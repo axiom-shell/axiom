@@ -31,8 +31,8 @@ Status: **done**, **next**, or **later**.
 - Done: **the daemon's Wayland connection**: `wire.Conn` and the output list on it (`wayland/outputs`, [wayland.md](wayland.md)); `share.*` no longer takes `outputs` (protocol 2). Stage 2 binds its protocols on the same connection; clipboard adds file descriptor passing.
 - Done: [protocol](protocol.md), the generated and cross-checked `rpc.md`, the Quickshell.Io allowlist.
 
-**Stage 1: pilot** (later)
-- `TailscaleManager`: polling `tailscale status --json` → a `tailscale` topic. The first use of the topic pattern, end to end.
+**Stage 1: pilot** (next)
+- Done: `TailscaleManager`: polling `tailscale status --json` → the `tailscale` topic (`backend/internal/tailscale`), the first polled topic end to end. Its floor (5 s) is Go's; the bar widget's default interval is 10 s.
 - `DependencyManager`: a `sh` + `command -v` per tool → `exec.LookPath`, one call.
 - `TimeZoneManager`: `sh` + `awk` over `tzdata.zi` → a Go parser, fetched once.
 

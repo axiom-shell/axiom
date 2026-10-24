@@ -1059,6 +1059,7 @@
     "How much of each screen's current brightness to take away: 50% takes 80% down to 40%.": "",
     "How much of the screen the grid may take.": "",
     "How much one wheel notch changes the level.": "",
+    "How often Tailscale is asked; never more often than every 5 seconds.": "",
     "How often calendars are checked for changes, while something shows them or reminders are on.": "",
     "How often the label command runs.": "",
     "How solid the shell's surfaces are: bars, the screen border, popouts, menus and panels (not your apps' windows: Compositor → Window look → Window opacity). 100 is fully solid. A translucent surface needs the compositor to blur behind it (Compositor → Window look → Blur).": "",

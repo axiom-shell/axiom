@@ -2,7 +2,8 @@
 
 > **Use when:** a feature needs state, a process, polling, file writes or Hyprland dispatches. UI never does those itself.
 > **Copy from:**
-> - `services/TailscaleManager.qml`: polled state through a `ConsumerRegistry`; its consumer is `components/bar/widgets/Tailscale/Tailscale.qml`. It predates the Quickshell.Io allowlist and keeps a `Process` of its own: a new service runs its command through `CommandManager.run`, as the skeleton below does.
+> - `services/TailscaleManager.qml` with `backend/internal/tailscale/`: polled state through a `ConsumerRegistry`, fetched by axiom (a polled topic); its consumer is `components/bar/widgets/Tailscale/Tailscale.qml`. The preferred shape for anything polled.
+> - The skeleton below: the same API polled in QML, its command through `CommandManager.run`, for what can't move to the daemon yet.
 > - `services/IdleInhibitManager.qml`: an IPC handler, and state kept across reloads in `PersistentProperties`.
 > **Docs:** [services-pattern](../dev/core/services-pattern.md), `services/AGENTS.md`, generated API `docs/dev/generated/api/<Name>.md`
 
@@ -92,8 +93,8 @@ Consumer (the request comes from config only, never from live values):
 1. Name it `<Domain>Manager`. Never shadow a Quickshell singleton (`NetworkingManager`, not `Networking`).
 2. Put the public API first (state, functions, signals) and the private parts after `// -- Private --`, prefixed `_`.
 3. **Polled data:** use a private `ConsumerRegistry`.
-   - The interval is the shortest one asked for, with a floor.
-   - The timer runs only while `_registry.active`, so nothing is fetched with no consumers.
+   - **Polled by axiom** (preferred): a `topics.Source{Name, Floor, Default, Fetch}` in a package of its own under `backend/internal/`, listed in `backend/internal/daemon/topics.go`. The service sends the merged request with `BackendManager.acquire(topic, …)` while `_registry.active` (`release(topic)` once not) and fills its state from `BackendManager.listen("<topic>.state", …)`: copy `TailscaleManager.qml`. The floor lives in Go ([protocol](../dev/backend/protocol.md) › Polled topics).
+   - **Polled in QML** (the skeleton): the interval is the shortest one asked for, with a floor; the timer runs only while `_registry.active`, so nothing is fetched with no consumers.
 4. **IPC:** a `property IpcTarget _ipc` with typed functions (`(): void`, `(): string`, `(text: string): void`). Per-screen handlers live on the surface instead, `enabled: ShellManager.isTarget(…)`.
 5. **Processes and files:** no `Process`, `FileView`, `Socket`, `IpcHandler` or `Quickshell.execDetached` of its own (`check_structure` refuses them outside `scripts/quickshell-io-allowlist.json`, a list that only shrinks as these move to the axiom daemon). Use `CommandManager.run` / `runDetached`, `FileManager.read`, `StateManager` for small state, and a daemon method for anything else (a file to watch or write, a socket).
 6. **Persistence:**

@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/tailscale"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
@@ -22,5 +23,7 @@ func (d *Daemon) topicsPart() part {
 
 // sources are the daemon's polled topics.
 func (d *Daemon) sources() []topics.Source {
-	return append([]topics.Source{}, d.opts.topics...)
+	return append([]topics.Source{
+		tailscale.Source(tailscale.Options{}),
+	}, d.opts.topics...)
 }

@@ -3,11 +3,11 @@
 
 > **File:** `services/TailscaleManager.qml` · **Docs:** see [docs/dev](../../README.md)
 
-Tailscale's state for every widget that shows it: one `tailscale status --json` at the shortest interval asked for, only while something has acquire()d it.
+Tailscale's state for every widget that shows it: axiom's `tailscale` topic (`tailscale status --json` at the shortest interval asked for, never more often than every 5 s), subscribed only while something has acquire()d it.
 
 ### Properties
 
-- `available` (bool): Installed at all (false until the first check says otherwise)
+- `available` (bool): Installed at all (false until axiom says otherwise)
 - `backendState` (string): "Running", "Stopped", "NeedsLogin", ...
 - `connected` (readonly bool)
 - `tailnetName` (string)

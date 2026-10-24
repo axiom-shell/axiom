@@ -112,9 +112,6 @@
       "FileView",
       "execDetached"
     ],
-    "services/TailscaleManager.qml": [
-      "Process"
-    ],
     "services/ThemeManager.qml": [
       "Process",
       "FileView",
