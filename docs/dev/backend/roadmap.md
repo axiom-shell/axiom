@@ -27,7 +27,7 @@ Status: **done**, **next**, or **later**.
 
 **Stage 0: foundations** (next)
 - **Go-polled topics:** a new `acquire(topic, request)` / `release(topic)` on BackendManager, mapped to `<svc>.subscribe` / `unsubscribe`; Go polls at the shortest interval asked and pushes `<svc>.state`. The same contract as `ConsumerRegistry`: nothing runs without consumers. Built once and reused by every polled move.
-- **Latest-wins pushes:** Go keeps only the newest unsent state per topic, rather than queueing every sample, so a stalled shell can't fill a connection's write queue (4096 messages) and get dropped.
+- Done: **latest-wins pushes**: Go keeps only the newest unsent state per method (`rpc.Conn.NotifyLatest`, [protocol](protocol.md) › The wire), rather than queueing every sample, so a stalled shell can't fill a connection's write queue (4096 messages) and get dropped. `config.state` stays queued: it follows its `config.changed` (stage 7 reshapes both).
 - **The daemon's Wayland connection:** `backend/internal/wayland/wire` past listing globals, an output list first. Drops the `outputs` param from `share.*`; needed by stage 2.
 - Done: [protocol](protocol.md), the generated and cross-checked `rpc.md`, the Quickshell.Io allowlist.
 

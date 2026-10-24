@@ -25,7 +25,9 @@ The shell (`qs -p <tree>`) is a child of the daemon (`axiom run`). Six channels 
 The daemon also talks to the compositor over its own sockets (`backend/internal/compositor/ipc`). That is a separate connection, not part of this protocol.
 
 ### The wire
-JSON-RPC 2.0, one message per line (NDJSON), over a unix socket in both directions (`backend/internal/rpc`; on the shell side `JsonRpc` builds and parses each line). Every message on a connection leaves through one queue, so a push caused by a request arrives before that request's reply: `config.changed` comes before the answer to the `config.replace` that caused it. A message may be up to 16 MiB and nested 64 deep, with at most 256 requests in flight per connection.
+JSON-RPC 2.0, one message per line (NDJSON), over a unix socket in both directions (`backend/internal/rpc`; on the shell side `JsonRpc` builds and parses each line). Every message on a connection leaves through one queue, so a push caused by a request arrives before that request's reply: `config.changed` comes before the answer to the `config.replace` that caused it.
+
+The whole-state pushes (`daemon.state`, `dev.state`, `saved.state`, `compositor.state`, and every polled topic's `<topic>.state`) are **latest-wins** (`Conn.NotifyLatest`, `Server.BroadcastLatest`): each holds one place in the queue, taken where its first unsent state was sent, and what is written there is the newest state. A shell that stalls gets fewer states, never a full queue (4096 messages, after which the daemon drops it). Events (`config.changed`, `schema.*`, `compositor.applied` / `notify` / `bindsMerged`) and `config.state`, which follows its `config.changed`, stay one message each. A message may be up to 16 MiB and nested 64 deep, with at most 256 requests in flight per connection.
 
 ### A session
 1. The shell connects and sends `daemon.hello` with `protocol` (from `config/json/backend.json`), `client: "shell"`, `schemaHash` (md5 of the schema file it read), `subscribe: true` (every topic) and `pid`. Calls made earlier wait in `BackendManager`'s queue.

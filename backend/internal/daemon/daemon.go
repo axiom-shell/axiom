@@ -224,7 +224,7 @@ func Run(ctx context.Context, opts Options) error {
 		OnState: func(st saved.State) {
 			// Also called while it opens, before there is a server
 			if d.server != nil {
-				d.server.Broadcast("saved.state", st, subscribedTo(topicSaved))
+				d.server.BroadcastLatest("saved.state", st, subscribedTo(topicSaved))
 			}
 		},
 	})

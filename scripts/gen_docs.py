@@ -680,7 +680,7 @@ GO_ROOT = ROOT / "backend/internal"
 # (Broadcast, or Push through an Options func), a call into the shell
 GO_HANDLE = re.compile(r'\brpc\.Handle\(reg,\s*"([\w.]+)"')
 GO_HELPER = re.compile(r'\b(\w+) := func\(name string\b')
-GO_BROADCAST = re.compile(r'\.Broadcast\(("([\w.]+)"|\w+),.*subscribedTo\((\w+)\)')
+GO_BROADCAST = re.compile(r'\.Broadcast(?:Latest)?\(("([\w.]+)"|\w+),.*subscribedTo\((\w+)\)')
 GO_PUSH = re.compile(r'\bPush\("([\w.]+)"')
 GO_CALL = re.compile(r'\.Call\(ctx,\s*"([\w.]+)"')
 GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')

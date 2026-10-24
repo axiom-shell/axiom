@@ -228,7 +228,7 @@ func (d *Daemon) reexecSoon(target string) {
 // pushState tells the clients what changed in the hello's answer.
 func (d *Daemon) pushState() {
 	ok, reason := d.compatible()
-	d.server.Broadcast("daemon.state", DaemonState{Compatible: ok, Reason: reason}, subscribedTo(topicDaemon))
+	d.server.BroadcastLatest("daemon.state", DaemonState{Compatible: ok, Reason: reason}, subscribedTo(topicDaemon))
 }
 
 // configPart: config.json, through the store.

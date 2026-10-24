@@ -187,7 +187,7 @@ func (m *devMode) setLogLevel(on bool) {
 
 func (m *devMode) push() {
 	if m.d.server != nil {
-		m.d.server.Broadcast("dev.state", m.State(), subscribedTo(topicDaemon))
+		m.d.server.BroadcastLatest("dev.state", m.State(), subscribedTo(topicDaemon))
 	}
 }
 
