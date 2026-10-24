@@ -18,6 +18,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### CommandOutput's text size loops through its own height
+- **Where:** `components/content/CommandOutput/CommandOutput.qml` (`body`)
+- **What:** In statement mode `body.textSize` reads `body.height`, which follows the text's implicit height in its layout, so the live log shows `Binding loop detected for property "textSize"` for this file. Sizing from the cell (the layout's height, or `metrics`) rather than the text's own height would break the loop.
+- **Size:** small
+- **Found:** 2026-10-24, while moving services to the axiom daemon
+
+### A notification's avatar warns when its saved image is gone
+- **Where:** `components/content/parts/notifications/NotificationAvatar.qml` (`picture`)
+- **What:** A history notification whose image file in `~/.local/state/axiom/notifications/` no longer exists logs `Cannot open: file:///…/notifications/<id>.png` on every build of its row. The avatar should fall back to the app icon quietly (check `picture.status`, or drop the image path from history when the file is removed).
+- **Size:** small
+- **Found:** 2026-10-24, while moving services to the axiom daemon
+
 ### A greeter clock set to another time zone shows the system's time
 - **Where:** `services/TimeZoneManager.qml` (`offsetOf`), `components/content/Clock/Clock.qml`
 - **What:** Zone offsets come from the axiom daemon (`tz.offsets`), and no daemon runs in the greeter (`BackendManager` stays inactive), so a Clock module on the login screen with a `timezone` shows the system's local time. The greeter could get offsets from `axiom greeter` (a small socket of its own, or the bundle carrying them), or the greeter host could hide the setting.
