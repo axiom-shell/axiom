@@ -32,6 +32,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
+	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
@@ -55,6 +56,8 @@ type Options struct {
 
 	// isShell replaces the check that a peer is the shell (tests)
 	isShell func(pid int) bool
+	// topics are polled topics added to the daemon's own (tests)
+	topics []topics.Source
 }
 
 // Files in the runtime directory
@@ -101,8 +104,10 @@ type Daemon struct {
 	// compositor is the compositor's config layer (nil without the tree's
 	// tables)
 	compositor *manager.Manager
-	tasks      *tasks
-	stop       context.CancelFunc
+	// topics are the polled topics and their subscribers
+	topics *topics.Hub
+	tasks  *tasks
+	stop   context.CancelFunc
 
 	// isShell says whether a connection's peer pid is the shell's (a
 	// hello as "shell" from anything else is refused)
@@ -233,12 +238,16 @@ func Run(ctx context.Context, opts Options) error {
 	d.savedKick = newKicker(func(context.Context) { d.saved.Changed() })
 
 	d.compositor = d.newCompositor()
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.dev.part()}
+	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.dev.part()}
 	reg := d.registry(parts)
 	d.server = &rpc.Server{
 		Registry: reg,
 		Log:      opts.Log.With("part", "rpc"),
-		OnClose:  d.router.Forget,
+		OnClose: func(c *rpc.Conn) {
+			d.router.Forget(c)
+			d.topics.Forget(c)
+		},
 	}
 	d.store.Subscribe(func(ev store.Event) {
 		for _, p := range parts {

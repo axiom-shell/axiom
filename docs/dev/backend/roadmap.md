@@ -1,6 +1,6 @@
 # Moving the service layer to the axiom binary
 
-> **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/BackendManager.qml`, `services/CommandManager.qml`, `services/FileManager.qml`, `services/StateManager.qml`, `services/IpcTarget.qml`, `services/ConsumerRegistry.qml`, `backend/internal/daemon/`
+> **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/BackendManager.qml`, `backend/internal/topics/`, `services/CommandManager.qml`, `services/FileManager.qml`, `services/StateManager.qml`, `services/IpcTarget.qml`, `services/ConsumerRegistry.qml`, `backend/internal/daemon/`
 > **Related:** [The axiom binary](README.md), [Protocol](protocol.md), [Wayland protocols](wayland.md), [Services pattern](../core/services-pattern.md), [every method and push](../generated/rpc.md) (generated)
 
 The plan for moving side effects out of QML and into the `axiom` daemon, stage by stage. Read this before starting any of it, and update it in the change that does a step (its status, and anything learned that changes a later stage).
@@ -26,7 +26,7 @@ The plan for moving side effects out of QML and into the `axiom` daemon, stage b
 Status: **done**, **next**, or **later**.
 
 **Stage 0: foundations** (next)
-- **Go-polled topics:** a new `acquire(topic, request)` / `release(topic)` on BackendManager, mapped to `<svc>.subscribe` / `unsubscribe`; Go polls at the shortest interval asked and pushes `<svc>.state`. The same contract as `ConsumerRegistry`: nothing runs without consumers. Built once and reused by every polled move.
+- Done: **Go-polled topics**: `BackendManager.acquire(topic, request)` / `release(topic)` / `refresh(topic)`, mapped to `<topic>.subscribe` / `unsubscribe` / `refresh`; the daemon (`backend/internal/topics`) polls at the shortest interval asked and pushes `<topic>.state`. The same contract as `ConsumerRegistry`: nothing runs without consumers ([protocol](protocol.md) › Polled topics). A polled move is a `topics.Source` in its own package, added to `daemon/topics.go`.
 - Done: **latest-wins pushes**: Go keeps only the newest unsent state per method (`rpc.Conn.NotifyLatest`, [protocol](protocol.md) › The wire), rather than queueing every sample, so a stalled shell can't fill a connection's write queue (4096 messages) and get dropped. `config.state` stays queued: it follows its `config.changed` (stage 7 reshapes both).
 - **The daemon's Wayland connection:** `backend/internal/wayland/wire` past listing globals, an output list first. Drops the `outputs` param from `share.*`; needed by stage 2.
 - Done: [protocol](protocol.md), the generated and cross-checked `rpc.md`, the Quickshell.Io allowlist.

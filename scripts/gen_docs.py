@@ -684,12 +684,17 @@ GO_BROADCAST = re.compile(r'\.Broadcast(?:Latest)?\(("([\w.]+)"|\w+),.*subscribe
 GO_PUSH = re.compile(r'\bPush\("([\w.]+)"')
 GO_CALL = re.compile(r'\.Call\(ctx,\s*"([\w.]+)"')
 GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')
+# A polled topic (internal/topics): its methods and push, named after it
+GO_SOURCE = re.compile(r'\btopics\.Source\{\s*Name:\s*"(\w+)"')
+POLLED_METHODS = ("subscribe", "unsubscribe", "refresh")
 # QML: through BackendManager (or inside it, root.*), and `// rpc: a, b`
 # for methods named at runtime
 QML_CALL = re.compile(r'\b(?:BackendManager|root)\.(?:call|notify)\("([\w.]+)"|JsonRpc\.request\(\w+,\s*"([\w.]+)"')
 QML_LISTEN = re.compile(r'\b(?:BackendManager|root)\.listen\("([\w.]+)"')
 QML_HANDLE = re.compile(r'\b(?:BackendManager|root)\.handle\("([\w.]+)"|^\s*"([\w.]+)":\s*params\s*=>', re.M)
 QML_RPC_NOTE = re.compile(r"//\s*rpc:\s*(.+)")
+# BackendManager.acquire / release / refresh of a polled topic
+QML_TOPIC = re.compile(r'\bBackendManager\.(acquire|release|refresh)\("(\w+)"')
 
 
 def go_sources():
@@ -733,12 +738,19 @@ def rpc_scan():
                 pushes.setdefault(m.group(2), {"go": set(), "topic": m.group(3), "qml": set()})["go"].add(rel(path))
             else:
                 dynamic_topic = m.group(3)
+        for m in GO_SOURCE.finditer(text):
+            for suffix in POLLED_METHODS:
+                methods[f"{m.group(1)}.{suffix}"] = {"go": rel(path), "guards": [], "qml": set(), "cli": set()}
+            pushes[f"{m.group(1)}.state"] = {"go": {rel(path)}, "topic": None, "polled": m.group(1), "qml": set()}
         for m in GO_PUSH.finditer(text):
             pushes.setdefault(m.group(1), {"go": set(), "topic": None, "qml": set()})["go"].add(rel(path))
         for m in GO_CALL.finditer(text):
             to_shell.setdefault(m.group(1), {"go": set(), "qml": set()})["go"].add(rel(path))
     for push in pushes.values():
-        push["topic"] = topics.get(push["topic"] or dynamic_topic, "?")
+        if push.get("polled"):
+            push["topic"] = f"{push['polled']} (polled)"
+        else:
+            push["topic"] = topics.get(push["topic"] or dynamic_topic, "?")
     # The command line's own calls
     for path in sorted((GO_ROOT / "cli").glob("*.go")):
         text = path.read_text()
@@ -752,6 +764,10 @@ def rpc_scan():
             continue
         text = path.read_text()
         calls = [a or b for a, b in QML_CALL.findall(text)]
+        for verb, topic in QML_TOPIC.findall(text):
+            calls += [f"{topic}.{s}" for s in ({"acquire": ("subscribe", "unsubscribe"),
+                                               "release": ("unsubscribe",),
+                                               "refresh": ("refresh",)}[verb])]
         for note in QML_RPC_NOTE.findall(text):
             calls += [n.strip() for n in note.split(",") if n.strip()]
         for method in calls:
@@ -783,8 +799,8 @@ def rpc_page():
 
     out = [NOTICE, "# Shell ↔ daemon RPC", "",
            "Every JSON-RPC method the axiom daemon serves on its socket, every push it sends and every call it makes "
-           "into the shell, with the files on each side. Found by name in the code (`rpc.Handle`, `Broadcast`, `Push`; "
-           "`BackendManager.call` / `listen` / `handle`, and `// rpc: a, b` where a method is chosen at runtime); "
+           "into the shell, with the files on each side. Found by name in the code (`rpc.Handle`, `Broadcast`, `Push`, "
+           "`topics.Source`; `BackendManager.call` / `listen` / `handle` / `acquire`, and `// rpc: a, b` where a method is chosen at runtime); "
            "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks. "
            "How the connection works: [protocol](../backend/protocol.md).", "",
            "## Methods (client → daemon)", "",
@@ -795,7 +811,9 @@ def rpc_page():
         m = methods[method]
         out.append(f"| `{method}` | {', '.join(m['guards'])} | `{m['go']}` | {files(m['qml']) or '(none)'} | {files(m['cli'])} |")
     out += ["", "## Pushes (daemon → subscribers)", "",
-            "Sent to connections whose hello subscribed to the topic (the shell subscribes to all).", "",
+            "Sent to connections whose hello subscribed to the topic (the shell subscribes to all). "
+            "A polled topic's state goes only to connections that called its `<topic>.subscribe` "
+            "(the shell through `BackendManager.acquire`).", "",
             "| Push | Topic | Sent from | Heard in |", "|---|---|---|---|"]
     for method in sorted(pushes):
         p = pushes[method]

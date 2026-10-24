@@ -1,6 +1,6 @@
 # The shell ↔ daemon protocol
 
-> **Files:** `services/BackendManager.qml`, `components/methods/JsonRpc.qml`, `services/IpcTarget.qml`, `backend/internal/rpc/`, `backend/internal/daemon/methods.go`, `backend/internal/daemon/daemon.go`, `backend/internal/ipcroute/`, `backend/internal/lock/`, `config/json/backend.json`, `config/Paths.qml`
+> **Files:** `services/BackendManager.qml`, `components/methods/JsonRpc.qml`, `services/IpcTarget.qml`, `backend/internal/rpc/`, `backend/internal/daemon/methods.go`, `backend/internal/daemon/daemon.go`, `backend/internal/topics/`, `backend/internal/daemon/topics.go`, `backend/internal/ipcroute/`, `backend/internal/lock/`, `config/json/backend.json`, `config/Paths.qml`
 > **Related:** [The axiom binary](README.md), [Config manager](../core/config-manager.md), [Config modes](../compositor/config-modes.md), [every method and push](../generated/rpc.md) (generated)
 
 Where the QML shell and the axiom binary meet. This page says how the connection works. The methods, pushes and the files that use them are listed in [rpc.md](../generated/rpc.md), which `scripts/gen_docs.py` builds from the code and checks: a call or listener in the shell that the daemon doesn't define fails it.
@@ -27,7 +27,7 @@ The daemon also talks to the compositor over its own sockets (`backend/internal/
 ### The wire
 JSON-RPC 2.0, one message per line (NDJSON), over a unix socket in both directions (`backend/internal/rpc`; on the shell side `JsonRpc` builds and parses each line). Every message on a connection leaves through one queue, so a push caused by a request arrives before that request's reply: `config.changed` comes before the answer to the `config.replace` that caused it.
 
-The whole-state pushes (`daemon.state`, `dev.state`, `saved.state`, `compositor.state`, and every polled topic's `<topic>.state`) are **latest-wins** (`Conn.NotifyLatest`, `Server.BroadcastLatest`): each holds one place in the queue, taken where its first unsent state was sent, and what is written there is the newest state. A shell that stalls gets fewer states, never a full queue (4096 messages, after which the daemon drops it). Events (`config.changed`, `schema.*`, `compositor.applied` / `notify` / `bindsMerged`) and `config.state`, which follows its `config.changed`, stay one message each. A message may be up to 16 MiB and nested 64 deep, with at most 256 requests in flight per connection.
+The whole-state pushes (`daemon.state`, `dev.state`, `saved.state`, `compositor.state`, and every [polled topic](#polled-topics)'s `<topic>.state`) are **latest-wins** (`Conn.NotifyLatest`, `Server.BroadcastLatest`): each holds one place in the queue, taken where its first unsent state was sent, and what is written there is the newest state. A shell that stalls gets fewer states, never a full queue (4096 messages, after which the daemon drops it). Events (`config.changed`, `schema.*`, `compositor.applied` / `notify` / `bindsMerged`) and `config.state`, which follows its `config.changed`, stay one message each. A message may be up to 16 MiB and nested 64 deep, with at most 256 requests in flight per connection.
 
 ### A session
 1. The shell connects and sends `daemon.hello` with `protocol` (from `config/json/backend.json`), `client: "shell"`, `schemaHash` (md5 of the schema file it read), `subscribe: true` (every topic) and `pid`. Calls made earlier wait in `BackendManager`'s queue.
@@ -44,6 +44,14 @@ A hello's `subscribe` is `true`, `false` or a list of topics:
 - `compositor`: `compositor.state`, `compositor.applied`, `compositor.notify`, `compositor.bindsMerged`
 
 The CLI subscribes to nothing.
+
+### Polled topics
+Data the daemon polls for the shell (`backend/internal/topics`) is not a hello topic: `subscribe: true` doesn't include it. A connection asks for it:
+- `<topic>.subscribe` with `{ interval }` (ms) plus whatever the topic's own request carries; called again, it replaces that connection's request. `<topic>.unsubscribe` drops it, and closing the connection drops all of them.
+- The daemon fetches once for every subscriber, at the shortest interval asked (never below the topic's floor), and not at all with none. A topic whose last subscriber left forgets its state.
+- It pushes `<topic>.state` to the subscribers when the state changes (latest-wins, below), and to a new subscriber at once when it has one. `<topic>.refresh` fetches now.
+- The shell: `BackendManager.acquire(topic, request)` / `release(topic)` / `refresh(topic)`, subscribed again after every hello (a reconnect or re-exec forgets them). The service owning the topic merges its consumers (`ConsumerRegistry`) into one request and listens to `<topic>.state`.
+- A topic is a `topics.Source{Name: "…", Floor, Default, Fetch}` in the package owning its side effect, listed in `daemon/topics.go` (`sources`); `rpc.md` reads the name from that literal.
 
 ### Guards and errors
 - Every connection's peer must be the same user (`SO_PEERCRED`, `rpc.SamePeerUser`).

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
+	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
@@ -29,7 +31,7 @@ func (td *testDaemon) getenv(k string) string { return td.env[k] }
 
 // startDaemon runs a daemon until the test ends. isShell, when set,
 // replaces the check that a peer is the shell.
-func startDaemon(t *testing.T, isShell func(int) bool) *testDaemon {
+func startDaemon(t *testing.T, isShell func(int) bool, sources ...topics.Source) *testDaemon {
 	t.Helper()
 	// Short: the socket path must fit a sockaddr_un
 	runtimeDir, err := os.MkdirTemp("", "ax")
@@ -57,7 +59,7 @@ func startDaemon(t *testing.T, isShell func(int) bool) *testDaemon {
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() {
-		done <- Run(ctx, Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell})
+		done <- Run(ctx, Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources})
 	}()
 	t.Cleanup(func() {
 		cancel()
@@ -93,7 +95,7 @@ func (td *testDaemon) connect(t *testing.T, client string, subscribe any, pushes
 	t.Helper()
 	reg := rpc.NewRegistry()
 	if pushes != nil {
-		for _, method := range []string{"config.changed", "config.state", "schema.changed", "saved.state", "daemon.state", "dev.state"} {
+		for _, method := range []string{"config.changed", "config.state", "schema.changed", "saved.state", "daemon.state", "dev.state", "probe.state"} {
 			rpc.Handle(reg, method, func(context.Context, *rpc.Conn, json.RawMessage) (struct{}, error) {
 				pushes <- method
 				return struct{}{}, nil
@@ -201,6 +203,61 @@ func TestPushesFollowTopics(t *testing.T) {
 			t.Errorf("a config push to a saved-only subscriber: %s", m)
 		}
 	case <-time.After(200 * time.Millisecond):
+	}
+}
+
+// A polled topic runs only while a connection subscribes, pushes only to
+// it, and stops when it closes. A hello subscribing to everything doesn't
+// subscribe to it.
+func TestPolledTopicFollowsItsSubscribers(t *testing.T) {
+	t.Parallel()
+	var fetches atomic.Int64
+	td := startDaemon(t, nil, topics.Source{Name: "probe", Floor: 10 * time.Millisecond, Default: time.Hour,
+		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
+			return fetches.Add(1), nil
+		}})
+	all := make(chan string, 64)
+	if _, err := td.connect(t, "cli", true, all); err != nil {
+		t.Fatal(err)
+	}
+	pushes := make(chan string, 64)
+	sub, err := td.connect(t, "cli", false, pushes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(50 * time.Millisecond)
+	if n := fetches.Load(); n != 0 {
+		t.Fatalf("%d fetches with nobody subscribed", n)
+	}
+	if err := sub.Call(context.Background(), "probe.subscribe", map[string]any{"interval": 10}, nil); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 2; i++ {
+		select {
+		case m := <-pushes:
+			if m != "probe.state" {
+				t.Errorf("push %s", m)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("no state")
+		}
+	}
+	select {
+	case m := <-all:
+		t.Errorf("%s pushed to a connection that didn't subscribe", m)
+	default:
+	}
+	sub.Close()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		before := fetches.Load()
+		time.Sleep(100 * time.Millisecond)
+		if fetches.Load() == before {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("still fetching after its subscriber closed")
+		}
 	}
 }
 

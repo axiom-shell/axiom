@@ -31,6 +31,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
   - `PomodoroManager`: `acquire(owner)` with no request, for its once-a-second `now`; the phase's end runs with no consumers (created from `_services`). See [Todo and pomodoro](../features/todo-pomodoro.md).
   - `TailscaleManager`: `available`, `backendState`/`connected`, `tailnetName`, `ip`.
   - `CommandManager`: `outputs[command]`, shared by identical commands (e.g. a Button's label).
+- **Polled by the daemon:** a service whose side effect moved to axiom keeps the same `acquire` / `release` and its `ConsumerRegistry`, but instead of a Timer it hands the merged request to `BackendManager.acquire(topic, request)` while `_registry.active` (and `release(topic)` once it isn't), and fills its properties from `BackendManager.listen("<topic>.state", …)` ([protocol](../backend/protocol.md) › Polled topics).
 - **Widget side:** hold the request in a `readonly property var …Request` built from `properties`; acquire it in `Component.onCompleted` and in `on…RequestChanged`; release in `onDestruction`.
 
 ### CommandManager: services keep no Process
