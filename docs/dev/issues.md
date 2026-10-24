@@ -18,6 +18,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A greeter clock set to another time zone shows the system's time
+- **Where:** `services/TimeZoneManager.qml` (`offsetOf`), `components/content/Clock/Clock.qml`
+- **What:** Zone offsets come from the axiom daemon (`tz.offsets`), and no daemon runs in the greeter (`BackendManager` stays inactive), so a Clock module on the login screen with a `timezone` shows the system's local time. The greeter could get offsets from `axiom greeter` (a small socket of its own, or the bundle carrying them), or the greeter host could hide the setting.
+- **Size:** small
+- **Found:** 2026-10-24, while moving TimeZoneManager to the daemon
+
 ### Leaving managed, the runtime layer can go on before the given-back config reloads
 - **Where:** `backend/internal/compositor/manager/manager.go` (`SetInputs`, `liveChanged`, `apply`)
 - **What:** The shell's first inputs arm both `debounce` and `liveDebounce` (300 ms each). When the live one fires first, `liveChanged` sees `AppliedMode != mode` and calls `apply`, which releases the managed config and asks for a reload; the layer debounce's `apply` then runs `runtimeApply` before that reload lands, so the runtime layer reads the managed config's binds (every axiom key looks taken, each logged once) and goes on over it. It's corrected after the reload (`configReloaded` applies again). Holding `runtimeApply` until `configReloaded` after a release that reloads would close it, but a missed reload event would then leave no runtime layer.

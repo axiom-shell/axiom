@@ -687,6 +687,7 @@ GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')
 # A polled topic (internal/topics): its methods and push, named after it
 GO_SOURCE = re.compile(r'\btopics\.Source\{\s*Name:\s*"(\w+)"')
 POLLED_METHODS = ("subscribe", "unsubscribe", "refresh")
+GO_COMMENT_LINE = re.compile(r"^[ \t]*//.*$", re.M)
 # QML: through BackendManager (or inside it, root.*), and `// rpc: a, b`
 # for methods named at runtime
 QML_CALL = re.compile(r'\b(?:BackendManager|root)\.(?:call|notify)\("([\w.]+)"|JsonRpc\.request\(\w+,\s*"([\w.]+)"')
@@ -716,7 +717,8 @@ def rpc_scan():
     methods, pushes, to_shell, topics = {}, {}, {}, {}
     dynamic_topic = None
     for path in go_sources():
-        text = path.read_text()
+        # Whole-line comments out: a doc comment's example isn't a registration
+        text = GO_COMMENT_LINE.sub("", path.read_text())
         topics.update(dict(GO_TOPIC.findall(text)))
         helpers = {}
         for m in GO_HELPER.finditer(text):

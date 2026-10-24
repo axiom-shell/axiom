@@ -114,9 +114,6 @@
       "FileView",
       "execDetached"
     ],
-    "services/TimeZoneManager.qml": [
-      "Process"
-    ],
     "services/TodoManager.qml": [
       "FileView"
     ],

@@ -5,18 +5,6 @@ import qs.components.methods
 TestCase {
   name: "TimeZones"
 
-  function test_parseOffset() {
-    compare(TimeZones.parseOffset("+0900"), 540);
-    compare(TimeZones.parseOffset("-0500"), -300);
-    compare(TimeZones.parseOffset("+0530"), 330);
-    compare(TimeZones.parseOffset("-09:30"), -570);
-    compare(TimeZones.parseOffset("+0000"), 0);
-    compare(TimeZones.parseOffset(" +1345\n"), 825, "date's output, trimmed");
-    compare(TimeZones.parseOffset("UTC"), null);
-    compare(TimeZones.parseOffset(""), null);
-    compare(TimeZones.parseOffset(undefined), null);
-  }
-
   // Whatever zone the test runs in, the shifted Date's local fields are
   // the zone's wall clock
   function test_shift() {

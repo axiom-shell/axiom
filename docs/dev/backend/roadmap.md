@@ -31,12 +31,12 @@ Status: **done**, **next**, or **later**.
 - Done: **the daemon's Wayland connection**: `wire.Conn` and the output list on it (`wayland/outputs`, [wayland.md](wayland.md)); `share.*` no longer takes `outputs` (protocol 2). Stage 2 binds its protocols on the same connection; clipboard adds file descriptor passing.
 - Done: [protocol](protocol.md), the generated and cross-checked `rpc.md`, the Quickshell.Io allowlist.
 
-**Stage 1: pilot** (next)
+**Stage 1: pilot** (done)
 - Done: `TailscaleManager`: polling `tailscale status --json` → the `tailscale` topic (`backend/internal/tailscale`), the first polled topic end to end. Its floor (5 s) is Go's; the bar widget's default interval is 10 s.
 - Done: `DependencyManager`: a `sh` + `command -v` per tool → `deps.check` (`backend/internal/deps`: `exec.LookPath`, the Python modules in one python3 run).
-- `TimeZoneManager`: `sh` + `awk` over `tzdata.zi` → a Go parser, fetched once.
+- Done: `TimeZoneManager`: `sh` + `awk` over `tzdata.zi` and `TZ=… date +%z` per zone → `tz.zones` (a Go parser, fetched once) and `tz.offsets` (`backend/internal/tz`, the zoneinfo files read in Go). The greeter has no daemon, so its clocks show the system's time ([issues](../issues.md)).
 
-**Stage 2: Wayland** (later; needs stage 0's connection; protocols per compositor: [wayland.md](wayland.md))
+**Stage 2: Wayland** (next; needs stage 0's connection; protocols per compositor: [wayland.md](wayland.md))
 - Idle: `HypridleManager` → `ext_idle_notifier_v1`; removes hypridle. `Idle` is `x-takeover`.
 - Clipboard: `ClipboardManager`'s `wl-paste --watch cliphist` → an in-memory history over `ext_data_control_v1` (wlr's as the fallback); removes cliphist and wl-clipboard. History never touches disk; only pinned clips do.
 - Typing: `EmojiManager`'s `wtype` → `zwp_virtual_keyboard_v1`.

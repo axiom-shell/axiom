@@ -3,7 +3,7 @@
 
 > **File:** `services/TimeZoneManager.qml` · **Docs:** see [docs/dev](../../README.md)
 
-Other time zones' UTC offsets, for clocks set to one (a Clock module's or a bar Time widget's `timezone`): the JS engine can't convert times between zones (TimeZones). Each zone asked for is read once for all its clocks (`date +%z` with TZ set), again past every half hour (when daylight saving changes), and not at all with none asked for. The zone travels as an argument, never inside the shell text. TimeZoneManager.acquire(owner, "Asia/Tokyo") // "" releases TimeZoneManager.acquire(owner, ["Asia/Tokyo", "Europe/Paris"]) TimeZoneManager.offsetOf("Asia/Tokyo") // 540, null until read Also lists the system's zones (`zones`), for the time zone fields.
+Other time zones' UTC offsets, for clocks set to one (a Clock module's or a bar Time widget's `timezone`): the JS engine can't convert times between zones (TimeZones). Each zone asked for is read once for all its clocks (axiom's tz.offsets, from the system's zoneinfo), again past every half hour (when daylight saving changes), and not at all with none asked for. Without axiom (the greeter) there are none: clocks show the system's time. TimeZoneManager.acquire(owner, "Asia/Tokyo") // "" releases TimeZoneManager.acquire(owner, ["Asia/Tokyo", "Europe/Paris"]) TimeZoneManager.offsetOf("Asia/Tokyo") // 540, null until read Also lists the system's zones (`zones`, tz.zones), for the time zone fields.
 
 ### Properties
 

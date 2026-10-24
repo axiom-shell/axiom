@@ -1,6 +1,6 @@
 # Clocks and time zones
 
-> **Files:** `services/TimeZoneManager.qml`, `components/methods/TimeZones.qml`, `components/content/Clock/Clock.qml`, `components/content/WorldClocks/WorldClocks.qml`, `components/bar/widgets/Time/Time.qml`
+> **Files:** `services/TimeZoneManager.qml`, `components/methods/TimeZones.qml`, `backend/internal/tz/`, `backend/internal/daemon/tools.go`, `components/content/Clock/Clock.qml`, `components/content/WorldClocks/WorldClocks.qml`, `components/bar/widgets/Time/Time.qml`
 > **Config:** module/widget `timezone` properties (no section of its own)
 > **Related:** [Services pattern](../core/services-pattern.md), [Schema annotations](../core/schema-annotations.md), [Desktop](desktop.md), [Utility modules](../overlay/utility-modules.md)
 
@@ -16,13 +16,14 @@ How clocks show another time zone (the JS engine has no Intl), plus the Clock mo
   - a `ConsumerRegistry`;
   - `zone` may be a list, as WorldClocks asks for.
 - **Reading a zone:**
-  - Each zone asked for is read with `TZ="$zone" date +%z`. The zone is passed as an argument, never inside the shell text.
+  - The zones asked for are read with one `tz.offsets` call to axiom (`backend/internal/tz`): each zone's file in the zoneinfo directory (`$TZDIR`, else `/usr/share/zoneinfo`), its offset now in minutes east of UTC. A zone name that isn't a plain relative path is never read.
   - One read serves all of that zone's clocks.
   - It reads again past every half hour UTC, when daylight saving can change.
   - Nothing is read when no clock asks.
+  - Without axiom (the greeter, a shell run by hand) nothing is read, and clocks show the system's time ([issues](../issues.md)).
 - **`offsetOf(zone)`** is null, meaning the system's time:
   - until the zone has been read;
-  - for a zone not in `zones`. `zones` is the system's list, from `tzdata.zi` (in `$TZDIR`, else `/usr/share/zoneinfo`) or `timedatectl`; it is also the `timezones` option list. Without this check, `date` would quietly give UTC.
+  - for a zone not in `zones`. `zones` is the system's list (`tz.zones`: `tzdata.zi`'s zones and links, else the zoneinfo files found), fetched once; it is also the `timezones` option list.
 - **Display:** a clock shows `methods/TimeZones.shift(date, offset)`, whose local fields read as that zone's wall clock.
 
 ### Clock module (`content/Clock`)
