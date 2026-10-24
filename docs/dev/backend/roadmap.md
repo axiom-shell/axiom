@@ -25,10 +25,10 @@ The plan for moving side effects out of QML and into the `axiom` daemon, stage b
 ### Stages
 Status: **done**, **next**, or **later**.
 
-**Stage 0: foundations** (next)
+**Stage 0: foundations** (done)
 - Done: **Go-polled topics**: `BackendManager.acquire(topic, request)` / `release(topic)` / `refresh(topic)`, mapped to `<topic>.subscribe` / `unsubscribe` / `refresh`; the daemon (`backend/internal/topics`) polls at the shortest interval asked and pushes `<topic>.state`. The same contract as `ConsumerRegistry`: nothing runs without consumers ([protocol](protocol.md) › Polled topics). A polled move is a `topics.Source` in its own package, added to `daemon/topics.go`.
 - Done: **latest-wins pushes**: Go keeps only the newest unsent state per method (`rpc.Conn.NotifyLatest`, [protocol](protocol.md) › The wire), rather than queueing every sample, so a stalled shell can't fill a connection's write queue (4096 messages) and get dropped. `config.state` stays queued: it follows its `config.changed` (stage 7 reshapes both).
-- **The daemon's Wayland connection:** `backend/internal/wayland/wire` past listing globals, an output list first. Drops the `outputs` param from `share.*`; needed by stage 2.
+- Done: **the daemon's Wayland connection**: `wire.Conn` and the output list on it (`wayland/outputs`, [wayland.md](wayland.md)); `share.*` no longer takes `outputs` (protocol 2). Stage 2 binds its protocols on the same connection; clipboard adds file descriptor passing.
 - Done: [protocol](protocol.md), the generated and cross-checked `rpc.md`, the Quickshell.Io allowlist.
 
 **Stage 1: pilot** (later)

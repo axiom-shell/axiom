@@ -18,7 +18,7 @@
   - It takes the display's instance lock and builds the schema from the tree (`config/schema/`).
   - It opens the config, writes both for the shell into `$XDG_RUNTIME_DIR/axiom/<display>/`, serves the socket there, and supervises `qs -p <tree>`.
   - Supervision: restart with a growing delay after a crash, give up after 5 crashes in a minute, stop an orphan an earlier daemon left (its process group, matched by its exact command line; never the shell a re-exec adopts). A run that ended on its own is `OnExit`'s, a stop the supervisor asked for `OnStop`'s.
-  - It holds an idle connection to its compositor (`wire.Watch`) and stops when the compositor closes it: a daemon outliving its session would hold the display's lock, and the next session's `axiom run` would find it taken.
+  - It holds its own Wayland connection (`wayland/outputs` on a `wire.Conn`) and stops when the compositor closes it: a daemon outliving its session would hold the display's lock, and the next session's `axiom run` would find it taken. If that connection fails otherwise (a protocol error), an idle one (`wire.Watch`) still watches.
   - The shell gets `AXIOM_SOCKET`, `AXIOM_SCHEMA`, `AXIOM_CONFIG`, `AXIOM_TREE`, `AXIOM_BIN` (the installed binary, never a dev build) and, read at each start, `AXIOM_INCOMPATIBLE` while the tree's schema isn't the binary's and dev mode is off.
   - `--dev` starts in dev mode whatever was chosen last, and logs to the terminal (and the shell's output with it).
 - **The daemon's parts** (`backend/internal/daemon/tasks.go`): each piece is a `part` (`core`, `config`, `ipc`, `sharing`, `compositor`, `topics`, `dev mode`): the RPC methods it registers, a `run(ctx)` started on the daemon's `tasks`, and an `onConfig` told of every store event in order. Every goroutine is started through `tasks.Go` (the locker gets it as `lock.Options.Go`) and `Run` waits for all of them; work that must not overlap itself (`saved.Changed`, dev builds) is a `kicker`.
@@ -57,13 +57,13 @@
 - **The rest of the CLI:**
   - `axiom ping|restart|quit`, `axiom daemon status|reexec|logs`, `axiom dev status|on|off|rebuild`
   - `axiom config path|get|set|reset|validate|status`: online, or `--offline` against the file under the writer lock
-  - `axiom schema build|check|hash`, `axiom debug wayland-globals`, `axiom version`
+  - `axiom schema build|check|hash`, `axiom debug wayland-globals|wayland-outputs`, `axiom version`
 - **Re-exec** (`axiom daemon reexec`, or dev mode on a rebuild): the new image takes over the instance lock, the writer lock, the socket and the shell (still its child). It trusts the handoff only when the inherited lock really is this display's held lock.
   - The descriptors lose close-on-exec only under `syscall.ForkLock`, so no child starts meanwhile and inherits a lock; an exec that fails gives them it back and thaws the store.
   - The handoff carries dev mode, the installed binary (while a dev build runs), the schema's hash and whether the session was locked: a new image whose tree builds another schema (an update, `axiom daemon reexec` after it) restarts the shell, locked first when it was.
 
 ### Wayland
-The daemon will talk Wayland itself for idle, gamma, clipboard and typing (branch 2). For now `backend/internal/wayland/wire` speaks the wire protocol far enough to list a compositor's globals: [what each compositor offers](wayland.md).
+The daemon holds its own Wayland connection ([wayland.md](wayland.md)): `backend/internal/wayland/wire` (the wire protocol, a `Conn` with objects and their events), and on it `wayland/outputs`, the outputs by place that `share.*` names monitors with. Idle, gamma, clipboard and typing come next (roadmap stage 2).
 
 ### Building and checking
 - `cd backend && go build ./cmd/axiom` builds it (pure Go, `CGO_ENABLED=0` works).

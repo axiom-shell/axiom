@@ -205,8 +205,7 @@ QtObject {
     BackendManager.call("share.export", {
       "personal": personal,
       "commands": commands,
-      "places": places,
-      "outputs": root._outputs()
+      "places": places
     }, (error, result) => {
       root.status = error ? I18n.tr("Failed to export") : I18n.tr("Exported to {0}", Paths.shortenHome(result.path));
       if (error)
@@ -228,9 +227,7 @@ QtObject {
       return false;
     }
     root._busy = true;
-    BackendManager.call(method, Object.assign({
-      "outputs": root._outputs()
-    }, params), (error, result) => {
+    BackendManager.call(method, params, (error, result) => {
       root._busy = false;
       if (error) {
         console.warn("[SavedConfigsManager] Applying", label, "failed:", error.message);
@@ -255,15 +252,6 @@ QtObject {
     if (message.includes("can't be read") || error.kind === "not_found")
       return I18n.tr("\"{0}\" could not be read", label);
     return I18n.tr("\"{0}\" is not a valid config", label);
-  }
-
-  // This PC's monitors, which shared files name by place
-  function _outputs() {
-    return CompositorManager.outputs.map(output => ({
-          "name": output.name,
-          "x": output.x,
-          "y": output.y
-        }));
   }
 
   // The folder must exist before FolderListModel watches it, or it never
