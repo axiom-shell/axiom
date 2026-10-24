@@ -26,6 +26,7 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `daemon.reexec` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/run.go` |
 | `daemon.shutdown` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/run.go` |
 | `daemon.status` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/run.go` |
+| `deps.check` |  | `backend/internal/daemon/tools.go` | `services/DependencyManager.qml` |  |
 | `dev.get` |  | `backend/internal/daemon/dev.go` | (none) | `backend/internal/cli/dev.go` |
 | `dev.rebuild` |  | `backend/internal/daemon/dev.go` | `services/DevManager.qml` | `backend/internal/cli/dev.go` |
 | `dev.set` |  | `backend/internal/daemon/dev.go` | `services/DevManager.qml` | `backend/internal/cli/dev.go` |

@@ -243,7 +243,7 @@ func Run(ctx context.Context, opts Options) error {
 	d.compositor = d.newCompositor()
 	d.outputs = outputs.New(opts.Log.With("part", "wayland"))
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.dev.part()}
 	reg := d.registry(parts)
 	d.server = &rpc.Server{
 		Registry: reg,

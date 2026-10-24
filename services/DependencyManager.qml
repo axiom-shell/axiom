@@ -1,7 +1,6 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.config
 import qs.components.methods
 
@@ -15,7 +14,7 @@ import qs.components.methods
  * `_services`.
  *
  * Also which commands (and Python modules, as "py:<module>") are installed
- * (`found`, filled by `check(commands)`),
+ * (`found`, filled by `check(commands)` through axiom's deps.check),
  * for the onboarder: the optional `tools` below, the apps it offers; and
  * what installs them on this distribution (`distro`, `installLines`).
  */
@@ -222,16 +221,16 @@ Singleton {
   // { command: bool } for every command checked so far
   property var found: ({})
 
-  // Looks the commands up (command -v; a "py:<module>" with python3's
-  // importlib) and adds them to `found`
+  // Looks the commands up (axiom's deps.check: $PATH; a "py:<module>"
+  // with python3's importlib) and adds them to `found`. Without axiom
+  // they stay unknown
   function check(commands) {
     const wanted = (commands ?? []).map(c => String(c).trim().split(/\s+/)[0]).filter(c => /^(py:)?[\w.+-]+$/.test(c));
     if (wanted.length === 0)
       return;
     _pendingChecks = _pendingChecks.concat(wanted);
-    // Later, not now: services check while they're being built, when the
-    // Process can't start yet (running stays false), so each call would
-    // replace the last one's commands. callLater also batches them.
+    // Later, not now: services check while they're being built, and
+    // callLater batches their calls into one lookup
     Qt.callLater(root._runLookup);
   }
 
@@ -242,7 +241,7 @@ Singleton {
 
   property var _pendingChecks: []
 
-  // A lookup is running (its exit starts the next)
+  // A lookup is running (its answer starts the next)
   property bool _busy: false
 
   function _runLookup() {
@@ -251,29 +250,22 @@ Singleton {
     _busy = true;
     const commands = Array.from(new Set(_pendingChecks));
     _pendingChecks = [];
-    _lookup.commands = commands;
-    _lookup.command = ["sh", "-c", 'for c in "$@"; do case "$c" in py:*) python3 -c "import importlib.util, sys; sys.exit(importlib.util.find_spec(sys.argv[1]) is None)" "${c#py:}" >/dev/null 2>&1 ;; *) command -v "$c" >/dev/null 2>&1 ;; esac && echo "$c"; done; true', "sh"].concat(commands);
-    _lookup.running = true;
-  }
-
-  Process {
-    id: _lookup
-    property var commands: []
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const present = text.split("\n").filter(line => line !== "");
+    BackendManager.call("deps.check", {
+      "commands": commands
+    }, (error, result) => {
+      if (error) {
+        if (error.kind !== "unavailable")
+          console.warn("[DependencyManager] checking", commands.join(" "), "failed:", error.message);
+      } else {
         const next = Object.assign({}, root.found);
-        for (const command of _lookup.commands)
-          next[command] = present.includes(command);
+        for (const command of commands)
+          next[command] = result.found.includes(command);
         root.found = next;
       }
-    }
-    // Checks asked for while this ran go next: only once it has exited,
-    // since starting a running Process does nothing and they'd be lost
-    onExited: {
+      // Checks asked for meanwhile go next
       root._busy = false;
       root._runLookup();
-    }
+    });
   }
 
   // Survives hot reloads, so only a qs launch notifies again

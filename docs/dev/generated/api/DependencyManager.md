@@ -3,7 +3,7 @@
 
 > **File:** `services/DependencyManager.qml` · **Docs:** see [docs/dev](../../README.md)
 
-Startup checks for what the whole shell needs to look right: the icon font (every icon is a Material Symbols name, StyledIcon, which shows as a word without it) and the text font (`Appearance.font.family`, a free-text setting: a misspelt name silently falls back to fontconfig's default). Warns in the log and notifies once per qs launch (the text font once per name, checked again whenever it changes). Created from shell.qml's `_services`. Also which commands (and Python modules, as "py:<module>") are installed (`found`, filled by `check(commands)`), for the onboarder: the optional `tools` below, the apps it offers; and what installs them on this distribution (`distro`, `installLines`).
+Startup checks for what the whole shell needs to look right: the icon font (every icon is a Material Symbols name, StyledIcon, which shows as a word without it) and the text font (`Appearance.font.family`, a free-text setting: a misspelt name silently falls back to fontconfig's default). Warns in the log and notifies once per qs launch (the text font once per name, checked again whenever it changes). Created from shell.qml's `_services`. Also which commands (and Python modules, as "py:<module>") are installed (`found`, filled by `check(commands)` through axiom's deps.check), for the onboarder: the optional `tools` below, the apps it offers; and what installs them on this distribution (`distro`, `installLines`).
 
 ### Properties
 
@@ -22,5 +22,5 @@ Startup checks for what the whole shell needs to look right: the icon font (ever
 - `commandsOf(tool)`: A tool's commands: its own, then its `alternatives`
 - `toolFound(tool)`: Whether a tool is installed (any of commandsOf): undefined until each one is checked, unless one already is
 - `toolCommand(tool)`: The command a tool is installed as (the first of commandsOf found), or its own
-- `check(commands)`: Looks the commands up (command -v; a "py:<module>" with python3's importlib) and adds them to `found`
+- `check(commands)`: Looks the commands up (axiom's deps.check: $PATH; a "py:<module>" with python3's importlib) and adds them to `found`.
 - `has(command)`: Whether a command (its first word) is installed: undefined until checked

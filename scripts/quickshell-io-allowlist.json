@@ -36,9 +36,6 @@
     "services/CompositorConfigManager.qml": [
       "execDetached"
     ],
-    "services/DependencyManager.qml": [
-      "Process"
-    ],
     "services/EmojiManager.qml": [
       "execDetached"
     ],

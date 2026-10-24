@@ -33,7 +33,7 @@ Status: **done**, **next**, or **later**.
 
 **Stage 1: pilot** (next)
 - Done: `TailscaleManager`: polling `tailscale status --json` → the `tailscale` topic (`backend/internal/tailscale`), the first polled topic end to end. Its floor (5 s) is Go's; the bar widget's default interval is 10 s.
-- `DependencyManager`: a `sh` + `command -v` per tool → `exec.LookPath`, one call.
+- Done: `DependencyManager`: a `sh` + `command -v` per tool → `deps.check` (`backend/internal/deps`: `exec.LookPath`, the Python modules in one python3 run).
 - `TimeZoneManager`: `sh` + `awk` over `tzdata.zi` → a Go parser, fetched once.
 
 **Stage 2: Wayland** (later; needs stage 0's connection; protocols per compositor: [wayland.md](wayland.md))
