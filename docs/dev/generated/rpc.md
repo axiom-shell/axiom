@@ -36,6 +36,7 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `lock.lock` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
 | `lock.state` | shell only | `backend/internal/daemon/methods.go` | `services/LockManager.qml` |  |
 | `media.art` |  | `backend/internal/daemon/tools.go` | `services/MediaManager.qml` |  |
+| `net.addresses` |  | `backend/internal/daemon/tools.go` | `services/NetworkingManager.qml` |  |
 | `saved.list` |  | `backend/internal/daemon/sharing.go` | (none) |  |
 | `saved.remove` |  | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
 | `saved.restore` | writable | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |

@@ -67,9 +67,6 @@
     "services/LockManager.qml": [
       "execDetached"
     ],
-    "services/NetworkingManager.qml": [
-      "Process"
-    ],
     "services/NightLightManager.qml": [
       "Process"
     ],
