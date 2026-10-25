@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.session
 import qs.components.reusable
 
 // The layouts editor's "Show on screen": the lock screen draft

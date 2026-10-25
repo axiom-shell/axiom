@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for Bars.style: how every bar draws its widgets, accents and
 // shadow, unless its own style sets a key (Bar.lookOf). Previews of the

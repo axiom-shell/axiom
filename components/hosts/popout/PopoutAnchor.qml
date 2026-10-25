@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.ui
 
 /**
  * Drop this into any bar widget that wants to open a bar popout on hover

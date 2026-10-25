@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.compositor
 import qs.components.surfaces.desktop
 
 // The desktop's modules on every screen whose layout has any

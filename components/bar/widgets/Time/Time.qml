@@ -4,7 +4,7 @@ import Quickshell
 import QtQuick
 
 import qs.config
-import qs.services
+import qs.services.system
 import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base

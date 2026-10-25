@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
-import qs.services
+import qs.services.core
+import qs.services.compositor
 import qs.config
 import qs.components.methods
 import qs.components.reusable

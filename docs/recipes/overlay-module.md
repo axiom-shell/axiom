@@ -16,7 +16,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.<group>  // FooManager's folder: core, compositor, session, system, ui or apps
 import qs.components.reusable
 import qs.components.content.parts
 import qs.components.content.base

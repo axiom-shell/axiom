@@ -1,6 +1,6 @@
 # Bar composition
 
-> **Files:** `shell/Bar.qml`, `components/bar/BarPanel.qml`, `components/bar/BarContainer.qml`, `components/bar/WidgetGroup.qml`, `components/bar/BarWidgetHost.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/PopoutAnchor.qml`, `config/Bar.qml`, `services/BarManager.qml`
+> **Files:** `shell/Bar.qml`, `components/bar/BarPanel.qml`, `components/bar/BarContainer.qml`, `components/bar/WidgetGroup.qml`, `components/bar/BarWidgetHost.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/PopoutAnchor.qml`, `config/Bar.qml`, `services/ui/BarManager.qml`
 > **Config:** `Bars` (`Bar`, `BarWidget` definitions)
 > **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Edge menus](../edge-menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
 

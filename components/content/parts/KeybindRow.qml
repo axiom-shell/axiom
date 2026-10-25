@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.config
-import qs.services
+import qs.services.compositor
 import qs.components.reusable
 
 // One action of the keybinds reference, keys first: its key combos

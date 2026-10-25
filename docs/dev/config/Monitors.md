@@ -13,7 +13,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`Monitors.items`** · array<MonitorProfile> = []
   - Monitor layouts, one per set of connected monitors.
-  - read: `MonitorsConfig.profiles` (computed) · in: `services/CompositorConfigManager.qml`, `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (computed) · in: `services/compositor/CompositorConfigManager.qml`, `services/compositor/MonitorManager.qml`
 
 ### `Monitors.items[]`
 
@@ -23,36 +23,36 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - pattern="^[A-Za-z0-9][A-Za-z0-9._-]*$", x-settings=false
   - read: entry field, name match · in: none found
 - **`Monitors.items[].name`** · string = ""
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs`** · array<MonitorRule> = []
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/CompositorConfigManager.qml`, `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/CompositorConfigManager.qml`, `services/compositor/MonitorManager.qml`
 
 ### `Monitors.items[].outputs[]`
 
 - **`Monitors.items[].outputs[]`** · object
 - **`Monitors.items[].outputs[].output`** · string = ""
   - desc:<description>, or a connector name (DP-1).
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/CompositorConfigManager.qml`, `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/CompositorConfigManager.qml`, `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs[].label`** · string = ""
   - The connector it was last seen on, for display.
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs[].mode`** · string = "preferred"
   - WIDTHxHEIGHT@HZ, or preferred.
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/CompositorConfigManager.qml`, `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/CompositorConfigManager.qml`, `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs[].x`** · integer = 0
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs[].y`** · integer = 0
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs[].scale`** · number = 1 · –8
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs[].transform`** · integer = 0 · 0–7
   - Rotation in quarter turns, plus 4 when flipped.
   - read: entry field, name match · in: `components/views/Monitors/MonitorInspector.qml`
 - **`Monitors.items[].outputs[].disabled`** · boolean = false
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/CompositorConfigManager.qml`, `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/CompositorConfigManager.qml`, `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs[].mirror`** · string = ""
   - The output (as in `output`) this one mirrors, or empty.
-  - read: `MonitorsConfig.profiles` (whole) · in: `services/MonitorManager.qml`
+  - read: `MonitorsConfig.profiles` (whole) · in: `services/compositor/MonitorManager.qml`
 - **`Monitors.items[].outputs[].vrr`** · integer = 0 · 0–3
   - 0 off, 1 on, 2 fullscreen only, 3 fullscreen games and video.
   - read: entry field, name match · in: `components/views/Monitors/MonitorInspector.qml`
@@ -70,4 +70,4 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 Every public member of `MonitorsConfig`, with the files that use it.
 
 - `MonitorsConfig.profiles` (var)
-  - in: `services/CompositorConfigManager.qml`, `services/MonitorManager.qml`
+  - in: `services/compositor/CompositorConfigManager.qml`, `services/compositor/MonitorManager.qml`

@@ -1,6 +1,6 @@
 # Community setups
 
-> **Files:** `services/CommunitySetupsManager.qml`, `services/CommunityFetch.qml`, `components/methods/CommunityCatalog.qml`, `scripts/community_fetch.sh`, `config/CommunitySetups.qml`, `components/views/Settings/CommunitySetupsCard.qml`, `services/SavedConfigsManager.qml`
+> **Files:** `services/apps/CommunitySetupsManager.qml`, `services/apps/CommunityFetch.qml`, `components/methods/CommunityCatalog.qml`, `scripts/community_fetch.sh`, `config/CommunitySetups.qml`, `components/views/Settings/CommunitySetupsCard.qml`, `services/core/SavedConfigsManager.qml`
 > **Config:** `CommunitySetups.*` (reader `CommunitySetups`); an applied setup becomes the saved config `community-<id>`
 > **Related:** [Saved configs and sharing](../core/saved-configs-sharing.md), [Themes](../theming/themes.md), [Launcher](launcher.md), [Config manager](../core/config-manager.md) (where files live)
 

@@ -4,7 +4,8 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
 import qs.components.content.base

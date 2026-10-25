@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Notifications section (toasts and the history). Named
 // NotificationsConfig because `Notifications` is a surface, module and bar

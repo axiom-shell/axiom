@@ -97,7 +97,7 @@ components/
   views/        overlay pages by view type
   bar/          the bar; widgets/ = bar widget types
   surfaces/     standalone windows (launcher, lockscreen, toasts, dock, onboarding, …)
-services/       pragma Singleton managers: state and side effects
+services/       pragma Singleton managers: state and side effects; core/ compositor/ session/ system/ ui/ apps/ (services/AGENTS.md › Folders)
 config/         reader singletons; json/ (schema, theme defaults), themes/, i18n/
 scripts/        external scripts and the dev checks
 backend/        the axiom binary (Go): its own AGENTS.md
@@ -105,7 +105,7 @@ tests/          qmltestrunner tests, fixtures, tests/scripts/
 docs/dev/       developer docs
 ```
 
-Imports use the `qs.` namespace (`import qs.services`), never relative paths; no qmldir files. Files start with `pragma ComponentBehavior: Bound` or `pragma Singleton`.
+Imports use the `qs.` namespace (`import qs.services.core`), never relative paths; no qmldir files. Files start with `pragma ComponentBehavior: Bound` or `pragma Singleton`.
 
 ## Layering
 

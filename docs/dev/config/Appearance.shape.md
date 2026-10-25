@@ -22,8 +22,8 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - read: `Appearance.borderWidth` · in: `components/bar/BarContainer.qml`, `components/bar/BarPanel.qml`, `components/bar/CornerMerge.qml`, `components/bar/WidgetBackground.qml`, `components/content/AudioMixer/AudioMixer.qml`, `components/content/ColorSwatch/ColorSwatch.qml`, `components/content/Greeting/Greeting.qml`, `components/content/Login/Login.qml`, `components/content/Network/Network.qml`, `components/content/NightLightControls/NightLightControls.qml`, `components/content/NowPlaying/NowPlaying.qml`, `components/content/Palette/Palette.qml`, `components/content/Password/Password.qml`, `components/content/Session/Session.qml` (+64 more)
 - **`Appearance.shape.screenBorder`** · boolean = true
   - Screen border: Draw a frame around the screen edges.
-  - read: `Appearance.screenBorder` · in: `components/bar/BarContainer.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `config/Bar.qml`, `services/BarManager.qml`, `shell/ScreenBorder.qml`
+  - read: `Appearance.screenBorder` · in: `components/bar/BarContainer.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `config/Bar.qml`, `services/ui/BarManager.qml`, `shell/ScreenBorder.qml`
 - **`Appearance.shape.screenMargin`** · integer = 8 · 0–100 · px
   - Screen margin: Width of the screen frame, and the gap kept from the screen edges (px).
   - x-control="stepper"
-  - read: `Appearance.screenMargin` (computed) · in: `components/bar/BarContainer.qml`, `components/hosts/popout/FloatingPopout.qml`, `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `config/Bar.qml`, `services/BarManager.qml`
+  - read: `Appearance.screenMargin` (computed) · in: `components/bar/BarContainer.qml`, `components/hosts/popout/FloatingPopout.qml`, `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `config/Bar.qml`, `services/ui/BarManager.qml`

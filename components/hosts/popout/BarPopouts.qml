@@ -3,7 +3,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.ui
 import qs.config
 import qs.components.methods
 import qs.components.reusable

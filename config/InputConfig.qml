@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Input section: the keyboard, mouse, touchpad and cursor
 // axiom sets on the compositor, a part at a time ({ keyboard: { enabled,

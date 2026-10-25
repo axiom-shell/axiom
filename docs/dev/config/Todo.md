@@ -13,11 +13,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`Todo.showCompleted`** · boolean = true
   - Show completed items: Under the open ones, the last finished first, until you clear them.
-  - read: `TodoConfig.showCompleted` · in: `services/TodoManager.qml`
+  - read: `TodoConfig.showCompleted` · in: `services/apps/TodoManager.qml`
 
 ### Reader members
 
 Every public member of `TodoConfig`, with the files that use it.
 
 - `TodoConfig.showCompleted` (bool)
-  - in: `services/TodoManager.qml`
+  - in: `services/apps/TodoManager.qml`

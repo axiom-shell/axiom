@@ -1,6 +1,6 @@
 # Desktop
 
-> **Files:** `services/DesktopManager.qml`, `config/DesktopConfig.qml`, `shell/Desktop.qml`, `components/surfaces/desktop/DesktopWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `services/ScreenLayoutEditor.qml`, `components/views/Layouts/DesktopTarget.qml`
+> **Files:** `services/ui/DesktopManager.qml`, `config/DesktopConfig.qml`, `shell/Desktop.qml`, `components/surfaces/desktop/DesktopWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `services/ui/ScreenLayoutEditor.qml`, `components/views/Layouts/DesktopTarget.qml`
 > **Config:** `Desktop.all`, `Desktop.primary`, `Desktop.monitors[]` (reader `DesktopConfig`)
 > **Related:** [Lockscreen](lockscreen.md), [Layouts editor](../overlay/layouts-editor.md), [Clock and time zones](clock-timezones.md), [Saved configs](../core/saved-configs-sharing.md), [Edge menus hosts](../edge-menus/hosts.md), [Dock](dock.md)
 

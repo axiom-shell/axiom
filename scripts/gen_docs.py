@@ -866,7 +866,8 @@ def api_pages(readers):
     index = [NOTICE, "# Service and reader APIs", "",
              "The public members (no `_` prefix) of every file in `services/` and every config reader, "
              "with the first sentence of the comment above each. Read one file instead of the whole service.", ""]
-    for folder in ("services", "config"):
+    folders = [d.relative_to(ROOT).as_posix() for d in sorted((ROOT / "services").iterdir()) if d.is_dir()] + ["config"]
+    for folder in folders:
         index += ["", f"## {folder}/", ""]
         for path in sorted((ROOT / folder).glob("*.qml")):
             header, members = parse_qml(path)

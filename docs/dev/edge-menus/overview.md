@@ -1,6 +1,6 @@
 # Edge menus: overview, fields and state
 
-> **Files:** `services/EdgeMenuManager.qml`, `config/EdgeMenusConfig.qml`, `shell/EdgeMenus.qml`, `components/surfaces/edgemenu/`, `components/content/QuickActions/QuickActions.qml`
+> **Files:** `services/ui/EdgeMenuManager.qml`, `config/EdgeMenusConfig.qml`, `shell/EdgeMenus.qml`, `components/surfaces/edgemenu/`, `components/content/QuickActions/QuickActions.qml`
 > **Config:** `EdgeMenus.items[]` (→ `definitions.EdgeMenu` in the schema)
 > **Related:** [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Popout registry](../popouts/registry.md), [Held off an edge](../popouts/held-off-edge.md)
 

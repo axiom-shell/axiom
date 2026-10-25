@@ -1,6 +1,6 @@
 # Wallpaper and schedules
 
-> **Files:** `services/WallpaperManager.qml`, `services/ThemeManager.qml`, `services/DailySchedule.qml`, `components/methods/Schedules.qml`, `components/methods/ShownLook.qml`, `shell/Wallpaper.qml`, `components/surfaces/wallpaper/WallpaperWindow.qml`, `scripts/setWallpaper.sh`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/forms/SettingRows.qml`
+> **Files:** `services/ui/WallpaperManager.qml`, `services/core/ThemeManager.qml`, `services/apps/DailySchedule.qml`, `components/methods/Schedules.qml`, `components/methods/ShownLook.qml`, `shell/Wallpaper.qml`, `components/surfaces/wallpaper/WallpaperWindow.qml`, `scripts/setWallpaper.sh`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/forms/SettingRows.qml`
 > **Config:** `Appearance.wallpaper.*` (`file`, `perScreen`, `folder`, `mode`, `rotation`, `variants`, `backend`, `daemon`), `Appearance.theme.schedule.*`
 > **Related:** [Themes](themes.md), [Night light](night-light.md)
 
@@ -34,7 +34,7 @@ How the wallpaper is drawn, and everything that changes the look on its own: wal
 ### Theme schedule
 - `Appearance.theme.schedule`: light from `lightAt`, dark from `darkAt`.
 - An edge calls `ThemeManager.followSchedule(light)`: the variant is shown at runtime, and `Appearance.theme.name` keeps the theme picked. A pick or a light/dark switch by hand (`applyTheme`) writes the config and drops the schedule's variant until the next edge.
-- Runs through a `services/DailySchedule`:
+- Runs through a `services/apps/DailySchedule`:
   - it fires `due(inWindow)` only on edges: the window opens or closes, the schedule is turned on, or the times are moved across now;
   - so a switch by hand lasts until the next edge;
   - its last state survives reloads.

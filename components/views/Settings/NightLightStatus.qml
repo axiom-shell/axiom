@@ -2,7 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.system
 import qs.components.reusable
 
 // The top of the Night light card (the section's `x-intro`): whether it's

@@ -1,6 +1,6 @@
 # Moving the service layer to the axiom binary
 
-> **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/BackendManager.qml`, `backend/internal/topics/`, `services/CommandManager.qml`, `services/FileManager.qml`, `services/StateManager.qml`, `services/IpcTarget.qml`, `services/ConsumerRegistry.qml`, `backend/internal/daemon/`
+> **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/core/BackendManager.qml`, `backend/internal/topics/`, `services/core/CommandManager.qml`, `services/core/FileManager.qml`, `services/core/StateManager.qml`, `services/core/IpcTarget.qml`, `services/core/ConsumerRegistry.qml`, `backend/internal/daemon/`
 > **Related:** [The axiom binary](README.md), [Protocol](protocol.md), [Wayland protocols](wayland.md), [Services pattern](../core/services-pattern.md), [every method and push](../generated/rpc.md) (generated)
 
 The plan for moving side effects out of QML and into the `axiom` daemon, stage by stage. Read this before starting any of it, and update it in the change that does a step (its status, and anything learned that changes a later stage).
@@ -18,6 +18,7 @@ The plan for moving side effects out of QML and into the `axiom` daemon, stage b
 ### Rules for every move
 - **Go takes the side effect; QML keeps the reader and the rendering.** The service's public API stays the same where it can, so widgets don't change.
 - **The QML version goes in the same change.** No parallel paths "for now": drop the file's allowlist entry (or the kind) as it moves.
+- **A service a move empties is folded or deleted in that move**, not before: the IPC managers into their backends (stage 6), `WeatherSource` into `WeatherManager` (stage 5), `HypridleManager` beside `IdleInhibitManager` (stage 2). The services' folders: `services/AGENTS.md` › Folders.
 - **Pick by user value:** a dependency removed, a process no longer started on a timer, a secret kept out of QML. Something no user would notice can stay on the allowlist.
 - **Keep pushes small and specific** (a topic carries what its service shows), never at frame rate. The shell's JS runs on the thread that draws frames.
 - New methods and pushes follow [protocol](protocol.md) › Changing the protocol; `rpc.md` regenerates itself.

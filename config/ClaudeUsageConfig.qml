@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the ClaudeUsage section: the Claude Code logins every Claude
 // usage widget reports on (see ClaudeUsageManager).

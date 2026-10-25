@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Pomodoro section: the session and break lengths every
 // pomodoro widget and module runs (see PomodoroManager).

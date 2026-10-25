@@ -14,17 +14,17 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Screenshots.folder`** · string = ""
   - Screenshot folder: Where screenshots are saved (~ is your home). Empty uses Pictures/Screenshots.
   - x-control="folder"
-  - read: `Screenshots.folder` (computed) · in: `services/ScreenshotManager.qml`
+  - read: `Screenshots.folder` (computed) · in: `services/apps/ScreenshotManager.qml`
 - **`Screenshots.recordingFolder`** · string = ""
   - Recording folder: Where recordings are saved, and listed from by the Screen recording card. Empty saves them with the screenshots.
   - x-control="folder"
-  - read: `Screenshots.recordingFolder` (computed) · in: `services/ScreenshotManager.qml`
+  - read: `Screenshots.recordingFolder` (computed) · in: `services/apps/ScreenshotManager.qml`
 
 ### Reader members
 
 Every public member of `Screenshots`, with the files that use it.
 
 - `Screenshots.folder` (string): With ~ expanded; empty for <Pictures>/Screenshots
-  - in: `services/ScreenshotManager.qml`
+  - in: `services/apps/ScreenshotManager.qml`
 - `Screenshots.recordingFolder` (string): With ~ expanded; empty for the screenshot folder
-  - in: `services/ScreenshotManager.qml`
+  - in: `services/apps/ScreenshotManager.qml`

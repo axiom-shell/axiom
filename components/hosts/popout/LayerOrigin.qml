@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.compositor
 
 // Where a layer-shell `window` is on its screen, as LayerManager works it
 // out from how every window there asks to be laid out (and reports this

@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services
+import qs.services.system
 import qs.components.reusable
 
 // One OSD bar, by its entry's type (see OSD.bars in the schema):

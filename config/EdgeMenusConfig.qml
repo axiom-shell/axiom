@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 import qs.components.methods
 
 // EdgeMenus: menus that pop out of a screen edge, holding overlay modules.

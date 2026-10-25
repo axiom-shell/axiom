@@ -1,6 +1,6 @@
 # Bars and the screen border: layering and corners
 
-> **Files:** `shell/Bar.qml`, `shell/ScreenBorder.qml`, `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/border/BorderPanel.qml`, `components/reusable/CornerPiece.qml`, `components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `components/bar/BarContainer.qml`, `components/bar/CornerMerge.qml`, `components/hosts/popout/AttachedSurface.qml`, `services/BarManager.qml`, `services/HyprlandManager.qml`
+> **Files:** `shell/Bar.qml`, `shell/ScreenBorder.qml`, `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/border/BorderPanel.qml`, `components/reusable/CornerPiece.qml`, `components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `components/bar/BarContainer.qml`, `components/bar/CornerMerge.qml`, `components/hosts/popout/AttachedSurface.qml`, `services/ui/BarManager.qml`, `services/compositor/HyprlandManager.qml`
 > **Config:** `Appearance.shape.screenBorder`, `Bars[].background`, `BarStyle` shadow group. (`insideBorder`, `innerStroke` are derived `barConfig` values from `Bar.enrichBarConfig`, not config keys.)
 > **Related:** [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Surface context](../popouts/surface-context.md), [Widget shapes](widget-shapes-runs.md)
 

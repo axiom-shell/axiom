@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services
+import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base

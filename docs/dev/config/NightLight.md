@@ -13,36 +13,36 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`NightLight.schedule`** · boolean = false
   - On a schedule: Turn the night light on and off at set times.
-  - read: `NightLight.schedule` · in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/NightLightManager.qml`
+  - read: `NightLight.schedule` · in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/system/NightLightManager.qml`
 - **`NightLight.startAt`** · string = "20:00"
   - Turn on at: 24-hour time, like 20:00.
   - pattern="^([01]?\\d|2[0-3]):[0-5]\\d$", x-showIf={"schedule":true}
-  - read: `NightLight.startAt` · in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/NightLightManager.qml`
+  - read: `NightLight.startAt` · in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/system/NightLightManager.qml`
 - **`NightLight.endAt`** · string = "07:00"
   - Turn off at: 24-hour time, like 07:00. Earlier than the start runs past midnight.
   - pattern="^([01]?\\d|2[0-3]):[0-5]\\d$", x-showIf={"schedule":true}
-  - read: `NightLight.endAt` · in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/NightLightManager.qml`
+  - read: `NightLight.endAt` · in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/system/NightLightManager.qml`
 - **`NightLight.temperature`** · integer = 4500 · 1000–6500 · K
   - Color temperature: Lower is warmer. 6500 K is the screens' own color.
-  - read: `NightLight.temperature` · in: `components/content/NightLightControls/NightLightControls.qml`, `services/NightLightManager.qml`
+  - read: `NightLight.temperature` · in: `components/content/NightLightControls/NightLightControls.qml`, `services/system/NightLightManager.qml`
 - **`NightLight.gamma`** · integer = 100 · 20–100 · %
   - Gamma: Dims the screens a little further while the night light is on. 100% leaves them as they are.
-  - read: `NightLight.gamma` · in: `components/content/NightLightControls/NightLightControls.qml`, `services/NightLightManager.qml`
+  - read: `NightLight.gamma` · in: `components/content/NightLightControls/NightLightControls.qml`, `services/system/NightLightManager.qml`
 
 ### Reader members
 
 Every public member of `NightLight`, with the files that use it.
 
 - `NightLight.schedule` (bool)
-  - in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/NightLightManager.qml`
+  - in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/system/NightLightManager.qml`
 - `NightLight.startAt` (string): "HH:MM", on from startAt until endAt (past midnight when it's earlier)
-  - in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/NightLightManager.qml`
+  - in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/system/NightLightManager.qml`
 - `NightLight.endAt` (string)
-  - in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/NightLightManager.qml`
+  - in: `components/content/NightLightControls/NightLightControls.qml`, `components/views/Settings/NightLightStatus.qml`, `services/system/NightLightManager.qml`
 - `NightLight.temperature` (int): Kelvin
-  - in: `components/content/NightLightControls/NightLightControls.qml`, `services/NightLightManager.qml`
+  - in: `components/content/NightLightControls/NightLightControls.qml`, `services/system/NightLightManager.qml`
 - `NightLight.gamma` (int): Percent; 100 leaves it alone
-  - in: `components/content/NightLightControls/NightLightControls.qml`, `services/NightLightManager.qml`
+  - in: `components/content/NightLightControls/NightLightControls.qml`, `services/system/NightLightManager.qml`
 - `NightLight.minTemperature` (int)
   - in: `components/content/NightLightControls/NightLightControls.qml`
 - `NightLight.maxTemperature` (int)

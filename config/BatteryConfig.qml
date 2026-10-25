@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Battery section. Named BatteryConfig because `Battery` is
 // a bar widget and module type.

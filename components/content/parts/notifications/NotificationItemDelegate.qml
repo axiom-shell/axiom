@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services
+import qs.services.system
 import qs.components.reusable
 
 // One history entry inside a group card: image, summary and body, its time

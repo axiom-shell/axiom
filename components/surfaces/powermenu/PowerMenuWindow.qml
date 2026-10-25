@@ -5,7 +5,10 @@ import Quickshell.Wayland
 
 import qs.components.reusable
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.session
+import qs.services.ui
 
 // The power menu on one screen: a card with a greeting and the uptime, a
 // row of session actions and a controls hint, over the dim backdrop.

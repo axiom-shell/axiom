@@ -5,7 +5,12 @@
 
 pragma ComponentBehavior: Bound
 import Quickshell
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.session
+import qs.services.system
+import qs.services.ui
+import qs.services.apps
 import qs.shell
 
 // The shell's entrypoint: one top-level piece per surface (shell/), plus

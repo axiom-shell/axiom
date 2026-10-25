@@ -19,7 +19,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`General.primaryMonitor`** · string = ""
   - Primary monitor: Monitor that hosts the lockscreen input, and the surfaces below when they're on one monitor. Empty uses the first screen.
   - x-options="screens", x-emptyLabel="First screen"
-  - read: `General.primaryMonitor` (computed) · in: `components/content/Brightness/Brightness.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/views/Monitors/MonitorCanvas.qml`, `components/views/Monitors/MonitorInspector.qml`, `config/DesktopConfig.qml`, `config/WorkspacesConfig.qml`, `services/CompositorManager.qml`, `services/HyprlandManager.qml`, `services/MonitorManager.qml`, `services/NiriManager.qml`, `services/PolkitManager.qml`, `services/ShellManager.qml`, `services/ThemeManager.qml`, `services/WallpaperManager.qml` (+2 more)
+  - read: `General.primaryMonitor` (computed) · in: `components/content/Brightness/Brightness.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/views/Monitors/MonitorCanvas.qml`, `components/views/Monitors/MonitorInspector.qml`, `config/DesktopConfig.qml`, `config/WorkspacesConfig.qml`, `services/compositor/CompositorManager.qml`, `services/compositor/HyprlandManager.qml`, `services/compositor/MonitorManager.qml`, `services/compositor/NiriManager.qml`, `services/core/ShellManager.qml`, `services/core/ThemeManager.qml`, `services/session/PolkitManager.qml`, `services/ui/WallpaperManager.qml` (+2 more)
 
 ### `General.screen`
 
@@ -28,7 +28,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`General.screen.mode`** · string = "primary" · enum primary|focused|all
   - Monitors
   - x-scope="look"
-  - read: `General.screen` (whole) · in: `services/ShellManager.qml`
+  - read: `General.screen` (whole) · in: `services/core/ShellManager.qml`
 
 ### Reader members
 
@@ -39,14 +39,14 @@ Every public member of `General`, with the files that use it.
 - `General.language` (string): Monitor for the lockscreen input, launcher, power menu and overlay Language for the shell's text, dates and clock (see I18n): "en" | "ja"
   - in: `components/surfaces/onboarding/pages/WelcomePage.qml`, `config/I18n.qml`
 - `General.primaryMonitor` (string)
-  - in: `components/content/Brightness/Brightness.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/views/Monitors/MonitorCanvas.qml`, `components/views/Monitors/MonitorInspector.qml`, `config/DesktopConfig.qml`, `config/WorkspacesConfig.qml`, `services/CompositorManager.qml`, `services/HyprlandManager.qml`, `services/MonitorManager.qml`, `services/NiriManager.qml` (+6 more)
+  - in: `components/content/Brightness/Brightness.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/views/Monitors/MonitorCanvas.qml`, `components/views/Monitors/MonitorInspector.qml`, `config/DesktopConfig.qml`, `config/WorkspacesConfig.qml`, `services/compositor/CompositorManager.qml`, `services/compositor/HyprlandManager.qml`, `services/compositor/MonitorManager.qml`, `services/compositor/NiriManager.qml` (+6 more)
 - `General.screen` (var): Where the power menu (and the overlay, launcher and OSD, unless their own `screen` says otherwise) appear: a ScreenTarget whose mode is "primary" | "focused" |…
-  - in: `services/ShellManager.qml`
+  - in: `services/core/ShellManager.qml`
 - `General.outputs` (var): The connected monitors: Quickshell.screens without the stand-ins shown while none is (Qt's nameless placeholder, Hyprland's headless FALLBACK).
-  - in: `components/bar/BarPanel.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/surfaces/onboarding/pages/MonitorsPage.qml`, `config/Bar.qml`, `services/BarManager.qml`, `services/BlurManager.qml`, `services/BrightnessManager.qml`, `services/CommunitySetupsManager.qml`, `services/CompositorManager.qml`, `services/DesktopManager.qml` (+18 more)
+  - in: `components/bar/BarPanel.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/surfaces/onboarding/pages/MonitorsPage.qml`, `config/Bar.qml`, `services/apps/CommunitySetupsManager.qml`, `services/apps/ScreenshotManager.qml`, `services/compositor/CompositorManager.qml`, `services/compositor/LayerManager.qml`, `services/core/ThemeManager.qml`, `services/system/BrightnessManager.qml` (+18 more)
 - `General.screens` (var): The screens they're built on
   - in: only inside the reader
 - `General.screensNamed(name)`: The screen named `name` (as a one-screen list), else the primary monitor, else the first screen
-  - in: `components/surfaces/polkit/PolkitWindow.qml`, `config/DesktopConfig.qml`, `services/ScreenLayoutEditor.qml`, `shell/IdleInhibit.qml`
+  - in: `components/surfaces/polkit/PolkitWindow.qml`, `config/DesktopConfig.qml`, `services/ui/ScreenLayoutEditor.qml`, `shell/IdleInhibit.qml`
 - `General.screensFor(target)`: The screens a ScreenTarget ({ mode, names }) builds a surface on, by mode: "inherit" (General's, the above) | "primary" (the primary monitor) | "focused" (ever…
-  - in: `components/hosts/popout/EdgePopout.qml`, `components/surfaces/greeter/GreeterSurface.qml`, `config/Bar.qml`, `config/DockConfig.qml`, `config/EdgeMenusConfig.qml`, `services/BarManager.qml`, `services/ShellManager.qml`, `shell/AppLauncher.qml`, `shell/Notifications.qml`, `shell/OSD.qml` (+3 more)
+  - in: `components/hosts/popout/EdgePopout.qml`, `components/surfaces/greeter/GreeterSurface.qml`, `config/Bar.qml`, `config/DockConfig.qml`, `config/EdgeMenusConfig.qml`, `services/core/ShellManager.qml`, `services/ui/BarManager.qml`, `shell/AppLauncher.qml`, `shell/Notifications.qml`, `shell/OSD.qml` (+3 more)

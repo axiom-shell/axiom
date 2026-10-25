@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Calendar section (see CalendarManager, which adds what the
 // servers say of each calendar). Account passwords are not config: see

@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Workspaces section: the workspace layout the bar widget,
 // the overview, the WorkspacesMap module and CompositorManager's navigation

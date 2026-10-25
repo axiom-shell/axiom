@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.core
 import qs.components.hosts.overlay
 
 // The base of every overlay page (views/<type>.qml): its grid and

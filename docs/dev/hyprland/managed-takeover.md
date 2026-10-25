@@ -1,6 +1,6 @@
 # Managed takeover (claim and release)
 
-> **Files:** `backend/internal/compositor/takeover/`, `backend/internal/compositor/luacheck/`, `backend/internal/daemon/compositor.go`, `backend/internal/compositor/manager/hypr.go`, `services/CompositorConfigManager.qml`, `backend/internal/compositor/render/hyprconfig.go`
+> **Files:** `backend/internal/compositor/takeover/`, `backend/internal/compositor/luacheck/`, `backend/internal/daemon/compositor.go`, `backend/internal/compositor/manager/hypr.go`, `services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/render/hyprconfig.go`
 > **Config:** `Compositor.mode` (`managed`), `Compositor.hyprland`
 > **Related:** [Config modes](config-modes.md), [Bind merge](bind-merge.md), [Onboarding](../features/onboarding.md)
 

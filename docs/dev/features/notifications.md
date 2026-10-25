@@ -1,6 +1,6 @@
 # Notifications
 
-> **Files:** `services/NotificationManager.qml`, `shell/Notifications.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`
+> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`
 > **Config:** `Notifications.*` (reader `NotificationsConfig`)
 > **Related:** [Self-update](self-update.md) (registerHandler), [Calendar](calendar.md) (reminders), [Grow and expand](../overlay/grow-expand.md)
 

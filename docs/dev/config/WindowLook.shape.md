@@ -15,16 +15,16 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`WindowLook.shape.enabled`** · boolean = false
   - Set border width and corners: The width of window borders and the rounding of their corners. Sway draws square corners, so there only the width applies.
   - x-enabledIf={"/$supports.windowShape":true}
-  - read: `WindowLookConfig.look` (whole) · in: `components/views/Settings/TranslucencyStatus.qml`, `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.look` (whole) · in: `components/views/Settings/TranslucencyStatus.qml`, `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.shape.matchShell`** · boolean = true
   - Match axiom's shape: Follow Look & Feel → Shape: its border width and corner radius (only the width on sway, which can't round corners).
   - x-link={"setting":"Appearance.shape"}, x-showIf={"enabled":true}, x-enabledIf={"/$supports.windowShape":true}
-  - read: `WindowLookConfig.borderWidth` (computed), `WindowLookConfig.radius` (computed) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.borderWidth` (computed), `WindowLookConfig.radius` (computed) · in: `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.shape.size`** · integer = 2 · 0–20 · px
   - Border width
   - x-control="stepper", x-showIf={"enabled":true,"matchShell":false}, x-enabledIf={"/$supports.windowShape":true}
-  - read: `WindowLookConfig.borderWidth` (computed) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.borderWidth` (computed) · in: `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.shape.rounding`** · integer = 8 · 0–50 · px
   - Corner rounding
   - x-control="stepper", x-showIf={"enabled":true,"matchShell":false}, x-enabledIf={"/$supports.windowShape":true,"/$supports.windowRounding":true}
-  - read: `WindowLookConfig.radius` (computed) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.radius` (computed) · in: `services/compositor/CompositorConfigManager.qml`

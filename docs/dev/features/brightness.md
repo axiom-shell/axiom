@@ -1,6 +1,6 @@
 # Brightness
 
-> **Files:** `services/BrightnessManager.qml`, `components/content/Brightness/Brightness.qml`, `components/surfaces/osd/OSDBar.qml`
+> **Files:** `services/system/BrightnessManager.qml`, `components/content/Brightness/Brightness.qml`, `components/surfaces/osd/OSDBar.qml`
 > **Config:** none of its own (the module's `monitor` property; OSD `brightness` bars)
 > **Related:** [OSD](osd.md), [Idle](idle.md) (dim/undim), [Utility modules](../overlay/utility-modules.md)
 

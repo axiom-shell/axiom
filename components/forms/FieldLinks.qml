@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.ui
 
 // The links under a form row or an inspector (`x-link`: { setting } or
 // { page }, or a list of them), one SettingsLink each, hidden while none

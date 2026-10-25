@@ -1,6 +1,6 @@
 # Talking to Hyprland (IPC)
 
-> **Files:** `services/HyprlandIpcManager.qml`, `components/methods/HyprReply.qml`, `services/HyprlandManager.qml`, `components/methods/HyprState.qml`, `services/HyprlandGrab.qml`
+> **Files:** `services/compositor/HyprlandIpcManager.qml`, `components/methods/HyprReply.qml`, `services/compositor/HyprlandManager.qml`, `components/methods/HyprState.qml`, `services/compositor/HyprlandGrab.qml`
 > **Config:** none
 > **Related:** [The compositor](../compositor/README.md), [Config modes](config-modes.md), [Workspaces](workspaces.md), [Monitors](monitors.md)
 

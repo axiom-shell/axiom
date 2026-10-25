@@ -13,7 +13,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`WindowSwitcher.scope`** · string = "all" · enum all|monitor|workspace
   - Windows listed
-  - read: `WindowSwitcherConfig.scope` · in: `services/WindowSwitcherManager.qml`
+  - read: `WindowSwitcherConfig.scope` · in: `services/compositor/WindowSwitcherManager.qml`
 - **`WindowSwitcher.previews`** · boolean = true
   - Window previews: Show each window's live contents; off shows app icons.
   - x-scope="look"
@@ -25,17 +25,17 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`WindowSwitcher.showDelay`** · integer = 120 · 0–1000 · ms
   - Show after: How long the keys must be held before the switcher shows. A quicker tap swaps to the last window without showing it.
   - x-control="stepper"
-  - read: `WindowSwitcherConfig.showDelay` · in: `services/WindowSwitcherManager.qml`
+  - read: `WindowSwitcherConfig.showDelay` · in: `services/compositor/WindowSwitcherManager.qml`
 
 ### Reader members
 
 Every public member of `WindowSwitcherConfig`, with the files that use it.
 
 - `WindowSwitcherConfig.scope` (string): all | monitor | workspace (DockLayout.inScope's scopes)
-  - in: `services/WindowSwitcherManager.qml`
+  - in: `services/compositor/WindowSwitcherManager.qml`
 - `WindowSwitcherConfig.previews` (bool)
   - in: `components/surfaces/switcher/SwitcherTile.qml`
 - `WindowSwitcherConfig.tileSize` (int)
   - in: `components/surfaces/switcher/SwitcherStrip.qml`, `components/surfaces/switcher/SwitcherTile.qml`
 - `WindowSwitcherConfig.showDelay` (int)
-  - in: `services/WindowSwitcherManager.qml`
+  - in: `services/compositor/WindowSwitcherManager.qml`

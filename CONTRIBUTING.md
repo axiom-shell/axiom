@@ -79,7 +79,8 @@ components/
   views/        # overlay pages by type, with their pieces in subfolders
   bar/          # the bar; bar/widgets/ holds the bar widget types
   surfaces/     # standalone windows (launcher, lock screen, toasts, dock, power menu, …)
-services/       # *Manager singletons: state and every side effect (processes, files, the compositor)
+services/       # *Manager singletons: state and every side effect (processes, files, the compositor),
+                # grouped core/ compositor/ session/ system/ ui/ apps/ (one QML module each)
 config/         # config readers; schema/ (the config schema's YAML source), themes/, i18n/
 backend/        # the axiom binary (Go): the shell's parent, the config's owner, the command line
 packaging/      # the AUR packages

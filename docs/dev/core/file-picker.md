@@ -1,6 +1,6 @@
 # File picker
 
-> **Files:** `services/FilePickerManager.qml`, `scripts/pick_path.py`, `components/forms/SchemaTextField.qml`, `components/forms/SchemaField.qml`
+> **Files:** `services/apps/FilePickerManager.qml`, `scripts/pick_path.py`, `components/forms/SchemaTextField.qml`, `components/forms/SchemaField.qml`
 > **Config:** none of its own; `x-control: "folder"` on a string setting adds its Browse button
 > **Related:** [Schema annotations](schema-annotations.md), [Saved configs and sharing](saved-configs-sharing.md), [Shell manager and screen targeting](shell-manager-targeting.md)
 

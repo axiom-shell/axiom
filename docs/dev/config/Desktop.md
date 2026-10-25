@@ -10,7 +10,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 ### `Desktop`
 
 - **`Desktop.items`** · array<DesktopLayout> = [{"id":"all","enabled":false,"screen":{"mode":"all","names":[]}},{"id…
-  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/DesktopManager.qml`
+  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/ui/DesktopManager.qml`
 
 ### `Desktop.items[]`
 
@@ -36,7 +36,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Desktop.items[].moduleScale`** · integer = 100 · 50–200 · %
   - Module size: Size of the modules, relative to the card size in Look & Feel. Their text and content grow and shrink with them, and each monitor fits as many as its screen holds.
   - x-link={"setting":"Interface.cardSize"}, x-group="Grid", x-control="stepper"
-  - read: entry field, name match repo-wide, `// reads:` marker · in: `components/views/Layouts/PageTarget.qml`, `config/OverlayConfig.qml`, `services/EdgeMenuManager.qml`
+  - read: entry field, name match repo-wide, `// reads:` marker · in: `components/views/Layouts/PageTarget.qml`, `config/OverlayConfig.qml`, `services/ui/EdgeMenuManager.qml`
 - **`Desktop.items[].moduleBorders`** · boolean = false
   - Module borders: Draw each module's card box, frosted over the wallpaper while the shell blurs. Off shows modules straight on the wallpaper.
   - x-group="Style"
@@ -48,11 +48,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Desktop.items[].id`** · string
   - The item's stable id, unique in its list: what editors, path ops and imports match it by.
   - pattern="^[A-Za-z0-9][A-Za-z0-9._-]*$", x-settings=false
-  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/DesktopManager.qml`
+  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/ui/DesktopManager.qml`
 - **`Desktop.items[].enabled`** · boolean = true
   - Shown. Off on a monitor's own layout leaves that monitor's desktop empty.
   - x-settings=false
-  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/DesktopManager.qml`
+  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/ui/DesktopManager.qml`
 
 ### `Desktop.items[].screen`
 
@@ -61,11 +61,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Desktop.items[].screen.mode`** · string = "primary" · enum all|primary|named
   - Monitors
   - x-scope="look", x-link={"setting":"General.screen"}
-  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/DesktopManager.qml`
+  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/ui/DesktopManager.qml`
 - **`Desktop.items[].screen.names`** · array<string> = []
   - Monitors
   - x-scope="machine", x-monitorRef="drop", x-showIf={"mode":"named"}
-  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/DesktopManager.qml`
+  - read: `DesktopConfig.desktop` (whole), `DesktopConfig.matchFor` (whole), `DesktopConfig.sourceFor` (whole) · in: `config/DesktopConfig.qml`, `services/ui/DesktopManager.qml`
 
 ### Reader members
 
@@ -76,10 +76,10 @@ Every public member of `DesktopConfig`, with the files that use it.
 - `DesktopConfig.fieldGroups` (var): A DesktopLayout's own fields in groups (`x-group`), for the layouts editor
   - in: `components/views/Layouts/DesktopTarget.qml`
 - `DesktopConfig.primaryName` (string): The primary monitor's name, as surfaces place on it (a primary monitor that isn't plugged in falls back to the first screen)
-  - in: `services/DesktopManager.qml`
+  - in: `services/ui/DesktopManager.qml`
 - `DesktopConfig.matchFor(name, desktop)`: The layout the screen named `name` matches in `desktop` (a Desktop section; the live one when left out), most specific first, enabled or not; null for none
   - in: only inside the reader
 - `DesktopConfig.sourceFor(name, desktop)`: Which layout the screen named `name` shows in `desktop`: "named" (one naming it), "primary", "all", or "" for none (none matches, or the match is turned off)
-  - in: `services/DesktopManager.qml`
+  - in: `services/ui/DesktopManager.qml`
 - `DesktopConfig.layoutFor(name)`: The DesktopLayout the screen named `name` shows, or null
   - in: `shell/Desktop.qml`

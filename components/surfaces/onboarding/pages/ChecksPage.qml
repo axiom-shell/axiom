@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services
+import qs.services.core
 import qs.components.reusable
 
 // What's missing: the icon font, and the programs features use

@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.session
 import qs.components.reusable
 
 // Setting axiom up as the login screen (GreeterManager), shared by

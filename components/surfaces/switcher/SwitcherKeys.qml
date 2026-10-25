@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.compositor
 import qs.components.methods
 
 // The window switcher's keys where the compositor can't report their

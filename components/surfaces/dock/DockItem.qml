@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services
+import qs.services.ui
 import qs.components.reusable
 
 // One app on a dock: its icon (grown by the dock's magnification) and a

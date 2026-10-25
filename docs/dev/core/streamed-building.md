@@ -1,6 +1,6 @@
 # Streamed building
 
-> **Files:** `services/BuildQueueManager.qml`, `components/reusable/StreamedLoader.qml`, `components/views/base/BaseView.qml`, `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/OverlayPages.qml`, `components/hosts/overlay/OverlayPage.qml`, `services/ConfigDraft.qml`, `scripts/dev/bench_overlay.sh`
+> **Files:** `services/core/BuildQueueManager.qml`, `components/reusable/StreamedLoader.qml`, `components/views/base/BaseView.qml`, `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/OverlayPages.qml`, `components/hosts/overlay/OverlayPage.qml`, `services/core/ConfigDraft.qml`, `scripts/dev/bench_overlay.sh`
 > **Config:** none
 > **Related:** [Overlay pages and the module grid](../overlay/pages-and-grid.md) (Loading), [Shared UI pieces](shared-ui-pieces.md), [Editors pattern](editors-pattern.md), [QML pitfalls](qml-pitfalls.md), [Testing](../testing.md)
 

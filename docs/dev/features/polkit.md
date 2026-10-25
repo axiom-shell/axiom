@@ -1,6 +1,6 @@
 # Polkit agent
 
-> **Files:** `services/PolkitManager.qml`, `components/methods/PolkitAgents.qml`, `config/PolkitConfig.qml`, `shell/PolkitPrompt.qml`, `components/surfaces/polkit/PolkitWindow.qml`, `components/views/Settings/PolkitStatusCard.qml`
+> **Files:** `services/session/PolkitManager.qml`, `components/methods/PolkitAgents.qml`, `config/PolkitConfig.qml`, `shell/PolkitPrompt.qml`, `components/surfaces/polkit/PolkitWindow.qml`, `components/views/Settings/PolkitStatusCard.qml`
 > **Config:** `Polkit.*` (reader `PolkitConfig`)
 > **Related:** [Lockscreen](lockscreen.md) (shared password field), [Shell manager and targeting](../core/shell-manager-targeting.md), [Greeter install](greeter-install.md)
 

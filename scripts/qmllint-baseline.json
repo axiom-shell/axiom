@@ -107,17 +107,17 @@
   "components/surfaces/notifications/NotificationToast.qml": {
     "missing-type: No type found for property \"adjustment\". This may be due to a missing import statement or incomplete qmltypes files.": 1
   },
-  "services/BluetoothManager.qml": {
+  "services/system/BluetoothManager.qml": {
     "unresolved-type: Type \"BluetoothAdapter\" of property \"defaultAdapter\" not found. This is likely due to a missing dependency entry or a type not being exposed declaratively.": 1
   },
-  "services/FileManager.qml": {
+  "services/core/FileManager.qml": {
     "missing-property: Member \"loaded\" not found on type \"QObject\"": 1,
     "missing-property: Member \"text\" not found on type \"QObject\"": 1
   },
-  "services/MediaManager.qml": {
+  "services/system/MediaManager.qml": {
     "unqualified: Unqualified access": 1
   },
-  "services/ThemeManager.qml": {
+  "services/core/ThemeManager.qml": {
     "missing-property: Member \"command\" not found on type call to method objectAt, returning QObject": 1,
     "missing-property: Member \"queued\" not found on type call to method objectAt, returning QObject": 1,
     "missing-property: Member \"running\" not found on type \"QObject\"": 1,

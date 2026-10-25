@@ -1,6 +1,6 @@
 # ConfigManager, drafts and previews
 
-> **Files:** `services/ConfigManager.qml`, `services/ConfigDraft.qml`, `services/BackendManager.qml`, `components/methods/DataDirs.qml`, `components/methods/SchemaValidation.qml`, `services/SettingsManager.qml`, `backend/internal/store/store.go`, `backend/internal/config/load.go`
+> **Files:** `services/core/ConfigManager.qml`, `services/core/ConfigDraft.qml`, `services/core/BackendManager.qml`, `components/methods/DataDirs.qml`, `components/methods/SchemaValidation.qml`, `services/ui/SettingsManager.qml`, `backend/internal/store/store.go`, `backend/internal/config/load.go`
 > **Config:** all of `~/.config/axiom/config.json`
 > **Related:** [Config readers](config-readers.md), [Schema annotations](schema-annotations.md), [Editors pattern](editors-pattern.md), [Saved configs and sharing](saved-configs-sharing.md), [Secrets](secrets.md)
 
@@ -55,7 +55,7 @@ Editors create new entries at their definition's defaults with `withDefaults(val
 - Never mutate `ConfigManager.config` fields from UI code and expect persistence.
 
 ### ConfigDraft
-- The editor services each hold a `ConfigDraft` (`services/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager, EdgeMenuManager, KeybindManager, MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.
+- The editor services each hold a `ConfigDraft` (`services/core/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager, EdgeMenuManager, KeybindManager, MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.
 - A draft is a working copy of one config path:
   - `changed()` after in-place edits
   - `save()` merges onto the latest config via `commit`.

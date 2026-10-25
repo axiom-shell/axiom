@@ -6,7 +6,8 @@ import QtQuick
 import QtQuick.Shapes
 
 import qs.config
-import qs.services
+import qs.services.compositor
+import qs.services.ui
 import qs.components.hosts.popout
 import qs.components.methods
 import qs.components.reusable

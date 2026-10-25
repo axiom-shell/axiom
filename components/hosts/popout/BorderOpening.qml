@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.services
+import qs.services.core
 
 // Publishes a stretch of the border's stroke a surface covers
 // (`opening`: { screen, edge, start, end }, screen px along the edge, and

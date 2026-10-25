@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Wayland
 
-import qs.services
+import qs.services.compositor
 
 // A layer-shell `window` with a fixed place in the stack (a bar, the
 // border, a dock, an integrated edge menu): bind its `visible` to

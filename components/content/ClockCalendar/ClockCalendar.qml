@@ -7,7 +7,7 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts.calendar
-import qs.services
+import qs.services.apps
 
 // A clock with the date, plus a month calendar where it fits (beside the
 // clock in wide slots, or where it only fits that way); a wide strip puts

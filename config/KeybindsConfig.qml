@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Keybinds section: axiom's own binds, edited on the
 // Keybinds page (KeybindManager) and applied by the compositor's config

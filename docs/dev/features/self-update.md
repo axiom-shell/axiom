@@ -1,6 +1,6 @@
 # Self-update
 
-> **Files:** `services/SelfUpdateManager.qml`, `scripts/self_update.sh`, `config/SelfUpdate.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`
+> **Files:** `services/core/SelfUpdateManager.qml`, `scripts/self_update.sh`, `config/SelfUpdate.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`
 > **Config:** `SelfUpdate.*` (reader `SelfUpdate`)
 > **Related:** [Notifications](notifications.md), [Launcher](launcher.md)
 

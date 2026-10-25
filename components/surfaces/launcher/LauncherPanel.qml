@@ -5,7 +5,7 @@ import QtQuick.Layouts
 
 import qs.components.reusable
 import qs.config
-import qs.services
+import qs.services.ui
 
 // The launcher's contents: the search field, the results and the controls
 // hint, without a box of its own: its host's surface is the box (a

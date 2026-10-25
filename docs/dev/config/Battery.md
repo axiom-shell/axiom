@@ -13,21 +13,21 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`Battery.notify`** · boolean = true
   - Low battery notifications: Send a notification when the battery becomes low, and again when it becomes critical.
-  - read: `BatteryConfig.notify` · in: `services/BatteryManager.qml`
+  - read: `BatteryConfig.notify` · in: `services/system/BatteryManager.qml`
 - **`Battery.lowThreshold`** · integer = 20 · 0–100 · %
   - Low at
-  - read: `BatteryConfig.lowThreshold` · in: `services/BatteryManager.qml`
+  - read: `BatteryConfig.lowThreshold` · in: `services/system/BatteryManager.qml`
 - **`Battery.criticalThreshold`** · integer = 10 · 0–100 · %
   - Critical at
-  - read: `BatteryConfig.criticalThreshold` · in: `services/BatteryManager.qml`
+  - read: `BatteryConfig.criticalThreshold` · in: `services/system/BatteryManager.qml`
 
 ### Reader members
 
 Every public member of `BatteryConfig`, with the files that use it.
 
 - `BatteryConfig.notify` (bool): Notify on reaching the low, then the critical level
-  - in: `services/BatteryManager.qml`
+  - in: `services/system/BatteryManager.qml`
 - `BatteryConfig.lowThreshold` (int): Percentages at or below which the battery is low / critical
-  - in: `services/BatteryManager.qml`
+  - in: `services/system/BatteryManager.qml`
 - `BatteryConfig.criticalThreshold` (int)
-  - in: `services/BatteryManager.qml`
+  - in: `services/system/BatteryManager.qml`

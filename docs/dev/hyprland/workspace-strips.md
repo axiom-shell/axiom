@@ -1,6 +1,6 @@
 # Workspace strips (Hyprland scrolling layout)
 
-> **Files:** `config/WorkspacesConfig.qml`, `components/methods/DynamicWorkspaces.qml`, `components/methods/HyprLua.qml` (`stripsLua`, `stripsRuntimeLua`), `services/HyprlandManager.qml` (`stripWindows`, `stepStrip`), `components/methods/WorkspaceGeometry.qml`, `components/bar/widgets/Workspaces/ActiveStrip.qml`, `components/bar/widgets/Workspaces/StripWindows.qml`
+> **Files:** `config/WorkspacesConfig.qml`, `components/methods/DynamicWorkspaces.qml`, `components/methods/HyprLua.qml` (`stripsLua`, `stripsRuntimeLua`), `services/compositor/HyprlandManager.qml` (`stripWindows`, `stepStrip`), `components/methods/WorkspaceGeometry.qml`, `components/bar/widgets/Workspaces/ActiveStrip.qml`, `components/bar/widgets/Workspaces/StripWindows.qml`
 > **Config:** `Workspaces.strips`, `Workspaces.stripColumnWidth`, `Workspaces.stripFollowFocus`
 > **Related:** [Workspaces](workspaces.md), [Config modes](config-modes.md), [Keybinds](keybinds.md), [Onboarding](../features/onboarding.md)
 

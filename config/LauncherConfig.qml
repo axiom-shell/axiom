@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Launcher section (the search launcher). Named
 // LauncherConfig because `Launcher` is the surface type.

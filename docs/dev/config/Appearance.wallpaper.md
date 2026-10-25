@@ -14,19 +14,19 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Appearance.wallpaper.mode`** · string = "fixed" · enum fixed|rotate|variant
   - Wallpaper mode: Fixed keeps the wallpaper you pick. Rotate changes it on a timer, from the wallpaper folder. One for light, one for dark shows the wallpaper you picked for the theme's current variant on every monitor. A generated theme follows the wallpaper as it changes. Also set on the overlay's Themes page.
   - x-snapshot=true
-  - read: `Appearance.wallpaperMode` · in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/GreeterManager.qml`, `services/ThemeManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.wallpaperMode` · in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/core/ThemeManager.qml`, `services/session/GreeterManager.qml`, `services/ui/WallpaperManager.qml`
 - **`Appearance.wallpaper.file`** · string = ""
   - The primary monitor's wallpaper file URL, used by the lockscreen (set on the overlay's Themes page).
   - x-snapshot=true, x-settings=false
-  - read: `Appearance.fixedWallpaper` · in: `services/GreeterManager.qml`, `services/ThemeManager.qml`
+  - read: `Appearance.fixedWallpaper` · in: `services/core/ThemeManager.qml`, `services/session/GreeterManager.qml`
 - **`Appearance.wallpaper.perScreen`** · object = {}
   - Monitor name → wallpaper file URL (set on the overlay's Themes page). A monitor with no entry shows `wallpaper`.
   - x-snapshot=true, x-settings=false
-  - read: `Appearance.fixedWallpapers` · in: `services/GreeterManager.qml`, `services/ThemeManager.qml`
+  - read: `Appearance.fixedWallpapers` · in: `services/core/ThemeManager.qml`, `services/session/GreeterManager.qml`
 - **`Appearance.wallpaper.folder`** · string = "~/Pictures/wallpapers"
   - Wallpaper folder: Folder the wallpaper pickers list images from (jpg, png, bmp). A leading ~ is your home folder.
   - x-snapshot=true, x-control="folder", pattern="\\S"
-  - read: `Appearance.wallpaperFolder`, `Appearance.wallpaperPath` (computed) · in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/surfaces/onboarding/pages/LookPage.qml`, `services/GreeterManager.qml`, `services/ThemeManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.wallpaperFolder`, `Appearance.wallpaperPath` (computed) · in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/surfaces/onboarding/pages/LookPage.qml`, `services/core/ThemeManager.qml`, `services/session/GreeterManager.qml`, `services/ui/WallpaperManager.qml`
 
 ### `Appearance.wallpaper.rotation`
 
@@ -35,13 +35,13 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - x-snapshot=true, x-showIf={"mode":"rotate"}
 - **`Appearance.wallpaper.rotation.interval`** · integer = 1800000 · 60000–86400000 · min
   - Change every: How long each wallpaper stays up.
-  - read: `Appearance.rotationInterval` · in: `services/GreeterManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.rotationInterval` · in: `services/session/GreeterManager.qml`, `services/ui/WallpaperManager.qml`
 - **`Appearance.wallpaper.rotation.order`** · string = "random" · enum random|sequential
   - Order: Random never picks the wallpaper already showing.
-  - read: `Appearance.rotationOrder` · in: `services/GreeterManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.rotationOrder` · in: `services/session/GreeterManager.qml`, `services/ui/WallpaperManager.qml`
 - **`Appearance.wallpaper.rotation.sameOnAll`** · boolean = false
   - Same on every monitor: Show one wallpaper on all monitors. Off, each monitor gets its own.
-  - read: `Appearance.rotationSameOnAll` · in: `services/GreeterManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.rotationSameOnAll` · in: `services/session/GreeterManager.qml`, `services/ui/WallpaperManager.qml`
 
 ### `Appearance.wallpaper.variants`
 
@@ -49,16 +49,16 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - The wallpapers for the light and dark variants, as file URLs (set on the overlay's Themes page).
   - x-snapshot=true, x-settings=false
 - **`Appearance.wallpaper.variants.dark`** · string = ""
-  - read: `Appearance.darkWallpaper` · in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/GreeterManager.qml`, `services/ThemeManager.qml`
+  - read: `Appearance.darkWallpaper` · in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/core/ThemeManager.qml`, `services/session/GreeterManager.qml`
 - **`Appearance.wallpaper.variants.light`** · string = ""
-  - read: `Appearance.lightWallpaper` · in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/GreeterManager.qml`, `services/ThemeManager.qml`
+  - read: `Appearance.lightWallpaper` · in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/core/ThemeManager.qml`, `services/session/GreeterManager.qml`
 
 ### `Appearance.wallpaper`
 
 - **`Appearance.wallpaper.backend`** · string = "quickshell" · enum quickshell|awww
   - Wallpaper backend: What draws the wallpaper. Axiom needs nothing installed and crossfades; awww (AUR) adds wipe and wave transitions.
-  - read: `Appearance.wallpaperBackend` · in: `services/GreeterManager.qml`, `services/ThemeManager.qml`, `services/WallpaperManager.qml`, `shell/Wallpaper.qml`
+  - read: `Appearance.wallpaperBackend` · in: `services/core/ThemeManager.qml`, `services/session/GreeterManager.qml`, `services/ui/WallpaperManager.qml`, `shell/Wallpaper.qml`
 - **`Appearance.wallpaper.daemon`** · boolean = true
   - Start awww: Start awww-daemon for the wallpaper picker.
   - x-scope="machine", x-showIf={"backend":"awww"}
-  - read: `Appearance.wallpaperDaemon` · in: `services/GreeterManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.wallpaperDaemon` · in: `services/session/GreeterManager.qml`, `services/ui/WallpaperManager.qml`

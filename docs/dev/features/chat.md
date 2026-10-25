@@ -1,6 +1,6 @@
 # Chat
 
-> **Files:** `services/ChatManager.qml`, `services/ChatRequest.qml`, `components/methods/ChatProtocol.qml`, `components/methods/ChatMarkdown.qml`, `components/content/Chat/Chat.qml`
+> **Files:** `services/apps/ChatManager.qml`, `services/apps/ChatRequest.qml`, `components/methods/ChatProtocol.qml`, `components/methods/ChatMarkdown.qml`, `components/content/Chat/Chat.qml`
 > **Config:** `Chat.*` (reader `ChatConfig`)
 > **Related:** [Secrets](../core/secrets.md), [Screenshots and recording](screenshots-recording.md), [Launcher](launcher.md), [Services pattern](../core/services-pattern.md)
 
@@ -18,7 +18,7 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 - Only the newest `Chat.keepConversations` chats are kept.
 
 ### Requests (ChatRequest)
-- Each reply is one `services/ChatRequest`, which runs curl:
+- Each reply is one `services/apps/ChatRequest`, which runs curl:
   - the curl config, API key included, goes in on stdin via `-K -` (never argv);
   - the request body goes in a file under `$XDG_RUNTIME_DIR`;
   - a `SplitParser` feeds the SSE lines to `components/methods/ChatProtocol`.

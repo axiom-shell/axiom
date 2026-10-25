@@ -4,7 +4,9 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.ui
 
 // Hover tooltip in a popup window of its own, so it isn't clipped by the
 // small layer windows (bars, popouts) buttons live in. Appears after a

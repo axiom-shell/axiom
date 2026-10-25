@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-import qs.services
+import qs.services.session
 import qs.components.surfaces.lockscreen
 
 // The built-in locker (Lockscreen.mode "quickshell"): a Wayland session

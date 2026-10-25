@@ -8,20 +8,20 @@ Settings are read as `properties.<key>`.
 
 - **`showCpu`** · boolean = true
   - CPU usage
-  - in (generic, name match): `services/SystemManager.qml`
+  - in (generic, name match): `services/system/SystemManager.qml`
 - **`showMemory`** · boolean = true
   - Memory
-  - in (generic, name match): `services/SystemManager.qml`
+  - in (generic, name match): `services/system/SystemManager.qml`
 - **`memoryFormat`** · string = "percent" · enum percent|used
   - Memory format: Percentage of RAM in use, or GiB used.
   - x-showIf={"showMemory":true}
   - in: none found
 - **`showTemp`** · boolean = true
   - CPU temperature: Hidden on machines without a k10temp / coretemp / zenpower sensor.
-  - in (generic, name match): `services/SystemManager.qml`
+  - in (generic, name match): `services/system/SystemManager.qml`
 - **`showGpu`** · boolean = false
   - GPU usage: AMD (sysfs) or NVIDIA (nvidia-smi). Hidden when no GPU is found.
-  - in (generic, name match): `services/SystemManager.qml`
+  - in (generic, name match): `services/system/SystemManager.qml`
 - **`showDisk`** · boolean = false
   - Disk usage
   - in: `components/bar/widgets/SystemStats/SystemStats.qml`

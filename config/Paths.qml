@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import qs.services
+import qs.services.core
 import qs.components.methods
 
 // Derived, non-configurable filesystem paths (from the environment, not config).

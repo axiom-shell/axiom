@@ -21,7 +21,7 @@ A status card:
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.<group>  // FooManager's folder: core, compositor, session, system, ui or apps
 import qs.components.reusable
 
 // The Foo section's first card (its `x-card`): <what it shows and does>

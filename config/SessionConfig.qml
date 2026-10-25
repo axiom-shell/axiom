@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Session section: what starts with the compositor while
 // axiom manages its config ({ recommendedEnv, env, autostart }).

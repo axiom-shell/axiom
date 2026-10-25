@@ -17,7 +17,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services
+import qs.services.<group>  // FooManager's folder: core, compositor, session, system, ui or apps
 import qs.components.hosts.popout
 
 // <One sentence: what it shows and what clicking does.>

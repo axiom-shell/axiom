@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.session
 import qs.components.reusable
 import qs.components.content.base
 

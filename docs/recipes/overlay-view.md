@@ -10,7 +10,7 @@
 3. Tool page only:
    - `config/schema/sections/Overlay.yaml`'s `items` `default` array: append `{ type: <Type>, id: <type> }`;
    - a format-2 step appending it to existing configs, with its test and the `version` bump ([migration](migration.md));
-   - `services/LauncherCommands.qml`: a way to open it (below);
+   - `services/ui/LauncherCommands.qml`: a way to open it (below);
    - `docs/usage.md`: the **Pages** row of the launcher command table.
 4. `config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
 
@@ -18,7 +18,7 @@
 ```qml
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.services
+import qs.services.<group>  // FooManager's folder: core, compositor, session, system, ui or apps
 import qs.components.views.FooPage
 
 // <What the page is for and where its state lives (FooManager).>

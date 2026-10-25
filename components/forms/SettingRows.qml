@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services
+import qs.services.ui
 
 // Settings by dotted config path ("Apps.terminal"), each a SchemaField
 // row as on the settings page, saved as they change

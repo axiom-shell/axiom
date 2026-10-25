@@ -13,32 +13,32 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`Weather.location`** · string = ""
   - Location: City name to look up. Empty uses your IP's location.
-  - read: `WeatherConfig.location` · in: `services/WeatherManager.qml`
+  - read: `WeatherConfig.location` · in: `services/apps/WeatherManager.qml`
 - **`Weather.latitude`** · string = ""
   - Latitude: Exact coordinates; with longitude, overrides the location lookup.
-  - read: `WeatherConfig.latitude` · in: `services/WeatherManager.qml`
+  - read: `WeatherConfig.latitude` · in: `services/apps/WeatherManager.qml`
 - **`Weather.longitude`** · string = ""
   - Longitude
-  - read: `WeatherConfig.longitude` · in: `services/WeatherManager.qml`
+  - read: `WeatherConfig.longitude` · in: `services/apps/WeatherManager.qml`
 - **`Weather.units`** · string = "celsius" · enum celsius|fahrenheit
   - Units
   - x-scope="personal"
-  - read: `WeatherConfig.units` · in: `services/WeatherManager.qml`
+  - read: `WeatherConfig.units` · in: `services/apps/WeatherManager.qml`
 - **`Weather.interval`** · integer = 900000 · 300000–86400000 · min
   - Refresh interval
-  - read: `WeatherConfig.interval` · in: `services/WeatherManager.qml`
+  - read: `WeatherConfig.interval` · in: `services/apps/WeatherManager.qml`
 
 ### Reader members
 
 Every public member of `WeatherConfig`, with the files that use it.
 
 - `WeatherConfig.location` (string)
-  - in: `services/WeatherManager.qml`
+  - in: `services/apps/WeatherManager.qml`
 - `WeatherConfig.latitude` (string)
-  - in: `services/WeatherManager.qml`
+  - in: `services/apps/WeatherManager.qml`
 - `WeatherConfig.longitude` (string)
-  - in: `services/WeatherManager.qml`
+  - in: `services/apps/WeatherManager.qml`
 - `WeatherConfig.units` (string): "celsius" | "fahrenheit"
-  - in: `services/WeatherManager.qml`
+  - in: `services/apps/WeatherManager.qml`
 - `WeatherConfig.interval` (int): How often it's fetched (ms)
-  - in: `services/WeatherManager.qml`
+  - in: `services/apps/WeatherManager.qml`

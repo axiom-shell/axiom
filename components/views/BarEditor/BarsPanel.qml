@@ -3,7 +3,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.config
-import qs.services
+import qs.services.compositor
+import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms

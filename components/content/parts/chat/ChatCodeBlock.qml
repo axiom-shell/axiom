@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.apps
 import qs.components.reusable
 
 // A fenced code block in a reply: its language, a copy button and the code

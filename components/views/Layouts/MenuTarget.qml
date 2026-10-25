@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.ui
 import qs.components.methods
 
 // The layouts editor on an edge menu (EdgeMenuManager's selected menu):

@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Monitors section: the monitor profiles ({ id, name,
 // outputs: [MonitorRule] }), edited on the Monitors page (MonitorManager) and

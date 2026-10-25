@@ -800,7 +800,7 @@ class KnownIssues(unittest.TestCase):
 - **Found:** 2026-10-16, while testing
 
 ### Qt's own warning
-- **Where:** `services/SwayManager.qml`
+- **Where:** `services/compositor/SwayManager.qml`
 - **What:** every reload logs `I3 event socket disconnected` (category `quickshell.I3.ipc`)
 - **Size:** trivial
 - **Found:** 2026-10-16, while testing

@@ -167,12 +167,19 @@ def main():
             if kind not in used.get(path, []):
                 errors.append(f"{rel(IO_ALLOWLIST)}: {path} no longer uses {kind}: remove it from the list (it only shrinks)")
 
+    # Services live in their group's folder (services/AGENTS.md › Folders):
+    # one directly in services/ would escape the singleton checks below,
+    # check_docs and the API pages, which all read services/*/
+    for path in sources:
+        if re.fullmatch(r"services/[^/]+\.qml", path):
+            errors.append(f"{path}: directly in services/ (put it in its group's folder: services/AGENTS.md › Folders)")
+
     # IPC targets are IpcTargets (an IpcHandler that registers with axiom,
     # which reaches it without a process per call): a bare IpcHandler is
     # out of `axiom ipc`'s fast path and of ipc.md
     for path, text in sources.items():
-        if path != "services/IpcTarget.qml" and re.search(r"\bIpcHandler\s*\{", text):
-            errors.append(f"{path}: an IpcHandler: use IpcTarget (services/IpcTarget.qml)")
+        if path != "services/core/IpcTarget.qml" and re.search(r"\bIpcHandler\s*\{", text):
+            errors.append(f"{path}: an IpcHandler: use IpcTarget (services/core/IpcTarget.qml)")
 
     # An optional call on a computed member crashes V4's compiler (Qt 6.12)
     # when the file loads: a hot reload of the live shell segfaults it
@@ -323,7 +330,7 @@ def main():
     # Only the Hyprland* services read Quickshell.Hyprland: the rest goes
     # through HyprlandManager (docs/dev/hyprland/ipc.md)
     for path, text in sources.items():
-        if re.search(r"^import Quickshell\.Hyprland\b", text, re.M) and not re.fullmatch(r"services/Hyprland\w*\.qml", path):
+        if re.search(r"^import Quickshell\.Hyprland\b", text, re.M) and not re.fullmatch(r"services/compositor/Hyprland\w*\.qml", path):
             errors.append(f"{path}: imports Quickshell.Hyprland (only the Hyprland* services may; use CompositorManager)")
 
     # Likewise only a backend's own services talk to its compositor: read
@@ -337,7 +344,7 @@ def main():
     for prefix, name, module, talks in backends:
         for path, text in sources.items():
             # (CompositorKind names the variables that say which one runs)
-            if re.fullmatch(rf"services/{prefix}\w*\.qml", path) or path in ("services/CompositorManager.qml", "components/methods/CompositorKind.qml"):
+            if re.fullmatch(rf"services/compositor/{prefix}\w*\.qml", path) or path in ("services/compositor/CompositorManager.qml", "components/methods/CompositorKind.qml"):
                 continue
             code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())
             if module and re.search(rf"^import Quickshell\.{module}\b", text, re.M):
@@ -350,11 +357,11 @@ def main():
     # backend; besides the Hyprland* services, only the Hyprland-only
     # features use it directly, each gated on CompositorManager.supports.
     hyprland_features = {
-        "services/CompositorManager.qml", "services/GreetdManager.qml", "services/OnboardingManager.qml",
+        "services/compositor/CompositorManager.qml", "services/session/GreetdManager.qml", "services/session/OnboardingManager.qml",
     }
     for path, text in sources.items():
         code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())
-        if re.search(r"\bHyprlandManager\.", code) and not re.fullmatch(r"services/Hyprland\w*\.qml", path) and path not in hyprland_features:
+        if re.search(r"\bHyprlandManager\.", code) and not re.fullmatch(r"services/compositor/Hyprland\w*\.qml", path) and path not in hyprland_features:
             errors.append(f"{path}: uses HyprlandManager (only the Hyprland* services and the Hyprland-only features may; use CompositorManager)")
 
     # A backend's text and state helpers are its own (Hyprland's Lua,
@@ -366,17 +373,17 @@ def main():
         code = "\n".join(line.split("//", 1)[0] for line in re.sub(r"/\*.*?\*/", "", text, flags=re.S).splitlines())
         if not path.startswith(("services/", "components/", "shell/", "config/")):
             continue
-        if not re.fullmatch(r"(services|components/methods)/Hypr\w*\.qml", path) and path not in hyprland_features and re.search(r"\b(HyprLua|HyprState)\.", code):
+        if not re.fullmatch(r"(services/compositor|components/methods)/Hypr\w*\.qml", path) and path not in hyprland_features and re.search(r"\b(HyprLua|HyprState)\.", code):
             errors.append(f"{path}: uses a Hyprland Lua helper (only the Hyprland* services and helpers may; go through CompositorManager / CompositorConfigManager)")
         for prefix, name, _, _ in backends:
-            if not re.fullmatch(rf"(services|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b({prefix}Conf|{prefix}State)\.", code):
+            if not re.fullmatch(rf"(services/compositor|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b({prefix}Conf|{prefix}State)\.", code):
                 errors.append(f"{path}: uses a {name} helper (only the {prefix}* services and helpers may; go through CompositorManager / CompositorConfigManager)")
 
     # Singleton references: FooManager. must be a service, and a near-miss
     # of any project singleton (AudioManger.) is a typo
     external = {"ToplevelManager"}  # Quickshell's own
-    singletons = {f.stem for d in ("services", "config", "components/methods") for f in (ROOT / d).glob("*.qml")}
-    services = {f.stem for f in (ROOT / "services").glob("*.qml")} | external
+    singletons = {f.stem for d in ("services/*", "config", "components/methods") for f in ROOT.glob(f"{d}/*.qml")}
+    services = {f.stem for f in ROOT.glob("services/*/*.qml")} | external
     for path, text in sources.items():
         # without strings and comments
         code = re.sub(r'"(?:[^"\\\n]|\\.)*"|`[^`]*`', '""', text)

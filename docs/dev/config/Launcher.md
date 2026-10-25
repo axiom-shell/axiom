@@ -43,7 +43,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Launcher.maxResults`** · integer = 8 · 3–20
   - Results shown: How many rows fit before the list scrolls.
   - x-scope="look", x-group="Launcher look", x-control="stepper"
-  - read: `LauncherConfig.maxResults` · in: `components/surfaces/launcher/LauncherPanel.qml`, `services/LauncherManager.qml`
+  - read: `LauncherConfig.maxResults` · in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherManager.qml`
 - **`Launcher.iconSize`** · integer = 32 · 16–64 · px
   - Icon size: Size of the result icons.
   - x-scope="look", x-group="Launcher look", x-control="stepper"
@@ -63,7 +63,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Launcher.showRecent`** · boolean = true
   - Frequent apps when empty: List your most used apps before you type anything.
   - x-group="Launcher look"
-  - read: `LauncherConfig.showRecent` · in: `services/LauncherManager.qml`
+  - read: `LauncherConfig.showRecent` · in: `services/ui/LauncherManager.qml`
 - **`Launcher.showHint`** · boolean = true
   - Controls hint: Show the search prefixes and keys under the results.
   - x-scope="look", x-group="Launcher look"
@@ -71,7 +71,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Launcher.hiddenApps`** · array<string> = []
   - Hidden apps: Desktop entry ids never shown, comma-separated (e.g. avahi-discover, qv4l2).
   - x-group="Launcher search"
-  - read: `LauncherConfig.hiddenApps` · in: `services/LauncherManager.qml`
+  - read: `LauncherConfig.hiddenApps` · in: `services/ui/LauncherManager.qml`
 
 ### Reader members
 
@@ -92,7 +92,7 @@ Every public member of `LauncherConfig`, with the files that use it.
 - `LauncherConfig.width` (int)
   - in: `components/surfaces/launcher/Launcher.qml`, `components/surfaces/launcher/LauncherPanel.qml`
 - `LauncherConfig.maxResults` (int)
-  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.iconSize` (int)
   - in: `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`
 - `LauncherConfig.showBackdrop` (bool): Dim the screen behind it
@@ -102,30 +102,30 @@ Every public member of `LauncherConfig`, with the files that use it.
 - `LauncherConfig.showDescriptions` (bool)
   - in: `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`
 - `LauncherConfig.showRecent` (bool)
-  - in: `services/LauncherManager.qml`
+  - in: `services/ui/LauncherManager.qml`
 - `LauncherConfig.showHint` (bool)
   - in: `components/surfaces/launcher/LauncherPanel.qml`
 - `LauncherConfig.hiddenApps` (var): Desktop entry ids never listed
-  - in: `services/LauncherManager.qml`
+  - in: `services/ui/LauncherManager.qml`
 - `LauncherConfig.windows` (bool)
-  - in: `services/LauncherManager.qml`
+  - in: `services/ui/LauncherManager.qml`
 - `LauncherConfig.calculator` (bool)
-  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/LauncherCommands.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.commands` (bool)
-  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.runCommands` (bool)
-  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/LauncherCommands.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.webSearch` (bool)
-  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/LauncherCommands.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.chat` (bool): "@question" asks the overlay's chat
-  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.clipboard` (bool): ":" searches the clipboard history (ClipboardManager)
-  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ClipboardManager.qml`, `services/LauncherCommands.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/system/ClipboardManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.clipboardSource` (string): "axiom" | "cliphist"
-  - in: `services/ClipboardManager.qml`
+  - in: `services/system/ClipboardManager.qml`
 - `LauncherConfig.clipboardMaxEntries` (int)
-  - in: `services/ClipboardManager.qml`
+  - in: `services/system/ClipboardManager.qml`
 - `LauncherConfig.emoji` (bool): ";" searches emoji (EmojiManager)
-  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/LauncherCommands.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.searchEngine` (string): With {} where the terms go
-  - in: `services/LauncherManager.qml`
+  - in: `services/ui/LauncherManager.qml`

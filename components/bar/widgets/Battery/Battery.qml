@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.services
+import qs.services.system
 import qs.config
 import qs.components.bar.widgets.base
 
@@ -10,7 +10,7 @@ import qs.components.bar.widgets.base
 BarIconWidget {
   id: root
 
-  // From UPower's display device (services/BatteryManager.qml)
+  // From UPower's display device (services/system/BatteryManager.qml)
   readonly property bool isCharging: BatteryManager.isCharging
   readonly property int percentage: BatteryManager.percentage
   readonly property string timeRemaining: isCharging ? BatteryManager.timeToFull : BatteryManager.timeRemaining

@@ -1,6 +1,6 @@
 # Blur window and openings
 
-> **Files:** `shell/BlurBacking.qml`, `shell/BlurBackingWindow.qml`, `services/BlurManager.qml`, `components/hosts/popout/BlurShape.qml`, `components/hosts/popout/AttachedSurfaceCopy.qml`, `components/hosts/popout/OutsideShadow.qml`, `components/hosts/popout/LayerOrigin.qml`, `components/hosts/popout/BorderOpening.qml`, `components/hosts/popout/StrokeOpening.qml`, `components/reusable/HoledItem.qml`, `components/surfaces/border/BorderPanel.qml`, `components/surfaces/border/RoundedBorders.qml`
+> **Files:** `shell/BlurBacking.qml`, `shell/BlurBackingWindow.qml`, `services/ui/BlurManager.qml`, `components/hosts/popout/BlurShape.qml`, `components/hosts/popout/AttachedSurfaceCopy.qml`, `components/hosts/popout/OutsideShadow.qml`, `components/hosts/popout/LayerOrigin.qml`, `components/hosts/popout/BorderOpening.qml`, `components/hosts/popout/StrokeOpening.qml`, `components/reusable/HoledItem.qml`, `components/surfaces/border/BorderPanel.qml`, `components/surfaces/border/RoundedBorders.qml`
 > **Config:** `Appearance.surface.*`
 > **Related:** [Translucency and blur](translucency-blur.md), [Shadows](../popouts/shadows.md), [Surface context](../popouts/surface-context.md), [Edge attach](../popouts/edge-attach.md), [Submenus](../popouts/submenus.md)
 

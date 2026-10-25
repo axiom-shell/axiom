@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Chat section. API keys are not config: see SecretsManager.
 QtObject {

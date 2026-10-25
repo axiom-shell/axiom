@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.compositor
 import qs.components.surfaces.border
 
 // The screen border on every screen (Appearance.screenBorder)

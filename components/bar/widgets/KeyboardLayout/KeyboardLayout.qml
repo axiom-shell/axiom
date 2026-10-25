@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.services
+import qs.services.system
 import qs.components.bar.widgets.base
 
 // Active xkb layout of the main keyboard, from KeyboardLayoutManager. Left

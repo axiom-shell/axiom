@@ -1,6 +1,6 @@
 # Backend contract
 
-> **Files:** `services/CompositorManager.qml`, `services/HyprlandManager.qml`, `services/SwayManager.qml`, `services/NiriManager.qml`, `components/methods/HyprState.qml`, `components/methods/SwayState.qml`, `components/methods/NiriState.qml`, `components/methods/CompositorLayer.qml`, `tests/tst_HyprState.qml`, `tests/tst_CompositorLayer.qml`
+> **Files:** `services/compositor/CompositorManager.qml`, `services/compositor/HyprlandManager.qml`, `services/compositor/SwayManager.qml`, `services/compositor/NiriManager.qml`, `components/methods/HyprState.qml`, `components/methods/SwayState.qml`, `components/methods/NiriState.qml`, `components/methods/CompositorLayer.qml`, `tests/tst_HyprState.qml`, `tests/tst_CompositorLayer.qml`
 > **Config:** none
 > **Related:** [The compositor](README.md), [Sway backend](sway-backend.md), [niri backend](niri-backend.md)
 

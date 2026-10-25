@@ -1,6 +1,6 @@
 # Edge menu hosts (floating and integrated)
 
-> **Files:** `shell/EdgeMenus.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `components/surfaces/edgemenu/EdgeMenuBody.qml`, `components/surfaces/edgemenu/EdgeMenuSync.qml`, `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/PopoutWrapperBase.qml`, `services/EdgeMenuManager.qml`
+> **Files:** `shell/EdgeMenus.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `components/surfaces/edgemenu/EdgeMenuBody.qml`, `components/surfaces/edgemenu/EdgeMenuSync.qml`, `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/PopoutWrapperBase.qml`, `services/ui/EdgeMenuManager.qml`
 > **Config:** `EdgeMenus.items[].mode` (`floating` | `integrated` | `submenu`), `length`, `offset`, `gridOffset`, `moduleScale`, `pinButton`, `frame`, `detached`, `gap`
 > **Related:** [Overview](overview.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Layering and corners](../bar/layering-and-corners.md)
 

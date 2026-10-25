@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import qs.services
+import qs.services.core
 
 // Reader for the General section.
 QtObject {

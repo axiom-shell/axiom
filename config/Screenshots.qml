@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Screenshots section: where screenshots and recordings are
 // saved (ScreenshotManager resolves the empty defaults)

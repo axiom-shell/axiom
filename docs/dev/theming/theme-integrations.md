@@ -1,6 +1,6 @@
 # Theme integrations
 
-> **Files:** `services/ThemeManager.qml`, `services/IntegrationHookupManager.qml`, `config/ThemeIntegrations.qml`, `scripts/theme_*.sh`, `scripts/lib/theme_env.sh`, `scripts/integration_hookup.py`, `scripts/templates/`, `components/forms/IntegrationHookup.qml`, `tests/scripts/test_scripts.py`
+> **Files:** `services/core/ThemeManager.qml`, `services/ui/IntegrationHookupManager.qml`, `config/ThemeIntegrations.qml`, `scripts/theme_*.sh`, `scripts/lib/theme_env.sh`, `scripts/integration_hookup.py`, `scripts/templates/`, `components/forms/IntegrationHookup.qml`, `tests/scripts/test_scripts.py`
 > **Config:** `ThemeIntegrations.*`
 > **Related:** [Themes](themes.md), [Schema annotations](../core/schema-annotations.md), [Hyprland config modes](../hyprland/config-modes.md)
 

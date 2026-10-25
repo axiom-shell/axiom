@@ -2,7 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.ui
 import qs.config
 import qs.components.reusable
 import qs.components.surfaces.workspaces

@@ -84,7 +84,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Notifications.clearOnFocus`** · boolean = false
   - Clear when the app is focused: Focusing an app's window removes its notifications from the history.
   - x-group="Notification history"
-  - read: `NotificationsConfig.clearOnFocus` · in: `services/NotificationManager.qml`
+  - read: `NotificationsConfig.clearOnFocus` · in: `services/system/NotificationManager.qml`
 - **`Notifications.removeOnClick`** · boolean = false
   - Remove when clicked: Clicking a notification, or one of its actions, removes it from the history.
   - x-group="Notification history"
@@ -96,11 +96,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Notifications.maxEntries`** · integer = 100 · 10–500
   - History size: How many notifications the history keeps. The oldest go first.
   - x-group="Notification history"
-  - read: `NotificationsConfig.maxEntries` · in: `services/NotificationManager.qml`
+  - read: `NotificationsConfig.maxEntries` · in: `services/system/NotificationManager.qml`
 - **`Notifications.maxAge`** · integer = 0 · 0–31536000000 · d
   - Keep for: Remove notifications older than this many days. 0 keeps them until removed.
   - x-group="Notification history"
-  - read: `NotificationsConfig.maxAge` · in: `services/NotificationManager.qml`
+  - read: `NotificationsConfig.maxAge` · in: `services/system/NotificationManager.qml`
 
 ### Reader members
 
@@ -137,12 +137,12 @@ Every public member of `NotificationsConfig`, with the files that use it.
 - `NotificationsConfig.quietFullscreen` (bool)
   - in: `shell/Notifications.qml`
 - `NotificationsConfig.clearOnFocus` (bool): History
-  - in: `services/NotificationManager.qml`
+  - in: `services/system/NotificationManager.qml`
 - `NotificationsConfig.removeOnClick` (bool)
   - in: `components/content/parts/notifications/NotificationItemDelegate.qml`, `components/surfaces/notifications/NotificationToast.qml`
 - `NotificationsConfig.closeRemoves` (bool)
   - in: `components/surfaces/notifications/NotificationToast.qml`
 - `NotificationsConfig.maxEntries` (int)
-  - in: `services/NotificationManager.qml`
+  - in: `services/system/NotificationManager.qml`
 - `NotificationsConfig.maxAge` (real): How old an entry may get (ms), 0 = keep forever
-  - in: `services/NotificationManager.qml`
+  - in: `services/system/NotificationManager.qml`

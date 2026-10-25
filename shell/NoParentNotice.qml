@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-import qs.services
+import qs.services.core
 import qs.components.methods
 
 // What shows instead of the shell when axiom didn't start it (qs run by

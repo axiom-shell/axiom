@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.apps
 import qs.components.reusable
 
 // Where a message is written: attached images, the text, then a toolbar

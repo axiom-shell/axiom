@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Notifications
 
-import qs.services
+import qs.services.system
 import qs.config
 import qs.components.reusable
 import qs.components.content.base

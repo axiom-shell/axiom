@@ -5,7 +5,8 @@ import Quickshell.Wayland
 import QtQuick
 
 import qs.config
-import qs.services
+import qs.services.compositor
+import qs.services.ui
 
 // The blur behind the chrome (BlurManager): per screen, one click-through
 // window under every chrome surface drawing each registered shape (the

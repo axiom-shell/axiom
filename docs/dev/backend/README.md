@@ -1,6 +1,6 @@
 # The axiom binary
 
-> **Files:** `backend/`, `services/BackendManager.qml`, `services/DevManager.qml`, `components/views/Settings/DevModeStatus.qml`, `config/json/backend.json`, `scripts/check_go.sh`, `scripts/generate.sh`, `scripts/dev/fixtures.py`
+> **Files:** `backend/`, `services/core/BackendManager.qml`, `services/core/DevManager.qml`, `components/views/Settings/DevModeStatus.qml`, `config/json/backend.json`, `scripts/check_go.sh`, `scripts/generate.sh`, `scripts/dev/fixtures.py`
 > **Related:** [Config manager](../core/config-manager.md), [Packaging](../packaging.md), [Testing](../testing.md)
 
 `axiom` is one Go binary (source in `backend/`, rules in `backend/AGENTS.md`). It is being brought in in stages; this page says what exists now and grows with it.

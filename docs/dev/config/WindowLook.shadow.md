@@ -15,19 +15,19 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`WindowLook.shadow.enabled`** · boolean = false
   - Window shadows
   - x-enabledIf={"/$supports.windowShadow":true}
-  - read: `WindowLookConfig.shadowOn` (computed) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.shadowOn` (computed) · in: `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.shadow.color`** · string = ""
   - Shadow color: Unfocused windows cast it too.
   - x-options="colors", x-emptyLabel="Compositor's", x-showIf={"enabled":true,"matchShell":false}, x-enabledIf={"/$supports.windowShadow":true}
-  - read: `WindowLookConfig.shadowColor` (computed), `WindowLookConfig.shadowThemed` (computed) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.shadowColor` (computed), `WindowLookConfig.shadowThemed` (computed) · in: `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.shadow.size`** · integer = 10 · 0–100 · px
   - Shadow size
   - x-control="stepper", x-showIf={"enabled":true,"matchShell":false}, x-enabledIf={"/$supports.windowShadow":true}
-  - read: `WindowLookConfig.shadowSize` (computed) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.shadowSize` (computed) · in: `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.shadow.matchShell`** · boolean = true
   - Match axiom's shadow: Follow Look & Feel → Surface shadow: its color and size. With it off there, windows cast none.
   - x-link={"setting":"Bars.style.shadow"}, x-showIf={"enabled":true}, x-enabledIf={"/$supports.windowShadow":true}
-  - read: `WindowLookConfig.shadowAlpha` (computed), `WindowLookConfig.shadowColor` (computed), `WindowLookConfig.shadowOn` (computed), `WindowLookConfig.shadowSize` (computed), `WindowLookConfig.shadowSoft` (computed), `WindowLookConfig.shadowThemed` (computed) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.shadowAlpha` (computed), `WindowLookConfig.shadowColor` (computed), `WindowLookConfig.shadowOn` (computed), `WindowLookConfig.shadowSize` (computed), `WindowLookConfig.shadowSoft` (computed), `WindowLookConfig.shadowThemed` (computed) · in: `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.shadow.power`** · integer = 3 · 1–4
   - Shadow falloff: 1 fades slowly, 4 ends sharply.
   - x-showIf={"enabled":true,"matchShell":false}, x-enabledIf={"/$supports.windowShadow":true,"/$compositor":"hyprland"}
@@ -35,4 +35,4 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`WindowLook.shadow.strength`** · integer = 100 · 10–400 · %
   - Shadow strength: How strong windows cast it, matching axiom's or not. The compositor's own color keeps its strength.
   - x-control="stepper", x-showIf={"enabled":true}, x-enabledIf={"/$supports.windowShadow":true}
-  - read: `WindowLookConfig.shadowStrength` (computed) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.shadowStrength` (computed) · in: `services/compositor/CompositorConfigManager.qml`

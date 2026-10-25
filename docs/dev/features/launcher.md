@@ -1,6 +1,6 @@
 # Launcher
 
-> **Files:** `services/LauncherManager.qml`, `services/LauncherCommands.qml`, `components/surfaces/launcher/Launcher.qml`, `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`, `components/views/Settings/LauncherPlace.qml`
+> **Files:** `services/ui/LauncherManager.qml`, `services/ui/LauncherCommands.qml`, `components/surfaces/launcher/Launcher.qml`, `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`, `components/views/Settings/LauncherPlace.qml`
 > **Config:** `Launcher.*` (reader `LauncherConfig`)
 > **Related:** [Launcher providers](launcher-providers.md), [Saved configs](../core/saved-configs-sharing.md), [Edge attach](../popouts/edge-attach.md), [Dock](dock.md), [OSD](osd.md)
 
@@ -58,7 +58,7 @@ The first character picks the provider:
 - **Toggles:** each provider has a `Launcher` config toggle (`LauncherConfig`).
 
 ### Commands
-- Commands live in `services/LauncherCommands.qml`, a plain list of entries:
+- Commands live in `services/ui/LauncherCommands.qml`, a plain list of entries:
   `{ name, aliases, glyph, description(), usage, needsArg, confirm, available(), status(), options(arg), run(arg, value) }`
 - A new shell feature gets a command by adding an entry that calls its service.
 - `options` supplies argument completions.

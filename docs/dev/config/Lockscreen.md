@@ -14,11 +14,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Lockscreen.mode`** · string = "quickshell" · enum quickshell|none
   - Locker: Built-in uses the Wayland session-lock protocol with PAM. None leaves locking to your own locker.
   - x-takeover=true
-  - read: `LockscreenConfig.mode` · in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Layouts/LockscreenTarget.qml`, `services/HypridleManager.qml`, `services/LockManager.qml`, `services/OverlayManager.qml`
+  - read: `LockscreenConfig.mode` · in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Layouts/LockscreenTarget.qml`, `services/session/HypridleManager.qml`, `services/session/LockManager.qml`, `services/ui/OverlayManager.qml`
 - **`Lockscreen.lockCommand`** · string = "loginctl lock-session"
   - Lock command: What axiom's lock buttons run when the locker is your own.
   - x-showIf={"mode":"none"}
-  - read: `LockscreenConfig.lockCommand` · in: `services/HypridleManager.qml`, `services/LockManager.qml`
+  - read: `LockscreenConfig.lockCommand` · in: `services/session/HypridleManager.qml`, `services/session/LockManager.qml`
 
 ### `Lockscreen.layout`
 
@@ -98,9 +98,9 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 Every public member of `LockscreenConfig`, with the files that use it.
 
 - `LockscreenConfig.mode` (string): "quickshell" (built-in) | "none"
-  - in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Layouts/LockscreenTarget.qml`, `services/HypridleManager.qml`, `services/LockManager.qml`, `services/OverlayManager.qml`
+  - in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Layouts/LockscreenTarget.qml`, `services/session/HypridleManager.qml`, `services/session/LockManager.qml`, `services/ui/OverlayManager.qml`
 - `LockscreenConfig.lockCommand` (string): What lock buttons run in "none" mode
-  - in: `services/HypridleManager.qml`, `services/LockManager.qml`
+  - in: `services/session/HypridleManager.qml`, `services/session/LockManager.qml`
 - `LockscreenConfig.layout` (var): The built-in lock screen, a ScreenLayout: { grid: { columns, rows, fine } (fitted to each monitor; `fine` splits its units in two), moduleScale, moduleBorders,…
   - in: `components/surfaces/lockscreen/LockSurface.qml`
 - `LockscreenConfig.fieldGroups` (var): The layout's own fields in groups (`x-group`), for the layouts editor

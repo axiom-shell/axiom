@@ -16,7 +16,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - read: `StopwatchConfig.presets` · in: `components/content/Stopwatch/Stopwatch.qml`
 - **`Stopwatch.notify`** · boolean = true
   - Notify: A notification when a timer ends.
-  - read: `StopwatchConfig.notify` · in: `services/StopwatchManager.qml`
+  - read: `StopwatchConfig.notify` · in: `services/apps/StopwatchManager.qml`
 
 ### Reader members
 
@@ -25,4 +25,4 @@ Every public member of `StopwatchConfig`, with the files that use it.
 - `StopwatchConfig.presets` (var): Durations as typed ("5m", "10m tea"), for StopwatchClock.parse
   - in: `components/content/Stopwatch/Stopwatch.qml`
 - `StopwatchConfig.notify` (bool)
-  - in: `services/StopwatchManager.qml`
+  - in: `services/apps/StopwatchManager.qml`

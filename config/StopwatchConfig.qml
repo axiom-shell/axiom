@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Stopwatch section: the one-off timer's presets and
 // whether its end notifies (see StopwatchManager).

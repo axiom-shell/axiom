@@ -1,6 +1,6 @@
 # Themes
 
-> **Files:** `services/ThemeManager.qml`, `components/methods/ThemeFamilies.qml`, `config/Theme.qml`, `config/json/theme-defaults.json`, `config/themes/`, `scripts/gen_theme_template.py`, `scripts/generate_theme.py`, `components/views/Themes/Themes.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/content/Palette/Palette.qml`
+> **Files:** `services/core/ThemeManager.qml`, `components/methods/ThemeFamilies.qml`, `config/Theme.qml`, `config/json/theme-defaults.json`, `config/themes/`, `scripts/gen_theme_template.py`, `scripts/generate_theme.py`, `components/views/Themes/Themes.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/content/Palette/Palette.qml`
 > **Config:** `Appearance.theme`
 > **Related:** [Theme integrations](theme-integrations.md), [Wallpaper and schedules](wallpaper-and-schedules.md), [Config readers](../core/config-readers.md)
 

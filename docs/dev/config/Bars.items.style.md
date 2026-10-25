@@ -101,7 +101,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Bars.items[].style.shadow.enabled`** · boolean = null
   - Shadow: Spread evenly round every bar (or its pills), the screen border, popouts, menus and docks. A transparent bar has nothing to cast one; a solid bar on the border leaves it to the border.
   - x-group="Surface shadow", x-inherit="Bars.style.shadow.enabled"
-  - read: `Bar.savedBars` (whole), `BarStyle.values` (whole) · in: `config/Bar.qml`, `services/EdgeMenuManager.qml`
+  - read: `Bar.savedBars` (whole), `BarStyle.values` (whole) · in: `config/Bar.qml`, `services/ui/EdgeMenuManager.qml`
 - **`Bars.items[].style.shadow.color`** · string = null
   - Shadow color: Auto: the theme's accent.
   - x-group="Surface shadow", x-options="colors", x-emptyLabel="Auto", x-showIf={"enabled":true}, x-inherit="Bars.style.shadow.color"

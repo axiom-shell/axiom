@@ -15,16 +15,16 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`WindowLook.surfaceBlur.enabled`** · boolean = true
   - Blur behind axiom's surfaces: The compositor blurs what shows through axiom's translucent surfaces (Look & Feel → Translucency), with its blur below. It costs GPU time whenever what's behind or on a surface changes, more with a stronger blur and with windows blurred behind.
   - x-link={"setting":"Appearance.surface"}, x-showIf={"/Appearance.surface.opacity":{"not":100}}, x-enabledIf={"/$supports.blur":true}
-  - read: `Appearance.blur` (computed) · in: `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/views/Settings/TranslucencyStatus.qml`, `services/BlurManager.qml`, `services/CompositorConfigManager.qml`
+  - read: `Appearance.blur` (computed) · in: `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/views/Settings/TranslucencyStatus.qml`, `services/compositor/CompositorConfigManager.qml`, `services/ui/BlurManager.qml`
 - **`WindowLook.surfaceBlur.throughWindows`** · boolean = true
   - Blur windows behind surfaces: Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them.
   - x-showIf={"/Appearance.surface.opacity":{"not":100},"enabled":true}, x-enabledIf={"/$supports.blur":true}
-  - read: `Appearance.blurThroughWindows` · in: `services/CompositorConfigManager.qml`
+  - read: `Appearance.blurThroughWindows` · in: `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.surfaceBlur.backdrops`** · boolean = false
   - Blur backdrops: Also blur the whole screen behind the overlay, launcher, power menu and workspace overview. Costs more while they open.
   - x-showIf={"/Appearance.surface.opacity":{"not":100},"enabled":true}, x-enabledIf={"/$supports.blur":true}
-  - read: `Appearance.blurBackdrops` (computed) · in: `services/BlurManager.qml`, `services/CompositorConfigManager.qml`
+  - read: `Appearance.blurBackdrops` (computed) · in: `services/compositor/CompositorConfigManager.qml`, `services/ui/BlurManager.qml`
 - **`WindowLook.surfaceBlur.pauseFullscreen`** · boolean = true
   - Pause blur over fullscreen apps: While a fullscreen window (a game, a video) is open, nothing blurs, so a volume popup or notification over it costs nothing extra. Surfaces on that monitor turn opaque; elsewhere they stay translucent, unblurred.
   - x-scope="machine", x-showIf={"/Appearance.surface.opacity":{"not":100},"enabled":true}, x-enabledIf={"/$supports.blur":true}
-  - read: `Appearance.blurPauseFullscreen` · in: `services/BlurManager.qml`
+  - read: `Appearance.blurPauseFullscreen` · in: `services/ui/BlurManager.qml`
