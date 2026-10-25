@@ -8,8 +8,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+	"syscall"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // machine is a fake /proc and /sys under one dir
@@ -221,5 +224,23 @@ func TestKillRefusesInit(t *testing.T) {
 		if Kill(pid) == nil {
 			t.Errorf("killed %d", pid)
 		}
+	}
+}
+
+func TestKill(t *testing.T) {
+	t.Parallel()
+	cmd := exec.Command("sleep", "600")
+	if err := cmd.Start(); err != nil {
+		t.Skip("no sleep:", err)
+	}
+	if err := Kill(cmd.Process.Pid); err != nil {
+		cmd.Process.Kill()
+		t.Fatal(err)
+	}
+	if err := cmd.Wait(); err == nil || cmd.ProcessState.Sys().(syscall.WaitStatus).Signal() != syscall.SIGTERM {
+		t.Errorf("sleep ended with %v, want SIGTERM", err)
+	}
+	if axerr.KindOf(Kill(cmd.Process.Pid)) != axerr.NotFound {
+		t.Errorf("killing a process that's gone isn't not_found")
 	}
 }
