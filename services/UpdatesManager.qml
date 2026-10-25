@@ -75,7 +75,9 @@ QtObject {
   readonly property bool _subscribed: _registry.active && root.supported
   readonly property int _interval: _registry.active ? Math.min(..._requests.map(r => r.interval)) : 0
   readonly property string _aurHelper: root.hasAur ? (_requests.find(r => r.aurHelper !== "")?.aurHelper ?? "") : ""
-  // The request as one value, so a change resubscribes once
+  // The request as one value, so a change resubscribes once. axiom checks
+  // at once for a request it hasn't seen (another AUR helper), and only
+  // moves the next check for another interval
   readonly property var _request: root._subscribed ? {
     "interval": root._interval,
     "check": {
@@ -96,10 +98,6 @@ QtObject {
       BackendManager.release("updates");
     }
   }
-
-  // A request axiom already has a state for gets that state back at
-  // once; another AUR helper is checked now, not at the next interval
-  on_AurHelperChanged: Qt.callLater(root.refresh)
 
   Component.onCompleted: BackendManager.listen("updates.state", state => {
     root.repoPackages = state.repo;

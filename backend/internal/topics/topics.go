@@ -2,8 +2,10 @@
 // subscribes to (`<name>.subscribe` with an interval and whatever else
 // its request carries) is fetched once for every subscriber, at the
 // shortest interval asked, and not at all without subscribers; its state
-// is pushed as `<name>.state` whenever it changes, latest-wins. The Go
-// side of the shell's ConsumerRegistry contract.
+// is pushed as `<name>.state` whenever it changes, latest-wins. A request
+// asking for something no subscriber asked for yet (more than another
+// interval) is fetched at once rather than at the next interval. The Go side of the
+// shell's ConsumerRegistry contract.
 package topics
 
 import (
@@ -29,9 +31,6 @@ type Source struct {
 	// Fetch returns the state for the subscribers' requests (each as it
 	// was sent); it's marshalled as JSON and pushed when it changed
 	Fetch func(ctx context.Context, requests []json.RawMessage) (any, error)
-	// FetchOnChange fetches as soon as the requests change (a new
-	// subscriber, or one asking for more), not at the next interval
-	FetchOnChange bool
 	// OnRefresh, when set, is told of `<name>.refresh` before the fetch
 	// it starts, for a source whose Fetch does more when asked to (it
 	// mustn't block: the hub's lock is held)
@@ -68,7 +67,7 @@ type topic struct {
 	// loop stopped and started again never publishes for the new one)
 	cancel context.CancelFunc
 	gen    int
-	// changed is signalled when the requests change, refresh to fetch now
+	// changed is signalled when the intervals change, refresh to fetch now
 	changed, refresh chan struct{}
 	last             json.RawMessage // the state last pushed
 	lastErr          string
@@ -77,6 +76,8 @@ type topic struct {
 type subscription struct {
 	request  json.RawMessage
 	interval time.Duration
+	// what is the request without its interval: what a fetch is for
+	what string
 }
 
 // New returns an empty hub.
@@ -153,11 +154,22 @@ func (h *Hub) Subscribe(s Subscriber, name string, request json.RawMessage) erro
 	if p.Interval != nil {
 		interval = time.Duration(*p.Interval * float64(time.Millisecond))
 	}
-	t.subs[s] = subscription{request: request, interval: max(interval, t.src.Floor)}
+	sub := subscription{request: request, interval: max(interval, t.src.Floor), what: what(request)}
+	// Something no subscriber asked for yet is fetched now; the same
+	// again, at another interval, only moves the next fetch
+	asked := false
+	for _, o := range t.subs {
+		asked = asked || o.what == sub.what
+	}
+	t.subs[s] = sub
 	if t.cancel == nil {
 		h.start(t)
 	} else {
-		signal(t.changed)
+		if !asked {
+			signal(t.refresh)
+		} else {
+			signal(t.changed)
+		}
 		if t.last != nil {
 			s.NotifyLatest(name+".state", t.last)
 		}
@@ -229,8 +241,8 @@ func (h *Hub) start(t *topic) {
 }
 
 // loop fetches, then waits for the shortest interval asked since that
-// fetch (again whenever the requests change), or a refresh (or, with
-// FetchOnChange, a change).
+// fetch (again whenever the intervals change), or a refresh (a request
+// asking for something new too).
 func (h *Hub) loop(ctx context.Context, t *topic, gen int, changed, refresh <-chan struct{}) {
 	for ctx.Err() == nil {
 		requests, _ := h.requests(t)
@@ -253,9 +265,6 @@ func (h *Hub) loop(ctx context.Context, t *topic, gen int, changed, refresh <-ch
 			case <-refresh:
 				break wait
 			case <-changed:
-				if t.src.FetchOnChange {
-					break wait
-				}
 			case <-h.o.After(d):
 				break wait
 			}
@@ -305,6 +314,18 @@ func (h *Hub) publish(t *topic, gen int, state any, err error) {
 	for s := range t.subs {
 		s.NotifyLatest(t.src.Name+".state", json.RawMessage(data))
 	}
+}
+
+// what is request without its interval (keys sorted), or as sent when
+// it isn't an object.
+func what(request json.RawMessage) string {
+	var m map[string]json.RawMessage
+	if json.Unmarshal(request, &m) != nil || m == nil {
+		return string(request)
+	}
+	delete(m, "interval")
+	data, _ := json.Marshal(m)
+	return string(data)
 }
 
 func signal(ch chan struct{}) {

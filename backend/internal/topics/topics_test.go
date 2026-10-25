@@ -286,23 +286,32 @@ func TestRefusesUnknownTopicsAndBadParams(t *testing.T) {
 	}
 }
 
-func TestFetchOnChange(t *testing.T) {
+// A request asking for something new is fetched at once; another
+// interval only moves the next fetch
+func TestFetchesANewRequestAtOnce(t *testing.T) {
 	t.Parallel()
-	for _, onChange := range []bool{false, true} {
-		h := newHarness(t, func(s *Source) { s.FetchOnChange = onChange })
-		s := newSub()
-		subscribe(t, h, s, `{"interval":60000}`)
-		fetched(t, h)
-		settle(t, h)
-		subscribe(t, h, s, `{"interval":60000, "more": true}`)
-		if onChange {
-			if r := fetched(t, h); string(r[0]) != `{"interval":60000, "more": true}` {
-				t.Errorf("fetched for %s", r)
-			}
-		} else {
-			notFetched(t, h)
-		}
+	h := newHarness(t)
+	s := newSub()
+	subscribe(t, h, s, `{"interval":60000}`)
+	fetched(t, h)
+	settle(t, h)
+	subscribe(t, h, s, `{"interval":30000}`)
+	notFetched(t, h)
+	subscribe(t, h, s, `{"interval":30000, "more": true}`)
+	if r := fetched(t, h); string(r[0]) != `{"interval":30000, "more": true}` {
+		t.Errorf("fetched for %s", r)
 	}
+	settle(t, h)
+	// The same request again, keys in another order: nothing new
+	subscribe(t, h, s, `{"more": true, "interval":30000}`)
+	notFetched(t, h)
+	// A second subscriber asking for the same gets the state it has
+	other := newSub()
+	subscribe(t, h, other, `{"interval":60000, "more": true}`)
+	notFetched(t, h)
+	// and asking for its own, fetches
+	subscribe(t, h, other, `{"interval":60000}`)
+	fetched(t, h)
 }
 
 func TestOnRefresh(t *testing.T) {

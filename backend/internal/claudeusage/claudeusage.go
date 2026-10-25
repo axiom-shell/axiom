@@ -124,12 +124,10 @@ func Source(o Options) topics.Source {
 	}
 	u := &usage{o: o, creds: map[string]time.Time{}}
 	return topics.Source{
-		Name:    "claudeUsage",
-		Floor:   time.Minute,
-		Default: time.Minute,
-		// A new account is fetched at once
-		FetchOnChange: true,
-		OnRefresh:     func() { u.forced.Store(true) },
+		Name:      "claudeUsage",
+		Floor:     time.Minute,
+		Default:   time.Minute,
+		OnRefresh: func() { u.forced.Store(true) },
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
 			return u.fetch(ctx, requests), nil
 		},

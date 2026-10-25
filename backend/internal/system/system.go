@@ -136,8 +136,6 @@ func Source(o Options) topics.Source {
 		Name:    "system",
 		Floor:   500 * time.Millisecond,
 		Default: 2 * time.Second,
-		// A page just opened shows its metrics at once
-		FetchOnChange: true,
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
 			return s.sample(ctx, requests), nil
 		},

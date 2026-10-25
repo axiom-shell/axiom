@@ -139,6 +139,10 @@ QtObject {
     target: BackendManager
     function onGreeted() {
       root._readZones();
+      // A read cut off by the connection dropping, not left to the next
+      // half hour (a zone the system lacks never gets one: read again)
+      if (root._wanted.split("\n").some(zone => zone !== "" && !(zone in root._offsets)))
+        root._read();
     }
   }
 

@@ -17,6 +17,7 @@ How clocks show another time zone (the JS engine has no Intl), plus the Clock mo
   - `zone` may be a list, as WorldClocks asks for.
 - **Reading a zone:**
   - The zones asked for are read with one `tz.offsets` call to axiom (`backend/internal/tz`): each zone's file in the zoneinfo directory (`$TZDIR`, else `/usr/share/zoneinfo`), its offset now in minutes east of UTC. A zone name that isn't a plain relative path is never read.
+  - A read cut off by axiom's connection dropping is retried after the next hello (`greeted`), with the zone list, rather than at the next half hour.
   - One read serves all of that zone's clocks.
   - It reads again past every half hour UTC, when daylight saving can change.
   - Nothing is read when no clock asks.
