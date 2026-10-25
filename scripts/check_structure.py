@@ -167,6 +167,13 @@ def main():
             if kind not in used.get(path, []):
                 errors.append(f"{rel(IO_ALLOWLIST)}: {path} no longer uses {kind}: remove it from the list (it only shrinks)")
 
+    # Services live in their group's folder (services/AGENTS.md › Folders):
+    # one directly in services/ would escape the singleton checks below,
+    # check_docs and the API pages, which all read services/*/
+    for path in sources:
+        if re.fullmatch(r"services/[^/]+\.qml", path):
+            errors.append(f"{path}: directly in services/ (put it in its group's folder: services/AGENTS.md › Folders)")
+
     # IPC targets are IpcTargets (an IpcHandler that registers with axiom,
     # which reaches it without a process per call): a bare IpcHandler is
     # out of `axiom ipc`'s fast path and of ipc.md

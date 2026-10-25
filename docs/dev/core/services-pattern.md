@@ -1,6 +1,6 @@
 # Services pattern
 
-> **Files:** `services/*.qml`, `scripts/quickshell-io-allowlist.json`, `services/core/ConsumerRegistry.qml`, `services/core/CommandManager.qml`, `services/system/SystemManager.qml`, `services/system/UpdatesManager.qml`, `config/Paths.qml`, `shell.qml`
+> **Files:** `services/*/*.qml`, `scripts/quickshell-io-allowlist.json`, `services/core/ConsumerRegistry.qml`, `services/core/CommandManager.qml`, `services/system/SystemManager.qml`, `services/system/UpdatesManager.qml`, `config/Paths.qml`, `shell.qml`
 > **Config:** none of its own
 > **Related:** [Config manager](config-manager.md), [Config readers](config-readers.md), [Editors pattern](editors-pattern.md), [Shell manager and screen targeting](shell-manager-targeting.md)
 

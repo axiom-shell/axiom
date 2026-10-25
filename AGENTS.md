@@ -97,13 +97,7 @@ components/
   views/        overlay pages by view type
   bar/          the bar; widgets/ = bar widget types
   surfaces/     standalone windows (launcher, lockscreen, toasts, dock, onboarding, …)
-services/       pragma Singleton managers: state and side effects, one module per group:
-  core/         config, backend bridge, commands, files, state, IPC, theme, dev and updates
-  compositor/   CompositorManager, its backends, monitors, binds, layers
-  session/      lock, auth, greeter, onboarding, polkit, idle
-  system/       hardware and OS data: audio, network, battery, media, notifications, clipboard
-  ui/           surface state and editors: bars, popouts, overlay, launcher, settings, wallpaper
-  apps/         features with their own data: calendar, chat, notes, todos, weather, screenshots
+services/       pragma Singleton managers: state and side effects; core/ compositor/ session/ system/ ui/ apps/ (services/AGENTS.md › Folders)
 config/         reader singletons; json/ (schema, theme defaults), themes/, i18n/
 scripts/        external scripts and the dev checks
 backend/        the axiom binary (Go): its own AGENTS.md
