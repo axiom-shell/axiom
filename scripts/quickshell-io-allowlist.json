@@ -117,9 +117,6 @@
     "services/TodoManager.qml": [
       "FileView"
     ],
-    "services/UpdatesManager.qml": [
-      "Process"
-    ],
     "services/WallpaperManager.qml": [
       "Process",
       "execDetached"

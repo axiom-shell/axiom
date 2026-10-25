@@ -15,8 +15,9 @@ QtObject {
   // names, `repo` by a third-party repository to enable first. `updates`
   // checks for pending updates without root: `check` (the command),
   // `found` / `none` (its exit codes with updates, and with none), `format`
-  // (its output, for parseUpdates), `upgrade` (run in a terminal), and
-  // `aur` (an AUR helper's updates count too)
+  // (its output, "pacman" or "dnf", parsed by axiom's `updates` topic),
+  // `upgrade` (run in a terminal), and `aur` (an AUR helper's updates
+  // count too)
   readonly property var distros: ({
       "arch": {
         "install": "sudo pacman -S --needed",
@@ -305,26 +306,5 @@ QtObject {
   // How `distro` checks for updates (see `distros`), or null
   function updates(distro) {
     return root.distros[distro]?.updates ?? null;
-  }
-
-  // An update check's output as [{ name, from, to }] (`from` "" when the
-  // output doesn't say). "pacman": `name from -> to` (checkupdates, and
-  // an AUR helper's -Qua). "dnf": `name.arch version repo` under a heading,
-  // skipping installed packages an update obsoletes (repo `@…`)
-  function parseUpdates(format, text) {
-    const rows = String(text ?? "").split("\n").map(line => line.trim().split(/\s+/));
-    if (format === "pacman")
-      return rows.filter(f => f.length >= 4 && f[2] === "->").map(f => ({
-            "name": f[0],
-            "from": f[1],
-            "to": f[3]
-          }));
-    if (format === "dnf")
-      return rows.filter(f => f.length === 3 && /^.+\.[A-Za-z0-9_]+$/.test(f[0]) && !f[2].startsWith("@")).map(f => ({
-            "name": f[0].slice(0, f[0].lastIndexOf(".")),
-            "from": "",
-            "to": f[1]
-          }));
-    return [];
   }
 }

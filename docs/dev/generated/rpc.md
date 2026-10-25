@@ -53,6 +53,9 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `tailscale.unsubscribe` |  | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |  |
 | `tz.offsets` |  | `backend/internal/daemon/tools.go` | `services/TimeZoneManager.qml` |  |
 | `tz.zones` |  | `backend/internal/daemon/tools.go` | `services/TimeZoneManager.qml` |  |
+| `updates.refresh` |  | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |  |
+| `updates.subscribe` |  | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |  |
+| `updates.unsubscribe` |  | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |  |
 
 ## Pushes (daemon → subscribers)
 
@@ -72,6 +75,7 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 | `schema.changed` | config | `backend/internal/daemon/dev.go` | `services/BackendManager.qml`<br>`services/ConfigManager.qml` |
 | `schema.error` | config | `backend/internal/daemon/dev.go` | `services/ConfigManager.qml` |
 | `tailscale.state` | tailscale (polled) | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |
+| `updates.state` | updates (polled) | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |
 
 ## Calls into the shell (daemon → shell)
 

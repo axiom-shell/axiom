@@ -20,9 +20,9 @@ How `services/` is built: one singleton per domain, owning state and side effect
   - Stops entirely with no consumers.
   - With `history: true` it keeps 60-sample ring buffers (see [Writing modules](../overlay/writing-modules.md)).
 - **UpdatesManager**: pending package (and, on Arch, AUR) updates shared by every Updates widget and module (same acquire/release pattern; the AUR helper is the `Updates` section's, `UpdatesConfig.activeAurHelper`).
-  - How it checks is the distribution's `Packages.updates` entry (`checkupdates` on Arch, `dnf check-update` on Fedora); on one with none, `supported` is false and nothing runs (the widget hides, the card says so).
-  - Only one check may run at a time: concurrent `checkupdates` runs share its temp db and fail.
-  - `upgrade(command, terminal)` runs the upgrade in a terminal (one at a time, `upgrading`) and checks again when it closes.
+  - Checked by axiom (the `updates` topic, `backend/internal/updates`, at most every minute): the request carries the distribution's `Packages.updates` entry (`checkupdates` on Arch, `dnf check-update` on Fedora), which Go runs and parses; on one with none, `supported` is false and nothing is subscribed (the widget hides, the card says so).
+  - Every check ends in a state, a failed one too (its `error`, the last packages kept), so `checking` (set on subscribing and `refresh()`) always clears. The hub runs one check at a time: concurrent `checkupdates` runs share its temp db and fail.
+  - `upgrade(command, terminal)` runs the upgrade in a terminal (`CommandManager.run`, one at a time) and checks again when it closes.
 - **Other polled services:**
   - `CalendarManager`: `acquire(owner)` with no request; its interval is the Calendar section's. See [Calendar](../features/calendar.md).
   - `WeatherManager`: takes no request (its settings are global).

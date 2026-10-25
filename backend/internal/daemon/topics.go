@@ -4,6 +4,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/tailscale"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
+	"github.com/axiom-shell/axiom/backend/internal/updates"
 )
 
 // topicsPart: the polled topics (internal/topics), each source from the
@@ -25,5 +26,6 @@ func (d *Daemon) topicsPart() part {
 func (d *Daemon) sources() []topics.Source {
 	return append([]topics.Source{
 		tailscale.Source(tailscale.Options{}),
+		updates.Source(updates.Options{Log: d.opts.Log}),
 	}, d.opts.topics...)
 }

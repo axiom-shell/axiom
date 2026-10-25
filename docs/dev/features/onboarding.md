@@ -66,7 +66,7 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - `DependencyManager.installLines(keys)` / `installCommand(key)` give the shell lines: COPRs to enable, one install, then downloads. On an unknown distribution they're empty and the Checks page lists names only.
 - The same commands serve Settings' hints (Idle, Night light, Login screen) and the missing icon font notification. A distribution without names gets the text only, no command.
 - `Packages.distros.<family>.updates` is how the Updates widget checks and upgrades there (`UpdatesManager.backend`); `"/$distro": "arch"` in an `x-showIf` hides the AUR options elsewhere.
-- **Adding a distribution:** one column in every `Packages.packages` entry (`tst_Packages` fails on a missing one), one `Packages.distros` entry (with `updates`, and a `Packages.parseUpdates` format if its output is new), and test rows; then install.sh's column for it ([packaging.md](../packaging.md): `check_packages.py` compares the two).
+- **Adding a distribution:** one column in every `Packages.packages` entry (`tst_Packages` fails on a missing one), one `Packages.distros` entry (with `updates`, and a format in `backend/internal/updates` if its output is new), and test rows; then install.sh's column for it ([packaging.md](../packaging.md): `check_packages.py` compares the two).
 
 ### Entry points
 - IPC `onboarding`:
