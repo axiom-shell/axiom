@@ -1,6 +1,7 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 import qs.components.methods
 
 // Other time zones' UTC offsets, for clocks set to one (a Clock module's
@@ -8,8 +9,8 @@ import qs.components.methods
 // between zones (TimeZones). Each zone asked for is read once for all its
 // clocks (axiom's tz.offsets, from the system's zoneinfo), again past
 // every half hour (when daylight saving changes), and not at all with
-// none asked for. Without axiom (the greeter) there are none: clocks show
-// the system's time.
+// none asked for. Without axiom's daemon (the greeter) the same answers
+// come from `axiom tz` (Paths.axiomBin).
 //   TimeZoneManager.acquire(owner, "Asia/Tokyo")   // "" releases
 //   TimeZoneManager.acquire(owner, ["Asia/Tokyo", "Europe/Paris"])
 //   TimeZoneManager.offsetOf("Asia/Tokyo")          // 540, null until read
@@ -69,9 +70,7 @@ QtObject {
       return;
     }
     root._reading = true;
-    BackendManager.call("tz.offsets", {
-      "zones": root._wanted.split("\n")
-    }, (error, result) => {
+    root._ask("offsets", root._wanted.split("\n"), (error, result) => {
       root._reading = false;
       if (error) {
         if (error.kind !== "unavailable")
@@ -96,9 +95,52 @@ QtObject {
     onTriggered: root._read()
   }
 
-  // tzdata's own list ($TZDIR where it's set)
-  Component.onCompleted: BackendManager.call("tz.zones", {}, (error, result) => {
-    if (!error)
-      root._zones = result.zones;
-  })
+  // Asks axiom for tz.zones / tz.offsets (what: "zones" | "offsets"):
+  // the daemon, else `axiom tz <what> --json`, which answers the same.
+  // done(error, result)
+  function _ask(what, zones, done) {
+    if (BackendManager.active && what === "zones") {
+      BackendManager.call("tz.zones", {}, done);
+      return;
+    }
+    if (BackendManager.active) {
+      BackendManager.call("tz.offsets", {
+        "zones": zones
+      }, done);
+      return;
+    }
+    CommandManager.run([Paths.axiomBin, "tz", what, "--json", "--"].concat(zones), (exitCode, out, err) => {
+      let result = null;
+      try {
+        result = exitCode === 0 ? JSON.parse(out) : null;
+      } catch (e) {}
+      done(result ? null : {
+        "kind": "unavailable",
+        "message": err.trim()
+      }, result);
+    });
+  }
+
+  // tzdata's own list ($TZDIR where it's set), until it's had: again
+  // after a hello, if the connection dropped before it was answered
+  function _readZones() {
+    if (root._zones.length > 0 || root._readingZones)
+      return;
+    root._readingZones = true;
+    root._ask("zones", [], (error, result) => {
+      root._readingZones = false;
+      if (!error)
+        root._zones = result.zones;
+    });
+  }
+  property bool _readingZones: false
+
+  property Connections _hello: Connections {
+    target: BackendManager
+    function onGreeted() {
+      root._readZones();
+    }
+  }
+
+  Component.onCompleted: root._readZones()
 }

@@ -1,6 +1,6 @@
 # Clocks and time zones
 
-> **Files:** `services/TimeZoneManager.qml`, `components/methods/TimeZones.qml`, `backend/internal/tz/`, `backend/internal/daemon/tools.go`, `components/content/Clock/Clock.qml`, `components/content/WorldClocks/WorldClocks.qml`, `components/bar/widgets/Time/Time.qml`
+> **Files:** `services/TimeZoneManager.qml`, `components/methods/TimeZones.qml`, `backend/internal/tz/`, `backend/internal/daemon/tools.go`, `backend/internal/cli/tz.go`, `components/content/Clock/Clock.qml`, `components/content/WorldClocks/WorldClocks.qml`, `components/bar/widgets/Time/Time.qml`
 > **Config:** module/widget `timezone` properties (no section of its own)
 > **Related:** [Services pattern](../core/services-pattern.md), [Schema annotations](../core/schema-annotations.md), [Desktop](desktop.md), [Utility modules](../overlay/utility-modules.md)
 
@@ -20,10 +20,10 @@ How clocks show another time zone (the JS engine has no Intl), plus the Clock mo
   - One read serves all of that zone's clocks.
   - It reads again past every half hour UTC, when daylight saving can change.
   - Nothing is read when no clock asks.
-  - Without axiom (the greeter, a shell run by hand) nothing is read, and clocks show the system's time ([issues](../issues.md)).
+  - Without axiom's daemon (the greeter) the same reads run through `axiom tz offsets` / `axiom tz zones --json` (`Paths.axiomBin`, `backend/internal/cli/tz.go`), whose answers have the calls' shape. A shell run by hand with no `axiom` on its PATH reads nothing, and clocks show the system's time.
 - **`offsetOf(zone)`** is null, meaning the system's time:
   - until the zone has been read;
-  - for a zone not in `zones`. `zones` is the system's list (`tz.zones`: `tzdata.zi`'s zones and links, else the zoneinfo files found), fetched once; it is also the `timezones` option list.
+  - for a zone not in `zones`. `zones` is the system's list (`tz.zones`: `tzdata.zi`'s zones and links, else the zoneinfo files found), fetched until it has been read (again after a reconnect); it is also the `timezones` option list.
 - **Display:** a clock shows `methods/TimeZones.shift(date, offset)`, whose local fields read as that zone's wall clock.
 
 ### Clock module (`content/Clock`)

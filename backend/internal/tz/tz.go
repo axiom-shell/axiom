@@ -20,6 +20,15 @@ import (
 // DefaultDir is the zoneinfo directory without $TZDIR.
 const DefaultDir = "/usr/share/zoneinfo"
 
+// Dir is the zoneinfo directory: $TZDIR (NixOS has no
+// /usr/share/zoneinfo), else DefaultDir.
+func Dir(getenv func(string) string) string {
+	if dir := getenv("TZDIR"); dir != "" {
+		return dir
+	}
+	return DefaultDir
+}
+
 // A zone name: never absolute, never climbing out of the directory
 var validZone = regexp.MustCompile(`^[A-Za-z0-9_+-]+(/[A-Za-z0-9_+-]+)*$`)
 

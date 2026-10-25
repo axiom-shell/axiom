@@ -27,6 +27,7 @@ func Root() *Command {
 			lockCommand(),
 			ipcCommand(),
 			compositorCommand(),
+			tzCommand(),
 			debugCommand(),
 			versionCommand(),
 		},

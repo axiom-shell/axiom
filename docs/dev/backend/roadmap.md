@@ -34,7 +34,7 @@ Status: **done**, **next**, or **later**.
 **Stage 1: pilot** (done)
 - Done: `TailscaleManager`: polling `tailscale status --json` → the `tailscale` topic (`backend/internal/tailscale`), the first polled topic end to end. Its floor (5 s) is Go's; the bar widget's default interval is 10 s.
 - Done: `DependencyManager`: a `sh` + `command -v` per tool → `deps.check` (`backend/internal/deps`: `exec.LookPath`, the Python modules in one python3 run).
-- Done: `TimeZoneManager`: `sh` + `awk` over `tzdata.zi` and `TZ=… date +%z` per zone → `tz.zones` (a Go parser, fetched once) and `tz.offsets` (`backend/internal/tz`, the zoneinfo files read in Go). The greeter has no daemon, so its clocks show the system's time ([issues](../issues.md)).
+- Done: `TimeZoneManager`: `sh` + `awk` over `tzdata.zi` and `TZ=… date +%z` per zone → `tz.zones` (a Go parser, fetched once) and `tz.offsets` (`backend/internal/tz`, the zoneinfo files read in Go). The greeter has no daemon: there it asks `axiom tz zones|offsets`, the same answers from the CLI.
 
 **Stage 2: Wayland** (next; needs stage 0's connection; protocols per compositor: [wayland.md](wayland.md))
 - Idle: `HypridleManager` → `ext_idle_notifier_v1`; removes hypridle. `Idle` is `x-takeover`.

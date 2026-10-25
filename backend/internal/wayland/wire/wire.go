@@ -90,14 +90,15 @@ func Globals(socket string, timeout time.Duration) ([]Global, error) {
 		if err != nil {
 			return nil, fmt.Errorf("reading from the compositor: %w", err)
 		}
+		// Args, not slices of body: a short message reads as zeros
+		args := &Args{b: body}
 		switch {
 		case obj == displayID && op == evDisplayError:
-			_, code, msg := readUint(body), readUint(body[4:]), readString(body[8:])
+			_, code, msg := args.Uint(), args.Uint(), args.String()
 			return nil, axerr.New(axerr.Unavailable, "the compositor reported error %d: %s", code, msg)
 		case obj == registryID && op == evGlobal:
-			name := readUint(body)
-			iface, rest := readStringRest(body[4:])
-			globals = append(globals, Global{Name: name, Interface: iface, Version: readUint(rest)})
+			name, iface, version := args.Uint(), args.String(), args.Uint()
+			globals = append(globals, Global{Name: name, Interface: iface, Version: version})
 		case obj == callbackID && op == evCallbackDone:
 			sort.Slice(globals, func(i, j int) bool { return globals[i].Interface < globals[j].Interface })
 			return globals, nil
@@ -181,11 +182,6 @@ func readUint(b []byte) uint32 {
 		return 0
 	}
 	return binary.LittleEndian.Uint32(b)
-}
-
-func readString(b []byte) string {
-	s, _ := readStringRest(b)
-	return s
 }
 
 // readStringRest reads a wire string (length with its NUL, the bytes,

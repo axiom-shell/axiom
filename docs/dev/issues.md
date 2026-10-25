@@ -18,23 +18,17 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### CommandOutput's text size loops through its own height
-- **Where:** `components/content/CommandOutput/CommandOutput.qml` (`body`)
-- **What:** In statement mode `body.textSize` reads `body.height`, which follows the text's implicit height in its layout, so the live log shows `Binding loop detected for property "textSize"` for this file. Sizing from the cell (the layout's height, or `metrics`) rather than the text's own height would break the loop.
+### The binds child sometimes segfaults instead of running out of memory
+- **Where:** `backend/internal/compositor/binds/isolate.go` (`Extract`'s error cases, `LimitMemory`), `backend/internal/compositor/binds/isolate_test.go` (`TestIsolatedExtractSurvivesAFileTakingAllMemory`)
+- **What:** Under `RLIMIT_DATA` the Go runtime (go 1.27.2, kernel 7.2) sometimes dies with `SIGSEGV: segmentation violation` rather than `out of memory`, so the error reads `reading the binds: SIGSEGV: segmentation violation: exit status 2` instead of the MiB message and the test fails. It fails on main as well, and passed earlier the same day. Nothing moves and the daemon goes on either way: only the message and the test are affected. Possible fixes: watch the child's peak RSS (`ProcessState.SysUsage`) to tell a memory death from a real crash, or limit with a cgroup instead of `RLIMIT_DATA`.
 - **Size:** small
-- **Found:** 2026-10-24, while moving services to the axiom daemon
+- **Found:** 2026-10-25, while getting the service-layer branch ready to merge
 
 ### A notification's avatar warns when its saved image is gone
 - **Where:** `components/content/parts/notifications/NotificationAvatar.qml` (`picture`)
 - **What:** A history notification whose image file in `~/.local/state/axiom/notifications/` no longer exists logs `Cannot open: file:///…/notifications/<id>.png` on every build of its row. The avatar should fall back to the app icon quietly (check `picture.status`, or drop the image path from history when the file is removed).
 - **Size:** small
 - **Found:** 2026-10-24, while moving services to the axiom daemon
-
-### A greeter clock set to another time zone shows the system's time
-- **Where:** `services/TimeZoneManager.qml` (`offsetOf`), `components/content/Clock/Clock.qml`
-- **What:** Zone offsets come from the axiom daemon (`tz.offsets`), and no daemon runs in the greeter (`BackendManager` stays inactive), so a Clock module on the login screen with a `timezone` shows the system's local time. The greeter could get offsets from `axiom greeter` (a small socket of its own, or the bundle carrying them), or the greeter host could hide the setting.
-- **Size:** small
-- **Found:** 2026-10-24, while moving TimeZoneManager to the daemon
 
 ### Leaving managed, the runtime layer can go on before the given-back config reloads
 - **Where:** `backend/internal/compositor/manager/manager.go` (`SetInputs`, `liveChanged`, `apply`)
@@ -54,12 +48,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-24, while moving the compositor takeover into the binary
 
-### backend.json points at a protocol doc that doesn't exist
-- **Where:** `config/json/backend.json` (`_comment`)
-- **What:** The comment says "see docs/dev/backend/protocol.md", which was never written: what counts as a protocol change (and that push topics and new methods don't need one) is only in `docs/dev/backend/README.md`. Writing the page, or pointing the comment at the README, fixes it.
-- **Size:** small
-- **Found:** 2026-10-24, while auditing the Go backend
-
 ### Some backend security checks have no tests
 - **Where:** `backend/internal/fsx/` (`Adopt`), `backend/internal/rpc/server.go` (`Listen`), `backend/internal/cli/greeter.go` (`greeterEnv`), `backend/internal/daemon/reexec.go` (`adopt`)
 - **What:** `backend/AGENTS.md` asks that every security check has a test. The daemon's (`daemon_test.go`: the handoff's parsing, the lockscreen refusal, the shell-peer check, `writable`) are covered; still untested: the stale socket removed only under the instance lock, `fsx.Adopt` refusing a wrong inode or an unheld lock (only its close-on-exec part is tested), the socket's 0600, an adopted handoff end to end, and the greeter's environment.
@@ -73,8 +61,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-24, while reviewing the Go backend
 
 ### Small backend error and robustness gaps
-- **Where:** `backend/internal/fsx/fsx.go` (`WriteFile`), `backend/internal/logfile/`, `backend/internal/ipcroute/ipcroute.go` (`exec`), `backend/internal/wayland/wire/wire.go` (`Globals`), `backend/internal/cli/cli.go` (`Main`), `backend/internal/config/format.go`, `backend/internal/saved/saved.go` (`Import`)
-- **What:** Raw errors reach the CLI as `Internal`: `fsx.WriteFile` (`fmt.Errorf`), `logfile.Open`, `daemon logs`' `ReadFile`. `ipcroute`'s exec path labels a timeout `NotFound` (should be `Unavailable`). `wire.Globals` slices `body[4:]`/`body[8:]` without checking a short message's length. `cli.Main` doesn't catch SIGHUP: closing the terminal kills a `--dev` daemon outright, leaving its shell for the next start to stop. `format: 1` is refused with "it reads 1 and 2", and `format: null` prints `<nil>`. The keys a format-1 load drops (`Removed`) are never logged. `saved.Import` reads the file twice, so the preview and what's applied can differ.
+- **Where:** `backend/internal/fsx/fsx.go` (`WriteFile`), `backend/internal/logfile/`, `backend/internal/ipcroute/ipcroute.go` (`exec`), `backend/internal/cli/cli.go` (`Main`), `backend/internal/config/format.go`, `backend/internal/saved/saved.go` (`Import`)
+- **What:** Raw errors reach the CLI as `Internal`: `fsx.WriteFile` (`fmt.Errorf`), `logfile.Open`, `daemon logs`' `ReadFile`. `ipcroute`'s exec path labels a timeout `NotFound` (should be `Unavailable`). `cli.Main` doesn't catch SIGHUP: closing the terminal kills a `--dev` daemon outright, leaving its shell for the next start to stop. `format: 1` is refused with "it reads 1 and 2", and `format: null` prints `<nil>`. The keys a format-1 load drops (`Removed`) are never logged. `saved.Import` reads the file twice, so the preview and what's applied can differ.
 - **Size:** small
 - **Found:** 2026-10-24, while reviewing the Go backend
 

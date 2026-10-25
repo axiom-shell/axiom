@@ -193,6 +193,28 @@ func TestNoNamesBeforeTheyAreKnown(t *testing.T) {
 	}
 }
 
+func TestNoNamesWhileAnOutputHasNone(t *testing.T) {
+	t.Parallel()
+	f := newFake(t, true, map[uint32]*fakeOutput{
+		1: {name: "DP-1", w: 1920, h: 1080, scale: 1},
+		2: {name: "", x: 1920, w: 1920, h: 1080, scale: 1},
+	})
+	tr, _ := run(t, f)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, ready := tr.Outputs(); ready {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("never ready")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if names := tr.Names(); names != nil {
+		t.Errorf("names %q with an output unnamed, want nil", names)
+	}
+}
+
 func TestRunEndsWithTheCompositor(t *testing.T) {
 	t.Parallel()
 	f := newFake(t, true, map[uint32]*fakeOutput{10: {name: "DP-1", w: 1, h: 1, scale: 1}})

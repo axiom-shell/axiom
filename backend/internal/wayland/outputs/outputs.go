@@ -102,12 +102,23 @@ func (t *Tracker) Outputs() ([]Output, bool) {
 	return out, t.ready
 }
 
-// Names are the outputs' names by place; nil until they are known.
+// Names are the outputs' names by place; nil until they are known, and
+// while an output has described itself without a name (wl_output below
+// v4): a list missing it would put every monitor after it in the wrong
+// place.
 func (t *Tracker) Names() []string {
-	outputs, ready := t.Outputs()
+	t.mu.Lock()
+	ready := t.ready
+	for _, o := range t.outputs {
+		if o.described && o.current.Name == "" {
+			ready = false
+		}
+	}
+	t.mu.Unlock()
 	if !ready {
 		return nil
 	}
+	outputs, _ := t.Outputs()
 	names := make([]string, 0, len(outputs))
 	for _, o := range outputs {
 		names = append(names, o.Name)
