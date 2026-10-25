@@ -12,7 +12,8 @@ The daemon's own Wayland connection, and what each compositor offers for what it
 - `axiom debug wayland-outputs [--json]` lists the outputs as the daemon sees them.
 - Tests script a fake compositor: `wire/wiretest`.
 
-### Globals `axiom debug wayland-globals [--json]` lists a running compositor's globals; all three offer `wl_output` v4 and `zxdg_output_manager_v1` v3, which the outputs use. The captures are in `tests/fixtures/wayland/globals-<compositor>.json`:
+### Globals
+`axiom debug wayland-globals [--json]` lists a running compositor's globals; all three offer `wl_output` v4 and `zxdg_output_manager_v1` v3, which the outputs use. The captures are in `tests/fixtures/wayland/globals-<compositor>.json`:
 - Hyprland 0.55: the live session.
 - sway 1.12 (SwayFX 0.6): headless (`WLR_BACKENDS=headless`).
 - niri 26.04: nested in a window (its winit backend).
