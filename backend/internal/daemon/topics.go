@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"github.com/axiom-shell/axiom/backend/internal/claudeusage"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/system"
 	"github.com/axiom-shell/axiom/backend/internal/tailscale"
@@ -29,5 +30,6 @@ func (d *Daemon) sources() []topics.Source {
 		tailscale.Source(tailscale.Options{}),
 		updates.Source(updates.Options{Log: d.opts.Log}),
 		system.Source(system.Options{Home: d.opts.Getenv("HOME")}),
+		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
 	}, d.opts.topics...)
 }

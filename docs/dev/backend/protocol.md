@@ -52,6 +52,9 @@ Data the daemon polls for the shell (`backend/internal/topics`) is not a hello t
 - It pushes `<topic>.state` to the subscribers when the state changes (latest-wins, below), and to a new subscriber at once when it has one. `<topic>.refresh` fetches now.
 - The shell: `BackendManager.acquire(topic, request)` / `release(topic)` / `refresh(topic)`, subscribed again after every hello (a reconnect or re-exec forgets them). The service owning the topic merges its consumers (`ConsumerRegistry`) into one request and listens to `<topic>.state`.
 - A topic is a `topics.Source{Name: "…", Floor, Default, Fetch}` in the package owning its side effect, listed in `daemon/topics.go` (`sources`); `rpc.md` reads the name from that literal.
+  - `FetchOnChange` fetches as soon as the requests change instead of at the next interval (`system`: a page just opened fills at once; `claudeUsage`: a new account).
+  - `OnRefresh` tells the source of a `<topic>.refresh` before the fetch, for a Fetch that does more when asked (`claudeUsage` refetches every account not rate limited).
+  - A state that must reach the shell after every fetch (a failure, a sample for a history) carries its time (`at`), since an unchanged state isn't pushed (`updates`, `system`).
 
 ### Guards and errors
 - Every connection's peer must be the same user (`SO_PEERCRED`, `rpc.SamePeerUser`).

@@ -19,10 +19,6 @@
       "FileView",
       "execDetached"
     ],
-    "services/ClaudeUsageManager.qml": [
-      "Process",
-      "FileView"
-    ],
     "services/ClipboardManager.qml": [
       "Process"
     ],

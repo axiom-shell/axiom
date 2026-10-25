@@ -9,6 +9,9 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 
 | Method | Guard | Daemon | Shell callers | CLI |
 |---|---|---|---|---|
+| `claudeUsage.refresh` |  | `backend/internal/claudeusage/claudeusage.go` | `services/ClaudeUsageManager.qml` |  |
+| `claudeUsage.subscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/ClaudeUsageManager.qml` |  |
+| `claudeUsage.unsubscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/ClaudeUsageManager.qml` |  |
 | `compositor.allowTakeover` | shell only | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
 | `compositor.checkManaged` | shell only | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
 | `compositor.entries` |  | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
@@ -69,6 +72,7 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 
 | Push | Topic | Sent from | Heard in |
 |---|---|---|---|
+| `claudeUsage.state` | claudeUsage (polled) | `backend/internal/claudeusage/claudeusage.go` | `services/ClaudeUsageManager.qml` |
 | `compositor.applied` | compositor | `backend/internal/compositor/manager/manager.go` | `services/CompositorConfigManager.qml` |
 | `compositor.bindsMerged` | compositor | `backend/internal/compositor/manager/manager.go` | `services/CompositorConfigManager.qml` |
 | `compositor.notify` | compositor | `backend/internal/compositor/manager/manager.go` | `services/CompositorConfigManager.qml` |

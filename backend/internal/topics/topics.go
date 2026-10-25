@@ -29,6 +29,13 @@ type Source struct {
 	// Fetch returns the state for the subscribers' requests (each as it
 	// was sent); it's marshalled as JSON and pushed when it changed
 	Fetch func(ctx context.Context, requests []json.RawMessage) (any, error)
+	// FetchOnChange fetches as soon as the requests change (a new
+	// subscriber, or one asking for more), not at the next interval
+	FetchOnChange bool
+	// OnRefresh, when set, is told of `<name>.refresh` before the fetch
+	// it starts, for a source whose Fetch does more when asked to (it
+	// mustn't block: the hub's lock is held)
+	OnRefresh func()
 }
 
 // Subscriber is where states go: an *rpc.Conn.
@@ -185,6 +192,9 @@ func (h *Hub) Refresh(name string) error {
 		return err
 	}
 	if t.cancel != nil {
+		if t.src.OnRefresh != nil {
+			t.src.OnRefresh()
+		}
 		signal(t.refresh)
 	}
 	return nil
@@ -219,7 +229,8 @@ func (h *Hub) start(t *topic) {
 }
 
 // loop fetches, then waits for the shortest interval asked since that
-// fetch (again whenever the requests change), or a refresh.
+// fetch (again whenever the requests change), or a refresh (or, with
+// FetchOnChange, a change).
 func (h *Hub) loop(ctx context.Context, t *topic, gen int, changed, refresh <-chan struct{}) {
 	for ctx.Err() == nil {
 		requests, _ := h.requests(t)
@@ -242,6 +253,9 @@ func (h *Hub) loop(ctx context.Context, t *topic, gen int, changed, refresh <-ch
 			case <-refresh:
 				break wait
 			case <-changed:
+				if t.src.FetchOnChange {
+					break wait
+				}
 			case <-h.o.After(d):
 				break wait
 			}

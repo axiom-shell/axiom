@@ -68,8 +68,8 @@ type harness struct {
 }
 
 // newHarness is a hub with one source, "t" (floor 1s, default 10s),
-// whose state is the harness's value.
-func newHarness(t *testing.T) *harness {
+// whose state is the harness's value; with changes to it from each opt.
+func newHarness(t *testing.T, opts ...func(*Source)) *harness {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
@@ -84,13 +84,17 @@ func newHarness(t *testing.T) *harness {
 		Now:   h.clock.Now,
 		After: h.clock.After,
 	})
-	h.hub.add(Source{Name: "t", Floor: time.Second, Default: 10 * time.Second,
+	src := Source{Name: "t", Floor: time.Second, Default: 10 * time.Second,
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
 			h.fetches <- requests
 			h.mu.Lock()
 			defer h.mu.Unlock()
 			return map[string]int{"v": h.value}, nil
-		}})
+		}}
+	for _, o := range opts {
+		o(&src)
+	}
+	h.hub.add(src)
 	return h
 }
 
@@ -279,5 +283,42 @@ func TestRefusesUnknownTopicsAndBadParams(t *testing.T) {
 	}
 	if err := h.hub.Subscribe(newSub(), "t", json.RawMessage(`{"interval":"x"}`)); err == nil {
 		t.Error("took a string interval")
+	}
+}
+
+func TestFetchOnChange(t *testing.T) {
+	t.Parallel()
+	for _, onChange := range []bool{false, true} {
+		h := newHarness(t, func(s *Source) { s.FetchOnChange = onChange })
+		s := newSub()
+		subscribe(t, h, s, `{"interval":60000}`)
+		fetched(t, h)
+		settle(t, h)
+		subscribe(t, h, s, `{"interval":60000, "more": true}`)
+		if onChange {
+			if r := fetched(t, h); string(r[0]) != `{"interval":60000, "more": true}` {
+				t.Errorf("fetched for %s", r)
+			}
+		} else {
+			notFetched(t, h)
+		}
+	}
+}
+
+func TestOnRefresh(t *testing.T) {
+	t.Parallel()
+	refreshed := 0
+	h := newHarness(t, func(s *Source) { s.OnRefresh = func() { refreshed++ } })
+	// Nothing to refresh without subscribers
+	h.hub.Refresh("t")
+	s := newSub()
+	subscribe(t, h, s, `{}`)
+	fetched(t, h)
+	h.hub.Refresh("t")
+	fetched(t, h)
+	h.hub.mu.Lock()
+	defer h.hub.mu.Unlock()
+	if refreshed != 1 {
+		t.Errorf("told of %d refreshes, want 1", refreshed)
 	}
 }

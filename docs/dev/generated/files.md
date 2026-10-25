@@ -878,7 +878,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `CalendarManager.qml`: Calendars (the Calendar section): CalDAV accounts and .ics subscriptions, through scripts/calendar_sync.py (run with the system python3; passwords from SecretsManager on its stdin).
 - `ChatManager.qml`: The chat: conversations, sending and streaming replies (ChatRequest, ChatProtocol), attachments, and their history on disk.
 - `ChatRequest.qml`: One streaming chat request, sent with curl.
-- `ClaudeUsageManager.qml`: Claude plan usage (the numbers Claude Code's /usage shows) for one or more Claude Code accounts, each a CLAUDE_CONFIG_DIR.
+- `ClaudeUsageManager.qml`: Claude plan usage (the numbers Claude Code's /usage shows) for one or more Claude Code accounts, each a CLAUDE_CONFIG_DIR: axiom's `claudeUsage` topic, which reads api.anthropic.com/api/oauth/usage with the OAuth token …
 - `ClipboardManager.qml`: The clipboard history the launcher searches (":" or /clipboard), while Launcher.clipboard is on.
 - `CommandManager.qml`: Shell commands polled for their output (e.g. a bar Button's label), shared by every widget asking for the same command: each distinct command runs once per interval (the shortest asked for), only while something has acq…
 - `CommunityFetch.qml`: One run of scripts/community_fetch.sh, for CommunitySetupsManager: its output is handed to `done` once it ends.
