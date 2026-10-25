@@ -28,6 +28,7 @@ func Root() *Command {
 			ipcCommand(),
 			compositorCommand(),
 			tzCommand(),
+			netCommand(),
 			debugCommand(),
 			versionCommand(),
 		},

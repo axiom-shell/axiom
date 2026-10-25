@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/topics"
@@ -111,11 +112,16 @@ func Source(o Options) topics.Source {
 	// each is said once
 	last := State{Repo: []Package{}, AUR: []Package{}}
 	var failed, warned string
+	// A loop stopped and started again can briefly overlap the old one:
+	// its check waits for the cancelled one to end
+	var mu sync.Mutex
 	return topics.Source{
 		Name:    "updates",
 		Floor:   time.Minute,
 		Default: 30 * time.Minute,
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
+			mu.Lock()
+			defer mu.Unlock()
 			var check *Check
 			helper := ""
 			for _, raw := range requests {

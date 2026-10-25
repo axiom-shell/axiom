@@ -97,12 +97,14 @@ const (
 	// The kernel's USER_HZ, which /proc/<pid>/stat counts in: 100 on
 	// every architecture Linux runs a desktop on
 	clockTicks = 100
-	pageSize   = 4096
 	// Disk usage changes slowly and statfs can stall on a network mount
 	diskEvery = time.Minute
 	// A first process list's second read, so %CPU is current at once
 	processWarmup = 500 * time.Millisecond
 )
+
+// rss in /proc/<pid>/stat counts pages: 16 KiB on Asahi, not 4
+var pageSize = int64(os.Getpagesize())
 
 // Source is the `system` topic.
 func Source(o Options) topics.Source {

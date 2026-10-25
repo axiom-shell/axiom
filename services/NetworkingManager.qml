@@ -182,8 +182,9 @@ QtObject {
   on_PrimaryKeyChanged: refreshIp()
   Component.onCompleted: refreshIp()
 
-  // From axiom (net.addresses); an answer for a lookup since replaced is
-  // dropped
+  // From axiom (net.addresses; without its daemon, the greeter, `axiom net
+  // address`, which answers the same); an answer for a lookup since
+  // replaced is dropped
   property int _ipLookup: 0
   function _lookUpIp() {
     const device = primaryDevice?.name ?? "";
@@ -192,14 +193,28 @@ QtObject {
       primaryIp = "";
       return;
     }
-    BackendManager.call("net.addresses", {
-      "device": device
-    }, (error, result) => {
+    const done = (error, result) => {
       if (lookup !== root._ipLookup)
         return;
-      if (error)
+      if (error && error.kind !== "unavailable")
         console.warn("[NetworkingManager] Could not read the address of", device + ":", error.message);
       root.primaryIp = result?.ipv4 ?? "";
+    };
+    if (BackendManager.active) {
+      BackendManager.call("net.addresses", {
+        "device": device
+      }, done);
+      return;
+    }
+    CommandManager.run([Paths.axiomBin, "net", "address", "--json", "--", device], (exitCode, out, err) => {
+      let result = null;
+      try {
+        result = exitCode === 0 ? JSON.parse(out) : null;
+      } catch (e) {}
+      done(result ? null : {
+        "kind": "unavailable",
+        "message": err.trim()
+      }, result);
     });
   }
 
