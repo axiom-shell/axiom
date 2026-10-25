@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/system"
 	"github.com/axiom-shell/axiom/backend/internal/tailscale"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/updates"
@@ -27,5 +28,6 @@ func (d *Daemon) sources() []topics.Source {
 	return append([]topics.Source{
 		tailscale.Source(tailscale.Options{}),
 		updates.Source(updates.Options{Log: d.opts.Log}),
+		system.Source(system.Options{Home: d.opts.Getenv("HOME")}),
 	}, d.opts.topics...)
 }

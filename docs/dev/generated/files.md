@@ -940,7 +940,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `StopwatchManager.qml`: One one-off timer and one stopwatch, for every Stopwatch widget and module, both able to run at once.
 - `SwayIpcManager.qml`: Requests to sway that want a reply, through swaymsg: what Quickshell.I3 doesn't cover (its I3.dispatch runs a command with no reply, and it has no window tree, inputs or outputs in full).
 - `SwayManager.qml`: CompositorManager's backend on sway (docs/dev/compositor/contract.md, docs/dev/compositor/sway-backend.md): sway's state as the compositor-neutral shapes (SwayState), and the primitives CompositorManager builds on.
-- `SystemManager.qml`: CPU / memory / temperature / GPU / disk usage, polled only while something is showing it.
+- `SystemManager.qml`: CPU / memory / temperature / GPU / disk usage, sampled by axiom (the `system` topic) only while something is showing it.
 - `TailscaleManager.qml`: Tailscale's state for every widget that shows it: axiom's `tailscale` topic (`tailscale status --json` at the shortest interval asked for, never more often than every 5 s), subscribed only while something has acquire()d…
 - `ThemeManager.qml`: ThemeManager owns the active theme's data (loaded from its file, watched, with defaults for what it leaves out), the theme lists, theme generation from a wallpaper, the wallpaper itself, and re-theming integrated tools.
 - `TimeZoneManager.qml`: Other time zones' UTC offsets, for clocks set to one (a Clock module's or a bar Time widget's `timezone`): the JS engine can't convert times between zones (TimeZones).

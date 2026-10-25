@@ -48,6 +48,10 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `share.import` | writable | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
 | `share.open` |  | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
 | `shell.restart` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/run.go` |
+| `system.kill` |  | `backend/internal/daemon/tools.go` | `services/SystemManager.qml` |  |
+| `system.refresh` |  | `backend/internal/system/system.go` | `services/SystemManager.qml` |  |
+| `system.subscribe` |  | `backend/internal/system/system.go` | `services/SystemManager.qml` |  |
+| `system.unsubscribe` |  | `backend/internal/system/system.go` | `services/SystemManager.qml` |  |
 | `tailscale.refresh` |  | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |  |
 | `tailscale.subscribe` |  | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |  |
 | `tailscale.unsubscribe` |  | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |  |
@@ -74,6 +78,7 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 | `saved.state` | saved | `backend/internal/daemon/daemon.go` | `services/SavedConfigsManager.qml` |
 | `schema.changed` | config | `backend/internal/daemon/dev.go` | `services/BackendManager.qml`<br>`services/ConfigManager.qml` |
 | `schema.error` | config | `backend/internal/daemon/dev.go` | `services/ConfigManager.qml` |
+| `system.state` | system (polled) | `backend/internal/system/system.go` | `services/SystemManager.qml` |
 | `tailscale.state` | tailscale (polled) | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |
 | `updates.state` | updates (polled) | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |
 

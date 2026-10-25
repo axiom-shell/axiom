@@ -3,7 +3,7 @@
 
 > **File:** `services/SystemManager.qml` · **Docs:** see [docs/dev](../../README.md)
 
-CPU / memory / temperature / GPU / disk usage, polled only while something is showing it. Consumers register what they need with acquire(owner, {interval, metrics, diskPaths}) and drop it with release(owner); the service reads the union of requested metrics at the fastest requested interval, and stops entirely when nothing is registered. Everything on the hot path is a sysfs / procfs read through FileView, so polling never spawns a process. The exceptions are disk usage (`df`, on its own slow timer) and NVIDIA GPUs (`nvidia-smi`, only without an AMD card). Metric names: "cpu", "mem", "cpuTemp", "gpu", "disk", "net" (throughput from /proc/net/dev; the connection itself is NetworkingManager's) and "processes" (`top`, two frames so %CPU is current). Request `history: true` to also keep the last `historyLength` samples of each polled metric (for graphs). The metrics any configured graph shows (SystemGraphs modules, SystemStats popouts) are kept from launch, so a graph opens with a minute already drawn.
+CPU / memory / temperature / GPU / disk usage, sampled by axiom (the `system` topic) only while something is showing it. Consumers register what they need with acquire(owner, {interval, metrics, diskPaths}) and drop it with release(owner); axiom reads the union of requested metrics at the fastest requested interval (never under 500 ms), and stops entirely when nothing is registered. Everything is a sysfs / procfs read in Go, so sampling never spawns a process; the exception is NVIDIA GPUs (`nvidia-smi`, only without an AMD card). Disk usage is re-read once a minute. Metric names: "cpu", "mem", "cpuTemp", "gpu", "disk", "net" (throughput from /proc/net/dev; the connection itself is NetworkingManager's) and "processes" (/proc/<pid>/ stat, %CPU since the last sample). Request `history: true` to also keep the last `historyLength` samples of each polled metric (for graphs), one per sample axiom pushes. The metrics any configured graph shows (SystemGraphs modules, SystemStats popouts) are kept from launch, so a graph opens with a minute already drawn.
 
 ### Properties
 
@@ -25,12 +25,12 @@ CPU / memory / temperature / GPU / disk usage, polled only while something is sh
 - `cpuTempHistory` (var)
 - `netRxHistory` (var)
 - `netTxHistory` (var)
-- `hasCpuTemp` (readonly bool): What this machine can report, known once discovery has run
-- `hasGpu` (readonly bool)
+- `hasCpuTemp` (bool): What this machine can report, known from axiom's first sample
+- `hasGpu` (bool)
 
 ### Functions
 
 - `acquire(owner, request)`
 - `release(owner)`
 - `wants(metric)`
-- `kill(pid)`
+- `kill(pid)`: SIGTERM, from axiom; the list is sampled again straight after

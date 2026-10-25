@@ -23,4 +23,4 @@ The desktop's own file picker, for a file or a folder. Axiom draws no picker of 
 
 ### Callers
 - Config import: `SavedConfigsManager.browseImport()`, with a `JSON:*.json` filter.
-- Folder settings: `SchemaField` passes `x-control: "folder"` to `SchemaTextField` as `browse`. Its folder button opens the picker in the current folder and commits the path picked at once, as a picked suggestion does. The path comes back as `~/…`: a reader of a `folder` setting expands it (`Paths.expandHome`; `SystemManager` does for `df`). When no picker could be shown, the field says so; typing a path still works.
+- Folder settings: `SchemaField` passes `x-control: "folder"` to `SchemaTextField` as `browse`. Its folder button opens the picker in the current folder and commits the path picked at once, as a picked suggestion does. The path comes back as `~/…`: a reader of a `folder` setting expands it (`Paths.expandHome`; axiom's `system` topic does for disk usage). When no picker could be shown, the field says so; typing a path still works.

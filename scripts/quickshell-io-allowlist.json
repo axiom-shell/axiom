@@ -104,11 +104,6 @@
       "Process",
       "FileView"
     ],
-    "services/SystemManager.qml": [
-      "Process",
-      "FileView",
-      "execDetached"
-    ],
     "services/ThemeManager.qml": [
       "Process",
       "FileView",

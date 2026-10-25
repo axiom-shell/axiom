@@ -6,6 +6,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/deps"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/system"
 	"github.com/axiom-shell/axiom/backend/internal/tz"
 )
 
@@ -39,5 +40,11 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 	})
 	rpc.Handle(reg, "deps.check", func(ctx context.Context, c *rpc.Conn, p checkParams) (checkResult, error) {
 		return checkResult{Found: append([]string{}, deps.Check(ctx, p.Commands, deps.Options{})...)}, nil
+	})
+	type killParams struct {
+		PID int `json:"pid"`
+	}
+	rpc.Handle(reg, "system.kill", func(ctx context.Context, c *rpc.Conn, p killParams) (struct{}, error) {
+		return struct{}{}, system.Kill(p.PID)
 	})
 }
