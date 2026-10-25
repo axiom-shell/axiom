@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/deps"
+	"github.com/axiom-shell/axiom/backend/internal/media"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/system"
 	"github.com/axiom-shell/axiom/backend/internal/tz"
@@ -46,5 +47,16 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 	}
 	rpc.Handle(reg, "system.kill", func(ctx context.Context, c *rpc.Conn, p killParams) (struct{}, error) {
 		return struct{}{}, system.Kill(p.PID)
+	})
+	type artParams struct {
+		URL  string `json:"url"`
+		Path string `json:"path"` // in $XDG_RUNTIME_DIR/axiom/media-art/
+	}
+	type artResult struct {
+		Path string `json:"path"`
+	}
+	rpc.Handle(reg, "media.art", func(ctx context.Context, c *rpc.Conn, p artParams) (artResult, error) {
+		o := media.Options{Dir: media.ArtDir(d.opts.Getenv("XDG_RUNTIME_DIR"))}
+		return artResult{Path: p.Path}, media.Art(ctx, o, p.URL, p.Path)
 	})
 }

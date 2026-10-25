@@ -2,7 +2,6 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Services.Mpris
-import Quickshell.Io
 
 import qs.config
 
@@ -50,23 +49,49 @@ QtObject {
     Qt.callLater(root._fetchArt);
   }
 
-  // The URL the running download is for; a result for any other URL is stale
+  // The URL the running fetch is for; a result for any other URL is stale
   property string _artFetchUrl: ""
 
   // Built here from the current values (not a binding): bindings on artUrl
   // may not have updated yet inside onArtUrlChanged, which used to start
-  // curl with the previous, often empty, URL
+  // a download with the previous, often empty, URL. axiom fetches it
+  // (media.art: downloaded, or copied from a file:// URL, into .part and
+  // renamed, so an interrupted one is never mistaken for a cached file;
+  // art already there is kept). One at a time: a newer URL is fetched
+  // when the running one ends.
   function _fetchArt() {
     const url = root.artUrl;
-    if (!url || url === root._artFetchUrl && root._artDownloader.running)
+    if (!url || root._artFetchUrl !== "")
       return;
     root._artFetchUrl = url;
-    // URL and path go in as arguments ($1, $2), never into the script
-    // text; downloads land in .part and are renamed, so an interrupted one
-    // is never mistaken for a cached file
-    root._artDownloader.command = ["bash", "-c", 'mkdir -p "$(dirname "$2")" && { [ -s "$2" ] || { curl --fail -sSL --max-time 15 "$1" -o "$2.part" && mv -f "$2.part" "$2"; }; }', "art", url, root.artFilePath];
-    root._artDownloader.running = false;
-    root._artDownloader.running = true;
+    BackendManager.call("media.art", {
+      "url": url,
+      "path": root.artFilePath
+    }, error => {
+      root._artFetchUrl = "";
+      // The track moved on while this was fetching: fetch the new one
+      if (url !== root.artUrl) {
+        Qt.callLater(root._fetchArt);
+        return;
+      }
+      if (!error) {
+        console.log("[MediaManager] Album art ready:", root.artFilePath);
+        root.artDownloaded = true;
+        root.artVersion++;
+      } else {
+        console.warn("[MediaManager] Failed to fetch album art from:", url, error.message);
+        root.artDownloaded = false;
+      }
+    });
+  }
+
+  // A fetch cut off by axiom restarting is tried again once it's back
+  property Connections _backend: Connections {
+    target: BackendManager
+    function onGreeted() {
+      if (!root.artDownloaded)
+        root._fetchArt();
+    }
   }
 
   // --- Public ---
@@ -174,28 +199,6 @@ QtObject {
   }
 
   // --- Private Logic, Timers, and Workers ---
-
-  // Album art downloader
-  property Process _artDownloader: Process {
-    running: false
-    onExited: (exitCode, exitStatus) => {
-      const url = root._artFetchUrl;
-      root._artFetchUrl = "";
-      // The track moved on while this was downloading: fetch the new one
-      if (url !== root.artUrl) {
-        Qt.callLater(root._fetchArt);
-        return;
-      }
-      if (exitCode === 0) {
-        console.log("[MediaManager] Album art ready:", root.artFilePath);
-        root.artDownloaded = true;
-        root.artVersion++;
-      } else {
-        console.warn("[MediaManager] Failed to download album art from:", url, "Exit code:", exitCode);
-        root.artDownloaded = false;
-      }
-    }
-  }
 
   property Timer _positionTimer: Timer {
     running: root.isPlaying && root.hasActivePlayer
