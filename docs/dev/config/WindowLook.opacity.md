@@ -15,11 +15,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`WindowLook.opacity.enabled`** · boolean = false
   - Set window opacity: Your apps' windows; the shell's own surfaces are Look & Feel → Translucency. Off, your own config's applies.
   - x-link={"setting":"Appearance.surface.opacity"}, x-enabledIf={"/$supports.windowOpacity":true}
-  - read: `WindowLookConfig.look` (whole) · in: `components/views/Settings/TranslucencyStatus.qml`, `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.look` (whole) · in: `components/views/Settings/TranslucencyStatus.qml`, `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.opacity.active`** · integer = 100 · 10–100 · %
   - Focused window opacity
   - x-showIf={"enabled":true}, x-enabledIf={"/$supports.windowOpacity":true}, x-compositor={"hyprland":{"key":"decoration.active_opacity","scale":0.01,"if":"ena…
-  - read: `WindowLookConfig.look` (whole) · in: `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.look` (whole) · in: `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.opacity.inactive`** · integer = 100 · 10–100 · %
   - Unfocused window opacity
   - x-showIf={"enabled":true}, x-enabledIf={"/$supports.windowOpacity":true}, x-compositor={"hyprland":{"key":"decoration.inactive_opacity","scale":0.01,"if":"e…

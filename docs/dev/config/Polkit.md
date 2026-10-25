@@ -14,11 +14,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Polkit.enabled`** · boolean = false
   - Use axiom's prompt: axiom becomes the session's polkit agent: the screen dims and the prompt opens in the middle of the focused monitor. A session has one agent, so axiom stops any other (hyprpolkitagent, KDE's, GNOME's) and leaves it out of the autostart; turned off, a stopped systemd agent starts again.
   - x-takeover=true
-  - read: `PolkitConfig.enabled` · in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Settings/PolkitStatusCard.qml`, `services/CompositorConfigManager.qml`, `services/PolkitManager.qml`
+  - read: `PolkitConfig.enabled` · in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Settings/PolkitStatusCard.qml`, `services/compositor/CompositorConfigManager.qml`, `services/session/PolkitManager.qml`
 
 ### Reader members
 
 Every public member of `PolkitConfig`, with the files that use it.
 
 - `PolkitConfig.enabled` (bool)
-  - in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Settings/PolkitStatusCard.qml`, `services/CompositorConfigManager.qml`, `services/PolkitManager.qml`
+  - in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Settings/PolkitStatusCard.qml`, `services/compositor/CompositorConfigManager.qml`, `services/session/PolkitManager.qml`

@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.compositor
 import qs.components.reusable
 
 // A bind's action: a button showing it, opening a popup with a search and

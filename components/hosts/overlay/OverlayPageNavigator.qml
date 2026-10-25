@@ -3,7 +3,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.ui
 import qs.components.reusable
 
 // Fixed page navigator for the overlay's pages: arrows at the ends and a tab

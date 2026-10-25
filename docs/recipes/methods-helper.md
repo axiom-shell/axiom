@@ -55,7 +55,7 @@ TestCase {
 4. Run `scripts/run_tests.sh <Name>`.
 
 ## Gotchas
-- **No Quickshell:** `run_tests.sh` builds a `--pure` module tree, so a helper importing Quickshell or any `qs.services` / `qs.config` module is silently left out and its test fails to find it. Pass the values in as arguments instead.
+- **No Quickshell:** `run_tests.sh` builds a `--pure` module tree, so a helper importing Quickshell or any `qs.services.*` / `qs.config` module is silently left out and its test fails to find it. Pass the values in as arguments instead.
 - **JS engine gaps:** no `Array.prototype.flatMap` (use `[].concat(...arr.map(...))`), no `Object.fromEntries` (use `reduce`), no `Intl` (time zones go through `TimeZoneManager` + `TimeZones.shift`).
 - **Don't mutate arguments.** Return new objects (`Utils.clone` for deep copies).
 - **Geometry decisions** (`SurfaceContext`, `EdgeAttach`, `PopoutGeometry`, `BarEnds`, `GridPlacement`) are the single source for every host. A new case is a rule plus a test row, never a special case in a host.

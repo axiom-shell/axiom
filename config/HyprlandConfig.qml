@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for Compositor.hyprland: what axiom writes into Hyprland
 // (the daemon's Hyprland writer). Named HyprlandConfig because `Hyprland` is

@@ -1,6 +1,6 @@
 # Layouts editor
 
-> **Files:** `components/views/Layouts/Layouts.qml`, `components/views/Layouts/` (`LayoutsPanel`, `PagesSection`, `MenusSection`, `EditTarget`, `PageTarget`, `MenuTarget`, `ScreenLayoutTarget`, `DesktopTarget`, `LockscreenTarget`, `GreeterTarget`, `LayoutsEditorLayout`, `EditorInspector`), `components/hosts/overlay/OverlayPages.qml`, `services/OverlayManager.qml`, `config/OverlayConfig.qml`, `components/reusable/TypePickerPopup.qml`
+> **Files:** `components/views/Layouts/Layouts.qml`, `components/views/Layouts/` (`LayoutsPanel`, `PagesSection`, `MenusSection`, `EditTarget`, `PageTarget`, `MenuTarget`, `ScreenLayoutTarget`, `DesktopTarget`, `LockscreenTarget`, `GreeterTarget`, `LayoutsEditorLayout`, `EditorInspector`), `components/hosts/overlay/OverlayPages.qml`, `services/ui/OverlayManager.qml`, `config/OverlayConfig.qml`, `components/reusable/TypePickerPopup.qml`
 > **Config:** `Overlay.items`, `EdgeMenus`, `Desktop`, `Lockscreen.layout`, `Greeter.layout`
 > **Related:** [Grid canvas](grid-canvas.md), [Editors pattern](../core/editors-pattern.md), [Edge menu editing](../edge-menus/editing-submenus.md), [Desktop](../features/desktop.md), [Lockscreen](../features/lockscreen.md), [Greeter runtime](../features/greeter-runtime.md)
 

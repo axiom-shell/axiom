@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 import qs.components.methods
 
 // Reader for the Lockscreen section: which locker locks the session, and

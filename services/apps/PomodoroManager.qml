@@ -1,0 +1,246 @@
+pragma Singleton
+import QtQuick
+import Quickshell
+import qs.config
+import qs.components.methods
+import qs.services.core
+import qs.services.system
+
+// The pomodoro timer: one for every widget and module, run here so it
+// keeps time with nothing showing it. The state (PomodoroCycle's) holds an
+// absolute end time, so it survives a QML reload (PersistentProperties)
+// and a restart (StateManager "pomodoro"); a phase that ended while axiom
+// wasn't running moves on quietly. A notification marks each end (with
+// Pomodoro.notify); clicking it opens a page or edge menu with the timer.
+// Displays acquire(owner) the once-a-second `now`; the end itself needs
+// no one.
+//
+//   axiom ipc pomodoro toggle
+Singleton {
+  id: root
+
+  readonly property var state: root._state
+  readonly property string phase: root._state.phase
+  readonly property bool running: root._state.running
+  readonly property bool isBreak: PomodoroCycle.isBreak(root._state)
+  // Neither running nor paused part way
+  readonly property bool idle: PomodoroCycle.isIdle(root._state)
+  readonly property int completed: root._state.completed
+  // Ms left, and 0–1 through the phase, as of `now`
+  readonly property real remaining: PomodoroCycle.remaining(root._state, root.now, PomodoroConfig.settings)
+  readonly property real progress: PomodoroCycle.progress(root._state, root.now, PomodoroConfig.settings)
+  readonly property string remainingText: PomodoroCycle.format(root.remaining)
+  // Updated every second while running and acquired
+  property real now: Date.now()
+  // The todo the sessions are for ("" for none), and its text
+  readonly property string todoUid: _run.todoUid
+  readonly property string todoText: TodoManager.find(_run.todoUid)?.summary ?? ""
+  // I18n.tr("Focus") I18n.tr("Short break") I18n.tr("Long break")
+  readonly property string phaseLabel: I18n.tr(root.phase === "short" ? "Short break" : root.phase === "long" ? "Long break" : "Focus")
+
+  // The time left as of this moment, for a reader holding no acquire
+  // (the launcher, IPC): `remainingText` follows `now`, which ticks only
+  // while something has acquired it
+  function remainingTextNow() {
+    return PomodoroCycle.format(PomodoroCycle.remaining(root._state, Date.now(), PomodoroConfig.settings));
+  }
+
+  function acquire(owner) {
+    root._registry.acquire(owner, true);
+    root.now = Date.now();
+  }
+
+  function release(owner) {
+    root._registry.release(owner);
+  }
+
+  function start() {
+    root._set(PomodoroCycle.start(root._state, Date.now(), PomodoroConfig.settings));
+  }
+
+  function pause() {
+    root._set(PomodoroCycle.pause(root._state, Date.now()));
+  }
+
+  function toggle() {
+    if (root.running)
+      root.pause();
+    else
+      root.start();
+  }
+
+  // Ends this phase now and goes to the next, without a notification
+  function skip() {
+    root._set(PomodoroCycle.advance(root._state, Date.now(), PomodoroConfig.settings, root._autoStart()));
+  }
+
+  // Back to a focus session not yet started (the count stays)
+  function stop() {
+    root._set(PomodoroCycle.reset(root._state, false));
+  }
+
+  // Stopped, and the session count back to 0
+  function reset() {
+    root._set(PomodoroCycle.reset(root._state, true));
+  }
+
+  function setTodo(uid) {
+    _run.todoUid = uid ?? "";
+    root._save();
+  }
+
+  // A page or edge menu with a Pomodoro or Focus module; false with none
+  function openTimer() {
+    return !Paths.greeter && ShellManager.openModule(["Pomodoro", "Focus"]);
+  }
+
+  // -- Private --
+
+  readonly property var _state: PomodoroCycle.normalize(root._parsed)
+  readonly property var _parsed: {
+    try {
+      return JSON.parse(_run.state || "null");
+    } catch (e) {
+      return null;
+    }
+  }
+  readonly property string _desktopEntry: "axiom-pomodoro"
+  readonly property var _store: StateManager.createStateHandler("pomodoro")
+  property ConsumerRegistry _registry: ConsumerRegistry {}
+
+  PersistentProperties {
+    id: _run
+    reloadableId: "axiomPomodoro"
+    // PomodoroCycle's state as JSON ("" until restored from the state file)
+    property string state: ""
+    property string todoUid: ""
+    property bool restored: false
+  }
+
+  function _autoStart() {
+    return {
+      "work": PomodoroConfig.autoStartWork,
+      "breaks": PomodoroConfig.autoStartBreaks
+    };
+  }
+
+  function _set(state) {
+    if (Paths.greeter)
+      return;
+    _run.state = JSON.stringify(state);
+    root.now = Date.now();
+    root._save();
+  }
+
+  function _save() {
+    root._store.save({
+      "state": root._state,
+      "todoUid": _run.todoUid
+    });
+  }
+
+  // The phase ran out: notify (unless it ended long ago, with axiom not
+  // running) and go on. Once per end: a second call queued by another
+  // _arm before the first ran finds the phase already moved on
+  function _finish(late) {
+    const was = root._state;
+    if (!was.running || was.endsAt > Date.now())
+      return;
+    const next = PomodoroCycle.advance(was, Date.now(), PomodoroConfig.settings, root._autoStart());
+    root._set(next);
+    if (!PomodoroConfig.notify || late)
+      return;
+    const task = root.todoText;
+    let summary, body;
+    if (was.phase === "work") {
+      summary = next.phase === "long" ? I18n.tr("Time for a long break") : I18n.tr("Time for a break");
+      body = next.running ? I18n.tr("{0} sessions done. The break has started.", next.completed) : I18n.tr("{0} sessions done.", next.completed);
+    } else {
+      summary = I18n.tr("Break's over");
+      body = next.running ? I18n.tr("The next focus session has started.") : I18n.tr("Start the next focus session when you're ready.");
+    }
+    if (task !== "" && next.phase === "work")
+      body += "\n" + task;
+    NotificationManager.sendNotification("axiom", summary, body, {
+      "desktopEntry": root._desktopEntry,
+      "icon": "appointment-soon"
+    });
+  }
+
+  // To the phase's end, at most an hour at a time
+  function _arm() {
+    _alarm.stop();
+    if (!root._state.running)
+      return;
+    const left = root._state.endsAt - Date.now();
+    if (left <= 0) {
+      Qt.callLater(() => root._finish(left < -5 * 60000));
+      return;
+    }
+    _alarm.interval = Math.min(left + 50, 3600000);
+    _alarm.start();
+  }
+
+  on_StateChanged: root._arm()
+
+  Timer {
+    id: _alarm
+    repeat: false
+    onTriggered: root._arm()
+  }
+
+  Timer {
+    interval: 1000
+    repeat: true
+    running: root.running && root._registry.active
+    onTriggered: root.now = Date.now()
+  }
+
+  Component.onCompleted: {
+    if (Paths.greeter)
+      return;
+    // A restart (not a reload): back from the state file
+    if (!_run.restored) {
+      const saved = root._store.load(null);
+      _run.state = JSON.stringify(PomodoroCycle.normalize(saved?.state));
+      _run.todoUid = typeof saved?.todoUid === "string" ? saved.todoUid : "";
+      _run.restored = true;
+    }
+    root._arm();
+    NotificationManager.registerHandler(root._desktopEntry, () => root.openTimer());
+  }
+
+  property IpcTarget _ipc: IpcTarget {
+    target: "pomodoro"
+    enabled: !Paths.greeter
+
+    function start(): void {
+      root.start();
+    }
+
+    function pause(): void {
+      root.pause();
+    }
+
+    function toggle(): void {
+      root.toggle();
+    }
+
+    function skip(): void {
+      root.skip();
+    }
+
+    function stop(): void {
+      root.stop();
+    }
+
+    function reset(): void {
+      root.reset();
+    }
+
+    // "<phase> <mm:ss> running|paused|stopped"
+    function status(): string {
+      return `${root.phase} ${root.remainingTextNow()} ${root.running ? "running" : root.idle ? "stopped" : "paused"}`;
+    }
+  }
+}

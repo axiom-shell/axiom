@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.apps
 import qs.components.methods
 
 // A day's events (DayAgenda) that turn into the EventEditor for the one

@@ -1,6 +1,6 @@
 # Calendar
 
-> **Files:** `services/CalendarManager.qml`, `scripts/calendar_sync.py`, `config/CalendarConfig.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `components/methods/CalendarEvents.qml`, `components/content/Calendar/Calendar.qml`, `components/content/Agenda/Agenda.qml`, `components/content/ClockCalendar/ClockCalendar.qml`, `components/content/parts/calendar/`
+> **Files:** `services/apps/CalendarManager.qml`, `scripts/calendar_sync.py`, `config/CalendarConfig.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `components/methods/CalendarEvents.qml`, `components/content/Calendar/Calendar.qml`, `components/content/Agenda/Agenda.qml`, `components/content/ClockCalendar/ClockCalendar.qml`, `components/content/parts/calendar/`
 > **Config:** `Calendar.*` (reader `CalendarConfig`)
 > **Related:** [Secrets](../core/secrets.md), [Services pattern](../core/services-pattern.md), [Notifications](notifications.md), [Lockscreen](lockscreen.md), [Greeter runtime](greeter-runtime.md)
 

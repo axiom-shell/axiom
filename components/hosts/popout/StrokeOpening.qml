@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.core
 import qs.components.methods
 
 // A stretch of a stroke a surface covers, left open there, whatever draws

@@ -25,13 +25,13 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - read: `PomodoroConfig.longBreakEvery` · in: `components/content/parts/PomodoroDial.qml`
 - **`Pomodoro.autoStartBreaks`** · boolean = true
   - Start breaks by themselves
-  - read: `PomodoroConfig.autoStartBreaks` · in: `services/PomodoroManager.qml`
+  - read: `PomodoroConfig.autoStartBreaks` · in: `services/apps/PomodoroManager.qml`
 - **`Pomodoro.autoStartWork`** · boolean = false
   - Start focus sessions by themselves: Off, a break ends waiting for you to start the next session.
-  - read: `PomodoroConfig.autoStartWork` · in: `services/PomodoroManager.qml`
+  - read: `PomodoroConfig.autoStartWork` · in: `services/apps/PomodoroManager.qml`
 - **`Pomodoro.notify`** · boolean = true
   - Notify: A notification when a session or break ends.
-  - read: `PomodoroConfig.notify` · in: `services/PomodoroManager.qml`
+  - read: `PomodoroConfig.notify` · in: `services/apps/PomodoroManager.qml`
 
 ### Reader members
 
@@ -46,10 +46,10 @@ Every public member of `PomodoroConfig`, with the files that use it.
 - `PomodoroConfig.longBreakEvery` (int): Focus sessions before a long break
   - in: `components/content/parts/PomodoroDial.qml`
 - `PomodoroConfig.autoStartBreaks` (bool)
-  - in: `services/PomodoroManager.qml`
+  - in: `services/apps/PomodoroManager.qml`
 - `PomodoroConfig.autoStartWork` (bool)
-  - in: `services/PomodoroManager.qml`
+  - in: `services/apps/PomodoroManager.qml`
 - `PomodoroConfig.notify` (bool)
-  - in: `services/PomodoroManager.qml`
+  - in: `services/apps/PomodoroManager.qml`
 - `PomodoroConfig.settings` (var): The lengths as PomodoroCycle takes them
-  - in: `services/PomodoroManager.qml`
+  - in: `services/apps/PomodoroManager.qml`

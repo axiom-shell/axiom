@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.session
 
 // Keeps the session awake while IdleInhibitManager.enabled (caffeine). The
 // Wayland idle inhibitor needs a mapped surface, so while it's on this maps

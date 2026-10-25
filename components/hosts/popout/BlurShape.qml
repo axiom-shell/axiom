@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services
+import qs.services.ui
 
 // A surface's shape, registered with BlurManager for the blur window
 // (shell/BlurBacking) to draw and blur in its place. `source` is an

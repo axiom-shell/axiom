@@ -15,7 +15,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Bars.items[].screen.mode`** · string = "primary" · enum primary|all|named
   - Monitors
   - x-scope="look", x-link={"setting":"General.screen"}
-  - read: `Bar.savedBars` (whole), `BarStyle.values` (whole) · in: `config/Bar.qml`, `services/EdgeMenuManager.qml`
+  - read: `Bar.savedBars` (whole), `BarStyle.values` (whole) · in: `config/Bar.qml`, `services/ui/EdgeMenuManager.qml`
 - **`Bars.items[].screen.names`** · array<string> = []
   - Monitors
   - x-scope="machine", x-monitorRef="off", x-showIf={"mode":"named"}

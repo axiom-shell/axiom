@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Qt.labs.folderlistmodel
 import qs.config
-import qs.services
+import qs.services.apps
 import qs.components.reusable
 
 // The notes folder, one level at a time: folders first, then notes. A

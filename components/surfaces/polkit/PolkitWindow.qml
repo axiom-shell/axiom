@@ -7,7 +7,10 @@ import Quickshell.Widgets
 
 import qs.components.reusable
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.session
+import qs.services.ui
 
 // The polkit prompt on one screen: the whole screen dimmed, over the bars,
 // and on the screen PolkitManager picked, a card with what is asking, the

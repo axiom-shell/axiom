@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.services
+import qs.services.core
 
 // A Loader built a moment after it's created, from BuildQueueManager's
 // queue, then faded in: a tool page's sections, cards and long lists, so the

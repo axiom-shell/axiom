@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.compositor
+import qs.services.ui
 import qs.components.reusable
 
 // A section of the Keybinds editor's list (KeybindManager.editLayout): a

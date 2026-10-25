@@ -3,11 +3,11 @@
 
 Docs drift silently; this catches the drift a reader would trip on:
 - every relative markdown link points at a file that exists
-- every backticked repo path (`services/FooManager.qml`, `docs/dev/…`)
+- every backticked repo path (`services/core/FooManager.qml`, `docs/dev/…`)
   exists, resolved from the repo root, from components/, or from the doc's
   own directory (paths with <placeholders> or globs are skipped)
 - every backticked `Singleton.member` names a member that file declares
-  (Singleton = a file in services/, config/ or components/methods/)
+  (Singleton = a file in services/*/, config/ or components/methods/)
 - no backticked name is one a rename retired (RETIRED: add the old name
   when renaming a singleton, so docs still citing it fail)
 - every shared piece (a file in components/reusable, forms or content/parts)
@@ -55,8 +55,8 @@ def docs():
 def singletons():
     """{name: set of root member names} for every singleton file."""
     table = {}
-    for folder in ("services", "config", "components/methods"):
-        for path in (ROOT / folder).glob("*.qml"):
+    for folder in ("services/*", "config", "components/methods"):
+        for path in ROOT.glob(f"{folder}/*.qml"):
             _, members = parse_qml(path)
             text = path.read_text()
             names = {m["name"] for m in members}

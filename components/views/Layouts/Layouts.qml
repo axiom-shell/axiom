@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.services
+import qs.services.session
+import qs.services.ui
 import qs.components.reusable
 import qs.components.views.base
 

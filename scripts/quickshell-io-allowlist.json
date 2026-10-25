@@ -4,105 +4,105 @@
     "config/I18n.qml": [
       "FileView"
     ],
-    "services/BackendManager.qml": [
+    "services/core/BackendManager.qml": [
       "Socket"
     ],
-    "services/CalculatorManager.qml": [
+    "services/apps/CalculatorManager.qml": [
       "Process"
     ],
-    "services/ChatManager.qml": [
+    "services/apps/ChatManager.qml": [
       "FileView",
       "execDetached"
     ],
-    "services/ChatRequest.qml": [
+    "services/apps/ChatRequest.qml": [
       "Process",
       "FileView",
       "execDetached"
     ],
-    "services/ClipboardManager.qml": [
+    "services/system/ClipboardManager.qml": [
       "Process"
     ],
-    "services/CommandManager.qml": [
+    "services/core/CommandManager.qml": [
       "Process",
       "execDetached"
     ],
-    "services/CommunityFetch.qml": [
+    "services/apps/CommunityFetch.qml": [
       "Process"
     ],
-    "services/CompositorConfigManager.qml": [
+    "services/compositor/CompositorConfigManager.qml": [
       "execDetached"
     ],
-    "services/EmojiManager.qml": [
+    "services/apps/EmojiManager.qml": [
       "execDetached"
     ],
-    "services/FileManager.qml": [
+    "services/core/FileManager.qml": [
       "FileView"
     ],
-    "services/FilePickerManager.qml": [
+    "services/apps/FilePickerManager.qml": [
       "Process"
     ],
-    "services/GreetdManager.qml": [
+    "services/session/GreetdManager.qml": [
       "execDetached"
     ],
-    "services/HypridleManager.qml": [
+    "services/session/HypridleManager.qml": [
       "Process",
       "FileView"
     ],
-    "services/HyprlandIpcManager.qml": [
+    "services/compositor/HyprlandIpcManager.qml": [
       "Socket"
     ],
-    "services/IntegrationHookupManager.qml": [
+    "services/ui/IntegrationHookupManager.qml": [
       "Process"
     ],
-    "services/IpcTarget.qml": [
+    "services/core/IpcTarget.qml": [
       "IpcHandler"
     ],
-    "services/LauncherManager.qml": [
+    "services/ui/LauncherManager.qml": [
       "execDetached"
     ],
-    "services/LockManager.qml": [
+    "services/session/LockManager.qml": [
       "execDetached"
     ],
-    "services/NightLightManager.qml": [
+    "services/system/NightLightManager.qml": [
       "Process"
     ],
-    "services/NiriIpcManager.qml": [
+    "services/compositor/NiriIpcManager.qml": [
       "Socket"
     ],
-    "services/NotesManager.qml": [
+    "services/apps/NotesManager.qml": [
       "FileView"
     ],
-    "services/NotificationManager.qml": [
+    "services/system/NotificationManager.qml": [
       "FileView",
       "execDetached"
     ],
-    "services/PolkitManager.qml": [
+    "services/session/PolkitManager.qml": [
       "Process"
     ],
-    "services/ScreenshotManager.qml": [
+    "services/apps/ScreenshotManager.qml": [
       "Process",
       "execDetached"
     ],
-    "services/SelfUpdateManager.qml": [
+    "services/core/SelfUpdateManager.qml": [
       "Process",
       "execDetached"
     ],
-    "services/ShellManager.qml": [
+    "services/core/ShellManager.qml": [
       "execDetached"
     ],
-    "services/StateManager.qml": [
+    "services/core/StateManager.qml": [
       "Process",
       "FileView"
     ],
-    "services/ThemeManager.qml": [
+    "services/core/ThemeManager.qml": [
       "Process",
       "FileView",
       "execDetached"
     ],
-    "services/TodoManager.qml": [
+    "services/apps/TodoManager.qml": [
       "FileView"
     ],
-    "services/WallpaperManager.qml": [
+    "services/ui/WallpaperManager.qml": [
       "Process",
       "execDetached"
     ]

@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.ui
 
 // The layouts editor on the desktop (DesktopManager's draft of the Desktop
 // section): the layout of the target picked in the side panel (all

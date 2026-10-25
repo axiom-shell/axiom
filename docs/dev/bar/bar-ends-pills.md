@@ -1,6 +1,6 @@
 # Bar ends and pills
 
-> **Files:** `components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `components/bar/BarContainer.qml`, `components/bar/CornerMerge.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/PillBarJoin.qml`, `components/hosts/popout/EdgePlacement.qml`, `services/BarManager.qml`
+> **Files:** `components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `components/bar/BarContainer.qml`, `components/bar/CornerMerge.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/PillBarJoin.qml`, `components/hosts/popout/EdgePlacement.qml`, `services/ui/BarManager.qml`
 > **Config:** `Bars[].background`, `pillMerge` (others such as `overlap`, `pillPad`, `pillConnector` are derived `barConfig` values)
 > **Related:** [Layering and corners](layering-and-corners.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md)
 

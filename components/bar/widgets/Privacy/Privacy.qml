@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Services.Pipewire
 
-import qs.services
+import qs.services.system
+import qs.services.apps
 import qs.config
 import qs.components.bar.widgets.base
 

@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.ui
 import qs.components.reusable
 
 // Buttons that add a bar button (one per bar) or a keybind opening what

@@ -11,7 +11,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`Bars.items`** · array<Bar> = [{"id":"primary","location":"top","widgetSize":26,"padding":4,"backgr…
   - x-settings=false
-  - read: `Bar.savedBars` · in: `components/surfaces/onboarding/pages/LookPage.qml`, `components/views/Layouts/OpenerButtons.qml`, `services/EdgeMenuManager.qml`
+  - read: `Bar.savedBars` · in: `components/surfaces/onboarding/pages/LookPage.qml`, `components/views/Layouts/OpenerButtons.qml`, `services/ui/EdgeMenuManager.qml`
 
 ### `Bars.items[]`
 
@@ -19,11 +19,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Bars.items[].id`** · string
   - The item's stable id, unique in its list: what editors, path ops and imports match it by.
   - pattern="^[A-Za-z0-9][A-Za-z0-9._-]*$", x-settings=false
-  - read: `Bar.savedBars` (whole), `BarStyle.values` (whole) · in: `config/Bar.qml`, `services/EdgeMenuManager.qml`
+  - read: `Bar.savedBars` (whole), `BarStyle.values` (whole) · in: `config/Bar.qml`, `services/ui/EdgeMenuManager.qml`
 - **`Bars.items[].enabled`** · boolean = true
   - Enabled
   - x-group="General"
-  - read: `Bar.savedBars` (whole), `BarStyle.values` (whole) · in: `config/Bar.qml`, `services/EdgeMenuManager.qml`
+  - read: `Bar.savedBars` (whole), `BarStyle.values` (whole) · in: `config/Bar.qml`, `services/ui/EdgeMenuManager.qml`
 - **`Bars.items[].location`** · string = "top" · enum top|bottom|left|right
   - Location
   - x-group="General"

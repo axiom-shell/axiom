@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.components.reusable
 import qs.config
-import qs.services
+import qs.services.ui
 
 // Save and Discard (both shown while `dirty`, or while a box in this window
 // holds typed text: EditsManager.typingField) for whichever service owns a

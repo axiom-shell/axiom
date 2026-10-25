@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the WindowBehaviour section: focus and the cursor, which
 // every compositor's managed config writes (each field by its

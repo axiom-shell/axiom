@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services
+import qs.services.compositor
 import qs.components.reusable
 
 // The keys axiom binds for some actions (from Keybinds.binds): one row per

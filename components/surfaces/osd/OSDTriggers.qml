@@ -1,7 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.services
+import qs.services.core
+import qs.services.system
 
 // What opens one OSD host (an EdgePopout) on its screen:
 // its bars' own changes (poke, system volume and mute included) and the

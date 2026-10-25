@@ -3,7 +3,8 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.ui
 import qs.components.methods
 
 // A surface's end joining a pill bar on a perpendicular screen edge: its

@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.apps
 import qs.components.reusable
 import qs.components.content.parts.notes
 import qs.components.content.parts

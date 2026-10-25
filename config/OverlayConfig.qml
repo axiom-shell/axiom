@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 import qs.components.methods
 
 // Overlay: the configured views, plus the card grid's layout constants.

@@ -6,7 +6,10 @@ import Quickshell.Services.Notifications
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.system
+import qs.services.ui
 import qs.components.reusable
 import qs.components.content.parts.notifications
 

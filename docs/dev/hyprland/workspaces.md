@@ -1,6 +1,6 @@
 # Workspaces (layout, navigation, the bar widget)
 
-> **Files:** `config/WorkspacesConfig.qml`, `services/CompositorManager.qml`, `services/HyprlandManager.qml`, `components/methods/WorkspaceGeometry.qml`, `components/bar/widgets/Workspaces/Workspaces.qml`, `components/bar/widgets/Workspaces/`, `components/surfaces/workspaces/`, `components/views/Settings/WorkspacesStatus.qml`
+> **Files:** `config/WorkspacesConfig.qml`, `services/compositor/CompositorManager.qml`, `services/compositor/HyprlandManager.qml`, `components/methods/WorkspaceGeometry.qml`, `components/bar/widgets/Workspaces/Workspaces.qml`, `components/bar/widgets/Workspaces/`, `components/surfaces/workspaces/`, `components/views/Settings/WorkspacesStatus.qml`
 > **Config:** `Workspaces.*` (`layout`, `count`, `columns`, `rows`, …)
 > **Related:** [Workspace strips](workspace-strips.md), [Keybinds](keybinds.md), [Bar composition](../bar/composition.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 

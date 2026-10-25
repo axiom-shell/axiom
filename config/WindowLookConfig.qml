@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the WindowLook section: settings that make windows match
 // axiom ({ borders, shape, gaps, surfaceBlur, blur, shadow, dim, opacity },

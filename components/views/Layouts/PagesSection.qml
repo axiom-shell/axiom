@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.session
+import qs.services.ui
 import qs.components.reusable
 
 // i18n: keys from the schema (view labels)

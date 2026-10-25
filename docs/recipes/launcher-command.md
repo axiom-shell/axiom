@@ -1,11 +1,11 @@
 # Recipe: a new launcher command
 
 > **Use when:** adding a `/command` to the launcher.
-> **Copy from:** the `nightlight` entry in `services/LauncherCommands.qml` (on/off with options and status); helpers in the same file: `_page` (open an overlay page), `_session`, `_device`, `_media`, `_prefix`, `_onOffOptions`/`_onOff`.
-> **Docs:** [features/launcher](../dev/features/launcher.md); the entry fields are documented in the comment at the top of `services/LauncherCommands.qml`.
+> **Copy from:** the `nightlight` entry in `services/ui/LauncherCommands.qml` (on/off with options and status); helpers in the same file: `_page` (open an overlay page), `_session`, `_device`, `_media`, `_prefix`, `_onOffOptions`/`_onOff`.
+> **Docs:** [features/launcher](../dev/features/launcher.md); the entry fields are documented in the comment at the top of `services/ui/LauncherCommands.qml`.
 
 ## Files to touch
-1. `services/LauncherCommands.qml`: an entry in `list`, in its group (`// --- Session ---`, `// --- Surfaces ---`, …).
+1. `services/ui/LauncherCommands.qml`: an entry in `list`, in its group (`// --- Session ---`, `// --- Surfaces ---`, …).
 2. `docs/usage.md`: the launcher command table (its group's row).
 3. `config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
 

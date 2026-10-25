@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.ui
 
 // A thin hover strip on a screen edge that fires `triggered` once the
 // pointer has rested on it for `hoverDelay`

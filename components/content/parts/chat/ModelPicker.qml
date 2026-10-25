@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.apps
 import qs.components.reusable
 
 // The conversation's preset, then each provider's models, in one list

@@ -14,31 +14,31 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Calendar.defaultCalendar`** · string = ""
   - New events go to: The calendar picked for a new event (the launcher's /event uses it too).
   - x-group="Events", x-options="calendars", x-emptyLabel="The first calendar"
-  - read: `CalendarConfig.defaultCalendar` · in: `components/views/Settings/CalendarAccountsCard.qml`, `services/CalendarManager.qml`
+  - read: `CalendarConfig.defaultCalendar` · in: `components/views/Settings/CalendarAccountsCard.qml`, `services/apps/CalendarManager.qml`
 - **`Calendar.defaultDuration`** · integer = 3600000 · 300000–86400000 · min
   - Event length: How long a new event lasts until you change it.
   - x-scope="personal", x-group="Events"
-  - read: `CalendarConfig.defaultDuration` (computed) · in: `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DayPane.qml`, `services/CalendarManager.qml`
+  - read: `CalendarConfig.defaultDuration` (computed) · in: `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DayPane.qml`, `services/apps/CalendarManager.qml`
 - **`Calendar.defaultReminder`** · integer = 600000 · -60000–604800000 · min
   - Reminder: How long before a new event's start its reminder fires. -1 adds none.
   - x-scope="personal", x-group="Events"
-  - read: `CalendarConfig.defaultReminder` (computed) · in: `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DayPane.qml`, `services/CalendarManager.qml`
+  - read: `CalendarConfig.defaultReminder` (computed) · in: `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DayPane.qml`, `services/apps/CalendarManager.qml`
 - **`Calendar.reminders`** · boolean = true
   - Notify reminders: Show a notification when an event's reminder is due (while axiom runs).
   - x-scope="personal", x-group="Events"
-  - read: `CalendarConfig.reminders` · in: `services/CalendarManager.qml`
+  - read: `CalendarConfig.reminders` · in: `services/apps/CalendarManager.qml`
 - **`Calendar.syncInterval`** · integer = 900000 · 60000–86400000 · min
   - Sync every: How often calendars are checked for changes, while something shows them or reminders are on.
   - x-group="Sync"
-  - read: `CalendarConfig.syncInterval` · in: `services/CalendarManager.qml`
+  - read: `CalendarConfig.syncInterval` · in: `services/apps/CalendarManager.qml`
 - **`Calendar.pastMonths`** · integer = 2 · 0–24
   - Months back: How far back events are kept. Paging past it fetches more.
   - x-scope="personal", x-group="Sync"
-  - read: `CalendarConfig.pastMonths` · in: `services/CalendarManager.qml`
+  - read: `CalendarConfig.pastMonths` · in: `services/apps/CalendarManager.qml`
 - **`Calendar.futureMonths`** · integer = 12 · 1–60
   - Months ahead
   - x-scope="personal", x-group="Sync"
-  - read: `CalendarConfig.futureMonths` · in: `services/CalendarManager.qml`
+  - read: `CalendarConfig.futureMonths` · in: `services/apps/CalendarManager.qml`
 - **`Calendar.use24Hour`** · boolean = true
   - 24-hour times: How event times show everywhere events do.
   - x-scope="look", x-group="Display"
@@ -46,7 +46,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Calendar.maxDots`** · integer = 3 · 1–6
   - Dots per day: Most calendar-colored dots under a day in the month grids.
   - x-scope="look", x-group="Display"
-  - read: `CalendarConfig.maxDots` · in: `services/CalendarManager.qml`
+  - read: `CalendarConfig.maxDots` · in: `services/apps/CalendarManager.qml`
 - **`Calendar.showOnLockscreen`** · boolean = false
   - Events on the lock screen: The Clock & calendar module shows the day's events on the lock screen too (read-only). Anyone at the locked screen can read them.
   - x-group="Display"
@@ -54,7 +54,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Calendar.items`** · array<CalendarAccount> = []
   - Accounts
   - x-settings=false
-  - read: `CalendarConfig.savedAccounts`, `CalendarConfig.accounts` (part) · in: `components/content/parts/calendar/EventEditor.qml`, `components/forms/SchemaField.qml`, `components/views/CalendarPage/CalendarPage.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `services/CalendarManager.qml`
+  - read: `CalendarConfig.savedAccounts`, `CalendarConfig.accounts` (part) · in: `components/content/parts/calendar/EventEditor.qml`, `components/forms/SchemaField.qml`, `components/views/CalendarPage/CalendarPage.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `services/apps/CalendarManager.qml`
 
 ### `Calendar.items[]`
 
@@ -107,30 +107,30 @@ Every public member of `CalendarConfig`, with the files that use it.
 - `CalendarConfig.savedAccounts` (var): Calendar.items as saved, for editing
   - in: `components/views/CalendarPage/CalendarPage.qml`, `components/views/Settings/CalendarAccountsCard.qml`
 - `CalendarConfig.accounts` (var): Calendar.items, each with a `name` (the username or the server's host when left empty; "This computer" for a local one); each account's `calendars` as configur…
-  - in: `components/content/parts/calendar/EventEditor.qml`, `components/forms/SchemaField.qml`, `components/views/CalendarPage/CalendarPage.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `services/CalendarManager.qml`
+  - in: `components/content/parts/calendar/EventEditor.qml`, `components/forms/SchemaField.qml`, `components/views/CalendarPage/CalendarPage.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `services/apps/CalendarManager.qml`
 - `CalendarConfig.defaultCalendar` (string)
-  - in: `components/views/Settings/CalendarAccountsCard.qml`, `services/CalendarManager.qml`
+  - in: `components/views/Settings/CalendarAccountsCard.qml`, `services/apps/CalendarManager.qml`
 - `CalendarConfig.defaultDuration` (int): A new event's length (minutes)
-  - in: `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DayPane.qml`, `services/CalendarManager.qml`
+  - in: `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DayPane.qml`, `services/apps/CalendarManager.qml`
 - `CalendarConfig.defaultReminder` (int): A new event's reminder: minutes before the start, -1 for none
-  - in: `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DayPane.qml`, `services/CalendarManager.qml`
+  - in: `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DayPane.qml`, `services/apps/CalendarManager.qml`
 - `CalendarConfig.reminders` (bool)
-  - in: `services/CalendarManager.qml`
+  - in: `services/apps/CalendarManager.qml`
 - `CalendarConfig.syncInterval` (int): How often calendars sync (ms)
-  - in: `services/CalendarManager.qml`
+  - in: `services/apps/CalendarManager.qml`
 - `CalendarConfig.pastMonths` (int)
-  - in: `services/CalendarManager.qml`
+  - in: `services/apps/CalendarManager.qml`
 - `CalendarConfig.futureMonths` (int)
-  - in: `services/CalendarManager.qml`
+  - in: `services/apps/CalendarManager.qml`
 - `CalendarConfig.maxDots` (int)
-  - in: `services/CalendarManager.qml`
+  - in: `services/apps/CalendarManager.qml`
 - `CalendarConfig.showOnLockscreen` (bool): The Clock & calendar module's events on the lock screen too
   - in: `components/content/ClockCalendar/ClockCalendar.qml`
 - `CalendarConfig.use24Hour` (bool)
   - in: only inside the reader
 - `CalendarConfig.timeFormat` (string): The language's time format, for event times
-  - in: `components/bar/widgets/NextEvent/NextEvent.qml`, `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DateTimeField.qml`, `components/content/parts/calendar/EventRow.qml`, `components/content/parts/calendar/MonthGrid.qml`, `components/views/CalendarPage/CalendarPage.qml`, `services/CalendarManager.qml`, `services/LauncherCommands.qml`
+  - in: `components/bar/widgets/NextEvent/NextEvent.qml`, `components/content/Agenda/Agenda.qml`, `components/content/parts/calendar/DateTimeField.qml`, `components/content/parts/calendar/EventRow.qml`, `components/content/parts/calendar/MonthGrid.qml`, `components/views/CalendarPage/CalendarPage.qml`, `services/apps/CalendarManager.qml`, `services/ui/LauncherCommands.qml`
 - `CalendarConfig.writableKind(kind)`: Kinds whose events axiom can change: CalDAV accounts and local calendars (.ics subscriptions are read-only)
-  - in: `components/views/Settings/CalendarAccountsCard.qml`, `services/CalendarManager.qml`
+  - in: `components/views/Settings/CalendarAccountsCard.qml`, `services/apps/CalendarManager.qml`
 - `CalendarConfig.hostOf(url)`
   - in: `components/views/Settings/CalendarAccountsCard.qml`

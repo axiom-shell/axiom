@@ -4,7 +4,7 @@ Reader singletons (`<Section>.qml` / `<Section>Config.qml`), `json/config.schema
 
 **Recipe:** `docs/recipes/setting.md` / `docs/recipes/config-section.md` / `docs/recipes/migration.md`; verify with `scripts/dev/verify.sh`.
 
-- **A reader**: `pragma Singleton`, `import QtQuick`, `import qs.services`, `QtObject { id: root; readonly property var _c: ConfigManager.config.<Section>; readonly property <type> x: _c.x … }`. Copy `PolkitConfig.qml` or `BatteryConfig.qml`.
+- **A reader**: `pragma Singleton`, `import QtQuick`, `import qs.services.core`, `QtObject { id: root; readonly property var _c: ConfigManager.config.<Section>; readonly property <type> x: _c.x … }`. Copy `PolkitConfig.qml` or `BatteryConfig.qml`.
 - Readers read only the data owners (`ConfigManager`, `ThemeManager`, `I18n`) and each other. **No `??` fallbacks**: every default is filled at load. A section edited live through a draft reads `ConfigManager.previews.X ?? ConfigManager.config.X` (that one `??` is the preview, not a default).
 - **A new setting** = a schema property with a `default` (plus `title`, `description`, `x-group`, in `x-order` if the section has one) + a reader property + `scripts/check_i18n.py --fill`. Purely additive keys need no migration.
 - **A new section** = a root `properties.<Section>` with `x-category` (from the root's `x-categories`), `title`, `description`, `additionalProperties: false`, `x-order`, + a new reader. Unknown sections are pruned at load.

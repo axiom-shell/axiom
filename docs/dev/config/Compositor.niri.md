@@ -43,7 +43,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Compositor.niri.animations`** · boolean = true
   - Animations
   - x-scope="look", x-compositor={"niri":{"key":"animations.off","value":"offFlag"}}
-  - read: `NiriConfig.options` (whole) · in: `services/CompositorConfigManager.qml`
+  - read: `NiriConfig.options` (whole) · in: `services/compositor/CompositorConfigManager.qml`
 - **`Compositor.niri.animationSlowdown`** · integer = 100 · 10–1000 · %
   - Animation length: 100 is niri's own speed; more is slower.
   - x-scope="look", x-showIf={"animations":true}, x-compositor={"niri":{"key":"animations.slowdown","scale":0.01,"value":"float","sk…

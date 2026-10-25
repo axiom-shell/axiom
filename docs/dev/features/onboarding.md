@@ -1,6 +1,6 @@
 # Onboarding
 
-> **Files:** `services/OnboardingManager.qml`, `shell/Onboarding.qml`, `components/surfaces/onboarding/OnboardingWindow.qml`, `components/surfaces/onboarding/pages/CompositorPage.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `services/DependencyManager.qml`, `components/methods/Packages.qml`, `components/views/Settings/OnboardingCard.qml`
+> **Files:** `services/session/OnboardingManager.qml`, `shell/Onboarding.qml`, `components/surfaces/onboarding/OnboardingWindow.qml`, `components/surfaces/onboarding/pages/CompositorPage.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `services/core/DependencyManager.qml`, `components/methods/Packages.qml`, `components/views/Settings/OnboardingCard.qml`
 > **Config:** none of its own (pages write other sections); state in `~/.local/state/axiom/ui/onboarding.json`
 > **Related:** [Config modes](../compositor/config-modes.md), [Hyprland's writer](../hyprland/config-modes.md), [Monitors](../hyprland/monitors.md), [Greeter install](greeter-install.md), [Pages and grid](../overlay/pages-and-grid.md)
 

@@ -3,7 +3,8 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services
+import qs.services.compositor
+import qs.services.session
 import qs.components.reusable
 
 // The last page: what Finish does to the compositor's config, whether

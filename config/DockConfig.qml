@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Dock section: any number of docks, each with its own
 // place, pinned apps and behaviour (DockEntry in the schema). Named

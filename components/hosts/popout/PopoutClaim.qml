@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.services
+import qs.services.ui
 
 // A popout host's place in PopoutManager: registered while it `wants` to
 // show and has a footprint (rects in screen px), released when it stops.

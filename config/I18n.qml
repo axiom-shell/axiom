@@ -3,7 +3,7 @@ import QtQuick
 import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
-import qs.services
+import qs.services.core
 
 // Translation and locale for the shell's text (General.language).
 //

@@ -9,7 +9,7 @@
 2. `scripts/templates/<key>_template.<ext>`: `envsubst` template, if the script renders one.
 3. `config/schema/sections/ThemeIntegrations.yaml` → `properties.<key>`: a boolean (`default: false`) with `title`, `description`, `x-hookup` (optionally `x-hookupNote`). `ThemeManager.integrations` is derived from these boolean keys, in schema order.
 4. `config/ThemeIntegrations.qml`: `readonly property bool <key>: _c.<key>` (`ThemeManager` reads `ThemeIntegrations[key]`).
-5. `services/ThemeManager.qml` → `_integrationCommands`: only if the app's binary isn't named `<key>` (the list is what "installed" is checked by).
+5. `services/core/ThemeManager.qml` → `_integrationCommands`: only if the app's binary isn't named `<key>` (the list is what "installed" is checked by).
 6. `tests/scripts/test_scripts.py`:
    - `FORMATS[<key>]` (toml/yaml/json/ini/css/plist) so the output is parse-checked;
    - the binary in `STUBS` if the script `require_cmds` it;

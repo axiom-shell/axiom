@@ -14,7 +14,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## audio
 
-`services/AudioManager.qml`
+`services/system/AudioManager.qml`
 - `volumeUp(): void`
 - `volumeDown(): void`
 - `toggleMute(): void`
@@ -22,7 +22,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## brightness
 
-`services/BrightnessManager.qml`
+`services/system/BrightnessManager.qml`
 - `up(): void`
 - `down(): void`
 - `set(percent: int): void`
@@ -32,7 +32,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## calendar
 
-`services/CalendarManager.qml` · enabled: `!Paths.greeter`
+`services/apps/CalendarManager.qml` · enabled: `!Paths.greeter`
 - `open(): void`
 - `newEvent(): void`
 - `sync(): void`
@@ -40,7 +40,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## chat
 
-`services/ChatManager.qml`
+`services/apps/ChatManager.qml`
 - `open(): void`
 - `newChat(): void`
 - `ask(text: string): void`
@@ -48,21 +48,21 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## community
 
-`services/CommunitySetupsManager.qml` · enabled: `root.enabled`
+`services/apps/CommunitySetupsManager.qml` · enabled: `root.enabled`
 - `refresh(): void`
 - `list(): string`
 - `apply(id: string): void`
 
 ## dock
 
-`services/DockManager.qml`
+`services/ui/DockManager.qml`
 - `toggle(id: string): void`
 - `open(id: string): void`
 - `close(id: string): void`
 
 ## edgeMenu
 
-`services/EdgeMenuManager.qml`
+`services/ui/EdgeMenuManager.qml`
 - `open(id: string): void`
 - `close(id: string): void`
 - `toggle(id: string): void`
@@ -73,13 +73,13 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## greeter
 
-`services/GreeterManager.qml`
+`services/session/GreeterManager.qml`
 - `open(): void`
 - `preview(): void`
 
 ## idleInhibit
 
-`services/IdleInhibitManager.qml`
+`services/session/IdleInhibitManager.qml`
 - `toggle(): void`
 - `enable(): void`
 - `disable(): void`
@@ -87,12 +87,12 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## lockscreen
 
-`services/LockManager.qml` · enabled: `root.mode !== "none"`
+`services/session/LockManager.qml` · enabled: `root.mode !== "none"`
 - `lock(): void`
 
 ## media
 
-`services/MediaManager.qml`
+`services/system/MediaManager.qml`
 - `playPause(): void`
 - `next(): void`
 - `previous(): void`
@@ -100,7 +100,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## monitors
 
-`services/MonitorManager.qml`
+`services/compositor/MonitorManager.qml`
 - `open(): void`
 - `keep(): void`
 - `revert(): void`
@@ -108,7 +108,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## nightLight
 
-`services/NightLightManager.qml`
+`services/system/NightLightManager.qml`
 - `toggle(): void`
 - `enable(): void`
 - `disable(): void`
@@ -116,13 +116,13 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## notifications
 
-`services/NotificationManager.qml`
+`services/system/NotificationManager.qml`
 - `clear(): void`
 - `toggleDnd(): void`
 
 ## onboarding
 
-`services/OnboardingManager.qml`
+`services/session/OnboardingManager.qml`
 - `open(): void`
 - `close(): void`
 - `goTo(index: int): void`
@@ -138,7 +138,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## pomodoro
 
-`services/PomodoroManager.qml` · enabled: `!Paths.greeter`
+`services/apps/PomodoroManager.qml` · enabled: `!Paths.greeter`
 - `start(): void`
 - `pause(): void`
 - `toggle(): void`
@@ -149,7 +149,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## popouts
 
-`services/PopoutManager.qml`
+`services/ui/PopoutManager.qml`
 - `list(): string`
 
 ## powermenu
@@ -161,7 +161,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## screenRecord
 
-`services/ScreenshotManager.qml`
+`services/apps/ScreenshotManager.qml`
 - `toggle(): void`
 - `enable(): void`
 - `disable(): void`
@@ -169,20 +169,20 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## screenshot
 
-`services/ScreenshotManager.qml`
+`services/apps/ScreenshotManager.qml`
 - `take(kind: string): void`
 - `cancel(): void`
 
 ## selfUpdate
 
-`services/SelfUpdateManager.qml`
+`services/core/SelfUpdateManager.qml`
 - `check(): void`
 - `update(): void`
 - `open(): void`
 
 ## stopwatch
 
-`services/StopwatchManager.qml` · enabled: `!Paths.greeter`
+`services/apps/StopwatchManager.qml` · enabled: `!Paths.greeter`
 - `timer(text: string): bool`
 - `toggleTimer(): void`
 - `resetTimer(): void`
@@ -193,7 +193,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## todo
 
-`services/TodoManager.qml` · enabled: `!Paths.greeter`
+`services/apps/TodoManager.qml` · enabled: `!Paths.greeter`
 - `add(text: string): bool`
 - `list(): string`
 - `toggle(text: string): bool`
@@ -202,12 +202,12 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## wallpaper
 
-`services/WallpaperManager.qml`
+`services/ui/WallpaperManager.qml`
 - `next(): void`
 
 ## windowSwitcher
 
-`services/WindowSwitcherManager.qml`
+`services/compositor/WindowSwitcherManager.qml`
 - `next(): void`
 - `previous(): void`
 - `commit(): void`
@@ -222,7 +222,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## workspaces
 
-`services/CompositorManager.qml`
+`services/compositor/CompositorManager.qml`
 - `go(id: string): void`
 - `move(id: string): void`
 - `moveSilent(id: string): void`

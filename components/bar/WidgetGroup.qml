@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services
+import qs.services.ui
 import qs.components.methods
 
 // One bar section: a row (or column, on a vertical bar) of BarWidgetHosts that

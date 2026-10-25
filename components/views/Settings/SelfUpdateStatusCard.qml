@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.core
 import qs.components.reusable
 
 // The Updates category's first card (the section's `x-card`): the

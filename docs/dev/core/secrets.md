@@ -1,6 +1,6 @@
 # Secrets
 
-> **Files:** `services/SecretsManager.qml`, `components/views/Settings/ChatProvidersCard.qml`, `components/views/Settings/CalendarAccountsCard.qml`
+> **Files:** `services/core/SecretsManager.qml`, `components/views/Settings/ChatProvidersCard.qml`, `components/views/Settings/CalendarAccountsCard.qml`
 > **Config:** none (secrets never go in config.json); a provider's `keyEnv`
 > **Related:** [Chat](../features/chat.md), [Calendar](../features/calendar.md), [Config manager](config-manager.md)
 

@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.system
 import qs.components.reusable
 
 // One app's notifications as a single card: the app header (icon, name,

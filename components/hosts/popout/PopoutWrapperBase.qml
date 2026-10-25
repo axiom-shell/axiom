@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.compositor
 
 /**
  * Shared state machine for any "popout wrapper": open/close/reopen

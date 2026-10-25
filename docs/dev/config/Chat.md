@@ -14,23 +14,23 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Chat.defaultProvider`** · string = "anthropic"
   - Default provider: Used by presets that don't name a provider of their own.
   - x-group="Chat conversations", x-options="chatProviders"
-  - read: `ChatConfig.defaultProvider` · in: `services/ChatManager.qml`
+  - read: `ChatConfig.defaultProvider` · in: `services/apps/ChatManager.qml`
 - **`Chat.defaultPreset`** · string = "Default"
   - Default preset: What a new conversation starts with.
   - x-scope="personal", x-group="Chat conversations", x-options="chatPresets"
-  - read: `ChatConfig.defaultPreset` · in: `services/ChatManager.qml`, `services/LauncherCommands.qml`, `services/LauncherManager.qml`
+  - read: `ChatConfig.defaultPreset` · in: `services/apps/ChatManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
 - **`Chat.maxTokens`** · integer = 16000 · 256–128000 · tokens
   - Longest reply: A reply that reaches this is cut off, with a note saying so.
   - x-group="Chat conversations"
-  - read: `ChatConfig.maxTokens` · in: `services/ChatManager.qml`
+  - read: `ChatConfig.maxTokens` · in: `services/apps/ChatManager.qml`
 - **`Chat.keepConversations`** · integer = 50 · 0–500
   - Conversations kept: Older ones are deleted. 0 keeps none: conversations last until the shell restarts.
   - x-scope="personal", x-group="Chat conversations"
-  - read: `ChatConfig.keepConversations` · in: `components/content/parts/chat/ConversationList.qml`, `services/ChatManager.qml`
+  - read: `ChatConfig.keepConversations` · in: `components/content/parts/chat/ConversationList.qml`, `services/apps/ChatManager.qml`
 - **`Chat.showThinking`** · boolean = true
   - Show thinking: Ask models that reason for a summary of it, shown folded above the reply.
   - x-scope="personal", x-group="Chat display"
-  - read: `ChatConfig.showThinking` · in: `services/ChatManager.qml`
+  - read: `ChatConfig.showThinking` · in: `services/apps/ChatManager.qml`
 - **`Chat.renderMarkdown`** · boolean = true
   - Format replies: Draw Markdown (headings, lists, tables, code blocks) instead of the raw text.
   - x-scope="personal", x-group="Chat display"
@@ -42,7 +42,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Chat.providers`** · array<object> = [{"id":"anthropic","name":"Anthropic","kind":"anthropic","baseUrl":"h…
   - Providers: Where chats are sent. The OpenAI kind also covers Ollama, LM Studio, llama.cpp, OpenRouter, Groq and anything else with an OpenAI-style API: set its address.
   - x-wide=true
-  - read: `ChatConfig.savedProviders`, `ChatConfig.providers` (part) · in: `components/content/parts/chat/ModelPicker.qml`, `components/views/Settings/ChatProvidersCard.qml`, `services/SecretsManager.qml`, `services/SettingsManager.qml`
+  - read: `ChatConfig.savedProviders`, `ChatConfig.providers` (part) · in: `components/content/parts/chat/ModelPicker.qml`, `components/views/Settings/ChatProvidersCard.qml`, `services/core/SecretsManager.qml`, `services/ui/SettingsManager.qml`
 
 ### `Chat.providers[]`
 
@@ -83,7 +83,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Chat.presets`** · array<object> = [{"id":"default","name":"Default","icon":"chat","systemPrompt":"You a…
   - Presets: Saved setups to start a conversation with: a system prompt, and optionally a provider, model and effort of their own.
   - x-scope="personal"
-  - read: `ChatConfig.presets` (part) · in: `components/content/parts/chat/ModelPicker.qml`, `services/SettingsManager.qml`
+  - read: `ChatConfig.presets` (part) · in: `components/content/parts/chat/ModelPicker.qml`, `services/ui/SettingsManager.qml`
 
 ### `Chat.presets[]`
 
@@ -91,17 +91,17 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Chat.presets[].id`** · string
   - The item's stable id, unique in its list: what editors, path ops and imports match it by.
   - pattern="^[A-Za-z0-9][A-Za-z0-9._-]*$", x-settings=false
-  - read: entry field, name match · in: `components/content/parts/chat/ConversationList.qml`, `components/content/parts/chat/ModelPicker.qml`, `config/ChatConfig.qml`, `services/SettingsManager.qml`
+  - read: entry field, name match · in: `components/content/parts/chat/ConversationList.qml`, `components/content/parts/chat/ModelPicker.qml`, `config/ChatConfig.qml`, `services/ui/SettingsManager.qml`
 - **`Chat.presets[].name`** · string = ""
   - Name
-  - read: entry field, name match · in: `components/content/parts/chat/ChatComposer.qml`, `components/content/parts/chat/ChatHeader.qml`, `components/content/parts/chat/ChatMessageList.qml`, `components/content/parts/chat/ModelPicker.qml`, `config/ChatConfig.qml`, `services/SettingsManager.qml`
+  - read: entry field, name match · in: `components/content/parts/chat/ChatComposer.qml`, `components/content/parts/chat/ChatHeader.qml`, `components/content/parts/chat/ChatMessageList.qml`, `components/content/parts/chat/ModelPicker.qml`, `config/ChatConfig.qml`, `services/ui/SettingsManager.qml`
 - **`Chat.presets[].icon`** · string = "chat"
   - Icon: A Material Symbols name (fonts.google.com/icons).
   - read: entry field, name match · in: `components/content/parts/chat/ChatHeader.qml`, `components/content/parts/chat/ChatMessageList.qml`, `components/content/parts/chat/ModelPicker.qml`
 - **`Chat.presets[].systemPrompt`** · string = ""
   - System prompt
   - x-multiline=true
-  - read: entry field, name match repo-wide · in: `services/ChatManager.qml`
+  - read: entry field, name match repo-wide · in: `services/apps/ChatManager.qml`
 - **`Chat.presets[].provider`** · string = ""
   - Provider: A provider ID. Empty uses the default provider.
   - read: entry field, name match · in: `components/content/parts/chat/ChatMessageList.qml`, `components/content/parts/chat/ModelPicker.qml`
@@ -110,33 +110,33 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - read: entry field, name match · in: `components/content/parts/chat/ChatHeader.qml`, `components/content/parts/chat/ChatMessage.qml`, `components/content/parts/chat/ChatMessageList.qml`, `components/content/parts/chat/ModelPicker.qml`
 - **`Chat.presets[].effort`** · string = "default" · enum default|low|medium|high|xhigh|max
   - Effort: How hard a reasoning model thinks. Models that don't reason ignore it.
-  - read: entry field, name match repo-wide · in: `components/methods/ChatProtocol.qml`, `services/ChatManager.qml`
+  - read: entry field, name match repo-wide · in: `components/methods/ChatProtocol.qml`, `services/apps/ChatManager.qml`
 
 ### Reader members
 
 Every public member of `ChatConfig`, with the files that use it.
 
 - `ChatConfig.providers` (var): Chat.providers, each with an `id` (from its name when left empty) and a `defaultModel` (the first model when left empty)
-  - in: `components/content/parts/chat/ModelPicker.qml`, `components/views/Settings/ChatProvidersCard.qml`, `services/SecretsManager.qml`, `services/SettingsManager.qml`
+  - in: `components/content/parts/chat/ModelPicker.qml`, `components/views/Settings/ChatProvidersCard.qml`, `services/core/SecretsManager.qml`, `services/ui/SettingsManager.qml`
 - `ChatConfig.savedProviders` (var): Chat.providers as saved (no filled-in ids or names), for editing
   - in: `components/views/Settings/ChatProvidersCard.qml`
 - `ChatConfig.presets` (var)
-  - in: `components/content/parts/chat/ModelPicker.qml`, `services/SettingsManager.qml`
+  - in: `components/content/parts/chat/ModelPicker.qml`, `services/ui/SettingsManager.qml`
 - `ChatConfig.defaultProvider` (string)
-  - in: `services/ChatManager.qml`
+  - in: `services/apps/ChatManager.qml`
 - `ChatConfig.defaultPreset` (string)
-  - in: `services/ChatManager.qml`, `services/LauncherCommands.qml`, `services/LauncherManager.qml`
+  - in: `services/apps/ChatManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
 - `ChatConfig.maxTokens` (int)
-  - in: `services/ChatManager.qml`
+  - in: `services/apps/ChatManager.qml`
 - `ChatConfig.keepConversations` (int): 0: conversations aren't saved
-  - in: `components/content/parts/chat/ConversationList.qml`, `services/ChatManager.qml`
+  - in: `components/content/parts/chat/ConversationList.qml`, `services/apps/ChatManager.qml`
 - `ChatConfig.showThinking` (bool)
-  - in: `services/ChatManager.qml`
+  - in: `services/apps/ChatManager.qml`
 - `ChatConfig.renderMarkdown` (bool)
   - in: `components/content/parts/chat/ChatMarkdownText.qml`, `components/content/parts/chat/ChatMessage.qml`
 - `ChatConfig.sendKey` (string): "enter" | "ctrlEnter"
   - in: `components/content/parts/chat/ChatComposer.qml`
 - `ChatConfig.provider(id)`: A provider by id: the default, else the first, for an unknown one
-  - in: `services/ChatManager.qml`, `services/LauncherManager.qml`
+  - in: `services/apps/ChatManager.qml`, `services/ui/LauncherManager.qml`
 - `ChatConfig.preset(name)`: A preset by name (the default, else the first, for an unknown one); never null, so a config without presets still chats
-  - in: `services/ChatManager.qml`, `services/LauncherManager.qml`
+  - in: `services/apps/ChatManager.qml`, `services/ui/LauncherManager.qml`

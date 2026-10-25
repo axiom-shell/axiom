@@ -3,7 +3,8 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.ui
 import qs.components.hosts.popout
 
 // What both edge menu hosts (FloatingEdgeMenu, IntegratedEdgeMenu) share:

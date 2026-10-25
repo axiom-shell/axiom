@@ -14,7 +14,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Apps.terminal`** · string = "kitty"
   - Terminal: Terminal used for commands run with Shift+Enter, for terminal apps and by the Terminal keybind. It's started as: terminal -e command.
   - x-scope="commands"
-  - read: `Apps.terminal` · in: `components/surfaces/onboarding/pages/AppsPage.qml`, `services/LauncherManager.qml`
+  - read: `Apps.terminal` · in: `components/surfaces/onboarding/pages/AppsPage.qml`, `services/ui/LauncherManager.qml`
 - **`Apps.fileManager`** · string = ""
   - File manager: Command the File manager keybind runs. Empty opens your home folder in the system's default file manager.
   - x-scope="commands"
@@ -26,25 +26,25 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Apps.pinned`** · array<string> = []
   - Pinned apps: Desktop entry ids, in order: the apps every dock shows first, unless it has its own (Dock → pinnedOwn).
   - x-scope="personal", x-settings=false
-  - read: `Apps.pinned` (computed) · in: `components/views/Settings/DockListCard.qml`, `config/DockConfig.qml`, `services/DockManager.qml`
+  - read: `Apps.pinned` (computed) · in: `components/views/Settings/DockListCard.qml`, `config/DockConfig.qml`, `services/ui/DockManager.qml`
 
 ### Reader members
 
 Every public member of `Apps`, with the files that use it.
 
 - `Apps.terminal` (string)
-  - in: `components/surfaces/onboarding/pages/AppsPage.qml`, `services/LauncherManager.qml`
+  - in: `components/surfaces/onboarding/pages/AppsPage.qml`, `services/ui/LauncherManager.qml`
 - `Apps.fileManager` (string): Empty is the system default (xdg-open / xdg-settings)
   - in: `components/surfaces/onboarding/pages/AppsPage.qml`
 - `Apps.browser` (string)
   - in: `components/surfaces/onboarding/pages/AppsPage.qml`
 - `Apps.pinned` (var)
-  - in: `components/views/Settings/DockListCard.qml`, `config/DockConfig.qml`, `services/DockManager.qml`
+  - in: `components/views/Settings/DockListCard.qml`, `config/DockConfig.qml`, `services/ui/DockManager.qml`
 - `Apps.terminalCommand` (string): What a bind (or the onboarder) runs to open each
-  - in: `services/CompositorConfigManager.qml`
+  - in: `services/compositor/CompositorConfigManager.qml`
 - `Apps.fileManagerCommand` (string)
-  - in: `services/CompositorConfigManager.qml`
+  - in: `services/compositor/CompositorConfigManager.qml`
 - `Apps.inTerminal(argv, terminal)`: `argv` run in a terminal: `terminal` (a widget's own), else the Apps one (which may carry arguments of its own), else xdg-terminal-exec, which takes the comman…
-  - in: `services/LauncherManager.qml`, `services/UpdatesManager.qml`
+  - in: `services/system/UpdatesManager.qml`, `services/ui/LauncherManager.qml`
 - `Apps.browserCommand` (string)
-  - in: `services/CompositorConfigManager.qml`
+  - in: `services/compositor/CompositorConfigManager.qml`

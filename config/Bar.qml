@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-import qs.services
+import qs.services.core
 import qs.components.methods
 
 // Reader for the Bars section and the bar look helpers: derived layout

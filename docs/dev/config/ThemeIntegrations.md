@@ -14,137 +14,137 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`ThemeIntegrations.gtk`** · boolean = false
   - GTK: Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).
   - x-hookup=[{"file":"{config}/gtk-3.0/gtk.css","place":"start","text":"@import u…
-  - read: `ThemeIntegrations.gtk`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.gtk`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.qt`** · boolean = false
   - Qt and KDE apps: Writes an "axiom" color scheme for qt5ct and qt6ct, and an "Axiom" KDE color scheme (Dolphin, Gwenview, Okular, Kate…).
   - x-hookupNote="Qt apps take the palette from qt5ct / qt6ct only with QT_QPA_PLATFOR…, x-hookup=[{"file":"{config}/qt5ct/qt5ct.conf","place":"section","section":"App…
-  - read: `ThemeIntegrations.qt`, `// reads:` marker · in: `services/CompositorConfigManager.qml`, `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.qt`, `// reads:` marker · in: `services/compositor/CompositorConfigManager.qml`, `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.kitty`** · boolean = false
   - Kitty: Writes kitty/axiom.conf. Reloads kitty when allow_remote_control is on.
   - x-hookup=[{"file":"{config}/kitty/kitty.conf","place":"end","text":"include ax…
-  - read: `ThemeIntegrations.kitty`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.kitty`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.alacritty`** · boolean = false
   - Alacritty: Writes alacritty/axiom.toml. Alacritty reloads it by itself.
   - x-hookupNote="Alacritty loads imported files before its own, so colors set in alac…, x-hookup=[{"file":"{config}/alacritty/alacritty.toml","place":"section","secti…
-  - read: `ThemeIntegrations.alacritty`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.alacritty`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.foot`** · boolean = false
   - Foot: Writes foot/axiom.ini. Applies to new windows.
   - x-hookup=[{"file":"{config}/foot/foot.ini","place":"top","replace":"keep","tex…
-  - read: `ThemeIntegrations.foot`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.foot`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.wezterm`** · boolean = false
   - WezTerm: Writes the "axiom" color scheme. WezTerm picks it up on its next config reload.
   - x-hookup=[{"text":"config.color_scheme = \"axiom\"","where":"In wezterm.lua, b…
-  - read: `ThemeIntegrations.wezterm`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.wezterm`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.ghostty`** · boolean = false
   - Ghostty: Writes the "axiom" theme. Ghostty 1.2+ reloads it.
   - x-hookup=[{"file":["{config}/ghostty/config","{config}/ghostty/config.ghostty"…
-  - read: `ThemeIntegrations.ghostty`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.ghostty`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.nvim`** · boolean = false
   - Neovim: Writes the theme for the axiom_theme module, and reloads running instances.
   - x-hookupNote="Neovim has no single line to add. Its colors come from colorscheme p…, x-hookup=[{"file":"{config}/nvim/lua/axiom_theme.lua","place":"copy","from":"t…
-  - read: `ThemeIntegrations.nvim`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.nvim`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.helix`** · boolean = false
   - Helix: Writes the "axiom" theme. Helix 23.10+ reloads it.
   - x-hookup=[{"file":"{config}/helix/config.toml","place":"top","text":"theme = \…
-  - read: `ThemeIntegrations.helix`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.helix`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.vscode`** · boolean = false
   - VS Code / VSCodium: Installs a local "Axiom" color theme extension.
   - x-hookup=[{"text":"\"workbench.colorTheme\": \"Axiom\"","where":"In settings.j…
-  - read: `ThemeIntegrations.vscode`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.vscode`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.zed`** · boolean = false
   - Zed: Writes the "Axiom" theme, which follows light/dark. Zed reloads it.
   - x-hookup=[{"text":"\"theme\": \"Axiom\"","where":"In Zed's settings.json (zed:…
-  - read: `ThemeIntegrations.zed`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.zed`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.vesktop`** · boolean = false
   - Vesktop / Vencord: Writes the axiom.theme.css Vencord theme for Vesktop (and Vencord, Equibop, Equicord). Discord re-colors live.
   - x-hookup=[{"text":"axiom.theme.css","where":"In Vesktop: Settings → Vencord → …
-  - read: `ThemeIntegrations.vesktop`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.vesktop`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.firefox`** · boolean = false
   - Firefox / LibreWolf / Zen: Writes chrome/axiom.css into every profile of Firefox and its forks (LibreWolf, Zen, Floorp, Waterfox; Flatpak too), recoloring the browser's tabs, toolbars, menus and sidebar. Applies from each browser's next start; websites only follow light/dark.
   - x-hookupNote="Apply sets up every profile it finds: it imports axiom.css at the to…, x-profiles=["{home}/.mozilla/firefox/profiles.ini","{config}/mozilla/firefox/pro…, x-hookup=[{"perProfile":true,"file":"chrome/userChrome.css","place":"start","t…
-  - read: `ThemeIntegrations.firefox`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.firefox`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.k9s`** · boolean = false
   - k9s: Writes the "axiom" skin. k9s reloads it by itself.
   - x-hookup=[{"text":"k9s:\n  ui:\n    skin: axiom","where":"In ~/.config/k9s/con…
-  - read: `ThemeIntegrations.k9s`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.k9s`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.cava`** · boolean = false
   - Cava: Writes cava/colors/axiom.conf (and a Cava config including it, when there is none). Reloads running Cava.
   - x-hookup=[{"file":"{config}/cava/config","place":"top","replace":"keep","text"…
-  - read: `ThemeIntegrations.cava`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.cava`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.btop`** · boolean = false
   - btop: Writes the "axiom" theme. Applies from btop's next start.
   - x-hookup=[{"file":"{config}/btop/btop.conf","place":"top","text":"color_theme …
-  - read: `ThemeIntegrations.btop`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.btop`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.ncspot`** · boolean = false
   - ncspot: Writes the colors into the [theme] table of ncspot's config.toml, between axiom's markers. Reloads running ncspot.
   - x-hookupNote="ncspot can't load a separate theme file, so unlike the other integra…, x-hookup=[{"file":"{config}/ncspot/config.toml","place":"section","section":"t…
-  - read: `ThemeIntegrations.ncspot`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.ncspot`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.fzf`** · boolean = false
   - fzf: Writes --color options to $XDG_STATE_HOME/axiom/fzf-colors (fzf 0.49+).
   - x-hookup=[{"place":"shellrc","replace":"keep","text":"export FZF_DEFAULT_OPTS_…
-  - read: `ThemeIntegrations.fzf`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.fzf`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.lazygit`** · boolean = false
   - lazygit: Writes lazygit/axiom.yml. Applies from lazygit's next start.
   - x-hookupNote="This sets LG_CONFIG_FILE, which takes the place of any value you set…, x-hookup=[{"place":"shellrc","replace":"keep","text":"export LG_CONFIG_FILE=\"…
-  - read: `ThemeIntegrations.lazygit`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.lazygit`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.bat`** · boolean = false
   - bat / delta: Writes the "axiom" syntax theme for bat and delta, and rebuilds bat's cache.
   - x-hookup=[{"file":"{config}/bat/config","place":"end","text":"--theme=axiom","…
-  - read: `ThemeIntegrations.bat`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.bat`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.yazi`** · boolean = false
   - Yazi: Writes the "axiom" flavor (Yazi 25.5+).
   - x-hookup=[{"file":"{config}/yazi/theme.toml","place":"section","section":"flav…
-  - read: `ThemeIntegrations.yazi`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.yazi`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 - **`ThemeIntegrations.zathura`** · boolean = false
   - zathura: Writes zathura/axiom: the interface, search highlights and recolor mode's page colors. Reloads running zathura.
   - x-hookup=[{"file":"{config}/zathura/zathurarc","place":"end","text":"include a…
-  - read: `ThemeIntegrations.zathura`, `// reads:` marker · in: `services/ThemeManager.qml`
+  - read: `ThemeIntegrations.zathura`, `// reads:` marker · in: `services/core/ThemeManager.qml`
 
 ### Reader members
 
 Every public member of `ThemeIntegrations`, with the files that use it.
 
 - `ThemeIntegrations.gtk` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.qt` (bool)
-  - in: `services/CompositorConfigManager.qml`
+  - in: `services/compositor/CompositorConfigManager.qml`
 - `ThemeIntegrations.kitty` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.alacritty` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.foot` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.wezterm` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.ghostty` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.nvim` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.helix` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.vscode` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.zed` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.vesktop` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.firefox` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.k9s` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.cava` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.btop` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.ncspot` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.fzf` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.lazygit` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.bat` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.yazi` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `ThemeIntegrations.zathura` (bool)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`

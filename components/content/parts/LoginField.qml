@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Widgets
 
 import qs.config
-import qs.services
+import qs.services.session
 import qs.components.reusable
 
 // The greeter's login box: who logs in (a list of the system's users to

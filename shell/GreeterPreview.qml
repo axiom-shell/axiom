@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
-import qs.services
+import qs.services.session
 import qs.components.surfaces.greeter
 
 // The layouts editor's preview of the login screen (GreeterManager.editor's

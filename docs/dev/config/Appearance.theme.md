@@ -15,7 +15,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Appearance.theme.name`** · string = "gruvbox-dark"
   - Active theme (set on the overlay's Themes page).
   - x-settings=false
-  - read: `Appearance.theme`, `// reads:` marker · in: `components/content/ThemePicker/ThemePicker.qml`, `config/Theme.qml`, `services/ThemeManager.qml`
+  - read: `Appearance.theme`, `// reads:` marker · in: `components/content/ThemePicker/ThemePicker.qml`, `config/Theme.qml`, `services/core/ThemeManager.qml`
 
 ### `Appearance.theme.schedule`
 
@@ -23,12 +23,12 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - Light and dark by time
 - **`Appearance.theme.schedule.enabled`** · boolean = false
   - Switch by time of day: Use the theme's light variant during the day and its dark one at night. Switching by hand lasts until the next change.
-  - read: `Appearance.themeScheduled`, `// reads:` marker · in: `components/content/ThemePicker/ThemePicker.qml`, `services/ThemeManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.themeScheduled`, `// reads:` marker · in: `components/content/ThemePicker/ThemePicker.qml`, `services/core/ThemeManager.qml`, `services/ui/WallpaperManager.qml`
 - **`Appearance.theme.schedule.lightAt`** · string = "07:00"
   - Light from: 24-hour time, like 07:00.
   - pattern="^([01]?\\d|2[0-3]):[0-5]\\d$", x-showIf={"enabled":true}
-  - read: `Appearance.lightAt` · in: `services/ThemeManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.lightAt` · in: `services/core/ThemeManager.qml`, `services/ui/WallpaperManager.qml`
 - **`Appearance.theme.schedule.darkAt`** · string = "19:00"
   - Dark from: 24-hour time, like 19:00.
   - pattern="^([01]?\\d|2[0-3]):[0-5]\\d$", x-showIf={"enabled":true}
-  - read: `Appearance.darkAt` · in: `services/ThemeManager.qml`, `services/WallpaperManager.qml`
+  - read: `Appearance.darkAt` · in: `services/core/ThemeManager.qml`, `services/ui/WallpaperManager.qml`

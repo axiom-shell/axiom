@@ -1,6 +1,6 @@
 # Greeter: install, update, status
 
-> **Files:** `services/GreeterManager.qml`, `config/GreeterConfig.qml`, `scripts/greeter/greeter_install.sh`, `scripts/greeter/org.axiom.greeter.policy`, `components/views/Settings/GreeterStatusCard.qml`, `components/forms/GreeterSetup.qml`
+> **Files:** `services/session/GreeterManager.qml`, `config/GreeterConfig.qml`, `scripts/greeter/greeter_install.sh`, `scripts/greeter/org.axiom.greeter.policy`, `components/views/Settings/GreeterStatusCard.qml`, `components/forms/GreeterSetup.qml`
 > **Config:** `Greeter.enabled`, `Greeter.source`, `SelfUpdate.channel` (reader `GreeterConfig`)
 > **Related:** [Greeter runtime](greeter-runtime.md), [Lockscreen](lockscreen.md), [Self-update](self-update.md), [Polkit](polkit.md), [Shell targeting](../core/shell-manager-targeting.md)
 

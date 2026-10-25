@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.core
 
 // A screen's wallpaper, crossfading to a new one once it has loaded
 PanelWindow {

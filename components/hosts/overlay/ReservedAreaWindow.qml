@@ -4,7 +4,9 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.ui
 
 // A full-screen Overlay-layer window placed inside the border's and bars'
 // reserved area (the overlay, the onboarder). Normal exclusion with no zone

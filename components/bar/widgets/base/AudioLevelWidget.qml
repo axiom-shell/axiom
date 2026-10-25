@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.system
 import qs.components.hosts.popout
 
 // Base for the Volume and Microphone widgets: a default device's level.

@@ -4,7 +4,7 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell.Widgets
 import qs.config
-import qs.services
+import qs.services.system
 import qs.components.reusable
 import qs.components.content.parts
 import qs.components.content.base

@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.session
 import qs.components.surfaces.greeter
 
 // The greeter (greeter.qml, greetd's login screen): a GreeterWindow per

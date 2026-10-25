@@ -15,7 +15,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`WindowLook.gaps.enabled`** · boolean = false
   - Set window gaps: Floating bars and detached surfaces set to Automatic keep these gaps too.
   - x-enabledIf={"/$supports.windowGaps":true}
-  - read: `WindowLookConfig.look` (whole) · in: `components/views/Settings/TranslucencyStatus.qml`, `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.look` (whole) · in: `components/views/Settings/TranslucencyStatus.qml`, `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.gaps.inner`** · integer = 3 · 0–50 · px
   - Gaps between windows
   - x-control="stepper", x-showIf={"enabled":true}, x-enabledIf={"/$supports.windowGaps":true}

@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Updates section: how every updates widget and module
 // checks for and installs updates (see UpdatesManager).

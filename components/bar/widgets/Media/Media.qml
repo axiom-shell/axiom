@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.services
+import qs.services.system
 import qs.config
 import qs.components.methods
 import qs.components.hosts.popout

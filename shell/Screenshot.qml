@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 
 import qs.components.surfaces.screenshot
-import qs.services
+import qs.services.apps
 import qs.config
 
 // The screenshot picker while ScreenshotManager is picking: on every screen

@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the WorkspaceOverlay section (the full-screen workspace
 // overview). Named WorkspaceOverlayConfig because `WorkspaceOverlay` is the

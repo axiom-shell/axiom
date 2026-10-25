@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.core
 import qs.components.reusable
 
 // The top of the axiom updates card (the section's `x-intro`): dev mode,

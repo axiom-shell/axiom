@@ -1,10 +1,10 @@
 # Popout registry and collisions
 
-> **Files:** `services/PopoutManager.qml`, `components/hosts/popout/PopoutClaim.qml`, `components/methods/PopoutGeometry.qml`, `tests/tst_PopoutGeometry.qml`, `components/methods/SurfaceOutline.qml`, `components/hosts/popout/LayerOrigin.qml`, `components/bar/BarPanel.qml`
+> **Files:** `services/ui/PopoutManager.qml`, `components/hosts/popout/PopoutClaim.qml`, `components/methods/PopoutGeometry.qml`, `tests/tst_PopoutGeometry.qml`, `components/methods/SurfaceOutline.qml`, `components/hosts/popout/LayerOrigin.qml`, `components/bar/BarPanel.qml`
 > **Config:** none
 > **Related:** [Surface context](surface-context.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Edge menu hosts](../edge-menus/hosts.md)
 
-`services/PopoutManager` knows every popout that is showing, and where. A popout opening closes only what it overlaps, decided by rank. Read this before adding a popout kind or changing which one wins. (Rule: AGENTS.md › UI conventions, "Popout collisions".)
+`services/ui/PopoutManager` knows every popout that is showing, and where. A popout opening closes only what it overlaps, decided by rank. Read this before adding a popout kind or changing which one wins. (Rule: AGENTS.md › UI conventions, "Popout collisions".)
 
 ### Claims
 - **Who holds a claim:** every bar popout, edge popout (OSDs, floating edge menus, the attached launcher), floating popout (the detached launcher, the window switcher), dock and submenu holds a `hosts/popout/PopoutClaim`.

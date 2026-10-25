@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Idle section: hypridle, run by HypridleManager. Timeouts
 // are ms, 0 turning that step off.

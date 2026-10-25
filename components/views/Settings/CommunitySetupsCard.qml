@@ -3,7 +3,9 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Widgets
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.apps
 import qs.components.reusable
 
 /**

@@ -25,10 +25,10 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Session.env[].id`** · string
   - The item's stable id, unique in its list: what editors, path ops and imports match it by.
   - pattern="^[A-Za-z0-9][A-Za-z0-9._-]*$", x-settings=false
-  - read: entry field, name match · in: `components/content/Session/Session.qml`
+  - read: entry field, name match · in: `components/content/Session/Session.qml`, `services/session/GreetdManager.qml`, `services/session/OnboardingManager.qml`
 - **`Session.env[].name`** · string = ""
   - Name
-  - read: entry field, name match · in: `components/content/Session/Session.qml`
+  - read: entry field, name match · in: `components/content/Session/Session.qml`, `services/session/GreetdManager.qml`
 - **`Session.env[].value`** · string = ""
   - Value
   - read: entry field, name match · in: none found
@@ -45,17 +45,17 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Session.autostart[].id`** · string
   - The item's stable id, unique in its list: what editors, path ops and imports match it by.
   - pattern="^[A-Za-z0-9][A-Za-z0-9._-]*$", x-settings=false
-  - read: entry field, name match · in: `components/content/Session/Session.qml`
+  - read: entry field, name match · in: `components/content/Session/Session.qml`, `services/session/GreetdManager.qml`, `services/session/OnboardingManager.qml`
 - **`Session.autostart[].command`** · string = ""
   - Command
-  - read: entry field, name match · in: none found
+  - read: entry field, name match · in: `services/session/HypridleManager.qml`, `services/session/PolkitManager.qml`
 - **`Session.autostart[].enabled`** · boolean = true
   - On
-  - read: `SessionConfig.session` (whole) · in: `services/CompositorConfigManager.qml`
+  - read: `SessionConfig.session` (whole) · in: `services/compositor/CompositorConfigManager.qml`
 
 ### Reader members
 
 Every public member of `SessionConfig`, with the files that use it.
 
 - `SessionConfig.session` (var)
-  - in: `services/CompositorConfigManager.qml`
+  - in: `services/compositor/CompositorConfigManager.qml`

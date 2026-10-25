@@ -4,6 +4,17 @@ One `pragma Singleton QtObject` per domain, named `*Manager`: state and every si
 
 **Recipe:** `docs/recipes/service.md` / `docs/recipes/launcher-command.md`; verify with `scripts/dev/verify.sh`.
 
+### Folders
+Each folder is its own QML module (`import qs.services.<folder>`); a file sees its own folder's types bare and imports the others it uses (cycles between folders are fine). A new service goes in the folder its domain fits:
+- `core/`: what everything else stands on: `ConfigManager` and `ConfigDraft`, `ThemeManager`, the daemon bridge (`BackendManager`) and its funnels (`CommandManager`, `FileManager`, `StateManager`, `IpcTarget`, `ConsumerRegistry`), `SecretsManager`, `ShellManager`, saved configs, dev and self-update.
+- `compositor/`: `CompositorManager`, each backend's `<Prefix>*` files (`check_structure.py` keys its backend rules on this folder), monitors, binds, layers, focus grabs.
+- `session/`: locking, auth, greeter and greetd, onboarding, polkit, idle.
+- `system/`: hardware and OS data: audio, network, bluetooth, battery, brightness, media, notifications, clipboard, updates.
+- `ui/`: state of the shell's own surfaces and their editors: bars, popouts, overlay, edge menus, docks, launcher, settings, wallpaper, blur.
+- `apps/`: features holding their own data: calendar, chat, notes, todos, timers, weather, screenshots, community setups.
+
+When a roadmap stage empties a service, fold or delete it in that stage's change (`docs/dev/backend/roadmap.md`), not here.
+
 - Expose readonly properties, signals and functions; private members start with `_`. Don't shadow Quickshell singletons (`NetworkingManager`, not `Networking`). `check_structure.py` errors on a `FooManager.` reference with no file.
 - **No new direct Quickshell.Io**: `Process`, `FileView`, `Socket`, `IpcHandler` and `Quickshell.execDetached` only in the files `scripts/quickshell-io-allowlist.json` lists (they're moving to the axiom daemon, in the order `docs/dev/backend/roadmap.md` sets). Run commands with `CommandManager.run`, read files with `FileManager.read`, keep small state in `StateManager`; a file to watch or write otherwise is a daemon method.
 - **Polled data**: `acquire(owner, request)` / `release(owner)` wrapping a private `ConsumerRegistry`. Polled by axiom (preferred: a `topics.Source` in the daemon, `docs/dev/backend/protocol.md` › Polled topics), the merged request goes to `BackendManager.acquire(topic, …)` while `_registry.active` and the state comes from `<topic>.state` (copy `TailscaleManager.qml`); polled in QML, the interval is the shortest asked (with a floor), the Timer runs only while `_registry.active`, and the command goes through `CommandManager.run` (the recipe's skeleton). Requests come from config only.

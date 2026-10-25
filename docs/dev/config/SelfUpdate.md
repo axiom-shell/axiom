@@ -13,17 +13,17 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`SelfUpdate.mode`** · string = "notify" · enum auto|notify|off
   - Updates: Checked when the shell starts and once a day. Update automatically installs an update and notifies you; Notify me sends a notification that opens this page. Off never checks.
-  - read: `SelfUpdate.mode` · in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`, `services/SelfUpdateManager.qml`
+  - read: `SelfUpdate.mode` · in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`, `services/core/SelfUpdateManager.qml`
 - **`SelfUpdate.channel`** · string = "tags" · enum tags|main
   - Follow: Releases updates to each new release tag. Main branch updates to every new commit on main: newer, but less tested.
   - x-showIf={"mode":{"not":"off"}}
-  - read: `SelfUpdate.channel` · in: `components/forms/GreeterSetup.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/GreeterManager.qml`, `services/SelfUpdateManager.qml`
+  - read: `SelfUpdate.channel` · in: `components/forms/GreeterSetup.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/core/SelfUpdateManager.qml`, `services/session/GreeterManager.qml`
 
 ### Reader members
 
 Every public member of `SelfUpdate`, with the files that use it.
 
 - `SelfUpdate.mode` (string): "auto" | "notify" | "off"
-  - in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`, `services/SelfUpdateManager.qml`
+  - in: `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`, `services/core/SelfUpdateManager.qml`
 - `SelfUpdate.channel` (string): "tags" (releases) | "main" (the main branch)
-  - in: `components/forms/GreeterSetup.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/GreeterManager.qml`, `services/SelfUpdateManager.qml`
+  - in: `components/forms/GreeterSetup.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/core/SelfUpdateManager.qml`, `services/session/GreeterManager.qml`

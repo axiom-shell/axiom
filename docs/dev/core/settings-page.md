@@ -1,6 +1,6 @@
 # Settings page
 
-> **Files:** `components/views/Settings/Settings.qml`, `components/methods/SchemaLayout.qml`, `components/methods/ColumnSplit.qml`, `components/views/Settings/` (`SettingsGroupCard`, `EntryListCard`, `FoldingCard`, `SettingsSidebar`, `SettingsContent`), `components/forms/`, `components/reusable/ScrollMemory.qml`, `services/SettingsManager.qml`
+> **Files:** `components/views/Settings/Settings.qml`, `components/methods/SchemaLayout.qml`, `components/methods/ColumnSplit.qml`, `components/views/Settings/` (`SettingsGroupCard`, `EntryListCard`, `FoldingCard`, `SettingsSidebar`, `SettingsContent`), `components/forms/`, `components/reusable/ScrollMemory.qml`, `services/ui/SettingsManager.qml`
 > **Config:** every section with settings (`x-settings` not false); fold state in `~/.local/state/axiom/ui/settings.json`
 > **Related:** [Schema annotations](schema-annotations.md), [Editors pattern](editors-pattern.md), [Shared UI pieces](shared-ui-pieces.md)
 

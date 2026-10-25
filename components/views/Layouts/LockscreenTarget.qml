@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.session
 
 // The layouts editor on the built-in lock screen (LockManager's draft of
 // Lockscreen.layout).

@@ -1,6 +1,6 @@
 # Networking and Bluetooth
 
-> **Files:** `services/NetworkingManager.qml`, `services/BluetoothManager.qml`
+> **Files:** `services/system/NetworkingManager.qml`, `services/system/BluetoothManager.qml`
 > **Config:** none
 > **Related:** [Services pattern](../core/services-pattern.md)
 

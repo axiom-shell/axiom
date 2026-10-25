@@ -5,7 +5,9 @@ import Quickshell
 import qs.components.hosts.popout
 import qs.components.reusable
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.session
+import qs.services.ui
 
 // The search launcher on one screen. LauncherManager builds the rows from
 // the text and runs them, LauncherPanel shows them, and this picks the

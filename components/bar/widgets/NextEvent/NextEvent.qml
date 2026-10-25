@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.apps
 import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base

@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.session
 
 // The layouts editor on the login screen (GreeterManager's draft of
 // Greeter.layout). A saved layout reaches the login screen through the

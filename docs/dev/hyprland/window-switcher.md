@@ -1,6 +1,6 @@
 # Window switcher (Alt+Tab)
 
-> **Files:** `services/WindowSwitcherManager.qml`, `config/WindowSwitcherConfig.qml`, `components/methods/HyprLua.qml` (`switcherBindLua`, `switcherLua`, `switcherLeaveLua`), `components/methods/WindowOrder.qml`, `shell/WindowSwitcher.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
+> **Files:** `services/compositor/WindowSwitcherManager.qml`, `config/WindowSwitcherConfig.qml`, `components/methods/HyprLua.qml` (`switcherBindLua`, `switcherLua`, `switcherLeaveLua`), `components/methods/WindowOrder.qml`, `shell/WindowSwitcher.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
 > **Config:** `WindowSwitcher.*` (`showDelay`, `scope`, `previews`)
 > **Related:** [Keybinds](keybinds.md), [Config modes](config-modes.md), [Workspaces](workspaces.md)
 

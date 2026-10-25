@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.ui
 import qs.components.reusable
 
 // i18n: keys from callers and the schema (titles, descriptions, type labels)

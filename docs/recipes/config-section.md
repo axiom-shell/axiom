@@ -32,7 +32,7 @@
 ```qml
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Polkit section: whether axiom is the session's polkit
 // agent (PolkitManager)
@@ -50,7 +50,7 @@ QtObject {
    - `x-category` must be one of the root's `x-categories`: General, Look & Feel, Hyprland, Workspaces, Overlay & Popouts, Dock & OSD, Launcher, Notifications, Screen & Power, Calendar, Modules, Maintenance.
    - Add `"x-scope": "look"`, `"personal"` or `"commands"` only if the section should travel with examples and exports. Otherwise it inherits the root's `machine`.
 2. **Reader.**
-   - Imports are only `QtQuick` and `qs.services` (for `ConfigManager`), plus other readers if needed.
+   - Imports are only `QtQuick` and `qs.services.core` (for `ConfigManager`), plus other readers if needed.
    - Write one `readonly property` per key that is used, as `_c.<key>`. No `??` fallbacks.
 3. **Use it:** services read it to act; UI binds to it.
 4. **Hand-built settings UI:** only if the generated form can't express it. Add `x-card: {file: <Name>, title: …}` (`components/views/Settings/<Name>Card.qml`) or `x-intro`.

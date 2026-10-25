@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.ui
 
 // The layouts editor on an overlay page (OverlayManager's selected view):
 // a Custom page's modules, with how they fit each monitor's overlay. A

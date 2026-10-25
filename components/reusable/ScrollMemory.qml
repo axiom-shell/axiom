@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.services
+import qs.services.ui
 
 // Keeps where a Flickable was scrolled to (EditsManager, by `key`), so a
 // panel rebuilt when the overlay reopens comes back to the same spot. Its

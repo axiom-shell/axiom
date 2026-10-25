@@ -1,6 +1,6 @@
 # Night light
 
-> **Files:** `services/NightLightManager.qml`, `config/NightLight.qml`, `components/views/Settings/NightLightStatus.qml`, `components/content/NightLightControls/NightLightControls.qml`, `services/DailySchedule.qml`
+> **Files:** `services/system/NightLightManager.qml`, `config/NightLight.qml`, `components/views/Settings/NightLightStatus.qml`, `components/content/NightLightControls/NightLightControls.qml`, `services/apps/DailySchedule.qml`
 > **Config:** `NightLight.*`
 > **Related:** [Wallpaper and schedules](wallpaper-and-schedules.md), [Utility modules](../overlay/utility-modules.md)
 

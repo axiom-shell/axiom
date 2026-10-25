@@ -3,7 +3,7 @@
 
 > **Reader:** `Bar` (`config/Bar.qml`)
 > **Schema:** `config/json/config.schema.json` → `properties.Bars` · category Look & Feel · scope look
-> **Read whole by:** `services/BarManager.qml`
+> **Read whole by:** `services/ui/BarManager.qml`
 
 Each setting: `path` · type = default · enum/range/unit; then title: description; annotations; `read:` the reader member(s) (exact unless marked) and `in:` the files that use them.
 
@@ -21,11 +21,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 Every public member of `Bar`, with the files that use it.
 
 - `Bar.enrichBarConfig(barConfig, gapsOut)`: Adds derived orientation flags to a bar entry from the Bars section (whose keys are always filled in from the schema defaults).
-  - in: `components/views/BarEditor/BarsPanel.qml`, `services/BarManager.qml`
+  - in: `components/views/BarEditor/BarsPanel.qml`, `services/ui/BarManager.qml`
 - `Bar.layerNamespace(barConfig)`: A bar window's layer namespace, whose rule's `order` decides where Hyprland arranges it (HyprLua.layerRulesLua): by its kind (solid, outside the border; pills;…
   - in: `components/bar/BarPanel.qml`, `shell/Bar.qml`
 - `Bar.endsOptions(gapsOut)`: BarEnds' options, from Appearance and Hyprland's gaps_out
-  - in: `services/BarManager.qml`
+  - in: `services/ui/BarManager.qml`
 - `Bar.widgetColors(barConfig, accent, foregroundName)`: What a bar widget draws in on its bar ({ fill, stroke, indicator, text, icon }, see BarWidgetStyle): `accent` is its color for its state, `foregroundName` the …
   - in: `components/bar/widgets/base/BarIconWidget.qml`, `components/bar/widgets/base/BarWidget.qml`
 - `Bar.cellColors(barConfig, color, own, state)`: What a cell inside a widget (a workspace) draws in on its bar ({ fill, stroke, indicator, content }, see BarWidgetStyle.cell): `color` is its state color, `own…
@@ -51,7 +51,7 @@ Every public member of `Bar`, with the files that use it.
 - `Bar.detachedPush(barConfig, gapsOut, connectorGap)`: How much further than half a connector gap past a transparent bar's inner edge a box detached from it (a bar popout, a floating edge menu) sits, so it starts i…
   - in: `components/hosts/popout/EdgePlacement.qml`, `components/methods/SurfaceContext.qml`
 - `Bar.reservedZone(barConfig, gapsOut)`: The exclusive zone a bar sets (BarPanel), given Hyprland's gaps_out on its edge.
-  - in: `components/bar/BarPanel.qml`, `services/BarManager.qml`
+  - in: `components/bar/BarPanel.qml`, `services/ui/BarManager.qml`
 - `Bar.boxedStyles` (var): The widget styles that draw each widget on a box of its own: only they have shapes and grouping
   - in: only inside the reader
 - `Bar.lookOf(barConfig, section)`: A bar's look: its `style` (a BarStyle) with every key it leaves null (inherit) taken from the Bars section's (`section`, BarStyle.values when left out), its sh…
@@ -59,9 +59,9 @@ Every public member of `Bar`, with the files that use it.
 - `Bar.lookContext(barConfig)`: The look a bar's widgets draw in, as `$bar.<key>` for their options' `x-showIf`: lookOf's BarStyle keys, with grouping only for boxed styles (as enrichBarConfi…
   - in: `components/views/BarEditor/WidgetInspector.qml`
 - `Bar.savedBars` (var): The bars as saved (Bars.items): no previews, unexpanded
-  - in: `components/surfaces/onboarding/pages/LookPage.qml`, `components/views/Layouts/OpenerButtons.qml`, `services/EdgeMenuManager.qml`
+  - in: `components/surfaces/onboarding/pages/LookPage.qml`, `components/views/Layouts/OpenerButtons.qml`, `services/ui/EdgeMenuManager.qml`
 - `Bar.expandBars(bars)`: Each bar as one entry per screen it's on (its `screen`, a ScreenTarget): the primary monitor, every monitor, or those named (the primary monitor when none of t…
-  - in: `services/BarManager.qml`
+  - in: `services/ui/BarManager.qml`
 - `Bar.widgetLayoutSchema` (var): A widget's `layout` overrides (size, minSize, priority), for the bar editor's inspector
   - in: `components/views/BarEditor/WidgetInspector.qml`
 - `Bar.fieldGroups` (var): A bar's own fields in groups (`x-group`), for the bar editor (its style is edited apart: styleGroups)
@@ -69,11 +69,11 @@ Every public member of `Bar`, with the files that use it.
 - `Bar.styleGroups` (var): The BarStyle fields in groups, for the bar editor's style (a bar's, inheriting, or the Bars section's)
   - in: `components/views/BarEditor/BarsPanel.qml`
 - `Bar.availableWidgetTypes` (var)
-  - in: `components/views/BarEditor/BarDragLayer.qml`, `components/views/BarEditor/SectionsBoard.qml`, `components/views/BarEditor/WidgetInspector.qml`, `services/EdgeMenuManager.qml`
+  - in: `components/views/BarEditor/BarDragLayer.qml`, `components/views/BarEditor/SectionsBoard.qml`, `components/views/BarEditor/WidgetInspector.qml`, `services/ui/EdgeMenuManager.qml`
 - `Bar.edgeName(location)`: A Bar.Location as the edge names zones and Hyprland use: "top" | "bottom" | "left" | "right"
-  - in: `components/bar/BarContainer.qml`, `components/bar/BarPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/EdgeTrigger.qml`, `components/surfaces/dock/DockWindow.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `services/BarManager.qml`, `services/DesktopManager.qml` (+1 more)
+  - in: `components/bar/BarContainer.qml`, `components/bar/BarPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/EdgeTrigger.qml`, `components/surfaces/dock/DockWindow.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `services/ui/BarManager.qml`, `services/ui/DesktopManager.qml` (+1 more)
 - `Bar.locationOf(name)`: The Bar.Location an edge name stands for (edgeName's inverse)
-  - in: `components/hosts/popout/StrokeOpening.qml`, `services/BarManager.qml`
+  - in: `components/hosts/popout/StrokeOpening.qml`, `services/ui/BarManager.qml`
 - `Bar.oppositeOf(location)`: The edge across the screen from a Bar.Location
   - in: `components/surfaces/launcher/Launcher.qml`
 - `Bar.getLocationFromString(locStr)`: The Bar.Location of an edge in config ("top" | "bottom" | "left" | "right"), Top for anything else

@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.apps
 import qs.components.reusable
 
 // One event in a list: its calendar's color, the title, and when (on

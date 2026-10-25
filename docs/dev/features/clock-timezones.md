@@ -1,6 +1,6 @@
 # Clocks and time zones
 
-> **Files:** `services/TimeZoneManager.qml`, `components/methods/TimeZones.qml`, `backend/internal/tz/`, `backend/internal/daemon/tools.go`, `backend/internal/cli/tz.go`, `components/content/Clock/Clock.qml`, `components/content/WorldClocks/WorldClocks.qml`, `components/bar/widgets/Time/Time.qml`
+> **Files:** `services/system/TimeZoneManager.qml`, `components/methods/TimeZones.qml`, `backend/internal/tz/`, `backend/internal/daemon/tools.go`, `backend/internal/cli/tz.go`, `components/content/Clock/Clock.qml`, `components/content/WorldClocks/WorldClocks.qml`, `components/bar/widgets/Time/Time.qml`
 > **Config:** module/widget `timezone` properties (no section of its own)
 > **Related:** [Services pattern](../core/services-pattern.md), [Schema annotations](../core/schema-annotations.md), [Desktop](desktop.md), [Utility modules](../overlay/utility-modules.md)
 

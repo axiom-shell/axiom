@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services
+import qs.services.core
 
 // The OSD section's first card (its `x-card`): the OSDs as tabs, one shown
 // at a time: where it sits (a screen picker with presets), a Show button,

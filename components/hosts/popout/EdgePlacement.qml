@@ -3,7 +3,9 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.ui
 import qs.components.methods
 
 // Where a surface growing out of a screen edge goes along it, and

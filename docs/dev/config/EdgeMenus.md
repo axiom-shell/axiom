@@ -13,7 +13,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`EdgeMenus.items`** · array<EdgeMenu> = []
   - x-settings=false
-  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/ui/OverlayManager.qml`
 
 ### `EdgeMenus.items[]`
 
@@ -21,15 +21,15 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`EdgeMenus.items[].id`** · string
   - The item's stable id, unique in its list: what editors, path ops and imports match it by.
   - pattern="^[A-Za-z0-9][A-Za-z0-9._-]*$", x-settings=false
-  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/EdgeMenuManager.qml`, `services/KeybindManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 - **`EdgeMenus.items[].name`** · string = ""
   - Name
   - x-group="General"
-  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/EdgeMenuManager.qml`, `services/KeybindManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 - **`EdgeMenus.items[].enabled`** · boolean = true
   - Enabled
   - x-group="General"
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 
 ### `EdgeMenus.items[].screen`
 
@@ -39,7 +39,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`EdgeMenus.items[].screen.mode`** · string = "primary" · enum primary|named
   - Monitors
   - x-scope="look", x-link={"setting":"General.screen"}
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`, `services/KeybindManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 - **`EdgeMenus.items[].screen.names`** · array<string> = []
   - Monitors
   - x-scope="machine", x-monitorRef="off", x-showIf={"mode":"named"}
@@ -67,34 +67,34 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`EdgeMenus.items[].trigger.size`** · integer = 5 · 1–50 · px
   - Trigger size: How far from the screen edge the pointer opens it.
   - x-control="stepper"
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/KeybindManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/compositor/KeybindManager.qml`
 - **`EdgeMenus.items[].trigger.length`** · integer = 0 · 0–4000 · px
   - Trigger length: How long the strip along the edge is (0: as long as it is).
   - x-emptyLabel="Its own length"
-  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/EdgeMenuManager.qml`, `services/KeybindManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 
 ### `EdgeMenus.items[]`
 
 - **`EdgeMenus.items[].edge`** · string = "left" · enum top|bottom|left|right
   - Edge
   - x-group="Placement", x-showIf={"mode":{"not":"submenu"}}
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/ui/EdgeMenuManager.qml`
 - **`EdgeMenus.items[].mode`** · string = "floating" · enum floating|integrated|submenu
   - Mode: Floating opens over your windows. Integrated opens outside the screen border and bars, pushing them and your windows inwards. Submenu has no edge of its own: it opens beside a floating menu, from a Submenu module there.
   - x-group="Placement"
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`, `services/KeybindManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 - **`EdgeMenus.items[].offset`** · integer = 0 · -200–200
   - Cells of its lattice the menu sits from centred along its edge, positive towards the end (right or down), kept on the screen. Set by the arrows on the layouts editor's grid.
   - x-settings=false
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/ui/EdgeMenuManager.qml`
 - **`EdgeMenus.items[].gridOffset`** · integer = 0 · -200–200 · px
   - Shifts the lattice the menu's modules sit on along its edge (centred on the screen) by this many px, positive towards the end. Set beside the arrows on the layouts editor's grid.
   - x-settings=false
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/ui/EdgeMenuManager.qml`
 - **`EdgeMenus.items[].length`** · string = "content" · enum content|edge
   - Length: Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge).
   - x-group="Placement", x-showIf={"mode":{"not":"submenu"}}
-  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/EdgeMenuManager.qml`, `services/KeybindManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `components/forms/SchemaField.qml`, `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 - **`EdgeMenus.items[].popoutAtWidget`** · boolean = false
   - Popout at its widget: Opened as a bar widget's popout, it opens at that widget, as bar popouts do, rather than where its layout places it. Only when that bar is on the menu's edge and monitor; opened any other way, it keeps its place.
   - x-group="Placement", x-showIf={"mode":"floating","length":"content"}
@@ -112,21 +112,21 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - x-group="Placement"
 - **`EdgeMenus.items[].layout.grid.fine`** · boolean = false
   - Double grid: Split each grid unit in two each way, for finer placement. Modules keep their size and spot.
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 
 ### `EdgeMenus.items[].layout`
 
 - **`EdgeMenus.items[].layout.moduleScale`** · integer = 100 · 50–200 · %
   - Module size: Size of the menu's modules, relative to the card size in Look & Feel. Their text and content grow and shrink with them.
   - x-link={"setting":"Interface.cardSize"}, x-group="Placement", x-control="stepper"
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/ui/EdgeMenuManager.qml`
 - **`EdgeMenus.items[].layout.moduleBorders`** · boolean = true
   - Module borders: Draw each module's card box. Turn off to show modules straight on the menu's background, e.g. a menu with a single module.
   - x-group="Style"
   - read: entry field, name match · in: `components/surfaces/edgemenu/EdgeMenuBody.qml`
 - **`EdgeMenus.items[].layout.modules`** · array<OverlayModules> = []
   - x-settings=false
-  - read: `EdgeMenusConfig.menus` (whole) · in: `services/EdgeMenuManager.qml`, `services/OverlayManager.qml`
+  - read: `EdgeMenusConfig.menus` (whole) · in: `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 - **`EdgeMenus.items[].layout.modules[]`**: one of the [OverlayModules](OverlayModules.md) types (discriminated by `type`)
 
 ### `EdgeMenus.items[]`
@@ -182,31 +182,31 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 Every public member of `EdgeMenusConfig`, with the files that use it.
 
 - `EdgeMenusConfig.menus` (var): EdgeMenus.items: [EdgeMenu], each { id, name, enabled, screen, edge, mode, …, layout: { grid, moduleScale, moduleBorders, modules }, open, trigger, close }
-  - in: `components/forms/SchemaField.qml`, `services/EdgeMenuManager.qml`, `services/KeybindManager.qml`, `services/OverlayManager.qml`
+  - in: `components/forms/SchemaField.qml`, `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 - `EdgeMenusConfig.enabledMenus` (var)
-  - in: `services/SystemManager.qml`, `shell/EdgeMenus.qml`
+  - in: `services/system/SystemManager.qml`, `shell/EdgeMenus.qml`
 - `EdgeMenusConfig.fieldGroups` (var): A menu's own fields in groups (`x-group`), for the edge menu editor
   - in: `components/views/Layouts/LayoutsPanel.qml`
 - `EdgeMenusConfig.isSubmenu(menu)`: A menu with no edge of its own: it opens only beside another, from a Submenu module there (content/Submenu/MenuSubmenu)
-  - in: `components/views/Layouts/MenuOpening.qml`, `components/views/Layouts/MenuTarget.qml`, `services/EdgeMenuManager.qml`
+  - in: `components/views/Layouts/MenuOpening.qml`, `components/views/Layouts/MenuTarget.qml`, `services/ui/EdgeMenuManager.qml`
 - `EdgeMenusConfig.menuById(id)`
-  - in: `components/content/Submenu/MenuSubmenu.qml`, `components/content/Submenu/Submenu.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `services/EdgeMenuManager.qml`
+  - in: `components/content/Submenu/MenuSubmenu.qml`, `components/content/Submenu/Submenu.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `services/ui/EdgeMenuManager.qml`
 - `EdgeMenusConfig.popoutMenuOf(properties)`: The menu a bar widget opens as its popout (its `popout.menu`, with `popout.enabled` on), else "": it opens its own popout, if any.
   - in: `components/bar/BarWidgetHost.qml`
 - `EdgeMenusConfig.menusOpenedBy(widget)`: The ids of the menus a bar widget entry opens, as configured (gone or disabled alike): its menu popout, then a Button's click menu
-  - in: `services/EdgeMenuManager.qml`, `services/OverlayManager.qml`
+  - in: `services/ui/EdgeMenuManager.qml`, `services/ui/OverlayManager.qml`
 - `EdgeMenusConfig.opensOwnPopout(properties)`: A bar widget with a popout of its own opens it: on, and no menu opened in its place
   - in: `components/bar/widgets/Bluetooth/Bluetooth.qml`, `components/bar/widgets/ClaudeUsage/ClaudeUsage.qml`, `components/bar/widgets/Media/Media.qml`, `components/bar/widgets/Network/Network.qml`, `components/bar/widgets/NextEvent/NextEvent.qml`, `components/bar/widgets/Notifications/Notifications.qml`, `components/bar/widgets/Pomodoro/Pomodoro.qml`, `components/bar/widgets/Stopwatch/Stopwatch.qml`, `components/bar/widgets/SystemStats/SystemStats.qml`, `components/bar/widgets/Time/Time.qml` (+6 more)
 - `EdgeMenusConfig.menuWithModule(type)`: The first enabled menu holding a module of `type`, else null
-  - in: `services/LauncherCommands.qml`, `services/ShellManager.qml`
+  - in: `services/core/ShellManager.qml`, `services/ui/LauncherCommands.qml`
 - `EdgeMenusConfig.screenFor(menu)`: The menu's screen: the one its ScreenTarget names, else the primary monitor
-  - in: `components/content/Submenu/MenuSubmenu.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `components/views/Layouts/MenuTarget.qml`, `services/EdgeMenuManager.qml`
+  - in: `components/content/Submenu/MenuSubmenu.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `components/views/Layouts/MenuTarget.qml`, `services/ui/EdgeMenuManager.qml`
 - `EdgeMenusConfig.edgeOf(menu)`: The menu's edge as a Bar.Location
   - in: `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`
 - `EdgeMenusConfig.colorsOf(menu)`: The menu's box colours
   - in: `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`
 - `EdgeMenusConfig.paddingOf(menu)`: Space between the menu's box and its modules: its own, else (-1) the popouts'
-  - in: `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `services/EdgeMenuManager.qml`
+  - in: `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `services/ui/EdgeMenuManager.qml`
 - `EdgeMenusConfig.lengthOf(menu, vertical, unit, gap)`: The menu's length along its edge, from config alone (for the hover strip before the menu has ever been loaded): its modules' grid at card size `unit` and `gap`…
   - in: `components/surfaces/edgemenu/EdgeMenuSync.qml`, `components/views/Layouts/MenuTarget.qml`
 - `EdgeMenusConfig.gridLengthOf(menu, vertical, unit, gap)`: The menu's modules' grid along its edge, unstretched, at card size `unit`, `gap` px between cards

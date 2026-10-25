@@ -9,62 +9,62 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 
 | Method | Guard | Daemon | Shell callers | CLI |
 |---|---|---|---|---|
-| `claudeUsage.refresh` |  | `backend/internal/claudeusage/claudeusage.go` | `services/ClaudeUsageManager.qml` |  |
-| `claudeUsage.subscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/ClaudeUsageManager.qml` |  |
-| `claudeUsage.unsubscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/ClaudeUsageManager.qml` |  |
-| `compositor.allowTakeover` | shell only | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
-| `compositor.checkManaged` | shell only | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
-| `compositor.entries` |  | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
-| `compositor.inputs` | shell only | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
-| `compositor.merge` | shell only | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
-| `compositor.previewMerge` | shell only | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
-| `compositor.reload` | shell only | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
-| `compositor.state` |  | `backend/internal/daemon/compositor.go` | `services/CompositorConfigManager.qml` |  |
-| `config.ackFirstRun` |  | `backend/internal/daemon/methods.go` | `services/ConfigManager.qml` |  |
-| `config.get` |  | `backend/internal/daemon/methods.go` | `services/ConfigManager.qml` | `backend/internal/cli/config.go` |
-| `config.replace` | writable | `backend/internal/daemon/methods.go` | `services/ConfigManager.qml` |  |
-| `config.restore` | writable | `backend/internal/daemon/methods.go` | `services/ConfigManager.qml` |  |
+| `claudeUsage.refresh` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
+| `claudeUsage.subscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
+| `claudeUsage.unsubscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
+| `compositor.allowTakeover` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
+| `compositor.checkManaged` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
+| `compositor.entries` |  | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
+| `compositor.inputs` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
+| `compositor.merge` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
+| `compositor.previewMerge` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
+| `compositor.reload` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
+| `compositor.state` |  | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
+| `config.ackFirstRun` |  | `backend/internal/daemon/methods.go` | `services/core/ConfigManager.qml` |  |
+| `config.get` |  | `backend/internal/daemon/methods.go` | `services/core/ConfigManager.qml` | `backend/internal/cli/config.go` |
+| `config.replace` | writable | `backend/internal/daemon/methods.go` | `services/core/ConfigManager.qml` |  |
+| `config.restore` | writable | `backend/internal/daemon/methods.go` | `services/core/ConfigManager.qml` |  |
 | `config.set` | writable | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/config.go` |
-| `daemon.hello` |  | `backend/internal/daemon/methods.go` | `services/BackendManager.qml` | `backend/internal/cli/client.go` |
+| `daemon.hello` |  | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` | `backend/internal/cli/client.go` |
 | `daemon.reexec` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/run.go` |
 | `daemon.shutdown` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/run.go` |
 | `daemon.status` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/run.go` |
-| `deps.check` |  | `backend/internal/daemon/tools.go` | `services/DependencyManager.qml` |  |
+| `deps.check` |  | `backend/internal/daemon/tools.go` | `services/core/DependencyManager.qml` |  |
 | `dev.get` |  | `backend/internal/daemon/dev.go` | (none) | `backend/internal/cli/dev.go` |
-| `dev.rebuild` |  | `backend/internal/daemon/dev.go` | `services/DevManager.qml` | `backend/internal/cli/dev.go` |
-| `dev.set` |  | `backend/internal/daemon/dev.go` | `services/DevManager.qml` | `backend/internal/cli/dev.go` |
+| `dev.rebuild` |  | `backend/internal/daemon/dev.go` | `services/core/DevManager.qml` | `backend/internal/cli/dev.go` |
+| `dev.set` |  | `backend/internal/daemon/dev.go` | `services/core/DevManager.qml` | `backend/internal/cli/dev.go` |
 | `ipc.call` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
 | `ipc.list` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
-| `ipc.register` | shell only | `backend/internal/daemon/methods.go` | `services/BackendManager.qml` |  |
+| `ipc.register` | shell only | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` |  |
 | `lock.lock` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
-| `lock.state` | shell only | `backend/internal/daemon/methods.go` | `services/LockManager.qml` |  |
-| `media.art` |  | `backend/internal/daemon/tools.go` | `services/MediaManager.qml` |  |
-| `net.addresses` |  | `backend/internal/daemon/tools.go` | `services/NetworkingManager.qml` |  |
+| `lock.state` | shell only | `backend/internal/daemon/methods.go` | `services/session/LockManager.qml` |  |
+| `media.art` |  | `backend/internal/daemon/tools.go` | `services/system/MediaManager.qml` |  |
+| `net.addresses` |  | `backend/internal/daemon/tools.go` | `services/system/NetworkingManager.qml` |  |
 | `saved.list` |  | `backend/internal/daemon/sharing.go` | (none) |  |
-| `saved.remove` |  | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `saved.restore` | writable | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `saved.save` |  | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `saved.state` |  | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `share.applyShared` | writable | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `share.defaults` | writable | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `share.example` | writable | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `share.examples` |  | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `share.export` |  | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `share.import` | writable | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
-| `share.open` |  | `backend/internal/daemon/sharing.go` | `services/SavedConfigsManager.qml` |  |
+| `saved.remove` |  | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `saved.restore` | writable | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `saved.save` |  | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `saved.state` |  | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `share.applyShared` | writable | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `share.defaults` | writable | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `share.example` | writable | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `share.examples` |  | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `share.export` |  | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `share.import` | writable | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
+| `share.open` |  | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
 | `shell.restart` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/run.go` |
-| `system.kill` |  | `backend/internal/daemon/tools.go` | `services/SystemManager.qml` |  |
-| `system.refresh` |  | `backend/internal/system/system.go` | `services/SystemManager.qml` |  |
-| `system.subscribe` |  | `backend/internal/system/system.go` | `services/SystemManager.qml` |  |
-| `system.unsubscribe` |  | `backend/internal/system/system.go` | `services/SystemManager.qml` |  |
-| `tailscale.refresh` |  | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |  |
-| `tailscale.subscribe` |  | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |  |
-| `tailscale.unsubscribe` |  | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |  |
-| `tz.offsets` |  | `backend/internal/daemon/tools.go` | `services/TimeZoneManager.qml` |  |
-| `tz.zones` |  | `backend/internal/daemon/tools.go` | `services/TimeZoneManager.qml` |  |
-| `updates.refresh` |  | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |  |
-| `updates.subscribe` |  | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |  |
-| `updates.unsubscribe` |  | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |  |
+| `system.kill` |  | `backend/internal/daemon/tools.go` | `services/system/SystemManager.qml` |  |
+| `system.refresh` |  | `backend/internal/system/system.go` | `services/system/SystemManager.qml` |  |
+| `system.subscribe` |  | `backend/internal/system/system.go` | `services/system/SystemManager.qml` |  |
+| `system.unsubscribe` |  | `backend/internal/system/system.go` | `services/system/SystemManager.qml` |  |
+| `tailscale.refresh` |  | `backend/internal/tailscale/tailscale.go` | `services/system/TailscaleManager.qml` |  |
+| `tailscale.subscribe` |  | `backend/internal/tailscale/tailscale.go` | `services/system/TailscaleManager.qml` |  |
+| `tailscale.unsubscribe` |  | `backend/internal/tailscale/tailscale.go` | `services/system/TailscaleManager.qml` |  |
+| `tz.offsets` |  | `backend/internal/daemon/tools.go` | `services/system/TimeZoneManager.qml` |  |
+| `tz.zones` |  | `backend/internal/daemon/tools.go` | `services/system/TimeZoneManager.qml` |  |
+| `updates.refresh` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
+| `updates.subscribe` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
+| `updates.unsubscribe` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
 
 ## Pushes (daemon → subscribers)
 
@@ -72,24 +72,24 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 
 | Push | Topic | Sent from | Heard in |
 |---|---|---|---|
-| `claudeUsage.state` | claudeUsage (polled) | `backend/internal/claudeusage/claudeusage.go` | `services/ClaudeUsageManager.qml` |
-| `compositor.applied` | compositor | `backend/internal/compositor/manager/manager.go` | `services/CompositorConfigManager.qml` |
-| `compositor.bindsMerged` | compositor | `backend/internal/compositor/manager/manager.go` | `services/CompositorConfigManager.qml` |
-| `compositor.notify` | compositor | `backend/internal/compositor/manager/manager.go` | `services/CompositorConfigManager.qml` |
-| `compositor.state` | compositor | `backend/internal/compositor/manager/manager.go` | `services/CompositorConfigManager.qml` |
-| `config.changed` | config | `backend/internal/daemon/methods.go` | `services/ConfigManager.qml` |
-| `config.state` | config | `backend/internal/daemon/methods.go` | `services/ConfigManager.qml` |
-| `daemon.state` | daemon | `backend/internal/daemon/methods.go` | `services/BackendManager.qml` |
-| `dev.state` | daemon | `backend/internal/daemon/dev.go` | `services/BackendManager.qml` |
-| `saved.state` | saved | `backend/internal/daemon/daemon.go` | `services/SavedConfigsManager.qml` |
-| `schema.changed` | config | `backend/internal/daemon/dev.go` | `services/BackendManager.qml`<br>`services/ConfigManager.qml` |
-| `schema.error` | config | `backend/internal/daemon/dev.go` | `services/ConfigManager.qml` |
-| `system.state` | system (polled) | `backend/internal/system/system.go` | `services/SystemManager.qml` |
-| `tailscale.state` | tailscale (polled) | `backend/internal/tailscale/tailscale.go` | `services/TailscaleManager.qml` |
-| `updates.state` | updates (polled) | `backend/internal/updates/updates.go` | `services/UpdatesManager.qml` |
+| `claudeUsage.state` | claudeUsage (polled) | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |
+| `compositor.applied` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
+| `compositor.bindsMerged` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
+| `compositor.notify` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
+| `compositor.state` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
+| `config.changed` | config | `backend/internal/daemon/methods.go` | `services/core/ConfigManager.qml` |
+| `config.state` | config | `backend/internal/daemon/methods.go` | `services/core/ConfigManager.qml` |
+| `daemon.state` | daemon | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` |
+| `dev.state` | daemon | `backend/internal/daemon/dev.go` | `services/core/BackendManager.qml` |
+| `saved.state` | saved | `backend/internal/daemon/daemon.go` | `services/core/SavedConfigsManager.qml` |
+| `schema.changed` | config | `backend/internal/daemon/dev.go` | `services/core/BackendManager.qml`<br>`services/core/ConfigManager.qml` |
+| `schema.error` | config | `backend/internal/daemon/dev.go` | `services/core/ConfigManager.qml` |
+| `system.state` | system (polled) | `backend/internal/system/system.go` | `services/system/SystemManager.qml` |
+| `tailscale.state` | tailscale (polled) | `backend/internal/tailscale/tailscale.go` | `services/system/TailscaleManager.qml` |
+| `updates.state` | updates (polled) | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |
 
 ## Calls into the shell (daemon → shell)
 
 | Method | Called from | Answered in |
 |---|---|---|
-| `ipc.call` | `backend/internal/ipcroute/ipcroute.go` | `services/BackendManager.qml` |
+| `ipc.call` | `backend/internal/ipcroute/ipcroute.go` | `services/core/BackendManager.qml` |

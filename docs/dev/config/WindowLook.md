@@ -25,39 +25,39 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 Every public member of `Appearance`, with the files that use it.
 
 - `Appearance.theme` (string): --- Theme (UI-owned, set on the overlay's Themes page) ---
-  - in: `components/content/ThemePicker/ThemePicker.qml`, `config/Theme.qml`, `services/ThemeManager.qml`
+  - in: `components/content/ThemePicker/ThemePicker.qml`, `config/Theme.qml`, `services/core/ThemeManager.qml`
 - `Appearance.darkMode` (bool): From the active theme, not config: a theme is dark or light
-  - in: `components/content/QuickActions/QuickActions.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/reusable/BackdropRequest.qml`, `components/surfaces/polkit/PolkitWindow.qml`, `services/LauncherCommands.qml`, `services/ThemeManager.qml`, `services/WallpaperManager.qml`
+  - in: `components/content/QuickActions/QuickActions.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/reusable/BackdropRequest.qml`, `components/surfaces/polkit/PolkitWindow.qml`, `services/core/ThemeManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/WallpaperManager.qml`
 - `Appearance.fixedWallpaper` (string): The wallpapers picked by hand (fixed mode): the primary monitor's, the fallback for monitors without their own, and monitor name -> URL, set per monitor on the…
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `Appearance.fixedWallpapers` (var)
-  - in: `services/ThemeManager.qml`
+  - in: `services/core/ThemeManager.qml`
 - `Appearance.wallpaperBackend` (string): As configured (for display), and with ~ expanded, no trailing slash "quickshell" (shell/Wallpaper draws it) | "awww" (setWallpaper.sh)
-  - in: `services/ThemeManager.qml`, `services/WallpaperManager.qml`, `shell/Wallpaper.qml`
+  - in: `services/core/ThemeManager.qml`, `services/ui/WallpaperManager.qml`, `shell/Wallpaper.qml`
 - `Appearance.wallpaperDaemon` (bool): Start awww's daemon for the awww backend (WallpaperManager)
-  - in: `services/WallpaperManager.qml`
+  - in: `services/ui/WallpaperManager.qml`
 - `Appearance.wallpaperFolder` (string)
   - in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/surfaces/onboarding/pages/LookPage.qml`
 - `Appearance.wallpaperPath` (string)
-  - in: `services/ThemeManager.qml`, `services/WallpaperManager.qml`
+  - in: `services/core/ThemeManager.qml`, `services/ui/WallpaperManager.qml`
 - `Appearance.wallpaperMode` (string): "fixed" | "rotate" (wallpaperRotation) | "variant" (variantWallpapers), driven by WallpaperManager
-  - in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/ThemeManager.qml`, `services/WallpaperManager.qml`
+  - in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/core/ThemeManager.qml`, `services/ui/WallpaperManager.qml`
 - `Appearance.rotationInterval` (int): How often it rotates (ms)
-  - in: `services/WallpaperManager.qml`
+  - in: `services/ui/WallpaperManager.qml`
 - `Appearance.rotationOrder` (string): "random" | "sequential"
-  - in: `services/WallpaperManager.qml`
+  - in: `services/ui/WallpaperManager.qml`
 - `Appearance.rotationSameOnAll` (bool)
-  - in: `services/WallpaperManager.qml`
+  - in: `services/ui/WallpaperManager.qml`
 - `Appearance.darkWallpaper` (string): { dark, light }: file URLs, "" for none
-  - in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/ThemeManager.qml`
+  - in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/core/ThemeManager.qml`
 - `Appearance.lightWallpaper` (string)
-  - in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/ThemeManager.qml`
+  - in: `components/content/WallpaperPicker/WallpaperPicker.qml`, `services/core/ThemeManager.qml`
 - `Appearance.themeScheduled` (bool): --- Light/dark by time of day (WallpaperManager) ---
-  - in: `components/content/ThemePicker/ThemePicker.qml`, `services/WallpaperManager.qml`
+  - in: `components/content/ThemePicker/ThemePicker.qml`, `services/ui/WallpaperManager.qml`
 - `Appearance.lightAt` (string)
-  - in: `services/WallpaperManager.qml`
+  - in: `services/ui/WallpaperManager.qml`
 - `Appearance.darkAt` (string)
-  - in: `services/WallpaperManager.qml`
+  - in: `services/ui/WallpaperManager.qml`
 - `Appearance.fontFamily` (string): --- Font ---
   - in: `components/bar/widgets/Time/Time.qml`, `components/content/Clock/Clock.qml`, `components/content/CommandOutput/CommandOutput.qml`, `components/content/QuickActions/QuickActions.qml`, `components/content/TopProcesses/TopProcesses.qml`, `components/content/parts/AudioRow.qml`, `components/content/parts/CompactFigure.qml`, `components/content/parts/DeviceList.qml`, `components/content/parts/ItemRow.qml`, `components/content/parts/chat/ChatMarkdownText.qml` (+11 more)
 - `Appearance.baseFontSize` (int): At the Interface scale (Widget.scale); bars size their text from baseFontSize, the setting itself
@@ -69,7 +69,7 @@ Every public member of `Appearance`, with the files that use it.
 - `Appearance.fontSizeBy(n: real): int`: The font size `n` px bigger (smaller when negative) than the setting, at the Interface scale: the offset grows with the text, where `fontSize + n` would leave …
   - in: `components/content/Agenda/Agenda.qml`, `components/content/AudioMixer/AudioMixer.qml`, `components/content/Battery/Battery.qml`, `components/content/Calculator/Calculator.qml`, `components/content/Calendar/Calendar.qml`, `components/content/Cheatsheet/Cheatsheet.qml`, `components/content/ClaudeUsage/ClaudeUsage.qml`, `components/content/ClipboardHistory/ClipboardHistory.qml`, `components/content/Clock/Clock.qml`, `components/content/ClockCalendar/ClockCalendar.qml` (+128 more)
 - `Appearance.iconFamily` (string): Icons are Material Symbols names drawn in this font (StyledIcon), so they don't depend on the text font
-  - in: `components/content/TopProcesses/TopProcesses.qml`, `components/reusable/StyledIcon.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `services/DependencyManager.qml`
+  - in: `components/content/TopProcesses/TopProcesses.qml`, `components/reusable/StyledIcon.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `services/core/DependencyManager.qml`
 - `Appearance.borderRadius` (int): --- Shape ---
   - in: `components/bar/BarContainer.qml`, `components/bar/BarPanel.qml`, `components/bar/CornerMerge.qml`, `components/content/base/Panel.qml`, `components/hosts/overlay/OverlayPageNavigator.qml`, `components/hosts/overlay/OverlayPages.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgeSurface.qml`, `components/hosts/popout/FloatingPopout.qml` (+14 more)
 - `Appearance.connectorGap` (int): The gap a surface growing out of an edge keeps between its box and that edge, which its fillets curve across (AttachedSurface, EdgeAttach)
@@ -77,9 +77,9 @@ Every public member of `Appearance`, with the files that use it.
 - `Appearance.borderWidth` (int)
   - in: `components/bar/BarContainer.qml`, `components/bar/BarPanel.qml`, `components/bar/CornerMerge.qml`, `components/bar/WidgetBackground.qml`, `components/content/AudioMixer/AudioMixer.qml`, `components/content/ColorSwatch/ColorSwatch.qml`, `components/content/Greeting/Greeting.qml`, `components/content/Login/Login.qml`, `components/content/Network/Network.qml`, `components/content/NightLightControls/NightLightControls.qml` (+68 more)
 - `Appearance.screenBorder` (bool)
-  - in: `components/bar/BarContainer.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `config/Bar.qml`, `services/BarManager.qml`, `shell/ScreenBorder.qml`
+  - in: `components/bar/BarContainer.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `config/Bar.qml`, `services/ui/BarManager.qml`, `shell/ScreenBorder.qml`
 - `Appearance.screenMargin` (int): The frame can't be thinner than its own outline (a narrower one would draw the stroke over the screen edge); without a frame it's just a gap
-  - in: `components/bar/BarContainer.qml`, `components/hosts/popout/FloatingPopout.qml`, `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `config/Bar.qml`, `services/BarManager.qml`
+  - in: `components/bar/BarContainer.qml`, `components/hosts/popout/FloatingPopout.qml`, `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `config/Bar.qml`, `services/ui/BarManager.qml`
 - `Appearance.surfaceAlpha` (real): --- Translucency --- How solid the shell's surfaces are (0.6–1).
   - in: `components/reusable/BoxBlurRegion.qml`, `shell/BlurBackingWindow.qml`
 - `Appearance.compositorBlurs` (bool): Whether the compositor blurs behind axiom's surfaces (CompositorManager.supports.blur), handed over by CompositorManager: a reader reads no service, and buildi…
@@ -87,15 +87,15 @@ Every public member of `Appearance`, with the files that use it.
 - `Appearance.translucent` (bool)
   - in: `components/bar/BarContainer.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/StrokeOpening.qml`, `components/hosts/popout/SubPopout.qml`
 - `Appearance.blur` (bool)
-  - in: `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/views/Settings/TranslucencyStatus.qml`, `services/BlurManager.qml`, `services/CompositorConfigManager.qml`
+  - in: `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/views/Settings/TranslucencyStatus.qml`, `services/compositor/CompositorConfigManager.qml`, `services/ui/BlurManager.qml`
 - `Appearance.blurBackdrops` (bool)
-  - in: `services/BlurManager.qml`, `services/CompositorConfigManager.qml`
+  - in: `services/compositor/CompositorConfigManager.qml`, `services/ui/BlurManager.qml`
 - `Appearance.blurThroughWindows` (bool): Blurring what's under each surface, windows included, rather than the wallpaper alone (xray), which every surface shares
-  - in: `services/CompositorConfigManager.qml`
+  - in: `services/compositor/CompositorConfigManager.qml`
 - `Appearance.blurPauseFullscreen` (bool): Nothing blurs while a fullscreen window is open (BlurManager.active)
-  - in: `services/BlurManager.qml`
+  - in: `services/ui/BlurManager.qml`
 - `Appearance.blurThreshold` (real)
-  - in: `components/reusable/BoxBlurRegion.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `services/CompositorConfigManager.qml`
+  - in: `components/reusable/BoxBlurRegion.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `services/compositor/CompositorConfigManager.qml`
 - `Appearance.shadowAlphaMax` (real): A shadow's darkest alpha while blurring: under the threshold, so its halo isn't blurred (the blur window casts the chrome's, and Hyprland blurs the chrome's po…
   - in: `config/Bar.qml`
 - `Appearance.fill(color)`: A surface fill (a theme color, or a name or "#hex" as Theme.resolveColor gives one) at the surface opacity

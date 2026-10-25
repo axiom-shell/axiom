@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.services
+import qs.services.core
 
 // Keeps a surface's instances on every monitor in step when its `monitors`
 // mode is "all": opening or closing one opens or closes the rest

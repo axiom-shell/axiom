@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Icons section. (Named IconsConfig: `Icons` is shadowed in
 // files importing Quickshell service modules.)

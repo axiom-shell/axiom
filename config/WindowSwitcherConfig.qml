@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the WindowSwitcher section (Alt+Tab). Named
 // WindowSwitcherConfig because `WindowSwitcher` is the shell module type.

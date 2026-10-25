@@ -1,6 +1,6 @@
 # Lockscreen
 
-> **Files:** `services/LockManager.qml`, `services/AuthManager.qml`, `shell/Lockscreen.qml`, `components/surfaces/lockscreen/LockSurface.qml`, `components/surfaces/lockscreen/LockPreviewWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/content/Password/Password.qml`, `components/content/parts/PasswordField.qml`, `components/content/parts/FocusKeeper.qml`, `components/reusable/PasswordEntry.qml`, `components/content/Greeting/Greeting.qml`, `services/ScreenLayoutEditor.qml`, `components/views/Layouts/LockscreenTarget.qml`, `config/LockscreenConfig.qml`
+> **Files:** `services/session/LockManager.qml`, `services/session/AuthManager.qml`, `shell/Lockscreen.qml`, `components/surfaces/lockscreen/LockSurface.qml`, `components/surfaces/lockscreen/LockPreviewWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/content/Password/Password.qml`, `components/content/parts/PasswordField.qml`, `components/content/parts/FocusKeeper.qml`, `components/reusable/PasswordEntry.qml`, `components/content/Greeting/Greeting.qml`, `services/ui/ScreenLayoutEditor.qml`, `components/views/Layouts/LockscreenTarget.qml`, `config/LockscreenConfig.qml`
 > **Config:** `Lockscreen.mode`, `Lockscreen.lockCommand`, `Lockscreen.layout` (reader `LockscreenConfig`)
 > **Related:** [Idle](idle.md), [Greeter runtime](greeter-runtime.md), [Desktop](desktop.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Themes](../theming/themes.md), [Shell targeting](../core/shell-manager-targeting.md)
 
@@ -112,7 +112,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/lock`
 - On the real greeter the names are `GreetdManager.selectedUser`'s. With no user selected yet it shows "Welcome".
 
 ### Editing and preview
-- **The editor:** `LockManager.editor` is a `services/ScreenLayoutEditor`, a non-singleton shared with the greeter. It holds:
+- **The editor:** `LockManager.editor` is a `services/ui/ScreenLayoutEditor`, a non-singleton shared with the greeter. It holds:
   - the draft, a `ConfigDraft` of `["Lockscreen", "layout"]`, so it never fights the settings page's draft over `mode`;
   - its `GridEditor` (`layout`);
   - `problems`, `updateLayoutField`, `ensureLoaded` / `saveChanges` / `resetChanges`;

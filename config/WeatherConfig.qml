@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Weather section: the one location and units every
 // weather widget and module shows (see WeatherManager).

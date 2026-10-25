@@ -48,7 +48,7 @@ Seams: CompositorManager.
 Scope: the three backends compared: same contract, same semantics, same edge cases.
 Mode: parity
 Docs: compositor/contract.md compositor/sway-backend.md compositor/niri-backend.md hyprland/config-modes.md hyprland/bind-merge.md
-Extra: services/HyprlandManager.qml services/SwayManager.qml services/NiriManager.qml backend/internal/compositor/
+Extra: services/compositor/HyprlandManager.qml services/compositor/SwayManager.qml services/compositor/NiriManager.qml backend/internal/compositor/
 Checks:
 - Build a table: each contract member and `supports` key × backend. Every cell is implemented the same way, or the difference is a declared `supports` key, or it's a finding.
 - Same inputs → same outputs: workspace numbering and naming, focus order, output names and scale, window shapes (class/app id, title, workspace, floating, fullscreen).
@@ -135,7 +135,7 @@ Seams: every reader user; every editor.
 ## services-core
 Scope: the services pattern, ConsumerRegistry, commands, state and files, shell targeting, file picker.
 Docs: core/services-pattern.md core/shell-manager-targeting.md core/file-picker.md
-Extra: services/ConsumerRegistry.qml services/StateManager.qml services/FileManager.qml services/ShellManager.qml components/methods/KeyboardLayouts.qml services/KeyboardLayoutManager.qml
+Extra: services/core/ConsumerRegistry.qml services/core/StateManager.qml services/core/FileManager.qml services/core/ShellManager.qml components/methods/KeyboardLayouts.qml services/system/KeyboardLayoutManager.qml
 Checks:
 - Every polled service uses `acquire`/`release` with the Timer gated on `_registry.active`; requests from config only.
 - Persisted state written atomically, under XDG paths, never under `Paths.axiomPath`.

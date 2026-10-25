@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.compositor
 import qs.components.reusable
 
 // The top of the Workspaces card (the section's `x-intro`): where the

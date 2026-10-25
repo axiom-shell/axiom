@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Apps section: the apps axiom opens (keybinds, the
 // launcher's terminal apps and Shift+Enter commands)

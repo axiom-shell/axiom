@@ -1,13 +1,13 @@
 # Services pattern
 
-> **Files:** `services/*.qml`, `scripts/quickshell-io-allowlist.json`, `services/ConsumerRegistry.qml`, `services/CommandManager.qml`, `services/SystemManager.qml`, `services/UpdatesManager.qml`, `config/Paths.qml`, `shell.qml`
+> **Files:** `services/*.qml`, `scripts/quickshell-io-allowlist.json`, `services/core/ConsumerRegistry.qml`, `services/core/CommandManager.qml`, `services/system/SystemManager.qml`, `services/system/UpdatesManager.qml`, `config/Paths.qml`, `shell.qml`
 > **Config:** none of its own
 > **Related:** [Config manager](config-manager.md), [Config readers](config-readers.md), [Editors pattern](editors-pattern.md), [Shell manager and screen targeting](shell-manager-targeting.md)
 
 How `services/` is built: one singleton per domain, owning state and side effects, and the shared acquire/release pattern for anything polled. Read this before adding or changing a service.
 
 ### Shape
-- Every file is `pragma Singleton QtObject`: one global instance per name, imported as `qs.services`.
+- Every file is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders, `services/AGENTS.md`).
 - (Rule: AGENTS.md › Services, for naming, `_services` and singleton shadowing.)
 - A service with an IPC target that nothing else references is created from `shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
 

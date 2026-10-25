@@ -1,6 +1,6 @@
 # Idle (hypridle) and idle inhibit
 
-> **Files:** `services/HypridleManager.qml`, `components/methods/HypridleConf.qml`, `config/Idle.qml`, `components/views/Settings/IdleStatusCard.qml`, `services/IdleInhibitManager.qml`, `shell/IdleInhibit.qml`, `components/bar/widgets/IdleInhibitor/IdleInhibitor.qml`
+> **Files:** `services/session/HypridleManager.qml`, `components/methods/HypridleConf.qml`, `config/Idle.qml`, `components/views/Settings/IdleStatusCard.qml`, `services/session/IdleInhibitManager.qml`, `shell/IdleInhibit.qml`, `components/bar/widgets/IdleInhibitor/IdleInhibitor.qml`
 > **Config:** `Idle.*` (reader `Idle`)
 > **Related:** [Lockscreen](lockscreen.md), [Brightness](brightness.md), [Hyprland config modes](../hyprland/config-modes.md)
 

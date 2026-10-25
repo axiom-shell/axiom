@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services
+import qs.services.ui
 import qs.components.reusable
 
 // The Dock section's first card (its `x-card`): the docks as tabs, one

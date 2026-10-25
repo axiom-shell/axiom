@@ -14,15 +14,15 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Notes.directory`** · string = ""
   - Notes folder: An absolute path (~/ works), e.g. a synced folder or a Markdown vault. Empty keeps notes in ~/.local/share/axiom/notes.
   - x-control="folder"
-  - read: `NotesConfig.directory` (part), `NotesConfig.linked` (part) · in: `services/NotesManager.qml`
+  - read: `NotesConfig.directory` (part), `NotesConfig.linked` (part) · in: `services/apps/NotesManager.qml`
 - **`Notes.extensions`** · array<string> = ["md","txt"]
   - File types: File extensions the note list shows, comma-separated. New notes are .md.
   - x-scope="personal"
-  - read: `NotesConfig.extensions` (part) · in: `components/content/parts/notes/NoteBrowser.qml`, `services/NotesManager.qml`
+  - read: `NotesConfig.extensions` (part) · in: `components/content/parts/notes/NoteBrowser.qml`, `services/apps/NotesManager.qml`
 - **`Notes.showHidden`** · boolean = false
   - Show hidden files: List files and folders whose names start with a dot.
   - x-scope="personal"
-  - read: `NotesConfig.showHidden` · in: `components/content/parts/notes/NoteBrowser.qml`, `services/NotesManager.qml`
+  - read: `NotesConfig.showHidden` · in: `components/content/parts/notes/NoteBrowser.qml`, `services/apps/NotesManager.qml`
 - **`Notes.confirmDelete`** · boolean = true
   - Confirm before deleting: Deleted notes and folders go to the trash. Without gio (glib2) deleting is permanent, and always asks first.
   - x-scope="personal"
@@ -35,12 +35,12 @@ Every public member of `NotesConfig`, with the files that use it.
 - `NotesConfig.defaultDirectory` (string): $XDG_DATA_HOME/axiom/notes/
   - in: only inside the reader
 - `NotesConfig.linked` (bool)
-  - in: `services/NotesManager.qml`
+  - in: `services/apps/NotesManager.qml`
 - `NotesConfig.directory` (string): The notes folder, absolute with a trailing slash
-  - in: `services/NotesManager.qml`
+  - in: `services/apps/NotesManager.qml`
 - `NotesConfig.extensions` (var): Without dots, lower case
-  - in: `components/content/parts/notes/NoteBrowser.qml`, `services/NotesManager.qml`
+  - in: `components/content/parts/notes/NoteBrowser.qml`, `services/apps/NotesManager.qml`
 - `NotesConfig.showHidden` (bool)
-  - in: `components/content/parts/notes/NoteBrowser.qml`, `services/NotesManager.qml`
+  - in: `components/content/parts/notes/NoteBrowser.qml`, `services/apps/NotesManager.qml`
 - `NotesConfig.confirmDelete` (bool)
   - in: `components/content/parts/notes/NoteBrowser.qml`

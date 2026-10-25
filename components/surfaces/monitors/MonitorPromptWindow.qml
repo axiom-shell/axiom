@@ -6,7 +6,9 @@ import Quickshell.Wayland
 
 import qs.components.reusable
 import qs.config
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.ui
 
 // One screen's prompt: its name while MonitorManager identifies, and
 // Keep / Revert with the countdown while an applied layout waits

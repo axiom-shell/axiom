@@ -3,7 +3,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-import qs.services
+import qs.services.core
+import qs.services.compositor
+import qs.services.ui
 import qs.components.surfaces.screenlayout
 
 // A screen's desktop modules (a DesktopLayout, DesktopConfig.layoutFor),

@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.services
+import qs.services.system
 import Quickshell.Services.Pipewire
 
 // A StyledVolumeBar bound to a Pipewire stream (by app name) or the system

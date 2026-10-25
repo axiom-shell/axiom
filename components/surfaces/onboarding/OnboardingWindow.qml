@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell.Wayland
 
 import qs.config
-import qs.services
+import qs.services.session
 import qs.components.methods
 import qs.components.hosts.overlay
 import qs.components.surfaces.onboarding.pages

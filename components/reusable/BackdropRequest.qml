@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.ui
 
 // A full-screen surface's dim background on its screen, shown while
 // `shown`: drawn by that screen's backdrop window (ScreenBackdrop,

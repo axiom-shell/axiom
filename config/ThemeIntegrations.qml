@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the ThemeIntegrations section: one switch per
 // scripts/theme_<key>.sh, run by ThemeManager.themeIntegrations().

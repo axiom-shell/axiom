@@ -14,7 +14,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`Greeter.source`** · string = "git" · enum git|local
   - Code from: Where Install and Update take the login screen's code. Git fetches it as root from the repository axiom was installed from, following releases or main as axiom's updates do: nothing that can write to your clone can change it. Local copies your clone as it is (the checked-out branch, uncommitted changes included), for working on axiom: any program running as you could change what the login screen runs before you next update it.
   - x-showIf={"/$packaged":false}
-  - read: `GreeterConfig.source` · in: `components/forms/GreeterSetup.qml`, `services/GreeterManager.qml`
+  - read: `GreeterConfig.source` · in: `components/forms/GreeterSetup.qml`, `services/session/GreeterManager.qml`
 
 ### `Greeter.screen`
 
@@ -33,11 +33,11 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 
 - **`Greeter.rememberUser`** · boolean = true
   - Remember the last user: Start on whoever logged in last, and on their last session. Off starts with an empty user field.
-  - read: `GreeterConfig.rememberUser` · in: `services/GreetdManager.qml`
+  - read: `GreeterConfig.rememberUser` · in: `services/session/GreetdManager.qml`
 - **`Greeter.enabled`** · boolean = false
   - Set up as the login screen (set by its card's Install and Remove, never by hand).
   - x-takeover=true, x-settings=false
-  - read: `GreeterConfig.enabled` · in: `services/GreeterManager.qml`, `services/OverlayManager.qml`
+  - read: `GreeterConfig.enabled` · in: `services/session/GreeterManager.qml`, `services/ui/OverlayManager.qml`
 
 ### `Greeter.layout`
 
@@ -117,13 +117,13 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 Every public member of `GreeterConfig`, with the files that use it.
 
 - `GreeterConfig.enabled` (bool): Set up as the login screen (GreeterManager's install)
-  - in: `services/GreeterManager.qml`, `services/OverlayManager.qml`
+  - in: `services/session/GreeterManager.qml`, `services/ui/OverlayManager.qml`
 - `GreeterConfig.screen` (var): Where the login box shows: a ScreenTarget (the primary monitor, or one named)
   - in: `components/surfaces/greeter/GreeterSurface.qml`
 - `GreeterConfig.rememberUser` (bool)
-  - in: `services/GreetdManager.qml`
+  - in: `services/session/GreetdManager.qml`
 - `GreeterConfig.source` (string): Where Install and Update take the code: "git" (the upstream, fetched by root, on SelfUpdate.channel) | "local" (the clone as it is)
-  - in: `components/forms/GreeterSetup.qml`, `services/GreeterManager.qml`
+  - in: `components/forms/GreeterSetup.qml`, `services/session/GreeterManager.qml`
 - `GreeterConfig.layout` (var): The login screen's ScreenLayout, as saved (the greeter shows the saved one; the layouts editor's draft is GreeterManager.editor.localLayout)
   - in: `components/surfaces/greeter/GreeterSurface.qml`
 - `GreeterConfig.fieldGroups` (var): The layout's own fields in groups (`x-group`), for the layouts editor

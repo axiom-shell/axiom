@@ -1,6 +1,6 @@
 # Translucency and blur
 
-> **Files:** `config/Appearance.qml`, `services/BlurManager.qml`, `components/reusable/BlurRegion.qml`, `components/reusable/BoxBlurRegion.qml`, `components/methods/NiriConf.qml`, `components/methods/HyprLua.qml`, `services/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `components/views/Settings/TranslucencyStatus.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`
+> **Files:** `config/Appearance.qml`, `services/ui/BlurManager.qml`, `components/reusable/BlurRegion.qml`, `components/reusable/BoxBlurRegion.qml`, `components/methods/NiriConf.qml`, `components/methods/HyprLua.qml`, `services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `components/views/Settings/TranslucencyStatus.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`
 > **Config:** `Appearance.surface.opacity`, `WindowLook.surfaceBlur*` (`surfaceBlur`, `surfaceBlurThroughWindows`, `surfaceBlurBackdrops`, `surfaceBlurPauseFullscreen`)
 > **Related:** [Blur window and openings](blur-window-openings.md), [Window look](../compositor/window-look.md), [Popout registry](../popouts/registry.md)
 

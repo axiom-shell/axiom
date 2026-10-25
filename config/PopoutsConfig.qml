@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Popouts section: behaviour shared by bar popouts and
 // screen-edge popouts. (Named PopoutsConfig because `Popouts` is the bar

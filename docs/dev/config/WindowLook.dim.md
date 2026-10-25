@@ -15,7 +15,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 - **`WindowLook.dim.enabled`** · boolean = false
   - Dim unfocused windows
   - x-enabledIf={"/$supports.windowDim":true}
-  - read: `WindowLookConfig.look` (whole) · in: `components/views/Settings/TranslucencyStatus.qml`, `services/CompositorConfigManager.qml`
+  - read: `WindowLookConfig.look` (whole) · in: `components/views/Settings/TranslucencyStatus.qml`, `services/compositor/CompositorConfigManager.qml`
 - **`WindowLook.dim.strength`** · integer = 8 · 0–100 · %
   - Dim strength
   - x-showIf={"enabled":true}, x-enabledIf={"/$supports.windowDim":true}

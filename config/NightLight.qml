@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the NightLight section: warmer colors through hyprsunset or
 // wlsunset, run by NightLightManager.

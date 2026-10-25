@@ -862,94 +862,109 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `WindowSwitcher.qml`: The window switcher (WindowSwitcherManager): a box of window tiles in the middle of the monitor that was focused when it opened.
 - `WorkspaceOverlay.qml`: The workspace overview: the hovered monitor's workspace board (WorkspacesConfig's layout) with its windows, full screen.
 
-## services/
+## services/apps/
 
-- `AudioManager.qml`: Pipewire audio state: the default output (sink) and input (source), every device and app stream, and helpers to control them.
-- `AuthManager.qml`: PAM authentication (Quickshell's PamContext, "login" stack) for the built-in lockscreen. authenticationSucceeded is the only thing that may unlock it (see shell/Lockscreen.qml).
-- `BackdropManager.qml`: The dim backgrounds full-screen surfaces ask for (the overlay, launcher, power menu, workspace overview, onboarding: reusable/BackdropRequest).
-- `BackendManager.qml`: The shell's connection to the axiom binary, its parent (`axiom run`, docs/dev/backend/README.md): JSON-RPC over the socket the binary names in $AXIOM_SOCKET.
-- `BarManager.qml`: BarManager holds the bar editor's working copy of the Bars section (its `style`, every bar's look unless a bar sets its own, and the bars, `items`).
-- `BatteryManager.qml`: The laptop battery (UPower's display device, when it is one) and the power-saver profile, for the Battery widget and module, and the low battery notifications (at BatteryConfig's levels).
-- `BluetoothManager.qml`: Bluetooth state and actions over the default adapter (BlueZ via Quickshell.Bluetooth).
-- `BlurManager.qml`: The blur behind the shell's chrome: the border's frame, bars and their popouts, edge popouts, integrated edge menus and docks.
-- `BrightnessManager.qml`: Screen brightness per monitor: a laptop panel through its sysfs backlight (written with brightnessctl, which goes through logind), an external monitor over DDC/CI (ddcutil, VCP 0x10).
-- `BuildQueueManager.qml`: Spreads building UI over frames: a page's modules (ModuleGrid.stream) and tool pages' sections (StreamedLoader) queue a job each, and the jobs run a few per 16 ms step, within a 6 ms budget (at least one a step, however…
 - `CalculatorManager.qml`: Math, units and currencies through qalc (libqalculate, which fetches and caches its own exchange rates), for the launcher's calculator rows and the Calculator module.
 - `CalendarManager.qml`: Calendars (the Calendar section): CalDAV accounts and .ics subscriptions, through scripts/calendar_sync.py (run with the system python3; passwords from SecretsManager on its stdin).
 - `ChatManager.qml`: The chat: conversations, sending and streaming replies (ChatRequest, ChatProtocol), attachments, and their history on disk.
 - `ChatRequest.qml`: One streaming chat request, sent with curl.
 - `ClaudeUsageManager.qml`: Claude plan usage (the numbers Claude Code's /usage shows) for one or more Claude Code accounts, each a CLAUDE_CONFIG_DIR: axiom's `claudeUsage` topic, which reads api.anthropic.com/api/oauth/usage with the OAuth token …
-- `ClipboardManager.qml`: The clipboard history the launcher searches (":" or /clipboard), while Launcher.clipboard is on.
-- `CommandManager.qml`: Shell commands polled for their output (e.g. a bar Button's label), shared by every widget asking for the same command: each distinct command runs once per interval (the shortest asked for), only while something has acq…
 - `CommunityFetch.qml`: One run of scripts/community_fetch.sh, for CommunitySetupsManager: its output is handed to `done` once it ends.
 - `CommunitySetupsManager.qml`: The community setups gallery (github.com/axiom-shell/community-setups): downloads the catalog (CommunitySetups.indexUrl) when the gallery is opened, never before, and the setups' thumbnails and screenshots into the cach…
+- `DailySchedule.qml`: A daily window, `startAt` until `endAt` ("HH:MM"; past midnight when the end is earlier), that says when its state is due: `due(inWindow)` fires when the window opens or closes, when the schedule is turned on, and when …
+- `EmojiManager.qml`: The emoji the launcher searches (";" or /emoji), while Launcher.emoji is on.
+- `FilePickerManager.qml`: The desktop's file picker (scripts/pick_path.py: xdg-desktop-portal, else zenity or kdialog), for a file or a folder: config import, and the Browse button of folder settings (the schema's x-control: "folder").
+- `NotesManager.qml`: Notes: Markdown files in NotesConfig.directory ($XDG_DATA_HOME/axiom/notes/ by default, or a linked folder).
+- `PomodoroManager.qml`: The pomodoro timer: one for every widget and module, run here so it keeps time with nothing showing it.
+- `ScreenshotManager.qml`: Screenshots (the `screenshot` keybind action, IPC `screenshot take <kind>`, launcher `/screenshot`, the Screenshot card), taken natively: while `picking`, shell/Screenshot shows a frozen frame (ScreencopyView, or grim's…
+- `StopwatchManager.qml`: One one-off timer and one stopwatch, for every Stopwatch widget and module, both able to run at once.
+- `TodoManager.qml`: The todo list: one list for every widget and module, kept in $XDG_DATA_HOME/axiom/todo.json ({ version, items }: TodoItems' shape), written atomically and watched, so an edit made elsewhere shows at once.
+- `WeatherManager.qml`: Weather shared by every widget that shows it: one WeatherSource for the Weather settings' location and units, fetching while some widget wants it.
+- `WeatherSource.qml`: Weather for one location from Open-Meteo (no API key).
+
+## services/compositor/
+
 - `CompositorConfigManager.qml`: The compositor set up for axiom (the Compositor section's mode, CompositorConfig.mode): the axiom daemon does it (backend/internal/ compositor/manager, docs/dev/compositor/config-modes.md), writing the compositor's conf…
 - `CompositorManager.qml`: The running compositor, for the rest of axiom: its windows, outputs and workspaces in shapes that don't depend on it, what it supports, and every workspace switch and window focus (docs/dev/compositor/README.md).
-- `ConfigDraft.qml`: A working copy of one config section for an editor (settings, bar, overlay, edge menu, keybind and monitor editors).
-- `ConfigManager.qml`: The config, as axiom (the binary, the shell's parent: `axiom run`) has it. axiom owns config.json: it loads it (converting older files), normalizes it and writes it.
-- `ConsumerRegistry.qml`: Reference-counted consumers of a shared poller (SystemManager, UpdatesManager, ...): each owner registers one request, and the service polls for the union of them, stopping when there are none.
-- `CursorThemeManager.qml`: The cursor theme as XCursor readers get it (the compositor's xcursor-theme, XCURSOR_THEME, GTK's cursor-theme).
-- `DailySchedule.qml`: A daily window, `startAt` until `endAt` ("HH:MM"; past midnight when the end is earlier), that says when its state is due: `due(inWindow)` fires when the window opens or closes, when the schedule is turned on, and when …
-- `DependencyManager.qml`: Startup checks for what the whole shell needs to look right: the icon font (every icon is a Material Symbols name, StyledIcon, which shows as a word without it) and the text font (`Appearance.font.family`, a free-text s…
-- `DesktopManager.qml`: The desktop's modules: the layouts editor's draft of the Desktop section (`editor`, shown live on the desktop while it differs from the config), which of its layouts is edited (`selectedTarget`: "all", "primary" or a mo…
-- `DevManager.qml`: Dev mode, which axiom switches while it runs (`axiom dev`, docs/dev/backend/README.md): the schema follows its YAML, a tree whose schema isn't the binary's may save, and an edit to the Go source builds a binary axiom re…
-- `DockManager.qml`: The docks' shared state and actions (the docks themselves are shell/Dock): which apps a dock shows on a screen (its pinned ones, then running ones, windows grouped by desktop entry), what a click does (launch, focus, cy…
-- `EdgeMenuManager.qml`: Which edge menus (EdgeMenusConfig) are open and which are pinned.
-- `EditsManager.qml`: The editors' unsaved edits, by overlay page: which pages hold a dirty draft (the navigator's dots and the unsaved-changes strip), and saving or discarding them all at once.
-- `EmojiManager.qml`: The emoji the launcher searches (";" or /emoji), while Launcher.emoji is on.
-- `FileManager.qml`: Synchronous whole-file reads, for the few places that need a file's contents during a binding or initializer (config, schema, theme, state).
-- `FilePickerManager.qml`: The desktop's file picker (scripts/pick_path.py: xdg-desktop-portal, else zenity or kdialog), for a file or a folder: config import, and the Browse button of folder settings (the schema's x-control: "folder").
 - `FocusGrab.qml`: A focus grab, for surfaces that close (or drop keyboard focus) on a click outside them: while `active`, keyboard focus stays in `windows` and a click anywhere else ends the grab (`cleared`).
-- `GreetdManager.qml`: The login itself, in the greeter (greeter.qml): who logs in, into which session, and the conversation with greetd (Quickshell's Greetd: PAM through greetd's IPC).
-- `GreeterManager.qml`: Axiom as greetd's login screen, from the user's side (the greeter itself is greeter.qml, with GreetdManager).
-- `GridEditor.qml`: Editing of one grid of modules (each with a `place` { x, y, w, h } in quarter cards), shared by the layouts editor's overlay pages and edge menus.
-- `HypridleManager.qml`: hypridle, run by axiom (the Idle section).
 - `HyprlandGrab.qml`: Hyprland's focus grab, for surfaces that close (or drop keyboard focus) on a click outside them: while `active`, keyboard focus stays in `windows` and a click anywhere else ends the grab (`cleared`).
 - `HyprlandIpcManager.qml`: Requests on Hyprland's request socket, as hyprctl makes them but without a process each: what Quickshell.Hyprland doesn't cover (options, Lua evals, binds, devices, layers, the cursor, reloads).
 - `HyprlandManager.qml`: CompositorManager's backend on Hyprland (docs/dev/compositor/contract.md): Hyprland's state as the compositor-neutral shapes (HyprState), and the primitives CompositorManager builds on.
-- `IdleInhibitManager.qml`: Shared on/off state for keeping the session awake.
-- `IntegrationHookupManager.qml`: Hooks theme integrations into their apps' configs: each ThemeIntegrations switch's `x-hookup` targets (the line that loads its axiom file, where it goes), run by scripts/integration_hookup.py.
-- `IpcTarget.qml`: An IPC target: Quickshell's IpcHandler (so `qs ipc call` reaches it as before) that also registers with axiom (BackendManager), so `axiom ipc <target> <fn>` and the named commands reach it over the shell's own connectio…
 - `KeybindManager.qml`: KeybindManager reads the keybinds the compositor has registered (CompositorManager.withBinds).
-- `KeyboardLayoutManager.qml`: Active xkb layout of the main keyboard, shared by every KeyboardLayout widget.
-- `LauncherCommands.qml`: The launcher's slash commands, one per shell feature.
-- `LauncherManager.qml`: LauncherManager turns the launcher's search text into result rows and runs them.
 - `LayerManager.qml`: Where axiom's layer-shell windows are on their outputs, worked out by axiom itself on every compositor (methods/LayerArrange; docs/dev/ compositor/layer-arrangement.md).
-- `LockManager.qml`: The one way to lock the session, whatever locks it (Lockscreen.mode): "quickshell" the built-in locker (shell/Lockscreen.qml: Wayland session lock + PAM through AuthManager) "none" the user's own locker: runs Lockscreen…
-- `MediaManager.qml`: The active MPRIS player (Spotify first, else one playing, else one that can play; or the one picked with selectPlayer) for the media widgets, the lockscreen and the media keys: its track, position and controls, and its …
 - `MonitorManager.qml`: The Monitors page: the connected outputs (CompositorManager. withOutputDetails, read at startup and when monitors come, go or the config reloads; never polled) and the editor for Monitors.profiles, a draft of profiles (…
-- `NetworkingManager.qml`: Wi-Fi state and actions over NetworkManager (Quickshell.Networking, D-Bus, so nothing polls).
-- `NightLightManager.qml`: The night light (the NightLight section): warmer colors through hyprsunset, or wlsunset without it, started and stopped by axiom.
 - `NiriIpcManager.qml`: niri's IPC socket ($NIRI_SOCKET), without a process per call: its event stream, and requests.
 - `NiriManager.qml`: CompositorManager's backend on niri (docs/dev/compositor/contract.md, docs/dev/compositor/niri-backend.md): niri's state as the compositor-neutral shapes (NiriState), and the primitives CompositorManager builds on.
-- `NotesManager.qml`: Notes: Markdown files in NotesConfig.directory ($XDG_DATA_HOME/axiom/notes/ by default, or a linked folder).
-- `NotificationManager.qml`: NotificationManager is the DBus notification server and the notification history.
-- `OnboardingManager.qml`: The first-run onboarder (shell/Onboarding): a series of pages that set the essentials up (the compositor, monitors, apps and keys, workspaces, the look, integrations), each applying as the user goes, with the compositor…
-- `OverlayManager.qml`: OverlayManager holds the layouts editor's working copy of Overlay.items (the editor is the pinned last page).
-- `PolkitManager.qml`: axiom as the session's polkit agent (the Polkit section): while PolkitConfig.enabled, a PolkitAgent answers apps' requests for administrator rights, and PolkitWindow (shell/PolkitPrompt) shows each one.
-- `PomodoroManager.qml`: The pomodoro timer: one for every widget and module, run here so it keeps time with nothing showing it.
-- `PopoutManager.qml`: Every popout showing, where it is, and which gives way to which.
-- `SavedConfigsManager.qml`: Named snapshots of the config (one JSON file each in $XDG_CONFIG_HOME/axiom/saved/) and shared configs: the examples shipped in examples/, imported files, exports to the home folder. axiom does the work (saved.* and sha…
-- `ScreenLayoutEditor.qml`: The layouts editor's draft of one screen layout (a ScreenLayout: the built-in lock screen's, LockManager.editor, or the greeter's, GreeterManager.editor): its modules on a bounded grid, edited through `layout`, its own …
-- `ScreenshotManager.qml`: Screenshots (the `screenshot` keybind action, IPC `screenshot take <kind>`, launcher `/screenshot`, the Screenshot card), taken natively: while `picking`, shell/Screenshot shows a frozen frame (ScreencopyView, or grim's…
-- `SecretsManager.qml`: Secrets, which never go in config.json: chat API keys (scope `provider`) and calendar account passwords (scope `calendar`).
-- `SelfUpdateManager.qml`: Updates axiom itself (not packages: that's UpdatesManager).
-- `SettingsManager.qml`: The settings page's working copy of the config.
-- `ShellManager.qml`: Shell manager manages global options and signals
-- `StateManager.qml`: Small JSON state files in Paths.statePath: createStateHandler(name) gives a shared save/load handler per name.
-- `StopwatchManager.qml`: One one-off timer and one stopwatch, for every Stopwatch widget and module, both able to run at once.
 - `SwayIpcManager.qml`: Requests to sway that want a reply, through swaymsg: what Quickshell.I3 doesn't cover (its I3.dispatch runs a command with no reply, and it has no window tree, inputs or outputs in full).
 - `SwayManager.qml`: CompositorManager's backend on sway (docs/dev/compositor/contract.md, docs/dev/compositor/sway-backend.md): sway's state as the compositor-neutral shapes (SwayState), and the primitives CompositorManager builds on.
+- `WindowSwitcherManager.qml`: The window switcher (Alt+Tab).
+
+## services/core/
+
+- `BackendManager.qml`: The shell's connection to the axiom binary, its parent (`axiom run`, docs/dev/backend/README.md): JSON-RPC over the socket the binary names in $AXIOM_SOCKET.
+- `BuildQueueManager.qml`: Spreads building UI over frames: a page's modules (ModuleGrid.stream) and tool pages' sections (StreamedLoader) queue a job each, and the jobs run a few per 16 ms step, within a 6 ms budget (at least one a step, however…
+- `CommandManager.qml`: Shell commands polled for their output (e.g. a bar Button's label), shared by every widget asking for the same command: each distinct command runs once per interval (the shortest asked for), only while something has acq…
+- `ConfigDraft.qml`: A working copy of one config section for an editor (settings, bar, overlay, edge menu, keybind and monitor editors).
+- `ConfigManager.qml`: The config, as axiom (the binary, the shell's parent: `axiom run`) has it. axiom owns config.json: it loads it (converting older files), normalizes it and writes it.
+- `ConsumerRegistry.qml`: Reference-counted consumers of a shared poller (SystemManager, UpdatesManager, ...): each owner registers one request, and the service polls for the union of them, stopping when there are none.
+- `DependencyManager.qml`: Startup checks for what the whole shell needs to look right: the icon font (every icon is a Material Symbols name, StyledIcon, which shows as a word without it) and the text font (`Appearance.font.family`, a free-text s…
+- `DevManager.qml`: Dev mode, which axiom switches while it runs (`axiom dev`, docs/dev/backend/README.md): the schema follows its YAML, a tree whose schema isn't the binary's may save, and an edit to the Go source builds a binary axiom re…
+- `FileManager.qml`: Synchronous whole-file reads, for the few places that need a file's contents during a binding or initializer (config, schema, theme, state).
+- `IpcTarget.qml`: An IPC target: Quickshell's IpcHandler (so `qs ipc call` reaches it as before) that also registers with axiom (BackendManager), so `axiom ipc <target> <fn>` and the named commands reach it over the shell's own connectio…
+- `SavedConfigsManager.qml`: Named snapshots of the config (one JSON file each in $XDG_CONFIG_HOME/axiom/saved/) and shared configs: the examples shipped in examples/, imported files, exports to the home folder. axiom does the work (saved.* and sha…
+- `SecretsManager.qml`: Secrets, which never go in config.json: chat API keys (scope `provider`) and calendar account passwords (scope `calendar`).
+- `SelfUpdateManager.qml`: Updates axiom itself (not packages: that's UpdatesManager).
+- `ShellManager.qml`: Shell manager manages global options and signals
+- `StateManager.qml`: Small JSON state files in Paths.statePath: createStateHandler(name) gives a shared save/load handler per name.
+- `ThemeManager.qml`: ThemeManager owns the active theme's data (loaded from its file, watched, with defaults for what it leaves out), the theme lists, theme generation from a wallpaper, the wallpaper itself, and re-theming integrated tools.
+
+## services/session/
+
+- `AuthManager.qml`: PAM authentication (Quickshell's PamContext, "login" stack) for the built-in lockscreen. authenticationSucceeded is the only thing that may unlock it (see shell/Lockscreen.qml).
+- `GreetdManager.qml`: The login itself, in the greeter (greeter.qml): who logs in, into which session, and the conversation with greetd (Quickshell's Greetd: PAM through greetd's IPC).
+- `GreeterManager.qml`: Axiom as greetd's login screen, from the user's side (the greeter itself is greeter.qml, with GreetdManager).
+- `HypridleManager.qml`: hypridle, run by axiom (the Idle section).
+- `IdleInhibitManager.qml`: Shared on/off state for keeping the session awake.
+- `LockManager.qml`: The one way to lock the session, whatever locks it (Lockscreen.mode): "quickshell" the built-in locker (shell/Lockscreen.qml: Wayland session lock + PAM through AuthManager) "none" the user's own locker: runs Lockscreen…
+- `OnboardingManager.qml`: The first-run onboarder (shell/Onboarding): a series of pages that set the essentials up (the compositor, monitors, apps and keys, workspaces, the look, integrations), each applying as the user goes, with the compositor…
+- `PolkitManager.qml`: axiom as the session's polkit agent (the Polkit section): while PolkitConfig.enabled, a PolkitAgent answers apps' requests for administrator rights, and PolkitWindow (shell/PolkitPrompt) shows each one.
+
+## services/system/
+
+- `AudioManager.qml`: Pipewire audio state: the default output (sink) and input (source), every device and app stream, and helpers to control them.
+- `BatteryManager.qml`: The laptop battery (UPower's display device, when it is one) and the power-saver profile, for the Battery widget and module, and the low battery notifications (at BatteryConfig's levels).
+- `BluetoothManager.qml`: Bluetooth state and actions over the default adapter (BlueZ via Quickshell.Bluetooth).
+- `BrightnessManager.qml`: Screen brightness per monitor: a laptop panel through its sysfs backlight (written with brightnessctl, which goes through logind), an external monitor over DDC/CI (ddcutil, VCP 0x10).
+- `ClipboardManager.qml`: The clipboard history the launcher searches (":" or /clipboard), while Launcher.clipboard is on.
+- `KeyboardLayoutManager.qml`: Active xkb layout of the main keyboard, shared by every KeyboardLayout widget.
+- `MediaManager.qml`: The active MPRIS player (Spotify first, else one playing, else one that can play; or the one picked with selectPlayer) for the media widgets, the lockscreen and the media keys: its track, position and controls, and its …
+- `NetworkingManager.qml`: Wi-Fi state and actions over NetworkManager (Quickshell.Networking, D-Bus, so nothing polls).
+- `NightLightManager.qml`: The night light (the NightLight section): warmer colors through hyprsunset, or wlsunset without it, started and stopped by axiom.
+- `NotificationManager.qml`: NotificationManager is the DBus notification server and the notification history.
 - `SystemManager.qml`: CPU / memory / temperature / GPU / disk usage, sampled by axiom (the `system` topic) only while something is showing it.
 - `TailscaleManager.qml`: Tailscale's state for every widget that shows it: axiom's `tailscale` topic (`tailscale status --json` at the shortest interval asked for, never more often than every 5 s), subscribed only while something has acquire()d…
-- `ThemeManager.qml`: ThemeManager owns the active theme's data (loaded from its file, watched, with defaults for what it leaves out), the theme lists, theme generation from a wallpaper, the wallpaper itself, and re-theming integrated tools.
 - `TimeZoneManager.qml`: Other time zones' UTC offsets, for clocks set to one (a Clock module's or a bar Time widget's `timezone`): the JS engine can't convert times between zones (TimeZones).
-- `TodoManager.qml`: The todo list: one list for every widget and module, kept in $XDG_DATA_HOME/axiom/todo.json ({ version, items }: TodoItems' shape), written atomically and watched, so an edit made elsewhere shows at once.
 - `UpdatesManager.qml`: Pending package updates, shared by every Updates widget: axiom's `updates` topic, which runs this distribution's check (Packages.updates: checkupdates on Arch, dnf on Fedora; nothing on one it doesn't know, `supported` …
+
+## services/ui/
+
+- `BackdropManager.qml`: The dim backgrounds full-screen surfaces ask for (the overlay, launcher, power menu, workspace overview, onboarding: reusable/BackdropRequest).
+- `BarManager.qml`: BarManager holds the bar editor's working copy of the Bars section (its `style`, every bar's look unless a bar sets its own, and the bars, `items`).
+- `BlurManager.qml`: The blur behind the shell's chrome: the border's frame, bars and their popouts, edge popouts, integrated edge menus and docks.
+- `CursorThemeManager.qml`: The cursor theme as XCursor readers get it (the compositor's xcursor-theme, XCURSOR_THEME, GTK's cursor-theme).
+- `DesktopManager.qml`: The desktop's modules: the layouts editor's draft of the Desktop section (`editor`, shown live on the desktop while it differs from the config), which of its layouts is edited (`selectedTarget`: "all", "primary" or a mo…
+- `DockManager.qml`: The docks' shared state and actions (the docks themselves are shell/Dock): which apps a dock shows on a screen (its pinned ones, then running ones, windows grouped by desktop entry), what a click does (launch, focus, cy…
+- `EdgeMenuManager.qml`: Which edge menus (EdgeMenusConfig) are open and which are pinned.
+- `EditsManager.qml`: The editors' unsaved edits, by overlay page: which pages hold a dirty draft (the navigator's dots and the unsaved-changes strip), and saving or discarding them all at once.
+- `GridEditor.qml`: Editing of one grid of modules (each with a `place` { x, y, w, h } in quarter cards), shared by the layouts editor's overlay pages and edge menus.
+- `IntegrationHookupManager.qml`: Hooks theme integrations into their apps' configs: each ThemeIntegrations switch's `x-hookup` targets (the line that loads its axiom file, where it goes), run by scripts/integration_hookup.py.
+- `LauncherCommands.qml`: The launcher's slash commands, one per shell feature.
+- `LauncherManager.qml`: LauncherManager turns the launcher's search text into result rows and runs them.
+- `OverlayManager.qml`: OverlayManager holds the layouts editor's working copy of Overlay.items (the editor is the pinned last page).
+- `PopoutManager.qml`: Every popout showing, where it is, and which gives way to which.
+- `ScreenLayoutEditor.qml`: The layouts editor's draft of one screen layout (a ScreenLayout: the built-in lock screen's, LockManager.editor, or the greeter's, GreeterManager.editor): its modules on a bounded grid, edited through `layout`, its own …
+- `SettingsManager.qml`: The settings page's working copy of the config.
 - `WallpaperManager.qml`: What changes the look on its own.
-- `WeatherManager.qml`: Weather shared by every widget that shows it: one WeatherSource for the Weather settings' location and units, fetching while some widget wants it.
-- `WeatherSource.qml`: Weather for one location from Open-Meteo (no API key).
-- `WindowSwitcherManager.qml`: The window switcher (Alt+Tab).
 
 ## config/
 

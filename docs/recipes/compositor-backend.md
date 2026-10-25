@@ -2,15 +2,15 @@
 
 > **Use when:** axiom should run under another compositor (sway, niri, …).
 > **Copy from:**
-> - `services/SwayManager.qml` (+ `services/SwayIpcManager.qml`): the closest model for a backend that isn't Hyprland; `HyprlandManager.qml` has the same members (the contract).
+> - `services/compositor/SwayManager.qml` (+ `services/compositor/SwayIpcManager.qml`): the closest model for a backend that isn't Hyprland; `HyprlandManager.qml` has the same members (the contract).
 > - `components/methods/SwayState.qml` + `tests/tst_SwayState.qml` (fixtures captured from the compositor in `tests/fixtures/sway/`): the compositor's replies to neutral shapes.
 > **Docs:** [The compositor](../dev/compositor/README.md), [contract](../dev/compositor/contract.md), [sway-backend](../dev/compositor/sway-backend.md), [niri-backend](../dev/compositor/niri-backend.md) (a compositor reached over its own socket, taking its layer from files only)
 
 ## Files to touch
-1. `services/<Name>Manager.qml`: a `pragma Singleton` (Quickshell's `Singleton`) with every member in [contract.md › Backend members](../dev/compositor/contract.md#backend-members) and its `supports`. Only this file talks to the compositor (its socket, its Quickshell module, its CLI).
+1. `services/compositor/<Name>Manager.qml`: a `pragma Singleton` (Quickshell's `Singleton`) with every member in [contract.md › Backend members](../dev/compositor/contract.md#backend-members) and its `supports`. Only this file talks to the compositor (its socket, its Quickshell module, its CLI).
 2. `components/methods/<Name>State.qml` + `tests/tst_<Name>State.qml`: the compositor's replies as the [shapes](../dev/compositor/contract.md#shapes). The service holds no parsing.
 3. With config modes, in the daemon ([config-modes.md › The writers](../dev/compositor/config-modes.md#the-writers)): a writer `backend/internal/compositor/manager/<kind>.go` (copy `sway.go`: the `writer` interface, its files, texts, runtime layer, `checkLoaded` and reload), picked in `manager.go` by its socket's env var; its texts in `backend/internal/compositor/render/<kind>.go` with test cases; an IPC client with its reload stream in `backend/internal/compositor/ipc/` (fake-socket tests in `ipc_test.go`). For managed mode: a takeover `Kind` in `backend/internal/compositor/takeover/kinds.go` (copy `sway`'s: its file, example config, the lines starting axiom, the marker) with its cases in `takeover_test.go`, and a merge in `backend/internal/compositor/binds/` (copy `sway.go`: the same JSON) with its cases in `binds_test.go`. `CompositorConfigManager` sends the inputs the writer reads (`compositor.inputs`).
-4. `services/CompositorManager.qml`: `kind` (its socket's env var, if not there yet) and `backend` (`kind === "<kind>" ? <Name>Manager : …`).
+4. `services/compositor/CompositorManager.qml`: `kind` (its socket's env var, if not there yet) and `backend` (`kind === "<kind>" ? <Name>Manager : …`).
 5. `scripts/check_structure.py`: a row in its `backends` table (what talks to the compositor: its module, CLI, socket and services), so only its own services do.
 6. `docs/dev/compositor/`: a `<kind>-backend.md` with what it supports and how it maps, and a line in `docs/dev/README.md`.
 

@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services
+import qs.services.compositor
 import qs.components.surfaces.edgemenu
 
 // The edge menus (EdgeMenusConfig), one per enabled entry. Keyed on the

@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import qs.services
+import qs.services.core
 
 // Reader for the Appearance section. Values are always present: schema
 // defaults are filled in by ConfigManager at load time.
