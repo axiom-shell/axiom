@@ -125,6 +125,21 @@ func (s *Server) Broadcast(method string, params any, keep func(*Conn) bool) {
 	}
 }
 
+// BroadcastLatest is Broadcast for a state: each connection keeps only
+// the newest unsent one (Conn.NotifyLatest).
+func (s *Server) BroadcastLatest(method string, params any, keep func(*Conn) bool) {
+	raw, err := marshalParams(params)
+	if err != nil {
+		s.Log.Error("broadcast", "method", method, "err", err)
+		return
+	}
+	for _, c := range s.Conns() {
+		if keep == nil || keep(c) {
+			c.NotifyLatest(method, raw)
+		}
+	}
+}
+
 func (s *Server) closeAll() {
 	for _, c := range s.Conns() {
 		c.Close()

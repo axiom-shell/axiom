@@ -1,6 +1,6 @@
 # Saved configs, examples, import and export
 
-> **Files:** `services/SavedConfigsManager.qml`, `components/views/Settings/SavedConfigsCard.qml`, `services/FilePickerManager.qml`, `backend/internal/saved/saved.go`, `backend/internal/share/share.go`, `backend/internal/store/store.go`, `examples/*.json`
+> **Files:** `services/SavedConfigsManager.qml`, `components/views/Settings/SavedConfigsCard.qml`, `services/FilePickerManager.qml`, `backend/internal/saved/saved.go`, `backend/internal/share/share.go`, `backend/internal/daemon/sharing.go`, `backend/internal/store/store.go`, `examples/*.json`
 > **Config:** whole config, filtered by `x-scope`; snapshots in `~/.config/axiom/saved/`; `~/.local/state/axiom/ui/savedconfigs.json`
 > **Related:** [Schema annotations](schema-annotations.md), [Config manager](config-manager.md), [Launcher](../features/launcher.md) (`/config` save/restore), [Shell manager](shell-manager-targeting.md)
 
@@ -23,7 +23,7 @@ Inherited down the schema; the root is `machine`.
 | `machine` | monitor names, wallpapers, accounts, paths, hardware, services, takeovers, and every section not marked | never | wallpaper setup only (`x-snapshot`) |
 
 - `x-scopeIf: { when, scope }` on an array's items gives an item its own scope by what it holds (`when` as `x-showIf`, over the item's keys): an `exec`/`raw` bind is `commands`, an `app` OSD bar `personal`. Such an item is left out where its scope isn't carried, and applying keeps the user's own after the file's.
-- `x-monitorRef` (`"off"` | `"drop"`) on the monitor names of a per-monitor part (a `ScreenTarget`'s `names`: bars, docks, OSDs, edge menus; a monitor's own desktop, a workspace strip): an export writes each monitor by its place (`#1` leftmost, `#2`, …, `@primary`, `*` for all; `share.MonitorOrder`), and applying puts it on the user's monitor in that place. With no monitor there, the part is turned off (`off`) or left out (`drop`), so nothing piles up on the primary. One monitor to two adds nothing: what shows everywhere is `mode: all`.
+- `x-monitorRef` (`"off"` | `"drop"`) on the monitor names of a per-monitor part (a `ScreenTarget`'s `names`: bars, docks, OSDs, edge menus; a monitor's own desktop, a workspace strip): an export writes each monitor by its place (`#1` leftmost, `#2`, …, `@primary`, `*` for all: the daemon's own outputs by place, `wayland/outputs`, never sent by the shell; until it knows them, monitor fields are left as they are), and applying puts it on the user's monitor in that place. With no monitor there, the part is turned off (`off`) or left out (`drop`), so nothing piles up on the primary. One monitor to two adds nothing: what shows everywhere is `mode: all`.
 
 ### What travels (`share`, pure)
 Walks a value along the schema.

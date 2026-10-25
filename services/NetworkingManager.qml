@@ -1,6 +1,5 @@
 pragma Singleton
 import QtQuick
-import Quickshell.Io
 import Quickshell.Networking
 
 import qs.config
@@ -183,31 +182,40 @@ QtObject {
   on_PrimaryKeyChanged: refreshIp()
   Component.onCompleted: refreshIp()
 
+  // From axiom (net.addresses; without its daemon, the greeter, `axiom net
+  // address`, which answers the same); an answer for a lookup since
+  // replaced is dropped
+  property int _ipLookup: 0
   function _lookUpIp() {
     const device = primaryDevice?.name ?? "";
+    const lookup = ++root._ipLookup;
     if (device === "") {
       primaryIp = "";
       return;
     }
-    // A lookup already running is restarted for the current device
-    _ipProc.running = false;
-    _ipProc.command = ["ip", "-4", "-j", "addr", "show", "dev", device];
-    _ipProc.running = true;
-  }
-
-  property Process _ipProc: Process {
-    stdout: StdioCollector {
-      onStreamFinished: {
-        let ip = "";
-        try {
-          const addresses = [].concat(...JSON.parse(text || "[]").map(i => i.addr_info ?? []));
-          ip = addresses.find(a => a.family === "inet")?.local ?? "";
-        } catch (e) {
-          console.warn("[NetworkingManager] Could not parse ip output:", e);
-        }
-        root.primaryIp = ip;
-      }
+    const done = (error, result) => {
+      if (lookup !== root._ipLookup)
+        return;
+      if (error && error.kind !== "unavailable")
+        console.warn("[NetworkingManager] Could not read the address of", device + ":", error.message);
+      root.primaryIp = result?.ipv4 ?? "";
+    };
+    if (BackendManager.active) {
+      BackendManager.call("net.addresses", {
+        "device": device
+      }, done);
+      return;
     }
+    CommandManager.run([Paths.axiomBin, "net", "address", "--json", "--", device], (exitCode, out, err) => {
+      let result = null;
+      try {
+        result = exitCode === 0 ? JSON.parse(out) : null;
+      } catch (e) {}
+      done(result ? null : {
+        "kind": "unavailable",
+        "message": err.trim()
+      }, result);
+    });
   }
 
   function _setFailure(network, reason) {

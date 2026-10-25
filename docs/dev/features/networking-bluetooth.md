@@ -17,7 +17,7 @@ Wi-Fi, wired and Bluetooth state, built on Quickshell's D-Bus modules. Throughpu
 - **Primary connection:**
   - `primaryDevice` prefers wired over Wi-Fi.
   - `netInfo` is `{ kind, name, device, signal, ip }`, all bindings.
-  - The one exception is the IPv4 address, which Quickshell.Networking lacks. It comes from one `ip -4 -j addr` run whenever the connection changes, or on `refreshIp()`.
+  - The one exception is the IPv4 address, which Quickshell.Networking lacks. It comes from axiom (`net.addresses`, the interface's addresses read in Go; in the greeter, which has no daemon, `axiom net address`, the same answer from the CLI) whenever the connection changes, or on `refreshIp()`; an answer for a lookup since replaced is dropped.
 - **Scanning:** the scanner runs only while something holds `acquireScan(owner)`.
 - Not named `Networking`, which is Quickshell's singleton. (Rule: AGENTS.md › Services.)
 

@@ -12,8 +12,8 @@ Settings are read as `properties.<key>`.
 - **`label`** · string = ""
   - Label: Text shown while connected. Empty shows the tailnet name.
   - in: `components/bar/widgets/Tailscale/Tailscale.qml`
-- **`interval`** · integer = 2000 · 250–60000 · ms
-  - Poll interval
+- **`interval`** · integer = 10000 · 250–60000 · ms
+  - Poll interval: How often Tailscale is asked; never more often than every 5 seconds.
   - in: `components/bar/widgets/Tailscale/Tailscale.qml`
 - **`connectedColor`** · string = ""
   - Connected color

@@ -221,14 +221,6 @@ func TestSnapshotPathsAndFiles(t *testing.T) {
 	}
 }
 
-func TestMonitorOrder(t *testing.T) {
-	t.Parallel()
-	outputs, _ := jsonx.Unmarshal([]byte(`[{"name": "C", "x": 1920, "y": 0}, {"name": "B", "x": 0, "y": 1080}, {"name": "A", "x": 0, "y": 0}, {"name": "D"}]`))
-	if got := string(jsonx.MarshalCompact(MonitorOrder(outputs))); got != `["A","B","C","D"]` {
-		t.Errorf("order %s", got)
-	}
-}
-
 func TestSparse(t *testing.T) {
 	t.Parallel()
 	s := v2(t)

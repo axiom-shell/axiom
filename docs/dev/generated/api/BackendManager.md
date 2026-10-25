@@ -24,6 +24,9 @@ The shell's connection to the axiom binary, its parent (`axiom run`, docs/dev/ba
 - `listen(method, fn)`: Calls fn(params) whenever the binary pushes method (config.changed, config.state, schema.changed, …).
 - `call(method, params, done)`: Calls method; done(error, result) with error null or { kind, message, issues }.
 - `notify(method, params)`: Sends a notification (no reply)
+- `acquire(topic, request)`: Subscribes to a polled topic ({ interval } in ms, plus what the topic's own request carries): axiom fetches it at the shortest interval anyone asked and pushes `<topic>.state` when it changes.
+- `release(topic)`: Drops the subscription: with nobody else subscribed, axiom stops fetching
+- `refresh(topic)`: Asks axiom to fetch an acquired topic now
 - `handle(method, fn)`: Answers the binary's calls of method with fn(params): a result, or a thrown { kind, message }
 - `addTarget(target)`: IpcTarget's registration: the names go to axiom (which reads their functions from `qs ipc show`), calls come back as ipc.call
 - `removeTarget(target)`

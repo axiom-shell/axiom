@@ -32,7 +32,9 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
+	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/outputs"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
@@ -55,6 +57,8 @@ type Options struct {
 
 	// isShell replaces the check that a peer is the shell (tests)
 	isShell func(pid int) bool
+	// topics are polled topics added to the daemon's own (tests)
+	topics []topics.Source
 }
 
 // Files in the runtime directory
@@ -101,8 +105,12 @@ type Daemon struct {
 	// compositor is the compositor's config layer (nil without the tree's
 	// tables)
 	compositor *manager.Manager
-	tasks      *tasks
-	stop       context.CancelFunc
+	// outputs are the compositor's, over the daemon's Wayland connection
+	outputs *outputs.Tracker
+	// topics are the polled topics and their subscribers
+	topics *topics.Hub
+	tasks  *tasks
+	stop   context.CancelFunc
 
 	// isShell says whether a connection's peer pid is the shell's (a
 	// hello as "shell" from anything else is refused)
@@ -224,7 +232,7 @@ func Run(ctx context.Context, opts Options) error {
 		OnState: func(st saved.State) {
 			// Also called while it opens, before there is a server
 			if d.server != nil {
-				d.server.Broadcast("saved.state", st, subscribedTo(topicSaved))
+				d.server.BroadcastLatest("saved.state", st, subscribedTo(topicSaved))
 			}
 		},
 	})
@@ -233,12 +241,17 @@ func Run(ctx context.Context, opts Options) error {
 	d.savedKick = newKicker(func(context.Context) { d.saved.Changed() })
 
 	d.compositor = d.newCompositor()
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.dev.part()}
+	d.outputs = outputs.New(opts.Log.With("part", "wayland"))
+	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.dev.part()}
 	reg := d.registry(parts)
 	d.server = &rpc.Server{
 		Registry: reg,
 		Log:      opts.Log.With("part", "rpc"),
-		OnClose:  d.router.Forget,
+		OnClose: func(c *rpc.Conn) {
+			d.router.Forget(c)
+			d.topics.Forget(c)
+		},
 	}
 	d.store.Subscribe(func(ev store.Event) {
 		for _, p := range parts {
@@ -262,22 +275,15 @@ func Run(ctx context.Context, opts Options) error {
 			serve(p.name, p.run)
 		}
 	}
-	// Stop with the compositor: a daemon left over from a session that
-	// ended would hold the display's lock, and the next session's
-	// `axiom run` would find it taken
+	// The daemon's own Wayland connection (its outputs), which also stops
+	// it with the compositor: a daemon left over from a session that
+	// ended would hold the display's lock, and the next session's `axiom
+	// run` would find it taken
 	if socket, err := wire.SocketPath(opts.Getenv); err != nil {
-		opts.Log.Warn("not watching the compositor", "err", err)
+		opts.Log.Warn("no Wayland connection", "err", err)
 	} else {
-		serve("the compositor watch", func(ctx context.Context) error {
-			err := wire.Watch(ctx, socket)
-			if errors.Is(err, wire.ErrGone) {
-				opts.Log.Info("the compositor is gone: stopping")
-				d.stop()
-				return nil
-			}
-			if err != nil {
-				opts.Log.Warn("not watching the compositor", "err", err)
-			}
+		serve("the Wayland connection", func(ctx context.Context) error {
+			d.followCompositor(ctx, socket)
 			return nil
 		})
 	}
@@ -318,6 +324,26 @@ func Run(ctx context.Context, opts Options) error {
 	d.tasks.Wait()
 	opts.Log.Info("axiom stopped")
 	return nil
+}
+
+// followCompositor runs the Wayland connection until ctx ends, and stops
+// the daemon when the compositor is gone. If the connection fails
+// otherwise (a protocol error), an idle one (wire.Watch) still watches
+// for that.
+func (d *Daemon) followCompositor(ctx context.Context, socket string) {
+	log := d.opts.Log
+	err := d.outputs.Run(ctx, socket)
+	// Unavailable: no compositor to connect to, nor to watch
+	if err != nil && !errors.Is(err, wire.ErrGone) && axerr.KindOf(err) != axerr.Unavailable {
+		log.Warn("the Wayland connection failed: monitors aren't known", "err", err)
+		err = wire.Watch(ctx, socket)
+	}
+	if errors.Is(err, wire.ErrGone) {
+		log.Info("the compositor is gone: stopping")
+		d.stop()
+	} else if err != nil {
+		log.Warn("not watching the compositor", "err", err)
+	}
 }
 
 // registry is every part's methods, behind the hello.

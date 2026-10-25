@@ -11,7 +11,7 @@ You are the lead reviewer of an axiom branch. The maintainer wants it merged onl
 Arguments: `$ARGUMENTS`
 - Free text is the author's description of what the branch is for. It is a claim to check, not a fact. Words in it ("fix the popout", "deep blur") are never flags: only the `--` forms below are.
 - `--base <ref>` reviews against `<ref>` instead of `main`.
-- `--fix` applies the confirmed findings after the report (Phase 4). Without it the review changes no code.
+- `--fix` applies every confirmed finding, Minor included, after the report (Phase 4). Without it the review changes no code.
 - `--deep` uses reviewer and verifier agents (Phase 2b), for a large or risky branch. Several times the tokens: only when asked.
 
 Uncommitted edits under `.claude/` (skills, settings) are tooling, not the branch: leave them out unless the branch's commits touch them.
@@ -90,4 +90,4 @@ Adding the pre-existing problems to `docs/dev/issues.md` (its format is at its t
 
 ## Phase 4: fix (only with `--fix`)
 
-Apply the Blockers, Major and Cleanups findings, smallest change each, following the repo rules (recipes, shared pieces, docs updated with the code). Skip a finding whose fix needs a decision from the maintainer and list it. Then `scripts/dev/verify.sh` until `verify ok`, read the log section and the docs it lists. Don't commit. Report what changed per finding, and anything that turned out different once you were in the code.
+Apply **every** finding, Minor included: a Minor one is fixed as properly as a Blocker, at its cause (the producer, not one caller over), never left as a note. Make the smallest change that removes the cause, following the repo rules (recipes, shared pieces, docs and tests updated with the code). A finding whose fix needs a decision from the maintainer (a migration, a changed default, a behaviour trade-off) isn't applied: add it to `docs/dev/issues.md` in its format and list it under Questions. Then `scripts/dev/verify.sh` until `verify ok`, read the log section and the docs it lists. Don't commit. Report what changed per finding, and anything that turned out different once you were in the code.

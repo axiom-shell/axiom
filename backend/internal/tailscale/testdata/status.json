@@ -1,0 +1,10 @@
+{
+  "Version": "1.104.1",
+  "BackendState": "Running",
+  "TailscaleIPs": ["100.64.0.7", "fd7a:115c:a1e0::7"],
+  "Self": {
+    "HostName": "laptop",
+    "TailscaleIPs": ["100.64.0.7", "fd7a:115c:a1e0::7"]
+  },
+  "CurrentTailnet": {"Name": "example.ts.net", "MagicDNSSuffix": "example.ts.net"}
+}

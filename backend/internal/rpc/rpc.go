@@ -4,7 +4,9 @@
 // connection goes out through one queue in order, so a notification sent
 // while handling a request reaches the peer before that request's reply:
 // `config.changed` always arrives before the reply to the `config.set`
-// that caused it.
+// that caused it. A state push (NotifyLatest) holds one place in that
+// queue and carries the newest state when it's written, so a peer that
+// reads slowly gets fewer states rather than a queue that fills.
 //
 // Security (docs/dev/backend/README.md › Security): a server only accepts
 // peers of its own user (SO_PEERCRED), and bounds line length, nesting,
@@ -129,7 +131,7 @@ type Conn struct {
 	limits Limits
 	log    *slog.Logger
 
-	out       chan []byte
+	out       chan queued
 	closeOnce sync.Once
 	done      chan struct{}
 	inFlight  chan struct{}
@@ -137,6 +139,9 @@ type Conn struct {
 	mu      sync.Mutex
 	pending map[string]chan message
 	nextID  atomic.Int64
+
+	latestMu sync.Mutex
+	latest   map[string][]byte // NotifyLatest's newest unsent message, by method, while its place is queued
 
 	handling sync.WaitGroup // the read loop and the handlers it started
 
@@ -154,10 +159,11 @@ func NewConn(nc net.Conn, reg *Registry, limits Limits, log *slog.Logger) *Conn 
 	}
 	c := &Conn{
 		nc: nc, reg: reg, limits: limits, log: log,
-		out:      make(chan []byte, limits.QueueSize),
+		out:      make(chan queued, limits.QueueSize),
 		done:     make(chan struct{}),
 		inFlight: make(chan struct{}, limits.MaxInFlight),
 		pending:  map[string]chan message{},
+		latest:   map[string][]byte{},
 	}
 	go c.writeLoop()
 	c.handling.Add(1)
@@ -251,6 +257,51 @@ func (c *Conn) Notify(method string, params any) error {
 	return c.send(message{JSONRPC: "2.0", Method: method, Params: raw})
 }
 
+// NotifyLatest sends a state notification that a newer one of the same
+// method replaces while it waits: the method holds one place in the queue
+// (where the first unsent state was sent, so order with replies holds),
+// and what is written there is the newest state.
+func (c *Conn) NotifyLatest(method string, params any) error {
+	raw, err := marshalParams(params)
+	if err != nil {
+		return err
+	}
+	data, err := json.Marshal(message{JSONRPC: "2.0", Method: method, Params: raw})
+	if err != nil {
+		return axerr.Wrap(axerr.Internal, err, "encoding a message")
+	}
+	c.latestMu.Lock()
+	_, waiting := c.latest[method]
+	c.latest[method] = data
+	c.latestMu.Unlock()
+	if waiting {
+		return nil
+	}
+	if err := c.enqueue(queued{latest: method}); err != nil {
+		c.latestMu.Lock()
+		delete(c.latest, method)
+		c.latestMu.Unlock()
+		return err
+	}
+	return nil
+}
+
+// queued is one place in the write queue: a message, or the place a
+// NotifyLatest method holds (its data is taken when it's written).
+type queued struct {
+	data   []byte
+	latest string
+}
+
+// takeLatest is the newest state queued for method, freeing its place.
+func (c *Conn) takeLatest(method string) []byte {
+	c.latestMu.Lock()
+	defer c.latestMu.Unlock()
+	data := c.latest[method]
+	delete(c.latest, method)
+	return data
+}
+
 func marshalParams(params any) (json.RawMessage, error) {
 	if params == nil {
 		return nil, nil
@@ -270,13 +321,17 @@ func (c *Conn) send(m message) error {
 	if err != nil {
 		return axerr.Wrap(axerr.Internal, err, "encoding a message")
 	}
+	return c.enqueue(queued{data: data})
+}
+
+func (c *Conn) enqueue(q queued) error {
 	select {
 	case <-c.done:
 		return axerr.New(axerr.Unavailable, "connection closed")
 	default:
 	}
 	select {
-	case c.out <- data:
+	case c.out <- q:
 		return nil
 	case <-c.done:
 		return axerr.New(axerr.Unavailable, "connection closed")
@@ -290,17 +345,23 @@ func (c *Conn) send(m message) error {
 
 func (c *Conn) writeLoop() {
 	w := bufio.NewWriter(c.nc)
+	write := func(q queued) {
+		data := q.data
+		if q.latest != "" {
+			data = c.takeLatest(q.latest)
+		}
+		w.Write(data)
+		w.WriteByte('\n')
+	}
 	for {
 		select {
-		case data := <-c.out:
-			w.Write(data)
-			w.WriteByte('\n')
+		case q := <-c.out:
+			write(q)
 			// Batch what's already queued into one write
 			for more := true; more; {
 				select {
-				case data := <-c.out:
-					w.Write(data)
-					w.WriteByte('\n')
+				case q := <-c.out:
+					write(q)
 				default:
 					more = false
 				}

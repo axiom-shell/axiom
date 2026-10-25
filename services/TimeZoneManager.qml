@@ -1,19 +1,21 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Io
+import qs.config
 import qs.components.methods
 
 // Other time zones' UTC offsets, for clocks set to one (a Clock module's
 // or a bar Time widget's `timezone`): the JS engine can't convert times
 // between zones (TimeZones). Each zone asked for is read once for all its
-// clocks (`date +%z` with TZ set), again past every half hour (when
-// daylight saving changes), and not at all with none asked for. The zone
-// travels as an argument, never inside the shell text.
+// clocks (axiom's tz.offsets, from the system's zoneinfo), again past
+// every half hour (when daylight saving changes), and not at all with
+// none asked for. Without axiom's daemon (the greeter) the same answers
+// come from `axiom tz` (Paths.axiomBin).
 //   TimeZoneManager.acquire(owner, "Asia/Tokyo")   // "" releases
 //   TimeZoneManager.acquire(owner, ["Asia/Tokyo", "Europe/Paris"])
 //   TimeZoneManager.offsetOf("Asia/Tokyo")          // 540, null until read
-// Also lists the system's zones (`zones`), for the time zone fields.
+// Also lists the system's zones (`zones`, tz.zones), for the time zone
+// fields.
 QtObject {
   id: root
 
@@ -56,37 +58,28 @@ QtObject {
   on_WantedChanged: root._read()
   // Asked again while reading: read once more after
   property bool _again: false
+  property bool _reading: false
 
   function _read() {
     if (root._wanted === "") {
       root._timer.stop();
       return;
     }
-    if (root._reader.running) {
+    if (root._reading) {
       root._again = true;
       return;
     }
-    // Each line names its zone, so a read started before this one ends
-    // can't be taken for it
-    root._reader.command = ["sh", "-c", 'for zone do printf "%s %s\\n" "$zone" "$(TZ="$zone" date +%z)"; done', "sh"].concat(root._wanted.split("\n"));
-    root._reader.running = true;
-  }
-
-  property Process _reader: Process {
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const offsets = Object.assign({}, root._offsets);
-        text.split("\n").forEach(line => {
-          const space = line.lastIndexOf(" ");
-          const offset = TimeZones.parseOffset(line.slice(space + 1));
-          if (space > 0 && offset !== null)
-            offsets[line.slice(0, space)] = offset;
-        });
+    root._reading = true;
+    root._ask("offsets", root._wanted.split("\n"), (error, result) => {
+      root._reading = false;
+      if (error) {
+        if (error.kind !== "unavailable")
+          console.warn("[TimeZoneManager] reading offsets failed:", error.message);
+      } else {
+        const offsets = Object.assign({}, root._offsets, result.offsets);
         if (JSON.stringify(offsets) !== JSON.stringify(root._offsets))
           root._offsets = offsets;
       }
-    }
-    onExited: {
       if (root._again) {
         root._again = false;
         root._read();
@@ -94,7 +87,7 @@ QtObject {
       }
       root._timer.interval = TimeZones.msToNextCheck(new Date());
       root._timer.restart();
-    }
+    });
   }
 
   property Timer _timer: Timer {
@@ -102,13 +95,56 @@ QtObject {
     onTriggered: root._read()
   }
 
-  // tzdata's own list, in $TZDIR where it's set (NixOS has no
-  // /usr/share/zoneinfo), else from timedatectl
-  property Process _lister: Process {
-    running: true
-    command: ["sh", "-c", `{ awk '$1 == "Z" { print $2 } $1 == "L" { print $3 }' "\${TZDIR:-/usr/share/zoneinfo}/tzdata.zi" 2>/dev/null || timedatectl list-timezones; } | sort -u`]
-    stdout: StdioCollector {
-      onStreamFinished: root._zones = text.split("\n").filter(zone => zone !== "")
+  // Asks axiom for tz.zones / tz.offsets (what: "zones" | "offsets"):
+  // the daemon, else `axiom tz <what> --json`, which answers the same.
+  // done(error, result)
+  function _ask(what, zones, done) {
+    if (BackendManager.active && what === "zones") {
+      BackendManager.call("tz.zones", {}, done);
+      return;
+    }
+    if (BackendManager.active) {
+      BackendManager.call("tz.offsets", {
+        "zones": zones
+      }, done);
+      return;
+    }
+    CommandManager.run([Paths.axiomBin, "tz", what, "--json", "--"].concat(zones), (exitCode, out, err) => {
+      let result = null;
+      try {
+        result = exitCode === 0 ? JSON.parse(out) : null;
+      } catch (e) {}
+      done(result ? null : {
+        "kind": "unavailable",
+        "message": err.trim()
+      }, result);
+    });
+  }
+
+  // tzdata's own list ($TZDIR where it's set), until it's had: again
+  // after a hello, if the connection dropped before it was answered
+  function _readZones() {
+    if (root._zones.length > 0 || root._readingZones)
+      return;
+    root._readingZones = true;
+    root._ask("zones", [], (error, result) => {
+      root._readingZones = false;
+      if (!error)
+        root._zones = result.zones;
+    });
+  }
+  property bool _readingZones: false
+
+  property Connections _hello: Connections {
+    target: BackendManager
+    function onGreeted() {
+      root._readZones();
+      // A read cut off by the connection dropping, not left to the next
+      // half hour (a zone the system lacks never gets one: read again)
+      if (root._wanted.split("\n").some(zone => zone !== "" && !(zone in root._offsets)))
+        root._read();
     }
   }
+
+  Component.onCompleted: root._readZones()
 }

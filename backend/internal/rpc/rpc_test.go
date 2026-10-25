@@ -264,3 +264,83 @@ func TestServeWaitsForHandlers(t *testing.T) {
 		t.Error("Serve returned before its handler finished")
 	}
 }
+
+// A peer that stops reading isn't dropped for states: each method holds
+// one place in the queue, and the newest state is what's written there.
+func TestNotifyLatestKeepsOnePlace(t *testing.T) {
+	t.Parallel()
+	a, b := net.Pipe()
+	c := NewConn(a, nil, Limits{MaxLine: 1 << 10, MaxDepth: 8, MaxInFlight: 4, QueueSize: 8}, nil)
+	t.Cleanup(func() { c.Close(); b.Close() })
+	for i := 0; i <= 10000; i++ {
+		if err := c.NotifyLatest("state", i); err != nil {
+			t.Fatalf("state %d: %v", i, err)
+		}
+		if i == 5000 {
+			c.Notify("event", "mid")
+		}
+	}
+	select {
+	case <-c.Done():
+		t.Fatal("dropped a peer for states")
+	default:
+	}
+	r := bufio.NewReader(b)
+	states, last, sawEvent := 0, -1, false
+	for last != 10000 || !sawEvent {
+		b.SetReadDeadline(time.Now().Add(2 * time.Second))
+		line, err := r.ReadBytes('\n')
+		if err != nil {
+			t.Fatalf("read: %v (last %d)", err, last)
+		}
+		var m struct {
+			Method string
+			Params json.RawMessage
+		}
+		json.Unmarshal(line, &m)
+		switch m.Method {
+		case "state":
+			states++
+			json.Unmarshal(m.Params, &last)
+		case "event":
+			if last < 0 {
+				t.Error("the event overtook the state queued before it")
+			}
+			sawEvent = true
+		}
+	}
+	// The first may be written before it's replaced, and the place
+	// queued then may carry states sent after the event: never one line
+	// per state
+	if states > 3 {
+		t.Errorf("%d states written", states)
+	}
+}
+
+// A state pushed while handling a request arrives before its reply, as
+// any notification does.
+func TestNotifyLatestBeforeReply(t *testing.T) {
+	t.Parallel()
+	reg := NewRegistry()
+	Handle(reg, "set", func(ctx context.Context, c *Conn, p struct{}) (string, error) {
+		c.NotifyLatest("changed", 1)
+		return "ok", nil
+	})
+	_, path := serve(t, reg, nil)
+	var got atomic.Int32
+	client := NewRegistry()
+	Handle(client, "changed", func(ctx context.Context, c *Conn, p int) (any, error) {
+		got.Add(1)
+		return nil, nil
+	})
+	c := dial(t, path, client)
+	for i := 0; i < 50; i++ {
+		before := got.Load()
+		if err := c.Call(context.Background(), "set", nil, nil); err != nil {
+			t.Fatal(err)
+		}
+		if got.Load() == before {
+			t.Fatalf("call %d: the reply came before its state", i)
+		}
+	}
+}

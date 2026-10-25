@@ -34,6 +34,7 @@ Dependencies point one way, methods → data owners → readers → services →
 
 ### backend/: the axiom binary
 - [backend](backend/README.md): the Go binary (parent of the shell, owner of the config, the command line): what exists so far, building and checking it, its security rules, and the shared fixtures both sides replay.
+- [roadmap](backend/roadmap.md): the staged plan for moving the services' side effects (processes, files, sockets, HTTP, polling) into the binary: the end state, the rules for each move, and each stage's status.
 - [protocol](backend/protocol.md): how the shell and the binary talk: the environment, runtime files, the socket's calls and pushes, a session, topics, guards, and when to bump the protocol (every method and push: [generated/rpc.md](generated/rpc.md)).
 
 ### core/: config, services, schema, shared UI

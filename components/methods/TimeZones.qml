@@ -3,21 +3,11 @@ import QtQuick
 
 // Pure helpers for clocks in another time zone. The JS engine has no Intl
 // and ignores toLocaleString's `timeZone`, so TimeZoneManager reads each
-// zone's UTC offset (`date +%z`) and a clock shifts its Date by it: the
+// zone's UTC offset (axiom's tz.offsets) and a clock shifts its Date by it: the
 // shifted Date's local fields read as that zone's wall clock, ready for
 // I18n.formatDate. No file access, processes or services.
 QtObject {
   id: root
-
-  // "+0930", "-05:00" -> minutes east of UTC (570, -300), or null when it
-  // isn't an offset
-  function parseOffset(text) {
-    const match = /^([+-])(\d\d):?(\d\d)$/.exec(String(text ?? "").trim());
-    if (!match)
-      return null;
-    const minutes = Number(match[2]) * 60 + Number(match[3]);
-    return match[1] === "-" ? -minutes : minutes;
-  }
 
   // `date` as the wall clock of a zone `offset` minutes east of UTC; `date`
   // itself without an offset (null: the system's zone). Built from the

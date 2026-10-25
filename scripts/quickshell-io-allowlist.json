@@ -1,5 +1,5 @@
 {
-  "_comment": "Files allowed to run processes, read or write files, open sockets or take IPC directly through Quickshell.Io (Process, FileView, Socket, IpcHandler, Quickshell.execDetached). This list only shrinks: these side effects are moving to the axiom daemon (docs/dev/backend/protocol.md). New code goes through CommandManager, FileManager, StateManager, IpcTarget or the daemon. scripts/check_structure.py fails on a use not listed here and on an entry no longer used.",
+  "_comment": "Files allowed to run processes, read or write files, open sockets or take IPC directly through Quickshell.Io (Process, FileView, Socket, IpcHandler, Quickshell.execDetached). This list only shrinks: these side effects are moving to the axiom daemon (the stages: docs/dev/backend/roadmap.md). New code goes through CommandManager, FileManager, StateManager, IpcTarget or the daemon. scripts/check_structure.py fails on a use not listed here and on an entry no longer used.",
   "files": {
     "config/I18n.qml": [
       "FileView"
@@ -19,10 +19,6 @@
       "FileView",
       "execDetached"
     ],
-    "services/ClaudeUsageManager.qml": [
-      "Process",
-      "FileView"
-    ],
     "services/ClipboardManager.qml": [
       "Process"
     ],
@@ -35,9 +31,6 @@
     ],
     "services/CompositorConfigManager.qml": [
       "execDetached"
-    ],
-    "services/DependencyManager.qml": [
-      "Process"
     ],
     "services/EmojiManager.qml": [
       "execDetached"
@@ -70,12 +63,6 @@
     "services/LockManager.qml": [
       "execDetached"
     ],
-    "services/MediaManager.qml": [
-      "Process"
-    ],
-    "services/NetworkingManager.qml": [
-      "Process"
-    ],
     "services/NightLightManager.qml": [
       "Process"
     ],
@@ -107,27 +94,13 @@
       "Process",
       "FileView"
     ],
-    "services/SystemManager.qml": [
-      "Process",
-      "FileView",
-      "execDetached"
-    ],
-    "services/TailscaleManager.qml": [
-      "Process"
-    ],
     "services/ThemeManager.qml": [
       "Process",
       "FileView",
       "execDetached"
     ],
-    "services/TimeZoneManager.qml": [
-      "Process"
-    ],
     "services/TodoManager.qml": [
       "FileView"
-    ],
-    "services/UpdatesManager.qml": [
-      "Process"
     ],
     "services/WallpaperManager.qml": [
       "Process",

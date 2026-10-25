@@ -12,8 +12,9 @@ settings:
   interval:
     type: integer
     title: Poll interval
+    description: How often Tailscale is asked; never more often than every 5 seconds.
     x-unit: ms
-    default: 2000
+    default: 10000
     minimum: 250
     maximum: 60000
   connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color}

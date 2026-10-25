@@ -878,7 +878,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `CalendarManager.qml`: Calendars (the Calendar section): CalDAV accounts and .ics subscriptions, through scripts/calendar_sync.py (run with the system python3; passwords from SecretsManager on its stdin).
 - `ChatManager.qml`: The chat: conversations, sending and streaming replies (ChatRequest, ChatProtocol), attachments, and their history on disk.
 - `ChatRequest.qml`: One streaming chat request, sent with curl.
-- `ClaudeUsageManager.qml`: Claude plan usage (the numbers Claude Code's /usage shows) for one or more Claude Code accounts, each a CLAUDE_CONFIG_DIR.
+- `ClaudeUsageManager.qml`: Claude plan usage (the numbers Claude Code's /usage shows) for one or more Claude Code accounts, each a CLAUDE_CONFIG_DIR: axiom's `claudeUsage` topic, which reads api.anthropic.com/api/oauth/usage with the OAuth token …
 - `ClipboardManager.qml`: The clipboard history the launcher searches (":" or /clipboard), while Launcher.clipboard is on.
 - `CommandManager.qml`: Shell commands polled for their output (e.g. a bar Button's label), shared by every widget asking for the same command: each distinct command runs once per interval (the shortest asked for), only while something has acq…
 - `CommunityFetch.qml`: One run of scripts/community_fetch.sh, for CommunitySetupsManager: its output is handed to `done` once it ends.
@@ -940,12 +940,12 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `StopwatchManager.qml`: One one-off timer and one stopwatch, for every Stopwatch widget and module, both able to run at once.
 - `SwayIpcManager.qml`: Requests to sway that want a reply, through swaymsg: what Quickshell.I3 doesn't cover (its I3.dispatch runs a command with no reply, and it has no window tree, inputs or outputs in full).
 - `SwayManager.qml`: CompositorManager's backend on sway (docs/dev/compositor/contract.md, docs/dev/compositor/sway-backend.md): sway's state as the compositor-neutral shapes (SwayState), and the primitives CompositorManager builds on.
-- `SystemManager.qml`: CPU / memory / temperature / GPU / disk usage, polled only while something is showing it.
-- `TailscaleManager.qml`: Tailscale's state for every widget that shows it: one `tailscale status --json` at the shortest interval asked for, only while something has acquire()d it.
+- `SystemManager.qml`: CPU / memory / temperature / GPU / disk usage, sampled by axiom (the `system` topic) only while something is showing it.
+- `TailscaleManager.qml`: Tailscale's state for every widget that shows it: axiom's `tailscale` topic (`tailscale status --json` at the shortest interval asked for, never more often than every 5 s), subscribed only while something has acquire()d…
 - `ThemeManager.qml`: ThemeManager owns the active theme's data (loaded from its file, watched, with defaults for what it leaves out), the theme lists, theme generation from a wallpaper, the wallpaper itself, and re-theming integrated tools.
 - `TimeZoneManager.qml`: Other time zones' UTC offsets, for clocks set to one (a Clock module's or a bar Time widget's `timezone`): the JS engine can't convert times between zones (TimeZones).
 - `TodoManager.qml`: The todo list: one list for every widget and module, kept in $XDG_DATA_HOME/axiom/todo.json ({ version, items }: TodoItems' shape), written atomically and watched, so an edit made elsewhere shows at once.
-- `UpdatesManager.qml`: Pending package updates, shared by every Updates widget, checked the way this distribution does (Packages.updates: checkupdates on Arch, dnf on Fedora; nothing on one it doesn't know, `supported` false).
+- `UpdatesManager.qml`: Pending package updates, shared by every Updates widget: axiom's `updates` topic, which runs this distribution's check (Packages.updates: checkupdates on Arch, dnf on Fedora; nothing on one it doesn't know, `supported` …
 - `WallpaperManager.qml`: What changes the look on its own.
 - `WeatherManager.qml`: Weather shared by every widget that shows it: one WeatherSource for the Weather settings' location and units, fetching while some widget wants it.
 - `WeatherSource.qml`: Weather for one location from Open-Meteo (no API key).

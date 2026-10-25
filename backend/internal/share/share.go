@@ -16,9 +16,7 @@
 package share
 
 import (
-	"math"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -31,9 +29,9 @@ import (
 // Everything is what a snapshot carries besides the look.
 var Everything = []string{"personal", "commands"}
 
-// Monitors are the user's monitors by place, left to right (MonitorOrder);
-// nil when the caller has none to give (JS null), which leaves monitor
-// fields as they are.
+// Monitors are the user's monitors by place, left to right then top to
+// bottom (the daemon's own list, wayland/outputs); nil while it has none
+// to give, which leaves monitor fields as they are.
 type Monitors []string
 
 type context struct {
@@ -80,52 +78,6 @@ func Apply(s *schema.Schema, current, example any, carry []string, monitors Moni
 	ctx := newContext(s, carry, monitors)
 	v, _ := ctx.merge(current, true, example, true, s.Root(), "machine", true)
 	return v
-}
-
-// MonitorOrder is the monitors' names by place, left to right then top to
-// bottom, from outputs ([{name, x, y}]).
-func MonitorOrder(outputs any) *jsonx.Array {
-	list, _ := outputs.(*jsonx.Array)
-	items := []any{}
-	if list != nil {
-		items = append(items, list.Items...)
-	}
-	sort.SliceStable(items, func(i, j int) bool {
-		return compareOutputs(items[i], items[j]) < 0
-	})
-	out := jsonx.Arr()
-	for _, o := range items {
-		out.Append(schema.Get(o, "name"))
-	}
-	return out
-}
-
-// compareOutputs is the comparator `a.x - b.x || a.y - b.y`; NaN (a missing
-// coordinate) counts as equal.
-func compareOutputs(a, b any) float64 {
-	dx := coordinate(a, "x") - coordinate(b, "x")
-	if dx != 0 && dx == dx {
-		return dx
-	}
-	dy := coordinate(a, "y") - coordinate(b, "y")
-	if dy != dy {
-		return 0
-	}
-	return dy
-}
-
-// coordinate is output[key] as a number; a missing one is NaN (undefined
-// in JS arithmetic).
-func coordinate(output any, key string) float64 {
-	obj, ok := output.(*jsonx.Object)
-	if !ok {
-		return math.NaN()
-	}
-	v, has := obj.Get(key)
-	if !has {
-		return math.NaN()
-	}
-	return jsonx.ToNumber(v)
 }
 
 // KeepMovedKeys is a copy of cfg (a file of version, loaded) with each of

@@ -18,6 +18,24 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Tailscale's poll interval allows values below axiom's 5 s floor
+- **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`Source`'s `Floor`)
+- **What:** The setting's `minimum` is 250 ms, but the `tailscale` topic never polls more often than every 5 s (its description says so), so 250–4999 ms are offered and do nothing. Raising `minimum` to 5000 makes saved values below it invalid, so it needs a format-2 migration step clamping them (`docs/recipes/migration.md`); the maintainer decides whether that's worth a config version.
+- **Size:** small
+- **Found:** 2026-10-25, while reviewing the service-layer branch
+
+### The binds child sometimes segfaults instead of running out of memory
+- **Where:** `backend/internal/compositor/binds/isolate.go` (`Extract`'s error cases, `LimitMemory`), `backend/internal/compositor/binds/isolate_test.go` (`TestIsolatedExtractSurvivesAFileTakingAllMemory`)
+- **What:** Under `RLIMIT_DATA` the Go runtime (go 1.27.2, kernel 7.2) sometimes dies with `SIGSEGV: segmentation violation` rather than `out of memory`, so the error reads `reading the binds: SIGSEGV: segmentation violation: exit status 2` instead of the MiB message and the test fails. It fails on main as well, and passed earlier the same day. Nothing moves and the daemon goes on either way: only the message and the test are affected. Possible fixes: watch the child's peak RSS (`ProcessState.SysUsage`) to tell a memory death from a real crash, or limit with a cgroup instead of `RLIMIT_DATA`.
+- **Size:** small
+- **Found:** 2026-10-25, while getting the service-layer branch ready to merge
+
+### A notification's avatar warns when its saved image is gone
+- **Where:** `components/content/parts/notifications/NotificationAvatar.qml` (`picture`)
+- **What:** A history notification whose image file in `~/.local/state/axiom/notifications/` no longer exists logs `Cannot open: file:///…/notifications/<id>.png` on every build of its row. The avatar should fall back to the app icon quietly (check `picture.status`, or drop the image path from history when the file is removed).
+- **Size:** small
+- **Found:** 2026-10-24, while moving services to the axiom daemon
+
 ### Leaving managed, the runtime layer can go on before the given-back config reloads
 - **Where:** `backend/internal/compositor/manager/manager.go` (`SetInputs`, `liveChanged`, `apply`)
 - **What:** The shell's first inputs arm both `debounce` and `liveDebounce` (300 ms each). When the live one fires first, `liveChanged` sees `AppliedMode != mode` and calls `apply`, which releases the managed config and asks for a reload; the layer debounce's `apply` then runs `runtimeApply` before that reload lands, so the runtime layer reads the managed config's binds (every axiom key looks taken, each logged once) and goes on over it. It's corrected after the reload (`configReloaded` applies again). Holding `runtimeApply` until `configReloaded` after a release that reloads would close it, but a missed reload event would then leave no runtime layer.
@@ -36,12 +54,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-24, while moving the compositor takeover into the binary
 
-### backend.json points at a protocol doc that doesn't exist
-- **Where:** `config/json/backend.json` (`_comment`)
-- **What:** The comment says "see docs/dev/backend/protocol.md", which was never written: what counts as a protocol change (and that push topics and new methods don't need one) is only in `docs/dev/backend/README.md`. Writing the page, or pointing the comment at the README, fixes it.
-- **Size:** small
-- **Found:** 2026-10-24, while auditing the Go backend
-
 ### Some backend security checks have no tests
 - **Where:** `backend/internal/fsx/` (`Adopt`), `backend/internal/rpc/server.go` (`Listen`), `backend/internal/cli/greeter.go` (`greeterEnv`), `backend/internal/daemon/reexec.go` (`adopt`)
 - **What:** `backend/AGENTS.md` asks that every security check has a test. The daemon's (`daemon_test.go`: the handoff's parsing, the lockscreen refusal, the shell-peer check, `writable`) are covered; still untested: the stale socket removed only under the instance lock, `fsx.Adopt` refusing a wrong inode or an unheld lock (only its close-on-exec part is tested), the socket's 0600, an adopted handoff end to end, and the greeter's environment.
@@ -55,8 +67,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-24, while reviewing the Go backend
 
 ### Small backend error and robustness gaps
-- **Where:** `backend/internal/fsx/fsx.go` (`WriteFile`), `backend/internal/logfile/`, `backend/internal/ipcroute/ipcroute.go` (`exec`), `backend/internal/wayland/wire/wire.go` (`Globals`), `backend/internal/cli/cli.go` (`Main`), `backend/internal/config/format.go`, `backend/internal/saved/saved.go` (`Import`)
-- **What:** Raw errors reach the CLI as `Internal`: `fsx.WriteFile` (`fmt.Errorf`), `logfile.Open`, `daemon logs`' `ReadFile`. `ipcroute`'s exec path labels a timeout `NotFound` (should be `Unavailable`). `wire.Globals` slices `body[4:]`/`body[8:]` without checking a short message's length. `cli.Main` doesn't catch SIGHUP: closing the terminal kills a `--dev` daemon outright, leaving its shell for the next start to stop. `format: 1` is refused with "it reads 1 and 2", and `format: null` prints `<nil>`. The keys a format-1 load drops (`Removed`) are never logged. `saved.Import` reads the file twice, so the preview and what's applied can differ.
+- **Where:** `backend/internal/fsx/fsx.go` (`WriteFile`), `backend/internal/logfile/`, `backend/internal/ipcroute/ipcroute.go` (`exec`), `backend/internal/cli/cli.go` (`Main`), `backend/internal/config/format.go`, `backend/internal/saved/saved.go` (`Import`)
+- **What:** Raw errors reach the CLI as `Internal`: `fsx.WriteFile` (`fmt.Errorf`), `logfile.Open`, `daemon logs`' `ReadFile`. `ipcroute`'s exec path labels a timeout `NotFound` (should be `Unavailable`). `cli.Main` doesn't catch SIGHUP: closing the terminal kills a `--dev` daemon outright, leaving its shell for the next start to stop. `format: 1` is refused with "it reads 1 and 2", and `format: null` prints `<nil>`. The keys a format-1 load drops (`Removed`) are never logged. `saved.Import` reads the file twice, so the preview and what's applied can differ.
 - **Size:** small
 - **Found:** 2026-10-24, while reviewing the Go backend
 
@@ -375,8 +387,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-13, while assessing reader renames for the docs makeover
 
 ### `BlurManager.paused` warns on every reload
-- **Where:** `services/BlurManager.qml` (`paused`), `services/UpdatesManager.qml` (`checking`), `services/SelfUpdateManager.qml`, `services/HyprlandManager.qml` (`activeWindowId`)
-- **What:** Every config reload logs `Unable to assign [undefined] to bool` at the `paused` declaration (and, seen 2026-10-14, at `UpdatesManager.checking`, also a readonly bool on a singleton: likely the same cause; seen 2026-10-16 as `Unable to assign [undefined] to QString` at `HyprlandManager.activeWindowId`, a readonly string). The binding itself evaluates to a boolean (a temporary probe logged `boolean false`), and a constant `paused: false` still warned, so it isn't the expression: something in Quickshell's reload of this singleton assigns it. Harmless (the value is right afterwards), but it's noise in every `scripts/log.sh`. Next step: check whether Quickshell carries readonly properties across a reload, or whether making `paused` a plain function helps.
+- **Where:** `services/BlurManager.qml` (`paused`), `services/SelfUpdateManager.qml`, `services/HyprlandManager.qml` (`activeWindowId`)
+- **What:** Every config reload logs `Unable to assign [undefined] to bool` at the `paused` declaration (and, seen 2026-10-14, at `UpdatesManager.checking` while it was a readonly bool on a singleton (now a plain one): likely the same cause; seen 2026-10-16 as `Unable to assign [undefined] to QString` at `HyprlandManager.activeWindowId`, a readonly string). The binding itself evaluates to a boolean (a temporary probe logged `boolean false`), and a constant `paused: false` still warned, so it isn't the expression: something in Quickshell's reload of this singleton assigns it. Harmless (the value is right afterwards), but it's noise in every `scripts/log.sh`. Next step: check whether Quickshell carries readonly properties across a reload, or whether making `paused` a plain function helps.
 - **Size:** small
 - **Found:** 2026-10-13, while checking reload logs during the docs makeover
 

@@ -1,9 +1,19 @@
 # Wayland protocols per compositor
 
-> **Files:** `backend/internal/wayland/wire/`, `tests/fixtures/wayland/`
+> **Files:** `backend/internal/wayland/wire/`, `backend/internal/wayland/outputs/`, `backend/internal/daemon/daemon.go`, `tests/fixtures/wayland/`
 > **Related:** [The axiom binary](README.md), [Compositor contract](../compositor/contract.md)
 
-What each compositor offers, for planning what the daemon does over its own Wayland connection (branch 2: idle, gamma, clipboard, typing). `axiom debug wayland-globals [--json]` lists a running compositor's globals. The captures are in `tests/fixtures/wayland/globals-<compositor>.json`:
+The daemon's own Wayland connection, and what each compositor offers for what it does over it next (roadmap stage 2: idle, gamma, clipboard, typing).
+
+### The connection
+- `wire.Conn` (pure Go, no libwayland): object ids from 2 up, reused after the compositor's `delete_id`; each object's events go to its handler on the goroutine running `Run`; `Registry`, `Bind`, `Sync`. A `wl_display.error` ends it with the compositor's message. No file descriptor passing yet (clipboard will need it).
+- `wayland/outputs` runs on it for the daemon's whole life (`Daemon.followCompositor`): it binds every `wl_output` (v4: its connector name and description) and `zxdg_output_manager_v1` (v3: each output's place and size in the layout, committed by `wl_output.done`; without it, `wl_output`'s geometry and current mode), and follows hotplug (`global` / `global_remove`, then `release`). `Names()` is the outputs by place (left to right, then top to bottom), nil until two roundtrips have described them, and while an output has no name (wl_output below v4): `share.*` names monitors by place with it.
+- The connection ending is the compositor gone: the daemon stops. A protocol error falls back to `wire.Watch`.
+- `axiom debug wayland-outputs [--json]` lists the outputs as the daemon sees them.
+- Tests script a fake compositor: `wire/wiretest`.
+
+### Globals
+`axiom debug wayland-globals [--json]` lists a running compositor's globals; all three offer `wl_output` v4 and `zxdg_output_manager_v1` v3, which the outputs use. The captures are in `tests/fixtures/wayland/globals-<compositor>.json`:
 - Hyprland 0.55: the live session.
 - sway 1.12 (SwayFX 0.6): headless (`WLR_BACKENDS=headless`).
 - niri 26.04: nested in a window (its winit backend).

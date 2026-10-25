@@ -1,10 +1,10 @@
 // Package wire is a minimal Wayland client: the wire protocol (messages
-// of 32-bit words on the compositor's unix socket) and the registry, to
-// list which globals (protocols) a compositor offers. It is the start of
-// the daemon's own Wayland connection (idle, gamma, clipboard come later,
-// with file descriptor passing); for now it backs `axiom debug
-// wayland-globals`, which tells what each compositor supports, and tells
-// the daemon when its compositor is gone (Watch).
+// of 32-bit words on the compositor's unix socket), a long-lived
+// connection with its objects and their events (Conn: the daemon's own,
+// wayland/outputs on it; idle, gamma, clipboard come later, with file
+// descriptor passing), the globals a compositor offers (`axiom debug
+// wayland-globals`), and an idle connection that tells when the
+// compositor is gone (Watch).
 package wire
 
 import (
@@ -51,12 +51,19 @@ const (
 	displayID       = 1
 	opSync          = 0 // wl_display.sync(callback)
 	opGetRegistry   = 1 // wl_display.get_registry(registry)
+	opRegistryBind  = 0 // wl_registry.bind(name, interface, version, id)
 	evDisplayError  = 0 // wl_display.error(object, code, message)
 	evDeleteID      = 1 // wl_display.delete_id(id)
 	evGlobal        = 0 // wl_registry.global(name, interface, version)
-	evGlobalRemove  = 1
+	evGlobalRemove  = 1 // wl_registry.global_remove(name)
 	evCallbackDone  = 0
 	maxMessageBytes = 1 << 16
+)
+
+// The registry's events, for a Registry handler
+const (
+	EvGlobal       = evGlobal       // name, interface, version
+	EvGlobalRemove = evGlobalRemove // name
 )
 
 // Globals connects to the compositor and lists its globals (sorted by
@@ -83,14 +90,15 @@ func Globals(socket string, timeout time.Duration) ([]Global, error) {
 		if err != nil {
 			return nil, fmt.Errorf("reading from the compositor: %w", err)
 		}
+		// Args, not slices of body: a short message reads as zeros
+		args := &Args{b: body}
 		switch {
 		case obj == displayID && op == evDisplayError:
-			_, code, msg := readUint(body), readUint(body[4:]), readString(body[8:])
+			_, code, msg := args.Uint(), args.Uint(), args.String()
 			return nil, axerr.New(axerr.Unavailable, "the compositor reported error %d: %s", code, msg)
 		case obj == registryID && op == evGlobal:
-			name := readUint(body)
-			iface, rest := readStringRest(body[4:])
-			globals = append(globals, Global{Name: name, Interface: iface, Version: readUint(rest)})
+			name, iface, version := args.Uint(), args.String(), args.Uint()
+			globals = append(globals, Global{Name: name, Interface: iface, Version: version})
 		case obj == callbackID && op == evCallbackDone:
 			sort.Slice(globals, func(i, j int) bool { return globals[i].Interface < globals[j].Interface })
 			return globals, nil
@@ -174,11 +182,6 @@ func readUint(b []byte) uint32 {
 		return 0
 	}
 	return binary.LittleEndian.Uint32(b)
-}
-
-func readString(b []byte) string {
-	s, _ := readStringRest(b)
-	return s
 }
 
 // readStringRest reads a wire string (length with its NUL, the bytes,

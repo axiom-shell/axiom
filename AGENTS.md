@@ -24,6 +24,7 @@ This file holds only rules. **How each service and surface works is in `docs/dev
 | Bar / popouts, edge surfaces / overlay / edge menus | `docs/dev/bar/`, `popouts/` (start at `surface-context.md`), `overlay/`, `edge-menus/` |
 | Compositor: windows, outputs, workspaces, capabilities, sway/niri | `docs/dev/compositor/` |
 | Config modes (detached / included / managed), the config writer | `docs/dev/compositor/config-modes.md` |
+| Moving a service's side effects into the axiom binary (the staged plan) | `docs/dev/backend/roadmap.md`; what's left: `scripts/quickshell-io-allowlist.json` |
 | The shell ↔ axiom binary connection (env, socket, methods, pushes) | `docs/dev/backend/protocol.md`; every method and push: `docs/dev/generated/rpc.md` (generated) |
 | Hyprland's writer, binds, monitors, workspaces | `docs/dev/hyprland/` |
 | Themes, integrations, wallpaper, blur | `docs/dev/theming/` |

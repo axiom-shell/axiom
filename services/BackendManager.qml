@@ -84,6 +84,34 @@ QtObject {
       });
   }
 
+  // Subscribes to a polled topic ({ interval } in ms, plus what the
+  // topic's own request carries): axiom fetches it at the shortest
+  // interval anyone asked and pushes `<topic>.state` when it changes.
+  // Called again, it replaces the request. Kept across reconnects; the
+  // service owning the topic merges its consumers into one request
+  // (ConsumerRegistry) and listens to the state
+  function acquire(topic, request) {
+    root._acquired[topic] = request ?? {};
+    if (root.ready)
+      root._subscribe(topic);
+  }
+
+  // Drops the subscription: with nobody else subscribed, axiom stops
+  // fetching
+  function release(topic) {
+    if (!(topic in root._acquired))
+      return;
+    delete root._acquired[topic];
+    if (root.ready)
+      root.call(topic + ".unsubscribe", {}, root._logFailure(topic + ".unsubscribe"));
+  }
+
+  // Asks axiom to fetch an acquired topic now
+  function refresh(topic) {
+    if (topic in root._acquired && root.ready)
+      root.call(topic + ".refresh", {}, root._logFailure(topic + ".refresh"));
+  }
+
   // Answers the binary's calls of method with fn(params): a result, or a
   // thrown { kind, message }
   function handle(method, fn) {
@@ -115,6 +143,19 @@ QtObject {
       "ipc.call": params => root._callTarget(params)
     })
   property var _listeners: ({})
+  // acquire's topics: { topic: request }, subscribed again on each hello
+  property var _acquired: ({})
+
+  function _subscribe(topic) {
+    root.call(topic + ".subscribe", root._acquired[topic], root._logFailure(topic + ".subscribe"));
+  }
+
+  function _logFailure(method) {
+    return error => {
+      if (error && error.kind !== "unavailable")
+        console.warn("[BackendManager]", method, "failed:", error.message);
+    };
+  }
   // The shell's IPC targets (IpcTarget), several per name where each
   // screen has its own and only the enabled one answers
   property var _targets: []
@@ -219,8 +260,9 @@ QtObject {
       const queued = root._queue;
       root._queue = [];
       queued.forEach(entry => root._send(entry.line));
-      // A new connection: axiom knows nothing of the targets yet
+      // A new connection: axiom knows nothing of the targets or topics yet
       root._register();
+      Object.keys(root._acquired).forEach(topic => root._subscribe(topic));
       root.greeted();
     };
     root._send(JsonRpc.request(id, "daemon.hello", {
