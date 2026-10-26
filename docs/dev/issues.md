@@ -58,15 +58,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The shell's socket warns when the daemon re-execs
 - **Where:** `services/core/BackendManager.qml` (its `Socket`)
-- **What:** Every daemon re-exec (each dev-mode rebuild) logs `quickshell.io.socket` `QLocalSocket::PeerClosedError` (a `Socket error for Socket(0x…)`) once: the old image closing the connection reaches the shell as an error, though `BackendManager` reconnects and it's expected. Five in one session's log (`scripts/log.sh --all -g PeerClosed`). Quieting it means telling a close the daemon announced (re-exec, quit) from a real failure, maybe with a notification before the exec.
+- **What:** Every daemon re-exec (each dev-mode rebuild) logs `quickshell.io.socket` `QLocalSocket::PeerClosedError` (a `Socket error for Socket(0x…)`) once: the old image closing the connection reaches the shell as an error, though `BackendManager` reconnects and it's expected. Five in one session's log (`scripts/log.sh --all -g PeerClosed`). Quieting it means telling a close the daemon announced (re-exec, quit) from a real failure, maybe with a notification before the exec. A request in flight at that moment fails and warns as well: `the connection to axiom closed` (seen from `MediaManager`'s album art fetch).
 - **Size:** small
 - **Found:** 2026-10-24, while moving the compositor takeover into the binary
-
-### Schema build gaps
-- **Where:** `backend/internal/schema/yamlsrc/kinds.go` (`orderKeys`), `backend/internal/cli/schema.go` (`schema check`), `backend/internal/config/pipeline.go` (patterns)
-- **What:** `orderKeys` overwrites an author-written `x-order` on every object with more than one property, though `config/schema/annotations.yaml` lets authors write one. `axiom schema check` passes when `config/json/config.schema.json` is missing. Go's RE2 `\S`/`\s` are ASCII-only while JS's are Unicode: a value of only U+00A0 passes `"\\S"` in Go and fails in JS. Translating the classes, or refusing them in `check.go`, keeps the two sides equal.
-- **Size:** small
-- **Found:** 2026-10-24, while reviewing the Go backend
 
 ### The schema root's description contradicts the annotations doc
 - **Where:** `config/schema/index.yaml` (root `description`), `docs/dev/core/schema-annotations.md` (`x-hosts`)

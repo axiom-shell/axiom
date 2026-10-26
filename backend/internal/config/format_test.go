@@ -68,3 +68,16 @@ func TestFormat1ReportsRemovedKeys(t *testing.T) {
 		t.Errorf("removed %q", l.Removed)
 	}
 }
+
+// A pattern's \S is JS's: a value of only U+00A0 fails it, as in the shell.
+func TestPatternWhitespaceIsUnicode(t *testing.T) {
+	t.Parallel()
+	node, _ := jsonx.Unmarshal([]byte(`{"type": "string", "pattern": "\\S"}`))
+	s := schema.New(node)
+	if errs := config.ValidationErrors(s, "\u00a0", node); len(errs) != 1 {
+		t.Errorf("U+00A0: %q", errs)
+	}
+	if errs := config.ValidationErrors(s, " x", node); len(errs) != 0 {
+		t.Errorf("x: %q", errs)
+	}
+}

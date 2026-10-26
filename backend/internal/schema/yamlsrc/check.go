@@ -2,10 +2,10 @@ package yamlsrc
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/schema"
 )
 
 // The draft-07 keywords axiom's schema uses (and its validator reads);
@@ -147,15 +147,16 @@ func (c *checker) node(v any, where string, isRoot bool) {
 	}
 }
 
-// pattern checks that a pattern compiles as the validators read it: Go's
-// RE2, a subset of the JS syntax the shell used
+// pattern checks that a pattern compiles as the validators read it
+// (schema.CompilePattern: RE2, a subset of the JS syntax the shell uses,
+// with JS's \s)
 func (c *checker) pattern(obj *jsonx.Object, key, where string, val any) {
 	p, ok := val.(string)
 	if !ok {
 		c.fail(obj, key, where, "a pattern must be a string")
 		return
 	}
-	if _, err := regexp.Compile(p); err != nil {
+	if _, err := schema.CompilePattern(p); err != nil {
 		c.fail(obj, key, where, "pattern %q doesn't compile: %v", p, err)
 	}
 }

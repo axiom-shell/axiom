@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -58,7 +59,7 @@ func schemaCommand() *Command {
 			},
 			{
 				Name:    "check",
-				Summary: "Check that config/schema/ builds, and that a built config/json/config.schema.json is fresh",
+				Summary: "Check that config/schema/ builds, and that config/json/config.schema.json is built from it and fresh",
 				Setup: func(fs *flag.FlagSet) Runner {
 					dir := fs.String("tree", "", "the axiom tree (default: $AXIOM_TREE, the one here, else the installed one)")
 					return func(ctx context.Context, e *Env, args []string) error {
@@ -67,7 +68,14 @@ func schemaCommand() *Command {
 							return err
 						}
 						target := filepath.Join(root, tree.SchemaJSON)
-						if old, err := os.ReadFile(target); err == nil && !bytes.Equal(old, data) {
+						old, err := os.ReadFile(target)
+						switch {
+						case errors.Is(err, os.ErrNotExist):
+							// The shell reads the built file: a tree without it doesn't run
+							return axerr.New(axerr.NotFound, "%s is missing (run `axiom schema build`)", tree.SchemaJSON)
+						case err != nil:
+							return axerr.Wrap(axerr.Unavailable, err, "reading %s", tree.SchemaJSON)
+						case !bytes.Equal(old, data):
 							return axerr.New(axerr.InvalidConfig, "%s is stale (run `axiom schema build`)", tree.SchemaJSON)
 						}
 						return e.Output(map[string]any{"ok": true}, func(w io.Writer) {

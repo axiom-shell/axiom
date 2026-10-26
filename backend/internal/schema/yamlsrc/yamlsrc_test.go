@@ -236,3 +236,26 @@ properties:
 		t.Errorf("Screen = %s, want %s", got, want)
 	}
 }
+
+// x-order is written from the properties' order, unless the author wrote
+// one (annotations.yaml: the keys shown first).
+func TestOrderKeysKeepsAnAuthorsOrder(t *testing.T) {
+	t.Parallel()
+	fsys := fstest.MapFS{
+		IndexFile:                  {Data: []byte("type: object\nproperties: {}\nsections: [A, B]\n")},
+		AnnotationsFile:            {Data: []byte("x-order: \"\"\n")},
+		SectionsDir + "/A.yaml":    {Data: []byte("type: object\nproperties:\n  first: {type: integer}\n  second: {type: integer}\n")},
+		DefinitionsDir + "/D.yaml": {Data: []byte("type: object\n")},
+		SectionsDir + "/B.yaml":    {Data: []byte("type: object\nx-order: [second]\nproperties:\n  first: {type: integer}\n  second: {type: integer}\n")},
+	}
+	root, err := Assemble(fsys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	props := root.Value("properties").(*jsonx.Object)
+	for section, want := range map[string]string{"A": `["first","second"]`, "B": `["second"]`} {
+		if got := string(jsonx.MarshalCompact(props.Value(section).(*jsonx.Object).Value("x-order"))); got != want {
+			t.Errorf("%s x-order = %s, want %s", section, got, want)
+		}
+	}
+}

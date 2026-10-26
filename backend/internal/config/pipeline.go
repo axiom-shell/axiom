@@ -340,9 +340,8 @@ func childPath(path, key string) string {
 
 var patterns sync.Map // string → *regexp.Regexp or error
 
-// compilePattern compiles a schema `pattern`. Go's RE2 accepts the
-// patterns the schema uses; one JS would read differently can't be
-// written (the YAML schema check refuses patterns RE2 rejects).
+// compilePattern compiles a schema `pattern` as JS reads it
+// (schema.CompilePattern; the YAML schema check refuses one it can't).
 func compilePattern(p string) (*regexp.Regexp, error) {
 	if v, ok := patterns.Load(p); ok {
 		if re, ok := v.(*regexp.Regexp); ok {
@@ -350,7 +349,7 @@ func compilePattern(p string) (*regexp.Regexp, error) {
 		}
 		return nil, v.(error)
 	}
-	re, err := regexp.Compile(p)
+	re, err := schema.CompilePattern(p)
 	if err != nil {
 		patterns.Store(p, err)
 		return nil, err
