@@ -157,15 +157,20 @@ jobs:
       # What the binary is built or tested from: backend/, the schema and
       # the files it embeds (config/), the JS helpers and tests the shared
       # fixtures are recorded from, and the scripts building them (the same
-      # list as verify.sh's, a little wider). A PR's HEAD is its merge
-      # commit: HEAD^1 is the base
+      # list as verify.sh's, a little wider); the tests also read examples/
+      # and the generated ipc.md (from every QML file with an IpcTarget). A
+      # PR's HEAD is its merge commit: HEAD^1 is the base
       - name: Does the change reach the binary?
         id: scope
         env:
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD |
-            grep -qE '^(backend/|config/(schema|json)/|components/methods/|tests/(Shared|RepoFiles|tst_)|scripts/(check_go|generate|qml_modules|run_tests)\.|scripts/dev/fixtures\.py|\.github/workflows/)'; then
+          changed=$(git diff --name-only HEAD^1 HEAD)
+          ipc=$(printf '%s\n' "$changed" | grep '\.qml$' | while read -r f; do
+            { git show "HEAD:$f"; git show "HEAD^1:$f"; } 2>/dev/null | grep -qE 'IpcTarget[[:space:]]*[{]' && echo "$f" || true
+          done)
+          if [ "$EVENT" != pull_request ] || [ -n "$ipc" ] || printf '%s\n' "$changed" |
+            grep -qE '^(backend/|config/(schema|json)/|components/methods/|examples/|tests/(Shared|RepoFiles|tst_)|scripts/(check_go|generate|gen_docs|qml_modules|run_tests)\.|scripts/dev/fixtures\.py|\.github/workflows/)'; then
             echo "run=1" >> "$GITHUB_OUTPUT"
           else
             echo "Nothing the binary is built or tested from changed: skipping the Go checks"
