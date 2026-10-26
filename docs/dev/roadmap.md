@@ -138,7 +138,14 @@ Steps, roughly in this order (moves first, each its own PR):
 4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
-- [Singletons doing several jobs](issues.md#singletons-doing-several-jobs)
+- [ShellManager runs session actions through execDetached](issues.md#shellmanager-runs-session-actions-through-execdetached)
+- [Session actions sit in ShellManager](issues.md#session-actions-sit-in-shellmanager)
+- [The surface registry sits in ShellManager](issues.md#the-surface-registry-sits-in-shellmanager)
+- [Screen-edge geometry is split over three services](issues.md#screen-edge-geometry-is-split-over-three-services)
+- [The edge menus' card-unit helpers sit in EdgeMenuManager](issues.md#the-edge-menus-card-unit-helpers-sit-in-edgemenumanager)
+- [EdgeMenuManager is also the layouts editor's working copy](issues.md#edgemenumanager-is-also-the-layouts-editors-working-copy)
+- [LauncherCommands holds the /config browser](issues.md#launchercommands-holds-the-config-browser)
+- [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (designed and fixed in backend stage 7)
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
 - [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer)
@@ -234,6 +241,7 @@ Resolves:
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
 - [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
 - [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
+- [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
 - [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
