@@ -178,6 +178,27 @@ func TestLockScreenOnlyTakesLock(t *testing.T) {
 	}
 }
 
+// A hello from another version hears the protocol mismatch even when it
+// carries a key this binary doesn't know (params are otherwise strict).
+func TestHelloFromAnotherVersion(t *testing.T) {
+	t.Parallel()
+	td := startDaemon(t, nil)
+	c, err := rpc.Dial(context.Background(), td.socket, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	ctx := context.Background()
+	newer := map[string]any{"protocol": buildinfo.Protocol() + 1, "client": "cli", "pid": os.Getpid(), "later": true}
+	if err := c.Call(ctx, "daemon.hello", newer, nil); axerr.KindOf(err) != axerr.Incompatible {
+		t.Errorf("a newer client's hello: %v", err)
+	}
+	newer["protocol"] = buildinfo.Protocol()
+	if err := c.Call(ctx, "daemon.hello", newer, nil); err != nil {
+		t.Errorf("a hello with an extra key: %v", err)
+	}
+}
+
 func TestNothingBeforeHello(t *testing.T) {
 	t.Parallel()
 	td := startDaemon(t, nil)

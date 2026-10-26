@@ -393,7 +393,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-13, while assessing reader renames for the docs makeover
 
-### `BlurManager.paused` warns on every reload
+### Singleton properties warn on every reload
 - **Where:** `services/ui/BlurManager.qml` (`paused`), `services/core/SelfUpdateManager.qml`, `services/compositor/HyprlandManager.qml` (`activeWindowId`), `services/system/AudioManager.qml` (`tracker`, `captureTracker`, `micInUse`)
 - **What:** Every config reload logs `Unable to assign [undefined] to bool` at the `paused` declaration (and, seen 2026-10-14, at `UpdatesManager.checking` while it was a readonly bool on a singleton (now a plain one): likely the same cause; seen 2026-10-16 as `Unable to assign [undefined] to QString` at `HyprlandManager.activeWindowId`, a readonly string; seen 2026-10-26 as `Unable to assign [undefined] to QList<QObject*>` at `AudioManager`'s two `PwObjectTracker.objects` and `Unable to assign [undefined] to bool` at its `micInUse`, after a reload from saving an unrelated file). The binding itself evaluates to a boolean (a temporary probe logged `boolean false`), and a constant `paused: false` still warned, so it isn't the expression: something in Quickshell's reload of this singleton assigns it. Harmless (the value is right afterwards), but it's noise in every `scripts/log.sh`. Next step: check whether Quickshell carries readonly properties across a reload, or whether making `paused` a plain function helps.
 - **Size:** small

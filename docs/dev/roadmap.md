@@ -56,7 +56,7 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 12 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 13 | later | [Phase 9](#phase-9-docs-tooling-and-process) | Last, so the docs describe the final shape. |
 
-**Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, `BlurManager.paused`); [Tailscale needs a revamp like Claude usage's](issues.md#tailscale-needs-a-revamp-like-claude-usages) (a feature, waiting for no stage).
+**Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload); [Tailscale needs a revamp like Claude usage's](issues.md#tailscale-needs-a-revamp-like-claude-usages) (a feature, waiting for no stage).
 
 ### Taking the next step
 What an agent does when asked for "the next step", to "continue the roadmap", or to work on a row or phase by number. The answer to "where do I start" is always this file: nothing else needs explaining.
@@ -220,7 +220,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [Text input warnings when the desktop takes the keyboard](issues.md#text-input-warnings-when-the-desktop-takes-the-keyboard)
 - [Qt text-input warnings under sway and niri](issues.md#qt-text-input-warnings-under-sway-and-niri)
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
-- [`BlurManager.paused` warns on every reload](issues.md#blurmanagerpaused-warns-on-every-reload)
+- [Singleton properties warn on every reload](issues.md#singleton-properties-warn-on-every-reload)
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
 - [A screenshot under niri timed out waiting for its frame](issues.md#a-screenshot-under-niri-timed-out-waiting-for-its-frame)

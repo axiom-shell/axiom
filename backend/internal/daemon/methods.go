@@ -116,6 +116,14 @@ type HelloParams struct {
 	PID        int             `json:"pid"`
 }
 
+// UnmarshalJSON decodes a hello leniently, past rpc.DecodeStrict: a peer
+// from another version may send a key this binary lacks, and must still
+// hear the protocol mismatch (Incompatible), never a bad params.
+func (p *HelloParams) UnmarshalJSON(data []byte) error {
+	type plain HelloParams
+	return json.Unmarshal(data, (*plain)(p))
+}
+
 // topics reads Subscribe.
 func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	if len(p.Subscribe) == 0 {
