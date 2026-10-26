@@ -250,12 +250,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### Any change of the mode to managed approves the takeover
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`onModeChanged`)
-- **What:** Picking managed while axiom runs counts as approval, which includes editing config.json by hand or a sync tool writing it, not only the card's Save that `docs/dev/compositor/config-modes.md` describes. Imports keep `x-takeover`, so only direct edits reach it. Approving from SettingsManager's save only, or saying so in the doc.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### Unreadable sway config means axiom binds over the user's keys
 - **Where:** `backend/internal/compositor/manager/runtime.go` (`_start`)
 - **What:** When `axiom compositor sway-text` fails (it logs `Can't read your sway config`) the layer treats the user as binding nothing, and binds with `--no-warn` over their keys after every reload. Hyprland's layer does the same. Binding nothing (look and input only) with a problem shown would be safer, at the cost of axiom's binds.
