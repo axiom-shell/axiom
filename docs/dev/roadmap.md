@@ -151,7 +151,6 @@ Steps: generate method shapes into `rpc.md` and check QML call sites against the
 Resolves:
 - [The shell–daemon contract is checked by name only](issues.md#the-shelldaemon-contract-is-checked-by-name-only)
 - [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
-- [backend/AGENTS.md's dependency table is incomplete](issues.md#backendagentsmds-dependency-table-is-incomplete)
 - [Tailscale's poll interval allows values below axiom's 5 s floor](issues.md#tailscales-poll-interval-allows-values-below-axioms-5-s-floor)
 - [The shell's socket warns when the daemon re-execs](issues.md#the-shells-socket-warns-when-the-daemon-re-execs)
 

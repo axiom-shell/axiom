@@ -38,6 +38,8 @@ Standard library first. A new module needs a line here saying why, and must be p
 | `go.yaml.in/yaml/v3` | reads the config schema's YAML source (`schema/yamlsrc`, which adds the strictness) |
 | `github.com/dop251/goja` | a pure-Go JS engine, used only by `migrate/legacy` to run the frozen format-1 migrations (`legacy.js`) exactly as the shell did, instead of a hand port that could drift |
 | `github.com/yuin/gopher-lua` | a pure-Go Lua (5.1) parser and VM: runs a user's Hyprland Lua files, sandboxed, for the bind merge (`compositor/binds`), and checks that an edit to them still parses where `luac` isn't installed (`compositor/luacheck`), without `lua` as a dependency |
+| `github.com/fsnotify/fsnotify` | inotify without cgo: `store` watches config.json for edits made outside the daemon, and the daemon's dev mode (`daemon/dev.go`) watches the tree and the installed binary to rebuild or re-exec |
+| `golang.org/x/sys` | the Linux calls `syscall` lacks or freezes: peer credentials on sockets (`rpc`, `wayland/wire`), descriptor passing (`unixmsg`), `flock` and `O_NOFOLLOW` opens (`fsx`), sealed memfds (`wayland/wire`), close-on-exec across a re-exec (`daemon`), and the bind merge child's memory limit (`compositor/binds`) |
 
 ## Checks
 

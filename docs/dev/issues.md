@@ -418,12 +418,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### backend/AGENTS.md's dependency table is incomplete
-- **Where:** `backend/AGENTS.md` (Dependencies), `backend/go.mod`
-- **What:** `github.com/fsnotify/fsnotify` and `golang.org/x/sys` are direct requirements in `go.mod` with no line saying why, though "a new module needs a line here".
-- **Size:** trivial
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### The check order is kept in three places
 - **Where:** `scripts/check_all.sh`, `scripts/dev/verify.sh`, `.github/workflows/checks.yml`
 - **What:** The same checks, in the same order, are listed by hand three times; a check added to one can be missed in the others. One list (a file the three read, or `check_all.sh` as the one CI runs) keeps them equal.
