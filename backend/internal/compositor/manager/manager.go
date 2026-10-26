@@ -52,8 +52,10 @@ type Options struct {
 	RuntimeFile string
 	Tables      *render.Tables
 	Actions     *actions.Table
-	// Schema is the config's schema; Mode the config's Compositor.mode;
-	// Binds its Keybinds.binds; CommitBinds saves Keybinds.binds
+	// Schema is the config's schema; Mode the config's Compositor.mode,
+	// "" while it isn't known (config.json didn't load at the start): the
+	// manager then holds, changing nothing it applied; Binds its
+	// Keybinds.binds; CommitBinds saves Keybinds.binds
 	Schema      func() any
 	Mode        func() string
 	Binds       func() any
@@ -83,7 +85,8 @@ type Manager struct {
 	stopped chan struct{}
 	stop    sync.Once
 
-	in      Inputs
+	in Inputs
+	// mode: the config's; "" while it isn't known (holding)
 	mode    string
 	lastKey string
 	liveKey string
@@ -309,6 +312,7 @@ func (m *Manager) SetInputs(in *jsonx.Object) {
 		}
 		if !wasLive {
 			m.mode = m.o.Mode()
+			m.noteHolding()
 			m.debounce.Reset(300 * time.Millisecond)
 		}
 		m.checkKey()
@@ -327,10 +331,18 @@ func (m *Manager) ConfigChanged() {
 		}
 		if mode := m.o.Mode(); mode != m.mode {
 			m.mode = mode
+			m.noteHolding()
 			m.modeChanged()
 			m.debounce.Reset(300 * time.Millisecond)
 		}
 	})
+}
+
+// noteHolding logs that the mode isn't known, so nothing is applied
+func (m *Manager) noteHolding() {
+	if m.mode == "" {
+		m.logf("config.json doesn't load: leaving the compositor's config as it is until it's fixed")
+	}
 }
 
 // checkKey re-applies the layer when what it's made of changed
@@ -349,6 +361,8 @@ func (m *Manager) checkKey() {
 
 func (m *Manager) status() string {
 	switch {
+	case m.mode == "":
+		return "pending"
 	case m.mode == "detached":
 		return "runtime"
 	case m.problem != "":
@@ -502,6 +516,12 @@ func (m *Manager) notify(what string) {
 
 func (m *Manager) apply(ctx context.Context) {
 	if !m.live() {
+		return
+	}
+	// The mode isn't known (config.json didn't load at the start, and
+	// running on the defaults would read detached): what was applied stays,
+	// a managed config never given back, until the file is fixed
+	if m.mode == "" {
 		return
 	}
 	// Detached, the reload's configReloaded applies the layer again. The
@@ -905,7 +925,7 @@ func (m *Manager) undoLive(ctx context.Context) bool {
 // runtime, in every mode (a reload on every step of a setting stalls the
 // desktop); turning a part off goes through apply()
 func (m *Manager) liveChanged(ctx context.Context) {
-	if !m.live() {
+	if !m.live() || m.mode == "" {
 		return
 	}
 	if m.w.liveByFile() || m.st.AppliedMode != m.mode || len(m.droppedParts()) > 0 {
@@ -966,6 +986,9 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 	m.w.noteReload()
 	m.st.LiveApplied = ""
 	m.st.save()
+	if m.mode == "" {
+		return
+	}
 	if m.w.configReloaded(ctx, m.in) {
 		m.checkKey()
 	}

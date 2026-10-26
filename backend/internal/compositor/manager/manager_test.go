@@ -478,3 +478,32 @@ func TestAConfigGivenBackMeanwhileIsntWrittenOver(t *testing.T) {
 		t.Fatal("written over, or the approval kept")
 	}
 }
+
+// While the mode isn't known (config.json didn't load at the start) nothing
+// applied changes: a managed config is never given back, whether the
+// runtime file remembers managed or not (gone after a reboot); once the
+// file is fixed, its mode applies
+func TestAnUnknownModeChangesNothing(t *testing.T) {
+	t.Parallel()
+	for _, applied := range []string{"managed", ""} {
+		t.Run("applied "+applied, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, "")
+			h.m.st.AppliedMode = applied
+			f := h.w.files(Inputs{})
+			os.MkdirAll(f.UserDir, 0o755)
+			os.WriteFile(f.ManagedPath, []byte(hyprHeader+" managed f0\n"), 0o644)
+			h.inputs("f1", "l1", "k1", "borders")
+			h.w.reloadCh <- ipc.Reload{}
+			time.Sleep(600 * time.Millisecond)
+			if calls := h.w.seen(); len(calls) != 0 || readFile(f.ManagedPath) != hyprHeader+" managed f0\n" {
+				t.Fatalf("changed the compositor's config: %v, %q", calls, readFile(f.ManagedPath))
+			}
+			if h.status() != "pending" {
+				t.Fatalf("status %s", h.status())
+			}
+			h.setMode("managed")
+			h.eventually("the managed config rewritten", func() bool { return readFile(f.ManagedPath) == hyprHeader+" managed f1\n" })
+		})
+	}
+}

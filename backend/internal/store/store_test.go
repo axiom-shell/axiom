@@ -443,3 +443,42 @@ func TestFixedUnparsableFileKeepsItsTakeovers(t *testing.T) {
 		t.Error("the fixed file was written back with the default")
 	}
 }
+
+// A file that doesn't load at the start: the takeover settings in effect
+// are the file's when it parsed, unknown when it isn't JSON
+func TestTakeoversOverAnUnloadedFile(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	first := open(t, dir)
+	if _, err := first.Set([]config.Op{config.SetValue(config.Keys("Compositor", "mode"), "managed")}, SetOptions{Takeover: true}); err != nil {
+		t.Fatal(err)
+	}
+	cfg, _ := first.Config()
+	broken := jsonx.Clone(cfg).(*jsonx.Object)
+	broken.Value("Battery").(*jsonx.Object).Set("lowThreshold", "x")
+	first.Close()
+	path := filepath.Join(dir, FileName)
+	for _, c := range []struct {
+		name, file string
+		known      bool
+	}{
+		{"invalid", string(jsonx.Marshal(broken)), true},
+		{"not JSON", `{"version": `, false},
+	} {
+		os.WriteFile(path, []byte(c.file), 0o600)
+		s, err := Open(Options{Dir: dir, Pipeline: pipeline(t)})
+		if err != nil {
+			t.Fatal(err)
+		}
+		running, _ := s.Config()
+		if v, _ := config.Lookup(running, config.Keys("Compositor", "mode")); v != "detached" {
+			t.Errorf("%s: not running on the defaults (mode %v)", c.name, v)
+		}
+		takeovers, known := s.Takeovers()
+		mode, _ := config.Lookup(takeovers, config.Keys("Compositor", "mode"))
+		if known != c.known || (known && mode != "managed") {
+			t.Errorf("%s: takeovers known %v, mode %v", c.name, known, mode)
+		}
+		s.Close()
+	}
+}

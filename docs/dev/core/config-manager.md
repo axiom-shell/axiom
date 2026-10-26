@@ -41,7 +41,7 @@ In axiom (`config.Pipeline.Load`), for config.json, saved configs and imports al
 1. Parse (a byte-order mark is ignored).
 2. A format-1 file (no `format`): the frozen v1–v75 migrations (`backend/internal/migrate/legacy/`, the shell's JS migrations run as they were), then the conversion to format 2 (`migrate/convert`). The file as it was is kept once as `config.format1.json`. This path stays only until format 1 is retired.
 3. Format-2 steps by `version`.
-4. Unknown keys are dropped (logged as warnings), defaults filled, the result validated. A file that fails runs nothing: axiom runs on the defaults and blocks saves until it's fixed.
+4. Unknown keys are dropped (logged as warnings), defaults filled, the result validated. A file that fails runs nothing: axiom runs on the defaults and blocks saves until it's fixed, but its `x-takeover` settings stay the file's (unknown when it isn't JSON), so the compositor's mode isn't changed by it ([Config modes](../compositor/config-modes.md#leaving-a-mode)).
 
 `axiom config validate [FILE]` runs the same, read-only.
 

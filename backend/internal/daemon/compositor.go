@@ -46,8 +46,18 @@ func (d *Daemon) newCompositor() *manager.Manager {
 		Tables:      tables,
 		Actions:     actions,
 		Schema:      func() any { return d.store.Pipeline().Schema().Root() },
-		Mode:        func() string { s, _ := setting("Compositor", "mode").(string); return s },
-		Binds:       func() any { return setting("Keybinds", "binds") },
+		// The takeover settings in effect: the file's while the store runs
+		// on the defaults (it didn't load at the start), "" while unknown
+		Mode: func() string {
+			cfg, known := d.store.Takeovers()
+			if !known {
+				return ""
+			}
+			v, _ := config.Lookup(cfg, config.Keys("Compositor", "mode"))
+			s, _ := v.(string)
+			return s
+		},
+		Binds: func() any { return setting("Keybinds", "binds") },
 		CommitBinds: func(b *jsonx.Array) error {
 			if err := d.writable(); err != nil {
 				return err

@@ -138,6 +138,18 @@ func (s *Store) Config() (*jsonx.Object, State) {
 	return s.config, s.state
 }
 
+// Takeovers is the config the x-takeover settings in effect are read from:
+// the config, or, while it runs on the defaults because the file didn't
+// load at the start, the defaults with the file's own takeover settings
+// (the caller must not modify it). False when they aren't known (the file
+// wasn't JSON at the start): what was applied before stays until it's
+// fixed.
+func (s *Store) Takeovers() (*jsonx.Object, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.takeoverBase(), !s.takeoversUnknown
+}
+
 // Subscribe calls fn after every change, until the returned func is
 // called. fn runs in change order, one event at a time, holding no lock:
 // it may read Config and write (its own change is delivered once it
