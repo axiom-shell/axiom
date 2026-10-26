@@ -36,9 +36,9 @@ Work in `$SCRATCH/review/` (`$SCRATCH` = this session's scratchpad directory). I
 
 ## Phase 1: mechanical checks (background)
 
-`git status --porcelain > status.before`, then one background Bash: `{ scripts/check_all.sh --no-docs; python3 scripts/gen_docs.py --check; python3 scripts/check_doc_drift.py; } > checks.log 2>&1`. When it finishes read only `grep -nE 'failed|FAIL|error|Error|stale|drift' checks.log | head -40` and `tail -5 checks.log`; compare `git status --porcelain` to `status.before` (a check that rewrote a file is a finding). Also `scripts/log.sh > log.txt` and read the lines not marked `(known: …)` (`grep -v known log.txt | tail -30`): a warning naming a changed file, or one the change could cause, is a finding. The shell may not have reloaded the latest state; say so rather than guess.
+`git status --porcelain > status.before`, then one background Bash: `{ scripts/check_all.sh; python3 scripts/check_doc_drift.py; } > checks.log 2>&1`. When it finishes read only `grep -nE 'failed|FAIL|error|Error|stale|drift' checks.log | head -40` and `tail -5 checks.log`; compare `git status --porcelain` to `status.before` (a check that rewrote a file is a finding). Also `scripts/log.sh > log.txt` and read the lines not marked `(known: …)` (`grep -v known log.txt | tail -30`): a warning naming a changed file, or one the change could cause, is a finding. The shell may not have reloaded the latest state; say so rather than guess.
 
-Every failing check is a blocker. Don't spend reading on what the checks cover (format, lint, structure, i18n keys, generated docs).
+Every failing check is a blocker. Don't spend reading on what the checks cover (format, lint, structure, i18n keys, the shell–daemon method names).
 
 ## Phase 2: review
 

@@ -66,12 +66,14 @@ def leveled(script):
     return (WARN if warnings else PASS), counted(errors, warnings) or "ok", found
 
 
-def generated():
-    code, lines = run("scripts/gen_docs.py", "--check")
-    found = [("error", link(m.group(2)), m.group(1)) for m in (re.match(r"^(stale|obsolete): (.*)$", line) for line in lines) if m]
+def contract():
+    """gen_docs.py: the shell's daemon calls and listeners the daemon doesn't
+    define, one indented line each (the docs themselves are built, not checked)"""
+    code, lines = run("scripts/gen_docs.py")
+    found = [("error", link("docs/dev/generated/rpc.md"), line.strip()) for line in lines if line.startswith("  ")]
     if code != 0:
-        return FAIL, f"{len(found)} out of date: run `scripts/gen_docs.py` and commit", found
-    return PASS, (lines[-1] if lines else "ok").removeprefix("generated docs "), []
+        return FAIL, f"{len(found)} disagreements" if found else "failed", found or [("error", "", line) for line in lines[-5:]]
+    return PASS, "ok", []
 
 
 def translations():
@@ -100,7 +102,7 @@ def counted(errors, warnings):
 
 CHECKS = [
     ("Structure (`check_structure.py`)", lambda: leveled("scripts/check_structure.py")),
-    ("Generated docs (`gen_docs.py --check`)", generated),
+    ("Shell and daemon agree (`gen_docs.py`)", contract),
     ("Docs match the code (`check_docs.py`)", lambda: leveled("scripts/check_docs.py")),
     ("Package lists agree (`check_packages.py`)", lambda: leveled("scripts/check_packages.py")),
     ("Translations (`check_i18n.py`)", translations),

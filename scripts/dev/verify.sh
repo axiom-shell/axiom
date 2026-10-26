@@ -3,13 +3,14 @@
 # (plus new files), the way CI will, and shows what the live shell logged.
 #
 #   0. builds the generated files (scripts/generate.sh: the schema from
-#      config/schema/, the binary's embedded copies, and the shared fixtures
-#      when a change touches what they're recorded from)
+#      config/schema/, the binary's embedded copies, the reference docs in
+#      docs/dev/config and docs/dev/generated, and the shared fixtures when a
+#      change touches what they're recorded from)
 #   1. formats changed QML with Qt 6's qmlformat, writing in place so the
 #      file keeps its inode and the running shell still reloads it
-#   2. check_structure, check_sizes, gen_docs (rewrites docs/dev/config + generated),
-#      check_docs, check_packages, qmllint, the unit tests the change touches (QML, and
-#      the test_scripts.py classes of a changed script), the Go checks (backend/:
+#   2. check_structure, check_sizes, check_docs, check_packages, qmllint, the
+#      unit tests the change touches (QML, and the test_scripts.py classes of
+#      a changed script), the Go checks (backend/:
 #      go generate, gofmt, vet, staticcheck, tests), shellcheck, i18n
 #   3. the shell's log since its last reload, lines issues.md already
 #      covers marked (known: …)
@@ -18,8 +19,6 @@
 #
 #   scripts/dev/verify.sh             what changed since HEAD
 #   scripts/dev/verify.sh --all       every check on everything (check_all.sh)
-#   --no-docs (with either)           skip rebuilding the generated docs (the
-#                                     pre-commit hook rebuilds them anyway)
 set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -27,20 +26,17 @@ cd "$root" || exit 1
 # shellcheck source=../lib/qt_paths.sh
 source "$root/scripts/lib/qt_paths.sh"
 
-all=0 docs=1
+all=0
 for arg in "$@"; do
   case "$arg" in
   --all) all=1 ;;
-  --no-docs) docs=0 ;;
   *)
     sed -n '2,21p' "$0" >&2
     exit 2
     ;;
   esac
 done
-if [[ $all -eq 1 ]]; then
-  if [[ $docs -eq 1 ]]; then exec scripts/check_all.sh; else exec scripts/check_all.sh --no-docs; fi
-fi
+[[ $all -eq 1 ]] && exec scripts/check_all.sh
 
 mapfile -t changed < <({
   git diff --name-only HEAD
@@ -139,7 +135,6 @@ step "structure" python3 scripts/check_structure.py
 if [[ ${#qml[@]} -gt 0 ]]; then
   step "sizes" python3 scripts/check_sizes.py
 fi
-[[ $docs -eq 1 ]] && step "generated docs" python3 scripts/gen_docs.py
 if printf '%s\n' "${changed[@]}" | grep -qE '\.(md|qml)$'; then
   step "doc citations" python3 scripts/check_docs.py
 fi
@@ -197,7 +192,7 @@ fi
 echo "── docs"
 python3 scripts/check_doc_drift.py --changed "${changed[@]}"
 if [[ "$(git config core.hooksPath)" != ".githooks" ]]; then
-  echo "warning: the pre-commit hook isn't set up, so commits can carry stale generated docs:"
+  echo "warning: the pre-commit hook isn't set up, so commits can carry stale translation files and theme template:"
   echo "  git config core.hooksPath .githooks"
 fi
 

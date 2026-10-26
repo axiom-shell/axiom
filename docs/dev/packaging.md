@@ -35,7 +35,7 @@ How axiom gets onto a machine: the installer (a clone in the user's home) or a d
 Not on the AUR yet: AUR account registration is closed, so they wait in `packaging/aur/` until it reopens ([#76](https://github.com/axiom-shell/axiom/issues/76), help wanted). The user docs describe installing them and say they aren't published.
 
 - `axiom-shell` (a release's tag tarball) and `axiom-shell-git` (main, `pkgver()` from `git describe`, `provides`/`conflicts` `axiom-shell`). The same `prepare()`, `build()` and `package()` otherwise.
-- **The binary:** `arch=(x86_64 aarch64)`, `makedepends` `go`. `prepare()` downloads the modules; `build()` runs `scripts/generate.sh` (the embedded copies and `config/json/config.schema.json`, which isn't committed) and `go build` with `CGO_ENABLED=0` and `-buildmode=pie -trimpath -mod=readonly`; `package()` installs it as `/usr/bin/axiom`.
+- **The binary:** `arch=(x86_64 aarch64)`, `makedepends` `go`. `prepare()` downloads the modules; `build()` runs `scripts/generate.sh` (the embedded copies, `config/json/config.schema.json` and the reference docs, none of them committed; python comes from `depends`) and `go build` with `CGO_ENABLED=0` and `-buildmode=pie -trimpath -mod=readonly`; `package()` installs it as `/usr/bin/axiom`.
 - **No compositor in `depends`:** pacman has no "one of"; `hyprland`, `sway` (which `swayfx` provides) and `niri` are `optdepends`. The package is the shell, not the session.
 - **Layout:**
   - The code in `/usr/share/axiom`, with the built schema, less what only development needs (tests, docs, CI, git hooks, `install.sh`, the check scripts, every `*.md`, and `backend/`, the axiom binary's Go source).

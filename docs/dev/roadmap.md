@@ -43,9 +43,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | # | Status | Work | Why here |
 |---|---|---|---|
 | 1 | done | Backend stage 2: night light, then clipboard (and [Phase 2](#phase-2-finish-stage-2)) | In progress; finish it before anything else churns the same files. |
-| 2 | in progress | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
-| 3 | next | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. |
-| 4 | later | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
+| 2 | done | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
+| 3 | in progress | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. |
+| 4 | next | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
 | 5 | later | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
 | 6 | later | Backend stage 3: brightness | Small; a first stage under the new checks. |
 | 7 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
@@ -89,7 +89,7 @@ Never, besides `AGENTS.md` › Never: merge a PR without the `roadmap` label, pu
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
-- **Generated docs are no longer committed.** `docs/dev/generated/` and `docs/dev/config/` go in `.gitignore` (`git rm --cached`), `scripts/generate.sh` builds them like the schema JSON, CI generates them instead of failing when stale, the pre-commit hook stops adding them, and `AGENTS.md` › Checks and `.gitignore`'s comment say so. About 290 files and 12k lines leave the tree and every PR's diff.
+- Done: **Generated docs are no longer committed.** `docs/dev/generated/` and `docs/dev/config/` go in `.gitignore` (`git rm --cached`), `scripts/generate.sh` builds them like the schema JSON, CI generates them instead of failing when stale, the pre-commit hook stops adding them, and `AGENTS.md` › Checks and `.gitignore`'s comment say so. About 290 files and 12k lines leave the tree and every PR's diff.
 - **The shell's `takeover: true` is fixed by backend stage 7**, with no stopgap before it: saves become path ops, only a takeover card's op carries `takeover`, live edits go through `ConfigManager.setPreview`, and config writes are applied in the order sent.
 - **Idle is the daemon's** (done in stage 2, on its own D-Bus client); hypridle is no longer a dependency.
 - **Tailscale's floor comes from the schema**: the topic reads the `interval` setting's `minimum` rather than a constant, so no migration.
