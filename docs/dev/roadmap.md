@@ -158,7 +158,6 @@ Steps: fold `saved.everything` into `share`; settle `tree` against `schema/yamls
 Resolves:
 - [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
 - [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
-- [A large binds file's own error reads as running out of memory](issues.md#a-large-binds-files-own-error-reads-as-running-out-of-memory)
 - [archtest's rules aren't all in backend/AGENTS.md](issues.md#archtests-rules-arent-all-in-backendagentsmd)
 
 ### Phase 5: the allowlist

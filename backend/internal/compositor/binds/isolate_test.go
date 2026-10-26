@@ -50,9 +50,12 @@ func built(t *testing.T) string {
 }
 
 // crashChild, set to a size in bytes, makes this test binary a child that
-// holds that much memory and then crashes as the Go runtime does, for the
-// tests that tell a memory death from a crash
-const crashChild = "AXIOM_BINDS_TEST_CRASH_HOLDING"
+// holds that much memory and then fails, saying childSays (by default the
+// Go runtime's crash), for the tests that tell a memory death from a crash
+const (
+	crashChild = "AXIOM_BINDS_TEST_CRASH_HOLDING"
+	childSays  = "AXIOM_BINDS_TEST_CHILD_SAYS"
+)
 
 func TestMain(m *testing.M) {
 	if size, err := strconv.Atoi(os.Getenv(crashChild)); err == nil {
@@ -60,7 +63,11 @@ func TestMain(m *testing.M) {
 		for i := 0; i < len(held); i += 4096 {
 			held[i] = 1
 		}
-		os.Stderr.WriteString("SIGSEGV: segmentation violation\n")
+		says := os.Getenv(childSays)
+		if says == "" {
+			says = "SIGSEGV: segmentation violation"
+		}
+		os.Stderr.WriteString(says + "\n")
 		runtime.KeepAlive(held)
 		os.Exit(2)
 	}
@@ -113,30 +120,33 @@ func TestIsolatedExtractSurvivesAFileTakingAllMemory(t *testing.T) {
 }
 
 // A child that crashes is told from one the limit ended by its peak RSS:
-// holding a quarter of the limit, it gets the MiB message; holding a few
-// MiB, the crash. Not parallel: the child is chosen by the environment,
-// and as the package's only sequential test it runs before the parallel
-// ones, so this process's own peak (which the child's counts) stays far
-// below a quarter of the limit.
+// holding a quarter of the limit (and more than this process ever held,
+// which the child's peak counts), it gets the MiB message; holding a few
+// MiB, the crash. A child holding as much that fails with its own error
+// says that error. Not parallel: the child is chosen by the environment.
 func TestIsolatedExtractTellsAMemoryDeathFromACrash(t *testing.T) {
 	self, err := os.Executable()
 	if err != nil {
 		t.Fatal(err)
 	}
+	big := func() int { return int(max(MemoryLimit/4, ownPeakRSS())) + 16<<20 }
 	for _, c := range []struct {
-		held int
+		held func() int
+		says string
 		want string
 	}{
-		{MemoryLimit/4 + 16<<20, "took more than 1024 MiB"},
-		{1 << 20, "reading the binds: SIGSEGV: segmentation violation"},
+		{big, "", "took more than 1024 MiB"},
+		{func() int { return 1 << 20 }, "", "reading the binds: SIGSEGV: segmentation violation"},
+		{big, "binds.lua:1: attempt to call a nil value", "reading the binds: binds.lua:1: attempt to call a nil value"},
 	} {
-		t.Setenv(crashChild, strconv.Itoa(c.held))
+		t.Setenv(crashChild, strconv.Itoa(c.held()))
+		t.Setenv(childSays, c.says)
 		f := newFx(t, "hyprland")
 		f.write("binds.lua", "")
 		o := f.options()
 		o.Isolate, o.Tree = self, testkit.RepoRoot()
 		if _, err := Extract(context.Background(), o); err == nil || !strings.Contains(err.Error(), c.want) {
-			t.Fatalf("holding %d: got %v, want %q", c.held, err, c.want)
+			t.Fatalf("saying %q: got %v, want %q", c.says, err, c.want)
 		}
 	}
 }

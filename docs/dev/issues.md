@@ -43,12 +43,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
-### A large binds file's own error reads as running out of memory
-- **Where:** `backend/internal/compositor/binds/isolate.go` (`diedOfMemory`, `Extract`)
-- **What:** #104 tells the child's memory death from a crash by its peak RSS, but `Extract` checks `diedOfMemory` before the child's own error message and doesn't look at how it exited. So any failure whose peak passed `MemoryLimit/4` (256 MiB) is reported as taking more than the limit, including an ordinary Lua error from a large file. It should only count for crash-like exits (a signal, or the Go runtime's `fatal error` / `SIGSEGV` on stderr). The test that covers it also relies on running before the parallel tests, so the test process's own peak stays low.
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
-
 ### archtest's rules aren't all in backend/AGENTS.md
 - **Where:** `backend/internal/archtest/archtest_test.go`, `backend/AGENTS.md` (Rules)
 - **What:** archtest requires the exact `Pure:` marker in a pure package's doc comment, which AGENTS.md only calls "marked pure in their doc comment". It also refuses more imports in pure packages than AGENTS.md lists (`os/signal`, `golang.org/x/sys`, `unsafe`, `plugin`, `io/ioutil` besides `os`, `net`, `os/exec`, `syscall`). And its tiers are coarse: about 40 packages share the edge tier, so the direction between edge packages isn't enforced, though the original entry asked for "downward dependency direction among the other packages".
