@@ -1,6 +1,6 @@
 # Bar widget classes, style and colors
 
-> **Files:** `components/bar/widgets/base/BarIconWidget.qml`, `components/bar/widgets/base/BarWidget.qml`, `components/bar/widgets/base/AudioLevelWidget.qml`, `components/reusable/BaseWidget.qml`, `components/methods/BarWidgetStyle.qml`, `components/methods/BarAutoColors.qml`, `config/Bar.qml`, `config/BarStyle.qml`, `components/bar/widgets/Workspaces/WorkspaceCell.qml`
+> **Files:** `components/bar/widgets/base/BarIconWidget.qml`, `components/bar/widgets/base/BarWidget.qml`, `components/bar/widgets/base/AudioLevelWidget.qml`, `components/bar/widgets/base/BaseWidget.qml`, `components/methods/BarWidgetStyle.qml`, `components/methods/BarAutoColors.qml`, `config/Bar.qml`, `config/BarStyle.qml`, `components/bar/widgets/Workspaces/WorkspaceCell.qml`
 > **Config:** `BarStyle.*`, `Bars.style.*`, per bar `style` (inheriting) and `widgetTextColor`, widget color fields with `x-autoColor`
 > **Related:** [Bar composition](composition.md), [Widget shapes and runs](widget-shapes-runs.md), [Schema annotations](../core/schema-annotations.md)
 
@@ -17,7 +17,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
     - `dim` is for fades of the widget's own.
 - **`AudioLevelWidget`** is shared by Volume and Microphone.
 - **`bar/widgets/base/BarWidget.qml`** is the base for widgets that draw their own content. It has the same inputs plus `isVertical`.
-- **`reusable/BaseWidget`** is the sizing and background wrapper under both.
+- **`base/BaseWidget`** is the sizing and background wrapper under both.
 
 ### Sizes come from the bar
 - (Rule: `components/bar/widgets/AGENTS.md`, "Sized by the bar".)

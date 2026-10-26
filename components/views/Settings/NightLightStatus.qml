@@ -5,6 +5,7 @@ import qs.config
 import qs.services.core
 import qs.services.system
 import qs.components.reusable
+import qs.components.content.parts
 
 // The top of the Night light card (the section's `x-intro`): whether it's
 // on, how it warms the screens, and a switch to try the settings

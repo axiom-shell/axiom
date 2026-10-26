@@ -5,6 +5,7 @@ import qs.config
 import qs.services.core
 import qs.services.session
 import qs.components.reusable
+import qs.components.content.parts
 
 // Setting axiom up as the login screen (GreeterManager), shared by
 // Settings → Login screen (GreeterStatusCard) and the onboarder: what

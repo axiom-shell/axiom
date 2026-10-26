@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.reusable
 
 // An icon followed by a label, laid along the bar's main axis (the label is
 // rotated on a vertical bar). Reports the size it needs to show everything

@@ -49,9 +49,9 @@ Bars size their own widgets (`Bar.enrichBarConfig`) and never use these: a share
 
 ### Controls (`reusable/`)
 - `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors, optional `CountBadge`).
-- `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`.
+- `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
 - `StyledSlider`: trough, fill and handle; `moved` while dragged, `released` at the end; a value pushed in animates.
-- `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll); `PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).
+- `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll); `surfaces/osd/PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).
 - `PercentageCircle`: a ring gauge with an icon in the middle.
 - `SegmentButton`: a choice, accent when `active`; `Layout.fillWidth: false` in a row of pills.
 - `SegmentRow`: a single choice of SegmentButtons on one track, the accent sliding to the active one. Toggles and multi-select chips stay plain rows or Flows.
@@ -62,7 +62,6 @@ Bars size their own widgets (`Bar.enrichBarConfig`) and never use these: a share
 - `StyledComboEntry`: a choice from a list dropping down under a field, optionally typed. In a popout or edge menu (its window declares `popoutRoom`) the list opens inline (`expandsInline`), inside the field's layout, since a dropdown Popup there is a window the popout's hover and blur don't reach. It's capped by the room the box has left to grow, or in an edge menu by the Flickable around it, which scrolls it into view.
   - `options` `[{ value, label, icon? }]`, `value` pushed in, `picked(value)`.
   - Used by the greeter's user and session pickers.
-- `CodeLine`: text to paste (a command) in a monospace box with Copy.
 - `StyledSwitch`.
 - `TypePickerPopup`: pick a type, `{ type, label, icon }`.
 - `ActionTile`: an icon well over a label. With `opens`, a right click or long press is `opened`.
@@ -91,7 +90,7 @@ Bars size their own widgets (`Bar.enrichBarConfig`) and never use these: a share
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
 
 ### Bar pieces (`bar/`)
-- `BaseWidget`: the rounded box a bar widget sits in; `IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar); `steadyDigits` sizes a ticking label by its digit count.
+- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar); `steadyDigits` sizes a ticking label by its digit count.
 - `WidgetBackground`: a widget's or merged run's background in the bar's widget style and shape, with the hover outline and editor highlight.
 - `SeparatorMark`: a line, dot, slash or chevron divider (the Separator widget's and the bar's `separatorStyle`).
 - `methods/BarShapes` (caps and SVG outlines), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
@@ -154,7 +153,7 @@ Bars size their own widgets (`Bar.enrichBarConfig`) and never use these: a share
 - See [Settings page](settings-page.md).
 
 ### Content and calendar parts
-- **Content parts** (`content/parts/`): see [Content roots](../overlay/content-roots.md) and [Writing modules](../overlay/writing-modules.md). Also `AudioRow` (a mixer line: icon, title, volume slider, percentage, mute) and `TrayMenuList` / `TrayMenuItem` (a tray menu's entries, for the tray popout and its submenus).
+- **Content parts** (`content/parts/`): see [Content roots](../overlay/content-roots.md) and [Writing modules](../overlay/writing-modules.md). Also `AudioRow` (a mixer line: icon, title, volume slider, percentage, mute) `TrayMenuList` / `TrayMenuItem` (a tray menu's entries, for the tray popout and its submenus) and `CodeLine` (text to paste, a command, in a monospace box with Copy: the greeter setup, onboarding and Settings status cards).
 - **Todo and pomodoro parts** (`content/parts/`): `TodoList` (the add field and the items, `fill` or capped at `maxListHeight`) `PomodoroDial` (the timer's ring, session dots, controls and task picker, `horizontal` for a wide card) and `TimeRing` (a countdown ring with the time and a label in the middle, used by `PomodoroDial` and the one-off timer in `content/Stopwatch/Stopwatch.qml`); see [Todo and pomodoro](../features/todo-pomodoro.md).
 - **Calendar parts** (`content/parts/calendar/`): see [Calendar](../features/calendar.md).
 
