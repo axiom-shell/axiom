@@ -36,7 +36,9 @@ jobs:
           python3 --version
 
       # config/json/config.schema.json, which the docs and checks read, is
-      # built from config/schema/ (never committed)
+      # built from config/schema/, and the reference docs from the code and
+      # the schema (never committed). gen_docs.py also fails here when the
+      # shell calls a daemon method or push the daemon doesn't define
       - name: Generated files (scripts/generate.sh)
         env:
           GOTOOLCHAIN: local
@@ -47,9 +49,6 @@ jobs:
 
       - name: Sizes follow the Interface scale (no literal px outside the bars)
         run: python3 scripts/check_sizes.py
-
-      - name: Generated docs are up to date (scripts/gen_docs.py)
-        run: python3 scripts/gen_docs.py --check
 
       - name: Docs match the code (links, paths, members)
         run: python3 scripts/check_docs.py

@@ -71,7 +71,7 @@ package() {
   cp -r --no-preserve=ownership . "$dest"
   # What only working on axiom needs (the greeter's copy leaves out the same)
   rm -rf "$dest"/{tests,docs,.github,.githooks,.claude,packaging,scripts/dev,backend}
-  rm -f "$dest"/{install.sh,.gitignore,.gitattributes,.qmlformat.ini,.qmlls.ini,.shellcheckrc} \
+  rm -f "$dest"/{install.sh,.gitignore,.qmlformat.ini,.qmlls.ini,.shellcheckrc} \
     "$dest"/scripts/{check_*,gen_docs.py,gen_theme_template.py,ci_summary.py,run_tests.sh,release.sh,qml_modules.py,qmllint-baseline.json}
   find "$dest" -name '*.md' -delete
   # The marker the shell reads (Paths.packaged): updates come from pacman,

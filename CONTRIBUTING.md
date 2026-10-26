@@ -48,7 +48,7 @@ axiom is two parts. The shell is QML with no build step: Quickshell runs it as i
    git clone https://github.com/<you>/axiom.git ~/.config/quickshell/axiom
    ```
    (Already running axiom from a clone? Use that one, and add your fork as a remote.)
-2. Turn on the pre-commit hook, which keeps what's generated up to date: the developer docs, the translation files (new text goes into every language, empty, and into the template a new language starts from) and the theme template:
+2. Turn on the pre-commit hook, which keeps what's committed but generated up to date: the translation files (new text goes into every language, empty, and into the template a new language starts from) and the theme template:
    ```bash
    git config core.hooksPath .githooks
    ```

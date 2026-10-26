@@ -12,3 +12,5 @@ tests/.out/
 config/json/config.schema.json
 backend/internal/assets/data/
 tests/fixtures/shared/
+docs/dev/config/
+docs/dev/generated/

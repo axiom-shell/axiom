@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # Regenerates what's built from the code being committed (the index, not the
 # working tree) and stages it, so a commit never carries stale output:
-#   - docs/dev/config and docs/dev/generated (scripts/gen_docs.py)
 #   - the translations (scripts/check_i18n.py --fill --prune): every new key,
 #     empty, in each config/i18n/<code>.json, every key nothing uses any more
 #     dropped from them, and the empty template a new language is copied
 #     from, config/i18n/template/language.json
 #   - the theme template, config/themes/template/theme.json
 #     (scripts/gen_theme_template.py)
-# The config schema they're made from, config/json/config.schema.json, is
-# built from config/schema/ in the snapshot (`axiom schema build`, through go
-# run) and never committed (scripts/generate.sh builds it in the tree).
+# The config schema the translations are made from,
+# config/json/config.schema.json, is built from config/schema/ in the snapshot
+# (`axiom schema build`, through go run) and never committed, like the
+# reference docs in docs/dev/config and docs/dev/generated (scripts/generate.sh
+# builds both in the tree).
 # Enabled per clone with
 #   git config core.hooksPath .githooks
 set -euo pipefail
@@ -19,12 +20,11 @@ root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
 staged="$(git diff --cached --name-only --diff-filter=ACMRD)"
-docs=0 i18n=0 theme=0
-grep -qE '^config/schema/|^backend/internal/schema/' <<<"$staged" && docs=1 && i18n=1
-grep -qE '\.qml$|^scripts/(gen_docs|qml_modules)\.py$' <<<"$staged" && docs=1
+i18n=0 theme=0
+grep -qE '^config/schema/|^backend/internal/schema/' <<<"$staged" && i18n=1
 grep -qE '\.qml$|^scripts/check_i18n\.py$|^config/i18n/' <<<"$staged" && i18n=1
 grep -qE '^config/json/theme-defaults\.json$|^scripts/gen_theme_template\.py$|^config/themes/template/' <<<"$staged" && theme=1
-[[ $docs -eq 1 || $i18n -eq 1 || $theme -eq 1 ]] || exit 0
+[[ $i18n -eq 1 || $theme -eq 1 ]] || exit 0
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -38,27 +38,13 @@ place() {
   git add "$1"
 }
 
-# The schema first: the docs and translations are made from it
-if [[ $docs -eq 1 || $i18n -eq 1 ]]; then
+# The schema first: the translations are made from it
+if [[ $i18n -eq 1 ]]; then
   if ! command -v go >/dev/null; then
-    echo "pre-commit: go isn't installed to build the config schema the docs and translations are made from" >&2
+    echo "pre-commit: go isn't installed to build the config schema the translations are made from" >&2
     exit 1
   fi
   (cd "$tmp/backend" && go generate ./internal/assets && go run ./cmd/axiom schema build --tree "$tmp" >/dev/null)
-fi
-
-if [[ $docs -eq 1 ]]; then
-  if [[ ! -f "$tmp/scripts/gen_docs.py" ]]; then
-    echo "pre-commit: scripts/gen_docs.py isn't committed yet; skipping doc generation" >&2
-  else
-    python3 "$tmp/scripts/gen_docs.py" >/dev/null
-    for dir in docs/dev/config docs/dev/generated; do
-      rm -rf "$dir"
-      mkdir -p "$(dirname "$dir")"
-      cp -r "$tmp/$dir" "$dir"
-      git add -A "$dir"
-    done
-  fi
 fi
 
 if [[ $i18n -eq 1 && -f "$tmp/scripts/check_i18n.py" ]]; then
