@@ -18,7 +18,7 @@ The shell (`qs -p <tree>`) is a child of the daemon (`axiom run`). Six channels 
   - `config.schema.json`: the schema built from the tree (`ConfigManager`; `BackendManager` sends its md5 in the hello).
   - `compositor.json`: the daemon's own state, kept across re-execs; the shell never reads it.
 - **C. Calls, shell → daemon**: JSON-RPC requests on the socket (`BackendManager.call(method, params, done)`).
-- **D. Pushes, daemon → shell**: notifications by topic (`BackendManager.listen(method, fn)`).
+- **D. Pushes, daemon → shell**: notifications by topic (`BackendManager.listen(method, fn)`). Each listener runs on its own: one that throws is logged and the rest still hear the push.
 - **E. Calls, daemon → shell**: `ipc.call`, how `axiom ipc <target> <fn>` and `axiom lock` reach an `IpcTarget` without a process per call (`BackendManager.handle`; answered by `_callTarget`).
 - **F. The binary as a command**: the shell runs `Paths.toolBin` for things that need no daemon (`compositor niri info`, `compositor sway-text`), and `Paths.axiomBin daemon reexec` after an update (`SelfUpdateManager`). The compositor configs the daemon writes call `axiom ipc …` for binds. The greeter has no daemon and runs `$AXIOM_BIN`, which is the greeter's own binary.
 
@@ -34,7 +34,7 @@ The whole-state pushes (`daemon.state`, `dev.state`, `saved.state`, `compositor.
 2. The daemon refuses a different protocol, a schema other than the one it built, and a `"shell"` hello from any pid except the shell it runs. A refusal fails every call with that error until a later hello is answered.
 3. The answer describes the daemon: version, commit, pid, display, tree, `dirs`, the config `state` (`firstRun`, `blocked`, `issues`, `revision`), `compatible` / `reason` and `dev`. It's available as `BackendManager.hello`.
 4. The queue is sent, the shell registers its IPC targets (`ipc.register`, names only; the daemon reads their signatures from `qs ipc show`), and `greeted` fires. `ConfigManager` applies the state, acknowledges a first run (`config.ackFirstRun`) and reads the config again (`config.get`) in case it missed a push while disconnected.
-5. When the connection drops (a re-exec or a restart), calls in flight fail with `unavailable`, queued notifications wait for the next connection, and the shell reconnects after 200 ms × 2ⁿ (at most 5 s), saying hello again.
+5. When the connection drops (a re-exec or a restart), calls in flight fail with `unavailable`, queued notifications wait for the next connection, and the shell reconnects after 200 ms × 2ⁿ (at most 5 s), saying hello again (the socket's `connected` keeps following `BackendManager.active`).
 
 ### Topics
 A hello's `subscribe` is `true`, `false` or a list of topics:

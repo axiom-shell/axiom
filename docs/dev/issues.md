@@ -406,12 +406,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### BackendManager's listeners and reconnect are fragile
-- **Where:** `services/core/BackendManager.qml` (`_onLine`, `_reconnect`)
-- **What:** A notification's listeners run in one `forEach` with no `try`, so one that throws stops the rest from hearing the push. `_reconnect` assigns `_socket.connected = true`, which breaks its `connected: root.active` binding, so the socket no longer follows `active` after the first reconnect.
-- **Size:** trivial
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### The shell–daemon contract is checked by name only
 - **Where:** `scripts/gen_docs.py` (the rpc cross-check), `backend/internal/daemon/methods.go` (params and results)
 - **What:** `rpc.md`'s check matches method names between the two sides by regex; params and results are Go structs on one side and hand-read fields on the other, and nothing checks they agree (only the manual protocol bump in `config/json/backend.json`). Generating each method's fields from the `rpc.Handle` registrations into `rpc.md`, and checking the QML call sites' keys against them, would catch a renamed field.

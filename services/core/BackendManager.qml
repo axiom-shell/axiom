@@ -285,7 +285,15 @@ QtObject {
         break;
       }
     case "notification":
-      (root._listeners[m.method] ?? []).forEach(fn => fn(m.params ?? {}));
+      // Each listener on its own: one that throws doesn't keep the push
+      // from the rest
+      (root._listeners[m.method] ?? []).forEach(fn => {
+        try {
+          fn(m.params ?? {});
+        } catch (e) {
+          console.warn("[BackendManager] a", m.method, "listener failed:", e?.message ?? e);
+        }
+      });
       break;
     case "request":
       root._answer(m);
@@ -358,7 +366,9 @@ QtObject {
     interval: Math.min(5000, 200 * Math.pow(2, root._retry))
     onTriggered: {
       root._retry++;
-      root._socket.connected = true;
+      // Through a fresh binding: assigning true would drop the socket's
+      // `connected: root.active` for good
+      root._socket.connected = Qt.binding(() => root.active);
     }
   }
 }
