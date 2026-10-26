@@ -349,7 +349,8 @@ QtObject {
 
   // daemon.closing: let the connection go before axiom closes it. After a
   // re-exec the new image answers on the same socket: connect again once
-  // the old one is gone. A quit stops the shell too: nothing to reconnect
+  // the old one is gone. After a quit, back off as after any drop (a shell
+  // run apart from `axiom run --no-shell` waits for the next daemon)
   function _closing(reexec) {
     const socket = root._socket;
     if (!socket || !socket.connected)
@@ -359,12 +360,11 @@ QtObject {
     root._greetedSinceDrop = false;
     root._failQueued({
       "kind": "unavailable",
-      "message": "axiom closed the connection"
+      "message": "the connection to axiom closed"
     });
-    if (reexec) {
+    if (reexec)
       root._retry = 0;
-      root._reconnect.start();
-    }
+    root._reconnect.start();
   }
 
   function _failQueued(error) {

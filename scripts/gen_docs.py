@@ -1124,7 +1124,9 @@ def rpc_page():
             "and methods in a `// rpc:` note that isn't directly above its helper's `function`.", "",
             "| Call site | Method | Params |", "|---|---|---|"]
     for file, line, method, src in sorted(unchecked):
-        out.append(f"| `{file}:{line}` | `{method}` | `{src}` |")
+        # A | would end the cell, a backtick the code span
+        cell = src.replace("`", "'").replace("|", "\\|")
+        out.append(f"| `{file}:{line}` | `{method}` | `{cell}` |")
     out += ["", "## Types", ""]
     done = set()
     while set(types) - done:
