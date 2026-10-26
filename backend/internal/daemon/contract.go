@@ -33,7 +33,7 @@ func pushShapes() []rpc.PushShape {
 	return []rpc.PushShape{
 		pushConfigChanged.Shape(), pushConfigState.Shape(), pushSchemaChanged.Shape(), pushSchemaError.Shape(),
 		pushSavedState.Shape(),
-		pushDaemonState.Shape(), pushDevState.Shape(),
+		pushDaemonState.Shape(), pushDevState.Shape(), pushDaemonClosing.Shape(),
 		pushCompositorState.Shape(), pushCompositorApplied.Shape(), pushCompositorNotify.Shape(), pushCompositorBindsMerged.Shape(),
 		pushIdleState.Shape(),
 		pushWaylandState.Shape(), pushNightLightState.Shape(),

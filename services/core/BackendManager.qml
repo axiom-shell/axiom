@@ -234,6 +234,10 @@ QtObject {
     });
     root.listen("daemon.state", params => root._applyDaemonState(params));
     root.listen("dev.state", params => root._dev = params);
+    // A re-exec or quit closes the connection on purpose: closed from
+    // this side first, it's no error (Quickshell's Socket warns on every
+    // close it didn't make). Later, not inside the socket's own read
+    root.listen("daemon.closing", params => Qt.callLater(root._closing, !!params.reexec));
     root._connect();
   }
 
@@ -329,6 +333,25 @@ QtObject {
     // At once: a re-exec hands its listening socket over, so this
     // connection waits for the new image. A failed attempt backs off
     root._connect();
+  }
+
+  // daemon.closing: let the connection go before axiom closes it. After a
+  // re-exec the new image answers on the same socket: connect again once
+  // the old one is gone. A quit stops the shell too: nothing to reconnect
+  function _closing(reexec) {
+    const socket = root._socket;
+    if (!socket || !socket.connected)
+      return;
+    root._retire(socket);
+    root._hello = null;
+    root._failQueued({
+      "kind": "unavailable",
+      "message": "axiom closed the connection"
+    });
+    if (reexec) {
+      root._retry = 0;
+      root._reconnect.start();
+    }
   }
 
   function _failQueued(error) {
