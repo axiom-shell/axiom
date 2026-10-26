@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"reflect"
 	"sync"
 	"sync/atomic"
 
@@ -49,17 +50,25 @@ type Handler func(ctx context.Context, c *Conn, params json.RawMessage) (any, er
 // every handler and can refuse the call (the daemon refuses everything
 // but daemon.hello until a connection said hello).
 type Registry struct {
-	handlers map[string]Handler
+	handlers map[string]entry
 	Before   func(c *Conn, method string) error
 }
 
+// entry is one method: its handler and the Go types of what it takes
+// and returns (ShapeOf turns them into what goes on the wire).
+type entry struct {
+	handler        Handler
+	params, result reflect.Type
+}
+
 // NewRegistry returns an empty registry.
-func NewRegistry() *Registry { return &Registry{handlers: map[string]Handler{}} }
+func NewRegistry() *Registry { return &Registry{handlers: map[string]entry{}} }
 
 // Handle registers a typed handler: params are decoded into P (unknown
-// fields ignored, for older and newer peers), the result R encoded.
+// fields ignored, for older and newer peers), the result R encoded. P and
+// R are kept for Types.
 func Handle[P, R any](r *Registry, method string, fn func(ctx context.Context, c *Conn, p P) (R, error)) {
-	r.handlers[method] = func(ctx context.Context, c *Conn, raw json.RawMessage) (any, error) {
+	h := func(ctx context.Context, c *Conn, raw json.RawMessage) (any, error) {
 		var p P
 		if len(raw) > 0 && !bytes.Equal(raw, []byte("null")) {
 			if err := json.Unmarshal(raw, &p); err != nil {
@@ -68,6 +77,14 @@ func Handle[P, R any](r *Registry, method string, fn func(ctx context.Context, c
 		}
 		return fn(ctx, c, p)
 	}
+	r.handlers[method] = entry{handler: h, params: reflect.TypeFor[P](), result: reflect.TypeFor[R]()}
+}
+
+// Types is what method takes and returns, as Go types (false: no such
+// method).
+func (r *Registry) Types(method string) (params, result reflect.Type, ok bool) {
+	e, ok := r.handlers[method]
+	return e.params, e.result, ok
 }
 
 // Methods lists the registered methods.
@@ -447,7 +464,7 @@ func (c *Conn) deliver(m message) {
 }
 
 func (c *Conn) dispatch(ctx context.Context, m message) {
-	h, ok := c.reg.handlers[m.Method]
+	e, ok := c.reg.handlers[m.Method]
 	if !ok {
 		if m.ID != nil {
 			c.replyError(m.ID, &wireError{Code: codeMethodNotFound, Message: "no method " + m.Method})
@@ -462,7 +479,7 @@ func (c *Conn) dispatch(ctx context.Context, m message) {
 			return
 		}
 	}
-	result, err := safeCall(ctx, h, c, m.Params)
+	result, err := safeCall(ctx, e.handler, c, m.Params)
 	if m.ID == nil {
 		if err != nil {
 			c.log.Warn("notification failed", "method", m.Method, "err", err)

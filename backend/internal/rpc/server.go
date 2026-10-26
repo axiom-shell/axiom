@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"reflect"
 	"sync"
 	"syscall"
 
@@ -111,31 +112,32 @@ func (s *Server) Conns() []*Conn {
 	return out
 }
 
-// Broadcast notifies every connection keep accepts (nil: all).
-func (s *Server) Broadcast(method string, params any, keep func(*Conn) bool) {
-	raw, err := marshalParams(params)
-	if err != nil {
-		s.Log.Error("broadcast", "method", method, "err", err)
-		return
-	}
-	for _, c := range s.Conns() {
-		if keep == nil || keep(c) {
-			c.Notify(method, raw)
-		}
-	}
+// Push is one notification a server sends, declared once with the type
+// of its params (ShapeOf reports what it carries). A latest-wins push is a
+// state: each connection keeps only the newest unsent one
+// (Conn.NotifyLatest).
+type Push[T any] struct {
+	Method string
+	Latest bool
 }
 
-// BroadcastLatest is Broadcast for a state: each connection keeps only
-// the newest unsent one (Conn.NotifyLatest).
-func (s *Server) BroadcastLatest(method string, params any, keep func(*Conn) bool) {
+// Type is the Go type of the push's params.
+func (p Push[T]) Type() reflect.Type { return reflect.TypeFor[T]() }
+
+// Send notifies every connection of s that keep accepts (nil: all).
+func (p Push[T]) Send(s *Server, params T, keep func(*Conn) bool) {
 	raw, err := marshalParams(params)
 	if err != nil {
-		s.Log.Error("broadcast", "method", method, "err", err)
+		s.Log.Error("broadcast", "method", p.Method, "err", err)
 		return
 	}
 	for _, c := range s.Conns() {
 		if keep == nil || keep(c) {
-			c.NotifyLatest(method, raw)
+			if p.Latest {
+				c.NotifyLatest(p.Method, raw)
+			} else {
+				c.Notify(p.Method, raw)
+			}
 		}
 	}
 }

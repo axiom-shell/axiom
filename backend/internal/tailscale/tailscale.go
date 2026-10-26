@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os/exec"
+	"reflect"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/topics"
@@ -67,6 +68,8 @@ func Source(o Options) topics.Source {
 		Name:    "tailscale",
 		Floor:   topics.MinInterval,
 		Default: 10 * time.Second,
+		Request: reflect.TypeFor[struct{}](),
+		State:   reflect.TypeFor[State](),
 		Fetch: func(ctx context.Context, _ []json.RawMessage) (any, error) {
 			bin, err := o.LookPath("tailscale")
 			if errors.Is(err, exec.ErrNotFound) {

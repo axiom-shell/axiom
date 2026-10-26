@@ -58,7 +58,7 @@ func (d *Daemon) newIdle() *idle.Service {
 		OnState: func(st idle.State) {
 			// Also called before there is a server
 			if d.server != nil {
-				d.server.BroadcastLatest("idle.state", st, subscribedTo(topicIdle))
+				pushIdleState.Send(d.server, st, subscribedTo(topicIdle))
 			}
 		},
 		Log: log,

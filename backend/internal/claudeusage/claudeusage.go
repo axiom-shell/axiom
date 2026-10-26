@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strconv"
 	"sync"
@@ -127,6 +128,8 @@ func Source(o Options) topics.Source {
 		Name:      "claudeUsage",
 		Floor:     time.Minute,
 		Default:   time.Minute,
+		Request:   reflect.TypeFor[request](),
+		State:     reflect.TypeFor[map[string]Account](),
 		OnRefresh: func() { u.forced.Store(true) },
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
 			return u.fetch(ctx, requests), nil

@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### rpc.md misses calls made through a service's own helper
+- **Where:** `scripts/gen_docs.py` (`rpc_scan`), `services/system/ClipboardManager.qml` (`_call`)
+- **What:** `ClipboardManager` sends `clipboard.copy`, `clipboard.remove` and `clipboard.clear` through `_call(method, params)`, which calls `BackendManager.call(method, …)` with a variable, so the scan finds no literal and `rpc.md` lists those three as having no shell caller ("(none)"), and the cross-check can't see them. A `// rpc: clipboard.copy, clipboard.remove, clipboard.clear` comment above `_call` fixes this case; the shape check (Phase 4) needs the same idea for any helper that forwards a method name.
+- **Size:** trivial
+- **Found:** 2026-10-26, while updating the QML ↔ Go bridge reference
+
 ### Restoring over a config.json that doesn't load resets the other takeovers
 - **Where:** `backend/internal/store/store.go` (`Replace`, `Restore`, `takeoverBase`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
 - **What:** While config.json doesn't load at the start, the store knows no takeover values (`takeoversUnknown`), so `Replace` and `Restore` keep `takeoverBase()`: the defaults. Restoring a saved config over that file therefore writes the defaults' `Idle.enabled`, `Polkit.enabled`, `Greeter.enabled` and `Lockscreen.mode`, switching off or changing whatever the user had taken over. Only `Compositor.mode` is repaired afterwards, by the compositor manager keeping the mode it applied and saving it back (`saveKept`, #108). Deciding the unknown takeovers once in the store (take the restored file's own values, or refuse the restore while none are known) would cover all five settings, and would let the manager's separate hold go ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)). Like every other problem that starts from a config.json that doesn't load, it's rare, and it's fixed by backend stage 7, with the other config problems.
@@ -434,18 +440,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The shell sends each `config.replace` without waiting for the last, the daemon runs requests concurrently, and `write` takes its lock in whatever order the goroutines reach it, so two quick saves can leave the older one on disk (and pushed back as the running config). Path ops alone (backend stage 7) still race on one key: `config.*` calls want handling in order per connection, or a base revision the store refuses on mismatch.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
-
-### The rpc registry doesn't record its methods' shapes
-- **Where:** `backend/internal/rpc/rpc.go` (`Handle`)
-- **What:** `rpc.Handle` knows each method's params and result types (`P`, `R`) but keeps only a closure, so nothing can report what a method takes or returns. It should store both `reflect.Type`s, and a pure walker should turn a type into a field tree by `encoding/json`'s rules (name from the tag, `omitempty`, `-` skipped, embedded fields inlined, slices, maps, nested structs; `json.RawMessage`, `any` and types with their own `MarshalJSON` opaque), with a table-driven test in `backend/internal/rpc`. First of the contract-check plan's items.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
-
-### Pushes and topics don't declare their types
-- **Where:** `backend/internal/daemon/methods.go` (the push and topic constants), `backend/internal/rpc/server.go` (`Broadcast`), `backend/internal/topics/topics.go` (`Source`)
-- **What:** `Broadcast(method, params any, …)` takes any value: some pushes are typed (`configChanged`, `clipboardState`), some `map[string]any` (`schema.error`, `schema.changed`), every `compositor.*` push pre-marshalled bytes; `topics.Source` names no request or state type. Each push should be declared once with its param type beside the topic constants and `Broadcast` calls use the declaration; `topics.Source` gains its request and state types; the `compositor.*` pushes get structs where that's cheap, opaque otherwise.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
 
 ### The generate step dumps no rpc shapes
 - **Where:** `scripts/generate.sh`, `backend/internal/daemon/methods.go` (the registrations)

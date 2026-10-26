@@ -1,6 +1,6 @@
 # The shell–daemon contract is checked by name only
 
-> **Issue:** The shell–daemon contract is checked by name only (replaced in [issues.md](../issues.md) by the items below, from [The rpc registry doesn't record its methods' shapes](../issues.md#the-rpc-registry-doesnt-record-its-methods-shapes) on)
+> **Issue:** The shell–daemon contract is checked by name only (replaced in [issues.md](../issues.md) by the items below, from [The generate step dumps no rpc shapes](../issues.md#the-generate-step-dumps-no-rpc-shapes) on)
 > **Status:** decided: B (2026-10-26)
 
 **Decision (2026-10-26):** option B, Go reports its own shapes. Option C's runtime strictness warning is not taken, not even as the recommended add-on, so item 5 (the daemon warning about unknown params) is dropped: non-literal call sites stay unchecked and are listed as such in `rpc.md`. Items 1–4 and 6 became issues.md entries, linked from the roadmap's Phase 4.

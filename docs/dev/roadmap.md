@@ -156,11 +156,10 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 Steps: generate method shapes into `rpc.md` and check QML call sites against them; fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`).
 
 Resolves:
-- [The rpc registry doesn't record its methods' shapes](issues.md#the-rpc-registry-doesnt-record-its-methods-shapes)
-- [Pushes and topics don't declare their types](issues.md#pushes-and-topics-dont-declare-their-types)
 - [The generate step dumps no rpc shapes](issues.md#the-generate-step-dumps-no-rpc-shapes)
 - [rpc.md shows no shapes and call sites' keys go unchecked](issues.md#rpcmd-shows-no-shapes-and-call-sites-keys-go-unchecked)
 - [Result and push reads in inline callbacks go unchecked](issues.md#result-and-push-reads-in-inline-callbacks-go-unchecked)
+- [rpc.md misses calls made through a service's own helper](issues.md#rpcmd-misses-calls-made-through-a-services-own-helper)
 - [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
 - [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
 - [The shell's socket warns when the daemon re-execs](issues.md#the-shells-socket-warns-when-the-daemon-re-execs)

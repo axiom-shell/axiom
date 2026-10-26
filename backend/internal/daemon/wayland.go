@@ -44,7 +44,7 @@ func (d *Daemon) pushWayland() {
 	d.wayland.pushed = &st
 	d.wayland.mu.Unlock()
 	if !same && d.server != nil {
-		d.server.BroadcastLatest("wayland.state", st, subscribedTo(topicWayland))
+		pushWaylandState.Send(d.server, st, subscribedTo(topicWayland))
 	}
 }
 
@@ -98,7 +98,7 @@ func (d *Daemon) newNightLight() {
 		Gamma: d.gamma,
 		OnState: func(st nightlight.State) {
 			if d.server != nil {
-				d.server.BroadcastLatest("nightlight.state", st, subscribedTo(topicWayland))
+				pushNightLightState.Send(d.server, st, subscribedTo(topicWayland))
 			}
 		},
 	})
