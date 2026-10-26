@@ -19,7 +19,7 @@ How the shell reads from and acts on Hyprland, without running `hyprctl`.
 - Hyprland's focus grab is `HyprlandGrab`, which only `FocusGrab` creates.
 - `runLua(lua, callback)` queues chunks and runs them one at a time, in order, calling back with Hyprland's reply (`"ok"` or the error). Something that must run after Lua already queued (the runtime layer's unbind) goes through it rather than `evalLua`. Once the queue drains, it refetches the window list and, if asked meanwhile, the options (`refreshOptions`).
 - The options axiom follows (gaps, split multiplier, blur, the animations) are read in one batch: at startup, on `configreloaded`, and after axiom changes them.
-- Commands that Hyprland or hypridle run, and shell scripts, still call `hyprctl` (the exit bind, DPMS through `HyprlandManager.dpmsCommand`): they run outside the shell.
+- Commands that Hyprland runs, and shell scripts, still call `hyprctl` (the exit bind): they run outside the shell. DPMS for idle is the daemon's, over the socket (`Manager.ScreenPower`).
 
 ### The socket
 - Hyprland answers one request per connection, then closes it. Each request gets its own `Socket`, closed by us once `HyprReply.complete` says the reply is all there (JSON once it parses, anything else once there's text): Quickshell warns `PeerClosedError` when Hyprland closes first.

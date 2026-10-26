@@ -284,11 +284,11 @@ QtObject {
       glyph: "coffee",
       usage: "[on | off]",
       description: () => I18n.tr("Keep the screen awake"),
-      status: () => IdleInhibitManager.enabled ? I18n.tr("On") : I18n.tr("Off"),
+      status: () => IdleManager.caffeine ? I18n.tr("On") : I18n.tr("Off"),
       options: () => root._onOffOptions(),
       run: (arg, value) => {
         const on = root._onOff(value ?? arg);
-        IdleInhibitManager.enabled = on === null ? !IdleInhibitManager.enabled : on;
+        IdleManager.caffeine = on === null ? !IdleManager.caffeine : on;
         return false;
       }
     },

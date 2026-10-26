@@ -8,8 +8,9 @@
 #     default $XDG_RUNTIME_DIR/axiom-nested-<compositor>)
 #   - it runs on its own D-Bus session (dbus-run-session), so it can't take
 #     the notification, tray or MPRIS names from the live shell
-#   - its config turns off what would reach outside it: the idle daemon
-#     (it would replace the session's) and the polkit agent
+#   - its config turns off what would reach outside it: idle (logind is
+#     the real system bus: its suspend step would suspend this machine,
+#     and it answers this session's lock requests) and the polkit agent
 #
 # Usage: scripts/dev/nested.sh <sway|niri|hyprland> [--copy-config] [--managed]
 #   --copy-config  start from a copy of ~/.config/axiom/config.json (with

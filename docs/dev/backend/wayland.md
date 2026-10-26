@@ -1,13 +1,16 @@
 # Wayland protocols per compositor
 
-> **Files:** `backend/internal/wayland/wire/`, `backend/internal/wayland/outputs/`, `backend/internal/daemon/daemon.go`, `tests/fixtures/wayland/`
+> **Files:** `backend/internal/wayland/wire/`, `backend/internal/wayland/client/`, `backend/internal/wayland/outputs/`, `backend/internal/wayland/seat/`, `backend/internal/wayland/idlenotify/`, `backend/internal/daemon/daemon.go`, `backend/internal/daemon/wayland.go`, `tests/fixtures/wayland/`
 > **Related:** [The axiom binary](README.md), [Compositor contract](../compositor/contract.md)
 
 The daemon's own Wayland connection, and what each compositor offers for what it does over it next (roadmap stage 2: idle, gamma, clipboard, typing).
 
 ### The connection
 - `wire.Conn` (pure Go, no libwayland): object ids from 2 up, reused after the compositor's `delete_id`; each object's events go to its handler on the goroutine running `Run`; `Registry`, `Bind`, `Sync`. A `wl_display.error` ends it with the compositor's message. No file descriptor passing yet (clipboard will need it).
-- `wayland/outputs` runs on it for the daemon's whole life (`Daemon.followCompositor`): it binds every `wl_output` (v4: its connector name and description) and `zxdg_output_manager_v1` (v3: each output's place and size in the layout, committed by `wl_output.done`; without it, `wl_output`'s geometry and current mode), and follows hotplug (`global` / `global_remove`, then `release`). `Names()` is the outputs by place (left to right, then top to bottom), nil until two roundtrips have described them, and while an output has no name (wl_output below v4): `share.*` names monitors by place with it.
+- `wire.Conn.PeerPID` is the compositor's pid, from the socket's credentials (the idle service tells the compositor holding `org.freedesktop.ScreenSaver` from another program with it).
+- **The clients share it** (`wayland/client`): the daemon dials once (`Daemon.followCompositor`), `client.Run` asks for the registry once and hands each `client.Client` the globals of the interfaces it names (`Global` / `Removed`), after `Start` (a new connection) and before `Ready` (two roundtrips: the first globals bound and described). Its handlers run on the connection's goroutine and never block: slow work (a pipe to read, an action to run, a D-Bus call) goes to a goroutine of its own owner's.
+  - The clients now: the connection itself (`daemon/wayland.go`), `wayland/outputs`, `wayland/seat` (the first `wl_seat`, which idle notifications, data control and the virtual keyboard are made on) and `wayland/idlenotify` (`ext_idle_notifier_v1`: one notification per idle step, armed again when the notifier or seat comes back; [idle](../features/idle.md)).
+- `wayland/outputs` runs on it for the daemon's whole life: it binds every `wl_output` (v4: its connector name and description) and `zxdg_output_manager_v1` (v3: each output's place and size in the layout, committed by `wl_output.done`; without it, `wl_output`'s geometry and current mode), and follows hotplug (`global` / `global_remove`, then `release`). `Names()` is the outputs by place (left to right, then top to bottom), nil until two roundtrips have described them, and while an output has no name (wl_output below v4): `share.*` names monitors by place with it.
 - The connection ending is the compositor gone: the daemon stops. A protocol error falls back to `wire.Watch`.
 - `axiom debug wayland-outputs [--json]` lists the outputs as the daemon sees them.
 - Tests script a fake compositor: `wire/wiretest`.
@@ -40,7 +43,7 @@ A nested or headless compositor has no real outputs, so protocols tied to output
 | `wp_security_context_manager_v1` | security context | v1 | v1 | v1 |
 
 ### What it means for branch 2
-- **Idle:** `ext_idle_notifier_v1` everywhere, so the daemon can replace hypridle on all three, with inhibitors (`zwp_idle_inhibit_manager_v1`) respected by the compositor.
+- **Idle** (done): `ext_idle_notifier_v1` everywhere, so the daemon replaced hypridle on all three, with inhibitors (`zwp_idle_inhibit_manager_v1`) respected by the compositor.
 - **Clipboard:** `ext_data_control_manager_v1` everywhere, with `zwlr_data_control` as the fallback. In-memory history can replace `wl-paste --watch` and cliphist.
 - **Typing:** `zwp_virtual_keyboard_manager_v1` everywhere, so `wtype` can go.
 - **Night light:**

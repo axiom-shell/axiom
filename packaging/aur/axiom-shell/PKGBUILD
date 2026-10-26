@@ -39,7 +39,6 @@ optdepends=(
   'cliphist: clipboard history with images, shared with other apps'
   'brightnessctl: brightness keys and OSD bar (laptop panels)'
   'ddcutil: brightness keys and OSD bar (external monitors over DDC/CI)'
-  'hypridle: locking on idle'
   'hyprsunset: night light (Hyprland)'
   'wlsunset: night light (sway, niri)'
   'power-profiles-daemon: power profiles'

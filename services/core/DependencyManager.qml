@@ -139,10 +139,6 @@ Singleton {
       "purpose": "Notifications from axiom itself, with their buttons"
     },
     {
-      "command": "hypridle",
-      "purpose": "Idle locking and screen blanking"
-    },
-    {
       "command": "hyprsunset",
       "purpose": "Night light",
       "compositors": ["hyprland"]

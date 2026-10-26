@@ -33,6 +33,8 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `dev.get` |  | `backend/internal/daemon/dev.go` | (none) | `backend/internal/cli/dev.go` |
 | `dev.rebuild` |  | `backend/internal/daemon/dev.go` | `services/core/DevManager.qml` | `backend/internal/cli/dev.go` |
 | `dev.set` |  | `backend/internal/daemon/dev.go` | `services/core/DevManager.qml` | `backend/internal/cli/dev.go` |
+| `idle.caffeine` | shell only | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |  |
+| `idle.get` |  | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |  |
 | `ipc.call` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
 | `ipc.list` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
 | `ipc.register` | shell only | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` |  |
@@ -81,6 +83,7 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 | `config.state` | config | `backend/internal/daemon/methods.go` | `services/core/ConfigManager.qml` |
 | `daemon.state` | daemon | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` |
 | `dev.state` | daemon | `backend/internal/daemon/dev.go` | `services/core/BackendManager.qml` |
+| `idle.state` | idle | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |
 | `saved.state` | saved | `backend/internal/daemon/daemon.go` | `services/core/SavedConfigsManager.qml` |
 | `schema.changed` | config | `backend/internal/daemon/dev.go` | `services/core/BackendManager.qml`<br>`services/core/ConfigManager.qml` |
 | `schema.error` | config | `backend/internal/daemon/dev.go` | `services/core/ConfigManager.qml` |

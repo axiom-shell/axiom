@@ -175,13 +175,6 @@ QtObject {
         "arch": "libnotify",
         "fedora": "libnotify"
       },
-      "hypridle": {
-        "arch": "hypridle",
-        "fedora": {
-          "name": "hypridle",
-          "repo": root._hyprCopr
-        }
-      },
       "hyprsunset": {
         "arch": "hyprsunset",
         "fedora": {

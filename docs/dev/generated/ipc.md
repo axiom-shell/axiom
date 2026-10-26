@@ -79,7 +79,7 @@ Every `IpcTarget` (an `IpcHandler` that also registers with axiom): call with `a
 
 ## idleInhibit
 
-`services/session/IdleInhibitManager.qml`
+`services/session/IdleManager.qml`
 - `toggle(): void`
 - `enable(): void`
 - `disable(): void`

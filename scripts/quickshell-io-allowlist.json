@@ -44,10 +44,6 @@
     "services/session/GreetdManager.qml": [
       "execDetached"
     ],
-    "services/session/HypridleManager.qml": [
-      "Process",
-      "FileView"
-    ],
     "services/compositor/HyprlandIpcManager.qml": [
       "Socket"
     ],

@@ -6,7 +6,7 @@ import Quickshell.Io
 // before) that also registers with axiom (BackendManager), so
 // `axiom ipc <target> <fn>` and the named commands reach it over the
 // shell's own connection, without a process per call. Declared as an
-// IpcHandler is, as a service's `_ipc` property (IdleInhibitManager).
+// IpcHandler is, as a service's `_ipc` property (IdleManager).
 IpcHandler {
   id: root
 

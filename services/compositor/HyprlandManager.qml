@@ -410,11 +410,6 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     Hyprland.dispatch("hl.dsp.exit()");
   }
 
-  // The shell command turning the screens off or on (hypridle's DPMS)
-  function dpmsCommand(on) {
-    return `hyprctl dispatch 'hl.dsp.dpms({ action = "${on ? "on" : "off"}" })'`;
-  }
-
   // Calls back with the cursor's global position ({ x, y }), or null if
   // Hyprland can't say. Calls made while one is running share its answer.
   function withCursorPos(callback) {

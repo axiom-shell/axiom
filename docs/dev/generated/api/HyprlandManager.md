@@ -56,7 +56,6 @@ CompositorManager's backend on Hyprland (docs/dev/compositor/contract.md): Hyprl
 - `captureKeys(on)`: While on, every key reaches axiom instead of a bind (the Keybinds page's recorder): an empty submap (Hyprland only registers one with a bind, hence the unreachable one).
 - `setCursor(theme, size)`: The cursor theme and size, for this session
 - `exitSession()`: Ends the Hyprland session (the power menu's log out)
-- `dpmsCommand(on)`: The shell command turning the screens off or on (hypridle's DPMS)
 - `withCursorPos(callback)`: Calls back with the cursor's global position ({ x, y }), or null if Hyprland can't say.
 - `toplevelFor(id)`: The Wayland toplevel for a window id (its "0x…" address), for live previews
 - `sendWindowToWorkspace(id)`: Sends the focused window to workspace `id`, staying put

@@ -11,12 +11,12 @@ package lock
 import (
 	"context"
 	"log/slog"
-	"os/exec"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/shellcmd"
 )
 
 // Options are how the locker reaches the shell.
@@ -140,12 +140,7 @@ func (l *Locker) ownLocker() error {
 	if command == "" || command == "loginctl lock-session" {
 		return axerr.New(axerr.Unavailable, "the lock screen is your own (Lockscreen.mode none), and Lockscreen.lockCommand doesn't name a locker")
 	}
-	cmd := exec.Command("sh", "-c", command)
-	if err := cmd.Start(); err != nil {
-		return axerr.Wrap(axerr.Unavailable, err, "running the lock command")
-	}
-	l.opts.Go(func(context.Context) { cmd.Wait() })
-	return nil
+	return shellcmd.Start(command, l.opts.Go)
 }
 
 // wait waits for a confirmed report.

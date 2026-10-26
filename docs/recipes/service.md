@@ -4,7 +4,7 @@
 > **Copy from:**
 > - `services/system/TailscaleManager.qml` with `backend/internal/tailscale/`: polled state through a `ConsumerRegistry`, fetched by axiom (a polled topic); its consumer is `components/bar/widgets/Tailscale/Tailscale.qml`. The preferred shape for anything polled.
 > - The skeleton below: the same API polled in QML, its command through `CommandManager.run`, for what can't move to the daemon yet.
-> - `services/session/IdleInhibitManager.qml`: an IPC handler, and state kept across reloads in `PersistentProperties`.
+> - `services/session/IdleManager.qml`: an IPC handler, state kept across reloads in `PersistentProperties`, and a daemon push (`idle.state`).
 > **Docs:** [services-pattern](../dev/core/services-pattern.md), `services/AGENTS.md`, generated API `docs/dev/generated/api/<Name>.md`
 
 ## Files to touch
@@ -98,7 +98,7 @@ Consumer (the request comes from config only, never from live values):
 4. **IPC:** a `property IpcTarget _ipc` with typed functions (`(): void`, `(): string`, `(text: string): void`). Per-screen handlers live on the surface instead, `enabled: ShellManager.isTarget(…)`.
 5. **Processes and files:** no `Process`, `FileView`, `Socket`, `IpcHandler` or `Quickshell.execDetached` of its own (`check_structure` refuses them outside `scripts/quickshell-io-allowlist.json`, a list that only shrinks as these move to the axiom daemon). Use `CommandManager.run` / `runDetached`, `FileManager.read`, `StateManager` for small state, and a daemon method for anything else (a file to watch or write, a socket).
 6. **Persistence:**
-   - State that must survive a QML reload goes in `PersistentProperties` (needs a `Singleton` root, see `IdleInhibitManager`).
+   - State that must survive a QML reload goes in `PersistentProperties` (needs a `Singleton` root, see `IdleManager`).
    - Small state that must survive a restart goes in `StateManager` (`~/.local/state/axiom/ui/*.json`) or `Paths.userStatePath`, written atomically (temp file + rename).
 7. **Config:** read it through readers. Write it only through `ConfigManager` / `SettingsManager`.
 8. Add it to `shell.qml`'s `_services` if nothing else references it, or it never gets created.

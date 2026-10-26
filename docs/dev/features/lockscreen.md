@@ -9,7 +9,7 @@ This doc covers the three lock modes, how the built-in lock screen's layout of m
 ### Locking
 - `LockManager.lock()` is the one way to lock.
   - Lock buttons call it through `ShellManager.sessionAction("lock")`.
-  - Idle daemons call it through the `lockscreen` IPC target.
+  - Idle locks come from the daemon (`axiom lock`'s path: [idle.md](idle.md)); a user's own idle daemon calls `axiom lock` or the `lockscreen` IPC target.
 - `lock()` ends a running preview first.
 
 ### Under axiom (`axiom lock`)
@@ -37,9 +37,9 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/lock`
 - Axiom provides no locker and no IPC target, so an idle daemon pointed at axiom can't loop through `loginctl lock-session`.
 - Lock buttons run `Lockscreen.lockCommand`.
 
-#### hypridle
-- `Idle.enabled` has axiom run hypridle with its own config ([idle.md](idle.md)).
-- A user's own hypridle:
+#### Idle and sleep
+- With `Idle.enabled` the daemon locks on idle, on logind's lock request (`loginctl lock-session`) and before sleep, all through the locker above ([idle.md](idle.md)).
+- A user's own hypridle (Idle off):
   - For the first two modes it uses `lock_cmd = axiom lock` and `before_sleep_cmd = loginctl lock-session`.
   - For `none` it has no axiom references.
 

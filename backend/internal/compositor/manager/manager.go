@@ -24,6 +24,7 @@ package manager
 
 import (
 	"context"
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -142,6 +143,15 @@ func New(o Options) *Manager {
 
 // Kind is the compositor ("hyprland", "sway", "niri" or "").
 func (m *Manager) Kind() string { return m.kind }
+
+// ScreenPower turns every screen off, or back on, through the
+// compositor's own socket.
+func (m *Manager) ScreenPower(ctx context.Context, on bool) error {
+	if m.w == nil {
+		return axerr.New(axerr.Unavailable, "no compositor to turn the screens off with")
+	}
+	return m.w.screenPower(ctx, on)
+}
 
 func (m *Manager) logf(format string, args ...any) {
 	m.o.Log.Info("compositor: " + sprintf(format, args...))

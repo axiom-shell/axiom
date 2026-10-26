@@ -10,7 +10,7 @@ import qs.components.reusable
 import qs.components.forms
 
 // How axiom fits into the system: self-updates, the launcher's clipboard
-// history, whether axiom runs hypridle (Idle.enabled), whether axiom's
+// history, whether axiom handles idle (Idle.enabled), whether axiom's
 // lock screen locks (Lockscreen.mode), and whether it's the
 // polkit agent (Polkit.enabled): idle and polkit off by default,
 // recommended on. Then the login screen (GreeterManager): off by default,
@@ -38,7 +38,7 @@ OnboardingPage {
   }
 
   Component.onCompleted: {
-    DependencyManager.check([].concat(...ThemeManager.integrations.map(key => ThemeManager.integrationCommands(key))).concat(["hypridle"]));
+    DependencyManager.check([].concat(...ThemeManager.integrations.map(key => ThemeManager.integrationCommands(key))));
     GreeterManager.check();
   }
 
@@ -78,20 +78,8 @@ OnboardingPage {
     font.bold: true
   }
 
-  Notice {
-    Layout.fillWidth: true
-    visible: DependencyManager.found.hypridle === false
-    text: I18n.tr("hypridle isn't installed. Install it to dim, lock and turn the screens off when you're away, then turn it on in Settings → Idle.")
-  }
-
-  CodeLine {
-    visible: DependencyManager.found.hypridle === false && text !== ""
-    text: DependencyManager.installCommand("hypridle")
-  }
-
   RowLayout {
     Layout.fillWidth: true
-    visible: DependencyManager.found.hypridle === true
     spacing: Widget.spacing
 
     OptionCard {
@@ -99,8 +87,8 @@ OnboardingPage {
       Layout.preferredWidth: 1
       Layout.fillHeight: true
       icon: "bedtime"
-      title: I18n.tr("Let axiom manage hypridle")
-      description: I18n.tr("Dims, locks and turns the screens off when you're away, set up from axiom's settings. Stops any hypridle you run yourself.")
+      title: I18n.tr("Let axiom handle idle")
+      description: I18n.tr("Dims, locks and turns the screens off when you're away, set up from axiom's settings, and locks before the computer sleeps. Remove any hypridle you start yourself.")
       selected: Idle.enabled
       recommended: true
       onClicked: SettingsManager.commitValues({
@@ -114,7 +102,7 @@ OnboardingPage {
       Layout.fillHeight: true
       icon: "tune"
       title: I18n.tr("Use my own")
-      description: I18n.tr("Leaves hypridle, and your hypridle.conf, to you.")
+      description: I18n.tr("Leaves idle to a daemon you run yourself, such as hypridle.")
       selected: !Idle.enabled
       onClicked: SettingsManager.commitValues({
         "Idle.enabled": false
@@ -124,13 +112,13 @@ OnboardingPage {
 
   SettingRows {
     Layout.fillWidth: true
-    visible: DependencyManager.found.hypridle === true && Idle.enabled
+    visible: Idle.enabled
     paths: ["Idle.dim.timeout", "Idle.lock.timeout", "Idle.screenOff.timeout", "Idle.suspend.timeout"]
   }
 
   ColumnLayout {
     Layout.fillWidth: true
-    visible: DependencyManager.found.hypridle === true && !Idle.enabled && LockscreenConfig.mode !== "none"
+    visible: !Idle.enabled && LockscreenConfig.mode !== "none"
     spacing: Widget.spacing
 
     StyledText {

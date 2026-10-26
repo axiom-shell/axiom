@@ -398,11 +398,6 @@ Singleton {
     SwayIpcManager.dispatch("exit");
   }
 
-  // The shell command turning the screens off or on (the idle daemon's)
-  function dpmsCommand(on) {
-    return `swaymsg 'output * power ${on ? "on" : "off"}'`;
-  }
-
   // --- Outputs (the Monitors page) ---
 
   // Calls back with every output in detail, disabled ones too

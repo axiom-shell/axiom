@@ -8,6 +8,8 @@ import (
 	"net"
 	"sync"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
@@ -34,6 +36,26 @@ func Dial(socket string) (*Conn, error) {
 		return nil, axerr.Wrap(axerr.Unavailable, err, "connecting to the compositor")
 	}
 	return &Conn{nc: nc, next: displayID + 1, handlers: map[uint32]Handler{}}, nil
+}
+
+// PeerPID is the compositor's process id, by the socket's credentials
+// (0 when the kernel can't say).
+func (c *Conn) PeerPID() int {
+	uc, ok := c.nc.(*net.UnixConn)
+	if !ok {
+		return 0
+	}
+	raw, err := uc.SyscallConn()
+	if err != nil {
+		return 0
+	}
+	pid := 0
+	raw.Control(func(fd uintptr) {
+		if cred, err := unix.GetsockoptUcred(int(fd), unix.SOL_SOCKET, unix.SO_PEERCRED); err == nil {
+			pid = int(cred.Pid)
+		}
+	})
+	return pid
 }
 
 // Close ends the connection; Run returns.

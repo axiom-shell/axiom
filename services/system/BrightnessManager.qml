@@ -66,7 +66,7 @@ QtObject {
       _write(name, clamped);
   }
 
-  // Idle dimming (hypridle, through IPC): every monitor down to `fraction`
+  // Idle dimming (the daemon's idle steps, through IPC): every monitor down to `fraction`
   // (darker ones stay), or with `relative` down by `fraction` of its own
   // brightness, then back to what each was on undim()
   function dim(fraction, relative) {

@@ -63,7 +63,10 @@
   - The handoff carries dev mode, the installed binary (while a dev build runs), the schema's hash and whether the session was locked: a new image whose tree builds another schema (an update, `axiom daemon reexec` after it) restarts the shell, locked first when it was.
 
 ### Wayland
-The daemon holds its own Wayland connection ([wayland.md](wayland.md)): `backend/internal/wayland/wire` (the wire protocol, a `Conn` with objects and their events), and on it `wayland/outputs`, the outputs by place that `share.*` names monitors with. Idle, gamma, clipboard and typing come next (roadmap stage 2).
+The daemon holds its own Wayland connection ([wayland.md](wayland.md)): `backend/internal/wayland/wire` (the wire protocol, a `Conn` with objects and their events), shared by its clients (`wayland/client`): `wayland/outputs`, the outputs by place that `share.*` names monitors with, the seat, and idle notifications ([idle](../features/idle.md)). Gamma, clipboard and typing come next (roadmap stage 2).
+
+### D-Bus
+The daemon's own client ([dbus.md](dbus.md), `backend/internal/dbus`): logind and `org.freedesktop.ScreenSaver` for idle so far.
 
 ### Building and checking
 - `cd backend && go build ./cmd/axiom` builds it (pure Go, `CGO_ENABLED=0` works).
@@ -77,6 +80,7 @@ Code handling sockets, locks, runtime directories, atomic writes, the child's en
 - Every socket connection's peer must be the same user (`SO_PEERCRED`), and a hello as `"shell"` must come from the pid of the shell the daemon runs (`Conn.PeerPID`): only it reports the lock and registers IPC targets.
 - Writes are atomic (temp file, fsync, rename, fsync the directory) and never follow a planted symlink.
 - Nothing unlocks the lock screen but PAM: no RPC, CLI or IPC path exists for it.
+- Descriptors received over a socket (D-Bus, and Wayland as it gains them) are close-on-exec on arrival and closed when nothing takes them (`internal/unixmsg`), so no child inherits one.
 
 ### Shared fixtures
 Behaviour implemented on both sides (`SchemaValidation.qml`, which the shell still validates and fills defaults with, and Go's `config` pipeline) is tested from one set of cases under `tests/fixtures/shared/`, read by both `go test` and qmltestrunner (`tests/tst_Shared.qml`), with expected output stored as exact bytes. The directory is generated and gitignored: `scripts/generate.sh --fixtures` records it when what it's made from changed (`fixtures.py ensure`, a stamp of the inputs), and CI records it before the tests.

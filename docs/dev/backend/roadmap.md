@@ -1,6 +1,6 @@
 # Moving the service layer to the axiom binary
 
-> **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/core/BackendManager.qml`, `backend/internal/topics/`, `services/core/CommandManager.qml`, `services/core/FileManager.qml`, `services/core/StateManager.qml`, `services/core/IpcTarget.qml`, `services/core/ConsumerRegistry.qml`, `backend/internal/daemon/`
+> **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/core/BackendManager.qml`, `backend/internal/topics/`, `backend/internal/dbus/`, `services/core/CommandManager.qml`, `services/core/FileManager.qml`, `services/core/StateManager.qml`, `services/core/IpcTarget.qml`, `services/core/ConsumerRegistry.qml`, `backend/internal/daemon/`
 > **Related:** [The axiom binary](README.md), [Protocol](protocol.md), [Wayland protocols](wayland.md), [Services pattern](../core/services-pattern.md), [every method and push](../generated/rpc.md) (generated)
 
 The plan for moving side effects out of QML and into the `axiom` daemon, stage by stage. Read this before starting any of it, and update it in the change that does a step (its status, and anything learned that changes a later stage).
@@ -12,13 +12,13 @@ The plan for moving side effects out of QML and into the `axiom` daemon, stage b
 
 ### Scope
 - **Now:** Quickshell.Io's side effects: every direct `Process`, `FileView`, `Socket`, `IpcHandler` and `Quickshell.execDetached`. `scripts/quickshell-io-allowlist.json` lists the files still using them, and `check_structure` keeps the list from growing: it is the live record of what's left.
-- **Planned, not scheduled:** services on Quickshell's D-Bus and native-library modules (notifications, tray, UPower, Mpris, Polkit, Bluetooth, networking; Pipewire and PAM, which would need cgo, against `CGO_ENABLED=0`). Don't start these without the maintainer.
+- **Planned, not scheduled:** services on Quickshell's D-Bus and native-library modules (notifications, tray, UPower, Mpris, Polkit, Bluetooth, networking; Pipewire and PAM, which would need cgo, against `CGO_ENABLED=0`). Don't start these without the maintainer. The daemon has its own D-Bus client since stage 2 (`internal/dbus`, [dbus.md](dbus.md)): the D-Bus ones build on it.
 - **Stays in QML:** the UI-state managers (bars, popouts, overlay, docks, editors).
 
 ### Rules for every move
 - **Go takes the side effect; QML keeps the reader and the rendering.** The service's public API stays the same where it can, so widgets don't change.
 - **The QML version goes in the same change.** No parallel paths "for now": drop the file's allowlist entry (or the kind) as it moves.
-- **A service a move empties is folded or deleted in that move**, not before: the IPC managers into their backends (stage 6), `WeatherSource` into `WeatherManager` (stage 5), `HypridleManager` beside `IdleInhibitManager` (stage 2). The services' folders: `services/AGENTS.md` › Folders.
+- **A service a move empties is folded or deleted in that move**, not before: the IPC managers into their backends (stage 6), `WeatherSource` into `WeatherManager` (stage 5); `HypridleManager` and `IdleInhibitManager` became `IdleManager` (stage 2). The services' folders: `services/AGENTS.md` › Folders.
 - **Pick by user value:** a dependency removed, a process no longer started on a timer, a secret kept out of QML. Something no user would notice can stay on the allowlist.
 - **Keep pushes small and specific** (a topic carries what its service shows), never at frame rate. The shell's JS runs on the thread that draws frames.
 - New methods and pushes follow [protocol](protocol.md) › Changing the protocol; `rpc.md` regenerates itself.
@@ -46,11 +46,12 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 - Done: `ClaudeUsageManager` (from stage 5) → the `claudeUsage` topic (`backend/internal/claudeusage`): Go's HTTP, the token read in Go so it never reaches QML, the once-per-interval rule, backoff and saved state (the same `claude-usage.json`) with it. The hub ticks every minute; `every` is the user's interval. A renewed login is noticed by the credentials' mtime at each tick, standing in for stage 6's `file.watch`. `OnRefresh` lets `refresh()` refetch every account not rate limited.
 - Not worth it: `PolkitManager`'s `pgrep`, `CalculatorManager`'s `qalc` (Go would run the same program), `WallpaperManager`'s folder count (its `xdg-open` keeps it on the allowlist).
 
-**Stage 2: Wayland** (next; needs stage 0's connection, and file descriptor passing on `wire.Conn` for all but idle (gamma tables, clipboard offers and the virtual keyboard's keymap are fds); protocols per compositor: [wayland.md](wayland.md))
-- Next, first: **idle**: `HypridleManager` → `ext_idle_notifier_v1` on the daemon's connection (offered v2 by all three: [wayland.md](wayland.md)); removes hypridle. It needs no file descriptors, so it can go before fd passing.
-  - Moves: hypridle's listeners (`HypridleConf.listeners`: dim, lock, screen off, suspend, the user's own) → one idle notification per timeout on a bound `wl_seat`, running `on-timeout` / `on-resume` from Go.
-  - Needs a decision first: hypridle's `lock_cmd` (logind's Lock), `before_sleep_cmd` / `after_sleep_cmd` (logind's PrepareForSleep) and D-Bus / systemd inhibitors are logind over D-Bus, which is "planned, not scheduled" (Scope). Either the maintainer schedules a small D-Bus client (pure Go, no cgo), or idle keeps hypridle for those until then.
-  - `Idle` is `x-takeover`: test against a scratch config, never by enabling it live.
+**Stage 2: Wayland** (next; needs stage 0's connection, and file descriptor passing on `wire.Conn` for all but idle (gamma tables, clipboard offers and the virtual keyboard's keymap are fds; `internal/unixmsg` carries them, D-Bus already uses it); protocols per compositor: [wayland.md](wayland.md))
+- Done: **idle**: `HypridleManager` → `internal/idle` ([idle.md](../features/idle.md)); hypridle is no longer a dependency.
+  - hypridle's listeners (`HypridleConf.listeners`) became `idle.Plan`'s typed steps, one `ext_idle_notifier_v1` notification each on the daemon's connection (now shared by its clients: `wayland/client`, the seat in `wayland/seat`).
+  - Its D-Bus side went with it, on the daemon's own client (`internal/dbus`, the maintainer's decision): logind's Lock, PrepareForSleep with a delay inhibitor, idle inhibitors and Suspend (`internal/logind`), and `org.freedesktop.ScreenSaver` (`internal/screensaver`).
+  - The screens are turned off over the compositor's socket (`Manager.ScreenPower`); `dpmsCommand` left the compositor contract.
+  - Learned: niri holds `org.freedesktop.ScreenSaver` itself and applies it to its own idle notifications, so the daemon tells a compositor holding it from a stray hypridle (the peer pid of its Wayland socket, `wire.Conn.PeerPID`).
 - Clipboard: `ClipboardManager`'s `wl-paste --watch cliphist` → an in-memory history over `ext_data_control_v1` (wlr's as the fallback); removes cliphist and wl-clipboard. History never touches disk; only pinned clips do.
 - Typing: `EmojiManager`'s `wtype` → `zwp_virtual_keyboard_v1`.
 - Night light: `NightLightManager`'s hyprsunset / wlsunset → `zwlr_gamma_control`; niri keeps wlsunset until a real session shows gamma control.

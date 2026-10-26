@@ -54,6 +54,5 @@ CompositorManager's backend on niri (docs/dev/compositor/contract.md, docs/dev/c
 - `withCursorPos(callback)`: niri can't say where the cursor is, nor where layer surfaces are
 - `withLayerRects(callback)`
 - `exitSession()`: Ends the niri session (the power menu's log out)
-- `dpmsCommand(on)`: The shell command turning the screens off or on (the idle daemon's)
 - `withOutputDetails(callback)`: Calls back with every output in detail, disabled ones too (NiriState.outputDetails), or null
 - `applyOutputs(rules, details)`: Sets the outputs as `rules` (MonitorRule) say, now; `details` resolve a rule naming its output by description

@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -75,6 +76,10 @@ func (f *fakeWriter) checkLoaded(context.Context, Inputs, string) (bool, bool) {
 	return f.loaded, false
 }
 func (f *fakeWriter) reload(context.Context) { f.note("reload") }
+func (f *fakeWriter) screenPower(_ context.Context, on bool) error {
+	f.note(fmt.Sprintf("screenPower %v", on))
+	return nil
+}
 func (f *fakeWriter) reloads(ctx context.Context, out chan<- ipc.Reload) error {
 	for {
 		select {

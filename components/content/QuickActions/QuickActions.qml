@@ -51,8 +51,8 @@ Card {
       "caffeine": {
         "icon": "coffee",
         "label": I18n.tr("Caffeine"),
-        "active": IdleInhibitManager.enabled,
-        "status": root.onOff(IdleInhibitManager.enabled)
+        "active": IdleManager.caffeine,
+        "status": root.onOff(IdleManager.caffeine)
       },
       "dnd": {
         "icon": NotificationManager.dnd ? "notifications_off" : "notifications",
@@ -198,7 +198,7 @@ Card {
       BluetoothManager.toggleEnabled();
       break;
     case "caffeine":
-      IdleInhibitManager.toggle();
+      IdleManager.toggle();
       break;
     case "dnd":
       NotificationManager.toggleDnd();

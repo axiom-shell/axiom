@@ -18,6 +18,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The default autostart still starts hypridle
+- **Where:** `config/schema/sections/Session.yaml` (`autostart`'s default `hypridle` entry), `backend/internal/compositor/render/hyprconfig.go` (`autostartCommands`)
+- **What:** hypridle stopped being a dependency in roadmap stage 2 (the daemon handles idle), but the managed mode's default `Session.autostart` still lists `hypridle`. With Idle on, the render skips it. With Idle off it starts hypridle if installed, and fails quietly if not. Dropping it from the default and from existing configs where it's unchanged needs a format-2 step (`docs/recipes/migration.md`); the maintainer decides whether a user leaving Idle off still wants hypridle started for them.
+- **Size:** small
+- **Found:** 2026-10-26, while moving idle to the daemon
+
 ### Tailscale's poll interval allows values below axiom's 5 s floor
 - **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`Source`'s `Floor`)
 - **What:** The setting's `minimum` is 250 ms, but the `tailscale` topic never polls more often than every 5 s (its description says so), so 250–4999 ms are offered and do nothing. Raising `minimum` to 5000 makes saved values below it invalid, so it needs a format-2 migration step clamping them (`docs/recipes/migration.md`); the maintainer decides whether that's worth a config version.

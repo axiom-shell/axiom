@@ -3,19 +3,8 @@
 
 > **File:** `config/Idle.qml` · **Docs:** see [docs/dev](../../README.md)
 
-Reader for the Idle section: hypridle, run by HypridleManager. Timeouts are ms, 0 turning that step off.
+Reader for the Idle section. The axiom daemon reads the rest of it itself (internal/idle) and runs the steps; the shell only needs to know whether it's on.
 
 ### Properties
 
 - `enabled` (readonly bool)
-- `dimTimeout` (readonly int)
-- `dimMode` (readonly string): "to": down to dimLevel%; "by": dimBy% off each screen's brightness
-- `dimLevel` (readonly int)
-- `dimBy` (readonly int)
-- `lockTimeout` (readonly int)
-- `screenOffTimeout` (readonly int)
-- `suspendTimeout` (readonly int)
-- `lockBeforeSleep` (readonly bool)
-- `screenOnAfterSleep` (readonly bool)
-- `respectInhibitors` (readonly bool)
-- `listeners` (readonly var): [{ id, enabled, timeout (ms), onTimeout, onResume }]

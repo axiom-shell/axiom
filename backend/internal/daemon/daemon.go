@@ -24,6 +24,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
+	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/lock"
@@ -34,7 +35,10 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/idlenotify"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/outputs"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/seat"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
@@ -105,8 +109,14 @@ type Daemon struct {
 	// compositor is the compositor's config layer (nil without the tree's
 	// tables)
 	compositor *manager.Manager
-	// outputs are the compositor's, over the daemon's Wayland connection
-	outputs *outputs.Tracker
+	// The clients on the daemon's Wayland connection: the outputs, the
+	// seat, idle notifications, and the connection itself
+	outputs      *outputs.Tracker
+	seat         *seat.Tracker
+	idleNotifier *idlenotify.Notifier
+	wayland      *waylandSession
+	// idle is the Idle section's service
+	idle *idle.Service
 	// topics are the polled topics and their subscribers
 	topics *topics.Hub
 	tasks  *tasks
@@ -242,8 +252,16 @@ func Run(ctx context.Context, opts Options) error {
 
 	d.compositor = d.newCompositor()
 	d.outputs = outputs.New(opts.Log.With("part", "wayland"))
+	d.seat = seat.New()
+	d.wayland = &waylandSession{}
+	d.idleNotifier = idlenotify.New(idlenotify.Options{
+		Seat:     d.seat,
+		Log:      opts.Log.With("part", "wayland"),
+		OnChange: func() { d.idle.NotifierChanged() },
+	})
+	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.idlePart(), d.dev.part()}
 	reg := d.registry(parts)
 	d.server = &rpc.Server{
 		Registry: reg,
@@ -332,7 +350,7 @@ func Run(ctx context.Context, opts Options) error {
 // for that.
 func (d *Daemon) followCompositor(ctx context.Context, socket string) {
 	log := d.opts.Log
-	err := d.outputs.Run(ctx, socket)
+	err := client.Run(ctx, socket, d.wayland, d.outputs, d.seat, d.idleNotifier)
 	// Unavailable: no compositor to connect to, nor to watch
 	if err != nil && !errors.Is(err, wire.ErrGone) && axerr.KindOf(err) != axerr.Unavailable {
 		log.Warn("the Wayland connection failed: monitors aren't known", "err", err)
