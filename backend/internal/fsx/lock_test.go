@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // A lock adopted across an exec (inherited without close-on-exec) gets
@@ -31,6 +33,64 @@ func TestAdoptSetsCloseOnExec(t *testing.T) {
 	flags, err := unix.FcntlInt(uintptr(int(adopted.File().Fd())), unix.F_GETFD, 0)
 	if err != nil || flags&unix.FD_CLOEXEC == 0 {
 		t.Errorf("flags %#x err %v: close-on-exec not set", flags, err)
+	}
+}
+
+// Adopt trusts an inherited descriptor only when it is the lock file at
+// path and holds its lock: a descriptor of another file (or of one that
+// replaced it) or one that isn't the holder's is refused.
+func TestAdoptRefusesAnotherLock(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		// inherited is the descriptor handed over for the lock at path
+		inherited func(t *testing.T, path string, held *Lock) *os.File
+	}{
+		{"another file", func(t *testing.T, path string, _ *Lock) *os.File {
+			other, err := TryLock(filepath.Join(filepath.Dir(path), "other.lock"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			return other.File()
+		}},
+		{"the file it replaced", func(t *testing.T, path string, held *Lock) *os.File {
+			// The holder's own descriptor (passing the lock check), of the
+			// file a new one replaced at path
+			fd, err := unix.FcntlInt(held.File().Fd(), unix.F_DUPFD_CLOEXEC, 3)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Rename(filepath.Join(filepath.Dir(path), "new"), path); err != nil {
+				t.Fatal(err)
+			}
+			return os.NewFile(uintptr(fd), path)
+		}},
+		{"not the holder", func(t *testing.T, path string, _ *Lock) *os.File {
+			f, err := os.Open(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return f
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			dir := t.TempDir()
+			path := filepath.Join(dir, "daemon.lock")
+			if err := os.WriteFile(filepath.Join(dir, "new"), nil, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			held, err := TryLock(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer held.Release()
+			f := tc.inherited(t, path, held)
+			defer f.Close()
+			if _, err := Adopt(f, path); axerr.KindOf(err) != axerr.Refused {
+				t.Fatalf("Adopt: %v, want Refused", err)
+			}
+		})
 	}
 }
 

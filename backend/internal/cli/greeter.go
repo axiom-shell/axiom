@@ -22,9 +22,11 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
-// The variables a greeter's quickshell must not inherit: the session's
-// axiom, when the greeter is looked at from a session
-var greeterDropped = []string{"AXIOM_SOCKET", "AXIOM_DAEMON_PID", "AXIOM_INCOMPATIBLE", "AXIOM_LOCK_ON_START"}
+// The inherited AXIOM_* variables a greeter's quickshell keeps: the knobs
+// for looking at it from a session. Every other one is dropped (as
+// supervise does for the shell), so a session axiom's socket, pid, tree or
+// handoff never reaches the greeter; axiom greeter sets its own.
+var greeterKept = []string{"AXIOM_GREETER_WINDOWED", "AXIOM_COMPOSITOR", "AXIOM_COMPOSITOR_OFF"}
 
 func greeterCommand() *Command {
 	return &Command{
@@ -141,13 +143,13 @@ func greeterRuntime(getenv func(string) string, gdir string) (string, error) {
 	return dir, xdg.PrivateDir(dir, true)
 }
 
-// greeterEnv is environ with set's variables replacing theirs, and the
-// session axiom's left out.
+// greeterEnv is environ with set's variables replacing theirs, and every
+// inherited AXIOM_* but greeterKept left out.
 func greeterEnv(environ []string, set map[string]string) []string {
 	out := make([]string, 0, len(environ)+len(set))
 	for _, kv := range environ {
 		name, _, _ := strings.Cut(kv, "=")
-		if _, replaced := set[name]; replaced || slices.Contains(greeterDropped, name) {
+		if _, replaced := set[name]; replaced || strings.HasPrefix(name, "AXIOM_") && !slices.Contains(greeterKept, name) {
 			continue
 		}
 		out = append(out, kv)
