@@ -13,7 +13,7 @@ This doc covers the three lock modes, how the built-in lock screen's layout of m
 - `lock()` ends a running preview first.
 
 ### Under axiom (`axiom lock`)
-Run by `axiom run`, the binary makes locking dependable (`backend/internal/lock`):
+Run by `axiom run`, the binary makes locking dependable (`backend/internal/lockscreen`):
 - `axiom lock` (and `axiom ipc lockscreen lock`) asks the shell. It exits 0 only once `shell/Lockscreen.qml`'s session lock is `secure` (the compositor acknowledged it), which `LockManager` reports as `lock.state`, with a lock surface on every monitor connected.
   - The report counts the lock surfaces `Lockscreen.qml` actually built (`LockManager.builtinSurfaces`) against `General.outputs`, so a monitor without one keeps the lock unconfirmed. With no monitor connected the session lock alone confirms it; `WlSessionLock` builds a surface for each monitor connected later.
   - A stopped shell's last report confirms nothing until the next shell reports.

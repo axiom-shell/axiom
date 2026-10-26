@@ -1,4 +1,4 @@
-// Package lock makes `axiom lock` dependable. With the built-in locker
+// Package lockscreen makes `axiom lock` dependable. With the built-in locker
 // (Lockscreen.mode "quickshell") it succeeds only when the shell confirms
 // the lock screen is up on every output, else tries harder (a shell
 // started locked), then fails loudly: there is no other locker to fall
@@ -6,7 +6,7 @@
 // command. A shell that dies while locked is started again at once,
 // locking before anything else. Nothing here unlocks: only PAM, in the
 // shell, does (docs/dev/features/lockscreen.md).
-package lock
+package lockscreen
 
 import (
 	"context"

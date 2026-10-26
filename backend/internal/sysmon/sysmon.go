@@ -1,10 +1,10 @@
-// Package system is the machine's load for the shell, the `system` polled
+// Package sysmon is the machine's load for the shell, the `system` polled
 // topic: CPU, memory, temperatures, GPU, network throughput, disk usage
 // and the process list, read from /proc and /sys (and `nvidia-smi` for an
 // NVIDIA card without an AMD one), only the metrics some subscriber asks
 // for. Each push is one sample; the graphs' history stays the shell's
 // (SystemManager). Also `system.kill`, which signals a process.
-package system
+package sysmon
 
 import (
 	"bytes"

@@ -1,6 +1,6 @@
 # The shell ↔ daemon protocol
 
-> **Files:** `services/core/BackendManager.qml`, `components/methods/JsonRpc.qml`, `services/core/IpcTarget.qml`, `backend/internal/rpc/`, `backend/internal/daemon/methods.go`, `backend/internal/daemon/daemon.go`, `backend/internal/daemon/contract.go`, `backend/tools/rpcshapes/`, `backend/internal/topics/`, `backend/internal/daemon/topics.go`, `backend/internal/ipcroute/`, `backend/internal/lock/`, `config/json/backend.json`, `config/Paths.qml`
+> **Files:** `services/core/BackendManager.qml`, `components/methods/JsonRpc.qml`, `services/core/IpcTarget.qml`, `backend/internal/rpc/`, `backend/internal/daemon/methods.go`, `backend/internal/daemon/daemon.go`, `backend/internal/daemon/contract.go`, `backend/tools/rpcshapes/`, `backend/internal/topics/`, `backend/internal/daemon/topics.go`, `backend/internal/ipcroute/`, `backend/internal/lockscreen/`, `config/json/backend.json`, `config/Paths.qml`
 > **Related:** [The axiom binary](README.md), [Config manager](../core/config-manager.md), [Config modes](../compositor/config-modes.md), [every method and push](../generated/rpc.md) (generated)
 
 Where the QML shell and the axiom binary meet. This page says how the connection works. The methods, pushes and the files that use them are listed in [rpc.md](../generated/rpc.md), which `scripts/gen_docs.py` builds from the code and the daemon's own registry, with every method's params and result fields and every push's.

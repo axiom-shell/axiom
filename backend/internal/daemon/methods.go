@@ -12,7 +12,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-	"github.com/axiom-shell/axiom/backend/internal/lock"
+	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
 	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
@@ -452,7 +452,7 @@ func (d *Daemon) ipcMethods(reg *rpc.Registry) {
 		return struct{}{}, d.locker.Lock(ctx)
 	})
 
-	rpc.Handle(reg, "lock.state", func(ctx context.Context, c *rpc.Conn, p lock.State) (struct{}, error) {
+	rpc.Handle(reg, "lock.state", func(ctx context.Context, c *rpc.Conn, p lockscreen.State) (struct{}, error) {
 		if !fromShell(c) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell reports the lock state")
 		}

@@ -45,9 +45,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 1 | done | Backend stage 2: night light, then clipboard (and [Phase 2](#phase-2-finish-stage-2)) | In progress; finish it before anything else churns the same files. |
 | 2 | done | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
 | 3 | done | [Phase 1](#phase-1-integrity), except the entries stage 7 fixes | Data and session safety first; touches nothing a stage deletes. The binds-child segfault was taken first, because its flaky test failed CI on unrelated PRs. |
-| 4 | in progress | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
-| 5 | next | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
-| 6 | later | Backend stage 3: brightness | Small; a first stage under the new checks. |
+| 4 | done | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
+| 5 | in progress | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
+| 6 | next | Backend stage 3: brightness | Small; a first stage under the new checks. |
 | 7 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
 | 8 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
 | 9 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
@@ -151,9 +151,7 @@ Resolves:
 ### Phase 4: backend structure and contract
 The binary's rules are enforced by its tests, and the shell–daemon contract is checked by shape, not just by name. The contract check lands before stage 7, so the switch to path ops is checked as it happens.
 
-Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc` (`tree` is its disk side, both package docs say so).
-
-Steps: clearer package names (`system`, and `lock` against `fsx.Lock`).
+Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc` (`tree` is its disk side, both package docs say so); clearer package names (`system` is `sysmon`, `lock` is `lockscreen`, apart from `fsx.Lock`).
 
 Resolves:
 

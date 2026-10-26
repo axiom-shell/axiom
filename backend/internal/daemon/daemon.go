@@ -27,7 +27,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-	"github.com/axiom-shell/axiom/backend/internal/lock"
+	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
 	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
@@ -110,7 +110,7 @@ type Daemon struct {
 	server    *rpc.Server
 	shell     *supervise.Supervisor
 	router    *ipcroute.Router
-	locker    *lock.Locker
+	locker    *lockscreen.Locker
 	dev       *devMode
 	savedKick *kicker
 	// compositor is the compositor's config layer (nil without the tree's
@@ -235,7 +235,7 @@ func Run(ctx context.Context, opts Options) error {
 	defer d.tasks.Wait()
 
 	d.router = ipcroute.New(ipcroute.Options{QS: opts.QS, ShellPID: d.shellPID})
-	d.locker = lock.New(lock.Options{
+	d.locker = lockscreen.New(lockscreen.Options{
 		AskShell: func(ctx context.Context) error {
 			_, err := d.router.Call(ctx, ipcroute.CallParams{Target: "lockscreen", Function: "lock"})
 			return err
