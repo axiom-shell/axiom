@@ -354,7 +354,6 @@ QtObject {
     Socket {
       id: socket
       path: root.socketPath
-      connected: true
       parser: SplitParser {
         onRead: line => {
           if (socket === root._socket)
@@ -380,9 +379,15 @@ QtObject {
     }
   }
 
+  // Known as _socket before it connects: a Socket opened on a listening
+  // path connects (and says so) before `connected = true` returns, and a
+  // socket that isn't _socket yet would never say hello
   function _connect() {
-    if (root.active && root._socket === null)
-      root._socket = root._socketComponent.createObject(root);
+    if (!root.active || root._socket !== null)
+      return;
+    const socket = root._socketComponent.createObject(root);
+    root._socket = socket;
+    socket.connected = true;
   }
 
   // A socket whose connection ended or failed: it's let go before it
