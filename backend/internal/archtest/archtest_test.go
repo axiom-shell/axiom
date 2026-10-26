@@ -245,7 +245,9 @@ func TestEveryPackageHasADocComment(t *testing.T) {
 		// the package has nothing else
 		var doc, testDoc string
 		var docFiles []string
+		onlyTests := true
 		for path, f := range p.files {
+			onlyTests = onlyTests && isTest(path)
 			switch {
 			case f.Doc == nil:
 			case isTest(path):
@@ -260,22 +262,19 @@ func TestEveryPackageHasADocComment(t *testing.T) {
 			t.Errorf("%s has a doc comment in %d files (%s): keep one", p.rel, len(docFiles), strings.Join(docFiles, ", "))
 			continue
 		}
-		if doc == "" {
+		if onlyTests {
 			doc = testDoc
 		}
 		want := "Package " + p.name + " "
-		switch p.name {
-		case "":
-			want = "Package archtest " // only _test.go files
-		case "main":
+		if p.name == "main" {
 			want = "Command " + filepath.Base(p.rel) + " "
 		}
 		if !strings.HasPrefix(doc, want) {
 			t.Errorf("%s has no doc comment (\"%s…\")", p.rel, want)
 			continue
 		}
-		tier, _ := tierOf(p.rel)
-		if pure, marked := tier == tierPure && !testOnly[p.rel], strings.Contains(doc, "Pure:"); pure != marked {
+		tier, ok := tierOf(p.rel)
+		if pure, marked := ok && tier == tierPure && !testOnly[p.rel], strings.Contains(doc, "Pure:"); pure != marked {
 			t.Errorf("%s: its doc comment says \"Pure:\" = %v, archtest's tiers say pure = %v", p.rel, marked, pure)
 		}
 	}
@@ -337,8 +336,6 @@ func TestNoInitOrPackageState(t *testing.T) {
 					}
 				case *ast.FuncDecl:
 					return s.Body != nil
-				case *ast.GenDecl:
-					return s.Tok != token.VAR // a package-level initializer isn't a write
 				}
 				for _, e := range targets {
 					id := root(e)
