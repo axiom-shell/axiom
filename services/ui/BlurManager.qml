@@ -60,7 +60,7 @@ QtObject {
   // Overlay-layer surfaces' shapes (BlurShape.overlayLayer) are then drawn
   // by a second blur window, over the overlay and under them
   function aboveOverlay(screen) {
-    return root.backing && ShellManager.surfaceOpenOn("overlay", root._name(screen));
+    return root.backing && SurfaceManager.surfaceOpenOn("overlay", root._name(screen));
   }
 
   // Whether the blur window on `screen` stands on the Overlay layer: a

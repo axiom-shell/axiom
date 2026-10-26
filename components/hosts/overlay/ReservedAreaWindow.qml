@@ -16,14 +16,14 @@ import qs.services.ui
 // window is transparent: the screen's backdrop (BackdropRequest) dims the
 // monitor under it.
 //
-// While ShellManager.steppedAside (another polkit agent's prompt, which
+// While SurfaceManager.steppedAside (another polkit agent's prompt, which
 // opens under the Overlay layer) it stays mapped, so nothing in it is
 // rebuilt, but takes no input or keys; its content hides (`content`).
 PanelWindow {
   id: root
 
   // Stepped aside: subclasses hide their content on it
-  readonly property bool steppedAside: ShellManager.steppedAside
+  readonly property bool steppedAside: SurfaceManager.steppedAside
 
   anchors {
     left: true

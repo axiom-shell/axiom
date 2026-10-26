@@ -233,7 +233,7 @@ Scope {
   readonly property bool obscured: root.mode === "intellihide" && DockManager.obscured(root.screen, root._restRect())
   // The overlay on this screen puts it away, whatever its visibility, unless
   // it reserves its strip (hiding that would retile the windows under it)
-  readonly property bool overlayOpen: ShellManager.surfaceOpenOn("overlay", root.screen)
+  readonly property bool overlayOpen: SurfaceManager.surfaceOpenOn("overlay", root.screen)
   readonly property bool underOverlay: root.overlayOpen && !root.reserving
   // Any popout over it puts it away too (PopoutManager: it ranks lowest
   // but for pinned menus), a reserving one included: that keeps its zone,

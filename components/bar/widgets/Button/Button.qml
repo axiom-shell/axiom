@@ -70,7 +70,7 @@ BarIconWidget {
 
   function hoverAction() {
     const surface = _surfaceFor[properties.action];
-    if (surface && ShellManager.surfaceOpen(surface))
+    if (surface && SurfaceManager.surfaceOpen(surface))
       return;
     runAction();
   }

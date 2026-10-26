@@ -132,7 +132,7 @@ PopoutWrapperBase {
 
   FocusGrab {
     id: focusGrab
-    windows: [root.window, root.panel].concat(ShellManager.modalWindows)
+    windows: [root.window, root.panel].concat(SurfaceManager.modalWindows)
     active: root.wantsKeyboardFocus
     onCleared: root.currentItem?.focusLost?.()
   }
@@ -229,7 +229,7 @@ PopoutWrapperBase {
     showing: root.occupied && root.claimed
     open: still.showing && !root.isClosing && root.claimed
     onOverlayLayer: root.onOverlayLayer
-    overOverlay: ShellManager.surfaceOpenOn("overlay", root.screen)
+    overOverlay: SurfaceManager.surfaceOpenOn("overlay", root.screen)
     origin: slot.popupScreenOrigin
     attachedSurface: surface
     opens: root._out
@@ -310,12 +310,12 @@ PopoutWrapperBase {
   // On a bottom or right bar the room lies before the surface
   readonly property bool spareBefore: root.barConfig.vertical ? root.barConfig.right : root.barConfig.bottom
 
-  Component.onDestruction: ShellManager.unregisterGrabPartner(mainPopup)
+  Component.onDestruction: SurfaceManager.unregisterGrabPartner(mainPopup)
 
   // The overlay's focus grab lets input through to the popout (see
-  // ShellManager.grabPartners)
+  // SurfaceManager.grabPartners)
   function _registerGrabPartners() {
-    ShellManager.registerGrabPartner(mainPopup, root.screen?.name);
+    SurfaceManager.registerGrabPartner(mainPopup, root.screen?.name);
   }
   Component.onCompleted: _registerGrabPartners()
   onScreenChanged: _registerGrabPartners()

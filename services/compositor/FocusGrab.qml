@@ -24,10 +24,10 @@ Scope {
   readonly property bool _native: CompositorManager.supports.focusGrab === true
   // Active without a native grab: the surface's own window should take the
   // keyboard exclusively (WlrKeyboardFocus.Exclusive) while this is on.
-  // Not while a modal is up (ShellManager.modalShown): two exclusive
+  // Not while a modal is up (SurfaceManager.modalShown): two exclusive
   // surfaces on one layer leave the keyboard with the older (niri), never
   // the prompt. The modal covers every screen, so no click needs catching
-  readonly property bool exclusive: !root._native && root.active && !ShellManager.modalShown
+  readonly property bool exclusive: !root._native && root.active && !SurfaceManager.modalShown
 
   // A click caught outside every surface (BackdropManager.catching)
   property int _uid: 0

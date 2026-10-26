@@ -26,7 +26,7 @@ ScreenLayoutView {
   readonly property bool isTarget: root.preview || General.screensFor(GreeterConfig.screen)[0] === root.screen
   readonly property var allModules: root.layout?.modules ?? []
   // Where this surface's Login module reports itself
-  // (ShellManager.requiredFields): set once on creation
+  // (SurfaceManager.requiredFields): set once on creation
   property string loginKey: ""
 
   // The layout shown: the saved one, or the layouts editor's draft in its
@@ -50,7 +50,7 @@ ScreenLayoutView {
   // The fallback box waits a tick, so a Login module can report first
   property bool _settled: false
   Component.onCompleted: {
-    root.loginKey = ShellManager.newSurfaceKey(root.preview ? "preview" : "greeter");
+    root.loginKey = SurfaceManager.newSurfaceKey(root.preview ? "preview" : "greeter");
     Qt.callLater(() => root._settled = true);
   }
 
@@ -62,7 +62,7 @@ ScreenLayoutView {
     anchors.bottom: parent.bottom
     anchors.bottomMargin: parent.height / 6
     width: Math.min(parent.width * 0.6, Appearance.fontSize * 28)
-    active: root.isTarget && root._settled && ShellManager.requiredFields[root.loginKey] !== true
+    active: root.isTarget && root._settled && SurfaceManager.requiredFields[root.loginKey] !== true
     sourceComponent: Rectangle {
       implicitHeight: fallback.implicitHeight + Widget.padding * 2
       radius: Widget.radius

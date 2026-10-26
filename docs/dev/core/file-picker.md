@@ -18,7 +18,7 @@ The desktop's own file picker, for a file or a folder. Axiom draws no picker of 
 - `FilePickerManager.pick(owner, title, options, onPicked, onFailed)`. Options: `folder`, `start` (`~` works), `filter` (`"NAME:GLOB"`), and `shortenHome` (hand back `~/…`, which keeps machine-scoped paths readable).
 - One picker at a time: `pick` returns false while one is open, and `running` says so.
 - `forget(owner)` drops the callbacks of an owner going away; what's picked then goes nowhere.
-- The overlay is stepped aside while the picker is open (`ShellManager.beginStepAside("filePicker")`): the picker is an ordinary window, under the Overlay layer. It ends in `onRunningChanged`, so a picker that never starts doesn't leave the overlay hidden.
+- The overlay is stepped aside while the picker is open (`SurfaceManager.beginStepAside("filePicker")`): the picker is an ordinary window, under the Overlay layer. It ends in `onRunningChanged`, so a picker that never starts doesn't leave the overlay hidden.
 - Nothing runs in greeter mode (`Paths.greeter`).
 
 ### Callers

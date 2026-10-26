@@ -30,8 +30,8 @@ PanelWindow {
 
   // Every focus grab lets input through to it while it shows, so Keep /
   // Revert work over the overlay the Monitors page applied from
-  onVisibleChanged: visible ? ShellManager.registerModal(root) : ShellManager.unregisterModal(root)
-  Component.onDestruction: ShellManager.unregisterModal(root)
+  onVisibleChanged: visible ? SurfaceManager.registerModal(root) : SurfaceManager.unregisterModal(root)
+  Component.onDestruction: SurfaceManager.unregisterModal(root)
 
   // Where the compositor blurs only what a window asks: the card
   // (attached only there: attached at all, it claims the window's blur, and

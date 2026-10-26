@@ -212,7 +212,7 @@ PopoutWrapperBase {
   // since the layer it slides out from under is one the overlay covers
   // (as BarPopouts.underBar). Followed only while closed: the namespace
   // changes with it.
-  readonly property bool overlayOpen: ShellManager.surfaceOpenOn("overlay", root.screen)
+  readonly property bool overlayOpen: SurfaceManager.surfaceOpenOn("overlay", root.screen)
   property ClosedLatch _overlayLatch: ClosedLatch {
     source: root.overlayOpen
     closed: !root.occupied
@@ -448,7 +448,7 @@ PopoutWrapperBase {
 
     FocusGrab {
       id: focusGrab
-      windows: [surfaceWindow].concat(root.grabWindows, ShellManager.modalWindows)
+      windows: [surfaceWindow].concat(root.grabWindows, SurfaceManager.modalWindows)
       active: surfaceWindow.visible && root.grabEnabled && (root.wantsKeyboardFocus || root.closeOnClickOutside)
 
       onActiveChanged: {

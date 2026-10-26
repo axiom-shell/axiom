@@ -130,7 +130,7 @@ PanelWindow {
   FocusGrab {
     id: grab
     active: root.shown && group.ownsGrab
-    windows: group.windows.concat(ShellManager.modalWindows)
+    windows: group.windows.concat(SurfaceManager.modalWindows)
     onCleared: root.shown = false
   }
 

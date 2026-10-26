@@ -110,14 +110,14 @@ QtObject {
   onMenuIdChanged: root._publishFrame()
 
   Component.onCompleted: {
-    ShellManager.registerGrabPartner(root.window, root.screen?.name ?? "");
-    ShellManager.registerGrabPartner(root.triggerWindow, root.screen?.name ?? "");
+    SurfaceManager.registerGrabPartner(root.window, root.screen?.name ?? "");
+    SurfaceManager.registerGrabPartner(root.triggerWindow, root.screen?.name ?? "");
     Qt.callLater(root._sync);
     root._publishFrame();
   }
   Component.onDestruction: {
-    ShellManager.unregisterGrabPartner(root.window);
-    ShellManager.unregisterGrabPartner(root.triggerWindow);
+    SurfaceManager.unregisterGrabPartner(root.window);
+    SurfaceManager.unregisterGrabPartner(root.triggerWindow);
     EdgeMenuManager.clearFrame(root._frameId, root.screen?.name ?? "");
   }
 }

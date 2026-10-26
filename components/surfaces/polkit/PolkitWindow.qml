@@ -50,8 +50,8 @@ PanelWindow {
 
   // Every focus grab lets input through to it while it shows, so a prompt
   // over the overlay (the greeter's install, from Settings) closes nothing
-  onVisibleChanged: visible ? ShellManager.registerModal(root) : ShellManager.unregisterModal(root)
-  Component.onDestruction: ShellManager.unregisterModal(root)
+  onVisibleChanged: visible ? SurfaceManager.registerModal(root) : SurfaceManager.unregisterModal(root)
+  Component.onDestruction: SurfaceManager.unregisterModal(root)
 
   Timer {
     id: settle

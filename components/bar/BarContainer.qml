@@ -208,7 +208,7 @@ Rectangle {
 
   // A stretch along the bar (from..to, in this item's coordinates) that a
   // surface joined to the border's inner stroke covers there, as
-  // ShellManager.setBorderOpening takes it (screen px along the edge), so
+  // SurfaceManager.setBorderOpening takes it (screen px along the edge), so
   // the border leaves its stroke open under a translucent fill: a pill, a
   // popout merged into the bar or on a solid bar's inner edge. Null while
   // surfaces are solid, with the border off, or until the bar's place on

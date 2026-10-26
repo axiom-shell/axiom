@@ -78,8 +78,8 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 #### Password
 - **What it is:** the `Password` module (`x-hosts: ["lockscreen"]`, `x-required`) draws `content/parts/PasswordField`. The field talks to `AuthManager`.
 - **When it's live:** the field keeps keyboard focus only when `active`, which means on the `target` screen of a real lock (`host.target && !host.preview`). Anywhere else it is inert.
-- **Required-field report:** the module reports itself to `ShellManager.reportRequiredField(host.key, true)`.
-  - Each surface's key comes from `ShellManager.newSurfaceKey(kind)` and is never reused.
+- **Required-field report:** the module reports itself to `SurfaceManager.reportRequiredField(host.key, true)`.
+  - Each surface's key comes from `SurfaceManager.newSurfaceKey(kind)` and is never reused.
   - Keys used to be screen names. A monitor that dropped out and came back while turning off then had its old surface's teardown clear the new surface's report, which flickered the fallback in.
 - **Fallback field:** a surface whose key has no report shows a `PasswordField` of its own, so a hand-edited or broken layout can never lock anyone out.
   - It appears a tick after loading, near the bottom, over the modules.

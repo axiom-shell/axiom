@@ -81,7 +81,7 @@ Built on `Quickshell.Services.Greetd`.
   - Its cards are sized like the lock screen's (`OverlayConfig.cardUnitOn`, from the bundle's `Widget.cardSize`), so both look the same on a monitor.
   - Its host is `{ kind: "greeter", target, preview, key, bare, passwordBorder, greetingBorder }`.
   - The target is `Greeter.monitor`'s screen. Other screens follow `otherScreens`.
-  - With no Login module reported (`ShellManager.requiredFields`), it draws a `content/parts/LoginField` of its own.
+  - With no Login module reported (`SurfaceManager.requiredFields`), it draws a `content/parts/LoginField` of its own.
 - **Greeter-only modules:**
   - `Login` (`x-required`): a `LoginField` holding a `StyledComboEntry` of users (can be typed over), a `PasswordEntry`, and the user's picture.
     - In a slot too short to stack them, the two fields go side by side.

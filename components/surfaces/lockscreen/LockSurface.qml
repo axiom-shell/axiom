@@ -28,7 +28,7 @@ ScreenLayoutView {
   readonly property bool isTarget: ShellManager.isTarget(root.screen)
   readonly property var allModules: root.layout?.modules ?? []
   // Where this surface's Password module reports itself
-  // (ShellManager.requiredFields): this instance's own, set once on
+  // (SurfaceManager.requiredFields): this instance's own, set once on
   // creation (a binding would loop on the counter newSurfaceKey bumps)
   property string passwordKey: ""
 
@@ -51,7 +51,7 @@ ScreenLayoutView {
   // The fallback field waits a tick, so a Password module can report first
   property bool _settled: false
   Component.onCompleted: {
-    root.passwordKey = ShellManager.newSurfaceKey(root.preview ? "preview" : "lock");
+    root.passwordKey = SurfaceManager.newSurfaceKey(root.preview ? "preview" : "lock");
     Qt.callLater(() => root._settled = true);
   }
 
@@ -63,7 +63,7 @@ ScreenLayoutView {
     anchors.bottom: parent.bottom
     anchors.bottomMargin: parent.height / 6
     width: Math.min(parent.width * 0.6, Appearance.fontSize * 28)
-    active: root.isTarget && root._settled && ShellManager.requiredFields[root.passwordKey] !== true
+    active: root.isTarget && root._settled && SurfaceManager.requiredFields[root.passwordKey] !== true
     sourceComponent: Rectangle {
       implicitHeight: fallback.implicitHeight + Widget.padding * 2
       radius: Widget.radius

@@ -68,7 +68,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 - **Uninstall** puts the original config back and deletes `.axiom-original`, so a later install backs up the config as it is then.
 
 #### Around the prompt
-- While pkexec waits, the overlay and the onboarder step aside, unless axiom's own polkit agent is running ([ShellManager](../core/shell-manager-targeting.md)).
+- While pkexec waits, the overlay and the onboarder step aside, unless axiom's own polkit agent is running ([SurfaceManager](../core/shell-manager-targeting.md#stepping-aside)).
 - `finishCommands` are what the user runs to make greetd the display manager (`readlink display-manager.service`). The card shows them as `CodeLine`s.
 
 ### Status

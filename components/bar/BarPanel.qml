@@ -80,14 +80,14 @@ PanelWindow {
   }
 
   Component.onCompleted: {
-    ShellManager.registerGrabPartner(root, root.screen?.name);
+    SurfaceManager.registerGrabPartner(root, root.screen?.name);
     ShellManager.registerBar(root);
   }
   // The overlay's focus grab lets input through to the bar (see
-  // ShellManager.grabPartners)
-  onScreenChanged: ShellManager.registerGrabPartner(root, root.screen?.name)
+  // SurfaceManager.grabPartners)
+  onScreenChanged: SurfaceManager.registerGrabPartner(root, root.screen?.name)
   Component.onDestruction: {
-    ShellManager.unregisterGrabPartner(root);
+    SurfaceManager.unregisterGrabPartner(root);
     ShellManager.unregisterBar(root);
   }
 

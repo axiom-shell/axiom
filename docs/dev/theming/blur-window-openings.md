@@ -74,7 +74,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 
 ### Joins: openings in the border's stroke
 - A surface joined to the border's stroke (`EdgePopout`) publishes the stretch it covers:
-  - `ShellManager.setBorderOpening`, through a `hosts/popout/BorderOpening`, which takes it back as it goes;
+  - `SurfaceManager.setBorderOpening`, through a `hosts/popout/BorderOpening`, which takes it back as it goes;
   - in screen px along the edge; its edge coordinates start at `reservedOn(startSide)`.
 - `BorderPanel` leaves its stroke and the fill of the stroke's row open there (`Utils.subtractSpans`).
   - A strip's own offset along its edge (`screenOffset`) is read through `LayerOrigin`. Until then it's taken as half what the edges across it reserve.

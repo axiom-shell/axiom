@@ -33,7 +33,7 @@ PopupWindow {
   readonly property int _edge: root.dockWindow.edge
   readonly property int _towards: _edge === Bar.Bottom ? Edges.Top : _edge === Bar.Top ? Edges.Bottom : _edge === Bar.Left ? Edges.Right : Edges.Left
 
-  visible: root.active && !!root.anchorItem?.QsWindow.window && !ShellManager.captureFrozen
+  visible: root.active && !!root.anchorItem?.QsWindow.window && !SurfaceManager.captureFrozen
   color: "transparent"
   implicitWidth: box.implicitWidth
   implicitHeight: box.implicitHeight
@@ -58,7 +58,7 @@ PopupWindow {
   }
 
   FocusGrab {
-    windows: [root, root.grabWindow].concat(ShellManager.modalWindows)
+    windows: [root, root.grabWindow].concat(SurfaceManager.modalWindows)
     active: root.visible && root.full
     onCleared: root.close()
   }

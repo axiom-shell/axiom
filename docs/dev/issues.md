@@ -377,7 +377,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Two exclusive-focus surfaces at once without a native grab
 - **Where:** `services/compositor/FocusGrab.qml` (`exclusive`), `components/hosts/overlay/OverlayPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`
-- **What:** Without `supports.focusGrab`, every active grab's surface asks for `WlrKeyboardFocus.Exclusive`. With the overlay open (exclusive the whole time) and a popout with a text field opened over it, two surfaces on the Overlay layer ask for exclusive focus. Which one gets the keyboard is up to the compositor. On niri the older one keeps it (found fixing the polkit prompt, c49b429, which now turns `exclusive` off while `ShellManager.modalShown`), so there typing into a popout over the overlay goes to the overlay. Sway is unchecked (`scripts/dev/nested.sh sway`). A fix in the same spirit: only the newest active grab is `exclusive`.
+- **What:** Without `supports.focusGrab`, every active grab's surface asks for `WlrKeyboardFocus.Exclusive`. With the overlay open (exclusive the whole time) and a popout with a text field opened over it, two surfaces on the Overlay layer ask for exclusive focus. Which one gets the keyboard is up to the compositor. On niri the older one keeps it (found fixing the polkit prompt, c49b429, which now turns `exclusive` off while `SurfaceManager.modalShown`), so there typing into a popout over the overlay goes to the overlay. Sway is unchecked (`scripts/dev/nested.sh sway`). A fix in the same spirit: only the newest active grab is `exclusive`.
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the layer-placement branch
 
@@ -422,12 +422,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The shell sends each `config.replace` without waiting for the last, the daemon runs requests concurrently, and `write` takes its lock in whatever order the goroutines reach it, so two quick saves can leave the older one on disk (and pushed back as the running config). Path ops alone (backend stage 7) still race on one key: `config.*` calls want handling in order per connection, or a base revision the store refuses on mismatch.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
-
-### The surface registry sits in ShellManager
-- **Where:** `services/ui/ShellManager.qml` (`surfaceShown`, `surfaceWindows`, `openSurfaces`, `grabPartners`, `captureWindows`, `borderOpenings`, `requiredFields`, `reportRequiredField`, `newSurfaceKey`), `docs/dev/core/shell-manager-targeting.md`
-- **What:** The registry of shown surfaces (surface windows and open surfaces, grab partners, capture windows, modals, step-aside, border openings) and screen layouts' required fields and surface keys are read by about 36 files, and the header still says "manages global options and signals". They move to a new `SurfaceManager` in `services/ui/` (not the bar panels: [screen-edge geometry](#screen-edge-geometry-is-split-over-three-services)); `ShellManager`'s header becomes "the shell's signals, link navigation and screen targeting", and `shell-manager-targeting.md` sends registry readers to the new doc section. Item 3 of the [singletons plan](plans/singletons-split.md) (a move, mechanical but wide).
-- **Size:** small
-- **Found:** 2026-10-27, while planning the singletons split (#123)
 
 ### Screen-edge geometry is split over three services
 - **Where:** `services/ui/BarManager.qml` (`bars`, `edgesFor`, `barStartOn`, `surfaceEnd`, `screenEdgeOpen`, `reservedOn`, `frameLine`, `cornerLine`, `detachedGaps`), `services/ui/EdgeMenuManager.qml` (`setZone`, `zoneOn`, `reservedOn`, `frameLineOn`, `cornerLineOn`, `heldInset`), `services/ui/ShellManager.qml` (`barOn`)

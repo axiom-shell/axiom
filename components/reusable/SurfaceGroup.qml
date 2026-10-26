@@ -32,26 +32,26 @@ QtObject {
   readonly property var windows: {
     if (!root.everywhere)
       return root.window ? [root.window] : [];
-    return ShellManager.surfaceWindows.filter(e => e.kind === root.kind).map(e => e.window);
+    return SurfaceManager.surfaceWindows.filter(e => e.kind === root.kind).map(e => e.window);
   }
 
   onShownChanged: {
-    ShellManager.setSurfaceOpen(root, root.kind, root.shown);
+    SurfaceManager.setSurfaceOpen(root, root.kind, root.shown);
     if (root.shown)
       root.ownsGrab = !root.everywhere || ShellManager.isTarget(root.screen, root.target);
     if (root.everywhere)
-      ShellManager.surfaceShown(root.kind, root.shown);
+      SurfaceManager.surfaceShown(root.kind, root.shown);
   }
 
-  onWindowChanged: ShellManager.registerSurfaceWindow(root, root.kind, root.window)
+  onWindowChanged: SurfaceManager.registerSurfaceWindow(root, root.kind, root.window)
   Component.onCompleted: {
-    ShellManager.registerSurfaceWindow(root, root.kind, root.window);
-    ShellManager.setSurfaceOpen(root, root.kind, root.shown);
+    SurfaceManager.registerSurfaceWindow(root, root.kind, root.window);
+    SurfaceManager.setSurfaceOpen(root, root.kind, root.shown);
   }
-  Component.onDestruction: ShellManager.unregisterSurfaceWindow(root)
+  Component.onDestruction: SurfaceManager.unregisterSurfaceWindow(root)
 
   property Connections _sync: Connections {
-    target: ShellManager
+    target: SurfaceManager
     function onSurfaceShown(kind, shown) {
       if (kind === root.kind && root.everywhere && shown !== root.shown)
         root.syncRequested(shown);

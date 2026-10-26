@@ -43,13 +43,13 @@ Card {
     const key = root.onLockscreen ? (root.host.key ?? "") : "";
     if (key === root._reportedKey)
       return;
-    ShellManager.reportRequiredField(root._reportedKey, false);
-    ShellManager.reportRequiredField(key, true);
+    SurfaceManager.reportRequiredField(root._reportedKey, false);
+    SurfaceManager.reportRequiredField(key, true);
     root._reportedKey = key;
   }
   Component.onCompleted: root._report()
   onHostChanged: root._report()
-  Component.onDestruction: ShellManager.reportRequiredField(root._reportedKey, false)
+  Component.onDestruction: SurfaceManager.reportRequiredField(root._reportedKey, false)
 
   // Boxed, it's drawn like LockSurface's fallback field: a box as tall as
   // the field plus padding, across the slot. Its height doesn't change

@@ -29,7 +29,7 @@ QtObject {
     _onPicked = path => onPicked(options?.shortenHome ? Paths.shortenHome(path) : path);
     _onFailed = onFailed ?? null;
     _picker.command = ["python3", Paths.scriptsPath + "pick_path.py"].concat(options?.folder ? ["--folder"] : []).concat(options?.filter ? ["--filter", options.filter] : []).concat([title, start]);
-    ShellManager.beginStepAside("filePicker");
+    SurfaceManager.beginStepAside("filePicker");
     _picker.running = true;
     return true;
   }
@@ -63,7 +63,7 @@ QtObject {
     // overlay would stay hidden
     onRunningChanged: {
       if (!running)
-        ShellManager.endStepAside("filePicker");
+        SurfaceManager.endStepAside("filePicker");
     }
     onExited: code => {
       const picked = root._onPicked;
