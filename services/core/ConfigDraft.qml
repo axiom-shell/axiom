@@ -21,10 +21,7 @@ QtObject {
   Component.onCompleted: load()
 
   function _read() {
-    let value = ConfigManager.config;
-    for (const key of root.path)
-      value = value?.[key];
-    return value;
+    return Utils.valueAt(ConfigManager.config, root.path);
   }
 
   // Start over from the current config

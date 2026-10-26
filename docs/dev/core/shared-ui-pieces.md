@@ -166,7 +166,7 @@ Bars size their own widgets (`Bar.enrichBarConfig`) and never use these: a share
 - `KeybindFilter.columns(sections, count)`: the masonry split of the Keybinds page and the Cheatsheet module.
 - **Utils** (`methods/Utils`):
   - `clone`, `freeId(base, taken, sep)` (`dock2` → `dock3`)
-  - `valueAt(object, path)`: a value by its key path (every form's `valueAt`, `SettingsManager.configValueAt`); a schema property's default by path is `SchemaLayout.defaultAt`
+  - `valueAt(object, path)`: a value by its key path (every form's `valueAt`, `SettingsManager.configValueAt`, `ConfigDraft`'s read); a schema property's default by path is `SchemaLayout.defaultAt`
   - `spaceWords` (CamelCase → words), `edgeArrow(edge)`
   - `formatRate` / `rateParts` / `formatSize`, `formatBytes` (a file size, "4.2 MiB")
   - `recordUse`, `truncate`.

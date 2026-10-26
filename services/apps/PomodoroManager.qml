@@ -10,10 +10,10 @@ import qs.services.ui
 // keeps time with nothing showing it. The state (PomodoroCycle's) holds an
 // absolute end time, so it survives a QML reload and a restart
 // (StateManager "pomodoro", through DeadlineTicker); a phase that ended
-// while axiom wasn't running moves on quietly. A notification marks each end (with
-// Pomodoro.notify); clicking it opens a page or edge menu with the timer.
-// Displays acquire(owner) the once-a-second `now`; the end itself needs
-// no one.
+// while axiom wasn't running moves on quietly. A notification marks each
+// end (with Pomodoro.notify); clicking it opens a page or edge menu with
+// the timer. Displays acquire(owner) the once-a-second `now`; the end
+// itself needs no one.
 //
 //   axiom ipc pomodoro toggle
 Singleton {
