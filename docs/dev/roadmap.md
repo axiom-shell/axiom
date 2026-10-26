@@ -140,9 +140,7 @@ Steps, roughly in this order (moves first, each its own PR):
 
 Resolves:
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (designed and fixed in backend stage 7)
-- [Readers read files through a service](issues.md#readers-read-files-through-a-service)
 - [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
-- [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer)
 - [The onboarding's Compositor page names Hyprland](issues.md#the-onboardings-compositor-page-names-hyprland)
 - [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (waits for stage 5: `ChatRequest` moves to the daemon)
 
@@ -158,6 +156,7 @@ Resolves:
 
 Resolved by a stage:
 - [Self-update and the greeter installer assume git](issues.md#self-update-and-the-greeter-installer-assume-git) (stage 4)
+- [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
 
 ### Phase 6: compositor parity
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
@@ -246,3 +245,6 @@ Entries decided against doing now: a plan the maintainer deferred ([Items that n
 
 Extremely rare paths, put after real gaps (2026-10-26):
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads) (transient: corrected after the reload)
+
+Deferred by the maintainer (2026-10-27):
+- [Readers read files through a service](issues.md#readers-read-files-through-a-service)
