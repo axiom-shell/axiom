@@ -285,12 +285,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### The onboarding's Compositor page names Hyprland
-- **Where:** `components/surfaces/onboarding/pages/CompositorPage.qml`, `services/session/OnboardingManager.qml` (`detectCompositor`)
-- **What:** It gates on `CompositorManager.kind !== "hyprland"` and reads `HyprlandManager.withVersion` (and the page shows Hyprland's legacy notice) rather than a capability, and calls `CompositorManager.backend?.unsupportedHint` from UI. A writer hook (`legacyConfig`, `configProblem`) and a CompositorManager passthrough would keep it neutral.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### SwayFX's corner radius reaches only windows opened later
 - **Where:** `components/methods/SwayConf.qml` (`fxLines`)
 - **What:** `corner_radius` sent at runtime sets SwayFX 0.6's global only (its per-window reset runs only while the config loads), and it has no per-window command, so a changed rounding shows on new windows while open ones keep theirs until sway reloads its config. A fix would need a reload, which takes back the rest of the runtime look.

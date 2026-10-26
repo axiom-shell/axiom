@@ -141,7 +141,6 @@ Steps, roughly in this order (moves first, each its own PR):
 Resolves:
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (designed and fixed in backend stage 7)
 - [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
-- [The onboarding's Compositor page names Hyprland](issues.md#the-onboardings-compositor-page-names-hyprland)
 - [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (waits for stage 5: `ChatRequest` moves to the daemon)
 
 ### Phase 4: backend structure and contract
