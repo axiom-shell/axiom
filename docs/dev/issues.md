@@ -393,12 +393,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-14, while letting typing modules go on the desktop
 
-### The edge enum has no methods helper
-- **Where:** `config/Bar.qml` (`enum Location`, `edgeName`, `locationOf`, `oppositeOf`, `getLocationFromString`), `components/methods/SurfaceOutline.qml` (its own `top` … `right`)
-- **What:** The screen edges (`Top, Bottom, Left, Right`, an order the code indexes arrays by) are declared on the `Bars` reader, which `components/methods/` may not import, so `SurfaceOutline` keeps a second copy of the numbers. Item 1 of the [edge enum plan](plans/edge-enum.md) (option B): a `ScreenEdge` singleton in components/methods/ with the enum in the same order and `name` (was `edgeName`), `fromName` (was `locationOf`, -1 if unknown), `fromConfig` (was `getLocationFromString`, Top if unknown) and `opposite` (was `oppositeOf`); its qmltestrunner test (the order, the name round trip, opposite, the Top fallback); `SurfaceOutline` uses it instead of its own ints. `Bar.qml` is untouched.
-- **Size:** small
-- **Found:** 2026-10-27, while planning the edge enum (docs/dev/plans/edge-enum.md)
-
 ### Edge users still read the enum from the `Bar` reader
 - **Where:** `config/Bar.qml` (`enum Location` and the four edge helpers), `services/ui/ScreenEdgeManager.qml`, `components/hosts/popout/` (and the other users: 32 files)
 - **What:** Docks, OSDs, the launcher, popouts, edge menus and the border read `Bar.Top` … and `Bar.edgeName` etc. (160 enum values, 38 helper calls, 24 "a Bar.Location" comments). Item 2 of the [edge enum plan](plans/edge-enum.md), after the helper exists: move each to `ScreenEdge` (`ScreenEdge.Top`, `ScreenEdge.name`, …, comments "a ScreenEdge"), delete the enum and the helpers from `config/Bar.qml`, fix the docs' spans (config-readers.md's `edgeName` line, `Bar.Top` / `Bar.Location` / `edge === Bar.Right`), and run qmllint, which flags a missed value. Force a reload afterwards (testing.md › Reloads and logs).

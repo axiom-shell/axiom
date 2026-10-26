@@ -9,9 +9,8 @@ import QtQuick
 //
 // Edge-local coordinates: u runs along the attach edge, v away from it
 // (v = 0 is the attach edge), laid out as if attached to the Top edge and
-// mapped onto the real one by `toItem`. `edge` is a Bar.Location number
-// (0 top, 1 bottom, 2 left, 3 right). No files, services or config: the
-// caller passes the shape's settings in a spec:
+// mapped onto the real one by `toItem`. `edge` is a ScreenEdge. No files,
+// services or config: the caller passes the shape's settings in a spec:
 //   { edge, boxAlong, boxDepth, strokeWidth, filletRadius, cornerRadius,
 //     startCornerRadius, endCornerRadius, connectorGap, joinStart,
 //     joinEnd, flushStart, flushEnd, flushStartThrough, flushEndThrough,
@@ -24,11 +23,6 @@ import QtQuick
 // which a straight join's far wall runs on through)
 QtObject {
   id: root
-
-  readonly property int top: 0
-  readonly property int bottom: 1
-  readonly property int left: 2
-  readonly property int right: 3
 
   // Everything derived from a spec, in edge-local coordinates
   function metrics(s) {
@@ -101,7 +95,7 @@ QtObject {
   // The item's size for a spec: along the edge, the box and fillet
   // squares; away from it, the box and connector gap
   function size(s, m) {
-    const vertical = s.edge === root.left || s.edge === root.right;
+    const vertical = s.edge === ScreenEdge.Left || s.edge === ScreenEdge.Right;
     return {
       "width": vertical ? m.depth : m.alongLength,
       "height": vertical ? m.alongLength : m.depth
@@ -111,17 +105,17 @@ QtObject {
   // An edge-local point in the item's coordinates (`w`/`h` its size)
   function toItem(edge, w, h, back, u, v) {
     switch (edge) {
-    case root.left:
+    case ScreenEdge.Left:
       return {
         "x": v + back,
         "y": u
       };
-    case root.right:
+    case ScreenEdge.Right:
       return {
         "x": w - v - back,
         "y": u
       };
-    case root.bottom:
+    case ScreenEdge.Bottom:
       return {
         "x": u,
         "y": h - v - back
@@ -155,7 +149,7 @@ QtObject {
   // flag is for the arc as drawn on the Top edge (y down); reflections
   // (bottom, left) flip it.
   function _pen(s, m, w, h) {
-    const mirrored = s.edge === root.bottom || s.edge === root.left;
+    const mirrored = s.edge === ScreenEdge.Bottom || s.edge === ScreenEdge.Left;
     const pt = (u, v) => {
       const p = toItem(s.edge, w, h, m.back, u, v);
       return p.x + " " + p.y;

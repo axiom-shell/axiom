@@ -1,6 +1,6 @@
 # `Bar` reader holds the edges enum and breaks reader naming
 
-> **Issue:** filed as its items: [the edge enum has no methods helper](../issues.md#the-edge-enum-has-no-methods-helper), [edge users still read the enum from the `Bar` reader](../issues.md#edge-users-still-read-the-enum-from-the-bar-reader), [the `Bars` reader is named `Bar`](../issues.md#the-bars-reader-is-named-bar)
+> **Issue:** filed as its items: the edge enum has no methods helper (fixed), [edge users still read the enum from the `Bar` reader](../issues.md#edge-users-still-read-the-enum-from-the-bar-reader), [the `Bars` reader is named `Bar`](../issues.md#the-bars-reader-is-named-bar)
 > **Status:** decided: B (2026-10-27)
 
 ### Problem

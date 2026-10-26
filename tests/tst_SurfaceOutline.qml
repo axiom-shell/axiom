@@ -9,7 +9,7 @@ TestCase {
   // edge, its arc's run
   function spec(extra) {
     return Object.assign({
-      "edge": SurfaceOutline.top,
+      "edge": ScreenEdge.Top,
       "boxAlong": 200,
       "boxDepth": 100,
       "strokeWidth": 2,
@@ -122,19 +122,19 @@ TestCase {
 
   function test_toItem_edges() {
     // 100 wide, 50 high; u = 10 along, v = 5 away from the edge
-    compare(SurfaceOutline.toItem(SurfaceOutline.top, 100, 50, 0, 10, 5), {
+    compare(SurfaceOutline.toItem(ScreenEdge.Top, 100, 50, 0, 10, 5), {
       "x": 10,
       "y": 5
     });
-    compare(SurfaceOutline.toItem(SurfaceOutline.bottom, 100, 50, 0, 10, 5), {
+    compare(SurfaceOutline.toItem(ScreenEdge.Bottom, 100, 50, 0, 10, 5), {
       "x": 10,
       "y": 45
     });
-    compare(SurfaceOutline.toItem(SurfaceOutline.left, 50, 100, 1, 10, 5), {
+    compare(SurfaceOutline.toItem(ScreenEdge.Left, 50, 100, 1, 10, 5), {
       "x": 6,
       "y": 10
     });
-    compare(SurfaceOutline.toItem(SurfaceOutline.right, 50, 100, 0, 10, 5), {
+    compare(SurfaceOutline.toItem(ScreenEdge.Right, 50, 100, 0, 10, 5), {
       "x": 45,
       "y": 10
     });
@@ -172,7 +172,7 @@ TestCase {
 
   function test_footprint_bottom_is_mirrored() {
     const s = spec({
-      "edge": SurfaceOutline.bottom
+      "edge": ScreenEdge.Bottom
     });
     const m = SurfaceOutline.metrics(s);
     const fp = SurfaceOutline.footprint(s, m, 254, 128);
@@ -239,7 +239,7 @@ TestCase {
     // Top edge: the fillet sweeps clockwise; on the bottom edge it flips
     verify(SurfaceOutline.strokePath(s, m, 254, 128).indexOf("A 28 28 0 0 1 28 29") >= 0);
     const b = spec({
-      "edge": SurfaceOutline.bottom
+      "edge": ScreenEdge.Bottom
     });
     verify(SurfaceOutline.strokePath(b, SurfaceOutline.metrics(b), 254, 128).indexOf("A 28 28 0 0 0 28 99") >= 0);
   }
@@ -284,7 +284,7 @@ TestCase {
 
   function test_blurRegion_bottom_is_mirrored() {
     const s = spec({
-      "edge": SurfaceOutline.bottom
+      "edge": ScreenEdge.Bottom
     });
     const pieces = SurfaceOutline.blurRegion(s, SurfaceOutline.metrics(s), 254, 128, 0, 0);
     const box = pieces[0];
@@ -295,7 +295,7 @@ TestCase {
 
   function test_blurRegion_left_edge_far_corners_right() {
     const s = spec({
-      "edge": SurfaceOutline.left
+      "edge": ScreenEdge.Left
     });
     const box = SurfaceOutline.blurRegion(s, SurfaceOutline.metrics(s), 128, 254, 0, 0)[0];
     compare([box.x, box.y, box.width, box.height], [0, 27, 100, 200]);

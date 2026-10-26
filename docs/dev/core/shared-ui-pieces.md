@@ -162,6 +162,7 @@ Bars size their own widgets (`Bar.enrichBarConfig`) and never use these: a share
   - `score(text, q)`: the launcher's 0–100 fuzzy match.
   - `frecency(useRecord, now)`.
   - `looksLikeMath(text)`.
+- `methods/ScreenEdge`: the screen edges as numbers (`ScreenEdge.Top`, `Bottom`, `Left`, `Right`, an order code indexes arrays by) and their config names: `name(edge)`, `fromName(name)` (-1 if unknown), `fromConfig(name)` (Top if unknown), `opposite(edge)`.
 - `methods/ColorTemperature.color(kelvin)`: light's color at a temperature (the night light's button).
 - `KeybindFilter.columns(sections, count)`: the masonry split of the Keybinds page and the Cheatsheet module.
 - **Utils** (`methods/Utils`):
