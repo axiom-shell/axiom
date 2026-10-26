@@ -357,7 +357,7 @@ def main():
     # backend; besides the Hyprland* services, only the Hyprland-only
     # features use it directly, each gated on CompositorManager.supports.
     hyprland_features = {
-        "services/compositor/CompositorManager.qml", "services/session/GreetdManager.qml", "services/session/OnboardingManager.qml",
+        "services/compositor/CompositorManager.qml", "services/session/GreetdManager.qml",
     }
     for path, text in sources.items():
         code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())

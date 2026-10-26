@@ -10,6 +10,10 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 
 ### Rules
 - **One batch, one PR; one item, one commit.** A batch is one to four items of the same row that sit in the same area, about 800 changed lines at most, so a review still reads it whole. Each item is its own commit ending with `scripts/dev/verify.sh` printing `verify ok`, and a move is a commit of its own that changes no behaviour (its diff reviews as a rename). Batching is what keeps CI's fixed cost (a run per push) per batch, not per item.
+- **Delete before adding.** A fix first looks for what to remove: a mechanism made unnecessary, a duplicate, a special case the general path already covers. Between two fixes that work, the smaller one wins, and a fix that makes the code shorter is the best kind. Each PR body states its net lines (QML, Go, scripts; tests and docs apart).
+- **A rare path gets the smallest fix, or stays logged** (decided 2026-10-26, after #107 and #108 spent about 840 lines holding the compositor mode while config.json doesn't load, and opened three new entries doing it). A fix for a path a user rarely takes that grows past about 150 lines (tests apart) stops and becomes a plan ([Items that need a plan](#items-that-need-a-plan)), or the entry stays open. Never a stopgap that a later stage then has to delete.
+- **The batch size is a gate, not a guide.** Over about 800 changed lines (moves, generated files and tests apart), the batch is split before review, never reviewed whole.
+- **A decision is settled before it's built.** An item resting on a choice the maintainer hasn't made, or might change, stops for the decision first. #116 built a topic floor and #120 removed it the next day.
 - **A fix removes its entry from issues.md and its link here** in the same change; a phase is done when its list is empty. A new issues.md entry gets a link in the phase that will fix it.
 - **Waits for a backend stage** means the item touches code that stage deletes or rewrites: it's done in that stage's change or after it, never before (no polishing code about to go). Items without one can run at any time, in parallel with the backend roadmap.
 - Phases are grouped by kind, not run in number order: [Full order](#full-order) interleaves them with the backend stages. Three rules set it: moves land in quiet windows between stages (they collide with everything); enforcement (archtest, the contract check) lands before the stages that add packages; and nothing polishes code a stage will replace.
@@ -21,6 +25,7 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 - No singleton over about 800 lines outside the pure helpers and the compositor backends; every file sits in the folder its rule names.
 - `archtest` enforces the backend's dependency direction; the shell–daemon method shapes are checked on both sides.
 - The root `AGENTS.md` is 12 KB or less; generated docs are built, not committed.
+- [The launch gate](#the-launch-gate) is met, and axiom is posted for testers.
 
 ### Alignment with the backend roadmap
 
@@ -36,6 +41,8 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 | 7. Fit, geometry, performance | the chat lists → stage 5 | none |
 | 8. A clean log | stage 6 for the socket warnings; the rest: none | none |
 | 9. Docs, tooling, process | `config-v2.md` → stage 7 | none |
+| 10. Custom JSON widgets | stage 3b (streamed commands, JSON) | none |
+| 11. Audits, clear-out and hardening | every row before it | none |
 
 ### Full order
 Both roadmaps as one sequence. A row starts when the one above it has merged; the parallel lane fills the gaps at any time. **Status** is `done`, `in progress` (normally one row), `next` (the row after it) or `later`; it's kept current by [Taking the next step](#taking-the-next-step), so the first row not `done` is always where work resumes.
@@ -48,13 +55,18 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 4 | done | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. Two contract items were added after the row's first pass (strict param decoding, and the check failing on calls it can't read), so the check stops growing a shape at a time. |
 | 5 | in progress | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
 | 6 | next | Backend stage 3: brightness | Small; a first stage under the new checks. |
-| 7 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
-| 8 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
-| 9 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
-| 10 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
-| 11 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
-| 12 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
-| 13 | later | [Phase 9](#phase-9-docs-tooling-and-process) | Last, so the docs describe the final shape. |
+| 7 | later | [Backend stage 3b](backend/roadmap.md): exec (polled and streamed commands, JSON) | Right after brightness, another small stage under the new checks; ahead of stage 6 because the planned custom JSON widgets build on it, and stages 4 and 5 don't touch `CommandManager`. |
+| 8 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
+| 9 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
+| 10 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
+| 11 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
+| 12 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
+| 13 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
+| 14 | later | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
+| 15 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
+| 16 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 2: clear out issues.md, then audit again | Fixes after the audits, so the list isn't refilled behind them; the second pass catches what the fixes broke. |
+| 17 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 3: 1–2 weeks of hardening, frozen | The maintainer drives sway and niri daily; only fixes land. |
+| 18 | later | [Phase 9](#phase-9-docs-tooling-and-process), then post for testers | Last, so the docs describe the final shape; the post follows [the launch gate](#the-launch-gate). |
 
 **Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload).
 
@@ -90,10 +102,10 @@ The cycle the `roadmap-autopilot` skill runs, one batch (one PR) per iteration, 
 
 1. **Preflight** (leader). On `main`, `git status` clean (anything uncommitted means someone else is working here: stop), `git pull --ff-only`. An open PR labelled `roadmap` (`gh pr list --label roadmap`) is resumed at the step it reached instead of starting a new batch, unless it's a plan waiting for its decision, which never holds up the row ([Items that need a plan](#items-that-need-a-plan) step 2). One labelled `needs-decision` waits for the maintainer: if it's a plan with a decision on it (an approval, a chosen option, or `defer`), finish [Items that need a plan](#items-that-need-a-plan) step 4 or 5 for it first; any other one blocks its row until the maintainer answers.
 2. **Pick** (leader) the batch with [Taking the next step](#taking-the-next-step) steps 1–3, reading only the Full order, that phase's section (or the stage's bullets in [backend/roadmap.md](backend/roadmap.md)) and the items' issues.md entries; a batch is never wider than one row. A "needs a plan" item gets a plan PR ([Items that need a plan](#items-that-need-a-plan) step 1, by a fresh agent with a brief like step 3's) and the leader moves on to the row's next item; when only plans waiting for decisions are left in the row, stop and report them. An item that needs a decision or a forbidden action ends the batch before it (the items before it still go); when it's the first, stop and report instead of starting. That's an item that needs a maintainer decision (a changed default, whether a migration is worth it, a behaviour trade-off), needs a live action `AGENTS.md` › Never forbids (takeovers, the greeter, the real lock, idle on the live config, restarting axiom), or waits on a row that isn't `done`.
-3. **Brief** (leader), ten to fifteen lines plus two or three per item: the row and the items in order; each issues.md entry's title and its **Where**/**What**; what done looks like (the behaviour, and the entry removed with its link here); the docs to start from (`AGENTS.md` › Where to look, the recipe if one fits); the branch name `roadmap/<row>-<slug>`; and the stop conditions above, so the agent stops rather than guesses.
+3. **Brief** (leader), ten to fifteen lines plus two or three per item: the row and the items in order; each issues.md entry's title and its **Where**/**What**; what done looks like (the behaviour, and the entry removed with its link here); the docs to start from (`AGENTS.md` › Where to look, the recipe if one fits); the branch name `roadmap/<row>-<slug>`; and the stop conditions above, so the agent stops rather than guesses. The brief also quotes [Rules](#rules)' Delete before adding and the rare-path cap (about 150 lines), so the agent stops there rather than building on.
 4. **Implement** (a fresh `general-purpose` agent, given the brief): branch from `main`, never pushing it; force a QML reload, since a checkout replaces files' inodes ([testing](testing.md) › Reloads and logs), and wait for `Configuration Loaded` in `scripts/log.sh`; then per item: implement, `scripts/dev/verify.sh` until `verify ok`, and commit it with [Taking the next step](#taking-the-next-step) step 5 (statuses, `Done:` marks, issues.md removals) and the attribution trailer. An item it has to stop on is left out (reset to the last item's commit) and reported; the committed ones go on. What the live session can't show (Go code: the running binary isn't rebuilt; a schema change: the daemon reads the schema at its start) rests on its tests. It reports in at most 250 words: **Commits** (sha and item, one line each), **Changed** (one line per file group), **Verified** (the `verify ok` line, the tests run), **Not verifiable live**, **Filed** (issues.md titles added), **Stopped** (why, if it did).
-5. **Gate** (leader): the branch is at the last commit's sha, `git status` is clean, `git diff --stat main...HEAD` touches the batch's area plus `docs/dev/roadmap.md` / `docs/dev/issues.md`, the closed entries' headings are gone from issues.md. A failed gate goes back to the same agent once (by `SendMessage`, with the failing lines); a second failure stops.
-6. **Review** (a second fresh `general-purpose` agent, so the review isn't anchored on the implementer's reasoning), on the local branch before anything is pushed: runs the `review-branch` skill with the batch's intent and `--fix`, commits its fixes after `verify ok` (one commit per round, never pushing), and reports in at most 200 words: findings fixed (by severity), **Questions**, unfixed **Blockers**, the new sha. At most two rounds (a second agent if the first fixed a Blocker or Major), until none is left. Questions, or a Blocker it couldn't fix: push and open the PR as step 7 does, labelled `needs-decision` too, comment the findings on it, and stop.
+5. **Gate** (leader): the branch is at the last commit's sha, `git status` is clean, `git diff --stat main...HEAD` touches the batch's area plus `docs/dev/roadmap.md` / `docs/dev/issues.md`, the closed entries' headings are gone from issues.md, and the batch is within the size gate: `git diff --shortstat main...HEAD -- . ':!**/*_test.go' ':!tests/' ':!docs/'` at about 800 changed lines or fewer, unless its commits are pure moves. An oversized batch isn't sent back to be cut: it stops, and the leader reports it with a proposed split. A failed gate goes back to the same agent once (by `SendMessage`, with the failing lines); a second failure stops.
+6. **Review** (a second fresh `general-purpose` agent, so the review isn't anchored on the implementer's reasoning), on the local branch before anything is pushed: runs the `review-branch` skill with the batch's intent and `--fix`, told to rate as Major any added mechanism a smaller change would do (a new state, cache, retry or hold for a rare path) and any code a fix leaves behind that nothing needs any more, commits its fixes after `verify ok` (one commit per round, never pushing), and reports in at most 200 words: findings fixed (by severity), **Questions**, unfixed **Blockers**, the new sha. At most two rounds (a second agent if the first fixed a Blocker or Major), until none is left. Questions, or a Blocker it couldn't fix: push and open the PR as step 7 does, labelled `needs-decision` too, comment the findings on it, and stop.
 7. **PR** (leader): `scripts/dev/verify.sh --all > <scratch>/verify.log; tail -3` ends in `verify ok` (every CI check, so CI only confirms), then `git push -u origin HEAD` once and `gh pr create --label roadmap`; the body lists the row, each item with its commit and the issues.md entries it closed, and the reports' Verified and Not verifiable live.
 8. **CI** (leader): `gh pr checks <n> --watch`. A failure goes to a fresh agent with the failing job's log tail (`gh run view --log-failed | tail -60`) to fix, run `verify.sh --all` and push once, at most twice; then stop with the PR open.
 9. **Merge** (leader): `gh pr merge <n> --squash --delete-branch` (the squash message keeps each item's commit message as a bullet), `git checkout main`, `git pull --ff-only`, force a reload, and read `scripts/log.sh` (lines not marked known): a new warning goes into the next brief as an issues.md entry to file.
@@ -139,10 +151,7 @@ Steps, roughly in this order (moves first, each its own PR):
 
 Resolves:
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (designed and fixed in backend stage 7)
-- [Readers read files through a service](issues.md#readers-read-files-through-a-service)
 - [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
-- [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer)
-- [The onboarding's Compositor page names Hyprland](issues.md#the-onboardings-compositor-page-names-hyprland)
 - [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (waits for stage 5: `ChatRequest` moves to the daemon)
 
 ### Phase 4: backend structure and contract
@@ -153,10 +162,11 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 Resolves:
 
 ### Phase 5: the allowlist
-[Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
+[Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
 
 Resolved by a stage:
 - [Self-update and the greeter installer assume git](issues.md#self-update-and-the-greeter-installer-assume-git) (stage 4)
+- [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
 
 ### Phase 6: compositor parity
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
@@ -223,7 +233,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [A screenshot under niri timed out waiting for its frame](issues.md#a-screenshot-under-niri-timed-out-waiting-for-its-frame)
 
 ### Phase 9: docs, tooling and process
-Last, so the docs describe the final shape.
+Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
 
 Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` pages it points at); fold `docs/dev/core/config-v2.md` into `schema-annotations.md` and `config-manager.md` once stage 7 finishes v2; the maintainer moves the [Deferred](#deferred) entries to GitHub; a PR-size note in `CONTRIBUTING.md` (a batch per PR, an item per commit, moves apart from logic).
 
@@ -240,8 +250,47 @@ Resolves:
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 - [CI checks dependencies and cross-builds only when a PR touches Go](issues.md#ci-checks-dependencies-and-cross-builds-only-when-a-pr-touches-go)
 
+### Phase 10: custom JSON widgets
+The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).
+
+Steps:
+1. **The plan** ([Items that need a plan](#items-that-need-a-plan)): the maintainer re-plans the feature before it's built. The plan settles the shape below, the fields, the styles, the editor's panels, and whether `CommandOutput` and `Button`'s `labelCommand` fold into it later (a migration), then splits into items.
+2. **Definitions and the pure logic:** a new config section holding the definitions (an array with stable ids, recipe `config-section`); each surface refers to one by id through an `x-options` source. A definition holds a name, the command (`x-scope: commands`), the mode (poll, stream, once), the interval, the format (waybar, json, text), the bindings (a style's slot → a path in the JSON), the icon map (Waybar's `format-icons`: by `alt` or by percentage steps), a text template (`{text} {percentage}%`), the style and click and scroll commands. A methods helper (recipe `methods-helper`, with its test) parses each format, flattens a sample's JSON into the paths the dropdowns offer, resolves the bindings, fills templates, picks icons and maps a `class` or state to a theme colour (`ok`, `warning`, `critical` → semantic names). A service acquires a definition for its consumers, exposes the parsed slots per id and keeps a graph's numeric history, so the UI never holds live arrays.
+3. **The surfaces:** a bar widget type (recipe `bar-widget`, with a `PopoutAnchor`), a popout panel (recipe `bar-popout`), and a module type (recipe `overlay-module`) with `hosts: [lockscreen]`. Never the greeter (it's data, never code, and runs as another user); no click commands on the lockscreen.
+4. **The styles** (a fixed set, each declaring its slots; never a layout language): Label (icon and text, the bar's default), Figure (a big value, unit and caption), Ring and Bar (a value between `min` and `max`), Graph (a sparkline from the service's history), List (rows from `items`, a ListView over a model the service keeps, never a Repeater over live values), Text block (monospace optional). Each draws at every size a card or bar gives it.
+5. **Fields beyond Waybar's**, all optional, which presets map: `icon` (a Material Symbols name, over the `alt` map), `value` with `min`, `max` and `unit`, `subtext`, `color` or `state` (a theme name), `badge` (a count), `urgent` (attention), `image` (art, an avatar), `items` (rows of `{text, icon, value, subtext}`, for List and the popout) and `hidden` (as Waybar hides a module whose text is empty).
+6. **The editor page** (part of this phase, not after it; recipe `overlay-view`, a tool page with its default, migration step, launcher command and docs, on `docs/dev/core/editors-pattern.md`): the definitions listed (add, duplicate, delete, a few presets for well-known Waybar scripts); an inspector with the command, mode and interval, a Run button showing the raw output and the parsed fields, binding dropdowns filled from the sample's paths, the style and its slots, the icon map and the colour states; and live previews of one definition as it's drawn: a horizontal bar, a vertical bar, a strip, a square card, a wide card, a large card and the popout.
+7. **The audit's entry:** the feature gets its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
+
+Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone.
+
+### Phase 11: audits, clear-out and hardening
+Every system audited in full, every open entry fixed or deliberately deferred, then a frozen stretch of daily use, before posting on the sway and niri wikis for testers (decided 2026-10-27). Nothing new is built in this phase.
+
+Steps:
+1. **Audit every system** (row 15) with the `review-system` skill: `--full --record` (findings land in issues.md, linked from this phase under Found by the audits), adding `--deep` for systems over about 5k lines. Every system `scope.py --list` names, plus the custom widgets, plus every `feature:<name>` doc that no system covers. Audits only file; nothing is fixed in this step. Systems can run in parallel (findings only), the fixes can't. Each audit also runs a **deletion pass**, its findings filed like any other: what in the system can go or shrink (dead members, mechanisms nothing needs since a stage moved their work, duplicates of a shared piece, special cases the general path covers, options nobody would miss), each with its line count. Before the first audit, record the repository's size under [Size](#size) below.
+2. **Clear out issues.md** (row 16): every open entry, highest severity first, as ordinary batches. Each is fixed, or the maintainer defers it (to [Deferred](#deferred), then GitHub, listed as a known issue in the post); rare paths get the smallest fix or stay logged. The deletion findings go first in each system's batches (deleting first shrinks everything the fixes then touch). A "needs a plan" entry goes through [Items that need a plan](#items-that-need-a-plan). Then an incremental `review-system` pass of every system (it rereads only what changed since its last review), and again, until a pass finds nothing above minor.
+3. **Harden, frozen** (row 17; the maintainer's, so the autopilot stops before it): 1–2 weeks of daily use under sway and niri. Only fixes land: each new finding is fixed at once or becomes a known issue. Also: a first run from nothing (`install.sh` and the AUR packages for a fresh user, onboarding without a config.json, importing saved configs), and the Waybar scripts from Phase 10 again.
+
+#### The launch gate
+Posting for testers waits for all of these:
+- issues.md has nothing open a tester can reach in normal use under sway or niri; what's deferred is on GitHub and listed in the post as known issues;
+- a reload logs only the two reload lines under Hyprland, niri and sway;
+- `scripts/dev/verify.sh --all` is green;
+- the last audit pass found nothing above minor;
+- the code is smaller than before the audits ([Size](#size)): QML and Go lines (tests apart) went down, or each system that grew says why;
+- the hardening weeks ended with no fix pending.
+
+#### Size
+Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.
+
+Found by the audits:
+
 ### Deferred
 Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
 
 Extremely rare paths, put after real gaps (2026-10-26):
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads) (transient: corrected after the reload)
+
+Deferred by the maintainer (2026-10-27):
+- [Readers read files through a service](issues.md#readers-read-files-through-a-service)

@@ -29,8 +29,8 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 
 ### Compositor page
 - Shown wherever axiom can set the compositor up (`supports.configModes`: Hyprland, sway). Its paths and names are the config writer's (`CompositorConfigManager.managedPath`, `userDir`) and `CompositorManager.displayName`, so nothing on it is one compositor's; `detectCompositor()` reads it all.
-- **`configState`:** `none` | `stock` | `custom` | `ours` | `blocked` | `legacy`. It comes from `checkManaged()`, plus on Hyprland a `hyprland.conf` check (`legacy`) and its version (`hyprlandSupported`: 0.55+; `compositorSupported` is false only for an older Hyprland, and Finish then leaves the mode).
-- Where another build of the compositor can do more (plain sway: SwayFX), a notice says so (the backend's `unsupportedHint`).
+- **`configState`:** `none` | `stock` | `custom` | `ours` | `blocked` | `legacy`. It comes from `checkManaged()`, plus the backend's setup check (`CompositorManager.withSetupCheck`): `legacy` when it names a config in an older format (`legacyNote`: Hyprland's `hyprland.conf`), and `compositorSupported` false, with `setupProblem` shown, where axiom can't set it up (a Hyprland before 0.55; Finish then leaves the mode).
+- Where another build of the compositor can do more (plain sway: SwayFX), a notice says so (`CompositorManager.unsupportedHint`).
 - **The three modes** are always shown, with `OptionCard.tag`:
   - `managed`: Recommended
   - `included`: For complex setups

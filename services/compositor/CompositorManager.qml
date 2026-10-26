@@ -34,8 +34,28 @@ Singleton {
   // that the compositor can't do it, and what can, where the backend knows
   // (its unsupportedHint). I18n.tr("{0} can't do this.")
   function unsupportedNote(capability) {
-    const hint = root.backend?.unsupportedHint?.(capability) ?? "";
-    return [I18n.tr("{0} can't do this.", root.displayName), hint].filter(text => text !== "").join(" ");
+    return [I18n.tr("{0} can't do this.", root.displayName), root.unsupportedHint(capability)].filter(text => text !== "").join(" ");
+  }
+
+  // What can do what this compositor can't, for `capability` (a supports
+  // key): "SwayFX can." on plain sway; "" where the backend doesn't say
+  function unsupportedHint(capability) {
+    return root.backend?.unsupportedHint?.(capability) ?? "";
+  }
+
+  // Whether axiom can set the compositor up, for the onboarding's Compositor
+  // page: calls back with { supported, problem, legacyNote } (contract.md ›
+  // Config layer). A backend that doesn't check calls back at once with
+  // supported and no notes.
+  function withSetupCheck(callback) {
+    if (root.backend?.withSetupCheck)
+      root.backend.withSetupCheck(callback);
+    else
+      callback({
+        "supported": true,
+        "problem": "",
+        "legacyNote": ""
+      });
   }
 
   // Which compositor axiom runs under: "hyprland", "sway", "niri" or ""

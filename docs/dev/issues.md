@@ -245,7 +245,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The window shadow's offset is always 0 but still passed through every writer
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`spec`: `"offset": 0`), `components/methods/CompositorLayer.qml` (`look`), `components/methods/HyprLua.qml`, `components/methods/SwayConf.qml`, `components/methods/NiriConf.qml`
-- **What:** Since config v66 axiom's shadow only spreads evenly, so the spec's shadow `offset` is a constant 0 that `look()` hands on and each writer writes (`decoration.shadow.offset`, `shadow_offset`, niri's `offset`). Writing 0 still matters (it resets a user's own offset), so each writer could write 0 itself and the field go from the spec and its tests.
+- **What:** Since config v66 axiom's shadow only spreads evenly, so the spec's shadow `offset` is a constant 0 that `look()` hands on and each writer writes (`decoration.shadow.offset`, `shadow_offset`, niri's `offset`). Writing 0 still matters (it resets a user's own offset), so each writer could write 0 itself and the field go from the spec and its tests. Done in Go's `compositor/render` when the QML writers go (backend stage 7; the maintainer folded it in, 2026-10-27).
 - **Size:** small
 - **Found:** 2026-10-17, while reviewing the shadow-on-or-off change
 
@@ -283,12 +283,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`_appliedParts`)
 - **What:** Opacity counts as an applied part, so turning it off reloads the config (see "Changing a setting under sway can flash the screen"), though SwayManager already sets every window back to 1 itself. A part the backend takes back itself shouldn't count.
 - **Size:** trivial
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
-### The onboarding's Compositor page names Hyprland
-- **Where:** `components/surfaces/onboarding/pages/CompositorPage.qml`, `services/session/OnboardingManager.qml` (`detectCompositor`)
-- **What:** It gates on `CompositorManager.kind !== "hyprland"` and reads `HyprlandManager.withVersion` (and the page shows Hyprland's legacy notice) rather than a capability, and calls `CompositorManager.backend?.unsupportedHint` from UI. A writer hook (`legacyConfig`, `configProblem`) and a CompositorManager passthrough would keep it neutral.
-- **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
 ### SwayFX's corner radius reaches only windows opened later
