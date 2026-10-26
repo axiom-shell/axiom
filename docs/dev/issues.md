@@ -122,11 +122,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
-### An outside edit of config.json can release a managed compositor config
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`apply`, `_leave`), `services/core/ConfigManager.qml` (its file-watch reload)
-- **What:** Takeover settings (`x-takeover`) are kept from changing only by `SavedConfigsManager`'s load and import. Writing `config.json` from outside while axiom runs, without `Compositor.mode` or with another mode, reloads it; `apply()` takes that as a switch away from managed and releases the compositor's config (`writer.release()`). Seen 2026-10-20: a saved example copied over `config.json` gave `hyprland.lua` back. A hand edit, a sync tool or a restored backup would do the same. A possible guard: hold every `x-takeover` value on a plain file reload, and change one only through its own card.
+### A config.json that doesn't load at the start releases a managed compositor config
+- **Where:** `backend/internal/store/store.go` (`loadInitial`: `s.config` is the defaults), `backend/internal/daemon/compositor.go` (`Mode` reads `store.Config`), `backend/internal/compositor/manager/manager.go` (`apply`, `leave`)
+- **What:** When config.json doesn't load as axiom starts (not JSON, or invalid), the store runs on the defaults, so the compositor manager reads `Compositor.mode` as the default `detached`; with `AppliedMode` `managed` its first `apply` leaves managed and gives the compositor's config back, though the file still says managed. The store already knows the file's takeover values when it parsed (`fileTakeovers`) but nothing reads them, and over a file that isn't JSON it knows none. The reload hold (`Store.holdTakeovers`) can't help: the release happens before any reload. A possible guard: while the store is blocked from the start, the manager keeps the mode it last applied (or the store hands out `fileTakeovers`' values, and none is applied while they're unknown).
 - **Size:** small
-- **Found:** 2026-10-20, while testing popout fixes on saved configs
+- **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
 
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
@@ -157,6 +157,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `CalendarPage.qml` is the only code file no doc's `Files:` header lists (`.claude/skills/review-system/scope.py --orphans`), though `calendar.md` describes it in its text. So `check_doc_drift.py` never flags the doc when the page changes, and a review of the calendar feature doesn't see the page.
 - **Size:** trivial
 - **Found:** 2026-10-19, while building the review-system skill
+
+### A supervise test times out under a loaded run
+- **Where:** `backend/internal/supervise/supervise_test.go` (`TestOrphanOfAnEarlierDaemonIsStopped`, `eventually`)
+- **What:** One `scripts/check_go.sh` run failed with `supervise_test.go:143: timed out` (the orphan wasn't seen stopped within `eventually`'s 2 s), then passed on the next two runs with nothing changed in `supervise`. The test runs `t.Parallel()` with the rest of the package and `go test` runs packages at once, so 2 s is tight under load; a flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or stop the orphan before polling.
+- **Size:** trivial
+- **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
 
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`

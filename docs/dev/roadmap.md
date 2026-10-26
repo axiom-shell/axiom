@@ -115,8 +115,8 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its two entries are linked here and fixed there.
 
 Fixed in this phase:
-- [An outside edit of config.json can release a managed compositor config](issues.md#an-outside-edit-of-configjson-can-release-a-managed-compositor-config)
 - [Any change of the mode to managed approves the takeover](issues.md#any-change-of-the-mode-to-managed-approves-the-takeover)
+- [A config.json that doesn't load at the start releases a managed compositor config](issues.md#a-configjson-that-doesnt-load-at-the-start-releases-a-managed-compositor-config)
 - [Unreadable sway config means axiom binds over the user's keys](issues.md#unreadable-sway-config-means-axiom-binds-over-the-users-keys)
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads)
 - [`axiom lock` fails with no screen connected](issues.md#axiom-lock-fails-with-no-screen-connected)
@@ -241,6 +241,7 @@ Resolves:
 - [Small tooling leftovers](issues.md#small-tooling-leftovers)
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
+- [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 

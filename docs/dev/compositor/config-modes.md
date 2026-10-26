@@ -53,7 +53,7 @@ How axiom sets the compositor up, the same on every compositor with `supports.co
 - Never press Allow for the user while testing (AGENTS.md › Never).
 
 ### Leaving a mode
-- A switch made while axiom runs gives back what the mode took. Outside managed mode, a compositor config that's still axiom's (its header on the first line) is given back too, whatever the mode last applied: a mode changed while axiom wasn't running, or a release that failed.
+- A switch made while axiom runs gives back what the mode took. Only the Compositor card switches it: `Compositor.mode` is `x-takeover`, so an edit of config.json from outside (a saved config copied over it, a sync tool) leaves the mode in effect and is logged as ignored ([ConfigManager](../core/config-manager.md)). Outside managed mode, a compositor config that's still axiom's (its header on the first line) is given back too, whatever the mode last applied: a mode changed while axiom wasn't running, or a release that failed.
 - Leaving managed runs the takeover's release ([Managed takeover](../hyprland/managed-takeover.md#release)); detached waits for it before applying its runtime layer. A release that fails (an error, or the dir now a link or in git) is tried again after 10 s, doubling up to 5 min, while `releaseProblem` says why (the status card shows it).
 - Leaving included, or leaving managed for detached, empties the module if it exists: every part becomes a no-op, so a config still loading it gets nothing (the runtime layer only adds, and couldn't undo it).
 
