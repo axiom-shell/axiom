@@ -41,4 +41,4 @@ Standard library first. A new module needs a line here saying why, and must be p
 
 ## Checks
 
-`scripts/check_go.sh` (`scripts/generate.sh --fixtures` first, then generated code, gofmt, vet, staticcheck, `go mod tidy`, tests with `-race`); `--fix` regenerates and formats; `--ci` adds govulncheck and the release cross-builds. `scripts/dev/verify.sh` runs it when anything under `backend/` (or an embedded file) changed.
+`scripts/check_go.sh` (`scripts/generate.sh --fixtures` first, then generated code, gofmt, vet, staticcheck, `go mod tidy`, tests with `-race`); `--fix` regenerates and formats; `--ci` adds govulncheck (the release cross-builds are `release.yml`'s). `scripts/dev/verify.sh` runs it when anything under `backend/` (or an embedded file) changed.

@@ -52,8 +52,12 @@ type Options struct {
 	RuntimeFile string
 	Tables      *render.Tables
 	Actions     *actions.Table
-	// Schema is the config's schema; Mode the config's Compositor.mode;
-	// Binds its Keybinds.binds; CommitBinds saves Keybinds.binds
+	// Schema is the config's schema; Mode the config's Compositor.mode,
+	// "" while it isn't known (config.json didn't load at the start): the
+	// manager then holds, changing no mode it applied (the defaults'
+	// runtime layer only while nothing of axiom's is in the compositor's
+	// config); Binds its
+	// Keybinds.binds; CommitBinds saves Keybinds.binds
 	Schema      func() any
 	Mode        func() string
 	Binds       func() any
@@ -83,7 +87,8 @@ type Manager struct {
 	stopped chan struct{}
 	stop    sync.Once
 
-	in      Inputs
+	in Inputs
+	// mode: the config's; "" while it isn't known (holding)
 	mode    string
 	lastKey string
 	liveKey string
@@ -91,8 +96,9 @@ type Manager struct {
 	problem         string
 	loaded          bool
 	takeoverPending bool
-	// pickedHere: managed was picked while axiom runs (its card's Save),
-	// where the card asks for the approval: no notification
+	// pickedHere: managed was saved while axiom runs (its card's Save, not
+	// an edit of the file), where the card asks for the approval: no
+	// notification
 	pickedHere bool
 	// releaseProblem: why the managed config couldn't be given back (retried
 	// after releaseBackoff)
@@ -309,6 +315,7 @@ func (m *Manager) SetInputs(in *jsonx.Object) {
 		}
 		if !wasLive {
 			m.mode = m.o.Mode()
+			m.noteHolding()
 			m.debounce.Reset(300 * time.Millisecond)
 		}
 		m.checkKey()
@@ -319,18 +326,56 @@ func (m *Manager) SetInputs(in *jsonx.Object) {
 	})
 }
 
-// ConfigChanged tells of a config change (the mode).
-func (m *Manager) ConfigChanged() {
+// ConfigChanged tells of a config change (the mode); fromFile when it was
+// read from config.json (an edit made outside), not saved by the shell.
+func (m *Manager) ConfigChanged(fromFile bool) {
 	m.enqueue(func(ctx context.Context) {
 		if !m.live() {
 			return
 		}
 		if mode := m.o.Mode(); mode != m.mode {
 			m.mode = mode
-			m.modeChanged()
+			m.modeChanged(fromFile)
 			m.debounce.Reset(300 * time.Millisecond)
 		}
 	})
+}
+
+// noteHolding logs that the mode isn't known, so no mode is applied
+func (m *Manager) noteHolding() {
+	if m.mode == "" {
+		m.logf("config.json doesn't load: leaving the compositor's config as it is until it's fixed")
+	}
+}
+
+// axiomsInConfig: a managed config or an include of axiom's is actually
+// in the compositor's config, which holding never touches; loaded when
+// axiom's file is in effect. AppliedMode managed alone doesn't count: a
+// takeover awaiting approval, blocked or failed left the user's config in
+// place, and gets the runtime layer as outside the hold
+func (m *Manager) axiomsInConfig(ctx context.Context) (in, loaded bool) {
+	loaded, _ = m.w.checkLoaded(ctx, m.in, "included")
+	return loaded || m.configIsOurs(), loaded
+}
+
+// applyHolding: while the mode isn't known, the defaults' runtime layer,
+// as detached mode applies it, only when nothing of axiom's is in the
+// compositor's config; no mode is set up or given back, and the applied
+// mode stays
+func (m *Manager) applyHolding(ctx context.Context) {
+	if in, loaded := m.axiomsInConfig(ctx); in {
+		// A layer applied before axiom's file loaded comes off, as
+		// checkLoaded takes it off (niri's wrapper would load it twice)
+		if loaded {
+			m.w.runtimeClear(ctx)
+		}
+		return
+	}
+	// The reload's configReloaded applies the layer again
+	if m.undoLive(ctx) {
+		return
+	}
+	m.runtimeApply(ctx)
 }
 
 // checkKey re-applies the layer when what it's made of changed
@@ -349,6 +394,8 @@ func (m *Manager) checkKey() {
 
 func (m *Manager) status() string {
 	switch {
+	case m.mode == "":
+		return "pending"
 	case m.mode == "detached":
 		return "runtime"
 	case m.problem != "":
@@ -504,6 +551,13 @@ func (m *Manager) apply(ctx context.Context) {
 	if !m.live() {
 		return
 	}
+	// The mode isn't known (config.json didn't load at the start, and
+	// running on the defaults would read detached): the mode applied stays,
+	// a managed config never given back, until the file is fixed
+	if m.mode == "" {
+		m.applyHolding(ctx)
+		return
+	}
 	// Detached, the reload's configReloaded applies the layer again. The
 	// file modes go on: returning would drop a mode switch or a rewrite
 	if m.undoLive(ctx) && m.mode == "detached" {
@@ -541,14 +595,16 @@ func (m *Manager) apply(ctx context.Context) {
 }
 
 // modeChanged: a problem belongs to the mode it was found in
-func (m *Manager) modeChanged() {
+func (m *Manager) modeChanged(fromFile bool) {
 	m.problem = ""
 	m.loaded = false
 	m.takeoverPending = false
 	m.monitorConflict = nil
 	// Saving managed never approves a takeover: the card shows Allow
-	// takeover after it, as it does for a config loaded with the mode
-	m.pickedHere = m.mode == "managed"
+	// takeover after it, as it does for a config loaded with the mode.
+	// Read from the file (one that didn't load at the start, fixed to say
+	// managed), no card is open: the notification asks
+	m.pickedHere = m.mode == "managed" && !fromFile
 }
 
 // --- Approving a takeover ---
@@ -908,6 +964,17 @@ func (m *Manager) liveChanged(ctx context.Context) {
 	if !m.live() {
 		return
 	}
+	if m.mode == "" {
+		if in, _ := m.axiomsInConfig(ctx); in {
+			return
+		}
+		if m.w.liveByFile() || len(m.droppedParts()) > 0 {
+			m.apply(ctx)
+			return
+		}
+		m.applyLive(ctx)
+		return
+	}
 	if m.w.liveByFile() || m.st.AppliedMode != m.mode || len(m.droppedParts()) > 0 {
 		m.apply(ctx)
 		return
@@ -969,7 +1036,9 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 	if m.w.configReloaded(ctx, m.in) {
 		m.checkKey()
 	}
-	if m.mode == "detached" {
+	// Holding, apply() applies the defaults' layer again when nothing of
+	// axiom's is in the config
+	if m.mode == "detached" || m.mode == "" {
 		m.debounce.Reset(300 * time.Millisecond)
 	} else {
 		m.checkLoaded(ctx)

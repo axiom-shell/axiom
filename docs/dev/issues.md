@@ -122,11 +122,17 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
-### A config.json that doesn't load at the start releases a managed compositor config
-- **Where:** `backend/internal/store/store.go` (`loadInitial`: `s.config` is the defaults), `backend/internal/daemon/compositor.go` (`Mode` reads `store.Config`), `backend/internal/compositor/manager/manager.go` (`apply`, `leave`)
-- **What:** When config.json doesn't load as axiom starts (not JSON, or invalid), the store runs on the defaults, so the compositor manager reads `Compositor.mode` as the default `detached`; with `AppliedMode` `managed` its first `apply` leaves managed and gives the compositor's config back, though the file still says managed. The store already knows the file's takeover values when it parsed (`fileTakeovers`) but nothing reads them, and over a file that isn't JSON it knows none. The reload hold (`Store.holdTakeovers`) can't help: the release happens before any reload. A possible guard: while the store is blocked from the start, the manager keeps the mode it last applied (or the store hands out `fileTakeovers`' values, and none is applied while they're unknown).
+### Restoring a saved config over an unreadable config.json releases a managed compositor config
+- **Where:** `backend/internal/store/store.go` (`Replace`, `takeoverBase`, `takeoversUnknown`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`, `apply`)
+- **What:** When config.json isn't JSON at the start, the store knows no takeover values and `takeoverBase` is the defaults, so the manager holds (mode ""). Restoring a saved config or an example from the settings (what the blocked banner suggests) goes through `Replace` without `takeover`, which keeps the takeover settings from `takeoverBase`: the defaults' `Compositor.mode` `detached` is written, the manager's mode goes from "" to `detached`, and its `apply` leaves managed and gives the compositor's config back, though the user never chose detached. Needs a decision: take the restored file's own takeover values while none is known (an import then sets a takeover setting), have the manager keep `AppliedMode` across the first change out of holding, or refuse a restore that would change what was applied.
 - **Size:** small
-- **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
+- **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
+
+### The shell reads the default compositor mode while config.json doesn't load
+- **Where:** `services/compositor/CompositorConfigManager.qml` (`mode`, `status`)
+- **What:** While config.json doesn't load at the start, the daemon's compositor manager runs on the file's mode (`Store.Takeovers`; its `compositor.state` push says `mode: "managed"`), but the shell's `mode` is `CompositorConfig.mode`, the defaults' `detached`, so `status` says `runtime` and the Compositor card, `KeybindManager` and `MonitorManager` treat a loaded managed config as the runtime layer until the file is fixed. Saves are blocked meanwhile, so nothing is written from it. Reading the daemon's pushed `mode` while `ConfigManager.savesBlocked` would match them.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
 
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
@@ -249,12 +255,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `BlurManager.active` flips as a fullscreen window opens or closes and is in `_liveInputs`, so each flip re-sends the whole look and input (Hyprland's `hl.config({ input = … })`, sway's `[all] border pixel`, `gaps … all set`), not just the blur rules: a user's runtime tweak (`border toggle`, `gaps current plus`) is undone whenever anything goes fullscreen. A blur-only change should send only the blur lines.
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
-
-### A managed mode loaded from a fixed config.json asks for the takeover without a notification
-- **Where:** `backend/internal/compositor/manager/manager.go` (`modeChanged`, `pickedHere`)
-- **What:** Every mode change while axiom runs sets `pickedHere`, which assumes the card's Save and so skips the approval notification. A config.json that didn't load at the start (defaults, detached) and is then fixed from outside to say managed changes the mode with no card open: the takeover waits for Allow with only the log line and the card's status to say so. Not an approval (only `AllowTakeover` records one), just a missing prompt. Telling the shell's save from the store's reload (a flag on the mode's change) would fix it.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the close of "Any change of the mode to managed approves the takeover"
 
 ### Unreadable sway config means axiom binds over the user's keys
 - **Where:** `backend/internal/compositor/manager/runtime.go` (`_start`)

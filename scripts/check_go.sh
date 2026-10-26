@@ -9,7 +9,8 @@
 #   scripts/check_go.sh           generated code fresh, gofmt, vet, staticcheck,
 #                                 go mod tidy, tests (with -race when cgo works)
 #   scripts/check_go.sh --fix     rewrite instead of failing: go generate, gofmt -w
-#   scripts/check_go.sh --ci      also govulncheck and the release cross-builds
+#   scripts/check_go.sh --ci      also govulncheck (the release cross-builds
+#                                 are release.yml's)
 set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -79,13 +80,6 @@ tests() {
   fi
 }
 
-crossbuild() {
-  local arch
-  for arch in amd64 arm64; do
-    CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -trimpath -o /dev/null ./cmd/axiom || return 1
-  done
-}
-
 step "generated files" generated
 step "gofmt" formatted
 step "vet" go vet ./...
@@ -98,7 +92,6 @@ step "tests" tests
 step "schema built from config/schema/" go run ./cmd/axiom schema check --tree ..
 if [[ $ci -eq 1 ]]; then
   step "govulncheck" go tool govulncheck ./...
-  step "cross-build" crossbuild
 fi
 
 if [[ ${#failed[@]} -gt 0 ]]; then

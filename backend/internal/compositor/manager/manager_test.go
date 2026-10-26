@@ -167,11 +167,16 @@ func (h *harness) inputs(fileTag, liveTag, layerKey string, parts ...string) {
 		"specFile", jsonx.Obj("tag", fileTag, "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look)))
 }
 
-func (h *harness) setMode(mode string) {
+// setMode changes the mode as the shell's save does
+func (h *harness) setMode(mode string) { h.changeMode(mode, false) }
+
+// changeMode changes the mode, read from the file (an edit made outside)
+// or saved by the shell
+func (h *harness) changeMode(mode string, fromFile bool) {
 	h.modeMu.Lock()
 	h.mode = mode
 	h.modeMu.Unlock()
-	h.m.ConfigChanged()
+	h.m.ConfigChanged(fromFile)
 }
 
 // eventually waits for cond
@@ -344,7 +349,7 @@ func TestInertManagerNeverBlocks(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		for range 1000 {
-			m.ConfigChanged()
+			m.ConfigChanged(false)
 		}
 		m.State(context.Background())
 		close(done)
@@ -370,7 +375,7 @@ func TestStoppedManagerNeverBlocks(t *testing.T) {
 	m2.stop.Do(func() { close(m2.stopped) })
 	done := make(chan struct{})
 	go func() {
-		m2.ConfigChanged()
+		m2.ConfigChanged(false)
 		m2.State(context.Background())
 		m2.Entries(ctx)
 		close(done)
@@ -476,5 +481,129 @@ func TestAConfigGivenBackMeanwhileIsntWrittenOver(t *testing.T) {
 	h.eventually("asked again", func() bool { return h.state("takeoverPending") == true })
 	if readFile(f.ManagedPath) != "-- mine again\n" || h.approved() {
 		t.Fatal("written over, or the approval kept")
+	}
+}
+
+// While the mode isn't known (config.json didn't load at the start) a
+// managed config or an include of axiom's is never touched: a managed
+// config in place is never given back, whether the runtime file remembers
+// managed or not (gone after a reboot), and the mode applied stays; once
+// the file is fixed, its mode applies
+func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct {
+		name, applied string
+		managedFile   bool
+		included      bool
+	}{
+		{"applied managed", "managed", true, false},
+		{"managed config, nothing applied", "", true, false},
+		{"include loaded", "included", false, true},
+		{"include loaded, nothing applied", "", false, true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, "")
+			h.m.st.AppliedMode = c.applied
+			h.w.loaded = c.included
+			f := h.w.files(Inputs{})
+			os.MkdirAll(f.UserDir, 0o755)
+			managed := ""
+			if c.managedFile {
+				managed = hyprHeader + " managed f0\n"
+				os.WriteFile(f.ManagedPath, []byte(managed), 0o644)
+			}
+			h.inputs("f1", "l1", "k1", "borders")
+			h.w.reloadCh <- ipc.Reload{}
+			time.Sleep(600 * time.Millisecond)
+			// A live change applies nothing either
+			h.inputs("f1", "l2", "k1", "borders")
+			time.Sleep(600 * time.Millisecond)
+			// Only a runtime layer comes off while axiom's file is loaded
+			for _, call := range h.w.seen() {
+				if call != "clear" || !c.included {
+					t.Fatalf("changed the compositor's config: %v", h.w.seen())
+				}
+			}
+			if readFile(f.ManagedPath) != managed {
+				t.Fatalf("changed the managed config: %q", readFile(f.ManagedPath))
+			}
+			if h.status() != "pending" || h.m.st.AppliedMode != c.applied {
+				t.Fatalf("status %s, applied %q", h.status(), h.m.st.AppliedMode)
+			}
+			if c.managedFile {
+				h.setMode("managed")
+				h.eventually("the managed config rewritten", func() bool { return readFile(f.ManagedPath) == hyprHeader+" managed f1\n" })
+			}
+		})
+	}
+}
+
+// While the mode isn't known and nothing of axiom's is in the compositor's
+// config, the defaults' runtime layer applies, again after a reload drops
+// it, and the mode applied stays. Managed applied with no managed config in
+// place (the takeover awaiting approval, blocked or failed) gets it too, as
+// outside the hold, and nothing is claimed
+func TestAnUnknownModeAppliesTheDefaultsLayer(t *testing.T) {
+	t.Parallel()
+	for _, applied := range []string{"", "detached", "managed"} {
+		t.Run("applied "+applied, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, "")
+			h.m.st.AppliedMode = applied
+			h.inputs("f1", "l1", "k1")
+			h.eventually("the runtime layer", h.called("runtime:live l1"))
+			h.w.reloadCh <- ipc.Reload{}
+			h.eventually("again after a reload", func() bool {
+				n := 0
+				for _, c := range h.w.seen() {
+					if c == "runtime:live l1" {
+						n++
+					}
+				}
+				return n >= 2
+			})
+			h.inputs("f1", "l2", "k1")
+			h.eventually("a live change", h.called("live:live l2"))
+			f := h.w.files(Inputs{})
+			if readFile(f.ManagedPath) != "" || readFile(f.IncludePath) != "" || h.m.st.AppliedMode != applied {
+				t.Fatalf("set up a mode: applied %q", h.m.st.AppliedMode)
+			}
+			if h.status() != "pending" {
+				t.Fatalf("status %s", h.status())
+			}
+		})
+	}
+}
+
+// managed read from the file (one that didn't load at the start, fixed from
+// outside) has no card open: the notification asks for the approval, which
+// it never is itself; the shell's save doesn't notify (the card asks)
+func TestManagedFromTheFileNotifies(t *testing.T) {
+	t.Parallel()
+	for _, fromFile := range []bool{true, false} {
+		t.Run(fmt.Sprintf("from file %v", fromFile), func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, "")
+			f := h.w.files(Inputs{})
+			os.MkdirAll(f.ConfigDir, 0o755)
+			os.WriteFile(f.ManagedPath, []byte("-- mine\n"), 0o644)
+			h.inputs("f1", "l1", "k1")
+			h.eventually("live", func() bool { return h.state("live") == true })
+			h.changeMode("managed", fromFile)
+			h.eventually("the takeover pending", func() bool { return h.state("takeoverPending") == true })
+			notified := false
+			for len(h.pushes) > 0 {
+				if strings.Contains(<-h.pushes, `"approval"`) {
+					notified = true
+				}
+			}
+			if notified != fromFile {
+				t.Fatalf("notified %v", notified)
+			}
+			if readFile(f.ManagedPath) != "-- mine\n" || h.approved() {
+				t.Fatal("taken over without the approval")
+			}
+		})
 	}
 }
