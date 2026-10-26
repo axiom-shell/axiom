@@ -13,7 +13,7 @@ import qs.components.hosts.popout
 // island, or a detached box past a transparent bar. One held off the edge
 // (`detached`) is an island: `gap`
 // in from the frame lines on its edge and at both ends
-// (BarManager.detachedGaps), so it lines up with a floating bar's islands, or
+// (ScreenEdgeManager.detachedGaps), so it lines up with a floating bar's islands, or
 // with the windows.
 EdgePopout {
   id: root
@@ -42,11 +42,11 @@ EdgePopout {
   // in screen px: this window's edge coordinates start past what's
   // reserved on the perpendicular edge at its start
   readonly property real screenLength: root.vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0
-  readonly property real alongOrigin: EdgeMenuManager.reservedOn(root.screen, root.startSide)
+  readonly property real alongOrigin: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.startSide)
   // The least room from the modules to the screen's ends: what's reserved
   // there, the box's inset and its padding
   readonly property real startPad: root.alongOrigin + root.startInset + root.contentPadding
-  readonly property real endPad: EdgeMenuManager.reservedOn(root.screen, root.endSide) + root.endInset + root.contentPadding
+  readonly property real endPad: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide) + root.endInset + root.contentPadding
   // From config, so the hover strip lines up before the body has loaded
   // Its card size (EdgeMenuManager.cardUnitOf)
   readonly property int unit: EdgeMenuManager.cardUnitOf(root.menu)

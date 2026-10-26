@@ -34,48 +34,6 @@ Singleton {
   // else "menu". Set with its anchor, as it opens.
   property var claimKinds: ({})
 
-  // Space open integrated menus reserve, by "<screen>:<edge>" (edge
-  // "top" | "bottom" | "left" | "right"), for surfaces that place
-  // themselves against the perpendicular edges (BarPopouts)
-  property var zones: ({})
-
-  function setZone(screenName, edge, size) {
-    const key = `${screenName}:${edge}`;
-    if ((root.zones[key] ?? 0) !== size)
-      root.zones = Utils.withEntry(root.zones, key, size > 0 ? size : undefined);
-  }
-
-  function zoneOn(screenName, edge) {
-    return root.zones[`${screenName}:${edge}`] ?? 0;
-  }
-
-  // Where windows start on a screen edge (a Bar.Location), in px from it,
-  // integrated menus included: what surfaces inside the reserved space
-  // (floating menus, docks) are placed from (BarManager.reservedOn)
-  function reservedOn(screen, location) {
-    return BarManager.reservedOn(screen, location) + root.zoneOn(screen?.name ?? "", Bar.edgeName(location));
-  }
-
-  // The inner side of what's on a screen edge, in px from it, integrated
-  // menus included: what a surface held off an edge keeps its gaps from
-  // (BarManager.frameLine, BarManager.detachedGaps)
-  function frameLineOn(screen, location) {
-    return BarManager.frameLine(screen, location) + root.zoneOn(screen?.name ?? "", Bar.edgeName(location));
-  }
-
-  // Where the border frame's rounded inner corner lies from a screen edge,
-  // integrated menus included (BarManager.cornerLine)
-  function cornerLineOn(screen, location) {
-    return BarManager.cornerLine(screen, location) + root.zoneOn(screen?.name ?? "", Bar.edgeName(location));
-  }
-
-  // How far past where windows start on a screen edge (a Bar.Location;
-  // reservedOn) a surface held `gap` off its frame line (frameLineOn) is:
-  // where a held box goes, in from its window's edge there
-  function heldInset(screen, location, gap) {
-    return Math.max(0, root.frameLineOn(screen, location) + gap - root.reservedOn(screen, location));
-  }
-
   // Where each running menu's modules can sit on its screen, by id, as the
   // menu reports it (IntegratedEdgeMenu, FloatingEdgeMenu), for the
   // layouts editor. In px: { screen (its name), startPad, endPad (the

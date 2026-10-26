@@ -245,7 +245,7 @@ Rectangle {
   function barAt(atStart, kind) {
     if ((atStart ? root.ends.start : root.ends.end).kind !== kind)
       return null;
-    const panel = ShellManager.barOn(root.blurScreen, root.isVertical ? (atStart ? Bar.Top : Bar.Bottom) : (atStart ? Bar.Left : Bar.Right));
+    const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? Bar.Top : Bar.Bottom) : (atStart ? Bar.Left : Bar.Right));
     return panel?.visible ? panel.container : null;
   }
   readonly property var solidStart: root.barAt(true, "solidBar")

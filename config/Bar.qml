@@ -18,7 +18,7 @@ QtObject {
   // with the compositor's outer gaps (`gapsOut`: per edge name,
   // CompositorManager's),
   // which a floating bar's islands keep from the screen edges as windows
-  // do (BarManager.bars).
+  // do (ScreenEdgeManager.bars).
   function enrichBarConfig(barConfig, gapsOut) {
     const loc = Bar.getLocationFromString(barConfig.location);
     // Its widget style, accents and shadow: its own style's, each key it
@@ -177,7 +177,7 @@ QtObject {
       "bottom": loc === Bar.Bottom
     };
     // How much less than its extent it reserves (reserveTrim). What its
-    // ends meet depends on the other bars on its screen: BarManager.bars
+    // ends meet depends on the other bars on its screen: ScreenEdgeManager.bars
     // adds them (BarEnds.withEnds).
     bar.trim = Bar.reserveTrim(bar, gapsOut[edge] ?? 0);
     return bar;

@@ -1,16 +1,16 @@
 # Bar composition
 
-> **Files:** `shell/Bar.qml`, `components/bar/BarPanel.qml`, `components/bar/BarContainer.qml`, `components/bar/WidgetGroup.qml`, `components/bar/BarWidgetHost.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/PopoutAnchor.qml`, `config/Bar.qml`, `services/ui/BarManager.qml`
+> **Files:** `shell/Bar.qml`, `components/bar/BarPanel.qml`, `components/bar/BarContainer.qml`, `components/bar/WidgetGroup.qml`, `components/bar/BarWidgetHost.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/PopoutAnchor.qml`, `config/Bar.qml`, `services/ui/BarManager.qml`, `services/ui/ScreenEdgeManager.qml`
 > **Config:** `Bars` (`Bar`, `BarWidget` definitions)
 > **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Edge menus](../edge-menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
 
 How a bar is built from config: the panel per bar, the widget hosts, the layout math, how widgets open popouts and edge menus, the icon rules, and why bar motion animates what is drawn rather than what is measured.
 
 ### Bars from config
-- `shell/Bar.qml` renders one `BarPanel` per entry in `BarManager.bars` (a `Variants`/model). Multi-monitor and multi-panel bars therefore come from config data, not from hardcoded code.
-- `BarManager.bars` holds the running bars after `Bar.enrichBarConfig`. Enrichment adds:
+- `shell/Bar.qml` renders one `BarPanel` per entry in `ScreenEdgeManager.bars` (a `Variants`/model). Multi-monitor and multi-panel bars therefore come from config data, not from hardcoded code.
+- `ScreenEdgeManager.bars` holds the running bars after `Bar.enrichBarConfig` (the bar editor, `BarManager`, only previews its draft into them). Enrichment adds:
   - Hyprland's `gapsOut`, which a reader can't read.
-  - What the bar leaves on each screen edge: `edgesFor`, `screenEdgeOpen`, `reservedOn`, `frameLine`, `detachedGaps`.
+  - What the bar leaves on each screen edge: `edgesFor`, `screenEdgeOpen`, `barReservedOn`, `frameLine`, `detachedGaps`.
 - A bar whose `monitor` is `"*"` is expanded by `Bar.expandBars` into one entry per screen (id `<id>@<screen>`, plus `sourceId`), the primary monitor's first.
 - Any other bar's monitor is resolved to a connected screen there.
 

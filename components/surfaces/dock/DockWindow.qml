@@ -57,7 +57,7 @@ Scope {
   readonly property var gaps: placement.gaps
   // Where the window starts across the edge (what's reserved there; not
   // docks, its own included)
-  readonly property real reservedHere: EdgeMenuManager.reservedOn(root.screen, root.edge)
+  readonly property real reservedHere: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge)
   readonly property bool attached: !placement.detached
   // Where its attach edge goes, from the screen edge: following a bar, as
   // that meets it; else the stroke of what reserves the edge (the screen

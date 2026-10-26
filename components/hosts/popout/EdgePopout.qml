@@ -171,7 +171,7 @@ PopoutWrapperBase {
 
   // Held off the edge (an edge menu's or OSD's `detached`): a detached box
   // `gap` in from the frame lines on its edge and at its ends
-  // (BarManager.detachedGaps), so it lines up with a floating bar's islands, or
+  // (ScreenEdgeManager.detachedGaps), so it lines up with a floating bar's islands, or
   // with the windows. Its gaps are what places it, so a change of `held`
   // never reads them before they follow.
   property bool held: false
@@ -201,7 +201,7 @@ PopoutWrapperBase {
   // Where the window's attach edge goes by default: on the stroke of what
   // reserves the edge (the border, a bar, integrated menus; not docks,
   // which it reaches past), none on a bare edge
-  readonly property real attachBase: EdgeMenuManager.reservedOn(root.screen, root.edge) - (root.bareEdge ? 0 : Appearance.borderWidth)
+  readonly property real attachBase: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) - (root.bareEdge ? 0 : Appearance.borderWidth)
   // Where it goes: held, a connector gap short of where its box goes;
   // following a bar, as that meets it; else on what reserves the edge
   // (EdgePlacement.attachAt)
@@ -426,7 +426,7 @@ PopoutWrapperBase {
         return own;
       // From this window's edge (its attach edge, less its backfill and
       // the way it slides in from) to the far edge's reserved space
-      const far = EdgeMenuManager.reservedOn(root.screen, root.edge === Bar.Top ? Bar.Bottom : Bar.Top);
+      const far = ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge === Bar.Top ? Bar.Bottom : Bar.Top);
       return Math.max(own, (root.screen?.height ?? 0) - far - root.attachAt + surface.backfill + (root.slidesUnder ? root.slideDistance : 0));
     }
     implicitWidth: root.vertical ? surfaceWindow.depth : 0

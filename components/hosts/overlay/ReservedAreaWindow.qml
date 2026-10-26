@@ -37,9 +37,9 @@ PanelWindow {
   // inner edge instead, past the reserved space by that gap. A floating
   // bar reserves up to its islands' inner side: land on their stroke, as
   // on any other bar's.
-  readonly property var _edges: BarManager.edgesFor(root.screen)
+  readonly property var _edges: ScreenEdgeManager.edgesFor(root.screen)
   function _margin(side, location) {
-    if (BarManager.screenEdgeOpen(root.screen, location))
+    if (ScreenEdgeManager.screenEdgeOpen(root.screen, location))
       return 0;
     const bar = root._edges[side];
     if (bar?.background === "transparent")

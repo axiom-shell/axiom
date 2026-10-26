@@ -9,14 +9,14 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.hosts.popout
 
-// One bar's layer-shell window (shell/Bar makes one per BarManager.bars
+// One bar's layer-shell window (shell/Bar makes one per ScreenEdgeManager.bars
 // entry): its screen, layer and exclusive zone, holding the bar's BarContainer.
 PanelWindow {
   id: root
 
   required property var barConfig
 
-  // BarManager.bars has resolved the monitor (an empty one is the primary)
+  // ScreenEdgeManager.bars has resolved the monitor (an empty one is the primary)
   readonly property ShellScreen targetScreen: General.outputs.find(s => s.name === barConfig.monitor) ?? General.outputs[0] ?? null
   screen: targetScreen
   // A solid bar sits at the screen edge, and the screen border's strip
@@ -81,14 +81,14 @@ PanelWindow {
 
   Component.onCompleted: {
     SurfaceManager.registerGrabPartner(root, root.screen?.name);
-    ShellManager.registerBar(root);
+    ScreenEdgeManager.registerBar(root);
   }
   // The overlay's focus grab lets input through to the bar (see
   // SurfaceManager.grabPartners)
   onScreenChanged: SurfaceManager.registerGrabPartner(root, root.screen?.name)
   Component.onDestruction: {
     SurfaceManager.unregisterGrabPartner(root);
-    ShellManager.unregisterBar(root);
+    ScreenEdgeManager.unregisterBar(root);
   }
 
   // Where the window is on its screen (LayerOrigin; null until it's
@@ -102,7 +102,7 @@ PanelWindow {
     window: root
     namespace: root.layerNamespace
     edge: root.barConfig.location
-    estimatedStart: BarManager.barStartOn(root.screen, root.barConfig.location, true)
+    estimatedStart: ScreenEdgeManager.barStartOn(root.screen, root.barConfig.location, true)
   }
 
   // What PopoutAnchors in it open their popouts in

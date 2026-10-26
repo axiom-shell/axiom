@@ -423,12 +423,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Screen-edge geometry is split over three services
-- **Where:** `services/ui/BarManager.qml` (`bars`, `edgesFor`, `barStartOn`, `surfaceEnd`, `screenEdgeOpen`, `reservedOn`, `frameLine`, `cornerLine`, `detachedGaps`), `services/ui/EdgeMenuManager.qml` (`setZone`, `zoneOn`, `reservedOn`, `frameLineOn`, `cornerLineOn`, `heldInset`), `services/ui/ShellManager.qml` (`barOn`)
-- **What:** `BarManager.barStartOn` and `surfaceEnd` add `EdgeMenuManager.zoneOn`, and `EdgeMenuManager`'s `*On` measures add the same zones to `BarManager`'s, so one edge's geometry is split over two services calling each other (22 files call one half or the other), with `ShellManager`'s bar panels and `barOn` a third piece; `BarManager` is also both the bar editor and the running bars. A new `ScreenEdgeManager` in `services/ui/` takes all of it, the function bodies moved as they are, and `BarManager` keeps only the editor. The two `reservedOn`s (bars only, menus included) get two clear names. About 28 callers, plus `docs/dev/bar/composition.md`, `docs/dev/edge-menus/hosts.md` and `docs/dev/popouts/held-off-edge.md`. Item 4 of the [singletons plan](plans/singletons-split.md) (a move).
-- **Size:** small
-- **Found:** 2026-10-27, while planning the singletons split (#123)
-
 ### The edge menus' card-unit helpers sit in EdgeMenuManager
 - **Where:** `services/ui/EdgeMenuManager.qml` (`cardUnitOf`, `gapOf`, `zoomOf`), `config/EdgeMenusConfig.qml`
 - **What:** `cardUnitOf` / `gapOf` / `zoomOf` read only `OverlayConfig` and `GridPlacement`, so they're reader-shaped; they move to `EdgeMenusConfig` and their 8 callers are renamed. Item 5 of the [singletons plan](plans/singletons-split.md) (a move).

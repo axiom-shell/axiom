@@ -128,8 +128,8 @@ Item {
     // stays within it, and content (MenuSubmenu) scrolls past
     // maxContentHeight
     readonly property real _placedY: outer.slot?.popupScreenPlaced?.y ?? 0
-    readonly property real screenFrom: EdgeMenuManager.reservedOn(outer.screen, Bar.Top) - root._placedY
-    readonly property real screenTo: (outer.screen?.height ?? 0) - EdgeMenuManager.reservedOn(outer.screen, Bar.Bottom) - root._placedY
+    readonly property real screenFrom: ScreenEdgeManager.reservedWithMenusOn(outer.screen, Bar.Top) - root._placedY
+    readonly property real screenTo: (outer.screen?.height ?? 0) - ScreenEdgeManager.reservedWithMenusOn(outer.screen, Bar.Bottom) - root._placedY
     readonly property real maxContentHeight: Math.max(Widget.height, root.screenTo - root.screenFrom - surface.contentInset * 2)
     // Along the parent's side (y in its window), placed as a bar popout is
     // along a pill (SurfaceContext.submenuPlace)

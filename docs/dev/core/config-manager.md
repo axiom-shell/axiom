@@ -64,5 +64,5 @@ Editors create new entries at their definition's defaults with `withDefaults(val
 
 ### Previews
 - `ConfigManager.previews` (`setPreview(section, value)` / `clearPreview(section)`) holds unsaved edits shown live without being part of `config`, so other saves and axiom's pushes don't touch them.
-- Example: BarManager previews `Bars` while dirty, and `BarManager.bars` reads `previews.Bars ?? config.Bars`.
+- Example: BarManager previews `Bars` while dirty, and `ScreenEdgeManager.bars` reads `previews.Bars ?? config.Bars`.
 - Readers that show previews read `previews.X ?? config.X` (`DesktopConfig`, `EdgeMenusConfig`).

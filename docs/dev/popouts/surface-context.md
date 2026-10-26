@@ -1,7 +1,7 @@
 # Surface context: what a surface meets at its ends
 
 > **Files:** `components/methods/SurfaceContext.qml`, `tests/tst_SurfaceContext.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgeSurface.qml`, `components/hosts/popout/StrokeOpening.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/SubmenuSide.qml`, `components/hosts/popout/PopoutAnchor.qml`, `scripts/dev/popout_matrix.py`
-> **Config:** none directly (reads bars, border and integrated menus through `BarManager`)
+> **Config:** none directly (reads bars, border and integrated menus through `ScreenEdgeManager`)
 > **Related:** [Edge attach](edge-attach.md), [Registry](registry.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Shadows](shadows.md), [Bar layering and corners](../bar/layering-and-corners.md)
 
 Every surface that grows out of a screen edge asks one pure helper what each of its ends meets. Read this before changing how any popout, dock or submenu joins, walls off or fillets at an intersection. (Rule: AGENTS.md › UI conventions, "Popout geometry".)
@@ -13,7 +13,7 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
   - docks
   - submenus
 - They all ask `methods/SurfaceContext` (tested by `tests/tst_SurfaceContext.qml`) and never decide for themselves. An intersection that fillets (or doesn't) for one therefore does for all.
-- **`endKind`** classifies what an end meets on the perpendicular edge. The input is `BarManager.surfaceEnd`, the one place the bars, the border and integrated menus' zones are read for this. The kinds:
+- **`endKind`** classifies what an end meets on the perpendicular edge. The input is `ScreenEdgeManager.surfaceEnd`, the one place the bars, the border and integrated menus' zones are read for this. The kinds:
   - `border`: a solid bar under the border counts as this too.
   - `bare`
   - `solidStroke`: a solid bar's own stroke, with the border off.

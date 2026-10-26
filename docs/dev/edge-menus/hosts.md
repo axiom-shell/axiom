@@ -1,6 +1,6 @@
 # Edge menu hosts (floating and integrated)
 
-> **Files:** `shell/EdgeMenus.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `components/surfaces/edgemenu/EdgeMenuBody.qml`, `components/surfaces/edgemenu/EdgeMenuSync.qml`, `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/PopoutWrapperBase.qml`, `services/ui/EdgeMenuManager.qml`
+> **Files:** `shell/EdgeMenus.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `components/surfaces/edgemenu/EdgeMenuBody.qml`, `components/surfaces/edgemenu/EdgeMenuSync.qml`, `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/PopoutWrapperBase.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/ScreenEdgeManager.qml`
 > **Config:** `EdgeMenus.items[].mode` (`floating` | `integrated` | `submenu`), `length`, `offset`, `gridOffset`, `moduleScale`, `pinButton`, `frame`, `detached`, `gap`
 > **Related:** [Overview](overview.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Layering and corners](../bar/layering-and-corners.md)
 
@@ -48,14 +48,14 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
   - held (`menu.detached`: `gap` from the frame lines on its edge and at both ends, through `EdgePopout.held` / `gap`; see [Held off an edge](../popouts/held-off-edge.md)); or
   - its edge has a transparent bar.
 - Otherwise it's attached to the border or solid bar, or meets a pill or floating bar as a bar popout does (`EdgePopout.followsBar`; see [Pill and floating bars](../popouts/pill-and-floating-bars.md)).
-- Its window sits inside what's reserved on each screen edge, `EdgeMenuManager.reservedOn(screen, location)`:
-  - `BarManager.reservedOn`: the border's `screenMargin`, a bar's `Bar.reservedZone`, less the `-borderWidth` margin Hyprland counts in for a bar inside the border;
+- Its window sits inside what's reserved on each screen edge, `ScreenEdgeManager.reservedWithMenusOn(screen, location)`:
+  - `ScreenEdgeManager.barReservedOn`: the border's `screenMargin`, a bar's `Bar.reservedZone`, less the `-borderWidth` margin Hyprland counts in for a bar inside the border;
   - plus integrated menus' zones;
   - not docks, which it reaches past.
 - So its edge coordinates start at `alongOrigin` (what the perpendicular edge at its start reserves), and its ends keep `startPad` / `endPad` from the screen's.
 - It places its box with `position: 0` and a `positionOffset` from the modules' start, computed from the box's natural length (the end joins depend on its position).
 - With `popoutAtWidget` (and `length: content`; a whole-edge menu keeps its place), opened as a widget's popout (claim kind `bar`) from a bar on its edge and screen, it centres the box on that widget instead (`PopoutAnchor.screenRect`, taken as it opens), as a bar popout does. Its hover strip stays at its layout place.
-- Across its edge it sits past `reservedOn(edge)`.
+- Across its edge it sits past `ScreenEdgeManager.reservedWithMenusOn(edge)`.
 - Its `PopoutClaim` ranks as it was opened (`EdgeMenuManager.claimKinds`, passed to `open`): `menu`, except opened on hover as a bar widget's popout (`PopoutAnchor.menu`, a `Button`'s `popout.menu` included), which ranks `bar`, so a neighbouring widget's popout replaces it ([Registry › Ranks](../popouts/registry.md#ranks)).
 
 ### `integrated`: `IntegratedEdgeMenu`
@@ -66,5 +66,5 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 - With `frame`, a rounded stroked box runs the strip's whole length.
   - Its stroke's inner edge is `screenMargin` in from the strip's edges (as the border's is, so the two line up).
   - It holds the modules `padding` in from its stroke.
-- It reports its zone (`EdgeMenuManager.setZone`), which `BarPopouts.borderInset` takes off the perpendicular bars' length.
+- It reports its zone (`ScreenEdgeManager.setZone`), which `BarPopouts.borderInset` takes off the perpendicular bars' length.
 - No `SubPopout`, so Submenu rows are dimmed and inert here.

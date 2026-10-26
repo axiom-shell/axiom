@@ -442,8 +442,8 @@ PopoutWrapperBase {
       if (!root.screen)
         return 0;
       if (root.barConfig.vertical)
-        return root.screen.height - EdgeMenuManager.frameLineOn(root.screen, Bar.Top) - EdgeMenuManager.frameLineOn(root.screen, Bar.Bottom) - root.targetBoxHeight;
-      return root.screen.height - EdgeMenuManager.frameLineOn(root.screen, root.barConfig.top ? Bar.Bottom : Bar.Top) - mainPopup._barNear - root.surfaceFrom - root._boxAcross;
+        return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, Bar.Top) - ScreenEdgeManager.frameLineOn(root.screen, Bar.Bottom) - root.targetBoxHeight;
+      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? Bar.Bottom : Bar.Top) - mainPopup._barNear - root.surfaceFrom - root._boxAcross;
     }
     // The surface in this window: where it is in the bar's, moved by where
     // the bar is on the screen

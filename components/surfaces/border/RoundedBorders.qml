@@ -29,7 +29,7 @@ Item {
   // Corners sit in the space left once every edge is reserved, so a bar
   // or a dock inside the border (reserving their own space)
   // would push them in past it. Pull them back out to the border's corners.
-  readonly property var edges: BarManager.edgesFor(root.screen)
+  readonly property var edges: ScreenEdgeManager.edgesFor(root.screen)
   function cornerMargin(edge) {
     const docks = DockManager.zoneOn(root.screen?.name ?? "", edge);
     const bar = root.edges[edge];
@@ -44,7 +44,7 @@ Item {
   // BarPanel), else the frame's own width
   function innerInset(edge) {
     const bar = root.edges[edge];
-    const panel = bar?.solid && bar.reserveSpace ? ShellManager.barOn(root.screen?.name ?? "", bar.location) : null;
+    const panel = bar?.solid && bar.reserveSpace ? ScreenEdgeManager.barOn(root.screen?.name ?? "", bar.location) : null;
     return (panel?.reservedZone ?? 0) + root.frameWidth;
   }
 
@@ -63,7 +63,7 @@ Item {
   // (arranged outside the border) to the stroke's inner side, round the
   // corner pieces' arcs, in screen coordinates
   function _menuZone(edge) {
-    return EdgeMenuManager.zoneOn(root.screen?.name ?? "", edge);
+    return ScreenEdgeManager.zoneOn(root.screen?.name ?? "", edge);
   }
   readonly property real outerLeft: root._menuZone("left")
   readonly property real outerTop: root._menuZone("top")

@@ -7,7 +7,7 @@
 What each end of a bar meets and whether surfaces may join it there, how two pill bars merge at a corner, and how pills are built and stretched by surfaces joining from the perpendicular edge. Which bar owns a corner is in [Layering and corners](layering-and-corners.md) (Bars sharing a corner).
 
 ### Ends (`BarEnds.withEnds`)
-- `BarManager.bars` gives each bar its `ends`, worked out among the bars on its screen. Each end says what it meets, as a `kind`:
+- `ScreenEdgeManager.bars` gives each bar its `ends`, worked out among the bars on its screen. Each end says what it meets, as a `kind`:
   - **`border`.**
   - **`bare`:** a bare screen edge.
   - **`solidBar`:** with the border off, a solid bar's inner stroke.
@@ -24,9 +24,9 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
   - It joins an end pill only where that end is `joinable`.
   - A transparent bar's widgets keep the same gap from each end as across the bar.
 - **Placing things along the bar:**
-  - `BarManager.barStartOn` says where a bar's window starts at each end. `EdgePlacement` places things along the bar from it (`barStart`).
+  - `ScreenEdgeManager.barStartOn` says where a bar's window starts at each end. `EdgePlacement` places things along the bar from it (`barStart`).
   - Where an end can't be joined, a bar popout's walls stop where windows start instead. See [Edge attach](../popouts/edge-attach.md) (Walls).
-- **Joining a bar end.** A bar popout joins an end only where `BarManager.surfaceEnd` says it may:
+- **Joining a bar end.** A bar popout joins an end only where `ScreenEdgeManager.surfaceEnd` says it may:
   - at the border, a solid bar or a bare edge, with no integrated menu; or
   - at a pill bar (`PillBarJoin`).
   - See [Pill and floating bars](../popouts/pill-and-floating-bars.md).

@@ -102,21 +102,4 @@ QtObject {
   function showsOn(screen, target) {
     return !!screen && (everywhere(target) || isTarget(screen, target));
   }
-
-  // The bar windows (BarPanel), for surfaces that attach to a bar without
-  // being its popouts (floating edge menus)
-  property var barPanels: []
-
-  function registerBar(panel) {
-    barPanels = barPanels.filter(p => p !== panel).concat([panel]);
-  }
-
-  function unregisterBar(panel) {
-    barPanels = barPanels.filter(p => p !== panel);
-  }
-
-  // The enabled bar on a screen edge (a Bar.Location), or null
-  function barOn(screenName, location) {
-    return barPanels.find(p => p.barConfig.enabled && p.barConfig.location === location && p.screen?.name === screenName) ?? null;
-  }
 }

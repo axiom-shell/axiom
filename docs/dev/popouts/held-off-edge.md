@@ -1,6 +1,6 @@
 # Surfaces held off an edge
 
-> **Files:** `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/ClosedLatch.qml`, `components/methods/SurfaceContext.qml`
+> **Files:** `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/ClosedLatch.qml`, `components/methods/SurfaceContext.qml`, `services/ui/ScreenEdgeManager.qml`
 > **Config:** `detached` and `gap` on floating edge menus (`EdgeMenus.items[]`), docks (`Dock.items[]`) and OSDs (`OSD.items[]`)
 > **Related:** [Edge attach](edge-attach.md), [Surface context](surface-context.md), [Pill and floating bars](pill-and-floating-bars.md), [Dock](../features/dock.md), [OSD](../features/osd.md), [Edge menu hosts](../edge-menus/hosts.md)
 
@@ -8,18 +8,18 @@ Floating edge menus, docks and OSDs with `detached` set are held off their edge 
 
 ### The island and its gaps
 - **Shape:** the surface is an island, `gap` in from the frame line on its own edge and on both perpendicular edges.
-- **The frame line:** `BarManager.frameLine`, plus integrated menus' zones (`EdgeMenuManager.frameLineOn`). Depending on what is there, it is:
+- **The frame line:** `ScreenEdgeManager.frameLine`, plus integrated menus' zones (`ScreenEdgeManager.frameLineOn`). Depending on what is there, it is:
   - the inner side of the border's stroke;
   - a solid bar's inner stroke;
   - a floating bar's islands;
   - a pill bar's far side;
   - a transparent bar's inner edge.
-- **`BarManager.detachedGaps(screen, location, gap)`** gives the three gaps:
+- **`ScreenEdgeManager.detachedGaps(screen, location, gap)`** gives the three gaps:
   - `gap` on each side, or
   - Auto (-1):
     - When a floating bar shares the edge, its `floatGap` is used on all three sides, so the surface lines up with its islands across and at both ends.
-    - Otherwise, per side, how far past the frame line windows start (`BarManager.reservedOn` + gaps_out), so it lines up with the windows.
-- **Placement origin:** each surface places itself from where its window starts (`EdgeMenuManager.reservedOn`).
+    - Otherwise, per side, how far past the frame line windows start (`ScreenEdgeManager.barReservedOn` + gaps_out), so it lines up with the windows.
+- **Placement origin:** each surface places itself from where its window starts (`ScreenEdgeManager.reservedWithMenusOn`).
 
 ### EdgePlacement given `held` and `gap`
 `EdgePlacement` does the work, given `held` and `gap` (from the OSD, floating edge menus or docks). It provides:

@@ -49,7 +49,7 @@
   - **That line** is `SurfaceContext.wallLine`: the further of that edge's frame line and its reserved space plus gaps_out, with the border on or off.
   - **Its fillet** curves past that line, beside the stroke it stands on.
 - **How far in:** the box is pushed in only as far as that fillet needs to clear the frame's rounded inner corner.
-  - The amount is `SurfaceContext.wallAt`, from `BarManager.cornerLine`.
+  - The amount is `SurfaceContext.wallAt`, from `ScreenEdgeManager.cornerLine`.
   - The corner line is the frame's inner edge, which a floating or transparent bar sits inside.
 - **`wallFrom`/`wallTo`** (in `EdgeAttach`): where the whole surface, its fillet included, stops. It never joins that edge.
 - **Fillet over reserved space:** where the fillet starts short of where windows start (over a transparent bar's reserved space), `frame` widens the end's `strokeInset`.
