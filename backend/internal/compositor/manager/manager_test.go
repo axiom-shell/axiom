@@ -491,6 +491,9 @@ func TestAConfigGivenBackMeanwhileIsntWrittenOver(t *testing.T) {
 	h.eventually("loaded", func() bool { return h.status() == "loaded" })
 	h.m.AllowTakeover()
 	h.eventually("approved", h.approved)
+	// The approval is saved before Allow's apply runs: given back only
+	// once that's done, or the approved claim adopts it
+	h.m.do(context.Background(), func(context.Context) {})
 	os.WriteFile(f.ManagedPath, []byte("-- mine again\n"), 0o644)
 	// A live change: evaluated, then the file synced after 2 s
 	h.inputs("f1", "l2", "k1", "borders")
