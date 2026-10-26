@@ -150,3 +150,70 @@ func TestV77DropsTheClipboardSource(t *testing.T) {
 		})
 	}
 }
+
+func TestV79MovesTheTailscaleInterval(t *testing.T) {
+	t.Parallel()
+	step := all[2]
+	if step.Version != 79 {
+		t.Fatalf("step %d", step.Version)
+	}
+	parse := func(s string) *jsonx.Object {
+		v, err := jsonx.Unmarshal([]byte(s))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return v.(*jsonx.Object)
+	}
+	bar := func(widgets string) string {
+		return `{"Bars":{"items":[{"id":"a","widgets":` + widgets + `}]}}`
+	}
+	cases := []struct {
+		name, in, out string
+		changed       bool
+	}{
+		{"one widget",
+			bar(`{"right":[{"id":"t","type":"Tailscale","properties":{"showLabel":true,"interval":5000}}]}`),
+			`{"Bars":{"items":[{"id":"a","widgets":{"right":[{"id":"t","type":"Tailscale","properties":{"showLabel":true}}]}}]},"Tailscale":{"interval":5000}}`, true},
+		{"the shortest of several bars",
+			`{"Bars":{"items":[{"id":"a","widgets":{"left":[{"id":"t","type":"Tailscale","properties":{"interval":20000}}]}},{"id":"b","widgets":{"center":[{"id":"c","type":"Clock"},{"id":"t","type":"Tailscale","properties":{"interval":8000}}]}}]}}`,
+			`{"Bars":{"items":[{"id":"a","widgets":{"left":[{"id":"t","type":"Tailscale","properties":{}}]}},{"id":"b","widgets":{"center":[{"id":"c","type":"Clock"},{"id":"t","type":"Tailscale","properties":{}}]}}]},"Tailscale":{"interval":8000}}`, true},
+		{"below the minimum is clamped",
+			bar(`{"right":[{"id":"t","type":"Tailscale","properties":{"interval":250}}]}`),
+			`{"Bars":{"items":[{"id":"a","widgets":{"right":[{"id":"t","type":"Tailscale","properties":{}}]}}]},"Tailscale":{"interval":1000}}`, true},
+		{"the section's own interval wins",
+			`{"Tailscale":{"interval":30000},"Bars":{"items":[{"id":"a","widgets":{"right":[{"id":"t","type":"Tailscale","properties":{"interval":5000}}]}}]}}`,
+			`{"Tailscale":{"interval":30000},"Bars":{"items":[{"id":"a","widgets":{"right":[{"id":"t","type":"Tailscale","properties":{}}]}}]}}`, true},
+		{"the old menu popout's default",
+			bar(`{"right":[{"id":"t","type":"Tailscale","properties":{"popout":{"enabled":false,"menu":""}}}]}`),
+			bar(`{"right":[{"id":"t","type":"Tailscale","properties":{"popout":{"menu":""}}}]}`), true},
+		{"an edge menu kept",
+			bar(`{"right":[{"id":"t","type":"Tailscale","properties":{"popout":{"enabled":true,"menu":"net"}}}]}`),
+			bar(`{"right":[{"id":"t","type":"Tailscale","properties":{"popout":{"enabled":true,"menu":"net"}}}]}`), false},
+		{"already migrated",
+			`{"Bars":{"items":[{"id":"a","widgets":{"right":[{"id":"t","type":"Tailscale","properties":{}}]}}]},"Tailscale":{"interval":5000}}`,
+			`{"Bars":{"items":[{"id":"a","widgets":{"right":[{"id":"t","type":"Tailscale","properties":{}}]}}]},"Tailscale":{"interval":5000}}`, false},
+		{"no Tailscale widget", bar(`{"right":[{"id":"c","type":"Clock","properties":{"interval":5}}]}`),
+			bar(`{"right":[{"id":"c","type":"Clock","properties":{"interval":5}}]}`), false},
+		{"no bars", `{"General":{}}`, `{"General":{}}`, false},
+		{"another shape", `{"Bars":{"items":[{"widgets":[1]},2]},"Tailscale":3}`, `{"Bars":{"items":[{"widgets":[1]},2]},"Tailscale":3}`, false},
+		{"a section of another shape",
+			`{"Tailscale":3,"Bars":{"items":[{"id":"a","widgets":{"right":[{"id":"t","type":"Tailscale","properties":{"interval":5000}}]}}]}}`,
+			`{"Tailscale":3,"Bars":{"items":[{"id":"a","widgets":{"right":[{"id":"t","type":"Tailscale","properties":{}}]}}]}}`, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			cfg := parse(c.in)
+			changes := step.Run(cfg)
+			if got := string(jsonx.MarshalCompact(cfg)); got != c.out {
+				t.Errorf("got %s, want %s", got, c.out)
+			}
+			if (len(changes) > 0) != c.changed {
+				t.Errorf("changes %v", changes)
+			}
+			if again := step.Run(cfg); len(again) > 0 {
+				t.Errorf("a second run: %v", again)
+			}
+		})
+	}
+}

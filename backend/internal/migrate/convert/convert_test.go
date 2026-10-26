@@ -96,11 +96,14 @@ func toCurrent(cfg *jsonx.Object) *jsonx.Object {
 }
 
 // The format-1 defaults, converted and migrated, are the format-2
-// defaults: the schema's shape and the converter agree on every key.
+// defaults: the schema's shape and the converter agree on every key. A
+// section format 1 never had (Tailscale, from v79) is filled from its
+// defaults at load, like any missing section.
 func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	t.Parallel()
 	s := v2Schema(t)
 	converted := toCurrent(legacyDefaults(t))
+	legacyRoot, _ := legacy.Schema().Value("properties").(*jsonx.Object)
 	if errs := config.ValidationErrors(s, converted, s.Root()); len(errs) > 0 {
 		t.Errorf("the converted defaults don't validate:\n%v", errs)
 	}
@@ -109,6 +112,11 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 		t.Errorf("pruning the converted defaults removes %v", removed)
 	}
 	defaults, _ := config.ApplyDefaults(s, jsonx.NewObject(), true, s.Root())
+	for _, k := range defaults.(*jsonx.Object).Keys() {
+		if !converted.Has(k) && !legacyRoot.Has(k) {
+			defaults.(*jsonx.Object).Delete(k)
+		}
+	}
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {

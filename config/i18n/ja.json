@@ -80,7 +80,6 @@
     "Command": "コマンド",
     "Configuration name": "設定名",
     "Confirm?": "実行しますか？",
-    "Connected to: {0}": "接続先：{0}",
     "Corner radius": "角の丸み",
     "Critical Battery": "バッテリー残量が危険",
     "Custom": "カスタム",
@@ -3146,6 +3145,16 @@
     "Warmer screen colors in the evening, through the compositor's color transform or gamma control (wlsunset where it has neither). The Night light quick action, `/nightlight` in the launcher and `axiom ipc nightLight toggle` switch it by hand; that lasts until the next scheduled change.": "",
     "This compositor offers no clipboard control": "",
     "No clipboard history here": "",
-    "Type : (or /clipboard) to search what you've copied; Enter copies it again, Shift+Enter removes it. axiom keeps the history, images included, in memory only, never on disk, and skips anything a password manager marks as sensitive. Turn this off if you copy passwords from apps that don't; turning it off clears the history.": ""
+    "Type : (or /clipboard) to search what you've copied; Enter copies it again, Shift+Enter removes it. axiom keeps the history, images included, in memory only, never on disk, and skips anything a password manager marks as sensitive. Turn this off if you copy passwords from apps that don't; turning it off clears the history.": "",
+    "Show this machine, the tailnet and its devices when hovered.": "",
+    "Show Connect / Disconnect (`tailscale up` / `down`). They need `sudo tailscale set --operator=$USER` once.": "",
+    "Show offline devices": "",
+    "Connected icon": "",
+    "Connect and disconnect buttons": "",
+    "Run on left click (e.g. `tailscale-systray`). Right click checks again now.": "",
+    "Disconnected icon": "",
+    "How every Tailscale widget and module reads and shows the tailnet.": "",
+    "List the tailnet's offline devices too, after the online ones.": "",
+    "How often `tailscale status` is read while something shows it.": ""
   }
 }

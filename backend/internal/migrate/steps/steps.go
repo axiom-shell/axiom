@@ -62,6 +62,9 @@ var all = []Step{
 		autostart.Items = kept
 		return []string{"Session.autostart: the hypridle entry removed: axiom handles idle itself (Idle settings); add it back to keep running hypridle"}
 	}},
+	// v79: Tailscale's interval moved from each bar widget to the
+	// Tailscale section (v79.go)
+	{Version: 79, Run: v79},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

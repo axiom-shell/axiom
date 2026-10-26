@@ -1,7 +1,7 @@
 label: Tailscale Status
 icon: vpn_lock
 group: Network & devices
-popout: menu
+popout: {variant: own, enabled: {description: 'Show this machine, the tailnet and its devices when hovered.'}}
 settings:
   showLabel: {type: boolean, title: Show label, default: true}
   label:
@@ -9,13 +9,22 @@ settings:
     title: Label
     default: ''
     description: Text shown while connected. Empty shows the tailnet name.
-  interval:
-    type: integer
-    title: Poll interval
-    x-unit: ms
-    default: 10000
-    minimum: 1000
-    maximum: 60000
+  connectedIcon:
+    type: string
+    title: Connected icon
+    default: shield_lock
+    description: A Material Symbols name (fonts.google.com/icons), or text.
+  disconnectedIcon:
+    type: string
+    title: Disconnected icon
+    default: signal_disconnected
+    description: A Material Symbols name (fonts.google.com/icons), or text.
+  clickCommand:
+    x-scope: commands
+    type: string
+    title: Click command
+    default: ''
+    description: Run on left click (e.g. `tailscale-systray`). Right click checks again now.
   connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color}
   disconnectedColor:
     $ref: '#/definitions/WidgetColor'

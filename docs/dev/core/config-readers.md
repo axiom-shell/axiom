@@ -36,6 +36,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader n
 - **`OverlayConfig`**: views and card-grid constants.
 - **`EdgeMenusConfig`**: edge menus.
 - **`IconsConfig`**, **`ChatConfig`**, **`ThemeIntegrations`**.
+- **`TailscaleConfig`**: what every Tailscale widget and module shares: the poll `interval`, `showOffline` peers, the Connect/Disconnect `actions`.
 - **`CommunitySetups`**: whether the gallery is on, and its catalog URL ([Community setups](../features/community-setups.md)).
 - **`CalendarConfig`**:
   - accounts with their ids filled in
