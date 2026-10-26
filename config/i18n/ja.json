@@ -3115,7 +3115,6 @@
     "Asks for your approval (Allow takeover) before it touches your {0}": "",
     "Then moves your {0} into {1}, where it keeps working, with a dated backup beside it": "",
     "axiom tries again by itself.": "",
-    "How often Tailscale is asked; never more often than every 5 seconds.": "",
     "Let axiom handle idle": "",
     "Dims, locks and turns the screens off when you're away, set up from axiom's settings, and locks before the computer sleeps. Remove any hypridle you start yourself.": "",
     "Leaves idle to a daemon you run yourself, such as hypridle.": "",

@@ -4,7 +4,7 @@ import qs.services.core
 
 // Tailscale's state for every widget that shows it: axiom's `tailscale`
 // topic (`tailscale status --json` at the shortest interval asked for,
-// never more often than every 5 s), subscribed only while something has
+// never more often than every 250 ms), subscribed only while something has
 // acquire()d it.
 QtObject {
   id: root

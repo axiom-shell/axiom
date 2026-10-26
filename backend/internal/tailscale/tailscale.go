@@ -1,7 +1,6 @@
 // Package tailscale is Tailscale's state for the shell, the `tailscale`
 // polled topic: `tailscale status --json` at the shortest interval a
-// widget asks for, never more often than every 5 s, and only what the
-// widgets show of it.
+// widget asks for, and only what the widgets show of it.
 package tailscale
 
 import (
@@ -66,7 +65,7 @@ func Source(o Options) topics.Source {
 	}
 	return topics.Source{
 		Name:    "tailscale",
-		Floor:   5 * time.Second,
+		Floor:   topics.MinInterval,
 		Default: 10 * time.Second,
 		Fetch: func(ctx context.Context, _ []json.RawMessage) (any, error) {
 			bin, err := o.LookPath("tailscale")

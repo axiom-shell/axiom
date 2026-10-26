@@ -33,7 +33,7 @@ Status: **done**, **next** (what to take up next), **ready** (needs nothing stag
 - Done: [protocol](protocol.md), the generated and cross-checked `rpc.md`, the Quickshell.Io allowlist.
 
 **Stage 1: pilot** (done)
-- Done: `TailscaleManager`: polling `tailscale status --json` → the `tailscale` topic (`backend/internal/tailscale`), the first polled topic end to end. Its floor (5 s) is Go's; the bar widget's default interval is 10 s.
+- Done: `TailscaleManager`: polling `tailscale status --json` → the `tailscale` topic (`backend/internal/tailscale`), the first polled topic end to end. Its floor is `topics.MinInterval` (250 ms), like every topic fed by a setting; the bar widget's default interval is 10 s.
 - Done: `DependencyManager`: a `sh` + `command -v` per tool → `deps.check` (`backend/internal/deps`: `exec.LookPath`, the Python modules in one python3 run).
 - Done: `TimeZoneManager`: `sh` + `awk` over `tzdata.zi` and `TZ=… date +%z` per zone → `tz.zones` (a Go parser, fetched once) and `tz.offsets` (`backend/internal/tz`, the zoneinfo files read in Go). The greeter has no daemon: there it asks `axiom tz zones|offsets`, the same answers from the CLI.
 
