@@ -406,6 +406,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
+### The shell stops reconnecting after a failed attempt
+- **Where:** `services/core/BackendManager.qml` (`_reconnect`, `_socket`)
+- **What:** Quickshell's `Socket.setConnected(true)` only connects when it holds no `QLocalSocket`, and a failed connect (`onSocketError`) keeps the failed one; only a `disconnected` frees it, which a socket that never connected doesn't emit (`src/io/socket.cpp`). So when the daemon isn't listening yet at the first retry (a restart slower than 200 ms), `onError` starts `_reconnect`, its write does nothing, and the shell never reconnects. Needs a fresh `Socket` per attempt (a `Loader` or `Component`) or a Quickshell fix.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing roadmap/3-backend-listeners
+
 ### The shell–daemon contract is checked by name only
 - **Where:** `scripts/gen_docs.py` (the rpc cross-check), `backend/internal/daemon/methods.go` (params and results)
 - **What:** `rpc.md`'s check matches method names between the two sides by regex; params and results are Go structs on one side and hand-read fields on the other, and nothing checks they agree (only the manual protocol bump in `config/json/backend.json`). Generating each method's fields from the `rpc.Handle` registrations into `rpc.md`, and checking the QML call sites' keys against them, would catch a renamed field.

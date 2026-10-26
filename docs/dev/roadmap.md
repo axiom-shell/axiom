@@ -123,6 +123,7 @@ Fixed in this phase:
 - [Some backend security checks have no tests](issues.md#some-backend-security-checks-have-no-tests)
 - [The greeter's environment is a denylist](issues.md#the-greeters-environment-is-a-denylist)
 - [Small backend error and robustness gaps](issues.md#small-backend-error-and-robustness-gaps)
+- [The shell stops reconnecting after a failed attempt](issues.md#the-shell-stops-reconnecting-after-a-failed-attempt)
 - [Schema build gaps](issues.md#schema-build-gaps)
 - [The binds child sometimes segfaults instead of running out of memory](issues.md#the-binds-child-sometimes-segfaults-instead-of-running-out-of-memory)
 
