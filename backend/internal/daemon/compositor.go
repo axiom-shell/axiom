@@ -65,6 +65,14 @@ func (d *Daemon) newCompositor() *manager.Manager {
 			_, err := d.store.Set([]config.Op{config.SetValue(config.Keys("Keybinds", "binds"), b)}, store.SetOptions{})
 			return err
 		},
+		// The mode kept on leaving the hold, as the Compositor card saves it
+		KeepMode: func(mode string) error {
+			if err := d.writable(); err != nil {
+				return err
+			}
+			_, err := d.store.Set([]config.Op{config.SetValue(config.Keys("Compositor", "mode"), mode)}, store.SetOptions{Takeover: true})
+			return err
+		},
 		Push: func(method string, params any) {
 			raw := json.RawMessage(jsonx.MarshalCompact(params))
 			if method == "compositor.state" {

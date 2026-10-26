@@ -24,6 +24,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -62,6 +63,10 @@ type Options struct {
 	Mode        func() string
 	Binds       func() any
 	CommitBinds func(binds *jsonx.Array) error
+	// KeepMode saves Compositor.mode as a takeover setting's own card
+	// does: the mode kept on leaving the hold (keptMode), retried while it
+	// fails (ConfigWritable, the next config event)
+	KeepMode func(mode string) error
 	// Push sends the shell a compositor.* push
 	Push func(method string, params any)
 	// Bin and Tree: the binary (the daemon's own, /proc/self/exe) and tree
@@ -89,9 +94,12 @@ type Manager struct {
 
 	in Inputs
 	// mode: the config's; "" while it isn't known (holding)
-	mode    string
-	lastKey string
-	liveKey string
+	mode string
+	// modeRead: the config's mode at the last config event, to tell the
+	// card's change while a kept mode isn't saved yet
+	modeRead string
+	lastKey  string
+	liveKey  string
 
 	problem         string
 	loaded          bool
@@ -315,6 +323,19 @@ func (m *Manager) SetInputs(in *jsonx.Object) {
 		}
 		if !wasLive {
 			m.mode = m.o.Mode()
+			m.modeRead = m.mode
+			if m.mode != "" && m.st.KeptMode != "" {
+				if m.mode == m.st.KeptMode {
+					// Saved, the runtime file not told
+					m.st.KeptMode = ""
+					m.st.save()
+				} else {
+					// A kept mode the file doesn't say yet (a re-exec,
+					// often into the compatible binary): still in effect
+					m.mode = m.st.KeptMode
+					m.saveKept(false)
+				}
+			}
 			m.noteHolding()
 			m.debounce.Reset(300 * time.Millisecond)
 		}
@@ -333,10 +354,115 @@ func (m *Manager) ConfigChanged(fromFile bool) {
 		if !m.live() {
 			return
 		}
-		if mode := m.o.Mode(); mode != m.mode {
+		mode := m.o.Mode()
+		read := m.modeRead
+		m.modeRead = mode
+		if m.mode != "" && m.st.KeptMode != "" && m.keptStands(mode, read) {
+			return
+		}
+		if mode != m.mode {
+			kept := false
+			if m.mode == "" {
+				mode, kept = m.keptMode(ctx, mode)
+			}
 			m.mode = mode
-			m.modeChanged(fromFile)
+			m.modeChanged(fromFile || kept)
 			m.debounce.Reset(300 * time.Millisecond)
+		}
+	})
+}
+
+// keptMode is the mode taken on leaving the hold: the first one read once
+// config.json loads again never switches away from what was applied. A
+// restore over the unloaded file keeps the defaults' takeover settings (none
+// was known), and a hand fix isn't the mode's own card: either would give a
+// managed config back though nobody chose another mode. The mode applied is
+// kept and saved back (KeepMode), so the file says what is in effect and the
+// next change doesn't switch it either; true when it was kept.
+func (m *Manager) keptMode(ctx context.Context, mode string) (string, bool) {
+	applied := m.st.AppliedMode
+	if applied == "" {
+		// The runtime file is gone after a reboot: what is in the
+		// compositor's config was applied
+		if m.configIsOurs() {
+			applied = "managed"
+		} else if m.moduleLoaded(ctx) {
+			applied = "included"
+		}
+	}
+	if applied == "" || applied == mode {
+		if m.st.KeptMode != "" {
+			// One left pending across a re-exec: the file says it now
+			m.st.KeptMode = ""
+			m.st.save()
+		}
+		return mode, false
+	}
+	m.logf("config.json loads again with Compositor.mode %q: keeping %q, applied while it didn't load (change it from Settings › Compositor)", mode, applied)
+	m.st.KeptMode = applied
+	m.saveKept(true)
+	return applied, true
+}
+
+// saveKept saves the kept mode back (KeepMode); while that fails it stays
+// pending (KeptMode, kept across re-execs) and is tried again when a save
+// can succeed: the next config event (config.json loading again, a
+// restore) and the daemon turning compatible (ConfigWritable). first: the
+// first try, whose failure is worth a warning
+func (m *Manager) saveKept(first bool) {
+	if m.o.Mode() != m.modeRead {
+		// Changed since the last config event (the card's write, its
+		// event queued): never saved over; that event drops the kept mode
+		return
+	}
+	err := errors.New("nothing saves it")
+	if m.o.KeepMode != nil {
+		err = m.o.KeepMode(m.st.KeptMode)
+	}
+	if err == nil {
+		m.st.KeptMode = ""
+	} else if first {
+		m.o.Log.Warn("compositor: saving the mode kept failed: tried again once config.json can be saved", "mode", m.st.KeptMode, "err", err)
+	} else {
+		m.o.Log.Debug("compositor: saving the mode kept again", "mode", m.st.KeptMode, "err", err)
+	}
+	m.st.save()
+}
+
+// keptStands: a config event while the kept mode isn't saved yet leaves
+// it in effect, the config's mode (the one read on leaving the hold) never
+// applied, and tries the save again; false when it's done with: saved (the
+// config says it), or the card changed the mode (any change since the last
+// event: an edit from outside holds x-takeover settings, and the kept
+// mode's own save clears it, so only Compositor.mode's own card can; the
+// event itself may be an earlier one, from the file, read after the card's
+// write), a real choice the stale kept mode must never overwrite. Every
+// shell save still carries takeover (docs/dev/issues.md › Shell saves carry
+// unsaved settings and every takeover), so one made from a config older
+// than the kept mode's save counts as that choice too
+func (m *Manager) keptStands(mode, read string) bool {
+	switch {
+	case mode == m.st.KeptMode:
+		m.st.KeptMode = ""
+		m.st.save()
+		return false
+	case mode != read:
+		m.logf("Compositor.mode changed to %q: no longer saving %q, kept on leaving the hold", mode, m.st.KeptMode)
+		m.st.KeptMode = ""
+		m.st.save()
+		return false
+	}
+	m.saveKept(false)
+	return true
+}
+
+// ConfigWritable tells that config.json can be saved again (the daemon
+// turned compatible with the tree): a kept mode not saved yet is tried
+// again.
+func (m *Manager) ConfigWritable() {
+	m.enqueue(func(ctx context.Context) {
+		if m.live() && m.mode != "" && m.st.KeptMode != "" {
+			m.saveKept(false)
 		}
 	})
 }
@@ -350,12 +476,31 @@ func (m *Manager) noteHolding() {
 
 // axiomsInConfig: a managed config or an include of axiom's is actually
 // in the compositor's config, which holding never touches; loaded when
-// axiom's file is in effect. AppliedMode managed alone doesn't count: a
-// takeover awaiting approval, blocked or failed left the user's config in
-// place, and gets the runtime layer as outside the hold
+// axiom's file (the module, or the managed config) is in effect.
+// AppliedMode managed alone doesn't count: a takeover awaiting approval,
+// blocked or failed left the user's config in place, and gets the runtime
+// layer as outside the hold
 func (m *Manager) axiomsInConfig(ctx context.Context) (in, loaded bool) {
-	loaded, _ = m.w.checkLoaded(ctx, m.in, "included")
-	return loaded || m.configIsOurs(), loaded
+	if m.moduleLoaded(ctx) {
+		return true, true
+	}
+	if !m.configIsOurs() {
+		return false, false
+	}
+	loaded, _ = m.w.checkLoaded(ctx, m.in, "managed")
+	return true, loaded
+}
+
+// moduleLoaded: the included module is in effect with axiom's layer in it.
+// An emptied one (left behind by a switch out of included) doesn't count:
+// niri's check only sees that the user's config reaches the file, and its
+// include line is often left in place
+func (m *Manager) moduleLoaded(ctx context.Context) bool {
+	if text := readFile(m.files().IncludePath); text == "" || text == m.w.emptyModuleText() {
+		return false
+	}
+	loaded, _ := m.w.checkLoaded(ctx, m.in, "included")
+	return loaded
 }
 
 // applyHolding: while the mode isn't known, the defaults' runtime layer,

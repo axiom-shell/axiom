@@ -34,7 +34,12 @@ Singleton {
   // depend on them) and the cursor theme's XCursor name is known
   readonly property bool live: enabled && CompositorManager.ready && CursorThemeManager.ready && BackendManager.ready
 
-  readonly property string mode: CompositorConfig.mode
+  // While config.json doesn't load, the shell runs on the defaults (their
+  // detached) but the daemon on the file's own mode (Store.Takeovers): its
+  // pushed mode, unless it holds ("", the file wasn't JSON at the start).
+  // The settings draft then holds the defaults' mode, which isn't a pick
+  readonly property bool modeFromDaemon: ConfigManager.savesBlocked && (_state.mode ?? "") !== ""
+  readonly property string mode: modeFromDaemon ? _state.mode : CompositorConfig.mode
 
   // --- What the daemon pushes (compositor.state) ---
 
@@ -42,8 +47,10 @@ Singleton {
   // Why the chosen mode isn't in effect, or ""
   readonly property string problem: _state.problem ?? ""
   // "runtime" (detached), "loaded" (the file is in effect), "fallback"
-  // (it isn't: see `problem`) or "pending" (still checking)
-  readonly property string status: mode === "detached" ? "runtime" : (_state.status ?? "pending")
+  // (it isn't: see `problem`) or "pending" (still checking, or holding while
+  // config.json's mode isn't known); the daemon's while config.json doesn't
+  // load
+  readonly property string status: mode === "detached" && !ConfigManager.savesBlocked ? "runtime" : (_state.status ?? "pending")
   // Configured keys the runtime layer skipped because the compositor's
   // config already binds them
   readonly property var skippedKeys: _state.skippedKeys ?? []

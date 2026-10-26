@@ -132,8 +132,10 @@ QtObject {
   }
 
   // Replaces the running config with `object` (defaults filled) and saves
-  // it; false and no change if it doesn't validate
-  function commit(object) {
+  // it; false and no change if it doesn't validate. `takeover` false keeps
+  // the `x-takeover` settings as axiom has them: a save that changes none
+  // (one made from a config that may predate a takeover write axiom made)
+  function commit(object, takeover = true) {
     if (!_maySave())
       return false;
     const filled = SchemaValidation.applyDefaults(Utils.clone(object), root._configSchema);
@@ -142,7 +144,7 @@ QtObject {
       return false;
     }
     root._config = filled;
-    _send(filled, true);
+    _send(filled, takeover);
     return true;
   }
 

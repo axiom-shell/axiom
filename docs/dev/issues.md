@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The Compositor card shows the file's mode while a kept mode isn't saved
+- **Where:** `services/compositor/CompositorConfigManager.qml` (`modeFromDaemon`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
+- **What:** Leaving the hold with the daemon incompatible with the tree, the kept mode's save is refused and stays pending; config.json loads, so `ConfigManager.savesBlocked` is false and the card shows `CompositorConfig.mode` (the file's stale mode, say detached) while managed is in effect. `modeFromDaemon` covers only a blocked file; it could also take the daemon's mode while the daemon reports a kept mode pending (a field in `compositor.state`).
+- **Size:** small
+- **Found:** 2026-10-26, while retrying the kept mode's save
+
+### The polkit agent fails to register on reloads
+- **Where:** `services/session/PolkitManager.qml` (`_registerCheck`)
+- **What:** In the live session the log shows `[PolkitManager] Could not register as the polkit agent` with no other agent named, on most reloads (6 in one session's `scripts/log.sh --all`) and at the start, where Quickshell logs `quickshell.service.polkit.listener` `failed to register listener: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: An authentication agent already exists for the given subject`. `_probe` finds no other agent, so possibly the previous generation's listener (or one left by the daemon's restart) still holds the subject. Not looked into: next step, check `busctl` for the agent's owner across a reload.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while reading the log for the unloaded config's compositor mode
+
 ### Running it unattended's gate can't get `verify ok` on a committed branch
 - **Where:** `docs/dev/roadmap.md` (Running it unattended, step 5), `scripts/dev/verify.sh`
 - **What:** Step 5 tells the leader to run `scripts/dev/verify.sh` on the pushed branch and expect `verify ok`, but verify.sh checks changes since HEAD, so on a clean committed branch it prints only `nothing changed since HEAD`. The leader used `scripts/dev/verify.sh --all` (`all checks passed`) instead; the step should say so.
@@ -121,18 +133,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum, and the card's rows below it are pushed out of view while it's open.
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
-
-### Restoring a saved config over an unreadable config.json releases a managed compositor config
-- **Where:** `backend/internal/store/store.go` (`Replace`, `takeoverBase`, `takeoversUnknown`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`, `apply`)
-- **What:** When config.json isn't JSON at the start, the store knows no takeover values and `takeoverBase` is the defaults, so the manager holds (mode ""). Restoring a saved config or an example from the settings (what the blocked banner suggests) goes through `Replace` without `takeover`, which keeps the takeover settings from `takeoverBase`: the defaults' `Compositor.mode` `detached` is written, the manager's mode goes from "" to `detached`, and its `apply` leaves managed and gives the compositor's config back, though the user never chose detached. Needs a decision: take the restored file's own takeover values while none is known (an import then sets a takeover setting), have the manager keep `AppliedMode` across the first change out of holding, or refuse a restore that would change what was applied.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
-
-### The shell reads the default compositor mode while config.json doesn't load
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`mode`, `status`)
-- **What:** While config.json doesn't load at the start, the daemon's compositor manager runs on the file's mode (`Store.Takeovers`; its `compositor.state` push says `mode: "managed"`), but the shell's `mode` is `CompositorConfig.mode`, the defaults' `detached`, so `status` says `runtime` and the Compositor card, `KeybindManager` and `MonitorManager` treat a loaded managed config as the runtime layer until the file is fixed. Saves are blocked meanwhile, so nothing is written from it. Reading the daemon's pushed `mode` while `ConfigManager.savesBlocked` would match them.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
 
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
@@ -402,7 +402,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Shell saves carry unsaved settings and every takeover
 - **Where:** `services/ui/SettingsManager.qml` (`setValue`, `setValues`), `services/core/ConfigDraft.qml` (`save`), `services/core/ConfigManager.qml` (`saveConfig`, `commit`, `_send`)
-- **What:** The settings page applies an unsaved change straight into `ConfigManager.config` (`applyConfig`; only `x-applyOnSave` settings wait), and every other save starts from a clone of it: `ConfigDraft.save` merges onto it, `commitValue(s)` and `CommunitySetupsManager`'s wallpaper setter clone it. So an unsaved setting is written by an unrelated save (toggle Handle idle, don't Save, save a bar edit: `Idle.enabled` is written on). Every shell save also sends `takeover: true`, so the store's takeover guard binds only the CLI and `saved.*`, against [the binary's README](backend/README.md). The fix is backend stage 7 ([roadmap](backend/roadmap.md)): path ops, `takeover` only on a takeover card's op, live edits through `ConfigManager.setPreview`.
+- **What:** The settings page applies an unsaved change straight into `ConfigManager.config` (`applyConfig`; only `x-applyOnSave` settings wait), and every other save starts from a clone of it: `ConfigDraft.save` merges onto it, `commitValue(s)` and `CommunitySetupsManager`'s wallpaper setter clone it. So an unsaved setting is written by an unrelated save (toggle Handle idle, don't Save, save a bar edit: `Idle.enabled` is written on). Every shell save also sends `takeover: true`, so the store's takeover guard binds only the CLI and `saved.*`, against [the binary's README](backend/README.md). A save made from a config that predates a takeover write of the daemon's own (the compositor mode kept and saved back on leaving the hold) also puts the stale value back: for `Compositor.mode` that gives the managed config back; only `CommunitySetupsManager`'s wallpaper save, sent right after a restore, goes without it (`ConfigManager.commit(object, false)`). The fix is backend stage 7 ([roadmap](backend/roadmap.md)): path ops, `takeover` only on a takeover card's op, live edits through `ConfigManager.setPreview`.
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while reviewing the repository's organization
 

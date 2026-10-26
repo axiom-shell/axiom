@@ -238,7 +238,10 @@ QtObject {
     }
   }
 
-  // Sets the setup's wallpaper on every monitor, as the fixed one, in one save
+  // Sets the setup's wallpaper on every monitor, as the fixed one, in one
+  // save. It changes no takeover setting: sent without `takeover`, so the
+  // config cloned before axiom's own write after the apply (the compositor
+  // mode kept on leaving its hold) can't put the stale one back
   function _setWallpaper(url) {
     const config = Utils.clone(ConfigManager.config);
     const wallpaper = config.Appearance.wallpaper;
@@ -246,7 +249,7 @@ QtObject {
     wallpaper.file = url;
     for (const output of General.outputs)
       wallpaper.perScreen[output.name] = url;
-    if (!ConfigManager.commit(config))
+    if (!ConfigManager.commit(config, false))
       console.warn("[CommunitySetupsManager] Could not set the wallpaper", url);
   }
 

@@ -14,8 +14,9 @@ FieldGroup {
 
   readonly property string mode: CompositorConfigManager.mode
   readonly property string status: CompositorConfigManager.status
-  // The mode picked in the settings draft
-  readonly property string pendingMode: SettingsManager.localConfig?.Compositor?.mode ?? root.mode
+  // The mode picked in the settings draft (the defaults' while the mode is
+  // the daemon's: config.json doesn't load, so nothing was picked)
+  readonly property string pendingMode: CompositorConfigManager.modeFromDaemon ? root.mode : (SettingsManager.localConfig?.Compositor?.mode ?? root.mode)
   readonly property bool pending: root.pendingMode !== root.mode
 
   function _checkPending() {
