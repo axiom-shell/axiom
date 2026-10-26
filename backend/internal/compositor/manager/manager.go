@@ -96,7 +96,7 @@ type Manager struct {
 	// mode: the config's; "" while it isn't known (holding)
 	mode string
 	// modeRead: the config's mode at the last config event, to tell the
-	// card's change from another write while a kept mode isn't saved yet
+	// card's change while a kept mode isn't saved yet
 	modeRead string
 	lastKey  string
 	liveKey  string
@@ -325,10 +325,16 @@ func (m *Manager) SetInputs(in *jsonx.Object) {
 			m.mode = m.o.Mode()
 			m.modeRead = m.mode
 			if m.mode != "" && m.st.KeptMode != "" {
-				// A kept mode the file doesn't say yet (a re-exec, often
-				// into the compatible binary): still in effect
-				m.mode = m.st.KeptMode
-				m.saveKept(false)
+				if m.mode == m.st.KeptMode {
+					// Saved, the runtime file not told
+					m.st.KeptMode = ""
+					m.st.save()
+				} else {
+					// A kept mode the file doesn't say yet (a re-exec,
+					// often into the compatible binary): still in effect
+					m.mode = m.st.KeptMode
+					m.saveKept(false)
+				}
 			}
 			m.noteHolding()
 			m.debounce.Reset(300 * time.Millisecond)
@@ -351,7 +357,7 @@ func (m *Manager) ConfigChanged(fromFile bool) {
 		mode := m.o.Mode()
 		read := m.modeRead
 		m.modeRead = mode
-		if m.mode != "" && m.st.KeptMode != "" && m.keptStands(mode, read, fromFile) {
+		if m.mode != "" && m.st.KeptMode != "" && m.keptStands(mode, read) {
 			return
 		}
 		if mode != m.mode {
@@ -404,6 +410,11 @@ func (m *Manager) keptMode(ctx context.Context, mode string) (string, bool) {
 // restore) and the daemon turning compatible (ConfigWritable). first: the
 // first try, whose failure is worth a warning
 func (m *Manager) saveKept(first bool) {
+	if m.o.Mode() != m.modeRead {
+		// Changed since the last config event (the card's write, its
+		// event queued): never saved over; that event drops the kept mode
+		return
+	}
 	err := errors.New("nothing saves it")
 	if m.o.KeepMode != nil {
 		err = m.o.KeepMode(m.st.KeptMode)
@@ -421,16 +432,18 @@ func (m *Manager) saveKept(first bool) {
 // keptStands: a config event while the kept mode isn't saved yet leaves
 // it in effect, the config's mode (the one read on leaving the hold) never
 // applied, and tries the save again; false when it's done with: saved (the
-// config says it), or the card changed the mode (a write through the store,
-// not the file, changing it: only Compositor.mode's own card can), a real
-// choice the stale kept mode must never overwrite
-func (m *Manager) keptStands(mode, read string, fromFile bool) bool {
+// config says it), or the card changed the mode (any change since the last
+// event: an edit from outside holds x-takeover settings, and the kept
+// mode's own save clears it, so only Compositor.mode's own card can; the
+// event itself may be an earlier one, from the file, read after the card's
+// write), a real choice the stale kept mode must never overwrite
+func (m *Manager) keptStands(mode, read string) bool {
 	switch {
 	case mode == m.st.KeptMode:
 		m.st.KeptMode = ""
 		m.st.save()
 		return false
-	case !fromFile && mode != read:
+	case mode != read:
 		m.logf("Compositor.mode changed to %q: no longer saving %q, kept on leaving the hold", mode, m.st.KeptMode)
 		m.st.KeptMode = ""
 		m.st.save()

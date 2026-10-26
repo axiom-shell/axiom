@@ -730,6 +730,35 @@ func TestTheCardDropsAKeptModeNotSaved(t *testing.T) {
 	}
 }
 
+// The card's write read by an earlier event (one from the file, or the
+// daemon turning compatible, queued before the card's own event) is still
+// the card's: the retry never saves the kept mode over it
+func TestARetryNeverSavesOverTheCardsWrite(t *testing.T) {
+	t.Parallel()
+	for _, how := range []string{"a file event", "the daemon turning compatible"} {
+		t.Run(how, func(t *testing.T) {
+			t.Parallel()
+			h, f := keptSetup(t)
+			h.modeMu.Lock()
+			h.keepErr = nil
+			// The card's write, its event not yet delivered
+			h.mode = "included"
+			h.modeMu.Unlock()
+			if how == "a file event" {
+				h.m.ConfigChanged(true)
+			} else {
+				h.m.ConfigWritable()
+			}
+			h.m.ConfigChanged(false)
+			h.eventually("given back", func() bool { return readFile(f.ManagedPath) == "-- given back\n" })
+			time.Sleep(600 * time.Millisecond)
+			if kept, mode := h.keptSaved(); len(kept) != 0 || mode != "included" || h.state("mode") != "included" {
+				t.Fatalf("saved the kept mode over the card's: saved %v, config %q, mode %v", kept, mode, h.state("mode"))
+			}
+		})
+	}
+}
+
 // A kept mode not saved outlives a re-exec (the runtime file): the new
 // daemon, often the compatible binary, keeps it in effect and saves it
 func TestAKeptModeNotSavedOutlivesAReexec(t *testing.T) {
