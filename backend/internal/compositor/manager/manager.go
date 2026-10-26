@@ -436,7 +436,10 @@ func (m *Manager) saveKept(first bool) {
 // event: an edit from outside holds x-takeover settings, and the kept
 // mode's own save clears it, so only Compositor.mode's own card can; the
 // event itself may be an earlier one, from the file, read after the card's
-// write), a real choice the stale kept mode must never overwrite
+// write), a real choice the stale kept mode must never overwrite. Every
+// shell save still carries takeover (docs/dev/issues.md › Shell saves carry
+// unsaved settings and every takeover), so one made from a config older
+// than the kept mode's save counts as that choice too
 func (m *Manager) keptStands(mode, read string) bool {
 	switch {
 	case mode == m.st.KeptMode:
