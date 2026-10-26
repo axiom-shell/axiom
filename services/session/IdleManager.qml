@@ -65,18 +65,28 @@ Singleton {
     }, null);
   }
 
+  // Caffeine to the daemon, and its state back
+  function _sync() {
+    root._report();
+    BackendManager.call("idle.get", {}, (error, state) => {
+      if (!error)
+        root._state = state;
+    });
+  }
+
   property Connections _backend: Connections {
     target: BackendManager
     function onGreeted() {
-      root._report();
-      BackendManager.call("idle.get", {}, (error, state) => {
-        if (!error)
-          root._state = state;
-      });
+      root._sync();
     }
   }
 
-  Component.onCompleted: BackendManager.listen("idle.state", state => root._state = state)
+  Component.onCompleted: {
+    BackendManager.listen("idle.state", state => root._state = state);
+    // Made after the hello (a QML reload): no greeted to wait for
+    if (BackendManager.ready)
+      root._sync();
+  }
 
   property IpcTarget _ipc: IpcTarget {
     target: "idleInhibit"

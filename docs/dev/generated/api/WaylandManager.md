@@ -3,7 +3,7 @@
 
 > **File:** `services/core/WaylandManager.qml` · **Docs:** see [docs/dev](../../README.md)
 
-What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, … . Services gate on these, never on a compositor. All false without a daemon, and until it has said.
+What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, … . Services gate on these, never on a compositor. All false without a daemon, and until it has said. Created from shell.qml's `_services`.
 
 ### Properties
 
