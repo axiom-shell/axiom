@@ -115,14 +115,12 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its two entries are linked here and fixed there.
 
 Fixed in this phase:
-- [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads)
 - [`axiom lock` fails with no screen connected](issues.md#axiom-lock-fails-with-no-screen-connected)
 - [Some backend security checks have no tests](issues.md#some-backend-security-checks-have-no-tests)
 - [The greeter's environment is a denylist](issues.md#the-greeters-environment-is-a-denylist)
 - [Small backend error and robustness gaps](issues.md#small-backend-error-and-robustness-gaps)
 - [The shell stops reconnecting after a failed attempt](issues.md#the-shell-stops-reconnecting-after-a-failed-attempt)
 - [Schema build gaps](issues.md#schema-build-gaps)
-- [The Compositor card shows the file's mode while a kept mode isn't saved](issues.md#the-compositor-card-shows-the-files-mode-while-a-kept-mode-isnt-saved)
 
 Fixed by backend stage 7 (add the bullets there if missing):
 - [Shell saves carry unsaved settings and every takeover](issues.md#shell-saves-carry-unsaved-settings-and-every-takeover)
@@ -247,4 +245,6 @@ Resolves:
 ### Deferred
 Entries decided against doing now ([Items that need a plan](#items-that-need-a-plan) step 5). They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
 
-Nothing deferred yet.
+Extremely rare paths, put after real gaps (2026-10-26):
+- [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads) (transient: corrected after the reload)
+- [The Compositor card shows the file's mode while a kept mode isn't saved](issues.md#the-compositor-card-shows-the-files-mode-while-a-kept-mode-isnt-saved)
