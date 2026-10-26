@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 func TestWriteFileReplacesAndKeepsMode(t *testing.T) {
@@ -63,6 +65,10 @@ func TestWriteFileFailsCleanlyInAMissingDir(t *testing.T) {
 	err := WriteFile(filepath.Join(t.TempDir(), "nope", "x.json"), []byte("x"), 0o600)
 	if err == nil || !strings.Contains(err.Error(), "temp file") {
 		t.Errorf("err %v", err)
+	}
+	// A kind the CLI and the shell can branch on, not a raw Internal
+	if axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("kind %s", axerr.KindOf(err))
 	}
 }
 

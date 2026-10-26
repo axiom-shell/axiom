@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // Writer appends to a file, starting it over (the old one kept as .1)
@@ -20,14 +22,15 @@ type Writer struct {
 	size int64
 }
 
-// Open opens (creating) path for appending.
+// Open opens (creating) path for appending; a failure is
+// axerr.Unavailable.
 func Open(path string, max int64) (*Writer, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return nil, err
+		return nil, axerr.Wrap(axerr.Unavailable, err, "creating the log folder")
 	}
 	w := &Writer{path: path, max: max}
 	if err := w.open(); err != nil {
-		return nil, err
+		return nil, axerr.Wrap(axerr.Unavailable, err, "opening the log")
 	}
 	return w, nil
 }

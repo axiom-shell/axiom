@@ -214,6 +214,11 @@ func (r *Router) exec(ctx context.Context, p CallParams) (string, error) {
 	var out, errOut bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errOut
 	if err := cmd.Run(); err != nil {
+		if ctx.Err() != nil {
+			// Timed out (or the caller gave up): the shell didn't answer,
+			// which says nothing about the function existing
+			return "", axerr.Wrap(axerr.Unavailable, ctx.Err(), "%s.%s didn't answer", p.Target, p.Function)
+		}
 		msg := strings.TrimSpace(errOut.String())
 		if msg == "" {
 			msg = err.Error()

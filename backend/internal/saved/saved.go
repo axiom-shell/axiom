@@ -359,6 +359,11 @@ func (s *Service) Open(path string) (Preview, error) {
 	if err != nil {
 		return Preview{}, err
 	}
+	return s.preview(path, parsed)
+}
+
+// preview is Open's answer for a file already read.
+func (s *Service) preview(path string, parsed any) (Preview, error) {
 	if _, err := s.load(parsed); err != nil {
 		return Preview{}, err
 	}
@@ -392,7 +397,13 @@ func (s *Service) Open(path string) (Preview, error) {
 // personal, its commands with commands), after saving the running config
 // as "before-<name>"; the result is saved as "import-<name>".
 func (s *Service) Import(path string, personal, commands bool, monitors share.Monitors) (Applied, error) {
-	preview, err := s.Open(path)
+	// Read once: what's applied is what the preview judged, even if the
+	// file changes meanwhile
+	parsed, err := readShared(path)
+	if err != nil {
+		return Applied{}, err
+	}
+	preview, err := s.preview(path, parsed)
 	if err != nil {
 		return Applied{}, err
 	}
@@ -403,7 +414,6 @@ func (s *Service) Import(path string, personal, commands bool, monitors share.Mo
 	if commands && preview.HasCommands {
 		carry = append(carry, "commands")
 	}
-	parsed, _ := readShared(path)
 	return s.apply(preview.Name, parsed, carry, monitors, "import-"+preview.Name, preview.Name)
 }
 

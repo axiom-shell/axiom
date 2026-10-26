@@ -57,9 +57,21 @@ type Command struct {
 
 // Main runs the command line and returns the process exit code.
 func Main(args []string, e *Env) int {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), shutdownSignals(signal.Ignored)...)
 	defer stop()
 	return Run(ctx, Root(), args, e)
+}
+
+// shutdownSignals are the signals that end a command cleanly (a daemon
+// stops its shell first): SIGINT, SIGTERM, and SIGHUP (the terminal of an
+// `axiom run --dev` closed) unless it was started with SIGHUP ignored
+// (nohup), which notifying it would undo.
+func shutdownSignals(ignored func(os.Signal) bool) []os.Signal {
+	sigs := []os.Signal{os.Interrupt, syscall.SIGTERM}
+	if !ignored(syscall.SIGHUP) {
+		sigs = append(sigs, syscall.SIGHUP)
+	}
+	return sigs
 }
 
 // Run dispatches args (without the program name) through root.

@@ -62,12 +62,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-24, while moving the compositor takeover into the binary
 
-### Small backend error and robustness gaps
-- **Where:** `backend/internal/fsx/fsx.go` (`WriteFile`), `backend/internal/logfile/`, `backend/internal/ipcroute/ipcroute.go` (`exec`), `backend/internal/cli/cli.go` (`Main`), `backend/internal/config/format.go`, `backend/internal/saved/saved.go` (`Import`)
-- **What:** Raw errors reach the CLI as `Internal`: `fsx.WriteFile` (`fmt.Errorf`), `logfile.Open`, `daemon logs`' `ReadFile`. `ipcroute`'s exec path labels a timeout `NotFound` (should be `Unavailable`). `cli.Main` doesn't catch SIGHUP: closing the terminal kills a `--dev` daemon outright, leaving its shell for the next start to stop. `format: 1` is refused with "it reads 1 and 2", and `format: null` prints `<nil>`. The keys a format-1 load drops (`Removed`) are never logged. `saved.Import` reads the file twice, so the preview and what's applied can differ.
-- **Size:** small
-- **Found:** 2026-10-24, while reviewing the Go backend
-
 ### Schema build gaps
 - **Where:** `backend/internal/schema/yamlsrc/kinds.go` (`orderKeys`), `backend/internal/cli/schema.go` (`schema check`), `backend/internal/config/pipeline.go` (patterns)
 - **What:** `orderKeys` overwrites an author-written `x-order` on every object with more than one property, though `config/schema/annotations.yaml` lets authors write one. `axiom schema check` passes when `config/json/config.schema.json` is missing. Go's RE2 `\S`/`\s` are ASCII-only while JS's are Unicode: a value of only U+00A0 passes `"\\S"` in Go and fails in JS. Translating the classes, or refusing them in `check.go`, keeps the two sides equal.
