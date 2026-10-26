@@ -333,7 +333,6 @@ func (m *Manager) ConfigChanged(fromFile bool) {
 		}
 		if mode := m.o.Mode(); mode != m.mode {
 			m.mode = mode
-			m.noteHolding()
 			m.modeChanged(fromFile)
 			m.debounce.Reset(300 * time.Millisecond)
 		}

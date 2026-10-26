@@ -134,6 +134,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
 
+### Holding on an unknown compositor mode applies no runtime layer
+- **Where:** `backend/internal/compositor/manager/manager.go` (`apply`, `liveChanged`, `configReloaded`)
+- **What:** While config.json isn't JSON at the start the manager's mode is "" and `apply`, `liveChanged` and `configReloaded` return at once. That keeps a managed config and an include file, which live in the compositor's config, but the runtime layer (detached mode, or managed while the takeover waits for approval) is never applied, and a compositor reload drops the one already applied: a detached user starting with a broken config.json (a sync tool, a half-written copy) gets no axiom binds or rules until the file is fixed, where before the hold they got the defaults' layer. Needs a decision: apply the runtime layer from the defaults while holding when nothing of axiom's is in the compositor's config (`configIsOurs` false, `AppliedMode` not `included`), or keep holding everything.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
+
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
 - **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Which surface it is hasn't been found yet: next step, reproduce with a nested compositor dropping its output and bisect by commenting out surfaces in `shell.qml`.
