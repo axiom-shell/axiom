@@ -518,6 +518,10 @@ func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 			h.w.loaded = c.included
 			f := h.w.files(Inputs{})
 			os.MkdirAll(f.UserDir, 0o755)
+			if c.included {
+				os.MkdirAll(filepath.Dir(f.IncludePath), 0o755)
+				os.WriteFile(f.IncludePath, []byte("-- module f0\n"), 0o644)
+			}
 			managed := ""
 			if c.managedFile {
 				managed = hyprHeader + " managed f0\n"
@@ -561,12 +565,16 @@ func TestLeavingTheHoldKeepsTheModeApplied(t *testing.T) {
 		name, applied string
 		managedFile   bool
 		included      bool
+		module        string
 		want          string
 	}{
-		{"applied managed", "managed", true, false, "managed"},
-		{"managed config, nothing applied", "", true, false, "managed"},
-		{"include loaded, nothing applied", "", false, true, "included"},
-		{"nothing applied", "", false, false, "detached"},
+		{"applied managed", "managed", true, false, "", "managed"},
+		{"managed config, nothing applied", "", true, false, "", "managed"},
+		{"include loaded, nothing applied", "", false, true, "-- module f0\n", "included"},
+		// Left behind by a switch out of included, its include line kept
+		// (niri's check only sees the line): not a mode in effect
+		{"emptied module included, nothing applied", "", false, true, "-- empty\n", "detached"},
+		{"nothing applied", "", false, false, "", "detached"},
 	} {
 		for _, fromFile := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s, from file %v", c.name, fromFile), func(t *testing.T) {
@@ -576,6 +584,10 @@ func TestLeavingTheHoldKeepsTheModeApplied(t *testing.T) {
 				h.w.loaded = c.included
 				f := h.w.files(Inputs{})
 				os.MkdirAll(f.UserDir, 0o755)
+				if c.module != "" {
+					os.MkdirAll(filepath.Dir(f.IncludePath), 0o755)
+					os.WriteFile(f.IncludePath, []byte(c.module), 0o644)
+				}
 				managed := ""
 				if c.managedFile {
 					managed = hyprHeader + " managed f1\n"

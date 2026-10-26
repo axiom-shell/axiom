@@ -362,7 +362,7 @@ func (m *Manager) keptMode(ctx context.Context, mode string) (string, bool) {
 		// compositor's config was applied
 		if m.configIsOurs() {
 			applied = "managed"
-		} else if loaded, _ := m.w.checkLoaded(ctx, m.in, "included"); loaded {
+		} else if m.moduleLoaded(ctx) {
 			applied = "included"
 		}
 	}
@@ -391,8 +391,20 @@ func (m *Manager) noteHolding() {
 // takeover awaiting approval, blocked or failed left the user's config in
 // place, and gets the runtime layer as outside the hold
 func (m *Manager) axiomsInConfig(ctx context.Context) (in, loaded bool) {
-	loaded, _ = m.w.checkLoaded(ctx, m.in, "included")
+	loaded = m.moduleLoaded(ctx)
 	return loaded || m.configIsOurs(), loaded
+}
+
+// moduleLoaded: the included module is in effect with axiom's layer in it.
+// An emptied one (left behind by a switch out of included) doesn't count:
+// niri's check only sees that the user's config reaches the file, and its
+// include line is often left in place
+func (m *Manager) moduleLoaded(ctx context.Context) bool {
+	if text := readFile(m.files().IncludePath); text == "" || text == m.w.emptyModuleText() {
+		return false
+	}
+	loaded, _ := m.w.checkLoaded(ctx, m.in, "included")
+	return loaded
 }
 
 // applyHolding: while the mode isn't known, the defaults' runtime layer,
