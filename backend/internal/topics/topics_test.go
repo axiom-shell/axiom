@@ -338,9 +338,10 @@ func TestOnRefresh(t *testing.T) {
 
 // Every interval setting (a number named *interval*, *refresh* or *poll*,
 // stored in ms whatever its x-unit) offers nothing below MinInterval, the
-// floor of the sources those settings feed, so no value it offers is
-// silently raised. The settings known to feed a topic must be among them,
-// so renaming one can't slip it past the check.
+// floor of the topics fed by a setting, so no value a topic's setting
+// offers is silently raised. Settings polled in QML are held to it too,
+// which keeps the check from depending on knowing which ones feed a topic;
+// those known to must be among them, so renaming one can't slip it past.
 func TestIntervalSettingsMeetMinInterval(t *testing.T) {
 	t.Parallel()
 	data, err := assets.Read("config/json/config.schema.json")
