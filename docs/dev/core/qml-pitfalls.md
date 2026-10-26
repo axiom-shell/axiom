@@ -23,6 +23,7 @@ Traps of QML, Qt's JS engine and Quickshell that have each cost a debugging sess
 
 ### Types and qmllint
 - Signal parameters or properties typed `Item` that callers read custom members of trip qmllint (`missing-property`): type them `var`.
+- qmllint doesn't see a singleton used only inside a template literal's `${…}`: its import is reported `unused-imports`. Concatenate instead (`"↓" + Utils.formatBytes(n)`).
 
 ### URL-loaded files
 Bar widgets, content and views are loaded by URL.

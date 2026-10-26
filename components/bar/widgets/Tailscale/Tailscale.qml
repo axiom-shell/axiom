@@ -5,11 +5,13 @@ import QtQuick
 import qs.services.core
 import qs.services.apps
 import qs.config
+import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
 // The Tailscale bar widget: connected or not, and the tailnet's name, from
-// TailscaleManager (acquired at the Tailscale section's interval). Left
-// click runs the click command, right click checks again now.
+// TailscaleManager (acquired at the Tailscale section's interval). Hovering
+// opens the Tailscale popout; left click runs the click command, right
+// click checks again now.
 BarIconWidget {
   id: root
 
@@ -39,5 +41,11 @@ BarIconWidget {
       TailscaleManager.refresh();
     else
       CommandManager.runDetached(root.properties.clickCommand);
+  }
+
+  PopoutAnchor {
+    hitArea: root.hitArea
+    popoutName: "Tailscale"
+    active: EdgeMenusConfig.opensOwnPopout(root.properties)
   }
 }

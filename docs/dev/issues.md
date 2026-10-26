@@ -163,6 +163,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
 
+### A daemon test finds the instance lock still held
+- **Where:** `backend/internal/daemon/reexec_test.go` (`TestStaleSocketIsRemovedOnlyUnderTheInstanceLock`)
+- **What:** One `scripts/dev/verify.sh` run failed with `reexec_test.go:42: the daemon stopped: axiom is already running on wayland-test: held by process …` and `daemon_test.go:90: the daemon didn't stop`, then passed on a rerun with nothing changed in `daemon`: after `held.Release()`, the daemon `td.start` runs still found the lock held, likely by the refused `runBriefly` daemon's open lock file (or the test's own) not yet closed under a loaded parallel run. A possible fix: wait for `runBriefly`'s daemon to close everything before releasing, or retry the start briefly.
+- **Size:** trivial
+- **Found:** 2026-10-27, while verifying the Tailscale revamp
+
 ### A dev-mode build test fails with text file busy
 - **Where:** `backend/internal/daemon/dev_test.go` (`TestDevBuild`, `fakeGo`)
 - **What:** One `scripts/check_go.sh` run failed with `dev_test.go:55: err go generate: fork/exec …/go: text file busy`, then passed on the next run with nothing changed in `daemon`. `fakeGo` writes an executable script while parallel subtests fork: a fork made while the file is still open for writing carries that descriptor, and exec of the script fails with ETXTBSY until that child execs. A possible fix: write the fake to a temp name and rename it into place, or retry the exec on ETXTBSY in the test helper.
@@ -458,10 +464,3 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The same Quickshell `Socket` gap `BackendManager` had: a connect that fails keeps its `QLocalSocket`, so `_reconnect`'s `stream.connected = true` does nothing, and once a connect to `$NIRI_SOCKET` fails the event stream never comes back (no workspace or window events until a reload). Also, assigning `connected` drops its binding to `socketPath`. Rare (niri's socket is up before the shell), but a fresh `Socket` per attempt, as `BackendManager` now does, would close it.
 - **Size:** small
 - **Found:** 2026-10-26, while fixing the shell's reconnect to axiom
-
-### Tailscale needs a revamp like Claude usage's
-- **Where:** `components/bar/widgets/Tailscale/schema.yaml`, `components/bar/widgets/Tailscale/Tailscale.qml`, `services/apps/TailscaleManager.qml`, `backend/internal/tailscale/tailscale.go`
-- **What:** The maintainer's decision (2026-10-26), quoted: "Raise minimum to 1s. No migration step. Leave tailscale alone for now - add entry to issues.md and roadmap for a full tailscale revamp including popout with more information and a modules setting page similar to claude usage with the bar module having only the bar specific settings (like claude usage)." The minimum is raised (1000 ms); the rest is this entry. Today every Tailscale bar widget carries its own poll `interval` beside its bar settings, and its popout is the generic `menu`. Claude usage is the target shape: a `ClaudeUsage` config section in the Modules settings category holds what every widget shares (its accounts), the bar widget's schema keeps only what's about the bar (what it shows, icon, thresholds, colors, click command), and its popout is its own content (`components/content/ClaudeUsage`, `popout: {variant: own}`) with more detail than the bar.
-- **Size:** needs a plan
-- **Found:** 2026-10-26, while raising the Tailscale interval's minimum (roadmap row 4)
-
