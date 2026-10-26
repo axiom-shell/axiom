@@ -376,11 +376,35 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The shell–daemon contract is checked by name only
-- **Where:** `scripts/gen_docs.py` (the rpc cross-check), `backend/internal/daemon/methods.go` (params and results)
-- **What:** `rpc.md`'s check matches method names between the two sides by regex; params and results are Go structs on one side and hand-read fields on the other, and nothing checks they agree (only the manual protocol bump in `config/json/backend.json`). Generating each method's fields from the `rpc.Handle` registrations into `rpc.md`, and checking the QML call sites' keys against them, would catch a renamed field.
-- **Size:** needs a plan
-- **Found:** 2026-10-26, while reviewing the repository's organization
+### The rpc registry doesn't record its methods' shapes
+- **Where:** `backend/internal/rpc/rpc.go` (`Handle`)
+- **What:** `rpc.Handle` knows each method's params and result types (`P`, `R`) but keeps only a closure, so nothing can report what a method takes or returns. It should store both `reflect.Type`s, and a pure walker should turn a type into a field tree by `encoding/json`'s rules (name from the tag, `omitempty`, `-` skipped, embedded fields inlined, slices, maps, nested structs; `json.RawMessage`, `any` and types with their own `MarshalJSON` opaque), with a table-driven test in `backend/internal/rpc`. First of the contract-check plan's items.
+- **Size:** small
+- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
+
+### Pushes and topics don't declare their types
+- **Where:** `backend/internal/daemon/methods.go` (the push and topic constants), `backend/internal/rpc/server.go` (`Broadcast`), `backend/internal/topics/topics.go` (`Source`)
+- **What:** `Broadcast(method, params any, …)` takes any value: some pushes are typed (`configChanged`, `clipboardState`), some `map[string]any` (`schema.error`, `schema.changed`), every `compositor.*` push pre-marshalled bytes; `topics.Source` names no request or state type. Each push should be declared once with its param type beside the topic constants and `Broadcast` calls use the declaration; `topics.Source` gains its request and state types; the `compositor.*` pushes get structs where that's cheap, opaque otherwise.
+- **Size:** small
+- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
+
+### The generate step dumps no rpc shapes
+- **Where:** `scripts/generate.sh`, `backend/internal/daemon/methods.go` (the registrations)
+- **What:** Nothing writes the method, push and topic shapes where `scripts/gen_docs.py` can read them. A Go program (under `backend/tools/`) should build the daemon's registry without starting a daemon (registration only stores closures, so a registry-only constructor suffices) and print methods, pushes and topics with their field trees as JSON; `scripts/generate.sh` writes it to a gitignored file before `gen_docs.py` runs. Needs the two entries above.
+- **Size:** small
+- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
+
+### rpc.md shows no shapes and call sites' keys go unchecked
+- **Where:** `scripts/gen_docs.py` (`rpc_scan`), `docs/dev/backend/protocol.md` (Changing the protocol)
+- **What:** `rpc_scan` matches method names only, and `rpc.Handle` decodes with `json.Unmarshal`, which ignores unknown fields: renaming `"zones"` to `"zone"` in `TimeZoneManager` gives the daemon an empty list with no error. From the shapes dump, `rpc.md` should list each method's params and result fields and each push's fields, and a `BackendManager.call` / `notify` whose params are an object literal should fail the check on a key the params don't have (`{}` and `null` pass); non-literal call sites are listed as unchecked in `rpc.md`, and protocol.md › Changing the protocol says what's checked. Needs the entry above.
+- **Size:** small
+- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
+
+### Result and push reads in inline callbacks go unchecked
+- **Where:** `scripts/gen_docs.py` (`rpc_scan`)
+- **What:** Results and pushes are read by name in callbacks (`result.name` in `SavedConfigsManager.save`, `state.repo` in `UpdatesManager`). Optional: in `(error, result) => …` and `listen("x", state => …)` arrow callbacks, a first-level `result.key` / `state.key` read could be checked against the result or push fields. Worth it only if the shapes in `rpc.md` show such reads are common enough; otherwise it moves to Deferred. Last of the contract-check plan's items; the plan file is deleted with it.
+- **Size:** small
+- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
 
 ### Singletons doing several jobs
 - **Where:** `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/core/ShellManager.qml`, `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`)

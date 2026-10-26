@@ -1,7 +1,9 @@
 # The shell–daemon contract is checked by name only
 
-> **Issue:** [The shell–daemon contract is checked by name only](../issues.md#the-shelldaemon-contract-is-checked-by-name-only)
-> **Status:** proposed
+> **Issue:** The shell–daemon contract is checked by name only (replaced in [issues.md](../issues.md) by the items below, from [The rpc registry doesn't record its methods' shapes](../issues.md#the-rpc-registry-doesnt-record-its-methods-shapes) on)
+> **Status:** decided: B (2026-10-26)
+
+**Decision (2026-10-26):** option B, Go reports its own shapes. Option C's runtime strictness warning is not taken, not even as the recommended add-on, so item 5 (the daemon warning about unknown params) is dropped: non-literal call sites stay unchecked and are listed as such in `rpc.md`. Items 1–4 and 6 became issues.md entries, linked from the roadmap's Phase 4.
 
 ### Problem
 `scripts/gen_docs.py` (`rpc_scan`) finds both sides of the socket by regex: `rpc.Handle(reg, "name"`, `Broadcast("name"`, `topics.Source{Name:` in Go; `BackendManager.call("name"` / `listen` / `acquire` and `// rpc:` notes in QML. It fails a call to a method the daemon lacks, but never looks at what goes inside one. The fields are typed on one side only:
@@ -23,7 +25,7 @@ Extend `rpc_scan` to resolve each handler's `P` and `R` to its struct and read t
 `rpc.Handle` already knows `P` and `R` as type parameters. The registry keeps `reflect.Type` for each, and a small walker turns them into field trees by `encoding/json`'s own rules (tags, `omitempty`, embedding, nested structs, slices, maps; `json.RawMessage` and `any` shown as opaque). Pushes get the same by declaring each push with its type once (beside the topic constants), and `topics.Source` names its request and state types. A Go program run by `scripts/generate.sh` (it already runs `go run`) writes the shapes as a gitignored JSON; `gen_docs.py` prints each method's params and result in `rpc.md` and checks every literal-object call site's keys against the params.
 - Costs: about 150 lines of Go (registry types, walker, dump, push declarations) plus the Python check; the dump must build the daemon's registry without starting it (registration only stores closures, so a registry-only constructor suffices).
 - Risks: opaque spots stay opaque until typed (the `compositor.*` pushes are pre-marshalled bytes; typing them is part of the items).
-- Leaves out: non-literal params and result reads, which no static check sees reliably; item 5 covers params at runtime.
+- Leaves out: non-literal params and result reads, which no static check sees reliably.
 
 #### C. Runtime strictness only
 `rpc.Handle` decodes the shell's params with unknown fields reported (a warning in the daemon's log, or a refusal), and nothing is generated.
@@ -39,5 +41,5 @@ B, with C's check kept as a warning for the call sites B can't see. Go is the on
 2. **Pushes and topics declare their types.** Each push named once with its param type (beside the topic constants in `backend/internal/daemon/methods.go`), `Broadcast` calls use the declaration; `topics.Source` gains its request and state types. The `compositor.*` pushes get structs instead of pre-marshalled bytes where that's cheap, opaque otherwise. (small)
 3. **A shapes dump in the generate step.** A program under `backend/tools/` builds the daemon's registry without starting a daemon and prints methods, pushes and topics with their field trees as JSON; `scripts/generate.sh` writes it to a gitignored file before `gen_docs.py`. (small)
 4. **`rpc.md` shows the shapes and `gen_docs.py` checks literal call sites.** Each method lists its params and result fields, each push its fields. A `BackendManager.call` / `notify` whose params are an object literal fails the check on a key the params don't have (`{}` and `null` pass); non-literal call sites are listed as unchecked in `rpc.md`. `docs/dev/backend/protocol.md` › Changing the protocol says what's checked. (small)
-5. **The daemon warns about unknown params from the shell.** `rpc.Handle` decodes the shell connection's params a second time with unknown fields disallowed when the first decode succeeded, and logs one warning per method and key in the daemon's log (no refusal, so additive changes still need no bump). (trivial)
+5. **Dropped (C not taken):** ~~The daemon warns about unknown params from the shell.~~ `rpc.Handle` decodes the shell connection's params a second time with unknown fields disallowed when the first decode succeeded, and logs one warning per method and key in the daemon's log (no refusal, so additive changes still need no bump). (trivial)
 6. **Optional: result reads in inline callbacks.** In `(error, result) => …` and `listen("x", state => …)` arrow callbacks, a first-level `result.key` / `state.key` read is checked against the result or push fields. Worth it only if items 1–4 show such reads are common enough; otherwise deferred. (small)
