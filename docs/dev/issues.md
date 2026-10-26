@@ -14,7 +14,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### <Short title>
 - **Where:** `path/File.qml` (symbol, or several paths)
 - **What:** what's wrong and the evidence (log line, grep count, failing case); quote a log warning's message in backticks so verify.sh marks it known (one from Qt or Quickshell that names no file: quote its category too, `quickshell.I3.ipc`)
-- **Size:** trivial | small | needs a plan
+- **Size:** trivial | small | needs a plan (designed first: the roadmap's Items that need a plan)
 - **Found:** YYYY-MM-DD, while <task>
 ```
 
