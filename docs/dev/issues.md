@@ -122,6 +122,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
+### A config.json that doesn't load at the start releases a managed compositor config
+- **Where:** `backend/internal/store/store.go` (`loadInitial`: `s.config` is the defaults), `backend/internal/daemon/compositor.go` (`Mode` reads `store.Config`), `backend/internal/compositor/manager/manager.go` (`apply`, `leave`)
+- **What:** When config.json doesn't load as axiom starts (not JSON, or invalid), the store runs on the defaults, so the compositor manager reads `Compositor.mode` as the default `detached`; with `AppliedMode` `managed` its first `apply` leaves managed and gives the compositor's config back, though the file still says managed. The store already knows the file's takeover values when it parsed (`fileTakeovers`) but nothing reads them, and over a file that isn't JSON it knows none. The reload hold (`Store.holdTakeovers`) can't help: the release happens before any reload. A possible guard: while the store is blocked from the start, the manager keeps the mode it last applied (or the store hands out `fileTakeovers`' values, and none is applied while they're unknown).
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
+
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
 - **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Which surface it is hasn't been found yet: next step, reproduce with a nested compositor dropping its output and bisect by commenting out surfaces in `shell.qml`.
