@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.services.ui
 import qs.components.reusable
+import qs.components.methods
 
 // One app on a dock: its icon (grown by the dock's magnification) and a
 // running indicator, spanning the whole depth of the dock window at its
@@ -157,7 +158,7 @@ Item {
   // its place: off the dock unpins it, among the pinned apps (re)pins it
   // there, after them leaves it be
   function _drop(along, across) {
-    const outward = root.dockWindow.edge === Bar.Bottom || root.dockWindow.edge === Bar.Right ? -across : across;
+    const outward = root.dockWindow.edge === ScreenEdge.Bottom || root.dockWindow.edge === ScreenEdge.Right ? -across : across;
     if (outward > root.dockWindow.thickness + root.dockWindow.base) {
       if (root.item.pinned)
         DockManager.unpin(root.dock.id, root.key);

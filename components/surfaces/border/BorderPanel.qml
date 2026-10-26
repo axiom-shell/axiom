@@ -37,7 +37,7 @@ PanelWindow {
     id: placeOnScreen
     window: root
     namespace: "axiom-border"
-    edge: root.edge === "left" ? Bar.Left : root.edge === "right" ? Bar.Right : root.edge === "bottom" ? Bar.Bottom : Bar.Top
+    edge: root.edge === "left" ? ScreenEdge.Left : root.edge === "right" ? ScreenEdge.Right : root.edge === "bottom" ? ScreenEdge.Bottom : ScreenEdge.Top
   }
   // Surfaces joined to the stroke leave it open under them, in strip
   // coordinates: the stroke and the fill beside it (the stroke's row),

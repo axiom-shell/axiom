@@ -3,8 +3,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-import qs.config
 import qs.services.compositor
+import qs.components.methods
 
 // Where a layer-shell `window` is on its screen, as LayerManager works it
 // out from how every window there asks to be laid out (and reports this
@@ -18,7 +18,7 @@ QtObject {
   required property var window
   required property string namespace
   // The window's edge: where it's estimated to be while it has no origin
-  property int edge: Bar.Top
+  property int edge: ScreenEdge.Top
   // Its WlrLayershell.layer (an attached property, unreadable from here)
   property int layer: WlrLayer.Top
   // Where it most likely starts along its edge while it has no origin,
@@ -82,9 +82,9 @@ QtObject {
   readonly property point _estimate: {
     const sw = root.window?.screen?.width ?? 0, sh = root.window?.screen?.height ?? 0;
     const w = root.window?.width ?? 0, h = root.window?.height ?? 0;
-    const vertical = root.edge === Bar.Left || root.edge === Bar.Right;
+    const vertical = root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right;
     const along = isNaN(root.estimatedStart) ? ((vertical ? sh - h : sw - w) / 2) : root.estimatedStart;
-    return Qt.point(vertical ? (root.edge === Bar.Right ? sw - w : 0) : along, vertical ? along : (root.edge === Bar.Bottom ? sh - h : 0));
+    return Qt.point(vertical ? (root.edge === ScreenEdge.Right ? sw - w : 0) : along, vertical ? along : (root.edge === ScreenEdge.Bottom ? sh - h : 0));
   }
 
   // Known, or given up on: a surface the blur window backs waits for this

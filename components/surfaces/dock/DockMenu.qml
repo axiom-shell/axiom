@@ -8,6 +8,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
+import qs.components.methods
 
 // A dock app's menu, opening towards the screen from its icon: its name and
 // windows (click one to focus it), and, opened by a right click (`full`),
@@ -31,7 +32,7 @@ PopupWindow {
   readonly property bool hovered: menuHover.hovered
 
   readonly property int _edge: root.dockWindow.edge
-  readonly property int _towards: _edge === Bar.Bottom ? Edges.Top : _edge === Bar.Top ? Edges.Bottom : _edge === Bar.Left ? Edges.Right : Edges.Left
+  readonly property int _towards: _edge === ScreenEdge.Bottom ? Edges.Top : _edge === ScreenEdge.Top ? Edges.Bottom : _edge === ScreenEdge.Left ? Edges.Right : Edges.Left
 
   visible: root.active && !!root.anchorItem?.QsWindow.window && !SurfaceManager.captureFrozen
   color: "transparent"

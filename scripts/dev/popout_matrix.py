@@ -26,7 +26,7 @@ import tempfile
 import time
 
 HOOK_MARK = "// popout_matrix.py hook"
-HOOK_IMPORTS = "import QtQml " + HOOK_MARK + "\nimport Quickshell.Io " + HOOK_MARK + "\nimport qs.config " + HOOK_MARK + "\n"
+HOOK_IMPORTS = "import QtQml " + HOOK_MARK + "\nimport Quickshell.Io " + HOOK_MARK + "\nimport qs.components.methods " + HOOK_MARK + "\n"
 HOOK = """
   // popout_matrix.py: opens a bar popout (or a submenu in the open one)
   // with no pointer, held open; the script takes it out again
@@ -54,7 +54,7 @@ HOOK = """
     target: "devPopouts"
     function open(screen: string, location: string, which: string): string {
       close();
-      const panel = ScreenEdgeManager.barOn(screen, Bar.locationOf(location));
+      const panel = ScreenEdgeManager.barOn(screen, ScreenEdge.fromName(location));
       if (!panel)
         return "no bar";
       const vertical = panel.barConfig.vertical;

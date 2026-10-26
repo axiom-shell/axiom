@@ -13,6 +13,7 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 - **Delete before adding.** A fix first looks for what to remove: a mechanism made unnecessary, a duplicate, a special case the general path already covers. Between two fixes that work, the smaller one wins, and a fix that makes the code shorter is the best kind. Each PR body states its net lines (QML, Go, scripts; tests and docs apart).
 - **A rare path gets the smallest fix, or stays logged** (decided 2026-10-26, after #107 and #108 spent about 840 lines holding the compositor mode while config.json doesn't load, and opened three new entries doing it). A fix for a path a user rarely takes that grows past about 150 lines (tests apart) stops and becomes a plan ([Items that need a plan](#items-that-need-a-plan)), or the entry stays open. Never a stopgap that a later stage then has to delete.
 - **The batch size is a gate, not a guide.** Over about 800 changed lines (moves, generated files and tests apart), the batch is split before review, never reviewed whole.
+- **A bug that got past the checks adds a check.** When a mechanical check could have caught it, the fix adds that check (or a ratchet), or its PR says why none could. So the guardrails grow from what actually went wrong, and [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0 revamps them rather than starting them.
 - **A decision is settled before it's built.** An item resting on a choice the maintainer hasn't made, or might change, stops for the decision first. #116 built a topic floor and #120 removed it the next day.
 - **A fix removes its entry from issues.md and its link here** in the same change; a phase is done when its list is empty. A new issues.md entry gets a link in the phase that will fix it.
 - **Waits for a backend stage** means the item touches code that stage deletes or rewrites: it's done in that stage's change or after it, never before (no polishing code about to go). Items without one can run at any time, in parallel with the backend roadmap.
@@ -63,10 +64,11 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 12 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
 | 13 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 14 | later | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
-| 15 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
-| 16 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 2: clear out issues.md, then audit again | Fixes after the audits, so the list isn't refilled behind them; the second pass catches what the fixes broke. |
-| 17 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 3: 1–2 weeks of hardening, frozen | The maintainer drives sway and niri daily; only fixes land. |
-| 18 | later | [Phase 9](#phase-9-docs-tooling-and-process), then post for testers | Last, so the docs describe the final shape; the post follows [the launch gate](#the-launch-gate). |
+| 15 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0: audit and tighten the guardrails (checks, tests, CI, agent rules) | The architecture is final once stage 7 and Phase 10 are in, so stricter checks aren't rewritten by a later stage; before the system audits, so the audits, the clear-out and the hardening all run under them. |
+| 16 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
+| 17 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 2: clear out issues.md, then audit again | Fixes after the audits, so the list isn't refilled behind them; the second pass catches what the fixes broke. |
+| 18 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 3: 1–2 weeks of hardening, frozen | The maintainer drives sway and niri daily; only fixes land. |
+| 19 | later | [Phase 9](#phase-9-docs-tooling-and-process), then post for testers | Last, so the docs describe the final shape; the post follows [the launch gate](#the-launch-gate). |
 
 **Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload).
 
@@ -150,8 +152,6 @@ Steps, roughly in this order (moves first, each its own PR):
 4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
-- [The edge enum has no methods helper](issues.md#the-edge-enum-has-no-methods-helper)
-- [Edge users still read the enum from the `Bar` reader](issues.md#edge-users-still-read-the-enum-from-the-bar-reader)
 - [The `Bars` reader is named `Bar`](issues.md#the-bars-reader-is-named-bar)
 
 ### Phase 4: backend structure and contract
@@ -240,17 +240,9 @@ Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-cl
 Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` pages it points at); fold `docs/dev/core/config-v2.md` into `schema-annotations.md` and `config-manager.md` once stage 7 finishes v2; the maintainer moves the [Deferred](#deferred) entries to GitHub; a PR-size note in `CONTRIBUTING.md` (a batch per PR, an item per commit, moves apart from logic).
 
 Resolves:
-- [The check order is kept in three places](issues.md#the-check-order-is-kept-in-three-places)
-- [Small tooling leftovers](issues.md#small-tooling-leftovers)
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
-- [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
-- [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
-- [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
-- [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
-- [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
-- [CI checks dependencies and cross-builds only when a PR touches Go](issues.md#ci-checks-dependencies-and-cross-builds-only-when-a-pr-touches-go)
 
 ### Phase 10: custom JSON widgets
 The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).
@@ -267,12 +259,20 @@ Steps:
 Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone.
 
 ### Phase 11: audits, clear-out and hardening
-Every system audited in full, every open entry fixed or deliberately deferred, then a frozen stretch of daily use, before posting on the sway and niri wikis for testers (decided 2026-10-27). Nothing new is built in this phase.
+The guardrails tightened first, then every system audited in full, every open entry fixed or deliberately deferred, then a frozen stretch of daily use, before posting on the sway and niri wikis for testers (decided 2026-10-27). Nothing new is built in this phase.
 
 Steps:
-1. **Audit every system** (row 15) with the `review-system` skill: `--full --record` (findings land in issues.md, linked from this phase under Found by the audits), adding `--deep` for systems over about 5k lines. Every system `scope.py --list` names, plus the custom widgets, plus every `feature:<name>` doc that no system covers. Audits only file; nothing is fixed in this step. Systems can run in parallel (findings only), the fixes can't. Each audit also runs a **deletion pass**, its findings filed like any other: what in the system can go or shrink (dead members, mechanisms nothing needs since a stage moved their work, duplicates of a shared piece, special cases the general path covers, options nobody would miss), each with its line count. Before the first audit, record the repository's size under [Size](#size) below.
-2. **Clear out issues.md** (row 16): every open entry, highest severity first, as ordinary batches. Each is fixed, or the maintainer defers it (to [Deferred](#deferred), then GitHub, listed as a known issue in the post); rare paths get the smallest fix or stay logged. The deletion findings go first in each system's batches (deleting first shrinks everything the fixes then touch). A "needs a plan" entry goes through [Items that need a plan](#items-that-need-a-plan). Then an incremental `review-system` pass of every system (it rereads only what changed since its last review), and again, until a pass finds nothing above minor.
-3. **Harden, frozen** (row 17; the maintainer's, so the autopilot stops before it): 1–2 weeks of daily use under sway and niri. Only fixes land: each new finding is fixed at once or becomes a known issue. Also: a first run from nothing (`install.sh` and the AUR packages for a fresh user, onboarding without a config.json, importing saved configs), and the Waybar scripts from Phase 10 again.
+0. **Audit and tighten the guardrails** (row 15), the checks being a system like any other. First `.claude/skills/review-system/systems.md` gets a `guardrails` system (the `scripts/check_*` scripts, `scripts/dev/verify.sh`, `scripts/generate.sh`, the CI workflows in `.github/workflows/`, `.claude/hooks/guard.py`, the test runners and helpers, `AGENTS.md` and the skills), audited with `--full --record`. Then, as ordinary batches:
+   - **An inventory:** each check, what it catches, how often it failed in CI's history and what it costs. One that never caught anything is justified or deleted.
+   - **What got past them:** the bug classes in issues.md and the fix history a mechanical check could have caught (the oversized rare-path fixes, live values as Repeater models, …); each one that recurred becomes a check.
+   - **Ratchets:** every baseline only shrinks (the qmllint baseline, the allowlist, files over the size limits, deferred entries), and CI fails on growth.
+   - **Test quality over count:** the flaky tests fixed (they're linked below), tests that can't fail found, and a sampled mutation run on the critical Go packages (the store's takeovers, the lock screen, the greeter installer, migrations): a mutant that survives is a missing test.
+   - **Security paths:** every rule in `AGENTS.md` › Never has its case in `tests/scripts/test_guard.py`, and PAM, the greeter installer and the takeovers each have a test that tries to break them.
+   - **Speed:** `scripts/dev/verify.sh` and CI stay fast enough that nobody routes around them.
+   - **The agent rules:** `AGENTS.md`, the skills and [Running it unattended](#running-it-unattended) checked against what went wrong in the rows before; rules nothing broke are trimmed (with Phase 9's 12 KB target).
+1. **Audit every system** (row 16) with the `review-system` skill: `--full --record` (findings land in issues.md, linked from this phase under Found by the audits), adding `--deep` for systems over about 5k lines. Every system `scope.py --list` names, plus the custom widgets, plus every `feature:<name>` doc that no system covers. Audits only file; nothing is fixed in this step. Systems can run in parallel (findings only), the fixes can't. Each audit also runs a **deletion pass**, its findings filed like any other: what in the system can go or shrink (dead members, mechanisms nothing needs since a stage moved their work, duplicates of a shared piece, special cases the general path covers, options nobody would miss), each with its line count. Before the first audit, record the repository's size under [Size](#size) below.
+2. **Clear out issues.md** (row 17): every open entry, highest severity first, as ordinary batches. Each is fixed, or the maintainer defers it (to [Deferred](#deferred), then GitHub, listed as a known issue in the post); rare paths get the smallest fix or stay logged. The deletion findings go first in each system's batches (deleting first shrinks everything the fixes then touch). A "needs a plan" entry goes through [Items that need a plan](#items-that-need-a-plan). Then an incremental `review-system` pass of every system (it rereads only what changed since its last review), and again, until a pass finds nothing above minor.
+3. **Harden, frozen** (row 18; the maintainer's, so the autopilot stops before it): 1–2 weeks of daily use under sway and niri. Only fixes land: each new finding is fixed at once or becomes a known issue. Also: a first run from nothing (`install.sh` and the AUR packages for a fresh user, onboarding without a config.json, importing saved configs), and the Waybar scripts from Phase 10 again.
 
 #### The launch gate
 Posting for testers waits for all of these:
@@ -282,6 +282,16 @@ Posting for testers waits for all of these:
 - the last audit pass found nothing above minor;
 - the code is smaller than before the audits ([Size](#size)): QML and Go lines (tests apart) went down, or each system that grew says why;
 - the hardening weeks ended with no fix pending.
+
+Fixed in step 0 (the guardrails; moved from Phase 9):
+- [The check order is kept in three places](issues.md#the-check-order-is-kept-in-three-places)
+- [Small tooling leftovers](issues.md#small-tooling-leftovers)
+- [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
+- [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
+- [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
+- [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
+- [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
+- [CI checks dependencies and cross-builds only when a PR touches Go](issues.md#ci-checks-dependencies-and-cross-builds-only-when-a-pr-touches-go)
 
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.

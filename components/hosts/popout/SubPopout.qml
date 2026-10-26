@@ -128,8 +128,8 @@ Item {
     // stays within it, and content (MenuSubmenu) scrolls past
     // maxContentHeight
     readonly property real _placedY: outer.slot?.popupScreenPlaced?.y ?? 0
-    readonly property real screenFrom: ScreenEdgeManager.reservedWithMenusOn(outer.screen, Bar.Top) - root._placedY
-    readonly property real screenTo: (outer.screen?.height ?? 0) - ScreenEdgeManager.reservedWithMenusOn(outer.screen, Bar.Bottom) - root._placedY
+    readonly property real screenFrom: ScreenEdgeManager.reservedWithMenusOn(outer.screen, ScreenEdge.Top) - root._placedY
+    readonly property real screenTo: (outer.screen?.height ?? 0) - ScreenEdgeManager.reservedWithMenusOn(outer.screen, ScreenEdge.Bottom) - root._placedY
     readonly property real maxContentHeight: Math.max(Widget.height, root.screenTo - root.screenFrom - surface.contentInset * 2)
     // Along the parent's side (y in its window), placed as a bar popout is
     // along a pill (SurfaceContext.submenuPlace)
@@ -284,7 +284,7 @@ Item {
         width: implicitWidth
         height: implicitHeight
 
-        edge: outer.openToLeft ? Bar.Right : Bar.Left
+        edge: outer.openToLeft ? ScreenEdge.Right : ScreenEdge.Left
         castShadow: true
         // The blur window draws its fill (BlurManager), from
         // where the parent's window is on screen

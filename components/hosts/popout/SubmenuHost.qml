@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
-import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // A popout host's submenu (SubPopout, one level deep) and everything the
 // two share, the same for a bar popout and an edge popout: what the
@@ -40,12 +40,12 @@ Item {
   readonly property var _place: root.geometry?.place ?? null
 
   readonly property int edge: root.geometry.edge
-  readonly property bool vertical: root.edge === Bar.Left || root.edge === Bar.Right
+  readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
   readonly property SubmenuSide side: SubmenuSide {
     edge: root.edge
     detached: root.geometry.detached
     straight: root.geometry.straight
-    attachLine: root.edge === Bar.Bottom ? root.popupSurface.y + root.popupSurface.height - root.popupSurface.backfill : root.popupSurface.y + root.popupSurface.backfill
+    attachLine: root.edge === ScreenEdge.Bottom ? root.popupSurface.y + root.popupSurface.height - root.popupSurface.backfill : root.popupSurface.y + root.popupSurface.backfill
     backfill: root.popupSurface.backfill
     joinStart: root._place?.joinStart ?? false
     joinEnd: root._place?.joinEnd ?? false

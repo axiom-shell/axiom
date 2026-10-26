@@ -26,9 +26,9 @@ PillStretch {
   id: root
 
   required property ShellScreen screen
-  // The surface's own edge, and the perpendicular one it joins (Bar.Location)
-  property int edge: Bar.Top
-  property int side: Bar.Left
+  // The surface's own edge, and the perpendicular one it joins (ScreenEdges)
+  property int edge: ScreenEdge.Top
+  property int side: ScreenEdge.Left
   // Whether the surface's end joins it, and is out (not loading or gone)
   property bool joined: false
   property bool showing: false
@@ -45,8 +45,8 @@ PillStretch {
   readonly property bool available: ScreenEdgeManager.surfaceEnd(root.screen, root.side).kind === "pillBar"
 
   // Along that bar, this edge is its start (left, top) or its end
-  readonly property bool _atStart: root.edge === Bar.Left || root.edge === Bar.Top
-  readonly property bool _vertical: root.edge === Bar.Left || root.edge === Bar.Right
+  readonly property bool _atStart: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Top
+  readonly property bool _vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
   readonly property real _radius: Appearance.borderRadius
   // Where the surface's far wall meets that bar (its coordinates) at
   // `reach` from the surface's edge; null while the surface doesn't show

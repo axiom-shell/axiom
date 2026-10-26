@@ -26,7 +26,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader n
 - **`Widget`**: sizes for controls and panels outside the bar. `height`, `padding`, `spacing`, `cardPadding`, `iconButton`, `smallHeight` and `smallPadding` are the density preset's (`Widget.density`) times the Interface scale (`Widget.scale`, a factor), which also scales `Appearance.fontSize` / `fontSizeLarge`; `Widget.px(n)` is any other size (a panel's width, an avatar, a dot) at the scale. Which to use where: [Shared UI pieces › Sizes](shared-ui-pieces.md#sizes). Bars read `Appearance.baseFontSize` and their own sizes, so they never follow it. `cardSize` is the card size every module grid starts from (`OverlayConfig.cardUnitOn`).
 - **`Bar`**: from `Bars`.
   - The first bar is primary.
-  - `edgeName(location)` gives a `Bar.Location` as `"top"`…`"right"`.
+  - Edges are numbers from `methods/ScreenEdge` (`ScreenEdge.fromConfig(location)`), not this reader's.
 - **`PopoutsConfig`**: open/dismiss delays and edge trigger size, shared by bar and edge popouts.
 - **`OSDConfig`**: the OSDs; see [OSD](../features/osd.md).
 - **`LauncherConfig`**: launcher placement, size and providers.

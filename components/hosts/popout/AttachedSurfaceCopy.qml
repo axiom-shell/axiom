@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.methods
 
 // A copy of an AttachedSurface's shape, its geometry bound live to the
 // source's (sliding with it: its own slide runs with the source's
@@ -19,7 +20,7 @@ AttachedSurface {
   visible: root.source !== null
   width: root.source?.width ?? 0
   height: root.source?.height ?? 0
-  edge: root.source?.edge ?? Bar.Top
+  edge: root.source?.edge ?? ScreenEdge.Top
   active: root.source?.active ?? false
   animationDuration: root.source?.animationDuration ?? Appearance.animNormal
   boxWidth: root.source?.boxWidth ?? 0

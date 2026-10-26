@@ -8,6 +8,7 @@ import qs.config
 import qs.services.core
 import qs.services.session
 import qs.services.ui
+import qs.components.methods
 
 // The search launcher on one screen. LauncherManager builds the rows from
 // the text and runs them, LauncherPanel shows them, and this picks the
@@ -112,15 +113,15 @@ Scope {
   // on each side, in from the window, which starts past what's reserved
   // there
   readonly property var _edgeGaps: ScreenEdgeManager.detachedGaps(root.screen, LauncherConfig.edge, -1)
-  readonly property var _oppositeGaps: ScreenEdgeManager.detachedGaps(root.screen, Bar.oppositeOf(LauncherConfig.edge), -1)
+  readonly property var _oppositeGaps: ScreenEdgeManager.detachedGaps(root.screen, ScreenEdge.opposite(LauncherConfig.edge), -1)
   function _marginOn(side) {
-    const vertical = LauncherConfig.edge === Bar.Left || LauncherConfig.edge === Bar.Right;
+    const vertical = LauncherConfig.edge === ScreenEdge.Left || LauncherConfig.edge === ScreenEdge.Right;
     let gap = root._edgeGaps.end;
     if (side === LauncherConfig.edge)
       gap = root._edgeGaps.across;
-    else if (side === Bar.oppositeOf(LauncherConfig.edge))
+    else if (side === ScreenEdge.opposite(LauncherConfig.edge))
       gap = root._oppositeGaps.across;
-    else if (side === (vertical ? Bar.Top : Bar.Left))
+    else if (side === (vertical ? ScreenEdge.Top : ScreenEdge.Left))
       gap = root._edgeGaps.start;
     return ScreenEdgeManager.heldInset(root.screen, side, gap);
   }
@@ -132,10 +133,10 @@ Scope {
     FloatingPopout {
       id: floating
 
-      readonly property bool vertical: LauncherConfig.edge === Bar.Left || LauncherConfig.edge === Bar.Right
+      readonly property bool vertical: LauncherConfig.edge === ScreenEdge.Left || LauncherConfig.edge === ScreenEdge.Right
       // How far across from its edge: the fraction with the same align
       // spreads the room left over, 0 against the edge, 0.5 centred
-      readonly property real across: LauncherConfig.edge === Bar.Bottom || LauncherConfig.edge === Bar.Right ? 1 - LauncherConfig.distance : LauncherConfig.distance
+      readonly property real across: LauncherConfig.edge === ScreenEdge.Bottom || LauncherConfig.edge === ScreenEdge.Right ? 1 - LauncherConfig.distance : LauncherConfig.distance
 
       screen: root.screen
       // Its centre at `position` along the edge
@@ -143,10 +144,10 @@ Scope {
       xAlign: floating.vertical ? floating.across : 0.5
       yFraction: floating.vertical ? LauncherConfig.position : floating.across
       yAlign: floating.vertical ? 0.5 : floating.across
-      leftMargin: root._marginOn(Bar.Left)
-      topMargin: root._marginOn(Bar.Top)
-      rightMargin: root._marginOn(Bar.Right)
-      bottomMargin: root._marginOn(Bar.Bottom)
+      leftMargin: root._marginOn(ScreenEdge.Left)
+      topMargin: root._marginOn(ScreenEdge.Top)
+      rightMargin: root._marginOn(ScreenEdge.Right)
+      bottomMargin: root._marginOn(ScreenEdge.Bottom)
       // Resized as results come and go, the box would move
       maxContentHeight: (floating.contentItem as LauncherPanel)?.maxHeight ?? 0
       // The panel's list glides to its rows' height itself

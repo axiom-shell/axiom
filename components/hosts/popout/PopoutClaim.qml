@@ -16,7 +16,7 @@ QtObject {
   // "dock" | "osd" | "bar" | "menu" | "launcher" | "submenu"
   required property string kind
   property string screen: ""
-  // A Bar.edgeName, or "" for one floating free of the edges
+  // A ScreenEdge.name, or "" for one floating free of the edges
   property string edge: ""
   property string barId: ""
   // A submenu's parent's key
