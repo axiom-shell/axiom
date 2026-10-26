@@ -127,10 +127,6 @@ QtObject {
         "arch": "ddcutil",
         "fedora": "ddcutil"
       },
-      "wl-copy": {
-        "arch": "wl-clipboard",
-        "fedora": "wl-clipboard"
-      },
       "jq": {
         "arch": "jq",
         "fedora": "jq"
@@ -175,20 +171,6 @@ QtObject {
         "arch": "libnotify",
         "fedora": "libnotify"
       },
-      "hypridle": {
-        "arch": "hypridle",
-        "fedora": {
-          "name": "hypridle",
-          "repo": root._hyprCopr
-        }
-      },
-      "hyprsunset": {
-        "arch": "hyprsunset",
-        "fedora": {
-          "name": "hyprsunset",
-          "repo": root._hyprCopr
-        }
-      },
       "wlsunset": {
         "arch": "wlsunset",
         "fedora": "wlsunset"
@@ -200,14 +182,6 @@ QtObject {
       "Xwayland": {
         "arch": "xorg-xwayland",
         "fedora": "xorg-x11-server-Xwayland"
-      },
-      "cliphist": {
-        "arch": "cliphist",
-        "fedora": "cliphist"
-      },
-      "wtype": {
-        "arch": "wtype",
-        "fedora": "wtype"
       },
       "wf-recorder": {
         "arch": "wf-recorder",

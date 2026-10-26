@@ -196,16 +196,7 @@ properties:
             type: boolean
             title: 'Clipboard history (:)'
             default: true
-            description: "Type : (or /clipboard) to search what you've copied; Enter copies it again, Shift+Enter removes it. axiom keeps the history in memory only, never on disk, and skips anything a password manager marks as sensitive. Turn this off if you copy passwords from apps that don't; turning it off clears the history."
-          source:
-            x-scope: machine
-            type: string
-            title: Clipboard history source
-            default: axiom
-            enum: [axiom, cliphist]
-            x-enumLabels: {axiom: axiom (in memory), cliphist: cliphist}
-            description: axiom records text clips itself. cliphist uses cliphist's history instead, images included, and records text and images into it while this is on (alongside any cliphist store you run yourself).
-            x-showIf: {enabled: true}
+            description: "Type : (or /clipboard) to search what you've copied; Enter copies it again, Shift+Enter removes it. axiom keeps the history, images included, in memory only, never on disk, and skips anything a password manager marks as sensitive. Turn this off if you copy passwords from apps that don't; turning it off clears the history."
           maxEntries:
             type: integer
             title: Clipboard history size
@@ -213,9 +204,9 @@ properties:
             minimum: 10
             maximum: 1000
             description: How many clips axiom keeps.
-            x-showIf: {enabled: true, source: axiom}
+            x-showIf: {enabled: true}
       emoji:
         type: boolean
         title: Emoji (;)
         default: true
-        description: Type ; (or /emoji) to search emoji by name or keyword; Enter copies one. With wtype installed, Shift+Enter also types it into the focused window.
+        description: Type ; (or /emoji) to search emoji by name or keyword; Enter copies one, and Shift+Enter types it into the focused window.

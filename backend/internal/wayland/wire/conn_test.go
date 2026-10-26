@@ -2,6 +2,7 @@ package wire_test
 
 import (
 	"context"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -74,5 +75,75 @@ func TestConnDispatchesAndReportsErrors(t *testing.T) {
 	}
 	if err == nil || !strings.Contains(err.Error(), "bad request") {
 		t.Errorf("Run returned %v", err)
+	}
+}
+
+// Descriptors, fixed numbers and arrays cross both ways: a request's fd
+// reaches the compositor, and an event's comes back to the handler.
+func TestConnPassesDescriptorsAndValues(t *testing.T) {
+	t.Parallel()
+	type got struct {
+		text  string
+		fixed float64
+		array []byte
+	}
+	requests := make(chan got, 1)
+	var obj uint32
+	f := wiretest.New(t, nil, func(c *wiretest.Compositor, r wiretest.Request) {
+		fd, err := r.Args.Fd()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer fd.Close()
+		b, _ := io.ReadAll(fd)
+		requests <- got{string(b), r.Args.Fixed(), r.Args.Array()}
+		reply, _ := wire.SealedFile("reply", []byte("from the compositor"))
+		defer reply.Close()
+		c.Send(r.Object, 0, wire.Fixed(-1.5), wire.Fd(reply), wire.Array([]byte{9, 8, 7, 6, 5}))
+	})
+	c, err := wire.Dial(f.Socket)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go c.Run(ctx)
+
+	events := make(chan got, 1)
+	obj = c.NewObject(func(op uint16, a *wire.Args) {
+		fixed := a.Fixed()
+		fd, err := a.Fd()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer fd.Close()
+		b, _ := io.ReadAll(fd)
+		events <- got{string(b), fixed, a.Array()}
+	})
+	data, err := wire.SealedFile("keymap", []byte("xkb_keymap {}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer data.Close()
+	if _, err := data.Write([]byte("x")); err == nil {
+		t.Error("a sealed file took a write")
+	}
+	if err := c.Send(obj, 1, wire.Fd(data), wire.Fixed(2.25), wire.Array([]byte{1, 2, 3})); err != nil {
+		t.Fatal(err)
+	}
+	for _, ch := range []chan got{requests, events} {
+		select {
+		case g := <-ch:
+			if ch == requests && (g.text != "xkb_keymap {}" || g.fixed != 2.25 || string(g.array) != "\x01\x02\x03") {
+				t.Errorf("request %+v", g)
+			}
+			if ch == events && (g.text != "from the compositor" || g.fixed != -1.5 || len(g.array) != 5) {
+				t.Errorf("event %+v", g)
+			}
+		case <-time.After(3 * time.Second):
+			t.Fatal("timed out")
+		}
 	}
 }

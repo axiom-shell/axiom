@@ -62,6 +62,16 @@ class Bash(unittest.TestCase):
         self.allows("gh issue list", "gh issue view 16", "gh api repos/a/b/issues", "gh api repos/a/b/issues -X GET -f state=open",
                     "gh label list", "gh pr create --fill")
 
+    def test_git_push(self):
+        self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
+                    "git push origin +x", "git push origin :x", "git push --delete origin x", "git push origin main",
+                    "git push origin HEAD:main", "git push origin x:refs/heads/main", "git -C . push --force origin x")
+        self.allows("git push -u origin roadmap/1-x", "git push origin HEAD:roadmap/1-x", "git status", "git pull --ff-only")
+        with mock.patch.object(guard, "current_branch", return_value="main"):
+            self.blocks("git push", "git push -u origin HEAD")
+        with mock.patch.object(guard, "current_branch", return_value="roadmap/1-x"):
+            self.allows("git push", "git push -u origin HEAD")
+
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
                     "scripts/greeter/greeter_install.sh install . me")

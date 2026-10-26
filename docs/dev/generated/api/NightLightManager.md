@@ -3,13 +3,14 @@
 
 > **File:** `services/system/NightLightManager.qml` · **Docs:** see [docs/dev](../../README.md)
 
-The night light (the NightLight section): warmer colors through hyprsunset, or wlsunset without it, started and stopped by axiom. On a schedule it turns on at `startAt` and off at `endAt` (DailySchedule); a switch by hand (the quick action, /nightlight, the `nightLight` IPC target or bind) lasts until the next of those. A new temperature or gamma restarts it while it's on. `active` is what axiom last set, kept across QML reloads; at startup it's whether the tool is already running. Created from shell.qml's `_services`. axiom ipc nightLight toggle
+The night light (the NightLight section): warmer colors, set by the axiom daemon on the compositor's color transform or gamma ramps (nightlight.set: internal/nightlight), or, where the compositor offers neither (niri), by wlsunset, started and stopped by axiom. On a schedule it turns on at `startAt` and off at `endAt` (DailySchedule); a switch by hand (the quick action, /nightlight, the `nightLight` IPC target or bind) lasts until the next of those. A new temperature or gamma is applied while it's on. `active` is what axiom last set, kept across QML reloads; at startup it's what the daemon holds, or whether wlsunset already runs. Created from shell.qml's `_services`. axiom ipc nightLight toggle
 
 ### Properties
 
-- `tool` (readonly var): "hyprsunset" | "wlsunset" | "" (neither); undefined until looked up. hyprsunset only under Hyprland: it drives Hyprland's own color transform, so elsewhere it starts and does nothing
+- `tool` (readonly var): "axiom" | "wlsunset" | "" (neither); undefined until known
 - `available` (readonly bool)
 - `active` (readonly bool)
+- `blocked` (readonly bool): Another program holds the screens' colors (the daemon's state)
 
 ### Functions
 

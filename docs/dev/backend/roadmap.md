@@ -1,9 +1,9 @@
 # Moving the service layer to the axiom binary
 
-> **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/core/BackendManager.qml`, `backend/internal/topics/`, `services/core/CommandManager.qml`, `services/core/FileManager.qml`, `services/core/StateManager.qml`, `services/core/IpcTarget.qml`, `services/core/ConsumerRegistry.qml`, `backend/internal/daemon/`
+> **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/core/BackendManager.qml`, `backend/internal/topics/`, `backend/internal/dbus/`, `services/core/CommandManager.qml`, `services/core/FileManager.qml`, `services/core/StateManager.qml`, `services/core/IpcTarget.qml`, `services/core/ConsumerRegistry.qml`, `backend/internal/daemon/`
 > **Related:** [The axiom binary](README.md), [Protocol](protocol.md), [Wayland protocols](wayland.md), [Services pattern](../core/services-pattern.md), [every method and push](../generated/rpc.md) (generated)
 
-The plan for moving side effects out of QML and into the `axiom` daemon, stage by stage. Read this before starting any of it, and update it in the change that does a step (its status, and anything learned that changes a later stage).
+The plan for moving side effects out of QML and into the `axiom` daemon, stage by stage. Read this before starting any of it, and update it in the change that does a step (its status, and anything learned that changes a later stage). Cleanup work that waits for a stage is listed in the [cleanup roadmap](../roadmap.md).
 
 ### The end state
 - **Quickshell** draws Wayland windows (layer shell, popups, the session lock, focus grab, screencopy) and runs the QML: readers, rendering, per-screen `Variants`, hot reload. Leaving it entirely isn't planned: that would mean a C++ host against Qt's private Wayland API.
@@ -12,13 +12,13 @@ The plan for moving side effects out of QML and into the `axiom` daemon, stage b
 
 ### Scope
 - **Now:** Quickshell.Io's side effects: every direct `Process`, `FileView`, `Socket`, `IpcHandler` and `Quickshell.execDetached`. `scripts/quickshell-io-allowlist.json` lists the files still using them, and `check_structure` keeps the list from growing: it is the live record of what's left.
-- **Planned, not scheduled:** services on Quickshell's D-Bus and native-library modules (notifications, tray, UPower, Mpris, Polkit, Bluetooth, networking; Pipewire and PAM, which would need cgo, against `CGO_ENABLED=0`). Don't start these without the maintainer.
+- **Planned, not scheduled:** services on Quickshell's D-Bus and native-library modules (notifications, tray, UPower, Mpris, Polkit, Bluetooth, networking; Pipewire and PAM, which would need cgo, against `CGO_ENABLED=0`). Don't start these without the maintainer. The daemon has its own D-Bus client since stage 2 (`internal/dbus`, [dbus.md](dbus.md)): the D-Bus ones build on it.
 - **Stays in QML:** the UI-state managers (bars, popouts, overlay, docks, editors).
 
 ### Rules for every move
 - **Go takes the side effect; QML keeps the reader and the rendering.** The service's public API stays the same where it can, so widgets don't change.
 - **The QML version goes in the same change.** No parallel paths "for now": drop the file's allowlist entry (or the kind) as it moves.
-- **A service a move empties is folded or deleted in that move**, not before: the IPC managers into their backends (stage 6), `WeatherSource` into `WeatherManager` (stage 5), `HypridleManager` beside `IdleInhibitManager` (stage 2). The services' folders: `services/AGENTS.md` › Folders.
+- **A service a move empties is folded or deleted in that move**, not before: the IPC managers into their backends (stage 6), `WeatherSource` into `WeatherManager` (stage 5); `HypridleManager` and `IdleInhibitManager` became `IdleManager` (stage 2). The services' folders: `services/AGENTS.md` › Folders.
 - **Pick by user value:** a dependency removed, a process no longer started on a timer, a secret kept out of QML. Something no user would notice can stay on the allowlist.
 - **Keep pushes small and specific** (a topic carries what its service shows), never at frame rate. The shell's JS runs on the thread that draws frames.
 - New methods and pushes follow [protocol](protocol.md) › Changing the protocol; `rpc.md` regenerates itself.
@@ -46,14 +46,15 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 - Done: `ClaudeUsageManager` (from stage 5) → the `claudeUsage` topic (`backend/internal/claudeusage`): Go's HTTP, the token read in Go so it never reaches QML, the once-per-interval rule, backoff and saved state (the same `claude-usage.json`) with it. The hub ticks every minute; `every` is the user's interval. A renewed login is noticed by the credentials' mtime at each tick, standing in for stage 6's `file.watch`. `OnRefresh` lets `refresh()` refetch every account not rate limited.
 - Not worth it: `PolkitManager`'s `pgrep`, `CalculatorManager`'s `qalc` (Go would run the same program), `WallpaperManager`'s folder count (its `xdg-open` keeps it on the allowlist).
 
-**Stage 2: Wayland** (next; needs stage 0's connection, and file descriptor passing on `wire.Conn` for all but idle (gamma tables, clipboard offers and the virtual keyboard's keymap are fds); protocols per compositor: [wayland.md](wayland.md))
-- Next, first: **idle**: `HypridleManager` → `ext_idle_notifier_v1` on the daemon's connection (offered v2 by all three: [wayland.md](wayland.md)); removes hypridle. It needs no file descriptors, so it can go before fd passing.
-  - Moves: hypridle's listeners (`HypridleConf.listeners`: dim, lock, screen off, suspend, the user's own) → one idle notification per timeout on a bound `wl_seat`, running `on-timeout` / `on-resume` from Go.
-  - Needs a decision first: hypridle's `lock_cmd` (logind's Lock), `before_sleep_cmd` / `after_sleep_cmd` (logind's PrepareForSleep) and D-Bus / systemd inhibitors are logind over D-Bus, which is "planned, not scheduled" (Scope). Either the maintainer schedules a small D-Bus client (pure Go, no cgo), or idle keeps hypridle for those until then.
-  - `Idle` is `x-takeover`: test against a scratch config, never by enabling it live.
-- Clipboard: `ClipboardManager`'s `wl-paste --watch cliphist` → an in-memory history over `ext_data_control_v1` (wlr's as the fallback); removes cliphist and wl-clipboard. History never touches disk; only pinned clips do.
-- Typing: `EmojiManager`'s `wtype` → `zwp_virtual_keyboard_v1`.
-- Night light: `NightLightManager`'s hyprsunset / wlsunset → `zwlr_gamma_control`; niri keeps wlsunset until a real session shows gamma control.
+**Stage 2: Wayland** (done; on stage 0's connection, shared by its clients (`wayland/client`), with file descriptors passed on `internal/unixmsg`, which the daemon's D-Bus client uses too; protocols per compositor: [wayland.md](wayland.md))
+- Done: **idle**: `HypridleManager` → `internal/idle` ([idle.md](../features/idle.md)); hypridle is no longer a dependency.
+  - hypridle's listeners (`HypridleConf.listeners`) became `idle.Plan`'s typed steps, one `ext_idle_notifier_v1` notification each on the daemon's connection (now shared by its clients: `wayland/client`, the seat in `wayland/seat`).
+  - Its D-Bus side went with it, on the daemon's own client (`internal/dbus`, the maintainer's decision): logind's Lock, PrepareForSleep with a delay inhibitor, idle inhibitors and Suspend (`internal/logind`), and `org.freedesktop.ScreenSaver` (`internal/screensaver`).
+  - The screens are turned off over the compositor's socket (`Manager.ScreenPower`); `dpmsCommand` left the compositor contract.
+  - Learned: niri holds `org.freedesktop.ScreenSaver` itself and applies it to its own idle notifications, so the daemon tells a compositor holding it from a stray hypridle (the peer pid of its Wayland socket, `wire.Conn.PeerPID`).
+- Done: **clipboard**: `ClipboardManager`'s `wl-paste --watch` and cliphist → the daemon's in-memory history (`internal/clipboard`) over `ext_data_control_v1`, wlr's as the fallback (`wayland/datacontrol`), and every wl-copy / wl-paste (copying, screenshots, the chat's paste) → `clipboard.*`. cliphist and wl-clipboard are no longer dependencies, and `Launcher.providers.clipboard.source` is gone (pruned at load). History never touches disk; only pinned clips do (images are files on tmpfs, for the shell to show).
+- Done: **typing**: `EmojiManager`'s `wtype` → `input.type` on `zwp_virtual_keyboard_v1` (`wayland/vkbd`: a keyboard per text, with a keymap giving each character a key, as wtype does); wtype is no longer a dependency. What the connection can do reaches the shell as `wayland.state` (`WaylandManager`), which services gate on.
+- Done: **night light**: hyprsunset → `nightlight.set` on Hyprland's CTM (`wayland/ctm`), wlsunset → gamma ramps (`wayland/gamma`) on sway; hyprsunset is no longer a dependency. niri offers neither yet, so `NightLightManager` keeps its wlsunset `Process` there (its allowlist entry stays for that); the daemon picks by the globals, so a niri that offers gamma control gets it with no change.
 
 **Stage 3: system data** (later)
 - `SystemManager`, `UpdatesManager`: done in stage 1b.
@@ -80,6 +81,9 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 
 **Stage 7: the config path** (later)
 - Saves send `config.set` path ops instead of the whole config (`config.replace`), and `config.changed` carries the change rather than the whole config.
+- `takeover` belongs to the op, not the connection: only a takeover card's op carries it, every other save sends `false`, so the store's guard binds the shell too ([issue](../issues.md#shell-saves-carry-unsaved-settings-and-every-takeover)).
+- Live edits show through `ConfigManager.setPreview`, never by changing the running config, so a save sends only what was saved, not another page's unsaved edits (same issue).
+- Config writes apply in the order sent: `config.*` calls handled in order per connection, or a base revision the store refuses on mismatch ([issue](../issues.md#config-saves-can-land-out-of-order)).
 - One validator: the shell stops validating before it saves (Go's answer stands anyway); `applyDefaults` stays for previews.
 - A thin `compositor.inputs`: Go reads binds, profiles, strips and the look from the config it owns; the shell sends only runtime facts (`supports`, `fx`, resolved theme colours).
 - Code on both sides gets an exit: `SchemaValidation` (shared fixtures), the compositor helpers `compositor/render` ported (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`), and the bind tables Go reads out of `BindActions.qml` (shared data in a JSON file both read, or the QML copy deleted).

@@ -25,6 +25,9 @@ const (
 	topicDaemon = "daemon" // daemon.state, dev.state
 	// compositor.state, compositor.applied, compositor.notify, compositor.bindsMerged
 	topicCompositor = "compositor"
+	topicIdle       = "idle"      // idle.state
+	topicWayland    = "wayland"   // wayland.state, nightlight.state
+	topicClipboard  = "clipboard" // clipboard.state
 )
 
 // session is what the daemon knows of one connection.
@@ -87,10 +90,10 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	topics = map[string]bool{}
 	for _, t := range list {
 		switch t {
-		case topicConfig, topicSaved, topicDaemon, topicCompositor:
+		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard:
 			topics[t] = true
 		default:
-			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor)", t)
+			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard)", t)
 		}
 	}
 	return false, topics, nil

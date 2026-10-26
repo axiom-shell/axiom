@@ -292,6 +292,14 @@ func (w *niriWriter) reload(ctx context.Context) {
 	w.ipc.Action(ctx, map[string]any{"LoadConfigFile": map[string]any{"path": nil}})
 }
 
+func (w *niriWriter) screenPower(ctx context.Context, on bool) error {
+	action := "PowerOffMonitors"
+	if on {
+		action = "PowerOnMonitors"
+	}
+	return w.ipc.Action(ctx, map[string]any{action: map[string]any{}})
+}
+
 func (w *niriWriter) reloads(ctx context.Context, out chan<- ipc.Reload) error {
 	return w.ipc.Reloads(ctx, out)
 }

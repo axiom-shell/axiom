@@ -43,8 +43,6 @@ QtObject {
   readonly property bool chat: _p.chat
   // ":" searches the clipboard history (ClipboardManager)
   readonly property bool clipboard: _p.clipboard.enabled
-  // "axiom" | "cliphist"
-  readonly property string clipboardSource: _p.clipboard.source
   readonly property int clipboardMaxEntries: _p.clipboard.maxEntries
   // ";" searches emoji (EmojiManager)
   readonly property bool emoji: _p.emoji

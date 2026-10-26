@@ -63,8 +63,8 @@ TestCase {
     compare(Packages.packageFor("fedora", "qalc"), {
       "name": "qalculate"
     });
-    compare(Packages.packageFor("fedora", "hypridle"), {
-      "name": "hypridle",
+    compare(Packages.packageFor("fedora", "satty"), {
+      "name": "satty",
       "repo": "nett00n/hyprland"
     });
     compare(Packages.packageFor("fedora", "checkupdates"), null, "Arch only");
@@ -81,15 +81,15 @@ TestCase {
   }
 
   function test_installLines_arch() {
-    compare(Packages.installLines("arch", ["iconFont", "qalc", "wl-copy", "qalc"]), ["sudo pacman -S --needed ttf-material-symbols-variable libqalculate wl-clipboard"]);
+    compare(Packages.installLines("arch", ["iconFont", "qalc", "grim", "qalc"]), ["sudo pacman -S --needed ttf-material-symbols-variable libqalculate grim"]);
     compare(Packages.installLines("arch", []), []);
   }
 
   function test_installLines_fedora() {
-    const lines = Packages.installLines("fedora", ["hypridle", "qalc", "satty", "checkupdates", "iconFont"]);
+    const lines = Packages.installLines("fedora", ["satty", "qalc", "checkupdates", "iconFont"]);
     compare(lines.length, 3);
     compare(lines[0], "sudo dnf copr enable -y nett00n/hyprland", "the COPR first, once");
-    compare(lines[1], "sudo dnf install hypridle qalculate satty", "checkupdates dropped");
+    compare(lines[1], "sudo dnf install satty qalculate", "checkupdates dropped");
     verify(lines[2].startsWith("mkdir -p ~/.local/share/fonts && curl -fLo ~/.local/share/fonts/MaterialSymbolsRounded.ttf '"), lines[2]);
     verify(lines[2].endsWith("' && fc-cache -f"), lines[2]);
     compare(Packages.installLines("fedora", ["qalc"]), ["sudo dnf install qalculate"], "no COPR unless needed");
@@ -123,8 +123,8 @@ TestCase {
   }
 
   function test_installCommand() {
-    compare(Packages.installCommand("arch", "hypridle"), "sudo pacman -S --needed hypridle");
-    compare(Packages.installCommand("fedora", "hyprsunset"), "sudo dnf copr enable -y nett00n/hyprland && sudo dnf install hyprsunset");
+    compare(Packages.installCommand("arch", "satty"), "sudo pacman -S --needed satty");
+    compare(Packages.installCommand("fedora", "satty"), "sudo dnf copr enable -y nett00n/hyprland && sudo dnf install satty");
     compare(Packages.installCommand("arch", ["greetd", "agreety"]), "sudo pacman -S --needed greetd greetd-agreety");
     compare(Packages.installCommand("fedora", ["greetd", "agreety"]), "sudo dnf install greetd", "agreety ships in greetd");
   }

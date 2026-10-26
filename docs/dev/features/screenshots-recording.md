@@ -39,7 +39,7 @@ Name clash: `KeybindManager.startRecording(index)` is the key recorder on the Ke
 ### After a capture
 - **Saving:** to `folder`: `Screenshots.folder`, else `<Pictures>/Screenshots` (`xdg-user-dir PICTURES`). With `copyOnly` it is only a runtime file.
 - The folders are global settings (General → Screenshots & recordings), not the cards': every entry point saves to the same place. Recordings go to `recordingFolder`: `Screenshots.recordingFolder`, else `folder`.
-- **Copying:** to the clipboard with wl-copy.
+- **Copying:** to the clipboard through the daemon (`ClipboardManager.copyFile`, `clipboard.copy {path, mime}`).
 - Then one of:
   - **A notification** with an "Edit in Satty/Swappy" button. This is a waiting `notify-send -A`; only the latest one stays live.
   - **Opened in satty/swappy straight away** with `annotate`: the picker's "Edit in …" switch, the E key, or holding Shift on release.

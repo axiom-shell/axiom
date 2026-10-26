@@ -56,7 +56,7 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 | `OSD.osds` (+ `scrollToChange`, `scrollStep`) | `OSD.items` (the two settings stay) |
 | `Overlay.views` | `Overlay.items` (pages; each with an `id`) |
 | `Desktop.all` / `primary` / `monitors[]` | `Desktop.items: [Layout + screen: ScreenTarget]`, matched most specific first (named, then primary, then all) |
-| `Monitors.profiles`, `Keybinds.presets`, `Chat.providers` / `presets`, `Calendar.accounts`, `ClaudeUsage.accounts`, `Session.env` / `autostart`, `Idle.listeners`, `Hyprland.managed.curves` / `customAnimations` | `items`, or a named list beside the section's other settings when a section holds two (`Chat.providers`, `Chat.presets`). Every entry gets an `id`. |
+| `Monitors.profiles`, `Keybinds.presets`, `Chat.providers` / `presets`, `Calendar.accounts`, `ClaudeUsage.accounts`, `Session.env` / `autostart`, Idle's `listeners`, `Hyprland.managed.curves` / `customAnimations` | `items`, or a named list beside the section's other settings when a section holds two (`Chat.providers`, `Chat.presets`). Every entry gets an `id`. |
 
 ### Compositor
 | Today | v2 |
@@ -72,8 +72,8 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 | `Appearance.wallpaper`, `wallpapers`, `wallpaperBackend`, `wallpaperDaemon`, `wallpaperFolder`, `wallpaperMode`, `wallpaperRotation`, `variantWallpapers` | `Appearance.wallpaper: { mode, file, perScreen: {}, folder, rotation: {…}, variants: { dark, light }, backend, daemon }` |
 | Widget's `overrideRadius` + `radius` | `Widget.radius` (`null` inherits `Appearance.shape.radius`) |
 | `Notifications.gap`, `gapTop`, …, `evenGaps` | `Notifications.gaps: { even, all, top, bottom, left, right }` |
-| `Launcher.windows`, `calculator`, `commands`, `runCommands`, `webSearch`, `chat`, `clipboard`, `emoji` (+ `searchEngine`, `clipboardSource`, `clipboardMaxEntries`) | `Launcher.providers: { windows, calculator, commands, run, web: { enabled, engine }, chat, clipboard: { enabled, source, maxEntries }, emoji }` |
-| `Idle.dimTimeout`, `dimMode`, `dimLevel`, `dimBy`, `lockTimeout`, `screenOffTimeout`, `suspendTimeout` (s) | `Idle.dim: { timeout, mode, level, by }`, `Idle.lock.timeout`, `Idle.screenOff.timeout`, `Idle.suspend.timeout` (ms) |
+| `Launcher.windows`, `calculator`, `commands`, `runCommands`, `webSearch`, `chat`, `clipboard`, `emoji` (+ `searchEngine`, `clipboardSource` (gone with cliphist, stage 2), `clipboardMaxEntries`) | `Launcher.providers: { windows, calculator, commands, run, web: { enabled, engine }, chat, clipboard: { enabled, maxEntries }, emoji }` |
+| Idle's `dimTimeout`, `dimMode`, `dimLevel`, `dimBy`, `lockTimeout`, `screenOffTimeout`, `suspendTimeout` (s) | `Idle.dim: { timeout, mode, level, by }`, `Idle.lock.timeout`, `Idle.screenOff.timeout`, `Idle.suspend.timeout` (ms) |
 | `Dock` magnify / running keys | `magnify: { enabled, size, range }`, `running: { show, scope, indicator }` |
 | `Pomodoro.workMinutes`, … | `Pomodoro.work`, `shortBreak`, `longBreak` (ms) |
 | `Weather.intervalMinutes`, `ClaudeUsage.intervalMinutes`, `Calendar.syncInterval`, `Appearance.wallpaperRotation.interval` (min), `Notifications.timeout`, `WindowBehaviour.cursorHideTimeout` (s), `Notifications.maxAgeDays` | each one key, in ms |

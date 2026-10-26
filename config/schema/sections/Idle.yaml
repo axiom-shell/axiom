@@ -3,18 +3,18 @@
 x-scope: personal
 type: object
 x-category: Screen & Power
-x-card: {file: IdleStatus, title: hypridle}
+x-card: {file: IdleStatus, title: Idle}
 title: Idle
-description: 'What happens when you step away: dimming, locking, turning the screens off and suspending, run by hypridle.'
+description: 'What happens when you step away: dimming, locking, turning the screens off and suspending, and locking before the computer sleeps.'
 additionalProperties: false
 properties:
   enabled:
     x-scope: machine
     type: boolean
     x-takeover: true
-    title: Manage hypridle
+    title: Handle idle
     default: false
-    description: axiom runs hypridle with a config of its own (~/.local/state/axiom/hypridle.conf) and stops any other hypridle while this is on. Your own hypridle.conf is never touched; remove your own hypridle autostart line.
+    description: axiom watches for idle itself and answers lock and sleep requests, so it replaces an idle daemon such as hypridle. Remove your own hypridle autostart line while this is on.
   dim:
     type: object
     title: Dim
@@ -119,7 +119,7 @@ properties:
     title: Respect apps that keep the screen on
     x-group: Sleep
     default: true
-    description: Video players and browsers can ask to stay awake over D-Bus and systemd. The caffeine widget works either way.
+    description: Video players and browsers can ask to stay awake through the compositor, D-Bus and systemd. The caffeine widget works either way.
     x-showIf: {enabled: true}
   items:
     x-scope: commands

@@ -9,10 +9,14 @@ Launcher: The search launcher: apps, open windows, a calculator, web search, run
 Each setting: `path` · type = default · enum/range/unit; then title: description; annotations; `read:` the reader member(s) (exact unless marked) and `in:` the files that use them.
 
 
-### Parts
+### `Launcher.screen`
 
-- [`Launcher.screen`](Launcher.screen.md)
-- [`Launcher.providers`](Launcher.providers.md)
+- **`Launcher.screen`** · object
+  - Monitors: Where the launcher opens. As in General follows General > Monitors; the primary monitor is the one set in General; the focused monitor is the one with your active workspace (and mouse); every monitor shows it on all of them at once.
+- **`Launcher.screen.mode`** · string = "inherit" · enum inherit|primary|focused|all
+  - Monitors
+  - x-scope="look", x-link={"setting":"General.screen"}
+  - read: `LauncherConfig.screen` (whole) · in: `config/LauncherConfig.qml`
 
 ### `Launcher`
 
@@ -73,6 +77,60 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - x-group="Launcher search"
   - read: `LauncherConfig.hiddenApps` · in: `services/ui/LauncherManager.qml`
 
+### `Launcher.providers`
+
+- **`Launcher.providers`** · object
+  - Launcher search: What the launcher searches besides apps.
+- **`Launcher.providers.windows`** · boolean = true
+  - Open windows: Also match open windows by title and class; picking one focuses it.
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `config/LauncherConfig.qml`, `services/ui/LauncherManager.qml`
+- **`Launcher.providers.calculator`** · boolean = true
+  - Calculator: Show the result of math as you type it (or after =), using qalc. Enter copies the result.
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `components/surfaces/launcher/LauncherPanel.qml`, `config/LauncherConfig.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
+- **`Launcher.providers.commands`** · boolean = true
+  - Shell commands (/): Type / for commands that control the shell: themes, volume, wifi, bluetooth, overlay pages, session and more.
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `components/surfaces/launcher/LauncherPanel.qml`, `config/LauncherConfig.qml`, `services/ui/LauncherManager.qml`
+- **`Launcher.providers.run`** · boolean = true
+  - Run commands (>): Type > and a command to run it. Shift+Enter runs it in the terminal.
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `config/LauncherConfig.qml`, `services/ui/LauncherManager.qml`
+
+### `Launcher.providers.web`
+
+- **`Launcher.providers.web`** · object
+  - Web search
+- **`Launcher.providers.web.enabled`** · boolean = true
+  - Web search (?): Offer a web search for what you typed, last in the list (or first after ?).
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `config/LauncherConfig.qml`, `services/ui/LauncherCommands.qml`
+- **`Launcher.providers.web.engine`** · string = "https://duckduckgo.com/?q={}"
+  - Search engine URL: {} is replaced by the search terms.
+  - x-showIf={"enabled":true}
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `config/LauncherConfig.qml`
+
+### `Launcher.providers`
+
+- **`Launcher.providers.chat`** · boolean = true
+  - Ask chat (@): Type @ and a question to ask it in the overlay's Chat module, with the default preset.
+  - x-link={"setting":"Chat"}
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `components/surfaces/launcher/LauncherPanel.qml`, `config/LauncherConfig.qml`, `services/ui/LauncherManager.qml`
+
+### `Launcher.providers.clipboard`
+
+- **`Launcher.providers.clipboard`** · object
+  - Clipboard history
+- **`Launcher.providers.clipboard.enabled`** · boolean = true
+  - Clipboard history (:): Type : (or /clipboard) to search what you've copied; Enter copies it again, Shift+Enter removes it. axiom keeps the history, images included, in memory only, never on disk, and skips anything a password manager marks as sensitive. Turn this off if you copy passwords from apps that don't; turning it off clears the history.
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `config/LauncherConfig.qml`, `services/ui/LauncherCommands.qml`
+- **`Launcher.providers.clipboard.maxEntries`** · integer = 100 · 10–1000
+  - Clipboard history size: How many clips axiom keeps.
+  - x-showIf={"enabled":true}
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `config/LauncherConfig.qml`
+
+### `Launcher.providers`
+
+- **`Launcher.providers.emoji`** · boolean = true
+  - Emoji (;): Type ; (or /emoji) to search emoji by name or keyword; Enter copies one, and Shift+Enter types it into the focused window.
+  - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `components/surfaces/launcher/LauncherPanel.qml`, `config/LauncherConfig.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
+
 ### Reader members
 
 Every public member of `LauncherConfig`, with the files that use it.
@@ -121,10 +179,8 @@ Every public member of `LauncherConfig`, with the files that use it.
   - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.clipboard` (bool): ":" searches the clipboard history (ClipboardManager)
   - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/system/ClipboardManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
-- `LauncherConfig.clipboardSource` (string): "axiom" | "cliphist"
-  - in: `services/system/ClipboardManager.qml`
 - `LauncherConfig.clipboardMaxEntries` (int)
-  - in: `services/system/ClipboardManager.qml`
+  - in: none found
 - `LauncherConfig.emoji` (bool): ";" searches emoji (EmojiManager)
   - in: `components/surfaces/launcher/LauncherPanel.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`
 - `LauncherConfig.searchEngine` (string): With {} where the terms go

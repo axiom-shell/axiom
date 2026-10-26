@@ -6,13 +6,13 @@ import Quickshell.Wayland
 import qs.config
 import qs.services.session
 
-// Keeps the session awake while IdleInhibitManager.enabled (caffeine). The
+// Keeps the session awake while IdleManager.caffeine. The
 // Wayland idle inhibitor needs a mapped surface, so while it's on this maps
 // a 1 px transparent, click-through window on the primary monitor to hold
 // it, whatever bars or widgets are configured.
 Scope {
   LazyLoader {
-    active: IdleInhibitManager.enabled && General.outputs.length > 0
+    active: IdleManager.caffeine && General.outputs.length > 0
 
     PanelWindow {
       id: holder

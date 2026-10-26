@@ -364,12 +364,6 @@ Singleton {
       root.backend.captureKeys(on);
   }
 
-  // The shell command turning the screens off or on (the idle daemon's),
-  // or "" where axiom doesn't know one
-  function dpmsCommand(on) {
-    return root.backend?.dpmsCommand(on) ?? "";
-  }
-
   // --- Workspaces (laid out by WorkspacesConfig) ---
 
   // Goes to workspace `id`. mode: "go" (default), "move" (taking the

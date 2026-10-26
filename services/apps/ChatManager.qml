@@ -229,15 +229,18 @@ Singleton {
       return;
     root.attaching = true;
     root.notice = "";
-    _run(["sh", "-c", "wl-paste --list-types 2>/dev/null | grep -m1 -E '^image/(png|jpeg|webp|gif)$'"], (ok, out) => {
-      const mime = out.trim();
-      if (!ok || mime === "") {
+    BackendManager.call("clipboard.types", {}, (error, result) => {
+      const mime = error ? undefined : ["image/png", "image/jpeg", "image/webp", "image/gif"].find(m => result.mimes.includes(m));
+      if (!mime) {
         root.attaching = false;
         root.notice = I18n.tr("There's no image on the clipboard.");
         return;
       }
       const path = _attachmentPath(mime.split("/")[1]);
-      _run(["sh", "-c", "mkdir -p \"$(dirname \"$1\")\" && wl-paste --type \"$2\" > \"$1\"", "sh", path, mime], ok => _attached(ok, path, mime, I18n.tr("Pasted image")));
+      BackendManager.call("clipboard.save", {
+        "mimes": [mime],
+        "path": path
+      }, saveError => _attached(!saveError, path, mime, I18n.tr("Pasted image")));
     });
   }
 

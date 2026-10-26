@@ -22,21 +22,19 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Network widget / module, Wi-Fi menu | NetworkManager, Quickshell built with its Networking module, and `ip` (iproute2) |
 | Updates | Arch: `pacman-contrib` (`checkupdates`), plus `paru` or `yay` for AUR updates. Fedora: `dnf` (nothing extra). Hidden on other distributions |
 | Tailscale | `tailscale` |
-| Screenshots | `wl-copy`; `grim` under niri; `satty` or `swappy` to annotate; `wf-recorder` to record, and `pactl` (libpulse; works with pipewire-pulse) to record the system's sound |
-| AI chat | `curl`; `secret-tool` (libsecret) to keep keys in your keyring; `wl-clipboard` to paste images |
-| Launcher calculator | `qalc` (libqalculate), `wl-copy` |
-| Launcher emoji picker | `wl-copy` to copy; `wtype` to type an emoji into the focused window (Shift+Enter) |
+| Screenshots | `grim` under niri; `satty` or `swappy` to annotate; `wf-recorder` to record, and `pactl` (libpulse; works with pipewire-pulse) to record the system's sound |
+| AI chat | `curl`; `secret-tool` (libsecret) to keep keys in your keyring |
+| Launcher calculator | `qalc` (libqalculate) |
 | Brightness (keys, OSD bar) | `brightnessctl` for a laptop panel; `ddcutil` for external monitors over DDC/CI (monitors that support it, with i2c access: the package's udev rule gives it to the logged-in user) |
 | NVIDIA GPU stats | `nvidia-smi` (AMD is read from sysfs) |
-| Idle (dim, lock, screen off, suspend) | `hypridle` (it runs on every compositor) |
+| Idle (dim, lock, screen off, suspend) | Nothing: axiom does it itself, on every compositor |
 | Login screen | `greetd` and its text login `agreety` (`greetd-agreety` on Arch), the fallback; `sway` for it to run in (recommended), or Hyprland without one; `pkexec` (polkit) to install it |
 | Themes generated from the wallpaper | The Python packages numpy and Pillow (`python-numpy python-pillow` on Arch, `python3-numpy python3-pillow` on Fedora) |
 | Calendar | The Python package icalendar (`python-icalendar` on Arch, `python3-icalendar` on Fedora); `secret-tool` (libsecret) to keep account passwords in your keyring |
 | Browse buttons for folders, importing a shared config | xdg-desktop-portal with a file chooser backend (`xdg-desktop-portal-gtk` or KDE's) and `python-gobject`; or `zenity` or `kdialog`. Without them, type the path |
 | Polkit prompt | Nothing: axiom is the agent itself, and stops another one (hyprpolkitagent, KDE's, GNOME's) while it's on |
-| Night light | `wlsunset`, or `hyprsunset` on Hyprland |
+| Night light | nothing on Hyprland and sway; `wlsunset` on niri |
 | X11 apps (Steam, games, older apps) | On niri, `xwayland-satellite` (niri runs X11 apps only through it); on sway, Xwayland (`xorg-xwayland` on Arch, `xorg-x11-server-Xwayland` on Fedora). Hyprland's package brings Xwayland itself |
-| Clipboard history | `wl-clipboard`; `cliphist` to share the history with other apps |
 | Notes | `gio` (glib2) to move deleted notes to the trash |
 | Theme integrations | The app itself (`kitty`, `alacritty`, `foot`, `wezterm`, `ghostty`, `nvim`, `helix`/`hx`, VS Code or VSCodium, Zed (`zed`/`zeditor`), Firefox or a fork (LibreWolf, Zen, Floorp, Waterfox), Vesktop or Vencord, `zathura`, `ncspot`, `k9s`, `cava`, `btop`, `fzf` 0.49+, `lazygit`, `bat`, `yazi` 25.5+); `qt5ct`/`qt6ct` for Qt; `adw-gtk-theme` for GTK3 apps |
 
@@ -55,7 +53,7 @@ It first prints its plan: the distribution, the compositor and each step. Then:
 1. **The compositor.** It uses the one you're running; else the one an earlier run set up; else, with several installed, it asks which one you use. It also offers to start axiom from every other one installed (each asked, default no). With none installed, it asks: Hyprland (the default, with every feature), niri, or sway. It doesn't install SwayFX, which replaces sway in place (the AUR's `swayfx` on Arch, COPR `swayfx/swayfx` on Fedora). `--compositor hyprland|sway|niri|none` picks without asking.
 2. **Packages.** It lists the optional features and offers them all at once (recommended), or one at a time, skipping any already installed. The login screen brings sway to run in; with Hyprland, that sway is offered on its own (recommended, so taking them all installs it), and without it the login screen runs in Hyprland. A feature with no package on your distribution is listed as not available there (wallpaper transitions on Fedora). It then shows the one `sudo pacman` or `sudo dnf` command it will run, and why, before running it.
    - On Arch, every package comes from the official repositories.
-   - On Fedora, quickshell comes from the COPR `errornointernet/quickshell` and Hyprland and its tools (hypridle, hyprsunset, satty) from `nett00n/hyprland`: Fedora's own quickshell is too old, and Hyprland left its repositories. A COPR is a third-party repository on Fedora's build service, so each one is shown and asked separately, and only enabled when something you picked needs it. The icon font isn't packaged there either: it's downloaded into `~/.local/share/fonts`, as you.
+   - On Fedora, quickshell comes from the COPR `errornointernet/quickshell` and Hyprland and its tools (satty) from `nett00n/hyprland`: Fedora's own quickshell is too old, and Hyprland left its repositories. A COPR is a third-party repository on Fedora's build service, so each one is shown and asked separately, and only enabled when something you picked needs it. The icon font isn't packaged there either: it's downloaded into `~/.local/share/fonts`, as you.
 3. **The clone.** It clones the latest release into `~/.config/quickshell/axiom`.
 4. **The `axiom` binary.** It builds `axiom` from the clone into `~/.local/bin/axiom` (`$XDG_BIN_HOME` if it's set). It doesn't need to be on your `PATH`: the start-up line names it by its full path.
 5. **Autostart.** It asks before adding the line that starts axiom to the end of the compositor's config (`hyprland.lua`, sway's `config`, niri's `config.kdl`), backing up the file first. A config that doesn't exist yet starts as the compositor's own default one, so its starter keybinds are there too.
@@ -177,7 +175,7 @@ An update also rebuilds the `axiom` binary from the new code, and axiom switches
 
 ## Idle and locking
 
-axiom can run hypridle for you, on any compositor, from **Settings → Screen & Power → Idle**: dim, lock, screen off and suspend timeouts. It writes its own hypridle config and replaces a hypridle you already run (and starts yours again if you turn it off).
+axiom handles idle itself, on any compositor, from **Settings → Screen & Power → Idle**: dim, lock, screen off and suspend timeouts, locking before the computer sleeps, and apps that ask to keep the screen on. It replaces an idle daemon such as hypridle: remove your own hypridle autostart line when you turn it on.
 
 To keep your own idle daemon instead, point its lock command at axiom's built-in lock screen:
 

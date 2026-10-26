@@ -19,9 +19,6 @@
       "FileView",
       "execDetached"
     ],
-    "services/system/ClipboardManager.qml": [
-      "Process"
-    ],
     "services/core/CommandManager.qml": [
       "Process",
       "execDetached"
@@ -32,9 +29,6 @@
     "services/compositor/CompositorConfigManager.qml": [
       "execDetached"
     ],
-    "services/apps/EmojiManager.qml": [
-      "execDetached"
-    ],
     "services/core/FileManager.qml": [
       "FileView"
     ],
@@ -43,10 +37,6 @@
     ],
     "services/session/GreetdManager.qml": [
       "execDetached"
-    ],
-    "services/session/HypridleManager.qml": [
-      "Process",
-      "FileView"
     ],
     "services/compositor/HyprlandIpcManager.qml": [
       "Socket"

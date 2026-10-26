@@ -6,6 +6,8 @@
 
 Problems found while working on something else: not fixed yet, but recorded so they aren't lost. **Add an entry whenever you find a problem outside the task at hand** rather than fixing it unasked or only mentioning it. Remove the entry in the change that fixes it. Before starting work in an area, check here for what's already known about it. This is a working list for coding agents and the maintainer, meant to move to GitHub over time: it's not where to report or look up problems, which is [GitHub issues](https://github.com/axiom-shell/axiom/issues). Agents never open a GitHub issue themselves; the maintainer moves an entry there.
 
+Every entry is linked from the phase of the [cleanup roadmap](roadmap.md) that resolves it: add the link with a new entry, and remove it with the entry (`scripts/check_docs.py` fails on a link to an entry that's gone and warns about an entry the roadmap doesn't link).
+
 Each entry is a `###` heading plus these four bullets, in this order (`scripts/check_docs.py` checks the shape and that cited paths and members exist):
 
 ```
@@ -20,7 +22,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Tailscale's poll interval allows values below axiom's 5 s floor
 - **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`Source`'s `Floor`)
-- **What:** The setting's `minimum` is 250 ms, but the `tailscale` topic never polls more often than every 5 s (its description says so), so 250–4999 ms are offered and do nothing. Raising `minimum` to 5000 makes saved values below it invalid, so it needs a format-2 migration step clamping them (`docs/recipes/migration.md`); the maintainer decides whether that's worth a config version.
+- **What:** The setting's `minimum` is 250 ms, but the `tailscale` topic never polls more often than every 5 s (its description says so), so 250–4999 ms are offered and do nothing. Decided (2026-10-26): no migration; the topic's floor is read from the setting's schema `minimum` instead of a constant in Go, so the two can't disagree again.
 - **Size:** small
 - **Found:** 2026-10-25, while reviewing the service-layer branch
 
@@ -391,4 +393,94 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Every config reload logs `Unable to assign [undefined] to bool` at the `paused` declaration (and, seen 2026-10-14, at `UpdatesManager.checking` while it was a readonly bool on a singleton (now a plain one): likely the same cause; seen 2026-10-16 as `Unable to assign [undefined] to QString` at `HyprlandManager.activeWindowId`, a readonly string). The binding itself evaluates to a boolean (a temporary probe logged `boolean false`), and a constant `paused: false` still warned, so it isn't the expression: something in Quickshell's reload of this singleton assigns it. Harmless (the value is right afterwards), but it's noise in every `scripts/log.sh`. Next step: check whether Quickshell carries readonly properties across a reload, or whether making `paused` a plain function helps.
 - **Size:** small
 - **Found:** 2026-10-13, while checking reload logs during the docs makeover
+
+### Shell saves carry unsaved settings and every takeover
+- **Where:** `services/ui/SettingsManager.qml` (`setValue`, `setValues`), `services/core/ConfigDraft.qml` (`save`), `services/core/ConfigManager.qml` (`saveConfig`, `commit`, `_send`)
+- **What:** The settings page applies an unsaved change straight into `ConfigManager.config` (`applyConfig`; only `x-applyOnSave` settings wait), and every other save starts from a clone of it: `ConfigDraft.save` merges onto it, `commitValue(s)` and `CommunitySetupsManager`'s wallpaper setter clone it. So an unsaved setting is written by an unrelated save (toggle Handle idle, don't Save, save a bar edit: `Idle.enabled` is written on). Every shell save also sends `takeover: true`, so the store's takeover guard binds only the CLI and `saved.*`, against [the binary's README](backend/README.md). The fix is backend stage 7 ([roadmap](backend/roadmap.md)): path ops, `takeover` only on a takeover card's op, live edits through `ConfigManager.setPreview`.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Config saves can land out of order
+- **Where:** `backend/internal/rpc/rpc.go` (requests each on their own goroutine), `backend/internal/store/store.go` (`write`), `services/core/ConfigManager.qml` (`_send`)
+- **What:** The shell sends each `config.replace` without waiting for the last, the daemon runs requests concurrently, and `write` takes its lock in whatever order the goroutines reach it, so two quick saves can leave the older one on disk (and pushed back as the running config). Path ops alone (backend stage 7) still race on one key: `config.*` calls want handling in order per connection, or a base revision the store refuses on mismatch.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### BackendManager's listeners and reconnect are fragile
+- **Where:** `services/core/BackendManager.qml` (`_onLine`, `_reconnect`)
+- **What:** A notification's listeners run in one `forEach` with no `try`, so one that throws stops the rest from hearing the push. `_reconnect` assigns `_socket.connected = true`, which breaks its `connected: root.active` binding, so the socket no longer follows `active` after the first reconnect.
+- **Size:** trivial
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### A missing embedded schema counts as this binary's
+- **Where:** `backend/internal/daemon/daemon.go` (`setSchema`)
+- **What:** `matches` starts true and stays true when `assets.Read` fails, so a binary built without its assets treats any schema as its own and stays writable: it should fail closed.
+- **Size:** trivial
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### The shell–daemon contract is checked by name only
+- **Where:** `scripts/gen_docs.py` (the rpc cross-check), `backend/internal/daemon/methods.go` (params and results)
+- **What:** `rpc.md`'s check matches method names between the two sides by regex; params and results are Go structs on one side and hand-read fields on the other, and nothing checks they agree (only the manual protocol bump in `config/json/backend.json`). Generating each method's fields from the `rpc.Handle` registrations into `rpc.md`, and checking the QML call sites' keys against them, would catch a renamed field.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Singletons doing several jobs
+- **Where:** `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/core/ShellManager.qml`, `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`)
+- **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. `EdgeMenuManager` is the menus' runtime and the layouts editor's working copy. `ShellManager` is a signal bus, surface registry, modals and session actions, sits in `core/` though it's UI state, and its header still says "manages global options and signals". `LauncherCommands`' `/config` browser is about 200 lines of its own. The Bar ↔ EdgeMenu cycle (each computes the other's reserved zones) wants one owner of that geometry.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Shared pieces holding feature logic
+- **Where:** `components/reusable/PipewireVolumeBar.qml`, `components/reusable/StyledToolTip.qml`, `components/reusable/CodeLine.qml`, `components/reusable/BaseWidget.qml`, `components/reusable/IconTextWidget.qml`
+- **What:** `reusable/` is "generic Styled* widgets, no feature logic" (AGENTS.md › Layout), but `PipewireVolumeBar` imports Pipewire and `AudioManager`, `StyledToolTip` reads `BlurManager`, `CompositorManager` and `ShellManager`, `CodeLine` uses `ClipboardManager`, and `BaseWidget` / `IconTextWidget` are bar widget bases used only under `components/bar/`. Move them (`components/bar/`, `content/parts/`) or name the exception in the rule.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Service folders hold misplaced and undocumented files
+- **Where:** `services/system/TailscaleManager.qml`, `services/apps/DailySchedule.qml`, `services/core/ShellManager.qml`, `services/AGENTS.md` (Folders)
+- **What:** Tailscale is an add-on for an outside service (like `ClaudeUsageManager` in `apps/`), not the machine: it belongs in `apps/`, with the folders reworded (`system/` the machine and desktop basics, `apps/` optional features and integrations). `DailySchedule` lives in `apps/` but serves `NightLightManager` and `WallpaperManager`: `core/`. `ShellManager` is UI state: `ui/`. About a dozen non-singleton parts (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, `ChatRequest`, `WeatherSource`, `GridEditor`, …) live beside the singletons though the layout says services are singletons: the folder rules should say so.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Readers read files through a service
+- **Where:** `config/Paths.qml` (`packagedVersion`), `config/I18n.qml`
+- **What:** Readers read only the data owners and each other (AGENTS.md › Layering), but `Paths.packagedVersion` calls `FileManager.read`, and `I18n` reads with both `FileManager.read` and a FileView of its own. Either the rule names `FileManager` as allowed in readers, or the reads move to a data owner.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Repeated plumbing
+- **Where:** `services/apps/StopwatchManager.qml`, `services/apps/PomodoroManager.qml` (`_arm`, the tick Timer, the notification handler), `components/forms/SchemaPropertiesForm.qml`, `components/forms/SettingRows.qml`, `components/views/Settings/SettingsContent.qml` (`valueAt`), `backend/internal/saved/saved.go` (`everything`)
+- **What:** Stopwatch and Pomodoro copy their deadline alarm, ticker, saved state and notification plumbing (a shared ticker part would take about 80 lines from each). Three forms each define `valueAt` beside `SettingsManager._valueAt`: a methods helper. `saved.everything` restates the scopes `share` already names.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### archtest checks only the pure packages
+- **Where:** `backend/internal/archtest/archtest_test.go`
+- **What:** It checks that the pure packages import no I/O, but not the rest of `backend/AGENTS.md`: the downward dependency direction among the other packages, no `init()` and no package-level state, a doc comment per package, or that every package is classified at all (`dbus`, `unixmsg` aren't). `backend/internal/config/pipeline.go` keeps a `sync.Map` cache in a package marked pure.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Backend packages with thin or no tests
+- **Where:** `backend/internal/compositor/edit/`, `backend/internal/ipcroute/`, `backend/internal/cli/`
+- **What:** `compositor/edit` does atomic replacement and dated backups (security rules: every check has a test) with no tests of its own. `ipcroute` tests only its parsing (33 lines for 310), not the registration race or the `qs ipc` fallback. `cli` has about 200 test lines for 1900.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### backend/AGENTS.md's dependency table is incomplete
+- **Where:** `backend/AGENTS.md` (Dependencies), `backend/go.mod`
+- **What:** `github.com/fsnotify/fsnotify` and `golang.org/x/sys` are direct requirements in `go.mod` with no line saying why, though "a new module needs a line here".
+- **Size:** trivial
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### The check order is kept in three places
+- **Where:** `scripts/check_all.sh`, `scripts/dev/verify.sh`, `.github/workflows/checks.yml`
+- **What:** The same checks, in the same order, are listed by hand three times; a check added to one can be missed in the others. One list (a file the three read, or `check_all.sh` as the one CI runs) keeps them equal.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Small tooling leftovers
+- **Where:** `components/methods/IconResolver.qml`, `packaging/aur/`, `docs/dev/core/i18n.md`
+- **What:** `IconResolver` is the one methods helper without a test (`tst_IconResolver`) (and the one importing `Quickshell`, for `iconPath`). The `axiom-shell` and `axiom-shell-git` PKGBUILDs are near copies. `check_doc_drift.py` flags `i18n.md` (12 commits behind its files, after the services moved to folders).
+- **Size:** trivial
+- **Found:** 2026-10-26, while reviewing the repository's organization
 

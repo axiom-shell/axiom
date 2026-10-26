@@ -95,10 +95,6 @@ Singleton {
       "purpose": "Brightness of external monitors"
     },
     {
-      "command": "wl-copy",
-      "purpose": "Copying to the clipboard"
-    },
-    {
       "command": "jq",
       "purpose": "Reading JSON (theme integrations)"
     },
@@ -139,18 +135,9 @@ Singleton {
       "purpose": "Notifications from axiom itself, with their buttons"
     },
     {
-      "command": "hypridle",
-      "purpose": "Idle locking and screen blanking"
-    },
-    {
-      "command": "hyprsunset",
-      "purpose": "Night light",
-      "compositors": ["hyprland"]
-    },
-    {
       "command": "wlsunset",
-      "purpose": "Night light",
-      "compositors": ["sway", "niri"]
+      "purpose": "Night light, where the compositor has no gamma control",
+      "compositors": ["niri"]
     },
     {
       "command": "xwayland-satellite",
@@ -161,14 +148,6 @@ Singleton {
       "command": "Xwayland",
       "purpose": "X11 apps (Steam, games, older apps)",
       "compositors": ["sway"]
-    },
-    {
-      "command": "cliphist",
-      "purpose": "Clipboard history shared with other apps"
-    },
-    {
-      "command": "wtype",
-      "purpose": "Typing emoji from the launcher"
     },
     {
       "command": "wf-recorder",

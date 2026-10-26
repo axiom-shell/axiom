@@ -12,6 +12,13 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `claudeUsage.refresh` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
 | `claudeUsage.subscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
 | `claudeUsage.unsubscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
+| `clipboard.clear` | shell only | `backend/internal/daemon/clipboard.go` | (none) |  |
+| `clipboard.copy` | shell only | `backend/internal/daemon/clipboard.go` | (none) |  |
+| `clipboard.get` | shell only | `backend/internal/daemon/clipboard.go` | `services/system/ClipboardManager.qml` |  |
+| `clipboard.remove` | shell only | `backend/internal/daemon/clipboard.go` | (none) |  |
+| `clipboard.save` | shell only | `backend/internal/daemon/clipboard.go` | `services/apps/ChatManager.qml` |  |
+| `clipboard.text` | shell only | `backend/internal/daemon/clipboard.go` | `services/system/ClipboardManager.qml` |  |
+| `clipboard.types` | shell only | `backend/internal/daemon/clipboard.go` | `services/apps/ChatManager.qml` |  |
 | `compositor.allowTakeover` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
 | `compositor.checkManaged` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
 | `compositor.entries` |  | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
@@ -33,6 +40,9 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `dev.get` |  | `backend/internal/daemon/dev.go` | (none) | `backend/internal/cli/dev.go` |
 | `dev.rebuild` |  | `backend/internal/daemon/dev.go` | `services/core/DevManager.qml` | `backend/internal/cli/dev.go` |
 | `dev.set` |  | `backend/internal/daemon/dev.go` | `services/core/DevManager.qml` | `backend/internal/cli/dev.go` |
+| `idle.caffeine` | shell only | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |  |
+| `idle.get` |  | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |  |
+| `input.type` | shell only | `backend/internal/daemon/wayland.go` | `services/apps/EmojiManager.qml` |  |
 | `ipc.call` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
 | `ipc.list` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
 | `ipc.register` | shell only | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` |  |
@@ -40,6 +50,8 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `lock.state` | shell only | `backend/internal/daemon/methods.go` | `services/session/LockManager.qml` |  |
 | `media.art` |  | `backend/internal/daemon/tools.go` | `services/system/MediaManager.qml` |  |
 | `net.addresses` |  | `backend/internal/daemon/tools.go` | `services/system/NetworkingManager.qml` |  |
+| `nightlight.get` |  | `backend/internal/daemon/wayland.go` | `services/system/NightLightManager.qml` |  |
+| `nightlight.set` | shell only | `backend/internal/daemon/wayland.go` | `services/system/NightLightManager.qml` |  |
 | `saved.list` |  | `backend/internal/daemon/sharing.go` | (none) |  |
 | `saved.remove` |  | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
 | `saved.restore` | writable | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
@@ -65,6 +77,7 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `updates.refresh` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
 | `updates.subscribe` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
 | `updates.unsubscribe` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
+| `wayland.get` |  | `backend/internal/daemon/wayland.go` | `services/core/WaylandManager.qml` |  |
 
 ## Pushes (daemon → subscribers)
 
@@ -73,6 +86,7 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 | Push | Topic | Sent from | Heard in |
 |---|---|---|---|
 | `claudeUsage.state` | claudeUsage (polled) | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |
+| `clipboard.state` | clipboard | `backend/internal/daemon/clipboard.go` | `services/system/ClipboardManager.qml` |
 | `compositor.applied` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
 | `compositor.bindsMerged` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
 | `compositor.notify` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
@@ -81,12 +95,15 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 | `config.state` | config | `backend/internal/daemon/methods.go` | `services/core/ConfigManager.qml` |
 | `daemon.state` | daemon | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` |
 | `dev.state` | daemon | `backend/internal/daemon/dev.go` | `services/core/BackendManager.qml` |
+| `idle.state` | idle | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |
+| `nightlight.state` | wayland | `backend/internal/daemon/wayland.go` | `services/system/NightLightManager.qml` |
 | `saved.state` | saved | `backend/internal/daemon/daemon.go` | `services/core/SavedConfigsManager.qml` |
 | `schema.changed` | config | `backend/internal/daemon/dev.go` | `services/core/BackendManager.qml`<br>`services/core/ConfigManager.qml` |
 | `schema.error` | config | `backend/internal/daemon/dev.go` | `services/core/ConfigManager.qml` |
 | `system.state` | system (polled) | `backend/internal/system/system.go` | `services/system/SystemManager.qml` |
 | `tailscale.state` | tailscale (polled) | `backend/internal/tailscale/tailscale.go` | `services/system/TailscaleManager.qml` |
 | `updates.state` | updates (polled) | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |
+| `wayland.state` | wayland | `backend/internal/daemon/wayland.go` | `services/core/WaylandManager.qml` |
 
 ## Calls into the shell (daemon → shell)
 

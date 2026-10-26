@@ -23,7 +23,7 @@ Screen brightness per monitor: a laptop panel through its sysfs backlight (writt
 - `available(name)`
 - `valueFor(name)`
 - `set(name, value, silent)`: A silent set doesn't emit brightnessChanged, so the OSD stays shut
-- `dim(fraction, relative)`: Idle dimming (hypridle, through IPC): every monitor down to `fraction` (darker ones stay), or with `relative` down by `fraction` of its own brightness, then back to what each was on undim()
+- `dim(fraction, relative)`: Idle dimming (the daemon's idle steps, through IPC): every monitor down to `fraction` (darker ones stay), or with `relative` down by `fraction` of its own brightness, then back to what each was on un…
 - `undim()`
 - `stepBy(name, delta)`
 - `refresh(name)`: Reads the monitor's current value, for changes made outside axiom

@@ -5,43 +5,46 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.services.core
-import qs.services.compositor
 import qs.services.apps
 
 /*
- * The night light (the NightLight section): warmer colors through
- * hyprsunset, or wlsunset without it, started and stopped by axiom. On a
+ * The night light (the NightLight section): warmer colors, set by the
+ * axiom daemon on the compositor's color transform or gamma ramps
+ * (nightlight.set: internal/nightlight), or, where the compositor offers
+ * neither (niri), by wlsunset, started and stopped by axiom. On a
  * schedule it turns on at `startAt` and off at `endAt` (DailySchedule); a
  * switch by hand (the quick action, /nightlight, the `nightLight` IPC
  * target or bind) lasts until the next of those. A new temperature or
- * gamma restarts it while it's on.
+ * gamma is applied while it's on.
  *
- * `active` is what axiom last set, kept across QML reloads; at startup it's
- * whether the tool is already running. Created from shell.qml's `_services`.
+ * `active` is what axiom last set, kept across QML reloads; at startup
+ * it's what the daemon holds, or whether wlsunset already runs. Created
+ * from shell.qml's `_services`.
  *
  *   axiom ipc nightLight toggle
  */
 Singleton {
   id: root
 
-  // "hyprsunset" | "wlsunset" | "" (neither); undefined until looked up.
-  // hyprsunset only under Hyprland: it drives Hyprland's own color
-  // transform, so elsewhere it starts and does nothing
+  // "axiom" | "wlsunset" | "" (neither); undefined until known
   readonly property var tool: {
-    const found = DependencyManager.found;
-    const hyprland = CompositorManager.kind === "hyprland";
-    if (hyprland && found.hyprsunset === true)
-      return "hyprsunset";
-    if (found.wlsunset === true)
-      return "wlsunset";
-    return (!hyprland || found.hyprsunset === false) && found.wlsunset === false ? "" : undefined;
+    if (WaylandManager.nightLight !== "")
+      return "axiom";
+    // Not wlsunset before the daemon has said it can't (it would run
+    // beside the daemon's)
+    if (BackendManager.active && !WaylandManager.known)
+      return undefined;
+    const found = DependencyManager.found.wlsunset;
+    return found === true ? "wlsunset" : found === false ? "" : undefined;
   }
   readonly property bool available: !!root.tool
   readonly property bool active: _run.active
+  // Another program holds the screens' colors (the daemon's state)
+  readonly property bool blocked: root._daemonState?.blocked === true
 
   function setActive(on) {
     if (!root.available) {
-      console.log("[NightLightManager] Neither hyprsunset nor wlsunset is installed");
+      console.log("[NightLightManager] No way to warm the screens here: the compositor has no color transform or gamma control, and wlsunset isn't installed");
       return;
     }
     _run.active = on;
@@ -59,21 +62,16 @@ Singleton {
     reloadableId: "axiomNightLight"
     property bool active: false
     property bool probed: false
-    // The command axiom last started, so a reload doesn't restart it
+    // The settings axiom last applied, so a reload doesn't apply them again
     property string started: ""
   }
 
-  // hyprsunset takes its settings as they are; wlsunset only runs a
-  // day/night cycle, so both ends of it get the temperature
-  readonly property var _command: {
-    if (root.tool === "hyprsunset") {
-      const command = ["hyprsunset", "-t", String(NightLight.temperature)];
-      return NightLight.gamma < 100 ? command.concat(["-g", String(NightLight.gamma)]) : command;
-    }
-    if (root.tool === "wlsunset")
-      return ["wlsunset", "-t", String(NightLight.temperature), "-T", String(NightLight.temperature + 1), "-S", "06:00", "-s", "18:00", "-g", String(NightLight.gamma / 100)];
-    return [];
-  }
+  property var _daemonState: null
+
+  // wlsunset only runs a day/night cycle, so both ends of it get the
+  // temperature
+  readonly property var _command: ["wlsunset", "-t", String(NightLight.temperature), "-T", String(NightLight.temperature + 1), "-S", "06:00", "-s", "18:00", "-g", String(NightLight.gamma / 100)]
+  readonly property string _settings: root.tool === "wlsunset" ? root._command.join(" ") : `${NightLight.temperature}|${NightLight.gamma}`
 
   // Stop any running one (waiting up to a second), then start ours
   readonly property string _startScript: 'pkill -x "$1"; for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -x "$1" >/dev/null || break; sleep 0.1; done; shift; setsid -f "$@" >/dev/null 2>&1'
@@ -82,13 +80,24 @@ Singleton {
   function _apply() {
     if (!root.available)
       return;
+    _run.started = _run.active ? root._settings : "";
+    if (root.tool === "axiom") {
+      BackendManager.call("nightlight.set", {
+        "on": _run.active,
+        "temperature": NightLight.temperature,
+        "gamma": NightLight.gamma
+      }, error => {
+        if (error)
+          console.warn("[NightLightManager] Could not set the night light:", error.message);
+      });
+      return;
+    }
     if (runner.running) {
       root._again = true;
       return;
     }
     console.log("[NightLightManager]", _run.active ? "On:" : "Off", _run.active ? root._settings : "");
-    _run.started = _run.active ? root._settings : "";
-    runner.command = _run.active ? ["sh", "-c", root._startScript, "sh", root.tool].concat(root._command) : ["sh", "-c", root._stopScript, "sh", root.tool];
+    runner.command = _run.active ? ["sh", "-c", root._startScript, "sh", "wlsunset"].concat(root._command) : ["sh", "-c", root._stopScript, "sh", "wlsunset"];
     runner.running = true;
   }
 
@@ -103,23 +112,29 @@ Singleton {
     }
   }
 
-  // Whether the tool is already running (a restart of qs, or one started
-  // before axiom managed it)
+  // Whether it's already on (a restart of qs; wlsunset started before
+  // axiom managed it), once per qs launch; the schedule waits for it
   property Process _probe: Process {
     stdout: StdioCollector {
       onStreamFinished: {
-        console.log("[NightLightManager] Probed", root.tool, "running:", text.trim() === "1");
+        console.log("[NightLightManager] Probed wlsunset running:", text.trim() === "1");
         _run.active = text.trim() === "1";
         _run.probed = true;
       }
     }
   }
-  // However the tool becomes known (it may be already at creation, when
-  // no change would fire), once per qs launch; the schedule waits for it
   function _probeOnce() {
     if (!root.available || _run.probed || _probe.running)
       return;
-    _probe.command = ["sh", "-c", 'pgrep -x "$1" >/dev/null && echo 1 || echo 0', "sh", root.tool];
+    if (root.tool === "axiom") {
+      BackendManager.call("nightlight.get", {}, (error, state) => {
+        root._daemonState = error ? null : state;
+        _run.active = !error && state.on;
+        _run.probed = true;
+      });
+      return;
+    }
+    _probe.command = ["sh", "-c", 'pgrep -x wlsunset >/dev/null && echo 1 || echo 0'];
     _probe.running = true;
   }
   onAvailableChanged: root._probeOnce()
@@ -134,15 +149,29 @@ Singleton {
     onDue: on => root.setActive(on)
   }
 
-  // A new temperature or gamma while it's on: restart it (debounced, since
-  // the slider commits as it's dragged)
-  readonly property string _settings: root._command.join(" ")
+  // A new temperature or gamma while it's on: the daemon takes it as the
+  // slider moves; wlsunset restarts, debounced
   on_SettingsChanged: if (_run.active && _run.probed && root._settings !== _run.started)
-    _restart.restart()
-  property Timer _restart: Timer {
-    interval: 400
+    _change.restart()
+  property Timer _change: Timer {
+    interval: root.tool === "axiom" ? 30 : 400
     onTriggered: if (_run.active)
       root._apply()
+  }
+
+  property Connections _backend: Connections {
+    target: BackendManager
+    // A daemon re-exec'd or restarted has forgotten it
+    function onGreeted() {
+      if (root.tool === "axiom" && _run.probed && _run.active)
+        root._apply();
+    }
+  }
+
+  Component.onCompleted: {
+    BackendManager.listen("nightlight.state", state => root._daemonState = state);
+    DependencyManager.check(["wlsunset"]);
+    root._probeOnce();
   }
 
   property IpcTarget _ipc: IpcTarget {
@@ -163,10 +192,5 @@ Singleton {
     function status(): bool {
       return root.active;
     }
-  }
-
-  Component.onCompleted: {
-    DependencyManager.check(["hyprsunset", "wlsunset"]);
-    root._probeOnce();
   }
 }

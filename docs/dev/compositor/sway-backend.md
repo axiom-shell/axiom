@@ -53,7 +53,7 @@ Outputs and workspaces come live from Quickshell's `I3` module (as Hyprland's do
   - `moveToSpecial(name)`: marks the focused window `axiom-special-<name>-<id>` (unmarking any other group's, as a window is on one special workspace at a time) and moves it to the scratchpad. A mark's group is everything up to its last `-` (`SwayState.specialGroup`), so `a` and `a-b` are separate groups.
   - `toggleSpecial(name)`: shows the group's windows on the focused output (`scratchpad show`, floating), or hides them all (`move scratchpad`) when any is shown there (`SwayState.specialToggle`).
 - `withOutputDetails`: `get_outputs` (`SwayState.outputDetails`; modes as `WxH@R.RRHz`). `applyOutputs`: one `output … enable mode … pos … scale … transform … adaptive_sync … render_bit_depth 8|10` command per rule (`SwayConf.outputCommands`), disabled ones last. No mirroring and no color settings.
-- `cycleKeyboardLayout`: `input type:keyboard xkb_switch_layout next|prev`. `exitSession`: `exit`. `dpmsCommand`: `swaymsg 'output * power on|off'`. `leaveSwitcher`: nothing (the switcher's binds enter no mode).
+- `cycleKeyboardLayout`: `input type:keyboard xkb_switch_layout next|prev`. `exitSession`: `exit`. `leaveSwitcher`: nothing (the switcher's binds enter no mode).
 - `toplevelFor`: null. Quickshell can't capture a toplevel on sway (`ScreencopyView` calls it not captureable), so the overview shows icons.
 - `withLayerRects`, `withCursorPos`: null; `warpCursorToLayer`, `scrollStrip`: nothing. `surfacesReady` is true at once.
 

@@ -18,6 +18,8 @@ Docs drift silently; this catches the drift a reader would trip on:
   drifts from the recipe, which is the one copy)
 - every `x-*` annotation the config schema uses is named in
   docs/dev/core/schema-annotations.md, so that list stays complete
+- every link to an issues.md entry names one that's there; an entry the
+  cleanup roadmap (docs/dev/roadmap.md) doesn't link is a warning
 
 Covers docs/**/*.md (not the generated docs/dev/config and docs/dev/generated),
 every AGENTS.md, README.md and CONTRIBUTING.md, and .claude/skills. Fenced
@@ -130,6 +132,40 @@ def check_issues():
     return errors
 
 
+ISSUES = "docs/dev/issues.md"
+ROADMAP = "docs/dev/roadmap.md"
+
+
+def heading_slug(title):
+    """GitHub's anchor for a heading: lowercase, punctuation dropped, spaces
+    to hyphens."""
+    return re.sub(r"[^\w\- ]", "", title.strip().lower()).replace(" ", "-")
+
+
+def check_issue_links(paths):
+    """Every link to an issues.md entry (`issues.md#<anchor>`) names an
+    entry that's there, so fixing one (and removing it) can't leave a dead
+    link in the cleanup roadmap. Returns (errors, warnings): an entry the
+    roadmap doesn't link is only a warning."""
+    issues = ROOT / ISSUES
+    anchors = {heading_slug(line[4:]) for line in issues.read_text().splitlines() if line.startswith("### ")}
+    errors, linked = [], set()
+    for doc in paths:
+        text = strip_fences(doc.read_text())
+        for n, line in enumerate(text.splitlines(), 1):
+            for target, anchor in re.findall(r"\]\(([^)\s#]*)#([^)\s]+)\)", line):
+                if (doc.parent / (target or doc.name)).resolve() != issues.resolve():
+                    continue
+                if anchor not in anchors:
+                    errors.append(f"{doc.relative_to(ROOT)}:{n}: link to a missing issues.md entry #{anchor}")
+                elif doc.relative_to(ROOT).as_posix() == ROADMAP:
+                    linked.add(anchor)
+    body = issues.read_text().split("\n## Open", 1)[-1]
+    warnings = [f"{ISSUES}: '{line[4:]}' isn't linked from {ROADMAP} (add it to the phase that fixes it)"
+                for line in body.splitlines() if line.startswith("### ") and heading_slug(line[4:]) not in linked]
+    return errors, warnings
+
+
 # Folders of shared pieces -> the docs that must name each of their files
 PIECE_INDEX = {
     "components/reusable": ["docs/dev/core/shared-ui-pieces.md"],
@@ -225,9 +261,13 @@ def main():
                     if m.group(2) not in members[m.group(1)]:
                         errors.append(f"{where}: `{span}`: {m.group(1)} has no member {m.group(2)}")
     errors += check_issues()
+    link_errors, warnings = check_issue_links(docs())
+    errors += link_errors
     errors += check_skills()
     errors += check_piece_index()
     errors += check_annotations()
+    for w in warnings:
+        print(f"warning  {w}")
     for e in errors:
         print(f"error    {e}")
     print("docs ok" if not errors else f"{len(errors)} doc errors")

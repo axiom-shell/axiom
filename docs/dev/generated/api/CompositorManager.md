@@ -67,7 +67,6 @@ The running compositor, for the rest of axiom: its windows, outputs and workspac
 - `applyOutputs(rules, details)`: Sets the outputs as `rules` (MonitorRule) say, now; `details` are the outputs as withOutputDetails gave them.
 - `withBinds(callback)`: Calls back with the compositor's binds in effect ({ modmask, key, keycode, description, submap }, BindKeys), or null.
 - `captureKeys(on)`: While on, every key reaches axiom instead of the compositor's binds (the key recorder).
-- `dpmsCommand(on)`: The shell command turning the screens off or on (the idle daemon's), or "" where axiom doesn't know one
 - `goToWorkspace(id, mode, output, focusId)`: Goes to workspace `id`. mode: "go" (default), "move" (taking the focused window along) or "moveSilent" (sending it there, staying put).
 - `stepWorkspace(direction, mode)`: One step left/right/up/down from the current workspace: within the output's grid, or through 1..count in the standard layout (where up is previous and down next).
 - `nthWorkspace(n, mode)`: The n-th workspace (1-based) of the current row in a grid or perMonitor layout, or workspace n in the standard layout (number keybinds)

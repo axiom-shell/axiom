@@ -10,6 +10,8 @@ This file holds only rules. **How each service and surface works is in `docs/dev
 
 ## Where to look
 
+**Asked for the next step, or to continue the roadmap?** Follow `docs/dev/roadmap.md` › Taking the next step: its Full order says where work resumes, and the same change keeps both roadmaps current (skill `next-step`; to run it unattended, PR by PR: skill `roadmap-autopilot`, its section Running it unattended).
+
 **Adding something of a known kind?** Follow its recipe in `docs/recipes/` (also skills in `.claude/skills/`): `bar-widget`, `bar-popout`, `overlay-module`, `overlay-view`, `settings-card`, `launcher-command`, `setting`, `config-section`, `migration`, `service`, `theme-integration`, `methods-helper`, `compositor-backend`.
 
 | Task / area | Read |
@@ -33,13 +35,14 @@ This file holds only rules. **How each service and surface works is in `docs/dev
 | A page or panel slow to open, streaming (`StreamedLoader`), measuring it | `docs/dev/core/streamed-building.md` |
 | install.sh, AUR packages, packaged installs | `docs/dev/packaging.md` |
 | Known unfixed problems (check before working in an area) | `docs/dev/issues.md` |
+| What to clean up next, phased (each issue's phase) | `docs/dev/roadmap.md` |
 | A setting: meaning, default, readers | `docs/dev/config/<Section>.md` (generated; `grep -rn 'Section.key' docs/dev/config/`) |
 | A bar widget / overlay module / view type's settings | `docs/dev/config/{BarWidgets,OverlayModules,OverlayViews}/<Type>.md` (generated) |
 | A service's or reader's public API | `docs/dev/generated/api/<Name>.md` (generated) |
 | Which file does X | `grep -n '<word>' docs/dev/generated/files.md` (generated; grep it, never read it whole) |
 | IPC targets / layer stacking order | `docs/dev/generated/ipc.md`, `layers.md` (generated) |
 
-**Found a problem outside the task?** Don't fix it unasked and don't only mention it: add an entry to `docs/dev/issues.md` (format at its top) and tell the user. Quote a log warning's message in backticks under **What** so `verify.sh` marks it `(known: …)`. Remove the entry in the change that fixes it. Never open a GitHub issue; the maintainer moves entries there.
+**Found a problem outside the task?** Don't fix it unasked and don't only mention it: add an entry to `docs/dev/issues.md` (format at its top), link it from the phase of `docs/dev/roadmap.md` that will fix it, and tell the user. Quote a log warning's message in backticks under **What** so `verify.sh` marks it `(known: …)`. Remove the entry in the change that fixes it. Never open a GitHub issue; the maintainer moves entries there.
 
 ## Running / reloading
 
@@ -62,6 +65,7 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 - Install, update or remove the greeter for real, or restart greetd (it ends the session). Test `scripts/greeter/greeter_install.sh` with a scratch `AXIOM_GREETER_ROOT`; view the greeter with `AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --tree "$PWD" --dir <scratch>` (a scratch `XDG_RUNTIME_DIR` too, `WAYLAND_DISPLAY` as an absolute path; stop only that instance).
 - Run, quit, restart or re-exec the live `axiom` daemon (`axiom run|quit|restart`, `axiom daemon stop|restart|reexec`), or switch its dev mode (`axiom dev on|off|rebuild`; `status` is fine), lock through it (`axiom lock`, `axiom ipc lockscreen …`), or pass `--takeover` against the live config: point it at a scratch instance instead (`XDG_RUNTIME_DIR=<scratch>`, `--socket`, `--config-dir`). A test lock screen's fallback must never be `loginctl lock-session`, which locks the real session.
 - Open a GitHub issue (`gh issue create`, or `gh api` posting one).
+- Force-push, delete a remote branch, or push to `main`: everything reaches main through a PR.
 
 ## Checks
 

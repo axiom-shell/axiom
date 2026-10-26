@@ -17,6 +17,7 @@ import json
 import os
 import re
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -234,6 +235,42 @@ def gh_api_opens_issue(args):
 
 # ----------------------------------------------------------------- rules
 
+GIT_VALUE_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
+PROTECTED_BRANCHES = {"main", "master"}
+
+
+def current_branch(cwd):
+    out = subprocess.run(["git", "-C", cwd, "symbolic-ref", "--quiet", "--short", "HEAD"], capture_output=True, text=True)
+    return out.stdout.strip()
+
+
+def check_git_push(args, cwd):
+    """`git push` that force-pushes, deletes or mirrors, or lands on main: every
+    change reaches main through a reviewed PR (docs/dev/roadmap.md ›
+    Running it unattended)."""
+    i = 0
+    while i < len(args) and args[i].startswith("-"):
+        if args[i] == "-C" and i + 1 < len(args):
+            cwd = str(resolve(args[i + 1], cwd))
+        i += 2 if args[i] in GIT_VALUE_OPTS else 1
+    if i >= len(args) or args[i] != "push":
+        return
+    push = args[i + 1:]
+    rule = "Never, while testing"
+    if any(a in {"-f", "--force", "--mirror", "--delete", "-d", "--force-if-includes"} or a.startswith("--force-with-lease")
+           or re.fullmatch(r"-[a-zA-Z]*f[a-zA-Z]*", a) for a in push):
+        deny(rule, "don't force-push, delete or mirror remote branches; push a new commit instead.")
+    refspecs = [a for a in push if not a.startswith("-")][1:]
+    for spec in refspecs:
+        dest = spec.split(":", 1)[-1]
+        if spec.startswith("+") or spec.startswith(":"):
+            deny(rule, "don't force-push or delete a remote branch.")
+        if dest.removeprefix("refs/heads/") in PROTECTED_BRANCHES or dest == "HEAD" and current_branch(cwd) in PROTECTED_BRANCHES:
+            deny(rule, "don't push to main; open a PR from a branch.")
+    if not refspecs and current_branch(cwd) in PROTECTED_BRANCHES:
+        deny(rule, "don't push to main; open a PR from a branch.")
+
+
 def check_argv(env, argv, cwd):
     name = Path(argv[0]).name
     args = argv[1:]
@@ -259,6 +296,10 @@ def check_argv(env, argv, cwd):
     # Opening a GitHub issue: problems go in docs/dev/issues.md
     if name == "gh" and (args[:2] == ["issue", "create"] or args[:1] == ["api"] and gh_api_opens_issue(args[1:])):
         deny("Never, while testing", "don't open GitHub issues; record the problem in docs/dev/issues.md and tell the user.")
+
+    # Rewriting history on the remote, or pushing to main past a PR
+    if name == "git":
+        check_git_push(args, cwd)
 
     # Greetd
     if name in {"systemctl", "service", "pkill", "killall"} and any("greetd" in a for a in args):

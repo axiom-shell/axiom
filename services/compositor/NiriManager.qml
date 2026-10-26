@@ -408,11 +408,6 @@ Singleton {
     });
   }
 
-  // The shell command turning the screens off or on (the idle daemon's)
-  function dpmsCommand(on) {
-    return `niri msg action power-${on ? "on" : "off"}-monitors`;
-  }
-
   // --- Outputs (the Monitors page) ---
 
   // Calls back with every output in detail, disabled ones too

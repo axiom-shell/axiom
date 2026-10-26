@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -233,6 +234,21 @@ func (w *hyprWriter) checkLoaded(ctx context.Context, in Inputs, mode string) (b
 }
 
 func (w *hyprWriter) reload(ctx context.Context) { w.ipc.Request(ctx, "reload") }
+
+func (w *hyprWriter) screenPower(ctx context.Context, on bool) error {
+	action := "off"
+	if on {
+		action = "on"
+	}
+	reply, err := w.ipc.Request(ctx, `dispatch hl.dsp.dpms({ action = "`+action+`" })`)
+	if err != nil {
+		return err
+	}
+	if reply = strings.TrimSpace(reply); reply != "ok" {
+		return fmt.Errorf("hyprland: dpms %s: %s", action, reply)
+	}
+	return nil
+}
 
 func (w *hyprWriter) reloads(ctx context.Context, out chan<- ipc.Reload) error {
 	return w.ipc.Reloads(ctx, out)

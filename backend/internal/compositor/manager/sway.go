@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
@@ -241,6 +242,23 @@ func (w *swayWriter) checkLoaded(ctx context.Context, in Inputs, mode string) (b
 }
 
 func (w *swayWriter) reload(ctx context.Context) { w.run(ctx, []string{"reload"}) }
+
+func (w *swayWriter) screenPower(ctx context.Context, on bool) error {
+	state := "off"
+	if on {
+		state = "on"
+	}
+	results, err := w.ipc.Run(ctx, "output * power "+state)
+	if err != nil {
+		return err
+	}
+	for _, r := range results {
+		if !r.Success {
+			return fmt.Errorf("sway: output power %s: %s", state, r.Error)
+		}
+	}
+	return nil
+}
 
 func (w *swayWriter) reloads(ctx context.Context, out chan<- ipc.Reload) error {
 	return w.ipc.Reloads(ctx, out)

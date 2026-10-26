@@ -59,6 +59,5 @@ CompositorManager's backend on sway (docs/dev/compositor/contract.md, docs/dev/c
 - `withLayerRects(callback)`
 - `unsupportedHint(capability)`: What can do what plain sway can't (CompositorManager.unsupportedNote).
 - `exitSession()`: Ends the sway session (the power menu's log out)
-- `dpmsCommand(on)`: The shell command turning the screens off or on (the idle daemon's)
 - `withOutputDetails(callback)`: Calls back with every output in detail, disabled ones too (SwayState.outputDetails), or null
 - `applyOutputs(rules, details)`: Sets the outputs as `rules` (MonitorRule) say, now.

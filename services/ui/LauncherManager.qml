@@ -67,10 +67,8 @@ QtObject {
       return _set("web", [_webRow(rest.trim())]);
     if (prefix === "@" && LauncherConfig.chat)
       return _set("chat", [_chatRow(rest.trim())]);
-    if (prefix === ":" && LauncherConfig.clipboard) {
-      ClipboardManager.refresh();
+    if (prefix === ":" && LauncherConfig.clipboard)
       return _set("clipboard", _clipboardRows(rest.trim()));
-    }
     if (prefix === ";" && LauncherConfig.emoji)
       return _set("emoji", _emojiRows(rest.trim()));
 
@@ -477,12 +475,12 @@ QtObject {
   // --- Clipboard ---
 
   function _clipboardRows(query) {
-    if (ClipboardManager.cliphist && ClipboardManager.cliphistInstalled === false)
-      return [_infoRow(I18n.tr("cliphist isn't installed"), I18n.tr("Install cliphist, or set the clipboard history source to axiom"))];
+    if (ClipboardManager.unsupported)
+      return [_infoRow(I18n.tr("No clipboard history here"), I18n.tr("This compositor offers no clipboard control"))];
     // Pins first, then the history without them
     const entries = ClipboardManager.pins.concat(ClipboardManager.entries.filter(e => !ClipboardManager.isPinned(e)));
     if (entries.length === 0)
-      return [_infoRow(I18n.tr("The clipboard history is empty"), ClipboardManager.cliphist ? I18n.tr("Record it with wl-paste --watch cliphist store") : I18n.tr("Copy something and it shows up here"))];
+      return [_infoRow(I18n.tr("The clipboard history is empty"), I18n.tr("Copy something and it shows up here"))];
     const q = query.toLowerCase();
     let matches = entries.map((e, i) => ({
           e: e,
@@ -535,7 +533,7 @@ QtObject {
     };
   }
 
-  // A cliphist image, with its thumbnail once decoded, or HTML that is just
+  // An image, with its thumbnail, or HTML that is just
   // an image, previewed from its url
   function _clipboardImageRow(entry) {
     return {
@@ -565,7 +563,7 @@ QtObject {
       if (root.mode === "clipboard")
         root._refresh();
     }
-    function onCliphistInstalledChanged() {
+    function onUnsupportedChanged() {
       if (root.mode === "clipboard")
         root._refresh();
     }
@@ -582,7 +580,7 @@ QtObject {
   }
 
   function _emojiRow(entry) {
-    const canType = EmojiManager.canType === true;
+    const canType = EmojiManager.canType;
     return {
       kind: "emoji",
       glyph: entry.e,
@@ -599,7 +597,7 @@ QtObject {
     };
   }
 
-  // The Shift+Enter hint, once wtype has been looked for
+  // The Shift+Enter hint, once the daemon says whether it can type
   property Connections _emojiUpdates: Connections {
     target: EmojiManager
     function onCanTypeChanged() {

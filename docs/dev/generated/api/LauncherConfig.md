@@ -29,7 +29,6 @@ Reader for the Launcher section (the search launcher). Named LauncherConfig beca
 - `webSearch` (readonly bool)
 - `chat` (readonly bool): "@question" asks the overlay's chat
 - `clipboard` (readonly bool): ":" searches the clipboard history (ClipboardManager)
-- `clipboardSource` (readonly string): "axiom" | "cliphist"
 - `clipboardMaxEntries` (readonly int)
 - `emoji` (readonly bool): ";" searches emoji (EmojiManager)
 - `searchEngine` (readonly string): With {} where the terms go

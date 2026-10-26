@@ -2,8 +2,8 @@
 // daemon's own Wayland connection: wl_output (v4 for its connector name
 // and description) and xdg_output (the position and size in the
 // compositor's layout), followed through hotplug. The daemon reads them
-// where it names monitors by place (share.Monitors); the same
-// connection carries what later needs an output (gamma, idle).
+// where it names monitors by place (share.Monitors). It is one client
+// on the daemon's shared connection (wayland/client).
 package outputs
 
 import (
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 )
 
@@ -66,6 +67,49 @@ type Tracker struct {
 	ready   bool
 	outputs map[uint32]*output // by global name
 	onReady func()             // List's
+
+	// The connection, and the xdg_output manager bound on it (0: none
+	// yet); used on the connection's goroutine only
+	s       *client.Session
+	manager uint32
+	// subs are told when an output is bound or goes (OnChange)
+	subs []func()
+}
+
+// Bound is one wl_output bound on the connection, for the protocols
+// made per output (gamma, CTM).
+type Bound struct {
+	ID   uint32 // the wl_output object
+	Name string // its connector, "" until described
+}
+
+// Bound are the outputs bound now.
+func (t *Tracker) Bound() []Bound {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	out := make([]Bound, 0, len(t.outputs))
+	for _, o := range t.outputs {
+		out = append(out, Bound{ID: o.id, Name: o.current.Name})
+	}
+	slices.SortFunc(out, func(a, b Bound) int { return cmp.Compare(a.ID, b.ID) })
+	return out
+}
+
+// OnChange calls fn, on the connection's goroutine, whenever an output
+// is bound or goes away (and once the first are described).
+func (t *Tracker) OnChange(fn func()) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.subs = append(t.subs, fn)
+}
+
+func (t *Tracker) changed() {
+	t.mu.Lock()
+	subs := append([]func(){}, t.subs...)
+	t.mu.Unlock()
+	for _, fn := range subs {
+		fn()
+	}
 }
 
 type output struct {
@@ -128,91 +172,95 @@ func (t *Tracker) Names() []string {
 
 // Run connects to the compositor at socket and follows its outputs until
 // ctx ends (nil) or the connection does (wire.ErrGone when the
-// compositor closed it).
+// compositor closed it): the tracker alone on a connection of its own.
 func (t *Tracker) Run(ctx context.Context, socket string) error {
-	c, err := wire.Dial(socket)
-	if err != nil {
-		return err
-	}
-	defer c.Close()
+	return client.Run(ctx, socket, t)
+}
+
+// Interfaces are the globals the tracker binds (client.Client).
+func (t *Tracker) Interfaces() []string { return []string{ifaceOutput, ifaceXdgManager} }
+
+// Start forgets the outputs of an earlier connection (client.Client).
+func (t *Tracker) Start(s *client.Session) {
 	t.mu.Lock()
+	t.s, t.manager = s, 0
 	t.ready, t.outputs = false, map[uint32]*output{}
 	t.mu.Unlock()
-	var registry, manager uint32
-	bindXdg := func(o *output) {
-		o.xdg = c.NewObject(func(op uint16, a *wire.Args) { t.xdgEvent(o, op, a) })
-		c.Send(manager, opXdgGetOutput, wire.Uint(o.xdg), wire.Uint(o.id))
-	}
-	registry, err = c.Registry(func(op uint16, a *wire.Args) {
-		switch op {
-		case wire.EvGlobal:
-			name, iface, version := a.Uint(), a.String(), a.Uint()
-			switch iface {
-			case ifaceOutput:
-				o := &output{version: min(version, maxOutputVersion)}
-				o.id, _ = c.Bind(registry, name, iface, o.version, func(op uint16, a *wire.Args) { t.outputEvent(o, op, a) })
-				t.mu.Lock()
-				t.outputs[name] = o
-				t.mu.Unlock()
-				if manager != 0 {
-					bindXdg(o)
-				}
-			case ifaceXdgManager:
-				if manager != 0 {
-					return
-				}
-				manager, _ = c.Bind(registry, name, iface, min(version, maxXdgVersion), nil)
-				t.mu.Lock()
-				existing := make([]*output, 0, len(t.outputs))
-				for _, o := range t.outputs {
-					existing = append(existing, o)
-				}
-				t.mu.Unlock()
-				for _, o := range existing {
-					bindXdg(o)
-				}
-			}
-		case wire.EvGlobalRemove:
-			name := a.Uint()
-			t.mu.Lock()
-			o := t.outputs[name]
-			delete(t.outputs, name)
-			t.mu.Unlock()
-			if o == nil {
-				return
-			}
-			if o.xdg != 0 {
-				c.Send(o.xdg, opXdgOutputDestroy)
-				c.Forget(o.xdg)
-			}
-			if o.version >= 3 {
-				c.Send(o.id, opOutputRelease)
-			}
-			c.Forget(o.id)
-			t.log.Debug("output removed", "name", o.current.Name)
+}
+
+// Global binds an output, or the xdg_output manager (client.Client).
+func (t *Tracker) Global(g client.Global) {
+	switch g.Interface {
+	case ifaceOutput:
+		o := &output{}
+		o.id, o.version, _ = t.s.Bind(g, maxOutputVersion, func(op uint16, a *wire.Args) { t.outputEvent(o, op, a) })
+		t.mu.Lock()
+		t.outputs[g.Name] = o
+		ready := t.ready
+		t.mu.Unlock()
+		if t.manager != 0 {
+			t.bindXdg(o)
 		}
-	})
-	if err != nil {
-		return err
+		if ready {
+			// A hotplug: the first outputs are told of at Ready
+			t.changed()
+		}
+	case ifaceXdgManager:
+		if t.manager != 0 {
+			return
+		}
+		t.manager, _, _ = t.s.Bind(g, maxXdgVersion, nil)
+		t.mu.Lock()
+		existing := make([]*output, 0, len(t.outputs))
+		for _, o := range t.outputs {
+			existing = append(existing, o)
+		}
+		t.mu.Unlock()
+		for _, o := range existing {
+			t.bindXdg(o)
+		}
 	}
-	// The first sync answers once the globals are listed (and bound); the
-	// second once the bound outputs have described themselves
-	err = c.Sync(func() {
-		c.Sync(func() {
-			t.mu.Lock()
-			t.ready = true
-			t.mu.Unlock()
-			outputs, _ := t.Outputs()
-			t.log.Debug("outputs", "outputs", outputs)
-			if t.onReady != nil {
-				t.onReady()
-			}
-		})
-	})
-	if err != nil {
-		return err
+}
+
+func (t *Tracker) bindXdg(o *output) {
+	c := t.s.Conn
+	o.xdg = c.NewObject(func(op uint16, a *wire.Args) { t.xdgEvent(o, op, a) })
+	c.Send(t.manager, opXdgGetOutput, wire.Uint(o.xdg), wire.Uint(o.id))
+}
+
+// Removed releases an output that went away (client.Client).
+func (t *Tracker) Removed(name uint32) {
+	t.mu.Lock()
+	o := t.outputs[name]
+	delete(t.outputs, name)
+	t.mu.Unlock()
+	if o == nil {
+		return
 	}
-	return c.Run(ctx)
+	c := t.s.Conn
+	if o.xdg != 0 {
+		c.Send(o.xdg, opXdgOutputDestroy)
+		c.Forget(o.xdg)
+	}
+	if o.version >= 3 {
+		c.Send(o.id, opOutputRelease)
+	}
+	c.Forget(o.id)
+	t.log.Debug("output removed", "name", o.current.Name)
+	t.changed()
+}
+
+// Ready marks the first outputs described (client.Client).
+func (t *Tracker) Ready() {
+	t.mu.Lock()
+	t.ready = true
+	t.mu.Unlock()
+	outputs, _ := t.Outputs()
+	t.log.Debug("outputs", "outputs", outputs)
+	if t.onReady != nil {
+		t.onReady()
+	}
+	t.changed()
 }
 
 // List connects to the compositor at socket, reads its outputs (by

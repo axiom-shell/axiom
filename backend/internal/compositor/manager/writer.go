@@ -85,6 +85,9 @@ type writer interface {
 	// compositor couldn't load its config at all
 	checkLoaded(ctx context.Context, in Inputs, mode string) (loaded, failed bool)
 	reload(ctx context.Context)
+	// screenPower turns every output's screen off or back on (the Idle
+	// settings' screen-off step)
+	screenPower(ctx context.Context, on bool) error
 	reloads(ctx context.Context, out chan<- ipc.Reload) error
 	// configReloaded: what the writer reads again after a reload; true when
 	// what the layer is made of changed (niri's user binds)

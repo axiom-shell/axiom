@@ -2,25 +2,26 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services.core
 import qs.services.session
 import qs.components.reusable
 
-// The Idle section's first card (its `x-card`): whether axiom's hypridle
-// is running, where its config is, and Restart
+// The Idle section's first card (its `x-card`): whether axiom is watching
+// for idle, what holds it off now, and a warning when another program
+// answers apps' requests to keep the screen on
 FieldGroup {
   id: root
 
-  readonly property string status: HypridleManager.status
+  readonly property string status: IdleManager.status
 
   readonly property color statusColor: {
     switch (root.status) {
     case "running":
       return Theme.success;
-    case "stopped":
+    case "inhibited":
+      return Theme.accent;
+    case "unsupported":
+    case "unavailable":
       return Theme.warning;
-    case "missing":
-      return Theme.error;
     }
     return Theme.foregroundAlt;
   }
@@ -28,25 +29,29 @@ FieldGroup {
   readonly property string statusLabel: {
     switch (root.status) {
     case "running":
-      return I18n.tr("Running");
-    case "stopped":
+      return I18n.tr("Watching");
+    case "inhibited":
+      return I18n.tr("Held off");
+    case "unsupported":
+      return I18n.tr("Unsupported");
+    case "unavailable":
       return I18n.tr("Not running");
-    case "missing":
-      return I18n.tr("Not installed");
     }
     return I18n.tr("Off");
   }
 
   readonly property string detail: {
-    if (HypridleManager.installed === false)
-      return I18n.tr("hypridle isn't installed. Install it to dim, lock and turn the screens off when you're away.");
     switch (root.status) {
     case "off":
-      return I18n.tr("axiom leaves hypridle to you: your own ~/.config/hypr/hypridle.conf is used, if you run it.");
-    case "stopped":
-      return I18n.tr("axiom's hypridle isn't running. Restart it, or check that hypridle starts from a terminal.");
+      return I18n.tr("axiom leaves idle to you: a daemon such as hypridle, if you run one.");
+    case "unsupported":
+      return I18n.tr("The compositor doesn't tell axiom when you're idle (ext-idle-notify), so nothing happens when you step away.");
+    case "unavailable":
+      return I18n.tr("axiom's daemon isn't running this shell, so nothing watches for idle.");
+    case "inhibited":
+      return I18n.tr("An app is keeping the screen on: the steps below wait until it lets go.");
     }
-    return I18n.tr("hypridle runs with the config axiom writes from these settings.");
+    return I18n.tr("axiom dims, locks and turns the screens off on these settings, and locks before the computer sleeps.");
   }
 
   headerExtras: [
@@ -58,59 +63,40 @@ FieldGroup {
 
   StyledText {
     text: root.detail
-    textColor: HypridleManager.installed === false ? Theme.error : Theme.foreground
     wrapMode: Text.WordWrap
     Layout.fillWidth: true
   }
 
-  // How to install it here (nothing on a distribution axiom has no
-  // package names for)
-  CodeLine {
-    visible: HypridleManager.installed === false && text !== ""
-    text: DependencyManager.installCommand("hypridle")
-  }
+  // What holds idle off (i18n: the sources, chosen at runtime:
+  // I18n.tr("Keeping awake") for caffeine)
+  Repeater {
+    model: Idle.enabled ? IdleManager.inhibitors : []
 
-  GridLayout {
-    visible: Idle.enabled
-    Layout.fillWidth: true
-    columns: 2
-    columnSpacing: Widget.spacing * 2
-    rowSpacing: Widget.spacing / 2
-
-    StyledText {
-      text: I18n.tr("Config")
-      opacity: 0.7
-    }
-    StyledText {
-      text: HypridleManager.configPath
-      textFamily: "monospace"
-      elide: Text.ElideMiddle
+    delegate: RowLayout {
+      id: inhibitor
+      required property var modelData
       Layout.fillWidth: true
+      spacing: Widget.spacing
+
+      StyledIcon {
+        text: inhibitor.modelData.source === "caffeine" ? "coffee" : "visibility"
+        textColor: Theme.accent
+      }
+
+      StyledText {
+        Layout.fillWidth: true
+        text: inhibitor.modelData.source === "caffeine" ? I18n.tr("Keeping awake") : inhibitor.modelData.reason ? `${inhibitor.modelData.app}: ${inhibitor.modelData.reason}` : inhibitor.modelData.app
+        elide: Text.ElideRight
+      }
     }
   }
 
   StyledText {
-    visible: Idle.enabled && HypridleManager.replacedOther
-    text: I18n.tr("axiom stopped another hypridle, likely started by your own compositor config. Remove its autostart line so the two don't fight at login.")
+    visible: Idle.enabled && IdleManager.screensaverHolder !== ""
+    text: I18n.tr("{0} answers apps asking to keep the screen on, so axiom doesn't see them. If it's hypridle, remove its autostart line so the two don't both act when you're away.", IdleManager.screensaverHolder)
     textColor: Theme.warning
     textSize: Appearance.fontSizeBy(-1)
     wrapMode: Text.WordWrap
     Layout.fillWidth: true
-  }
-
-  RowLayout {
-    visible: Idle.enabled && HypridleManager.installed === true
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    Item {
-      Layout.fillWidth: true
-    }
-
-    StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
-      text: I18n.tr("Restart")
-      onClicked: HypridleManager.restart()
-    }
   }
 }

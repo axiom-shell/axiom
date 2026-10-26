@@ -12,6 +12,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/migrate/steps"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
@@ -45,7 +46,7 @@ func TestFirstRunWritesDefaults(t *testing.T) {
 	dir := t.TempDir()
 	s := open(t, dir)
 	cfg, st := s.Config()
-	if !st.FirstRun || cfg.Value("version") != 76.0 || cfg.Value("format") != 2.0 {
+	if !st.FirstRun || cfg.Value("version") != float64(steps.Current()) || cfg.Value("format") != 2.0 {
 		t.Fatalf("state %+v", st)
 	}
 	data, _ := os.ReadFile(filepath.Join(dir, FileName))
@@ -77,7 +78,7 @@ func TestFormat1IsConvertedAndKept(t *testing.T) {
 	os.WriteFile(filepath.Join(dir, FileName), old, 0o644)
 	s := open(t, dir)
 	cfg, st := s.Config()
-	if st.Blocked || cfg.Value("version") != 76.0 || cfg.Value("format") != 2.0 {
+	if st.Blocked || cfg.Value("version") != float64(steps.Current()) || cfg.Value("format") != 2.0 {
 		t.Fatalf("version %v format %v state %+v", cfg.Value("version"), cfg.Value("format"), st)
 	}
 	if r := cfg.Value("Interface").(*jsonx.Object).Value("radius"); r != 9.0 {

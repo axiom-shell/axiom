@@ -7,7 +7,7 @@
 Settings are read as `properties.<key>`.
 
 - **`actions`** · array<string> = ["wifi","bluetooth","caffeine","dnd","darkMode"]
-  - Actions: Toggles, session actions and pin, in any mix. Night light and power saver only show when hyprsunset/wlsunset or powerprofilesctl is installed, brightness only with a monitor brightnessctl or ddcutil can set (a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.
+  - Actions: Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor brightnessctl or ddcutil can set (a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.
   - in: `components/content/QuickActions/QuickActions.qml`
 - **`labels`** · string = "auto" · enum auto|show|hide
   - Names: Auto shows the names only when every tile has room for its whole name.

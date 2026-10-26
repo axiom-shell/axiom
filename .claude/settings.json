@@ -44,7 +44,10 @@
       "Bash(git clean -fdx*)",
       "Bash(git clean -x*)",
       "Bash(git clean -X*)",
-      "Bash(qmlformat -i *)"
+      "Bash(qmlformat -i *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push origin main*)"
     ]
   },
   "hooks": {

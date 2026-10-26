@@ -28,7 +28,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - read: entry field, name match · in: `components/content/Session/Session.qml`, `services/session/GreetdManager.qml`, `services/session/OnboardingManager.qml`
 - **`Session.env[].name`** · string = ""
   - Name
-  - read: entry field, name match · in: `components/content/Session/Session.qml`, `services/session/GreetdManager.qml`
+  - read: entry field, name match · in: `components/content/Session/Session.qml`, `services/session/GreetdManager.qml`, `services/session/IdleManager.qml`
 - **`Session.env[].value`** · string = ""
   - Value
   - read: entry field, name match · in: none found
@@ -48,7 +48,7 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
   - read: entry field, name match · in: `components/content/Session/Session.qml`, `services/session/GreetdManager.qml`, `services/session/OnboardingManager.qml`
 - **`Session.autostart[].command`** · string = ""
   - Command
-  - read: entry field, name match · in: `services/session/HypridleManager.qml`, `services/session/PolkitManager.qml`
+  - read: entry field, name match · in: `services/session/PolkitManager.qml`
 - **`Session.autostart[].enabled`** · boolean = true
   - On
   - read: `SessionConfig.session` (whole) · in: `services/compositor/CompositorConfigManager.qml`
