@@ -369,19 +369,15 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     root.runLua(HyprLua.monitorCalls(rules, mirrorName).join("\n"));
   }
 
-  // Calls back with Hyprland's version ("0.56.2"), or "" when it didn't
-  // answer
-  function withVersion(callback) {
-    HyprlandIpcManager.json("version", version => callback(String(version?.version ?? version?.tag ?? "").replace(/^v/, "")));
-  }
-
   // Whether axiom can set Hyprland up (CompositorManager.withSetupCheck):
   // only 0.55 and newer has the Lua config (not supported while the version
   // is unknown; `problem` says why once it's known to be older), and a
   // hyprland.conf is the older format axiom doesn't read (`legacyNote`)
   function withSetupCheck(callback) {
     const legacyNote = FileManager.read(Paths.hyprlandPath + "hyprland.conf") !== null ? I18n.tr("You have a hyprland.conf in the older format. axiom works with Hyprland's Lua config: letting it manage Hyprland writes a hyprland.lua, and your hyprland.conf is left as it is.") : "";
-    root.withVersion(version => {
+    HyprlandIpcManager.json("version", reply => {
+      // "0.56.2", or "" when Hyprland didn't answer
+      const version = String(reply?.version ?? reply?.tag ?? "").replace(/^v/, "");
       const known = /^\d+\.\d+/.test(version);
       const [major, minor] = version.split(".").map(Number);
       const supported = known && (major > 0 || minor >= 55);
