@@ -146,11 +146,10 @@ Resolves:
 ### Phase 4: backend structure and contract
 The binary's rules are enforced by its tests, and the shell–daemon contract is checked by shape, not just by name. The contract check lands before stage 7, so the switch to path ops is checked as it happens.
 
-Steps: generate method shapes into `rpc.md` and check QML call sites against them; extend `archtest` (dependency direction, no `init()` or package state, every package classified); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`); the Tailscale floor from the schema.
+Steps: generate method shapes into `rpc.md` and check QML call sites against them; Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`); the Tailscale floor from the schema.
 
 Resolves:
 - [The shell–daemon contract is checked by name only](issues.md#the-shelldaemon-contract-is-checked-by-name-only)
-- [archtest checks only the pure packages](issues.md#archtest-checks-only-the-pure-packages)
 - [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
 - [backend/AGENTS.md's dependency table is incomplete](issues.md#backendagentsmds-dependency-table-is-incomplete)
 - [Tailscale's poll interval allows values below axiom's 5 s floor](issues.md#tailscales-poll-interval-allows-values-below-axioms-5-s-floor)

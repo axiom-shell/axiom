@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // Niri is a niri instance's socket ($NIRI_SOCKET): one JSON request per
@@ -73,7 +74,7 @@ func (n *Niri) Reloads(ctx context.Context, out chan<- Reload) error {
 	if _, err := conn.Write([]byte("\"EventStream\"\n")); err != nil {
 		return err
 	}
-	conn.SetDeadline(timeZero)
+	conn.SetDeadline(time.Time{})
 	lines := bufio.NewScanner(conn)
 	lines.Buffer(make([]byte, 64*1024), 16*1024*1024)
 	started := false

@@ -31,8 +31,6 @@ const (
 	swayEventWorkspace  = 0x80000000
 )
 
-var timeZero time.Time
-
 const swayMagic = "i3-ipc"
 
 func swayWrite(conn net.Conn, kind uint32, payload []byte) error {
@@ -118,7 +116,7 @@ func (s *Sway) Reloads(ctx context.Context, out chan<- Reload) error {
 	if err := swayWrite(conn, swaySubscribe, []byte(`["workspace"]`)); err != nil {
 		return err
 	}
-	conn.SetDeadline(timeZero)
+	conn.SetDeadline(time.Time{})
 	for {
 		kind, body, err := swayRead(conn)
 		if err != nil {
