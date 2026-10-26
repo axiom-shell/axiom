@@ -115,7 +115,6 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its two entries are linked here and fixed there.
 
 Fixed in this phase:
-- [BackendManager's listeners and reconnect are fragile](issues.md#backendmanagers-listeners-and-reconnect-are-fragile)
 - [An outside edit of config.json can release a managed compositor config](issues.md#an-outside-edit-of-configjson-can-release-a-managed-compositor-config)
 - [Any change of the mode to managed approves the takeover](issues.md#any-change-of-the-mode-to-managed-approves-the-takeover)
 - [Unreadable sway config means axiom binds over the user's keys](issues.md#unreadable-sway-config-means-axiom-binds-over-the-users-keys)
@@ -124,6 +123,7 @@ Fixed in this phase:
 - [Some backend security checks have no tests](issues.md#some-backend-security-checks-have-no-tests)
 - [The greeter's environment is a denylist](issues.md#the-greeters-environment-is-a-denylist)
 - [Small backend error and robustness gaps](issues.md#small-backend-error-and-robustness-gaps)
+- [The shell stops reconnecting after a failed attempt](issues.md#the-shell-stops-reconnecting-after-a-failed-attempt)
 - [Schema build gaps](issues.md#schema-build-gaps)
 - [The binds child sometimes segfaults instead of running out of memory](issues.md#the-binds-child-sometimes-segfaults-instead-of-running-out-of-memory)
 

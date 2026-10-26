@@ -406,11 +406,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### BackendManager's listeners and reconnect are fragile
-- **Where:** `services/core/BackendManager.qml` (`_onLine`, `_reconnect`)
-- **What:** A notification's listeners run in one `forEach` with no `try`, so one that throws stops the rest from hearing the push. `_reconnect` assigns `_socket.connected = true`, which breaks its `connected: root.active` binding, so the socket no longer follows `active` after the first reconnect.
-- **Size:** trivial
-- **Found:** 2026-10-26, while reviewing the repository's organization
+### The shell stops reconnecting after a failed attempt
+- **Where:** `services/core/BackendManager.qml` (`_reconnect`, `_socket`)
+- **What:** Quickshell's `Socket.setConnected(true)` only connects when it holds no `QLocalSocket`, and a failed connect (`onSocketError`) keeps the failed one; only a `disconnected` frees it, which a socket that never connected doesn't emit (`src/io/socket.cpp`). So when the daemon isn't listening yet at the first retry (a restart slower than 200 ms), `onError` starts `_reconnect`, its write does nothing, and the shell never reconnects. Needs a fresh `Socket` per attempt (a `Loader` or `Component`) or a Quickshell fix.
+- **Size:** small
+- **Found:** 2026-10-26, while reviewing roadmap/3-backend-listeners
 
 ### The shell–daemon contract is checked by name only
 - **Where:** `scripts/gen_docs.py` (the rpc cross-check), `backend/internal/daemon/methods.go` (params and results)
