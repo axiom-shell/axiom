@@ -180,7 +180,7 @@ Clone into Quickshell's config directory, build the `axiom` binary (the shell's 
 
 ```bash
 git clone https://github.com/axiom-shell/axiom.git ~/.config/quickshell/axiom
-cd ~/.config/quickshell/axiom && scripts/generate.sh && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom
+cd ~/.config/quickshell/axiom && scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom
 ```
 
 To start it with your session, add one line to your compositor's config (a second `axiom run` on the same display exits at once):

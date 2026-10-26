@@ -61,12 +61,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
-### Installs and self-update fail when the reference docs can't be generated
-- **Where:** `scripts/generate.sh`, `install.sh`, `scripts/self_update.sh`, `packaging/aur/axiom-shell/PKGBUILD`, `packaging/aur/axiom-shell-git/PKGBUILD`, `CONTRIBUTING.md`
-- **What:** Since generated docs stopped being committed (#100), `generate.sh` always runs `gen_docs.py`, a developer check that fails on a shell–daemon contract mismatch or on QML it doesn't expect. Every end-user path runs `generate.sh`, so that failure stops `install.sh`, fails an AUR build, and leaves a self-update with new QML on the old binary (which then runs read-only). Packaged installs delete `docs/` anyway. The contract check (Phase 4) adds another `go run` to the same step. User-facing callers should skip the docs (a `--no-docs`). Also: `generate.sh`'s header says each file is built "only when what it's made from changed", but `gen_docs.py` runs every time, and `CONTRIBUTING.md` links `docs/dev/generated/rpc.md`, which no longer exists on GitHub.
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 0 PR
-
 ### archtest's rules aren't all in backend/AGENTS.md
 - **Where:** `backend/internal/archtest/archtest_test.go`, `backend/AGENTS.md` (Rules)
 - **What:** archtest requires the exact `Pure:` marker in a pure package's doc comment, which AGENTS.md only calls "marked pure in their doc comment". It also refuses more imports in pure packages than AGENTS.md lists (`os/signal`, `golang.org/x/sys`, `unsafe`, `plugin`, `io/ioutil` besides `os`, `net`, `os/exec`, `syscall`). And its tiers are coarse: about 40 packages share the edge tier, so the direction between edge packages isn't enforced, though the original entry asked for "downward dependency direction among the other packages".

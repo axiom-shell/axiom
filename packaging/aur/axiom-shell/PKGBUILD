@@ -59,7 +59,7 @@ prepare() {
 build() {
   cd "axiom-$pkgver"
   export CGO_ENABLED=0 GOFLAGS="-buildmode=pie -trimpath -mod=readonly -modcacherw"
-  scripts/generate.sh
+  scripts/generate.sh --no-docs
   (cd backend && go build -o axiom ./cmd/axiom)
 }
 

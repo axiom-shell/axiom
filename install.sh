@@ -878,7 +878,7 @@ else
   info "Building the axiom binary into $AXIOM_BIN"
   # The generated files first (the embedded schema among them), then the
   # binary beside its old one, swapped in once it built
-  run "$AXIOM_DIR/scripts/generate.sh" || die "Generating axiom's files failed (see above)."
+  run "$AXIOM_DIR/scripts/generate.sh" --no-docs || die "Generating axiom's files failed (see above)."
   run mkdir -p "$(dirname "$AXIOM_BIN")"
   run bash -c 'cd "$1/backend" && CGO_ENABLED=0 go build -trimpath -o "$2.new" ./cmd/axiom && mv -f "$2.new" "$2"' _ "$AXIOM_DIR" "$AXIOM_BIN" \
     || die "Building the axiom binary failed (see above)."

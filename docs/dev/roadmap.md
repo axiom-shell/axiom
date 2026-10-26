@@ -166,7 +166,6 @@ Resolves:
 - [A dropped connection to axiom reconnects with no backoff](issues.md#a-dropped-connection-to-axiom-reconnects-with-no-backoff)
 - [A large binds file's own error reads as running out of memory](issues.md#a-large-binds-files-own-error-reads-as-running-out-of-memory)
 - [archtest's rules aren't all in backend/AGENTS.md](issues.md#archtests-rules-arent-all-in-backendagentsmd)
-- [Installs and self-update fail when the reference docs can't be generated](issues.md#installs-and-self-update-fail-when-the-reference-docs-cant-be-generated) (before the contract check adds its `go run` to `generate.sh`)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `ShellManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.

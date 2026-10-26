@@ -87,7 +87,7 @@ git clone https://github.com/axiom-shell/axiom.git ~/.config/quickshell/axiom
 Build the `axiom` binary, the shell's parent (it needs `go`):
 
 ```bash
-cd ~/.config/quickshell/axiom && scripts/generate.sh && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom
+cd ~/.config/quickshell/axiom && scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom
 ```
 
 `axiom run` starts it once. To start it with your session, add its line to your compositor's config (a second `axiom run` on the same display exits at once):
