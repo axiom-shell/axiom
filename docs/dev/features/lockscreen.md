@@ -8,7 +8,7 @@ This doc covers the three lock modes, how the built-in lock screen's layout of m
 
 ### Locking
 - `LockManager.lock()` is the one way to lock.
-  - Lock buttons call it through `ShellManager.sessionAction("lock")`.
+  - Lock buttons call it through `SessionManager.sessionAction("lock")`.
   - Idle locks come from the daemon (`axiom lock`'s path: [idle.md](idle.md)); a user's own idle daemon calls `axiom lock` or the `lockscreen` IPC target.
 - `lock()` ends a running preview first.
 
@@ -71,7 +71,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 - **Which modules may go here:** only module types whose `x-hosts` list `lockscreen`.
   - Display-only modules.
   - NowPlaying (media transport) and VolumeDials.
-  - Power: suspend, restart, shut down through `ShellManager.sessionAction`; restart and shut down ask twice.
+  - Power: suspend, restart, shut down through `SessionManager.sessionAction`; restart and shut down ask twice.
   - Nothing that launches, dispatches, kills, writes files or shows private content.
 - A new module stays off the lock screen unless it is added there deliberately.
 

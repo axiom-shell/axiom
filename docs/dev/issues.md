@@ -423,12 +423,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Session actions sit in ShellManager
-- **Where:** `services/ui/ShellManager.qml` (`sessionAction`, `sessionActionInfo`, `destructiveActions`)
-- **What:** The session actions are a concern of their own inside the signal bus. They move to a new `SessionManager` in `services/session/` (check the name against Quickshell's singletons first), and the 6 callers (power menu, QuickActions, launcher) are renamed. Item 2 of the [singletons plan](plans/singletons-split.md) (a move, no logic).
-- **Size:** small
-- **Found:** 2026-10-27, while planning the singletons split (#123)
-
 ### The surface registry sits in ShellManager
 - **Where:** `services/ui/ShellManager.qml` (`surfaceShown`, `surfaceWindows`, `openSurfaces`, `grabPartners`, `captureWindows`, `borderOpenings`, `requiredFields`, `reportRequiredField`, `newSurfaceKey`), `docs/dev/core/shell-manager-targeting.md`
 - **What:** The registry of shown surfaces (surface windows and open surfaces, grab partners, capture windows, modals, step-aside, border openings) and screen layouts' required fields and surface keys are read by about 36 files, and the header still says "manages global options and signals". They move to a new `SurfaceManager` in `services/ui/` (not the bar panels: [screen-edge geometry](#screen-edge-geometry-is-split-over-three-services)); `ShellManager`'s header becomes "the shell's signals, link navigation and screen targeting", and `shell-manager-targeting.md` sends registry readers to the new doc section. Item 3 of the [singletons plan](plans/singletons-split.md) (a move, mechanical but wide).

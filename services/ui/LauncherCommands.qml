@@ -594,12 +594,12 @@ QtObject {
     return {
       name: action,
       aliases: aliases,
-      glyph: ShellManager.sessionActionInfo(action).icon,
-      confirm: ShellManager.destructiveActions.includes(action),
+      glyph: SessionManager.sessionActionInfo(action).icon,
+      confirm: SessionManager.destructiveActions.includes(action),
       // I18n.tr("Lock the screen") I18n.tr("Suspend to RAM") I18n.tr("Hibernate to disk")
       // I18n.tr("End the session") I18n.tr("Restart the computer") I18n.tr("Turn the computer off")
       description: () => I18n.tr(description),
-      run: () => ShellManager.sessionAction(action)
+      run: () => SessionManager.sessionAction(action)
     };
   }
 

@@ -8,7 +8,7 @@ One `pragma Singleton QtObject` per domain, named `*Manager`: state and every si
 Each folder is its own QML module (`import qs.services.<folder>`); a file sees its own folder's types bare and imports the others it uses (cycles between folders are fine). A new service goes in the folder its domain fits:
 - `core/`: what everything else stands on: `ConfigManager` and `ConfigDraft`, `ThemeManager`, the daemon bridge (`BackendManager`) and its funnels (`CommandManager`, `FileManager`, `StateManager`, `IpcTarget`, `ConsumerRegistry`), `SecretsManager`, `DailySchedule`, saved configs, dev and self-update.
 - `compositor/`: `CompositorManager`, each backend's `<Prefix>*` files (`check_structure.py` keys its backend rules on this folder), monitors, binds, layers, focus grabs.
-- `session/`: locking, auth, greeter and greetd, onboarding, polkit, idle.
+- `session/`: locking, auth, greeter and greetd, onboarding, polkit, idle, the session actions.
 - `system/`: the machine and the desktop basics every user has: audio, network, bluetooth, battery, brightness, media, notifications, clipboard, night light, updates.
 - `ui/`: state of the shell's own surfaces and their editors: `ShellManager`, bars, popouts, overlay, edge menus, docks, launcher, settings, wallpaper, blur.
 - `apps/`: optional features and integrations with outside tools or services: calendar, chat, notes, todos, timers, weather, screenshots, community setups, Claude usage, Tailscale.

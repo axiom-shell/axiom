@@ -138,7 +138,6 @@ Steps, roughly in this order (moves first, each its own PR):
 4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
-- [Session actions sit in ShellManager](issues.md#session-actions-sit-in-shellmanager)
 - [The surface registry sits in ShellManager](issues.md#the-surface-registry-sits-in-shellmanager)
 - [Screen-edge geometry is split over three services](issues.md#screen-edge-geometry-is-split-over-three-services)
 - [The edge menus' card-unit helpers sit in EdgeMenuManager](issues.md#the-edge-menus-card-unit-helpers-sit-in-edgemenumanager)
