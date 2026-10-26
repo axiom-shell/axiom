@@ -10,7 +10,7 @@ This file holds only rules. **How each service and surface works is in `docs/dev
 
 ## Where to look
 
-**Asked for the next step, or to continue the roadmap?** Follow `docs/dev/roadmap.md` › Taking the next step: its Full order says where work resumes, and the same change keeps both roadmaps current (skill `next-step`).
+**Asked for the next step, or to continue the roadmap?** Follow `docs/dev/roadmap.md` › Taking the next step: its Full order says where work resumes, and the same change keeps both roadmaps current (skill `next-step`; to run it unattended, PR by PR: skill `roadmap-autopilot`, its section Running it unattended).
 
 **Adding something of a known kind?** Follow its recipe in `docs/recipes/` (also skills in `.claude/skills/`): `bar-widget`, `bar-popout`, `overlay-module`, `overlay-view`, `settings-card`, `launcher-command`, `setting`, `config-section`, `migration`, `service`, `theme-integration`, `methods-helper`, `compositor-backend`.
 
@@ -65,6 +65,7 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 - Install, update or remove the greeter for real, or restart greetd (it ends the session). Test `scripts/greeter/greeter_install.sh` with a scratch `AXIOM_GREETER_ROOT`; view the greeter with `AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --tree "$PWD" --dir <scratch>` (a scratch `XDG_RUNTIME_DIR` too, `WAYLAND_DISPLAY` as an absolute path; stop only that instance).
 - Run, quit, restart or re-exec the live `axiom` daemon (`axiom run|quit|restart`, `axiom daemon stop|restart|reexec`), or switch its dev mode (`axiom dev on|off|rebuild`; `status` is fine), lock through it (`axiom lock`, `axiom ipc lockscreen …`), or pass `--takeover` against the live config: point it at a scratch instance instead (`XDG_RUNTIME_DIR=<scratch>`, `--socket`, `--config-dir`). A test lock screen's fallback must never be `loginctl lock-session`, which locks the real session.
 - Open a GitHub issue (`gh issue create`, or `gh api` posting one).
+- Force-push, delete a remote branch, or push to `main`: everything reaches main through a PR.
 
 ## Checks
 
