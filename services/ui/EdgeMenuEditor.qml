@@ -123,7 +123,7 @@ QtObject {
   property GridEditor layout: GridEditor {
     host: "edgeMenu"
     sizeScale: root.localMenus?.[root.selectedMenuIndex]?.layout?.grid?.fine ? 2 : 1
-    modulesOf: () => root.selectedMenu()?.modules ?? null
+    modulesOf: () => root.selectedMenu()?.layout.modules ?? null
     // A submenu has no edge: just its grid
     readonly property var _onEdge: EdgeMenusConfig.isSubmenu(root.selectedMenu()) ? null : root.selectedMenu()
     edge: _onEdge?.edge ?? ""
