@@ -424,8 +424,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
 ### Service folders hold misplaced and undocumented files
-- **Where:** `services/system/TailscaleManager.qml`, `services/apps/DailySchedule.qml`, `services/core/ShellManager.qml`, `services/AGENTS.md` (Folders)
-- **What:** Tailscale is an add-on for an outside service (like `ClaudeUsageManager` in `apps/`), not the machine: it belongs in `apps/`, with the folders reworded (`system/` the machine and desktop basics, `apps/` optional features and integrations). `DailySchedule` lives in `apps/` but serves `NightLightManager` and `WallpaperManager`: `core/`. `ShellManager` is UI state: `ui/`. About a dozen non-singleton parts (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, `ChatRequest`, `WeatherSource`, `GridEditor`, …) live beside the singletons though the layout says services are singletons: the folder rules should say so.
+- **Where:** `services/apps/DailySchedule.qml`, `services/core/ShellManager.qml`, `services/AGENTS.md` (Folders)
+- **What:** The folders want rewording (`system/` the machine and desktop basics, `apps/` optional features and integrations; `TailscaleManager` already moved to `apps/`). `DailySchedule` lives in `apps/` but serves `NightLightManager` and `WallpaperManager`: `core/`. `ShellManager` is UI state: `ui/`. About a dozen non-singleton parts (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, `ChatRequest`, `WeatherSource`, `GridEditor`, …) live beside the singletons though the layout says services are singletons: the folder rules should say so.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
@@ -460,7 +460,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-26, while fixing the shell's reconnect to axiom
 
 ### Tailscale needs a revamp like Claude usage's
-- **Where:** `components/bar/widgets/Tailscale/schema.yaml`, `components/bar/widgets/Tailscale/Tailscale.qml`, `services/system/TailscaleManager.qml`, `backend/internal/tailscale/tailscale.go`
+- **Where:** `components/bar/widgets/Tailscale/schema.yaml`, `components/bar/widgets/Tailscale/Tailscale.qml`, `services/apps/TailscaleManager.qml`, `backend/internal/tailscale/tailscale.go`
 - **What:** The maintainer's decision (2026-10-26), quoted: "Raise minimum to 1s. No migration step. Leave tailscale alone for now - add entry to issues.md and roadmap for a full tailscale revamp including popout with more information and a modules setting page similar to claude usage with the bar module having only the bar specific settings (like claude usage)." The minimum is raised (1000 ms); the rest is this entry. Today every Tailscale bar widget carries its own poll `interval` beside its bar settings, and its popout is the generic `menu`. Claude usage is the target shape: a `ClaudeUsage` config section in the Modules settings category holds what every widget shares (its accounts), the bar widget's schema keeps only what's about the bar (what it shows, icon, thresholds, colors, click command), and its popout is its own content (`components/content/ClaudeUsage`, `popout: {variant: own}`) with more detail than the bar.
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while raising the Tailscale interval's minimum (roadmap row 4)

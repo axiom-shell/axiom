@@ -107,7 +107,7 @@ Decided (2026-10-26):
 - **The shell's `takeover: true` is fixed by backend stage 7**, with no stopgap before it: saves become path ops, only a takeover card's op carries `takeover`, live edits go through `ConfigManager.setPreview`, and config writes are applied in the order sent.
 - **Idle is the daemon's** (done in stage 2, on its own D-Bus client); hypridle is no longer a dependency.
 - Done: **Topics fed by a setting have no real floor** (decided again 2026-10-26: "1 ms (no real floor)", replacing the 250 ms floor, itself replacing the floor read from the schema): every `topics.Source` whose interval comes from a setting has `topics.MinInterval` (1 ms) as its floor, so each setting's schema `minimum` is the real limit (Tailscale's stays at 1 s), and a test keeps every interval setting's `minimum` at or above it. No migration.
-- **`TailscaleManager` moves to `services/apps/`** (Phase 3).
+- Done: **`TailscaleManager` moves to `services/apps/`** (moved with the Tailscale revamp; the rest of Phase 3 step 1 stays).
 
 Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; packed history is about 18 MB).
 
@@ -132,7 +132,7 @@ Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the
 Each file has one job and sits where its folder's rule says. Moves and splits keep each service's public API, so widgets don't change; a service a backend stage empties is folded in that stage instead.
 
 Steps, roughly in this order (moves first, each its own PR):
-1. Move `TailscaleManager` to `services/apps/` and reword `services/AGENTS.md` › Folders (`system/`: the machine and the desktop basics every user has; `apps/`: optional features and integrations with outside tools or services); `DailySchedule` to `core/`; `ShellManager` to `ui/`; document the non-singleton parts.
+1. Reword `services/AGENTS.md` › Folders (`system/`: the machine and the desktop basics every user has; `apps/`: optional features and integrations with outside tools or services); `DailySchedule` to `core/`; `ShellManager` to `ui/`; document the non-singleton parts.
 2. Move the reusable pieces holding feature logic to `components/bar/` or `content/parts/`.
 3. Split `ShellManager` by concern and `EdgeMenuManager` into its runtime and its editor (the `KeybindManager` split, into its reader, a `KeybindEditor` and page state, goes with backend stage 7); extract `LauncherCommands`' `/config` browser; give the bars' and edge menus' reserved zones one owner.
 4. A shared ticker part for Stopwatch and Pomodoro; `valueAt` into a methods helper with a test row.
