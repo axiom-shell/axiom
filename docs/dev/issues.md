@@ -43,12 +43,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
-### A dropped connection to axiom reconnects with no backoff
-- **Where:** `services/core/BackendManager.qml` (`_dropped`, `_greet`)
-- **What:** Since #111, `_dropped` calls `_connect()` at once (so a re-exec's handover is caught quickly), and `_retry` resets only on a successful hello. A daemon that accepts and then closes the connection (a crash loop, or a hello refused and closed) puts the shell in a tight reconnect loop; before, a drop went through the backoff timer. Reconnecting at once only on the first drop after a successful hello, and backing off after that, would keep the fast re-exec path.
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
-
 ### A large binds file's own error reads as running out of memory
 - **Where:** `backend/internal/compositor/binds/isolate.go` (`diedOfMemory`, `Extract`)
 - **What:** #104 tells the child's memory death from a crash by its peak RSS, but `Extract` checks `diedOfMemory` before the child's own error message and doesn't look at how it exited. So any failure whose peak passed `MemoryLimit/4` (256 MiB) is reported as taking more than the limit, including an ordinary Lua error from a large file. It should only count for crash-like exits (a signal, or the Go runtime's `fatal error` / `SIGSEGV` on stderr). The test that covers it also relies on running before the parallel tests, so the test process's own peak stays low.
