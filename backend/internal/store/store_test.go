@@ -387,3 +387,59 @@ func TestReloadHoldsTakeovers(t *testing.T) {
 		t.Error("the card's change didn't apply")
 	}
 }
+
+// An edit of nothing but a takeover is put back once: no new revision, and
+// the write-back isn't read again as another edit.
+func TestTakeoverOnlyEditIsWrittenBackOnce(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go s.Watch(ctx)
+	time.Sleep(50 * time.Millisecond)
+
+	path := filepath.Join(dir, FileName)
+	cfg, st := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Value("Idle").(*jsonx.Object).Set("enabled", true)
+	os.WriteFile(path, jsonx.Marshal(edited), 0o600)
+	idle := func() any {
+		cfg, _, _ := Peek(Options{Dir: dir, Pipeline: pipeline(t)})
+		return cfg.Value("Idle").(*jsonx.Object).Value("enabled")
+	}
+	waitFor(t, func() bool { return idle() == false })
+	time.Sleep(100 * time.Millisecond)
+	if got, now := s.Config(); now.Revision != st.Revision || got.Value("Idle").(*jsonx.Object).Value("enabled") != false {
+		t.Errorf("revision %d → %d, Idle.enabled %v", st.Revision, now.Revision, got.Value("Idle").(*jsonx.Object).Value("enabled"))
+	}
+}
+
+// Over a file that wasn't JSON at the start nothing about its takeovers is
+// known (the store ran on the defaults), so the fixed file's own values load.
+func TestFixedUnparsableFileKeepsItsTakeovers(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	first := open(t, dir)
+	if _, err := first.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), true)}, SetOptions{Takeover: true}); err != nil {
+		t.Fatal(err)
+	}
+	good, _ := first.Config()
+	first.Close()
+	path := filepath.Join(dir, FileName)
+	os.WriteFile(path, []byte(`{"version": `), 0o600)
+
+	s := open(t, dir)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go s.Watch(ctx)
+	time.Sleep(50 * time.Millisecond)
+	os.WriteFile(path, jsonx.Marshal(good), 0o600)
+	waitFor(t, func() bool { _, st := s.Config(); return !st.Blocked })
+	if cfg, _ := s.Config(); cfg.Value("Idle").(*jsonx.Object).Value("enabled") != true {
+		t.Error("the fixed file's takeover was reset to the default")
+	}
+	if onDisk, _, _ := Peek(Options{Dir: dir, Pipeline: pipeline(t)}); onDisk.Value("Idle").(*jsonx.Object).Value("enabled") != true {
+		t.Error("the fixed file was written back with the default")
+	}
+}

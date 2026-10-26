@@ -81,8 +81,11 @@ type Store struct {
 	// defaults with the takeover settings the file holds, which a restore
 	// keeps and a write is checked against, never the defaults' own
 	fileTakeovers *jsonx.Object
-	subs          map[int]func(Event)
-	nextSub       int
+	// The file wasn't JSON at the start: fileTakeovers are only the
+	// defaults, so the first reload that loads takes the file's own
+	takeoversUnknown bool
+	subs             map[int]func(Event)
+	nextSub          int
 	// Events not delivered yet, and whether a goroutine is delivering them
 	pending  []Event
 	draining bool
@@ -271,7 +274,7 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	}
 	s.written = data
 	s.config = checked
-	s.fileTakeovers = nil
+	s.fileTakeovers, s.takeoversUnknown = nil, false
 	s.state.Revision++
 	s.state.Missing = false
 	if opts.Restore {
@@ -370,7 +373,7 @@ func (s *Store) loadInitial() error {
 	if problems != nil {
 		// Run on the defaults, writes blocked, until the file is fixed
 		s.config = s.opts.Pipeline.Defaults()
-		s.fileTakeovers = s.config
+		s.fileTakeovers, s.takeoversUnknown = s.config, loaded == nil
 		if loaded != nil {
 			s.fileTakeovers, _ = share.KeepTakeovers(s.config, loaded, s.takeovers).(*jsonx.Object)
 		}
@@ -464,7 +467,7 @@ func (s *Store) reload() {
 	} else {
 		s.state.Blocked, s.state.Issues = false, nil
 		loaded = s.holdTakeovers(loaded)
-		s.fileTakeovers = nil
+		s.fileTakeovers, s.takeoversUnknown = nil, false
 		if !jsonx.Equal(loaded, s.config) {
 			s.config = loaded
 			s.state.Revision++
@@ -482,23 +485,32 @@ func (s *Store) reload() {
 // edit, a sync tool or a backup copied over the file never releases a
 // managed compositor config or swaps the locker. A setting held is logged
 // and written back, so the file says what is in effect and the next start
-// loads the same (s.mu held).
+// loads the same (s.mu held). Nothing is held when no value is known (the
+// file wasn't JSON at the start, or a schema rebuild added the setting),
+// nor when the held values don't check (a schema rebuild reshaped one).
 func (s *Store) holdTakeovers(loaded *jsonx.Object) *jsonx.Object {
+	if s.takeoversUnknown {
+		return loaded
+	}
 	base := s.takeoverBase()
 	var held []string
 	for _, path := range s.takeovers {
-		before, _ := at(base, path)
+		before, known := at(base, path)
 		after, _ := at(loaded, path)
-		if !jsonx.Equal(before, after) {
+		if known && !jsonx.Equal(before, after) {
 			held = append(held, joinPath(path))
 		}
 	}
 	if len(held) == 0 {
 		return loaded
 	}
-	kept, _ := share.KeepTakeovers(loaded, base, s.takeovers).(*jsonx.Object)
+	kept, problems := s.opts.Pipeline.Check(share.KeepTakeovers(loaded, base, s.takeovers).(*jsonx.Object))
+	if len(problems) > 0 {
+		s.opts.Log.Warn("the takeover settings in effect don't fit the config read: taking the file's", "keys", held)
+		return loaded
+	}
 	for _, path := range held {
-		s.opts.Log.Warn("config.json was edited from outside: ignored the change to a setting that takes something over on this PC; change it from its own card", "key", path)
+		s.opts.Log.Warn("config.json changed outside the settings: kept a setting that takes something over on this PC as it is; change it from its own card", "key", path)
 	}
 	out := jsonx.Marshal(kept)
 	if err := fsx.WriteFile(s.path, out, 0o600); err != nil {
@@ -656,7 +668,7 @@ func (s *Store) Reschema(p config.Pipeline) {
 		s.state.Blocked, s.state.Issues = false, nil
 		loaded = s.holdTakeovers(loaded)
 		s.config = loaded
-		s.fileTakeovers = nil
+		s.fileTakeovers, s.takeoversUnknown = nil, false
 		s.state.Revision++
 		ev = Event{State: s.state, Config: loaded}
 	}

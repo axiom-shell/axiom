@@ -152,6 +152,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-19, while building the review-system skill
 
+### A supervise test times out under a loaded run
+- **Where:** `backend/internal/supervise/supervise_test.go` (`TestOrphanOfAnEarlierDaemonIsStopped`, `eventually`)
+- **What:** One `scripts/check_go.sh` run failed with `supervise_test.go:143: timed out` (the orphan wasn't seen stopped within `eventually`'s 2 s), then passed on the next two runs with nothing changed in `supervise`. The test runs `t.Parallel()` with the rest of the package and `go test` runs packages at once, so 2 s is tight under load; a flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or stop the orphan before polling.
+- **Size:** trivial
+- **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
+
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
 - **What:** With blur on under niri, a bar popout switching to another widget's content in the same window shows its old stroke cutting into the box for a frame or two as it resizes: the stroke is the popout's window's, the fill the blur window's, and niri shows the two windows' frames out of step (no `supports.layerFrameSync`). Tried and reverted (2026-10-18), neither changing what the maintainer saw: holding the switch until the popout's window had drawn the new content twice (`SwitchStill`, its window's `frameSwapped`), and drawing the popout's stroke in the blur window with its fill (a stroke-only `AttachedSurfaceCopy` over the fills, the popout's own stroke transparent). That the second didn't help suggests the stroke isn't what's late: perhaps the popout's content, its clip, or the blur region. Next: log each window's `frameSwapped` with what it drew, during a switch.
