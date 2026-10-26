@@ -349,13 +349,11 @@ func (m *Manager) noteHolding() {
 }
 
 // axiomsInConfig: a managed config or an include of axiom's is in the
-// compositor's config (or was set up last), which holding never touches
-func (m *Manager) axiomsInConfig(ctx context.Context) bool {
-	if m.st.AppliedMode == "managed" || m.configIsOurs() {
-		return true
-	}
-	loaded, _ := m.w.checkLoaded(ctx, m.in, "included")
-	return loaded
+// compositor's config (or was set up last), which holding never touches;
+// loaded when axiom's file is in effect
+func (m *Manager) axiomsInConfig(ctx context.Context) (in, loaded bool) {
+	loaded, _ = m.w.checkLoaded(ctx, m.in, "included")
+	return loaded || m.st.AppliedMode == "managed" || m.configIsOurs(), loaded
 }
 
 // applyHolding: while the mode isn't known, the defaults' runtime layer,
@@ -363,7 +361,12 @@ func (m *Manager) axiomsInConfig(ctx context.Context) bool {
 // compositor's config; no mode is set up or given back, and the applied
 // mode stays
 func (m *Manager) applyHolding(ctx context.Context) {
-	if m.axiomsInConfig(ctx) {
+	if in, loaded := m.axiomsInConfig(ctx); in {
+		// A layer applied before axiom's file loaded comes off, as
+		// checkLoaded takes it off (niri's wrapper would load it twice)
+		if loaded {
+			m.w.runtimeClear(ctx)
+		}
 		return
 	}
 	// The reload's configReloaded applies the layer again
@@ -960,7 +963,7 @@ func (m *Manager) liveChanged(ctx context.Context) {
 		return
 	}
 	if m.mode == "" {
-		if m.axiomsInConfig(ctx) {
+		if in, _ := m.axiomsInConfig(ctx); in {
 			return
 		}
 		if m.w.liveByFile() || len(m.droppedParts()) > 0 {

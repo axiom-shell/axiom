@@ -517,8 +517,17 @@ func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 			h.inputs("f1", "l1", "k1", "borders")
 			h.w.reloadCh <- ipc.Reload{}
 			time.Sleep(600 * time.Millisecond)
-			if calls := h.w.seen(); len(calls) != 0 || readFile(f.ManagedPath) != managed {
-				t.Fatalf("changed the compositor's config: %v, %q", calls, readFile(f.ManagedPath))
+			// A live change applies nothing either
+			h.inputs("f1", "l2", "k1", "borders")
+			time.Sleep(600 * time.Millisecond)
+			// Only a runtime layer comes off while axiom's file is loaded
+			for _, call := range h.w.seen() {
+				if call != "clear" || !c.included {
+					t.Fatalf("changed the compositor's config: %v", h.w.seen())
+				}
+			}
+			if readFile(f.ManagedPath) != managed {
+				t.Fatalf("changed the managed config: %q", readFile(f.ManagedPath))
 			}
 			if h.status() != "pending" || h.m.st.AppliedMode != c.applied {
 				t.Fatalf("status %s, applied %q", h.status(), h.m.st.AppliedMode)
@@ -553,6 +562,8 @@ func TestAnUnknownModeAppliesTheDefaultsLayer(t *testing.T) {
 				}
 				return n >= 2
 			})
+			h.inputs("f1", "l2", "k1")
+			h.eventually("a live change", h.called("live:live l2"))
 			f := h.w.files(Inputs{})
 			if readFile(f.ManagedPath) != "" || readFile(f.IncludePath) != "" || h.m.st.AppliedMode != applied {
 				t.Fatalf("set up a mode: applied %q", h.m.st.AppliedMode)
@@ -564,6 +575,9 @@ func TestAnUnknownModeAppliesTheDefaultsLayer(t *testing.T) {
 	}
 }
 
+// managed read from the file (one that didn't load at the start, fixed from
+// outside) has no card open: the notification asks for the approval, which
+// it never is itself; the shell's save doesn't notify (the card asks)
 func TestManagedFromTheFileNotifies(t *testing.T) {
 	t.Parallel()
 	for _, fromFile := range []bool{true, false} {

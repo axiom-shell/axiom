@@ -134,6 +134,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
 
+### Holding, a managed mode waiting for approval gets no runtime layer
+- **Where:** `backend/internal/compositor/manager/manager.go` (`axiomsInConfig`, `claimIfApproved`)
+- **What:** While the mode isn't known (config.json not JSON at the start), `axiomsInConfig` counts `AppliedMode` managed as axiom's being in the compositor's config, so no runtime layer applies. But `apply` sets `AppliedMode` before `claimIfApproved`, so it is also managed when the takeover still waits for approval, was blocked, or failed: the managed config isn't there (`configIsOurs` false), and outside the hold each of those applies the runtime layer in its place. A user who picked managed but hasn't allowed the takeover gets axiom's binds normally and none while config.json is broken. Needs a decision: drop the `AppliedMode` term (`configIsOurs` and the loaded check already cover a managed config in place), or keep holding everything once managed was picked.
+- **Size:** trivial
+- **Found:** 2026-10-26, while reviewing the hold's runtime layer
+
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
 - **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Which surface it is hasn't been found yet: next step, reproduce with a nested compositor dropping its output and bisect by commenting out surfaces in `shell.qml`.
