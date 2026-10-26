@@ -158,7 +158,6 @@ Steps: fold `saved.everything` into `share`; settle `tree` against `schema/yamls
 Resolves:
 - [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
 - [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
-- [archtest's rules aren't all in backend/AGENTS.md](issues.md#archtests-rules-arent-all-in-backendagentsmd)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `ShellManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.

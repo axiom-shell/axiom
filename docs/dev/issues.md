@@ -43,12 +43,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
-### archtest's rules aren't all in backend/AGENTS.md
-- **Where:** `backend/internal/archtest/archtest_test.go`, `backend/AGENTS.md` (Rules)
-- **What:** archtest requires the exact `Pure:` marker in a pure package's doc comment, which AGENTS.md only calls "marked pure in their doc comment". It also refuses more imports in pure packages than AGENTS.md lists (`os/signal`, `golang.org/x/sys`, `unsafe`, `plugin`, `io/ioutil` besides `os`, `net`, `os/exec`, `syscall`). And its tiers are coarse: about 40 packages share the edge tier, so the direction between edge packages isn't enforced, though the original entry asked for "downward dependency direction among the other packages".
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 4 PR
-
 ### CI checks dependencies and cross-builds only when a PR touches Go
 - **Where:** `.github/workflows/checks.yml` (the `go` job's change filter), `.github/workflows/release.yml`
 - **What:** Since checks run on pull requests only and the `go` job is skipped unless the binary's inputs changed (#107), govulncheck runs only on PRs that touch Go, with no scheduled run, so a newly published advisory for a dependency goes unseen until the next Go PR. The amd64/arm64 cross-builds now run only on a release tag, so an arm64 break surfaces at release, after merge (low risk with `CGO_ENABLED=0`). A weekly `schedule:` run of the `go` job would cover both.
