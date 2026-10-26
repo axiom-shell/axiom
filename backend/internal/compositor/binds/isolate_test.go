@@ -114,7 +114,10 @@ func TestIsolatedExtractSurvivesAFileTakingAllMemory(t *testing.T) {
 
 // A child that crashes is told from one the limit ended by its peak RSS:
 // holding a quarter of the limit, it gets the MiB message; holding a few
-// MiB, the crash. Not parallel: the child is chosen by the environment.
+// MiB, the crash. Not parallel: the child is chosen by the environment,
+// and as the package's only sequential test it runs before the parallel
+// ones, so this process's own peak (which the child's counts) stays far
+// below a quarter of the limit.
 func TestIsolatedExtractTellsAMemoryDeathFromACrash(t *testing.T) {
 	self, err := os.Executable()
 	if err != nil {
