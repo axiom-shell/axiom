@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-// Pure helpers: deep copies and comparison, free ids, usage counts, curl config values, text width
+// Pure helpers: deep copies, comparison and lookup by path, free ids, usage counts, curl config values, text width
 // and truncation, colors, calendar grids, byte sizes and rates. No file access, processes or
 // services (those live in services/).
 QtObject {
@@ -26,6 +26,15 @@ QtObject {
       return a.length === b.length && a.every((item, i) => root.deepEqual(item, b[i]));
     const keys = Object.keys(a);
     return keys.length === Object.keys(b).length && keys.every(key => Object.prototype.hasOwnProperty.call(b, key) && root.deepEqual(a[key], b[key]));
+  }
+
+  // The value at `path` (an array of keys and indices) in `object`, or
+  // undefined where the path runs out: a config value by its key path
+  function valueAt(object, path) {
+    let value = object;
+    for (const key of path)
+      value = value?.[key];
+    return value;
   }
 
   // A copy of the object `map` with `key` set to `value`, or left out when

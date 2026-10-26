@@ -216,13 +216,6 @@ QtObject {
     draft.loadIfStale();
   }
 
-  function _valueAt(object, path) {
-    let cur = object;
-    for (const key of path)
-      cur = cur?.[key];
-    return cur;
-  }
-
   function _setAt(object, path, value) {
     let cur = object;
     for (let i = 0; i < path.length - 1; i++) {
@@ -240,7 +233,7 @@ QtObject {
     // edit in place that `changedPaths` sees only next tick
     for (const changed of _diff(draft.local, draft.saved, [])) {
       const path = changed.split(".");
-      _setAt(merged, path, _valueAt(draft.local, path));
+      _setAt(merged, path, Utils.valueAt(draft.local, path));
     }
     return merged;
   }
@@ -280,7 +273,7 @@ QtObject {
   function discard(paths) {
     root.setValues(paths.map(path => ({
           "path": path,
-          "value": Utils.clone(_valueAt(draft.saved, path))
+          "value": Utils.clone(Utils.valueAt(draft.saved, path))
         })));
   }
 
@@ -509,7 +502,7 @@ QtObject {
       return Paths.packaged;
     if (dottedPath.startsWith("$supports."))
       return CompositorManager.supports[dottedPath.slice(10)] === true;
-    return _valueAt(ConfigManager.config, dottedPath.split("."));
+    return Utils.valueAt(ConfigManager.config, dottedPath.split("."));
   }
 
   // A `/`-rooted `x-showIf` key's value (configValueAt)
@@ -517,7 +510,7 @@ QtObject {
 
   function valueOf(key) {
     const entry = settingFor(key);
-    return entry ? _valueAt(ConfigManager.config, entry.path) : undefined;
+    return entry ? Utils.valueAt(ConfigManager.config, entry.path) : undefined;
   }
 
   // Stays dirty if the save is rejected (invalid, or saves are blocked)

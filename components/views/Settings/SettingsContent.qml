@@ -39,10 +39,7 @@ Item {
   onTyped: (path, value) => SettingsManager.setDraftValue(path, value)
 
   function valueAt(path) {
-    let value = SettingsManager.localConfig;
-    for (const key of path)
-      value = value?.[key];
-    return value;
+    return Utils.valueAt(SettingsManager.localConfig, path);
   }
 
   // Matches English and the translation, so either can be typed
