@@ -3,7 +3,6 @@ package daemon
 import (
 	"context"
 	"encoding/json"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -325,17 +324,14 @@ func TestWritableFollowsDevMode(t *testing.T) {
 
 func TestEmbeddedSchemaMatch(t *testing.T) {
 	t.Parallel()
-	schema := []byte(`{"type":"object"}`)
-	hash := buildinfo.SchemaHash(schema)
-	read := func() ([]byte, error) { return schema, nil }
-	if !embeddedMatches(read, hash) {
+	hash := buildinfo.SchemaHash([]byte(`{"type":"object"}`))
+	if !embeddedMatches(hash, hash) {
 		t.Error("the embedded schema doesn't match itself")
 	}
-	if embeddedMatches(read, buildinfo.SchemaHash([]byte(`{}`))) {
+	if embeddedMatches(hash, buildinfo.SchemaHash([]byte(`{}`))) {
 		t.Error("another schema matches")
 	}
-	missing := func() ([]byte, error) { return nil, fs.ErrNotExist }
-	if embeddedMatches(missing, hash) {
+	if embeddedMatches("", hash) {
 		t.Error("a missing embedded schema counts as this binary's")
 	}
 }

@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/axiom-shell/axiom/backend/internal/assets"
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/clipboard"
@@ -426,12 +425,12 @@ func (d *Daemon) compatible() (bool, string) {
 	return false, incompatibleReason
 }
 
-// embeddedMatches: hash is the schema this binary embeds. A binary built
-// without its assets fails closed: no schema counts as its own, so the
-// config stays read-only outside dev mode.
-func embeddedMatches(read func() ([]byte, error), hash string) bool {
-	embedded, err := read()
-	return err == nil && buildinfo.SchemaHash(embedded) == hash
+// embeddedMatches: hash is the schema this binary embeds (embedded, its
+// hash, empty for a binary built without its assets). Without one it fails
+// closed: no schema counts as its own, so the config stays read-only
+// outside dev mode.
+func embeddedMatches(embedded, hash string) bool {
+	return embedded != "" && embedded == hash
 }
 
 func (d *Daemon) matches() bool {
@@ -514,9 +513,7 @@ func (d *Daemon) currentSchema() ([]byte, string) {
 
 // setSchema records a built schema, and whether it is this binary's.
 func (d *Daemon) setSchema(data []byte, hash string) {
-	matches := embeddedMatches(func() ([]byte, error) {
-		return assets.Read("config/json/config.schema.json")
-	}, hash)
+	matches := embeddedMatches(buildinfo.Get().SchemaHash, hash)
 	d.schemaMu.Lock()
 	d.schemaBytes, d.schemaHash, d.treeMatches = data, hash, matches
 	d.schemaMu.Unlock()
