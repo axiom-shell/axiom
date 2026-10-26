@@ -505,17 +505,21 @@ func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 		name, applied string
 		managedFile   bool
 		included      bool
+		// managedLoaded: the managed config is in effect (its module
+		// emptied, as managed mode leaves it)
+		managedLoaded bool
 	}{
-		{"applied managed", "managed", true, false},
-		{"managed config, nothing applied", "", true, false},
-		{"include loaded", "included", false, true},
-		{"include loaded, nothing applied", "", false, true},
+		{"applied managed", "managed", true, false, false},
+		{"applied managed, loaded", "managed", true, false, true},
+		{"managed config, nothing applied", "", true, false, false},
+		{"include loaded", "included", false, true, false},
+		{"include loaded, nothing applied", "", false, true, false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			h := newHarness(t, "")
 			h.m.st.AppliedMode = c.applied
-			h.w.loaded = c.included
+			h.w.loaded = c.included || c.managedLoaded
 			f := h.w.files(Inputs{})
 			os.MkdirAll(f.UserDir, 0o755)
 			if c.included {
@@ -535,9 +539,12 @@ func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 			time.Sleep(600 * time.Millisecond)
 			// Only a runtime layer comes off while axiom's file is loaded
 			for _, call := range h.w.seen() {
-				if call != "clear" || !c.included {
+				if call != "clear" || !(c.included || c.managedLoaded) {
 					t.Fatalf("changed the compositor's config: %v", h.w.seen())
 				}
+			}
+			if (c.included || c.managedLoaded) && !slices.Contains(h.w.seen(), "clear") {
+				t.Fatalf("the runtime layer stayed over axiom's loaded file: %v", h.w.seen())
 			}
 			if readFile(f.ManagedPath) != managed {
 				t.Fatalf("changed the managed config: %q", readFile(f.ManagedPath))

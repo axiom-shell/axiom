@@ -67,6 +67,9 @@ func (d *Daemon) newCompositor() *manager.Manager {
 		},
 		// The mode kept on leaving the hold, as the Compositor card saves it
 		KeepMode: func(mode string) error {
+			if err := d.writable(); err != nil {
+				return err
+			}
 			_, err := d.store.Set([]config.Op{config.SetValue(config.Keys("Compositor", "mode"), mode)}, store.SetOptions{Takeover: true})
 			return err
 		},

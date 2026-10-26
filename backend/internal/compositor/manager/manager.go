@@ -387,12 +387,19 @@ func (m *Manager) noteHolding() {
 
 // axiomsInConfig: a managed config or an include of axiom's is actually
 // in the compositor's config, which holding never touches; loaded when
-// axiom's file is in effect. AppliedMode managed alone doesn't count: a
-// takeover awaiting approval, blocked or failed left the user's config in
-// place, and gets the runtime layer as outside the hold
+// axiom's file (the module, or the managed config) is in effect.
+// AppliedMode managed alone doesn't count: a takeover awaiting approval,
+// blocked or failed left the user's config in place, and gets the runtime
+// layer as outside the hold
 func (m *Manager) axiomsInConfig(ctx context.Context) (in, loaded bool) {
-	loaded = m.moduleLoaded(ctx)
-	return loaded || m.configIsOurs(), loaded
+	if m.moduleLoaded(ctx) {
+		return true, true
+	}
+	if !m.configIsOurs() {
+		return false, false
+	}
+	loaded, _ = m.w.checkLoaded(ctx, m.in, "managed")
+	return true, loaded
 }
 
 // moduleLoaded: the included module is in effect with axiom's layer in it.
