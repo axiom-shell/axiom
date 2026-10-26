@@ -1,8 +1,8 @@
 // Package wire is a minimal Wayland client: the wire protocol (messages
 // of 32-bit words on the compositor's unix socket), a long-lived
-// connection with its objects and their events (Conn: the daemon's own,
-// wayland/outputs on it; idle, gamma, clipboard come later, with file
-// descriptor passing), the globals a compositor offers (`axiom debug
+// connection with its objects and their events, file descriptors passed
+// both ways (Conn: the daemon's own, shared by its clients through
+// wayland/client), the globals a compositor offers (`axiom debug
 // wayland-globals`), and an idle connection that tells when the
 // compositor is gone (Watch).
 package wire

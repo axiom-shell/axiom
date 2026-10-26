@@ -1,10 +1,12 @@
 // Package wiretest is a scripted fake compositor for tests of Wayland
 // clients (wire.Conn and what runs on it): it answers get_registry with
 // its globals, sync with done, and hands every other request to the
-// test, which answers with events.
+// test, which answers with events. Descriptors go both ways: a request's
+// come out of its Args (Fd), and Send takes wire.Fd arguments.
 package wiretest
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"io"
@@ -13,6 +15,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/axiom-shell/axiom/backend/internal/unixmsg"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 )
 
@@ -41,7 +44,7 @@ type Compositor struct {
 	OnRequest func(c *Compositor, r Request)
 
 	mu       sync.Mutex
-	conn     net.Conn
+	conn     *unixmsg.Conn
 	globals  []Global
 	registry uint32
 	ready    chan struct{}
@@ -51,16 +54,17 @@ type Compositor struct {
 func New(t *testing.T, globals []Global, onRequest func(c *Compositor, r Request)) *Compositor {
 	t.Helper()
 	c := &Compositor{Socket: filepath.Join(t.TempDir(), "wayland-0"), OnRequest: onRequest, globals: globals, ready: make(chan struct{})}
-	ln, err := net.Listen("unix", c.Socket)
+	ln, err := net.ListenUnix("unix", &net.UnixAddr{Name: c.Socket, Net: "unix"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { ln.Close(); c.Close() })
 	go func() {
-		nc, err := ln.Accept()
+		uc, err := ln.AcceptUnix()
 		if err != nil {
 			return
 		}
+		nc := unixmsg.New(uc)
 		c.mu.Lock()
 		c.conn = nc
 		c.mu.Unlock()
@@ -79,24 +83,25 @@ func (c *Compositor) Close() {
 	}
 }
 
-// Send sends an event.
+// Send sends an event; its wire.Fd arguments go with it.
 func (c *Compositor) Send(obj uint32, opcode uint16, args ...wire.Arg) {
 	<-c.ready
 	var b bytes.Buffer
+	raw, fds := wire.Frame(args)
 	size := 8
-	for _, a := range args {
+	for _, a := range raw {
 		size += len(a)
 	}
 	var head [8]byte
 	binary.LittleEndian.PutUint32(head[:4], obj)
 	binary.LittleEndian.PutUint32(head[4:], uint32(size)<<16|uint32(opcode))
 	b.Write(head[:])
-	for _, a := range args {
+	for _, a := range raw {
 		b.Write(a)
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.conn.Write(b.Bytes())
+	c.conn.WriteMsg(b.Bytes(), fds)
 }
 
 // AddGlobal announces a global (a hotplugged output).
@@ -118,7 +123,8 @@ func (c *Compositor) RemoveGlobal(name uint32) {
 	c.Send(registry, wire.EvGlobalRemove, wire.Uint(name))
 }
 
-func (c *Compositor) serve(r io.Reader) {
+func (c *Compositor) serve(nc *unixmsg.Conn) {
+	r := bufio.NewReader(nc)
 	for {
 		var head [8]byte
 		if _, err := io.ReadFull(r, head[:]); err != nil {
@@ -131,7 +137,7 @@ func (c *Compositor) serve(r io.Reader) {
 			return
 		}
 		op := uint16(word & 0xffff)
-		args := wire.ParseArgs(body)
+		args := wire.ParseArgs(body, nc.TakeFD)
 		c.mu.Lock()
 		registry := c.registry
 		c.mu.Unlock()

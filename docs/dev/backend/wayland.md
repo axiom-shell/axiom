@@ -6,7 +6,11 @@
 The daemon's own Wayland connection, and what each compositor offers for what it does over it next (roadmap stage 2: idle, gamma, clipboard, typing).
 
 ### The connection
-- `wire.Conn` (pure Go, no libwayland): object ids from 2 up, reused after the compositor's `delete_id`; each object's events go to its handler on the goroutine running `Run`; `Registry`, `Bind`, `Sync`. A `wl_display.error` ends it with the compositor's message. No file descriptor passing yet (clipboard will need it).
+- `wire.Conn` (pure Go, no libwayland): object ids from 2 up, reused after the compositor's `delete_id`; each object's events go to its handler on the goroutine running `Run`; `Registry`, `Bind`, `Sync`. A `wl_display.error` ends it with the compositor's message.
+- **Arguments**: `Uint`, `Int`, `Fixed` (24.8), `String`, `Array`, `NewID` (an interface named by the request, as `wl_registry.bind`'s) and `Fd`, read back by `Args` in order.
+  - File descriptors ride beside the message on `internal/unixmsg` ([dbus.md](dbus.md) › Descriptors): `Fd(f)` sends a duplicate (`f` stays the caller's).
+  - `Args.Fd()` takes the event's next one from the connection's queue. A handler must take every fd its event carries, in order, or later events get the wrong ones.
+  - `SealedFile(name, data)` is a sealed memfd for what the compositor maps (a keymap, gamma ramps).
 - `wire.Conn.PeerPID` is the compositor's pid, from the socket's credentials (the idle service tells the compositor holding `org.freedesktop.ScreenSaver` from another program with it).
 - **The clients share it** (`wayland/client`): the daemon dials once (`Daemon.followCompositor`), `client.Run` asks for the registry once and hands each `client.Client` the globals of the interfaces it names (`Global` / `Removed`), after `Start` (a new connection) and before `Ready` (two roundtrips: the first globals bound and described). Its handlers run on the connection's goroutine and never block: slow work (a pipe to read, an action to run, a D-Bus call) goes to a goroutine of its own owner's.
   - The clients now: the connection itself (`daemon/wayland.go`), `wayland/outputs`, `wayland/seat` (the first `wl_seat`, which idle notifications, data control and the virtual keyboard are made on) and `wayland/idlenotify` (`ext_idle_notifier_v1`: one notification per idle step, armed again when the notifier or seat comes back; [idle](../features/idle.md)).
