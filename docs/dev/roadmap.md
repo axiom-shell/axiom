@@ -140,7 +140,7 @@ Steps, roughly in this order (moves first, each its own PR):
 Resolves:
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (designed and fixed in backend stage 7)
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
-- [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
+- [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming) (plan: #126)
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer)
 - [The onboarding's Compositor page names Hyprland](issues.md#the-onboardings-compositor-page-names-hyprland)
 - [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (waits for stage 5: `ChatRequest` moves to the daemon)
