@@ -257,6 +257,7 @@ Singleton {
       return;
     root._sent = text;
     root._sentBinds = inputs.binds;
+    // rpc: unchecked (the whole layer, built by _inputs(); the daemon takes it as a JSON tree)
     BackendManager.call("compositor.inputs", inputs, err => {
       if (err)
         console.warn("[CompositorConfigManager] The daemon didn't take the layer:", err.message);

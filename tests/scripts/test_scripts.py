@@ -867,6 +867,47 @@ class RpcShapes(unittest.TestCase):
         ])
         self.assertEqual(qml_helper_sites(qml), [(1, "x.a", "{id: 1}"), (1, "x.b", ""), (6, "(through a helper) x.c", "")])
 
+    def test_helper_lines(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_helper_lines
+        qml = "\n".join([
+            "  // rpc: x.a",
+            "  function _send(method, params) {",
+            "    BackendManager.call(method, params);",
+            "  }",
+            "  BackendManager.call(method, params);",
+            "  // rpc: unchecked (not a helper note)",
+            "  function other(method) {",
+            "  }",
+        ])
+        self.assertEqual(qml_helper_lines(qml), {2, 3, 4})
+
+    def test_unreadable_calls_need_a_mark(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_marked_calls
+        qml = "\n".join([
+            '  BackendManager.call("a.b", built); // rpc: unchecked (built elsewhere)',
+            "  // rpc: unchecked (named at runtime)",
+            "  BackendManager.call(method, {});",
+            '  BackendManager.call("a.c", other);',
+            "  // rpc: unchecked (stale)",
+            '  BackendManager.call("a.d", {id: 1});',
+            "  const x = 1;",
+            '  BackendManager.call("a.e", more); // rpc: unchecked ()',
+        ])
+        unreadable = [(1, "a.b", "built"), (3, None, "{}"), (4, "a.c", "other"), (8, "a.e", "more")]
+        marked, problems = qml_marked_calls(qml, unreadable)
+        self.assertEqual(marked, [(1, "a.b", "built", "built elsewhere"), (3, None, "{}", "named at runtime")])
+        self.assertEqual([line for line, _ in problems], [4, 8, 5])
+        self.assertIn("can't read a.c's params (other)", problems[0][1])
+        self.assertIn("marks no call", problems[2][1])
+
+    def test_a_mark_is_no_helper_note(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import QML_RPC_NOTE
+        self.assertIsNone(QML_RPC_NOTE.search("// rpc: unchecked (a reason, with a comma)"))
+        self.assertEqual(QML_RPC_NOTE.search("// rpc: a.b, c.d").group(1), "a.b, c.d")
+
     def test_callback_reads(self):
         sys.path.insert(0, str(SCRIPTS))
         from gen_docs import qml_callback_reads

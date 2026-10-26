@@ -700,7 +700,9 @@ GO_COMMENT_LINE = re.compile(r"^[ \t]*//.*$", re.M)
 QML_CALL = re.compile(r'\b(?:BackendManager|root)\.(?:call|notify)\("([\w.]+)"|JsonRpc\.request\(\w+,\s*"([\w.]+)"')
 QML_LISTEN = re.compile(r'\b(?:BackendManager|root)\.listen\("([\w.]+)"')
 QML_HANDLE = re.compile(r'\b(?:BackendManager|root)\.handle\("([\w.]+)"|^\s*"([\w.]+)":\s*params\s*=>', re.M)
-QML_RPC_NOTE = re.compile(r"//\s*rpc:\s*(.+)")
+QML_RPC_NOTE = re.compile(r"//\s*rpc:(?!\s*unchecked\b)\s*(.+)")
+# A call the check can't read, marked so on its line or the line above
+QML_RPC_UNCHECKED = re.compile(r"//\s*rpc:\s*unchecked\s*\((.+)\)\s*$", re.M)
 # BackendManager.acquire / release / refresh of a polled topic
 QML_TOPIC = re.compile(r'\bBackendManager\.(acquire|release|refresh)\("(\w+)"')
 
@@ -886,7 +888,7 @@ def qml_helper_sites(text):
     `function`: (line, method, params source) for each call naming one of
     the noted methods as a literal, its params the argument after it. A
     note above anything else gives ("(through a helper) " + method) at the
-    note's line, for each method: unchecked."""
+    note's line, for each method: a call the check can't read."""
     sites = []
     for note in QML_RPC_NOTE.finditer(text):
         noted = [n.strip() for n in note.group(1).split(",") if n.strip()]
@@ -903,6 +905,60 @@ def qml_helper_sites(text):
                     sites.append((text.count("\n", 0, call.start()) + 1, literal.group(1), args[i + 1] if i + 1 < len(args) else ""))
                     break
     return sites
+
+
+def qml_helper_lines(text):
+    """The lines of every helper under a `// rpc:` note, its `function`
+    line through its closing brace: the calls in it are covered, since its
+    callers are checked."""
+    lines = set()
+    for note in QML_RPC_NOTE.finditer(text):
+        helper = QML_HELPER.match(text, text.find("\n", note.start()) + 1)
+        if not helper:
+            continue
+        brace = text.find("{", helper.end())
+        if brace < 0:
+            continue
+        first = text.count("\n", 0, helper.end()) + 1
+        last = text.count("\n", 0, _skip_balanced(text, brace)) + 1
+        lines.update(range(first, last + 1))
+    return lines
+
+
+def qml_marked_calls(text, unreadable):
+    """Sorts the calls the check can't read, (line, method, params
+    source), by their `// rpc: unchecked (<reason>)` mark (on the call's
+    line or the line above): (marked as (line, method, params, reason),
+    problems as (line, message)). A mark that no unreadable call uses is a
+    problem too, so the unchecked count only shrinks."""
+    lines = text.split("\n")
+
+    def mark(n):
+        """The mark for a call on line n: (reason, the mark's line), or None."""
+        for at in (n, n - 1):
+            if at < 1 or (at < n and not lines[at - 1].strip().startswith("//")):
+                continue
+            found = QML_RPC_UNCHECKED.search(lines[at - 1])
+            if found:
+                return found.group(1).strip(), at
+        return None
+
+    marked, problems, used = [], [], set()
+    for line, method, src in unreadable:
+        found = mark(line)
+        if found:
+            used.add(found[1])
+            marked.append((line, method, src, found[0]))
+        else:
+            what = f"{method}'s params" if method else "a call naming its method at runtime"
+            problems.append((line, f"the contract check can't read {what} ({' '.join(src.split())[:60] or 'no params'}): "
+                                   "write the method as a string literal and the params as an object literal, "
+                                   "or mark the line `// rpc: unchecked (<reason>)` (docs/dev/backend/protocol.md › Changing the protocol)"))
+    for m in QML_RPC_UNCHECKED.finditer(text):
+        line = text.count("\n", 0, m.start()) + 1
+        if line not in used:
+            problems.append((line, "`// rpc: unchecked` marks no call the contract check can't read: drop it"))
+    return marked, problems
 
 
 def render_shape(shape, types, depth=0):
@@ -1012,7 +1068,13 @@ def rpc_scan():
             continue
         text = path.read_text()
         # Params written as an object literal are checked against the
-        # method's; anything else is listed as unchecked
+        # method's; anything else the check can't read fails unless marked
+        # `// rpc: unchecked (<reason>)`. BackendManager's own generic
+        # paths and the calls inside a `// rpc:` helper (checked at its
+        # callers) are exempt
+        exempt = qml_helper_lines(text) if path.stem != "BackendManager" else None
+        unreadable = []
+
         def check(line, method, src):
             if src in ("", "{}", "null", "undefined"):
                 return
@@ -1020,10 +1082,12 @@ def rpc_scan():
             if src.startswith("{") and object_members(src) is not None:
                 problems.extend(shape_key_problems(src, params[method], where))
             else:
-                unchecked.append((rel(path), line, method, " ".join(src.split())[:60]))
+                unreadable.append((line, method, src))
         for line, method, src in qml_call_sites(text):
             if method in params:
                 check(line, method, src)
+            elif method is None and exempt is not None and line not in exempt:
+                unreadable.append((line, None, src))
         # Results and pushes read in an inline callback
         for line, kind, method, var, keys in qml_callback_reads(text):
             shape = results.get(method) if kind == "call" else push_params.get(method)
@@ -1039,7 +1103,13 @@ def rpc_scan():
             if method in params:
                 check(line, method, src)
             elif method.startswith("(through a helper) "):
-                unchecked.append((rel(path), line, method.split(" ", 4)[-1], "(through a helper)"))
+                problems.append(f"{rel(path)}:{line}: the `// rpc: {method.split(' ', 4)[-1]}` note isn't directly above "
+                                "its helper's `function`, so the calls through it go unchecked: move it there")
+        if exempt is not None:
+            marked, found = qml_marked_calls(text, unreadable)
+            unchecked += [(rel(path), line, method or "(at runtime)", " ".join(src.split())[:60], reason)
+                          for line, method, src, reason in marked]
+            problems += [f"{rel(path)}:{line}: {message}" for line, message in found]
         calls = [a or b for a, b in QML_CALL.findall(text)]
         for verb, topic in QML_TOPIC.findall(text):
             calls += [f"{topic}.{s}" for s in ({"acquire": ("subscribe", "unsubscribe"),
@@ -1088,7 +1158,8 @@ def rpc_page():
            "`topics.Source`; `BackendManager.call` / `listen` / `handle` / `acquire`, and `// rpc: a, b` where a method is chosen at runtime); "
            "fields come from the daemon's own registry (`docs/dev/generated/rpc-shapes.json`, printed by `backend/tools/rpcshapes`). "
            "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks, passes an object literal "
-           "with a key the method's params don't have, or reads a key a result or push lacks in an inline callback. "
+           "with a key the method's params don't have, reads a key a result or push lacks in an inline callback, "
+           "or makes a call it can't read that isn't marked `// rpc: unchecked (<reason>)`. "
            "How the connection works: [protocol](../backend/protocol.md).", "",
            "**Fields:** `?` marks one left out when empty (`omitempty`); `{[key]: T}` is a map; "
            "a named object below the top level is listed under [Types](#types); `json.RawMessage` and `any` carry any JSON.", "",
@@ -1120,13 +1191,16 @@ def rpc_page():
         c = to_shell[method]
         out.append(f"| `{method}` | {files(c['go'])} | {files(c['qml'])} |")
     out += ["", "## Unchecked call sites", "",
-            "Calls whose params aren't an object literal (a variable, a spread, a computed key), so their keys go unchecked, "
-            "and methods in a `// rpc:` note that isn't directly above its helper's `function`.", "",
-            "| Call site | Method | Params |", "|---|---|---|"]
-    for file, line, method, src in sorted(unchecked):
+            "Calls the check can't read (params that aren't an object literal, a method named at runtime), each marked "
+            "`// rpc: unchecked (<reason>)`: their keys are checked only at runtime, by the daemon's strict decoding where the params are typed. "
+            "An unmarked one fails `gen_docs.py`, and the scanner learns no new call shapes, so this list only shrinks "
+            "([protocol](../backend/protocol.md#changing-the-protocol)).", "",
+            "| Call site | Method | Params | Why |", "|---|---|---|---|"]
+    for file, line, method, src, reason in sorted(unchecked):
         # A | would end the cell, a backtick the code span
         cell = src.replace("`", "'").replace("|", "\\|")
-        out.append(f"| `{file}:{line}` | `{method}` | `{cell}` |")
+        why = reason.replace("|", "\\|")
+        out.append(f"| `{file}:{line}` | `{method}` | `{cell}` | {why} |")
     out += ["", "## Types", ""]
     done = set()
     while set(types) - done:
