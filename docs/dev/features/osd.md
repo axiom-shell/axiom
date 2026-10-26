@@ -1,6 +1,6 @@
 # OSD (on-screen displays)
 
-> **Files:** `config/OSDConfig.qml`, `shell/OSD.qml`, `components/surfaces/osd/OSDContent.qml`, `components/surfaces/osd/OSDBar.qml`, `components/surfaces/osd/OSDTriggers.qml`, `components/views/Settings/OSDListCard.qml`
+> **Files:** `config/OSDConfig.qml`, `shell/OSD.qml`, `components/surfaces/osd/OSDContent.qml`, `components/surfaces/osd/OSDBar.qml`, `components/surfaces/osd/PipewireVolumeBar.qml`, `components/surfaces/osd/OSDTriggers.qml`, `components/views/Settings/OSDListCard.qml`
 > **Config:** `OSD.*` (reader `OSDConfig`); entries are `definitions/OSDEntry`
 > **Related:** [Brightness](brightness.md), [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Popout registry](../popouts/registry.md), [Dock](dock.md)
 
