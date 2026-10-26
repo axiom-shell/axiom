@@ -14,7 +14,9 @@ This doc covers the three lock modes, how the built-in lock screen's layout of m
 
 ### Under axiom (`axiom lock`)
 Run by `axiom run`, the binary makes locking dependable (`backend/internal/lock`):
-- `axiom lock` (and `axiom ipc lockscreen lock`) asks the shell. It exits 0 only once `shell/Lockscreen.qml`'s session lock is `secure` (the compositor acknowledged it), which `LockManager` reports as `lock.state`.
+- `axiom lock` (and `axiom ipc lockscreen lock`) asks the shell. It exits 0 only once `shell/Lockscreen.qml`'s session lock is `secure` (the compositor acknowledged it), which `LockManager` reports as `lock.state`, with a lock surface on every monitor connected.
+  - The report counts the lock surfaces `Lockscreen.qml` actually built (`LockManager.builtinSurfaces`) against `General.outputs`, so a monitor without one keeps the lock unconfirmed. With no monitor connected the session lock alone confirms it; `WlSessionLock` builds a surface for each monitor connected later.
+  - A stopped shell's last report confirms nothing until the next shell reports.
 - If that doesn't come within 3 s, the binary restarts the shell with `AXIOM_LOCK_ON_START=1`, which locks before anything else shows. If that fails too, `axiom lock` fails: the built-in locker has nothing to fall back on.
 - A shell that dies while locked is restarted at once, locked. The compositor keeps the session locked meanwhile.
 - Nothing goes the other way: `lock.state` only informs, `lockscreen` takes no function but `lock`, and only PAM unlocks.
@@ -25,7 +27,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/lock`
 #### `quickshell` (default)
 - The built-in locker, `shell/Lockscreen.qml`.
   - A `WlSessionLock` (Wayland `ext-session-lock-v1`).
-  - One `WlSessionLockSurface` per screen, showing `surfaces/lockscreen/LockSurface.qml`.
+  - One `WlSessionLockSurface` per Wayland output (Quickshell adds one for an output connected while locked), showing `surfaces/lockscreen/LockSurface.qml`.
 - While locked, the compositor shows only the lock surfaces and sends them all input.
 - If qs dies, the session stays locked (Hyprland's fallback). `misc:allow_session_lock_restore` lets a restarted qs take the lock back.
 - The locked state lives in a `PersistentProperties`, so a QML reload comes back locked.

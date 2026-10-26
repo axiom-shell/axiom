@@ -49,8 +49,11 @@ type State struct {
 type Locker struct {
 	opts Options
 
-	mu      sync.Mutex
-	state   State
+	mu    sync.Mutex
+	state State
+	// gone: the shell that made the last report has stopped, so the
+	// report confirms nothing until the next shell reports
+	gone    bool
 	changed chan struct{} // closed and replaced on every report
 }
 
@@ -73,6 +76,7 @@ func New(opts Options) *Locker {
 func (l *Locker) Report(s State) {
 	l.mu.Lock()
 	l.state = s
+	l.gone = false
 	close(l.changed)
 	l.changed = make(chan struct{})
 	l.mu.Unlock()
@@ -92,12 +96,23 @@ func (l *Locker) ShellStopped() bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.state.Surfaces = 0
+	l.gone = true
 	return l.state.Locked
 }
 
-// confirmed: locked, with a lock surface on every output it knows of.
+// confirmed: the session lock is up, with a lock surface on every output
+// the shell knows of. With no output connected the session lock alone
+// confirms it: the compositor holds the session locked, and the shell
+// builds a lock surface for each output connected later.
 func (s State) confirmed() bool {
-	return s.Locked && s.Surfaces > 0 && s.Surfaces >= s.Outputs
+	return s.Locked && s.Surfaces >= s.Outputs
+}
+
+// confirmed: the running shell's last report confirms the lock.
+func (l *Locker) confirmed() bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return !l.gone && l.state.confirmed()
 }
 
 // Lock locks the session: with the built-in locker, returning nil only
@@ -106,7 +121,7 @@ func (l *Locker) Lock(ctx context.Context) error {
 	if l.opts.Mode != nil && l.opts.Mode() == "none" {
 		return l.ownLocker()
 	}
-	if l.State().confirmed() {
+	if l.confirmed() {
 		return nil
 	}
 	if l.opts.AskShell != nil {
@@ -148,7 +163,7 @@ func (l *Locker) wait(ctx context.Context, d time.Duration) bool {
 	deadline := time.After(d)
 	for {
 		l.mu.Lock()
-		ok, changed := l.state.confirmed(), l.changed
+		ok, changed := !l.gone && l.state.confirmed(), l.changed
 		l.mu.Unlock()
 		if ok {
 			return true

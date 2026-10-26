@@ -56,12 +56,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-24, while reviewing the Go backend branch
 
-### `axiom lock` fails with no screen connected
-- **Where:** `services/session/LockManager.qml` (`_report`), `backend/internal/lock/lock.go` (`State.confirmed`)
-- **What:** `_report` sends `surfaces` and `outputs` from the same number (`Quickshell.screens.length`), so the daemon's `Surfaces >= Outputs` check can never catch a screen without a lock surface, and with no screen connected `confirmed()` needs `Surfaces > 0`, so `axiom lock` reports a failure. Locking should lock the session with no screens connected, and a screen connected while locked should get the lock surface; the shell should report the surfaces it actually built, and the daemon confirm on the session lock with zero outputs.
-- **Size:** small
-- **Found:** 2026-10-24, while reviewing the Go backend branch
-
 ### The shell's socket warns when the daemon re-execs
 - **Where:** `services/core/BackendManager.qml` (its `Socket`)
 - **What:** Every daemon re-exec (each dev-mode rebuild) logs `quickshell.io.socket` `QLocalSocket::PeerClosedError` (a `Socket error for Socket(0x…)`) once: the old image closing the connection reaches the shell as an error, though `BackendManager` reconnects and it's expected. Five in one session's log (`scripts/log.sh --all -g PeerClosed`). Quieting it means telling a close the daemon announced (re-exec, quit) from a real failure, maybe with a notification before the exec.
