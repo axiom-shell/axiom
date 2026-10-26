@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -112,9 +113,11 @@ type harness struct {
 	w      *fakeWriter
 	mode   string
 	modeMu sync.Mutex
-	// kept: the modes KeepMode saved
-	kept   []string
-	pushes chan string
+	// kept: the modes KeepMode saved; keepErr refuses the save (config.json
+	// broken again, the daemon incompatible)
+	kept    []string
+	keepErr error
+	pushes  chan string
 }
 
 func newHarness(t *testing.T, mode string) *harness {
@@ -138,6 +141,9 @@ func newHarness(t *testing.T, mode string) *harness {
 		KeepMode: func(mode string) error {
 			h.modeMu.Lock()
 			defer h.modeMu.Unlock()
+			if h.keepErr != nil {
+				return h.keepErr
+			}
 			h.mode = mode
 			h.kept = append(h.kept, mode)
 			return nil
@@ -630,6 +636,114 @@ func TestLeavingTheHoldKeepsTheModeApplied(t *testing.T) {
 			})
 		}
 	}
+}
+
+// keptSetup: managed applied and in place, the hold left with the file
+// saying detached while KeepMode is refused: managed is kept, not saved yet
+func keptSetup(t *testing.T) (*harness, files) {
+	t.Helper()
+	h := newHarness(t, "")
+	h.keepErr = errors.New("refused")
+	h.m.st.AppliedMode = "managed"
+	f := h.w.files(Inputs{})
+	os.MkdirAll(f.UserDir, 0o755)
+	os.WriteFile(f.ManagedPath, []byte(hyprHeader+" managed f1\n"), 0o644)
+	h.m.approve()
+	h.inputs("f1", "l1", "k1")
+	h.eventually("live", func() bool { return h.state("live") == true })
+	h.changeMode("detached", true)
+	h.eventually("managed kept", func() bool { return h.state("mode") == "managed" })
+	return h, f
+}
+
+// keptSaved: the modes KeepMode saved, and the mode config.json says
+func (h *harness) keptSaved() ([]string, string) {
+	h.modeMu.Lock()
+	defer h.modeMu.Unlock()
+	return slices.Clone(h.kept), h.mode
+}
+
+// stillManaged fails when the managed config was given back
+func stillManaged(t *testing.T, h *harness, f files) {
+	t.Helper()
+	time.Sleep(600 * time.Millisecond)
+	applied := ""
+	h.m.do(context.Background(), func(context.Context) { applied = h.m.st.AppliedMode })
+	if readFile(f.ManagedPath) != hyprHeader+" managed f1\n" || applied != "managed" || h.state("mode") != "managed" {
+		t.Fatalf("gave the managed config back: applied %q, mode %v, managed config %q", applied, h.state("mode"), readFile(f.ManagedPath))
+	}
+}
+
+// A kept mode whose save failed stays in effect through the config events
+// that follow (the file's mode is never applied), and is saved again when
+// the save can succeed: config.json loading again, or the daemon turning
+// compatible; only then does the card's change give the config back
+func TestAKeptModeNotSavedIsRetried(t *testing.T) {
+	t.Parallel()
+	for _, how := range []string{"config.json loads again", "the daemon turns compatible"} {
+		t.Run(how, func(t *testing.T) {
+			t.Parallel()
+			h, f := keptSetup(t)
+			// config.json broken again, an edit from outside, a write by
+			// the shell of another setting: still refused
+			h.changeMode("detached", true)
+			h.changeMode("detached", false)
+			stillManaged(t, h, f)
+			if kept, _ := h.keptSaved(); len(kept) != 0 {
+				t.Fatalf("saved %v", kept)
+			}
+			h.modeMu.Lock()
+			h.keepErr = nil
+			h.modeMu.Unlock()
+			if how == "config.json loads again" {
+				h.m.ConfigChanged(true)
+			} else {
+				h.m.ConfigWritable()
+			}
+			h.eventually("saved", func() bool { kept, _ := h.keptSaved(); return slices.Equal(kept, []string{"managed"}) })
+			stillManaged(t, h, f)
+			h.setMode("detached")
+			h.eventually("given back by the card", func() bool { return readFile(f.ManagedPath) == "-- given back\n" })
+		})
+	}
+}
+
+// The card's change while the kept mode isn't saved is a real choice: it
+// applies, and the kept mode is never saved over it (an edit from outside
+// before it isn't one)
+func TestTheCardDropsAKeptModeNotSaved(t *testing.T) {
+	t.Parallel()
+	h, f := keptSetup(t)
+	h.changeMode("detached", true)
+	stillManaged(t, h, f)
+	h.setMode("included")
+	h.eventually("included", func() bool { return h.state("mode") == "included" })
+	h.eventually("given back", func() bool { return readFile(f.ManagedPath) == "-- given back\n" })
+	h.modeMu.Lock()
+	h.keepErr = nil
+	h.modeMu.Unlock()
+	h.m.ConfigWritable()
+	h.m.ConfigChanged(true)
+	time.Sleep(600 * time.Millisecond)
+	if kept, mode := h.keptSaved(); len(kept) != 0 || mode != "included" || h.state("mode") != "included" {
+		t.Fatalf("saved the kept mode over the card's: saved %v, config %q, mode %v", kept, mode, h.state("mode"))
+	}
+}
+
+// A kept mode not saved outlives a re-exec (the runtime file): the new
+// daemon, often the compatible binary, keeps it in effect and saves it
+func TestAKeptModeNotSavedOutlivesAReexec(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "detached")
+	h.m.st.AppliedMode = "managed"
+	h.m.st.KeptMode = "managed"
+	f := h.w.files(Inputs{})
+	os.MkdirAll(f.UserDir, 0o755)
+	os.WriteFile(f.ManagedPath, []byte(hyprHeader+" managed f1\n"), 0o644)
+	h.m.approve()
+	h.inputs("f1", "l1", "k1")
+	h.eventually("saved", func() bool { kept, _ := h.keptSaved(); return slices.Equal(kept, []string{"managed"}) })
+	stillManaged(t, h, f)
 }
 
 // While the mode isn't known and nothing of axiom's is in the compositor's

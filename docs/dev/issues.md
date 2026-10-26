@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The Compositor card shows the file's mode while a kept mode isn't saved
+- **Where:** `services/compositor/CompositorConfigManager.qml` (`modeFromDaemon`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
+- **What:** Leaving the hold with the daemon incompatible with the tree, the kept mode's save is refused and stays pending; config.json loads, so `ConfigManager.savesBlocked` is false and the card shows `CompositorConfig.mode` (the file's stale mode, say detached) while managed is in effect. `modeFromDaemon` covers only a blocked file; it could also take the daemon's mode while the daemon reports a kept mode pending (a field in `compositor.state`).
+- **Size:** small
+- **Found:** 2026-10-26, while retrying the kept mode's save
+
 ### The polkit agent fails to register on reloads
 - **Where:** `services/session/PolkitManager.qml` (`_registerCheck`)
 - **What:** In the live session the log shows `[PolkitManager] Could not register as the polkit agent` with no other agent named, on most reloads (6 in one session's `scripts/log.sh --all`) and at the start, where Quickshell logs `quickshell.service.polkit.listener` `failed to register listener: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: An authentication agent already exists for the given subject`. `_probe` finds no other agent, so possibly the previous generation's listener (or one left by the daemon's restart) still holds the subject. Not looked into: next step, check `busctl` for the agent's owner across a reload.

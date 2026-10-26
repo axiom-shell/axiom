@@ -231,6 +231,10 @@ func (d *Daemon) reexecSoon(target string) {
 // pushState tells the clients what changed in the hello's answer.
 func (d *Daemon) pushState() {
 	ok, reason := d.compatible()
+	if ok && d.compositor != nil {
+		// A mode the compositor's manager kept but couldn't save is saved now
+		d.compositor.ConfigWritable()
+	}
 	d.server.BroadcastLatest("daemon.state", DaemonState{Compatible: ok, Reason: reason}, subscribedTo(topicDaemon))
 }
 

@@ -24,6 +24,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -63,7 +64,8 @@ type Options struct {
 	Binds       func() any
 	CommitBinds func(binds *jsonx.Array) error
 	// KeepMode saves Compositor.mode as a takeover setting's own card
-	// does: the mode kept on leaving the hold (keptMode)
+	// does: the mode kept on leaving the hold (keptMode), retried while it
+	// fails (ConfigWritable, the next config event)
 	KeepMode func(mode string) error
 	// Push sends the shell a compositor.* push
 	Push func(method string, params any)
@@ -92,9 +94,12 @@ type Manager struct {
 
 	in Inputs
 	// mode: the config's; "" while it isn't known (holding)
-	mode    string
-	lastKey string
-	liveKey string
+	mode string
+	// modeRead: the config's mode at the last config event, to tell the
+	// card's change from another write while a kept mode isn't saved yet
+	modeRead string
+	lastKey  string
+	liveKey  string
 
 	problem         string
 	loaded          bool
@@ -318,6 +323,13 @@ func (m *Manager) SetInputs(in *jsonx.Object) {
 		}
 		if !wasLive {
 			m.mode = m.o.Mode()
+			m.modeRead = m.mode
+			if m.mode != "" && m.st.KeptMode != "" {
+				// A kept mode the file doesn't say yet (a re-exec, often
+				// into the compatible binary): still in effect
+				m.mode = m.st.KeptMode
+				m.saveKept(false)
+			}
 			m.noteHolding()
 			m.debounce.Reset(300 * time.Millisecond)
 		}
@@ -336,7 +348,13 @@ func (m *Manager) ConfigChanged(fromFile bool) {
 		if !m.live() {
 			return
 		}
-		if mode := m.o.Mode(); mode != m.mode {
+		mode := m.o.Mode()
+		read := m.modeRead
+		m.modeRead = mode
+		if m.mode != "" && m.st.KeptMode != "" && m.keptStands(mode, read, fromFile) {
+			return
+		}
+		if mode != m.mode {
 			kept := false
 			if m.mode == "" {
 				mode, kept = m.keptMode(ctx, mode)
@@ -367,15 +385,70 @@ func (m *Manager) keptMode(ctx context.Context, mode string) (string, bool) {
 		}
 	}
 	if applied == "" || applied == mode {
+		if m.st.KeptMode != "" {
+			// One left pending across a re-exec: the file says it now
+			m.st.KeptMode = ""
+			m.st.save()
+		}
 		return mode, false
 	}
 	m.logf("config.json loads again with Compositor.mode %q: keeping %q, applied while it didn't load (change it from Settings › Compositor)", mode, applied)
-	if m.o.KeepMode != nil {
-		if err := m.o.KeepMode(applied); err != nil {
-			m.o.Log.Warn("compositor: saving the mode kept", "mode", applied, "err", err)
-		}
-	}
+	m.st.KeptMode = applied
+	m.saveKept(true)
 	return applied, true
+}
+
+// saveKept saves the kept mode back (KeepMode); while that fails it stays
+// pending (KeptMode, kept across re-execs) and is tried again when a save
+// can succeed: the next config event (config.json loading again, a
+// restore) and the daemon turning compatible (ConfigWritable). first: the
+// first try, whose failure is worth a warning
+func (m *Manager) saveKept(first bool) {
+	err := errors.New("nothing saves it")
+	if m.o.KeepMode != nil {
+		err = m.o.KeepMode(m.st.KeptMode)
+	}
+	if err == nil {
+		m.st.KeptMode = ""
+	} else if first {
+		m.o.Log.Warn("compositor: saving the mode kept failed: tried again once config.json can be saved", "mode", m.st.KeptMode, "err", err)
+	} else {
+		m.o.Log.Debug("compositor: saving the mode kept again", "mode", m.st.KeptMode, "err", err)
+	}
+	m.st.save()
+}
+
+// keptStands: a config event while the kept mode isn't saved yet leaves
+// it in effect, the config's mode (the one read on leaving the hold) never
+// applied, and tries the save again; false when it's done with: saved (the
+// config says it), or the card changed the mode (a write through the store,
+// not the file, changing it: only Compositor.mode's own card can), a real
+// choice the stale kept mode must never overwrite
+func (m *Manager) keptStands(mode, read string, fromFile bool) bool {
+	switch {
+	case mode == m.st.KeptMode:
+		m.st.KeptMode = ""
+		m.st.save()
+		return false
+	case !fromFile && mode != read:
+		m.logf("Compositor.mode changed to %q: no longer saving %q, kept on leaving the hold", mode, m.st.KeptMode)
+		m.st.KeptMode = ""
+		m.st.save()
+		return false
+	}
+	m.saveKept(false)
+	return true
+}
+
+// ConfigWritable tells that config.json can be saved again (the daemon
+// turned compatible with the tree): a kept mode not saved yet is tried
+// again.
+func (m *Manager) ConfigWritable() {
+	m.enqueue(func(ctx context.Context) {
+		if m.live() && m.mode != "" && m.st.KeptMode != "" {
+			m.saveKept(false)
+		}
+	})
 }
 
 // noteHolding logs that the mode isn't known, so no mode is applied

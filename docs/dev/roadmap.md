@@ -123,6 +123,7 @@ Fixed in this phase:
 - [Small backend error and robustness gaps](issues.md#small-backend-error-and-robustness-gaps)
 - [The shell stops reconnecting after a failed attempt](issues.md#the-shell-stops-reconnecting-after-a-failed-attempt)
 - [Schema build gaps](issues.md#schema-build-gaps)
+- [The Compositor card shows the file's mode while a kept mode isn't saved](issues.md#the-compositor-card-shows-the-files-mode-while-a-kept-mode-isnt-saved)
 
 Fixed by backend stage 7 (add the bullets there if missing):
 - [Shell saves carry unsaved settings and every takeover](issues.md#shell-saves-carry-unsaved-settings-and-every-takeover)
