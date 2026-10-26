@@ -484,38 +484,86 @@ func TestAConfigGivenBackMeanwhileIsntWrittenOver(t *testing.T) {
 	}
 }
 
-// While the mode isn't known (config.json didn't load at the start) nothing
-// applied changes: a managed config is never given back, whether the
-// runtime file remembers managed or not (gone after a reboot); once the
-// file is fixed, its mode applies
-func TestAnUnknownModeChangesNothing(t *testing.T) {
+// While the mode isn't known (config.json didn't load at the start) a
+// managed config or an include of axiom's is never touched: a managed
+// config is never given back, whether the runtime file remembers managed
+// or not (gone after a reboot), and the mode applied stays; once the file
+// is fixed, its mode applies
+func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 	t.Parallel()
-	for _, applied := range []string{"managed", ""} {
-		t.Run("applied "+applied, func(t *testing.T) {
+	for _, c := range []struct {
+		name, applied string
+		managedFile   bool
+		included      bool
+	}{
+		{"applied managed", "managed", true, false},
+		{"managed config, nothing applied", "", true, false},
+		{"applied managed, config gone", "managed", false, false},
+		{"include loaded", "included", false, true},
+		{"include loaded, nothing applied", "", false, true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			h := newHarness(t, "")
-			h.m.st.AppliedMode = applied
+			h.m.st.AppliedMode = c.applied
+			h.w.loaded = c.included
 			f := h.w.files(Inputs{})
 			os.MkdirAll(f.UserDir, 0o755)
-			os.WriteFile(f.ManagedPath, []byte(hyprHeader+" managed f0\n"), 0o644)
+			managed := ""
+			if c.managedFile {
+				managed = hyprHeader + " managed f0\n"
+				os.WriteFile(f.ManagedPath, []byte(managed), 0o644)
+			}
 			h.inputs("f1", "l1", "k1", "borders")
 			h.w.reloadCh <- ipc.Reload{}
 			time.Sleep(600 * time.Millisecond)
-			if calls := h.w.seen(); len(calls) != 0 || readFile(f.ManagedPath) != hyprHeader+" managed f0\n" {
+			if calls := h.w.seen(); len(calls) != 0 || readFile(f.ManagedPath) != managed {
 				t.Fatalf("changed the compositor's config: %v, %q", calls, readFile(f.ManagedPath))
 			}
-			if h.status() != "pending" {
-				t.Fatalf("status %s", h.status())
+			if h.status() != "pending" || h.m.st.AppliedMode != c.applied {
+				t.Fatalf("status %s, applied %q", h.status(), h.m.st.AppliedMode)
 			}
-			h.setMode("managed")
-			h.eventually("the managed config rewritten", func() bool { return readFile(f.ManagedPath) == hyprHeader+" managed f1\n" })
+			if c.managedFile {
+				h.setMode("managed")
+				h.eventually("the managed config rewritten", func() bool { return readFile(f.ManagedPath) == hyprHeader+" managed f1\n" })
+			}
 		})
 	}
 }
 
-// managed read from the file (one that didn't load at the start, fixed from
-// outside) has no card open: the notification asks for the approval, which
-// it never is itself; the shell's save doesn't notify (the card asks)
+// While the mode isn't known and nothing of axiom's is in the compositor's
+// config, the defaults' runtime layer applies, again after a reload drops
+// it, and the mode applied stays
+func TestAnUnknownModeAppliesTheDefaultsLayer(t *testing.T) {
+	t.Parallel()
+	for _, applied := range []string{"", "detached"} {
+		t.Run("applied "+applied, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, "")
+			h.m.st.AppliedMode = applied
+			h.inputs("f1", "l1", "k1")
+			h.eventually("the runtime layer", h.called("runtime:live l1"))
+			h.w.reloadCh <- ipc.Reload{}
+			h.eventually("again after a reload", func() bool {
+				n := 0
+				for _, c := range h.w.seen() {
+					if c == "runtime:live l1" {
+						n++
+					}
+				}
+				return n >= 2
+			})
+			f := h.w.files(Inputs{})
+			if readFile(f.ManagedPath) != "" || readFile(f.IncludePath) != "" || h.m.st.AppliedMode != applied {
+				t.Fatalf("set up a mode: applied %q", h.m.st.AppliedMode)
+			}
+			if h.status() != "pending" {
+				t.Fatalf("status %s", h.status())
+			}
+		})
+	}
+}
+
 func TestManagedFromTheFileNotifies(t *testing.T) {
 	t.Parallel()
 	for _, fromFile := range []bool{true, false} {

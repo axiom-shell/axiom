@@ -54,7 +54,9 @@ type Options struct {
 	Actions     *actions.Table
 	// Schema is the config's schema; Mode the config's Compositor.mode,
 	// "" while it isn't known (config.json didn't load at the start): the
-	// manager then holds, changing nothing it applied; Binds its
+	// manager then holds, changing no mode it applied (the defaults'
+	// runtime layer only while nothing of axiom's is in the compositor's
+	// config); Binds its
 	// Keybinds.binds; CommitBinds saves Keybinds.binds
 	Schema      func() any
 	Mode        func() string
@@ -339,11 +341,36 @@ func (m *Manager) ConfigChanged(fromFile bool) {
 	})
 }
 
-// noteHolding logs that the mode isn't known, so nothing is applied
+// noteHolding logs that the mode isn't known, so no mode is applied
 func (m *Manager) noteHolding() {
 	if m.mode == "" {
 		m.logf("config.json doesn't load: leaving the compositor's config as it is until it's fixed")
 	}
+}
+
+// axiomsInConfig: a managed config or an include of axiom's is in the
+// compositor's config (or was set up last), which holding never touches
+func (m *Manager) axiomsInConfig(ctx context.Context) bool {
+	if m.st.AppliedMode == "managed" || m.configIsOurs() {
+		return true
+	}
+	loaded, _ := m.w.checkLoaded(ctx, m.in, "included")
+	return loaded
+}
+
+// applyHolding: while the mode isn't known, the defaults' runtime layer,
+// as detached mode applies it, only when nothing of axiom's is in the
+// compositor's config; no mode is set up or given back, and the applied
+// mode stays
+func (m *Manager) applyHolding(ctx context.Context) {
+	if m.axiomsInConfig(ctx) {
+		return
+	}
+	// The reload's configReloaded applies the layer again
+	if m.undoLive(ctx) {
+		return
+	}
+	m.runtimeApply(ctx)
 }
 
 // checkKey re-applies the layer when what it's made of changed
@@ -520,9 +547,10 @@ func (m *Manager) apply(ctx context.Context) {
 		return
 	}
 	// The mode isn't known (config.json didn't load at the start, and
-	// running on the defaults would read detached): what was applied stays,
+	// running on the defaults would read detached): the mode applied stays,
 	// a managed config never given back, until the file is fixed
 	if m.mode == "" {
+		m.applyHolding(ctx)
 		return
 	}
 	// Detached, the reload's configReloaded applies the layer again. The
@@ -928,7 +956,18 @@ func (m *Manager) undoLive(ctx context.Context) bool {
 // runtime, in every mode (a reload on every step of a setting stalls the
 // desktop); turning a part off goes through apply()
 func (m *Manager) liveChanged(ctx context.Context) {
-	if !m.live() || m.mode == "" {
+	if !m.live() {
+		return
+	}
+	if m.mode == "" {
+		if m.axiomsInConfig(ctx) {
+			return
+		}
+		if m.w.liveByFile() || len(m.droppedParts()) > 0 {
+			m.apply(ctx)
+			return
+		}
+		m.applyLive(ctx)
 		return
 	}
 	if m.w.liveByFile() || m.st.AppliedMode != m.mode || len(m.droppedParts()) > 0 {
@@ -989,13 +1028,12 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 	m.w.noteReload()
 	m.st.LiveApplied = ""
 	m.st.save()
-	if m.mode == "" {
-		return
-	}
 	if m.w.configReloaded(ctx, m.in) {
 		m.checkKey()
 	}
-	if m.mode == "detached" {
+	// Holding, apply() applies the defaults' layer again when nothing of
+	// axiom's is in the config
+	if m.mode == "detached" || m.mode == "" {
 		m.debounce.Reset(300 * time.Millisecond)
 	} else {
 		m.checkLoaded(ctx)
