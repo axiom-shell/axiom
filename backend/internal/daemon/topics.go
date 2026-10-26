@@ -1,6 +1,8 @@
 package daemon
 
 import (
+	"context"
+
 	"github.com/axiom-shell/axiom/backend/internal/claudeusage"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/sysmon"
@@ -20,6 +22,7 @@ func (d *Daemon) topicsPart() part {
 			for _, src := range d.sources() {
 				topics.Register(reg, d.topics, src)
 			}
+			d.tailscaleMethods(reg, tailscale.Options{})
 		},
 	}
 }
@@ -32,4 +35,18 @@ func (d *Daemon) sources() []topics.Source {
 		sysmon.Source(sysmon.Options{Home: d.opts.Getenv("HOME")}),
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
 	}, d.opts.topics...)
+}
+
+// tailscaleMethods: `tailscale.up` / `tailscale.down`, the popout's
+// Connect and Disconnect, each fetching the topic again after.
+func (d *Daemon) tailscaleMethods(reg *rpc.Registry, o tailscale.Options) {
+	connect := func(up bool) func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
+		return func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
+			err := tailscale.Connect(ctx, o, up)
+			d.topics.Refresh("tailscale")
+			return struct{}{}, err
+		}
+	}
+	rpc.Handle(reg, "tailscale.up", connect(true))
+	rpc.Handle(reg, "tailscale.down", connect(false))
 }

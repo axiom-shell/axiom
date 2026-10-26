@@ -43,10 +43,11 @@ type Source struct {
 }
 
 // MinInterval is the floor of every source whose interval comes from a
-// setting. No interval setting's schema minimum is below it
+// setting: 1 ms, no real floor, so each setting's schema minimum is the
+// real limit. No interval setting's schema minimum is below it
 // (TestIntervalSettingsMeetMinInterval), so every value the settings
 // offer is polled at, never silently raised to a floor.
-const MinInterval = 250 * time.Millisecond
+const MinInterval = time.Millisecond
 
 // Subscriber is where states go: an *rpc.Conn.
 type Subscriber interface {

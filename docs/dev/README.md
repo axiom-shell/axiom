@@ -136,6 +136,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [screenshots-recording](features/screenshots-recording.md): screenshots, recording, the picker.
 - [brightness](features/brightness.md): backlight / DDC, the module, OSD bars.
 - [networking-bluetooth](features/networking-bluetooth.md): Wi-Fi, wired, Bluetooth.
+- [tailscale](features/tailscale.md): the `tailscale` topic, Connect / Disconnect, the widget, popout and module.
 - [idle](features/idle.md): hypridle and idle inhibit.
 - [polkit](features/polkit.md): the polkit agent.
 - [onboarding](features/onboarding.md): the first-run onboarder.

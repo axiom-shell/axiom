@@ -14,7 +14,7 @@ Everything below is one shell and one config, and everything is set from inside 
 - **26 widget types:**
   - Workspaces, Window, Time, NextEvent (the next event from your calendars), Media
   - Volume, Microphone, Network, Bluetooth, Battery, SystemStats, SystemTray, Notifications
-  - Updates, Weather, Tailscale, KeyboardLayout, IdleInhibitor, Privacy
+  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices and Connect / Disconnect), KeyboardLayout, IdleInhibitor, Privacy
   - ScreenRecord (shown while recording; click to stop), Claude usage (your Claude Code plan limits, for one or more logins), Todo (open count), Pomodoro (the time left), Timer & stopwatch
   - Button (runs any command, opens a page or toggles an edge menu) and Separator
 - **Popouts** grow out of the bar, or out of the screen border, with filleted corners. Widgets open theirs on hover, and Buttons can run their action on hover too.
@@ -72,12 +72,12 @@ Set a style once under **Settings → Look & Feel → Bar widgets**, and give an
 <p align="center"><img src="../assets/screenshots/overlay-home.webp" alt="The overlay's Home page: Wi-Fi, quick actions, media, notifications, a clock and calendar, the mixer, network, weather and disks" width="900"></p>
 
 - A full-screen overlay made of pages. Each page is a grid you place modules on, with gaps wherever you like. Pages have their own name and icon in the navigator.
-- **41 modules**, and every one adapts to its size and shape (square, wide or tall, down to a compact figure):
+- **42 modules**, and every one adapts to its size and shape (square, wide or tall, down to a compact figure):
 
   | Group | Modules |
   | --- | --- |
   | Media and sound | Now playing, Audio mixer, Volume dials |
-  | System | System graphs, Top processes, Disks, Battery, Updates, Network |
+  | System | System graphs, Top processes, Disks, Battery, Updates, Network, Tailscale |
   | Controls | Quick actions (toggles, power, pin), Screenshot, Screen recording (region or screen, with sound, recent recordings), Night light, Brightness, Bluetooth devices, Wi-Fi networks, Favourite apps |
   | Time and plans | Clock (digital, stacked or analog, in any time zone), World clocks, Clock & calendar, Calendar, Agenda, Weather |
   | Workspace | Workspaces map, Notifications |

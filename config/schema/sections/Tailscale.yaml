@@ -1,0 +1,27 @@
+# The Tailscale section of the config (config.json's "Tailscale").
+
+type: object
+x-category: Modules
+x-scope: personal
+title: Tailscale
+description: How every Tailscale widget and module reads and shows the tailnet.
+additionalProperties: false
+properties:
+  interval:
+    type: integer
+    title: Check interval
+    x-unit: ms
+    default: 10000
+    minimum: 1000
+    maximum: 60000
+    description: How often `tailscale status` is read while something shows it.
+  showOffline:
+    type: boolean
+    title: Show offline devices
+    default: true
+    description: List the tailnet's offline devices too, after the online ones.
+  actions:
+    type: boolean
+    title: Connect and disconnect buttons
+    default: true
+    description: 'Show Connect / Disconnect (`tailscale up` / `down`). They need `sudo tailscale set --operator=$USER` once.'

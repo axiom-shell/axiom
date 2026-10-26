@@ -13,7 +13,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
 
 ### Polled data: acquire / release
 (Rule: AGENTS.md › Services, "Anything polled".)
-- **SystemManager**: CPU/memory/temp/GPU/disk stats, sampled by axiom (the `system` topic, `backend/internal/sysmon`, at the shortest interval asked, at most every 250 ms).
+- **SystemManager**: CPU/memory/temp/GPU/disk stats, sampled by axiom (the `system` topic, `backend/internal/sysmon`, at the shortest interval asked; the setting's schema minimum is the only floor).
   - Reference-counted through a `ConsumerRegistry` (shared with UpdatesManager; identical re-registrations are no-ops).
   - Consumers call `acquire(owner, {interval, metrics, diskPaths})` / `release(owner)`.
   - Go reads only the union of requested metrics from /proc and /sys (no process but `nvidia-smi`, only without an AMD card); disk usage is re-read once a minute. Each push is one sample, the metrics asked for and an `at` time, so every sample is pushed.
@@ -29,7 +29,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
   - `ClaudeUsageManager`: `{ accounts, interval }`, both from the `ClaudeUsage` section; fetched by axiom (the `claudeUsage` topic, `backend/internal/claudeusage`: the token is read in Go and never reaches the shell; each account at most once per interval, across restarts, with backoff).
   - `StopwatchManager`: `acquire(owner, interval)`, `now` ticking at the shortest interval asked while the timer or stopwatch runs; the timer's end runs with no consumers.
   - `PomodoroManager`: `acquire(owner)` with no request, for its once-a-second `now`; the phase's end runs with no consumers (created from `_services`). See [Todo and pomodoro](../features/todo-pomodoro.md).
-  - `TailscaleManager`: `available`, `backendState`/`connected`, `tailnetName`, `ip`, polled by axiom (the `tailscale` topic, at the widget's interval: `backend/internal/tailscale`).
+  - `TailscaleManager`: `available`, `backendState`/`connected`, `tailnetName`, `ip`, polled by axiom (the `tailscale` topic, at `TailscaleConfig.interval`: `backend/internal/tailscale`).
   - `CommandManager`: `outputs[command]`, shared by identical commands (e.g. a Button's label).
 - **Polled by the daemon:** a service whose side effect moved to axiom keeps the same `acquire` / `release` and its `ConsumerRegistry`, but instead of a Timer it hands the merged request to `BackendManager.acquire(topic, request)` while `_registry.active` (and `release(topic)` once it isn't), and fills its properties from `BackendManager.listen("<topic>.state", …)` ([protocol](../backend/protocol.md) › Polled topics).
 - **Widget side:** hold the request in a `readonly property var …Request` built from `properties`; acquire it in `Component.onCompleted` and in `on…RequestChanged`; release in `onDestruction`.

@@ -11,7 +11,7 @@ Each folder is its own QML module (`import qs.services.<folder>`); a file sees i
 - `session/`: locking, auth, greeter and greetd, onboarding, polkit, idle.
 - `system/`: hardware and OS data: audio, network, bluetooth, battery, brightness, media, notifications, clipboard, updates.
 - `ui/`: state of the shell's own surfaces and their editors: bars, popouts, overlay, edge menus, docks, launcher, settings, wallpaper, blur.
-- `apps/`: features holding their own data: calendar, chat, notes, todos, timers, weather, screenshots, community setups.
+- `apps/`: features holding their own data and integrations with outside services: calendar, chat, notes, todos, timers, weather, screenshots, community setups, Claude usage, Tailscale.
 
 When a roadmap stage empties a service, fold or delete it in that stage's change (`docs/dev/backend/roadmap.md`), not here.
 

@@ -2,7 +2,7 @@
 
 > **Use when:** a feature needs state, a process, polling, file writes or Hyprland dispatches. UI never does those itself.
 > **Copy from:**
-> - `services/system/TailscaleManager.qml` with `backend/internal/tailscale/`: polled state through a `ConsumerRegistry`, fetched by axiom (a polled topic); its consumer is `components/bar/widgets/Tailscale/Tailscale.qml`. The preferred shape for anything polled.
+> - `services/apps/TailscaleManager.qml` with `backend/internal/tailscale/`: polled state through a `ConsumerRegistry`, fetched by axiom (a polled topic); its consumer is `components/bar/widgets/Tailscale/Tailscale.qml`. The preferred shape for anything polled.
 > - The skeleton below: the same API polled in QML, its command through `CommandManager.run`, for what can't move to the daemon yet.
 > - `services/session/IdleManager.qml`: an IPC handler, state kept across reloads in `PersistentProperties`, and a daemon push (`idle.state`).
 > **Docs:** [services-pattern](../dev/core/services-pattern.md), `services/AGENTS.md`, generated API `docs/dev/generated/api/<Name>.md`

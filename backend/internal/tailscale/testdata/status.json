@@ -1,10 +1,74 @@
 {
   "Version": "1.104.1",
+  "TUN": true,
   "BackendState": "Running",
+  "HaveNodeKey": true,
+  "AuthURL": "",
   "TailscaleIPs": ["100.64.0.7", "fd7a:115c:a1e0::7"],
   "Self": {
+    "ID": "1",
     "HostName": "laptop",
-    "TailscaleIPs": ["100.64.0.7", "fd7a:115c:a1e0::7"]
+    "DNSName": "laptop.example.ts.net.",
+    "OS": "linux",
+    "TailscaleIPs": ["100.64.0.7", "fd7a:115c:a1e0::7"],
+    "CurAddr": "",
+    "Relay": "fra",
+    "LastSeen": "0001-01-01T00:00:00Z",
+    "Online": true,
+    "ExitNode": false,
+    "ExitNodeOption": false,
+    "Active": false
   },
-  "CurrentTailnet": {"Name": "example.ts.net", "MagicDNSSuffix": "example.ts.net"}
+  "Health": ["Some peers are advertising routes but --accept-routes is false"],
+  "MagicDNSSuffix": "example.ts.net",
+  "CurrentTailnet": {"Name": "example.ts.net", "MagicDNSSuffix": "example.ts.net", "MagicDNSEnabled": true},
+  "Peer": {
+    "nodekey:aa": {
+      "HostName": "Phone",
+      "DNSName": "phone.example.ts.net.",
+      "OS": "android",
+      "TailscaleIPs": ["100.64.0.9"],
+      "Addrs": null,
+      "CurAddr": "",
+      "Relay": "fra",
+      "RxBytes": 0,
+      "TxBytes": 0,
+      "LastSeen": "2026-10-20T08:30:00Z",
+      "Online": false,
+      "ExitNode": false,
+      "ExitNodeOption": false,
+      "Active": false
+    },
+    "nodekey:bb": {
+      "HostName": "nas",
+      "DNSName": "nas.example.ts.net.",
+      "OS": "linux",
+      "TailscaleIPs": ["100.64.0.2", "fd7a:115c:a1e0::2"],
+      "CurAddr": "192.0.2.10:41641",
+      "Relay": "fra",
+      "RxBytes": 2048,
+      "TxBytes": 1024,
+      "LastSeen": "0001-01-01T00:00:00Z",
+      "Online": true,
+      "ExitNode": true,
+      "ExitNodeOption": true,
+      "Active": true
+    },
+    "nodekey:cc": {
+      "HostName": "desktop",
+      "DNSName": "Desktop.example.ts.net.",
+      "OS": "windows",
+      "TailscaleIPs": ["100.64.0.3"],
+      "CurAddr": "",
+      "Relay": "ams",
+      "RxBytes": 512,
+      "TxBytes": 256,
+      "LastSeen": "0001-01-01T00:00:00Z",
+      "Online": true,
+      "ExitNode": false,
+      "ExitNodeOption": false,
+      "Active": true
+    }
+  },
+  "User": {}
 }

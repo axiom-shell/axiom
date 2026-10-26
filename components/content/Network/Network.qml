@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.services.apps
 import qs.services.system
 import qs.components.methods
 import qs.components.reusable
@@ -27,9 +28,7 @@ Card {
       "history": true,
       "interval": 1000
     });
-    TailscaleManager.acquire(root, {
-      "interval": 30000
-    });
+    TailscaleManager.acquire(root);
   }
   Component.onDestruction: {
     SystemManager.release(root);
