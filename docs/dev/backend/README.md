@@ -37,6 +37,7 @@
   - Loading: format 1 through the frozen migrations and the conversion to format 2 (the file kept as `config.format1.json`), then the format-2 steps (`migrate/steps`), with defaults written on a first run. A file that doesn't load blocks saves until fixed. Edits made outside are watched; the store's own writes are recognised.
   - Writing: path ops (keys and `{id}` selectors, never positions), validation, and takeover settings refused without `takeover`. A replace or restore keeps them (making a section it lacks, so the defaults can't reset one); over a file that didn't load at the start, the values that file held, not the defaults the store runs on.
   - Outside edits are told from its own writes by the bytes last written or read, so undoing a broken edit back to them is read again.
+  - An outside edit never changes a takeover setting (`holdTakeovers`): the value in effect is kept, each key ignored is logged, and the file is written back with it.
   - Writes are atomic and keep a symlinked config a symlink.
 - **The shell's side:**
   - `BackendManager` (the connection, hello, reconnect; `compatible` and `dev` from the hello and its pushes).

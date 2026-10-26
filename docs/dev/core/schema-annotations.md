@@ -64,7 +64,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-wide: true` (field): the settings card the field lands on spans both columns (`SchemaLayout.groups`' `wide`). Put it on the field that needs the room, usually an array of objects (chat providers, Hyprland curves, session environment). See [Settings page](settings-page.md) › Columns.
 - `x-applyOnSave`: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
 - `x-snapshot: true`: a machine setting a saved snapshot carries too (the wallpaper setup: wallpapers, folder, mode, rotation, light/dark wallpapers, theme schedule), since a snapshot restores on the PC it was saved on. Exports and examples still leave it out. See [Saved configs and sharing](saved-configs-sharing.md).
-- `x-takeover: true`: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter). Loading or importing a config never changes it; only its own card does. See [Saved configs and sharing](saved-configs-sharing.md).
+- `x-takeover: true`: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter). Loading or importing a config, or editing config.json from outside while axiom runs, never changes it; only its own card does. See [Saved configs and sharing](saved-configs-sharing.md).
 
 ### Controls
 - `x-options`: a dynamic option list.

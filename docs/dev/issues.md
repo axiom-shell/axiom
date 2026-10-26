@@ -122,12 +122,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
-### An outside edit of config.json can release a managed compositor config
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`apply`, `_leave`), `services/core/ConfigManager.qml` (its file-watch reload)
-- **What:** Takeover settings (`x-takeover`) are kept from changing only by `SavedConfigsManager`'s load and import. Writing `config.json` from outside while axiom runs, without `Compositor.mode` or with another mode, reloads it; `apply()` takes that as a switch away from managed and releases the compositor's config (`writer.release()`). Seen 2026-10-20: a saved example copied over `config.json` gave `hyprland.lua` back. A hand edit, a sync tool or a restored backup would do the same. A possible guard: hold every `x-takeover` value on a plain file reload, and change one only through its own card.
-- **Size:** small
-- **Found:** 2026-10-20, while testing popout fixes on saved configs
-
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
 - **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Which surface it is hasn't been found yet: next step, reproduce with a nested compositor dropping its output and bisect by commenting out surfaces in `shell.qml`.

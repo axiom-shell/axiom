@@ -346,3 +346,44 @@ func TestSubscriberMayWrite(t *testing.T) {
 		t.Errorf("revisions %v", revisions)
 	}
 }
+
+// An edit made outside (a saved config copied over the file, here one
+// without the Idle section) changes the rest but never a takeover setting:
+// the one in effect stays, and is written back so the next start loads it.
+func TestReloadHoldsTakeovers(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir)
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), true)}, SetOptions{Takeover: true}); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go s.Watch(ctx)
+	time.Sleep(50 * time.Millisecond)
+
+	path := filepath.Join(dir, FileName)
+	cfg, _ := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Delete("Idle")
+	edited.Value("Battery").(*jsonx.Object).Set("lowThreshold", 9.0)
+	os.WriteFile(path, jsonx.Marshal(edited), 0o600)
+	waitFor(t, func() bool {
+		cfg, _ := s.Config()
+		return cfg.Value("Battery").(*jsonx.Object).Value("lowThreshold") == 9.0
+	})
+	if cfg, st := s.Config(); cfg.Value("Idle").(*jsonx.Object).Value("enabled") != true || st.Blocked {
+		t.Error("an outside edit changed a takeover")
+	}
+	onDisk, _, err := Peek(Options{Dir: dir, Pipeline: pipeline(t)})
+	if err != nil || onDisk.Value("Idle").(*jsonx.Object).Value("enabled") != true {
+		t.Errorf("the kept takeover wasn't written back: %v", err)
+	}
+	// Its own card still changes it
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), false)}, SetOptions{Takeover: true}); err != nil {
+		t.Fatal(err)
+	}
+	if cfg, _ := s.Config(); cfg.Value("Idle").(*jsonx.Object).Value("enabled") != false {
+		t.Error("the card's change didn't apply")
+	}
+}

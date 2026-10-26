@@ -284,7 +284,7 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 }
 
 // Watch reloads the file whenever something else changes it, until ctx
-// ends.
+// ends. A reload keeps every x-takeover setting as it is (holdTakeovers).
 func (s *Store) Watch(ctx context.Context) error {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -463,6 +463,7 @@ func (s *Store) reload() {
 		s.opts.Log.Warn("the config was edited into one that doesn't load: keeping the last good one, saves blocked", "issues", len(problems))
 	} else {
 		s.state.Blocked, s.state.Issues = false, nil
+		loaded = s.holdTakeovers(loaded)
 		s.fileTakeovers = nil
 		if !jsonx.Equal(loaded, s.config) {
 			s.config = loaded
@@ -474,6 +475,38 @@ func (s *Store) reload() {
 	}
 	s.queue(ev)
 	s.mu.Unlock()
+}
+
+// holdTakeovers is loaded (an edit made outside) with every x-takeover
+// setting as it is in effect: only its own card changes one, so a hand
+// edit, a sync tool or a backup copied over the file never releases a
+// managed compositor config or swaps the locker. A setting held is logged
+// and written back, so the file says what is in effect and the next start
+// loads the same (s.mu held).
+func (s *Store) holdTakeovers(loaded *jsonx.Object) *jsonx.Object {
+	base := s.takeoverBase()
+	var held []string
+	for _, path := range s.takeovers {
+		before, _ := at(base, path)
+		after, _ := at(loaded, path)
+		if !jsonx.Equal(before, after) {
+			held = append(held, joinPath(path))
+		}
+	}
+	if len(held) == 0 {
+		return loaded
+	}
+	kept, _ := share.KeepTakeovers(loaded, base, s.takeovers).(*jsonx.Object)
+	for _, path := range held {
+		s.opts.Log.Warn("config.json was edited from outside: ignored the change to a setting that takes something over on this PC; change it from its own card", "key", path)
+	}
+	out := jsonx.Marshal(kept)
+	if err := fsx.WriteFile(s.path, out, 0o600); err != nil {
+		s.opts.Log.Error("writing back the takeover settings kept", "err", err)
+	} else {
+		s.written = out
+	}
+	return kept
 }
 
 // queue adds ev to the events to deliver; called holding changeMu and mu,
@@ -621,6 +654,7 @@ func (s *Store) Reschema(p config.Pipeline) {
 		ev = Event{State: s.state}
 	} else {
 		s.state.Blocked, s.state.Issues = false, nil
+		loaded = s.holdTakeovers(loaded)
 		s.config = loaded
 		s.fileTakeovers = nil
 		s.state.Revision++
