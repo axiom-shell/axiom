@@ -795,7 +795,7 @@ class KnownIssues(unittest.TestCase):
 
 ### A file's warning
 - **Where:** `services/Thing.qml`
-- **What:** logs `Cannot read property` at its binding
+- **What:** logs `Cannot read property` at its binding, and warns `the connection closed`
 - **Size:** trivial
 - **Found:** 2026-10-16, while testing
 
@@ -811,6 +811,8 @@ class KnownIssues(unittest.TestCase):
             "  WARN quickshell.I3.ipc: I3 event socket disconnected.",
             "  WARN quickshell.other: I3 event socket disconnected.",
             "  WARN quickshell.I3.ipc: a new failure",
+            "  WARN qml: [Thing] Failed to fetch: the connection closed",
+            "  WARN qml: [Other] Failed to fetch: the connection closed",
         ]) + "\n"
         done = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "known_issues.py")], input=log, capture_output=True,
                               text=True, timeout=30, env={**os.environ, "AXIOM_ISSUES": str(issues)})
@@ -820,6 +822,8 @@ class KnownIssues(unittest.TestCase):
         self.assertTrue(lines[2].endswith("(known: issues.md › Qt's own warning)"))
         self.assertNotIn("known", lines[3])
         self.assertNotIn("known", lines[4], "the category alone isn't the warning")
+        self.assertTrue(lines[5].endswith("(known: issues.md › A file's warning)"), "a [Tag] names its file")
+        self.assertNotIn("known", lines[6])
 
 
 class CheckSizes(unittest.TestCase):

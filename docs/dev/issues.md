@@ -13,7 +13,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ```
 ### <Short title>
 - **Where:** `path/File.qml` (symbol, or several paths)
-- **What:** what's wrong and the evidence (log line, grep count, failing case); quote a log warning's message in backticks so verify.sh marks it known (one from Qt or Quickshell that names no file: quote its category too, `quickshell.I3.ipc`)
+- **What:** what's wrong and the evidence (log line, grep count, failing case); quote a log warning's message in backticks so verify.sh marks it known (when it comes from a file **Where** cites, by its `@path` or a `[Name]` tag; one from Qt or Quickshell that names no file: quote its category too, `quickshell.I3.ipc`)
 - **Size:** trivial | small | needs a plan (designed first: the roadmap's Items that need a plan)
 - **Found:** YYYY-MM-DD, while <task>
 ```
@@ -57,7 +57,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-24, while reviewing the Go backend branch
 
 ### The shell's socket warns when the daemon re-execs
-- **Where:** `services/core/BackendManager.qml` (its `Socket`)
+- **Where:** `services/core/BackendManager.qml` (its `Socket`), `services/system/MediaManager.qml` (a request in flight)
 - **What:** Every daemon re-exec (each dev-mode rebuild) logs `quickshell.io.socket` `QLocalSocket::PeerClosedError` (a `Socket error for Socket(0x…)`) once: the old image closing the connection reaches the shell as an error, though `BackendManager` reconnects and it's expected. Five in one session's log (`scripts/log.sh --all -g PeerClosed`). Quieting it means telling a close the daemon announced (re-exec, quit) from a real failure, maybe with a notification before the exec. A request in flight at that moment fails and warns as well: `the connection to axiom closed` (seen from `MediaManager`'s album art fetch).
 - **Size:** small
 - **Found:** 2026-10-24, while moving the compositor takeover into the binary
