@@ -322,6 +322,20 @@ func TestWritableFollowsDevMode(t *testing.T) {
 	}
 }
 
+func TestEmbeddedSchemaMatch(t *testing.T) {
+	t.Parallel()
+	hash := buildinfo.SchemaHash([]byte(`{"type":"object"}`))
+	if !embeddedMatches(hash, hash) {
+		t.Error("the embedded schema doesn't match itself")
+	}
+	if embeddedMatches(hash, buildinfo.SchemaHash([]byte(`{}`))) {
+		t.Error("another schema matches")
+	}
+	if embeddedMatches("", hash) {
+		t.Error("a missing embedded schema counts as this binary's")
+	}
+}
+
 func TestHandoffIsChecked(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {

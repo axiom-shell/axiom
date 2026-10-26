@@ -115,7 +115,6 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its two entries are linked here and fixed there.
 
 Fixed in this phase:
-- [A missing embedded schema counts as this binary's](issues.md#a-missing-embedded-schema-counts-as-this-binarys)
 - [BackendManager's listeners and reconnect are fragile](issues.md#backendmanagers-listeners-and-reconnect-are-fragile)
 - [An outside edit of config.json can release a managed compositor config](issues.md#an-outside-edit-of-configjson-can-release-a-managed-compositor-config)
 - [Any change of the mode to managed approves the takeover](issues.md#any-change-of-the-mode-to-managed-approves-the-takeover)
