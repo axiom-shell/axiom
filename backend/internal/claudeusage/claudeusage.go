@@ -125,7 +125,7 @@ func Source(o Options) topics.Source {
 	u := &usage{o: o, creds: map[string]time.Time{}}
 	return topics.Source{
 		Name:      "claudeUsage",
-		Floor:     topics.MinInterval,
+		Floor:     time.Minute,
 		Default:   time.Minute,
 		OnRefresh: func() { u.forced.Store(true) },
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {

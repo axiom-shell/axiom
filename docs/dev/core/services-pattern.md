@@ -13,14 +13,14 @@ How `services/` is built: one singleton per domain, owning state and side effect
 
 ### Polled data: acquire / release
 (Rule: AGENTS.md › Services, "Anything polled".)
-- **SystemManager**: CPU/memory/temp/GPU/disk stats, sampled by axiom (the `system` topic, `backend/internal/system`, at most every 500 ms).
+- **SystemManager**: CPU/memory/temp/GPU/disk stats, sampled by axiom (the `system` topic, `backend/internal/system`, at the shortest interval asked, at most every 250 ms).
   - Reference-counted through a `ConsumerRegistry` (shared with UpdatesManager; identical re-registrations are no-ops).
   - Consumers call `acquire(owner, {interval, metrics, diskPaths})` / `release(owner)`.
   - Go reads only the union of requested metrics from /proc and /sys (no process but `nvidia-smi`, only without an AMD card); disk usage is re-read once a minute. Each push is one sample, the metrics asked for and an `at` time, so every sample is pushed.
   - Stops entirely with no consumers.
   - With `history: true` it keeps 60-sample ring buffers in QML, one entry per push (see [Writing modules](../overlay/writing-modules.md)).
 - **UpdatesManager**: pending package (and, on Arch, AUR) updates shared by every Updates widget and module (same acquire/release pattern; the AUR helper is the `Updates` section's, `UpdatesConfig.activeAurHelper`).
-  - Checked by axiom (the `updates` topic, `backend/internal/updates`, at most every minute): the request carries the distribution's `Packages.updates` entry (`checkupdates` on Arch, `dnf check-update` on Fedora), which Go runs and parses; on one with none, `supported` is false and nothing is subscribed (the widget hides, the card says so).
+  - Checked by axiom (the `updates` topic, `backend/internal/updates`, at the shortest interval asked): the request carries the distribution's `Packages.updates` entry (`checkupdates` on Arch, `dnf check-update` on Fedora), which Go runs and parses; on one with none, `supported` is false and nothing is subscribed (the widget hides, the card says so).
   - Every check ends in a state, a failed one too (its `error`, the last packages kept), so `checking` (set on subscribing and `refresh()`) always clears. The hub runs one check at a time: concurrent `checkupdates` runs share its temp db and fail.
   - `upgrade(command, terminal)` runs the upgrade in a terminal (`CommandManager.run`, one at a time) and checks again when it closes.
 - **Other polled services:**

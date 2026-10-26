@@ -336,9 +336,11 @@ func TestOnRefresh(t *testing.T) {
 	}
 }
 
-// Every interval setting (a property named *interval*, in ms whatever
-// its x-unit) offers nothing below MinInterval, the floor of the sources
-// those settings feed, so no value it offers is silently raised.
+// Every interval setting (a number named *interval*, *refresh* or *poll*,
+// stored in ms whatever its x-unit) offers nothing below MinInterval, the
+// floor of the sources those settings feed, so no value it offers is
+// silently raised. The settings known to feed a topic must be among them,
+// so renaming one can't slip it past the check.
 func TestIntervalSettingsMeetMinInterval(t *testing.T) {
 	t.Parallel()
 	data, err := assets.Read("config/json/config.schema.json")
@@ -349,7 +351,13 @@ func TestIntervalSettingsMeetMinInterval(t *testing.T) {
 	if err := json.Unmarshal(data, &root); err != nil {
 		t.Fatal(err)
 	}
-	found := 0
+	feeds := map[string]bool{
+		"/definitions/TailscaleWidget/properties/properties.interval":      false, // tailscale
+		"/definitions/SystemStatsWidget/properties/properties.interval":    false, // system
+		"/definitions/UpdatesWidget/properties/properties.interval":        false, // updates
+		"/definitions/UpdatesOverlayModule/properties/properties.interval": false, // updates
+		"/properties/ClaudeUsage.interval":                                 false, // claudeUsage's every
+	}
 	var walk func(node any, path string)
 	walk = func(node any, path string) {
 		switch n := node.(type) {
@@ -361,10 +369,14 @@ func TestIntervalSettingsMeetMinInterval(t *testing.T) {
 			if props, ok := n["properties"].(map[string]any); ok {
 				for key, v := range props {
 					p, ok := v.(map[string]any)
-					if !ok || p["type"] != "integer" || !strings.Contains(strings.ToLower(key), "interval") {
+					name := strings.ToLower(key)
+					if !ok || (p["type"] != "integer" && p["type"] != "number") ||
+						!strings.Contains(name, "interval") && !strings.Contains(name, "refresh") && !strings.Contains(name, "poll") {
 						continue
 					}
-					found++
+					if _, known := feeds[path+"."+key]; known {
+						feeds[path+"."+key] = true
+					}
 					if minimum, ok := p["minimum"].(float64); !ok || time.Duration(minimum)*time.Millisecond < MinInterval {
 						t.Errorf("%s.%s: minimum %v is below topics.MinInterval (%v)", path, key, p["minimum"], MinInterval)
 					}
@@ -376,7 +388,9 @@ func TestIntervalSettingsMeetMinInterval(t *testing.T) {
 		}
 	}
 	walk(root, "")
-	if found < 5 {
-		t.Errorf("found %d interval settings: did the schema's shape change?", found)
+	for path, seen := range feeds {
+		if !seen {
+			t.Errorf("%s: not found as an interval setting: was it renamed or moved?", path)
+		}
 	}
 }

@@ -8,7 +8,8 @@
 #   - the theme template, config/themes/template/theme.json
 #     (scripts/gen_theme_template.py)
 # The config schema the translations are made from,
-# config/json/config.schema.json, is built from config/schema/ in the snapshot
+# config/json/config.schema.json, is built from config/schema/ and the
+# components' schema.yaml files in the snapshot
 # (`axiom schema build`, through go run) and never committed, like the
 # reference docs in docs/dev/config and docs/dev/generated (scripts/generate.sh
 # builds both in the tree).
@@ -21,7 +22,7 @@ cd "$root"
 
 staged="$(git diff --cached --name-only --diff-filter=ACMRD)"
 i18n=0 theme=0
-grep -qE '^config/schema/|^backend/internal/schema/' <<<"$staged" && i18n=1
+grep -qE '^config/schema/|^backend/internal/schema/|^components/.*/schema\.yaml$' <<<"$staged" && i18n=1
 grep -qE '\.qml$|^scripts/check_i18n\.py$|^config/i18n/' <<<"$staged" && i18n=1
 grep -qE '^config/json/theme-defaults\.json$|^scripts/gen_theme_template\.py$|^config/themes/template/' <<<"$staged" && theme=1
 [[ $i18n -eq 1 || $theme -eq 1 ]] || exit 0

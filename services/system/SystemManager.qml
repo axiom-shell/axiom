@@ -8,7 +8,7 @@ import qs.services.ui
 // `system` topic) only while something is showing it. Consumers register
 // what they need with acquire(owner, {interval, metrics, diskPaths}) and
 // drop it with release(owner); axiom reads the union of requested metrics
-// at the fastest requested interval (never under 500 ms), and stops
+// at the fastest requested interval (never under 250 ms), and stops
 // entirely when nothing is registered.
 //
 // Everything is a sysfs / procfs read in Go, so sampling never spawns a
