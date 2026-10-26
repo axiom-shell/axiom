@@ -48,15 +48,9 @@ ColumnLayout {
     }, []).filter(row => row.kind !== "group")), [])
 
   function valueAt(path) {
-    let value = root.values;
-    let schema = {
+    return Utils.valueAt(root.values, path) ?? SchemaLayout.defaultAt({
       "properties": root.propertiesSchema
-    };
-    for (const key of path) {
-      value = value?.[key];
-      schema = schema?.properties?.[key];
-    }
-    return value ?? schema?.default;
+    }, path);
   }
 
   // A row's edit (SchemaField's form): a nested field's as its whole

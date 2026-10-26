@@ -135,12 +135,11 @@ Steps, roughly in this order (moves first, each its own PR):
 1. Done: Reword `services/AGENTS.md` › Folders (`system/`: the machine and the desktop basics every user has; `apps/`: optional features and integrations with outside tools or services); `DailySchedule` to `core/`; `ShellManager` to `ui/`; document the non-singleton parts.
 2. Done: Move the reusable pieces holding feature logic: `BaseWidget` / `IconTextWidget` to `bar/widgets/base/`, `CodeLine` to `content/parts/`, `PipewireVolumeBar` to `surfaces/osd/`; `StyledToolTip` stays, named in AGENTS.md › Layout.
 3. Split `ShellManager` by concern and `EdgeMenuManager` into its runtime and its editor (the `KeybindManager` split, into its reader, a `KeybindEditor` and page state, goes with backend stage 7); extract `LauncherCommands`' `/config` browser; give the bars' and edge menus' reserved zones one owner.
-4. A shared ticker part for Stopwatch and Pomodoro; `valueAt` into a methods helper with a test row.
+4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
 - [Singletons doing several jobs](issues.md#singletons-doing-several-jobs) (plan: #123)
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
-- [Repeated plumbing](issues.md#repeated-plumbing)
 - [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer)
 - [The onboarding's Compositor page names Hyprland](issues.md#the-onboardings-compositor-page-names-hyprland)

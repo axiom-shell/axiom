@@ -128,6 +128,15 @@ QtObject {
     });
   }
 
+  // The `default` of the property at `path` (keys) under `objectSchema`
+  // (nested through `properties`), or undefined for none
+  function defaultAt(objectSchema, path) {
+    let schema = objectSchema;
+    for (const key of path)
+      schema = schema?.properties?.[key];
+    return schema?.default;
+  }
+
   // A plain condition key (`mode`, `open.onHover`, `../position`) as a
   // path, from `parent`: the path of the object holding the condition
   function keyPath(parent, key) {

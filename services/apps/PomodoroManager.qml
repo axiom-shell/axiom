@@ -4,17 +4,16 @@ import Quickshell
 import qs.config
 import qs.components.methods
 import qs.services.core
-import qs.services.system
 import qs.services.ui
 
 // The pomodoro timer: one for every widget and module, run here so it
 // keeps time with nothing showing it. The state (PomodoroCycle's) holds an
-// absolute end time, so it survives a QML reload (PersistentProperties)
-// and a restart (StateManager "pomodoro"); a phase that ended while axiom
-// wasn't running moves on quietly. A notification marks each end (with
-// Pomodoro.notify); clicking it opens a page or edge menu with the timer.
-// Displays acquire(owner) the once-a-second `now`; the end itself needs
-// no one.
+// absolute end time, so it survives a QML reload and a restart
+// (StateManager "pomodoro", through DeadlineTicker); a phase that ended
+// while axiom wasn't running moves on quietly. A notification marks each
+// end (with Pomodoro.notify); clicking it opens a page or edge menu with
+// the timer. Displays acquire(owner) the once-a-second `now`; the end
+// itself needs no one.
 //
 //   axiom ipc pomodoro toggle
 Singleton {
@@ -32,10 +31,10 @@ Singleton {
   readonly property real progress: PomodoroCycle.progress(root._state, root.now, PomodoroConfig.settings)
   readonly property string remainingText: PomodoroCycle.format(root.remaining)
   // Updated every second while running and acquired
-  property real now: Date.now()
+  readonly property real now: root._ticker.now
   // The todo the sessions are for ("" for none), and its text
-  readonly property string todoUid: _run.todoUid
-  readonly property string todoText: TodoManager.find(_run.todoUid)?.summary ?? ""
+  readonly property string todoUid: root._ticker.values.todoUid ?? ""
+  readonly property string todoText: TodoManager.find(root.todoUid)?.summary ?? ""
   // I18n.tr("Focus") I18n.tr("Short break") I18n.tr("Long break")
   readonly property string phaseLabel: I18n.tr(root.phase === "short" ? "Short break" : root.phase === "long" ? "Long break" : "Focus")
 
@@ -47,12 +46,11 @@ Singleton {
   }
 
   function acquire(owner) {
-    root._registry.acquire(owner, true);
-    root.now = Date.now();
+    root._ticker.acquire(owner, 1000);
   }
 
   function release(owner) {
-    root._registry.release(owner);
+    root._ticker.release(owner);
   }
 
   function start() {
@@ -86,8 +84,9 @@ Singleton {
   }
 
   function setTodo(uid) {
-    _run.todoUid = uid ?? "";
-    root._save();
+    root._ticker.set({
+      "todoUid": uid ?? ""
+    });
   }
 
   // A page or edge menu with a Pomodoro or Focus module; false with none
@@ -97,25 +96,20 @@ Singleton {
 
   // -- Private --
 
-  readonly property var _state: PomodoroCycle.normalize(root._parsed)
-  readonly property var _parsed: {
-    try {
-      return JSON.parse(_run.state || "null");
-    } catch (e) {
-      return null;
-    }
-  }
-  readonly property string _desktopEntry: "axiom-pomodoro"
-  readonly property var _store: StateManager.createStateHandler("pomodoro")
-  property ConsumerRegistry _registry: ConsumerRegistry {}
+  readonly property var _state: PomodoroCycle.normalize(root._ticker.values.state)
 
-  PersistentProperties {
-    id: _run
-    reloadableId: "axiomPomodoro"
-    // PomodoroCycle's state as JSON ("" until restored from the state file)
-    property string state: ""
-    property string todoUid: ""
-    property bool restored: false
+  property DeadlineTicker _ticker: DeadlineTicker {
+    name: "pomodoro"
+    desktopEntry: "axiom-pomodoro"
+    deadline: root._state
+    ticks: root.running
+    // PomodoroCycle's state, and the todo's uid
+    restore: saved => ({
+          "state": PomodoroCycle.normalize(saved?.state),
+          "todoUid": typeof saved?.todoUid === "string" ? saved.todoUid : ""
+        })
+    onEnded: late => root._finish(late)
+    onNotificationClicked: root.openTimer()
   }
 
   function _autoStart() {
@@ -126,27 +120,15 @@ Singleton {
   }
 
   function _set(state) {
-    if (Paths.greeter)
-      return;
-    _run.state = JSON.stringify(state);
-    root.now = Date.now();
-    root._save();
-  }
-
-  function _save() {
-    root._store.save({
-      "state": root._state,
-      "todoUid": _run.todoUid
+    root._ticker.set({
+      "state": state
     });
   }
 
   // The phase ran out: notify (unless it ended long ago, with axiom not
-  // running) and go on. Once per end: a second call queued by another
-  // _arm before the first ran finds the phase already moved on
+  // running) and go on
   function _finish(late) {
     const was = root._state;
-    if (!was.running || was.endsAt > Date.now())
-      return;
     const next = PomodoroCycle.advance(was, Date.now(), PomodoroConfig.settings, root._autoStart());
     root._set(next);
     if (!PomodoroConfig.notify || late)
@@ -162,53 +144,7 @@ Singleton {
     }
     if (task !== "" && next.phase === "work")
       body += "\n" + task;
-    NotificationManager.sendNotification("axiom", summary, body, {
-      "desktopEntry": root._desktopEntry,
-      "icon": "appointment-soon"
-    });
-  }
-
-  // To the phase's end, at most an hour at a time
-  function _arm() {
-    _alarm.stop();
-    if (!root._state.running)
-      return;
-    const left = root._state.endsAt - Date.now();
-    if (left <= 0) {
-      Qt.callLater(() => root._finish(left < -5 * 60000));
-      return;
-    }
-    _alarm.interval = Math.min(left + 50, 3600000);
-    _alarm.start();
-  }
-
-  on_StateChanged: root._arm()
-
-  Timer {
-    id: _alarm
-    repeat: false
-    onTriggered: root._arm()
-  }
-
-  Timer {
-    interval: 1000
-    repeat: true
-    running: root.running && root._registry.active
-    onTriggered: root.now = Date.now()
-  }
-
-  Component.onCompleted: {
-    if (Paths.greeter)
-      return;
-    // A restart (not a reload): back from the state file
-    if (!_run.restored) {
-      const saved = root._store.load(null);
-      _run.state = JSON.stringify(PomodoroCycle.normalize(saved?.state));
-      _run.todoUid = typeof saved?.todoUid === "string" ? saved.todoUid : "";
-      _run.restored = true;
-    }
-    root._arm();
-    NotificationManager.registerHandler(root._desktopEntry, () => root.openTimer());
+    root._ticker.notify(summary, body);
   }
 
   property IpcTarget _ipc: IpcTarget {
