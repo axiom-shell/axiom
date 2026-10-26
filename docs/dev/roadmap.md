@@ -16,7 +16,7 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 
 ### Done means
 - `scripts/dev/verify.sh --all` is green, and a reload logs only `Reloading configuration...` and `Configuration Loaded` under Hyprland, niri and sway.
-- issues.md holds only "needs a plan" entries, each moved to GitHub by the maintainer.
+- Every "needs a plan" item is decided: built from its plan, or listed under [Deferred](#deferred) and moved to GitHub by the maintainer.
 - `scripts/quickshell-io-allowlist.json` lists only the permanent funnels (`BackendManager`'s socket, `FileManager`'s blocking read).
 - No singleton over about 800 lines outside the pure helpers and the compositor backends; every file sits in the folder its rule names.
 - `archtest` enforces the backend's dependency direction; the shell–daemon method shapes are checked on both sides.
@@ -63,14 +63,23 @@ What an agent does when asked for "the next step", to "continue the roadmap", or
 
 1. **Find the step.** The first [Full order](#full-order) row not `done`. Its work is the backend stage's bullets in [backend/roadmap.md](backend/roadmap.md) (a stage row) or the phase section below (a phase row). A row named by the user wins; so does a parallel-lane item they name.
 2. **Check nobody holds it.** `git log -5` and `git status`: uncommitted changes in that row's files mean another agent is on it. Then take the next unblocked item (the parallel lane, or a later row with nothing waiting), or ask.
-3. **Pick one item.** One PR: a backend stage's next not-`Done` bullet, or a phase's first step not marked `Done:` and then its listed issues in order. Read the item's issues.md entry, the docs for its area (`AGENTS.md` › Where to look), the matching recipe if there is one, and [issues.md](issues.md) for anything else known in those files.
+3. **Pick one item.** One PR: a backend stage's next not-`Done` bullet, or a phase's first step not marked `Done:` and then its listed issues in order. A "needs a plan" entry is taken through [Items that need a plan](#items-that-need-a-plan) instead of being built straight away. Read the item's issues.md entry, the docs for its area (`AGENTS.md` › Where to look), the matching recipe if there is one, and [issues.md](issues.md) for anything else known in those files.
 4. **Do it**, and run `scripts/dev/verify.sh` until `verify ok`.
 5. **Update the roadmaps in the same change:**
    - remove the fixed issues.md entry and its link here;
    - mark a finished phase step `Done:` at its start (as backend/roadmap.md marks its bullets);
-   - when a row's last item is done, set its Status to `done`, the next row's to `in progress` and the one after to `next`; a stage row also updates its status in backend/roadmap.md;
+   - when a row's last item is done (a deferred item doesn't count; a plan waiting for its decision does), set its Status to `done`, the next row's to `in progress` and the one after to `next`; a stage row also updates its status in backend/roadmap.md;
    - anything learned that changes the order is an edit to [Full order](#full-order) with its reason in the "Why here" cell.
 6. **Report** what was done, what the next item is (the user's next "next step"), and anything found and filed in issues.md along the way.
+
+### Items that need a plan
+An issues.md entry sized "needs a plan" is a design question before it's work. One that names a backend stage (`(stage 7)`, "Fixed by backend stage 7") is designed in that stage instead; every other one goes through this cycle, which never blocks the rest of its row.
+
+1. **Plan.** A fresh agent investigates the entry and writes `docs/dev/plans/<slug>.md` in the format of [plans/README.md](plans/README.md): the problem with evidence, two or three options with their trade-offs, a recommendation, and the small items it splits into. Docs only, one PR, labelled `roadmap` and `needs-decision`; the entry's link here gets `(plan: #<PR>)` in the same PR.
+2. **Carry on.** The row's other items go ahead meanwhile. The row can't turn `done` while a plan waits.
+3. **The maintainer decides** on the PR: approves it (as written, or after editing it), comments the option chosen, or comments `defer`.
+4. **Approved:** the PR is merged with its plan marked decided, and in the same PR the entry is replaced by the plan's small items, each an ordinary issues.md entry linked in the same phase where the old one was. From there they're built like any other item, and the plan file is deleted with the last of them.
+5. **Deferred:** the PR is closed, and the entry's link moves to [Deferred](#deferred), which blocks no row. The maintainer moves deferred entries to GitHub over time.
 
 ### Running it unattended
 The cycle the `roadmap-autopilot` skill runs, one item per iteration, driven by `/loop /roadmap-autopilot` in a session of its own (auto mode, so git and gh don't stop it for permission). It works in the live checkout, so the desktop reloads as branches change; nothing else may be working in this checkout meanwhile. With `--dry-run` it only reports the item it would take.
@@ -79,8 +88,8 @@ The cycle the `roadmap-autopilot` skill runs, one item per iteration, driven by 
 
 **Bounds.** A leader does at most six items, then stops and asks for a fresh session even mid-row, and every row starts in a fresh session (the pause after a row ends the loop). Agents answer in the report shape asked for: a report that runs long is read for its fields, not reread. A failing gate's output is read as `tail` / `grep`, never whole.
 
-1. **Preflight** (leader). On `main`, `git status` clean (anything uncommitted means someone else is working here: stop), `git pull --ff-only`. An open PR labelled `roadmap` (`gh pr list --label roadmap`) is resumed at the step it reached instead of starting a new item; one labelled `needs-decision` waits for the user and blocks its row.
-2. **Pick** (leader) with [Taking the next step](#taking-the-next-step) steps 1–3, reading only the Full order, that phase's section (or the stage's bullets in [backend/roadmap.md](backend/roadmap.md)) and the item's issues.md entry. Stop and report instead of starting when the item is "needs a plan", needs a maintainer decision (a changed default, whether a migration is worth it, a behaviour trade-off), needs a live action `AGENTS.md` › Never forbids (takeovers, the greeter, the real lock, idle on the live config, restarting axiom), or waits on a row that isn't `done`.
+1. **Preflight** (leader). On `main`, `git status` clean (anything uncommitted means someone else is working here: stop), `git pull --ff-only`. An open PR labelled `roadmap` (`gh pr list --label roadmap`) is resumed at the step it reached instead of starting a new item. One labelled `needs-decision` waits for the maintainer: if it's a plan with a decision on it (an approval, a chosen option, or `defer`), finish [Items that need a plan](#items-that-need-a-plan) step 4 or 5 for it first; any other one blocks its row until the maintainer answers.
+2. **Pick** (leader) with [Taking the next step](#taking-the-next-step) steps 1–3, reading only the Full order, that phase's section (or the stage's bullets in [backend/roadmap.md](backend/roadmap.md)) and the item's issues.md entry. A "needs a plan" item gets a plan PR ([Items that need a plan](#items-that-need-a-plan) step 1, by a fresh agent with a brief like step 3's) and the leader moves on to the row's next item; when only plans waiting for decisions are left in the row, stop and report them. Stop and report instead of starting when the item needs a maintainer decision (a changed default, whether a migration is worth it, a behaviour trade-off), needs a live action `AGENTS.md` › Never forbids (takeovers, the greeter, the real lock, idle on the live config, restarting axiom), or waits on a row that isn't `done`.
 3. **Brief** (leader), ten to fifteen lines: the row and item; the issues.md entry's title and its **Where**/**What**; what done looks like (the behaviour, and the entry removed with its link here); the docs to start from (`AGENTS.md` › Where to look, the recipe if one fits); the branch name `roadmap/<row>-<slug>`; and the stop conditions above, so the agent stops rather than guesses.
 4. **Implement** (a fresh `general-purpose` agent, given the brief): branch from `main`; force a QML reload, since a checkout replaces files' inodes ([testing](testing.md) › Reloads and logs), and wait for `Configuration Loaded` in `scripts/log.sh`; implement; `scripts/dev/verify.sh` until `verify ok`; [Taking the next step](#taking-the-next-step) step 5 (statuses, `Done:` marks, issues.md removals) in the same commit, with the attribution trailer; `git push -u origin HEAD`. What the live session can't show (Go code: the running binary isn't rebuilt; a schema change: the daemon reads the schema at its start) rests on its tests. It reports in at most 200 words: **Commit** (sha), **Changed** (one line per file group), **Verified** (the `verify ok` line, the tests run), **Not verifiable live**, **Filed** (issues.md titles added), **Stopped** (why, if it did).
 5. **Gate** (leader): the branch is pushed at that sha, `git status` is clean, `git diff --stat main...HEAD` touches the item's area plus `docs/dev/roadmap.md` / `docs/dev/issues.md`, the closed entry's heading is gone from issues.md, and `scripts/dev/verify.sh > <scratch>/verify.log; tail -3` ends in `verify ok`. A failed gate goes back to the same agent once (by `SendMessage`, with the failing lines); a second failure stops.
@@ -227,7 +236,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape.
 
-Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` pages it points at); fold `docs/dev/core/config-v2.md` into `schema-annotations.md` and `config-manager.md` once stage 7 finishes v2; the maintainer moves the remaining "needs a plan" entries to GitHub; a PR-size note in `CONTRIBUTING.md` (moves apart from logic, one item per PR).
+Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` pages it points at); fold `docs/dev/core/config-v2.md` into `schema-annotations.md` and `config-manager.md` once stage 7 finishes v2; the maintainer moves the [Deferred](#deferred) entries to GitHub; a PR-size note in `CONTRIBUTING.md` (moves apart from logic, one item per PR).
 
 Resolves:
 - [The check order is kept in three places](issues.md#the-check-order-is-kept-in-three-places)
@@ -235,3 +244,8 @@ Resolves:
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
+
+### Deferred
+Entries decided against doing now ([Items that need a plan](#items-that-need-a-plan) step 5). They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
+
+Nothing deferred yet.
