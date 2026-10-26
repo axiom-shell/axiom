@@ -1,6 +1,6 @@
 # `Bar` reader holds the edges enum and breaks reader naming
 
-> **Issue:** filed as its items: the edge enum has no methods helper (fixed), [edge users still read the enum from the `Bar` reader](../issues.md#edge-users-still-read-the-enum-from-the-bar-reader), [the `Bars` reader is named `Bar`](../issues.md#the-bars-reader-is-named-bar)
+> **Issue:** filed as its items: the edge enum has no methods helper (fixed), edge users still read the enum from the `Bar` reader (fixed), [the `Bars` reader is named `Bar`](../issues.md#the-bars-reader-is-named-bar)
 > **Status:** decided: B (2026-10-27)
 
 ### Problem
@@ -42,5 +42,5 @@ B with `BarsConfig`. The edge numbers are a pure contract that methods need too,
 Each one commit, in this order, one PR (a batch). Force a reload after each (testing.md › Reloads and logs).
 
 1. **Add `methods/ScreenEdge` with its test.** The enum (`Top, Bottom, Left, Right`, same order) and `name(edge)` (was `edgeName`), `fromName(name)` (was `locationOf`, -1 if unknown), `fromConfig(name)` (was `getLocationFromString`, Top if unknown), `opposite(edge)` (was `oppositeOf`). Its test, tests/tst_ScreenEdge.qml. `SurfaceOutline` uses it instead of its own ints. `Bar.qml` is untouched.
-2. **Move every enum and edge-helper user to `ScreenEdge`.** `Bar.Top` … → `ScreenEdge.Top` …, `Bar.edgeName` → `ScreenEdge.name` and so on, in the 32 files and the comments ("a Bar.Location" → "a ScreenEdge"). Delete the enum and the four helpers from `config/Bar.qml`. Docs: config-readers.md's `edgeName` line, and the `Bar.Top` / `Bar.Left` / `Bar.Location` / `edge === Bar.Right` spans. Run qmllint, which catches a missed value.
+2. **Move every enum and edge-helper user to `ScreenEdge`.** `Bar.Top` … → `ScreenEdge.Top` …, Bar.edgeName → `ScreenEdge.name` and so on, in the 32 files and the comments ("a Bar.Location" → "a ScreenEdge"). Delete the enum and the four helpers from `config/Bar.qml`. Docs: config-readers.md's `edgeName` line, and the `Bar.Top` / `Bar.Left` / `Bar.Location` / `edge === Bar.Right` spans. Run qmllint, which catches a missed value.
 3. **Rename the reader `Bar` → `BarsConfig`.** `git mv config/Bar.qml config/BarsConfig.qml` and its about 80 references, then the docs (`Bar.enrichBarConfig`, `Bar.lookOf`, …; config-readers.md's entry). In `scripts/check_docs.py`, make a retired name that is also a schema definition fail only when a span names a member that isn't a config path (so `Bar.background` still passes and `Bar.enrichBarConfig` fails), and add `"Bar": "BarsConfig"` that way. A test case for that check goes in `tests/scripts/`. Remove the issues.md entry and its roadmap link.

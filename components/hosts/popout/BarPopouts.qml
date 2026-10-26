@@ -58,7 +58,7 @@ PopoutWrapperBase {
     key: "bar:" + root.barConfig.id
     kind: "bar"
     screen: root.screen?.name ?? ""
-    edge: Bar.edgeName(root.barConfig.location)
+    edge: ScreenEdge.name(root.barConfig.location)
     barId: root.barConfig.id
     occupied: root.occupied
     closing: root.isClosing
@@ -442,8 +442,8 @@ PopoutWrapperBase {
       if (!root.screen)
         return 0;
       if (root.barConfig.vertical)
-        return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, Bar.Top) - ScreenEdgeManager.frameLineOn(root.screen, Bar.Bottom) - root.targetBoxHeight;
-      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? Bar.Bottom : Bar.Top) - mainPopup._barNear - root.surfaceFrom - root._boxAcross;
+        return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Top) - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Bottom) - root.targetBoxHeight;
+      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? ScreenEdge.Bottom : ScreenEdge.Top) - mainPopup._barNear - root.surfaceFrom - root._boxAcross;
     }
     // The surface in this window: where it is in the bar's, moved by where
     // the bar is on the screen

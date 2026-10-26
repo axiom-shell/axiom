@@ -25,8 +25,8 @@ QtObject {
   id: root
 
   required property ShellScreen screen
-  // A Bar.Location
-  property int edge: Bar.Top
+  // A ScreenEdge
+  property int edge: ScreenEdge.Top
   // Held off the edge (a `detached` OSD, edge menu or dock, or a surface
   // over a fullscreen window): it follows no bar, joins nothing, and keeps
   // `gaps` from the frame lines (ScreenEdgeManager.detachedGaps, `gap` -1 Auto)
@@ -92,10 +92,10 @@ QtObject {
   property bool open: false
   readonly property bool stretchReady: root._stretch.ready && root._startPill.ready && root._endPill.ready
 
-  readonly property bool vertical: root.edge === Bar.Left || root.edge === Bar.Right
-  readonly property string edgeName: Bar.edgeName(root.edge)
-  readonly property int startSide: root.vertical ? Bar.Top : Bar.Left
-  readonly property int endSide: root.vertical ? Bar.Bottom : Bar.Right
+  readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
+  readonly property string edgeName: ScreenEdge.name(root.edge)
+  readonly property int startSide: root.vertical ? ScreenEdge.Top : ScreenEdge.Left
+  readonly property int endSide: root.vertical ? ScreenEdge.Bottom : ScreenEdge.Right
   readonly property real _span: (root.vertical ? root.screen?.height : root.screen?.width) ?? 0
   readonly property real _spanAcross: (root.vertical ? root.screen?.width : root.screen?.height) ?? 0
   readonly property bool bareEdge: ScreenEdgeManager.screenEdgeOpen(root.screen, root.edge)
@@ -116,7 +116,7 @@ QtObject {
 
   // --- Its frame (SurfaceContext.frame): ends and room ---
   function _side(location, held) {
-    const name = Bar.edgeName(location);
+    const name = ScreenEdge.name(location);
     const frame = ScreenEdgeManager.frameLineOn(root.screen, location);
     const reserved = ScreenEdgeManager.reservedWithMenusOn(root.screen, location);
     return {

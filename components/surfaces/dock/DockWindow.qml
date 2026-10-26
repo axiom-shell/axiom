@@ -31,8 +31,8 @@ Scope {
   // The settings card's Show (see the top)
   property bool preview: false
 
-  readonly property int edge: Bar.getLocationFromString(root.dock.edge)
-  readonly property bool vertical: root.edge === Bar.Left || root.edge === Bar.Right
+  readonly property int edge: ScreenEdge.fromConfig(root.dock.edge)
+  readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
   readonly property string mode: root.dock.visibility
 
   // --- Sizes ---
@@ -48,7 +48,7 @@ Scope {
   // out of the border's (or a solid bar's) stroke, or running straight off
   // a bare screen edge; with another bar on its edge, meeting it as a bar
   // popout would.
-  readonly property string _edgeName: Bar.edgeName(root.edge)
+  readonly property string _edgeName: ScreenEdge.name(root.edge)
   readonly property int connectorGap: placement.connectorGap
   // Held off the edge, and its gaps from the frame lines across its edge
   // and at its ends (what places it, so a change of `held` never reads
@@ -193,9 +193,9 @@ Scope {
   // in from the dock's edge and `size` deep
   function crossAt(fromEdge, size) {
     switch (root.edge) {
-    case Bar.Bottom:
+    case ScreenEdge.Bottom:
       return panelWindow.height - fromEdge - size + root.slide;
-    case Bar.Right:
+    case ScreenEdge.Right:
       return panelWindow.width - fromEdge - size + root.slide;
     }
     return fromEdge - root.slide;
@@ -283,11 +283,11 @@ Scope {
     const w = root.screen?.width ?? 0;
     const h = root.screen?.height ?? 0;
     switch (root.edge) {
-    case Bar.Top:
+    case ScreenEdge.Top:
       return Qt.rect(reserved[0] + along, reserved[1] + across, root.restLength, root.thickness);
-    case Bar.Left:
+    case ScreenEdge.Left:
       return Qt.rect(reserved[0] + across, reserved[1] + along, root.thickness, root.restLength);
-    case Bar.Right:
+    case ScreenEdge.Right:
       return Qt.rect(w - reserved[2] - across - root.thickness, reserved[1] + along, root.thickness, root.restLength);
     }
     return Qt.rect(reserved[0] + along, h - reserved[3] - across - root.thickness, root.restLength, root.thickness);
@@ -458,20 +458,20 @@ Scope {
     }
 
     anchors {
-      top: root.edge !== Bar.Bottom
-      bottom: root.edge !== Bar.Top
-      left: root.edge !== Bar.Right
-      right: root.edge !== Bar.Left
+      top: root.edge !== ScreenEdge.Bottom
+      bottom: root.edge !== ScreenEdge.Top
+      left: root.edge !== ScreenEdge.Right
+      right: root.edge !== ScreenEdge.Left
     }
     implicitWidth: root.vertical ? root.depth : 0
     implicitHeight: root.vertical ? 0 : root.depth
 
     // Along the edge it reaches onto the perpendicular strokes (startStrokeInset, endStrokeInset)
     margins {
-      top: root.edge === Bar.Top ? root.edgeMargin : root.vertical ? -root.startStrokeInset : 0
-      bottom: root.edge === Bar.Bottom ? root.edgeMargin : root.vertical ? -root.endStrokeInset : 0
-      left: root.edge === Bar.Left ? root.edgeMargin : root.vertical ? 0 : -root.startStrokeInset
-      right: root.edge === Bar.Right ? root.edgeMargin : root.vertical ? 0 : -root.endStrokeInset
+      top: root.edge === ScreenEdge.Top ? root.edgeMargin : root.vertical ? -root.startStrokeInset : 0
+      bottom: root.edge === ScreenEdge.Bottom ? root.edgeMargin : root.vertical ? -root.endStrokeInset : 0
+      left: root.edge === ScreenEdge.Left ? root.edgeMargin : root.vertical ? 0 : -root.startStrokeInset
+      right: root.edge === ScreenEdge.Right ? root.edgeMargin : root.vertical ? 0 : -root.endStrokeInset
     }
 
     // The box and the icons grown out of it, and the gap to the edge (so

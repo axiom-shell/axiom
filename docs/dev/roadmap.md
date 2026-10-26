@@ -152,7 +152,6 @@ Steps, roughly in this order (moves first, each its own PR):
 4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
-- [Edge users still read the enum from the `Bar` reader](issues.md#edge-users-still-read-the-enum-from-the-bar-reader)
 - [The `Bars` reader is named `Bar`](issues.md#the-bars-reader-is-named-bar)
 
 ### Phase 4: backend structure and contract

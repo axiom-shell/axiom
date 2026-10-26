@@ -64,9 +64,9 @@ QtObject {
     return General.screensFor(menu.screen)[0] ?? null;
   }
 
-  // The menu's edge as a Bar.Location
+  // The menu's edge as a ScreenEdge
   function edgeOf(menu) {
-    return Bar.getLocationFromString(menu.edge);
+    return ScreenEdge.fromConfig(menu.edge);
   }
 
   // The menu's box colours

@@ -303,7 +303,7 @@ PanelWindow {
     AttachedSurface {
       id: blankSurface
       visible: false
-      edge: Bar.Top
+      edge: ScreenEdge.Top
     }
     Rectangle {
       id: blankRect

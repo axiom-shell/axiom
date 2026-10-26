@@ -97,7 +97,7 @@ Item {
     root.popouts.safeOpenPopout(root.panel, payload);
   }
 
-  // Where it is on its screen, in px, with its bar's edge (a Bar.Location)
+  // Where it is on its screen, in px, with its bar's edge (a ScreenEdge)
   // and screen: { x, y, width, height, edge, screen }, or null once gone
   // (for an edge menu opened as its popout that places itself here)
   function screenRect() {

@@ -219,7 +219,7 @@ Rectangle {
     const at = root.isVertical ? root.blurOrigin.y : root.blurOrigin.x;
     return {
       "screen": root.blurScreen,
-      "edge": Bar.edgeName(root.barConfig.location),
+      "edge": ScreenEdge.name(root.barConfig.location),
       "start": at + from,
       "end": at + to
     };
@@ -234,7 +234,7 @@ Rectangle {
     const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
     return Object.assign({
       "screen": root.blurScreen
-    }, EdgeAttach.joinOpening(Bar.edgeName(root.barConfig.location), atStart, from, root.isVertical ? surface.width : surface.height, (atStart ? surface.joinShown : surface.joinShownEnd), span, atStart ? surface.joinFillet : surface.joinFilletEnd));
+    }, EdgeAttach.joinOpening(ScreenEdge.name(root.barConfig.location), atStart, from, root.isVertical ? surface.width : surface.height, (atStart ? surface.joinShown : surface.joinShownEnd), span, atStart ? surface.joinFillet : surface.joinFilletEnd));
   }
 
   // The bar an end makes way for, as its container, when it's of `kind`
@@ -245,7 +245,7 @@ Rectangle {
   function barAt(atStart, kind) {
     if ((atStart ? root.ends.start : root.ends.end).kind !== kind)
       return null;
-    const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? Bar.Top : Bar.Bottom) : (atStart ? Bar.Left : Bar.Right));
+    const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right));
     return panel?.visible ? panel.container : null;
   }
   readonly property var solidStart: root.barAt(true, "solidBar")
@@ -265,7 +265,7 @@ Rectangle {
       return null;
     const from = root.isVertical ? root.blurOrigin.x + surface.x : root.blurOrigin.y + surface.y;
     const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
-    const opening = EdgeAttach.joinOpening(Bar.edgeName(root.barConfig.location), atStart, from, root.isVertical ? surface.width : surface.height, atStart ? surface.joinShown : surface.joinShownEnd, span);
+    const opening = EdgeAttach.joinOpening(ScreenEdge.name(root.barConfig.location), atStart, from, root.isVertical ? surface.width : surface.height, atStart ? surface.joinShown : surface.joinShownEnd, span);
     const at = root.isVertical ? origin.x : origin.y;
     // (its fillet at the far end of its cover: the stretch's end from the
     // near side, its start from the far one)

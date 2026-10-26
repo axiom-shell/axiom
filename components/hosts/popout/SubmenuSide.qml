@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.config
+import qs.components.methods
 
 // What a submenu (SubPopout) meets on the side of its parent's box, the
 // same for a bar popout's and an edge popout's: which side it opens to,
@@ -12,11 +12,11 @@ import qs.config
 QtObject {
   id: root
 
-  // The parent's edge (a Bar.Location), whether its box is detached (a
+  // The parent's edge (a ScreenEdge), whether its box is detached (a
   // box of its own: its bar side has nothing to join) or runs straight
   // off its attach edge (a bare screen edge, or without the border a
   // merged box's outer edge)
-  property int edge: Bar.Top
+  property int edge: ScreenEdge.Top
   property bool detached: false
   property bool straight: false
   // The parent's attach edge (y of the stroke's outer edge), where a
@@ -35,27 +35,27 @@ QtObject {
   // What an open submenu asks of the box (SubPopout.parentStretch), or null
   property var stretch: null
 
-  readonly property bool vertical: root.edge === Bar.Left || root.edge === Bar.Right
+  readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
   // Away from a side edge; on a top or bottom one towards the nearer half
   // (a box about the middle opening right: judged by its exact centre, it
   // flipped with a few px of where its window was found to be)
-  readonly property bool openToLeft: root.vertical ? root.edge === Bar.Right : root.boxCentreX > root.windowWidth * 0.55
+  readonly property bool openToLeft: root.vertical ? root.edge === ScreenEdge.Right : root.boxCentreX > root.windowWidth * 0.55
   // At the bar side of a box on a top or bottom edge, a submenu with no
   // room for its fillet joins the stroke the box grows from, as a popout
   // joins the perpendicular border: the border's, a solid bar's, a pill's
   // or island's far stroke (stretched to carry it). A detached box's ends
   // there are flush instead.
   readonly property bool _joins: !root.vertical && !root.detached
-  readonly property bool joinTop: root._joins && root.edge === Bar.Top
-  readonly property bool joinBottom: root._joins && root.edge === Bar.Bottom
+  readonly property bool joinTop: root._joins && root.edge === ScreenEdge.Top
+  readonly property bool joinBottom: root._joins && root.edge === ScreenEdge.Bottom
   // The ends of the side it may run flush to: the far edge's, not a
   // joined end, and on a top or bottom edge its bar side's where nothing's
   // joined there
-  readonly property bool freeTop: root.vertical ? !root.joinStart : root.edge === Bar.Bottom || !root._joins
-  readonly property bool freeBottom: root.vertical ? !root.joinEnd : root.edge === Bar.Top || !root._joins
+  readonly property bool freeTop: root.vertical ? !root.joinStart : root.edge === ScreenEdge.Bottom || !root._joins
+  readonly property bool freeBottom: root.vertical ? !root.joinEnd : root.edge === ScreenEdge.Top || !root._joins
   // Longer than the side, it hangs past its far end: up on a bottom edge,
   // and on a side edge towards the screen's middle
-  readonly property bool growsUp: root.vertical ? root.boxCentreY > root.windowHeight / 2 : root.edge === Bar.Bottom
+  readonly property bool growsUp: root.vertical ? root.boxCentreY > root.windowHeight / 2 : root.edge === ScreenEdge.Bottom
   // Joined at the bar side, the stroke the box's wall there ran flush into
   // carries on past it, under the submenu
   readonly property bool joined: !root.vertical && (root.stretch?.joined ?? false)
@@ -64,8 +64,8 @@ QtObject {
   // the side it opens on, the far one, or a detached box's near one
   readonly property bool _squareTop: root.stretch?.squareTop ?? false
   readonly property bool _squareBottom: root.stretch?.squareBottom ?? false
-  readonly property bool _squareFar: root.edge === Bar.Top ? root._squareBottom : root._squareTop
-  readonly property bool _squareNear: !root.vertical && (root.edge === Bar.Top ? root._squareTop : root._squareBottom)
+  readonly property bool _squareFar: root.edge === ScreenEdge.Top ? root._squareBottom : root._squareTop
+  readonly property bool _squareNear: !root.vertical && (root.edge === ScreenEdge.Top ? root._squareTop : root._squareBottom)
   readonly property bool squareStartCorner: root.vertical ? root._squareTop : root.openToLeft && root._squareFar
   readonly property bool squareEndCorner: root.vertical ? root._squareBottom : !root.openToLeft && root._squareFar
   readonly property bool squareStartNear: root.openToLeft && root._squareNear

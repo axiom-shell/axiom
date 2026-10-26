@@ -59,7 +59,7 @@ QtObject {
     return openSurfaces.some(e => e.kind === kind && (e.group.screen?.name ?? "") === name);
   }
 
-  // `{ owner, screen, edge, start, end }` (a screen name, a Bar.edgeName,
+  // `{ owner, screen, edge, start, end }` (a screen name, a ScreenEdge.name,
   // screen px along the edge): surfaces joined to the border's inner
   // stroke, which leaves it open under them while surfaces are translucent,
   // where it would show through their fill (BorderPanel)

@@ -7,12 +7,6 @@ import qs.components.methods
 // Reader for the Bars section and the bar look helpers: derived layout
 // values (enrichBarConfig), widget colors, look groups and autoColor fields.
 QtObject {
-  enum Location {
-    Top,
-    Bottom,
-    Left,
-    Right
-  }
   // Adds derived orientation flags to a bar entry from the Bars section
   // (whose keys are always filled in from the schema defaults). Laid out
   // with the compositor's outer gaps (`gapsOut`: per edge name,
@@ -20,7 +14,7 @@ QtObject {
   // which a floating bar's islands keep from the screen edges as windows
   // do (ScreenEdgeManager.bars).
   function enrichBarConfig(barConfig, gapsOut) {
-    const loc = Bar.getLocationFromString(barConfig.location);
+    const loc = ScreenEdge.fromConfig(barConfig.location);
     // Its widget style, accents and shadow: its own style's, each key it
     // leaves null the Bars section's
     const look = Bar.lookOf(barConfig);
@@ -70,7 +64,7 @@ QtObject {
     // side leaves them off the windows' edges), and holds the widgets and
     // their padding inside a stroke. Windows keep gaps_out from it, as from
     // a screen edge: gaps_in is only between windows.
-    const edge = Bar.edgeName(loc);
+    const edge = ScreenEdge.name(loc);
     const floatGap = barConfig.floatGap >= 0 ? barConfig.floatGap : gapsOut[edge] ?? 0;
     const islandStart = outerCover + floatGap;
     const islandDepth = Appearance.borderWidth + padding + widgetSize + padding + Appearance.borderWidth;
@@ -79,7 +73,7 @@ QtObject {
     const boxed = Bar.boxedStyles.includes(look.widgetStyle);
     const grouping = boxed ? look.widgetGrouping : "separate";
 
-    const vertical = loc === Bar.Left || loc === Bar.Right;
+    const vertical = loc === ScreenEdge.Left || loc === ScreenEdge.Right;
     const screen = General.outputs.find(s => s.name === barConfig.monitor) ?? null;
     const bar = {
       "id": barConfig.id,
@@ -171,10 +165,10 @@ QtObject {
       // Along its screen's shorter edge: of two bars of a kind meeting at a
       // corner, it takes the corner (BarEnds)
       "shortEdge": screen ? BarEnds.onShortEdge(vertical, screen.width, screen.height) : vertical,
-      "left": loc === Bar.Left,
-      "right": loc === Bar.Right,
-      "top": loc === Bar.Top,
-      "bottom": loc === Bar.Bottom
+      "left": loc === ScreenEdge.Left,
+      "right": loc === ScreenEdge.Right,
+      "top": loc === ScreenEdge.Top,
+      "bottom": loc === ScreenEdge.Bottom
     };
     // How much less than its extent it reserves (reserveTrim). What its
     // ends meet depends on the other bars on its screen: ScreenEdgeManager.bars
@@ -454,25 +448,5 @@ QtObject {
         "link": def["x-link"]
       };
     }).filter(t => t !== null);
-  }
-  // A Bar.Location as the edge names zones and Hyprland use: "top" |
-  // "bottom" | "left" | "right"
-  function edgeName(location) {
-    return ["top", "bottom", "left", "right"][location];
-  }
-  // The Bar.Location an edge name stands for (edgeName's inverse)
-  function locationOf(name) {
-    return ["top", "bottom", "left", "right"].indexOf(name);
-  }
-
-  // The edge across the screen from a Bar.Location
-  function oppositeOf(location) {
-    return [Bar.Bottom, Bar.Top, Bar.Right, Bar.Left][location];
-  }
-
-  // The Bar.Location of an edge in config ("top" | "bottom" | "left" |
-  // "right"), Top for anything else
-  function getLocationFromString(locStr) {
-    return Math.max(0, Bar.locationOf(locStr));
   }
 }

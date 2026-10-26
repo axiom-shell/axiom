@@ -29,7 +29,7 @@ PopoutWrapperBase {
   required property ShellScreen screen
 
   readonly property int edge: EdgeMenusConfig.edgeOf(root.menu)
-  readonly property bool vertical: root.edge === Bar.Left || root.edge === Bar.Right
+  readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
 
   readonly property bool framed: root.menu.frame
   readonly property int padding: EdgeMenusConfig.paddingOf(root.menu)
@@ -88,7 +88,7 @@ PopoutWrapperBase {
   Component.onDestruction: ScreenEdgeManager.setZone(root.screen?.name ?? "", root._edgeName, 0)
 
   // Report the space taken, for surfaces laid out against this edge
-  readonly property string _edgeName: Bar.edgeName(root.edge)
+  readonly property string _edgeName: ScreenEdge.name(root.edge)
   readonly property int reserved: panel.visible && !menuSlot.idle ? root.depth : 0
   onReservedChanged: ScreenEdgeManager.setZone(root.screen?.name ?? "", root._edgeName, root.reserved)
 
@@ -138,10 +138,10 @@ PopoutWrapperBase {
     property Region _noInput: Region {}
 
     anchors {
-      top: root.edge === Bar.Top || root.vertical
-      bottom: root.edge === Bar.Bottom || root.vertical
-      left: root.edge === Bar.Left || !root.vertical
-      right: root.edge === Bar.Right || !root.vertical
+      top: root.edge === ScreenEdge.Top || root.vertical
+      bottom: root.edge === ScreenEdge.Bottom || root.vertical
+      left: root.edge === ScreenEdge.Left || !root.vertical
+      right: root.edge === ScreenEdge.Right || !root.vertical
     }
 
     implicitWidth: root.vertical ? (menuSlot.idle ? 1 : root.depth) : 0
@@ -162,10 +162,10 @@ PopoutWrapperBase {
       anchors.fill: parent
       visible: !menuSlot.idle
       active: root.isOpen
-      slideFromLeft: root.edge === Bar.Left
-      slideFromRight: root.edge === Bar.Right
-      slideFromTop: root.edge === Bar.Top
-      slideFromBottom: root.edge === Bar.Bottom
+      slideFromLeft: root.edge === ScreenEdge.Left
+      slideFromRight: root.edge === ScreenEdge.Right
+      slideFromTop: root.edge === ScreenEdge.Top
+      slideFromBottom: root.edge === ScreenEdge.Bottom
       enableFade: false
       containerWidth: panel.width
       containerHeight: panel.height
@@ -201,8 +201,8 @@ PopoutWrapperBase {
           visible: root.framed
           // Clear of the strip's inner stroke, which is at its start on a
           // right or bottom strip
-          x: root.frameInset + (root.edge === Bar.Right ? root.innerStroke : 0)
-          y: root.frameInset + (root.edge === Bar.Bottom ? root.innerStroke : 0)
+          x: root.frameInset + (root.edge === ScreenEdge.Right ? root.innerStroke : 0)
+          y: root.frameInset + (root.edge === ScreenEdge.Bottom ? root.innerStroke : 0)
           width: parent.width - root.frameInset * 2 - (root.vertical ? root.innerStroke : 0)
           height: parent.height - root.frameInset * 2 - (root.vertical ? 0 : root.innerStroke)
           radius: Appearance.borderRadius
@@ -217,15 +217,15 @@ PopoutWrapperBase {
           color: Theme.foreground
           width: root.vertical ? Appearance.borderWidth : parent.width
           height: root.vertical ? parent.height : Appearance.borderWidth
-          x: root.edge === Bar.Left ? parent.width - width : 0
-          y: root.edge === Bar.Top ? parent.height - height : 0
+          x: root.edge === ScreenEdge.Left ? parent.width - width : 0
+          y: root.edge === ScreenEdge.Top ? parent.height - height : 0
         }
 
         Loader {
           id: loader
           active: root.occupied
 
-          readonly property real across: root.pad + (root.edge === Bar.Right || root.edge === Bar.Bottom ? root.innerStroke : 0)
+          readonly property real across: root.pad + (root.edge === ScreenEdge.Right || root.edge === ScreenEdge.Bottom ? root.innerStroke : 0)
 
           x: root.vertical ? across : root.alongPos
           y: root.vertical ? root.alongPos : across

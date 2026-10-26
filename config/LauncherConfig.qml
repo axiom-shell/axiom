@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import qs.services.core
+import qs.components.methods
 
 // Reader for the Launcher section (the search launcher). Named
 // LauncherConfig because `Launcher` is the surface type.
@@ -9,11 +10,11 @@ QtObject {
 
   // The ScreenTarget it opens on (see General.screensFor)
   readonly property var screen: _c.screen
-  // Placed as docks and OSDs are: a Bar.Location, its centre's position
+  // Placed as docks and OSDs are: a ScreenEdge, its centre's position
   // along it (0-1), and whether it floats off the edge (a FloatingPopout,
   // `distance` 0-0.5 across the free screen: 0.5 centres it) or grows out
   // of it (an EdgePopout)
-  readonly property int edge: Bar.getLocationFromString(_c.edge)
+  readonly property int edge: ScreenEdge.fromConfig(_c.edge)
   readonly property real position: _c.position / 100
   readonly property bool detached: _c.detached
   readonly property real distance: _c.distance / 100

@@ -347,7 +347,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A side edge's submenus always open away from the edge
 - **Where:** `components/hosts/popout/SubmenuSide.qml` (`openToLeft`)
-- **What:** On a left or right edge a submenu always opens away from that edge (`openToLeft` is `edge === Bar.Right`), so a floating menu on the right edge opens every submenu to its left, across the menu's own content side. The maintainer finds that unexpected for a right-edge menu: which way it should open there (and whether by the box's place on screen, as top and bottom edges do) needs deciding. Seen with a `Submenu` module in a right-edge floating menu in nested niri.
+- **What:** On a left or right edge a submenu always opens away from that edge (`openToLeft` is `edge === ScreenEdge.Right`), so a floating menu on the right edge opens every submenu to its left, across the menu's own content side. The maintainer finds that unexpected for a right-edge menu: which way it should open there (and whether by the box's place on screen, as top and bottom edges do) needs deciding. Seen with a `Submenu` module in a right-edge floating menu in nested niri.
 - **Size:** small
 - **Found:** 2026-10-18, while checking shadow seams on side-edge menus
 
@@ -392,12 +392,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** With a typing module (Notes) on the desktop, clicking into it and back to windows logs bursts of `Trying to disable` from `qt.qpa.wayland.textinput` (`QWaylandTextInputv3::disableSurface`; 174 in one session). Typing and handing focus back work. Likely Qt's text-input-v3 noise when focus moves between surfaces; not yet checked whether an edge menu's Notes logs the same.
 - **Size:** small
 - **Found:** 2026-10-14, while letting typing modules go on the desktop
-
-### Edge users still read the enum from the `Bar` reader
-- **Where:** `config/Bar.qml` (`enum Location` and the four edge helpers), `services/ui/ScreenEdgeManager.qml`, `components/hosts/popout/` (and the other users: 32 files)
-- **What:** Docks, OSDs, the launcher, popouts, edge menus and the border read `Bar.Top` … and `Bar.edgeName` etc. (160 enum values, 38 helper calls, 24 "a Bar.Location" comments). Item 2 of the [edge enum plan](plans/edge-enum.md), after the helper exists: move each to `ScreenEdge` (`ScreenEdge.Top`, `ScreenEdge.name`, …, comments "a ScreenEdge"), delete the enum and the helpers from `config/Bar.qml`, fix the docs' spans (config-readers.md's `edgeName` line, `Bar.Top` / `Bar.Location` / `edge === Bar.Right`), and run qmllint, which flags a missed value. Force a reload afterwards (testing.md › Reloads and logs).
-- **Size:** small
-- **Found:** 2026-10-27, while planning the edge enum (docs/dev/plans/edge-enum.md)
 
 ### The `Bars` reader is named `Bar`
 - **Where:** `config/Bar.qml`, `scripts/check_docs.py` (`RETIRED`)

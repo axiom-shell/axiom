@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.config
 import qs.services.compositor
 import qs.services.ui
+import qs.components.methods
 
 // A full-screen Overlay-layer window placed inside the border's and bars'
 // reserved area (the overlay, the onboarder). Normal exclusion with no zone
@@ -47,10 +48,10 @@ PanelWindow {
     return (bar ? Bar.reserveTrim(bar, CompositorManager.gapsOut[side] ?? 0) : 0) - Appearance.borderWidth;
   }
   margins {
-    left: root._margin("left", Bar.Left)
-    right: root._margin("right", Bar.Right)
-    top: root._margin("top", Bar.Top)
-    bottom: root._margin("bottom", Bar.Bottom)
+    left: root._margin("left", ScreenEdge.Left)
+    right: root._margin("right", ScreenEdge.Right)
+    top: root._margin("top", ScreenEdge.Top)
+    bottom: root._margin("bottom", ScreenEdge.Bottom)
   }
 
   color: "transparent"

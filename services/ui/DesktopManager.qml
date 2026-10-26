@@ -186,12 +186,12 @@ QtObject {
         "bottom": 0
       };
     const reserved = DockManager.reservedOf(screen);
-    const side = (location, index) => Math.max(ScreenEdgeManager.reservedWithMenusOn(screen, location), reserved[index]) + (CompositorManager.gapsOut[Bar.edgeName(location)] ?? 0);
+    const side = (location, index) => Math.max(ScreenEdgeManager.reservedWithMenusOn(screen, location), reserved[index]) + (CompositorManager.gapsOut[ScreenEdge.name(location)] ?? 0);
     return {
-      "left": side(Bar.Left, 0),
-      "top": side(Bar.Top, 1),
-      "right": side(Bar.Right, 2),
-      "bottom": side(Bar.Bottom, 3)
+      "left": side(ScreenEdge.Left, 0),
+      "top": side(ScreenEdge.Top, 1),
+      "right": side(ScreenEdge.Right, 2),
+      "bottom": side(ScreenEdge.Bottom, 3)
     };
   }
 }

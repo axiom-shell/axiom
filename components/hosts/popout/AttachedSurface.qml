@@ -19,7 +19,7 @@ import qs.components.methods
  * continues. Composing rectangles + clipped corner pieces left some
  * segments half-clipped and anti-aliased.
  *
- * `edge` is the side the surface attaches to, as a Bar.Location value.
+ * `edge` is the side the surface attaches to, as a ScreenEdge value.
  * `boxWidth`/`boxHeight` are the size of the content box; the implicit
  * size adds the connector and fillet margins around it. Attached, the box
  * starts on the attach edge (boxStart), the fillets beside it.
@@ -162,12 +162,12 @@ Item {
       if (toLeft || toRight) {
         const x0 = toLeft ? b.x : right, w = Math.min(b.height, reach * 2);
         const sx = toLeft ? x0 - reach : x0, hx = toLeft ? x0 - reach * 2 : x0;
-        if (wall(Bar.Top) && Math.abs(s.y - b.y) <= 1)
+        if (wall(ScreenEdge.Top) && Math.abs(s.y - b.y) <= 1)
           runs.push({
             "source": Qt.rect(sx, b.y, reach, w),
             "hole": Qt.rect(hx, b.y - reach, reach * 2, reach)
           });
-        if (wall(Bar.Bottom) && Math.abs(s.y + s.height - bottom) <= 1)
+        if (wall(ScreenEdge.Bottom) && Math.abs(s.y + s.height - bottom) <= 1)
           runs.push({
             "source": Qt.rect(sx, bottom - w, reach, w),
             "hole": Qt.rect(hx, bottom, reach * 2, reach)
@@ -240,11 +240,11 @@ Item {
   readonly property real coverStartFillet: root._natural.filletStart ? Math.max(0, root.startMargin - root.coverStart) : 0
   readonly property real coverEndFillet: root._natural.filletEnd && root.coverLength > 0 ? Math.max(0, root.endMargin - (root.alongLength - root.coverStart - root.coverLength)) : 0
 
-  readonly property bool vertical: edge === Bar.Left || edge === Bar.Right
-  readonly property bool attachLeft: edge === Bar.Left
-  readonly property bool attachRight: edge === Bar.Right
-  readonly property bool attachTop: edge === Bar.Top
-  readonly property bool attachBottom: edge === Bar.Bottom
+  readonly property bool vertical: edge === ScreenEdge.Left || edge === ScreenEdge.Right
+  readonly property bool attachLeft: edge === ScreenEdge.Left
+  readonly property bool attachRight: edge === ScreenEdge.Right
+  readonly property bool attachTop: edge === ScreenEdge.Top
+  readonly property bool attachBottom: edge === ScreenEdge.Bottom
 
   // ---- Geometry, in edge-local coordinates ----
   // u runs along the attach edge, v away from it (v = 0 is the attach

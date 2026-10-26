@@ -6,6 +6,7 @@ import qs.config
 import qs.components.hosts.popout
 import qs.components.reusable
 import qs.components.surfaces.osd
+import qs.components.methods
 
 // Every enabled OSD (OSD.osds), each on the screens its `monitors` puts it
 // on: an EdgePopout, held off its edge when `detached` (as a dock or edge
@@ -36,7 +37,7 @@ Scope {
           required property ShellScreen modelData
 
           screen: modelData
-          edge: Bar.getLocationFromString(entry.osd.edge)
+          edge: ScreenEdge.fromConfig(entry.osd.edge)
           position: entry.osd.position / 100
           // Held off the edge, `gap` in from the frame lines there
           held: entry.osd.detached

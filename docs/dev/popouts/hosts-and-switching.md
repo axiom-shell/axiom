@@ -15,7 +15,7 @@ This doc covers the shared host pieces in `components/hosts/popout/`, how a bar 
   - It fades in, once granted its `PopoutClaim` (`claimKey`; its footprint is its box where it's placed).
   - Used by the detached launcher and the window switcher.
 - **`SlideAnimation`.**
-- **`AttachedSurface`:** the content box, connector and `CornerPiece` fillets that make a popout look like it grows out of a bar or the screen border. `edge` is a `Bar.Location`.
+- **`AttachedSurface`:** the content box, connector and `CornerPiece` fillets that make a popout look like it grows out of a bar or the screen border. `edge` is a `ScreenEdge`.
   - **Attached:**
     - The box starts on the attach edge, with the fillets curving outside its walls (`boxStart`).
     - `boxStart` is pushed back only as far as a box too shallow for its fillet and far corner needs.

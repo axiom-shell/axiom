@@ -29,7 +29,7 @@ import qs.components.methods
  *     delegate: EdgePopout {
  *       required property ShellScreen modelData
  *       screen: modelData
- *       edge: Bar.Right
+ *       edge: ScreenEdge.Right
  *       content: Component { MyPanel {} }
  *     }
  *   }
@@ -39,8 +39,8 @@ PopoutWrapperBase {
 
   required property ShellScreen screen
 
-  // Side of the screen to attach to (a Bar.Location value)
-  property int edge: Bar.Right
+  // Side of the screen to attach to (a ScreenEdge value)
+  property int edge: ScreenEdge.Right
   // Position along the edge: 0-1 of the available length, plus pixels
   property real position: 0.5
   property real positionOffset: 0
@@ -151,7 +151,7 @@ PopoutWrapperBase {
     key: root.claimKey
     kind: root.claimKind
     screen: root.screen?.name ?? ""
-    edge: Bar.edgeName(root.edge)
+    edge: ScreenEdge.name(root.edge)
     pinned: root.pinned && !root.engaged
     resident: root.resident
     occupied: root.occupied
@@ -190,7 +190,7 @@ PopoutWrapperBase {
   readonly property bool holds: root.held || root._overFullscreen
   readonly property var gaps: placement.gaps
 
-  // The perpendicular edges at its start and end (Bar.Locations)
+  // The perpendicular edges at its start and end (ScreenEdges)
   readonly property int startSide: placement.startSide
   readonly property int endSide: placement.endSide
 
@@ -396,10 +396,10 @@ PopoutWrapperBase {
 
     // Spans the whole edge; the input mask limits it to the surface.
     anchors {
-      top: root.edge === Bar.Top || root.vertical
-      bottom: root.edge === Bar.Bottom || root.vertical
-      left: root.edge === Bar.Left || !root.vertical
-      right: root.edge === Bar.Right || !root.vertical
+      top: root.edge === ScreenEdge.Top || root.vertical
+      bottom: root.edge === ScreenEdge.Bottom || root.vertical
+      left: root.edge === ScreenEdge.Left || !root.vertical
+      right: root.edge === ScreenEdge.Right || !root.vertical
     }
 
     // On a bare screen edge (no border, no bar) there's no stroke to land
@@ -407,12 +407,12 @@ PopoutWrapperBase {
     // Docks reserving space inside the border don't push it in: it reaches
     // past them, on its own edge and at both ends
     readonly property string screenName: root.screen?.name ?? ""
-    readonly property real attachMargin: (root.bareEdge ? 0 : -Appearance.borderWidth) - surface.backfill + root.edgeOffset - (root.slidesUnder ? root.slideDistance : 0) - DockManager.zoneOn(screenName, Bar.edgeName(root.edge))
+    readonly property real attachMargin: (root.bareEdge ? 0 : -Appearance.borderWidth) - surface.backfill + root.edgeOffset - (root.slidesUnder ? root.slideDistance : 0) - DockManager.zoneOn(screenName, ScreenEdge.name(root.edge))
     margins {
-      top: root.edge === Bar.Top ? surfaceWindow.attachMargin : root.vertical ? -root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "top") : 0
-      bottom: root.edge === Bar.Bottom ? surfaceWindow.attachMargin : root.vertical ? -root.endStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "bottom") : 0
-      left: root.edge === Bar.Left ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "left")
-      right: root.edge === Bar.Right ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.endStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "right")
+      top: root.edge === ScreenEdge.Top ? surfaceWindow.attachMargin : root.vertical ? -root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "top") : 0
+      bottom: root.edge === ScreenEdge.Bottom ? surfaceWindow.attachMargin : root.vertical ? -root.endStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "bottom") : 0
+      left: root.edge === ScreenEdge.Left ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "left")
+      right: root.edge === ScreenEdge.Right ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.endStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "right")
     }
 
     // The surface, or room for it at the content's largest
@@ -426,7 +426,7 @@ PopoutWrapperBase {
         return own;
       // From this window's edge (its attach edge, less its backfill and
       // the way it slides in from) to the far edge's reserved space
-      const far = ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge === Bar.Top ? Bar.Bottom : Bar.Top);
+      const far = ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge === ScreenEdge.Top ? ScreenEdge.Bottom : ScreenEdge.Top);
       return Math.max(own, (root.screen?.height ?? 0) - far - root.attachAt + surface.backfill + (root.slidesUnder ? root.slideDistance : 0));
     }
     implicitWidth: root.vertical ? surfaceWindow.depth : 0
@@ -482,8 +482,8 @@ PopoutWrapperBase {
       animateShape: root.settled
 
       // At the attach edge of a window that may be deeper than it
-      x: root.vertical ? (root.edge === Bar.Right ? surfaceWindow.width - width : 0) : root._windowStart + root.surfaceStart
-      y: root.vertical ? root._windowStart + root.surfaceStart : (root.edge === Bar.Bottom ? surfaceWindow.height - height : 0)
+      x: root.vertical ? (root.edge === ScreenEdge.Right ? surfaceWindow.width - width : 0) : root._windowStart + root.surfaceStart
+      y: root.vertical ? root._windowStart + root.surfaceStart : (root.edge === ScreenEdge.Bottom ? surfaceWindow.height - height : 0)
       width: implicitWidth
       height: implicitHeight
 
@@ -510,10 +510,10 @@ PopoutWrapperBase {
         // re-evaluate one at a time when the edge changes, and QML drops
         // the anchor that briefly conflicts (top + bottom + verticalCenter)
         // for good.
-        readonly property real leftMargin: root.contentPadding + (root.edge === Bar.Left ? root.attachClearance : 0)
-        readonly property real rightMargin: root.contentPadding + (root.edge === Bar.Right ? root.attachClearance : 0)
-        readonly property real topMargin: root.contentPadding + (root.edge === Bar.Top ? root.attachClearance : 0)
-        readonly property real bottomMargin: root.contentPadding + (root.edge === Bar.Bottom ? root.attachClearance : 0)
+        readonly property real leftMargin: root.contentPadding + (root.edge === ScreenEdge.Left ? root.attachClearance : 0)
+        readonly property real rightMargin: root.contentPadding + (root.edge === ScreenEdge.Right ? root.attachClearance : 0)
+        readonly property real topMargin: root.contentPadding + (root.edge === ScreenEdge.Top ? root.attachClearance : 0)
+        readonly property real bottomMargin: root.contentPadding + (root.edge === ScreenEdge.Bottom ? root.attachClearance : 0)
         // (below a submenu's stretch above it, clear of one below)
         x: root.vertical ? leftMargin : root.contentPadding + root.place.contentOffset
         y: root.vertical ? root.contentPadding + root.place.contentOffset + slot.shownStretchTop : topMargin + slot.shownStretchTop
