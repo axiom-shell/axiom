@@ -94,8 +94,9 @@ type Manager struct {
 	problem         string
 	loaded          bool
 	takeoverPending bool
-	// pickedHere: managed was picked while axiom runs (its card's Save),
-	// where the card asks for the approval: no notification
+	// pickedHere: managed was saved while axiom runs (its card's Save, not
+	// an edit of the file), where the card asks for the approval: no
+	// notification
 	pickedHere bool
 	// releaseProblem: why the managed config couldn't be given back (retried
 	// after releaseBackoff)
@@ -323,8 +324,9 @@ func (m *Manager) SetInputs(in *jsonx.Object) {
 	})
 }
 
-// ConfigChanged tells of a config change (the mode).
-func (m *Manager) ConfigChanged() {
+// ConfigChanged tells of a config change (the mode); fromFile when it was
+// read from config.json (an edit made outside), not saved by the shell.
+func (m *Manager) ConfigChanged(fromFile bool) {
 	m.enqueue(func(ctx context.Context) {
 		if !m.live() {
 			return
@@ -332,7 +334,7 @@ func (m *Manager) ConfigChanged() {
 		if mode := m.o.Mode(); mode != m.mode {
 			m.mode = mode
 			m.noteHolding()
-			m.modeChanged()
+			m.modeChanged(fromFile)
 			m.debounce.Reset(300 * time.Millisecond)
 		}
 	})
@@ -561,14 +563,16 @@ func (m *Manager) apply(ctx context.Context) {
 }
 
 // modeChanged: a problem belongs to the mode it was found in
-func (m *Manager) modeChanged() {
+func (m *Manager) modeChanged(fromFile bool) {
 	m.problem = ""
 	m.loaded = false
 	m.takeoverPending = false
 	m.monitorConflict = nil
 	// Saving managed never approves a takeover: the card shows Allow
-	// takeover after it, as it does for a config loaded with the mode
-	m.pickedHere = m.mode == "managed"
+	// takeover after it, as it does for a config loaded with the mode.
+	// Read from the file (one that didn't load at the start, fixed to say
+	// managed), no card is open: the notification asks
+	m.pickedHere = m.mode == "managed" && !fromFile
 }
 
 // --- Approving a takeover ---

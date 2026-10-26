@@ -60,6 +60,9 @@ type State struct {
 type Event struct {
 	State  State
 	Config *jsonx.Object
+	// FromFile: read from the file (an edit made outside, the schema
+	// rebuilt), not a write through the store
+	FromFile bool
 }
 
 // Store is the open config.
@@ -450,7 +453,7 @@ func (s *Store) reload() {
 		changed := !s.state.Missing
 		s.state.Missing = true
 		if changed {
-			s.queue(Event{State: s.state})
+			s.queue(Event{State: s.state, FromFile: true})
 		}
 		s.mu.Unlock()
 		if changed {
@@ -488,6 +491,7 @@ func (s *Store) reload() {
 			ev = Event{State: s.state}
 		}
 	}
+	ev.FromFile = true
 	s.queue(ev)
 	s.mu.Unlock()
 }
@@ -684,6 +688,7 @@ func (s *Store) Reschema(p config.Pipeline) {
 		s.state.Revision++
 		ev = Event{State: s.state, Config: loaded}
 	}
+	ev.FromFile = true
 	s.queue(ev)
 	s.mu.Unlock()
 }

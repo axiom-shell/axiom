@@ -95,7 +95,7 @@ func (d *Daemon) compositorPart() part {
 		name:     "compositor",
 		methods:  func(reg *rpc.Registry) { d.compositorMethods(reg, m) },
 		run:      m.Run,
-		onConfig: func(store.Event) { m.ConfigChanged() },
+		onConfig: func(ev store.Event) { m.ConfigChanged(ev.FromFile) },
 	}
 }
 

@@ -167,11 +167,16 @@ func (h *harness) inputs(fileTag, liveTag, layerKey string, parts ...string) {
 		"specFile", jsonx.Obj("tag", fileTag, "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look)))
 }
 
-func (h *harness) setMode(mode string) {
+// setMode changes the mode as the shell's save does
+func (h *harness) setMode(mode string) { h.changeMode(mode, false) }
+
+// changeMode changes the mode, read from the file (an edit made outside)
+// or saved by the shell
+func (h *harness) changeMode(mode string, fromFile bool) {
 	h.modeMu.Lock()
 	h.mode = mode
 	h.modeMu.Unlock()
-	h.m.ConfigChanged()
+	h.m.ConfigChanged(fromFile)
 }
 
 // eventually waits for cond
@@ -344,7 +349,7 @@ func TestInertManagerNeverBlocks(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		for range 1000 {
-			m.ConfigChanged()
+			m.ConfigChanged(false)
 		}
 		m.State(context.Background())
 		close(done)
@@ -370,7 +375,7 @@ func TestStoppedManagerNeverBlocks(t *testing.T) {
 	m2.stop.Do(func() { close(m2.stopped) })
 	done := make(chan struct{})
 	go func() {
-		m2.ConfigChanged()
+		m2.ConfigChanged(false)
 		m2.State(context.Background())
 		m2.Entries(ctx)
 		close(done)
@@ -504,6 +509,38 @@ func TestAnUnknownModeChangesNothing(t *testing.T) {
 			}
 			h.setMode("managed")
 			h.eventually("the managed config rewritten", func() bool { return readFile(f.ManagedPath) == hyprHeader+" managed f1\n" })
+		})
+	}
+}
+
+// managed read from the file (one that didn't load at the start, fixed from
+// outside) has no card open: the notification asks for the approval, which
+// it never is itself; the shell's save doesn't notify (the card asks)
+func TestManagedFromTheFileNotifies(t *testing.T) {
+	t.Parallel()
+	for _, fromFile := range []bool{true, false} {
+		t.Run(fmt.Sprintf("from file %v", fromFile), func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, "")
+			f := h.w.files(Inputs{})
+			os.MkdirAll(f.ConfigDir, 0o755)
+			os.WriteFile(f.ManagedPath, []byte("-- mine\n"), 0o644)
+			h.inputs("f1", "l1", "k1")
+			h.eventually("live", func() bool { return h.state("live") == true })
+			h.changeMode("managed", fromFile)
+			h.eventually("the takeover pending", func() bool { return h.state("takeoverPending") == true })
+			notified := false
+			for len(h.pushes) > 0 {
+				if strings.Contains(<-h.pushes, `"approval"`) {
+					notified = true
+				}
+			}
+			if notified != fromFile {
+				t.Fatalf("notified %v", notified)
+			}
+			if readFile(f.ManagedPath) != "-- mine\n" || h.approved() {
+				t.Fatal("taken over without the approval")
+			}
 		})
 	}
 }
