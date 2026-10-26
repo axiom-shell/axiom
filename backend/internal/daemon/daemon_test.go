@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -89,9 +90,13 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 			t.Error("the daemon didn't stop")
 		}
 	})
+	// Ready once a connection gets through: the socket's file is there
+	// from the bind, a moment before the listen, and a connect between
+	// the two is refused
 	deadline := time.Now().Add(10 * time.Second)
 	for {
-		if info, err := os.Lstat(td.socket); err == nil && info.Mode()&os.ModeSocket != 0 {
+		if nc, err := net.Dial("unix", td.socket); err == nil {
+			nc.Close()
 			return
 		}
 		select {
