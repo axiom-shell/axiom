@@ -486,9 +486,9 @@ func TestAConfigGivenBackMeanwhileIsntWrittenOver(t *testing.T) {
 
 // While the mode isn't known (config.json didn't load at the start) a
 // managed config or an include of axiom's is never touched: a managed
-// config is never given back, whether the runtime file remembers managed
-// or not (gone after a reboot), and the mode applied stays; once the file
-// is fixed, its mode applies
+// config in place is never given back, whether the runtime file remembers
+// managed or not (gone after a reboot), and the mode applied stays; once
+// the file is fixed, its mode applies
 func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 	t.Parallel()
 	for _, c := range []struct {
@@ -498,7 +498,6 @@ func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 	}{
 		{"applied managed", "managed", true, false},
 		{"managed config, nothing applied", "", true, false},
-		{"applied managed, config gone", "managed", false, false},
 		{"include loaded", "included", false, true},
 		{"include loaded, nothing applied", "", false, true},
 	} {
@@ -542,10 +541,12 @@ func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 
 // While the mode isn't known and nothing of axiom's is in the compositor's
 // config, the defaults' runtime layer applies, again after a reload drops
-// it, and the mode applied stays
+// it, and the mode applied stays. Managed applied with no managed config in
+// place (the takeover awaiting approval, blocked or failed) gets it too, as
+// outside the hold, and nothing is claimed
 func TestAnUnknownModeAppliesTheDefaultsLayer(t *testing.T) {
 	t.Parallel()
-	for _, applied := range []string{"", "detached"} {
+	for _, applied := range []string{"", "detached", "managed"} {
 		t.Run("applied "+applied, func(t *testing.T) {
 			t.Parallel()
 			h := newHarness(t, "")
