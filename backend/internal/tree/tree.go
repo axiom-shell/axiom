@@ -1,6 +1,11 @@
 // Package tree finds the axiom tree (the shell's QML and the config
 // schema's source) a command works on, and builds the JSON schema from it:
 // config/schema/**.yaml → config/json/config.schema.json.
+//
+// It is the disk side of schema/yamlsrc, which stays pure: tree finds the
+// tree, hands yamlsrc the files (os.DirFS) and reports yamlsrc's problems
+// as one axerr.Error. What the YAML means, how the files join and what
+// they may hold is yamlsrc's alone.
 package tree
 
 import (
@@ -17,9 +22,8 @@ import (
 
 // Paths inside a tree
 const (
-	SchemaSource = yamlsrc.SourceDir
-	SchemaJSON   = "config/json/config.schema.json"
-	shellQML     = "shell.qml"
+	SchemaJSON = "config/json/config.schema.json"
+	shellQML   = "shell.qml"
 )
 
 // Find is the tree to use: dir when given, else $AXIOM_TREE, else the
