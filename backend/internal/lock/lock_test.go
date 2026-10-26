@@ -59,7 +59,7 @@ func TestConfirmRule(t *testing.T) {
 	}{
 		{"locked on every output", State{Locked: true, Surfaces: 2, Outputs: 2}, true},
 		{"an output without a surface", State{Locked: true, Surfaces: 1, Outputs: 2}, false},
-		{"a surface on a stand-in output too", State{Locked: true, Surfaces: 1, Outputs: 0}, true},
+		{"more surfaces than outputs", State{Locked: true, Surfaces: 1, Outputs: 0}, true},
 		{"no output connected", State{Locked: true, Surfaces: 0, Outputs: 0}, true},
 		{"not locked", State{Locked: false, Surfaces: 1, Outputs: 1}, false},
 		{"not locked, no output", State{}, false},

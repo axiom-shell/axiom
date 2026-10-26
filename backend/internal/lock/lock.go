@@ -112,6 +112,11 @@ func (s State) confirmed() bool {
 func (l *Locker) confirmed() bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	return l.confirmedLocked()
+}
+
+// confirmedLocked is confirmed with l.mu held.
+func (l *Locker) confirmedLocked() bool {
 	return !l.gone && l.state.confirmed()
 }
 
@@ -163,7 +168,7 @@ func (l *Locker) wait(ctx context.Context, d time.Duration) bool {
 	deadline := time.After(d)
 	for {
 		l.mu.Lock()
-		ok, changed := !l.gone && l.state.confirmed(), l.changed
+		ok, changed := l.confirmedLocked(), l.changed
 		l.mu.Unlock()
 		if ok {
 			return true

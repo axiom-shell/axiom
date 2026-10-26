@@ -326,8 +326,8 @@ QtObject {
       "kind": "unavailable",
       "message": "the connection to axiom closed"
     });
-    // At once, as before: a re-exec hands its listening socket over, so
-    // this connection waits for the new image. Failing, it backs off
+    // At once: a re-exec hands its listening socket over, so this
+    // connection waits for the new image. A failed attempt backs off
     root._connect();
   }
 
