@@ -117,7 +117,10 @@ var allowedState = map[string]string{
 }
 
 // Types whose package-level variable is state, whatever its initializer
-var stateTypes = map[string]bool{"sync.Map": true, "sync.Mutex": true, "sync.RWMutex": true, "sync.Once": true, "sync.WaitGroup": true, "sync.Pool": true}
+var stateTypes = map[string]bool{
+	"sync.Map": true, "sync.Mutex": true, "sync.RWMutex": true, "sync.Once": true, "sync.WaitGroup": true, "sync.Pool": true,
+	"atomic.Bool": true, "atomic.Int32": true, "atomic.Int64": true, "atomic.Uint32": true, "atomic.Uint64": true, "atomic.Uintptr": true, "atomic.Value": true, "atomic.Pointer": true,
+}
 
 // tierOf is the tier of a package directory under backend/, or false
 func tierOf(rel string) (int, bool) {
@@ -238,11 +241,27 @@ func TestImportsPointDown(t *testing.T) {
 func TestEveryPackageHasADocComment(t *testing.T) {
 	t.Parallel()
 	for _, p := range load(t) {
-		var doc string
+		// The package's doc comment: in one file, a _test.go one only when
+		// the package has nothing else
+		var doc, testDoc string
+		var docFiles []string
 		for path, f := range p.files {
-			if f.Doc != nil && (!isTest(path) || doc == "") {
+			switch {
+			case f.Doc == nil:
+			case isTest(path):
+				testDoc = f.Doc.Text()
+			default:
 				doc = f.Doc.Text()
+				docFiles = append(docFiles, filepath.Base(path))
 			}
+		}
+		if len(docFiles) > 1 {
+			sort.Strings(docFiles)
+			t.Errorf("%s has a doc comment in %d files (%s): keep one", p.rel, len(docFiles), strings.Join(docFiles, ", "))
+			continue
+		}
+		if doc == "" {
+			doc = testDoc
 		}
 		want := "Package " + p.name + " "
 		switch p.name {
@@ -312,6 +331,10 @@ func TestNoInitOrPackageState(t *testing.T) {
 					}
 				case *ast.IncDecStmt:
 					targets = []ast.Expr{s.X}
+				case *ast.CallExpr:
+					if fn, ok := s.Fun.(*ast.Ident); ok && fn.Obj == nil && (fn.Name == "delete" || fn.Name == "clear") && len(s.Args) > 0 {
+						targets = s.Args[:1]
+					}
 				case *ast.FuncDecl:
 					return s.Body != nil
 				case *ast.GenDecl:
@@ -339,8 +362,8 @@ func TestNoInitOrPackageState(t *testing.T) {
 
 // stateful says why a package-level variable holds state, or ""
 func stateful(d *ast.GenDecl, vs *ast.ValueSpec) string {
-	if vs.Type != nil && stateTypes[exprString(vs.Type)] {
-		return exprString(vs.Type)
+	if t := typeName(vs.Type); t != "" {
+		return t
 	}
 	if len(vs.Values) == 0 {
 		for _, c := range append(commentList(d.Doc), commentList(vs.Doc)...) {
@@ -351,9 +374,37 @@ func stateful(d *ast.GenDecl, vs *ast.ValueSpec) string {
 		return "no initializer"
 	}
 	for _, v := range vs.Values {
-		if c, ok := v.(*ast.CompositeLit); ok && stateTypes[exprString(c.Type)] {
-			return exprString(c.Type)
+		// T{}, &T{} and new(T)
+		if u, ok := v.(*ast.UnaryExpr); ok && u.Op == token.AND {
+			v = u.X
 		}
+		switch x := v.(type) {
+		case *ast.CompositeLit:
+			if t := typeName(x.Type); t != "" {
+				return t
+			}
+		case *ast.CallExpr:
+			if fn, ok := x.Fun.(*ast.Ident); ok && fn.Name == "new" && len(x.Args) == 1 {
+				if t := typeName(x.Args[0]); t != "" {
+					return t
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// typeName is a state type's name if e is one (or a pointer to or an
+// instance of a generic one), else ""
+func typeName(e ast.Expr) string {
+	if star, ok := e.(*ast.StarExpr); ok {
+		e = star.X
+	}
+	if idx, ok := e.(*ast.IndexExpr); ok {
+		e = idx.X
+	}
+	if n := exprString(e); stateTypes[n] {
+		return n
 	}
 	return ""
 }
