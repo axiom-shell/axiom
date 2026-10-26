@@ -691,6 +691,9 @@ GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')
 # A polled topic (internal/topics): its methods and push, named after it
 GO_SOURCE = re.compile(r'\btopics\.Source\{\s*Name:\s*"(\w+)"')
 POLLED_METHODS = ("subscribe", "unsubscribe", "refresh")
+# The daemon's own account of them, with their fields (scripts/generate.sh
+# writes it first, from backend/tools/rpcshapes)
+SHAPES_PATH = ROOT / GEN_OUT / "rpc-shapes.json"
 GO_COMMENT_LINE = re.compile(r"^[ \t]*//.*$", re.M)
 # QML: through BackendManager (or inside it, root.*), and `// rpc: a, b`
 # for methods named at runtime
@@ -712,6 +715,27 @@ def _segment(text, start, ends):
     stop = min([e for e in ends if e > start] + [len(text)])
     close = text.find("\n}\n", start)
     return text[start: stop if close < 0 else min(stop, close)]
+
+
+def load_shapes():
+    """The daemon's methods, pushes and topics as rpcshapes printed them."""
+    if not SHAPES_PATH.exists():
+        sys.exit(f"{rel(SHAPES_PATH)} is missing: run scripts/generate.sh")
+    return json.loads(SHAPES_PATH.read_text())
+
+
+def shapes_problems(methods, pushes, shapes):
+    """Where the scan by name and the daemon's own registry disagree: a
+    method or push one of them misses, so the scan's regexes need a case."""
+    problems = []
+    for what, scanned, real in (
+            ("method", set(methods), {m["method"] for m in shapes["methods"]}),
+            ("push", set(pushes), {p["method"] for p in shapes["pushes"]} | {f"{t['name']}.state" for t in shapes["topics"]})):
+        for name in sorted(real - scanned):
+            problems.append(f"rpc_scan misses the {what} {name}, which the daemon's registry has (rpc-shapes.json)")
+        for name in sorted(scanned - real):
+            problems.append(f"rpc_scan finds the {what} {name}, which the daemon's registry lacks (rpc-shapes.json)")
+    return problems
 
 
 def rpc_scan():
@@ -799,6 +823,7 @@ def rpc_scan():
     for method, info in to_shell.items():
         if not info["qml"]:
             problems.append(f"the daemon calls {method} on the shell, which nothing answers")
+    problems += shapes_problems(methods, pushes, load_shapes())
     return methods, pushes, to_shell, problems
 
 

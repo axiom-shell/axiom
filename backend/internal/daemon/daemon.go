@@ -68,6 +68,8 @@ type Options struct {
 	isShell func(pid int) bool
 	// topics are polled topics added to the daemon's own (tests)
 	topics []topics.Source
+	// registered sees the registry once every part registered (tests)
+	registered func(*rpc.Registry)
 }
 
 // Files in the runtime directory
@@ -279,6 +281,9 @@ func Run(ctx context.Context, opts Options) error {
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
 	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.idlePart(), d.waylandPart(), d.clipboardPart(), d.dev.part()}
 	reg := d.registry(parts)
+	if opts.registered != nil {
+		opts.registered(reg)
+	}
 	d.server = &rpc.Server{
 		Registry: reg,
 		Log:      opts.Log.With("part", "rpc"),

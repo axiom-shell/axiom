@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"strings"
 )
 
@@ -216,4 +217,34 @@ func dominant(all []jsonField, idx []int) int {
 		}
 	}
 	return tagged
+}
+
+// MethodShape is one method as it goes on the wire: what it takes and
+// what it returns.
+type MethodShape struct {
+	Method string `json:"method"`
+	Params Shape  `json:"params"`
+	Result Shape  `json:"result"`
+}
+
+// Shapes lists every registered method's shapes, by method name.
+func (r *Registry) Shapes() []MethodShape {
+	out := make([]MethodShape, 0, len(r.handlers))
+	for m, e := range r.handlers {
+		out = append(out, MethodShape{Method: m, Params: ShapeOf(e.params), Result: ShapeOf(e.result)})
+	}
+	slices.SortFunc(out, func(a, b MethodShape) int { return strings.Compare(a.Method, b.Method) })
+	return out
+}
+
+// PushShape is one push as it goes on the wire.
+type PushShape struct {
+	Method string `json:"method"`
+	Latest bool   `json:"latest,omitempty"`
+	Params Shape  `json:"params"`
+}
+
+// Shape is the push's declaration with what its params carry.
+func (p Push[T]) Shape() PushShape {
+	return PushShape{Method: p.Method, Latest: p.Latest, Params: ShapeOf(p.Type())}
 }

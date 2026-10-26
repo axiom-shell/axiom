@@ -435,12 +435,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The generate step dumps no rpc shapes
-- **Where:** `scripts/generate.sh`, `backend/internal/daemon/methods.go` (the registrations)
-- **What:** Nothing writes the method, push and topic shapes where `scripts/gen_docs.py` can read them. A Go program (under `backend/tools/`) should build the daemon's registry without starting a daemon (registration only stores closures, so a registry-only constructor suffices; check that first: the methods are registered through `d.registry(parts)` over part constructors on a `*Daemon`, and some may need initialised fields such as `d.dev`, which could make this more than small) and print methods, pushes and topics with their field trees as JSON; `scripts/generate.sh` writes it to a gitignored file before `gen_docs.py` runs. Needs the two entries above.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
-
 ### rpc.md shows no shapes and call sites' keys go unchecked
 - **Where:** `scripts/gen_docs.py` (`rpc_scan`), `docs/dev/backend/protocol.md` (Changing the protocol)
 - **What:** `rpc_scan` matches method names only, and `rpc.Handle` decodes with `json.Unmarshal`, which ignores unknown fields: renaming `"zones"` to `"zone"` in `TimeZoneManager` gives the daemon an empty list with no error. From the shapes dump, `rpc.md` should list each method's params and result fields and each push's fields, and a `BackendManager.call` / `notify` whose params are an object literal should fail the check on a key the params don't have (`{}` and `null` pass); non-literal call sites are listed as unchecked in `rpc.md`, and protocol.md › Changing the protocol says what's checked. Needs the entry above.

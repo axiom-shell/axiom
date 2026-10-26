@@ -26,6 +26,8 @@ type testDaemon struct {
 	socket  string
 	dirs    xdg.Dirs
 	runtime xdg.Runtime
+	// registered sees the running daemon's registry
+	registered func(*rpc.Registry)
 }
 
 func (td *testDaemon) getenv(k string) string { return td.env[k] }
@@ -105,7 +107,7 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 }
 
 func (td *testDaemon) options(isShell func(int) bool, sources ...topics.Source) Options {
-	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources}
+	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered}
 }
 
 // connect dials the daemon and says hello as client; the connection's

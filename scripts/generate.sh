@@ -11,7 +11,9 @@
 #     (`axiom schema build`, through go run)
 #   - docs/dev/config/ and docs/dev/generated/, the reference docs made from
 #     the code and the schema (scripts/gen_docs.py, which also fails when the
-#     shell calls a daemon method or push the daemon doesn't define); a
+#     shell calls a daemon method or push the daemon doesn't define), after
+#     docs/dev/generated/rpc-shapes.json, the daemon's methods, pushes and
+#     topics with their fields (backend/tools/rpcshapes, through go run); a
 #     developer check, so --no-docs skips it: install.sh, self_update.sh and
 #     the AUR packages pass it, since a failed check mustn't stop an install
 #   - with --fixtures: tests/fixtures/shared/, the cases SchemaValidation
@@ -29,7 +31,7 @@ for arg in "$@"; do
   --fixtures) fixtures=1 ;;
   --no-docs) docs=0 ;;
   *)
-    sed -n '2,21p' "$0" >&2
+    sed -n '2,23p' "$0" >&2
     exit 2
     ;;
   esac
@@ -44,6 +46,9 @@ fi
 (cd "$root/backend" && go generate ./internal/assets)
 (cd "$root/backend" && go run ./cmd/axiom schema build --tree .. >/dev/null)
 if [[ $docs -eq 1 ]]; then
+  mkdir -p "$root/docs/dev/generated"
+  (cd "$root/backend" && go run ./tools/rpcshapes >"$root/docs/dev/generated/rpc-shapes.json.new")
+  mv -f "$root/docs/dev/generated/rpc-shapes.json.new" "$root/docs/dev/generated/rpc-shapes.json"
   python3 "$root/scripts/gen_docs.py"
 fi
 if [[ $fixtures -eq 1 ]]; then

@@ -156,7 +156,6 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 Steps: generate method shapes into `rpc.md` and check QML call sites against them; fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`).
 
 Resolves:
-- [The generate step dumps no rpc shapes](issues.md#the-generate-step-dumps-no-rpc-shapes)
 - [rpc.md shows no shapes and call sites' keys go unchecked](issues.md#rpcmd-shows-no-shapes-and-call-sites-keys-go-unchecked)
 - [Result and push reads in inline callbacks go unchecked](issues.md#result-and-push-reads-in-inline-callbacks-go-unchecked)
 - [rpc.md misses calls made through a service's own helper](issues.md#rpcmd-misses-calls-made-through-a-services-own-helper)
