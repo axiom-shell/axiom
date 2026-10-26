@@ -6,6 +6,7 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -75,7 +76,7 @@ func (h *Hypr) Reloads(ctx context.Context, out chan<- Reload) error {
 	if err != nil {
 		return err
 	}
-	conn.SetDeadline(timeZero)
+	conn.SetDeadline(time.Time{})
 	defer conn.Close()
 	// Closing the connection is what ends a read blocked on it
 	defer context.AfterFunc(ctx, func() { conn.Close() })()

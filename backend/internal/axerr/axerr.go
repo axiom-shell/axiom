@@ -1,7 +1,7 @@
 // Package axerr is the one error type that crosses axiom's boundaries: RPC
 // replies, CLI exit codes and what the shell shows. A Kind says what went
 // wrong in a way callers branch on (the shell translates by kind); the
-// message stays English, like every log and validation error.
+// message stays English, like every log and validation error. Pure: no I/O.
 package axerr
 
 import (

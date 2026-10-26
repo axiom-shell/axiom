@@ -22,6 +22,23 @@ func CompilePattern(p string) (*regexp.Regexp, error) {
 	return regexp.Compile(translated)
 }
 
+// Pattern is CompilePattern for a pattern of this schema, compiled once.
+func (s *Schema) Pattern(p string) (*regexp.Regexp, error) {
+	if v, ok := s.patterns.Load(p); ok {
+		if re, ok := v.(*regexp.Regexp); ok {
+			return re, nil
+		}
+		return nil, v.(error)
+	}
+	re, err := CompilePattern(p)
+	if err != nil {
+		s.patterns.Store(p, err)
+		return nil, err
+	}
+	s.patterns.Store(p, re)
+	return re, nil
+}
+
 func translatePattern(p string) (string, error) {
 	var b strings.Builder
 	inClass := false

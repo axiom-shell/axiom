@@ -12,8 +12,8 @@ tools/            go generate programs (syncassets, …)
 
 ## Rules
 
-- **Pure core, effects at the edge.** Packages marked pure in their doc comment (`axerr`, `jsonx`, `schema`, `config`, `migrate/…`, `share`, `compositor/kdl`, `compositor/actions`, `compositor/render`) do no I/O and import no `os`, `net`, `os/exec` or `syscall`: they are the Go side of `components/methods/`. File, socket and process work lives in the packages above them, and the dependency direction only points down.
-- **No globals, no `init()` side effects.** State lives in structs built by constructors taking an `Options` (logger, clock, paths injected), so tests build their own. `context.Context` first on anything that blocks; every goroutine has an owner that stops it.
+- **Pure core, effects at the edge.** Packages marked pure in their doc comment (`axerr`, `jsonx`, `schema`, `schema/yamlsrc`, `config`, `migrate/…`, `share`, `compositor/kdl`, `compositor/actions`, `compositor/render`) do no I/O and import no `os`, `net`, `os/exec` or `syscall`: they are the Go side of `components/methods/`. File, socket and process work lives in the edge packages above them, which only `daemon` and `cli` wire together: imports only point down those tiers. Every package is placed in one in `internal/archtest`, which enforces these rules and the next one, and fails on a package it doesn't know.
+- **No globals, no `init()`.** Package-level variables are read-only tables (regexps, lookup maps, sentinel errors, `go:embed` data, values computed once with `sync.OnceValue`), never written after init; an exception is listed with its reason in archtest. State lives in structs built by constructors taking an `Options` (logger, clock, paths injected), so tests build their own. `context.Context` first on anything that blocks; every goroutine has an owner that stops it.
 - **One error type across boundaries**: `axerr.Error` with a `Kind`. RPC codes, CLI exit codes and what the shell shows all come from the kind; messages stay English (the shell translates by kind). Wrap causes with `%w`.
 - **The config is a tree, not structs.** Migrate, prune, defaults, validate and write work on the ordered JSON tree (`jsonx`), so key order, unknown keys and old shapes survive and the bytes match the JS reference. Generated structs are read-only views, never written back.
 - **The schema is the source of truth**: never hand-copy a key list, default or annotation from it into Go; read it through `schema`, or generate from it.
@@ -38,6 +38,8 @@ Standard library first. A new module needs a line here saying why, and must be p
 | `go.yaml.in/yaml/v3` | reads the config schema's YAML source (`schema/yamlsrc`, which adds the strictness) |
 | `github.com/dop251/goja` | a pure-Go JS engine, used only by `migrate/legacy` to run the frozen format-1 migrations (`legacy.js`) exactly as the shell did, instead of a hand port that could drift |
 | `github.com/yuin/gopher-lua` | a pure-Go Lua (5.1) parser and VM: runs a user's Hyprland Lua files, sandboxed, for the bind merge (`compositor/binds`), and checks that an edit to them still parses where `luac` isn't installed (`compositor/luacheck`), without `lua` as a dependency |
+| `github.com/fsnotify/fsnotify` | inotify without cgo: `store` watches config.json for edits made outside the daemon, and the daemon's dev mode (`daemon/dev.go`) watches the tree and the installed binary to rebuild or re-exec |
+| `golang.org/x/sys` | the Linux calls `syscall` lacks or freezes: peer credentials on sockets (`rpc`, `wayland/wire`), descriptor passing (`unixmsg`), `flock` and `O_NOFOLLOW` opens (`fsx`), sealed memfds (`wayland/wire`), close-on-exec across a re-exec (`daemon`), and the bind merge child's memory limit (`compositor/binds`) |
 
 ## Checks
 
