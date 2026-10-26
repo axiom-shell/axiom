@@ -423,15 +423,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### LauncherCommands holds the /config browser
-- **Where:** `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`, `_communityOptions`, `_configShow`, `_savedConfigNames`)
-- **What:** The `/config` entry's browser is about 225 lines that read `SettingsManager`, `SavedConfigsManager` and `CommunitySetupsManager`, and nothing else in the file uses it. It moves to a new non-singleton `LauncherConfigBrowser` in `services/ui/`, held by `LauncherCommands`, which the `config` entry calls; add it to `services/AGENTS.md`'s non-singleton list and `docs/dev/features/launcher.md`. Item 7 of the [singletons plan](plans/singletons-split.md) (a move).
-- **Size:** trivial
-- **Found:** 2026-10-27, while planning the singletons split (#123)
-
 ### KeybindManager does three jobs
 - **Where:** `services/compositor/KeybindManager.qml`
-- **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. It's split with backend stage 7 (`compositor.inputs`: Go reads binds and profiles from the config it owns), which changes what the reader half is, so it's designed in that stage, not by the [singletons plan](plans/singletons-split.md).
+- **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. It's split with backend stage 7 (`compositor.inputs`: Go reads binds and profiles from the config it owns), which changes what the reader half is, so it's designed in that stage, not with the other singleton splits (#123).
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
