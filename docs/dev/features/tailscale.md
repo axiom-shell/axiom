@@ -7,7 +7,7 @@
 Tailscale's state for the bar widget, its popout and the overlay module, shaped like Claude usage: the `Tailscale` section (Modules category) holds what every widget shares, the widget only its look and click command.
 
 ### State
-- axiom polls `tailscale status --json` (the `tailscale` topic) at the shortest interval asked, only while something acquires `TailscaleManager`. Everything acquires with `TailscaleConfig.interval` (schema minimum 1 s, the only floor: `topics.MinInterval` is 1 ms).
+- axiom polls `tailscale status --json` (the `tailscale` topic) every `TailscaleConfig.interval`, only while something acquires `TailscaleManager` (schema minimum 1 s, the only floor: `topics.MinInterval` is 1 ms). Consumers `acquire(owner)` with no request: they all share the interval.
 - `tailscale.Parse` keeps what the shell shows: this machine (host and MagicDNS name, every address, version), the tailnet, the MagicDNS suffix, a pending login's `authURL`, the health warnings, the exit node in use, and the peers (name from the MagicDNS name, OS, addresses, online, active, direct or relayed, last seen, traffic), online first, then by name. Lists are never null.
 
 ### Actions

@@ -21,11 +21,6 @@ Card {
   // "Running 100.x.y.z", or "" when Tailscale isn't installed
   readonly property string tailscale: TailscaleManager.available ? (TailscaleManager.backendState + " " + TailscaleManager.ip).trim() : ""
 
-  readonly property var tailscaleRequest: ({
-      "interval": TailscaleConfig.interval
-    })
-  onTailscaleRequestChanged: TailscaleManager.acquire(root, tailscaleRequest)
-
   Component.onCompleted: {
     NetworkingManager.refreshIp();
     SystemManager.acquire(root, {
@@ -33,7 +28,7 @@ Card {
       "history": true,
       "interval": 1000
     });
-    TailscaleManager.acquire(root, root.tailscaleRequest);
+    TailscaleManager.acquire(root);
   }
   Component.onDestruction: {
     SystemManager.release(root);

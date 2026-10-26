@@ -40,11 +40,7 @@ Panel {
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 11
 
-  readonly property var request: ({
-      "interval": TailscaleConfig.interval
-    })
-  onRequestChanged: TailscaleManager.acquire(root, root.request)
-  Component.onCompleted: TailscaleManager.acquire(root, root.request)
+  Component.onCompleted: TailscaleManager.acquire(root)
   Component.onDestruction: TailscaleManager.release(root)
 
   compactContent: CompactFigure {

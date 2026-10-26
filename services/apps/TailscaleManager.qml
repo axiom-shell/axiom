@@ -4,8 +4,8 @@ import qs.config
 import qs.services.core
 
 // Tailscale's state for every widget and module that shows it: axiom's
-// `tailscale` topic (`tailscale status --json` at the shortest interval
-// asked for; the setting's minimum is the only floor), subscribed only
+// `tailscale` topic (`tailscale status --json` every Tailscale.interval;
+// the setting's minimum is the only floor), subscribed only
 // while something has acquire()d it. connect() / disconnect() run
 // `tailscale up` / `down` in axiom, which fetches the state again after.
 QtObject {
@@ -42,11 +42,9 @@ QtObject {
   // Why the last one failed, for the user ("" after a success)
   property string lastError: ""
 
-  // request: { interval } (ms)
-  function acquire(owner, request) {
-    _registry.acquire(owner, {
-      "interval": request?.interval ?? TailscaleConfig.interval
-    });
+  // Every consumer shares TailscaleConfig.interval: no request
+  function acquire(owner) {
+    _registry.acquire(owner, {});
   }
 
   function release(owner) {
@@ -76,7 +74,7 @@ QtObject {
   // -- Private --
   property ConsumerRegistry _registry: ConsumerRegistry {}
   // 0 while nothing has acquired it
-  readonly property int _interval: _registry.active ? Math.min(..._registry.requests.map(r => r.interval)) : 0
+  readonly property int _interval: _registry.active ? TailscaleConfig.interval : 0
 
   on_IntervalChanged: {
     if (root._interval > 0)
