@@ -62,5 +62,5 @@ Each setting: `path` · type = default · enum/range/unit; then title: descripti
 ### `Launcher.providers`
 
 - **`Launcher.providers.emoji`** · boolean = true
-  - Emoji (;): Type ; (or /emoji) to search emoji by name or keyword; Enter copies one. With wtype installed, Shift+Enter also types it into the focused window.
+  - Emoji (;): Type ; (or /emoji) to search emoji by name or keyword; Enter copies one, and Shift+Enter types it into the focused window.
   - read: `LauncherConfig.calculator` (whole), `LauncherConfig.chat` (whole), `LauncherConfig.clipboard` (whole), `LauncherConfig.clipboardMaxEntries` (whole), `LauncherConfig.clipboardSource` (whole), `LauncherConfig.commands` (whole), `LauncherConfig.emoji` (whole), `LauncherConfig.runCommands` (whole), `LauncherConfig.searchEngine` (whole), `LauncherConfig.webSearch` (whole), `LauncherConfig.windows` (whole) · in: `components/surfaces/launcher/LauncherPanel.qml`, `config/LauncherConfig.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherManager.qml`

@@ -1,6 +1,5 @@
 pragma Singleton
 import QtQuick
-import Quickshell
 
 import qs.config
 import qs.components.methods
@@ -12,9 +11,10 @@ import qs.services.system
  * `entries()` is config/json/emoji.json (built by scripts/generate_emoji.py
  * from Unicode's emoji-test.txt and CLDR's keywords), read the first time
  * it's asked for: [{ e: emoji, n: name, g: group, k: [keywords] }], in
- * Unicode's order. `copy` puts one on the clipboard (wl-copy) and counts it
- * in `usage` ({ emoji: { count, last } }), for LauncherManager's frecency;
- * `type` also types it into the focused window (wtype, optional: `canType`).
+ * Unicode's order. `copy` puts one on the clipboard and counts it in
+ * `usage` ({ emoji: { count, last } }), for LauncherManager's frecency;
+ * `type` also types it into the focused window (the daemon's virtual
+ * keyboard, where the compositor has one: `canType`).
  * `search(query, limit, group)` ranks them for the launcher and the EmojiPicker
  * module (most used first with no query), `groups()` lists Unicode's groups
  * in order.
@@ -24,8 +24,7 @@ QtObject {
 
   // { emoji: { count, last } }
   property var usage: ({})
-  // undefined until checked
-  readonly property var canType: DependencyManager.found.wtype
+  readonly property bool canType: WaylandManager.typing
 
   // Every emoji, loaded on first use; [] when the file can't be read
   function entries() {
@@ -39,7 +38,6 @@ QtObject {
       }
       if (root._entries.length === 0)
         console.warn("[EmojiManager] No emoji: run scripts/generate_emoji.py");
-      DependencyManager.check(["wtype"]);
     }
     return root._entries;
   }
@@ -110,7 +108,12 @@ QtObject {
 
   property Timer _typeLater: Timer {
     interval: 150
-    onTriggered: Quickshell.execDetached(["wtype", "--", root._typing])
+    onTriggered: BackendManager.call("input.type", {
+      "text": root._typing
+    }, error => {
+      if (error)
+        console.warn("[EmojiManager] Could not type:", error.message);
+    })
   }
 
   property var _stateHandler: StateManager.createStateHandler("emoji")

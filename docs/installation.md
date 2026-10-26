@@ -25,7 +25,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Screenshots | `wl-copy`; `grim` under niri; `satty` or `swappy` to annotate; `wf-recorder` to record, and `pactl` (libpulse; works with pipewire-pulse) to record the system's sound |
 | AI chat | `curl`; `secret-tool` (libsecret) to keep keys in your keyring; `wl-clipboard` to paste images |
 | Launcher calculator | `qalc` (libqalculate), `wl-copy` |
-| Launcher emoji picker | `wl-copy` to copy; `wtype` to type an emoji into the focused window (Shift+Enter) |
+| Launcher emoji picker | `wl-copy` to copy |
 | Brightness (keys, OSD bar) | `brightnessctl` for a laptop panel; `ddcutil` for external monitors over DDC/CI (monitors that support it, with i2c access: the package's udev rule gives it to the logged-in user) |
 | NVIDIA GPU stats | `nvidia-smi` (AMD is read from sysfs) |
 | Idle (dim, lock, screen off, suspend) | `hypridle` (it runs on every compositor) |

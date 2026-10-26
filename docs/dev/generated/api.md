@@ -57,6 +57,7 @@ The public members (no `_` prefix) of every file in `services/` and every config
 - [ShellManager](api/ShellManager.md): Shell manager manages global options and signals
 - [StateManager](api/StateManager.md): Small JSON state files in Paths.statePath: createStateHandler(name) gives a shared save/load handler per name.
 - [ThemeManager](api/ThemeManager.md): ThemeManager owns the active theme's data (loaded from its file, watched, with defaults for what it leaves out), the theme lists, theme generation from a wallp…
+- [WaylandManager](api/WaylandManager.md): What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, … .
 
 ## services/session/
 

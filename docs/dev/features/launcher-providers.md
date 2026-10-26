@@ -69,5 +69,5 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
   - `recent(limit)` and `groups()` are also provided.
 - **Enter / Shift+Enter:**
   - Enter `copy`s through wl-copy.
-  - Shift+Enter also `type`s the emoji with `wtype`, 150 ms later, once the launcher has let go of the keyboard. `wtype` is optional; `canType` comes from `DependencyManager`.
+  - Shift+Enter also `type`s the emoji, 150 ms later, once the launcher has let go of the keyboard: `input.type`, the daemon's virtual keyboard (`wayland/vkbd`). `canType` is `WaylandManager.typing`: the compositor offers `zwp_virtual_keyboard_manager_v1`.
 - **Binds:** a bind opens it with the `launcherSearch` action and the argument `;`.

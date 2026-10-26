@@ -37,7 +37,6 @@ optdepends=(
   'grim: screenshots (niri)'
   'satty: annotating screenshots'
   'libqalculate: launcher calculator'
-  'wtype: typing emoji from the launcher'
   'cliphist: clipboard history with images, shared with other apps'
   'brightnessctl: brightness keys and OSD bar (laptop panels)'
   'ddcutil: brightness keys and OSD bar (external monitors over DDC/CI)'

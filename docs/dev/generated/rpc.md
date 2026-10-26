@@ -35,6 +35,7 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `dev.set` |  | `backend/internal/daemon/dev.go` | `services/core/DevManager.qml` | `backend/internal/cli/dev.go` |
 | `idle.caffeine` | shell only | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |  |
 | `idle.get` |  | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |  |
+| `input.type` | shell only | `backend/internal/daemon/wayland.go` | `services/apps/EmojiManager.qml` |  |
 | `ipc.call` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
 | `ipc.list` |  | `backend/internal/daemon/methods.go` | (none) | `backend/internal/cli/ipc.go` |
 | `ipc.register` | shell only | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` |  |
@@ -67,6 +68,7 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `updates.refresh` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
 | `updates.subscribe` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
 | `updates.unsubscribe` |  | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |  |
+| `wayland.get` |  | `backend/internal/daemon/wayland.go` | `services/core/WaylandManager.qml` |  |
 
 ## Pushes (daemon → subscribers)
 
@@ -90,6 +92,7 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 | `system.state` | system (polled) | `backend/internal/system/system.go` | `services/system/SystemManager.qml` |
 | `tailscale.state` | tailscale (polled) | `backend/internal/tailscale/tailscale.go` | `services/system/TailscaleManager.qml` |
 | `updates.state` | updates (polled) | `backend/internal/updates/updates.go` | `services/system/UpdatesManager.qml` |
+| `wayland.state` | wayland | `backend/internal/daemon/wayland.go` | `services/core/WaylandManager.qml` |
 
 ## Calls into the shell (daemon → shell)
 

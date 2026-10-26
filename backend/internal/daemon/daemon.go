@@ -39,6 +39,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/wayland/idlenotify"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/outputs"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/seat"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/vkbd"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
@@ -114,6 +115,7 @@ type Daemon struct {
 	outputs      *outputs.Tracker
 	seat         *seat.Tracker
 	idleNotifier *idlenotify.Notifier
+	keyboard     *vkbd.Keyboard
 	wayland      *waylandSession
 	// idle is the Idle section's service
 	idle *idle.Service
@@ -259,9 +261,10 @@ func Run(ctx context.Context, opts Options) error {
 		Log:      opts.Log.With("part", "wayland"),
 		OnChange: func() { d.idle.NotifierChanged() },
 	})
+	d.keyboard = vkbd.New(vkbd.Options{Seat: d.seat, OnChange: d.pushWayland, Gap: 2 * time.Millisecond})
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.idlePart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.idlePart(), d.waylandPart(), d.dev.part()}
 	reg := d.registry(parts)
 	d.server = &rpc.Server{
 		Registry: reg,
@@ -350,7 +353,7 @@ func Run(ctx context.Context, opts Options) error {
 // for that.
 func (d *Daemon) followCompositor(ctx context.Context, socket string) {
 	log := d.opts.Log
-	err := client.Run(ctx, socket, d.wayland, d.outputs, d.seat, d.idleNotifier)
+	err := client.Run(ctx, socket, d.wayland, d.outputs, d.seat, d.idleNotifier, d.keyboard)
 	// Unavailable: no compositor to connect to, nor to watch
 	if err != nil && !errors.Is(err, wire.ErrGone) && axerr.KindOf(err) != axerr.Unavailable {
 		log.Warn("the Wayland connection failed: monitors aren't known", "err", err)

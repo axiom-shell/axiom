@@ -198,10 +198,6 @@ QtObject {
         "arch": "cliphist",
         "fedora": "cliphist"
       },
-      "wtype": {
-        "arch": "wtype",
-        "fedora": "wtype"
-      },
       "wf-recorder": {
         "arch": "wf-recorder",
         "fedora": "wf-recorder"

@@ -163,10 +163,6 @@ Singleton {
       "purpose": "Clipboard history shared with other apps"
     },
     {
-      "command": "wtype",
-      "purpose": "Typing emoji from the launcher"
-    },
-    {
       "command": "wf-recorder",
       "purpose": "Screen recording"
     },

@@ -2567,7 +2567,7 @@
     "Type / to list every command": "",
     "Type : (or /clipboard) to search what you've copied; Enter copies it again, Shift+Enter removes it. axiom keeps the history in memory only, never on disk, and skips anything a password manager marks as sensitive. Turn this off if you copy passwords from apps that don't; turning it off clears the history.": "",
     "Type : in the launcher to search what you've copied. axiom keeps it in memory only and skips what password managers mark as sensitive; turn it off if you copy passwords from apps that don't.": "",
-    "Type ; (or /emoji) to search emoji by name or keyword; Enter copies one. With wtype installed, Shift+Enter also types it into the focused window.": "",
+    "Type ; (or /emoji) to search emoji by name or keyword; Enter copies one, and Shift+Enter types it into the focused window.": "",
     "Type > and a command to run it. Shift+Enter runs it in the terminal.": "",
     "Type @ and a question to ask it in the overlay's Chat module, with the default preset.": "",
     "Type a command": "",

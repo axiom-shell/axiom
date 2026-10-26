@@ -1461,7 +1461,6 @@
     "Clicking a notification, or one of its actions, removes it from the history.": "通知またはそのアクションをクリックすると、履歴から削除します。",
     "screenshot": "スクリーンショット",
     "How long a toast stays up. Hovering it pauses the countdown.": "トーストの表示時間。ホバー中はカウントダウンが止まります。",
-    "Type ; (or /emoji) to search emoji by name or keyword; Enter copies one. With wtype installed, Shift+Enter also types it into the focused window.": "; （または /emoji）を入力すると名前やキーワードで絵文字を検索でき、Enter でコピーします。wtype がインストールされていれば、Shift+Enter でフォーカス中のウィンドウに入力もします。",
     "Turn the screens back on when the computer wakes.": "コンピューターの復帰時に画面をオンに戻します。",
     "Hide when a window overlaps": "ウィンドウと重なると隠す",
     "Gamma": "ガンマ",
@@ -3148,6 +3147,7 @@
     "What happens when you step away: dimming, locking, turning the screens off and suspending, and locking before the computer sleeps.": "",
     "axiom watches for idle itself and answers lock and sleep requests, so it replaces an idle daemon such as hypridle. Remove your own hypridle autostart line while this is on.": "",
     "Video players and browsers can ask to stay awake through the compositor, D-Bus and systemd. The caffeine widget works either way.": "",
-    "Handle idle": ""
+    "Handle idle": "",
+    "Type ; (or /emoji) to search emoji by name or keyword; Enter copies one, and Shift+Enter types it into the focused window.": ""
   }
 }

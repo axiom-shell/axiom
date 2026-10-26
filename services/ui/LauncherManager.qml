@@ -582,7 +582,7 @@ QtObject {
   }
 
   function _emojiRow(entry) {
-    const canType = EmojiManager.canType === true;
+    const canType = EmojiManager.canType;
     return {
       kind: "emoji",
       glyph: entry.e,

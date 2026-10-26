@@ -218,4 +218,4 @@ properties:
         type: boolean
         title: Emoji (;)
         default: true
-        description: Type ; (or /emoji) to search emoji by name or keyword; Enter copies one. With wtype installed, Shift+Enter also types it into the focused window.
+        description: Type ; (or /emoji) to search emoji by name or keyword; Enter copies one, and Shift+Enter types it into the focused window.

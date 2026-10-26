@@ -32,9 +32,6 @@
     "services/compositor/CompositorConfigManager.qml": [
       "execDetached"
     ],
-    "services/apps/EmojiManager.qml": [
-      "execDetached"
-    ],
     "services/core/FileManager.qml": [
       "FileView"
     ],
