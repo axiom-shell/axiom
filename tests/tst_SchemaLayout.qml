@@ -59,6 +59,29 @@ TestCase {
     compare(rows.map(r => r.kind + ":" + r.path.join(".")), ["field:S.a", "group:S.group", "field:S.group.b", "array:S.list", "field:S.tags"]);
   }
 
+  function test_defaultAt() {
+    const objectSchema = {
+      "properties": {
+        "size": {
+          "type": "integer",
+          "default": 4
+        },
+        "open": {
+          "type": "object",
+          "properties": {
+            "onHover": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        }
+      }
+    };
+    const rows = [[["size"], 4, "a top-level default"], [["open", "onHover"], false, "a nested default, falsy kept"], [["open"], undefined, "an object with no default"], [["missing", "x"], undefined, "past a missing property"]];
+    for (const [path, expected, message] of rows)
+      compare(SchemaLayout.defaultAt(objectSchema, path), expected, message);
+  }
+
   function test_failingKey() {
     const values = {
       "/$supports.blur": false,

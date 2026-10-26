@@ -429,12 +429,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Repeated plumbing
-- **Where:** `services/apps/StopwatchManager.qml`, `services/apps/PomodoroManager.qml` (`_arm`, the tick Timer, the notification handler), `components/forms/SchemaPropertiesForm.qml`, `components/forms/SettingRows.qml`, `components/views/Settings/SettingsContent.qml` (`valueAt`)
-- **What:** Stopwatch and Pomodoro copy their deadline alarm, ticker, saved state and notification plumbing (a shared ticker part would take about 80 lines from each). Three forms each define `valueAt` beside `SettingsManager._valueAt`: a methods helper.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### The check order is kept in three places
 - **Where:** `scripts/check_all.sh`, `scripts/dev/verify.sh`, `.github/workflows/checks.yml`
 - **What:** The same checks, in the same order, are listed by hand three times; a check added to one can be missed in the others. One list (a file the three read, or `check_all.sh` as the one CI runs) keeps them equal.

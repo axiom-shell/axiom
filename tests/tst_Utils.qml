@@ -5,6 +5,24 @@ import qs.components.methods
 TestCase {
   name: "Utils"
 
+  function test_valueAt() {
+    const object = {
+      "Bar": {
+        "items": [
+          {
+            "id": "main"
+          }
+        ],
+        "zero": 0,
+        "empty": null
+      }
+    };
+    const rows = [[["Bar", "items", 0, "id"], "main", "through an array index"], [["Bar", "zero"], 0, "a falsy value is kept"], [["Bar", "empty"], null, "null is kept"], [["Bar", "empty", "x"], undefined, "past null"], [["Bar", "missing", "deeper"], undefined, "past a missing key"], [[], object, "the empty path is the object"]];
+    for (const [path, expected, message] of rows)
+      compare(Utils.valueAt(object, path), expected, message);
+    compare(Utils.valueAt(undefined, ["a"]), undefined, "no object");
+  }
+
   function test_spaceWords() {
     compare(Utils.spaceWords("SystemTray"), "System Tray");
     compare(Utils.spaceWords("Grid2x2"), "Grid 2x2");
