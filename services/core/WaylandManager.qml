@@ -4,9 +4,9 @@ import Quickshell
 
 // What the axiom daemon's own Wayland connection can do for the shell
 // (wayland.state: docs/dev/backend/wayland.md): typing into the focused
-// window, the night light. Services gate on these, never on a
-// compositor. All off without a daemon, and until it has said. Created
-// from shell.qml's `_services`.
+// window, the night light, the clipboard. Services gate on these, never
+// on a compositor. All off without a daemon, and until it has said.
+// Created from shell.qml's `_services`.
 Singleton {
   id: root
 
@@ -18,6 +18,8 @@ Singleton {
   // transform), "gamma" (gamma ramps) or "" (NightLightManager falls back
   // to wlsunset)
   readonly property string nightLight: root._state?.nightLight ?? ""
+  // Clipboard control: "ext", "wlr" or "" (ClipboardManager)
+  readonly property string clipboard: root._state?.clipboard ?? ""
 
   property var _state: null
 

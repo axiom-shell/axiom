@@ -58,12 +58,10 @@ PACKAGES=(
   "secret-tool|libsecret|libsecret"
   "nmcli|networkmanager|NetworkManager"
   "checkupdates|pacman-contrib|-"
-  "wl-copy|wl-clipboard|wl-clipboard"
   "wf-recorder|wf-recorder|wf-recorder"
   "grim|grim|grim"
   "satty|satty|nett00n/hyprland:satty"
   "qalc|libqalculate|qalculate"
-  "cliphist|cliphist|cliphist"
   "brightnessctl|brightnessctl|brightnessctl"
   "ddcutil|ddcutil|ddcutil"
   "wlsunset|wlsunset|wlsunset"
@@ -87,12 +85,10 @@ FEATURES=(
   "Calendar accounts and feeds|py:icalendar secret-tool|"
   "Wi-Fi menu and network widget|nmcli|"
   "Package update checks|checkupdates|"
-  "Copying screenshots to the clipboard|wl-copy|"
   "Screen recording|wf-recorder|"
   "Screenshots under niri|grim|niri"
   "Annotating screenshots|satty|"
-  "Launcher calculator|qalc wl-copy|"
-  "Clipboard history with images, shared with other apps|cliphist wl-copy|"
+  "Launcher calculator|qalc|"
   "Brightness keys and OSD bar (laptop panels, external monitors over DDC/CI)|brightnessctl ddcutil|"
   "Night light|wlsunset|niri"
   "X11 apps under niri (Steam, games, older apps)|xwayland-satellite|niri"
@@ -618,7 +614,7 @@ else
   ok "Every optional feature's packages are installed"
 fi
 
-# Every key to install (a key can be wanted twice: wl-copy), as packages
+# Every key to install (a key can be wanted twice), as packages
 mapfile -t to_install < <(missing "${need_required[@]}" "${wanted[@]}" | sort -u)
 packages=() coprs=() download=0
 for key in "${to_install[@]}"; do

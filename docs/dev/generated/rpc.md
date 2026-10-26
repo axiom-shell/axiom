@@ -12,6 +12,13 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `claudeUsage.refresh` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
 | `claudeUsage.subscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
 | `claudeUsage.unsubscribe` |  | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |  |
+| `clipboard.clear` | shell only | `backend/internal/daemon/clipboard.go` | (none) |  |
+| `clipboard.copy` | shell only | `backend/internal/daemon/clipboard.go` | (none) |  |
+| `clipboard.get` | shell only | `backend/internal/daemon/clipboard.go` | `services/system/ClipboardManager.qml` |  |
+| `clipboard.remove` | shell only | `backend/internal/daemon/clipboard.go` | (none) |  |
+| `clipboard.save` | shell only | `backend/internal/daemon/clipboard.go` | `services/apps/ChatManager.qml` |  |
+| `clipboard.text` | shell only | `backend/internal/daemon/clipboard.go` | `services/system/ClipboardManager.qml` |  |
+| `clipboard.types` | shell only | `backend/internal/daemon/clipboard.go` | `services/apps/ChatManager.qml` |  |
 | `compositor.allowTakeover` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
 | `compositor.checkManaged` | shell only | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
 | `compositor.entries` |  | `backend/internal/daemon/compositor.go` | `services/compositor/CompositorConfigManager.qml` |  |
@@ -79,6 +86,7 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 | Push | Topic | Sent from | Heard in |
 |---|---|---|---|
 | `claudeUsage.state` | claudeUsage (polled) | `backend/internal/claudeusage/claudeusage.go` | `services/apps/ClaudeUsageManager.qml` |
+| `clipboard.state` | clipboard | `backend/internal/daemon/clipboard.go` | `services/system/ClipboardManager.qml` |
 | `compositor.applied` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
 | `compositor.bindsMerged` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |
 | `compositor.notify` | compositor | `backend/internal/compositor/manager/manager.go` | `services/compositor/CompositorConfigManager.qml` |

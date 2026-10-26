@@ -79,11 +79,31 @@ func (c *Conn) NewObject(h Handler) uint32 {
 	return id
 }
 
+// serverIDs are where the compositor numbers the objects it makes (a
+// data_offer event's new object)
+const serverIDs = 0xff000000
+
+// Adopt takes an object the compositor made (an event's new_id), its
+// events going to h.
+func (c *Conn) Adopt(id uint32, h Handler) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if h == nil {
+		h = func(uint16, *Args) {}
+	}
+	c.handlers[id] = h
+}
+
 // Forget stops dispatching id's events, once its destructor was sent
-// (its id is reused after the compositor's delete_id).
+// (its id is reused after the compositor's delete_id; one the compositor
+// made gets none, and goes at once).
 func (c *Conn) Forget(id uint32) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if id >= serverIDs {
+		delete(c.handlers, id)
+		return
+	}
 	if _, ok := c.handlers[id]; ok {
 		c.handlers[id] = func(uint16, *Args) {}
 	}

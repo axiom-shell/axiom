@@ -81,7 +81,7 @@ TestCase {
   }
 
   function test_installLines_arch() {
-    compare(Packages.installLines("arch", ["iconFont", "qalc", "wl-copy", "qalc"]), ["sudo pacman -S --needed ttf-material-symbols-variable libqalculate wl-clipboard"]);
+    compare(Packages.installLines("arch", ["iconFont", "qalc", "grim", "qalc"]), ["sudo pacman -S --needed ttf-material-symbols-variable libqalculate grim"]);
     compare(Packages.installLines("arch", []), []);
   }
 

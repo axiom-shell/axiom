@@ -19,9 +19,6 @@
       "FileView",
       "execDetached"
     ],
-    "services/system/ClipboardManager.qml": [
-      "Process"
-    ],
     "services/core/CommandManager.qml": [
       "Process",
       "execDetached"

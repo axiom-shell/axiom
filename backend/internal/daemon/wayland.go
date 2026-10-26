@@ -20,10 +20,13 @@ type waylandState struct {
 	// NightLight: how the night light warms the screens, "ctm", "gamma"
 	// or "" (nightlight.set)
 	NightLight string `json:"nightLight"`
+	// Clipboard: the clipboard control bound, "ext", "wlr" or ""
+	// (clipboard.*)
+	Clipboard string `json:"clipboard"`
 }
 
 func (d *Daemon) waylandNow() waylandState {
-	return waylandState{Typing: d.keyboard.Available(), NightLight: d.nightLight.Mode()}
+	return waylandState{Typing: d.keyboard.Available(), NightLight: d.nightLight.Mode(), Clipboard: d.clip.Protocol()}
 }
 
 // pushWayland pushes the connection's state when it changed (its clients

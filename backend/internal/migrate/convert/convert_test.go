@@ -9,6 +9,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/migrate/convert"
 	"github.com/axiom-shell/axiom/backend/internal/migrate/legacy"
+	"github.com/axiom-shell/axiom/backend/internal/migrate/steps"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
@@ -86,12 +87,20 @@ func short(v any) string {
 	return s
 }
 
-// The format-1 defaults, converted, are the format-2 defaults: the schema's
-// shape and the converter agree on every key.
+// toCurrent converts a format-1 config and runs the format-2 steps on it,
+// as a load does.
+func toCurrent(cfg *jsonx.Object) *jsonx.Object {
+	converted := convert.ToV2(cfg).Config
+	steps.Migrate(converted)
+	return converted
+}
+
+// The format-1 defaults, converted and migrated, are the format-2
+// defaults: the schema's shape and the converter agree on every key.
 func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	t.Parallel()
 	s := v2Schema(t)
-	converted := convert.ToV2(legacyDefaults(t)).Config
+	converted := toCurrent(legacyDefaults(t))
 	if errs := config.ValidationErrors(s, converted, s.Root()); len(errs) > 0 {
 		t.Errorf("the converted defaults don't validate:\n%v", errs)
 	}
@@ -121,7 +130,7 @@ func TestCorpusConvertsValid(t *testing.T) {
 		if err != nil || len(loaded.Errors) > 0 || loaded.Config == nil {
 			continue
 		}
-		converted := convert.ToV2(loaded.Config).Config
+		converted := toCurrent(loaded.Config)
 		filled, _ := config.ApplyDefaults(s, converted, true, s.Root())
 		if errs := config.ValidationErrors(s, filled, s.Root()); len(errs) > 0 {
 			t.Errorf("%s: %v", c.Name, errs)

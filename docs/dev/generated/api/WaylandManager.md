@@ -3,10 +3,11 @@
 
 > **File:** `services/core/WaylandManager.qml` · **Docs:** see [docs/dev](../../README.md)
 
-What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, the night light. Services gate on these, never on a compositor. All off without a daemon, and until it has said. Created from shell.qml's `_services`.
+What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, the night light, the clipboard. Services gate on these, never on a compositor. All off without a daemon, and until it has said. Created from shell.qml's `_services`.
 
 ### Properties
 
 - `known` (readonly bool): Whether the daemon has said yet
 - `typing` (readonly bool): Virtual keyboards: EmojiManager.type (input.type)
 - `nightLight` (readonly string): How the night light warms the screens: "ctm" (Hyprland's color transform), "gamma" (gamma ramps) or "" (NightLightManager falls back to wlsunset)
+- `clipboard` (readonly string): Clipboard control: "ext", "wlr" or "" (ClipboardManager)

@@ -60,3 +60,48 @@ func TestMigrateRunsNewerStepsOnce(t *testing.T) {
 		t.Fatalf("second run: %v, %v; want nothing", changes, migrated)
 	}
 }
+
+func TestV77DropsTheClipboardSource(t *testing.T) {
+	t.Parallel()
+	step := all[0]
+	if step.Version != 77 {
+		t.Fatalf("step %d", step.Version)
+	}
+	parse := func(s string) *jsonx.Object {
+		v, err := jsonx.Unmarshal([]byte(s))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return v.(*jsonx.Object)
+	}
+	cases := []struct {
+		name, in, out string
+		changed       bool
+	}{
+		{"cliphist", `{"Launcher":{"providers":{"clipboard":{"enabled":true,"source":"cliphist","maxEntries":50}}}}`,
+			`{"Launcher":{"providers":{"clipboard":{"enabled":true,"maxEntries":50}}}}`, true},
+		{"axiom", `{"Launcher":{"providers":{"clipboard":{"source":"axiom"}}}}`,
+			`{"Launcher":{"providers":{"clipboard":{}}}}`, true},
+		{"already without it", `{"Launcher":{"providers":{"clipboard":{"enabled":false}}}}`,
+			`{"Launcher":{"providers":{"clipboard":{"enabled":false}}}}`, false},
+		{"no launcher", `{"Bars":[]}`, `{"Bars":[]}`, false},
+		{"another shape", `{"Launcher":{"providers":{"clipboard":true}}}`, `{"Launcher":{"providers":{"clipboard":true}}}`, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			cfg := parse(c.in)
+			changes := step.Run(cfg)
+			if got := string(jsonx.MarshalCompact(cfg)); got != c.out {
+				t.Errorf("got %s, want %s", got, c.out)
+			}
+			if (len(changes) > 0) != c.changed {
+				t.Errorf("changes %v", changes)
+			}
+			// Twice changes nothing more
+			if again := step.Run(cfg); len(again) > 0 {
+				t.Errorf("a second run: %v", again)
+			}
+		})
+	}
+}

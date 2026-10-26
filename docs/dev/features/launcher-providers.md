@@ -1,7 +1,7 @@
 # Launcher providers: calculator, clipboard, emoji
 
-> **Files:** `services/apps/CalculatorManager.qml`, `services/system/ClipboardManager.qml`, `services/apps/EmojiManager.qml`, `config/json/emoji.json`, `scripts/generate_emoji.py`, `components/methods/Search.qml`, `components/content/Calculator/Calculator.qml`, `components/content/ClipboardHistory/ClipboardHistory.qml`, `components/content/EmojiPicker/EmojiPicker.qml`
-> **Config:** `Launcher.providers.clipboard.enabled`, `Launcher.providers.clipboard.source`, `Launcher.providers.clipboard.maxEntries`, `Launcher.providers.emoji` (reader `LauncherConfig`)
+> **Files:** `services/apps/CalculatorManager.qml`, `services/system/ClipboardManager.qml`, `backend/internal/clipboard/`, `backend/internal/wayland/datacontrol/`, `backend/internal/daemon/clipboard.go`, `services/apps/EmojiManager.qml`, `config/json/emoji.json`, `scripts/generate_emoji.py`, `components/methods/Search.qml`, `components/content/Calculator/Calculator.qml`, `components/content/ClipboardHistory/ClipboardHistory.qml`, `components/content/EmojiPicker/EmojiPicker.qml`
+> **Config:** `Launcher.providers.clipboard.enabled`, `Launcher.providers.clipboard.maxEntries`, `Launcher.providers.emoji` (reader `LauncherConfig`)
 > **Related:** [Launcher](launcher.md), [Utility modules](../overlay/utility-modules.md)
 
 This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each one also backs an overlay module (Calculator, ClipboardHistory, EmojiPicker).
@@ -23,35 +23,29 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
 - **Toggle:** `Launcher.providers.clipboard.enabled` is on by default and also appears on the onboarder's Integrations page. Turning it off clears the history.
 - **Created from** `shell.qml`'s `_services`.
 
-#### Source `axiom` (`Launcher.providers.clipboard.source`)
-- A `wl-paste --type text --watch` process records text clips while the history is on.
-- Clips are split at ASCII RS.
-- A clip whose `CLIPBOARD_STATE` isn't `data` is skipped (a password manager's `sensitive`).
-- Clips are de-duplicated and capped at `clipboardMaxEntries`.
-- The history is in memory only, never on disk. It is a `PersistentProperties` holding JSON, since a JS array can't cross into the reloaded engine.
-
-#### Source `cliphist`
-- `cliphist list` runs on each `:` query, at most once a second.
-  - An unchanged list changes nothing; otherwise the rows would loop.
-  - No listing runs while a `cliphist delete` is in flight, or it would bring the entry back.
-- Axiom itself runs `wl-paste --type text|image --watch cliphist store`.
-  - cliphist drops duplicates, so a user's own watcher is harmless.
-  - A text-only watcher would miss screenshots and keep only the HTML of an image copied from a browser.
-- **Images:**
-  - The newest 50 are decoded as thumbnails into `$XDG_RUNTIME_DIR/axiom/clipboard/`. That folder is pruned to the listed images and removed when the history is off.
-  - They are copied back with `wl-copy --type image/<format>`.
-  - HTML that is just an `<img>` is decoded for its `src` and previewed from it. The listed preview is cut at 100 chars.
+#### The history (the daemon's `internal/clipboard`)
+- The axiom daemon reads every selection over the compositor's data control (`wayland/datacontrol`: `ext_data_control_v1`, else `zwlr_data_control_v1`), in place of wl-paste and cliphist. Each offer is read through a pipe, off the Wayland connection's goroutine, in order, while the history is on (the daemon reads `Launcher.providers.clipboard` itself).
+- **What's kept**, read as the type preferred:
+  - an image (`image/png` > `jpeg` > `webp` > `gif` > `bmp` > any other `image/*`, at most 32 MiB), with its size and, for png, jpeg and gif, its dimensions;
+  - else text (`text/plain;charset=utf-8` > `UTF8_STRING` > `text/plain` > …), at most 100 000 characters, not blank;
+  - else HTML that is just an `<img>` (a browser's copy without the image itself), shown from its http(s) `src`.
+- A clip marked `x-kde-passwordManagerHint: secret` (what wl-paste's `CLIPBOARD_STATE=sensitive` was) is never recorded.
+- Deduplicated by content (the copy moves to the top), capped at `clipboardMaxEntries`.
+- In memory only, never on disk: an image is a file in `$XDG_RUNTIME_DIR/axiom/clipboard/` (tmpfs; the folder 0700, files 0600) for the shell to show, at most 256 MiB of them (the oldest go first), removed with its entry, when the history is turned off, and when the daemon starts and stops. A restart or re-exec starts the history empty.
+- **To the shell:** `clipboard.state` (the `clipboard` topic) and `clipboard.get` give the entries with their text cut to 1000 characters; `clipboard.text {id}` gives one whole. Every `clipboard.*` method answers the shell only.
 
 #### Rows and copying
 - Launcher row text is `Text.PlainText`, since clips can hold markup.
-- `copy` pipes the text to `wl-copy` on stdin, never argv. With cliphist it runs `cliphist decode <id> | wl-copy`.
-- Every other text copy in axiom does the same through `copyText(text)`.
+- `copy` is `clipboard.copy {id}`: the daemon becomes the clipboard's source and serves the clip from memory (an image from its file, as its own type). Text never passes through argv.
+- Every other text copy in axiom goes through `copyText(text)` (`clipboard.copy {text}`); a screenshot through `copyFile(path, "image/png")`. They work with the history off too.
+- The chat's paste asks `clipboard.types`, then `clipboard.save {mimes, path}` writes the image into the conversation's folder.
+- Without data control (`WaylandManager.clipboard` is ""), the launcher and the module say so.
 - Shift+Enter on a row `remove`s it.
 
 #### Pins
-- `pins` are text clips only: `{ id, text, time, pinned: true }`.
-- They are the one part written to disk: `~/.local/state/axiom/ui/clipboardPins.json`. They are kept through `clear()` and restarts, whichever source is on.
-- `pin` decodes a cliphist clip first, since its listing is only a preview.
+- `pins` are text clips only: `{ id, text, preview, time, pinned: true }`.
+- They are the one part written to disk: `~/.local/state/axiom/ui/clipboardPins.json`. They are kept through `clear()` and restarts.
+- `pin` fetches the clip whole first (`clipboard.text`), since a row holds only its start; `preview` keeps the row's text, which is how the row is matched.
 - `unpin` goes by text.
 - A pin copies with `copyText`.
 - The launcher and the ClipboardHistory module list pins first, then the history without them.
@@ -68,6 +62,6 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
   - with no query, the most used come first.
   - `recent(limit)` and `groups()` are also provided.
 - **Enter / Shift+Enter:**
-  - Enter `copy`s through wl-copy.
+  - Enter `copy`s it (`ClipboardManager.copyText`).
   - Shift+Enter also `type`s the emoji, 150 ms later, once the launcher has let go of the keyboard: `input.type`, the daemon's virtual keyboard (`wayland/vkbd`). `canType` is `WaylandManager.typing`: the compositor offers `zwp_virtual_keyboard_manager_v1`.
 - **Binds:** a bind opens it with the `launcherSearch` action and the argument `;`.

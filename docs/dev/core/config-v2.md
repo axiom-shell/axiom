@@ -72,7 +72,7 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 | `Appearance.wallpaper`, `wallpapers`, `wallpaperBackend`, `wallpaperDaemon`, `wallpaperFolder`, `wallpaperMode`, `wallpaperRotation`, `variantWallpapers` | `Appearance.wallpaper: { mode, file, perScreen: {}, folder, rotation: {…}, variants: { dark, light }, backend, daemon }` |
 | Widget's `overrideRadius` + `radius` | `Widget.radius` (`null` inherits `Appearance.shape.radius`) |
 | `Notifications.gap`, `gapTop`, …, `evenGaps` | `Notifications.gaps: { even, all, top, bottom, left, right }` |
-| `Launcher.windows`, `calculator`, `commands`, `runCommands`, `webSearch`, `chat`, `clipboard`, `emoji` (+ `searchEngine`, `clipboardSource`, `clipboardMaxEntries`) | `Launcher.providers: { windows, calculator, commands, run, web: { enabled, engine }, chat, clipboard: { enabled, source, maxEntries }, emoji }` |
+| `Launcher.windows`, `calculator`, `commands`, `runCommands`, `webSearch`, `chat`, `clipboard`, `emoji` (+ `searchEngine`, `clipboardSource` (gone with cliphist, stage 2), `clipboardMaxEntries`) | `Launcher.providers: { windows, calculator, commands, run, web: { enabled, engine }, chat, clipboard: { enabled, maxEntries }, emoji }` |
 | Idle's `dimTimeout`, `dimMode`, `dimLevel`, `dimBy`, `lockTimeout`, `screenOffTimeout`, `suspendTimeout` (s) | `Idle.dim: { timeout, mode, level, by }`, `Idle.lock.timeout`, `Idle.screenOff.timeout`, `Idle.suspend.timeout` (ms) |
 | `Dock` magnify / running keys | `magnify: { enabled, size, range }`, `running: { show, scope, indicator }` |
 | `Pomodoro.workMinutes`, … | `Pomodoro.work`, `shortBreak`, `longBreak` (ms) |

@@ -24,7 +24,34 @@ type Step struct {
 
 // all are the steps in order, the first at convert.Version + 1. The
 // schema's `version` default (config/schema/index.yaml) is the last one's.
-var all = []Step{}
+var all = []Step{
+	// v77: the clipboard history is the daemon's own, images included
+	// (roadmap stage 2): cliphist is no longer a source to pick
+	{Version: 77, Run: func(cfg *jsonx.Object) []string {
+		clip := object(cfg, "Launcher", "providers", "clipboard")
+		if clip == nil {
+			return nil
+		}
+		if _, ok := clip.Get("source"); !ok {
+			return nil
+		}
+		clip.Delete("source")
+		return []string{"Launcher.providers.clipboard.source removed: axiom keeps the clipboard history itself, images included"}
+	}},
+}
+
+// object is the object at path in cfg, nil when any part isn't one.
+func object(cfg *jsonx.Object, path ...string) *jsonx.Object {
+	o := cfg
+	for _, k := range path {
+		next, _ := o.Value(k).(*jsonx.Object)
+		if next == nil {
+			return nil
+		}
+		o = next
+	}
+	return o
+}
 
 // Current is the version this axiom writes: the last step's, else the
 // conversion's.

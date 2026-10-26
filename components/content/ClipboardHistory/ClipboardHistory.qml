@@ -11,7 +11,7 @@ import qs.components.content.parts
 // The clipboard history (ClipboardManager, as the launcher's ":" lists it):
 // pinned clips first, then the newest, with a search field. Click a clip to
 // copy it back; on hover, pin it (kept through restarts and Clear) or
-// remove it. Images show a thumbnail (cliphist only). A short card is the
+// remove it. Images show a thumbnail. A short card is the
 // newest clip with a copy button.
 // properties: { grow }
 Panel {
@@ -19,7 +19,8 @@ Panel {
 
   readonly property string query: field.text.trim().toLowerCase()
   readonly property bool off: !ClipboardManager.enabled
-  readonly property bool missing: ClipboardManager.cliphist && ClipboardManager.cliphistInstalled === false
+  // The compositor offers no clipboard control
+  readonly property bool missing: !ClipboardManager.available
   // Pins, then the history without them
   readonly property var allClips: ClipboardManager.pins.concat(ClipboardManager.entries.filter(e => !ClipboardManager.isPinned(e)))
   readonly property var clips: root.query === "" ? root.allClips : root.allClips.filter(e => root.labelOf(e).toLowerCase().includes(root.query) || (e.text ?? "").toLowerCase().includes(root.query))
@@ -98,8 +99,6 @@ Panel {
     onTriggered: root.confirmClear = false
   }
 
-  Component.onCompleted: ClipboardManager.refresh()
-
   compactContent: CompactFigure {
     icon: "content_paste"
     iconColor: root.off ? Theme.foregroundAlt : Theme.accent
@@ -152,7 +151,7 @@ Panel {
     }
   }
 
-  // Off, cliphist missing, or nothing (that matches) yet
+  // Off, no clipboard here, or nothing (that matches) yet
   Item {
     visible: !root.strip && (root.off || root.missing || root.clips.length === 0)
     Layout.fillWidth: true
@@ -163,7 +162,7 @@ Panel {
       maxWidth: parent.width
       availableHeight: parent.height
       icon: root.off ? "content_paste_off" : root.query !== "" ? "search_off" : "content_paste"
-      text: root.off ? I18n.tr("Clipboard history is off (Launcher settings)") : root.missing ? I18n.tr("cliphist isn't installed") : root.query !== "" ? I18n.tr("No matches") : I18n.tr("Copy something and it shows up here")
+      text: root.off ? I18n.tr("Clipboard history is off (Launcher settings)") : root.missing ? I18n.tr("This compositor offers no clipboard control") : root.query !== "" ? I18n.tr("No matches") : I18n.tr("Copy something and it shows up here")
     }
   }
 

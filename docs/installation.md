@@ -22,10 +22,9 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Network widget / module, Wi-Fi menu | NetworkManager, Quickshell built with its Networking module, and `ip` (iproute2) |
 | Updates | Arch: `pacman-contrib` (`checkupdates`), plus `paru` or `yay` for AUR updates. Fedora: `dnf` (nothing extra). Hidden on other distributions |
 | Tailscale | `tailscale` |
-| Screenshots | `wl-copy`; `grim` under niri; `satty` or `swappy` to annotate; `wf-recorder` to record, and `pactl` (libpulse; works with pipewire-pulse) to record the system's sound |
-| AI chat | `curl`; `secret-tool` (libsecret) to keep keys in your keyring; `wl-clipboard` to paste images |
-| Launcher calculator | `qalc` (libqalculate), `wl-copy` |
-| Launcher emoji picker | `wl-copy` to copy |
+| Screenshots | `grim` under niri; `satty` or `swappy` to annotate; `wf-recorder` to record, and `pactl` (libpulse; works with pipewire-pulse) to record the system's sound |
+| AI chat | `curl`; `secret-tool` (libsecret) to keep keys in your keyring |
+| Launcher calculator | `qalc` (libqalculate) |
 | Brightness (keys, OSD bar) | `brightnessctl` for a laptop panel; `ddcutil` for external monitors over DDC/CI (monitors that support it, with i2c access: the package's udev rule gives it to the logged-in user) |
 | NVIDIA GPU stats | `nvidia-smi` (AMD is read from sysfs) |
 | Idle (dim, lock, screen off, suspend) | `hypridle` (it runs on every compositor) |
@@ -36,7 +35,6 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Polkit prompt | Nothing: axiom is the agent itself, and stops another one (hyprpolkitagent, KDE's, GNOME's) while it's on |
 | Night light | nothing on Hyprland and sway; `wlsunset` on niri |
 | X11 apps (Steam, games, older apps) | On niri, `xwayland-satellite` (niri runs X11 apps only through it); on sway, Xwayland (`xorg-xwayland` on Arch, `xorg-x11-server-Xwayland` on Fedora). Hyprland's package brings Xwayland itself |
-| Clipboard history | `wl-clipboard`; `cliphist` to share the history with other apps |
 | Notes | `gio` (glib2) to move deleted notes to the trash |
 | Theme integrations | The app itself (`kitty`, `alacritty`, `foot`, `wezterm`, `ghostty`, `nvim`, `helix`/`hx`, VS Code or VSCodium, Zed (`zed`/`zeditor`), Firefox or a fork (LibreWolf, Zen, Floorp, Waterfox), Vesktop or Vencord, `zathura`, `ncspot`, `k9s`, `cava`, `btop`, `fzf` 0.49+, `lazygit`, `bat`, `yazi` 25.5+); `qt5ct`/`qt6ct` for Qt; `adw-gtk-theme` for GTK3 apps |
 

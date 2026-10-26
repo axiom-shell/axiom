@@ -69,7 +69,7 @@ OnboardingPage {
 
   SettingRows {
     Layout.fillWidth: true
-    paths: ["Launcher.providers.clipboard.enabled", "Launcher.providers.clipboard.source"]
+    paths: ["Launcher.providers.clipboard.enabled"]
   }
 
   StyledText {

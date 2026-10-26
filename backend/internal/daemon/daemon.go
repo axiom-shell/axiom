@@ -21,6 +21,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/assets"
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
+	"github.com/axiom-shell/axiom/backend/internal/clipboard"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
@@ -38,6 +39,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/ctm"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/datacontrol"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/gamma"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/idlenotify"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/outputs"
@@ -124,6 +126,9 @@ type Daemon struct {
 	wayland      *waylandSession
 	// nightLight warms the screens (on ctm or gamma)
 	nightLight *nightlight.Service
+	// clip is the clipboard's data control; clipboard its history
+	clip      *datacontrol.Device
+	clipboard *clipboard.History
 	// idle is the Idle section's service
 	idle *idle.Service
 	// topics are the polled topics and their subscribers
@@ -270,9 +275,10 @@ func Run(ctx context.Context, opts Options) error {
 	})
 	d.keyboard = vkbd.New(vkbd.Options{Seat: d.seat, OnChange: d.pushWayland, Gap: 2 * time.Millisecond})
 	d.newNightLight()
+	d.newClipboard()
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.idlePart(), d.waylandPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.idlePart(), d.waylandPart(), d.clipboardPart(), d.dev.part()}
 	reg := d.registry(parts)
 	d.server = &rpc.Server{
 		Registry: reg,
@@ -361,7 +367,7 @@ func Run(ctx context.Context, opts Options) error {
 // for that.
 func (d *Daemon) followCompositor(ctx context.Context, socket string) {
 	log := d.opts.Log
-	err := client.Run(ctx, socket, d.wayland, d.outputs, d.seat, d.idleNotifier, d.keyboard, d.ctm, d.gamma)
+	err := client.Run(ctx, socket, d.wayland, d.outputs, d.seat, d.idleNotifier, d.keyboard, d.ctm, d.gamma, d.clip)
 	// Unavailable: no compositor to connect to, nor to watch
 	if err != nil && !errors.Is(err, wire.ErrGone) && axerr.KindOf(err) != axerr.Unavailable {
 		log.Warn("the Wayland connection failed: monitors aren't known", "err", err)

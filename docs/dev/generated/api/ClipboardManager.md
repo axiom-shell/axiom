@@ -3,22 +3,20 @@
 
 > **File:** `services/system/ClipboardManager.qml` · **Docs:** see [docs/dev](../../README.md)
 
-The clipboard history the launcher searches (":" or /clipboard), while Launcher.clipboard is on. Launcher.clipboardSource picks where it comes from: axiom `wl-paste --watch` records text clips, in memory only (kept across QML reloads, gone on restart). Clips a password manager marks sensitive (CLIPBOARD_STATE=sensitive) are never recorded. cliphist cliphist's history, listed when the launcher asks. While it's on, axiom records into it too (text and images: a text-only watcher misses screenshots, and keeps only the HTML of an image copied in a browser); cliphist drops duplicates, so a watcher the user runs as well is harmless, and skips sensitive clips. Images come with a thumbnail: the newest are decoded into $XDG_RUNTIME_DIR/axiom/clipboard/ (tmpfs, pruned to the listed ones, removed when turned off). `entries` is [{ id, text, time, image }], newest first (time is 0 for cliphist); an image also has `format` (png, jpeg, …), `dimensions` ("1920x1080"), `size` ("1.2 MiB") and `image`, its thumbnail's url once decoded. HTML that is just an image (a browser's copy, stored beside the image itself) has `html` set and `image` from its src once decoded. Copying back pipes the text to wl-copy's stdin, never through argv. `pins` are text clips the user pinned ([{ id, text, preview, time, pinned: true }], newest first): the one part written to disk ($XDG_STATE_HOME/axiom/ui/clipboardPins.json), kept through clear() and restarts, whichever source is on. A cliphist clip is decoded first, as its listing is only a preview (its lines run together, cut short); the pin keeps that preview as `preview`, which is how its row in the listing is matched. Images can't be pinned.
+The clipboard history the launcher searches (":" or /clipboard), while Launcher.clipboard is on, and copying for the whole shell. The axiom daemon keeps both (internal/clipboard, on the compositor's data control): the history in memory only (gone on restart), text and images, skipping clips a password manager marks sensitive. `entries` is [{ id, text, time, image }], newest first; text is the clip's first 1000 characters. An image also has `format` (png, jpeg, …), `dimensions` ("1920x1080", when known), `size` ("1.2 MiB") and `image`, its file's url. HTML that is just an image (a browser's copy) has `html` set and `image` from its src. Copying back goes through the daemon, never through argv. `pins` are text clips the user pinned ([{ id, text, preview, time, pinned: true }], newest first): the one part written to disk ($XDG_STATE_HOME/axiom/ui/clipboardPins.json), kept through clear() and restarts. A clip is fetched whole to pin it; the pin keeps the row's text as `preview`, which is how its row is matched. Images can't be pinned. Created from shell.qml's `_services`.
 
 ### Properties
 
 - `enabled` (readonly bool)
-- `cliphist` (readonly bool)
-- `recording` (readonly bool): Whether axiom records the clipboard itself
-- `cliphistInstalled` (readonly var): undefined until checked
+- `available` (readonly bool): The compositor offers clipboard control (ext or wlr data control)
 - `entries` (var)
 - `pins` (var)
 
 ### Functions
 
-- `refresh()`: Lists cliphist's history again (axiom's own is always current), at most once a second: the launcher asks on every keystroke
 - `copy(entry)`
-- `copyText(text)`: Puts text on the clipboard (through wl-copy's stdin, never argv)
+- `copyText(text)`: Puts text on the clipboard
+- `copyFile(path, mime)`: Puts a file on the clipboard as mime (a screenshot)
 - `remove(entry)`
 - `canPin(entry)`: Whether a clip can be pinned (text, not an image), and whether it is
 - `isPinned(entry)`

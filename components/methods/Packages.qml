@@ -127,10 +127,6 @@ QtObject {
         "arch": "ddcutil",
         "fedora": "ddcutil"
       },
-      "wl-copy": {
-        "arch": "wl-clipboard",
-        "fedora": "wl-clipboard"
-      },
       "jq": {
         "arch": "jq",
         "fedora": "jq"
@@ -186,10 +182,6 @@ QtObject {
       "Xwayland": {
         "arch": "xorg-xwayland",
         "fedora": "xorg-x11-server-Xwayland"
-      },
-      "cliphist": {
-        "arch": "cliphist",
-        "fedora": "cliphist"
       },
       "wf-recorder": {
         "arch": "wf-recorder",

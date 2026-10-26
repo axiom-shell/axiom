@@ -916,7 +916,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `ShellManager.qml`: Shell manager manages global options and signals
 - `StateManager.qml`: Small JSON state files in Paths.statePath: createStateHandler(name) gives a shared save/load handler per name.
 - `ThemeManager.qml`: ThemeManager owns the active theme's data (loaded from its file, watched, with defaults for what it leaves out), the theme lists, theme generation from a wallpaper, the wallpaper itself, and re-theming integrated tools.
-- `WaylandManager.qml`: What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, the night light.
+- `WaylandManager.qml`: What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, the night light, the clipboard.
 
 ## services/session/
 
@@ -934,7 +934,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `BatteryManager.qml`: The laptop battery (UPower's display device, when it is one) and the power-saver profile, for the Battery widget and module, and the low battery notifications (at BatteryConfig's levels).
 - `BluetoothManager.qml`: Bluetooth state and actions over the default adapter (BlueZ via Quickshell.Bluetooth).
 - `BrightnessManager.qml`: Screen brightness per monitor: a laptop panel through its sysfs backlight (written with brightnessctl, which goes through logind), an external monitor over DDC/CI (ddcutil, VCP 0x10).
-- `ClipboardManager.qml`: The clipboard history the launcher searches (":" or /clipboard), while Launcher.clipboard is on.
+- `ClipboardManager.qml`: The clipboard history the launcher searches (":" or /clipboard), while Launcher.clipboard is on, and copying for the whole shell.
 - `KeyboardLayoutManager.qml`: Active xkb layout of the main keyboard, shared by every KeyboardLayout widget.
 - `MediaManager.qml`: The active MPRIS player (Spotify first, else one playing, else one that can play; or the one picked with selectPlayer) for the media widgets, the lockscreen and the media keys: its track, position and controls, and its …
 - `NetworkingManager.qml`: Wi-Fi state and actions over NetworkManager (Quickshell.Networking, D-Bus, so nothing polls).
