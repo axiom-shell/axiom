@@ -116,7 +116,6 @@ The config, the takeover and the session must never be damaged by a rarely taken
 
 Fixed in this phase:
 - [Small backend error and robustness gaps](issues.md#small-backend-error-and-robustness-gaps)
-- [The shell stops reconnecting after a failed attempt](issues.md#the-shell-stops-reconnecting-after-a-failed-attempt)
 - [Schema build gaps](issues.md#schema-build-gaps)
 
 Fixed by backend stage 7 (add the bullets there if missing):
@@ -189,6 +188,7 @@ niri:
 - [niri reports no space reserved by bars, nor where tiled windows are](issues.md#niri-reports-no-space-reserved-by-bars-nor-where-tiled-windows-are)
 - [niri's flags can't be turned off from axiom](issues.md#niris-flags-cant-be-turned-off-from-axiom)
 - [Nested niri freezes while its window is hidden](issues.md#nested-niri-freezes-while-its-window-is-hidden)
+- [niri's event stream stops retrying after a failed connect](issues.md#niris-event-stream-stops-retrying-after-a-failed-connect)
 
 Hyprland, and every compositor:
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
