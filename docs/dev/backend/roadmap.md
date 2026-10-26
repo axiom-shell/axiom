@@ -3,7 +3,7 @@
 > **Files:** `scripts/quickshell-io-allowlist.json`, `scripts/check_structure.py`, `services/core/BackendManager.qml`, `backend/internal/topics/`, `backend/internal/dbus/`, `services/core/CommandManager.qml`, `services/core/FileManager.qml`, `services/core/StateManager.qml`, `services/core/IpcTarget.qml`, `services/core/ConsumerRegistry.qml`, `backend/internal/daemon/`
 > **Related:** [The axiom binary](README.md), [Protocol](protocol.md), [Wayland protocols](wayland.md), [Services pattern](../core/services-pattern.md), [every method and push](../generated/rpc.md) (generated)
 
-The plan for moving side effects out of QML and into the `axiom` daemon, stage by stage. Read this before starting any of it, and update it in the change that does a step (its status, and anything learned that changes a later stage).
+The plan for moving side effects out of QML and into the `axiom` daemon, stage by stage. Read this before starting any of it, and update it in the change that does a step (its status, and anything learned that changes a later stage). Cleanup work that waits for a stage is listed in the [cleanup roadmap](../roadmap.md).
 
 ### The end state
 - **Quickshell** draws Wayland windows (layer shell, popups, the session lock, focus grab, screencopy) and runs the QML: readers, rendering, per-screen `Variants`, hot reload. Leaving it entirely isn't planned: that would mean a C++ host against Qt's private Wayland API.
@@ -81,6 +81,9 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 
 **Stage 7: the config path** (later)
 - Saves send `config.set` path ops instead of the whole config (`config.replace`), and `config.changed` carries the change rather than the whole config.
+- `takeover` belongs to the op, not the connection: only a takeover card's op carries it, every other save sends `false`, so the store's guard binds the shell too ([issue](../issues.md#shell-saves-carry-unsaved-settings-and-every-takeover)).
+- Live edits show through `ConfigManager.setPreview`, never by changing the running config, so a save sends only what was saved, not another page's unsaved edits (same issue).
+- Config writes apply in the order sent: `config.*` calls handled in order per connection, or a base revision the store refuses on mismatch ([issue](../issues.md#config-saves-can-land-out-of-order)).
 - One validator: the shell stops validating before it saves (Go's answer stands anyway); `applyDefaults` stays for previews.
 - A thin `compositor.inputs`: Go reads binds, profiles, strips and the look from the config it owns; the shell sends only runtime facts (`supports`, `fx`, resolved theme colours).
 - Code on both sides gets an exit: `SchemaValidation` (shared fixtures), the compositor helpers `compositor/render` ported (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`), and the bind tables Go reads out of `BindActions.qml` (shared data in a JSON file both read, or the QML copy deleted).

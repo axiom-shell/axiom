@@ -23,6 +23,10 @@ Dependencies point one way, methods → data owners → readers → services →
 - [generated/rpc.md](generated/rpc.md): every method, push and call between the shell and the axiom daemon, with the files on each side.
 - [generated/layers.md](generated/layers.md): every layer namespace's `order` and why, from `LayerStack.layers`.
 
+### Roadmaps
+- [roadmap](roadmap.md): the phased cleanup plan (correctness, structure, parity, fit, a clean log, docs), every [issues.md](issues.md) entry linked from the phase that fixes it.
+- [backend/roadmap](backend/roadmap.md): the staged move of the services' side effects into the axiom binary, which the cleanup roadmap aligns with.
+
 ### Known issues
 - [issues.md](issues.md): coding agents' working list of problems found in the code but not fixed yet (add one when you find something out of scope; remove it with the fix). Not where people report or look up problems: that's GitHub issues, which agents never open.
 
