@@ -11,8 +11,9 @@
                          stacking, from LayerStack.layers), api/<Name>.md (the
                          public members of each service and config reader)
 
-  scripts/gen_docs.py            write them (stale files removed)
-  scripts/gen_docs.py --check    exit 1 if any is out of date (CI)
+  scripts/gen_docs.py            write them (stale files removed); exit 1,
+                                 writing nothing, when the shell calls or
+                                 listens to something the daemon lacks
   scripts/gen_docs.py --report   also list reader members nothing uses
 
 Usages are file level (no line numbers) and found by name, so they're a map
@@ -923,7 +924,6 @@ def generate():
 
 
 def main():
-    check = "--check" in sys.argv
     pages, missing, unused, rpc_problems = generate()
     if rpc_problems:
         print("the shell and the daemon disagree (docs/dev/generated/rpc.md):")
@@ -938,16 +938,6 @@ def main():
         print("\n".join("  " + m for m in missing))
         print(f"Reader members with no user outside their reader ({len(unused)}):")
         print("\n".join("  " + u for u in unused))
-    if check:
-        if stale or extra:
-            for p in stale:
-                print(f"stale: {p}")
-            for p in extra:
-                print(f"obsolete: {p}")
-            print("generated docs are out of date: run scripts/gen_docs.py")
-            return 1
-        print(f"generated docs ok ({len(pages)} files)")
-        return 0
     for p in stale:
         (ROOT / p).parent.mkdir(parents=True, exist_ok=True)
         (ROOT / p).write_text(pages[p])

@@ -10,5 +10,5 @@ Reader singletons (`<Section>.qml` / `<Section>Config.qml`), `json/config.schema
 - **A new section** = a root `properties.<Section>` with `x-category` (from the root's `x-categories`), `title`, `description`, `additionalProperties: false`, `x-order`, + a new reader. Unknown sections are pruned at load.
 - **Renaming or reshaping a key**: edit the schema first, then a format-2 step (`docs/recipes/migration.md`).
 - `x-scope`: a setting in a look section that names a monitor, path, account or command needs `machine`/`personal`.
-- After changing the schema or a reader, run `scripts/gen_docs.py`.
+- After changing the schema or a reader, run `scripts/generate.sh` (or verify.sh): it rebuilds the schema JSON, then the reference docs from it (`scripts/gen_docs.py` alone reads the old schema).
 - Edit `~/.config/axiom/config.json` and `i18n/*.json` atomically (temp file + rename): they're watched.

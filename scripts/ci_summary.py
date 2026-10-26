@@ -70,7 +70,9 @@ def contract():
     """gen_docs.py: the shell's daemon calls and listeners the daemon doesn't
     define, one indented line each (the docs themselves are built, not checked)"""
     code, lines = run("scripts/gen_docs.py")
-    found = [("error", link("docs/dev/generated/rpc.md"), line.strip()) for line in lines if line.startswith("  ")]
+    # Only the lines under its header: a crash's traceback is indented too
+    header = next((i for i, line in enumerate(lines) if line.startswith("the shell and the daemon disagree")), len(lines))
+    found = [("error", link("docs/dev/generated/rpc.md"), line.strip()) for line in lines[header + 1:] if line.startswith("  ")]
     if code != 0:
         return FAIL, f"{len(found)} disagreements" if found else "failed", found or [("error", "", line) for line in lines[-5:]]
     return PASS, "ok", []
