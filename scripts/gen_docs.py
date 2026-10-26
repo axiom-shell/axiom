@@ -852,6 +852,33 @@ def qml_call_sites(text):
     return sites
 
 
+QML_HELPER = re.compile(r"(?:\s*//[^\n]*\n)*\s*function (\w+)\(")
+
+
+def qml_helper_sites(text):
+    """Calls through a helper whose `// rpc: a, b` note sits above its
+    `function`: (line, method, params source) for each call naming one of
+    the noted methods as a literal, its params the argument after it. A
+    note above anything else gives ("(through a helper) " + method) at the
+    note's line, for each method: unchecked."""
+    sites = []
+    for note in QML_RPC_NOTE.finditer(text):
+        noted = [n.strip() for n in note.group(1).split(",") if n.strip()]
+        helper = QML_HELPER.match(text, text.find("\n", note.start()) + 1)
+        if not helper:
+            line = text.count("\n", 0, note.start()) + 1
+            sites += [(line, "(through a helper) " + n, "") for n in noted]
+            continue
+        for call in re.finditer(rf"(?<!function )\b{helper.group(1)}\(", text):
+            args = call_args(text, call.end() - 1)
+            for i, arg in enumerate(args):
+                literal = JS_STRING.match(arg)
+                if literal and literal.group(1) in noted:
+                    sites.append((text.count("\n", 0, call.start()) + 1, literal.group(1), args[i + 1] if i + 1 < len(args) else ""))
+                    break
+    return sites
+
+
 def render_shape(shape, types, depth=0):
     """A shape on one line: `{zones: [string], ids?: [number]}`. A named
     object below the top level is its name, its fields listed in types."""
@@ -957,19 +984,22 @@ def rpc_scan():
         text = path.read_text()
         # Params written as an object literal are checked against the
         # method's; anything else is listed as unchecked
-        for line, method, src in qml_call_sites(text):
-            if method is None or method not in params:
-                continue
+        def check(line, method, src):
             if src in ("", "{}", "null", "undefined"):
-                continue
+                return
             where = f"{rel(path)}:{line}: {method}'s params"
             if src.startswith("{") and object_members(src) is not None:
-                problems += shape_key_problems(src, params[method], where)
+                problems.extend(shape_key_problems(src, params[method], where))
             else:
                 unchecked.append((rel(path), line, method, " ".join(src.split())[:60]))
-        for m in QML_RPC_NOTE.finditer(text):
-            line = text.count("\n", 0, m.start()) + 1
-            unchecked += [(rel(path), line, n.strip(), "(through a helper)") for n in m.group(1).split(",") if n.strip()]
+        for line, method, src in qml_call_sites(text):
+            if method in params:
+                check(line, method, src)
+        for line, method, src in qml_helper_sites(text):
+            if method in params:
+                check(line, method, src)
+            elif method.startswith("(through a helper) "):
+                unchecked.append((rel(path), line, method.split(" ", 4)[-1], "(through a helper)"))
         calls = [a or b for a, b in QML_CALL.findall(text)]
         for verb, topic in QML_TOPIC.findall(text):
             calls += [f"{topic}.{s}" for s in ({"acquire": ("subscribe", "unsubscribe"),
@@ -1051,7 +1081,7 @@ def rpc_page():
         out.append(f"| `{method}` | {files(c['go'])} | {files(c['qml'])} |")
     out += ["", "## Unchecked call sites", "",
             "Calls whose params aren't an object literal (a variable, a spread, a computed key), so their keys go unchecked, "
-            "and methods sent through a service's own helper (`// rpc:`).", "",
+            "and methods in a `// rpc:` note that isn't directly above its helper's `function`.", "",
             "| Call site | Method | Params |", "|---|---|---|"]
     for file, line, method, src in sorted(unchecked):
         out.append(f"| `{file}:{line}` | `{method}` | `{src}` |")

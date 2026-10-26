@@ -853,6 +853,20 @@ class RpcShapes(unittest.TestCase):
         self.assertEqual([(line, method, src.split("\n")[0]) for line, method, src in qml_call_sites(qml)],
                          [(2, "tz.offsets", "{"), (6, "x.y", ""), (7, None, "params"), (8, "daemon.hello", "{pid: 1}")])
 
+    def test_helper_sites(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_helper_sites
+        qml = "\n".join([
+            '  function copy() { root._send("1", "x.a", {id: 1}); _send("2", "x.b"); _send(n, other, {}) }',
+            "  // rpc: x.a, x.b",
+            "  // sends one",
+            "  function _send(name, method, params) {",
+            "  }",
+            "  // rpc: x.c",
+            "  property var notAFunction: 1",
+        ])
+        self.assertEqual(qml_helper_sites(qml), [(1, "x.a", "{id: 1}"), (1, "x.b", ""), (6, "(through a helper) x.c", "")])
+
     def test_unknown_keys_fail(self):
         sys.path.insert(0, str(SCRIPTS))
         from gen_docs import shape_key_problems

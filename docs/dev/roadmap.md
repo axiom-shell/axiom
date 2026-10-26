@@ -157,7 +157,6 @@ Steps: generate method shapes into `rpc.md` and check QML call sites against the
 
 Resolves:
 - [Result and push reads in inline callbacks go unchecked](issues.md#result-and-push-reads-in-inline-callbacks-go-unchecked)
-- [rpc.md misses calls made through a service's own helper](issues.md#rpcmd-misses-calls-made-through-a-services-own-helper)
 - [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
 - [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
 - [The shell's socket warns when the daemon re-execs](issues.md#the-shells-socket-warns-when-the-daemon-re-execs)
