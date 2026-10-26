@@ -25,6 +25,10 @@ Scope {
     property bool locked: false
   }
 
+  // The lock surfaces built: WlSessionLock builds one per Wayland output
+  // while locked, also for an output connected later
+  property int surfaces: 0
+
   Connections {
     target: LockManager
 
@@ -58,6 +62,12 @@ Scope {
     value: lockState.locked && sessionLock.secure
   }
 
+  Binding {
+    target: LockManager
+    property: "builtinSurfaces"
+    value: root.surfaces
+  }
+
   // axiom restarts a shell that died while locked with this set: it locks
   // before anything else shows
   Component.onCompleted: {
@@ -72,6 +82,9 @@ Scope {
     WlSessionLockSurface {
       id: surface
       color: "black"
+
+      Component.onCompleted: root.surfaces++
+      Component.onDestruction: root.surfaces--
 
       LockSurface {
         screen: surface.screen

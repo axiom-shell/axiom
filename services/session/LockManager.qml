@@ -27,22 +27,34 @@ QtObject {
   property bool builtinLocked: false
   // …and the compositor has acknowledged it (the session is locked)
   property bool builtinSecure: false
+  // …and how many lock surfaces it built (set by shell/Lockscreen.qml)
+  property int builtinSurfaces: 0
 
   // Run by axiom: it hears of every change, to confirm `axiom lock` and to
   // relock a shell that dies while locked. Never the other way: nothing
   // axiom says unlocks
   onBuiltinSecureChanged: _report()
   onBuiltinLockedChanged: _report()
+  onBuiltinSurfacesChanged: _report()
 
+  // The surfaces actually built against the monitors connected (not Qt's
+  // stand-ins), so a monitor without a lock surface keeps `axiom lock`
+  // from confirming, and with none connected the session lock alone does
   function _report() {
     if (!BackendManager.active)
       return;
-    const outputs = Quickshell.screens.length;
     BackendManager.call("lock.state", {
       "locked": root.builtinLocked && root.builtinSecure,
-      "surfaces": root.builtinSecure ? outputs : 0,
-      "outputs": outputs
+      "surfaces": root.builtinSecure ? root.builtinSurfaces : 0,
+      "outputs": General.outputs.length
     }, null);
+  }
+
+  property Connections _outputs: Connections {
+    target: General
+    function onOutputsChanged() {
+      root._report();
+    }
   }
 
   property Connections _backend: Connections {

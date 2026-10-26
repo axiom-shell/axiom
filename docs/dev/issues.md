@@ -56,12 +56,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-24, while reviewing the Go backend branch
 
-### `axiom lock` fails with no screen connected
-- **Where:** `services/session/LockManager.qml` (`_report`), `backend/internal/lock/lock.go` (`State.confirmed`)
-- **What:** `_report` sends `surfaces` and `outputs` from the same number (`Quickshell.screens.length`), so the daemon's `Surfaces >= Outputs` check can never catch a screen without a lock surface, and with no screen connected `confirmed()` needs `Surfaces > 0`, so `axiom lock` reports a failure. Locking should lock the session with no screens connected, and a screen connected while locked should get the lock surface; the shell should report the surfaces it actually built, and the daemon confirm on the session lock with zero outputs.
-- **Size:** small
-- **Found:** 2026-10-24, while reviewing the Go backend branch
-
 ### The shell's socket warns when the daemon re-execs
 - **Where:** `services/core/BackendManager.qml` (its `Socket`)
 - **What:** Every daemon re-exec (each dev-mode rebuild) logs `quickshell.io.socket` `QLocalSocket::PeerClosedError` (a `Socket error for Socket(0x…)`) once: the old image closing the connection reaches the shell as an error, though `BackendManager` reconnects and it's expected. Five in one session's log (`scripts/log.sh --all -g PeerClosed`). Quieting it means telling a close the daemon announced (re-exec, quit) from a real failure, maybe with a notification before the exec.
@@ -394,12 +388,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The shell stops reconnecting after a failed attempt
-- **Where:** `services/core/BackendManager.qml` (`_reconnect`, `_socket`)
-- **What:** Quickshell's `Socket.setConnected(true)` only connects when it holds no `QLocalSocket`, and a failed connect (`onSocketError`) keeps the failed one; only a `disconnected` frees it, which a socket that never connected doesn't emit (`src/io/socket.cpp`). So when the daemon isn't listening yet at the first retry (a restart slower than 200 ms), `onError` starts `_reconnect`, its write does nothing, and the shell never reconnects. Needs a fresh `Socket` per attempt (a `Loader` or `Component`) or a Quickshell fix.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing roadmap/3-backend-listeners
-
 ### The shell–daemon contract is checked by name only
 - **Where:** `scripts/gen_docs.py` (the rpc cross-check), `backend/internal/daemon/methods.go` (params and results)
 - **What:** `rpc.md`'s check matches method names between the two sides by regex; params and results are Go structs on one side and hand-read fields on the other, and nothing checks they agree (only the manual protocol bump in `config/json/backend.json`). Generating each method's fields from the `rpc.Handle` registrations into `rpc.md`, and checking the QML call sites' keys against them, would catch a renamed field.
@@ -466,3 +454,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
+### niri's event stream stops retrying after a failed connect
+- **Where:** `services/compositor/NiriIpcManager.qml` (`stream`, `_reconnect`)
+- **What:** The same Quickshell `Socket` gap `BackendManager` had: a connect that fails keeps its `QLocalSocket`, so `_reconnect`'s `stream.connected = true` does nothing, and once a connect to `$NIRI_SOCKET` fails the event stream never comes back (no workspace or window events until a reload). Also, assigning `connected` drops its binding to `socketPath`. Rare (niri's socket is up before the shell), but a fresh `Socket` per attempt, as `BackendManager` now does, would close it.
+- **Size:** small
+- **Found:** 2026-10-26, while fixing the shell's reconnect to axiom

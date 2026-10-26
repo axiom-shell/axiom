@@ -234,11 +234,12 @@ QtObject {
     });
     root.listen("daemon.state", params => root._applyDaemonState(params));
     root.listen("dev.state", params => root._dev = params);
+    root._connect();
   }
 
   function _send(line) {
-    _socket.write(line);
-    _socket.flush();
+    root._socket?.write(line);
+    root._socket?.flush();
   }
 
   function _greet() {
@@ -325,8 +326,9 @@ QtObject {
       "kind": "unavailable",
       "message": "the connection to axiom closed"
     });
-    if (root.active)
-      _reconnect.start();
+    // At once: a re-exec hands its listening socket over, so this
+    // connection waits for the new image. A failed attempt backs off
+    root._connect();
   }
 
   function _failQueued(error) {
@@ -342,22 +344,53 @@ QtObject {
     }
   }
 
-  property Socket _socket: Socket {
-    path: root.socketPath
-    connected: root.active
-    parser: SplitParser {
-      onRead: line => root._onLine(line)
+  // One Socket per attempt: Quickshell's Socket keeps a connection that
+  // failed and never tries it again (it reconnects only after a
+  // `disconnected`, which a connection that never opened doesn't emit),
+  // so each attempt gets a fresh one and a finished one is destroyed
+  property Socket _socket: null
+
+  property Component _socketComponent: Component {
+    Socket {
+      id: socket
+      path: root.socketPath
+      connected: true
+      parser: SplitParser {
+        onRead: line => {
+          if (socket === root._socket)
+            root._onLine(line);
+        }
+      }
+      onConnectionStateChanged: {
+        if (socket !== root._socket)
+          return;
+        if (connected) {
+          root._greet();
+        } else {
+          root._retire(socket);
+          root._dropped();
+        }
+      }
+      onError: error => {
+        if (socket !== root._socket || connected)
+          return;
+        root._retire(socket);
+        root._reconnect.start();
+      }
     }
-    onConnectionStateChanged: {
-      if (connected)
-        root._greet();
-      else
-        root._dropped();
-    }
-    onError: error => {
-      if (!connected && root.active)
-        _reconnect.start();
-    }
+  }
+
+  function _connect() {
+    if (root.active && root._socket === null)
+      root._socket = root._socketComponent.createObject(root);
+  }
+
+  // A socket whose connection ended or failed: it's let go before it
+  // could connect again by itself
+  function _retire(socket) {
+    root._socket = null;
+    socket.connected = false;
+    socket.destroy();
   }
 
   // A re-exec or restart of the binary: try again, a little slower each
@@ -366,9 +399,7 @@ QtObject {
     interval: Math.min(5000, 200 * Math.pow(2, root._retry))
     onTriggered: {
       root._retry++;
-      // Through a fresh binding: assigning true would drop the socket's
-      // `connected: root.active` for good
-      root._socket.connected = Qt.binding(() => root.active);
+      root._connect();
     }
   }
 }

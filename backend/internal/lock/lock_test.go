@@ -50,6 +50,62 @@ func TestPartialLockIsNotConfirmed(t *testing.T) {
 	}
 }
 
+func TestConfirmRule(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct {
+		name  string
+		state State
+		want  bool
+	}{
+		{"locked on every output", State{Locked: true, Surfaces: 2, Outputs: 2}, true},
+		{"an output without a surface", State{Locked: true, Surfaces: 1, Outputs: 2}, false},
+		{"more surfaces than outputs", State{Locked: true, Surfaces: 1, Outputs: 0}, true},
+		{"no output connected", State{Locked: true, Surfaces: 0, Outputs: 0}, true},
+		{"not locked", State{Locked: false, Surfaces: 1, Outputs: 1}, false},
+		{"not locked, no output", State{}, false},
+	} {
+		if got := c.state.confirmed(); got != c.want {
+			t.Errorf("%s: confirmed(%+v) = %v, want %v", c.name, c.state, got, c.want)
+		}
+	}
+}
+
+// With no monitor connected the session lock alone confirms `axiom lock`.
+func TestLockWithNoOutputConnected(t *testing.T) {
+	t.Parallel()
+	var l *Locker
+	l = New(Options{
+		Confirm:     time.Second,
+		AskShell:    func(ctx context.Context) error { go l.Report(State{Locked: true}); return nil },
+		StartLocked: func(ctx context.Context) error { t.Error("started the shell locked"); return nil },
+	})
+	if err := l.Lock(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A stopped shell's report confirms nothing, even with no output connected,
+// until the next shell reports.
+func TestStoppedShellConfirmsNothing(t *testing.T) {
+	t.Parallel()
+	l := New(Options{Confirm: 20 * time.Millisecond})
+	l.Report(State{Locked: true})
+	if !l.confirmed() {
+		t.Fatal("a lock with no output connected wasn't confirmed")
+	}
+	l.ShellStopped()
+	if l.confirmed() {
+		t.Error("still confirmed with the shell gone")
+	}
+	if err := l.Lock(context.Background()); err == nil {
+		t.Error("a stopped shell's lock counted")
+	}
+	l.Report(State{Locked: true})
+	if !l.confirmed() {
+		t.Error("the next shell's report wasn't confirmed")
+	}
+}
+
 func TestBuiltinLockerNeverFallsBackToACommand(t *testing.T) {
 	t.Parallel()
 	marker := filepath.Join(t.TempDir(), "ran")
@@ -111,7 +167,7 @@ func TestShellDyingWhileLockedRelocks(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("not restarted locked")
 	}
-	if l.State().confirmed() {
+	if l.confirmed() {
 		t.Error("still confirmed with the shell gone")
 	}
 	// Unlocked, an exit is just an exit
