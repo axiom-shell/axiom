@@ -27,7 +27,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Launcher calculator | `qalc` (libqalculate) |
 | Brightness (keys, OSD bar) | `brightnessctl` for a laptop panel; `ddcutil` for external monitors over DDC/CI (monitors that support it, with i2c access: the package's udev rule gives it to the logged-in user) |
 | NVIDIA GPU stats | `nvidia-smi` (AMD is read from sysfs) |
-| Idle (dim, lock, screen off, suspend) | `hypridle` (it runs on every compositor) |
+| Idle (dim, lock, screen off, suspend) | Nothing: axiom does it itself, on every compositor |
 | Login screen | `greetd` and its text login `agreety` (`greetd-agreety` on Arch), the fallback; `sway` for it to run in (recommended), or Hyprland without one; `pkexec` (polkit) to install it |
 | Themes generated from the wallpaper | The Python packages numpy and Pillow (`python-numpy python-pillow` on Arch, `python3-numpy python3-pillow` on Fedora) |
 | Calendar | The Python package icalendar (`python-icalendar` on Arch, `python3-icalendar` on Fedora); `secret-tool` (libsecret) to keep account passwords in your keyring |
@@ -175,7 +175,7 @@ An update also rebuilds the `axiom` binary from the new code, and axiom switches
 
 ## Idle and locking
 
-axiom can run hypridle for you, on any compositor, from **Settings → Screen & Power → Idle**: dim, lock, screen off and suspend timeouts. It writes its own hypridle config and replaces a hypridle you already run (and starts yours again if you turn it off).
+axiom handles idle itself, on any compositor, from **Settings → Screen & Power → Idle**: dim, lock, screen off and suspend timeouts, locking before the computer sleeps, and apps that ask to keep the screen on. It replaces an idle daemon such as hypridle: remove your own hypridle autostart line when you turn it on.
 
 To keep your own idle daemon instead, point its lock command at axiom's built-in lock screen:
 

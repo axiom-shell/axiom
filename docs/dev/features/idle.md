@@ -9,7 +9,7 @@ What happens when you step away is the axiom daemon's (`internal/idle`), in plac
 ### Turning it on
 - `Idle.enabled` (off by default; the onboarder's Integrations page recommends it) is an `x-takeover` setting: ask before enabling it on the live config (rule: AGENTS.md › Never, while testing). It replaces an idle daemon of the user's own; a running hypridle shows up as the holder of `org.freedesktop.ScreenSaver` in the card's warning.
 - Off, the daemon does nothing about idle: no listeners, no D-Bus connections, no hypridle started or stopped.
-- The managed mode's autostart (`Session.autostart`) still skips a plain `hypridle` entry while it's on, so a leftover one doesn't run beside it.
+- The managed mode's autostart (`Session.autostart`) no longer has a `hypridle` entry by default (the v78 step drops the old default's from saved configs), and still skips a plain `hypridle` one the user added while Idle is on, so it doesn't run beside it.
 
 ### The steps (`internal/idle/plan.go`)
 - `Plan(settings)`: dim, lock, screen off and suspend, each with its timeout (0 is off), in timeout order (ties keep that order), then the user's own `items` that are enabled, timed and run something.

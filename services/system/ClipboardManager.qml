@@ -31,6 +31,8 @@ Singleton {
   readonly property bool enabled: LauncherConfig.clipboard
   // The compositor offers clipboard control (ext or wlr data control)
   readonly property bool available: WaylandManager.clipboard !== ""
+  // It offers none (false until the daemon has said)
+  readonly property bool unsupported: WaylandManager.known && !root.available
 
   property var entries: []
   property var pins: []

@@ -267,7 +267,7 @@ func Run(ctx context.Context, opts Options) error {
 	d.compositor = d.newCompositor()
 	d.outputs = outputs.New(opts.Log.With("part", "wayland"))
 	d.seat = seat.New()
-	d.wayland = &waylandSession{}
+	d.wayland = &waylandSession{onChange: d.pushWayland}
 	d.idleNotifier = idlenotify.New(idlenotify.Options{
 		Seat:     d.seat,
 		Log:      opts.Log.With("part", "wayland"),
@@ -367,7 +367,7 @@ func Run(ctx context.Context, opts Options) error {
 // for that.
 func (d *Daemon) followCompositor(ctx context.Context, socket string) {
 	log := d.opts.Log
-	err := client.Run(ctx, socket, d.wayland, d.outputs, d.seat, d.idleNotifier, d.keyboard, d.ctm, d.gamma, d.clip)
+	err := client.Run(ctx, socket, d.outputs, d.seat, d.idleNotifier, d.keyboard, d.ctm, d.gamma, d.clip, d.wayland)
 	// Unavailable: no compositor to connect to, nor to watch
 	if err != nil && !errors.Is(err, wire.ErrGone) && axerr.KindOf(err) != axerr.Unavailable {
 		log.Warn("the Wayland connection failed: monitors aren't known", "err", err)

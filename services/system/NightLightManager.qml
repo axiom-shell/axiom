@@ -30,10 +30,12 @@ Singleton {
   readonly property var tool: {
     if (WaylandManager.nightLight !== "")
       return "axiom";
+    // Not wlsunset before the daemon has said it can't (it would run
+    // beside the daemon's)
+    if (BackendManager.active && !WaylandManager.known)
+      return undefined;
     const found = DependencyManager.found.wlsunset;
-    if (found === true)
-      return "wlsunset";
-    return WaylandManager.known && found === false ? "" : undefined;
+    return found === true ? "wlsunset" : found === false ? "" : undefined;
   }
   readonly property bool available: !!root.tool
   readonly property bool active: _run.active

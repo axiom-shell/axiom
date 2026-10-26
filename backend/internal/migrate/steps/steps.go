@@ -38,6 +38,30 @@ var all = []Step{
 		clip.Delete("source")
 		return []string{"Launcher.providers.clipboard.source removed: axiom keeps the clipboard history itself, images included"}
 	}},
+	// v78: idle is the daemon's (roadmap stage 2): the managed autostart's
+	// default hypridle entry goes, as it left the default
+	{Version: 78, Run: func(cfg *jsonx.Object) []string {
+		session := object(cfg, "Session")
+		if session == nil {
+			return nil
+		}
+		autostart, _ := session.Value("autostart").(*jsonx.Array)
+		if autostart == nil {
+			return nil
+		}
+		kept := autostart.Items[:0:0]
+		for _, item := range autostart.Items {
+			if e, _ := item.(*jsonx.Object); e != nil && e.Value("id") == "hypridle" && e.Value("command") == "hypridle" {
+				continue
+			}
+			kept = append(kept, item)
+		}
+		if len(kept) == len(autostart.Items) {
+			return nil
+		}
+		autostart.Items = kept
+		return []string{"Session.autostart: the hypridle entry removed: axiom handles idle itself (Idle settings); add it back to keep running hypridle"}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

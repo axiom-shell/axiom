@@ -7,7 +7,7 @@ What the axiom daemon's own Wayland connection can do for the shell (wayland.sta
 
 ### Properties
 
-- `known` (readonly bool): Whether the daemon has said yet
+- `known` (readonly bool): Whether the daemon has said yet, with its connection's globals bound (before that, everything reads off)
 - `typing` (readonly bool): Virtual keyboards: EmojiManager.type (input.type)
 - `nightLight` (readonly string): How the night light warms the screens: "ctm" (Hyprland's color transform), "gamma" (gamma ramps) or "" (NightLightManager falls back to wlsunset)
 - `clipboard` (readonly string): Clipboard control: "ext", "wlr" or "" (ClipboardManager)

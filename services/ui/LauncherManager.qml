@@ -475,7 +475,7 @@ QtObject {
   // --- Clipboard ---
 
   function _clipboardRows(query) {
-    if (!ClipboardManager.available)
+    if (ClipboardManager.unsupported)
       return [_infoRow(I18n.tr("No clipboard history here"), I18n.tr("This compositor offers no clipboard control"))];
     // Pins first, then the history without them
     const entries = ClipboardManager.pins.concat(ClipboardManager.entries.filter(e => !ClipboardManager.isPinned(e)));
@@ -563,7 +563,7 @@ QtObject {
       if (root.mode === "clipboard")
         root._refresh();
     }
-    function onAvailableChanged() {
+    function onUnsupportedChanged() {
       if (root.mode === "clipboard")
         root._refresh();
     }
@@ -597,7 +597,7 @@ QtObject {
     };
   }
 
-  // The Shift+Enter hint, once wtype has been looked for
+  // The Shift+Enter hint, once the daemon says whether it can type
   property Connections _emojiUpdates: Connections {
     target: EmojiManager
     function onCanTypeChanged() {

@@ -342,7 +342,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 - **Screenshots:** a region, a window or a whole screen, picked on a frozen frame. Saved and copied, or opened in satty or swappy to annotate. Also screen recording with `wf-recorder`, with the microphone or (with `pactl`) the system's sound.
 - **Brightness:** keys and an OSD bar for a laptop screen and for external monitors over DDC/CI.
 - **Night light:** warmer colors on a schedule, set by axiom through the compositor (`wlsunset` on niri).
-- **Idle:** axiom can run hypridle from its own settings, on any compositor: dim, lock, screen off and suspend timeouts.
+- **Idle:** axiom handles idle itself, on any compositor: dim, lock, screen off and suspend timeouts, and locking before the computer sleeps.
 - **Updates:** axiom updates itself from git, following releases or `main`, with a notification or automatically, and switches to the rebuilt `axiom` binary without logging out.
 - **The `axiom` command:** the shell's parent process, and a command line for scripts and keybinds.
   - Run, restart or stop the shell (`axiom run`, `axiom restart`, `axiom quit`). If the shell crashes, axiom starts it again, locked first if it was locked.

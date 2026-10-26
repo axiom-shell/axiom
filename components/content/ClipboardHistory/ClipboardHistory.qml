@@ -20,7 +20,7 @@ Panel {
   readonly property string query: field.text.trim().toLowerCase()
   readonly property bool off: !ClipboardManager.enabled
   // The compositor offers no clipboard control
-  readonly property bool missing: !ClipboardManager.available
+  readonly property bool missing: ClipboardManager.unsupported
   // Pins, then the history without them
   readonly property var allClips: ClipboardManager.pins.concat(ClipboardManager.entries.filter(e => !ClipboardManager.isPinned(e)))
   readonly property var clips: root.query === "" ? root.allClips : root.allClips.filter(e => root.labelOf(e).toLowerCase().includes(root.query) || (e.text ?? "").toLowerCase().includes(root.query))

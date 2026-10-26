@@ -15,7 +15,7 @@ The night light: a screen color temperature, set by the axiom daemon (wlsunset w
   - `gamma`: `zwlr_gamma_control_manager_v1` (sway), ramps per output, held only while on.
   - Either follows output hotplug. Another program holding the colors (CTM's `blocked` event; a gamma control's `failed`, which also means an output without gamma tables, as a nested sway's) shows as `NightLightManager.blocked` on the card.
 - **wlsunset**, where the compositor offers neither (niri, so far): wlsunset pinned to one temperature, started detached, stopped with `pkill`.
-- `tool` is "axiom", "wlsunset" or "" (neither).
+- `tool` is "axiom", "wlsunset" or "" (neither); undefined until the daemon's Wayland connection is ready (`WaylandManager.known`), so wlsunset is never picked, and started, where the daemon is about to say it warms the screens itself.
 - `active` is a `PersistentProperties`:
   - probed once per launch (`_probeOnce`): `nightlight.get` from the daemon, or `pgrep` for wlsunset;
   - the schedule waits for the probe.

@@ -23,6 +23,7 @@ The daemon's own D-Bus client: pure Go, no library, written for what axiom asks 
 - **Signals:** `Subscribe(ctx, Match)` sends `AddMatch` and filters locally.
   - A well-known `Sender` is matched only by the bus: signals carry the sender's unique name.
   - A subscriber more than 64 signals behind loses the newest (logged); the reader never blocks.
+  - A rule's values are quoted, a `'` inside one written `'\''` (the spec's escape).
   - Helpers: `NameOwnerChanged(name)` and `PropertiesChangedMatch` / `PropertiesChanged(msg)`.
 - **Exporting:** `Export(path, Interface{Name, Methods, Signals})` answers calls until the returned func unexports.
   - Each `Method` declares `In` and `Out` signatures. A call with another signature gets `InvalidArgs`; an unknown object, interface or method gets its own error.
@@ -58,7 +59,7 @@ Every value is encoded from a signature, never guessed. `MakeVariant` and `Signa
   - Every descriptor received is close-on-exec on arrival (`MSG_CMSG_CLOEXEC`).
   - Descriptors queue in arrival order; each message takes as many as its header names.
   - Closing the connection closes any that nobody took.
-- A received message owns its `Files`: whoever gets it takes what it keeps (`File`) and calls `Close` for the rest. A signal matching several subscriptions has its descriptors closed: they can only have one owner.
+- A received message owns its `Files`: whoever gets it takes what it keeps (`File`) and calls `Close` for the rest. A signal matching several subscriptions has its descriptors closed: they can only have one owner; so does one its only subscriber was too far behind to take.
 
 ### Tests
 - `dbustest.New(t)` is an in-process bus:

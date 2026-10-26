@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### The default autostart still starts hypridle
-- **Where:** `config/schema/sections/Session.yaml` (`autostart`'s default `hypridle` entry), `backend/internal/compositor/render/hyprconfig.go` (`autostartCommands`)
-- **What:** hypridle stopped being a dependency in roadmap stage 2 (the daemon handles idle), but the managed mode's default `Session.autostart` still lists `hypridle`. With Idle on, the render skips it. With Idle off it starts hypridle if installed, and fails quietly if not. Dropping it from the default and from existing configs where it's unchanged needs a format-2 step (`docs/recipes/migration.md`); the maintainer decides whether a user leaving Idle off still wants hypridle started for them.
-- **Size:** small
-- **Found:** 2026-10-26, while moving idle to the daemon
-
 ### Tailscale's poll interval allows values below axiom's 5 s floor
 - **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`Source`'s `Floor`)
 - **What:** The setting's `minimum` is 250 ms, but the `tailscale` topic never polls more often than every 5 s (its description says so), so 250–4999 ms are offered and do nothing. Decided (2026-10-26): no migration; the topic's floor is read from the setting's schema `minimum` instead of a constant in Go, so the two can't disagree again.
@@ -421,12 +415,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A missing embedded schema counts as this binary's
 - **Where:** `backend/internal/daemon/daemon.go` (`setSchema`)
 - **What:** `matches` starts true and stays true when `assets.Read` fails, so a binary built without its assets treats any schema as its own and stays writable: it should fail closed.
-- **Size:** trivial
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
-### D-Bus match rules don't escape their values
-- **Where:** `backend/internal/dbus/conn.go` (`Match.rule`, signal delivery)
-- **What:** `rule()` quotes each value in `'…'` without escaping a `'` inside it, so a value holding one makes a broken (or different) match rule. A signal dropped because its only subscriber is behind keeps its descriptors open until the message is collected, rather than closing them.
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the repository's organization
 

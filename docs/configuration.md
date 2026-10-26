@@ -25,7 +25,7 @@ axiom never writes inside its own folder (`~/.config/quickshell/axiom`). What it
 | Small UI state (launcher history, pinned clips, editor and page choices, first-run progress) | `~/.local/state/axiom/ui/` |
 | Notes, when no notes folder is set | `~/.local/share/axiom/notes/` |
 | Themes generated from the wallpaper | `~/.local/state/axiom/themes/` |
-| Chats, notification history, secrets without a keyring, and the files axiom generates for your compositor, hypridle and themed apps | `~/.local/state/axiom/` |
+| Chats, notification history, secrets without a keyring, and the files axiom generates for your compositor and themed apps | `~/.local/state/axiom/` |
 
 To back up your setup or keep it in a dotfiles repo, `~/.config/axiom/` is the folder to keep (`~/.local/share/axiom/notes/` too, if your notes live there).
 

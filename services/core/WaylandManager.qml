@@ -10,8 +10,9 @@ import Quickshell
 Singleton {
   id: root
 
-  // Whether the daemon has said yet
-  readonly property bool known: root._state !== null
+  // Whether the daemon has said yet, with its connection's globals bound
+  // (before that, everything reads off)
+  readonly property bool known: root._state?.ready === true
   // Virtual keyboards: EmojiManager.type (input.type)
   readonly property bool typing: root._state?.typing === true
   // How the night light warms the screens: "ctm" (Hyprland's color

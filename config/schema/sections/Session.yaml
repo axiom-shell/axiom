@@ -34,7 +34,6 @@ properties:
         command: dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
         enabled: true
       - {id: systemctl, command: systemctl --user start hyprpolkitagent, enabled: true}
-      - {id: hypridle, command: hypridle, enabled: true}
     description: Commands run once when the compositor starts, after axiom.
     items:
       type: object

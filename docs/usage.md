@@ -108,7 +108,7 @@ Plain text searches apps and open windows. When the text is math, the result sho
 | `?` | Web search, with the engine set in Settings |
 | `@` | Asks the overlay's chat, in a new conversation |
 | `:` | Clipboard history. Shift+Enter removes an entry |
-| `;` | Emoji, searched by name and keyword. Enter copies one, Shift+Enter also types it (with `wtype`) |
+| `;` | Emoji, searched by name and keyword. Enter copies one, Shift+Enter also types it into the focused window |
 
 | Apps | Commands | Calculator | Emoji |
 | :---: | :---: | :---: | :---: |

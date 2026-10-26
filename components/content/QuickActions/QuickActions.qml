@@ -12,8 +12,8 @@ import qs.components.content.base
 // A grid of action tiles: toggles, session actions and pin, in any mix.
 // Tiles that can't work here are hidden: night light (no color transform,
 // gamma control or wlsunset) and power saver (power-profiles-daemon)
-// without their tool, pin outside an
-// edge menu. Log out, reboot and power off ask for a second click.
+// without their tool, pin outside an edge menu. Log out, reboot and power
+// off ask for a second click.
 // Names show on every tile or none ("auto": only when all fit whole),
 // always ("show", elided) or never ("hide").
 // "pills" draws wide tiles with a status line, as Android's quick settings

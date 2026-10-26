@@ -9,6 +9,7 @@ The clipboard history the launcher searches (":" or /clipboard), while Launcher.
 
 - `enabled` (readonly bool)
 - `available` (readonly bool): The compositor offers clipboard control (ext or wlr data control)
+- `unsupported` (readonly bool): It offers none (false until the daemon has said)
 - `entries` (var)
 - `pins` (var)
 

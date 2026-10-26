@@ -42,9 +42,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 
 | # | Status | Work | Why here |
 |---|---|---|---|
-| 1 | in progress | Backend stage 2: night light, then clipboard (and [Phase 2](#phase-2-finish-stage-2)) | In progress; finish it before anything else churns the same files. |
-| 2 | next | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
-| 3 | later | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. |
+| 1 | done | Backend stage 2: night light, then clipboard (and [Phase 2](#phase-2-finish-stage-2)) | In progress; finish it before anything else churns the same files. |
+| 2 | in progress | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
+| 3 | next | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. |
 | 4 | later | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
 | 5 | later | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
 | 6 | later | Backend stage 3: brightness | Small; a first stage under the new checks. |
@@ -119,9 +119,7 @@ Fixed by backend stage 7 (add the bullets there if missing):
 - [Config saves can land out of order](issues.md#config-saves-can-land-out-of-order)
 
 ### Phase 2: finish stage 2
-[Backend stage 2](backend/roadmap.md) (Wayland) is in progress: idle and typing are done; clipboard and night light remain. Its own entries:
-- [The default autostart still starts hypridle](issues.md#the-default-autostart-still-starts-hypridle)
-- [D-Bus match rules don't escape their values](issues.md#d-bus-match-rules-dont-escape-their-values)
+Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the hypridle autostart default (dropped, and from saved configs by the v78 step) and the D-Bus match rules' escaping.
 
 ### Phase 3: QML structure
 Each file has one job and sits where its folder's rule says. Moves and splits keep each service's public API, so widgets don't change; a service a backend stage empties is folded in that stage instead.

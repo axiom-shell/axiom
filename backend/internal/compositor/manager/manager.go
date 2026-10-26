@@ -24,7 +24,6 @@ package manager
 
 import (
 	"context"
-	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -34,6 +33,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/binds"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"

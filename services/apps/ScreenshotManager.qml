@@ -18,8 +18,8 @@ import qs.services.system
 // `screen` captures the focused monitor at once. The picture is saved in
 // `folder` (the Screenshots section), or only to a scratch file
 // with `copyOnly`, copied to the clipboard (ClipboardManager.copyFile:
-// Quickshell's clipboard is text only) and either notified (click opens it) or opened in an
-// annotator (satty or swappy; its notification also has an "Edit in …"
+// Quickshell's clipboard is text only) and either notified (click opens
+// it) or opened in an annotator (satty or swappy; its notification also has an "Edit in …"
 // button). Recording (IPC `screenRecord`, the
 // `screenRecord` bind, launcher `/record`, or R / the Record switch in an
 // open picker) picks its area in the same picker (kind `record`), or takes

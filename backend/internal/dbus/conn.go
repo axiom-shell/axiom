@@ -13,6 +13,7 @@ import (
 	"errors"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -214,6 +215,10 @@ func (c *Conn) route(m *Message) {
 			case s.ch <- m:
 			default:
 				c.log.Warn("dropped a D-Bus signal: its subscriber is behind", "member", m.Member, "interface", m.Interface)
+				if len(to) == 1 {
+					// Its one owner never gets it
+					m.Close()
+				}
 			}
 		}
 		c.mu.Unlock()
@@ -338,7 +343,9 @@ func (m Match) rule() string {
 	rule := "type='signal'"
 	add := func(k, v string) {
 		if v != "" {
-			rule += "," + k + "='" + v + "'"
+			// No escaping inside quotes: a ' closes them, is escaped, and
+			// they open again
+			rule += "," + k + "='" + strings.ReplaceAll(v, "'", `'\''`) + "'"
 		}
 	}
 	add("sender", m.Sender)
