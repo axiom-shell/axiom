@@ -543,7 +543,7 @@ Card {
         }
       }
 
-      // The other menus on the screen, dimmed (EdgeMenuManager.showingOthers)
+      // The other menus on the screen, dimmed (OverlayManager.menus.showingOthers)
       Repeater {
         model: root.editable && root.pxScale > 0 ? root.ghosts.length : 0
 

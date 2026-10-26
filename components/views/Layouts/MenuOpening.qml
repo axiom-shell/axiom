@@ -12,8 +12,8 @@ ColumnLayout {
   id: root
 
   required property var menu
-  readonly property bool previewingThis: !!root.menu && EdgeMenuManager.previewing !== "" && EdgeMenuManager.previewing === root.menu.id
-  readonly property var references: EdgeMenuManager.references(root.menu?.id ?? "")
+  readonly property bool previewingThis: !!root.menu && OverlayManager.menus.previewing !== "" && OverlayManager.menus.previewing === root.menu.id
+  readonly property var references: OverlayManager.menus.references(root.menu?.id ?? "")
   // A submenu menu opens only from Submenu modules
   readonly property bool submenu: EdgeMenusConfig.isSubmenu(root.menu)
 
@@ -26,24 +26,24 @@ ColumnLayout {
 
     StyledTextButton {
       Layout.fillWidth: true
-      enabled: EdgeMenuManager.canPreview(root.menu)
+      enabled: OverlayManager.menus.canPreview(root.menu)
       opacity: enabled ? 1 : 0.5
       iconText: root.previewingThis ? "visibility_off" : "visibility"
       text: root.previewingThis ? I18n.tr("Hide from screen") : I18n.tr("Show on screen")
       textPadding: Widget.smallPadding
       backgroundColor: root.previewingThis ? Theme.accent : Theme.backgroundHighlight
       textColor: root.previewingThis ? Theme.background : Theme.foreground
-      onClicked: EdgeMenuManager.togglePreviewing()
+      onClicked: OverlayManager.menus.togglePreviewing()
     }
 
     StyledTextButton {
       Layout.fillWidth: true
       iconText: "layers"
-      text: EdgeMenuManager.showingOthers ? I18n.tr("Hide other menus") : I18n.tr("Show other menus")
+      text: OverlayManager.menus.showingOthers ? I18n.tr("Hide other menus") : I18n.tr("Show other menus")
       textPadding: Widget.smallPadding
-      backgroundColor: EdgeMenuManager.showingOthers ? Theme.accent : Theme.backgroundHighlight
-      textColor: EdgeMenuManager.showingOthers ? Theme.background : Theme.foreground
-      onClicked: EdgeMenuManager.toggleShowingOthers()
+      backgroundColor: OverlayManager.menus.showingOthers ? Theme.accent : Theme.backgroundHighlight
+      textColor: OverlayManager.menus.showingOthers ? Theme.background : Theme.foreground
+      onClicked: OverlayManager.menus.toggleShowingOthers()
     }
   }
 
@@ -52,8 +52,8 @@ ColumnLayout {
     wrapMode: Text.WordWrap
     text: {
       if (root.submenu)
-        return EdgeMenuManager.canPreview(root.menu) ? I18n.tr("Holds it open beside the menu it opens from while you edit it, showing unsaved changes.") : I18n.tr("Add a Submenu module opening it to an enabled floating menu to show it.");
-      return EdgeMenuManager.canPreview(root.menu) ? I18n.tr("Holds the menu open on its screen while you edit it, showing unsaved changes.") : I18n.tr("Enable the menu to show it.");
+        return OverlayManager.menus.canPreview(root.menu) ? I18n.tr("Holds it open beside the menu it opens from while you edit it, showing unsaved changes.") : I18n.tr("Add a Submenu module opening it to an enabled floating menu to show it.");
+      return OverlayManager.menus.canPreview(root.menu) ? I18n.tr("Holds the menu open on its screen while you edit it, showing unsaved changes.") : I18n.tr("Enable the menu to show it.");
     }
     textSize: Appearance.fontSizeBy(-2)
     opacity: 0.7
@@ -102,7 +102,7 @@ ColumnLayout {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: EdgeMenuManager.goToReference(reference.ref)
+        onClicked: OverlayManager.menus.goToReference(reference.ref)
       }
     }
   }
@@ -121,9 +121,9 @@ ColumnLayout {
 
   OpenerButtons {
     visible: !root.submenu
-    saved: EdgeMenuManager.isSaved(root.menu)
+    saved: OverlayManager.menus.isSaved(root.menu)
     unsavedHint: I18n.tr("Save the menu to add a bar button or keybind for it.")
-    onBarButtonRequested: barIndex => EdgeMenuManager.addBarButton(barIndex, "right")
-    onKeybindRequested: EdgeMenuManager.addKeybind()
+    onBarButtonRequested: barIndex => OverlayManager.menus.addBarButton(barIndex, "right")
+    onKeybindRequested: OverlayManager.menus.addKeybind()
   }
 }

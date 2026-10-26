@@ -10,7 +10,7 @@ import qs.components.views.base
 // screen and the login screen on the left; the selected one's modules on a
 // canvas (drag to move, drag a corner to resize) above the selected
 // module's options, or the library to add from. Edits go through
-// OverlayManager's, EdgeMenuManager's, DesktopManager's, LockManager's and
+// OverlayManager's (pages and menus), DesktopManager's, LockManager's and
 // GreeterManager's drafts until saved; a menu's and the desktop's show
 // live on screen.
 BaseView {
@@ -37,13 +37,13 @@ BaseView {
 
   Component.onCompleted: {
     OverlayManager.ensureLoaded();
-    EdgeMenuManager.ensureLoaded();
+    OverlayManager.menus.ensureLoaded();
     DesktopManager.editor.ensureLoaded();
     LockManager.editor.ensureLoaded();
     GreeterManager.editor.ensureLoaded();
   }
   // The page unloads when the overlay closes (or it pages two away)
-  Component.onDestruction: EdgeMenuManager.stopPreviewing()
+  Component.onDestruction: OverlayManager.menus.stopPreviewing()
 
   LayoutsEditorLayout {
     id: layout
@@ -74,15 +74,15 @@ BaseView {
     canvas.gridOffsetLimit: root.target.gridOffsetLimit
     canvas.setGridOffset: root.target.setGridOffset
     canvas.latticeSpan: root.target.latticeSpan
-    canvas.dirty: OverlayManager.isDirty || EdgeMenuManager.isDirty || DesktopManager.editor.isDirty || LockManager.editor.isDirty || GreeterManager.editor.isDirty
-    canvas.canSave: OverlayManager.problems.length === 0 && EdgeMenuManager.problems.length === 0 && DesktopManager.editor.problems.length === 0 && LockManager.editor.problems.length === 0 && GreeterManager.editor.problems.length === 0
+    canvas.dirty: OverlayManager.isDirty || OverlayManager.menus.isDirty || DesktopManager.editor.isDirty || LockManager.editor.isDirty || GreeterManager.editor.isDirty
+    canvas.canSave: OverlayManager.problems.length === 0 && OverlayManager.menus.problems.length === 0 && DesktopManager.editor.problems.length === 0 && LockManager.editor.problems.length === 0 && GreeterManager.editor.problems.length === 0
     inspector.editable: root.target.editable
     inspector.notEditableHint: root.target.notEditableHint
     onSave: {
       if (OverlayManager.isDirty)
         OverlayManager.saveChanges();
-      if (EdgeMenuManager.isDirty)
-        EdgeMenuManager.saveChanges();
+      if (OverlayManager.menus.isDirty)
+        OverlayManager.menus.saveChanges();
       if (DesktopManager.editor.isDirty)
         DesktopManager.editor.saveChanges();
       if (LockManager.editor.isDirty)
@@ -92,7 +92,7 @@ BaseView {
     }
     onReset: {
       OverlayManager.resetChanges();
-      EdgeMenuManager.resetChanges();
+      OverlayManager.menus.resetChanges();
       DesktopManager.editor.resetChanges();
       LockManager.editor.resetChanges();
       GreeterManager.editor.resetChanges();

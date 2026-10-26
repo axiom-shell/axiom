@@ -1,6 +1,6 @@
 # Layouts editor
 
-> **Files:** `components/views/Layouts/Layouts.qml`, `components/views/Layouts/` (`LayoutsPanel`, `PagesSection`, `MenusSection`, `EditTarget`, `PageTarget`, `MenuTarget`, `ScreenLayoutTarget`, `DesktopTarget`, `LockscreenTarget`, `GreeterTarget`, `LayoutsEditorLayout`, `EditorInspector`), `components/hosts/overlay/OverlayPages.qml`, `services/ui/OverlayManager.qml`, `config/OverlayConfig.qml`, `components/reusable/TypePickerPopup.qml`
+> **Files:** `components/views/Layouts/Layouts.qml`, `components/views/Layouts/` (`LayoutsPanel`, `PagesSection`, `MenusSection`, `EditTarget`, `PageTarget`, `MenuTarget`, `ScreenLayoutTarget`, `DesktopTarget`, `LockscreenTarget`, `GreeterTarget`, `LayoutsEditorLayout`, `EditorInspector`), `components/hosts/overlay/OverlayPages.qml`, `services/ui/OverlayManager.qml`, `services/ui/EdgeMenuEditor.qml`, `config/OverlayConfig.qml`, `components/reusable/TypePickerPopup.qml`
 > **Config:** `Overlay.items`, `EdgeMenus`, `Desktop`, `Lockscreen.layout`, `Greeter.layout`
 > **Related:** [Grid canvas](grid-canvas.md), [Editors pattern](../core/editors-pattern.md), [Edge menu editing](../edge-menus/editing-submenus.md), [Desktop](../features/desktop.md), [Lockscreen](../features/lockscreen.md), [Greeter runtime](../features/greeter-runtime.md)
 
@@ -17,7 +17,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 | Target | What it edits | Draft |
 |---|---|---|
 | `"page"` | `OverlayManager.selectedViewIndex` | its draft of `Overlay.items` |
-| `"menu"` | `EdgeMenuManager.selectedMenuIndex` | its draft of `EdgeMenus` |
+| `"menu"` | `OverlayManager.menus.selectedMenuIndex` | its draft of `EdgeMenus` (`menus`: an `EdgeMenuEditor`, not a singleton) |
 | `"desktop"` | `DesktopManager.editor` | its draft of `Desktop` |
 | `"lockscreen"` | `LockManager.editor` | its draft of `Lockscreen.layout` |
 | `"greeter"` | `GreeterManager.editor` | of `Greeter.layout` |
@@ -28,7 +28,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 - Entry points: the launcher's `/layouts` and `/menus`, `ipc call edgeMenu edit`.
 - Each target is an `EditTarget`: `PageTarget`, `MenuTarget`, and `DesktopTarget` / `LockscreenTarget` / `GreeterTarget` on `ScreenLayoutTarget` (all in `views/Layouts/`). It carries the editor, modules, title, icon, screen box, fit line, …, and `Layouts.qml` binds the canvas and inspector to it.
   - `fitLink` (an `x-link`) puts a `SettingsLink` beside the fit line: a shrunk page to `Overlay.moduleScale`, a shrunk screen layout to `Widget.cardSize`, an outdated login screen to its settings card, the lock screen under another locker to `Lockscreen.mode`.
-- Links out (followed as links, so the navigator offers the way back): a Custom page's group to the page switcher's settings, a tool page's to the page itself, each module type's `x-link` in the inspector, and an edge menu's "Also opened by" rows to the bar widget, keybind or menu that opens it (`EdgeMenuManager.goToReference`). Settings' Lock screen and Login screen links open this editor on them (`OverlayManager.followPageLink("Layouts:lockscreen")`).
+- Links out (followed as links, so the navigator offers the way back): a Custom page's group to the page switcher's settings, a tool page's to the page itself, each module type's `x-link` in the inspector, and an edge menu's "Also opened by" rows to the bar widget, keybind or menu that opens it (`OverlayManager.menus.goToReference`). Settings' Lock screen and Login screen links open this editor on them (`OverlayManager.followPageLink("Layouts:lockscreen")`).
 - Save/Discard on the canvas save or discard all five drafts, and `EditsManager` lists the page as unsaved when any is dirty.
 
 ### Layout of the page

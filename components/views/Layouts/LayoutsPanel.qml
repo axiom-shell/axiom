@@ -31,7 +31,7 @@ Item {
   // A monitor of the desktop's (not all monitors or the primary one)
   readonly property bool isDesktopMonitor: root.isDesktop && DesktopManager.isMonitorTarget(DesktopManager.selectedTarget)
   readonly property bool isCustom: root.view?.type === "Custom"
-  readonly property var problems: OverlayManager.problems.concat(EdgeMenuManager.problems, DesktopManager.editor.problems, LockManager.editor.problems, GreeterManager.editor.problems)
+  readonly property var problems: OverlayManager.problems.concat(OverlayManager.menus.problems, DesktopManager.editor.problems, LockManager.editor.problems, GreeterManager.editor.problems)
 
   // StyledTextEntry writes each keystroke back to its `text`, which drops
   // any binding on it, so the name is pushed in rather than bound: on every
@@ -173,7 +173,7 @@ Item {
           order: group.modelData.keys
           // The whole menu, so x-showIf sees keys from other groups
           values: root.menu ?? ({})
-          onEdited: (path, value) => EdgeMenuManager.updateMenuField(path[0], value)
+          onEdited: (path, value) => OverlayManager.menus.updateMenuField(path[0], value)
         }
       }
     }

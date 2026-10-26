@@ -138,7 +138,6 @@ Steps, roughly in this order (moves first, each its own PR):
 4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
-- [EdgeMenuManager is also the layouts editor's working copy](issues.md#edgemenumanager-is-also-the-layouts-editors-working-copy)
 - [LauncherCommands holds the /config browser](issues.md#launchercommands-holds-the-config-browser)
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (designed and fixed in backend stage 7)
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)

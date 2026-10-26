@@ -28,10 +28,10 @@ Card {
   // Which way it opens, for the arrow
   readonly property bool toLeft: anchor.popouts?.openToLeft ?? false
 
-  // The layouts editor showing the menu it opens (EdgeMenuManager's
+  // The layouts editor showing the menu it opens (OverlayManager.menus
   // previewing a submenu): held open from here, as if hovered
   // (the first such row in the menu, if there are more)
-  readonly property bool previewed: root.menuId !== "" && EdgeMenuManager.previewing === root.menuId && EdgeMenuManager.previewParent !== "" && EdgeMenuManager.previewParent === (root.host?.id ?? "") && !root.host?.submenu && root._firstOpener
+  readonly property bool previewed: root.menuId !== "" && OverlayManager.menus.previewing === root.menuId && OverlayManager.menus.previewParent !== "" && OverlayManager.menus.previewParent === (root.host?.id ?? "") && !root.host?.submenu && root._firstOpener
   readonly property bool _firstOpener: {
     const first = (EdgeMenusConfig.menuById(root.host?.id ?? "")?.layout?.modules ?? []).find(module => module?.type === "Submenu" && module.properties?.menu === root.menuId);
     return first?.place?.x === root.slotRect[0] && first?.place?.y === root.slotRect[1];

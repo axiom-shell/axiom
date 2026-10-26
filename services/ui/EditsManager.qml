@@ -41,7 +41,7 @@ QtObject {
     },
     {
       "type": "Layouts",
-      "dirty": OverlayManager.isDirty || EdgeMenuManager.isDirty || DesktopManager.editor.isDirty || LockManager.editor.isDirty || GreeterManager.editor.isDirty
+      "dirty": OverlayManager.isDirty || OverlayManager.menus.isDirty || DesktopManager.editor.isDirty || LockManager.editor.isDirty || GreeterManager.editor.isDirty
     }
   ].filter(page => page.dirty).map(page => page.type)
 
@@ -162,8 +162,8 @@ QtObject {
       BarManager.saveChanges();
     if (KeybindManager.isDirty)
       KeybindManager.save();
-    if (EdgeMenuManager.isDirty)
-      EdgeMenuManager.saveChanges();
+    if (OverlayManager.menus.isDirty)
+      OverlayManager.menus.saveChanges();
     if (OverlayManager.isDirty)
       OverlayManager.saveChanges();
     if (DesktopManager.editor.isDirty)
@@ -182,8 +182,8 @@ QtObject {
       BarManager.resetChanges();
     if (KeybindManager.isDirty)
       KeybindManager.reset();
-    if (EdgeMenuManager.isDirty)
-      EdgeMenuManager.resetChanges();
+    if (OverlayManager.menus.isDirty)
+      OverlayManager.menus.resetChanges();
     if (OverlayManager.isDirty)
       OverlayManager.resetChanges();
     if (DesktopManager.editor.isDirty)

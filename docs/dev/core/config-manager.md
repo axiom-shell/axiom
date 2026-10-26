@@ -55,7 +55,7 @@ Editors create new entries at their definition's defaults with `withDefaults(val
 - Never mutate `ConfigManager.config` fields from UI code and expect persistence.
 
 ### ConfigDraft
-- The editor services each hold a `ConfigDraft` (`services/core/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager, EdgeMenuManager, KeybindManager, MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.
+- The editor services each hold a `ConfigDraft` (`services/core/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager (and its `EdgeMenuEditor`), KeybindManager, MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.
 - A draft is a working copy of one config path:
   - `changed()` after in-place edits
   - `save()` merges onto the latest config via `commit`.

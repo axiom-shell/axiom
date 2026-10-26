@@ -33,7 +33,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 ### Frames reported to the editor
 - Each host reports where its modules can sit: `EdgeMenuSync.frame` → `EdgeMenuManager.setFrame(id, { screen, startPad, endPad, across, before, after, reserves })`.
   - Cleared on destruction or an id change.
-- The editor uses it, and also draws the other menus from it (`screenRectsOf`).
+- The editor uses it, and also draws the other menus from it (`OverlayManager.menus.screenRectsOf`).
 - `frameOf(menu)` falls back to the menu's padding for one without a host (disabled).
 
 ### Shared behaviour (`EdgeMenuSync`)
