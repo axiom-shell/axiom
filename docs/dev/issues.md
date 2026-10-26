@@ -74,12 +74,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-24, while reviewing the Go backend
 
-### The greeter's environment is a denylist
-- **Where:** `backend/internal/cli/greeter.go` (`greeterDropped`, `greeterEnv`)
-- **What:** The greeter drops four named `AXIOM_*` variables, so others (`AXIOM_BIN`, `AXIOM_REEXEC`, `AXIOM_TREE`) inherited by `axiom greeter` reach it. `supervise` strips every inherited `AXIOM_*` and sets its own: the greeter should do the same.
-- **Size:** trivial
-- **Found:** 2026-10-24, while reviewing the Go backend
-
 ### Small backend error and robustness gaps
 - **Where:** `backend/internal/fsx/fsx.go` (`WriteFile`), `backend/internal/logfile/`, `backend/internal/ipcroute/ipcroute.go` (`exec`), `backend/internal/cli/cli.go` (`Main`), `backend/internal/config/format.go`, `backend/internal/saved/saved.go` (`Import`)
 - **What:** Raw errors reach the CLI as `Internal`: `fsx.WriteFile` (`fmt.Errorf`), `logfile.Open`, `daemon logs`' `ReadFile`. `ipcroute`'s exec path labels a timeout `NotFound` (should be `Unavailable`). `cli.Main` doesn't catch SIGHUP: closing the terminal kills a `--dev` daemon outright, leaving its shell for the next start to stop. `format: 1` is refused with "it reads 1 and 2", and `format: null` prints `<nil>`. The keys a format-1 load drops (`Removed`) are never logged. `saved.Import` reads the file twice, so the preview and what's applied can differ.
