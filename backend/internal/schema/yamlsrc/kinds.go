@@ -477,11 +477,11 @@ func (a *assembler) inlineExtensions(root *jsonx.Object) {
 
 // orderKeys gives every object with properties its `x-order`: the order
 // its properties are written in (QML reads the schema as a map, whose keys
-// come out sorted).
+// come out sorted). One its author wrote is kept.
 func orderKeys(v any) {
 	switch t := v.(type) {
 	case *jsonx.Object:
-		if props, ok := t.Value("properties").(*jsonx.Object); ok && t.Value("type") == "object" && props.Len() > 1 {
+		if props, ok := t.Value("properties").(*jsonx.Object); ok && t.Value("type") == "object" && props.Len() > 1 && !t.Has("x-order") {
 			order := jsonx.Arr()
 			for _, k := range props.Keys() {
 				order.Items = append(order.Items, k)

@@ -64,11 +64,18 @@ func (p V2Pipeline) Load(parsed any) (Loaded, error) {
 		converted := convert.ToV2(old.Config)
 		stepped, _ := steps.Migrate(converted.Config)
 		l := p.normalize(converted.Config)
+		// The keys format 1's own pass dropped too, so they're logged
+		l.Removed = append(old.Removed, l.Removed...)
 		l.Changes = append(append(old.Changes, converted.Changes...), stepped...)
 		l.Migrated, l.FromFormat1 = true, true
 		return l, nil
+	case format == 1.0:
+		// Format 1 is read by its missing "format", never by a 1
+		return Loaded{Config: obj, Errors: []string{fmt.Sprintf(
+			"format: 1 isn't written in a config (format 1 has no \"format\" key; format 2 says \"format\": %d)", convert.Format)}}, nil
 	case format != float64(convert.Format):
-		return Loaded{Config: obj, Errors: []string{fmt.Sprintf("format: %v isn't one this axiom reads (it reads 1 and %d)", format, convert.Format)}}, nil
+		return Loaded{Config: obj, Errors: []string{fmt.Sprintf(
+			"format: %s isn't one this axiom reads (it reads format 1, without a \"format\" key, and \"format\": %d)", jsonx.MarshalCompact(format), convert.Format)}}, nil
 	case version > float64(steps.Current()):
 		return Loaded{Config: obj, Errors: []string{fmt.Sprintf("version: %v is newer than this axiom knows (%d): update axiom", version, steps.Current())}}, nil
 	}

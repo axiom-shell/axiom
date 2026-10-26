@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -157,6 +158,30 @@ func TestOpenAndImport(t *testing.T) {
 	os.WriteFile(path, []byte(`{"format": 2, "version": 999}`), 0o644)
 	if _, err := f.svc.Open(path); err == nil || !strings.Contains(err.Error(), "newer") {
 		t.Errorf("newer: %v", err)
+	}
+}
+
+// Import reads the file once: a change after its preview was judged isn't
+// what gets applied.
+func TestImportReadsTheFileOnce(t *testing.T) {
+	t.Parallel()
+	f := setup(t)
+	path := filepath.Join(f.home, "shared.json")
+	os.WriteFile(path, []byte(`{"format": 2, "version": 76, "Appearance": {"theme": {"name": "nord"}}}`), 0o644)
+	pipeline := f.svc.opts.Pipeline
+	var once sync.Once
+	f.svc.opts.Pipeline = func() config.Pipeline {
+		// The first use is the preview's: the file changes right after
+		once.Do(func() {
+			os.WriteFile(path, []byte(`{"format": 2, "version": 76, "Appearance": {"theme": {"name": "gruvbox"}}}`), 0o644)
+		})
+		return pipeline()
+	}
+	if _, err := f.svc.Import(path, false, false, nil); err != nil {
+		t.Fatal(err)
+	}
+	if v := get(t, f.store, "Appearance.theme.name"); v != "nord" {
+		t.Errorf("theme %v, want the previewed nord", v)
 	}
 }
 

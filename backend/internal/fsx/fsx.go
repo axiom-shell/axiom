@@ -14,6 +14,8 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
+
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // WriteFile replaces path's content atomically: a temp file in the same
@@ -21,8 +23,16 @@ import (
 // fsynced, renamed over path, then the directory fsynced. When path is a
 // symlink (a config kept in a dotfiles repo), the file it points at is
 // replaced and the link stays. An existing file keeps its mode; a new one
-// gets perm.
+// gets perm. A failure is axerr.Unavailable (the disk or the folder
+// refused it), its message the step that failed.
 func WriteFile(path string, data []byte, perm fs.FileMode) error {
+	if err := writeFile(path, data, perm); err != nil {
+		return &axerr.Error{Kind: axerr.Unavailable, Err: err}
+	}
+	return nil
+}
+
+func writeFile(path string, data []byte, perm fs.FileMode) error {
 	target, err := resolve(path)
 	if err != nil {
 		return err

@@ -44,9 +44,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 |---|---|---|---|
 | 1 | done | Backend stage 2: night light, then clipboard (and [Phase 2](#phase-2-finish-stage-2)) | In progress; finish it before anything else churns the same files. |
 | 2 | done | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
-| 3 | in progress | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. The binds-child segfault was taken first, because its flaky test failed CI on unrelated PRs. |
-| 4 | next | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
-| 5 | later | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
+| 3 | done | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. The binds-child segfault was taken first, because its flaky test failed CI on unrelated PRs. |
+| 4 | in progress | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
+| 5 | next | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
 | 6 | later | Backend stage 3: brightness | Small; a first stage under the new checks. |
 | 7 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
 | 8 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
@@ -114,9 +114,7 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 ### Phase 1: integrity
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its two entries are linked here and fixed there.
 
-Fixed in this phase:
-- [Small backend error and robustness gaps](issues.md#small-backend-error-and-robustness-gaps)
-- [Schema build gaps](issues.md#schema-build-gaps)
+Fixed in this phase: none left.
 
 Fixed by backend stage 7 (add the bullets there if missing):
 - [Shell saves carry unsaved settings and every takeover](issues.md#shell-saves-carry-unsaved-settings-and-every-takeover)

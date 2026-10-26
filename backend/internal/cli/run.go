@@ -2,12 +2,14 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/daemon"
 	"github.com/axiom-shell/axiom/backend/internal/logfile"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
@@ -152,8 +154,11 @@ func daemonCommand() *Command {
 				Setup: func(fs *flag.FlagSet) Runner {
 					return func(ctx context.Context, e *Env, args []string) error {
 						data, err := os.ReadFile(xdg.Resolve(e.Getenv).State + "log/daemon.log")
+						if errors.Is(err, os.ErrNotExist) {
+							return axerr.Wrap(axerr.NotFound, err, "no daemon log yet")
+						}
 						if err != nil {
-							return err
+							return axerr.Wrap(axerr.Unavailable, err, "reading the daemon log")
 						}
 						_, err = e.Stdout.Write(data)
 						return err
