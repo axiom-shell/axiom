@@ -117,7 +117,7 @@ func Source(o Options) topics.Source {
 	var mu sync.Mutex
 	return topics.Source{
 		Name:    "updates",
-		Floor:   time.Minute,
+		Floor:   topics.MinInterval,
 		Default: 30 * time.Minute,
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
 			mu.Lock()

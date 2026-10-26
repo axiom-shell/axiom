@@ -12,7 +12,6 @@ settings:
   interval:
     type: integer
     title: Poll interval
-    description: How often Tailscale is asked; never more often than every 5 seconds.
     x-unit: ms
     default: 10000
     minimum: 250

@@ -3,9 +3,13 @@ package topics
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/assets"
 )
 
 // fakeClock moves only when told; After fires once Advance passes it.
@@ -329,5 +333,50 @@ func TestOnRefresh(t *testing.T) {
 	defer h.hub.mu.Unlock()
 	if refreshed != 1 {
 		t.Errorf("told of %d refreshes, want 1", refreshed)
+	}
+}
+
+// Every interval setting (a property named *interval*, in ms whatever
+// its x-unit) offers nothing below MinInterval, the floor of the sources
+// those settings feed, so no value it offers is silently raised.
+func TestIntervalSettingsMeetMinInterval(t *testing.T) {
+	t.Parallel()
+	data, err := assets.Read("config/json/config.schema.json")
+	if err != nil {
+		t.Skip("no built schema:", err)
+	}
+	var root any
+	if err := json.Unmarshal(data, &root); err != nil {
+		t.Fatal(err)
+	}
+	found := 0
+	var walk func(node any, path string)
+	walk = func(node any, path string) {
+		switch n := node.(type) {
+		case []any:
+			for i, v := range n {
+				walk(v, fmt.Sprintf("%s[%d]", path, i))
+			}
+		case map[string]any:
+			if props, ok := n["properties"].(map[string]any); ok {
+				for key, v := range props {
+					p, ok := v.(map[string]any)
+					if !ok || p["type"] != "integer" || !strings.Contains(strings.ToLower(key), "interval") {
+						continue
+					}
+					found++
+					if minimum, ok := p["minimum"].(float64); !ok || time.Duration(minimum)*time.Millisecond < MinInterval {
+						t.Errorf("%s.%s: minimum %v is below topics.MinInterval (%v)", path, key, p["minimum"], MinInterval)
+					}
+				}
+			}
+			for k, v := range n {
+				walk(v, path+"/"+k)
+			}
+		}
+	}
+	walk(root, "")
+	if found < 5 {
+		t.Errorf("found %d interval settings: did the schema's shape change?", found)
 	}
 }

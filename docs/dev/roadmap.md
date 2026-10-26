@@ -106,7 +106,7 @@ Decided (2026-10-26):
 - Done: **Generated docs are no longer committed.** `docs/dev/generated/` and `docs/dev/config/` go in `.gitignore` (`git rm --cached`), `scripts/generate.sh` builds them like the schema JSON, CI generates them instead of failing when stale, the pre-commit hook stops adding them, and `AGENTS.md` › Checks and `.gitignore`'s comment say so. About 290 files and 12k lines leave the tree and every PR's diff.
 - **The shell's `takeover: true` is fixed by backend stage 7**, with no stopgap before it: saves become path ops, only a takeover card's op carries `takeover`, live edits go through `ConfigManager.setPreview`, and config writes are applied in the order sent.
 - **Idle is the daemon's** (done in stage 2, on its own D-Bus client); hypridle is no longer a dependency.
-- **Tailscale's floor comes from the schema**: the topic reads the `interval` setting's `minimum` rather than a constant, so no migration.
+- Done: **Topics fed by a setting poll down to 250 ms** (decided again 2026-10-26, replacing the floor read from the schema): every `topics.Source` whose interval comes from a setting has `topics.MinInterval` (250 ms) as its floor, and a test keeps every interval setting's schema `minimum` at or above it, so the two can't disagree. No migration.
 - **`TailscaleManager` moves to `services/apps/`** (Phase 3).
 
 Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; packed history is about 18 MB).
@@ -146,7 +146,7 @@ Resolves:
 ### Phase 4: backend structure and contract
 The binary's rules are enforced by its tests, and the shell–daemon contract is checked by shape, not just by name. The contract check lands before stage 7, so the switch to path ops is checked as it happens.
 
-Steps: generate method shapes into `rpc.md` and check QML call sites against them; Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`); the Tailscale floor from the schema.
+Steps: generate method shapes into `rpc.md` and check QML call sites against them; Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`); Done: one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting.
 
 Resolves:
 - [The rpc registry doesn't record its methods' shapes](issues.md#the-rpc-registry-doesnt-record-its-methods-shapes)
@@ -155,7 +155,7 @@ Resolves:
 - [rpc.md shows no shapes and call sites' keys go unchecked](issues.md#rpcmd-shows-no-shapes-and-call-sites-keys-go-unchecked)
 - [Result and push reads in inline callbacks go unchecked](issues.md#result-and-push-reads-in-inline-callbacks-go-unchecked)
 - [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
-- [Tailscale's poll interval allows values below axiom's 5 s floor](issues.md#tailscales-poll-interval-allows-values-below-axioms-5-s-floor)
+- [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
 - [The shell's socket warns when the daemon re-execs](issues.md#the-shells-socket-warns-when-the-daemon-re-execs)
 
 ### Phase 5: the allowlist

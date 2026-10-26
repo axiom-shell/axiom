@@ -38,11 +38,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while taking the binds-child segfault from the roadmap
 
-### Tailscale's poll interval allows values below axiom's 5 s floor
-- **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`Source`'s `Floor`)
-- **What:** The setting's `minimum` is 250 ms, but the `tailscale` topic never polls more often than every 5 s (its description says so), so 250–4999 ms are offered and do nothing. Decided (2026-10-26): no migration; the topic's floor is read from the setting's schema `minimum` instead of a constant in Go, so the two can't disagree again.
-- **Size:** small
-- **Found:** 2026-10-25, while reviewing the service-layer branch
+### Tailscale's 250 ms minimum runs its command four times a second
+- **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`status`)
+- **What:** Now that the `tailscale` topic's floor is `topics.MinInterval` (250 ms), the setting's 250 ms minimum really polls: a new `tailscale status --json` process (5 s timeout) four times a second while a widget shows it, for a state that rarely changes. The other topics' settings start at 1 s or more. Whether 250 ms should stay offered (raising the minimum would leave saved values below it invalid) is the maintainer's call.
+- **Size:** trivial
+- **Found:** 2026-10-26, while moving the topics' floor to 250 ms
 
 ### A notification's avatar warns when its saved image is gone
 - **Where:** `components/content/parts/notifications/NotificationAvatar.qml` (`picture`)

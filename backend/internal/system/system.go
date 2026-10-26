@@ -134,7 +134,7 @@ func Source(o Options) topics.Source {
 	s := &sampler{o: o, users: map[string]string{}}
 	return topics.Source{
 		Name:    "system",
-		Floor:   500 * time.Millisecond,
+		Floor:   topics.MinInterval,
 		Default: 2 * time.Second,
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
 			return s.sample(ctx, requests), nil

@@ -25,7 +25,8 @@ import (
 // methods and push it defines.
 type Source struct {
 	Name string
-	// Floor is the shortest interval anyone gets; Default the one a
+	// Floor is the shortest interval anyone gets (MinInterval for a
+	// source whose interval comes from a setting); Default the one a
 	// request without an interval asks for
 	Floor, Default time.Duration
 	// Fetch returns the state for the subscribers' requests (each as it
@@ -36,6 +37,12 @@ type Source struct {
 	// mustn't block: the hub's lock is held)
 	OnRefresh func()
 }
+
+// MinInterval is the floor of every source whose interval comes from a
+// setting. No interval setting's schema minimum is below it
+// (TestIntervalSettingsMeetMinInterval), so every value the settings
+// offer is polled at, never silently raised to a floor.
+const MinInterval = 250 * time.Millisecond
 
 // Subscriber is where states go: an *rpc.Conn.
 type Subscriber interface {
