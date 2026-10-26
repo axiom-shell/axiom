@@ -11,7 +11,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 - It is drawn in the bar's shape settings:
   - **`widgetShape`:** rounded, capsule, slanted or arrow.
     - Rounded takes the bar's widget radius. Qt caps a radius at half the thickness, so a radius that large draws the same as capsule.
-    - Capsule is always a full pill, and so are the Workspaces cells inside it (`Bar.cellRadius`).
+    - Capsule is always a full pill, and so are the Workspaces cells inside it (`BarsConfig.cellRadius`).
   - **`widgetEnds`:** a slanted or arrow widget's (or run's) own ends. They can be shaped (an arrow's notched and pointed), pointed at both ends (an arrow's only, via `x-enumShowIf`), or rounded.
   - **`widgetGrouping`:** see Runs below.
 - `methods/BarShapes` gives each widget two things:
@@ -21,7 +21,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).
-- **Merged** draws one background per run in `groupColor` (`Bar.groupColors`). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`).
+- **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`).
 - **Powerline** chains the widgets with no gap (`groupSpacing` 0).
   - Each segment's end cap runs into the next segment, which reaches back under it (`back`).
   - With a see-through fill (tinted or outline), the next segment fits against the cap instead.
@@ -62,13 +62,13 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 ### Separator marks (accents)
 - `WidgetGroup` draws a `SeparatorMark` in each gap between shown widgets (`separatorStyle`).
 - No mark is drawn beside a widget that `divides` (the Separator), nor in a powerline.
-- With marks on, the gap between a section's widgets is the mark's room along the bar plus `separatorGap` either side (`BarLayout.dividerGap`, as `groupSpacing` in `Bar.enrichBarConfig`) instead of the bar's `spacing`.
+- With marks on, the gap between a section's widgets is the mark's room along the bar plus `separatorGap` either side (`BarLayout.dividerGap`, as `groupSpacing` in `BarsConfig.enrichBarConfig`) instead of the bar's `spacing`.
 
 ### Bar shadow
 - `BarContainer` paints the bar in one `surface` layer: its background, inner stroke and pills.
 - A `shadow` (on or off) therefore follows their outline without redrawing for the widgets: a `MultiEffect` shadow spread evenly round it, in `shadowColor` (Auto: the accent).
 - `shadowReach` widens the bar window on its inner side. The input mask stays the bar.
-- `Bar.shadowColor` resolves a shadow's color, both for the bar and for the border's inward shadow (see [Layering and corners](layering-and-corners.md#border-shadow-window)): `Bar.shadowBaseColor`, capped at `Appearance.shadowAlphaMax` and premultiplied, as `MultiEffect` blends `shadowColor` (a color cleared by its alpha alone still adds its light). Windows matching axiom's shadow take `shadowBaseColor` ([window look](../compositor/window-look.md)).
+- `BarsConfig.shadowColor` resolves a shadow's color, both for the bar and for the border's inward shadow (see [Layering and corners](layering-and-corners.md#border-shadow-window)): `BarsConfig.shadowBaseColor`, capped at `Appearance.shadowAlphaMax` and premultiplied, as `MultiEffect` blends `shadowColor` (a color cleared by its alpha alone still adds its light). Windows matching axiom's shadow take `shadowBaseColor` ([window look](../compositor/window-look.md)).
 
 ### Accent line
 - Above the shadow, an `AccentLine` (an inline component in `BarContainer`) runs along the bar's inner or outer edge (`accentLine`), fading into `accentLineFade`.

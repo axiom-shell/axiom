@@ -12,7 +12,7 @@ QtObject {
   id: root
 
   // One entry per axiom namespace (without its "axiom-" prefix), highest
-  // order first; `bar` marks a bar's (Bar.layerNamespace), `noAnim` one
+  // order first; `bar` marks a bar's (BarsConfig.layerNamespace), `noAnim` one
   // Hyprland shouldn't animate, `why` says why it sits there. Kept as
   // plain JSON: scripts/gen_docs.py reads it into
   // docs/dev/generated/layers.md.

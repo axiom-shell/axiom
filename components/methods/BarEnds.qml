@@ -11,7 +11,7 @@ import QtQuick
 // longer bar gives up its length. The other bar's window then ends at the
 // owner's reserved line.
 //
-// A bar is an enriched bar entry (Bar.enrichBarConfig): `vertical`,
+// A bar is an enriched bar entry (BarsConfig.enrichBarConfig): `vertical`,
 // `shortEdge`, `solid`, `background`, `insideBorder`, `island`, `floatGap`,
 // `floatGapAuto`, `trim` (how much less than its extent it reserves),
 // `enabled`, `reserveSpace`, `monitor`, `top`/`bottom`/`left`/`right`.

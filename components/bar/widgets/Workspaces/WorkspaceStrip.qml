@@ -29,7 +29,7 @@ Item {
   // A cell's thickness across the bar, and its corners within the
   // background's
   readonly property real cell: barConfig.widgetSize - inset * 2
-  readonly property real cellRadius: Bar.cellRadius(barConfig, cell, inset)
+  readonly property real cellRadius: BarsConfig.cellRadius(barConfig, cell, inset)
   // Along the bar: square, or narrower for dots straight on the bar
   readonly property real cellLength: barConfig.widgetBoxed || properties.labels !== "dots" || properties.showAppIcons || CompositorManager.dynamicWorkspaces ? cell : Math.round(cell * 0.6)
 
@@ -37,7 +37,7 @@ Item {
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
   readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(properties.textColor)
-  readonly property color hoverColor: Bar.cellHoverColor(properties)
+  readonly property color hoverColor: BarsConfig.cellHoverColor(properties)
 
   readonly property var monitor: CompositorManager.outputFor(root.screen)
   readonly property string output: root.monitor?.name ?? ""

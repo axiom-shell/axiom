@@ -43,7 +43,7 @@ Item {
 
   readonly property var _item: contentLoader.item
   // What WidgetGroup draws under the module: its colors on this bar
-  // (Bar.widgetColors), or null when it has no background
+  // (BarsConfig.widgetColors), or null when it has no background
   readonly property bool hasBackground: _item?.hasBackground ?? false
   readonly property var background: hasBackground ? _item.colors : null
   // The module's own fade, which its background follows: its `dim` when

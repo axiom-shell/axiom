@@ -334,7 +334,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-16, while consolidating compositor settings
 
 ### Floating bars sit flush on the border without a backend
-- **Where:** `config/Bar.qml` (`enrichBarConfig`: `floatGap`), `services/compositor/CompositorManager.qml` (`gapsOut`)
+- **Where:** `config/BarsConfig.qml` (`enrichBarConfig`: `floatGap`), `services/compositor/CompositorManager.qml` (`gapsOut`)
 - **What:** A floating bar's automatic gap (`floatGap` -1) is the compositor's outer gaps (`CompositorManager.gapsOut`). With no backend (an unknown compositor) `gapsOut` is all 0, so a floating bar sits flush against the border. Sway's and niri's backends read their gaps from the config (`SwayState.configInfo`, `axiom compositor niri info`); decide what the gap is with no backend at all (a fixed default, or `Appearance.screenMargin`).
 - **Size:** small
 - **Found:** 2026-10-16, while testing layer order in nested sway
@@ -392,12 +392,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** With a typing module (Notes) on the desktop, clicking into it and back to windows logs bursts of `Trying to disable` from `qt.qpa.wayland.textinput` (`QWaylandTextInputv3::disableSurface`; 174 in one session). Typing and handing focus back work. Likely Qt's text-input-v3 noise when focus moves between surfaces; not yet checked whether an edge menu's Notes logs the same.
 - **Size:** small
 - **Found:** 2026-10-14, while letting typing modules go on the desktop
-
-### The `Bars` reader is named `Bar`
-- **Where:** `config/Bar.qml`, `scripts/check_docs.py` (`RETIRED`)
-- **What:** Every other reader is named for its section with a `Config` suffix where needed (`EdgeMenusConfig`, `PopoutsConfig`); `Bar` is also `shell/Bar`'s type name. Item 3 of the [edge enum plan](plans/edge-enum.md), after the enum has moved: `git mv` it to `BarsConfig` with its about 80 references and the docs (`Bar.enrichBarConfig`, `Bar.lookOf`, config-readers.md's entry). In `check_docs.py`, a retired name that is also a schema definition fails only on a span naming a member that isn't a config path (`Bar.background` passes, `Bar.enrichBarConfig` fails); add `"Bar": "BarsConfig"` that way, with a test case in `tests/scripts/`. Delete the plan file with this entry. Force a reload afterwards.
-- **Size:** small
-- **Found:** 2026-10-27, while planning the edge enum (docs/dev/plans/edge-enum.md)
 
 ### Singleton properties warn on every reload
 - **Where:** `services/ui/BlurManager.qml` (`paused`), `services/core/SelfUpdateManager.qml`, `services/compositor/HyprlandManager.qml` (`activeWindowId`), `services/system/AudioManager.qml` (`tracker`, `captureTracker`, `micInUse`)

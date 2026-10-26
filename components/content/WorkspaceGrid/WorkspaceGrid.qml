@@ -39,7 +39,7 @@ Panel {
   readonly property color occupiedColor: Theme.resolveColor(root.properties.occupiedColor)
   readonly property color emptyColor: Theme.resolveColor(root.properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(root.properties.textColor)
-  readonly property color hoverColor: Bar.cellHoverColor(root.properties)
+  readonly property color hoverColor: BarsConfig.cellHoverColor(root.properties)
   readonly property int base: CompositorManager.workspaceBase(root.output)
   // Not `cols`/`rows`: those are Panel's slot size
   readonly property int gridColumns: WorkspacesConfig.columns
@@ -84,7 +84,7 @@ Panel {
 
         barConfig: root.barConfig
         isActive: wsId === root.activeId
-        look: Bar.cellColors(root.barConfig, isActive ? root.activeColor : hasWindows ? root.occupiedColor : root.emptyColor, isActive || hasWindows ? root.textColor : Theme.foreground, isActive ? "active" : hasWindows ? "occupied" : "empty")
+        look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : hasWindows ? root.occupiedColor : root.emptyColor, isActive || hasWindows ? root.textColor : Theme.foreground, isActive ? "active" : hasWindows ? "occupied" : "empty")
         thickness: root.cellSize
         length: root.cellLength
         radius: root.radius

@@ -99,7 +99,7 @@ Item {
     // A ColumnLayout's Repeater re-runs its model on every draft edit:
     // `hasEntry` keeps the model the same while one is selected
     Repeater {
-      model: root.hasBar ? Bar.fieldGroups : []
+      model: root.hasBar ? BarsConfig.fieldGroups : []
 
       // Each group streamed in (StreamedLoader) as the page opens
       delegate: StreamedLoader {
@@ -145,14 +145,14 @@ Item {
             numberMode: "stepper"
             // The whole bar, so x-showIf sees keys from other groups, with
             // the look it takes from BarStyle where it doesn't override it
-            values: Bar.lookOf(root.bar ?? ({}))
+            values: BarsConfig.lookOf(root.bar ?? ({}))
             onEdited: (path, value) => BarManager.updateBarField(path[0], value)
           }
 
           // The thickness the size settings add up to
           StyledText {
             visible: "widgetSize" in group.modelData.schema
-            text: I18n.tr("Bar thickness: {0} px", Math.round(Bar.enrichBarConfig(root.bar ?? ({}), CompositorManager.gapsOut).extent))
+            text: I18n.tr("Bar thickness: {0} px", Math.round(BarsConfig.enrichBarConfig(root.bar ?? ({}), CompositorManager.gapsOut).extent))
             textColor: Theme.foreground
             opacity: 0.7
             wrapMode: Text.WordWrap
@@ -165,7 +165,7 @@ Item {
     // The bar's style, by group: shared (Bars.style, on the settings
     // page's Look & Feel) until the bar takes its own
     Repeater {
-      model: root.hasBar ? Bar.styleGroups : []
+      model: root.hasBar ? BarsConfig.styleGroups : []
 
       delegate: StreamedLoader {
         id: styleLoader
@@ -179,7 +179,7 @@ Item {
           readonly property bool owned: BarManager.ownsStyle(BarManager.selectedBarIndex, styleGroup.modelData.keys)
           // The shadow is one object; the rest are the bar's flat look
           readonly property bool isShadow: styleGroup.modelData.keys.includes("shadow")
-          readonly property var look: Bar.lookOf(root.bar ?? ({}), BarManager.localStyle)
+          readonly property var look: BarsConfig.lookOf(root.bar ?? ({}), BarManager.localStyle)
           title: I18n.tr(styleGroup.modelData.title)
 
           SchemaSwitch {

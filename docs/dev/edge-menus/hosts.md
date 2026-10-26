@@ -49,7 +49,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
   - its edge has a transparent bar.
 - Otherwise it's attached to the border or solid bar, or meets a pill or floating bar as a bar popout does (`EdgePopout.followsBar`; see [Pill and floating bars](../popouts/pill-and-floating-bars.md)).
 - Its window sits inside what's reserved on each screen edge, `ScreenEdgeManager.reservedWithMenusOn(screen, location)`:
-  - `ScreenEdgeManager.barReservedOn`: the border's `screenMargin`, a bar's `Bar.reservedZone`, less the `-borderWidth` margin Hyprland counts in for a bar inside the border;
+  - `ScreenEdgeManager.barReservedOn`: the border's `screenMargin`, a bar's `BarsConfig.reservedZone`, less the `-borderWidth` margin Hyprland counts in for a bar inside the border;
   - plus integrated menus' zones;
   - not docks, which it reaches past.
 - So its edge coordinates start at `alongOrigin` (what the perpendicular edge at its start reserves), and its ends keep `startPad` / `endPad` from the screen's.

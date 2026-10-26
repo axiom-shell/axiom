@@ -50,7 +50,7 @@ Item {
 
   TypePickerPopup {
     id: addPopup
-    types: LibraryOrder.sorted(Bar.availableWidgetTypes, type => I18n.tr(type.label))
+    types: LibraryOrder.sorted(BarsConfig.availableWidgetTypes, type => I18n.tr(type.label))
     parent: root
     placeholderText: I18n.tr("Search widgets")
     onTypeSelected: type => BarManager.addWidget(root._pendingZone, type)

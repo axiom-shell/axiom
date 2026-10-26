@@ -59,7 +59,7 @@ DragLayer {
   }
 
   function typeInfo(type) {
-    return Bar.availableWidgetTypes.find(t => t.type === type) ?? null;
+    return BarsConfig.availableWidgetTypes.find(t => t.type === type) ?? null;
   }
 
   // The type's label (its schema description), translated like titles

@@ -41,7 +41,7 @@ QtObject {
   // A bar's look: its `style`, and its fields in the look groups
   // (`x-group`), not its identity, placement, behaviour or widgets
   readonly property var styleGroups: ["Size", "Style"]
-  readonly property var styleKeys: ["style"].concat(...Bar.fieldGroups.filter(group => root.styleGroups.includes(group.title)).map(group => group.keys))
+  readonly property var styleKeys: ["style"].concat(...BarsConfig.fieldGroups.filter(group => root.styleGroups.includes(group.title)).map(group => group.keys))
   // The style copied with copyStyle(): { index, values }, or null. By
   // index, since ids may be empty or shared: kept pointing at its bar as
   // bars are added, moved and removed. Never saved.
@@ -260,7 +260,7 @@ QtObject {
   // --- A bar's own style ---
   // A bar's `style` holds a BarStyle whose keys it leaves null take the
   // shared one's (Bars.style). The editor switches whole groups
-  // (Bar.styleGroups' keys): owned, each key holds a value of the bar's
+  // (BarsConfig.styleGroups' keys): owned, each key holds a value of the bar's
   // own; not, all are null.
 
   // Whether the bar at `index` sets any of `keys` itself
@@ -426,7 +426,7 @@ QtObject {
   // A new widget's id: unique among every widget of the bar (they move
   // between its sections)
   function _widgetId(type, bar) {
-    const all = [].concat(...Bar.sectionNames.map(section => bar?.widgets?.[section] ?? []));
+    const all = [].concat(...BarsConfig.sectionNames.map(section => bar?.widgets?.[section] ?? []));
     return Utils.newId(type, all);
   }
 

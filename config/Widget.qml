@@ -5,7 +5,7 @@ import qs.services.core
 // Reader for the Interface section (named Widget, as every size outside
 // the bars is Widget.<size>): sizing for panels, cards, popouts and
 // controls, and the card size every module grid starts from. Bars size
-// their own widgets (Bar.enrichBarConfig).
+// their own widgets (BarsConfig.enrichBarConfig).
 QtObject {
   readonly property var _c: ConfigManager.config.Interface
 

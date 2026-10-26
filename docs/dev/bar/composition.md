@@ -1,6 +1,6 @@
 # Bar composition
 
-> **Files:** `shell/Bar.qml`, `components/bar/BarPanel.qml`, `components/bar/BarContainer.qml`, `components/bar/WidgetGroup.qml`, `components/bar/BarWidgetHost.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/PopoutAnchor.qml`, `config/Bar.qml`, `services/ui/BarManager.qml`, `services/ui/ScreenEdgeManager.qml`
+> **Files:** `shell/Bar.qml`, `components/bar/BarPanel.qml`, `components/bar/BarContainer.qml`, `components/bar/WidgetGroup.qml`, `components/bar/BarWidgetHost.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/PopoutAnchor.qml`, `config/BarsConfig.qml`, `services/ui/BarManager.qml`, `services/ui/ScreenEdgeManager.qml`
 > **Config:** `Bars` (`Bar`, `BarWidget` definitions)
 > **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Edge menus](../edge-menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
 
@@ -8,17 +8,17 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 
 ### Bars from config
 - `shell/Bar.qml` renders one `BarPanel` per entry in `ScreenEdgeManager.bars` (a `Variants`/model). Multi-monitor and multi-panel bars therefore come from config data, not from hardcoded code.
-- `ScreenEdgeManager.bars` holds the running bars after `Bar.enrichBarConfig` (the bar editor, `BarManager`, only previews its draft into them). Enrichment adds:
+- `ScreenEdgeManager.bars` holds the running bars after `BarsConfig.enrichBarConfig` (the bar editor, `BarManager`, only previews its draft into them). Enrichment adds:
   - Hyprland's `gapsOut`, which a reader can't read.
   - What the bar leaves on each screen edge: `edgesFor`, `screenEdgeOpen`, `barReservedOn`, `frameLine`, `detachedGaps`.
-- A bar whose `monitor` is `"*"` is expanded by `Bar.expandBars` into one entry per screen (id `<id>@<screen>`, plus `sourceId`), the primary monitor's first.
+- A bar whose `monitor` is `"*"` is expanded by `BarsConfig.expandBars` into one entry per screen (id `<id>@<screen>`, plus `sourceId`), the primary monitor's first.
 - Any other bar's monitor is resolved to a connected screen there.
 
 ### Widgets and their options
 - Bar contents are built from `components/bar/{BarContainer,BarWidgetHost,WidgetGroup,BarPanel}.qml`. These compose widgets from `components/bar/widgets/<type>/<type>.qml` (Time, Battery, Network, Workspaces, Media, SystemTray, Notifications, etc.).
 - Each widget's options live under its `<Type>Widget.properties.properties` definition in the schema.
 - `SchemaValidation` picks the `BarWidget` oneOf option by `type`. Widget properties therefore get their defaults filled like the rest of the config, and widgets read `properties.<key>` directly.
-- Widget types come from `Bar.availableWidgetTypes`, the `BarWidget` oneOf. Each type's label comes from its description and its icon from its `x-icon`.
+- Widget types come from `BarsConfig.availableWidgetTypes`, the `BarWidget` oneOf. Each type's label comes from its description and its icon from its `x-icon`.
 - `WidgetGroup` models its widgets by count, so live option edits reach a widget in place instead of rebuilding the section.
 
 ### Layout math

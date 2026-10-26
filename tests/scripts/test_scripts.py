@@ -987,6 +987,22 @@ class CheckSizes(unittest.TestCase):
                          [(2, "4"), (3, "48"), (4, "8"), (5, "6")])
 
 
+class CheckDocs(unittest.TestCase):
+    """scripts/check_docs.py flags a retired name; one that is also a schema
+    definition only with a member that isn't a setting."""
+
+    def test_retired_definition_name(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from check_docs import retired_name
+        configs = {"Bar.background", "Bars.items"}
+        self.assertEqual(retired_name("PopoutConfig.openDelay", configs), "PopoutConfig")
+        self.assertIsNone(retired_name("Bar", configs))
+        self.assertIsNone(retired_name('Bar.background: "solid"', configs))
+        self.assertEqual(retired_name("Bar.enrichBarConfig", configs), "Bar")
+        self.assertEqual(retired_name("Bar.lookOf(bar)", configs), "Bar")
+        self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
+
+
 class CommunityFetch(unittest.TestCase):
     """community_fetch.sh: downloads from a local server, checks sha256,
     keeps a cached file without fetching, and never leaves a bad file."""

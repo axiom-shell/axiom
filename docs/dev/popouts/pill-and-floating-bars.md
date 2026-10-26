@@ -26,7 +26,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - The island squares that inner corner (`squareStart`/`squareEnd`, animated).
 - **Reservation:** floating bars reserve space up to their islands, so windows keep gaps_out from them as from a screen edge.
   - gaps_in applies only between windows.
-  - `Bar.reserveTrim` is 0 for floating bars, whatever their float gap.
+  - `BarsConfig.reserveTrim` is 0 for floating bars, whatever their float gap.
 
 ### Bar popouts and pill bars
 - **Joining ends:** bar popouts join an end the same way edge popouts do (`EdgeAttach.joins`).

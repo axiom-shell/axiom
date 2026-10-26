@@ -14,7 +14,7 @@ Scope {
   Variants {
     // Keyed on the stable bar id so a config reload rebinds the existing
     // PanelWindow instead of rebuilding it, and on its layer namespace
-    // (Bar.layerNamespace, after a "|"): its kind (solid, pills,
+    // (BarsConfig.layerNamespace, after a "|"): its kind (solid, pills,
     // transparent, floating) and whether it lies along its screen's longer
     // edge pick it, and Hyprland reads its rule's `order` only as a surface
     // maps, so a bar changing either (a monitor rotated too) is remade to
@@ -22,7 +22,7 @@ Scope {
     // inside it, and the longer edge's bar after the shorter edge's of its
     // kind (BarEnds). A remade bar lands correctly once the rules are in
     // (layerRulesReady).
-    model: CompositorManager.surfacesReady && General.outputs.length > 0 ? ScreenEdgeManager.bars.map(b => b.id + "|" + Bar.layerNamespace(b)) : []
+    model: CompositorManager.surfacesReady && General.outputs.length > 0 ? ScreenEdgeManager.bars.map(b => b.id + "|" + BarsConfig.layerNamespace(b)) : []
     delegate: BarPanel {
       required property string modelData
       readonly property string barId: modelData.replace(/\|[^|]*$/, "")

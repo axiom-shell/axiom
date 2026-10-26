@@ -46,7 +46,7 @@ IconTextWidget {
   spacing: barConfig.widgetSpacing * 1.5
   // Its color for its state, and what it draws in on this bar
   property color accentColor: Theme.resolveColor(properties.backgroundColor)
-  readonly property var colors: Bar.widgetColors(barConfig, accentColor, properties.foregroundColor)
+  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor)
   // Whether its WidgetGroup draws a background under it, and an outline
   // in its shape while it's hovered
   property bool hasBackground: !hidden

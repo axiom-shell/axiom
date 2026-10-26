@@ -36,7 +36,7 @@ Item {
     if (!bar?.insideBorder || !bar.reserveSpace)
       return -root.strokeWidth - docks;
     // As far as the bar reserves (see BarPanel)
-    const gap = Bar.reserveTrim(bar, CompositorManager.gapsOut[edge] ?? 0);
+    const gap = BarsConfig.reserveTrim(bar, CompositorManager.gapsOut[edge] ?? 0);
     return -(bar.extent - gap) - docks;
   }
   // How far in from a screen edge the frame's inner edge lies: past a solid
@@ -238,7 +238,7 @@ Item {
         layer.enabled: true
         layer.effect: MultiEffect {
           shadowEnabled: true
-          shadowColor: Bar.shadowColor(shadowWindow.look)
+          shadowColor: BarsConfig.shadowColor(shadowWindow.look)
           shadowBlur: 1
           blurMax: shadowWindow.look.shadowSize
         }

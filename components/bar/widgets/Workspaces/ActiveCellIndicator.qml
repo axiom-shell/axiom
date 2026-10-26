@@ -16,7 +16,7 @@ Item {
   id: root
 
   required property var barConfig
-  // Bar.cellColors for the active state
+  // BarsConfig.cellColors for the active state
   required property var look
   // The active cell's index in the row, or -1 when none shows
   required property int index

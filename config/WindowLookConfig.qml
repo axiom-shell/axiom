@@ -27,13 +27,13 @@ QtObject {
   // axiom draws it where nothing caps it (Appearance.shadowAlphaMax keeps
   // the chrome's under the blur threshold; no blur reaches a window's)
   readonly property bool shadowSoft: _shadowMatched
-  // The Bars section's look, its shadow flat (Bar.lookOf)
-  readonly property var _barLook: Bar.lookOf({})
+  // The Bars section's look, its shadow flat (BarsConfig.lookOf)
+  readonly property var _barLook: BarsConfig.lookOf({})
   readonly property bool shadowOn: _c.shadow.enabled && !(_shadowMatched && !_barLook.shadow)
   readonly property int shadowSize: _shadowMatched ? _barLook.shadowSize : _c.shadow.size
   // Its color: axiom's, the one picked, or none for the compositor's own
   readonly property bool shadowThemed: _shadowMatched || _c.shadow.color !== ""
-  readonly property color shadowColor: _shadowMatched ? Bar.shadowBaseColor(_barLook) : shadowThemed ? Theme.resolveColor(_c.shadow.color) : "black"
+  readonly property color shadowColor: _shadowMatched ? BarsConfig.shadowBaseColor(_barLook) : shadowThemed ? Theme.resolveColor(_c.shadow.color) : "black"
   // (a picked color nearly opaque, as the compositors' own are)
   readonly property real shadowAlpha: _shadowMatched ? shadowColor.a : 0.93
   // How strong windows cast it (1 = as above), on top of its alpha

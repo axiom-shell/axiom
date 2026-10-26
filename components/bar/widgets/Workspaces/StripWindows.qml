@@ -55,7 +55,7 @@ Grid {
 
       barConfig: root.barConfig
       isActive: address === root.focused
-      look: Bar.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied")
+      look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied")
       thickness: root.thickness
       length: root.cellLength
       radius: root.radius

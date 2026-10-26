@@ -17,7 +17,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - A `$ref` may carry keys beside it (`default`, `title`, …) that override the definition's (`SchemaValidation._resolve`). `Lockscreen.layout` and `Greeter.layout` share `definitions/ScreenLayout`, each with its own default modules.
 - `oneOf`s (bar widgets, overlay views and modules) are discriminated by `type`.
 - A `pattern` is RE2 (a subset of JS's syntax), read as JS reads it: the binary widens `\s`/`\S` to JS's Unicode whitespace (`schema.CompilePattern`), and refuses a `\S` inside a character class.
-- `x-inherit: "<path>"`: the setting may be `null`, and is by default, meaning the value at that dotted path (`Interface.radius` follows `Appearance.shape.radius`). On a `$ref`, the build makes an inheriting copy of the definition (`<Definition>Inherited`, every leaf `null` and inheriting from `<path>.<key>`): a bar's `style` from `Bars.style`. Validation lets the `null` through; the form shows the inherited value with "Follows … until set" (`SettingsManager.inheritedValue`), and readers resolve it (`Bar.lookOf`).
+- `x-inherit: "<path>"`: the setting may be `null`, and is by default, meaning the value at that dotted path (`Interface.radius` follows `Appearance.shape.radius`). On a `$ref`, the build makes an inheriting copy of the definition (`<Definition>Inherited`, every leaf `null` and inheriting from `<path>.<key>`): a bar's `style` from `Bars.style`. Validation lets the `null` through; the form shows the inherited value with "Follows … until set" (`SettingsManager.inheritedValue`), and readers resolve it (`BarsConfig.lookOf`).
 - Build-time keys, never in the built schema: `x-inline: true` on a definition copies it into each use; `x-properties` beside a `$ref` makes a copy of that definition with its properties adjusted (a schema replaces or adds one, `null` removes one: `ScreenLayout` of `Layout`).
 
 ### Placement
@@ -29,7 +29,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-link` (on a field, or a widget/module definition): where something it follows or names is set, drawn as a `SettingsLink` under the field in every form (`FieldLinks`), or in the bar widget / module inspector for a definition. `{ "setting": "<key path>" }` (a field, an object or a section: `SchemaLayout.locate` finds its card) or `{ "page": "<page link>" }` (as `x-links`), or a list of them. A link hides itself when its setting has no card or its page isn't shown. Examples: a bar's `style.shadow` → `Bars.style.shadow`, every `moduleScale` → `Widget.cardSize`, the Battery widget → `Battery`. `tst_SchemaLayout`'s `test_real_schema_links_resolve` checks every target.
 - `x-order` (on an object): the keys shown first, in order. This applies to its form, or to its settings cards, whose order is their first field's. The build writes it from the properties' order on every object with more than one; one written in the YAML is kept.
 - `x-group`: puts a field on a card of that name. One section or object can make several cards.
-  - The bar and edge menu editors group a `Bar`'s / `EdgeMenu`'s own fields the same way (`SchemaLayout.objectGroups`, as `Bar.fieldGroups` / `EdgeMenusConfig.fieldGroups`).
+  - The bar and edge menu editors group a `Bar`'s / `EdgeMenu`'s own fields the same way (`SchemaLayout.objectGroups`, as `BarsConfig.fieldGroups` / `EdgeMenusConfig.fieldGroups`).
   - A nested object with an `x-group` joins that card (a group heading repeating the card's title is left out); `objectGroups` places a nested object's fields by their own or an ancestor's `x-group`.
 - `x-scope` (`look` | `personal` | `commands` | `machine`, inherited, root `machine`): what a snapshot, example, import or export carries. See [Saved configs and sharing](saved-configs-sharing.md).
   - A new setting inside a look section that names a monitor, path or account needs `machine`; one that runs something (a command, a terminal) `commands`; a preference that means something on any PC `personal`.
@@ -54,7 +54,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `anyOf: [conditions]` holds when one of them does. Example: the OSD's `alongEdge`, shown only while its bars run along its edge.
   - A key starting with `/` is a dotted path from the config root (e.g. `"/Workspaces.layout"`), read through `SettingsManager.configValueAt`.
   - **Compositor.** Two `/` keys read the running compositor instead: `"/$supports.<capability>": true` (`CompositorManager.supports`) and `"/$compositor": "<kind>"`. See [The compositor](../compositor/README.md) › Hiding what a compositor can't do.
-  - **Bar look.** In a bar widget's options, `"$bar.<key>"` (no `/`) reads the look of the bar it sits on: a `BarStyle` key as that bar uses it (`Bar.lookContext`, passed as the form's `context` by the bar editor's inspector). The grouping reads `separate` for styles without boxes. Use it to hide a color the bar's style doesn't draw ([widget style](../bar/widget-style.md#which-color-fields-show)).
+  - **Bar look.** In a bar widget's options, `"$bar.<key>"` (no `/`) reads the look of the bar it sits on: a `BarStyle` key as that bar uses it (`BarsConfig.lookContext`, passed as the form's `context` by the bar editor's inspector). The grouping reads `separate` for styles without boxes. Use it to hide a color the bar's style doesn't draw ([widget style](../bar/widget-style.md#which-color-fields-show)).
   - **Distribution.** `"/$distro": "<family>"` reads `DependencyManager.distro` (`Packages.distroFamily`: `arch`, `fedora`, or `""`), for a setting only one distribution has (the Updates options' AUR).
   - **Package.** `"/$packaged": false` reads `Paths.packaged`, for what a packaged axiom doesn't have (the `SelfUpdate` section, `Greeter.source`; [packaging.md](../packaging.md)).
   - On a whole section, `x-showIf` (with `/` keys only) takes the section out of its settings category when it fails (`SchemaLayout.categories`). The `Hyprland` section needs `configModes`.
@@ -70,7 +70,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 ### Controls
 - `x-options`: a dynamic option list.
   - `"colors"`: a picker over `base00`–`base0F`, read with `Theme.resolveColor` (which also takes semantic names and hex).
-  - `"screens"`: a monitor. Empty means the primary monitor, resolved by `General.screensNamed` (bars in `Bar.expandBars`, docks, edge menus). Docks and OSDs pick all monitors through `monitors` instead.
+  - `"screens"`: a monitor. Empty means the primary monitor, resolved by `General.screensNamed` (bars in `BarsConfig.expandBars`, docks, edge menus). Docks and OSDs pick all monitors through `monitors` instead.
   - Others: `"languages"`, `"edgeMenus"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"calendars"`, `"chatProviders"`, `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
 - `x-emptyLabel`: offers or renames the empty value under that label.
   - On a color: automatic (a bar's `widgetTextColor`).
@@ -102,7 +102,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `x-canvasDetail`: a module property the layouts editor shows on its tile (a list joined). `x-canvasFill`: a color property the tile is filled with (`OverlayConfig`).
 - `x-tool: true` on the hand-built view types: the navigator's tool group.
 - `x-needs: "<capability>"` on a view type: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
-- `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`): a bar widget color picked by its bar when left empty (`Bar.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).
+- `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`): a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).
 
 ### Compositor config (`x-compositor`)
 A setting a compositor's config takes says how, per compositor: `x-compositor: { hyprland: {…}, sway: {…}, niri: {…} }`. `CompositorLayer.compositorFields` collects a section's annotated fields (inside its objects too) with their spec. Each is written, under a gated part (the input), only while its `if` switch is on, else once changed from its default; a managed config's options every one (`annotatedFields`).

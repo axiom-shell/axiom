@@ -9,7 +9,8 @@ Docs drift silently; this catches the drift a reader would trip on:
 - every backticked `Singleton.member` names a member that file declares
   (Singleton = a file in services/*/, config/ or components/methods/)
 - no backticked name is one a rename retired (RETIRED: add the old name
-  when renaming a singleton, so docs still citing it fail)
+  when renaming a singleton, so docs still citing it fail; an old name that
+  is also a schema definition fails only with a member that isn't a setting)
 - every shared piece (a file in components/reusable, forms or content/parts)
   is named in the shared-ui-pieces index or the docs it defers to, so the
   index agents check before building stays whole
@@ -40,7 +41,7 @@ GENERATED = ("docs/dev/config/", "docs/dev/generated/")
 PATH_ROOTS = ("components/", "services/", "config/", "scripts/", "shell/", "tests/", "docs/",
               "examples/", "backend/", ".github/", ".claude/", "shell.qml", "greeter.qml", "install.sh")
 # Names a rename retired: a doc still citing one is stale (old -> new)
-RETIRED = {"IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig"}
+RETIRED = {"IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig", "Bar": "BarsConfig"}
 # Backticked text that looks like a member access but isn't one of ours
 NOT_MEMBERS = {"Quickshell", "Qt", "Math", "JSON", "Object", "Array", "String", "Date", "Number",
                "console", "Hyprland", "Text", "Item", "Layout", "Keys", "Image"}
@@ -90,6 +91,19 @@ def config_names():
     for name, node in schema["definitions"].items():
         walk(name, node)
     return names
+
+
+def retired_name(span, configs):
+    """The retired name a span starts with, or None. One that is also a
+    schema definition is stale only with a member that isn't a config path:
+    `Bar` and `Bar.background` are the setting, `Bar.lookOf` the old reader."""
+    old = re.match(r"(\w+)(?:\.(\w+))?", span)
+    if not old or old.group(1) not in RETIRED:
+        return None
+    name, member = old.groups()
+    if any(c.startswith(name + ".") for c in configs) and (not member or f"{name}.{member}" in configs):
+        return None
+    return name
 
 
 def ignored(path):
@@ -245,9 +259,9 @@ def main():
                     errors.append(f"{where}: link to missing {target}")
             for span in re.findall(r"`([^`\n]+)`", line):
                 span = span.strip()
-                old = re.match(r"(\w+)", span)
-                if old and old.group(1) in RETIRED:
-                    errors.append(f"{where}: `{span}`: {old.group(1)} was renamed to {RETIRED[old.group(1)]}")
+                old = retired_name(span, configs)
+                if old:
+                    errors.append(f"{where}: `{span}`: {old} was renamed to {RETIRED[old]}")
                     continue
                 if span.startswith(PATH_ROOTS) and not re.search(r"[<>*{}|$ ]|\.\.\.|…", span):
                     path = span.split(":")[0].rstrip("/").rstrip(".,")

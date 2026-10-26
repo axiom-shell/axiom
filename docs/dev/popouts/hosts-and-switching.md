@@ -20,7 +20,7 @@ This doc covers the shared host pieces in `components/hosts/popout/`, how a bar 
     - The box starts on the attach edge, with the fillets curving outside its walls (`boxStart`).
     - `boxStart` is pushed back only as far as a box too shallow for its fillet and far corner needs.
   - **Detached:** the box sits half a connector gap past its lead.
-    - Past a transparent bar, the lead moves the box in line with the windows (`Bar.detachedPush`). This is negative where the windows start nearer.
+    - Past a transparent bar, the lead moves the box in line with the windows (`BarsConfig.detachedPush`). This is negative where the windows start nearer.
     - A bar's pills keep that half gap too, since their depth is sized by it.
 - **`BarPopouts.qml`:** bar popouts share one wrapper, and one box, per bar.
 
