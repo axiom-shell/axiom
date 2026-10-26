@@ -44,14 +44,14 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 |---|---|---|---|
 | 1 | done | Backend stage 2: night light, then clipboard (and [Phase 2](#phase-2-finish-stage-2)) | In progress; finish it before anything else churns the same files. |
 | 2 | done | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
-| 3 | done | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. The binds-child segfault was taken first, because its flaky test failed CI on unrelated PRs. |
+| 3 | done | [Phase 1](#phase-1-integrity), except the entries stage 7 fixes | Data and session safety first; touches nothing a stage deletes. The binds-child segfault was taken first, because its flaky test failed CI on unrelated PRs. |
 | 4 | in progress | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
 | 5 | next | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
 | 6 | later | Backend stage 3: brightness | Small; a first stage under the new checks. |
 | 7 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
 | 8 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
 | 9 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
-| 10 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak and the save order; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
+| 10 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
 | 11 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
 | 12 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 13 | later | [Phase 9](#phase-9-docs-tooling-and-process) | Last, so the docs describe the final shape. |
@@ -88,7 +88,7 @@ The cycle the `roadmap-autopilot` skill runs, one batch (one PR) per iteration, 
 
 **Bounds.** A leader does at most three batches, then stops and asks for a fresh session even mid-row, and every row starts in a fresh session (the pause after a row ends the loop). Agents answer in the report shape asked for: a report that runs long is read for its fields, not reread. A failing gate's output is read as `tail` / `grep`, never whole.
 
-1. **Preflight** (leader). On `main`, `git status` clean (anything uncommitted means someone else is working here: stop), `git pull --ff-only`. An open PR labelled `roadmap` (`gh pr list --label roadmap`) is resumed at the step it reached instead of starting a new batch. One labelled `needs-decision` waits for the maintainer: if it's a plan with a decision on it (an approval, a chosen option, or `defer`), finish [Items that need a plan](#items-that-need-a-plan) step 4 or 5 for it first; any other one blocks its row until the maintainer answers.
+1. **Preflight** (leader). On `main`, `git status` clean (anything uncommitted means someone else is working here: stop), `git pull --ff-only`. An open PR labelled `roadmap` (`gh pr list --label roadmap`) is resumed at the step it reached instead of starting a new batch, unless it's a plan waiting for its decision, which never holds up the row ([Items that need a plan](#items-that-need-a-plan) step 2). One labelled `needs-decision` waits for the maintainer: if it's a plan with a decision on it (an approval, a chosen option, or `defer`), finish [Items that need a plan](#items-that-need-a-plan) step 4 or 5 for it first; any other one blocks its row until the maintainer answers.
 2. **Pick** (leader) the batch with [Taking the next step](#taking-the-next-step) steps 1–3, reading only the Full order, that phase's section (or the stage's bullets in [backend/roadmap.md](backend/roadmap.md)) and the items' issues.md entries; a batch is never wider than one row. A "needs a plan" item gets a plan PR ([Items that need a plan](#items-that-need-a-plan) step 1, by a fresh agent with a brief like step 3's) and the leader moves on to the row's next item; when only plans waiting for decisions are left in the row, stop and report them. An item that needs a decision or a forbidden action ends the batch before it (the items before it still go); when it's the first, stop and report instead of starting. That's an item that needs a maintainer decision (a changed default, whether a migration is worth it, a behaviour trade-off), needs a live action `AGENTS.md` › Never forbids (takeovers, the greeter, the real lock, idle on the live config, restarting axiom), or waits on a row that isn't `done`.
 3. **Brief** (leader), ten to fifteen lines plus two or three per item: the row and the items in order; each issues.md entry's title and its **Where**/**What**; what done looks like (the behaviour, and the entry removed with its link here); the docs to start from (`AGENTS.md` › Where to look, the recipe if one fits); the branch name `roadmap/<row>-<slug>`; and the stop conditions above, so the agent stops rather than guesses.
 4. **Implement** (a fresh `general-purpose` agent, given the brief): branch from `main`, never pushing it; force a QML reload, since a checkout replaces files' inodes ([testing](testing.md) › Reloads and logs), and wait for `Configuration Loaded` in `scripts/log.sh`; then per item: implement, `scripts/dev/verify.sh` until `verify ok`, and commit it with [Taking the next step](#taking-the-next-step) step 5 (statuses, `Done:` marks, issues.md removals) and the attribution trailer. An item it has to stop on is left out (reset to the last item's commit) and reported; the committed ones go on. What the live session can't show (Go code: the running binary isn't rebuilt; a schema change: the daemon reads the schema at its start) rests on its tests. It reports in at most 250 words: **Commits** (sha and item, one line each), **Changed** (one line per file group), **Verified** (the `verify ok` line, the tests run), **Not verifiable live**, **Filed** (issues.md titles added), **Stopped** (why, if it did).
@@ -112,13 +112,18 @@ Decided (2026-10-26):
 Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; packed history is about 18 MB).
 
 ### Phase 1: integrity
-The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its two entries are linked here and fixed there.
+The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its entries are linked here and fixed there. So is everything that starts from a config.json that doesn't load (decided 2026-10-26): rare, and handled with the other config problems when stage 7 rewrites that path, not patched before it.
 
 Fixed in this phase: none left.
 
 Fixed by backend stage 7 (add the bullets there if missing):
 - [Shell saves carry unsaved settings and every takeover](issues.md#shell-saves-carry-unsaved-settings-and-every-takeover)
 - [Config saves can land out of order](issues.md#config-saves-can-land-out-of-order)
+
+A config.json that doesn't load (decided 2026-10-26):
+- [The compositor mode is held twice while config.json doesn't load](issues.md#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)
+- [Restoring over a config.json that doesn't load resets the other takeovers](issues.md#restoring-over-a-configjson-that-doesnt-load-resets-the-other-takeovers)
+- [The Compositor card shows the file's mode while a kept mode isn't saved](issues.md#the-compositor-card-shows-the-files-mode-while-a-kept-mode-isnt-saved)
 
 ### Phase 2: finish stage 2
 Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the hypridle autostart default (dropped, and from saved configs by the v78 step) and the D-Bus match rules' escaping.
@@ -146,7 +151,9 @@ Resolves:
 ### Phase 4: backend structure and contract
 The binary's rules are enforced by its tests, and the shell–daemon contract is checked by shape, not just by name. The contract check lands before stage 7, so the switch to path ops is checked as it happens.
 
-Steps: generate method shapes into `rpc.md` and check QML call sites against them; Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`); Done: one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting.
+Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting.
+
+Steps: generate method shapes into `rpc.md` and check QML call sites against them; fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`).
 
 Resolves:
 - [The rpc registry doesn't record its methods' shapes](issues.md#the-rpc-registry-doesnt-record-its-methods-shapes)
@@ -157,6 +164,10 @@ Resolves:
 - [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
 - [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
 - [The shell's socket warns when the daemon re-execs](issues.md#the-shells-socket-warns-when-the-daemon-re-execs)
+- [A dropped connection to axiom reconnects with no backoff](issues.md#a-dropped-connection-to-axiom-reconnects-with-no-backoff)
+- [A large binds file's own error reads as running out of memory](issues.md#a-large-binds-files-own-error-reads-as-running-out-of-memory)
+- [archtest's rules aren't all in backend/AGENTS.md](issues.md#archtests-rules-arent-all-in-backendagentsmd)
+- [Installs and self-update fail when the reference docs can't be generated](issues.md#installs-and-self-update-fail-when-the-reference-docs-cant-be-generated) (before the contract check adds its `go run` to `generate.sh`)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `ShellManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
@@ -179,6 +190,7 @@ sway and SwayFX:
 - [Overview drops on sway nest split containers](issues.md#overview-drops-on-sway-nest-split-containers)
 - [Detached sway keeps the floating modifier after the mouse binds go](issues.md#detached-sway-keeps-the-floating-modifier-after-the-mouse-binds-go)
 - [`noWarps` off maps to sway's `mouse_warping output`](issues.md#nowarps-off-maps-to-sways-mouse_warping-output)
+- [An unreadable sway config file still binds axiom's keys silently](issues.md#an-unreadable-sway-config-file-still-binds-axioms-keys-silently)
 
 niri:
 - [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)
@@ -224,6 +236,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
 - [`BlurManager.paused` warns on every reload](issues.md#blurmanagerpaused-warns-on-every-reload)
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
+- [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape.
@@ -238,10 +251,10 @@ Resolves:
 - [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
+- [CI checks dependencies and cross-builds only when a PR touches Go](issues.md#ci-checks-dependencies-and-cross-builds-only-when-a-pr-touches-go)
 
 ### Deferred
-Entries decided against doing now ([Items that need a plan](#items-that-need-a-plan) step 5). They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
+Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
 
 Extremely rare paths, put after real gaps (2026-10-26):
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads) (transient: corrected after the reload)
-- [The Compositor card shows the file's mode while a kept mode isn't saved](issues.md#the-compositor-card-shows-the-files-mode-while-a-kept-mode-isnt-saved)

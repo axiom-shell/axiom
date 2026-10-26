@@ -20,6 +20,65 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Restoring over a config.json that doesn't load resets the other takeovers
+- **Where:** `backend/internal/store/store.go` (`Replace`, `Restore`, `takeoverBase`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
+- **What:** While config.json doesn't load at the start, the store knows no takeover values (`takeoversUnknown`), so `Replace` and `Restore` keep `takeoverBase()`: the defaults. Restoring a saved config over that file therefore writes the defaults' `Idle.enabled`, `Polkit.enabled`, `Greeter.enabled` and `Lockscreen.mode`, switching off or changing whatever the user had taken over. Only `Compositor.mode` is repaired afterwards, by the compositor manager keeping the mode it applied and saving it back (`saveKept`, #108). Deciding the unknown takeovers once in the store (take the restored file's own values, or refuse the restore while none are known) would cover all five settings, and would let the manager's separate hold go ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)). Like every other problem that starts from a config.json that doesn't load, it's rare, and it's fixed by backend stage 7, with the other config problems.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+
+### The compositor mode is held twice while config.json doesn't load
+- **Where:** `backend/internal/store/store.go` (`holdTakeovers`, `Takeovers`), `backend/internal/compositor/manager/manager.go` (`saveKept`, `keptStands`, `ConfigWritable`), `backend/internal/daemon/compositor.go`, `backend/internal/daemon/methods.go` (`pushState`), `services/apps/CommunitySetupsManager.qml` (`_setWallpaper`)
+- **What:** #105, #107 and #108 each fixed one case of "a config.json that doesn't load, or was edited outside, releases a managed compositor config", and filed the next. The result is two mechanisms for one rule ("only a takeover setting's own card changes it"): the store's `holdTakeovers` / `Takeovers()`, which covers every `x-takeover` setting, and the compositor manager's own hold of `Compositor.mode` (`KeptMode`, `saveKept`, `keptStands`, `ConfigWritable`; about 155 lines), which keeps the mode it applied and saves it back. Three things in it were never decided by the maintainer:
+  - #108 says it used "the maintainer's choice, option 2" (keep the last applied mode) for #107's question 2, but only question 1 was answered.
+  - `CommunitySetupsManager._setWallpaper` saves with `ConfigManager.commit(config, false)` so a stale clone can't undo the kept mode, a stopgap against Phase 0's "The shell's `takeover: true` is fixed by backend stage 7, with no stopgap before it".
+  - #105 writes each held takeover value back into the config.json the user just edited outside (an implementer's call, flagged on the PR and never answered), so the edit is reverted under their editor with only a daemon log `Warn` to say so.
+
+  Even so, `config-modes.md` admits that any shell save cloned before the kept mode's save puts the stale mode back. Stage 7's path ops (`takeover` only on a takeover card's op) remove the reason for most of this. In that stage: one hold in the store for every takeover, the unknown takeovers decided in `Replace` / `Restore` ([restoring resets the other takeovers](#restoring-over-a-configjson-that-doesnt-load-resets-the-other-takeovers)), the manager's kept mode and the wallpaper stopgap deleted, and the write-back decided.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+
+### An unreadable sway config file still binds axiom's keys silently
+- **Where:** `backend/internal/compositor/manager/sway.go` (`userBinds`), `backend/internal/compositor/userconf/sway.go` (`SwayText`)
+- **What:** #109 shows `UnreadBinds` as the manager's problem only when `userconf.SwayMain` finds no config (`w.unread = main == ""`). A main config that exists but can't be read, or an include that can't be read, is skipped silently by `SwayText` (`os.ReadFile` failing returns `""`), so axiom binds over the keys those files hold with no problem shown. The decision behind #109 ("an unreadable config is realistically axiom's own reader failing on one sway accepts") is about exactly this case, not a missing file. `SwayText` could report the paths it failed to read, and `userBinds` could set `unread` when any did.
+- **Size:** small
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+
+### A dropped connection to axiom reconnects with no backoff
+- **Where:** `services/core/BackendManager.qml` (`_dropped`, `_greet`)
+- **What:** Since #111, `_dropped` calls `_connect()` at once (so a re-exec's handover is caught quickly), and `_retry` resets only on a successful hello. A daemon that accepts and then closes the connection (a crash loop, or a hello refused and closed) puts the shell in a tight reconnect loop; before, a drop went through the backoff timer. Reconnecting at once only on the first drop after a successful hello, and backing off after that, would keep the fast re-exec path.
+- **Size:** small
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+
+### A large binds file's own error reads as running out of memory
+- **Where:** `backend/internal/compositor/binds/isolate.go` (`diedOfMemory`, `Extract`)
+- **What:** #104 tells the child's memory death from a crash by its peak RSS, but `Extract` checks `diedOfMemory` before the child's own error message and doesn't look at how it exited. So any failure whose peak passed `MemoryLimit/4` (256 MiB) is reported as taking more than the limit, including an ordinary Lua error from a large file. It should only count for crash-like exits (a signal, or the Go runtime's `fatal error` / `SIGSEGV` on stderr). The test that covers it also relies on running before the parallel tests, so the test process's own peak stays low.
+- **Size:** small
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+
+### Installs and self-update fail when the reference docs can't be generated
+- **Where:** `scripts/generate.sh`, `install.sh`, `scripts/self_update.sh`, `packaging/aur/axiom-shell/PKGBUILD`, `packaging/aur/axiom-shell-git/PKGBUILD`, `CONTRIBUTING.md`
+- **What:** Since generated docs stopped being committed (#100), `generate.sh` always runs `gen_docs.py`, a developer check that fails on a shell–daemon contract mismatch or on QML it doesn't expect. Every end-user path runs `generate.sh`, so that failure stops `install.sh`, fails an AUR build, and leaves a self-update with new QML on the old binary (which then runs read-only). Packaged installs delete `docs/` anyway. The contract check (Phase 4) adds another `go run` to the same step. User-facing callers should skip the docs (a `--no-docs`). Also: `generate.sh`'s header says each file is built "only when what it's made from changed", but `gen_docs.py` runs every time, and `CONTRIBUTING.md` links `docs/dev/generated/rpc.md`, which no longer exists on GitHub.
+- **Size:** small
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 0 PR
+
+### archtest's rules aren't all in backend/AGENTS.md
+- **Where:** `backend/internal/archtest/archtest_test.go`, `backend/AGENTS.md` (Rules)
+- **What:** archtest requires the exact `Pure:` marker in a pure package's doc comment, which AGENTS.md only calls "marked pure in their doc comment". It also refuses more imports in pure packages than AGENTS.md lists (`os/signal`, `golang.org/x/sys`, `unsafe`, `plugin`, `io/ioutil` besides `os`, `net`, `os/exec`, `syscall`). And its tiers are coarse: about 40 packages share the edge tier, so the direction between edge packages isn't enforced, though the original entry asked for "downward dependency direction among the other packages".
+- **Size:** small
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 4 PR
+
+### CI checks dependencies and cross-builds only when a PR touches Go
+- **Where:** `.github/workflows/checks.yml` (the `go` job's change filter), `.github/workflows/release.yml`
+- **What:** Since checks run on pull requests only and the `go` job is skipped unless the binary's inputs changed (#107), govulncheck runs only on PRs that touch Go, with no scheduled run, so a newly published advisory for a dependency goes unseen until the next Go PR. The amd64/arm64 cross-builds now run only on a release tag, so an arm64 break surfaces at release, after merge (low risk with `CGO_ENABLED=0`). A weekly `schedule:` run of the `go` job would cover both.
+- **Size:** small
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+
+### MediaManager warns when the daemon's re-exec fails its album art fetch
+- **Where:** `services/system/MediaManager.qml` (the album art fetch)
+- **What:** A daemon re-exec fails every request in flight with `the connection to axiom closed`, and `MediaManager` warns about it, though it's an expected failure it could retry on the next hello. #112 had folded it into "The shell's socket warns when the daemon re-execs", but the socket's warning is Quickshell's and this one is ours to quiet.
+- **Size:** trivial
+- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+
 ### The Compositor card shows the file's mode while a kept mode isn't saved
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`modeFromDaemon`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
 - **What:** Leaving the hold with the daemon incompatible with the tree, the kept mode's save is refused and stays pending; config.json loads, so `ConfigManager.savesBlocked` is false and the card shows `CompositorConfig.mode` (the file's stale mode, say detached) while managed is in effect. `modeFromDaemon` covers only a blocked file; it could also take the daemon's mode while the daemon reports a kept mode pending (a field in `compositor.state`).
@@ -57,8 +116,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-24, while reviewing the Go backend branch
 
 ### The shell's socket warns when the daemon re-execs
-- **Where:** `services/core/BackendManager.qml` (its `Socket`), `services/system/MediaManager.qml` (a request in flight)
-- **What:** Every daemon re-exec (each dev-mode rebuild) logs `quickshell.io.socket` `QLocalSocket::PeerClosedError` (a `Socket error for Socket(0x…)`) once: the old image closing the connection reaches the shell as an error, though `BackendManager` reconnects and it's expected. Five in one session's log (`scripts/log.sh --all -g PeerClosed`). Quieting it means telling a close the daemon announced (re-exec, quit) from a real failure, maybe with a notification before the exec. A request in flight at that moment fails and warns as well: `the connection to axiom closed` (seen from `MediaManager`'s album art fetch).
+- **Where:** `services/core/BackendManager.qml` (its `Socket`)
+- **What:** Every daemon re-exec (each dev-mode rebuild) logs `quickshell.io.socket` `QLocalSocket::PeerClosedError` (a `Socket error for Socket(0x…)`) once: the old image closing the connection reaches the shell as an error, though `BackendManager` reconnects and it's expected. Five in one session's log (`scripts/log.sh --all -g PeerClosed`). Quieting it means telling a close the daemon announced (re-exec, quit) from a real failure, maybe with a notification before the exec. A request in flight at that moment fails too: [MediaManager's warning](#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch) is its own entry.
 - **Size:** small
 - **Found:** 2026-10-24, while moving the compositor takeover into the binary
 
@@ -390,7 +449,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The generate step dumps no rpc shapes
 - **Where:** `scripts/generate.sh`, `backend/internal/daemon/methods.go` (the registrations)
-- **What:** Nothing writes the method, push and topic shapes where `scripts/gen_docs.py` can read them. A Go program (under `backend/tools/`) should build the daemon's registry without starting a daemon (registration only stores closures, so a registry-only constructor suffices) and print methods, pushes and topics with their field trees as JSON; `scripts/generate.sh` writes it to a gitignored file before `gen_docs.py` runs. Needs the two entries above.
+- **What:** Nothing writes the method, push and topic shapes where `scripts/gen_docs.py` can read them. A Go program (under `backend/tools/`) should build the daemon's registry without starting a daemon (registration only stores closures, so a registry-only constructor suffices; check that first: the methods are registered through `d.registry(parts)` over part constructors on a `*Daemon`, and some may need initialised fields such as `d.dev`, which could make this more than small) and print methods, pushes and topics with their field trees as JSON; `scripts/generate.sh` writes it to a gitignored file before `gen_docs.py` runs. Needs the two entries above.
 - **Size:** small
 - **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
 
