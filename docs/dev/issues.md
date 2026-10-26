@@ -213,9 +213,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while debugging the screenshot crash with a popout open
 
-### A screenshot under Hyprland timed out waiting for its frame
-- **Where:** `services/apps/ScreenshotManager.qml` (`_watchdog`, `frameArrived`), `components/surfaces/screenshot/ScreenshotPickerWindow.qml`
-- **What:** The live shell on Hyprland logged `The compositor sent no picture of the screen.` once (2026-10-26), with no other warning: a picker's frame didn't arrive within the watchdog's 3 s. Hyprland has `supports.outputCapture`, so the frame is Quickshell's screencopy, not grim's. Not reproduced; what was captured, and whether a slow first frame (a large or several outputs) or a lost one, isn't known yet.
+### A screenshot under niri timed out waiting for its frame
+- **Where:** `services/apps/ScreenshotManager.qml` (`_grabFrames`, `_grim`, `_watchdog`, `frameArrived`), `components/surfaces/screenshot/ScreenshotPickerWindow.qml` (`still`, `_onFrame`)
+- **What:** The live shell on niri logged `The compositor sent no picture of the screen.` with no other warning: three times in `scripts/log.sh --all -g "no picture"` (2026-10-26). niri has no `supports.outputCapture`, so the picker's frame is grim's (`ScreenshotManager.grimFrames`): grim had already written each screen's PPM and exited 0 (a failure says so in its own message), `_grim`'s `onExited` set `picking` and started the 3 s watchdog, and the picker's `still` Image never reached `Image.Ready` in time, so `_onFrame` never called `frameArrived` (or, for an immediate `screen` shot, the capture never reported back through `finish`). An `Image.Error` (a PPM it can't read, a path gone) is never reported either: it waits out the watchdog with this message. Not reproduced; whether the asynchronous load of a large PPM is slow or fails isn't known yet.
 - **Size:** small
 - **Found:** 2026-10-26, while working on the shell–daemon contract check (in the live log)
 
