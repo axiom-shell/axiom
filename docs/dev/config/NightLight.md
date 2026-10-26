@@ -4,7 +4,7 @@
 > **Reader:** `NightLight` (`config/NightLight.qml`)
 > **Schema:** `config/json/config.schema.json` → `properties.NightLight` · category Screen & Power · scope personal
 
-Night light: Warmer screen colors in the evening, through hyprsunset (or wlsunset). The Night light quick action, `/nightlight` in the launcher and `axiom ipc nightLight toggle` switch it by hand; that lasts until the next scheduled change.
+Night light: Warmer screen colors in the evening, through the compositor's color transform or gamma control (wlsunset where it has neither). The Night light quick action, `/nightlight` in the launcher and `axiom ipc nightLight toggle` switch it by hand; that lasts until the next scheduled change.
 
 Each setting: `path` · type = default · enum/range/unit; then title: description; annotations; `read:` the reader member(s) (exact unless marked) and `in:` the files that use them.
 

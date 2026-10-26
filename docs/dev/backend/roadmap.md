@@ -54,7 +54,7 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
   - Learned: niri holds `org.freedesktop.ScreenSaver` itself and applies it to its own idle notifications, so the daemon tells a compositor holding it from a stray hypridle (the peer pid of its Wayland socket, `wire.Conn.PeerPID`).
 - Clipboard: `ClipboardManager`'s `wl-paste --watch cliphist` → an in-memory history over `ext_data_control_v1` (wlr's as the fallback); removes cliphist and wl-clipboard. History never touches disk; only pinned clips do.
 - Done: **typing**: `EmojiManager`'s `wtype` → `input.type` on `zwp_virtual_keyboard_v1` (`wayland/vkbd`: a keyboard per text, with a keymap giving each character a key, as wtype does); wtype is no longer a dependency. What the connection can do reaches the shell as `wayland.state` (`WaylandManager`), which services gate on.
-- Night light: `NightLightManager`'s hyprsunset / wlsunset → `zwlr_gamma_control`; niri keeps wlsunset until a real session shows gamma control.
+- Done: **night light**: hyprsunset → `nightlight.set` on Hyprland's CTM (`wayland/ctm`), wlsunset → gamma ramps (`wayland/gamma`) on sway; hyprsunset is no longer a dependency. niri offers neither yet, so `NightLightManager` keeps its wlsunset `Process` there (its allowlist entry stays for that); the daemon picks by the globals, so a niri that offers gamma control gets it with no change.
 
 **Stage 3: system data** (later)
 - `SystemManager`, `UpdatesManager`: done in stage 1b.

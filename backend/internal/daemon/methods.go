@@ -26,7 +26,7 @@ const (
 	// compositor.state, compositor.applied, compositor.notify, compositor.bindsMerged
 	topicCompositor = "compositor"
 	topicIdle       = "idle"    // idle.state
-	topicWayland    = "wayland" // wayland.state
+	topicWayland    = "wayland" // wayland.state, nightlight.state
 )
 
 // session is what the daemon knows of one connection.

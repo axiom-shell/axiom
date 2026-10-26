@@ -3,7 +3,7 @@
 
 > **File:** `config/NightLight.qml` · **Docs:** see [docs/dev](../../README.md)
 
-Reader for the NightLight section: warmer colors through hyprsunset or wlsunset, run by NightLightManager.
+Reader for the NightLight section: warmer colors, applied by the axiom daemon (or wlsunset) through NightLightManager.
 
 ### Properties
 

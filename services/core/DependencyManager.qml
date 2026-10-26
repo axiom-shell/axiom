@@ -139,14 +139,9 @@ Singleton {
       "purpose": "Notifications from axiom itself, with their buttons"
     },
     {
-      "command": "hyprsunset",
-      "purpose": "Night light",
-      "compositors": ["hyprland"]
-    },
-    {
       "command": "wlsunset",
-      "purpose": "Night light",
-      "compositors": ["sway", "niri"]
+      "purpose": "Night light, where the compositor has no gamma control",
+      "compositors": ["niri"]
     },
     {
       "command": "xwayland-satellite",

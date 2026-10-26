@@ -124,7 +124,7 @@ TestCase {
 
   function test_installCommand() {
     compare(Packages.installCommand("arch", "satty"), "sudo pacman -S --needed satty");
-    compare(Packages.installCommand("fedora", "hyprsunset"), "sudo dnf copr enable -y nett00n/hyprland && sudo dnf install hyprsunset");
+    compare(Packages.installCommand("fedora", "satty"), "sudo dnf copr enable -y nett00n/hyprland && sudo dnf install satty");
     compare(Packages.installCommand("arch", ["greetd", "agreety"]), "sudo pacman -S --needed greetd greetd-agreety");
     compare(Packages.installCommand("fedora", ["greetd", "agreety"]), "sudo dnf install greetd", "agreety ships in greetd");
   }

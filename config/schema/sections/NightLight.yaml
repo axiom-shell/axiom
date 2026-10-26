@@ -5,7 +5,7 @@ type: object
 x-category: Screen & Power
 x-intro: NightLightStatus
 title: Night light
-description: Warmer screen colors in the evening, through hyprsunset (or wlsunset). The Night light quick action, `/nightlight` in the launcher and `axiom ipc nightLight toggle` switch it by hand; that lasts until the next scheduled change.
+description: Warmer screen colors in the evening, through the compositor's color transform or gamma control (wlsunset where it has neither). The Night light quick action, `/nightlight` in the launcher and `axiom ipc nightLight toggle` switch it by hand; that lasts until the next scheduled change.
 additionalProperties: false
 properties:
   schedule:

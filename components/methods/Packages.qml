@@ -175,13 +175,6 @@ QtObject {
         "arch": "libnotify",
         "fedora": "libnotify"
       },
-      "hyprsunset": {
-        "arch": "hyprsunset",
-        "fedora": {
-          "name": "hyprsunset",
-          "repo": root._hyprCopr
-        }
-      },
       "wlsunset": {
         "arch": "wlsunset",
         "fedora": "wlsunset"

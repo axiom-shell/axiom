@@ -5,8 +5,11 @@ import (
 	"sync"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/ctm"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/gamma"
 )
 
 // waylandState is what the daemon's Wayland connection can do for the
@@ -14,10 +17,13 @@ import (
 type waylandState struct {
 	// Typing: virtual keyboards (input.type)
 	Typing bool `json:"typing"`
+	// NightLight: how the night light warms the screens, "ctm", "gamma"
+	// or "" (nightlight.set)
+	NightLight string `json:"nightLight"`
 }
 
 func (d *Daemon) waylandNow() waylandState {
-	return waylandState{Typing: d.keyboard.Available()}
+	return waylandState{Typing: d.keyboard.Available(), NightLight: d.nightLight.Mode()}
 }
 
 // pushWayland pushes the connection's state when it changed (its clients
@@ -51,6 +57,41 @@ func (d *Daemon) waylandMethods(reg *rpc.Registry) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell types")
 		}
 		return struct{}{}, d.keyboard.Type(ctx, p.Text)
+	})
+	rpc.Handle(reg, "nightlight.get", func(ctx context.Context, c *rpc.Conn, _ struct{}) (nightlight.State, error) {
+		return d.nightLight.State(), nil
+	})
+	rpc.Handle(reg, "nightlight.set", func(ctx context.Context, c *rpc.Conn, p nightlight.Settings) (struct{}, error) {
+		if !fromShell(c) {
+			return struct{}{}, axerr.New(axerr.Refused, "only the shell drives the night light")
+		}
+		if p.On && (p.Temperature < 1000 || p.Temperature > 40000 || p.Gamma < 0 || p.Gamma > 100) {
+			return struct{}{}, axerr.New(axerr.BadRequest, "a temperature of 1000-40000 K and a gamma of 0-100%%")
+		}
+		d.nightLight.Set(p)
+		return struct{}{}, nil
+	})
+}
+
+// newNightLight is the night light on the connection's color transform
+// or gamma ramps, whichever the compositor offers.
+func (d *Daemon) newNightLight() {
+	changed := func() {
+		if d.nightLight != nil {
+			d.nightLight.Changed()
+		}
+		d.pushWayland()
+	}
+	d.ctm = ctm.New(ctm.Options{Outputs: d.outputs, OnChange: changed})
+	d.gamma = gamma.New(gamma.Options{Outputs: d.outputs, OnChange: changed})
+	d.nightLight = nightlight.New(nightlight.Options{
+		CTM:   d.ctm,
+		Gamma: d.gamma,
+		OnState: func(st nightlight.State) {
+			if d.server != nil {
+				d.server.BroadcastLatest("nightlight.state", st, subscribedTo(topicWayland))
+			}
+		},
 	})
 }
 

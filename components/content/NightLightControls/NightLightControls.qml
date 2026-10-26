@@ -30,7 +30,7 @@ Card {
   property int draggedGamma: -1
   readonly property int kelvin: root.draggedKelvin >= 0 ? root.draggedKelvin : NightLight.temperature
   readonly property int gamma: root.draggedGamma >= 0 ? root.draggedGamma : NightLight.gamma
-  readonly property string status: root.missing ? I18n.tr("Needs hyprsunset or wlsunset") : root.active ? I18n.tr("On · {0} K", root.kelvin) : I18n.tr("Off")
+  readonly property string status: root.missing ? I18n.tr("Needs wlsunset") : root.active ? I18n.tr("On · {0} K", root.kelvin) : I18n.tr("Off")
 
   // One row: the switch, and the warmth beside it when there's width
   readonly property bool strip: root.innerHeight < Appearance.fontSize * 6

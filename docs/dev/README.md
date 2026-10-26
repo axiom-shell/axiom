@@ -109,7 +109,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [themes](theming/themes.md): theme loading, families, wallpaper-generated themes, the Themes page.
 - [theme-integrations](theming/theme-integrations.md): `theme_<key>.sh` scripts, hookups, adding an integration.
 - [wallpaper-and-schedules](theming/wallpaper-and-schedules.md): wallpaper backends, rotation, light/dark wallpapers and schedule.
-- [night-light](theming/night-light.md): hyprsunset / wlsunset, schedule, NightLightControls.
+- [night-light](theming/night-light.md): the daemon's CTM / gamma, wlsunset on niri, schedule, NightLightControls.
 - [translucency-blur](theming/translucency-blur.md): the translucency setting, fills, Hyprland blur rules, per-screen and fullscreen behaviour.
 - [blur-window-openings](theming/blur-window-openings.md): the shared blur backing window, shadows in it, strokes opened at joins.
 

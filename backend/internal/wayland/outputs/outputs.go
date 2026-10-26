@@ -72,6 +72,44 @@ type Tracker struct {
 	// yet); used on the connection's goroutine only
 	s       *client.Session
 	manager uint32
+	// subs are told when an output is bound or goes (OnChange)
+	subs []func()
+}
+
+// Bound is one wl_output bound on the connection, for the protocols
+// made per output (gamma, CTM).
+type Bound struct {
+	ID   uint32 // the wl_output object
+	Name string // its connector, "" until described
+}
+
+// Bound are the outputs bound now.
+func (t *Tracker) Bound() []Bound {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	out := make([]Bound, 0, len(t.outputs))
+	for _, o := range t.outputs {
+		out = append(out, Bound{ID: o.id, Name: o.current.Name})
+	}
+	slices.SortFunc(out, func(a, b Bound) int { return cmp.Compare(a.ID, b.ID) })
+	return out
+}
+
+// OnChange calls fn, on the connection's goroutine, whenever an output
+// is bound or goes away (and once the first are described).
+func (t *Tracker) OnChange(fn func()) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.subs = append(t.subs, fn)
+}
+
+func (t *Tracker) changed() {
+	t.mu.Lock()
+	subs := append([]func(){}, t.subs...)
+	t.mu.Unlock()
+	for _, fn := range subs {
+		fn()
+	}
 }
 
 type output struct {
@@ -158,9 +196,14 @@ func (t *Tracker) Global(g client.Global) {
 		o.id, o.version, _ = t.s.Bind(g, maxOutputVersion, func(op uint16, a *wire.Args) { t.outputEvent(o, op, a) })
 		t.mu.Lock()
 		t.outputs[g.Name] = o
+		ready := t.ready
 		t.mu.Unlock()
 		if t.manager != 0 {
 			t.bindXdg(o)
+		}
+		if ready {
+			// A hotplug: the first outputs are told of at Ready
+			t.changed()
 		}
 	case ifaceXdgManager:
 		if t.manager != 0 {
@@ -204,6 +247,7 @@ func (t *Tracker) Removed(name uint32) {
 	}
 	c.Forget(o.id)
 	t.log.Debug("output removed", "name", o.current.Name)
+	t.changed()
 }
 
 // Ready marks the first outputs described (client.Client).
@@ -216,6 +260,7 @@ func (t *Tracker) Ready() {
 	if t.onReady != nil {
 		t.onReady()
 	}
+	t.changed()
 }
 
 // List connects to the compositor at socket, reads its outputs (by

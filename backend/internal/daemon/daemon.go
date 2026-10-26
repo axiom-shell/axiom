@@ -28,6 +28,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/lock"
+	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
@@ -36,6 +37,8 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/ctm"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/gamma"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/idlenotify"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/outputs"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/seat"
@@ -116,7 +119,11 @@ type Daemon struct {
 	seat         *seat.Tracker
 	idleNotifier *idlenotify.Notifier
 	keyboard     *vkbd.Keyboard
+	ctm          *ctm.Control
+	gamma        *gamma.Control
 	wayland      *waylandSession
+	// nightLight warms the screens (on ctm or gamma)
+	nightLight *nightlight.Service
 	// idle is the Idle section's service
 	idle *idle.Service
 	// topics are the polled topics and their subscribers
@@ -262,6 +269,7 @@ func Run(ctx context.Context, opts Options) error {
 		OnChange: func() { d.idle.NotifierChanged() },
 	})
 	d.keyboard = vkbd.New(vkbd.Options{Seat: d.seat, OnChange: d.pushWayland, Gap: 2 * time.Millisecond})
+	d.newNightLight()
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
 	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.idlePart(), d.waylandPart(), d.dev.part()}
@@ -353,7 +361,7 @@ func Run(ctx context.Context, opts Options) error {
 // for that.
 func (d *Daemon) followCompositor(ctx context.Context, socket string) {
 	log := d.opts.Log
-	err := client.Run(ctx, socket, d.wayland, d.outputs, d.seat, d.idleNotifier, d.keyboard)
+	err := client.Run(ctx, socket, d.wayland, d.outputs, d.seat, d.idleNotifier, d.keyboard, d.ctm, d.gamma)
 	// Unavailable: no compositor to connect to, nor to watch
 	if err != nil && !errors.Is(err, wire.ErrGone) && axerr.KindOf(err) != axerr.Unavailable {
 		log.Warn("the Wayland connection failed: monitors aren't known", "err", err)

@@ -57,7 +57,7 @@ The public members (no `_` prefix) of every file in `services/` and every config
 - [ShellManager](api/ShellManager.md): Shell manager manages global options and signals
 - [StateManager](api/StateManager.md): Small JSON state files in Paths.statePath: createStateHandler(name) gives a shared save/load handler per name.
 - [ThemeManager](api/ThemeManager.md): ThemeManager owns the active theme's data (loaded from its file, watched, with defaults for what it leaves out), the theme lists, theme generation from a wallp…
-- [WaylandManager](api/WaylandManager.md): What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, … .
+- [WaylandManager](api/WaylandManager.md): What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, the night lig…
 
 ## services/session/
 
@@ -79,7 +79,7 @@ The public members (no `_` prefix) of every file in `services/` and every config
 - [KeyboardLayoutManager](api/KeyboardLayoutManager.md): Active xkb layout of the main keyboard, shared by every KeyboardLayout widget.
 - [MediaManager](api/MediaManager.md): The active MPRIS player (Spotify first, else one playing, else one that can play; or the one picked with selectPlayer) for the media widgets, the lockscreen an…
 - [NetworkingManager](api/NetworkingManager.md): Wi-Fi state and actions over NetworkManager (Quickshell.Networking, D-Bus, so nothing polls).
-- [NightLightManager](api/NightLightManager.md): The night light (the NightLight section): warmer colors through hyprsunset, or wlsunset without it, started and stopped by axiom.
+- [NightLightManager](api/NightLightManager.md): The night light (the NightLight section): warmer colors, set by the axiom daemon on the compositor's color transform or gamma ramps (nightlight.set: internal/n…
 - [NotificationManager](api/NotificationManager.md): NotificationManager is the DBus notification server and the notification history.
 - [SystemManager](api/SystemManager.md): CPU / memory / temperature / GPU / disk usage, sampled by axiom (the `system` topic) only while something is showing it.
 - [TailscaleManager](api/TailscaleManager.md): Tailscale's state for every widget that shows it: axiom's `tailscale` topic (`tailscale status --json` at the shortest interval asked for, never more often tha…
@@ -132,7 +132,7 @@ The public members (no `_` prefix) of every file in `services/` and every config
 - [LauncherConfig](api/LauncherConfig.md): Reader for the Launcher section (the search launcher).
 - [LockscreenConfig](api/LockscreenConfig.md): Reader for the Lockscreen section: which locker locks the session, and what the built-in one shows (`layout`, as saved: the lock never shows the layouts editor…
 - [MonitorsConfig](api/MonitorsConfig.md): Reader for the Monitors section: the monitor profiles ({ id, name, outputs: [MonitorRule] }), edited on the Monitors page (MonitorManager) and applied by the c…
-- [NightLight](api/NightLight.md): Reader for the NightLight section: warmer colors through hyprsunset or wlsunset, run by NightLightManager.
+- [NightLight](api/NightLight.md): Reader for the NightLight section: warmer colors, applied by the axiom daemon (or wlsunset) through NightLightManager.
 - [NiriConfig](api/NiriConfig.md): Reader for Compositor.niri: niri's own options in the managed config (the daemon's niri writer; each field by its x-compositor.niri annotation), read whole.
 - [NotesConfig](api/NotesConfig.md): Reader for the Notes section (see NotesManager).
 - [NotificationsConfig](api/NotificationsConfig.md): Reader for the Notifications section (toasts and the history).

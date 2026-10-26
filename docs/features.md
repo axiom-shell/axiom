@@ -341,7 +341,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   `/welcome` runs it again.
 - **Screenshots:** a region, a window or a whole screen, picked on a frozen frame. Saved and copied, or opened in satty or swappy to annotate. Also screen recording with `wf-recorder`, with the microphone or (with `pactl`) the system's sound.
 - **Brightness:** keys and an OSD bar for a laptop screen and for external monitors over DDC/CI.
-- **Night light:** warmer colors on a schedule, through `wlsunset` (or `hyprsunset` on Hyprland).
+- **Night light:** warmer colors on a schedule, set by axiom through the compositor (`wlsunset` on niri).
 - **Idle:** axiom can run hypridle from its own settings, on any compositor: dim, lock, screen off and suspend timeouts.
 - **Updates:** axiom updates itself from git, following releases or `main`, with a notification or automatically, and switches to the rebuilt `axiom` binary without logging out.
 - **The `axiom` command:** the shell's parent process, and a command line for scripts and keybinds.

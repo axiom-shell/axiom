@@ -43,6 +43,8 @@ Every JSON-RPC method the axiom daemon serves on its socket, every push it sends
 | `lock.state` | shell only | `backend/internal/daemon/methods.go` | `services/session/LockManager.qml` |  |
 | `media.art` |  | `backend/internal/daemon/tools.go` | `services/system/MediaManager.qml` |  |
 | `net.addresses` |  | `backend/internal/daemon/tools.go` | `services/system/NetworkingManager.qml` |  |
+| `nightlight.get` |  | `backend/internal/daemon/wayland.go` | `services/system/NightLightManager.qml` |  |
+| `nightlight.set` | shell only | `backend/internal/daemon/wayland.go` | `services/system/NightLightManager.qml` |  |
 | `saved.list` |  | `backend/internal/daemon/sharing.go` | (none) |  |
 | `saved.remove` |  | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
 | `saved.restore` | writable | `backend/internal/daemon/sharing.go` | `services/core/SavedConfigsManager.qml` |  |
@@ -86,6 +88,7 @@ Sent to connections whose hello subscribed to the topic (the shell subscribes to
 | `daemon.state` | daemon | `backend/internal/daemon/methods.go` | `services/core/BackendManager.qml` |
 | `dev.state` | daemon | `backend/internal/daemon/dev.go` | `services/core/BackendManager.qml` |
 | `idle.state` | idle | `backend/internal/daemon/idle.go` | `services/session/IdleManager.qml` |
+| `nightlight.state` | wayland | `backend/internal/daemon/wayland.go` | `services/system/NightLightManager.qml` |
 | `saved.state` | saved | `backend/internal/daemon/daemon.go` | `services/core/SavedConfigsManager.qml` |
 | `schema.changed` | config | `backend/internal/daemon/dev.go` | `services/core/BackendManager.qml`<br>`services/core/ConfigManager.qml` |
 | `schema.error` | config | `backend/internal/daemon/dev.go` | `services/core/ConfigManager.qml` |

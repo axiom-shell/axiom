@@ -810,7 +810,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `GreeterStatusCard.qml`: The Greeter section's first card (its `x-card`): whether axiom is the login screen, and setting it up, updating or removing it (GreeterSetup)
 - `IdleStatusCard.qml`: The Idle section's first card (its `x-card`): whether axiom is watching for idle, what holds it off now, and a warning when another program answers apps' requests to keep the screen on
 - `LauncherPlace.qml`: The top of the Launcher card (the section's `x-intro`): where it opens, on a screen picker with presets, as a dock's or OSD's (EntryListCard), above the place fields it sets.
-- `NightLightStatus.qml`: The top of the Night light card (the section's `x-intro`): whether it's on, which tool runs it, and a switch to try the settings
+- `NightLightStatus.qml`: The top of the Night light card (the section's `x-intro`): whether it's on, how it warms the screens, and a switch to try the settings
 - `OSDListCard.qml`: The OSD section's first card (its `x-card`): the OSDs as tabs, one shown at a time: where it sits (a screen picker with presets), a Show button, and its settings and bars (EntryListCard).
 - `OnboardingCard.qml`: The General section's first card (the section's `x-card`): the first-time setup (OnboardingManager), to run again
 - `PolkitStatusCard.qml`: The Polkit section's first card (its `x-card`): whether axiom is the session's polkit agent, and which other agents it stopped
@@ -916,7 +916,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `ShellManager.qml`: Shell manager manages global options and signals
 - `StateManager.qml`: Small JSON state files in Paths.statePath: createStateHandler(name) gives a shared save/load handler per name.
 - `ThemeManager.qml`: ThemeManager owns the active theme's data (loaded from its file, watched, with defaults for what it leaves out), the theme lists, theme generation from a wallpaper, the wallpaper itself, and re-theming integrated tools.
-- `WaylandManager.qml`: What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, … .
+- `WaylandManager.qml`: What the axiom daemon's own Wayland connection can do for the shell (wayland.state: docs/dev/backend/wayland.md): typing into the focused window, the night light.
 
 ## services/session/
 
@@ -938,7 +938,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `KeyboardLayoutManager.qml`: Active xkb layout of the main keyboard, shared by every KeyboardLayout widget.
 - `MediaManager.qml`: The active MPRIS player (Spotify first, else one playing, else one that can play; or the one picked with selectPlayer) for the media widgets, the lockscreen and the media keys: its track, position and controls, and its …
 - `NetworkingManager.qml`: Wi-Fi state and actions over NetworkManager (Quickshell.Networking, D-Bus, so nothing polls).
-- `NightLightManager.qml`: The night light (the NightLight section): warmer colors through hyprsunset, or wlsunset without it, started and stopped by axiom.
+- `NightLightManager.qml`: The night light (the NightLight section): warmer colors, set by the axiom daemon on the compositor's color transform or gamma ramps (nightlight.set: internal/nightlight), or, where the compositor offers neither (niri), …
 - `NotificationManager.qml`: NotificationManager is the DBus notification server and the notification history.
 - `SystemManager.qml`: CPU / memory / temperature / GPU / disk usage, sampled by axiom (the `system` topic) only while something is showing it.
 - `TailscaleManager.qml`: Tailscale's state for every widget that shows it: axiom's `tailscale` topic (`tailscale status --json` at the shortest interval asked for, never more often than every 5 s), subscribed only while something has acquire()d…
@@ -991,7 +991,7 @@ Every QML file with the first sentence of its purpose comment (the `//` block ab
 - `LauncherConfig.qml`: Reader for the Launcher section (the search launcher).
 - `LockscreenConfig.qml`: Reader for the Lockscreen section: which locker locks the session, and what the built-in one shows (`layout`, as saved: the lock never shows the layouts editor's unsaved draft, LockManager.editor.localLayout).
 - `MonitorsConfig.qml`: Reader for the Monitors section: the monitor profiles ({ id, name, outputs: [MonitorRule] }), edited on the Monitors page (MonitorManager) and applied by the compositor's config writer
-- `NightLight.qml`: Reader for the NightLight section: warmer colors through hyprsunset or wlsunset, run by NightLightManager.
+- `NightLight.qml`: Reader for the NightLight section: warmer colors, applied by the axiom daemon (or wlsunset) through NightLightManager.
 - `NiriConfig.qml`: Reader for Compositor.niri: niri's own options in the managed config (the daemon's niri writer; each field by its x-compositor.niri annotation), read whole.
 - `NotesConfig.qml`: Reader for the Notes section (see NotesManager).
 - `NotificationsConfig.qml`: Reader for the Notifications section (toasts and the history).
