@@ -151,9 +151,9 @@ Resolves:
 ### Phase 4: backend structure and contract
 The binary's rules are enforced by its tests, and the shell–daemon contract is checked by shape, not just by name. The contract check lands before stage 7, so the switch to path ops is checked as it happens.
 
-Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`).
+Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`.
 
-Steps: fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`).
+Steps: settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`).
 
 Resolves:
 
