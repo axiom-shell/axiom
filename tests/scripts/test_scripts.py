@@ -867,6 +867,18 @@ class RpcShapes(unittest.TestCase):
         ])
         self.assertEqual(qml_helper_sites(qml), [(1, "x.a", "{id: 1}"), (1, "x.b", ""), (6, "(through a helper) x.c", "")])
 
+    def test_callback_reads(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_callback_reads
+        qml = "\n".join([
+            '  BackendManager.call("a.b", {}, (error, result) => f(result.name, result?.path, other.result.x));',
+            '  BackendManager.call("a.c", {}, error => g(error.message));',
+            '  BackendManager.call("a.d", {}, done);',
+            '  BackendManager.listen("a.state", state => { root.x = state.repo; });',
+        ])
+        self.assertEqual(qml_callback_reads(qml), [(1, "call", "a.b", "result", ["name", "path"]),
+                                                   (4, "listen", "a.state", "state", ["repo"])])
+
     def test_unknown_keys_fail(self):
         sys.path.insert(0, str(SCRIPTS))
         from gen_docs import shape_key_problems

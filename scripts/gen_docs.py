@@ -852,6 +852,32 @@ def qml_call_sites(text):
     return sites
 
 
+QML_CALLBACK_OPEN = re.compile(r"\b(?:BackendManager|root)\.(call|listen)\(")
+# (error, result) => … for a call, (state) => … or state => … for a listener
+JS_ARROW2 = re.compile(r"^\(\s*\w+\s*,\s*(\w+)\s*\)\s*=>")
+JS_ARROW1 = re.compile(r"^\(?\s*(\w+)\s*\)?\s*=>")
+
+
+def qml_callback_reads(text):
+    """First-level reads of a result or push in an inline arrow callback:
+    (line, "call" or "listen", method, variable, the keys read)."""
+    reads = []
+    for m in QML_CALLBACK_OPEN.finditer(text):
+        args = call_args(text, m.end() - 1)
+        method = JS_STRING.match(args[0]) if args else None
+        index = 2 if m.group(1) == "call" else 1
+        if not method or len(args) <= index:
+            continue
+        arrow = (JS_ARROW2 if m.group(1) == "call" else JS_ARROW1).match(args[index])
+        if not arrow:
+            continue
+        var = arrow.group(1)
+        keys = sorted(set(re.findall(rf"(?<![\w.]){var}\??\.(\w+)", args[index][arrow.end():])))
+        if keys:
+            reads.append((text.count("\n", 0, m.start()) + 1, m.group(1), method.group(1), var, keys))
+    return reads
+
+
 QML_HELPER = re.compile(r"(?:\s*//[^\n]*\n)*\s*function (\w+)\(")
 
 
@@ -978,6 +1004,9 @@ def rpc_scan():
     problems, unchecked = [], []
     shapes = load_shapes()
     params = {m["method"]: m["params"] for m in shapes["methods"]}
+    results = {m["method"]: m["result"] for m in shapes["methods"]}
+    push_params = {p["method"]: p["params"] for p in shapes["pushes"]}
+    push_params.update({f"{t['name']}.state": t["state"] for t in shapes["topics"]})
     for path in qml_files():
         if rel(path).startswith("tests/"):
             continue
@@ -995,6 +1024,17 @@ def rpc_scan():
         for line, method, src in qml_call_sites(text):
             if method in params:
                 check(line, method, src)
+        # Results and pushes read in an inline callback
+        for line, kind, method, var, keys in qml_callback_reads(text):
+            shape = results.get(method) if kind == "call" else push_params.get(method)
+            if not shape or shape["kind"] != "object":
+                continue
+            fields = {f["name"] for f in shape.get("fields", [])}
+            what = "result" if kind == "call" else "push"
+            for key in keys:
+                if key not in fields:
+                    problems.append(f"{rel(path)}:{line}: {method}'s {what} has no key {key!r}, read as {var}.{key} "
+                                    f"(it has: {', '.join(sorted(fields)) or 'none'})")
         for line, method, src in qml_helper_sites(text):
             if method in params:
                 check(line, method, src)
@@ -1047,8 +1087,8 @@ def rpc_page():
            "into the shell, with the files on each side and what each carries. Names are found in the code (`rpc.Handle`, `rpc.Push`, `Push`, "
            "`topics.Source`; `BackendManager.call` / `listen` / `handle` / `acquire`, and `// rpc: a, b` where a method is chosen at runtime); "
            "fields come from the daemon's own registry (`docs/dev/generated/rpc-shapes.json`, printed by `backend/tools/rpcshapes`). "
-           "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks, or passes an object literal "
-           "with a key the method's params don't have. "
+           "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks, passes an object literal "
+           "with a key the method's params don't have, or reads a key a result or push lacks in an inline callback. "
            "How the connection works: [protocol](../backend/protocol.md).", "",
            "**Fields:** `?` marks one left out when empty (`omitempty`); `{[key]: T}` is a map; "
            "a named object below the top level is listed under [Types](#types); `json.RawMessage` and `any` carry any JSON.", "",

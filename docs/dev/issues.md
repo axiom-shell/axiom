@@ -429,12 +429,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Result and push reads in inline callbacks go unchecked
-- **Where:** `scripts/gen_docs.py` (`rpc_scan`)
-- **What:** Results and pushes are read by name in callbacks (`result.name` in `SavedConfigsManager.save`, `state.repo` in `UpdatesManager`). Optional: in `(error, result) => …` and `listen("x", state => …)` arrow callbacks, a first-level `result.key` / `state.key` read could be checked against the result or push fields. Worth it only if the shapes in `rpc.md` show such reads are common enough; otherwise it moves to Deferred. Last of the contract-check plan's items; the plan file is deleted with it.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
-
 ### Singletons doing several jobs
 - **Where:** `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/core/ShellManager.qml`, `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`)
 - **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. `EdgeMenuManager` is the menus' runtime and the layouts editor's working copy. `ShellManager` is a signal bus, surface registry, modals and session actions, sits in `core/` though it's UI state, and its header still says "manages global options and signals". `LauncherCommands`' `/config` browser is about 200 lines of its own. The Bar ↔ EdgeMenu cycle (each computes the other's reserved zones) wants one owner of that geometry.
