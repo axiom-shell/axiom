@@ -250,11 +250,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### Any change of the mode to managed approves the takeover
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`onModeChanged`)
-- **What:** Picking managed while axiom runs counts as approval, which includes editing config.json by hand or a sync tool writing it, not only the card's Save that `docs/dev/compositor/config-modes.md` describes. Imports keep `x-takeover`, so only direct edits reach it. Approving from SettingsManager's save only, or saying so in the doc.
+### A managed mode loaded from a fixed config.json asks for the takeover without a notification
+- **Where:** `backend/internal/compositor/manager/manager.go` (`modeChanged`, `pickedHere`)
+- **What:** Every mode change while axiom runs sets `pickedHere`, which assumes the card's Save and so skips the approval notification. A config.json that didn't load at the start (defaults, detached) and is then fixed from outside to say managed changes the mode with no card open: the takeover waits for Allow with only the log line and the card's status to say so. Not an approval (only `AllowTakeover` records one), just a missing prompt. Telling the shell's save from the store's reload (a flag on the mode's change) would fix it.
 - **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
+- **Found:** 2026-10-26, while reviewing the close of "Any change of the mode to managed approves the takeover"
 
 ### Unreadable sway config means axiom binds over the user's keys
 - **Where:** `backend/internal/compositor/manager/runtime.go` (`_start`)
