@@ -116,6 +116,7 @@ The config, the takeover and the session must never be damaged by a rarely taken
 
 Fixed in this phase:
 - [A config.json that doesn't load at the start releases a managed compositor config](issues.md#a-configjson-that-doesnt-load-at-the-start-releases-a-managed-compositor-config)
+- [A managed mode loaded from a fixed config.json asks for the takeover without a notification](issues.md#a-managed-mode-loaded-from-a-fixed-configjson-asks-for-the-takeover-without-a-notification)
 - [Unreadable sway config means axiom binds over the user's keys](issues.md#unreadable-sway-config-means-axiom-binds-over-the-users-keys)
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads)
 - [`axiom lock` fails with no screen connected](issues.md#axiom-lock-fails-with-no-screen-connected)
