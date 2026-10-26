@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.components.reusable
+import qs.components.content.parts
 
 // The top of the axiom updates card (the section's `x-intro`): dev mode,
 // a switch for it, and the last dev build (DevManager)

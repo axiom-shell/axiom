@@ -423,12 +423,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Shared pieces holding feature logic
-- **Where:** `components/reusable/PipewireVolumeBar.qml`, `components/reusable/StyledToolTip.qml`, `components/reusable/CodeLine.qml`, `components/reusable/BaseWidget.qml`, `components/reusable/IconTextWidget.qml`
-- **What:** `reusable/` is "generic Styled* widgets, no feature logic" (AGENTS.md › Layout), but `PipewireVolumeBar` imports Pipewire and `AudioManager`, `StyledToolTip` reads `BlurManager`, `CompositorManager` and `ShellManager`, `CodeLine` uses `ClipboardManager`, and `BaseWidget` / `IconTextWidget` are bar widget bases used only under `components/bar/`. Move them (`components/bar/`, `content/parts/`) or name the exception in the rule.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### Readers read files through a service
 - **Where:** `config/Paths.qml` (`packagedVersion`), `config/I18n.qml`
 - **What:** Readers read only the data owners and each other (AGENTS.md › Layering), but `Paths.packagedVersion` calls `FileManager.read`, and `I18n` reads with both `FileManager.read` and a FileView of its own. Either the rule names `FileManager` as allowed in readers, or the reads move to a data owner.

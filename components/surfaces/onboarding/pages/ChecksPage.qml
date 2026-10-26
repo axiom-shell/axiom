@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.components.reusable
+import qs.components.content.parts
 
 // What's missing: the icon font, and the programs features use
 // (DependencyManager.tools; one is there when any of its alternatives is,

@@ -95,7 +95,7 @@ shell.qml       entrypoint: one top-level Item per surface, plus `_services` (se
 shell/          top-level pieces, one per surface
 components/
   methods/      pure singleton helpers (unit-tested)
-  reusable/     generic Styled* widgets, no feature logic
+  reusable/     generic Styled* widgets, no feature logic (StyledToolTip, used by its buttons, and the plumbing pieces StreamedLoader, BackdropRequest, ScrollMemory, SurfaceGroup read services)
   forms/        schema-driven form widgets
   content/      loadable panels by name: overlay module types, bar popouts (base/, parts/)
   hosts/        where content appears: popout/, overlay/

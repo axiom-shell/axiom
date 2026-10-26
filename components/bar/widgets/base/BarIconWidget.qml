@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.components.reusable
 
 // Base for icon + label bar modules: the inputs every module gets from
 // BarWidgetHost, orientation from the bar, and the configured colors.

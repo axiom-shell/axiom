@@ -7,6 +7,7 @@ import qs.services.core
 import qs.services.session
 import qs.services.ui
 import qs.components.reusable
+import qs.components.content.parts
 import qs.components.forms
 
 // How axiom fits into the system: self-updates, the launcher's clipboard
