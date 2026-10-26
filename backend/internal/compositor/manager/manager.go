@@ -674,7 +674,7 @@ func (m *Manager) checkLoaded(ctx context.Context) {
 
 func (m *Manager) runtimeApply(ctx context.Context) {
 	m.w.runtimeApply(ctx, m.in, func() []string { return m.liveLines(ctx) })
-	// The binds went on without the user's known: the card says so (a file
+	// The binds went on without knowing the user's: the card says so (a file
 	// mode's own problem comes first), until they're read again
 	p := m.w.problems(m.in).UnreadBinds
 	switch {
