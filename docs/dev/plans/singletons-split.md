@@ -1,7 +1,7 @@
 # Singletons doing several jobs
 
-> **Issue:** [Singletons doing several jobs](../issues.md#singletons-doing-several-jobs)
-> **Status:** proposed
+> **Issue:** Singletons doing several jobs (replaced by the items below, linked in the roadmap's [Phase 3](../roadmap.md#phase-3-qml-structure); the `KeybindManager` part: [its entry](../issues.md#keybindmanager-does-three-jobs))
+> **Status:** decided: B (2026-10-27)
 
 ### Problem
 Four services each hold several jobs, so each file is long, its header no longer describes it, and a change to one job means reading the others. Counts are from `main` at 3810528 (files = QML files outside the service that reference it).

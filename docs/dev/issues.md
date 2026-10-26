@@ -169,6 +169,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-27, while verifying the Tailscale revamp
 
+### A binds test fails with pthread_create failed in CI
+- **Where:** `backend/internal/compositor/binds/isolate_test.go` (`TestIsolatedExtractSurvivesAFileTakingAllMemory`)
+- **What:** CI on PR #124 (which touched no Go) failed with `isolate_test.go:115: got reading the binds: runtime/cgo: pthread_create failed: Resource temporarily unavailable: exit status 2`, then passed on a rerun. The test expects the child to be ended by its memory limit (an error naming `MiB`); this time the child couldn't start a thread (`EAGAIN`, likely the limit or a loaded runner's thread cap reached while the Go runtime was still starting threads) and failed with the cgo error instead. A flaky CI failure blocks an unrelated PR.
+- **Size:** trivial
+- **Found:** 2026-10-27, while finishing the singletons plan (#123)
+
 ### A dev-mode build test fails with text file busy
 - **Where:** `backend/internal/daemon/dev_test.go` (`TestDevBuild`, `fakeGo`)
 - **What:** One `scripts/check_go.sh` run failed with `dev_test.go:55: err go generate: fork/exec …/go: text file busy`, then passed on the next run with nothing changed in `daemon`. `fakeGo` writes an executable script while parallel subtests fork: a fork made while the file is still open for writing carries that descriptor, and exec of the script fails with ETXTBSY until that child execs. A possible fix: write the fake to a temp name and rename it into place, or retry the exec on ETXTBSY in the test helper.
@@ -417,9 +423,51 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Singletons doing several jobs
-- **Where:** `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/ShellManager.qml`, `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`)
-- **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. `EdgeMenuManager` is the menus' runtime and the layouts editor's working copy. `ShellManager` is a signal bus, surface registry, modals and session actions, sits in `core/` though it's UI state, and its header still says "manages global options and signals". `LauncherCommands`' `/config` browser is about 200 lines of its own. The Bar ↔ EdgeMenu cycle (each computes the other's reserved zones) wants one owner of that geometry.
+### ShellManager runs session actions through execDetached
+- **Where:** `services/ui/ShellManager.qml` (`sessionAction`), `scripts/quickshell-io-allowlist.json`
+- **What:** The session actions' `systemctl` calls use `Quickshell.execDetached`, `ShellManager`'s only Quickshell.Io use and the reason it's on the allowlist. They switch to `CommandManager.runDetached` and the file's allowlist entry goes. Item 1 of the [singletons plan](plans/singletons-split.md) (logic, its own PR).
+- **Size:** trivial
+- **Found:** 2026-10-27, while planning the singletons split (#123)
+
+### Session actions sit in ShellManager
+- **Where:** `services/ui/ShellManager.qml` (`sessionAction`, `sessionActionInfo`, `destructiveActions`)
+- **What:** The session actions are a concern of their own inside the signal bus. They move to a new `SessionManager` in `services/session/` (check the name against Quickshell's singletons first), and the 6 callers (power menu, QuickActions, launcher) are renamed. Item 2 of the [singletons plan](plans/singletons-split.md) (a move, no logic).
+- **Size:** small
+- **Found:** 2026-10-27, while planning the singletons split (#123)
+
+### The surface registry sits in ShellManager
+- **Where:** `services/ui/ShellManager.qml` (`surfaceShown`, `surfaceWindows`, `openSurfaces`, `grabPartners`, `captureWindows`, `borderOpenings`, `requiredFields`, `reportRequiredField`, `newSurfaceKey`), `docs/dev/core/shell-manager-targeting.md`
+- **What:** The registry of shown surfaces (surface windows and open surfaces, grab partners, capture windows, modals, step-aside, border openings) and screen layouts' required fields and surface keys are read by about 36 files, and the header still says "manages global options and signals". They move to a new `SurfaceManager` in `services/ui/` (not the bar panels: [screen-edge geometry](#screen-edge-geometry-is-split-over-three-services)); `ShellManager`'s header becomes "the shell's signals, link navigation and screen targeting", and `shell-manager-targeting.md` sends registry readers to the new doc section. Item 3 of the [singletons plan](plans/singletons-split.md) (a move, mechanical but wide).
+- **Size:** small
+- **Found:** 2026-10-27, while planning the singletons split (#123)
+
+### Screen-edge geometry is split over three services
+- **Where:** `services/ui/BarManager.qml` (`bars`, `edgesFor`, `barStartOn`, `surfaceEnd`, `screenEdgeOpen`, `reservedOn`, `frameLine`, `cornerLine`, `detachedGaps`), `services/ui/EdgeMenuManager.qml` (`setZone`, `zoneOn`, `reservedOn`, `frameLineOn`, `cornerLineOn`, `heldInset`), `services/ui/ShellManager.qml` (`barOn`)
+- **What:** `BarManager.barStartOn` and `surfaceEnd` add `EdgeMenuManager.zoneOn`, and `EdgeMenuManager`'s `*On` measures add the same zones to `BarManager`'s, so one edge's geometry is split over two services calling each other (22 files call one half or the other), with `ShellManager`'s bar panels and `barOn` a third piece; `BarManager` is also both the bar editor and the running bars. A new `ScreenEdgeManager` in `services/ui/` takes all of it, the function bodies moved as they are, and `BarManager` keeps only the editor. The two `reservedOn`s (bars only, menus included) get two clear names. About 28 callers, plus `docs/dev/bar/composition.md`, `docs/dev/edge-menus/hosts.md` and `docs/dev/popouts/held-off-edge.md`. Item 4 of the [singletons plan](plans/singletons-split.md) (a move).
+- **Size:** small
+- **Found:** 2026-10-27, while planning the singletons split (#123)
+
+### The edge menus' card-unit helpers sit in EdgeMenuManager
+- **Where:** `services/ui/EdgeMenuManager.qml` (`cardUnitOf`, `gapOf`, `zoomOf`), `config/EdgeMenusConfig.qml`
+- **What:** `cardUnitOf` / `gapOf` / `zoomOf` read only `OverlayConfig` and `GridPlacement`, so they're reader-shaped; they move to `EdgeMenusConfig` and their 8 callers are renamed. Item 5 of the [singletons plan](plans/singletons-split.md) (a move).
+- **Size:** trivial
+- **Found:** 2026-10-27, while planning the singletons split (#123)
+
+### EdgeMenuManager is also the layouts editor's working copy
+- **Where:** `services/ui/EdgeMenuManager.qml` (the draft, selection, `layout`, previewing, references, nudging, `showingOthers`), `services/ui/OverlayManager.qml`, `services/ui/EditsManager.qml`
+- **What:** About 550 of `EdgeMenuManager`'s 829 lines are the layouts editor's copy of `EdgeMenus` (a `ConfigDraft`, selection, the `GridEditor`, add/move/remove, references, previewing, nudging), read by 12 files. They become a non-singleton `EdgeMenuEditor` in `services/ui/`, held by `OverlayManager` as `menus` (beside `GridEditor`, and where `editTarget: "menu"` already points); `EdgeMenuManager` keeps open/pin state, anchors, claim kinds, reveal, reported frames and the `edgeMenu` IPC target. Also `EditsManager`'s lists, `docs/dev/core/editors-pattern.md`, `docs/dev/overlay/layouts-editor.md` and `services/AGENTS.md`'s non-singleton list. Item 6 of the [singletons plan](plans/singletons-split.md) (a move).
+- **Size:** small
+- **Found:** 2026-10-27, while planning the singletons split (#123)
+
+### LauncherCommands holds the /config browser
+- **Where:** `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`, `_communityOptions`, `_configShow`, `_savedConfigNames`)
+- **What:** The `/config` entry's browser is about 225 lines that read `SettingsManager`, `SavedConfigsManager` and `CommunitySetupsManager`, and nothing else in the file uses it. It moves to a new non-singleton `LauncherConfigBrowser` in `services/ui/`, held by `LauncherCommands`, which the `config` entry calls; add it to `services/AGENTS.md`'s non-singleton list and `docs/dev/features/launcher.md`. Item 7 of the [singletons plan](plans/singletons-split.md) (a move).
+- **Size:** trivial
+- **Found:** 2026-10-27, while planning the singletons split (#123)
+
+### KeybindManager does three jobs
+- **Where:** `services/compositor/KeybindManager.qml`
+- **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. It's split with backend stage 7 (`compositor.inputs`: Go reads binds and profiles from the config it owns), which changes what the reader half is, so it's designed in that stage, not by the [singletons plan](plans/singletons-split.md).
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
