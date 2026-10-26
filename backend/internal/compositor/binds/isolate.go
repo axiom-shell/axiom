@@ -57,10 +57,8 @@ func extractIsolated(ctx context.Context, o Options) (*jsonx.Object, error) {
 		case ctx.Err() != nil:
 			return nil, axerr.New(axerr.Unavailable, "reading the binds took too long, so nothing moved")
 		// Refused memory inside its collector, the runtime may crash
-		// instead (a SIGSEGV), with no word of memory; reading the
-		// files takes a few MiB, so a child that died holding a
-		// quarter of the limit died of it
-		case peakRSS(cmd.ProcessState) >= MemoryLimit/4:
+		// instead (a SIGSEGV), with no word of memory
+		case diedOfMemory(peakRSS(cmd.ProcessState), ownPeakRSS()):
 			return nil, tooBig
 		case msg != "":
 			// The command line's own error, its first line
@@ -77,6 +75,17 @@ func extractIsolated(ctx context.Context, o Options) (*jsonx.Object, error) {
 	return result, nil
 }
 
+// diedOfMemory tells a child that died of MemoryLimit from one that
+// crashed, by its peak RSS (childPeak) against this process's (ownPeak).
+// Reading the files takes a few MiB, so a child that held a quarter of the
+// limit died of it. But a child started by vfork (as Go starts every one)
+// counts the memory its parent held when it exec'd in its own peak, so a
+// peak this process may have reached itself tells nothing, and reads as a
+// crash.
+func diedOfMemory(childPeak, ownPeak int64) bool {
+	return childPeak >= MemoryLimit/4 && childPeak > ownPeak
+}
+
 // peakRSS is the most memory an ended process held, in bytes (0 if
 // unknown)
 func peakRSS(ps *os.ProcessState) int64 {
@@ -87,4 +96,14 @@ func peakRSS(ps *os.ProcessState) int64 {
 		return ru.Maxrss << 10 // KiB on Linux
 	}
 	return 0
+}
+
+// ownPeakRSS is the most memory this process has held, in bytes (0 if
+// unknown)
+func ownPeakRSS() int64 {
+	var ru syscall.Rusage
+	if syscall.Getrusage(syscall.RUSAGE_SELF, &ru) != nil {
+		return 0
+	}
+	return ru.Maxrss << 10
 }
