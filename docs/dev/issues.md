@@ -441,12 +441,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Backend packages with thin or no tests
-- **Where:** `backend/internal/compositor/edit/`, `backend/internal/ipcroute/`, `backend/internal/cli/`
-- **What:** `compositor/edit` does atomic replacement and dated backups (security rules: every check has a test) with no tests of its own. `ipcroute` tests only its parsing (33 lines for 310), not the registration race or the `qs ipc` fallback. `cli` has about 200 test lines for 1900.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### The check order is kept in three places
 - **Where:** `scripts/check_all.sh`, `scripts/dev/verify.sh`, `.github/workflows/checks.yml`
 - **What:** The same checks, in the same order, are listed by hand three times; a check added to one can be missed in the others. One list (a file the three read, or `check_all.sh` as the one CI runs) keeps them equal.

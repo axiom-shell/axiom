@@ -156,7 +156,6 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 Steps: fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`).
 
 Resolves:
-- [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
 - [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
 
 ### Phase 5: the allowlist
