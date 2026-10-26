@@ -25,6 +25,7 @@ Dependencies point one way, methods → data owners → readers → services →
 
 ### Roadmaps
 - [roadmap](roadmap.md): the phased cleanup plan (correctness, structure, parity, fit, a clean log, docs), every [issues.md](issues.md) entry linked from the phase that fixes it.
+- [plans/](plans/README.md): the designs of "needs a plan" entries while they're decided and built.
 - [backend/roadmap](backend/roadmap.md): the staged move of the services' side effects into the axiom binary, which the cleanup roadmap aligns with.
 
 ### Known issues
