@@ -19,7 +19,8 @@
       "Bash(hyprctl layers *)",
       "Bash(python3 scripts/check_doc_drift.py)",
       "Bash(python3 scripts/check_doc_drift.py *)",
-      "Bash(python3 tests/scripts/test_guard.py)"
+      "Bash(python3 tests/scripts/test_guard.py)",
+      "Bash(gh pr merge *)"
     ],
     "deny": [
       "Bash(qs -c axiom ipc call lockscreen lock*)",
