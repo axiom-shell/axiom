@@ -48,13 +48,14 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 4 | done | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. Two contract items were added after the row's first pass (strict param decoding, and the check failing on calls it can't read), so the check stops growing a shape at a time. |
 | 5 | in progress | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
 | 6 | next | Backend stage 3: brightness | Small; a first stage under the new checks. |
-| 7 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
-| 8 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
-| 9 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
-| 10 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
-| 11 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
-| 12 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
-| 13 | later | [Phase 9](#phase-9-docs-tooling-and-process) | Last, so the docs describe the final shape. |
+| 7 | later | [Backend stage 3b](backend/roadmap.md): exec (polled and streamed commands, JSON) | Right after brightness, another small stage under the new checks; ahead of stage 6 because the planned custom JSON widgets build on it, and stages 4 and 5 don't touch `CommandManager`. |
+| 8 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
+| 9 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
+| 10 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
+| 11 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
+| 12 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
+| 13 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
+| 14 | later | [Phase 9](#phase-9-docs-tooling-and-process) | Last, so the docs describe the final shape. |
 
 **Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload).
 
@@ -153,7 +154,7 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 Resolves:
 
 ### Phase 5: the allowlist
-[Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
+[Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
 
 Resolved by a stage:
 - [Self-update and the greeter installer assume git](issues.md#self-update-and-the-greeter-installer-assume-git) (stage 4)
