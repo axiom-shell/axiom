@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os/exec"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -119,6 +120,8 @@ func Source(o Options) topics.Source {
 		Name:    "updates",
 		Floor:   topics.MinInterval,
 		Default: 30 * time.Minute,
+		Request: reflect.TypeFor[request](),
+		State:   reflect.TypeFor[State](),
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
 			mu.Lock()
 			defer mu.Unlock()

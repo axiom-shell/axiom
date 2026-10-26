@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -136,6 +137,8 @@ func Source(o Options) topics.Source {
 		Name:    "system",
 		Floor:   topics.MinInterval,
 		Default: 2 * time.Second,
+		Request: reflect.TypeFor[request](),
+		State:   reflect.TypeFor[State](),
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
 			return s.sample(ctx, requests), nil
 		},

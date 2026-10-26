@@ -34,7 +34,7 @@ func (d *Daemon) newClipboard() {
 		},
 		OnChange: func() {
 			if d.server != nil {
-				d.server.BroadcastLatest("clipboard.state", clipboardState{Entries: d.clipboard.Entries()}, subscribedTo(topicClipboard))
+				pushClipboardState.Send(d.server, clipboardState{Entries: d.clipboard.Entries()}, subscribedTo(topicClipboard))
 			}
 		},
 		Log: log,

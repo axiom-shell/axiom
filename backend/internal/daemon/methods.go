@@ -9,10 +9,13 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/lock"
+	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/saved"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
@@ -29,6 +32,43 @@ const (
 	topicWayland    = "wayland"   // wayland.state, nightlight.state
 	topicClipboard  = "clipboard" // clipboard.state
 )
+
+// Pushes, each declared once with the type of its params and sent to the
+// connections subscribed to its topic. The compositor's are the jsonx
+// trees its manager builds, sent as jsonx writes them (encoding/json
+// would escape their <, > and &): opaque.
+var (
+	pushConfigChanged = rpc.Push[configChanged]{Method: "config.changed"}
+	pushConfigState   = rpc.Push[store.State]{Method: "config.state"}
+	pushSchemaChanged = rpc.Push[schemaChanged]{Method: "schema.changed"}
+	pushSchemaError   = rpc.Push[schemaError]{Method: "schema.error"}
+
+	pushSavedState = rpc.Push[saved.State]{Method: "saved.state", Latest: true}
+
+	pushDaemonState = rpc.Push[DaemonState]{Method: "daemon.state", Latest: true}
+	pushDevState    = rpc.Push[DevState]{Method: "dev.state", Latest: true}
+
+	pushCompositorState       = rpc.Push[json.RawMessage]{Method: "compositor.state", Latest: true}
+	pushCompositorApplied     = rpc.Push[json.RawMessage]{Method: "compositor.applied"}
+	pushCompositorNotify      = rpc.Push[json.RawMessage]{Method: "compositor.notify"}
+	pushCompositorBindsMerged = rpc.Push[json.RawMessage]{Method: "compositor.bindsMerged"}
+
+	pushIdleState = rpc.Push[idle.State]{Method: "idle.state", Latest: true}
+
+	pushWaylandState    = rpc.Push[waylandState]{Method: "wayland.state", Latest: true}
+	pushNightLightState = rpc.Push[nightlight.State]{Method: "nightlight.state", Latest: true}
+
+	pushClipboardState = rpc.Push[clipboardState]{Method: "clipboard.state", Latest: true}
+)
+
+// compositorPushes are the compositor's pushes by method, for its
+// manager's Push.
+var compositorPushes = map[string]rpc.Push[json.RawMessage]{
+	pushCompositorState.Method:       pushCompositorState,
+	pushCompositorApplied.Method:     pushCompositorApplied,
+	pushCompositorNotify.Method:      pushCompositorNotify,
+	pushCompositorBindsMerged.Method: pushCompositorBindsMerged,
+}
 
 // session is what the daemon knows of one connection.
 type session struct {
@@ -143,6 +183,19 @@ type configChanged struct {
 	Config   json.RawMessage `json:"config"`
 }
 
+// schemaChanged is schema.changed: the schema rebuilt in dev mode, and
+// the file the shell reads it from.
+type schemaChanged struct {
+	Hash string `json:"hash"`
+	Path string `json:"path"`
+}
+
+// schemaError is schema.error: why the schema's source didn't build.
+type schemaError struct {
+	Issues  []axerr.Issue `json:"issues"`
+	Message string        `json:"message"`
+}
+
 type setParams struct {
 	Ops      []config.Op `json:"ops"`
 	Takeover bool        `json:"takeover"`
@@ -235,7 +288,7 @@ func (d *Daemon) pushState() {
 		// A mode the compositor's manager kept but couldn't save is saved now
 		d.compositor.ConfigWritable()
 	}
-	d.server.BroadcastLatest("daemon.state", DaemonState{Compatible: ok, Reason: reason}, subscribedTo(topicDaemon))
+	pushDaemonState.Send(d.server, DaemonState{Compatible: ok, Reason: reason}, subscribedTo(topicDaemon))
 }
 
 // configPart: config.json, through the store.
@@ -250,9 +303,9 @@ func (d *Daemon) onConfigEvent(ev store.Event) {
 		if err := d.writeSnapshot(); err != nil {
 			d.opts.Log.Error("writing the config snapshot", "err", err)
 		}
-		d.server.Broadcast("config.changed", configChanged{Revision: ev.State.Revision, Config: rawJSON(ev.Config)}, subscribedTo(topicConfig))
+		pushConfigChanged.Send(d.server, configChanged{Revision: ev.State.Revision, Config: rawJSON(ev.Config)}, subscribedTo(topicConfig))
 	}
-	d.server.Broadcast("config.state", ev.State, subscribedTo(topicConfig))
+	pushConfigState.Send(d.server, ev.State, subscribedTo(topicConfig))
 }
 
 func (d *Daemon) configMethods(reg *rpc.Registry) {

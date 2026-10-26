@@ -13,6 +13,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"reflect"
 	"sync"
 	"time"
 
@@ -32,6 +33,9 @@ type Source struct {
 	// Fetch returns the state for the subscribers' requests (each as it
 	// was sent); it's marshalled as JSON and pushed when it changed
 	Fetch func(ctx context.Context, requests []json.RawMessage) (any, error)
+	// Request is the Go type a request decodes into, besides the hub's
+	// interval; State the type Fetch returns (rpc.ShapeOf reports them)
+	Request, State reflect.Type
 	// OnRefresh, when set, is told of `<name>.refresh` before the fetch
 	// it starts, for a source whose Fetch does more when asked to (it
 	// mustn't block: the hub's lock is held)

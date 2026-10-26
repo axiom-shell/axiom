@@ -677,11 +677,14 @@ def ipc_page():
 
 GO_ROOT = ROOT / "backend/internal"
 # Go: a method registered (rpc.Handle, or a helper wrapping it: `name :=
-# func(name string, …` whose body calls rpc.Handle), a push sent
-# (Broadcast, or Push through an Options func), a call into the shell
+# func(name string, …` whose body calls rpc.Handle), a push declared
+# (`pushX = rpc.Push[T]{Method: "name"`) and sent (`pushX.Send(…,
+# subscribedTo(topic))`; a receiver that isn't a declaration sends what
+# an Options func's Push names), a call into the shell
 GO_HANDLE = re.compile(r'\brpc\.Handle\(reg,\s*"([\w.]+)"')
 GO_HELPER = re.compile(r'\b(\w+) := func\(name string\b')
-GO_BROADCAST = re.compile(r'\.Broadcast(?:Latest)?\(("([\w.]+)"|\w+),.*subscribedTo\((\w+)\)')
+GO_PUSH_DECL = re.compile(r'\b(\w+)\s*=\s*rpc\.Push\[.*?\]\{Method:\s*"([\w.]+)"')
+GO_PUSH_SEND = re.compile(r'\b(\w+)\.Send\([\w.]*server,.*subscribedTo\((\w+)\)')
 GO_PUSH = re.compile(r'\bPush\("([\w.]+)"')
 GO_CALL = re.compile(r'\.Call\(ctx,\s*"([\w.]+)"')
 GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')
@@ -717,6 +720,7 @@ def rpc_scan():
     shell, and what the shell calls, listens to and answers."""
     methods, pushes, to_shell, topics = {}, {}, {}, {}
     dynamic_topic = None
+    declared, sent = {}, {}
     for path in go_sources():
         # Whole-line comments out: a doc comment's example isn't a registration
         text = GO_COMMENT_LINE.sub("", path.read_text())
@@ -736,11 +740,9 @@ def rpc_scan():
             guards = [g for g, words in (("shell only", ("fromShell(c)", "shellOnly(c)")),
                                          ("writable", ("d.writable()",))) if any(w in body for w in words)]
             methods[method] = {"go": rel(path), "guards": guards, "qml": set(), "cli": set()}
-        for m in GO_BROADCAST.finditer(text):
-            if m.group(2):
-                pushes.setdefault(m.group(2), {"go": set(), "topic": m.group(3), "qml": set()})["go"].add(rel(path))
-            else:
-                dynamic_topic = m.group(3)
+        declared.update(dict(GO_PUSH_DECL.findall(text)))
+        for m in GO_PUSH_SEND.finditer(text):
+            sent.setdefault(m.group(1), []).append((rel(path), m.group(2)))
         for m in GO_SOURCE.finditer(text):
             for suffix in POLLED_METHODS:
                 methods[f"{m.group(1)}.{suffix}"] = {"go": rel(path), "guards": [], "qml": set(), "cli": set()}
@@ -749,6 +751,12 @@ def rpc_scan():
             pushes.setdefault(m.group(1), {"go": set(), "topic": None, "qml": set()})["go"].add(rel(path))
         for m in GO_CALL.finditer(text):
             to_shell.setdefault(m.group(1), {"go": set(), "qml": set()})["go"].add(rel(path))
+    for var, sends in sent.items():
+        if var not in declared:
+            dynamic_topic = sends[0][1]
+            continue
+        for file, topic in sends:
+            pushes.setdefault(declared[var], {"go": set(), "topic": topic, "qml": set()})["go"].add(file)
     for push in pushes.values():
         if push.get("polled"):
             push["topic"] = f"{push['polled']} (polled)"
@@ -802,7 +810,7 @@ def rpc_page():
 
     out = [NOTICE, "# Shell ↔ daemon RPC", "",
            "Every JSON-RPC method the axiom daemon serves on its socket, every push it sends and every call it makes "
-           "into the shell, with the files on each side. Found by name in the code (`rpc.Handle`, `Broadcast`, `Push`, "
+           "into the shell, with the files on each side. Found by name in the code (`rpc.Handle`, `rpc.Push`, `Push`, "
            "`topics.Source`; `BackendManager.call` / `listen` / `handle` / `acquire`, and `// rpc: a, b` where a method is chosen at runtime); "
            "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks. "
            "How the connection works: [protocol](../backend/protocol.md).", "",

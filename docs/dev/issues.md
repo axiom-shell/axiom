@@ -435,12 +435,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Pushes and topics don't declare their types
-- **Where:** `backend/internal/daemon/methods.go` (the push and topic constants), `backend/internal/rpc/server.go` (`Broadcast`), `backend/internal/topics/topics.go` (`Source`)
-- **What:** `Broadcast(method, params any, …)` takes any value: some pushes are typed (`configChanged`, `clipboardState`), some `map[string]any` (`schema.error`, `schema.changed`), every `compositor.*` push pre-marshalled bytes; `topics.Source` names no request or state type. Each push should be declared once with its param type beside the topic constants and `Broadcast` calls use the declaration; `topics.Source` gains its request and state types; the `compositor.*` pushes get structs where that's cheap, opaque otherwise.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
-
 ### The generate step dumps no rpc shapes
 - **Where:** `scripts/generate.sh`, `backend/internal/daemon/methods.go` (the registrations)
 - **What:** Nothing writes the method, push and topic shapes where `scripts/gen_docs.py` can read them. A Go program (under `backend/tools/`) should build the daemon's registry without starting a daemon (registration only stores closures, so a registry-only constructor suffices; check that first: the methods are registered through `d.registry(parts)` over part constructors on a `*Daemon`, and some may need initialised fields such as `d.dev`, which could make this more than small) and print methods, pushes and topics with their field trees as JSON; `scripts/generate.sh` writes it to a gitignored file before `gen_docs.py` runs. Needs the two entries above.

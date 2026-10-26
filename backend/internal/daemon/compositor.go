@@ -74,13 +74,12 @@ func (d *Daemon) newCompositor() *manager.Manager {
 			return err
 		},
 		Push: func(method string, params any) {
-			raw := json.RawMessage(jsonx.MarshalCompact(params))
-			if method == "compositor.state" {
-				// A state: only the newest unsent one matters
-				d.server.BroadcastLatest(method, raw, subscribedTo(topicCompositor))
+			p, ok := compositorPushes[method]
+			if !ok {
+				d.opts.Log.Error("compositor: no such push", "method", method)
 				return
 			}
-			d.server.Broadcast(method, raw, subscribedTo(topicCompositor))
+			p.Send(d.server, json.RawMessage(jsonx.MarshalCompact(params)), subscribedTo(topicCompositor))
 		},
 		// This image, even once the file it came from is replaced
 		Bin:  "/proc/self/exe",

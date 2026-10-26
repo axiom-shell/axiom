@@ -187,7 +187,7 @@ func (m *devMode) setLogLevel(on bool) {
 
 func (m *devMode) push() {
 	if m.d.server != nil {
-		m.d.server.BroadcastLatest("dev.state", m.State(), subscribedTo(topicDaemon))
+		pushDevState.Send(m.d.server, m.State(), subscribedTo(topicDaemon))
 	}
 }
 
@@ -471,7 +471,7 @@ func (d *Daemon) rebuildSchema() {
 	data, err := tree.BuildSchema(d.opts.Tree)
 	if err != nil {
 		d.opts.Log.Error("the schema source doesn't build: keeping the last one", "err", err)
-		d.server.Broadcast("schema.error", map[string]any{"message": err.Error(), "issues": axerr.IssuesOf(err)}, subscribedTo(topicConfig))
+		pushSchemaError.Send(d.server, schemaError{Issues: axerr.IssuesOf(err), Message: err.Error()}, subscribedTo(topicConfig))
 		return
 	}
 	hash := buildinfo.SchemaHash(data)
@@ -496,6 +496,6 @@ func (d *Daemon) rebuildSchema() {
 	d.setSchema(data, hash)
 	d.dev.push() // whether turning it off leaves the config read-only
 	d.opts.Log.Info("rebuilt the schema", "hash", hash)
-	d.server.Broadcast("schema.changed", map[string]string{"hash": hash, "path": d.runtime.File(SchemaFile)}, subscribedTo(topicConfig))
+	pushSchemaChanged.Send(d.server, schemaChanged{Hash: hash, Path: d.runtime.File(SchemaFile)}, subscribedTo(topicConfig))
 	d.store.Reschema(config.V2Pipeline{S: schema.New(parsed)})
 }
