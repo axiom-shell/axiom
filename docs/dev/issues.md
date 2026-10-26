@@ -219,6 +219,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while debugging the screenshot crash with a popout open
 
+### A screenshot under Hyprland timed out waiting for its frame
+- **Where:** `services/apps/ScreenshotManager.qml` (`_watchdog`, `frameArrived`), `components/surfaces/screenshot/ScreenshotPickerWindow.qml`
+- **What:** The live shell on Hyprland logged `The compositor sent no picture of the screen.` once (2026-10-26), with no other warning: a picker's frame didn't arrive within the watchdog's 3 s. Hyprland has `supports.outputCapture`, so the frame is Quickshell's screencopy, not grim's. Not reproduced; what was captured, and whether a slow first frame (a large or several outputs) or a lost one, isn't known yet.
+- **Size:** small
+- **Found:** 2026-10-26, while working on the shell–daemon contract check (in the live log)
+
 ### WorkspaceStrip's Grid briefly has more items than cells
 - **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml` (the `Grid`, `id: layout`)
 - **What:** The log shows `Grid contains more visible items (2) than rows*columns (1)` after a reload. `shown` counts `activeStrip.visible`, so for a moment the Grid's `rows`/`columns` lag a child becoming visible; likely harmless (the next layout pass fits), but it warns.

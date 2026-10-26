@@ -231,6 +231,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [`BlurManager.paused` warns on every reload](issues.md#blurmanagerpaused-warns-on-every-reload)
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
+- [A screenshot under Hyprland timed out waiting for its frame](issues.md#a-screenshot-under-hyprland-timed-out-waiting-for-its-frame)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape.
