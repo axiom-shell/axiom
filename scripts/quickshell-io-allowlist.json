@@ -77,7 +77,7 @@
       "Process",
       "execDetached"
     ],
-    "services/core/ShellManager.qml": [
+    "services/ui/ShellManager.qml": [
       "execDetached"
     ],
     "services/core/StateManager.qml": [

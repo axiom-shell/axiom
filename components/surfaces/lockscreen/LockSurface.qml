@@ -6,6 +6,7 @@ import qs.services.core
 import qs.services.compositor
 import qs.components.content.parts
 import qs.components.surfaces.screenlayout
+import qs.services.ui
 
 // What one screen shows while the built-in lock is up (the content of a
 // WlSessionLockSurface, see shell/Lockscreen.qml), or in the layouts

@@ -5,7 +5,6 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.services.core
-import qs.services.apps
 
 /*
  * The night light (the NightLight section): warmer colors, set by the

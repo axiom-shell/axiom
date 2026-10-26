@@ -3,12 +3,12 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
+import qs.services.ui
 
 // The keybinds as a read-only cheat sheet (KeybindManager, as Hyprland
 // reports them), sections in as many columns as fit, with a search field of

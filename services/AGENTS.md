@@ -6,12 +6,14 @@ One `pragma Singleton QtObject` per domain, named `*Manager`: state and every si
 
 ### Folders
 Each folder is its own QML module (`import qs.services.<folder>`); a file sees its own folder's types bare and imports the others it uses (cycles between folders are fine). A new service goes in the folder its domain fits:
-- `core/`: what everything else stands on: `ConfigManager` and `ConfigDraft`, `ThemeManager`, the daemon bridge (`BackendManager`) and its funnels (`CommandManager`, `FileManager`, `StateManager`, `IpcTarget`, `ConsumerRegistry`), `SecretsManager`, `ShellManager`, saved configs, dev and self-update.
+- `core/`: what everything else stands on: `ConfigManager` and `ConfigDraft`, `ThemeManager`, the daemon bridge (`BackendManager`) and its funnels (`CommandManager`, `FileManager`, `StateManager`, `IpcTarget`, `ConsumerRegistry`), `SecretsManager`, `DailySchedule`, saved configs, dev and self-update.
 - `compositor/`: `CompositorManager`, each backend's `<Prefix>*` files (`check_structure.py` keys its backend rules on this folder), monitors, binds, layers, focus grabs.
 - `session/`: locking, auth, greeter and greetd, onboarding, polkit, idle.
-- `system/`: hardware and OS data: audio, network, bluetooth, battery, brightness, media, notifications, clipboard, updates.
-- `ui/`: state of the shell's own surfaces and their editors: bars, popouts, overlay, edge menus, docks, launcher, settings, wallpaper, blur.
-- `apps/`: features holding their own data and integrations with outside services: calendar, chat, notes, todos, timers, weather, screenshots, community setups, Claude usage, Tailscale.
+- `system/`: the machine and the desktop basics every user has: audio, network, bluetooth, battery, brightness, media, notifications, clipboard, night light, updates.
+- `ui/`: state of the shell's own surfaces and their editors: `ShellManager`, bars, popouts, overlay, edge menus, docks, launcher, settings, wallpaper, blur.
+- `apps/`: optional features and integrations with outside tools or services: calendar, chat, notes, todos, timers, weather, screenshots, community setups, Claude usage, Tailscale.
+
+Services are singletons, but a folder also holds the **non-singleton parts** its services build: a type with no `pragma Singleton`, named for what it is (never `*Manager`), whose file comment says who owns it. They are `ConfigDraft` (each editor's working copy), `ConsumerRegistry` (each polled service's consumers), `IpcTarget` (each IPC target) and `DailySchedule` (night light's and the theme's schedules) in `core/`; `FocusGrab` and `HyprlandGrab` in `compositor/`; `GridEditor`, `ScreenLayoutEditor` and `LauncherCommands` (`LauncherManager`'s command list) in `ui/`; `ChatRequest`, `CommunityFetch` and `WeatherSource` in `apps/`. A new one goes beside the service that owns it.
 
 When a roadmap stage empties a service, fold or delete it in that stage's change (`docs/dev/backend/roadmap.md`), not here.
 

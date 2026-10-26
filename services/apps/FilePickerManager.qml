@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell.Io
 
 import qs.config
-import qs.services.core
+import qs.services.ui
 
 // The desktop's file picker (scripts/pick_path.py: xdg-desktop-portal, else
 // zenity or kdialog), for a file or a folder: config import, and the

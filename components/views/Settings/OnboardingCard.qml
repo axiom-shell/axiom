@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services.core
 import qs.services.session
 import qs.components.reusable
+import qs.services.ui
 
 // The General section's first card (the section's `x-card`): the
 // first-time setup (OnboardingManager), to run again

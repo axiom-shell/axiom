@@ -7,6 +7,7 @@ import Quickshell
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.ui
 
 /**
  * The window switcher (Alt+Tab). The compositor reports each step, pick

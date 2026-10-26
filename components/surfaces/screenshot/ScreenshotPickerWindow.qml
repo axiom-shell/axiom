@@ -6,9 +6,9 @@ import Quickshell.Wayland
 
 import qs.components.reusable
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.services.apps
+import qs.services.ui
 
 // One screen's screenshot picker: the screen frozen (one ScreencopyView
 // frame, or grim's picture of it where Quickshell can't capture it

@@ -2,11 +2,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services.core
 import qs.services.session
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
+import qs.services.ui
 
 // Power buttons for the lock screen and the greeter (x-hosts: those two
 // only): suspend, restart and shut down, nothing else (never log out or

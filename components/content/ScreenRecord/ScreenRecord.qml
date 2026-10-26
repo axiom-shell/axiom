@@ -10,6 +10,7 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
+import qs.services.ui
 
 // Screen recording (ScreenshotManager, with wf-recorder): record a region
 // (picked as for a screenshot) or the whole focused screen (the overlay

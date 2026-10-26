@@ -1,10 +1,10 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.components.reusable
 import qs.components.views.Layouts
+import qs.services.ui
 
 // The overlay's pages on one screen: a view per Overlay.views entry, the
 // current one and its neighbours loaded, sliding between them.

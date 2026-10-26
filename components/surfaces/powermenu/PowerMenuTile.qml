@@ -3,7 +3,7 @@ import QtQuick
 
 import qs.components.reusable
 import qs.config
-import qs.services.core
+import qs.services.ui
 
 // One power menu action. Destructive actions highlight in the error
 // colour; armed (waiting for the confirming press) the tile fills with it

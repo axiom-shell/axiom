@@ -5,7 +5,6 @@ import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable

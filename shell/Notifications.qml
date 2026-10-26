@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Services.Notifications
 import Quickshell.Wayland
 
-import qs.services.core
 import qs.services.compositor
 import qs.services.system
 import qs.services.ui

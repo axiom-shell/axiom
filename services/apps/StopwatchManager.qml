@@ -5,6 +5,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.system
+import qs.services.ui
 
 // One one-off timer and one stopwatch, for every Stopwatch widget and
 // module, both able to run at once. Their states (StopwatchClock's) hold

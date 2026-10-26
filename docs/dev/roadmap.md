@@ -132,13 +132,12 @@ Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the
 Each file has one job and sits where its folder's rule says. Moves and splits keep each service's public API, so widgets don't change; a service a backend stage empties is folded in that stage instead.
 
 Steps, roughly in this order (moves first, each its own PR):
-1. Reword `services/AGENTS.md` › Folders (`system/`: the machine and the desktop basics every user has; `apps/`: optional features and integrations with outside tools or services); `DailySchedule` to `core/`; `ShellManager` to `ui/`; document the non-singleton parts.
+1. Done: Reword `services/AGENTS.md` › Folders (`system/`: the machine and the desktop basics every user has; `apps/`: optional features and integrations with outside tools or services); `DailySchedule` to `core/`; `ShellManager` to `ui/`; document the non-singleton parts.
 2. Move the reusable pieces holding feature logic to `components/bar/` or `content/parts/`.
 3. Split `ShellManager` by concern and `EdgeMenuManager` into its runtime and its editor (the `KeybindManager` split, into its reader, a `KeybindEditor` and page state, goes with backend stage 7); extract `LauncherCommands`' `/config` browser; give the bars' and edge menus' reserved zones one owner.
 4. A shared ticker part for Stopwatch and Pomodoro; `valueAt` into a methods helper with a test row.
 
 Resolves:
-- [Service folders hold misplaced and undocumented files](issues.md#service-folders-hold-misplaced-and-undocumented-files)
 - [Shared pieces holding feature logic](issues.md#shared-pieces-holding-feature-logic)
 - [Singletons doing several jobs](issues.md#singletons-doing-several-jobs)
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)

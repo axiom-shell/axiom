@@ -5,6 +5,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.system
+import qs.services.ui
 
 // The pomodoro timer: one for every widget and module, run here so it
 // keeps time with nothing showing it. The state (PomodoroCycle's) holds an

@@ -7,7 +7,6 @@ import Quickshell.Widgets
 
 import qs.components.reusable
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.services.session
 import qs.services.ui

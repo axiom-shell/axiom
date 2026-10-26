@@ -6,7 +6,6 @@ import Quickshell.Io
 import qs.config
 import qs.components.methods
 import qs.services.core
-import qs.services.apps
 
 /*
  * What changes the look on its own. ThemeManager shows it (activeTheme,

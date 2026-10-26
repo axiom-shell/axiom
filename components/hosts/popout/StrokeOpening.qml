@@ -3,8 +3,8 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services.core
 import qs.components.methods
+import qs.services.ui
 
 // A stretch of a stroke a surface covers, left open there, whatever draws
 // that stroke: every host publishes its openings through this, so one

@@ -3,7 +3,6 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
