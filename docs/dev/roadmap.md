@@ -115,7 +115,6 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its two entries are linked here and fixed there.
 
 Fixed in this phase:
-- [The shell reads the default compositor mode while config.json doesn't load](issues.md#the-shell-reads-the-default-compositor-mode-while-configjson-doesnt-load)
 - [Unreadable sway config means axiom binds over the user's keys](issues.md#unreadable-sway-config-means-axiom-binds-over-the-users-keys)
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads)
 - [`axiom lock` fails with no screen connected](issues.md#axiom-lock-fails-with-no-screen-connected)
@@ -229,6 +228,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [Qt text-input warnings under sway and niri](issues.md#qt-text-input-warnings-under-sway-and-niri)
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
 - [`BlurManager.paused` warns on every reload](issues.md#blurmanagerpaused-warns-on-every-reload)
+- [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape.

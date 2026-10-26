@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The polkit agent fails to register on reloads
+- **Where:** `services/session/PolkitManager.qml` (`_registerCheck`)
+- **What:** In the live session the log shows `[PolkitManager] Could not register as the polkit agent` with no other agent named, on most reloads (6 in one session's `scripts/log.sh --all`) and at the start, where Quickshell logs `quickshell.service.polkit.listener` `failed to register listener: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: An authentication agent already exists for the given subject`. `_probe` finds no other agent, so possibly the previous generation's listener (or one left by the daemon's restart) still holds the subject. Not looked into: next step, check `busctl` for the agent's owner across a reload.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while reading the log for the unloaded config's compositor mode
+
 ### Running it unattended's gate can't get `verify ok` on a committed branch
 - **Where:** `docs/dev/roadmap.md` (Running it unattended, step 5), `scripts/dev/verify.sh`
 - **What:** Step 5 tells the leader to run `scripts/dev/verify.sh` on the pushed branch and expect `verify ok`, but verify.sh checks changes since HEAD, so on a clean committed branch it prints only `nothing changed since HEAD`. The leader used `scripts/dev/verify.sh --all` (`all checks passed`) instead; the step should say so.
@@ -121,12 +127,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum, and the card's rows below it are pushed out of view while it's open.
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
-
-### The shell reads the default compositor mode while config.json doesn't load
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`mode`, `status`)
-- **What:** While config.json doesn't load at the start, the daemon's compositor manager runs on the file's mode (`Store.Takeovers`; its `compositor.state` push says `mode: "managed"`), but the shell's `mode` is `CompositorConfig.mode`, the defaults' `detached`, so `status` says `runtime` and the Compositor card, `KeybindManager` and `MonitorManager` treat a loaded managed config as the runtime layer until the file is fixed. Saves are blocked meanwhile, so nothing is written from it. Reading the daemon's pushed `mode` while `ConfigManager.savesBlocked` would match them.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
 
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
