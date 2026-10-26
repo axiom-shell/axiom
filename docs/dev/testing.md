@@ -58,6 +58,7 @@ How to look at, exercise and debug the live shell without breaking the user's se
 - For quick JS checks, run a scratch `tst_x.qml` with `QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input <dir>`. The dev scripts find Qt 6's tools through `scripts/lib/qt_paths.sh` (`$QT_BIN`, else `qmake6 -query`, else `/usr/lib/qt6/bin`; Fedora's are in `/usr/lib64/qt6/bin`). The plain `qml` tool prints nothing.
 
 ### CI
+- `.github/workflows/checks.yml` runs on pull requests only (a PR's run checks the merge commit that lands; merges are serial), plus by hand (`gh workflow run checks.yml --ref <branch>`) for a full run. A new push cancels the PR's older run, and the `go` job skips itself when the PR touches nothing the binary is built or tested from (its first step lists the paths). CI confirms; `scripts/dev/verify.sh --all` before the first push is what finds failures.
 - The `checks` job's summary page (`scripts/ci_summary.py`) shows each quick check's result and its findings as tables, linked to the file and line: structure, the shell against the daemon's methods (`gen_docs.py`), docs against the code, translations. On a pull request it adds the docs describing the files it changes (`check_doc_drift.py --changed`), then the doc drift table. It reports only; the steps fail.
 - To see it locally: `scripts/ci_summary.py --changed-from main`.
 - Doc drift only warns, on purpose: it counts commits, not changed behaviour, and failing on it would teach touching docs to reset the count.

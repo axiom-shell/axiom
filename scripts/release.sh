@@ -70,12 +70,15 @@ for f in install.sh scripts/*.sh scripts/lib/*.sh; do bash -n "$f"; done
 python3 -m py_compile scripts/*.py
 python3 scripts/check_i18n.py >/dev/null || info "check_i18n.py reported missing translations (not blocking)"
 
+# Checks run on pull requests, not on main: a release asks for a full run
+# on the commit it tags (gh workflow run checks.yml --ref main)
 if command -v gh >/dev/null; then
   ci=$(gh run list --commit "$(git rev-parse HEAD)" --workflow checks.yml --json status,conclusion \
     --jq '.[0] | if . == null then "none" elif .status != "completed" then "pending" else .conclusion end' 2>/dev/null || echo unknown)
   case "$ci" in
   success) info "CI passed on this commit" ;;
   failure | cancelled) die "CI $ci on this commit" ;;
+  none) die "CI hasn't run on this commit: gh workflow run checks.yml --ref main, then release once it passes" ;;
   *) info "CI status: $ci" ;;
   esac
 fi

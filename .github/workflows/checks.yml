@@ -1,13 +1,19 @@
 name: Checks
 
+# Pull requests only: a PR's run checks its merge commit, which is what
+# lands on main (merges are serial), so main isn't checked again. Run by hand
+# (Actions → Checks → Run workflow) for a full run on any branch
 on:
-  # Pushes run only on main (after a merge); branches are checked by their PR
-  push:
-    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+# A new push to a PR cancels its older run
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   checks:
@@ -123,17 +129,17 @@ jobs:
         run: scripts/run_tests.sh
 
   # backend/ (the axiom binary): generated files, gofmt, vet, staticcheck,
-  # tests under -race, govulncheck and the release cross-builds. Arch's go
-  # and gcc (for -race), like the other jobs' containers; Qt and Quickshell
-  # to record the shared fixtures the tests replay (from SchemaValidation)
+  # tests under -race and govulncheck (the release cross-builds are
+  # release.yml's). Arch's go and gcc (for -race), like the other jobs'
+  # containers; Qt and Quickshell to record the shared fixtures the tests
+  # replay (from SchemaValidation). Skipped when a PR changes nothing the
+  # binary is built or tested from
   go:
     runs-on: ubuntu-latest
     container: archlinux:latest
     steps:
-      - name: Install tools
-        run: |
-          pacman -Syu --noconfirm --needed git go gcc python qt6-declarative quickshell lua
-          go version
+      - name: Install git
+        run: pacman -Syu --noconfirm --needed git
 
       - name: Checkout
         env:
@@ -148,14 +154,39 @@ jobs:
           git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q origin "$GITHUB_SHA"
           git checkout -q FETCH_HEAD
 
+      # What the binary is built or tested from: backend/, the schema and
+      # the files it embeds (config/), the JS helpers and tests the shared
+      # fixtures are recorded from, and the scripts building them (the same
+      # list as verify.sh's, a little wider). A PR's HEAD is its merge
+      # commit: HEAD^1 is the base
+      - name: Does the change reach the binary?
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD |
+            grep -qE '^(backend/|config/(schema|json)/|components/methods/|tests/(Shared|RepoFiles|tst_)|scripts/(check_go|generate|qml_modules|run_tests)\.|scripts/dev/fixtures\.py|\.github/workflows/)'; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nothing the binary is built or tested from changed: skipping the Go checks"
+          fi
+
+      - name: Install tools
+        if: steps.scope.outputs.run
+        run: |
+          pacman -S --noconfirm --needed go gcc python qt6-declarative quickshell lua
+          go version
+
       # GOTOOLCHAIN=local: build with the container's go, never a download
       - name: Go checks
+        if: steps.scope.outputs.run
         env:
           GOTOOLCHAIN: local
         run: scripts/check_go.sh --ci
 
       # The cases the JS helpers and the axiom binary share (both replay them)
       - name: Shared fixtures are indexed
+        if: steps.scope.outputs.run
         run: python3 scripts/dev/fixtures.py check
 
   # The script tests (the slowest checks) and the shell script lint, beside
