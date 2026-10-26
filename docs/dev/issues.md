@@ -412,12 +412,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### A missing embedded schema counts as this binary's
-- **Where:** `backend/internal/daemon/daemon.go` (`setSchema`)
-- **What:** `matches` starts true and stays true when `assets.Read` fails, so a binary built without its assets treats any schema as its own and stays writable: it should fail closed.
-- **Size:** trivial
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### The shell–daemon contract is checked by name only
 - **Where:** `scripts/gen_docs.py` (the rpc cross-check), `backend/internal/daemon/methods.go` (params and results)
 - **What:** `rpc.md`'s check matches method names between the two sides by regex; params and results are Go structs on one side and hand-read fields on the other, and nothing checks they agree (only the manual protocol bump in `config/json/backend.json`). Generating each method's fields from the `rpc.Handle` registrations into `rpc.md`, and checking the QML call sites' keys against them, would catch a renamed field.
