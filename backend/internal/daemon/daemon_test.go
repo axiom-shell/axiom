@@ -22,9 +22,10 @@ import (
 
 // testDaemon is a daemon on scratch folders, running no shell.
 type testDaemon struct {
-	env    map[string]string
-	socket string
-	dirs   xdg.Dirs
+	env     map[string]string
+	socket  string
+	dirs    xdg.Dirs
+	runtime xdg.Runtime
 }
 
 func (td *testDaemon) getenv(k string) string { return td.env[k] }
@@ -32,6 +33,14 @@ func (td *testDaemon) getenv(k string) string { return td.env[k] }
 // startDaemon runs a daemon until the test ends. isShell, when set,
 // replaces the check that a peer is the shell.
 func startDaemon(t *testing.T, isShell func(int) bool, sources ...topics.Source) *testDaemon {
+	t.Helper()
+	td := newTestDaemon(t)
+	td.start(t, isShell, sources...)
+	return td
+}
+
+// newTestDaemon is a daemon's scratch folders, not yet running.
+func newTestDaemon(t *testing.T) *testDaemon {
 	t.Helper()
 	// Short: the socket path must fit a sockaddr_un
 	runtimeDir, err := os.MkdirTemp("", "ax")
@@ -54,12 +63,18 @@ func startDaemon(t *testing.T, isShell func(int) bool, sources ...topics.Source)
 	if err != nil {
 		t.Fatal(err)
 	}
+	td.runtime = rt
 	td.socket = rt.Socket()
+	return td
+}
 
+// start runs the daemon until the test ends, once its socket is there.
+func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...topics.Source) {
+	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() {
-		done <- Run(ctx, Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources})
+		done <- Run(ctx, td.options(isShell, sources...))
 	}()
 	t.Cleanup(func() {
 		cancel()
@@ -74,8 +89,8 @@ func startDaemon(t *testing.T, isShell func(int) bool, sources ...topics.Source)
 	})
 	deadline := time.Now().Add(10 * time.Second)
 	for {
-		if _, err := os.Stat(td.socket); err == nil {
-			return td
+		if info, err := os.Lstat(td.socket); err == nil && info.Mode()&os.ModeSocket != 0 {
+			return
 		}
 		select {
 		case err := <-done:
@@ -87,6 +102,10 @@ func startDaemon(t *testing.T, isShell func(int) bool, sources ...topics.Source)
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+}
+
+func (td *testDaemon) options(isShell func(int) bool, sources ...topics.Source) Options {
+	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources}
 }
 
 // connect dials the daemon and says hello as client; the connection's

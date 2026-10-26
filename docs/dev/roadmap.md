@@ -116,7 +116,6 @@ The config, the takeover and the session must never be damaged by a rarely taken
 
 Fixed in this phase:
 - [`axiom lock` fails with no screen connected](issues.md#axiom-lock-fails-with-no-screen-connected)
-- [Some backend security checks have no tests](issues.md#some-backend-security-checks-have-no-tests)
 - [Small backend error and robustness gaps](issues.md#small-backend-error-and-robustness-gaps)
 - [The shell stops reconnecting after a failed attempt](issues.md#the-shell-stops-reconnecting-after-a-failed-attempt)
 - [Schema build gaps](issues.md#schema-build-gaps)
