@@ -147,6 +147,9 @@ func TestShapeOf(t *testing.T) {
 		{"slice of any", reflect.TypeFor[[]any](), "[opaque]"},
 		{"bytes", reflect.TypeFor[[]byte](), "string"},
 		{"map", reflect.TypeFor[map[string]bool](), "map[bool]"},
+		{"map by number", reflect.TypeFor[map[int]bool](), "map[bool]"},
+		{"map by text", reflect.TypeFor[map[shapeText]bool](), "map[bool]"},
+		{"map by struct", reflect.TypeFor[map[struct{}]bool](), "opaque"},
 		{"recursive", reflect.TypeFor[shapeList](), "{next?:opaque,v:number}"},
 		{"every field rule", reflect.TypeFor[shapeAll](), "{plain:string,omit?:number,zero?:bool,Untagged:number,quoted:string," +
 			"ptr:string,bytes:string,array:[number],list:[{a:string}],map:map[[number]],nested:{a:string},raw:opaque,any:opaque," +

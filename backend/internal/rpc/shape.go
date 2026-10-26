@@ -77,6 +77,15 @@ func shapeOf(t reflect.Type, walking map[reflect.Type]bool) Shape {
 		elem := shapeOf(t.Elem(), walking)
 		return Shape{Kind: "array", Type: name, Elem: &elem}
 	case reflect.Map:
+		// keys are strings, integers or TextMarshalers, else it doesn't encode
+		switch t.Key().Kind() {
+		case reflect.String, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		default:
+			if !t.Key().Implements(reflect.TypeFor[encoding.TextMarshaler]()) {
+				return Shape{Kind: "opaque", Type: name}
+			}
+		}
 		walking[t] = true
 		defer delete(walking, t)
 		elem := shapeOf(t.Elem(), walking)
