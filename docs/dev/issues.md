@@ -435,12 +435,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### rpc.md shows no shapes and call sites' keys go unchecked
-- **Where:** `scripts/gen_docs.py` (`rpc_scan`), `docs/dev/backend/protocol.md` (Changing the protocol)
-- **What:** `rpc_scan` matches method names only, and `rpc.Handle` decodes with `json.Unmarshal`, which ignores unknown fields: renaming `"zones"` to `"zone"` in `TimeZoneManager` gives the daemon an empty list with no error. From the shapes dump, `rpc.md` should list each method's params and result fields and each push's fields, and a `BackendManager.call` / `notify` whose params are an object literal should fail the check on a key the params don't have (`{}` and `null` pass); non-literal call sites are listed as unchecked in `rpc.md`, and protocol.md › Changing the protocol says what's checked. Needs the entry above.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
-
 ### Result and push reads in inline callbacks go unchecked
 - **Where:** `scripts/gen_docs.py` (`rpc_scan`)
 - **What:** Results and pushes are read by name in callbacks (`result.name` in `SavedConfigsManager.save`, `state.repo` in `UpdatesManager`). Optional: in `(error, result) => …` and `listen("x", state => …)` arrow callbacks, a first-level `result.key` / `state.key` read could be checked against the result or push fields. Worth it only if the shapes in `rpc.md` show such reads are common enough; otherwise it moves to Deferred. Last of the contract-check plan's items; the plan file is deleted with it.

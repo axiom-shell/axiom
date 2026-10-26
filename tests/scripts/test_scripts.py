@@ -826,6 +826,52 @@ class KnownIssues(unittest.TestCase):
         self.assertNotIn("known", lines[6])
 
 
+class RpcShapes(unittest.TestCase):
+    """scripts/gen_docs.py checks the keys of object-literal params against
+    the daemon's shapes (rpc-shapes.json)."""
+
+    SHAPE = {"kind": "object", "fields": [
+        {"name": "zones", "shape": {"kind": "array", "elem": {"kind": "string"}}},
+        {"name": "opts", "omitempty": True, "shape": {"kind": "object", "type": "x.Opts", "fields": [
+            {"name": "on", "shape": {"kind": "bool"}}]}},
+        {"name": "extra", "shape": {"kind": "map", "elem": {"kind": "number"}}}]}
+
+    def test_call_sites(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_call_sites
+        qml = "\n".join([
+            "function f() {",
+            '  BackendManager.call("tz.offsets", {',
+            "    zones: list, // a comment, with a comma",
+            '    "opts": {on: `${a}, b`}',
+            "  }, (e, r) => g(r));",
+            '  BackendManager.notify("x.y");',
+            "  BackendManager.call(method, params);",
+            '  root._send(JsonRpc.request(id, "daemon.hello", {pid: 1}));',
+            "}",
+        ])
+        self.assertEqual([(line, method, src.split("\n")[0]) for line, method, src in qml_call_sites(qml)],
+                         [(2, "tz.offsets", "{"), (6, "x.y", ""), (7, None, "params"), (8, "daemon.hello", "{pid: 1}")])
+
+    def test_unknown_keys_fail(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import shape_key_problems
+        self.assertEqual(shape_key_problems("{zones, opts: {on: true}, extra: {any: 1}}", self.SHAPE, "m"), [])
+        self.assertEqual(shape_key_problems("{zone: [], opts: {off: 1}}", self.SHAPE, "m"),
+                         ["m has no key 'zone' (it takes: extra, opts, zones)",
+                          "m.opts has no key 'off' (it takes: on)"])
+        # A spread or a computed key can't be checked
+        self.assertEqual(shape_key_problems("{...base, nope: 1}", self.SHAPE, "m"), [])
+        self.assertEqual(shape_key_problems("{[k]: 1}", self.SHAPE, "m"), [])
+
+    def test_render(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import render_shape
+        types = {}
+        self.assertEqual(render_shape(self.SHAPE, types), "{zones: [string], opts?: x.Opts, extra: {[key]: number}}")
+        self.assertEqual(list(types), ["x.Opts"])
+
+
 class CheckSizes(unittest.TestCase):
     """scripts/check_sizes.py finds sizes written as numbers outside the bars."""
 

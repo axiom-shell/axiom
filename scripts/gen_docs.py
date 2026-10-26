@@ -717,6 +717,161 @@ def _segment(text, start, ends):
     return text[start: stop if close < 0 else min(stop, close)]
 
 
+# ------------------------------------------------------- JS call arguments
+# Enough of JavaScript's syntax to split a call's arguments and an object
+# literal's members: strings, template strings, comments and nesting.
+_CLOSE = {"(": ")", "[": "]", "{": "}"}
+
+
+def _skip_string(text, i):
+    """The index past the string starting at text[i]."""
+    quote, i = text[i], i + 1
+    while i < len(text) and text[i] != quote:
+        if text[i] == "\\":
+            i += 1
+        elif quote == "`" and text.startswith("${", i):
+            i = _skip_balanced(text, i + 1)
+            continue
+        i += 1
+    return i + 1
+
+
+def _comment_end(text, i):
+    """The index past the comment starting at text[i]."""
+    line = text.startswith("//", i)
+    end = text.find("\n" if line else "*/", i + 2)
+    return len(text) if end < 0 else end + (0 if line else 2)
+
+
+def _skip_balanced(text, i):
+    """The index past the bracket opened at text[i] and its contents."""
+    stack = [_CLOSE[text[i]]]
+    i += 1
+    while i < len(text) and stack:
+        c = text[i]
+        if c in "\"'`":
+            i = _skip_string(text, i)
+            continue
+        if text.startswith("//", i) or text.startswith("/*", i):
+            i = _comment_end(text, i)
+            continue
+        if c in _CLOSE:
+            stack.append(_CLOSE[c])
+        elif stack and c == stack[-1]:
+            stack.pop()
+        i += 1
+    return i
+
+
+def split_top(text, start, end):
+    """text[start:end] split at its top-level commas, each part stripped
+    (an empty last part, after a trailing comma, dropped)."""
+    parts, i, last = [], start, start
+    while i < end:
+        c = text[i]
+        if c in "\"'`":
+            i = _skip_string(text, i)
+        elif c in _CLOSE:
+            i = _skip_balanced(text, i)
+        elif text.startswith("//", i) or text.startswith("/*", i):
+            i = _comment_end(text, i)
+        elif c == ",":
+            parts.append(text[last:i])
+            i, last = i + 1, i + 1
+        else:
+            i += 1
+    parts.append(text[last:end])
+    parts = [_strip_comments(p).strip() for p in parts]
+    return parts[:-1] if parts and not parts[-1] else parts
+
+
+def _strip_comments(src):
+    return re.sub(r"^\s*(//[^\n]*\n|/\*.*?\*/)\s*", "", src, flags=re.S)
+
+
+def call_args(text, open_paren):
+    """The arguments of the call whose ( is at text[open_paren]."""
+    end = _skip_balanced(text, open_paren)
+    return split_top(text, open_paren + 1, end - 1)
+
+
+JS_KEY = re.compile(r'^(?:(["\'])([^"\']+)\1|([\w$]+))\s*(:|\()')
+JS_SHORTHAND = re.compile(r"^[\w$]+$")
+
+
+def object_members(src):
+    """An object literal's members as (key, value source), or None when one
+    can't be named statically (a spread, a computed key)."""
+    members = []
+    for part in split_top(src, 1, len(src) - 1):
+        if JS_SHORTHAND.match(part):
+            members.append((part, part))
+            continue
+        m = JS_KEY.match(part)
+        if not m:
+            return None
+        members.append((m.group(2) or m.group(3), part[m.end():].strip() if m.group(4) == ":" else ""))
+    return members
+
+
+def shape_key_problems(src, shape, where):
+    """Keys of the object literal src that shape (rpc-shapes.json) has no
+    field for, nested literals included; [] when it's not an object
+    literal or the shape takes any keys."""
+    if not src.startswith("{") or shape["kind"] != "object":
+        return []
+    members = object_members(src)
+    if members is None:
+        return []
+    fields = {f["name"]: f["shape"] for f in shape.get("fields", [])}
+    problems = []
+    for key, value in members:
+        if key not in fields:
+            known = ", ".join(sorted(fields)) or "none"
+            problems.append(f"{where} has no key {key!r} (it takes: {known})")
+        else:
+            problems += shape_key_problems(value, fields[key], f"{where}.{key}")
+    return problems
+
+
+QML_CALL_OPEN = re.compile(r"\b(?:(?:BackendManager|root)\.(call|notify)|JsonRpc\.(request))\(")
+JS_STRING = re.compile(r'^"([\w.]+)"$')
+
+
+def qml_call_sites(text):
+    """Every call to the daemon in a QML file: (line, method, params
+    source), method None when it isn't a literal, params "" when none is
+    passed."""
+    sites = []
+    for m in QML_CALL_OPEN.finditer(text):
+        args = call_args(text, m.end() - 1)
+        if m.group(2):  # JsonRpc.request(id, method, params)
+            args = args[1:]
+        method = JS_STRING.match(args[0]) if args else None
+        sites.append((text.count("\n", 0, m.start()) + 1, method and method.group(1), args[1] if len(args) > 1 else ""))
+    return sites
+
+
+def render_shape(shape, types, depth=0):
+    """A shape on one line: `{zones: [string], ids?: [number]}`. A named
+    object below the top level is its name, its fields listed in types."""
+    kind, name = shape["kind"], shape.get("type")
+    if kind == "object":
+        if depth and name:
+            types.setdefault(name, shape)
+            return name
+        fields = ", ".join(f"{f['name']}{'?' if f.get('omitempty') else ''}: {render_shape(f['shape'], types, depth + 1)}"
+                           for f in shape.get("fields", []))
+        return "{" + fields + "}"
+    if kind == "array":
+        return "[" + render_shape(shape["elem"], types, depth) + "]"
+    if kind == "map":
+        return "{[key]: " + render_shape(shape["elem"], types, depth + 1) + "}"
+    if kind == "opaque":
+        return name or "any"
+    return kind
+
+
 def load_shapes():
     """The daemon's methods, pushes and topics as rpcshapes printed them."""
     if not SHAPES_PATH.exists():
@@ -793,11 +948,28 @@ def rpc_scan():
             if f'"{method}"' in text and not path.name.endswith("_test.go"):
                 info["cli"].add(rel(path))
 
-    problems = []
+    problems, unchecked = [], []
+    shapes = load_shapes()
+    params = {m["method"]: m["params"] for m in shapes["methods"]}
     for path in qml_files():
         if rel(path).startswith("tests/"):
             continue
         text = path.read_text()
+        # Params written as an object literal are checked against the
+        # method's; anything else is listed as unchecked
+        for line, method, src in qml_call_sites(text):
+            if method is None or method not in params:
+                continue
+            if src in ("", "{}", "null", "undefined"):
+                continue
+            where = f"{rel(path)}:{line}: {method}'s params"
+            if src.startswith("{") and object_members(src) is not None:
+                problems += shape_key_problems(src, params[method], where)
+            else:
+                unchecked.append((rel(path), line, method, " ".join(src.split())[:60]))
+        for m in QML_RPC_NOTE.finditer(text):
+            line = text.count("\n", 0, m.start()) + 1
+            unchecked += [(rel(path), line, n.strip(), "(through a helper)") for n in m.group(1).split(",") if n.strip()]
         calls = [a or b for a, b in QML_CALL.findall(text)]
         for verb, topic in QML_TOPIC.findall(text):
             calls += [f"{topic}.{s}" for s in ({"acquire": ("subscribe", "unsubscribe"),
@@ -823,42 +995,74 @@ def rpc_scan():
     for method, info in to_shell.items():
         if not info["qml"]:
             problems.append(f"the daemon calls {method} on the shell, which nothing answers")
-    problems += shapes_problems(methods, pushes, load_shapes())
-    return methods, pushes, to_shell, problems
+    problems += shapes_problems(methods, pushes, shapes)
+    return methods, pushes, to_shell, problems, shapes, unchecked
 
 
 def rpc_page():
-    methods, pushes, to_shell, problems = rpc_scan()
+    methods, pushes, to_shell, problems, shapes, unchecked = rpc_scan()
+    types = {}
+    method_shapes = {m["method"]: m for m in shapes["methods"]}
+    push_shapes = {p["method"]: p["params"] for p in shapes["pushes"]}
+    push_shapes.update({f"{t['name']}.state": t["state"] for t in shapes["topics"]})
 
     def files(items):
         return "<br>".join(f"`{f}`" for f in sorted(items))
 
+    def shape(s):
+        return f"`{render_shape(s, types)}`" if s else ""
+
     out = [NOTICE, "# Shell ↔ daemon RPC", "",
            "Every JSON-RPC method the axiom daemon serves on its socket, every push it sends and every call it makes "
-           "into the shell, with the files on each side. Found by name in the code (`rpc.Handle`, `rpc.Push`, `Push`, "
+           "into the shell, with the files on each side and what each carries. Names are found in the code (`rpc.Handle`, `rpc.Push`, `Push`, "
            "`topics.Source`; `BackendManager.call` / `listen` / `handle` / `acquire`, and `// rpc: a, b` where a method is chosen at runtime); "
-           "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks. "
+           "fields come from the daemon's own registry (`docs/dev/generated/rpc-shapes.json`, printed by `backend/tools/rpcshapes`). "
+           "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks, or passes an object literal "
+           "with a key the method's params don't have. "
            "How the connection works: [protocol](../backend/protocol.md).", "",
+           "**Fields:** `?` marks one left out when empty (`omitempty`); `{[key]: T}` is a map; "
+           "a named object below the top level is listed under [Types](#types); `json.RawMessage` and `any` carry any JSON.", "",
            "## Methods (client → daemon)", "",
            "**Guard:** `shell only` refuses any connection but the shell's; `writable` refuses while the config is read-only "
            "(`compatible: false`).", "",
-           "| Method | Guard | Daemon | Shell callers | CLI |", "|---|---|---|---|---|"]
+           "| Method | Params | Result | Guard | Daemon | Shell callers | CLI |", "|---|---|---|---|---|---|---|"]
     for method in sorted(methods):
-        m = methods[method]
-        out.append(f"| `{method}` | {', '.join(m['guards'])} | `{m['go']}` | {files(m['qml']) or '(none)'} | {files(m['cli'])} |")
+        m, sh = methods[method], method_shapes.get(method, {})
+        out.append(f"| `{method}` | {shape(sh.get('params'))} | {shape(sh.get('result'))} | {', '.join(m['guards'])} "
+                   f"| `{m['go']}` | {files(m['qml']) or '(none)'} | {files(m['cli'])} |")
     out += ["", "## Pushes (daemon → subscribers)", "",
             "Sent to connections whose hello subscribed to the topic (the shell subscribes to all). "
             "A polled topic's state goes only to connections that called its `<topic>.subscribe` "
             "(the shell through `BackendManager.acquire`).", "",
-            "| Push | Topic | Sent from | Heard in |", "|---|---|---|---|"]
+            "| Push | Params | Topic | Sent from | Heard in |", "|---|---|---|---|---|"]
     for method in sorted(pushes):
         p = pushes[method]
-        out.append(f"| `{method}` | {p['topic']} | {files(p['go'])} | {files(p['qml']) or '(nothing)'} |")
+        out.append(f"| `{method}` | {shape(push_shapes.get(method))} | {p['topic']} | {files(p['go'])} | {files(p['qml']) or '(nothing)'} |")
+    out += ["", "## Polled topics", "",
+            "A `<topic>.subscribe` takes `interval` (ms) besides the topic's own request; the shell sends it through "
+            "`BackendManager.acquire`, built from config, so it isn't checked.", "",
+            "| Topic | Request | State |", "|---|---|---|"]
+    for t in shapes["topics"]:
+        out.append(f"| `{t['name']}` | {shape(t['request'])} | {shape(t['state'])} |")
     out += ["", "## Calls into the shell (daemon → shell)", "",
             "| Method | Called from | Answered in |", "|---|---|---|"]
     for method in sorted(to_shell):
         c = to_shell[method]
         out.append(f"| `{method}` | {files(c['go'])} | {files(c['qml'])} |")
+    out += ["", "## Unchecked call sites", "",
+            "Calls whose params aren't an object literal (a variable, a spread, a computed key), so their keys go unchecked, "
+            "and methods sent through a service's own helper (`// rpc:`).", "",
+            "| Call site | Method | Params |", "|---|---|---|"]
+    for file, line, method, src in sorted(unchecked):
+        out.append(f"| `{file}:{line}` | `{method}` | `{src}` |")
+    out += ["", "## Types", ""]
+    done = set()
+    while set(types) - done:
+        for name in sorted(set(types) - done):
+            done.add(name)
+            rendered = render_shape(types[name], types)
+            out.append(f"- `{name}`: `{rendered}`")
+    out = out[:out.index("## Types") + 2] + sorted(out[out.index("## Types") + 2:])
     return "\n".join(out).rstrip() + "\n", problems
 
 
