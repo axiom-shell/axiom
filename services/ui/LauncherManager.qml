@@ -563,7 +563,7 @@ QtObject {
       if (root.mode === "clipboard")
         root._refresh();
     }
-    function onCliphistInstalledChanged() {
+    function onAvailableChanged() {
       if (root.mode === "clipboard")
         root._refresh();
     }
