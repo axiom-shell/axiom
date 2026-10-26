@@ -423,12 +423,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### ShellManager runs session actions through execDetached
-- **Where:** `services/ui/ShellManager.qml` (`sessionAction`), `scripts/quickshell-io-allowlist.json`
-- **What:** The session actions' `systemctl` calls use `Quickshell.execDetached`, `ShellManager`'s only Quickshell.Io use and the reason it's on the allowlist. They switch to `CommandManager.runDetached` and the file's allowlist entry goes. Item 1 of the [singletons plan](plans/singletons-split.md) (logic, its own PR).
-- **Size:** trivial
-- **Found:** 2026-10-27, while planning the singletons split (#123)
-
 ### Session actions sit in ShellManager
 - **Where:** `services/ui/ShellManager.qml` (`sessionAction`, `sessionActionInfo`, `destructiveActions`)
 - **What:** The session actions are a concern of their own inside the signal bus. They move to a new `SessionManager` in `services/session/` (check the name against Quickshell's singletons first), and the 6 callers (power menu, QuickActions, launcher) are renamed. Item 2 of the [singletons plan](plans/singletons-split.md) (a move, no logic).

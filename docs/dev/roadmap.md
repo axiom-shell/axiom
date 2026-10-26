@@ -138,7 +138,6 @@ Steps, roughly in this order (moves first, each its own PR):
 4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
-- [ShellManager runs session actions through execDetached](issues.md#shellmanager-runs-session-actions-through-execdetached)
 - [Session actions sit in ShellManager](issues.md#session-actions-sit-in-shellmanager)
 - [The surface registry sits in ShellManager](issues.md#the-surface-registry-sits-in-shellmanager)
 - [Screen-edge geometry is split over three services](issues.md#screen-edge-geometry-is-split-over-three-services)
@@ -160,7 +159,7 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 Resolves:
 
 ### Phase 5: the allowlist
-[Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `ShellManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
+[Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
 
 Resolved by a stage:
 - [Self-update and the greeter installer assume git](issues.md#self-update-and-the-greeter-installer-assume-git) (stage 4)

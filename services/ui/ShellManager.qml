@@ -1,10 +1,10 @@
 pragma Singleton
 import QtQuick
-import Quickshell
 
 import qs.config
 import qs.components.methods
 import qs.services.compositor
+import qs.services.core
 import qs.services.session
 
 /* Shell manager manages global options and signals */
@@ -333,19 +333,19 @@ QtObject {
       LockManager.lock();
       break;
     case "suspend":
-      Quickshell.execDetached(["systemctl", "suspend"]);
+      CommandManager.runDetached("systemctl suspend");
       break;
     case "hibernate":
-      Quickshell.execDetached(["systemctl", "hibernate"]);
+      CommandManager.runDetached("systemctl hibernate");
       break;
     case "logout":
       CompositorManager.exitSession();
       break;
     case "reboot":
-      Quickshell.execDetached(["systemctl", "reboot"]);
+      CommandManager.runDetached("systemctl reboot");
       break;
     case "poweroff":
-      Quickshell.execDetached(["systemctl", "poweroff"]);
+      CommandManager.runDetached("systemctl poweroff");
       break;
     default:
       console.warn("[ShellManager] Unknown session action:", action);
