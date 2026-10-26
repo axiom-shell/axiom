@@ -14,7 +14,7 @@ settings:
     title: Poll interval
     x-unit: ms
     default: 10000
-    minimum: 250
+    minimum: 1000
     maximum: 60000
   connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color}
   disconnectedColor:

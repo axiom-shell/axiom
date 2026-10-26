@@ -73,12 +73,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while taking the binds-child segfault from the roadmap
 
-### Tailscale's 250 ms minimum runs its command four times a second
-- **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`status`)
-- **What:** Now that the `tailscale` topic's floor is `topics.MinInterval` (250 ms), the setting's 250 ms minimum really polls: a new `tailscale status --json` process (5 s timeout) four times a second while a widget shows it, for a state that rarely changes. The other topics' settings start at 1 s or more. Whether 250 ms should stay offered (raising the minimum would leave saved values below it invalid) is the maintainer's call.
-- **Size:** trivial
-- **Found:** 2026-10-26, while moving the topics' floor to 250 ms
-
 ### A notification's avatar warns when its saved image is gone
 - **Where:** `components/content/parts/notifications/NotificationAvatar.qml` (`picture`)
 - **What:** A history notification whose image file in `~/.local/state/axiom/notifications/` no longer exists logs `Cannot open: file:///…/notifications/<id>.png` on every build of its row. The avatar should fall back to the app icon quietly (check `picture.status`, or drop the image path from history when the file is removed).
@@ -458,3 +452,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The same Quickshell `Socket` gap `BackendManager` had: a connect that fails keeps its `QLocalSocket`, so `_reconnect`'s `stream.connected = true` does nothing, and once a connect to `$NIRI_SOCKET` fails the event stream never comes back (no workspace or window events until a reload). Also, assigning `connected` drops its binding to `socketPath`. Rare (niri's socket is up before the shell), but a fresh `Socket` per attempt, as `BackendManager` now does, would close it.
 - **Size:** small
 - **Found:** 2026-10-26, while fixing the shell's reconnect to axiom
+
+### Tailscale needs a revamp like Claude usage's
+- **Where:** `components/bar/widgets/Tailscale/schema.yaml`, `components/bar/widgets/Tailscale/Tailscale.qml`, `services/system/TailscaleManager.qml`, `backend/internal/tailscale/tailscale.go`
+- **What:** The maintainer's decision (2026-10-26), quoted: "Raise minimum to 1s. No migration step. Leave tailscale alone for now - add entry to issues.md and roadmap for a full tailscale revamp including popout with more information and a modules setting page similar to claude usage with the bar module having only the bar specific settings (like claude usage)." The minimum is raised (1000 ms); the rest is this entry. Today every Tailscale bar widget carries its own poll `interval` beside its bar settings, and its popout is the generic `menu`. Claude usage is the target shape: a `ClaudeUsage` config section in the Modules settings category holds what every widget shares (its accounts), the bar widget's schema keeps only what's about the bar (what it shows, icon, thresholds, colors, click command), and its popout is its own content (`components/content/ClaudeUsage`, `popout: {variant: own}`) with more detail than the bar.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while raising the Tailscale interval's minimum (roadmap row 4)

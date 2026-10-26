@@ -56,7 +56,7 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 12 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 13 | later | [Phase 9](#phase-9-docs-tooling-and-process) | Last, so the docs describe the final shape. |
 
-**Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, `BlurManager.paused`).
+**Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, `BlurManager.paused`); [Tailscale needs a revamp like Claude usage's](issues.md#tailscale-needs-a-revamp-like-claude-usages) (a feature, waiting for no stage).
 
 ### Taking the next step
 What an agent does when asked for "the next step", to "continue the roadmap", or to work on a row or phase by number. The answer to "where do I start" is always this file: nothing else needs explaining.
@@ -156,7 +156,6 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 Steps: fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`).
 
 Resolves:
-- [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `ShellManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
