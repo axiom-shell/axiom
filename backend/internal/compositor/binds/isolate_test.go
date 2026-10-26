@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -47,7 +49,21 @@ func built(t *testing.T) string {
 	return axiomBin
 }
 
+// crashChild, set to a size in bytes, makes this test binary a child that
+// holds that much memory and then crashes as the Go runtime does, for the
+// tests that tell a memory death from a crash
+const crashChild = "AXIOM_BINDS_TEST_CRASH_HOLDING"
+
 func TestMain(m *testing.M) {
+	if size, err := strconv.Atoi(os.Getenv(crashChild)); err == nil {
+		held := make([]byte, size)
+		for i := 0; i < len(held); i += 4096 {
+			held[i] = 1
+		}
+		os.Stderr.WriteString("SIGSEGV: segmentation violation\n")
+		runtime.KeepAlive(held)
+		os.Exit(2)
+	}
 	code := m.Run()
 	if axiomBin != "" && axiomErr == nil {
 		os.RemoveAll(filepath.Dir(axiomBin))
@@ -93,6 +109,54 @@ func TestIsolatedExtractSurvivesAFileTakingAllMemory(t *testing.T) {
 	}
 	if time.Since(start) > 20*time.Second {
 		t.Fatal("not ended by the limit")
+	}
+}
+
+// A child that crashes is told from one the limit ended by its peak RSS:
+// holding a quarter of the limit, it gets the MiB message; holding a few
+// MiB, the crash. Not parallel: the child is chosen by the environment,
+// and as the package's only sequential test it runs before the parallel
+// ones, so this process's own peak (which the child's counts) stays far
+// below a quarter of the limit.
+func TestIsolatedExtractTellsAMemoryDeathFromACrash(t *testing.T) {
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		held int
+		want string
+	}{
+		{MemoryLimit/4 + 16<<20, "took more than 1024 MiB"},
+		{1 << 20, "reading the binds: SIGSEGV: segmentation violation"},
+	} {
+		t.Setenv(crashChild, strconv.Itoa(c.held))
+		f := newFx(t, "hyprland")
+		f.write("binds.lua", "")
+		o := f.options()
+		o.Isolate, o.Tree = self, testkit.RepoRoot()
+		if _, err := Extract(context.Background(), o); err == nil || !strings.Contains(err.Error(), c.want) {
+			t.Fatalf("holding %d: got %v, want %q", c.held, err, c.want)
+		}
+	}
+}
+
+// A child's peak counts its parent's memory at exec (vfork), so a peak
+// this process may have reached itself is a crash
+func TestDiedOfMemory(t *testing.T) {
+	t.Parallel()
+	q := int64(MemoryLimit / 4)
+	for _, c := range []struct {
+		child, own int64
+		want       bool
+	}{
+		{q, 0, true},
+		{q - 1, 0, false},
+		{2 * q, q, true},
+		{q, q, false},
+		{q, 2 * q, false},
+	} {
+		eq(t, diedOfMemory(c.child, c.own), c.want)
 	}
 }
 

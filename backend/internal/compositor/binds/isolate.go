@@ -3,10 +3,12 @@ package binds
 import (
 	"bytes"
 	"context"
+	"os"
 	"os/exec"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -47,12 +49,17 @@ func extractIsolated(ctx context.Context, o Options) (*jsonx.Object, error) {
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
 		msg := strings.TrimSpace(stderr.String())
+		tooBig := axerr.New(axerr.Unavailable, "reading the binds took more than %d MiB, so nothing moved", MemoryLimit>>20)
 		switch {
 		// The Go runtime's own words when the limit refuses it memory
 		case strings.Contains(msg, "out of memory") || strings.Contains(msg, "cannot allocate memory"):
-			return nil, axerr.New(axerr.Unavailable, "reading the binds took more than %d MiB, so nothing moved", MemoryLimit>>20)
+			return nil, tooBig
 		case ctx.Err() != nil:
 			return nil, axerr.New(axerr.Unavailable, "reading the binds took too long, so nothing moved")
+		// Refused memory inside its collector, the runtime may crash
+		// instead (a SIGSEGV), with no word of memory
+		case diedOfMemory(peakRSS(cmd.ProcessState), ownPeakRSS()):
+			return nil, tooBig
 		case msg != "":
 			// The command line's own error, its first line
 			first, _, _ := strings.Cut(msg, "\n")
@@ -66,4 +73,37 @@ func extractIsolated(ctx context.Context, o Options) (*jsonx.Object, error) {
 		return nil, axerr.New(axerr.Unavailable, "reading the binds: not the JSON extract prints")
 	}
 	return result, nil
+}
+
+// diedOfMemory tells a child that died of MemoryLimit from one that
+// crashed, by its peak RSS (childPeak) against this process's (ownPeak).
+// Reading the files takes a few MiB, so a child that held a quarter of the
+// limit died of it. But a child started by vfork (as Go starts every one)
+// counts the memory its parent held when it exec'd in its own peak, so a
+// peak this process may have reached itself tells nothing, and reads as a
+// crash.
+func diedOfMemory(childPeak, ownPeak int64) bool {
+	return childPeak >= MemoryLimit/4 && childPeak > ownPeak
+}
+
+// peakRSS is the most memory an ended process held, in bytes (0 if
+// unknown)
+func peakRSS(ps *os.ProcessState) int64 {
+	if ps == nil {
+		return 0
+	}
+	if ru, ok := ps.SysUsage().(*syscall.Rusage); ok {
+		return ru.Maxrss << 10 // KiB on Linux
+	}
+	return 0
+}
+
+// ownPeakRSS is the most memory this process has held, in bytes (0 if
+// unknown)
+func ownPeakRSS() int64 {
+	var ru syscall.Rusage
+	if syscall.Getrusage(syscall.RUSAGE_SELF, &ru) != nil {
+		return 0
+	}
+	return ru.Maxrss << 10
 }

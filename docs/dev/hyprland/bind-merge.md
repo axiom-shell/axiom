@@ -18,7 +18,7 @@
 
 ### Extracting
 - It runs the files under gopher-lua (Lua 5.1), with no `lua` binary.
-  - The daemon runs them in a child (`axiom compositor binds extract --memory-limit`, its own image through `/proc/self/exe`) that caps itself at 1 GiB (`RLIMIT_DATA`, `binds.MemoryLimit`): gopher-lua has no heap limit, and a file building a huge string allocates it in one instruction, so only the kernel can refuse it, and then only the child dies, never the daemon (the shell's parent). The merge then fails with what happened, and nothing moves.
+  - The daemon runs them in a child (`axiom compositor binds extract --memory-limit`, its own image through `/proc/self/exe`) that caps itself at 1 GiB (`RLIMIT_DATA`, `binds.MemoryLimit`): gopher-lua has no heap limit, and a file building a huge string allocates it in one instruction, so only the kernel can refuse it, and then only the child dies, never the daemon (the shell's parent). The merge then fails with what happened, and nothing moves. Refused memory, the Go runtime usually says `out of memory`, but inside its collector it may crash with a SIGSEGV instead: a child that died holding a quarter of the limit (peak RSS, `ProcessState.SysUsage`) is reported as too big too, since reading the files takes a few MiB; a crash below that reads as a crash. A vforked child's peak counts the daemon's memory at exec, so a peak the daemon itself reached (its own `RUSAGE_SELF`) reads as a crash too (`binds.diedOfMemory`).
   - In any process, `string.rep` refuses a result over 16 MiB and the call stack is bounded.
   - Each file is required as `user.<name>` against a stand-in `hl` that records `hl.bind`/`hl.unbind` with their file and line.
   - Because the files really run, variables, string building and loops work.

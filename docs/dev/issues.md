@@ -20,17 +20,17 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Running it unattended's gate can't get `verify ok` on a committed branch
+- **Where:** `docs/dev/roadmap.md` (Running it unattended, step 5), `scripts/dev/verify.sh`
+- **What:** Step 5 tells the leader to run `scripts/dev/verify.sh` on the pushed branch and expect `verify ok`, but verify.sh checks changes since HEAD, so on a clean committed branch it prints only `nothing changed since HEAD`. The leader used `scripts/dev/verify.sh --all` (`all checks passed`) instead; the step should say so.
+- **Size:** trivial
+- **Found:** 2026-10-26, while taking the binds-child segfault from the roadmap
+
 ### Tailscale's poll interval allows values below axiom's 5 s floor
 - **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`Source`'s `Floor`)
 - **What:** The setting's `minimum` is 250 ms, but the `tailscale` topic never polls more often than every 5 s (its description says so), so 250–4999 ms are offered and do nothing. Decided (2026-10-26): no migration; the topic's floor is read from the setting's schema `minimum` instead of a constant in Go, so the two can't disagree again.
 - **Size:** small
 - **Found:** 2026-10-25, while reviewing the service-layer branch
-
-### The binds child sometimes segfaults instead of running out of memory
-- **Where:** `backend/internal/compositor/binds/isolate.go` (`Extract`'s error cases, `LimitMemory`), `backend/internal/compositor/binds/isolate_test.go` (`TestIsolatedExtractSurvivesAFileTakingAllMemory`)
-- **What:** Under `RLIMIT_DATA` the Go runtime (go 1.27.2, kernel 7.2) sometimes dies with `SIGSEGV: segmentation violation` rather than `out of memory`, so the error reads `reading the binds: SIGSEGV: segmentation violation: exit status 2` instead of the MiB message and the test fails. It fails on main as well, and passed earlier the same day. Nothing moves and the daemon goes on either way: only the message and the test are affected. Possible fixes: watch the child's peak RSS (`ProcessState.SysUsage`) to tell a memory death from a real crash, or limit with a cgroup instead of `RLIMIT_DATA`.
-- **Size:** small
-- **Found:** 2026-10-25, while getting the service-layer branch ready to merge
 
 ### A notification's avatar warns when its saved image is gone
 - **Where:** `components/content/parts/notifications/NotificationAvatar.qml` (`picture`)

@@ -44,7 +44,7 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 |---|---|---|---|
 | 1 | done | Backend stage 2: night light, then clipboard (and [Phase 2](#phase-2-finish-stage-2)) | In progress; finish it before anything else churns the same files. |
 | 2 | done | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
-| 3 | in progress | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. |
+| 3 | in progress | [Phase 1](#phase-1-integrity), except the two save-path entries (stage 7's) | Data and session safety first; touches nothing a stage deletes. The binds-child segfault was taken first, because its flaky test failed CI on unrelated PRs. |
 | 4 | next | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
 | 5 | later | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
 | 6 | later | Backend stage 3: brightness | Small; a first stage under the new checks. |
@@ -125,7 +125,6 @@ Fixed in this phase:
 - [Small backend error and robustness gaps](issues.md#small-backend-error-and-robustness-gaps)
 - [The shell stops reconnecting after a failed attempt](issues.md#the-shell-stops-reconnecting-after-a-failed-attempt)
 - [Schema build gaps](issues.md#schema-build-gaps)
-- [The binds child sometimes segfaults instead of running out of memory](issues.md#the-binds-child-sometimes-segfaults-instead-of-running-out-of-memory)
 
 Fixed by backend stage 7 (add the bullets there if missing):
 - [Shell saves carry unsaved settings and every takeover](issues.md#shell-saves-carry-unsaved-settings-and-every-takeover)
@@ -243,6 +242,7 @@ Resolves:
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
+- [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 
 ### Deferred
 Entries decided against doing now ([Items that need a plan](#items-that-need-a-plan) step 5). They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
