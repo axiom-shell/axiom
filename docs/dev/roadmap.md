@@ -45,9 +45,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 1 | done | Backend stage 2: night light, then clipboard (and [Phase 2](#phase-2-finish-stage-2)) | In progress; finish it before anything else churns the same files. |
 | 2 | done | [Phase 0](#phase-0-decisions-and-quick-wins): stop committing generated docs | Right after stage 2 merges, so it doesn't collide with that work's regenerated docs; every later diff shrinks. |
 | 3 | done | [Phase 1](#phase-1-integrity), except the entries stage 7 fixes | Data and session safety first; touches nothing a stage deletes. The binds-child segfault was taken first, because its flaky test failed CI on unrelated PRs. |
-| 4 | in progress | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. |
-| 5 | next | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
-| 6 | later | Backend stage 3: brightness | Small; a first stage under the new checks. |
+| 4 | done | [Phase 4](#phase-4-backend-structure-and-contract) | archtest and the contract check land before stages 3 to 6 add packages and before stage 7 rewrites saves, so both are checked as they're written. Two contract items were added after the row's first pass (strict param decoding, and the check failing on calls it can't read), so the check stops growing a shape at a time. |
+| 5 | in progress | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
+| 6 | next | Backend stage 3: brightness | Small; a first stage under the new checks. |
 | 7 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
 | 8 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
 | 9 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
@@ -56,7 +56,7 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 12 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 13 | later | [Phase 9](#phase-9-docs-tooling-and-process) | Last, so the docs describe the final shape. |
 
-**Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, `BlurManager.paused`).
+**Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload); [Tailscale needs a revamp like Claude usage's](issues.md#tailscale-needs-a-revamp-like-claude-usages) (a feature, waiting for no stage).
 
 ### Taking the next step
 What an agent does when asked for "the next step", to "continue the roadmap", or to work on a row or phase by number. The answer to "where do I start" is always this file: nothing else needs explaining.
@@ -151,22 +151,9 @@ Resolves:
 ### Phase 4: backend structure and contract
 The binary's rules are enforced by its tests, and the shell–daemon contract is checked by shape, not just by name. The contract check lands before stage 7, so the switch to path ops is checked as it happens.
 
-Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting.
-
-Steps: generate method shapes into `rpc.md` and check QML call sites against them; fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc`; clearer package names (`system`, and `lock` against `fsx.Lock`).
+Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc` (`tree` is its disk side, both package docs say so); clearer package names (`system` is `sysmon`, `lock` is `lockscreen`, apart from `fsx.Lock`); strict param decoding (`rpc.DecodeStrict`, topic requests too); the call rule in protocol.md, with `gen_docs.py` failing on a call it can't read unless marked `// rpc: unchecked (<reason>)`.
 
 Resolves:
-- [The generate step dumps no rpc shapes](issues.md#the-generate-step-dumps-no-rpc-shapes)
-- [rpc.md shows no shapes and call sites' keys go unchecked](issues.md#rpcmd-shows-no-shapes-and-call-sites-keys-go-unchecked)
-- [Result and push reads in inline callbacks go unchecked](issues.md#result-and-push-reads-in-inline-callbacks-go-unchecked)
-- [rpc.md misses calls made through a service's own helper](issues.md#rpcmd-misses-calls-made-through-a-services-own-helper)
-- [Backend packages with thin or no tests](issues.md#backend-packages-with-thin-or-no-tests)
-- [Tailscale's 250 ms minimum runs its command four times a second](issues.md#tailscales-250-ms-minimum-runs-its-command-four-times-a-second) (a decision on the setting's minimum)
-- [The shell's socket warns when the daemon re-execs](issues.md#the-shells-socket-warns-when-the-daemon-re-execs)
-- [A dropped connection to axiom reconnects with no backoff](issues.md#a-dropped-connection-to-axiom-reconnects-with-no-backoff)
-- [A large binds file's own error reads as running out of memory](issues.md#a-large-binds-files-own-error-reads-as-running-out-of-memory)
-- [archtest's rules aren't all in backend/AGENTS.md](issues.md#archtests-rules-arent-all-in-backendagentsmd)
-- [Installs and self-update fail when the reference docs can't be generated](issues.md#installs-and-self-update-fail-when-the-reference-docs-cant-be-generated) (before the contract check adds its `go run` to `generate.sh`)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `ShellManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
@@ -233,9 +220,10 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [Text input warnings when the desktop takes the keyboard](issues.md#text-input-warnings-when-the-desktop-takes-the-keyboard)
 - [Qt text-input warnings under sway and niri](issues.md#qt-text-input-warnings-under-sway-and-niri)
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
-- [`BlurManager.paused` warns on every reload](issues.md#blurmanagerpaused-warns-on-every-reload)
+- [Singleton properties warn on every reload](issues.md#singleton-properties-warn-on-every-reload)
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
+- [A screenshot under niri timed out waiting for its frame](issues.md#a-screenshot-under-niri-timed-out-waiting-for-its-frame)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape.
@@ -248,6 +236,7 @@ Resolves:
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
 - [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
+- [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 - [CI checks dependencies and cross-builds only when a PR touches Go](issues.md#ci-checks-dependencies-and-cross-builds-only-when-a-pr-touches-go)

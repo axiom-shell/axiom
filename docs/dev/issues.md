@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### rpc.md misses calls made through a service's own helper
-- **Where:** `scripts/gen_docs.py` (`rpc_scan`), `services/system/ClipboardManager.qml` (`_call`)
-- **What:** `ClipboardManager` sends `clipboard.copy`, `clipboard.remove` and `clipboard.clear` through `_call(method, params)`, which calls `BackendManager.call(method, …)` with a variable, so the scan finds no literal and `rpc.md` lists those three as having no shell caller ("(none)"), and the cross-check can't see them. A `// rpc: clipboard.copy, clipboard.remove, clipboard.clear` comment above `_call` fixes this case; the shape check (Phase 4) needs the same idea for any helper that forwards a method name.
-- **Size:** trivial
-- **Found:** 2026-10-26, while updating the QML ↔ Go bridge reference
-
 ### Restoring over a config.json that doesn't load resets the other takeovers
 - **Where:** `backend/internal/store/store.go` (`Replace`, `Restore`, `takeoverBase`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
 - **What:** While config.json doesn't load at the start, the store knows no takeover values (`takeoversUnknown`), so `Replace` and `Restore` keep `takeoverBase()`: the defaults. Restoring a saved config over that file therefore writes the defaults' `Idle.enabled`, `Polkit.enabled`, `Greeter.enabled` and `Lockscreen.mode`, switching off or changing whatever the user had taken over. Only `Compositor.mode` is repaired afterwards, by the compositor manager keeping the mode it applied and saving it back (`saveKept`, #108). Deciding the unknown takeovers once in the store (take the restored file's own values, or refuse the restore while none are known) would cover all five settings, and would let the manager's separate hold go ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)). Like every other problem that starts from a config.json that doesn't load, it's rare, and it's fixed by backend stage 7, with the other config problems.
@@ -48,30 +42,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** #109 shows `UnreadBinds` as the manager's problem only when `userconf.SwayMain` finds no config (`w.unread = main == ""`). A main config that exists but can't be read, or an include that can't be read, is skipped silently by `SwayText` (`os.ReadFile` failing returns `""`), so axiom binds over the keys those files hold with no problem shown. The decision behind #109 ("an unreadable config is realistically axiom's own reader failing on one sway accepts") is about exactly this case, not a missing file. `SwayText` could report the paths it failed to read, and `userBinds` could set `unread` when any did.
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
-
-### A dropped connection to axiom reconnects with no backoff
-- **Where:** `services/core/BackendManager.qml` (`_dropped`, `_greet`)
-- **What:** Since #111, `_dropped` calls `_connect()` at once (so a re-exec's handover is caught quickly), and `_retry` resets only on a successful hello. A daemon that accepts and then closes the connection (a crash loop, or a hello refused and closed) puts the shell in a tight reconnect loop; before, a drop went through the backoff timer. Reconnecting at once only on the first drop after a successful hello, and backing off after that, would keep the fast re-exec path.
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
-
-### A large binds file's own error reads as running out of memory
-- **Where:** `backend/internal/compositor/binds/isolate.go` (`diedOfMemory`, `Extract`)
-- **What:** #104 tells the child's memory death from a crash by its peak RSS, but `Extract` checks `diedOfMemory` before the child's own error message and doesn't look at how it exited. So any failure whose peak passed `MemoryLimit/4` (256 MiB) is reported as taking more than the limit, including an ordinary Lua error from a large file. It should only count for crash-like exits (a signal, or the Go runtime's `fatal error` / `SIGSEGV` on stderr). The test that covers it also relies on running before the parallel tests, so the test process's own peak stays low.
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
-
-### Installs and self-update fail when the reference docs can't be generated
-- **Where:** `scripts/generate.sh`, `install.sh`, `scripts/self_update.sh`, `packaging/aur/axiom-shell/PKGBUILD`, `packaging/aur/axiom-shell-git/PKGBUILD`, `CONTRIBUTING.md`
-- **What:** Since generated docs stopped being committed (#100), `generate.sh` always runs `gen_docs.py`, a developer check that fails on a shell–daemon contract mismatch or on QML it doesn't expect. Every end-user path runs `generate.sh`, so that failure stops `install.sh`, fails an AUR build, and leaves a self-update with new QML on the old binary (which then runs read-only). Packaged installs delete `docs/` anyway. The contract check (Phase 4) adds another `go run` to the same step. User-facing callers should skip the docs (a `--no-docs`). Also: `generate.sh`'s header says each file is built "only when what it's made from changed", but `gen_docs.py` runs every time, and `CONTRIBUTING.md` links `docs/dev/generated/rpc.md`, which no longer exists on GitHub.
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 0 PR
-
-### archtest's rules aren't all in backend/AGENTS.md
-- **Where:** `backend/internal/archtest/archtest_test.go`, `backend/AGENTS.md` (Rules)
-- **What:** archtest requires the exact `Pure:` marker in a pure package's doc comment, which AGENTS.md only calls "marked pure in their doc comment". It also refuses more imports in pure packages than AGENTS.md lists (`os/signal`, `golang.org/x/sys`, `unsafe`, `plugin`, `io/ioutil` besides `os`, `net`, `os/exec`, `syscall`). And its tiers are coarse: about 40 packages share the edge tier, so the direction between edge packages isn't enforced, though the original entry asked for "downward dependency direction among the other packages".
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 4 PR
 
 ### CI checks dependencies and cross-builds only when a PR touches Go
 - **Where:** `.github/workflows/checks.yml` (the `go` job's change filter), `.github/workflows/release.yml`
@@ -103,12 +73,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while taking the binds-child segfault from the roadmap
 
-### Tailscale's 250 ms minimum runs its command four times a second
-- **Where:** `components/bar/widgets/Tailscale/schema.yaml` (`interval`), `backend/internal/tailscale/tailscale.go` (`status`)
-- **What:** Now that the `tailscale` topic's floor is `topics.MinInterval` (250 ms), the setting's 250 ms minimum really polls: a new `tailscale status --json` process (5 s timeout) four times a second while a widget shows it, for a state that rarely changes. The other topics' settings start at 1 s or more. Whether 250 ms should stay offered (raising the minimum would leave saved values below it invalid) is the maintainer's call.
-- **Size:** trivial
-- **Found:** 2026-10-26, while moving the topics' floor to 250 ms
-
 ### A notification's avatar warns when its saved image is gone
 - **Where:** `components/content/parts/notifications/NotificationAvatar.qml` (`picture`)
 - **What:** A history notification whose image file in `~/.local/state/axiom/notifications/` no longer exists logs `Cannot open: file:///…/notifications/<id>.png` on every build of its row. The avatar should fall back to the app icon quietly (check `picture.status`, or drop the image path from history when the file is removed).
@@ -120,12 +84,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The shell's first inputs arm both `debounce` and `liveDebounce` (300 ms each). When the live one fires first, `liveChanged` sees `AppliedMode != mode` and calls `apply`, which releases the managed config and asks for a reload; the layer debounce's `apply` then runs `runtimeApply` before that reload lands, so the runtime layer reads the managed config's binds (every axiom key looks taken, each logged once) and goes on over it. It's corrected after the reload (`configReloaded` applies again). Holding `runtimeApply` until `configReloaded` after a release that reloads would close it, but a missed reload event would then leave no runtime layer.
 - **Size:** small
 - **Found:** 2026-10-24, while reviewing the Go backend branch
-
-### The shell's socket warns when the daemon re-execs
-- **Where:** `services/core/BackendManager.qml` (its `Socket`)
-- **What:** Every daemon re-exec (each dev-mode rebuild) logs `quickshell.io.socket` `QLocalSocket::PeerClosedError` (a `Socket error for Socket(0x…)`) once: the old image closing the connection reaches the shell as an error, though `BackendManager` reconnects and it's expected. Five in one session's log (`scripts/log.sh --all -g PeerClosed`). Quieting it means telling a close the daemon announced (re-exec, quit) from a real failure, maybe with a notification before the exec. A request in flight at that moment fails too: [MediaManager's warning](#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch) is its own entry.
-- **Size:** small
-- **Found:** 2026-10-24, while moving the compositor takeover into the binary
 
 ### The schema root's description contradicts the annotations doc
 - **Where:** `config/schema/index.yaml` (root `description`), `docs/dev/core/schema-annotations.md` (`x-hosts`)
@@ -205,6 +163,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
 
+### A dev-mode build test fails with text file busy
+- **Where:** `backend/internal/daemon/dev_test.go` (`TestDevBuild`, `fakeGo`)
+- **What:** One `scripts/check_go.sh` run failed with `dev_test.go:55: err go generate: fork/exec …/go: text file busy`, then passed on the next run with nothing changed in `daemon`. `fakeGo` writes an executable script while parallel subtests fork: a fork made while the file is still open for writing carries that descriptor, and exec of the script fails with ETXTBSY until that child execs. A possible fix: write the fake to a temp name and rename it into place, or retry the exec on ETXTBSY in the test helper.
+- **Size:** trivial
+- **Found:** 2026-10-26, while renaming the backend's `system` and `lock` packages
+
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
 - **What:** With blur on under niri, a bar popout switching to another widget's content in the same window shows its old stroke cutting into the box for a frame or two as it resizes: the stroke is the popout's window's, the fill the blur window's, and niri shows the two windows' frames out of step (no `supports.layerFrameSync`). Tried and reverted (2026-10-18), neither changing what the maintainer saw: holding the switch until the popout's window had drawn the new content twice (`SwitchStill`, its window's `frameSwapped`), and drawing the popout's stroke in the blur window with its fill (a stroke-only `AttachedSurfaceCopy` over the fills, the popout's own stroke transparent). That the second didn't help suggests the stroke isn't what's late: perhaps the popout's content, its clip, or the blur region. Next: log each window's `frameSwapped` with what it drew, during a switch.
@@ -230,6 +194,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Without ext-image-copy-capture (niri 26.04 has only wlr-screencopy), Quickshell's wlr screencopy binds a second `wl_output` of its own (`WlrScreencopyContext::OutputTransformQuery`, a `QtWayland::wl_output`; still so in upstream master). niri then sends `wl_surface.enter` for it to every surface; Qt takes it for one of its screens (`QWaylandScreen::fromWlOutput` casts it) and keeps a bogus screen in each surface's list. The next `enter`/`leave` on such a surface crashes in `QWaylandWindow::handleScreensChanged` → `QPlatformScreen::screen()` (at once with a popout open, which unmaps as the picker opens). WAYLAND_DEBUG: `bind(46, "wl_output", 3, …)` beside `zwlr_screencopy_manager_v1.capture_output`, `wl_surface.enter(wl_output#198)` on every surface, then `axiom-edge-popout`'s surface `leave(wl_output#19)` and the crash. Worked around: niri has no `supports.outputCapture`, so the picker's frame is grim's. Left: report it upstream (awaiting a second person to confirm), then drop the workaround once fixed. Sway and Hyprland 0.55 keep `outputCapture` (Hyprland checked by hand: no crash with a popout open).
 - **Size:** small
 - **Found:** 2026-10-18, while debugging the screenshot crash with a popout open
+
+### A screenshot under niri timed out waiting for its frame
+- **Where:** `services/apps/ScreenshotManager.qml` (`_grabFrames`, `_grim`, `_watchdog`, `frameArrived`), `components/surfaces/screenshot/ScreenshotPickerWindow.qml` (`still`, `_onFrame`)
+- **What:** The live shell on niri logged `The compositor sent no picture of the screen.` with no other warning: three times in `scripts/log.sh --all -g "no picture"` (2026-10-26). niri has no `supports.outputCapture`, so the picker's frame is grim's (`ScreenshotManager.grimFrames`): grim had already written each screen's PPM and exited 0 (a failure says so in its own message), `_grim`'s `onExited` set `picking` and started the 3 s watchdog, and the picker's `still` Image never reached `Image.Ready` in time, so `_onFrame` never called `frameArrived` (or, for an immediate `screen` shot, the capture never reported back through `finish`). An `Image.Error` (a PPM it can't read, a path gone) is never reported either: it waits out the watchdog with this message. Not reproduced; whether the asynchronous load of a large PPM is slow or fails isn't known yet.
+- **Size:** small
+- **Found:** 2026-10-26, while working on the shell–daemon contract check (in the live log)
 
 ### WorkspaceStrip's Grid briefly has more items than cells
 - **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml` (the `Grid`, `id: layout`)
@@ -423,9 +393,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-13, while assessing reader renames for the docs makeover
 
-### `BlurManager.paused` warns on every reload
-- **Where:** `services/ui/BlurManager.qml` (`paused`), `services/core/SelfUpdateManager.qml`, `services/compositor/HyprlandManager.qml` (`activeWindowId`)
-- **What:** Every config reload logs `Unable to assign [undefined] to bool` at the `paused` declaration (and, seen 2026-10-14, at `UpdatesManager.checking` while it was a readonly bool on a singleton (now a plain one): likely the same cause; seen 2026-10-16 as `Unable to assign [undefined] to QString` at `HyprlandManager.activeWindowId`, a readonly string). The binding itself evaluates to a boolean (a temporary probe logged `boolean false`), and a constant `paused: false` still warned, so it isn't the expression: something in Quickshell's reload of this singleton assigns it. Harmless (the value is right afterwards), but it's noise in every `scripts/log.sh`. Next step: check whether Quickshell carries readonly properties across a reload, or whether making `paused` a plain function helps.
+### Singleton properties warn on every reload
+- **Where:** `services/ui/BlurManager.qml` (`paused`), `services/core/SelfUpdateManager.qml`, `services/compositor/HyprlandManager.qml` (`activeWindowId`), `services/system/AudioManager.qml` (`tracker`, `captureTracker`, `micInUse`)
+- **What:** Every config reload logs `Unable to assign [undefined] to bool` at the `paused` declaration (and, seen 2026-10-14, at `UpdatesManager.checking` while it was a readonly bool on a singleton (now a plain one): likely the same cause; seen 2026-10-16 as `Unable to assign [undefined] to QString` at `HyprlandManager.activeWindowId`, a readonly string; seen 2026-10-26 as `Unable to assign [undefined] to QList<QObject*>` at `AudioManager`'s two `PwObjectTracker.objects` and `Unable to assign [undefined] to bool` at its `micInUse`, after a reload from saving an unrelated file). The binding itself evaluates to a boolean (a temporary probe logged `boolean false`), and a constant `paused: false` still warned, so it isn't the expression: something in Quickshell's reload of this singleton assigns it. Harmless (the value is right afterwards), but it's noise in every `scripts/log.sh`. Next step: check whether Quickshell carries readonly properties across a reload, or whether making `paused` a plain function helps.
 - **Size:** small
 - **Found:** 2026-10-13, while checking reload logs during the docs makeover
 
@@ -440,24 +410,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The shell sends each `config.replace` without waiting for the last, the daemon runs requests concurrently, and `write` takes its lock in whatever order the goroutines reach it, so two quick saves can leave the older one on disk (and pushed back as the running config). Path ops alone (backend stage 7) still race on one key: `config.*` calls want handling in order per connection, or a base revision the store refuses on mismatch.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
-
-### The generate step dumps no rpc shapes
-- **Where:** `scripts/generate.sh`, `backend/internal/daemon/methods.go` (the registrations)
-- **What:** Nothing writes the method, push and topic shapes where `scripts/gen_docs.py` can read them. A Go program (under `backend/tools/`) should build the daemon's registry without starting a daemon (registration only stores closures, so a registry-only constructor suffices; check that first: the methods are registered through `d.registry(parts)` over part constructors on a `*Daemon`, and some may need initialised fields such as `d.dev`, which could make this more than small) and print methods, pushes and topics with their field trees as JSON; `scripts/generate.sh` writes it to a gitignored file before `gen_docs.py` runs. Needs the two entries above.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
-
-### rpc.md shows no shapes and call sites' keys go unchecked
-- **Where:** `scripts/gen_docs.py` (`rpc_scan`), `docs/dev/backend/protocol.md` (Changing the protocol)
-- **What:** `rpc_scan` matches method names only, and `rpc.Handle` decodes with `json.Unmarshal`, which ignores unknown fields: renaming `"zones"` to `"zone"` in `TimeZoneManager` gives the daemon an empty list with no error. From the shapes dump, `rpc.md` should list each method's params and result fields and each push's fields, and a `BackendManager.call` / `notify` whose params are an object literal should fail the check on a key the params don't have (`{}` and `null` pass); non-literal call sites are listed as unchecked in `rpc.md`, and protocol.md › Changing the protocol says what's checked. Needs the entry above.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
-
-### Result and push reads in inline callbacks go unchecked
-- **Where:** `scripts/gen_docs.py` (`rpc_scan`)
-- **What:** Results and pushes are read by name in callbacks (`result.name` in `SavedConfigsManager.save`, `state.repo` in `UpdatesManager`). Optional: in `(error, result) => …` and `listen("x", state => …)` arrow callbacks, a first-level `result.key` / `state.key` read could be checked against the result or push fields. Worth it only if the shapes in `rpc.md` show such reads are common enough; otherwise it moves to Deferred. Last of the contract-check plan's items; the plan file is deleted with it.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
 
 ### Singletons doing several jobs
 - **Where:** `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/core/ShellManager.qml`, `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`)
@@ -484,14 +436,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
 ### Repeated plumbing
-- **Where:** `services/apps/StopwatchManager.qml`, `services/apps/PomodoroManager.qml` (`_arm`, the tick Timer, the notification handler), `components/forms/SchemaPropertiesForm.qml`, `components/forms/SettingRows.qml`, `components/views/Settings/SettingsContent.qml` (`valueAt`), `backend/internal/saved/saved.go` (`everything`)
-- **What:** Stopwatch and Pomodoro copy their deadline alarm, ticker, saved state and notification plumbing (a shared ticker part would take about 80 lines from each). Three forms each define `valueAt` beside `SettingsManager._valueAt`: a methods helper. `saved.everything` restates the scopes `share` already names.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
-### Backend packages with thin or no tests
-- **Where:** `backend/internal/compositor/edit/`, `backend/internal/ipcroute/`, `backend/internal/cli/`
-- **What:** `compositor/edit` does atomic replacement and dated backups (security rules: every check has a test) with no tests of its own. `ipcroute` tests only its parsing (33 lines for 310), not the registration race or the `qs ipc` fallback. `cli` has about 200 test lines for 1900.
+- **Where:** `services/apps/StopwatchManager.qml`, `services/apps/PomodoroManager.qml` (`_arm`, the tick Timer, the notification handler), `components/forms/SchemaPropertiesForm.qml`, `components/forms/SettingRows.qml`, `components/views/Settings/SettingsContent.qml` (`valueAt`)
+- **What:** Stopwatch and Pomodoro copy their deadline alarm, ticker, saved state and notification plumbing (a shared ticker part would take about 80 lines from each). Three forms each define `valueAt` beside `SettingsManager._valueAt`: a methods helper.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
@@ -512,3 +458,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The same Quickshell `Socket` gap `BackendManager` had: a connect that fails keeps its `QLocalSocket`, so `_reconnect`'s `stream.connected = true` does nothing, and once a connect to `$NIRI_SOCKET` fails the event stream never comes back (no workspace or window events until a reload). Also, assigning `connected` drops its binding to `socketPath`. Rare (niri's socket is up before the shell), but a fresh `Socket` per attempt, as `BackendManager` now does, would close it.
 - **Size:** small
 - **Found:** 2026-10-26, while fixing the shell's reconnect to axiom
+
+### Tailscale needs a revamp like Claude usage's
+- **Where:** `components/bar/widgets/Tailscale/schema.yaml`, `components/bar/widgets/Tailscale/Tailscale.qml`, `services/system/TailscaleManager.qml`, `backend/internal/tailscale/tailscale.go`
+- **What:** The maintainer's decision (2026-10-26), quoted: "Raise minimum to 1s. No migration step. Leave tailscale alone for now - add entry to issues.md and roadmap for a full tailscale revamp including popout with more information and a modules setting page similar to claude usage with the bar module having only the bar specific settings (like claude usage)." The minimum is raised (1000 ms); the rest is this entry. Today every Tailscale bar widget carries its own poll `interval` beside its bar settings, and its popout is the generic `menu`. Claude usage is the target shape: a `ClaudeUsage` config section in the Modules settings category holds what every widget shares (its accounts), the bar widget's schema keeps only what's about the bar (what it shows, icon, thresholds, colors, click command), and its popout is its own content (`components/content/ClaudeUsage`, `popout: {variant: own}`) with more detail than the bar.
+- **Size:** needs a plan
+- **Found:** 2026-10-26, while raising the Tailscale interval's minimum (roadmap row 4)
+

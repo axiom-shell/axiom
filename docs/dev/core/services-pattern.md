@@ -13,7 +13,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
 
 ### Polled data: acquire / release
 (Rule: AGENTS.md › Services, "Anything polled".)
-- **SystemManager**: CPU/memory/temp/GPU/disk stats, sampled by axiom (the `system` topic, `backend/internal/system`, at the shortest interval asked, at most every 250 ms).
+- **SystemManager**: CPU/memory/temp/GPU/disk stats, sampled by axiom (the `system` topic, `backend/internal/sysmon`, at the shortest interval asked, at most every 250 ms).
   - Reference-counted through a `ConsumerRegistry` (shared with UpdatesManager; identical re-registrations are no-ops).
   - Consumers call `acquire(owner, {interval, metrics, diskPaths})` / `release(owner)`.
   - Go reads only the union of requested metrics from /proc and /sys (no process but `nvidia-smi`, only without an AMD card); disk usage is re-read once a minute. Each push is one sample, the metrics asked for and an `at` time, so every sample is pushed.

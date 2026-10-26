@@ -15,7 +15,7 @@ What happens when you step away is the axiom daemon's (`internal/idle`), in plac
 - `Plan(settings)`: dim, lock, screen off and suspend, each with its timeout (0 is off), in timeout order (ties keep that order), then the user's own `items` that are enabled, timed and run something.
 - Each step is a typed action, not a shell line:
   - **Dim** / **undim**: the shell's `brightness` IPC target (`dim` / `dimBy` / `undim`, every monitor, no OSD), until brightness moves to the daemon (stage 3).
-  - **Lock**: the locker `axiom lock` uses (`internal/lock`), so `Lockscreen.mode` `none` runs `Lockscreen.lockCommand`.
+  - **Lock**: the locker `axiom lock` uses (`internal/lockscreen`), so `Lockscreen.mode` `none` runs `Lockscreen.lockCommand`.
   - **Screen off / on**: the compositor's socket (`Manager.ScreenPower`: Hyprland `dispatch hl.dsp.dpms`, sway `output * power`, niri `PowerOff/OnMonitors`).
   - **Suspend**: logind's `Suspend`.
   - **The user's own**: `sh -c` in its own process group (`internal/shellcmd`).

@@ -37,7 +37,7 @@ type Actions struct {
 	// brightness ("by"); Undim brings them back (the shell's brightness)
 	Dim   func(ctx context.Context, mode string, percent int) error
 	Undim func(ctx context.Context) error
-	// Lock locks the session (lock.Locker)
+	// Lock locks the session (lockscreen.Locker)
 	Lock func(ctx context.Context) error
 	// ScreenPower turns the screens off or on (the compositor's socket)
 	ScreenPower func(ctx context.Context, on bool) error

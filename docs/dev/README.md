@@ -20,7 +20,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [generated/api.md](generated/api.md): public members of every service and config reader, one page each.
 - [generated/files.md](generated/files.md): every QML file with its purpose comment. Long: grep it.
 - [generated/ipc.md](generated/ipc.md): every IPC target and its functions.
-- [generated/rpc.md](generated/rpc.md): every method, push and call between the shell and the axiom daemon, with the files on each side.
+- [generated/rpc.md](generated/rpc.md): every method, push and call between the shell and the axiom daemon, with their fields and the files on each side.
 - [generated/layers.md](generated/layers.md): every layer namespace's `order` and why, from `LayerStack.layers`.
 
 ### Roadmaps

@@ -1,4 +1,4 @@
-package system
+package sysmon
 
 import (
 	"context"

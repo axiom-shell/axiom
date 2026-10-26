@@ -234,6 +234,10 @@ QtObject {
     });
     root.listen("daemon.state", params => root._applyDaemonState(params));
     root.listen("dev.state", params => root._dev = params);
+    // A re-exec or quit closes the connection on purpose: closed from
+    // this side first, it's no error (Quickshell's Socket warns on every
+    // close it didn't make). Later, not inside the socket's own read
+    root.listen("daemon.closing", params => Qt.callLater(root._closing, !!params.reexec));
     root._connect();
   }
 
@@ -253,6 +257,7 @@ QtObject {
         return;
       }
       root._retry = 0;
+      root._greetedSinceDrop = true;
       root._refused = null;
       root._hello = result;
       root._applyDaemonState(result);
@@ -326,9 +331,40 @@ QtObject {
       "kind": "unavailable",
       "message": "the connection to axiom closed"
     });
-    // At once: a re-exec hands its listening socket over, so this
-    // connection waits for the new image. A failed attempt backs off
-    root._connect();
+    // At once after a greeted connection: a re-exec hands its listening
+    // socket over, so this connection waits for the new image. Any drop
+    // after that, before the next hello (a daemon that accepts and then
+    // closes), backs off like a failed attempt
+    if (root._greetedSinceDrop) {
+      root._greetedSinceDrop = false;
+      root._connect();
+    } else {
+      root._reconnect.start();
+    }
+  }
+
+  // A hello was answered since the last drop: the next drop reconnects
+  // at once
+  property bool _greetedSinceDrop: false
+
+  // daemon.closing: let the connection go before axiom closes it. After a
+  // re-exec the new image answers on the same socket: connect again once
+  // the old one is gone. After a quit, back off as after any drop (a shell
+  // run apart from `axiom run --no-shell` waits for the next daemon)
+  function _closing(reexec) {
+    const socket = root._socket;
+    if (!socket || !socket.connected)
+      return;
+    root._retire(socket);
+    root._hello = null;
+    root._greetedSinceDrop = false;
+    root._failQueued({
+      "kind": "unavailable",
+      "message": "the connection to axiom closed"
+    });
+    if (reexec)
+      root._retry = 0;
+    root._reconnect.start();
   }
 
   function _failQueued(error) {

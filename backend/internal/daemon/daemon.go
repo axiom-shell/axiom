@@ -27,7 +27,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-	"github.com/axiom-shell/axiom/backend/internal/lock"
+	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
 	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
@@ -68,6 +68,8 @@ type Options struct {
 	isShell func(pid int) bool
 	// topics are polled topics added to the daemon's own (tests)
 	topics []topics.Source
+	// registered sees the registry once every part registered (tests)
+	registered func(*rpc.Registry)
 }
 
 // Files in the runtime directory
@@ -108,7 +110,7 @@ type Daemon struct {
 	server    *rpc.Server
 	shell     *supervise.Supervisor
 	router    *ipcroute.Router
-	locker    *lock.Locker
+	locker    *lockscreen.Locker
 	dev       *devMode
 	savedKick *kicker
 	// compositor is the compositor's config layer (nil without the tree's
@@ -233,7 +235,7 @@ func Run(ctx context.Context, opts Options) error {
 	defer d.tasks.Wait()
 
 	d.router = ipcroute.New(ipcroute.Options{QS: opts.QS, ShellPID: d.shellPID})
-	d.locker = lock.New(lock.Options{
+	d.locker = lockscreen.New(lockscreen.Options{
 		AskShell: func(ctx context.Context) error {
 			_, err := d.router.Call(ctx, ipcroute.CallParams{Target: "lockscreen", Function: "lock"})
 			return err
@@ -279,6 +281,9 @@ func Run(ctx context.Context, opts Options) error {
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
 	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.idlePart(), d.waylandPart(), d.clipboardPart(), d.dev.part()}
 	reg := d.registry(parts)
+	if opts.registered != nil {
+		opts.registered(reg)
+	}
 	d.server = &rpc.Server{
 		Registry: reg,
 		Log:      opts.Log.With("part", "rpc"),

@@ -57,8 +57,9 @@ func extractIsolated(ctx context.Context, o Options) (*jsonx.Object, error) {
 		case ctx.Err() != nil:
 			return nil, axerr.New(axerr.Unavailable, "reading the binds took too long, so nothing moved")
 		// Refused memory inside its collector, the runtime may crash
-		// instead (a SIGSEGV), with no word of memory
-		case diedOfMemory(peakRSS(cmd.ProcessState), ownPeakRSS()):
+		// instead (a SIGSEGV), with no word of memory. Only a crash: a
+		// large file's own error (a Lua error) is said as it is
+		case crashed(cmd.ProcessState, msg) && diedOfMemory(peakRSS(cmd.ProcessState), ownPeakRSS()):
 			return nil, tooBig
 		case msg != "":
 			// The command line's own error, its first line
@@ -73,6 +74,22 @@ func extractIsolated(ctx context.Context, o Options) (*jsonx.Object, error) {
 		return nil, axerr.New(axerr.Unavailable, "reading the binds: not the JSON extract prints")
 	}
 	return result, nil
+}
+
+// crashed: the child ended as a crash, not with its own error: killed by
+// a signal, or the Go runtime's last words on stderr
+func crashed(ps *os.ProcessState, stderr string) bool {
+	if ps != nil {
+		if ws, ok := ps.Sys().(syscall.WaitStatus); ok && ws.Signaled() {
+			return true
+		}
+	}
+	for _, word := range []string{"fatal error", "SIGSEGV", "unexpected signal"} {
+		if strings.Contains(stderr, word) {
+			return true
+		}
+	}
+	return false
 }
 
 // diedOfMemory tells a child that died of MemoryLimit from one that

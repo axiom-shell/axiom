@@ -826,6 +826,119 @@ class KnownIssues(unittest.TestCase):
         self.assertNotIn("known", lines[6])
 
 
+class RpcShapes(unittest.TestCase):
+    """scripts/gen_docs.py checks the keys of object-literal params against
+    the daemon's shapes (rpc-shapes.json)."""
+
+    SHAPE = {"kind": "object", "fields": [
+        {"name": "zones", "shape": {"kind": "array", "elem": {"kind": "string"}}},
+        {"name": "opts", "omitempty": True, "shape": {"kind": "object", "type": "x.Opts", "fields": [
+            {"name": "on", "shape": {"kind": "bool"}}]}},
+        {"name": "extra", "shape": {"kind": "map", "elem": {"kind": "number"}}}]}
+
+    def test_call_sites(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_call_sites
+        qml = "\n".join([
+            "function f() {",
+            '  BackendManager.call("tz.offsets", {',
+            "    zones: list, // a comment, with a comma",
+            '    "opts": {on: `${a}, b`}',
+            "  }, (e, r) => g(r));",
+            '  BackendManager.notify("x.y");',
+            "  BackendManager.call(method, params);",
+            '  root._send(JsonRpc.request(id, "daemon.hello", {pid: 1}));',
+            "}",
+        ])
+        self.assertEqual([(line, method, src.split("\n")[0]) for line, method, src in qml_call_sites(qml)],
+                         [(2, "tz.offsets", "{"), (6, "x.y", ""), (7, None, "params"), (8, "daemon.hello", "{pid: 1}")])
+
+    def test_helper_sites(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_helper_sites
+        qml = "\n".join([
+            '  function copy() { root._send("1", "x.a", {id: 1}); _send("2", "x.b"); _send(n, other, {}) }',
+            "  // rpc: x.a, x.b",
+            "  // sends one",
+            "  function _send(name, method, params) {",
+            "  }",
+            "  // rpc: x.c",
+            "  property var notAFunction: 1",
+        ])
+        self.assertEqual(qml_helper_sites(qml), [(1, "x.a", "{id: 1}"), (1, "x.b", ""), (6, "(through a helper) x.c", "")])
+
+    def test_helper_lines(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_helper_lines
+        qml = "\n".join([
+            "  // rpc: x.a",
+            "  function _send(method, params) {",
+            "    BackendManager.call(method, params);",
+            "  }",
+            "  BackendManager.call(method, params);",
+            "  // rpc: unchecked (not a helper note)",
+            "  function other(method) {",
+            "  }",
+        ])
+        self.assertEqual(qml_helper_lines(qml), {2, 3, 4})
+
+    def test_unreadable_calls_need_a_mark(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_marked_calls
+        qml = "\n".join([
+            '  BackendManager.call("a.b", built); // rpc: unchecked (built elsewhere)',
+            "  // rpc: unchecked (named at runtime)",
+            "  BackendManager.call(method, {});",
+            '  BackendManager.call("a.c", other);',
+            "  // rpc: unchecked (stale)",
+            '  BackendManager.call("a.d", {id: 1});',
+            "  const x = 1;",
+            '  BackendManager.call("a.e", more); // rpc: unchecked ()',
+        ])
+        unreadable = [(1, "a.b", "built"), (3, None, "{}"), (4, "a.c", "other"), (8, "a.e", "more")]
+        marked, problems = qml_marked_calls(qml, unreadable)
+        self.assertEqual(marked, [(1, "a.b", "built", "built elsewhere"), (3, None, "{}", "named at runtime")])
+        self.assertEqual([line for line, _ in problems], [4, 8, 5])
+        self.assertIn("can't read a.c's params (other)", problems[0][1])
+        self.assertIn("marks no call", problems[2][1])
+
+    def test_a_mark_is_no_helper_note(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import QML_RPC_NOTE
+        self.assertIsNone(QML_RPC_NOTE.search("// rpc: unchecked (a reason, with a comma)"))
+        self.assertEqual(QML_RPC_NOTE.search("// rpc: a.b, c.d").group(1), "a.b, c.d")
+
+    def test_callback_reads(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import qml_callback_reads
+        qml = "\n".join([
+            '  BackendManager.call("a.b", {}, (error, result) => f(result.name, result?.path, other.result.x));',
+            '  BackendManager.call("a.c", {}, error => g(error.message));',
+            '  BackendManager.call("a.d", {}, done);',
+            '  BackendManager.listen("a.state", state => { root.x = state.repo; });',
+        ])
+        self.assertEqual(qml_callback_reads(qml), [(1, "call", "a.b", "result", ["name", "path"]),
+                                                   (4, "listen", "a.state", "state", ["repo"])])
+
+    def test_unknown_keys_fail(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import shape_key_problems
+        self.assertEqual(shape_key_problems("{zones, opts: {on: true}, extra: {any: 1}}", self.SHAPE, "m"), [])
+        self.assertEqual(shape_key_problems("{zone: [], opts: {off: 1}}", self.SHAPE, "m"),
+                         ["m has no key 'zone' (it takes: extra, opts, zones)",
+                          "m.opts has no key 'off' (it takes: on)"])
+        # A spread or a computed key can't be checked
+        self.assertEqual(shape_key_problems("{...base, nope: 1}", self.SHAPE, "m"), [])
+        self.assertEqual(shape_key_problems("{[k]: 1}", self.SHAPE, "m"), [])
+
+    def test_render(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import render_shape
+        types = {}
+        self.assertEqual(render_shape(self.SHAPE, types), "{zones: [string], opts?: x.Opts, extra: {[key]: number}}")
+        self.assertEqual(list(types), ["x.Opts"])
+
+
 class CheckSizes(unittest.TestCase):
     """scripts/check_sizes.py finds sizes written as numbers outside the bars."""
 

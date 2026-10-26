@@ -217,3 +217,21 @@ func TestRegistryTypes(t *testing.T) {
 		t.Error("Types(missing) found a method")
 	}
 }
+
+func TestRegistryAndPushShapes(t *testing.T) {
+	t.Parallel()
+	reg := NewRegistry()
+	Handle(reg, "b", func(ctx context.Context, c *Conn, p struct{}) (bool, error) { return false, nil })
+	Handle(reg, "a", func(ctx context.Context, c *Conn, p echoParams) (string, error) { return "", nil })
+	got := reg.Shapes()
+	if len(got) != 2 || got[0].Method != "a" || got[1].Method != "b" {
+		t.Fatalf("Shapes() = %+v", got)
+	}
+	if got[0].Params.Kind != "object" || got[0].Result.Kind != "string" || got[1].Result.Kind != "bool" {
+		t.Errorf("Shapes() = %+v", got)
+	}
+	push := Push[echoParams]{Method: "x.state", Latest: true}.Shape()
+	if push.Method != "x.state" || !push.Latest || push.Params.Kind != "object" {
+		t.Errorf("Push.Shape() = %+v", push)
+	}
+}

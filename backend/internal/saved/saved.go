@@ -36,9 +36,6 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/store"
 )
 
-// Everything a snapshot carries besides the look
-var everything = []string{"personal", "commands"}
-
 // Options configure a Service.
 type Options struct {
 	Dir      string // the config folder: snapshots in saved/
@@ -264,7 +261,7 @@ func (s *Service) Restore(name string) error {
 	}
 	sch := s.opts.Pipeline().Schema()
 	current, _ := s.opts.Store.Config()
-	applied := share.Apply(sch, current, loaded, everything, nil)
+	applied := share.Apply(sch, current, loaded, share.Everything, nil)
 	var existing []string
 	for _, file := range share.SnapshotFiles(sch, loaded) {
 		if _, err := os.Stat(file); err == nil {
@@ -382,7 +379,7 @@ func (s *Service) preview(path string, parsed any) (Preview, error) {
 	sch := s.opts.Pipeline().Schema()
 	look := share.Pick(sch, held, nil, nil)
 	personal := share.Pick(sch, held, []string{"personal"}, nil)
-	withCommands := share.Pick(sch, held, everything, nil)
+	withCommands := share.Pick(sch, held, share.Everything, nil)
 	return Preview{
 		Name:        name,
 		Title:       title,
@@ -443,7 +440,7 @@ func (s *Service) ApplyShared(path, name, snapshot string, monitors share.Monito
 // personal parts and commands; machine settings stay), after saving the
 // running config as "before-defaults".
 func (s *Service) Defaults() (Applied, error) {
-	return s.apply("defaults", s.opts.Pipeline().Defaults(), everything, nil, "", "")
+	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "", "")
 }
 
 // apply: backup, then the file's parts in carry applied, then (snapshot

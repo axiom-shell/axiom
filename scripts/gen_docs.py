@@ -691,13 +691,18 @@ GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')
 # A polled topic (internal/topics): its methods and push, named after it
 GO_SOURCE = re.compile(r'\btopics\.Source\{\s*Name:\s*"(\w+)"')
 POLLED_METHODS = ("subscribe", "unsubscribe", "refresh")
+# The daemon's own account of them, with their fields (scripts/generate.sh
+# writes it first, from backend/tools/rpcshapes)
+SHAPES_PATH = ROOT / GEN_OUT / "rpc-shapes.json"
 GO_COMMENT_LINE = re.compile(r"^[ \t]*//.*$", re.M)
 # QML: through BackendManager (or inside it, root.*), and `// rpc: a, b`
 # for methods named at runtime
 QML_CALL = re.compile(r'\b(?:BackendManager|root)\.(?:call|notify)\("([\w.]+)"|JsonRpc\.request\(\w+,\s*"([\w.]+)"')
 QML_LISTEN = re.compile(r'\b(?:BackendManager|root)\.listen\("([\w.]+)"')
 QML_HANDLE = re.compile(r'\b(?:BackendManager|root)\.handle\("([\w.]+)"|^\s*"([\w.]+)":\s*params\s*=>', re.M)
-QML_RPC_NOTE = re.compile(r"//\s*rpc:\s*(.+)")
+QML_RPC_NOTE = re.compile(r"//\s*rpc:(?!\s*unchecked\b)\s*(.+)")
+# A call the check can't read, marked so on its line or the line above
+QML_RPC_UNCHECKED = re.compile(r"//\s*rpc:\s*unchecked\s*\((.+)\)\s*$", re.M)
 # BackendManager.acquire / release / refresh of a polled topic
 QML_TOPIC = re.compile(r'\bBackendManager\.(acquire|release|refresh)\("(\w+)"')
 
@@ -712,6 +717,289 @@ def _segment(text, start, ends):
     stop = min([e for e in ends if e > start] + [len(text)])
     close = text.find("\n}\n", start)
     return text[start: stop if close < 0 else min(stop, close)]
+
+
+# ------------------------------------------------------- JS call arguments
+# Enough of JavaScript's syntax to split a call's arguments and an object
+# literal's members: strings, template strings, comments and nesting.
+_CLOSE = {"(": ")", "[": "]", "{": "}"}
+
+
+def _skip_string(text, i):
+    """The index past the string starting at text[i]."""
+    quote, i = text[i], i + 1
+    while i < len(text) and text[i] != quote:
+        if text[i] == "\\":
+            i += 1
+        elif quote == "`" and text.startswith("${", i):
+            i = _skip_balanced(text, i + 1)
+            continue
+        i += 1
+    return i + 1
+
+
+def _comment_end(text, i):
+    """The index past the comment starting at text[i]."""
+    line = text.startswith("//", i)
+    end = text.find("\n" if line else "*/", i + 2)
+    return len(text) if end < 0 else end + (0 if line else 2)
+
+
+def _skip_balanced(text, i):
+    """The index past the bracket opened at text[i] and its contents."""
+    stack = [_CLOSE[text[i]]]
+    i += 1
+    while i < len(text) and stack:
+        c = text[i]
+        if c in "\"'`":
+            i = _skip_string(text, i)
+            continue
+        if text.startswith("//", i) or text.startswith("/*", i):
+            i = _comment_end(text, i)
+            continue
+        if c in _CLOSE:
+            stack.append(_CLOSE[c])
+        elif stack and c == stack[-1]:
+            stack.pop()
+        i += 1
+    return i
+
+
+def split_top(text, start, end):
+    """text[start:end] split at its top-level commas, each part stripped
+    (an empty last part, after a trailing comma, dropped)."""
+    parts, i, last = [], start, start
+    while i < end:
+        c = text[i]
+        if c in "\"'`":
+            i = _skip_string(text, i)
+        elif c in _CLOSE:
+            i = _skip_balanced(text, i)
+        elif text.startswith("//", i) or text.startswith("/*", i):
+            i = _comment_end(text, i)
+        elif c == ",":
+            parts.append(text[last:i])
+            i, last = i + 1, i + 1
+        else:
+            i += 1
+    parts.append(text[last:end])
+    parts = [_strip_comments(p).strip() for p in parts]
+    return parts[:-1] if parts and not parts[-1] else parts
+
+
+def _strip_comments(src):
+    return re.sub(r"^\s*(//[^\n]*\n|/\*.*?\*/)\s*", "", src, flags=re.S)
+
+
+def call_args(text, open_paren):
+    """The arguments of the call whose ( is at text[open_paren]."""
+    end = _skip_balanced(text, open_paren)
+    return split_top(text, open_paren + 1, end - 1)
+
+
+JS_KEY = re.compile(r'^(?:(["\'])([^"\']+)\1|([\w$]+))\s*(:|\()')
+JS_SHORTHAND = re.compile(r"^[\w$]+$")
+
+
+def object_members(src):
+    """An object literal's members as (key, value source), or None when one
+    can't be named statically (a spread, a computed key)."""
+    members = []
+    for part in split_top(src, 1, len(src) - 1):
+        if JS_SHORTHAND.match(part):
+            members.append((part, part))
+            continue
+        m = JS_KEY.match(part)
+        if not m:
+            return None
+        members.append((m.group(2) or m.group(3), part[m.end():].strip() if m.group(4) == ":" else ""))
+    return members
+
+
+def shape_key_problems(src, shape, where):
+    """Keys of the object literal src that shape (rpc-shapes.json) has no
+    field for, nested literals included; [] when it's not an object
+    literal or the shape takes any keys."""
+    if not src.startswith("{") or shape["kind"] != "object":
+        return []
+    members = object_members(src)
+    if members is None:
+        return []
+    fields = {f["name"]: f["shape"] for f in shape.get("fields", [])}
+    problems = []
+    for key, value in members:
+        if key not in fields:
+            known = ", ".join(sorted(fields)) or "none"
+            problems.append(f"{where} has no key {key!r} (it takes: {known})")
+        else:
+            problems += shape_key_problems(value, fields[key], f"{where}.{key}")
+    return problems
+
+
+QML_CALL_OPEN = re.compile(r"\b(?:(?:BackendManager|root)\.(call|notify)|JsonRpc\.(request))\(")
+JS_STRING = re.compile(r'^"([\w.]+)"$')
+
+
+def qml_call_sites(text):
+    """Every call to the daemon in a QML file: (line, method, params
+    source), method None when it isn't a literal, params "" when none is
+    passed."""
+    sites = []
+    for m in QML_CALL_OPEN.finditer(text):
+        args = call_args(text, m.end() - 1)
+        if m.group(2):  # JsonRpc.request(id, method, params)
+            args = args[1:]
+        method = JS_STRING.match(args[0]) if args else None
+        sites.append((text.count("\n", 0, m.start()) + 1, method and method.group(1), args[1] if len(args) > 1 else ""))
+    return sites
+
+
+QML_CALLBACK_OPEN = re.compile(r"\b(?:BackendManager|root)\.(call|listen)\(")
+# (error, result) => … for a call, (state) => … or state => … for a listener
+JS_ARROW2 = re.compile(r"^\(\s*\w+\s*,\s*(\w+)\s*\)\s*=>")
+JS_ARROW1 = re.compile(r"^\(?\s*(\w+)\s*\)?\s*=>")
+
+
+def qml_callback_reads(text):
+    """First-level reads of a result or push in an inline arrow callback:
+    (line, "call" or "listen", method, variable, the keys read)."""
+    reads = []
+    for m in QML_CALLBACK_OPEN.finditer(text):
+        args = call_args(text, m.end() - 1)
+        method = JS_STRING.match(args[0]) if args else None
+        index = 2 if m.group(1) == "call" else 1
+        if not method or len(args) <= index:
+            continue
+        arrow = (JS_ARROW2 if m.group(1) == "call" else JS_ARROW1).match(args[index])
+        if not arrow:
+            continue
+        var = arrow.group(1)
+        keys = sorted(set(re.findall(rf"(?<![\w.]){var}\??\.(\w+)", args[index][arrow.end():])))
+        if keys:
+            reads.append((text.count("\n", 0, m.start()) + 1, m.group(1), method.group(1), var, keys))
+    return reads
+
+
+QML_HELPER = re.compile(r"(?:\s*//[^\n]*\n)*\s*function (\w+)\(")
+
+
+def qml_helper_sites(text):
+    """Calls through a helper whose `// rpc: a, b` note sits above its
+    `function`: (line, method, params source) for each call naming one of
+    the noted methods as a literal, its params the argument after it. A
+    note above anything else gives ("(through a helper) " + method) at the
+    note's line, for each method: a call the check can't read."""
+    sites = []
+    for note in QML_RPC_NOTE.finditer(text):
+        noted = [n.strip() for n in note.group(1).split(",") if n.strip()]
+        helper = QML_HELPER.match(text, text.find("\n", note.start()) + 1)
+        if not helper:
+            line = text.count("\n", 0, note.start()) + 1
+            sites += [(line, "(through a helper) " + n, "") for n in noted]
+            continue
+        for call in re.finditer(rf"(?<!function )\b{helper.group(1)}\(", text):
+            args = call_args(text, call.end() - 1)
+            for i, arg in enumerate(args):
+                literal = JS_STRING.match(arg)
+                if literal and literal.group(1) in noted:
+                    sites.append((text.count("\n", 0, call.start()) + 1, literal.group(1), args[i + 1] if i + 1 < len(args) else ""))
+                    break
+    return sites
+
+
+def qml_helper_lines(text):
+    """The lines of every helper under a `// rpc:` note, its `function`
+    line through its closing brace: the calls in it are covered, since its
+    callers are checked."""
+    lines = set()
+    for note in QML_RPC_NOTE.finditer(text):
+        helper = QML_HELPER.match(text, text.find("\n", note.start()) + 1)
+        if not helper:
+            continue
+        brace = text.find("{", helper.end())
+        if brace < 0:
+            continue
+        first = text.count("\n", 0, helper.end()) + 1
+        last = text.count("\n", 0, _skip_balanced(text, brace)) + 1
+        lines.update(range(first, last + 1))
+    return lines
+
+
+def qml_marked_calls(text, unreadable):
+    """Sorts the calls the check can't read, (line, method, params
+    source), by their `// rpc: unchecked (<reason>)` mark (on the call's
+    line or the line above): (marked as (line, method, params, reason),
+    problems as (line, message)). A mark that no unreadable call uses is a
+    problem too, so the unchecked count only shrinks."""
+    lines = text.split("\n")
+
+    def mark(n):
+        """The mark for a call on line n: (reason, the mark's line), or None."""
+        for at in (n, n - 1):
+            if at < 1 or (at < n and not lines[at - 1].strip().startswith("//")):
+                continue
+            found = QML_RPC_UNCHECKED.search(lines[at - 1])
+            if found:
+                return found.group(1).strip(), at
+        return None
+
+    marked, problems, used = [], [], set()
+    for line, method, src in unreadable:
+        found = mark(line)
+        if found:
+            used.add(found[1])
+            marked.append((line, method, src, found[0]))
+        else:
+            what = f"{method}'s params" if method else "a call naming its method at runtime"
+            problems.append((line, f"the contract check can't read {what} ({' '.join(src.split())[:60] or 'no params'}): "
+                                   "write the method as a string literal and the params as an object literal, "
+                                   "or mark the line `// rpc: unchecked (<reason>)` (docs/dev/backend/protocol.md › Changing the protocol)"))
+    for m in QML_RPC_UNCHECKED.finditer(text):
+        line = text.count("\n", 0, m.start()) + 1
+        if line not in used:
+            problems.append((line, "`// rpc: unchecked` marks no call the contract check can't read: drop it"))
+    return marked, problems
+
+
+def render_shape(shape, types, depth=0):
+    """A shape on one line: `{zones: [string], ids?: [number]}`. A named
+    object below the top level is its name, its fields listed in types."""
+    kind, name = shape["kind"], shape.get("type")
+    if kind == "object":
+        if depth and name:
+            types.setdefault(name, shape)
+            return name
+        fields = ", ".join(f"{f['name']}{'?' if f.get('omitempty') else ''}: {render_shape(f['shape'], types, depth + 1)}"
+                           for f in shape.get("fields", []))
+        return "{" + fields + "}"
+    if kind == "array":
+        return "[" + render_shape(shape["elem"], types, depth) + "]"
+    if kind == "map":
+        return "{[key]: " + render_shape(shape["elem"], types, depth + 1) + "}"
+    if kind == "opaque":
+        return name or "any"
+    return kind
+
+
+def load_shapes():
+    """The daemon's methods, pushes and topics as rpcshapes printed them."""
+    if not SHAPES_PATH.exists():
+        sys.exit(f"{rel(SHAPES_PATH)} is missing: run scripts/generate.sh")
+    return json.loads(SHAPES_PATH.read_text())
+
+
+def shapes_problems(methods, pushes, shapes):
+    """Where the scan by name and the daemon's own registry disagree: a
+    method or push one of them misses, so the scan's regexes need a case."""
+    problems = []
+    for what, scanned, real in (
+            ("method", set(methods), {m["method"] for m in shapes["methods"]}),
+            ("push", set(pushes), {p["method"] for p in shapes["pushes"]} | {f"{t['name']}.state" for t in shapes["topics"]})):
+        for name in sorted(real - scanned):
+            problems.append(f"rpc_scan misses the {what} {name}, which the daemon's registry has (rpc-shapes.json)")
+        for name in sorted(scanned - real):
+            problems.append(f"rpc_scan finds the {what} {name}, which the daemon's registry lacks (rpc-shapes.json)")
+    return problems
 
 
 def rpc_scan():
@@ -769,11 +1057,59 @@ def rpc_scan():
             if f'"{method}"' in text and not path.name.endswith("_test.go"):
                 info["cli"].add(rel(path))
 
-    problems = []
+    problems, unchecked = [], []
+    shapes = load_shapes()
+    params = {m["method"]: m["params"] for m in shapes["methods"]}
+    results = {m["method"]: m["result"] for m in shapes["methods"]}
+    push_params = {p["method"]: p["params"] for p in shapes["pushes"]}
+    push_params.update({f"{t['name']}.state": t["state"] for t in shapes["topics"]})
     for path in qml_files():
         if rel(path).startswith("tests/"):
             continue
         text = path.read_text()
+        # Params written as an object literal are checked against the
+        # method's; anything else the check can't read fails unless marked
+        # `// rpc: unchecked (<reason>)`. BackendManager's own generic
+        # paths and the calls inside a `// rpc:` helper (checked at its
+        # callers) are exempt
+        exempt = qml_helper_lines(text) if path.stem != "BackendManager" else None
+        unreadable = []
+
+        def check(line, method, src):
+            if src in ("", "{}", "null", "undefined"):
+                return
+            where = f"{rel(path)}:{line}: {method}'s params"
+            if src.startswith("{") and object_members(src) is not None:
+                problems.extend(shape_key_problems(src, params[method], where))
+            else:
+                unreadable.append((line, method, src))
+        for line, method, src in qml_call_sites(text):
+            if method in params:
+                check(line, method, src)
+            elif method is None and exempt is not None and line not in exempt:
+                unreadable.append((line, None, src))
+        # Results and pushes read in an inline callback
+        for line, kind, method, var, keys in qml_callback_reads(text):
+            shape = results.get(method) if kind == "call" else push_params.get(method)
+            if not shape or shape["kind"] != "object":
+                continue
+            fields = {f["name"] for f in shape.get("fields", [])}
+            what = "result" if kind == "call" else "push"
+            for key in keys:
+                if key not in fields:
+                    problems.append(f"{rel(path)}:{line}: {method}'s {what} has no key {key!r}, read as {var}.{key} "
+                                    f"(it has: {', '.join(sorted(fields)) or 'none'})")
+        for line, method, src in qml_helper_sites(text):
+            if method in params:
+                check(line, method, src)
+            elif method.startswith("(through a helper) "):
+                problems.append(f"{rel(path)}:{line}: the `// rpc: {method.split(' ', 4)[-1]}` note isn't directly above "
+                                "its helper's `function`, so the calls through it go unchecked: move it there")
+        if exempt is not None:
+            marked, found = qml_marked_calls(text, unreadable)
+            unchecked += [(rel(path), line, method or "(at runtime)", " ".join(src.split())[:60], reason)
+                          for line, method, src, reason in marked]
+            problems += [f"{rel(path)}:{line}: {message}" for line, message in found]
         calls = [a or b for a, b in QML_CALL.findall(text)]
         for verb, topic in QML_TOPIC.findall(text):
             calls += [f"{topic}.{s}" for s in ({"acquire": ("subscribe", "unsubscribe"),
@@ -799,41 +1135,80 @@ def rpc_scan():
     for method, info in to_shell.items():
         if not info["qml"]:
             problems.append(f"the daemon calls {method} on the shell, which nothing answers")
-    return methods, pushes, to_shell, problems
+    problems += shapes_problems(methods, pushes, shapes)
+    return methods, pushes, to_shell, problems, shapes, unchecked
 
 
 def rpc_page():
-    methods, pushes, to_shell, problems = rpc_scan()
+    methods, pushes, to_shell, problems, shapes, unchecked = rpc_scan()
+    types = {}
+    method_shapes = {m["method"]: m for m in shapes["methods"]}
+    push_shapes = {p["method"]: p["params"] for p in shapes["pushes"]}
+    push_shapes.update({f"{t['name']}.state": t["state"] for t in shapes["topics"]})
 
     def files(items):
         return "<br>".join(f"`{f}`" for f in sorted(items))
 
+    def shape(s):
+        return f"`{render_shape(s, types)}`" if s else ""
+
     out = [NOTICE, "# Shell ↔ daemon RPC", "",
            "Every JSON-RPC method the axiom daemon serves on its socket, every push it sends and every call it makes "
-           "into the shell, with the files on each side. Found by name in the code (`rpc.Handle`, `rpc.Push`, `Push`, "
+           "into the shell, with the files on each side and what each carries. Names are found in the code (`rpc.Handle`, `rpc.Push`, `Push`, "
            "`topics.Source`; `BackendManager.call` / `listen` / `handle` / `acquire`, and `// rpc: a, b` where a method is chosen at runtime); "
-           "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks. "
+           "fields come from the daemon's own registry (`docs/dev/generated/rpc-shapes.json`, printed by `backend/tools/rpcshapes`). "
+           "`gen_docs.py` fails when the shell calls or listens to something the daemon lacks, passes an object literal "
+           "with a key the method's params don't have, reads a key a result or push lacks in an inline callback, "
+           "or makes a call it can't read that isn't marked `// rpc: unchecked (<reason>)`. "
            "How the connection works: [protocol](../backend/protocol.md).", "",
+           "**Fields:** `?` marks one left out when empty (`omitempty`); `{[key]: T}` is a map; "
+           "a named object below the top level is listed under [Types](#types); `json.RawMessage` and `any` carry any JSON.", "",
            "## Methods (client → daemon)", "",
            "**Guard:** `shell only` refuses any connection but the shell's; `writable` refuses while the config is read-only "
            "(`compatible: false`).", "",
-           "| Method | Guard | Daemon | Shell callers | CLI |", "|---|---|---|---|---|"]
+           "| Method | Params | Result | Guard | Daemon | Shell callers | CLI |", "|---|---|---|---|---|---|---|"]
     for method in sorted(methods):
-        m = methods[method]
-        out.append(f"| `{method}` | {', '.join(m['guards'])} | `{m['go']}` | {files(m['qml']) or '(none)'} | {files(m['cli'])} |")
+        m, sh = methods[method], method_shapes.get(method, {})
+        out.append(f"| `{method}` | {shape(sh.get('params'))} | {shape(sh.get('result'))} | {', '.join(m['guards'])} "
+                   f"| `{m['go']}` | {files(m['qml']) or '(none)'} | {files(m['cli'])} |")
     out += ["", "## Pushes (daemon → subscribers)", "",
             "Sent to connections whose hello subscribed to the topic (the shell subscribes to all). "
             "A polled topic's state goes only to connections that called its `<topic>.subscribe` "
             "(the shell through `BackendManager.acquire`).", "",
-            "| Push | Topic | Sent from | Heard in |", "|---|---|---|---|"]
+            "| Push | Params | Topic | Sent from | Heard in |", "|---|---|---|---|---|"]
     for method in sorted(pushes):
         p = pushes[method]
-        out.append(f"| `{method}` | {p['topic']} | {files(p['go'])} | {files(p['qml']) or '(nothing)'} |")
+        out.append(f"| `{method}` | {shape(push_shapes.get(method))} | {p['topic']} | {files(p['go'])} | {files(p['qml']) or '(nothing)'} |")
+    out += ["", "## Polled topics", "",
+            "A `<topic>.subscribe` takes `interval` (ms) besides the topic's own request; the shell sends it through "
+            "`BackendManager.acquire`, built from config, so it isn't checked.", "",
+            "| Topic | Request | State |", "|---|---|---|"]
+    for t in shapes["topics"]:
+        out.append(f"| `{t['name']}` | {shape(t['request'])} | {shape(t['state'])} |")
     out += ["", "## Calls into the shell (daemon → shell)", "",
             "| Method | Called from | Answered in |", "|---|---|---|"]
     for method in sorted(to_shell):
         c = to_shell[method]
         out.append(f"| `{method}` | {files(c['go'])} | {files(c['qml'])} |")
+    out += ["", "## Unchecked call sites", "",
+            "Calls the check can't read (params that aren't an object literal, a method named at runtime), each marked "
+            "`// rpc: unchecked (<reason>)`: their keys are checked only at runtime, by the daemon's strict decoding where the params are typed. "
+            "An unmarked one fails `gen_docs.py`, and the scanner learns no new call shapes, so this list only shrinks "
+            "([protocol](../backend/protocol.md#changing-the-protocol)).", "",
+            "| Call site | Method | Params | Why |", "|---|---|---|---|"]
+    for file, line, method, src, reason in sorted(unchecked):
+        # A | would end the cell, a backtick the code span
+        cell = src.replace("`", "'").replace("|", "\\|")
+        why = reason.replace("|", "\\|")
+        out.append(f"| `{file}:{line}` | `{method}` | `{cell}` | {why} |")
+    out += ["", "## Types", ""]
+    done = set()
+    while set(types) - done:
+        for name in sorted(set(types) - done):
+            done.add(name)
+            rendered = render_shape(types[name], types)
+            out.append(f"- `{name}`: `{rendered}`")
+    out = out[:out.index("## Types") + 2] + sorted(out[out.index("## Types") + 2:])
     return "\n".join(out).rstrip() + "\n", problems
 
 

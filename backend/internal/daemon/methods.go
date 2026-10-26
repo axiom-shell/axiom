@@ -12,7 +12,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-	"github.com/axiom-shell/axiom/backend/internal/lock"
+	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
 	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
@@ -25,7 +25,7 @@ import (
 const (
 	topicConfig = "config" // config.changed, config.state, schema.changed, schema.error
 	topicSaved  = "saved"  // saved.state
-	topicDaemon = "daemon" // daemon.state, dev.state
+	topicDaemon = "daemon" // daemon.state, dev.state, daemon.closing
 	// compositor.state, compositor.applied, compositor.notify, compositor.bindsMerged
 	topicCompositor = "compositor"
 	topicIdle       = "idle"      // idle.state
@@ -45,8 +45,9 @@ var (
 
 	pushSavedState = rpc.Push[saved.State]{Method: "saved.state", Latest: true}
 
-	pushDaemonState = rpc.Push[DaemonState]{Method: "daemon.state", Latest: true}
-	pushDevState    = rpc.Push[DevState]{Method: "dev.state", Latest: true}
+	pushDaemonState   = rpc.Push[DaemonState]{Method: "daemon.state", Latest: true}
+	pushDevState      = rpc.Push[DevState]{Method: "dev.state", Latest: true}
+	pushDaemonClosing = rpc.Push[daemonClosing]{Method: "daemon.closing"}
 
 	pushCompositorState       = rpc.Push[json.RawMessage]{Method: "compositor.state", Latest: true}
 	pushCompositorApplied     = rpc.Push[json.RawMessage]{Method: "compositor.applied"}
@@ -115,6 +116,14 @@ type HelloParams struct {
 	PID        int             `json:"pid"`
 }
 
+// UnmarshalJSON decodes a hello leniently, past rpc.DecodeStrict: a peer
+// from another version may send a key this binary lacks, and must still
+// hear the protocol mismatch (Incompatible), never a bad params.
+func (p *HelloParams) UnmarshalJSON(data []byte) error {
+	type plain HelloParams
+	return json.Unmarshal(data, (*plain)(p))
+}
+
 // topics reads Subscribe.
 func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	if len(p.Subscribe) == 0 {
@@ -162,6 +171,42 @@ type HelloResult struct {
 type DaemonState struct {
 	Compatible bool   `json:"compatible"`
 	Reason     string `json:"reason,omitempty"`
+}
+
+// daemonClosing announces that the daemon closes every connection on
+// purpose: a re-exec (connect again) or a quit.
+type daemonClosing struct {
+	Reexec bool `json:"reexec"`
+}
+
+// closingWait is how long a re-exec or quit waits for the clients told
+// it's closing to close their side first.
+const closingWait = 300 * time.Millisecond
+
+// announceClosing tells the daemon topic's subscribers that the daemon is
+// about to close their connection, and waits (at most wait) for them to
+// close it themselves: a peer that closes first sees no error (the
+// shell's socket warns on every close it didn't make).
+func announceClosing(server *rpc.Server, reexec bool, wait time.Duration) {
+	if server == nil {
+		return
+	}
+	keep := subscribedTo(topicDaemon)
+	var told []*rpc.Conn
+	for _, c := range server.Conns() {
+		if keep(c) {
+			told = append(told, c)
+		}
+	}
+	pushDaemonClosing.Send(server, daemonClosing{Reexec: reexec}, subscribedTo(topicDaemon))
+	deadline := time.After(wait)
+	for _, c := range told {
+		select {
+		case <-c.Done():
+		case <-deadline:
+			return
+		}
+	}
 }
 
 // StatusResult is daemon.status.
@@ -249,7 +294,10 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 
 	rpc.Handle(reg, "daemon.shutdown", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
 		d.opts.Log.Info("asked to shut down", "client", sessionOf(c).Client)
-		go d.stop()
+		go func() {
+			announceClosing(d.server, false, closingWait)
+			d.stop()
+		}()
 		return struct{}{}, nil
 	})
 
@@ -412,7 +460,7 @@ func (d *Daemon) ipcMethods(reg *rpc.Registry) {
 		return struct{}{}, d.locker.Lock(ctx)
 	})
 
-	rpc.Handle(reg, "lock.state", func(ctx context.Context, c *rpc.Conn, p lock.State) (struct{}, error) {
+	rpc.Handle(reg, "lock.state", func(ctx context.Context, c *rpc.Conn, p lockscreen.State) (struct{}, error) {
 		if !fromShell(c) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell reports the lock state")
 		}

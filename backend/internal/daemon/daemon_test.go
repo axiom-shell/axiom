@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +27,8 @@ type testDaemon struct {
 	socket  string
 	dirs    xdg.Dirs
 	runtime xdg.Runtime
+	// registered sees the running daemon's registry
+	registered func(*rpc.Registry)
 }
 
 func (td *testDaemon) getenv(k string) string { return td.env[k] }
@@ -87,9 +90,13 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 			t.Error("the daemon didn't stop")
 		}
 	})
+	// Ready once a connection gets through: the socket's file is there
+	// from the bind, a moment before the listen, and a connect between
+	// the two is refused
 	deadline := time.Now().Add(10 * time.Second)
 	for {
-		if info, err := os.Lstat(td.socket); err == nil && info.Mode()&os.ModeSocket != 0 {
+		if nc, err := net.Dial("unix", td.socket); err == nil {
+			nc.Close()
 			return
 		}
 		select {
@@ -105,7 +112,7 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 }
 
 func (td *testDaemon) options(isShell func(int) bool, sources ...topics.Source) Options {
-	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources}
+	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered}
 }
 
 // connect dials the daemon and says hello as client; the connection's
@@ -173,6 +180,27 @@ func TestLockScreenOnlyTakesLock(t *testing.T) {
 		if axerr.KindOf(err) != axerr.Refused {
 			t.Errorf("lockscreen %q: %v", fn, err)
 		}
+	}
+}
+
+// A hello from another version hears the protocol mismatch even when it
+// carries a key this binary doesn't know (params are otherwise strict).
+func TestHelloFromAnotherVersion(t *testing.T) {
+	t.Parallel()
+	td := startDaemon(t, nil)
+	c, err := rpc.Dial(context.Background(), td.socket, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	ctx := context.Background()
+	newer := map[string]any{"protocol": buildinfo.Protocol() + 1, "client": "cli", "pid": os.Getpid(), "later": true}
+	if err := c.Call(ctx, "daemon.hello", newer, nil); axerr.KindOf(err) != axerr.Incompatible {
+		t.Errorf("a newer client's hello: %v", err)
+	}
+	newer["protocol"] = buildinfo.Protocol()
+	if err := c.Call(ctx, "daemon.hello", newer, nil); err != nil {
+		t.Errorf("a hello with an extra key: %v", err)
 	}
 }
 

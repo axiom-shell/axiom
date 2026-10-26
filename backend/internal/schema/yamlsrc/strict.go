@@ -1,8 +1,8 @@
 // Package yamlsrc is the YAML source of the config schema
 // (config/schema/): a strict YAML reader, the assembler that joins the
-// files into the one JSON schema everything else reads, the checks that
-// refuse a mistyped keyword or annotation, and the writer that split the
-// JSON schema into these files. Pure: files come through an fs.FS.
+// files into the one JSON schema everything else reads, and the checks that
+// refuse a mistyped keyword or annotation. Pure: files come through an
+// fs.FS; finding the tree on disk and reading it is package tree's.
 //
 // Strict means YAML can't mean something other than it looks: no anchors,
 // aliases or merge keys, no tags beyond the plain types, no timestamps,

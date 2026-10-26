@@ -70,7 +70,7 @@ rebuild() {
     build_error="go isn't installed"
     return
   fi
-  if out=$("$dir/scripts/generate.sh" 2>&1 && cd "$dir/backend" \
+  if out=$("$dir/scripts/generate.sh" --no-docs 2>&1 && cd "$dir/backend" \
     && CGO_ENABLED=0 go build -trimpath -o "$bin.new" ./cmd/axiom 2>&1 && mv -f "$bin.new" "$bin"); then
     rebuilt=true
   else

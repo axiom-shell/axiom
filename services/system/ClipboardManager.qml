@@ -129,6 +129,7 @@ Singleton {
     });
   }
 
+  // rpc: clipboard.copy, clipboard.remove, clipboard.clear
   function _call(method, params) {
     BackendManager.call(method, params, error => {
       if (error)

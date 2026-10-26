@@ -55,7 +55,8 @@ func inherited(getenv func(string) string) (*handoff, error) {
 
 // reexec replaces this process with the binary at exe (this one's path,
 // the installed binary, or a dev build), keeping the locks, the socket and
-// the shell. Clients see their connection close and reconnect. An exec
+// the shell. Clients are told first (daemon.closing), then see their
+// connection close and reconnect. An exec
 // that fails leaves the daemon as it was.
 func (d *Daemon) reexec(exe string) (err error) {
 	if _, err := os.Stat(exe); err != nil {
@@ -81,6 +82,9 @@ func (d *Daemon) reexec(exe string) (err error) {
 		Started:    d.started.UnixMilli(),
 	}
 	_, h.Schema = d.currentSchema()
+	// The clients close their side first, so the exec's close is no
+	// error to them
+	announceClosing(d.server, true, closingWait)
 	// No child may start while the descriptors lose close-on-exec (it
 	// would inherit the locks): every fork takes ForkLock first
 	syscall.ForkLock.Lock()

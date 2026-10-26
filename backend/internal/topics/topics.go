@@ -161,6 +161,9 @@ func (h *Hub) Subscribe(s Subscriber, name string, request json.RawMessage) erro
 	if err != nil {
 		return err
 	}
+	if err := checkRequest(t.src.Request, request); err != nil {
+		return axerr.Wrap(axerr.BadRequest, err, "%s.subscribe: bad params", name)
+	}
 	interval := t.src.Default
 	if p.Interval != nil {
 		interval = time.Duration(*p.Interval * float64(time.Millisecond))
@@ -186,6 +189,25 @@ func (h *Hub) Subscribe(s Subscriber, name string, request json.RawMessage) erro
 		}
 	}
 	return nil
+}
+
+// checkRequest fails on a key of request that neither the hub's interval
+// nor the source's Request type takes (rpc.DecodeStrict), as a method's
+// params do.
+func checkRequest(typ reflect.Type, request json.RawMessage) error {
+	if typ == nil || len(request) == 0 || string(request) == "null" {
+		return nil
+	}
+	var keys map[string]json.RawMessage
+	if err := json.Unmarshal(request, &keys); err != nil {
+		return err
+	}
+	delete(keys, "interval")
+	rest, err := json.Marshal(keys)
+	if err != nil {
+		return err
+	}
+	return rpc.DecodeStrict(rest, reflect.New(typ).Interface())
 }
 
 // Unsubscribe drops s's request; the topic stops with its last subscriber.

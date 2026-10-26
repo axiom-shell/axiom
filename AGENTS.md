@@ -86,6 +86,7 @@ All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs eve
 - verify.sh formats changed QML in place (Qt 6's qmlformat, `.qmlformat.ini`). Never `qmlformat -i` (replaces the inode; the `qmlformat` on PATH is Qt5's and fails silently).
 - Each QML file has a short purpose comment above its root object (feeds `docs/dev/generated/files.md`).
 - A config read grep can't see (by key name, a whole object handed to a helper) gets a `// reads: Section.path, …` comment (`*` matches any part).
+- A helper forwarding a daemon method name to `BackendManager.call` gets a `// rpc: a, b` comment above its `function` (`docs/dev/backend/protocol.md` › Changing the protocol).
 
 ## Layout
 
