@@ -102,6 +102,7 @@ type Manager struct {
 	liveKey  string
 
 	problem         string
+	unreadBinds     string // the last runtimeApply's problems().UnreadBinds
 	loaded          bool
 	takeoverPending bool
 	// pickedHere: managed was saved while axiom runs (its card's Save, not
@@ -673,6 +674,16 @@ func (m *Manager) checkLoaded(ctx context.Context) {
 
 func (m *Manager) runtimeApply(ctx context.Context) {
 	m.w.runtimeApply(ctx, m.in, func() []string { return m.liveLines(ctx) })
+	// The binds went on without the user's known: the card says so (a file
+	// mode's own problem comes first), until they're read again
+	p := m.w.problems(m.in).UnreadBinds
+	switch {
+	case p != "" && m.problem == "":
+		m.warnOnce(p)
+	case p == "" && m.unreadBinds != "" && m.problem == m.unreadBinds:
+		m.problem = ""
+	}
+	m.unreadBinds = p
 	m.applied()
 }
 

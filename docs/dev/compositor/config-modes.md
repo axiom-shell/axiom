@@ -22,7 +22,7 @@ How axiom sets the compositor up, the same on every compositor with `supports.co
 - **Included but not loaded**: a notification, once per session and not while the onboarding is open, offers **Add it for me** (`addIncludeLines`: the `compositorModule` hookup, the include lines added with a backup, then `compositor.reload`) and Open settings. The Compositor card has the same button next to Copy while the module isn't loaded.
 
 ### The runtime layer
-- What every compositor's shares (`manager/runtime.go`): the binds in effect are read first, so a bind on a key the user's config already takes is skipped (`render.RuntimeBinds`, `skippedKeys`), each taken key logged once. A reload while it reads (counted by the event stream as it comes) makes what it read stale, and it reads again.
+- What every compositor's shares (`manager/runtime.go`): the binds in effect are read first, so a bind on a key the user's config already takes is skipped (`render.RuntimeBinds`, `skippedKeys`), each taken key logged once. A writer that couldn't read the user's binds (sway, no config found) binds anyway and says so as `problems().UnreadBinds`, which `problem` shows unless a file mode's own problem is there, until a later apply reads them. A reload while it reads (counted by the event stream as it comes) makes what it read stale, and it reads again.
 - Hyprland's keeps the keys it bound in Hyprland's Lua state (`AXIOM_RUNTIME_KEYS`), unbound before the binds are read; sway's keeps the commands unbinding them (state, below); niri takes nothing at runtime, so its runtime layer is a file: a wrapper niri loads in place of the user's config (`load-config-file`), including it and then axiom's module.
 
 ### Writing files
