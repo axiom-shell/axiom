@@ -21,6 +21,7 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 - No singleton over about 800 lines outside the pure helpers and the compositor backends; every file sits in the folder its rule names.
 - `archtest` enforces the backend's dependency direction; the shell–daemon method shapes are checked on both sides.
 - The root `AGENTS.md` is 12 KB or less; generated docs are built, not committed.
+- [The launch gate](#the-launch-gate) is met, and axiom is posted for testers.
 
 ### Alignment with the backend roadmap
 
@@ -36,6 +37,8 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 | 7. Fit, geometry, performance | the chat lists → stage 5 | none |
 | 8. A clean log | stage 6 for the socket warnings; the rest: none | none |
 | 9. Docs, tooling, process | `config-v2.md` → stage 7 | none |
+| 10. Custom JSON widgets | stage 3b (streamed commands, JSON) | none |
+| 11. Audits, clear-out and hardening | every row before it | none |
 
 ### Full order
 Both roadmaps as one sequence. A row starts when the one above it has merged; the parallel lane fills the gaps at any time. **Status** is `done`, `in progress` (normally one row), `next` (the row after it) or `later`; it's kept current by [Taking the next step](#taking-the-next-step), so the first row not `done` is always where work resumes.
@@ -55,7 +58,11 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 11 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
 | 12 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
 | 13 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
-| 14 | later | [Phase 9](#phase-9-docs-tooling-and-process) | Last, so the docs describe the final shape. |
+| 14 | later | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
+| 15 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
+| 16 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 2: clear out issues.md, then audit again | Fixes after the audits, so the list isn't refilled behind them; the second pass catches what the fixes broke. |
+| 17 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 3: 1–2 weeks of hardening, frozen | The maintainer drives sway and niri daily; only fixes land. |
+| 18 | later | [Phase 9](#phase-9-docs-tooling-and-process), then post for testers | Last, so the docs describe the final shape; the post follows [the launch gate](#the-launch-gate). |
 
 **Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload).
 
@@ -222,7 +229,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [A screenshot under niri timed out waiting for its frame](issues.md#a-screenshot-under-niri-timed-out-waiting-for-its-frame)
 
 ### Phase 9: docs, tooling and process
-Last, so the docs describe the final shape.
+Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
 
 Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` pages it points at); fold `docs/dev/core/config-v2.md` into `schema-annotations.md` and `config-manager.md` once stage 7 finishes v2; the maintainer moves the [Deferred](#deferred) entries to GitHub; a PR-size note in `CONTRIBUTING.md` (a batch per PR, an item per commit, moves apart from logic).
 
@@ -238,6 +245,38 @@ Resolves:
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 - [CI checks dependencies and cross-builds only when a PR touches Go](issues.md#ci-checks-dependencies-and-cross-builds-only-when-a-pr-touches-go)
+
+### Phase 10: custom JSON widgets
+The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).
+
+Steps:
+1. **The plan** ([Items that need a plan](#items-that-need-a-plan)): the maintainer re-plans the feature before it's built. The plan settles the shape below, the fields, the styles, the editor's panels, and whether `CommandOutput` and `Button`'s `labelCommand` fold into it later (a migration), then splits into items.
+2. **Definitions and the pure logic:** a new config section holding the definitions (an array with stable ids, recipe `config-section`); each surface refers to one by id through an `x-options` source. A definition holds a name, the command (`x-scope: commands`), the mode (poll, stream, once), the interval, the format (waybar, json, text), the bindings (a style's slot → a path in the JSON), the icon map (Waybar's `format-icons`: by `alt` or by percentage steps), a text template (`{text} {percentage}%`), the style and click and scroll commands. A methods helper (recipe `methods-helper`, with its test) parses each format, flattens a sample's JSON into the paths the dropdowns offer, resolves the bindings, fills templates, picks icons and maps a `class` or state to a theme colour (`ok`, `warning`, `critical` → semantic names). A service acquires a definition for its consumers, exposes the parsed slots per id and keeps a graph's numeric history, so the UI never holds live arrays.
+3. **The surfaces:** a bar widget type (recipe `bar-widget`, with a `PopoutAnchor`), a popout panel (recipe `bar-popout`), and a module type (recipe `overlay-module`) with `hosts: [lockscreen]`. Never the greeter (it's data, never code, and runs as another user); no click commands on the lockscreen.
+4. **The styles** (a fixed set, each declaring its slots; never a layout language): Label (icon and text, the bar's default), Figure (a big value, unit and caption), Ring and Bar (a value between `min` and `max`), Graph (a sparkline from the service's history), List (rows from `items`, a ListView over a model the service keeps, never a Repeater over live values), Text block (monospace optional). Each draws at every size a card or bar gives it.
+5. **Fields beyond Waybar's**, all optional, which presets map: `icon` (a Material Symbols name, over the `alt` map), `value` with `min`, `max` and `unit`, `subtext`, `color` or `state` (a theme name), `badge` (a count), `urgent` (attention), `image` (art, an avatar), `items` (rows of `{text, icon, value, subtext}`, for List and the popout) and `hidden` (as Waybar hides a module whose text is empty).
+6. **The editor page** (part of this phase, not after it; recipe `overlay-view`, a tool page with its default, migration step, launcher command and docs, on `docs/dev/core/editors-pattern.md`): the definitions listed (add, duplicate, delete, a few presets for well-known Waybar scripts); an inspector with the command, mode and interval, a Run button showing the raw output and the parsed fields, binding dropdowns filled from the sample's paths, the style and its slots, the icon map and the colour states; and live previews of one definition as it's drawn: a horizontal bar, a vertical bar, a strip, a square card, a wide card, a large card and the popout.
+7. **The audit's entry:** the feature gets its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
+
+Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone.
+
+### Phase 11: audits, clear-out and hardening
+Every system audited in full, every open entry fixed or deliberately deferred, then a frozen stretch of daily use, before posting on the sway and niri wikis for testers (decided 2026-10-27). Nothing new is built in this phase.
+
+Steps:
+1. **Audit every system** (row 15) with the `review-system` skill: `--full --record` (findings land in issues.md, linked from this phase under Found by the audits), adding `--deep` for systems over about 5k lines. Every system `scope.py --list` names, plus the custom widgets, plus every `feature:<name>` doc that no system covers. Audits only file; nothing is fixed in this step. Systems can run in parallel (findings only), the fixes can't.
+2. **Clear out issues.md** (row 16): every open entry, highest severity first, as ordinary batches. Each is fixed, or the maintainer defers it (to [Deferred](#deferred), then GitHub, listed as a known issue in the post); rare paths get the smallest fix or stay logged. A "needs a plan" entry goes through [Items that need a plan](#items-that-need-a-plan). Then an incremental `review-system` pass of every system (it rereads only what changed since its last review), and again, until a pass finds nothing above minor.
+3. **Harden, frozen** (row 17; the maintainer's, so the autopilot stops before it): 1–2 weeks of daily use under sway and niri. Only fixes land: each new finding is fixed at once or becomes a known issue. Also: a first run from nothing (`install.sh` and the AUR packages for a fresh user, onboarding without a config.json, importing saved configs), and the Waybar scripts from Phase 10 again.
+
+#### The launch gate
+Posting for testers waits for all of these:
+- issues.md has nothing open a tester can reach in normal use under sway or niri; what's deferred is on GitHub and listed in the post as known issues;
+- a reload logs only the two reload lines under Hyprland, niri and sway;
+- `scripts/dev/verify.sh --all` is green;
+- the last audit pass found nothing above minor;
+- the hardening weeks ended with no fix pending.
+
+Found by the audits:
 
 ### Deferred
 Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
