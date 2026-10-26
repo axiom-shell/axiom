@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/assets"
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // fakeClock moves only when told; After fires once Advance passes it.
@@ -287,6 +289,39 @@ func TestRefusesUnknownTopicsAndBadParams(t *testing.T) {
 	}
 	if err := h.hub.Subscribe(newSub(), "t", json.RawMessage(`{"interval":"x"}`)); err == nil {
 		t.Error("took a string interval")
+	}
+}
+
+// A request is decoded strictly against the source's Request type plus
+// the hub's interval, as a method's params are
+func TestRequestKeysAreStrict(t *testing.T) {
+	t.Parallel()
+	type request struct {
+		Paths []string `json:"paths"`
+	}
+	for _, tc := range []struct {
+		name, request string
+		ok            bool
+	}{
+		{"none", ``, true},
+		{"null", `null`, true},
+		{"empty", `{}`, true},
+		{"interval only", `{"interval": 2000}`, true},
+		{"known keys", `{"interval": 2000, "paths": ["/"]}`, true},
+		{"an unknown key", `{"interval": 2000, "path": ["/"]}`, false},
+		{"a wrong type", `{"paths": "/"}`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, func(s *Source) { s.Request = reflect.TypeFor[request]() })
+			err := h.hub.Subscribe(newSub(), "t", json.RawMessage(tc.request))
+			if (err == nil) != tc.ok {
+				t.Fatalf("Subscribe(%s) = %v, want ok %v", tc.request, err, tc.ok)
+			}
+			if err != nil && (axerr.KindOf(err) != axerr.BadRequest || !strings.Contains(err.Error(), "bad params")) {
+				t.Errorf("error %v, want a bad request naming bad params", err)
+			}
+		})
 	}
 }
 

@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
 	"reflect"
@@ -64,20 +65,37 @@ type entry struct {
 // NewRegistry returns an empty registry.
 func NewRegistry() *Registry { return &Registry{handlers: map[string]entry{}} }
 
-// Handle registers a typed handler: params are decoded into P (unknown
-// fields ignored, for older and newer peers), the result R encoded. P and
-// R are kept for Types.
+// Handle registers a typed handler: params are decoded into P strictly
+// (DecodeStrict), the result R encoded. P and R are kept for Types.
 func Handle[P, R any](r *Registry, method string, fn func(ctx context.Context, c *Conn, p P) (R, error)) {
 	h := func(ctx context.Context, c *Conn, raw json.RawMessage) (any, error) {
 		var p P
 		if len(raw) > 0 && !bytes.Equal(raw, []byte("null")) {
-			if err := json.Unmarshal(raw, &p); err != nil {
+			if err := DecodeStrict(raw, &p); err != nil {
 				return nil, axerr.New(axerr.BadRequest, "%s: bad params: %v", method, err)
 			}
 		}
 		return fn(ctx, c, p)
 	}
 	r.handlers[method] = entry{handler: h, params: reflect.TypeFor[P](), result: reflect.TypeFor[R]()}
+}
+
+// DecodeStrict decodes params into v, failing on a key v has no field
+// for, at any depth: a typo or a renamed field is an error the caller
+// sees, never a method run on its zero value. Every caller (the shell,
+// the CLI) sends only the keys the method takes (docs/dev/backend/
+// protocol.md › Changing the protocol); params typed json.RawMessage, a
+// map or any take every key.
+func DecodeStrict(raw json.RawMessage, v any) error {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(v); err != nil {
+		return err
+	}
+	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
+		return errors.New("data after the params")
+	}
+	return nil
 }
 
 // Types is what method takes and returns, as Go types (false: no such

@@ -154,7 +154,6 @@ The binary's rules are enforced by its tests, and the shell–daemon contract is
 Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one 250 ms floor (`topics.MinInterval`) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc` (`tree` is its disk side, both package docs say so); clearer package names (`system` is `sysmon`, `lock` is `lockscreen`, apart from `fsx.Lock`).
 
 Resolves:
-- [The daemon drops unknown param keys silently](issues.md#the-daemon-drops-unknown-param-keys-silently)
 - [The contract check skips calls it can't read without saying so](issues.md#the-contract-check-skips-calls-it-cant-read-without-saying-so)
 
 ### Phase 5: the allowlist

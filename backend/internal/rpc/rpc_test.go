@@ -70,6 +70,59 @@ func TestCallAndErrorKinds(t *testing.T) {
 	}
 }
 
+// Params are decoded strictly: a key the method's params have no field
+// for, at any depth, is a bad request, never a call on the zero value.
+func TestParamsAreStrict(t *testing.T) {
+	t.Parallel()
+	type nested struct {
+		Text  string `json:"text"`
+		Inner struct {
+			On bool `json:"on"`
+		} `json:"inner"`
+	}
+	reg := NewRegistry()
+	var ran atomic.Int32
+	Handle(reg, "nested", func(ctx context.Context, c *Conn, p nested) (struct{}, error) {
+		ran.Add(1)
+		return struct{}{}, nil
+	})
+	Handle(reg, "raw", func(ctx context.Context, c *Conn, p json.RawMessage) (struct{}, error) {
+		ran.Add(1)
+		return struct{}{}, nil
+	})
+	_, path := serve(t, reg, nil)
+	c := dial(t, path, nil)
+	for _, tc := range []struct {
+		method, params string
+		ok             bool
+	}{
+		{"nested", ``, true},
+		{"nested", `null`, true},
+		{"nested", `{}`, true},
+		{"nested", `{"text": "a", "inner": {"on": true}}`, true},
+		{"nested", `{"text": "a", "txet": "b"}`, false},
+		{"nested", `{"inner": {"on": true, "off": false}}`, false},
+		{"nested", `{"text": 1}`, false},
+		{"raw", `{"anything": {"goes": 1}}`, true},
+	} {
+		before := ran.Load()
+		var params any
+		if tc.params != "" {
+			params = json.RawMessage(tc.params)
+		}
+		err := c.Call(context.Background(), tc.method, params, nil)
+		if (err == nil) != tc.ok {
+			t.Errorf("%s(%s) = %v, want ok %v", tc.method, tc.params, err, tc.ok)
+		}
+		if err != nil && (axerr.KindOf(err) != axerr.BadRequest || !strings.Contains(err.Error(), "bad params")) {
+			t.Errorf("%s(%s): %v, want a bad request naming bad params", tc.method, tc.params, err)
+		}
+		if ran := ran.Load() - before; ran != map[bool]int32{true: 1, false: 0}[tc.ok] {
+			t.Errorf("%s(%s) ran the method %d times", tc.method, tc.params, ran)
+		}
+	}
+}
+
 // A notification sent while handling a request arrives before its reply.
 func TestPushBeforeReply(t *testing.T) {
 	t.Parallel()
