@@ -124,7 +124,7 @@ Nothing in v2's shape depends on these; rule 11's folders are where they would g
 ## What it costs, and where
 - **Readers keep their public names** (`Bar.savedBars`, `DockConfig.docks`, `Widget.px`, …). Only reader internals change, so the components above them don't.
 - **What changes in QML:**
-  - the editors that write shape directly (BarManager, EdgeMenuManager, OverlayManager, DockManager, ScreenLayoutEditor, MonitorManager, KeybindManager, the settings cards);
+  - the editors that write shape directly (BarManager, EdgeMenuEditor, OverlayManager, DockManager, ScreenLayoutEditor, MonitorManager, KeybindManager, the settings cards);
   - the compositor config writers (the daemon's `render`, which reads the annotations);
   - the condition evaluator (`SchemaLayout`);
   - the form controls (duration units).

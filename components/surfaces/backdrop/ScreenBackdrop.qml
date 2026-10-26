@@ -18,7 +18,7 @@ import qs.components.hosts.popout
 // nothing asks for it (LayerSlot.held). It takes no input: clicks go to
 // the surface above it, or to the bars and border (which clears the
 // surface's focus grab, unless the surface lets its screen's bars
-// through: see ShellManager.grabPartners). Without a native focus grab it
+// through: see SurfaceManager.grabPartners). Without a native focus grab it
 // catches the click outside a grabbing surface instead, covering its
 // screen while one is active (BackdropManager.catching).
 PanelWindow {

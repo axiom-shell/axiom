@@ -27,7 +27,7 @@ Scope {
       BackdropRequest {
         screen: onboarding.modelData
         // Away while another polkit agent's prompt needs the screen
-        shown: !ShellManager.steppedAside
+        shown: !SurfaceManager.steppedAside
       }
 
       OnboardingWindow {

@@ -5,6 +5,7 @@ import Quickshell
 
 import qs.config
 import qs.services.core
+import qs.services.session
 import qs.services.ui
 import qs.components.reusable
 import qs.components.bar.widgets.base
@@ -51,7 +52,7 @@ BarIconWidget {
       EdgeMenuManager.toggle(properties.menu, root);
       break;
     case "lock":
-      ShellManager.sessionAction("lock");
+      SessionManager.sessionAction("lock");
       break;
     case "command":
       runCommand(properties.command);
@@ -69,7 +70,7 @@ BarIconWidget {
 
   function hoverAction() {
     const surface = _surfaceFor[properties.action];
-    if (surface && ShellManager.surfaceOpen(surface))
+    if (surface && SurfaceManager.surfaceOpen(surface))
       return;
     runAction();
   }

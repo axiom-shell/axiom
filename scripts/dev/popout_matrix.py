@@ -54,7 +54,7 @@ HOOK = """
     target: "devPopouts"
     function open(screen: string, location: string, which: string): string {
       close();
-      const panel = ShellManager.barOn(screen, Bar.locationOf(location));
+      const panel = ScreenEdgeManager.barOn(screen, Bar.locationOf(location));
       if (!panel)
         return "no bar";
       const vertical = panel.barConfig.vertical;

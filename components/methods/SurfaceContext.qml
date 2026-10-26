@@ -81,7 +81,7 @@ QtObject {
   // perpendicular screen edge: its box in line with the windows (`windows`,
   // wallLine), its fillet past that beside the stroke it stands on, pushed
   // in only as far as that fillet needs to clear the frame's rounded inner
-  // corner (`corner`, BarManager.cornerLine; `room`, endRoom: the fillet's
+  // corner (`corner`, ScreenEdgeManager.cornerLine; `room`, endRoom: the fillet's
   // `fm` and the corner's arc)
   function wallAt(windows, corner, fm, room) {
     return Math.max(windows - fm, corner + room - fm);
@@ -182,7 +182,7 @@ QtObject {
    *   start, end: per perpendicular side { kind (endKind), frame (its
    *     frame line: what an unjoined end measures its room from), reserved
    *     (where windows start, before gaps_out), gapsOut, corner (where the
-   *     frame's rounded inner corner lies, BarManager.cornerLine),
+   *     frame's rounded inner corner lies, ScreenEdgeManager.cornerLine),
    *     barHeld (the followed bar's end there is held clear of a bar) },
    *     each in px from that side's own screen edge
    * Returns { startEnd, endEnd (end(), their strokeInset widened to reach an

@@ -29,7 +29,7 @@ Item {
   // Corners sit in the space left once every edge is reserved, so a bar
   // or a dock inside the border (reserving their own space)
   // would push them in past it. Pull them back out to the border's corners.
-  readonly property var edges: BarManager.edgesFor(root.screen)
+  readonly property var edges: ScreenEdgeManager.edgesFor(root.screen)
   function cornerMargin(edge) {
     const docks = DockManager.zoneOn(root.screen?.name ?? "", edge);
     const bar = root.edges[edge];
@@ -44,7 +44,7 @@ Item {
   // BarPanel), else the frame's own width
   function innerInset(edge) {
     const bar = root.edges[edge];
-    const panel = bar?.solid && bar.reserveSpace ? ShellManager.barOn(root.screen?.name ?? "", bar.location) : null;
+    const panel = bar?.solid && bar.reserveSpace ? ScreenEdgeManager.barOn(root.screen?.name ?? "", bar.location) : null;
     return (panel?.reservedZone ?? 0) + root.frameWidth;
   }
 
@@ -63,7 +63,7 @@ Item {
   // (arranged outside the border) to the stroke's inner side, round the
   // corner pieces' arcs, in screen coordinates
   function _menuZone(edge) {
-    return EdgeMenuManager.zoneOn(root.screen?.name ?? "", edge);
+    return ScreenEdgeManager.zoneOn(root.screen?.name ?? "", edge);
   }
   readonly property real outerLeft: root._menuZone("left")
   readonly property real outerTop: root._menuZone("top")
@@ -152,13 +152,13 @@ Item {
     aboveWindows: true
     WlrLayershell.namespace: "axiom-border-shadow"
 
-    // Surfaces joined to the frame's stroke (ShellManager.borderOpenings)
+    // Surfaces joined to the frame's stroke (SurfaceManager.borderOpenings)
     // as rects it casts nothing on, from the frame line in: their
     // translucent fill would show (and blur) it. A fillet at either end
     // (`startFillet`/`endFillet`) is left out only as far as its curve, not the square it
     // sits in: past the curve the shadow runs on round it (as a solid
     // bar's, BarContainer._shadowHoles). Each an SVG subpath.
-    readonly property var holes: ShellManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? "")).map(o => shadowWindow._holePath(o))
+    readonly property var holes: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? "")).map(o => shadowWindow._holePath(o))
     function _holePath(o) {
       const reach = look.shadowSize * 2;
       const vertical = o.edge === "left" || o.edge === "right";
@@ -327,11 +327,11 @@ Item {
       readonly property real _x: corner.isLeft ? root.innerLeft - root.strokeWidth : (root.screen?.width ?? 0) - root.innerRight + root.strokeWidth - root.cornerSize
       readonly property real _y: corner.isTop ? root.innerTop - root.strokeWidth : (root.screen?.height ?? 0) - root.innerBottom + root.strokeWidth - root.cornerSize
       // A surface joined to the stroke runs into the perpendicular edge over
-      // it (a pill joined to it, ShellManager.borderOpenings): the corner
+      // it (a pill joined to it, SurfaceManager.borderOpenings): the corner
       // is left open there as the strips are, its fill no longer hiding it
       readonly property bool covered: {
         const name = root.screen?.name ?? "";
-        return ShellManager.borderOpenings.some(o => o.screen === name && (o.edge === (corner.isTop ? "top" : "bottom") && corner._spans(o, corner._x, corner.isLeft) || o.edge === (corner.isLeft ? "left" : "right") && corner._spans(o, corner._y, corner.isTop)));
+        return SurfaceManager.borderOpenings.some(o => o.screen === name && (o.edge === (corner.isTop ? "top" : "bottom") && corner._spans(o, corner._x, corner.isLeft) || o.edge === (corner.isLeft ? "left" : "right") && corner._spans(o, corner._y, corner.isTop)));
       }
       // Whether opening `o` runs across the piece (at `at` along its edge)
       // from its stroke on, the piece being at the edge's start or not

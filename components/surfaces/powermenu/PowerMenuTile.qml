@@ -3,7 +3,7 @@ import QtQuick
 
 import qs.components.reusable
 import qs.config
-import qs.services.ui
+import qs.services.session
 
 // One power menu action. Destructive actions highlight in the error
 // colour; armed (waiting for the confirming press) the tile fills with it
@@ -20,7 +20,7 @@ ActionTile {
   // Set when the menu opens, to run the entrance
   property bool revealed: false
 
-  readonly property var info: ShellManager.sessionActionInfo(root.action)
+  readonly property var info: SessionManager.sessionActionInfo(root.action)
 
   // 0 → 1 as it comes in
   property real introProgress: 1
@@ -31,7 +31,7 @@ ActionTile {
   label: root.armed ? I18n.tr("Confirm?") : (root.info?.label ?? "")
   active: root.armed
   activeColor: Theme.error
-  tone: ShellManager.destructiveActions.includes(root.action) ? Theme.error : Theme.accent
+  tone: SessionManager.destructiveActions.includes(root.action) ? Theme.error : Theme.accent
   countdown: root.armedTimeout
 
   opacity: root.introProgress

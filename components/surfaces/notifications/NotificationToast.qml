@@ -46,7 +46,7 @@ PopupWindow {
 
   // Out until it slides away (hidden meanwhile by a screenshot picker)
   property bool shown: false
-  visible: shown && !ShellManager.captureFrozen
+  visible: shown && !SurfaceManager.captureFrozen
   color: "transparent"
 
   anchor.window: anchorWindow

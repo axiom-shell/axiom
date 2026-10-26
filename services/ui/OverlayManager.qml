@@ -14,7 +14,7 @@ import qs.services.session
  *
  * Also keeps the page's own state, since the page is unloaded whenever the
  * overlay closes: whether it's editing a page, an edge menu or the lock
- * screen (`editTarget`; the menus are EdgeMenuManager's and the lock
+ * screen (`editTarget`; the menus are `menus`' (EdgeMenuEditor) and the lock
  * screen LockManager's), the selected
  * page, and each overlay's room (for the canvas's "fits" line). The
  * selected page's modules are edited through `layout` (GridEditor, which
@@ -31,7 +31,7 @@ QtObject {
   readonly property alias isDirty: draft.isDirty
   property int selectedViewIndex: 0
   // What the layouts editor shows: "page" (selectedViewIndex), "menu"
-  // (EdgeMenuManager.selectedMenuIndex), "desktop" (DesktopManager's
+  // (menus.selectedMenuIndex), "desktop" (DesktopManager's
   // draft), "lockscreen" (LockManager's) or "greeter" (GreeterManager's).
   // The lock screen only while the built-in locker is in use, the login
   // screen only while it's set up (their rows hide otherwise): back on the
@@ -42,6 +42,9 @@ QtObject {
   readonly property bool lockscreenEditable: LockscreenConfig.mode === "quickshell"
   // The login screen's, only once it's set up
   readonly property bool greeterEditable: GreeterConfig.enabled
+
+  // The edge menus' working copy (editTarget "menu")
+  property EdgeMenuEditor menus: EdgeMenuEditor {}
 
   property GridEditor layout: GridEditor {
     host: "overlay"
@@ -95,7 +98,7 @@ QtObject {
 
   function editMenu(index) {
     root._editTarget = "menu";
-    EdgeMenuManager.selectMenu(index);
+    root.menus.selectMenu(index);
   }
 
   function editDesktop() {
@@ -378,13 +381,13 @@ QtObject {
   // passed over
   function openedBy(widget) {
     const props = widget?.type === "Button" ? widget.properties ?? {} : {};
-    const menus = EdgeMenuManager.localMenus ?? EdgeMenusConfig.menus;
+    const menus = root.menus.localMenus ?? EdgeMenusConfig.menus;
     const menuTarget = id => {
       const index = id ? menus.findIndex(menu => menu.id === id) : -1;
       return index < 0 ? null : {
         "kind": "menu",
         "index": index,
-        "label": EdgeMenuManager.menuLabel(menus[index], index)
+        "label": root.menus.menuLabel(menus[index], index)
       };
     };
     const pageTarget = key => {
@@ -403,7 +406,7 @@ QtObject {
   // Shows what a bar widget opens in this editor
   function editOpenedBy(widget) {
     root.ensureLoaded();
-    EdgeMenuManager.ensureLoaded();
+    root.menus.ensureLoaded();
     const target = root.openedBy(widget);
     if (!target)
       return;

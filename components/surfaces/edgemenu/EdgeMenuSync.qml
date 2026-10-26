@@ -47,7 +47,7 @@ QtObject {
       return root.menu.trigger.length;
     if (body)
       return (vertical ? body.implicitHeight : body.implicitWidth) + pad * 2;
-    return EdgeMenusConfig.lengthOf(root.menu, vertical, EdgeMenuManager.cardUnitOf(root.menu), EdgeMenuManager.gapOf(root.menu));
+    return EdgeMenusConfig.lengthOf(root.menu, vertical, EdgeMenusConfig.cardUnitOf(root.menu), EdgeMenusConfig.gapOf(root.menu));
   }
 
   function _sync() {
@@ -110,14 +110,14 @@ QtObject {
   onMenuIdChanged: root._publishFrame()
 
   Component.onCompleted: {
-    ShellManager.registerGrabPartner(root.window, root.screen?.name ?? "");
-    ShellManager.registerGrabPartner(root.triggerWindow, root.screen?.name ?? "");
+    SurfaceManager.registerGrabPartner(root.window, root.screen?.name ?? "");
+    SurfaceManager.registerGrabPartner(root.triggerWindow, root.screen?.name ?? "");
     Qt.callLater(root._sync);
     root._publishFrame();
   }
   Component.onDestruction: {
-    ShellManager.unregisterGrabPartner(root.window);
-    ShellManager.unregisterGrabPartner(root.triggerWindow);
+    SurfaceManager.unregisterGrabPartner(root.window);
+    SurfaceManager.unregisterGrabPartner(root.triggerWindow);
     EdgeMenuManager.clearFrame(root._frameId, root.screen?.name ?? "");
   }
 }

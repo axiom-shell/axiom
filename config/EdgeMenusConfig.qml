@@ -83,9 +83,33 @@ QtObject {
     return menu.padding >= 0 ? Widget.px(menu.padding) : PopoutsConfig.padding;
   }
 
+  // A menu's card size: the card size on its screen (OverlayConfig.
+  // cardUnitOn, the card size setting's, not the overlay's own Module
+  // size), scaled by the menu's moduleScale. A submenu's is on the screen
+  // of the menu it opens from (`screen`)
+  function cardUnitOf(menu, screen) {
+    screen = screen ?? root.screenFor(menu);
+    const unit = screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit;
+    // A double grid (fineGrid) splits each unit in two each way
+    return GridPlacement.gridUnitOf(unit * menu.layout.moduleScale / 100, menu.layout.grid.fine, root.gapOf(menu));
+  }
+
+  // The px between a menu's cards: the layout's gap drawn at the menu's
+  // zoom (GridPlacement.gapOf), so the menu is an overlay page's grid
+  function gapOf(menu) {
+    return GridPlacement.gapOf(root.zoomOf(menu));
+  }
+
+  // What a menu's modules are drawn at: its moduleScale
+  // (GridPlacement.zoomOf), so it scales their text and controls with
+  // its cards, while the screen only changes how big the cards are
+  function zoomOf(menu) {
+    return GridPlacement.zoomOf(menu.layout.moduleScale / 100);
+  }
+
   // The menu's length along its edge, from config alone (for the hover
   // strip before the menu has ever been loaded): its modules' grid at
-  // card size `unit` and `gap` px between cards (EdgeMenuManager.cardUnitOf
+  // card size `unit` and `gap` px between cards (cardUnitOf
   // and gapOf), as EdgeMenuBody lays it out, plus its padding
   function lengthOf(menu, vertical, unit, gap) {
     return root.gridLengthOf(menu, vertical, unit, gap) + root.paddingOf(menu) * 2;

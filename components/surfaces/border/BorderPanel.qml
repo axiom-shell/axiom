@@ -42,7 +42,7 @@ PanelWindow {
   // Surfaces joined to the stroke leave it open under them, in strip
   // coordinates: the stroke and the fill beside it (the stroke's row),
   // which would show through their translucent fill
-  readonly property var openings: ShellManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? "") && o.edge === root.edge).map(o => ({
+  readonly property var openings: SurfaceManager.borderOpenings.filter(o => o.screen === (root.screen?.name ?? "") && o.edge === root.edge).map(o => ({
         "start": o.start - root.screenOffset,
         "end": o.end - root.screenOffset
       }))

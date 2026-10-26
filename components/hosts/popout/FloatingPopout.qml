@@ -150,7 +150,7 @@ PopoutWrapperBase {
 
     FocusGrab {
       id: focusGrab
-      windows: [surfaceWindow].concat(root.grabWindows, ShellManager.modalWindows)
+      windows: [surfaceWindow].concat(root.grabWindows, SurfaceManager.modalWindows)
       active: root.isOpen && root.grabEnabled && (root.wantsKeyboardFocus || root.closeOnClickOutside)
 
       onActiveChanged: {

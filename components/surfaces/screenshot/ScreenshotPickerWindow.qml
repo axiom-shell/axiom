@@ -46,7 +46,7 @@ PanelWindow {
   property point dragStart: Qt.point(0, 0)
   property point dragEnd: Qt.point(0, 0)
   property bool grabbing: false
-  // The frame is in (ShellManager.captureFrozen)
+  // The frame is in (SurfaceManager.captureFrozen)
   readonly property bool frozen: ScreenshotManager.grimFrames ? still.status === Image.Ready : frame.hasContent
   // What the frozen frame is drawn by, and its size in buffer pixels
   readonly property Item _frameItem: ScreenshotManager.grimFrames ? still : frame
@@ -136,7 +136,7 @@ PanelWindow {
   }
 
   Component.onCompleted: {
-    ShellManager.captureWindows = ShellManager.captureWindows.concat([root]);
+    SurfaceManager.captureWindows = SurfaceManager.captureWindows.concat([root]);
     if (!root.interactive)
       return;
     root.windows = root._windows();
@@ -148,7 +148,7 @@ PanelWindow {
     });
   }
 
-  Component.onDestruction: ShellManager.captureWindows = ShellManager.captureWindows.filter(w => w !== root)
+  Component.onDestruction: SurfaceManager.captureWindows = SurfaceManager.captureWindows.filter(w => w !== root)
 
   // Under the frame (never seen), rendered only for the grab
   Item {

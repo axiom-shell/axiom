@@ -186,7 +186,7 @@ QtObject {
         "bottom": 0
       };
     const reserved = DockManager.reservedOf(screen);
-    const side = (location, index) => Math.max(EdgeMenuManager.reservedOn(screen, location), reserved[index]) + (CompositorManager.gapsOut[Bar.edgeName(location)] ?? 0);
+    const side = (location, index) => Math.max(ScreenEdgeManager.reservedWithMenusOn(screen, location), reserved[index]) + (CompositorManager.gapsOut[Bar.edgeName(location)] ?? 0);
     return {
       "left": side(Bar.Left, 0),
       "top": side(Bar.Top, 1),

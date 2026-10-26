@@ -77,7 +77,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - Its namespace is `axiom-popout-under`, whose layer rule ([layer stacking](../generated/layers.md)) stacks it under the bars and border.
   - It starts at the bar's outer edge, and the box (`AttachedSurface.detachedOffset`) slides out from beneath the bar.
 - **Over the overlay:** that same rule also stacks the window under the overlay.
-  - So while the overlay is open on its screen (`ShellManager.surfaceOpenOn("overlay", screen)`), the window opens on the Overlay layer instead (`axiom-popout`), over the overlay, without the slide.
+  - So while the overlay is open on its screen (`SurfaceManager.surfaceOpenOn("overlay", screen)`), the window opens on the Overlay layer instead (`axiom-popout`), over the overlay, without the slide.
 - **Without layer rules** (no `CompositorManager.supports.layerOrder`: sway, niri), a window mapped as it opens lands over the bar whatever its namespace, so it never slides under: it opens over the bar as it does over the overlay ([layer arrangement](../compositor/layer-arrangement.md)).
 - **Detached edge popouts do the same as bar popouts:**
   - They slide out from under a transparent bar only (`EdgePopout.slideDistance`).

@@ -96,7 +96,7 @@ QtObject {
       });
     (OverlayConfig.views ?? []).forEach(view => fromModules(view?.layout?.modules));
     EdgeMenusConfig.enabledMenus.forEach(menu => fromModules(menu.layout.modules));
-    BarManager.bars.forEach(bar => Object.values(bar?.widgets ?? {}).forEach(section => (section ?? []).forEach(widget => {
+    ScreenEdgeManager.bars.forEach(bar => Object.values(bar?.widgets ?? {}).forEach(section => (section ?? []).forEach(widget => {
           const p = widget?.properties;
           if (widget?.type !== "SystemStats" || !p?.popout?.enabled)
             return;

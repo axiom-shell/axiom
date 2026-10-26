@@ -3,7 +3,6 @@ import QtQuick
 import qs.config
 import qs.components.methods
 import qs.services.core
-import qs.services.compositor
 
 /* BarManager holds the bar editor's working copy of the Bars section (its
  * `style`, every bar's look unless a bar sets its own, and the bars,
@@ -16,11 +15,7 @@ import qs.services.compositor
  * Also keeps the page's own state (selected bar and widget), since the
  * page is unloaded whenever the overlay closes, and, while the page is on
  * screen, what the running bars report back about the selected bar.
- *
- * And the running bars themselves (`bars`), laid out with Hyprland's gaps
- * (Bar.enrichBarConfig), with what they leave on each screen edge: which
- * bar is there, where windows start, where surfaces held off it measure
- * from. */
+ * The running bars themselves are ScreenEdgeManager's. */
 QtObject {
   id: root
 
@@ -488,126 +483,5 @@ QtObject {
   // Discard edits: reload from the current config, and the bars with it
   function resetChanges() {
     loadConfig();
-  }
-
-  // The running bars (while the bar editor has unsaved edits, those),
-  // each with what its ends meet among the bars on its screen (BarEnds:
-  // which bar a shared corner goes to)
-  readonly property var bars: BarEnds.withEnds(Bar.expandBars((ConfigManager.previews.Bars ?? ConfigManager.config.Bars).items).map(bar => Bar.enrichBarConfig(bar, CompositorManager.gapsOut)), Bar.endsOptions(CompositorManager.gapsOut))
-
-  // The enabled bars on a screen by edge ({ top, bottom, left, right },
-  // null where there is none)
-  function edgesFor(screen) {
-    return BarEnds.edgesOn(root.bars, screen?.name);
-  }
-
-  // Where the window of the bar on a screen edge (a Bar.Location) starts
-  // along it at its start or end (`atStart`), in px from that end's
-  // screen edge, as Hyprland arranges it (BarEnds): past the bar there it
-  // makes way for, else from the frame's outer side (the screen edge for a
-  // solid bar, arranged before the border), each less the bar's reach onto
-  // the stroke there. Integrated menus on that edge, arranged before
-  // everything, included.
-  function barStartOn(screen, location, atStart) {
-    const edges = root.edgesFor(screen);
-    const bar = edges[Bar.edgeName(location)];
-    if (!bar)
-      return 0;
-    const side = BarEnds.endEdges(bar)[atStart ? 0 : 1];
-    const end = atStart ? bar.ends.start : bar.ends.end;
-    const menus = EdgeMenuManager.zoneOn(screen?.name ?? "", side);
-    const reserved = root.reservedOn(screen, Bar.locationOf(side));
-    // A solid bar is arranged before the border, which then reserves its
-    // margin inside both: past the other solid bar alone
-    if (BarEnds.yieldsTo(bar, edges[side]))
-      return menus + reserved - (bar.solid && Appearance.screenBorder ? Appearance.screenMargin : 0) - end.reach;
-    return menus + (bar.solid || !Appearance.screenBorder ? 0 : Appearance.screenMargin) - end.reach;
-  }
-
-  // What a surface's end reaching a screen edge (a Bar.Location) along a
-  // perpendicular one meets there (SurfaceContext.endKind): the one answer
-  // every popout, dock and pill takes its joins, walls and openings from
-  function surfaceEnd(screen, location) {
-    const name = Bar.edgeName(location);
-    const bar = root.edgesFor(screen)[name];
-    return SurfaceContext.endKind({
-      "border": Appearance.screenBorder,
-      "bar": bar,
-      "barShowing": !bar || (ShellManager.barOn(screen?.name ?? "", location)?.visible ?? false),
-      "menuZone": EdgeMenuManager.zoneOn(screen?.name ?? "", name)
-    });
-  }
-
-  // Whether a screen edge (a Bar.Location) is bare: no screen border and no
-  // bar on it, so surfaces there run straight off the screen
-  function screenEdgeOpen(screen, location) {
-    if (Appearance.screenBorder)
-      return false;
-    return !root.edgesFor(screen)[Bar.edgeName(location)];
-  }
-
-  // Where windows start on a screen edge (a Bar.Location), in px from it:
-  // the border's and bar's reserved space, Hyprland's gaps_out not
-  // included, nor integrated edge menus' zones (EdgeMenuManager.reservedOn
-  // adds those)
-  function reservedOn(screen, location) {
-    const bar = root.edgesFor(screen)[Bar.edgeName(location)];
-    const zone = bar ? Bar.reservedZone(bar, CompositorManager.gapsOut[Bar.edgeName(location)]) : 0;
-    return (Appearance.screenBorder ? Appearance.screenMargin : 0) + zone - (zone > 0 && bar.insideBorder ? Appearance.borderWidth : 0);
-  }
-
-  // The inner side of what's on a screen edge, in px from it: the
-  // border's stroke, or the bar there (a solid bar's inner stroke, a
-  // floating bar's islands, a pill bar's far side, a transparent bar's
-  // inner edge); 0 on a bare edge. Surfaces held off an edge measure their
-  // gap from it (detachedGaps). Integrated edge menus' zones not included
-  // (EdgeMenuManager.frameLineOn adds those).
-  function frameLine(screen, location) {
-    const bar = root.edgesFor(screen)[Bar.edgeName(location)];
-    const margin = Appearance.screenBorder ? Appearance.screenMargin : 0;
-    if (!bar)
-      return margin;
-    // Its outer edge on the border's stroke
-    if (bar.insideBorder)
-      return margin - Appearance.borderWidth + bar.extent;
-    // The border's strip, laid over its inner part, draws its stroke
-    if (bar.solid && Appearance.screenBorder)
-      return bar.reserveSpace ? bar.extent + Appearance.borderWidth : margin;
-    return bar.extent;
-  }
-
-  // Where the border frame's rounded inner corner lies from a screen edge
-  // (a Bar.Location), in px: past a solid bar its strip (frameLine), else
-  // the frame's own width, any other bar sitting inside it; 0 with the
-  // border off. What an end with nothing to join keeps its fillet clear of
-  // (SurfaceContext.wallAt).
-  function cornerLine(screen, location) {
-    if (!Appearance.screenBorder)
-      return 0;
-    const bar = root.edgesFor(screen)[Bar.edgeName(location)];
-    return bar?.solid ? root.frameLine(screen, location) : Appearance.screenMargin;
-  }
-
-  // The gaps a surface held off a screen edge (a Bar.Location) keeps from
-  // the frame lines (frameLine) across that edge and at its two ends (the
-  // perpendicular edges at its start and end: top and bottom, or left and
-  // right): `gap` on each when it's 0 or more. Automatic (-1), it lines up
-  // with a floating bar on that edge, its float gap on all three, else
-  // with the windows: how far past each frame line they start.
-  function detachedGaps(screen, location, gap) {
-    if (gap >= 0)
-      return {
-        "across": gap,
-        "start": gap,
-        "end": gap
-      };
-    const bar = root.edgesFor(screen)[Bar.edgeName(location)];
-    const windowGap = side => bar?.island ? bar.floatGap : Math.max(0, root.reservedOn(screen, side) + CompositorManager.gapsOut[Bar.edgeName(side)] - root.frameLine(screen, side));
-    const vertical = location === Bar.Left || location === Bar.Right;
-    return {
-      "across": windowGap(location),
-      "start": windowGap(vertical ? Bar.Top : Bar.Left),
-      "end": windowGap(vertical ? Bar.Bottom : Bar.Right)
-    };
   }
 }

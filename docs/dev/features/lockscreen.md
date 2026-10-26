@@ -8,7 +8,7 @@ This doc covers the three lock modes, how the built-in lock screen's layout of m
 
 ### Locking
 - `LockManager.lock()` is the one way to lock.
-  - Lock buttons call it through `ShellManager.sessionAction("lock")`.
+  - Lock buttons call it through `SessionManager.sessionAction("lock")`.
   - Idle locks come from the daemon (`axiom lock`'s path: [idle.md](idle.md)); a user's own idle daemon calls `axiom lock` or the `lockscreen` IPC target.
 - `lock()` ends a running preview first.
 
@@ -71,15 +71,15 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 - **Which modules may go here:** only module types whose `x-hosts` list `lockscreen`.
   - Display-only modules.
   - NowPlaying (media transport) and VolumeDials.
-  - Power: suspend, restart, shut down through `ShellManager.sessionAction`; restart and shut down ask twice.
+  - Power: suspend, restart, shut down through `SessionManager.sessionAction`; restart and shut down ask twice.
   - Nothing that launches, dispatches, kills, writes files or shows private content.
 - A new module stays off the lock screen unless it is added there deliberately.
 
 #### Password
 - **What it is:** the `Password` module (`x-hosts: ["lockscreen"]`, `x-required`) draws `content/parts/PasswordField`. The field talks to `AuthManager`.
 - **When it's live:** the field keeps keyboard focus only when `active`, which means on the `target` screen of a real lock (`host.target && !host.preview`). Anywhere else it is inert.
-- **Required-field report:** the module reports itself to `ShellManager.reportRequiredField(host.key, true)`.
-  - Each surface's key comes from `ShellManager.newSurfaceKey(kind)` and is never reused.
+- **Required-field report:** the module reports itself to `SurfaceManager.reportRequiredField(host.key, true)`.
+  - Each surface's key comes from `SurfaceManager.newSurfaceKey(kind)` and is never reused.
   - Keys used to be screen names. A monitor that dropped out and came back while turning off then had its old surface's teardown clear the new surface's report, which flickered the fallback in.
 - **Fallback field:** a surface whose key has no report shows a `PasswordField` of its own, so a hand-edited or broken layout can never lock anyone out.
   - It appears a tick after loading, near the bottom, over the modules.

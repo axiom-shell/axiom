@@ -7,7 +7,7 @@ import qs.services.core
 
 /* Editing of one grid of modules (each with a `place` { x, y, w, h } in
  * quarter cards), shared by the layouts editor's overlay pages and edge
- * menus. Not a singleton: OverlayManager and EdgeMenuManager each own one,
+ * menus. Not a singleton: OverlayManager and its EdgeMenuEditor each own one,
  * point `modulesOf` at the live modules array in their draft and run their
  * draft's changed() on `edited`.
  *

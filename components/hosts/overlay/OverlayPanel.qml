@@ -133,7 +133,7 @@ ReservedAreaWindow {
     active: root.isOpen && group.ownsGrab && !root.steppedAside
     // This screen's bars and their popouts stay usable while it's open
     // (every screen's, and the other instances, when it's on all of them)
-    windows: group.windows.concat(ShellManager.grabPartnersFor(group.everywhere ? null : root.screen), ShellManager.modalWindows)
+    windows: group.windows.concat(SurfaceManager.grabPartnersFor(group.everywhere ? null : root.screen), SurfaceManager.modalWindows)
     onCleared: {
       if (root.isOpen && !root.steppedAside && OverlayConfig.closeOnOutsideClick) {
         root._outsideCloseTime = Date.now();

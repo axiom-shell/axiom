@@ -21,7 +21,7 @@ PopupWindow {
 
   property bool _delayed: false
 
-  visible: root._delayed && root.text !== "" && !ShellManager.captureFrozen
+  visible: root._delayed && root.text !== "" && !SurfaceManager.captureFrozen
   color: "transparent"
   implicitWidth: box.implicitWidth
   implicitHeight: box.implicitHeight

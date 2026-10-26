@@ -45,7 +45,7 @@ Scope {
       // Over a fullscreen window nothing else shows, so the gaps are measured
       // from the screen's edges instead.
       readonly property bool fullscreen: CompositorManager.hasFullscreen(stack.modelData?.name ?? "")
-      readonly property var _edges: BarManager.edgesFor(stack.modelData)
+      readonly property var _edges: ScreenEdgeManager.edgesFor(stack.modelData)
       function _edgeGap(side, gap) {
         const bar = stack._edges[side];
         if (stack.fullscreen)

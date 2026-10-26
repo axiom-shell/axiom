@@ -45,13 +45,13 @@ Card {
     const key = root.onGreeter ? (root.host.key ?? "") : "";
     if (key === root._reportedKey)
       return;
-    ShellManager.reportRequiredField(root._reportedKey, false);
-    ShellManager.reportRequiredField(key, true);
+    SurfaceManager.reportRequiredField(root._reportedKey, false);
+    SurfaceManager.reportRequiredField(key, true);
     root._reportedKey = key;
   }
   Component.onCompleted: root._report()
   onHostChanged: root._report()
-  Component.onDestruction: ShellManager.reportRequiredField(root._reportedKey, false)
+  Component.onDestruction: SurfaceManager.reportRequiredField(root._reportedKey, false)
 
   Rectangle {
     anchors.left: parent.left

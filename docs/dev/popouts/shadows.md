@@ -16,7 +16,7 @@ Every surface with an exposed border casts the shell's shadow. It uses the bars'
   - where surfaces joined to the target sit;
   - for an attached surface, the stroke it grows out of, beside it as well as under it (not on a bare edge). Its window is over that stroke's, so a shadow there dims the stroke. It is darkest under the surface's soft edge, which made a 1px seam where the two strokes meet;
   - the bar's open popouts (its stretches);
-  - for the border's own shadow window, `ShellManager.borderOpenings`.
+  - for the border's own shadow window, `SurfaceManager.borderOpenings`.
     - A joined end's opening carries its fillet (`startFillet`/`endFillet`, `EdgeAttach.joinOpening`), and a surface's own cover its attach-side fillets at both ends.
     - That window leaves it out only as far as its curve, as a bar's `OutsideShadow.fillets` does.
 - **Never on the surface's own layer:** never use a `layer.effect` on a visible surface's own layer, or hand that layer directly to a `MultiEffect`. Its padding would redraw that surface in the padded rect.

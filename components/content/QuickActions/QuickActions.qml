@@ -130,8 +130,8 @@ Card {
   function def(name) {
     if (!root.sessionActions.includes(name))
       return root.defs[name];
-    const info = ShellManager.sessionActionInfo(name);
-    const destructive = ShellManager.destructiveActions.includes(name);
+    const info = SessionManager.sessionActionInfo(name);
+    const destructive = SessionManager.destructiveActions.includes(name);
     return {
       "icon": info.icon,
       "label": root.armed === name ? I18n.tr("Confirm?") : info.label,
@@ -161,7 +161,7 @@ Card {
     case "pin":
       return root.inMenu;
     default:
-      return !root.sessionActions.includes(a) || ShellManager.sessionActionInfo(a) !== null;
+      return !root.sessionActions.includes(a) || SessionManager.sessionActionInfo(a) !== null;
     }
   })
 
@@ -170,7 +170,7 @@ Card {
   readonly property string labels: root.properties.labels
   // "Confirm?" counts for the actions that ask, so arming one doesn't hide
   // every name
-  readonly property var _fitLabels: root.shown.map(a => root.def(a).label).concat(root.shown.some(a => ShellManager.destructiveActions.includes(a)) ? [I18n.tr("Confirm?")] : [])
+  readonly property var _fitLabels: root.shown.map(a => root.def(a).label).concat(root.shown.some(a => SessionManager.destructiveActions.includes(a)) ? [I18n.tr("Confirm?")] : [])
   readonly property real widestLabel: Math.max(0, ...root._fitLabels.map(label => labelFont.advanceWidth(label)))
   readonly property bool labelsFit: root.widestLabel <= grid.tileWidth - Widget.spacing * 2 && grid.tileHeight >= Appearance.fontSize * 4.5
 
@@ -182,13 +182,13 @@ Card {
 
   function run(name) {
     if (root.sessionActions.includes(name)) {
-      if (ShellManager.destructiveActions.includes(name) && root.armed !== name) {
+      if (SessionManager.destructiveActions.includes(name) && root.armed !== name) {
         root.armed = name;
         disarm.restart();
         return;
       }
       root.armed = "";
-      ShellManager.sessionAction(name);
+      SessionManager.sessionAction(name);
       return;
     }
     switch (name) {

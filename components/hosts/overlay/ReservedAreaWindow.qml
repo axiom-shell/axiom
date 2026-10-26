@@ -16,14 +16,14 @@ import qs.services.ui
 // window is transparent: the screen's backdrop (BackdropRequest) dims the
 // monitor under it.
 //
-// While ShellManager.steppedAside (another polkit agent's prompt, which
+// While SurfaceManager.steppedAside (another polkit agent's prompt, which
 // opens under the Overlay layer) it stays mapped, so nothing in it is
 // rebuilt, but takes no input or keys; its content hides (`content`).
 PanelWindow {
   id: root
 
   // Stepped aside: subclasses hide their content on it
-  readonly property bool steppedAside: ShellManager.steppedAside
+  readonly property bool steppedAside: SurfaceManager.steppedAside
 
   anchors {
     left: true
@@ -37,9 +37,9 @@ PanelWindow {
   // inner edge instead, past the reserved space by that gap. A floating
   // bar reserves up to its islands' inner side: land on their stroke, as
   // on any other bar's.
-  readonly property var _edges: BarManager.edgesFor(root.screen)
+  readonly property var _edges: ScreenEdgeManager.edgesFor(root.screen)
   function _margin(side, location) {
-    if (BarManager.screenEdgeOpen(root.screen, location))
+    if (ScreenEdgeManager.screenEdgeOpen(root.screen, location))
       return 0;
     const bar = root._edges[side];
     if (bar?.background === "transparent")

@@ -48,7 +48,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 2. It shows `shell/MonitorPrompt` (`surfaces/monitors/MonitorPromptWindow`).
    - It appears on every screen, outside the overlay, because the overlay's screen may change.
    - It sits on the Overlay layer as `axiom-monitor-prompt`; its layer rule stacks it over the overlay.
-   - It is registered in `ShellManager.modalWindows` while shown, so the overlay's focus grab lets clicks through to it.
+   - It is registered in `SurfaceManager.modalWindows` while shown, so the overlay's focus grab lets clicks through to it.
 3. `keep()` saves the draft. `revert()`, or 15 s without an answer, evals the snapshot back.
 - A profile for monitors that aren't connected only saves.
 

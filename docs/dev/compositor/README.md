@@ -43,7 +43,7 @@ How axiom reaches the compositor it runs under. Read this before anything that r
 - Surfaces that close on an outside click use `FocusGrab` (`windows`, `active`, `cleared`), never `HyprlandGrab`.
   - With `supports.focusGrab` it loads Hyprland's grab.
   - Otherwise it clears once keyboard focus (each window's content `Window.active`) has left every one of its windows for 100 ms, or a click lands outside them. While such a grab is active:
-    - `FocusGrab.exclusive` is true, and its surface asks for `WlrKeyboardFocus.Exclusive` instead of `OnDemand` (an on-demand layer surface gets the keyboard only once clicked, where no grab hands it over). Not while `ShellManager.modalShown`: the modal asks for it too, and of two exclusive surfaces on one layer niri keeps the older;
+    - `FocusGrab.exclusive` is true, and its surface asks for `WlrKeyboardFocus.Exclusive` instead of `OnDemand` (an on-demand layer surface gets the keyboard only once clicked, where no grab hands it over). Not while `SurfaceManager.modalShown`: the modal asks for it too, and of two exclusive surfaces on one layer niri keeps the older;
     - every screen's backdrop window (`surfaces/backdrop/ScreenBackdrop`) covers its screen, transparent, under the grabbing surface, and a press on it clears the grab (`BackdropManager.catching`, `clickedOutside`). Bars and other surfaces above it take their own clicks.
 
 ### The window look

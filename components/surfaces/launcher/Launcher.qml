@@ -108,11 +108,11 @@ Scope {
   }
 
   // Detached, its distance 0 is where a detached dock or OSD on its edge
-  // sits with an automatic gap (BarManager.detachedGaps): the free area's margin
+  // sits with an automatic gap (ScreenEdgeManager.detachedGaps): the free area's margin
   // on each side, in from the window, which starts past what's reserved
   // there
-  readonly property var _edgeGaps: BarManager.detachedGaps(root.screen, LauncherConfig.edge, -1)
-  readonly property var _oppositeGaps: BarManager.detachedGaps(root.screen, Bar.oppositeOf(LauncherConfig.edge), -1)
+  readonly property var _edgeGaps: ScreenEdgeManager.detachedGaps(root.screen, LauncherConfig.edge, -1)
+  readonly property var _oppositeGaps: ScreenEdgeManager.detachedGaps(root.screen, Bar.oppositeOf(LauncherConfig.edge), -1)
   function _marginOn(side) {
     const vertical = LauncherConfig.edge === Bar.Left || LauncherConfig.edge === Bar.Right;
     let gap = root._edgeGaps.end;
@@ -122,7 +122,7 @@ Scope {
       gap = root._oppositeGaps.across;
     else if (side === (vertical ? Bar.Top : Bar.Left))
       gap = root._edgeGaps.start;
-    return EdgeMenuManager.heldInset(root.screen, side, gap);
+    return ScreenEdgeManager.heldInset(root.screen, side, gap);
   }
 
   LazyLoader {

@@ -39,10 +39,10 @@ PillStretch {
   property real joinReach: 0
   property real hidden: 0
 
-  readonly property var _panel: ShellManager.barOn(root.screen?.name ?? "", root.side)
+  readonly property var _panel: ScreenEdgeManager.barOn(root.screen?.name ?? "", root.side)
   // A pill bar showing there, with no integrated menu's strip on that edge
   // between (SurfaceContext.endKind "pillBar", as its hosts decide joins)
-  readonly property bool available: BarManager.surfaceEnd(root.screen, root.side).kind === "pillBar"
+  readonly property bool available: ScreenEdgeManager.surfaceEnd(root.screen, root.side).kind === "pillBar"
 
   // Along that bar, this edge is its start (left, top) or its end
   readonly property bool _atStart: root.edge === Bar.Left || root.edge === Bar.Top

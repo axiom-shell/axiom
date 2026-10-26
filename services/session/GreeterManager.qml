@@ -188,7 +188,7 @@ QtObject {
   function _runElevated(action, staging) {
     const external = PolkitManager.status !== "running";
     if (external)
-      ShellManager.beginStepAside("greeter");
+      SurfaceManager.beginStepAside("greeter");
     // Once installed, root's own copy of the script, by its polkit action
     // (its prompt says what it's for); before, or while that copy is from
     // before the copy got the axiom binary too (`binaries`), the clone's,
@@ -196,7 +196,7 @@ QtObject {
     const program = root._report?.helper === true && root._report?.binaries === true ? [root._helper] : ["/usr/bin/bash", root._script];
     const args = ["pkexec"].concat(program, [action, Paths.axiomPath, Quickshell.env("USER")], action === "uninstall" ? [] : [staging].concat(root._sourceArgs));
     CommandManager.run(args, (exitCode, out, err) => {
-      ShellManager.endStepAside("greeter");
+      SurfaceManager.endStepAside("greeter");
       root._elevating = false;
       const result = root._parse(out);
       if (exitCode !== 0 || result.ok !== true) {

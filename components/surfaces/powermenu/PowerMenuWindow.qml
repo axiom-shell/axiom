@@ -18,7 +18,7 @@ PanelWindow {
 
   property bool shown: false
   // Session actions shown, in order
-  readonly property var actions: PowerMenuConfig.actions.filter(a => ShellManager.sessionActionInfo(a) !== null)
+  readonly property var actions: PowerMenuConfig.actions.filter(a => SessionManager.sessionActionInfo(a) !== null)
   // The tile the keys act on (hover moves it too)
   property int selected: 0
   // A destructive action waiting for its confirming press
@@ -33,14 +33,14 @@ PanelWindow {
   }
 
   function run(action) {
-    if (PowerMenuConfig.confirm && ShellManager.destructiveActions.includes(action) && armed !== action) {
+    if (PowerMenuConfig.confirm && SessionManager.destructiveActions.includes(action) && armed !== action) {
       armed = action;
       disarm.restart();
       return;
     }
     armed = "";
     shown = false;
-    ShellManager.sessionAction(action);
+    SessionManager.sessionAction(action);
   }
 
   function select(index) {
@@ -130,7 +130,7 @@ PanelWindow {
   FocusGrab {
     id: grab
     active: root.shown && group.ownsGrab
-    windows: group.windows.concat(ShellManager.modalWindows)
+    windows: group.windows.concat(SurfaceManager.modalWindows)
     onCleared: root.shown = false
   }
 

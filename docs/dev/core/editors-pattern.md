@@ -1,6 +1,6 @@
 # Editors pattern
 
-> **Files:** `services/core/ConfigDraft.qml`, `services/ui/EditsManager.qml`, `components/views/base/BaseView.qml`, `components/reusable/DragLayer.qml`; editor managers `services/ui/{SettingsManager,BarManager,OverlayManager,EdgeMenuManager}.qml`, `services/compositor/{KeybindManager,MonitorManager}.qml`, `services/ui/ScreenLayoutEditor.qml`
+> **Files:** `services/core/ConfigDraft.qml`, `services/ui/EditsManager.qml`, `components/views/base/BaseView.qml`, `components/reusable/DragLayer.qml`; editor managers `services/ui/{SettingsManager,BarManager,OverlayManager}.qml`, `services/ui/EdgeMenuEditor.qml`, `services/compositor/{KeybindManager,MonitorManager}.qml`, `services/ui/ScreenLayoutEditor.qml`
 > **Config:** whichever path the editor drafts; layout prefs in `~/.local/state/axiom/ui/editors.json`
 > **Related:** [Config manager](config-manager.md), [Bar editor](../bar/bar-editor.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Monitors](../hyprland/monitors.md), [Keybinds](../hyprland/keybinds.md), [Shared UI pieces](shared-ui-pieces.md)
 
@@ -8,6 +8,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 
 ### Draft
 - The manager owns a `ConfigDraft` of its config path.
+  - An editor that is one part of a page's manager is a non-singleton the manager holds, named `*Editor`: the layouts editor's edge menus are `OverlayManager.menus` (`EdgeMenuEditor`), its screen layouts `ScreenLayoutEditor`s (`DesktopManager.editor`, …).
 - Mutate `draft.local` in place, then `changed()`. It re-clones next tick so bindings see it; `isDirty` is a JSON compare.
 - Structural editors show unsaved edits live through `ConfigManager.setPreview`.
 - Save merges onto the latest config (`commit`, which may refuse: the draft stays dirty). Discard (shown only while dirty) reloads.

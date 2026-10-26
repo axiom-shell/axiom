@@ -6,12 +6,11 @@ import qs.services.session
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
-import qs.services.ui
 
 // Power buttons for the lock screen and the greeter (x-hosts: those two
 // only): suspend, restart and shut down, nothing else (never log out or
 // unlock). Restart and shut down ask for a second click. The lock screen
-// runs them as the session (ShellManager.sessionAction), the greeter as
+// runs them as the session (SessionManager.sessionAction), the greeter as
 // greetd's user (GreetdManager.power); in the layouts editor's preview
 // they do nothing.
 // properties: { actions: ["suspend" | "reboot" | "poweroff"] }
@@ -56,7 +55,7 @@ Card {
     if (root.kind === "greeter")
       GreetdManager.power(action);
     else
-      ShellManager.sessionAction(action);
+      SessionManager.sessionAction(action);
   }
 
   Timer {

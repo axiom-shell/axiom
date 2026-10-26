@@ -25,13 +25,13 @@ PanelWindow {
   property int triggerLength: 200 // fixed px: a hover strip on the screen's edge, like edgeTriggerSize
   property int hoverDelay: PopoutsConfig.openDelay
 
-  // Integrated edge menus' zones (EdgeMenuManager) move the surfaces this
+  // Integrated edge menus' zones (ScreenEdgeManager) move the surfaces this
   // triggers inwards, so the trigger follows: past a zone on its own edge,
   // and along it as the edge's free length shrinks from either end
   readonly property bool _vertical: root.edge === Bar.Left || root.edge === Bar.Right
-  property real edgeInset: EdgeMenuManager.zoneOn(root.screen?.name ?? "", Bar.edgeName(root.edge))
-  property real startInset: EdgeMenuManager.zoneOn(root.screen?.name ?? "", root._vertical ? "top" : "left")
-  property real endInset: EdgeMenuManager.zoneOn(root.screen?.name ?? "", root._vertical ? "bottom" : "right")
+  property real edgeInset: ScreenEdgeManager.zoneOn(root.screen?.name ?? "", Bar.edgeName(root.edge))
+  property real startInset: ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root._vertical ? "top" : "left")
+  property real endInset: ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root._vertical ? "bottom" : "right")
   // Its centre along the edge in screen px, overriding the above (NaN:
   // from `position`)
   property real centre: NaN

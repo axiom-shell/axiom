@@ -141,7 +141,7 @@ QtObject {
     root._delay.kind = kind;
     // A whole-screen recording waits for the overlay too (the card that
     // started it closes it), so it isn't in the first frames
-    root._delay.interval = ShellManager.surfaceOpen("launcher") || (kind === "recordScreen" && ShellManager.surfaceOpen("overlay")) ? Appearance.animSlow + 150 : 1;
+    root._delay.interval = SurfaceManager.surfaceOpen("launcher") || (kind === "recordScreen" && SurfaceManager.surfaceOpen("overlay")) ? Appearance.animSlow + 150 : 1;
     root._delay.restart();
   }
 

@@ -13,7 +13,7 @@ import qs.services.ui
 // EdgeAttach.joinOpening gives, or a stretch along the surface's own
 // edge), `sink` who draws it (SurfaceContext.end's `sink`, or for the
 // surface's own edge "border"/"solidBar"):
-// - "border": the border's strip (ShellManager.borderOpenings), open under
+// - "border": the border's strip (SurfaceManager.borderOpenings), open under
 //   a translucent fill only, as an opaque one hides it anyway
 // - "solidBar": with the border off, a solid bar's own inner stroke, open
 //   opaque or not (the bar and the surface are separate windows, whose
@@ -32,7 +32,7 @@ QtObject {
     opening: root.sink === "border" && Appearance.translucent && root.span ? root.span : null
   }
   readonly property var _solid: PillStretch {
-    readonly property var panel: root.sink === "solidBar" && root.span ? ShellManager.barOn(root.screen?.name ?? "", Bar.locationOf(root.span.edge)) : null
+    readonly property var panel: root.sink === "solidBar" && root.span ? ScreenEdgeManager.barOn(root.screen?.name ?? "", Bar.locationOf(root.span.edge)) : null
     owner: root.owner
     container: panel?.visible && (panel.barConfig?.innerStroke ?? false) ? panel.container : null
     opening: {

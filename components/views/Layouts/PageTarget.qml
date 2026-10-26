@@ -18,7 +18,7 @@ EditTarget {
   readonly property var shrunk: root.fits.filter(fit => fit.scale < 0.999)
 
   editor: OverlayManager.layout
-  modules: root.isCustom ? root.view.modules : null
+  modules: root.isCustom ? root.view.layout.modules : null
   icon: root.view ? OverlayConfig.pageIcon(root.view) : "dashboard"
   title: root.view ? OverlayConfig.viewLabel(root.view, OverlayManager.selectedViewIndex) : I18n.tr("No pages")
   emptyText: I18n.tr(root.view ? "A tool page: it has no layout to edit. Drag it in the list to reorder it." : "No pages yet: add one with New page.")

@@ -134,17 +134,10 @@ Each file has one job and sits where its folder's rule says. Moves and splits ke
 Steps, roughly in this order (moves first, each its own PR):
 1. Done: Reword `services/AGENTS.md` › Folders (`system/`: the machine and the desktop basics every user has; `apps/`: optional features and integrations with outside tools or services); `DailySchedule` to `core/`; `ShellManager` to `ui/`; document the non-singleton parts.
 2. Done: Move the reusable pieces holding feature logic: `BaseWidget` / `IconTextWidget` to `bar/widgets/base/`, `CodeLine` to `content/parts/`, `PipewireVolumeBar` to `surfaces/osd/`; `StyledToolTip` stays, named in AGENTS.md › Layout.
-3. Split `ShellManager` by concern and `EdgeMenuManager` into its runtime and its editor (the `KeybindManager` split, into its reader, a `KeybindEditor` and page state, goes with backend stage 7); extract `LauncherCommands`' `/config` browser; give the bars' and edge menus' reserved zones one owner.
+3. Done: Split `ShellManager` by concern (`SurfaceManager`, `SessionManager`) and `EdgeMenuManager` into its runtime and its editor (`EdgeMenuEditor`); extract `LauncherCommands`' `/config` browser (`LauncherConfigBrowser`); give the bars' and edge menus' reserved zones one owner (`ScreenEdgeManager`). The `KeybindManager` split, into its reader, a `KeybindEditor` and page state, stays with backend stage 7.
 4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
-- [ShellManager runs session actions through execDetached](issues.md#shellmanager-runs-session-actions-through-execdetached)
-- [Session actions sit in ShellManager](issues.md#session-actions-sit-in-shellmanager)
-- [The surface registry sits in ShellManager](issues.md#the-surface-registry-sits-in-shellmanager)
-- [Screen-edge geometry is split over three services](issues.md#screen-edge-geometry-is-split-over-three-services)
-- [The edge menus' card-unit helpers sit in EdgeMenuManager](issues.md#the-edge-menus-card-unit-helpers-sit-in-edgemenumanager)
-- [EdgeMenuManager is also the layouts editor's working copy](issues.md#edgemenumanager-is-also-the-layouts-editors-working-copy)
-- [LauncherCommands holds the /config browser](issues.md#launchercommands-holds-the-config-browser)
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (designed and fixed in backend stage 7)
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
 - [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
@@ -160,7 +153,7 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 Resolves:
 
 ### Phase 5: the allowlist
-[Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `ShellManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
+[Backend stages 3–7](backend/roadmap.md) are this phase; nothing here restates them. Before them, the files on the allowlist only for `Quickshell.execDetached` can switch to `CommandManager.runDetached` at any time (`GreetdManager`, `LockManager`, `LauncherManager`, `CompositorConfigManager`), shrinking the list early. Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
 
 Resolved by a stage:
 - [Self-update and the greeter installer assume git](issues.md#self-update-and-the-greeter-installer-assume-git) (stage 4)

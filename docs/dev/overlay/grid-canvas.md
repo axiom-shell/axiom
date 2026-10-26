@@ -10,18 +10,18 @@ The right side of the layouts editor: `GridCanvas` draws the selected page, menu
 - Draws the selected page or menu at a scale it computes itself (not `Item.scale`).
 - A lattice of unit squares (one `Canvas`) with room around the grid (`GridPlacement.canvasExtent`: a unit above/left, three below/right, or one past the screen), scaled to the area (`canvasFit`).
 - `CanvasModule` tiles. Lattice squares and modules share `cellRadius`.
-- For a menu, its whole screen around it, where the menu really sits on it (`screenBox`: `EdgeMenuManager.screenBoxOf`, `GridPlacement.screenBox` from `placementOf`):
+- For a menu, its whole screen around it, where the menu really sits on it (`screenBox`: `OverlayManager.menus.screenBoxOf`, `GridPlacement.screenBox` from `placementOf`):
   - a dashed outline, with the units outside it tinted (they'd scroll);
   - the screen edge as a faint accent bar with the menu's part solid;
   - a shaded band along it (`reservedDepth`, `GridPlacement.menuReservedDepth`, with a line where the windows start): the strip an integrated menu reserves, or the bars and border a floating one sits past.
-- With "Show other menus" (`EdgeMenuManager.showingOthers`), the other enabled menus on that screen are drawn dimmed where they sit.
-  - `ghosts`: `EdgeMenuManager.othersOn`, in screen px through `pxScale`, since their module size can differ.
+- With "Show other menus" (`OverlayManager.menus.showingOthers`), the other enabled menus on that screen are drawn dimmed where they sit.
+  - `ghosts`: `OverlayManager.menus.othersOn`, in screen px through `pxScale`, since their module size can differ.
   - They are not drop targets.
 - A header with undo/redo at its left, the module count, a menu's arrows moving it along its edge (see [Edge menu editing](../edge-menus/editing-submenus.md)) and how it fits (per monitor for a page, along the edge for a menu).
 
 ### GridCanvas: alignment guides
 Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement`).
-- The **frame** a module is aligned against (`GridEditor.guideFrame`, `GridPlacement.guideFrame`): the bounded grid (`GridEditor.area`, a screen layout), else the cover of the *other* modules (a page or a submenu: centred among the rest). An edge menu's is its screen along its edge (`GridEditor.screenBox`, `EdgeMenuManager.screenBoxOf`) and the other modules across it, so what's centred lines up with the screen's centre.
+- The **frame** a module is aligned against (`GridEditor.guideFrame`, `GridPlacement.guideFrame`): the bounded grid (`GridEditor.area`, a screen layout), else the cover of the *other* modules (a page or a submenu: centred among the rest). An edge menu's is its screen along its edge (`GridEditor.screenBox`, `OverlayManager.menus.screenBoxOf`) and the other modules across it, so what's centred lines up with the screen's centre.
 - **Centre cross** (`centreLines`, `centreGuides`): faint dashed accent lines over the tiles (the guides' `Canvas`, so a full page doesn't hide them), through the centre of the frame of every module: the screen's (screen layouts), the page's modules' bounds (what the overlay centres the page on), an edge menu's screen along its edge and its modules across it.
 - **Smart guides** while carrying or resizing (`guides`, `alignments`): a line wherever the landing place's start, end or centre on an axis equals another module's (at its previewed place), running over both; stronger where it's centred in the frame. Drawn by the same `Canvas` as the centre cross. The drag layer's `landingMembers` says which previewed places are the ones moving.
 - **Margins** on the one selected module, while nothing's carried (`margins`, `canvasMargins`): a line and its length in cards (`GridPlacement.cards`) to each frame side with room, accent where both sides on that axis match. An edge menu's screen side can fall between units: that length is rounded and shown with `≈`.
@@ -81,7 +81,7 @@ The canvas pieces name no service: they edit through `dragLayer.editor`.
   - Cleared when the scope changes and by the owners' load/reset (`clearHistory`).
 - Each edit keeps the selection on its module (or group) and normalizes the grid, so a place left of or above it makes room there.
   - On a `hold` axis a gap before the modules stays and only negative places are shifted back. That is a whole-edge menu's axis along its edge, since it starts at the edge's start whatever its modules reach.
-  - `shifted(shift, boundsBefore)` tells the owner; EdgeMenuManager uses it to keep a menu's modules on their cells.
+  - `shifted(shift, boundsBefore)` tells the owner; EdgeMenuEditor uses it to keep a menu's modules on their cells.
 - With an `area` `{ cols, rows }` the grid is bounded instead:
   - places stay absolute and inside it;
   - new modules go to `GridPlacement.firstFreeIn`;
@@ -89,5 +89,5 @@ The canvas pieces name no service: they edit through `dragLayer.editor`.
 - Required modules (`canRemove`) are never removed or duplicated, and a grid missing one is a problem.
 
 ### Owners
-- `OverlayManager.layout`, `EdgeMenuManager.layout` and each `ScreenLayoutEditor`'s `layout` (`LockManager.editor`, `GreeterManager.editor`, bounded by the layout's `columns` × `rows`) each own one.
+- `OverlayManager.layout`, `OverlayManager.menus.layout` and each `ScreenLayoutEditor`'s `layout` (`LockManager.editor`, `GreeterManager.editor`, bounded by the layout's `columns` × `rows`) each own one.
 - Each points `modulesOf` at the selected page's or menu's modules, or the lock screen's.

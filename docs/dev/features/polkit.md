@@ -36,7 +36,7 @@ A session has one agent, and Quickshell never retries a failed registration. So:
 - Drawn by `shell/PolkitPrompt` → `surfaces/polkit/PolkitWindow`, on every screen.
 - **Layer:** Overlay, with the `axiom-polkit` layer rule, which stacks it over every other axiom surface.
 - **Modal:** it dims everything, bars included.
-- **`ShellManager.modalWindows`:** it is registered there while shown, so a prompt over the overlay clears no focus grab. One case is the greeter's install started from Settings. Without a native grab (sway, niri) the grabbing surface stops asking for exclusive keyboard meanwhile (`ShellManager.modalShown`), or it would keep the keyboard from the prompt.
+- **`SurfaceManager.modalWindows`:** it is registered there while shown, so a prompt over the overlay clears no focus grab. One case is the greeter's install started from Settings. Without a native grab (sway, niri) the grabbing surface stops asking for exclusive keyboard meanwhile (`SurfaceManager.modalShown`), or it would keep the keyboard from the prompt.
 - **The card:** with exclusive keyboard, on the picked screen (`General.screensNamed`).
 - **The field:** `reusable/PasswordEntry`, shared with the lock screen's `PasswordField`. It takes no keys for 400 ms after it opens.
 - Settings → Authentication prompts starts with `PolkitStatusCard`.

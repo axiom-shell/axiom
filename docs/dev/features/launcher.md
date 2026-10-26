@@ -1,6 +1,6 @@
 # Launcher
 
-> **Files:** `services/ui/LauncherManager.qml`, `services/ui/LauncherCommands.qml`, `components/surfaces/launcher/Launcher.qml`, `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`, `components/views/Settings/LauncherPlace.qml`
+> **Files:** `services/ui/LauncherManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherConfigBrowser.qml`, `components/surfaces/launcher/Launcher.qml`, `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`, `components/views/Settings/LauncherPlace.qml`
 > **Config:** `Launcher.*` (reader `LauncherConfig`)
 > **Related:** [Launcher providers](launcher-providers.md), [Saved configs](../core/saved-configs-sharing.md), [Edge attach](../popouts/edge-attach.md), [Dock](dock.md), [OSD](osd.md)
 
@@ -17,7 +17,7 @@ This doc covers the app launcher: how search text becomes rows, how the window i
 - **Detached:** a `FloatingPopout`.
   - It claims `launcher:<screen>` as the attached one does, so it closes the popouts it covers ([Registry](../popouts/registry.md)).
   - Its fraction and its align across are both that distance, measured from the far side on the bottom or right edge. 0% sits against its margin; 50% is centred.
-  - Its margins are where a detached dock or OSD with an automatic gap sits (`BarManager.detachedGaps`, per side; `Launcher._marginOn`).
+  - Its margins are where a detached dock or OSD with an automatic gap sits (`ScreenEdgeManager.detachedGaps`, per side; `Launcher._marginOn`).
   - `maxContentHeight` keeps it from moving, and `growUp` keeps a reversed field in place.
 - **Attached:** an `EdgePopout` at `position` on its edge.
   - On a side edge its height runs along the edge, so the panel holds its tallest (`LauncherPanel.holdHeight`, the blocks against the field) instead of the window keeping room across (`maxContentDepth`).
@@ -65,6 +65,7 @@ The first character picks the provider:
 - `confirm` (destructive session actions) asks for a second Enter.
 
 ### /config
+- Its rows and what they do are `services/ui/LauncherConfigBrowser.qml` (`options(arg)`, `run(value)`): not a singleton, `LauncherCommands` holds one for its `config` entry.
 - `/config` sets any setting by dotted path (`/config Appearance.font.size 14`). It saves at once through `SettingsManager.commitValue`.
 - It also holds `save` / `restore` for snapshots, `example` for the example setups, and `community <search>` for the [community setups](community-setups.md) (with their thumbnails, applied without a wallpaper), as on the settings page ([saved configs](../core/saved-configs-sharing.md)):
   - `save` suggests only `SavedConfigsManager.active`, saying whether it is `modified`. Another snapshot is replaced only by typing its name.

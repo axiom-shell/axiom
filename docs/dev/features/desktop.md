@@ -38,7 +38,7 @@ Overlay modules drawn on the desktop, under the windows. Read this doc for deskt
   - `showBackdrop: false`: its backdrop only feeds the frosting (`hideSource`).
   - `frost` is on only with `moduleBorders`.
 - **Insets** come from `DesktopManager.insetsFor(screen)`. Per side, it takes the larger of:
-  - `EdgeMenuManager.reservedOn` (border, bars, integrated menus);
+  - `ScreenEdgeManager.reservedWithMenusOn` (border, bars, integrated menus);
   - Hyprland's live `reserved`, which includes docks (`DockManager.reservedOf`);
   - plus `gaps_out` on top of that.
   The grid therefore lines up with where tiled windows start, and refits when a bar moves.

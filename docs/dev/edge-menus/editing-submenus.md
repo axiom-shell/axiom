@@ -1,6 +1,6 @@
 # Edge menus: editing and submenus
 
-> **Files:** `services/ui/EdgeMenuManager.qml`, `config/EdgeMenusConfig.qml`, `components/views/Layouts/MenuTarget.qml`, `components/views/Layouts/MenuOpening.qml`, `components/views/Layouts/OpenerButtons.qml`, `components/content/Submenu/Submenu.qml`, `components/content/Submenu/MenuSubmenu.qml`, `services/ui/GridEditor.qml`
+> **Files:** `services/ui/EdgeMenuEditor.qml`, `services/ui/EdgeMenuManager.qml`, `config/EdgeMenusConfig.qml`, `components/views/Layouts/MenuTarget.qml`, `components/views/Layouts/MenuOpening.qml`, `components/views/Layouts/OpenerButtons.qml`, `components/content/Submenu/Submenu.qml`, `components/content/Submenu/MenuSubmenu.qml`, `services/ui/GridEditor.qml`
 > **Config:** `EdgeMenus.items[]` (`mode: "submenu"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Popout submenus](../popouts/submenus.md), [Editors pattern](../core/editors-pattern.md)
 
@@ -8,7 +8,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 
 ### Draft
 - Editing happens on the Layouts page (see [Layouts editor](../overlay/layouts-editor.md)).
-- The draft lives in `EdgeMenuManager`: `ConfigDraft { path: ["EdgeMenus"] }`, plus `layout`, the selected menu's `GridEditor` with host `edgeMenu`.
+- The draft lives in `EdgeMenuEditor`, which `OverlayManager` holds as `menus` (not a singleton; `EdgeMenuManager` keeps only the running menus' state): `ConfigDraft { path: ["EdgeMenus"] }`, plus `layout`, the selected menu's `GridEditor` with host `edgeMenu`.
 - While dirty it shows live on the running menus through `previews.EdgeMenus`, as the bar editor's does.
 
 ### Field groups
@@ -17,7 +17,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
   - **"Show on screen"**: sets `previewing` to the selected menu (following the selection and id renames) and opens it.
     - `isHeld(id)` (pinned or previewing) makes a menu ignore `closeOnLeave` and outside clicks.
     - The page's `onDestruction` stops it.
-  - **What else opens the menu** (`EdgeMenuManager.references(id)`):
+  - **What else opens the menu** (`OverlayManager.menus.references(id)`):
     - bar Buttons and widgets opening it as their menu popout (`EdgeMenusConfig.menusOpenedBy`, which the bar inspector's link to the layouts editor reads too, `OverlayManager.openedBy`: a Button's click action first, then its menu popout, passing over one that's gone), in the bar editor's draft or saved bars;
     - binds in the keybind editor's draft or `KeybindsConfig.binds`.
   - **Buttons that add an opener**, drawn by `OpenerButtons` (shared with the page's Opening group):

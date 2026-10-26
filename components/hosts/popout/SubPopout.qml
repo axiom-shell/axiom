@@ -128,8 +128,8 @@ Item {
     // stays within it, and content (MenuSubmenu) scrolls past
     // maxContentHeight
     readonly property real _placedY: outer.slot?.popupScreenPlaced?.y ?? 0
-    readonly property real screenFrom: EdgeMenuManager.reservedOn(outer.screen, Bar.Top) - root._placedY
-    readonly property real screenTo: (outer.screen?.height ?? 0) - EdgeMenuManager.reservedOn(outer.screen, Bar.Bottom) - root._placedY
+    readonly property real screenFrom: ScreenEdgeManager.reservedWithMenusOn(outer.screen, Bar.Top) - root._placedY
+    readonly property real screenTo: (outer.screen?.height ?? 0) - ScreenEdgeManager.reservedWithMenusOn(outer.screen, Bar.Bottom) - root._placedY
     readonly property real maxContentHeight: Math.max(Widget.height, root.screenTo - root.screenFrom - surface.contentInset * 2)
     // Along the parent's side (y in its window), placed as a bar popout is
     // along a pill (SurfaceContext.submenuPlace)
@@ -218,7 +218,7 @@ Item {
       // What PopoutAnchors in its content open in: this one again
       readonly property var popoutHost: outer
 
-      visible: root.occupied && (root.contentReady || still.switching) && !ShellManager.captureFrozen
+      visible: root.occupied && (root.contentReady || still.switching) && !SurfaceManager.captureFrozen
       color: "transparent"
 
       // TrayMenuList sizes itself to its entries, within its limits
@@ -448,10 +448,10 @@ Item {
   }
 
   // The overlay's focus grab lets input through to the submenu (see
-  // ShellManager.grabPartners)
-  Component.onCompleted: ShellManager.registerGrabPartner(submenuPopup, outer.screen?.name)
-  onScreenChanged: ShellManager.registerGrabPartner(submenuPopup, outer.screen?.name)
-  Component.onDestruction: ShellManager.unregisterGrabPartner(submenuPopup)
+  // SurfaceManager.grabPartners)
+  Component.onCompleted: SurfaceManager.registerGrabPartner(submenuPopup, outer.screen?.name)
+  onScreenChanged: SurfaceManager.registerGrabPartner(submenuPopup, outer.screen?.name)
+  Component.onDestruction: SurfaceManager.unregisterGrabPartner(submenuPopup)
 
   // How much of it is still behind its parent's side as it slides
   // (AttachedSurface.slid): the pill reach under a joined one follows it
