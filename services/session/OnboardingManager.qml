@@ -90,24 +90,27 @@ Singleton {
 
   // --- The compositor ---
 
-  // Hyprland's version ("0.56.2"), and whether it has the Lua config axiom
-  // needs (0.55+); "" until read, and elsewhere
-  property string hyprlandVersion: ""
-  readonly property bool hyprlandSupported: {
-    const [major, minor] = hyprlandVersion.split(".").map(Number);
-    return major > 0 || minor >= 55;
-  }
-  // Whether axiom can set the compositor up: an older Hyprland can't
-  readonly property bool compositorSupported: CompositorManager.kind !== "hyprland" || hyprlandSupported
+  // Whether axiom can set the compositor up (an older Hyprland can't), why
+  // not ("" when it can or that isn't known), and what the user's config in
+  // an older format means ("" without one): CompositorManager.withSetupCheck,
+  // false and "" until checked
+  readonly property bool compositorSupported: _setup.supported
+  readonly property string setupProblem: _setup.problem
+  readonly property string legacyNote: _setup.legacyNote
+  property var _setup: ({
+      "supported": false,
+      "problem": "",
+      "legacyNote": ""
+    })
   // What the compositor's config folder holds: "none" (no config), "stock"
   // (the compositor's example config), "custom" (the user's own), "ours"
   // (axiom's managed file), "blocked" (a symlink or git repository: never
-  // taken over) or "legacy" (Hyprland: only a hyprland.conf); "" until
-  // checked
+  // taken over) or "legacy" (only a config in an older format axiom doesn't
+  // read, legacyNote: Hyprland's hyprland.conf); "" until checked
   readonly property string configState: {
     switch (CompositorConfigManager.managedCheck) {
     case "new":
-      return _hasLegacyConfig ? "legacy" : "none";
+      return legacyNote !== "" ? "legacy" : "none";
     case "adopt":
       return "custom";
     // The file leaving managed wrote: nothing of the user's
@@ -120,7 +123,6 @@ Singleton {
     }
     return "";
   }
-  property bool _hasLegacyConfig: false
 
   // Why managed can't be picked ("" when it can), for its option card
   readonly property string blockedReason: {
@@ -154,17 +156,14 @@ Singleton {
   }
 
   // What the Compositor page shows: the config folder, the include and
-  // autostart lines, and on Hyprland its version and an old hyprland.conf
+  // autostart lines, and whether the compositor can be set up
   function detectCompositor() {
     if (!CompositorManager.supports.configModes)
       return;
     CompositorConfigManager.checkManaged();
     IntegrationHookupManager.check("compositorInclude");
     IntegrationHookupManager.check("compositorAutostart");
-    if (CompositorManager.kind !== "hyprland")
-      return;
-    root._hasLegacyConfig = FileManager.read(Paths.hyprlandPath + "hyprland.conf") !== null;
-    HyprlandManager.withVersion(version => root.hyprlandVersion = /^\d+\.\d+/.test(version) ? version : "");
+    CompositorManager.withSetupCheck(setup => root._setup = setup);
   }
 
   // --- Navigation ---

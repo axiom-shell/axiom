@@ -60,6 +60,17 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 - `SystemManager`, `UpdatesManager`: done in stage 1b.
 - `BrightnessManager`: brightnessctl → sysfs; ddcutil stays an exec, from Go.
 
+**Stage 3b: exec** (later; `CommandManager`, taken ahead of stage 6 because the planned custom JSON widgets, Waybar-style scripts drawn as bar widgets and modules, build on it)
+- **What moves:** `CommandManager`'s `Process` and `execDetached` → the daemon. Its API stays (`acquire(owner, {command, interval})`, `outputs[command]`, `refresh`, `run(argv, callback, input)`, `runDetached`), so its callers don't change (`Button`'s `labelCommand`, `CommandOutput`, about 20 `run` users), and its allowlist entry goes.
+- **Methods:** `exec.run` (once: argv and optional stdin → exit code, stdout, stderr; stdin stays the way secrets travel, never argv), `exec.spawn` (detached, for `runDetached`), and a subscription per command: watch, unwatch and refresh with `{command, mode: poll|stream|once, interval, format: text|json}`.
+- **Not the polled hub as it is:** a `topics.Source` runs one `Fetch` over every request at the shortest interval, but commands need a loop per distinct command (at that command's shortest asked interval), and a stream is a long-lived process. Either the hub gets keyed sources, or a hub of exec's own keeps the same contract: counted per command, nothing runs without consumers, stopped on the last unwatch and on the connection's `Forget`.
+- **Pushes keyed by command:** `NotifyLatest` keeps the newest unsent push per method, so per-command pushes on one method would overwrite each other: one push carries every watched command's entry (or each command gets its own key). An entry has the text, the parsed value with `format: json`, an `error` keeping the raw line when it isn't JSON, the exit code and `at`.
+- **Streamed mode:** `sh -c` in its own process group; each stdout line is a sample (Waybar's continuous scripts print one JSON object per line). Lines are capped (about 64 KB), a chatty script is coalesced to a few pushes a second (never at frame rate), a script that exits restarts with backoff, the last unwatch sends the group SIGTERM then SIGKILL, and stderr reaches the log rate-limited.
+- **Go parses the JSON**, so the shell gets objects rather than a string to `JSON.parse` per sample. What Waybar's fields mean (`text`, `alt`, `tooltip`, `class`, `percentage`, `format-icons`) is the widgets' pure helper's, not exec's.
+- **Refresh from outside:** the subscription's refresh is what Waybar's `signal` (`pkill -RTMIN+N waybar`) becomes, through an `axiom` CLI or IPC call the widgets add.
+- **Done when:** `CommandManager` is off the allowlist, Button and CommandOutput behave as before, and QML can ask for `mode: "stream"` and `format: "json"` and read the parsed value. Go tests cover the interval union per command, stream lines, restart with backoff, the kill on unwatch and on `Forget`, the line cap, coalescing and a bad JSON line.
+- Not in this stage: the other direct `Process` and `execDetached` users (stage 6).
+
 **Stage 4: scripts** (later; pure rendering at the core, effects at the edge, as `compositor/render` is)
 - `calendar_sync.py` → a Go CalDAV client (also unblocks VTODO sync).
 - `generate_theme.py` and the `theme_*.sh` integrations → a renderer plus one writer per integration's `axiom.*` file.
@@ -70,10 +81,10 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 
 **Stage 5: HTTP** (later)
 - `WeatherSource`: XHR polling → Go HTTP behind a topic. `ClaudeUsageManager` and `MediaManager`'s album art: done in stage 1b.
-- `ChatRequest` with `SecretsManager`: streamed replies pushed as chunks, keys read in Go so they never pass through QML, argv or temp files.
+- `ChatRequest` with `SecretsManager`: streamed replies pushed as chunks, keys read in Go so they never pass through QML, argv or temp files; `ChatProvidersCard`'s Test and Fetch models go through `ChatManager` with it ([issue](../issues.md#chatproviderscard-runs-its-own-requests)).
 
 **Stage 6: the funnels** (later; each moves every caller with it)
-- `CommandManager` → `exec.run` / `exec.spawn` and an `exec` topic for polled commands; then the remaining direct `Process` / `execDetached` users switch to it.
+- `CommandManager` → `exec.run` / `exec.spawn` and the per-command subscription: moved ahead to stage 3b. Here the remaining direct `Process` / `execDetached` users switch to it.
 - File watching and atomic writes (`StateManager`, notes, todos, chats, notification history) → `file.watch` (pushes on change) and `file.write`. `FileManager.read` stays: bindings need a synchronous read, and the socket is async.
 - `HyprlandIpcManager`, `NiriIpcManager`: the daemon already holds each compositor's socket (`backend/internal/compositor/ipc`) and can push its events. Keep those pushes small: workspace and focus changes drive the UI.
 - `IpcTarget` stops being an `IpcHandler` once binds and scripts all use `axiom ipc`; the daemon's `qs ipc --pid` fallback retires with it.
@@ -88,4 +99,4 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 - The contract check (cleanup Phase 4) sees only object-literal params, sent directly or through a helper under a `// rpc:` note: the runtime warning for helper-built params was not taken, so the new `config.set` ops and `compositor.inputs` get tests of their own.
 - One validator: the shell stops validating before it saves (Go's answer stands anyway); `applyDefaults` stays for previews.
 - A thin `compositor.inputs`: Go reads binds, profiles, strips and the look from the config it owns; the shell sends only runtime facts (`supports`, `fx`, resolved theme colours). `KeybindManager` is split on that shape, into its reader, a `KeybindEditor` and page state ([issue](../issues.md#keybindmanager-does-three-jobs)).
-- Code on both sides gets an exit: `SchemaValidation` (shared fixtures), the compositor helpers `compositor/render` ported (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`), and the bind tables Go reads out of `BindActions.qml` (shared data in a JSON file both read, or the QML copy deleted).
+- Code on both sides gets an exit: `SchemaValidation` (shared fixtures), the compositor helpers `compositor/render` ported (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`; the shadow's constant offset leaves the spec there, [issue](../issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer)), and the bind tables Go reads out of `BindActions.qml` (shared data in a JSON file both read, or the QML copy deleted).

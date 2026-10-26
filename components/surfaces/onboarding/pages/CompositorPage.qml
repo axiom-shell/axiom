@@ -39,23 +39,24 @@ OnboardingPage {
     case "blocked":
       return I18n.tr("Your {0} config is a symlink or lives in a git repository (dotfiles), so axiom will never take it over. Load axiom's part from it instead.", root.compositor);
     case "legacy":
-      return I18n.tr("You have a hyprland.conf in the older format. axiom works with Hyprland's Lua config: letting it manage Hyprland writes a hyprland.lua, and your hyprland.conf is left as it is.");
+      return OnboardingManager.legacyNote;
     case "ours":
       return I18n.tr("axiom already manages your {0} config. Keep it that way, or pick another mode.", root.compositor);
     }
     return I18n.tr("Looking at your {0} config…", root.compositor);
   }
 
+  // Why axiom can't set this compositor up (an older Hyprland)
   Notice {
-    visible: OnboardingManager.hyprlandVersion !== "" && !OnboardingManager.hyprlandSupported
+    visible: OnboardingManager.setupProblem !== ""
     tone: "error"
-    text: I18n.tr("Hyprland {0} is too old: axiom needs 0.55 or newer, with the Lua config. Update Hyprland, then run this again with /welcome.", OnboardingManager.hyprlandVersion)
+    text: OnboardingManager.setupProblem
   }
 
   // What this compositor can't do that another build can (plain sway:
   // SwayFX blurs, rounds corners and casts shadows)
   Notice {
-    readonly property string hint: CompositorManager.backend?.unsupportedHint?.("blur") ?? ""
+    readonly property string hint: CompositorManager.unsupportedHint("blur")
     visible: hint !== ""
     tone: "info"
     text: I18n.tr("{0} can't blur, round window corners or cast shadows, so axiom's surfaces are solid. {1}", root.compositor, hint)

@@ -1,7 +1,7 @@
 # `Bar` reader holds the edges enum and breaks reader naming
 
-> **Issue:** [`Bar` reader holds the edges enum and breaks reader naming](../issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
-> **Status:** proposed
+> **Issue:** filed as its items: [the edge enum has no methods helper](../issues.md#the-edge-enum-has-no-methods-helper), [edge users still read the enum from the `Bar` reader](../issues.md#edge-users-still-read-the-enum-from-the-bar-reader), [the `Bars` reader is named `Bar`](../issues.md#the-bars-reader-is-named-bar)
+> **Status:** decided: B (2026-10-27)
 
 ### Problem
 `config/Bar.qml` does two jobs. It is the `Bars` section's reader (`enrichBarConfig`, the look helpers, `savedBars`, `expandBars`, the schema groups), named `Bar` where every other reader is named for its section (`EdgeMenusConfig`, `PopoutsConfig`, …). And it declares `enum Location { Top, Bottom, Left, Right }` plus four edge helpers (`edgeName`, `locationOf`, `oppositeOf`, `getLocationFromString`) that docks, OSDs, the launcher, popouts, edge menus and the border use, none of which is about bars.

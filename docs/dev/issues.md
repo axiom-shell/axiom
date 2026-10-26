@@ -135,7 +135,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### ChatProvidersCard runs its own requests
 - **Where:** `components/views/Settings/ChatProvidersCard.qml` (Test, Fetch models)
-- **What:** The card creates its own `ChatRequest` for Test and Fetch models, so a UI file owns a process, against the rule that services own every side effect (AGENTS.md › Services). Kept as a known exception; moving the requests into `ChatManager` would end it.
+- **What:** The card creates its own `ChatRequest` for Test and Fetch models, so a UI file owns a process, against the rule that services own every side effect (AGENTS.md › Services). Kept as a known exception until backend stage 5 moves `ChatRequest` to the daemon; the card's requests then go through `ChatManager` in that stage.
 - **Size:** small
 - **Found:** 2026-10-20, while tightening AGENTS.md (it was listed there under Known housekeeping)
 
@@ -245,7 +245,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The window shadow's offset is always 0 but still passed through every writer
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`spec`: `"offset": 0`), `components/methods/CompositorLayer.qml` (`look`), `components/methods/HyprLua.qml`, `components/methods/SwayConf.qml`, `components/methods/NiriConf.qml`
-- **What:** Since config v66 axiom's shadow only spreads evenly, so the spec's shadow `offset` is a constant 0 that `look()` hands on and each writer writes (`decoration.shadow.offset`, `shadow_offset`, niri's `offset`). Writing 0 still matters (it resets a user's own offset), so each writer could write 0 itself and the field go from the spec and its tests.
+- **What:** Since config v66 axiom's shadow only spreads evenly, so the spec's shadow `offset` is a constant 0 that `look()` hands on and each writer writes (`decoration.shadow.offset`, `shadow_offset`, niri's `offset`). Writing 0 still matters (it resets a user's own offset), so each writer could write 0 itself and the field go from the spec and its tests. Done in Go's `compositor/render` when the QML writers go (backend stage 7; the maintainer folded it in, 2026-10-27).
 - **Size:** small
 - **Found:** 2026-10-17, while reviewing the shadow-on-or-off change
 
@@ -283,12 +283,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`_appliedParts`)
 - **What:** Opacity counts as an applied part, so turning it off reloads the config (see "Changing a setting under sway can flash the screen"), though SwayManager already sets every window back to 1 itself. A part the backend takes back itself shouldn't count.
 - **Size:** trivial
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
-### The onboarding's Compositor page names Hyprland
-- **Where:** `components/surfaces/onboarding/pages/CompositorPage.qml`, `services/session/OnboardingManager.qml` (`detectCompositor`)
-- **What:** It gates on `CompositorManager.kind !== "hyprland"` and reads `HyprlandManager.withVersion` (and the page shows Hyprland's legacy notice) rather than a capability, and calls `CompositorManager.backend?.unsupportedHint` from UI. A writer hook (`legacyConfig`, `configProblem`) and a CompositorManager passthrough would keep it neutral.
-- **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
 ### SwayFX's corner radius reaches only windows opened later
@@ -399,11 +393,23 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-14, while letting typing modules go on the desktop
 
-### `Bar` reader holds the edges enum and breaks reader naming
-- **Where:** `config/Bar.qml` (`enum Location`, the `Bars` reader)
-- **What:** The `Bars` section's reader is named `Bar` (other readers are named for their section, with a `Config` suffix where needed), and the same file declares the `Location` edge enum (`Bar.Top`, `Bar.Left`, …) that docks, OSDs, popouts and edge menus use. About 302 `Bar.` references in 57 files, 204 of them the enum. Plan: move the enum to a new `Edge` singleton in config/ (`Edge.Top`), then rename the reader (e.g. `BarsConfig`). `gen_docs.py` needs no change; add the old names to `RETIRED` in `scripts/check_docs.py`, and force a reload afterwards (testing.md › Reloads and logs).
-- **Size:** needs a plan
-- **Found:** 2026-10-13, while assessing reader renames for the docs makeover
+### The edge enum has no methods helper
+- **Where:** `config/Bar.qml` (`enum Location`, `edgeName`, `locationOf`, `oppositeOf`, `getLocationFromString`), `components/methods/SurfaceOutline.qml` (its own `top` … `right`)
+- **What:** The screen edges (`Top, Bottom, Left, Right`, an order the code indexes arrays by) are declared on the `Bars` reader, which `components/methods/` may not import, so `SurfaceOutline` keeps a second copy of the numbers. Item 1 of the [edge enum plan](plans/edge-enum.md) (option B): a `ScreenEdge` singleton in components/methods/ with the enum in the same order and `name` (was `edgeName`), `fromName` (was `locationOf`, -1 if unknown), `fromConfig` (was `getLocationFromString`, Top if unknown) and `opposite` (was `oppositeOf`); its qmltestrunner test (the order, the name round trip, opposite, the Top fallback); `SurfaceOutline` uses it instead of its own ints. `Bar.qml` is untouched.
+- **Size:** small
+- **Found:** 2026-10-27, while planning the edge enum (docs/dev/plans/edge-enum.md)
+
+### Edge users still read the enum from the `Bar` reader
+- **Where:** `config/Bar.qml` (`enum Location` and the four edge helpers), `services/ui/ScreenEdgeManager.qml`, `components/hosts/popout/` (and the other users: 32 files)
+- **What:** Docks, OSDs, the launcher, popouts, edge menus and the border read `Bar.Top` … and `Bar.edgeName` etc. (160 enum values, 38 helper calls, 24 "a Bar.Location" comments). Item 2 of the [edge enum plan](plans/edge-enum.md), after the helper exists: move each to `ScreenEdge` (`ScreenEdge.Top`, `ScreenEdge.name`, …, comments "a ScreenEdge"), delete the enum and the helpers from `config/Bar.qml`, fix the docs' spans (config-readers.md's `edgeName` line, `Bar.Top` / `Bar.Location` / `edge === Bar.Right`), and run qmllint, which flags a missed value. Force a reload afterwards (testing.md › Reloads and logs).
+- **Size:** small
+- **Found:** 2026-10-27, while planning the edge enum (docs/dev/plans/edge-enum.md)
+
+### The `Bars` reader is named `Bar`
+- **Where:** `config/Bar.qml`, `scripts/check_docs.py` (`RETIRED`)
+- **What:** Every other reader is named for its section with a `Config` suffix where needed (`EdgeMenusConfig`, `PopoutsConfig`); `Bar` is also `shell/Bar`'s type name. Item 3 of the [edge enum plan](plans/edge-enum.md), after the enum has moved: `git mv` it to `BarsConfig` with its about 80 references and the docs (`Bar.enrichBarConfig`, `Bar.lookOf`, config-readers.md's entry). In `check_docs.py`, a retired name that is also a schema definition fails only on a span naming a member that isn't a config path (`Bar.background` passes, `Bar.enrichBarConfig` fails); add `"Bar": "BarsConfig"` that way, with a test case in `tests/scripts/`. Delete the plan file with this entry. Force a reload afterwards.
+- **Size:** small
+- **Found:** 2026-10-27, while planning the edge enum (docs/dev/plans/edge-enum.md)
 
 ### Singleton properties warn on every reload
 - **Where:** `services/ui/BlurManager.qml` (`paused`), `services/core/SelfUpdateManager.qml`, `services/compositor/HyprlandManager.qml` (`activeWindowId`), `services/system/AudioManager.qml` (`tracker`, `captureTracker`, `micInUse`)
