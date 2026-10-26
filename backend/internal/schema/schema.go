@@ -7,6 +7,7 @@ package schema
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -15,6 +16,9 @@ import (
 type Schema struct {
 	root any
 	defs *jsonx.Object
+	// The compiled `pattern`s, by source: validating reads the same few
+	// patterns for every value, and they live as long as the schema does
+	patterns sync.Map // string → *regexp.Regexp or error
 }
 
 // New wraps a parsed root schema.

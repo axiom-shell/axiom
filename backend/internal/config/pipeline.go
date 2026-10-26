@@ -7,9 +7,7 @@ package config
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
-	"sync"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
@@ -176,7 +174,7 @@ func validate(s *schema.Schema, value any, node any, path string, errs *[]string
 	if pattern, _ := get("pattern"); jsonx.Truthy(pattern) {
 		if str, ok := value.(string); ok {
 			p := jsonx.ToString(pattern)
-			re, err := compilePattern(p)
+			re, err := s.Pattern(p)
 			switch {
 			case err != nil:
 				*errs = append(*errs, fmt.Sprintf("%s: invalid pattern %s in the schema", path, p))
@@ -264,7 +262,7 @@ func validateObject(s *schema.Schema, value *jsonx.Object, n *jsonx.Object, path
 	if patterns, ok := n.Value("patternProperties").(*jsonx.Object); ok {
 		for _, key := range value.Keys() {
 			for _, p := range patterns.Keys() {
-				if re, err := compilePattern(p); err == nil && re.MatchString(key) {
+				if re, err := s.Pattern(p); err == nil && re.MatchString(key) {
 					validate(s, value.Value(key), patterns.Value(p), childPath(path, key), errs)
 				}
 			}
@@ -336,24 +334,4 @@ func childPath(path, key string) string {
 		return key
 	}
 	return path + "." + key
-}
-
-var patterns sync.Map // string → *regexp.Regexp or error
-
-// compilePattern compiles a schema `pattern` as JS reads it
-// (schema.CompilePattern; the YAML schema check refuses one it can't).
-func compilePattern(p string) (*regexp.Regexp, error) {
-	if v, ok := patterns.Load(p); ok {
-		if re, ok := v.(*regexp.Regexp); ok {
-			return re, nil
-		}
-		return nil, v.(error)
-	}
-	re, err := schema.CompilePattern(p)
-	if err != nil {
-		patterns.Store(p, err)
-		return nil, err
-	}
-	patterns.Store(p, re)
-	return re, nil
 }

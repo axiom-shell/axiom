@@ -412,22 +412,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### archtest checks only the pure packages
-- **Where:** `backend/internal/archtest/archtest_test.go`
-- **What:** It checks that the pure packages import no I/O, but not the rest of `backend/AGENTS.md`: the downward dependency direction among the other packages, no `init()` and no package-level state, a doc comment per package, or that every package is classified at all (`dbus`, `unixmsg` aren't). `backend/internal/config/pipeline.go` keeps a `sync.Map` cache in a package marked pure.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### Backend packages with thin or no tests
 - **Where:** `backend/internal/compositor/edit/`, `backend/internal/ipcroute/`, `backend/internal/cli/`
 - **What:** `compositor/edit` does atomic replacement and dated backups (security rules: every check has a test) with no tests of its own. `ipcroute` tests only its parsing (33 lines for 310), not the registration race or the `qs ipc` fallback. `cli` has about 200 test lines for 1900.
 - **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
-### backend/AGENTS.md's dependency table is incomplete
-- **Where:** `backend/AGENTS.md` (Dependencies), `backend/go.mod`
-- **What:** `github.com/fsnotify/fsnotify` and `golang.org/x/sys` are direct requirements in `go.mod` with no line saying why, though "a new module needs a line here".
-- **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
 ### The check order is kept in three places
