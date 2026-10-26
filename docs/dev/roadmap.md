@@ -236,6 +236,7 @@ Resolves:
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
 - [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
+- [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 - [CI checks dependencies and cross-builds only when a PR touches Go](issues.md#ci-checks-dependencies-and-cross-builds-only-when-a-pr-touches-go)

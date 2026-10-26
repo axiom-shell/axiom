@@ -163,6 +163,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
 
+### A dev-mode build test fails with text file busy
+- **Where:** `backend/internal/daemon/dev_test.go` (`TestDevBuild`, `fakeGo`)
+- **What:** One `scripts/check_go.sh` run failed with `dev_test.go:55: err go generate: fork/exec …/go: text file busy`, then passed on the next run with nothing changed in `daemon`. `fakeGo` writes an executable script while parallel subtests fork: a fork made while the file is still open for writing carries that descriptor, and exec of the script fails with ETXTBSY until that child execs. A possible fix: write the fake to a temp name and rename it into place, or retry the exec on ETXTBSY in the test helper.
+- **Size:** trivial
+- **Found:** 2026-10-26, while renaming the backend's `system` and `lock` packages
+
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
 - **What:** With blur on under niri, a bar popout switching to another widget's content in the same window shows its old stroke cutting into the box for a frame or two as it resizes: the stroke is the popout's window's, the fill the blur window's, and niri shows the two windows' frames out of step (no `supports.layerFrameSync`). Tried and reverted (2026-10-18), neither changing what the maintainer saw: holding the switch until the popout's window had drawn the new content twice (`SwitchStill`, its window's `frameSwapped`), and drawing the popout's stroke in the blur window with its fill (a stroke-only `AttachedSurfaceCopy` over the fills, the popout's own stroke transparent). That the second didn't help suggests the stroke isn't what's late: perhaps the popout's content, its clip, or the blur region. Next: log each window's `frameSwapped` with what it drew, during a switch.
