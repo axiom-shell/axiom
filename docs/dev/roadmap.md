@@ -115,7 +115,6 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its two entries are linked here and fixed there.
 
 Fixed in this phase:
-- [Restoring a saved config over an unreadable config.json releases a managed compositor config](issues.md#restoring-a-saved-config-over-an-unreadable-configjson-releases-a-managed-compositor-config)
 - [The shell reads the default compositor mode while config.json doesn't load](issues.md#the-shell-reads-the-default-compositor-mode-while-configjson-doesnt-load)
 - [Unreadable sway config means axiom binds over the user's keys](issues.md#unreadable-sway-config-means-axiom-binds-over-the-users-keys)
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads)

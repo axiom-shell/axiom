@@ -122,12 +122,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
-### Restoring a saved config over an unreadable config.json releases a managed compositor config
-- **Where:** `backend/internal/store/store.go` (`Replace`, `takeoverBase`, `takeoversUnknown`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`, `apply`)
-- **What:** When config.json isn't JSON at the start, the store knows no takeover values and `takeoverBase` is the defaults, so the manager holds (mode ""). Restoring a saved config or an example from the settings (what the blocked banner suggests) goes through `Replace` without `takeover`, which keeps the takeover settings from `takeoverBase`: the defaults' `Compositor.mode` `detached` is written, the manager's mode goes from "" to `detached`, and its `apply` leaves managed and gives the compositor's config back, though the user never chose detached. Needs a decision: take the restored file's own takeover values while none is known (an import then sets a takeover setting), have the manager keep `AppliedMode` across the first change out of holding, or refuse a restore that would change what was applied.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the managed-mode hold over an unloaded config.json
-
 ### The shell reads the default compositor mode while config.json doesn't load
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`mode`, `status`)
 - **What:** While config.json doesn't load at the start, the daemon's compositor manager runs on the file's mode (`Store.Takeovers`; its `compositor.state` push says `mode: "managed"`), but the shell's `mode` is `CompositorConfig.mode`, the defaults' `detached`, so `status` says `runtime` and the Compositor card, `KeybindManager` and `MonitorManager` treat a loaded managed config as the runtime layer until the file is fixed. Saves are blocked meanwhile, so nothing is written from it. Reading the daemon's pushed `mode` while `ConfigManager.savesBlocked` would match them.

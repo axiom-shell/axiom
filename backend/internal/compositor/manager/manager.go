@@ -62,6 +62,9 @@ type Options struct {
 	Mode        func() string
 	Binds       func() any
 	CommitBinds func(binds *jsonx.Array) error
+	// KeepMode saves Compositor.mode as a takeover setting's own card
+	// does: the mode kept on leaving the hold (keptMode)
+	KeepMode func(mode string) error
 	// Push sends the shell a compositor.* push
 	Push func(method string, params any)
 	// Bin and Tree: the binary (the daemon's own, /proc/self/exe) and tree
@@ -334,11 +337,45 @@ func (m *Manager) ConfigChanged(fromFile bool) {
 			return
 		}
 		if mode := m.o.Mode(); mode != m.mode {
+			kept := false
+			if m.mode == "" {
+				mode, kept = m.keptMode(ctx, mode)
+			}
 			m.mode = mode
-			m.modeChanged(fromFile)
+			m.modeChanged(fromFile || kept)
 			m.debounce.Reset(300 * time.Millisecond)
 		}
 	})
+}
+
+// keptMode is the mode taken on leaving the hold: the first one read once
+// config.json loads again never switches away from what was applied. A
+// restore over the unloaded file keeps the defaults' takeover settings (none
+// was known), and a hand fix isn't the mode's own card: either would give a
+// managed config back though nobody chose another mode. The mode applied is
+// kept and saved back (KeepMode), so the file says what is in effect and the
+// next change doesn't switch it either; true when it was kept.
+func (m *Manager) keptMode(ctx context.Context, mode string) (string, bool) {
+	applied := m.st.AppliedMode
+	if applied == "" {
+		// The runtime file is gone after a reboot: what is in the
+		// compositor's config was applied
+		if m.configIsOurs() {
+			applied = "managed"
+		} else if loaded, _ := m.w.checkLoaded(ctx, m.in, "included"); loaded {
+			applied = "included"
+		}
+	}
+	if applied == "" || applied == mode {
+		return mode, false
+	}
+	m.logf("config.json loads again with Compositor.mode %q: keeping %q, applied while it didn't load (change it from Settings › Compositor)", mode, applied)
+	if m.o.KeepMode != nil {
+		if err := m.o.KeepMode(applied); err != nil {
+			m.o.Log.Warn("compositor: saving the mode kept", "mode", applied, "err", err)
+		}
+	}
+	return applied, true
 }
 
 // noteHolding logs that the mode isn't known, so no mode is applied

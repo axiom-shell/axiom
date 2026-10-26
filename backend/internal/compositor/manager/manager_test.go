@@ -112,6 +112,8 @@ type harness struct {
 	w      *fakeWriter
 	mode   string
 	modeMu sync.Mutex
+	// kept: the modes KeepMode saved
+	kept   []string
 	pushes chan string
 }
 
@@ -132,6 +134,14 @@ func newHarness(t *testing.T, mode string) *harness {
 		},
 		Binds:       func() any { return jsonx.Arr() },
 		CommitBinds: func(*jsonx.Array) error { return nil },
+		// As the store saves it: the mode read from then on
+		KeepMode: func(mode string) error {
+			h.modeMu.Lock()
+			defer h.modeMu.Unlock()
+			h.mode = mode
+			h.kept = append(h.kept, mode)
+			return nil
+		},
 		Push: func(method string, params any) {
 			if method != "compositor.state" {
 				select {
@@ -536,6 +546,70 @@ func TestAnUnknownModeKeepsWhatsAxioms(t *testing.T) {
 				h.eventually("the managed config rewritten", func() bool { return readFile(f.ManagedPath) == hyprHeader+" managed f1\n" })
 			}
 		})
+	}
+}
+
+// The first mode read once config.json loads again (a saved config
+// restored over the unloaded file, keeping the defaults' detached, or a hand
+// fix) never switches away from what was applied, whether the runtime file
+// remembers it or not (gone after a reboot): it's kept and saved back, and
+// only a later change, the mode's own card, gives the config back. With
+// nothing applied, the file's mode applies
+func TestLeavingTheHoldKeepsTheModeApplied(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct {
+		name, applied string
+		managedFile   bool
+		included      bool
+		want          string
+	}{
+		{"applied managed", "managed", true, false, "managed"},
+		{"managed config, nothing applied", "", true, false, "managed"},
+		{"include loaded, nothing applied", "", false, true, "included"},
+		{"nothing applied", "", false, false, "detached"},
+	} {
+		for _, fromFile := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s, from file %v", c.name, fromFile), func(t *testing.T) {
+				t.Parallel()
+				h := newHarness(t, "")
+				h.m.st.AppliedMode = c.applied
+				h.w.loaded = c.included
+				f := h.w.files(Inputs{})
+				os.MkdirAll(f.UserDir, 0o755)
+				managed := ""
+				if c.managedFile {
+					managed = hyprHeader + " managed f1\n"
+					os.WriteFile(f.ManagedPath, []byte(managed), 0o644)
+					h.m.approve()
+				}
+				h.inputs("f1", "l1", "k1")
+				h.eventually("live", func() bool { return h.state("live") == true })
+				h.changeMode("detached", fromFile)
+				h.eventually("the mode taken", func() bool { return h.state("mode") == c.want })
+				time.Sleep(600 * time.Millisecond)
+				h.modeMu.Lock()
+				kept := slices.Clone(h.kept)
+				h.modeMu.Unlock()
+				if c.want == "detached" {
+					if len(kept) != 0 {
+						t.Fatalf("saved a mode back: %v", kept)
+					}
+					return
+				}
+				if !slices.Equal(kept, []string{c.want}) {
+					t.Fatalf("saved back %v", kept)
+				}
+				applied := ""
+				h.m.do(context.Background(), func(context.Context) { applied = h.m.st.AppliedMode })
+				if readFile(f.ManagedPath) != managed || applied != c.want {
+					t.Fatalf("switched away: applied %q, managed config %q", applied, readFile(f.ManagedPath))
+				}
+				if c.managedFile {
+					h.setMode("detached")
+					h.eventually("given back by the card", func() bool { return readFile(f.ManagedPath) == "-- given back\n" })
+				}
+			})
+		}
 	}
 }
 
