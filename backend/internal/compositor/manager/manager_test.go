@@ -27,6 +27,7 @@ type fakeWriter struct {
 	calls    []string
 	loaded   bool
 	invalid  string
+	unread   string
 	reloadCh chan ipc.Reload
 }
 
@@ -103,8 +104,10 @@ func (f *fakeWriter) monitorPattern() (*regexp.Regexp, string) {
 func (f *fakeWriter) runningConfig(Inputs) string { return "" }
 func (f *fakeWriter) userBindsRead() bool         { return true }
 func (f *fakeWriter) problems(Inputs) problems {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return problems{NotIncluded: "not included", NotManaged: "not managed", Blocked: "blocked", Failed: "failed",
-		Invalid: func(e string) string { return "invalid: " + e }}
+		Invalid: func(e string) string { return "invalid: " + e }, UnreadBinds: f.unread}
 }
 
 type harness struct {
@@ -244,6 +247,20 @@ func TestDetachedAppliesTheRuntimeLayer(t *testing.T) {
 		}
 		return n >= 2
 	})
+}
+
+func TestUnreadUserBindsShowAProblem(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "detached")
+	h.w.unread = "unread"
+	h.inputs("f1", "l1", "k1")
+	h.eventually("the problem", func() bool { return jsonx.ToString(h.state("problem")) == "unread" })
+	// Read again after a reload: gone
+	h.w.mu.Lock()
+	h.w.unread = ""
+	h.w.mu.Unlock()
+	h.w.reloadCh <- ipc.Reload{}
+	h.eventually("the problem gone", func() bool { return jsonx.ToString(h.state("problem")) == "" })
 }
 
 func TestIncludedWritesTheModule(t *testing.T) {

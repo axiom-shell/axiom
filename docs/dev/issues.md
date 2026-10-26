@@ -256,12 +256,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### Unreadable sway config means axiom binds over the user's keys
-- **Where:** `backend/internal/compositor/manager/runtime.go` (`_start`)
-- **What:** When `axiom compositor sway-text` fails (it logs `Can't read your sway config`) the layer treats the user as binding nothing, and binds with `--no-warn` over their keys after every reload. Hyprland's layer does the same. Binding nothing (look and input only) with a problem shown would be safer, at the cost of axiom's binds.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### The takeover makes only some of sway's relative includes absolute
 - **Where:** `backend/internal/compositor/takeover/kinds.go` (`sway`'s `absInclude`)
 - **What:** Adopting a sway config makes its relative includes absolute (it moves to `user/`), but only an unquoted first path: a quoted relative include, and all but the first path of a multi-path `include`, stay relative and then resolve from `user/`. (The unchecked edit and the unescaped dir in the old script's sed went with the Go port.)

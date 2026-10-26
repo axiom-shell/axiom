@@ -282,8 +282,9 @@ FieldGroup {
   }
 
   StyledText {
-    visible: root.status === "fallback" && !CompositorConfigManager.takeoverPending
-    text: CompositorConfigManager.problem + "\n" + I18n.tr("Until then, axiom applies its layer at runtime.")
+    // Detached, a problem is only the runtime layer's (its binds went on unread)
+    visible: (root.status === "fallback" || root.mode === "detached" && CompositorConfigManager.problem !== "") && !CompositorConfigManager.takeoverPending
+    text: CompositorConfigManager.problem + (root.status === "fallback" ? "\n" + I18n.tr("Until then, axiom applies its layer at runtime.") : "")
     textColor: Theme.warning
     textSize: Appearance.fontSizeBy(-1)
     wrapMode: Text.WordWrap
