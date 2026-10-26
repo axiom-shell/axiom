@@ -44,26 +44,28 @@ func TestAdoptRefusesAnotherLock(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		// inherited is the descriptor handed over for the lock at path
-		inherited func(t *testing.T, path string) *os.File
+		inherited func(t *testing.T, path string, held *Lock) *os.File
 	}{
-		{"another file", func(t *testing.T, path string) *os.File {
+		{"another file", func(t *testing.T, path string, _ *Lock) *os.File {
 			other, err := TryLock(filepath.Join(filepath.Dir(path), "other.lock"))
 			if err != nil {
 				t.Fatal(err)
 			}
 			return other.File()
 		}},
-		{"the file it replaced", func(t *testing.T, path string) *os.File {
-			old, err := os.Open(path)
+		{"the file it replaced", func(t *testing.T, path string, held *Lock) *os.File {
+			// The holder's own descriptor (passing the lock check), of the
+			// file a new one replaced at path
+			fd, err := unix.FcntlInt(held.File().Fd(), unix.F_DUPFD_CLOEXEC, 3)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if err := os.Rename(filepath.Join(filepath.Dir(path), "new"), path); err != nil {
 				t.Fatal(err)
 			}
-			return old
+			return os.NewFile(uintptr(fd), path)
 		}},
-		{"not the holder", func(t *testing.T, path string) *os.File {
+		{"not the holder", func(t *testing.T, path string, _ *Lock) *os.File {
 			f, err := os.Open(path)
 			if err != nil {
 				t.Fatal(err)
@@ -83,7 +85,7 @@ func TestAdoptRefusesAnotherLock(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer held.Release()
-			f := tc.inherited(t, path)
+			f := tc.inherited(t, path, held)
 			defer f.Close()
 			if _, err := Adopt(f, path); axerr.KindOf(err) != axerr.Refused {
 				t.Fatalf("Adopt: %v, want Refused", err)

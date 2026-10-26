@@ -127,9 +127,18 @@ func TestAdoptedHandoffServes(t *testing.T) {
 		Listener:   dup(t, fx.listener),
 	})
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	done := make(chan error, 1)
-	go func() { done <- Run(ctx, td.options(nil)) }()
+	var runErr error
+	stopped := make(chan struct{})
+	go func() { runErr = Run(ctx, td.options(nil)); close(stopped) }()
+	// Stopped before its folders go, also when the test fails early
+	t.Cleanup(func() {
+		cancel()
+		select {
+		case <-stopped:
+		case <-time.After(10 * time.Second):
+			t.Error("the daemon didn't stop")
+		}
+	})
 
 	callCtx, callCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer callCancel()
@@ -142,7 +151,7 @@ func TestAdoptedHandoffServes(t *testing.T) {
 	params := map[string]any{"protocol": buildinfo.Protocol(), "client": "test", "pid": os.Getpid()}
 	if err := c.Call(callCtx, "daemon.hello", params, &hello); err != nil {
 		select {
-		case runErr := <-done:
+		case <-stopped:
 			t.Fatalf("hello: %v (the daemon stopped: %v)", err, runErr)
 		default:
 			t.Fatalf("hello: %v", err)
@@ -150,9 +159,9 @@ func TestAdoptedHandoffServes(t *testing.T) {
 	}
 	cancel()
 	select {
-	case err := <-done:
-		if err != nil {
-			t.Fatalf("run: %v", err)
+	case <-stopped:
+		if runErr != nil {
+			t.Fatalf("run: %v", runErr)
 		}
 	case <-time.After(10 * time.Second):
 		t.Fatal("the daemon didn't stop")
