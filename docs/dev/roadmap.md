@@ -138,7 +138,7 @@ Steps, roughly in this order (moves first, each its own PR):
 4. A shared ticker part for Stopwatch and Pomodoro; `valueAt` into a methods helper with a test row.
 
 Resolves:
-- [Singletons doing several jobs](issues.md#singletons-doing-several-jobs) (plan: #PR)
+- [Singletons doing several jobs](issues.md#singletons-doing-several-jobs) (plan: #123)
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
 - [Repeated plumbing](issues.md#repeated-plumbing)
 - [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
