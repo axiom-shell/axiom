@@ -34,7 +34,7 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 | 0. Decisions and quick wins | none | none |
 | 1. Integrity | none | the config save path → stage 7 |
 | 2. Finish stage 2 | is stage 2 | clipboard, night light |
-| 3. QML structure | ChatProvidersCard → stage 5; the `KeybindManager` split → stage 7 | services a stage empties are folded in that stage |
+| 3. QML structure | none | services a stage empties are folded in that stage; ChatProvidersCard → stage 5, the `KeybindManager` split → stage 7 |
 | 4. Backend structure and contract | none (lands before stage 7, so its switch to path ops is checked) | none |
 | 5. The allowlist | stages 3–7 | is those stages |
 | 6. Compositor parity | stage 7 (one compositor writer left); runtime-only bugs: none | none |
@@ -57,7 +57,7 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 6 | next | Backend stage 3: brightness | Small; a first stage under the new checks. |
 | 7 | later | [Backend stage 3b](backend/roadmap.md): exec (polled and streamed commands, JSON) | Right after brightness, another small stage under the new checks; ahead of stage 6 because the planned custom JSON widgets build on it, and stages 4 and 5 don't touch `CommandManager`. |
 | 8 | later | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
-| 9 | later | Backend stage 5: HTTP | Unblocks `ChatProvidersCard` and the chat lists (Phases 3 and 7). |
+| 9 | later | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
 | 10 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
 | 11 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
 | 12 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
@@ -150,9 +150,9 @@ Steps, roughly in this order (moves first, each its own PR):
 4. Done: A shared ticker part for Stopwatch and Pomodoro (`DeadlineTicker`); `valueAt` into a methods helper with a test row (`Utils.valueAt`, `SchemaLayout.defaultAt`).
 
 Resolves:
-- [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (designed and fixed in backend stage 7)
-- [`Bar` reader holds the edges enum and breaks reader naming](issues.md#bar-reader-holds-the-edges-enum-and-breaks-reader-naming)
-- [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (waits for stage 5: `ChatRequest` moves to the daemon)
+- [The edge enum has no methods helper](issues.md#the-edge-enum-has-no-methods-helper)
+- [Edge users still read the enum from the `Bar` reader](issues.md#edge-users-still-read-the-enum-from-the-bar-reader)
+- [The `Bars` reader is named `Bar`](issues.md#the-bars-reader-is-named-bar)
 
 ### Phase 4: backend structure and contract
 The binary's rules are enforced by its tests, and the shell–daemon contract is checked by shape, not just by name. The contract check lands before stage 7, so the switch to path ops is checked as it happens.
@@ -166,7 +166,9 @@ Resolves:
 
 Resolved by a stage:
 - [Self-update and the greeter installer assume git](issues.md#self-update-and-the-greeter-installer-assume-git) (stage 4)
+- [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (stage 5)
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
+- [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (stage 7)
 
 ### Phase 6: compositor parity
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).

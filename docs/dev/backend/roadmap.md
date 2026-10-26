@@ -81,7 +81,7 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 
 **Stage 5: HTTP** (later)
 - `WeatherSource`: XHR polling → Go HTTP behind a topic. `ClaudeUsageManager` and `MediaManager`'s album art: done in stage 1b.
-- `ChatRequest` with `SecretsManager`: streamed replies pushed as chunks, keys read in Go so they never pass through QML, argv or temp files.
+- `ChatRequest` with `SecretsManager`: streamed replies pushed as chunks, keys read in Go so they never pass through QML, argv or temp files; `ChatProvidersCard`'s Test and Fetch models go through `ChatManager` with it ([issue](../issues.md#chatproviderscard-runs-its-own-requests)).
 
 **Stage 6: the funnels** (later; each moves every caller with it)
 - `CommandManager` → `exec.run` / `exec.spawn` and the per-command subscription: moved ahead to stage 3b. Here the remaining direct `Process` / `execDetached` users switch to it.
