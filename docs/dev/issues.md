@@ -435,12 +435,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The rpc registry doesn't record its methods' shapes
-- **Where:** `backend/internal/rpc/rpc.go` (`Handle`)
-- **What:** `rpc.Handle` knows each method's params and result types (`P`, `R`) but keeps only a closure, so nothing can report what a method takes or returns. It should store both `reflect.Type`s, and a pure walker should turn a type into a field tree by `encoding/json`'s rules (name from the tag, `omitempty`, `-` skipped, embedded fields inlined, slices, maps, nested structs; `json.RawMessage`, `any` and types with their own `MarshalJSON` opaque), with a table-driven test in `backend/internal/rpc`. First of the contract-check plan's items.
-- **Size:** small
-- **Found:** 2026-10-26, while splitting up the contract-check plan (`docs/dev/plans/shell-daemon-contract-checked-by-name-only.md`)
-
 ### Pushes and topics don't declare their types
 - **Where:** `backend/internal/daemon/methods.go` (the push and topic constants), `backend/internal/rpc/server.go` (`Broadcast`), `backend/internal/topics/topics.go` (`Source`)
 - **What:** `Broadcast(method, params any, …)` takes any value: some pushes are typed (`configChanged`, `clipboardState`), some `map[string]any` (`schema.error`, `schema.changed`), every `compositor.*` push pre-marshalled bytes; `topics.Source` names no request or state type. Each push should be declared once with its param type beside the topic constants and `Broadcast` calls use the declaration; `topics.Source` gains its request and state types; the `compositor.*` pushes get structs where that's cheap, opaque otherwise.
