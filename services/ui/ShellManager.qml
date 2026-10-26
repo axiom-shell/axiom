@@ -6,7 +6,6 @@ import qs.config
 import qs.components.methods
 import qs.services.compositor
 import qs.services.session
-import qs.services.ui
 
 /* Shell manager manages global options and signals */
 QtObject {

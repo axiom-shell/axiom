@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
-import qs.services.core
 import qs.services.ui
 
 // A focus grab, for surfaces that close (or drop keyboard focus) on a click

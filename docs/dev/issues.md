@@ -418,7 +418,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
 ### Singletons doing several jobs
-- **Where:** `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/core/ShellManager.qml`, `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`)
+- **Where:** `services/compositor/KeybindManager.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/ShellManager.qml`, `services/ui/LauncherCommands.qml` (`_configOptions`, `_configRun`)
 - **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. `EdgeMenuManager` is the menus' runtime and the layouts editor's working copy. `ShellManager` is a signal bus, surface registry, modals and session actions, sits in `core/` though it's UI state, and its header still says "manages global options and signals". `LauncherCommands`' `/config` browser is about 200 lines of its own. The Bar ↔ EdgeMenu cycle (each computes the other's reserved zones) wants one owner of that geometry.
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while reviewing the repository's organization
@@ -426,12 +426,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Shared pieces holding feature logic
 - **Where:** `components/reusable/PipewireVolumeBar.qml`, `components/reusable/StyledToolTip.qml`, `components/reusable/CodeLine.qml`, `components/reusable/BaseWidget.qml`, `components/reusable/IconTextWidget.qml`
 - **What:** `reusable/` is "generic Styled* widgets, no feature logic" (AGENTS.md › Layout), but `PipewireVolumeBar` imports Pipewire and `AudioManager`, `StyledToolTip` reads `BlurManager`, `CompositorManager` and `ShellManager`, `CodeLine` uses `ClipboardManager`, and `BaseWidget` / `IconTextWidget` are bar widget bases used only under `components/bar/`. Move them (`components/bar/`, `content/parts/`) or name the exception in the rule.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
-### Service folders hold misplaced and undocumented files
-- **Where:** `services/apps/DailySchedule.qml`, `services/core/ShellManager.qml`, `services/AGENTS.md` (Folders)
-- **What:** The folders want rewording (`system/` the machine and desktop basics, `apps/` optional features and integrations; `TailscaleManager` already moved to `apps/`). `DailySchedule` lives in `apps/` but serves `NightLightManager` and `WallpaperManager`: `core/`. `ShellManager` is UI state: `ui/`. About a dozen non-singleton parts (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, `ChatRequest`, `WeatherSource`, `GridEditor`, …) live beside the singletons though the layout says services are singletons: the folder rules should say so.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 

@@ -3,10 +3,10 @@ import QtQuick
 import Quickshell
 
 import qs.config
-import qs.services.core
 import qs.services.session
 import qs.components.reusable
 import qs.components.surfaces.onboarding
+import qs.services.ui
 
 // The first-run onboarder (OnboardingManager), on the primary monitor over
 // the dimmed screen. Built only while it's open; when the primary monitor

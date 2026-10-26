@@ -6,7 +6,6 @@ import Quickshell.Wayland
 
 import qs.components.reusable
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.services.ui
 

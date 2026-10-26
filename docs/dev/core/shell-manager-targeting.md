@@ -1,6 +1,6 @@
 # ShellManager and screen targeting
 
-> **Files:** `services/core/ShellManager.qml`, `config/General.qml`, `components/reusable/SurfaceGroup.qml`, `components/hosts/overlay/ReservedAreaWindow.qml`
+> **Files:** `services/ui/ShellManager.qml`, `config/General.qml`, `components/reusable/SurfaceGroup.qml`, `components/hosts/overlay/ReservedAreaWindow.qml`
 > **Config:** `General.screen`, `General.primaryMonitor`; each surface's own `screen` (a `ScreenTarget`: OSD, overlay, launcher, notifications, power menu, docks, bars, edge menus)
 > **Related:** [Popout registry](../popouts/registry.md), [Lockscreen](../features/lockscreen.md), [Greeter runtime](../features/greeter-runtime.md), [Polkit](../features/polkit.md), [Screenshots and recording](../features/screenshots-recording.md)
 

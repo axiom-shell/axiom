@@ -8,6 +8,7 @@ import qs.config
 import qs.services.core
 import qs.services.compositor
 import qs.services.system
+import qs.services.ui
 
 // Screenshots (the `screenshot` keybind action, IPC `screenshot take <kind>`,
 // launcher `/screenshot`, the Screenshot card), taken natively: while

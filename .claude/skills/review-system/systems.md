@@ -135,7 +135,7 @@ Seams: every reader user; every editor.
 ## services-core
 Scope: the services pattern, ConsumerRegistry, commands, state and files, shell targeting, file picker.
 Docs: core/services-pattern.md core/shell-manager-targeting.md core/file-picker.md
-Extra: services/core/ConsumerRegistry.qml services/core/StateManager.qml services/core/FileManager.qml services/core/ShellManager.qml components/methods/KeyboardLayouts.qml services/system/KeyboardLayoutManager.qml
+Extra: services/core/ConsumerRegistry.qml services/core/StateManager.qml services/core/FileManager.qml services/ui/ShellManager.qml components/methods/KeyboardLayouts.qml services/system/KeyboardLayoutManager.qml
 Checks:
 - Every polled service uses `acquire`/`release` with the Timer gated on `_registry.active`; requests from config only.
 - Persisted state written atomically, under XDG paths, never under `Paths.axiomPath`.

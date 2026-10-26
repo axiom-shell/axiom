@@ -4,10 +4,10 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services.core
 import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.reusable
+import qs.services.ui
 
 // One edge of the screen border (RoundedBorders): a strip that reserves
 // `frameWidth` and draws the frame with its inner stroke, which stops short

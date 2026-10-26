@@ -5,6 +5,7 @@ import qs.config
 import qs.services.core
 import qs.components.content.parts
 import qs.components.surfaces.screenlayout
+import qs.services.ui
 
 // What one screen of the greeter shows (greetd's login screen, run from
 // greeter.qml), or the layouts editor's preview of it: the layout's

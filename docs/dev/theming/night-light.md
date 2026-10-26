@@ -1,6 +1,6 @@
 # Night light
 
-> **Files:** `backend/internal/nightlight/`, `backend/internal/wayland/ctm/`, `backend/internal/wayland/gamma/`, `services/system/NightLightManager.qml`, `config/NightLight.qml`, `components/views/Settings/NightLightStatus.qml`, `components/content/NightLightControls/NightLightControls.qml`, `services/apps/DailySchedule.qml`
+> **Files:** `backend/internal/nightlight/`, `backend/internal/wayland/ctm/`, `backend/internal/wayland/gamma/`, `services/system/NightLightManager.qml`, `config/NightLight.qml`, `components/views/Settings/NightLightStatus.qml`, `components/content/NightLightControls/NightLightControls.qml`, `services/core/DailySchedule.qml`
 > **Config:** `NightLight.*`
 > **Related:** [Wallpaper and schedules](wallpaper-and-schedules.md), [Utility modules](../overlay/utility-modules.md), [Wayland protocols](../backend/wayland.md)
 

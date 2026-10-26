@@ -2,7 +2,6 @@ pragma Singleton
 import QtQuick
 
 import qs.config
-import qs.services.core
 import qs.services.compositor
 
 /**

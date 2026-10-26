@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services.core
 import qs.components.content.base
 import qs.components.content.parts
+import qs.services.ui
 
 // The lock screen's password field (x-hosts: lockscreen only; x-required,
 // so every lock screen layout has one). It only unlocks on the screen the

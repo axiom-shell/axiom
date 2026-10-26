@@ -2,9 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services.core
 import qs.components.content.base
 import qs.components.content.parts
+import qs.services.ui
 
 // The greeter's login box (x-hosts: greeter only; x-required, so every
 // greeter layout has one): who logs in and their password. It only logs
