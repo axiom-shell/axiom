@@ -49,9 +49,9 @@ PopoutWrapperBase {
   readonly property int depth: Math.ceil(root.bodyDepth + root.pad * 2 + root.innerStroke)
   // Where the modules start along the edge, from config (the body loads
   // only while open, and the hover strip needs it closed)
-  // Its card size (EdgeMenuManager.cardUnitOf)
-  readonly property int unit: EdgeMenuManager.cardUnitOf(root.menu)
-  readonly property real cardGap: EdgeMenuManager.gapOf(root.menu)
+  // Its card size (EdgeMenusConfig.cardUnitOf)
+  readonly property int unit: EdgeMenusConfig.cardUnitOf(root.menu)
+  readonly property real cardGap: EdgeMenusConfig.gapOf(root.menu)
   readonly property real gridLength: EdgeMenusConfig.gridLengthOf(root.menu, root.vertical, root.unit, root.cardGap)
   readonly property real alongPos: GridPlacement.menuAlong(root.menu, root.edgeLength, root.unit, root.pad, root.pad, root.cardGap)
 

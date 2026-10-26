@@ -47,7 +47,7 @@ QtObject {
       return root.menu.trigger.length;
     if (body)
       return (vertical ? body.implicitHeight : body.implicitWidth) + pad * 2;
-    return EdgeMenusConfig.lengthOf(root.menu, vertical, EdgeMenuManager.cardUnitOf(root.menu), EdgeMenuManager.gapOf(root.menu));
+    return EdgeMenusConfig.lengthOf(root.menu, vertical, EdgeMenusConfig.cardUnitOf(root.menu), EdgeMenusConfig.gapOf(root.menu));
   }
 
   function _sync() {

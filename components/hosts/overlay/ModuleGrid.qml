@@ -25,7 +25,7 @@ Item {
     })
 
   // What each module is drawn at: laid out at its slot's size over this,
-  // then scaled to fill it (an edge menu's, EdgeMenuManager.zoomOf). The
+  // then scaled to fill it (an edge menu's, EdgeMenusConfig.zoomOf). The
   // grid itself is laid out at `grid`'s card size, drawn
   property real zoom: 1
 

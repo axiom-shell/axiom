@@ -8,7 +8,7 @@ import qs.components.reusable
 import qs.components.hosts.overlay
 
 // An edge menu's modules on a grid of quarter cards, as on a Custom overlay
-// page, with its screen's overlay cards (EdgeMenuManager.cardUnitOf). With `length: "edge"` the
+// page, with its screen's overlay cards (EdgeMenusConfig.cardUnitOf). With `length: "edge"` the
 // grid fits the edge exactly, its rows (or columns) growing or shrinking
 // evenly to `maxLength` (scrolling only past half a unit); otherwise it's
 // capped there and scrolls past that.
@@ -36,8 +36,8 @@ Item {
 
   OverlayGrid {
     id: overlayGrid
-    fixedUnit: EdgeMenuManager.cardUnitOf(root.menu)
-    gap: EdgeMenuManager.gapOf(root.menu)
+    fixedUnit: EdgeMenusConfig.cardUnitOf(root.menu)
+    gap: EdgeMenusConfig.gapOf(root.menu)
   }
 
   // Whether the menu takes its whole edge
@@ -89,7 +89,7 @@ Item {
       grid: overlayGrid
       stretch: root._stretch
       host: root.host
-      zoom: EdgeMenuManager.zoomOf(root.menu)
+      zoom: EdgeMenusConfig.zoomOf(root.menu)
       // A bottom menu's edge is under its modules
       growTowards: root.menu.edge === "bottom" ? 1 : -1
     }

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.services.ui
 import qs.components.reusable
 import qs.components.hosts.overlay
 
@@ -36,8 +35,8 @@ Item {
 
   OverlayGrid {
     id: overlayGrid
-    fixedUnit: root.menu ? EdgeMenuManager.cardUnitOf(root.menu, root.parentMenu ? EdgeMenusConfig.screenFor(root.parentMenu) : null) : 0
-    gap: root.menu ? EdgeMenuManager.gapOf(root.menu) : OverlayConfig.cardSpacing
+    fixedUnit: root.menu ? EdgeMenusConfig.cardUnitOf(root.menu, root.parentMenu ? EdgeMenusConfig.screenFor(root.parentMenu) : null) : 0
+    gap: root.menu ? EdgeMenusConfig.gapOf(root.menu) : OverlayConfig.cardSpacing
   }
 
   readonly property bool empty: root.modules.length === 0
@@ -67,7 +66,7 @@ Item {
       modules: root.modules
       grid: overlayGrid
       host: root.host
-      zoom: root.menu ? EdgeMenuManager.zoomOf(root.menu) : 1
+      zoom: root.menu ? EdgeMenusConfig.zoomOf(root.menu) : 1
     }
   }
 

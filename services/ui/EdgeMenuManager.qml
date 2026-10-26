@@ -81,7 +81,7 @@ Singleton {
     const screen = EdgeMenusConfig.screenFor(menu);
     if (!menu || !screen || EdgeMenusConfig.isSubmenu(menu))
       return null;
-    const place = GridPlacement.menuPlacement(menu, bounds ?? GridPlacement.bounds(menu.layout.modules), root.cardUnitOf(menu), root.frameOf(menu), screen.width, screen.height, root.gapOf(menu));
+    const place = GridPlacement.menuPlacement(menu, bounds ?? GridPlacement.bounds(menu.layout.modules), EdgeMenusConfig.cardUnitOf(menu), root.frameOf(menu), screen.width, screen.height, EdgeMenusConfig.gapOf(menu));
     place.screen = screen;
     return place;
   }
@@ -93,7 +93,7 @@ Singleton {
     const place = root.placementOf(menu);
     if (!place)
       return null;
-    const onScreen = GridPlacement.menuOnScreen(menu, place, root.cardUnitOf(menu), root.gapOf(menu));
+    const onScreen = GridPlacement.menuOnScreen(menu, place, EdgeMenusConfig.cardUnitOf(menu), EdgeMenusConfig.gapOf(menu));
     onScreen.name = root.menuLabel(menu, index);
     return onScreen;
   }
@@ -104,7 +104,7 @@ Singleton {
     const place = root.placementOf(menu);
     if (!place)
       return null;
-    return GridPlacement.screenBox(place.screenWidth, place.screenHeight, root.cardUnitOf(menu), GridPlacement.bounds(menu.layout.modules), menu.edge, place.along, place.across, root.gapOf(menu));
+    return GridPlacement.screenBox(place.screenWidth, place.screenHeight, EdgeMenusConfig.cardUnitOf(menu), GridPlacement.bounds(menu.layout.modules), menu.edge, place.along, place.across, EdgeMenusConfig.gapOf(menu));
   }
 
   // The draft's other enabled menus on the screen of the one at `index`,
@@ -136,7 +136,7 @@ Singleton {
   // How far a menu's lattice can be moved, in px either way: half a cell,
   // as a whole one is what the arrows do
   function gridOffsetLimit(menu) {
-    return menu ? Math.floor(GridPlacement.stepOf(root.cardUnitOf(menu), root.gapOf(menu)) / 2) : 0;
+    return menu ? Math.floor(GridPlacement.stepOf(EdgeMenusConfig.cardUnitOf(menu), EdgeMenusConfig.gapOf(menu)) / 2) : 0;
   }
 
   function setGridOffset(px) {
@@ -431,30 +431,6 @@ Singleton {
     const menu = root.localMenus?.[index];
     const saved = (root.savedMenus ?? []).find(m => m.id === menu?.id);
     return JSON.stringify(menu) !== JSON.stringify(saved);
-  }
-
-  // A menu's card size: the card size on its screen (OverlayConfig.
-  // cardUnitOn, the card size setting's, not the overlay's own Module
-  // size), scaled by the menu's moduleScale. A submenu's is on the screen
-  // of the menu it opens from (`screen`)
-  function cardUnitOf(menu, screen) {
-    screen = screen ?? EdgeMenusConfig.screenFor(menu);
-    const unit = screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit;
-    // A double grid (fineGrid) splits each unit in two each way
-    return GridPlacement.gridUnitOf(unit * menu.layout.moduleScale / 100, menu.layout.grid.fine, root.gapOf(menu));
-  }
-
-  // The px between a menu's cards: the layout's gap drawn at the menu's
-  // zoom (GridPlacement.gapOf), so the menu is an overlay page's grid
-  function gapOf(menu) {
-    return GridPlacement.gapOf(root.zoomOf(menu));
-  }
-
-  // What a menu's modules are drawn at: its moduleScale
-  // (GridPlacement.zoomOf), so it scales their text and controls with
-  // its cards, while the screen only changes how big the cards are
-  function zoomOf(menu) {
-    return GridPlacement.zoomOf(menu.layout.moduleScale / 100);
   }
 
   function selectedMenu() {

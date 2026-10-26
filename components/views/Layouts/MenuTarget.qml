@@ -15,7 +15,7 @@ EditTarget {
   readonly property bool submenu: EdgeMenusConfig.isSubmenu(root.menu)
   readonly property bool vertical: root.menu?.edge === "left" || root.menu?.edge === "right"
   readonly property var screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
-  readonly property real length: root.menu ? EdgeMenusConfig.lengthOf(root.menu, root.vertical, EdgeMenuManager.cardUnitOf(root.menu), EdgeMenuManager.gapOf(root.menu)) : 0
+  readonly property real length: root.menu ? EdgeMenusConfig.lengthOf(root.menu, root.vertical, EdgeMenusConfig.cardUnitOf(root.menu), EdgeMenusConfig.gapOf(root.menu)) : 0
   readonly property real edgeLength: root.screen ? (root.vertical ? root.screen.height : root.screen.width) : 0
   // Where the menu's modules sit on its screen (EdgeMenuManager.placementOf)
   readonly property var place: root.menu ? EdgeMenuManager.placementOf(root.menu) : null

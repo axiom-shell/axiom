@@ -12,11 +12,11 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 
 ### The body (`EdgeMenuBody`)
 - Both hosts put `EdgeMenuBody` inside: a `ModuleGrid` on an `OverlayGrid`.
-- `fixedUnit` is the card size on its screen (`EdgeMenuManager.cardUnitOf`):
+- `fixedUnit` is the card size on its screen (`EdgeMenusConfig.cardUnitOf`):
   - `OverlayConfig.cardUnitOn` of the screen: the card size there (two cards fill its short side, times `Widget.cardSize`%). It's the same whether an overlay is open or not, and the overlay's own Module size (`Overlay.moduleScale`) doesn't reach menus;
   - times the menu's `moduleScale`%.
-  - The grid and everything placed by it (the lattice, the menu's size, reserved strips) use that drawn card size, and `EdgeMenuManager.gapOf` between cards: the layout's gap drawn at the menu's zoom (`GridPlacement.gapOf`), as an overlay page's are (`OverlayGrid.gap`).
-- Each module's content is zoomed as on the overlay (`ModuleGrid.zoom` → `OverlaySlot.zoom`, `ExpandedModule.zoom`): laid out at its slot's size over `EdgeMenuManager.zoomOf` and scaled back to fill it.
+  - The grid and everything placed by it (the lattice, the menu's size, reserved strips) use that drawn card size, and `EdgeMenusConfig.gapOf` between cards: the layout's gap drawn at the menu's zoom (`GridPlacement.gapOf`), as an overlay page's are (`OverlayGrid.gap`).
+- Each module's content is zoomed as on the overlay (`ModuleGrid.zoom` → `OverlaySlot.zoom`, `ExpandedModule.zoom`): laid out at its slot's size over `EdgeMenusConfig.zoomOf` and scaled back to fill it.
   - `zoomOf`: the menu's `moduleScale` as a factor (`GridPlacement.zoomOf`, 1 within 2 %).
   - So `moduleScale` scales text with the cards, while the screen only changes how big the cards are. Text size itself is the Interface scale's (`Widget.scale`, through `Appearance.fontSize` and the Widget sizes).
   - Submenus (`MenuSubmenu`) do the same on their parent menu's screen.
