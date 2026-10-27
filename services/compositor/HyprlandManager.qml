@@ -765,8 +765,6 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     onTriggered: root._fetch()
   }
 
-  // Set when a fetch is asked for while one is still running: it's run
-  // again once the current one ends
   // --- Hyprland's request socket, through axiom (hypr.request): what
   // Quickshell.Hyprland doesn't cover (options, Lua evals, binds, devices,
   // layers, the cursor), as hyprctl asks it but without a process each ---
@@ -808,6 +806,8 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     _request("eval " + lua, reply => callback?.(String(reply ?? "").trim()));
   }
 
+  // Set when a fetch is asked for while one is still running: it's run
+  // again once the current one ends
   property bool _fetching: false
   property bool _pending: false
 

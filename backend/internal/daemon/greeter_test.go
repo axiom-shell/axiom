@@ -98,12 +98,13 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 	}
 }
 
-// The greeter's Weather module subscribes to the weather topic, and its
-// state (GreetdManager's) is written through file.write.
+// The greeter's Weather module subscribes to the weather topic, its state
+// (GreetdManager's) is written through file.write, and on Hyprland its
+// HyprlandManager sends hypr.request (monitors, layouts, the cursor).
 func TestGreeterServesWeather(t *testing.T) {
 	t.Parallel()
-	reg := greeterRegistry(GreeterOptions{}, nil, func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}))
-	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "file.write"} {
+	reg := greeterRegistry(GreeterOptions{Getenv: func(string) string { return "" }}, nil, func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}))
+	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "file.write", "hypr.request"} {
 		if _, _, ok := reg.Types(m); !ok {
 			t.Errorf("no %s", m)
 		}
