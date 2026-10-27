@@ -6,7 +6,7 @@ import QtQuick
 // (OSDs, floating edge menus, the attached launcher), docks and submenus.
 // One answer per intersection, so if a corner fillets (or doesn't) for one
 // of them it does for all (tests/tst_SurfaceContext.qml). Pure: callers pass
-// the bars (Bar.enrichBarConfig entries) and the shape metrics.
+// the bars (BarsConfig.enrichBarConfig entries) and the shape metrics.
 //
 // EdgeAttach places the box along its edge; this decides what it's given:
 // which ends may join, which are walls, the room kept at each, whether it's
@@ -276,7 +276,7 @@ QtObject {
    *     aligned, length (the content's), joinStart, joinEnd (joinsOf)
    *   frameLine (across: the inner side of what's on its own edge),
    *     reserved (where windows start across it), detachedPush
-   *     (Bar.detachedPush for the followed bar), ownBar (whatever bar is on
+   *     (BarsConfig.detachedPush for the followed bar), ownBar (whatever bar is on
    *     its edge, for the shadow), across (held: the gap from the frame
    *     line across the edge), layerOrder (the compositor orders layer
    *     windows by namespace, supports.layerOrder), overOverlay (the
@@ -333,7 +333,7 @@ QtObject {
     // Where the attach edge goes, from the followed bar's outer edge: that
     // edge grown from it, a pill's or island's far stroke, a solid bar's own
     // inner stroke, or a transparent bar's inner edge (moved so its box is
-    // in line with the windows, Bar.detachedPush)
+    // in line with the windows, BarsConfig.detachedPush)
     const attachFromBar = !bar ? 0 : fromOuter ? 0 : onPill ? pillFoot : bar.extent - (bar.innerStroke ? p.stroke : 0) + (p.detachedPush ?? 0);
     // Held, a connector gap short of where the box goes; following a bar,
     // as that meets it; else on the stroke of what reserves the edge

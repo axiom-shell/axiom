@@ -1,7 +1,7 @@
 # Bars and the screen border: layering and corners
 
 > **Files:** `shell/Bar.qml`, `shell/ScreenBorder.qml`, `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/border/BorderPanel.qml`, `components/reusable/CornerPiece.qml`, `components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `components/bar/BarContainer.qml`, `components/bar/CornerMerge.qml`, `components/hosts/popout/AttachedSurface.qml`, `services/ui/ScreenEdgeManager.qml`, `services/compositor/HyprlandManager.qml`
-> **Config:** `Appearance.shape.screenBorder`, `Bars[].background`, `BarStyle` shadow group. (`insideBorder`, `innerStroke` are derived `barConfig` values from `Bar.enrichBarConfig`, not config keys.)
+> **Config:** `Appearance.shape.screenBorder`, `Bars[].background`, `BarStyle` shadow group. (`insideBorder`, `innerStroke` are derived `barConfig` values from `BarsConfig.enrichBarConfig`, not config keys.)
 > **Related:** [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Surface context](../popouts/surface-context.md), [Widget shapes](widget-shapes-runs.md)
 
 How bars and the screen border share an edge through layer-shell ordering. Covers solid bars, bars inside the border, which bar gets a shared corner, transparent bars, the border being off, and the border's inward shadow window. Bar ends and pills are in [Bar ends and pills](bar-ends-pills.md).
@@ -39,7 +39,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
   - Between bars of one kind, the bar on the screen's longer edge makes way (the `-long` namespace), so the shorter bar gets the corner: side bars on a landscape monitor, top and bottom ones on a portrait one (`shortEdge`, `BarEnds.onShortEdge`).
   - Solid bars can't tie with pill bars: a solid bar is arranged before the border, a pill bar after it.
   - Docks, the overlay, the OSD and popouts are ordered after every bar.
-  - The namespace comes from `Bar.layerNamespace`. `shell/Bar` keys each window on it, since `order` is read only as a surface maps: a bar changing kind, or a monitor rotating, remakes the window.
+  - The namespace comes from `BarsConfig.layerNamespace`. `shell/Bar` keys each window on it, since `order` is read only as a surface maps: a bar changing kind, or a monitor rotating, remakes the window.
 - A bar reserving nothing takes no corner.
 
 ### Ends and pills
@@ -61,5 +61,5 @@ Each bar end's `kind`, joining rules, pill bars merging at a corner, and pills t
   - the frame's shape, blurred and masked to its inside
   - `innerInset`: inset past a solid bar reserving its edge
   - in the `axiom-border-shadow` namespace. Its layer rule stacks it under every other axiom surface, the overlay backdrop included.
-- A solid bar reserving its edge under the border casts no shadow of its own (`Bar.enrichBarConfig`'s `borderShadowed`).
-- `Bar.shadowColor` resolves the color for both the border and the bar shadows (see [Widget shapes](widget-shapes-runs.md#bar-shadow)).
+- A solid bar reserving its edge under the border casts no shadow of its own (`BarsConfig.enrichBarConfig`'s `borderShadowed`).
+- `BarsConfig.shadowColor` resolves the color for both the border and the bar shadows (see [Widget shapes](widget-shapes-runs.md#bar-shadow)).

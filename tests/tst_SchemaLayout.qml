@@ -736,7 +736,7 @@ TestCase {
           // The running compositor's, not the config's (SettingsManager.configValueAt)
           if (target.startsWith("/$"))
             continue;
-          // The look of the bar a widget sits on (Bar.lookContext): only
+          // The look of the bar a widget sits on (BarsConfig.lookContext): only
           // a bar widget's options have it, and it names a BarStyle field
           if (target.startsWith("$")) {
             if (!/^\w+Widget\.properties$/.test(where) || !target.startsWith("$bar.") || !(target.slice(5) in schema.definitions.BarStyle.properties))

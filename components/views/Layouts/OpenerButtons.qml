@@ -13,7 +13,7 @@ ColumnLayout {
 
   required property bool saved
   required property string unsavedHint
-  readonly property var bars: BarManager.localConfig ?? Bar.savedBars
+  readonly property var bars: BarManager.localConfig ?? BarsConfig.savedBars
 
   signal barButtonRequested(int barIndex)
   signal keybindRequested

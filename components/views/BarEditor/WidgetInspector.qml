@@ -30,7 +30,7 @@ Item {
   // How the widget sizes itself, from its policy (BarWidgetHost)
   function sizingText(measure) {
     if (!measure)
-      return Bar.widgetLayoutSchema.description ? I18n.tr(Bar.widgetLayoutSchema.description) : "";
+      return BarsConfig.widgetLayoutSchema.description ? I18n.tr(BarsConfig.widgetLayoutSchema.description) : "";
     if (measure.policy === "fixed")
       return I18n.tr("A fixed {0} px long.", measure.preferred);
     if (measure.policy === "elastic")
@@ -162,7 +162,7 @@ Item {
               numberMode: "stepper"
               pairs: true
               values: editorRoot.widget.properties ?? ({})
-              context: Bar.lookContext(BarManager.selectedBar())
+              context: BarsConfig.lookContext(BarManager.selectedBar())
               emptyText: I18n.tr("This widget has no options")
               onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
             }
@@ -170,7 +170,7 @@ Item {
 
           FieldGroup {
             Layout.preferredWidth: 2
-            title: I18n.tr(Bar.widgetLayoutSchema.title)
+            title: I18n.tr(BarsConfig.widgetLayoutSchema.title)
             description: root.sizingText(root.measure)
 
             Repeater {
@@ -197,7 +197,7 @@ Item {
                 required property var modelData
                 key: modelData.key
                 initial: root.measure?.[modelData.measured] ?? modelData.initial
-                fieldSchema: Bar.widgetLayoutSchema.properties?.[modelData.key] ?? ({})
+                fieldSchema: BarsConfig.widgetLayoutSchema.properties?.[modelData.key] ?? ({})
                 value: editorRoot.widget.layout?.[modelData.key]
                 onEdited: value => BarManager.updateWidgetLayout(editorRoot.zone, editorRoot.index, modelData.key, value)
               }
@@ -232,7 +232,7 @@ Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.topMargin: Widget.spacing / 2
-        types: Bar.availableWidgetTypes
+        types: BarsConfig.availableWidgetTypes
         groups: OverlayConfig.libraryGroups
         grouped: EditsManager.libraryGrouped
         // Schema keys (labels, group names)

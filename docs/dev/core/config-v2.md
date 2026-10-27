@@ -122,7 +122,7 @@ Nothing in v2's shape depends on these; rule 11's folders are where they would g
 - **User types:** a folder dropped into `~/.config/axiom/<kind>/<Type>/` could later be merged into the schema by the binary at load.
 
 ## What it costs, and where
-- **Readers keep their public names** (`Bar.savedBars`, `DockConfig.docks`, `Widget.px`, …). Only reader internals change, so the components above them don't.
+- **Readers keep their public names** (`BarsConfig.savedBars`, `DockConfig.docks`, `Widget.px`, …). Only reader internals change, so the components above them don't.
 - **What changes in QML:**
   - the editors that write shape directly (BarManager, EdgeMenuEditor, OverlayManager, DockManager, ScreenLayoutEditor, MonitorManager, KeybindManager, the settings cards);
   - the compositor config writers (the daemon's `render`, which reads the annotations);

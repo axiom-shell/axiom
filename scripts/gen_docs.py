@@ -43,8 +43,8 @@ UNIONS = [
 UNION_NAMES = {u[0]: u[1] for u in UNIONS}
 # Plumbing every union member shares, documented once on its page
 SHARED_KEYS = {"type", "visible", "layout", "place"}
-# Sections whose fields are merged into each bar's `barConfig` (Bar.lookOf,
-# Bar.enrichBarConfig), so widgets read them as barConfig.<key>
+# Sections whose fields are merged into each bar's `barConfig` (BarsConfig.lookOf,
+# BarsConfig.enrichBarConfig), so widgets read them as barConfig.<key>
 BARCONFIG_PATHS = ["BarStyle", "Bars[]"]
 # Annotations shown elsewhere in a setting's line (or noise in a reference)
 # A section page over this many chars is split by its top-level objects

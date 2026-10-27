@@ -45,7 +45,7 @@ PanelWindow {
     const bar = root._edges[side];
     if (bar?.background === "transparent")
       return CompositorManager.gapsOut[side] ?? 0;
-    return (bar ? Bar.reserveTrim(bar, CompositorManager.gapsOut[side] ?? 0) : 0) - Appearance.borderWidth;
+    return (bar ? BarsConfig.reserveTrim(bar, CompositorManager.gapsOut[side] ?? 0) : 0) - Appearance.borderWidth;
   }
   margins {
     left: root._margin("left", ScreenEdge.Left)

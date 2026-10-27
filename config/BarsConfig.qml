@@ -17,7 +17,7 @@ QtObject {
     const loc = ScreenEdge.fromConfig(barConfig.location);
     // Its widget style, accents and shadow: its own style's, each key it
     // leaves null the Bars section's
-    const look = Bar.lookOf(barConfig);
+    const look = BarsConfig.lookOf(barConfig);
     // The bar is sized by its widgets, never the other way round, so no
     // setting can leave them cut off
     const widgetSize = barConfig.widgetSize;
@@ -70,7 +70,7 @@ QtObject {
     const islandDepth = Appearance.borderWidth + padding + widgetSize + padding + Appearance.borderWidth;
     const borderShadowed = solid && Appearance.screenBorder && barConfig.reserveSpace;
     // Shapes and grouping are for widgets drawn on a background
-    const boxed = Bar.boxedStyles.includes(look.widgetStyle);
+    const boxed = BarsConfig.boxedStyles.includes(look.widgetStyle);
     const grouping = boxed ? look.widgetGrouping : "separate";
 
     const vertical = loc === ScreenEdge.Left || loc === ScreenEdge.Right;
@@ -160,7 +160,7 @@ QtObject {
       "location": loc,
       "reserveSpace": barConfig.reserveSpace,
       // Each Auto color picked for its place on this bar
-      "widgets": Bar.withAutoColors(barConfig.widgets, look.widgetStyle, grouping, look.groupColor),
+      "widgets": BarsConfig.withAutoColors(barConfig.widgets, look.widgetStyle, grouping, look.groupColor),
       "vertical": vertical,
       // Along its screen's shorter edge: of two bars of a kind meeting at a
       // corner, it takes the corner (BarEnds)
@@ -173,7 +173,7 @@ QtObject {
     // How much less than its extent it reserves (reserveTrim). What its
     // ends meet depends on the other bars on its screen: ScreenEdgeManager.bars
     // adds them (BarEnds.withEnds).
-    bar.trim = Bar.reserveTrim(bar, gapsOut[edge] ?? 0);
+    bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0);
     return bar;
   }
 
@@ -201,14 +201,14 @@ QtObject {
   // text, icon }, see BarWidgetStyle): `accent` is its color for its state,
   // `foregroundName` the text color it's configured with
   function widgetColors(barConfig, accent, foregroundName) {
-    return BarWidgetStyle.colors(Bar._widgetStyle(barConfig, barConfig.widgetGrouping === "merged"), accent, Theme.resolveColor(foregroundName));
+    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.widgetGrouping === "merged"), accent, Theme.resolveColor(foregroundName));
   }
 
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
   // stroke, indicator, content }, see BarWidgetStyle.cell): `color` is its
   // state color, `own` what reads on it filled, `state` active/occupied/empty
   function cellColors(barConfig, color, own, state) {
-    return BarWidgetStyle.cell(Bar._widgetStyle(barConfig, false), color, own, state);
+    return BarWidgetStyle.cell(BarsConfig._widgetStyle(barConfig, false), color, own, state);
   }
 
   // The corners of a Workspaces cell `cell` thick, inset by `inset` in its
@@ -227,20 +227,20 @@ QtObject {
   // What a merged run of widgets draws its shared background in
   function groupColors(barConfig) {
     const group = Theme.resolveColor(barConfig.groupColor);
-    return BarWidgetStyle.colors(Bar._widgetStyle(barConfig, false), group, BarWidgetStyle.readableOn(group, Theme.foreground));
+    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, false), group, BarWidgetStyle.readableOn(group, Theme.foreground));
   }
 
   // A bar's widgets (by section) with each Auto color field (`x-autoColor`,
   // left empty) set to the color BarAutoColors picks for it among its shown
   // neighbours, seen against the bar or, filled and merged, the run
   function withAutoColors(widgets, widgetStyle, grouping, groupColor) {
-    const shown = [].concat(...Bar.sectionNames.map(section => (widgets?.[section] ?? []).map((widget, index) => ({
+    const shown = [].concat(...BarsConfig.sectionNames.map(section => (widgets?.[section] ?? []).map((widget, index) => ({
             "section": section,
             "index": index,
             "widget": widget
           })))).filter(entry => entry.widget.visible !== false);
     const fields = shown.map(entry => {
-      const roles = Bar.autoColorFields[entry.widget.type] ?? {};
+      const roles = BarsConfig.autoColorFields[entry.widget.type] ?? {};
       const properties = entry.widget.properties ?? {};
       return {
         "roles": roles,
@@ -340,7 +340,7 @@ QtObject {
   function detachedPush(barConfig, gapsOut, connectorGap) {
     if (barConfig.background !== "transparent")
       return 0;
-    return gapsOut - Bar.reserveTrim(barConfig, gapsOut) - connectorGap / 2;
+    return gapsOut - BarsConfig.reserveTrim(barConfig, gapsOut) - connectorGap / 2;
   }
 
   // The exclusive zone a bar sets (BarPanel), given Hyprland's gaps_out on
@@ -349,7 +349,7 @@ QtObject {
   function reservedZone(barConfig, gapsOut) {
     if (!barConfig.reserveSpace)
       return 0;
-    const trim = Bar.reserveTrim(barConfig, gapsOut);
+    const trim = BarsConfig.reserveTrim(barConfig, gapsOut);
     if (barConfig.insideBorder)
       return Math.max(0, barConfig.extent - trim);
     return Math.max(0, (Appearance.screenBorder ? barConfig.extent - Appearance.screenMargin + Appearance.borderWidth : barConfig.extent) - trim);
@@ -384,8 +384,8 @@ QtObject {
   // `x-showIf`: lookOf's BarStyle keys, with grouping only for boxed styles
   // (as enrichBarConfig)
   function lookContext(barConfig) {
-    const look = Bar.lookOf(barConfig ?? {});
-    if (!Bar.boxedStyles.includes(look.widgetStyle))
+    const look = BarsConfig.lookOf(barConfig ?? {});
+    if (!BarsConfig.boxedStyles.includes(look.widgetStyle))
       look.widgetGrouping = "separate";
     return Object.keys(BarStyle.values).reduce((context, key) => {
       context["$bar." + key] = look[key];

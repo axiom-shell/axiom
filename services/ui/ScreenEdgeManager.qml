@@ -8,7 +8,7 @@ import qs.services.compositor
 
 /* What's on each screen edge: the running bars (`bars`, while the bar
  * editor has unsaved edits, those), laid out with the compositor's gaps
- * (Bar.enrichBarConfig), their windows (the bar panels), and the zones
+ * (BarsConfig.enrichBarConfig), their windows (the bar panels), and the zones
  * open integrated edge menus reserve, with what they leave on each edge:
  * which bar is there, where windows start, where surfaces held off it
  * measure from. */
@@ -18,7 +18,7 @@ QtObject {
   // The running bars (while the bar editor has unsaved edits, those),
   // each with what its ends meet among the bars on its screen (BarEnds:
   // which bar a shared corner goes to)
-  readonly property var bars: BarEnds.withEnds(Bar.expandBars((ConfigManager.previews.Bars ?? ConfigManager.config.Bars).items).map(bar => Bar.enrichBarConfig(bar, CompositorManager.gapsOut)), Bar.endsOptions(CompositorManager.gapsOut))
+  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars((ConfigManager.previews.Bars ?? ConfigManager.config.Bars).items).map(bar => BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut)), BarsConfig.endsOptions(CompositorManager.gapsOut))
 
   // The enabled bars on a screen by edge ({ top, bottom, left, right },
   // null where there is none)
@@ -77,7 +77,7 @@ QtObject {
   // adds those)
   function barReservedOn(screen, location) {
     const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const zone = bar ? Bar.reservedZone(bar, CompositorManager.gapsOut[ScreenEdge.name(location)]) : 0;
+    const zone = bar ? BarsConfig.reservedZone(bar, CompositorManager.gapsOut[ScreenEdge.name(location)]) : 0;
     return (Appearance.screenBorder ? Appearance.screenMargin : 0) + zone - (zone > 0 && bar.insideBorder ? Appearance.borderWidth : 0);
   }
 

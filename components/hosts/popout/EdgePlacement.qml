@@ -198,7 +198,7 @@ QtObject {
     "joinEnd": root.joinEnd,
     "frameLine": ScreenEdgeManager.frameLineOn(root.screen, root.edge),
     "reserved": ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge),
-    "detachedPush": root.barConfig ? Bar.detachedPush(root.barConfig, CompositorManager.gapsOut[root.edgeName] ?? 0, root.connectorGap) : 0,
+    "detachedPush": root.barConfig ? BarsConfig.detachedPush(root.barConfig, CompositorManager.gapsOut[root.edgeName] ?? 0, root.connectorGap) : 0,
     "ownBar": root.ownBar,
     "across": root.gaps?.across ?? 0,
     "layerOrder": CompositorManager.supports.layerOrder === true,

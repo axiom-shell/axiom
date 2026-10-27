@@ -26,7 +26,7 @@ Item {
   // rebuilding every widget in the section.
   property var widgets: []
 
-  // A powerline's widgets touch (Bar.enrichBarConfig)
+  // A powerline's widgets touch (BarsConfig.enrichBarConfig)
   readonly property int spacing: root.barConfig.groupSpacing
   readonly property string grouping: root.barConfig.widgetGrouping
   // Room the bar's section layout gives this group along the main axis
@@ -134,7 +134,7 @@ Item {
 
       z: -2
       barConfig: root.barConfig
-      colors: Bar.groupColors(root.barConfig)
+      colors: BarsConfig.groupColors(root.barConfig)
       startCap: root.segmentAt({
         "index": 0,
         "count": run.count

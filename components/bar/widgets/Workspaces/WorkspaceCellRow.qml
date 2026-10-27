@@ -63,10 +63,10 @@ Item {
     return false;
   }
 
-  // Bar.cellColors for a workspace's cell, active or at rest
+  // BarsConfig.cellColors for a workspace's cell, active or at rest
   function _look(id, active) {
     const occupied = root._occupied(id);
-    return Bar.cellColors(root.barConfig, active ? root.activeColor : occupied ? root.occupiedColor : root.emptyColor, active || occupied ? root.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty");
+    return BarsConfig.cellColors(root.barConfig, active ? root.activeColor : occupied ? root.occupiedColor : root.emptyColor, active || occupied ? root.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty");
   }
 
   function _length(active) {
@@ -103,7 +103,7 @@ Item {
   ActiveCellIndicator {
     id: indicator
     barConfig: root.barConfig
-    look: Bar.cellColors(root.barConfig, root.activeColor, root.textColor, "active")
+    look: BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active")
     index: root.ids.indexOf(root.activeId)
     thickness: root.cell
     restLength: root.cellLength

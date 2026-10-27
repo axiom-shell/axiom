@@ -372,7 +372,7 @@ Rectangle {
     maxExtent: section.slot.extent
     hiddenIndices: section.bar.hidden[section.slotIndex]
 
-    // crossStart in from the bar's outer edge (see Bar.enrichBarConfig)
+    // crossStart in from the bar's outer edge (see BarsConfig.enrichBarConfig)
     readonly property real crossPos: {
       const across = section.bar.isVertical ? section.bar.width : section.bar.height;
       const size = section.bar.isVertical ? width : height;

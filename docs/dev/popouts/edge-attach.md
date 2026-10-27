@@ -101,5 +101,5 @@ How the context a surface needs (a pill to stand on, a pill reaching along a joi
 - **Placement outputs:** `place`, `detached`, `straight`, `attachAt`/`attachFromBar`, `backfill`, `slidesUnder` (from `SurfaceContext.layout`: a detached box past a transparent bar with `supports.layerOrder`, the overlay not open over it, given as `overOverlay` and latched by the host).
 - **Look outputs:** `shadow`/`shadowLook`, `backed`/`opaque`, its openings and its `PillStretch`es.
 - **Following the bar:** it follows its bar unless held (`followsBar`), on pills and islands alike.
-  - Past a transparent bar, a detached box goes past it (`Bar.detachedPush`).
+  - Past a transparent bar, a detached box goes past it (`BarsConfig.detachedPush`).
 - How EdgePlacement gathers its inputs is in [Surface context](surface-context.md#edgeplacement-the-only-input-gatherer).

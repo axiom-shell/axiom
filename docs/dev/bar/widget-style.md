@@ -1,6 +1,6 @@
 # Bar widget classes, style and colors
 
-> **Files:** `components/bar/widgets/base/BarIconWidget.qml`, `components/bar/widgets/base/BarWidget.qml`, `components/bar/widgets/base/AudioLevelWidget.qml`, `components/bar/widgets/base/BaseWidget.qml`, `components/methods/BarWidgetStyle.qml`, `components/methods/BarAutoColors.qml`, `config/Bar.qml`, `config/BarStyle.qml`, `components/bar/widgets/Workspaces/WorkspaceCell.qml`
+> **Files:** `components/bar/widgets/base/BarIconWidget.qml`, `components/bar/widgets/base/BarWidget.qml`, `components/bar/widgets/base/AudioLevelWidget.qml`, `components/bar/widgets/base/BaseWidget.qml`, `components/methods/BarWidgetStyle.qml`, `components/methods/BarAutoColors.qml`, `config/BarsConfig.qml`, `config/BarStyle.qml`, `components/bar/widgets/Workspaces/WorkspaceCell.qml`
 > **Config:** `BarStyle.*`, `Bars.style.*`, per bar `style` (inheriting) and `widgetTextColor`, widget color fields with `x-autoColor`
 > **Related:** [Bar composition](composition.md), [Widget shapes and runs](widget-shapes-runs.md), [Schema annotations](../core/schema-annotations.md)
 
@@ -21,21 +21,21 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 
 ### Sizes come from the bar
 - (Rule: `components/bar/widgets/AGENTS.md`, "Sized by the bar".)
-- `Bar.enrichBarConfig` derives `extent` from `widgetSize`, plus padding and whatever covers the bar.
+- `BarsConfig.enrichBarConfig` derives `extent` from `widgetSize`, plus padding and whatever covers the bar.
 - It resolves `fontSize` and `radius` from the bar's `overrideFontSize`/`overrideRadius`, else from Appearance's values and `Widget.radius`.
 
 ### Widget style
 - Widgets don't draw their own backgrounds. Each reports two things:
   - `hasBackground`: on by default for `BarIconWidget`, opt-in on `BarWidget`.
   - `accentColor`: its color for its current state, e.g. a critical battery or a muted mic. This used to be the background.
-- They draw in `colors` = `Bar.widgetColors(barConfig, accent, foregroundName)`, which gives `{ fill, stroke, indicator, text, icon }`.
+- They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName)`, which gives `{ fill, stroke, indicator, text, icon }`.
   - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, underline, colored icons or plain.
   - `widgetTextColor` overrides the automatic text color.
 - Colors that are content rather than a background stay the widget's own: workspace cells, separators, badges, the DND icon.
 
 ### Auto colors
 - A widget color field with an `x-autoColor` role is Auto when empty, which is its default.
-- `Bar.enrichBarConfig` fills Auto fields in the widgets it hands out (`Bar.withAutoColors`; the fields per type are in `Bar.autoColorFields`). Widgets just resolve `properties.X`.
+- `BarsConfig.enrichBarConfig` fills Auto fields in the widgets it hands out (`BarsConfig.withAutoColors`; the fields per type are in `BarsConfig.autoColorFields`). Widgets just resolve `properties.X`.
 - The pure `methods/BarAutoColors` picks colors along the bar's shown widgets, every section in order. The roles are:
   - **`accent`:** the widget's own color, a base08–0F accent unlike its neighbours'. Fixed colors count as neighbours too. Every accent is used before any repeats, and an accent is kept apart from the widget's own warning/critical colors.
   - **`alt`:** a second state, as unlike its accent as possible.
@@ -48,7 +48,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 
 ### Which color fields show
 - A widget's color fields show in the bar editor's inspector only in the bar looks where they draw something.
-  - Their `x-showIf` reads the look of the selected bar through `$bar.<key>` keys. The values come from `Bar.lookContext`: `lookOf`, with grouping counted only for boxed styles.
+  - Their `x-showIf` reads the look of the selected bar through `$bar.<key>` keys. The values come from `BarsConfig.lookContext`: `lookOf`, with grouping counted only for boxed styles.
   - `tst_SchemaLayout` (`test_real_schema_showIf_targets_exist`) checks that each such key names a `BarStyle` field, in a bar widget's options only.
 - **The widget's own color** (`backgroundColor` titled "Color", and its state colors). It is the fill when filled, the tint or outline when tinted or outlined, the line when underlined, and the icon when merged or under colored icons.
   - Hidden under Plain text.
@@ -59,19 +59,19 @@ The base classes bar widgets extend, where their sizes come from, and how their 
   - `showBackground` shows only for boxed styles. `backgroundColor` also needs the background on and the grouping not merged.
   - `activeColor` and `occupiedColor` hide under Plain. `emptyColor` shows only when filled, tinted, outlined or underlined.
   - `textColor` shows only when filled and the bar's text color is Auto.
-  - Cells follow the widget shape: pills under capsule (`Bar.cellRadius`), otherwise the radius less the inset.
-- The bar's own look fields read the look it uses too (`BarsPanel` hands its form `Bar.lookOf(bar)`). The separator fields hide in a boxed powerline, where `enrichBarConfig` drops separators.
+  - Cells follow the widget shape: pills under capsule (`BarsConfig.cellRadius`), otherwise the radius less the inset.
+- The bar's own look fields read the look it uses too (`BarsPanel` hands its form `BarsConfig.lookOf(bar)`). The separator fields hide in a boxed powerline, where `enrichBarConfig` drops separators.
 
 ### Shared and per-bar style (`BarStyle`)
 - A bar's widget style, accents and shadow are a `BarStyle`: the shared one is `Bars.style` (shown in Look & Feel, reader `BarStyle`), and each bar has its own `style` (`x-inherit: Bars.style`) whose keys it leaves `null` take the shared one's.
-- `Bar.lookOf` fills a bar's look from both before `enrichBarConfig`, its shadow as flat `shadow` / `shadowColor` / `shadowSize`. `fontSize` and `widgetRadius` stay `null` where both leave them (Appearance's and Widget's then).
-- The bar editor shows the style by `x-group` (`Bar.styleGroups`, from `SchemaLayout.objectGroups`), each with a "This bar's own" switch: `BarManager.ownsStyle` / `setStyleOwned` (copies what it inherits, or sets the group back to `null`) / `updateStyleField`.
+- `BarsConfig.lookOf` fills a bar's look from both before `enrichBarConfig`, its shadow as flat `shadow` / `shadowColor` / `shadowSize`. `fontSize` and `widgetRadius` stay `null` where both leave them (Appearance's and Widget's then).
+- The bar editor shows the style by `x-group` (`BarsConfig.styleGroups`, from `SchemaLayout.objectGroups`), each with a "This bar's own" switch: `BarManager.ownsStyle` / `setStyleOwned` (copies what it inherits, or sets the group back to `null`) / `updateStyleField`.
 
 ### Workspaces cells
 - Workspaces sits on a background like the rest (`backgroundColor`). Its box is Auto (`neutral`).
 - Its cells (`workspaces/WorkspaceCell`) are inset by `widgetSpacing` inside that box.
-- A hovered cell's box is `hoverColor` (`Bar.cellHoverColor`; Auto is `Theme.backgroundHighlight`). On the bar, a cell reads hover from the widget's hit area (`hitArea.hovers(cell)`), which lies over the cells: their own `MouseArea` misses the leave after a click and stays lit. In a popout it uses its own.
-- Cells draw in the same style through `Bar.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content }` from the cell's state color.
+- A hovered cell's box is `hoverColor` (`BarsConfig.cellHoverColor`; Auto is `Theme.backgroundHighlight`). On the bar, a cell reads hover from the widget's hit area (`hitArea.hovers(cell)`), which lies over the cells: their own `MouseArea` misses the leave after a click and stays lit. In a popout it uses its own.
+- Cells draw in the same style through `BarsConfig.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content }` from the cell's state color.
   - **Filled, tinted or outlined** styles draw boxes.
   - **Styles with no box** (underline, colored icons, plain) draw the cell's number or a dot straight on the bar. The dot becomes a pill when wide, with the cells narrowed to fit.
     - For underline, each cell is underlined itself and the widget's own line is off.

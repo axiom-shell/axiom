@@ -4,7 +4,7 @@ import QtQuick
 import qs.config
 import qs.components.reusable
 
-// One workspace on the bar, in the bar's widget style (Bar.cellColors): a
+// One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
 // widgets have no boxes, its number (or a dot) straight on the bar, under a
 // line of its color for underline. Shows an app icon or a glyph instead of
@@ -15,7 +15,7 @@ Item {
   id: root
 
   required property var barConfig
-  // Bar.cellColors for its state
+  // BarsConfig.cellColors for its state
   required property var look
   required property bool isActive
   // Across the bar, and along it (`restLength` when not widened)
@@ -41,7 +41,7 @@ Item {
   // Its box in the hover color: when hovered, or for a background layer,
   // when its content layer is
   property bool lit: hovered
-  // Its box while lit (Bar.cellHoverColor)
+  // Its box while lit (BarsConfig.cellHoverColor)
   property color hoverColor: Theme.backgroundHighlight
   readonly property bool _drawsBox: part !== "content"
   readonly property bool _drawsContent: part !== "background"

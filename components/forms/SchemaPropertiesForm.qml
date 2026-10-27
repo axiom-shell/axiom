@@ -18,7 +18,7 @@ ColumnLayout {
   required property var propertiesSchema
   property var values: ({})
   // What `$` keys in an `x-showIf` read, by key (a bar widget's
-  // `$bar.<key>`: Bar.lookContext)
+  // `$bar.<key>`: BarsConfig.lookContext)
   property var context: ({})
   // Keys to put first, in this order (the schema's `x-order`): the schema
   // reaches QML as a map, whose keys come out sorted

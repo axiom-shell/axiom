@@ -5,7 +5,7 @@
 x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
 x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
 x-auto: a switch in front of an integer whose `value` means automatic.
-x-autoColor: a bar widget color picked by its bar when left empty (`Bar.autoColorFields`, `methods/BarAutoColors`).
+x-autoColor: a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`).
 x-beside: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns).
 x-canvasDetail: a module property the layouts editor shows on its tile (a list joined).
 x-canvasFill: a color property the layouts editor fills a module's tile with (`OverlayConfig`).

@@ -76,7 +76,7 @@ OnboardingPage {
   // --- Bar ---
 
   // As saved (ScreenEdgeManager.bars turns `location` into an edge enum)
-  readonly property var bar: Bar.savedBars?.[0] ?? null
+  readonly property var bar: BarsConfig.savedBars?.[0] ?? null
 
   function setBar(key, value) {
     const values = {};

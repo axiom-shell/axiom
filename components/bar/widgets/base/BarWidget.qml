@@ -26,5 +26,5 @@ Item {
 
   property bool hasBackground: false
   property color accentColor: "transparent"
-  readonly property var colors: Bar.widgetColors(barConfig, accentColor, properties.foregroundColor)
+  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor)
 }
