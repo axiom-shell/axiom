@@ -57,21 +57,9 @@ jobs:
       - name: Generated files (scripts/generate.sh)
         run: scripts/generate.sh
 
+      # The same build as a release's (release.yml)
       - name: Build
-        run: |
-          short=$(git rev-parse --short=7 HEAD)
-          mkdir dist
-          for arch in amd64 arm64; do
-            CGO_ENABLED=0 GOOS=linux GOARCH=$arch go -C backend build -trimpath \
-              -ldflags "-s -w -X github.com/axiom-shell/axiom/backend/internal/buildinfo.version=edge-$short" \
-              -o "../dist/axiom-linux-$arch" ./cmd/axiom
-          done
-          dist/axiom-linux-amd64 version | tee /dev/stderr | grep -qF "axiom edge-$short " ||
-            { echo "::error::the binary doesn't report edge-$short"; exit 1; }
-          dist/axiom-linux-amd64 version --json | grep -qF "\"commit\": \"$GITHUB_SHA\"" ||
-            { echo "::error::the binary doesn't name $GITHUB_SHA as its commit"; exit 1; }
-          echo "$GITHUB_SHA" >dist/COMMIT
-          (cd dist && sha256sum axiom-linux-* COMMIT >SHA256SUMS && cat SHA256SUMS)
+        run: scripts/build_binaries.sh "edge-$(git rev-parse --short=7 HEAD)" dist
 
       # The tag moved first, then the files, SHA256SUMS last: a download
       # racing the upload fails its check instead of taking a mismatched
