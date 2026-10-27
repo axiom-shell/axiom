@@ -125,6 +125,18 @@ class Bash(unittest.TestCase):
         self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", "python3 -c 'selfupdate.check'",
                     "grep -rn selfupdate.apply backend", "go test ./internal/selfupdate")
 
+    def test_greeter_install_command(self):
+        self.blocks("axiom greeter-install install . me", "sudo axiom greeter-install uninstall . me",
+                    "pkexec ~/.local/bin/axiom greeter-install update . me")
+        self.allows("AXIOM_GREETER_ROOT=/tmp/x axiom greeter-install install . me", "axiom greeter-install --help",
+                    "go test ./internal/greeterinstall")
+
+    def test_greeter_apply(self):
+        call = """'{"jsonrpc":"2.0","id":1,"method":"greeter.apply","params":{"action":"install"}}'"""
+        self.blocks(f"python3 -c {call}", f"printf %s {call}")
+        self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", "python3 -c 'greeter.status'",
+                    "grep -rn greeter.apply backend", "go test ./internal/greeterinstall")
+
     def test_live_config_file(self):
         self.blocks(f"rm {guard.LIVE_CONFIG}", f"rm -rf {guard.LIVE_CONFIG.parent}", f"mv {guard.LIVE_CONFIG} /tmp/x",
                     "rm ~/.config/axiom/config.json" if not os.environ.get("XDG_CONFIG_HOME") else f"rm {guard.LIVE_CONFIG}",

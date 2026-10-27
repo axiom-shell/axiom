@@ -5,6 +5,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.compositor
+import qs.services.session
 import qs.services.system
 import qs.services.apps
 
@@ -492,7 +493,8 @@ QtObject {
   // `$supports.<capability>` (true or false); `$distro` reads the
   // distribution family (DependencyManager.distro: "arch", "fedora", ""),
   // `$packaged` whether axiom is installed as a package
-  // (Paths.packaged).
+  // (Paths.packaged), `$clone` whether its tree is a git clone
+  // (GreeterManager.report's `clone`; true until the first check).
   function configValueAt(dottedPath) {
     if (dottedPath === "$compositor")
       return CompositorManager.kind;
@@ -500,6 +502,8 @@ QtObject {
       return DependencyManager.distro;
     if (dottedPath === "$packaged")
       return Paths.packaged;
+    if (dottedPath === "$clone")
+      return GreeterManager.report?.clone !== false;
     if (dottedPath.startsWith("$supports."))
       return CompositorManager.supports[dottedPath.slice(10)] === true;
     return Utils.valueAt(ConfigManager.config, dottedPath.split("."));

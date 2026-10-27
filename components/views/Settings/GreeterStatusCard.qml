@@ -22,6 +22,7 @@ FieldGroup {
       return Theme.warning;
     case "noGreetd":
     case "noCompositor":
+    case "noClone":
     case "checkFailed":
       return Theme.error;
     }
@@ -40,6 +41,8 @@ FieldGroup {
       return I18n.tr("No greetd");
     case "noCompositor":
       return I18n.tr("No compositor");
+    case "noClone":
+      return I18n.tr("Unavailable");
     case "checking":
       return I18n.tr("Checking");
     case "checkFailed":

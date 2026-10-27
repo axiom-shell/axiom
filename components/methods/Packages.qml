@@ -123,10 +123,6 @@ QtObject {
         "arch": "ddcutil",
         "fedora": "ddcutil"
       },
-      "jq": {
-        "arch": "jq",
-        "fedora": "jq"
-      },
       "curl": {
         "arch": "curl",
         "fedora": "curl"

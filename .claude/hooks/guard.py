@@ -27,7 +27,7 @@ HOME = Path(os.path.expanduser("~")).resolve()
 LIVE_CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or HOME / ".config").resolve() / "axiom/config.json"
 SCHEMA = REPO / "config/json/config.schema.json"
 SEPARATORS = {";", "&&", "||", "|", "&", "\n", "|&"}
-WRAPPERS = {"sudo", "env", "nohup", "exec", "command", "time", "timeout", "setsid"}
+WRAPPERS = {"sudo", "pkexec", "env", "nohup", "exec", "command", "time", "timeout", "setsid"}
 SHELLS = {"bash", "sh", "zsh"}
 QS = {"qs", "quickshell"}
 QS_VALUE_OPTS = {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}
@@ -205,6 +205,10 @@ def check_axiom(env, args, cwd):
         shown = env.get("AXIOM_GREETER_WINDOWED") == "1" or "--no-shell" in args
         if not shown or not scratch(gdir) or installed:
             deny("Never, while testing", "run the greeter only windowed on a scratch folder: AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --dir <scratch> (or --no-shell).")
+    # The greeter installer's root side, which greeter_install.sh runs
+    if sub == "greeter-install" and words[1:2] and words[1] in {"install", "update", "uninstall"}:
+        if not scratch(env.get("AXIOM_GREETER_ROOT", "")):
+            deny("Never, while testing", "axiom greeter-install install/update/uninstall only with a scratch AXIOM_GREETER_ROOT=<dir>.")
     # A compositor claim (managed mode) on the live config, or moving binds
     # out of its files (the bind merge's remove)
     if sub == "compositor" and words[1:2] and words[1] in {"claim", "release"} and words[2:3]:
@@ -332,6 +336,12 @@ def check_argv(env, argv, cwd):
     # the daemon runs from: the live repo) sent to the live daemon by hand
     if sends and any("selfupdate.apply" in a for a in args) and axiom_live_display(env, args):
         deny("Never, while testing", "selfupdate.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it updates the live repo (test it with go test ./internal/selfupdate).")
+
+    # The login screen's install, update or uninstall (the daemon's
+    # greeter.apply, which runs the installer as root through pkexec) sent
+    # to the live daemon by hand
+    if sends and any("greeter.apply" in a for a in args) and axiom_live_display(env, args):
+        deny("Never, while testing", "greeter.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it installs the greeter for real (test it with go test ./internal/greeterinstall).")
 
     # The real config.json
     if name in {"rm", "unlink", "trash", "trash-put", "shred", "mv"}:

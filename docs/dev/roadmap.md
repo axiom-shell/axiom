@@ -58,9 +58,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 5 | done | [Phase 3](#phase-3-qml-structure)'s moves and splits (not `KeybindManager`), and [Phase 5](#phase-5-the-allowlist)'s `execDetached` quick wins | One quiet window for every move, while the backend roadmap sits between stages. |
 | 6 | done | Backend stage 3: brightness | Small; a first stage under the new checks. |
 | 7 | done | [Backend stage 3b](backend/roadmap.md): exec (polled and streamed commands, JSON) | Right after brightness, another small stage under the new checks; ahead of stage 6 because the planned custom JSON widgets build on it, and stages 4 and 5 don't touch `CommandManager`. |
-| 8 | in progress | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
-| 9 | next | [Phase 12](#phase-12-memory-footprint) step 0 and [the heap entry](issues.md#the-shells-heap-never-shrinks-after-a-spike) | Small and the largest likely win; its numbers order the rest of the phase, and it touches nothing stage 5 does. |
-| 10 | later | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
+| 8 | done | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
+| 9 | in progress | [Phase 12](#phase-12-memory-footprint) step 0 and [the heap entry](issues.md#the-shells-heap-never-shrinks-after-a-spike) | Small and the largest likely win; its numbers order the rest of the phase, and it touches nothing stage 5 does. |
+| 10 | next | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
 | 11 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
 | 12 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
 | 13 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
@@ -169,11 +169,6 @@ Resolves:
 Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
 
 Resolved by a stage:
-- [The greeter's status runs its installer script as the user](issues.md#the-greeters-status-runs-its-installer-script-as-the-user) (stage 4)
-- [A greeter tree with no .git offers an install that fails](issues.md#a-greeter-tree-with-no-git-offers-an-install-that-fails) (stage 4)
-- [The greeter installer runs bash, awk and jq as root](issues.md#the-greeter-installer-runs-bash-awk-and-jq-as-root) (stage 4)
-- [The first greeter install runs the user's binary as root](issues.md#the-first-greeter-install-runs-the-users-binary-as-root) (stage 4)
-- [jq is a dependency only for the greeter installer](issues.md#jq-is-a-dependency-only-for-the-greeter-installer) (stage 4)
 - [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (stage 5)
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (stage 7)
@@ -240,6 +235,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [Singleton properties warn on every reload](issues.md#singleton-properties-warn-on-every-reload)
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
+- [ThemeManager warns when the daemon's re-exec fails its integrations](issues.md#thememanager-warns-when-the-daemons-re-exec-fails-its-integrations)
 - [The updates check warns when a daemon re-exec kills checkupdates](issues.md#the-updates-check-warns-when-a-daemon-re-exec-kills-checkupdates)
 - [A screenshot under niri timed out waiting for its frame](issues.md#a-screenshot-under-niri-timed-out-waiting-for-its-frame)
 
@@ -252,7 +248,6 @@ Resolves:
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
-- [The onboarding's jq purpose names the theme integrations](issues.md#the-onboardings-jq-purpose-names-the-theme-integrations)
 
 ### Phase 10: custom JSON widgets
 The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).

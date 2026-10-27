@@ -1,6 +1,5 @@
 pragma Singleton
 import QtQuick
-import Quickshell
 
 import qs.config
 import qs.components.methods
@@ -12,8 +11,8 @@ import qs.services.ui
 // is greeter.qml, with GreetdManager). The greeter runs as greetd's user,
 // who can't read the user's home, so:
 //   - a copy of axiom made for it, owned by root (install/update/uninstall:
-//     scripts/greeter/greeter_install.sh through pkexec, one polkit prompt
-//     each). A change to axiom's code reaches the greeter only through
+//     the daemon's greeter.apply, which runs the installer through pkexec,
+//     one polkit prompt each). A change to axiom's code reaches the greeter only through
 //     update(), so a copy behind the repo is `outdated`, notified once per
 //     version (clicking it opens Settings → Login screen)
 //   - the bundle: what the greeter shows (GreeterBundle.exportConfig: the
@@ -36,11 +35,11 @@ QtObject {
 
   // --- What's set up ---
 
-  // The last `check`: { greetd, agreety, compositor ("sway" | "hyprland":
-  // what the login screen runs in, "" for neither), displayManager, installed,
-  // configured, helper, installedSource, url, installedHash, currentHash,
-  // greeterUser, bundleWritable, error }, or
-  // null before the first
+  // The last `check` (the daemon's greeter.status): { greetd, agreety,
+  // compositor ("sway" | "hyprland": what the login screen runs in, "" for
+  // neither), displayManager, installed, configured, helper, binaries,
+  // installedSource, url, installedHash, currentHash, greeterUser,
+  // bundleWritable, clone }, or null before the first
   readonly property var report: _report
   property var _report: null
 
@@ -54,7 +53,9 @@ QtObject {
   // "checking" | "checkFailed" (lastError says why) | "noGreetd"
   // (greetd or its text login, agreety, isn't installed) | "noCompositor"
   // (neither sway nor Hyprland, which it runs in, is installed; a copy
-  // already set up still shows, with Remove) | "off" |
+  // already set up still shows, with Remove) | "noClone" (axiom's tree is
+  // neither a git clone nor a package, so there's nothing to install
+  // from; a copy already set up still shows) | "off" |
   // "notInstalled" (Greeter.enabled, but no copy: set up by hand, or
   // removed outside axiom) | "outdated" (the copy is behind its source,
   // came from another source, or greetd's command was changed; a source
@@ -67,12 +68,18 @@ QtObject {
       return "noGreetd";
     if (report.compositor === "" && !report.installed)
       return "noCompositor";
+    if (!root.installable && !report.installed)
+      return "noClone";
     if (!report.installed)
       return GreeterConfig.enabled ? "notInstalled" : "off";
     if (!report.configured || report.installedSource !== root.wantedSource || (report.currentHash && report.installedHash !== report.currentHash))
       return "outdated";
     return "installed";
   }
+
+  // There's something to install from: a git clone, or a package (true
+  // until the first check says otherwise)
+  readonly property bool installable: Paths.packaged || _report?.clone !== false
 
   // pkexec is running (install, update or uninstall)
   readonly property bool elevating: _elevating
@@ -99,7 +106,10 @@ QtObject {
       return;
     }
     root._checking = true;
-    CommandManager.run(["bash", root._script, "check", Paths.axiomPath].concat(root._sourceArgs), (exitCode, out) => {
+    BackendManager.call("greeter.status", {
+      "source": root._source,
+      "channel": SelfUpdate.channel
+    }, (error, result) => {
       root._checking = false;
       // Asked again while running (the source changed): its answer is stale
       if (root._checkAgain) {
@@ -107,15 +117,14 @@ QtObject {
         root.check();
         return;
       }
-      const report = root._parse(out);
-      if (report.error) {
-        console.warn("[GreeterManager] check:", report.error);
+      if (error) {
+        console.warn("[GreeterManager] check:", error.message);
         root._checkFailed = root._report === null;
-        root._lastError = report.error;
+        root._lastError = error.message;
         return;
       }
       root._checkFailed = false;
-      root._report = report;
+      root._report = result;
       root._notifyOutdated();
     });
   }
@@ -143,24 +152,8 @@ QtObject {
 
   // --- Private ---
 
-  readonly property string _script: Paths.scriptsPath + "greeter/greeter_install.sh"
   readonly property string _source: Paths.packaged ? "package" : GreeterConfig.source
-  // The script's <source> <channel> <binary> (the binary the shell runs,
-  // which a local copy takes: $AXIOM_BIN, set by axiom run)
-  readonly property var _sourceArgs: [_source, SelfUpdate.channel, Quickshell.env("AXIOM_BIN") ?? ""]
-  // The installed copy's, which org.axiom.greeter.policy names
-  readonly property string _helper: "/usr/share/axiom-greeter/scripts/greeter/greeter_install.sh"
   readonly property string _desktopEntry: "axiom-greeter-update"
-
-  function _parse(text) {
-    try {
-      return JSON.parse(text.trim());
-    } catch (e) {
-      return {
-        "error": text.trim() || "no output"
-      };
-    }
-  }
 
   // One polkit prompt for the script as root. Another agent's prompt is an
   // ordinary window, under the overlay and the onboarder: they step aside
@@ -189,24 +182,19 @@ QtObject {
     const external = PolkitManager.status !== "running";
     if (external)
       SurfaceManager.beginStepAside("greeter");
-    // Once installed, root's own copy of the script, by its polkit action
-    // (its prompt says what it's for); before, or while that copy is from
-    // before the copy got the axiom binary too (`binaries`), the clone's,
-    // through bash
-    const program = root._report?.helper === true && root._report?.binaries === true ? [root._helper] : ["/usr/bin/bash", root._script];
-    const args = ["pkexec"].concat(program, [action, Paths.axiomPath, Quickshell.env("USER")], action === "uninstall" ? [] : [staging].concat(root._sourceArgs));
-    CommandManager.run(args, (exitCode, out, err) => {
+    BackendManager.call("greeter.apply", {
+      "action": action,
+      "source": root._source,
+      "channel": SelfUpdate.channel,
+      "staged": staging
+    }, (error, result) => {
       SurfaceManager.endStepAside("greeter");
       root._elevating = false;
-      const result = root._parse(out);
-      if (exitCode !== 0 || result.ok !== true) {
-        // pkexec: 126 dismissed, 127 not authorized or not there
-        // The script's own error when it ran, else pkexec's (no agent)
-        const scriptError = out.trim() ? result.error : "";
-        root._lastError = exitCode === 126 ? I18n.tr("The password prompt was dismissed.") : scriptError || err.trim() || I18n.tr("pkexec failed ({0}).", exitCode);
+      if (error || !result.ok) {
+        root._lastError = error ? error.message : result.dismissed ? I18n.tr("The password prompt was dismissed.") : result.error;
         console.warn("[GreeterManager]", action, "failed:", root._lastError);
       } else {
-        console.log("[GreeterManager]", action, "changed", (result.changed ?? []).join(", "), result.backup ? "(backup: " + result.backup + ")" : "");
+        console.log("[GreeterManager]", action, "changed", result.changed.join(", "), result.backup ? "(backup: " + result.backup + ")" : "");
         if (action !== "uninstall") {
           root._written = "";
           root._writeBundle(Paths.greeterBundlePath, true, ok => root._written = ok ? root._bundleKey : "");

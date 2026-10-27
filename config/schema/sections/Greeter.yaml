@@ -11,11 +11,11 @@ properties:
   source:
     type: string
     title: Code from
-    x-showIf: {/$packaged: false}
+    x-showIf: {/$packaged: false, /$clone: true}
     enum: [git, local]
     x-enumLabels: {git: Git (axiom's repository), local: Local (your clone)}
     default: git
-    description: "Where Install and Update take the login screen's code. Git fetches it as root from the repository axiom was installed from, following releases or main as axiom's updates do: nothing that can write to your clone can change it. Local copies your clone as it is (the checked-out branch, uncommitted changes included), for working on axiom: any program running as you could change what the login screen runs before you next update it."
+    description: "Where Install and Update take the login screen's code. Git fetches it as root from axiom's official repository, at its newest release, with the release's prebuilt axiom binary checked against its checksums: nothing that can write to your clone can change it (main, having no such binary, can't be installed; a fork uses Local). Local copies your clone as it is (the checked-out branch, uncommitted changes included) with the axiom binary you built last, for working on axiom: any program running as you could change what the login screen runs before you next update it."
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Login monitor

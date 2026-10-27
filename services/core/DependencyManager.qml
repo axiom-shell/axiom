@@ -91,10 +91,6 @@ Singleton {
       "purpose": "Brightness of external monitors"
     },
     {
-      "command": "jq",
-      "purpose": "Reading JSON (theme integrations)"
-    },
-    {
       "command": "curl",
       "purpose": "Chat requests"
     },
