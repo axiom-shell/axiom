@@ -1,6 +1,5 @@
 pragma Singleton
 import QtQuick
-import Quickshell
 
 import qs.config
 import qs.services.core
@@ -78,8 +77,7 @@ QtObject {
       root.lockRequested();
       break;
     default:
-      if (LockscreenConfig.lockCommand)
-        Quickshell.execDetached(["sh", "-c", LockscreenConfig.lockCommand]);
+      CommandManager.runDetached(LockscreenConfig.lockCommand);
     }
     root.lockStarted();
   }

@@ -50,9 +50,6 @@
     "services/ui/LauncherManager.qml": [
       "execDetached"
     ],
-    "services/session/LockManager.qml": [
-      "execDetached"
-    ],
     "services/system/NightLightManager.qml": [
       "Process"
     ],
