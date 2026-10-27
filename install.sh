@@ -29,6 +29,9 @@ set -euo pipefail
 # curl | bash, anything reading stdin would otherwise eat the rest
 main() {
 AXIOM_REPO=${AXIOM_REPO:-https://github.com/axiom-shell/axiom.git}
+# The official builds (release.Official): a v* tag's release, or edge,
+# main's newest build, each with a SHA256SUMS listing its files
+AXIOM_RELEASES=${AXIOM_RELEASES:-https://github.com/axiom-shell/axiom/releases/download}
 CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 # Where `axiom run` looks for it
 QS_DIR=$CONFIG_HOME/quickshell/axiom
@@ -70,8 +73,9 @@ PACKAGES=(
 )
 ICON_FONT_URL="https://github.com/google/material-design-icons/raw/master/variablefont/MaterialSymbolsRounded%5BFILL,GRAD,opsz,wght%5D.ttf"
 ICON_FONT_FILE=$HOME/.local/share/fonts/MaterialSymbolsRounded.ttf
-# go builds the axiom binary from a clone (a package brings its own)
-REQUIRED=(git go quickshell curl python3 iconFont)
+# go isn't here: the axiom binary is downloaded (a package brings its own),
+# and go is installed only to build it when there's no official build
+REQUIRED=(git quickshell curl python3 iconFont)
 # "feature|keys|compositors" (none listed: any), offered one at a time;
 # the AUR package's optdepends say the same
 FEATURES=(
@@ -492,6 +496,53 @@ else
   AXIOM_BIN=${XDG_BIN_HOME:-$HOME/.local/bin}/axiom
 fi
 
+# official_binary dir out: downloads the official build of dir's checkout
+# into out (maintainer, 2026-10-27: "Download, build fallback
+# (Recommended)"): its v* tag's release, else edge, main's newest build,
+# when that's the commit checked out; each file checked against the
+# release's SHA256SUMS. Fails (and says why) when there's none to take
+official_binary() (
+  # A subshell: its scratch folder goes with it
+  dir=$1 out=$2
+  case "$(uname -m)" in
+    x86_64) arch=amd64 ;;
+    aarch64 | arm64) arch=arm64 ;;
+    *) info "There's no official axiom binary for $(uname -m)."; return 1 ;;
+  esac
+  release=$(git -C "$dir" describe --tags --exact-match --match 'v*' HEAD 2>/dev/null) || release=edge
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' EXIT
+  fetch() { curl -fsSL --max-time 300 -o "$tmp/$1" "$AXIOM_RELEASES/$release/$1" 2>/dev/null; }
+  checked() { (cd "$tmp" && grep -E "^[0-9a-f]{64} [ *]$1\$" SHA256SUMS | sha256sum -c --status 2>/dev/null); }
+  if ! fetch SHA256SUMS; then
+    info "No official axiom build of $release to download (offline?)."
+    return 1
+  fi
+  if [[ "$release" == edge ]]; then
+    head=$(git -C "$dir" rev-parse HEAD)
+    if ! fetch COMMIT || ! checked COMMIT; then
+      warn "main's newest build doesn't match its SHA256SUMS."
+      return 1
+    fi
+    if [[ "$(cat "$tmp/COMMIT")" != "$head" ]]; then
+      info "main's newest build is of another commit than this clone's (${head:0:12})."
+      return 1
+    fi
+  fi
+  if ! fetch "axiom-linux-$arch"; then
+    info "The $release build has no binary for this machine."
+    return 1
+  fi
+  if ! checked "axiom-linux-$arch"; then
+    warn "The $release build's binary doesn't match its SHA256SUMS."
+    return 1
+  fi
+  chmod 755 "$tmp/axiom-linux-$arch"
+  "$tmp/axiom-linux-$arch" version >/dev/null || { warn "The $release build's binary doesn't run here."; return 1; }
+  mv -f "$tmp/axiom-linux-$arch" "$out"
+  ok "Downloaded axiom's $release build (checked against its SHA256SUMS)"
+)
+
 # ─── The plan ────────────────────────────────────────────────────────────────
 
 if ((packaged)); then
@@ -519,7 +570,7 @@ fi
 if ((packaged)); then
   binary_step="none: the package's, at $AXIOM_BIN"
 else
-  binary_step="the axiom binary, built from the clone (with go) into $AXIOM_BIN"
+  binary_step="the axiom binary into $AXIOM_BIN: the official build of the clone's checkout, downloaded and checked, else built from the clone (installing go)"
 fi
 if [[ "$distro" == arch ]]; then
   packages_step="packages from the official repositories, through sudo pacman"
@@ -543,8 +594,6 @@ echo
 
 required_keys=()
 for key in "${REQUIRED[@]}" "${compositors[@]}"; do
-  # A package brings its binary: nothing to build
-  [[ "$key" == go ]] && ((packaged)) && continue
   required_keys+=("$key")
 done
 mapfile -t need_required < <(missing "${required_keys[@]}")
@@ -869,14 +918,31 @@ if ((packaged)); then
   [[ -x "$AXIOM_BIN" ]] || warn "The package has no $AXIOM_BIN: reinstall it."
 else
   echo
-  info "Building the axiom binary into $AXIOM_BIN"
-  # The generated files first (the embedded schema among them), then the
-  # binary beside its old one, swapped in once it built
-  run "$AXIOM_DIR/scripts/generate.sh" --no-docs || die "Generating axiom's files failed (see above)."
+  info "The axiom binary, into $AXIOM_BIN"
   run mkdir -p "$(dirname "$AXIOM_BIN")"
-  run bash -c 'cd "$1/backend" && CGO_ENABLED=0 go build -trimpath -o "$2.new" ./cmd/axiom && mv -f "$2.new" "$2"' _ "$AXIOM_DIR" "$AXIOM_BIN" \
-    || die "Building the axiom binary failed (see above)."
-  ok "Built $AXIOM_BIN"
+  if ((dry_run)); then
+    run official_binary "$AXIOM_DIR" "$AXIOM_BIN.new"
+    run "$AXIOM_BIN.new" schema build --tree "$AXIOM_DIR"
+    run mv -f "$AXIOM_BIN.new" "$AXIOM_BIN"
+    info "(else built from the clone with go, installed first when it's missing)"
+  elif official_binary "$AXIOM_DIR" "$AXIOM_BIN.new"; then
+    # The tree's schema copy, which the tools read (the daemon builds the
+    # shell's own)
+    "$AXIOM_BIN.new" schema build --tree "$AXIOM_DIR" >/dev/null || die "Building axiom's schema failed (see above)."
+    mv -f "$AXIOM_BIN.new" "$AXIOM_BIN"
+    ok "Installed $AXIOM_BIN"
+  else
+    info "Building it from the clone instead"
+    if ! command -v go >/dev/null; then
+      install_packages "$(package_name "$(package_of go)")" || die "Building the axiom binary needs go. Install it, then run this again."
+    fi
+    # The generated files first (the embedded schema among them), then the
+    # binary beside its old one, swapped in once it built
+    "$AXIOM_DIR/scripts/generate.sh" --no-docs || die "Generating axiom's files failed (see above)."
+    (cd "$AXIOM_DIR/backend" && CGO_ENABLED=0 go build -trimpath -o "$AXIOM_BIN.new" ./cmd/axiom && mv -f "$AXIOM_BIN.new" "$AXIOM_BIN") \
+      || die "Building the axiom binary failed (see above)."
+    ok "Built $AXIOM_BIN"
+  fi
   [[ ":$PATH:" == *":$(dirname "$AXIOM_BIN"):"* ]] \
     || info "$(dirname "$AXIOM_BIN") isn't on your PATH: the compositor starts axiom by its full path, but for \`axiom\` commands in a terminal, add it."
 fi

@@ -361,7 +361,8 @@ func TestGitRefusesABinaryItsSumsDontMatch(t *testing.T) {
 	}
 }
 
-// A release without a binary for this machine (none ships one yet) has
+// A release without a binary for this machine (one from before the
+// release workflow) has
 // nothing root may run: refused
 func TestGitWithoutAReleaseBinary(t *testing.T) {
 	t.Parallel()
