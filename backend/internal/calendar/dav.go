@@ -36,6 +36,22 @@ type dav struct {
 	auth   string
 }
 
+// caldav is a CalDAV account's client, with its saved password (looked
+// up by id); no_password without one
+func (s *Service) caldav(ctx context.Context, id, username string) (*dav, error) {
+	password := ""
+	if id != "" {
+		var err error
+		if password, _, err = s.o.Secrets.Lookup(ctx, "calendar", id); err != nil {
+			return nil, err
+		}
+	}
+	if password == "" {
+		return nil, fail(axerr.NoPassword, "No password saved for this account")
+	}
+	return s.dav(username, password), nil
+}
+
 func (s *Service) dav(username, password string) *dav {
 	d := &dav{client: s.o.Client}
 	if username != "" || password != "" {

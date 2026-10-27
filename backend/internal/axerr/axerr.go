@@ -32,8 +32,10 @@ const (
 	// Refused on purpose (a security rule, a read-only calendar), never
 	// retried.
 	Refused Kind = "refused"
-	// A server refused the credentials (or none are saved).
+	// A server refused the credentials.
 	Unauthorized Kind = "unauthorized"
+	// No password is saved for the account the request needs one for.
+	NoPassword Kind = "no_password"
 	// A server's reply couldn't be read (not XML, not iCalendar).
 	BadReply Kind = "bad_reply"
 	// A bug or an unexpected system failure.

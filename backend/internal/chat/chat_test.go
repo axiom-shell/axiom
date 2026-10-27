@@ -12,6 +12,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/command"
+	"github.com/axiom-shell/axiom/backend/internal/secrets"
 )
 
 // secretTool is one fake secret-tool for every test, written by TestMain
@@ -59,14 +60,14 @@ func fakeSecretTool(t *testing.T, keyring map[string]string) string {
 func newService(t *testing.T, keyring map[string]string, env []string) *Service {
 	t.Helper()
 	dir := t.TempDir()
-	secrets := `{"filed": " from-file ", "calendar:filed": "not this", "both": "file-loses"}`
-	if err := os.WriteFile(filepath.Join(dir, "secrets.json"), []byte(secrets), 0o600); err != nil {
+	file := `{"filed": " from-file ", "calendar:filed": "not this", "both": "file-loses"}`
+	if err := os.WriteFile(filepath.Join(dir, "secrets.json"), []byte(file), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	cmd := func() command.Options { return command.Options{Env: env} }
 	return New(Options{
-		StateDir:   dir,
-		SecretTool: fakeSecretTool(t, keyring),
-		Command:    func() command.Options { return command.Options{Env: env} },
+		Secrets: secrets.New(secrets.Options{StateDir: dir, SecretTool: fakeSecretTool(t, keyring), Command: cmd}),
+		Command: cmd,
 	})
 }
 
@@ -78,10 +79,10 @@ func TestKeySources(t *testing.T) {
 		key, source string
 	}{
 		{Provider{ID: "ring", KeyEnv: "MY_KEY"}, "from-env", SourceEnv},
-		{Provider{ID: "ring", KeyEnv: "UNSET_KEY"}, "from-ring", SourceKeyring},
-		{Provider{ID: "both"}, "ring-wins", SourceKeyring},
-		{Provider{ID: "filed"}, "from-file", SourceFile},
-		{Provider{ID: "missing"}, "", SourceNone},
+		{Provider{ID: "ring", KeyEnv: "UNSET_KEY"}, "from-ring", secrets.SourceKeyring},
+		{Provider{ID: "both"}, "ring-wins", secrets.SourceKeyring},
+		{Provider{ID: "filed"}, "from-file", secrets.SourceFile},
+		{Provider{ID: "missing"}, "", secrets.SourceNone},
 		{Provider{ID: "ring", Auth: "none", KeyEnv: "MY_KEY"}, "", SourceUnneeded},
 	}
 	for _, tc := range tests {
@@ -91,19 +92,9 @@ func TestKeySources(t *testing.T) {
 		}
 	}
 	got, err := s.Status(context.Background(), StatusRequest{Providers: []Provider{{ID: "ring"}, {ID: "filed"}, {ID: "missing"}, {ID: "local", Auth: "none"}}})
-	want := map[string]string{"ring": SourceKeyring, "filed": SourceFile, "missing": SourceNone, "local": SourceUnneeded}
-	if err != nil || !reflect.DeepEqual(got.Statuses, want) {
-		t.Errorf("Status: got %v %v, want %v", got.Statuses, err, want)
-	}
-}
-
-// Without secret-tool installed the file still answers
-func TestKeyWithoutSecretTool(t *testing.T) {
-	t.Parallel()
-	s := newService(t, nil, []string{})
-	s.o.SecretTool = filepath.Join(t.TempDir(), "missing")
-	if key, source, err := s.key(context.Background(), Provider{ID: "filed"}); key != "from-file" || source != SourceFile || err != nil {
-		t.Errorf("got %q %q %v", key, source, err)
+	want := map[string]string{"ring": secrets.SourceKeyring, "filed": secrets.SourceFile, "missing": secrets.SourceNone, "local": SourceUnneeded}
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf("Status: got %v %v, want %v", got, err, want)
 	}
 }
 

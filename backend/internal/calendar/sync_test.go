@@ -20,6 +20,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/calendar/ical"
+	"github.com/axiom-shell/axiom/backend/internal/secrets"
 )
 
 const event = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:%s\r\nDTSTART:20260709T140000Z\r\nDTEND:20260709T150000Z\r\nSUMMARY:%s\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
@@ -112,7 +113,18 @@ func (s *calServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func newService(t *testing.T) *Service {
 	t.Helper()
 	dir := t.TempDir()
-	return New(Options{StateDir: filepath.Join(dir, "state"), DataDir: filepath.Join(dir, "data"), Local: time.UTC, Zone: &ical.Zone{Loc: time.UTC}})
+	return New(Options{StateDir: filepath.Join(dir, "state"), DataDir: filepath.Join(dir, "data"), Secrets: testSecrets(t), Local: time.UTC, Zone: &ical.Zone{Loc: time.UTC}})
+}
+
+// testSecrets holds the CalDAV passwords "p" (account acc) and "wrong"
+// (account wrong) in its own secrets.json, with no keyring
+func testSecrets(t *testing.T) *secrets.Store {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "secrets.json"), []byte(`{"calendar:acc": "p", "calendar:wrong": "wrong"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return secrets.New(secrets.Options{StateDir: dir, SecretTool: filepath.Join(dir, "no-secret-tool")})
 }
 
 func readEvents(t *testing.T, s *Service) events {
@@ -140,7 +152,7 @@ func titles(t *testing.T, s *Service) []string {
 func account(id, kind string, hrefs ...string) Account {
 	a := Account{ID: id, Kind: kind}
 	if kind == "caldav" {
-		a.Username, a.Password = "u", "p"
+		a.Username = "u"
 	}
 	for _, h := range hrefs {
 		a.Calendars = append(a.Calendars, struct {
@@ -191,8 +203,10 @@ func TestCalDAVSync(t *testing.T) {
 		t.Errorf("changed sync %+v, fetched %v", r, fake.requested)
 	}
 	// No password: the calendar reports it and keeps its copy
-	accounts[0].Password = ""
-	if r := sync(); len(r.Errors) != 1 || r.Errors[0].Kind != axerr.Unauthorized || r.Count != 2 {
+	if err := s.o.Secrets.Clear(ctx, "calendar", "acc"); err != nil {
+		t.Fatal(err)
+	}
+	if r := sync(); len(r.Errors) != 1 || r.Errors[0].Kind != axerr.NoPassword || r.Count != 2 {
 		t.Errorf("no password %+v", r)
 	}
 }

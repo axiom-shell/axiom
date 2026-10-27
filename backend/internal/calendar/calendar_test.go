@@ -62,7 +62,7 @@ func TestDiscoverCalDAV(t *testing.T) {
 	t.Parallel()
 	ts := httptest.NewServer(davServer())
 	t.Cleanup(ts.Close)
-	s := New(Options{})
+	s := New(Options{Secrets: testSecrets(t)})
 	work := Info{Href: ts.URL + "/dav/cal/u/work/", Name: "Work", Color: "#FF0000", Components: []string{"VEVENT"}}
 	cases := []struct {
 		name, url string
@@ -79,7 +79,7 @@ func TestDiscoverCalDAV(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := s.Discover(context.Background(), DiscoverRequest{Kind: "caldav", URL: c.url, Username: "u", Password: "p"})
+			got, err := s.Discover(context.Background(), DiscoverRequest{Kind: "caldav", URL: c.url, ID: "acc", Username: "u"})
 			if c.want == nil {
 				if axerr.KindOf(err) != axerr.NotFound {
 					t.Errorf("got %+v %v", got, err)
@@ -125,7 +125,7 @@ func TestDiscoverFeed(t *testing.T) {
 		{ts.URL + "/gone.ics", "", "", axerr.NotFound},
 		{"file://" + file + ".missing", "", "", axerr.Unavailable},
 	}
-	s := New(Options{})
+	s := New(Options{Secrets: testSecrets(t)})
 	for _, c := range cases {
 		got, err := s.Discover(context.Background(), DiscoverRequest{Kind: "ics", URL: c.url})
 		if c.kind != "" {
@@ -145,16 +145,16 @@ func TestDiscoverFailures(t *testing.T) {
 	t.Parallel()
 	ts := httptest.NewServer(davServer())
 	t.Cleanup(ts.Close)
-	s := New(Options{})
+	s := New(Options{Secrets: testSecrets(t)})
 	cases := []struct {
 		request DiscoverRequest
 		kind    axerr.Kind
 	}{
-		{DiscoverRequest{Kind: "caldav", URL: ts.URL + "/start", Username: "u", Password: "wrong"}, axerr.Unauthorized},
-		{DiscoverRequest{Kind: "caldav", URL: "https://example.invalid"}, axerr.Unauthorized},
+		{DiscoverRequest{Kind: "caldav", URL: ts.URL + "/start", ID: "wrong", Username: "u"}, axerr.Unauthorized},
+		{DiscoverRequest{Kind: "caldav", URL: "https://example.invalid"}, axerr.NoPassword},
 		{DiscoverRequest{Kind: "ics", URL: "http://127.0.0.1:9/feed.ics"}, axerr.Unavailable},
 		{DiscoverRequest{Kind: "ics", URL: " "}, axerr.NotFound},
-		{DiscoverRequest{Kind: "caldav", URL: "https://exa mple.com", Password: "p"}, axerr.Unavailable},
+		{DiscoverRequest{Kind: "caldav", ID: "acc", URL: "https://exa mple.com"}, axerr.Unavailable},
 	}
 	for _, c := range cases {
 		if _, err := s.Discover(context.Background(), c.request); err == nil || axerr.KindOf(err) != c.kind {
@@ -168,7 +168,7 @@ func TestDiscoverFailures(t *testing.T) {
 			`<d:resourcetype><d:collection/></d:resourcetype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`, r.URL.Path)
 	}))
 	t.Cleanup(empty.Close)
-	if got, err := s.Discover(context.Background(), DiscoverRequest{Kind: "caldav", URL: empty.URL + "/dav/", Password: "p"}); err != nil || got.Calendars == nil || len(got.Calendars) != 0 {
+	if got, err := s.Discover(context.Background(), DiscoverRequest{Kind: "caldav", ID: "acc", URL: empty.URL + "/dav/"}); err != nil || got.Calendars == nil || len(got.Calendars) != 0 {
 		t.Errorf("no calendars: %+v %v, want none and no error", got, err)
 	}
 	for in, want := range map[string]string{"webcal://a.b/c.ics": "https://a.b/c.ics", " dav.example.com ": "https://dav.example.com", "http://x": "http://x"} {

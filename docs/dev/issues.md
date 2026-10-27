@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### Calendar passwords and secrets.json still pass through QML
-- **Where:** `services/core/SecretsManager.qml` (`withSecret`, `_cache`, `_secrets`, `_storeFile`), `services/apps/CalendarManager.qml` (`_withAccounts`), `backend/internal/calendar/calendar.go` (`DiscoverRequest.Password`)
-- **What:** Chat keys are read only by axiom since backend stage 5 (`backend/internal/chat/keys.go`, `secrets.status`), but calendar passwords are still looked up into QML (`secret-tool lookup` through `CommandManager`, cached for the session in `_cache`) and sent in every `calendar.*` call's params. And since QML writes secrets.json itself (read, merge, rewrite through `sh`), it reads the whole file into `_secrets`, chat keys stored there included. The maintainer kept this out of the stage-5 PR (2026-10-27: "Ensure calendar secret issues are noted down to match in issues as well"). The fix mirrors chat: package calendar looks the password up by account id (`service axiom calendar <id>`, then `calendar:<id>` in the file), the calls send the id only, and storing and clearing a secret becomes a daemon method, so `SecretsManager` keeps no secret and reads no file.
-- **Size:** small
-- **Found:** 2026-10-27, while moving the chat requests to axiom (backend stage 5)
-
 ### A fast chat reply can drop the shell's connection
 - **Where:** `backend/internal/rpc/rpc.go` (`Conn.enqueue`, `Limits.QueueSize`), `backend/internal/daemon/chat.go` (`chat.send`'s `c.Notify`), `backend/internal/chat/send.go` (`Send`)
 - **What:** Each piece of a reply is its own `chat.delta` notification (`Notify`, not latest-wins), and `enqueue` never waits: when the connection's 4096-message queue is full it logs `dropping a peer that stopped reading` and closes the connection, every topic and call in flight with it. So if the shell stops reading (its event loop busy) while a fast provider streams, once the socket buffer and 4096 deltas fill (seconds at the fastest servers' token rates, a delta per token or two), the shell's whole connection goes. Before stage 5 curl's pipe simply blocked. A fix would coalesce the deltas `Send` emits (text gathered while a push waits) or let `chat.send` wait for room instead of dropping the peer.
