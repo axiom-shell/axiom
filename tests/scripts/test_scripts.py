@@ -37,10 +37,8 @@ SCRIPTS = ROOT / "scripts"
 THEMES = ROOT / "config" / "themes"
 BASES = [f"base0{c}" for c in "0123456789ABCDEF"]
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
-# Apps the hookups' `requires` look for and the scripts may run; stubs keep
-# them from touching a running session
-STUBS = ["alacritty", "bat", "btop", "foot", "fzf", "ghostty", "hx", "kitty", "lazygit",
-         "nvim", "wezterm", "yazi", "qt5ct", "qt6ct", "pkill", "gsettings", "busctl"]
+# Apps the hookups' `requires` look for, stubbed so their targets are applied
+STUBS = ["qt5ct", "qt6ct"]
 
 
 def scratch_env(tmp):

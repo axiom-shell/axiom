@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/assets"
@@ -229,6 +230,40 @@ func TestIntegrateQueuesDuringARun(t *testing.T) {
 	results, _ := in.Run(context.Background(), themes+"ayu-dark.json", []string{"alacritty"})
 	if len(results) != 2 || !strings.Contains(read(t, home+"/.config/kitty/axiom.conf"), "Ayu Light") {
 		t.Errorf("%+v", results)
+	}
+}
+
+// Calls at once (go test -race): each returns a list, every key asked runs,
+// and nothing is left queued
+func TestIntegrateConcurrentCalls(t *testing.T) {
+	t.Parallel()
+	_, in := scratch(t)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	ran := map[string]bool{}
+	for i := range 8 {
+		wg.Go(func() {
+			theme, key := "ayu-dark", "kitty"
+			if i%2 == 1 {
+				theme, key = "ayu-light", "alacritty"
+			}
+			results, err := in.Run(context.Background(), themes+theme+".json", []string{key})
+			if err != nil || results == nil {
+				t.Errorf("%v %v", results, err)
+			}
+			mu.Lock()
+			for _, r := range results {
+				ran[r.Key] = true
+			}
+			mu.Unlock()
+		})
+	}
+	wg.Wait()
+	if !ran["kitty"] || !ran["alacritty"] {
+		t.Errorf("ran %v", ran)
+	}
+	if in.running || len(in.pending) != 0 {
+		t.Errorf("left running %v, queued %v", in.running, in.pending)
 	}
 }
 
