@@ -75,9 +75,7 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 **Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); [Phase 12](#phase-12-memory-footprint)'s other entries, before row 13 (Phase 6), so the parity pass checks the windows they change; parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload).
 
 **Binaries** (parallel lane, run by its own session on `binaries/*` branches; maintainer, 2026-10-27: "Rolling CI build (Recommended)"; tags: "Download, build fallback (Recommended)"; greeter main: "Allow via CI build (Recommended)"): every clone takes the official binary built from the commit it checks out ([packaging](packaging.md) › Edge builds), `go` only as the fallback.
-- done: the edge prerelease (`.github/workflows/edge.yml`) and the shared `release`, `release/fetch` packages (#144, #145); the greeter's `main` channel through edge (#147).
-- in progress: self-update downloading the binary.
-- later: install.sh downloading before it builds; then the maintainer cuts a release, so the tags channel has binaries.
+- done: the edge prerelease (`.github/workflows/edge.yml`) and the shared `release`, `release/fetch` packages (#144, #145); the greeter's `main` channel through edge (#147); self-update downloading the binary (#148); install.sh downloading before it builds. (The tags channel already has binaries: v1.1.12's release published them.)
 
 ### Taking the next step
 What an agent does when asked for "the next step", to "continue the roadmap", or to work on a row or phase by number. The answer to "where do I start" is always this file: nothing else needs explaining.
