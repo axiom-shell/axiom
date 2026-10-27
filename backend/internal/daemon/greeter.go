@@ -94,11 +94,8 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool) *rp
 		return nil
 	}
 	rpc.Handle(reg, "daemon.hello", func(ctx context.Context, c *rpc.Conn, p HelloParams) (HelloResult, error) {
-		if p.Protocol != buildinfo.Protocol() {
-			return HelloResult{}, axerr.New(axerr.Incompatible, "this axiom speaks protocol %d, the client %d: the shell's files and the binary are from different versions", buildinfo.Protocol(), p.Protocol)
-		}
-		if p.SchemaHash != "" && p.SchemaHash != o.SchemaHash {
-			return HelloResult{}, axerr.New(axerr.Incompatible, "the client read another schema than the greeter was given")
+		if err := p.compatible(o.SchemaHash); err != nil {
+			return HelloResult{}, err
 		}
 		if p.Client != "shell" || !isShell(c.PeerPID()) {
 			return HelloResult{}, axerr.New(axerr.Refused, "only the greeter's quickshell may connect to the greeter's axiom")
