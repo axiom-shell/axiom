@@ -19,6 +19,7 @@ func (d *Daemon) calendarMethods(reg *rpc.Registry) {
 	s := calendar.New(calendar.Options{
 		StateDir: filepath.Join(d.dirs.State, "calendar"),
 		DataDir:  d.dirs.Data,
+		Secrets:  d.secretStore("calendar"),
 		Log:      d.opts.Log.With("part", "calendar"),
 	})
 	rpc.Handle(reg, "calendar.discover", func(ctx context.Context, c *rpc.Conn, p calendar.DiscoverRequest) (calendar.DiscoverResult, error) {

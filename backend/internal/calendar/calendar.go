@@ -7,8 +7,9 @@
 // objects.json and writes the shown calendars' occurrences in the range
 // to events.json beside it, both mode 600 and atomically, which the shell
 // reads (so events show at once, and offline). Parsing, expansion and the
-// edits themselves are package ical's. Passwords come in the request from
-// the shell's SecretsManager and are never logged or written.
+// edits themselves are package ical's. A CalDAV account's password is
+// looked up here by its id (package secrets), so it never passes through
+// QML, and is never logged or written.
 package calendar
 
 import (
@@ -31,6 +32,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/calendar/ical"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
+	"github.com/axiom-shell/axiom/backend/internal/secrets"
 )
 
 const (
@@ -39,8 +41,10 @@ const (
 )
 
 // Options are where the calendars live; zero values are the real ones
-// (only the two folders must be given).
+// (only the two folders and Secrets must be given).
 type Options struct {
+	// Secrets holds the CalDAV accounts' passwords
+	Secrets *secrets.Store
 	// StateDir holds objects.json and events.json
 	StateDir string
 	// DataDir holds the local calendars, in calendars/<href>/
@@ -119,12 +123,13 @@ func localZone() *ical.Zone {
 	return &ical.Zone{Loc: time.UTC}
 }
 
-// DiscoverRequest is an account to find the calendars of.
+// DiscoverRequest is an account to find the calendars of (ID: whose
+// password to use).
 type DiscoverRequest struct {
+	ID       string `json:"id"`
 	Kind     string `json:"kind"` // "caldav" or "ics"
 	URL      string `json:"url"`
 	Username string `json:"username"`
-	Password string `json:"password"`
 }
 
 // DiscoverResult is the calendars found.
@@ -143,10 +148,11 @@ func (s *Service) Discover(ctx context.Context, r DiscoverRequest) (DiscoverResu
 		err = fail(axerr.NotFound, "No address")
 	case r.Kind == "ics":
 		calendars, err = discoverFeed(ctx, s.dav("", ""), target)
-	case r.Password == "":
-		err = fail(axerr.Unauthorized, "No password saved for this account")
 	default:
-		calendars, err = discoverCalDAV(ctx, s.dav(r.Username, r.Password), target)
+		var d *dav
+		if d, err = s.caldav(ctx, r.ID, r.Username); err == nil {
+			calendars, err = discoverCalDAV(ctx, d, target)
+		}
 	}
 	return DiscoverResult{Calendars: calendars}, err
 }
@@ -171,7 +177,6 @@ type Account struct {
 	Kind      string `json:"kind"` // caldav, ics or local
 	URL       string `json:"url"`
 	Username  string `json:"username"`
-	Password  string `json:"password"`
 	Calendars []struct {
 		Href string `json:"href"`
 	} `json:"calendars"`
@@ -247,9 +252,12 @@ func (s *Service) sync(ctx context.Context, r SyncRequest, onlyAccount, onlyCale
 	result := SyncResult{Errors: []SyncError{}}
 	calendars := map[string]*cached{}
 	for _, account := range r.Accounts {
-		d := s.dav("", "")
-		if account.Kind == "caldav" {
-			d = s.dav(account.Username, account.Password)
+		d, noPassword := s.dav("", ""), error(nil)
+		if account.Kind == "caldav" && (onlyAccount == "" || onlyAccount == account.ID) {
+			d, noPassword = s.caldav(ctx, account.ID, account.Username)
+			if ctx.Err() != nil {
+				return SyncResult{}, ctx.Err()
+			}
 		}
 		for _, cal := range account.Calendars {
 			id := account.ID + "|" + cal.Href
@@ -264,8 +272,8 @@ func (s *Service) sync(ctx context.Context, r SyncRequest, onlyAccount, onlyCale
 			var fresh *cached
 			var err error
 			switch {
-			case account.Kind == "caldav" && account.Password == "":
-				err = fail(axerr.Unauthorized, "No password saved for this account")
+			case account.Kind == "caldav" && noPassword != nil:
+				err = noPassword
 			case account.Kind == "caldav":
 				fresh, err = syncCalDAV(ctx, d, cal.Href, old, force)
 			case account.Kind == "local":
@@ -542,7 +550,7 @@ type writer struct {
 	d *dav
 }
 
-func (s *Service) writer(r EditRequest) (writer, error) {
+func (s *Service) writer(ctx context.Context, r EditRequest) (writer, error) {
 	i := slices.IndexFunc(r.Accounts, func(a Account) bool { return a.ID == r.Account })
 	if i < 0 {
 		return writer{}, fail(axerr.NotFound, "Unknown account")
@@ -552,10 +560,9 @@ func (s *Service) writer(r EditRequest) (writer, error) {
 		return writer{}, nil
 	case account.Kind != "caldav":
 		return writer{}, fail(axerr.Refused, "Subscriptions are read-only")
-	case account.Password == "":
-		return writer{}, fail(axerr.Unauthorized, "No password saved for this account")
 	default:
-		return writer{d: s.dav(account.Username, account.Password)}, nil
+		d, err := s.caldav(ctx, account.ID, account.Username)
+		return writer{d: d}, err
 	}
 }
 
@@ -584,7 +591,7 @@ func (s *Service) resync(ctx context.Context, r EditRequest, href string) (EditR
 func (s *Service) Save(ctx context.Context, r SaveRequest) (EditResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	w, err := s.writer(r.EditRequest)
+	w, err := s.writer(ctx, r.EditRequest)
 	if err != nil {
 		return EditResult{}, err
 	}
@@ -620,7 +627,7 @@ func (s *Service) Save(ctx context.Context, r SaveRequest) (EditResult, error) {
 func (s *Service) Delete(ctx context.Context, r EditRequest) (EditResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	w, err := s.writer(r)
+	w, err := s.writer(ctx, r)
 	if err != nil {
 		return EditResult{}, err
 	}

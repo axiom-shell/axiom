@@ -120,7 +120,7 @@ FoldingCard {
       "ok": false,
       "text": ""
     };
-    CalendarManager.discover(account, null, result => {
+    CalendarManager.discover(account, result => {
       if (!root || !root._alive)
         return;
       if (!result.ok) {

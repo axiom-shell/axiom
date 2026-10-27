@@ -10,7 +10,8 @@ import qs.services.ui
 /*
  * Calendars (the Calendar section): CalDAV accounts, .ics subscriptions and
  * local calendars, through axiom's calendar.* methods (backend/internal/
- * calendar; passwords from SecretsManager, in the call's params). axiom
+ * calendar, which looks each CalDAV account's password up by its id:
+ * none passes through here). axiom
  * keeps the server's objects in $XDG_STATE_HOME/axiom/calendar/objects.json
  * and writes their occurrences in `range` to events.json, which this reads
  * (so the calendar shows at once, and offline). Syncs every
@@ -156,44 +157,36 @@ QtObject {
   function sync() {
     if (Paths.greeter || root._jobs.some(job => job.cmd === "sync"))
       return;
-    root._enqueue("sync", done => root._withAccounts(null, accounts => BackendManager.call("calendar.sync", {
-          "range": root.range,
-          "accounts": accounts
-        }, (error, result) => done(error ? root._failure(error) : {
-            "ok": true
-          }))), result => {
+    root._enqueue("sync", done => BackendManager.call("calendar.sync", {
+        "range": root.range,
+        "accounts": root._accounts(null)
+      }, (error, result) => done(error ? root._failure(error) : {
+          "ok": true
+        })), result => {
       if (!result.ok)
         console.warn("[CalendarManager] Sync failed:", result.message);
     });
   }
 
-  // Finds an account's calendars: calls back with { ok, calendars, code,
-  // message }. `password` is used when given, else the saved one.
-  function discover(account, password, callback) {
+  // Finds an account's calendars (with its saved password): calls back
+  // with { ok, calendars, code, message }
+  function discover(account, callback) {
     if (Paths.greeter)
       return;
     // Not queued: it writes nothing a sync reads
-    const run = secret => {
-      if (account.kind === "caldav" && !secret)
-        return callback?.(root._noPassword);
-      BackendManager.call("calendar.discover", {
-        "kind": account.kind,
-        "url": account.url,
-        "username": account.username,
-        "password": secret
-      }, (error, result) => callback?.(error ? root._failure(error) : result.calendars.length > 0 ? {
-          "ok": true,
-          "calendars": result.calendars
-        } : {
-          "ok": false,
-          "kind": "no_calendars",
-          "message": "No calendars found at that address"
-        }));
-    };
-    if (password || account.kind !== "caldav")
-      run(password ?? "");
-    else
-      SecretsManager.withSecret("calendar", account.id, run);
+    BackendManager.call("calendar.discover", {
+      "id": account.id,
+      "kind": account.kind,
+      "url": account.url,
+      "username": account.username
+    }, (error, result) => callback?.(error ? root._failure(error) : result.calendars.length > 0 ? {
+        "ok": true,
+        "calendars": result.calendars
+      } : {
+        "ok": false,
+        "kind": "no_calendars",
+        "message": "No calendars found at that address"
+      }));
   }
 
   // Saves a draft (CalendarEvents.newDraft/draftOf): a new event without an
@@ -229,20 +222,20 @@ QtObject {
         }, "series", callback);
       });
     }
-    root._enqueue("save", done => root._withAccounts(calendar.account, accounts => root._hasPassword(accounts, calendar.account) ? BackendManager.call("calendar.save", {
-          "range": root.range,
-          "accounts": accounts,
-          "account": calendar.account,
-          "calendar": calendar.href,
-          "href": draft.href,
-          "etag": draft.etag,
-          "scope": scope,
-          "rid": draft.rid,
-          "event": CalendarEvents.payloadOf(draft)
-        }, (error, result) => done(error ? root._failure(error) : {
-            "ok": true,
-            "href": result.href
-          })) : done(root._noPassword)), callback);
+    root._enqueue("save", done => BackendManager.call("calendar.save", {
+        "range": root.range,
+        "accounts": root._accounts(calendar.account),
+        "account": calendar.account,
+        "calendar": calendar.href,
+        "href": draft.href,
+        "etag": draft.etag,
+        "scope": scope,
+        "rid": draft.rid,
+        "event": CalendarEvents.payloadOf(draft)
+      }, (error, result) => done(error ? root._failure(error) : {
+          "ok": true,
+          "href": result.href
+        })), callback);
   }
 
   // Deletes an event: "series" (the whole of a recurring one) or
@@ -259,18 +252,18 @@ QtObject {
         "message": "That calendar can't be changed"
       });
     root.events = root.events.filter(e => scope === "occurrence" ? e.key !== event.key : e.href !== event.href);
-    root._enqueue("delete", done => root._withAccounts(calendar.account, accounts => root._hasPassword(accounts, calendar.account) ? BackendManager.call("calendar.delete", {
-          "range": root.range,
-          "accounts": accounts,
-          "account": calendar.account,
-          "calendar": calendar.href,
-          "href": event.href,
-          "etag": event.etag,
-          "scope": scope,
-          "rid": event.rid
-        }, error => done(error ? root._failure(error) : {
-            "ok": true
-          })) : done(root._noPassword)), callback);
+    root._enqueue("delete", done => BackendManager.call("calendar.delete", {
+        "range": root.range,
+        "accounts": root._accounts(calendar.account),
+        "account": calendar.account,
+        "calendar": calendar.href,
+        "href": event.href,
+        "etag": event.etag,
+        "scope": scope,
+        "rid": event.rid
+      }, error => done(error ? root._failure(error) : {
+          "ok": true
+        })), callback);
   }
 
   // The launcher's quick add, parsed (null when it can't be: no title)
@@ -320,7 +313,8 @@ QtObject {
   }
 
   // A failed save, delete or discover, for people: by its axerr kind, or
-  // the shell's own no_calendars and no_password
+  // the shell's own no_calendars and no_password (axiom's unauthorized when
+  // no password is saved)
   function errorText(result) {
     switch (result?.kind) {
     case "unauthorized":
@@ -392,46 +386,27 @@ QtObject {
     }
   }
 
-  // Every account with its shown calendars (and password), as every
-  // call sends them; with `onlyAccount`, that one even with none shown
-  function _withAccounts(onlyAccount, callback) {
-    const accounts = CalendarConfig.accounts.map(account => ({
+  // Every account with its shown calendars, as every call sends them;
+  // with `onlyAccount`, that one even with none shown
+  function _accounts(onlyAccount) {
+    return CalendarConfig.accounts.map(account => ({
           "id": account.id,
           "kind": account.kind,
           "url": account.url,
           "username": account.username,
-          "password": "",
           "calendars": root.shownCalendars.filter(calendar => calendar.account === account.id).map(calendar => ({
                 "href": calendar.href
               }))
         })).filter(account => account.calendars.length > 0 || account.id === onlyAccount);
-    let waiting = accounts.filter(account => account.kind === "caldav").length;
-    const finish = () => callback(accounts);
-    if (waiting === 0)
-      return finish();
-    accounts.filter(account => account.kind === "caldav").forEach(account => SecretsManager.withSecret("calendar", account.id, secret => {
-        account.password = secret;
-        if (--waiting === 0)
-          finish();
-      }));
   }
 
-  // A CalDAV account an edit is for has its password
-  function _hasPassword(accounts, id) {
-    return !accounts.some(account => account.id === id && account.kind === "caldav" && !account.password);
-  }
-
-  readonly property var _noPassword: ({
-      "ok": false,
-      "kind": "no_password",
-      "message": "No password saved for this account"
-    })
-
-  // A failed call as the result callers get
+  // A failed call as the result callers get; axiom's refusal for a CalDAV
+  // account with no password saved is told apart by its message
+  // (calendar.NoPassword)
   function _failure(error) {
     return {
       "ok": false,
-      "kind": error.kind,
+      "kind": error.kind === "unauthorized" && error.message === "No password saved for this account" ? "no_password" : error.kind,
       "message": error.message
     };
   }

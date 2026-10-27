@@ -3,8 +3,8 @@
 // servers copying it, Gemini's generateContent), built from the
 // conversation with its images read by path and streamed back as deltas
 // (send.go), their model lists, and the API keys they take. A key is
-// read here, from where SecretsManager stores it (keys.go), so it never
-// passes through QML, argv or a file of its own.
+// read here, from the environment or package secrets (keys.go), so it
+// never passes through QML, argv or a file of its own.
 package chat
 
 import (
@@ -23,6 +23,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/command"
+	"github.com/axiom-shell/axiom/backend/internal/secrets"
 )
 
 const (
@@ -34,16 +35,15 @@ const (
 )
 
 // Options are where keys come from and how requests go; zero values are
-// the real ones (only StateDir must be given).
+// the real ones (only Secrets must be given).
 type Options struct {
-	// StateDir holds secrets.json
-	StateDir string
-	// Command is how secret-tool runs, and its Env where a provider's
-	// keyEnv is read (nil Env: the daemon's own)
-	Command    func() command.Options
-	SecretTool string
-	Client     *http.Client
-	Log        *slog.Logger
+	// Secrets holds the stored keys
+	Secrets *secrets.Store
+	// Command's Env is where a provider's keyEnv is read (nil Env: the
+	// daemon's own)
+	Command func() command.Options
+	Client  *http.Client
+	Log     *slog.Logger
 }
 
 // Service answers the chat methods.
@@ -57,9 +57,6 @@ type Service struct {
 func New(o Options) *Service {
 	if o.Command == nil {
 		o.Command = func() command.Options { return command.Options{} }
-	}
-	if o.SecretTool == "" {
-		o.SecretTool = "secret-tool"
 	}
 	if o.Client == nil {
 		dialer := &net.Dialer{Timeout: connectTimeout}
@@ -122,7 +119,7 @@ func (s *Service) keyFor(ctx context.Context, p Provider) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if source == SourceNone {
+	if source == secrets.SourceNone {
 		return "", axerr.New(axerr.NotFound, "no API key for %s", p.label())
 	}
 	return key, nil

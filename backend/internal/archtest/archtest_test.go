@@ -87,6 +87,7 @@ var tiers = map[string]int{
 	"internal/rpc":                  tierEdge,
 	"internal/saved":                tierEdge,
 	"internal/screensaver":          tierEdge,
+	"internal/secrets":              tierEdge,
 	"internal/selfupdate":           tierEdge,
 	"internal/shellcmd":             tierEdge,
 	"internal/store":                tierEdge,

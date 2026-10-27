@@ -1,4 +1,4 @@
 {
   "_comment": "What the shell and the axiom binary must agree on to talk (daemon.hello). Bump protocol on any change an older peer would misread; see docs/dev/backend/protocol.md.",
-  "protocol": 2
+  "protocol": 3
 }
