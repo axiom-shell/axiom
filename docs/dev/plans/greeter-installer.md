@@ -1,7 +1,7 @@
 # The greeter installer assumes git
 
-> **Issue:** [The greeter installer assumes git](../issues.md#the-greeter-installer-assumes-git)
-> **Status:** proposed
+> **Issue:** filed as its items: [the greeter's status runs its installer script as the user](../issues.md#the-greeters-status-runs-its-installer-script-as-the-user), [a greeter tree with no `.git` offers an install that fails](../issues.md#a-greeter-tree-with-no-git-offers-an-install-that-fails), [the greeter installer runs bash, awk and jq as root](../issues.md#the-greeter-installer-runs-bash-awk-and-jq-as-root), [the first greeter install runs the user's binary as root](../issues.md#the-first-greeter-install-runs-the-users-binary-as-root), [jq is a dependency only for the greeter installer](../issues.md#jq-is-a-dependency-only-for-the-greeter-installer)
+> **Status:** decided: A, with the note (2026-10-27)
 
 ### Problem
 Two things, designed together because both land in the same file: backend stage 4's last bullet ("`greeter/greeter_install.sh` last: it runs as root", [backend/roadmap.md](../backend/roadmap.md)) and the issue's git assumption.
@@ -48,12 +48,17 @@ Self-update settled the same case for itself (maintainer, 2026-10-27, "Show a no
 
 Size: A is about 950 changed lines (tests and docs apart), past the ~800 gate. Splitting it (B first, the root side second) leaves two implementations of the source rules for one PR's time; one PR like CalDAV keeps the contract and its tests in one review. Recommended: **waive the gate, one PR** (or two, in the order below, if not waived).
 
-### Items
-1. **The installer in Go** (one PR, or 1a + 1b): 1a `greeter.status` / `greeter.apply` (a new pure + edge package pair and a daemon part), `GreeterManager` on them, the no-`.git` note (`clone` in the report, `GreeterSetup` hides Git and Local); 1b `axiom greeter-install` (root, reached before anything of the user's is opened), `greeter_install.sh` reduced to the shim, `GreeterInstall` tests moved to Go (the shim's own case stays in `test_scripts.py`), a Go test that runs the old script's update from git history onto a scratch root and then the new shim, jq dropped (`install.sh`, `Packages.qml`, `DependencyManager`, check_packages), docs ([greeter-install.md](../features/greeter-install.md) › Changes from the script, backend/roadmap.md's bullet `Done`).
+### Decision
+The maintainer's answers (2026-10-27), verbatim:
+- Questions 1 and 2 (the option; the no-`.git` tree): "A plus show a note". A, with i.
+- Question 3 (the gate): "waive limit". One PR.
+- Question 4 (the root contract): "Keep argv (Recommended)". The script's argv and `{ok, changed, backup, error}` reply stay the contract; no marker.
+- Question 5 (the binary run as root on a first install): "root owned checksum verified binary". That is question 5's second choice: require a root-owned binary, the package's, else a release download verified by `SHA256SUMS` before anything runs as root. It replaces A's "the first install runs the user's `$AXIOM_BIN` as root, the same trust as `pkexec bash <clone's script>` today".
 
-### Questions for the maintainer
-1. Who runs as root: A (Go subcommand behind a shim at today's path), B (bash stays for root) or C (polkit names the binary)?
-2. The no-`.git`, no-`.packaged` tree: i (a note, Git and Local hidden) or ii (git from the official repository)?
-3. Waive the ~800-line gate for one PR, or split status (1a) and the root side (1b)?
-4. Keep the script's argv and reply as the root contract (A's free migration), or version it now (a `--json` reply, named flags) at the cost of a marker check like `binaries` for old helpers?
-5. The first install runs the user's `$AXIOM_BIN` as root (as today's runs the user's script). Keep that, or require a root-owned binary (the package's, else a release download verified by `SHA256SUMS` before anything runs as root)?
+### Items
+One PR, the gate waived (question 3), the items in this order, each an issues.md entry:
+1. [The greeter's status runs its installer script as the user](../issues.md#the-greeters-status-runs-its-installer-script-as-the-user): `greeter.status` / `greeter.apply` (a new pure + edge package pair and a daemon part), `GreeterManager` on them.
+2. [A greeter tree with no `.git` offers an install that fails](../issues.md#a-greeter-tree-with-no-git-offers-an-install-that-fails): the note (`clone` in the report, `GreeterSetup` hides Git and Local, Install not offered).
+3. [The greeter installer runs bash, awk and jq as root](../issues.md#the-greeter-installer-runs-bash-awk-and-jq-as-root): `axiom greeter-install` (root, reached before anything of the user's is opened) on the script's argv and reply, `greeter_install.sh` reduced to the shim, `GreeterInstall` tests moved to Go (the shim's own case stays in `test_scripts.py`), a Go test that runs the old script's update from git history onto a scratch root and then the new shim, docs ([greeter-install.md](../features/greeter-install.md) › Changes from the script, backend/roadmap.md's bullet `Done`).
+4. [The first greeter install runs the user's binary as root](../issues.md#the-first-greeter-install-runs-the-users-binary-as-root): a root-owned binary (the package's, else a release download verified by `SHA256SUMS`) before anything runs as root.
+5. [jq is a dependency only for the greeter installer](../issues.md#jq-is-a-dependency-only-for-the-greeter-installer): jq dropped (`install.sh`, `Packages.qml`, `DependencyManager`, check_packages).

@@ -423,11 +423,35 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-16, while auditing the layer-placement branch
 
-### The greeter installer assumes git
-- **Where:** `scripts/greeter/greeter_install.sh`
-- **What:** The greeter installer works on `Paths.axiomPath` as a git clone. A package manager owns updates, so it should hide or switch when there is no `.git` (self-update already does: it says updates come from the package manager). Blocks packaging, not the XDG move.
-- **Size:** needs a plan
-- **Found:** 2026-10-15, while moving config and state to the XDG folders
+### The greeter's status runs its installer script as the user
+- **Where:** `services/session/GreeterManager.qml` (`check`, `_parse`, `_runElevated`, `_script`), `scripts/greeter/greeter_install.sh` (`check`, `hash`)
+- **What:** The installer's no-root half (`check`, `hash`) runs as the user through `CommandManager.run(["bash", script, "check", …])` at startup, on the card and after each action, and the shell parses its JSON; the pkexec is run from QML too. They become daemon methods, `greeter.status` (no root, as `selfupdate.status`) and `greeter.apply { action, source, channel, staged }` (only from the shell, choosing root's helper or the first-install program as `_runElevated` does now), on a new pure + edge package pair and a daemon part, and `GreeterManager` uses them. Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").
+- **Size:** small
+- **Found:** 2026-10-27, while planning the greeter installer's port (#142)
+
+### A greeter tree with no .git offers an install that fails
+- **Where:** `components/forms/GreeterSetup.qml`, `scripts/greeter/greeter_install.sh` (`check`)
+- **What:** A tree with no `.git` and no `.packaged` (a release tarball unpacked by hand, another distribution's package) still offers Git, Local and Install: `check`'s `url` and `currentHash` are empty or the hash of nothing, so the status never turns `outdated`, and Install fails at root's prompt with `not a git clone: <repo>` or `copying <repo> failed`. Decided (maintainer, 2026-10-27: "A plus show a note"): `greeter.status` reports it (`clone: false`), the card hides Git and Local and says the login screen needs a clone or a package, and Install isn't offered. Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").
+- **Size:** small
+- **Found:** 2026-10-27, while planning the greeter installer's port (#142)
+
+### The greeter installer runs bash, awk and jq as root
+- **Where:** `scripts/greeter/greeter_install.sh`, `scripts/greeter/org.axiom.greeter.policy`, `backend/internal/cli/cli.go` (`Main`), `tests/scripts/test_scripts.py` (`GreeterInstall`)
+- **What:** Backend stage 4's last script: 583 lines of bash, awk and jq run as root through pkexec. It becomes `axiom greeter-install install|update|uninstall <repo> <user> [<staged> [<source> [<channel> [<binary>]]]]`, the script's argv and `{ok, changed, backup, error}` reply unchanged (maintainer, 2026-10-27: "Keep argv (Recommended)"): a pure package decides (the newest `v*` tag or `main`, ssh→https, the greetd TOML line, `SHA256SUMS` matching, `.greeter-source`, the refusals), an edge package does it, all under `AXIOM_GREETER_ROOT` for tests; `cli.Main` reaches it before anything of the user's (no log file, XDG dirs or daemon socket), with a test. The script stays as a shim at the policy's path: `exec "$here/../../bin/axiom" greeter-install "$@"`, else `/usr/bin/axiom`, never `PATH` or `$AXIOM_BIN`. The old helper's update installs the shim, so no marker. The `GreeterInstall` tests move to Go (the shim's own case stays), plus a Go test that runs the old script's update from git history onto a scratch root and then the shim; greeter-install.md gets Changes from the script and backend/roadmap.md's bullet turns `Done`. Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").
+- **Size:** small
+- **Found:** 2026-10-27, while planning the greeter installer's port (#142)
+
+### The first greeter install runs the user's binary as root
+- **Where:** `services/session/GreeterManager.qml` (`_sourceArgs`, `_runElevated`)
+- **What:** The first install runs the clone's own script as root (`pkexec /usr/bin/bash <clone>/scripts/greeter/greeter_install.sh`) with the user's `$AXIOM_BIN` (`_sourceArgs`), and option A of the plan kept that trust. Decided (maintainer, 2026-10-27: "root owned checksum verified binary"): require a root-owned binary, the package's, else a release download verified by `SHA256SUMS` before anything runs as root. The plan doesn't say where that download happens or how the first install's pkexec reaches it (A's shim at the clone's path execs the clone's `bin/axiom`): settle it with the maintainer before building. Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").
+- **Size:** small
+- **Found:** 2026-10-27, while planning the greeter installer's port (#142)
+
+### jq is a dependency only for the greeter installer
+- **Where:** `install.sh` (`REQUIRED`), `components/methods/Packages.qml`, `services/core/DependencyManager.qml` (`tools`), `scripts/check_packages.py`
+- **What:** Once the installer is Go, nothing required uses jq: it leaves `install.sh`'s `REQUIRED`, `Packages.packages`, `DependencyManager`'s list and check_packages, with the AUR PKGBUILDs ([packaging.md](packaging.md)). `scripts/bug_info.sh` uses it only when present (`has jq`). Replaces [the onboarding's jq purpose names the theme integrations](#the-onboardings-jq-purpose-names-the-theme-integrations) if done first. Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").
+- **Size:** trivial
+- **Found:** 2026-10-27, while planning the greeter installer's port (#142)
 
 ### Text input warnings when the desktop takes the keyboard
 - **Where:** `components/surfaces/desktop/DesktopWindow.qml` (`WlrLayershell.keyboardFocus`)
