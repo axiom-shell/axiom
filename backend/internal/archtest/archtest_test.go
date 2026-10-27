@@ -58,6 +58,7 @@ var tiers = map[string]int{
 	"internal/claudeusage":         tierEdge,
 	"internal/clipboard":           tierEdge,
 	"internal/command":             tierEdge,
+	"internal/community":           tierEdge,
 	"internal/compositor/binds":    tierEdge,
 	"internal/compositor/edit":     tierEdge,
 	"internal/compositor/ipc":      tierEdge,

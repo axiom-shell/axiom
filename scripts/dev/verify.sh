@@ -91,7 +91,6 @@ for f in "${changed[@]}"; do
   scripts/templates/nvim/*) script_tests+=(NvimModule) ;;
   scripts/greeter/*) script_tests+=(GreeterInstall GreeterSession) ;;
   scripts/pick_path.py) script_tests+=(PickPath) ;;
-  scripts/community_fetch.sh) script_tests+=(CommunityFetch) ;;
   scripts/dev/known_issues.py) script_tests+=(KnownIssues) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/gen_docs.py) script_tests+=(RpcShapes) ;;

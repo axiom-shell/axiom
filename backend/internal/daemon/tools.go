@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/community"
 	"github.com/axiom-shell/axiom/backend/internal/deps"
 	"github.com/axiom-shell/axiom/backend/internal/media"
 	"github.com/axiom-shell/axiom/backend/internal/netif"
@@ -45,6 +46,20 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "media.art", func(ctx context.Context, c *rpc.Conn, p artParams) (artResult, error) {
 		o := media.Options{Dir: media.ArtDir(d.opts.Getenv("XDG_RUNTIME_DIR"))}
 		return artResult{Path: p.Path}, media.Art(ctx, o, p.URL, p.Path)
+	})
+	// The community gallery's files, only into its cache, its palettes'
+	// folder and the wallpapers a setup brings
+	fetcher := community.New(community.Options{Roots: []string{
+		d.dirs.Cache + "community/", d.dirs.CommunityThemes, d.dirs.Data + "wallpapers/",
+	}})
+	type fetchParams struct {
+		Files []community.File `json:"files"`
+	}
+	type fetchResult struct {
+		Files []community.Result `json:"files"`
+	}
+	rpc.Handle(reg, "community.fetch", func(ctx context.Context, c *rpc.Conn, p fetchParams) (fetchResult, error) {
+		return fetchResult{Files: fetcher.Fetch(ctx, p.Files)}, nil
 	})
 }
 
