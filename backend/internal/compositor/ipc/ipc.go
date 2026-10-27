@@ -1,9 +1,9 @@
-// Package ipc talks to the running compositor for axiom's config layer:
-// Hyprland's request and event sockets, sway's i3 IPC and niri's JSON
-// socket. Each is a small client: requests with a reply, and an event
-// stream telling the layer when the compositor reloaded its config. The
-// shell's own connections (windows, workspaces) are its own; these carry
-// only what the config writer needs (docs/dev/compositor/config-modes.md).
+// Package ipc talks to the running compositor: Hyprland's request and
+// event sockets, sway's i3 IPC and niri's JSON socket. Each is a small
+// client: requests with a reply, and an event stream telling axiom's config
+// layer when the compositor reloaded its config
+// (docs/dev/compositor/config-modes.md). The shell's backends send their
+// requests through it too (hypr.request).
 package ipc
 
 import (

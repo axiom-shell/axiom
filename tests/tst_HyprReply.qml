@@ -2,32 +2,12 @@ import QtQuick
 import QtTest
 import qs.components.methods
 
-// HyprReply: when a reply on Hyprland's request socket is complete, and
-// splitting a batch's replies.
+// HyprReply: building a batch, splitting its replies, parsing a reply.
 TestCase {
   name: "HyprReply"
 
   function test_batch() {
     compare(HyprReply.batch(["j/getoption general:gaps_out", "j/animations"]), "[[BATCH]]j/getoption general:gaps_out;j/animations");
-  }
-
-  function test_jsonCompleteOnceItParses() {
-    verify(!HyprReply.complete("j/clients", ""));
-    verify(!HyprReply.complete("j/clients", "[{\"address\": \"0x1\""), "a piece of a long reply");
-    verify(HyprReply.complete("j/clients", "[{\"address\": \"0x1\"}]"));
-  }
-
-  function test_textCompleteOnceThere() {
-    verify(!HyprReply.complete("eval x = 1", ""));
-    verify(HyprReply.complete("eval x = 1", "ok"));
-    verify(HyprReply.complete("eval error('x')", "error: [string \"return error('x');\"]:1: x"));
-  }
-
-  function test_batchCompleteWithItsLastReply() {
-    const request = HyprReply.batch(["j/getoption a", "j/getoption b"]);
-    verify(!HyprReply.complete(request, "{\"int\": 1}"), "one of two replies");
-    verify(!HyprReply.complete(request, "{\"int\": 1}\n\n\n{\"int\""), "the last one cut off");
-    verify(HyprReply.complete(request, "{\"int\": 1}\n\n\n{\"int\": 2}"));
   }
 
   function test_splitBatch() {

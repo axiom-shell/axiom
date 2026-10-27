@@ -10,9 +10,6 @@
     "services/core/FileManager.qml": [
       "FileView"
     ],
-    "services/compositor/HyprlandIpcManager.qml": [
-      "Socket"
-    ],
     "services/core/IpcTarget.qml": [
       "IpcHandler"
     ],
