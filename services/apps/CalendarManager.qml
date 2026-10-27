@@ -313,8 +313,7 @@ QtObject {
   }
 
   // A failed save, delete or discover, for people: by its axerr kind, or
-  // the shell's own no_calendars and no_password (axiom's unauthorized when
-  // no password is saved)
+  // the shell's own no_calendars
   function errorText(result) {
     switch (result?.kind) {
     case "unauthorized":
@@ -400,13 +399,11 @@ QtObject {
         })).filter(account => account.calendars.length > 0 || account.id === onlyAccount);
   }
 
-  // A failed call as the result callers get; axiom's refusal for a CalDAV
-  // account with no password saved is told apart by its message
-  // (calendar.NoPassword)
+  // A failed call as the result callers get
   function _failure(error) {
     return {
       "ok": false,
-      "kind": error.kind === "unauthorized" && error.message === "No password saved for this account" ? "no_password" : error.kind,
+      "kind": error.kind,
       "message": error.message
     };
   }

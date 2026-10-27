@@ -151,7 +151,7 @@ func TestDiscoverFailures(t *testing.T) {
 		kind    axerr.Kind
 	}{
 		{DiscoverRequest{Kind: "caldav", URL: ts.URL + "/start", ID: "wrong", Username: "u"}, axerr.Unauthorized},
-		{DiscoverRequest{Kind: "caldav", URL: "https://example.invalid"}, axerr.Unauthorized},
+		{DiscoverRequest{Kind: "caldav", URL: "https://example.invalid"}, axerr.NoPassword},
 		{DiscoverRequest{Kind: "ics", URL: "http://127.0.0.1:9/feed.ics"}, axerr.Unavailable},
 		{DiscoverRequest{Kind: "ics", URL: " "}, axerr.NotFound},
 		{DiscoverRequest{Kind: "caldav", ID: "acc", URL: "https://exa mple.com"}, axerr.Unavailable},

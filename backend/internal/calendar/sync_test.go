@@ -206,7 +206,7 @@ func TestCalDAVSync(t *testing.T) {
 	if err := s.o.Secrets.Clear(ctx, "calendar", "acc"); err != nil {
 		t.Fatal(err)
 	}
-	if r := sync(); len(r.Errors) != 1 || r.Errors[0].Kind != axerr.Unauthorized || r.Count != 2 {
+	if r := sync(); len(r.Errors) != 1 || r.Errors[0].Kind != axerr.NoPassword || r.Count != 2 {
 		t.Errorf("no password %+v", r)
 	}
 }

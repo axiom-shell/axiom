@@ -81,7 +81,7 @@ func (s *Store) Lookup(ctx context.Context, scope, id string) (string, string, e
 	}
 	secrets, err := s.read()
 	if err != nil {
-		s.o.Log.Warn("secrets.json doesn't parse", "err", err)
+		s.o.Log.Warn("secrets.json can't be read", "err", err)
 	}
 	v, _ := secrets[slot(scope, id)].(string)
 	if v = strings.TrimSpace(v); v != "" {
@@ -154,13 +154,15 @@ func (s *Store) run(ctx context.Context, input *string, args ...string) (command
 
 func (s *Store) path() string { return filepath.Join(s.o.StateDir, "secrets.json") }
 
-// read is secrets.json (empty without one; an error when it doesn't
-// parse, so a write never replaces what's there)
+// read is secrets.json (empty without one; an error when it can't be read
+// or doesn't parse, so a write never replaces what's there)
 func (s *Store) read() (map[string]any, error) {
 	secrets := map[string]any{}
 	data, err := os.ReadFile(s.path())
-	if err != nil {
+	if errors.Is(err, fs.ErrNotExist) {
 		return secrets, nil
+	} else if err != nil {
+		return secrets, axerr.Wrap(axerr.Unavailable, err, "reading %s", s.path())
 	}
 	if err := json.Unmarshal(data, &secrets); err != nil {
 		return map[string]any{}, axerr.Wrap(axerr.Unavailable, err, "%s doesn't parse", s.path())

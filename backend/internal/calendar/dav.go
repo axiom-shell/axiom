@@ -36,13 +36,8 @@ type dav struct {
 	auth   string
 }
 
-// NoPassword is the unauthorized error's message for a CalDAV account
-// with no password saved, which the shell tells apart from the server's
-// refusal by it (CalendarManager._failure)
-const NoPassword = "No password saved for this account"
-
 // caldav is a CalDAV account's client, with its saved password (looked
-// up by id); unauthorized without one
+// up by id); no_password without one
 func (s *Service) caldav(ctx context.Context, id, username string) (*dav, error) {
 	password := ""
 	if id != "" {
@@ -52,7 +47,7 @@ func (s *Service) caldav(ctx context.Context, id, username string) (*dav, error)
 		}
 	}
 	if password == "" {
-		return nil, fail(axerr.Unauthorized, NoPassword)
+		return nil, fail(axerr.NoPassword, "No password saved for this account")
 	}
 	return s.dav(username, password), nil
 }
