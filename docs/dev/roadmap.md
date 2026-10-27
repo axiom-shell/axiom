@@ -296,6 +296,7 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 - [Small tooling leftovers](issues.md#small-tooling-leftovers)
 - [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
 - [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
+- [An ipcroute test fails with text file busy](issues.md#an-ipcroute-test-fails-with-text-file-busy)
 - [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
 - [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
