@@ -115,6 +115,30 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
+### The shell's heap never shrinks after a spike
+- **Where:** `backend/internal/supervise/supervise.go` (`environ`)
+- **What:** At rest qs holds 838 MB RSS: 435 MB anonymous malloc heap, against a JS heap of 42 MB, and 207 MB of it AnonHugePages (THP `always`). With 105 threads glibc can keep up to 64 arenas, so the heap freed when an overlay page or popout is torn down isn't returned, and RSS stays over 1 GB after use. Setting `GLIBC_TUNABLES` (`glibc.malloc.arena_max`, `glibc.malloc.trim_threshold`, merged with the user's own) in the shell's environment should bring it back down; opting the shell out of THP (`PR_SET_THP_DISABLE`, inherited across exec) is the maintainer's call. Measure each in a nested session: RSS, Private_Dirty and AnonHugePages before and after 10 overlay cycles.
+- **Size:** small
+- **Found:** 2026-10-27, while measuring the shell's memory
+
+### Nineteen windows stay mapped on one monitor
+- **Where:** `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/border/BorderPanel.qml`, `components/surfaces/backdrop/ScreenBackdrop.qml`, `shell/BlurBackingWindow.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/overlay/OverlayPanel.qml`
+- **What:** Each window has its own render thread and GL context (19 `QSGRenderThread`s on one niri monitor). 9 are the border (4 strips, 4 corners, the shadow); the backdrop, blur backing and border shadow are `held` only for niri's map-order stacking. About 25 more (overlay, launcher, a submenu per popout host, edge-popout bodies, power menu, overview, switcher, prompts) keep their context for the session once shown. Options: strips drawing their own corners, windows unloaded a while after they hide, one stacking anchor instead of three held windows ([layer arrangement](compositor/layer-arrangement.md)).
+- **Size:** needs a plan
+- **Found:** 2026-10-27, while measuring the shell's memory
+
+### Images decoded at full size or more than once
+- **Where:** `components/surfaces/wallpaper/WallpaperWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/content/NowPlaying/NowPlaying.qml`
+- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer).
+- **Size:** small
+- **Found:** 2026-10-27, while measuring the shell's memory
+
+### ChatManager's attachment cache is never cleared
+- **Where:** `services/apps/ChatManager.qml` (`_encoded`)
+- **What:** Every attached image's base64 (up to about 7 MB each) is kept for the session.
+- **Size:** trivial
+- **Found:** 2026-10-27, while measuring the shell's memory
+
 ### An edge menu can be bigger than its screen
 - **Where:** `config/EdgeMenusConfig.qml` (`cardUnitOf`), `components/methods/GridPlacement.qml` (`menuPlacement`)
 - **What:** A menu's cards are the card size on its screen (`OverlayConfig.cardUnitOn`, `Widget.cardSize` up to 150 %) times its own `moduleScale` (up to 200 %), and nothing caps the result to the screen: `menuPlacement` sizes the menu from its modules (`trackSizes`) and only places it along the edge. With a high card size and Module size (a 1080 px screen at 150 % × 200 %: cards of about 1350 px), a menu's depth or length passes the screen and the rest is cut off. A fix would shrink its cards to fit, as `screenArrangement` does for screen layouts.
