@@ -145,12 +145,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while measuring the shell's memory
 
-### ChatManager's attachment cache is never cleared
-- **Where:** `services/apps/ChatManager.qml` (`_encoded`)
-- **What:** Every attached image's base64 (up to about 7 MB each) is kept for the session.
-- **Size:** trivial
-- **Found:** 2026-10-27, while measuring the shell's memory
-
 ### An edge menu can be bigger than its screen
 - **Where:** `config/EdgeMenusConfig.qml` (`cardUnitOf`), `components/methods/GridPlacement.qml` (`menuPlacement`)
 - **What:** A menu's cards are the card size on its screen (`OverlayConfig.cardUnitOn`, `Widget.cardSize` up to 150 %) times its own `moduleScale` (up to 200 %), and nothing caps the result to the screen: `menuPlacement` sizes the menu from its modules (`trackSizes`) and only places it along the edge. With a high card size and Module size (a 1080 px screen at 150 % × 200 %: cards of about 1350 px), a menu's depth or length passes the screen and the rest is cut off. A fix would shrink its cards to fit, as `screenArrangement` does for screen layouts.

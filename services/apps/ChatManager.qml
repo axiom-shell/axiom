@@ -5,15 +5,15 @@ import Quickshell
 import Quickshell.Io
 
 import qs.config
-import qs.components.methods
 import qs.services.core
 import qs.services.system
 import qs.services.ui
 
 /*
- * The chat: conversations, sending and streaming replies (ChatRequest,
- * ChatProtocol), attachments, and their history on disk. Every Chat module
- * shows the one current conversation.
+ * The chat: conversations, sending and streaming replies (axiom's
+ * chat.send, which reads the key and the attachments itself and pushes
+ * the reply as chat.delta), attachments, and their history on disk. Every
+ * Chat module shows the one current conversation.
  *
  * A conversation is { id, title, created, updated, preset, provider, model,
  * messages }; a message is { role: "user" | "assistant", text, time, and
@@ -45,7 +45,7 @@ Singleton {
 
   // The reply streaming in: its text and thinking so far (the last
   // message, while its state is "streaming", reads these)
-  readonly property bool busy: _request !== null
+  readonly property bool busy: _replyId !== ""
   property string streamingText: ""
   property string streamingThinking: ""
   // When the reply started, and its thinking ended (0 while it thinks)
@@ -170,9 +170,12 @@ Singleton {
     root.send(text);
   }
 
+  // The reply ends with what streamed so far (chat.send answers stopped)
   function stop() {
-    if (root._request)
-      root._request.stop();
+    if (root.busy)
+      BackendManager.call("chat.stop", {
+        "id": root._replyId
+      });
   }
 
   // The last reply again (after an error, or for a different answer)
@@ -303,9 +306,8 @@ Singleton {
 
   // -- Private --
 
-  property ChatRequest _request: null
-  // base64 of every attachment sent this session, by path
-  property var _encoded: ({})
+  // The reply streaming in, as chat.send and chat.delta name it
+  property string _replyId: ""
   property string _pendingText: ""
   property string _pendingThinking: ""
 
@@ -398,20 +400,6 @@ Singleton {
     });
   }
 
-  // Encodes every attachment in the conversation not encoded yet, then
-  // calls back
-  function _encodeAll(messages, callback) {
-    const paths = [].concat(...messages.map(m => (m.attachments ?? []).map(a => a.path))).filter(path => root._encoded[path] === undefined);
-    if (paths.length === 0)
-      return callback();
-    const path = paths[0];
-    _run(["base64", "-w0", "--", path], (ok, out) => {
-      // A missing file (deleted by hand) is sent without its image
-      root._encoded[path] = ok ? out.trim() : "";
-      _encodeAll(messages, callback);
-    });
-  }
-
   function _reply() {
     const provider = root.provider;
     const model = root.model;
@@ -440,26 +428,45 @@ Singleton {
     if (!model)
       return _fail("config", I18n.tr("{0} has no model to use. Add one in Settings → Chat.", provider.name));
 
-    const request = _requestComponent.createObject(root, {
-      kind: provider.kind
-    });
-    root._request = request;
-    SecretsManager.withKey(provider, key => {
-      if (root._request !== request)
+    const id = Date.now().toString(36) + Math.floor(Math.random() * 1e9).toString(36);
+    root._replyId = id;
+    BackendManager.call("chat.send", {
+      "id": id,
+      "provider": root._wire(provider),
+      "model": model,
+      // Only what goes to the provider: attachments are read by path
+      "messages": history.map(m => ({
+            "role": m.role,
+            "text": m.text ?? "",
+            "state": m.state,
+            "provider": m.provider,
+            "model": m.model,
+            "blocks": m.blocks,
+            "attachments": (m.attachments ?? []).map(a => ({
+                  "path": a.path,
+                  "mime": a.mime
+                }))
+          })),
+      "system": root.preset.systemPrompt,
+      "maxTokens": ChatConfig.maxTokens,
+      "effort": root.preset.effort,
+      "showThinking": ChatConfig.showThinking
+    }, (error, result) => {
+      if (id !== root._replyId)
         return;
-      if (provider.auth !== "none" && !key)
-        return _fail("nokey", I18n.tr("No API key for {0}.", provider.name));
-      _encodeAll(history, () => {
-        if (root._request !== request)
-          return;
-        const body = ChatProtocol.request(provider, model, key, history, {
-          system: root.preset.systemPrompt,
-          maxTokens: ChatConfig.maxTokens,
-          effort: root.preset.effort,
-          showThinking: ChatConfig.showThinking,
-          images: root._encoded
-        });
-        request.start(body, model);
+      if (error) {
+        const kind = {
+          "unauthorized": "auth",
+          "not_found": "nokey",
+          "unavailable": "network"
+        }[error.kind] ?? "";
+        return _fail(kind, kind === "nokey" ? I18n.tr("No API key for {0}.", provider.name) : error.message);
+      }
+      _finish({
+        state: result.stopped ? "stopped" : "done",
+        model: result.model || model,
+        blocks: result.blocks,
+        notice: result.notice
       });
     });
   }
@@ -491,6 +498,7 @@ Singleton {
   function _finish(changes) {
     _flushNow();
     _flush.stop();
+    root._replyId = "";
     const messages = root.conversation.messages.slice();
     const last = messages[messages.length - 1];
     if (last?.role !== "assistant" || last.state !== "streaming")
@@ -501,10 +509,6 @@ Singleton {
       thinking: root.streamingThinking,
       thinkingMs: thinkingMs
     }, changes);
-    if (root._request) {
-      root._request.destroy();
-      root._request = null;
-    }
     _update({
       messages: messages
     });
@@ -519,24 +523,6 @@ Singleton {
       errorKind: kind,
       error: message
     });
-  }
-
-  function _onFinished(request, state) {
-    if (request !== root._request)
-      return;
-    _finish({
-      state: request.stopped ? "stopped" : "done",
-      model: state.model || root.model,
-      blocks: request.stopped ? [] : state.blocks.filter(b => b),
-      notice: ChatProtocol.stopNotice(state.stopReason)
-    });
-  }
-
-  function _onFailed(request, status, message) {
-    if (request !== root._request)
-      return;
-    const kind = status === 401 || status === 403 ? "auth" : status === 0 ? "network" : "";
-    _fail(kind, status > 0 ? `${status}: ${message}` : message);
   }
 
   // -- Disk --
@@ -618,15 +604,6 @@ Singleton {
       _noticeClear.restart();
   }
 
-  property Component _requestComponent: Component {
-    ChatRequest {
-      id: request
-      onDelta: (kind, text) => root._onDelta(kind, text)
-      onFinished: state => root._onFinished(request, state)
-      onFailed: (status, message) => root._onFailed(request, status, message)
-    }
-  }
-
   property Component _fileComponent: Component {
     FileView {
       blockWrites: true
@@ -660,6 +637,10 @@ Singleton {
   }
 
   Component.onCompleted: {
+    BackendManager.listen("chat.delta", delta => {
+      if (delta.id === root._replyId)
+        root._onDelta(delta.kind, delta.text);
+    });
     Quickshell.execDetached(["mkdir", "-p", root.chatDir]);
     root.conversations = root._loadIndex();
     root.conversation = _blank(ChatConfig.defaultPreset);

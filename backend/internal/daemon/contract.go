@@ -39,6 +39,7 @@ func pushShapes() []rpc.PushShape {
 		pushWaylandState.Shape(), pushNightLightState.Shape(),
 		pushClipboardState.Shape(),
 		pushExecOutputs.Shape(),
+		pushChatDelta.Shape(),
 	}
 }
 

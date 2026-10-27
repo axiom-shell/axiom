@@ -1,7 +1,8 @@
 // Package chat is the chat's side effects (ChatManager): the providers'
 // HTTP APIs (Anthropic's Messages, OpenAI's Chat Completions and the
-// servers copying it, Gemini's generateContent), their model lists, and
-// the API keys they take. A key is read here, from where SecretsManager
+// servers copying it, Gemini's generateContent), built from the
+// conversation with its images read by path and streamed back as deltas
+// (send.go), their model lists, and the API keys they take. A key is read here, from where SecretsManager
 // stores it (keys.go), so it never passes through QML, argv or a file of
 // its own.
 package chat
@@ -17,6 +18,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -46,7 +48,9 @@ type Options struct {
 
 // Service answers the chat methods.
 type Service struct {
-	o Options
+	o       Options
+	mu      sync.Mutex
+	running map[string]context.CancelCauseFunc // replies streaming, by id, for Stop
 }
 
 // New makes the service.
@@ -66,7 +70,7 @@ func New(o Options) *Service {
 	if o.Log == nil {
 		o.Log = slog.New(slog.DiscardHandler)
 	}
-	return &Service{o: o}
+	return &Service{o: o, running: map[string]context.CancelCauseFunc{}}
 }
 
 // Provider is a Chat.providers entry, as the shell sends it (never with a

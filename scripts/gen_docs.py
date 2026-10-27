@@ -681,14 +681,15 @@ GO_ROOT = ROOT / "backend/internal"
 # (`pushX = rpc.Push[T]{Method: "name"`) and sent (`pushX.Send(…,
 # subscribedTo(topic))`; a receiver that isn't a declaration sends what
 # an Options func's Push names; one handed to a hub as `Method:
-# pushX.Method`, such as command.Watches's, goes only to the connections
-# that asked), a call into the shell
+# pushX.Method`, such as command.Watches's, or notified on a connection
+# (`c.Notify(pushX.Method`, chat.send's deltas), goes only to the
+# connections that asked), a call into the shell
 GO_HANDLE = re.compile(r'\brpc\.Handle\(reg,\s*"([\w.]+)"')
 GO_HELPER = re.compile(r'\b(\w+) := func\(name string\b')
 GO_PUSH_DECL = re.compile(r'\b(\w+)\s*=\s*rpc\.Push\[.*?\]\{Method:\s*"([\w.]+)"')
 GO_PUSH_SEND = re.compile(r'\b(\w+)\.Send\([\w.]*server,.*subscribedTo\((\w+)\)')
 GO_PUSH = re.compile(r'\bPush\("([\w.]+)"')
-GO_PUSH_METHOD = re.compile(r'\bMethod:\s*(push\w+)\.Method\b')
+GO_PUSH_METHOD = re.compile(r'(?:\bMethod:\s*|\.Notify(?:Latest)?\()(push\w+)\.Method\b')
 GO_CALL = re.compile(r'\.Call\(ctx,\s*"([\w.]+)"')
 GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')
 # A polled topic (internal/topics): its methods and push, named after it

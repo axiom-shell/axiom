@@ -124,7 +124,7 @@ Dependencies point one way:
 
 ## Services
 
-- One `pragma Singleton QtObject` per domain, named `*Manager`, exposing readonly properties, signals and functions. Non-singleton helpers are named for what they are (`ConfigDraft`, `ConsumerRegistry`, `ChatRequest`). Don't shadow Quickshell singletons (`NetworkingManager`, not `Networking`).
+- One `pragma Singleton QtObject` per domain, named `*Manager`, exposing readonly properties, signals and functions. Non-singleton helpers are named for what they are (`ConfigDraft`, `ConsumerRegistry`, `DeadlineTicker`). Don't shadow Quickshell singletons (`NetworkingManager`, not `Networking`).
 - A service with an IPC target nothing else references is created from `shell.qml`'s `_services`.
 - **Quickshell.Io's side effects are moving to the axiom daemon**: only the files in `scripts/quickshell-io-allowlist.json` use `Process`, `FileView`, `Socket`, `IpcHandler` or `Quickshell.execDetached` directly (`check_structure` enforces it, and the list only shrinks). New code runs commands through `CommandManager.run` / `runDetached`, reads files through `FileManager.read`, keeps small state through `StateManager`, takes IPC through `IpcTarget`, and asks the daemon for anything else (a file to watch or write, a socket). Drop a file's entry in the change that moves it.
 - **Anything polled goes through `acquire(owner, request)` / `release(owner)`** (`ConsumerRegistry`): fetched once for all consumers at the shortest interval asked, not at all with none. Acquire in `Component.onCompleted` (again when the config-derived request changes), release in `onDestruction`.

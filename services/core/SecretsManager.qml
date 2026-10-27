@@ -1,7 +1,6 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 
 import qs.config
 
@@ -43,16 +42,6 @@ QtObject {
     return root.statuses[provider.id] ?? "";
   }
 
-  // Calls back with the provider's key, "" when there is none
-  function withKey(provider, callback) {
-    if (provider.auth === "none")
-      return callback("");
-    const fromEnv = provider.keyEnv ? Quickshell.env(provider.keyEnv) : "";
-    if (fromEnv)
-      return callback(fromEnv);
-    root.withSecret("provider", provider.id, callback);
-  }
-
   // Asks axiom where every provider's key is again (after it changed
   // elsewhere)
   function refresh(providers) {
@@ -87,7 +76,8 @@ QtObject {
     return root.statuses[root._slot(scope, id)] ?? "";
   }
 
-  // Calls back with the secret, "" when there is none
+  // Calls back with the secret, "" when there is none (never a chat key:
+  // axiom reads those)
   function withSecret(scope, id, callback) {
     const slot = root._slot(scope, id);
     if (root._cache[slot] !== undefined)
@@ -155,7 +145,7 @@ QtObject {
 
   function _clearCache(scope) {
     for (const slot of Object.keys(root._cache))
-      if (scope === "provider" ? !slot.includes(":") : slot.startsWith(scope + ":"))
+      if (slot.startsWith(scope + ":"))
         delete root._cache[slot];
   }
 
