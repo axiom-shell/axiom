@@ -157,6 +157,7 @@ func TestDiscoverFailures(t *testing.T) {
 		{DiscoverRequest{Kind: "caldav", URL: "https://example.invalid"}, "noPassword"},
 		{DiscoverRequest{Kind: "ics", URL: "http://127.0.0.1:9/feed.ics"}, "network"},
 		{DiscoverRequest{Kind: "ics", URL: " "}, "notFound"},
+		{DiscoverRequest{Kind: "caldav", URL: "https://exa mple.com", Password: "p"}, "network"},
 	}
 	for _, c := range cases {
 		got, err := s.Discover(context.Background(), c.request)

@@ -269,7 +269,10 @@ func calendarInfo(href string, p props) Info {
 	name := p.get(nsD, "displayname").text()
 	if name == "" {
 		path := strings.TrimRight(href, "/")
-		name, _ = url.PathUnescape(path[strings.LastIndex(path, "/")+1:])
+		name = path[strings.LastIndex(path, "/")+1:]
+		if unescaped, err := url.PathUnescape(name); err == nil {
+			name = unescaped
+		}
 	}
 	return Info{Href: href, Name: name, Color: color, Components: components, ReadOnly: readOnly}
 }
@@ -278,7 +281,10 @@ func calendarInfo(href string, p props) Info {
 // the principal, its calendar home, the collections there; then the same
 // from /.well-known/caldav
 func discoverCalDAV(ctx context.Context, d *dav, start string) ([]Info, error) {
-	base, _ := url.Parse(start)
+	base, err := url.Parse(start)
+	if err != nil {
+		return nil, fail("network", "Could not reach %s: %v", start, err)
+	}
 	wellKnown, _ := base.Parse("/.well-known/caldav")
 	var last error
 	for _, candidate := range []string{start, wellKnown.String()} {

@@ -162,7 +162,7 @@ QtObject {
   function sync() {
     if (Paths.greeter || root._jobs.some(job => job.cmd === "sync"))
       return;
-    root._enqueue("sync", finish => root._withAccounts(null, base => root._helper("sync", base, finish)), result => {
+    root._enqueue("sync", done => root._withAccounts(null, base => done(base)), result => {
       if (!result.ok)
         console.warn("[CalendarManager] Sync failed:", result.message);
     });
@@ -173,16 +173,17 @@ QtObject {
   function discover(account, password, callback) {
     if (Paths.greeter)
       return;
-    const run = secret => root._enqueue("discover", finish => BackendManager.call("calendar.discover", {
-          "kind": account.kind,
-          "url": account.url,
-          "username": account.username,
-          "password": secret
-        }, (error, result) => finish(error ? {
-            "ok": false,
-            "code": "helper",
-            "message": error.message
-          } : result)), callback);
+    // Not queued: it writes nothing the helper reads
+    const run = secret => BackendManager.call("calendar.discover", {
+        "kind": account.kind,
+        "url": account.url,
+        "username": account.username,
+        "password": secret
+      }, (error, result) => callback?.(error ? {
+          "ok": false,
+          "code": "helper",
+          "message": error.message
+        } : result));
     if (password || account.kind !== "caldav")
       run(password ?? "");
     else
@@ -222,7 +223,7 @@ QtObject {
         }, "series", callback);
       });
     }
-    root._enqueue("save", finish => root._withAccounts(calendar.account, base => root._helper("save", Object.assign(base, {
+    root._enqueue("save", done => root._withAccounts(calendar.account, base => done(Object.assign(base, {
           "account": calendar.account,
           "calendar": calendar.href,
           "href": draft.href,
@@ -230,7 +231,7 @@ QtObject {
           "scope": scope,
           "rid": draft.rid,
           "event": CalendarEvents.payloadOf(draft)
-        }), finish)), callback);
+        }))), callback);
   }
 
   // Deletes an event: "series" (the whole of a recurring one) or
@@ -247,14 +248,14 @@ QtObject {
         "message": "That calendar can't be changed"
       });
     root.events = root.events.filter(e => scope === "occurrence" ? e.key !== event.key : e.href !== event.href);
-    root._enqueue("delete", finish => root._withAccounts(calendar.account, base => root._helper("delete", Object.assign(base, {
+    root._enqueue("delete", done => root._withAccounts(calendar.account, base => done(Object.assign(base, {
           "account": calendar.account,
           "calendar": calendar.href,
           "href": event.href,
           "etag": event.etag,
           "scope": scope,
           "rid": event.rid
-        }), finish)), callback);
+        }))), callback);
   }
 
   // The launcher's quick add, parsed (null when it can't be: no title)
@@ -344,7 +345,7 @@ QtObject {
   readonly property string _dataDir: Paths.userDataPath
   readonly property string _desktopEntry: "axiom-calendar"
   property ConsumerRegistry _registry: ConsumerRegistry {}
-  // [{ cmd, start(finish), callback }], and the one running
+  // [{ cmd, build(done), callback }], and the one running
   property var _jobs: []
   property var _running: null
   readonly property var _state: StateManager.createStateHandler("calendar")
@@ -417,11 +418,11 @@ QtObject {
       }));
   }
 
-  function _enqueue(cmd, start, callback) {
+  function _enqueue(cmd, build, callback) {
     root._jobs = root._jobs.concat([
       {
         "cmd": cmd,
-        "start": start,
+        "build": build,
         "callback": callback
       }
     ]);
@@ -434,36 +435,28 @@ QtObject {
     const job = root._jobs[0];
     root._jobs = root._jobs.slice(1);
     root._running = job;
-    job.start(result => {
-      // What the helper needs; discover is the daemon's
-      if (job.cmd !== "discover") {
+    job.build(request => {
+      CommandManager.run(["python3", Paths.scriptsPath + "calendar_sync.py", job.cmd], (code, out, err) => {
+        let result = null;
+        try {
+          result = JSON.parse(out.trim().split("\n").pop());
+        } catch (e) {
+          result = {
+            "ok": false,
+            "code": "helper",
+            "message": err.trim().split("\n").pop() || "exit " + code
+          };
+        }
+        if (err.trim())
+          console.log("[CalendarManager]", job.cmd + ":", err.trim());
         root.missingModule = result.code === "missingModule" ? result.message : "";
         root.available = result.code !== "helper" && root.missingModule === "";
         root._loadEvents();
-      }
-      root._running = null;
-      job.callback?.(result);
-      root._next();
+        root._running = null;
+        job.callback?.(result);
+        root._next();
+      }, JSON.stringify(request));
     });
-  }
-
-  // Runs calendar_sync.py's `cmd` on `request`, calling back with its result
-  function _helper(cmd, request, finish) {
-    CommandManager.run(["python3", Paths.scriptsPath + "calendar_sync.py", cmd], (code, out, err) => {
-      let result = null;
-      try {
-        result = JSON.parse(out.trim().split("\n").pop());
-      } catch (e) {
-        result = {
-          "ok": false,
-          "code": "helper",
-          "message": err.trim().split("\n").pop() || "exit " + code
-        };
-      }
-      if (err.trim())
-        console.log("[CalendarManager]", cmd + ":", err.trim());
-      finish(result);
-    }, JSON.stringify(request));
   }
 
   function _loadEvents() {

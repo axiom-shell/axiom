@@ -39,7 +39,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: finding calendars thr
   - `helper` when it couldn't run at all, which also clears `available`;
   - `missingModule` (`message` the module) when icalendar or dateutil isn't installed: `missingModule` is set, `available` cleared, and `missingText` names the package to install (the Accounts card's description).
 - `errorText(result)` turns these into words.
-- One call runs at a time. Later jobs are queued, and a sync isn't queued twice.
+- One helper call runs at a time. Later jobs are queued, and a sync isn't queued twice. `discover` isn't queued: it writes nothing the helper reads.
 
 ### Discover
 - `backend/internal/calendar` (Go's HTTP and XML; the feed read by the pure `calendar/ical`), wired in `daemon/calendar.go`.
