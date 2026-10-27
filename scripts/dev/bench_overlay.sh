@@ -77,12 +77,16 @@ step() {
   tail -n +"$((before + 1))" <<<"$after" | sed 's/^/    /'
 }
 
-[[ $mem -eq 1 ]] && printf '%-14s%s\n' memory "$("$repo/scripts/dev/mem.sh" -H "$pid" | head -1)" && printf '%-14s%s\n' before "$("$repo/scripts/dev/mem.sh" "$pid")"
+if [[ $mem -eq 1 ]]; then
+  "$repo/scripts/dev/mem.sh" -H "$pid" | sed '1s/^/memory        /; 2s/^/before        /'
+fi
 for ((cycle = 1; cycle <= cycles; cycle++)); do
   step open
   for page in "$@"; do
     step page "$page"
   done
   step close
-  [[ $mem -eq 1 ]] && printf '%-14s%s\n' "cycle $cycle" "$("$repo/scripts/dev/mem.sh" "$pid")"
+  if [[ $mem -eq 1 ]]; then
+    printf '%-14s%s\n' "cycle $cycle" "$("$repo/scripts/dev/mem.sh" "$pid")"
+  fi
 done
