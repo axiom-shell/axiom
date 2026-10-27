@@ -5,9 +5,11 @@ name: Edge
 # as a release (release.yml), plus COMMIT, the commit they were built
 # from, all listed in SHA256SUMS, so a clone following main (self-update,
 # the greeter install, install.sh) takes the binary built from the commit
-# it checks out (docs/dev/packaging.md › Edge builds). The edge tag is
-# moved to that commit; it isn't a v* tag, so nothing looking for
-# releases takes it, and the release is never marked latest.
+# it checks out (docs/dev/packaging.md › Edge builds). COMMIT, not the
+# release's tag, names the build: the tag ruleset lets CI create or move
+# no tag, so the edge release (its tag made once by the maintainer) keeps
+# its tag and only its files are replaced. The tag isn't v*, so nothing
+# looking for releases takes it, and the release is never marked latest.
 # Run by hand (Actions → Edge → Run workflow) to publish main again.
 on:
   push:
@@ -83,12 +85,11 @@ jobs:
             echo "::notice::main has moved past $GITHUB_SHA: the newer run publishes"
             exit 0
           fi
-          git push -q --force origin "$GITHUB_SHA:refs/tags/edge"
-          notes="main's newest build, $GITHUB_SHA. Not a release: the binaries a clone following main downloads."
-          if gh release view edge >/dev/null 2>&1; then
-            gh release edit edge --prerelease --latest=false --title "axiom edge" --notes "$notes"
-          else
-            gh release create edge --verify-tag --prerelease --latest=false --title "axiom edge" --notes "$notes"
+          if ! gh release view edge >/dev/null 2>&1; then
+            echo "::error::No edge release: the maintainer makes it once (docs/dev/packaging.md › Edge builds)"
+            exit 1
           fi
+          notes="main's newest build: $GITHUB_SHA (COMMIT names it; the tag doesn't move). Not a release: the binaries a clone following main downloads."
+          gh release edit edge --prerelease --latest=false --title "axiom edge" --notes "$notes"
           gh release upload edge dist/axiom-linux-* dist/COMMIT --clobber
           gh release upload edge dist/SHA256SUMS --clobber
