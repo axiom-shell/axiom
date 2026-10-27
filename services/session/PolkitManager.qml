@@ -3,11 +3,11 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Polkit
 
 import qs.config
 import qs.components.methods
+import qs.services.core
 import qs.services.compositor
 
 /*
@@ -105,32 +105,26 @@ Singleton {
 
   function _describe() {
     const id = root.flow?.actionId ?? "";
-    if (id === "" || pkaction.running)
+    if (id === "" || root._describingNow)
       return;
     root._describing = id;
-    pkaction.command = ["pkaction", "--verbose", "--action-id", id];
-    pkaction.running = true;
-  }
-
-  Process {
-    id: pkaction
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const info = {};
-        for (const line of text.split("\n")) {
-          const match = line.match(/^\s+(description|vendor|vendor_url):\s*(.*)$/);
-          if (match)
-            info[match[1] === "vendor_url" ? "vendorUrl" : match[1]] = match[2].trim();
-        }
-        if (root.flow?.actionId === root._describing)
-          root._actionInfo = info;
+    root._describingNow = true;
+    CommandManager.run(["pkaction", "--verbose", "--action-id", id], (code, stdout) => {
+      root._describingNow = false;
+      const info = {};
+      for (const line of stdout.split("\n")) {
+        const match = line.match(/^\s+(description|vendor|vendor_url):\s*(.*)$/);
+        if (match)
+          info[match[1] === "vendor_url" ? "vendorUrl" : match[1]] = match[2].trim();
       }
-    }
-    onExited: {
-      if ((root.flow?.actionId ?? root._describing) !== root._describing)
+      if (root.flow?.actionId === root._describing)
+        root._actionInfo = info;
+      else if ((root.flow?.actionId ?? root._describing) !== root._describing)
         Qt.callLater(root._describe);
-    }
+    });
   }
+  // pkaction is running
+  property bool _describingNow: false
 
   // --- Other agents ---
 
@@ -184,8 +178,7 @@ Singleton {
       if (PolkitConfig.enabled) {
         root._lateCheck.restart();
       } else if (root._stoppedUnits.length > 0) {
-        restartUnits.command = ["systemctl", "--user", "start"].concat(root._stoppedUnits);
-        restartUnits.running = true;
+        CommandManager.run(["systemctl", "--user", "start"].concat(root._stoppedUnits));
         _state.stoppedUnits = "[]";
       }
     }
@@ -194,8 +187,15 @@ Singleton {
   // Calls `then` with the known agents running, by process name
   function _probe(then) {
     root._probeWaiting.push(then);
-    if (!probe.running)
-      probe.running = true;
+    if (root._probeWaiting.length > 1)
+      return;
+    CommandManager.run(["pgrep", "-af", PolkitAgents.processPattern], (code, stdout) => {
+      const waiting = root._probeWaiting;
+      root._probeWaiting = [];
+      const names = root._agentNames(stdout);
+      for (const then of waiting)
+        then(names);
+    });
   }
 
   property var _probeWaiting: []
@@ -211,56 +211,31 @@ Singleton {
     return names;
   }
 
-  Process {
-    id: probe
-    command: ["pgrep", "-af", PolkitAgents.processPattern]
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const waiting = root._probeWaiting;
-        root._probeWaiting = [];
-        const names = root._agentNames(text);
-        for (const then of waiting)
-          then(names);
-      }
-    }
-  }
-
   // Stop the running units, then any agent process left; prints
   // "unit <name>" for each unit stopped, and the processes it stops
   readonly property string _stopScript: 'pattern=$1; shift; for unit in "$@"; do systemctl --user -q is-active "$unit" 2>/dev/null && systemctl --user stop "$unit" && echo "unit $unit"; done; pgrep -af "$pattern"; pkill -f "$pattern"; true'
 
-  property bool _registerAfterStop: false
+  property bool _stopping: false
 
   function _stopOthers(register) {
-    if (stopper.running)
+    if (root._stopping)
       return;
-    root._registerAfterStop = register;
-    stopper.command = ["sh", "-c", _stopScript, "sh", PolkitAgents.processPattern].concat(PolkitAgents.units);
-    stopper.running = true;
-  }
-
-  Process {
-    id: stopper
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const units = text.split("\n").filter(line => line.startsWith("unit ")).map(line => line.slice(5).trim());
-        const names = root._agentNames(text.split("\n").filter(line => !line.startsWith("unit ")).join("\n"));
-        _state.stoppedUnits = JSON.stringify(root._stoppedUnits.concat(units.filter(unit => !root._stoppedUnits.includes(unit))));
-        // A unit's agent is gone by the time its process would print
-        const stopped = names.concat(units.map(unit => PolkitAgents.agents.find(agent => agent.unit === unit)?.process ?? unit.replace(/\.service$/, "")));
-        _state.replaced = JSON.stringify(root.replaced.concat(stopped.filter((name, i) => stopped.indexOf(name) === i && !root.replaced.includes(name))));
-        if (stopped.length > 0)
-          console.log("[PolkitManager] Stopped", stopped.join(", "));
-        if (root._registerAfterStop) {
-          root._paused = true;
-          root._resume.restart();
-        }
+    root._stopping = true;
+    CommandManager.run(["sh", "-c", root._stopScript, "sh", PolkitAgents.processPattern].concat(PolkitAgents.units), (code, text) => {
+      root._stopping = false;
+      const units = text.split("\n").filter(line => line.startsWith("unit ")).map(line => line.slice(5).trim());
+      const names = root._agentNames(text.split("\n").filter(line => !line.startsWith("unit ")).join("\n"));
+      _state.stoppedUnits = JSON.stringify(root._stoppedUnits.concat(units.filter(unit => !root._stoppedUnits.includes(unit))));
+      // A unit's agent is gone by the time its process would print
+      const stopped = names.concat(units.map(unit => PolkitAgents.agents.find(agent => agent.unit === unit)?.process ?? unit.replace(/\.service$/, "")));
+      _state.replaced = JSON.stringify(root.replaced.concat(stopped.filter((name, i) => stopped.indexOf(name) === i && !root.replaced.includes(name))));
+      if (stopped.length > 0)
+        console.log("[PolkitManager] Stopped", stopped.join(", "));
+      if (register) {
+        root._paused = true;
+        root._resume.restart();
       }
-    }
-  }
-
-  Process {
-    id: restartUnits
+    });
   }
 
   Component.onCompleted: {

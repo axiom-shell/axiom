@@ -7,9 +7,6 @@
     "services/core/BackendManager.qml": [
       "Socket"
     ],
-    "services/apps/CalculatorManager.qml": [
-      "Process"
-    ],
     "services/apps/ChatManager.qml": [
       "FileView",
       "execDetached"
@@ -17,17 +14,11 @@
     "services/core/FileManager.qml": [
       "FileView"
     ],
-    "services/apps/FilePickerManager.qml": [
-      "Process"
-    ],
     "services/compositor/HyprlandIpcManager.qml": [
       "Socket"
     ],
     "services/core/IpcTarget.qml": [
       "IpcHandler"
-    ],
-    "services/system/NightLightManager.qml": [
-      "Process"
     ],
     "services/compositor/NiriIpcManager.qml": [
       "Socket"
@@ -37,13 +28,6 @@
     ],
     "services/system/NotificationManager.qml": [
       "FileView",
-      "execDetached"
-    ],
-    "services/session/PolkitManager.qml": [
-      "Process"
-    ],
-    "services/apps/ScreenshotManager.qml": [
-      "Process",
       "execDetached"
     ],
     "services/core/StateManager.qml": [
@@ -56,9 +40,6 @@
     ],
     "services/apps/TodoManager.qml": [
       "FileView"
-    ],
-    "services/ui/WallpaperManager.qml": [
-      "Process"
     ]
   }
 }

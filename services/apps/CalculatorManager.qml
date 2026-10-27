@@ -1,7 +1,6 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.services.core
 
 /*
@@ -114,31 +113,23 @@ Singleton {
     onTriggered: root._next()
   }
 
+  property bool _running: false
+
   function _next() {
-    if (_process.running || root._queue.length === 0)
+    if (root._running || root._queue.length === 0)
       return;
     const key = root._queue.shift();
     const slot = root._slots[key];
     if (!slot || slot.expr === "" || slot.expr === slot.doneExpr)
       return root._next();
-    _process.key = key;
-    _process.expr = slot.expr;
-    _process.command = ["qalc", "-t", "--", slot.expr];
-    _process.running = true;
-  }
-
-  Process {
-    id: _process
-    property string key: ""
-    property string expr: ""
-    stdout: StdioCollector {
-      id: out
-    }
-    onExited: {
+    const expr = slot.expr;
+    root._running = true;
+    CommandManager.run(["qalc", "-t", "--", expr], (exitCode, stdout) => {
+      root._running = false;
       const slot = root._slots[key];
       if (slot) {
         // qalc echoes what it can't evaluate
-        const answer = out.text.trim().split("\n").pop().trim();
+        const answer = stdout.trim().split("\n").pop().trim();
         const plain = s => s.replace(/\s/g, "").replace(/−/g, "-");
         slot.result = answer !== "" && plain(answer) !== plain(expr) ? answer : "";
         slot.doneExpr = expr;
@@ -148,6 +139,6 @@ Singleton {
         root.evaluated(key);
       }
       Qt.callLater(root._next);
-    }
+    });
   }
 }

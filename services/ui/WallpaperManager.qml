@@ -2,7 +2,6 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.config
 import qs.components.methods
 import qs.services.core
@@ -108,10 +107,20 @@ Singleton {
   readonly property bool hasHyprlandWallpapers: _hyprlandWallpapers !== ""
   property string _hyprlandWallpapers: ""
 
+  // Prints the image count (-2 without the folder), then the first data
+  // dir's hypr/ holding Hyprland's wallpapers, if any. Only the latest
+  // check's answer counts
   function checkFolder() {
-    _folderCheck.running = false;
-    _folderCheck.running = true;
+    const check = ++root._folderChecks;
+    CommandManager.run(["sh", "-c", 'if [ -d "$1" ]; then find "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" \\) | wc -l; else echo -2; fi; shift; for d in "$@"; do ls "$d"/hypr/wall*.png >/dev/null 2>&1 && { echo "$d/hypr"; break; }; done', "sh", Appearance.wallpaperPath].concat(Paths.dataSearchDirs), (code, stdout) => {
+      if (check !== root._folderChecks)
+        return;
+      const lines = stdout.split("\n").filter(line => line !== "");
+      root.folderImages = parseInt(lines[0] ?? "-1");
+      root._hyprlandWallpapers = lines[1] ?? "";
+    });
   }
+  property int _folderChecks: 0
 
   // Creates the folder, opens it in the file manager and checks it again
   function createFolder() {
@@ -121,19 +130,6 @@ Singleton {
 
   function openFolder() {
     CommandManager.runDetached(["xdg-open", Appearance.wallpaperPath]);
-  }
-
-  property Process _folderCheck: Process {
-    // Prints the image count (-2 without the folder), then the first
-    // data dir's hypr/ holding Hyprland's wallpapers, if any
-    command: ["sh", "-c", 'if [ -d "$1" ]; then find "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" \\) | wc -l; else echo -2; fi; shift; for d in "$@"; do ls "$d"/hypr/wall*.png >/dev/null 2>&1 && { echo "$d/hypr"; break; }; done', "sh", Appearance.wallpaperPath].concat(Paths.dataSearchDirs)
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const lines = text.split("\n").filter(line => line !== "");
-        root.folderImages = parseInt(lines[0] ?? "-1");
-        root._hyprlandWallpapers = lines[1] ?? "";
-      }
-    }
   }
 
   // mkdir runs detached: look again once it has
