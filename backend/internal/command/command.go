@@ -42,8 +42,6 @@ type Result struct {
 type Options struct {
 	// Env is the environment (nil: the daemon's own)
 	Env []string
-	// PipeWait replaces pipeWait (tests)
-	PipeWait time.Duration
 }
 
 // Run runs argv and waits for it. Input, when not nil, is written to its
@@ -67,9 +65,6 @@ func Run(ctx context.Context, o Options, argv []string, input *string) (Result, 
 	stdout, stderr := &capped{max: maxStdout}, &capped{max: maxStderr}
 	cmd.Stdout, cmd.Stderr = stdout, stderr
 	cmd.WaitDelay = pipeWait
-	if o.PipeWait > 0 {
-		cmd.WaitDelay = o.PipeWait
-	}
 	if err := cmd.Start(); err != nil {
 		return Result{}, startError(argv[0], err)
 	}

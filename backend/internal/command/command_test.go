@@ -69,8 +69,8 @@ func TestRunCapsOutput(t *testing.T) {
 func TestRunDoesNotWaitForAChildHoldingStdout(t *testing.T) {
 	t.Parallel()
 	start := time.Now()
-	got, err := Run(testCtx(t), Options{PipeWait: 100 * time.Millisecond}, []string{"sh", "-c", "sleep 5 & echo hi"}, nil)
-	if err != nil || got.Stdout != "hi\n" || time.Since(start) > 3*time.Second {
+	got, err := Run(testCtx(t), Options{}, []string{"sh", "-c", "sleep 5 & echo hi"}, nil)
+	if err != nil || got.Stdout != "hi\n" || time.Since(start) > pipeWait+time.Second {
 		t.Fatalf("got %+v, %v after %v", got, err, time.Since(start))
 	}
 }
