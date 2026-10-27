@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
@@ -50,9 +51,14 @@ type fixture struct {
 	user     string
 	env      []string
 	original string
-	// The releases' download url (install tests serve one)
+	// The releases' download url, and the commit the edge prerelease
+	// names ("" for no edge build; setEdge)
 	releases string
+	edge     atomic.Value
 }
+
+// setEdge publishes an edge build of commit.
+func (f *fixture) setEdge(commit string) { f.edge.Store(commit) }
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
@@ -90,6 +96,8 @@ func newFixture(t *testing.T) *fixture {
 	f.git(f.repo, "tag", "-a", "v1.0", "-m", "v1.0")
 	f.git(tmp, "clone", "-q", "--bare", f.repo, f.upstream)
 	f.git(f.repo, "remote", "add", "origin", f.upstream)
+	f.edge.Store("")
+	f.releases = releasesWithEdge(t, released, "", func() string { return f.edge.Load().(string) })
 	return f
 }
 
@@ -184,6 +192,7 @@ func TestStatusURL(t *testing.T) {
 	// A git install recorded from a fork (before the pin) shows as behind
 	f.write(f.root, "usr/share/axiom-greeter/.greeter-source", "git main https://github.com/me/fork.git\n", 0o644)
 	f.write(f.root, "usr/share/axiom-greeter/.greeter-hash", "abc\n", 0o644)
+	f.setEdge(f.git(f.repo, "rev-parse", "main"))
 	r := f.status(rules.SourceGit, rules.ChannelMain)
 	if r.URL != f.upstream || r.CurrentHash != f.git(f.repo, "rev-parse", "main") || r.InstalledSource != "git:main" || !r.Installed || r.InstalledHash != "abc" {
 		t.Errorf("report %+v", r)
@@ -280,6 +289,47 @@ func TestElevate(t *testing.T) {
 	}
 }
 
+// For main, a helper older than main's builds (it refuses main) isn't
+// run: the first-install program is, here refused for want of an edge
+// build, before any prompt
+func TestElevateMainNeedsAnEdgeHelper(t *testing.T) {
+	t.Parallel()
+	pkexec := filepath.Join(tools, "pkexec")
+	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: rules.SourceGit, Channel: rules.ChannelMain}
+	for _, tc := range []struct {
+		name, helper string
+		ranHelper    bool
+	}{
+		{"a helper from before main's builds", "#!/bin/sh\n" + binariesMarker + " ...)\n", false},
+		{"a helper taking main's builds", "#!/bin/sh\n" + binariesMarker + " ...)\n" + edgeMarker + " ...)\n", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			helper := filepath.Join(root, HelperPath)
+			os.MkdirAll(filepath.Dir(helper), 0o755)
+			os.WriteFile(helper, []byte(tc.helper), 0o755)
+			policy := filepath.Join(root, "usr/share/polkit-1/actions/org.axiom.greeter.policy")
+			os.MkdirAll(filepath.Dir(policy), 0o755)
+			os.WriteFile(policy, nil, 0o644)
+			log := filepath.Join(root, "log")
+			env := []string{"FAKE_LOG=" + log, "FAKE_OUT=echo '{\"ok\": true}'", "FAKE_CODE=0"}
+			in := New(Options{Root: root, Pkexec: pkexec, Releases: releases(t, "x", ""), Upstream: filepath.Join(root, "none.git"), Environ: func() []string { return env }})
+			got, err := in.Elevate(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ran, _ := os.ReadFile(log)
+			if tc.ranHelper != strings.HasPrefix(string(ran), helper+" ") || tc.ranHelper != got.OK {
+				t.Errorf("ran %q, got %+v", ran, got)
+			}
+			if !tc.ranHelper && !strings.Contains(got.Error, "nothing to fetch") {
+				t.Errorf("error %q", got.Error)
+			}
+		})
+	}
+}
+
 // Before root has a helper, pkexec runs only a binary root owns or one
 // checked against its release's SHA256SUMS (local: the user's own)
 func TestFirstProgram(t *testing.T) {
@@ -288,9 +338,9 @@ func TestFirstProgram(t *testing.T) {
 	released := "#!/bin/sh\necho ran \"$@\"\n"
 	for _, tc := range []struct {
 		name, source, channel string
-		releases              func(t *testing.T) string // "" for none
-		packaged              os.FileMode               // /usr/bin/axiom's mode (0: none)
-		want                  string                    // the program, or the refusal's text
+		releases              func(t *testing.T, f *fixture) string // nil: the fixture's
+		packaged              os.FileMode                           // /usr/bin/axiom's mode (0: none)
+		want                  string                                // the program, or the refusal's text
 		refused               bool
 	}{
 		{"local reuses the user's binary", rules.SourceLocal, rules.ChannelTags, nil, 0, "/home/me/axiom greeter-install", false},
@@ -298,11 +348,14 @@ func TestFirstProgram(t *testing.T) {
 		{"a package binary others can write", rules.SourcePackage, rules.ChannelTags, nil, 0o775, "isn't root's", true},
 		{"no package binary", rules.SourcePackage, rules.ChannelTags, nil, 0, "isn't root's", true},
 		// (the fixture's remote isn't GitHub's: the release is the official one's)
-		{"the release's binary, checked", rules.SourceGit, rules.ChannelTags, func(t *testing.T) string { return releases(t, released, "") }, 0, "", false},
+		{"the release's binary, checked", rules.SourceGit, rules.ChannelTags, func(t *testing.T, _ *fixture) string { return releases(t, released, "") }, 0, "", false},
 		{"a release binary its sums don't match", rules.SourceGit, rules.ChannelTags,
-			func(t *testing.T) string { return releases(t, released, strings.Repeat("0", 64)) }, 0, "doesn't match its SHA256SUMS", true},
-		{"a release without a binary", rules.SourceGit, rules.ChannelTags, func(t *testing.T) string { return releases(t, "", "-") }, 0, "no release binary", true},
-		{"the main channel", rules.SourceGit, rules.ChannelMain, nil, 0, "the main channel has no release binary", true},
+			func(t *testing.T, _ *fixture) string { return releases(t, released, strings.Repeat("0", 64)) }, 0, "doesn't match its SHA256SUMS", true},
+		{"a release without a binary", rules.SourceGit, rules.ChannelTags, func(t *testing.T, _ *fixture) string { return releases(t, "", "-") }, 0, "no official binary", true},
+		{"main's edge build, checked", rules.SourceGit, rules.ChannelMain, func(t *testing.T, f *fixture) string {
+			return releasesWithEdge(t, released, "", func() string { return f.edge.Load().(string) })
+		}, 0, "", false},
+		{"main without an edge build", rules.SourceGit, rules.ChannelMain, func(t *testing.T, _ *fixture) string { return releases(t, released, "") }, 0, "nothing to fetch", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -311,9 +364,10 @@ func TestFirstProgram(t *testing.T) {
 				f.write(f.root, "usr/bin/axiom", "\x7fELF packaged", tc.packaged)
 				os.Chmod(filepath.Join(f.root, "usr/bin/axiom"), tc.packaged)
 			}
-			opts := Options{Root: f.root, Upstream: f.upstream, Environ: func() []string { return f.env }}
+			opts := Options{Root: f.root, Releases: f.releases, Upstream: f.upstream, Environ: func() []string { return f.env }}
+			f.setEdge(f.git(f.repo, "rev-parse", "main"))
 			if tc.releases != nil {
-				opts.Releases = tc.releases(t)
+				opts.Releases = tc.releases(t, f)
 			}
 			in := New(opts)
 			req := rules.Request{Action: rules.ActionInstall, Repo: f.repo, User: f.user, Source: tc.source, Channel: tc.channel, Binary: "/home/me/axiom"}

@@ -464,10 +464,19 @@ func buildAxiom(ctx context.Context, goBin, treeDir, target string) ([]byte, err
 	if err := run(goBin, "build", "-o", next, "-trimpath", "./cmd/axiom"); err != nil {
 		return out.Bytes(), axerr.Wrap(axerr.Unavailable, err, "go build")
 	}
-	if err := run(next, "version"); err != nil {
-		return out.Bytes(), axerr.Wrap(axerr.Unavailable, err, "the new binary doesn't run")
+	vout, err := swapIn(ctx, next, target)
+	out.Write(vout)
+	return out.Bytes(), err
+}
+
+// swapIn replaces target with next, a new axiom binary beside it, once
+// it's checked to run (its `version`, returned).
+func swapIn(ctx context.Context, next, target string) ([]byte, error) {
+	out, err := exec.CommandContext(ctx, next, "version").CombinedOutput()
+	if err != nil {
+		return out, axerr.Wrap(axerr.Unavailable, err, "the new binary doesn't run")
 	}
-	return out.Bytes(), os.Rename(next, target)
+	return out, os.Rename(next, target)
 }
 
 // rebuildSchema builds the schema from its YAML source again: written for

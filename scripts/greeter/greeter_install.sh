@@ -13,6 +13,8 @@
 #              greeter_install.sh uninstall <repo> <user>
 # (This helper installs the axiom binary too: the status reports it as
 # binaries, so axiom runs an older installed helper's replacement instead)
+# (Its main channel takes main's newest build, the edge prerelease: an
+# older helper refuses main, and axiom runs its replacement for main)
 
 here=$(dirname "$(readlink -f "$0")")
 axiom="$here/../../bin/axiom"

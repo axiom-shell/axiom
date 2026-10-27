@@ -1,6 +1,7 @@
 // Package rules decides what the greeter's install takes and where from
 // (package greeterinstall does it): a git remote as the https url root
-// fetches, the channel's newest commit from `git ls-remote`'s answer,
+// fetches, the channel's commit (the newest tag from `git ls-remote`'s
+// answer, or main's newest build),
 // greetd's default_session lines, the .greeter-source line, what a copy
 // ships and what a local copy's hash covers. Pure: the edge runs git,
 // reads the files and writes.
@@ -11,6 +12,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+
+	"github.com/axiom-shell/axiom/backend/internal/release"
 )
 
 // The sources (Greeter.source, or "package" for a packaged axiom) and
@@ -33,7 +36,7 @@ const PackagePath = "/usr/share/axiom"
 // Repository is the official repository, the git source's code: root
 // fetches only it, never the clone's remote (maintainer, 2026-10-27:
 // "Pin mirror too"; forks use the local source), and its releases'
-// binaries (Releases).
+// binaries (release.Official).
 const Repository = "https://github.com/axiom-shell/axiom.git"
 
 // Target is the commit a channel stands at on a remote.
@@ -50,6 +53,15 @@ func (t Target) Name() string {
 	return strings.TrimPrefix(t.Ref, "refs/heads/")
 }
 
+// Release is the release holding the target's binary: its tag, or the
+// edge prerelease for main ("" for neither).
+func (t Target) Release() string {
+	if t.Ref == "refs/heads/main" {
+		return release.Edge
+	}
+	return t.Tag()
+}
+
 // Tag is the target's tag ("" for a branch).
 func (t Target) Tag() string {
 	if name, ok := strings.CutPrefix(t.Ref, "refs/tags/"); ok {
@@ -58,36 +70,32 @@ func (t Target) Tag() string {
 	return ""
 }
 
-// Newest reads `git ls-remote --sort=-v:refname`'s answer (newest
-// version first) for the channel's newest commit: "tags" the newest v*
-// tag (an annotated tag by the commit it points at), "main" the main
-// branch, else master. ok is false when the remote has none.
-func Newest(refs, channel string) (t Target, ok bool) {
-	var master string
+// NewestTag reads `git ls-remote --sort=-v:refname`'s answer (newest
+// version first) for the tags channel's commit: the newest v* tag (an
+// annotated tag by the commit it points at). ok is false when the remote
+// has none.
+func NewestTag(refs string) (t Target, ok bool) {
 	for line := range strings.Lines(refs) {
 		commit, ref, found := strings.Cut(strings.TrimRight(line, "\r\n"), "\t")
-		if !found {
+		if !found || !strings.HasPrefix(ref, "refs/tags/v") {
 			continue
 		}
-		switch {
-		case channel == ChannelMain && ref == "refs/heads/main":
-			return Target{Commit: commit, Ref: ref}, true
-		case channel == ChannelMain && ref == "refs/heads/master":
-			master = commit
-		case channel != ChannelMain && strings.HasPrefix(ref, "refs/tags/v"):
-			tag, peeled := strings.CutSuffix(ref, "^{}")
-			if t.Ref != "" && tag != t.Ref {
-				return t, true
-			}
-			if t.Ref == "" || peeled {
-				t = Target{Commit: commit, Ref: tag}
-			}
+		tag, peeled := strings.CutSuffix(ref, "^{}")
+		if t.Ref != "" && tag != t.Ref {
+			return t, true
+		}
+		if t.Ref == "" || peeled {
+			t = Target{Commit: commit, Ref: tag}
 		}
 	}
-	if channel == ChannelMain {
-		return Target{Commit: master, Ref: "refs/heads/master"}, master != ""
-	}
 	return t, t.Ref != ""
+}
+
+// MainTarget is the main channel's commit: the one main's newest build
+// (the edge prerelease) was made from, which may be behind main's head,
+// so the copy's code and its binary are always the same commit's.
+func MainTarget(commit string) Target {
+	return Target{Commit: commit, Ref: "refs/heads/main"}
 }
 
 // GreetdValue is `key`'s value in greetd's [default_session] (command,
