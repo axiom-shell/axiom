@@ -32,9 +32,6 @@
     "services/apps/FilePickerManager.qml": [
       "Process"
     ],
-    "services/session/GreetdManager.qml": [
-      "execDetached"
-    ],
     "services/compositor/HyprlandIpcManager.qml": [
       "Socket"
     ],
