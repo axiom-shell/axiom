@@ -161,12 +161,20 @@ func subscribe(t *testing.T, h *harness, s Subscriber, request string) {
 // state pushed), so the next Advance is measured from that fetch.
 func settle(t *testing.T, h *harness) {
 	t.Helper()
+	settleWaits(t, h, 1)
+}
+
+// settleWaits waits for n unfired waits: the loop asks for a new one each
+// time the intervals change, and an Advance before it has would move the
+// clock between its reading Now and its asking After.
+func settleWaits(t *testing.T, h *harness, want int) {
+	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
 		h.clock.mu.Lock()
 		n := len(h.clock.waits)
 		h.clock.mu.Unlock()
-		if n > 0 {
+		if n >= want {
 			return
 		}
 		time.Sleep(time.Millisecond)
@@ -209,11 +217,15 @@ func TestShortestIntervalAndFloor(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			h := newHarness(t)
-			for _, r := range tc.requests {
+			// One at a time: the first starts the loop (a fetch, then a
+			// wait), each later one changes the interval (another wait)
+			for i, r := range tc.requests {
 				subscribe(t, h, newSub(), r)
+				if i == 0 {
+					fetched(t, h)
+				}
+				settleWaits(t, h, i+1)
 			}
-			fetched(t, h)
-			settle(t, h)
 			h.clock.Advance(tc.short)
 			notFetched(t, h)
 			h.clock.Advance(tc.at - tc.short)
