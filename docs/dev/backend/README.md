@@ -59,8 +59,9 @@
 - **The rest of the CLI:**
   - `axiom ping|restart|quit`, `axiom daemon status|reexec|logs`, `axiom dev status|on|off|rebuild`
   - `axiom config path|get|set|reset|validate|status`: online, or `--offline` against the file under the writer lock
+  - `axiom exec refresh COMMAND`: runs a command the shell watches again now (a script's stand-in for Waybar's `signal`)
   - `axiom schema build|check|hash`, `axiom debug wayland-globals|wayland-outputs`, `axiom version`
-- **Re-exec** (`axiom daemon reexec`, or dev mode on a rebuild): the new image takes over the instance lock, the writer lock, the socket and the shell (still its child). Its clients are told first (`daemon.closing`, [protocol](protocol.md) › A session). It trusts the handoff only when the inherited lock really is this display's held lock.
+- **Re-exec** (`axiom daemon reexec`, or dev mode on a rebuild): the new image takes over the instance lock, the writer lock, the socket and the shell (still its child), and the commands running as its children (`command.Children`: their output drained, reaped when they exit, handed on again by a later re-exec, a stream stopped). Its clients are told first (`daemon.closing`, [protocol](protocol.md) › A session). It trusts the handoff only when the inherited lock really is this display's held lock.
   - The descriptors lose close-on-exec only under `syscall.ForkLock`, so no child starts meanwhile and inherits a lock; an exec that fails gives them it back and thaws the store.
   - The handoff carries dev mode, the installed binary (while a dev build runs), the schema's hash and whether the session was locked: a new image whose tree builds another schema (an update, `axiom daemon reexec` after it) restarts the shell, locked first when it was.
 
@@ -83,7 +84,7 @@ Code handling sockets, locks, runtime directories, atomic writes, the child's en
 - Writes are atomic (temp file, fsync, rename, fsync the directory) and never follow a planted symlink.
 - Nothing unlocks the lock screen but PAM: no RPC, CLI or IPC path exists for it.
 - Descriptors received over a socket (D-Bus, and Wayland as it gains them) are close-on-exec on arrival and closed when nothing takes them (`internal/unixmsg`), so no child inherits one.
-- A command the shell asks for (`exec.run`, `exec.spawn`, a watched one through `exec.watch`; `internal/command`) gets the shell's environment and only stdio; what it reads as a secret comes on stdin, never argv or the log, and a spawn starts in a session of its own, never the daemon's child.
+- A command the shell asks for (`exec.run`, `exec.spawn`, a watched one through `exec.watch`; `internal/command`) gets the shell's environment and only stdio; what it reads as a secret comes on stdin, never argv or the log, a spawn starts in a session of its own, never the daemon's child, and a streamed watch runs in a process group of its own, killed whole when it stops.
 
 ### Shared fixtures
 Behaviour implemented on both sides (`SchemaValidation.qml`, which the shell still validates and fills defaults with, and Go's `config` pipeline) is tested from one set of cases under `tests/fixtures/shared/`, read by both `go test` and qmltestrunner (`tests/tst_Shared.qml`), with expected output stored as exact bytes. The directory is generated and gitignored: `scripts/generate.sh --fixtures` records it when what it's made from changed (`fixtures.py ensure`, a stamp of the inputs), and CI records it before the tests.

@@ -56,8 +56,9 @@ func execHandlers(reg *rpc.Registry, options func() command.Options, watches fun
 // commandOptions: commands get the shell's environment, as they did when
 // the shell started them itself (the daemon's own without a shell)
 func (d *Daemon) commandOptions() command.Options {
-	if d.shell == nil {
-		return command.Options{}
+	o := command.Options{Children: &d.children}
+	if d.shell != nil {
+		o.Env = d.shell.Environ()
 	}
-	return command.Options{Env: d.shell.Environ()}
+	return o
 }

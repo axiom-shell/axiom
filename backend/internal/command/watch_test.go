@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// fakeClock moves only when told; After fires once Advance passes it.
+// fakeClock moves only when told; Until fires once Advance passes it.
 type fakeClock struct {
 	mu    sync.Mutex
 	now   time.Time
@@ -28,11 +28,15 @@ func (c *fakeClock) Now() time.Time {
 	return c.now
 }
 
-func (c *fakeClock) After(d time.Duration) <-chan time.Time {
+func (c *fakeClock) Until(at time.Time) <-chan time.Time {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	ch := make(chan time.Time, 1)
-	c.waits = append(c.waits, fakeWait{c.now.Add(d), ch})
+	if at.After(c.now) {
+		c.waits = append(c.waits, fakeWait{at, ch})
+	} else {
+		ch <- c.now
+	}
 	return ch
 }
 
@@ -87,7 +91,7 @@ func newHarness(t *testing.T) *harness {
 	t.Cleanup(cancel)
 	h := &harness{clock: &fakeClock{now: time.Unix(1000, 0)}, runs: make(chan string, 64), out: map[string]string{}}
 	h.w = NewWatches(WatchOptions{
-		Method: "exec.outputs", Context: ctx, Now: h.clock.Now, After: h.clock.After,
+		Method: "exec.outputs", Context: ctx, Now: h.clock.Now, Until: h.clock.Until,
 		Run: func(ctx context.Context, argv []string) (Result, error) {
 			h.mu.Lock()
 			h.n++
@@ -282,7 +286,7 @@ func TestWatchStops(t *testing.T) {
 		h.w.mu.Unlock()
 	}
 	h := newHarness(t)
-	for _, r := range []WatchRequest{{}, {Command: "x", Mode: "stream"}, {Command: "x", Format: "xml"}} {
+	for _, r := range []WatchRequest{{}, {Command: "x", Mode: "tail"}, {Command: "x", Format: "xml"}} {
 		if err := h.w.Watch(newSub(), r); err == nil {
 			t.Errorf("%+v accepted", r)
 		}

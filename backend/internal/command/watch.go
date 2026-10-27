@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -13,8 +14,9 @@ import (
 // The watched commands (CommandManager's acquire and outputs: `exec.watch`,
 // `exec.unwatch`, `exec.refresh`). Each distinct command runs through
 // `sh -c` in one loop for every subscriber, at the shortest interval any
-// of them asked (once, for a command only watched in once mode), and not
-// at all without subscribers. A subscriber gets one latest-wins push
+// of them asked (once, for a command only watched in once mode; as a
+// stream, stream.go, for one any of them streams), and not at all without
+// subscribers. A subscriber gets one latest-wins push
 // carrying every command it watches, since per-command pushes on one
 // method would overwrite each other.
 
@@ -22,6 +24,7 @@ import (
 const (
 	ModePoll   = "poll"
 	ModeOnce   = "once"
+	ModeStream = "stream"
 	FormatText = "text"
 	FormatJSON = "json"
 )
@@ -35,8 +38,9 @@ const (
 // WatchRequest is one subscriber's watch of a command.
 type WatchRequest struct {
 	Command string `json:"command"` // run by sh -c
-	// "poll" (the default: again every interval) or "once" (run once,
-	// then only on a refresh)
+	// "poll" (the default: again every interval), "once" (run once,
+	// then only on a refresh) or "stream" (run for as long as it's
+	// watched, each line it prints an output)
 	Mode string `json:"mode"`
 	// In ms, for a poll (default 5000, at least 500)
 	Interval *float64 `json:"interval"`
@@ -69,17 +73,18 @@ type Subscriber interface {
 	NotifyLatest(method string, params any) error
 }
 
-// WatchOptions configure Watches; the zero Now and After are the real
-// clock, the zero Run is Run with Options.
+// WatchOptions configure Watches; the zero Now and Until are the real
+// clock, the zero Run is Run with Options, the zero Log discards.
 type WatchOptions struct {
 	Method  string         // the push's method
+	Log     *slog.Logger   // a stream's stderr, rate-limited
 	Options func() Options // what each run gets
 	// Context bounds every loop; Go runs one on a goroutine its owner
 	// waits for
 	Context context.Context
 	Go      func(func(ctx context.Context))
 	Now     func() time.Time
-	After   func(time.Duration) <-chan time.Time
+	Until   func(time.Time) <-chan time.Time // fires at that time (at once when past)
 	Run     func(ctx context.Context, argv []string) (Result, error)
 }
 
@@ -106,11 +111,14 @@ func NewWatches(o WatchOptions) *Watches {
 	if o.Go == nil {
 		o.Go = func(fn func(context.Context)) { go fn(o.Context) }
 	}
+	if o.Log == nil {
+		o.Log = slog.New(slog.DiscardHandler)
+	}
 	if o.Now == nil {
 		o.Now = time.Now
 	}
-	if o.After == nil {
-		o.After = time.After
+	if o.Until == nil {
+		o.Until = func(t time.Time) <-chan time.Time { return time.After(time.Until(t)) }
 	}
 	if o.Run == nil {
 		o.Run = func(ctx context.Context, argv []string) (Result, error) {
@@ -137,8 +145,8 @@ func (w *Watches) Watch(s Subscriber, r WatchRequest) error {
 	if r.Format == "" {
 		r.Format = FormatText
 	}
-	if r.Mode != ModePoll && r.Mode != ModeOnce {
-		return axerr.New(axerr.BadRequest, "mode %q isn't poll or once", r.Mode)
+	if r.Mode != ModePoll && r.Mode != ModeOnce && r.Mode != ModeStream {
+		return axerr.New(axerr.BadRequest, "mode %q isn't poll, once or stream", r.Mode)
 	}
 	if r.Format != FormatText && r.Format != FormatJSON {
 		return axerr.New(axerr.BadRequest, "format %q isn't text or json", r.Format)
@@ -186,7 +194,9 @@ func (w *Watches) Forget(s Subscriber) {
 	}
 }
 
-// Refresh runs a watched command now.
+// Refresh runs a watched command now. A stream that runs only publishes
+// its last line again (parsed, if json was asked for since); one waiting
+// out its backoff restarts.
 func (w *Watches) Refresh(command string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -216,6 +226,16 @@ func (w *Watches) drop(s Subscriber, command string) {
 func (w *Watches) watched(command string) bool {
 	for _, cmds := range w.subs {
 		if _, ok := cmds[command]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// streamed is whether anyone streams command; w.mu is held.
+func (w *Watches) streamed(command string) bool {
+	for _, cmds := range w.subs {
+		if r, ok := cmds[command]; ok && r.Mode == ModeStream {
 			return true
 		}
 	}
@@ -264,52 +284,69 @@ func (w *Watches) start(command string) {
 	})
 }
 
-// loop runs command, then waits for the shortest interval asked since
-// that run (again whenever the watches change), or for a refresh; a
-// command only watched once waits for a refresh alone.
+// loop runs command as its watchers ask, a stream or polls, switching
+// when they change.
 func (w *Watches) loop(ctx context.Context, command string, run *watched) {
 	for ctx.Err() == nil {
-		ran := w.o.Now()
-		res, err := w.o.Run(ctx, []string{"sh", "-c", command})
-		if ctx.Err() != nil {
-			return
-		}
-		w.publish(command, run, res, err, ran)
-	wait:
-		for {
-			w.mu.Lock()
-			interval, poll := w.interval(command)
-			w.mu.Unlock()
-			var due <-chan time.Time
-			if poll {
-				d := ran.Add(interval).Sub(w.o.Now())
-				if d <= 0 {
-					break
-				}
-				due = w.o.After(d)
-			}
-			select {
-			case <-ctx.Done():
-				return
-			case <-run.refresh:
-				break wait
-			case <-run.changed:
-			case <-due:
-				break wait
-			}
+		if w.isStreamed(command) {
+			w.stream(ctx, command, run)
+		} else {
+			w.poll(ctx, command, run)
 		}
 	}
 }
 
-// publish makes a run command's entry and pushes it to its watchers when
-// it differs from the last.
-func (w *Watches) publish(command string, run *watched, res Result, err error, at time.Time) {
+func (w *Watches) isStreamed(command string) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.streamed(command)
+}
+
+// poll runs command, then waits for the shortest interval asked since
+// that run (again whenever the watches change), or for a refresh; a
+// command only watched once waits for a refresh alone. It returns to run
+// again, or when a watcher asks for a stream.
+func (w *Watches) poll(ctx context.Context, command string, run *watched) {
+	ran := w.o.Now()
+	res, err := w.o.Run(ctx, []string{"sh", "-c", command})
+	if ctx.Err() != nil {
+		return
+	}
+	w.publish(command, run, res.Stdout, res.ExitCode, err, ran)
+	for {
+		w.mu.Lock()
+		interval, poll := w.interval(command)
+		streamed := w.streamed(command)
+		w.mu.Unlock()
+		if streamed {
+			return
+		}
+		var due <-chan time.Time
+		if poll {
+			due = w.o.Until(ran.Add(interval))
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-run.refresh:
+			return
+		case <-run.changed:
+		case <-due:
+			return
+		}
+	}
+}
+
+// publish makes command's entry from its output (a run's stdout, a
+// stream's line) and pushes it to its watchers when it differs from the
+// last.
+func (w *Watches) publish(command string, run *watched, out string, exitCode int, err error, at time.Time) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.runs[command] != run {
 		return // stopped meanwhile
 	}
-	e := Entry{Text: strings.TrimSpace(res.Stdout), ExitCode: res.ExitCode, At: at.UnixMilli()}
+	e := Entry{Text: strings.TrimSpace(out), ExitCode: exitCode, At: at.UnixMilli()}
 	if err != nil {
 		e.ExitCode, e.Error = -1, err.Error()
 	} else if w.json(command) && e.Text != "" {

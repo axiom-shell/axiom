@@ -137,8 +137,10 @@ type Daemon struct {
 	topics *topics.Hub
 	// The commands the shell watches (exec.watch)
 	watches *command.Watches
-	tasks   *tasks
-	stop    context.CancelFunc
+	// The commands running as its children (handed on by a re-exec)
+	children command.Children
+	tasks    *tasks
+	stop     context.CancelFunc
 
 	// isShell says whether a connection's peer pid is the shell's (a
 	// hello as "shell" from anything else is refused)
@@ -282,7 +284,7 @@ func Run(ctx context.Context, opts Options) error {
 	d.newClipboard()
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
-	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Context: ctx, Go: d.tasks.Go})
+	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.clipboardPart(), d.dev.part()}
 	reg := d.registry(parts)
 	if opts.registered != nil {
