@@ -66,7 +66,6 @@
       "FileView"
     ],
     "services/core/ThemeManager.qml": [
-      "Process",
       "FileView",
       "execDetached"
     ],

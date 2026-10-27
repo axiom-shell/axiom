@@ -3,12 +3,7 @@
 
   - every shipped theme is complete (config/themes/theme.schema.json's
     required keys, hex colors, semantic names that resolve, pairs that exist)
-  - every theme_*.sh integration renders every shipped theme (and any
-    generated ones) into a scratch dir with no warnings, no unfilled
-    ${VAR}s and only well-formed colors, and each output parses as its
-    format (TOML, JSON, plist, INI; YAML and GTK CSS when PyYAML / PyGObject
-    are installed). The apps they need (and pkill, which they signal
-    running apps with) are stubbed
+  - the Neovim module Apply copies compiles and maps the shipped themes
   - integration_hookup.py (Settings' Apply) adds each placement where it
     belongs, backs files up, follows symlinks, and does nothing twice
   - self_update.sh reports and applies updates on scratch git clones, and
@@ -26,7 +21,6 @@ import configparser
 import hashlib
 import json
 import os
-import plistlib
 import re
 import shutil
 import stat
@@ -36,30 +30,17 @@ import tempfile
 import time
 import tomllib
 import unittest
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS = ROOT / "scripts"
 THEMES = ROOT / "config" / "themes"
 BASES = [f"base0{c}" for c in "0123456789ABCDEF"]
-SHIPPED_THEMES = sorted(p for p in THEMES.glob("*.json") if p.name != "theme.schema.json") + \
-    sorted((THEMES / "generated").glob("*.json"))
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
-# envsubst leaves nothing behind, so a ${VAR} left over is a template typo
-UNFILLED = re.compile(r"\$\{[A-Z0-9_]+\}")
-# The ncspot x-hookup's text: theme_ncspot.sh fills the lines between them
-NCSPOT_MARKERS = "# axiom theme: begin (rewritten on every theme change)\n# axiom theme: end\n"
-# Apps the integrations require or signal; stubs keep them from touching a
-# running session
+# Apps the hookups' `requires` look for and the scripts may run; stubs keep
+# them from touching a running session
 STUBS = ["alacritty", "bat", "btop", "foot", "fzf", "ghostty", "hx", "kitty", "lazygit",
          "nvim", "wezterm", "yazi", "qt5ct", "qt6ct", "pkill", "gsettings", "busctl"]
-
-
-def parallel(fn, items):
-    """fn over items on a thread per CPU (they wait on subprocesses), in order"""
-    with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as pool:
-        return list(pool.map(fn, items))
 
 
 def scratch_env(tmp):
@@ -141,255 +122,8 @@ class Themes(unittest.TestCase):
             self.assertRegex(template["colors"][base], HEX)
 
 
-def luminance(color):
-    channels = [int(color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
-    r, g, b = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b
-
-
-def contrast(a, b):
-    high, low = sorted((luminance(a), luminance(b)), reverse=True)
-    return (high + 0.05) / (low + 0.05)
-
-
-class TerminalPalette(unittest.TestCase):
-    """export_theme_colors / readable_text_colors keep text readable."""
-    TEXT = ["RED", "GREEN", "YELLOW", "BLUE", "MAGENTA", "CYAN", "ORANGE",
-            "ERROR", "WARNING", "SUCCESS", "INFO"]
-
-    @classmethod
-    def palette(cls, theme):
-        """(the palette's variables, bash's stderr when it failed)"""
-        script = (f'set -euo pipefail; source "{SCRIPTS}/lib/theme_env.sh"; '
-                  f'load_theme "{theme}" >/dev/null; export_theme_colors; readable_text_colors; '
-                  'env | grep -E "^(ANSI_[0-9]+|BACKGROUND|THEME_VARIANT|'
-                  + "|".join(cls.TEXT) + ')="')
-        result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, timeout=60)
-        if result.returncode != 0:
-            return None, result.stderr
-        return dict(line.split("=", 1) for line in result.stdout.splitlines()), None
-
-    def test_every_theme_is_readable(self):
-        for f, (c, error) in zip(SHIPPED_THEMES, parallel(self.palette, SHIPPED_THEMES)):
-            with self.subTest(theme=f.name):
-                self.assertIsNone(error)
-                bg = c["BACKGROUND"]
-                for i in [*range(1, 7), *range(9, 15)]:
-                    self.assertGreaterEqual(contrast(c[f"ANSI_{i}"], bg), 4.5, f"ANSI_{i} {c[f'ANSI_{i}']}")
-                self.assertGreaterEqual(contrast(c["ANSI_8"], bg), 3.0, f"ANSI_8 {c['ANSI_8']}")
-                for key in self.TEXT:
-                    self.assertGreaterEqual(contrast(c[key], bg), 4.5, f"{key} {c[key]}")
-                if c["THEME_VARIANT"] == "light":
-                    self.assertLess(luminance(c["ANSI_0"]), luminance(bg), "black isn't dark")
-
-
-# Each integration's output format, for the parse checks (the others are
-# key=value lines, checked for their colors only)
-FORMATS = {
-    "alacritty": "toml", "helix": "toml", "wezterm": "toml", "yazi": "toml",
-    "k9s": "yaml", "lazygit": "yaml", "bat": "plist", "nvim": "json",
-    "vscode": "json", "zed": "json", "qt": "ini", "foot": "ini", "gtk": "css", "vesktop": "css", "ncspot": "toml", "firefox": "css",
-}
-COLOR = re.compile(r"#([0-9a-fA-F]+)\b")
-
-
-def run_problems(script, args, env):
-    """(problems, result) of running an integration script: a failure, or
-    stderr lines starting with "Warning:" (ThemeManager logs them)"""
-    result = subprocess.run([str(script)] + [str(a) for a in args], env=env,
-                            capture_output=True, text=True, timeout=60)
-    if result.returncode != 0:
-        return [f"{script.name} failed:\n{result.stderr}"], result
-    warnings = [line for line in result.stderr.splitlines() if line.startswith("Warning:")]
-    return [f"{script.name} warned: {w}" for w in warnings], result
-
-
-def output_files(root):
-    return [p for p in Path(root).rglob("*") if p.is_file()] if Path(root).is_dir() else [Path(root)]
-
-
-def rendered_problems(root):
-    """Something was written, and no file is empty or has unfilled ${VAR}s"""
-    files = output_files(root)
-    if not files or not files[0].exists():
-        return [f"nothing written to {root}"]
-    problems = []
-    for f in files:
-        text = f.read_text()
-        if not text.strip():
-            problems.append(f"{f} is empty")
-        if UNFILLED.findall(text):
-            problems.append(f"{f} has unfilled variables: {UNFILLED.findall(text)}")
-    return problems
-
-
-def parse_problems(key, root, gtk=False):
-    """Each output file of an integration parses as its format (GTK's own
-    CSS parser only when `gtk`: it costs an interpreter per file)"""
-    fmt = FORMATS.get(key)
-    problems = []
-    for f in output_files(root):
-        text = f.read_text()
-        odd = [m.group(0) for m in COLOR.finditer(text) if len(m.group(1)) not in (6, 8)]
-        if odd:
-            problems.append(f"{f}: malformed colors {odd}")
-        try:
-            if fmt == "toml":
-                tomllib.loads(text)
-            elif fmt == "json" and (f.suffix == ".json" or key == "nvim"):
-                json.loads(text)
-            elif fmt == "plist":
-                plistlib.loads(f.read_bytes())
-            elif fmt == "ini":
-                configparser.ConfigParser(interpolation=None, strict=False).read_string(text)
-            elif fmt == "yaml":
-                try:
-                    import yaml
-                except ImportError:
-                    continue
-                yaml.safe_load(text)
-            elif fmt == "css" and f.suffix == ".css":
-                if text.count("{") != text.count("}"):
-                    problems.append(f"{f}: unbalanced braces")
-                if key == "gtk" and gtk:
-                    problems += gtk_css_problems(f)
-        except Exception as e:  # noqa: BLE001 (any parser's error is a finding)
-            problems.append(f"{f}: doesn't parse as {fmt}: {e}")
-    return problems
-
-
-def gtk_css_problems(path):
-    """GTK's own parser, when PyGObject and GTK are installed"""
-    version = "4.0" if path.parent.name == "gtk-4.0" else "3.0"
-    check = (
-        "import sys, gi\n"
-        "gi.require_version('Gtk', sys.argv[1])\n"
-        "from gi.repository import Gtk\n"
-        "errors = []\n"
-        "p = Gtk.CssProvider()\n"
-        "p.connect('parsing-error', lambda p, s, e: errors.append(e.message))\n"
-        "p.load_from_path(sys.argv[2])\n"
-        "print('\\n'.join(errors))\n"
-    )
-    result = subprocess.run([sys.executable, "-c", check, version, str(path)], capture_output=True, text=True)
-    if result.returncode != 0 or not result.stdout.strip():
-        return []  # fine, or no PyGObject / no GTK of that version
-    return [f"{path}: GTK CSS errors:\n{result.stdout.strip()}"]
-
-
-def integration_args(key, theme, target):
-    """(output path to check, the script's arguments) for rendering `theme`
-    into the directory `target`"""
-    if key in ("gtk", "vscode", "qt"):
-        return target, [theme, target]
-    if key in ("vesktop", "firefox"):
-        target = target / "axiom.css"
-        return target, [theme, target]
-    if key == "ncspot":
-        target = target / "config.toml"
-        target.parent.mkdir(parents=True)
-        target.write_text("[theme]\n" + NCSPOT_MARKERS)
-        return target, [theme, target]
-    target = target / "axiom.out"
-    return target, [theme, target]
-
-
-class ThemeIntegrations(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.mkdtemp()
-        self.env = scratch_env(self.tmp)
-        self.out = Path(self.tmp) / "out"
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp)
-
-    def run_script(self, script, args):
-        problems, result = run_problems(script, args, self.env)
-        self.assertEqual(problems, [])
-        return result
-
-    def test_every_integration_renders(self):
-        scripts = sorted(SCRIPTS.glob("theme_*.sh"))
-        self.assertTrue(scripts)
-        # GTK's parser checks one theme of each variant
-        gtk_themes = {next(t for t in SHIPPED_THEMES if json.loads(t.read_text()).get("variant") == v)
-                      for v in ("dark", "light")}
-        jobs = [(theme, script) for theme in SHIPPED_THEMES for script in scripts]
-
-        def render(job):
-            theme, script = job
-            key = script.stem.removeprefix("theme_")
-            target, args = integration_args(key, theme, self.out / theme.stem / key)
-            problems, _ = run_problems(script, args, self.env)
-            if not problems:
-                problems = rendered_problems(target) + parse_problems(key, target, theme in gtk_themes)
-            return problems
-
-        for (theme, script), problems in zip(jobs, parallel(render, jobs)):
-            with self.subTest(script=script.name, theme=theme.name):
-                self.assertEqual(problems, [])
-
-    def test_qt_keeps_kdeglobals_in_step_once_chosen(self):
-        kdeglobals = Path(self.env["XDG_CONFIG_HOME"]) / "kdeglobals"
-        kdeglobals.parent.mkdir(parents=True)
-        mine = "[Colors:View]\nBackgroundNormal=1,2,3\nCustom=x\n\n[General]\nColorScheme=BreezeDark\n\n[WM]\nactiveFont=Sans,10\n"
-        kdeglobals.write_text(mine)
-        theme = THEMES / "ayu-dark.json"
-        self.run_script(SCRIPTS / "theme_qt.sh", [theme])
-        scheme = Path(self.env["XDG_DATA_HOME"]) / "color-schemes" / "Axiom.colors"
-        self.assertTrue(scheme.is_file())
-        self.assertEqual(kdeglobals.read_text(), mine, "untouched until it names the scheme")
-        kdeglobals.write_text(mine.replace("BreezeDark", "Axiom"))
-        self.run_script(SCRIPTS / "theme_qt.sh", [theme])
-        first = kdeglobals.read_text()
-        data = configparser.ConfigParser(interpolation=None, strict=False)
-        data.optionxform = str
-        data.read_string(first)
-        colors = configparser.ConfigParser(interpolation=None, strict=False)
-        colors.optionxform = str
-        colors.read_string(scheme.read_text())
-        self.assertEqual(data["Colors:View"]["BackgroundNormal"], colors["Colors:View"]["BackgroundNormal"])
-        self.assertRegex(data["Colors:View"]["BackgroundNormal"], r"^\d+,\d+,\d+$")
-        self.assertEqual(data["Colors:View"]["Custom"], "x", "keys the scheme doesn't set stay")
-        self.assertEqual(data["WM"]["activeFont"], "Sans,10")
-        self.assertEqual(data["WM"]["activeBackground"], colors["WM"]["activeBackground"])
-        self.assertEqual(dict(data["Colors:Selection"]), dict(colors["Colors:Selection"]), "missing groups are added")
-        self.assertEqual(dict(data["General"]), {"ColorScheme": "Axiom"})
-        self.run_script(SCRIPTS / "theme_qt.sh", [theme])
-        self.assertEqual(kdeglobals.read_text(), first, "a second run changes nothing")
-
-    def test_qt_warns_of_kde_apps_picking_their_own_scheme(self):
-        """Okular and the like read [UiSettings] from their own rc before
-        kdeglobals': one naming another scheme there is said, not changed."""
-        config = Path(self.env["XDG_CONFIG_HOME"])
-        config.mkdir(parents=True)
-        (config / "kdeglobals").write_text("[General]\nColorScheme=Axiom\n\n[UiSettings]\nColorScheme=Axiom\n")
-        okular = config / "okularrc"
-        okular.write_text("[UiSettings]\nColorScheme=BreezeDark\n")
-        (config / "dolphinrc").write_text("[UiSettings]\nColorScheme=Axiom\n")
-        (config / "katerc").write_text("[General]\nColorScheme=Other\n")
-        problems, _ = run_problems(SCRIPTS / "theme_qt.sh", [THEMES / "ayu-dark.json"], self.env)
-        self.assertEqual(len(problems), 1, problems)
-        self.assertIn("okularrc", problems[0])
-        self.assertIn("BreezeDark", problems[0])
-        self.assertEqual(okular.read_text(), "[UiSettings]\nColorScheme=BreezeDark\n")
-        okular.write_text("[UiSettings]\nColorScheme=Axiom\n")
-        self.assertEqual(run_problems(SCRIPTS / "theme_qt.sh", [THEMES / "ayu-dark.json"], self.env)[0], [])
-
-    def test_ncspot_leaves_your_keys(self):
-        config = self.out / "config.toml"
-        config.parent.mkdir(parents=True)
-        config.write_text('use_nerdfont = true\n\n[theme]\nprimary = "red"\n' + NCSPOT_MARKERS + '\n[keybindings]\n"q" = "quit"\n')
-        theme = THEMES / "ayu-dark.json"
-        self.run_script(SCRIPTS / "theme_ncspot.sh", [theme, config])
-        first = config.read_text()
-        data = tomllib.loads(first)
-        self.assertEqual(data["theme"]["primary"], "red")
-        self.assertIn("background", data["theme"])
-        self.assertEqual(data["keybindings"], {"q": "quit"})
-        self.run_script(SCRIPTS / "theme_ncspot.sh", [theme, config])
-        self.assertEqual(config.read_text(), first)
-
+class NvimModule(unittest.TestCase):
+    """The axiom_theme Lua module Apply copies into a Neovim config"""
     def test_nvim_module_compiles(self):
         luac = shutil.which("luac")
         if not luac:
@@ -397,17 +131,6 @@ class ThemeIntegrations(unittest.TestCase):
         module = SCRIPTS / "templates" / "nvim" / "axiom_theme.lua"
         result = subprocess.run([luac, "-p", str(module)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_nvim_palette_has_readable_accents(self):
-        target = self.out / "nvim-theme.json"
-        for theme in (THEMES / "ayu-light.json", THEMES / "submarine-sonar.json"):
-            with self.subTest(theme=theme.name):
-                self.run_script(SCRIPTS / "theme_nvim.sh", [theme, target])
-                data = json.loads(target.read_text())
-                semantic = data["semantic"]
-                self.assertRegex(semantic["accent"], HEX)
-                for key in ("accent", "accentAlt"):
-                    self.assertGreaterEqual(contrast(data["text"][key], semantic["background"]), 4.5, key)
 
     def test_nvim_module_maps_shipped_themes(self):
         text = (SCRIPTS / "templates" / "nvim" / "axiom_theme.lua").read_text()
@@ -481,12 +204,6 @@ class HookupScript(unittest.TestCase):
             self.assertTrue(css.startswith('@import url("axiom.css");'))
             prefs = (root / profile / "user.js").read_text().splitlines()
             self.assertEqual(prefs[-1], 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);')
-        # The theme script themes the same profiles
-        result = subprocess.run([str(SCRIPTS / "theme_firefox.sh"), str(THEMES / "ayu-dark.json")],
-                                env=self.env, capture_output=True, text=True, timeout=60)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        for profile in ("a.default-release", "b c.other"):
-            self.assertTrue((root / profile / "chrome" / "axiom.css").is_file())
 
     def test_per_profile_without_profiles_is_skipped(self):
         targets = self.hookup("status", "firefox")["targets"]

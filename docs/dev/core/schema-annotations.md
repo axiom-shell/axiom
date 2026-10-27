@@ -128,5 +128,5 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
 ### Theme integrations
 - `x-hookup` (on a `ThemeIntegrations` boolean): how the integration hooks into its app (targets, place, text).
 - `x-hookupNote`: a note shown with it.
-- `x-profiles`: profile locations to search (Firefox and its forks; `scripts/integration_hookup.py`, `theme_firefox.sh`).
+- `x-profiles`: profile locations to search (Firefox and its forks; `scripts/integration_hookup.py`, the daemon's `firefox` integration).
 - See [Theme integrations](../theming/theme-integrations.md).

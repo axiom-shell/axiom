@@ -285,30 +285,33 @@ QtObject {
     setLightMode(Appearance.darkMode);
   }
 
-  // Runs the enabled integrations (scripts/theme_<key>.sh, one per
+  // Runs the enabled integrations (the daemon's theme.integrate, one per
   // ThemeIntegrations switch) for a theme; `keys` limits it to those (none:
-  // all of them)
+  // all of them). A run asked for while one is going joins it, for the
+  // latest theme.
   function themeIntegrations(themeName = root.activeTheme, keys = []) {
     if (Paths.greeter)
       return;
-    const themePath = Paths.themeFile(themeName);
     const all = keys.length === 0;
-    for (let i = 0; i < root.integrations.length; i++) {
-      const key = root.integrations[i];
-      const process = root._integrationRunner.objectAt(i);
-      if (!ThemeIntegrations[key] || !process || (!all && !keys.includes(key)))
-        continue;
-      // A busy one runs again for the latest theme once it's done, or a
-      // quick light-dark-light would leave it on the middle one
-      if (process.running) {
-        process.queued = themePath;
-        continue;
-      }
-      process.command = [Paths.scriptsPath + "theme_" + key + ".sh", themePath];
-      process.running = true;
-    }
+    const run = root._enabledIntegrations.filter(key => all || keys.includes(key));
     if (all)
       root._themed = root._enabledIntegrations;
+    if (run.length === 0)
+      return;
+    BackendManager.call("theme.integrate", {
+      "theme": Paths.themeFile(themeName),
+      "keys": run
+    }, (error, result) => {
+      if (error) {
+        console.warn("[ThemeManager] Theme integrations failed:", error.message);
+        return;
+      }
+      for (const r of result.results) {
+        const problems = r.error ? [r.error] : r.warnings;
+        if (problems.length > 0)
+          console.warn("[ThemeManager] " + r.key + " integration:", problems.join("\n"));
+      }
+    });
   }
 
   // The switched-on integrations (keys, in schema order), and those as of the
@@ -537,10 +540,10 @@ QtObject {
   property var _communityThemes: []
   property var _families: []
 
-  // --- Integration processes ---
+  // --- Integrations ---
 
-  // The ThemeIntegrations switches, in schema order: one per
-  // scripts/theme_<key>.sh
+  // The ThemeIntegrations switches, in schema order (the daemon's
+  // theme.integrate has one integration each)
   readonly property var integrations: {
     const props = ConfigManager.configSchema.properties.ThemeIntegrations.properties;
     return Object.keys(props).filter(key => props[key].type === "boolean");
@@ -565,53 +568,6 @@ QtObject {
     })
   function integrationCommands(key) {
     return root._integrationCommands[key] ?? [key];
-  }
-
-  // One process per integration, each running its script
-  property Instantiator _integrationRunner: Instantiator {
-    model: root.integrations
-    delegate: Process {
-      id: integration
-      required property string modelData
-      // Reported once both the exit and the end of stderr are in, in
-      // whichever order they come
-      property int _exitCode: -1
-      property bool _stderrDone: false
-      // A theme asked for while it was running, run next
-      property string queued: ""
-
-      function _report() {
-        if (_exitCode < 0 || !_stderrDone)
-          return;
-        // A failure logs all of stderr; a success only its "Warning:" lines
-        const text = errors.text.trim();
-        const shown = _exitCode === 0 ? text.split("\n").filter(line => line.startsWith("Warning:")).join("\n") : text || "exited with " + _exitCode;
-        if (shown)
-          console.warn("[ThemeManager] theme_" + modelData + ".sh:", shown);
-        if (queued) {
-          command = [Paths.scriptsPath + "theme_" + modelData + ".sh", queued];
-          queued = "";
-          Qt.callLater(() => integration.running = true);
-        }
-      }
-
-      onRunningChanged: if (running) {
-        _exitCode = -1;
-        _stderrDone = false;
-      }
-      onExited: exitCode => {
-        _exitCode = exitCode;
-        _report();
-      }
-      stdout: StdioCollector {}
-      stderr: StdioCollector {
-        id: errors
-        onStreamFinished: {
-          integration._stderrDone = true;
-          integration._report();
-        }
-      }
-    }
   }
 
   // --- Theme List Loading ---
