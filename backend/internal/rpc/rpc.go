@@ -48,8 +48,9 @@ func DefaultLimits() Limits {
 type Handler func(ctx context.Context, c *Conn, params json.RawMessage) (any, error)
 
 // Registry maps methods to handlers. Before, when set, runs ahead of
-// every handler and can refuse the call (the daemon refuses everything
-// but daemon.hello until a connection said hello).
+// every call, a method it has no handler for too, and can refuse it (the
+// daemon refuses everything but daemon.hello until a connection said
+// hello; the greeter's answers what it doesn't serve as unavailable).
 type Registry struct {
 	handlers map[string]entry
 	Before   func(c *Conn, method string) error
@@ -482,13 +483,6 @@ func (c *Conn) deliver(m message) {
 }
 
 func (c *Conn) dispatch(ctx context.Context, m message) {
-	e, ok := c.reg.handlers[m.Method]
-	if !ok {
-		if m.ID != nil {
-			c.replyError(m.ID, &wireError{Code: codeMethodNotFound, Message: "no method " + m.Method})
-		}
-		return
-	}
 	if c.reg.Before != nil {
 		if err := c.reg.Before(c, m.Method); err != nil {
 			if m.ID != nil {
@@ -496,6 +490,13 @@ func (c *Conn) dispatch(ctx context.Context, m message) {
 			}
 			return
 		}
+	}
+	e, ok := c.reg.handlers[m.Method]
+	if !ok {
+		if m.ID != nil {
+			c.replyError(m.ID, &wireError{Code: codeMethodNotFound, Message: "no method " + m.Method})
+		}
+		return
 	}
 	result, err := safeCall(ctx, e.handler, c, m.Params)
 	if m.ID == nil {

@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"context"
-	"errors"
 	"io"
 	"log/slog"
 	"os"
@@ -15,7 +14,6 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
-	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 )
 
@@ -24,16 +22,13 @@ type GreeterOptions struct {
 	Command []string // qs -p <tree>/greeter.qml
 	Environ []string // its environment, without AXIOM_SOCKET (added here)
 	// Dir is the greeter's private runtime folder (xdg.PrivateDir): its
-	// socket and lock
+	// socket
 	Dir        string
 	SchemaHash string // the schema written for it, which its hello names
 	Tree       string
 	Getenv     func(string) string
 	Output     io.Writer // quickshell's stdout and stderr
 	Log        *slog.Logger
-
-	// isShell replaces the check that a peer is the greeter (tests)
-	isShell func(pid int) bool
 }
 
 // greeterSocket is the greeter's socket in its runtime folder.
@@ -50,21 +45,13 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	if o.Log == nil {
 		o.Log = slog.New(slog.DiscardHandler)
 	}
-	lock, err := fsx.TryLock(filepath.Join(o.Dir, "greeter.lock"))
-	if err != nil {
-		return err
-	}
-	defer lock.Release()
 	socket := filepath.Join(o.Dir, greeterSocket)
 	ln, err := rpc.Listen(socket)
 	if err != nil {
 		return err
 	}
 	var shellPID atomic.Int64
-	isShell := o.isShell
-	if isShell == nil {
-		isShell = func(pid int) bool { return pid > 0 && int64(pid) == shellPID.Load() }
-	}
+	isShell := func(pid int) bool { return pid > 0 && int64(pid) == shellPID.Load() }
 	env := append(append([]string{}, o.Environ...), "AXIOM_SOCKET="+socket)
 	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell), Log: o.Log}
 	serveCtx, stopServing := context.WithCancel(context.Background())
@@ -85,28 +72,24 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 		return axerr.Wrap(axerr.Unavailable, err, "starting %s", o.Command[0])
 	}
 	shellPID.Store(int64(cmd.Process.Pid))
-	err = cmd.Wait()
-	if ctx.Err() != nil {
-		return nil
-	}
-	var exit *exec.ExitError
-	if errors.As(err, &exit) {
+	if err := cmd.Wait(); err != nil && ctx.Err() == nil {
 		return axerr.Wrap(axerr.Internal, err, "the greeter's quickshell failed")
-	}
-	if err != nil {
-		return axerr.Wrap(axerr.Internal, err, "waiting for the greeter's quickshell")
 	}
 	return nil
 }
 
 // greeterRegistry is what the greeter's axiom answers: a hello from its
 // quickshell alone, then that quickshell's commands, run with its own
-// environment, and lookups.
+// environment, and lookups. Anything else is unavailable, as it was with
+// no axiom at all, so the shell's callers stay quiet about it.
 func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool) *rpc.Registry {
 	reg := rpc.NewRegistry()
 	reg.Before = func(c *rpc.Conn, method string) error {
 		if method != "daemon.hello" && sessionOf(c) == nil {
 			return axerr.New(axerr.BadRequest, "say daemon.hello first")
+		}
+		if _, _, ok := reg.Types(method); !ok {
+			return axerr.New(axerr.Unavailable, "the greeter's axiom has no %s", method)
 		}
 		return nil
 	}
