@@ -28,10 +28,9 @@ func greeterInstall(ctx context.Context, e *Env, args []string) int {
 		result = rules.Result{Changed: []string{}, Error: err.Error()}
 	} else {
 		in := greeterinstall.New(greeterinstall.Options{
-			Root:     e.Getenv("AXIOM_GREETER_ROOT"),
-			Releases: e.Getenv("AXIOM_GREETER_RELEASES"),
-			Getenv:   e.Getenv,
-			Environ:  os.Environ,
+			Root:    e.Getenv("AXIOM_GREETER_ROOT"),
+			Getenv:  e.Getenv,
+			Environ: os.Environ,
 		})
 		result = in.Run(ctx, req)
 	}

@@ -2726,7 +2726,7 @@
     "When the bar can't fit its widgets, lower priorities are hidden first: higher ones stay longest.": "",
     "When the model declines a request, the API retries it on another model within the same reply.": "",
     "When, then what": "",
-    "Where Install and Update take the login screen's code. Git fetches it as root from the repository axiom was installed from, at its newest release, with the release's prebuilt axiom binary checked against its checksums: nothing that can write to your clone can change it (main, having no such binary, can't be installed). Local copies your clone as it is (the checked-out branch, uncommitted changes included) with the axiom binary you built last, for working on axiom: any program running as you could change what the login screen runs before you next update it.": "",
+    "Where Install and Update take the login screen's code. Git fetches it as root from axiom's official repository, at its newest release, with the release's prebuilt axiom binary checked against its checksums: nothing that can write to your clone can change it (main, having no such binary, can't be installed; a fork uses Local). Local copies your clone as it is (the checked-out branch, uncommitted changes included) with the axiom binary you built last, for working on axiom: any program running as you could change what the login screen runs before you next update it.": "",
     "Where a module sits on its page's or menu's grid, in quarter cards: x and y from the top left, w and h its size.": "",
     "Where along the edge it opens: 0 is the start (left/top), 100 the end.": "",
     "Where along the edge its centre sits: 0 is the start (left/top), 100 the end. It never runs off the screen.": "",

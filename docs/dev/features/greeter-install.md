@@ -36,7 +36,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
   - It fetches as root into its own bare mirror, `/var/lib/axiom-greeter/upstream.git`.
   - It takes the channel's newest `v*` tag (peeled, in version order: `git ls-remote --sort=-v:refname`), or `main`/`master`.
   - It finds them with `git ls-remote` on the official repository, `rules.Repository` (`https://github.com/axiom-shell/axiom.git`; maintainer, 2026-10-27: "Pin mirror too": the git source always installs official code and binary, and a fork uses `local`). The clone's remote never counts.
-  - A copy recorded from another url (a fork, before the pin) shows as `outdated` when its hash isn't the official one's, and its update takes the official code and records its url.
+  - A copy recorded from another url (a fork, before the pin) shows as `outdated` when its hash isn't the official one's, and an update run by a helper of this version takes the official code and records its url (a bash-era helper still fetches its recorded url once; the update after it does).
   - The hash is the commit.
   - **Its binary:** the tag's release's prebuilt `axiom-linux-<amd64|arm64>` from the official repository's release (`rules.Releases`, `https://github.com/axiom-shell/axiom/releases/download/<tag>/`; maintainer, 2026-10-27: "pin official repo"), checked against that release's `SHA256SUMS`: root runs it at the next update, so nothing else is taken, and the sums prove it's an official release's. A mismatch fails the install; so does a release without one (a tag the official repository hasn't released, a release with no binary: none has one yet) and the `main` channel, which has no release (maintainer, 2026-10-27: "Refuse the install (except for if you have the local clone install path selected, in which case it reuses your most recently built binary, and skips the checksum)"). The old copy stays.
 - **Source `local`:**
@@ -84,7 +84,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 | `noClone` | axiom's tree is neither a git clone nor a package (no `.git`, no `.packaged`: a release's source unpacked by hand, another distribution's package), so git and local have nothing to take (the status's `clone` is false; it runs no git then). `GreeterSetup` says the login screen needs a clone or a package, Install isn't offered and `Greeter.source` is hidden (`"/$clone": true`). An installed copy keeps its status, with Remove and the note, but no Update. |
 | `off` | The greeter is off. |
 | `notInstalled` | `Greeter.enabled` is set, but there is no copy. |
-| `outdated` | One of: the copy's hash isn't its source's current one; `installedSource` isn't `GreeterManager.wantedSource` (the setting changed); greetd's command changed. A git remote that can't be reached (`currentHash` "") does not count as behind. |
+| `outdated` | One of: the copy's hash isn't its source's current one; `installedSource` isn't `GreeterManager.wantedSource` (the setting changed); greetd's command changed. An official repository that can't be reached (`currentHash` "") does not count as behind. |
 | `installed` | Installed and current. |
 
 - **`Greeter.enabled`** (`x-settings: false`) is set by Install and cleared by Remove. While set, the Layouts page shows its Login screen row.

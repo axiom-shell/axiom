@@ -362,7 +362,7 @@ func TestFirstProgram(t *testing.T) {
 			os.Symlink(t.TempDir(), filepath.Join(f.root, "var/lib/axiom-greeter"))
 			cmd := exec.Command(program[0], append(program[1:], "update", "/r")...)
 			cmd.Stdin = bytes.NewReader(stdin)
-			if out, err := cmd.CombinedOutput(); err == nil || !strings.Contains(string(out), "is a link") {
+			if out, err := cmd.CombinedOutput(); err == nil || !strings.Contains(string(out), "is a link or isn't root's") {
 				t.Errorf("ran through a link: %v %s", err, out)
 			}
 		})

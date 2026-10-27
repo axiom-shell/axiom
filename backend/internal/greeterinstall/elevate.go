@@ -124,9 +124,8 @@ func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]str
 // run. The folder is removed when it's done.
 const verifyAndRun = `set -e
 umask 077
-if [ -L "$1" ]; then echo "$1 is a link" >&2; exit 1; fi
 mkdir -p "$1"
-if [ -L "$1" ] || [ ! -O "$1" ]; then echo "$1 isn't root's" >&2; exit 1; fi
+if [ -L "$1" ] || [ ! -O "$1" ]; then echo "$1 is a link or isn't root's" >&2; exit 1; fi
 dir=$(mktemp -d "$1/.install.XXXXXXXX")
 trap 'rm -rf "$dir"' EXIT
 cat >"$dir/axiom"
