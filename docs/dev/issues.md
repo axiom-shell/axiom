@@ -229,6 +229,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while renaming the backend's `system` and `lock` packages
 
+### An ipcroute test fails with text file busy
+- **Where:** `backend/internal/ipcroute/ipcroute_test.go` (`TestExecErrorKinds`)
+- **What:** CI on PR #149 (no Go change) failed with `ipcroute_test.go:68: kind not_found (t.f: fork/exec …/qs: text file busy), want unavailable`: the same ETXTBSY race as the dev-mode build test above (a fake executable written while parallel tests fork), in another package. Fixed together: a shared test helper that writes the fake under a temp name and renames it into place.
+- **Size:** trivial
+- **Found:** 2026-10-27, while finishing the binaries plan (#149)
+
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
 - **What:** With blur on under niri, a bar popout switching to another widget's content in the same window shows its old stroke cutting into the box for a frame or two as it resizes: the stroke is the popout's window's, the fill the blur window's, and niri shows the two windows' frames out of step (no `supports.layerFrameSync`). Tried and reverted (2026-10-18), neither changing what the maintainer saw: holding the switch until the popout's window had drawn the new content twice (`SwitchStill`, its window's `frameSwapped`), and drawing the popout's stroke in the blur window with its fill (a stroke-only `AttachedSurfaceCopy` over the fills, the popout's own stroke transparent). That the second didn't help suggests the stroke isn't what's late: perhaps the popout's content, its clip, or the blur region. Next: log each window's `frameSwapped` with what it drew, during a switch.
