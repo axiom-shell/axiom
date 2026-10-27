@@ -99,32 +99,30 @@ Singleton {
     root._describe();
   }
 
-  // The action pkaction is describing: a request that came in meanwhile
-  // is described once it's done, and never gets another's description
+  // The action pkaction is describing ("" when it isn't running): a
+  // request that came in meanwhile is described once it's done, and never
+  // gets another's description
   property string _describing: ""
 
   function _describe() {
     const id = root.flow?.actionId ?? "";
-    if (id === "" || root._describingNow)
+    if (id === "" || root._describing !== "")
       return;
     root._describing = id;
-    root._describingNow = true;
     CommandManager.run(["pkaction", "--verbose", "--action-id", id], (code, stdout) => {
-      root._describingNow = false;
+      root._describing = "";
       const info = {};
       for (const line of stdout.split("\n")) {
         const match = line.match(/^\s+(description|vendor|vendor_url):\s*(.*)$/);
         if (match)
           info[match[1] === "vendor_url" ? "vendorUrl" : match[1]] = match[2].trim();
       }
-      if (root.flow?.actionId === root._describing)
+      if (root.flow?.actionId === id)
         root._actionInfo = info;
-      else if ((root.flow?.actionId ?? root._describing) !== root._describing)
+      else if ((root.flow?.actionId ?? id) !== id)
         Qt.callLater(root._describe);
     });
   }
-  // pkaction is running
-  property bool _describingNow: false
 
   // --- Other agents ---
 

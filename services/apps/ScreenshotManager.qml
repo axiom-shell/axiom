@@ -307,14 +307,10 @@ QtObject {
     root._recorderRunning = true;
     CommandManager.run(command, (code, stdout, stderr) => {
       root._recorderRunning = false;
-      // Its answer lost (axiom re-exec'd): it may still be recording
+      // Its answer lost (axiom re-exec'd): it may still be recording, so
+      // it's left as one from before a reload (stopping marks it stopped)
       if (code !== -1)
         root._recorded(stderr);
-      else
-        CommandManager.run(["sh", "-c", 'pgrep -P "$PPID" -x wf-recorder'], running => {
-          if (running !== 0)
-            root._recorded(stderr);
-        });
     });
     root.recording = true;
     root.recordingSince = Date.now();
