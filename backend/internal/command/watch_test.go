@@ -288,3 +288,26 @@ func TestWatchStops(t *testing.T) {
 		}
 	}
 }
+
+// A second watcher gets the output already there at once, even when its
+// asking for json reruns the command to an unchanged (empty) output.
+func TestWatchNewWatcherGetsOutput(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.out["x"] = "\n"
+	a, b := newSub(), newSub()
+	h.w.Watch(a, WatchRequest{Command: "x", Mode: ModeOnce})
+	h.ran(t, "x")
+	a.next(t)
+	h.w.Watch(b, WatchRequest{Command: "x", Mode: ModeOnce, Format: FormatJSON})
+	if _, ok := b.next(t).Outputs["x"]; !ok {
+		t.Error("b got no output")
+	}
+	h.ran(t, "x")
+	h.idle(t)
+	select {
+	case p := <-a.pushes:
+		t.Errorf("unchanged output pushed: %+v", p)
+	default:
+	}
+}

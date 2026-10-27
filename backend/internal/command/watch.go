@@ -126,7 +126,7 @@ func NewWatches(o WatchOptions) *Watches {
 
 // Watch sets s's watch of a command (replacing its last one) and starts
 // the command's loop if s is its first watcher. An output already there
-// is pushed to s at once.
+// is pushed to s at once if s didn't watch the command yet.
 func (w *Watches) Watch(s Subscriber, r WatchRequest) error {
 	if strings.TrimSpace(r.Command) == "" {
 		return axerr.New(axerr.BadRequest, "an empty command")
@@ -146,6 +146,7 @@ func (w *Watches) Watch(s Subscriber, r WatchRequest) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	wasJSON := w.json(r.Command)
+	_, had := w.subs[s][r.Command]
 	if w.subs[s] == nil {
 		w.subs[s] = map[string]WatchRequest{}
 	}
@@ -154,14 +155,16 @@ func (w *Watches) Watch(s Subscriber, r WatchRequest) error {
 	switch {
 	case run == nil:
 		w.start(r.Command)
-	case !wasJSON && r.Format == FormatJSON:
-		// Run again, parsed this time
+		return nil
+	case !wasJSON && r.Format == FormatJSON && run.entry != nil:
+		// Run again, parsed this time (a run in flight parses already)
 		signal(run.refresh)
 	default:
 		signal(run.changed)
-		if run.entry != nil {
-			w.push(s)
-		}
+	}
+	// A new watcher gets what's there; the parsed value follows
+	if !had && run.entry != nil {
+		w.push(s)
 	}
 	return nil
 }
