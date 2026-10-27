@@ -25,6 +25,9 @@ func TestRebuildInstalled(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+			if tc.name == "read-only (a package's)" && os.Geteuid() == 0 {
+				t.Skip("root writes anywhere")
+			}
 			tree := t.TempDir()
 			os.MkdirAll(filepath.Join(tree, "backend"), 0o755)
 			d := &Daemon{opts: Options{Tree: tree, Go: fakeGo(t, tc.build), Log: slog.New(slog.DiscardHandler)}}
