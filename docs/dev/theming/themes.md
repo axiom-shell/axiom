@@ -38,7 +38,7 @@ How the active theme is loaded, how themes are grouped into dark/light families,
 
 ### Generation from a wallpaper
 - `ThemeManager.generateThemesFromWallpaper` calls axiom's `theme.generate` (`{ wallpaper }`, an absolute path; `daemon/theme.go`). One call writes a `generated/wallpaper-<style>-dark|light` pair per style into `Paths.generatedThemesPath`, each file atomically (`fsx.WriteFile`), and answers the paths. A failure (no such file, not an image, a write refused) is an `axerr` kind whose message `generationFailed` shows; without axiom nothing is generated.
-- `backend/internal/theme` is the edge: it decodes the image (PNG, JPEG, BMP: the wallpaper list's formats; BMP through `golang.org/x/image/bmp`) and writes the files. `backend/internal/theme/palette` (pure) does the colour work, with golden tests (`testdata/*.golden`, `go test -update` rewrites them) and property tests (contrast, ramp direction, each style's character).
+- `backend/internal/theme` is the edge: it decodes the image (PNG, JPEG, BMP: the wallpaper list's formats, plus WebP and GIF for a wallpaper set by path; BMP and WebP through `golang.org/x/image`), refusing one over 8192×8192 pixels from its header (it's decoded whole, in the daemon), and writes the files. `backend/internal/theme/palette` (pure) does the colour work, with golden tests (`testdata/*.golden`, `go test -update` rewrites them) and property tests (contrast, ramp direction, each style's character).
 - Styles (`palette.Styles`): `tonal`, `vibrant`, `faithful`, `muted`, `alternate`. They are factors on the one build, like Material's scheme variants.
 - Algorithm:
   - the image is averaged down to 128 px on its longer side and clustered in OKLab into up to 24 candidate colors;

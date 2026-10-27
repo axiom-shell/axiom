@@ -1,20 +1,24 @@
 // Package theme generates the themes made from a wallpaper
 // (ThemeManager's generateThemesFromWallpaper): it decodes the image
-// (PNG, JPEG or BMP, the wallpapers axiom lists), has package palette
-// build every style's pair, and writes them to the generated themes'
-// folder, each file atomically, so the shell's watch never reads half a
-// theme.
+// (PNG, JPEG or BMP, the wallpapers axiom lists, or a WebP or GIF set by
+// path), has package palette build every style's pair, and writes them to
+// the generated themes' folder, each file atomically, so the shell's watch
+// never reads half a theme.
 package theme
 
 import (
+	"fmt"
 	"image"
-	_ "image/jpeg" // decoders, registered for image.Decode
+	_ "image/gif" // decoders, registered for image.Decode
+	_ "image/jpeg"
 	_ "image/png"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
 
 	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/webp"
 
 	"github.com/axiom-shell/axiom/backend/internal/assets"
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -23,10 +27,16 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/theme/palette"
 )
 
+// maxPixels bounds the image decoded whole (an 8K×8K one): the daemon
+// decodes it in memory, so a larger one, or a header claiming one, is
+// refused rather than allocated.
+const maxPixels = 8192 * 8192
+
 // Generate writes every style's wallpaper-<style>-dark|light.json made from
 // the image at wallpaper into dir, and returns their paths. An image that
 // can't be read is axerr.NotFound (no such file) or BadRequest (not an
-// image it can decode); a write that fails, Unavailable.
+// image it can decode, or larger than maxPixels); a write that fails,
+// Unavailable.
 func Generate(wallpaper, dir string, now time.Time) ([]string, error) {
 	semantic, err := darkSemantic()
 	if err != nil {
@@ -47,7 +57,7 @@ func Generate(wallpaper, dir string, now time.Time) ([]string, error) {
 		}
 		return nil, axerr.Wrap(kind, err, "can't read the wallpaper")
 	}
-	img, _, err := image.Decode(f)
+	img, err := decode(f)
 	f.Close()
 	if err != nil {
 		return nil, axerr.Wrap(axerr.BadRequest, err, "can't read the wallpaper %s", path)
@@ -64,6 +74,22 @@ func Generate(wallpaper, dir string, now time.Time) ([]string, error) {
 		written = append(written, out)
 	}
 	return written, nil
+}
+
+// decode reads the image after checking its header's size.
+func decode(f *os.File) (image.Image, error) {
+	cfg, _, err := image.DecodeConfig(f)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width*cfg.Height > maxPixels {
+		return nil, fmt.Errorf("a %d×%d image is too large or empty", cfg.Width, cfg.Height)
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
+	img, _, err := image.Decode(f)
+	return img, err
 }
 
 // darkSemantic is theme-defaults.json's dark semantic map, which every

@@ -2,6 +2,7 @@ package theme
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"image"
 	"image/color"
@@ -84,12 +85,25 @@ func TestGenerateRefuses(t *testing.T) {
 	if err := os.WriteFile(text, []byte("not an image"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	// A BMP whose header claims 100000×100000 pixels: refused unread
+	huge := filepath.Join(dir, "huge.bmp")
+	var b bytes.Buffer
+	if err := bmp.Encode(&b, image.NewRGBA(image.Rect(0, 0, 1, 1))); err != nil {
+		t.Fatal(err)
+	}
+	header := b.Bytes()
+	binary.LittleEndian.PutUint32(header[18:], 100000)
+	binary.LittleEndian.PutUint32(header[22:], 100000)
+	if err := os.WriteFile(huge, header, 0o644); err != nil {
+		t.Fatal(err)
+	}
 	for _, tc := range []struct {
 		path string
 		kind axerr.Kind
 	}{
 		{filepath.Join(dir, "missing.png"), axerr.NotFound},
 		{text, axerr.BadRequest},
+		{huge, axerr.BadRequest},
 	} {
 		_, err := Generate(tc.path, filepath.Join(dir, "themes"), time.Now())
 		var e *axerr.Error

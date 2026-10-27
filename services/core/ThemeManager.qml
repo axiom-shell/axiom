@@ -223,9 +223,11 @@ QtObject {
       return;
     }
     console.log("[ThemeManager] Generating themes from", wallpaperUrl.toString());
+    // Decoded first: a malformed URL throws here, not with a run marked going
+    const wallpaper = decodeURIComponent(wallpaperUrl.toString().replace("file://", ""));
     root._generating = wallpaperUrl.toString();
     BackendManager.call("theme.generate", {
-      "wallpaper": decodeURIComponent(root._generating.replace("file://", ""))
+      "wallpaper": wallpaper
     }, (error, result) => {
       if (error) {
         console.error("[ThemeManager] Theme generation failed:", error.message);

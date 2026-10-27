@@ -75,14 +75,15 @@ var (
 	}
 	// How much of the neutral tint each ramp step carries (text is less tinted)
 	neutralTint = [8]float64{0.9, 1.0, 1.05, 1.1, 0.85, 0.75, 0.5, 0.3}
-	accents     = []accent{
-		{"base08", 20, 14, [2][2]float64{{0.735, 0.145}, {0.535, 0.175}}, 0},  // red: error
-		{"base09", 50, 12, [2][2]float64{{0.80, 0.125}, {0.61, 0.150}}, 0},    // orange
-		{"base0A", 82, 14, [2][2]float64{{0.855, 0.105}, {0.70, 0.140}}, -10}, // yellow: warning
-		{"base0B", 135, 25, [2][2]float64{{0.825, 0.125}, {0.61, 0.140}}, 0},  // green: success
-		{"base0C", 195, 30, [2][2]float64{{0.835, 0.095}, {0.58, 0.100}}, 0},  // cyan: info
-		{"base0D", 255, 25, [2][2]float64{{0.745, 0.125}, {0.53, 0.160}}, 0},  // blue
-		{"base0E", 315, 30, [2][2]float64{{0.77, 0.125}, {0.54, 0.160}}, 0},   // magenta
+	// base08-base0E, in order
+	accents = []accent{
+		{20, 14, [2][2]float64{{0.735, 0.145}, {0.535, 0.175}}, 0},  // red: error
+		{50, 12, [2][2]float64{{0.80, 0.125}, {0.61, 0.150}}, 0},    // orange
+		{82, 14, [2][2]float64{{0.855, 0.105}, {0.70, 0.140}}, -10}, // yellow: warning
+		{135, 25, [2][2]float64{{0.825, 0.125}, {0.61, 0.140}}, 0},  // green: success
+		{195, 30, [2][2]float64{{0.835, 0.095}, {0.58, 0.100}}, 0},  // cyan: info
+		{255, 25, [2][2]float64{{0.745, 0.125}, {0.53, 0.160}}, 0},  // blue
+		{315, 30, [2][2]float64{{0.77, 0.125}, {0.54, 0.160}}, 0},   // magenta
 	}
 	primaryL = [2]float64{0.80, 0.50}
 	// clamp range for the seed's chroma
@@ -91,7 +92,6 @@ var (
 )
 
 type accent struct {
-	slot           string
 	hue, deviation float64
 	target         [2][2]float64 // L, C per variant
 	// added in light themes: dark yellows read olive, so light ones lean
@@ -100,13 +100,17 @@ type accent struct {
 }
 
 const (
-	primary        = "base0F"
-	lightTint      = 0.7   // tint shows more on a light background
-	minChroma      = 0.035 // below this a color counts as grey
-	seedMinChroma  = 0.05  // Material's cutoff (15 CAM16 chroma) for a seed
-	harmonizeMax   = 15.0  // Material's cap on rotating a hue toward the seed
-	referenceChrom = 0.06  // image colorfulness the accent chroma targets assume
+	firstAccent     = 8     // base08: accents[i] is base08+i
+	primary         = 15    // base0F, the seed's slot
+	lightTint       = 0.7   // tint shows more on a light background
+	minChroma       = 0.035 // below this a color counts as grey
+	seedMinChroma   = 0.05  // Material's cutoff (15 CAM16 chroma) for a seed
+	harmonizeMax    = 15.0  // Material's cap on rotating a hue toward the seed
+	referenceChroma = 0.06  // image colorfulness the accent chroma targets assume
 )
+
+// slotName is base16 slot i's key, base00-base0F.
+func slotName(i int) string { return fmt.Sprintf("base%02X", i) }
 
 // seeds are candidate indices, best first by Material's score (chroma
 // rescaled from CAM16 to OKLCH units), each at least 15° from the ones
@@ -150,10 +154,11 @@ type hue struct {
 	hasWall bool // the hue is a wallpaper color's (and c its chroma)
 }
 
-// pair is a style's two variants' colors, base00-base0F.
+// pair is a style's two variants' colors, base00-base0F, the slot
+// accentAlt points at and the seed (nil without one).
 type pair struct {
-	colors  [2]map[string]rgb8
-	altSlot string
+	colors  [2][16]rgb8
+	altSlot int
 	seed    *rgb8
 }
 
@@ -189,7 +194,7 @@ func (a *Analysis) build(s Style) pair {
 	}
 
 	// Accent chroma follows how colorful the image is, within reason
-	vivid := min(max(math.Sqrt(a.colorfulness/referenceChrom), 0.7), 1.15)
+	vivid := min(max(math.Sqrt(a.colorfulness/referenceChroma), 0.7), 1.15)
 	if len(distinct) == 0 {
 		vivid = 0.7
 	}
@@ -208,22 +213,22 @@ func (a *Analysis) build(s Style) pair {
 	}
 	// accentAlt is the slot nearest altH but red, which would read as an error
 	closest := math.Inf(1)
-	for i, acc := range accents[1:] {
-		if d := math.Abs(hueDiff(hues[i+1].h, altH)); d < closest {
-			closest, p.altSlot = d, acc.slot
+	for i := 1; i < len(accents); i++ {
+		if d := math.Abs(hueDiff(hues[i].h, altH)); d < closest {
+			closest, p.altSlot = d, firstAccent+i
 		}
 	}
 
 	for v := range variants {
-		colors := map[string]rgb8{}
+		colors := &p.colors[v]
 		t := tint
 		if v == 1 {
 			t *= lightTint
 		}
 		for i, l := range neutralL[v] {
-			colors[fmt.Sprintf("base%02X", i)] = lchColor(l, t*neutralTint[i], neutralH)
+			colors[i] = lchColor(l, t*neutralTint[i], neutralH)
 		}
-		bg := colors["base00"]
+		bg := colors[0]
 		for i, acc := range accents {
 			l, c := acc.target[v][0], acc.target[v][1]*vivid
 			h := hues[i].h
@@ -233,11 +238,10 @@ func (a *Analysis) build(s Style) pair {
 			if hues[i].hasWall {
 				c += (hues[i].c - c) * s.Fidelity
 			}
-			colors[acc.slot] = readable(l, c, h, bg, v)
+			colors[firstAccent+i] = readable(l, c, h, bg, v)
 		}
 		lo, hi := primaryC[v][0]*s.PrimaryChroma, primaryC[v][1]*s.PrimaryChroma
 		colors[primary] = readable(primaryL[v], min(max(seedC, lo), hi), seedH, bg, v)
-		p.colors[v] = colors
 	}
 	return p
 }
@@ -313,19 +317,14 @@ func Themes(a *Analysis, semantic *jsonx.Object, wallpaper string, at time.Time)
 		for _, k := range semantic.Keys() {
 			sem.Set(k, semantic.Value(k))
 		}
-		sem.Set("accent", primary)
-		sem.Set("borderFocus", primary)
-		sem.Set("accentAlt", p.altSlot)
+		sem.Set("accent", slotName(primary))
+		sem.Set("borderFocus", slotName(primary))
+		sem.Set("accentAlt", slotName(p.altSlot))
 		names := [2]string{"wallpaper-" + s.Name + "-dark", "wallpaper-" + s.Name + "-light"}
 		for v, variant := range variants {
 			colors := jsonx.NewObject()
-			keys := make([]string, 0, len(p.colors[v]))
-			for k := range p.colors[v] {
-				keys = append(keys, k)
-			}
-			slices.Sort(keys)
-			for _, k := range keys {
-				colors.Set(k, p.colors[v][k].hex())
+			for i, c := range p.colors[v] {
+				colors.Set(slotName(i), c.hex())
 			}
 			theme := jsonx.Obj("name", "Wallpaper "+title(s.Name)+" "+title(variant), "author", "axiom",
 				"variant", variant, "paired", names[1-v], "generated", generated, "colors", colors, "semantic", sem)
