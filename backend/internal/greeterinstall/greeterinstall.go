@@ -27,6 +27,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
+	"github.com/axiom-shell/axiom/backend/internal/release/fetch"
 )
 
 // HelperPath is root's copy of the installer, which the installed polkit
@@ -36,6 +37,11 @@ const HelperPath = "/usr/share/axiom-greeter/scripts/greeter/greeter_install.sh"
 // binariesMarker starts a line of every helper that installs the axiom
 // binary too: an older one doesn't, and is never run (Report.Binaries).
 const binariesMarker = "# (This helper installs the axiom binary too"
+
+// edgeMarker starts a line of every helper whose main channel takes
+// main's newest build (the edge prerelease): an older one refuses main, so
+// for main it's never run (Elevate).
+const edgeMarker = "# (Its main channel takes main's newest build"
 
 // lsRemoteTimeout bounds asking a remote for its refs.
 const lsRemoteTimeout = time.Minute
@@ -176,12 +182,17 @@ func (in *Installer) helper() (installed, binaries bool) {
 	if !executable(helper) || !regular(in.policy()) {
 		return false, false
 	}
-	for line := range strings.Lines(readText(helper)) {
-		if strings.HasPrefix(line, binariesMarker) {
-			return true, true
+	return true, in.helperSays(binariesMarker)
+}
+
+// helperSays whether root's helper has a line starting with marker.
+func (in *Installer) helperSays(marker string) bool {
+	for line := range strings.Lines(readText(in.path(HelperPath))) {
+		if strings.HasPrefix(line, marker) {
+			return true
 		}
 	}
-	return true, false
+	return false
 }
 
 // upstream is the url the git source fetches: the official repository
@@ -226,16 +237,28 @@ func (in *Installer) currentHash(ctx context.Context, g gitRunner, source, chann
 	return target.Commit
 }
 
-// remoteTarget asks url for the channel's newest commit (ok false when it
-// can't be reached or has none).
+// remoteTarget is the channel's commit (ok false when it can't be told):
+// for tags, url's newest v* tag; for main, the commit main's newest build
+// was made from (release.Edge's COMMIT, checked against its SHA256SUMS),
+// which fetch checks is on url's main.
 func (in *Installer) remoteTarget(ctx context.Context, url, channel string) (rules.Target, bool) {
+	if channel == rules.ChannelMain {
+		commit, err := in.releases().EdgeCommit(ctx)
+		return rules.MainTarget(commit), err == nil
+	}
 	ctx, cancel := context.WithTimeout(ctx, lsRemoteTimeout)
 	defer cancel()
 	out, err := in.git("", nil).run(ctx, nil, "ls-remote", "--sort=-v:refname", url)
 	if err != nil {
 		return rules.Target{}, false
 	}
-	return rules.Newest(string(out), channel)
+	return rules.NewestTag(string(out))
+}
+
+// releases downloads from the official releases (Options.Releases in
+// tests).
+func (in *Installer) releases() *fetch.Fetcher {
+	return fetch.New(fetch.Options{Base: in.opts.Releases})
 }
 
 // gitRunner runs git in one repository (dir, "" for none), as an account

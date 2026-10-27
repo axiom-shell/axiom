@@ -100,7 +100,6 @@ func newInstallFixture(t *testing.T) *fixture {
 	f.git(f.repo, "commit", "-qm", "the policy and the helper")
 	f.git(f.repo, "tag", "-f", "-a", "v1.0", "-m", "v1.0")
 	f.git(f.repo, "push", "-q", "-f", "origin", "main", "--tags")
-	f.releases = releases(t, released, "")
 	return f
 }
 
@@ -174,14 +173,42 @@ func TestGitTagsTakesTheNewestReleaseOnly(t *testing.T) {
 	}
 }
 
-// The main channel has no release binary to check: refused, the copy left
-// as it was
-func TestGitMainIsRefused(t *testing.T) {
+// The main channel takes the commit main's newest build was made from,
+// with that build's binary, even when main has moved on since
+func TestGitMainTakesTheEdgeBuild(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
 	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
 	f.publish("greeter.qml", "on main", "")
-	f.refused("only a release's prebuilt one", rules.ActionUpdate, rules.SourceGit, rules.ChannelMain)
+	built := f.git(f.repo, "rev-parse", "main")
+	f.setEdge(built)
+	f.publish("greeter.qml", "not built yet", "")
+	if s := f.status(rules.SourceGit, rules.ChannelMain); s.CurrentHash != built {
+		t.Errorf("main's current hash %q, want the edge build's %q", s.CurrentHash, built)
+	}
+	f.ok(rules.ActionUpdate, rules.SourceGit, rules.ChannelMain)
+	if f.copied("greeter.qml") != "on main" || f.copied(".greeter-hash") != built+"\n" ||
+		f.copied(".greeter-source") != "git main "+f.upstream+"\n" || f.copied("bin/axiom") != released {
+		t.Errorf("didn't take the edge build's commit: %q %q", f.copied("greeter.qml"), f.copied(".greeter-hash"))
+	}
+	if s := f.status(rules.SourceGit, rules.ChannelMain); s.InstalledHash != s.CurrentHash {
+		t.Errorf("status %+v", s)
+	}
+}
+
+// An edge build of a commit that isn't on the official main, or none at
+// all, is refused, the copy left as it was
+func TestGitMainWithoutAnEdgeBuildOnMain(t *testing.T) {
+	t.Parallel()
+	f := newInstallFixture(t)
+	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	f.refused("nothing to fetch", rules.ActionUpdate, rules.SourceGit, rules.ChannelMain)
+	f.git(f.repo, "checkout", "-q", "-b", "fork")
+	f.write(f.repo, "greeter.qml", "not on main", 0o644)
+	f.git(f.repo, "commit", "-qam", "fork")
+	f.git(f.repo, "push", "-q", "origin", "fork")
+	f.setEdge(f.git(f.repo, "rev-parse", "fork"))
+	f.refused("isn't on", rules.ActionUpdate, rules.SourceGit, rules.ChannelMain)
 	if f.copied("greeter.qml") != "greeter.qml" || f.copied(".greeter-source") != "git tags "+f.upstream+"\n" {
 		t.Error("a refused update changed the copy")
 	}
@@ -274,6 +301,12 @@ func TestGitTakesTheReleasesBinary(t *testing.T) {
 // machine and sums as its SHA256SUMS line (data's own when ""; no binary
 // when "-").
 func releases(t *testing.T, data, sums string) string {
+	return releasesWithEdge(t, data, sums, nil)
+}
+
+// releasesWithEdge is releases, with the edge prerelease's COMMIT naming
+// what edge returns at the time it's asked (no COMMIT when nil or "").
+func releasesWithEdge(t *testing.T, data, sums string, edge func() string) string {
 	t.Helper()
 	asset, ok := release.Asset(runtime.GOARCH)
 	if !ok {
@@ -281,6 +314,12 @@ func releases(t *testing.T, data, sums string) string {
 	}
 	if sums == "" {
 		sums = fmt.Sprintf("%x", sha256.Sum256([]byte(data)))
+	}
+	commit := func() string {
+		if edge == nil {
+			return ""
+		}
+		return edge()
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch tag := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")[0]; r.URL.Path {
@@ -292,6 +331,15 @@ func releases(t *testing.T, data, sums string) string {
 			w.Write([]byte(data))
 		case "/" + tag + "/SHA256SUMS":
 			fmt.Fprintf(w, "%s  %s\n", sums, asset)
+			if c := commit(); tag == release.Edge && c != "" {
+				fmt.Fprintf(w, "%x  COMMIT\n", sha256.Sum256([]byte(c+"\n")))
+			}
+		case "/edge/COMMIT":
+			if c := commit(); c != "" {
+				fmt.Fprintln(w, c)
+				return
+			}
+			http.NotFound(w, r)
 		default:
 			http.NotFound(w, r)
 		}

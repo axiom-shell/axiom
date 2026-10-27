@@ -497,7 +497,7 @@
     "Closing a toast (its close button or a swipe) also removes the notification from the history. Off, it only hides the toast.": "",
     "Closing a toast removes it": "",
     "Code from": "",
-    "Code from Git takes only a release, whose prebuilt axiom binary root checks against the release's checksums, and axiom's updates follow the main branch, which has none. Switch them to releases, or choose Local.": "",
+    "Code from Git, following main: root fetches main's newest build from {0}, the commit its prebuilt axiom binary was built from, checked against the build's checksums. Nothing that can write to your clone can change what the login screen runs.": "",
     "Code from Git: root fetches the newest release from {0}, with its prebuilt axiom binary checked against the release's checksums. Nothing that can write to your clone can change what the login screen runs.": "",
     "Code from Local: Update copies your clone as it is, uncommitted changes included, with the axiom binary you built last. Any program running as you can change them before you next update, and the password prompt is then the only check. Choose Git unless you're working on axiom.": "",
     "Color": "",

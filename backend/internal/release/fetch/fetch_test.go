@@ -93,3 +93,16 @@ func TestEdgeCommit(t *testing.T) {
 		})
 	}
 }
+
+func TestEdge(t *testing.T) {
+	t.Parallel()
+	commit := "0123456789abcdef0123456789abcdef01234567"
+	base := serve(t, map[string]string{"edge/COMMIT": commit + "\n", "edge/axiom-linux-amd64": "bin"}, nil)
+	got, data, err := New(Options{Base: base}).Edge(context.Background(), "amd64")
+	if err != nil || got != commit || string(data) != "bin" {
+		t.Fatalf("Edge = %q, %q, %v", got, data, err)
+	}
+	if _, _, err := New(Options{Base: base}).Edge(context.Background(), "arm64"); !errors.Is(err, ErrMissing) {
+		t.Errorf("no arm64 build: %v", err)
+	}
+}
