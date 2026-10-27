@@ -10,7 +10,7 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
 - **`displays[screenName]`** gives each monitor's controller:
   - **`backlight`:** for an `eDP` / `LVDS` / `DSI` screen. Read from `/sys/class/backlight` (firmware over platform over raw, as systemd-backlight picks), set through logind's `Session.SetBrightness` (how the session's user may write it, as brightnessctl does).
   - **`ddc`:** for monitors that `ddcutil detect` maps to a DRM connector. Uses VCP 0x10.
-- **The daemon does the work** (`backend/internal/brightness`): `brightness.detect` (the backlight with its level, the DDC monitors without theirs), `brightness.get` and `brightness.set` per controller. ddcutil stays a program, run from Go (10 s at most). The logind connection opens on the first backlight set and is kept. The QML keeps the mapping onto screens, the coalescing and the dimming. Without the daemon (the greeter) there's no brightness.
+- **The daemon does the work** (`backend/internal/brightness`): `brightness.detect` (the backlight with its level, the DDC monitors without theirs), `brightness.get` and `brightness.set` per controller. ddcutil stays a program, run from Go (10 s at most). Each backlight set dials logind afresh. The QML keeps the mapping onto screens, the coalescing and the dimming. Without the daemon (the greeter) there's no brightness.
 - **When it reads:**
   - Detection runs at startup and on screen changes.
   - Values are read then, and again when the OSD opens (`refresh`).

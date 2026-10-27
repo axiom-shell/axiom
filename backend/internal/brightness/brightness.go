@@ -17,7 +17,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -91,14 +90,9 @@ type Options struct {
 	Getenv    func(string) string
 }
 
-// Service answers the shell's brightness calls. Its logind connection is
-// opened on the first backlight set and kept until it fails or Close.
+// Service answers the shell's brightness calls.
 type Service struct {
 	o Options
-
-	mu   sync.Mutex
-	conn *dbus.Conn
-	lg   *logind.Logind
 }
 
 // New is a service on o.
@@ -121,7 +115,7 @@ func ddcutil(ctx context.Context, args ...string) ([]byte, error) {
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
-		return out, axerr.Wrap(axerr.Unavailable, err, "ddcutil %s: %s", args[len(args)-1], strings.TrimSpace(stderr.String()))
+		return out, axerr.Wrap(axerr.Unavailable, err, "ddcutil %s: %s", strings.Join(args, " "), strings.TrimSpace(stderr.String()))
 	}
 	return out, nil
 }
@@ -129,13 +123,11 @@ func ddcutil(ctx context.Context, args ...string) ([]byte, error) {
 // Detect finds the panel's backlight and the monitors answering DDC/CI
 // (without their levels: reading each is slow, Get does it).
 func (s *Service) Detect(ctx context.Context) Found {
-	found := Found{Backlight: s.backlight(), DDC: []DDC{}}
 	ctx, cancel := context.WithTimeout(ctx, ddcTimeout)
 	defer cancel()
 	// Without ddcutil, or with no monitor answering, there are none
 	out, _ := s.o.Run(ctx, "detect", "--terse")
-	found.DDC = parseDetect(string(out))
-	return found
+	return Found{Backlight: s.backlight(), DDC: parseDetect(string(out))}
 }
 
 func (s *Service) backlight() *Backlight {
@@ -265,55 +257,23 @@ func (s *Service) Set(ctx context.Context, t Target, value int) error {
 	return axerr.New(axerr.BadRequest, "brightness: unknown kind %q", t.Kind)
 }
 
+// setBacklight asks logind on a connection of its own: the shell sends
+// one set at a time per monitor, so dialling each time costs nothing
 func (s *Service) setBacklight(ctx context.Context, device string, value uint32) error {
-	lg, err := s.logind(ctx)
+	if s.o.SystemBus == nil {
+		return axerr.New(axerr.Unavailable, "brightness: no system bus")
+	}
+	conn, err := s.o.SystemBus(ctx)
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "brightness: connecting to the system bus")
+	}
+	defer conn.Close()
+	lg, err := logind.Open(ctx, conn, s.o.Getenv)
 	if err != nil {
 		return err
 	}
 	if err := lg.SetBrightness(ctx, KindBacklight, device, value); err != nil {
-		// A dropped connection is opened again on the next set
-		s.mu.Lock()
-		if s.conn != nil && s.conn.Err() != nil {
-			s.closeLocked()
-		}
-		s.mu.Unlock()
 		return axerr.Wrap(axerr.Unavailable, err, "logind: setting backlight %q", device)
 	}
 	return nil
-}
-
-func (s *Service) logind(ctx context.Context) (*logind.Logind, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.lg != nil {
-		return s.lg, nil
-	}
-	if s.o.SystemBus == nil {
-		return nil, axerr.New(axerr.Unavailable, "brightness: no system bus")
-	}
-	conn, err := s.o.SystemBus(ctx)
-	if err != nil {
-		return nil, axerr.Wrap(axerr.Unavailable, err, "brightness: connecting to the system bus")
-	}
-	lg, err := logind.Open(ctx, conn, s.o.Getenv)
-	if err != nil {
-		conn.Close()
-		return nil, err
-	}
-	s.conn, s.lg = conn, lg
-	return lg, nil
-}
-
-// Close closes the logind connection, if one is open.
-func (s *Service) Close() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.closeLocked()
-}
-
-func (s *Service) closeLocked() {
-	if s.conn != nil {
-		s.conn.Close()
-	}
-	s.conn, s.lg = nil, nil
 }

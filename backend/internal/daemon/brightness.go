@@ -8,8 +8,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 )
 
-// brightnessPart: the monitors' brightness (BrightnessManager), its
-// logind connection closed when the daemon stops.
+// brightnessPart: the monitors' brightness (BrightnessManager).
 func (d *Daemon) brightnessPart() part {
 	log := d.opts.Log.With("part", "brightness")
 	svc := brightness.New(brightness.Options{
@@ -34,11 +33,6 @@ func (d *Daemon) brightnessPart() part {
 			rpc.Handle(reg, "brightness.set", func(ctx context.Context, c *rpc.Conn, p setParams) (struct{}, error) {
 				return struct{}{}, svc.Set(ctx, p.Target, p.Value)
 			})
-		},
-		run: func(ctx context.Context) error {
-			<-ctx.Done()
-			svc.Close()
-			return nil
 		},
 	}
 }

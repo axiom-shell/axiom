@@ -179,15 +179,12 @@ func TestSetBacklightThroughLogind(t *testing.T) {
 	t.Parallel()
 	bus := dbustest.New(t)
 	f := logindtest.New(t, bus)
-	dials := 0
 	s := New(Options{
 		SystemBus: func(ctx context.Context) (*dbus.Conn, error) {
-			dials++
 			return dbus.Dial(ctx, bus.Address, dbus.Options{})
 		},
 		Getenv: logindtest.Getenv,
 	})
-	t.Cleanup(s.Close)
 	for _, v := range []int{300, 1} {
 		if err := s.Set(ctx(t), Target{Kind: KindBacklight, Device: "intel_backlight"}, v); err != nil {
 			t.Fatal(err)
@@ -199,9 +196,6 @@ func TestSetBacklightThroughLogind(t *testing.T) {
 	want := []string{"backlight intel_backlight 300", "backlight intel_backlight 1"}
 	if got := f.Brightness(); !reflect.DeepEqual(got, want) {
 		t.Errorf("logind got %v, want %v", got, want)
-	}
-	if dials != 1 {
-		t.Errorf("%d dials, want the connection kept", dials)
 	}
 }
 

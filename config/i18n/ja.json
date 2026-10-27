@@ -3175,7 +3175,7 @@
     "Tailscale isn't available.": "",
     "Rows it may take while its device list needs them: free rows towards the edge first (above it, or below it in a bottom menu), then away from it, pushing the modules there along (not on the lock or login screen). 0 keeps it at its size.": "",
     "No monitor here has a brightness control (a backlight, or ddcutil for DDC/CI)": "",
-    "Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor axiom can set (a laptop backlight, or ddcutil over DDC/CI) (a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.": "",
-    "One bar per entry, in order. System volume is the output device's volume, Other apps is the first playing stream no App bar (in any OSD) matches, Microphone is the input device's volume, and Brightness is the monitor's own (a laptop panel through its backlight, an external monitor over DDC/CI through ddcutil; left out on a monitor that has neither).": ""
+    "One bar per entry, in order. System volume is the output device's volume, Other apps is the first playing stream no App bar (in any OSD) matches, Microphone is the input device's volume, and Brightness is the monitor's own (a laptop panel through its backlight, an external monitor over DDC/CI through ddcutil; left out on a monitor that has neither).": "",
+    "Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor axiom can set (a laptop backlight, or one ddcutil reaches over DDC/CI; a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.": ""
   }
 }
