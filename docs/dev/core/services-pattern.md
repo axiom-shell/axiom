@@ -25,7 +25,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
   - `upgrade(command, terminal)` runs the upgrade in a terminal (`CommandManager.run`, one at a time) and checks again when it closes.
 - **Other polled services:**
   - `CalendarManager`: `acquire(owner)` with no request; its interval is the Calendar section's. See [Calendar](../features/calendar.md).
-  - `WeatherManager`: takes no request (its settings are global).
+  - `WeatherManager`: takes no request (its settings are global); fetched by axiom (the `weather` topic, `backend/internal/weather`: Open-Meteo, the place geocoded or from the IP in Go), the state carrying the settings it answers so a stale one isn't shown.
   - `ClaudeUsageManager`: `{ accounts, interval }`, both from the `ClaudeUsage` section; fetched by axiom (the `claudeUsage` topic, `backend/internal/claudeusage`: the token is read in Go and never reaches the shell; each account at most once per interval, across restarts, with backoff).
   - `StopwatchManager`: `acquire(owner, interval)`, `now` ticking at the shortest interval asked while the timer or stopwatch runs; the timer's end runs with no consumers.
   - `PomodoroManager`: `acquire(owner)` with no request, for its once-a-second `now`; the phase's end runs with no consumers (created from `_services`). Both keep their ticker, alarm, saved state and notification in a `DeadlineTicker` part. See [Todo and pomodoro](../features/todo-pomodoro.md).

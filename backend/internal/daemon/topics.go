@@ -9,6 +9,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/tailscale"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/updates"
+	"github.com/axiom-shell/axiom/backend/internal/weather"
 )
 
 // topicsPart: the polled topics (internal/topics), each source from the
@@ -34,6 +35,7 @@ func (d *Daemon) sources() []topics.Source {
 		updates.Source(updates.Options{Log: d.opts.Log}),
 		sysmon.Source(sysmon.Options{Home: d.opts.Getenv("HOME")}),
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
+		weather.Source(weather.Options{}),
 	}, d.opts.topics...)
 }
 

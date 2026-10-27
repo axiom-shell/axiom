@@ -393,6 +393,7 @@ func TestIntervalSettingsMeetMinInterval(t *testing.T) {
 		"/definitions/UpdatesWidget/properties/properties.interval":        false, // updates
 		"/definitions/UpdatesOverlayModule/properties/properties.interval": false, // updates
 		"/properties/ClaudeUsage.interval":                                 false, // claudeUsage's every
+		"/properties/Weather.interval":                                     false, // weather
 	}
 	var walk func(node any, path string)
 	walk = func(node any, path string) {

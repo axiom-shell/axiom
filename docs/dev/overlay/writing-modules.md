@@ -55,9 +55,9 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
   - `history: true` (60-sample ring buffers);
   - a `net` metric (`/proc/net/dev` rates; the connection itself is `NetworkingManager.netInfo`);
   - a `processes` metric (`/proc/<pid>/stat`, %CPU since the last sample; `kill(pid)` sends SIGTERM through axiom's `system.kill`).
-- Weather comes from `WeatherManager` (`acquire(owner)`, read `source`).
-  - One `WeatherSource` for the Weather settings' location, units and refresh interval (`WeatherConfig`), shared by every bar widget, module and forecast popout.
-  - It fetches only while acquired and keeps its last data when released.
+- Weather comes from `WeatherManager` (`acquire(owner)`, read `weather`, `current`, `condition`, `place`, …).
+  - Fetched by axiom (the `weather` topic, `backend/internal/weather`) for the Weather settings' location, units and refresh interval (`WeatherConfig`), shared by every bar widget, module and forecast popout; the greeter's axiom serves the topic too.
+  - It fetches only while acquired and keeps its last data when released or when a fetch fails.
 - Acquire in `Component.onCompleted`, release in `onDestruction`: modules only exist while their page is shown. (Rule: AGENTS.md › Services, polled data.)
 
 ### Repeater models
