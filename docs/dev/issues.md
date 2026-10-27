@@ -482,3 +482,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The same Quickshell `Socket` gap `BackendManager` had: a connect that fails keeps its `QLocalSocket`, so `_reconnect`'s `stream.connected = true` does nothing, and once a connect to `$NIRI_SOCKET` fails the event stream never comes back (no workspace or window events until a reload). Also, assigning `connected` drops its binding to `socketPath`. Rare (niri's socket is up before the shell), but a fresh `Socket` per attempt, as `BackendManager` now does, would close it.
 - **Size:** small
 - **Found:** 2026-10-26, while fixing the shell's reconnect to axiom
+
+### The onboarding's jq purpose names the theme integrations
+- **Where:** `services/core/DependencyManager.qml` (`tools`, the `jq` entry)
+- **What:** The onboarder's check says jq is for "Reading JSON (theme integrations)", but the theme integrations run in Go since backend stage 4 (`theme.integrate`). jq is still used by `scripts/greeter/greeter_install.sh` and `scripts/bug_info.sh`, so the purpose should name those (or jq leave the onboarder's list once the greeter installer is ported).
+- **Size:** trivial
+- **Found:** 2026-10-27, while reviewing the cursor theme and community downloads port

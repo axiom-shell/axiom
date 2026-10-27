@@ -248,6 +248,7 @@ Resolves:
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
+- [The onboarding's jq purpose names the theme integrations](issues.md#the-onboardings-jq-purpose-names-the-theme-integrations)
 
 ### Phase 10: custom JSON widgets
 The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).

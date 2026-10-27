@@ -2838,7 +2838,6 @@
     "Browse community setups": "",
     "Community setups": "",
     "Catalog": "",
-    "Downloads (album art, Claude usage, community setups)": "",
     "Tested on {0}": "",
     "Applied \"{0}\" as \"{1}\". The previous configuration is saved as \"{2}\".": "",
     "Built-in Themes": "",
@@ -3169,6 +3168,7 @@
     "Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor axiom can set (a laptop backlight, or one ddcutil reaches over DDC/CI; a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.": "",
     "Theme integrations and keybinds": "",
     "Package manager": "",
-    "This copy of axiom isn't a git clone: its updates come from your package manager.": ""
+    "This copy of axiom isn't a git clone: its updates come from your package manager.": "",
+    "Chat requests": ""
   }
 }
