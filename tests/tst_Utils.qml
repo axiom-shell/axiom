@@ -141,13 +141,6 @@ TestCase {
     compare(Utils.recordUse(null, "y", 5).y.count, 1);
   }
 
-  function test_curlConfigValue() {
-    compare(Utils.curlConfigValue("plain"), "\"plain\"");
-    compare(Utils.curlConfigValue("a\"b\\c"), "\"a\\\"b\\\\c\"");
-    compare(Utils.curlConfigValue("line\nurl = evil"), "\"line\\nurl = evil\"");
-    compare(Utils.curlConfigValue("cr\r"), "\"cr\\r\"");
-  }
-
   function test_visualWidth_counts_wide_chars_twice() {
     compare(Utils.visualWidth("abc"), 3);
     compare(Utils.visualWidth("日本"), 4);

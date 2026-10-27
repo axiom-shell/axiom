@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-// Pure helpers: deep copies, comparison and lookup by path, free ids, usage counts, curl config values, text width
+// Pure helpers: deep copies, comparison and lookup by path, free ids, usage counts, text width
 // and truncation, colors, calendar grids, byte sizes and rates. No file access, processes or
 // services (those live in services/).
 QtObject {
@@ -121,12 +121,6 @@ QtObject {
       "last": now
     };
     return updated;
-  }
-
-  // A value for a curl config file (`curl -K`): double-quoted, with \, "
-  // and newlines escaped, so it can't end its line and start another option
-  function curlConfigValue(value) {
-    return "\"" + String(value).replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\r/g, "\\r").replace(/\n/g, "\\n") + "\"";
   }
 
   function charWidth(codePoint) {

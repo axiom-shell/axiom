@@ -60,9 +60,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 7 | done | [Backend stage 3b](backend/roadmap.md): exec (polled and streamed commands, JSON) | Right after brightness, another small stage under the new checks; ahead of stage 6 because the planned custom JSON widgets build on it, and stages 4 and 5 don't touch `CommandManager`. |
 | 8 | done | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
 | 9 | done | [Phase 12](#phase-12-memory-footprint) step 0 and the shell's THP opt-out ([memory](core/memory.md) › Transparent huge pages) | Small and the largest likely win; its numbers order the rest of the phase, and it touches nothing stage 5 does. |
-| 10 | in progress | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
-| 11 | next | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
-| 12 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
+| 10 | done | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
+| 11 | in progress | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
+| 12 | next | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
 | 13 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
 | 14 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 15 | later | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
@@ -164,6 +164,7 @@ The binary's rules are enforced by its tests, and the shell–daemon contract is
 Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one floor (`topics.MinInterval`, 1 ms since 2026-10-26: each setting's schema minimum is the limit) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc` (`tree` is its disk side, both package docs say so); clearer package names (`system` is `sysmon`, `lock` is `lockscreen`, apart from `fsx.Lock`); strict param decoding (`rpc.DecodeStrict`, topic requests too); the call rule in protocol.md, with `gen_docs.py` failing on a call it can't read unless marked `// rpc: unchecked (<reason>)`.
 
 Resolves:
+- [A fast chat reply can drop the shell's connection](issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.
@@ -172,10 +173,10 @@ Resolves:
 Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
 
 Resolved by a stage:
-- [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (stage 5)
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (stage 7)
 - [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (stage 6, when `ThemeManager`'s `execDetached` moves)
+- [Calendar passwords and secrets.json still pass through QML](issues.md#calendar-passwords-and-secretsjson-still-pass-through-qml) (stage 6, with the file writes: `SecretsManager` writes secrets.json itself, so its store moves to the daemon then, and the calendar's lookup with it)
 
 ### Phase 6: compositor parity
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
@@ -319,7 +320,6 @@ The shell's RSS at rest and after use, measured rather than guessed: about 840 M
 - **Done:** the shell's heap never shrinking after a spike (row 9; maintainer, 2026-10-27: "yes, opt the shell out of THP"): qs runs with transparent huge pages off, 110–125 MB less at rest and after use; the daemon and what it launches keep them ([memory](core/memory.md) › Transparent huge pages).
 - [Nineteen windows stay mapped on one monitor](issues.md#nineteen-windows-stay-mapped-on-one-monitor)
 - [Images decoded at full size or more than once](issues.md#images-decoded-at-full-size-or-more-than-once)
-- [ChatManager's attachment cache is never cleared](issues.md#chatmanagers-attachment-cache-is-never-cleared) (with stage 5's chat work)
 
 ### Deferred
 Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.

@@ -59,7 +59,6 @@ FoldingCard {
 - Text fields follow the push pattern (`StyledTextEntry`: push values in unless focused, act on `textEdited`); see AGENTS.md › QML pitfalls.
 - A card that takes over something on this PC (Hyprland mode, locker, idle, polkit, greeter) belongs to an `x-takeover` setting: only its own card changes it.
 - Secrets typed in a card go to `SecretsManager`, never the draft (`CalendarAccountsCard`).
-- `views/Settings/ChatProvidersCard` running its own `ChatRequest` is a documented exception, not a pattern.
 
 ## Verify
 - `scripts/dev/verify.sh`

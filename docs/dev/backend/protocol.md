@@ -47,7 +47,7 @@ A hello's `subscribe` is `true`, `false` or a list of topics:
 - `wayland`: `wayland.state`, `nightlight.state` (latest-wins)
 - `clipboard`: `clipboard.state` (latest-wins)
 
-The CLI subscribes to nothing. `exec.outputs` is no topic: it goes only to a connection watching commands (`exec.watch`; `CommandManager.acquire`), carrying every command that connection watches, since per-command pushes on one latest-wins method would overwrite each other.
+The CLI subscribes to nothing. `exec.outputs` is no topic: it goes only to a connection watching commands (`exec.watch`; `CommandManager.acquire`), carrying every command that connection watches, since per-command pushes on one latest-wins method would overwrite each other. `chat.delta` is no topic either: each piece of a reply goes, one message each (not latest-wins), only to the connection whose `chat.send` asked for it ([Chat](../features/chat.md) › Requests).
 
 ### Polled topics
 Data the daemon polls for the shell (`backend/internal/topics`) is not a hello topic: `subscribe: true` doesn't include it. A connection asks for it:

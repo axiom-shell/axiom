@@ -14,11 +14,6 @@
       "FileView",
       "execDetached"
     ],
-    "services/apps/ChatRequest.qml": [
-      "Process",
-      "FileView",
-      "execDetached"
-    ],
     "services/core/FileManager.qml": [
       "FileView"
     ],

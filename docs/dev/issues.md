@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Calendar passwords and secrets.json still pass through QML
+- **Where:** `services/core/SecretsManager.qml` (`withSecret`, `_cache`, `_secrets`, `_storeFile`), `services/apps/CalendarManager.qml` (`_withAccounts`), `backend/internal/calendar/calendar.go` (`DiscoverRequest.Password`)
+- **What:** Chat keys are read only by axiom since backend stage 5 (`backend/internal/chat/keys.go`, `secrets.status`), but calendar passwords are still looked up into QML (`secret-tool lookup` through `CommandManager`, cached for the session in `_cache`) and sent in every `calendar.*` call's params. And since QML writes secrets.json itself (read, merge, rewrite through `sh`), it reads the whole file into `_secrets`, chat keys stored there included. The maintainer kept this out of the stage-5 PR (2026-10-27: "Ensure calendar secret issues are noted down to match in issues as well"). The fix mirrors chat: package calendar looks the password up by account id (`service axiom calendar <id>`, then `calendar:<id>` in the file), the calls send the id only, and storing and clearing a secret becomes a daemon method, so `SecretsManager` keeps no secret and reads no file.
+- **Size:** small
+- **Found:** 2026-10-27, while moving the chat requests to axiom (backend stage 5)
+
+### A fast chat reply can drop the shell's connection
+- **Where:** `backend/internal/rpc/rpc.go` (`Conn.enqueue`, `Limits.QueueSize`), `backend/internal/daemon/chat.go` (`chat.send`'s `c.Notify`), `backend/internal/chat/send.go` (`Send`)
+- **What:** Each piece of a reply is its own `chat.delta` notification (`Notify`, not latest-wins), and `enqueue` never waits: when the connection's 4096-message queue is full it logs `dropping a peer that stopped reading` and closes the connection, every topic and call in flight with it. So if the shell stops reading (its event loop busy) while a fast provider streams, once the socket buffer and 4096 deltas fill (seconds at the fastest servers' token rates, a delta per token or two), the shell's whole connection goes. Before stage 5 curl's pipe simply blocked. A fix would coalesce the deltas `Send` emits (text gathered while a push waits) or let `chat.send` wait for room instead of dropping the peer.
+- **Size:** small
+- **Found:** 2026-10-27, while reviewing the chat move to axiom (backend stage 5)
+
 ### Restoring over a config.json that doesn't load resets the other takeovers
 - **Where:** `backend/internal/store/store.go` (`Replace`, `Restore`, `takeoverBase`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
 - **What:** While config.json doesn't load at the start, the store knows no takeover values (`takeoversUnknown`), so `Replace` and `Restore` keep `takeoverBase()`: the defaults. Restoring a saved config over that file therefore writes the defaults' `Idle.enabled`, `Polkit.enabled`, `Greeter.enabled` and `Lockscreen.mode`, switching off or changing whatever the user had taken over. Only `Compositor.mode` is repaired afterwards, by the compositor manager keeping the mode it applied and saving it back (`saveKept`, #108). Deciding the unknown takeovers once in the store (take the restored file's own values, or refuse the restore while none are known) would cover all five settings, and would let the manager's separate hold go ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)). Like every other problem that starts from a config.json that doesn't load, it's rare, and it's fixed by backend stage 7, with the other config problems.
@@ -139,12 +151,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while measuring the shell's memory
 
-### ChatManager's attachment cache is never cleared
-- **Where:** `services/apps/ChatManager.qml` (`_encoded`)
-- **What:** Every attached image's base64 (up to about 7 MB each) is kept for the session.
-- **Size:** trivial
-- **Found:** 2026-10-27, while measuring the shell's memory
-
 ### An edge menu can be bigger than its screen
 - **Where:** `config/EdgeMenusConfig.qml` (`cardUnitOf`), `components/methods/GridPlacement.qml` (`menuPlacement`)
 - **What:** A menu's cards are the card size on its screen (`OverlayConfig.cardUnitOn`, `Widget.cardSize` up to 150 %) times its own `moduleScale` (up to 200 %), and nothing caps the result to the screen: `menuPlacement` sizes the menu from its modules (`trackSizes`) and only places it along the edge. With a high card size and Module size (a 1080 px screen at 150 % × 200 %: cards of about 1350 px), a menu's depth or length passes the screen and the rest is cut off. A fix would shrink its cards to fit, as `screenArrangement` does for screen layouts.
@@ -174,12 +180,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Which surface it is hasn't been found yet: next step, reproduce with a nested compositor dropping its output and bisect by commenting out surfaces in `shell.qml`.
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while reviewing the popouts system
-
-### ChatProvidersCard runs its own requests
-- **Where:** `components/views/Settings/ChatProvidersCard.qml` (Test, Fetch models)
-- **What:** The card creates its own `ChatRequest` for Test and Fetch models, so a UI file owns a process, against the rule that services own every side effect (AGENTS.md › Services). Kept as a known exception until backend stage 5 moves `ChatRequest` to the daemon; the card's requests then go through `ChatManager` in that stage.
-- **Size:** small
-- **Found:** 2026-10-20, while tightening AGENTS.md (it was listed there under Known housekeeping)
 
 ### The community setups' check doesn't take monitor places yet
 - **Where:** `services/core/SavedConfigsManager.qml` (`exportConfig`'s `places`), `components/views/Settings/CommunitySetupsCard.qml` (Export and submit), `backend/internal/share/share.go` (`Pick`'s `monitors`)

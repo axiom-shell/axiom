@@ -91,10 +91,6 @@ Singleton {
       "purpose": "Brightness of external monitors"
     },
     {
-      "command": "curl",
-      "purpose": "Chat requests"
-    },
-    {
       "command": "checkupdates",
       "purpose": "Pending package updates"
     },
