@@ -47,6 +47,20 @@ func Resolve(getenv func(string) string) Dirs {
 	}
 }
 
+// Bases are the XDG base directories themselves (no trailing "/"), where
+// other apps keep their files (the theme integrations write there).
+type Bases struct{ Home, Config, State, Data string }
+
+// ResolveBases is Resolve's folders without axiom's own.
+func ResolveBases(getenv func(string) string) Bases {
+	return Bases{
+		Home:   strings.TrimRight(getenv("HOME"), "/"),
+		Config: base(getenv, "XDG_CONFIG_HOME", ".config"),
+		State:  base(getenv, "XDG_STATE_HOME", ".local/state"),
+		Data:   base(getenv, "XDG_DATA_HOME", ".local/share"),
+	}
+}
+
 var trailingSlashes = regexp.MustCompile(`(.)/+$`)
 
 func base(getenv func(string) string, name, fallback string) string {

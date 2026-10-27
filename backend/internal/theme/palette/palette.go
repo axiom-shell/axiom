@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -285,12 +286,52 @@ func readable(l, c, h float64, bg rgb8, variant int) rgb8 {
 	if variant == 1 {
 		step = -0.02
 	}
+	return pushed(l, c, h, bg, 3, step)
+}
+
+// pushed is the OKLCH color, its lightness moved by step until it has
+// min contrast against bg (chroma shrinking to stay in sRGB).
+func pushed(l, c, h float64, bg rgb8, min, step float64) rgb8 {
 	color := lchColor(l, c, h)
-	for contrast(color, bg) < 3 && 0.05 < l && l < 0.98 {
+	for contrast(color, bg) < min && (step < 0 && l > 0.05 || step > 0 && l < 0.98) {
 		l += step
 		color = lchColor(l, c, h)
 	}
 	return color
+}
+
+// Readable is fg ("#rrggbb") with at least min contrast against bg: its
+// hue kept, its lightness moved away from the background only as far as
+// needed, so a color that passes comes back unchanged. Anything that
+// isn't two 6-digit hex colors comes back as it is.
+func Readable(fg, bg string, min float64) string {
+	f, okF := parseHex(fg)
+	b, okB := parseHex(bg)
+	if !okF || !okB || contrast(f, b) >= min {
+		return fg
+	}
+	step := 0.01
+	if contrast(b, rgb8{}) >= contrast(b, rgb8{255, 255, 255}) {
+		step = -0.01 // a light background: darker
+	}
+	l, c, h := f.lab().lch()
+	return pushed(l, c, h, b, min, step).hex()
+}
+
+// parseHex reads "#rrggbb".
+func parseHex(s string) (rgb8, bool) {
+	var c rgb8
+	if len(s) != 7 || s[0] != '#' {
+		return c, false
+	}
+	for i := range c {
+		v, err := strconv.ParseUint(s[1+2*i:3+2*i], 16, 8)
+		if err != nil {
+			return c, false
+		}
+		c[i] = uint8(v)
+	}
+	return c, true
 }
 
 // File is one theme file: its name in the generated themes' folder and

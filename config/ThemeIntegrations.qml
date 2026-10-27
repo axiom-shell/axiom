@@ -2,8 +2,8 @@ pragma Singleton
 import QtQuick
 import qs.services.core
 
-// Reader for the ThemeIntegrations section: one switch per
-// scripts/theme_<key>.sh, run by ThemeManager.themeIntegrations().
+// Reader for the ThemeIntegrations section: one switch per integration
+// in the daemon's table, run by ThemeManager.themeIntegrations().
 QtObject {
   readonly property var _c: ConfigManager.config.ThemeIntegrations
 

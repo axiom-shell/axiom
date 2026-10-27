@@ -167,11 +167,11 @@ Seams: every colour user; theme integrations.
 Scope: every app theme integration, against the recipe.
 Mode: collection
 Docs: theming/theme-integrations.md
-Extra: scripts/theme_*.sh scripts/integration_hookup.py scripts/lib/theme_env.sh
+Extra: backend/internal/theme/integrations/ backend/internal/theme/integrate.go backend/internal/theme/effects.go scripts/integration_hookup.py
 Checks:
 - Each writes only its own `axiom.*` file; only `integration_hookup.py` edits a user's config, on the user's click.
-- Each follows the recipe shape (`usage_or_help`, `require_cmds`, `load_theme`, `render_template`), has a `FORMATS` test entry and a schema switch with `x-hookup`.
-- Odd ones out: one reimplementing what `theme_env.sh` does.
+- Each follows the recipe shape (a `Table` entry, a template where it renders one, reloads as `live` effects), has goldens and a schema switch with `x-hookup`.
+- Odd ones out: a table entry or effect reimplementing what `tmpl`, `Each` or a shared effect helper does.
 Seams: ThemeManager, the settings page.
 
 ## blur

@@ -1,4 +1,4 @@
--- Follows the axiom (quickshell) theme. axiom's scripts/theme_nvim.sh writes
+-- Follows the axiom (quickshell) theme. axiom's nvim theme integration writes
 -- the active theme to $XDG_STATE_HOME/axiom/nvim-theme.json and calls
 -- reload() in every running Neovim over RPC.
 --

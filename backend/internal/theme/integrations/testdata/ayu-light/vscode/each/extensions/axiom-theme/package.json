@@ -1,0 +1,12 @@
+{
+  "name": "axiom-theme",
+  "displayName": "Axiom",
+  "publisher": "axiom",
+  "version": "1.0.0",
+  "description": "The active axiom shell theme (generated; rewritten on every theme change)",
+  "engines": { "vscode": "^1.60.0" },
+  "categories": ["Themes"],
+  "contributes": {
+    "themes": [{ "label": "Axiom", "uiTheme": "vs", "path": "./themes/axiom-color-theme.json" }]
+  }
+}

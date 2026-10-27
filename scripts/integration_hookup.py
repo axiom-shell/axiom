@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Hooks a theme integration's axiom file into the app's own config.
 
-Usage: integration_hookup.py status|apply|profiles KEY [--schema PATH | --targets JSON]
+Usage: integration_hookup.py status|apply KEY [--schema PATH | --targets JSON]
 
 The targets are the `x-hookup` list of ThemeIntegrations.KEY in the config
 schema, or the JSON list `--targets` gives (KEY then only names them: the
@@ -39,8 +39,7 @@ files is ever written.
 `perProfile` makes a target one per browser profile: `file` is then
 relative to each profile directory listed by the profiles.ini files in the
 integration's `x-profiles` (Firefox and its forks), and with none found the
-target is skipped ("profiles"). `profiles KEY` prints those directories,
-one per line (for the theme script).
+target is skipped ("profiles").
 
 apply backs up each file it changes beside the real file (a symlink is
 followed and kept) as <name>.axiom-bak-<time>, then writes it atomically.
@@ -373,25 +372,19 @@ def main(argv):
             else:
                 given = json.loads(args[i + 1])
             del args[i:i + 2]
-    if len(args) != 2 or args[0] not in ("status", "apply", "profiles"):
+    if len(args) != 2 or args[0] not in ("status", "apply"):
         print(__doc__.strip().splitlines()[2], file=sys.stderr)
         return 2
     action, key = args
     d = dirs()
     if given is not None:
-        if action == "profiles":
-            return 0
         targets = given
     else:
         props = json.loads(schema.read_text())["properties"]["ThemeIntegrations"]["properties"]
         if key not in props:
             print(f"Error: no integration '{key}'", file=sys.stderr)
             return 2
-        profiles = props[key].get("x-profiles", [])
-        if action == "profiles":
-            print("\n".join(profile_dirs(profiles, d)))
-            return 0
-        targets = expand(props[key].get("x-hookup", []), profiles, d)
+        targets = expand(props[key].get("x-hookup", []), props[key].get("x-profiles", []), d)
     if action == "status":
         rows = status(targets, d)
         for row in rows:

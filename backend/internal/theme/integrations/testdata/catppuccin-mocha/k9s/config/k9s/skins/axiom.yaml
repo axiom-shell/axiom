@@ -1,0 +1,76 @@
+# K9s Skin - Auto-generated from Quickshell Theme
+# Theme: Catppuccin Mocha
+# Author: catppuccin
+# Variant: dark
+
+k9s:
+  # General K9s styles
+  body:
+    fgColor: "#cdd6f4"
+    bgColor: "#1e1e2e"
+    logoColor: "#89b4fa"
+
+  # ClusterInfoView styles
+  info:
+    fgColor: "#585b70"
+    sectionColor: "#f9e2af"
+
+  # Frame styles
+  frame:
+    # Borders styles
+    border:
+      fgColor: "#45475a"
+      focusColor: "#89b4fa"
+
+    # MenuView attributes and styles
+    menu:
+      fgColor: "#cdd6f4"
+      keyColor: "#fab387"
+      numKeyColor: "#cba6f7"
+
+    # CrumbView attributes for history navigation
+    crumbs:
+      fgColor: "#1e1e2e"
+      bgColor: "#45475a"
+      activeColor: "#cdd6f4"
+
+    # Resource status and update styles
+    status:
+      newColor: "#a6e3a1"
+      modifyColor: "#f9e2af"
+      addColor: "#a6e3a1"
+      errorColor: "#f38ba8"
+      highlightcolor: "#fab387"
+      killColor: "#f38ba8"
+      completedColor: "#585b70"
+
+    # Border title styles
+    title:
+      fgColor: "#cdd6f4"
+      bgColor: "#313244"
+      highlightColor: "#89b4fa"
+      counterColor: "#cba6f7"
+      filterColor: "#fab387"
+
+  # Views
+  views:
+    # Table view
+    table:
+      fgColor: "#cdd6f4"
+      bgColor: "#1e1e2e"
+      cursorColor: "#313244"
+      header:
+        fgColor: "#cdd6f4"
+        bgColor: "#313244"
+        sorterColor: "#fab387"
+
+    # YAML view
+    yaml:
+      keyColor: "#89b4fa"
+      colonColor: "#585b70"
+      valueColor: "#cdd6f4"
+
+    # Logs view
+    logs:
+      fgColor: "#cdd6f4"
+      bgColor: "#1e1e2e"
