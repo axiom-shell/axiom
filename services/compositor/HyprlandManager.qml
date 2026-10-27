@@ -229,7 +229,7 @@ end
   readonly property string _luaEpilogue: `
 if #errs > 0 then error(table.concat(errs, "; ")) end`
 
-  // Lua chunks run one at a time, in order (HyprlandIpcManager.evalLua):
+  // Lua chunks run one at a time, in order (_evalLua):
   // [{ lua, callback }]
   property var _evalQueue: []
   property bool _evaluating: false
@@ -264,7 +264,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     // Those waiting get this read's answer: it started after they asked
     const waiting = _optionsWaiting;
     _optionsWaiting = [];
-    HyprlandIpcManager.jsonBatch(["getoption general:gaps_out", "getoption dwindle:split_width_multiplier", "getoption decoration:blur:enabled", "getoption decoration:blur:size", "getoption decoration:blur:passes", "getoption animations:enabled", "animations"], replies => {
+    root._jsonBatch(["getoption general:gaps_out", "getoption dwindle:split_width_multiplier", "getoption decoration:blur:enabled", "getoption decoration:blur:size", "getoption decoration:blur:passes", "getoption animations:enabled", "animations"], replies => {
       root._readingOptions = false;
       root._readOptions(replies);
       waiting.forEach(callback => callback());
@@ -326,7 +326,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     }
     _evaluating = true;
     const chunk = _evalQueue.shift();
-    HyprlandIpcManager.evalLua(chunk.lua, reply => {
+    root._evalLua(chunk.lua, reply => {
       if (reply !== "ok")
         console.warn("[HyprlandManager] Lua eval:", reply || "no reply from Hyprland");
       root._evaluating = false;
@@ -341,25 +341,25 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   // Calls back with the main keyboard's layouts ({ layouts, index, keymap },
   // HyprState.keyboard), or null
   function withKeyboard(callback) {
-    HyprlandIpcManager.json("devices", devices => callback(HyprState.keyboard(devices)));
+    root._json("devices", devices => callback(HyprState.keyboard(devices)));
   }
 
   // Switches every keyboard to its "next" or "prev" layout, then calls back
   function cycleKeyboardLayout(direction, callback) {
-    HyprlandIpcManager.request("switchxkblayout all " + direction, () => callback?.());
+    root._request("switchxkblayout all " + direction, () => callback?.());
   }
 
   // Calls back with each monitor's layer surfaces (HyprState.layerRects),
   // or null when Hyprland didn't answer
   function withLayerRects(callback) {
-    HyprlandIpcManager.jsonBatch(["monitors", "layers"], ([monitors, layers]) => callback(Array.isArray(monitors) && layers ? HyprState.layerRects(monitors, layers) : null));
+    root._jsonBatch(["monitors", "layers"], ([monitors, layers]) => callback(Array.isArray(monitors) && layers ? HyprState.layerRects(monitors, layers) : null));
   }
 
   // Calls back with every output, disabled ones too, or null (the output
   // details of docs/dev/compositor/contract.md, which are Hyprland's
   // monitors as JSON)
   function withOutputDetails(callback) {
-    HyprlandIpcManager.json("monitors all", outputs => callback(Array.isArray(outputs) ? outputs : null));
+    root._json("monitors all", outputs => callback(Array.isArray(outputs) ? outputs : null));
   }
 
   // Sets the outputs as `rules` (MonitorRule) say now, `details` being the
@@ -375,7 +375,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   // hyprland.conf is the older format axiom doesn't read (`legacyNote`)
   function withSetupCheck(callback) {
     const legacyNote = FileManager.read(Paths.hyprlandPath + "hyprland.conf") !== null ? I18n.tr("You have a hyprland.conf in the older format. axiom works with Hyprland's Lua config: letting it manage Hyprland writes a hyprland.lua, and your hyprland.conf is left as it is.") : "";
-    HyprlandIpcManager.json("version", reply => {
+    root._json("version", reply => {
       // "0.56.2", or "" when Hyprland didn't answer
       const version = String(reply?.version ?? reply?.tag ?? "").replace(/^v/, "");
       const known = /^\d+\.\d+/.test(version);
@@ -392,7 +392,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   // Calls back with every bind Hyprland has (its binds as JSON: modmask,
   // key, keycode, submap, description, dispatcher, arg, …), or null
   function withBinds(callback) {
-    HyprlandIpcManager.json("binds", binds => callback(Array.isArray(binds) ? binds : null));
+    root._json("binds", binds => callback(Array.isArray(binds) ? binds : null));
   }
 
   // Calls back with the binds in effect outside axiom's own submaps (the
@@ -417,7 +417,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
 
   // The cursor theme and size, for this session
   function setCursor(theme, size) {
-    HyprlandIpcManager.request(`setcursor ${theme} ${size}`);
+    root._request(`setcursor ${theme} ${size}`);
   }
 
   // Ends the Hyprland session (the power menu's log out)
@@ -431,7 +431,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     _cursorCallbacks.push(callback);
     if (_cursorCallbacks.length > 1)
       return;
-    HyprlandIpcManager.json("cursorpos", pos => {
+    root._json("cursorpos", pos => {
       const callbacks = root._cursorCallbacks;
       root._cursorCallbacks = [];
       callbacks.forEach(callback => callback(pos ?? null));
@@ -687,7 +687,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
   // One eval for all of them, each in its own pcall, so one Hyprland
   // rejects doesn't drop the rest (as _addLayerRules' one eval per rule)
   function _addLayerRulesFirst() {
-    HyprlandIpcManager.evalLua(root._layerRulesLua.map(rule => `pcall(function() ${rule} end)`).join("\n"), () => _layerRules.ready = true);
+    root._evalLua(root._layerRulesLua.map(rule => `pcall(function() ${rule} end)`).join("\n"), () => _layerRules.ready = true);
   }
 
   // Shows the shell anyway if Hyprland never answers
@@ -765,6 +765,47 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     onTriggered: root._fetch()
   }
 
+  // --- Hyprland's request socket, through axiom (hypr.request): what
+  // Quickshell.Hyprland doesn't cover (options, Lua evals, binds, devices,
+  // layers, the cursor), as hyprctl asks it but without a process each ---
+
+  // Sends `command` as hyprctl would ("j/clients", "switchxkblayout all
+  // next") and calls back with the reply, or null when Hyprland didn't
+  // answer (logged)
+  function _request(command, callback) {
+    BackendManager.call("hypr.request", {
+      "command": command
+    }, (error, result) => {
+      if (error)
+        console.warn("[HyprlandManager]", command.slice(0, 80) + ":", error.message);
+      callback?.(error ? null : result.reply);
+    });
+  }
+
+  // `command`'s JSON reply ("clients" asks j/clients), or null
+  function _json(command, callback) {
+    _request("j/" + command, reply => {
+      const value = reply === null ? null : HyprReply.parse(reply);
+      if (reply !== null && value === null)
+        console.warn(`[HyprlandManager] ${command}: not JSON:`, reply.slice(0, 200));
+      callback?.(value);
+    });
+  }
+
+  // Several JSON replies in one request (["getoption general:gaps_out",
+  // "animations"]), each a value or null
+  function _jsonBatch(commands, callback) {
+    _request(HyprReply.batch(commands.map(command => "j/" + command)), reply => {
+      callback?.(HyprReply.splitBatch(reply ?? "", commands.length).map(text => HyprReply.parse(text)));
+    });
+  }
+
+  // Runs a Lua chunk in Hyprland (hl.*) and calls back with its reply,
+  // trimmed: "ok", or the error ("" when Hyprland didn't answer)
+  function _evalLua(lua, callback) {
+    _request("eval " + lua, reply => callback?.(String(reply ?? "").trim()));
+  }
+
   // Set when a fetch is asked for while one is still running: it's run
   // again once the current one ends
   property bool _fetching: false
@@ -776,7 +817,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       return;
     }
     _fetching = true;
-    HyprlandIpcManager.json("clients", clients => {
+    root._json("clients", clients => {
       root._fetching = false;
       if (Array.isArray(clients)) {
         const names = Hyprland.monitors.values.reduce((map, m) => {

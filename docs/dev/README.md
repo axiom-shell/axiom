@@ -101,7 +101,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [layer-arrangement](compositor/layer-arrangement.md): how compositors arrange and stack layer windows (measured on sway and niri), and how axiom reproduces it.
 
 ### hyprland/
-- [ipc](hyprland/ipc.md): `HyprlandIpcManager` (the request socket), Quickshell.Hyprland and `HyprlandManager`, the Hyprland backend; who may talk to Hyprland.
+- [ipc](hyprland/ipc.md): the request socket (`hypr.request`), Quickshell.Hyprland and `HyprlandManager`, the Hyprland backend; who may talk to Hyprland.
 - [config-modes](hyprland/config-modes.md): Hyprland's writer: the Lua layer in each mode, `x-compositor` options.
 - [managed-takeover](hyprland/managed-takeover.md): the takeover's claim and release (`backend/internal/compositor/takeover`).
 - [bind-merge](hyprland/bind-merge.md): `mergeUserBinds` (managed mode).

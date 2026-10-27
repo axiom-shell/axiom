@@ -14,6 +14,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
@@ -96,7 +97,7 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 
 // greeterRegistry is what the greeter's axiom answers: a hello from its
 // quickshell alone, then that quickshell's commands (watched ones too), run with its own
-// environment, its files (its state), lookups and the weather. Anything else is unavailable, as it was with
+// environment, its files (its state), lookups, the weather and Hyprland's request socket. Anything else is unavailable, as it was with
 // no axiom at all, so the shell's callers stay quiet about it.
 func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub, written *files.Files) *rpc.Registry {
 	reg := rpc.NewRegistry()
@@ -126,6 +127,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	execHandlers(reg, func() command.Options { return command.Options{Env: env} }, func() *command.Watches { return watches })
 	fileHandlers(reg, func() *files.Files { return written })
 	lookupMethods(reg, o.Getenv)
+	hyprHandlers(reg, ipc.HyprFromEnv(o.Getenv))
 	topics.Register(reg, hub, weather.Source(weather.Options{}))
 	return reg
 }
