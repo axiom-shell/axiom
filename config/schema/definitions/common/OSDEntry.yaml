@@ -94,7 +94,7 @@ properties:
   bars:
     type: array
     title: Bars
-    description: One bar per entry, in order. System volume is the output device's volume, Other apps is the first playing stream no App bar (in any OSD) matches, Microphone is the input device's volume, and Brightness is the monitor's own (a laptop panel through brightnessctl, an external monitor over DDC/CI through ddcutil; left out on a monitor that has neither).
+    description: One bar per entry, in order. System volume is the output device's volume, Other apps is the first playing stream no App bar (in any OSD) matches, Microphone is the input device's volume, and Brightness is the monitor's own (a laptop panel through its backlight, an external monitor over DDC/CI through ddcutil; left out on a monitor that has neither).
     default:
       - {type: other, icon: music_note, showOsd: true}
       - {type: master, icon: '', showOsd: true}

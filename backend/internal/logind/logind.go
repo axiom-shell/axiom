@@ -98,6 +98,14 @@ func (l *Logind) Suspend(ctx context.Context) error {
 	return err
 }
 
+// SetBrightness sets a device of the session's seat (subsystem
+// "backlight" or "leds") to value: logind writes sysfs for the session's
+// user, who may not, as brightnessctl has it do.
+func (l *Logind) SetBrightness(ctx context.Context, subsystem, name string, value uint32) error {
+	_, err := l.conn.Call(ctx, busName, l.session, ifaceSession, "SetBrightness", "ssu", subsystem, name, value)
+	return err
+}
+
 // InhibitSleep takes a delay inhibitor on sleep: logind waits (up to
 // InhibitDelayMax) for it to be closed after announcing sleep. The
 // caller closes the file to let sleep go on.

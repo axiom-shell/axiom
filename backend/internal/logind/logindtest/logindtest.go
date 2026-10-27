@@ -1,11 +1,12 @@
 // Package logindtest is a fake systemd-logind on a dbustest bus: one
-// session, Suspend counted, delay inhibitors as pipes the test can watch,
-// idle inhibitors listed, BlockInhibited changed and signals sent by the
-// test.
+// session, Suspend counted and SetBrightness recorded, delay inhibitors
+// as pipes the test can watch, idle inhibitors listed, BlockInhibited
+// changed and signals sent by the test.
 package logindtest
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -36,6 +37,7 @@ type Fake struct {
 	blocked    string
 	suspended  int
 	inhibitors []any
+	brightness []string
 }
 
 // New exports the fake on bus, owning logind's name.
@@ -92,6 +94,17 @@ func New(t *testing.T, bus *dbustest.Bus) *Fake {
 	if err != nil {
 		t.Fatal(err)
 	}
+	_, err = conn.Export(SessionPath, dbus.Interface{Name: ifaceSession, Methods: map[string]dbus.Method{
+		"SetBrightness": {In: "ssu", Fn: func(_ context.Context, m *dbus.Message) ([]any, error) {
+			f.mu.Lock()
+			defer f.mu.Unlock()
+			f.brightness = append(f.brightness, fmt.Sprintf("%v %v %v", m.Body...))
+			return nil, nil
+		}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
 	_, err = conn.Export(ManagerPath, dbus.Interface{Name: "org.freedesktop.DBus.Properties", Methods: map[string]dbus.Method{
 		"Get": {In: "ss", Out: "v", Fn: func(_ context.Context, m *dbus.Message) ([]any, error) {
 			f.mu.Lock()
@@ -127,6 +140,14 @@ func (f *Fake) Suspended() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.suspended
+}
+
+// Brightness lists the session's SetBrightness calls, as "subsystem name
+// value".
+func (f *Fake) Brightness() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]string{}, f.brightness...)
 }
 
 // SetInhibitors sets what ListInhibitors lists: rows of (what, who, why,

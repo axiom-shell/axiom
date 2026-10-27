@@ -48,6 +48,7 @@ var tiers = map[string]int{
 	"internal/compositor/actions":  tierPure,
 	"internal/compositor/render":   tierPure,
 	"internal/assets":              tierEdge,
+	"internal/brightness":          tierEdge,
 	"internal/buildinfo":           tierEdge,
 	"internal/claudeusage":         tierEdge,
 	"internal/clipboard":           tierEdge,
