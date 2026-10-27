@@ -167,6 +167,25 @@ func TestStatusURL(t *testing.T) {
 	}
 }
 
+// A tree with no .git (a release's source unpacked by hand) has no git
+// or local source: it runs no git, and says so
+func TestStatusWithoutAClone(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	if !f.status(rules.SourceGit, rules.ChannelTags).Clone {
+		t.Error("a clone isn't one")
+	}
+	if err := os.RemoveAll(filepath.Join(f.repo, ".git")); err != nil {
+		t.Fatal(err)
+	}
+	for _, source := range []string{rules.SourceGit, rules.SourceLocal} {
+		r := f.status(source, rules.ChannelTags)
+		if r.Clone || r.URL != "" || r.CurrentHash != "" || !r.Greetd {
+			t.Errorf("%s: %+v", source, r)
+		}
+	}
+}
+
 func TestStatusPackage(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

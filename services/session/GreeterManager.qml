@@ -39,7 +39,7 @@ QtObject {
   // compositor ("sway" | "hyprland": what the login screen runs in, "" for
   // neither), displayManager, installed, configured, helper, binaries,
   // installedSource, url, installedHash, currentHash, greeterUser,
-  // bundleWritable }, or null before the first
+  // bundleWritable, clone }, or null before the first
   readonly property var report: _report
   property var _report: null
 
@@ -53,7 +53,9 @@ QtObject {
   // "checking" | "checkFailed" (lastError says why) | "noGreetd"
   // (greetd or its text login, agreety, isn't installed) | "noCompositor"
   // (neither sway nor Hyprland, which it runs in, is installed; a copy
-  // already set up still shows, with Remove) | "off" |
+  // already set up still shows, with Remove) | "noClone" (axiom's tree is
+  // neither a git clone nor a package, so there's nothing to install
+  // from; a copy already set up still shows) | "off" |
   // "notInstalled" (Greeter.enabled, but no copy: set up by hand, or
   // removed outside axiom) | "outdated" (the copy is behind its source,
   // came from another source, or greetd's command was changed; a source
@@ -66,12 +68,18 @@ QtObject {
       return "noGreetd";
     if (report.compositor === "" && !report.installed)
       return "noCompositor";
+    if (!root.installable && !report.installed)
+      return "noClone";
     if (!report.installed)
       return GreeterConfig.enabled ? "notInstalled" : "off";
     if (!report.configured || report.installedSource !== root.wantedSource || (report.currentHash && report.installedHash !== report.currentHash))
       return "outdated";
     return "installed";
   }
+
+  // There's something to install from: a git clone, or a package (true
+  // until the first check says otherwise)
+  readonly property bool installable: Paths.packaged || _report?.clone !== false
 
   // pkexec is running (install, update or uninstall)
   readonly property bool elevating: _elevating

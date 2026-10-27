@@ -110,6 +110,10 @@ type Report struct {
 	GreeterUser string `json:"greeterUser"`
 	// The bundle's folder is the user's to write
 	BundleWritable bool `json:"bundleWritable"`
+	// The tree is a git clone: git and local take their code from one, so
+	// a tree with no .git (a release's source unpacked by hand) has
+	// neither, only a package
+	Clone bool `json:"clone"`
 }
 
 // Status describes the setup for the tree at repo, the copy's code to come
@@ -136,6 +140,11 @@ func (in *Installer) Status(ctx context.Context, repo, source, channel string) (
 	}
 	r.Helper, r.Binaries = in.helper()
 	r.InstalledSource = in.origin().Label()
+	_, err := os.Lstat(filepath.Join(repo, ".git"))
+	r.Clone = err == nil
+	if !r.Clone && source != rules.SourcePackage {
+		return r, nil // no git to run, nothing to compare with
+	}
 	g := in.git(repo, nil)
 	if source == rules.SourceGit {
 		r.URL = g.upstreamURL(ctx, in.origin())

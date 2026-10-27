@@ -1,6 +1,6 @@
 # The greeter installer assumes git
 
-> **Issue:** filed as its items: the greeter's status runs its installer script as the user (done), [a greeter tree with no `.git` offers an install that fails](../issues.md#a-greeter-tree-with-no-git-offers-an-install-that-fails), [the greeter installer runs bash, awk and jq as root](../issues.md#the-greeter-installer-runs-bash-awk-and-jq-as-root), [the first greeter install runs the user's binary as root](../issues.md#the-first-greeter-install-runs-the-users-binary-as-root), [jq is a dependency only for the greeter installer](../issues.md#jq-is-a-dependency-only-for-the-greeter-installer)
+> **Issue:** filed as its items: the greeter's status runs its installer script as the user (done), a greeter tree with no `.git` offers an install that fails (done), [the greeter installer runs bash, awk and jq as root](../issues.md#the-greeter-installer-runs-bash-awk-and-jq-as-root), [the first greeter install runs the user's binary as root](../issues.md#the-first-greeter-install-runs-the-users-binary-as-root), [jq is a dependency only for the greeter installer](../issues.md#jq-is-a-dependency-only-for-the-greeter-installer)
 > **Status:** decided: A, with the note (2026-10-27)
 
 ### Problem
@@ -59,7 +59,7 @@ The maintainer's answers (2026-10-27), verbatim:
 ### Items
 One PR, the gate waived (question 3), the items in this order, each an issues.md entry:
 1. The greeter's status runs its installer script as the user (done): `greeter.status` / `greeter.apply` (a new pure + edge package pair and a daemon part), `GreeterManager` on them.
-2. [A greeter tree with no `.git` offers an install that fails](../issues.md#a-greeter-tree-with-no-git-offers-an-install-that-fails): the note (`clone` in the report, `GreeterSetup` hides Git and Local, Install not offered).
+2. A greeter tree with no `.git` offers an install that fails (done): the note (`clone` in the report, `GreeterSetup` hides Git and Local, Install not offered).
 3. [The greeter installer runs bash, awk and jq as root](../issues.md#the-greeter-installer-runs-bash-awk-and-jq-as-root): `axiom greeter-install` (root, reached before anything of the user's is opened) on the script's argv and reply, `greeter_install.sh` reduced to the shim, `GreeterInstall` tests moved to Go (the shim's own case stays in `test_scripts.py`), a Go test that runs the old script's update from git history onto a scratch root and then the new shim, docs ([greeter-install.md](../features/greeter-install.md) › Changes from the script, backend/roadmap.md's bullet `Done`).
 4. [The first greeter install runs the user's binary as root](../issues.md#the-first-greeter-install-runs-the-users-binary-as-root): a root-owned binary (the package's, else a release download verified by `SHA256SUMS`) before anything runs as root.
 5. [jq is a dependency only for the greeter installer](../issues.md#jq-is-a-dependency-only-for-the-greeter-installer): jq dropped (`install.sh`, `Packages.qml`, `DependencyManager`, check_packages).

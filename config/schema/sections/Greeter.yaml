@@ -11,7 +11,7 @@ properties:
   source:
     type: string
     title: Code from
-    x-showIf: {/$packaged: false}
+    x-showIf: {/$packaged: false, /$clone: true}
     enum: [git, local]
     x-enumLabels: {git: Git (axiom's repository), local: Local (your clone)}
     default: git

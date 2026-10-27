@@ -69,6 +69,16 @@ ColumnLayout {
     }
   }
 
+  // Neither a clone nor a package: nothing to install from (the source
+  // choice is hidden too, Greeter.source's `/$clone`)
+  StyledText {
+    visible: !GreeterManager.installable && root.status !== "noGreetd"
+    text: I18n.tr("The login screen needs axiom installed from a git clone, or by a package. This copy is neither (no .git folder), so it can't be set up from here.")
+    textColor: root.status === "noClone" ? Theme.foreground : Theme.warning
+    wrapMode: Text.WordWrap
+    Layout.fillWidth: true
+  }
+
   // What Install does
   ColumnLayout {
     visible: root.status === "off" || root.status === "notInstalled"
@@ -114,7 +124,7 @@ ColumnLayout {
   // that trusts
   StyledText {
     readonly property bool local: GreeterConfig.source === "local" && !Paths.packaged
-    visible: root.report !== null && root.status !== "noGreetd" && root.status !== "noCompositor"
+    visible: root.report !== null && GreeterManager.installable && root.status !== "noGreetd" && root.status !== "noCompositor"
     // i18n: I18n.tr("the newest release") I18n.tr("the main branch")
     text: Paths.packaged ? I18n.tr("The login screen runs the copy of axiom your package manager installed, so it updates with the system. Only root can change it.") : local ? I18n.tr("Code from Local: Update copies your clone as it is, uncommitted changes included. Any program running as you can change that code before you next update, and the password prompt is then the only check. Choose Git unless you're working on axiom.") : I18n.tr("Code from Git: root fetches {0} from {1}, as axiom's own updates follow it. Nothing that can write to your clone can change what the login screen runs.", I18n.tr(SelfUpdate.channel === "main" ? "the main branch" : "the newest release"), root.report?.url || I18n.tr("your clone's remote"))
     textColor: local ? Theme.warning : Theme.foreground
@@ -208,7 +218,7 @@ ColumnLayout {
     }
 
     StyledTextButton {
-      visible: root.status === "outdated"
+      visible: root.status === "outdated" && GreeterManager.installable
       enabled: !root.busy
       implicitHeight: Widget.height - Widget.px(4)
       iconText: "system_update_alt"
