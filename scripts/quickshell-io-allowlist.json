@@ -26,9 +26,6 @@
     "services/apps/CommunityFetch.qml": [
       "Process"
     ],
-    "services/compositor/CompositorConfigManager.qml": [
-      "execDetached"
-    ],
     "services/core/FileManager.qml": [
       "FileView"
     ],
