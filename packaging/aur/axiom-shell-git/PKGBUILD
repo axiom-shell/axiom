@@ -36,7 +36,6 @@ optdepends=(
   'grim: screenshots (niri)'
   'satty: annotating screenshots'
   'libqalculate: launcher calculator'
-  'brightnessctl: brightness keys and OSD bar (laptop panels)'
   'ddcutil: brightness keys and OSD bar (external monitors over DDC/CI)'
   'wlsunset: night light (niri)'
   'power-profiles-daemon: power profiles'

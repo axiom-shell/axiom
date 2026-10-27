@@ -7,12 +7,13 @@ import qs.config
 import qs.services.core
 import qs.services.compositor
 
-// Screen brightness per monitor: a laptop panel through its sysfs backlight
-// (written with brightnessctl, which goes through logind), an external
-// monitor over DDC/CI (ddcutil, VCP 0x10). Monitors are found once at
-// startup and again when the screens change; values are read then and when
-// the OSD opens (`refresh`), never polled. Writes show at once and are
-// coalesced per monitor, so held brightness keys don't queue slow DDC calls.
+// Screen brightness per monitor, through the daemon (brightness.*): a
+// laptop panel through its sysfs backlight (set through logind), an
+// external monitor over DDC/CI (ddcutil, VCP 0x10). Monitors are found
+// once at startup and again when the screens change; values are read then
+// and when the OSD opens (`refresh`), never polled. Writes show at once and
+// are coalesced per monitor, so held brightness keys don't queue slow DDC
+// calls.
 QtObject {
   id: root
 
@@ -100,17 +101,13 @@ QtObject {
     const display = displays[name];
     if (!display || _writing[name])
       return;
-    if (display.kind === "backlight") {
-      const raw = parseInt(FileManager.read(`/sys/class/backlight/${display.device}/brightness`));
-      if (isFinite(raw))
-        _update(name, raw / display.max);
-      return;
-    }
-    _run(["ddcutil", "--bus", String(display.bus), "getvcp", "10", "--terse"], text => {
-      // "VCP 10 C <current> <max>"
-      const match = text.match(/VCP 10 C (\d+) (\d+)/);
-      if (match && !root._writing[name])
-        root._update(name, parseInt(match[1]) / Math.max(1, parseInt(match[2])), parseInt(match[2]));
+    BackendManager.call("brightness.get", {
+      "kind": display.kind,
+      "device": display.device ?? "",
+      "bus": display.bus ?? 0
+    }, (error, level) => {
+      if (level && !root._writing[name])
+        root._update(name, level.value / Math.max(1, level.max), Math.max(1, level.max));
     });
   }
 
@@ -137,11 +134,16 @@ QtObject {
   function _write(name, value) {
     const display = displays[name];
     _writing[name] = true;
-    // A backlight at 0 turns the panel off, so it stops at one step
-    const command = display.kind === "backlight" ? ["brightnessctl", "-q", "-d", display.device, "set", String(Math.max(1, Math.round(value * display.max)))] : ["ddcutil", "--bus", String(display.bus), "--noverify", "setvcp", "10", String(Math.round(value * display.max))];
-    _run(command, (text, exitCode) => {
-      if (exitCode !== 0)
-        console.warn(`[BrightnessManager] ${command[0]} failed for ${name} (exit ${exitCode})`);
+    const raw = Math.round(value * display.max);
+    BackendManager.call("brightness.set", {
+      "kind": display.kind,
+      "device": display.device ?? "",
+      "bus": display.bus ?? 0,
+      // A backlight at 0 turns the panel off, so it stops at one step
+      "value": display.kind === "backlight" ? Math.max(1, raw) : raw
+    }, error => {
+      if (error)
+        console.warn(`[BrightnessManager] Setting ${name} failed: ${error.message}`);
       const pending = root._pending[name];
       delete root._pending[name];
       root._writing[name] = false;
@@ -150,49 +152,33 @@ QtObject {
     });
   }
 
-  // Runs a command once and hands its stdout and exit code to `done`
-  function _run(command, done) {
-    CommandManager.run(command, (code, out) => done(out, code));
-  }
-
   // -- Detection --
 
   function detect() {
-    // Backlights as "backlight <name> <type> <brightness> <max>", then
-    // ddcutil's display list
-    _run(["sh", "-c", "for d in /sys/class/backlight/*; do [ -r \"$d/max_brightness\" ] && echo \"backlight ${d##*/} $(cat \"$d/type\") $(cat \"$d/brightness\") $(cat \"$d/max_brightness\")\"; done; command -v ddcutil >/dev/null && ddcutil detect --terse 2>/dev/null; true"], text => root._parseDetect(text));
+    BackendManager.call("brightness.detect", {}, (error, found) => {
+      if (found)
+        root._found(found.backlight, found.ddc);
+    });
   }
 
-  function _parseDetect(text) {
+  // The backlight goes to the laptop panel; each DDC monitor by its connector
+  function _found(backlight, ddc) {
     const found = {};
-    // Several backlights can drive one panel: prefer firmware over
-    // platform over raw, as systemd-backlight does
-    const priority = {
-      "firmware": 0,
-      "platform": 1,
-      "raw": 2
-    };
-    const backlights = text.split("\n").filter(line => line.startsWith("backlight ")).map(line => line.split(" ")).sort((a, b) => (priority[a[2]] ?? 3) - (priority[b[2]] ?? 3));
     const panel = General.outputs.map(screen => screen.name).find(name => /^(eDP|LVDS|DSI)-/.test(name));
-    if (panel && backlights.length > 0) {
-      const [, device, , raw, max] = backlights[0];
+    if (panel && backlight)
       found[panel] = {
         "kind": "backlight",
-        "device": device,
-        "max": Math.max(1, parseInt(max)),
-        "value": parseInt(raw) / Math.max(1, parseInt(max))
+        "device": backlight.device,
+        "max": Math.max(1, backlight.max),
+        "value": backlight.value / Math.max(1, backlight.max)
       };
-    }
-    // "Display N / I2C bus: /dev/i2c-9 / DRM connector: card1-DP-1"
-    for (const block of text.split(/^Display \d+/m).slice(1)) {
-      const bus = block.match(/I2C bus:\s*\/dev\/i2c-(\d+)/)?.[1];
-      const connector = block.match(/DRM connector:\s*card\d+-(\S+)/)?.[1];
-      if (bus !== undefined && connector && !found[connector])
-        found[connector] = {
+    for (const monitor of ddc) {
+      if (!found[monitor.connector])
+        found[monitor.connector] = {
           "kind": "ddc",
-          "bus": parseInt(bus),
+          "bus": monitor.bus,
           "max": 100,
-          "value": displays[connector]?.value ?? 0.5
+          "value": displays[monitor.connector]?.value ?? 0.5
         };
     }
     displays = found;

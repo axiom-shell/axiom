@@ -65,7 +65,7 @@ Singleton {
   // `alternatives` are commands that do its job as well (toolFound), the
   // command itself being what's installed when none is; one with nothing
   // to install on this distribution (Packages) is left out.
-  // I18n.tr("Calculator in the launcher") I18n.tr("Brightness of a laptop screen")
+  // I18n.tr("Calculator in the launcher")
   // I18n.tr("Brightness of external monitors") I18n.tr("Copying to the clipboard")
   // I18n.tr("Reading JSON (theme integrations)") I18n.tr("Downloads (album art, Claude usage, community setups)")
   // I18n.tr("Pending package updates")
@@ -85,10 +85,6 @@ Singleton {
     {
       "command": "qalc",
       "purpose": "Calculator in the launcher"
-    },
-    {
-      "command": "brightnessctl",
-      "purpose": "Brightness of a laptop screen"
     },
     {
       "command": "ddcutil",

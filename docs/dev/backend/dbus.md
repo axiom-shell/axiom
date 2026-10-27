@@ -3,7 +3,7 @@
 > **Files:** `backend/internal/dbus/`, `backend/internal/dbus/dbustest/`, `backend/internal/unixmsg/`
 > **Related:** [The axiom binary](README.md), [Wayland protocols](wayland.md), [Roadmap](roadmap.md)
 
-The daemon's own D-Bus client: pure Go, no library, written for what axiom asks of a local bus. Idle (roadmap stage 2) is its first user: logind on the system bus, `org.freedesktop.ScreenSaver` on the session bus. The services Scope lists as planned (notifications, tray, UPower, Mpris, …) build on it.
+The daemon's own D-Bus client: pure Go, no library, written for what axiom asks of a local bus. Idle (roadmap stage 2) is its first user: logind on the system bus, `org.freedesktop.ScreenSaver` on the session bus. Brightness (stage 3) sets backlights through logind's `Session.SetBrightness`. The services Scope lists as planned (notifications, tray, UPower, Mpris, …) build on it.
 
 ### The connection
 - `dbus.Dial(ctx, address, Options)`:

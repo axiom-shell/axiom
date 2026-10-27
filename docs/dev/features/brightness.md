@@ -1,6 +1,6 @@
 # Brightness
 
-> **Files:** `services/system/BrightnessManager.qml`, `components/content/Brightness/Brightness.qml`, `components/surfaces/osd/OSDBar.qml`
+> **Files:** `services/system/BrightnessManager.qml`, `backend/internal/brightness/`, `backend/internal/daemon/brightness.go`, `components/content/Brightness/Brightness.qml`, `components/surfaces/osd/OSDBar.qml`
 > **Config:** none of its own (the module's `monitor` property; OSD `brightness` bars)
 > **Related:** [OSD](osd.md), [Idle](idle.md) (dim/undim), [Utility modules](../overlay/utility-modules.md)
 
@@ -8,15 +8,16 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
 
 ### BrightnessManager
 - **`displays[screenName]`** gives each monitor's controller:
-  - **`backlight`:** for an `eDP` / `LVDS` / `DSI` screen. Read from `/sys/class/backlight`, written with `brightnessctl`.
+  - **`backlight`:** for an `eDP` / `LVDS` / `DSI` screen. Read from `/sys/class/backlight` (firmware over platform over raw, as systemd-backlight picks), set through logind's `Session.SetBrightness` (how the session's user may write it, as brightnessctl does).
   - **`ddc`:** for monitors that `ddcutil detect` maps to a DRM connector. Uses VCP 0x10.
+- **The daemon does the work** (`backend/internal/brightness`): `brightness.detect` (the backlight with its level, the DDC monitors without theirs), `brightness.get` and `brightness.set` per controller. ddcutil stays a program, run from Go (10 s at most). The logind connection opens on the first backlight set and is kept. The QML keeps the mapping onto screens, the coalescing and the dimming. Without the daemon (the greeter) there's no brightness.
 - **When it reads:**
   - Detection runs at startup and on screen changes.
   - Values are read then, and again when the OSD opens (`refresh`).
   - Never polled.
 - **Writing:**
   - `set` / `stepBy` update the value at once.
-  - Writes are coalesced per monitor: one process in flight, with the latest value next.
+  - Writes are coalesced per monitor: one `brightness.set` in flight, with the latest value next.
 - **`brightnessChanged(name)`** fires only for axiom's own sets, so the OSD opens on them.
   - Brightness changed outside axiom is picked up when the OSD opens (`OSDTriggers` calls `refresh`).
 - **Several monitors:**

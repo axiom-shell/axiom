@@ -59,6 +59,7 @@ var tiers = map[string]int{
 	"internal/compositor/takeover": tierEdge,
 	"internal/compositor/userconf": tierEdge,
 	"internal/dbus":                tierEdge,
+	"internal/brightness":          tierEdge,
 	"internal/deps":                tierEdge,
 	"internal/fsx":                 tierEdge,
 	"internal/greeter":             tierEdge,

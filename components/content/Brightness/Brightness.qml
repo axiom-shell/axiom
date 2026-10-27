@@ -72,7 +72,7 @@ Panel {
       maxWidth: parent.width
       availableHeight: parent.height
       icon: "brightness_empty"
-      text: I18n.tr("No monitor here has a brightness control (brightnessctl or ddcutil)")
+      text: I18n.tr("No monitor here has a brightness control (a backlight, or ddcutil for DDC/CI)")
     }
   }
 

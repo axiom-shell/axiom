@@ -25,7 +25,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Screenshots | `grim` under niri; `satty` or `swappy` to annotate; `wf-recorder` to record, and `pactl` (libpulse; works with pipewire-pulse) to record the system's sound |
 | AI chat | `curl`; `secret-tool` (libsecret) to keep keys in your keyring |
 | Launcher calculator | `qalc` (libqalculate) |
-| Brightness (keys, OSD bar) | `brightnessctl` for a laptop panel; `ddcutil` for external monitors over DDC/CI (monitors that support it, with i2c access: the package's udev rule gives it to the logged-in user) |
+| Brightness (keys, OSD bar) | nothing for a laptop panel (axiom sets its backlight through logind); `ddcutil` for external monitors over DDC/CI (monitors that support it, with i2c access: the package's udev rule gives it to the logged-in user) |
 | NVIDIA GPU stats | `nvidia-smi` (AMD is read from sysfs) |
 | Idle (dim, lock, screen off, suspend) | Nothing: axiom does it itself, on every compositor |
 | Login screen | `greetd` and its text login `agreety` (`greetd-agreety` on Arch), the fallback; `sway` for it to run in (recommended), or Hyprland without one; `pkexec` (polkit) to install it |

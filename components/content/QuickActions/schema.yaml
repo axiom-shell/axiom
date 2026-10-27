@@ -7,7 +7,7 @@ settings:
     type: array
     title: Actions
     default: [wifi, bluetooth, caffeine, dnd, darkMode]
-    description: Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor brightnessctl or ddcutil can set (a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.
+    description: Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor axiom can set (a laptop backlight, or ddcutil over DDC/CI) (a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.
     items:
       type: string
       enum:

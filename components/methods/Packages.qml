@@ -119,10 +119,6 @@ QtObject {
         "arch": "libqalculate",
         "fedora": "qalculate"
       },
-      "brightnessctl": {
-        "arch": "brightnessctl",
-        "fedora": "brightnessctl"
-      },
       "ddcutil": {
         "arch": "ddcutil",
         "fedora": "ddcutil"
