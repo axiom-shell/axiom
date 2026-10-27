@@ -208,6 +208,19 @@ func TestGitIgnoresTheClone(t *testing.T) {
 	}
 }
 
+// A copy recorded from a fork (before the pin) updates to the official
+// repository's code, and records it
+func TestGitUpdatesAForkToTheOfficial(t *testing.T) {
+	t.Parallel()
+	f := newInstallFixture(t)
+	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	f.write(f.root, "usr/share/axiom-greeter/.greeter-source", "git tags https://github.com/me/fork.git\n", 0o644)
+	f.ok(rules.ActionUpdate, rules.SourceGit, rules.ChannelTags)
+	if got := f.copied(".greeter-source"); got != "git tags "+f.upstream+"\n" {
+		t.Errorf(".greeter-source %q", got)
+	}
+}
+
 func TestLocalCopiesTheWorkingTree(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
@@ -287,7 +300,7 @@ func releases(t *testing.T, data, sums string) string {
 }
 
 func (f *fixture) withReleases(url string) *Installer {
-	return New(Options{Root: f.root, Releases: url, Environ: func() []string { return f.env }})
+	return New(Options{Root: f.root, Releases: url, Upstream: f.upstream, Environ: func() []string { return f.env }})
 }
 
 func TestGitRefusesABinaryItsSumsDontMatch(t *testing.T) {
@@ -337,8 +350,10 @@ func TestRefusesAReleaseWithoutALoginScreen(t *testing.T) {
 func TestGitUnreachable(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
-	f.git(f.repo, "remote", "set-url", "origin", filepath.Join(f.tmp, "missing.git"))
-	f.refused("offline", rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	in := New(Options{Root: f.root, Releases: f.releases, Upstream: filepath.Join(f.tmp, "missing.git"), Environ: func() []string { return f.env }})
+	if r := f.runWith(in, rules.ActionInstall, rules.SourceGit, rules.ChannelTags); r.OK || !strings.Contains(r.Error, "offline") {
+		t.Errorf("result %+v", r)
+	}
 }
 
 func TestPolicyNamesTheInstalledHelper(t *testing.T) {
@@ -452,7 +467,7 @@ func TestBackupsAreDated(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
 	at := time.Date(2026, 10, 27, 9, 8, 7, 0, time.Local)
-	in := New(Options{Root: f.root, Releases: f.releases, Now: func() time.Time { return at }, Environ: func() []string { return f.env }})
+	in := New(Options{Root: f.root, Releases: f.releases, Upstream: f.upstream, Now: func() time.Time { return at }, Environ: func() []string { return f.env }})
 	r := f.runWith(in, rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
 	if !strings.HasSuffix(r.Backup, "config.toml.axiom-bak-20261027-090807") {
 		t.Errorf("backup %q", r.Backup)

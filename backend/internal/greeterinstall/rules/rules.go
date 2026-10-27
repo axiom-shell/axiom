@@ -30,23 +30,11 @@ const Session = "/usr/share/axiom-greeter/scripts/greeter/greeter-session.sh"
 // PackagePath is the package source's code, and where the greeter finds it.
 const PackagePath = "/usr/share/axiom"
 
-// HTTPSURL is a remote's url as https, which root fetches without the
-// user's keys: git@host:path and ssh://[user@]host/path; anything else as
-// it is.
-func HTTPSURL(remote string) string {
-	if rest, ok := strings.CutPrefix(remote, "git@"); ok {
-		if host, path, ok := strings.Cut(rest, ":"); ok {
-			return "https://" + host + "/" + path
-		}
-	}
-	if rest, ok := strings.CutPrefix(remote, "ssh://"); ok {
-		if _, hostPath, ok := strings.Cut(rest, "@"); ok {
-			rest = hostPath
-		}
-		return "https://" + rest
-	}
-	return remote
-}
+// Repository is the official repository, the git source's code: root
+// fetches only it, never the clone's remote (maintainer, 2026-10-27:
+// "Pin mirror too"; forks use the local source), and its releases'
+// binaries (Releases).
+const Repository = "https://github.com/axiom-shell/axiom.git"
 
 // Target is the commit a channel stands at on a remote.
 type Target struct {

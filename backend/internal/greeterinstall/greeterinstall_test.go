@@ -116,7 +116,7 @@ func (f *fixture) git(dir string, args ...string) string {
 }
 
 func (f *fixture) installer() *Installer {
-	return New(Options{Root: f.root, Releases: f.releases, Environ: func() []string { return f.env }})
+	return New(Options{Root: f.root, Releases: f.releases, Upstream: f.upstream, Environ: func() []string { return f.env }})
 }
 
 func (f *fixture) status(source, channel string) Report {
@@ -176,21 +176,22 @@ func TestStatusCompositor(t *testing.T) {
 func TestStatusURL(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	f.git(f.repo, "remote", "set-url", "origin", "git@github.com:axiom-shell/axiom.git")
-	if got := f.installer().git(f.repo, nil).upstreamURL(context.Background(), rules.Origin{}); got != "https://github.com/axiom-shell/axiom.git" {
-		t.Errorf("url %q", got)
-	}
-	// Unreachable: nothing to compare with, so never behind
+	// The clone's remote never counts: the official repository does
 	f.git(f.repo, "remote", "set-url", "origin", filepath.Join(f.tmp, "missing.git"))
-	if r := f.status(rules.SourceGit, rules.ChannelTags); r.CurrentHash != "" {
-		t.Errorf("current hash %q for an unreachable remote", r.CurrentHash)
+	if r := f.status(rules.SourceGit, rules.ChannelTags); r.URL != f.upstream || r.CurrentHash == "" {
+		t.Errorf("report %+v", r)
 	}
-	// A recorded git install's url wins over the clone's remote
-	f.write(f.root, "usr/share/axiom-greeter/.greeter-source", "git main "+f.upstream+"\n", 0o644)
+	// A git install recorded from a fork (before the pin) shows as behind
+	f.write(f.root, "usr/share/axiom-greeter/.greeter-source", "git main https://github.com/me/fork.git\n", 0o644)
 	f.write(f.root, "usr/share/axiom-greeter/.greeter-hash", "abc\n", 0o644)
 	r := f.status(rules.SourceGit, rules.ChannelMain)
 	if r.URL != f.upstream || r.CurrentHash != f.git(f.repo, "rev-parse", "main") || r.InstalledSource != "git:main" || !r.Installed || r.InstalledHash != "abc" {
 		t.Errorf("report %+v", r)
+	}
+	// Unreachable: nothing to compare with, so never behind
+	in := New(Options{Root: f.root, Upstream: filepath.Join(f.tmp, "missing.git"), Environ: func() []string { return f.env }})
+	if r, err := in.Status(context.Background(), f.repo, rules.SourceGit, rules.ChannelTags); err != nil || r.CurrentHash != "" {
+		t.Errorf("current hash %q for an unreachable repository (%v)", r.CurrentHash, err)
 	}
 }
 
@@ -310,7 +311,7 @@ func TestFirstProgram(t *testing.T) {
 				f.write(f.root, "usr/bin/axiom", "\x7fELF packaged", tc.packaged)
 				os.Chmod(filepath.Join(f.root, "usr/bin/axiom"), tc.packaged)
 			}
-			opts := Options{Root: f.root, Environ: func() []string { return f.env }}
+			opts := Options{Root: f.root, Upstream: f.upstream, Environ: func() []string { return f.env }}
 			if tc.releases != nil {
 				opts.Releases = tc.releases(t)
 			}

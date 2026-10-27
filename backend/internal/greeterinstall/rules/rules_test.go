@@ -9,22 +9,6 @@ import (
 	"testing"
 )
 
-func TestHTTPSURL(t *testing.T) {
-	t.Parallel()
-	for remote, want := range map[string]string{
-		"git@github.com:axiom-shell/axiom.git": "https://github.com/axiom-shell/axiom.git",
-		"ssh://git@example.org/me/axiom.git":   "https://example.org/me/axiom.git",
-		"ssh://example.org/me/axiom.git":       "https://example.org/me/axiom.git",
-		"https://github.com/axiom-shell/axiom": "https://github.com/axiom-shell/axiom",
-		"/home/me/upstream.git":                "/home/me/upstream.git",
-		"git@nohost":                           "git@nohost",
-	} {
-		if got := HTTPSURL(remote); got != want {
-			t.Errorf("HTTPSURL(%q) = %q, want %q", remote, got, want)
-		}
-	}
-}
-
 func TestNewest(t *testing.T) {
 	t.Parallel()
 	refs := strings.Join([]string{

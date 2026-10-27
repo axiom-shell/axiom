@@ -354,15 +354,11 @@ func (r *run) localArchive(ctx context.Context, stage string) (string, int, erro
 	return rules.LocalHash(sums), n, err
 }
 
-// fetch takes git's channel from the url recorded at the first git install
-// (else the clone's remote) into root's own mirror, and its tree into
-// stage.
+// fetch takes git's channel from the official repository into root's own
+// mirror, and its tree into stage.
 func (r *run) fetch(ctx context.Context, stage string) (rules.Target, string, rules.Origin, error) {
 	in, req := r.in, r.req
-	url := in.git(req.Repo, r.user).upstreamURL(ctx, in.origin())
-	if url == "" {
-		return rules.Target{}, "", rules.Origin{}, failf("%s has no remote to fetch axiom from", req.Repo)
-	}
+	url := in.upstream()
 	target, ok := in.remoteTarget(ctx, url, req.Channel)
 	if !ok {
 		return target, "", rules.Origin{}, failf("nothing to fetch from %s on the %s channel (offline?)", url, req.Channel)

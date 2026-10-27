@@ -82,7 +82,7 @@ func (in *Installer) Elevate(ctx context.Context, req rules.Request) (Elevated, 
 // ("Refuse the install (except for if you have the local clone install
 // path selected, in which case it reuses your most recently built binary,
 // and skips the checksum)"): the main channel, a release with no binary
-// for this machine (the official release of the remote's newest tag).
+// for this machine.
 func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]string, []byte, error) {
 	switch req.Source {
 	case rules.SourceLocal:
@@ -100,10 +100,7 @@ func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]str
 	if req.Channel == rules.ChannelMain {
 		return nil, nil, failf("the main channel has no release binary to check: set the login screen up from the newest release, or from Local")
 	}
-	url := in.git(req.Repo, nil).upstreamURL(ctx, in.origin())
-	if url == "" {
-		return nil, nil, failf("%s has no remote to fetch axiom from", req.Repo)
-	}
+	url := in.upstream()
 	target, ok := in.remoteTarget(ctx, url, req.Channel)
 	if !ok {
 		return nil, nil, failf("nothing to fetch from %s on the %s channel (offline?)", url, req.Channel)

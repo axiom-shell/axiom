@@ -55,6 +55,8 @@ type Options struct {
 	// Releases replaces the official releases' download url, rules.Releases
 	// (tests)
 	Releases string
+	// Upstream replaces the official repository, rules.Repository (tests)
+	Upstream string
 	// Now dates the backups (default time.Now)
 	Now func() time.Time
 }
@@ -161,7 +163,7 @@ func (in *Installer) Status(ctx context.Context, repo, source, channel string) (
 	}
 	g := in.git(repo, nil)
 	if source == rules.SourceGit {
-		r.URL = g.upstreamURL(ctx, in.origin())
+		r.URL = in.upstream()
 	}
 	r.CurrentHash = in.currentHash(ctx, g, source, channel)
 	return r, nil
@@ -180,6 +182,16 @@ func (in *Installer) helper() (installed, binaries bool) {
 		}
 	}
 	return true, false
+}
+
+// upstream is the url the git source fetches: the official repository
+// (an older copy's recorded fork shows as outdated, and its update takes
+// the official code).
+func (in *Installer) upstream() string {
+	if in.opts.Upstream != "" {
+		return in.opts.Upstream
+	}
+	return rules.Repository
 }
 
 // origin is what the installed copy was made from.
@@ -210,11 +222,7 @@ func (in *Installer) currentHash(ctx context.Context, g gitRunner, source, chann
 		hash, _ := g.localHash(ctx)
 		return hash
 	}
-	url := g.upstreamURL(ctx, in.origin())
-	if url == "" {
-		return ""
-	}
-	target, _ := in.remoteTarget(ctx, url, channel)
+	target, _ := in.remoteTarget(ctx, in.upstream(), channel)
 	return target.Commit
 }
 
@@ -257,26 +265,6 @@ func (g gitRunner) output(ctx context.Context, args ...string) string {
 		return ""
 	}
 	return strings.TrimSpace(string(out))
-}
-
-// upstreamURL is the url git takes: the one the installed copy's git
-// install recorded (nothing that writes to the clone redirects it later),
-// else the clone's remote (its branch's, else origin), as https.
-func (g gitRunner) upstreamURL(ctx context.Context, recorded rules.Origin) string {
-	if recorded.Source == rules.SourceGit {
-		return recorded.URL
-	}
-	remote := "origin"
-	if branch := g.output(ctx, "symbolic-ref", "--quiet", "--short", "HEAD"); branch != "" {
-		if r := g.output(ctx, "config", "branch."+branch+".remote"); r != "" {
-			remote = r
-		}
-	}
-	url := g.output(ctx, "remote", "get-url", remote)
-	if url == "" {
-		return ""
-	}
-	return rules.HTTPSURL(url)
 }
 
 // localHash is the hash of the clone's tracked files as they are in the

@@ -2074,7 +2074,6 @@
     "The monitor the login box shows on. The others show the layout without it, or only the background.": "ログイン欄を表示するモニターです。ほかのモニターにはログイン欄を除いたレイアウト、または背景だけを表示します。",
     "the login screen": "ログイン画面",
     "The login screen's code came from elsewhere than Code from now says. Update takes it from there, asking for your password.": "ログイン画面のコードは、現在の「コードの取得元」とは別の場所から取得されています。更新するとそこから取得し直します（パスワードを求められます）。",
-    "your clone's remote": "クローンのリモート",
     "Code from": "コードの取得元",
     "Git (axiom's repository)": "Git（axiom のリポジトリ）",
     "Local (your clone)": "ローカル（あなたのクローン）",
@@ -3169,6 +3168,7 @@
     "Code from Local: Update copies your clone as it is, uncommitted changes included, with the axiom binary you built last. Any program running as you can change them before you next update, and the password prompt is then the only check. Choose Git unless you're working on axiom.": "",
     "Code from Git takes only a release, whose prebuilt axiom binary root checks against the release's checksums, and axiom's updates follow the main branch, which has none. Switch them to releases, or choose Local.": "",
     "Code from Git: root fetches the newest release from {0}, with its prebuilt axiom binary checked against the release's checksums. Nothing that can write to your clone can change what the login screen runs.": "",
-    "Where Install and Update take the login screen's code. Git fetches it as root from the repository axiom was installed from, at its newest release, with the release's prebuilt axiom binary checked against its checksums: nothing that can write to your clone can change it (main, having no such binary, can't be installed). Local copies your clone as it is (the checked-out branch, uncommitted changes included) with the axiom binary you built last, for working on axiom: any program running as you could change what the login screen runs before you next update it.": ""
+    "Where Install and Update take the login screen's code. Git fetches it as root from the repository axiom was installed from, at its newest release, with the release's prebuilt axiom binary checked against its checksums: nothing that can write to your clone can change it (main, having no such binary, can't be installed). Local copies your clone as it is (the checked-out branch, uncommitted changes included) with the axiom binary you built last, for working on axiom: any program running as you could change what the login screen runs before you next update it.": "",
+    "axiom's official repository": ""
   }
 }
