@@ -28,8 +28,9 @@ QtObject {
   // Whether a Secret Service answered (null until the probe finishes)
   property var keyringAvailable: null
 
-  // { slot: "keyring" | "file" | "none" } (a slot is a provider's id, or
-  // "<scope>:<id>"), for the settings cards. refresh() and lookups fill it.
+  // { slot: "keyring" | "file" | "none", and for a provider "env" |
+  // "unneeded" } (a slot is a provider's id, or "<scope>:<id>"), for the
+  // settings cards. refresh() and lookups fill it.
   property var statuses: ({})
 
   // Where a provider's key comes from: "env" | "keyring" | "file" |
@@ -150,6 +151,9 @@ QtObject {
   }
 
   function _setStatus(id, value) {
+    // A provider's keyEnv wins over what's stored (axiom reads it first)
+    if (root.statuses[id] === "env")
+      return;
     const next = Object.assign({}, root.statuses);
     next[id] = value;
     root.statuses = next;
