@@ -31,26 +31,19 @@ type Target struct {
 	Functions []Function `json:"functions"`
 }
 
-// Options configure a Router.
-type Options struct {
-	Timeout time.Duration
-}
+// How long a call waits for the shell's answer
+const callTimeout = 5 * time.Second
 
 // Router routes calls to the shell.
 type Router struct {
-	opts Options
-
 	mu      sync.Mutex
 	shell   *rpc.Conn
 	targets map[string]Target
 }
 
 // New returns a router.
-func New(opts Options) *Router {
-	if opts.Timeout == 0 {
-		opts.Timeout = 5 * time.Second
-	}
-	return &Router{opts: opts, targets: map[string]Target{}}
+func New() *Router {
+	return &Router{targets: map[string]Target{}}
 }
 
 // Register records the targets the shell registered on conn, replacing
@@ -125,7 +118,7 @@ func (r *Router) Call(ctx context.Context, p CallParams) (string, error) {
 	if len(p.Args) != fn.Args {
 		return "", axerr.New(axerr.BadRequest, "%s takes %d arguments, got %d", fn.Name, fn.Args, len(p.Args))
 	}
-	ctx, cancel := context.WithTimeout(ctx, r.opts.Timeout)
+	ctx, cancel := context.WithTimeout(ctx, callTimeout)
 	defer cancel()
 	args := p.Args
 	if args == nil {

@@ -25,7 +25,7 @@ running anything:
     takes typing (a text field in it or its parts) says so (`x-keyboard`,
     false when it deliberately stays read-only there)
   - only the files in scripts/quickshell-io-allowlist.json use Process,
-    FileView, Socket, IpcHandler or Quickshell.execDetached directly, and
+    FileView, Socket or Quickshell.execDetached directly, and
     the list only shrinks (these move to the axiom daemon)
 and warns about files in the loaded directories that nothing registers or
 uses.
@@ -63,7 +63,6 @@ IO_KINDS = {
     "Process": re.compile(r"(?<![\w.])Process\s*\{"),
     "FileView": re.compile(r"(?<![\w.])FileView\s*\{"),
     "Socket": re.compile(r"(?<![\w.])Socket\s*\{"),
-    "IpcHandler": re.compile(r"(?<![\w.])IpcHandler\s*\{"),
     "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
 }
 

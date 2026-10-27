@@ -39,7 +39,7 @@ var targets = []Target{
 func TestCallRoutes(t *testing.T) {
 	t.Parallel()
 	conn := shellConn(t)
-	r := New(Options{})
+	r := New()
 	ctx := context.Background()
 	if _, err := r.Call(ctx, CallParams{Target: "osd", Function: "show"}); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("before a registration: %v, want Unavailable", err)
@@ -79,7 +79,7 @@ func TestCallRoutes(t *testing.T) {
 // that closed, and only the shell's connection forgets its targets.
 func TestRegistrations(t *testing.T) {
 	t.Parallel()
-	r := New(Options{})
+	r := New()
 	first, second := shellConn(t), shellConn(t)
 	r.Register(first, targets)
 	if !r.Register(second, []Target{{Name: "other"}}) {
