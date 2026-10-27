@@ -11,6 +11,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/chat"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -70,6 +71,10 @@ var (
 	// Not a hello topic either: each piece of a reply, sent only to the
 	// connection that asked for it (chat.send), one message each
 	pushChatDelta = rpc.Push[chat.Delta]{Method: "chat.delta"}
+
+	// Nor this: a watched file changed, sent only to the connections
+	// watching it (file.watch), one message each
+	pushFileChanged = rpc.Push[files.Changed]{Method: "file.changed"}
 )
 
 // compositorPushes are the compositor's pushes by method, for its

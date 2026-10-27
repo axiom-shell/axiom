@@ -2,7 +2,6 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
 import qs.config
 import qs.services.core
@@ -536,7 +535,7 @@ Singleton {
   }
 
   function _writeConversation(conversation) {
-    _writeFile(root.chatDir + conversation.id + ".json", JSON.stringify(conversation));
+    FileManager.write(root.chatDir + conversation.id + ".json", JSON.stringify(conversation));
     const summary = {
       id: conversation.id,
       title: conversation.title,
@@ -556,15 +555,7 @@ Singleton {
   }
 
   function _saveIndex() {
-    _writeFile(root.chatDir + "index.json", JSON.stringify(root.conversations, null, 1));
-  }
-
-  function _writeFile(path, text) {
-    const view = _fileComponent.createObject(root, {
-      path: path
-    });
-    view.setText(text);
-    view.destroy();
+    FileManager.write(root.chatDir + "index.json", JSON.stringify(root.conversations, null, 1));
   }
 
   function _loadIndex() {
@@ -604,15 +595,6 @@ Singleton {
       _noticeClear.restart();
   }
 
-  property Component _fileComponent: Component {
-    FileView {
-      blockWrites: true
-      atomicWrites: true
-      printErrors: false
-      onSaveFailed: error => console.warn("[ChatManager] Could not save", path + ":", FileViewError.toString(error))
-    }
-  }
-
   IpcTarget {
     target: "chat"
 
@@ -641,7 +623,6 @@ Singleton {
       if (delta.id === root._replyId)
         root._onDelta(delta.kind, delta.text);
     });
-    CommandManager.runDetached(["mkdir", "-p", root.chatDir]);
     root.conversations = root._loadIndex();
     root.conversation = _blank(ChatConfig.defaultPreset);
     // Pick up where the last conversation left off

@@ -7,9 +7,6 @@
     "services/core/BackendManager.qml": [
       "Socket"
     ],
-    "services/apps/ChatManager.qml": [
-      "FileView"
-    ],
     "services/core/FileManager.qml": [
       "FileView"
     ],
@@ -22,20 +19,7 @@
     "services/compositor/NiriIpcManager.qml": [
       "Socket"
     ],
-    "services/apps/NotesManager.qml": [
-      "FileView"
-    ],
-    "services/system/NotificationManager.qml": [
-      "FileView"
-    ],
-    "services/core/StateManager.qml": [
-      "Process",
-      "FileView"
-    ],
     "services/core/ThemeManager.qml": [
-      "FileView"
-    ],
-    "services/apps/TodoManager.qml": [
       "FileView"
     ]
   }

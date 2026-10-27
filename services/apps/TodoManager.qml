@@ -1,13 +1,13 @@
 pragma Singleton
 import QtQuick
-import Quickshell.Io
 import qs.config
 import qs.components.methods
 import qs.services.core
 
 // The todo list: one list for every widget and module, kept in
 // $XDG_DATA_HOME/axiom/todo.json ({ version, items }: TodoItems' shape),
-// written atomically and watched, so an edit made elsewhere shows at once.
+// written atomically and watched through axiom (FileManager), so an edit
+// made elsewhere shows at once.
 // While the file can't be read (a hand edit half done), nothing is written
 // over it. Never read or written in the greeter.
 //
@@ -63,7 +63,7 @@ QtObject {
   property bool _loaded: false
   // The file holds something that isn't a list: left alone until fixed
   property bool _unreadable: false
-  property bool _retried: false
+  property var _watch: null
   property int _serial: 0
 
   function _newUid() {
@@ -86,10 +86,19 @@ QtObject {
   }
 
   function _write() {
-    root._view.setText(JSON.stringify({
+    FileManager.write(root.path, JSON.stringify({
       "version": 1,
       "items": root._items
     }, null, 2) + "\n");
+  }
+
+  // Nothing saved yet: an empty list
+  function _load() {
+    const text = FileManager.read(root.path);
+    if (text === null)
+      root._loaded = true;
+    else
+      root._parse(text);
   }
 
   function _parse(text) {
@@ -104,30 +113,14 @@ QtObject {
     root._loaded = true;
   }
 
-  property FileView _view: FileView {
-    path: Paths.greeter ? "" : root.path
-    watchChanges: true
-    atomicWrites: true
-    blockWrites: true
-    printErrors: false
-    onLoaded: root._parse(text())
-    onFileChanged: reload()
-    // Nothing saved yet: an empty list
-    onLoadFailed: root._loaded = true
-    onSaved: root._retried = false
-    onSaveFailed: error => {
-      // The data folder may not exist yet: make it and write again, once
-      if (root._retried) {
-        console.warn("[TodoManager] Couldn't save", root.path + ":", FileViewError.toString(error));
-        return;
-      }
-      root._retried = true;
-      CommandManager.run(["mkdir", "-p", "--", Paths.userDataPath], code => {
-        if (code === 0)
-          root._write();
-      });
-    }
+  Component.onCompleted: {
+    if (Paths.greeter)
+      return;
+    root._load();
+    root._watch = FileManager.watch(root.path, () => root._load());
   }
+
+  Component.onDestruction: FileManager.unwatch(root._watch)
 
   property IpcTarget _ipc: IpcTarget {
     target: "todo"

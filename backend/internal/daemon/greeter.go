@@ -14,6 +14,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
+	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/weather"
@@ -64,8 +65,10 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 		Log:     o.Log,
 	})
 	hub := topics.New(topics.Options{Log: o.Log, Context: serveCtx})
-	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches, hub), Log: o.Log, OnClose: func(c *rpc.Conn) {
+	written := files.New(files.Options{Method: pushFileChanged.Method, Log: o.Log, Context: serveCtx})
+	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches, hub, written), Log: o.Log, OnClose: func(c *rpc.Conn) {
 		watches.Forget(c)
+		written.Forget(c)
 		hub.Forget(c)
 	}}
 	served := make(chan error, 1)
@@ -93,9 +96,9 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 
 // greeterRegistry is what the greeter's axiom answers: a hello from its
 // quickshell alone, then that quickshell's commands (watched ones too), run with its own
-// environment, lookups and the weather. Anything else is unavailable, as it was with
+// environment, its files (its state), lookups and the weather. Anything else is unavailable, as it was with
 // no axiom at all, so the shell's callers stay quiet about it.
-func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub) *rpc.Registry {
+func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub, written *files.Files) *rpc.Registry {
 	reg := rpc.NewRegistry()
 	reg.Before = func(c *rpc.Conn, method string) error {
 		if method != "daemon.hello" && sessionOf(c) == nil {
@@ -121,6 +124,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 		}, nil
 	})
 	execHandlers(reg, func() command.Options { return command.Options{Env: env} }, func() *command.Watches { return watches })
+	fileHandlers(reg, func() *files.Files { return written })
 	lookupMethods(reg, o.Getenv)
 	topics.Register(reg, hub, weather.Source(weather.Options{}))
 	return reg
