@@ -236,7 +236,7 @@ QtObject {
   function edit(path) {
     if (root.annotator === "")
       return;
-    Quickshell.execDetached(root.annotator === "satty" ? ["satty", "--filename", path, "--output-filename", path] : ["swappy", "-f", path, "-o", path]);
+    CommandManager.runDetached(root.annotator === "satty" ? ["satty", "--filename", path, "--output-filename", path] : ["swappy", "-f", path, "-o", path]);
   }
 
   // Switches an open picker between taking a screenshot and recording
@@ -555,7 +555,7 @@ QtObject {
     root._probe.running = true;
     NotificationManager.registerHandler(_desktopEntry, () => {
       if (root._lastPath !== "")
-        Quickshell.execDetached(["xdg-open", root._lastPath]);
+        CommandManager.runDetached(["xdg-open", root._lastPath]);
     });
   }
 

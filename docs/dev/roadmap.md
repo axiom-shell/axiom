@@ -316,7 +316,6 @@ The shell's RSS at rest and after use, measured rather than guessed: about 840 M
 0. **Done:** **Measure** (row 9; [memory](core/memory.md)): a memory reading script (RSS, Private_Dirty, AnonHugePages, the JS heap, render threads) and a `--mem` option for `scripts/dev/bench_overlay.sh` (the reading after each open/close cycle), run in a nested session, with a baseline recorded in a doc. Every entry below is judged by it.
 
 - **Done:** the shell's heap never shrinking after a spike (row 9; maintainer, 2026-10-27: "yes, opt the shell out of THP"): qs runs with transparent huge pages off, 110–125 MB less at rest and after use; the daemon and what it launches keep them ([memory](core/memory.md) › Transparent huge pages).
-- [Apps the shell starts run without transparent huge pages](issues.md#apps-the-shell-starts-run-without-transparent-huge-pages)
 - [Nineteen windows stay mapped on one monitor](issues.md#nineteen-windows-stay-mapped-on-one-monitor)
 - [Images decoded at full size or more than once](issues.md#images-decoded-at-full-size-or-more-than-once)
 - [ChatManager's attachment cache is never cleared](issues.md#chatmanagers-attachment-cache-is-never-cleared) (with stage 5's chat work)

@@ -63,8 +63,7 @@
       "FileView"
     ],
     "services/ui/WallpaperManager.qml": [
-      "Process",
-      "execDetached"
+      "Process"
     ]
   }
 }

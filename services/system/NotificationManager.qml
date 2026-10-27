@@ -115,7 +115,7 @@ Singleton {
     const app = DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id);
     if (!app)
       return false;
-    app.execute();
+    CommandManager.runDetached(app.command, app.workingDirectory);
     return true;
   }
 

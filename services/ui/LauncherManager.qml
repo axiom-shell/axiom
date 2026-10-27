@@ -112,11 +112,10 @@ QtObject {
       usage = Utils.recordUse(usage, appEntry.id, Date.now());
       _stateHandler.save(usage);
 
-      // DesktopEntry.execute() ignores Terminal=true
-      if (appEntry.runInTerminal)
-        CommandManager.runDetached(Apps.inTerminal(appEntry.command));
-      else
-        appEntry.execute();
+      // Through axiom, not DesktopEntry.execute() (a qs child, which
+      // also ignores Terminal=true)
+      const argv = appEntry.runInTerminal ? Apps.inTerminal(appEntry.command) : appEntry.command;
+      CommandManager.runDetached(argv, appEntry.workingDirectory);
       return true;
     } catch (e) {
       console.warn("[LauncherManager] Failed to launch app:", e);
