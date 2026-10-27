@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
-<!-- Installed by greeter_install.sh to /usr/share/polkit-1/actions: the
-     prompt for updating or removing axiom's login screen, through the
-     root-owned copy of greeter_install.sh (the first install runs the
-     user's own copy through pkexec bash, before this exists) -->
+<!-- Installed by `axiom greeter-install` to /usr/share/polkit-1/actions:
+     the prompt for updating or removing axiom's login screen, through the
+     root-owned copy of greeter_install.sh (which runs the copy's own axiom
+     binary; the first install runs before this exists, through plain
+     pkexec) -->
 <policyconfig>
   <vendor>axiom</vendor>
   <action id="org.axiom.greeter.manage">

@@ -17,6 +17,7 @@ func Root() *Command {
 		Subs: []*Command{
 			runCommand(),
 			greeterCommand(),
+			greeterInstallCommand(),
 			pingCommand(),
 			restartCommand(),
 			quitCommand(),

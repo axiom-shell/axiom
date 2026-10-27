@@ -92,7 +92,7 @@ QtObject {
   readonly property string greeterDir: (Quickshell.env("AXIOM_GREETER_DIR") || "/var/lib/axiom-greeter") + "/"
   readonly property string greeterBundlePath: root.greeterDir + "config/"
   readonly property string greeterStatePath: root.greeterDir + "state/"
-  // The snapshot of the bundle its install took (greeter_install.sh): in
+  // The snapshot of the bundle its install took (axiom greeter-install): in
   // the install folder the session script names, else beside the code (a
   // packaged axiom's install folder isn't its code's)
   readonly property string greeterFallbackUrl: Quickshell.env("AXIOM_GREETER_FALLBACK") ? "file://" + Quickshell.env("AXIOM_GREETER_FALLBACK") : Qt.resolvedUrl("../fallback/")

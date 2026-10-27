@@ -197,3 +197,63 @@ func TestArgs(t *testing.T) {
 		}
 	}
 }
+
+func TestPointGreetd(t *testing.T) {
+	t.Parallel()
+	const cmd = `command = "` + Session + `"`
+	for _, tc := range []struct{ name, config, want string }{
+		{"replaces the command, keeps the rest",
+			"[terminal]\nvt = 1\n\n[default_session]\n# the greeter\ncommand = \"agreety --cmd /bin/sh\"\nuser = \"me\"\n",
+			"[terminal]\nvt = 1\n\n[default_session]\n# the greeter\n" + cmd + "\nuser = \"me\"\n"},
+		{"a section without a command gets one",
+			"[default_session]\nuser = \"me\"\n\n[terminal]\nvt = 1\n",
+			"[default_session]\nuser = \"me\"\n\n" + cmd + "\n[terminal]\nvt = 1\n"},
+		{"a section without a user gets greeter",
+			"[default_session]\ncommand = \"x\"\n",
+			"[default_session]\n" + cmd + "\nuser = \"greeter\"\n"},
+		{"no section",
+			"[terminal]\nvt = 1\n",
+			"[terminal]\nvt = 1\n\n[default_session]\n" + cmd + "\nuser = \"greeter\"\n"},
+		{"two commands keep one",
+			"[default_session]\ncommand = \"a\"\ncommand = \"b\"\nuser = \"me\"\n",
+			"[default_session]\n" + cmd + "\nuser = \"me\"\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := PointGreetd(tc.config, Session)
+			if got != tc.want {
+				t.Errorf("got\n%s\nwant\n%s", got, tc.want)
+			}
+			if GreetdValue(got, "command") != Session {
+				t.Error("doesn't read back")
+			}
+		})
+	}
+}
+
+func TestReleases(t *testing.T) {
+	t.Parallel()
+	for url, want := range map[string]string{
+		"https://github.com/axiom-shell/axiom.git": "https://github.com/axiom-shell/axiom/releases/download",
+		"https://github.com/axiom-shell/axiom/":    "https://github.com/axiom-shell/axiom/releases/download",
+		"https://github.com/axiom-shell":           "",
+		"https://github.com/a/b/c":                 "",
+		"https://gitlab.com/a/b":                   "",
+	} {
+		if got, _ := ReleaseBase(url); got != want {
+			t.Errorf("ReleaseBase(%q) = %q, want %q", url, got, want)
+		}
+	}
+	if asset, ok := ReleaseAsset("arm64"); !ok || asset != "axiom-linux-arm64" {
+		t.Errorf("arm64: %q", asset)
+	}
+	if _, ok := ReleaseAsset("riscv64"); ok {
+		t.Error("riscv64 has a release binary")
+	}
+	sums := "aaa  axiom-linux-amd64\nbbb *axiom-linux-arm64\nccc  axiom-linux-amd64.sig\n"
+	for name, want := range map[string]string{"axiom-linux-amd64": "aaa", "axiom-linux-arm64": "bbb", "axiom": ""} {
+		if got := SumFor(sums, name); got != want {
+			t.Errorf("SumFor(%q) = %q, want %q", name, got, want)
+		}
+	}
+}

@@ -57,6 +57,11 @@ type Command struct {
 
 // Main runs the command line and returns the process exit code.
 func Main(args []string, e *Env) int {
+	// Root's command (pkexec): before anything else, so nothing of the
+	// user's is opened as root
+	if len(args) > 0 && args[0] == greeterInstallName {
+		return greeterInstall(context.Background(), e, args[1:])
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), shutdownSignals(signal.Ignored)...)
 	defer stop()
 	return Run(ctx, Root(), args, e)

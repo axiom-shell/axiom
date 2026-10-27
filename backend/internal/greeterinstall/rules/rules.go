@@ -377,3 +377,88 @@ type Result struct {
 	Backup  string   `json:"backup"`
 	Error   string   `json:"error"`
 }
+
+// PointGreetd is greetd's config with default_session's command set to
+// command, the rest kept line for line: the section's other lines and
+// user stay, a section without a command gets one, and a config without
+// the section gets it, with user "greeter" unless one is set.
+func PointGreetd(config, command string) string {
+	line := `command = "` + command + `"`
+	userLine := ""
+	if GreetdValue(config, "user") == "" {
+		userLine = `user = "greeter"`
+	}
+	var out []string
+	inSection, seen, done := false, false, false
+	finish := func() {
+		if inSection && !done {
+			out, done = append(out, line), true
+		}
+		if inSection && userLine != "" {
+			out, userLine = append(out, userLine), ""
+		}
+	}
+	for text := range strings.Lines(config) {
+		text = strings.TrimSuffix(text, "\n")
+		if name, ok := sectionName(text); ok {
+			finish()
+			inSection = name == "default_session"
+			seen = seen || inSection
+			out = append(out, text)
+			continue
+		}
+		if _, ok := keyValue(text, "command"); inSection && ok {
+			if !done {
+				out = append(out, line)
+			}
+			done = true
+			continue
+		}
+		out = append(out, text)
+	}
+	finish()
+	if !seen {
+		if userLine == "" {
+			userLine = `user = "greeter"`
+		}
+		out = append(out, "", "[default_session]", line, userLine)
+	}
+	return strings.Join(out, "\n") + "\n"
+}
+
+// ReleaseBase is where a GitHub repository's release assets download from
+// (<base>/<tag>/<asset>); ok is false for a url that isn't one.
+func ReleaseBase(url string) (string, bool) {
+	path, ok := strings.CutPrefix(url, "https://github.com/")
+	if !ok {
+		return "", false
+	}
+	path = strings.TrimSuffix(strings.TrimSuffix(path, "/"), ".git")
+	owner, repo, ok := strings.Cut(path, "/")
+	if !ok || owner == "" || repo == "" || strings.Contains(repo, "/") {
+		return "", false
+	}
+	return "https://github.com/" + path + "/releases/download", true
+}
+
+// ReleaseAsset is the release's prebuilt binary for an architecture (Go's
+// GOARCH); ok is false for one releases don't build.
+func ReleaseAsset(goarch string) (string, bool) {
+	switch goarch {
+	case "amd64", "arm64":
+		return "axiom-linux-" + goarch, true
+	}
+	return "", false
+}
+
+// SumFor is a file's SHA-256 in a SHA256SUMS listing (`<hex>  <name>`, or
+// `<hex> *<name>`), "" when it isn't listed.
+func SumFor(sums, name string) string {
+	for line := range strings.Lines(sums) {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && (fields[1] == name || fields[1] == "*"+name) {
+			return fields[0]
+		}
+	}
+	return ""
+}

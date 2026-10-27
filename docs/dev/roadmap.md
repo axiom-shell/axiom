@@ -169,7 +169,6 @@ Resolves:
 Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
 
 Resolved by a stage:
-- [The greeter installer runs bash, awk and jq as root](issues.md#the-greeter-installer-runs-bash-awk-and-jq-as-root) (stage 4)
 - [The first greeter install runs the user's binary as root](issues.md#the-first-greeter-install-runs-the-users-binary-as-root) (stage 4)
 - [jq is a dependency only for the greeter installer](issues.md#jq-is-a-dependency-only-for-the-greeter-installer) (stage 4)
 - [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (stage 5)

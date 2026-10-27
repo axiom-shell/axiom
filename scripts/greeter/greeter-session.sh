@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Description: greetd's greeter command, as greeter_install.sh points
+# Description: greetd's greeter command, as axiom greeter-install points
 #              default_session at it (run as greetd's user, from the
 #              installed copy):
 #                greeter-session.sh         axiom's greeter in a compositor
@@ -27,7 +27,7 @@
 here=$(dirname "$(readlink -f "$0")")
 install=$(cd "$here/../.." && pwd)
 copy=$install
-# A packaged axiom (greeter_install.sh's package source): the code is the
+# A packaged axiom (axiom greeter-install's package source): the code is the
 # package's own, root's like this folder, which holds only these scripts
 # and the fallback snapshot
 if [ -f "$install/.greeter-source" ]; then

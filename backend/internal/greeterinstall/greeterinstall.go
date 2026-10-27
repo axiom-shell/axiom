@@ -16,6 +16,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -49,6 +50,15 @@ type Options struct {
 	Environ func() []string
 	// Pkexec runs a program as root (default "pkexec")
 	Pkexec string
+	// Getenv reads this process's variables (default os.Getenv): pkexec's
+	// PKEXEC_UID
+	Getenv func(string) string
+	// Releases replaces the GitHub releases' download url (tests)
+	Releases string
+	// Client downloads release binaries (default one of its own)
+	Client *http.Client
+	// Now dates the backups (default time.Now)
+	Now func() time.Time
 }
 
 // Installer sets the greeter up under one root.
@@ -64,6 +74,15 @@ func New(opts Options) *Installer {
 	}
 	if opts.Pkexec == "" {
 		opts.Pkexec = "pkexec"
+	}
+	if opts.Getenv == nil {
+		opts.Getenv = os.Getenv
+	}
+	if opts.Client == nil {
+		opts.Client = &http.Client{}
+	}
+	if opts.Now == nil {
+		opts.Now = time.Now
 	}
 	return &Installer{opts: opts, root: strings.TrimSuffix(opts.Root, "/")}
 }
@@ -234,7 +253,7 @@ func (g gitRunner) run(ctx context.Context, stdout io.Writer, args ...string) ([
 	if g.dir != "" {
 		full = append(full, "-C", g.dir)
 	}
-	return g.in.command(ctx, g.as, stdout, "git", append(full, args...)...)
+	return g.in.command(ctx, cmd{as: g.as, stdout: stdout}, "git", append(full, args...)...)
 }
 
 func (g gitRunner) output(ctx context.Context, args ...string) string {
@@ -294,28 +313,66 @@ type account struct {
 	home     string
 }
 
-// command runs a program as `as` (nil: this process), its output to stdout
-// when given, else returned. Its error carries the program's first line
-// of stderr.
-func (in *Installer) command(ctx context.Context, as *account, stdout io.Writer, name string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, name, args...)
-	cmd.Env = append(in.opts.Environ(), "GIT_TERMINAL_PROMPT=0", "LC_ALL=C")
-	if as != nil {
-		cmd.Env = append(cmd.Env, "HOME="+as.home)
-		cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: as.uid, Gid: as.gid, Groups: as.groups}}
+// cmd is how a command runs.
+type cmd struct {
+	as     *account  // as this user (nil: as this process)
+	dir    string    // in this folder ("" for this process's)
+	env    []string  // in this environment, PATH added (nil: Options.Environ's)
+	stdin  io.Reader // from this
+	stdout io.Writer // its output to this, else returned
+}
+
+// command runs a program. Its error carries the program's first line of
+// stderr.
+func (in *Installer) command(ctx context.Context, c cmd, name string, args ...string) ([]byte, error) {
+	env := in.opts.Environ()
+	path := lookupEnv(env, "PATH")
+	run := exec.CommandContext(ctx, lookPath(name, path), args...)
+	run.Dir, run.Stdin = c.dir, c.stdin
+	run.Env = append(env, "GIT_TERMINAL_PROMPT=0", "LC_ALL=C")
+	if c.env != nil {
+		run.Env = append([]string{"PATH=" + path}, c.env...)
+	}
+	if c.as != nil {
+		run.Env = append(run.Env, "HOME="+c.as.home)
+		run.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: c.as.uid, Gid: c.as.gid, Groups: c.as.groups}}
 	}
 	var out, errOut bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &out, &errOut
-	if stdout != nil {
-		cmd.Stdout = stdout
+	run.Stdout, run.Stderr = &out, &errOut
+	if c.stdout != nil {
+		run.Stdout = c.stdout
 	}
-	if err := cmd.Run(); err != nil {
+	if err := run.Run(); err != nil {
 		if line := firstLine(strings.TrimSpace(errOut.String())); line != "" {
 			return nil, errors.New(line)
 		}
 		return nil, err
 	}
 	return out.Bytes(), nil
+}
+
+// lookPath finds a program in the environment's PATH (its own, not this
+// process's: tests stand fakes in); as it is when it isn't there.
+func lookPath(name, path string) string {
+	if strings.Contains(name, "/") {
+		return name
+	}
+	for _, dir := range filepath.SplitList(path) {
+		if p := filepath.Join(dir, name); dir != "" && executable(p) && regular(p) {
+			return p
+		}
+	}
+	return name
+}
+
+// lookupEnv is a variable's value in an environment.
+func lookupEnv(env []string, key string) string {
+	for i := len(env) - 1; i >= 0; i-- {
+		if value, ok := strings.CutPrefix(env[i], key+"="); ok {
+			return value
+		}
+	}
+	return ""
 }
 
 // readText is a file's text ("" when it can't be read).

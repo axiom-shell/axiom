@@ -13,6 +13,34 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
 )
 
+// tools holds the fake programs the tests run (go, pkexec), written by
+// TestMain before any test forks: a program written while another test
+// forks can't be run ("text file busy").
+var tools string
+
+func TestMain(m *testing.M) {
+	dir, err := os.MkdirTemp("", "greeterinstall-tools-")
+	if err != nil {
+		panic(err)
+	}
+	tools = dir
+	// go, as a git copy's build runs it: `build -o OUT` writes "built";
+	// it fails while $GO_FAILS names a file that exists
+	write := func(name, script string) {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(script), 0o755); err != nil {
+			panic(err)
+		}
+	}
+	write("go", "#!/bin/sh\n[ -n \"$GO_FAILS\" ] && [ -e \"$GO_FAILS\" ] && exit 1\n[ \"$1\" = build ] || exit 0\n"+
+		"while [ $# -gt 0 ]; do [ \"$1\" = -o ] && { echo built >\"$2\"; exit 0; }; shift; done\nexit 1\n")
+	// pkexec, logging its arguments to $FAKE_LOG, running $FAKE_OUT and
+	// exiting $FAKE_CODE
+	write("pkexec", "#!/bin/sh\nprintf '%s\\n' \"$*\" >\"$FAKE_LOG\"\neval \"$FAKE_OUT\"\nexit \"$FAKE_CODE\"\n")
+	code := m.Run()
+	os.RemoveAll(dir)
+	os.Exit(code)
+}
+
 // fixture is a scratch root with greetd, agreety and sway, and a clone of
 // axiom (release v1.0) with an upstream it was cloned from: the current
 // user stands in for both the user and greetd's user.
@@ -39,7 +67,7 @@ func newFixture(t *testing.T) *fixture {
 	tmp := t.TempDir()
 	f := &fixture{t: t, tmp: tmp, root: filepath.Join(tmp, "root"), repo: filepath.Join(tmp, "repo"),
 		upstream: filepath.Join(tmp, "upstream.git"), user: me.Username}
-	f.env = append(os.Environ(), "HOME="+tmp, "XDG_CONFIG_HOME="+tmp, "GIT_CONFIG_NOSYSTEM=1",
+	f.env = append(os.Environ(), "PATH="+tools+":"+os.Getenv("PATH"), "GO_FAILS="+filepath.Join(tmp, "go-fails"), "HOME="+tmp, "XDG_CONFIG_HOME="+tmp, "GIT_CONFIG_NOSYSTEM=1",
 		"GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@t", "GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@t")
 	f.original = "[terminal]\nvt = 1\n\n[default_session]\n# the greeter\n" +
 		"command = \"agreety --cmd /bin/sh\"\nuser = \"" + f.user + "\"\n"
@@ -195,22 +223,9 @@ func TestStatusPackage(t *testing.T) {
 	}
 }
 
-// fakePkexec is a pkexec that logs its arguments to $FAKE_LOG, runs
-// $FAKE_OUT and exits $FAKE_CODE. One for every case, written before any
-// of them runs (a program written while another test forks is busy).
-func fakePkexec(t *testing.T) string {
-	t.Helper()
-	pkexec := filepath.Join(t.TempDir(), "pkexec")
-	script := "#!/bin/sh\nprintf '%s\\n' \"$*\" >\"$FAKE_LOG\"\neval \"$FAKE_OUT\"\nexit \"$FAKE_CODE\"\n"
-	if err := os.WriteFile(pkexec, []byte(script), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	return pkexec
-}
-
-// Not parallel: its fake pkexec is written while no other test runs
 func TestElevate(t *testing.T) {
-	pkexec := fakePkexec(t)
+	t.Parallel()
+	pkexec := filepath.Join(tools, "pkexec")
 	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: "git", Channel: "tags"}
 	first := []string{"/usr/bin/bash", "/r/scripts/greeter/greeter_install.sh"}
 	for _, tc := range []struct {

@@ -3,7 +3,6 @@ package daemon
 import (
 	"context"
 	"os/user"
-	"path/filepath"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall"
@@ -55,8 +54,7 @@ func (d *Daemon) greeterInstallMethods(reg *rpc.Registry) {
 		}
 		req := rules.Request{Action: p.Action, Repo: d.opts.Tree, User: me.Username, Staged: p.Staged,
 			Source: p.Source, Channel: p.Channel, Binary: d.installed}
-		// Before root's helper is there: the tree's own installer
-		first := []string{"/usr/bin/bash", filepath.Join(d.opts.Tree, "scripts/greeter/greeter_install.sh")}
-		return in.Elevate(ctx, req, first)
+		// Before root's helper is there: the binary the shell runs
+		return in.Elevate(ctx, req, []string{d.installed, "greeter-install"})
 	})
 }
