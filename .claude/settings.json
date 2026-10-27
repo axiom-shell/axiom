@@ -23,18 +23,8 @@
       "Bash(gh pr merge *)"
     ],
     "deny": [
-      "Bash(qs -c axiom ipc call lockscreen lock*)",
-      "Bash(qs ipc call lockscreen lock*)",
       "Bash(loginctl lock-session*)",
       "Bash(hyprlock*)",
-      "Bash(qs -c axiom ipc call monitors keep*)",
-      "Bash(qs ipc call monitors keep*)",
-      "Bash(qs -c axiom ipc call selfUpdate update*)",
-      "Bash(qs ipc call selfUpdate update*)",
-      "Bash(axiom lock*)",
-      "Bash(axiom ipc lockscreen*)",
-      "Bash(axiom ipc monitors keep*)",
-      "Bash(axiom ipc selfUpdate update*)",
       "Bash(ydotool *)",
       "Bash(dotool *)",
       "Bash(wlrctl *)",

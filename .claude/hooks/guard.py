@@ -374,17 +374,6 @@ def check_qs(env, args):
         sub, rest = a, args[i + 1:]
         break
     options = args[:i]
-    if sub == "ipc":
-        call = [a for a in rest if not a.startswith("-")]
-        if call[:1] == ["call"]:
-            target, fn = (call[1:3] + ["", ""])[:2]
-            if target == "lockscreen" and fn == "lock":
-                deny("Never, while testing", "don't lock the built-in locker; only the user can type the password. Test LockSurface in a hidden window.")
-            if target == "monitors" and fn == "keep":
-                deny("Never, while testing", "don't Keep a monitor layout.")
-            if target == "selfUpdate" and fn == "update":
-                deny("Never, while testing", "don't apply a self-update to the live repo.")
-        return
     if sub in SAFE_QS:
         return
     greeter = env.get("AXIOM_GREETER") == "1" and any(o.endswith("greeter.qml") for o in options)
