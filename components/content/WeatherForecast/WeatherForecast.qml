@@ -8,14 +8,13 @@ import qs.components.reusable
 import qs.components.content.base
 
 // Current conditions and a 5-day forecast: the Weather widget's popout,
-// from WeatherManager's source (the widget keeps it acquired).
+// from WeatherManager (the widget keeps it acquired).
 Panel {
   id: root
 
-  readonly property var source: WeatherManager.source
-  readonly property var current: root.source?.current ?? null
-  readonly property var condition: root.source?.condition ?? null
-  readonly property var daily: root.source?.weather?.daily ?? null
+  readonly property var current: WeatherManager.current
+  readonly property var condition: WeatherManager.condition
+  readonly property var daily: WeatherManager.weather?.daily ?? null
 
   spacing: Widget.padding
 
@@ -23,7 +22,7 @@ Panel {
 
   StyledText {
     visible: text !== ""
-    text: root.source?.place?.name ?? ""
+    text: WeatherManager.place?.name ?? ""
     font.bold: true
     textColor: Theme.accent
   }
@@ -45,12 +44,12 @@ Panel {
       spacing: 2
 
       StyledText {
-        text: root.current ? `${Math.round(root.current.temperature_2m)}${root.source.unitSymbol}  ${root.condition?.label ?? ""}` : ""
+        text: root.current ? `${Math.round(root.current.temperature_2m)}${WeatherManager.unitSymbol}  ${root.condition?.label ?? ""}` : ""
         textSize: Appearance.fontSize * 1.3
         font.bold: true
       }
       StyledText {
-        text: root.source?.details ?? ""
+        text: WeatherManager.details
         textColor: Theme.foregroundAlt
         textSize: Appearance.fontSizeBy(-2)
       }
@@ -77,13 +76,13 @@ Panel {
 
         StyledText {
           Layout.alignment: Qt.AlignHCenter
-          text: root.source.dayLabel(day.index)
+          text: WeatherManager.dayLabel(day.index)
           textColor: Theme.foregroundAlt
           textSize: Appearance.fontSizeBy(-2)
         }
         StyledIcon {
           Layout.alignment: Qt.AlignHCenter
-          text: root.source.conditionFor(root.daily.weather_code[day.index], 1).icon
+          text: WeatherManager.conditionFor(root.daily.weather_code[day.index], 1).icon
           textSize: Appearance.fontSize * 1.5
         }
         StyledText {

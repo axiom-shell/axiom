@@ -11,6 +11,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
 // shortDir is a temp folder short enough for a socket's path.
@@ -53,7 +54,7 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 				t.Fatal(err)
 			}
 			o := GreeterOptions{SchemaHash: "abc", Getenv: func(string) string { return "" }}
-			reg := greeterRegistry(o, os.Environ(), func(int) bool { return c.shell }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}))
+			reg := greeterRegistry(o, os.Environ(), func(int) bool { return c.shell }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}))
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
 			go (&rpc.Server{Registry: reg}).Serve(ctx, ln)
@@ -96,6 +97,17 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 	}
 }
 
+// The greeter's Weather module subscribes to the weather topic.
+func TestGreeterServesWeather(t *testing.T) {
+	t.Parallel()
+	reg := greeterRegistry(GreeterOptions{}, nil, func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}))
+	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh"} {
+		if _, _, ok := reg.Types(m); !ok {
+			t.Errorf("no %s", m)
+		}
+	}
+}
+
 // The greeter's quickshell watches commands too (a Button's label, a
 // CommandOutput module), their outputs pushed to it.
 func TestGreeterWatchesCommands(t *testing.T) {
@@ -109,7 +121,7 @@ func TestGreeterWatchesCommands(t *testing.T) {
 	t.Cleanup(cancel)
 	watches := command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Context: ctx})
 	o := GreeterOptions{SchemaHash: "abc", Getenv: func(string) string { return "" }}
-	go (&rpc.Server{Registry: greeterRegistry(o, os.Environ(), func(int) bool { return true }, watches)}).Serve(ctx, ln)
+	go (&rpc.Server{Registry: greeterRegistry(o, os.Environ(), func(int) bool { return true }, watches, topics.New(topics.Options{Context: ctx}))}).Serve(ctx, ln)
 	outputs := make(chan command.Outputs, 4)
 	client := rpc.NewRegistry()
 	rpc.Handle(client, pushExecOutputs.Method, func(_ context.Context, _ *rpc.Conn, p command.Outputs) (struct{}, error) {

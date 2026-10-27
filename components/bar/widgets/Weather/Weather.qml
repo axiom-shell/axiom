@@ -10,12 +10,11 @@ import qs.components.bar.widgets.base
 BarIconWidget {
   id: root
 
-  readonly property var source: WeatherManager.source
   Component.onCompleted: WeatherManager.acquire(root)
   Component.onDestruction: WeatherManager.release(root)
 
-  readonly property var current: root.source.current
-  readonly property var condition: root.source.condition
+  readonly property var current: WeatherManager.current
+  readonly property var condition: WeatherManager.condition
 
   icon: condition?.icon ?? "cloud"
   text: current ? `${Math.round(current.temperature_2m)}°` + (properties.showCondition ? ` ${condition.label}` : "") : "…"
@@ -23,6 +22,6 @@ BarIconWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "WeatherForecast"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && root.source.weather !== null
+    active: EdgeMenusConfig.opensOwnPopout(root.properties) && WeatherManager.weather !== null
   }
 }

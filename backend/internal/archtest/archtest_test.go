@@ -99,6 +99,7 @@ var tiers = map[string]int{
 	"internal/unixmsg":              tierEdge,
 	"internal/updates":              tierEdge,
 	"internal/wayland/":             tierEdge,
+	"internal/weather":              tierEdge,
 	"internal/xdg":                  tierEdge,
 	"internal/daemon":               tierDaemon,
 	"internal/cli":                  tierCLI,
