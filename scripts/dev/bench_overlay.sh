@@ -7,28 +7,69 @@
 # N built in X ms"; a streamed grid; and anything BuildQueueManager built
 # that alone took over a frame), then closes the overlay.
 #
-# Usage: scripts/dev/bench_overlay.sh [-w SECONDS] [PAGE...]
+# Usage: scripts/dev/bench_overlay.sh [-w SECONDS] [-n CYCLES] [-p PID] [--mem] [PAGE...]
 #   PAGE      a view type or a page's name, as `ipc call overlay page` takes
 #             (default: just open and close)
 #   -w        seconds to wait after each step (default 1.5)
+#   -n        run the open, pages, close cycle this many times (default 1)
+#   -p        the qs to drive and read (a nested one: scripts/dev/nested.sh);
+#             default the live shell, through axiom ipc
+#   --mem     the memory reading (scripts/dev/mem.sh) before the first cycle
+#             and after each; needs -p
 
 set -euo pipefail
 
 wait_s=1.5
-if [[ "${1:-}" == "-w" ]]; then
-  wait_s="$2"
-  shift 2
+cycles=1
+pid=''
+mem=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -w)
+    wait_s="$2"
+    shift
+    ;;
+  -n)
+    cycles="$2"
+    shift
+    ;;
+  -p)
+    pid="$2"
+    shift
+    ;;
+  --mem) mem=1 ;;
+  *) break ;;
+  esac
+  shift
+done
+if [[ $mem -eq 1 && -z "$pid" ]]; then
+  echo "--mem needs -p PID (measure a nested shell: docs/dev/core/memory.md)" >&2
+  exit 2
 fi
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
 export LC_ALL=C.UTF-8
 
-built() { "$repo/scripts/log.sh" --debug -g 'Overlay (page [0-9]+ built|modules streamed) in|Built .* in [0-9]+ ms' | sed 's/^.*qml: //'; }
+pattern='Overlay (page [0-9]+ built|modules streamed) in|Built .* in [0-9]+ ms'
+built() {
+  if [[ -n "$pid" ]]; then
+    qs log --pid "$pid" 2>/dev/null | grep -E --color=never "$pattern" | sed 's/^.*qml: //' || true
+  else
+    "$repo/scripts/log.sh" --debug -g "$pattern" | sed 's/^.*qml: //'
+  fi
+}
+overlay() {
+  if [[ -n "$pid" ]]; then
+    qs ipc --pid "$pid" call overlay "$@" >/dev/null 2>&1
+  else
+    axiom ipc overlay "$@" 2>/dev/null
+  fi
+}
 
 step() {
   local before after start end
   before=$(built | wc -l)
   start=$(date +%s%N)
-  axiom ipc overlay "$@" 2>/dev/null
+  overlay "$@"
   end=$(date +%s%N)
   sleep "$wait_s"
   after=$(built)
@@ -36,8 +77,12 @@ step() {
   tail -n +"$((before + 1))" <<<"$after" | sed 's/^/    /'
 }
 
-step open
-for page in "$@"; do
-  step page "$page"
+[[ $mem -eq 1 ]] && printf '%-14s%s\n' memory "$("$repo/scripts/dev/mem.sh" -H "$pid" | head -1)" && printf '%-14s%s\n' before "$("$repo/scripts/dev/mem.sh" "$pid")"
+for ((cycle = 1; cycle <= cycles; cycle++)); do
+  step open
+  for page in "$@"; do
+    step page "$page"
+  done
+  step close
+  [[ $mem -eq 1 ]] && printf '%-14s%s\n' "cycle $cycle" "$("$repo/scripts/dev/mem.sh" "$pid")"
 done
-step close

@@ -56,6 +56,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [i18n](core/i18n.md): translation mechanics, language files, `check_i18n.py`.
 - [shared-ui-pieces](core/shared-ui-pieces.md): index of reusable widgets and helpers. Check it before drawing anything.
 - [streamed-building](core/streamed-building.md): how pages show at once and fill in over frames (`BuildQueueManager`, `StreamedLoader`), what made them slow, and measuring it (`bench_overlay.sh`).
+- [memory](core/memory.md): reading the shell's memory (`mem.sh`, `bench_overlay.sh --mem`) in a nested session, and the baseline Phase 12 is judged against.
 - [qml-pitfalls](core/qml-pitfalls.md): traps of QML, its JS engine and URL-loaded files that have each bitten. Read it before writing QML.
 
 ### bar/
