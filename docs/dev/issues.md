@@ -32,6 +32,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while reviewing the file.write / file.watch move (backend stage 6)
 
+### Calls in flight are lost across a daemon re-exec, one service at a time
+- **Where:** `services/core/BackendManager.qml` (`_failQueued`, `call`), `services/core/FileManager.qml` (`write`), `services/core/ThemeManager.qml` (`themeIntegrations`), `services/system/MediaManager.qml` (the album art fetch)
+- **What:** Three entries share one cause: a re-exec fails every call in flight with `unavailable` (`the connection to axiom closed`), and each caller then warns or drops its work ("A file write or change can be missed across a daemon re-exec", "ThemeManager warns when the daemon's re-exec fails its integrations", "MediaManager warns when the daemon's re-exec fails its album art fetch"). Each new funnel adds callers, so fixing them one service at a time keeps adding entries. One fix in `BackendManager` would close all three: a call marked safe to repeat (an option on `call`) is held and sent again after the next hello rather than failed, and watchers are called once after a re-hello; the caller decides what's safe (a whole-file `file.write`, `theme.integrate`, `media.art` are; a `share.import` isn't). Not the daemon's own commands ("The daemon's own commands are left zombies across a re-exec") or the updates check's warning, which are Go-side.
+- **Size:** small
+- **Found:** 2026-10-28, while reviewing row 11's PRs (#155 to #158)
+
+### AGENTS.md's funnel rule doesn't name FileManager.write and watch
+- **Where:** `AGENTS.md` (Services › Quickshell.Io's side effects), `services/core/FileManager.qml` (`write`, `watch`)
+- **What:** The rule lists the funnels new code uses (`CommandManager.run` / `runDetached`, `FileManager.read`, `StateManager`, `IpcTarget`) but still says to ask the daemon for "a file to watch or write", though #157 added `FileManager.write` (atomic, through `file.write`) and `FileManager.watch` (through `file.watch`) for exactly that. An agent following it could call `BackendManager` directly instead of the funnel. The line should name both, as it names `FileManager.read`.
+- **Size:** trivial
+- **Found:** 2026-10-28, while reviewing row 11's PRs (#155 to #158)
+
 ### Restoring over a config.json that doesn't load resets the other takeovers
 - **Where:** `backend/internal/store/store.go` (`Replace`, `Restore`, `takeoverBase`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
 - **What:** While config.json doesn't load at the start, the store knows no takeover values (`takeoversUnknown`), so `Replace` and `Restore` keep `takeoverBase()`: the defaults. Restoring a saved config over that file therefore writes the defaults' `Idle.enabled`, `Polkit.enabled`, `Greeter.enabled` and `Lockscreen.mode`, switching off or changing whatever the user had taken over. Only `Compositor.mode` is repaired afterwards, by the compositor manager keeping the mode it applied and saving it back (`saveKept`, #108). Deciding the unknown takeovers once in the store (take the restored file's own values, or refuse the restore while none are known) would cover all five settings, and would let the manager's separate hold go ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)). Like every other problem that starts from a config.json that doesn't load, it's rare, and it's fixed by backend stage 7, with the other config problems.
