@@ -1,5 +1,5 @@
 {
-  "_comment": "Files allowed to run processes, read or write files, open sockets or take IPC directly through Quickshell.Io (Process, FileView, Socket, IpcHandler, Quickshell.execDetached). This list only shrinks: these side effects are moving to the axiom daemon (the stages: docs/dev/backend/roadmap.md). New code goes through CommandManager, FileManager, StateManager, IpcTarget or the daemon. scripts/check_structure.py fails on a use not listed here and on an entry no longer used.",
+  "_comment": "Files allowed to run processes, read or write files or open sockets directly through Quickshell.Io (Process, FileView, Socket, Quickshell.execDetached). This list only shrinks: these side effects are moving to the axiom daemon (the stages: docs/dev/backend/roadmap.md). New code goes through CommandManager, FileManager, StateManager or the daemon. scripts/check_structure.py fails on a use not listed here and on an entry no longer used.",
   "files": {
     "config/I18n.qml": [
       "FileView"
@@ -9,9 +9,6 @@
     ],
     "services/core/FileManager.qml": [
       "FileView"
-    ],
-    "services/core/IpcTarget.qml": [
-      "IpcHandler"
     ],
     "services/core/ThemeManager.qml": [
       "FileView"

@@ -12,7 +12,7 @@ import (
 
 // Every named command calls a function the shell has, with as many
 // arguments as it takes (docs/dev/generated/ipc.md is generated from the
-// IpcHandlers).
+// IpcTargets).
 func TestNamedCommandsMatchTheShellsTargets(t *testing.T) {
 	t.Parallel()
 	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "docs", "dev", "generated", "ipc.md"))

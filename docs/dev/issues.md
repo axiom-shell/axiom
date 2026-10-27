@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A word passed to an int IPC parameter is 0
+- **Where:** `services/core/BackendManager.qml` (`_callTarget`), `backend/internal/ipcroute/ipcroute.go` (`Router.Call`)
+- **What:** Since `IpcTarget` stopped being an `IpcHandler`, `axiom ipc` sends the command line's text and the target's typed parameters convert it: JavaScript can't read a function's parameter types, so nothing refuses a word where a number belongs. `axiom ipc brightness set loud` sets 0 % (QML turns `"loud"` into 0 for an `int`), where qs's typed call refused it with `bad_request`. Only `int` and `string` parameters exist today (`brightness` `set` / `dim` / `dimBy`, `workspaces` `nth`); a `bool` parameter would take `"false"` as true. A fix: the functions check their own input, or a parameter-type table generated from the source as `ipc.md` is.
+- **Size:** small
+- **Found:** 2026-10-28, while retiring the `qs ipc` fallback (backend stage 6)
+
 ### A fast chat reply can drop the shell's connection
 - **Where:** `backend/internal/rpc/rpc.go` (`Conn.enqueue`, `Limits.QueueSize`), `backend/internal/daemon/chat.go` (`chat.send`'s `c.Notify`), `backend/internal/chat/send.go` (`Send`)
 - **What:** Each piece of a reply is its own `chat.delta` notification (`Notify`, not latest-wins), and `enqueue` never waits: when the connection's 4096-message queue is full it logs `dropping a peer that stopped reading` and closes the connection, every topic and call in flight with it. So if the shell stops reading (its event loop busy) while a fast provider streams, once the socket buffer and 4096 deltas fill (seconds at the fastest servers' token rates, a delta per token or two), the shell's whole connection goes. Before stage 5 curl's pipe simply blocked. A fix would coalesce the deltas `Send` emits (text gathered while a push waits) or let `chat.send` wait for room instead of dropping the peer.
@@ -80,8 +86,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-27, while reviewing what the shell still starts as its own children (row 9)
 
 ### The daemon's own commands are left zombies across a re-exec
-- **Where:** `backend/internal/updates/updates.go`, `backend/internal/ipcroute/ipcroute.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`
-- **What:** The commands the daemon runs for itself (`checkupdates`, `qs ipc`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Later the same day the same daemon (about 9 h of dev-mode re-execs) had 104: 61 `qs`, 18 `checkupdates`, 8 `bash`, 7 `bat`, 5 `ddcutil`, 3 `tailscale`, mostly in groups started in the same second, the commands a fresh image runs at once (`ipcroute`'s `qs ipc --pid … show` and `call`, the startup checks). The `qs` ones are those `qs ipc` runs, not shells: the shell a re-exec adopts is waited on and reaped (`supervise.Supervisor.adopt`), and only ever one runs. Running them through `command.Run` with the daemon's `Children` would cover them.
+- **Where:** `backend/internal/updates/updates.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`
+- **What:** The commands the daemon runs for itself (`checkupdates`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Later the same day the same daemon (about 9 h of dev-mode re-execs) had 104: 61 `qs`, 18 `checkupdates`, 8 `bash`, 7 `bat`, 5 `ddcutil`, 3 `tailscale`, mostly in groups started in the same second, the commands a fresh image runs at once (`ipcroute`'s `qs ipc --pid … show` and `call`, gone since, and the startup checks). The `qs` ones were those `qs ipc` ran, not shells: the shell a re-exec adopts is waited on and reaped (`supervise.Supervisor.adopt`), and only ever one runs. Running them through `command.Run` with the daemon's `Children` would cover them.
 - **Size:** small
 - **Found:** 2026-10-27, while handing exec's commands across a re-exec
 
@@ -240,12 +246,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** One `scripts/check_go.sh` run failed with `dev_test.go:55: err go generate: fork/exec …/go: text file busy`, then passed on the next run with nothing changed in `daemon`. `fakeGo` writes an executable script while parallel subtests fork: a fork made while the file is still open for writing carries that descriptor, and exec of the script fails with ETXTBSY until that child execs. A possible fix: write the fake to a temp name and rename it into place, or retry the exec on ETXTBSY in the test helper.
 - **Size:** trivial
 - **Found:** 2026-10-26, while renaming the backend's `system` and `lock` packages
-
-### An ipcroute test fails with text file busy
-- **Where:** `backend/internal/ipcroute/ipcroute_test.go` (`TestExecErrorKinds`)
-- **What:** CI on PR #149 (no Go change) failed with `ipcroute_test.go:68: kind not_found (t.f: fork/exec …/qs: text file busy), want unavailable`: the same ETXTBSY race as the dev-mode build test above (a fake executable written while parallel tests fork), in another package. Fixed together: a shared test helper that writes the fake under a temp name and renames it into place.
-- **Size:** trivial
-- **Found:** 2026-10-27, while finishing the binaries plan (#149)
 
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
@@ -431,7 +431,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Nested niri freezes while its window is hidden
 - **Where:** `scripts/dev/nested.sh` (niri)
-- **What:** niri's nested (winit) backend stops its event loop while its window isn't shown on the host (another workspace): its IPC times out and the axiom inside it hangs waiting on it, so a `qs ipc` call never returns. Keep the nested window visible while testing; it carries on once shown again.
+- **What:** niri's nested (winit) backend stops its event loop while its window isn't shown on the host (another workspace): its IPC times out and the axiom inside it hangs waiting on it, so an `axiom ipc` call never returns. Keep the nested window visible while testing; it carries on once shown again.
 - **Size:** trivial
 - **Found:** 2026-10-17, while testing the niri backend
 

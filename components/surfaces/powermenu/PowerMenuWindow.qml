@@ -107,7 +107,6 @@ PanelWindow {
     function toggle() {
       root.toggle();
     }
-    // Not "show": `qs ipc call <target> show` is taken by the CLI
     function open() {
       root.shown = true;
     }

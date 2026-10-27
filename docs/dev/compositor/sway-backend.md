@@ -14,7 +14,7 @@
 - `--copy-config` starts from your own config.
 - `scripts/dev/nested.sh niri` does the same for niri ([niri backend](niri-backend.md)), `scripts/dev/nested.sh hyprland` for Hyprland (a second Hyprland in a window; commands to it take its signature: `hyprctl -i <n>` or `HYPRLAND_INSTANCE_SIGNATURE=…`, `hyprctl instances` lists them; not under sway, whose `xdg_wm_base` 5 is too old for Hyprland's Wayland backend, so run it from Hyprland or niri). `--managed` runs any of them on the scratch config folder's own config, the one managed mode takes over (axiom finds every compositor's config folder through `XDG_CONFIG_HOME`). `AXIOM_COMPOSITOR=none` in the nested launch runs axiom on no backend at all (the bar, the launcher and notifications; empty workspaces): the "unknown compositor" case to keep working.
 - Logs: the newest `/run/user/$UID/quickshell/by-pid/<pid>/log.log` (`pgrep -af "qs -p"`: the one without `-d`).
-- IPC: `qs ipc --pid <pid> call …`.
+- IPC: `axiom ipc …` (a nested one: its own binary with `--socket`, `scripts/dev/nested.sh`).
 - Closing the window, or killing that compositor, ends both.
 
 ### X11 apps

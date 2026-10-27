@@ -160,8 +160,8 @@ QtObject {
   // screen has its own and only the enabled one answers
   property var _targets: []
 
-  // IpcTarget's registration: the names go to axiom (which reads their
-  // functions from `qs ipc show`), calls come back as ipc.call
+  // IpcTarget's registration: each enabled target's functions (name and
+  // argument count) go to axiom, calls come back as ipc.call
   function addTarget(target) {
     root._targets.push(target);
     targetsChanged();
@@ -183,13 +183,33 @@ QtObject {
 
   function _register() {
     root._registerQueued = false;
-    const names = root._targets.filter(t => t.enabled).map(t => t.target);
+    const seen = {};
+    const targets = [];
+    for (const target of root._targets) {
+      if (!target.enabled || seen[target.target])
+        continue;
+      seen[target.target] = true;
+      targets.push({
+        "name": target.target,
+        "functions": root._functions(target).map(name => ({
+              "name": name,
+              "args": target[name].length
+            }))
+      });
+    }
     root.call("ipc.register", {
-      "targets": names.filter((n, i) => names.indexOf(n) === i).map(name => ({
-            "name": name,
-            "enabled": true
-          }))
+      "targets": targets
     }, null);
+  }
+
+  // A target's own functions: not its properties' change signals nor
+  // its private (`_`) helpers
+  function _functions(target) {
+    const names = [];
+    for (const key in target)
+      if (typeof target[key] === "function" && !key.startsWith("_") && !key.endsWith("Changed"))
+        names.push(key);
+    return names;
   }
 
   function _callTarget(params) {
@@ -200,12 +220,12 @@ QtObject {
         "message": "no enabled target " + params.target
       };
     const fn = target[params.function];
-    if (typeof fn !== "function")
+    if (root._functions(target).indexOf(params.function) < 0)
       throw {
         "kind": "not_found",
         "message": params.target + " has no function " + params.function
       };
-    const result = fn.apply(target, params.args ?? []);
+    const result = fn.apply(target, params.args);
     return result === undefined ? null : result;
   }
   property int _retry: 0

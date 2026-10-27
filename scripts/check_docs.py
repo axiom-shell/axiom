@@ -63,7 +63,7 @@ def singletons():
             _, members = parse_qml(path)
             text = path.read_text()
             names = {m["name"] for m in members}
-            # Members declared deeper (an IpcHandler's functions, inline
+            # Members declared deeper (an IpcTarget's functions, inline
             # objects' ids) still count as the file's
             names |= set(re.findall(r"\b(?:function|property\s+\S+|signal)\s+(\w+)", text))
             names |= set(re.findall(r"\bid:\s*(\w+)", text))

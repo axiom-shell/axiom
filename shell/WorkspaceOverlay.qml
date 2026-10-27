@@ -51,7 +51,6 @@ Scope {
       root.toggle();
     }
 
-    // Not "show": `qs ipc call <target> show` is taken by the CLI
     function open(): void {
       root.open();
     }

@@ -21,7 +21,7 @@
 - **Footprint:** the rects it covers, in screen px, with fillets and backfill included (`methods/SurfaceOutline.footprint`). It is offset by where its window is:
   - `LayerOrigin.placed`: its origin, or until it has one, an estimate on its edge.
   - A bar popout uses its bar's origin (`BarPanel.screenPlaced`).
-- **Location report:** `entries`, visible with `qs ipc call popouts list`.
+- **Location report:** `entries`, visible with `axiom ipc popouts list`.
 
 ### Ranks
 The rules are pure: `methods/PopoutGeometry`, tested by `tests/tst_PopoutGeometry.qml`. Ranks, lowest first:

@@ -35,12 +35,11 @@ class Bash(unittest.TestCase):
             self.assertFalse(denied(command), command)
 
     def test_ordinary_commands_pass(self):
-        self.allows("scripts/dev/verify.sh", "git status && git diff HEAD", "qs -c axiom ipc call overlay toggle",
+        self.allows("scripts/dev/verify.sh", "git status && git diff HEAD", "axiom ipc overlay toggle",
                     "scripts/log.sh -g lock", "grep -rn 'lockscreen lock' docs", "echo 'qs kill'", "qs log -f")
 
     def test_locking(self):
-        self.blocks("qs -c axiom ipc call lockscreen lock", "qs ipc call lockscreen lock", "loginctl lock-session",
-                    "sleep 1 && hyprlock", "bash -c 'qs -c axiom ipc call lockscreen lock'")
+        self.blocks("loginctl lock-session", "sleep 1 && hyprlock", "bash -c 'axiom ipc lockscreen lock'")
 
     def test_cursor(self):
         self.blocks("ydotool mousemove 10 10", "hyprctl dispatch movecursor 10 10", "wlrctl pointer move 5 5",
@@ -50,10 +49,6 @@ class Bash(unittest.TestCase):
         self.blocks("qs kill", "qs -c axiom kill", "qs -c axiom", "qs -c axiom -d", "quickshell -p shell.qml &")
         self.allows('AXIOM_GREETER=1 AXIOM_GREETER_WINDOWED=1 AXIOM_GREETER_DIR=/tmp/g qs -p "$PWD/greeter.qml"',
                     'qs kill -p "$PWD/greeter.qml"', "qs kill -i abc123", "qs list")
-
-    def test_ipc_takeovers(self):
-        self.blocks("qs -c axiom ipc call monitors keep", "qs -c axiom ipc call selfUpdate update")
-        self.allows("qs -c axiom ipc call monitors revert", "qs -c axiom ipc call onboarding goTo 2")
 
     def test_github_issues(self):
         self.blocks("gh issue create --title x --body y", "gh api repos/a/b/issues -f title=x",
@@ -120,8 +115,7 @@ class Bash(unittest.TestCase):
 
     def test_self_update(self):
         call = """'{"jsonrpc":"2.0","id":1,"method":"selfupdate.apply","params":{"channel":"tags","target":"v1.2"}}'"""
-        self.blocks(f"python3 -c {call}", f"printf %s {call}", "qs ipc call selfUpdate update",
-                    "axiom ipc selfUpdate update")
+        self.blocks(f"python3 -c {call}", f"printf %s {call}", "axiom ipc selfUpdate update")
         self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", "python3 -c 'selfupdate.check'",
                     "grep -rn selfupdate.apply backend", "go test ./internal/selfupdate")
 

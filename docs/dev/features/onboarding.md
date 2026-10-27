@@ -77,5 +77,5 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - Settings → General's `OnboardingCard`.
 
 ### Testing
-- Use `ipc call onboarding goTo <n>` plus grim screenshots.
+- Use `axiom ipc onboarding goTo <n>` plus grim screenshots.
 - Never delete the real config.json to test it. (Rule: AGENTS.md › Never, while testing.)

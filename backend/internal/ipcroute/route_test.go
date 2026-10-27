@@ -4,10 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net"
-	"os"
-	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
@@ -32,46 +29,34 @@ func shellConn(t *testing.T) *rpc.Conn {
 	return daemon
 }
 
-// fakeQS is a qs that prints its arguments, for the exec fallback
-func fakeQS(t *testing.T) string {
-	t.Helper()
-	qs := filepath.Join(t.TempDir(), "qs")
-	if err := os.WriteFile(qs, []byte("#!/bin/sh\necho \"exec $*\"\n"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	return qs
+var targets = []Target{
+	{Name: "osd", Functions: []Function{{Name: "show", Args: 2}, {Name: "fails"}}},
 }
 
-var sigs = map[string][]Function{
-	"osd":   {{Name: "show", Args: []Arg{{"value", "int"}, {"muted", "bool"}}}, {Name: "fails"}},
-	"other": {{Name: "f"}},
-}
-
-// A registered target is called over the shell's connection, its text
-// arguments typed by the declaration; anything else goes through
-// `qs ipc --pid <shell> call`, as does everything once the connection is
-// forgotten.
+// A registered target is called over the shell's connection with the
+// command line's text; anything else is refused, and everything once the
+// connection is forgotten.
 func TestCallRoutes(t *testing.T) {
 	t.Parallel()
 	conn := shellConn(t)
-	r := New(Options{QS: fakeQS(t), ShellPID: func() int { return 42 }, Timeout: 5 * time.Second})
-	if !r.RegisterNames(conn, r.Begin(), []string{"osd", "unknown"}, sigs) {
+	r := New()
+	ctx := context.Background()
+	if _, err := r.Call(ctx, CallParams{Target: "osd", Function: "show"}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("before a registration: %v, want Unavailable", err)
+	}
+	if !r.Register(conn, targets) {
 		t.Fatal("a registration was dropped")
 	}
-	if got := r.Targets(); len(got) != 1 || got[0].Name != "osd" {
-		t.Errorf("targets %+v, want only osd (unknown has no signatures)", got)
-	}
-	ctx := context.Background()
 	for _, c := range []struct {
 		p    CallParams
 		want string
 		kind axerr.Kind
 	}{
-		{CallParams{Target: "osd", Function: "show", Args: []string{"5", "true"}}, `osd.show[5,true]`, ""},
-		{CallParams{Target: "osd", Function: "show", Args: []string{"loud", "true"}}, "", axerr.BadRequest},
-		{CallParams{Target: "osd", Function: "hide"}, "", axerr.NotFound},
+		{CallParams{Target: "osd", Function: "show", Args: []string{"5", "a b"}}, `osd.show["5","a b"]`, ""},
 		{CallParams{Target: "osd", Function: "fails"}, "", axerr.NotFound},
-		{CallParams{Target: "other", Function: "f", Args: []string{"a b"}}, "exec ipc --pid 42 call other f a b", ""},
+		{CallParams{Target: "osd", Function: "show", Args: []string{"5"}}, "", axerr.BadRequest},
+		{CallParams{Target: "osd", Function: "hide"}, "", axerr.NotFound},
+		{CallParams{Target: "other", Function: "f"}, "", axerr.NotFound},
 		{CallParams{Target: "osd"}, "", axerr.BadRequest},
 	} {
 		got, err := r.Call(ctx, c.p)
@@ -85,60 +70,32 @@ func TestCallRoutes(t *testing.T) {
 	}
 
 	r.Forget(conn)
-	if got, err := r.Call(ctx, CallParams{Target: "osd", Function: "show", Args: []string{"5", "true"}}); err != nil || got != "exec ipc --pid 42 call osd show 5 true" {
-		t.Errorf("after Forget: %q, %v, want the exec fallback", got, err)
+	if _, err := r.Call(ctx, CallParams{Target: "osd", Function: "fails"}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("after Forget: %v, want Unavailable", err)
 	}
 }
 
-// A disabled target says so rather than calling another screen's; with
-// no shell running, the fallback is Unavailable
-func TestCallWithoutAnAnsweringShell(t *testing.T) {
+// A later registration replaces the last, none lands from a connection
+// that closed, and only the shell's connection forgets its targets.
+func TestRegistrations(t *testing.T) {
 	t.Parallel()
-	conn := shellConn(t)
-	r := New(Options{QS: fakeQS(t), ShellPID: func() int { return 0 }})
-	r.RegisterNames(conn, r.Begin(), []string{"osd"}, sigs)
-	r.mu.Lock()
-	osd := r.targets["osd"]
-	osd.Enabled = false
-	r.targets["osd"] = osd
-	r.mu.Unlock()
-	if _, err := r.Call(context.Background(), CallParams{Target: "osd", Function: "show", Args: []string{"1", "false"}}); axerr.KindOf(err) != axerr.Unavailable {
-		t.Errorf("a disabled target: %v, want Unavailable", err)
-	}
-	if _, err := r.Call(context.Background(), CallParams{Target: "other", Function: "f"}); axerr.KindOf(err) != axerr.Unavailable {
-		t.Errorf("no shell: %v, want Unavailable", err)
-	}
-	if _, err := r.Signatures(context.Background()); axerr.KindOf(err) != axerr.Unavailable {
-		t.Errorf("signatures with no shell: %v, want Unavailable", err)
-	}
-}
-
-// Registrations race while their signatures are read: only the latest
-// begun lands, and none from a connection that closed meanwhile.
-func TestRegistrationRace(t *testing.T) {
-	t.Parallel()
-	r := New(Options{})
+	r := New()
 	first, second := shellConn(t), shellConn(t)
-	older, newer := r.Begin(), r.Begin()
-	if !r.RegisterNames(second, newer, []string{"other"}, sigs) {
+	r.Register(first, targets)
+	if !r.Register(second, []Target{{Name: "other"}}) {
 		t.Fatal("the latest registration was dropped")
-	}
-	if r.RegisterNames(first, older, []string{"osd"}, sigs) {
-		t.Error("an older registration finishing late replaced the latest")
 	}
 	if got := r.Targets(); len(got) != 1 || got[0].Name != "other" {
 		t.Errorf("targets %+v, want the latest's", got)
 	}
-
-	second.Close()
-	<-second.Done()
-	if r.RegisterNames(second, r.Begin(), []string{"osd"}, sigs) {
-		t.Error("a closed connection registered")
-	}
-	// Forgetting a connection that isn't the shell's changes nothing
 	r.Forget(first)
 	if len(r.Targets()) != 1 {
 		t.Error("forgetting another connection dropped the shell's targets")
+	}
+	second.Close()
+	<-second.Done()
+	if r.Register(second, targets) {
+		t.Error("a closed connection registered")
 	}
 	r.Forget(second)
 	if len(r.Targets()) != 0 {

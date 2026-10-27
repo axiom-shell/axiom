@@ -248,7 +248,7 @@ func Run(ctx context.Context, opts Options) error {
 	d.tasks = &tasks{ctx: ctx}
 	defer d.tasks.Wait()
 
-	d.router = ipcroute.New(ipcroute.Options{QS: opts.QS, ShellPID: d.shellPID})
+	d.router = ipcroute.New()
 	d.locker = lockscreen.New(lockscreen.Options{
 		AskShell: func(ctx context.Context) error {
 			_, err := d.router.Call(ctx, ipcroute.CallParams{Target: "lockscreen", Function: "lock"})

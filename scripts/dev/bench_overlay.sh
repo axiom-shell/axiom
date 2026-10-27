@@ -8,12 +8,13 @@
 # that alone took over a frame), then closes the overlay.
 #
 # Usage: scripts/dev/bench_overlay.sh [-w SECONDS] [-n CYCLES] [-p PID] [--mem] [PAGE...]
-#   PAGE      a view type or a page's name, as `ipc call overlay page` takes
+#   PAGE      a view type or a page's name, as `axiom ipc overlay page` takes
 #             (default: just open and close)
 #   -w        seconds to wait after each step (default 1.5)
 #   -n        run the open, pages, close cycle this many times (default 1)
-#   -p        the qs to drive and read (a nested one: scripts/dev/nested.sh);
-#             default the live shell, through axiom ipc
+#   -p        the qs to drive and read (a nested one: scripts/dev/nested.sh),
+#             through its own daemon (the AXIOM_SOCKET and AXIOM_DAEMON_PID
+#             in its environment); default the live shell
 #   --mem     the memory reading (scripts/dev/mem.sh) before the first cycle
 #             and after each; needs -p
 
@@ -48,6 +49,11 @@ if [[ $mem -eq 1 && -z "$pid" ]]; then
 fi
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
 export LC_ALL=C.UTF-8
+axiom=(axiom)
+if [[ -n "$pid" ]]; then
+  env_of() { tr '\0' '\n' <"/proc/$pid/environ" | sed -n "s/^$1=//p"; }
+  axiom=("/proc/$(env_of AXIOM_DAEMON_PID)/exe" --socket "$(env_of AXIOM_SOCKET)")
+fi
 
 pattern='Overlay (page [0-9]+ built|modules streamed) in|Built .* in [0-9]+ ms'
 built() {
@@ -58,11 +64,7 @@ built() {
   fi
 }
 overlay() {
-  if [[ -n "$pid" ]]; then
-    qs ipc --pid "$pid" call overlay "$@" >/dev/null 2>&1
-  else
-    axiom ipc overlay "$@" 2>/dev/null
-  fi
+  "${axiom[@]}" ipc overlay "$@" >/dev/null 2>&1
 }
 
 step() {

@@ -30,8 +30,8 @@
 #
 # Logs: the daemon's in <scratch>/state/axiom/log/daemon.log, the shell's
 # with qs log -p <repo> (the nested instance is the newest). IPC and the
-# CLI: <scratch>/axiom --socket $XDG_RUNTIME_DIR/axiom/<display>/axiom.sock …,
-# or qs ipc --pid <its qs> call …. Closing the nested window ends it all.
+# CLI: <scratch>/axiom --socket $XDG_RUNTIME_DIR/axiom/<display>/axiom.sock
+# ipc <target> <fn> …. Closing the nested window ends it all.
 
 set -euo pipefail
 

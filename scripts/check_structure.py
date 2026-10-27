@@ -25,7 +25,7 @@ running anything:
     takes typing (a text field in it or its parts) says so (`x-keyboard`,
     false when it deliberately stays read-only there)
   - only the files in scripts/quickshell-io-allowlist.json use Process,
-    FileView, Socket, IpcHandler or Quickshell.execDetached directly, and
+    FileView, Socket or Quickshell.execDetached directly, and
     the list only shrinks (these move to the axiom daemon)
 and warns about files in the loaded directories that nothing registers or
 uses.
@@ -63,7 +63,6 @@ IO_KINDS = {
     "Process": re.compile(r"(?<![\w.])Process\s*\{"),
     "FileView": re.compile(r"(?<![\w.])FileView\s*\{"),
     "Socket": re.compile(r"(?<![\w.])Socket\s*\{"),
-    "IpcHandler": re.compile(r"(?<![\w.])IpcHandler\s*\{"),
     "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
 }
 
@@ -174,11 +173,11 @@ def main():
         if re.fullmatch(r"services/[^/]+\.qml", path):
             errors.append(f"{path}: directly in services/ (put it in its group's folder: services/AGENTS.md › Folders)")
 
-    # IPC targets are IpcTargets (an IpcHandler that registers with axiom,
-    # which reaches it without a process per call): a bare IpcHandler is
-    # out of `axiom ipc`'s fast path and of ipc.md
+    # IPC targets are IpcTargets (registered with axiom, which calls them
+    # over the shell's connection): an IpcHandler is out of `axiom ipc`'s
+    # reach and of ipc.md
     for path, text in sources.items():
-        if path != "services/core/IpcTarget.qml" and re.search(r"\bIpcHandler\s*\{", text):
+        if re.search(r"\bIpcHandler\s*\{", text):
             errors.append(f"{path}: an IpcHandler: use IpcTarget (services/core/IpcTarget.qml)")
 
     # An optional call on a computed member crashes V4's compiler (Qt 6.12)
