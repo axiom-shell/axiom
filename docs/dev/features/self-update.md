@@ -8,7 +8,7 @@ Axiom updating its own git clone. This is not package updates, which are Updates
 
 A packaged axiom (`Paths.packaged`, [packaging.md](../packaging.md)) is updated by its package manager: `check()` returns at once, nothing is scheduled, `available` stays false, and the `SelfUpdate` section (`"/$packaged": false`), the onboarder's rows and launcher `/update` are hidden.
 
-A tree that isn't a git clone otherwise (no `.git`: installed some other way) is updated by whatever installed it: `selfupdate.status` says `blocked: "nogit"` without running git, `managed` is true, nothing is checked or scheduled, and the card stays, saying its updates come from the package manager (no Check now, no Update).
+A tree that isn't a git clone otherwise (no `.git`: installed some other way) is updated by whatever installed it: `selfupdate.status` says `blocked: "nogit"` without running git, `managed` is true, nothing is checked or scheduled, launcher `/update` is hidden, and the card stays, saying its updates come from the package manager (no Check now, no Update).
 
 ### Channels
 `SelfUpdate.channel` picks what to follow on the clone's remote:
