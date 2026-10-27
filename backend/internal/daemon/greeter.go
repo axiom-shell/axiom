@@ -2,11 +2,13 @@ package daemon
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -43,8 +45,9 @@ const greeterSocket = "axiom.sock"
 // fallback) or ctx ends (it is stopped). Unlike Run, it owns no config,
 // lock screen, compositor layer or Wayland connection: it answers only
 // what the greeter asks, its commands (exec.*, watched ones pushed as
-// exec.outputs), lookups (tz.*, net.addresses) and the weather topic
-// (its Weather module), and only to that quickshell. Greeter mode reads its
+// exec.outputs), lookups (tz.*, net.addresses), the weather topic (its
+// Weather module) and the compositor's socket (hypr.request, niri.*), and
+// only to that quickshell. Greeter mode reads its
 // config once and writes nothing (docs/dev/features/greeter-runtime.md).
 func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	if o.Log == nil {
@@ -67,16 +70,25 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	})
 	hub := topics.New(topics.Options{Log: o.Log, Context: serveCtx})
 	written := files.New(files.Options{Method: pushFileChanged.Method, Log: o.Log, Context: serveCtx})
-	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches, hub, written), Log: o.Log, OnClose: func(c *rpc.Conn) {
+	// niri's event stream, for NiriManager when the greeter is looked at
+	// from a niri session (the login screen's own compositor is sway or
+	// Hyprland); its streams end with serveCtx and are waited for
+	var streams sync.WaitGroup
+	niri := greeterNiriStreams(serveCtx, o, &streams)
+	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches, hub, written, niri), Log: o.Log, OnClose: func(c *rpc.Conn) {
 		watches.Forget(c)
 		written.Forget(c)
 		hub.Forget(c)
+		if niri != nil {
+			niri.Forget(c)
+		}
 	}}
 	served := make(chan error, 1)
 	go func() { served <- server.Serve(serveCtx, ln) }()
 	defer func() {
 		stopServing()
 		<-served
+		streams.Wait()
 	}()
 
 	cmd := exec.CommandContext(ctx, o.Command[0], o.Command[1:]...)
@@ -95,11 +107,30 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	return nil
 }
 
+// greeterNiriStreams are the streams of niri's event stream under niri,
+// else nil, their goroutines on wg.
+func greeterNiriStreams(ctx context.Context, o GreeterOptions, wg *sync.WaitGroup) *ipc.NiriStreams {
+	n := ipc.NiriFromEnv(o.Getenv)
+	if n == nil {
+		return nil
+	}
+	return ipc.NewNiriStreams(n, ipc.NiriStreamsOptions{
+		Started: func(s ipc.Subscriber) { s.Notify(pushNiriStarted.Method, struct{}{}) },
+		Event:   func(s ipc.Subscriber, event json.RawMessage) { s.Notify(pushNiriEvent.Method, event) },
+		Log:     o.Log.With("part", "niri"), Context: ctx,
+		Go: func(fn func(context.Context)) {
+			wg.Go(func() { fn(ctx) })
+		},
+	})
+}
+
 // greeterRegistry is what the greeter's axiom answers: a hello from its
 // quickshell alone, then that quickshell's commands (watched ones too), run with its own
-// environment, its files (its state), lookups, the weather and Hyprland's request socket. Anything else is unavailable, as it was with
+// environment, its files (its state), lookups, the weather and the
+// compositor's socket (Hyprland's requests, niri's requests and event
+// stream on niriStreams, nil when not under niri). Anything else is unavailable, as it was with
 // no axiom at all, so the shell's callers stay quiet about it.
-func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub, written *files.Files) *rpc.Registry {
+func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub, written *files.Files, niriStreams *ipc.NiriStreams) *rpc.Registry {
 	reg := rpc.NewRegistry()
 	reg.Before = func(c *rpc.Conn, method string) error {
 		if method != "daemon.hello" && sessionOf(c) == nil {
@@ -128,6 +159,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	fileHandlers(reg, func() *files.Files { return written })
 	lookupMethods(reg, o.Getenv)
 	hyprHandlers(reg, ipc.HyprFromEnv(o.Getenv))
+	niriHandlers(reg, ipc.NiriFromEnv(o.Getenv), func() *ipc.NiriStreams { return niriStreams })
 	topics.Register(reg, hub, weather.Source(weather.Options{}))
 	return reg
 }
