@@ -114,7 +114,7 @@ QtObject {
 
       // DesktopEntry.execute() ignores Terminal=true
       if (appEntry.runInTerminal)
-        Quickshell.execDetached(Apps.inTerminal(appEntry.command));
+        CommandManager.runDetached(Apps.inTerminal(appEntry.command));
       else
         appEntry.execute();
       return true;
@@ -429,9 +429,9 @@ QtObject {
         if (command === "")
           return false;
         if (shift)
-          Quickshell.execDetached(Apps.inTerminal(["sh", "-c", command + "; exec \"${SHELL:-sh}\""]));
+          CommandManager.runDetached(Apps.inTerminal(["sh", "-c", command + "; exec \"${SHELL:-sh}\""]));
         else
-          Quickshell.execDetached(["sh", "-c", command]);
+          CommandManager.runDetached(command);
         return true;
       }
     };

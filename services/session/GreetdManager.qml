@@ -169,7 +169,7 @@ QtObject {
   // session do these
   function power(action) {
     if (["suspend", "reboot", "poweroff"].includes(action))
-      Quickshell.execDetached(["systemctl", action]);
+      CommandManager.runDetached(["systemctl", action]);
   }
 
   // --- Keyboard layouts ---

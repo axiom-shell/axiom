@@ -26,17 +26,11 @@
     "services/apps/CommunityFetch.qml": [
       "Process"
     ],
-    "services/compositor/CompositorConfigManager.qml": [
-      "execDetached"
-    ],
     "services/core/FileManager.qml": [
       "FileView"
     ],
     "services/apps/FilePickerManager.qml": [
       "Process"
-    ],
-    "services/session/GreetdManager.qml": [
-      "execDetached"
     ],
     "services/compositor/HyprlandIpcManager.qml": [
       "Socket"
@@ -46,12 +40,6 @@
     ],
     "services/core/IpcTarget.qml": [
       "IpcHandler"
-    ],
-    "services/ui/LauncherManager.qml": [
-      "execDetached"
-    ],
-    "services/session/LockManager.qml": [
-      "execDetached"
     ],
     "services/system/NightLightManager.qml": [
       "Process"

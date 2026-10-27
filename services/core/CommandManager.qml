@@ -10,8 +10,9 @@ import Quickshell.Io
 // something has acquire()d it.
 //   CommandManager.acquire(owner, { command, interval })
 //   CommandManager.outputs[command]    // last stdout, trimmed
-// Also runs one-off commands: runDetached for widgets (so the UI starts no
-// processes of its own), and run() for services that want the output:
+// Also runs one-off commands: runDetached (a shell string or an argv) for
+// widgets and services that don't wait on it (so they start no processes of
+// their own), and run() for services that want the output:
 //   CommandManager.run(["cmd", "arg"], (exitCode, stdout, stderr) => ..., input)
 // `input` (optional) is written to stdin, which is then closed: how secrets
 // and clipboard text reach a command without going through argv.
@@ -36,11 +37,12 @@ QtObject {
     _registry.release(owner);
   }
 
-  // Run a user-configured shell command once, detached (a widget's click
-  // or middle-click command). An empty command does nothing.
+  // Run a command once, detached: a shell string (a widget's click or
+  // middle-click command, run by sh -c) or an argv array, run as is. An
+  // empty command does nothing.
   function runDetached(command) {
-    if (command)
-      Quickshell.execDetached(["sh", "-c", command]);
+    if (command?.length)
+      Quickshell.execDetached(Array.isArray(command) ? command : ["sh", "-c", command]);
   }
 
   // Runs a command once and calls back with (exitCode, stdout, stderr).

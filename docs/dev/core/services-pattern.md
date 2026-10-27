@@ -35,7 +35,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
 - **Widget side:** hold the request in a `readonly property var …Request` built from `properties`; acquire it in `Component.onCompleted` and in `on…RequestChanged`; release in `onDestruction`.
 
 ### CommandManager: services keep no Process
-- `CommandManager.runDetached(command)` runs a widget's click commands.
+- `CommandManager.runDetached(command)` runs a command nothing waits on: a shell string (a widget's click command) or an argv.
 - `run(command, callback, input)` runs a service's one-off command.
   - callback is `(exitCode, stdout, stderr)`
   - `input` goes to stdin.

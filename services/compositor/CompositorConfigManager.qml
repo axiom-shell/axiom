@@ -369,7 +369,7 @@ Singleton {
 
   function openConfigDir() {
     if (root.configDir !== "")
-      Quickshell.execDetached(["xdg-open", root.configDir]);
+      CommandManager.runDetached(["xdg-open", root.configDir]);
   }
 
   // Adds the include lines to the user's config (the include hookup, with a
