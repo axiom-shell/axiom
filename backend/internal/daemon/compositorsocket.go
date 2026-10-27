@@ -9,7 +9,7 @@ import (
 )
 
 // compositorSocketPart: the running compositor's own socket, for the
-// shell's backends: what HyprlandManager asks Hyprland's request socket
+// shell's Hyprland backend: what HyprlandManager asks Hyprland's request socket
 // (hyprctl's requests, without a process each).
 func (d *Daemon) compositorSocketPart() part {
 	return part{name: "compositor socket", methods: d.compositorSocketMethods}

@@ -2,8 +2,8 @@
 // event sockets, sway's i3 IPC and niri's JSON socket. Each is a small
 // client: requests with a reply, and an event stream telling axiom's config
 // layer when the compositor reloaded its config
-// (docs/dev/compositor/config-modes.md). The shell's backends send their
-// requests through it too (hypr.request).
+// (docs/dev/compositor/config-modes.md). The shell's Hyprland backend sends
+// its requests through it too (hypr.request).
 package ipc
 
 import (

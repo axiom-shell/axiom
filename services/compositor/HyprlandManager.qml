@@ -777,7 +777,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       "command": command
     }, (error, result) => {
       if (error)
-        console.warn("[HyprlandManager] No reply from Hyprland to", command.slice(0, 80) + ":", error.message);
+        console.warn("[HyprlandManager]", command.slice(0, 80) + ":", error.message);
       callback?.(error ? null : result.reply);
     });
   }
