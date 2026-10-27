@@ -4,8 +4,9 @@ name: Release
 # pushes it). From it this publishes:
 #   - the GitHub release: the tag's message as its notes, with the axiom
 #     binaries axiom-linux-amd64 and axiom-linux-arm64 (static, the version
-#     stamped in) and a SHA256SUMS listing them, as the greeter install and
-#     the installer download them (docs/dev/packaging.md › Release binaries)
+#     stamped in), COMMIT and a SHA256SUMS listing them
+#     (scripts/build_binaries.sh), as the greeter install, self-update and
+#     the installer download them (docs/dev/packaging.md › Releases)
 #   - the AUR packages axiom-shell (pointed at the tag, built once as a
 #     check) and axiom-shell-git, from main's packaging/aur/, so nothing is
 #     committed back to the repository. Skipped while the repository has no
@@ -68,17 +69,9 @@ jobs:
       - name: Generated files (scripts/generate.sh)
         run: scripts/generate.sh
 
+      # The same build as the edge prerelease's (edge.yml)
       - name: Build
-        run: |
-          mkdir dist
-          for arch in amd64 arm64; do
-            CGO_ENABLED=0 GOOS=linux GOARCH=$arch go -C backend build -trimpath \
-              -ldflags "-s -w -X github.com/axiom-shell/axiom/backend/internal/buildinfo.version=$TAG" \
-              -o "../dist/axiom-linux-$arch" ./cmd/axiom
-          done
-          dist/axiom-linux-amd64 version | tee /dev/stderr | grep -qF "axiom $TAG " ||
-            { echo "::error::the binary doesn't report $TAG"; exit 1; }
-          (cd dist && sha256sum axiom-linux-* >SHA256SUMS && cat SHA256SUMS)
+        run: scripts/build_binaries.sh "$TAG" dist
 
       - name: Publish the release
         env:
