@@ -1,12 +1,14 @@
 # Self-update
 
-> **Files:** `services/core/SelfUpdateManager.qml`, `scripts/self_update.sh`, `config/SelfUpdate.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`
+> **Files:** `services/core/SelfUpdateManager.qml`, `backend/internal/selfupdate/selfupdate.go`, `backend/internal/daemon/selfupdate.go`, `config/SelfUpdate.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`
 > **Config:** `SelfUpdate.*` (reader `SelfUpdate`)
-> **Related:** [Notifications](notifications.md), [Launcher](launcher.md)
+> **Related:** [Notifications](notifications.md), [Launcher](launcher.md), [Backend](../backend/README.md) › Re-exec
 
 Axiom updating its own git clone. This is not package updates, which are UpdatesManager's job.
 
 A packaged axiom (`Paths.packaged`, [packaging.md](../packaging.md)) is updated by its package manager: `check()` returns at once, nothing is scheduled, `available` stays false, and the `SelfUpdate` section (`"/$packaged": false`), the onboarder's rows and launcher `/update` are hidden.
+
+A tree that isn't a git clone otherwise (no `.git`: installed some other way) is updated by whatever installed it: `selfupdate.status` says `blocked: "nogit"` without running git, `managed` is true, nothing is checked or scheduled, and the card stays, saying its updates come from the package manager (no Check now, no Update).
 
 ### Channels
 `SelfUpdate.channel` picks what to follow on the clone's remote:
@@ -15,15 +17,20 @@ A packaged axiom (`Paths.packaged`, [packaging.md](../packaging.md)) is updated 
 
 A channel change triggers a recheck.
 
-### The script
-`scripts/self_update.sh [--channel tags|main] check|apply <target>` does the git work and prints one JSON object:
+### The daemon's methods
+`backend/internal/selfupdate` does the git work on the tree the daemon runs from (`daemon/selfupdate.go`), one call at a time; each method takes `{ channel, target? }` and answers one report:
+- `selfupdate.status`: the clone from the refs it has, without fetching (at every shell load, for the installed version and `managed`).
+- `selfupdate.check`: fetches (`v*` tags; on main the branch too, else master; a minute at most, never prompting for a password or host key), then describes. A failed fetch still describes the clone, with git's reason as `error`.
+- `selfupdate.apply`: only from the shell. `target` must be the `latest` a check reported, still available and not blocked; it runs to the end once started.
+
+The report:
 - `channel`, `current`, `commit`
 - `latest`: the tag, or main's short commit
 - `state`: `uptodate` | `available` | `diverged`
 - `ahead`, `behind`
 - `blocked`: `dirty` | `diverged` | `branch` | `nogit`
 - `notes`, `error`
-- `rebuilt`, `buildError`: after an `apply`, the axiom binary (`$AXIOM_BIN`, set by `axiom run`) built again from the updated clone (`scripts/generate.sh --no-docs`, then `go build` beside it and swapped in), so its embedded schema is the tree's. Only a binary this user can replace (install.sh's in `~/.local/bin`); a failed build leaves the old one and says why, the update itself staying in.
+- `rebuilt`, `buildError`: after an `apply`, the installed axiom binary (the one the daemon came from) built again from the updated clone (`go generate ./internal/assets`, then `go build -trimpath` beside it, checked to run and swapped in: dev mode's `buildAxiom`), so its embedded schema is the tree's. Only a binary this user can replace (install.sh's in `~/.local/bin`); a failed build leaves the old one and says why (the compiler's first line), the update itself staying in.
 
 What it will and won't do:
 - It only fast-forwards: `merge --ff-only`, or a detached `checkout` when the clone is detached.
@@ -32,7 +39,7 @@ What it will and won't do:
 
 ### Modes (`SelfUpdate.mode`)
 - **`auto`:** applies, notifies, then calls `Quickshell.reload`. git replaces files by inode, which the file watcher misses, so the explicit reload is needed.
-  - With the binary rebuilt, it runs `axiom daemon reexec`: the new image takes the daemon over, and when the update changed the schema it restarts the shell (locked first when it was), whose hello would otherwise be refused ([backend](../backend/README.md) › Re-exec). A failed build is notified.
+  - With the binary rebuilt, the daemon re-execs into it once its reply is out: the new image takes the daemon over, and when the update changed the schema it restarts the shell (locked first when it was), whose hello would otherwise be refused ([backend](../backend/README.md) › Re-exec). A failed build is notified.
 - **`notify`:** sends a notification whose `desktopEntry` (`axiom-update`) is a `NotificationManager.registerHandler` key. Clicking it runs `openSettings()`, which opens Settings → Updates (the `SelfUpdateStatusCard`).
 - **`off`:** never checks.
 
@@ -49,6 +56,13 @@ What it will and won't do:
 - Launcher `/update`.
 - Created from `shell.qml`'s `_services`.
 
+### Changes from the script
+- A tree with no `.git` is `managed` (the decision above): the card says its updates come from the package manager instead of "Can't update: it isn't a git clone", and nothing checks it. Its report has no `error`.
+- `selfupdate.status` is new: the card shows the installed version and whether it's a clone at once, not after the first check.
+- The daemon rebuilds and re-execs itself after an update; the shell no longer runs `axiom daemon reexec`. The build is `go generate` and `go build` alone: the tree's generated `config/json/config.schema.json` (the tools' copy; the daemon builds the shell's from the YAML) isn't rebuilt.
+- git runs in the C locale (its messages parse the same in every language), and a tag's SSH signature is cut from the notes as a PGP one was.
+- An unknown channel or an apply without a target is a `bad_request` error rather than a report.
+
 ### Testing
-- Test the script on scratch clones.
-- Never `apply` on the live repo. (Rule: AGENTS.md › Never, while testing.)
+- `go test ./internal/selfupdate` runs on scratch clones (upstream and clone in a temp dir); `TestRebuildInstalled` (daemon) on a fake go.
+- Never `selfupdate.apply` (or IPC `selfUpdate update`) on the live daemon: it updates the live repo. (Rule: AGENTS.md › Never, while testing; the guard refuses it.)

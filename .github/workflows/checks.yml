@@ -225,7 +225,7 @@ jobs:
       - name: shellcheck
         run: shellcheck -x -S warning install.sh scripts/*.sh scripts/lib/*.sh scripts/greeter/*.sh scripts/dev/*.sh .githooks/pre-commit
 
-      # Themes, the Neovim module, self-update on scratch clones, the dev scripts
+      # Themes, the Neovim module, the dev scripts
       - name: Script tests
         run: python3 tests/scripts/test_scripts.py -v
 

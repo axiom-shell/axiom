@@ -1,7 +1,6 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.config
 import qs.services.system
 import qs.services.ui
@@ -9,10 +8,11 @@ import qs.services.ui
 /*
  * Updates axiom itself (not packages: that's UpdatesManager). It follows the
  * clone's remote on SelfUpdate.channel: "tags" (releases, `v*` tags) or
- * "main" (every commit on the main branch). scripts/self_update.sh does the
- * git work: `check` fetches and compares, `apply` fast-forwards to the
- * newest. A clone with changed tracked files, local commits or another
- * branch is `blocked` and never touched.
+ * "main" (every commit on the main branch). The daemon does the git work
+ * (selfupdate.status reads the clone, selfupdate.check fetches and
+ * compares, selfupdate.apply fast-forwards to the newest, rebuilds the
+ * axiom binary and re-execs into it). A clone with changed tracked files,
+ * local commits or another branch is `blocked` and never touched.
  *
  * SelfUpdate.mode: "auto" installs a new release and notifies; "notify"
  * notifies, and the notification opens Settings → Updates; "off" never
@@ -20,7 +20,9 @@ import qs.services.ui
  * when the channel changes. Each release (or main's commit) is notified once.
  *
  * A packaged axiom (the AUR's axiom-shell, Paths.packaged) is updated by its
- * package manager: this never checks, and its settings are hidden.
+ * package manager: this never checks, and its settings are hidden. A tree
+ * with no .git otherwise (`managed`) never checks either; the card says
+ * its updates come from the package manager.
  *
  *   axiom ipc selfUpdate check
  *   axiom ipc selfUpdate update
@@ -29,8 +31,8 @@ import qs.services.ui
 Singleton {
   id: root
 
-  readonly property bool checking: _check.running
-  readonly property bool applying: _apply.running
+  readonly property bool checking: _checking
+  readonly property bool applying: _applying
   readonly property bool busy: checking || applying
 
   // The installed release tag ("" before the first one), and HEAD
@@ -47,6 +49,8 @@ Singleton {
   readonly property int behind: _result.behind ?? 0
   // Why it can't update: "dirty" | "diverged" | "branch" | "nogit" | ""
   readonly property string blocked: _result.blocked ?? ""
+  // Not a git clone: whatever installed it updates it (no check, no apply)
+  readonly property bool managed: blocked === "nogit"
   // The newest release's tag message, or main's new commit subjects
   readonly property string notes: _result.notes ?? ""
   readonly property string error: _result.error ?? ""
@@ -56,17 +60,28 @@ Singleton {
   readonly property bool available: state === "available" && blocked === "" && !Paths.packaged
 
   function check() {
-    if (root.busy || Paths.packaged)
+    if (root.busy || Paths.packaged || root.managed)
       return;
-    _check.command = [Paths.scriptsPath + "self_update.sh", "--channel", SelfUpdate.channel, "check"];
-    _check.running = true;
+    root._checking = true;
+    BackendManager.call("selfupdate.check", {
+      "channel": SelfUpdate.channel
+    }, (error, result) => {
+      root._checking = false;
+      root._onChecked(error ? root._failed(error, SelfUpdate.channel) : result);
+    });
   }
 
   function apply() {
     if (root.busy || !root.available)
       return;
-    _apply.command = [Paths.scriptsPath + "self_update.sh", "--channel", root.channel, "apply", root.latest];
-    _apply.running = true;
+    root._applying = true;
+    BackendManager.call("selfupdate.apply", {
+      "channel": root.channel,
+      "target": root.latest
+    }, (error, result) => {
+      root._applying = false;
+      root._onApplied(error ? root._failed(error, root.channel) : result);
+    });
   }
 
   function openSettings() {
@@ -76,7 +91,6 @@ Singleton {
   // I18n.tr("It has changed files. Commit or discard them to update.")
   // I18n.tr("It has commits of its own that the release doesn't.")
   // I18n.tr("It's on a branch other than main.")
-  // I18n.tr("It isn't a git clone.")
   function blockedReason(reason) {
     switch (reason) {
     case "dirty":
@@ -85,8 +99,6 @@ Singleton {
       return I18n.tr("It has commits of its own that the release doesn't.");
     case "branch":
       return I18n.tr("It's on a branch other than main.");
-    case "nogit":
-      return I18n.tr("It isn't a git clone.");
     }
     return "";
   }
@@ -94,6 +106,8 @@ Singleton {
   // -- Private --
 
   property var _result: ({})
+  property bool _checking: false
+  property bool _applying: false
   // { lastChecked, notifiedTag, result }: the last result survives reloads
   // and restarts, so the page has something to show before the next check
   property var _saved: ({})
@@ -105,14 +119,27 @@ Singleton {
     root._state.save(root._saved);
   }
 
-  function _parse(text) {
-    try {
-      return JSON.parse(text.trim());
-    } catch (e) {
-      return {
-        error: text.trim() || "no output"
-      };
-    }
+  // A failed call as a result: the last one's facts, with its message
+  function _failed(error, channel) {
+    return Object.assign({}, root._result, {
+      "channel": channel,
+      "error": error.message
+    });
+  }
+
+  // The clone as it is, without fetching: the installed version, and
+  // whether it's a clone at all, before the first check
+  function _readStatus() {
+    BackendManager.call("selfupdate.status", {
+      "channel": SelfUpdate.channel
+    }, (error, result) => {
+      if (error) {
+        console.warn(`[SelfUpdateManager] Reading the clone failed: ${error.message}`);
+        return;
+      }
+      if (!root.busy)
+        root._result = result;
+    });
   }
 
   function _notify(summary, body) {
@@ -156,12 +183,12 @@ Singleton {
       root._notify(summary, I18n.tr("Your copy can't update: {0}", root.blockedReason(root.blocked)));
   }
 
-  function _onApplied(result, exitCode) {
+  function _onApplied(result) {
     root._result = result;
     root._save({
       result: result
     });
-    if (exitCode !== 0 || result.error) {
+    if (result.error) {
       console.warn(`[SelfUpdateManager] Update failed: ${result.error}`);
       root._notify(I18n.tr("axiom update failed"), result.error || I18n.tr("Unknown error"));
       return;
@@ -173,11 +200,9 @@ Singleton {
       notifiedTag: version
     });
     root._notify(I18n.tr("axiom updated to {0}", version), result.notes || I18n.tr("Click to see what's new."));
-    if (result.rebuilt) {
-      // The new binary takes over the daemon; when the update changed the
-      // schema, it restarts the shell itself
-      Quickshell.execDetached([Paths.axiomBin, "daemon", "reexec"]);
-    } else if (result.buildError) {
+    // With the binary rebuilt, the daemon re-execs into it; when the
+    // update changed the schema, it restarts the shell itself
+    if (result.buildError) {
       console.warn(`[SelfUpdateManager] The axiom binary didn't build: ${result.buildError}`);
       root._notify(I18n.tr("The axiom binary didn't build"), I18n.tr("Until it does, settings can't be saved after the next start: {0}", result.buildError));
     }
@@ -207,7 +232,7 @@ Singleton {
   Timer {
     interval: 24 * 60 * 60 * 1000
     repeat: true
-    running: SelfUpdate.mode !== "off" && !Paths.packaged
+    running: SelfUpdate.mode !== "off" && !Paths.packaged && !root.managed
     onTriggered: root.check()
   }
 
@@ -216,22 +241,6 @@ Singleton {
     id: _reloadTimer
     interval: 1000
     onTriggered: Quickshell.reload(false)
-  }
-
-  Process {
-    id: _check
-    stdout: StdioCollector {
-      id: _checkOut
-    }
-    onExited: root._onChecked(root._parse(_checkOut.text))
-  }
-
-  Process {
-    id: _apply
-    stdout: StdioCollector {
-      id: _applyOut
-    }
-    onExited: exitCode => root._onApplied(root._parse(_applyOut.text), exitCode)
   }
 
   IpcTarget {
@@ -268,6 +277,8 @@ Singleton {
     root._saved = root._state.load({});
     root._result = root._saved.result ?? {};
     NotificationManager.registerHandler(root._desktopEntry, () => root.openSettings());
+    if (!Paths.packaged)
+      root._readStatus();
     if (SelfUpdate.mode !== "off" && !_run.checked && !Paths.packaged)
       _startup.start();
   }

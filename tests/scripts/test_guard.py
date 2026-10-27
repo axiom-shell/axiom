@@ -101,7 +101,7 @@ class Bash(unittest.TestCase):
                         "export NIRI_SOCKET=/run/user/1000/niri.wayland-2.200.sock; niri msg output winit scale 1")
 
     def test_scripts_run_through_a_shell_and_variables(self):
-        self.blocks("bash scripts/self_update.sh apply .", "bash scripts/greeter/greeter_install.sh install . me")
+        self.blocks("bash scripts/greeter/greeter_install.sh install . me")
         self.assertTrue(denied("axiom compositor claim --kind sway $HOME/.config/sway axiom", cwd="/tmp"))
         self.assertTrue(denied("axiom compositor claim --kind sway ${HOME}/.config/sway axiom", cwd="/tmp"))
         self.assertTrue(denied("export D=~/.config/hypr; axiom compositor binds remove --kind hyprland $D '[]'", cwd="/tmp"))
@@ -119,9 +119,11 @@ class Bash(unittest.TestCase):
                     "grep -rn hookup.apply backend", "python3 -c 'hookup.status'")
 
     def test_self_update(self):
-        self.blocks("scripts/self_update.sh apply v1.2", f"scripts/self_update.sh --channel main apply v1.2 {REPO}",
-                    "scripts/self_update.sh apply v1.2 .")
-        self.allows("scripts/self_update.sh check", "scripts/self_update.sh apply v1.2 /tmp/clone")
+        call = """'{"jsonrpc":"2.0","id":1,"method":"selfupdate.apply","params":{"channel":"tags","target":"v1.2"}}'"""
+        self.blocks(f"python3 -c {call}", f"printf %s {call}", "qs ipc call selfUpdate update",
+                    "axiom ipc selfUpdate update")
+        self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", "python3 -c 'selfupdate.check'",
+                    "grep -rn selfupdate.apply backend", "go test ./internal/selfupdate")
 
     def test_live_config_file(self):
         self.blocks(f"rm {guard.LIVE_CONFIG}", f"rm -rf {guard.LIVE_CONFIG.parent}", f"mv {guard.LIVE_CONFIG} /tmp/x",

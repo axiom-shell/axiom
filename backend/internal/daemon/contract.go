@@ -49,7 +49,7 @@ func (d *Daemon) methodSets() []func(*rpc.Registry) {
 	return []func(*rpc.Registry){
 		d.coreMethods, d.configMethods, d.ipcMethods, d.sharingMethods,
 		func(reg *rpc.Registry) { d.compositorMethods(reg, d.compositor) },
-		d.topicsPart().methods, d.toolsMethods, d.execMethods, d.calendarMethods, d.themeMethods, d.hookupMethods, d.brightnessPart().methods, d.idleMethods, d.waylandMethods, d.clipboardMethods, d.dev.methods,
+		d.topicsPart().methods, d.toolsMethods, d.execMethods, d.calendarMethods, d.themeMethods, d.hookupMethods, d.selfUpdateMethods, d.brightnessPart().methods, d.idleMethods, d.waylandMethods, d.clipboardMethods, d.dev.methods,
 	}
 }
 

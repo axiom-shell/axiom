@@ -11,6 +11,8 @@ FieldGroup {
   id: root
 
   readonly property string status: {
+    if (SelfUpdateManager.managed)
+      return "managed";
     if (SelfUpdateManager.applying)
       return "applying";
     if (SelfUpdateManager.checking)
@@ -38,6 +40,8 @@ FieldGroup {
 
   readonly property string statusLabel: {
     switch (root.status) {
+    case "managed":
+      return I18n.tr("Package manager");
     case "applying":
       return I18n.tr("Updating…");
     case "checking":
@@ -72,6 +76,7 @@ FieldGroup {
   ]
 
   GridLayout {
+    visible: !SelfUpdateManager.managed
     Layout.fillWidth: true
     columns: 2
     columnSpacing: Widget.spacing * 2
@@ -105,6 +110,15 @@ FieldGroup {
       text: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateFormat("mediumDate") + " " + I18n.dateFormat("time24")) : I18n.tr("Never")
       Layout.fillWidth: true
     }
+  }
+
+  StyledText {
+    visible: root.status === "managed"
+    text: I18n.tr("This copy of axiom isn't a git clone: its updates come from your package manager.")
+    opacity: 0.7
+    textSize: Appearance.fontSizeBy(-1)
+    wrapMode: Text.WordWrap
+    Layout.fillWidth: true
   }
 
   StyledText {
@@ -155,6 +169,7 @@ FieldGroup {
   }
 
   RowLayout {
+    visible: !SelfUpdateManager.managed
     Layout.fillWidth: true
     spacing: Widget.spacing
 
