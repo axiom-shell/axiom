@@ -53,6 +53,6 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
 - **Data reloaded on open.** See Editors reopening.
 
 ### Measuring
-- `scripts/dev/bench_overlay.sh [-w SECONDS] [PAGE…]` opens the overlay, switches to each page given, closes it, and prints for each step how long the IPC call blocked (a no-op call is ~25 ms) and the log lines from the build: `Overlay page N built in X ms` (the page's synchronous build, `OverlayPage`), `Overlay modules streamed in X ms (N modules)` (`ModuleGrid`), and `Built <label> in X ms` (a slow job).
+- `scripts/dev/bench_overlay.sh [-w SECONDS] [-n CYCLES] [-p PID] [--mem] [PAGE…]` opens the overlay, switches to each page given, closes it, and prints for each step how long the IPC call blocked (a no-op call is ~25 ms) and the log lines from the build: `Overlay page N built in X ms` (the page's synchronous build, `OverlayPage`), `Overlay modules streamed in X ms (N modules)` (`ModuleGrid`), and `Built <label> in X ms` (a slow job). `-n` repeats the cycle, `-p` drives a nested qs instead of the live one, `--mem` adds a [memory reading](memory.md) after each cycle.
 - Wait long enough for the neighbours (`-w`, default 1.5 s): a neighbour built during the next step's IPC call shows in that step.
 - A temporary `console.log(Date.now() - t)` around a suspect, bisected, finds what a slow job holds; remove it after.
