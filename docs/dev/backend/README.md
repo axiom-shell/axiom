@@ -59,6 +59,7 @@
 - **The rest of the CLI:**
   - `axiom ping|restart|quit`, `axiom daemon status|reexec|logs`, `axiom dev status|on|off|rebuild`
   - `axiom config path|get|set|reset|validate|status`: online, or `--offline` against the file under the writer lock
+  - `axiom exec refresh COMMAND`: runs a command the shell watches again now (a script's stand-in for Waybar's `signal`)
   - `axiom schema build|check|hash`, `axiom debug wayland-globals|wayland-outputs`, `axiom version`
 - **Re-exec** (`axiom daemon reexec`, or dev mode on a rebuild): the new image takes over the instance lock, the writer lock, the socket and the shell (still its child). Its clients are told first (`daemon.closing`, [protocol](protocol.md) › A session). It trusts the handoff only when the inherited lock really is this display's held lock.
   - The descriptors lose close-on-exec only under `syscall.ForkLock`, so no child starts meanwhile and inherits a lock; an exec that fails gives them it back and thaws the store.
