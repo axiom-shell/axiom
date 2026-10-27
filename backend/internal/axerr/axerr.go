@@ -29,8 +29,13 @@ const (
 	// Already running on this display.
 	Running  Kind = "running"
 	NotFound Kind = "not_found"
-	// Refused on purpose (a security rule), never retried.
+	// Refused on purpose (a security rule, a read-only calendar), never
+	// retried.
 	Refused Kind = "refused"
+	// A server refused the credentials (or none are saved).
+	Unauthorized Kind = "unauthorized"
+	// A server's reply couldn't be read (not XML, not iCalendar).
+	BadReply Kind = "bad_reply"
 	// A bug or an unexpected system failure.
 	Internal Kind = "internal"
 )
@@ -135,6 +140,10 @@ func RPCCode(kind Kind) int {
 		return -32007
 	case Refused:
 		return -32008
+	case Unauthorized:
+		return -32009
+	case BadReply:
+		return -32010
 	default:
 		return -32603
 	}

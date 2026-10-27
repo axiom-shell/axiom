@@ -4,10 +4,10 @@ import QtQuick
 // Pure helpers for calendar events (see CalendarManager): day keys, which
 // days an event covers, a day's events in order, dots, what's next,
 // reminders due, editing drafts and the launcher's quick add. Events are
-// scripts/calendar_sync.py's occurrences: { key, calendar, allDay, start,
-// end (epoch ms), dayStart, dayEnd ("YYYY-MM-DD", all-day, end exclusive),
-// title, alarms, repeat, reminder, … }. No file access, processes or
-// services.
+// axiom's occurrences (ical.Occurrence in backend/internal/calendar/ical):
+// { key, calendar, allDay, start, end (epoch ms), dayStart, dayEnd
+// ("YYYY-MM-DD", all-day, end exclusive), title, alarms, repeat, reminder,
+// … }. No file access, processes or services.
 QtObject {
   id: root
 
@@ -214,7 +214,7 @@ QtObject {
     return out;
   }
 
-  // The `event` calendar_sync.py's save takes
+  // The `event` calendar.save takes (ical.Event)
   function payloadOf(draft) {
     return {
       "title": String(draft.title).trim(),

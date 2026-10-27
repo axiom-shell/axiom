@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Every check CI runs (.github/workflows/checks.yml), in the same order.
-# Needs Qt 6's tools, go, shellcheck, luac and jq; the theme and calendar script
-# tests also want python's numpy, Pillow and icalendar (skipped without).
+# Needs Qt 6's tools, go, shellcheck, luac and jq; the theme script tests
+# also want python's numpy and Pillow (skipped without).
 #
 #   scripts/check_all.sh
 set -uo pipefail

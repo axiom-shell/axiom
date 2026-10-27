@@ -104,9 +104,8 @@ TestCase {
 
   // Python modules ("py:<module>") from each distribution's own repositories
   function test_pythonModules() {
-    compare(Packages.installCommand("arch", ["py:numpy", "py:PIL", "py:icalendar"]), "sudo pacman -S --needed python-numpy python-pillow python-icalendar");
-    compare(Packages.installCommand("fedora", ["py:numpy", "py:PIL", "py:icalendar"]), "sudo dnf install python3-numpy python3-pillow python3-icalendar", "no COPR");
-    compare(Packages.installCommand("fedora", "py:dateutil"), "sudo dnf install python3-dateutil");
+    compare(Packages.installCommand("arch", ["py:numpy", "py:PIL"]), "sudo pacman -S --needed python-numpy python-pillow");
+    compare(Packages.installCommand("fedora", ["py:numpy", "py:PIL"]), "sudo dnf install python3-numpy python3-pillow", "no COPR");
   }
 
   // What install.sh installs: the compositors, and quickshell from its own

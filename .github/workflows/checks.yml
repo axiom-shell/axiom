@@ -201,10 +201,8 @@ jobs:
     container: archlinux:latest
     steps:
       - name: Install tools
-        # numpy, Pillow and icalendar for theme generation and calendars, as
-        # users install them: never python-recurring-ical-events, which
-        # Fedora doesn't package (the calendar tests make importing it fail)
-        run: pacman -Syu --noconfirm --needed git diffutils shellcheck lua jq gettext python python-numpy python-pillow python-icalendar go
+        # numpy and Pillow for theme generation, as users install them
+        run: pacman -Syu --noconfirm --needed git diffutils shellcheck lua jq gettext python python-numpy python-pillow go
 
       - name: Checkout
         env:

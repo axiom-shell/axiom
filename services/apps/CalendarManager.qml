@@ -8,14 +8,14 @@ import qs.services.system
 import qs.services.ui
 
 /*
- * Calendars (the Calendar section): CalDAV accounts and .ics subscriptions,
- * through scripts/calendar_sync.py (run with the system python3; passwords from
- * SecretsManager on its stdin). The helper keeps the server's objects in
- * $XDG_STATE_HOME/axiom/calendar/objects.json and writes their occurrences
- * in `range` to events.json, which this reads (so the calendar shows at
- * once, and offline). Syncs every `Calendar.syncInterval` minutes while
- * something has acquire()d it, or while reminders are on; one helper runs
- * at a time, later jobs queued.
+ * Calendars (the Calendar section): CalDAV accounts, .ics subscriptions and
+ * local calendars, through axiom's calendar.* methods (backend/internal/
+ * calendar; passwords from SecretsManager, in the call's params). axiom
+ * keeps the server's objects in $XDG_STATE_HOME/axiom/calendar/objects.json
+ * and writes their occurrences in `range` to events.json, which this reads
+ * (so the calendar shows at once, and offline). Syncs every
+ * `Calendar.syncInterval` minutes while something has acquire()d it, or
+ * while reminders are on; one call runs at a time, later jobs queued.
  *   CalendarManager.acquire(owner) / release(owner)
  *   CalendarManager.eventsOn("2026-10-05")    // that day's, in order
  *   CalendarManager.dotsFor("2026-10-05")     // its calendars' colors
@@ -29,19 +29,15 @@ import qs.services.ui
 QtObject {
   id: root
 
-  // Occurrences from events.json (see calendar_sync.py)
+  // Occurrences from events.json (ical.Occurrence in backend/internal/calendar/ical)
   property var events: []
   // When the last sync finished (epoch ms; 0 before any)
   property real lastSync: 0
-  // The last sync's problems: [{ calendar, code, message }]
+  // The last sync's problems: [{ calendar, kind, message }]
   property var errors: []
   readonly property bool syncing: root._running?.cmd === "sync" || root._jobs.some(job => job.cmd === "sync")
-  // A helper is running (a sync, save or delete)
+  // A sync, save or delete is running
   readonly property bool busy: root._running !== null
-  // False once the helper couldn't start (no python3), or a Python package
-  // it needs is missing (`missingModule`, the module's name, else "")
-  property bool available: true
-  property string missingModule: ""
   // What the page or a module was asked to show next ({ kind: "new" |
   // "day", key }), taken by the first one that can (takeRequest)
   property var request: null
@@ -156,11 +152,16 @@ QtObject {
     root.sync();
   }
 
-  // Syncs now (queued behind a running helper; a queued sync isn't doubled)
+  // Syncs now (queued behind a running call; a queued sync isn't doubled)
   function sync() {
     if (Paths.greeter || root._jobs.some(job => job.cmd === "sync"))
       return;
-    root._enqueue("sync", done => root._withAccounts(null, base => done(base)), result => {
+    root._enqueue("sync", done => root._withAccounts(null, accounts => BackendManager.call("calendar.sync", {
+          "range": root.range,
+          "accounts": accounts
+        }, (error, result) => done(error ? root._failure(error) : {
+            "ok": true
+          }))), result => {
       if (!result.ok)
         console.warn("[CalendarManager] Sync failed:", result.message);
     });
@@ -171,12 +172,24 @@ QtObject {
   function discover(account, password, callback) {
     if (Paths.greeter)
       return;
-    const run = secret => root._enqueue("discover", done => done({
-          "kind": account.kind,
-          "url": account.url,
-          "username": account.username,
-          "password": secret
-        }), callback);
+    // Not queued: it writes nothing a sync reads
+    const run = secret => {
+      if (account.kind === "caldav" && !secret)
+        return callback?.(root._noPassword);
+      BackendManager.call("calendar.discover", {
+        "kind": account.kind,
+        "url": account.url,
+        "username": account.username,
+        "password": secret
+      }, (error, result) => callback?.(error ? root._failure(error) : result.calendars.length > 0 ? {
+          "ok": true,
+          "calendars": result.calendars
+        } : {
+          "ok": false,
+          "kind": "no_calendars",
+          "message": "No calendars found at that address"
+        }));
+    };
     if (password || account.kind !== "caldav")
       run(password ?? "");
     else
@@ -184,7 +197,7 @@ QtObject {
   }
 
   // Saves a draft (CalendarEvents.newDraft/draftOf): a new event without an
-  // href; `scope` "series" or "occurrence". Calls back with { ok, code,
+  // href; `scope` "series" or "occurrence". Calls back with { ok, kind,
   // message }.
   function save(draft, scope, callback) {
     if (Paths.greeter)
@@ -193,7 +206,7 @@ QtObject {
     if (!calendar?.writable)
       return callback?.({
         "ok": false,
-        "code": "readOnly",
+        "kind": "refused",
         "message": "That calendar can't be changed"
       });
     // Moving an event to another calendar: a new one there, then the old
@@ -216,7 +229,9 @@ QtObject {
         }, "series", callback);
       });
     }
-    root._enqueue("save", done => root._withAccounts(calendar.account, base => done(Object.assign(base, {
+    root._enqueue("save", done => root._withAccounts(calendar.account, accounts => root._hasPassword(accounts, calendar.account) ? BackendManager.call("calendar.save", {
+          "range": root.range,
+          "accounts": accounts,
           "account": calendar.account,
           "calendar": calendar.href,
           "href": draft.href,
@@ -224,7 +239,10 @@ QtObject {
           "scope": scope,
           "rid": draft.rid,
           "event": CalendarEvents.payloadOf(draft)
-        }))), callback);
+        }, (error, result) => done(error ? root._failure(error) : {
+            "ok": true,
+            "href": result.href
+          })) : done(root._noPassword)), callback);
   }
 
   // Deletes an event: "series" (the whole of a recurring one) or
@@ -237,18 +255,22 @@ QtObject {
     if (!calendar?.writable)
       return callback?.({
         "ok": false,
-        "code": "readOnly",
+        "kind": "refused",
         "message": "That calendar can't be changed"
       });
     root.events = root.events.filter(e => scope === "occurrence" ? e.key !== event.key : e.href !== event.href);
-    root._enqueue("delete", done => root._withAccounts(calendar.account, base => done(Object.assign(base, {
+    root._enqueue("delete", done => root._withAccounts(calendar.account, accounts => root._hasPassword(accounts, calendar.account) ? BackendManager.call("calendar.delete", {
+          "range": root.range,
+          "accounts": accounts,
           "account": calendar.account,
           "calendar": calendar.href,
           "href": event.href,
           "etag": event.etag,
           "scope": scope,
           "rid": event.rid
-        }))), callback);
+        }, error => done(error ? root._failure(error) : {
+            "ok": true
+          })) : done(root._noPassword)), callback);
   }
 
   // The launcher's quick add, parsed (null when it can't be: no title)
@@ -297,35 +319,26 @@ QtObject {
     return request;
   }
 
-  // What to install for a missing Python module, for people
-  function missingText(module) {
-    const install = DependencyManager.installCommand("py:" + module);
-    return install ? I18n.tr("Calendars need the Python package {0}. Install it with: {1}", module, install) : I18n.tr("Calendars need the Python package {0}.", module);
-  }
-
-  // A helper's failure, for people
+  // A failed save, delete or discover, for people: by its axerr kind, or
+  // the shell's own no_calendars and no_password
   function errorText(result) {
-    switch (result?.code) {
-    case "auth":
+    switch (result?.kind) {
+    case "unauthorized":
       return I18n.tr("The server refused the username or password.");
-    case "network":
+    case "unavailable":
       return I18n.tr("Couldn't reach the server.");
-    case "notFound":
+    case "not_found":
       return I18n.tr("Nothing was found at that address.");
-    case "notCalendar":
+    case "no_calendars":
       return I18n.tr("No calendars were found at that address.");
     case "conflict":
       return I18n.tr("The event changed elsewhere. It has been reloaded: check it and try again.");
-    case "readOnly":
+    case "refused":
       return I18n.tr("This calendar can't be changed.");
-    case "noPassword":
+    case "no_password":
       return I18n.tr("No password is saved for this account.");
-    case "parse":
+    case "bad_reply":
       return I18n.tr("The server sent something unreadable.");
-    case "helper":
-      return I18n.tr("The calendar helper couldn't run: {0}", result.message);
-    case "missingModule":
-      return root.missingText(result.message);
     default:
       return result?.message ?? "";
     }
@@ -334,11 +347,9 @@ QtObject {
   // -- Private --
 
   readonly property string _stateDir: Paths.userStatePath + "calendar"
-  // Local calendars: <dataDir>/calendars/<href>/<uid>.ics
-  readonly property string _dataDir: Paths.userDataPath
   readonly property string _desktopEntry: "axiom-calendar"
   property ConsumerRegistry _registry: ConsumerRegistry {}
-  // [{ cmd, build(done), callback }], and the one running
+  // [{ cmd, run(done), callback }], and the one running
   property var _jobs: []
   property var _running: null
   readonly property var _state: StateManager.createStateHandler("calendar")
@@ -381,9 +392,8 @@ QtObject {
     }
   }
 
-  // The request every helper call starts from: where its files are, the
-  // range, and every account with its shown calendars (and password).
-  // With `onlyAccount`, that account must have its password.
+  // Every account with its shown calendars (and password), as every
+  // call sends them; with `onlyAccount`, that one even with none shown
   function _withAccounts(onlyAccount, callback) {
     const accounts = CalendarConfig.accounts.map(account => ({
           "id": account.id,
@@ -396,12 +406,7 @@ QtObject {
               }))
         })).filter(account => account.calendars.length > 0 || account.id === onlyAccount);
     let waiting = accounts.filter(account => account.kind === "caldav").length;
-    const finish = () => callback({
-        "stateDir": root._stateDir,
-        "dataDir": root._dataDir,
-        "range": root.range,
-        "accounts": accounts
-      });
+    const finish = () => callback(accounts);
     if (waiting === 0)
       return finish();
     accounts.filter(account => account.kind === "caldav").forEach(account => SecretsManager.withSecret("calendar", account.id, secret => {
@@ -411,11 +416,31 @@ QtObject {
       }));
   }
 
-  function _enqueue(cmd, build, callback) {
+  // A CalDAV account an edit is for has its password
+  function _hasPassword(accounts, id) {
+    return !accounts.some(account => account.id === id && account.kind === "caldav" && !account.password);
+  }
+
+  readonly property var _noPassword: ({
+      "ok": false,
+      "kind": "no_password",
+      "message": "No password saved for this account"
+    })
+
+  // A failed call as the result callers get
+  function _failure(error) {
+    return {
+      "ok": false,
+      "kind": error.kind,
+      "message": error.message
+    };
+  }
+
+  function _enqueue(cmd, run, callback) {
     root._jobs = root._jobs.concat([
       {
         "cmd": cmd,
-        "build": build,
+        "run": run,
         "callback": callback
       }
     ]);
@@ -428,28 +453,11 @@ QtObject {
     const job = root._jobs[0];
     root._jobs = root._jobs.slice(1);
     root._running = job;
-    job.build(request => {
-      CommandManager.run(["python3", Paths.scriptsPath + "calendar_sync.py", job.cmd], (code, out, err) => {
-        let result = null;
-        try {
-          result = JSON.parse(out.trim().split("\n").pop());
-        } catch (e) {
-          result = {
-            "ok": false,
-            "code": "helper",
-            "message": err.trim().split("\n").pop() || "exit " + code
-          };
-        }
-        if (err.trim())
-          console.log("[CalendarManager]", job.cmd + ":", err.trim());
-        root.missingModule = result.code === "missingModule" ? result.message : "";
-        root.available = result.code !== "helper" && root.missingModule === "";
-        if (job.cmd !== "discover")
-          root._loadEvents();
-        root._running = null;
-        job.callback?.(result);
-        root._next();
-      }, JSON.stringify(request));
+    job.run(result => {
+      root._loadEvents();
+      root._running = null;
+      job.callback?.(result);
+      root._next();
     });
   }
 

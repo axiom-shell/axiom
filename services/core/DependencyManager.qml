@@ -123,10 +123,6 @@ Singleton {
       "purpose": "Theme generation from the wallpaper"
     },
     {
-      "command": "py:icalendar",
-      "purpose": "Calendar accounts and feeds"
-    },
-    {
       "command": "notify-send",
       "purpose": "Notifications from axiom itself, with their buttons"
     },

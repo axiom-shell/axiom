@@ -155,14 +155,6 @@ QtObject {
         "arch": "python-pillow",
         "fedora": "python3-pillow"
       },
-      "py:icalendar": {
-        "arch": "python-icalendar",
-        "fedora": "python3-icalendar"
-      },
-      "py:dateutil": {
-        "arch": "python-dateutil",
-        "fedora": "python3-dateutil"
-      },
       "notify-send": {
         "arch": "libnotify",
         "fedora": "libnotify"
