@@ -363,6 +363,8 @@ class GreeterShim(unittest.TestCase):
         planted.write_text("#!/bin/sh\necho planted\n")
         planted.chmod(0o755)
         self.env.update({"AXIOM_BIN": str(planted), "PATH": f"{self.tmp}:{self.env['PATH']}"})
+        # A real /usr/bin/axiom (a packaged one) acts only on a scratch root
+        self.env["AXIOM_GREETER_ROOT"] = str(self.tmp / "root")
         (self.tmp / "axiom").symlink_to(planted)
 
     def tearDown(self):

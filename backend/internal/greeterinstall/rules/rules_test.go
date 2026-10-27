@@ -31,10 +31,10 @@ func TestNewest(t *testing.T) {
 		"aaa\tHEAD",
 		"bbb\trefs/heads/master",
 		"ccc\trefs/heads/main",
-		"d01\trefs/tags/v1.9",
-		"d02\trefs/tags/v1.10",
-		"d03\trefs/tags/v1.10^{}",
 		"d04\trefs/tags/other",
+		"d03\trefs/tags/v1.10^{}",
+		"d02\trefs/tags/v1.10",
+		"d01\trefs/tags/v1.9",
 		"d05\trefs/tags/v1.2",
 	}, "\n") + "\n"
 	for _, tc := range []struct {
@@ -62,20 +62,6 @@ func TestNewest(t *testing.T) {
 	}
 	if target := (Target{Ref: "refs/heads/main"}); target.Name() != "main" || target.Tag() != "" {
 		t.Errorf("branch target: %q %q", target.Name(), target.Tag())
-	}
-}
-
-func TestCompareVersions(t *testing.T) {
-	t.Parallel()
-	sorted := []string{"v0.9", "v1.0~rc1", "v1.0", "v1.0.1", "v1.2", "v1.9", "v1.10", "v1.10a", "v2", "v10"}
-	shuffled := slices.Clone(sorted)
-	slices.Reverse(shuffled)
-	slices.SortFunc(shuffled, CompareVersions)
-	if !slices.Equal(shuffled, sorted) {
-		t.Errorf("sorted %v, want %v", shuffled, sorted)
-	}
-	if CompareVersions("v1.01", "v1.1") != 0 {
-		t.Error("leading zeros count")
 	}
 }
 

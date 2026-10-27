@@ -16,7 +16,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -55,8 +54,6 @@ type Options struct {
 	Getenv func(string) string
 	// Releases replaces the GitHub releases' download url (tests)
 	Releases string
-	// Client downloads release binaries (default one of its own)
-	Client *http.Client
 	// Now dates the backups (default time.Now)
 	Now func() time.Time
 }
@@ -77,9 +74,6 @@ func New(opts Options) *Installer {
 	}
 	if opts.Getenv == nil {
 		opts.Getenv = os.Getenv
-	}
-	if opts.Client == nil {
-		opts.Client = &http.Client{}
 	}
 	if opts.Now == nil {
 		opts.Now = time.Now
@@ -228,7 +222,7 @@ func (in *Installer) currentHash(ctx context.Context, g gitRunner, source, chann
 func (in *Installer) remoteTarget(ctx context.Context, url, channel string) (rules.Target, bool) {
 	ctx, cancel := context.WithTimeout(ctx, lsRemoteTimeout)
 	defer cancel()
-	out, err := in.git("", nil).run(ctx, nil, "ls-remote", url)
+	out, err := in.git("", nil).run(ctx, nil, "ls-remote", "--sort=-v:refname", url)
 	if err != nil {
 		return rules.Target{}, false
 	}
@@ -317,7 +311,6 @@ type account struct {
 type cmd struct {
 	as     *account  // as this user (nil: as this process)
 	dir    string    // in this folder ("" for this process's)
-	env    []string  // in this environment, PATH added (nil: Options.Environ's)
 	stdin  io.Reader // from this
 	stdout io.Writer // its output to this, else returned
 }
@@ -330,9 +323,6 @@ func (in *Installer) command(ctx context.Context, c cmd, name string, args ...st
 	run := exec.CommandContext(ctx, lookPath(name, path), args...)
 	run.Dir, run.Stdin = c.dir, c.stdin
 	run.Env = append(env, "GIT_TERMINAL_PROMPT=0", "LC_ALL=C")
-	if c.env != nil {
-		run.Env = append([]string{"PATH=" + path}, c.env...)
-	}
 	if c.as != nil {
 		run.Env = append(run.Env, "HOME="+c.as.home)
 		run.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: c.as.uid, Gid: c.as.gid, Groups: c.as.groups}}

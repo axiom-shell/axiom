@@ -1,6 +1,7 @@
 package greeterinstall
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -282,7 +283,8 @@ func TestElevate(t *testing.T) {
 // checked against its release's SHA256SUMS (local: the user's own)
 func TestFirstProgram(t *testing.T) {
 	t.Parallel()
-	released := "\x7fELF released"
+	// (a script, so the check root runs it through can run it)
+	released := "#!/bin/sh\necho ran \"$@\"\n"
 	for _, tc := range []struct {
 		name, source, channel string
 		releases              func(t *testing.T) string // "" for none
@@ -290,8 +292,8 @@ func TestFirstProgram(t *testing.T) {
 		want                  string                    // the program, or the refusal's text
 		refused               bool
 	}{
-		{"local reuses the user's binary", rules.SourceLocal, rules.ChannelTags, nil, 0, "/home/me/axiom", false},
-		{"the package's binary", rules.SourcePackage, rules.ChannelTags, nil, 0o755, "ROOT/usr/bin/axiom", false},
+		{"local reuses the user's binary", rules.SourceLocal, rules.ChannelTags, nil, 0, "/home/me/axiom greeter-install", false},
+		{"the package's binary", rules.SourcePackage, rules.ChannelTags, nil, 0o755, "ROOT/usr/bin/axiom greeter-install", false},
 		{"a package binary others can write", rules.SourcePackage, rules.ChannelTags, nil, 0o775, "isn't root's", true},
 		{"no package binary", rules.SourcePackage, rules.ChannelTags, nil, 0, "isn't root's", true},
 		{"the release's binary, checked", rules.SourceGit, rules.ChannelTags, func(t *testing.T) string { return releases(t, released, "") }, 0, "", false},
@@ -314,7 +316,7 @@ func TestFirstProgram(t *testing.T) {
 			}
 			in := New(opts)
 			req := rules.Request{Action: rules.ActionInstall, Repo: f.repo, User: f.user, Source: tc.source, Channel: tc.channel}
-			program, cleanup, err := in.firstProgram(context.Background(), req, "/home/me/axiom")
+			program, stdin, err := in.firstProgram(context.Background(), req, "/home/me/axiom")
 			if tc.refused {
 				if err == nil || !strings.Contains(err.Error(), tc.want) {
 					t.Fatalf("program %q, err %v; want a refusal saying %q", program, err, tc.want)
@@ -324,16 +326,30 @@ func TestFirstProgram(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if tc.want != "" && program != strings.Replace(tc.want, "ROOT", f.root, 1) {
-				t.Errorf("program %q, want %q", program, tc.want)
-			}
-			if tc.source == rules.SourceGit {
-				if data, _ := os.ReadFile(program); string(data) != released {
-					t.Errorf("the release binary is %q", data)
+			if tc.source != rules.SourceGit {
+				if got := strings.Join(program, " "); got != strings.Replace(tc.want, "ROOT", f.root, 1) {
+					t.Errorf("program %q, want %q", got, tc.want)
 				}
-				cleanup()
-				if _, err := os.Stat(program); err == nil {
-					t.Error("cleanup left the download")
+				return
+			}
+			// The release's bytes on stdin, checked against its sum where
+			// root runs them
+			if string(stdin) != released {
+				t.Errorf("the release binary is %q", stdin)
+			}
+			for _, tamper := range []bool{false, true} {
+				data := stdin
+				if tamper {
+					data = append([]byte(released), '#')
+				}
+				cmd := exec.Command(program[0], append(program[1:], "update", "/r")...)
+				cmd.Stdin = bytes.NewReader(data)
+				out, err := cmd.CombinedOutput()
+				if tamper && (err == nil || strings.Contains(string(out), "ran")) {
+					t.Errorf("a changed binary ran: %s", out)
+				}
+				if !tamper && (err != nil || strings.TrimSpace(string(out)) != "ran greeter-install update /r") {
+					t.Errorf("the checked binary: %v %s", err, out)
 				}
 			}
 		})

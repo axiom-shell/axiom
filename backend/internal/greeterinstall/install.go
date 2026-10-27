@@ -301,11 +301,14 @@ func (r *run) fillCopy(ctx context.Context, stage string) error {
 	case rules.SourceGit:
 		// Only a release's, checked against its SHA256SUMS: root runs it at
 		// the next update
-		ok, err := in.releaseBinary(ctx, origin.URL, target, binary)
+		data, _, err := in.releaseBinary(ctx, origin.URL, target)
+		if err == nil && data != nil {
+			err = writeFile(binary, data, 0o755)
+		}
 		if err != nil {
 			return err
 		}
-		if !ok {
+		if data == nil {
 			return failf("no axiom binary for %s: only a release's prebuilt one, checked against its SHA256SUMS, is installed (follow releases, or use Local)", label)
 		}
 	}
@@ -408,33 +411,34 @@ func (r *run) userBinary(ctx context.Context, dest string) error {
 }
 
 // releaseBinary downloads the target tag's prebuilt binary for this
-// machine from its GitHub release into dest, checked against the
-// release's SHA256SUMS. false: there's none (not a GitHub repository, not
-// a tag, no such asset); a download that doesn't match fails the install.
-func (in *Installer) releaseBinary(ctx context.Context, url string, target rules.Target, dest string) (bool, error) {
+// machine from its GitHub release, checked against the release's
+// SHA256SUMS: its bytes and that sum. nil: there's none (not a GitHub
+// repository, not a tag, no such asset); a download that doesn't match
+// fails the install.
+func (in *Installer) releaseBinary(ctx context.Context, url string, target rules.Target) ([]byte, string, error) {
 	asset, ok := rules.ReleaseAsset(runtime.GOARCH)
 	if !ok || target.Tag() == "" {
-		return false, nil
+		return nil, "", nil
 	}
 	base := in.opts.Releases
 	if base == "" {
 		if base, ok = rules.ReleaseBase(url); !ok {
-			return false, nil
+			return nil, "", nil
 		}
 	}
 	sums, err := in.download(ctx, base+"/"+target.Tag()+"/SHA256SUMS", sumsTimeout)
 	if err != nil {
-		return false, nil
+		return nil, "", nil
 	}
 	data, err := in.download(ctx, base+"/"+target.Tag()+"/"+asset, downloadTimeout)
 	if err != nil {
-		return false, nil
+		return nil, "", nil
 	}
-	sum := sha256.Sum256(data)
-	if want := rules.SumFor(string(sums), asset); want == "" || !strings.EqualFold(want, fmt.Sprintf("%x", sum)) {
-		return false, failf("the %s release's %s doesn't match its SHA256SUMS", target.Tag(), asset)
+	sum := fmt.Sprintf("%x", sha256.Sum256(data))
+	if want := rules.SumFor(string(sums), asset); want == "" || !strings.EqualFold(want, sum) {
+		return nil, "", failf("the %s release's %s doesn't match its SHA256SUMS", target.Tag(), asset)
 	}
-	return true, writeFile(dest, data, 0o755)
+	return data, sum, nil
 }
 
 // download is a url's body.
@@ -445,7 +449,7 @@ func (in *Installer) download(ctx context.Context, url string, timeout time.Dura
 	if err != nil {
 		return nil, err
 	}
-	resp, err := in.opts.Client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

@@ -70,12 +70,11 @@ func (t Target) Tag() string {
 	return ""
 }
 
-// Newest reads `git ls-remote`'s answer for the channel's newest commit:
-// "tags" the newest v* tag in version order (an annotated tag by the
-// commit it points at), "main" the main branch, else master. ok is false
-// when the remote has none.
+// Newest reads `git ls-remote --sort=-v:refname`'s answer (newest
+// version first) for the channel's newest commit: "tags" the newest v*
+// tag (an annotated tag by the commit it points at), "main" the main
+// branch, else master. ok is false when the remote has none.
 func Newest(refs, channel string) (t Target, ok bool) {
-	plain, peeled := map[string]string{}, map[string]string{}
 	var master string
 	for line := range strings.Lines(refs) {
 		commit, ref, found := strings.Cut(strings.TrimRight(line, "\r\n"), "\t")
@@ -88,97 +87,19 @@ func Newest(refs, channel string) (t Target, ok bool) {
 		case channel == ChannelMain && ref == "refs/heads/master":
 			master = commit
 		case channel != ChannelMain && strings.HasPrefix(ref, "refs/tags/v"):
-			name := strings.TrimPrefix(ref, "refs/tags/")
-			if base, ok := strings.CutSuffix(name, "^{}"); ok {
-				peeled[base] = commit
-			} else {
-				plain[name] = commit
+			tag, peeled := strings.CutSuffix(ref, "^{}")
+			if t.Ref != "" && tag != t.Ref {
+				return t, true
+			}
+			if t.Ref == "" || peeled {
+				t = Target{Commit: commit, Ref: tag}
 			}
 		}
 	}
 	if channel == ChannelMain {
 		return Target{Commit: master, Ref: "refs/heads/master"}, master != ""
 	}
-	newest := ""
-	for name := range plain {
-		if newest == "" || CompareVersions(name, newest) > 0 {
-			newest = name
-		}
-	}
-	if newest == "" {
-		return Target{}, false
-	}
-	commit := plain[newest]
-	if c, ok := peeled[newest]; ok {
-		commit = c
-	}
-	return Target{Commit: commit, Ref: "refs/tags/" + newest}, true
-}
-
-// CompareVersions orders version strings as `sort -V` does: runs of
-// digits by their number, the text between them byte by byte, "~" before
-// anything.
-func CompareVersions(a, b string) int {
-	for a != "" || b != "" {
-		var ta, tb string
-		ta, a = cutRun(a, false)
-		tb, b = cutRun(b, false)
-		if c := compareText(ta, tb); c != 0 {
-			return c
-		}
-		ta, a = cutRun(a, true)
-		tb, b = cutRun(b, true)
-		ta, tb = strings.TrimLeft(ta, "0"), strings.TrimLeft(tb, "0")
-		if len(ta) != len(tb) {
-			return sign(len(ta) - len(tb))
-		}
-		if c := strings.Compare(ta, tb); c != 0 {
-			return c
-		}
-	}
-	return 0
-}
-
-// cutRun splits s after its leading run of digits (or of non-digits).
-func cutRun(s string, digits bool) (string, string) {
-	i := 0
-	for i < len(s) && (s[i] >= '0' && s[i] <= '9') == digits {
-		i++
-	}
-	return s[:i], s[i:]
-}
-
-func compareText(a, b string) int {
-	for i := 0; i < len(a) || i < len(b); i++ {
-		if c := textOrder(a, i) - textOrder(b, i); c != 0 {
-			return sign(c)
-		}
-	}
-	return 0
-}
-
-// textOrder is a byte's weight in compareText: ~ first, then the end of
-// the run, then letters, then everything else.
-func textOrder(s string, i int) int {
-	switch {
-	case i >= len(s):
-		return 0
-	case s[i] == '~':
-		return -1
-	case s[i] >= 'a' && s[i] <= 'z' || s[i] >= 'A' && s[i] <= 'Z':
-		return int(s[i])
-	}
-	return int(s[i]) + 256
-}
-
-func sign(n int) int {
-	switch {
-	case n < 0:
-		return -1
-	case n > 0:
-		return 1
-	}
-	return 0
+	return t, t.Ref != ""
 }
 
 // GreetdValue is `key`'s value in greetd's [default_session] (command,

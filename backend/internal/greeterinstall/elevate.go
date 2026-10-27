@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
@@ -32,21 +31,20 @@ type Elevated struct {
 func (in *Installer) Elevate(ctx context.Context, req rules.Request, own string) (Elevated, error) {
 	ctx = context.WithoutCancel(ctx)
 	program := []string{in.path(HelperPath)}
+	var stdin []byte
 	if helper, binaries := in.helper(); !helper || !binaries {
-		binary, cleanup, err := in.firstProgram(ctx, req, own)
-		if err != nil {
+		var err error
+		if program, stdin, err = in.firstProgram(ctx, req, own); err != nil {
 			var f failure
 			if errors.As(err, &f) {
 				return Elevated{Result: rules.Result{Changed: []string{}, Error: f.Error()}}, nil
 			}
 			return Elevated{}, err
 		}
-		defer cleanup()
-		program = []string{binary, "greeter-install"}
 	}
-	args := append(append([]string{}, program[1:]...), req.Args()...)
-	cmd := exec.CommandContext(ctx, in.opts.Pkexec, append([]string{program[0]}, args...)...)
+	cmd := exec.CommandContext(ctx, in.opts.Pkexec, append(program, req.Args()...)...)
 	cmd.Env = in.opts.Environ()
+	cmd.Stdin = bytes.NewReader(stdin)
 	var out, errOut bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errOut
 	err := cmd.Run()
@@ -73,59 +71,63 @@ func (in *Installer) Elevate(ctx context.Context, req rules.Request, own string)
 	return r, nil
 }
 
-// firstProgram is the axiom binary pkexec runs before root has a helper of
-// its own: one root owns, or one checked against its release's SHA256SUMS
-// before anything runs as root (maintainer, 2026-10-27: "root owned
-// checksum verified binary"). A package's is root's own; git's is the
-// newest release's prebuilt one, downloaded to a folder of this user's
-// and verified (cleanup removes it); local reuses own, the binary this
-// user built, unchecked. Anything else is refused ("Refuse the install
-// (except for if you have the local clone install path selected, in which
-// case it reuses your most recently built binary, and skips the
-// checksum)"): the main channel, a release with no binary for this
-// machine, a remote that isn't GitHub's.
-func (in *Installer) firstProgram(ctx context.Context, req rules.Request, own string) (string, func(), error) {
-	none := func() {}
+// firstProgram is what pkexec runs before root has a helper of its own:
+// a binary root owns, or one checked against its release's SHA256SUMS
+// (maintainer, 2026-10-27: "root owned checksum verified binary"). A
+// package's is root's own; local reuses own, the binary this user built,
+// unchecked. git's is the newest release's prebuilt one, downloaded here
+// and handed to root on stdin (verifyAndRun): nothing of this user's can
+// swap it between the check and its run. Anything else is refused
+// ("Refuse the install (except for if you have the local clone install
+// path selected, in which case it reuses your most recently built binary,
+// and skips the checksum)"): the main channel, a release with no binary
+// for this machine, a remote that isn't GitHub's.
+func (in *Installer) firstProgram(ctx context.Context, req rules.Request, own string) ([]string, []byte, error) {
 	switch req.Source {
 	case rules.SourceLocal:
 		if own == "" {
-			return "", none, failf("no axiom binary of yours to run")
+			return nil, nil, failf("no axiom binary of yours to run")
 		}
-		return own, none, nil
+		return []string{own, "greeter-install"}, nil, nil
 	case rules.SourcePackage:
 		binary := in.path("/usr/bin/axiom")
 		if !in.rootOwned(binary) {
-			return "", none, failf("%s isn't root's: install axiom's package", binary)
+			return nil, nil, failf("%s isn't root's: install axiom's package", binary)
 		}
-		return binary, none, nil
+		return []string{binary, "greeter-install"}, nil, nil
 	}
 	if req.Channel == rules.ChannelMain {
-		return "", none, failf("the main channel has no release binary to check: set the login screen up from the newest release, or from Local")
+		return nil, nil, failf("the main channel has no release binary to check: set the login screen up from the newest release, or from Local")
 	}
 	url := in.git(req.Repo, nil).upstreamURL(ctx, in.origin())
 	if url == "" {
-		return "", none, failf("%s has no remote to fetch axiom from", req.Repo)
+		return nil, nil, failf("%s has no remote to fetch axiom from", req.Repo)
 	}
 	target, ok := in.remoteTarget(ctx, url, req.Channel)
 	if !ok {
-		return "", none, failf("nothing to fetch from %s on the %s channel (offline?)", url, req.Channel)
+		return nil, nil, failf("nothing to fetch from %s on the %s channel (offline?)", url, req.Channel)
 	}
-	dir, err := os.MkdirTemp("", "axiom-greeter-")
+	data, sum, err := in.releaseBinary(ctx, url, target)
 	if err != nil {
-		return "", none, err
+		return nil, nil, err
 	}
-	cleanup := func() { os.RemoveAll(dir) }
-	binary := filepath.Join(dir, "axiom")
-	ok, err = in.releaseBinary(ctx, url, target, binary)
-	if err == nil && !ok {
-		err = failf("%s has no release binary to check for this machine: the login screen installs only a release's, or yours from Local", target.Name())
+	if data == nil {
+		return nil, nil, failf("%s has no release binary to check for this machine: the login screen installs only a release's, or yours from Local", target.Name())
 	}
-	if err != nil {
-		cleanup()
-		return "", none, err
-	}
-	return binary, cleanup, nil
+	return []string{"/bin/sh", "-c", verifyAndRun, "sh", sum}, data, nil
 }
+
+// verifyAndRun is how root runs a release binary the user's daemon
+// downloaded: its bytes (stdin) go into a folder only root can write and
+// are checked there against the sum the release lists ($1), then run.
+const verifyAndRun = `set -e
+dir=$(mktemp -d)
+trap 'rm -rf "$dir"' EXIT
+cat >"$dir/axiom"
+echo "$1  $dir/axiom" | sha256sum -c --status || { echo "the axiom binary doesn't match its release's SHA256SUMS" >&2; exit 1; }
+chmod 700 "$dir/axiom"
+shift
+"$dir/axiom" greeter-install "$@"`
 
 // rootOwned says whether only root can change a file: root's, and
 // writable by no one else (on a test root: the user running the tests).
