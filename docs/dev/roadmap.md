@@ -74,6 +74,10 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 
 **Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); [Phase 12](#phase-12-memory-footprint)'s other entries, before row 13 (Phase 6), so the parity pass checks the windows they change; parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload).
 
+**Binaries** (parallel lane, run by its own session on `binaries/*` branches; maintainer, 2026-10-27: "Rolling CI build (Recommended)"; tags: "Download, build fallback (Recommended)"; greeter main: "Allow via CI build (Recommended)"): every clone takes the official binary built from the commit it checks out ([packaging](packaging.md) › Edge builds), `go` only as the fallback.
+- in progress: the edge prerelease (`.github/workflows/edge.yml`) and the shared `release`, `release/fetch` packages.
+- later: the greeter's `main` channel through edge; self-update downloading the binary; install.sh downloading before it builds; then the maintainer cuts a release, so the tags channel has binaries.
+
 ### Taking the next step
 What an agent does when asked for "the next step", to "continue the roadmap", or to work on a row or phase by number. The answer to "where do I start" is always this file: nothing else needs explaining.
 
@@ -296,7 +300,7 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 - [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
 - [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
-- [CI checks dependencies and cross-builds only when a PR touches Go](issues.md#ci-checks-dependencies-and-cross-builds-only-when-a-pr-touches-go)
+- [CI checks dependencies only when a PR touches Go](issues.md#ci-checks-dependencies-only-when-a-pr-touches-go)
 
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.

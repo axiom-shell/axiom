@@ -1,6 +1,6 @@
 # Packaging: install.sh and the AUR packages
 
-> **Files:** `install.sh`, `packaging/aur/axiom-shell/PKGBUILD`, `packaging/aur/axiom-shell-git/PKGBUILD`, `scripts/check_packages.py`, `scripts/release.sh`, `.github/workflows/release.yml`, `components/methods/Packages.qml`, `config/Paths.qml`
+> **Files:** `install.sh`, `packaging/aur/axiom-shell/PKGBUILD`, `packaging/aur/axiom-shell-git/PKGBUILD`, `scripts/check_packages.py`, `scripts/release.sh`, `.github/workflows/release.yml`, `.github/workflows/edge.yml`, `backend/internal/release/`, `components/methods/Packages.qml`, `config/Paths.qml`
 > **Config:** none
 > **Related:** [Self-update](features/self-update.md), [Greeter install](features/greeter-install.md), [Onboarding](features/onboarding.md), [Config manager](core/config-manager.md)
 
@@ -50,6 +50,12 @@ Not on the AUR yet: AUR account registration is closed, so they wait in `packagi
   - **The AUR** (`aur` job, skipped without the `AUR_SSH_PRIVATE_KEY` secret): `packaging/aur/` as main has it, `axiom-shell` given the tag's `pkgver`, the `pkgrel` and the tag tarball's `sha256sums`, built once with `makepkg --nodeps` as a check, `.SRCINFO` made for both, and each pushed to its AUR repository when it changed. The repository keeps no `.SRCINFO`, and the PKGBUILD's version fields are only the last release's.
   - Settings: the `AUR_SSH_PRIVATE_KEY` secret (the AUR account's key); optional variables `AUR_HOST_FINGERPRINT` (pins `aur.archlinux.org`'s ed25519 key, `SHA256:…`), `AUR_GIT_NAME` and `AUR_GIT_EMAIL` (the AUR commits' author).
   - **A packaging-only fix:** merge it to main, then run the workflow by hand (Actions → Release → Run workflow) with the tag and a higher `pkgrel`. A rerun also publishes the binaries again.
+- **Edge builds** (`.github/workflows/edge.yml`): every merge to main publishes the `edge` prerelease, main's newest build, for a clone following main (maintainer, 2026-10-27: "Rolling CI build (Recommended)").
+  - The same static `axiom-linux-amd64` / `axiom-linux-arm64` as a release, stamped `edge-<short commit>` (and the full commit, which `axiom version --json` reports), plus `COMMIT` (the full hash and a newline), all three listed in `SHA256SUMS`.
+  - The `edge` tag is moved to the commit; it isn't `v*`, so the tags channels never see it, and the release is a prerelease never marked latest (`releases/latest` stays a `v*` release).
+  - The files are uploaded first and `SHA256SUMS` last, so a download racing an upload fails its check instead of taking a mismatched binary. A run whose commit main has moved past by publish time publishes nothing; runs never cancel each other mid-upload. Run it by hand (Actions → Edge → Run workflow) to publish main again.
+  - It also makes the cross-builds run at every merge, not only at a release.
+- **Reading them** (Go): `backend/internal/release` (pure) names the files and urls (`release.Official`, pinned to the official repository whatever a clone's remote; `release.Edge`; `release.Asset`, `release.SumFor`, `release.ParseCommit`), and `release/fetch` downloads one and checks it against its release's `SHA256SUMS` (`Binary`, `EdgeCommit`): `ErrMissing` when there's nothing to take (fall back), `ErrMismatch` when it doesn't match (never used). The greeter install uses it ([greeter-install.md](features/greeter-install.md)).
 - **Testing:** `makepkg` in a scratch copy of the folder (or its functions sourced with `srcdir`/`pkgdir` on a scratch clone, which tests uncommitted work), then `axiom schema check --tree <pkgdir>/usr/share/axiom`, `namcap` on the PKGBUILD and the package (in an `archlinux` container if it isn't installed: its QML-module and `bash`/`sh` warnings are expected), and `tar -tf` the package to see its files.
 
 ### A packaged shell

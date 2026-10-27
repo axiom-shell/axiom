@@ -200,30 +200,3 @@ func TestPointGreetd(t *testing.T) {
 		})
 	}
 }
-
-func TestReleases(t *testing.T) {
-	t.Parallel()
-	for tag, want := range map[string]string{
-		"v1.0":        "B/v1.0/SHA256SUMS",
-		"":            "",
-		"v1/../other": "",
-		"..":          "",
-		"v1?x":        "",
-	} {
-		if got, _ := ReleaseURL("B", tag, "SHA256SUMS"); got != want {
-			t.Errorf("ReleaseURL(%q) = %q, want %q", tag, got, want)
-		}
-	}
-	if asset, ok := ReleaseAsset("arm64"); !ok || asset != "axiom-linux-arm64" {
-		t.Errorf("arm64: %q", asset)
-	}
-	if _, ok := ReleaseAsset("riscv64"); ok {
-		t.Error("riscv64 has a release binary")
-	}
-	sums := "aaa  axiom-linux-amd64\nbbb *axiom-linux-arm64\nccc  axiom-linux-amd64.sig\n"
-	for name, want := range map[string]string{"axiom-linux-amd64": "aaa", "axiom-linux-arm64": "bbb", "axiom": ""} {
-		if got := SumFor(sums, name); got != want {
-			t.Errorf("SumFor(%q) = %q, want %q", name, got, want)
-		}
-	}
-}

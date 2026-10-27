@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
+	"github.com/axiom-shell/axiom/backend/internal/release"
 )
 
 // pkexecDismissed is pkexec's exit code when its prompt was dismissed.
@@ -112,7 +113,7 @@ func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]str
 	if data == nil {
 		return nil, nil, failf("%s has no release binary to check for this machine: the login screen installs only a release's, or yours from Local", target.Name())
 	}
-	asset, _ := rules.ReleaseAsset(runtime.GOARCH)
+	asset, _ := release.Asset(runtime.GOARCH)
 	return []string{"/bin/sh", "-c", verifyAndRun, "sh", in.varDir(), sums, asset}, data, nil
 }
 
