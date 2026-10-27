@@ -71,6 +71,8 @@ type Options struct {
 	topics []topics.Source
 	// registered sees the registry once every part registered (tests)
 	registered func(*rpc.Registry)
+	// releases replaces the official releases' download url (tests)
+	releases string
 }
 
 // Files in the runtime directory

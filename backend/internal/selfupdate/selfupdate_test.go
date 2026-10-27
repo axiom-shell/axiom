@@ -2,6 +2,7 @@ package selfupdate
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -221,6 +222,62 @@ func TestMainChannelFollowsCommits(t *testing.T) {
 	if rep := r.check(ChannelTags); rep.State != "uptodate" || !rep.Ahead {
 		t.Fatalf("back on tags: %+v", rep)
 	}
+}
+
+// With an edge build, main aims at the commit it was made from, not the
+// head, and keeps aiming there without fetching (a status, an apply, a
+// restarted daemon)
+func TestMainChannelFollowsTheEdgeBuild(t *testing.T) {
+	t.Parallel()
+	r := newRepos(t)
+	r.commit(r.upstream, "two")
+	built := r.head(r.upstream)
+	r.commit(r.upstream, "three")
+	edge := func(context.Context) (string, error) { return built, nil }
+	u := New(Options{Dir: r.clone, Environ: func() []string { return r.env }, EdgeCommit: edge})
+	rep, err := u.Check(context.Background(), ChannelMain)
+	if err != nil || rep.State != "available" || rep.Behind != 1 || rep.Latest != built[:len(rep.Latest)] || strings.Contains(rep.Notes, "three") {
+		t.Fatalf("check: %+v %v", rep, err)
+	}
+	if status := r.status(ChannelMain); status.Latest != rep.Latest {
+		t.Fatalf("a status without fetching aims at %q, not %q", status.Latest, rep.Latest)
+	}
+	applied := r.apply(ChannelMain, rep.Latest)
+	if applied.Error != "" || !r.exists("two.txt") || r.exists("three.txt") || r.updater().Head(context.Background()) != built {
+		t.Fatalf("apply: %+v", applied)
+	}
+	// No build any more: main's head again
+	none := func(context.Context) (string, error) { return "", errors.New("no edge build") }
+	u = New(Options{Dir: r.clone, Environ: func() []string { return r.env }, EdgeCommit: none})
+	if rep, err := u.Check(context.Background(), ChannelMain); err != nil || rep.Behind != 1 || !strings.Contains(rep.Notes, "three") {
+		t.Fatalf("without a build: %+v %v", rep, err)
+	}
+	// A build of a commit this clone can't fetch isn't followed
+	unknown := func(context.Context) (string, error) { return strings.Repeat("a", 40), nil }
+	u = New(Options{Dir: r.clone, Environ: func() []string { return r.env }, EdgeCommit: unknown})
+	if rep, err := u.Check(context.Background(), ChannelMain); err != nil || rep.Behind != 1 {
+		t.Fatalf("an unknown build: %+v %v", rep, err)
+	}
+}
+
+func (r *repos) head(repo string) string {
+	r.t.Helper()
+	cmd := exec.Command("git", "-C", repo, "rev-parse", "HEAD")
+	cmd.Env = r.env
+	out, err := cmd.Output()
+	if err != nil {
+		r.t.Fatal(err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func (r *repos) status(channel string) Report {
+	r.t.Helper()
+	rep, err := r.updater().Status(context.Background(), channel)
+	if err != nil {
+		r.t.Fatal(err)
+	}
+	return rep
 }
 
 func TestMainChannelFallsBackToMaster(t *testing.T) {

@@ -1,7 +1,9 @@
 // Package selfupdate brings axiom's own git clone up to date from its
 // remote (SelfUpdateManager, through the daemon's selfupdate.* methods),
 // following one of two channels: "tags" (releases, `v*` tags, to the
-// newest) or "main" (the remote's main branch, else master). An update
+// newest) or "main" (the remote's main branch, else master: to the commit
+// main's newest official build was made from when there is one, so the
+// binary downloaded for it is that commit's; else main's head). An update
 // only fast-forwards; a clone with changed tracked files, commits of its
 // own or another branch checked out is reported as blocked and never
 // touched (nothing is stashed, reset or forced). A tree with no .git is
@@ -52,10 +54,13 @@ type Report struct {
 	Blocked string `json:"blocked"`
 	// The release's tag message, or main's new commit subjects
 	Notes string `json:"notes"`
-	// After an update: whether the axiom binary was rebuilt from the
-	// updated tree, or why that failed (the update itself stays in)
-	Rebuilt    bool   `json:"rebuilt"`
-	BuildError string `json:"buildError"`
+	// After an update: whether the axiom binary was replaced to match the
+	// updated tree, where the new one came from ("release" | "edge": an
+	// official build downloaded and checked; "built": compiled from the
+	// tree), or why that failed (the update itself stays in)
+	Rebuilt      bool   `json:"rebuilt"`
+	BinarySource string `json:"binarySource"`
+	BuildError   string `json:"buildError"`
 	// Error is git's reason a fetch or an update failed, or why an update
 	// was refused; the rest still describes the clone
 	Error string `json:"error"`
@@ -67,7 +72,15 @@ type Options struct {
 	// Environ is git's environment (default os.Environ()): the user's
 	// ssh agent and credential helpers come from it
 	Environ func() []string
+	// EdgeCommit is the commit main's newest official build was made from
+	// (nil: none to follow), asked at each main check
+	EdgeCommit func(context.Context) (string, error)
 }
+
+// edgeRef keeps the commit of main's newest build a check found, so a
+// status or an apply (which don't fetch) aim at the same commit, across
+// restarts too.
+const edgeRef = "refs/axiom/edge"
 
 // fetchTimeout bounds a fetch.
 const fetchTimeout = time.Minute
@@ -85,6 +98,15 @@ func New(opts Options) *Updater {
 		opts.Environ = os.Environ
 	}
 	return &Updater{opts: opts}
+}
+
+// Head is the full commit the clone has checked out ("" when it can't
+// be told).
+func (u *Updater) Head(ctx context.Context) string {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	s := &session{u: u}
+	return s.line(ctx, "rev-parse", "HEAD")
 }
 
 // Status describes the clone from the refs it has, without fetching.
@@ -109,6 +131,9 @@ func (u *Updater) Check(ctx context.Context, channel string) (Report, error) {
 		return r, err
 	}
 	fetched, fetchErr := s.fetch(ctx)
+	if fetchErr == "" {
+		s.noteEdge(ctx)
+	}
 	r, err = s.inspect(ctx, fetched)
 	if err == nil && fetchErr != "" {
 		r.Error = fetchErr
@@ -271,6 +296,22 @@ func (s *session) fetch(ctx context.Context) (fetched, failed string) {
 	return "", firstError(out)
 }
 
+// noteEdge records, on main, the commit main's newest build was made
+// from (edgeRef), or drops the record when there's no build to follow.
+// A commit this clone hasn't fetched (a build of a fork's main) isn't
+// recorded.
+func (s *session) noteEdge(ctx context.Context) {
+	if s.channel != ChannelMain || s.u.opts.EdgeCommit == nil {
+		return
+	}
+	commit, err := s.u.opts.EdgeCommit(ctx)
+	if err != nil || s.line(ctx, "rev-parse", "--quiet", "--verify", commit+"^{commit}") == "" {
+		s.git(ctx, "update-ref", "-d", edgeRef)
+		return
+	}
+	s.git(ctx, "update-ref", edgeRef, commit)
+}
+
 // inspect describes the clone against the channel's newest ref, setting
 // s.ref. fetched is the branch a fetch found on main, preferred over a
 // stale remote-tracking one.
@@ -299,6 +340,12 @@ func (s *session) inspect(ctx context.Context, fetched string) (Report, error) {
 		}
 		if s.ref == "" {
 			return r, nil
+		}
+		// main's newest build, when it's on main: its commit, not the head
+		if s.line(ctx, "rev-parse", "--quiet", "--verify", edgeRef) != "" {
+			if on, err := s.ancestor(ctx, edgeRef, s.ref); err == nil && on {
+				s.ref = edgeRef
+			}
 		}
 		r.Latest = s.line(ctx, "rev-parse", "--short", s.ref)
 	}
