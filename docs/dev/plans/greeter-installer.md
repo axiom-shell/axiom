@@ -54,6 +54,7 @@ The maintainer's answers (2026-10-27), verbatim:
 - Question 3 (the gate): "waive limit". One PR.
 - Question 4 (the root contract): "Keep argv (Recommended)". The script's argv and `{ok, changed, backup, error}` reply stay the contract; no marker.
 - Question 5 (the binary run as root on a first install): "root owned checksum verified binary". That is question 5's second choice: require a root-owned binary, the package's, else a release download verified by `SHA256SUMS` before anything runs as root. It replaces A's "the first install runs the user's `$AXIOM_BIN` as root, the same trust as `pkexec bash <clone's script>` today".
+- Follow-up to question 5 (2026-10-27), asked: "'Root owned checksum verified binary' for the greeter: some installs have no release binary to verify (the `main` channel, the `local` source, and no release ships binaries yet). What should happen there?" Answer: "Refuse the install (except for if you have the local clone install path selected, in which case it reuses your most recently built binary, and skips the checksum)".
 
 ### Items
 One PR, the gate waived (question 3), the items in this order, each an issues.md entry:
