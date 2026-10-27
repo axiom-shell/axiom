@@ -78,6 +78,8 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 
 **Stage 4: scripts** (next; pure rendering at the core, effects at the edge, as `compositor/render` is)
 - `calendar_sync.py` → a Go CalDAV client (also unblocks VTODO sync).
+  - Batches: discovery; then the sync and the recurrence expansion (`calendar.sync`, with `calendar/ical` growing its values and `teambition/rrule-go`, a port of the dateutil rrule the script uses); then saving and deleting, when the script and its icalendar dependency go.
+  - Done: discovery. `CalendarManager.discover` → `calendar.discover` (`backend/internal/calendar`, `daemon/calendar.go`): principal, calendar home and collections from any URL on the server, redirects followed for every method, then `/.well-known/caldav`; a feed's name and color read by the pure `calendar/ical`. The password still comes from `SecretsManager`, now in the call's params. The script lost `discover`.
 - `generate_theme.py` and the `theme_*.sh` integrations → a renderer plus one writer per integration's `axiom.*` file.
 - `integration_hookup.py` → `compositor/edit` (atomic replacement, dated backups).
 - `self_update.sh` → the daemon, which already owns the re-exec after an update.

@@ -6,7 +6,10 @@ CalendarManager runs it with the system python3; it needs icalendar (and
 python-dateutil, which icalendar depends on). Recurrences are expanded here,
 not by recurring-ical-events, which Fedora doesn't package:
 
-  calendar_sync.py discover|sync|save|delete
+  calendar_sync.py sync|save|delete
+
+Finding an account's calendars is the axiom daemon's (calendar.discover,
+backend/internal/calendar).
 
 Each reads one JSON object on stdin (passwords included: never argv, never
 printed) and prints one JSON object. Failures are `{"ok": false, "code",
@@ -14,11 +17,6 @@ printed) and prints one JSON object. Failures are `{"ok": false, "code",
 server, parse, noPassword, readOnly, missingModule (`message` the module's
 name: icalendar or dateutil isn't installed).
 
-discover  {kind, url, username, password}
-          -> {ok, calendars: [{href, name, color, components, readOnly}]}
-             `kind` "caldav" finds the calendars from any URL on the server
-             (the principal and its calendar home, following redirects:
-             iCloud moves to a pNN-caldav host); "ics" is one feed.
 sync      {stateDir, dataDir, range: {from, to}, accounts: [Account], only?: {account, calendar}}
           -> {ok, errors: [{calendar, code, message}], changed}
              Account: {id, kind, url, username, password, calendars: [{href}]}
@@ -83,15 +81,6 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 _opener = urllib.request.build_opener(_NoRedirect)
-
-
-def normalize_url(url):
-    url = (url or "").strip()
-    if url.startswith("webcal://") or url.startswith("webcals://"):
-        url = "https://" + url.split("://", 1)[1]
-    if url and "://" not in url:
-        url = "https://" + url
-    return url
 
 
 class Dav:
@@ -172,71 +161,9 @@ def parse_multistatus(data, base):
     return out
 
 
-def _href_of(el):
-    href = el.find("D:href", NS) if el is not None else None
-    return href.text.strip() if href is not None and href.text else None
-
-
 def _text(props, tag):
     el = props.get(tag)
     return (el.text or "").strip() if el is not None else ""
-
-
-def _is_calendar(props):
-    rt = props.get(f"{{{D}}}resourcetype")
-    return rt is not None and rt.find("C:calendar", NS) is not None
-
-
-CAL_PROPS = ["D:resourcetype", "D:displayname", "A:calendar-color", "C:supported-calendar-component-set",
-             "CS:getctag", "D:sync-token", "D:current-user-privilege-set"]
-
-
-def calendar_info(href, props):
-    comps_el = props.get(f"{{{C}}}supported-calendar-component-set")
-    comps = [c.get("name") for c in comps_el.findall("C:comp", NS)] if comps_el is not None else ["VEVENT", "VTODO"]
-    privs = props.get(f"{{{D}}}current-user-privilege-set")
-    read_only = False
-    if privs is not None:
-        names = {child.tag for p in privs.findall("D:privilege", NS) for child in p}
-        read_only = not names & {f"{{{D}}}{n}" for n in ("write", "write-content", "all", "bind")}
-    color = _text(props, f"{{{A}}}calendar-color")
-    if len(color) == 9 and color.startswith("#"):
-        color = color[:7]
-    name = _text(props, f"{{{D}}}displayname") or urllib.parse.unquote(href.rstrip("/").rsplit("/", 1)[-1])
-    return {"href": href, "name": name, "color": color, "components": comps, "readOnly": read_only}
-
-
-def discover_caldav(dav, url):
-    candidates = [url, urllib.parse.urljoin(url, "/.well-known/caldav")]
-    last = None
-    for candidate in candidates:
-        try:
-            found, final = dav.propfind(candidate, ["D:current-user-principal", "D:resourcetype", "C:calendar-home-set"] + CAL_PROPS, 0)
-        except Failure as err:
-            if err.code == "auth":
-                raise
-            last = err
-            continue
-        props = next(iter(found.values()), {})
-        if _is_calendar(props):
-            return [calendar_info(final, props)]
-        home = _href_of(props.get(f"{{{C}}}calendar-home-set"))
-        principal = _href_of(props.get(f"{{{D}}}current-user-principal"))
-        if not home and principal:
-            principal = urllib.parse.urljoin(final, principal)
-            found, pfinal = dav.propfind(principal, ["C:calendar-home-set"], 0)
-            pprops = next(iter(found.values()), {})
-            home = _href_of(pprops.get(f"{{{C}}}calendar-home-set"))
-            if home:
-                home = urllib.parse.urljoin(pfinal, home)
-        elif home:
-            home = urllib.parse.urljoin(final, home)
-        listing, hfinal = dav.propfind(home or final, CAL_PROPS, 1)
-        calendars = [calendar_info(href, props) for href, props in listing.items() if _is_calendar(props)]
-        if calendars:
-            return sorted(calendars, key=lambda c: c["name"].lower())
-        last = Failure("notCalendar", "No calendars found at that address")
-    raise last or Failure("notCalendar", "No calendars found at that address")
 
 
 def fetch_feed(dav, url, etag=None):
@@ -252,18 +179,6 @@ def fetch_feed(dav, url, etag=None):
     if status >= 400:
         raise Failure("server", f"GET {url}: HTTP {status}")
     return status, resp_headers.get("ETag") or "", data.decode("utf-8", "replace")
-
-
-def discover_feed(dav, url):
-    import icalendar
-    _, _, text = fetch_feed(dav, url)
-    try:
-        cal = icalendar.Calendar.from_ical(text)
-    except ValueError as err:
-        raise Failure("parse", f"Not an iCalendar feed: {err}") from None
-    name = str(cal.get("X-WR-CALNAME") or urllib.parse.urlparse(url).netloc)
-    color = str(cal.get("X-APPLE-CALENDAR-COLOR") or "")[:7]
-    return [{"href": url, "name": name, "color": color, "components": ["VEVENT"], "readOnly": True}]
 
 
 # --- Sync -------------------------------------------------------------------
@@ -976,17 +891,6 @@ def run_delete(req):
     return _resync(req, {"ok": True})
 
 
-def run_discover(req):
-    url = normalize_url(req.get("url"))
-    if not url:
-        raise Failure("notFound", "No address")
-    if req.get("kind") == "ics":
-        return {"ok": True, "calendars": discover_feed(Dav(), url)}
-    if not req.get("password"):
-        raise Failure("noPassword", "No password saved for this account")
-    return {"ok": True, "calendars": discover_caldav(Dav(req.get("username", ""), req["password"]), url)}
-
-
 # --- Files ------------------------------------------------------------------
 
 def read_json(path, default):
@@ -1012,7 +916,7 @@ def write_json(path, data):
         raise
 
 
-COMMANDS = {"discover": run_discover, "sync": run_sync, "save": run_save, "delete": run_delete}
+COMMANDS = {"sync": run_sync, "save": run_save, "delete": run_delete}
 
 
 def main(argv):

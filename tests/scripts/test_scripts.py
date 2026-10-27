@@ -1175,7 +1175,7 @@ END:VCALENDAR
 
 
 class CalendarSync(unittest.TestCase):
-    """calendar_sync.py: an .ics feed served locally (discover, sync and the
+    """calendar_sync.py: an .ics feed served locally (sync and the
     occurrences it writes), and the edits it makes to events, without a
     server. Times in UTC (TZ), so the expected values don't depend on the
     machine. recurring-ical-events is made unimportable: Fedora doesn't
@@ -1222,10 +1222,6 @@ class CalendarSync(unittest.TestCase):
         site.mkdir(exist_ok=True)
         (site / "team.ics").write_text(CALENDAR_FEED)
         url = self.serve(site) + "/team.ics"
-
-        found = self.run_helper("discover", {"kind": "ics", "url": url})
-        self.assertEqual(found["calendars"], [{"href": url, "name": "Team", "color": "#3366CC",
-                                               "components": ["VEVENT"], "readOnly": True}])
 
         state = self.tmp / "state"
         ms = lambda *args: int(__import__("datetime").datetime(*args, tzinfo=__import__("datetime").timezone.utc)
@@ -1435,10 +1431,10 @@ print(json.dumps(out))
         self.assertEqual(out["spanning"], [timed(2026, 9, 28, 10, length=120 * hour), timed(2026, 10, 5, 10, length=120 * hour)])
 
     def test_failures_are_json(self):
-        self.assertEqual(self.run_helper("discover", {"kind": "caldav", "url": "https://example.invalid"})["code"],
-                         "noPassword")
-        unreachable = self.run_helper("discover", {"kind": "ics", "url": "http://127.0.0.1:9/feed.ics"})
-        self.assertEqual(unreachable["code"], "network")
+        unreachable = self.run_helper("sync", {"stateDir": str(self.tmp), "range": {"from": 0, "to": 1},
+                                               "accounts": [{"id": "f", "kind": "ics",
+                                                             "calendars": [{"href": "http://127.0.0.1:9/feed.ics"}]}]})
+        self.assertEqual([e["code"] for e in unreachable["errors"]], ["network"])
         self.assertEqual(self.run_helper("save", {"stateDir": str(self.tmp), "range": {"from": 0, "to": 1},
                                                   "accounts": [], "account": "nope", "calendar": "x",
                                                   "event": {}})["code"], "notFound")
