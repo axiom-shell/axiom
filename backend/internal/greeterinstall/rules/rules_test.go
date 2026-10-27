@@ -219,15 +219,15 @@ func TestPointGreetd(t *testing.T) {
 
 func TestReleases(t *testing.T) {
 	t.Parallel()
-	for url, want := range map[string]string{
-		"https://github.com/axiom-shell/axiom.git": "https://github.com/axiom-shell/axiom/releases/download",
-		"https://github.com/axiom-shell/axiom/":    "https://github.com/axiom-shell/axiom/releases/download",
-		"https://github.com/axiom-shell":           "",
-		"https://github.com/a/b/c":                 "",
-		"https://gitlab.com/a/b":                   "",
+	for tag, want := range map[string]string{
+		"v1.0":        "B/v1.0/SHA256SUMS",
+		"":            "",
+		"v1/../other": "",
+		"..":          "",
+		"v1?x":        "",
 	} {
-		if got, _ := ReleaseBase(url); got != want {
-			t.Errorf("ReleaseBase(%q) = %q, want %q", url, got, want)
+		if got, _ := ReleaseURL("B", tag, "SHA256SUMS"); got != want {
+			t.Errorf("ReleaseURL(%q) = %q, want %q", tag, got, want)
 		}
 	}
 	if asset, ok := ReleaseAsset("arm64"); !ok || asset != "axiom-linux-arm64" {

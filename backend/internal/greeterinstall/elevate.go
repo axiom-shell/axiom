@@ -82,7 +82,7 @@ func (in *Installer) Elevate(ctx context.Context, req rules.Request) (Elevated, 
 // ("Refuse the install (except for if you have the local clone install
 // path selected, in which case it reuses your most recently built binary,
 // and skips the checksum)"): the main channel, a release with no binary
-// for this machine, a remote that isn't GitHub's.
+// for this machine (the official release of the remote's newest tag).
 func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]string, []byte, error) {
 	switch req.Source {
 	case rules.SourceLocal:
@@ -108,7 +108,7 @@ func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]str
 	if !ok {
 		return nil, nil, failf("nothing to fetch from %s on the %s channel (offline?)", url, req.Channel)
 	}
-	data, sums, err := in.releaseBinary(ctx, url, target)
+	data, sums, err := in.releaseBinary(ctx, target)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -116,21 +116,27 @@ func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]str
 		return nil, nil, failf("%s has no release binary to check for this machine: the login screen installs only a release's, or yours from Local", target.Name())
 	}
 	asset, _ := rules.ReleaseAsset(runtime.GOARCH)
-	return []string{"/bin/sh", "-c", verifyAndRun, "sh", sums, asset}, data, nil
+	return []string{"/bin/sh", "-c", verifyAndRun, "sh", in.varDir(), sums, asset}, data, nil
 }
 
 // verifyAndRun is how root runs a release binary the user's daemon
-// downloaded: its bytes (stdin) go into a folder only root can write and
-// are checked there against the sum for asset ($2) in the SHA256SUMS root
-// fetches from the release ($1), then run.
+// downloaded: its bytes (stdin) go into a new folder only root can use,
+// made under the greeter's folder ($1, root's own; not /tmp, which may be
+// mounted noexec), and are checked there against the sum for asset ($3)
+// in the SHA256SUMS root fetches from the official release ($2), then
+// run. The folder is removed when it's done.
 const verifyAndRun = `set -e
-dir=$(mktemp -d)
+umask 077
+if [ -L "$1" ]; then echo "$1 is a link" >&2; exit 1; fi
+mkdir -p "$1"
+if [ -L "$1" ] || [ ! -O "$1" ]; then echo "$1 isn't root's" >&2; exit 1; fi
+dir=$(mktemp -d "$1/.install.XXXXXXXX")
 trap 'rm -rf "$dir"' EXIT
 cat >"$dir/axiom"
-sum=$(curl -fsSL --max-time 30 -- "$1" | awk -v f="$2" '$2 == f || $2 == "*" f { print $1; exit }')
+sum=$(curl -fsSL --max-time 30 -- "$2" | awk -v f="$3" '$2 == f || $2 == "*" f { print $1; exit }')
 echo "$sum  $dir/axiom" | sha256sum -c --status || { echo "the axiom binary doesn't match its release's SHA256SUMS" >&2; exit 1; }
 chmod 700 "$dir/axiom"
-shift 2
+shift 3
 "$dir/axiom" greeter-install "$@"`
 
 // rootOwned says whether only root can change a file: root's, and

@@ -296,11 +296,11 @@ func TestFirstProgram(t *testing.T) {
 		{"the package's binary", rules.SourcePackage, rules.ChannelTags, nil, 0o755, "ROOT/usr/bin/axiom greeter-install", false},
 		{"a package binary others can write", rules.SourcePackage, rules.ChannelTags, nil, 0o775, "isn't root's", true},
 		{"no package binary", rules.SourcePackage, rules.ChannelTags, nil, 0, "isn't root's", true},
+		// (the fixture's remote isn't GitHub's: the release is the official one's)
 		{"the release's binary, checked", rules.SourceGit, rules.ChannelTags, func(t *testing.T) string { return releases(t, released, "") }, 0, "", false},
 		{"a release binary its sums don't match", rules.SourceGit, rules.ChannelTags,
 			func(t *testing.T) string { return releases(t, released, strings.Repeat("0", 64)) }, 0, "doesn't match its SHA256SUMS", true},
 		{"a release without a binary", rules.SourceGit, rules.ChannelTags, func(t *testing.T) string { return releases(t, "", "-") }, 0, "no release binary", true},
-		{"not a GitHub repository", rules.SourceGit, rules.ChannelTags, nil, 0, "no release binary", true},
 		{"the main channel", rules.SourceGit, rules.ChannelMain, nil, 0, "the main channel has no release binary", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -351,6 +351,18 @@ func TestFirstProgram(t *testing.T) {
 				if !tamper && (err != nil || strings.TrimSpace(string(out)) != "ran greeter-install update /r") {
 					t.Errorf("the checked binary: %v %s", err, out)
 				}
+			}
+			// Its folder was root's own under the greeter's, and is gone
+			if left, err := os.ReadDir(filepath.Join(f.root, "var/lib/axiom-greeter")); err != nil || len(left) != 0 {
+				t.Errorf("the greeter's folder: %v %v", left, err)
+			}
+			// A link there is never followed
+			os.Remove(filepath.Join(f.root, "var/lib/axiom-greeter"))
+			os.Symlink(t.TempDir(), filepath.Join(f.root, "var/lib/axiom-greeter"))
+			cmd := exec.Command(program[0], append(program[1:], "update", "/r")...)
+			cmd.Stdin = bytes.NewReader(stdin)
+			if out, err := cmd.CombinedOutput(); err == nil || !strings.Contains(string(out), "is a link") {
+				t.Errorf("ran through a link: %v %s", err, out)
 			}
 		})
 	}

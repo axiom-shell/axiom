@@ -301,7 +301,7 @@ func (r *run) fillCopy(ctx context.Context, stage string) error {
 	case rules.SourceGit:
 		// Only a release's, checked against its SHA256SUMS: root runs it at
 		// the next update
-		data, _, err := in.releaseBinary(ctx, origin.URL, target)
+		data, _, err := in.releaseBinary(ctx, target)
 		if err == nil && data != nil {
 			err = writeFile(binary, data, 0o755)
 		}
@@ -411,27 +411,29 @@ func (r *run) userBinary(ctx context.Context, dest string) error {
 }
 
 // releaseBinary downloads the target tag's prebuilt binary for this
-// machine from its GitHub release, checked against the release's
-// SHA256SUMS: its bytes and that listing's url. nil: there's none (not a GitHub
-// repository, not a tag, no such asset); a download that doesn't match
-// fails the install.
-func (in *Installer) releaseBinary(ctx context.Context, url string, target rules.Target) ([]byte, string, error) {
+// machine from the official repository's GitHub release (rules.Releases,
+// never the copy's remote), checked against the release's SHA256SUMS: its
+// bytes and that listing's url. nil: there's none (not a tag, no such
+// release or asset); a download that doesn't match fails the install.
+func (in *Installer) releaseBinary(ctx context.Context, target rules.Target) ([]byte, string, error) {
 	asset, ok := rules.ReleaseAsset(runtime.GOARCH)
-	if !ok || target.Tag() == "" {
+	if !ok {
 		return nil, "", nil
 	}
 	base := in.opts.Releases
 	if base == "" {
-		if base, ok = rules.ReleaseBase(url); !ok {
-			return nil, "", nil
-		}
+		base = rules.Releases
 	}
-	sumsURL := base + "/" + target.Tag() + "/SHA256SUMS"
+	sumsURL, ok := rules.ReleaseURL(base, target.Tag(), "SHA256SUMS")
+	assetURL, _ := rules.ReleaseURL(base, target.Tag(), asset)
+	if !ok {
+		return nil, "", nil
+	}
 	sums, err := in.download(ctx, sumsURL, sumsTimeout)
 	if err != nil {
 		return nil, "", nil
 	}
-	data, err := in.download(ctx, base+"/"+target.Tag()+"/"+asset, downloadTimeout)
+	data, err := in.download(ctx, assetURL, downloadTimeout)
 	if err != nil {
 		return nil, "", nil
 	}

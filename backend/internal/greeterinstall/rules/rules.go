@@ -347,19 +347,19 @@ func PointGreetd(config, command string) string {
 	return strings.Join(out, "\n") + "\n"
 }
 
-// ReleaseBase is where a GitHub repository's release assets download from
-// (<base>/<tag>/<asset>); ok is false for a url that isn't one.
-func ReleaseBase(url string) (string, bool) {
-	path, ok := strings.CutPrefix(url, "https://github.com/")
-	if !ok {
+// Releases is where root downloads a release's binary and SHA256SUMS
+// from: the official repository's, whatever remote the copy's code is
+// fetched from (maintainer, 2026-10-27: "pin official repo"), so the sums
+// prove the binary is an official release's.
+const Releases = "https://github.com/axiom-shell/axiom/releases/download"
+
+// ReleaseURL is a release file's url under base (<base>/<tag>/<file>);
+// ok is false for a tag that would leave its release's folder.
+func ReleaseURL(base, tag, file string) (string, bool) {
+	if tag == "" || strings.ContainsAny(tag, "/?#%\\") || strings.HasPrefix(tag, ".") {
 		return "", false
 	}
-	path = strings.TrimSuffix(strings.TrimSuffix(path, "/"), ".git")
-	owner, repo, ok := strings.Cut(path, "/")
-	if !ok || owner == "" || repo == "" || strings.Contains(repo, "/") {
-		return "", false
-	}
-	return "https://github.com/" + path + "/releases/download", true
+	return base + "/" + tag + "/" + file, true
 }
 
 // ReleaseAsset is the release's prebuilt binary for an architecture (Go's

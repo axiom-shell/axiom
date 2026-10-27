@@ -52,7 +52,8 @@ type Options struct {
 	// Getenv reads this process's variables (default os.Getenv): pkexec's
 	// PKEXEC_UID
 	Getenv func(string) string
-	// Releases replaces the GitHub releases' download url (tests)
+	// Releases replaces the official releases' download url, rules.Releases
+	// (tests)
 	Releases string
 	// Now dates the backups (default time.Now)
 	Now func() time.Time
