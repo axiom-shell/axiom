@@ -67,7 +67,7 @@ Recording lives in the service, not in the card, because the overlay destroys th
 - `recordAudio` (the ScreenRecord card's choice) is saved with `copyOnly` in `~/.local/state/axiom/ui/screenshot.json`.
 
 **Running and stopping:**
-- wf-recorder runs in axiom (`CommandManager.run`) until `stopRecording()` sends SIGINT to the wf-recorder whose parent is the daemon (`pkill -P "$PPID"` in a `sh` axiom also runs), never another one; one left from before a reload (found the same way) or whose answer an axiom re-exec lost is marked stopped at once.
+- wf-recorder runs in axiom (`CommandManager.run`) until `stopRecording()` sends SIGINT to the wf-recorder whose parent is the daemon (`pkill -P "$PPID"` in a `sh` axiom also runs), never another one; one left from before a reload (found the same way) or whose answer an axiom re-exec lost is marked stopped at once. One killed by a signal is treated as exited.
 - On exit it notifies with the saved file (a click opens it) or with the failure.
 - While it runs, `recordingElapsed` ticks for the `ScreenRecord` bar widget. That widget is hidden otherwise; a click on it stops the recording.
 - The Privacy widget's screen indicator shows the recording. wf-recorder uses screencopy, so Pipewire never sees it.

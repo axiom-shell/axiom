@@ -70,7 +70,9 @@ QtObject {
   // Runs a command once and calls back with (exitCode, stdout, stderr).
   // With `input` (a string), it's written to stdin, then stdin is closed.
   // A command that can't run, or whose answer is lost (axiom re-exec'd
-  // meanwhile), calls back with -1 and the reason as stderr.
+  // meanwhile), calls back with -1, the reason as stderr and the error
+  // (its `kind` "unavailable" when the answer was lost) as a fourth
+  // argument; -1 without it is a command killed by a signal.
   function run(command, callback, input) {
     BackendManager.call("exec.run", {
       "argv": command,
@@ -79,7 +81,7 @@ QtObject {
       if (error && error.kind !== "unavailable")
         console.warn(`[CommandManager] ${command[0]}: ${error.message}`);
       if (error)
-        callback?.(-1, "", error.message);
+        callback?.(-1, "", error.message, error);
       else
         callback?.(result.exitCode, result.stdout, result.stderr);
     });

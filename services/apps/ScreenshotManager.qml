@@ -305,11 +305,11 @@ QtObject {
       command = ["wf-recorder"].concat(root._recordAudio === "mic" ? ["--audio"] : [], args);
     root._recordAudio = "none";
     root._recorderRunning = true;
-    CommandManager.run(command, (code, stdout, stderr) => {
+    CommandManager.run(command, (code, stdout, stderr, error) => {
       root._recorderRunning = false;
       // Its answer lost (axiom re-exec'd): it may still be recording, so
       // it's left as one from before a reload (stopping marks it stopped)
-      if (code !== -1)
+      if (error?.kind !== "unavailable")
         root._recorded(stderr);
     });
     root.recording = true;

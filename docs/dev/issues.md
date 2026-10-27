@@ -63,7 +63,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Setting an awww wallpaper never starts awww's daemon
 - **Where:** `scripts/setWallpaper.sh`, `services/core/ThemeManager.qml` (`_showWallpaper`)
-- **What:** With `Appearance.wallpaperBackend` `awww` and no `awww-daemon` running, the script runs `awww query || awww init`, but awww has no `init` (`error: unrecognized subcommand 'init'`), so the wallpaper isn't set (`set -e` stops it). Starting `awww-daemon` instead would make it a child of qs's `Quickshell.execDetached`, inheriting qs's transparent huge pages opt-out ([memory](core/memory.md) › Transparent huge pages): it should start through the daemon (`CommandManager.runDetached`), as apps do.
+- **What:** With `Appearance.wallpaperBackend` `awww` and no `awww-daemon` running, the script runs `awww query || awww init`, but awww has no `init` (`error: unrecognized subcommand 'init'`), so the wallpaper isn't set (`set -e` stops it). `ThemeManager` now runs the script through the daemon (`CommandManager.runDetached`, backend stage 6), so starting `awww-daemon` from it would no longer inherit qs's transparent huge pages opt-out ([memory](core/memory.md) › Transparent huge pages): only the script's `awww init` is left to fix.
 - **Size:** small
 - **Found:** 2026-10-27, while reviewing what the shell still starts as its own children (row 9)
 
