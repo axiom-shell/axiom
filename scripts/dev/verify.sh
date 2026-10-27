@@ -89,7 +89,6 @@ for f in "${changed[@]}"; do
   case "$f" in
   config/themes/* | config/json/theme-defaults.json | scripts/gen_theme_template.py) script_tests+=(Themes) ;;
   scripts/templates/nvim/*) script_tests+=(NvimModule) ;;
-  scripts/cursor_theme.py) script_tests+=(CursorTheme) ;;
   scripts/greeter/*) script_tests+=(GreeterInstall GreeterSession) ;;
   scripts/pick_path.py) script_tests+=(PickPath) ;;
   scripts/community_fetch.sh) script_tests+=(CommunityFetch) ;;

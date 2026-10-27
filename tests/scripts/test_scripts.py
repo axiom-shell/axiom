@@ -4,8 +4,6 @@
   - every shipped theme is complete (config/themes/theme.schema.json's
     required keys, hex colors, semantic names that resolve, pairs that exist)
   - the Neovim module Apply copies compiles and maps the shipped themes
-  - cursor_theme.py makes the companion theme filling in a cursor theme's
-    missing standard names, and only for a theme that needs it
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
     lines marked `// fixed px:`
   - pick_path.py falls back to zenity/kdialog without a portal, asking for
@@ -882,74 +880,6 @@ class GreeterSession(unittest.TestCase):
         self.fake("start-hyprland")
         self.fake("agreety")
         self.assertEqual(self.run_session(), ["sway", "agreety"])
-
-
-class CursorTheme(unittest.TestCase):
-    """cursor_theme.py on scratch icon folders (never --gsettings)."""
-
-    def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, self.tmp)
-        self.home, self.data, self.system = self.tmp / "home", self.tmp / "data", self.tmp / "system"
-        self.home.mkdir()
-
-    def theme(self, name, cursors, inherits=None):
-        folder = self.system / "icons" / name
-        (folder / "cursors").mkdir(parents=True)
-        for cursor in cursors:
-            (folder / "cursors" / cursor).write_text(cursor)
-        if inherits:
-            (folder / "index.theme").write_text(f"[Icon Theme]\nInherits={inherits}\n")
-
-    def run_script(self, theme):
-        env = {**os.environ, "HOME": str(self.home), "XDG_DATA_HOME": str(self.data), "XDG_DATA_DIRS": str(self.system)}
-        done = subprocess.run([sys.executable, str(SCRIPTS / "cursor_theme.py"), theme], env=env,
-                              capture_output=True, text=True, timeout=30)
-        self.assertEqual(done.returncode, 0, done.stderr)
-        return json.loads(done.stdout)
-
-    def test_fills_missing_names(self):
-        self.theme("Old", ["left_ptr", "hand2", "xterm", "text"])
-        self.assertEqual(self.run_script("Old"), {"theme": "axiom-cursor-Old", "filled": 2})
-        made = self.data / "icons" / "axiom-cursor-Old"
-        self.assertIn("Inherits=Old", (made / "index.theme").read_text())
-        self.assertEqual(os.readlink(made / "cursors" / "default"), str(self.system / "icons/Old/cursors/left_ptr"))
-        self.assertEqual(os.readlink(made / "cursors" / "pointer"), str(self.system / "icons/Old/cursors/hand2"))
-        # The theme has `text` itself: not linked
-        self.assertFalse((made / "cursors" / "text").exists())
-        # As wanted already: not rewritten
-        inode = (made / "index.theme").stat().st_ino
-        self.run_script("Old")
-        self.assertEqual((made / "index.theme").stat().st_ino, inode)
-
-    def test_inherited_names_count(self):
-        self.theme("Base", ["default", "pointer"])
-        self.theme("Child", ["left_ptr", "hand2"], inherits="Base")
-        self.assertEqual(self.run_script("Child"), {"theme": "Child", "filled": 0})
-
-    def test_complete_theme_removes_the_companion(self):
-        self.theme("Old", ["left_ptr"])
-        self.theme("New", ["default", "left_ptr"])
-        self.run_script("Old")
-        self.assertEqual(self.run_script("New"), {"theme": "New", "filled": 0})
-        self.assertFalse((self.data / "icons" / "axiom-cursor-Old").exists())
-        # A theme with no XCursor cursors (hyprcursor only) keeps its name
-        self.assertEqual(self.run_script("Missing"), {"theme": "Missing", "filled": 0})
-
-    def test_each_theme_its_own_name(self):
-        # One name for both would leave readers on the cursors they loaded
-        self.theme("Old", ["left_ptr"])
-        self.theme("Other Theme", ["arrow"])
-        self.run_script("Old")
-        self.assertEqual(self.run_script("Other Theme"), {"theme": "axiom-cursor-Other_Theme", "filled": 1})
-        self.assertFalse((self.data / "icons" / "axiom-cursor-Old").exists())
-
-    def test_leaves_a_folder_not_its_own(self):
-        self.theme("Old", ["left_ptr"])
-        (self.data / "icons" / "axiom-cursor-Old").mkdir(parents=True)
-        env = {**os.environ, "HOME": str(self.home), "XDG_DATA_HOME": str(self.data), "XDG_DATA_DIRS": str(self.system)}
-        done = subprocess.run([sys.executable, str(SCRIPTS / "cursor_theme.py"), "Old"], env=env, capture_output=True, text=True)
-        self.assertEqual(done.returncode, 1)
 
 
 class PickPath(unittest.TestCase):
