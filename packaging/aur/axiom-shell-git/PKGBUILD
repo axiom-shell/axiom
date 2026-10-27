@@ -18,7 +18,7 @@ license=('MIT')
 # hyprland, sway (or swayfx, which provides it) and niri runs it
 provides=('axiom-shell')
 conflicts=('axiom-shell')
-depends=('quickshell>=0.3.2' 'jq' 'curl' 'python' 'ttf-material-symbols-variable')
+depends=('quickshell>=0.3.2' 'curl' 'python' 'ttf-material-symbols-variable')
 optdepends=(
   'hyprland: the compositor with every feature'
   'niri: run axiom under niri'

@@ -429,12 +429,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-16, while auditing the layer-placement branch
 
-### jq is a dependency only for the greeter installer
-- **Where:** `install.sh` (`REQUIRED`), `components/methods/Packages.qml`, `services/core/DependencyManager.qml` (`tools`), `scripts/check_packages.py`
-- **What:** Once the installer is Go, nothing required uses jq: it leaves `install.sh`'s `REQUIRED`, `Packages.packages`, `DependencyManager`'s list and check_packages, with the AUR PKGBUILDs ([packaging.md](packaging.md)). `scripts/bug_info.sh` uses it only when present (`has jq`). Replaces [the onboarding's jq purpose names the theme integrations](#the-onboardings-jq-purpose-names-the-theme-integrations) if done first. Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").
-- **Size:** trivial
-- **Found:** 2026-10-27, while planning the greeter installer's port (#142)
-
 ### Text input warnings when the desktop takes the keyboard
 - **Where:** `components/surfaces/desktop/DesktopWindow.qml` (`WlrLayershell.keyboardFocus`)
 - **What:** With a typing module (Notes) on the desktop, clicking into it and back to windows logs bursts of `Trying to disable` from `qt.qpa.wayland.textinput` (`QWaylandTextInputv3::disableSurface`; 174 in one session). Typing and handing focus back work. Likely Qt's text-input-v3 noise when focus moves between surfaces; not yet checked whether an edge menu's Notes logs the same.
@@ -489,8 +483,3 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while fixing the shell's reconnect to axiom
 
-### The onboarding's jq purpose names the theme integrations
-- **Where:** `services/core/DependencyManager.qml` (`tools`, the `jq` entry)
-- **What:** The onboarder's check says jq is for "Reading JSON (theme integrations)", but the theme integrations run in Go since backend stage 4 (`theme.integrate`). jq is still used by `scripts/greeter/greeter_install.sh` and `scripts/bug_info.sh`, so the purpose should name those (or jq leave the onboarder's list once the greeter installer is ported).
-- **Size:** trivial
-- **Found:** 2026-10-27, while reviewing the cursor theme and community downloads port

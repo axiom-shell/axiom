@@ -44,7 +44,6 @@ PACKAGES=(
   "git|git|git"
   "go|go|golang"
   "quickshell|quickshell|errornointernet/quickshell:quickshell"
-  "jq|jq|jq"
   "curl|curl|curl"
   "python3|python|python3"
   "iconFont|ttf-material-symbols-variable|download"
@@ -72,7 +71,7 @@ PACKAGES=(
 ICON_FONT_URL="https://github.com/google/material-design-icons/raw/master/variablefont/MaterialSymbolsRounded%5BFILL,GRAD,opsz,wght%5D.ttf"
 ICON_FONT_FILE=$HOME/.local/share/fonts/MaterialSymbolsRounded.ttf
 # go builds the axiom binary from a clone (a package brings its own)
-REQUIRED=(git go quickshell jq curl python3 iconFont)
+REQUIRED=(git go quickshell curl python3 iconFont)
 # "feature|keys|compositors" (none listed: any), offered one at a time;
 # the AUR package's optdepends say the same
 FEATURES=(
