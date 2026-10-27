@@ -53,8 +53,8 @@ func (d *Daemon) greeterInstallMethods(reg *rpc.Registry) {
 			return greeterinstall.Elevated{}, err
 		}
 		req := rules.Request{Action: p.Action, Repo: d.opts.Tree, User: me.Username, Staged: p.Staged,
-			Source: p.Source, Channel: p.Channel, Binary: d.installed}
-		// Before root's helper is there: the binary the shell runs
-		return in.Elevate(ctx, req, []string{d.installed, "greeter-install"})
+			Source: p.Source, Channel: p.Channel, Binary: d.executable}
+		// A local copy reuses the binary built last: the one running
+		return in.Elevate(ctx, req, d.executable)
 	})
 }

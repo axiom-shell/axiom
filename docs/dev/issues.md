@@ -61,6 +61,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while merging #133
 
+### ThemeManager warns when the daemon's re-exec fails its integrations
+- **Where:** `services/core/ThemeManager.qml` (`themeIntegrations`)
+- **What:** As with `MediaManager`'s album art: a daemon re-exec (dev mode rebuilding after a Go edit) fails a `theme.integrate` call in flight, and ThemeManager logs `Theme integrations failed: the connection to axiom closed`, though the call could simply be sent again after the next hello.
+- **Size:** trivial
+- **Found:** 2026-10-27, while porting the greeter installer (a dev-mode re-exec during the batch)
+
 ### MediaManager warns when the daemon's re-exec fails its album art fetch
 - **Where:** `services/system/MediaManager.qml` (the album art fetch)
 - **What:** A daemon re-exec fails every request in flight with `the connection to axiom closed`, and `MediaManager` warns about it, though it's an expected failure it could retry on the next hello. #112 had folded it into "The shell's socket warns when the daemon re-execs", but the socket's warning is Quickshell's and this one is ours to quiet.
@@ -422,12 +428,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** An app whose `.desktop` icon isn't in the icon theme (here `xdg-desktop-portal-gtk`'s `applications-system-symbolic`) logs `Could not load icon` at each size it's drawn, though the fallback icon shows. Noise in `scripts/log.sh`; either skip hidden/`NoDisplay` entries or resolve the name before handing it to an Image.
 - **Size:** trivial
 - **Found:** 2026-10-16, while auditing the layer-placement branch
-
-### The first greeter install runs the user's binary as root
-- **Where:** `services/session/GreeterManager.qml` (`_sourceArgs`, `_runElevated`)
-- **What:** The first install runs the clone's own script as root (`pkexec /usr/bin/bash <clone>/scripts/greeter/greeter_install.sh`) with the user's `$AXIOM_BIN` (`_sourceArgs`), and option A of the plan kept that trust. Decided (maintainer, 2026-10-27: "root owned checksum verified binary"): require a root-owned binary, the package's, else a release download verified by `SHA256SUMS` before anything runs as root. Where there's no release binary to verify, the maintainer was asked "'Root owned checksum verified binary' for the greeter: some installs have no release binary to verify (the `main` channel, the `local` source, and no release ships binaries yet). What should happen there?" and answered "Refuse the install (except for if you have the local clone install path selected, in which case it reuses your most recently built binary, and skips the checksum)". Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").
-- **Size:** small
-- **Found:** 2026-10-27, while planning the greeter installer's port (#142)
 
 ### jq is a dependency only for the greeter installer
 - **Where:** `install.sh` (`REQUIRED`), `components/methods/Packages.qml`, `services/core/DependencyManager.qml` (`tools`), `scripts/check_packages.py`

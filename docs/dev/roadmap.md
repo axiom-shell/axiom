@@ -169,7 +169,6 @@ Resolves:
 Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
 
 Resolved by a stage:
-- [The first greeter install runs the user's binary as root](issues.md#the-first-greeter-install-runs-the-users-binary-as-root) (stage 4)
 - [jq is a dependency only for the greeter installer](issues.md#jq-is-a-dependency-only-for-the-greeter-installer) (stage 4)
 - [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (stage 5)
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
@@ -237,6 +236,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [Singleton properties warn on every reload](issues.md#singleton-properties-warn-on-every-reload)
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
+- [ThemeManager warns when the daemon's re-exec fails its integrations](issues.md#thememanager-warns-when-the-daemons-re-exec-fails-its-integrations)
 - [The updates check warns when a daemon re-exec kills checkupdates](issues.md#the-updates-check-warns-when-a-daemon-re-exec-kills-checkupdates)
 - [A screenshot under niri timed out waiting for its frame](issues.md#a-screenshot-under-niri-timed-out-waiting-for-its-frame)
 

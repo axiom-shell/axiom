@@ -13,7 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
 )
 
-// tools holds the fake programs the tests run (go, pkexec), written by
+// tools holds the fake programs the tests run (pkexec), written by
 // TestMain before any test forks: a program written while another test
 // forks can't be run ("text file busy").
 var tools string
@@ -24,15 +24,11 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	tools = dir
-	// go, as a git copy's build runs it: `build -o OUT` writes "built";
-	// it fails while $GO_FAILS names a file that exists
 	write := func(name, script string) {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(script), 0o755); err != nil {
 			panic(err)
 		}
 	}
-	write("go", "#!/bin/sh\n[ -n \"$GO_FAILS\" ] && [ -e \"$GO_FAILS\" ] && exit 1\n[ \"$1\" = build ] || exit 0\n"+
-		"while [ $# -gt 0 ]; do [ \"$1\" = -o ] && { echo built >\"$2\"; exit 0; }; shift; done\nexit 1\n")
 	// pkexec, logging its arguments to $FAKE_LOG, running $FAKE_OUT and
 	// exiting $FAKE_CODE
 	write("pkexec", "#!/bin/sh\nprintf '%s\\n' \"$*\" >\"$FAKE_LOG\"\neval \"$FAKE_OUT\"\nexit \"$FAKE_CODE\"\n")
@@ -53,6 +49,8 @@ type fixture struct {
 	user     string
 	env      []string
 	original string
+	// The releases' download url (install tests serve one)
+	releases string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -67,7 +65,7 @@ func newFixture(t *testing.T) *fixture {
 	tmp := t.TempDir()
 	f := &fixture{t: t, tmp: tmp, root: filepath.Join(tmp, "root"), repo: filepath.Join(tmp, "repo"),
 		upstream: filepath.Join(tmp, "upstream.git"), user: me.Username}
-	f.env = append(os.Environ(), "PATH="+tools+":"+os.Getenv("PATH"), "GO_FAILS="+filepath.Join(tmp, "go-fails"), "HOME="+tmp, "XDG_CONFIG_HOME="+tmp, "GIT_CONFIG_NOSYSTEM=1",
+	f.env = append(os.Environ(), "HOME="+tmp, "XDG_CONFIG_HOME="+tmp, "GIT_CONFIG_NOSYSTEM=1",
 		"GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@t", "GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@t")
 	f.original = "[terminal]\nvt = 1\n\n[default_session]\n# the greeter\n" +
 		"command = \"agreety --cmd /bin/sh\"\nuser = \"" + f.user + "\"\n"
@@ -117,7 +115,7 @@ func (f *fixture) git(dir string, args ...string) string {
 }
 
 func (f *fixture) installer() *Installer {
-	return New(Options{Root: f.root, Environ: func() []string { return f.env }})
+	return New(Options{Root: f.root, Releases: f.releases, Environ: func() []string { return f.env }})
 }
 
 func (f *fixture) status(source, channel string) Report {
@@ -226,8 +224,7 @@ func TestStatusPackage(t *testing.T) {
 func TestElevate(t *testing.T) {
 	t.Parallel()
 	pkexec := filepath.Join(tools, "pkexec")
-	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: "git", Channel: "tags"}
-	first := []string{"/usr/bin/bash", "/r/scripts/greeter/greeter_install.sh"}
+	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: "local", Channel: "tags", Binary: "/b"}
 	for _, tc := range []struct {
 		name    string
 		helper  string // root's helper's text ("" for none)
@@ -237,11 +234,11 @@ func TestElevate(t *testing.T) {
 		want    Elevated
 	}{
 		{"first install", "", `echo '{"ok": true, "changed": ["/x"], "backup": "/b", "error": ""}'`, 0,
-			"/usr/bin/bash /r/scripts/greeter/greeter_install.sh update", Elevated{Result: rules.Result{OK: true, Changed: []string{"/x"}, Backup: "/b"}}},
+			"/home/me/axiom greeter-install update", Elevated{Result: rules.Result{OK: true, Changed: []string{"/x"}, Backup: "/b"}}},
 		{"root's helper", "#!/bin/sh\n" + binariesMarker + " ...)\n", `echo '{"ok": true}'`, 0,
 			"ROOT" + HelperPath + " update", Elevated{Result: rules.Result{OK: true}}},
 		{"a helper from before the binary", "#!/bin/sh\n", `echo '{"ok": true}'`, 0,
-			"/usr/bin/bash /r/scripts/greeter/greeter_install.sh update", Elevated{Result: rules.Result{OK: true}}},
+			"/home/me/axiom greeter-install update", Elevated{Result: rules.Result{OK: true}}},
 		{"the installer's refusal", "", `echo '{"ok": false, "changed": [], "backup": "", "error": "no such user: me"}'; exit 1`, 0,
 			"", Elevated{Result: rules.Result{Changed: []string{}, Error: "no such user: me"}}},
 		{"dismissed", "", "", 126, "", Elevated{Dismissed: true}},
@@ -262,7 +259,7 @@ func TestElevate(t *testing.T) {
 			log := filepath.Join(root, "log")
 			env := []string{"FAKE_LOG=" + log, "FAKE_OUT=" + tc.out, fmt.Sprintf("FAKE_CODE=%d", tc.code)}
 			in := New(Options{Root: root, Pkexec: pkexec, Environ: func() []string { return env }})
-			got, err := in.Elevate(context.Background(), req, first)
+			got, err := in.Elevate(context.Background(), req, "/home/me/axiom")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -272,9 +269,71 @@ func TestElevate(t *testing.T) {
 			}
 			if tc.program != "" {
 				ran, _ := os.ReadFile(log)
-				want := strings.Replace(tc.program, "ROOT", root, 1) + " /r me  git tags "
+				want := strings.Replace(tc.program, "ROOT", root, 1) + " /r me  local tags /b"
 				if strings.TrimSuffix(string(ran), "\n") != want {
 					t.Errorf("ran %q, want %q", ran, want)
+				}
+			}
+		})
+	}
+}
+
+// Before root has a helper, pkexec runs only a binary root owns or one
+// checked against its release's SHA256SUMS (local: the user's own)
+func TestFirstProgram(t *testing.T) {
+	t.Parallel()
+	released := "\x7fELF released"
+	for _, tc := range []struct {
+		name, source, channel string
+		releases              func(t *testing.T) string // "" for none
+		packaged              os.FileMode               // /usr/bin/axiom's mode (0: none)
+		want                  string                    // the program, or the refusal's text
+		refused               bool
+	}{
+		{"local reuses the user's binary", rules.SourceLocal, rules.ChannelTags, nil, 0, "/home/me/axiom", false},
+		{"the package's binary", rules.SourcePackage, rules.ChannelTags, nil, 0o755, "ROOT/usr/bin/axiom", false},
+		{"a package binary others can write", rules.SourcePackage, rules.ChannelTags, nil, 0o775, "isn't root's", true},
+		{"no package binary", rules.SourcePackage, rules.ChannelTags, nil, 0, "isn't root's", true},
+		{"the release's binary, checked", rules.SourceGit, rules.ChannelTags, func(t *testing.T) string { return releases(t, released, "") }, 0, "", false},
+		{"a release binary its sums don't match", rules.SourceGit, rules.ChannelTags,
+			func(t *testing.T) string { return releases(t, released, strings.Repeat("0", 64)) }, 0, "doesn't match its SHA256SUMS", true},
+		{"a release without a binary", rules.SourceGit, rules.ChannelTags, func(t *testing.T) string { return releases(t, "", "-") }, 0, "no release binary", true},
+		{"not a GitHub repository", rules.SourceGit, rules.ChannelTags, nil, 0, "no release binary", true},
+		{"the main channel", rules.SourceGit, rules.ChannelMain, nil, 0, "the main channel has no release binary", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			f := newFixture(t)
+			if tc.packaged != 0 {
+				f.write(f.root, "usr/bin/axiom", "\x7fELF packaged", tc.packaged)
+				os.Chmod(filepath.Join(f.root, "usr/bin/axiom"), tc.packaged)
+			}
+			opts := Options{Root: f.root, Environ: func() []string { return f.env }}
+			if tc.releases != nil {
+				opts.Releases = tc.releases(t)
+			}
+			in := New(opts)
+			req := rules.Request{Action: rules.ActionInstall, Repo: f.repo, User: f.user, Source: tc.source, Channel: tc.channel}
+			program, cleanup, err := in.firstProgram(context.Background(), req, "/home/me/axiom")
+			if tc.refused {
+				if err == nil || !strings.Contains(err.Error(), tc.want) {
+					t.Fatalf("program %q, err %v; want a refusal saying %q", program, err, tc.want)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.want != "" && program != strings.Replace(tc.want, "ROOT", f.root, 1) {
+				t.Errorf("program %q, want %q", program, tc.want)
+			}
+			if tc.source == rules.SourceGit {
+				if data, _ := os.ReadFile(program); string(data) != released {
+					t.Errorf("the release binary is %q", data)
+				}
+				cleanup()
+				if _, err := os.Stat(program); err == nil {
+					t.Error("cleanup left the download")
 				}
 			}
 		})

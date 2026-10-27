@@ -99,8 +99,12 @@ func newInstallFixture(t *testing.T) *fixture {
 	f.git(f.repo, "commit", "-qm", "the policy and the helper")
 	f.git(f.repo, "tag", "-f", "-a", "v1.0", "-m", "v1.0")
 	f.git(f.repo, "push", "-q", "-f", "origin", "main", "--tags")
+	f.releases = releases(t, released, "")
 	return f
 }
+
+// released is every release's binary in the install tests.
+const released = "\x7fELF released"
 
 func TestInstallCopiesPointsGreetdAndBacksUp(t *testing.T) {
 	t.Parallel()
@@ -169,13 +173,16 @@ func TestGitTagsTakesTheNewestReleaseOnly(t *testing.T) {
 	}
 }
 
-func TestGitMainFollowsTheBranch(t *testing.T) {
+// The main channel has no release binary to check: refused, the copy left
+// as it was
+func TestGitMainIsRefused(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
+	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
 	f.publish("greeter.qml", "on main", "")
-	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelMain)
-	if f.copied("greeter.qml") != "on main" || f.status(rules.SourceGit, rules.ChannelMain).InstalledSource != "git:main" {
-		t.Error("didn't follow main")
+	f.refused("only a release's prebuilt one", rules.ActionUpdate, rules.SourceGit, rules.ChannelMain)
+	if f.copied("greeter.qml") != "greeter.qml" || f.copied(".greeter-source") != "git tags "+f.upstream+"\n" {
+		t.Error("a refused update changed the copy")
 	}
 }
 
@@ -240,16 +247,18 @@ func TestLocalBinaryRefusals(t *testing.T) {
 	}
 }
 
-func TestGitBuildsTheBinaryWithoutARelease(t *testing.T) {
+func TestGitTakesTheReleasesBinary(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
 	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
-	if f.copied("bin/axiom") != "built\n" {
+	if f.copied("bin/axiom") != released {
 		t.Errorf("binary %q", f.copied("bin/axiom"))
 	}
 }
 
-// releases serves v1.0's release: the binary for this machine and sums.
+// releases serves every tag's release: data as the binary for this
+// machine and sums as its SHA256SUMS line (data's own when ""; no binary
+// when "-").
 func releases(t *testing.T, data, sums string) string {
 	t.Helper()
 	asset, ok := rules.ReleaseAsset(runtime.GOARCH)
@@ -260,10 +269,14 @@ func releases(t *testing.T, data, sums string) string {
 		sums = fmt.Sprintf("%x", sha256.Sum256([]byte(data)))
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/v1.0/" + asset:
+		switch tag := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")[0]; r.URL.Path {
+		case "/" + tag + "/" + asset:
+			if sums == "-" {
+				http.NotFound(w, r)
+				return
+			}
 			w.Write([]byte(data))
-		case "/v1.0/SHA256SUMS":
+		case "/" + tag + "/SHA256SUMS":
 			fmt.Fprintf(w, "%s  %s\n", sums, asset)
 		default:
 			http.NotFound(w, r)
@@ -277,34 +290,23 @@ func (f *fixture) withReleases(url string) *Installer {
 	return New(Options{Root: f.root, Releases: url, Environ: func() []string { return f.env }})
 }
 
-func TestGitTakesAReleasesBinary(t *testing.T) {
-	t.Parallel()
-	f := newInstallFixture(t)
-	f.write(f.tmp, "go-fails", "", 0o644)
-	if r := f.runWith(f.withReleases(releases(t, "\x7fELF released", "")), rules.ActionInstall, rules.SourceGit, rules.ChannelTags); !r.OK {
-		t.Fatal(r.Error)
-	}
-	if f.copied("bin/axiom") != "\x7fELF released" {
-		t.Error("not the release's binary")
-	}
-}
-
 func TestGitRefusesABinaryItsSumsDontMatch(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
-	r := f.runWith(f.withReleases(releases(t, "\x7fELF released", strings.Repeat("0", 64))), rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	r := f.runWith(f.withReleases(releases(t, released, strings.Repeat("0", 64))), rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
 	if r.OK || !strings.Contains(r.Error, "doesn't match its SHA256SUMS") || f.exists("usr/share/axiom-greeter") {
 		t.Errorf("result %+v", r)
 	}
 }
 
-func TestGitWithoutReleaseOrGo(t *testing.T) {
+// A release without a binary for this machine (none ships one yet) has
+// nothing root may run: refused
+func TestGitWithoutAReleaseBinary(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
-	f.write(f.tmp, "go-fails", "", 0o644)
-	f.refused("no axiom binary", rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
-	if f.exists("usr/share/axiom-greeter") {
-		t.Error("a refused install left a copy")
+	r := f.runWith(f.withReleases(releases(t, "", "-")), rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	if r.OK || !strings.Contains(r.Error, "no axiom binary for v1.0") || f.exists("usr/share/axiom-greeter") {
+		t.Errorf("result %+v", r)
 	}
 }
 
@@ -450,7 +452,7 @@ func TestBackupsAreDated(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
 	at := time.Date(2026, 10, 27, 9, 8, 7, 0, time.Local)
-	in := New(Options{Root: f.root, Now: func() time.Time { return at }, Environ: func() []string { return f.env }})
+	in := New(Options{Root: f.root, Releases: f.releases, Now: func() time.Time { return at }, Environ: func() []string { return f.env }})
 	r := f.runWith(in, rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
 	if !strings.HasSuffix(r.Backup, "config.toml.axiom-bak-20261027-090807") {
 		t.Errorf("backup %q", r.Backup)

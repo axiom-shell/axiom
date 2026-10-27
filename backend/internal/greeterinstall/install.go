@@ -31,7 +31,6 @@ const (
 	fetchTimeout    = 5 * time.Minute
 	sumsTimeout     = time.Minute
 	downloadTimeout = 5 * time.Minute
-	buildTimeout    = 15 * time.Minute
 )
 
 // loginScreen is what a copy can't do without: a release from before the
@@ -300,12 +299,14 @@ func (r *run) fillCopy(ctx context.Context, stage string) error {
 			return err
 		}
 	case rules.SourceGit:
+		// Only a release's, checked against its SHA256SUMS: root runs it at
+		// the next update
 		ok, err := in.releaseBinary(ctx, origin.URL, target, binary)
 		if err != nil {
 			return err
 		}
-		if !ok && !r.builtBinary(ctx, binary) {
-			return failf("no axiom binary for %s: its release has none, and building one needs go (see %s/state/binary-build.log)", label, in.varDir())
+		if !ok {
+			return failf("no axiom binary for %s: only a release's prebuilt one, checked against its SHA256SUMS, is installed (follow releases, or use Local)", label)
 		}
 	}
 	if writeFile(filepath.Join(stage, ".greeter-hash"), []byte(hash+"\n"), 0o644) != nil ||
@@ -453,50 +454,6 @@ func (in *Installer) download(ctx context.Context, url string, timeout time.Dura
 		return nil, fmt.Errorf("%s: %s", url, resp.Status)
 	}
 	return io.ReadAll(resp.Body)
-}
-
-// builtBinary builds the mirror's target with go into dest, as greetd's
-// user (the account that runs it anyway) in a folder of its own; false
-// when go isn't installed or the build failed (its log in the greeter's
-// state folder).
-func (r *run) builtBinary(ctx context.Context, dest string) bool {
-	in := r.in
-	if _, err := in.command(ctx, cmd{}, "go", "version"); err != nil {
-		return false
-	}
-	dir, err := os.MkdirTemp("", "axiom-greeter-build-")
-	if err != nil {
-		return false
-	}
-	defer os.RemoveAll(dir)
-	var archive bytes.Buffer
-	if _, err := in.git(filepath.Join(in.varDir(), "upstream.git"), nil).run(ctx, &archive, "archive", "--format=tar", "refs/axiom/target^{tree}"); err != nil {
-		return false
-	}
-	if _, err := extract(&archive, filepath.Join(dir, "src"), func(string, []byte) bool { return true }); err != nil {
-		return false
-	}
-	if r.greeter != nil {
-		filepath.WalkDir(dir, func(p string, _ fs.DirEntry, _ error) error {
-			return os.Lchown(p, int(r.greeter.uid), int(r.greeter.gid))
-		})
-	}
-	ctx, cancel := context.WithTimeout(ctx, buildTimeout)
-	defer cancel()
-	var log bytes.Buffer
-	env := []string{"HOME=" + dir, "GOPATH=" + dir + "/go", "GOCACHE=" + dir + "/cache", "GOMODCACHE=" + dir + "/mod",
-		"GOTOOLCHAIN=local", "GOFLAGS=-modcacherw", "CGO_ENABLED=0"}
-	build := cmd{as: r.greeter, dir: filepath.Join(dir, "src/backend"), env: env, stdout: &log}
-	_, err = in.command(ctx, build, "go", "generate", "./internal/assets")
-	if err == nil {
-		_, err = in.command(ctx, build, "go", "build", "-trimpath", "-o", filepath.Join(dir, "axiom"), "./cmd/axiom")
-	}
-	os.WriteFile(filepath.Join(in.varDir(), "state/binary-build.log"), log.Bytes(), 0o644)
-	if err != nil {
-		return false
-	}
-	data, err := os.ReadFile(filepath.Join(dir, "axiom"))
-	return err == nil && writeFile(dest, data, 0o755) == nil
 }
 
 // snapshot copies what the user's axiom exported into the copy's
