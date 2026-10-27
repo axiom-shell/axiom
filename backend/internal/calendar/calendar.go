@@ -530,10 +530,10 @@ type SaveRequest struct {
 	Event ical.Event `json:"event"`
 }
 
-// EditResult is the event's href and what the sync after found.
+// EditResult is the event's href (the sync after writes its errors to
+// events.json, as every sync does).
 type EditResult struct {
-	Href   string      `json:"href"`
-	Errors []SyncError `json:"errors"`
+	Href string `json:"href"`
 }
 
 // writer is where an edit goes: a CalDAV account's server, or a local
@@ -574,8 +574,8 @@ func (s *Service) cachedObject(r EditRequest) (object, *ical.Component, error) {
 
 // resync syncs the edited calendar again
 func (s *Service) resync(ctx context.Context, r EditRequest, href string) (EditResult, error) {
-	synced, err := s.sync(ctx, SyncRequest{Range: r.Range, Accounts: r.Accounts}, r.Account, r.Calendar)
-	return EditResult{Href: href, Errors: synced.Errors}, err
+	_, err := s.sync(ctx, SyncRequest{Range: r.Range, Accounts: r.Accounts}, r.Account, r.Calendar)
+	return EditResult{Href: href}, err
 }
 
 // Save writes an event: a new one (no Href) in the local zone, else the

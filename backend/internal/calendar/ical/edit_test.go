@@ -132,6 +132,17 @@ func TestCustomZones(t *testing.T) {
 	if len(events) != 2 || events[0].Start != ms(2026, 10, 20, 7) || events[1].Start != ms(2026, 10, 27, 8) {
 		t.Errorf("windows zone %+v", events)
 	}
+	// A rule ending at a UTC UNTIL keeps its last onset (east of UTC, the
+	// UNTIL read as wall time would fall before it)
+	ending, _ := Parse("BEGIN:VCALENDAR\r\nBEGIN:VTIMEZONE\r\nTZID:Ending\r\n" +
+		"BEGIN:STANDARD\r\nDTSTART:19961027T030000\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nRRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10\r\nEND:STANDARD\r\n" +
+		"BEGIN:DAYLIGHT\r\nDTSTART:19810329T020000\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nRRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3;UNTIL=20250330T010000Z\r\nEND:DAYLIGHT\r\n" +
+		"END:VTIMEZONE\r\nEND:VCALENDAR\r\n")
+	if built := fromVTimezone("ending", ending.Walk("VTIMEZONE")[0]); built == nil {
+		t.Error("no zone from a rule with UNTIL")
+	} else if _, got := time.Date(2025, 7, 15, 12, 0, 0, 0, time.UTC).In(built).Zone(); got != 7200 {
+		t.Errorf("summer 2025 offset %d, want 7200", got)
+	}
 	for _, name := range []string{"Europe/Berlin", "America/New_York", "Asia/Kolkata", "UTC"} {
 		loc, _ := time.LoadLocation(name)
 		vtz := VTimezone(name, loc)

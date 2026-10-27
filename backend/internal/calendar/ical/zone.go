@@ -65,6 +65,8 @@ func fromVTimezone(name string, tz *Component) *time.Location {
 		if err != nil {
 			continue
 		}
+		// A real instant in that offset, so a UTC UNTIL compares as one
+		start.Floating = false
 		onsets := []time.Time{start.Time}
 		// rrule-go expands nothing from before 1678 (Outlook starts its
 		// rules in 1601): the same yearly rule from 1970 is the same onsets
