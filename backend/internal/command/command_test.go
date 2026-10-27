@@ -95,7 +95,7 @@ func TestSpawn(t *testing.T) {
 	// Its session, its parent and its descriptors, written once it runs
 	script := `read -r _ _ _ _ _ sid _ < /proc/$$/stat; echo "$$ $sid $PPID"; ls /proc/$$/fd | wc -l`
 	argv := []string{"sh", "-c", "{ " + script + "; } > " + out + ".tmp; mv " + out + ".tmp " + out}
-	if err := Spawn(testCtx(t), Options{}, argv); err != nil {
+	if err := Spawn(testCtx(t), Options{}, argv, ""); err != nil {
 		t.Fatal(err)
 	}
 	data := waitFor(t, out)
@@ -115,6 +115,31 @@ func TestSpawn(t *testing.T) {
 	}
 }
 
+// A spawn starts in the folder it's given (a desktop entry's Path=), the
+// daemon's own without one; a folder that's gone fails the spawn.
+func TestSpawnCwd(t *testing.T) {
+	t.Parallel()
+	here, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	for _, tc := range []struct{ cwd, want string }{{dir, dir}, {"", here}} {
+		out := filepath.Join(t.TempDir(), "out")
+		argv := []string{"sh", "-c", `pwd -P > "$0.tmp" && mv "$0.tmp" "$0"`, out}
+		if err := Spawn(testCtx(t), Options{}, argv, tc.cwd); err != nil {
+			t.Fatal(err)
+		}
+		want, _ := filepath.EvalSymlinks(tc.want)
+		if got := strings.TrimSpace(waitFor(t, out)); got != want {
+			t.Errorf("cwd %q: started in %q, want %q", tc.cwd, got, want)
+		}
+	}
+	if err := Spawn(testCtx(t), Options{}, []string{"true"}, filepath.Join(t.TempDir(), "gone")); err == nil {
+		t.Error("spawned in a folder that doesn't exist")
+	}
+}
+
 func TestSpawnErrors(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
@@ -124,7 +149,7 @@ func TestSpawnErrors(t *testing.T) {
 		{[]string{"axiom-no-such-command"}, axerr.NotFound},
 		{nil, axerr.BadRequest},
 	} {
-		if err := Spawn(testCtx(t), Options{}, tc.argv); axerr.KindOf(err) != tc.kind {
+		if err := Spawn(testCtx(t), Options{}, tc.argv, ""); axerr.KindOf(err) != tc.kind {
 			t.Errorf("%v: err %v, want %s", tc.argv, err, tc.kind)
 		}
 	}

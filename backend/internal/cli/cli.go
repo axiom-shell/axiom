@@ -17,6 +17,7 @@ import (
 	"syscall"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/supervise"
 )
 
 // Env is everything a command touches outside its own arguments, so tests
@@ -61,6 +62,13 @@ func Main(args []string, e *Env) int {
 	// user's is opened as root
 	if len(args) > 0 && args[0] == greeterInstallName {
 		return greeterInstall(context.Background(), e, args[1:])
+	}
+	// The shell's start (supervise.Options.NoTHP): the image execs qs in
+	// its place, with nothing of the command line set up
+	if len(args) > 0 && args[0] == supervise.NoTHPArg {
+		err := supervise.ExecNoTHP(args[1:], e.Stderr)
+		fmt.Fprintln(e.Stderr, "axiom: starting the shell:", err)
+		return 127
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), shutdownSignals(signal.Ignored)...)
 	defer stop()

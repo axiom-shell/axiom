@@ -29,6 +29,7 @@ func execHandlers(reg *rpc.Registry, options func() command.Options, watches fun
 	}
 	type spawnParams struct {
 		Argv []string `json:"argv"`
+		Cwd  string   `json:"cwd,omitempty"` // where it starts; empty: the daemon's folder
 	}
 	type commandParams struct {
 		Command string `json:"command"`
@@ -37,7 +38,7 @@ func execHandlers(reg *rpc.Registry, options func() command.Options, watches fun
 		return command.Run(ctx, options(), p.Argv, p.Input)
 	})
 	rpc.Handle(reg, "exec.spawn", func(ctx context.Context, c *rpc.Conn, p spawnParams) (struct{}, error) {
-		return struct{}{}, command.Spawn(ctx, options(), p.Argv)
+		return struct{}{}, command.Spawn(ctx, options(), p.Argv, p.Cwd)
 	})
 	// Outputs come as exec.outputs pushes, to this connection only
 	rpc.Handle(reg, "exec.watch", func(ctx context.Context, c *rpc.Conn, p command.WatchRequest) (struct{}, error) {

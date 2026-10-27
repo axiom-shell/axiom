@@ -92,8 +92,9 @@ func Run(ctx context.Context, o Options, argv []string, input *string) (Result, 
 // setsid -f, which forks it into a session of its own and exits, so it's
 // never this process's child (no zombie after a re-exec, nothing tying
 // it to the daemon's life) and keeps the signal handling it's given. Its
-// stdio is /dev/null.
-func Spawn(ctx context.Context, o Options, argv []string) error {
+// stdio is /dev/null; it starts in cwd (a desktop entry's Path=; empty:
+// the daemon's).
+func Spawn(ctx context.Context, o Options, argv []string, cwd string) error {
 	if len(argv) == 0 {
 		return axerr.New(axerr.BadRequest, "an empty command")
 	}
@@ -103,6 +104,7 @@ func Spawn(ctx context.Context, o Options, argv []string) error {
 	}
 	cmd := exec.CommandContext(ctx, "setsid", append([]string{"-f", "--"}, argv...)...)
 	cmd.Env = o.Env
+	cmd.Dir = cwd
 	// No pipes: the program inherits setsid's stdio, and a pipe would
 	// keep this waiting for as long as the program lives
 	if err := cmd.Run(); err != nil {
