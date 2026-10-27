@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
+	"github.com/axiom-shell/axiom/backend/internal/release"
 )
 
 // The binary the shell runs, which a local copy takes
@@ -274,7 +275,7 @@ func TestGitTakesTheReleasesBinary(t *testing.T) {
 // when "-").
 func releases(t *testing.T, data, sums string) string {
 	t.Helper()
-	asset, ok := rules.ReleaseAsset(runtime.GOARCH)
+	asset, ok := release.Asset(runtime.GOARCH)
 	if !ok {
 		t.Skip("no release binary for", runtime.GOARCH)
 	}

@@ -1,0 +1,94 @@
+name: Edge
+
+# The edge prerelease: main's newest build, published at every merge
+# (main is reached only through pull requests). The same static binaries
+# as a release (release.yml), plus COMMIT, the commit they were built
+# from, all listed in SHA256SUMS, so a clone following main (self-update,
+# the greeter install, install.sh) takes the binary built from the commit
+# it checks out (docs/dev/packaging.md › Edge builds). The edge tag is
+# moved to that commit; it isn't a v* tag, so nothing looking for
+# releases takes it, and the release is never marked latest.
+# Run by hand (Actions → Edge → Run workflow) to publish main again.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time, none cancelled half-uploaded: a run whose commit
+# main has moved past by then publishes nothing, leaving it to the newer run
+concurrency:
+  group: edge
+  cancel-in-progress: false
+
+env:
+  GOTOOLCHAIN: local
+
+jobs:
+  edge:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    permissions:
+      contents: write
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed git python go github-cli
+
+      # The org only allows its own SHA-pinned actions, so check out with
+      # plain git (as checks.yml does)
+      - name: Checkout
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git config --global --add safe.directory "$PWD"
+          git init -q .
+          git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          git config --global http.extraheader "AUTHORIZATION: basic $auth"
+          git fetch -q origin main
+          git checkout -q "$GITHUB_SHA"
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_SHA isn't on main"; exit 1; }
+
+      # The schema and the copies the binary embeds (never committed)
+      - name: Generated files (scripts/generate.sh)
+        run: scripts/generate.sh
+
+      - name: Build
+        run: |
+          short=$(git rev-parse --short=7 HEAD)
+          mkdir dist
+          for arch in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=linux GOARCH=$arch go -C backend build -trimpath \
+              -ldflags "-s -w -X github.com/axiom-shell/axiom/backend/internal/buildinfo.version=edge-$short" \
+              -o "../dist/axiom-linux-$arch" ./cmd/axiom
+          done
+          dist/axiom-linux-amd64 version | tee /dev/stderr | grep -qF "axiom edge-$short " ||
+            { echo "::error::the binary doesn't report edge-$short"; exit 1; }
+          dist/axiom-linux-amd64 version --json | grep -qF "\"commit\": \"$GITHUB_SHA\"" ||
+            { echo "::error::the binary doesn't name $GITHUB_SHA as its commit"; exit 1; }
+          echo "$GITHUB_SHA" >dist/COMMIT
+          (cd dist && sha256sum axiom-linux-* COMMIT >SHA256SUMS && cat SHA256SUMS)
+
+      # The files first and SHA256SUMS last: a download racing the upload
+      # fails its check instead of taking a mismatched binary
+      - name: Publish the edge prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          git fetch -q origin main
+          if [ "$(git rev-parse origin/main)" != "$GITHUB_SHA" ]; then
+            echo "::notice::main has moved past $GITHUB_SHA: the newer run publishes"
+            exit 0
+          fi
+          git push -q --force origin "$GITHUB_SHA:refs/tags/edge"
+          notes="main's newest build, $GITHUB_SHA. Not a release: the binaries a clone following main downloads."
+          if gh release view edge >/dev/null 2>&1; then
+            gh release edit edge --prerelease --latest=false --title "axiom edge" --notes "$notes"
+          else
+            gh release create edge --verify-tag --prerelease --latest=false --title "axiom edge" --notes "$notes"
+          fi
+          gh release upload edge dist/axiom-linux-* dist/COMMIT --clobber
+          gh release upload edge dist/SHA256SUMS --clobber

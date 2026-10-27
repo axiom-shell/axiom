@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -24,13 +23,12 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
+	"github.com/axiom-shell/axiom/backend/internal/release/fetch"
 )
 
 // The time limits of what an install waits on.
 const (
-	fetchTimeout    = 5 * time.Minute
-	sumsTimeout     = time.Minute
-	downloadTimeout = 5 * time.Minute
+	fetchTimeout = 5 * time.Minute
 )
 
 // loginScreen is what a copy can't do without: a release from before the
@@ -407,56 +405,24 @@ func (r *run) userBinary(ctx context.Context, dest string) error {
 }
 
 // releaseBinary downloads the target tag's prebuilt binary for this
-// machine from the official repository's GitHub release (rules.Releases,
+// machine from the official repository's GitHub release (release.Official,
 // never the copy's remote), checked against the release's SHA256SUMS: its
 // bytes and that listing's url. nil: there's none (not a tag, no such
 // release or asset); a download that doesn't match fails the install.
 func (in *Installer) releaseBinary(ctx context.Context, target rules.Target) ([]byte, string, error) {
-	asset, ok := rules.ReleaseAsset(runtime.GOARCH)
+	releases := fetch.New(fetch.Options{Base: in.opts.Releases})
+	sumsURL, ok := releases.SumsURL(target.Tag())
 	if !ok {
 		return nil, "", nil
 	}
-	base := in.opts.Releases
-	if base == "" {
-		base = rules.Releases
-	}
-	sumsURL, ok := rules.ReleaseURL(base, target.Tag(), "SHA256SUMS")
-	assetURL, _ := rules.ReleaseURL(base, target.Tag(), asset)
-	if !ok {
+	data, err := releases.Binary(ctx, target.Tag(), runtime.GOARCH)
+	switch {
+	case errors.Is(err, fetch.ErrMissing):
 		return nil, "", nil
-	}
-	sums, err := in.download(ctx, sumsURL, sumsTimeout)
-	if err != nil {
-		return nil, "", nil
-	}
-	data, err := in.download(ctx, assetURL, downloadTimeout)
-	if err != nil {
-		return nil, "", nil
-	}
-	sum := fmt.Sprintf("%x", sha256.Sum256(data))
-	if want := rules.SumFor(string(sums), asset); want == "" || !strings.EqualFold(want, sum) {
-		return nil, "", failf("the %s release's %s doesn't match its SHA256SUMS", target.Tag(), asset)
+	case err != nil:
+		return nil, "", failf("%v", err)
 	}
 	return data, sumsURL, nil
-}
-
-// download is a url's body.
-func (in *Installer) download(ctx context.Context, url string, timeout time.Duration) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s: %s", url, resp.Status)
-	}
-	return io.ReadAll(resp.Body)
 }
 
 // snapshot copies what the user's axiom exported into the copy's
