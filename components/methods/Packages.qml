@@ -147,14 +147,6 @@ QtObject {
         "arch": "python",
         "fedora": "python3"
       },
-      "py:numpy": {
-        "arch": "python-numpy",
-        "fedora": "python3-numpy"
-      },
-      "py:PIL": {
-        "arch": "python-pillow",
-        "fedora": "python3-pillow"
-      },
       "notify-send": {
         "arch": "libnotify",
         "fedora": "libnotify"

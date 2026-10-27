@@ -24,8 +24,6 @@ optdepends=(
   'xorg-xwayland: X11 apps under sway (Steam, games, older apps)'
   'xwayland-satellite: X11 apps under niri (Steam, games, older apps)'
   'awww: wallpapers'
-  'python-numpy: themes generated from your wallpaper'
-  'python-pillow: themes generated from your wallpaper'
   'libsecret: calendar accounts and feeds'
   'networkmanager: Wi-Fi menu and network widget'
   'pacman-contrib: package update checks'

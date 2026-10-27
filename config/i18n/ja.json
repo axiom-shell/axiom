@@ -2173,7 +2173,6 @@
     "The event changed elsewhere. It has been reloaded: check it and try again.": "予定がほかの場所で変更されました。再読み込みしたので、確認してからもう一度お試しください。",
     "No password is saved for this account.": "このアカウントのパスワードは保存されていません。",
     "The server sent something unreadable.": "サーバーから読み取れない応答がありました。",
-    "The calendar helper couldn't run: {0}": "カレンダーのヘルパーを実行できませんでした: {0}",
     "tomorrow, tmr": "明日",
     "all day, all-day": "終日",
     "Most calendar-colored dots under a day in the month grids.": "月表示で 1 日に表示するカレンダー色のドットの最大数。",
@@ -2639,7 +2638,6 @@
     "Locks through the session-lock protocol and unlocks with your password (PAM), in your theme and laid out on the Layouts page.": "セッションロックプロトコルでロックし、パスワード（PAM）で解除します。テーマに合わせ、レイアウトページで配置できます。",
     "Leaves locking to a locker you set up yourself.": "ロックは自分で設定したロッカーに任せます。",
     "Other apps in axiom's colors": "axiom の配色に合わせる他のアプリ",
-    "Theme generation, theme integrations and keybinds": "テーマ生成、テーマ連携、キーバインド",
     "Notifications from axiom itself, with their buttons": "axiom 自身の通知とそのボタン",
     "Annotating screenshots (swappy works too)": "スクリーンショットへの注釈（swappy でも可）",
     "Power profiles in the quick actions": "クイックアクションの電源プロファイル",
@@ -2650,13 +2648,6 @@
     "Run on click. Empty uses your distribution's upgrade (`sudo pacman -Syu`, `sudo dnf upgrade`), or the AUR helper with -Syu.": "クリックで実行します。空の場合はディストリビューションのアップグレード（`sudo pacman -Syu`、`sudo dnf upgrade`）、または AUR ヘルパーの -Syu を使います。",
     "Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).": "GTK 3 と GTK 4 の gtk.css の隣に axiom.css を書き出し、ライト/ダークに追従します。GTK3 アプリには adw-gtk3 テーマが必要です（Arch では adw-gtk-theme、Fedora では adw-gtk3-theme）。",
     "Built-in uses the Wayland session-lock protocol with PAM. None leaves locking to your own locker.": "ビルトインは Wayland のセッションロックプロトコルと PAM を使います。なしの場合、ロックは自分のロッカーに任せます。",
-    "The calendar helper couldn't run (it needs python3).": "カレンダーのヘルパーを実行できませんでした（python3 が必要です）。",
-    "Themes can't be generated": "テーマを生成できません",
-    "Generating themes from the wallpaper needs the Python packages numpy and Pillow. Install them with: {0}": "壁紙からテーマを生成するには Python パッケージ numpy と Pillow が必要です。次のコマンドでインストールしてください: {0}",
-    "Generating themes from the wallpaper needs the Python packages numpy and Pillow.": "壁紙からテーマを生成するには Python パッケージ numpy と Pillow が必要です。",
-    "Calendars need the Python package {0}. Install it with: {1}": "カレンダーには Python パッケージ {0} が必要です。次のコマンドでインストールしてください: {1}",
-    "Calendars need the Python package {0}.": "カレンダーには Python パッケージ {0} が必要です。",
-    "Theme generation from the wallpaper": "壁紙からのテーマ生成",
     "Calendar accounts and feeds": "カレンダーのアカウントとフィード",
     "axiom's package was updated since its login screen was set up. It runs the new code already; Update refreshes its start-up files and fallback look, asking for your password.": "ログイン画面を設定した後に axiom のパッケージが更新されました。新しいコードはすでに動いています。「更新」で起動用ファイルと予備の見た目を新しくします（パスワードを求めます）。",
     "The login screen runs the copy of axiom your package manager installed, so it updates with the system. Only root can change it.": "ログイン画面はパッケージマネージャーがインストールした axiom を実行するため、システムと一緒に更新されます。変更できるのは root だけです。",
@@ -3176,6 +3167,7 @@
     "Rows it may take while its device list needs them: free rows towards the edge first (above it, or below it in a bottom menu), then away from it, pushing the modules there along (not on the lock or login screen). 0 keeps it at its size.": "",
     "No monitor here has a brightness control (a backlight, or ddcutil for DDC/CI)": "",
     "One bar per entry, in order. System volume is the output device's volume, Other apps is the first playing stream no App bar (in any OSD) matches, Microphone is the input device's volume, and Brightness is the monitor's own (a laptop panel through its backlight, an external monitor over DDC/CI through ddcutil; left out on a monitor that has neither).": "",
-    "Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor axiom can set (a laptop backlight, or one ddcutil reaches over DDC/CI; a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.": ""
+    "Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor axiom can set (a laptop backlight, or one ddcutil reaches over DDC/CI; a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.": "",
+    "Theme integrations and keybinds": ""
   }
 }

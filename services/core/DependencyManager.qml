@@ -47,7 +47,7 @@ Singleton {
     return Packages.installLines(root.distro, keys);
   }
 
-  // A key as people read it: "python: numpy" for "py:numpy", the font's
+  // A key as people read it: "python: gi" for "py:gi", the font's
   // family for "iconFont"
   function label(key) {
     if (key === "iconFont")
@@ -70,7 +70,7 @@ Singleton {
   // I18n.tr("Reading JSON (theme integrations)") I18n.tr("Downloads (album art, Claude usage, community setups)")
   // I18n.tr("Pending package updates")
   // I18n.tr("Chat API keys in the keyring") I18n.tr("Moving notes to the trash")
-  // I18n.tr("Theme generation, theme integrations and keybinds")
+  // I18n.tr("Theme integrations and keybinds")
   // I18n.tr("Notifications from axiom itself, with their buttons")
   // I18n.tr("Idle locking and screen blanking") I18n.tr("Night light")
   // I18n.tr("X11 apps (Steam, games, older apps)")
@@ -79,7 +79,7 @@ Singleton {
   // I18n.tr("The system's sound in screen recordings")
   // I18n.tr("Annotating screenshots (swappy works too)")
   // I18n.tr("Power profiles in the quick actions")
-  // I18n.tr("Theme generation from the wallpaper") I18n.tr("Calendar accounts and feeds")
+  // I18n.tr("Calendar accounts and feeds")
   // I18n.tr("The login screen's compositor (Hyprland works too)")
   readonly property var tools: [
     {
@@ -112,15 +112,7 @@ Singleton {
     },
     {
       "command": "python3",
-      "purpose": "Theme generation, theme integrations and keybinds"
-    },
-    {
-      "command": "py:numpy",
-      "purpose": "Theme generation from the wallpaper"
-    },
-    {
-      "command": "py:PIL",
-      "purpose": "Theme generation from the wallpaper"
+      "purpose": "Theme integrations and keybinds"
     },
     {
       "command": "notify-send",
