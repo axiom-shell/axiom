@@ -11,7 +11,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 - [Quickshell](https://quickshell.org) 0.3.2 or newer (`qs`)
 - [Material Symbols](https://fonts.google.com/icons) for icons (`ttf-material-symbols-variable`). Any font works for text
 - `curl`, `python3`
-- `go`, to build the `axiom` binary from a clone (an AUR package brings it already built). `axiom` is the shell's parent process: it starts the shell, owns your config file, and is the `axiom` command
+- `go`, only to build the `axiom` binary from a clone by hand. The installer downloads the official build of the release it checks out (checked against the release's checksums), and installs `go` to build it only when there's none for your machine; an AUR package brings it already built. `axiom` is the shell's parent process: it starts the shell, owns your config file, and is the `axiom` command
 
 <details open>
 <summary><b>Optional</b>, for the features that use them</summary>
