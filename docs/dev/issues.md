@@ -49,9 +49,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
+### Setting an awww wallpaper never starts awww's daemon
+- **Where:** `scripts/setWallpaper.sh`, `services/core/ThemeManager.qml` (`_showWallpaper`)
+- **What:** With `Appearance.wallpaperBackend` `awww` and no `awww-daemon` running, the script runs `awww query || awww init`, but awww has no `init` (`error: unrecognized subcommand 'init'`), so the wallpaper isn't set (`set -e` stops it). Starting `awww-daemon` instead would make it a child of qs's `Quickshell.execDetached`, inheriting qs's transparent huge pages opt-out ([memory](core/memory.md) › Transparent huge pages): it should start through the daemon (`CommandManager.runDetached`), as apps do.
+- **Size:** small
+- **Found:** 2026-10-27, while reviewing what the shell still starts as its own children (row 9)
+
 ### The daemon's own commands are left zombies across a re-exec
 - **Where:** `backend/internal/updates/updates.go`, `backend/internal/ipcroute/ipcroute.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`
-- **What:** The commands the daemon runs for itself (`checkupdates`, `qs ipc`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Running them through `command.Run` with the daemon's `Children` would cover them.
+- **What:** The commands the daemon runs for itself (`checkupdates`, `qs ipc`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Later the same day the same daemon (about 9 h of dev-mode re-execs) had 104: 61 `qs`, 18 `checkupdates`, 8 `bash`, 7 `bat`, 5 `ddcutil`, 3 `tailscale`, mostly in groups started in the same second, the commands a fresh image runs at once (`ipcroute`'s `qs ipc --pid … show` and `call`, the startup checks). The `qs` ones are those `qs ipc` runs, not shells: the shell a re-exec adopts is waited on and reaped (`supervise.Supervisor.adopt`), and only ever one runs. Running them through `command.Run` with the daemon's `Children` would cover them.
 - **Size:** small
 - **Found:** 2026-10-27, while handing exec's commands across a re-exec
 

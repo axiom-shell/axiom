@@ -29,7 +29,7 @@ func execHandlers(reg *rpc.Registry, options func() command.Options, watches fun
 	}
 	type spawnParams struct {
 		Argv []string `json:"argv"`
-		Cwd  string   `json:"cwd"` // optional: where it starts
+		Cwd  string   `json:"cwd,omitempty"` // where it starts; empty: the daemon's folder
 	}
 	type commandParams struct {
 		Command string `json:"command"`
