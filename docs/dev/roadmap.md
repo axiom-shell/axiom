@@ -168,7 +168,6 @@ Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's
 
 Resolved by a stage:
 - [A command run across a daemon re-exec loses its output and is left a zombie](issues.md#a-command-run-across-a-daemon-re-exec-loses-its-output-and-is-left-a-zombie) (stage 3b)
-- [The greeter runs CommandManager's commands without the daemon](issues.md#the-greeter-runs-commandmanagers-commands-without-the-daemon) (stage 3b)
 - [Self-update and the greeter installer assume git](issues.md#self-update-and-the-greeter-installer-assume-git) (stage 4)
 - [ChatProvidersCard runs its own requests](issues.md#chatproviderscard-runs-its-own-requests) (stage 5)
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)

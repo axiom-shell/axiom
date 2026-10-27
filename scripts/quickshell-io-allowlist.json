@@ -20,8 +20,7 @@
       "execDetached"
     ],
     "services/core/CommandManager.qml": [
-      "Process",
-      "execDetached"
+      "Process"
     ],
     "services/apps/CommunityFetch.qml": [
       "Process"

@@ -20,7 +20,8 @@ The shell (`qs -p <tree>`) is a child of the daemon (`axiom run`). Six channels 
 - **C. Calls, shell → daemon**: JSON-RPC requests on the socket (`BackendManager.call(method, params, done)`).
 - **D. Pushes, daemon → shell**: notifications by topic (`BackendManager.listen(method, fn)`). Each listener runs on its own: one that throws is logged and the rest still hear the push.
 - **E. Calls, daemon → shell**: `ipc.call`, how `axiom ipc <target> <fn>` and `axiom lock` reach an `IpcTarget` without a process per call (`BackendManager.handle`; answered by `_callTarget`).
-- **F. The binary as a command**: the shell runs `Paths.toolBin` for things that need no daemon (`compositor niri info`, `compositor sway-text`), and `Paths.axiomBin daemon reexec` after an update (`SelfUpdateManager`). The compositor configs the daemon writes call `axiom ipc …` for binds. The greeter has no daemon and runs `$AXIOM_BIN`, which is the greeter's own binary.
+- **F. The binary as a command**: the shell runs `Paths.toolBin` for things that need no daemon (`compositor niri info`, `compositor sway-text`), and `Paths.axiomBin daemon reexec` after an update (`SelfUpdateManager`). The compositor configs the daemon writes call `axiom ipc …` for binds. The greeter runs `$AXIOM_BIN`, which is the greeter's own binary.
+- **The greeter's axiom**: `axiom greeter` stays the parent of the login screen's qs and serves the same protocol on `<its runtime folder>/axiom.sock` (`AXIOM_SOCKET`; `daemon/greeter.go`, `RunGreeter`), answering only that qs's hello and then `exec.run`, `exec.spawn`, `tz.zones`, `tz.offsets` and `net.addresses`: no config, lock, compositor layer, Wayland connection or pushes. Any other method is `not_found`.
 
 The daemon also talks to the compositor over its own sockets (`backend/internal/compositor/ipc`). That is a separate connection, not part of this protocol.
 

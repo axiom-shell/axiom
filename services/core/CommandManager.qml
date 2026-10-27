@@ -1,7 +1,6 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 import Quickshell.Io
 
 // Shell commands polled for their output (e.g. a bar Button's label),
@@ -16,8 +15,9 @@ import Quickshell.Io
 //   CommandManager.run(["cmd", "arg"], (exitCode, stdout, stderr) => ..., input)
 // `input` (optional) is written to stdin, which is then closed: how secrets
 // and clipboard text reach a command without going through argv.
-// One-off commands run in axiom (exec.run, exec.spawn); without it (the
-// greeter, a shell started by hand) they run here.
+// One-off commands run in axiom (exec.run, exec.spawn: the session's
+// `axiom run`, or the greeter's `axiom greeter`); a shell started by hand,
+// with no axiom, runs none. The polling still runs here.
 QtObject {
   id: root
 
@@ -46,10 +46,6 @@ QtObject {
     if (!command?.length)
       return;
     const argv = Array.isArray(command) ? command : ["sh", "-c", command];
-    if (!BackendManager.active) {
-      Quickshell.execDetached(argv);
-      return;
-    }
     BackendManager.call("exec.spawn", {
       "argv": argv
     }, error => {
@@ -63,30 +59,17 @@ QtObject {
   // A command that can't run, or whose answer is lost (axiom re-exec'd
   // meanwhile), calls back with -1 and the reason as stderr.
   function run(command, callback, input) {
-    if (BackendManager.active) {
-      BackendManager.call("exec.run", {
-        "argv": command,
-        "input": input ?? null
-      }, (error, result) => {
-        if (error && error.kind !== "unavailable")
-          console.warn(`[CommandManager] ${command[0]}: ${error.message}`);
-        if (error)
-          callback?.(-1, "", error.message);
-        else
-          callback?.(result.exitCode, result.stdout, result.stderr);
-      });
-      return;
-    }
-    const process = root._oneShotComponent.createObject(root, {
-      "command": command,
-      "input": input ?? "",
-      "stdinEnabled": input !== null && input !== undefined
+    BackendManager.call("exec.run", {
+      "argv": command,
+      "input": input ?? null
+    }, (error, result) => {
+      if (error && error.kind !== "unavailable")
+        console.warn(`[CommandManager] ${command[0]}: ${error.message}`);
+      if (error)
+        callback?.(-1, "", error.message);
+      else
+        callback?.(result.exitCode, result.stdout, result.stderr);
     });
-    process.done.connect((exitCode, out, err) => {
-      callback?.(exitCode, out, err);
-      process.destroy();
-    });
-    process.running = true;
   }
 
   // Run a command again now (after an action that may change its output)
@@ -134,29 +117,6 @@ QtObject {
           }
         }
       }
-    }
-  }
-
-  property Component _oneShotComponent: Component {
-    Process {
-      id: oneShot
-      property string input: ""
-      signal done(int exitCode, string out, string err)
-
-      stdout: StdioCollector {
-        id: oneShotOut
-      }
-      stderr: StdioCollector {
-        id: oneShotErr
-      }
-      onStarted: {
-        if (!oneShot.stdinEnabled)
-          return;
-        oneShot.write(oneShot.input);
-        oneShot.input = "";
-        oneShot.stdinEnabled = false; // closes stdin
-      }
-      onExited: exitCode => oneShot.done(exitCode, oneShotOut.text, oneShotErr.text)
     }
   }
 
