@@ -680,12 +680,15 @@ GO_ROOT = ROOT / "backend/internal"
 # func(name string, …` whose body calls rpc.Handle), a push declared
 # (`pushX = rpc.Push[T]{Method: "name"`) and sent (`pushX.Send(…,
 # subscribedTo(topic))`; a receiver that isn't a declaration sends what
-# an Options func's Push names), a call into the shell
+# an Options func's Push names; one handed to a hub as `Method:
+# pushX.Method`, such as command.Watches's, goes only to the connections
+# that asked), a call into the shell
 GO_HANDLE = re.compile(r'\brpc\.Handle\(reg,\s*"([\w.]+)"')
 GO_HELPER = re.compile(r'\b(\w+) := func\(name string\b')
 GO_PUSH_DECL = re.compile(r'\b(\w+)\s*=\s*rpc\.Push\[.*?\]\{Method:\s*"([\w.]+)"')
 GO_PUSH_SEND = re.compile(r'\b(\w+)\.Send\([\w.]*server,.*subscribedTo\((\w+)\)')
 GO_PUSH = re.compile(r'\bPush\("([\w.]+)"')
+GO_PUSH_METHOD = re.compile(r'\bMethod:\s*(push\w+)\.Method\b')
 GO_CALL = re.compile(r'\.Call\(ctx,\s*"([\w.]+)"')
 GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')
 # A polled topic (internal/topics): its methods and push, named after it
@@ -1031,6 +1034,8 @@ def rpc_scan():
         declared.update(dict(GO_PUSH_DECL.findall(text)))
         for m in GO_PUSH_SEND.finditer(text):
             sent.setdefault(m.group(1), []).append((rel(path), m.group(2)))
+        for m in GO_PUSH_METHOD.finditer(text):
+            sent.setdefault(m.group(1), []).append((rel(path), None))
         for m in GO_SOURCE.finditer(text):
             for suffix in POLLED_METHODS:
                 methods[f"{m.group(1)}.{suffix}"] = {"go": rel(path), "guards": [], "qml": set(), "cli": set()}
@@ -1044,9 +1049,13 @@ def rpc_scan():
             dynamic_topic = sends[0][1]
             continue
         for file, topic in sends:
-            pushes.setdefault(declared[var], {"go": set(), "topic": topic, "qml": set()})["go"].add(file)
+            push = pushes.setdefault(declared[var], {"go": set(), "topic": topic, "qml": set()})
+            push["go"].add(file)
+            push["asked"] = topic is None
     for push in pushes.values():
-        if push.get("polled"):
+        if push.get("asked"):
+            push["topic"] = "none (to the connections that asked)"
+        elif push.get("polled"):
             push["topic"] = f"{push['polled']} (polled)"
         else:
             push["topic"] = topics.get(push["topic"] or dynamic_topic, "?")

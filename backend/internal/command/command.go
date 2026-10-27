@@ -1,6 +1,7 @@
 // Package command runs the commands the shell asks for (CommandManager's
-// run and runDetached: `exec.run`, `exec.spawn`), with the shell's
-// environment and no descriptor but stdio. A run is waited on and its
+// run and runDetached: `exec.run`, `exec.spawn`; its watched commands:
+// `exec.watch`, watch.go), with the shell's environment and no
+// descriptor but stdio. A run is waited on and its
 // output returned; a spawn is detached for good, so what it starts (an
 // app from the launcher, a bar button's command) outlives the daemon and
 // is never left a zombie in it across a re-exec.

@@ -19,9 +19,6 @@
       "FileView",
       "execDetached"
     ],
-    "services/core/CommandManager.qml": [
-      "Process"
-    ],
     "services/apps/CommunityFetch.qml": [
       "Process"
     ],
