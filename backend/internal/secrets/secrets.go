@@ -114,7 +114,11 @@ func (s *Store) Set(ctx context.Context, scope, id, label, value string) (string
 	}
 	if err == nil && out.ExitCode == 0 {
 		// One place per secret: the file's copy would outlive a later clear
-		return SourceKeyring, s.write(slot(scope, id), "")
+		// (one in a file that can't be read is never looked up anyway)
+		if err := s.write(slot(scope, id), ""); err != nil {
+			s.o.Log.Warn("secrets.json's copy can't be dropped", "err", err)
+		}
+		return SourceKeyring, nil
 	}
 	s.o.Log.Info("no keyring took the secret; saving it to secrets.json", "slot", slot(scope, id))
 	return SourceFile, s.write(slot(scope, id), value)

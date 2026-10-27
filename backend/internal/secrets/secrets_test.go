@@ -150,6 +150,11 @@ func TestRefusals(t *testing.T) {
 	if data, _ := os.ReadFile(filepath.Join(dir, "secrets.json")); string(data) != "not json" {
 		t.Errorf("the broken file was replaced: %s", data)
 	}
+	// The keyring still takes one
+	ring, _ := newStore(t, `not json`, map[string]string{})
+	if source, err := ring.Set(ctx, "calendar", "acc", "", "pw"); err != nil || source != SourceKeyring {
+		t.Errorf("Set to the keyring beside a broken file: %q %v", source, err)
+	}
 	for _, c := range [][2]string{{"other", "x"}, {"calendar", ""}} {
 		if _, err := s.Set(ctx, c[0], c[1], "", "v"); axerr.KindOf(err) != axerr.BadRequest {
 			t.Errorf("Set %v: %v", c, err)
