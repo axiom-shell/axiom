@@ -313,7 +313,7 @@ Found by the audits:
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
 
-0. **Measure** (row 9): a memory reading script (RSS, Private_Dirty, AnonHugePages, the JS heap, render threads) and a `--mem` option for `scripts/dev/bench_overlay.sh` (the reading after each open/close cycle), run in a nested session, with a baseline recorded in a doc. Every entry below is judged by it.
+0. **Done:** **Measure** (row 9; [memory](core/memory.md)): a memory reading script (RSS, Private_Dirty, AnonHugePages, the JS heap, render threads) and a `--mem` option for `scripts/dev/bench_overlay.sh` (the reading after each open/close cycle), run in a nested session, with a baseline recorded in a doc. Every entry below is judged by it.
 
 - [The shell's heap never shrinks after a spike](issues.md#the-shells-heap-never-shrinks-after-a-spike) (row 9)
 - [Nineteen windows stay mapped on one monitor](issues.md#nineteen-windows-stay-mapped-on-one-monitor)
