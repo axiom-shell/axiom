@@ -128,7 +128,7 @@ Singleton {
   // --- Windows ---
 
   function activateWindow(id) {
-    NiriIpcManager.action({
+    root._action({
       "FocusWindow": {
         "id": Number(id)
       }
@@ -136,7 +136,7 @@ Singleton {
   }
 
   function closeWindow(id) {
-    NiriIpcManager.action({
+    root._action({
       "CloseWindow": {
         "id": Number(id)
       }
@@ -151,7 +151,7 @@ Singleton {
   function placeWindow(id, workspaceId, targetId, side, restore, reinsert, floatAt) {
     const win = Number(id);
     if (!reinsert)
-      NiriIpcManager.action({
+      root._action({
         "MoveWindowToWorkspace": {
           "window_id": win,
           "reference": root._reference(workspaceId),
@@ -162,7 +162,7 @@ Singleton {
     if (floatAt) {
       if (moved?.floating) {
         const output = root.outputs.find(o => o.name === root._outputOf(workspaceId));
-        NiriIpcManager.action({
+        root._action({
           "MoveFloatingWindow": {
             "id": win,
             "x": {
@@ -179,7 +179,7 @@ Singleton {
     const target = root.windows.find(w => w.id === String(targetId));
     if (!target?.column)
       return;
-    NiriIpcManager.action({
+    root._action({
       "FocusWindow": {
         "id": win
       }
@@ -187,13 +187,13 @@ Singleton {
     const into = side === "top" || side === "bottom";
     // The window's own column leaving from before the target's shifts it
     const shift = moved?.workspaceId === target.workspaceId && (moved.column ?? Infinity) < target.column ? 1 : 0;
-    NiriIpcManager.action({
+    root._action({
       "MoveColumnToIndex": {
         "index": target.column - shift + (side === "left" ? 0 : 1)
       }
     });
     if (into)
-      NiriIpcManager.action({
+      root._action({
         "ConsumeOrExpelWindowLeft": {
           "id": win
         }
@@ -207,14 +207,14 @@ Singleton {
           "AdjustFixed": Math.round(value)
         });
     if (Math.round(dw) !== 0)
-      NiriIpcManager.action({
+      root._action({
         "SetWindowWidth": {
           "id": win,
           "change": adjust(dw)
         }
       });
     if (Math.round(dh) !== 0)
-      NiriIpcManager.action({
+      root._action({
         "SetWindowHeight": {
           "id": win,
           "change": adjust(dh)
@@ -222,7 +222,7 @@ Singleton {
       });
     const floating = root.windows.find(w => w.id === String(id))?.floating === true;
     if (floating && (Math.round(dx) !== 0 || Math.round(dy) !== 0))
-      NiriIpcManager.action({
+      root._action({
         "MoveFloatingWindow": {
           "id": win,
           "x": adjust(dx),
@@ -245,7 +245,7 @@ Singleton {
 
   // Sends the focused window to workspace `id`, staying put
   function sendWindowToWorkspace(id) {
-    NiriIpcManager.action({
+    root._action({
       "MoveWindowToWorkspace": {
         "window_id": null,
         "reference": root._reference(id),
@@ -256,7 +256,7 @@ Singleton {
 
   // Scrolls the focused output's strip a column on (1) or back (-1)
   function scrollStrip(direction) {
-    NiriIpcManager.action(direction > 0 ? {
+    root._action(direction > 0 ? {
       "FocusColumnRight": {}
     } : {
       "FocusColumnLeft": {}
@@ -268,7 +268,7 @@ Singleton {
   function travel(output, legs, mode, focusId) {
     const last = legs[legs.length - 1];
     if (output)
-      NiriIpcManager.action({
+      root._action({
         "FocusMonitor": {
           "output": output
         }
@@ -276,7 +276,7 @@ Singleton {
     if (focusId)
       root.activateWindow(focusId);
     else if (mode === "move")
-      NiriIpcManager.action({
+      root._action({
         "MoveWindowToWorkspace": {
           "window_id": null,
           "reference": root._reference(last.id),
@@ -284,7 +284,7 @@ Singleton {
         }
       });
     else
-      NiriIpcManager.action({
+      root._action({
         "FocusWorkspace": {
           "reference": root._reference(last.id)
         }
@@ -293,7 +293,7 @@ Singleton {
 
   // Focuses output `name` (its active workspace)
   function focusOutput(name) {
-    NiriIpcManager.action({
+    root._action({
       "FocusMonitor": {
         "output": name
       }
@@ -304,7 +304,7 @@ Singleton {
   // `follow`, else stays on the output it's on
   function moveWindowToOutput(name, follow) {
     const from = root.focusedOutput;
-    NiriIpcManager.action({
+    root._action({
       "MoveWindowToMonitor": {
         "id": null,
         "output": name
@@ -383,7 +383,7 @@ Singleton {
 
   // Switches to the "next" or "prev" layout, then calls back
   function cycleKeyboardLayout(direction, callback) {
-    NiriIpcManager.action({
+    root._action({
       "SwitchLayout": {
         "layout": direction === "prev" ? "Prev" : "Next"
       }
@@ -401,7 +401,7 @@ Singleton {
 
   // Ends the niri session (the power menu's log out)
   function exitSession() {
-    NiriIpcManager.action({
+    root._action({
       "Quit": {
         "skip_confirmation": true
       }
@@ -413,14 +413,14 @@ Singleton {
   // Calls back with every output in detail, disabled ones too
   // (NiriState.outputDetails), or null
   function withOutputDetails(callback) {
-    NiriIpcManager.request("Outputs", reply => callback(reply?.Outputs ? NiriState.outputDetails(reply.Outputs) : null));
+    root._request("Outputs", reply => callback(reply?.Outputs ? NiriState.outputDetails(reply.Outputs) : null));
   }
 
   // Sets the outputs as `rules` (MonitorRule) say, now; `details` resolve
   // a rule naming its output by description
   function applyOutputs(rules, details) {
     const requests = NiriConf.outputRequests(rules, details);
-    requests.forEach((request, i) => NiriIpcManager.command(request, i === requests.length - 1 ? () => root._readOutputs() : null));
+    requests.forEach((request, i) => root._command(request, i === requests.length - 1 ? () => root._readOutputs() : null));
   }
 
   // --- State behind the members above ---
@@ -495,7 +495,7 @@ Singleton {
   property bool _startLoadSeen: false
 
   function _readOutputs() {
-    NiriIpcManager.request("Outputs", reply => {
+    root._request("Outputs", reply => {
       if (!reply?.Outputs)
         return;
       root._outputsReply = reply.Outputs;
@@ -507,50 +507,116 @@ Singleton {
     });
   }
 
-  // The stream may have started before this was created (NiriIpcManager
-  // connects as soon as it exists), its streamStarted missed
+  // --- niri's socket, through axiom (niri.request, niri.watch): Quickshell
+  // has no niri module ---
+
+  // Sends `request` ("Outputs", or an object) and calls back with its Ok
+  // value, or null when niri refused it (logged) or didn't answer
+  function _request(request, callback) {
+    BackendManager.call("niri.request", {
+      "request": request
+    }, (error, result) => {
+      if (error)
+        console.warn("[NiriManager]", JSON.stringify(request).slice(0, 160) + ":", error.message);
+      callback?.(error ? null : result);
+    });
+  }
+
+  // Runs an action ({ "FocusWorkspace": { … } }) after those sent before,
+  // then calls back with whether niri took it
+  function _action(action, callback) {
+    root._command({
+      "Action": action
+    }, callback);
+  }
+
+  // Sends a request that changes something ({ "Output": { … } }, an
+  // action) after those sent before, so a chain split over several calls
+  // can't overtake itself, then calls back with whether niri took it.
+  // Requests for state go at once.
+  function _command(request, callback) {
+    _queue.push({
+      "request": request,
+      "callback": callback
+    });
+    if (!_running)
+      _next();
+  }
+
+  property var _queue: []
+  property bool _running: false
+
+  function _next() {
+    const item = _queue.shift();
+    if (!item) {
+      _running = false;
+      return;
+    }
+    _running = true;
+    root._request(item.request, reply => {
+      item.callback?.(reply !== null);
+      root._next();
+    });
+  }
+
+  // niri's event stream, which axiom holds: niri.started when it
+  // (re)connects (niri restarting), then each event, starting with the full
+  // state (which holds a ConfigLoaded of its own). Watched again after every
+  // hello: a new connection to axiom has no stream yet.
+  function _watch() {
+    if (BackendManager.ready)
+      BackendManager.call("niri.watch", {}, error => {
+        if (error)
+          console.warn("[NiriManager] niri's event stream:", error.message);
+      });
+  }
+
   Component.onCompleted: {
+    BackendManager.listen("niri.started", () => root._streamStarted());
+    BackendManager.listen("niri.event", event => root._event(event));
+    root._watch();
+  }
+
+  property Connections _greeted: Connections {
+    target: BackendManager
+    function onGreeted() {
+      root._watch();
+    }
+  }
+
+  function _streamStarted() {
+    root._startLoadSeen = false;
     root._readOutputs();
     root._readConfig();
   }
 
-  property Connections _ipc: Connections {
-    target: NiriIpcManager
-
-    function onStreamStarted() {
-      root._startLoadSeen = false;
-      root._readOutputs();
-      root._readConfig();
-    }
-
-    function onEvent(event) {
-      const kind = Object.keys(event)[0];
-      const before = root._state;
-      root._state = NiriState.reduce(before, event);
-      switch (kind) {
-      case "WorkspacesChanged":
-        root._outputsTimer.restart();
-        break;
-      case "WindowFocusChanged":
-        {
-          const id = event[kind].id;
-          if (id !== null && id !== undefined)
-            root.windowFocused(root._state.windows[String(id)]?.app_id ?? "");
-          break;
-        }
-      case "KeyboardLayoutsChanged":
-      case "KeyboardLayoutSwitched":
-        root.keyboardLayoutChanged();
-        break;
-      case "ConfigLoaded":
-        if (!root._startLoadSeen)
-          root._startLoadSeen = true;
-        else if (!root._state.configFailed) {
-          root._readConfig();
-          root.configReloaded();
-        }
+  function _event(event) {
+    const kind = Object.keys(event)[0];
+    const before = root._state;
+    root._state = NiriState.reduce(before, event);
+    switch (kind) {
+    case "WorkspacesChanged":
+      root._outputsTimer.restart();
+      break;
+    case "WindowFocusChanged":
+      {
+        const id = event[kind].id;
+        if (id !== null && id !== undefined)
+          root.windowFocused(root._state.windows[String(id)]?.app_id ?? "");
         break;
       }
+    case "KeyboardLayoutsChanged":
+    case "KeyboardLayoutSwitched":
+      root.keyboardLayoutChanged();
+      break;
+    case "ConfigLoaded":
+      if (!root._startLoadSeen)
+        root._startLoadSeen = true;
+      else if (!root._state.configFailed) {
+        root._readConfig();
+        root.configReloaded();
+      }
+      break;
     }
   }
 

@@ -203,7 +203,6 @@ niri:
 - [niri reports no space reserved by bars, nor where tiled windows are](issues.md#niri-reports-no-space-reserved-by-bars-nor-where-tiled-windows-are)
 - [niri's flags can't be turned off from axiom](issues.md#niris-flags-cant-be-turned-off-from-axiom)
 - [Nested niri freezes while its window is hidden](issues.md#nested-niri-freezes-while-its-window-is-hidden)
-- [niri's event stream stops retrying after a failed connect](issues.md#niris-event-stream-stops-retrying-after-a-failed-connect)
 
 Hyprland, and every compositor:
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)

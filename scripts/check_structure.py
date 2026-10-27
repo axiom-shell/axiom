@@ -339,7 +339,7 @@ def main():
     # its Quickshell module or None, what talks to it)
     backends = [
         ("Sway", "sway", "I3", r"\bSwayManager\.|\bSwayIpcManager\.|\"swaymsg\""),
-        ("Niri", "niri", None, r"\bNiriManager\.|\bNiriIpcManager\.|\"NIRI_SOCKET\"|\[\"niri\","),  # its CLI: ["niri", "msg", …]
+        ("Niri", "niri", None, r"\bNiriManager\.|\"NIRI_SOCKET\"|\[\"niri\","),  # its CLI: ["niri", "msg", …]
     ]
     for prefix, name, module, talks in backends:
         for path, text in sources.items():

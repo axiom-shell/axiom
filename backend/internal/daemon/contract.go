@@ -41,6 +41,7 @@ func pushShapes() []rpc.PushShape {
 		pushExecOutputs.Shape(),
 		pushChatDelta.Shape(),
 		pushFileChanged.Shape(),
+		pushNiriStarted.Shape(), pushNiriEvent.Shape(),
 	}
 }
 

@@ -75,6 +75,13 @@ var (
 	// Nor this: a watched file changed, sent only to the connections
 	// watching it (file.watch), one message each
 	pushFileChanged = rpc.Push[files.Changed]{Method: "file.changed"}
+
+	// Nor niri's event stream: sent only to the connection watching it
+	// (niri.watch), one message each. niri.started when the stream
+	// (re)connects, before the events of niri's full state; niri.event
+	// with each event as niri wrote it ({"WindowFocusChanged": {…}})
+	pushNiriStarted = rpc.Push[struct{}]{Method: "niri.started"}
+	pushNiriEvent   = rpc.Push[json.RawMessage]{Method: "niri.event"}
 )
 
 // compositorPushes are the compositor's pushes by method, for its
