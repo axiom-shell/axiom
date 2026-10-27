@@ -2,7 +2,6 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Notifications
 
 import qs.config
@@ -423,7 +422,7 @@ Singleton {
 
   function _writeNow() {
     saveTimer.stop();
-    historyFile.setText(JSON.stringify(root.entries.map(e => Object.assign({}, e, {
+    FileManager.write(root.historyPath, JSON.stringify(root.entries.map(e => Object.assign({}, e, {
         live: undefined
       })), null, 2));
   }
@@ -432,15 +431,6 @@ Singleton {
     id: saveTimer
     interval: 500
     onTriggered: root._writeNow()
-  }
-
-  property FileView _historyFile: FileView {
-    id: historyFile
-    path: root.historyPath
-    printErrors: false
-    blockWrites: true
-    atomicWrites: true
-    onSaveFailed: error => console.warn("[NotificationManager] Could not save history:", FileViewError.toString(error))
   }
 
   Component.onCompleted: {

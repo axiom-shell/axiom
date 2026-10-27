@@ -13,7 +13,7 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
   - `dismiss(uid)`
   - `clearAll()`
   - the `notifications` IPC target.
-- The history is saved to `$XDG_STATE_HOME/axiom/notifications.json`.
+- The history is saved to `$XDG_STATE_HOME/axiom/notifications.json` (atomically, through axiom: `FileManager.write`).
 - `liveNotification(uid)` gives the still-open `Notification` (needed for actions). Entries restored from disk open their app instead (`openApp`).
 - `keepOnReload` keeps live notifications across QML reloads.
 
