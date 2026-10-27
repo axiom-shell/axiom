@@ -67,9 +67,10 @@ type Options struct {
 	// Environ is git's environment (default os.Environ()): the user's
 	// ssh agent and credential helpers come from it
 	Environ func() []string
-	// FetchTimeout bounds a fetch (default a minute)
-	FetchTimeout time.Duration
 }
+
+// fetchTimeout bounds a fetch.
+const fetchTimeout = time.Minute
 
 // Updater checks and updates one clone, one call at a time (git's index
 // and refs aren't shared safely between concurrent runs).
@@ -83,17 +84,7 @@ func New(opts Options) *Updater {
 	if opts.Environ == nil {
 		opts.Environ = os.Environ
 	}
-	if opts.FetchTimeout == 0 {
-		opts.FetchTimeout = time.Minute
-	}
 	return &Updater{opts: opts}
-}
-
-// IsClone reports whether dir is a git checkout (a .git folder, or the
-// file a worktree has).
-func IsClone(dir string) bool {
-	_, err := os.Stat(filepath.Join(dir, ".git"))
-	return err == nil
 }
 
 // Status describes the clone from the refs it has, without fetching.
@@ -175,7 +166,8 @@ func (u *Updater) begin(ctx context.Context, channel string) (Report, *session, 
 		return Report{}, nil, axerr.New(axerr.BadRequest, "unknown channel %q", channel)
 	}
 	r := Report{Channel: channel}
-	if !IsClone(u.opts.Dir) {
+	// A .git folder, or the file a worktree has
+	if _, err := os.Stat(filepath.Join(u.opts.Dir, ".git")); err != nil {
 		r.Blocked = "nogit"
 		return r, nil, nil
 	}
@@ -250,7 +242,7 @@ func (s *session) ancestor(ctx context.Context, a, b string) (bool, error) {
 // tags too, so the installed version still reads as one). It returns the
 // branch main found, and git's reason when it failed.
 func (s *session) fetch(ctx context.Context) (fetched, failed string) {
-	ctx, cancel := context.WithTimeout(ctx, s.u.opts.FetchTimeout)
+	ctx, cancel := context.WithTimeout(ctx, fetchTimeout)
 	defer cancel()
 	tags := "refs/tags/v*:refs/tags/v*"
 	try := func(refspecs ...string) (string, bool) {
