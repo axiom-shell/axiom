@@ -39,6 +39,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
 - `run(command, callback, input)` runs a service's one-off command.
   - callback is `(exitCode, stdout, stderr)`
   - `input` goes to stdin.
+  - Both run in the axiom daemon (`exec.run`, `exec.spawn`; [roadmap](../backend/roadmap.md) › Stage 3b), in QML only without one (the greeter). A run that can't start or whose answer is lost calls back with -1 and the reason as stderr. The polled `outputs` still run in QML.
 - So services keep no `Process` of their own. Direct `Process`, `FileView`, `Socket`, `IpcHandler` and `Quickshell.execDetached` are frozen to the files in `scripts/quickshell-io-allowlist.json` (`check_structure`), which shrinks as those side effects move to the axiom daemon ([roadmap](../backend/roadmap.md), [protocol](../backend/protocol.md)). Funnelling through `CommandManager`, `FileManager` and `StateManager` means each can later be switched to the daemon in one place.
 
 ### Other domain services

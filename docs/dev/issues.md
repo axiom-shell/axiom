@@ -49,6 +49,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
+### A command run across a daemon re-exec loses its output and is left a zombie
+- **Where:** `backend/internal/command/command.go` (`Run`), `services/core/CommandManager.qml` (`run`)
+- **What:** A `CommandManager.run` in flight when the daemon re-execs (dev mode's rebuild, a self-update) calls back at once with -1 and `the connection to axiom closed`, but its command keeps running: its stdout and stderr pipes close with the old image, so a write after that gets SIGPIPE (a terminal opened by `UpdatesManager.upgrade`, a `pkexec` of the greeter installer), and when it exits the new image never waits on it, so it stays a zombie until the daemon quits. `exec.spawn` has neither problem (`setsid -f`). Handing the running pids and output files across the re-exec would fix it; it takes a re-exec during a long run.
+- **Size:** small
+- **Found:** 2026-10-27, while moving `CommandManager.run` to `exec.run`
+
+### The greeter runs CommandManager's commands without the daemon
+- **Where:** `services/core/CommandManager.qml` (`run`, `runDetached`), `scripts/quickshell-io-allowlist.json`
+- **What:** No daemon runs in greeter mode (`BackendManager.active` false), yet the greeter reaches `CommandManager.run` / `runDetached` (`GreetdManager`'s sessions, avatars and power actions, `SwayIpcManager`, `NiriManager`), so `CommandManager` keeps its own `Process` and `Quickshell.execDetached` for a shell with no daemon. Stage 3b's "`CommandManager` is off the allowlist" can't hold while it does: the greeter needs another way to run commands (the greeter's `axiom` serving `exec.*` while it runs, or the entry staying for the greeter), a maintainer decision for stage 3b's last batch.
+- **Size:** needs a plan
+- **Found:** 2026-10-27, while moving `CommandManager.run` to `exec.run`
+
 ### MediaManager warns when the daemon's re-exec fails its album art fetch
 - **Where:** `services/system/MediaManager.qml` (the album art fetch)
 - **What:** A daemon re-exec fails every request in flight with `the connection to axiom closed`, and `MediaManager` warns about it, though it's an expected failure it could retry on the next hello. #112 had folded it into "The shell's socket warns when the daemon re-execs", but the socket's warning is Quickshell's and this one is ours to quiet.

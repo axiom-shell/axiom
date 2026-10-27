@@ -304,6 +304,10 @@ func (s *Supervisor) adopt(pid int) <-chan exitResult {
 	return done
 }
 
+// Environ is the environment the shell starts with now, which the
+// commands it asks the daemon to run (exec.*) get too.
+func (s *Supervisor) Environ() []string { return s.environ(nil) }
+
 func (s *Supervisor) environ(extra map[string]string) []string {
 	set := map[string]string{}
 	for k, v := range s.opts.Env {
