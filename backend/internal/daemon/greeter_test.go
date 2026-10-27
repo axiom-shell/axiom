@@ -105,7 +105,7 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 func TestGreeterServesWeather(t *testing.T) {
 	t.Parallel()
 	reg := greeterRegistry(GreeterOptions{Getenv: func(string) string { return "" }}, nil, func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}), nil)
-	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "file.write", "hypr.request", "niri.request", "niri.watch", "niri.unwatch"} {
+	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "file.write", "hypr.request", "niri.request", "niri.watch"} {
 		if _, _, ok := reg.Types(m); !ok {
 			t.Errorf("no %s", m)
 		}

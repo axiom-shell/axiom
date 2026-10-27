@@ -79,14 +79,12 @@ func TestNiriStreams(t *testing.T) {
 			t.Fatalf("pushes: %q, want %q", got, want)
 		}
 	}
-	// Watching again starts over from the full state
+	// Watching again keeps the stream it has
 	s.Watch(p)
-	if got := p.waitFor(t, 6); got[3] != "started" {
-		t.Fatalf("watched again: %q", got)
-	}
+	time.Sleep(50 * time.Millisecond)
 	s.Forget(p)
 	time.Sleep(50 * time.Millisecond)
-	if got := p.list(); len(got) != 6 {
-		t.Fatalf("pushed after Forget: %q", got)
+	if got := p.list(); len(got) != 3 {
+		t.Fatalf("pushed again or after Forget: %q", got)
 	}
 }

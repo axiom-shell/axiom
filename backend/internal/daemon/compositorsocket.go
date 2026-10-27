@@ -48,7 +48,7 @@ func hyprHandlers(reg *rpc.Registry, h *ipc.Hypr) {
 	})
 }
 
-// niriHandlers are niri.request, niri.watch and niri.unwatch on n (nil:
+// niriHandlers are niri.request and niri.watch on n (nil:
 // not under niri) and its streams.
 func niriHandlers(reg *rpc.Registry, n *ipc.Niri, streams func() *ipc.NiriStreams) {
 	type requestParams struct {
@@ -79,19 +79,12 @@ func niriHandlers(reg *rpc.Registry, n *ipc.Niri, streams func() *ipc.NiriStream
 		return ok, nil
 	})
 	// Events come as niri.started and niri.event pushes, to this
-	// connection only; watching again starts over from niri's full state
+	// connection only, until it closes; watching again keeps its stream
 	rpc.Handle(reg, "niri.watch", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
 		if err := available(c); err != nil {
 			return struct{}{}, err
 		}
 		streams().Watch(c)
-		return struct{}{}, nil
-	})
-	rpc.Handle(reg, "niri.unwatch", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
-		if err := available(c); err != nil {
-			return struct{}{}, err
-		}
-		streams().Unwatch(c)
 		return struct{}{}, nil
 	})
 }

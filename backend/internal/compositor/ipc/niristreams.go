@@ -32,16 +32,14 @@ type NiriStreamsOptions struct {
 // NiriStreams hands niri's event stream to each subscriber watching it
 // (niri.watch): a connection to niri of its own per subscriber, so each
 // starts with niri's full state, connected again Retry after it drops or
-// fails to connect, until Unwatch or Forget.
+// fails to connect, until Forget.
 type NiriStreams struct {
 	niri *Niri
 	o    NiriStreamsOptions
 	mu   sync.Mutex
-	// Each subscriber's stream (a later Watch replaces it)
-	subs map[Subscriber]*niriStream
+	// Each subscriber's stream, stopped by its cancel
+	subs map[Subscriber]context.CancelFunc
 }
-
-type niriStream struct{ stop context.CancelFunc }
 
 // NewNiriStreams returns streams of n with nothing watched.
 func NewNiriStreams(n *Niri, o NiriStreamsOptions) *NiriStreams {
@@ -57,33 +55,22 @@ func NewNiriStreams(n *Niri, o NiriStreamsOptions) *NiriStreams {
 	if o.Retry == 0 {
 		o.Retry = time.Second
 	}
-	return &NiriStreams{niri: n, o: o, subs: map[Subscriber]*niriStream{}}
+	return &NiriStreams{niri: n, o: o, subs: map[Subscriber]context.CancelFunc{}}
 }
 
-// Watch starts s's stream, again from niri's full state when it had one.
+// Watch starts s's stream; one it already has goes on.
 func (w *NiriStreams) Watch(s Subscriber) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	if old := w.subs[s]; old != nil {
-		old.stop()
+	if w.subs[s] != nil {
+		return
 	}
 	ctx, stop := context.WithCancel(w.o.Context)
-	st := &niriStream{stop: stop}
-	w.subs[s] = st
-	// Pushes only while this is still s's stream: a replaced one may be
-	// reading a line as it's stopped
-	current := func(push func()) {
-		w.mu.Lock()
-		defer w.mu.Unlock()
-		if w.subs[s] == st {
-			push()
-		}
-	}
+	w.subs[s] = stop
 	w.o.Go(func(context.Context) {
 		for ctx.Err() == nil {
-			err := w.niri.Events(ctx, func() { current(func() { w.o.Started(s) }) }, func(line []byte) {
-				event := json.RawMessage(append([]byte(nil), line...))
-				current(func() { w.o.Event(s, event) })
+			err := w.niri.Events(ctx, func() { w.o.Started(s) }, func(line []byte) {
+				w.o.Event(s, json.RawMessage(append([]byte(nil), line...)))
 			})
 			if ctx.Err() != nil {
 				return
@@ -97,15 +84,12 @@ func (w *NiriStreams) Watch(s Subscriber) {
 	})
 }
 
-// Unwatch stops s's stream.
-func (w *NiriStreams) Unwatch(s Subscriber) {
+// Forget stops s's stream (a connection that closed).
+func (w *NiriStreams) Forget(s Subscriber) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	if st := w.subs[s]; st != nil {
-		st.stop()
+	if stop := w.subs[s]; stop != nil {
+		stop()
 		delete(w.subs, s)
 	}
 }
-
-// Forget stops s's stream (a connection that closed).
-func (w *NiriStreams) Forget(s Subscriber) { w.Unwatch(s) }
