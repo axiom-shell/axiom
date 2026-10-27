@@ -79,7 +79,8 @@ type Found struct {
 	DDC       []DDC      `json:"ddc"`
 }
 
-// Options are where the controllers are; zero values are the real ones.
+// Options are where the controllers are: Dir's and Run's zero values are
+// the real ones; setting a backlight needs SystemBus and Getenv.
 type Options struct {
 	// Dir holds the backlights ("" is /sys/class/backlight)
 	Dir string
@@ -260,9 +261,6 @@ func (s *Service) Set(ctx context.Context, t Target, value int) error {
 // setBacklight asks logind on a connection of its own: the shell sends
 // one set at a time per monitor, so dialling each time costs nothing
 func (s *Service) setBacklight(ctx context.Context, device string, value uint32) error {
-	if s.o.SystemBus == nil {
-		return axerr.New(axerr.Unavailable, "brightness: no system bus")
-	}
 	conn, err := s.o.SystemBus(ctx)
 	if err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "brightness: connecting to the system bus")
