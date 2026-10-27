@@ -30,7 +30,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Idle (dim, lock, screen off, suspend) | Nothing: axiom does it itself, on every compositor |
 | Login screen | `greetd` and its text login `agreety` (`greetd-agreety` on Arch), the fallback; `sway` for it to run in (recommended), or Hyprland without one; `pkexec` (polkit) to install it |
 | Themes generated from the wallpaper | The Python packages numpy and Pillow (`python-numpy python-pillow` on Arch, `python3-numpy python3-pillow` on Fedora) |
-| Calendar | The Python package icalendar (`python-icalendar` on Arch, `python3-icalendar` on Fedora); `secret-tool` (libsecret) to keep account passwords in your keyring |
+| Calendar | `secret-tool` (libsecret) to keep account passwords in your keyring |
 | Browse buttons for folders, importing a shared config | xdg-desktop-portal with a file chooser backend (`xdg-desktop-portal-gtk` or KDE's) and `python-gobject`; or `zenity` or `kdialog`. Without them, type the path |
 | Polkit prompt | Nothing: axiom is the agent itself, and stops another one (hyprpolkitagent, KDE's, GNOME's) while it's on |
 | Night light | nothing on Hyprland and sway; `wlsunset` on niri |

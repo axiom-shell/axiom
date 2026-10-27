@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
 // davServer is a fake CalDAV server: one user (u / p) whose principal and
@@ -78,16 +80,13 @@ func TestDiscoverCalDAV(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := s.Discover(context.Background(), DiscoverRequest{Kind: "caldav", URL: c.url, Username: "u", Password: "p"})
-			if err != nil {
-				t.Fatal(err)
-			}
 			if c.want == nil {
-				if got.OK || got.Code != "notFound" {
-					t.Errorf("got %+v", got)
+				if axerr.KindOf(err) != axerr.NotFound {
+					t.Errorf("got %+v %v", got, err)
 				}
 				return
 			}
-			if !got.OK || !reflect.DeepEqual(got.Calendars, c.want) {
+			if err != nil || !reflect.DeepEqual(got.Calendars, c.want) {
 				t.Errorf("got %+v\nwant %+v", got, c.want)
 			}
 		})
@@ -116,29 +115,27 @@ func TestDiscoverFeed(t *testing.T) {
 	}
 	host := strings.TrimPrefix(ts.URL, "http://")
 	cases := []struct {
-		url, name, color, code string
+		url, name, color string
+		kind             axerr.Kind
 	}{
 		{ts.URL + "/team.ics", "Team", "#3366CC", ""},
 		{ts.URL + "/plain.ics", host, "", ""},
 		{"file://" + file, "Team", "#3366CC", ""},
-		{ts.URL + "/page", "", "", "parse"},
-		{ts.URL + "/gone.ics", "", "", "notFound"},
-		{"file://" + file + ".missing", "", "", "network"},
+		{ts.URL + "/page", "", "", axerr.BadReply},
+		{ts.URL + "/gone.ics", "", "", axerr.NotFound},
+		{"file://" + file + ".missing", "", "", axerr.Unavailable},
 	}
 	s := New(Options{})
 	for _, c := range cases {
 		got, err := s.Discover(context.Background(), DiscoverRequest{Kind: "ics", URL: c.url})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if c.code != "" {
-			if got.OK || got.Code != c.code {
-				t.Errorf("%s: %+v, want %s", c.url, got, c.code)
+		if c.kind != "" {
+			if err == nil || axerr.KindOf(err) != c.kind {
+				t.Errorf("%s: %+v %v, want %s", c.url, got, err, c.kind)
 			}
 			continue
 		}
 		want := []Info{{Href: c.url, Name: c.name, Color: c.color, Components: []string{"VEVENT"}, ReadOnly: true}}
-		if !got.OK || !reflect.DeepEqual(got.Calendars, want) {
+		if err != nil || !reflect.DeepEqual(got.Calendars, want) {
 			t.Errorf("%s: %+v", c.url, got)
 		}
 	}
@@ -151,18 +148,17 @@ func TestDiscoverFailures(t *testing.T) {
 	s := New(Options{})
 	cases := []struct {
 		request DiscoverRequest
-		code    string
+		kind    axerr.Kind
 	}{
-		{DiscoverRequest{Kind: "caldav", URL: ts.URL + "/start", Username: "u", Password: "wrong"}, "auth"},
-		{DiscoverRequest{Kind: "caldav", URL: "https://example.invalid"}, "noPassword"},
-		{DiscoverRequest{Kind: "ics", URL: "http://127.0.0.1:9/feed.ics"}, "network"},
-		{DiscoverRequest{Kind: "ics", URL: " "}, "notFound"},
-		{DiscoverRequest{Kind: "caldav", URL: "https://exa mple.com", Password: "p"}, "network"},
+		{DiscoverRequest{Kind: "caldav", URL: ts.URL + "/start", Username: "u", Password: "wrong"}, axerr.Unauthorized},
+		{DiscoverRequest{Kind: "caldav", URL: "https://example.invalid"}, axerr.Unauthorized},
+		{DiscoverRequest{Kind: "ics", URL: "http://127.0.0.1:9/feed.ics"}, axerr.Unavailable},
+		{DiscoverRequest{Kind: "ics", URL: " "}, axerr.NotFound},
+		{DiscoverRequest{Kind: "caldav", URL: "https://exa mple.com", Password: "p"}, axerr.Unavailable},
 	}
 	for _, c := range cases {
-		got, err := s.Discover(context.Background(), c.request)
-		if err != nil || got.OK || got.Code != c.code {
-			t.Errorf("%+v: %+v %v, want %s", c.request, got, err, c.code)
+		if _, err := s.Discover(context.Background(), c.request); err == nil || axerr.KindOf(err) != c.kind {
+			t.Errorf("%+v: %v, want %s", c.request, err, c.kind)
 		}
 	}
 	for in, want := range map[string]string{"webcal://a.b/c.ics": "https://a.b/c.ics", " dav.example.com ": "https://dav.example.com", "http://x": "http://x"} {

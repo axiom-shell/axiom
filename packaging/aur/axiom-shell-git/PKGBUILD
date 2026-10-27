@@ -28,7 +28,6 @@ optdepends=(
   'awww: wallpapers'
   'python-numpy: themes generated from your wallpaper'
   'python-pillow: themes generated from your wallpaper'
-  'python-icalendar: calendar accounts and feeds'
   'libsecret: calendar accounts and feeds'
   'networkmanager: Wi-Fi menu and network widget'
   'pacman-contrib: package update checks'

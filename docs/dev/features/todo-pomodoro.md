@@ -11,7 +11,7 @@ One todo list, one pomodoro timer and one one-off timer + stopwatch, each shown 
   - Written atomically on every change (a `FileView`; the data folder is made on the first failed write) and watched, so an edit from elsewhere shows at once. An unreadable file is reported and the list shown stays.
   - Never read or written in the greeter.
 - **Items** (`TodoItems`, pure, `tst_TodoItems`): `{ uid, summary, done, created, completed, due, order }`. Every change returns a new list.
-  - The fields are a CalDAV VTODO's (UID, SUMMARY, STATUS, CREATED, COMPLETED, DUE), so syncing a task list later maps them one to one. Not done: `calendar_sync.py` reads only VEVENTs, and two-way task sync (servers differ, offline edits, subtasks, repeating tasks) is its own job.
+  - The fields are a CalDAV VTODO's (UID, SUMMARY, STATUS, CREATED, COMPLETED, DUE), so syncing a task list later maps them one to one. Not done: the calendar sync (`backend/internal/calendar`) reads only VEVENTs, and two-way task sync (servers differ, offline edits, subtasks, repeating tasks) is its own job.
   - `due` is kept but nothing sets it yet.
 - **Shown:** `TodoManager.shownItems`: open items in order, then (with `Todo.showCompleted`) the done ones, the last finished first.
 - **UI:** `TodoList` (add field, rows: click ticks off or reopens; rename, work on it, delete on hover). The `Todo` widget shows the open count; its popout and module are `content/Todo/Todo.qml` (header with Clear completed).

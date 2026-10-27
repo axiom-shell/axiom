@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,14 +12,16 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/calendar/ical"
 )
 
 // The WebDAV namespaces
 const (
-	nsD = "DAV:"
-	nsC = "urn:ietf:params:xml:ns:caldav"
-	nsA = "http://apple.com/ns/ical/"
+	nsD  = "DAV:"
+	nsC  = "urn:ietf:params:xml:ns:caldav"
+	nsCS = "http://calendarserver.org/ns/"
+	nsA  = "http://apple.com/ns/ical/"
 )
 
 const maxBody = 64 << 20
@@ -43,9 +44,10 @@ func (s *Service) dav(username, password string) *dav {
 	return d
 }
 
-// response is a request's status, body and final URL
+// response is a request's status, headers, body and final URL
 type response struct {
 	status int
+	header http.Header
 	body   []byte
 	url    string
 }
@@ -56,14 +58,14 @@ func (d *dav) request(ctx context.Context, method, target string, body []byte, h
 	for range 6 {
 		u, err := url.Parse(target)
 		if err != nil {
-			return response{}, fail("network", "Could not reach %s: %v", target, err)
+			return response{}, fail(axerr.Unavailable, "Could not reach %s: %v", target, err)
 		}
 		if u.Scheme == "file" {
 			data, err := os.ReadFile(u.Path)
 			if err != nil {
-				return response{}, fail("network", "Could not reach %s: %v", u.Host, err)
+				return response{}, fail(axerr.Unavailable, "Could not reach %s: %v", u.Host, err)
 			}
-			return response{status: 200, body: data, url: target}, nil
+			return response{status: 200, header: http.Header{}, body: data, url: target}, nil
 		}
 		var reader io.Reader
 		if body != nil {
@@ -71,7 +73,7 @@ func (d *dav) request(ctx context.Context, method, target string, body []byte, h
 		}
 		req, err := http.NewRequestWithContext(ctx, method, target, reader)
 		if err != nil {
-			return response{}, fail("network", "Could not reach %s: %v", u.Host, err)
+			return response{}, fail(axerr.Unavailable, "Could not reach %s: %v", u.Host, err)
 		}
 		req.Header.Set("User-Agent", "axiom-calendar")
 		if d.auth != "" {
@@ -88,27 +90,27 @@ func (d *dav) request(ctx context.Context, method, target string, body []byte, h
 		}
 		resp, err := d.client.Do(req)
 		if err != nil {
-			return response{}, fail("network", "Could not reach %s: %v", u.Host, err)
+			return response{}, fail(axerr.Unavailable, "Could not reach %s: %v", u.Host, err)
 		}
 		data, err := io.ReadAll(io.LimitReader(resp.Body, maxBody))
 		resp.Body.Close()
 		if err != nil {
-			return response{}, fail("network", "Could not reach %s: %v", u.Host, err)
+			return response{}, fail(axerr.Unavailable, "Could not reach %s: %v", u.Host, err)
 		}
 		switch location := resp.Header.Get("Location"); {
 		case location != "" && slices.Contains([]int{301, 302, 303, 307, 308}, resp.StatusCode):
 			next, err := u.Parse(location)
 			if err != nil {
-				return response{}, fail("network", "Could not reach %s: %v", location, err)
+				return response{}, fail(axerr.Unavailable, "Could not reach %s: %v", location, err)
 			}
 			target = next.String()
 			continue
 		case resp.StatusCode == 401:
-			return response{}, fail("auth", "The server refused the username or password")
+			return response{}, fail(axerr.Unauthorized, "The server refused the username or password")
 		}
-		return response{status: resp.StatusCode, body: data, url: target}, nil
+		return response{status: resp.StatusCode, header: resp.Header, body: data, url: target}, nil
 	}
-	return response{}, fail("network", "Too many redirects")
+	return response{}, fail(axerr.Unavailable, "Too many redirects")
 }
 
 func (d *dav) propfind(ctx context.Context, target string, props []string, depth string) (multistatus, string, error) {
@@ -124,13 +126,24 @@ func (d *dav) propfind(ctx context.Context, target string, props []string, depth
 		return nil, "", err
 	}
 	if resp.status == 404 {
-		return nil, "", fail("notFound", "Nothing at %s", target)
+		return nil, "", fail(axerr.NotFound, "Nothing at %s", target)
 	}
 	if resp.status >= 400 {
-		return nil, "", fail("server", "PROPFIND %s: HTTP %d", target, resp.status)
+		return nil, "", fail(axerr.Internal, "PROPFIND %s: HTTP %d", target, resp.status)
 	}
 	found, err := parseMultistatus(resp.body, resp.url)
 	return found, resp.url, err
+}
+
+func (d *dav) report(ctx context.Context, target, body string) (multistatus, error) {
+	resp, err := d.request(ctx, "REPORT", target, []byte(body), nil, "1")
+	if err != nil {
+		return nil, err
+	}
+	if resp.status >= 400 {
+		return nil, fail(axerr.Internal, "REPORT %s: HTTP %d", target, resp.status)
+	}
+	return parseMultistatus(resp.body, resp.url)
 }
 
 // node is an XML element, kept whole
@@ -189,7 +202,7 @@ func parseMultistatus(data []byte, base string) (multistatus, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
 	decoder.CharsetReader = func(_ string, input io.Reader) (io.Reader, error) { return input, nil }
 	if err := decoder.Decode(&root); err != nil {
-		return nil, fail("parse", "The server's reply isn't XML: %v", err)
+		return nil, fail(axerr.BadReply, "The server's reply isn't XML: %v", err)
 	}
 	baseURL, _ := url.Parse(base)
 	var out multistatus
@@ -283,14 +296,14 @@ func calendarInfo(href string, p props) Info {
 func discoverCalDAV(ctx context.Context, d *dav, start string) ([]Info, error) {
 	base, err := url.Parse(start)
 	if err != nil {
-		return nil, fail("network", "Could not reach %s: %v", start, err)
+		return nil, fail(axerr.Unavailable, "Could not reach %s: %v", start, err)
 	}
 	wellKnown, _ := base.Parse("/.well-known/caldav")
 	var last error
 	for _, candidate := range []string{start, wellKnown.String()} {
 		found, final, err := d.propfind(ctx, candidate, append([]string{"D:current-user-principal", "D:resourcetype", "C:calendar-home-set"}, calProps...), "0")
 		if err != nil {
-			if codeOf(err) == "auth" {
+			if axerr.KindOf(err) == axerr.Unauthorized {
 				return nil, err
 			}
 			last = err
@@ -329,7 +342,7 @@ func discoverCalDAV(ctx context.Context, d *dav, start string) ([]Info, error) {
 			slices.SortStableFunc(calendars, func(a, b Info) int { return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name)) })
 			return calendars, nil
 		}
-		last = fail("notCalendar", "No calendars found at that address")
+		last = fail(axerr.NotFound, "No calendars found at that address")
 	}
 	return nil, last
 }
@@ -346,28 +359,35 @@ func resolve(base, ref string) string {
 	return r.String()
 }
 
-// fetchFeed GETs an .ics feed's text
-func fetchFeed(ctx context.Context, d *dav, target string) (string, error) {
-	resp, err := d.request(ctx, "GET", target, nil, map[string]string{"Accept": "text/calendar"}, "")
+// fetchFeed GETs an .ics feed: status 304 (with etag sent) keeps the
+// cached copy
+func fetchFeed(ctx context.Context, d *dav, target, etag string) (status int, newEtag, text string, err error) {
+	headers := map[string]string{"Accept": "text/calendar"}
+	if etag != "" {
+		headers["If-None-Match"] = etag
+	}
+	resp, err := d.request(ctx, "GET", target, nil, headers, "")
 	switch {
 	case err != nil:
-		return "", err
+		return 0, "", "", err
+	case resp.status == 304:
+		return 304, etag, "", nil
 	case resp.status == 404:
-		return "", fail("notFound", "Nothing at %s", target)
+		return 0, "", "", fail(axerr.NotFound, "Nothing at %s", target)
 	case resp.status >= 400:
-		return "", fail("server", "GET %s: HTTP %d", target, resp.status)
+		return 0, "", "", fail(axerr.Internal, "GET %s: HTTP %d", target, resp.status)
 	}
-	return strings.ToValidUTF8(string(resp.body), "�"), nil
+	return resp.status, resp.header.Get("ETag"), strings.ToValidUTF8(string(resp.body), "\uFFFD"), nil
 }
 
 func discoverFeed(ctx context.Context, d *dav, target string) ([]Info, error) {
-	text, err := fetchFeed(ctx, d, target)
+	_, _, text, err := fetchFeed(ctx, d, target, "")
 	if err != nil {
 		return nil, err
 	}
 	cal, err := ical.Parse(text)
 	if err != nil {
-		return nil, fail("parse", "Not an iCalendar feed: %v", err)
+		return nil, fail(axerr.BadReply, "Not an iCalendar feed: %v", err)
 	}
 	name := cal.Text("X-WR-CALNAME")
 	if name == "" {
@@ -381,20 +401,8 @@ func discoverFeed(ctx context.Context, d *dav, target string) ([]Info, error) {
 	return []Info{{Href: target, Name: name, Color: color, Components: []string{"VEVENT"}, ReadOnly: true}}, nil
 }
 
-// failure is a calendar operation's failure as the shell shows it: code
-// is one of auth, network, notFound, notCalendar, conflict, server,
-// parse, noPassword, readOnly (CalendarManager.errorText)
-type failure struct{ code, message string }
-
-func (f *failure) Error() string { return f.message }
-
-func fail(code, format string, args ...any) error {
-	return &failure{code: code, message: fmt.Sprintf(format, args...)}
-}
-
-func codeOf(err error) string {
-	if f, ok := err.(*failure); ok {
-		return f.code
-	}
-	return ""
+// fail is a calendar failure as the shell shows it (CalendarManager's
+// errorText reads the kind)
+func fail(kind axerr.Kind, format string, args ...any) error {
+	return axerr.New(kind, format, args...)
 }

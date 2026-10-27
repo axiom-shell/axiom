@@ -94,7 +94,6 @@ for f in "${changed[@]}"; do
   scripts/self_update.sh) script_tests+=(SelfUpdate) ;;
   scripts/cursor_theme.py) script_tests+=(CursorTheme) ;;
   scripts/generate_theme.py) script_tests+=(GenerateTheme) ;;
-  scripts/calendar_sync.py) script_tests+=(CalendarSync) ;;
   scripts/greeter/*) script_tests+=(GreeterInstall GreeterSession) ;;
   scripts/pick_path.py) script_tests+=(PickPath) ;;
   scripts/community_fetch.sh) script_tests+=(CommunityFetch) ;;

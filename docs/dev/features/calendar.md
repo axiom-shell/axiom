@@ -1,26 +1,23 @@
 # Calendar
 
-> **Files:** `services/apps/CalendarManager.qml`, `backend/internal/calendar/`, `backend/internal/daemon/calendar.go`, `scripts/calendar_sync.py`, `config/CalendarConfig.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `components/methods/CalendarEvents.qml`, `components/content/Calendar/Calendar.qml`, `components/content/Agenda/Agenda.qml`, `components/content/ClockCalendar/ClockCalendar.qml`, `components/content/parts/calendar/`
+> **Files:** `services/apps/CalendarManager.qml`, `backend/internal/calendar/`, `backend/internal/daemon/calendar.go`, `config/CalendarConfig.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `components/methods/CalendarEvents.qml`, `components/content/Calendar/Calendar.qml`, `components/content/Agenda/Agenda.qml`, `components/content/ClockCalendar/ClockCalendar.qml`, `components/content/parts/calendar/`
 > **Config:** `Calendar.*` (reader `CalendarConfig`)
 > **Related:** [Secrets](../core/secrets.md), [Services pattern](../core/services-pattern.md), [Notifications](notifications.md), [Lockscreen](lockscreen.md), [Greeter runtime](greeter-runtime.md)
 
-CalDAV accounts, read-only .ics feeds and local calendars: finding calendars through the axiom daemon, syncing through a Python helper, editing events, reminders, and the calendar UI parts.
+CalDAV accounts, read-only .ics feeds and local calendars: synced and edited through the axiom daemon, editing events, reminders, and the calendar UI parts.
 
 ### Sources
 - **CalDAV accounts.**
 - **Read-only .ics subscriptions:** `https://` / `webcal://`, or a local `file://` feed.
 - **Local calendars** (kind `local`, "On this computer"): no server and no password.
-  - Each calendar's `href` is a folder name, `<account id>-<base36 time>` (never one a removed calendar left behind), under `$XDG_DATA_HOME/axiom/calendars/` (`dataDir` in the request).
-  - Each event is a `<uid>.ics` file in it; its etag is the file's mtime and size, and a write whose etag no longer matches is a `conflict`. A `.ics` file dropped in by hand is picked up by the next sync.
+  - Each calendar's `href` is a folder name, `<account id>-<base36 time>` (never one a removed calendar left behind), under `$XDG_DATA_HOME/axiom/calendars/`.
+  - Each event is a `<uid>.ics` file in it; its etag is the file's mtime and size, and a write whose etag no longer matches is a conflict. A `.ics` file dropped in by hand is picked up by the next sync.
   - The Accounts card's **Add calendar** makes one; names are edited in place. Removing a calendar or the account only drops it from the config: its folder stays (a draft can be reverted, so nothing is deleted).
-  - An href that isn't one plain name, or an event href leaving its folder, is refused (`notFound`).
+  - An href that isn't one plain name, or an event href leaving its folder, is refused (`not_found`).
   - `CalendarConfig.writableKind(kind)` is the one place that says local and CalDAV calendars can be changed.
-- Finding an account's calendars is the daemon's (`calendar.discover`, below). Syncing, saving and deleting, for all three, go through `scripts/calendar_sync.py`:
-  - run with the system `python3`;
-  - uses `icalendar` (and `python-dateutil`, its dependency), system packages on every distribution;
-  - expands recurrences itself (`occurrences`, on `dateutil.rrule`): never `recurring-ical-events`, which Fedora doesn't package. `CalendarSync` makes importing it fail, so Arch and Fedora run the same code;
-  - a `RANGE=THISANDFUTURE` override changes only its own occurrence, not the ones after it;
-  - uses stdlib HTTP and XML for the WebDAV side.
+- All three go through axiom's `calendar.*` methods (`backend/internal/calendar`, wired in `daemon/calendar.go`): Go's HTTP and XML for the WebDAV side, and the pure `calendar/ical` for iCalendar (reading and writing it, recurrences, time zones, the edits).
+  - Recurrences are expanded on `teambition/rrule-go`, a port of the dateutil rrule the Python helper used; a `RANGE=THISANDFUTURE` override changes only its own occurrence, not the ones after it.
+  - A TZID the zone database doesn't know (Outlook's Windows names) is read from the object's own VTIMEZONE (its onsets, as transitions); a written object gets a VTIMEZONE for each zone it names without one (its changes from 1970 to 2038).
 
 ### Reader (CalendarConfig)
 - Accounts with their ids filled in.
@@ -30,23 +27,19 @@ CalDAV accounts, read-only .ics feeds and local calendars: finding calendars thr
 - `colors`, by calendar id.
 - `timeFormat`, from `use24Hour`.
 
-### Helper protocol
-- `discover` is `BackendManager.call("calendar.discover", …)`; `sync`, `save` and `delete` run the helper through `CommandManager.run`, with one JSON request on stdin.
-  - Passwords come from `SecretsManager.withSecret("calendar", id)` and are included in the call's params or the helper's request (never argv). The daemon never logs or writes them.
-- The daemon's answer has the same shape as the helper's; a failed call (no axiom) is `helper`.
-- It prints one JSON result: `ok`, or a `code`:
-  - `auth`, `network`, `notFound`, `notCalendar`, `conflict`, `readOnly`, `noPassword`, `parse`;
-  - `helper` when it couldn't run at all, which also clears `available`;
-  - `missingModule` (`message` the module) when icalendar or dateutil isn't installed: `missingModule` is set, `available` cleared, and `missingText` names the package to install (the Accounts card's description).
+### Calls
+- `calendar.discover`, `calendar.sync`, `calendar.save`, `calendar.delete` through `BackendManager.call`; the sync, save and delete take the `range` and every account with its shown calendars (`_withAccounts`).
+  - Passwords come from `SecretsManager.withSecret("calendar", id)`, in the call's params (never argv or a file). The daemon never logs or writes them. An edit or discovery for a CalDAV account with no password saved isn't sent: it fails as `noPassword` in the shell.
+- A failure is an RPC error with an `axerr` kind; `_failure` turns it into the result callers get, `{ ok: false, code, message }`, its code by the kind: `unauthorized` → `auth`, `unavailable` → `network`, `not_found` → `notFound`, `conflict`, `refused` → `readOnly`, `bad_reply` → `parse`; any other kind shows its message.
 - `errorText(result)` turns these into words.
-- One helper call runs at a time. Later jobs are queued, and a sync isn't queued twice. `discover` isn't queued: it writes nothing the helper reads.
+- One call runs at a time (the daemon also takes them one at a time). Later jobs are queued, and a sync isn't queued twice. `discover` isn't queued: it writes nothing a sync reads.
 
 ### Discover
-- `backend/internal/calendar` (Go's HTTP and XML; the feed read by the pure `calendar/ical`), wired in `daemon/calendar.go`.
 - Finds an account's calendars from any URL on the server:
   - `current-user-principal` → `calendar-home-set` → the collections;
   - redirects are followed for every method, which iCloud's per-user host needs;
   - `/.well-known/caldav` is tried second.
+  - No calendars at either is `not_found`, as nothing at the address is.
 - For a feed, it reads the feed's name and color.
 
 ### Sync
@@ -57,9 +50,9 @@ CalDAV accounts, read-only .ics feeds and local calendars: finding calendars thr
 - **Events:** it writes the shown calendars' occurrences within `range` to `events.json`.
   - Both files are mode 600 and written atomically.
   - The manager reads `events.json` at startup and after each call, so events show at once and offline.
-- **Errors:** a calendar that fails keeps its last copy and reports in `errors`.
+- **Errors:** a calendar that fails keeps its last copy and reports in `errors` (`{ calendar, kind, message }`).
 
-**Occurrences:** recurrence and time zones are expanded in the helper. An occurrence is:
+**Occurrences:** recurrence and time zones are expanded in Go (`ical.Occurrence`). An occurrence is:
 - `key`
 - `calendar`: `"<account>|<href>"`
 - `href`, `etag`, `uid`
@@ -87,6 +80,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: finding calendars thr
 - **Conflicts:** a 412 is `conflict`. The editor keeps the draft and says so.
 - **Moving to another calendar:** a new event there, then the old one is deleted.
 - **Local calendars:** the same edits, written to the event's file atomically (mode 600) or unlinked, instead of a PUT or DELETE.
+- After a save or delete, the daemon syncs that calendar again (whatever its ctag), so `events.json` has the change when the call answers.
 
 ### Reads
 - `byDay` (`CalendarEvents.byDay` over the shown calendars)
@@ -145,6 +139,6 @@ CalDAV accounts, read-only .ics feeds and local calendars: finding calendars thr
 Drafts, and everything about days, spans, dots, what's next, reminders due and quick add, are pure, in `methods/CalendarEvents` (tested in `tst_CalendarEvents`).
 
 ### Testing
-- Discovery: the Go tests in `backend/internal/calendar` (a fake CalDAV server and feeds on `httptest`).
-- Test the helper against a scratch Radicale (`pip install radicale`), or with the served-feed and local-calendar tests in `tests/scripts/test_scripts.py` (`CalendarSync`).
+- The Go tests in `backend/internal/calendar` (a fake CalDAV server and feeds on `httptest`, local calendars in a temp dir) and `calendar/ical` (the expansion's hard cases, the edits read back, Windows zones).
+- By hand, against a scratch Radicale (`pip install radicale`).
 - Never add a test account to the live config without removing it again.
