@@ -225,7 +225,7 @@ func TestStatusPackage(t *testing.T) {
 func TestElevate(t *testing.T) {
 	t.Parallel()
 	pkexec := filepath.Join(tools, "pkexec")
-	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: "local", Channel: "tags", Binary: "/b"}
+	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: "local", Channel: "tags", Binary: "/home/me/axiom"}
 	for _, tc := range []struct {
 		name    string
 		helper  string // root's helper's text ("" for none)
@@ -260,7 +260,7 @@ func TestElevate(t *testing.T) {
 			log := filepath.Join(root, "log")
 			env := []string{"FAKE_LOG=" + log, "FAKE_OUT=" + tc.out, fmt.Sprintf("FAKE_CODE=%d", tc.code)}
 			in := New(Options{Root: root, Pkexec: pkexec, Environ: func() []string { return env }})
-			got, err := in.Elevate(context.Background(), req, "/home/me/axiom")
+			got, err := in.Elevate(context.Background(), req)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -270,7 +270,7 @@ func TestElevate(t *testing.T) {
 			}
 			if tc.program != "" {
 				ran, _ := os.ReadFile(log)
-				want := strings.Replace(tc.program, "ROOT", root, 1) + " /r me  local tags /b"
+				want := strings.Replace(tc.program, "ROOT", root, 1) + " /r me  local tags /home/me/axiom"
 				if strings.TrimSuffix(string(ran), "\n") != want {
 					t.Errorf("ran %q, want %q", ran, want)
 				}
@@ -315,8 +315,8 @@ func TestFirstProgram(t *testing.T) {
 				opts.Releases = tc.releases(t)
 			}
 			in := New(opts)
-			req := rules.Request{Action: rules.ActionInstall, Repo: f.repo, User: f.user, Source: tc.source, Channel: tc.channel}
-			program, stdin, err := in.firstProgram(context.Background(), req, "/home/me/axiom")
+			req := rules.Request{Action: rules.ActionInstall, Repo: f.repo, User: f.user, Source: tc.source, Channel: tc.channel, Binary: "/home/me/axiom"}
+			program, stdin, err := in.firstProgram(context.Background(), req)
 			if tc.refused {
 				if err == nil || !strings.Contains(err.Error(), tc.want) {
 					t.Fatalf("program %q, err %v; want a refusal saying %q", program, err, tc.want)

@@ -412,7 +412,7 @@ func (r *run) userBinary(ctx context.Context, dest string) error {
 
 // releaseBinary downloads the target tag's prebuilt binary for this
 // machine from its GitHub release, checked against the release's
-// SHA256SUMS: its bytes and that sum. nil: there's none (not a GitHub
+// SHA256SUMS: its bytes and that listing's url. nil: there's none (not a GitHub
 // repository, not a tag, no such asset); a download that doesn't match
 // fails the install.
 func (in *Installer) releaseBinary(ctx context.Context, url string, target rules.Target) ([]byte, string, error) {
@@ -426,7 +426,8 @@ func (in *Installer) releaseBinary(ctx context.Context, url string, target rules
 			return nil, "", nil
 		}
 	}
-	sums, err := in.download(ctx, base+"/"+target.Tag()+"/SHA256SUMS", sumsTimeout)
+	sumsURL := base + "/" + target.Tag() + "/SHA256SUMS"
+	sums, err := in.download(ctx, sumsURL, sumsTimeout)
 	if err != nil {
 		return nil, "", nil
 	}
@@ -438,7 +439,7 @@ func (in *Installer) releaseBinary(ctx context.Context, url string, target rules
 	if want := rules.SumFor(string(sums), asset); want == "" || !strings.EqualFold(want, sum) {
 		return nil, "", failf("the %s release's %s doesn't match its SHA256SUMS", target.Tag(), asset)
 	}
-	return data, sum, nil
+	return data, sumsURL, nil
 }
 
 // download is a url's body.

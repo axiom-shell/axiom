@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
@@ -25,16 +26,15 @@ type Elevated struct {
 
 // Elevate runs req as root through pkexec, one password prompt: root's
 // own helper once it's installed (its polkit action's prompt says what
-// it's for), else a binary root may run (firstProgram), own being the one
-// this user built. A refusal is the reply's error, before any prompt. It
+// it's for), else a binary root may run (firstProgram). A refusal is the reply's error, before any prompt. It
 // runs to the end once started, whatever ctx does.
-func (in *Installer) Elevate(ctx context.Context, req rules.Request, own string) (Elevated, error) {
+func (in *Installer) Elevate(ctx context.Context, req rules.Request) (Elevated, error) {
 	ctx = context.WithoutCancel(ctx)
 	program := []string{in.path(HelperPath)}
 	var stdin []byte
 	if helper, binaries := in.helper(); !helper || !binaries {
 		var err error
-		if program, stdin, err = in.firstProgram(ctx, req, own); err != nil {
+		if program, stdin, err = in.firstProgram(ctx, req); err != nil {
 			var f failure
 			if errors.As(err, &f) {
 				return Elevated{Result: rules.Result{Changed: []string{}, Error: f.Error()}}, nil
@@ -74,21 +74,22 @@ func (in *Installer) Elevate(ctx context.Context, req rules.Request, own string)
 // firstProgram is what pkexec runs before root has a helper of its own:
 // a binary root owns, or one checked against its release's SHA256SUMS
 // (maintainer, 2026-10-27: "root owned checksum verified binary"). A
-// package's is root's own; local reuses own, the binary this user built,
-// unchecked. git's is the newest release's prebuilt one, downloaded here
-// and handed to root on stdin (verifyAndRun): nothing of this user's can
-// swap it between the check and its run. Anything else is refused
+// package's is root's own; local reuses req.Binary, the one this user's
+// daemon runs, unchecked. git's is the newest release's prebuilt one,
+// downloaded here and handed to root on stdin, which checks it against
+// the SHA256SUMS root fetches itself (verifyAndRun): this user supplies
+// the bytes, never the sum they're checked against. Anything else is refused
 // ("Refuse the install (except for if you have the local clone install
 // path selected, in which case it reuses your most recently built binary,
 // and skips the checksum)"): the main channel, a release with no binary
 // for this machine, a remote that isn't GitHub's.
-func (in *Installer) firstProgram(ctx context.Context, req rules.Request, own string) ([]string, []byte, error) {
+func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]string, []byte, error) {
 	switch req.Source {
 	case rules.SourceLocal:
-		if own == "" {
+		if req.Binary == "" {
 			return nil, nil, failf("no axiom binary of yours to run")
 		}
-		return []string{own, "greeter-install"}, nil, nil
+		return []string{req.Binary, "greeter-install"}, nil, nil
 	case rules.SourcePackage:
 		binary := in.path("/usr/bin/axiom")
 		if !in.rootOwned(binary) {
@@ -107,26 +108,29 @@ func (in *Installer) firstProgram(ctx context.Context, req rules.Request, own st
 	if !ok {
 		return nil, nil, failf("nothing to fetch from %s on the %s channel (offline?)", url, req.Channel)
 	}
-	data, sum, err := in.releaseBinary(ctx, url, target)
+	data, sums, err := in.releaseBinary(ctx, url, target)
 	if err != nil {
 		return nil, nil, err
 	}
 	if data == nil {
 		return nil, nil, failf("%s has no release binary to check for this machine: the login screen installs only a release's, or yours from Local", target.Name())
 	}
-	return []string{"/bin/sh", "-c", verifyAndRun, "sh", sum}, data, nil
+	asset, _ := rules.ReleaseAsset(runtime.GOARCH)
+	return []string{"/bin/sh", "-c", verifyAndRun, "sh", sums, asset}, data, nil
 }
 
 // verifyAndRun is how root runs a release binary the user's daemon
 // downloaded: its bytes (stdin) go into a folder only root can write and
-// are checked there against the sum the release lists ($1), then run.
+// are checked there against the sum for asset ($2) in the SHA256SUMS root
+// fetches from the release ($1), then run.
 const verifyAndRun = `set -e
 dir=$(mktemp -d)
 trap 'rm -rf "$dir"' EXIT
 cat >"$dir/axiom"
-echo "$1  $dir/axiom" | sha256sum -c --status || { echo "the axiom binary doesn't match its release's SHA256SUMS" >&2; exit 1; }
+sum=$(curl -fsSL --max-time 30 -- "$1" | awk -v f="$2" '$2 == f || $2 == "*" f { print $1; exit }')
+echo "$sum  $dir/axiom" | sha256sum -c --status || { echo "the axiom binary doesn't match its release's SHA256SUMS" >&2; exit 1; }
 chmod 700 "$dir/axiom"
-shift
+shift 2
 "$dir/axiom" greeter-install "$@"`
 
 // rootOwned says whether only root can change a file: root's, and

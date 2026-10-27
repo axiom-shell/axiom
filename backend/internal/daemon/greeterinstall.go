@@ -52,9 +52,9 @@ func (d *Daemon) greeterInstallMethods(reg *rpc.Registry) {
 		if err != nil {
 			return greeterinstall.Elevated{}, err
 		}
+		// A local copy reuses the binary built last: the one running
 		req := rules.Request{Action: p.Action, Repo: d.opts.Tree, User: me.Username, Staged: p.Staged,
 			Source: p.Source, Channel: p.Channel, Binary: d.executable}
-		// A local copy reuses the binary built last: the one running
-		return in.Elevate(ctx, req, d.executable)
+		return in.Elevate(ctx, req)
 	})
 }
