@@ -15,7 +15,10 @@ import qs.config
  *   3. $XDG_STATE_HOME/axiom/secrets.json ({ "<id>": "…" } for providers,
  *      "<scope>:<id>" for the other scopes; mode 600)
  * setSecret() stores one in the keyring when one answers, else in the file.
- * Secrets go to secret-tool and the file through stdin, never argv.
+ * Secrets go to secret-tool and the file through stdin, never argv. Chat
+ * keys are only stored from here: axiom reads them itself (package chat),
+ * and `secrets.status` says where each one is, so they're never looked up
+ * into QML.
  */
 QtObject {
   id: root
@@ -30,15 +33,14 @@ QtObject {
   // "<scope>:<id>"), for the settings cards. refresh() and lookups fill it.
   property var statuses: ({})
 
-  // Where a provider's key would come from; "" while it's being looked up
+  // Where a provider's key comes from: "env" | "keyring" | "file" |
+  // "none" | "unneeded", or "" while it's being looked up
   function status(provider) {
     if (!provider)
       return "none";
     if (provider.auth === "none")
       return "unneeded";
-    if (provider.keyEnv && Quickshell.env(provider.keyEnv))
-      return "env";
-    return root.secretStatus("provider", provider.id);
+    return root.statuses[provider.id] ?? "";
   }
 
   // Calls back with the provider's key, "" when there is none
@@ -51,13 +53,23 @@ QtObject {
     root.withSecret("provider", provider.id, callback);
   }
 
-  // Looks every provider's key up again (after it changed elsewhere)
+  // Asks axiom where every provider's key is again (after it changed
+  // elsewhere)
   function refresh(providers) {
-    root._clearCache("provider");
     root._secrets = root._read();
-    for (const provider of providers ?? [])
-      if (provider.auth !== "none")
-        root._lookup("provider", provider.id, () => {});
+    BackendManager.call("secrets.status", {
+      "providers": (providers ?? []).map(p => ({
+            "id": p.id,
+            "auth": p.auth,
+            "keyEnv": p.keyEnv
+          }))
+    }, (error, result) => {
+      if (error) {
+        console.warn("[SecretsManager] Couldn't read the chat keys' status:", error.message);
+        return;
+      }
+      root.statuses = Object.assign({}, root.statuses, result.statuses);
+    });
   }
 
   function setKey(provider, key) {
@@ -97,7 +109,9 @@ QtObject {
     if (trimmed === "")
       return root.clearSecret(scope, id);
     const slot = root._slot(scope, id);
-    root._cache[slot] = trimmed;
+    // A chat key is only ever read by axiom
+    if (scope !== "provider")
+      root._cache[slot] = trimmed;
     if (root.keyringAvailable) {
       root._run(["secret-tool", "store", "--label=" + "Axiom: " + label, "service", "axiom", scope, id], trimmed, ok => {
         if (!ok) {
@@ -121,7 +135,7 @@ QtObject {
     if (root._secrets[slot] !== undefined)
       root._storeFile(slot, undefined);
     if (root.keyringAvailable)
-      root._run(["secret-tool", "clear", "service", "axiom", scope, id], null, () => root._lookup(scope, id, () => {}));
+      root._run(["secret-tool", "clear", "service", "axiom", scope, id], null, () => scope === "provider" ? root._setStatus(slot, "none") : root._lookup(scope, id, () => {}));
     else
       root._setStatus(slot, "none");
   }

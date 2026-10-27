@@ -342,18 +342,4 @@ TestCase {
     compare(ChatProtocol.errorMessage('{"error": "plain"}'), "plain");
     compare(ChatProtocol.errorMessage("  502 Bad Gateway \n"), "502 Bad Gateway");
   }
-
-  function test_models() {
-    compare(ChatProtocol.modelsRequest(provider("anthropic"), "K").url, "https://example.test/v1/models?limit=1000");
-    compare(ChatProtocol.modelsRequest(provider("openai", {
-      "auth": "none"
-    }), "").headers, []);
-    compare(ChatProtocol.parseModels("openai", '{"data": [{"id": "a"}, {"id": 3}]}'), ["a"]);
-    compare(ChatProtocol.parseModels("gemini", '{"models": [{"name": "models/g1", "supportedGenerationMethods": ["generateContent"]}, {"name": "models/embed"}]}'), ["g1"]);
-    compare(ChatProtocol.parseModels("openai", "nope"), null);
-    compare(ChatProtocol.chatModels(provider("openai", {
-      "baseUrl": "https://api.openai.com/v1"
-    }), ["gpt-5", "text-embedding-3", "gpt-4o-audio", "o3"]), ["gpt-5", "o3"]);
-    compare(ChatProtocol.chatModels(provider("openai"), ["anything"]), ["anything"]);
-  }
 }

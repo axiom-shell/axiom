@@ -38,50 +38,22 @@ FieldGroup {
       ok: false,
       text: ""
     });
-    SecretsManager.withKey(provider, key => {
-      // The key can arrive after the overlay closed
+    ChatManager.fetchModels(provider, (error, models) => {
+      // The answer can arrive after the overlay closed
       if (!root || !root._alive)
         return;
-      if (provider.auth !== "none" && !key) {
-        root._setResult(provider.id, {
-          busy: false,
-          ok: false,
-          text: I18n.tr("No API key")
-        });
-        return;
-      }
-      const request = requestComponent.createObject(root, {
-        kind: provider.kind
+      let text;
+      if (error)
+        text = error.kind === "not_found" ? I18n.tr("No API key") : error.message;
+      else if (models === null)
+        text = I18n.tr("That address didn't answer like a {0} API.", provider.kind);
+      else if (store && models.length > 0)
+        root._storeModels(provider, models);
+      root._setResult(provider.id, {
+        busy: false,
+        ok: !error && models !== null,
+        text: text ?? (store ? I18n.tr("{0} models listed: Save to keep them", models.length) : I18n.tr("Connected: {0} models", models.length))
       });
-      request.finished.connect((state, body) => {
-        const ids = ChatProtocol.parseModels(provider.kind, body);
-        request.destroy();
-        if (ids === null) {
-          root._setResult(provider.id, {
-            busy: false,
-            ok: false,
-            text: I18n.tr("That address didn't answer like a {0} API.", provider.kind)
-          });
-          return;
-        }
-        const models = ChatProtocol.chatModels(provider, ids);
-        if (store && models.length > 0)
-          root._storeModels(provider, models);
-        root._setResult(provider.id, {
-          busy: false,
-          ok: true,
-          text: store ? I18n.tr("{0} models listed: Save to keep them", models.length) : I18n.tr("Connected: {0} models", models.length)
-        });
-      });
-      request.failed.connect((status, message) => {
-        request.destroy();
-        root._setResult(provider.id, {
-          busy: false,
-          ok: false,
-          text: status > 0 ? I18n.tr("{0}: {1}", status, message) : message
-        });
-      });
-      request.start(ChatProtocol.modelsRequest(provider, key), "");
     });
   }
 
@@ -94,13 +66,6 @@ FieldGroup {
     if (!models.includes(providers[index].defaultModel))
       providers[index].defaultModel = "";
     SettingsManager.setValue(["Chat", "providers"], providers);
-  }
-
-  Component {
-    id: requestComponent
-    ChatRequest {
-      stream: false
-    }
   }
 
   // Keys may have changed outside the shell (secret-tool, the file)

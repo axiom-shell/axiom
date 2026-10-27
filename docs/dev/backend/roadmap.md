@@ -86,10 +86,11 @@ Each copies a stage 1 shape (a polled topic as `tailscale`, a one-off call as `d
 
 **Stage 5: HTTP** (next)
 - Done: `WeatherSource` → the `weather` topic (`backend/internal/weather`): Open-Meteo's forecast, the location geocoded (once per name) or the IP's place (ipinfo.io, then ipapi.co; again after an hour) fetched in Go, only the fields the widgets read pushed; a failed fetch keeps the last state. `WeatherSource` folded into `WeatherManager` (same members; the widgets read `WeatherManager` instead of `.source`), and the greeter's axiom serves the topic for its Weather module. `ClaudeUsageManager` and `MediaManager`'s album art: done in stage 1b.
-- `ChatRequest` with `SecretsManager`: streamed replies pushed as chunks, keys read in Go so they never pass through QML, argv or temp files; `ChatProvidersCard`'s Test and Fetch models go through `ChatManager` with it ([issue](../issues.md#chatproviderscard-runs-its-own-requests)).
+- `ChatRequest` with `SecretsManager`: streamed replies pushed as chunks, keys read in Go so they never pass through QML, argv or temp files; `ChatProvidersCard`'s Test and Fetch models go through `ChatManager` with it.
 
 **Stage 6: the funnels** (later; each moves every caller with it)
 - `CommandManager` → `exec.run` / `exec.spawn` and the per-command subscription: moved ahead to stage 3b. Here the remaining direct `Process` / `execDetached` users switch to it.
+- `SecretsManager`'s store (secret-tool and secrets.json writes) → daemon methods, and package calendar looks CalDAV passwords up itself as package chat does keys, so no secret passes through QML ([issue](../issues.md#calendar-passwords-and-secretsjson-still-pass-through-qml)).
 - File watching and atomic writes (`StateManager`, notes, todos, chats, notification history) → `file.watch` (pushes on change) and `file.write`. `FileManager.read` stays: bindings need a synchronous read, and the socket is async.
 - `HyprlandIpcManager`, `NiriIpcManager`: the daemon already holds each compositor's socket (`backend/internal/compositor/ipc`) and can push its events. Keep those pushes small: workspace and focus changes drive the UI.
 - `IpcTarget` stops being an `IpcHandler` once binds and scripts all use `axiom ipc`; the daemon's `qs ipc --pid` fallback retires with it.

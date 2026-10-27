@@ -57,6 +57,7 @@ var tiers = map[string]int{
 	"internal/brightness":           tierEdge,
 	"internal/buildinfo":            tierEdge,
 	"internal/calendar":             tierEdge,
+	"internal/chat":                 tierEdge,
 	"internal/claudeusage":          tierEdge,
 	"internal/clipboard":            tierEdge,
 	"internal/command":              tierEdge,

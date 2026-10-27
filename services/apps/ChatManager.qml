@@ -205,6 +205,15 @@ Singleton {
     ClipboardManager.copyText(text);
   }
 
+  // Lists a provider's chat models (Settings → Chat's Test and Fetch
+  // models), calling back with (error, models): models is null when the
+  // address didn't answer like that kind of API
+  function fetchModels(provider, callback) {
+    BackendManager.call("chat.models", {
+      "provider": root._wire(provider)
+    }, (error, result) => callback(error, error ? null : result.models));
+  }
+
   // Settings → Chat (keys, providers, presets)
   function openSettings() {
     SettingsManager.openSetting("Chat");
@@ -299,6 +308,20 @@ Singleton {
   property var _encoded: ({})
   property string _pendingText: ""
   property string _pendingThinking: ""
+
+  // A provider as axiom takes it (package chat's Provider): no key, which
+  // axiom reads itself
+  function _wire(provider) {
+    return {
+      "id": provider.id,
+      "name": provider.name,
+      "kind": provider.kind,
+      "baseUrl": provider.baseUrl,
+      "auth": provider.auth,
+      "keyEnv": provider.keyEnv,
+      "fallbacks": provider.fallbacks === true
+    };
+  }
 
   function _blank(presetName) {
     const preset = ChatConfig.preset(presetName);
