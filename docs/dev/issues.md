@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while reviewing the chat move to axiom (backend stage 5)
 
+### A file write or change can be missed across a daemon re-exec
+- **Where:** `services/core/FileManager.qml` (`write`, `watch`), `services/core/BackendManager.qml` (`_failQueued`)
+- **What:** Calls in flight when the connection drops fail with `unavailable` (protocol.md), so a `file.write` out at the moment of a re-exec is dropped (logged `[FileManager] Could not write`; notes show "Couldn't save"), and the file keeps its older content until the next save of it. Likewise a change made on disk between the drop and the next hello pushes nothing (the watch is gone until `onGreeted` sends it again), so a todo list or open note edited elsewhere in that moment isn't reloaded. FileView wrote and watched in-process, with no such gap. Rare (a ~200 ms window per re-exec, which dev mode does on every Go save); a fix would resend a write that failed `unavailable` and call each watcher once after a re-hello.
+- **Size:** small
+- **Found:** 2026-10-28, while reviewing the file.write / file.watch move (backend stage 6)
+
 ### Restoring over a config.json that doesn't load resets the other takeovers
 - **Where:** `backend/internal/store/store.go` (`Replace`, `Restore`, `takeoverBase`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
 - **What:** While config.json doesn't load at the start, the store knows no takeover values (`takeoversUnknown`), so `Replace` and `Restore` keep `takeoverBase()`: the defaults. Restoring a saved config over that file therefore writes the defaults' `Idle.enabled`, `Polkit.enabled`, `Greeter.enabled` and `Lockscreen.mode`, switching off or changing whatever the user had taken over. Only `Compositor.mode` is repaired afterwards, by the compositor manager keeping the mode it applied and saving it back (`saveKept`, #108). Deciding the unknown takeovers once in the store (take the restored file's own values, or refuse the restore while none are known) would cover all five settings, and would let the manager's separate hold go ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)). Like every other problem that starts from a config.json that doesn't load, it's rare, and it's fixed by backend stage 7, with the other config problems.

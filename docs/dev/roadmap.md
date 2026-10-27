@@ -175,6 +175,7 @@ Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's
 Resolved by a stage:
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (stage 7)
+- [A file write or change can be missed across a daemon re-exec](issues.md#a-file-write-or-change-can-be-missed-across-a-daemon-re-exec) (stage 6)
 - [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (closed by awww's removal; maintainer: "awww is scheduled for remove in favor of axioms own animations")
 
 ### Phase 6: compositor parity
