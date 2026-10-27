@@ -449,26 +449,9 @@ func (d *Daemon) ipcMethods(reg *rpc.Registry) {
 		if !fromShell(c) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell registers IPC targets")
 		}
-		names := make([]string, 0, len(p.Targets))
-		for _, t := range p.Targets {
-			names = append(names, t.Name)
+		if d.router.Register(c, p.Targets) {
+			d.opts.Log.Debug("the shell registered its IPC targets", "targets", len(p.Targets))
 		}
-		// The functions and their types come from quickshell itself; a
-		// later registration (a QML reload) or the connection closing
-		// meanwhile wins
-		generation := d.router.Begin()
-		d.tasks.Go(func(ctx context.Context) {
-			sigs, err := d.router.Signatures(ctx)
-			if err != nil {
-				if ctx.Err() == nil {
-					d.opts.Log.Warn("reading the shell's IPC functions (qs ipc show)", "err", err)
-				}
-				return
-			}
-			if d.router.RegisterNames(c, generation, names, sigs) {
-				d.opts.Log.Debug("the shell registered its IPC targets", "targets", len(names))
-			}
-		})
 		return struct{}{}, nil
 	})
 

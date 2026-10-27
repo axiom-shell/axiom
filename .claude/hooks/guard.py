@@ -353,7 +353,7 @@ def check_argv(env, argv, cwd):
             # The file, or a folder holding it up to its config folder
             top = LIVE_CONFIG.parent
             if target == LIVE_CONFIG or target in LIVE_CONFIG.parents and (target == top or top in target.parents):
-                deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}); use `ipc call onboarding goTo <n>`.")
+                deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}); use `axiom ipc onboarding goTo <n>`.")
 
     # qmlformat -i replaces the inode
     if name == "qmlformat" and any(a in {"-i", "--inplace"} for a in args):

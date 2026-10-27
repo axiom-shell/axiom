@@ -25,7 +25,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 - Switched by `editPage(i)` / `editMenu(i)` / `editDesktop()` / `editLockscreen()` / `editGreeter()` / `editPages()` / `editMenus()`.
 - The lock screen's row shows only while `Lockscreen.mode` is `quickshell` (`lockscreenEditable`), and the login screen's only while `Greeter.enabled` (`greeterEditable`).
 - `editTarget` falls back to `"page"` when its row hides.
-- Entry points: the launcher's `/layouts` and `/menus`, `ipc call edgeMenu edit`.
+- Entry points: the launcher's `/layouts` and `/menus`, `axiom ipc edgeMenu edit`.
 - Each target is an `EditTarget`: `PageTarget`, `MenuTarget`, and `DesktopTarget` / `LockscreenTarget` / `GreeterTarget` on `ScreenLayoutTarget` (all in `views/Layouts/`). It carries the editor, modules, title, icon, screen box, fit line, …, and `Layouts.qml` binds the canvas and inspector to it.
   - `fitLink` (an `x-link`) puts a `SettingsLink` beside the fit line: a shrunk page to `Overlay.moduleScale`, a shrunk screen layout to `Widget.cardSize`, an outdated login screen to its settings card, the lock screen under another locker to `Lockscreen.mode`.
 - Links out (followed as links, so the navigator offers the way back): a Custom page's group to the page switcher's settings, a tool page's to the page itself, each module type's `x-link` in the inspector, and an edge menu's "Also opened by" rows to the bar widget, keybind or menu that opens it (`OverlayManager.menus.goToReference`). Settings' Lock screen and Login screen links open this editor on them (`OverlayManager.followPageLink("Layouts:lockscreen")`).

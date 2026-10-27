@@ -65,4 +65,4 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
   - `link` true: followed from another overlay page (`ShellManager.followLink`), which the navigator then offers to go back to. Services opening it from outside (a notification, the launcher) leave it off.
   - In the schema, `x-link` puts such links under fields and on widget/module types (`SettingsLink`, `FieldLinks`: [Schema annotations](schema-annotations.md)); `x-links` puts page links in a category's header.
 - The launcher's `/config <setting>` lists **Show in settings** last, which calls `openSetting`.
-- A category has no IPC; for testing use a temporary `IpcHandler` (AGENTS.md › Running / reloading).
+- A category has no IPC; for testing use a temporary `IpcTarget` (AGENTS.md › Running / reloading).

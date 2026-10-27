@@ -96,7 +96,7 @@ Consumer (the request comes from config only, never from live values):
    - **Polled by axiom** (preferred): a `topics.Source{Name, Floor, Default, Fetch}` in a package of its own under `backend/internal/`, listed in `backend/internal/daemon/topics.go`. The service sends the merged request with `BackendManager.acquire(topic, …)` while `_registry.active` (`release(topic)` once not) and fills its state from `BackendManager.listen("<topic>.state", …)`: copy `TailscaleManager.qml`. The floor lives in Go: `topics.MinInterval` when a setting gives the interval ([protocol](../dev/backend/protocol.md) › Polled topics).
    - **Polled in QML** (the skeleton): the interval is the shortest one asked for, with a floor; the timer runs only while `_registry.active`, so nothing is fetched with no consumers.
 4. **IPC:** a `property IpcTarget _ipc` with typed functions (`(): void`, `(): string`, `(text: string): void`). Per-screen handlers live on the surface instead, `enabled: ShellManager.isTarget(…)`.
-5. **Processes and files:** no `Process`, `FileView`, `Socket`, `IpcHandler` or `Quickshell.execDetached` of its own (`check_structure` refuses them outside `scripts/quickshell-io-allowlist.json`, a list that only shrinks as these move to the axiom daemon). Use `CommandManager.run` / `runDetached`, `FileManager.read`, `StateManager` for small state, and a daemon method for anything else (a file to watch or write, a socket).
+5. **Processes and files:** no `Process`, `FileView`, `Socket` or `Quickshell.execDetached` of its own (`check_structure` refuses them outside `scripts/quickshell-io-allowlist.json`, a list that only shrinks as these move to the axiom daemon). Use `CommandManager.run` / `runDetached`, `FileManager.read`, `StateManager` for small state, and a daemon method for anything else (a file to watch or write, a socket).
 6. **Persistence:**
    - State that must survive a QML reload goes in `PersistentProperties` (needs a `Singleton` root, see `IdleManager`).
    - Small state that must survive a restart goes in `StateManager` (`~/.local/state/axiom/ui/*.json`) or `Paths.userStatePath`, written atomically (temp file + rename).
@@ -112,11 +112,10 @@ Consumer (the request comes from config only, never from live values):
   - Build requests from config only. Never key a Repeater model on live values (the 25 GB lesson).
 - **`check_structure.py`** errors on a `<Name>Manager.` reference with no `services/*/<Name>Manager.qml`, and on near-miss names.
 - **Hot reload:** a new singleton is picked up on reload, and its timer starts again, so make `refresh()` idempotent (the skeleton's `_checking`).
-- **Showing `show`:** `show` is a qs IPC keyword (`ipc call foo show` lists functions), so don't name a function `show`.
 
 ## Verify
 - `scripts/dev/verify.sh`: structure, formatting, generated API and IPC docs, and the log since the reload.
-- `qs -c axiom ipc call <target> <function>` for each IPC function. `docs/dev/generated/ipc.md` lists it after `scripts/gen_docs.py`.
+- `axiom ipc <target> <function>` for each IPC function. `docs/dev/generated/ipc.md` lists it after `scripts/gen_docs.py`.
 - `scripts/log.sh --debug` while a consumer is shown: the process runs at the expected interval and stops when the consumer goes.
 
 ## Docs to update

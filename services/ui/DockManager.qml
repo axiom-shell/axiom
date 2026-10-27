@@ -328,7 +328,6 @@ QtObject {
       root.toggle(id);
     }
 
-    // Not `show`: qs's own `ipc show` would take the call
     function open(id: string): void {
       root.show(id);
     }

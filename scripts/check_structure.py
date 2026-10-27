@@ -174,11 +174,11 @@ def main():
         if re.fullmatch(r"services/[^/]+\.qml", path):
             errors.append(f"{path}: directly in services/ (put it in its group's folder: services/AGENTS.md › Folders)")
 
-    # IPC targets are IpcTargets (an IpcHandler that registers with axiom,
-    # which reaches it without a process per call): a bare IpcHandler is
-    # out of `axiom ipc`'s fast path and of ipc.md
+    # IPC targets are IpcTargets (registered with axiom, which calls them
+    # over the shell's connection): an IpcHandler is out of `axiom ipc`'s
+    # reach and of ipc.md
     for path, text in sources.items():
-        if path != "services/core/IpcTarget.qml" and re.search(r"\bIpcHandler\s*\{", text):
+        if re.search(r"\bIpcHandler\s*\{", text):
             errors.append(f"{path}: an IpcHandler: use IpcTarget (services/core/IpcTarget.qml)")
 
     # An optional call on a computed member crashes V4's compiler (Qt 6.12)

@@ -31,14 +31,13 @@ How to look at, exercise and debug the live shell without breaking the user's se
 ### Seeing a page or surface
 - Overlay pages: `scripts/dev/shot.sh page <ViewType>` does all of this. By hand: `axiom ipc overlay page <ViewType>`, then `grim -o <monitor>` (or `grim -g "X,Y WxH"`), crop with `magick`, read the PNG, then `axiom ipc overlay close`.
 - The overlay only instantiates the current page and its neighbours, so a page's QML errors only reach `scripts/log.sh` once it's been opened like this.
-- **`show` is a qs IPC keyword:** `qs -c axiom ipc call <target> show` prints the target's functions instead of calling `show()`. Use `toggle` (or `hide`).
-- A temporary `IpcHandler` (for a settings category, a lockscreen preview, a screenshot hook) goes in `shell.qml`, never inside a singleton, where it never registers. It needs `import Quickshell.Io`. Revert it in place afterwards.
+- A temporary `IpcTarget` (for a settings category, a lockscreen preview, a screenshot hook) goes in `shell.qml`, called with `axiom ipc`. Revert it in place afterwards.
 - Never simulate cursor movement to verify UI. Reason from logs and bindings; if it really needs interactive checking, ask the user to look.
 - Per-feature recipes:
   - Launcher: [launcher.md › Testing](features/launcher.md) (`appLauncher search`, focus stealing).
   - Lock screen: [lockscreen.md › Testing](features/lockscreen.md) (`LockManager.editor.startPreview()`, draft-only demo layouts).
   - Greeter: [greeter-runtime.md › Testing](features/greeter-runtime.md) (windowed greeter) and [greeter-install.md › Testing](features/greeter-install.md) (scratch root).
-  - Onboarding: [onboarding.md › Testing](features/onboarding.md) (`ipc call onboarding goTo <n>`).
+  - Onboarding: [onboarding.md › Testing](features/onboarding.md) (`axiom ipc onboarding goTo <n>`).
   - Another compositor: [sway-backend.md › Running it](compositor/sway-backend.md) (`scripts/dev/nested.sh <sway|niri|hyprland>`: a nested compositor with a second axiom on scratch folders and its own D-Bus; kill only the nested compositor you started). Nested niri: [niri-backend.md › Running it](compositor/niri-backend.md) (keep its window visible).
 
 ### Popout and layering checks

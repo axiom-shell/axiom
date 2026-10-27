@@ -86,7 +86,6 @@ Scope {
     function toggle(): void {
       root.toggle();
     }
-    // Not "show": `qs ipc call <target> show` is taken by the CLI
     function open(): void {
       if (!root.shown)
         root.open("");

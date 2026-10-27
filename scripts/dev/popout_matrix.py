@@ -26,7 +26,7 @@ import tempfile
 import time
 
 HOOK_MARK = "// popout_matrix.py hook"
-HOOK_IMPORTS = "import QtQml " + HOOK_MARK + "\nimport Quickshell.Io " + HOOK_MARK + "\nimport qs.components.methods " + HOOK_MARK + "\n"
+HOOK_IMPORTS = "import QtQml " + HOOK_MARK + "\nimport qs.components.methods " + HOOK_MARK + "\n"
 HOOK = """
   // popout_matrix.py: opens a bar popout (or a submenu in the open one)
   // with no pointer, held open; the script takes it out again
@@ -50,7 +50,7 @@ HOOK = """
       return out;
     }
   }
-  IpcHandler {
+  IpcTarget {
     target: "devPopouts"
     function open(screen: string, location: string, which: string): string {
       close();
@@ -157,7 +157,7 @@ VARIANTS = [
 
 
 def qs(*args, check=False):
-    r = subprocess.run(["qs", "-c", "axiom", "ipc", "call", *args], capture_output=True, text=True)
+    r = subprocess.run(["axiom", "ipc", *args], capture_output=True, text=True)
     if check and r.returncode != 0:
         raise RuntimeError(f"ipc {args}: {r.stderr.strip()}")
     return r.stdout.strip()

@@ -10,9 +10,6 @@
     "services/core/FileManager.qml": [
       "FileView"
     ],
-    "services/core/IpcTarget.qml": [
-      "IpcHandler"
-    ],
     "services/core/ThemeManager.qml": [
       "FileView"
     ]

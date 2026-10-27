@@ -62,7 +62,7 @@ FoldingCard {
 
 ## Verify
 - `scripts/dev/verify.sh`
-- Settings categories have no IPC: add a temporary `IpcHandler` to `shell.qml` calling `SettingsManager.openCategory("<Category>")`, look with `scripts/dev/shot.sh`, then remove it in place ([testing](../dev/testing.md)).
+- Settings categories have no IPC: add a temporary `IpcTarget` to `shell.qml` calling `SettingsManager.openCategory("<Category>")`, look with `scripts/dev/shot.sh`, then remove it in place ([testing](../dev/testing.md)).
 
 ## Docs to update
 - [core/settings-page](../dev/core/settings-page.md) if it adds a new kind of card; the feature's doc.

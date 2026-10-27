@@ -126,6 +126,6 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - Escape or a click on the background (`stopPreview()`) reopens the overlay on Layouts.
 
 ### Testing
-- Look at the lock screen through `LockManager.editor.startPreview()` (a `ScreenLayoutEditor`), called from a temporary `IpcHandler` in `shell.qml`; revert the handler afterwards.
+- Look at the lock screen through `LockManager.editor.startPreview()` (a `ScreenLayoutEditor`), called from a temporary `IpcTarget` in `shell.qml`; revert the handler afterwards.
 - Put demo layouts on the draft only, then `resetChanges`.
 - Test `LockSurface` in a hidden window, never by locking for real: only the user can type the password.
