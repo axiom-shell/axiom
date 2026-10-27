@@ -55,7 +55,7 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 				t.Fatal(err)
 			}
 			o := GreeterOptions{SchemaHash: "abc", Getenv: func(string) string { return "" }}
-			reg := greeterRegistry(o, os.Environ(), func(int) bool { return c.shell }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}))
+			reg := greeterRegistry(o, os.Environ(), func(int) bool { return c.shell }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}), nil)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
 			go (&rpc.Server{Registry: reg}).Serve(ctx, ln)
@@ -100,11 +100,12 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 
 // The greeter's Weather module subscribes to the weather topic, its state
 // (GreetdManager's) is written through file.write, and on Hyprland its
-// HyprlandManager sends hypr.request (monitors, layouts, the cursor).
+// HyprlandManager sends hypr.request (monitors, layouts, the cursor), and
+// on niri its NiriManager sends niri.request and watches niri.watch.
 func TestGreeterServesWeather(t *testing.T) {
 	t.Parallel()
-	reg := greeterRegistry(GreeterOptions{Getenv: func(string) string { return "" }}, nil, func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}))
-	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "file.write", "hypr.request"} {
+	reg := greeterRegistry(GreeterOptions{Getenv: func(string) string { return "" }}, nil, func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}), nil)
+	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "file.write", "hypr.request", "niri.request", "niri.watch"} {
 		if _, _, ok := reg.Types(m); !ok {
 			t.Errorf("no %s", m)
 		}
@@ -124,7 +125,7 @@ func TestGreeterWatchesCommands(t *testing.T) {
 	t.Cleanup(cancel)
 	watches := command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Context: ctx})
 	o := GreeterOptions{SchemaHash: "abc", Getenv: func(string) string { return "" }}
-	go (&rpc.Server{Registry: greeterRegistry(o, os.Environ(), func(int) bool { return true }, watches, topics.New(topics.Options{Context: ctx}), files.New(files.Options{}))}).Serve(ctx, ln)
+	go (&rpc.Server{Registry: greeterRegistry(o, os.Environ(), func(int) bool { return true }, watches, topics.New(topics.Options{Context: ctx}), files.New(files.Options{}), nil)}).Serve(ctx, ln)
 	outputs := make(chan command.Outputs, 4)
 	client := rpc.NewRegistry()
 	rpc.Handle(client, pushExecOutputs.Method, func(_ context.Context, _ *rpc.Conn, p command.Outputs) (struct{}, error) {

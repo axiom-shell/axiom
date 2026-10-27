@@ -175,7 +175,6 @@ Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's
 Resolved by a stage:
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (stage 7)
-- [A file write or change can be missed across a daemon re-exec](issues.md#a-file-write-or-change-can-be-missed-across-a-daemon-re-exec) (stage 6)
 - [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (closed by awww's removal; maintainer: "awww is scheduled for remove in favor of axioms own animations")
 
 ### Phase 6: compositor parity
@@ -203,7 +202,6 @@ niri:
 - [niri reports no space reserved by bars, nor where tiled windows are](issues.md#niri-reports-no-space-reserved-by-bars-nor-where-tiled-windows-are)
 - [niri's flags can't be turned off from axiom](issues.md#niris-flags-cant-be-turned-off-from-axiom)
 - [Nested niri freezes while its window is hidden](issues.md#nested-niri-freezes-while-its-window-is-hidden)
-- [niri's event stream stops retrying after a failed connect](issues.md#niris-event-stream-stops-retrying-after-a-failed-connect)
 
 Hyprland, and every compositor:
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
@@ -239,6 +237,8 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
 - [Singleton properties warn on every reload](issues.md#singleton-properties-warn-on-every-reload)
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
+- [Calls in flight are lost across a daemon re-exec, one service at a time](issues.md#calls-in-flight-are-lost-across-a-daemon-re-exec-one-service-at-a-time): one `BackendManager` fix for the three below
+- [A file write or change can be missed across a daemon re-exec](issues.md#a-file-write-or-change-can-be-missed-across-a-daemon-re-exec)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
 - [ThemeManager warns when the daemon's re-exec fails its integrations](issues.md#thememanager-warns-when-the-daemons-re-exec-fails-its-integrations)
 - [The updates check warns when a daemon re-exec kills checkupdates](issues.md#the-updates-check-warns-when-a-daemon-re-exec-kills-checkupdates)
@@ -252,6 +252,7 @@ Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` 
 Resolves:
 - [The schema root's description contradicts the annotations doc](issues.md#the-schema-roots-description-contradicts-the-annotations-doc)
 - [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
+- [AGENTS.md's funnel rule doesn't name FileManager.write and watch](issues.md#agentsmds-funnel-rule-doesnt-name-filemanagerwrite-and-watch)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 
 ### Phase 10: custom JSON widgets

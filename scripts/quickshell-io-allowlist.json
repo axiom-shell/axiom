@@ -13,9 +13,6 @@
     "services/core/IpcTarget.qml": [
       "IpcHandler"
     ],
-    "services/compositor/NiriIpcManager.qml": [
-      "Socket"
-    ],
     "services/core/ThemeManager.qml": [
       "FileView"
     ]

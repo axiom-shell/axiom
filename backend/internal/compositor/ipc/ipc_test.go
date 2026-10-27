@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/binary"
+	"errors"
 	"io"
 	"net"
 	"os"
@@ -192,8 +193,8 @@ func TestNiri(t *testing.T) {
 	if err := n.Action(ctx(t), map[string]any{"LoadConfigFile": map[string]any{"path": nil}}); err != nil {
 		t.Fatal(err)
 	}
-	if err := n.Action(ctx(t), map[string]any{"Quit": map[string]any{}}); err == nil {
-		t.Fatal("an Err read as Ok")
+	if err := n.Action(ctx(t), map[string]any{"Quit": map[string]any{}}); !errors.Is(err, ErrRefused) {
+		t.Fatal("an Err read as Ok:", err)
 	}
 	out := make(chan Reload, 2)
 	c, cancel := context.WithCancel(context.Background())

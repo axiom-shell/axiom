@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -21,6 +22,9 @@ func NiriFromEnv(getenv func(string) string) *Niri {
 	}
 	return nil
 }
+
+// ErrRefused: niri answered a request with an Err.
+var ErrRefused = errors.New("niri refused it")
 
 // Request sends one request (a JSON value) and returns the reply's Ok.
 func (n *Niri) Request(ctx context.Context, request any) (json.RawMessage, error) {
@@ -48,7 +52,7 @@ func (n *Niri) Request(ctx context.Context, request any) (json.RawMessage, error
 		return nil, err
 	}
 	if reply.Err != nil {
-		return nil, fmt.Errorf("niri: %s", *reply.Err)
+		return nil, fmt.Errorf("%w: %s", ErrRefused, *reply.Err)
 	}
 	return reply.Ok, nil
 }
@@ -64,6 +68,33 @@ func (n *Niri) Action(ctx context.Context, action any) error {
 // ConfigLoaded is the state niri starts it with, not a reload: it's left
 // out.
 func (n *Niri) Reloads(ctx context.Context, out chan<- Reload) error {
+	started := false
+	return n.Events(ctx, nil, func(line []byte) {
+		var event struct {
+			ConfigLoaded *struct {
+				Failed bool `json:"failed"`
+			} `json:"ConfigLoaded"`
+		}
+		if json.Unmarshal(line, &event) != nil || event.ConfigLoaded == nil {
+			return
+		}
+		if !started {
+			started = true
+			return
+		}
+		select {
+		case out <- Reload{Failed: event.ConfigLoaded.Failed}:
+		case <-ctx.Done():
+		}
+	})
+}
+
+// Events reads niri's event stream until ctx ends (nil) or the socket
+// closes: started once it's connected, then event with each event's line
+// ({"WindowFocusChanged": {…}}; the reply to the request itself left out),
+// which starts with niri's full state. A line is only valid during its
+// call.
+func (n *Niri) Events(ctx context.Context, started func(), event func(line []byte)) error {
 	conn, err := dial(context.Background(), n.Path)
 	if err != nil {
 		return err
@@ -75,25 +106,24 @@ func (n *Niri) Reloads(ctx context.Context, out chan<- Reload) error {
 		return err
 	}
 	conn.SetDeadline(time.Time{})
+	if started != nil {
+		started()
+	}
 	lines := bufio.NewScanner(conn)
 	lines.Buffer(make([]byte, 64*1024), 16*1024*1024)
-	started := false
+	first := true
 	for lines.Scan() {
-		var event struct {
-			ConfigLoaded *struct {
-				Failed bool `json:"failed"`
-			} `json:"ConfigLoaded"`
+		if first {
+			first = false
+			var reply struct {
+				Ok, Err json.RawMessage
+			}
+			if json.Unmarshal(lines.Bytes(), &reply) == nil && (reply.Ok != nil || reply.Err != nil) {
+				continue
+			}
 		}
-		if json.Unmarshal(lines.Bytes(), &event) != nil || event.ConfigLoaded == nil {
-			continue
-		}
-		if !started {
-			started = true
-			continue
-		}
-		select {
-		case out <- Reload{Failed: event.ConfigLoaded.Failed}:
-		case <-ctx.Done():
+		event(lines.Bytes())
+		if ctx.Err() != nil {
 			return nil
 		}
 	}
