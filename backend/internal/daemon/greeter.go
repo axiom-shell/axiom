@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"log/slog"
 	"os"
@@ -74,7 +73,9 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	// from a niri session (the login screen's own compositor is sway or
 	// Hyprland); its streams end with serveCtx and are waited for
 	var streams sync.WaitGroup
-	niri := greeterNiriStreams(serveCtx, o, &streams)
+	niri := niriStreams(o.Getenv, o.Log, serveCtx, func(fn func(context.Context)) {
+		streams.Go(func() { fn(serveCtx) })
+	})
 	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches, hub, written, niri), Log: o.Log, OnClose: func(c *rpc.Conn) {
 		watches.Forget(c)
 		written.Forget(c)
@@ -105,23 +106,6 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 		return axerr.Wrap(axerr.Internal, err, "the greeter's quickshell failed")
 	}
 	return nil
-}
-
-// greeterNiriStreams are the streams of niri's event stream under niri,
-// else nil, their goroutines on wg.
-func greeterNiriStreams(ctx context.Context, o GreeterOptions, wg *sync.WaitGroup) *ipc.NiriStreams {
-	n := ipc.NiriFromEnv(o.Getenv)
-	if n == nil {
-		return nil
-	}
-	return ipc.NewNiriStreams(n, ipc.NiriStreamsOptions{
-		Started: func(s ipc.Subscriber) { s.Notify(pushNiriStarted.Method, struct{}{}) },
-		Event:   func(s ipc.Subscriber, event json.RawMessage) { s.Notify(pushNiriEvent.Method, event) },
-		Log:     o.Log.With("part", "niri"), Context: ctx,
-		Go: func(fn func(context.Context)) {
-			wg.Go(func() { fn(ctx) })
-		},
-	})
 }
 
 // greeterRegistry is what the greeter's axiom answers: a hello from its
@@ -159,7 +143,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	fileHandlers(reg, func() *files.Files { return written })
 	lookupMethods(reg, o.Getenv)
 	hyprHandlers(reg, ipc.HyprFromEnv(o.Getenv))
-	niriHandlers(reg, ipc.NiriFromEnv(o.Getenv), func() *ipc.NiriStreams { return niriStreams })
+	niriHandlers(reg, ipc.NiriFromEnv(o.Getenv), niriStreams)
 	topics.Register(reg, hub, weather.Source(weather.Options{}))
 	return reg
 }

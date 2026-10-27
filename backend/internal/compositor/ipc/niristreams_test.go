@@ -71,7 +71,12 @@ func TestNiriStreams(t *testing.T) {
 	// niri isn't there yet: a failed connect is tried again
 	s.Watch(p)
 	time.Sleep(50 * time.Millisecond)
-	listen(t, path, eventStream)
+	// Each stream's connection to niri, closed when it ends
+	ended := make(chan struct{}, 4)
+	listen(t, path, func(c net.Conn) {
+		eventStream(c)
+		ended <- struct{}{}
+	})
 	want := []string{"started", `event {"WorkspacesChanged":{"workspaces":[]}}`, `event {"WindowFocusChanged":{"id":4}}`}
 	got := p.waitFor(t, 3)
 	for i := range want {
@@ -82,9 +87,15 @@ func TestNiriStreams(t *testing.T) {
 	// Watching again keeps the stream it has
 	s.Watch(p)
 	time.Sleep(50 * time.Millisecond)
-	s.Forget(p)
-	time.Sleep(50 * time.Millisecond)
 	if got := p.list(); len(got) != 3 {
-		t.Fatalf("pushed again or after Forget: %q", got)
+		t.Fatalf("pushed again: %q", got)
+	}
+	// Forget (the connection to axiom closed) ends the stream's connection
+	// to niri
+	s.Forget(p)
+	select {
+	case <-ended:
+	case <-time.After(3 * time.Second):
+		t.Fatal("the stream outlived Forget")
 	}
 }
