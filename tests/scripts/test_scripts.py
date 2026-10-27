@@ -4,8 +4,6 @@
   - every shipped theme is complete (config/themes/theme.schema.json's
     required keys, hex colors, semantic names that resolve, pairs that exist)
   - the Neovim module Apply copies compiles and maps the shipped themes
-  - cursor_theme.py makes the companion theme filling in a cursor theme's
-    missing standard names, and only for a theme that needs it
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
     lines marked `// fixed px:`
   - pick_path.py falls back to zenity/kdialog without a portal, asking for
@@ -348,78 +346,6 @@ class CheckDocs(unittest.TestCase):
         self.assertEqual(retired_name("Bar.enrichBarConfig", configs), "Bar")
         self.assertEqual(retired_name("Bar.lookOf(bar)", configs), "Bar")
         self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
-
-
-class CommunityFetch(unittest.TestCase):
-    """community_fetch.sh: downloads from a local server, checks sha256,
-    keeps a cached file without fetching, and never leaves a bad file."""
-
-    @classmethod
-    def setUpClass(cls):
-        import functools
-        import http.server
-        import threading
-        cls.served = Path(tempfile.mkdtemp())
-        (cls.served / "a.json").write_text('{"a": 1}')
-        class Quiet(http.server.SimpleHTTPRequestHandler):
-            def log_message(self, *args):
-                pass
-        handler = functools.partial(Quiet, directory=str(cls.served))
-        cls.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
-        threading.Thread(target=cls.server.serve_forever, daemon=True).start()
-        cls.base = f"http://127.0.0.1:{cls.server.server_address[1]}/"
-        cls.sha = hashlib.sha256(b'{"a": 1}').hexdigest()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.server.shutdown()
-        shutil.rmtree(cls.served)
-
-    def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp())
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp)
-
-    def fetch(self, *args):
-        return subprocess.run([str(SCRIPTS / "community_fetch.sh"), *args], capture_output=True, text=True, timeout=30)
-
-    def test_downloads_and_checks(self):
-        dest = self.tmp / "sub" / "a.json"
-        run = self.fetch(self.base + "a.json", str(dest), self.sha, self.base + "a.json", str(self.tmp / "nosha.json"), "-")
-        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
-        self.assertEqual(dest.read_text(), '{"a": 1}')
-        self.assertTrue((self.tmp / "nosha.json").exists())
-        self.assertEqual(run.stdout.splitlines(), [f"ok {dest}", f"ok {self.tmp / 'nosha.json'}"])
-
-    def test_bad_checksum_leaves_nothing(self):
-        dest = self.tmp / "a.json"
-        run = self.fetch(self.base + "a.json", str(dest), "0" * 64)
-        self.assertEqual(run.returncode, 1)
-        self.assertIn("checksum mismatch", run.stdout)
-        self.assertEqual(list(self.tmp.iterdir()), [], "no file, no .part")
-
-    def test_cached_file_is_kept(self):
-        dest = self.tmp / "a.json"
-        dest.write_text('{"a": 1}')
-        run = self.fetch(self.base + "missing.json", str(dest), self.sha)
-        self.assertEqual(run.returncode, 0, "a matching file isn't fetched again")
-
-    def test_failures_are_reported_per_file(self):
-        good, bad = self.tmp / "good.json", self.tmp / "bad.json"
-        run = self.fetch(self.base + "missing.json", str(bad), "-", self.base + "a.json", str(good), self.sha)
-        self.assertEqual(run.returncode, 1)
-        self.assertTrue(run.stdout.startswith(f"fail {bad}"))
-        self.assertIn(f"ok {good}", run.stdout)
-        self.assertFalse(bad.exists())
-
-    def test_only_http(self):
-        run = self.fetch("file:///etc/hostname", str(self.tmp / "x"), "-")
-        self.assertEqual(run.returncode, 1)
-        self.assertFalse((self.tmp / "x").exists())
-
-    def test_usage(self):
-        self.assertEqual(self.fetch("only-one").returncode, 2)
 
 
 class GreeterInstall(unittest.TestCase):
@@ -882,74 +808,6 @@ class GreeterSession(unittest.TestCase):
         self.fake("start-hyprland")
         self.fake("agreety")
         self.assertEqual(self.run_session(), ["sway", "agreety"])
-
-
-class CursorTheme(unittest.TestCase):
-    """cursor_theme.py on scratch icon folders (never --gsettings)."""
-
-    def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, self.tmp)
-        self.home, self.data, self.system = self.tmp / "home", self.tmp / "data", self.tmp / "system"
-        self.home.mkdir()
-
-    def theme(self, name, cursors, inherits=None):
-        folder = self.system / "icons" / name
-        (folder / "cursors").mkdir(parents=True)
-        for cursor in cursors:
-            (folder / "cursors" / cursor).write_text(cursor)
-        if inherits:
-            (folder / "index.theme").write_text(f"[Icon Theme]\nInherits={inherits}\n")
-
-    def run_script(self, theme):
-        env = {**os.environ, "HOME": str(self.home), "XDG_DATA_HOME": str(self.data), "XDG_DATA_DIRS": str(self.system)}
-        done = subprocess.run([sys.executable, str(SCRIPTS / "cursor_theme.py"), theme], env=env,
-                              capture_output=True, text=True, timeout=30)
-        self.assertEqual(done.returncode, 0, done.stderr)
-        return json.loads(done.stdout)
-
-    def test_fills_missing_names(self):
-        self.theme("Old", ["left_ptr", "hand2", "xterm", "text"])
-        self.assertEqual(self.run_script("Old"), {"theme": "axiom-cursor-Old", "filled": 2})
-        made = self.data / "icons" / "axiom-cursor-Old"
-        self.assertIn("Inherits=Old", (made / "index.theme").read_text())
-        self.assertEqual(os.readlink(made / "cursors" / "default"), str(self.system / "icons/Old/cursors/left_ptr"))
-        self.assertEqual(os.readlink(made / "cursors" / "pointer"), str(self.system / "icons/Old/cursors/hand2"))
-        # The theme has `text` itself: not linked
-        self.assertFalse((made / "cursors" / "text").exists())
-        # As wanted already: not rewritten
-        inode = (made / "index.theme").stat().st_ino
-        self.run_script("Old")
-        self.assertEqual((made / "index.theme").stat().st_ino, inode)
-
-    def test_inherited_names_count(self):
-        self.theme("Base", ["default", "pointer"])
-        self.theme("Child", ["left_ptr", "hand2"], inherits="Base")
-        self.assertEqual(self.run_script("Child"), {"theme": "Child", "filled": 0})
-
-    def test_complete_theme_removes_the_companion(self):
-        self.theme("Old", ["left_ptr"])
-        self.theme("New", ["default", "left_ptr"])
-        self.run_script("Old")
-        self.assertEqual(self.run_script("New"), {"theme": "New", "filled": 0})
-        self.assertFalse((self.data / "icons" / "axiom-cursor-Old").exists())
-        # A theme with no XCursor cursors (hyprcursor only) keeps its name
-        self.assertEqual(self.run_script("Missing"), {"theme": "Missing", "filled": 0})
-
-    def test_each_theme_its_own_name(self):
-        # One name for both would leave readers on the cursors they loaded
-        self.theme("Old", ["left_ptr"])
-        self.theme("Other Theme", ["arrow"])
-        self.run_script("Old")
-        self.assertEqual(self.run_script("Other Theme"), {"theme": "axiom-cursor-Other_Theme", "filled": 1})
-        self.assertFalse((self.data / "icons" / "axiom-cursor-Old").exists())
-
-    def test_leaves_a_folder_not_its_own(self):
-        self.theme("Old", ["left_ptr"])
-        (self.data / "icons" / "axiom-cursor-Old").mkdir(parents=True)
-        env = {**os.environ, "HOME": str(self.home), "XDG_DATA_HOME": str(self.data), "XDG_DATA_DIRS": str(self.system)}
-        done = subprocess.run([sys.executable, str(SCRIPTS / "cursor_theme.py"), "Old"], env=env, capture_output=True, text=True)
-        self.assertEqual(done.returncode, 1)
 
 
 class PickPath(unittest.TestCase):

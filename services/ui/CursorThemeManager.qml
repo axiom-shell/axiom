@@ -13,7 +13,7 @@ import qs.services.core
  * cursors only the X11 way (left_ptr, not default) and inheriting nothing
  * shows the "default" theme's cursors (often Adwaita's) for the standard
  * names it lacks, the arrow among them. So while the Input section's
- * cursor part is on, scripts/cursor_theme.py makes a companion theme
+ * cursor part is on, the daemon (cursor.theme) makes a companion theme
  * (axiom-cursor-<theme> in $XDG_DATA_HOME/icons/) inheriting it, with those names
  * linked to its own cursors, and sets GTK's cursor-theme and cursor-size
  * to what XCursor readers get. CompositorConfigManager hands that name on
@@ -51,15 +51,15 @@ Singleton {
     const theme = root._wanted;
     if (theme === "" || Paths.greeter)
       return;
-    CommandManager.run([Paths.scriptsPath + "cursor_theme.py", theme, "--size", String(root._size), "--gsettings"], (code, out, err) => {
+    BackendManager.call("cursor.theme", {
+      "theme": theme,
+      "size": root._size
+    }, (error, result) => {
       let name = theme;
-      if (code === 0) {
-        try {
-          name = JSON.parse(out).theme || theme;
-        } catch (e) {}
-      } else {
-        console.warn("[CursorThemeManager] cursor_theme.py:", String(err).trim());
-      }
+      if (error)
+        console.warn("[CursorThemeManager] cursor.theme:", error.message);
+      else
+        name = result.theme || theme;
       if (theme !== root._wanted)
         return;
       root._resolved = {

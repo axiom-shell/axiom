@@ -1,10 +1,10 @@
 # Community setups
 
-> **Files:** `services/apps/CommunitySetupsManager.qml`, `services/apps/CommunityFetch.qml`, `components/methods/CommunityCatalog.qml`, `scripts/community_fetch.sh`, `config/CommunitySetups.qml`, `components/views/Settings/CommunitySetupsCard.qml`, `services/core/SavedConfigsManager.qml`
+> **Files:** `services/apps/CommunitySetupsManager.qml`, `backend/internal/community/`, `backend/internal/daemon/tools.go`, `components/methods/CommunityCatalog.qml`, `config/CommunitySetups.qml`, `components/views/Settings/CommunitySetupsCard.qml`, `services/core/SavedConfigsManager.qml`
 > **Config:** `CommunitySetups.*` (reader `CommunitySetups`); an applied setup becomes the saved config `community-<id>`
 > **Related:** [Saved configs and sharing](../core/saved-configs-sharing.md), [Themes](../theming/themes.md), [Launcher](launcher.md), [Config manager](../core/config-manager.md) (where files live)
 
-A gallery of setups other people shared at [axiom-shell/community-setups](https://github.com/axiom-shell/community-setups), applied like an import. Tests: `tst_CommunityCatalog`, `test_scripts.py`'s `CommunityFetch`.
+A gallery of setups other people shared at [axiom-shell/community-setups](https://github.com/axiom-shell/community-setups), applied like an import. Tests: `tst_CommunityCatalog`, `backend/internal/community`'s Go tests.
 
 ### The other repo
 - `setups/<id>/` holds `setup.json` (title, author, tags, tested compositors, fonts, a wallpaper's license), `config.json` (an Export), a screenshot, and optionally `theme.json` and a wallpaper.
@@ -23,7 +23,7 @@ A gallery of setups other people shared at [axiom-shell/community-setups](https:
 
 ### Downloading (`CommunitySetupsManager`)
 - Nothing touches the network until the gallery is shown: the card (and `/config community`) calls `open()`, which reads the cached `index.json` and refreshes it once per session. **Refresh** fetches it again. Offline, the cached catalog stays, with a status saying so.
-- Every download goes through `scripts/community_fetch.sh URL DEST SHA256|- …`: curl (http/https only, redirects too, 20 MB cap) to a `.part` file, sha256 checked, then renamed into place. A destination already holding that hash isn't fetched again (the cache). It prints `ok DEST` / `fail DEST REASON` per file, and results are read from those lines.
+- Every download goes through the daemon's `community.fetch` (`{ files: [{ url, dest, sha256 }] }`, `backend/internal/community`): http/https only (redirects too), 20 MB cap, 60 s a file, up to four files of a call at once; the sha256 (none for the catalog) is checked before the file is written atomically (`fsx.WriteFile`), so a bad or half-downloaded one never lands. A destination already holding that hash isn't fetched again (the cache). It answers each file's `{ dest, error }` in their order, which `_fetch` turns into the destinations that landed and the failures. A destination outside `communityCachePath`, `communityThemesPath` and `userDataPath + "wallpapers/"` is refused.
 - One run of each kind at a time: a fresher catalog arriving while the thumbnails download fetches them again after that run, and a screenshot asked for during another's download follows it.
 - Where things go (`Paths`, `DataDirs`):
   - `communityCachePath` (`$XDG_CACHE_HOME/axiom/community/`): `index.json`, `thumbs/<id>.webp`, `setups/<id>/` (config, screenshot).
@@ -33,13 +33,14 @@ A gallery of setups other people shared at [axiom-shell/community-setups](https:
 
 ### Applying
 `apply(id, withWallpaper)`:
-1. Downloads the config, the palette (straight into `communityThemesPath`) and, when asked, the wallpaper, all hash-checked in one script run.
+1. Downloads the config, the palette (straight into `communityThemesPath`) and, when asked, the wallpaper, all hash-checked in one call.
 2. Rescans the community palettes (`ThemeManager.reloadCommunityThemes`).
 3. Hands the config to `SavedConfigsManager.applyShared(id, path, title)`: the same checks as Import (a `version`, not newer than this axiom), then `_backupThenApply` with personal parts and commands **off**. So the running config is saved as `before-<id>`, only the look is taken (`share.Apply`), and `x-takeover` settings are kept (`ConfigManager.restoreConfig`). Even a setup that got past the repo's CI can't bring a command.
 4. On `SavedConfigsManager.applied(id)`, sets the wallpaper (with `withWallpaper`) on every monitor as the fixed one, `wallpaper.mode` `fixed`, in one `ConfigManager.commit` sent without `takeover` (its config, cloned when the apply answers, may predate the compositor mode axiom saves back on leaving its hold: [config modes](../compositor/config-modes.md#leaving-a-mode)). On `applyFailed(id)` it stops.
 5. `SavedConfigsManager` then saves the result (wallpaper included) as the snapshot `community-<id>`, the active one, as it does for examples and imports ([saved configs](../core/saved-configs-sharing.md)).
 - `applied` is derived, not stored: the id while `community-<id>` is `SavedConfigsManager.active`, saved by the apply (`activeSource`, its `_example.source`) and not `modified`. Restoring another snapshot, applying anything else, changing the look or saving over it clears that setup's **Applied** chip; a snapshot the user names `community-<id>` never shows it.
-- Every download is a `CommunityFetch` (`launch(args)`, then `done(output)`). A script that can't start ends with no output, which counts as a failure, so an apply never stays under way.
+- Every download is one `_fetch(files, done)`. A call that fails as a whole (no daemon) fails every file, so an apply never stays under way.
+- Changes from `community_fetch.sh`: Go's HTTP instead of curl (the failure reasons read differently in the log), a call's files downloaded four at a time rather than one by one, and destinations limited to those three folders.
 
 ### Where it shows
 - **Settings → Maintenance**: `CommunitySetupsCard` is the `CommunitySetups` section's `x-card` (wide). It has a search field, tag chips (`SegmentButton`s in a Flow) and a `TileFlow` of thumbnails. A tile opens the details: the full screenshot (`fetchScreenshot`; the thumbnail until then), about, chips for tested compositors / its own palette / missing fonts / a newer axiom, the wallpaper's license with an "Also use its wallpaper" switch (off), and Apply (a second click confirms). **Export and submit…** exports the look (personal parts and commands off, monitors not by place: [issues](../issues.md)) and opens the submission issue form (`submitUrl`: its title prefilled from the active saved config; attachments can't be).

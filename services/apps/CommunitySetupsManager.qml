@@ -12,8 +12,8 @@ import qs.services.core
 // look only, after a "before-<id>" backup), first installing its palette
 // as the theme "community/<id>" and, when asked, its wallpaper; the result
 // is saved as the snapshot "community-<id>", the active one. Every
-// download goes through scripts/community_fetch.sh and is checked against
-// the catalog's sha256. Nothing here runs in the greeter.
+// download goes through the daemon (community.fetch) and is checked
+// against the catalog's sha256. Nothing here runs in the greeter.
 QtObject {
   id: root
 
@@ -23,7 +23,7 @@ QtObject {
   readonly property var setups: _setups
   // The catalog was read (from the network or, offline, the cache)
   readonly property bool loaded: _loaded
-  readonly property bool loading: root._indexFetch.running
+  readonly property bool loading: root._indexBusy
   // { id: file URL } of the thumbnails downloaded so far
   readonly property var thumbs: _thumbs
   // { id: file URL } of the full screenshots downloaded (fetchScreenshot)
@@ -56,11 +56,21 @@ QtObject {
 
   // Downloads the catalog again, then any thumbnails not cached yet
   function refresh() {
-    if (!root.enabled || root._indexFetch.running)
+    if (!root.enabled || root._indexBusy)
       return;
     root._fetched = true;
     root._status = "";
-    root._indexFetch.launch([root._fetchScript, CommunitySetups.indexUrl, root._indexFile, "-"]);
+    root._indexBusy = true;
+    root._fetch([root._file(CommunitySetups.indexUrl, root._indexFile, "")], fetched => {
+      root._indexBusy = false;
+      if (fetched.ok[root._indexFile]) {
+        if (root._readIndex(false))
+          console.log("[CommunitySetupsManager] Catalog:", root._setups.length, "setups");
+        return;
+      }
+      console.warn("[CommunitySetupsManager] Could not download the catalog:", fetched.failures.join("; "));
+      root._status = root._loaded ? I18n.tr("Offline: showing the setups from last time") : I18n.tr("The catalog could not be downloaded");
+    });
   }
 
   function setup(id) {
@@ -88,14 +98,24 @@ QtObject {
     const setup = root.setup(id);
     if (!setup || root._screenshots[id])
       return;
-    if (root._screenshotFetch.running) {
+    if (root._screenshotBusy) {
       root._screenshotNext = id;
       return;
     }
     const dest = root._setupDir(id) + "screenshot" + CommunityCatalog.extension(setup.files.screenshot);
-    root._screenshotId = id;
-    root._screenshotDest = dest;
-    root._screenshotFetch.launch([root._fetchScript, root._url(setup.files.screenshot), dest, setup.files.screenshot.sha256]);
+    root._screenshotBusy = true;
+    root._fetch([root._file(root._url(setup.files.screenshot), dest, setup.files.screenshot.sha256)], fetched => {
+      root._screenshotBusy = false;
+      if (fetched.ok[dest]) {
+        const screenshots = Object.assign({}, root._screenshots);
+        screenshots[id] = "file://" + dest;
+        root._screenshots = screenshots;
+      }
+      const next = root._screenshotNext;
+      root._screenshotNext = "";
+      if (next !== "")
+        root.fetchScreenshot(next);
+    });
   }
 
   // Downloads a setup and applies it: its palette is installed first, its
@@ -109,16 +129,16 @@ QtObject {
       return;
     }
     const files = setup.files;
-    const args = [root._fetchScript, root._url(files.config), root._setupDir(id) + "config.json", files.config.sha256];
+    const downloads = [root._file(root._url(files.config), root._setupDir(id) + "config.json", files.config.sha256)];
     if (files.theme)
-      args.push(root._url(files.theme), root._themeFile(id), files.theme.sha256);
+      downloads.push(root._file(root._url(files.theme), root._themeFile(id), files.theme.sha256));
     const wallpaper = withWallpaper && files.wallpaper ? root._wallpaperFile(setup) : "";
     if (wallpaper)
-      args.push(root._url(files.wallpaper), wallpaper, files.wallpaper.sha256);
+      downloads.push(root._file(root._url(files.wallpaper), wallpaper, files.wallpaper.sha256));
     root._applying = id;
     root._applyWallpaper = wallpaper;
     root._status = I18n.tr("Downloading \"{0}\"…", setup.title);
-    root._applyFetch.launch(args);
+    root._fetch(downloads, fetched => root._finishApply(fetched.failures));
   }
 
   // The issue form that submits a setup, its title filled in (attachments
@@ -140,16 +160,16 @@ QtObject {
   // A newer catalog came while the thumbnails were downloading: once more
   // after that run
   property bool _thumbsAgain: false
-  // The screenshot being downloaded (its setup and file), and the one
-  // asked for meanwhile ("" for none)
-  property string _screenshotId: ""
-  property string _screenshotDest: ""
+  // One download of each kind at a time
+  property bool _indexBusy: false
+  property bool _thumbsBusy: false
+  property bool _screenshotBusy: false
+  // The screenshot asked for during another's download ("" for none)
   property string _screenshotNext: ""
   // The wallpaper file the setup being applied downloads, set once
   // SavedConfigsManager has applied it ("" for none)
   property string _applyWallpaper: ""
 
-  readonly property string _fetchScript: Paths.scriptsPath + "community_fetch.sh"
   readonly property string _indexFile: Paths.communityCachePath + "index.json"
   readonly property string _snapshotPrefix: "community-"
 
@@ -195,39 +215,72 @@ QtObject {
     return true;
   }
 
-  // Thumbnails not downloaded yet (the script keeps the cached ones)
+  // Thumbnails not downloaded yet (the daemon keeps the cached ones)
   function _fetchThumbs() {
-    if (root._thumbFetch.running) {
+    if (root._thumbsBusy) {
       root._thumbsAgain = true;
       return;
     }
     if (root._setups.length === 0)
       return;
-    const args = [root._fetchScript];
-    for (const setup of root._setups)
-      args.push(root._url(setup.files.thumb), root._thumbFile(setup), setup.files.thumb.sha256);
-    root._thumbFetch.launch(args);
+    const setups = root._setups;
+    root._thumbsBusy = true;
+    root._fetch(setups.map(setup => root._file(root._url(setup.files.thumb), root._thumbFile(setup), setup.files.thumb.sha256)), fetched => {
+      root._thumbsBusy = false;
+      const thumbs = {};
+      for (const setup of setups) {
+        const dest = root._thumbFile(setup);
+        if (fetched.ok[dest])
+          thumbs[setup.id] = "file://" + dest;
+      }
+      root._thumbs = thumbs;
+      if (root._thumbsAgain) {
+        root._thumbsAgain = false;
+        root._fetchThumbs();
+      }
+    });
   }
 
-  // The script's "ok DEST" lines, as { dest: true }
-  function _okDests(text) {
-    return text.split("\n").filter(line => line.startsWith("ok ")).reduce((map, line) => {
-      map[line.slice(3)] = true;
-      return map;
-    }, {});
+  // One download of the daemon's: a File (sha256 "" for unchecked)
+  function _file(url, dest, sha256) {
+    return {
+      "url": url,
+      "dest": dest,
+      "sha256": sha256
+    };
   }
 
-  function _failures(text) {
-    return text.split("\n").filter(line => line.startsWith("fail ")).map(line => line.slice(5));
+  // Downloads `files` (_file's), then calls done({ ok: { dest: true },
+  // failures: ["dest: reason"] }); a call that failed as a whole fails
+  // every file
+  function _fetch(files, done) {
+    BackendManager.call("community.fetch", {
+      "files": files
+    }, (error, result) => {
+      const fetched = {
+        "ok": {},
+        "failures": []
+      };
+      if (error)
+        fetched.failures.push(error.message);
+      else
+        for (const file of result.files) {
+          if (file.error)
+            fetched.failures.push(file.dest + ": " + file.error);
+          else
+            fetched.ok[file.dest] = true;
+        }
+      done(fetched);
+    });
   }
 
-  function _finishApply(ok, output) {
+  function _finishApply(failures) {
     const id = root._applying;
     const setup = root.setup(id);
-    if (!ok || !setup) {
+    if (failures.length > 0 || !setup) {
       root._applying = "";
       root._status = I18n.tr("\"{0}\" could not be downloaded", setup?.title ?? id);
-      console.warn("[CommunitySetupsManager] Download failed:", root._failures(output).join("; "));
+      console.warn("[CommunitySetupsManager] Download failed:", failures.join("; "));
       return;
     }
     if (setup.files.theme)
@@ -273,54 +326,6 @@ QtObject {
       root._applying = "";
       root._status = SavedConfigsManager.status;
     }
-  }
-
-  // Each a CommunityFetch: its `done` hands over the script's lines
-  property CommunityFetch _indexFetch: CommunityFetch {
-    onDone: output => {
-      if (root._okDests(output)[root._indexFile]) {
-        if (root._readIndex(false))
-          console.log("[CommunitySetupsManager] Catalog:", root._setups.length, "setups");
-        return;
-      }
-      console.warn("[CommunitySetupsManager] Could not download the catalog:", root._failures(output).join("; ") || "community_fetch.sh failed");
-      root._status = root._loaded ? I18n.tr("Offline: showing the setups from last time") : I18n.tr("The catalog could not be downloaded");
-    }
-  }
-
-  property CommunityFetch _thumbFetch: CommunityFetch {
-    onDone: output => {
-      const ok = root._okDests(output);
-      const thumbs = {};
-      for (const setup of root._setups) {
-        const dest = root._thumbFile(setup);
-        if (ok[dest])
-          thumbs[setup.id] = "file://" + dest;
-      }
-      root._thumbs = thumbs;
-      if (root._thumbsAgain) {
-        root._thumbsAgain = false;
-        root._fetchThumbs();
-      }
-    }
-  }
-
-  property CommunityFetch _screenshotFetch: CommunityFetch {
-    onDone: output => {
-      if (root._okDests(output)[root._screenshotDest]) {
-        const screenshots = Object.assign({}, root._screenshots);
-        screenshots[root._screenshotId] = "file://" + root._screenshotDest;
-        root._screenshots = screenshots;
-      }
-      const next = root._screenshotNext;
-      root._screenshotNext = "";
-      if (next !== "")
-        root.fetchScreenshot(next);
-    }
-  }
-
-  property CommunityFetch _applyFetch: CommunityFetch {
-    onDone: output => root._finishApply(output.trim() !== "" && root._failures(output).length === 0, output)
   }
 
   property IpcTarget _ipc: IpcTarget {
