@@ -59,7 +59,7 @@ PopoutAnchor {
 - Declare `extraData` keys as properties; never read the wrapper's `currentData`.
 - A text field inside needs `wantsKeyboardFocus: true`; a panel that grows needs `maxImplicitHeight` (and `maxImplicitWidth` if it widens).
 - A popout opened inside popout or edge menu content becomes that popout's submenu (`SubPopout`, one level deep): same `PopoutAnchor`, no extra code.
-- Data is the service's: the widget keeps it acquired; the panel only reads (`WeatherForecast` reads `WeatherManager.source`).
+- Data is the service's: the widget keeps it acquired; the panel only reads (`WeatherForecast` reads `WeatherManager`).
 - `check_structure.py` only checks literal `popoutName: "…"` values; a computed name isn't checked.
 - A content file used by nothing (no module, no popout) is reported.
 - Animations use `Appearance.anim*`; content changing in place cross-fades with `CrossFade`.

@@ -14,12 +14,11 @@ import qs.components.content.base
 Card {
   id: root
 
-  readonly property var source: WeatherManager.source
   Component.onCompleted: WeatherManager.acquire(root)
   Component.onDestruction: WeatherManager.release(root)
 
-  readonly property var current: root.source.current
-  readonly property var daily: root.source.weather?.daily ?? null
+  readonly property var current: WeatherManager.current
+  readonly property var daily: WeatherManager.weather?.daily ?? null
   // What each section needs (px), and what fits in the room inside
   readonly property real currentHeight: Appearance.fontSize * 6
   readonly property real hourlyHeight: Appearance.fontSize * 4.2
@@ -56,9 +55,9 @@ Card {
   // Compact: the condition and temperature
   // (until it's loaded, a cloud)
   compactContent: CompactFigure {
-    icon: root.current ? (root.source.condition?.icon ?? "") : "cloud"
+    icon: root.current ? (WeatherManager.condition?.icon ?? "") : "cloud"
     value: root.current ? `${Math.round(root.current.temperature_2m)}°` : ""
-    label: root.source.condition?.label ?? ""
+    label: WeatherManager.condition?.label ?? ""
   }
 
   // A flexible gap between sections, up to maxGap
@@ -73,11 +72,11 @@ Card {
   component Current: ColumnLayout {
     spacing: Widget.spacing
     StyledText {
-      visible: (root.source.place?.name ?? "") !== ""
+      visible: (WeatherManager.place?.name ?? "") !== ""
       Layout.fillWidth: true
       horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
       elide: Text.ElideRight
-      text: root.source.place?.name ?? ""
+      text: WeatherManager.place?.name ?? ""
       font.bold: true
       textColor: Theme.accent
     }
@@ -89,7 +88,7 @@ Card {
       // The current condition, cross-fading as it changes
       CrossFade {
         Layout.alignment: root.stacked ? Qt.AlignHCenter : Qt.AlignVCenter
-        value: root.source.condition?.icon ?? ""
+        value: WeatherManager.condition?.icon ?? ""
         delegate: StyledIcon {
           required property var value
           text: value
@@ -102,7 +101,7 @@ Card {
         StyledText {
           Layout.fillWidth: true
           horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
-          text: root.current ? `${Math.round(root.current.temperature_2m)}${root.source.unitSymbol}` : ""
+          text: root.current ? `${Math.round(root.current.temperature_2m)}${WeatherManager.unitSymbol}` : ""
           textSize: Appearance.fontSize * (root.stacked ? 2.4 * root.heroScale : 2)
           font.bold: true
         }
@@ -110,13 +109,13 @@ Card {
           Layout.fillWidth: true
           horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
           elide: Text.ElideRight
-          text: root.source.condition?.label ?? ""
+          text: WeatherManager.condition?.label ?? ""
         }
         StyledText {
           Layout.fillWidth: true
           horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
           elide: Text.ElideRight
-          text: root.source.details
+          text: WeatherManager.details
           textColor: Theme.foregroundAlt
           textSize: Appearance.fontSizeBy(-2)
         }
@@ -141,12 +140,12 @@ Card {
         spacing: Widget.spacing * 1.5
         StyledText {
           Layout.preferredWidth: Appearance.fontSize * 3.5
-          text: root.source.dayLabel(day.index)
+          text: WeatherManager.dayLabel(day.index)
         }
         StyledIcon {
           Layout.preferredWidth: Appearance.fontSize * 1.5
           horizontalAlignment: Text.AlignHCenter
-          text: root.source.conditionFor(root.daily.weather_code[day.index], 1).icon
+          text: WeatherManager.conditionFor(root.daily.weather_code[day.index], 1).icon
         }
         Item {
           Layout.fillWidth: true
@@ -242,7 +241,7 @@ Card {
         model: hours.count
         Column {
           required property int index
-          readonly property var hourly: root.source.weather?.hourly
+          readonly property var hourly: WeatherManager.weather?.hourly
           width: hours.width / Math.max(1, hours.count)
           spacing: 2
           StyledText {
@@ -253,7 +252,7 @@ Card {
           }
           StyledIcon {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: parent.hourly ? root.source.conditionFor(parent.hourly.weather_code[parent.index], parent.hourly.is_day[parent.index]).icon : ""
+            text: parent.hourly ? WeatherManager.conditionFor(parent.hourly.weather_code[parent.index], parent.hourly.is_day[parent.index]).icon : ""
             textSize: Appearance.fontSize * 1.4
           }
           StyledText {

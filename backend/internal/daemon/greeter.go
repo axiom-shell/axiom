@@ -15,6 +15,8 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/topics"
+	"github.com/axiom-shell/axiom/backend/internal/weather"
 )
 
 // GreeterOptions configure the greeter's axiom (`axiom greeter`).
@@ -39,8 +41,8 @@ const greeterSocket = "axiom.sock"
 // fallback) or ctx ends (it is stopped). Unlike Run, it owns no config,
 // lock screen, compositor layer or Wayland connection: it answers only
 // what the greeter asks, its commands (exec.*, watched ones pushed as
-// exec.outputs) and lookups (tz.*,
-// net.addresses), and only to that quickshell. Greeter mode reads its
+// exec.outputs), lookups (tz.*, net.addresses) and the weather topic
+// (its Weather module), and only to that quickshell. Greeter mode reads its
 // config once and writes nothing (docs/dev/features/greeter-runtime.md).
 func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	if o.Log == nil {
@@ -61,7 +63,11 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 		Context: serveCtx,
 		Log:     o.Log,
 	})
-	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches), Log: o.Log, OnClose: func(c *rpc.Conn) { watches.Forget(c) }}
+	hub := topics.New(topics.Options{Log: o.Log, Context: serveCtx})
+	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches, hub), Log: o.Log, OnClose: func(c *rpc.Conn) {
+		watches.Forget(c)
+		hub.Forget(c)
+	}}
 	served := make(chan error, 1)
 	go func() { served <- server.Serve(serveCtx, ln) }()
 	defer func() {
@@ -87,9 +93,9 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 
 // greeterRegistry is what the greeter's axiom answers: a hello from its
 // quickshell alone, then that quickshell's commands (watched ones too), run with its own
-// environment, and lookups. Anything else is unavailable, as it was with
+// environment, lookups and the weather. Anything else is unavailable, as it was with
 // no axiom at all, so the shell's callers stay quiet about it.
-func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches) *rpc.Registry {
+func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub) *rpc.Registry {
 	reg := rpc.NewRegistry()
 	reg.Before = func(c *rpc.Conn, method string) error {
 		if method != "daemon.hello" && sessionOf(c) == nil {
@@ -116,5 +122,6 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	})
 	execHandlers(reg, func() command.Options { return command.Options{Env: env} }, func() *command.Watches { return watches })
 	lookupMethods(reg, o.Getenv)
+	topics.Register(reg, hub, weather.Source(weather.Options{}))
 	return reg
 }
