@@ -118,7 +118,7 @@ Singleton {
       return;
     root.conversations = root.conversations.filter(c => c.id !== id);
     _saveIndex();
-    Quickshell.execDetached(["rm", "-rf", "--", root.chatDir + id + ".json", root.chatDir + id]);
+    CommandManager.runDetached(["rm", "-rf", "--", root.chatDir + id + ".json", root.chatDir + id]);
     if (id === root.conversation.id)
       root.newConversation(root.conversation.preset);
   }
@@ -301,7 +301,7 @@ Singleton {
     const removed = next.splice(index, 1)[0];
     root.attachments = next;
     if (removed)
-      Quickshell.execDetached(["rm", "-f", "--", removed.path]);
+      CommandManager.runDetached(["rm", "-f", "--", removed.path]);
   }
 
   // -- Private --
@@ -386,7 +386,7 @@ Singleton {
         return;
       }
       if (size > root.maxImageBytes) {
-        Quickshell.execDetached(["rm", "-f", "--", path]);
+        CommandManager.runDetached(["rm", "-f", "--", path]);
         root.notice = I18n.tr("That image is over {0} MB.", Math.round(root.maxImageBytes / 1024 / 1024));
         return;
       }
@@ -550,7 +550,7 @@ Singleton {
     // Past the limit: the oldest go, attachments and all
     const dropped = list.slice(ChatConfig.keepConversations);
     list = list.slice(0, ChatConfig.keepConversations);
-    dropped.forEach(c => Quickshell.execDetached(["rm", "-rf", "--", root.chatDir + c.id + ".json", root.chatDir + c.id]));
+    dropped.forEach(c => CommandManager.runDetached(["rm", "-rf", "--", root.chatDir + c.id + ".json", root.chatDir + c.id]));
     root.conversations = list;
     _saveIndex();
   }
@@ -641,7 +641,7 @@ Singleton {
       if (delta.id === root._replyId)
         root._onDelta(delta.kind, delta.text);
     });
-    Quickshell.execDetached(["mkdir", "-p", root.chatDir]);
+    CommandManager.runDetached(["mkdir", "-p", root.chatDir]);
     root.conversations = root._loadIndex();
     root.conversation = _blank(ChatConfig.defaultPreset);
     // Pick up where the last conversation left off

@@ -8,8 +8,7 @@
       "Socket"
     ],
     "services/apps/ChatManager.qml": [
-      "FileView",
-      "execDetached"
+      "FileView"
     ],
     "services/core/FileManager.qml": [
       "FileView"
@@ -27,16 +26,14 @@
       "FileView"
     ],
     "services/system/NotificationManager.qml": [
-      "FileView",
-      "execDetached"
+      "FileView"
     ],
     "services/core/StateManager.qml": [
       "Process",
       "FileView"
     ],
     "services/core/ThemeManager.qml": [
-      "FileView",
-      "execDetached"
+      "FileView"
     ],
     "services/apps/TodoManager.qml": [
       "FileView"
