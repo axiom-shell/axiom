@@ -2053,7 +2053,6 @@
     "Axiom is greetd's login screen. Lay it out on the Layouts page; it shows your theme, wallpapers and monitor layout as they are when you save.": "axiom が greetd のログイン画面です。レイアウトページで配置してください。保存した時点のテーマ、壁紙、モニター配置で表示されます。",
     "What greetd shows before anyone logs in. Modules here can't open apps or run anything; Power can suspend, restart and shut down.": "誰かがログインする前に greetd が表示する画面です。ここのモジュールはアプリを開いたり何かを実行したりできません。電源だけはスリープ、再起動、シャットダウンができます。",
     "The password prompt was dismissed.": "パスワードの入力が取り消されました。",
-    "pkexec failed ({0}).": "pkexec が失敗しました（{0}）。",
     "Login screen update": "ログイン画面のアップデート",
     "Axiom changed since its login screen was set up. Click to update it (it asks for your password).": "ログイン画面を設定してから axiom が更新されました。クリックするとアップデートします（パスワードを尋ねます）。",
     "Picture": "画像",

@@ -423,12 +423,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-16, while auditing the layer-placement branch
 
-### The greeter's status runs its installer script as the user
-- **Where:** `services/session/GreeterManager.qml` (`check`, `_parse`, `_runElevated`, `_script`), `scripts/greeter/greeter_install.sh` (`check`, `hash`)
-- **What:** The installer's no-root half (`check`, `hash`) runs as the user through `CommandManager.run(["bash", script, "check", …])` at startup, on the card and after each action, and the shell parses its JSON; the pkexec is run from QML too. They become daemon methods, `greeter.status` (no root, as `selfupdate.status`) and `greeter.apply { action, source, channel, staged }` (only from the shell, choosing root's helper or the first-install program as `_runElevated` does now), on a new pure + edge package pair and a daemon part, and `GreeterManager` uses them. Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").
-- **Size:** small
-- **Found:** 2026-10-27, while planning the greeter installer's port (#142)
-
 ### A greeter tree with no .git offers an install that fails
 - **Where:** `components/forms/GreeterSetup.qml`, `scripts/greeter/greeter_install.sh` (`check`)
 - **What:** A tree with no `.git` and no `.packaged` (a release tarball unpacked by hand, another distribution's package) still offers Git, Local and Install: `check`'s `url` and `currentHash` are empty or the hash of nothing, so the status never turns `outdated`, and Install fails at root's prompt with `not a git clone: <repo>` or `copying <repo> failed`. Decided (maintainer, 2026-10-27: "A plus show a note"): `greeter.status` reports it (`clone: false`), the card hides Git and Local and says the login screen needs a clone or a package, and Install isn't offered. Built in one PR with the other greeter installer items (the [plan](plans/greeter-installer.md); maintainer, 2026-10-27, on the gate: "waive limit").

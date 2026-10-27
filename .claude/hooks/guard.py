@@ -333,6 +333,12 @@ def check_argv(env, argv, cwd):
     if sends and any("selfupdate.apply" in a for a in args) and axiom_live_display(env, args):
         deny("Never, while testing", "selfupdate.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it updates the live repo (test it with go test ./internal/selfupdate).")
 
+    # The login screen's install, update or uninstall (the daemon's
+    # greeter.apply, which runs the installer as root through pkexec) sent
+    # to the live daemon by hand
+    if sends and any("greeter.apply" in a for a in args) and axiom_live_display(env, args):
+        deny("Never, while testing", "greeter.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it installs the greeter for real (test it with go test ./internal/greeterinstall).")
+
     # The real config.json
     if name in {"rm", "unlink", "trash", "trash-put", "shred", "mv"}:
         paths = [a for a in args if not a.startswith("-")]

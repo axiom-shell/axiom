@@ -1,6 +1,6 @@
 # Greeter: install, update, status
 
-> **Files:** `services/session/GreeterManager.qml`, `config/GreeterConfig.qml`, `scripts/greeter/greeter_install.sh`, `scripts/greeter/org.axiom.greeter.policy`, `components/views/Settings/GreeterStatusCard.qml`, `components/forms/GreeterSetup.qml`
+> **Files:** `services/session/GreeterManager.qml`, `config/GreeterConfig.qml`, `backend/internal/greeterinstall/`, `backend/internal/daemon/greeterinstall.go`, `scripts/greeter/greeter_install.sh`, `scripts/greeter/org.axiom.greeter.policy`, `components/views/Settings/GreeterStatusCard.qml`, `components/forms/GreeterSetup.qml`
 > **Config:** `Greeter.enabled`, `Greeter.source`, `SelfUpdate.channel` (reader `GreeterConfig`)
 > **Related:** [Greeter runtime](greeter-runtime.md), [Lockscreen](lockscreen.md), [Self-update](self-update.md), [Polkit](polkit.md), [Shell targeting](../core/shell-manager-targeting.md)
 
@@ -13,20 +13,20 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 - `GreeterManager` is created from `shell.qml`'s `_services`.
 
 ### Install / update / uninstall
-- **Calls:** `GreeterManager.install` / `update` / `uninstall`. Each needs one polkit prompt.
-- **How the script is run:**
+- **Calls:** `GreeterManager.install` / `update` / `uninstall`, through the daemon's `greeter.apply` (`{ action, source, channel, staged }`, only from the shell; `backend/internal/daemon/greeterinstall.go`). Each needs one polkit prompt. The reply is the script's `{ ok, changed, backup, error }`, plus `dismissed` when the prompt was dismissed.
+- **How the script is run** (the daemon runs pkexec, `greeterinstall.Elevate`):
   - Until the greeter is installed: `pkexec /usr/bin/bash scripts/greeter/greeter_install.sh <action> <repo> <user> [<staged bundle>]`.
   - Once installed: `pkexec /usr/share/axiom-greeter/scripts/greeter/greeter_install.sh …`, root's copy.
 - **Root's copy afterwards:** the installed polkit action `org.axiom.greeter.manage` (`scripts/greeter/org.axiom.greeter.policy`) names that copy by `exec.path`.
   - Its prompt says what it's for.
-  - The user's own file never runs as root again; `check` reports `helper`.
-- **Script compatibility:** an update is run by the copy it replaces, so the script's arguments must stay compatible (a new one goes last). The check's `binaries` says whether the installed helper installs the binary too; while it doesn't, `GreeterManager` runs the clone's script instead (through `pkexec bash`), so a copy is never left without its binary.
-- **Root-free actions:** `check` and `hash` run without root.
+  - The user's own file never runs as root again; `greeter.status` reports `helper`.
+- **Script compatibility:** an update is run by the copy it replaces, so the script's arguments must stay compatible (a new one goes last). The status's `binaries` says whether the installed helper installs the binary too; while it doesn't, the daemon runs the clone's script instead (through `pkexec bash`), so a copy is never left without its binary.
+- **Root-free:** the status, `greeter.status` (`{ source, channel }`), runs in the daemon as the user (`greeterinstall.Status`), as the script's `check` and `hash` did.
 - **The user argument:** under pkexec, `<user>` must be `$PKEXEC_UID`'s.
 
 #### What gets copied
 - The code, minus tests, docs and `*.md`.
-- **From:** `Greeter.source` (`GreeterConfig.source`), passed as the script's `<source> <channel> <binary>` arguments. The channel is `SelfUpdate.channel`; `<binary>` is the axiom binary the shell runs (`$AXIOM_BIN`).
+- **From:** `Greeter.source` (`GreeterConfig.source`), passed as the script's `<source> <channel> <binary>` arguments. The channel is `SelfUpdate.channel`; `<binary>` is the axiom binary the shell runs (the daemon's installed binary, `$AXIOM_BIN`).
 - **The binary** the greeter runs (`axiom greeter`, [greeter-runtime.md](greeter-runtime.md)) goes in the copy's `bin/axiom`, by source (below); a package's is its own, on `PATH`.
 - **To:** `/usr/share/axiom-greeter`, owned by root.
   - `.greeter-source` says where the copy came from: `"git <channel> <url>"`, `"local"` or `"package <dir>"`.
@@ -53,7 +53,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
   - `ext::` transports are off, and git never prompts.
   - A copy that can't be swapped in leaves the old one in place.
   - It refuses without `agreety` (`greetd-agreety`), the fallback login.
-  - It refuses without sway or Hyprland's `start-hyprland` (in `/usr/bin` or `/usr/local/bin`), what `greeter-session.sh` runs the login screen in; `check` reports which as `compositor`. The onboarder's Checks page lists it too (`DependencyManager.tools`' `sway`, with `start-hyprland` as its alternative).
+  - It refuses without sway or Hyprland's `start-hyprland` (in `/usr/bin` or `/usr/local/bin`), what `greeter-session.sh` runs the login screen in; the status reports which as `compositor`. The onboarder's Checks page lists it too (`DependencyManager.tools`' `sway`, with `start-hyprland` as its alternative).
 
 #### Then it sets up
 - **`/var/lib/axiom-greeter`:**
@@ -72,14 +72,14 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 - `finishCommands` are what the user runs to make greetd the display manager (`readlink display-manager.service`). The card shows them as `CodeLine`s.
 
 ### Status
-`check` runs at startup, on the card, and after each action. The states are:
+`GreeterManager.check()` asks `greeter.status` at startup, on the card, and after each action. The states are:
 
 | State | Meaning |
 |---|---|
 | `checking` | A check is running. |
 | `checkFailed` | The first check failed. `lastError` says why; Check again retries. |
 | `noGreetd` | greetd or agreety is missing. |
-| `noCompositor` | Neither sway nor Hyprland (`start-hyprland`), which the login screen runs in, is installed (the check's `compositor` is `""`). Install refuses then. An installed copy keeps its status (so Remove stays), and `GreeterSetup` warns that it falls back to agreety. |
+| `noCompositor` | Neither sway nor Hyprland (`start-hyprland`), which the login screen runs in, is installed (the status's `compositor` is `""`). Install refuses then. An installed copy keeps its status (so Remove stays), and `GreeterSetup` warns that it falls back to agreety. |
 | `off` | The greeter is off. |
 | `notInstalled` | `Greeter.enabled` is set, but there is no copy. |
 | `outdated` | One of: the copy's hash isn't its source's current one; `installedSource` isn't `GreeterManager.wantedSource` (the setting changed); greetd's command changed. A git remote that can't be reached (`currentHash` "") does not count as behind. |
