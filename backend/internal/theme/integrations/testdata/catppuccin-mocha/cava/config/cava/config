@@ -1,0 +1,19 @@
+# Main Cava configuration (created by axiom; yours to edit)
+include = /home/u/.config/cava/colors/axiom.conf
+
+[general]
+framerate = 60
+autosens = 1
+sensitivity = 100
+bars = 0
+bar_width = 2
+bar_spacing = 1
+
+[input]
+method = pulse
+source = auto
+
+[output]
+method = ncurses
+channels = stereo
+mono_option = average

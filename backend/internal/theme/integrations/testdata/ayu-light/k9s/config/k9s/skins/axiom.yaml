@@ -1,0 +1,76 @@
+# K9s Skin - Auto-generated from Quickshell Theme
+# Theme: Ayu Light
+# Author: ayu-theme
+# Variant: light
+
+k9s:
+  # General K9s styles
+  body:
+    fgColor: "#5c6166"
+    bgColor: "#f8f9fa"
+    logoColor: "#399ee6"
+
+  # ClusterInfoView styles
+  info:
+    fgColor: "#a0a6ac"
+    sectionColor: "#9c6700"
+
+  # Frame styles
+  frame:
+    # Borders styles
+    border:
+      fgColor: "#d2d4d8"
+      focusColor: "#399ee6"
+
+    # MenuView attributes and styles
+    menu:
+      fgColor: "#5c6166"
+      keyColor: "#b25700"
+      numKeyColor: "#a37acc"
+
+    # CrumbView attributes for history navigation
+    crumbs:
+      fgColor: "#f8f9fa"
+      bgColor: "#d2d4d8"
+      activeColor: "#5c6166"
+
+    # Resource status and update styles
+    status:
+      newColor: "#358200"
+      modifyColor: "#9c6700"
+      addColor: "#358200"
+      errorColor: "#c2484b"
+      highlightcolor: "#b25700"
+      killColor: "#c2484b"
+      completedColor: "#a0a6ac"
+
+    # Border title styles
+    title:
+      fgColor: "#5c6166"
+      bgColor: "#edeff1"
+      highlightColor: "#399ee6"
+      counterColor: "#a37acc"
+      filterColor: "#b25700"
+
+  # Views
+  views:
+    # Table view
+    table:
+      fgColor: "#5c6166"
+      bgColor: "#f8f9fa"
+      cursorColor: "#edeff1"
+      header:
+        fgColor: "#5c6166"
+        bgColor: "#edeff1"
+        sorterColor: "#b25700"
+
+    # YAML view
+    yaml:
+      keyColor: "#0076b7"
+      colonColor: "#a0a6ac"
+      valueColor: "#5c6166"
+
+    # Logs view
+    logs:
+      fgColor: "#5c6166"
+      bgColor: "#f8f9fa"
