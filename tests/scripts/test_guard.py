@@ -112,12 +112,11 @@ class Bash(unittest.TestCase):
         with mock.patch.object(guard, "CONFIG_HOMES", guard.CONFIG_HOMES | {Path("/srv/conf")}):
             self.assertTrue(denied("axiom compositor claim --kind sway /srv/conf/sway axiom"))
 
-    def test_integration_hookup(self):
-        self.blocks("python3 scripts/integration_hookup.py apply kitty", "scripts/integration_hookup.py apply kitty",
-                    f"HOME={HOME} python3 scripts/integration_hookup.py apply kitty")
-        self.allows("HOME=/tmp/h python3 scripts/integration_hookup.py apply kitty",
-                    'XDG_CONFIG_HOME="$scratch" scripts/integration_hookup.py apply kitty',
-                    "python3 scripts/integration_hookup.py status kitty")
+    def test_hookup_apply(self):
+        call = """'{"jsonrpc":"2.0","id":1,"method":"hookup.apply","params":{"key":"kitty"}}'"""
+        self.blocks(f"python3 -c {call}", f"printf %s {call}", f"HOME=/tmp/h python3 -c {call}")
+        self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", f"AXIOM_SOCKET=/tmp/run/axiom.sock printf %s {call}",
+                    "grep -rn hookup.apply backend", "python3 -c 'hookup.status'")
 
     def test_self_update(self):
         self.blocks("scripts/self_update.sh apply v1.2", f"scripts/self_update.sh --channel main apply v1.2 {REPO}",

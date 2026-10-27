@@ -4,8 +4,6 @@
   - every shipped theme is complete (config/themes/theme.schema.json's
     required keys, hex colors, semantic names that resolve, pairs that exist)
   - the Neovim module Apply copies compiles and maps the shipped themes
-  - integration_hookup.py (Settings' Apply) adds each placement where it
-    belongs, backs files up, follows symlinks, and does nothing twice
   - self_update.sh reports and applies updates on scratch git clones, and
     refuses the blocked cases
   - cursor_theme.py makes the companion theme filling in a cursor theme's
@@ -17,7 +15,6 @@
 
   python3 tests/scripts/test_scripts.py [-v] [TestCase[.test_name]]
 """
-import configparser
 import hashlib
 import json
 import os
@@ -37,19 +34,11 @@ SCRIPTS = ROOT / "scripts"
 THEMES = ROOT / "config" / "themes"
 BASES = [f"base0{c}" for c in "0123456789ABCDEF"]
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
-# Apps the hookups' `requires` look for, stubbed so their targets are applied
-STUBS = ["qt5ct", "qt6ct"]
 
 
 def scratch_env(tmp):
-    """Environment with $HOME, XDG dirs and stubbed apps under `tmp`."""
+    """Environment with $HOME and XDG dirs under `tmp`."""
     tmp = Path(tmp)
-    stubs = tmp / "stubs"
-    stubs.mkdir()
-    for name in STUBS:
-        stub = stubs / name
-        stub.write_text("#!/bin/sh\nexit 0\n")
-        stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
     env = dict(os.environ)
     env.update({
         "HOME": str(tmp / "home"),
@@ -57,7 +46,6 @@ def scratch_env(tmp):
         "XDG_STATE_HOME": str(tmp / "home" / ".local" / "state"),
         "XDG_DATA_HOME": str(tmp / "home" / ".local" / "share"),
         "XDG_RUNTIME_DIR": str(tmp / "run"),
-        "PATH": f"{stubs}:{env['PATH']}",
         "GIT_CONFIG_GLOBAL": str(tmp / "gitconfig"),
         "GIT_CONFIG_NOSYSTEM": "1",
     })
@@ -137,248 +125,6 @@ class NvimModule(unittest.TestCase):
         self.assertEqual(mapped - shipped, set(), "map entries without a theme")
         self.assertEqual(shipped - mapped - {"submarine-sonar", "submarine-sonar-light", "nord-light", "alucard"},
                          set(), "themes without a map entry")
-
-
-class HookupScript(unittest.TestCase):
-    """integration_hookup.py on scratch configs (ThemeIntegrations' x-hookup)"""
-
-    def setUp(self):
-        self.tmp = tempfile.mkdtemp()
-        self.env = scratch_env(self.tmp)
-        self.env["SHELL"] = "/bin/bash"
-        self.config = Path(self.env["XDG_CONFIG_HOME"])
-
-    def tearDown(self):
-        system = Path(self.tmp) / "system"
-        if system.is_dir():
-            system.chmod(0o755)
-        shutil.rmtree(self.tmp)
-
-    def hookup(self, action, key, schema=None, targets=None):
-        args = [sys.executable, str(SCRIPTS / "integration_hookup.py"), action, key]
-        if schema:
-            args += ["--schema", str(schema)]
-        if targets is not None:
-            args += ["--targets", json.dumps(targets)]
-        result = subprocess.run(args, env=self.env, capture_output=True, text=True, timeout=30)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        return json.loads(result.stdout)
-
-    def write(self, rel, text):
-        path = self.config / rel
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text)
-        return path
-
-    def backups(self, path):
-        return sorted(Path(path).parent.glob(Path(path).name + ".axiom-bak-*"))
-
-    def test_every_hookup_applies_to_empty_configs(self):
-        schema = json.loads((ROOT / "config/json/config.schema.json").read_text())
-        for key, prop in schema["properties"]["ThemeIntegrations"]["properties"].items():
-            with self.subTest(key=key):
-                self.assertIn("x-hookup", prop)
-                self.hookup("apply", key)
-                for target in self.hookup("status", key)["targets"]:
-                    if not target["copyOnly"] and not target["skipped"]:
-                        self.assertTrue(target["done"], f"{key}: {target}")
-
-    def test_per_profile_targets(self):
-        home = Path(self.env["HOME"])
-        root = home / ".mozilla" / "firefox"
-        for profile in ("a.default-release", "b c.other"):
-            (root / profile).mkdir(parents=True)
-        (root / "profiles.ini").write_text(
-            "[Profile0]\nIsRelative=1\nPath=a.default-release\n\n"
-            "[Profile1]\nIsRelative=1\nPath=b c.other\n\n[General]\nVersion=2\n")
-        (root / "a.default-release" / "user.js").write_text(
-            'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);\n')
-        targets = self.hookup("status", "firefox")["targets"]
-        self.assertEqual(len(targets), 4)
-        self.hookup("apply", "firefox")
-        self.assertTrue(all(t["done"] for t in self.hookup("status", "firefox")["targets"]))
-        for profile in ("a.default-release", "b c.other"):
-            css = (root / profile / "chrome" / "userChrome.css").read_text()
-            self.assertTrue(css.startswith('@import url("axiom.css");'))
-            prefs = (root / profile / "user.js").read_text().splitlines()
-            self.assertEqual(prefs[-1], 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);')
-
-    def test_per_profile_without_profiles_is_skipped(self):
-        targets = self.hookup("status", "firefox")["targets"]
-        self.assertTrue(targets)
-        self.assertTrue(all(t["skipped"] == "profiles" for t in targets))
-
-    def readonly_file(self, name, text):
-        """A file in a directory the user can't write (like /usr/share/themes)"""
-        if os.geteuid() == 0:
-            self.skipTest("root can write anywhere")
-        theme = Path(self.tmp) / "system" / name
-        theme.parent.mkdir(parents=True)
-        theme.write_text(text)
-        theme.chmod(0o444)
-        theme.parent.chmod(0o555)
-        return theme
-
-    def test_link_to_a_readonly_file_is_skipped(self):
-        real = self.readonly_file("kitty.conf", "font_size 12\n")
-        link = self.config / "kitty" / "kitty.conf"
-        link.parent.mkdir(parents=True)
-        link.symlink_to(real)
-        self.assertEqual(self.hookup("status", "kitty")["targets"][0]["skipped"], "readonly")
-        result = self.hookup("apply", "kitty")["results"][0]
-        self.assertFalse(result["changed"])
-        self.assertEqual(result["error"], "")
-        self.assertTrue(link.is_symlink())
-        self.assertEqual(real.read_text(), "font_size 12\n")
-
-    def test_gtk_link_to_a_theme_is_wrapped(self):
-        real = self.readonly_file("gtk.css", "@define-color window_bg_color #fff;\n")
-        self.write("gtk-3.0/gtk.css", "")
-        link = self.config / "gtk-4.0" / "gtk.css"
-        link.parent.mkdir(parents=True)
-        link.symlink_to(real)
-        status = self.hookup("status", "gtk")["targets"][1]
-        self.assertTrue(status["wraps"])
-        self.assertEqual(status["skipped"], "")
-        self.hookup("apply", "gtk")
-        self.assertFalse(link.is_symlink())
-        self.assertEqual(link.read_text(), f'@import url("file://{real}");\n@import url("axiom.css");\n')
-        backups = self.backups(link)
-        self.assertEqual(len(backups), 1)
-        self.assertEqual(os.readlink(backups[0]), str(real))
-        self.assertTrue(self.hookup("status", "gtk")["targets"][1]["done"])
-
-    def test_qt_names_the_scheme_for_kde_apps_with_their_own_menu(self):
-        """kdeglobals gets ColorScheme=Axiom in [General] (KColorScheme's
-        copy) and in [UiSettings], which KColorSchemeManager apps (Okular,
-        Dolphin) read and otherwise fall back to Breeze from: two targets in
-        one file, both applied, the user's own choice commented out."""
-        kdeglobals = self.write("kdeglobals", "[General]\nColorScheme=BreezeDark\n\n[UiSettings]\nColorScheme=BreezeDark\n\n[KDE]\nwidgetStyle=Fusion\n")
-        targets = [t for t in self.hookup("status", "qt")["targets"] if t["path"].endswith("kdeglobals")]
-        self.assertEqual([(t["section"], t["done"]) for t in targets], [("General", False), ("UiSettings", False)])
-        self.hookup("apply", "qt")
-        data = configparser.ConfigParser(interpolation=None, strict=False, comment_prefixes=("#",))
-        data.optionxform = str
-        data.read_string(kdeglobals.read_text())
-        self.assertEqual(data["General"]["ColorScheme"], "Axiom")
-        self.assertEqual(data["UiSettings"]["ColorScheme"], "Axiom")
-        self.assertEqual(data["KDE"]["widgetStyle"], "Fusion")
-        self.assertEqual(kdeglobals.read_text().count("# axiom: ColorScheme=BreezeDark"), 2)
-        self.assertTrue(all(t["done"] for t in self.hookup("status", "qt")["targets"] if t["path"].endswith("kdeglobals")))
-        # Without a [UiSettings] of its own, Apply adds the group
-        kdeglobals.write_text("[General]\nColorScheme=Axiom\n")
-        self.hookup("apply", "qt")
-        data = configparser.ConfigParser(interpolation=None, strict=False)
-        data.optionxform = str
-        data.read_string(kdeglobals.read_text())
-        self.assertEqual(data["UiSettings"]["ColorScheme"], "Axiom")
-
-    def test_end_keeps_a_symlink_and_backs_up(self):
-        real = Path(self.tmp) / "dotfiles" / "kitty.conf"
-        real.parent.mkdir()
-        real.write_text("font_size 12\n")
-        link = self.config / "kitty" / "kitty.conf"
-        link.parent.mkdir(parents=True)
-        link.symlink_to(real)
-        status = self.hookup("status", "kitty")["targets"][0]
-        self.assertTrue(status["link"])
-        self.hookup("apply", "kitty")
-        self.assertTrue(link.is_symlink())
-        self.assertEqual(real.read_text(), "font_size 12\n\ninclude axiom.conf\n")
-        self.assertEqual(len(self.backups(real)), 1)
-        self.assertEqual(self.backups(real)[0].read_text(), "font_size 12\n")
-        # Done: a second Apply changes nothing
-        self.assertFalse(self.hookup("apply", "kitty")["results"][0]["changed"])
-        self.assertEqual(len(self.backups(real)), 1)
-
-    def test_given_targets_hook_hyprland_up(self):
-        path = self.write("hypr/hyprland.lua", '-- mine\nhl.bind("SUPER + Q", hl.dsp.exec_cmd("kitty"))\n')
-        include = {"file": str(path), "place": "start", "comment": "--", "accept": r"axiom\.setup\(",
-                   "text": 'local ok, axiom = pcall(dofile, "/x/axiom/hyprland.lua")\nif ok then axiom.setup() end'}
-        autostart = {"file": str(path), "place": "end", "comment": "--", "accept": r"(^|[\s'\"/])axiom['\"]? +run\b",
-                     "text": 'hl.on("hyprland.start", function() hl.exec_cmd("\'/x/axiom\' run") end) -- axiom'}
-        targets = [include, autostart]
-        self.assertFalse(any(t["done"] for t in self.hookup("status", "hyprland", targets=targets)["targets"]))
-        self.hookup("apply", "hyprland", targets=targets)
-        lines = path.read_text().splitlines()
-        self.assertEqual(lines[:2], include["text"].splitlines())
-        self.assertEqual(lines[-1], autostart["text"])
-        self.assertEqual(len(self.backups(path)), 1)
-        self.assertTrue(all(t["done"] for t in self.hookup("status", "hyprland", targets=targets)["targets"]))
-        # install.sh's own autostart line counts as done
-        path.write_text('hl.on("hyprland.start", function() hl.exec_cmd("\'/usr/bin/axiom\' run") end) -- axiom\n')
-        self.assertTrue(self.hookup("status", "hyprland", targets=[autostart])["targets"][0]["done"])
-
-    def test_start_goes_first(self):
-        path = self.write("gtk-3.0/gtk.css", "window { color: red; }\n")
-        self.hookup("apply", "gtk")
-        self.assertEqual(path.read_text().splitlines()[0], '@import url("axiom.css");')
-
-    def test_top_comments_out_the_old_key(self):
-        path = self.write("helix/config.toml", 'theme = "onedark"\n\n[editor]\nline-number = "relative"\n')
-        status = self.hookup("status", "helix")["targets"][0]
-        self.assertEqual(status["replaces"], ['theme = "onedark"'])
-        self.hookup("apply", "helix")
-        parsed = tomllib.loads(path.read_text())
-        self.assertEqual(parsed["theme"], "axiom")
-        self.assertEqual(parsed["editor"], {"line-number": "relative"})
-        self.assertIn('# axiom: theme = "onedark"', path.read_text())
-
-    def test_section_present_and_missing(self):
-        path = self.write("yazi/theme.toml", '[flavor]\ndark = "x"\n\n[mgr]\nfoo = 1\n')
-        self.hookup("apply", "yazi")
-        self.assertEqual(tomllib.loads(path.read_text())["flavor"], {"dark": "axiom", "light": "axiom"})
-        path.write_text("[mgr]\nfoo = 1\n")
-        self.assertTrue(self.hookup("status", "yazi")["targets"][0]["createsSection"])
-        self.hookup("apply", "yazi")
-        self.assertEqual(tomllib.loads(path.read_text())["flavor"], {"dark": "axiom", "light": "axiom"})
-
-    def test_keep_leaves_other_lines(self):
-        path = self.write("foot/foot.ini", "include=~/mine.ini\n\n[main]\nfont=x\n")
-        status = self.hookup("status", "foot")["targets"][0]
-        self.assertEqual(status["alongside"], ["include=~/mine.ini"])
-        self.hookup("apply", "foot")
-        lines = path.read_text().splitlines()
-        self.assertEqual(lines[0], "include=~/mine.ini")
-        self.assertTrue(lines[1].startswith("include=") and lines[1].endswith("foot/axiom.ini"))
-
-    def test_conflict_is_left_alone(self):
-        path = self.write("alacritty/alacritty.toml", '[general]\nimport = ["~/mine.toml"]\n')
-        status = self.hookup("status", "alacritty")["targets"][0]
-        self.assertEqual(status["conflicts"], ['import = ["~/mine.toml"]'])
-        result = self.hookup("apply", "alacritty")["results"][0]
-        self.assertEqual(result["error"], "conflict")
-        self.assertEqual(path.read_text(), '[general]\nimport = ["~/mine.toml"]\n')
-
-    def test_accept_counts_another_spelling(self):
-        self.write("btop/btop.conf", 'color_theme = "/home/me/.config/btop/themes/axiom.theme"\n')
-        self.assertTrue(self.hookup("status", "btop")["targets"][0]["done"])
-
-    def test_shellrc_and_fish(self):
-        self.hookup("apply", "fzf")
-        rc = Path(self.env["HOME"]) / ".bashrc"
-        self.assertIn("export FZF_DEFAULT_OPTS_FILE=", rc.read_text())
-        self.env["SHELL"] = "/usr/bin/fish"
-        self.hookup("apply", "fzf")
-        fish = self.config / "fish" / "conf.d" / "axiom.fish"
-        self.assertTrue(fish.read_text().startswith("set -gx FZF_DEFAULT_OPTS_FILE "))
-
-    def test_requires_skips(self):
-        schema = {"properties": {"ThemeIntegrations": {"properties": {"x": {"x-hookup": [
-            {"file": "{config}/x.conf", "place": "end", "text": "x", "requires": "axiom-no-such-command"}]}}}}}
-        path = Path(self.tmp) / "schema.json"
-        path.write_text(json.dumps(schema))
-        self.assertEqual(self.hookup("status", "x", path)["targets"][0]["skipped"], "requires")
-        self.hookup("apply", "x", path)
-        self.assertFalse((self.config / "x.conf").exists())
-
-    def test_copy_never_overwrites(self):
-        module = self.write("nvim/lua/axiom_theme.lua", "-- mine\n")
-        self.hookup("apply", "nvim")
-        self.assertEqual(module.read_text(), "-- mine\n")
-        module.unlink()
-        self.hookup("apply", "nvim")
-        self.assertEqual(module.read_text(), (SCRIPTS / "templates/nvim/axiom_theme.lua").read_text())
 
 
 class SelfUpdate(unittest.TestCase):

@@ -1,7 +1,7 @@
-// Package edit is how axiom changes a user's compositor files (the
-// takeover's copies, the bind merge's edits): atomic replacement keeping a
-// file's mode, dated backups that keep its mode and modification time, and
-// the config dir's lock.
+// Package edit is how axiom changes a user's own config files (the
+// takeover's copies, the bind merge's edits, the hookups' lines that load
+// axiom's files): atomic replacement keeping a file's mode, dated backups
+// that keep its mode and modification time, and the config dir's lock.
 package edit
 
 import (

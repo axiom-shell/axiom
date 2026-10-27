@@ -90,7 +90,7 @@ Singleton {
   readonly property string userFiles: _files.userFiles ?? ""
   readonly property string includeLines: _files.includeLines ?? ""
   readonly property string autostartLines: _files.autostartLines ?? ""
-  // integration_hookup.py targets, or null. Their texts, as
+  // Hookup targets (hookup.status / hookup.apply), or null. Their texts, as
   // IntegrationHookupManager translates them:
   // I18n.tr("Load axiom's module")
   // I18n.tr("Start axiom")

@@ -1,8 +1,6 @@
 package theme
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -234,7 +232,10 @@ func (r *run) places(integ integrations.Integration) []string {
 	var out []string
 	if integ.Profiles {
 		for _, ini := range r.opts.Profiles(r.key) {
-			out = append(out, profileDirs(r.dirs.Expand(ini))...)
+			ini = r.dirs.Expand(ini)
+			if data, err := os.ReadFile(ini); err == nil {
+				out = append(out, integrations.ProfileDirs(ini, data)...)
+			}
 		}
 	}
 	for _, dir := range integ.Each {
@@ -245,45 +246,6 @@ func (r *run) places(integ integrations.Integration) []string {
 		info, err := os.Stat(dir)
 		return err != nil || !info.IsDir()
 	})
-}
-
-// profileDirs are the profile folders a browser's profiles.ini lists.
-func profileDirs(ini string) []string {
-	data, err := os.ReadFile(ini)
-	if err != nil {
-		return nil
-	}
-	var out []string
-	add := func(section map[string]string) {
-		if section["path"] == "" {
-			return
-		}
-		dir := section["path"]
-		if section["isrelative"] != "0" {
-			dir = filepath.Join(filepath.Dir(ini), dir)
-		}
-		out = append(out, dir)
-	}
-	var section map[string]string
-	sc := bufio.NewScanner(bytes.NewReader(data))
-	for sc.Scan() {
-		line := strings.TrimSpace(sc.Text())
-		if name, ok := strings.CutPrefix(line, "["); ok {
-			if section != nil {
-				add(section)
-			}
-			section = nil
-			if strings.HasPrefix(name, "Profile") {
-				section = map[string]string{}
-			}
-		} else if k, v, ok := strings.Cut(line, "="); ok && section != nil {
-			section[strings.ToLower(strings.TrimSpace(k))] = strings.TrimSpace(v)
-		}
-	}
-	if section != nil {
-		add(section)
-	}
-	return out
 }
 
 // output runs a command with a timeout, for what it prints.

@@ -44,14 +44,14 @@ foo:
 ## Steps
 1. Write the template and the table entry.
 2. Add the schema switch with its `x-hookup`:
-   - The `place`/`section`/`replace` options are described in [theme-integrations](../dev/theming/theme-integrations.md) and implemented in `scripts/integration_hookup.py`.
+   - The `place`/`section`/`replace` options are described in [theme-integrations](../dev/theming/theme-integrations.md) and implemented in `backend/internal/hookup` (deciding the edit) and `backend/internal/compositor/edit/hookup.go` (the files).
    - Copy the closest existing entry for the file format.
 3. Add the reader property and, if needed, the `_integrationCommands` entry.
 4. A reload, if the app has one: an `effects` entry wrapped in `live(…)`, so only the daemon's integrator runs it, never a test.
 5. Write the goldens (`-update`) and read them.
 
 ## Gotchas
-- **Only the hookup touches the user's config.** The integration writes only its own `axiom.*` file (`TestOnlyAxiomFiles` checks every path has an `axiom` part). Only `integration_hookup.py` edits the user's app config, on the user's Apply click, after a backup. ncspot and kdeglobals are the exceptions (theme-integrations.md).
+- **Only the hookup touches the user's config.** The integration writes only its own `axiom.*` file (`TestOnlyAxiomFiles` checks every path has an `axiom` part). Only the hookup's Apply (`hookup.apply`) edits the user's app config, on the user's Apply click, after a backup. ncspot and kdeglobals are the exceptions (theme-integrations.md).
 - **Version-gated signals:** some apps die of a signal they don't handle yet (Helix before 23.10): use `signalFrom` with the first version that reloads.
 - **Warnings** (`r.warn`) are logged by the shell as warnings: only for real problems.
 - **Color forms:** colors stay 6- or 8-digit hex (`TestEveryThemeRenders` checks it): convert them with a `format`, not in the template.

@@ -31,9 +31,6 @@
     "services/compositor/HyprlandIpcManager.qml": [
       "Socket"
     ],
-    "services/ui/IntegrationHookupManager.qml": [
-      "Process"
-    ],
     "services/core/IpcTarget.qml": [
       "IpcHandler"
     ],

@@ -72,7 +72,7 @@ How to look at, exercise and debug the live shell without breaking the user's se
 
 ### Feature testing sections
 - Hyprland: [config-modes](hyprland/config-modes.md), [managed-takeover](hyprland/managed-takeover.md), [monitors](hyprland/monitors.md)
-- Theming: [theme-integrations](theming/theme-integrations.md) (scratch `HOME`/`XDG_CONFIG_HOME` for hookups)
+- Theming: [theme-integrations](theming/theme-integrations.md) (hookups: Go tests in a scratch home, never `hookup.apply` on the live daemon)
 - Services: [self-update](features/self-update.md), [polkit](features/polkit.md), [calendar](features/calendar.md), [idle](features/idle.md)
 - Surfaces: [launcher](features/launcher.md), [lockscreen](features/lockscreen.md), [greeter-install](features/greeter-install.md), [greeter-runtime](features/greeter-runtime.md), [onboarding](features/onboarding.md)
 - Layout: [surface-context](popouts/surface-context.md), [writing-modules](overlay/writing-modules.md)

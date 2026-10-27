@@ -321,11 +321,12 @@ def check_argv(env, argv, cwd):
         if changes and (not socket or socket == os.environ.get("NIRI_SOCKET", "")):
             deny("Never, while testing", "niri msg output / action quit / load-config-file only on a nested niri (NIRI_SOCKET=<its socket>), never the live session.")
 
-    # A theme integration's hookup on the real configs
-    if name == "integration_hookup.py" or (name.startswith("python") and any(Path(a).name == "integration_hookup.py" for a in args)):
-        rest = args[[Path(a).name for a in args].index("integration_hookup.py") + 1:] if name.startswith("python") else args
-        if "apply" in rest and not (scratch(env.get("HOME", "")) or scratch(env.get("XDG_CONFIG_HOME", ""))):
-            deny("Never, while testing", "integration_hookup.py apply only with a scratch HOME or XDG_CONFIG_HOME.")
+    # A hookup's Apply (the daemon's hookup.apply, which edits the configs
+    # of the HOME the daemon runs with) sent to the live daemon by hand:
+    # only to a scratch one (XDG_RUNTIME_DIR / AXIOM_SOCKET)
+    sends = name in {"socat", "nc", "ncat", "websocat", "echo", "printf", "axiom"} or name.startswith("python")
+    if sends and any("hookup.apply" in a for a in args) and axiom_live_display(env, args):
+        deny("Never, while testing", "hookup.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it edits the real configs (test it with go test ./internal/compositor/edit).")
 
     # Self-update on the live repo
     if name == "self_update.sh" and "apply" in args:
