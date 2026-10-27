@@ -2,21 +2,28 @@ package daemon
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"golang.org/x/sys/unix"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/release/fetch"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/selfupdate"
 )
 
 // selfUpdatePart: SelfUpdateManager's updates of the tree the shell runs
-// from (package selfupdate), and after one the axiom binary rebuilt from
-// it and re-exec'd into, so the daemon's embedded schema is the tree's.
+// from (package selfupdate), and after one the axiom binary replaced to
+// match it and re-exec'd into, so the daemon's embedded schema is the
+// tree's: the official build of the commit checked out when there is one
+// (maintainer, 2026-10-27: "Download, build fallback (Recommended)"),
+// else built from the tree.
 func (d *Daemon) selfUpdatePart() part {
 	return part{name: "self-update", methods: d.selfUpdateMethods}
 }
@@ -29,13 +36,14 @@ type SelfUpdateRequest struct {
 }
 
 func (d *Daemon) selfUpdateMethods(reg *rpc.Registry) {
+	releases := fetch.New(fetch.Options{Base: d.opts.releases})
 	u := selfupdate.New(selfupdate.Options{Dir: d.opts.Tree, Environ: func() []string {
 		// The shell's environment (its ssh agent), as when it ran git itself
 		if d.shell != nil {
 			return d.shell.Environ()
 		}
 		return os.Environ()
-	}})
+	}, EdgeCommit: releases.EdgeCommit})
 	rpc.Handle(reg, "selfupdate.status", func(ctx context.Context, c *rpc.Conn, p SelfUpdateRequest) (selfupdate.Report, error) {
 		return u.Status(ctx, p.Channel)
 	})
@@ -51,26 +59,63 @@ func (d *Daemon) selfUpdateMethods(reg *rpc.Registry) {
 		if err != nil || r.Error != "" {
 			return r, err
 		}
-		r.Rebuilt, r.BuildError = d.rebuildInstalled(context.WithoutCancel(ctx))
+		ctx = context.WithoutCancel(ctx)
+		r.Rebuilt, r.BinarySource, r.BuildError = d.replaceInstalled(ctx, releases, p.Channel, r.Latest, u.Head(ctx))
 		if r.Rebuilt {
 			// The new image takes the daemon over once this reply is out;
 			// when the update changed the schema it restarts the shell
-			d.opts.Log.Info("self-update: rebuilt the binary, re-executing", "binary", d.installed)
+			d.opts.Log.Info("self-update: replaced the binary, re-executing", "binary", d.installed, "from", r.BinarySource)
 			d.reexecSoon(d.installed)
 		}
 		return r, nil
 	})
 }
 
-// rebuildInstalled builds the installed binary again from the updated
+// replaceInstalled replaces the installed binary to match the updated
 // tree, when this user may replace it (install.sh's in ~/.local/bin, not
-// a package's): whether it did, or why that failed ("" when it wasn't
+// a package's): with the official build of the commit checked out, the
+// tag's release (tags) or main's newest build when it's head's (main),
+// checked against its SHA256SUMS; else built from the tree. It says
+// whether it did, from where, or why that failed ("" when it wasn't
 // tried).
-func (d *Daemon) rebuildInstalled(ctx context.Context) (bool, string) {
+func (d *Daemon) replaceInstalled(ctx context.Context, releases *fetch.Fetcher, channel, tag, head string) (bool, string, string) {
 	bin := d.installed
 	if bin == "" || unix.Access(bin, unix.W_OK) != nil || unix.Access(filepath.Dir(bin), unix.W_OK) != nil {
-		return false, ""
+		return false, "", ""
 	}
+	var data []byte
+	var err error
+	source := "release"
+	if channel == selfupdate.ChannelMain {
+		source = "edge"
+		var commit string
+		if commit, data, err = releases.Edge(ctx, runtime.GOARCH); err == nil && commit != head {
+			data, err = nil, fmt.Errorf("main's newest build is %.12s, not %.12s: %w", commit, head, fetch.ErrMissing)
+		}
+	} else {
+		data, err = releases.Binary(ctx, tag, runtime.GOARCH)
+	}
+	if err == nil {
+		if err = installBinary(ctx, data, bin); err == nil {
+			return true, source, ""
+		}
+	}
+	if errors.Is(err, fetch.ErrMissing) {
+		d.opts.Log.Info("self-update: no official build to download, building", "reason", err)
+	} else {
+		d.opts.Log.Warn("self-update: the official build wasn't taken, building", "err", err)
+	}
+	rebuilt, reason := d.rebuildInstalled(ctx)
+	if rebuilt {
+		return true, "built", ""
+	}
+	return false, "", reason
+}
+
+// rebuildInstalled builds the installed binary again from the updated
+// tree: whether it did, or why that failed.
+func (d *Daemon) rebuildInstalled(ctx context.Context) (bool, string) {
+	bin := d.installed
 	if _, err := exec.LookPath(d.opts.Go); err != nil {
 		return false, "go isn't installed"
 	}
@@ -86,4 +131,16 @@ func (d *Daemon) rebuildInstalled(ctx context.Context) (bool, string) {
 		}
 	}
 	return false, err.Error()
+}
+
+// installBinary puts a downloaded binary in target's place: written
+// beside it, checked to run, then swapped in.
+func installBinary(ctx context.Context, data []byte, target string) error {
+	next := target + ".new"
+	defer os.Remove(next)
+	if err := os.WriteFile(next, data, 0o755); err != nil {
+		return err
+	}
+	_, err := swapIn(ctx, next, target)
+	return err
 }
