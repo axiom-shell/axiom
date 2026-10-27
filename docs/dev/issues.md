@@ -55,6 +55,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while moving `CommandManager.run` to `exec.run`
 
+### The updates check warns when a daemon re-exec kills checkupdates
+- **Where:** `backend/internal/updates/updates.go` (`Source`'s `Fetch`, `runCheck`)
+- **What:** `axiom daemon logs` shows `checking for updates` with `checkupdates failed (-1): ` 7 times since 2026-10-26, each within a few seconds of a `dev build done: re-executing` line (12:33:56.102 after a re-exec at 12:33:55.828 on 2026-10-27). Exit code -1 is a kill by a signal: most likely the old image's context ends at the re-exec, the check's `checkupdates` is killed with it, and `Fetch` logs the failure before the hub drops the fetch as cancelled. A `ctx.Err()` check before the warning would quiet it; the next image checks again anyway. Related: [A command run across a daemon re-exec loses its output and is left a zombie](#a-command-run-across-a-daemon-re-exec-loses-its-output-and-is-left-a-zombie).
+- **Size:** small
+- **Found:** 2026-10-27, while merging #133
+
 ### MediaManager warns when the daemon's re-exec fails its album art fetch
 - **Where:** `services/system/MediaManager.qml` (the album art fetch)
 - **What:** A daemon re-exec fails every request in flight with `the connection to axiom closed`, and `MediaManager` warns about it, though it's an expected failure it could retry on the next hello. #112 had folded it into "The shell's socket warns when the daemon re-execs", but the socket's warning is Quickshell's and this one is ours to quiet.
