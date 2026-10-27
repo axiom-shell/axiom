@@ -27,10 +27,12 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/theme/palette"
 )
 
-// maxPixels bounds the image decoded whole (an 8K×8K one): the daemon
-// decodes it in memory, so a larger one, or a header claiming one, is
+// maxPixels bounds the image decoded whole: Pillow's decompression-bomb
+// limit (MAX_IMAGE_PIXELS, about 89 MP), so a multi-screen panorama or a
+// 12K wallpaper is read while the daemon's memory stays bounded (about
+// 360 MB decoded as RGBA). A larger image, or a header claiming one, is
 // refused rather than allocated.
-const maxPixels = 8192 * 8192
+const maxPixels = 1024 * 1024 * 1024 / 4 / 3
 
 // Generate writes every style's wallpaper-<style>-dark|light.json made from
 // the image at wallpaper into dir, and returns their paths. An image that

@@ -78,6 +78,24 @@ func TestGenerate(t *testing.T) {
 	}
 }
 
+// A triple-screen panorama, wider than 8192 px, is well under the limit
+func TestGeneratePanorama(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	wall := filepath.Join(dir, "panorama.png")
+	img := image.NewGray(image.Rect(0, 0, 11520, 2160))
+	var b bytes.Buffer
+	if err := png.Encode(&b, img); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(wall, b.Bytes(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if files, err := Generate(wall, filepath.Join(dir, "themes"), time.Now()); err != nil || len(files) != 10 {
+		t.Fatalf("files = %v, err = %v", files, err)
+	}
+}
+
 func TestGenerateRefuses(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
@@ -85,15 +103,15 @@ func TestGenerateRefuses(t *testing.T) {
 	if err := os.WriteFile(text, []byte("not an image"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// A BMP whose header claims 100000×100000 pixels: refused unread
+	// A BMP whose header claims 10000×10000 pixels (100 MP): refused unread
 	huge := filepath.Join(dir, "huge.bmp")
 	var b bytes.Buffer
 	if err := bmp.Encode(&b, image.NewRGBA(image.Rect(0, 0, 1, 1))); err != nil {
 		t.Fatal(err)
 	}
 	header := b.Bytes()
-	binary.LittleEndian.PutUint32(header[18:], 100000)
-	binary.LittleEndian.PutUint32(header[22:], 100000)
+	binary.LittleEndian.PutUint32(header[18:], 10000)
+	binary.LittleEndian.PutUint32(header[22:], 10000)
 	if err := os.WriteFile(huge, header, 0o644); err != nil {
 		t.Fatal(err)
 	}
