@@ -92,7 +92,7 @@ Singleton {
     const old = root.entries;
     root.entries = [];
     old.forEach(e => root._forget(e));
-    Quickshell.execDetached(["sh", "-c", "rm -f \"$1\"*.png", "sh", root.imageDir]);
+    CommandManager.runDetached(["sh", "-c", "rm -f \"$1\"*.png", "sh", root.imageDir]);
     root._save();
   }
 
@@ -132,7 +132,7 @@ Singleton {
   function sendNotification(appName, summary, body, opts) {
     const hints = opts?.desktopEntry ? ["-h", "string:desktop-entry:" + opts.desktopEntry] : [];
     const icon = opts?.icon ? ["-i", opts.icon] : [];
-    Quickshell.execDetached(["notify-send", "-a", appName].concat(icon, hints, ["--", summary, body]));
+    CommandManager.runDetached(["notify-send", "-a", appName].concat(icon, hints, ["--", summary, body]));
   }
 
   // -- Private --
@@ -315,7 +315,7 @@ Singleton {
     delete root._sources[entry.uid];
     notif?.dismiss();
     if (entry.image.startsWith("file://" + root.imageDir))
-      Quickshell.execDetached(["rm", "-f", entry.image.slice(7).split("?")[0]]);
+      CommandManager.runDetached(["rm", "-f", entry.image.slice(7).split("?")[0]]);
   }
 
   // Copies a notification's image to disk (scaled down: the UI only shows
@@ -444,7 +444,7 @@ Singleton {
   }
 
   Component.onCompleted: {
-    Quickshell.execDetached(["mkdir", "-p", root.imageDir]);
+    CommandManager.runDetached(["mkdir", "-p", root.imageDir]);
     root._load();
     root._dnd = root._state.load({}).dnd === true;
     root._stateLoaded = true;

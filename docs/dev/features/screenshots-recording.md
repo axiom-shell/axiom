@@ -41,7 +41,7 @@ Name clash: `KeybindManager.startRecording(index)` is the key recorder on the Ke
 - The folders are global settings (General → Screenshots & recordings), not the cards': every entry point saves to the same place. Recordings go to `recordingFolder`: `Screenshots.recordingFolder`, else `folder`.
 - **Copying:** to the clipboard through the daemon (`ClipboardManager.copyFile`, `clipboard.copy {path, mime}`).
 - Then one of:
-  - **A notification** with an "Edit in Satty/Swappy" button. This is a waiting `notify-send -A`; only the latest one stays live.
+  - **A notification** with an "Edit in Satty/Swappy" button. This is a waiting `notify-send -A` (`CommandManager.run`), so each one's button stays live until its notification closes.
   - **Opened in satty/swappy straight away** with `annotate`: the picker's "Edit in …" switch, the E key, or holding Shift on release.
 - **Watchdog:** a single 3 s watchdog in the service fails any capture that gets no frame, so nothing can wedge it.
   - A picker reports its frame with `frameArrived()`.
@@ -67,7 +67,7 @@ Recording lives in the service, not in the card, because the overlay destroys th
 - `recordAudio` (the ScreenRecord card's choice) is saved with `copyOnly` in `~/.local/state/axiom/ui/screenshot.json`.
 
 **Running and stopping:**
-- wf-recorder runs until `stopRecording()`, which sends SIGINT to its own process. `pkill` is used only for a recorder left over from before a reload.
+- wf-recorder runs in axiom (`CommandManager.run`) until `stopRecording()` sends SIGINT to the wf-recorder whose parent is the daemon (`pkill -P "$PPID"` in a `sh` axiom also runs), never another one; one left from before a reload (found the same way) or whose answer an axiom re-exec lost is marked stopped at once. One killed by a signal is treated as exited.
 - On exit it notifies with the saved file (a click opens it) or with the failure.
 - While it runs, `recordingElapsed` ticks for the `ScreenRecord` bar widget. That widget is hidden otherwise; a click on it stops the recording.
 - The Privacy widget's screen indicator shows the recording. wf-recorder uses screencopy, so Pipewire never sees it.

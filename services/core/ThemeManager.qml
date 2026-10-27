@@ -181,9 +181,9 @@ QtObject {
       return;
     const path = url.replace("file://", "");
     if (Appearance.wallpaperBackend === "awww")
-      Quickshell.execDetached([Paths.scriptsPath + "setWallpaper.sh", path, monitor, primary ? "1" : "0"]);
+      CommandManager.runDetached([Paths.scriptsPath + "setWallpaper.sh", path, monitor, primary ? "1" : "0"]);
     else if (primary)
-      Quickshell.execDetached(["ln", "-sf", path, Quickshell.env("HOME") + "/.current_wallpaper"]);
+      CommandManager.runDetached(["ln", "-sf", path, Quickshell.env("HOME") + "/.current_wallpaper"]);
   }
 
   // Generated themes are named by style, not wallpaper, so each run

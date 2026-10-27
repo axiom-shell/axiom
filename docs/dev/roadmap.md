@@ -175,7 +175,7 @@ Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's
 Resolved by a stage:
 - [The window shadow's offset is always 0 but still passed through every writer](issues.md#the-window-shadows-offset-is-always-0-but-still-passed-through-every-writer) (stage 7)
 - [KeybindManager does three jobs](issues.md#keybindmanager-does-three-jobs) (stage 7)
-- [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (stage 6, when `ThemeManager`'s `execDetached` moves)
+- [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (closed by awww's removal; maintainer: "awww is scheduled for remove in favor of axioms own animations")
 - [Calendar passwords and secrets.json still pass through QML](issues.md#calendar-passwords-and-secretsjson-still-pass-through-qml) (stage 6, with the file writes: `SecretsManager` writes secrets.json itself, so its store moves to the daemon then, and the calendar's lookup with it)
 
 ### Phase 6: compositor parity

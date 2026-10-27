@@ -2,7 +2,6 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.config
 import qs.services.core
 
@@ -91,39 +90,29 @@ Singleton {
       });
       return;
     }
-    if (runner.running) {
+    if (root._applying) {
       root._again = true;
       return;
     }
     console.log("[NightLightManager]", _run.active ? "On:" : "Off", _run.active ? root._settings : "");
-    runner.command = _run.active ? ["sh", "-c", root._startScript, "sh", "wlsunset"].concat(root._command) : ["sh", "-c", root._stopScript, "sh", "wlsunset"];
-    runner.running = true;
-  }
-
-  property bool _again: false
-  property Process _runner: Process {
-    id: runner
-    onExited: {
+    root._applying = true;
+    CommandManager.run(_run.active ? ["sh", "-c", root._startScript, "sh", "wlsunset"].concat(root._command) : ["sh", "-c", root._stopScript, "sh", "wlsunset"], () => {
+      root._applying = false;
       if (root._again) {
         root._again = false;
         root._apply();
       }
-    }
+    });
   }
+
+  property bool _applying: false
+  property bool _again: false
 
   // Whether it's already on (a restart of qs; wlsunset started before
   // axiom managed it), once per qs launch; the schedule waits for it
-  property Process _probe: Process {
-    stdout: StdioCollector {
-      onStreamFinished: {
-        console.log("[NightLightManager] Probed wlsunset running:", text.trim() === "1");
-        _run.active = text.trim() === "1";
-        _run.probed = true;
-      }
-    }
-  }
+  property bool _probing: false
   function _probeOnce() {
-    if (!root.available || _run.probed || _probe.running)
+    if (!root.available || _run.probed || root._probing)
       return;
     if (root.tool === "axiom") {
       BackendManager.call("nightlight.get", {}, (error, state) => {
@@ -133,8 +122,13 @@ Singleton {
       });
       return;
     }
-    _probe.command = ["sh", "-c", 'pgrep -x wlsunset >/dev/null && echo 1 || echo 0'];
-    _probe.running = true;
+    root._probing = true;
+    CommandManager.run(["pgrep", "-x", "wlsunset"], exitCode => {
+      root._probing = false;
+      console.log("[NightLightManager] Probed wlsunset running:", exitCode === 0);
+      _run.active = exitCode === 0;
+      _run.probed = true;
+    });
   }
   onAvailableChanged: root._probeOnce()
 

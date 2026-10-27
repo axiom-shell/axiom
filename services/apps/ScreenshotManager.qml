@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
 import qs.config
 import qs.services.core
@@ -38,7 +37,7 @@ QtObject {
   // The picker is open (or an immediate capture is running)
   property bool picking: false
   // Picking, or waiting for the launcher to close first (or for grim)
-  readonly property bool busy: root.picking || root._delay.running || root._grim.running
+  readonly property bool busy: root.picking || root._delay.running || root._grabbing
   // { kind, screen: the screen an immediate `screen` capture takes }
   property var request: null
   // Keep nothing on disk, only copy (saved in Paths.statePath screenshot.json)
@@ -117,7 +116,7 @@ QtObject {
       "path": path,
       "callback": callback
     };
-    Quickshell.execDetached(["mkdir", "-p", path.replace(/\/[^/]*$/, "")]);
+    CommandManager.runDetached(["mkdir", "-p", path.replace(/\/[^/]*$/, "")]);
     root._start("region");
     return true;
   }
@@ -134,7 +133,7 @@ QtObject {
     if (kind === "window" && !root.kinds.includes("window"))
       kind = "region";
     root._directory = kind.startsWith("record") ? root.recordingFolder : root.folder;
-    Quickshell.execDetached(["mkdir", "-p", root._directory, root._scratchDir]);
+    CommandManager.runDetached(["mkdir", "-p", root._directory, root._scratchDir]);
     root.annotate = false;
     // The screen is taken as it is (an open overlay included), but the
     // launcher closes itself after running a command: let it go first
@@ -209,27 +208,12 @@ QtObject {
       });
       return;
     }
-    // With an "Edit in …" button: notify-send waits for it and prints the
-    // action. Only the latest notification's button stays live.
-    root._nextNotice = {
-      "path": path,
-      "command": ["notify-send", "-a", "axiom", "-i", path, "-h", "string:desktop-entry:" + root._desktopEntry, "-A", "edit=" + I18n.tr("Edit in {0}", root.annotatorName), "--", summary, body]
-    };
-    // The previous one is stopped first; its exit starts this one
-    if (root._savedNotice.running)
-      root._savedNotice.running = false;
-    else
-      root._startNotice();
-  }
-
-  function _startNotice() {
-    const next = root._nextNotice;
-    if (!next)
-      return;
-    root._nextNotice = null;
-    root._noticePath = next.path;
-    root._savedNotice.command = next.command;
-    root._savedNotice.running = true;
+    // With an "Edit in …" button: notify-send waits for it (until the
+    // notification closes) and prints the action
+    CommandManager.run(["notify-send", "-a", "axiom", "-i", path, "-h", "string:desktop-entry:" + root._desktopEntry, "-A", "edit=" + I18n.tr("Edit in {0}", root.annotatorName), "--", summary, body], (code, stdout) => {
+      if (stdout.trim() === "edit")
+        root.edit(path);
+    });
   }
 
   // Opens a picture in the annotator, which saves over it
@@ -283,16 +267,14 @@ QtObject {
     return audio === "mic" ? "mic" : "none";
   }
 
-  // Ours gets SIGINT (wf-recorder finishes the file on it). One started
-  // before a reload isn't ours to signal or see exit: only then does it
-  // go by name, which would stop any wf-recorder.
+  // SIGINT (wf-recorder finishes the file on it) to the wf-recorder axiom
+  // runs for the shell (its parent is the one running pkill's sh), not any
+  // other. One started before a reload isn't ours to see exit: it's
+  // marked stopped at once.
   function stopRecording() {
-    if (root._recorder.running) {
-      root._recorder.signal(2);
-      return;
-    }
-    Quickshell.execDetached(["pkill", "-INT", "-x", "wf-recorder"]);
-    root.recording = false;
+    CommandManager.run(["sh", "-c", 'pkill -INT -P "$PPID" -x wf-recorder; true']);
+    if (!root._recorderRunning)
+      root.recording = false;
   }
 
   function toggleRecording() {
@@ -316,12 +298,20 @@ QtObject {
     const args = target.concat(["-f", path]);
     // The system's sound is the default output's monitor, looked up as it
     // starts (exec, so stopping signals wf-recorder itself)
+    let command;
     if (root._recordAudio === "system")
-      root._recorder.command = ["sh", "-c", 'exec wf-recorder --audio="$(pactl get-default-sink).monitor" "$@"', "sh"].concat(args);
+      command = ["sh", "-c", 'exec wf-recorder --audio="$(pactl get-default-sink).monitor" "$@"', "sh"].concat(args);
     else
-      root._recorder.command = ["wf-recorder"].concat(root._recordAudio === "mic" ? ["--audio"] : [], args);
+      command = ["wf-recorder"].concat(root._recordAudio === "mic" ? ["--audio"] : [], args);
     root._recordAudio = "none";
-    root._recorder.running = true;
+    root._recorderRunning = true;
+    CommandManager.run(command, (code, stdout, stderr, error) => {
+      root._recorderRunning = false;
+      // Its answer lost (axiom re-exec'd): it may still be recording, so
+      // it's left as one from before a reload (stopping marks it stopped)
+      if (error?.kind !== "unavailable")
+        root._recorded(stderr);
+    });
     root.recording = true;
     root.recordingSince = Date.now();
     root.recordingElapsed = 0;
@@ -360,18 +350,9 @@ QtObject {
       args.push(s.name, String(s.devicePixelRatio), path);
     });
     root._pendingFrames = frames;
-    root._grim.command = ["sh", "-c", 'command -v grim >/dev/null || exit 127; while [ $# -gt 0 ]; do grim -t ppm -s "$2" -o "$1" "$3" || exit 1; shift 3; done', "sh"].concat(args);
-    root._grim.running = true;
-  }
-  property var _pendingFrames: ({})
-
-  property Process _grim: Process {
-    stderr: StdioCollector {
-      id: grimErrors
-    }
-    onExited: code => {
-      const frames = root._pendingFrames;
-      root._pendingFrames = {};
+    root._grabbing = true;
+    CommandManager.run(["sh", "-c", 'command -v grim >/dev/null || exit 127; while [ $# -gt 0 ]; do grim -t ppm -s "$2" -o "$1" "$3" || exit 1; shift 3; done', "sh"].concat(args), (code, stdout, stderr) => {
+      root._grabbing = false;
       // Cancelled meanwhile
       if (!root.request) {
         root._dropFrames(frames);
@@ -379,19 +360,20 @@ QtObject {
       }
       if (code !== 0) {
         root._dropFrames(frames);
-        root.fail(code === 127 ? I18n.tr("Screenshots here need grim.") : I18n.tr("grim couldn't take a picture of the screen: {0}", grimErrors.text.trim()));
+        root.fail(code === 127 ? I18n.tr("Screenshots here need grim.") : I18n.tr("grim couldn't take a picture of the screen: {0}", stderr.trim()));
         return;
       }
       root._frames = frames;
       root.picking = true;
       root._watchdog.restart();
-    }
+    });
   }
+  property bool _grabbing: false
 
   function _dropFrames(frames) {
     const paths = Object.keys(frames).map(name => frames[name]);
     if (paths.length > 0)
-      Quickshell.execDetached(["rm", "-f"].concat(paths));
+      CommandManager.runDetached(["rm", "-f"].concat(paths));
   }
 
   // Gone with the picker
@@ -427,25 +409,17 @@ QtObject {
     onTriggered: root.recordingElapsed = Math.floor((Date.now() - root.recordingSince) / 1000)
   }
 
-  property Process _recorder: Process {
-    stderr: StdioCollector {
-      id: recorderErrors
-    }
-    onExited: {
-      root.recording = false;
-      root.recordingSince = 0;
-      root.recordingElapsed = 0;
-      root._recordCheck.command = ["test", "-s", root._recordPath];
-      root._recordCheck.running = true;
-    }
-  }
+  property bool _recorderRunning: false
 
-  // Whether the recording left a file: saved, else it failed
-  property Process _recordCheck: Process {
-    onExited: code => {
-      const path = root._recordPath;
+  // wf-recorder exited: whether it left a file (saved, else it failed)
+  function _recorded(errors) {
+    root.recording = false;
+    root.recordingSince = 0;
+    root.recordingElapsed = 0;
+    const path = root._recordPath;
+    CommandManager.run(["test", "-s", path], code => {
       if (code !== 0) {
-        const reason = recorderErrors.text.trim().split("\n").pop() || I18n.tr("wf-recorder stopped without writing a file.");
+        const reason = errors.trim().split("\n").pop() || I18n.tr("wf-recorder stopped without writing a file.");
         console.warn("[ScreenshotManager] Recording failed:", reason);
         NotificationManager.sendNotification("axiom", I18n.tr("Recording failed"), reason);
         return;
@@ -457,19 +431,36 @@ QtObject {
       NotificationManager.sendNotification("axiom", I18n.tr("Recording saved"), I18n.tr("Saved in {0}. Click to open it.", path.replace(/\/[^/]*$/, "")), {
         "desktopEntry": root._desktopEntry
       });
-    }
+    });
   }
 
   // Lists the newest recordings in recordingFolder into `recordings`
   function refreshRecordings() {
     root._listed = true;
-    if (root._lister.running) {
+    if (root._listing) {
       root._relist = true;
       return;
     }
-    root._listingFolder = root.recordingFolder;
-    root._lister.command = ["sh", "-c", 'find "$1" -maxdepth 1 -type f -name "Recording_*.mp4" -printf "%T@\t%s\t%p\n" 2>/dev/null | sort -rn | head -n 12', "sh", root._listingFolder];
-    root._lister.running = true;
+    const folder = root.recordingFolder;
+    root._listing = true;
+    CommandManager.run(["sh", "-c", 'find "$1" -maxdepth 1 -type f -name "Recording_*.mp4" -printf "%T@\t%s\t%p\n" 2>/dev/null | sort -rn | head -n 12', "sh", folder], (code, stdout) => {
+      root._listing = false;
+      // Of a folder since changed: the list that follows replaces it
+      if (folder === root.recordingFolder)
+        root._recordings = stdout.split("\n").filter(line => line !== "").map(line => {
+          const [time, size, path] = line.split("\t");
+          return {
+            "path": path,
+            "name": path.replace(/^.*\//, ""),
+            "time": Math.round(Number(time) * 1000),
+            "size": Number(size)
+          };
+        });
+      if (root._relist) {
+        root._relist = false;
+        Qt.callLater(root.refreshRecordings);
+      }
+    });
   }
   onRecordingFolderChanged: {
     if (!root._listed)
@@ -491,68 +482,22 @@ QtObject {
   property bool _listed: false
   // Asked again while listing
   property bool _relist: false
-  // The folder the running listing is of
-  property string _listingFolder: ""
-
-  property Process _lister: Process {
-    stdout: StdioCollector {
-      onStreamFinished: {
-        // Of a folder since changed: the list that follows replaces it
-        if (root._listingFolder !== root.recordingFolder)
-          return;
-        root._recordings = text.split("\n").filter(line => line !== "").map(line => {
-          const [time, size, path] = line.split("\t");
-          return {
-            "path": path,
-            "name": path.replace(/^.*\//, ""),
-            "time": Math.round(Number(time) * 1000),
-            "size": Number(size)
-          };
-        });
-      }
-    }
-    onExited: {
-      if (!root._relist)
-        return;
-      root._relist = false;
-      Qt.callLater(root.refreshRecordings);
-    }
-  }
-
-  // The picture the live "Edit in …" button opens
-  property string _noticePath: ""
-  // { path, command } waiting for the previous notice to stop
-  property var _nextNotice: null
-
-  property Process _savedNotice: Process {
-    stdout: StdioCollector {
-      onStreamFinished: {
-        if (text.trim() === "edit")
-          root.edit(root._noticePath);
-      }
-    }
-    onExited: root._startNotice()
-  }
-
-  property Process _probe: Process {
-    command: ["sh", "-c", 'xdg-user-dir PICTURES 2>/dev/null; pgrep -x wf-recorder >/dev/null && echo rec; true']
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const lines = text.split("\n").map(line => line.trim()).filter(line => line !== "");
-        if (lines[0]?.startsWith("/"))
-          root._picturesDir = lines[0];
-        // A recording from before a reload: only stopping it is offered
-        root.recording = root.recording || lines.includes("rec");
-      }
-    }
-  }
+  // A listing is running
+  property bool _listing: false
 
   Component.onCompleted: {
     const saved = root._state.load({});
     root.copyOnly = saved.copyOnly === true;
     root.recordAudio = ["system", "mic"].includes(saved.recordAudio) ? saved.recordAudio : "none";
     DependencyManager.check(["satty", "swappy", "wf-recorder"].concat(root.grimFrames ? ["grim"] : []));
-    root._probe.running = true;
+    // The pictures folder, and a recording axiom runs from before a
+    // reload (only stopping it is offered)
+    CommandManager.run(["sh", "-c", 'xdg-user-dir PICTURES 2>/dev/null; pgrep -P "$PPID" -x wf-recorder >/dev/null && echo rec; true'], (code, stdout) => {
+      const lines = stdout.split("\n").map(line => line.trim()).filter(line => line !== "");
+      if (lines[0]?.startsWith("/"))
+        root._picturesDir = lines[0];
+      root.recording = root.recording || lines.includes("rec");
+    });
     NotificationManager.registerHandler(_desktopEntry, () => {
       if (root._lastPath !== "")
         CommandManager.runDetached(["xdg-open", root._lastPath]);
