@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of theme defaults: the fallback palette (a missing or broken theme file) and the semantic -> base16 maps used for keys a theme leaves out and by generated themes (scripts/generate_theme.py). Read by components/methods/Utils.qml.",
+  "_comment": "Single source of theme defaults: the fallback palette (a missing or broken theme file) and the semantic -> base16 maps used for keys a theme leaves out and by generated themes (backend/internal/theme). Read by components/methods/Utils.qml.",
   "colors": {
     "base00": "#0c0c0c",
     "base01": "#1c1c1c",

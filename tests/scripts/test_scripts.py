@@ -13,8 +13,6 @@
     belongs, backs files up, follows symlinks, and does nothing twice
   - self_update.sh reports and applies updates on scratch git clones, and
     refuses the blocked cases
-  - generate_theme.py turns an image into a valid dark/light pair, and exits
-    3 naming a missing module (skipped without numpy and Pillow)
   - cursor_theme.py makes the companion theme filling in a cursor theme's
     missing standard names, and only for a theme that needs it
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
@@ -1069,72 +1067,6 @@ class CommunityFetch(unittest.TestCase):
 
     def test_usage(self):
         self.assertEqual(self.fetch("only-one").returncode, 2)
-
-
-def skip_without_modules(*modules):
-    """Skips (fails in CI, which installs them) when python3 lacks one of
-    the system packages a script uses."""
-    import importlib.util
-    missing = [m for m in modules if importlib.util.find_spec(m) is None]
-    if missing:
-        message = f"python modules not installed: {', '.join(missing)}"
-        if os.environ.get("CI"):
-            raise AssertionError(message)
-        raise unittest.SkipTest(message)
-
-
-class GenerateTheme(unittest.TestCase):
-    def test_missing_module_exits_3(self):
-        tmp = Path(tempfile.mkdtemp())
-        try:
-            # A numpy that can't be imported, ahead of the real one
-            (tmp / "numpy.py").write_text("raise ModuleNotFoundError('no numpy', name='numpy')\n")
-            env = dict(scratch_env(tmp), PYTHONPATH=str(tmp))
-            result = subprocess.run([sys.executable, str(SCRIPTS / "generate_theme.py"), str(tmp / "x.png"),
-                                     "--output_dir", str(tmp)], env=env, capture_output=True, text=True, timeout=60)
-            self.assertEqual(result.returncode, 3, result.stderr)
-            self.assertEqual(result.stderr.strip(), "missing python module: numpy")
-        finally:
-            shutil.rmtree(tmp)
-
-    def test_wallpaper_makes_a_valid_pair(self):
-        skip_without_modules("numpy", "PIL")
-        tmp = Path(tempfile.mkdtemp())
-        try:
-            env = scratch_env(tmp)
-            python = sys.executable
-            image = tmp / "wall.png"
-            # Bands of colour, so every accent slot has something to pick from
-            subprocess.run([python, "-c", (
-                "from PIL import Image\n"
-                "img = Image.new('RGB', (120, 80))\n"
-                "cols = [(30, 40, 90), (200, 80, 60), (60, 160, 90), (220, 200, 80), (140, 60, 160)]\n"
-                "for x in range(120):\n"
-                "    for y in range(80):\n"
-                "        img.putpixel((x, y), cols[(x // 24) % len(cols)])\n"
-                f"img.save({str(image)!r})\n")], check=True, env=env)
-            out = tmp / "themes"
-            out.mkdir()
-            result = subprocess.run([python, str(SCRIPTS / "generate_theme.py"), str(image), "--output_dir",
-                                     str(out)], env=env, capture_output=True, text=True, timeout=300)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            styles = ["alternate", "faithful", "muted", "tonal", "vibrant"]
-            files = sorted(out.glob("*.json"))
-            self.assertEqual([f.stem for f in files],
-                             [f"wallpaper-{s}-{v}" for s in styles for v in ("dark", "light")])
-            themes = {f.stem: json.loads(f.read_text()) for f in files}
-            names = {t["name"] for t in themes.values()} | set(themes)
-            for stem, theme in themes.items():
-                with self.subTest(theme=stem):
-                    self.assertEqual(theme["variant"], stem.rsplit("-", 1)[1])
-                    self.assertEqual(theme_problems(theme, names), [])
-            # Every style looks different from every other
-            palettes = [tuple(sorted(themes[f"wallpaper-{s}-dark"]["colors"].items())) for s in styles]
-            self.assertEqual(len(set(palettes)), len(styles))
-        finally:
-            shutil.rmtree(tmp)
-
-
 
 
 class GreeterInstall(unittest.TestCase):

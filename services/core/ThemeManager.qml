@@ -46,7 +46,7 @@ QtObject {
   // The family Appearance.theme belongs to, or null; a shared light's is
   // the family it was switched to from
   readonly property var currentFamily: ThemeFamilies.current(themeFamilies, Appearance.theme, root._look.lightFrom ?? "")
-  readonly property bool isGenerating: generationProcess.running
+  readonly property bool isGenerating: _generating !== ""
   // The theme list's groups ("builtin", "imported", "generated") folded shut
   readonly property var foldedGroups: root._look.foldedGroups ?? []
 
@@ -76,12 +76,8 @@ QtObject {
     return ShownLook.wallpaperFor(root.shownWallpapers, monitor);
   }
   // config/json/theme-defaults.json: fallback palette and semantic maps,
-  // shared with scripts/generate_theme.py
+  // shared with the generated themes (axiom's theme.generate)
   readonly property var defaults: _defaults
-
-  // Theme generation's Python packages (numpy, Pillow) aren't installed:
-  // set by the last run, which said so once (generate_theme.py exits 3)
-  property bool generationUnavailable: false
 
   signal generationFailed(string errorText)
   onGenerationFailed: errorText => NotificationManager.sendNotification("axiom", I18n.tr("Failed to generate themes"), I18n.tr("There was an error while processing the wallpaper. Details: {0}", errorText))
@@ -199,7 +195,7 @@ QtObject {
     if (Paths.greeter || !root.activeTheme.startsWith("generated/") || !root.wallpaper)
       return;
     // Already on its way
-    if (isGenerating && (generationProcess.wallpaper === root.wallpaper || root._pendingGeneration === root.wallpaper))
+    if (isGenerating && (root._generating === root.wallpaper || root._pendingGeneration === root.wallpaper))
       return;
     const wanted = decodeURIComponent(root.wallpaper.replace("file://", ""));
     if (root.currentTheme?.generated?.wallpaper === wanted)
@@ -208,6 +204,8 @@ QtObject {
     generateThemesFromWallpaper(root.wallpaper);
   }
 
+  // The wallpaper URL being generated from (axiom's theme.generate), or ""
+  property string _generating: ""
   // A request made while a run is going replaces any earlier one and runs
   // after it, so the last wallpaper asked for is the one generated
   property string _pendingGeneration: ""
@@ -215,7 +213,7 @@ QtObject {
   function generateThemesFromWallpaper(wallpaperUrl) {
     // The one running is the latest wanted again (Dark, Light, Dark):
     // nothing after it
-    if (isGenerating && wallpaperUrl.toString() === generationProcess.wallpaper) {
+    if (isGenerating && wallpaperUrl.toString() === root._generating) {
       root._pendingGeneration = "";
       return;
     }
@@ -224,8 +222,26 @@ QtObject {
       root._pendingGeneration = wallpaperUrl.toString();
       return;
     }
-    console.log("[ThemeManager] Starting generation process for:", wallpaperUrl.toString());
-    generationProcess.start(wallpaperUrl);
+    console.log("[ThemeManager] Generating themes from", wallpaperUrl.toString());
+    root._generating = wallpaperUrl.toString();
+    BackendManager.call("theme.generate", {
+      "wallpaper": decodeURIComponent(root._generating.replace("file://", ""))
+    }, (error, result) => {
+      if (error) {
+        console.error("[ThemeManager] Theme generation failed:", error.message);
+        root.generationFailed(error.message);
+      } else {
+        console.log("[ThemeManager] Generated", result.files.length, "themes");
+        root._reloadAllThemes();
+        // The watch misses a file that didn't exist when it started
+        root._reloadTheme();
+      }
+      root._generating = "";
+      const next = root._pendingGeneration;
+      root._pendingGeneration = "";
+      if (next)
+        Qt.callLater(() => root.generateThemesFromWallpaper(next));
+    });
   }
 
   // Shows the current theme's light (or dark) variant for the light/dark
@@ -483,10 +499,10 @@ QtObject {
     const content = FileManager.read(_themeUrl(name)) ?? "";
     if (name === _loadedName && content === _themeContent)
       return;
-    // Mid-write: generate_theme.py (or an editor) truncates a file before
-    // writing it, and the watch fires in between. Keep what's showing: the
-    // next change, or the end of the generation, reads it whole. Falling
-    // back here would flash the default palette and flip darkMode.
+    // Mid-write (an editor truncates a file before writing it, and the
+    // watch fires in between) or not generated yet: keep what's showing.
+    // The next change, or the end of the generation, reads it whole.
+    // Falling back here would flash the default palette and flip darkMode.
     if (!_tryParse(content) && (name === _loadedName || isGenerating)) {
       console.log("[ThemeManager]", name, "is empty or partly written; keeping the current colors");
       return;
@@ -511,7 +527,6 @@ QtObject {
   readonly property string _themesPath: "file://" + Paths.themePath
   readonly property string _generatedThemesPath: "file://" + Paths.generatedThemesPath
   readonly property string _communityThemesPath: "file://" + Paths.communityThemesPath
-  readonly property string _pythonScriptPath: Paths.scriptsPath + "generate_theme.py"
 
   // Each folder's themes, [{ name, label, variant, paired }], combined
   // into _families once any folder has been scanned
@@ -594,59 +609,6 @@ QtObject {
           integration._report();
         }
       }
-    }
-  }
-
-  // --- Generation Logic ---
-  // One run generates every style's pair (generate_theme.py STYLES), with
-  // the system's python3 and its numpy and Pillow packages.
-
-  property Process _generationProcess: Process {
-    id: generationProcess
-
-    // The URL being generated from
-    property string wallpaper: ""
-
-    function start(wallpaperUrl) {
-      wallpaper = wallpaperUrl.toString();
-      const wallpaperPath = wallpaperUrl.toString().replace("file://", "");
-      command = ["python3", root._pythonScriptPath, wallpaperPath, "--output_dir", Paths.generatedThemesPath];
-      console.log("[ThemeManager] Executing:", command.join(" "));
-      running = true;
-    }
-
-    stdout: StdioCollector {
-      onStreamFinished: if (text.trim())
-        console.log("[ThemeManager] generate_theme.py:", text.trim())
-    }
-    stderr: StdioCollector {
-      id: stderrCollector
-    }
-    onExited: (exitCode, exitStatus) => {
-      const errors = stderrCollector.text.trim();
-      if (exitStatus === 0 && exitCode === 3) {
-        console.warn("[ThemeManager] Theme generation needs python packages:", errors);
-        if (!root.generationUnavailable) {
-          const install = DependencyManager.installCommand(["py:numpy", "py:PIL"]);
-          NotificationManager.sendNotification("axiom", I18n.tr("Themes can't be generated"), install ? I18n.tr("Generating themes from the wallpaper needs the Python packages numpy and Pillow. Install them with: {0}", install) : I18n.tr("Generating themes from the wallpaper needs the Python packages numpy and Pillow."));
-        }
-        root.generationUnavailable = true;
-      } else if (exitStatus !== 0 || exitCode !== 0) {
-        console.error("[ThemeManager] Theme generation failed.", errors);
-        root.generationFailed(errors);
-      } else {
-        root.generationUnavailable = false;
-        if (errors)
-          console.warn("[ThemeManager] generate_theme.py:", errors);
-        console.log("[ThemeManager] Theme generation finished successfully.");
-        root._reloadAllThemes();
-        // The watch misses a file that didn't exist when it started
-        root._reloadTheme();
-      }
-      const next = root._pendingGeneration;
-      root._pendingGeneration = "";
-      if (next)
-        Qt.callLater(() => root.generateThemesFromWallpaper(next));
     }
   }
 

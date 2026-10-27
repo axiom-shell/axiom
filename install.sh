@@ -52,8 +52,6 @@ PACKAGES=(
   "sway|sway|sway"
   "niri|niri|niri"
   "awww|awww|n/a"
-  "py:numpy|python-numpy|python3-numpy"
-  "py:PIL|python-pillow|python3-pillow"
   "secret-tool|libsecret|libsecret"
   "nmcli|networkmanager|NetworkManager"
   "checkupdates|pacman-contrib|-"
@@ -79,7 +77,6 @@ REQUIRED=(git go quickshell jq curl python3 iconFont)
 # the AUR package's optdepends say the same
 FEATURES=(
   "Wallpapers|awww|"
-  "Themes generated from your wallpaper|py:numpy py:PIL|"
   "Calendar accounts and feeds|secret-tool|"
   "Wi-Fi menu and network widget|nmcli|"
   "Package update checks|checkupdates|"

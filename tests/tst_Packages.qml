@@ -104,8 +104,8 @@ TestCase {
 
   // Python modules ("py:<module>") from each distribution's own repositories
   function test_pythonModules() {
-    compare(Packages.installCommand("arch", ["py:numpy", "py:PIL"]), "sudo pacman -S --needed python-numpy python-pillow");
-    compare(Packages.installCommand("fedora", ["py:numpy", "py:PIL"]), "sudo dnf install python3-numpy python3-pillow", "no COPR");
+    compare(Packages.installCommand("arch", ["py:gi"]), "sudo pacman -S --needed python-gobject");
+    compare(Packages.installCommand("fedora", ["py:gi"]), "sudo dnf install python3-gobject", "no COPR");
   }
 
   // What install.sh installs: the compositors, and quickshell from its own

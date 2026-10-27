@@ -1,6 +1,6 @@
 # Themes
 
-> **Files:** `services/core/ThemeManager.qml`, `components/methods/ThemeFamilies.qml`, `config/Theme.qml`, `config/json/theme-defaults.json`, `config/themes/`, `scripts/gen_theme_template.py`, `scripts/generate_theme.py`, `components/views/Themes/Themes.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/content/Palette/Palette.qml`
+> **Files:** `services/core/ThemeManager.qml`, `components/methods/ThemeFamilies.qml`, `config/Theme.qml`, `config/json/theme-defaults.json`, `config/themes/`, `scripts/gen_theme_template.py`, `backend/internal/theme/`, `backend/internal/theme/palette/`, `components/views/Themes/Themes.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/content/Palette/Palette.qml`
 > **Config:** `Appearance.theme`
 > **Related:** [Theme integrations](theme-integrations.md), [Wallpaper and schedules](wallpaper-and-schedules.md), [Config readers](../core/config-readers.md)
 
@@ -34,16 +34,22 @@ How the active theme is loaded, how themes are grouped into dark/light families,
 ### theme-defaults.json
 - `config/json/theme-defaults.json` is the one fallback palette and semantic → base16 map (dark and light).
 - Read through `ThemeManager.defaults` by `Theme`, for keys a theme omits and for a missing theme.
-- Also read by `scripts/generate_theme.py`.
+- Also read by theme generation (`backend/internal/theme`, from the binary's embedded copy).
 
 ### Generation from a wallpaper
-- `scripts/generate_theme.py`: one run writes a `generated/wallpaper-<style>-dark|light` pair per `STYLES` entry.
-- Styles: `tonal`, `vibrant`, `faithful`, `muted`, `alternate`. They are factors on the one build, like Material's scheme variants.
+- `ThemeManager.generateThemesFromWallpaper` calls axiom's `theme.generate` (`{ wallpaper }`, an absolute path; `daemon/theme.go`). One call writes a `generated/wallpaper-<style>-dark|light` pair per style into `Paths.generatedThemesPath`, each file atomically (`fsx.WriteFile`), and answers the paths. A failure (no such file, not an image, a write refused) is an `axerr` kind whose message `generationFailed` shows; without axiom nothing is generated.
+- `backend/internal/theme` is the edge: it decodes the image (PNG, JPEG, BMP: the wallpaper list's formats; BMP through `golang.org/x/image/bmp`) and writes the files. `backend/internal/theme/palette` (pure) does the colour work, with golden tests (`testdata/*.golden`, `go test -update` rewrites them) and property tests (contrast, ramp direction, each style's character).
+- Styles (`palette.Styles`): `tonal`, `vibrant`, `faithful`, `muted`, `alternate`. They are factors on the one build, like Material's scheme variants.
 - Algorithm:
-  - k-means in OKLab picks candidate colors;
-  - the palette is built in OKLCH from targets measured off the hand-made themes;
-  - the wallpaper's seed color goes in `base0F` as `accent`.
-- Run with the system `python3`; needs numpy and Pillow (system packages). Without them it exits 3, and `ThemeManager` notifies once with the install command (`DependencyManager.installCommand`) and sets `generationUnavailable`.
+  - the image is averaged down to 128 px on its longer side and clustered in OKLab into up to 24 candidate colors;
+  - candidates are scored as Material scores seeds (hue share and chroma); the best becomes the seed, in `base0F` as `accent`;
+  - the palette is built in OKLCH from targets measured off the hand-made themes: a tinted neutral ramp, and accents that keep their slot's hue cell (red stays red) but lean toward the wallpaper's colours there, or else rotate toward the seed;
+  - every accent is pushed to 3:1 contrast against `base00`.
+- Moved from the Python script generate_theme.py (numpy, Pillow) to Go in roadmap row 8, on purpose not bit-for-bit (maintainer: "ensure the go implementation is as good as it can be and faithful to go - color drift is okay and go is the forever home so changes now are better"). What differs from the Python:
+  - clustering is deterministic: pixels are binned in OKLab, and each k-means start is the bin with the most to gain (weight × squared distance to the nearest start), k-means++'s choice without the random draw, so a stray pixel weighs little and an image always gives the same colors;
+  - the thumbnail is a plain area average (up to 8×8 samples a pixel), not Pillow's bicubic with JPEG draft decoding;
+  - an accent taking the wallpaper's colour takes the weighted mean of the candidates in its cell, not the heaviest one alone, so a small change to the image moves it slightly instead of jumping between candidates.
+  - So a wallpaper's generated themes may look different once, the first time they're generated again after the move (the Python's own k-means changed visibly with its random seed on about a third of wallpapers). An image whose clustering doesn't depend on the start (the bands golden) gives the Python's colours exactly.
 - When automatic wallpaper changes regenerate: see [Wallpaper and schedules](wallpaper-and-schedules.md).
 
 ### Themes page

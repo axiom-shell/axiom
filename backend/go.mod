@@ -13,6 +13,7 @@ require (
 	github.com/teambition/rrule-go v1.8.2
 	github.com/yuin/gopher-lua v1.1.2
 	go.yaml.in/yaml/v3 v3.0.5
+	golang.org/x/image v0.47.0
 	golang.org/x/sys v0.49.0
 )
 
