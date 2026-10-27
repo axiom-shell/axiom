@@ -305,6 +305,10 @@ func TestKdeglobals(t *testing.T) {
 	if got := read(t, path); got != want {
 		t.Errorf("%q", got)
 	}
+	// Backed up once, before the first of its two targets
+	if b := backups(t, path); len(b) != 1 || read(t, b[0]) != "[General]\nColorScheme=BreezeDark\n\n[UiSettings]\nColorScheme=BreezeDark\n\n[KDE]\nwidgetStyle=Fusion\n" {
+		t.Errorf("backups %v", b)
+	}
 	os.WriteFile(path, []byte("[General]\nColorScheme=Axiom\n"), 0o644)
 	s.apply("qt")
 	if got := read(t, path); got != "[General]\nColorScheme=Axiom\n\n[UiSettings]\nColorScheme=Axiom\n" {

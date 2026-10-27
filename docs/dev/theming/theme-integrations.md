@@ -45,6 +45,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - `accept` is a Go regexp (RE2): every shipped pattern is the same in both; a lookahead or backreference would no longer compile.
 - A file's lines are split on `\n` only, so a CRLF file keeps its `\r`s (Python's `splitlines` dropped them, rewriting the file with LF).
 - A target whose `accept` doesn't compile fails the whole check instead of the script exiting with a traceback.
+- A file with two targets (kdeglobals) is backed up once per Apply, before the first; the script's second backup overwrote the first with the half-edited file. An existing backup is never overwritten.
 - `requires` is checked with the daemon's `PATH`, `$SHELL`/`$ZDOTDIR` and the XDG folders are the daemon's environment (`axiom run`'s, which the shell inherits).
 
 ### Qt and KDE apps

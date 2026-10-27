@@ -92,12 +92,11 @@ func (h *Hookups) Apply(targets []hookup.Target, profiles []string) []HookupResu
 func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) {
 	p, lines, err := h.plan(r)
 	result := HookupResult{Path: p.Path}
-	if err != nil || p.CopyOnly || p.Skipped != "" || p.Done {
+	if err != nil || !p.Pending() {
+		if len(p.Conflicts) > 0 {
+			result.Error = "conflict"
+		}
 		return result, err
-	}
-	if len(p.Conflicts) > 0 {
-		result.Error = "conflict"
-		return result, nil
 	}
 	if err := os.MkdirAll(filepath.Dir(p.Resolved), 0o755); err != nil {
 		return result, err
@@ -127,10 +126,15 @@ func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) 
 		return result, err
 	}
 	if p.Exists {
-		if err := Copy(p.Resolved, p.Resolved+suffix); err != nil {
-			return result, err
+		// One backup per file and Apply, taken before its first target
+		// (kdeglobals has two): one already there is never overwritten
+		backup := p.Resolved + suffix
+		if _, err := os.Lstat(backup); errors.Is(err, fs.ErrNotExist) {
+			if err := Copy(p.Resolved, backup); err != nil {
+				return result, err
+			}
 		}
-		result.Backup = p.Resolved + suffix
+		result.Backup = backup
 	}
 	err = Replace(p.Resolved, []byte(hookup.Text(hookup.Edit(r, p, lines))))
 	result.Changed = err == nil
