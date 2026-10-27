@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/hookup"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/theme"
 )
@@ -50,7 +51,7 @@ type ThemeIntegrateResult struct {
 func (d *Daemon) themeIntegrateMethods(reg *rpc.Registry) {
 	in := theme.NewIntegrator(theme.IntegrateOptions{
 		Getenv:   d.opts.Getenv,
-		Profiles: d.integrationProfiles,
+		Profiles: func(key string) []string { e, _ := d.integrationEntry(key); return e.Profiles },
 		Live:     true,
 		Log:      d.opts.Log.With("part", "theme"),
 	})
@@ -60,21 +61,25 @@ func (d *Daemon) themeIntegrateMethods(reg *rpc.Registry) {
 	})
 }
 
-// integrationProfiles is a ThemeIntegrations switch's x-profiles, from the
-// schema the shell runs with.
-func (d *Daemon) integrationProfiles(key string) []string {
+// integrationEntry is a ThemeIntegrations switch's hookup annotations,
+// from the schema the shell runs with.
+type integrationEntry struct {
+	Hookup   []hookup.Target `json:"x-hookup"`
+	Profiles []string        `json:"x-profiles"`
+}
+
+func (d *Daemon) integrationEntry(key string) (integrationEntry, bool) {
 	var s struct {
 		Properties struct {
 			ThemeIntegrations struct {
-				Properties map[string]struct {
-					Profiles []string `json:"x-profiles"`
-				} `json:"properties"`
+				Properties map[string]integrationEntry `json:"properties"`
 			} `json:"ThemeIntegrations"`
 		} `json:"properties"`
 	}
 	built, _ := d.currentSchema()
 	if err := json.Unmarshal(built, &s); err != nil {
-		return nil
+		return integrationEntry{}, false
 	}
-	return s.Properties.ThemeIntegrations.Properties[key].Profiles
+	entry, ok := s.Properties.ThemeIntegrations.Properties[key]
+	return entry, ok
 }

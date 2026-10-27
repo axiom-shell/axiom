@@ -60,6 +60,33 @@ func TestWriteFileThroughSymlink(t *testing.T) {
 	}
 }
 
+func TestReplaceLinkReplacesTheLink(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	target := filepath.Join(dir, "theirs.css")
+	if err := os.WriteFile(target, []byte("theirs\n"), 0o444); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "gtk.css")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	if err := ReplaceLink(link, []byte("mine\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Lstat(link)
+	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm() != 0o644 {
+		t.Fatalf("link not replaced by a 0644 file: %v %v", info, err)
+	}
+	if got, _ := os.ReadFile(link); string(got) != "mine\n" {
+		t.Errorf("file %q", got)
+	}
+	// The file it named is untouched
+	if got, _ := os.ReadFile(target); string(got) != "theirs\n" {
+		t.Errorf("target %q", got)
+	}
+}
+
 func TestWriteFileFailsCleanlyInAMissingDir(t *testing.T) {
 	t.Parallel()
 	err := WriteFile(filepath.Join(t.TempDir(), "nope", "x.json"), []byte("x"), 0o600)

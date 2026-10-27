@@ -39,7 +39,7 @@ x-multiline: a growing text area.
 x-needs: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
 x-options: a dynamic option list.
 x-order: the keys shown first, in order.
-x-profiles: profile locations to search (Firefox and its forks; `scripts/integration_hookup.py`, the daemon's `firefox` integration).
+x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 x-required: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
 x-scope: what a snapshot, example, import or export carries.
 x-scopeIf: 'an item that matches `when` (`x-showIf`''s form, over the item''s keys) has `scope` as its own: an exec bind is `commands`, an app''s OSD bar `personal`.'

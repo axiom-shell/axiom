@@ -216,7 +216,7 @@ jobs:
           git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth=1 origin "$GITHUB_SHA"
           git checkout -q FETCH_HEAD
 
-      # config/json/config.schema.json, which the hookup tests read
+      # The generated files (the schema and its kin) the script tests read
       - name: Generated files (scripts/generate.sh)
         env:
           GOTOOLCHAIN: local
@@ -225,7 +225,7 @@ jobs:
       - name: shellcheck
         run: shellcheck -x -S warning install.sh scripts/*.sh scripts/lib/*.sh scripts/greeter/*.sh scripts/dev/*.sh .githooks/pre-commit
 
-      # Theme integrations, self-update on scratch clones, theme generation
+      # Themes, the Neovim module, self-update on scratch clones, the dev scripts
       - name: Script tests
         run: python3 tests/scripts/test_scripts.py -v
 

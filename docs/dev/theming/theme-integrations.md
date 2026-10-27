@@ -1,6 +1,6 @@
 # Theme integrations
 
-> **Files:** `services/core/ThemeManager.qml`, `services/ui/IntegrationHookupManager.qml`, `config/ThemeIntegrations.qml`, `backend/internal/theme/integrations/`, `backend/internal/theme/integrate.go`, `backend/internal/theme/effects.go`, `backend/internal/daemon/theme.go`, `scripts/integration_hookup.py`, `scripts/templates/nvim/`, `components/forms/IntegrationHookup.qml`, `tests/scripts/test_scripts.py`
+> **Files:** `services/core/ThemeManager.qml`, `services/ui/IntegrationHookupManager.qml`, `config/ThemeIntegrations.qml`, `backend/internal/theme/integrations/`, `backend/internal/theme/integrate.go`, `backend/internal/theme/effects.go`, `backend/internal/daemon/theme.go`, `backend/internal/hookup/`, `backend/internal/compositor/edit/hookup.go`, `backend/internal/daemon/hookup.go`, `scripts/templates/nvim/`, `components/forms/IntegrationHookup.qml`, `tests/scripts/test_scripts.py`
 > **Config:** `ThemeIntegrations.*`
 > **Related:** [Themes](themes.md), [Schema annotations](../core/schema-annotations.md), [Hyprland config modes](../hyprland/config-modes.md)
 
@@ -37,8 +37,16 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - Contrast flooring keeps the most chroma that fits in sRGB at each lightness (the jq version shrank chroma by steps of 5%), so a floored color comes out a little more saturated: terminal colors on light themes shift slightly. Colors that already passed are unchanged (Catppuccin Mocha's files came out byte for byte the same).
 - An app that isn't installed no longer fails its integration: the file is written anyway (an app installed later finds it), and only the reload needs the app.
 - JSON files (VS Code, Zed, Neovim) are rendered from templates or Go, so their whitespace and key order differ (Neovim's maps are sorted); their content is the same.
-- Firefox's profiles are read by the daemon from the schema's `x-profiles`, no longer through `integration_hookup.py profiles` (that action went).
+- Firefox's profiles are read by the daemon from the schema's `x-profiles`, no longer through the hookup script's `profiles` action (that action went).
 - The scripts' progress lines are gone (how many kitty and Neovim instances reloaded goes to the daemon's log at info); only problems reach the shell.
+
+### Changes from the hookup script (2026-10)
+`integration_hookup.py` was ported to Go as well. On purpose:
+- `accept` is a Go regexp (RE2): every shipped pattern is the same in both; a lookahead or backreference would no longer compile.
+- A file's lines are split on `\n` only, so a CRLF file keeps its `\r`s (Python's `splitlines` dropped them, rewriting the file with LF).
+- A target whose `accept` doesn't compile fails the whole check instead of the script exiting with a traceback.
+- A file with two targets (kdeglobals) is backed up once per Apply, before the first; the script's second backup overwrote the first with the half-edited file. An existing backup is never overwritten.
+- `requires` is checked with the daemon's `PATH`, `$SHELL`/`$ZDOTDIR` and the XDG folders are the daemon's environment (`axiom run`'s, which the shell inherits).
 
 ### Qt and KDE apps
 - The `qt` integration writes qt5ct's / qt6ct's `colors/axiom.conf` (a QPalette per state; for each tool installed, if any) and the KDE color scheme `$XDG_DATA_HOME/color-schemes/Axiom.colors` (`templates/qt.colors`, colors as `r,g,b`). The switch counts as installed with qt*ct or a common KDE app (`ThemeManager._integrationCommands`).
@@ -75,8 +83,9 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - Vesktop: Vencord keeps its enabled themes in a JSON array, and reloads `axiom.theme.css` live through its watch on the themes folder. The Flatpak Vesktop's folder is under `~/.var/app/dev.vencord.Vesktop/config/vesktop`.
 - `x-hookupNote` says what's peculiar (Alacritty's import order, lazygit's `LG_CONFIG_FILE`, Neovim).
 
-### integration_hookup.py
-- `scripts/integration_hookup.py status|apply <key>` (stdlib Python) does the work.
+### The hookups in the daemon (`hookup.status`, `hookup.apply`)
+- `hookup.status { key, targets? }` says what Apply would do to each target, `hookup.apply` does it (only for the shell's connection); `backend/internal/daemon/hookup.go`. Without `targets`, the key's `x-hookup` (and `x-profiles`) come from the schema the shell runs with.
+- `backend/internal/hookup` (pure) resolves a target (`{config}`, `{state}`, `{home}`, `$SHELL`'s rc, the first existing candidate file, a target per browser profile) and decides: done or not, what's commented out, kept or conflicting, and the edited lines. `compositor/edit` (`Hookups`) finds the facts (links followed, what may be written), backs up and writes.
 - `place`:
   - `end`: read last, so it wins;
   - `start`: CSS `@import` must come first;
@@ -88,7 +97,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
   - commented out (`replace: comment`, the default);
   - left beside it (`keep`);
   - or blocks the target (`conflict`).
-- `accept`: a regex for an equivalent line that already counts as done.
+- `accept`: a regexp (Go's RE2) for an equivalent line that already counts as done; one that doesn't compile fails the check (`bad_request`).
 - `requires`: skips a target without its command.
 - `perProfile` targets:
   - repeated for every browser profile listed by the profiles.ini files in the integration's `x-profiles` (Firefox and its forks, native and Flatpak);
@@ -102,10 +111,10 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
   - writes atomically;
   - never deletes a line;
   - does nothing for a target already done.
-- `--targets JSON` passes the targets instead of a schema key, with `title` (naming a target above its path) and `note` (replacing the line about where it goes). Used for the compositor's include and autostart lines (CompositorConfigManager; see [Config modes](../compositor/config-modes.md)).
+- `targets` passes the targets instead of a schema key, with `title` (naming a target above its path) and `note` (replacing the line about where it goes). Used for the compositor's include and autostart lines (CompositorConfigManager; see [Config modes](../compositor/config-modes.md)).
 
 ### IntegrationHookupManager and the UI
-- `IntegrationHookupManager` runs the script; nothing is polled:
+- `IntegrationHookupManager` calls the daemon; nothing is polled:
   - `check(key)` → `status[key]`;
   - `apply(key)` → `results[key]`, then checks again, and runs the integration for the current theme when Apply changed something.
 - `forms/IntegrationHookup` shows it under a switched-on integration:
@@ -126,5 +135,6 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 ### Testing
 - `backend/internal/theme/integrations`: every file of every integration for a dark and a light theme against goldens (`go test ./internal/theme/integrations -update` rewrites them; read the diff), every shipped theme rendered through every integration (JSON and plist parse, colors well-formed), the terminal palette's contrast, and the merges (ncspot, kdeglobals, foot).
 - `backend/internal/theme`: the writer in a scratch home (only axiom's files and the missing main configs written, links written through, kdeglobals kept in step only once chosen, the missing-target errors, runs joining one going).
-- `tests/scripts/test_scripts.py` runs every hookup on empty configs and checks the Neovim module (`NvimModule`).
-- Never apply a hookup to the real configs: run `integration_hookup.py` with a scratch `HOME`/`XDG_CONFIG_HOME` (AGENTS.md › Never, while testing).
+- `backend/internal/hookup`: each place's edit, done/skipped/conflict decisions, resolving (candidates, shells, profiles). `backend/internal/compositor/edit` (`hookup_test.go`): every schema hookup applied to empty configs in a scratch home, links followed and backed up, read-only links skipped or wrapped, profiles, kdeglobals' two targets, conflicts, `requires`, copies, the compositor's given targets.
+- `tests/scripts/test_scripts.py` checks the Neovim module (`NvimModule`).
+- Never apply a hookup to the real configs: the Go tests run in a scratch home; `hookup.apply` goes only to a scratch daemon (AGENTS.md › Never, while testing; `guard.py` refuses it by hand against the live one).

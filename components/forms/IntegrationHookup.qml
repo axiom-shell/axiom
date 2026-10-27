@@ -26,7 +26,7 @@ Rectangle {
 
   readonly property var rows: IntegrationHookupManager.status[root.integration]?.targets ?? []
   readonly property var results: IntegrationHookupManager.results[root.integration] ?? []
-  readonly property bool busy: IntegrationHookupManager.busy[root.integration] === true
+  readonly property bool busy: IntegrationHookupManager.busy[root.integration] > 0
   readonly property string note: IntegrationHookupManager.note(root.integration)
 
   // Targets Apply would change

@@ -25,8 +25,8 @@ QtObject {
   readonly property string toolBin: Quickshell.env("AXIOM_DAEMON_PID") ? `/proc/${Quickshell.env("AXIOM_DAEMON_PID")}/exe` : root.axiomBin
   // The restart binds' command: axiom restarts the shell it runs
   readonly property string restartCommand: `${root.shellCommand} restart`
-  // A line in a compositor config that starts axiom (Python regex, for
-  // integration_hookup.py's `accept`): `axiom run`
+  // A line in a compositor config that starts axiom (a Go regexp, for the
+  // autostart hookup's `accept`): `axiom run`
   readonly property string startPattern: "(^|[\\s'\"/])axiom['\"]? +run\\b"
   readonly property string themePath: root.axiomPath + "config/themes/"
   readonly property string scriptsPath: root.axiomPath + "scripts/"

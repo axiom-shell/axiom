@@ -130,7 +130,7 @@ Nothing in v2's shape depends on these; rule 11's folders are where they would g
   - the form controls (duration units).
 - **Enum case** (rule 6) is the widest change: `edge === "Top"` style comparisons across the bar, popout and edge code. Readers could normalize instead, but that keeps two spellings alive. **Recommended: change them**, file by file with the readers.
 - **Type folders** (rule 11): the loaders (`BarContainer`, `OverlaySlot`, `ExpandedModule`, `BarPopouts`, `SubPopout`, `OverlayPages`), the discovery in `backend/internal/schema/yamlsrc/assemble.go`, the `qs.` imports of moved private parts and shared bases, and the scripts that find type files (`check_structure.py`, `gen_docs.py`, `check_docs.py`). Moving the files changes no config, so it can land as its own commit first.
-- **Python consumers** of annotations change in the same commit: `check_i18n.py` (or the pre-commit prune drops translations), `check_structure.py`, `gen_docs.py`, `integration_hookup.py`, `guard.py`.
+- **Python consumers** of annotations change in the same commit: `check_i18n.py` (or the pre-commit prune drops translations), `check_structure.py`, `gen_docs.py`, `guard.py` (and the daemon's readers: `daemon/theme.go`'s `x-hookup` and `x-profiles`).
 
 ## Open questions
 1. **Collection key:** `items` everywhere (`Overlay.items`), or a name per section (`Overlay.pages`, `Dock.docks`)? Recommended: `items`. One generic collection editor and one path rule are worth the less descriptive name.

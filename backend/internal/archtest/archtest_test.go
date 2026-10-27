@@ -50,6 +50,7 @@ var tiers = map[string]int{
 	"internal/calendar/ical":       tierPure,
 	"internal/theme/palette":       tierPure,
 	"internal/theme/integrations":  tierPure,
+	"internal/hookup":              tierPure,
 	"internal/assets":              tierEdge,
 	"internal/brightness":          tierEdge,
 	"internal/buildinfo":           tierEdge,

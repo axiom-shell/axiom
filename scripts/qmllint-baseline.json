@@ -14,6 +14,10 @@
     "missing-property: Member \"implicitHeight\" not found on type \"QObject\"": 1,
     "missing-property: Member \"implicitWidth\" not found on type \"QObject\"": 1
   },
+  "components/bar/widgets/base/BaseWidget.qml": {
+    "missing-property: Member \"implicitHeight\" not found on type \"QObject\"": 1,
+    "missing-property: Member \"implicitWidth\" not found on type \"QObject\"": 1
+  },
   "components/content/SystemTray/SystemTray.qml": {
     "missing-property: Member \"menuItem\" not found on type \"QQuickItem\"": 1
   },
@@ -76,10 +80,6 @@
     "missing-property: Member \"contentReady\" not found on type \"QQuickItem\"": 1,
     "missing-type: No type found for property \"adjustment\". This may be due to a missing import statement or incomplete qmltypes files.": 1
   },
-  "components/bar/widgets/base/BaseWidget.qml": {
-    "missing-property: Member \"implicitHeight\" not found on type \"QObject\"": 1,
-    "missing-property: Member \"implicitWidth\" not found on type \"QObject\"": 1
-  },
   "components/reusable/StyledScrollView.qml": {
     "import: ScrollBar.vertical was not found. Did you add all imports and dependencies?": 1,
     "missing-property: Member \"pressed\" not found on type \"QQuickItem\"": 1,
@@ -107,21 +107,15 @@
   "components/surfaces/notifications/NotificationToast.qml": {
     "missing-type: No type found for property \"adjustment\". This may be due to a missing import statement or incomplete qmltypes files.": 1
   },
-  "services/system/BluetoothManager.qml": {
-    "unresolved-type: Type \"BluetoothAdapter\" of property \"defaultAdapter\" not found. This is likely due to a missing dependency entry or a type not being exposed declaratively.": 1
-  },
   "services/core/FileManager.qml": {
     "missing-property: Member \"loaded\" not found on type \"QObject\"": 1,
     "missing-property: Member \"text\" not found on type \"QObject\"": 1
   },
+  "services/system/BluetoothManager.qml": {
+    "unresolved-type: Type \"BluetoothAdapter\" of property \"defaultAdapter\" not found. This is likely due to a missing dependency entry or a type not being exposed declaratively.": 1
+  },
   "services/system/MediaManager.qml": {
     "unqualified: Unqualified access": 1
-  },
-  "services/core/ThemeManager.qml": {
-    "missing-property: Member \"command\" not found on type call to method objectAt, returning QObject": 1,
-    "missing-property: Member \"queued\" not found on type call to method objectAt, returning QObject": 1,
-    "missing-property: Member \"running\" not found on type \"QObject\"": 1,
-    "missing-property: Member \"running\" not found on type call to method objectAt, returning QObject": 1
   },
   "shell/NoParentNotice.qml": {
     "unqualified: unknown grouped property scope margins.": 1,

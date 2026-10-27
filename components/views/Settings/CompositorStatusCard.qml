@@ -314,7 +314,7 @@ FieldGroup {
     // While it isn't loaded: adds the lines (with a backup), as the
     // notification's Add it for me does
     canAdd: root.status !== "loaded" && CompositorConfigManager.includeTarget !== null
-    adding: IntegrationHookupManager.busy.compositorModule === true
+    adding: IntegrationHookupManager.busy.compositorModule > 0
     onCopyClicked: CompositorConfigManager.copyIncludeLines()
     onAddClicked: CompositorConfigManager.addIncludeLines()
   }
@@ -331,7 +331,7 @@ FieldGroup {
     }
     lines: CompositorConfigManager.autostartLines
     canAdd: CompositorConfigManager.autostartTarget !== null
-    adding: IntegrationHookupManager.busy.compositorAutostart === true
+    adding: IntegrationHookupManager.busy.compositorAutostart > 0
     added: root.autostartAdded
     onCopyClicked: CompositorConfigManager.copyAutostartLines()
     onAddClicked: CompositorConfigManager.addAutostartLines()
