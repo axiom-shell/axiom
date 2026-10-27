@@ -96,8 +96,10 @@ func TestStreamRestartsWithBackoff(t *testing.T) {
 		}
 	}
 	exited("1")
+	h.clock.waiting(t)
 	h.clock.Advance(firstBackoff)
 	exited("2")
+	h.clock.waiting(t)
 	h.clock.Advance(firstBackoff)
 	s.quiet(t)
 	h.clock.Advance(firstBackoff)

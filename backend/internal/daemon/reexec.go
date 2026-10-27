@@ -17,9 +17,9 @@ import (
 // reexecEnv carries a handoff from the image before a re-exec (an updated
 // binary taking over) to the one after: the descriptors it keeps open and
 // the shell it supervises and the commands it runs (still this process's
-// children: execve keeps the pid). The handoff is trusted only when its instance-lock descriptor
-// really is the held lock of this display, which only the previous holder
-// could pass on.
+// children: execve keeps the pid). The handoff is trusted only when its
+// instance-lock descriptor really is the held lock of this display, which
+// only the previous holder could pass on.
 const reexecEnv = "AXIOM_REEXEC"
 
 type handoff struct {
@@ -93,8 +93,13 @@ func (d *Daemon) reexec(exe string) (err error) {
 	syscall.ForkLock.Lock()
 	defer syscall.ForkLock.Unlock()
 	fds := []int{h.Lock, h.ConfigLock, h.Listener}
+	h.Children = d.children.Handoff()
+	for _, ch := range h.Children {
+		fds = append(fds, ch.Output...)
+	}
 	defer func() {
 		if err != nil {
+			d.children.Resume()
 			for _, fd := range fds {
 				unix.FcntlInt(uintptr(fd), unix.F_SETFD, unix.FD_CLOEXEC)
 			}
@@ -104,10 +109,6 @@ func (d *Daemon) reexec(exe string) (err error) {
 		if _, err := unix.FcntlInt(uintptr(fd), unix.F_SETFD, 0); err != nil {
 			return axerr.Wrap(axerr.Internal, err, "keeping a descriptor across the re-exec")
 		}
-	}
-	h.Children = d.children.Handoff()
-	for _, ch := range h.Children {
-		fds = append(fds, ch.Output...)
 	}
 	data, _ := json.Marshal(h)
 	env := []string{reexecEnv + "=" + string(data)}

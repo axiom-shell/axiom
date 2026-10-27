@@ -12,7 +12,7 @@ import (
 )
 
 // A running command is listed for a re-exec with its output's
-// descriptors kept across an exec, and dropped once it's done.
+// descriptors, and dropped once it's done.
 func TestChildrenHandoff(t *testing.T) {
 	t.Parallel()
 	var children Children
@@ -30,17 +30,11 @@ func TestChildrenHandoff(t *testing.T) {
 		n := len(children.m)
 		children.mu.Unlock()
 		if n > 0 {
-			syscall.ForkLock.Lock()
 			listed = children.Handoff()
-			for _, ch := range listed {
-				for _, fd := range ch.Output {
-					syscall.CloseOnExec(fd)
-				}
-			}
-			syscall.ForkLock.Unlock()
+			children.Resume()
 		}
 	}
-	if len(listed) != 1 || len(listed[0].Output) != 2 || listed[0].Stop {
+	if len(listed) != 1 || len(listed[0].Output) != 2 || listed[0].Stream {
 		t.Fatalf("listed %+v", listed)
 	}
 	if res := <-done; res.Stdout != "hi\n" {

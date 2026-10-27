@@ -36,6 +36,23 @@ func (c *fakeClock) After(d time.Duration) <-chan time.Time {
 	return ch
 }
 
+// waiting returns once something waits on the clock: an Advance made
+// before a loop's After would move the wait it then sets past the advance.
+func (c *fakeClock) waiting(t *testing.T) {
+	t.Helper()
+	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(5 * time.Millisecond) {
+		c.mu.Lock()
+		n := len(c.waits)
+		c.mu.Unlock()
+		if n > 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("nothing waits on the clock")
+		}
+	}
+}
+
 func (c *fakeClock) Advance(d time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

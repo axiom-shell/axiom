@@ -235,7 +235,6 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
 - [The updates check warns when a daemon re-exec kills checkupdates](issues.md#the-updates-check-warns-when-a-daemon-re-exec-kills-checkupdates)
-- [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
 - [A screenshot under niri timed out waiting for its frame](issues.md#a-screenshot-under-niri-timed-out-waiting-for-its-frame)
 
 ### Phase 9: docs, tooling and process
@@ -310,3 +309,4 @@ Extremely rare paths, put after real gaps (2026-10-26):
 
 Deferred by the maintainer (2026-10-27):
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
+- [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)

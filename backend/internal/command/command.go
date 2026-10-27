@@ -112,12 +112,11 @@ func Spawn(ctx context.Context, o Options, argv []string) error {
 }
 
 // start starts cmd with its stdout and stderr copied to the writers
-// through pipes of its own, held in children while it runs so a re-exec
-// can hand them on (stop: the command is stopped then, a stream). wait
-// waits for it to exit and for its output, at most pipeWait past its exit
-// (a background child it left may hold the pipes for as long as it
-// lives).
-func start(cmd *exec.Cmd, children *Children, stop bool, stdout, stderr io.Writer) (wait func(), err error) {
+// through pipes of its own, listed in children while it runs for a
+// re-exec to hand on. wait waits for it, and for its output at most
+// pipeWait past its exit (a background child it left may hold the pipes
+// for as long as it lives).
+func start(cmd *exec.Cmd, children *Children, stream bool, stdout, stderr io.Writer) (wait func(), err error) {
 	var reads []*os.File
 	closeAll := func() {
 		for _, r := range reads {
@@ -125,7 +124,8 @@ func start(cmd *exec.Cmd, children *Children, stop bool, stdout, stderr io.Write
 		}
 	}
 	copied := make(chan struct{}, 2)
-	for _, w := range []io.Writer{stdout, stderr} {
+	ends := []*io.Writer{&cmd.Stdout, &cmd.Stderr}
+	for i, w := range []io.Writer{stdout, stderr} {
 		r, pw, err := os.Pipe()
 		if err != nil {
 			closeAll()
@@ -133,11 +133,7 @@ func start(cmd *exec.Cmd, children *Children, stop bool, stdout, stderr io.Write
 		}
 		defer pw.Close() // the child has its copy
 		reads = append(reads, r)
-		if cmd.Stdout == nil {
-			cmd.Stdout = pw
-		} else {
-			cmd.Stderr = pw
-		}
+		*ends[i] = pw
 		go func() {
 			io.Copy(w, r)
 			copied <- struct{}{}
@@ -147,13 +143,14 @@ func start(cmd *exec.Cmd, children *Children, stop bool, stdout, stderr io.Write
 		closeAll()
 		return nil, err
 	}
-	child := Child{PID: cmd.Process.Pid, Stop: stop, files: reads}
 	if children == nil {
 		children = &Children{} // nobody hands it on
 	}
-	children.add(child)
+	children.add(Child{PID: cmd.Process.Pid, Stream: stream, files: reads})
 	return func() {
 		cmd.Wait()
+		// Before its pipes close: a handoff holding the list keeps them
+		children.remove(cmd.Process.Pid)
 		timeout := time.After(pipeWait)
 		for range 2 {
 			select {
@@ -163,7 +160,6 @@ func start(cmd *exec.Cmd, children *Children, stop bool, stdout, stderr io.Write
 				<-copied
 			}
 		}
-		children.remove(child.PID)
 		closeAll()
 	}, nil
 }
