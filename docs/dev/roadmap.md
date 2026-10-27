@@ -299,6 +299,9 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.
 
+Found while porting the scripts (backend stage 4):
+- [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
+
 Found by the audits:
 
 ### Deferred

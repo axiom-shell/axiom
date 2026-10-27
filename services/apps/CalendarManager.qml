@@ -181,9 +181,13 @@ QtObject {
         "url": account.url,
         "username": account.username,
         "password": secret
-      }, (error, result) => callback?.(error ? root._failure(error) : {
+      }, (error, result) => callback?.(error ? root._failure(error) : result.calendars.length > 0 ? {
           "ok": true,
           "calendars": result.calendars
+        } : {
+          "ok": false,
+          "kind": "no_calendars",
+          "message": "No calendars found at that address"
         }));
     };
     if (password || account.kind !== "caldav")
@@ -193,7 +197,7 @@ QtObject {
   }
 
   // Saves a draft (CalendarEvents.newDraft/draftOf): a new event without an
-  // href; `scope` "series" or "occurrence". Calls back with { ok, code,
+  // href; `scope` "series" or "occurrence". Calls back with { ok, kind,
   // message }.
   function save(draft, scope, callback) {
     if (Paths.greeter)
@@ -202,7 +206,7 @@ QtObject {
     if (!calendar?.writable)
       return callback?.({
         "ok": false,
-        "code": "readOnly",
+        "kind": "refused",
         "message": "That calendar can't be changed"
       });
     // Moving an event to another calendar: a new one there, then the old
@@ -251,7 +255,7 @@ QtObject {
     if (!calendar?.writable)
       return callback?.({
         "ok": false,
-        "code": "readOnly",
+        "kind": "refused",
         "message": "That calendar can't be changed"
       });
     root.events = root.events.filter(e => scope === "occurrence" ? e.key !== event.key : e.href !== event.href);
@@ -315,22 +319,25 @@ QtObject {
     return request;
   }
 
-  // A failed save, delete or discover, for people
+  // A failed save, delete or discover, for people: by its axerr kind, or
+  // the shell's own no_calendars and no_password
   function errorText(result) {
-    switch (result?.code) {
-    case "auth":
+    switch (result?.kind) {
+    case "unauthorized":
       return I18n.tr("The server refused the username or password.");
-    case "network":
+    case "unavailable":
       return I18n.tr("Couldn't reach the server.");
-    case "notFound":
+    case "not_found":
       return I18n.tr("Nothing was found at that address.");
+    case "no_calendars":
+      return I18n.tr("No calendars were found at that address.");
     case "conflict":
       return I18n.tr("The event changed elsewhere. It has been reloaded: check it and try again.");
-    case "readOnly":
+    case "refused":
       return I18n.tr("This calendar can't be changed.");
-    case "noPassword":
+    case "no_password":
       return I18n.tr("No password is saved for this account.");
-    case "parse":
+    case "bad_reply":
       return I18n.tr("The server sent something unreadable.");
     default:
       return result?.message ?? "";
@@ -416,23 +423,15 @@ QtObject {
 
   readonly property var _noPassword: ({
       "ok": false,
-      "code": "noPassword",
+      "kind": "no_password",
       "message": "No password saved for this account"
     })
 
-  // A failed call as the result callers get: errorText's code by its kind
+  // A failed call as the result callers get
   function _failure(error) {
-    const codes = {
-      "unauthorized": "auth",
-      "unavailable": "network",
-      "not_found": "notFound",
-      "conflict": "conflict",
-      "refused": "readOnly",
-      "bad_reply": "parse"
-    };
     return {
       "ok": false,
-      "code": codes[error.kind] ?? "",
+      "kind": error.kind,
       "message": error.message
     };
   }

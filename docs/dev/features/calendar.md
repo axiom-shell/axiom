@@ -29,9 +29,9 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 
 ### Calls
 - `calendar.discover`, `calendar.sync`, `calendar.save`, `calendar.delete` through `BackendManager.call`; the sync, save and delete take the `range` and every account with its shown calendars (`_withAccounts`).
-  - Passwords come from `SecretsManager.withSecret("calendar", id)`, in the call's params (never argv or a file). The daemon never logs or writes them. An edit or discovery for a CalDAV account with no password saved isn't sent: it fails as `noPassword` in the shell.
-- A failure is an RPC error with an `axerr` kind; `_failure` turns it into the result callers get, `{ ok: false, code, message }`, its code by the kind: `unauthorized` → `auth`, `unavailable` → `network`, `not_found` → `notFound`, `conflict`, `refused` → `readOnly`, `bad_reply` → `parse`; any other kind shows its message.
-- `errorText(result)` turns these into words.
+  - Passwords come from `SecretsManager.withSecret("calendar", id)`, in the call's params (never argv or a file). The daemon never logs or writes them. An edit or discovery for a CalDAV account with no password saved isn't sent: it fails as `no_password` in the shell.
+- A failure is an RPC error with an `axerr` kind; `_failure` turns it into the result callers get, `{ ok: false, kind, message }`. The shell adds two kinds of its own, `no_password` and `no_calendars`; a read-only calendar's edit is `refused` before any call.
+- `errorText(result)` turns these into words by kind (`unauthorized`, `unavailable`, `not_found`, `no_calendars`, `conflict`, `refused`, `no_password`, `bad_reply`); any other kind shows its message.
 - One call runs at a time (the daemon also takes them one at a time). Later jobs are queued, and a sync isn't queued twice. `discover` isn't queued: it writes nothing a sync reads.
 
 ### Discover
@@ -39,7 +39,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
   - `current-user-principal` → `calendar-home-set` → the collections;
   - redirects are followed for every method, which iCloud's per-user host needs;
   - `/.well-known/caldav` is tried second.
-  - No calendars at either is `not_found`, as nothing at the address is.
+  - Collections but no calendar at the last one tried is an empty list, which the shell shows as `no_calendars` ("No calendars were found"), apart from nothing at the address (`not_found`).
 - For a feed, it reads the feed's name and color.
 
 ### Sync

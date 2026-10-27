@@ -292,7 +292,8 @@ func calendarInfo(href string, p props) Info {
 
 // discoverCalDAV finds an account's calendars from any URL on its server:
 // the principal, its calendar home, the collections there; then the same
-// from /.well-known/caldav
+// from /.well-known/caldav. None when the last one tried has none (the
+// shell says so apart from nothing at the address).
 func discoverCalDAV(ctx context.Context, d *dav, start string) ([]Info, error) {
 	base, err := url.Parse(start)
 	if err != nil {
@@ -342,9 +343,9 @@ func discoverCalDAV(ctx context.Context, d *dav, start string) ([]Info, error) {
 			slices.SortStableFunc(calendars, func(a, b Info) int { return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name)) })
 			return calendars, nil
 		}
-		last = fail(axerr.NotFound, "No calendars found at that address")
+		last = nil
 	}
-	return nil, last
+	return []Info{}, last
 }
 
 func resolve(base, ref string) string {

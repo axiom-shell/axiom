@@ -161,6 +161,16 @@ func TestDiscoverFailures(t *testing.T) {
 			t.Errorf("%+v: %v, want %s", c.request, err, c.kind)
 		}
 	}
+	// Collections, none a calendar, at the URL and at /.well-known/caldav
+	empty := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(207)
+		fmt.Fprintf(w, `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:"><d:response><d:href>%s</d:href><d:propstat><d:prop>`+
+			`<d:resourcetype><d:collection/></d:resourcetype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`, r.URL.Path)
+	}))
+	t.Cleanup(empty.Close)
+	if got, err := s.Discover(context.Background(), DiscoverRequest{Kind: "caldav", URL: empty.URL + "/dav/", Password: "p"}); err != nil || got.Calendars == nil || len(got.Calendars) != 0 {
+		t.Errorf("no calendars: %+v %v, want none and no error", got, err)
+	}
 	for in, want := range map[string]string{"webcal://a.b/c.ics": "https://a.b/c.ics", " dav.example.com ": "https://dav.example.com", "http://x": "http://x"} {
 		if got := normalizeURL(in); got != want {
 			t.Errorf("%q: %q, want %q", in, got, want)
