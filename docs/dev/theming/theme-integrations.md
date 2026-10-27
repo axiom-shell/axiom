@@ -15,7 +15,7 @@ How axiom themes other apps: the daemon writes each app's own `axiom.*` file, an
   - when the active theme's name or contents change;
   - for one integration, as soon as its switch turns on (`_enabledIntegrations` compared against those of the last full run, `_themed`);
   - nothing until the first full run, so loading the config doesn't run them twice.
-- A call while a run is going joins it: its keys run after, for the theme asked last (so a quick light-dark-light never ends on the middle one), and it gets no results back.
+- A call while a run is going joins it: its keys run after, for the theme asked last (so a quick light-dark-light never ends on the middle one), and it gets an empty `results` back. Each theme file is read once per run.
 - Each switch is hooked into its app by `IntegrationHookupManager` (see Hookup below).
 
 ### The renderer and the writer (`backend/internal/theme`)
@@ -37,7 +37,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - Contrast flooring keeps the most chroma that fits in sRGB at each lightness (the jq version shrank chroma by steps of 5%), so a floored color comes out a little more saturated: terminal colors on light themes shift slightly. Colors that already passed are unchanged (Catppuccin Mocha's files came out byte for byte the same).
 - An app that isn't installed no longer fails its integration: the file is written anyway (an app installed later finds it), and only the reload needs the app.
 - JSON files (VS Code, Zed, Neovim) are rendered from templates or Go, so their whitespace and key order differ (Neovim's maps are sorted); their content is the same.
-- Firefox's profiles are read by the daemon from the schema's `x-profiles`, no longer through `integration_hookup.py profiles`.
+- Firefox's profiles are read by the daemon from the schema's `x-profiles`, no longer through `integration_hookup.py profiles` (that action went).
 - The scripts' progress lines are gone (how many kitty and Neovim instances reloaded goes to the daemon's log at info); only problems reach the shell.
 
 ### Qt and KDE apps
@@ -94,7 +94,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
   - repeated for every browser profile listed by the profiles.ini files in the integration's `x-profiles` (Firefox and its forks, native and Flatpak);
   - skipped as `profiles` when there are none;
   - the target's `file` is relative to the profile.
-- `integration_hookup.py profiles <key>` prints those profiles. The `firefox` integration reads the same profiles.ini files itself to write `chrome/axiom.css` (imported atop `userChrome.css`, with `toolkit.legacyUserProfileCustomizations.stylesheets` in `user.js`; the browser reads it at startup).
+- The `firefox` integration reads the same profiles.ini files itself to write `chrome/axiom.css` (imported atop `userChrome.css`, with `toolkit.legacyUserProfileCustomizations.stylesheets` in `user.js`; the browser reads it at startup).
 - Apply's safety:
   - backs each changed file up beside the real file (`<name>.axiom-bak-<time>`);
   - follows a symlink and keeps it (so a dotfiles repo's file is edited);

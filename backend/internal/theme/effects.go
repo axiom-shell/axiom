@@ -150,7 +150,8 @@ func signalAll(name string, sig syscall.Signal) {
 
 // writable: the file a path names, and its folder, can be changed.
 func writable(path string) bool {
-	return syscall.Access(path, 2) == nil && syscall.Access(filepath.Dir(path), 2) == nil
+	const wOK = 2 // access(2)'s W_OK
+	return syscall.Access(path, wOK) == nil && syscall.Access(filepath.Dir(path), wOK) == nil
 }
 
 // gtk: says which gtk.css doesn't load the colors (one it created does),

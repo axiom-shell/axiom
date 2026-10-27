@@ -73,8 +73,9 @@ type IntegrationResult struct {
 
 // Run themes the integrations keys name for the theme file at themePath.
 // While a run is going, a call only queues its keys for it (each runs for
-// the latest theme asked) and returns no results: a quick light-dark-light
-// never ends on the middle one. An unknown key is axerr.BadRequest.
+// the latest theme asked) and returns no results (an empty list, as JSON
+// [] for the shell to loop over): a quick light-dark-light never ends on
+// the middle one. An unknown key is axerr.BadRequest.
 func (in *Integrator) Run(ctx context.Context, themePath string, keys []string) ([]IntegrationResult, error) {
 	for _, k := range keys {
 		if _, ok := integrations.Table[k]; !ok {
@@ -89,22 +90,60 @@ func (in *Integrator) Run(ctx context.Context, themePath string, keys []string) 
 	}
 	if in.running {
 		in.mu.Unlock()
-		return nil, nil
+		return []IntegrationResult{}, nil
 	}
 	in.running = true
-	var results []IntegrationResult
-	for len(in.pending) > 0 {
+	in.mu.Unlock()
+	// A panic (recovered by the rpc server) mustn't leave every later
+	// call queued for a run that's gone
+	defer func() {
+		if p := recover(); p != nil {
+			in.mu.Lock()
+			in.running = false
+			in.mu.Unlock()
+			panic(p)
+		}
+	}()
+	results := []IntegrationResult{}
+	for {
+		in.mu.Lock()
 		batch := in.pending
+		if len(batch) == 0 {
+			in.running = false
+			in.mu.Unlock()
+			return results, nil
+		}
 		in.pending = map[string]string{}
 		in.mu.Unlock()
+		loaded := map[string]loadedTheme{} // each theme file read once
 		for _, k := range slices.Sorted(maps.Keys(batch)) {
-			results = append(results, in.one(ctx, k, batch[k]))
+			path := batch[k]
+			l, ok := loaded[path]
+			if !ok {
+				l.theme, l.err = loadTheme(path)
+				loaded[path] = l
+			}
+			results = append(results, in.one(ctx, k, l))
 		}
-		in.mu.Lock()
 	}
-	in.running = false
-	in.mu.Unlock()
-	return results, nil
+}
+
+type loadedTheme struct {
+	theme *integrations.Theme
+	err   error
+}
+
+// loadTheme reads a theme file over the theme defaults.
+func loadTheme(themePath string) (*integrations.Theme, error) {
+	data, err := os.ReadFile(themePath)
+	if err != nil {
+		return nil, axerr.Wrap(axerr.NotFound, err, "can't read the theme")
+	}
+	defaults, err := assets.Read("config/json/theme-defaults.json")
+	if err != nil {
+		return nil, axerr.Wrap(axerr.Internal, err, "theme defaults")
+	}
+	return integrations.Parse(data, defaults, strings.TrimSuffix(filepath.Base(themePath), ".json"))
 }
 
 // run is one integration's run in progress.
@@ -124,12 +163,16 @@ func (r *run) warn(format string, args ...any) {
 
 func (r *run) has(cmd string) bool { _, err := r.opts.LookPath(cmd); return err == nil }
 
-func (in *Integrator) one(ctx context.Context, key, themePath string) IntegrationResult {
+func (in *Integrator) one(ctx context.Context, key string, l loadedTheme) IntegrationResult {
 	result := IntegrationResult{Key: key, Files: []string{}, Warnings: []string{}}
 	b := xdg.ResolveBases(in.opts.Getenv)
 	r := &run{Integrator: in, ctx: ctx, key: key, result: &result, files: map[string][]byte{},
-		dirs: integrations.Dirs{Home: b.Home, Config: b.Config, State: b.State, Data: b.Data}}
-	if err := r.write(themePath); err != nil {
+		dirs: integrations.Dirs{Home: b.Home, Config: b.Config, State: b.State, Data: b.Data}, theme: l.theme}
+	err := l.err
+	if err == nil {
+		err = r.write()
+	}
+	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
@@ -140,18 +183,7 @@ func (in *Integrator) one(ctx context.Context, key, themePath string) Integratio
 }
 
 // write renders and writes the integration's files.
-func (r *run) write(themePath string) error {
-	data, err := os.ReadFile(themePath)
-	if err != nil {
-		return axerr.Wrap(axerr.NotFound, err, "can't read the theme")
-	}
-	defaults, err := assets.Read("config/json/theme-defaults.json")
-	if err != nil {
-		return axerr.Wrap(axerr.Internal, err, "theme defaults")
-	}
-	if r.theme, err = integrations.Parse(data, defaults, strings.TrimSuffix(filepath.Base(themePath), ".json")); err != nil {
-		return err
-	}
+func (r *run) write() error {
 	integ := integrations.Table[r.key]
 	places := []string{""}
 	if integ.Each != nil || integ.Profiles {

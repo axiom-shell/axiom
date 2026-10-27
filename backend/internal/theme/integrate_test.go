@@ -222,7 +222,7 @@ func TestIntegrateQueuesDuringARun(t *testing.T) {
 	t.Parallel()
 	home, in := scratch(t)
 	in.running = true
-	if results, err := in.Run(context.Background(), themes+"ayu-light.json", []string{"kitty"}); err != nil || results != nil {
+	if results, err := in.Run(context.Background(), themes+"ayu-light.json", []string{"kitty"}); err != nil || results == nil || len(results) != 0 {
 		t.Fatalf("%v %v", results, err)
 	}
 	in.running = false
