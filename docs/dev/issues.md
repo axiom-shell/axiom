@@ -121,6 +121,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
+### Apps the shell starts run without transparent huge pages
+- **Where:** `services/ui/LauncherManager.qml` (`launchApp`), `services/system/NotificationManager.qml`, `backend/internal/supervise/supervise.go` (`ExecNoTHP`)
+- **What:** qs runs with `PR_SET_THP_DISABLE` ([memory](core/memory.md) › Transparent huge pages), which every child inherits across exec. Apps started through `DesktopEntry.execute()` (the launcher, dock and Favourites through `launchApp`, and a notification's app) are qs's own children, so they run without huge pages too, for their whole life: a browser, game or JVM started from the launcher, unlike one started from a terminal or a compositor bind. A terminal app (`runInTerminal`) goes through `CommandManager.runDetached` (the daemon's `exec.spawn`) and keeps them. Starting every app through `exec.spawn` would keep the opt-out to the shell alone, but `exec.spawn` takes no working directory (a desktop entry's `Path=`), so it needs a `cwd` param or the maintainer accepting that loss.
+- **Size:** small
+- **Found:** 2026-10-27, while reviewing the shell's THP opt-out (roadmap row 9)
+
 ### Nineteen windows stay mapped on one monitor
 - **Where:** `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/border/BorderPanel.qml`, `components/surfaces/backdrop/ScreenBackdrop.qml`, `shell/BlurBackingWindow.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/overlay/OverlayPanel.qml`
 - **What:** Each window has its own render thread and GL context (19 `QSGRenderThread`s on one niri monitor). 9 are the border (4 strips, 4 corners, the shadow); the backdrop, blur backing and border shadow are `held` only for niri's map-order stacking. About 25 more (overlay, launcher, a submenu per popout host, edge-popout bodies, power menu, overview, switcher, prompts) keep their context for the session once shown. Options: strips drawing their own corners, windows unloaded a while after they hide, one stacking anchor instead of three held windows ([layer arrangement](compositor/layer-arrangement.md)).
