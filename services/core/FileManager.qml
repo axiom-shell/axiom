@@ -25,26 +25,33 @@ QtObject {
   }
 
   // Calls fn() whenever path (absolute) changes on disk, except by a
-  // write of its own. Pair with unwatch(path, fn)
+  // write of its own; returns the watch, for unwatch(watch)
   function watch(path, fn) {
-    const fns = root._watched[path] ?? [];
-    fns.push(fn);
-    root._watched[path] = fns;
-    if (fns.length === 1)
+    const watch = {
+      "path": path,
+      "fn": fn
+    };
+    const watches = root._watched[path] ?? [];
+    watches.push(watch);
+    root._watched[path] = watches;
+    if (watches.length === 1)
       BackendManager.call("file.watch", {
         "path": path
       }, root._logFailure);
+    return watch;
   }
 
-  function unwatch(path, fn) {
-    const fns = (root._watched[path] ?? []).filter(f => f !== fn);
-    if (fns.length > 0) {
-      root._watched[path] = fns;
+  function unwatch(watch) {
+    if (!watch)
+      return;
+    const watches = (root._watched[watch.path] ?? []).filter(other => other !== watch);
+    if (watches.length > 0) {
+      root._watched[watch.path] = watches;
       return;
     }
-    delete root._watched[path];
+    delete root._watched[watch.path];
     BackendManager.call("file.unwatch", {
-      "path": path
+      "path": watch.path
     }, root._logFailure);
   }
 
@@ -84,13 +91,15 @@ QtObject {
     }
   }
 
-  Component.onCompleted: BackendManager.listen("file.changed", change => (root._watched[change.path] ?? []).forEach(fn => fn()))
+  Component.onCompleted: BackendManager.listen("file.changed", change => (root._watched[change.path] ?? []).forEach(watch => watch.fn()))
 
   // Contents of a file (a file:// URL or an absolute path), or null if it
   // can't be read. A blocking FileView per read, so it needs no
   // QML_XHR_ALLOW_FILE_READ.
   function read(url) {
-    const path = decodeURIComponent(String(url).replace(/^file:\/\//, ""));
+    const text = String(url);
+    // A plain path may hold a "%" (a note's name)
+    const path = text.startsWith("file://") ? decodeURIComponent(text.slice(7)) : text;
     const view = root._reader.createObject(root, {
       "path": path
     });

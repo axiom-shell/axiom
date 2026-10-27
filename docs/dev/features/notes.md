@@ -20,7 +20,7 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
   - `flush()`.
 - Modules showing the same note therefore stay in sync.
 - `release(path)` flushes.
-- A change on disk reloads a document, unless it has edits waiting, in which case the edits win.
+- A document is read at once and saved and watched through axiom (`FileManager.write` / `watch`; a save makes the note's missing folders). A change on disk reloads it, unless it has edits waiting, in which case the edits win; its own saves don't count as changes.
 
 ### File operations
 - `createNote` / `createFolder` / `rename` / `trash` run argv processes.

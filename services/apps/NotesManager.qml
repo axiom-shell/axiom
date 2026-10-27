@@ -1,6 +1,5 @@
 pragma Singleton
 import QtQuick
-import Quickshell.Io
 import qs.config
 import qs.services.core
 
@@ -396,7 +395,9 @@ QtObject {
       // Edits waiting to be written
       property bool dirty: false
       property int refs: 0
-      property bool _retried: false
+      // Where it is on disk, and the file watched (FileManager)
+      readonly property string _file: root.absolute(doc.path)
+      property var _watch: null
 
       function edit(text) {
         if (text === doc.text)
@@ -411,7 +412,11 @@ QtObject {
         if (!doc.dirty)
           return;
         doc.dirty = false;
-        doc._view.setText(doc.text);
+        const path = doc.path;
+        FileManager.write(doc._file, doc.text, error => {
+          if (error)
+            root._fail(I18n.tr("Couldn't save {0}", path));
+        });
       }
 
       // Drops pending edits (the file went to the trash)
@@ -433,39 +438,32 @@ QtObject {
         onTriggered: doc.flush()
       }
 
-      property FileView _view: FileView {
-        path: root.absolute(doc.path)
-        watchChanges: true
-        atomicWrites: true
-        // Small files: a write finishes before the document can go away
-        blockWrites: true
-        printErrors: false
-        onLoaded: doc._fromDisk(text())
-        onFileChanged: {
-          if (doc.dirty)
-            console.warn("[NotesManager]", doc.path, "changed on disk while it had unsaved edits: keeping the edits");
-          else
-            reload();
-        }
-        // A new note: nothing on disk until the first edit
-        onLoadFailed: doc.loaded = true
-        onSaved: doc._retried = false
-        onSaveFailed: error => {
-          // Its folder may not exist yet (a configured work/todo.md):
-          // make it and write again, once
-          if (doc._retried) {
-            root._fail(I18n.tr("Couldn't save {0}", doc.path));
-            return;
-          }
-          doc._retried = true;
-          root._run(["mkdir", "-p", "--", root.absolute(root.parentOf(doc.path))], ok => {
-            if (ok)
-              doc._view.setText(doc.text);
-            else
-              root._fail(I18n.tr("Couldn't save {0}", doc.path));
-          });
-        }
+      // A new note: nothing on disk until the first edit
+      function _read() {
+        const text = FileManager.read(doc._file);
+        if (text === null)
+          doc.loaded = true;
+        else
+          doc._fromDisk(text);
       }
+
+      function _changed() {
+        if (doc.dirty)
+          console.warn("[NotesManager]", doc.path, "changed on disk while it had unsaved edits: keeping the edits");
+        else
+          doc._read();
+      }
+
+      // Watches and reads _file (again after a rename or a new folder)
+      function _follow() {
+        FileManager.unwatch(doc._watch);
+        doc._watch = FileManager.watch(doc._file, () => doc._changed());
+        doc._read();
+      }
+
+      on_FileChanged: doc._follow()
+      Component.onCompleted: doc._follow()
+      Component.onDestruction: FileManager.unwatch(doc._watch)
     }
   }
 }

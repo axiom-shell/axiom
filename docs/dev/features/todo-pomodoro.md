@@ -8,7 +8,7 @@ One todo list, one pomodoro timer and one one-off timer + stopwatch, each shown 
 
 ### Todo list
 - **Storage:** `$XDG_DATA_HOME/axiom/todo.json` (`TodoManager.path`): `{ version: 1, items }`. It's user content, not config: never exported, imported or snapshotted.
-  - Written atomically on every change (a `FileView`; the data folder is made on the first failed write) and watched, so an edit from elsewhere shows at once. An unreadable file is reported and the list shown stays.
+  - Written atomically on every change and watched, through axiom (`FileManager.write` / `watch`, which make the data folder), so an edit from elsewhere shows at once. An unreadable file is reported and the list shown stays.
   - Never read or written in the greeter.
 - **Items** (`TodoItems`, pure, `tst_TodoItems`): `{ uid, summary, done, created, completed, due, order }`. Every change returns a new list.
   - The fields are a CalDAV VTODO's (UID, SUMMARY, STATUS, CREATED, COMPLETED, DUE), so syncing a task list later maps them one to one. Not done: the calendar sync (`backend/internal/calendar`) reads only VEVENTs, and two-way task sync (servers differ, offline edits, subtasks, repeating tasks) is its own job.
