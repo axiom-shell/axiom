@@ -54,10 +54,6 @@
       "Process",
       "execDetached"
     ],
-    "services/core/SelfUpdateManager.qml": [
-      "Process",
-      "execDetached"
-    ],
     "services/core/StateManager.qml": [
       "Process",
       "FileView"

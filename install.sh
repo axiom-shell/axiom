@@ -467,7 +467,7 @@ fi
 
 # ─── The clone ───────────────────────────────────────────────────────────────
 
-is_axiom_clone() { [[ -f "$1/shell.qml" && -f "$1/scripts/self_update.sh" ]] && git -C "$1" rev-parse --git-dir >/dev/null 2>&1; }
+is_axiom_clone() { [[ -f "$1/shell.qml" && -f "$1/backend/go.mod" ]] && git -C "$1" rev-parse --git-dir >/dev/null 2>&1; }
 same_dir() { [[ "$(readlink -f "$1" 2>/dev/null)" == "$(readlink -f "$2" 2>/dev/null)" ]]; }
 
 # Run from a clone (not curl | bash): that clone is the install, wherever it is

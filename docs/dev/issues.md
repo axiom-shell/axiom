@@ -399,9 +399,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-16, while auditing the layer-placement branch
 
-### Self-update and the greeter installer assume git
-- **Where:** `services/core/SelfUpdateManager.qml`, `scripts/greeter/greeter_install.sh`
-- **What:** Self-update and the greeter installer work on `Paths.axiomPath` as a git clone. A package manager owns updates, so these should hide or switch when there is no `.git`. Blocks packaging, not the XDG move.
+### The greeter installer assumes git
+- **Where:** `scripts/greeter/greeter_install.sh`
+- **What:** The greeter installer works on `Paths.axiomPath` as a git clone. A package manager owns updates, so it should hide or switch when there is no `.git` (self-update already does: it says updates come from the package manager). Blocks packaging, not the XDG move.
 - **Size:** needs a plan
 - **Found:** 2026-10-15, while moving config and state to the XDG folders
 

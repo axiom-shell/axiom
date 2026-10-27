@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
 # Description: Tags and pushes an axiom release. Releases are annotated `v*`
-#              tags on main; self_update.sh moves clones between them and
-#              shows the tag message as the release notes (Settings → Updates
-#              and the "axiom updated" notification), so its first line
-#              should be a short summary.
+#              tags on main; self-update (the daemon's selfupdate.*) moves
+#              clones between them and shows the tag message as the release
+#              notes (Settings → Updates and the "axiom updated"
+#              notification), so its first line should be a short summary.
 # Usage:       scripts/release.sh <version> [--dry-run]
 #              version is X.Y.Z (a leading v is optional) and must be higher
 #              than the latest tag. Checks for a clean main that matches

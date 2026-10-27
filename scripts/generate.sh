@@ -14,8 +14,8 @@
 #     shell calls a daemon method or push the daemon doesn't define), after
 #     docs/dev/generated/rpc-shapes.json, the daemon's methods, pushes and
 #     topics with their fields (backend/tools/rpcshapes, through go run); a
-#     developer check, so --no-docs skips it: install.sh, self_update.sh and
-#     the AUR packages pass it, since a failed check mustn't stop an install
+#     developer check, so --no-docs skips it: install.sh and the AUR
+#     packages pass it, since a failed check mustn't stop an install
 #   - with --fixtures: tests/fixtures/shared/, the cases SchemaValidation
 #     and the binary share (scripts/dev/fixtures.py ensure: a few seconds
 #     when stale; needs Qt 6's qmltestrunner)

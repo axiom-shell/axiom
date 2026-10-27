@@ -97,7 +97,7 @@ def simple(tokens, exported):
     if Path(argv[0]).name in SHELLS and command_flag is not None:
         inner = argv[command_flag + 1]
         return [(dict(env, **e), a) for e, a in split_commands(inner)]
-    # A script run through a shell (`bash scripts/self_update.sh …`): judge the script
+    # A script run through a shell (`bash scripts/greeter/greeter_install.sh …`): judge the script
     if Path(argv[0]).name in SHELLS:
         rest = argv[1:]
         while rest and rest[0].startswith("-"):
@@ -328,11 +328,10 @@ def check_argv(env, argv, cwd):
     if sends and any("hookup.apply" in a for a in args) and axiom_live_display(env, args):
         deny("Never, while testing", "hookup.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it edits the real configs (test it with go test ./internal/compositor/edit).")
 
-    # Self-update on the live repo
-    if name == "self_update.sh" and "apply" in args:
-        rest = args[args.index("apply") + 1:]
-        if len(rest) < 2 or resolve(rest[1], cwd) == REPO:
-            deny("Never, while testing", "self_update.sh apply only on a scratch clone (give its dir), never the live repo.")
+    # A self-update (the daemon's selfupdate.apply, which updates the tree
+    # the daemon runs from: the live repo) sent to the live daemon by hand
+    if sends and any("selfupdate.apply" in a for a in args) and axiom_live_display(env, args):
+        deny("Never, while testing", "selfupdate.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it updates the live repo (test it with go test ./internal/selfupdate).")
 
     # The real config.json
     if name in {"rm", "unlink", "trash", "trash-put", "shred", "mv"}:

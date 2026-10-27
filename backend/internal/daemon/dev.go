@@ -433,14 +433,21 @@ func (m *devMode) build(ctx context.Context) {
 // binary is where dev builds go.
 func (m *devMode) binary() string { return m.d.dirs.State + "dev/axiom" }
 
-// compile runs go generate and go build into a temporary file, checks the
-// result runs, and puts it in place. It returns the tools' output.
+// compile builds the dev binary.
 func (m *devMode) compile(ctx context.Context) ([]byte, error) {
 	target := m.binary()
 	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
 		return nil, err
 	}
-	src := filepath.Join(m.d.opts.Tree, "backend")
+	return buildAxiom(ctx, m.d.opts.Go, m.d.opts.Tree, target)
+}
+
+// buildAxiom builds the tree's axiom binary to target (a dev build, or
+// the installed binary after a self-update): go generate, then go build
+// into a file beside it, checked to run before it replaces target. It
+// returns the tools' output.
+func buildAxiom(ctx context.Context, goBin, treeDir, target string) ([]byte, error) {
+	src := filepath.Join(treeDir, "backend")
 	next := target + ".new"
 	defer os.Remove(next)
 	var out bytes.Buffer
@@ -451,10 +458,10 @@ func (m *devMode) compile(ctx context.Context) ([]byte, error) {
 		cmd.Stdout, cmd.Stderr = &out, &out
 		return cmd.Run()
 	}
-	if err := run(m.d.opts.Go, "generate", "./internal/assets"); err != nil {
+	if err := run(goBin, "generate", "./internal/assets"); err != nil {
 		return out.Bytes(), axerr.Wrap(axerr.Unavailable, err, "go generate")
 	}
-	if err := run(m.d.opts.Go, "build", "-o", next, "./cmd/axiom"); err != nil {
+	if err := run(goBin, "build", "-o", next, "-trimpath", "./cmd/axiom"); err != nil {
 		return out.Bytes(), axerr.Wrap(axerr.Unavailable, err, "go build")
 	}
 	if err := run(next, "version"); err != nil {
