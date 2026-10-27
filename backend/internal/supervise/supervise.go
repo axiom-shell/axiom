@@ -8,12 +8,21 @@
 // The child gets the daemon's environment (apps the shell launches inherit
 // it, so it can't be cut down) with the AXIOM_* variables the daemon sets
 // replacing any inherited ones.
+//
+// With NoTHP the child runs with transparent huge pages off: freed heap
+// held in huge pages is never returned, and qs frees in small pieces. The
+// flag (PR_SET_THP_DISABLE) belongs to a process and its children, and
+// os/exec runs nothing between fork and exec, so the child is the running
+// axiom image (/proc/self/exe) with NoTHPArg, which sets it on itself and
+// execs the command (ExecNoTHP): the daemon, and what it launches, keep
+// huge pages.
 package supervise
 
 import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -25,12 +34,15 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
 
 // Options describe the child.
 type Options struct {
 	Command []string          // argv: qs -p <tree>
+	NoTHP   bool              // run Command with transparent huge pages off (ExecNoTHP)
 	Env     map[string]string // AXIOM_* (and any other) values set over the inherited environment
 	// EnvFunc, when set, is read at each start for values set over Env:
 	// what may change while the daemon runs (whether its config is writable)
@@ -254,7 +266,13 @@ func (s *Supervisor) start() <-chan exitResult {
 	s.extraEnv = nil
 	s.mu.Unlock()
 
-	cmd := exec.Command(s.opts.Command[0], s.opts.Command[1:]...)
+	argv := s.opts.Command
+	if s.opts.NoTHP {
+		// The image running, not the path it came from: an update may
+		// have replaced that with a binary of another version
+		argv = append([]string{"/proc/self/exe", NoTHPArg}, argv...)
+	}
+	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Env = s.environ(extra)
 	cmd.Stdout, cmd.Stderr = s.opts.Output, s.opts.Output
 	// Its own process group, so a stop reaches what it started but the
@@ -473,6 +491,30 @@ func (s *Supervisor) isOurChild(pid int) bool {
 	// Exactly: a prefix would take `qs -p /x/axiom` for `qs -p /x/axiom-old`
 	want := strings.Join(s.opts.Command, "\x00") + "\x00"
 	return bytes.Equal(cmdline, []byte(want))
+}
+
+// NoTHPArg is the first argument that makes the axiom binary run
+// ExecNoTHP on the rest (cli.Main): a contract only with the image
+// itself, never another version.
+const NoTHPArg = "exec-no-thp"
+
+// ExecNoTHP turns transparent huge pages off for this process and what it
+// runs, then execs argv in its place (looked up in $PATH), keeping its
+// pid, process group and environment. It returns only when the exec
+// failed; a kernel refusing the flag leaves huge pages on rather than the
+// shell not starting.
+func ExecNoTHP(argv []string, stderr io.Writer) error {
+	if len(argv) == 0 {
+		return ErrNoCommand
+	}
+	path, err := exec.LookPath(argv[0])
+	if err != nil {
+		return err
+	}
+	if err := unix.Prctl(unix.PR_SET_THP_DISABLE, 1, 0, 0, 0); err != nil {
+		fmt.Fprintln(stderr, "axiom: transparent huge pages stay on:", err)
+	}
+	return syscall.Exec(path, argv, os.Environ())
 }
 
 // ErrNoCommand is returned for an empty command.

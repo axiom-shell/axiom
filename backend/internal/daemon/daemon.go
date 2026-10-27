@@ -342,6 +342,7 @@ func Run(ctx context.Context, opts Options) error {
 		}
 		d.shell = supervise.New(supervise.Options{
 			Command:  []string{opts.QS, "-p", opts.Tree},
+			NoTHP:    true,
 			Env:      d.shellEnv(),
 			EnvFunc:  d.shellEnvNow,
 			PIDFile:  runtime.File(ShellPIDFile),

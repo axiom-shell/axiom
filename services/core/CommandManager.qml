@@ -49,14 +49,18 @@ QtObject {
   }
 
   // Run a command once, detached: a shell string (a widget's click or
-  // middle-click command, run by sh -c) or an argv array, run as is. An
-  // empty command does nothing.
-  function runDetached(command) {
+  // middle-click command, run by sh -c) or an argv array, run as is,
+  // started in `cwd` when given. An empty command does nothing. Apps start
+  // here too, never as qs's children, which inherit its huge pages opt-out
+  // (docs/dev/core/memory.md).
+  function runDetached(command, cwd) {
     if (!command?.length)
       return;
-    const argv = Array.isArray(command) ? command : ["sh", "-c", command];
+    // Array.from: a desktop entry's command is a list<string>, not an Array
+    const argv = typeof command === "string" ? ["sh", "-c", command] : Array.from(command);
     BackendManager.call("exec.spawn", {
-      "argv": argv
+      "argv": argv,
+      "cwd": cwd ?? ""
     }, error => {
       if (error)
         console.warn(`[CommandManager] ${argv[0]}: ${error.message}`);

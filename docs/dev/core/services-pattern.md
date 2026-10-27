@@ -35,7 +35,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
 - **Widget side:** hold the request in a `readonly property var …Request` built from `properties`; acquire it in `Component.onCompleted` and in `on…RequestChanged`; release in `onDestruction`.
 
 ### CommandManager: services keep no Process
-- `CommandManager.runDetached(command)` runs a command nothing waits on: a shell string (a widget's click command) or an argv.
+- `CommandManager.runDetached(command, cwd)` runs a command nothing waits on: a shell string (a widget's click command) or an argv, in `cwd` when given (a desktop entry's `Path=`). Apps the shell starts go through it, never `DesktopEntry.execute()` or `Quickshell.execDetached`, so they aren't qs's children and keep transparent huge pages ([memory](memory.md) › Transparent huge pages).
 - `run(command, callback, input)` runs a service's one-off command.
   - callback is `(exitCode, stdout, stderr)`
   - `input` goes to stdin.

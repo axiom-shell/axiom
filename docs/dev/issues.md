@@ -49,9 +49,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
+### Setting an awww wallpaper never starts awww's daemon
+- **Where:** `scripts/setWallpaper.sh`, `services/core/ThemeManager.qml` (`_showWallpaper`)
+- **What:** With `Appearance.wallpaperBackend` `awww` and no `awww-daemon` running, the script runs `awww query || awww init`, but awww has no `init` (`error: unrecognized subcommand 'init'`), so the wallpaper isn't set (`set -e` stops it). Starting `awww-daemon` instead would make it a child of qs's `Quickshell.execDetached`, inheriting qs's transparent huge pages opt-out ([memory](core/memory.md) › Transparent huge pages): it should start through the daemon (`CommandManager.runDetached`), as apps do.
+- **Size:** small
+- **Found:** 2026-10-27, while reviewing what the shell still starts as its own children (row 9)
+
 ### The daemon's own commands are left zombies across a re-exec
 - **Where:** `backend/internal/updates/updates.go`, `backend/internal/ipcroute/ipcroute.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`
-- **What:** The commands the daemon runs for itself (`checkupdates`, `qs ipc`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Running them through `command.Run` with the daemon's `Children` would cover them.
+- **What:** The commands the daemon runs for itself (`checkupdates`, `qs ipc`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Later the same day the same daemon (about 9 h of dev-mode re-execs) had 104: 61 `qs`, 18 `checkupdates`, 8 `bash`, 7 `bat`, 5 `ddcutil`, 3 `tailscale`, mostly in groups started in the same second, the commands a fresh image runs at once (`ipcroute`'s `qs ipc --pid … show` and `call`, the startup checks). The `qs` ones are those `qs ipc` runs, not shells: the shell a re-exec adopts is waited on and reaped (`supervise.Supervisor.adopt`), and only ever one runs. Running them through `command.Run` with the daemon's `Children` would cover them.
 - **Size:** small
 - **Found:** 2026-10-27, while handing exec's commands across a re-exec
 
@@ -120,12 +126,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Each builds one delegate per item in a Repeater, with no limit, as `DeviceList` did before it became a ListView (52 Wi-Fi networks took 1.8 s). None showed as slow on the test machine, but they grow with use: a long chat or note becomes a slow module and popout. ListViews (or streamed sections) would build only what's in view.
 - **Size:** small
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
-
-### The shell's heap never shrinks after a spike
-- **Where:** `backend/internal/supervise/supervise.go` (`environ`)
-- **What:** At rest qs holds 838 MB RSS: 435 MB anonymous malloc heap, against a JS heap of 42 MB, and 207 MB of it AnonHugePages (THP `always`). The heap freed when an overlay page or popout is torn down isn't returned, and RSS stays over 1 GB after use. Measured in a nested session ([memory](core/memory.md) › Baseline, 2026-10-27): fewer glibc arenas and a fixed trim threshold (`GLIBC_TUNABLES=glibc.malloc.arena_max=2:glibc.malloc.trim_threshold=131072`) changed nothing (591–598 MB against 591 MB after 10 overlay cycles), so they weren't shipped; opting the shell out of THP (`PR_SET_THP_DISABLE` before exec'ing qs, inherited across exec) saved 110–125 MB at rest and after use. Whether to ship the THP opt-out is the maintainer's call.
-- **Size:** small
-- **Found:** 2026-10-27, while measuring the shell's memory
 
 ### Nineteen windows stay mapped on one monitor
 - **Where:** `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/border/BorderPanel.qml`, `components/surfaces/backdrop/ScreenBackdrop.qml`, `shell/BlurBackingWindow.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/overlay/OverlayPanel.qml`

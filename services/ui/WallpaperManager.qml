@@ -115,12 +115,12 @@ Singleton {
 
   // Creates the folder, opens it in the file manager and checks it again
   function createFolder() {
-    Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && xdg-open "$1"', "sh", Appearance.wallpaperPath]);
+    CommandManager.runDetached(["sh", "-c", 'mkdir -p "$1" && xdg-open "$1"', "sh", Appearance.wallpaperPath]);
     _recheck.restart();
   }
 
   function openFolder() {
-    Quickshell.execDetached(["xdg-open", Appearance.wallpaperPath]);
+    CommandManager.runDetached(["xdg-open", Appearance.wallpaperPath]);
   }
 
   property Process _folderCheck: Process {
