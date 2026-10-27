@@ -83,6 +83,7 @@ Code handling sockets, locks, runtime directories, atomic writes, the child's en
 - Writes are atomic (temp file, fsync, rename, fsync the directory) and never follow a planted symlink.
 - Nothing unlocks the lock screen but PAM: no RPC, CLI or IPC path exists for it.
 - Descriptors received over a socket (D-Bus, and Wayland as it gains them) are close-on-exec on arrival and closed when nothing takes them (`internal/unixmsg`), so no child inherits one.
+- A command the shell asks for (`exec.run`, `exec.spawn`, `internal/command`) gets the shell's environment and only stdio; what it reads as a secret comes on stdin, never argv or the log, and a spawn starts in a session of its own, never the daemon's child.
 
 ### Shared fixtures
 Behaviour implemented on both sides (`SchemaValidation.qml`, which the shell still validates and fills defaults with, and Go's `config` pipeline) is tested from one set of cases under `tests/fixtures/shared/`, read by both `go test` and qmltestrunner (`tests/tst_Shared.qml`), with expected output stored as exact bytes. The directory is generated and gitignored: `scripts/generate.sh --fixtures` records it when what it's made from changed (`fixtures.py ensure`, a stamp of the inputs), and CI records it before the tests.

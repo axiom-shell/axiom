@@ -16,6 +16,8 @@ import Quickshell.Io
 //   CommandManager.run(["cmd", "arg"], (exitCode, stdout, stderr) => ..., input)
 // `input` (optional) is written to stdin, which is then closed: how secrets
 // and clipboard text reach a command without going through argv.
+// One-off commands run in axiom (exec.run, exec.spawn); without it (the
+// greeter, a shell started by hand) they run here.
 QtObject {
   id: root
 
@@ -41,13 +43,40 @@ QtObject {
   // middle-click command, run by sh -c) or an argv array, run as is. An
   // empty command does nothing.
   function runDetached(command) {
-    if (command?.length)
-      Quickshell.execDetached(Array.isArray(command) ? command : ["sh", "-c", command]);
+    if (!command?.length)
+      return;
+    const argv = Array.isArray(command) ? command : ["sh", "-c", command];
+    if (!BackendManager.active) {
+      Quickshell.execDetached(argv);
+      return;
+    }
+    BackendManager.call("exec.spawn", {
+      "argv": argv
+    }, error => {
+      if (error)
+        console.warn(`[CommandManager] ${argv[0]}: ${error.message}`);
+    });
   }
 
   // Runs a command once and calls back with (exitCode, stdout, stderr).
   // With `input` (a string), it's written to stdin, then stdin is closed.
+  // A command that can't run, or whose answer is lost (axiom re-exec'd
+  // meanwhile), calls back with -1 and the reason as stderr.
   function run(command, callback, input) {
+    if (BackendManager.active) {
+      BackendManager.call("exec.run", {
+        "argv": command,
+        "input": input ?? null
+      }, (error, result) => {
+        if (error && error.kind !== "unavailable")
+          console.warn(`[CommandManager] ${command[0]}: ${error.message}`);
+        if (error)
+          callback?.(-1, "", error.message);
+        else
+          callback?.(result.exitCode, result.stdout, result.stderr);
+      });
+      return;
+    }
     const process = root._oneShotComponent.createObject(root, {
       "command": command,
       "input": input ?? "",
