@@ -11,7 +11,8 @@ import (
 // Children are the commands running as this process's children (runs,
 // polls, streams), handed on by a re-exec: the old image's ends of their
 // pipes close with it (a later write gets SIGPIPE) and the new image
-// wouldn't wait on them (a zombie), so it drains and reaps them (Adopt).
+// wouldn't wait on them (a zombie), so it drains and reaps them (Adopt),
+// listing them in turn for the next re-exec.
 // A stream is stopped: the new image starts its own.
 type Children struct {
 	mu sync.Mutex
@@ -52,7 +53,11 @@ func (c *Children) Handoff() []Child {
 	for _, ch := range c.m {
 		ch.Output = nil
 		for _, f := range ch.files {
-			ch.Output = append(ch.Output, int(f.Fd()))
+			// Not f.Fd(): it would make the pipe blocking, and a close no
+			// longer ends a read of it
+			if rc, err := f.SyscallConn(); err == nil {
+				rc.Control(func(fd uintptr) { ch.Output = append(ch.Output, int(fd)) })
+			}
 		}
 		if ch.Stream {
 			syscall.Kill(-ch.PID, syscall.SIGTERM)
@@ -65,24 +70,60 @@ func (c *Children) Handoff() []Child {
 // Resume releases the list after an exec that failed.
 func (c *Children) Resume() { c.mu.Unlock() }
 
-// Adopt takes over a child the previous image handed on: its output is
-// dropped until it closes, and it's waited on (a stream killed first).
-// The goroutines end with the child, as Run's own do.
-func Adopt(ch Child) {
-	for _, fd := range ch.Output {
-		syscall.CloseOnExec(fd)
-		f := os.NewFile(uintptr(fd), "output")
+// track lists ch while it runs, copying its output to out (dropped past
+// its length), and returns what waits for it: wait (its exit), then its
+// output at most pipeWait more (a background child it left may hold the
+// pipes for as long as it lives).
+func (c *Children) track(ch Child, wait func(), out ...io.Writer) func() {
+	copied := make(chan struct{}, len(ch.files))
+	for i, f := range ch.files {
+		w := io.Discard
+		if i < len(out) {
+			w = out[i]
+		}
 		go func() {
-			io.Copy(io.Discard, f)
-			f.Close()
+			io.Copy(w, f)
+			copied <- struct{}{}
 		}()
 	}
-	go func() {
+	c.add(ch)
+	closeAll := func() {
+		for _, f := range ch.files {
+			f.Close()
+		}
+	}
+	return func() {
+		wait()
+		// Before its pipes close: a handoff holding the list keeps them
+		c.remove(ch.PID)
+		timeout := time.After(pipeWait)
+		for range ch.files {
+			select {
+			case <-copied:
+			case <-timeout:
+				closeAll() // ends the copies
+				<-copied
+			}
+		}
+		closeAll()
+	}
+}
+
+// Adopt takes over a child the previous image handed on, as its own
+// until it exits (handed on again by the next re-exec): its output
+// dropped, waited on, a stream killed first after stopGrace.
+func (c *Children) Adopt(ch Child) {
+	for _, fd := range ch.Output {
+		syscall.CloseOnExec(fd)
+		ch.files = append(ch.files, os.NewFile(uintptr(fd), "output"))
+	}
+	wait := c.track(ch, func() {
 		if ch.Stream {
 			time.Sleep(stopGrace)
 			syscall.Kill(-ch.PID, syscall.SIGKILL)
 		}
 		var ws syscall.WaitStatus
 		syscall.Wait4(ch.PID, &ws, 0, nil)
-	}()
+	})
+	go wait()
 }

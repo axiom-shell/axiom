@@ -46,7 +46,8 @@ func TestChildrenHandoff(t *testing.T) {
 }
 
 // An adopted child keeps writing after the old image's end of its pipe
-// closed (no SIGPIPE), and is reaped (no zombie).
+// closed (no SIGPIPE), is listed for the next re-exec, and is reaped (no
+// zombie).
 func TestAdopt(t *testing.T) {
 	t.Parallel()
 	marker := filepath.Join(t.TempDir(), "done")
@@ -65,7 +66,13 @@ func TestAdopt(t *testing.T) {
 		t.Fatal(err)
 	}
 	r.Close() // the old image's end
-	Adopt(Child{PID: cmd.Process.Pid, Output: []int{fd}})
+	var children Children
+	children.Adopt(Child{PID: cmd.Process.Pid, Output: []int{fd}})
+	// Listed in turn for the next re-exec
+	if listed := children.Handoff(); len(listed) != 1 || len(listed[0].Output) != 1 {
+		t.Errorf("listed %+v", listed)
+	}
+	children.Resume()
 	pid := strconv.Itoa(cmd.Process.Pid)
 	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(20 * time.Millisecond) {
 		if _, err := os.Stat("/proc/" + pid); err != nil {

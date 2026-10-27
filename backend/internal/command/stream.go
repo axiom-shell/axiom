@@ -45,14 +45,10 @@ func (w *Watches) stream(ctx context.Context, command string, run *watched) {
 		if exited.Sub(started) >= maxBackoff {
 			backoff = firstBackoff
 		}
-		due := exited.Add(backoff)
+		due := w.o.Until(exited.Add(backoff))
 		backoff = min(2*backoff, maxBackoff)
 	wait:
 		for {
-			d := due.Sub(w.o.Now())
-			if d <= 0 {
-				break
-			}
 			select {
 			case <-ctx.Done():
 				return
@@ -62,7 +58,7 @@ func (w *Watches) stream(ctx context.Context, command string, run *watched) {
 				}
 			case <-run.refresh:
 				break wait
-			case <-w.o.After(d):
+			case <-due:
 				break wait
 			}
 		}
@@ -127,11 +123,7 @@ func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, 
 			flush(0)
 		case <-lines:
 			if due == nil {
-				if d := published.Add(coalesce).Sub(w.o.Now()); d > 0 {
-					due = w.o.After(d)
-				} else {
-					flush(0)
-				}
+				due = w.o.Until(published.Add(coalesce))
 			}
 		case <-due:
 			flush(0)

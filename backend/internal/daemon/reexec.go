@@ -128,7 +128,7 @@ func (d *Daemon) reexec(exe string) (err error) {
 // adopt takes the handoff's descriptors and commands over.
 func (d *Daemon) adopt(h *handoff) (net.Listener, error) {
 	for _, ch := range h.Children {
-		command.Adopt(ch)
+		d.children.Adopt(ch)
 	}
 	instance, err := fsx.Adopt(os.NewFile(uintptr(h.Lock), "daemon.lock"), d.runtime.Lock())
 	if err != nil {

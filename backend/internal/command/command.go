@@ -113,9 +113,7 @@ func Spawn(ctx context.Context, o Options, argv []string) error {
 
 // start starts cmd with its stdout and stderr copied to the writers
 // through pipes of its own, listed in children while it runs for a
-// re-exec to hand on. wait waits for it, and for its output at most
-// pipeWait past its exit (a background child it left may hold the pipes
-// for as long as it lives).
+// re-exec to hand on (Children.track). wait waits for it.
 func start(cmd *exec.Cmd, children *Children, stream bool, stdout, stderr io.Writer) (wait func(), err error) {
 	var reads []*os.File
 	closeAll := func() {
@@ -123,9 +121,8 @@ func start(cmd *exec.Cmd, children *Children, stream bool, stdout, stderr io.Wri
 			r.Close()
 		}
 	}
-	copied := make(chan struct{}, 2)
 	ends := []*io.Writer{&cmd.Stdout, &cmd.Stderr}
-	for i, w := range []io.Writer{stdout, stderr} {
+	for i := range ends {
 		r, pw, err := os.Pipe()
 		if err != nil {
 			closeAll()
@@ -134,10 +131,6 @@ func start(cmd *exec.Cmd, children *Children, stream bool, stdout, stderr io.Wri
 		defer pw.Close() // the child has its copy
 		reads = append(reads, r)
 		*ends[i] = pw
-		go func() {
-			io.Copy(w, r)
-			copied <- struct{}{}
-		}()
 	}
 	if err := cmd.Start(); err != nil {
 		closeAll()
@@ -146,22 +139,7 @@ func start(cmd *exec.Cmd, children *Children, stream bool, stdout, stderr io.Wri
 	if children == nil {
 		children = &Children{} // nobody hands it on
 	}
-	children.add(Child{PID: cmd.Process.Pid, Stream: stream, files: reads})
-	return func() {
-		cmd.Wait()
-		// Before its pipes close: a handoff holding the list keeps them
-		children.remove(cmd.Process.Pid)
-		timeout := time.After(pipeWait)
-		for range 2 {
-			select {
-			case <-copied:
-			case <-timeout:
-				closeAll() // ends the copies
-				<-copied
-			}
-		}
-		closeAll()
-	}, nil
+	return children.track(Child{PID: cmd.Process.Pid, Stream: stream, files: reads}, func() { cmd.Wait() }, stdout, stderr), nil
 }
 
 func startError(name string, err error) error {

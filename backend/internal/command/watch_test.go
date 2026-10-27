@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// fakeClock moves only when told; After fires once Advance passes it.
+// fakeClock moves only when told; Until fires once Advance passes it.
 type fakeClock struct {
 	mu    sync.Mutex
 	now   time.Time
@@ -28,29 +28,16 @@ func (c *fakeClock) Now() time.Time {
 	return c.now
 }
 
-func (c *fakeClock) After(d time.Duration) <-chan time.Time {
+func (c *fakeClock) Until(at time.Time) <-chan time.Time {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	ch := make(chan time.Time, 1)
-	c.waits = append(c.waits, fakeWait{c.now.Add(d), ch})
-	return ch
-}
-
-// waiting returns once something waits on the clock: an Advance made
-// before a loop's After would move the wait it then sets past the advance.
-func (c *fakeClock) waiting(t *testing.T) {
-	t.Helper()
-	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(5 * time.Millisecond) {
-		c.mu.Lock()
-		n := len(c.waits)
-		c.mu.Unlock()
-		if n > 0 {
-			return
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("nothing waits on the clock")
-		}
+	if at.After(c.now) {
+		c.waits = append(c.waits, fakeWait{at, ch})
+	} else {
+		ch <- c.now
 	}
+	return ch
 }
 
 func (c *fakeClock) Advance(d time.Duration) {
@@ -104,7 +91,7 @@ func newHarness(t *testing.T) *harness {
 	t.Cleanup(cancel)
 	h := &harness{clock: &fakeClock{now: time.Unix(1000, 0)}, runs: make(chan string, 64), out: map[string]string{}}
 	h.w = NewWatches(WatchOptions{
-		Method: "exec.outputs", Context: ctx, Now: h.clock.Now, After: h.clock.After,
+		Method: "exec.outputs", Context: ctx, Now: h.clock.Now, Until: h.clock.Until,
 		Run: func(ctx context.Context, argv []string) (Result, error) {
 			h.mu.Lock()
 			h.n++

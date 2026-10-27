@@ -73,7 +73,7 @@ type Subscriber interface {
 	NotifyLatest(method string, params any) error
 }
 
-// WatchOptions configure Watches; the zero Now and After are the real
+// WatchOptions configure Watches; the zero Now and Until are the real
 // clock, the zero Run is Run with Options, the zero Log discards.
 type WatchOptions struct {
 	Method  string         // the push's method
@@ -84,7 +84,7 @@ type WatchOptions struct {
 	Context context.Context
 	Go      func(func(ctx context.Context))
 	Now     func() time.Time
-	After   func(time.Duration) <-chan time.Time
+	Until   func(time.Time) <-chan time.Time // fires at that time (at once when past)
 	Run     func(ctx context.Context, argv []string) (Result, error)
 }
 
@@ -117,8 +117,8 @@ func NewWatches(o WatchOptions) *Watches {
 	if o.Now == nil {
 		o.Now = time.Now
 	}
-	if o.After == nil {
-		o.After = time.After
+	if o.Until == nil {
+		o.Until = func(t time.Time) <-chan time.Time { return time.After(time.Until(t)) }
 	}
 	if o.Run == nil {
 		o.Run = func(ctx context.Context, argv []string) (Result, error) {
@@ -323,11 +323,7 @@ func (w *Watches) poll(ctx context.Context, command string, run *watched) {
 		}
 		var due <-chan time.Time
 		if poll {
-			d := ran.Add(interval).Sub(w.o.Now())
-			if d <= 0 {
-				return
-			}
-			due = w.o.After(d)
+			due = w.o.Until(ran.Add(interval))
 		}
 		select {
 		case <-ctx.Done():
