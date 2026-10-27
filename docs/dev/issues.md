@@ -121,12 +121,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
-### The shell's heap never shrinks after a spike
-- **Where:** `backend/internal/supervise/supervise.go` (`environ`)
-- **What:** At rest qs holds 838 MB RSS: 435 MB anonymous malloc heap, against a JS heap of 42 MB, and 207 MB of it AnonHugePages (THP `always`). The heap freed when an overlay page or popout is torn down isn't returned, and RSS stays over 1 GB after use. Measured in a nested session ([memory](core/memory.md) › Baseline, 2026-10-27): fewer glibc arenas and a fixed trim threshold (`GLIBC_TUNABLES=glibc.malloc.arena_max=2:glibc.malloc.trim_threshold=131072`) changed nothing (591–598 MB against 591 MB after 10 overlay cycles), so they weren't shipped; opting the shell out of THP (`PR_SET_THP_DISABLE` before exec'ing qs, inherited across exec) saved 110–125 MB at rest and after use. Whether to ship the THP opt-out is the maintainer's call.
-- **Size:** small
-- **Found:** 2026-10-27, while measuring the shell's memory
-
 ### Nineteen windows stay mapped on one monitor
 - **Where:** `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/border/BorderPanel.qml`, `components/surfaces/backdrop/ScreenBackdrop.qml`, `shell/BlurBackingWindow.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/overlay/OverlayPanel.qml`
 - **What:** Each window has its own render thread and GL context (19 `QSGRenderThread`s on one niri monitor). 9 are the border (4 strips, 4 corners, the shadow); the backdrop, blur backing and border shadow are `held` only for niri's map-order stacking. About 25 more (overlay, launcher, a submenu per popout host, edge-popout bodies, power menu, overview, switcher, prompts) keep their context for the session once shown. Options: strips drawing their own corners, windows unloaded a while after they hide, one stacking anchor instead of three held windows ([layer arrangement](compositor/layer-arrangement.md)).

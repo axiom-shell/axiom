@@ -59,9 +59,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 6 | done | Backend stage 3: brightness | Small; a first stage under the new checks. |
 | 7 | done | [Backend stage 3b](backend/roadmap.md): exec (polled and streamed commands, JSON) | Right after brightness, another small stage under the new checks; ahead of stage 6 because the planned custom JSON widgets build on it, and stages 4 and 5 don't touch `CommandManager`. |
 | 8 | done | Backend stage 4: scripts | The largest stage (theming, calendar, hookup, self-update, greeter installer). |
-| 9 | in progress | [Phase 12](#phase-12-memory-footprint) step 0 and [the heap entry](issues.md#the-shells-heap-never-shrinks-after-a-spike) | Small and the largest likely win; its numbers order the rest of the phase, and it touches nothing stage 5 does. |
-| 10 | next | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
-| 11 | later | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
+| 9 | done | [Phase 12](#phase-12-memory-footprint) step 0 and the shell's THP opt-out ([memory](core/memory.md) › Transparent huge pages) | Small and the largest likely win; its numbers order the rest of the phase, and it touches nothing stage 5 does. |
+| 10 | in progress | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
+| 11 | next | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
 | 12 | later | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
 | 13 | later | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
 | 14 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
@@ -315,7 +315,7 @@ The shell's RSS at rest and after use, measured rather than guessed: about 840 M
 
 0. **Done:** **Measure** (row 9; [memory](core/memory.md)): a memory reading script (RSS, Private_Dirty, AnonHugePages, the JS heap, render threads) and a `--mem` option for `scripts/dev/bench_overlay.sh` (the reading after each open/close cycle), run in a nested session, with a baseline recorded in a doc. Every entry below is judged by it.
 
-- [The shell's heap never shrinks after a spike](issues.md#the-shells-heap-never-shrinks-after-a-spike) (row 9)
+- **Done:** the shell's heap never shrinking after a spike (row 9; maintainer, 2026-10-27: "yes, opt the shell out of THP"): qs runs with transparent huge pages off, 110–125 MB less at rest and after use; the daemon and what it launches keep them ([memory](core/memory.md) › Transparent huge pages).
 - [Nineteen windows stay mapped on one monitor](issues.md#nineteen-windows-stay-mapped-on-one-monitor)
 - [Images decoded at full size or more than once](issues.md#images-decoded-at-full-size-or-more-than-once)
 - [ChatManager's attachment cache is never cleared](issues.md#chatmanagers-attachment-cache-is-never-cleared) (with stage 5's chat work)

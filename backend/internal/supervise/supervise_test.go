@@ -215,3 +215,61 @@ func TestRequestedStopIsNotAnExit(t *testing.T) {
 	default:
 	}
 }
+
+// The test binary stands in for the axiom image /proc/self/exe names.
+func TestMain(m *testing.M) {
+	if len(os.Args) > 1 && os.Args[1] == NoTHPArg {
+		err := ExecNoTHP(os.Args[2:], os.Stderr)
+		os.Stderr.WriteString(err.Error() + "\n")
+		os.Exit(127)
+	}
+	os.Exit(m.Run())
+}
+
+// With NoTHP the shell, and what it runs, has transparent huge pages off,
+// under the pid the supervisor started; the supervisor keeps them.
+func TestNoTHPIsTheShellsAlone(t *testing.T) {
+	t.Parallel()
+	thp := func(status string) string {
+		for line := range strings.Lines(status) {
+			if v, ok := strings.CutPrefix(line, "THP_enabled:"); ok {
+				return strings.TrimSpace(v)
+			}
+		}
+		return ""
+	}
+	own, err := os.ReadFile("/proc/self/status")
+	if err != nil || thp(string(own)) != "1" {
+		t.Skip("no transparent huge pages here")
+	}
+	for _, c := range []struct {
+		noTHP bool
+		want  string
+	}{{false, "1"}, {true, "0"}} {
+		t.Run(strconv.FormatBool(c.noTHP), func(t *testing.T) {
+			t.Parallel()
+			out := filepath.Join(t.TempDir(), "out")
+			// $$ is the shell's pid; grep, its child, reads its own status
+			script := `echo $$ > "$0"; grep THP_enabled /proc/self/status >> "$0"`
+			started := make(chan int, 1)
+			s := New(fast(Options{Command: []string{"sh", "-c", script, out}, NoTHP: c.noTHP, OnStart: func(pid int) { started <- pid }}))
+			run(t, s)
+			pid := <-started
+			var data []byte
+			eventually(t, func() bool {
+				data, _ = os.ReadFile(out)
+				return strings.Count(string(data), "\n") == 2
+			})
+			first, rest, _ := strings.Cut(string(data), "\n")
+			if first != strconv.Itoa(pid) {
+				t.Errorf("the shell ran as %s, started as %d", first, pid)
+			}
+			if got := thp(rest); got != c.want {
+				t.Errorf("THP_enabled %q, want %q", got, c.want)
+			}
+			if own, _ := os.ReadFile("/proc/self/status"); thp(string(own)) != "1" {
+				t.Error("the supervisor's huge pages were turned off")
+			}
+		})
+	}
+}
