@@ -28,10 +28,6 @@
     "services/system/NotificationManager.qml": [
       "FileView"
     ],
-    "services/core/StateManager.qml": [
-      "Process",
-      "FileView"
-    ],
     "services/core/ThemeManager.qml": [
       "FileView"
     ],

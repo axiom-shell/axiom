@@ -2,11 +2,89 @@ pragma Singleton
 import QtQuick
 import Quickshell.Io
 
-// Synchronous whole-file reads, for the few places that need a file's
-// contents during a binding or initializer (config, schema, theme, state).
-// Watching and writing stay with FileView.
+// Files: synchronous whole-file reads, for the places that need a file's
+// contents during a binding or initializer (config, schema, theme, state);
+// atomic writes and watching through axiom (file.write, file.watch).
 QtObject {
   id: root
+
+  // Replaces the file at path (absolute) with text, atomically, making
+  // its folders; done(error) after, error null or { kind, message }.
+  // Writes to one path go out one at a time, in the order asked
+  function write(path, text, done) {
+    const queue = root._writes[path];
+    if (queue) {
+      queue.push({
+        "text": text,
+        "done": done
+      });
+      return;
+    }
+    root._writes[path] = [];
+    root._write(path, text, done);
+  }
+
+  // Calls fn() whenever path (absolute) changes on disk, except by a
+  // write of its own. Pair with unwatch(path, fn)
+  function watch(path, fn) {
+    const fns = root._watched[path] ?? [];
+    fns.push(fn);
+    root._watched[path] = fns;
+    if (fns.length === 1)
+      BackendManager.call("file.watch", {
+        "path": path
+      }, root._logFailure);
+  }
+
+  function unwatch(path, fn) {
+    const fns = (root._watched[path] ?? []).filter(f => f !== fn);
+    if (fns.length > 0) {
+      root._watched[path] = fns;
+      return;
+    }
+    delete root._watched[path];
+    BackendManager.call("file.unwatch", {
+      "path": path
+    }, root._logFailure);
+  }
+
+  // Waiting writes by path ({ text, done }), while one is out
+  property var _writes: ({})
+  // Watchers by path
+  property var _watched: ({})
+
+  function _write(path, text, done) {
+    BackendManager.call("file.write", {
+      "path": path,
+      "text": text
+    }, error => {
+      if (error)
+        console.warn("[FileManager] Could not write", path + ":", error.message);
+      done?.(error);
+      const next = root._writes[path].shift();
+      if (next)
+        root._write(path, next.text, next.done);
+      else
+        delete root._writes[path];
+    });
+  }
+
+  function _logFailure(error) {
+    if (error)
+      console.warn("[FileManager] Could not watch a file:", error.message);
+  }
+
+  property Connections _backend: Connections {
+    target: BackendManager
+    // A reconnect forgets the watches
+    function onGreeted() {
+      Object.keys(root._watched).forEach(path => BackendManager.call("file.watch", {
+          "path": path
+        }, root._logFailure));
+    }
+  }
+
+  Component.onCompleted: BackendManager.listen("file.changed", change => (root._watched[change.path] ?? []).forEach(fn => fn()))
 
   // Contents of a file (a file:// URL or an absolute path), or null if it
   // can't be read. A blocking FileView per read, so it needs no
