@@ -91,16 +91,15 @@ func (w *Watches) streamOnce(ctx context.Context, command string, run *watched, 
 		mu.Unlock()
 		signal(lines)
 	}}
-	cmd.Stdout, cmd.Stderr = stdout, &lineWriter{line: stderr.log}
-	cmd.WaitDelay = pipeWait
-	if err := cmd.Start(); err != nil {
+	wait, err := start(cmd, opts.Children, true, stdout, &lineWriter{line: stderr.log})
+	if err != nil {
 		now := w.o.Now()
 		w.publish(command, run, "", 0, startError("sh", err), now)
 		return now, true
 	}
 	exited := make(chan struct{})
 	go func() {
-		cmd.Wait()
+		wait()
 		close(exited)
 	}()
 	text, published := "", time.Time{}

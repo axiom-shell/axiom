@@ -61,7 +61,7 @@
   - `axiom config path|get|set|reset|validate|status`: online, or `--offline` against the file under the writer lock
   - `axiom exec refresh COMMAND`: runs a command the shell watches again now (a script's stand-in for Waybar's `signal`)
   - `axiom schema build|check|hash`, `axiom debug wayland-globals|wayland-outputs`, `axiom version`
-- **Re-exec** (`axiom daemon reexec`, or dev mode on a rebuild): the new image takes over the instance lock, the writer lock, the socket and the shell (still its child). Its clients are told first (`daemon.closing`, [protocol](protocol.md) › A session). It trusts the handoff only when the inherited lock really is this display's held lock.
+- **Re-exec** (`axiom daemon reexec`, or dev mode on a rebuild): the new image takes over the instance lock, the writer lock, the socket and the shell (still its child), and the commands running as its children (`command.Children`: their output drained, reaped when they exit, a stream stopped). Its clients are told first (`daemon.closing`, [protocol](protocol.md) › A session). It trusts the handoff only when the inherited lock really is this display's held lock.
   - The descriptors lose close-on-exec only under `syscall.ForkLock`, so no child starts meanwhile and inherits a lock; an exec that fails gives them it back and thaws the store.
   - The handoff carries dev mode, the installed binary (while a dev build runs), the schema's hash and whether the session was locked: a new image whose tree builds another schema (an update, `axiom daemon reexec` after it) restarts the shell, locked first when it was.
 

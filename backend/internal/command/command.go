@@ -4,13 +4,16 @@
 // descriptor but stdio. A run is waited on and its
 // output returned; a spawn is detached for good, so what it starts (an
 // app from the launcher, a bar button's command) outlives the daemon and
-// is never left a zombie in it across a re-exec.
+// is never left a zombie in it across a re-exec; a run's command is
+// handed to the next image across one (Children).
 package command
 
 import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -43,6 +46,8 @@ type Result struct {
 type Options struct {
 	// Env is the environment (nil: the daemon's own)
 	Env []string
+	// Children, when not nil, holds what runs, for a re-exec to hand on
+	Children *Children
 }
 
 // Run runs argv and waits for it. Input, when not nil, is written to its
@@ -50,7 +55,8 @@ type Options struct {
 // never logged); without it stdin is /dev/null. No timeout: a run may
 // wait on the user (a terminal, a polkit prompt). When ctx ends first
 // (the shell's connection closed, a re-exec) Run returns unavailable and
-// the command runs on, reaped when it exits.
+// the command runs on, reaped when it exits (by the next image, after a
+// re-exec: Children).
 func Run(ctx context.Context, o Options, argv []string, input *string) (Result, error) {
 	if len(argv) == 0 {
 		return Result{}, axerr.New(axerr.BadRequest, "an empty command")
@@ -64,15 +70,14 @@ func Run(ctx context.Context, o Options, argv []string, input *string) (Result, 
 		cmd.Stdin = strings.NewReader(*input)
 	}
 	stdout, stderr := &capped{max: maxStdout}, &capped{max: maxStderr}
-	cmd.Stdout, cmd.Stderr = stdout, stderr
-	cmd.WaitDelay = pipeWait
-	if err := cmd.Start(); err != nil {
+	wait, err := start(cmd, o.Children, false, stdout, stderr)
+	if err != nil {
 		return Result{}, startError(argv[0], err)
 	}
 	done := make(chan struct{})
 	// Ends when the command does, whether or not anyone still waits
 	go func() {
-		cmd.Wait()
+		wait()
 		close(done)
 	}()
 	select {
@@ -104,6 +109,63 @@ func Spawn(ctx context.Context, o Options, argv []string) error {
 		return axerr.Wrap(axerr.Unavailable, err, "starting %s", argv[0])
 	}
 	return nil
+}
+
+// start starts cmd with its stdout and stderr copied to the writers
+// through pipes of its own, held in children while it runs so a re-exec
+// can hand them on (stop: the command is stopped then, a stream). wait
+// waits for it to exit and for its output, at most pipeWait past its exit
+// (a background child it left may hold the pipes for as long as it
+// lives).
+func start(cmd *exec.Cmd, children *Children, stop bool, stdout, stderr io.Writer) (wait func(), err error) {
+	var reads []*os.File
+	closeAll := func() {
+		for _, r := range reads {
+			r.Close()
+		}
+	}
+	copied := make(chan struct{}, 2)
+	for _, w := range []io.Writer{stdout, stderr} {
+		r, pw, err := os.Pipe()
+		if err != nil {
+			closeAll()
+			return nil, err
+		}
+		defer pw.Close() // the child has its copy
+		reads = append(reads, r)
+		if cmd.Stdout == nil {
+			cmd.Stdout = pw
+		} else {
+			cmd.Stderr = pw
+		}
+		go func() {
+			io.Copy(w, r)
+			copied <- struct{}{}
+		}()
+	}
+	if err := cmd.Start(); err != nil {
+		closeAll()
+		return nil, err
+	}
+	child := Child{PID: cmd.Process.Pid, Stop: stop, files: reads}
+	if children == nil {
+		children = &Children{} // nobody hands it on
+	}
+	children.add(child)
+	return func() {
+		cmd.Wait()
+		timeout := time.After(pipeWait)
+		for range 2 {
+			select {
+			case <-copied:
+			case <-timeout:
+				closeAll() // ends the copies
+				<-copied
+			}
+		}
+		children.remove(child.PID)
+		closeAll()
+	}, nil
 }
 
 func startError(name string, err error) error {

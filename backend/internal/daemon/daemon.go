@@ -137,8 +137,10 @@ type Daemon struct {
 	topics *topics.Hub
 	// The commands the shell watches (exec.watch)
 	watches *command.Watches
-	tasks   *tasks
-	stop    context.CancelFunc
+	// The commands running as its children (handed on by a re-exec)
+	children command.Children
+	tasks    *tasks
+	stop     context.CancelFunc
 
 	// isShell says whether a connection's peer pid is the shell's (a
 	// hello as "shell" from anything else is refused)

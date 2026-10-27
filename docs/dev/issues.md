@@ -49,15 +49,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
-### A command run across a daemon re-exec loses its output and is left a zombie
-- **Where:** `backend/internal/command/command.go` (`Run`), `services/core/CommandManager.qml` (`run`)
-- **What:** A `CommandManager.run` in flight when the daemon re-execs (dev mode's rebuild, a self-update) calls back at once with -1 and `the connection to axiom closed`, but its command keeps running: its stdout and stderr pipes close with the old image, so a write after that gets SIGPIPE (a terminal opened by `UpdatesManager.upgrade`, a `pkexec` of the greeter installer), and when it exits the new image never waits on it, so it stays a zombie until the daemon quits. `exec.spawn` has neither problem (`setsid -f`). Handing the running pids and output files across the re-exec would fix it; it takes a re-exec during a long run.
+### The daemon's own commands are left zombies across a re-exec
+- **Where:** `backend/internal/updates/updates.go`, `backend/internal/ipcroute/ipcroute.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`
+- **What:** The commands the daemon runs for itself (`checkupdates`, `qs ipc`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Running them through `command.Run` with the daemon's `Children` would cover them.
 - **Size:** small
-- **Found:** 2026-10-27, while moving `CommandManager.run` to `exec.run`
+- **Found:** 2026-10-27, while handing exec's commands across a re-exec
 
 ### The updates check warns when a daemon re-exec kills checkupdates
 - **Where:** `backend/internal/updates/updates.go` (`Source`'s `Fetch`, `runCheck`)
-- **What:** `axiom daemon logs` shows `checking for updates` with `checkupdates failed (-1): ` 7 times since 2026-10-26, each within a few seconds of a `dev build done: re-executing` line (12:33:56.102 after a re-exec at 12:33:55.828 on 2026-10-27). Exit code -1 is a kill by a signal: most likely the old image's context ends at the re-exec, the check's `checkupdates` is killed with it, and `Fetch` logs the failure before the hub drops the fetch as cancelled. A `ctx.Err()` check before the warning would quiet it; the next image checks again anyway. Related: [A command run across a daemon re-exec loses its output and is left a zombie](#a-command-run-across-a-daemon-re-exec-loses-its-output-and-is-left-a-zombie).
+- **What:** `axiom daemon logs` shows `checking for updates` with `checkupdates failed (-1): ` 7 times since 2026-10-26, each within a few seconds of a `dev build done: re-executing` line (12:33:56.102 after a re-exec at 12:33:55.828 on 2026-10-27). Exit code -1 is a kill by a signal: most likely the old image's context ends at the re-exec, the check's `checkupdates` is killed with it, and `Fetch` logs the failure before the hub drops the fetch as cancelled. A `ctx.Err()` check before the warning would quiet it; the next image checks again anyway.
 - **Size:** small
 - **Found:** 2026-10-27, while merging #133
 

@@ -10,13 +10,14 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
 
 // reexecEnv carries a handoff from the image before a re-exec (an updated
 // binary taking over) to the one after: the descriptors it keeps open and
-// the shell it supervises (still this process's child: execve keeps the
-// pid). The handoff is trusted only when its instance-lock descriptor
+// the shell it supervises and the commands it runs (still this process's
+// children: execve keeps the pid). The handoff is trusted only when its instance-lock descriptor
 // really is the held lock of this display, which only the previous holder
 // could pass on.
 const reexecEnv = "AXIOM_REEXEC"
@@ -26,6 +27,8 @@ type handoff struct {
 	ConfigLock int `json:"configLock"`
 	Listener   int `json:"listener"`
 	Shell      int `json:"shell"`
+	// The commands running, for the next image to drain and reap
+	Children []command.Child `json:"children,omitempty"`
 	// The schema the shell read, and whether it held the session lock: a
 	// new image whose tree builds another schema (an update) restarts the
 	// shell, locked first when it was
@@ -102,6 +105,10 @@ func (d *Daemon) reexec(exe string) (err error) {
 			return axerr.Wrap(axerr.Internal, err, "keeping a descriptor across the re-exec")
 		}
 	}
+	h.Children = d.children.Handoff()
+	for _, ch := range h.Children {
+		fds = append(fds, ch.Output...)
+	}
 	data, _ := json.Marshal(h)
 	env := []string{reexecEnv + "=" + string(data)}
 	for _, kv := range os.Environ() {
@@ -117,8 +124,11 @@ func (d *Daemon) reexec(exe string) (err error) {
 	return axerr.Wrap(axerr.Unavailable, err, "re-executing %s", exe)
 }
 
-// adopt takes the handoff's descriptors over.
+// adopt takes the handoff's descriptors and commands over.
 func (d *Daemon) adopt(h *handoff) (net.Listener, error) {
+	for _, ch := range h.Children {
+		command.Adopt(ch)
+	}
 	instance, err := fsx.Adopt(os.NewFile(uintptr(h.Lock), "daemon.lock"), d.runtime.Lock())
 	if err != nil {
 		return nil, err
