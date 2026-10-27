@@ -47,9 +47,6 @@
     "services/core/IpcTarget.qml": [
       "IpcHandler"
     ],
-    "services/ui/LauncherManager.qml": [
-      "execDetached"
-    ],
     "services/system/NightLightManager.qml": [
       "Process"
     ],
