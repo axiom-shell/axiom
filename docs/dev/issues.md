@@ -43,9 +43,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
-### CI checks dependencies and cross-builds only when a PR touches Go
-- **Where:** `.github/workflows/checks.yml` (the `go` job's change filter), `.github/workflows/release.yml`
-- **What:** Since checks run on pull requests only and the `go` job is skipped unless the binary's inputs changed (#107), govulncheck runs only on PRs that touch Go, with no scheduled run, so a newly published advisory for a dependency goes unseen until the next Go PR. The amd64/arm64 cross-builds now run only on a release tag, so an arm64 break surfaces at release, after merge (low risk with `CGO_ENABLED=0`). A weekly `schedule:` run of the `go` job would cover both.
+### CI checks dependencies only when a PR touches Go
+- **Where:** `.github/workflows/checks.yml` (the `go` job's change filter)
+- **What:** Since checks run on pull requests only and the `go` job is skipped unless the binary's inputs changed (#107), govulncheck runs only on PRs that touch Go, with no scheduled run, so a newly published advisory for a dependency goes unseen until the next Go PR. (The amd64/arm64 cross-builds run at every merge now, in `.github/workflows/edge.yml`, so an arm64 break surfaces right after merge, not at release.) A weekly `schedule:` run of the `go` job would cover it.
 - **Size:** small
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
