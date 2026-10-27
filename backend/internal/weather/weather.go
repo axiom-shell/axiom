@@ -179,8 +179,7 @@ func (w *fetcher) fetch(ctx context.Context, r Request) (*State, error) {
 }
 
 // resolve is the request's place: its coordinates, else the one looked
-// up for it before (an IP's for an hour), else a new lookup. A failed
-// lookup falls back on the last place for the same settings.
+// up for it before (an IP's for an hour), else a new lookup.
 func (w *fetcher) resolve(ctx context.Context, r Request) (*Place, error) {
 	lat, errLat := strconv.ParseFloat(strings.TrimSpace(r.Latitude), 64)
 	lon, errLon := strconv.ParseFloat(strings.TrimSpace(r.Longitude), 64)
@@ -204,9 +203,6 @@ func (w *fetcher) resolve(ctx context.Context, r Request) (*Place, error) {
 		place, err = w.fromIP(ctx)
 	}
 	if err != nil {
-		if w.place != nil && w.placeKey == key {
-			return w.place, nil
-		}
 		return nil, err
 	}
 	w.place, w.placeKey, w.placeAt = place, key, now

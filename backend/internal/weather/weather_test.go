@@ -110,8 +110,7 @@ func TestPlace(t *testing.T) {
 	}
 }
 
-// A named place is looked up once; an IP's again after an hour, keeping
-// the last one when that lookup fails.
+// A named place is looked up once; an IP's again after an hour.
 func TestPlaceCache(t *testing.T) {
 	t.Parallel()
 	f := newFake(t, map[string]string{
@@ -134,10 +133,10 @@ func TestPlaceCache(t *testing.T) {
 		t.Fatalf("IP looked up %d times within the hour, want 1", n)
 	}
 	c.now = c.now.Add(time.Hour)
-	f.set("/ipinfo", "")
+	f.set("/ipinfo", `{"loc":"5,6","city":"C"}`)
 	p, err := w.resolve(ctx, Request{})
-	if err != nil || p.Name != "B" || f.calls("/ipinfo") != 2 {
-		t.Fatalf("after the hour: %+v, %v, %d lookups; want the last place after a second lookup", p, err, f.calls("/ipinfo"))
+	if err != nil || p.Name != "C" || f.calls("/ipinfo") != 2 {
+		t.Fatalf("after the hour: %+v, %v, %d lookups; want the new place after a second lookup", p, err, f.calls("/ipinfo"))
 	}
 }
 

@@ -12,8 +12,8 @@ import qs.components.content.base
 Panel {
   id: root
 
-  readonly property var current: WeatherManager.current ?? null
-  readonly property var condition: WeatherManager.condition ?? null
+  readonly property var current: WeatherManager.current
+  readonly property var condition: WeatherManager.condition
   readonly property var daily: WeatherManager.weather?.daily ?? null
 
   spacing: Widget.padding
@@ -49,7 +49,7 @@ Panel {
         font.bold: true
       }
       StyledText {
-        text: WeatherManager.details ?? ""
+        text: WeatherManager.details
         textColor: Theme.foregroundAlt
         textSize: Appearance.fontSizeBy(-2)
       }
