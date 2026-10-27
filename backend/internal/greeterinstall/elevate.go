@@ -33,7 +33,9 @@ func (in *Installer) Elevate(ctx context.Context, req rules.Request) (Elevated, 
 	ctx = context.WithoutCancel(ctx)
 	program := []string{in.path(HelperPath)}
 	var stdin []byte
-	if helper, binaries := in.helper(); !helper || !binaries {
+	// An older helper doesn't install the binary, or refuses main
+	helper, binaries := in.helper()
+	if !helper || !binaries || (req.Source == rules.SourceGit && req.Channel == rules.ChannelMain && !in.helperSays(edgeMarker)) {
 		var err error
 		if program, stdin, err = in.firstProgram(ctx, req); err != nil {
 			var f failure
@@ -72,18 +74,20 @@ func (in *Installer) Elevate(ctx context.Context, req rules.Request) (Elevated, 
 	return r, nil
 }
 
-// firstProgram is what pkexec runs before root has a helper of its own:
-// a binary root owns, or one checked against its release's SHA256SUMS
-// (maintainer, 2026-10-27: "root owned checksum verified binary"). A
-// package's is root's own; local reuses req.Binary, the one this user's
-// daemon runs, unchecked. git's is the newest release's prebuilt one,
-// downloaded here and handed to root on stdin, which checks it against
-// the SHA256SUMS root fetches itself (verifyAndRun): this user supplies
-// the bytes, never the sum they're checked against. Anything else is refused
-// ("Refuse the install (except for if you have the local clone install
-// path selected, in which case it reuses your most recently built binary,
-// and skips the checksum)"): the main channel, a release with no binary
-// for this machine.
+// firstProgram is what pkexec runs before root has a helper of its own
+// (or, for main, while its helper is older than main's builds): a binary
+// root owns, or one checked against its release's SHA256SUMS (maintainer,
+// 2026-10-27: "root owned checksum verified binary"). A package's is
+// root's own; local reuses req.Binary, the one this user's daemon runs,
+// unchecked. git's is the channel's official build (the newest release's,
+// or main's newest, the edge prerelease's: "Allow via CI build
+// (Recommended)"), downloaded here and handed to root on stdin, which
+// checks it against the SHA256SUMS root fetches itself (verifyAndRun):
+// this user supplies the bytes, never the sum they're checked against.
+// Anything else is refused ("Refuse the install (except for if you have
+// the local clone install path selected, in which case it reuses your
+// most recently built binary, and skips the checksum)"): a channel with no
+// build for this machine.
 func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]string, []byte, error) {
 	switch req.Source {
 	case rules.SourceLocal:
@@ -98,9 +102,6 @@ func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]str
 		}
 		return []string{binary, "greeter-install"}, nil, nil
 	}
-	if req.Channel == rules.ChannelMain {
-		return nil, nil, failf("the main channel has no release binary to check: set the login screen up from the newest release, or from Local")
-	}
 	url := in.upstream()
 	target, ok := in.remoteTarget(ctx, url, req.Channel)
 	if !ok {
@@ -111,7 +112,7 @@ func (in *Installer) firstProgram(ctx context.Context, req rules.Request) ([]str
 		return nil, nil, err
 	}
 	if data == nil {
-		return nil, nil, failf("%s has no release binary to check for this machine: the login screen installs only a release's, or yours from Local", target.Name())
+		return nil, nil, failf("%s has no official binary to check for this machine: the login screen installs only an official build's, or yours from Local", target.Name())
 	}
 	asset, _ := release.Asset(runtime.GOARCH)
 	return []string{"/bin/sh", "-c", verifyAndRun, "sh", in.varDir(), sums, asset}, data, nil

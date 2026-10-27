@@ -23,6 +23,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
+	"github.com/axiom-shell/axiom/backend/internal/release"
 	"github.com/axiom-shell/axiom/backend/internal/release/fetch"
 )
 
@@ -307,7 +308,7 @@ func (r *run) fillCopy(ctx context.Context, stage string) error {
 			return err
 		}
 		if data == nil {
-			return failf("no axiom binary for %s: only a release's prebuilt one, checked against its SHA256SUMS, is installed (follow releases, or use Local)", label)
+			return failf("no axiom binary for %s: only an official build's, checked against its SHA256SUMS, is installed (use Local to install your own)", label)
 		}
 	}
 	if writeFile(filepath.Join(stage, ".greeter-hash"), []byte(hash+"\n"), 0o644) != nil ||
@@ -377,8 +378,15 @@ func (r *run) fetch(ctx context.Context, stage string) (rules.Target, string, ru
 	if hash == "" {
 		return target, "", rules.Origin{}, failf("fetched nothing from %s", url)
 	}
+	// main: the commit its newest build was made from, which must be on it
+	if req.Channel == rules.ChannelMain {
+		if _, err := m.run(ctx, nil, "merge-base", "--is-ancestor", target.Commit, hash); err != nil {
+			return target, "", rules.Origin{}, failf("main's newest build (%.12s) isn't on %s's main", target.Commit, url)
+		}
+		hash = target.Commit
+	}
 	var archive bytes.Buffer
-	if _, err := m.run(ctx, &archive, "archive", "--format=tar", "refs/axiom/target^{tree}"); err != nil {
+	if _, err := m.run(ctx, &archive, "archive", "--format=tar", hash+"^{tree}"); err != nil {
 		return target, "", rules.Origin{}, failf("archiving %s failed", target.Ref)
 	}
 	if _, err := extract(&archive, stage, func(name string, _ []byte) bool { return rules.Ships(name) }); err != nil {
@@ -404,18 +412,29 @@ func (r *run) userBinary(ctx context.Context, dest string) error {
 	return writeFile(dest, data.Bytes(), 0o755)
 }
 
-// releaseBinary downloads the target tag's prebuilt binary for this
-// machine from the official repository's GitHub release (release.Official,
-// never the copy's remote), checked against the release's SHA256SUMS: its
-// bytes and that listing's url. nil: there's none (not a tag, no such
+// releaseBinary downloads the target's prebuilt binary for this machine
+// from the official repository's GitHub release (release.Official, never
+// the copy's remote): a tag's release, or for main the edge prerelease,
+// whose binary must be the target commit's. Checked against the release's
+// SHA256SUMS: its bytes and that listing's url. nil: there's none (no such
 // release or asset); a download that doesn't match fails the install.
 func (in *Installer) releaseBinary(ctx context.Context, target rules.Target) ([]byte, string, error) {
-	releases := fetch.New(fetch.Options{Base: in.opts.Releases})
-	sumsURL, ok := releases.SumsURL(target.Tag())
+	releases := in.releases()
+	sumsURL, ok := releases.SumsURL(target.Release())
 	if !ok {
 		return nil, "", nil
 	}
-	data, err := releases.Binary(ctx, target.Tag(), runtime.GOARCH)
+	var data []byte
+	var err error
+	if target.Release() == release.Edge {
+		var commit string
+		commit, data, err = releases.Edge(ctx, runtime.GOARCH)
+		if err == nil && commit != target.Commit {
+			return nil, "", failf("main's newest build moved on from %.12s during the install: try again", target.Commit)
+		}
+	} else {
+		data, err = releases.Binary(ctx, target.Tag(), runtime.GOARCH)
+	}
 	switch {
 	case errors.Is(err, fetch.ErrMissing):
 		return nil, "", nil

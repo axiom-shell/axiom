@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestNewest(t *testing.T) {
+func TestNewestTag(t *testing.T) {
 	t.Parallel()
 	refs := strings.Join([]string{
 		"aaa\tHEAD",
@@ -22,30 +22,31 @@ func TestNewest(t *testing.T) {
 		"d05\trefs/tags/v1.2",
 	}, "\n") + "\n"
 	for _, tc := range []struct {
-		name, refs, channel string
-		want                Target
-		ok                  bool
+		name, refs string
+		want       Target
+		ok         bool
 	}{
-		{"tags, by version, peeled", refs, ChannelTags, Target{"d03", "refs/tags/v1.10"}, true},
-		{"main", refs, ChannelMain, Target{"ccc", "refs/heads/main"}, true},
-		{"master without main", "bbb\trefs/heads/master\n", ChannelMain, Target{"bbb", "refs/heads/master"}, true},
-		{"a lightweight tag", "e01\trefs/tags/v2.0\n", ChannelTags, Target{"e01", "refs/tags/v2.0"}, true},
-		{"no releases", "ccc\trefs/heads/main\n", ChannelTags, Target{}, false},
-		{"no main", "", ChannelMain, Target{Ref: "refs/heads/master"}, false},
+		{"by version, peeled", refs, Target{"d03", "refs/tags/v1.10"}, true},
+		{"a lightweight tag", "e01\trefs/tags/v2.0\n", Target{"e01", "refs/tags/v2.0"}, true},
+		{"no releases", "ccc\trefs/heads/main\n", Target{}, false},
+		{"nothing", "", Target{}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			got, ok := Newest(tc.refs, tc.channel)
+			got, ok := NewestTag(tc.refs)
 			if ok != tc.ok || (ok && got != tc.want) {
-				t.Errorf("Newest = %+v, %v; want %+v, %v", got, ok, tc.want, tc.ok)
+				t.Errorf("NewestTag = %+v, %v; want %+v, %v", got, ok, tc.want, tc.ok)
 			}
 		})
 	}
 	if target := (Target{Ref: "refs/tags/v1.0"}); target.Name() != "v1.0" || target.Tag() != "v1.0" {
 		t.Errorf("tag target: %q %q", target.Name(), target.Tag())
 	}
-	if target := (Target{Ref: "refs/heads/main"}); target.Name() != "main" || target.Tag() != "" {
-		t.Errorf("branch target: %q %q", target.Name(), target.Tag())
+	if target := MainTarget("ccc"); target.Name() != "main" || target.Tag() != "" || target.Release() != "edge" || target.Commit != "ccc" {
+		t.Errorf("main's target: %q %q %q", target.Name(), target.Tag(), target.Release())
+	}
+	if target := (Target{Ref: "refs/tags/v1.0"}); target.Release() != "v1.0" {
+		t.Errorf("a tag's release: %q", target.Release())
 	}
 }
 

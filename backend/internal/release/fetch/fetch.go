@@ -72,13 +72,46 @@ func (f *Fetcher) Binary(ctx context.Context, tag, goarch string) ([]byte, error
 	if !ok {
 		return nil, fmt.Errorf("%s: no binary for %s: %w", tag, goarch, ErrMissing)
 	}
-	return f.checked(ctx, tag, asset, binaryTimeout)
+	sums, err := f.sums(ctx, tag)
+	if err != nil {
+		return nil, err
+	}
+	return f.checked(ctx, tag, sums, asset, binaryTimeout)
 }
 
 // EdgeCommit is the commit the edge prerelease was built from, its
 // COMMIT checked against its SHA256SUMS like any of its files.
 func (f *Fetcher) EdgeCommit(ctx context.Context) (string, error) {
-	data, err := f.checked(ctx, release.Edge, release.Commit, sumsTimeout)
+	sums, err := f.sums(ctx, release.Edge)
+	if err != nil {
+		return "", err
+	}
+	return f.edgeCommit(ctx, sums)
+}
+
+// Edge is the edge prerelease's binary for goarch and the commit it was
+// built from, both checked against one SHA256SUMS, so they're the same
+// build's even while a newer one is being published.
+func (f *Fetcher) Edge(ctx context.Context, goarch string) (string, []byte, error) {
+	asset, ok := release.Asset(goarch)
+	if !ok {
+		return "", nil, fmt.Errorf("%s: no binary for %s: %w", release.Edge, goarch, ErrMissing)
+	}
+	sums, err := f.sums(ctx, release.Edge)
+	if err != nil {
+		return "", nil, err
+	}
+	commit, err := f.edgeCommit(ctx, sums)
+	if err != nil {
+		return "", nil, err
+	}
+	data, err := f.checked(ctx, release.Edge, sums, asset, binaryTimeout)
+	return commit, data, err
+}
+
+// edgeCommit is edge's COMMIT, checked against sums.
+func (f *Fetcher) edgeCommit(ctx context.Context, sums string) (string, error) {
+	data, err := f.checked(ctx, release.Edge, sums, release.Commit, sumsTimeout)
 	if err != nil {
 		return "", err
 	}
@@ -89,23 +122,24 @@ func (f *Fetcher) EdgeCommit(ctx context.Context) (string, error) {
 	return commit, nil
 }
 
-// checked is one of tag's files, downloaded after its SHA256SUMS and
-// matched against it.
-func (f *Fetcher) checked(ctx context.Context, tag, file string, timeout time.Duration) ([]byte, error) {
-	sumsURL, ok := f.SumsURL(tag)
-	fileURL, _ := release.URL(f.base, tag, file)
+// sums is tag's SHA256SUMS.
+func (f *Fetcher) sums(ctx context.Context, tag string) (string, error) {
+	url, ok := f.SumsURL(tag)
 	if !ok {
-		return nil, fmt.Errorf("%q isn't a release tag: %w", tag, ErrMissing)
+		return "", fmt.Errorf("%q isn't a release tag: %w", tag, ErrMissing)
 	}
-	sums, err := f.get(ctx, sumsURL, sumsTimeout)
+	data, err := f.get(ctx, url, sumsTimeout)
+	return string(data), err
+}
+
+// checked is one of tag's files, matched against the release's sums.
+func (f *Fetcher) checked(ctx context.Context, tag, sums, file string, timeout time.Duration) ([]byte, error) {
+	url, _ := release.URL(f.base, tag, file)
+	data, err := f.get(ctx, url, timeout)
 	if err != nil {
 		return nil, err
 	}
-	data, err := f.get(ctx, fileURL, timeout)
-	if err != nil {
-		return nil, err
-	}
-	want := release.SumFor(string(sums), file)
+	want := release.SumFor(sums, file)
 	if got := fmt.Sprintf("%x", sha256.Sum256(data)); want == "" || !strings.EqualFold(want, got) {
 		return nil, fmt.Errorf("the %s release's %s %w", tag, file, ErrMismatch)
 	}
