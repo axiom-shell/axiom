@@ -200,6 +200,26 @@ func TestApplyThroughALink(t *testing.T) {
 	}
 }
 
+// A file missing from a linked folder (a config kept in a dotfiles repo)
+// is shown as a link to where it will be created
+func TestMissingFileInALinkedFolder(t *testing.T) {
+	t.Parallel()
+	s := newScratch(t)
+	real := filepath.Join(s.root, "dotfiles", "kitty")
+	os.MkdirAll(real, 0o755)
+	s.link("kitty", real)
+	row := s.status("kitty")[0]
+	if !row.Link || row.Exists || row.Resolved != filepath.Join(real, "kitty.conf") {
+		t.Errorf("status: %+v", row)
+	}
+	if result := s.apply("kitty")[0]; !result.Changed {
+		t.Errorf("apply: %+v", result)
+	}
+	if _, err := os.Stat(filepath.Join(real, "kitty.conf")); err != nil {
+		t.Error(err)
+	}
+}
+
 // A link to a file the user can't write is skipped, or, with wrapLink
 // (GTK 4), replaced by a file loading it, the link kept as the backup
 func TestReadonlyLinks(t *testing.T) {

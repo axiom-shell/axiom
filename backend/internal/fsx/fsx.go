@@ -41,6 +41,21 @@ func writeFile(path string, data []byte, perm fs.FileMode) error {
 	if info, err := os.Stat(target); err == nil {
 		mode = info.Mode().Perm()
 	}
+	return replace(target, data, mode)
+}
+
+// ReplaceLink is WriteFile for a symlink that is to become a file of its
+// own (one naming a file the user can't write): the link itself is
+// replaced, never followed, and the file gets perm.
+func ReplaceLink(path string, data []byte, perm fs.FileMode) error {
+	if err := replace(path, data, perm); err != nil {
+		return &axerr.Error{Kind: axerr.Unavailable, Err: err}
+	}
+	return nil
+}
+
+// replace puts data at target atomically, with mode.
+func replace(target string, data []byte, mode fs.FileMode) error {
 	dir := filepath.Dir(target)
 	tmp, err := createTemp(dir, filepath.Base(target), mode)
 	if err != nil {

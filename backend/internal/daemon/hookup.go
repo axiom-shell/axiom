@@ -3,7 +3,6 @@ package daemon
 import (
 	"context"
 	"path/filepath"
-	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
@@ -40,7 +39,7 @@ type HookupApplied struct {
 }
 
 func (d *Daemon) hookupMethods(reg *rpc.Registry) {
-	h := edit.NewHookups(edit.HookupOptions{Getenv: d.opts.Getenv, Scripts: filepath.Join(d.opts.Tree, "scripts"), Now: time.Now})
+	h := edit.NewHookups(edit.HookupOptions{Getenv: d.opts.Getenv, Scripts: filepath.Join(d.opts.Tree, "scripts")})
 	// The targets asked for, and the profiles.ini files of a browser's
 	targets := func(p HookupRequest) ([]hookup.Target, []string, error) {
 		if p.Targets != nil {

@@ -12,6 +12,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/hookup"
 	"github.com/axiom-shell/axiom/backend/internal/theme/integrations"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
@@ -121,7 +122,7 @@ func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) 
 			return result, err
 		}
 		result.Backup = p.Path + suffix
-		err = replaceLink(p.Path, []byte(hookup.Text(hookup.Edit(r, p, lines))))
+		err = fsx.ReplaceLink(p.Path, []byte(hookup.Text(hookup.Edit(r, p, lines))), 0o644)
 		result.Changed = err == nil
 		return result, err
 	}
@@ -134,28 +135,6 @@ func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) 
 	err = Replace(p.Resolved, []byte(hookup.Text(hookup.Edit(r, p, lines))))
 	result.Changed = err == nil
 	return result, err
-}
-
-// replaceLink puts a new file where the link at path is, atomically: the
-// link itself is replaced, not the file it names.
-func replaceLink(path string, data []byte) error {
-	tmp, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".tmp-*")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Chmod(0o644); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmp.Name(), path)
 }
 
 func (h *Hookups) env() hookup.Env {
@@ -194,11 +173,9 @@ func (h *Hookups) resolve(targets []hookup.Target, profiles []string) []hookup.R
 // file's.
 func (h *Hookups) plan(r hookup.Resolved) (hookup.Plan, []string, error) {
 	var f hookup.Facts
-	if r.Path != "" && r.Skipped == "" {
-		if r.Requires != "" {
-			if _, err := h.opts.LookPath(r.Requires); err != nil {
-				r.Skipped = hookup.SkipRequires
-			}
+	if r.Path != "" && r.Skipped == "" && r.Requires != "" {
+		if _, err := h.opts.LookPath(r.Requires); err != nil {
+			r.Skipped = hookup.SkipRequires
 		}
 	}
 	if r.Path != "" && r.Skipped == "" {
@@ -225,12 +202,13 @@ func (h *Hookups) plan(r hookup.Resolved) (hookup.Plan, []string, error) {
 }
 
 // realPath is path with every link followed, as far as they lead (a
-// dangling link names the file it would create)
+// dangling link, or a missing file in a linked folder, names the file
+// that would be created)
 func realPath(path string) string {
-	if real, err := filepath.EvalSymlinks(path); err == nil {
-		return real
-	}
 	for range 40 {
+		if real, err := filepath.EvalSymlinks(path); err == nil {
+			return real
+		}
 		link, err := os.Readlink(path)
 		if err != nil {
 			break
@@ -240,7 +218,11 @@ func realPath(path string) string {
 		}
 		path = link
 	}
-	return filepath.Clean(path)
+	dir := filepath.Dir(path)
+	if dir == path {
+		return path
+	}
+	return filepath.Join(realPath(dir), filepath.Base(path))
 }
 
 // writable says whether path could be replaced atomically and backed up:

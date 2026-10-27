@@ -31,7 +31,7 @@ Singleton {
   property var status: ({})
   // key -> [{ path, changed, backup, error }] from the last apply
   property var results: ({})
-  // key -> true while a check or apply for it is running
+  // key -> how many checks and applies for it are running (none: absent)
   property var busy: ({})
 
   readonly property var _given: ({
@@ -105,20 +105,11 @@ Singleton {
     });
   }
 
-  // key -> calls in flight
-  property var _calls: ({})
-
   function _setBusy(key, change) {
-    const calls = Object.assign({}, root._calls);
-    calls[key] = (calls[key] ?? 0) + change;
     const next = Object.assign({}, root.busy);
-    if (calls[key] > 0)
-      next[key] = true;
-    else {
-      delete calls[key];
+    next[key] = (next[key] ?? 0) + change;
+    if (next[key] <= 0)
       delete next[key];
-    }
-    root._calls = calls;
     root.busy = next;
   }
 }
