@@ -124,6 +124,18 @@ func (p *HelloParams) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, (*plain)(p))
 }
 
+// compatible refuses a client of another protocol, or one that read
+// another schema than hash (the one this axiom built or was given).
+func (p HelloParams) compatible(hash string) error {
+	if p.Protocol != buildinfo.Protocol() {
+		return axerr.New(axerr.Incompatible, "this axiom speaks protocol %d, the client %d: the shell's files and the binary are from different versions", buildinfo.Protocol(), p.Protocol)
+	}
+	if p.SchemaHash != "" && p.SchemaHash != hash {
+		return axerr.New(axerr.Incompatible, "the client read another schema than this axiom has (restart the shell)")
+	}
+	return nil
+}
+
 // topics reads Subscribe.
 func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	if len(p.Subscribe) == 0 {
@@ -264,11 +276,9 @@ func (d *Daemon) corePart() part {
 
 func (d *Daemon) coreMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "daemon.hello", func(ctx context.Context, c *rpc.Conn, p HelloParams) (HelloResult, error) {
-		if p.Protocol != buildinfo.Protocol() {
-			return HelloResult{}, axerr.New(axerr.Incompatible, "this axiom speaks protocol %d, the client %d: the shell's files and the binary are from different versions", buildinfo.Protocol(), p.Protocol)
-		}
-		if _, hash := d.currentSchema(); p.SchemaHash != "" && p.SchemaHash != hash {
-			return HelloResult{}, axerr.New(axerr.Incompatible, "the client read another schema than the daemon built (restart the shell)")
+		_, hash := d.currentSchema()
+		if err := p.compatible(hash); err != nil {
+			return HelloResult{}, err
 		}
 		// Only the shell this daemon runs may say it is the shell: it
 		// reports the lock and registers IPC targets

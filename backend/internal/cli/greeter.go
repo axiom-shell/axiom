@@ -4,16 +4,18 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
-	"syscall"
 
 	"github.com/axiom-shell/axiom/backend/internal/assets"
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/daemon"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/greeter"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -36,9 +38,11 @@ func greeterCommand() *Command {
 bundle, <dir>/config/greeter.json), else the snapshot the install took
 (fallback/greeter.json), else the defaults, through the same pipeline as
 config.json, writes it to a private runtime folder and runs the tree's
-greeter.qml on it (quickshell replaces this process). greeter-session.sh
-runs it as greetd's user. To look at it from a session, set
-AXIOM_GREETER_WINDOWED=1 and point --dir at a scratch folder.`,
+greeter.qml on it, staying quickshell's parent until it exits: the
+greeter's commands and lookups go through this process, on a socket in
+that folder. greeter-session.sh runs it as greetd's user. To look at it
+from a session, set AXIOM_GREETER_WINDOWED=1 and point --dir at a
+scratch folder.`,
 		Setup: func(fs *flag.FlagSet) Runner {
 			dir := fs.String("tree", "", "the axiom tree whose greeter runs (default: $AXIOM_TREE, the one here, else the installed one)")
 			greeterDir := fs.String("dir", "", "the greeter's folder (default $AXIOM_GREETER_DIR, else /var/lib/axiom-greeter)")
@@ -121,7 +125,16 @@ AXIOM_GREETER_WINDOWED=1 and point --dir at a scratch folder.`,
 					// What reads the compositor's config (axiom compositor …)
 					"AXIOM_BIN": self,
 				})
-				return syscall.Exec(bin, []string{*qs, "-p", filepath.Join(root, "greeter.qml")}, env)
+				return daemon.RunGreeter(ctx, daemon.GreeterOptions{
+					Command:    []string{bin, "-p", filepath.Join(root, "greeter.qml")},
+					Environ:    env,
+					Dir:        run,
+					SchemaHash: buildinfo.SchemaHash(schemaBytes),
+					Tree:       root,
+					Getenv:     e.Getenv,
+					Output:     e.Stderr,
+					Log:        slog.New(slog.NewTextHandler(e.Stderr, nil)),
+				})
 			}
 		},
 	}

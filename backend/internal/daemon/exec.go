@@ -14,6 +14,12 @@ func (d *Daemon) execPart() part {
 }
 
 func (d *Daemon) execMethods(reg *rpc.Registry) {
+	execHandlers(reg, d.commandOptions)
+}
+
+// execHandlers are exec.run and exec.spawn, run with options' (the
+// shell's, the greeter's quickshell's environment).
+func execHandlers(reg *rpc.Registry, options func() command.Options) {
 	type runParams struct {
 		Argv []string `json:"argv"`
 		// Written to stdin (null: none): how secrets travel, never argv
@@ -23,10 +29,10 @@ func (d *Daemon) execMethods(reg *rpc.Registry) {
 		Argv []string `json:"argv"`
 	}
 	rpc.Handle(reg, "exec.run", func(ctx context.Context, c *rpc.Conn, p runParams) (command.Result, error) {
-		return command.Run(ctx, d.commandOptions(), p.Argv, p.Input)
+		return command.Run(ctx, options(), p.Argv, p.Input)
 	})
 	rpc.Handle(reg, "exec.spawn", func(ctx context.Context, c *rpc.Conn, p spawnParams) (struct{}, error) {
-		return struct{}{}, command.Spawn(ctx, d.commandOptions(), p.Argv)
+		return struct{}{}, command.Spawn(ctx, options(), p.Argv)
 	})
 }
 
