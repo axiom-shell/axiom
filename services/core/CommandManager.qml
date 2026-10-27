@@ -28,8 +28,9 @@ QtObject {
   readonly property var values: _values
 
   // request: { command, interval (ms, default 5000, at least 500), mode
-  // ("poll", or "once": run once, then on refresh), format ("text", or
-  // "json": values[command] too) }
+  // ("poll"; "once": run once, then on refresh; "stream": run for as long
+  // as it's acquired, each line it prints an output, restarted when it
+  // exits), format ("text", or "json": values[command] too) }
   function acquire(owner, request) {
     if (!request?.command) {
       release(owner);
@@ -98,15 +99,15 @@ QtObject {
   // command -> { interval, mode, format } as axiom watches it
   property var _watched: ({})
 
-  // One watch per command: the shortest interval, polled if anyone
-  // polls, parsed if anyone asked for json
+  // One watch per command: the shortest interval, streamed if anyone
+  // streams, else polled if anyone polls, parsed if anyone asked for json
   function _sync() {
     const next = {};
     for (const r of root._requests) {
       const w = next[r.command];
       next[r.command] = w ? {
         "interval": Math.min(w.interval, r.interval),
-        "mode": w.mode === "poll" || r.mode === "poll" ? "poll" : "once",
+        "mode": [w.mode, r.mode].includes("stream") ? "stream" : [w.mode, r.mode].includes("poll") ? "poll" : "once",
         "format": w.format === "json" || r.format === "json" ? "json" : "text"
       } : {
         "interval": r.interval,

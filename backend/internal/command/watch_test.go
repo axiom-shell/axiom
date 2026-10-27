@@ -282,7 +282,7 @@ func TestWatchStops(t *testing.T) {
 		h.w.mu.Unlock()
 	}
 	h := newHarness(t)
-	for _, r := range []WatchRequest{{}, {Command: "x", Mode: "stream"}, {Command: "x", Format: "xml"}} {
+	for _, r := range []WatchRequest{{}, {Command: "x", Mode: "tail"}, {Command: "x", Format: "xml"}} {
 		if err := h.w.Watch(newSub(), r); err == nil {
 			t.Errorf("%+v accepted", r)
 		}

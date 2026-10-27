@@ -59,6 +59,7 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 		Method:  pushExecOutputs.Method,
 		Options: func() command.Options { return command.Options{Env: env} },
 		Context: serveCtx,
+		Log:     o.Log,
 	})
 	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches), Log: o.Log, OnClose: func(c *rpc.Conn) { watches.Forget(c) }}
 	served := make(chan error, 1)
