@@ -2,9 +2,9 @@
 // HTTP APIs (Anthropic's Messages, OpenAI's Chat Completions and the
 // servers copying it, Gemini's generateContent), built from the
 // conversation with its images read by path and streamed back as deltas
-// (send.go), their model lists, and the API keys they take. A key is read here, from where SecretsManager
-// stores it (keys.go), so it never passes through QML, argv or a file of
-// its own.
+// (send.go), their model lists, and the API keys they take. A key is
+// read here, from where SecretsManager stores it (keys.go), so it never
+// passes through QML, argv or a file of its own.
 package chat
 
 import (

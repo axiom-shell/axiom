@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while moving the chat requests to axiom (backend stage 5)
 
+### A fast chat reply can drop the shell's connection
+- **Where:** `backend/internal/rpc/rpc.go` (`Conn.enqueue`, `Limits.QueueSize`), `backend/internal/daemon/chat.go` (`chat.send`'s `c.Notify`), `backend/internal/chat/send.go` (`Send`)
+- **What:** Each piece of a reply is its own `chat.delta` notification (`Notify`, not latest-wins), and `enqueue` never waits: when the connection's 4096-message queue is full it logs `dropping a peer that stopped reading` and closes the connection, every topic and call in flight with it. So if the shell stops reading (its event loop busy) while a fast provider streams, once the socket buffer and 4096 deltas fill (seconds at the fastest servers' token rates, a delta per token or two), the shell's whole connection goes. Before stage 5 curl's pipe simply blocked. A fix would coalesce the deltas `Send` emits (text gathered while a push waits) or let `chat.send` wait for room instead of dropping the peer.
+- **Size:** small
+- **Found:** 2026-10-27, while reviewing the chat move to axiom (backend stage 5)
+
 ### Restoring over a config.json that doesn't load resets the other takeovers
 - **Where:** `backend/internal/store/store.go` (`Replace`, `Restore`, `takeoverBase`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
 - **What:** While config.json doesn't load at the start, the store knows no takeover values (`takeoversUnknown`), so `Replace` and `Restore` keep `takeoverBase()`: the defaults. Restoring a saved config over that file therefore writes the defaults' `Idle.enabled`, `Polkit.enabled`, `Greeter.enabled` and `Lockscreen.mode`, switching off or changing whatever the user had taken over. Only `Compositor.mode` is repaired afterwards, by the compositor manager keeping the mode it applied and saving it back (`saveKept`, #108). Deciding the unknown takeovers once in the store (take the restored file's own values, or refuse the restore while none are known) would cover all five settings, and would let the manager's separate hold go ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)). Like every other problem that starts from a config.json that doesn't load, it's rare, and it's fixed by backend stage 7, with the other config problems.

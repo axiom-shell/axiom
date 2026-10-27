@@ -22,7 +22,7 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 - axiom (`backend/internal/chat`) reads the key itself (`keys.go`: `keyEnv` in the shell's environment, then `secret-tool`, then secrets.json; see [Secrets](../core/secrets.md)), reads each attachment by path (one it can't read goes without its image), builds the request and streams the reply:
   - each piece is a `chat.delta` push (`{ id, kind: "text" | "thinking", text }`) to the connection that asked;
   - the call answers when the reply ends: `{ model, blocks, notice: "refusal" | "length" | "", stopped }`;
-  - a failure is an error by kind, which `ChatManager` maps to the message's `errorKind`: `unauthorized` (401, 403) → `auth`, `not_found` (no key) → `nokey`, `unavailable` (no answer) → `network`, else `bad_reply` (another status, an error event in the stream).
+  - a failure is an error by kind, which `ChatManager` maps to the message's `errorKind`: `unauthorized` (401, 403) → `auth`, `not_found` (no key) → `nokey`, `unavailable` (no answer, or the reply cut off midway) → `network`, else `bad_reply` (another status, an error event in the stream).
 - `chat.stop { id }` ends a reply early; `chat.send` then answers `stopped`, with what streamed kept.
 - Three provider kinds: `anthropic`, `openai` (any OpenAI-style server), `gemini`.
 - Anthropic thinking blocks (with their signatures) are sent back only to the model that wrote them.

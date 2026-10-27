@@ -14,18 +14,41 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/command"
 )
 
-// fakeSecretTool is a secret-tool answering `lookup service axiom
-// provider <id>` with keyring[id] (exit 1 for an id it doesn't have)
+// secretTool is one fake secret-tool for every test, written by TestMain
+// before any test forks: a program written while another test forks
+// can't be run ("text file busy"). It answers `lookup service axiom
+// provider <id>` with the file <the path it ran as>.keys/<id> (exit 1
+// without one), so each test links it with its own keyring.
+var secretTool string
+
+func TestMain(m *testing.M) {
+	dir, err := os.MkdirTemp("", "chat-tools-")
+	if err != nil {
+		panic(err)
+	}
+	secretTool = filepath.Join(dir, "secret-tool")
+	if err := os.WriteFile(secretTool, []byte("#!/bin/sh\nexec cat \"$0.keys/$5\" 2>/dev/null\n"), 0o755); err != nil {
+		panic(err)
+	}
+	code := m.Run()
+	os.RemoveAll(dir)
+	os.Exit(code)
+}
+
+// fakeSecretTool is secretTool answering with keyring[id]
 func fakeSecretTool(t *testing.T, keyring map[string]string) string {
 	t.Helper()
-	script := "#!/bin/sh\ncase \"$5\" in\n"
-	for id, key := range keyring {
-		script += id + ") echo '" + key + "' ;;\n"
-	}
-	script += "*) exit 1 ;;\nesac\n"
 	path := filepath.Join(t.TempDir(), "secret-tool")
-	if err := os.WriteFile(path, []byte(script), 0o700); err != nil {
+	if err := os.Symlink(secretTool, path); err != nil {
 		t.Fatal(err)
+	}
+	if err := os.Mkdir(path+".keys", 0o700); err != nil {
+		t.Fatal(err)
+	}
+	for id, key := range keyring {
+		if err := os.WriteFile(filepath.Join(path+".keys", id), []byte(key+"\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
 	}
 	return path
 }

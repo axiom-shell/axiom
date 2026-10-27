@@ -258,6 +258,10 @@ func TestSendErrors(t *testing.T) {
 		case "/broken/messages":
 			fmt.Fprint(w, "data: {\"type\": \"content_block_delta\", \"index\": 0, \"delta\": {\"type\": \"text_delta\", \"text\": \"so far\"}}\n\n")
 			fmt.Fprint(w, "data: {\"type\": \"error\", \"error\": {\"message\": \"overloaded\"}}\n\n")
+		case "/cut/messages":
+			// The connection ends before the body it promised
+			w.Header().Set("Content-Length", "1000")
+			fmt.Fprint(w, "data: {\"type\": \"message_start\", \"message\": {}}\n\n")
 		}
 	}))
 	defer srv.Close()
@@ -269,6 +273,7 @@ func TestSendErrors(t *testing.T) {
 	}{
 		{srv.URL + "/denied", "p", axerr.Unauthorized, "401: bad key"},
 		{srv.URL + "/broken", "p", axerr.BadReply, "overloaded"},
+		{srv.URL + "/cut", "p", axerr.Unavailable, ""},
 		{srv.URL, "nokey", axerr.NotFound, "no API key for nokey"},
 		{"http://127.0.0.1:1", "p", axerr.Unavailable, ""},
 	}

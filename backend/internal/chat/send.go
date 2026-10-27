@@ -80,8 +80,9 @@ var errStopped = errors.New("stopped")
 // Send asks the provider for a reply to the messages, passing each piece
 // to emit as it streams in. Stop(id) ends it early, which isn't an
 // error: the result says stopped. A failure is unauthorized (401, 403),
-// not_found (no key), unavailable (no answer) or bad_reply (any other
-// status, an error in the stream), after whatever streamed before it.
+// not_found (no key), unavailable (no answer, or the reply cut off
+// midway) or bad_reply (any other status, an error in the stream), after
+// whatever streamed before it.
 func (s *Service) Send(ctx context.Context, r SendRequest, emit func(Delta)) (SendResult, error) {
 	key, err := s.keyFor(ctx, r.Provider)
 	if err != nil {
@@ -141,7 +142,7 @@ func (s *Service) Send(ctx context.Context, r SendRequest, emit func(Delta)) (Se
 		return SendResult{Model: st.model, Blocks: []map[string]any{}, Stopped: true}, nil
 	}
 	if err := scanner.Err(); err != nil {
-		return SendResult{}, transportError(err)
+		return SendResult{}, axerr.Wrap(axerr.Unavailable, err, "the reply was cut off")
 	}
 	if st.err != "" {
 		return SendResult{}, axerr.New(axerr.BadReply, "%s", st.err)

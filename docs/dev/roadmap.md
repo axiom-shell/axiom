@@ -164,6 +164,7 @@ The binary's rules are enforced by its tests, and the shell–daemon contract is
 Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one floor (`topics.MinInterval`, 1 ms since 2026-10-26: each setting's schema minimum is the limit) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc` (`tree` is its disk side, both package docs say so); clearer package names (`system` is `sysmon`, `lock` is `lockscreen`, apart from `fsx.Lock`); strict param decoding (`rpc.DecodeStrict`, topic requests too); the call rule in protocol.md, with `gen_docs.py` failing on a call it can't read unless marked `// rpc: unchecked (<reason>)`.
 
 Resolves:
+- [A fast chat reply can drop the shell's connection](issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.

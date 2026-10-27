@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-// Pure helpers: deep copies, comparison and lookup by path, free ids, usage counts, curl config values, text width
+// Pure helpers: deep copies, comparison and lookup by path, free ids, usage counts, text width
 // and truncation, colors, calendar grids, byte sizes and rates. No file access, processes or
 // services (those live in services/).
 QtObject {
