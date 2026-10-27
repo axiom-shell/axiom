@@ -38,7 +38,8 @@ const greeterSocket = "axiom.sock"
 // exits (an error when it failed, so greeter-session.sh tries the
 // fallback) or ctx ends (it is stopped). Unlike Run, it owns no config,
 // lock screen, compositor layer or Wayland connection: it answers only
-// what the greeter asks, its commands (exec.*) and lookups (tz.*,
+// what the greeter asks, its commands (exec.*, watched ones pushed as
+// exec.outputs) and lookups (tz.*,
 // net.addresses), and only to that quickshell. Greeter mode reads its
 // config once and writes nothing (docs/dev/features/greeter-runtime.md).
 func RunGreeter(ctx context.Context, o GreeterOptions) error {
@@ -53,8 +54,13 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	var shellPID atomic.Int64
 	isShell := func(pid int) bool { return pid > 0 && int64(pid) == shellPID.Load() }
 	env := append(append([]string{}, o.Environ...), "AXIOM_SOCKET="+socket)
-	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell), Log: o.Log}
 	serveCtx, stopServing := context.WithCancel(context.Background())
+	watches := command.NewWatches(command.WatchOptions{
+		Method:  pushExecOutputs.Method,
+		Options: func() command.Options { return command.Options{Env: env} },
+		Context: serveCtx,
+	})
+	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches), Log: o.Log, OnClose: func(c *rpc.Conn) { watches.Forget(c) }}
 	served := make(chan error, 1)
 	go func() { served <- server.Serve(serveCtx, ln) }()
 	defer func() {
@@ -79,10 +85,10 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 }
 
 // greeterRegistry is what the greeter's axiom answers: a hello from its
-// quickshell alone, then that quickshell's commands, run with its own
+// quickshell alone, then that quickshell's commands (watched ones too), run with its own
 // environment, and lookups. Anything else is unavailable, as it was with
 // no axiom at all, so the shell's callers stay quiet about it.
-func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool) *rpc.Registry {
+func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches) *rpc.Registry {
 	reg := rpc.NewRegistry()
 	reg.Before = func(c *rpc.Conn, method string) error {
 		if method != "daemon.hello" && sessionOf(c) == nil {
@@ -107,7 +113,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool) *rp
 			SchemaHash: o.SchemaHash, PID: os.Getpid(), Tree: o.Tree, Compatible: true,
 		}, nil
 	})
-	execHandlers(reg, func() command.Options { return command.Options{Env: env} })
+	execHandlers(reg, func() command.Options { return command.Options{Env: env} }, func() *command.Watches { return watches })
 	lookupMethods(reg, o.Getenv)
 	return reg
 }

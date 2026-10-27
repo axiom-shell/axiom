@@ -8,6 +8,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
@@ -60,6 +61,10 @@ var (
 	pushNightLightState = rpc.Push[nightlight.State]{Method: "nightlight.state", Latest: true}
 
 	pushClipboardState = rpc.Push[clipboardState]{Method: "clipboard.state", Latest: true}
+
+	// Not a hello topic: sent only to a connection watching commands
+	// (exec.watch), every watched command's output in one
+	pushExecOutputs = rpc.Push[command.Outputs]{Method: "exec.outputs", Latest: true}
 )
 
 // compositorPushes are the compositor's pushes by method, for its

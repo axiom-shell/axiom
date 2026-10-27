@@ -1,29 +1,35 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Io
 
-// Shell commands polled for their output (e.g. a bar Button's label),
-// shared by every widget asking for the same command: each distinct
-// command runs once per interval (the shortest asked for), only while
-// something has acquire()d it.
-//   CommandManager.acquire(owner, { command, interval })
+// Shell commands watched for their output (e.g. a bar Button's label),
+// shared by every widget asking for the same command: axiom runs each
+// distinct command once per interval (the shortest asked for), only while
+// something has acquire()d it (exec.watch, pushed back as exec.outputs).
+//   CommandManager.acquire(owner, { command, interval, mode, format })
 //   CommandManager.outputs[command]    // last stdout, trimmed
+//   CommandManager.values[command]     // with format "json": it parsed
 // Also runs one-off commands: runDetached (a shell string or an argv) for
 // widgets and services that don't wait on it (so they start no processes of
 // their own), and run() for services that want the output:
 //   CommandManager.run(["cmd", "arg"], (exitCode, stdout, stderr) => ..., input)
 // `input` (optional) is written to stdin, which is then closed: how secrets
 // and clipboard text reach a command without going through argv.
-// One-off commands run in axiom (exec.run, exec.spawn: the session's
-// `axiom run`, or the greeter's `axiom greeter`); a shell started by hand,
-// with no axiom, runs none. The polling still runs here.
+// Every command runs in axiom (the session's `axiom run`, or the
+// greeter's `axiom greeter`); a shell started by hand, with no axiom, runs
+// none.
 QtObject {
   id: root
 
   // command -> last output (trimmed)
-  property var outputs: ({})
+  readonly property var outputs: _outputs
+  // command -> its output parsed, for a command acquired with format
+  // "json" (absent while the output isn't JSON)
+  readonly property var values: _values
 
+  // request: { command, interval (ms, default 5000, at least 500), mode
+  // ("poll", or "once": run once, then on refresh), format ("text", or
+  // "json": values[command] too) }
   function acquire(owner, request) {
     if (!request?.command) {
       release(owner);
@@ -31,7 +37,9 @@ QtObject {
     }
     _registry.acquire(owner, {
       "command": request.command,
-      "interval": Math.max(500, request.interval ?? 5000)
+      "interval": request.interval ?? 5000,
+      "mode": request.mode ?? "poll",
+      "format": request.format ?? "text"
     });
   }
 
@@ -74,68 +82,90 @@ QtObject {
 
   // Run a command again now (after an action that may change its output)
   function refresh(command) {
-    _runners[command]?.run();
+    if (command in root._watched)
+      BackendManager.call("exec.refresh", {
+        "command": command
+      }, root._logFailure);
   }
 
   // -- Private --
+  property var _outputs: ({})
+  property var _values: ({})
   property ConsumerRegistry _registry: ConsumerRegistry {}
   readonly property var _requests: _registry.requests
   on_RequestsChanged: _sync()
 
-  // command -> runner
-  property var _runners: ({})
+  // command -> { interval, mode, format } as axiom watches it
+  property var _watched: ({})
 
-  property Component _runnerComponent: Component {
-    QtObject {
-      id: runner
-      property string command
-      property int interval: 5000
-
-      function run() {
-        if (!process.running)
-          process.running = true;
-      }
-
-      property Timer _timer: Timer {
-        interval: runner.interval
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: runner.run()
-      }
-
-      property Process _process: Process {
-        id: process
-        command: ["sh", "-c", runner.command]
-        stdout: StdioCollector {
-          onStreamFinished: {
-            const output = text.trim();
-            if (root.outputs[runner.command] !== output)
-              root.outputs = Object.assign({}, root.outputs, {
-                [runner.command]: output
-              });
-          }
-        }
-      }
+  // One watch per command: the shortest interval, polled if anyone
+  // polls, parsed if anyone asked for json
+  function _sync() {
+    const next = {};
+    for (const r of root._requests) {
+      const w = next[r.command];
+      next[r.command] = w ? {
+        "interval": Math.min(w.interval, r.interval),
+        "mode": w.mode === "poll" || r.mode === "poll" ? "poll" : "once",
+        "format": w.format === "json" || r.format === "json" ? "json" : "text"
+      } : {
+        "interval": r.interval,
+        "mode": r.mode,
+        "format": r.format
+      };
+    }
+    const last = root._watched;
+    root._watched = next;
+    for (const command in next) {
+      if (JSON.stringify(next[command]) !== JSON.stringify(last[command]))
+        root._watch(command);
+    }
+    for (const command in last) {
+      if (!(command in next) && BackendManager.ready)
+        BackendManager.call("exec.unwatch", {
+          "command": command
+        }, root._logFailure);
     }
   }
 
-  function _sync() {
-    const intervals = {};
-    for (const r of root._requests)
-      intervals[r.command] = Math.min(intervals[r.command] ?? r.interval, r.interval);
-    const next = {};
-    for (const command in intervals) {
-      const runner = root._runners[command] ?? root._runnerComponent.createObject(root, {
-        "command": command
-      });
-      runner.interval = intervals[command];
-      next[command] = runner;
+  // Sent once greeted (onGreeted watches them all then)
+  function _watch(command) {
+    if (!BackendManager.ready)
+      return;
+    const w = root._watched[command];
+    BackendManager.call("exec.watch", {
+      "command": command,
+      "interval": w.interval,
+      "mode": w.mode,
+      "format": w.format
+    }, root._logFailure);
+  }
+
+  function _logFailure(error) {
+    if (error && error.kind !== "unavailable")
+      console.warn(`[CommandManager] ${error.message}`);
+  }
+
+  // Each push carries every watched command's output
+  Component.onCompleted: {
+    BackendManager.listen("exec.outputs", state => {
+      const outputs = {};
+      const values = {};
+      for (const command in state.outputs) {
+        const entry = state.outputs[command];
+        outputs[command] = entry.text;
+        if (entry.value !== undefined)
+          values[command] = entry.value;
+      }
+      root._outputs = outputs;
+      root._values = values;
+    });
+  }
+  // A new connection: axiom knows nothing of the watches yet
+  property Connections _greeted: Connections {
+    target: BackendManager
+    function onGreeted() {
+      Object.keys(root._watched).forEach(command => root._watch(command));
     }
-    for (const command in root._runners) {
-      if (!(command in next))
-        root._runners[command].destroy();
-    }
-    root._runners = next;
   }
 }

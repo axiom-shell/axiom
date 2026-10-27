@@ -21,14 +21,14 @@ The shell (`qs -p <tree>`) is a child of the daemon (`axiom run`). Six channels 
 - **D. Pushes, daemon → shell**: notifications by topic (`BackendManager.listen(method, fn)`). Each listener runs on its own: one that throws is logged and the rest still hear the push.
 - **E. Calls, daemon → shell**: `ipc.call`, how `axiom ipc <target> <fn>` and `axiom lock` reach an `IpcTarget` without a process per call (`BackendManager.handle`; answered by `_callTarget`).
 - **F. The binary as a command**: the shell runs `Paths.toolBin` for things that need no daemon (`compositor niri info`, `compositor sway-text`), and `Paths.axiomBin daemon reexec` after an update (`SelfUpdateManager`). The compositor configs the daemon writes call `axiom ipc …` for binds. The greeter runs `$AXIOM_BIN`, which is the greeter's own binary.
-- **The greeter's axiom**: `axiom greeter` stays the parent of the login screen's qs and serves the same protocol on `<its runtime folder>/axiom.sock` (`AXIOM_SOCKET`; `daemon/greeter.go`, `RunGreeter`), answering only that qs's hello and then `exec.run`, `exec.spawn`, `tz.zones`, `tz.offsets` and `net.addresses`: no config, lock, compositor layer, Wayland connection or pushes. Any other method is `unavailable` (its `Before` refuses it ahead of the lookup), as it would be with no axiom.
+- **The greeter's axiom**: `axiom greeter` stays the parent of the login screen's qs and serves the same protocol on `<its runtime folder>/axiom.sock` (`AXIOM_SOCKET`; `daemon/greeter.go`, `RunGreeter`), answering only that qs's hello and then `exec.*` (watched commands pushed as `exec.outputs`), `tz.zones`, `tz.offsets` and `net.addresses`: no config, lock, compositor layer, Wayland connection or other pushes. Any other method is `unavailable` (its `Before` refuses it ahead of the lookup), as it would be with no axiom.
 
 The daemon also talks to the compositor over its own sockets (`backend/internal/compositor/ipc`). That is a separate connection, not part of this protocol.
 
 ### The wire
 JSON-RPC 2.0, one message per line (NDJSON), over a unix socket in both directions (`backend/internal/rpc`; on the shell side `JsonRpc` builds and parses each line). Every message on a connection leaves through one queue, so a push caused by a request arrives before that request's reply: `config.changed` comes before the answer to the `config.replace` that caused it.
 
-The whole-state pushes (`daemon.state`, `dev.state`, `saved.state`, `compositor.state`, `idle.state`, `wayland.state`, `nightlight.state`, `clipboard.state`, and every [polled topic](#polled-topics)'s `<topic>.state`) are **latest-wins** (`Conn.NotifyLatest`, an `rpc.Push` declared `Latest`): each holds one place in the queue, taken where its first unsent state was sent, and what is written there is the newest state. A shell that stalls gets fewer states, never a full queue (4096 messages, after which the daemon drops it). Events (`config.changed`, `schema.*`, `compositor.applied` / `notify` / `bindsMerged`) and `config.state`, which follows its `config.changed`, stay one message each. A message may be up to 16 MiB and nested 64 deep, with at most 256 requests in flight per connection.
+The whole-state pushes (`daemon.state`, `dev.state`, `saved.state`, `compositor.state`, `idle.state`, `wayland.state`, `nightlight.state`, `clipboard.state`, `exec.outputs`, and every [polled topic](#polled-topics)'s `<topic>.state`) are **latest-wins** (`Conn.NotifyLatest`, an `rpc.Push` declared `Latest`): each holds one place in the queue, taken where its first unsent state was sent, and what is written there is the newest state. A shell that stalls gets fewer states, never a full queue (4096 messages, after which the daemon drops it). Events (`config.changed`, `schema.*`, `compositor.applied` / `notify` / `bindsMerged`) and `config.state`, which follows its `config.changed`, stay one message each. A message may be up to 16 MiB and nested 64 deep, with at most 256 requests in flight per connection.
 
 ### A session
 1. The shell connects and sends `daemon.hello` with `protocol` (from `config/json/backend.json`), `client: "shell"`, `schemaHash` (md5 of the schema file it read), `subscribe: true` (every topic) and `pid`. Calls made earlier wait in `BackendManager`'s queue.
@@ -47,7 +47,7 @@ A hello's `subscribe` is `true`, `false` or a list of topics:
 - `wayland`: `wayland.state`, `nightlight.state` (latest-wins)
 - `clipboard`: `clipboard.state` (latest-wins)
 
-The CLI subscribes to nothing.
+The CLI subscribes to nothing. `exec.outputs` is no topic: it goes only to a connection watching commands (`exec.watch`; `CommandManager.acquire`), carrying every command that connection watches, since per-command pushes on one latest-wins method would overwrite each other.
 
 ### Polled topics
 Data the daemon polls for the shell (`backend/internal/topics`) is not a hello topic: `subscribe: true` doesn't include it. A connection asks for it:

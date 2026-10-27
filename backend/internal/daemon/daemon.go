@@ -21,6 +21,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/clipboard"
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
@@ -134,8 +135,10 @@ type Daemon struct {
 	idle *idle.Service
 	// topics are the polled topics and their subscribers
 	topics *topics.Hub
-	tasks  *tasks
-	stop   context.CancelFunc
+	// The commands the shell watches (exec.watch)
+	watches *command.Watches
+	tasks   *tasks
+	stop    context.CancelFunc
 
 	// isShell says whether a connection's peer pid is the shell's (a
 	// hello as "shell" from anything else is refused)
@@ -279,6 +282,7 @@ func Run(ctx context.Context, opts Options) error {
 	d.newClipboard()
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
+	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Context: ctx, Go: d.tasks.Go})
 	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.clipboardPart(), d.dev.part()}
 	reg := d.registry(parts)
 	if opts.registered != nil {
@@ -290,6 +294,7 @@ func Run(ctx context.Context, opts Options) error {
 		OnClose: func(c *rpc.Conn) {
 			d.router.Forget(c)
 			d.topics.Forget(c)
+			d.watches.Forget(c)
 		},
 	}
 	d.store.Subscribe(func(ev store.Event) {

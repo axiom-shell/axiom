@@ -53,7 +53,7 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 				t.Fatal(err)
 			}
 			o := GreeterOptions{SchemaHash: "abc", Getenv: func(string) string { return "" }}
-			reg := greeterRegistry(o, os.Environ(), func(int) bool { return c.shell })
+			reg := greeterRegistry(o, os.Environ(), func(int) bool { return c.shell }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}))
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
 			go (&rpc.Server{Registry: reg}).Serve(ctx, ln)
@@ -93,6 +93,47 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 				t.Errorf("%s: %+v, %v", c.method, res, err)
 			}
 		})
+	}
+}
+
+// The greeter's quickshell watches commands too (a Button's label, a
+// CommandOutput module), their outputs pushed to it.
+func TestGreeterWatchesCommands(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(shortDir(t), "s.sock")
+	ln, err := rpc.Listen(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	watches := command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Context: ctx})
+	o := GreeterOptions{SchemaHash: "abc", Getenv: func(string) string { return "" }}
+	go (&rpc.Server{Registry: greeterRegistry(o, os.Environ(), func(int) bool { return true }, watches)}).Serve(ctx, ln)
+	outputs := make(chan command.Outputs, 4)
+	client := rpc.NewRegistry()
+	rpc.Handle(client, pushExecOutputs.Method, func(_ context.Context, _ *rpc.Conn, p command.Outputs) (struct{}, error) {
+		outputs <- p
+		return struct{}{}, nil
+	})
+	conn, err := rpc.Dial(ctx, path, client, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { conn.Close() })
+	if err := conn.Call(ctx, "daemon.hello", HelloParams{Protocol: buildinfo.Protocol(), Client: "shell", SchemaHash: "abc"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := conn.Call(ctx, "exec.watch", command.WatchRequest{Command: "echo hi", Mode: command.ModeOnce}, nil); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case p := <-outputs:
+		if p.Outputs["echo hi"].Text != "hi" {
+			t.Errorf("pushed %+v", p)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("no output pushed")
 	}
 }
 

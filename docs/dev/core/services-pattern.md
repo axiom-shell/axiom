@@ -30,7 +30,7 @@ How `services/` is built: one singleton per domain, owning state and side effect
   - `StopwatchManager`: `acquire(owner, interval)`, `now` ticking at the shortest interval asked while the timer or stopwatch runs; the timer's end runs with no consumers.
   - `PomodoroManager`: `acquire(owner)` with no request, for its once-a-second `now`; the phase's end runs with no consumers (created from `_services`). Both keep their ticker, alarm, saved state and notification in a `DeadlineTicker` part. See [Todo and pomodoro](../features/todo-pomodoro.md).
   - `TailscaleManager`: `available`, `backendState`/`connected`, `tailnetName`, `ip`, polled by axiom (the `tailscale` topic, at `TailscaleConfig.interval`: `backend/internal/tailscale`).
-  - `CommandManager`: `outputs[command]`, shared by identical commands (e.g. a Button's label).
+  - `CommandManager`: `acquire(owner, { command, interval, mode, format })`, `outputs[command]` (and `values[command]` with `format: "json"`), shared by identical commands (e.g. a Button's label); watched by axiom (below).
 - **Polled by the daemon:** a service whose side effect moved to axiom keeps the same `acquire` / `release` and its `ConsumerRegistry`, but instead of a Timer it hands the merged request to `BackendManager.acquire(topic, request)` while `_registry.active` (and `release(topic)` once it isn't), and fills its properties from `BackendManager.listen("<topic>.state", …)` ([protocol](../backend/protocol.md) › Polled topics).
 - **Widget side:** hold the request in a `readonly property var …Request` built from `properties`; acquire it in `Component.onCompleted` and in `on…RequestChanged`; release in `onDestruction`.
 
@@ -39,7 +39,8 @@ How `services/` is built: one singleton per domain, owning state and side effect
 - `run(command, callback, input)` runs a service's one-off command.
   - callback is `(exitCode, stdout, stderr)`
   - `input` goes to stdin.
-  - Both run in axiom (`exec.run`, `exec.spawn`; the greeter's `axiom greeter` answers them too; [roadmap](../backend/roadmap.md) › Stage 3b), and never without it (a shell started by hand). A run that can't start or whose answer is lost calls back with -1 and the reason as stderr. The polled `outputs` still run in QML.
+  - Both run in axiom (`exec.run`, `exec.spawn`; the greeter's `axiom greeter` answers them too; [roadmap](../backend/roadmap.md) › Stage 3b), and never without it (a shell started by hand). A run that can't start or whose answer is lost calls back with -1 and the reason as stderr.
+- `acquire` watches a command in axiom (`exec.watch` / `exec.unwatch` / `exec.refresh`, `backend/internal/command/watch.go`): one watch per command with the shortest interval its consumers asked (at least 500 ms), `mode` `poll` or `once` (run once, then on `refresh`), and `format` `json` when any consumer asked. Every watched command's output comes in one `exec.outputs` push (`{ outputs: { command: { text, value, error, exitCode, at } } }`, latest-wins, sent only when an output changed); the watches are sent again after every hello.
 - So services keep no `Process` of their own. Direct `Process`, `FileView`, `Socket`, `IpcHandler` and `Quickshell.execDetached` are frozen to the files in `scripts/quickshell-io-allowlist.json` (`check_structure`), which shrinks as those side effects move to the axiom daemon ([roadmap](../backend/roadmap.md), [protocol](../backend/protocol.md)). Funnelling through `CommandManager`, `FileManager` and `StateManager` means each can later be switched to the daemon in one place.
 
 ### Other domain services
