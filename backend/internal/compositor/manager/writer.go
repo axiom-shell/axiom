@@ -72,6 +72,10 @@ type writer interface {
 	// compositor takes them only from its files (liveByFile)
 	liveLines(in Inputs, spec any) []string
 	liveByFile() bool
+	// takesBack: a look part the shell sets back itself once it's off
+	// (sway's window opacity, set a window at a time), so turning it off
+	// reloads nothing
+	takesBack(part string) bool
 	// validate is "" or why the compositor would refuse text (niri's)
 	validate(ctx context.Context, text string) string
 	runLive(ctx context.Context, lines []string) bool

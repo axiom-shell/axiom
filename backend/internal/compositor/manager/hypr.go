@@ -32,9 +32,10 @@ func newHypr(e env, h *ipc.Hypr) *hyprWriter {
 	return &hyprWriter{env: e, ipc: h, runtime: runtimeLayer{logf: e.logf, configName: "Hyprland"}}
 }
 
-func (w *hyprWriter) header() string       { return hyprHeader }
-func (w *hyprWriter) takeoverKind() string { return "hyprland" }
-func (w *hyprWriter) liveByFile() bool     { return false }
+func (w *hyprWriter) header() string        { return hyprHeader }
+func (w *hyprWriter) takeoverKind() string  { return "hyprland" }
+func (w *hyprWriter) liveByFile() bool      { return false }
+func (w *hyprWriter) takesBack(string) bool { return false }
 
 func (w *hyprWriter) dir() string { return w.configHome() + "/hypr/" }
 

@@ -58,6 +58,7 @@ func (f *fakeWriter) liveLines(in Inputs, spec any) []string {
 	return []string{"live " + jsonx.ToString(getAny(spec, "tag"))}
 }
 func (f *fakeWriter) liveByFile() bool                        { return false }
+func (f *fakeWriter) takesBack(part string) bool              { return part == "opacity" }
 func (f *fakeWriter) validate(context.Context, string) string { return f.invalid }
 func (f *fakeWriter) runLive(_ context.Context, lines []string) bool {
 	f.note("live:" + strings.Join(lines, ";"))
@@ -173,7 +174,7 @@ func newHarness(t *testing.T, mode string) *harness {
 func (h *harness) inputs(fileTag, liveTag, layerKey string, parts ...string) {
 	look := jsonx.Obj("parts", strs(parts))
 	in := Inputs{jsonx.Obj("kind", "hyprland", "layerKey", layerKey, "liveKey", liveTag,
-		"supports", jsonx.Obj("windowBorders", true, "windowGaps", true),
+		"supports", jsonx.Obj("windowBorders", true, "windowGaps", true, "windowOpacity", true),
 		"specFile", jsonx.Obj("tag", fileTag, "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look))}
 	h.m.enqueue(func(context.Context) { h.m.setInputs(in) })
 }
@@ -374,6 +375,18 @@ func TestLivePartsAreEvaluatedAndTakenBack(t *testing.T) {
 	// reloads
 	h.inputs("f1", "l3", "k1", "borders")
 	h.eventually("reloaded", h.called("reload"))
+}
+
+func TestAPartTheShellTakesBackReloadsNothing(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "detached")
+	h.inputs("f1", "l1", "k1", "borders", "opacity")
+	h.eventually("the runtime layer", h.called("runtime:live l1"))
+	h.inputs("f1", "l2", "k1", "borders")
+	h.eventually("evaluated", h.called("live:live l2"))
+	if slices.Contains(h.w.seen(), "reload") {
+		t.Fatal("turning opacity off reloaded the compositor")
+	}
 }
 
 func TestMergedBindsGetIDs(t *testing.T) {

@@ -45,9 +45,10 @@ func newNiri(e env, n *ipc.Niri) *niriWriter {
 	return w
 }
 
-func (w *niriWriter) header() string       { return niriHeader }
-func (w *niriWriter) takeoverKind() string { return "niri" }
-func (w *niriWriter) liveByFile() bool     { return true }
+func (w *niriWriter) header() string        { return niriHeader }
+func (w *niriWriter) takeoverKind() string  { return "niri" }
+func (w *niriWriter) liveByFile() bool      { return true }
+func (w *niriWriter) takesBack(string) bool { return false }
 
 func (w *niriWriter) dir() string          { return w.configHome() + "/niri/" }
 func (w *niriWriter) includePath() string  { return w.stateDir + "niri.kdl" }

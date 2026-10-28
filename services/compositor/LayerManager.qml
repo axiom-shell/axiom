@@ -34,6 +34,7 @@ QtObject {
 
   // Whether the compositor stacks and arranges by LayerStack order itself
   readonly property bool _ordered: CompositorManager.supports.layerOrder === true
+  readonly property bool _restacks: CompositorManager.supports.layerRestack === true
 
   // A WlrLayershell.layer as LayerArrange.layerNames names it
   function layerName(layer) {
@@ -209,13 +210,17 @@ QtObject {
 
   // A slot's state, again whenever it changes; null once it's gone
   function reportSlot(uid, slot) {
+    // A mapped window moved to another layer lands on top of it, as if it
+    // had just mapped, where the compositor does that (supports.layerRestack,
+    // SwayFX: the blur window rising over a fullscreen window and back)
+    const moved = root._restacks && slot !== null && root._slots[uid] !== undefined && root._slots[uid].layer !== slot.layer;
     const slots = Object.assign({}, root._slots);
     if (slot)
       slots[uid] = slot;
     else
       delete slots[uid];
     root._slots = slots;
-    if (slot?.mapped && root._slotSeqs[uid] === undefined) {
+    if (slot?.mapped && (root._slotSeqs[uid] === undefined || moved)) {
       root._slotSeqs[uid] = ++root._lastSeq;
       root._settle.restart();
     } else if (!slot?.mapped) {

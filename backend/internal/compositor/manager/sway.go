@@ -43,6 +43,9 @@ func (w *swayWriter) header() string       { return swayHeader }
 func (w *swayWriter) takeoverKind() string { return "sway" }
 func (w *swayWriter) liveByFile() bool     { return false }
 
+// SwayManager sets every window's opacity back to 1 itself
+func (w *swayWriter) takesBack(part string) bool { return part == "opacity" }
+
 func (w *swayWriter) dir() string         { return w.configHome() + "/sway/" }
 func (w *swayWriter) includePath() string { return w.stateDir + "sway.conf" }
 func (w *swayWriter) includeLines() string {

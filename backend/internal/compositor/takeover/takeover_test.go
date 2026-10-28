@@ -700,3 +700,16 @@ func TestVerbsWaitForTheDirsLock(t *testing.T) {
 	held.Release()
 	eq(t, f.run("check"), "adopt")
 }
+
+func TestSwayIncludeMakesEveryRelativePathAbsolute(t *testing.T) {
+	t.Parallel()
+	for _, c := range [][2]string{
+		{"include conf.d/*", "include /d/conf.d/*"},
+		{`  include "my conf/a" 'b' c`, `  include "/d/my conf/a" '/d/b' /d/c`},
+		{`include /etc/sway/config.d/* ~/x $HOME/y "/z" rel`, `include /etc/sway/config.d/* ~/x $HOME/y "/z" /d/rel`},
+		{"included a", "included a"},
+		{`include ""`, `include ""`},
+	} {
+		eq(t, swayInclude(c[0], "/d"), c[1])
+	}
+}

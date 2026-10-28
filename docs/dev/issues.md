@@ -316,34 +316,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-17, while auditing the niri branch for merge
 
-### SwayFX remaps the chrome on a fresh qs start
-- **Where:** `services/compositor/SwayManager.qml` (`surfacesReady`), `shell/BlurBacking.qml`
-- **What:** `surfacesReady` is always true, so bars, border and docks map at once, while the held blur window (order 9) and the shadow window beside it (`axiom-shadows`, order 8) wait for `supports.blur`, known only from the `get_version` reply. Mapped after them, they make LayerManager map each lower-ordered window again. Hot reloads keep the variant, so only a fresh start does it. Waiting for `ready` would fix it, but hides the chrome until sway answers.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
-### The blur window's Top/Overlay switch may land over the bars on SwayFX
-- **Where:** `shell/BlurBacking.qml`, `shell/BlurBackingWindow.qml`
-- **What:** The blur window changes `stackLayer` while a fullscreen window shows; LayerManager keeps its place in the order. If SwayFX puts a window that changed layer on top of its new layer, then after fullscreen ends it draws over the bars. Needs a look in `scripts/dev/nested.sh sway` with SwayFX.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### A fullscreen window re-sends the whole live layer
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`_liveInputs`)
 - **What:** `BlurManager.active` flips as a fullscreen window opens or closes and is in `_liveInputs`, so each flip re-sends the whole look and input (Hyprland's `hl.config({ input = … })`, sway's `[all] border pixel`, `gaps … all set`), not just the blur rules: a user's runtime tweak (`border toggle`, `gaps current plus`) is undone whenever anything goes fullscreen. A blur-only change should send only the blur lines.
 - **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
-### The takeover makes only some of sway's relative includes absolute
-- **Where:** `backend/internal/compositor/takeover/kinds.go` (`sway`'s `absInclude`)
-- **What:** Adopting a sway config makes its relative includes absolute (it moves to `user/`), but only an unquoted first path: a quoted relative include, and all but the first path of a multi-path `include`, stay relative and then resolve from `user/`. (The unchecked edit and the unescaped dir in the old script's sed went with the Go port.)
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
-### Turning sway's window opacity off reloads sway
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`_appliedParts`)
-- **What:** Opacity counts as an applied part, so turning it off reloads the config (see "Changing a setting under sway can flash the screen"), though SwayManager already sets every window back to 1 itself. A part the backend takes back itself shouldn't count.
-- **Size:** trivial
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
 ### SwayFX's corner radius reaches only windows opened later

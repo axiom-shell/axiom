@@ -49,8 +49,9 @@ Singleton {
   readonly property bool ready: _recent.variant !== ""
   readonly property string displayName: fx ? "SwayFX" : "Sway"
   // Sway doesn't stack layers by axiom's order: LayerManager maps them in
-  // order itself, from the start
-  readonly property bool surfacesReady: true
+  // order itself. The chrome waits for the variant, so the blur and shadow
+  // windows (SwayFX only) map in their place with the rest, not after it
+  readonly property bool surfacesReady: ready
   // Sway has no slides
   readonly property int travelingTo: -1
   // Sway doesn't pick a split by the window's shape
@@ -69,6 +70,7 @@ Singleton {
     "windowGeometry": true,
     "outputCapture": true,
     "layerFrameSync": true,
+    "layerRestack": true,
     "windowBorders": true,
     "windowShape": true,
     "windowGaps": true,
@@ -450,9 +452,9 @@ Singleton {
     });
   }
 
-  // Until it's known, `ready` holds back axiom's layer. A sway that doesn't
-  // answer is asked again less and less often (2 s, doubling up to a
-  // minute), so it doesn't fill the log
+  // Until it's known, `ready` holds back axiom's layer and the chrome
+  // (surfacesReady). A sway that doesn't answer is asked again less and
+  // less often (2 s, doubling up to a minute), so it doesn't fill the log
   property Timer _versionRetry: Timer {
     interval: 2000
     onTriggered: {

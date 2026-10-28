@@ -112,7 +112,7 @@ var sway = &Kind{
 	comment:        regexp.MustCompile(`^[[:space:]]*#`),
 	axiomLine:      regexp.MustCompile(swayAxiomLine),
 	marker:         "# " + marker,
-	absInclude:     replacer(regexp.MustCompile(`^([[:space:]]*include[[:space:]]+)([^/~$"'[:space:]][^[:space:]]*)`)),
+	absInclude:     swayInclude,
 	left: func(text, userDir string) int {
 		if regexp.MustCompile(`(?m)^[[:space:]]*include .*/user/\*`).MatchString(text) {
 			return 0
@@ -169,6 +169,32 @@ func replacer(re *regexp.Regexp) func(line, dir string) string {
 		}
 		return line[:m[3]] + dir + "/" + line[m[4]:]
 	}
+}
+
+var (
+	swayIncludeLine = regexp.MustCompile(`^([[:space:]]*include[[:space:]]+)(.*)$`)
+	swayIncludePath = regexp.MustCompile(`"[^"]*"|'[^']*'|[^[:space:]"']+`)
+)
+
+// swayInclude makes each relative path of a sway include absolute from dir:
+// sway joins its arguments and expands them as a shell would, so an include
+// takes several paths, each quoted or not
+func swayInclude(line, dir string) string {
+	m := swayIncludeLine.FindStringSubmatch(line)
+	if m == nil {
+		return line
+	}
+	return m[1] + swayIncludePath.ReplaceAllStringFunc(m[2], func(path string) string {
+		quote := ""
+		if path[0] == '"' || path[0] == '\'' {
+			quote = path[:1]
+		}
+		inner := strings.Trim(path, quote)
+		if inner == "" || strings.ContainsRune("/~$", rune(inner[0])) {
+			return path
+		}
+		return quote + dir + "/" + inner + quote
+	})
 }
 
 func entries(dir string) []os.DirEntry {
