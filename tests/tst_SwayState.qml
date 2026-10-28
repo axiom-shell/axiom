@@ -36,6 +36,21 @@ TestCase {
     });
   }
 
+  function test_layoutsAreTheTiledWindowsParents() {
+    compare(SwayState.tree(fixture("get_tree")).layouts, {
+      "5": "splith",
+      "6": "splith",
+      "11": "tabbed",
+      "12": "tabbed"
+    });
+  }
+
+  function test_dropSplitsOnlyAcrossTheParent() {
+    const rows = [["splith", "left", ""], ["splith", "right", ""], ["splith", "top", "v"], ["splitv", "bottom", ""], ["splitv", "left", "h"], ["tabbed", "right", "h"], ["stacked", "top", "v"], [undefined, "left", "h"]];
+    for (const [layout, side, split] of rows)
+      compare(SwayState.dropSplit(layout, side), split, `${layout} ${side}`);
+  }
+
   function test_window() {
     const info = SwayState.tree(fixture("get_tree"));
     const win = info.windows.find(w => w.title === "floater");

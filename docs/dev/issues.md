@@ -328,12 +328,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-16, while auditing the sway branch
 
-### Overview drops on sway nest split containers
-- **Where:** `services/compositor/SwayManager.qml` (`placeWindow`)
-- **What:** A drop next to a window runs `split h|v` on the target every time, which wraps it in a new container even when its parent already splits that way, so repeated drops nest containers sway then draws as such (tabbed/stacked parents behave oddly). Split only when the parent's layout differs (the tree has it).
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch
-
 ### Detached sway keeps the floating modifier after the mouse binds go
 - **Where:** `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/render/sway.go` (`SwayUnbindLines`, `SwayFloatingModifier`)
 - **What:** The runtime layer sends `floating_modifier` for the drag/resize binds but its unbind commands don't take it back, so removing them in detached mode leaves sway's floating modifier set until sway reloads. It also overrides a `floating_modifier` of the user's own config, which `render.RuntimeBinds` doesn't see as a taken key.
