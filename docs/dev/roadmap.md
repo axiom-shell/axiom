@@ -183,10 +183,9 @@ niri:
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
-- [The Monitors page edits Monitors.profiles, a key format 2 renamed to items](issues.md#the-monitors-page-edits-monitorsprofiles-a-key-format-2-renamed-to-items)
-- [Hyprland picks monitor profiles in generated Lua](issues.md#hyprland-picks-monitor-profiles-in-generated-lua)
-- [A Hyprland hotplug modesets twice once Go switches](issues.md#a-hyprland-hotplug-modesets-twice-once-go-switches)
 - [The Monitors page matches profiles in QML](issues.md#the-monitors-page-matches-profiles-in-qml)
+- [A monitor profile saved under one compositor doesn't match under another](issues.md#a-monitor-profile-saved-under-one-compositor-doesnt-match-under-another)
+- [Two profiles naming one unplugged monitor differently both write a rule](issues.md#two-profiles-naming-one-unplugged-monitor-differently-both-write-a-rule)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [Floating bars sit flush on the border without a backend](issues.md#floating-bars-sit-flush-on-the-border-without-a-backend)
 - [Two exclusive-focus surfaces at once without a native grab](issues.md#two-exclusive-focus-surfaces-at-once-without-a-native-grab)
@@ -288,6 +287,7 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 - [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
 - [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
 - [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
+- [A self-update test once took the build path for a release](issues.md#a-self-update-test-once-took-the-build-path-for-a-release)
 - [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
 - [A compositor manager test misses its takeover prompt under load](issues.md#a-compositor-manager-test-misses-its-takeover-prompt-under-load)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)

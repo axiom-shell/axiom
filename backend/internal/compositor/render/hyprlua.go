@@ -447,89 +447,17 @@ func MirrorNames(details any) Func {
 	}
 }
 
-const applyMonitors = `function axiom_apply_monitors()
-  local connected = hl.get_monitors() or {}
-  local function matches(output, mon)
-    if output:sub(1, 5) == "desc:" then return mon.description == output:sub(6) end
-    return mon.name == output
-  end
-  local function find(output)
-    for _, mon in ipairs(connected) do
-      if matches(output, mon) then return mon end
-    end
-  end
-  local best, bestScore = nil, 0
-  for _, profile in ipairs(AXIOM_MONITOR_PROFILES) do
-    local score, exact = 0, true
-    for _, spec in ipairs(profile.outputs) do
-      local found = find(spec.output)
-      if found and not spec.disabled then score = score + 1 end
-      if not found and not spec.disabled then exact = false end
-    end
-    for _, mon in ipairs(connected) do
-      local listed = false
-      for _, spec in ipairs(profile.outputs) do
-        if matches(spec.output, mon) then listed = true end
-      end
-      if not listed then exact = false end
-    end
-    if exact and score > 0 then score = score + 1000 end
-    if score > bestScore then best, bestScore = profile, score end
-  end
-  -- Nothing reported yet (a first start): the first profile, as rules
-  -- waiting for their outputs
-  if #connected == 0 then best = AXIOM_MONITOR_PROFILES[1] end
-  if not best then return end
-  local mine = {}
-  for _, spec in ipairs(best.outputs) do
-    mine[spec.output] = true
-    local rule = {}
-    for k, v in pairs(spec) do rule[k] = v end
-    if rule.mirror then
-      local target = find(rule.mirror)
-      rule.mirror = target and target.name or nil
-    end
-    hl.monitor(rule)
-  end
-  for _, profile in ipairs(AXIOM_MONITOR_PROFILES) do
-    for _, spec in ipairs(profile.outputs) do
-      if not mine[spec.output] then
-        mine[spec.output] = true
-        hl.monitor({ output = spec.output, mode = "preferred", position = "auto", scale = "auto" })
-      end
-    end
-  end
-end`
-
-// MonitorsLua is HyprLua.monitorsLua: Lua keeping the monitors in the
-// profile for what's connected, now and on every monitor.added/removed.
-func MonitorsLua(profiles any) []string {
-	out := []string{"if AXIOM_MONITOR_SUBS then", "  for _, sub in ipairs(AXIOM_MONITOR_SUBS) do sub:remove() end", "  AXIOM_MONITOR_SUBS = nil", "end"}
-	var used []any
-	for _, p := range items(profiles) {
-		for _, rule := range items(get(p, "outputs")) {
-			if truthy(get(rule, "output")) {
-				used = append(used, p)
-				break
-			}
+// HyprFileMonitorCalls are the hl.monitor() calls of a profile in a
+// module or managed config axiom wrote: the profile it holds until the
+// outputs are read.
+func HyprFileMonitorCalls(text any) []string {
+	out := []string{}
+	for _, l := range strings.Split(str(or(text, "")), "\n") {
+		if l = strings.TrimSpace(l); strings.HasPrefix(l, `hl.monitor({ output = "`) {
+			out = append(out, l)
 		}
 	}
-	if len(used) == 0 {
-		return out
-	}
-	out = append(out, "AXIOM_MONITOR_PROFILES = {")
-	for _, p := range used {
-		out = append(out, "  { name = "+LuaString(or(get(p, "name"), ""))+", outputs = {")
-		for _, rule := range items(get(p, "outputs")) {
-			if truthy(get(rule, "output")) {
-				out = append(out, "    "+InlineSpec(MonitorSpec(rule))+",")
-			}
-		}
-		out = append(out, "  } },")
-	}
-	return append(out, "}", applyMonitors,
-		`AXIOM_MONITOR_SUBS = { hl.on("monitor.added", axiom_apply_monitors), hl.on("monitor.removed", axiom_apply_monitors) }`,
-		"axiom_apply_monitors()")
+	return out
 }
 
 // InputLua is HyprLua.inputLua: the input's parts that are on as one
@@ -542,18 +470,16 @@ func InputLua(input, inputSchema any) []string {
 	return strings.Split(hlConfig(table), "\n")
 }
 
-// GreeterLua is HyprLua.greeterLua: the greeter's Hyprland, the monitor
-// layouts and the Input options marked x-greeter (none a color, so no
-// resolveHex).
-func GreeterLua(profiles, inputSchema, input any) []string {
-	out := MonitorsLua(profiles)
+// GreeterLua is the greeter's Hyprland's Lua: the Input options marked
+// x-greeter (none a color, so no resolveHex), or none.
+func GreeterLua(inputSchema, input any) []string {
 	if !truthy(input) {
-		return out
+		return nil
 	}
 	if table := ConfigTable(greeterSchema(inputSchema), input, nil, jsonx.NewObject()); table.Len() > 0 {
-		out = append(out, hlConfig(table))
+		return []string{hlConfig(table)}
 	}
-	return out
+	return nil
 }
 
 // greeterSchema is objectSchema with only its x-greeter settings

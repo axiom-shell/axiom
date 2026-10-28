@@ -34,63 +34,22 @@ func repoSchema(t *testing.T) any {
 	return parse(t, string(data))
 }
 
-// The monitors' Lua (MonitorsLua), run with a stubbed hl, picks the
-// profile MonitorLayout.matchProfile picks, resolves a mirror to its
-// connector, resets an output only another profile names, and drops the
-// handlers of an earlier run
-func TestMonitorsLuaPicks(t *testing.T) {
-	t.Parallel()
-	profiles := parse(t, `[
-		{"name": "Desk", "outputs": [{"output": "desc:AOC", "mode": "3440x1440@240"}, {"output": "HDMI-A-1", "disabled": true}]},
-		{"name": "TV", "outputs": [{"output": "desc:AOC", "mode": "3440x1440@144"}, {"output": "desc:LG TV", "mode": "1920x1080@60", "x": 3440, "mirror": "desc:AOC"}]}]`)
-	if got := strings.Join(MonitorsLua(jsonx.Arr()), "\n"); !strings.Contains(got, "sub:remove()") || strings.Contains(got, "axiom_apply_monitors") {
-		t.Errorf("no profiles: only the unsubscribing:\n%s", got)
-	}
-	runLua(t, `connected, applied, removed = {}, {}, 0
-hl = {
-  get_monitors = function() return connected end,
-  monitor = function(spec) applied[#applied + 1] = spec end,
-  on = function() return { remove = function() removed = removed + 1 end } end,
-}
-aoc = { name = "DP-1", description = "AOC" }
-tv = { name = "HDMI-A-1", description = "LG TV" }
-function check(monitors, mode)
-  connected, applied = monitors, {}
-  axiom_apply_monitors()
-  assert(applied[1].mode == mode, "picked " .. tostring(applied[1].mode) .. ", wanted " .. mode)
-end`, strings.Join(MonitorsLua(profiles), "\n"), `check({ aoc }, "3440x1440@240")
-check({ tv }, "3440x1440@144")
--- The TV profile mirrors onto the AOC's connector, and resets the output
--- Desk disables
-check({ aoc, tv }, "3440x1440@144")
-assert(applied[2].mirror == "DP-1", "mirror resolved to a connector")
-local reset = false
-for _, spec in ipairs(applied) do
-  if spec.output == "HDMI-A-1" and spec.mode == "preferred" then reset = true end
-end
-assert(reset, "the output Desk disables goes back to its defaults")
--- A first start, nothing reported yet: the first profile
-check({}, "3440x1440@240")`, strings.Join(MonitorsLua(profiles), "\n"), `assert(removed == 2, "earlier handlers removed")`)
-}
-
-// The greeter's Hyprland (GreeterLua): the monitors always, and the
-// x-greeter input options of the parts that are on, as Lua that runs
+// The greeter's Hyprland (GreeterLua): the x-greeter input options of the
+// parts that are on, as Lua that runs
 func TestGreeterLua(t *testing.T) {
 	t.Parallel()
 	inputSchema := get(get(repoSchema(t), "properties"), "Input")
-	profiles := parse(t, `[{"name": "desk", "outputs": [{"output": "DP-1"}]}]`)
-	stub := `hl = { config = function(t) end, monitor = function(t) end, get_monitors = function() return {} end, on = function() return { remove = function() end } end }`
+	stub := `hl = { config = function(t) end }`
 
-	none := GreeterLua(profiles, inputSchema, nil)
-	if strings.Contains(strings.Join(none, "\n"), "hl.config") {
+	if none := GreeterLua(inputSchema, nil); len(none) != 0 {
 		t.Errorf("no input: nothing set:\n%s", strings.Join(none, "\n"))
 	}
 	off := parse(t, `{"keyboard": {"enabled": false, "layout": "us,de"}, "mouse": {"enabled": false, "sensitivity": -50}}`)
-	if got := GreeterLua(profiles, inputSchema, off); len(got) != len(none) {
+	if got := GreeterLua(inputSchema, off); len(got) != 0 {
 		t.Errorf("every part off: nothing set:\n%s", strings.Join(got, "\n"))
 	}
 	on := parse(t, `{"keyboard": {"enabled": true, "layout": "us,de"}, "mouse": {"enabled": true, "sensitivity": -50}, "touchpad": {"enabled": false, "naturalScroll": true}}`)
-	lines := GreeterLua(profiles, inputSchema, on)
+	lines := GreeterLua(inputSchema, on)
 	config := lines[len(lines)-1]
 	for _, want := range []string{"hl.config(", `kb_layout = "us,de"`, "sensitivity = -0.5"} {
 		if !strings.Contains(config, want) {
@@ -182,5 +141,23 @@ func TestLookBlurLua(t *testing.T) {
 	}
 	if lines := LookBlurLua(parse(t, `{"parts":[],"values":{}}`)); len(lines) != 0 {
 		t.Errorf("lines with the blur part off: %q", lines)
+	}
+}
+
+// The profile a module holds (HyprFileMonitorCalls): its own hl.monitor
+// calls, not the user's Lua nor an older module's picker
+func TestHyprFileMonitorCalls(t *testing.T) {
+	t.Parallel()
+	text := `function M.monitors()
+  hl.monitor({ output = "DP-1", mode = "preferred", position = "0x0", scale = 1 })
+  hl.monitor(rule)
+        hl.monitor({ output = spec.output, mode = "preferred", position = "auto", scale = "auto" })
+end`
+	got := HyprFileMonitorCalls(text)
+	if len(got) != 1 || got[0] != `hl.monitor({ output = "DP-1", mode = "preferred", position = "0x0", scale = 1 })` {
+		t.Errorf("got %q", got)
+	}
+	if got := HyprFileMonitorCalls(nil); len(got) != 0 {
+		t.Errorf("no file: %q", got)
 	}
 }

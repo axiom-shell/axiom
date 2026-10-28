@@ -114,8 +114,8 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 }
 
 // greeterProfiles is what keeps the bundle's saved monitor profile for
-// what's connected applied on the greeter's sway, as the session's config
-// layer does: its first call starts the greeter's own outputs.Tracker
+// what's connected applied on the greeter's Hyprland or sway, as the
+// session's config layer does: its first call starts the greeter's own outputs.Tracker
 // (greeter.compositor, which a windowed greeter never sends, so a
 // session's outputs are left alone), its goroutine on goFn until ctx ends;
 // each call sets the profiles.
@@ -124,7 +124,7 @@ func greeterProfiles(ctx context.Context, getenv func(string) string, log *slog.
 	var watch *manager.ProfileWatch
 	return func(profiles any) {
 		once.Do(func() {
-			watch = manager.NewProfileWatch(ctx, manager.Outputs{Sway: ipc.SwayFromEnv(getenv)}, log)
+			watch = manager.NewProfileWatch(ctx, manager.OutputsFromEnv(getenv), log)
 			socket, err := wire.SocketPath(getenv)
 			if err != nil {
 				log.Warn("not watching the outputs", "err", err)
@@ -147,7 +147,7 @@ func greeterProfiles(ctx context.Context, getenv func(string) string, log *slog.
 // environment, its files (its state), lookups, the weather and the
 // compositor's socket (Hyprland's requests, niri's requests and event
 // stream on niriStreams, nil when not under niri), and greeter.compositor,
-// which hands profiles the bundle's monitor profiles on sway. Anything else is unavailable, as it was with
+// which hands profiles the bundle's monitor profiles on Hyprland and sway. Anything else is unavailable, as it was with
 // no axiom at all, so the shell's callers stay quiet about it.
 func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub, written *files.Files, niriStreams *ipc.NiriStreams, profiles func(any)) *rpc.Registry {
 	reg := rpc.NewRegistry()

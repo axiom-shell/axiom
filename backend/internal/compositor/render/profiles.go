@@ -38,7 +38,7 @@ func connected(output string, outputs []Output) bool {
 
 // MatchProfile is the index of the saved profile (Monitors.items) for
 // what's connected, or -1 when none turns any output on. Only enabled
-// outputs count, as Hyprland's Lua sees them. A profile listing exactly
+// outputs count. A profile listing exactly
 // those wins (a disabled rule's output may be missing), else the one
 // turning on most of them; ties go to the earlier profile
 // (MonitorLayout.matchProfile).
@@ -89,6 +89,50 @@ func SavedRules(profiles any, outputs []Output) []any {
 	for _, rule := range items(get(items(profiles)[index], "outputs")) {
 		if connected(ruleOutput(rule), outputs) {
 			out = append(out, rule)
+		}
+	}
+	return out
+}
+
+// HyprlandRules is SavedRules for Hyprland, which lays a monitor plugged in
+// out itself before the daemon's switch lands: with them, for each output
+// a profile names that the matched profile's rules leave out, connected or
+// not, the rule every profile naming it agrees on (an external monitor
+// always set the same way), so it's laid out once, on plug and after the
+// switch alike. An output the profiles set differently gets no rule
+// (Hyprland's own layout, then the switch: a second modeset).
+func HyprlandRules(profiles any, outputs []Output) []any {
+	out := SavedRules(profiles, outputs)
+	if out == nil {
+		return nil
+	}
+	var covered []Output
+	for _, o := range outputs {
+		if slices.ContainsFunc(out, func(rule any) bool { return names(ruleOutput(rule), o.Name, o.Description) }) {
+			covered = append(covered, o)
+		}
+	}
+	var order []string
+	agreed := map[string]any{}
+	specs := map[string]string{}
+	for _, profile := range items(profiles) {
+		for _, rule := range items(get(profile, "outputs")) {
+			output := ruleOutput(rule)
+			if output == "" || connected(output, covered) {
+				continue
+			}
+			spec := InlineSpec(MonitorSpec(rule))
+			if seen, ok := specs[output]; !ok {
+				order = append(order, output)
+				specs[output], agreed[output] = spec, rule
+			} else if seen != spec {
+				agreed[output] = nil
+			}
+		}
+	}
+	for _, output := range order {
+		if agreed[output] != nil {
+			out = append(out, agreed[output])
 		}
 	}
 	return out

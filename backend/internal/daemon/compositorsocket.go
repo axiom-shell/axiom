@@ -64,14 +64,13 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 
 // greeterHandlers is greeter.compositor, the greeter's axiom's alone: the
 // greeter's compositor, loading no config of axiom's, set up from its
-// bundle (the config's Monitors profiles and Input values). Hyprland evals
-// Lua keeping the monitors in the profile for what's connected (picked
-// again on each hotplug) and the Input options marked x-greeter, then sets
-// the cursor; sway gets its live input and seat commands, its monitors
-// kept in the saved profile for what's connected by profiles
-// (greeterProfiles), its cursor the theme's companion
-// when XCURSOR_PATH holds the bundle's copy of it (greeter-session.sh);
-// niri takes input from its config file alone. schema is the config's.
+// bundle (the config's Monitors profiles and Input values). On Hyprland and
+// sway the monitors are kept in the saved profile for what's connected by
+// profiles (greeterProfiles). Hyprland evals the Input options marked
+// x-greeter, then sets the cursor; sway gets its live input and seat
+// commands, its cursor the theme's companion when XCURSOR_PATH holds the
+// bundle's copy of it (greeter-session.sh); niri takes input from its
+// config file alone. schema is the config's.
 func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any, profiles func(any)) {
 	type applyParams struct {
 		Profiles json.RawMessage `json:"profiles"`
@@ -108,8 +107,8 @@ func inputSchemaOf(schema any) any {
 
 // applyGreeter sets up the first of Hyprland, niri and sway running from
 // the greeter's profiles and input values (greeter.compositor).
-// xcursorPath is the greeter's XCURSOR_PATH; watch keeps sway's monitors
-// in the profiles (greeterProfiles).
+// xcursorPath is the greeter's XCURSOR_PATH; watch keeps Hyprland's and
+// sway's monitors in the profiles (greeterProfiles).
 func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, profiles, values, inputSchema any, xcursorPath string, watch func(any)) error {
 	input := render.Input(values, nil)
 	cursor, _ := input.Value("cursor").(*jsonx.Object)
@@ -120,19 +119,22 @@ func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, prof
 	}
 	switch {
 	case h != nil:
-		reply, err := h.Eval(ctx, strings.Join(render.GreeterLua(profiles, inputSchema, values), "\n"))
-		if err != nil {
-			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
-		}
-		// A refused Lua (the monitors, the input) still gets the cursor
+		watch(profiles)
+		// A refused Lua (the input) still gets the cursor
 		var refused error
-		if reply != "" {
-			refused = axerr.New(axerr.Refused, "Hyprland refused the greeter's Lua: %s", reply)
+		if lua := render.GreeterLua(inputSchema, values); len(lua) > 0 {
+			reply, err := h.Eval(ctx, strings.Join(lua, "\n"))
+			if err != nil {
+				return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
+			}
+			if reply != "" {
+				refused = axerr.New(axerr.Refused, "Hyprland refused the greeter's Lua: %s", reply)
+			}
 		}
 		if cursor == nil {
 			return refused
 		}
-		reply, err = h.Request(ctx, "setcursor "+jsonx.ToString(cursor.Value("theme"))+" "+jsonx.ToString(cursor.Value("size")))
+		reply, err := h.Request(ctx, "setcursor "+jsonx.ToString(cursor.Value("theme"))+" "+jsonx.ToString(cursor.Value("size")))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}

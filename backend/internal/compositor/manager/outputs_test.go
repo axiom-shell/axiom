@@ -101,8 +101,8 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	}
 }
 
-// buildInputs gives sway's and niri's writers the saved profile's rules
-// for the outputs read: nil until they're read (the files keep what they
+// buildInputs gives the writers the saved profile's rules for the outputs
+// read: nil until they're read (the files keep what they
 // say), [] when no profile matches
 func TestBuildInputsOutputRules(t *testing.T) {
 	t.Parallel()
@@ -110,21 +110,45 @@ func TestBuildInputsOutputRules(t *testing.T) {
 	cfg := jsonx.Obj("Monitors", jsonx.Obj("items", items))
 	for _, c := range []struct {
 		name    string
+		kind    string
 		outputs []render.Output
 		want    string
 	}{
-		{"unread", nil, "null"},
-		{"both", []render.Output{mainOut, tvOut}, "[" + deskRule + "," + tvRule + "]"},
-		{"desk", []render.Output{mainOut}, "[" + deskRule + "]"},
-		{"no profile", []render.Output{{Name: "DP-9"}}, `[]`},
+		{"unread", "sway", nil, "null"},
+		{"both", "sway", []render.Output{mainOut, tvOut}, "[" + deskRule + "," + tvRule + "]"},
+		{"desk", "sway", []render.Output{mainOut}, "[" + deskRule + "]"},
+		{"no profile", "sway", []render.Output{{Name: "DP-9"}}, `[]`},
+		// Hyprland's also hold the TV's rule, which every profile naming
+		// it agrees on, for when it's plugged in
+		{"desk on Hyprland", "hyprland", []render.Output{mainOut}, "[" + deskRule + "," + tvRule + "]"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			in := buildInputs(cfg, &Facts{Kind: "sway"}, c.outputs)
+			in := buildInputs(cfg, &Facts{Kind: c.kind}, c.outputs)
 			if got := string(jsonx.MarshalCompact(in.get("outputRules"))); got != c.want {
 				t.Errorf("got %s, want %s", got, c.want)
 			}
 		})
+	}
+}
+
+// Hyprland's writer gets the rules as hl.monitor calls, and an output only
+// turned off, the calls the same, leaves layerKey (no layer re-applied)
+func TestBuildInputsMonitorCalls(t *testing.T) {
+	t.Parallel()
+	items, _ := jsonx.Unmarshal([]byte(testProfiles))
+	cfg := jsonx.Obj("Monitors", jsonx.Obj("items", items))
+	on := buildInputs(cfg, &Facts{Kind: "hyprland"}, []render.Output{mainOut, {Name: "DP-9"}})
+	off := buildInputs(cfg, &Facts{Kind: "hyprland"}, []render.Output{mainOut, {Name: "DP-9", Disabled: true}})
+	want := `["hl.monitor({ output = \"desc:Main\", mode = \"preferred\", position = \"0x0\", scale = 1 })","hl.monitor({ output = \"HDMI-A-1\", mode = \"preferred\", position = \"2560x0\", scale = 1 })"]`
+	if got := string(jsonx.MarshalCompact(on.get("monitorCalls"))); got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+	if on.str("layerKey") != off.str("layerKey") {
+		t.Error("an output turned off changed layerKey")
+	}
+	if got := buildInputs(cfg, &Facts{Kind: "sway"}, []render.Output{mainOut}).get("monitorCalls"); got != nil {
+		t.Errorf("sway: %v", got)
 	}
 }
 

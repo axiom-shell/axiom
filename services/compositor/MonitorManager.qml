@@ -10,10 +10,10 @@ import qs.services.ui
 /*
  * The Monitors page: the connected outputs (CompositorManager.
  * withOutputDetails, read at startup and when monitors come, go or the
- * config reloads; never polled) and the editor for Monitors.profiles, a
+ * config reloads; never polled) and the editor for Monitors.items, a
  * draft of profiles (each a layout for one set of monitors). The saved
  * profile matching what's connected is applied on every hotplug by the
- * compositor (`outputProfiles`) or the daemon (sway, niri), not here.
+ * daemon, not here.
  *
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
@@ -33,7 +33,7 @@ QtObject {
     id: draft
     path: ["Monitors"]
   }
-  readonly property var profiles: draft.local?.profiles ?? []
+  readonly property var profiles: draft.local?.items ?? []
   readonly property alias isDirty: draft.isDirty
 
   // The profile shown on the page
@@ -101,18 +101,18 @@ QtObject {
     if (outputs.length === 0)
       return;
     const local = draft.local ?? {
-      "profiles": []
+      "items": []
     };
     draft.local = local;
-    local.profiles = local.profiles ?? [];
-    let index = MonitorLayout.matchProfile(local.profiles, enabledOutputs);
+    local.items = local.items ?? [];
+    let index = MonitorLayout.matchProfile(local.items, enabledOutputs);
     let edited = false;
     if (index < 0) {
-      local.profiles.push(_newProfile(local.profiles.length));
-      index = local.profiles.length - 1;
+      local.items.push(_newProfile(local.items.length));
+      index = local.items.length - 1;
       edited = true;
     } else {
-      const listed = local.profiles[index].outputs;
+      const listed = local.items[index].outputs;
       for (const monitor of outputs)
         if (!listed.some(rule => MonitorLayout.matches(rule.output, monitor))) {
           listed.push(MonitorLayout.ruleFromMonitor(monitor, outputs));
@@ -135,7 +135,7 @@ QtObject {
 
   // The selected profile's rule for an output, in the draft, or undefined
   function _ruleOf(output) {
-    return draft.local?.profiles?.[selectedProfile]?.outputs?.find(r => r.output === output);
+    return draft.local?.items?.[selectedProfile]?.outputs?.find(r => r.output === output);
   }
 
   // A profile from how the monitors are now, named after its place
@@ -167,20 +167,20 @@ QtObject {
 
   // Shows a profile, keeping the selected monitor if the profile has it
   function selectProfile(index) {
-    const listed = draft.local?.profiles?.[index]?.outputs ?? [];
+    const listed = draft.local?.items?.[index]?.outputs ?? [];
     selectedProfile = index;
     if (!listed.some(rule => rule.output === selectedOutput))
       selectedOutput = listed[0]?.output ?? "";
   }
 
   function newProfile() {
-    draft.local.profiles.push(_newProfile(profiles.length));
+    draft.local.items.push(_newProfile(profiles.length));
     draft.changed();
-    selectProfile(draft.local.profiles.length - 1);
+    selectProfile(draft.local.items.length - 1);
   }
 
   function renameProfile(index, name) {
-    const target = draft.local?.profiles?.[index];
+    const target = draft.local?.items?.[index];
     if (!target || target.name === name)
       return;
     target.name = name;
@@ -188,16 +188,16 @@ QtObject {
   }
 
   function removeProfile(index) {
-    if (!draft.local?.profiles?.[index])
+    if (!draft.local?.items?.[index])
       return;
-    draft.local.profiles.splice(index, 1);
+    draft.local.items.splice(index, 1);
     draft.changed();
-    selectProfile(Math.max(0, Math.min(selectedProfile, draft.local.profiles.length - 1)));
+    selectProfile(Math.max(0, Math.min(selectedProfile, draft.local.items.length - 1)));
   }
 
   // Leaves an output out of the profile (one that isn't connected)
   function forgetOutput(output) {
-    const list = draft.local?.profiles?.[selectedProfile]?.outputs;
+    const list = draft.local?.items?.[selectedProfile]?.outputs;
     const index = list ? list.findIndex(rule => rule.output === output) : -1;
     if (index < 0)
       return;
@@ -410,9 +410,9 @@ QtObject {
         draft.load();
         root._detectPending = true;
       }
-      // On sway and niri the daemon has applied the saved profile for the
-      // new set already: a trial Apply ends without reverting
-      if (root.pending && !CompositorManager.supports.outputProfiles) {
+      // The daemon has applied the saved profile for the new set already:
+      // a trial Apply ends without reverting
+      if (root.pending) {
         root.pending = false;
         root._countdown.stop();
       }

@@ -93,12 +93,21 @@ type outputsIO interface {
 	Apply(ctx context.Context, rules, details any) error
 }
 
+// profileRules are profiles' rules for outputs: render.HyprlandRules on
+// Hyprland, render.SavedRules elsewhere.
+func profileRules(hyprland bool, profiles any, outputs []render.Output) []any {
+	if hyprland {
+		return render.HyprlandRules(profiles, outputs)
+	}
+	return render.SavedRules(profiles, outputs)
+}
+
 // profileSwitch keeps the saved monitor profile (Monitors.items) for
-// what's connected applied, on a compositor that can't pick it itself
-// (sway, niri): read again on each hotplug, applied once per set of
-// outputs and rules.
+// what's connected applied: read again on each hotplug, applied once per
+// set of outputs and rules.
 type profileSwitch struct {
-	io outputsIO
+	io       outputsIO
+	hyprland bool
 	// outputs as last read, nil until then
 	outputs []render.Output
 	// applied: the outputs and rules applied last ("" after a reload,
@@ -125,7 +134,7 @@ func (p *profileSwitch) rules(profiles any) *jsonx.Array {
 	if p.outputs == nil {
 		return nil
 	}
-	return jsonx.Arr(render.SavedRules(profiles, p.outputs)...)
+	return jsonx.Arr(profileRules(p.hyprland, profiles, p.outputs)...)
 }
 
 // apply applies profiles' rules for the outputs read, unless they're
@@ -149,9 +158,10 @@ func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 }
 
 // ProfileWatch keeps a saved monitor profile applied where no config
-// layer runs (the greeter's sway), as the session's Manager does: after
-// each hotplug (Changed), once the outputs have settled, it reads them
-// again and applies the profile for them, until ctx ends.
+// layer runs (the greeter's Hyprland or sway), as the session's Manager
+// does: after each hotplug (Changed), once the outputs have settled (at
+// once on Hyprland), it reads them again and applies the profile for them,
+// until ctx ends.
 type ProfileWatch struct {
 	ctx      context.Context
 	log      *slog.Logger
@@ -164,7 +174,11 @@ type ProfileWatch struct {
 
 // NewProfileWatch watches the outputs of o's compositor.
 func NewProfileWatch(ctx context.Context, o Outputs, log *slog.Logger) *ProfileWatch {
-	return newProfileWatch(ctx, o, log)
+	w := newProfileWatch(ctx, o, log)
+	if o.Hypr != nil {
+		w.sw.hyprland, w.delay = true, 0
+	}
+	return w
 }
 
 func newProfileWatch(ctx context.Context, io outputsIO, log *slog.Logger) *ProfileWatch {

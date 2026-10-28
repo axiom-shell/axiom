@@ -284,7 +284,7 @@ func Run(ctx context.Context, opts Options) error {
 	d.compositor = d.newCompositor()
 	d.outputs = outputs.New(opts.Log.With("part", "wayland"))
 	if d.compositor != nil {
-		// sway's and niri's saved monitor profile follows hotplugs
+		// The saved monitor profile follows hotplugs
 		d.outputs.OnChange(d.compositor.OutputsChanged)
 	}
 	d.seat = seat.New()

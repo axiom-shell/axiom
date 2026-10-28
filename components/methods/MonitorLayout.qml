@@ -5,7 +5,7 @@ import QtQuick
 // Pure helpers for the Monitors page (MonitorManager): modes, scales,
 // rotation, the layout's rects and snapping, and picking the profile for
 // the connected outputs. A monitor is an entry of `hyprctl monitors all -j`;
-// a rule is a Monitors.profiles profile output (the MonitorRule schema);
+// a rule is a Monitors.items profile output (the MonitorRule schema);
 // rects are { x, y, width, height } in layout (logical) pixels.
 QtObject {
   id: root
@@ -218,11 +218,11 @@ QtObject {
     return (monitors ?? []).find(monitor => matches(output, monitor)) ?? null;
   }
 
-  // The profile for the connected monitors (enabled ones: what Hyprland's
-  // Lua sees, so it picks the same one): one listing exactly them wins (a
-  // disabled output it lists may be missing), else the one that turns on
-  // most of them; -1 when none turns any on. Ties go to the earlier profile.
-  // The greeter's Hyprland Lua does the same (render.MonitorsLua).
+  // The profile for the connected monitors (enabled ones): one listing
+  // exactly them wins (a disabled output it lists may be missing), else the
+  // one that turns on most of them; -1 when none turns any on. Ties go to
+  // the earlier profile. The daemon's picker does the same
+  // (render.MatchProfile).
   function matchProfile(profiles, monitors) {
     let best = -1;
     let bestScore = 0;

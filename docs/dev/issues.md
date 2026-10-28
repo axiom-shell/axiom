@@ -230,6 +230,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-28, while merging the niri screenshot fix (CI on PR #184)
 
+### A self-update test once took the build path for a release
+- **Where:** `backend/internal/daemon/selfupdate_test.go` (`TestReplaceInstalled`)
+- **What:** Locally, `go test -count=1 ./internal/compositor/... ./internal/daemon/` failed once with `selfupdate_test.go:68: rebuilt true from "built", reason ""` in the case `a release's` (the fake release server's binary should have been taken), then passed on a rerun. Likely the release fetch failing or timing out under parallel load, so `replaceInstalled` fell back to building; not reproduced.
+- **Size:** small
+- **Found:** 2026-10-29, while running the Go tests for roadmap row 13
+
 ### A binds test fails with pthread_create failed in CI
 - **Where:** `backend/internal/compositor/binds/isolate_test.go` (`TestIsolatedExtractSurvivesAFileTakingAllMemory`)
 - **What:** CI on PR #124 (which touched no Go) failed with `isolate_test.go:115: got reading the binds: runtime/cgo: pthread_create failed: Resource temporarily unavailable: exit status 2`, then passed on a rerun. The test expects the child to be ended by its memory limit (an error naming `MiB`); this time the child couldn't start a thread (`EAGAIN`, likely the limit or a loaded runner's thread cap reached while the Go runtime was still starting threads) and failed with the cgo error instead. A flaky CI failure blocks an unrelated PR.
@@ -280,29 +286,23 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### Hyprland picks monitor profiles in generated Lua
-- **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorsLua`, `GreeterLua`), `backend/internal/compositor/manager/hypr.go` (`monitorsApplied`), `services/compositor/HyprlandManager.qml` (`outputProfiles`)
-- **What:** Hyprland's module, managed config, runtime Lua and greeter carry every profile plus a Lua picker (`applyMonitors`, re-run on `monitor.added`/`removed` through `AXIOM_MONITOR_SUBS`), a second copy of the rule, which differs from `MonitorLayout.matchProfile` and `render.MatchProfile` in two rare cases: it compares descriptions untrimmed, and `MonitorsLua` drops rules with an empty `output` (which the others count as a missing enabled output, so no exact match). Item 5 of the plan (option B): the watch runs on Hyprland too, session and greeter, and the Lua carries only `render.MonitorCalls` of the profile matched last, rewritten on each switch so a reload keeps it. `MonitorsLua`, `applyMonitors`, `AXIOM_MONITOR_SUBS`, `TestMonitorsLuaPicks` and the `outputProfiles` capability (every branch and doc line) go. Without axiom running Hyprland no longer switches: user error, as decided.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
-### A Hyprland hotplug modesets twice once Go switches
-- **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorCalls`)
-- **What:** With the switch in Go, Hyprland lays a new monitor out itself before the daemon's apply lands, then again. Item 6 of the plan: for each output the matched profile leaves out, the written Lua gives the rule every profile naming it agrees on (else `preferred`/`auto`), and on Hyprland the watch switches on the first change without the debounce. A monitor set differently between profiles still modesets twice, the cost the decision accepts. A table test. Candidate to check first (maintainer, 2026-10-28: "add that to item 6"): write the rule for outputs no profile names as disabled, so Hyprland lights nothing new until the daemon has picked, and no monitor modesets twice; a new monitor then stays dark while axiom isn't running (user error, per the decision). It applies in managed and included mode (in included, the user's own monitor rules can override it: user error too); detached writes no config, so confirm whether the runtime switch still runs there and say what it does.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
-### The Monitors page edits Monitors.profiles, a key format 2 renamed to items
-- **Where:** `services/compositor/MonitorManager.qml` (`profiles`, `_detect`, `removeProfile`), `backend/internal/migrate/convert/convert.go`
-- **What:** The format-2 conversion renames `Monitors.profiles` to `Monitors.items` (the schema has only `items`, `additionalProperties: false`), but MonitorManager's draft (path `["Monitors"]`) still reads and writes `draft.local.profiles` (`grep -c 'local?.profiles'` = 6): the page lists none of the saved profiles, `_detect` adds a `profiles` array beside `items`, and a Keep saves a section the schema refuses. `MonitorsConfig` and `useWholeScale` use `items` correctly. Rename the draft's `profiles` to `items` throughout (and the header comment), then check Apply/Keep on a nested compositor.
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing roadmap row 13 (GreetdManager sent `Monitors.profiles` to the greeter the same way; fixed there)
-
 ### The Monitors page matches profiles in QML
 - **Where:** `services/compositor/MonitorManager.qml` (`liveProfile`, `_detect`), `components/methods/MonitorLayout.qml` (`matchProfile`), `backend/internal/compositor/manager/manager.go` (`state`)
 - **What:** The page runs `MonitorLayout.matchProfile` over its draft for the "(connected)" label and `_detect`, the last QML copy of the picker. Item 7 of the plan: `compositor.state` carries the matched profile's name (or `""`), which `liveProfile` and `_detect` find in the draft; `matchProfile`, its `tst_MonitorLayout` cases and the plan file go.
 - **Size:** small
 - **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
+
+### A monitor profile saved under one compositor doesn't match under another
+- **Where:** `backend/internal/compositor/ipc/niri.go` (`Outputs`), `backend/internal/compositor/render/profiles.go` (`MatchProfile`)
+- **What:** Profiles name monitors by description (`desc:make model serial`), and the compositors spell the make differently: a profile saved under Hyprland names `desc:AOC CU34G4Z XJ9R7HA000231`, while niri reports the same monitor as `PNP(AOC) CU34G4Z XJ9R7HA000231` (the recorded `niri-outputs.json` fixture). Under niri the saved profile never matches, so nothing is switched and the Monitors page offers a new layout for what's connected. Seen on the maintainer's machine (one monitor, profile saved on Hyprland). Normalising niri's `PNP(XXX)` to the bare code in the readers (Go and `NiriState`), or matching it either way, would fix it.
+- **Size:** small
+- **Found:** 2026-10-29, while checking the Monitors page's `items` fix (roadmap row 13)
+
+### Two profiles naming one unplugged monitor differently both write a rule
+- **Where:** `backend/internal/compositor/render/profiles.go` (`HyprlandRules`)
+- **What:** When one profile names a monitor by connector and another by `desc:`, and that monitor isn't connected, both profiles' rules are written to Hyprland's Lua, even where they disagree; Hyprland applies the later one when it's plugged in, until the daemon's switch corrects it. Rare (the same monitor saved two ways); found reviewing #188.
+- **Size:** trivial
+- **Found:** 2026-10-29, while reviewing roadmap row 13
 
 ### install.sh still installs the rest of a feature whose COPR was declined
 - **Where:** `install.sh` (the declined-COPR loop after the COPR prompts)

@@ -108,8 +108,7 @@ func tree(v any) any {
 
 // buildInputs is what the layer is made of: the config (cfg, with the
 // shell's previews laid over it), the shell's facts and the outputs
-// connected (sway's and niri's, nil until read: the files then keep what
-// they say), as the writers read it, with layerKey (a change re-applies the layer), liveKey (a change
+// connected (nil until read: the files then keep what they say), as the writers read it, with layerKey (a change re-applies the layer), liveKey (a change
 // is only evaluated at runtime) and liveRestKey (liveKey but for the blur
 // now).
 func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
@@ -151,7 +150,14 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	// The saved profile's rules for what's connected ([] for none)
 	var outputRules any
 	if outputs != nil {
-		outputRules = jsonx.Arr(render.SavedRules(at("Monitors", "items"), outputs)...)
+		outputRules = jsonx.Arr(profileRules(f.Kind == "hyprland", at("Monitors", "items"), outputs)...)
+	}
+	// Hyprland's: those rules as hl.monitor calls, a mirror named by its
+	// connector (the calls, not the outputs, so an output only turned off
+	// doesn't change layerKey)
+	var monitorCalls any
+	if outputRules != nil && f.Kind == "hyprland" {
+		monitorCalls = strs(render.MonitorCalls(outputRules, render.MirrorNames(tree(outputs))))
 	}
 	spec := func(forFile bool) *jsonx.Object {
 		surfacesBlur := f.Blur.Now
@@ -173,11 +179,11 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		"ctx", tree(f.Ctx),
 		"startPattern", f.StartPattern,
 		"requiredSettings", flag("Compositor", "requiredSettings"),
-		"profiles", at("Monitors", "items"),
 		"strips", strips,
 		"stripOptions", stripOptions,
 		"stripsKey", string(jsonx.MarshalCompact(jsonx.Arr(strips, stripOptions))),
 		"outputRules", outputRules,
+		"monitorCalls", monitorCalls,
 		"session", at("Session"),
 		"qt", flag("ThemeIntegrations", "qt"),
 		"managed", managed,
