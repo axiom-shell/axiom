@@ -151,7 +151,7 @@ func TestApplyGreeter(t *testing.T) {
 		n, _ := c.Read(buf)
 		return string(buf[:n])
 	}, func(c net.Conn, _ string) { io.WriteString(c, "ok") })
-	if err := applyGreeter(ctx, &ipc.Hypr{Dir: dir}, false, nil, profiles, values, inputSchema); err != nil {
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: dir}, false, nil, profiles, values, inputSchema, ""); err != nil {
 		t.Fatal(err)
 	}
 	lua := <-hypr
@@ -184,7 +184,7 @@ func TestApplyGreeter(t *testing.T) {
 			io.WriteString(c, "ok")
 		}
 	})
-	if err := applyGreeter(ctx, &ipc.Hypr{Dir: refusing}, false, nil, profiles, values, inputSchema); axerr.KindOf(err) != axerr.Refused {
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: refusing}, false, nil, profiles, values, inputSchema, ""); axerr.KindOf(err) != axerr.Refused {
 		t.Errorf("refused Lua: %v", err)
 	}
 	<-asked
@@ -206,18 +206,26 @@ func TestApplyGreeter(t *testing.T) {
 		binary.LittleEndian.PutUint32(head[6:], uint32(len(body)))
 		c.Write(append(head, body...))
 	})
-	if err := applyGreeter(ctx, nil, false, &ipc.Sway{Path: swayPath}, nil, values, inputSchema); err != nil {
+	// The bundle's copy of the theme's companion, on XCURSOR_PATH
+	icons := filepath.Join(dir, "icons")
+	if err := os.MkdirAll(filepath.Join(icons, "axiom-cursor-Bibata_Modern"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(icons, "axiom-cursor-Bibata_Modern", "index.theme"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := applyGreeter(ctx, nil, false, &ipc.Sway{Path: swayPath}, nil, values, inputSchema, filepath.Join(dir, "none")+":"+icons); err != nil {
 		t.Fatal(err)
 	}
 	// numlock only from a config file; the cursor last
-	if got := <-sway; got != `input type:keyboard xkb_layout "us,de"; input type:keyboard xkb_variant ""; input type:keyboard xkb_options ""; input type:keyboard repeat_rate 25; input type:keyboard repeat_delay 600; seat * xcursor_theme "Bibata Modern" 24` {
+	if got := <-sway; got != `input type:keyboard xkb_layout "us,de"; input type:keyboard xkb_variant ""; input type:keyboard xkb_options ""; input type:keyboard repeat_rate 25; input type:keyboard repeat_delay 600; seat * xcursor_theme axiom-cursor-Bibata_Modern 24` {
 		t.Errorf("sway: %q", got)
 	}
 
-	if err := applyGreeter(ctx, nil, true, nil, nil, values, inputSchema); err != nil {
+	if err := applyGreeter(ctx, nil, true, nil, nil, values, inputSchema, ""); err != nil {
 		t.Errorf("niri: %v", err)
 	}
-	if err := applyGreeter(ctx, nil, false, nil, nil, values, inputSchema); axerr.KindOf(err) != axerr.Unavailable {
+	if err := applyGreeter(ctx, nil, false, nil, nil, values, inputSchema, ""); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("no compositor: %v", err)
 	}
 }

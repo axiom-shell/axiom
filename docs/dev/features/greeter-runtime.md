@@ -17,6 +17,7 @@ This doc covers what runs at the login screen and the data it reads: the bundle 
   - the `Input` options marked `x-greeter` (the part switches, keyboard, mouse, touchpad, cursor);
   - `theme.json` (`ThemeManager.currentTheme`);
   - each wallpaper showing (`ThemeManager.shownWallpapers`, exported as fixed ones in `fixed` mode, so the greeter shows what the desktop does), copied to `wallpapers/<md5 of its url>.<ext>` (cp + mv, stale ones removed). The bundle's `Appearance` names these copies.
+  - the cursor theme's companion (`CursorThemeManager.xcursorTheme`, when it is one: `axiom-cursor-<theme>` in the user's `$XDG_DATA_HOME/icons`, which greetd's user can't read), copied with its links followed to `icons/`.
 - **How it's written:** one `sh` (`GreeterManager._writeBundle`).
   - Each JSON goes through a temp file and a rename.
   - Then `chmod -R go+rX`, so greetd's user can read it whatever the umask.
@@ -74,7 +75,7 @@ Built on `Quickshell.Services.Greetd`.
   - Keyboard layouts through `CompositorManager.withKeyboard` and `cycleKeyboardLayout`.
   - `avatarOf(name)` from AccountsService's icons.
 - **At start** (but not when windowed), `_applyCompositor`:
-  - it hands the bundle's monitor profiles and Input values to axiom (`CompositorManager.setUpGreeter` → `greeter.compositor`, `daemon/compositorsocket.go`): on Hyprland axiom evals `render.GreeterLua`, the profiles' `MonitorsLua` (which picks the profile again on each hotplug) plus one `hl.config` of the `x-greeter` input options whose parts are on, then sets the cursor while the cursor part is on with a theme (`setcursor`, even when Hyprland refused the Lua); on sway it sends the live `input` / `seat` commands (`render.SwayInputLines`);
+  - it hands the bundle's monitor profiles and Input values to axiom (`CompositorManager.setUpGreeter` → `greeter.compositor`, `daemon/compositorsocket.go`): on Hyprland axiom evals `render.GreeterLua`, the profiles' `MonitorsLua` (which picks the profile again on each hotplug) plus one `hl.config` of the `x-greeter` input options whose parts are on, then sets the cursor while the cursor part is on with a theme (`setcursor`, even when Hyprland refused the Lua); on sway it sends the live `input` / `seat` commands (`render.SwayInputLines`), the cursor theme being its companion when a folder of `XCURSOR_PATH` holds it (`greeter-session.sh` puts the bundle's `icons/` first on sway's);
   - without `supports.outputProfiles` (sway, niri) the shell also applies the saved profile for the outputs connected at start (`MonitorLayout.savedRules` → `CompositorManager.applyOutputs`).
 
 ### Surfaces and modules

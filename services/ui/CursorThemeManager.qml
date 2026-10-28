@@ -17,8 +17,9 @@ import qs.services.core
  * (axiom-cursor-<theme> in $XDG_DATA_HOME/icons/) inheriting it, with those names
  * linked to its own cursors, and sets GTK's cursor-theme and cursor-size
  * to what XCursor readers get. CompositorConfigManager hands that name on
- * (compositor.inputs' `xcursor`); Hyprland's setcursor and the greeter
- * keep the theme's own (docs/dev/compositor/config-modes.md).
+ * (compositor.inputs' `xcursor`); Hyprland's setcursor keeps the theme's
+ * own. GreeterManager copies the companion into the greeter's bundle, for
+ * the greeter's sway (docs/dev/compositor/config-modes.md).
  */
 Singleton {
   id: root
