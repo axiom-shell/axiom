@@ -96,14 +96,21 @@ func SavedRules(profiles any, outputs []Output) []any {
 
 // HyprlandRules is SavedRules for Hyprland, which lays a monitor plugged in
 // out itself before the daemon's switch lands: with them, for each output
-// a profile names that isn't connected, the rule every profile naming it
-// agrees on (an external monitor always set the same way), so it's laid
-// out once. An output the profiles set differently gets no rule (Hyprland's
-// own layout, then the switch: a second modeset).
+// a profile names that the matched profile's rules leave out, connected or
+// not, the rule every profile naming it agrees on (an external monitor
+// always set the same way), so it's laid out once, on plug and after the
+// switch alike. An output the profiles set differently gets no rule
+// (Hyprland's own layout, then the switch: a second modeset).
 func HyprlandRules(profiles any, outputs []Output) []any {
 	out := SavedRules(profiles, outputs)
 	if out == nil {
 		return nil
+	}
+	var covered []Output
+	for _, o := range outputs {
+		if slices.ContainsFunc(out, func(rule any) bool { return names(ruleOutput(rule), o.Name, o.Description) }) {
+			covered = append(covered, o)
+		}
 	}
 	var order []string
 	agreed := map[string]any{}
@@ -111,7 +118,7 @@ func HyprlandRules(profiles any, outputs []Output) []any {
 	for _, profile := range items(profiles) {
 		for _, rule := range items(get(profile, "outputs")) {
 			output := ruleOutput(rule)
-			if output == "" || connected(output, outputs) {
+			if output == "" || connected(output, covered) {
 				continue
 			}
 			spec := InlineSpec(MonitorSpec(rule))

@@ -53,14 +53,15 @@ func TestProfiles(t *testing.T) {
 }
 
 // Hyprland's rules (HyprlandRules, as MonitorCalls writes them): the
-// matched profile's, then those for monitors not connected that every
-// profile naming them sets the same way
+// matched profile's, then those for monitors it leaves out, connected or
+// not, that every profile naming them sets the same way
 func TestHyprlandRules(t *testing.T) {
 	t.Parallel()
 	profiles := parse(t, `[
 		{"name": "Laptop", "outputs": [{"output": "eDP-1", "mode": "1920x1200@60"}, {"output": "desc:Dell", "mode": "2560x1440@60", "x": 1920}]},
 		{"name": "Dock", "outputs": [{"output": "eDP-1", "disabled": true}, {"output": "desc:Dell", "mode": "2560x1440@60", "x": 1920}, {"output": "desc:LG", "mode": "3840x2160@60", "scale": 2}]},
-		{"name": "Away", "outputs": [{"output": "eDP-1", "mode": "1920x1200@60"}, {"output": "desc:LG", "mode": "3840x2160@30", "scale": 2}]}
+		{"name": "Away", "outputs": [{"output": "eDP-1", "mode": "1920x1200@60"}, {"output": "desc:LG", "mode": "3840x2160@30", "scale": 2}]},
+		{"name": "TV", "outputs": [{"output": "DP-3", "mode": "1920x1080@60"}]}
 	]`)
 	laptop := Output{Name: "eDP-1"}
 	dell := Output{Name: "DP-1", Description: "Dell"}
@@ -70,14 +71,21 @@ func TestHyprlandRules(t *testing.T) {
 		outputs []Output
 		want    []string
 	}{
-		{"the Dell agrees everywhere; the LG doesn't", []Output{laptop}, []string{
+		{"the Dell and the TV agree everywhere; the LG doesn't", []Output{laptop}, []string{
 			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })`,
 			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
+			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
 		}},
-		{"a connected output keeps the matched rule alone", []Output{laptop, dell, lg}, []string{
+		{"a connected output keeps the matched rule", []Output{laptop, dell, lg}, []string{
 			`hl.monitor({ output = "eDP-1", disabled = true })`,
 			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
 			`hl.monitor({ output = "desc:LG", mode = "3840x2160@60", position = "0x0", scale = 2 })`,
+			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
+		}},
+		{"a connected output the match leaves out gets the agreed rule", []Output{laptop, dell, {Name: "DP-3"}}, []string{
+			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
+			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
 		}},
 		{"no profile matches: none", []Output{{Name: "HDMI-A-1"}}, nil},
 	}
