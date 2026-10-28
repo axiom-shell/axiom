@@ -348,7 +348,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### niri's flags can't be turned off from axiom
 - **Where:** `backend/internal/compositor/render/niri.go` (`niriArgs`), `config/schema/` (`x-compositor.niri.value: flag`)
-- **What:** A niri flag (`tap`, `natural-scroll`, `numlock`, `focus-follows-mouse`) is on by being there and has no `false`; axiom writes one on and leaves it out off. Off in axiom while the user's own config has it on, it stays on.
+- **What:** A niri flag (`tap`, `natural-scroll`, `numlock`, `focus-follows-mouse`) is on by being there and has no `false`; axiom writes one on and leaves it out off. Off in axiom while the user's own config has it on, it stays on. Checked with `niri validate` (26.04, 2026-10-28): `cursor.hide-when-typing`, `hotkey-overlay.skip-at-startup`, `input.keyboard.numlock`, `input.workspace-auto-back-and-forth`, `layout.always-center-single-column`, `layout.empty-workspace-above-first`, `prefer-no-csd` and `clipboard.disable-primary` take `false`; `tap`, `natural-scroll`, `dwt`, `mouse.left-handed`, `focus-follows-mouse`, `warp-mouse-to-focus` and `gestures.hot-corners.off` have no off form; `animations` and `xwayland-satellite` have `on`. Decided (maintainer, #179): "hide flags that can't be adjusted / dont exist / cant be turned off from the UI on niri (via schema annotations). Use false/true on/off where necessary for the others".
 - **Size:** small
 - **Found:** 2026-10-17, while adding the niri backend
 
@@ -498,7 +498,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Shift+Enter on an emoji doesn't type it on niri
 - **Where:** `components/surfaces/launcher/LauncherPanel.qml` (`activate`), `services/apps/EmojiManager.qml` (`type`)
-- **What:** From the maintainer's notes: under niri, Shift+Enter on an emoji in the launcher doesn't type it into the focused window (typing goes through `input.type` on the daemon's virtual keyboard).
+- **What:** From the maintainer's notes: under niri, Shift+Enter on an emoji in the launcher doesn't type it into the focused window (typing goes through `input.type` on the daemon's virtual keyboard). Not reproduced (2026-10-28): in a nested niri on the live binary, `axiom launcher search ";grinning"` then Shift+Enter typed it into foot, kitty and a GTK entry every time, with fcitx5 and mozc running too; the live logs show no typing error, and the last emoji uses predate typing moving to the daemon. Untested: a physical Shift+Enter, Electron or Xwayland windows, the live focus-follows-mouse. Waits for the maintainer: which app, and does it still fail.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
