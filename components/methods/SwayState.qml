@@ -355,6 +355,45 @@ QtObject {
     return [previous ? `workspace ${root.quote(previous)}` : "workspace back_and_forth"];
   }
 
+  // Special group `name`'s windows the other kind keeps, moved over to
+  // `kind` ("scratchpad" or "workspace") after Compositor.sway.specialWorkspaces
+  // changed: { lines (the commands), windows and marks (`windows` and
+  // `marks` as they are after them) }. To the workspace, marked windows
+  // lose the mark and move there; to the scratchpad, the windows on the
+  // group's workspace are marked (out of any other group) and moved to it,
+  // then back to `active` (the focused output's workspace): sway goes to
+  // the group's workspace when its last window leaves for the scratchpad
+  function specialAdopt(windows, marks, name, kind, active) {
+    const con = id => `[con_id=${Number(id)}]`;
+    const ws = root.specialWorkspace(name);
+    const after = Object.assign({}, marks ?? {});
+    const lines = [];
+    if (kind === "workspace") {
+      for (const id of root.specialToggle([], marks, name, "").ids) {
+        lines.push(...(marks[id] ?? []).filter(mark => root.specialGroup(mark) === name).map(mark => `${con(id)} unmark ${root.quote(mark)}`), `${con(id)} move container to workspace ${root.quote(ws)}`);
+        after[id] = (marks[id] ?? []).filter(mark => root.specialGroup(mark) !== name);
+      }
+      return {
+        "lines": lines,
+        "windows": windows,
+        "marks": after
+      };
+    }
+    const strays = (windows ?? []).filter(win => win.workspaceName === ws);
+    for (const win of strays) {
+      const mark = `axiom-special-${name}-${win.id}`;
+      lines.push(...(marks?.[win.id] ?? []).filter(m => root.specialGroup(m) !== "").map(m => `${con(win.id)} unmark ${root.quote(m)}`), `${con(win.id)} mark --add ${root.quote(mark)}`, `${con(win.id)} move scratchpad`);
+      after[win.id] = (marks?.[win.id] ?? []).filter(m => root.specialGroup(m) === "").concat([mark]);
+    }
+    if (lines.length > 0 && active && active !== ws)
+      lines.push(`workspace --no-auto-back-and-forth ${root.quote(active)}`);
+    return {
+      "lines": lines,
+      "windows": (windows ?? []).filter(win => !strays.includes(win)),
+      "marks": after
+    };
+  }
+
   // The marks of every window in a get_tree reply: { [id]: [marks] }, for
   // those with any
   function marks(reply) {

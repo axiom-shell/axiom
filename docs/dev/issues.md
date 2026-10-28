@@ -316,12 +316,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### Switching sway's special workspace kind strands the other kind's windows
-- **Where:** `services/compositor/SwayManager.qml` (`toggleSpecial`, `moveToSpecial`)
-- **What:** Windows put in a special group under one `Compositor.sway.specialWorkspaces` value stay where that kind keeps them when it changes: marked scratchpad windows aren't on `axiom-special-<name>`, so the workspace toggle doesn't show them (sway's own `scratchpad show` still does), and windows on that workspace aren't marked, so the scratchpad toggle doesn't reach them, and with no number the workspace is in no list. Rare (the setting changed while groups hold windows); a fix would move the other kind's windows over on toggle, or leave it as is.
-- **Size:** small
-- **Found:** 2026-10-28, while reviewing row 13's special workspaces
-
 ### Quickshell's I3 socket warns on every reload
 - **Where:** `services/compositor/SwayManager.qml` (Quickshell.I3)
 - **What:** Under sway every reload of the shell logs `I3 event socket disconnected` twice (category `quickshell.I3.ipc`), from the old generation's sockets closing. Events still arrive afterwards (checked in nested sway). Quickshell's, not axiom's; nothing to fix here unless it starts dropping events.
