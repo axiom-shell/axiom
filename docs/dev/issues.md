@@ -270,7 +270,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A screenshot under niri timed out waiting for its frame
 - **Where:** `services/apps/ScreenshotManager.qml` (`_grabFrames`, `_grim`, `_watchdog`, `frameArrived`), `components/surfaces/screenshot/ScreenshotPickerWindow.qml` (`still`, `_onFrame`)
-- **What:** The live shell on niri logged `The compositor sent no picture of the screen.` with no other warning: three times in `scripts/log.sh --all -g "no picture"` (2026-10-26). niri has no `supports.outputCapture`, so the picker's frame is grim's (`ScreenshotManager.grimFrames`): grim had already written each screen's PPM and exited 0 (a failure says so in its own message), `_grim`'s `onExited` set `picking` and started the 3 s watchdog, and the picker's `still` Image never reached `Image.Ready` in time, so `_onFrame` never called `frameArrived` (or, for an immediate `screen` shot, the capture never reported back through `finish`). An `Image.Error` (a PPM it can't read, a path gone) is never reported either: it waits out the watchdog with this message. Not reproduced; whether the asynchronous load of a large PPM is slow or fails isn't known yet.
+- **What:** The live shell on niri logged `The compositor sent no picture of the screen.` with no other warning: three times in `scripts/log.sh --all -g "no picture"` (2026-10-26). niri has no `supports.outputCapture`, so the picker's frame is grim's (`ScreenshotManager.grimFrames`): grim had already written each screen's PPM and exited 0 (a failure says so in its own message), `_grim`'s `onExited` set `picking` and started the 3 s watchdog, and the picker's `still` Image never reached `Image.Ready` in time, so `_onFrame` never called `frameArrived` (or, for an immediate `screen` shot, the capture never reported back through `finish`). An `Image.Error` (a PPM it can't read, a path gone) is never reported either: it waits out the watchdog with this message. Not reproduced; whether the asynchronous load of a large PPM is slow or fails isn't known yet. The maintainer's notes (2026-10-28) report it as "grim fails if it takes too long?" under niri.
 - **Size:** small
 - **Found:** 2026-10-26, while working on the shell–daemon contract check (in the live log)
 
@@ -360,7 +360,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Sway's special workspaces are floating scratchpad windows
 - **Where:** `services/compositor/SwayManager.qml` (`toggleSpecial`, `moveToSpecial`), `components/methods/SwayState.qml` (`specialToggle`)
-- **What:** Hyprland's special workspace is a tiled workspace drawn over the current one; sway has none, so a special group is marked scratchpad windows, and sway's scratchpad makes every window floating, centred and stacked on the others (a group of three shows as three overlapping windows). Options: keep the scratchpad and lay the group's windows out in a grid on show (`move position` / `resize set` per window, over the workspace like Hyprland's), or a hidden named workspace per group (tiles, but replaces the view instead of overlaying it). A group name holding `,` or `;` also breaks its `nop axiom special` bind (sway splits the command there).
+- **What:** Hyprland's special workspace is a tiled workspace drawn over the current one; sway has none, so a special group is marked scratchpad windows, and sway's scratchpad makes every window floating, centred and stacked on the others (a group of three shows as three overlapping windows). Options: keep the scratchpad and lay the group's windows out in a grid on show (`move position` / `resize set` per window, over the workspace like Hyprland's), or a hidden named workspace per group (tiles, but replaces the view instead of overlaying it). A group name holding `,` or `;` also breaks its `nop axiom special` bind (sway splits the command there). The maintainer's notes (2026-10-28) list it as "figure out what to do for scratchpad".
 - **Size:** needs a plan
 - **Found:** 2026-10-16, while auditing the sway branch
 
@@ -477,3 +477,117 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `IconResolver` is the one methods helper without a test (`tst_IconResolver`) (and the one importing `Quickshell`, for `iconPath`). The `axiom-shell` and `axiom-shell-git` PKGBUILDs are near copies. `check_doc_drift.py` flags `i18n.md` (12 commits behind its files, after the services moved to folders).
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the repository's organization
+
+### Overlay and popouts close or break each other
+- **Where:** `services/ui/ShellManager.qml` (`closeOverlay`), `services/ui/OverlayManager.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/overlay/OverlayPanel.qml` (its `FocusGrab`)
+- **What:** From the maintainer's notes, verbatim: "a little bit of a system re-work/look to ensure all popouts are usable as expected while the overlay is open, without closing the overlay. There are a bit more problems here so this likely needs a plan (i.e. currently open popouts break when overlay is opened, nothing should close the overlay (i.e. after installing greetd and the polkit prompt closes, the overlay closes) The one exception is likely launcher (although it can also just open over the overlay and be usable)". The plan covers which surfaces may close the overlay (callers of `ShellManager.closeOverlay`, focus grabs ending when a prompt like polkit's takes and gives back focus), and how a popout open before the overlay keeps working.
+- **Size:** needs a plan
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### The window switcher's blur and release on sway and niri
+- **Where:** `services/compositor/WindowSwitcherManager.qml` (`commit`, `pick`), `components/surfaces/switcher/SwitcherKeys.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
+- **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". The plan settles one release path that works on every compositor and the switcher's backing.
+- **Size:** needs a plan
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### Setting names that still confuse
+- **Where:** `config/schema/sections/`
+- **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.
+- **Size:** needs a plan
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### A note's view jumps while typing and forgets its place
+- **Where:** `components/content/parts/notes/NoteEditor.qml` (`ensureVisible`, `_flick`), `components/content/parts/notes/NoteBlock.qml`
+- **What:** From the maintainer's notes: a newline (and other edits that rebuild blocks) jumps the view around, so you lose where you were; and reopening a note scrolls back to the top (`_flick.contentY = 0`) instead of where you left it.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### The bar editor lost its links to the global bar style
+- **Where:** `components/views/BarEditor/BarsPanel.qml`, `components/views/BarEditor/WidgetInspector.qml`
+- **What:** From the maintainer's notes: the bar editor used to link to the Look and feel settings that style every bar; those links are gone, and it needs a link to the global bar style.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### The layouts editor says a page is shrunk to 99% at the defaults
+- **Where:** `components/views/Layouts/PageTarget.qml` (`Shrunk to {0}% on {1}`)
+- **What:** From the maintainer's notes: with every scale at its default 100 %, the layouts editor still shows a page as shrunk to 99 %: a fit a hair under 1 is reported as shrinking.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### The monitor editor shows changes nobody made
+- **Where:** `services/compositor/MonitorManager.qml` (`draft`, `ensureLoaded`), `components/views/Monitors/Monitors.qml`
+- **What:** From the maintainer's notes: the monitors page shows unsaved changes when nothing was changed (likely a value the draft normalises on load differing from the saved one).
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### Updating the greeter closes the overlay and shows no progress
+- **Where:** `services/session/GreeterManager.qml` (`update`, `_elevate`, `_notifyOutdated`)
+- **What:** From the maintainer's notes: a greeter update needs an indicator while it runs and must not close the overlay; its login screen update notification doesn't go away after the update ("check all notifs for this": every notification that announces something to do should clear once it's done).
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### Notifications have no blur backing and an invisible border
+- **Where:** `components/surfaces/notifications/NotificationToast.qml` (`BoxBlurRegion`, `borderColor`)
+- **What:** From the maintainer's notes: a notification gets no blur backing (always, or likely only the first after launch; on sway too), and its border is `Theme.backgroundAlt`, the background's colour, so its edge can't be seen: it wants a foreground colour.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### Typing in modules on the overlay and the desktop
+- **Where:** `components/hosts/overlay/OverlayPanel.qml` (`keyboardFocus`), `components/surfaces/desktop/DesktopWindow.qml` (`keyboardFocus`, `wantsKeyboard`)
+- **What:** From the maintainer's notes: modules that take typing can't be used while they're on the overlay, and a click outside a desktop module stops its typing.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### Warning triangles say nothing on hover
+- **Where:** `components/views/Keybinds/BindListRow.qml`, `components/reusable/IssueList.qml`
+- **What:** From the maintainer's notes: anywhere the shell shows a yellow warning triangle (a niri bind set while on Hyprland, …) it should be hoverable, with a tooltip saying what's wrong.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### The system stats widget changes width with its digits
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml`
+- **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### Modules inside borders aren't sized evenly
+- **Where:** `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/OverlaySlot.qml`
+- **What:** From the maintainer's notes: module sizing within borders isn't even (the space around modules framed by a border differs from side to side or between modules).
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### High module padding clips edge menu modules
+- **Where:** `components/surfaces/edgemenu/EdgeMenuBody.qml`
+- **What:** From the maintainer's notes: on an edge menu, a module padding too high for the menu clips the modules instead of making them smaller.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### An edge popout doesn't size itself consistently
+- **Where:** `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/EdgeSurface.qml`
+- **What:** From the maintainer's notes: an edge popout doesn't consistently size itself (the same content opens at different sizes).
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### The keybinds page on a small monitor with large binds
+- **Where:** `components/views/Keybinds/BindListRow.qml`, `components/views/Keybinds/BindSection.qml`
+- **What:** From the maintainer's notes: the keybinds page needs checking on a small monitor with long binds (combos and commands): rows that don't fit. Take it with the 1080p pass of [Text clips on 1080p screens](#text-clips-on-1080p-screens).
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### Shift+Enter on an emoji doesn't type it on niri
+- **Where:** `components/surfaces/launcher/LauncherPanel.qml` (`activate`), `services/apps/EmojiManager.qml` (`type`)
+- **What:** From the maintainer's notes: under niri, Shift+Enter on an emoji in the launcher doesn't type it into the focused window (typing goes through `input.type` on the daemon's virtual keyboard).
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### A window takes the keyboard from a desktop module on niri
+- **Where:** `components/surfaces/desktop/DesktopWindow.qml` (`keyboardFocus`), `services/ui/DesktopManager.qml`
+- **What:** From the maintainer's notes: under niri, as soon as the mouse leaves a desktop module that takes typing, the window under the pointer takes the keyboard focus (niri's focus follows the mouse onto it), so typing in the module stops. How to hold the focus there is still open ("idk how to handle this").
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### Hyprland's default workspace doesn't highlight its first window
+- **Where:** `components/bar/widgets/Workspaces/StripWindows.qml` (`focused`), `services/compositor/HyprlandManager.qml`
+- **What:** From the maintainer's notes: on the workspace Hyprland starts on, the first window opened isn't highlighted as focused until a workspace move.
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
