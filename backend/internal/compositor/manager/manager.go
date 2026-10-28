@@ -586,6 +586,9 @@ func (m *Manager) runtimeApply(ctx context.Context) {
 		m.warnOnce(p)
 	case p == "" && m.runtimeProblem != "" && m.problem == m.runtimeProblem:
 		m.problem = ""
+	case p != "" && p != m.runtimeProblem:
+		// Behind a file mode's problem: logged, once
+		m.o.Log.Warn("compositor: " + p)
 	}
 	m.runtimeProblem = p
 	m.applied()

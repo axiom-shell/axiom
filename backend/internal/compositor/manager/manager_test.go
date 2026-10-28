@@ -248,6 +248,12 @@ func TestUnreadUserBindsShowAProblem(t *testing.T) {
 	h.w.unread = "unread"
 	h.inputs("f1", "l1", "k1")
 	h.eventually("the problem", func() bool { return jsonx.ToString(h.state("problem")) == "unread" })
+	// Another one after a reload (niri's next refusal): it replaces the first
+	h.w.mu.Lock()
+	h.w.unread = "unread again"
+	h.w.mu.Unlock()
+	h.w.reloadCh <- ipc.Reload{}
+	h.eventually("the new problem", func() bool { return jsonx.ToString(h.state("problem")) == "unread again" })
 	// Read again after a reload: gone
 	h.w.mu.Lock()
 	h.w.unread = ""
