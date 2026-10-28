@@ -262,12 +262,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while debugging the screenshot crash with a popout open
 
-### A screenshot under niri timed out waiting for its frame
-- **Where:** `services/apps/ScreenshotManager.qml` (`_grabFrames`, `_grim`, `_watchdog`, `frameArrived`), `components/surfaces/screenshot/ScreenshotPickerWindow.qml` (`still`, `_onFrame`)
-- **What:** The live shell on niri logged `The compositor sent no picture of the screen.` with no other warning: three times in `scripts/log.sh --all -g "no picture"` (2026-10-26). niri has no `supports.outputCapture`, so the picker's frame is grim's (`ScreenshotManager.grimFrames`): grim had already written each screen's PPM and exited 0 (a failure says so in its own message), `_grim`'s `onExited` set `picking` and started the 3 s watchdog, and the picker's `still` Image never reached `Image.Ready` in time, so `_onFrame` never called `frameArrived` (or, for an immediate `screen` shot, the capture never reported back through `finish`). An `Image.Error` (a PPM it can't read, a path gone) is never reported either: it waits out the watchdog with this message. Not reproduced; whether the asynchronous load of a large PPM is slow or fails isn't known yet. The maintainer's notes (2026-10-28) report it as "grim fails if it takes too long?" under niri.
-- **Size:** small
-- **Found:** 2026-10-26, while working on the shell–daemon contract check (in the live log)
-
 ### WorkspaceStrip's Grid briefly has more items than cells
 - **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml` (the `Grid`, `id: layout`)
 - **What:** The log shows `Grid contains more visible items (2) than rows*columns (1)` after a reload. `shown` counts `activeStrip.visible`, so for a moment the Grid's `rows`/`columns` lag a child becoming visible; likely harmless (the next layout pass fits), but it warns.
