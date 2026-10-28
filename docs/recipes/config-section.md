@@ -59,7 +59,7 @@ QtObject {
 - **Sections unknown to the schema are pruned on load**, with a warning. A key missing from the schema vanishes from the user's config on the next save.
 - **Reader naming:** the name must not collide with a type the reader's users can see (bar widgets, content, views, Quickshell types). `check_structure.py` reports two same-named types in one file's scope.
 - **Hot reload:** a new singleton is picked up on reload (qs 0.3.1). Check `scripts/log.sh` for `module "qs.config" … not a type`-style errors.
-- **Schema before config:** the running shell validates `config.json` against the schema it last loaded, so confirm the reload before writing the new section into `~/.config/axiom/config.json`.
+- **Schema before config:** the running axiom validates `config.json` against the schema it loaded at its start (`AGENTS.md` › Running / reloading), so confirm it has the new schema before writing the new section into `~/.config/axiom/config.json`.
 - **Layering:** readers read only `ConfigManager`, `ThemeManager`, `I18n` and other readers, never a service with side effects.
 - **No `version` bump** for a new section: defaults fill it in.
 - **Takeovers:** settings that take over something on this PC (a system agent, a daemon) get `x-takeover: true`, and on the live config they need the user's go-ahead before you turn them on.
