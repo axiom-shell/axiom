@@ -280,12 +280,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### The session switches monitor profiles in QML on sway and niri
-- **Where:** `services/compositor/MonitorManager.qml` (`_applySavedProfile`, `_applyProfilePending`), `services/compositor/CompositorConfigManager.qml` (`_outputRules`), `backend/internal/compositor/manager/inputs.go` (`Facts.OutputRules`), `backend/internal/compositor/manager/manager.go`
-- **What:** Without `supports.outputProfiles`, `MonitorManager` applies the saved profile after each `outputsHotplugged` and after a detached reload, and `CompositorConfigManager` matches again to send `outputRules` for the files: the shell must be up for a hotplug to switch, and each hotplug reads the outputs three times. Item 3 of the plan: `manager.Manager` watches the Tracker (debounced), reads the outputs, applies `SavedRules`, fills the output rules in `buildInputs`, and applies again after a detached reload; the QML above goes. A hotplug during a trial Apply closes the Keep prompt without reverting.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
 ### The greeter on sway matches monitors only at its start
 - **Where:** `services/session/GreetdManager.qml` (`_applyCompositor`), `backend/internal/daemon/compositorsocket.go` (`applyGreeter`)
 - **What:** The greeter applies `MonitorLayout.savedRules` once for the outputs it sees at start, and `applyGreeter`'s sway branch sends only input: a monitor plugged in at the greeter is never matched. Item 4 of the plan: `greeter.compositor` starts the session's watch for the greeter's lifetime on sway; `_applyCompositor`'s `savedRules` branch goes.

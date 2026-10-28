@@ -11,6 +11,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/cursortheme"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -41,7 +42,7 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 		Rules   json.RawMessage `json:"rules"`
 		Details json.RawMessage `json:"details"`
 	}
-	h, n, s := ipc.HyprFromEnv(getenv), ipc.NiriFromEnv(getenv), ipc.SwayFromEnv(getenv)
+	outputs := manager.OutputsFromEnv(getenv)
 	rpc.Handle(reg, "outputs.apply", func(ctx context.Context, c *rpc.Conn, p applyParams) (struct{}, error) {
 		if !fromShell(c) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell sets the outputs")
@@ -54,54 +55,11 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 		if err != nil {
 			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "details")
 		}
-		return struct{}{}, applyOutputs(ctx, h, n, s, rules, details)
+		return struct{}{}, outputs.Apply(ctx, rules, details)
 	})
 	// One at a time, in the order sent: a revert lands after the Apply it
 	// undoes
 	reg.InOrder("outputs.apply")
-}
-
-// applyOutputs sends the rules to the first of Hyprland, niri and sway
-// running (as the config layer picks), in their own terms
-func applyOutputs(ctx context.Context, h *ipc.Hypr, n *ipc.Niri, s *ipc.Sway, rules, details any) error {
-	switch {
-	case h != nil:
-		reply, err := h.Eval(ctx, strings.Join(render.MonitorCalls(rules, render.MirrorNames(details)), "\n"))
-		if err != nil {
-			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
-		}
-		if reply != "" {
-			return axerr.New(axerr.Refused, "Hyprland refused the monitor rules: %s", reply)
-		}
-	case n != nil:
-		// Each request on its own: one niri refuses doesn't stop the rest
-		var refused error
-		for _, request := range render.NiriOutputRequests(rules, details).Items {
-			if _, err := n.Request(ctx, json.RawMessage(jsonx.MarshalCompact(request))); errors.Is(err, ipc.ErrRefused) {
-				if refused == nil {
-					refused = axerr.Wrap(axerr.Refused, err, "")
-				}
-			} else if err != nil {
-				return axerr.Wrap(axerr.Unavailable, err, "no reply from niri")
-			}
-		}
-		if refused != nil {
-			return refused
-		}
-	case s != nil:
-		results, err := s.Run(ctx, render.SwayOutputCommands(rules))
-		if err != nil {
-			return axerr.Wrap(axerr.Unavailable, err, "no reply from sway")
-		}
-		for _, r := range results {
-			if !r.Success {
-				return axerr.New(axerr.Refused, "sway refused an output command: %s", r.Error)
-			}
-		}
-	default:
-		return axerr.New(axerr.Unavailable, "no compositor to set the outputs on")
-	}
-	return nil
 }
 
 // greeterHandlers is greeter.compositor, the greeter's axiom's alone: the

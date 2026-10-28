@@ -55,7 +55,8 @@ func repo(t *testing.T) (*render.Tables, any) {
 // goldenInputs are what the layer is made of for kind: testdata/config.json
 // (a config's sections the layer reads) with testdata/facts.json (what a
 // shell sent as compositor.inputs, its machine's paths and names made
-// generic), decoded as the daemon decodes them
+// generic) and the one output its profile names connected, decoded as the
+// daemon decodes them
 func goldenInputs(t *testing.T, kind string) Inputs {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join("testdata", "facts.json"))
@@ -75,7 +76,7 @@ func goldenInputs(t *testing.T, kind string) Inputs {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return buildInputs(cfg.(*jsonx.Object), &f)
+	return buildInputs(cfg.(*jsonx.Object), &f, []render.Output{{Name: "DP-1", Description: "Example Display 0001"}})
 }
 
 // goldenWriter is kind's writer in a home that doesn't exist, with no

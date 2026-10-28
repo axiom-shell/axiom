@@ -115,19 +115,6 @@ Singleton {
   // input's settings, the session, the options) from the config, with the
   // unsaved edits of those sections the shell sends
 
-  // The saved monitor profile for what's connected (MonitorLayout.
-  // matchProfile, as MonitorManager applies it), for a compositor whose
-  // files hold the outputs (sway's and niri's reset them on a reload); null
-  // until MonitorManager has read them (a file keeps what it says)
-  readonly property var _outputRules: {
-    if (!root.enabled || CompositorManager.kind === "hyprland" || !MonitorManager.outputsRead)
-      return null;
-    const outputs = MonitorManager.outputs;
-    const profiles = MonitorsConfig.profiles;
-    const index = MonitorLayout.matchProfile(profiles, outputs.filter(output => !output.disabled));
-    return index < 0 ? [] : profiles[index].outputs.filter(rule => MonitorLayout.find(rule.output, outputs) !== null);
-  }
-
   // The window look's values the theme and the Appearance settings
   // resolve, colors as their text ("#rrggbb", "#aarrggbb")
   readonly property var _look: ({
@@ -176,7 +163,6 @@ Singleton {
       },
       "startPattern": Paths.startPattern,
       "primaryMonitor": General.primaryMonitor,
-      "outputRules": root._outputRules,
       "look": root._look,
       // Whether axiom's surfaces blur: as saved (for a file), and now
       // (BlurManager.active, paused over a fullscreen window)

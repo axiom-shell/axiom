@@ -14,6 +14,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
@@ -64,7 +65,7 @@ func TestApplyOutputs(t *testing.T) {
 		return string(buf[:n])
 	}, func(c net.Conn, _ string) { io.WriteString(c, hyprReply) })
 	h := &ipc.Hypr{Dir: dir}
-	if err := applyOutputs(ctx, h, nil, nil, rules, details); err != nil {
+	if err := (manager.Outputs{Hypr: h}).Apply(ctx, rules, details); err != nil {
 		t.Fatal(err)
 	}
 	if got := <-hypr; got != `eval hl.monitor({ output = "HDMI-A-1", disabled = true })`+"\n"+`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, mirror = "DP-1" })` {
@@ -85,7 +86,7 @@ func TestApplyOutputs(t *testing.T) {
 	n := &ipc.Niri{Path: niriPath}
 	// On first, so an output isn't turned off before another takes over;
 	// the refused On doesn't stop the rest, and comes back refused
-	err = applyOutputs(ctx, nil, n, nil, rules, details)
+	err = manager.Outputs{Niri: n}.Apply(ctx, rules, details)
 	if axerr.KindOf(err) != axerr.Refused {
 		t.Fatalf("niri refusing: %v", err)
 	}
@@ -111,7 +112,7 @@ func TestApplyOutputs(t *testing.T) {
 		binary.LittleEndian.PutUint32(head[6:], uint32(len(body)))
 		c.Write(append(head, body...))
 	})
-	err = applyOutputs(ctx, nil, nil, &ipc.Sway{Path: swayPath}, rules, details)
+	err = manager.Outputs{Sway: &ipc.Sway{Path: swayPath}}.Apply(ctx, rules, details)
 	if axerr.KindOf(err) != axerr.Refused || !strings.Contains(err.Error(), "Unknown output") {
 		t.Fatalf("sway refusing: %v", err)
 	}
@@ -119,7 +120,7 @@ func TestApplyOutputs(t *testing.T) {
 		t.Errorf("sway: %q", got)
 	}
 
-	if err := applyOutputs(ctx, nil, nil, nil, rules, details); axerr.KindOf(err) != axerr.Unavailable {
+	if err := (manager.Outputs{}).Apply(ctx, rules, details); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("no compositor: %v", err)
 	}
 }

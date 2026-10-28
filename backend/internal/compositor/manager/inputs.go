@@ -12,10 +12,10 @@ import (
 // what the compositor can do, the shell's paths and apps, the window look
 // as the theme and the Appearance settings resolve it, the blur behind
 // axiom's surfaces now, the cursor theme's XCursor name, the theme's
-// colors, the motion, the primary monitor, the matched
-// monitor profile's rules and its unsaved edits (previews). The rest (binds,
-// profiles, strips, the look's and input's settings, the session, the
-// options) the manager reads from the config (buildInputs).
+// colors, the motion, the primary monitor and its unsaved edits (previews).
+// The rest (binds, profiles, strips, the look's and input's settings, the
+// session, the options) the manager reads from the config, and the
+// outputs from the compositor (buildInputs).
 type Facts struct {
 	Kind     string          `json:"kind"`
 	Supports map[string]bool `json:"supports"`
@@ -26,12 +26,9 @@ type Facts struct {
 	StartPattern string `json:"startPattern"`
 	// PrimaryMonitor is General.primaryMonitor as resolved (the first
 	// output when it's unset): a strip on the primary monitor goes there
-	PrimaryMonitor string `json:"primaryMonitor"`
-	// OutputRules: for sway and niri, the matched monitor profile's rules
-	// for the outputs connected ([] for none), null until they're read
-	OutputRules json.RawMessage `json:"outputRules"`
-	Look        LookFacts       `json:"look"`
-	Blur        BlurFacts       `json:"blur"`
+	PrimaryMonitor string    `json:"primaryMonitor"`
+	Look           LookFacts `json:"look"`
+	Blur           BlurFacts `json:"blur"`
 	// XCursor is the cursor theme's XCursor name (CursorThemeManager)
 	XCursor string `json:"xcursor"`
 	// Palette is the theme's colors by name (Theme.stringToColorMap), as
@@ -110,11 +107,12 @@ func tree(v any) any {
 }
 
 // buildInputs is what the layer is made of: the config (cfg, with the
-// shell's previews laid over it) and the shell's facts, as the writers read
-// it, with layerKey (a change re-applies the layer), liveKey (a change
+// shell's previews laid over it), the shell's facts and the outputs
+// connected (sway's and niri's, nil until read: the files then keep what
+// they say), as the writers read it, with layerKey (a change re-applies the layer), liveKey (a change
 // is only evaluated at runtime) and liveRestKey (liveKey but for the blur
 // now).
-func buildInputs(cfg *jsonx.Object, f *Facts) Inputs {
+func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	if cfg == nil {
 		cfg = jsonx.NewObject()
 	}
@@ -150,9 +148,10 @@ func buildInputs(cfg *jsonx.Object, f *Facts) Inputs {
 			}
 		}
 	}
+	// The saved profile's rules for what's connected ([] for none)
 	var outputRules any
-	if len(f.OutputRules) > 0 {
-		outputRules, _ = jsonx.Unmarshal(f.OutputRules)
+	if outputs != nil {
+		outputRules = jsonx.Arr(render.SavedRules(at("Monitors", "items"), outputs)...)
 	}
 	spec := func(forFile bool) *jsonx.Object {
 		surfacesBlur := f.Blur.Now

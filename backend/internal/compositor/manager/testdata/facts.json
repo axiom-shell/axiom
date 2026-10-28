@@ -39,24 +39,6 @@
   },
   "startPattern": "(^|[\\s'\"/])axiom['\"]? +run\\b",
   "primaryMonitor": "DP-1",
-  "outputRules": [
-    {
-      "output": "desc:Example Display 0001",
-      "label": "DP-1",
-      "mode": "3440x1440@240",
-      "x": 0,
-      "y": 0,
-      "scale": 1,
-      "transform": 0,
-      "disabled": false,
-      "mirror": "",
-      "vrr": 0,
-      "bitdepth": 8,
-      "cm": "srgb",
-      "sdrBrightness": 1,
-      "sdrSaturation": 1
-    }
-  ],
   "look": {
     "active": "#9ccfd8",
     "inactive": "#403d52",

@@ -11,10 +11,9 @@ import qs.services.ui
  * The Monitors page: the connected outputs (CompositorManager.
  * withOutputDetails, read at startup and when monitors come, go or the
  * config reloads; never polled) and the editor for Monitors.profiles, a
- * draft of profiles (each a layout for one set of monitors). The
- * compositor's config writer applies the saved profiles, the one matching
- * what's connected (again on every hotplug; with `outputProfiles` the
- * compositor picks it itself, else this does on outputsHotplugged).
+ * draft of profiles (each a layout for one set of monitors). The saved
+ * profile matching what's connected is applied on every hotplug by the
+ * compositor (`outputProfiles`) or the daemon (sway, niri), not here.
  *
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
@@ -26,10 +25,6 @@ QtObject {
   // The outputs in detail (CompositorManager.withOutputDetails), disabled
   // ones included
   property var outputs: []
-  // Whether `outputs` has been read yet (a config writer keeps what its
-  // file says about the monitors until then)
-  readonly property bool outputsRead: _outputsRead
-  property bool _outputsRead: false
   readonly property var enabledOutputs: outputs.filter(monitor => !monitor.disabled)
 
   // --- The draft ---
@@ -356,14 +351,8 @@ QtObject {
     _reading = true;
     CompositorManager.withOutputDetails(outputs => {
       root._reading = false;
-      if (outputs) {
+      if (outputs)
         root.outputs = outputs;
-        root._outputsRead = true;
-      }
-      if (root._applyProfilePending) {
-        root._applyProfilePending = false;
-        root._applySavedProfile();
-      }
     });
   }
 
@@ -404,8 +393,6 @@ QtObject {
     });
     // After the config writer has applied it (debounced, then evaluated)
     _refreshLater.restart();
-    if (!CompositorManager.supports.outputProfiles)
-      _applyProfilePending = true;
   }
 
   property bool _wholeScalePending: false
@@ -423,32 +410,17 @@ QtObject {
         draft.load();
         root._detectPending = true;
       }
-      if (!CompositorManager.supports.outputProfiles)
-        root._applyProfilePending = true;
+      // The saved profile for the new set is applied already: a trial
+      // Apply ends without reverting
+      if (root.pending) {
+        root.pending = false;
+        root._countdown.stop();
+      }
       root._refreshSoon.restart();
     }
     function onConfigReloaded() {
-      // A reload sets the outputs as the compositor's config says. Without
-      // outputProfiles, only a file of axiom's that's loaded holds the
-      // profile (sway's writer writes it); otherwise it's applied again
-      if (!CompositorManager.supports.outputProfiles && CompositorConfigManager.status !== "loaded")
-        root._applyProfilePending = true;
       root._refreshSoon.restart();
     }
-  }
-
-  // --- The saved profile for what's connected, without outputProfiles ---
-
-  // The compositor can't pick a profile on a hotplug itself: once the
-  // outputs are read, the saved one matching them is applied
-  property bool _applyProfilePending: !CompositorManager.supports.outputProfiles
-
-  function _applySavedProfile() {
-    if (root.pending)
-      return;
-    const rules = MonitorLayout.savedRules(MonitorsConfig.profiles, root.outputs);
-    if (rules.length > 0)
-      CompositorManager.applyOutputs(rules, root.outputs);
   }
 
   // Read as soon as the compositor is known to have monitors: created early

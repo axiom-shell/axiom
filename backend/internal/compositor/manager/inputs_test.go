@@ -43,7 +43,7 @@ func TestBuildInputs(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			saved := cfg(c.layout)
-			in := buildInputs(saved, &Facts{Kind: "hyprland", PrimaryMonitor: "DP-1", Previews: c.previews})
+			in := buildInputs(saved, &Facts{Kind: "hyprland", PrimaryMonitor: "DP-1", Previews: c.previews}, nil)
 			if got := string(jsonx.MarshalCompact(in.get("binds"))); got != c.binds {
 				t.Errorf("binds: got %s, want %s", got, c.binds)
 			}
@@ -69,7 +69,7 @@ func TestShellColors(t *testing.T) {
 	in := buildInputs(cfg, &Facts{
 		Palette: map[string]string{"accent": "#C4A7E7", "base0D": "#80112233", "base00": "#191724", "easeOut": "x"},
 		Look:    LookFacts{Active: "#9ccfd8", Inactive: "#ff403d52", Shadow: &ShadowFacts{Size: 8, Color: "#101010", Alpha: 0.5, Strength: 1}},
-	})
+	}, nil)
 	if got := string(jsonx.MarshalCompact(in.get("colors"))); got != `{"accent":"c4a7e7","base0D":"112233"}` {
 		t.Errorf("colors: %s", got)
 	}
