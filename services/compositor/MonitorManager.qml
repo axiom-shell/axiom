@@ -46,9 +46,10 @@ QtObject {
   readonly property int selectedIndex: rules.findIndex(rule => rule.output === selectedOutput)
   readonly property var selectedRule: rules[selectedIndex] ?? null
 
-  // The draft's profile for what's connected (the daemon's match, by name:
-  // names are unique)
-  readonly property int liveProfile: _named(profiles, CompositorConfigManager.monitorProfile)
+  // The draft's profile for what's connected: the one _detect found (the
+  // daemon's match, by name: names are unique) or made, through renames
+  readonly property int liveProfile: _named(profiles, _liveName)
+  property string _liveName: ""
   // The selected profile is for what's connected: Apply tries it live
   readonly property bool selectedIsLive: selectedProfile === liveProfile
 
@@ -97,8 +98,8 @@ QtObject {
     return MonitorLayout.ruleRect(rule, monitorFor(rule));
   }
 
-  // What's connected, as a profile: the selected one when it's for these
-  // monitors (adding any it doesn't list), else a new one from how they are
+  // What's connected, as a profile: the one the daemon matched (adding any
+  // monitor it doesn't list), else a new one from how they are
   function _detect() {
     if (outputs.length === 0)
       return;
@@ -122,6 +123,7 @@ QtObject {
         }
     }
     selectProfile(index);
+    _liveName = local.items[index].name;
     if (edited)
       draft.changed();
     _detected = JSON.stringify(draft.local);
@@ -132,16 +134,21 @@ QtObject {
     return name ? list.findIndex(profile => profile.name === name) : -1;
   }
 
-  // The draft as _detect left it: the daemon's match for a hotplug may come
-  // after the page's read, and detects again while nothing else is edited
+  // The draft as _detect left it. The daemon's match for a hotplug may come
+  // after the page's read: it detects again while nothing else is edited
+  // (unless a detect is still waiting for the read, which will use it)
   property string _detected: ""
 
   property Connections _match: Connections {
     target: CompositorConfigManager
 
     function onMonitorProfileChanged() {
-      if (root.pageShown && !root.pending && (!draft.isDirty || JSON.stringify(draft.local) === root._detected))
+      if (!root.pageShown || root.pending || root._detectPending)
+        return;
+      if (!draft.isDirty || JSON.stringify(draft.local) === root._detected)
         root.reset();
+      else
+        root._liveName = CompositorConfigManager.monitorProfile;
     }
   }
 
@@ -204,6 +211,8 @@ QtObject {
     const target = draft.local?.items?.[index];
     if (!target || target.name === name)
       return;
+    if (target.name === _liveName)
+      _liveName = name;
     target.name = name;
     draft.changed();
   }
