@@ -27,7 +27,8 @@ QtObject {
   // focusRank), counts ({ [workspace num]: windows on it }), workspaceRects
   // and outputRects ({ [name]: { x, y, width, height } }), order (window ids
   // in the order sway's focus stacks say they were used, most recent first),
-  // focusedId ("" with none) }. Windows in the scratchpad aren't listed; one
+  // focusedId ("" with none), layouts ({ [tiled window id]: its parent's
+  // layout }) }. Windows in the scratchpad aren't listed; one
   // shown from it is, on the workspace it shows on.
   function tree(reply) {
     const info = {
@@ -36,7 +37,8 @@ QtObject {
       "workspaceRects": {},
       "outputRects": {},
       "order": _focusOrder(reply),
-      "focusedId": ""
+      "focusedId": "",
+      "layouts": {}
     };
     for (const output of reply?.nodes ?? []) {
       if (output.name === "__i3")
@@ -70,6 +72,8 @@ QtObject {
       const hidden = at.hidden || (tabbed && !floating && child.id !== front);
       if (child.pid !== undefined && child.pid !== null && (child.nodes ?? []).length === 0) {
         info.windows.push(root.window(child, at.ws, at.output, floating || at.floating, hidden));
+        if (!floating && !at.floating)
+          info.layouts[String(child.id)] = node.layout;
         if (child.focused)
           info.focusedId = String(child.id);
       } else {
@@ -102,6 +106,14 @@ QtObject {
     };
     const sorted = children.slice().sort((a, b) => rank(a.id) - rank(b.id));
     return [].concat(...sorted.map(child => _focusOrder(child)));
+  }
+
+  // The split a drop on `side` of a tiled window needs before the dropped
+  // window moves next to it: "h" or "v", or "" when its parent (`layout`, from
+  // tree's layouts) already splits that way, so drops don't nest containers.
+  function dropSplit(layout, side) {
+    const axis = side === "top" || side === "bottom" ? "v" : "h";
+    return layout === "split" + axis ? "" : axis;
   }
 
   // A window (a get_tree leaf) on workspace `ws` (its tree node) and output

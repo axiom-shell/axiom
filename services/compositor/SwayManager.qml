@@ -142,8 +142,11 @@ Singleton {
         lines.push(`${win} move absolute position ${Math.round(floatAt.x)} ${Math.round(floatAt.y)}`);
     } else if (targetId) {
       const target = _con(targetId);
-      const vertical = side === "top" || side === "bottom";
-      lines.push(`${target} mark --add ${_dropMark}`, `${target} split ${vertical ? "v" : "h"}`, `${win} move container to mark ${_dropMark}`, `${target} unmark ${_dropMark}`);
+      const split = SwayState.dropSplit(root._info.layouts[String(targetId)], side);
+      lines.push(`${target} mark --add ${_dropMark}`);
+      if (split)
+        lines.push(`${target} split ${split}`);
+      lines.push(`${win} move container to mark ${_dropMark}`, `${target} unmark ${_dropMark}`);
       if (side === "left" || side === "top")
         lines.push(`${win} swap container with con_id ${Number(targetId)}`);
     } else {

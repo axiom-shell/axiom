@@ -219,7 +219,7 @@ func (w *swayWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 	}
 	binds := jsonx.Arr(w.runtime.plan(in, func(b any) bool { return w.complete(in, b) }, entries)...)
 	unbind := w.state.SwayUnbind
-	w.state.SwayUnbind = w.tables.SwayUnbindLines(binds, in.get("ctx"))
+	w.state.SwayUnbind = w.tables.SwayUnbindLines(binds, in.get("ctx"), entries)
 	w.state.save()
 	// Sent apart, in order: sway stops a command list at an invalid command,
 	// so a bind it refuses would take the look with it

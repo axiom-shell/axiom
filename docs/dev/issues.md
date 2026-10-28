@@ -322,34 +322,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### SwayFX's corner radius reaches only windows opened later
-- **Where:** `backend/internal/compositor/render/sway.go` (`SwayFxLines`)
-- **What:** `corner_radius` sent at runtime sets SwayFX 0.6's global only (its per-window reset runs only while the config loads), and it has no per-window command, so a changed rounding shows on new windows while open ones keep theirs until sway reloads its config. A fix would need a reload, which takes back the rest of the runtime look.
-- **Size:** small
-- **Found:** 2026-10-16, while fixing SwayFX's blur on unfocused windows
-
-### Changing a setting under sway can flash the screen
-- **Where:** `services/compositor/LayerManager.qml` (`_sequence`), `components/hosts/popout/LayerSlot.qml`, `services/compositor/MonitorManager.qml`
-- **What:** Reported on sway: changing a setting flashes the whole settings page. Two causes fixed: the border's shadow window wasn't held, so turning the shadow on remapped every surface ordered under it (`LayerManager: mapping … again, in its place` for the backdrop, bars, border and dock, the backdrop dimming the overlay flashing with them), and a sway reload (any save rewriting axiom's file) reset the outputs to the config's, dropping the monitor profile. A third, on any compositor: the settings page rebuilt every card on each edit (its categories were recomputed from the config through `x-showIf`), fixed in `components/views/Settings/Settings.qml`. Not reproduced with an ordinary setting since (a save then logs no remap and no overlay resize). Without `layerOrder`, a bar remade by a change of kind still remaps everything after it, by design. If it still happens, note which setting and look for those log lines.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch
-
 ### Sway's special workspaces are floating scratchpad windows
 - **Where:** `services/compositor/SwayManager.qml` (`toggleSpecial`, `moveToSpecial`), `components/methods/SwayState.qml` (`specialToggle`)
 - **What:** Hyprland's special workspace is a tiled workspace drawn over the current one; sway has none, so a special group is marked scratchpad windows, and sway's scratchpad makes every window floating, centred and stacked on the others (a group of three shows as three overlapping windows). Options: keep the scratchpad and lay the group's windows out in a grid on show (`move position` / `resize set` per window, over the workspace like Hyprland's), or a hidden named workspace per group (tiles, but replaces the view instead of overlaying it). A group name holding `,` or `;` also breaks its `nop axiom special` bind (sway splits the command there). The maintainer's notes (2026-10-28) list it as "figure out what to do for scratchpad".
 - **Size:** needs a plan
-- **Found:** 2026-10-16, while auditing the sway branch
-
-### Overview drops on sway nest split containers
-- **Where:** `services/compositor/SwayManager.qml` (`placeWindow`)
-- **What:** A drop next to a window runs `split h|v` on the target every time, which wraps it in a new container even when its parent already splits that way, so repeated drops nest containers sway then draws as such (tabbed/stacked parents behave oddly). Split only when the parent's layout differs (the tree has it).
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch
-
-### Detached sway keeps the floating modifier after the mouse binds go
-- **Where:** `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/render/sway.go` (`SwayUnbindLines`, `SwayFloatingModifier`)
-- **What:** The runtime layer sends `floating_modifier` for the drag/resize binds but its unbind commands don't take it back, so removing them in detached mode leaves sway's floating modifier set until sway reloads. It also overrides a `floating_modifier` of the user's own config, which `render.RuntimeBinds` doesn't see as a taken key.
-- **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch
 
 ### `noWarps` off maps to sway's `mouse_warping output`

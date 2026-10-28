@@ -310,7 +310,7 @@ var ops = map[string]func(t *Tables, a []any) any{
 	"SwayConf.outputCommands":   func(t *Tables, a []any) any { return SwayOutputCommands(arg(a, 0)) },
 	"SwayConf.quote":            func(t *Tables, a []any) any { return SwayQuote(arg(a, 0)) },
 	"SwayConf.releasedText":     func(t *Tables, a []any) any { return SwayReleasedText(arg(a, 0), argStr(a, 1)) },
-	"SwayConf.unbindLines":      func(t *Tables, a []any) any { return strList(t.SwayUnbindLines(arg(a, 0), arg(a, 1))) },
+	"SwayConf.unbindLines":      func(t *Tables, a []any) any { return strList(t.SwayUnbindLines(arg(a, 0), arg(a, 1), arg(a, 2))) },
 
 	"NiriConf.actionFor":       func(t *Tables, a []any) any { return nilObject(t.NiriActionFor(arg(a, 0), arg(a, 1))) },
 	"NiriConf.bindEntries":     func(t *Tables, a []any) any { return t.NiriBindEntries(arg(a, 0), arg(a, 1)) },

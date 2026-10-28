@@ -2527,7 +2527,6 @@
     "Tiled": "タイル",
     "No gaps around a lone window": "ウィンドウが 1 つのときは隙間なし",
     "A Pango font, e.g. pango:Inter 10. Empty keeps sway's.": "Pango フォント（例: pango:Inter 10）。空なら sway の既定のまま。",
-    "Follow Look & Feel → Shape: its border width and corner radius (only the width on sway, which can't round corners).": "外観と操作感 → 形に従います：枠の幅と角の丸み（sway は角を丸められないため、幅のみ）。",
     "The width of window borders and the rounding of their corners. Sway draws square corners, so there only the width applies.": "ウィンドウの枠の幅と角の丸み。sway は角を四角く描くため、幅のみが適用されます。",
     "{0} only.": "{0} のみ。",
     "{0} can't do this.": "{0} ではできません。",
@@ -3170,6 +3169,8 @@
     "axiom's official repository": "",
     "Where Install and Update take the login screen's code. Git fetches it as root from axiom's official repository, at its newest release, with the release's prebuilt axiom binary checked against its checksums: nothing that can write to your clone can change it (main, having no such binary, can't be installed; a fork uses Local). Local copies your clone as it is (the checked-out branch, uncommitted changes included) with the axiom binary you built last, for working on axiom: any program running as you could change what the login screen runs before you next update it.": "",
     "Code from Git, following main: root fetches main's newest build from {0}, the commit its prebuilt axiom binary was built from, checked against the build's checksums. Nothing that can write to your clone can change what the login screen runs.": "",
-    "config.json is broken and the settings that take something over on this PC aren't known, so nothing replaces it. Fix it by hand, or delete it and restart axiom.": ""
+    "config.json is broken and the settings that take something over on this PC aren't known, so nothing replaces it. Fix it by hand, or delete it and restart axiom.": "",
+    "On SwayFX, open windows keep their rounding until sway reloads; windows opened later take the new one.": "",
+    "Follow Look & Feel → Shape: its border width and corner radius (only the width on sway, which can't round corners; on SwayFX, open windows keep their rounding until sway reloads).": ""
   }
 }
