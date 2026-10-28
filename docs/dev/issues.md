@@ -62,6 +62,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
+### `config.restore` has no caller in the shell
+- **Where:** `services/core/ConfigManager.qml` (`restoreConfig`), `backend/internal/daemon/methods.go` (`config.restore`), `docs/dev/features/community-setups.md`
+- **What:** Nothing in the shell calls `ConfigManager.restoreConfig` (grep finds only its definition), so `config.restore` (`Store.Restore`, the only restore that takes a whole config, takeover settings included) is reached by no UI path: saved configs, examples, community setups and Defaults all go through `saved.*` (`share.Apply`, then `Store.Replace`). `community-setups.md` still says a setup's apply keeps the takeovers through `ConfigManager.restoreConfig`. This matters to the store's hold ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)): a saved config holds no takeover values (`share.Pick` never keeps one), so `config.restore` is the only restore with any of its own. Either delete `restoreConfig` and `config.restore` (and `Store.Restore`), or give them a caller, and fix the doc.
+- **Size:** small
+- **Found:** 2026-10-28, while planning row 12 (the store's one hold)
+
 ### The compositor mode is held twice while config.json doesn't load
 - **Where:** `backend/internal/store/store.go` (`holdTakeovers`, `Takeovers`), `backend/internal/compositor/manager/manager.go` (`saveKept`, `keptStands`, `ConfigWritable`), `backend/internal/daemon/compositor.go`, `backend/internal/daemon/methods.go` (`pushState`)
 - **What:** #105, #107 and #108 each fixed one case of "a config.json that doesn't load, or was edited outside, releases a managed compositor config", and filed the next. The result is two mechanisms for one rule ("only a takeover setting's own card changes it"): the store's `holdTakeovers` / `Takeovers()`, which covers every `x-takeover` setting, and the compositor manager's own hold of `Compositor.mode` (`KeptMode`, `saveKept`, `keptStands`, `ConfigWritable`; about 155 lines), which keeps the mode it applied and saves it back. Three things in it were never decided by the maintainer:
