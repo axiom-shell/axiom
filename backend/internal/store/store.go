@@ -242,21 +242,6 @@ func (s *Store) Replace(cfg *jsonx.Object, opts SetOptions) (int64, error) {
 	}, opts)
 }
 
-// Restore replaces the config with a parsed one of any format the
-// pipeline reads (an older one converted, as config.json would be), the
-// takeover settings kept unless opts.Takeover. It lifts a blocked file.
-func (s *Store) Restore(parsed any, opts SetOptions) (int64, error) {
-	loaded, err := s.opts.Pipeline.Load(parsed)
-	if err != nil {
-		return 0, err
-	}
-	if len(loaded.Errors) > 0 {
-		return 0, &axerr.Error{Kind: axerr.InvalidConfig, Message: "the config doesn't load", Issues: issues(loaded.Errors)}
-	}
-	opts.Restore = true
-	return s.Replace(loaded.Config, opts)
-}
-
 func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts SetOptions) (int64, error) {
 	defer s.publish()
 	s.changeMu.Lock()

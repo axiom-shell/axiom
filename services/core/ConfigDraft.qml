@@ -47,6 +47,19 @@ QtObject {
 
   property var _loadedFrom: null
 
+  // A refused save of what this draft holds as saved: `saved` is the
+  // config read back, so the edits show unsaved again
+  property Connections _refusals: Connections {
+    target: ConfigManager
+
+    function onSaveRefused(refused) {
+      if (!Utils.deepEqual(Utils.valueAt(refused, root.path), root.saved))
+        return;
+      root.saved = Utils.clone(root._read());
+      root.isDirty = !Utils.deepEqual(root.local, root.saved);
+    }
+  }
+
   // After mutating `local` in place: update isDirty, and re-assign it (next
   // tick) so bindings on it see the change, since in-place mutation doesn't
   // notify. Deferred so it doesn't re-enter the binding of the control
@@ -58,7 +71,8 @@ QtObject {
 
   // Merges `local` onto the LATEST config (so settings edited elsewhere
   // meanwhile survive) and commits it. Returns false, staying dirty, if
-  // ConfigManager rejects it.
+  // ConfigManager rejects it. A save axiom refuses later makes it dirty
+  // again (saveRefused).
   function save() {
     let merged = Utils.clone(root.local);
     if (root.path.length > 0) {

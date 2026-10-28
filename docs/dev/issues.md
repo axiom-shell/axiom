@@ -20,11 +20,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### A save axiom refuses leaves its editor clean, showing the refused value
-- **Where:** `services/core/ConfigManager.qml` (`commit`, `hardResetConfig`), `services/core/ConfigDraft.qml` (`save`), `services/ui/SettingsManager.qml` (`saveChanges`)
-- **What:** Since row 12's one validator, `commit` returns true for any save it can send: an invalid one is applied to the running config at once (readers see the invalid value until axiom answers), then refused, logged (`axiom refused the config`) and read back. The draft that saved it has already reloaded (`saved` = the refused value), so the editor shows that value as saved and clean while the running config has the old one, and Save can't retry; the next `loadIfStale` drops it. Before, the shell's own check kept the draft dirty and changed nothing. Rare: forms, `parseValue` and generated ids keep saves valid, so a refusal means a bug. A fix would have the refusal reach the drafts (a `ConfigManager` signal after the read-back, each draft setting `saved` from the config again so its edits show dirty), or keep commit's result until axiom answers. Maintainer decision (2026-10-28), verbatim: **"signal after refused save show unsaved edits"**: a `ConfigManager` signal after the read-back, each draft setting `saved` from the config again so its edits show unsaved.
+### After a refused save, a draft's edits show unsaved but not live
+- **Where:** `services/core/ConfigDraft.qml` (`_refusals`), `services/ui/SettingsManager.qml` (`_clearPreviews`), `services/ui/BarManager.qml` (`applyChanges`)
+- **What:** When axiom refuses a save, `ConfigManager.saveRefused` makes the draft dirty again, but the editor's previews were cleared when it saved (the settings page's `draft.load()` → `_clearPreviews`; `BarManager` clears its preview once clean) and nothing sets them again: the running config shows the value read back while the editor shows the edits as unsaved, until the next edit previews them. Rare (a save axiom refuses), so left after the minimal fix (row 12).
 - **Size:** small
-- **Found:** 2026-10-28, while reviewing row 12's one validator (backend stage 7)
+- **Found:** 2026-10-28, while reviewing row 12's refused-save fix (backend stage 7)
 
 ### A protocol bump in dev mode leaves the installed CLI on the old protocol
 - **Where:** `backend/cmd/axiom`, `config/json/backend.json` (`protocol`)
@@ -62,15 +62,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-28, while reviewing row 11's PRs (#155 to #158)
 
-### `config.restore` has no caller in the shell
-- **Where:** `services/core/ConfigManager.qml` (`restoreConfig`), `backend/internal/daemon/methods.go` (`config.restore`)
-- **What:** Nothing in the shell calls `ConfigManager.restoreConfig` (grep finds only its definition), so `config.restore` (`Store.Restore`, the only restore that takes a whole config, takeover settings included) is reached by no UI path: saved configs, examples, community setups and Defaults all go through `saved.*` (`share.Apply`, then `Store.Replace`). A saved config holds no takeover values (`share.Pick` never keeps one), so `config.restore` is the only restore that could bring any. Either delete `restoreConfig` and `config.restore` (and `Store.Restore`), or give them a caller.
-- **Size:** small
-- **Found:** 2026-10-28, while planning row 12 (the store's one hold)
-
 ### With no takeovers kept, a broken config.json can still release the compositor's config
 - **Where:** `backend/internal/store/store.go` (`loadInitial`, `write`, `holdTakeovers`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`)
-- **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Undecided: whether a hand fix over unknown takeovers should keep what the compositor has applied.
+- **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Accepted by the maintainer (2026-10-28, #163): with no takeovers kept, a restore is refused and a hand fix sets the takeovers as it reads.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while reviewing row 12's third batch
 
