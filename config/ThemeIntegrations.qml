@@ -5,7 +5,7 @@ import qs.services.core
 // Reader for the ThemeIntegrations section: one switch per integration
 // in the daemon's table, run by ThemeManager.themeIntegrations().
 QtObject {
-  readonly property var _c: ConfigManager.config.ThemeIntegrations
+  readonly property var _c: ConfigManager.live.ThemeIntegrations
 
   readonly property bool gtk: _c.gtk
   readonly property bool qt: _c.qt

@@ -10,7 +10,7 @@ import qs.components.methods
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Greeter
+  readonly property var _c: ConfigManager.live.Greeter
 
   // Set up as the login screen (GreeterManager's install)
   readonly property bool enabled: _c.enabled

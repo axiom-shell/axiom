@@ -6,7 +6,7 @@ import qs.services.core
 // overview). Named WorkspaceOverlayConfig because `WorkspaceOverlay` is the
 // shell module type.
 QtObject {
-  readonly property var _c: ConfigManager.config.WorkspaceOverlay
+  readonly property var _c: ConfigManager.live.WorkspaceOverlay
 
   // Cells show the monitor's wallpaper, else `color`
   readonly property bool wallpaper: _c.background === "wallpaper"

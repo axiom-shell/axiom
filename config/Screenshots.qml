@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Screenshots
+  readonly property var _c: ConfigManager.live.Screenshots
 
   // With ~ expanded; empty for <Pictures>/Screenshots
   readonly property string folder: Paths.expandHome(_c.folder)

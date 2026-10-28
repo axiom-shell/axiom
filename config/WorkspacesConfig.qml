@@ -8,7 +8,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Workspaces
+  readonly property var _c: ConfigManager.live.Workspaces
 
   // Grid: each monitor owns columns × rows ids. Per monitor: each monitor
   // owns a flat block of count ids. Standard: ids 1..count, shared by every

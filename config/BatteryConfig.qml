@@ -5,7 +5,7 @@ import qs.services.core
 // Reader for the Battery section. Named BatteryConfig because `Battery` is
 // a bar widget and module type.
 QtObject {
-  readonly property var _c: ConfigManager.config.Battery
+  readonly property var _c: ConfigManager.live.Battery
 
   // Notify on reaching the low, then the critical level
   readonly property bool notify: _c.notify

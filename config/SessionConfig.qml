@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Session
+  readonly property var _c: ConfigManager.live.Session
 
   // Goes through a string so a reload that leaves it unchanged doesn't
   // rewrite the managed config

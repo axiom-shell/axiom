@@ -135,9 +135,6 @@ The config, the takeover and the session must never be damaged by a rarely taken
 
 Fixed in this phase: none left.
 
-Fixed by backend stage 7 (add the bullets there if missing):
-- [Shell saves carry unsaved settings](issues.md#shell-saves-carry-unsaved-settings)
-
 A config.json that doesn't load (decided 2026-10-26):
 - [The compositor mode is held twice while config.json doesn't load](issues.md#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)
 - [Restoring over a config.json that doesn't load resets the other takeovers](issues.md#restoring-over-a-configjson-that-doesnt-load-resets-the-other-takeovers)

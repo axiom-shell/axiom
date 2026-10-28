@@ -18,7 +18,7 @@ QtObject {
   // The running bars (while the bar editor has unsaved edits, those),
   // each with what its ends meet among the bars on its screen (BarEnds:
   // which bar a shared corner goes to)
-  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars((ConfigManager.previews.Bars ?? ConfigManager.config.Bars).items).map(bar => BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut)), BarsConfig.endsOptions(CompositorManager.gapsOut))
+  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut)), BarsConfig.endsOptions(CompositorManager.gapsOut))
 
   // The enabled bars on a screen by edge ({ top, bottom, left, right },
   // null where there is none)

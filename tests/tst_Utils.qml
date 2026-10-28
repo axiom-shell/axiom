@@ -108,6 +108,53 @@ TestCase {
     compare(map.a, 1, "the original is untouched");
   }
 
+  function test_withValuesAt() {
+    const object = {
+      "Bars": {
+        "style": {
+          "radius": 4,
+          "gap": 2
+        },
+        "items": [1]
+      },
+      "General": {
+        "x": 1
+      }
+    };
+    compare(Utils.withValuesAt(object, {}), object, "no values: the object itself");
+    const out = Utils.withValuesAt(object, {
+      "Bars.style.radius": 8,
+      "Bars": {
+        "style": {
+          "radius": 0
+        },
+        "items": []
+      },
+      "New.deep.key": true
+    });
+    compare(out.Bars, {
+      "style": {
+        "radius": 8
+      },
+      "items": []
+    }, "the deeper path shows through the section laid over it");
+    compare(out.New, {
+      "deep": {
+        "key": true
+      }
+    }, "missing objects are made");
+    verify(out.General === object.General, "untouched sections stay the same object");
+    compare(object.Bars.style.radius, 4, "the original is untouched");
+    const one = Utils.withValuesAt(object, {
+      "Bars.style.gap": 5
+    });
+    compare(one.Bars.style, {
+      "radius": 4,
+      "gap": 5
+    });
+    verify(one.Bars.items === object.Bars.items, "siblings along the path are shared");
+  }
+
   function test_clone() {
     const original = {
       "a": [1,

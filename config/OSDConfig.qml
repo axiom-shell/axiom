@@ -6,7 +6,7 @@ import qs.services.core
 // on-screen displays). Named
 // OSDConfig because `OSD` is the module type.
 QtObject {
-  readonly property var _c: ConfigManager.config.OSD
+  readonly property var _c: ConfigManager.live.OSD
 
   // Level change per wheel notch (0-1); 0 when scrolling is off
   readonly property real scrollStep: _c.scrollToChange ? _c.scrollStep / 100 : 0

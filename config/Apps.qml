@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Apps
+  readonly property var _c: ConfigManager.live.Apps
 
   readonly property string terminal: _c.terminal
   // Empty is the system default (xdg-open / xdg-settings)

@@ -6,7 +6,7 @@ import qs.services.core
 // (the daemon's Hyprland writer). Named HyprlandConfig because `Hyprland` is
 // Quickshell's singleton.
 QtObject {
-  readonly property var _c: ConfigManager.config.Compositor.hyprland
+  readonly property var _c: ConfigManager.live.Compositor.hyprland
 
   // The managed hyprland.lua's own settings (layout, animations, ...)
   readonly property string _managedJson: JSON.stringify(_c)

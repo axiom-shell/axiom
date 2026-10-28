@@ -7,7 +7,7 @@
 Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader naming and no `??` fallbacks; › Layering.)
 
 ### What a reader is
-- `pragma Singleton`, but a reader, not an owner: one per config section, exposing `readonly property` values from `ConfigManager.config`.
+- `pragma Singleton`, but a reader, not an owner: one per config section, exposing `readonly property` values from `ConfigManager.live` (the config with editors' unsaved previews over it, [Previews](config-manager.md#previews)).
 - No `??` fallbacks: schema defaults are already filled in.
 - UI reads colors and settings from readers (`Theme.background`, `Widget.padding`), never `ConfigManager.config` directly.
 - Readers whose section name collides with a type get a `Config` suffix (`Popouts`, `Overlay`, `Icons`, `OSD`, `Launcher`, `Notifications`, …).

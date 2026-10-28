@@ -6,7 +6,7 @@ import qs.services.core
 // screen-edge popouts. (Named PopoutsConfig because `Popouts` is the bar
 // popout wrapper type.)
 QtObject {
-  readonly property var _c: ConfigManager.config.Popouts
+  readonly property var _c: ConfigManager.live.Popouts
 
   readonly property int openDelay: _c.timing.openDelay
   readonly property int dismissDelay: _c.timing.closeDelay

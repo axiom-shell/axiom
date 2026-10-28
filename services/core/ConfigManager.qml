@@ -51,15 +51,38 @@ QtObject {
   // greeter says, $AXIOM_GREETER_SOURCE); "" outside the greeter
   readonly property string greeterSource: greeter ? (Quickshell.env("AXIOM_GREETER_SOURCE") ?? "") : ""
 
-  // Unsaved edits an editor shows live, by top-level section ({ Bars: {...} }).
-  // Readers of that section prefer them to `config`; they're never merged
-  // into it or saved, so other saves and pushes leave them alone.
+  // The config as it shows: `config` with the previews laid over it. What
+  // readers read; a save starts from `config`, never from this
+  readonly property var live: Utils.withValuesAt(_config, _previews)
+
+  // Unsaved edits shown live, by dotted key path: an editor's whole
+  // section ({ Bars: {...} }) or one setting ("Appearance.font.size", the
+  // settings page). A deeper path shows through a section laid over it.
+  // They're never merged into `config` or saved, so other saves and pushes
+  // leave them alone.
   readonly property var previews: _previews
 
-  function setPreview(section, value) {
-    const previews = Object.assign({}, root._previews);
-    previews[section] = Utils.clone(value);
-    root._previews = previews;
+  function setPreview(path, value) {
+    setPreviews({
+      [path]: value
+    });
+  }
+
+  function clearPreview(path) {
+    setPreviews({
+      [path]: undefined
+    });
+  }
+
+  // Several previews in one change (path → value; undefined clears one)
+  function setPreviews(values) {
+    let previews = root._previews;
+    for (const path of Object.keys(values)) {
+      if (values[path] !== undefined || path in previews)
+        previews = Utils.withEntry(previews, path, values[path] === undefined ? undefined : Utils.clone(values[path]));
+    }
+    if (previews !== root._previews)
+      root._previews = previews;
   }
 
   // `value` with the defaults of a schema definition (e.g. "Bar",
@@ -68,14 +91,6 @@ QtObject {
     return SchemaValidation.applyDefaults(value, {
       "$ref": "#/definitions/" + definition
     }, root._configSchema);
-  }
-
-  function clearPreview(section) {
-    if (!(section in root._previews))
-      return;
-    const previews = Object.assign({}, root._previews);
-    delete previews[section];
-    root._previews = previews;
   }
 
   // The theme by name (e.g. "catppuccin-mocha", "generated/wallpaper-tonal-dark")
@@ -168,14 +183,6 @@ QtObject {
         console.error("[ConfigManager] axiom refused the config:", error.message, (error.issues ?? []).map(i => i.path + ": " + i.message).join("; "));
       done?.(!error);
     });
-  }
-
-  // Shows `object` in place of the running config without saving it (the
-  // settings page's live edits, until Save commits them); a push or a save
-  // replaces it
-  function applyConfig(object) {
-    if (SchemaValidation.validateAgainstSchema(object, root._configSchema))
-      root._config = Utils.clone(object);
   }
 
   // Discards in-memory edits: the config as axiom has it

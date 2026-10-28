@@ -7,23 +7,23 @@ import qs.components.methods
 // (Named OverlayConfig because `Overlay` is the module type.)
 QtObject {
   // The pages, Overlay.items: [OverlayView], each with its id
-  readonly property var views: ConfigManager.config.Overlay.items
+  readonly property var views: ConfigManager.live.Overlay.items
   // The overlay's own Module size, in %: its cards are the card size
   // (cardUnitOn) times it, and their content drawn at it (see layoutFor)
-  readonly property int moduleScale: ConfigManager.config.Overlay.moduleScale
+  readonly property int moduleScale: ConfigManager.live.Overlay.moduleScale
   // The page switcher's edge, "bottom" | "top", and which tabs show their
   // names: "auto" (all while they fit) | "current" | "icons"
-  readonly property string navigator: ConfigManager.config.Overlay.navigator
-  readonly property string navigatorLabels: ConfigManager.config.Overlay.navigatorLabels
+  readonly property string navigator: ConfigManager.live.Overlay.navigator
+  readonly property string navigatorLabels: ConfigManager.live.Overlay.navigatorLabels
   // "top" | "bottom" (the edge it slides in from) | "fade"
-  readonly property string animation: ConfigManager.config.Overlay.animation
-  readonly property bool showBackdrop: ConfigManager.config.Overlay.showBackdrop
+  readonly property string animation: ConfigManager.live.Overlay.animation
+  readonly property bool showBackdrop: ConfigManager.live.Overlay.showBackdrop
   // 0-1 opacity of the backdrop
-  readonly property real backdrop: ConfigManager.config.Overlay.backdrop / 100
+  readonly property real backdrop: ConfigManager.live.Overlay.backdrop / 100
   // The ScreenTarget it opens on (see General.screensFor)
-  readonly property var screen: ConfigManager.config.Overlay.screen
-  readonly property bool closeOnEscape: ConfigManager.config.Overlay.closeOnEscape
-  readonly property bool closeOnOutsideClick: ConfigManager.config.Overlay.closeOnOutsideClick
+  readonly property var screen: ConfigManager.live.Overlay.screen
+  readonly property bool closeOnEscape: ConfigManager.live.Overlay.closeOnEscape
+  readonly property bool closeOnOutsideClick: ConfigManager.live.Overlay.closeOnOutsideClick
 
   // The pages that aren't in config, after the configured ones: the
   // layouts editor (overlay pages and edge menus), which can't be removed.

@@ -8,7 +8,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Idle
+  readonly property var _c: ConfigManager.live.Idle
 
   readonly property bool enabled: _c.enabled
 }

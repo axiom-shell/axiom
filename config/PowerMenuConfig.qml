@@ -5,7 +5,7 @@ import qs.services.core
 // Reader for the PowerMenu section. Named PowerMenuConfig because
 // `PowerMenu` is the surface type.
 QtObject {
-  readonly property var _c: ConfigManager.config.PowerMenu
+  readonly property var _c: ConfigManager.live.PowerMenu
 
   // The ScreenTarget it opens on (see General.screensFor)
   readonly property var screen: _c.screen

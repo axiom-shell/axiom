@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.ClaudeUsage
+  readonly property var _c: ConfigManager.live.ClaudeUsage
 
   // [{ id, label, configDir }], configDir as typed (may hold ~)
   readonly property var accounts: _c.items

@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Appearance
+  readonly property var _c: ConfigManager.live.Appearance
 
   // --- Theme (UI-owned, set on the overlay's Themes page) ---
   readonly property string theme: _c.theme.name
@@ -89,7 +89,7 @@ QtObject {
   // effects), with its own blur (the window look's blur part, or the
   // user's config). The options are the window look's (Compositor ›
   // Window look › Blur)
-  readonly property var _look: ConfigManager.config.WindowLook
+  readonly property var _look: ConfigManager.live.WindowLook
   readonly property bool blur: translucent && _look.surfaceBlur.enabled
   readonly property bool blurBackdrops: blur && _look.surfaceBlur.backdrops
   // Blurring what's under each surface, windows included, rather than the

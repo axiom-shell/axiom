@@ -5,7 +5,7 @@ import qs.components.methods
 
 // EdgeMenus: menus that pop out of a screen edge, holding overlay modules.
 // While the edge menu editor has unsaved edits, the running menus show
-// those (ConfigManager.previews). Named with a Config suffix so the shell
+// those (ConfigManager.live). Named with a Config suffix so the shell
 // entry can be `EdgeMenus`.
 QtObject {
   id: root
@@ -13,7 +13,7 @@ QtObject {
   // EdgeMenus.items: [EdgeMenu], each { id, name, enabled, screen, edge,
   // mode, …, layout: { grid, moduleScale, moduleBorders, modules }, open,
   // trigger, close }
-  readonly property var menus: (ConfigManager.previews.EdgeMenus ?? ConfigManager.config.EdgeMenus).items
+  readonly property var menus: ConfigManager.live.EdgeMenus.items
   readonly property var enabledMenus: root.menus.filter(menu => menu.enabled && menu.id)
   // A menu's own fields in groups (`x-group`), for the edge menu editor
   readonly property var fieldGroups: SchemaLayout.objectGroups(ConfigManager.configSchema.definitions.EdgeMenu, ["layout.modules"])

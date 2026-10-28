@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Polkit
+  readonly property var _c: ConfigManager.live.Polkit
 
   readonly property bool enabled: _c.enabled
 }

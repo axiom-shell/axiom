@@ -9,11 +9,12 @@ import qs.services.session
 import qs.services.system
 import qs.services.apps
 
-/* The settings page's working copy of the config. Edits are applied live
- * (in memory) as they're made; saveChanges() persists them, resetChanges()
- * reloads from disk. Only the settings actually edited are applied and
- * saved, onto the latest config, so changes made elsewhere meanwhile (a
- * theme, a wallpaper, the bar editor) survive.
+/* The settings page's working copy of the config. Edits show live as
+ * they're made, each setting a preview (ConfigManager.setPreview) and never
+ * part of the running config, so another save doesn't carry them;
+ * saveChanges() persists them, resetChanges() drops them. Only the
+ * settings actually edited are saved, onto the latest config, so changes
+ * made elsewhere meanwhile (a theme, a wallpaper, the bar editor) survive.
  *
  * Also keeps the page's own state (category, search), since the page is
  * unloaded whenever the overlay closes. */
@@ -22,6 +23,7 @@ QtObject {
 
   property ConfigDraft _draft: ConfigDraft {
     id: draft
+    onLoaded: root._clearPreviews()
   }
   readonly property alias localConfig: draft.local
   readonly property alias savedConfig: draft.saved
@@ -236,33 +238,61 @@ QtObject {
   }
 
   // Sets one value by path (e.g. ["Appearance", "shape", "radius"]) and
-  // applies it live.
+  // shows it live.
   function setValue(path, value) {
-    _setAt(draft.local, path, value);
-    // `x-applyOnSave` settings (Hyprland's mode, which can take over files)
-    // wait in the draft until Save
-    if (!schemaAt(path)?.["x-applyOnSave"]) {
-      const live = Utils.clone(ConfigManager.config);
-      _setAt(live, path, value);
-      ConfigManager.applyConfig(live);
+    root.setValues([
+      {
+        "path": path,
+        "value": value
+      }
+    ]);
+  }
+
+  // Sets several values ([{ path, value }]), shown live in one go
+  function setValues(entries) {
+    const previews = {};
+    for (const entry of entries) {
+      _setAt(draft.local, entry.path, entry.value);
+      Object.assign(previews, _previewOf(entry.path, entry.value));
     }
+    ConfigManager.setPreviews(previews);
     draft.changed();
   }
 
-  // Sets several values ([{ path, value }]), applied live in one go
-  function setValues(entries) {
-    const live = Utils.clone(ConfigManager.config);
-    let apply = false;
-    for (const entry of entries) {
-      _setAt(draft.local, entry.path, entry.value);
-      if (!schemaAt(entry.path)?.["x-applyOnSave"]) {
-        _setAt(live, entry.path, entry.value);
-        apply = true;
-      }
+  // The settings this page shows live (ConfigManager.previews), as a set
+  // of dotted paths
+  property var _previewed: ({})
+
+  // The previews that show `value` at `path` (path → value; undefined
+  // clears one): none for `x-applyOnSave` settings (Hyprland's mode, which
+  // can take over files), which wait in the draft until Save; cleared when
+  // it's back as saved; one set at a path drops this page's below it
+  function _previewOf(path, value) {
+    if (schemaAt(path)?.["x-applyOnSave"])
+      return {};
+    const key = path.join(".");
+    const out = {};
+    for (const shown of Object.keys(root._previewed).filter(shown => shown.startsWith(key + "."))) {
+      out[shown] = undefined;
+      delete root._previewed[shown];
     }
-    if (apply)
-      ConfigManager.applyConfig(live);
-    draft.changed();
+    if (Utils.deepEqual(value, Utils.valueAt(draft.saved, path))) {
+      out[key] = undefined;
+      delete root._previewed[key];
+    } else {
+      out[key] = value;
+      root._previewed[key] = true;
+    }
+    return out;
+  }
+
+  // The draft was loaded again (saved, reset): nothing unsaved to show
+  function _clearPreviews() {
+    ConfigManager.setPreviews(Object.keys(root._previewed).reduce((out, key) => {
+      out[key] = undefined;
+      return out;
+    }, {}));
+    root._previewed = {};
   }
 
   // Puts the settings at these key paths back as saved (one card's
@@ -502,7 +532,7 @@ QtObject {
       return GreeterManager.report?.clone !== false;
     if (dottedPath.startsWith("$supports."))
       return CompositorManager.supports[dottedPath.slice(10)] === true;
-    return Utils.valueAt(ConfigManager.config, dottedPath.split("."));
+    return Utils.valueAt(ConfigManager.live, dottedPath.split("."));
   }
 
   // A `/`-rooted `x-showIf` key's value (configValueAt)
@@ -510,7 +540,7 @@ QtObject {
 
   function valueOf(key) {
     const entry = settingFor(key);
-    return entry ? Utils.valueAt(ConfigManager.config, entry.path) : undefined;
+    return entry ? Utils.valueAt(ConfigManager.live, entry.path) : undefined;
   }
 
   // Whether a save of these key paths is a takeover setting's own: it
@@ -531,7 +561,6 @@ QtObject {
   }
 
   function resetChanges() {
-    ConfigManager.hardResetConfig();
     draft.load();
   }
 }

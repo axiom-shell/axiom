@@ -8,7 +8,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Keybinds
+  readonly property var _c: ConfigManager.live.Keybinds
 
   // [{ key, action, argument, call, compositor, description, … }]. Goes
   // through a string so a reload that leaves the list unchanged doesn't

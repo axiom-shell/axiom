@@ -7,7 +7,7 @@ import qs.services.core
 // SecretsManager.
 QtObject {
   id: root
-  readonly property var _c: ConfigManager.config.Calendar
+  readonly property var _c: ConfigManager.live.Calendar
   // Calendar.items as saved, for editing
   readonly property var savedAccounts: _c.items
   // Calendar.items, each with a `name` (the username or the server's host

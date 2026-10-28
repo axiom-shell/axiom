@@ -10,7 +10,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Input
+  readonly property var _c: ConfigManager.live.Input
 
   // Goes through a string so a reload that leaves it unchanged doesn't
   // apply it again

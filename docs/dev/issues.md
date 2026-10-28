@@ -459,12 +459,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-13, while checking reload logs during the docs makeover
 
-### Shell saves carry unsaved settings
-- **Where:** `services/ui/SettingsManager.qml` (`setValue`, `setValues`), `services/core/ConfigDraft.qml` (`save`), `services/core/ConfigManager.qml` (`saveConfig`, `commit`, `_send`)
-- **What:** The settings page applies an unsaved change straight into `ConfigManager.config` (`applyConfig`; only `x-applyOnSave` settings wait), and every other save starts from a clone of it: `ConfigDraft.save` merges onto it, `commitValue(s)` and `CommunitySetupsManager`'s wallpaper setter clone it. So an unsaved setting is written by an unrelated save (toggle Handle idle, don't Save, save a bar edit: `Idle.enabled` is written on). The fix is backend stage 7 ([roadmap](backend/roadmap.md)): path ops, live edits through `ConfigManager.setPreview`.
-- **Size:** needs a plan
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### KeybindManager does three jobs
 - **Where:** `services/compositor/KeybindManager.qml`
 - **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. It's split with backend stage 7 (`compositor.inputs`: Go reads binds and profiles from the config it owns), which changes what the reader half is, so it's designed in that stage, not with the other singleton splits (#123).

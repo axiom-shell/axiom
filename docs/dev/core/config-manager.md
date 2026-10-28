@@ -15,7 +15,8 @@ The binary is the shell's parent (`axiom run`) and owns config.json ([The axiom 
 - **Without axiom** (`qs` started by hand): `available` is false, there is no config, and `shell.qml` shows only a notice with the start line. The greeter (`greeter`) runs read-only on the config `axiom greeter` made from its bundle.
 
 ### What it owns
-- `_config`: the config as axiom has it, plus edits applied but not yet answered.
+- `_config` (`config`): the config as axiom has it, plus saves applied but not yet answered; never an unsaved edit.
+- `live`: `config` with the previews laid over it (`Utils.withValuesAt`, copying only the objects along each path), what readers read.
 - `_configSchema`: `$AXIOM_SCHEMA`, else the tree's `config/json/config.schema.json` (built from `config/schema/`, never committed).
 - The active theme's data belongs to ThemeManager, not here.
 
@@ -63,6 +64,6 @@ Editors create new entries at their definition's defaults with `withDefaults(val
 - Shape of an editor built on it: [Editors pattern](editors-pattern.md).
 
 ### Previews
-- `ConfigManager.previews` (`setPreview(section, value)` / `clearPreview(section)`) holds unsaved edits shown live without being part of `config`, so other saves and axiom's pushes don't touch them.
-- Example: BarManager previews `Bars` while dirty, and `ScreenEdgeManager.bars` reads `previews.Bars ?? config.Bars`.
-- Readers that show previews read `previews.X ?? config.X` (`DesktopConfig`, `EdgeMenusConfig`).
+- `ConfigManager.previews` (`setPreview(path, value)` / `clearPreview(path)` / `setPreviews({ path: value })`, undefined clearing one) holds unsaved edits by dotted key path, shown live without being part of `config`, so other saves and axiom's pushes don't touch them, and a save (which starts from `config`) never carries another page's unsaved edit.
+- An editor previews its whole section (BarManager previews `Bars` while dirty); the settings page previews each setting it changed (`SettingsManager._previewOf`, cleared when the draft loads again on Save or Reset) except `x-applyOnSave` ones, which wait for Save because their effect is a takeover. A deeper path shows through a section laid over it.
+- Readers read `ConfigManager.live`; only a reader exposing the saved config reads `config` (`BarsConfig.savedBars`).
