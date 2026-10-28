@@ -290,7 +290,6 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 - [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
 - [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
 - [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
-- [A compositor manager test misses its takeover prompt under load](issues.md#a-compositor-manager-test-misses-its-takeover-prompt-under-load)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 - [CI checks dependencies only when a PR touches Go](issues.md#ci-checks-dependencies-only-when-a-pr-touches-go)
 
