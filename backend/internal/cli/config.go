@@ -256,7 +256,12 @@ func applyOps(ctx context.Context, e *Env, treeDir string, ops []config.Op, take
 	if err != nil {
 		return err
 	}
-	s, err := store.Open(store.Options{Dir: configDir(e), Pipeline: pipeline})
+	opts := store.Options{Dir: configDir(e), Pipeline: pipeline}
+	if e.Globals.ConfigDir == "" {
+		// The takeovers kept are the XDG config's: never another folder's
+		opts.TakeoversFile = filepath.Join(xdg.Resolve(e.Getenv).State, store.TakeoversFile)
+	}
+	s, err := store.Open(opts)
 	if err != nil {
 		if axerr.KindOf(err) == axerr.Running {
 			return &axerr.Error{Kind: axerr.Running, Message: "axiom is running and owns the config: drop --offline to change it through axiom", Err: err}

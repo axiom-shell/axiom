@@ -223,6 +223,8 @@ func Run(ctx context.Context, opts Options) error {
 		Dir:      d.dirs.Config,
 		Pipeline: config.V2Pipeline{S: schema.New(parsed)},
 		Log:      opts.Log.With("part", "config"),
+		// The takeover settings in effect, read when config.json isn't JSON
+		TakeoversFile: filepath.Join(d.dirs.State, store.TakeoversFile),
 	}
 	if h != nil {
 		d.store, err = store.OpenAdopting(storeOpts, os.NewFile(uintptr(h.ConfigLock), "config.json.lock"))

@@ -528,3 +528,92 @@ func TestTakeoversOverAnUnloadedFile(t *testing.T) {
 		s.Close()
 	}
 }
+
+func openKeeping(t *testing.T, dir string) *Store {
+	t.Helper()
+	s, err := Open(Options{Dir: dir, Pipeline: pipeline(t), Debounce: 20 * time.Millisecond, TakeoversFile: filepath.Join(dir, "state", TakeoversFile)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
+func takeover(t *testing.T, cfg *jsonx.Object, path ...string) any {
+	t.Helper()
+	v, _ := config.Lookup(cfg, config.Keys(path...))
+	return v
+}
+
+// A config.json that isn't JSON at the start: the takeover settings last in
+// effect, kept on disk, are the ones in effect. A restore (a saved config,
+// which holds none) keeps them, and so does a hand fix, written back.
+func TestKeptTakeoversOverAFileThatIsntJSON(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	first := openKeeping(t, dir)
+	for _, op := range []config.Op{config.SetValue(config.Keys("Compositor", "mode"), "managed"), config.SetValue(config.Keys("Idle", "enabled"), true)} {
+		if _, err := first.Set([]config.Op{op}, SetOptions{Takeover: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	first.Close()
+	path := filepath.Join(dir, FileName)
+	os.WriteFile(path, []byte(`{"version": `), 0o600)
+
+	s := openKeeping(t, dir)
+	t.Cleanup(func() { s.Close() })
+	if cfg, known := s.Takeovers(); !known || takeover(t, cfg, "Compositor", "mode") != "managed" {
+		t.Fatalf("takeovers known %v, mode %v", known, takeover(t, cfg, "Compositor", "mode"))
+	}
+	look := s.Pipeline().Defaults()
+	look.Delete("Compositor")
+	look.Delete("Idle")
+	if _, err := s.Replace(look, SetOptions{Restore: true}); err != nil {
+		t.Fatal(err)
+	}
+	got, st := s.Config()
+	if st.Blocked || takeover(t, got, "Compositor", "mode") != "managed" || takeover(t, got, "Idle", "enabled") != true {
+		t.Fatalf("restore: blocked %v, mode %v, idle %v", st.Blocked, takeover(t, got, "Compositor", "mode"), takeover(t, got, "Idle", "enabled"))
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go s.Watch(ctx)
+	time.Sleep(50 * time.Millisecond)
+	edited := jsonx.Clone(got).(*jsonx.Object)
+	edited.Value("Compositor").(*jsonx.Object).Set("mode", "detached")
+	edited.Value("Battery").(*jsonx.Object).Set("lowThreshold", 7.0)
+	os.WriteFile(path, jsonx.Marshal(edited), 0o600)
+	waitFor(t, func() bool { cfg, _ := s.Config(); return takeover(t, cfg, "Battery", "lowThreshold") == 7.0 })
+	cfg, _ := s.Config()
+	data, _ := os.ReadFile(path)
+	onDisk, _ := jsonx.Unmarshal(data)
+	if takeover(t, cfg, "Compositor", "mode") != "managed" || takeover(t, onDisk.(*jsonx.Object), "Compositor", "mode") != "managed" {
+		t.Fatalf("the outside edit released the mode: in effect %v, on disk %v", takeover(t, cfg, "Compositor", "mode"), takeover(t, onDisk.(*jsonx.Object), "Compositor", "mode"))
+	}
+}
+
+// A first run keeps the defaults' takeovers. With none kept (the file
+// removed), a config.json that isn't JSON leaves them unknown and a restore
+// is refused rather than writing the defaults'.
+func TestNoKeptTakeoversRefusesARestore(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	first := openKeeping(t, dir)
+	first.Close()
+	kept := filepath.Join(dir, "state", TakeoversFile)
+	data, err := os.ReadFile(kept)
+	if v, _ := jsonx.Unmarshal(data); err != nil || takeover(t, v.(*jsonx.Object), "Compositor", "mode") != "detached" {
+		t.Fatalf("first run kept %s (%v)", data, err)
+	}
+	os.Remove(kept)
+	os.WriteFile(filepath.Join(dir, FileName), []byte(`{"version": `), 0o600)
+	s := openKeeping(t, dir)
+	defer s.Close()
+	if _, known := s.Takeovers(); known {
+		t.Fatal("takeovers known with none kept")
+	}
+	if _, err := s.Replace(s.Pipeline().Defaults(), SetOptions{Restore: true}); axerr.KindOf(err) != axerr.Conflict {
+		t.Fatalf("restore with the takeovers unknown: %v", err)
+	}
+}

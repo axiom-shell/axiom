@@ -38,6 +38,9 @@ const FileName = "config.json"
 // to format 2 (written once, never read by axiom)
 const Format1File = "config.format1.json"
 
+// TakeoversFile is where Options.TakeoversFile is, in $XDG_STATE_HOME/axiom.
+const TakeoversFile = "takeovers.json"
+
 // Options configure a Store.
 type Options struct {
 	Dir      string // the config folder ($XDG_CONFIG_HOME/axiom)
@@ -45,6 +48,11 @@ type Options struct {
 	Log      *slog.Logger
 	// Debounce is how long a burst of file events settles before a reload
 	Debounce time.Duration
+	// TakeoversFile keeps the x-takeover settings in effect after every
+	// good load or write ($XDG_STATE_HOME/axiom/takeovers.json), read when
+	// config.json isn't JSON at the start, so they're known then too; ""
+	// keeps none
+	TakeoversFile string
 }
 
 // State is what subscribers are told besides the config.
@@ -86,9 +94,11 @@ type Store struct {
 	// defaults with the takeover settings the file holds, which a restore
 	// keeps and a write is checked against, never the defaults' own
 	fileTakeovers *jsonx.Object
-	// The file wasn't JSON at the start: fileTakeovers are only the
-	// defaults, so the first reload that loads takes the file's own
+	// The file wasn't JSON at the start and no TakeoversFile was kept:
+	// fileTakeovers are only the defaults, so the first reload that loads
+	// takes the file's own, and a restore is refused
 	takeoversUnknown bool
+	keptTakeovers    []byte // what TakeoversFile was last written with
 	subs             map[int]func(Event)
 	nextSub          int
 	// Events not delivered yet, and whether a goroutine is delivering them
@@ -146,9 +156,9 @@ func (s *Store) Config() (*jsonx.Object, State) {
 // Takeovers is the config the x-takeover settings in effect are read from:
 // the config, or, while it runs on the defaults because the file didn't
 // load at the start, the defaults with the file's own takeover settings
-// (the caller must not modify it). False when they aren't known (the file
-// wasn't JSON at the start): what was applied before stays until it's
-// fixed.
+// (or, when it isn't JSON, the ones kept in TakeoversFile) (the caller
+// must not modify it). False when they aren't known (none kept): what was
+// applied before stays until it's fixed.
 func (s *Store) Takeovers() (*jsonx.Object, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -257,6 +267,10 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 		s.mu.Unlock()
 		return 0, &axerr.Error{Kind: axerr.Conflict, Message: s.path + " doesn't load: fix it (or restore a saved config) before anything is saved", Issues: issues}
 	}
+	if s.takeoversUnknown && !opts.Takeover {
+		s.mu.Unlock()
+		return 0, axerr.New(axerr.Conflict, "%s isn't JSON and the settings that take something over on this PC aren't known: fix it by hand", s.path)
+	}
 	current := s.config
 	next, err := change(current)
 	if err != nil {
@@ -292,6 +306,7 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	s.written = data
 	s.config = checked
 	s.fileTakeovers, s.takeoversUnknown = nil, false
+	s.keepTakeovers(checked)
 	s.state.Revision++
 	s.state.Missing = false
 	if opts.Restore {
@@ -379,6 +394,7 @@ func (s *Store) loadInitial() error {
 		}
 		s.config, s.written = defaults, out
 		s.state = State{Revision: 1, FirstRun: true}
+		s.keepTakeovers(defaults)
 		s.opts.Log.Info("no config yet: wrote the defaults", "path", s.path)
 		return nil
 	}
@@ -391,15 +407,68 @@ func (s *Store) loadInitial() error {
 		// Run on the defaults, writes blocked, until the file is fixed
 		s.config = s.opts.Pipeline.Defaults()
 		s.fileTakeovers, s.takeoversUnknown = s.config, loaded == nil
+		if loaded == nil {
+			loaded = s.keptTakeoversFile()
+		}
 		if loaded != nil {
 			s.fileTakeovers, _ = share.KeepTakeovers(s.config, loaded, s.takeovers).(*jsonx.Object)
+			s.takeoversUnknown = false
 		}
 		s.state.Blocked, s.state.Issues = true, problems
 		s.opts.Log.Warn("the config doesn't load: running on the defaults, saves blocked until it's fixed", "path", s.path, "issues", len(problems))
 		return nil
 	}
 	s.config = loaded
+	s.keepTakeovers(loaded)
 	return nil
+}
+
+// keepTakeovers writes the takeover settings of cfg (a good config, now in
+// effect) to TakeoversFile when they changed (s.mu held).
+func (s *Store) keepTakeovers(cfg *jsonx.Object) {
+	if s.opts.TakeoversFile == "" {
+		return
+	}
+	kept := jsonx.NewObject()
+	for _, path := range s.takeovers {
+		if v, ok := at(cfg, path); ok {
+			putAt(kept, path, jsonx.Clone(v))
+		}
+	}
+	data := jsonx.Marshal(kept)
+	if bytes.Equal(data, s.keptTakeovers) {
+		return
+	}
+	if err := os.MkdirAll(filepath.Dir(s.opts.TakeoversFile), 0o700); err != nil {
+		s.opts.Log.Error("keeping the takeover settings", "err", err)
+	} else if err := fsx.WriteFile(s.opts.TakeoversFile, data, 0o600); err != nil {
+		s.opts.Log.Error("keeping the takeover settings", "err", err)
+	} else {
+		s.keptTakeovers = data
+	}
+}
+
+// keptTakeoversFile is the takeover settings TakeoversFile kept, nil when
+// there are none or they don't fit the schema now.
+func (s *Store) keptTakeoversFile() *jsonx.Object {
+	if s.opts.TakeoversFile == "" {
+		return nil
+	}
+	data, err := os.ReadFile(s.opts.TakeoversFile)
+	if err != nil {
+		return nil
+	}
+	v, err := jsonx.Unmarshal(data)
+	kept, ok := v.(*jsonx.Object)
+	if err != nil || !ok {
+		return nil
+	}
+	if _, problems := s.opts.Pipeline.Check(share.KeepTakeovers(s.config, kept, s.takeovers).(*jsonx.Object)); len(problems) > 0 {
+		s.opts.Log.Warn("the takeover settings kept don't fit the schema: not using them", "path", s.opts.TakeoversFile)
+		return nil
+	}
+	s.opts.Log.Info("config.json isn't JSON: keeping the takeover settings last in effect", "path", s.opts.TakeoversFile)
+	return kept
 }
 
 // load parses and normalizes file content: the config, or the issues
@@ -485,6 +554,7 @@ func (s *Store) reload() {
 		s.state.Blocked, s.state.Issues = false, nil
 		loaded = s.holdTakeovers(loaded)
 		s.fileTakeovers, s.takeoversUnknown = nil, false
+		s.keepTakeovers(loaded)
 		if !jsonx.Equal(loaded, s.config) {
 			changes := config.Diff(s.config, loaded)
 			s.config = loaded
@@ -689,6 +759,7 @@ func (s *Store) Reschema(p config.Pipeline) {
 		changes := config.Diff(s.config, loaded)
 		s.config = loaded
 		s.fileTakeovers, s.takeoversUnknown = nil, false
+		s.keepTakeovers(loaded)
 		s.state.Revision++
 		ev = Event{State: s.state, Config: loaded, Changes: changes}
 	}

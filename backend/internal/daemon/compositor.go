@@ -46,8 +46,8 @@ func (d *Daemon) newCompositor() *manager.Manager {
 		Tables:      tables,
 		Actions:     actions,
 		Schema:      func() any { return d.store.Pipeline().Schema().Root() },
-		// The takeover settings in effect: the file's while the store runs
-		// on the defaults (it didn't load at the start), "" while unknown
+		// The takeover settings in effect (the store's: the file's, or the
+		// ones it kept, while it runs on the defaults), "" while unknown
 		Mode: func() string {
 			cfg, known := d.store.Takeovers()
 			if !known {
@@ -63,14 +63,6 @@ func (d *Daemon) newCompositor() *manager.Manager {
 				return err
 			}
 			_, err := d.store.Set([]config.Op{config.SetValue(config.Keys("Keybinds", "binds"), b)}, store.SetOptions{})
-			return err
-		},
-		// The mode kept on leaving the hold, as the Compositor card saves it
-		KeepMode: func(mode string) error {
-			if err := d.writable(); err != nil {
-				return err
-			}
-			_, err := d.store.Set([]config.Op{config.SetValue(config.Keys("Compositor", "mode"), mode)}, store.SetOptions{Takeover: true})
 			return err
 		},
 		Push: func(method string, params any) {
