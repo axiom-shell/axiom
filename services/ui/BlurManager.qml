@@ -21,27 +21,48 @@ import qs.services.compositor
 QtObject {
   id: root
 
-  // Whether anything blurs now: Appearance.blur where the compositor blurs
-  // axiom's surfaces (elsewhere they fill themselves: the blur window
-  // couldn't place their shapes without its layer positions), paused while
-  // a fullscreen window is open on any screen (Appearance.
-  // blurPauseFullscreen; the layer rules are Hyprland-wide). The chrome
-  // then fills itself, solid on the screens showing one (opaqueOn).
+  // Whether the compositor blurs axiom's surfaces now (its rules, sent to
+  // it: CompositorConfigManager): Appearance.blur where it blurs them
+  // (elsewhere they fill themselves: the blur window couldn't place their
+  // shapes without its layer positions), paused while a fullscreen window
+  // is open on any screen (Appearance.blurPauseFullscreen) where its rules
+  // are compositor-wide (Hyprland's layer rules, SwayFX's layer_effects).
+  // Where each window asks for its own blur (supports.blurRegion: niri)
+  // it pauses per screen instead (pausedOn). The chrome then fills itself,
+  // solid on the screens showing one (opaqueOn).
   readonly property bool _wanted: Appearance.blur && CompositorManager.supports.blur === true
-  readonly property bool paused: root._wanted && Appearance.blurPauseFullscreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))
+  readonly property bool _pauses: root._wanted && Appearance.blurPauseFullscreen
+  readonly property bool _perScreen: CompositorManager.supports.blurRegion === true
+  readonly property bool paused: root._pauses && !root._perScreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))
   readonly property bool active: root._wanted && !root.paused
-  // The surfaces leave their fill to the blur window: blurring, and its
-  // windows built (BlurBacking waits for the layer rules, as the chrome does)
-  readonly property bool backing: root.active && CompositorManager.surfacesReady
-  // Whether a surface that blurs itself (LayerStack.blurSurfaces, the
-  // chrome's popups) asks the compositor to blur behind its box now, where
-  // it blurs only what a window asks (supports.blurRegion: no layer rule
-  // decides there), and a backdrop behind all of it (blurBackdrops)
-  readonly property bool regions: root.active && CompositorManager.supports.blurRegion === true
-  readonly property bool backdropRegions: root.regions && Appearance.blurBackdrops
 
   function _name(screen) {
     return typeof screen === "string" ? screen : screen?.name ?? "";
+  }
+
+  // Whether the blur is paused on `screen` (a ShellScreen or its name)
+  function pausedOn(screen) {
+    return root._perScreen ? root._pauses && CompositorManager.hasFullscreen(root._name(screen)) : root.paused;
+  }
+
+  // Whether surfaces on `screen` leave their fill to the blur window:
+  // blurring there, and its windows built (BlurBacking waits for the layer
+  // rules, as the chrome does)
+  function backingOn(screen) {
+    return root._wanted && !root.pausedOn(screen) && CompositorManager.surfacesReady;
+  }
+
+  // Whether a surface on `screen` that blurs itself (LayerStack.
+  // blurSurfaces, the chrome's popups) asks the compositor to blur behind
+  // its box now, where it blurs only what a window asks (supports.
+  // blurRegion: no layer rule decides there), and a backdrop behind all of
+  // it (blurBackdrops)
+  function regionsOn(screen) {
+    return root._perScreen && root._wanted && !root.pausedOn(screen);
+  }
+
+  function backdropRegionsOn(screen) {
+    return root.regionsOn(screen) && Appearance.blurBackdrops;
   }
 
   // Whether a chrome surface on `screen` (a ShellScreen or its name) leaves
@@ -51,7 +72,7 @@ QtObject {
   // overlay draws it: aboveOverlay). Otherwise it's on Top, faded out under
   // a fullscreen window, and its copy goes with it.
   function backsOn(screen, onOverlay) {
-    if (!root.backing)
+    if (!root.backingOn(screen))
       return false;
     return onOverlay || !CompositorManager.hasFullscreen(root._name(screen));
   }
@@ -60,20 +81,20 @@ QtObject {
   // Overlay-layer surfaces' shapes (BlurShape.overlayLayer) are then drawn
   // by a second blur window, over the overlay and under them
   function aboveOverlay(screen) {
-    return root.backing && SurfaceManager.surfaceOpenOn("overlay", root._name(screen));
+    return root.backingOn(screen) && SurfaceManager.surfaceOpenOn("overlay", root._name(screen));
   }
 
   // Whether the blur window on `screen` stands on the Overlay layer: a
   // fullscreen window shown there hides the Top layer, and the surfaces
   // over it still blur
   function overFullscreen(screen) {
-    return root.backing && CompositorManager.hasFullscreen(root._name(screen));
+    return root.backingOn(screen) && CompositorManager.hasFullscreen(root._name(screen));
   }
 
   // Whether surfaces on `screen` fill themselves solid: blur paused for a
   // fullscreen window shown there (elsewhere they stay translucent)
   function opaqueOn(screen) {
-    return root.paused && CompositorManager.hasFullscreen(root._name(screen));
+    return root.pausedOn(screen) && CompositorManager.hasFullscreen(root._name(screen));
   }
 
   // A surface's own fill on `screen`: at the surface opacity, solid where

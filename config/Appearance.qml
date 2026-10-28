@@ -95,7 +95,7 @@ QtObject {
   // Blurring what's under each surface, windows included, rather than the
   // wallpaper alone (xray), which every surface shares
   readonly property bool blurThroughWindows: _look.surfaceBlur.throughWindows
-  // Nothing blurs while a fullscreen window is open (BlurManager.active)
+  // Nothing blurs while a fullscreen window is open (BlurManager.pausedOn)
   readonly property bool blurPauseFullscreen: _look.surfaceBlur.pauseFullscreen
   readonly property real blurThreshold: 0.5
   // A shadow's darkest alpha while blurring: under the threshold, so its

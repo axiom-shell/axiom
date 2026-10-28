@@ -49,7 +49,7 @@ PanelWindow {
   // Its namespace and layer, set here so its LayerSlot can read them
   required property string layerNamespace
   property int stackLayer: WlrLayer.Top
-  // Whether it draws (BlurManager.backing). Where the compositor stacks
+  // Whether it draws (BlurManager.backingOn). Where the compositor stacks
   // by map order alone (SwayFX) it stays mapped while not (held), a pixel
   // drawing nothing, so it keeps its place under the chrome: mapped later
   // it would land over the bars and cover their content
