@@ -132,6 +132,26 @@ func TestBuildInputsOutputRules(t *testing.T) {
 	}
 }
 
+// Hyprland's writer gets the rules as hl.monitor calls, and an output only
+// turned off, the calls the same, leaves layerKey (no layer re-applied)
+func TestBuildInputsMonitorCalls(t *testing.T) {
+	t.Parallel()
+	items, _ := jsonx.Unmarshal([]byte(testProfiles))
+	cfg := jsonx.Obj("Monitors", jsonx.Obj("items", items))
+	on := buildInputs(cfg, &Facts{Kind: "hyprland"}, []render.Output{mainOut, {Name: "DP-9"}})
+	off := buildInputs(cfg, &Facts{Kind: "hyprland"}, []render.Output{mainOut, {Name: "DP-9", Disabled: true}})
+	want := `["hl.monitor({ output = \"desc:Main\", mode = \"preferred\", position = \"0x0\", scale = 1 })","hl.monitor({ output = \"HDMI-A-1\", mode = \"preferred\", position = \"2560x0\", scale = 1 })"]`
+	if got := string(jsonx.MarshalCompact(on.get("monitorCalls"))); got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+	if on.str("layerKey") != off.str("layerKey") {
+		t.Error("an output turned off changed layerKey")
+	}
+	if got := buildInputs(cfg, &Facts{Kind: "sway"}, []render.Output{mainOut}).get("monitorCalls"); got != nil {
+		t.Errorf("sway: %v", got)
+	}
+}
+
 // The greeter's watch (ProfileWatch): the profiles set are applied for
 // what's connected, a burst of hotplugs read once, settled; nothing once
 // its context ends

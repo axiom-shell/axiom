@@ -152,6 +152,13 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	if outputs != nil {
 		outputRules = jsonx.Arr(profileRules(f.Kind == "hyprland", at("Monitors", "items"), outputs)...)
 	}
+	// Hyprland's: those rules as hl.monitor calls, a mirror named by its
+	// connector (the calls, not the outputs, so an output only turned off
+	// doesn't change layerKey)
+	var monitorCalls any
+	if outputRules != nil && f.Kind == "hyprland" {
+		monitorCalls = strs(render.MonitorCalls(outputRules, render.MirrorNames(tree(outputs))))
+	}
 	spec := func(forFile bool) *jsonx.Object {
 		surfacesBlur := f.Blur.Now
 		if forFile {
@@ -176,7 +183,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		"stripOptions", stripOptions,
 		"stripsKey", string(jsonx.MarshalCompact(jsonx.Arr(strips, stripOptions))),
 		"outputRules", outputRules,
-		"outputs", tree(outputs),
+		"monitorCalls", monitorCalls,
 		"session", at("Session"),
 		"qt", flag("ThemeIntegrations", "qt"),
 		"managed", managed,

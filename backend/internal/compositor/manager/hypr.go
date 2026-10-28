@@ -83,14 +83,14 @@ func (w *hyprWriter) stripsLua(in Inputs) []string {
 	return render.StripsLua(in.get("strips"), w.schemaOf("Workspaces"), in.get("stripOptions"))
 }
 
-// monitorCalls are the profile for what's connected (outputRules, applied
-// live by the manager's profile switch too, so a reload keeps it), or,
-// until the outputs are read, what the file says
-func (w *hyprWriter) monitorCalls(in Inputs, path string) []string {
-	if rules := in.get("outputRules"); rules != nil {
-		return render.MonitorCalls(rules, render.MirrorNames(in.get("outputs")))
+// monitorCalls are the profile for what's connected (buildInputs'
+// monitorCalls, applied live by the manager's profile switch too, so a
+// reload keeps it), or, until the outputs are read, what the file says
+func (w *hyprWriter) monitorCalls(in Inputs, path string) any {
+	if calls := in.get("monitorCalls"); calls != nil {
+		return calls
 	}
-	return render.HyprFileMonitorCalls(readFile(path))
+	return strs(render.HyprFileMonitorCalls(readFile(path)))
 }
 
 func (w *hyprWriter) moduleText(in Inputs, spec any) string {
@@ -105,7 +105,7 @@ func (w *hyprWriter) module(in Inputs, spec any, path string) string {
 		"input", strs(render.InputLua(getAny(spec, "input"), w.schemaOf("Input"))),
 		"blur", strs(w.tables.BlurLua(getAny(spec, "surfaces"))),
 		"layers", strs(w.tables.LayerRulesLua()),
-		"monitors", strs(w.monitorCalls(in, path)),
+		"monitors", w.monitorCalls(in, path),
 		"strips", strs(w.stripsLua(in))))
 }
 
