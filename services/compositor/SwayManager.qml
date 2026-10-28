@@ -264,12 +264,7 @@ Singleton {
     const id = root.activeWindowId;
     if (!id)
       return;
-    const leave = (root._marks[id] ?? []).filter(mark => SwayState.specialGroup(mark) !== "").map(mark => `${_con(id)} unmark ${SwayState.quote(mark)}`);
-    if (CompositorConfig.swaySpecial === "workspace") {
-      SwayIpcManager.command(leave.concat([`${_con(id)} move container to workspace ${SwayState.quote(SwayState.specialWorkspace(name))}`]).join("; "), () => root._debounce.restart());
-      return;
-    }
-    SwayIpcManager.command(leave.concat([`${_con(id)} mark --add ${SwayState.quote(`axiom-special-${name}-${id}`)}`, `${_con(id)} move scratchpad`]).join("; "), () => root._debounce.restart());
+    SwayIpcManager.command(SwayState.specialMove(root._marks, id, name, CompositorConfig.swaySpecial).join("; "), () => root._debounce.restart());
   }
 
   // --- The window switcher ---

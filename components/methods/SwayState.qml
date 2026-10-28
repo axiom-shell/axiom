@@ -355,36 +355,37 @@ QtObject {
     return [previous ? `workspace ${root.quote(previous)}` : "workspace back_and_forth"];
   }
 
+  // The commands moving window `id` into special group `name` kept as
+  // `kind` ("scratchpad", marked and hidden, or "workspace"), out of any
+  // group it's in (`marks`, every window's): a window is in one at a time
+  function specialMove(marks, id, name, kind) {
+    const con = `[con_id=${Number(id)}]`;
+    const leave = (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `${con} unmark ${root.quote(mark)}`);
+    return leave.concat(kind === "workspace" ? [`${con} move container to workspace ${root.quote(root.specialWorkspace(name))}`] : [`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
+  }
+
   // Special group `name`'s windows the other kind keeps, moved over to
   // `kind` ("scratchpad" or "workspace") after Compositor.sway.specialWorkspaces
   // changed: { lines (the commands), windows and marks (`windows` and
-  // `marks` as they are after them) }. To the workspace, marked windows
-  // lose the mark and move there; to the scratchpad, the windows on the
-  // group's workspace are marked (out of any other group) and moved to it,
-  // then back to `active` (the focused output's workspace): sway goes to
-  // the group's workspace when its last window leaves for the scratchpad
+  // `marks` as they are after them, for the scratchpad's toggle) }. To the
+  // workspace, marked windows lose the mark and move there; to the
+  // scratchpad, the windows on the group's workspace are marked (out of
+  // any other group) and moved to it, then back to `active` (the focused
+  // output's workspace): sway goes to the group's workspace when its last
+  // tiled window leaves for the scratchpad
   function specialAdopt(windows, marks, name, kind, active) {
-    const con = id => `[con_id=${Number(id)}]`;
-    const ws = root.specialWorkspace(name);
-    const after = Object.assign({}, marks ?? {});
-    const lines = [];
-    if (kind === "workspace") {
-      for (const id of root.specialToggle([], marks, name, "").ids) {
-        lines.push(...(marks[id] ?? []).filter(mark => root.specialGroup(mark) === name).map(mark => `${con(id)} unmark ${root.quote(mark)}`), `${con(id)} move container to workspace ${root.quote(ws)}`);
-        after[id] = (marks[id] ?? []).filter(mark => root.specialGroup(mark) !== name);
-      }
+    if (kind === "workspace")
       return {
-        "lines": lines,
+        "lines": [].concat(...root.specialToggle([], marks, name, "").ids.map(id => root.specialMove(marks, id, name, kind))),
         "windows": windows,
-        "marks": after
+        "marks": marks
       };
-    }
+    const ws = root.specialWorkspace(name);
     const strays = (windows ?? []).filter(win => win.workspaceName === ws);
-    for (const win of strays) {
-      const mark = `axiom-special-${name}-${win.id}`;
-      lines.push(...(marks?.[win.id] ?? []).filter(m => root.specialGroup(m) !== "").map(m => `${con(win.id)} unmark ${root.quote(m)}`), `${con(win.id)} mark --add ${root.quote(mark)}`, `${con(win.id)} move scratchpad`);
-      after[win.id] = (marks?.[win.id] ?? []).filter(m => root.specialGroup(m) === "").concat([mark]);
-    }
+    const after = Object.assign({}, marks ?? {});
+    for (const win of strays)
+      after[win.id] = (marks?.[win.id] ?? []).filter(mark => root.specialGroup(mark) === "").concat([`axiom-special-${name}-${win.id}`]);
+    const lines = [].concat(...strays.map(win => root.specialMove(marks, win.id, name, kind)));
     if (lines.length > 0 && active && active !== ws)
       lines.push(`workspace --no-auto-back-and-forth ${root.quote(active)}`);
     return {

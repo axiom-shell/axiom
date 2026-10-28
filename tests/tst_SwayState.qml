@@ -366,6 +366,16 @@ TestCase {
     compare(SwayState.specialWorkspaceToggle("my games", "1", "HDMI-A-1", ""), ["workspace \"axiom-special-my games\"", "move workspace to output HDMI-A-1"]);
   }
 
+  // Into a group, out of any other
+  function test_specialMove() {
+    const marks = {
+      "15": ["axiom-special-music-15", "keep"]
+    };
+    compare(SwayState.specialMove(marks, "15", "gaming", "scratchpad"), ["[con_id=15] unmark axiom-special-music-15", "[con_id=15] mark --add axiom-special-gaming-15", "[con_id=15] move scratchpad"]);
+    compare(SwayState.specialMove(marks, "15", "gaming", "workspace"), ["[con_id=15] unmark axiom-special-music-15", "[con_id=15] move container to workspace axiom-special-gaming"]);
+    compare(SwayState.specialMove({}, "16", "my games", "workspace"), ["[con_id=16] move container to workspace \"axiom-special-my games\""]);
+  }
+
   // After the kind changed, the other kind's windows move over
   function test_specialAdopt() {
     const marks = {
@@ -385,8 +395,6 @@ TestCase {
     // To the workspace: the group's marked windows, unmarked
     const toWs = SwayState.specialAdopt(windows, marks, "gaming", "workspace", "1");
     compare(toWs.lines, ["[con_id=15] unmark axiom-special-gaming-15", "[con_id=15] move container to workspace axiom-special-gaming"]);
-    compare(toWs.marks["15"], ["keep"]);
-    compare(toWs.marks["16"], ["axiom-special-music-16"]);
     // To the scratchpad: the windows on the group's workspace, marked
     const toPad = SwayState.specialAdopt(windows, {
       "20": ["axiom-special-music-20"]
