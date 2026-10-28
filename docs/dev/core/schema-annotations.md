@@ -105,7 +105,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`): a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).
 
 ### Compositor config (`x-compositor`)
-A setting a compositor's config takes says how, per compositor: `x-compositor: { hyprland: {…}, sway: {…}, niri: {…} }`. `CompositorLayer.compositorFields` collects a section's annotated fields (inside its objects too) with their spec. Each is written, under a gated part (the input), only while its `if` switch is on, else once changed from its default; a managed config's options every one (`annotatedFields`).
+A setting a compositor's config takes says how, per compositor: `x-compositor: { hyprland: {…}, sway: {…}, niri: {…} }`. `render.CompositorFields` in the daemon (and `CompositorLayer.compositorFields` for the greeter's Hyprland Lua) collects a section's annotated fields (inside its objects too) with their spec. Each is written, under a gated part (the input), only while its `if` switch is on, else once changed from its default; a managed config's options every one (`render.AnnotatedFields`).
 - Every compositor's spec takes:
   - `key`: Hyprland's option path (or a list of paths), sway's command with `{}` for the value (`"input type:keyboard repeat_rate {}"`), or niri's node path (`"input.keyboard.repeat-rate"`, its value the node's argument).
   - `scale`: a factor for a value stored scaled (0.01 for a percent, 0.001 for ms written as seconds).

@@ -26,7 +26,6 @@ func (d *Daemon) compositorSocketMethods(reg *rpc.Registry) {
 	hyprHandlers(reg, ipc.HyprFromEnv(d.opts.Getenv))
 	niriHandlers(reg, ipc.NiriFromEnv(d.opts.Getenv), d.niriStreams)
 	outputHandlers(reg, d.opts.Getenv)
-	inputHandlers(reg, d.opts.Getenv, func() any { return d.store.Pipeline().Schema().Root() })
 }
 
 // outputHandlers is outputs.apply: monitor rules (MonitorRule) set now on
@@ -102,11 +101,12 @@ func applyOutputs(ctx context.Context, h *ipc.Hypr, n *ipc.Niri, s *ipc.Sway, ru
 	return nil
 }
 
-// inputHandlers is input.apply: the Input section's values (`input`) set
-// now on a compositor loading no config of axiom's (the greeter's; the
-// session's input is the config layer's): sway's live input and seat
-// commands, Hyprland's cursor (its Lua sets the input: GreetdManager);
-// niri takes input from its config file alone. schema is the config's.
+// inputHandlers is input.apply, the greeter's axiom's alone: the Input
+// section's values (`input`) set now on a compositor loading no config of
+// axiom's (the session's input is the config layer's): sway's live input
+// and seat commands, Hyprland's cursor (its Lua sets the input:
+// GreetdManager); niri takes input from its config file alone. schema is
+// the config's.
 func inputHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any) {
 	type applyParams struct {
 		Input json.RawMessage `json:"input"`

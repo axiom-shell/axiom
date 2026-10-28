@@ -146,7 +146,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	hyprHandlers(reg, ipc.HyprFromEnv(o.Getenv))
 	niriHandlers(reg, ipc.NiriFromEnv(o.Getenv), niriStreams)
 	outputHandlers(reg, o.Getenv)
-	inputHandlers(reg, o.Getenv, func() any { return o.Schema })
+	greeterOnlyMethods(reg, o.Getenv, func() any { return o.Schema })
 	topics.Register(reg, hub, weather.Source(weather.Options{}))
 	return reg
 }

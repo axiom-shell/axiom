@@ -43,13 +43,4 @@ QtObject {
     }
     return out;
   }
-
-  /**
-   * compositorFields, those a config writes: with `gated` (the input)
-   * each only while its `if` switch is on, else once changed from its
-   * default; without (a managed config's options) every one.
-   */
-  function annotatedFields(sectionSchema, values, compositor, gated) {
-    return root.compositorFields(sectionSchema, values, compositor, "").filter(field => !gated || (field.on !== null ? field.on : field.value !== field.schema.default));
-  }
 }
