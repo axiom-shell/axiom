@@ -139,7 +139,6 @@ The config, the takeover and the session must never be damaged by a rarely taken
 Fixed in this phase: none left.
 
 A config.json that doesn't load (decided 2026-10-26):
-- [`config.restore` has no caller in the shell](issues.md#configrestore-has-no-caller-in-the-shell)
 - [With no takeovers kept, a broken config.json can still release the compositor's config](issues.md#with-no-takeovers-kept-a-broken-configjson-can-still-release-the-compositors-config)
 
 ### Phase 2: finish stage 2

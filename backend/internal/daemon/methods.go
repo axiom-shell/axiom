@@ -282,11 +282,6 @@ type setParams struct {
 	Takeover bool        `json:"takeover"`
 }
 
-type restoreParams struct {
-	Config   json.RawMessage `json:"config"`
-	Takeover bool            `json:"takeover"`
-}
-
 type revisionResult struct {
 	Revision int64 `json:"revision"`
 }
@@ -400,20 +395,6 @@ func (d *Daemon) configMethods(reg *rpc.Registry) {
 		return revisionResult{Revision: rev}, err
 	})
 
-	// A config of any format axiom reads, put in place of the running one
-	// (loaded as config.json is): it lifts a file that doesn't load
-	rpc.Handle(reg, "config.restore", func(ctx context.Context, c *rpc.Conn, p restoreParams) (revisionResult, error) {
-		if err := d.writable(); err != nil {
-			return revisionResult{}, err
-		}
-		v, err := jsonx.Unmarshal(p.Config)
-		if _, ok := v.(*jsonx.Object); err != nil || !ok {
-			return revisionResult{}, axerr.New(axerr.BadRequest, "config.restore takes a config object")
-		}
-		rev, err := d.store.Restore(v, store.SetOptions{Takeover: p.Takeover})
-		return revisionResult{Revision: rev}, err
-	})
-
 	rpc.Handle(reg, "config.ackFirstRun", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
 		d.store.AckFirstRun()
 		return struct{}{}, nil
@@ -421,7 +402,7 @@ func (d *Daemon) configMethods(reg *rpc.Registry) {
 
 	// The shell sends saves without waiting for the last: they're written
 	// in the order sent
-	reg.InOrder("config.get", "config.set", "config.restore")
+	reg.InOrder("config.get", "config.set")
 }
 
 // ipcPart: the shell's IPC targets, and the lock screen behind them.

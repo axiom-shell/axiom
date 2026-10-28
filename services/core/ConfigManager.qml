@@ -160,26 +160,6 @@ QtObject {
   // config that was sent. A draft that saved it shows its edits unsaved again
   signal saveRefused(var refused)
 
-  // Replaces the whole config with a parsed one (a saved config, an
-  // import), of any version axiom reads: axiom loads it as it loads
-  // config.json (an older file converted) and keeps the `x-takeover`
-  // settings (compositor mode, locker, idle, polkit, greeter) as they are:
-  // only their own cards switch them. It also lifts savesBlocked.
-  // done(ok) once axiom has answered.
-  function restoreConfig(object, done) {
-    if (root.greeter || !root.available) {
-      done?.(false);
-      return;
-    }
-    BackendManager.call("config.restore", {
-      "config": object
-    }, (error, result) => {
-      if (error)
-        console.error("[ConfigManager] axiom refused the config:", error.message, (error.issues ?? []).map(i => i.path + ": " + i.message).join("; "));
-      done?.(!error);
-    });
-  }
-
   // Discards in-memory edits: the config as axiom has it; done() once read
   function hardResetConfig(done) {
     BackendManager.call("config.get", null, (error, result) => {

@@ -63,7 +63,7 @@ Data the daemon polls for the shell (`backend/internal/topics`) is not a hello t
 ### Guards and errors
 - Every connection's peer must be the same user (`SO_PEERCRED`, `rpc.SamePeerUser`).
 - **Shell only**: `ipc.register`, `lock.state` and every compositor method that changes something answer only the connection whose hello was the shell's.
-- **Writable**: config writes (`config.set`, `config.restore`, the `share.*` applies, `saved.restore`) are refused with `incompatible` while the tree's schema isn't the binary's and dev mode is off. `daemon.state` pushes the change.
+- **Writable**: config writes (`config.set`, the `share.*` applies, `saved.restore`) are refused with `incompatible` while the tree's schema isn't the binary's and dev mode is off. `daemon.state` pushes the change.
 - The lock screen takes only `lock`: no method unlocks it (`ipc.call` to `lockscreen` is anything but `lock` → `refused`).
 - Errors are `{ kind, message, issues }`. `kind` comes from `axerr.Kind` (`invalid_config`, `bad_request`, `conflict`, `takeover_refused`, `incompatible`, `unavailable`, `running`, `not_found`, `refused`, `unauthorized`, `no_password`, `bad_reply`, `internal`); messages stay English, and the shell translates by kind.
 
