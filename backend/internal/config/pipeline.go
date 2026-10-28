@@ -1,8 +1,10 @@
 // Package config is the config pipeline: filling in schema defaults,
 // pruning keys the schema doesn't allow, validating, and the whole load
-// (migrate, prune, defaults, validate) the shell's ConfigManager did. Each
-// step reproduces SchemaValidation.qml exactly, error messages included;
-// the shared fixtures check it byte for byte. Pure: no I/O.
+// (migrate, prune, defaults, validate) the shell's ConfigManager did. The
+// defaults and $ref resolution the shell still has a copy of
+// (SchemaValidation.qml, for previews) are checked against it byte for
+// byte by the shared fixtures; validating is this package's alone. Pure:
+// no I/O.
 package config
 
 import (

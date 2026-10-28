@@ -92,17 +92,12 @@ TestCase {
       }
     })
 
-  function errors(value) {
-    return shared.validationErrors(value, schema);
-  }
-
   function test_defaults_fill_everything() {
     const filled = shared.applyDefaults({}, schema);
     compare(filled.size, 10);
     compare(filled.mode, "a");
     compare(filled.nested.on, true);
     compare(filled.widgets.length, 0);
-    compare(errors(filled), []);
   }
 
   function test_defaults_keep_values_and_do_not_mutate() {
@@ -132,66 +127,6 @@ TestCase {
     }, schema);
     compare(filled.widgets[0].format, "HH:mm");
     compare(filled.widgets[1].format, undefined);
-    compare(errors(filled), []);
-  }
-
-  function test_type_errors() {
-    verify(errors({
-      "size": "big"
-    }).length === 1);
-    verify(errors({
-      "size": 1.5
-    }).length === 1);
-    verify(errors({
-      "nested": []
-    }).length === 1);
-  }
-
-  function test_range_and_enum() {
-    verify(errors({
-      "size": 0
-    })[0].includes("minimum"));
-    verify(errors({
-      "size": 21
-    })[0].includes("maximum"));
-    verify(errors({
-      "mode": "c"
-    })[0].includes("not in allowed values"));
-  }
-
-  function test_additional_properties() {
-    verify(errors({
-      "stray": 1
-    })[0].includes("additional property"));
-    compare(errors({
-      "free": {
-        "x": 1
-      }
-    }), []);
-    verify(errors({
-      "free": {
-        "x": "no"
-      }
-    }).length === 1);
-  }
-
-  function test_oneOf_reports_the_matching_option() {
-    const found = errors({
-      "widgets": [
-        {
-          "type": "Label"
-        }
-      ]
-    });
-    compare(found.length, 1);
-    verify(found[0].includes("text: required field missing"), found[0]);
-    verify(errors({
-      "widgets": [
-        {
-          "type": "Nope"
-        }
-      ]
-    })[0].includes("does not match any schema"));
   }
 
   // Keys beside a $ref override the definition's: one definition, two
@@ -248,6 +183,5 @@ TestCase {
         "size": 5
       }
     }, twoDefaults).a.items, []);
-    compare(shared.validationErrors(filled, twoDefaults), []);
   }
 }
