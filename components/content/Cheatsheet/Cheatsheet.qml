@@ -37,7 +37,7 @@ Panel {
   readonly property bool showSearch: !root.keyboard && !root.strip && (!root.embedded || root.innerHeight >= Appearance.fontSize * 10)
 
   function edit(bindIndex) {
-    KeybindManager.editBind(bindIndex);
+    KeybindManager.editor.editBind(bindIndex);
     ShellManager.openOverlayPage("Keybinds");
   }
 

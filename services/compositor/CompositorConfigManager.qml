@@ -75,7 +75,7 @@ Singleton {
   // loaded), and whether the user's binds have been read
   readonly property string runningConfig: _state.runningConfig ?? ""
   readonly property bool userBindsRead: _state.userBindsRead === true
-  // The binds a merge moved in for good (KeybindManager adds them to a
+  // The binds a merge moved in for good (KeybindEditor adds them to a
   // draft with unsaved edits)
   signal bindsMerged(var binds)
 

@@ -17,7 +17,7 @@ ColumnLayout {
   required property var sections
   // The modifiers held, and chips to change them (the page's, shared with
   // the editor's key map); a Cheatsheet passes its own without chips
-  property var mods: KeybindManager.keyMapMods
+  property var mods: KeybindManager.page.keyMapMods
   property bool showMods: true
 
   readonly property var labels: KeyMap.labels(root.sections, root.mods)
@@ -55,7 +55,7 @@ ColumnLayout {
         required property string modelData
         text: KeyNames.modifierLabel(modelData)
         active: root.mods.includes(modelData)
-        onClicked: KeybindManager.toggleKeyMapMod(modelData)
+        onClicked: KeybindManager.page.toggleKeyMapMod(modelData)
       }
     }
   }
@@ -67,8 +67,8 @@ ColumnLayout {
     inkOf: key => root._ink(key)
     labelOf: key => root.labels[key]?.label ?? ""
     iconOf: key => root.labels[key]?.action ? KeybindManager.actionIcon(root.labels[key].action) : ""
-    clickableOf: key => KeybindManager.bindIndexFor(root.labels[key]?.ids ?? []) >= 0
-    onClicked: key => root.editRequested(KeybindManager.bindIndexFor(root.labels[key].ids))
+    clickableOf: key => KeybindManager.editor.bindIndexFor(root.labels[key]?.ids ?? []) >= 0
+    onClicked: key => root.editRequested(KeybindManager.editor.bindIndexFor(root.labels[key].ids))
   }
 
   // What the colours mean

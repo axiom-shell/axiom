@@ -5,7 +5,7 @@ import qs.components.reusable
 
 // The Keybinds page's toggle chips, in groups set apart by a short line,
 // then Clear while any is on. Both tabs use it: the list (KeybindFilter)
-// and the editor (KeybindManager.visibleKey).
+// and the editor (KeybindManager.page.visibleKey).
 Flow {
   id: root
 

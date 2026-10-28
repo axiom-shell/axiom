@@ -8,7 +8,7 @@ import qs.components.forms
 import qs.components.reusable
 
 // The Keybinds editor's inspector for the selected bind
-// (KeybindManager.selectedIndex): its key, action, argument and label,
+// (KeybindManager.editor.selectedIndex): its key, action, argument and label,
 // its flags in words, its issues, and Duplicate, Pause and Remove. Built
 // anew for each selection, so typed text never lands on another bind.
 ColumnLayout {
@@ -16,8 +16,8 @@ ColumnLayout {
 
   // The bind it edits, fixed while it lives (a new selection rebuilds it)
   required property int bindIndex
-  readonly property var bind: KeybindManager.binds[root.bindIndex] ?? ({})
-  readonly property var issues: KeybindManager.issues[root.bindIndex] ?? []
+  readonly property var bind: KeybindManager.editor.binds[root.bindIndex] ?? ({})
+  readonly property var issues: KeybindManager.editor.issues[root.bindIndex] ?? []
   readonly property bool hasError: root.issues.some(issue => issue.level === "error")
   readonly property bool paused: root.bind.paused === true
   readonly property bool needed: KeybindManager.needsArgument(root.bind.action)
@@ -49,22 +49,22 @@ ColumnLayout {
       size: Widget.height
       iconText: "content_copy"
       tooltipText: I18n.tr("Duplicate, then record its key")
-      onClicked: KeybindManager.duplicateBind(root.bindIndex)
+      onClicked: KeybindManager.editor.duplicateBind(root.bindIndex)
     }
 
     SquareIconButton {
       size: Widget.height
       iconText: root.paused ? "play_arrow" : "pause"
       tooltipText: root.paused ? I18n.tr("Resume") : I18n.tr("Pause: keep it, but don't bind it")
-      onClicked: KeybindManager.setPaused([root.bindIndex], !root.paused)
+      onClicked: KeybindManager.editor.setPaused([root.bindIndex], !root.paused)
     }
 
     SquareIconButton {
-      visible: KeybindManager.changedBinds[root.bindIndex] === true
+      visible: KeybindManager.editor.changedBinds[root.bindIndex] === true
       size: Widget.height
       iconText: "history"
       tooltipText: I18n.tr("Revert to the saved bind")
-      onClicked: KeybindManager.revertBind(root.bindIndex)
+      onClicked: KeybindManager.editor.revertBind(root.bindIndex)
     }
 
     SquareIconButton {
@@ -72,14 +72,14 @@ ColumnLayout {
       iconText: "delete"
       tooltipText: I18n.tr("Remove")
       hoverColor: Theme.error
-      onClicked: KeybindManager.removeBind(root.bindIndex)
+      onClicked: KeybindManager.editor.removeBind(root.bindIndex)
     }
 
     SquareIconButton {
       size: Widget.height
       iconText: "close"
       tooltipText: I18n.tr("Close, to see the key map")
-      onClicked: KeybindManager.selectBind(-1)
+      onClicked: KeybindManager.editor.selectBind(-1)
     }
   }
 
@@ -107,7 +107,7 @@ ColumnLayout {
 
     ActionPicker {
       currentValue: root.bind.action ?? ""
-      onPicked: action => KeybindManager.setField(root.bindIndex, "action", action)
+      onPicked: action => KeybindManager.editor.setField(root.bindIndex, "action", action)
       Layout.fillWidth: true
     }
 
@@ -119,7 +119,7 @@ ColumnLayout {
       currentValue: root.bind.argument ?? ""
       // I18n.tr("left") I18n.tr("right") I18n.tr("up") I18n.tr("down")
       // I18n.tr("region") I18n.tr("window") I18n.tr("screen")
-      onSelectionChanged: value => KeybindManager.setField(root.bindIndex, "argument", value)
+      onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "argument", value)
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
     }
@@ -144,7 +144,7 @@ ColumnLayout {
       Component.onCompleted: input.text = root.bind.argument ?? ""
       input.onEditingFinished: {
         if (argumentText.typed)
-          KeybindManager.setField(root.bindIndex, "argument", input.text);
+          KeybindManager.editor.setField(root.bindIndex, "argument", input.text);
         argumentText.typed = false;
       }
       Layout.fillWidth: true
@@ -159,7 +159,7 @@ ColumnLayout {
       options: root.callOptions ?? []
       optionLabels: KeybindManager.callLabels(root.bind.action)
       currentValue: root.bind.call ?? "toggle"
-      onSelectionChanged: value => KeybindManager.setField(root.bindIndex, "call", value)
+      onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, "call", value)
       Layout.fillWidth: true
     }
   }
@@ -188,7 +188,7 @@ ColumnLayout {
         Component.onCompleted: input.text = root.bind.description ?? ""
         input.onEditingFinished: {
           if (label.typed)
-            KeybindManager.setField(root.bindIndex, "description", input.text);
+            KeybindManager.editor.setField(root.bindIndex, "description", input.text);
           label.typed = false;
         }
       }
@@ -237,7 +237,7 @@ ColumnLayout {
         StyledSwitch {
           checkable: false
           checked: flag.on
-          onClicked: KeybindManager.setField(root.bindIndex, flag.modelData[0], !flag.on)
+          onClicked: KeybindManager.editor.setField(root.bindIndex, flag.modelData[0], !flag.on)
         }
       }
     }

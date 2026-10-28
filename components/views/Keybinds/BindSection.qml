@@ -6,7 +6,7 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
 
-// A section of the Keybinds editor's list (KeybindManager.editLayout): a
+// A section of the Keybinds editor's list (KeybindManager.page.editLayout): a
 // header to fold it (remembered, EditsManager.keybindsFolded), with its
 // counts, the unsaved dot and a switch pausing or resuming all of it, over
 // its rows (BindListRow, a run's binds under it while unfolded). Rows
@@ -20,9 +20,9 @@ ColumnLayout {
   property var scrollTo: null
 
   readonly property bool folded: EditsManager.keybindsFolded.includes(root.section.key)
-  readonly property bool allPaused: root.section.indices.every(i => KeybindManager.binds[i]?.paused === true)
-  readonly property int issueCount: root.section.indices.filter(i => KeybindManager.hasIssue(KeybindManager.issues[i])).length
-  readonly property bool changed: root.section.indices.some(i => KeybindManager.changedBinds[i] === true)
+  readonly property bool allPaused: root.section.indices.every(i => KeybindManager.editor.binds[i]?.paused === true)
+  readonly property int issueCount: root.section.indices.filter(i => KeybindManager.editor.hasIssue(KeybindManager.editor.issues[i])).length
+  readonly property bool changed: root.section.indices.some(i => KeybindManager.editor.changedBinds[i] === true)
 
   // As a drop target: rows carried within the section, dropped before the
   // row under the pointer
@@ -55,7 +55,7 @@ ColumnLayout {
       const last = Math.max(...root.section.indices);
       to = from < last ? last : last + 1;
     }
-    KeybindManager.moveBind(from, Math.min(to, KeybindManager.binds.length - 1));
+    KeybindManager.editor.moveBind(from, Math.min(to, KeybindManager.editor.binds.length - 1));
   }
 
   Layout.fillWidth: true
@@ -72,7 +72,7 @@ ColumnLayout {
 
   // Unfolds to show a bind asked for
   Connections {
-    target: KeybindManager
+    target: KeybindManager.editor
 
     function onRevealRequested(index) {
       if (root.section.indices.includes(index) && root.folded)
@@ -153,7 +153,7 @@ ColumnLayout {
         checkable: false
         checked: !root.allPaused
         implicitHeight: Widget.smallHeight
-        onClicked: KeybindManager.setPaused(root.section.indices, !root.allPaused)
+        onClicked: KeybindManager.editor.setPaused(root.section.indices, !root.allPaused)
       }
     }
   }
