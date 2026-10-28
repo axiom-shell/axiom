@@ -53,7 +53,7 @@ properties:
         type: boolean
         title: Match axiom's shape
         default: true
-        description: "Follow Look & Feel → Shape: its border width and corner radius (only the width on sway, which can't round corners)."
+        description: "Follow Look & Feel → Shape: its border width and corner radius (only the width on sway, which can't round corners; on SwayFX, open windows keep their rounding until sway reloads)."
         x-showIf: {enabled: true}
         x-enabledIf: {/$supports.windowShape: true}
       size:
@@ -72,6 +72,7 @@ properties:
         title: Corner rounding
         x-unit: px
         default: 8
+        description: On SwayFX, open windows keep their rounding until sway reloads; windows opened later take the new one.
         minimum: 0
         maximum: 50
         x-showIf: {enabled: true, matchShell: false}

@@ -173,7 +173,6 @@ Resolved by a stage:
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
 sway and SwayFX:
-- [SwayFX's corner radius reaches only windows opened later](issues.md#swayfxs-corner-radius-reaches-only-windows-opened-later)
 - [Changing a setting under sway can flash the screen](issues.md#changing-a-setting-under-sway-can-flash-the-screen)
 - [Sway's special workspaces are floating scratchpad windows](issues.md#sways-special-workspaces-are-floating-scratchpad-windows)
 - [Overview drops on sway nest split containers](issues.md#overview-drops-on-sway-nest-split-containers)

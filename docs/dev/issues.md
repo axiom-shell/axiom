@@ -322,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### SwayFX's corner radius reaches only windows opened later
-- **Where:** `backend/internal/compositor/render/sway.go` (`SwayFxLines`)
-- **What:** `corner_radius` sent at runtime sets SwayFX 0.6's global only (its per-window reset runs only while the config loads), and it has no per-window command, so a changed rounding shows on new windows while open ones keep theirs until sway reloads its config. A fix would need a reload, which takes back the rest of the runtime look.
-- **Size:** small
-- **Found:** 2026-10-16, while fixing SwayFX's blur on unfocused windows
-
 ### Changing a setting under sway can flash the screen
 - **Where:** `services/compositor/LayerManager.qml` (`_sequence`), `components/hosts/popout/LayerSlot.qml`, `services/compositor/MonitorManager.qml`
 - **What:** Reported on sway: changing a setting flashes the whole settings page. Two causes fixed: the border's shadow window wasn't held, so turning the shadow on remapped every surface ordered under it (`LayerManager: mapping … again, in its place` for the backdrop, bars, border and dock, the backdrop dimming the overlay flashing with them), and a sway reload (any save rewriting axiom's file) reset the outputs to the config's, dropping the monitor profile. A third, on any compositor: the settings page rebuilt every card on each edit (its categories were recomputed from the config through `x-showIf`), fixed in `components/views/Settings/Settings.qml`. Not reproduced with an ordinary setting since (a save then logs no remap and no overlay resize). Without `layerOrder`, a bar remade by a change of kind still remaps everything after it, by design. If it still happens, note which setting and look for those log lines.
