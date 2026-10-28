@@ -76,7 +76,7 @@ func (w *swayWriter) problems(in Inputs) problems {
 		Blocked:     `Compositor mode is "managed", but ` + f.ConfigDir + ` is a symlink or in a git repository, so axiom won't take it over; use "included" instead. Applying axiom's layer at runtime meanwhile.`,
 	}
 	if w.unread != "" {
-		p.UnreadBinds = "Can't read your sway config (" + w.unread + "), so axiom's binds may cover your own keys"
+		p.Runtime = "Can't read your sway config (" + w.unread + "), so axiom's binds may cover your own keys"
 	}
 	return p
 }

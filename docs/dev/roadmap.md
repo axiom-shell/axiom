@@ -178,7 +178,6 @@ niri:
 - [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)
 - [A hot reload while locked leaves niri's red screen](issues.md#a-hot-reload-while-locked-leaves-niris-red-screen)
 - [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)
-- [A niri module refused in detached mode is only logged](issues.md#a-niri-module-refused-in-detached-mode-is-only-logged)
 - [niri reports no space reserved by bars, nor where tiled windows are](issues.md#niri-reports-no-space-reserved-by-bars-nor-where-tiled-windows-are)
 - [niri's flags can't be turned off from axiom](issues.md#niris-flags-cant-be-turned-off-from-axiom)
 - [Nested niri freezes while its window is hidden](issues.md#nested-niri-freezes-while-its-window-is-hidden)
