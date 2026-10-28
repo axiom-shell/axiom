@@ -465,12 +465,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Config saves can land out of order
-- **Where:** `backend/internal/rpc/rpc.go` (requests each on their own goroutine), `backend/internal/store/store.go` (`write`), `services/core/ConfigManager.qml` (`_send`)
-- **What:** The shell sends each `config.replace` without waiting for the last, the daemon runs requests concurrently, and `write` takes its lock in whatever order the goroutines reach it, so two quick saves can leave the older one on disk (and pushed back as the running config). Path ops alone (backend stage 7) still race on one key: `config.*` calls want handling in order per connection, or a base revision the store refuses on mismatch.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### KeybindManager does three jobs
 - **Where:** `services/compositor/KeybindManager.qml`
 - **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. It's split with backend stage 7 (`compositor.inputs`: Go reads binds and profiles from the config it owns), which changes what the reader half is, so it's designed in that stage, not with the other singleton splits (#123).

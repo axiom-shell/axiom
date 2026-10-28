@@ -435,6 +435,10 @@ func (d *Daemon) configMethods(reg *rpc.Registry) {
 		d.store.AckFirstRun()
 		return struct{}{}, nil
 	})
+
+	// The shell sends saves without waiting for the last: they're written
+	// in the order sent
+	reg.InOrder("config.get", "config.set", "config.replace", "config.restore")
 }
 
 // ipcPart: the shell's IPC targets, and the lock screen behind them.

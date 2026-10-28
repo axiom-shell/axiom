@@ -137,7 +137,6 @@ Fixed in this phase: none left.
 
 Fixed by backend stage 7 (add the bullets there if missing):
 - [Shell saves carry unsaved settings and every takeover](issues.md#shell-saves-carry-unsaved-settings-and-every-takeover)
-- [Config saves can land out of order](issues.md#config-saves-can-land-out-of-order)
 
 A config.json that doesn't load (decided 2026-10-26):
 - [The compositor mode is held twice while config.json doesn't load](issues.md#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)
