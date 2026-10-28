@@ -112,7 +112,9 @@ func SavedRules(profiles any, outputs []Output) []any {
 // not, the rule every profile naming it agrees on (an external monitor
 // always set the same way), so it's laid out once, on plug and after the
 // switch alike. An output the profiles set differently gets no rule
-// (Hyprland's own layout, then the switch: a second modeset).
+// (Hyprland's own layout, then the switch: a second modeset), as do an
+// unplugged monitor named by description and the connector a profile last
+// saw it on (its label), named by another, when their rules disagree.
 func HyprlandRules(profiles any, outputs []Output) []any {
 	out := SavedRules(profiles, outputs)
 	if out == nil {
@@ -127,11 +129,17 @@ func HyprlandRules(profiles any, outputs []Output) []any {
 	var order []string
 	agreed := map[string]any{}
 	specs := map[string]string{}
+	// seenOn: the connectors (rules' labels) each monitor named by
+	// description and not connected was last seen on
+	seenOn := map[string][]string{}
 	for _, profile := range items(profiles) {
 		for _, rule := range items(get(profile, "outputs")) {
 			output := ruleOutput(rule)
 			if output == "" || connected(output, covered) {
 				continue
+			}
+			if label := str(or(get(rule, "label"), "")); strings.HasPrefix(output, "desc:") && label != "" && !connected(output, outputs) {
+				seenOn[output] = append(seenOn[output], label)
 			}
 			spec := InlineSpec(MonitorSpec(rule))
 			if seen, ok := specs[output]; !ok {
@@ -139,6 +147,16 @@ func HyprlandRules(profiles any, outputs []Output) []any {
 				specs[output], agreed[output] = spec, rule
 			} else if seen != spec {
 				agreed[output] = nil
+			}
+		}
+	}
+	// An unplugged monitor named by description may be the one another
+	// profile names by the connector it was seen on: where the two rules
+	// disagree, neither is written (Hyprland would apply the later)
+	for output, labels := range seenOn {
+		for _, label := range labels {
+			if spec, ok := specs[label]; ok && !connected(label, outputs) && spec != specs[output] {
+				agreed[output], agreed[label] = nil, nil
 			}
 		}
 	}

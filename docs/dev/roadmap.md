@@ -184,7 +184,6 @@ niri:
 
 Hyprland, and every compositor:
 - [A profile saved under another compositor is written in that one's spelling](issues.md#a-profile-saved-under-another-compositor-is-written-in-that-ones-spelling)
-- [Two profiles naming one unplugged monitor differently both write a rule](issues.md#two-profiles-naming-one-unplugged-monitor-differently-both-write-a-rule)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [Floating bars sit flush on the border without a backend](issues.md#floating-bars-sit-flush-on-the-border-without-a-backend)
 - [Two exclusive-focus surfaces at once without a native grab](issues.md#two-exclusive-focus-surfaces-at-once-without-a-native-grab)

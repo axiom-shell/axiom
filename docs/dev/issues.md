@@ -292,12 +292,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while fixing profile matching across compositors (roadmap row 13)
 
-### Two profiles naming one unplugged monitor differently both write a rule
-- **Where:** `backend/internal/compositor/render/profiles.go` (`HyprlandRules`)
-- **What:** When one profile names a monitor by connector and another by `desc:`, and that monitor isn't connected, both profiles' rules are written to Hyprland's Lua, even where they disagree; Hyprland applies the later one when it's plugged in, until the daemon's switch corrects it. Rare (the same monitor saved two ways); found reviewing #188.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing roadmap row 13
-
 ### install.sh still installs the rest of a feature whose COPR was declined
 - **Where:** `install.sh` (the declined-COPR loop after the COPR prompts)
 - **What:** Declining a COPR on Fedora marks each feature with a package from it as skipped, but drops only that COPR's packages: the feature's other packages stay in the one `dnf install`. Declining `nett00n/hyprland` while setting up niri skips the login screen's feature yet still installs `greetd`. Rebuilding `packages` from the features left (and the required keys) after the prompts would fix it; test with `--dry-run` in a `fedora:latest` container.
