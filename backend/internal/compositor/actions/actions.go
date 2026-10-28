@@ -1,7 +1,7 @@
 // Package actions is what every compositor's bind merge shares: axiom's
 // bind actions (table.json, which the daemon also sends the shell:
-// binds.actions), and the commands that are one of them (axiom's own IPC
-// calls; volume, brightness and media commands). Pure: no I/O.
+// compositor.bindActions), and the commands that are one of them (axiom's
+// own IPC calls; volume, brightness and media commands). Pure: no I/O.
 package actions
 
 import (

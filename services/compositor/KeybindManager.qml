@@ -41,12 +41,13 @@ QtObject {
   // BindActions functions read it): the daemon's table
   // (compositor.bindActions), read again after each hello, since a new
   // binary may bring another; null until it answers
-  property var actionTable: null
+  readonly property var actionTable: root._actionTable
+  property var _actionTable: null
 
   function _readActionTable() {
     BackendManager.call("compositor.bindActions", {}, (error, result) => {
       if (!error)
-        root.actionTable = result;
+        root._actionTable = result;
     });
   }
 
