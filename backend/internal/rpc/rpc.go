@@ -56,11 +56,13 @@ type Registry struct {
 	Before   func(c *Conn, method string) error
 }
 
-// entry is one method: its handler and the Go types of what it takes
-// and returns (ShapeOf turns them into what goes on the wire).
+// entry is one method: its handler, the Go types of what it takes and
+// returns (ShapeOf turns them into what goes on the wire), and whether
+// its calls run in the order they arrived (InOrder).
 type entry struct {
 	handler        Handler
 	params, result reflect.Type
+	inOrder        bool
 }
 
 // NewRegistry returns an empty registry.
@@ -97,6 +99,21 @@ func DecodeStrict(raw json.RawMessage, v any) error {
 		return errors.New("data after the params")
 	}
 	return nil
+}
+
+// InOrder makes a connection's calls of these methods (registered ones)
+// run one at a time, in the order they arrived: the shell sends saves
+// without waiting for the last, so two quick ones must not land in the
+// order their goroutines happen to run. Other methods still run alongside.
+func (r *Registry) InOrder(methods ...string) {
+	for _, m := range methods {
+		e, ok := r.handlers[m]
+		if !ok {
+			panic("rpc: InOrder of unregistered method " + m)
+		}
+		e.inOrder = true
+		r.handlers[m] = e
+	}
 }
 
 // Types is what method takes and returns, as Go types (false: no such
@@ -421,6 +438,9 @@ func (c *Conn) readLoop() {
 	sc.Buffer(make([]byte, 0, min(64<<10, c.limits.MaxLine)), c.limits.MaxLine)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	// Closed once the last in-order call (InOrder) is handled: the next
+	// one waits for it
+	var lastInOrder chan struct{}
 	for sc.Scan() {
 		line := sc.Bytes()
 		if len(bytes.TrimSpace(line)) == 0 {
@@ -453,10 +473,21 @@ func (c *Conn) readLoop() {
 			}
 			continue
 		}
+		var after, done chan struct{}
+		if c.reg.handlers[m.Method].inOrder {
+			after, done = lastInOrder, make(chan struct{})
+			lastInOrder = done
+		}
 		c.handling.Add(1)
 		go func(m message) {
 			defer c.handling.Done()
 			defer func() { <-c.inFlight }()
+			if done != nil {
+				defer close(done)
+			}
+			if after != nil {
+				<-after
+			}
 			c.dispatch(ctx, m)
 		}(m)
 	}

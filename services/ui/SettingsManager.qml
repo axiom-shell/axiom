@@ -227,15 +227,11 @@ QtObject {
     cur[path[path.length - 1]] = Utils.clone(value);
   }
 
-  // The latest config with every changed setting from the draft on top
-  function _merged() {
+  // The latest config with the draft's settings at these key paths on top
+  function _merged(paths) {
     const merged = Utils.clone(ConfigManager.config);
-    // Diffed now, not `changedPaths`: Save first commits typed text, an
-    // edit in place that `changedPaths` sees only next tick
-    for (const changed of _diff(draft.local, draft.saved, [])) {
-      const path = changed.split(".");
+    for (const path of paths)
       _setAt(merged, path, Utils.valueAt(draft.local, path));
-    }
     return merged;
   }
 
@@ -467,7 +463,7 @@ QtObject {
       return false;
     const next = Utils.clone(ConfigManager.config);
     _setAt(next, entry.path, value);
-    if (!ConfigManager.commit(next))
+    if (!ConfigManager.commit(next, _takesOver([entry.path])))
       return false;
     ensureLoaded();
     return true;
@@ -480,7 +476,7 @@ QtObject {
     const next = Utils.clone(ConfigManager.config);
     for (const dottedPath of Object.keys(values))
       _setAt(next, dottedPath.split("."), values[dottedPath]);
-    if (!ConfigManager.commit(next))
+    if (!ConfigManager.commit(next, _takesOver(Object.keys(values).map(dottedPath => dottedPath.split(".")))))
       return false;
     ensureLoaded();
     return true;
@@ -517,9 +513,18 @@ QtObject {
     return entry ? Utils.valueAt(ConfigManager.config, entry.path) : undefined;
   }
 
+  // Whether a save of these key paths is a takeover setting's own: it
+  // names one (`x-takeover`), so axiom lets it change what it takes over
+  function _takesOver(paths) {
+    return paths.some(path => schemaAt(path)?.["x-takeover"] === true);
+  }
+
   // Stays dirty if the save is rejected (invalid, or saves are blocked)
   function saveChanges() {
-    if (!ConfigManager.commit(_merged()))
+    // Diffed now, not `changedPaths`: Save first commits typed text, an
+    // edit in place that `changedPaths` sees only next tick
+    const changed = _diff(draft.local, draft.saved, []).map(path => path.split("."));
+    if (!ConfigManager.commit(_merged(changed), _takesOver(changed)))
       return false;
     draft.load();
     return true;

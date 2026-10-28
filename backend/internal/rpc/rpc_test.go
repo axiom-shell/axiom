@@ -397,3 +397,70 @@ func TestNotifyLatestBeforeReply(t *testing.T) {
 		}
 	}
 }
+
+// Calls of an InOrder method run in the order they arrived, even when the
+// first is slow; other methods still run alongside them.
+func TestInOrderCallsRunInOrder(t *testing.T) {
+	t.Parallel()
+	type writeParams struct {
+		N int `json:"n"`
+	}
+	var mu sync.Mutex
+	var order []int
+	release := make(chan struct{})
+	reg := NewRegistry()
+	Handle(reg, "write", func(ctx context.Context, c *Conn, p writeParams) (struct{}, error) {
+		if p.N == 0 {
+			<-release
+		}
+		mu.Lock()
+		order = append(order, p.N)
+		mu.Unlock()
+		return struct{}{}, nil
+	})
+	Handle(reg, "free", func(ctx context.Context, c *Conn, p struct{}) (struct{}, error) { return struct{}{}, nil })
+	reg.InOrder("write")
+	a, b := net.Pipe()
+	c := NewConn(a, reg, DefaultLimits(), nil)
+	t.Cleanup(func() { c.Close(); b.Close() })
+	replies := make(chan string, 16)
+	go func() {
+		r := bufio.NewReader(b)
+		for {
+			line, err := r.ReadBytes('\n')
+			if err != nil {
+				return
+			}
+			var m message
+			json.Unmarshal(line, &m)
+			replies <- string(m.ID)
+		}
+	}()
+	for n := 0; n < 5; n++ {
+		io.WriteString(b, `{"jsonrpc":"2.0","id":`+string(rune('0'+n))+`,"method":"write","params":{"n":`+string(rune('0'+n))+"}}\n")
+	}
+	io.WriteString(b, `{"jsonrpc":"2.0","id":9,"method":"free"}`+"\n")
+	select {
+	case id := <-replies:
+		if id != "9" {
+			t.Fatalf("reply %s came before free's, while write 0 waits", id)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("free waited for the in-order calls")
+	}
+	close(release)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-replies:
+		case <-time.After(2 * time.Second):
+			t.Fatal("the in-order calls didn't all answer")
+		}
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	for i, n := range order {
+		if n != i {
+			t.Fatalf("ran in order %v, not as sent", order)
+		}
+	}
+}
