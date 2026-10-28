@@ -134,18 +134,26 @@ QtObject {
     return name ? list.findIndex(profile => profile.name === name) : -1;
   }
 
-  // The draft as _detect left it. The daemon's match for a hotplug may come
-  // after the page's read: it detects again while nothing else is edited
-  // (unless a detect is still waiting for the read, which will use it)
+  // The draft as _detect left it
   property string _detected: ""
 
+  // The draft holds no edits but detection's: a hotplug or the daemon's
+  // new match may detect again
+  function _untouched() {
+    return !draft.isDirty || JSON.stringify(draft.local) === _detected;
+  }
+
+  // The daemon's match for a hotplug may come after the page's read: it
+  // detects again (unless a detect is still waiting for the read, which
+  // will use it). Otherwise the live profile follows the name, the page
+  // closed or not.
   property Connections _match: Connections {
     target: CompositorConfigManager
 
     function onMonitorProfileChanged() {
-      if (!root.pageShown || root.pending || root._detectPending)
+      if (root.pending || root._detectPending)
         return;
-      if (!draft.isDirty || JSON.stringify(draft.local) === root._detected)
+      if (root.pageShown && root._untouched())
         root.reset();
       else
         root._liveName = CompositorConfigManager.monitorProfile;
@@ -436,7 +444,7 @@ QtObject {
     target: CompositorManager
 
     function onOutputsHotplugged() {
-      if (root.pageShown && !root.pending && !draft.isDirty) {
+      if (root.pageShown && !root.pending && root._untouched()) {
         draft.load();
         root._detectPending = true;
       }
