@@ -67,8 +67,8 @@ func TestValidationErrors(t *testing.T) {
 		}
 	}
 	// Filled with its defaults (a oneOf's by its type, a $ref's own default
-	// over its definition's), a value stays valid
-	for _, value := range []string{`{}`, `{"widgets": [{"type": "Clock"}, {"type": "Label", "text": "hi"}]}`, `{"box": {"size": 5}}`} {
+	// over its definition's; its own values kept), a value stays valid
+	for _, value := range []string{`{}`, `{"size": 3, "nested": {"on": false}}`, `{"widgets": [{"type": "Clock"}, {"type": "Label", "text": "hi"}]}`, `{"box": {"size": 5}}`} {
 		filled, ok := config.ApplyDefaults(s, parse(t, value), true, root)
 		if !ok {
 			t.Fatalf("%s: no defaults", value)

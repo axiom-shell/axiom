@@ -15,10 +15,6 @@ TestCase {
     testCase: test
   }
 
-  RepoFiles {
-    id: files
-  }
-
   property var schema
 
   function initTestCase() {
@@ -57,5 +53,15 @@ TestCase {
       "id": "test"
     }, unionSchema, schema);
     compare(filled.type, data.type);
+  }
+
+  // A new edge menu (EdgeMenuEditor) fills the same way
+  function test_edge_menu_default_fills() {
+    const filled = shared.applyDefaults({
+      "id": "test"
+    }, {
+      "$ref": "#/definitions/EdgeMenu"
+    }, schema);
+    compare(filled.id, "test");
   }
 }
