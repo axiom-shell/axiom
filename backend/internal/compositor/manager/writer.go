@@ -114,11 +114,12 @@ type writer interface {
 	userBindsRead() bool
 }
 
-// problems are why a file mode isn't in effect; UnreadBinds, why the
-// runtime layer bound without knowing the user's keys (sway's)
+// problems are why a file mode isn't in effect; Runtime, why the runtime
+// layer isn't as axiom made it (sway's binds made without knowing the
+// user's keys, niri's module it refused)
 type problems struct {
-	NotIncluded, NotManaged, Blocked, Failed, UnreadBinds string
-	Invalid                                               func(string) string
+	NotIncluded, NotManaged, Blocked, Failed, Runtime string
+	Invalid                                           func(string) string
 }
 
 // env is what writers share: paths, tables, the schema and the

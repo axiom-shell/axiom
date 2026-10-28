@@ -304,12 +304,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-17, while reviewing the distro-support branch for merge
 
-### A niri module refused in detached mode is only logged
-- **Where:** `backend/internal/compositor/manager/niri.go` (`runtimeApply`), `services/compositor/CompositorConfigManager.qml` (`problem`)
-- **What:** In the file modes a module `niri validate` refuses sets `CompositorConfigManager.problem` (the Compositor card shows it). The detached mode's module (also the file modes' fallback) is checked the same way, but a refusal is only a `compositor: niri refuses the config axiom made` warning in the daemon's log in the log: the card says nothing, and niri keeps the module before. A raw bind niri refuses is the likely cause.
-- **Size:** small
-- **Found:** 2026-10-17, while auditing the niri branch for merge
-
 ### A fullscreen window re-sends the whole live layer
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`_liveInputs`)
 - **What:** `BlurManager.active` flips as a fullscreen window opens or closes and is in `_liveInputs`, so each flip re-sends the whole look and input (Hyprland's `hl.config({ input = … })`, sway's `[all] border pixel`, `gaps … all set`), not just the blur rules: a user's runtime tweak (`border toggle`, `gaps current plus`) is undone whenever anything goes fullscreen. A blur-only change should send only the blur lines.

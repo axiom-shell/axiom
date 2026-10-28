@@ -107,7 +107,7 @@ func (f *fakeWriter) problems(Inputs) problems {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return problems{NotIncluded: "not included", NotManaged: "not managed", Blocked: "blocked", Failed: "failed",
-		Invalid: func(e string) string { return "invalid: " + e }, UnreadBinds: f.unread}
+		Invalid: func(e string) string { return "invalid: " + e }, Runtime: f.unread}
 }
 
 type harness struct {

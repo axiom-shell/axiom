@@ -8,7 +8,7 @@ import (
 )
 
 // A sway config file that's there but can't be read (here an include) is
-// the UnreadBinds problem, as a missing config is: axiom's binds may cover
+// the Runtime problem, as a missing config is: axiom's binds may cover
 // keys it holds
 func TestSwayUnreadableIncludeIsUnread(t *testing.T) {
 	t.Parallel()
