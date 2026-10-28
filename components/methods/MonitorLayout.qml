@@ -218,11 +218,11 @@ QtObject {
     return (monitors ?? []).find(monitor => matches(output, monitor)) ?? null;
   }
 
-  // The profile for the connected monitors (enabled ones: what Hyprland's
-  // Lua sees, so it picks the same one): one listing exactly them wins (a
-  // disabled output it lists may be missing), else the one that turns on
-  // most of them; -1 when none turns any on. Ties go to the earlier profile.
-  // The greeter's Hyprland Lua does the same (render.MonitorsLua).
+  // The profile for the connected monitors (enabled ones): one listing
+  // exactly them wins (a disabled output it lists may be missing), else the
+  // one that turns on most of them; -1 when none turns any on. Ties go to
+  // the earlier profile. The daemon's picker does the same
+  // (render.MatchProfile).
   function matchProfile(profiles, monitors) {
     let best = -1;
     let bestScore = 0;

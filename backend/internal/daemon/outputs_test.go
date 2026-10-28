@@ -125,11 +125,12 @@ func TestApplyOutputs(t *testing.T) {
 	}
 }
 
-// The greeter's compositor (greeter.compositor): Hyprland's Lua for the
-// profiles and the x-greeter input, then its cursor by the theme's own
-// name; sway's profiles watched and its live input commands; nothing on niri
+// The greeter's compositor (greeter.compositor): Hyprland's profiles
+// watched, its Lua for the x-greeter input, then its cursor by the theme's
+// own name; sway's profiles watched and its live input commands; nothing
+// on niri
 func TestApplyGreeter(t *testing.T) {
-	noWatch := func(any) { t.Error("watched the profiles off sway") }
+	noWatch := func(any) { t.Error("watched the profiles off Hyprland and sway") }
 	t.Parallel()
 	dir, err := os.MkdirTemp("", "axin")
 	if err != nil {
@@ -153,12 +154,16 @@ func TestApplyGreeter(t *testing.T) {
 		n, _ := c.Read(buf)
 		return string(buf[:n])
 	}, func(c net.Conn, _ string) { io.WriteString(c, "ok") })
-	if err := applyGreeter(ctx, &ipc.Hypr{Dir: dir}, false, nil, profiles, values, inputSchema, "", noWatch); err != nil {
+	// Hyprland's monitors: the profiles go to the watch (greeterProfiles)
+	var watchedHypr any
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: dir}, false, nil, profiles, values, inputSchema, "", func(p any) { watchedHypr = p }); err != nil {
 		t.Fatal(err)
 	}
+	if watchedHypr != profiles {
+		t.Errorf("hyprland: the watch got %v", watchedHypr)
+	}
 	lua := <-hypr
-	for _, want := range []string{"eval if AXIOM_MONITOR_SUBS then", `{ output = "DP-1", mode = "2560x1440@144", position = "0x0", scale = 1 },`,
-		"axiom_apply_monitors()\nhl.config({", `kb_layout = "us,de"`, "numlock_by_default = true"} {
+	for _, want := range []string{"eval hl.config({", `kb_layout = "us,de"`, "numlock_by_default = true"} {
 		if !strings.Contains(lua, want) {
 			t.Errorf("hyprland's Lua has no %q:\n%s", want, lua)
 		}
@@ -186,7 +191,7 @@ func TestApplyGreeter(t *testing.T) {
 			io.WriteString(c, "ok")
 		}
 	})
-	if err := applyGreeter(ctx, &ipc.Hypr{Dir: refusing}, false, nil, profiles, values, inputSchema, "", noWatch); axerr.KindOf(err) != axerr.Refused {
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: refusing}, false, nil, profiles, values, inputSchema, "", func(any) {}); axerr.KindOf(err) != axerr.Refused {
 		t.Errorf("refused Lua: %v", err)
 	}
 	<-asked

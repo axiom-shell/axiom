@@ -74,8 +74,7 @@ Singleton {
       "pseudoTile": true,
       "splitToggle": true,
       "pin": true,
-      "windowGroups": true,
-      "outputProfiles": true
+      "windowGroups": true
     })
 
   // Whether the workspaces are niri's, kept by axiom (the scrolling layout,

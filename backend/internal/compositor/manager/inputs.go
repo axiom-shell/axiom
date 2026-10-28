@@ -108,8 +108,7 @@ func tree(v any) any {
 
 // buildInputs is what the layer is made of: the config (cfg, with the
 // shell's previews laid over it), the shell's facts and the outputs
-// connected (sway's and niri's, nil until read: the files then keep what
-// they say), as the writers read it, with layerKey (a change re-applies the layer), liveKey (a change
+// connected (nil until read: the files then keep what they say), as the writers read it, with layerKey (a change re-applies the layer), liveKey (a change
 // is only evaluated at runtime) and liveRestKey (liveKey but for the blur
 // now).
 func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
@@ -173,11 +172,11 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		"ctx", tree(f.Ctx),
 		"startPattern", f.StartPattern,
 		"requiredSettings", flag("Compositor", "requiredSettings"),
-		"profiles", at("Monitors", "items"),
 		"strips", strips,
 		"stripOptions", stripOptions,
 		"stripsKey", string(jsonx.MarshalCompact(jsonx.Arr(strips, stripOptions))),
 		"outputRules", outputRules,
+		"outputs", tree(outputs),
 		"session", at("Session"),
 		"qt", flag("ThemeIntegrations", "qt"),
 		"managed", managed,

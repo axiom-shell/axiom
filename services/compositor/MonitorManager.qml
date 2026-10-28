@@ -13,7 +13,7 @@ import qs.services.ui
  * config reloads; never polled) and the editor for Monitors.items, a
  * draft of profiles (each a layout for one set of monitors). The saved
  * profile matching what's connected is applied on every hotplug by the
- * compositor (`outputProfiles`) or the daemon (sway, niri), not here.
+ * daemon, not here.
  *
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
@@ -410,9 +410,9 @@ QtObject {
         draft.load();
         root._detectPending = true;
       }
-      // On sway and niri the daemon has applied the saved profile for the
-      // new set already: a trial Apply ends without reverting
-      if (root.pending && !CompositorManager.supports.outputProfiles) {
+      // The daemon has applied the saved profile for the new set already:
+      // a trial Apply ends without reverting
+      if (root.pending) {
         root.pending = false;
         root._countdown.stop();
       }

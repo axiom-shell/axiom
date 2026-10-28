@@ -183,7 +183,6 @@ niri:
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
-- [Hyprland picks monitor profiles in generated Lua](issues.md#hyprland-picks-monitor-profiles-in-generated-lua)
 - [A Hyprland hotplug modesets twice once Go switches](issues.md#a-hyprland-hotplug-modesets-twice-once-go-switches)
 - [The Monitors page matches profiles in QML](issues.md#the-monitors-page-matches-profiles-in-qml)
 - [A monitor profile saved under one compositor doesn't match under another](issues.md#a-monitor-profile-saved-under-one-compositor-doesnt-match-under-another)

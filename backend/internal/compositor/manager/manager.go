@@ -119,9 +119,8 @@ type Manager struct {
 	mergeable       float64
 	pushed          string
 
-	// profiles: sway's and niri's saved monitor profile for what's
-	// connected (nil where the compositor picks it itself), read again
-	// hotplugDelay after the daemon's outputs change
+	// profiles: the saved monitor profile for what's connected, read
+	// again hotplugDelay after the daemon's outputs change
 	profiles     *profileSwitch
 	hotplugDelay time.Duration
 
@@ -147,6 +146,7 @@ func New(o Options) *Manager {
 	switch m.kind {
 	case "hyprland":
 		m.w = newHypr(e, ipc.HyprFromEnv(o.Getenv))
+		m.profiles = &profileSwitch{io: Outputs{Hypr: ipc.HyprFromEnv(o.Getenv)}}
 	case "sway":
 		m.w = newSway(e, ipc.SwayFromEnv(o.Getenv))
 		m.profiles = &profileSwitch{io: Outputs{Sway: ipc.SwayFromEnv(o.Getenv)}}
@@ -370,8 +370,8 @@ func (m *Manager) buildInputs() Inputs {
 }
 
 // OutputsChanged tells of an output connected or gone (the daemon's
-// outputs.Tracker): on sway and niri, the saved profile for what's
-// connected is applied once they've settled.
+// outputs.Tracker): the saved profile for what's connected is applied
+// once they've settled.
 func (m *Manager) OutputsChanged() {
 	if m.profiles != nil {
 		m.hotplug.Reset(m.hotplugDelay)

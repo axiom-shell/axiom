@@ -38,7 +38,7 @@ func connected(output string, outputs []Output) bool {
 
 // MatchProfile is the index of the saved profile (Monitors.items) for
 // what's connected, or -1 when none turns any output on. Only enabled
-// outputs count, as Hyprland's Lua sees them. A profile listing exactly
+// outputs count. A profile listing exactly
 // those wins (a disabled rule's output may be missing), else the one
 // turning on most of them; ties go to the earlier profile
 // (MonitorLayout.matchProfile).
