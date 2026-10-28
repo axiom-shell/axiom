@@ -286,11 +286,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### A monitor profile saved under one compositor doesn't match under another
-- **Where:** `backend/internal/compositor/ipc/niri.go` (`Outputs`), `backend/internal/compositor/render/profiles.go` (`MatchProfile`)
-- **What:** Profiles name monitors by description (`desc:make model serial`), and the compositors spell the make differently: a profile saved under Hyprland names `desc:AOC CU34G4Z XJ9R7HA000231`, while niri reports the same monitor as `PNP(AOC) CU34G4Z XJ9R7HA000231` (the recorded `niri-outputs.json` fixture). Under niri the saved profile never matches, so nothing is switched and the Monitors page offers a new layout for what's connected. Seen on the maintainer's machine (one monitor, profile saved on Hyprland). Normalising niri's `PNP(XXX)` to the bare code in the readers (Go and `NiriState`), or matching it either way, would fix it.
+### A profile saved under another compositor is written in that one's spelling
+- **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorCalls`), `backend/internal/compositor/render/niri.go` (`NiriOutputNodes`)
+- **What:** A profile now matches across compositors (niri's `PNP(AOC)` make is the bare code `AOC` Hyprland and sway give), but its rules are written as saved: under Hyprland a profile saved under niri sets `desc:PNP(AOC) …`, which Hyprland doesn't match, so the switch picks it and changes nothing; under niri a profile saved under Hyprland is written to the KDL as `output "AOC …"`, which niri doesn't match at its start (the daemon's switch, which resolves the connector, sets it after). Writing a `desc:` output in the running compositor's spelling (the connected output's description) would fix both.
 - **Size:** small
-- **Found:** 2026-10-29, while checking the Monitors page's `items` fix (roadmap row 13)
+- **Found:** 2026-10-29, while fixing profile matching across compositors (roadmap row 13)
 
 ### Two profiles naming one unplugged monitor differently both write a rule
 - **Where:** `backend/internal/compositor/render/profiles.go` (`HyprlandRules`)

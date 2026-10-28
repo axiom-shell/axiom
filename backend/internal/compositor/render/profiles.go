@@ -1,6 +1,7 @@
 package render
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -18,9 +19,20 @@ type Output struct {
 // connector) is the output with this name and description.
 func names(output, name, description string) bool {
 	if desc, ok := strings.CutPrefix(output, "desc:"); ok {
-		return trim(description) == trim(desc)
+		return sameDescription(description, desc)
 	}
 	return name == output
+}
+
+// pnpMake is niri's spelling of a make it has no name for ("PNP(AOC)"),
+// which Hyprland and sway give as the bare code ("AOC")
+var pnpMake = regexp.MustCompile(`^PNP\(([^)]*)\)`)
+
+// sameDescription is whether two descriptions name one monitor: trimmed,
+// and with niri's PNP(XXX) make the bare code, so a profile saved under
+// one compositor matches under another
+func sameDescription(a, b string) bool {
+	return pnpMake.ReplaceAllString(trim(a), "$1") == pnpMake.ReplaceAllString(trim(b), "$1")
 }
 
 // ruleOutput is a rule's output, "" when it has none.

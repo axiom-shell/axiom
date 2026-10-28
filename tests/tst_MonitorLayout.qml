@@ -203,6 +203,16 @@ TestCase {
     }, []), "eDP-1");
   }
 
+  function test_matches_across_compositors() {
+    const niri = {
+      "name": "DP-1",
+      "description": "PNP(AOC) CU34G4Z XJ9R7HA000231"
+    };
+    verify(MonitorLayout.matches("desc:AOC CU34G4Z XJ9R7HA000231", niri), "niri's PNP(XXX) make matches the bare code");
+    verify(MonitorLayout.matches("desc:PNP(AOC) CU34G4Z XJ9R7HA000231 ", aoc), "and the other way");
+    verify(!MonitorLayout.matches("desc:AOC CU34G4Z", niri));
+  }
+
   function test_ruleFromMonitor() {
     const monitor = {
       "name": "DP-1",

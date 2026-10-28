@@ -30,6 +30,8 @@ func TestProfiles(t *testing.T) {
 		{"most covered", profiles, []Output{tv}, 1, []string{"desc:LG TV"}},
 		{"a disabled output doesn't pick the profile, but keeps its rule", profiles, []Output{aoc, offTV}, 0, []string{"desc:AOC CU34G4Z XJ9R7HA000231", "HDMI-A-1"}},
 		{"a description matches trimmed", profiles, []Output{{Name: "DP-2", Description: " LG TV "}}, 1, []string{"desc:LG TV"}},
+		{"niri's PNP(XXX) make matches the bare code", profiles, []Output{{Name: "DP-1", Description: "PNP(AOC) CU34G4Z XJ9R7HA000231"}}, 0, []string{"desc:AOC CU34G4Z XJ9R7HA000231"}},
+		{"and the bare code a profile saved under niri", parse(t, `[{"outputs": [{"output": "desc:PNP(AOC) CU34G4Z XJ9R7HA000231"}]}]`), []Output{aoc}, 0, []string{"desc:PNP(AOC) CU34G4Z XJ9R7HA000231"}},
 		{"nothing known", profiles, []Output{other}, -1, nil},
 		{"no profiles", parse(t, `[]`), []Output{aoc}, -1, nil},
 		{"ties go to the earlier", parse(t, `[{"outputs": [{"output": "DP-1"}, {"output": "DP-9"}]}, {"outputs": [{"output": "DP-1"}, {"output": "DP-8"}]}]`), []Output{aoc}, 0, []string{"DP-1"}},

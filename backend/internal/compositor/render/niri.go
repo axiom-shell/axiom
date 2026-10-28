@@ -561,9 +561,8 @@ func connectorFor(output, details any) string {
 	if !strings.HasPrefix(value, "desc:") {
 		return value
 	}
-	description := trim(value[5:])
 	for _, d := range items(details) {
-		if trim(str(or(get(d, "description"), ""))) == description {
+		if sameDescription(str(or(get(d, "description"), "")), value[5:]) {
 			return str(or(get(d, "name"), ""))
 		}
 	}
