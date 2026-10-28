@@ -53,7 +53,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 - The strength is niri's `blur {}` (the window look's blur part writes it); `NiriManager.blur` reads it back from `axiom compositor niri info` (its offset as the size) for the Translucency card and the lock screen's frost.
 
 ### No reload per step
-- The window look and the blur are CompositorConfigManager's `_liveInputs`.
+- The window look and the blur are the layer's live part (`liveKey`, [config modes](../compositor/config-modes.md)): the daemon builds them from `WindowLook` and the facts `CompositorConfigManager` sends (`look`, `blur`).
 - In every mode a change is only evaluated at runtime (`_applyLive`, which also runs after every reload); the file catches up on its next write.
 - Turning a look part off rewrites the file (an eval can't take a setting back).
 

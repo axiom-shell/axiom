@@ -1,0 +1,1486 @@
+{
+  "Keybinds": {
+    "binds": [
+      {
+        "id": "super-shift-g",
+        "key": "SUPER + SHIFT + G",
+        "action": "moveToSpecial",
+        "argument": "gaming",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-g",
+        "key": "SUPER + G",
+        "action": "toggleSpecial",
+        "argument": "gaming",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-ctrl-s",
+        "key": "SUPER + CTRL + S",
+        "action": "screenshot",
+        "argument": "region",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-mouse-down",
+        "key": "SUPER + mouse_down",
+        "action": "focusDir",
+        "argument": "right",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-mouse-up",
+        "key": "SUPER + mouse_up",
+        "action": "focusDir",
+        "argument": "left",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "ctrl-shift-tab",
+        "key": "CTRL + SHIFT + Tab",
+        "action": "windowSwitcherReverse",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-r",
+        "key": "SUPER + SHIFT + R",
+        "action": "exec",
+        "argument": "/home/user/.config/hypr/user/scripts/rotateMonitor.sh",
+        "description": "Media: Rotate Monitor",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-f",
+        "key": "SUPER + F",
+        "action": "fullscreen",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-c",
+        "key": "SUPER + C",
+        "action": "closeWindow",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-z",
+        "key": "SUPER + Z",
+        "action": "toggleFloat",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-ctrl-r",
+        "key": "SUPER + CTRL + r",
+        "action": "restartShell",
+        "release": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-mouse-272",
+        "key": "SUPER + mouse:272",
+        "action": "mouseDrag",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-mouse-273",
+        "key": "SUPER + mouse:273",
+        "action": "mouseResize",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-v",
+        "key": "SUPER + V",
+        "action": "toggleSpecial",
+        "argument": "special",
+        "compositor": "sway",
+        "call": "toggle",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-v",
+        "key": "SUPER + SHIFT + V",
+        "action": "moveToSpecial",
+        "argument": "special",
+        "compositor": "sway",
+        "call": "toggle",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-q",
+        "key": "SUPER + Q",
+        "action": "terminal",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-q",
+        "key": "SUPER + SHIFT + Q",
+        "action": "browser",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-e",
+        "key": "SUPER + E",
+        "action": "fileManager",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-t",
+        "key": "SUPER + T",
+        "action": "exec",
+        "argument": "kitty --title btop -e btop",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-b",
+        "key": "SUPER + B",
+        "action": "exec",
+        "argument": "pavucontrol",
+        "description": "Apps: pavucontrol",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-shift-c",
+        "key": "SUPER + SHIFT + C",
+        "action": "exec",
+        "argument": "element-desktop",
+        "description": "Apps: element",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-shift-e",
+        "key": "SUPER + SHIFT + E",
+        "action": "exec",
+        "argument": "vesktop",
+        "description": "Apps: vesktop",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-ctrl-shift-s",
+        "key": "SUPER + CTRL + SHIFT + S",
+        "action": "exec",
+        "argument": "rm -f /tmp/ocr-input.png /tmp/ocr-done && grim -g \"$(slurp)\" /tmp/ocr-input.png",
+        "description": "Apps: yank ocr",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-shift-escape",
+        "key": "SUPER + SHIFT + Escape",
+        "action": "exitSession",
+        "release": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "ctrl-tab",
+        "key": "CTRL + Tab",
+        "action": "windowSwitcher",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-x",
+        "key": "SUPER + X",
+        "action": "toggleSplit",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-1",
+        "key": "SUPER + 1",
+        "action": "workspaceNth",
+        "argument": "1",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-1",
+        "key": "SUPER + SHIFT + 1",
+        "action": "moveWindowNth",
+        "argument": "1",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-2",
+        "key": "SUPER + 2",
+        "action": "workspaceNth",
+        "argument": "2",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-2",
+        "key": "SUPER + SHIFT + 2",
+        "action": "moveWindowNth",
+        "argument": "2",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-3",
+        "key": "SUPER + 3",
+        "action": "workspaceNth",
+        "argument": "3",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-3",
+        "key": "SUPER + SHIFT + 3",
+        "action": "moveWindowNth",
+        "argument": "3",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-4",
+        "key": "SUPER + 4",
+        "action": "workspaceNth",
+        "argument": "4",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-4",
+        "key": "SUPER + SHIFT + 4",
+        "action": "moveWindowNth",
+        "argument": "4",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-5",
+        "key": "SUPER + 5",
+        "action": "workspaceNth",
+        "argument": "5",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-5",
+        "key": "SUPER + SHIFT + 5",
+        "action": "moveWindowNth",
+        "argument": "5",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-6",
+        "key": "SUPER + 6",
+        "action": "workspaceNth",
+        "argument": "6",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-6",
+        "key": "SUPER + SHIFT + 6",
+        "action": "moveWindowNth",
+        "argument": "6",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-7",
+        "key": "SUPER + 7",
+        "action": "workspaceNth",
+        "argument": "7",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-7",
+        "key": "SUPER + SHIFT + 7",
+        "action": "moveWindowNth",
+        "argument": "7",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-8",
+        "key": "SUPER + 8",
+        "action": "workspaceNth",
+        "argument": "8",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-8",
+        "key": "SUPER + SHIFT + 8",
+        "action": "moveWindowNth",
+        "argument": "8",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-9",
+        "key": "SUPER + 9",
+        "action": "workspaceNth",
+        "argument": "9",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-9",
+        "key": "SUPER + SHIFT + 9",
+        "action": "moveWindowNth",
+        "argument": "9",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-ctrl-h",
+        "key": "SUPER + CTRL + H",
+        "action": "resizeWindow",
+        "argument": "-50 0",
+        "repeating": true,
+        "call": "toggle",
+        "compositor": "hyprland",
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-ctrl-j",
+        "key": "SUPER + CTRL + J",
+        "action": "resizeWindow",
+        "argument": "0 50",
+        "repeating": true,
+        "call": "toggle",
+        "compositor": "hyprland",
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-ctrl-k",
+        "key": "SUPER + CTRL + K",
+        "action": "resizeWindow",
+        "argument": "0 -50",
+        "repeating": true,
+        "call": "toggle",
+        "compositor": "hyprland",
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-ctrl-l",
+        "key": "SUPER + CTRL + L",
+        "action": "resizeWindow",
+        "argument": "50 0",
+        "repeating": true,
+        "call": "toggle",
+        "compositor": "hyprland",
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-space",
+        "key": "SUPER + space",
+        "action": "launcher",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-escape",
+        "key": "SUPER + Escape",
+        "action": "powerMenu",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-tab",
+        "key": "SUPER + Tab",
+        "action": "overlay",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-space",
+        "key": "SUPER + SHIFT + space",
+        "action": "workspaceOverview",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audioraisevolume",
+        "key": "XF86AudioRaiseVolume",
+        "action": "volumeUp",
+        "repeating": true,
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audiolowervolume",
+        "key": "XF86AudioLowerVolume",
+        "action": "volumeDown",
+        "repeating": true,
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audiomute",
+        "key": "XF86AudioMute",
+        "action": "toggleMute",
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audiomicmute",
+        "key": "XF86AudioMicMute",
+        "action": "toggleMicMute",
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86monbrightnessup",
+        "key": "XF86MonBrightnessUp",
+        "action": "brightnessUp",
+        "repeating": true,
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86monbrightnessdown",
+        "key": "XF86MonBrightnessDown",
+        "action": "brightnessDown",
+        "repeating": true,
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audioplay",
+        "key": "XF86AudioPlay",
+        "action": "mediaPlayPause",
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audiopause",
+        "key": "XF86AudioPause",
+        "action": "mediaPlayPause",
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audionext",
+        "key": "XF86AudioNext",
+        "action": "mediaNext",
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audioprev",
+        "key": "XF86AudioPrev",
+        "action": "mediaPrevious",
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "xf86audiostop",
+        "key": "XF86AudioStop",
+        "action": "mediaStop",
+        "locked": true,
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-w",
+        "key": "SUPER + W",
+        "action": "workspaceStep",
+        "argument": "up",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-w",
+        "key": "SUPER + SHIFT + W",
+        "action": "moveWindowStep",
+        "argument": "up",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-s",
+        "key": "SUPER + S",
+        "action": "workspaceStep",
+        "argument": "down",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-s",
+        "key": "SUPER + SHIFT + S",
+        "action": "moveWindowStep",
+        "argument": "down",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-a-2",
+        "key": "SUPER + A",
+        "action": "workspaceStep",
+        "argument": "left",
+        "description": "Tiling: Switch left",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-shift-a",
+        "key": "SUPER + SHIFT + A",
+        "action": "moveWindowStep",
+        "argument": "left",
+        "description": "Tiling: Move window left",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-d",
+        "key": "SUPER + D",
+        "action": "workspaceStep",
+        "argument": "right",
+        "description": "Tiling: Switch right",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-shift-d",
+        "key": "SUPER + SHIFT + D",
+        "action": "moveWindowStep",
+        "argument": "right",
+        "description": "Tiling: Move window right",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false
+      },
+      {
+        "id": "super-j",
+        "key": "SUPER + J",
+        "action": "focusDir",
+        "argument": "down",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-j",
+        "key": "SUPER + SHIFT + J",
+        "action": "moveWindowDir",
+        "argument": "down",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-k",
+        "key": "SUPER + K",
+        "action": "focusDir",
+        "argument": "up",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-k",
+        "key": "SUPER + SHIFT + K",
+        "action": "moveWindowDir",
+        "argument": "up",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-h",
+        "key": "SUPER + h",
+        "action": "focusDir",
+        "argument": "left",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-h",
+        "key": "SUPER + SHIFT + h",
+        "action": "moveWindowDir",
+        "argument": "left",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-l",
+        "key": "SUPER + l",
+        "action": "focusDir",
+        "argument": "right",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-l",
+        "key": "SUPER + SHIFT + l",
+        "action": "moveWindowDir",
+        "argument": "right",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-bracketleft",
+        "key": "SUPER + bracketleft",
+        "action": "stripSwapColumn",
+        "argument": "left",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-bracketright",
+        "key": "SUPER + bracketright",
+        "action": "stripSwapColumn",
+        "argument": "right",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-equal",
+        "key": "SUPER + equal",
+        "action": "stripWider",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-minus",
+        "key": "SUPER + minus",
+        "action": "stripNarrower",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-ctrl-f",
+        "key": "SUPER + CTRL + F",
+        "action": "stripFit",
+        "argument": "",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-0",
+        "key": "SUPER + 0",
+        "action": "workspaceNth",
+        "argument": "10",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      },
+      {
+        "id": "super-shift-0",
+        "key": "SUPER + SHIFT + 0",
+        "action": "moveWindowNth",
+        "argument": "10",
+        "call": "toggle",
+        "compositor": "hyprland",
+        "repeating": false,
+        "locked": false,
+        "release": false,
+        "paused": false,
+        "description": ""
+      }
+    ]
+  },
+  "Monitors": {
+    "items": [
+      {
+        "id": "layout-1",
+        "name": "Layout 1",
+        "outputs": [
+          {
+            "output": "desc:Example Display 0001",
+            "label": "DP-1",
+            "mode": "3440x1440@240",
+            "x": 0,
+            "y": 0,
+            "scale": 1,
+            "transform": 0,
+            "disabled": false,
+            "mirror": "",
+            "vrr": 0,
+            "bitdepth": 8,
+            "cm": "srgb",
+            "sdrBrightness": 1,
+            "sdrSaturation": 1
+          }
+        ]
+      }
+    ]
+  },
+  "Workspaces": {
+    "layout": "perMonitor",
+    "strips": [],
+    "stripColumnWidth": 50,
+    "stripFollowFocus": true
+  },
+  "WindowLook": {
+    "borders": {
+      "enabled": true,
+      "activeColor": "",
+      "inactiveColor": ""
+    },
+    "shape": {
+      "enabled": true,
+      "matchShell": true,
+      "size": 2,
+      "rounding": 8
+    },
+    "gaps": {
+      "enabled": true,
+      "inner": 3,
+      "outer": 6
+    },
+    "blur": {
+      "enabled": true,
+      "windowBlur": true,
+      "size": 5,
+      "passes": 2,
+      "xray": true,
+      "ignoreOpacity": true,
+      "newOptimizations": true,
+      "noise": 12,
+      "contrast": 89,
+      "vibrancy": 17,
+      "popups": false,
+      "special": false
+    },
+    "opacity": {
+      "enabled": true,
+      "active": 100,
+      "inactive": 80,
+      "fullscreen": 100
+    },
+    "surfaceBlur": {
+      "enabled": true,
+      "throughWindows": true,
+      "backdrops": true,
+      "pauseFullscreen": true
+    },
+    "shadow": {
+      "enabled": true,
+      "matchShell": true,
+      "size": 4,
+      "power": 3,
+      "color": "base0D",
+      "strength": 90
+    },
+    "dim": {
+      "enabled": true,
+      "strength": 8
+    }
+  },
+  "Input": {
+    "keyboard": {
+      "enabled": true,
+      "layout": "us",
+      "variant": "",
+      "options": "",
+      "repeatRate": 50,
+      "repeatDelay": 300,
+      "numlock": true
+    },
+    "mouse": {
+      "enabled": true,
+      "accel": "flat",
+      "sensitivity": 0,
+      "leftHanded": false
+    },
+    "touchpad": {
+      "enabled": true,
+      "naturalScroll": false,
+      "tapToClick": true,
+      "disableWhileTyping": true,
+      "scrollFactor": 99
+    },
+    "cursor": {
+      "enabled": true,
+      "theme": "Oxygen_White",
+      "size": 24
+    }
+  },
+  "Session": {
+    "recommendedEnv": true,
+    "env": [
+      {
+        "id": "xdg-config-home",
+        "name": "XDG_CONFIG_HOME",
+        "value": "/home/user/.config"
+      }
+    ],
+    "autostart": [
+      {
+        "id": "dbus-update-activation-environment",
+        "command": "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP",
+        "enabled": true
+      },
+      {
+        "id": "systemctl",
+        "command": "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP",
+        "enabled": true
+      },
+      {
+        "id": "nm-applet",
+        "command": "nm-applet",
+        "enabled": true
+      },
+      {
+        "id": "tailscale",
+        "command": "tailscale systray",
+        "enabled": true
+      },
+      {
+        "id": "fcitx5",
+        "command": "fcitx5 -d --replace",
+        "enabled": true
+      },
+      {
+        "id": "xrandr",
+        "command": "xrandr --output DP-1 --primary",
+        "enabled": true
+      },
+      {
+        "id": "easyeffects",
+        "command": "easyeffects --gapplication-service",
+        "enabled": true
+      },
+      {
+        "id": "wl-paste",
+        "command": "wl-paste --type text --watch cliphist store",
+        "enabled": true
+      },
+      {
+        "id": "protonmail-bridge",
+        "command": "protonmail-bridge --no-window",
+        "enabled": true
+      }
+    ]
+  },
+  "ThemeIntegrations": {
+    "qt": true
+  },
+  "Compositor": {
+    "requiredSettings": true,
+    "hyprland": {
+      "animationPreset": "lightning",
+      "curves": [
+        {
+          "id": "mybezier",
+          "name": "myBezier",
+          "points": "0.05, 0.9, 0.1, 1"
+        },
+        {
+          "id": "linear",
+          "name": "linear",
+          "points": "0, 0, 1, 1"
+        },
+        {
+          "id": "wind",
+          "name": "wind",
+          "points": "0.05, 0.9, 0.1, 1"
+        },
+        {
+          "id": "winin",
+          "name": "winIn",
+          "points": "0.1, 1.1, 0.1, 1"
+        },
+        {
+          "id": "winout",
+          "name": "winOut",
+          "points": "0.3, -0.3, 0, 1"
+        },
+        {
+          "id": "slow",
+          "name": "slow",
+          "points": "0, 0.85, 0.3, 1"
+        },
+        {
+          "id": "overshot",
+          "name": "overshot",
+          "points": "0.7, 0.6, 0.1, 1.1"
+        },
+        {
+          "id": "bounce",
+          "name": "bounce",
+          "points": "1.1, 1.6, 0.1, 0.85"
+        },
+        {
+          "id": "slingshot",
+          "name": "slingshot",
+          "points": "1, -1, 0.15, 1.25"
+        },
+        {
+          "id": "nice",
+          "name": "nice",
+          "points": "0, 2, 0.5, -1"
+        },
+        {
+          "id": "md3-decel",
+          "name": "md3_decel",
+          "points": "0.05, 0.7, 0.1, 1"
+        }
+      ],
+      "customAnimations": [
+        {
+          "id": "windowsin",
+          "curve": "slow",
+          "duration": 50,
+          "leaf": "windowsIn",
+          "style": "popin",
+          "enabled": true
+        },
+        {
+          "id": "windowsout",
+          "curve": "winOut",
+          "duration": 50,
+          "leaf": "windowsOut",
+          "style": "popin",
+          "enabled": true
+        },
+        {
+          "id": "windowsmove",
+          "curve": "wind",
+          "duration": 70,
+          "leaf": "windowsMove",
+          "style": "slide",
+          "enabled": true
+        },
+        {
+          "id": "fade",
+          "curve": "overshot",
+          "duration": 200,
+          "leaf": "fade",
+          "enabled": true,
+          "style": ""
+        },
+        {
+          "id": "workspaces",
+          "curve": "wind",
+          "duration": 250,
+          "leaf": "workspaces",
+          "style": "fade",
+          "enabled": true
+        },
+        {
+          "id": "windows",
+          "curve": "bounce",
+          "duration": 200,
+          "style": "popin",
+          "leaf": "windows",
+          "enabled": true
+        },
+        {
+          "id": "specialworkspace",
+          "curve": "md3_decel",
+          "duration": 80,
+          "leaf": "specialWorkspace",
+          "style": "slidevert",
+          "enabled": true
+        }
+      ],
+      "floatSwitchOverrideFocus": "0",
+      "backgroundThemed": true,
+      "swallowRegex": "^(kitty)$",
+      "layout": "dwindle",
+      "preserveSplit": true,
+      "smartSplit": false,
+      "smartResizing": true,
+      "forceSplit": "0",
+      "splitRatio": 100,
+      "masterSize": 55,
+      "masterOrientation": "left",
+      "masterNewStatus": "slave",
+      "snap": false,
+      "dimSpecial": 20,
+      "animations": true,
+      "workspaceWraparound": false,
+      "resizeOnBorder": true,
+      "hideLogo": true,
+      "backgroundColor": "base00",
+      "swallow": true,
+      "closeSpecialOnEmpty": true,
+      "hideSpecialOnWorkspaceChange": false,
+      "mouseWakesScreen": true,
+      "keyWakesScreen": false,
+      "vrr": "0",
+      "scrollEventDelay": 0,
+      "xwaylandZeroScaling": true
+    },
+    "sway": {
+      "workspaceLayout": "default",
+      "hideEdgeBorders": "none",
+      "smartGaps": "off",
+      "focusWrapping": "yes",
+      "popupDuringFullscreen": "smart",
+      "xwayland": "enable",
+      "font": ""
+    },
+    "niri": {
+      "alwaysCenterSingleColumn": true,
+      "defaultColumnDisplay": "tabbed",
+      "animationSlowdown": 60,
+      "preferNoCsd": true,
+      "centerFocusedColumn": "never",
+      "emptyWorkspaceAboveFirst": false,
+      "hotCorner": false,
+      "overviewZoom": 50,
+      "animations": true,
+      "skipHotkeyOverlay": true,
+      "primaryClipboard": true,
+      "xwayland": true
+    }
+  },
+  "WindowBehaviour": {
+    "followMouse": true,
+    "focusOnActivate": true,
+    "workspaceBackAndForth": false,
+    "cursorHideTimeout": 0,
+    "hideCursorOnKeyPress": false,
+    "noWarps": false
+  },
+  "Idle": {
+    "enabled": true
+  },
+  "Polkit": {
+    "enabled": true
+  }
+}

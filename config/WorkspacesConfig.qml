@@ -55,14 +55,6 @@ QtObject {
         }));
   })).filter((strip, i, all) => all.findIndex(other => other.monitor === strip.monitor) === i)
   readonly property bool hasStrips: strips.length > 0
-  // The strips and their settings as a string, for CompositorConfigManager's
-  // change check
-  readonly property string _stripsJson: JSON.stringify([strips, stripOptions])
-  // The strip settings Hyprland takes (HyprLua.stripsLua)
-  readonly property var stripOptions: ({
-      "stripColumnWidth": _c.stripColumnWidth,
-      "stripFollowFocus": _c.stripFollowFocus
-    })
 
   // Columns for n workspaces: one row up to 5, else the narrowest column
   // count at least as wide as tall that divides n evenly (10 → 5 × 2), as

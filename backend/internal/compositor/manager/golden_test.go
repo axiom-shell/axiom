@@ -14,6 +14,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
@@ -51,21 +52,30 @@ func repo(t *testing.T) (*render.Tables, any) {
 	return repoTables, repoSchema
 }
 
-// goldenInputs are testdata/inputs.json (what a shell sent, its machine's
-// paths and names made generic) for kind
+// goldenInputs are what the layer is made of for kind: testdata/config.json
+// (a config's sections the layer reads) with testdata/facts.json (what a
+// shell sent as compositor.inputs, its machine's paths and names made
+// generic), decoded as the daemon decodes them
 func goldenInputs(t *testing.T, kind string) Inputs {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("testdata", "inputs.json"))
+	data, err := os.ReadFile(filepath.Join("testdata", "facts.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	v, err := jsonx.Unmarshal(data)
+	var f Facts
+	if err := rpc.DecodeStrict(data, &f); err != nil {
+		t.Fatalf("compositor.inputs doesn't decode the shell's facts: %v", err)
+	}
+	f.Kind = kind
+	data, err = os.ReadFile(filepath.Join("testdata", "config.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	in := v.(*jsonx.Object)
-	in.Set("kind", kind)
-	return Inputs{in}
+	cfg, err := jsonx.Unmarshal(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return buildInputs(cfg.(*jsonx.Object), &f)
 }
 
 // goldenWriter is kind's writer in a home that doesn't exist, with no

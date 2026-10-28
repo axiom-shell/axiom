@@ -1,0 +1,92 @@
+{
+  "kind": "sway",
+  "supports": {
+    "configModes": true,
+    "keybinds": true,
+    "monitors": true,
+    "switcher": true,
+    "windowGeometry": true,
+    "outputCapture": true,
+    "layerFrameSync": true,
+    "windowBorders": true,
+    "windowShape": true,
+    "windowGaps": true,
+    "inputConfig": true,
+    "keyCapture": true,
+    "modifierTap": true,
+    "bindMerge": true,
+    "scratchpad": true,
+    "namedSpecial": true,
+    "mouseBinds": true,
+    "splitToggle": true,
+    "pin": true,
+    "windowOpacity": true,
+    "windowRounding": true,
+    "windowBlur": true,
+    "blur": true,
+    "windowShadow": true,
+    "windowDim": true
+  },
+  "fx": true,
+  "ctx": {
+    "axiomPath": "/home/user/.config/quickshell/axiom",
+    "axiomBin": "/home/user/.local/bin/axiom",
+    "shellCommand": "'/home/user/.local/bin/axiom'",
+    "restartCommand": "'/home/user/.local/bin/axiom' restart",
+    "terminal": "kitty",
+    "fileManager": "nemo",
+    "browser": "flatpak run app.zen_browser.zen"
+  },
+  "startPattern": "(^|[\\s'\"/])axiom['\"]? +run\\b",
+  "primaryMonitor": "DP-1",
+  "outputRules": [
+    {
+      "output": "desc:Example Display 0001",
+      "label": "DP-1",
+      "mode": "3440x1440@240",
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "transform": 0,
+      "disabled": false,
+      "mirror": "",
+      "vrr": 0,
+      "bitdepth": 8,
+      "cm": "srgb",
+      "sdrBrightness": 1,
+      "sdrSaturation": 1
+    }
+  ],
+  "look": {
+    "activeHex": "9ccfd8",
+    "inactiveHex": "403d52",
+    "borderWidth": 2,
+    "radius": 26,
+    "shadow": {
+      "size": 24,
+      "color": "ffffff",
+      "alpha": 1,
+      "offset": 0,
+      "soft": true,
+      "strength": 0.9
+    }
+  },
+  "blur": {
+    "saved": true,
+    "now": true,
+    "throughWindows": true,
+    "backdrops": true,
+    "threshold": 0.5
+  },
+  "xcursor": "axiom-cursor-Oxygen_White",
+  "colors": {
+    "base00": "191724"
+  },
+  "motion": {
+    "fast": 100,
+    "normal": 150,
+    "slow": 300,
+    "enabled": true
+  },
+  "previews": []
+}

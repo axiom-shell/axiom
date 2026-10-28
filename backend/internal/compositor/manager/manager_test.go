@@ -114,6 +114,7 @@ type harness struct {
 	m      *Manager
 	w      *fakeWriter
 	mode   string
+	config *jsonx.Object // under modeMu
 	modeMu sync.Mutex
 	pushes chan string
 }
@@ -121,7 +122,7 @@ type harness struct {
 func newHarness(t *testing.T, mode string) *harness {
 	t.Helper()
 	dir := t.TempDir()
-	h := &harness{t: t, mode: mode, pushes: make(chan string, 64)}
+	h := &harness{t: t, mode: mode, config: jsonx.NewObject(), pushes: make(chan string, 64)}
 	env := map[string]string{"HYPRLAND_INSTANCE_SIGNATURE": "test", "XDG_RUNTIME_DIR": dir}
 	h.m = New(Options{
 		Getenv:      func(k string) string { return env[k] },
@@ -132,6 +133,11 @@ func newHarness(t *testing.T, mode string) *harness {
 			h.modeMu.Lock()
 			defer h.modeMu.Unlock()
 			return h.mode
+		},
+		Config: func() *jsonx.Object {
+			h.modeMu.Lock()
+			defer h.modeMu.Unlock()
+			return h.config
 		},
 		Binds:       func() any { return jsonx.Arr() },
 		CommitBinds: func(*jsonx.Array) error { return nil },
@@ -162,12 +168,14 @@ func newHarness(t *testing.T, mode string) *harness {
 	return h
 }
 
-// inputs sends the shell's inputs, the specs tagged (what the fake writes)
+// inputs sets what the layer is made of, the specs tagged (what the fake
+// writes)
 func (h *harness) inputs(fileTag, liveTag, layerKey string, parts ...string) {
 	look := jsonx.Obj("parts", strs(parts))
-	h.m.SetInputs(jsonx.Obj("kind", "hyprland", "layerKey", layerKey, "liveKey", liveTag,
+	in := Inputs{jsonx.Obj("kind", "hyprland", "layerKey", layerKey, "liveKey", liveTag,
 		"supports", jsonx.Obj("windowBorders", true, "windowGaps", true),
-		"specFile", jsonx.Obj("tag", fileTag, "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look)))
+		"specFile", jsonx.Obj("tag", fileTag, "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look))}
+	h.m.enqueue(func(context.Context) { h.m.setInputs(in) })
 }
 
 // setMode changes the mode as the shell's save does
@@ -277,6 +285,33 @@ func TestIncludedWritesTheModule(t *testing.T) {
 	// A layer change rewrites it
 	h.inputs("f2", "l1", "k2")
 	h.eventually("rewritten", func() bool { return readFile(path) == "-- module f2\n" })
+}
+
+// The layer follows the config: a save the shell sent no facts for (a
+// bind's) still reaches what the layer is made of
+func TestTheLayerFollowsTheConfig(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "detached")
+	setBinds := func(ids ...string) {
+		binds := jsonx.Arr()
+		for _, id := range ids {
+			binds.Append(jsonx.Obj("id", id))
+		}
+		h.modeMu.Lock()
+		h.config = jsonx.Obj("Keybinds", jsonx.Obj("binds", binds))
+		h.modeMu.Unlock()
+	}
+	complete := func(want string) func() bool {
+		return func() bool {
+			return string(jsonx.MarshalCompact(h.m.State(context.Background()).Value("complete"))) == want
+		}
+	}
+	setBinds("a")
+	h.m.SetFacts(Facts{Kind: "hyprland"})
+	h.eventually("the config's binds", complete(`[{"id":"a"}]`))
+	setBinds("a", "b")
+	h.m.ConfigChanged(false)
+	h.eventually("the saved binds", complete(`[{"id":"a"},{"id":"b"}]`))
 }
 
 func TestARefusedTextIsntWritten(t *testing.T) {

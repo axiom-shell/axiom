@@ -16,12 +16,12 @@ import qs.services.ui
  * CompositorConfig.mode): the axiom daemon does it (backend/internal/
  * compositor/manager, docs/dev/compositor/config-modes.md), writing the
  * compositor's config, taking it over and giving it back, moving the
- * user's binds in and applying the runtime layer. This sends it what the
- * layer is made of, as the shell's readers resolve it (compositor.inputs:
- * the binds, the window look and input, monitors, strips, the session,
- * theme colors), and shows what it pushes back (compositor.state): the
- * status, the problem, the takeover, the merge. Notifications are sent
- * from here, translated.
+ * user's binds in and applying the runtime layer, made of the config and
+ * what only the shell knows, which this sends it (compositor.inputs: the
+ * capabilities, paths, the look as the theme resolves it, the cursor, the
+ * monitors connected, unsaved edits), and shows what it pushes back
+ * (compositor.state): the status, the problem, the takeover, the merge.
+ * Notifications are sent from here, translated.
  */
 Singleton {
   id: root
@@ -103,53 +103,17 @@ Singleton {
   readonly property var autostartTarget: _files.autostartTarget ?? null
 
   // Whether a configured bind (one of KeybindsConfig.activeBinds) has
-  // everything it needs to be bound, as the daemon says for the binds sent
+  // everything it needs to be bound, as the daemon says
   function isComplete(bind) {
     return root._complete[JSON.stringify(bind)] === true;
   }
 
   property var _complete: ({})
-  property var _sentBinds: []
 
-  // --- What the layer is made of (compositor.inputs) ---
-
-  // Whether axiom's surfaces blur: as saved for a file, and at runtime as
-  // now (BlurManager.active, paused over a fullscreen window)
-  function _surfacesBlur(forFile) {
-    return forFile === true ? Appearance.blur : BlurManager.active;
-  }
-
-  // The window look and the input that are on, for a file (`forFile`) or
-  // for now: { look (CompositorLayer.look), surfaces ({ blur,
-  // throughWindows, backdrops, threshold }), input (CompositorLayer.input) }
-  function spec(forFile) {
-    const surfacesBlur = _surfacesBlur(forFile);
-    return {
-      "look": CompositorLayer.look(WindowLookConfig.look, {
-        "activeHex": CompositorLayer.hex(WindowLookConfig.activeBorder),
-        "inactiveHex": CompositorLayer.hex(WindowLookConfig.inactiveBorder),
-        "borderWidth": WindowLookConfig.borderWidth,
-        "radius": WindowLookConfig.radius,
-        "surfacesBlur": surfacesBlur,
-        "shadow": WindowLookConfig.shadowOn ? {
-          "size": WindowLookConfig.shadowSize,
-          "color": WindowLookConfig.shadowThemed ? CompositorLayer.hex(WindowLookConfig.shadowColor) : "",
-          "alpha": WindowLookConfig.shadowAlpha,
-          // Spread evenly, as axiom's own
-          "offset": 0,
-          "soft": WindowLookConfig.shadowSoft,
-          "strength": WindowLookConfig.shadowStrength
-        } : null
-      }),
-      "surfaces": {
-        "blur": surfacesBlur,
-        "throughWindows": Appearance.blurThroughWindows,
-        "backdrops": Appearance.blurBackdrops,
-        "threshold": Appearance.blurThreshold
-      },
-      "input": CompositorLayer.input(InputConfig.input, CursorThemeManager.xcursorTheme)
-    };
-  }
+  // --- What only the shell knows of the layer (compositor.inputs) ---
+  // The daemon reads the rest (binds, profiles, strips, the look's and
+  // input's settings, the session, the options) from the config, with the
+  // unsaved edits of those sections the shell sends
 
   // The saved monitor profile for what's connected (MonitorLayout.
   // matchProfile, as MonitorManager applies it), for a compositor whose
@@ -164,13 +128,29 @@ Singleton {
     return index < 0 ? [] : profiles[index].outputs.filter(rule => MonitorLayout.find(rule.output, outputs) !== null);
   }
 
-  // The managed Hyprland options with the shared ones
-  // reads: Compositor.hyprland.*, WindowBehaviour.*
-  readonly property var _managed: Object.assign({}, HyprlandConfig.managed, WindowBehaviourConfig.behaviour)
+  // The window look's values the theme and the Appearance settings resolve
+  // (CompositorLayer.look's opts, but surfacesBlur)
+  readonly property var _look: ({
+      "activeHex": CompositorLayer.hex(WindowLookConfig.activeBorder),
+      "inactiveHex": CompositorLayer.hex(WindowLookConfig.inactiveBorder),
+      "borderWidth": WindowLookConfig.borderWidth,
+      "radius": WindowLookConfig.radius,
+      "shadow": WindowLookConfig.shadowOn ? {
+        "size": WindowLookConfig.shadowSize,
+        "color": WindowLookConfig.shadowThemed ? CompositorLayer.hex(WindowLookConfig.shadowColor) : "",
+        "alpha": WindowLookConfig.shadowAlpha,
+        // Spread evenly, as axiom's own
+        "offset": 0,
+        "soft": WindowLookConfig.shadowSoft,
+        "strength": WindowLookConfig.shadowStrength
+      } : null
+    })
 
-  // The theme colors the managed options name, as "rrggbb" (every string
-  // is tried: one that isn't a color, a curve's name, is left out)
-  function _colors(values) {
+  // The theme colors the managed Hyprland options (with the shared ones)
+  // name, as "rrggbb" (every string is tried: one that isn't a color, a
+  // curve's name, is left out)
+  // reads: Compositor.hyprland.*, WindowBehaviour.*
+  readonly property var _colors: {
     const out = {};
     const walk = v => {
       if (typeof v === "string") {
@@ -181,30 +161,21 @@ Singleton {
         for (const key in v)
           walk(v[key]);
     };
-    walk(values);
+    walk([HyprlandConfig.managed, WindowBehaviourConfig.behaviour]);
     return out;
   }
 
-  // Everything the layer is made of but the look, the input and the blur;
-  // a change re-applies it (in the file modes, rewriting the file, which
-  // reloads the compositor)
-  readonly property string _layerKey: [mode, KeybindsConfig._bindsJson, MonitorsConfig._profilesJson, SessionConfig._sessionJson, ThemeIntegrations.qt, WorkspacesConfig._stripsJson, CompositorConfig.requiredSettings, HyprlandConfig._managedJson, WindowBehaviourConfig._behaviourJson, SwayConfig._optionsJson, NiriConfig._optionsJson, Theme.baseColorNames.map(name => Theme.resolveColor(name)).join(","), Appearance.animFast, Appearance.animations, Apps.terminalCommand, Apps.fileManagerCommand, Apps.browserCommand, Idle.enabled, PolkitConfig.enabled, JSON.stringify(_outputRules)].join("|")
+  // The sections the layer is made of: their unsaved edits (ConfigManager.
+  // previews) show in the compositor too
+  readonly property var _layerSections: ["Keybinds", "Monitors", "Workspaces", "WindowLook", "Input", "Session", "ThemeIntegrations", "Compositor", "WindowBehaviour", "Idle", "Polkit"]
 
-  // The window look, the input and the blur behind axiom (paused over a
-  // fullscreen window too): only evaluated at runtime as they change, in
-  // every mode (a reload on every step of a setting stalls the desktop)
-  readonly property string _liveKey: [WindowLookConfig._lookJson, InputConfig._inputJson, CursorThemeManager.xcursorTheme, Appearance.blur, BlurManager.active, Appearance.blurBackdrops, Appearance.blurThroughWindows, WindowLookConfig.activeBorder, WindowLookConfig.inactiveBorder, WindowLookConfig.radius, WindowLookConfig.borderWidth, WindowLookConfig.shadowOn, WindowLookConfig.shadowSize, WindowLookConfig.shadowColor, WindowLookConfig.shadowAlpha, WindowLookConfig.shadowStrength].join("|")
-
-  function _inputs() {
-    const live = root.spec(false);
-    // sway sets the look a window at a time as windows open (SwayManager)
-    if (CompositorManager.backend.setLiveLook)
-      CompositorManager.backend.setLiveLook(live.look);
+  function _facts() {
+    const previews = ConfigManager.previews;
+    const layer = Object.keys(previews).filter(path => root._layerSections.includes(path.split(".")[0]));
     return {
       "kind": CompositorManager.kind,
       "supports": CompositorManager.supports,
       "fx": CompositorManager.backend.fx === true,
-      "binds": KeybindsConfig.activeBinds,
       "ctx": {
         "axiomPath": Paths.axiomPath.replace(/\/$/, ""),
         "axiomBin": Paths.axiomBin,
@@ -215,21 +186,20 @@ Singleton {
         "browser": Apps.browserCommand
       },
       "startPattern": Paths.startPattern,
-      "requiredSettings": CompositorConfig.requiredSettings,
-      "specFile": root.spec(true),
-      "specLive": live,
-      "profiles": MonitorsConfig.profiles,
-      "strips": WorkspacesConfig.strips,
-      "stripOptions": WorkspacesConfig.stripOptions,
-      "stripsKey": WorkspacesConfig._stripsJson,
+      "primaryMonitor": General.primaryMonitor,
       "outputRules": root._outputRules,
-      "session": SessionConfig.session,
-      "qt": ThemeIntegrations.qt,
-      "managed": root._managed,
-      "behaviour": WindowBehaviourConfig.behaviour,
-      "swayOptions": SwayConfig.options,
-      "niriOptions": NiriConfig.options,
-      "colors": root._colors(root._managed),
+      "look": root._look,
+      // Whether axiom's surfaces blur: as saved (for a file), and now
+      // (BlurManager.active, paused over a fullscreen window)
+      "blur": {
+        "saved": Appearance.blur,
+        "now": BlurManager.active,
+        "throughWindows": Appearance.blurThroughWindows,
+        "backdrops": Appearance.blurBackdrops,
+        "threshold": Appearance.blurThreshold
+      },
+      "xcursor": CursorThemeManager.xcursorTheme,
+      "colors": root._colors,
       // The shell's motion (Look & Feel → Motion), for the managed
       // animations
       "motion": {
@@ -238,29 +208,41 @@ Singleton {
         "slow": Appearance.animSlow,
         "enabled": Appearance.animations
       },
-      "idle": Idle.enabled,
-      "polkit": PolkitConfig.enabled,
-      "layerKey": root._layerKey,
-      "liveKey": root._liveKey
+      "previews": ConfigOps.previewOps(layer.reduce((out, path) => Object.assign(out, {
+          [path]: previews[path]
+        }), {}))
     };
   }
 
+  // The facts as they are now: a change sends them (soon)
+  readonly property string _factsText: live ? JSON.stringify(_facts()) : ""
   // What was last sent, to send only a change
   property string _sent: ""
+
+  // The window look now, for a backend that sets it a window at a time as
+  // windows open (sway: SwayManager.setLiveLook). Its own key: a saved
+  // WindowLook change no fact names (an edit of config.json, a restored
+  // config) changes it too
+  readonly property string _liveLookText: live && CompositorManager.backend.setLiveLook ? JSON.stringify(CompositorLayer.look(WindowLookConfig.look, Object.assign({
+    "surfacesBlur": BlurManager.active
+  }, _look))) : ""
+  property string _sentLook: ""
 
   function _send() {
     if (!root.live)
       return;
-    const inputs = root._inputs();
-    const text = JSON.stringify(inputs);
-    if (text === root._sent)
+    if (root._liveLookText !== root._sentLook) {
+      root._sentLook = root._liveLookText;
+      if (root._sentLook)
+        CompositorManager.backend.setLiveLook(JSON.parse(root._sentLook));
+    }
+    if (root._factsText === root._sent)
       return;
-    root._sent = text;
-    root._sentBinds = inputs.binds;
-    // rpc: unchecked (the whole layer, built by _inputs(); the daemon takes it as a JSON tree)
-    BackendManager.call("compositor.inputs", inputs, err => {
+    root._sent = root._factsText;
+    // rpc: unchecked (the facts, built by _facts() and sent as they change; the daemon decodes them strictly)
+    BackendManager.call("compositor.inputs", JSON.parse(root._sent), err => {
       if (err)
-        console.warn("[CompositorConfigManager] The daemon didn't take the layer:", err.message);
+        console.warn("[CompositorConfigManager] The daemon didn't take the layer's facts:", err.message);
     });
   }
 
@@ -269,12 +251,11 @@ Singleton {
     onTriggered: root._send()
   }
 
-  on_LayerKeyChanged: _sendSoon.restart()
-  on_LiveKeyChanged: _sendSoon.restart()
+  on_FactsTextChanged: _sendSoon.restart()
+  on_LiveLookTextChanged: _sendSoon.restart()
   onLiveChanged: {
     root._sent = "";
-    if (live)
-      _sendSoon.restart();
+    root._sentLook = "";
   }
 
   // The state as soon as the daemon is there (niri's user binds and
@@ -293,11 +274,9 @@ Singleton {
 
   function _setState(state) {
     root._state = state ?? {};
+    // The binds the daemon has everything for
     const complete = {};
-    (state?.complete ?? []).forEach((ok, i) => {
-      if (i < root._sentBinds.length)
-        complete[JSON.stringify(root._sentBinds[i])] = ok === true;
-    });
+    (state?.complete ?? []).forEach(bind => complete[JSON.stringify(bind)] = true);
     root._complete = complete;
   }
 
