@@ -172,7 +172,9 @@ Resolved by a stage:
 ### Phase 6: compositor parity
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
-Done: sway and SwayFX (nothing left).
+sway and SwayFX:
+- [Sway's special workspace toggles back to another output's workspace](issues.md#sways-special-workspace-toggles-back-to-another-outputs-workspace)
+- [Switching sway's special workspace kind strands the other kind's windows](issues.md#switching-sways-special-workspace-kind-strands-the-other-kinds-windows)
 
 niri:
 - [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)

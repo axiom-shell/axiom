@@ -210,7 +210,7 @@ func (w *swayWriter) userBinds() *jsonx.Array {
 	w.unread = ""
 	if len(failed) > 0 {
 		w.unread = "can't open " + strings.Join(failed, ", ")
-		w.logf("Can't read your sway config: can't open %s", strings.Join(failed, ", "))
+		w.logf("Can't read your sway config: %s", w.unread)
 	}
 	return render.SwayConfigBinds(text)
 }
