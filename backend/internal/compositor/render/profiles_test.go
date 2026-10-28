@@ -87,6 +87,10 @@ func TestHyprlandRules(t *testing.T) {
 			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
 			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
 		}},
+		{"an output the match names by description gets no second rule by connector", []Output{laptop, {Name: "DP-3", Description: "Dell"}}, []string{
+			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
+		}},
 		{"no profile matches: none", []Output{{Name: "HDMI-A-1"}}, nil},
 	}
 	for _, tt := range tests {
