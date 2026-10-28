@@ -483,8 +483,8 @@ QtObject {
   }
 
   // Sets one setting and saves it straight away, leaving any unsaved edits
-  // on the page alone. False if it's not a setting offered here, or the
-  // save is rejected.
+  // on the page alone. False if it's not a setting offered here, or saves
+  // can't be made (ConfigManager.commit).
   function commitValue(key, value) {
     const entry = settingFor(key);
     if (!entry)
@@ -498,7 +498,7 @@ QtObject {
   }
 
   // Sets config values by dotted path ({ "Apps.terminal": "foot" }) and
-  // saves them at once; false if the result doesn't validate. For pages
+  // saves them at once; false if saves can't be made. For pages
   // that apply as they go (SettingRows), not the settings page's draft.
   function commitValues(values) {
     const next = Utils.clone(ConfigManager.config);
@@ -547,7 +547,7 @@ QtObject {
     return paths.some(path => schemaAt(path)?.["x-takeover"] === true);
   }
 
-  // Stays dirty if the save is rejected (invalid, or saves are blocked)
+  // Stays dirty if saves can't be made (savesBlocked)
   function saveChanges() {
     // Diffed now, not `changedPaths`: Save first commits typed text, an
     // edit in place that `changedPaths` sees only next tick

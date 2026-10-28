@@ -2,8 +2,10 @@ pragma Singleton
 import QtQuick
 
 /**
- * JSON-schema helpers for the config: validation and filling in defaults
- * (pruning and loading are the axiom binary's). Every entry point takes the root schema, which is
+ * JSON-schema helpers for the config: filling in defaults (for new entries
+ * and previews; pruning, loading and validating saves are the axiom
+ * binary's), and validation, which only the shared fixtures still use as
+ * the binary's reference (tests/Shared.qml). Every entry point takes the root schema, which is
  * used to resolve `#/definitions/...` refs, so this has no dependency on
  * ConfigManager (which lets ConfigManager load eagerly at startup).
  */
@@ -18,16 +20,6 @@ QtObject {
   readonly property var _ctx: ({
       root: {}
     })
-
-  function validateAgainstSchema(value, schema, path = '') {
-    const errors = validationErrors(value, schema, path);
-    if (errors.length > 0) {
-      console.error("Validation Failed with errors:");
-      errors.forEach(err => console.error("  - " + err));
-      return false;
-    }
-    return true;
-  }
 
   // Every reason `value` fails `schema` (empty when it's valid)
   function validationErrors(value, schema, path = '') {

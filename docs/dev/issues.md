@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A save axiom refuses leaves its editor clean, showing the refused value
+- **Where:** `services/core/ConfigManager.qml` (`commit`, `hardResetConfig`), `services/core/ConfigDraft.qml` (`save`), `services/ui/SettingsManager.qml` (`saveChanges`)
+- **What:** Since row 12's one validator, `commit` returns true for any save it can send: an invalid one is applied to the running config at once (readers see the invalid value until axiom answers), then refused, logged (`axiom refused the config`) and read back. The draft that saved it has already reloaded (`saved` = the refused value), so the editor shows that value as saved and clean while the running config has the old one, and Save can't retry; the next `loadIfStale` drops it. Before, the shell's own check kept the draft dirty and changed nothing. Rare: forms, `parseValue` and generated ids keep saves valid, so a refusal means a bug. A fix would have the refusal reach the drafts (a `ConfigManager` signal after the read-back, each draft setting `saved` from the config again so its edits show dirty), or keep commit's result until axiom answers. Undecided whether that is worth the mechanism.
+- **Size:** small
+- **Found:** 2026-10-28, while reviewing row 12's one validator (backend stage 7)
+
 ### A protocol bump in dev mode leaves the installed CLI on the old protocol
 - **Where:** `backend/cmd/axiom`, `config/json/backend.json` (`protocol`)
 - **What:** In dev mode a Go change rebuilds and re-execs the live daemon (into `~/.local/state/axiom/dev/axiom`), but the installed `~/.local/bin/axiom` stays as it was. After a change that bumps `protocol`, every `axiom ipc` call (keybinds, scripts) fails with `this axiom speaks protocol 5, the client 4` until the user rebuilds it by hand (`go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`). Dev mode's rebuild could rebuild the CLI too, or the CLI could run the dev binary when the daemon says it's newer.

@@ -9,11 +9,11 @@ import qs.components.methods
  * it. axiom owns config.json: it loads it (converting older files),
  * normalizes it and writes it. The shell reads the snapshot axiom wrote for
  * its start ($AXIOM_CONFIG) and the pushes after (config.changed); a write
- * is checked here against the schema, applied at once and sent, and
- * axiom's answer stands. The greeter runs on the snapshot `axiom greeter`
- * made from the exported bundle, and writes nothing. Without axiom (qs
- * started by hand) there is no config: the shell shows only a notice
- * (shell.qml, `available`). docs/dev/core/config-manager.md */
+ * is applied at once and sent, and axiom's answer stands (it validates).
+ * The greeter runs on the snapshot `axiom greeter` made from the exported
+ * bundle, and writes nothing. Without axiom (qs started by hand) there is
+ * no config: the shell shows only a notice (shell.qml, `available`).
+ * docs/dev/core/config-manager.md */
 QtObject {
   id: root
 
@@ -130,19 +130,16 @@ QtObject {
   }
 
   // Replaces the running config with `object` (defaults filled) and saves
-  // what differs from it (config.set's ops); false and no change if it
-  // doesn't validate. axiom keeps the `x-takeover` settings as it has them
-  // unless `takeover`: only a save from a takeover setting's own control
-  // sends it (SettingsManager._takesOver), so a save made from a config
-  // that predates a takeover write axiom made can't put the stale value back
+  // what differs from it (config.set's ops); false and no change while
+  // saves can't be made. axiom validates: a refusal reads its config back.
+  // axiom keeps the `x-takeover` settings as it has them unless
+  // `takeover`: only a save from a takeover setting's own control sends it
+  // (SettingsManager._takesOver), so a save made from a config that
+  // predates a takeover write axiom made can't put the stale value back
   function commit(object, takeover = false) {
     if (!_maySave())
       return false;
     const filled = SchemaValidation.applyDefaults(Utils.clone(object), root._configSchema);
-    if (!SchemaValidation.validateAgainstSchema(filled, root._configSchema)) {
-      console.error("[ConfigManager] Rejected config: it does not validate against the schema.");
-      return false;
-    }
     const ops = ConfigOps.diff(root._config, filled);
     if (ops.length === 0)
       return true;
