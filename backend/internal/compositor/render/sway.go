@@ -388,8 +388,9 @@ func (t *Tables) SwayBindEntries(binds, ctx any) *jsonx.Array {
 }
 
 // SwayUnbindLines is SwayConf.unbindLines: the commands taking binds' lines
-// back out.
-func (t *Tables) SwayUnbindLines(binds, ctx any) []string {
+// back out, the floating modifier put back to the user's own (entries are
+// SwayConfigBinds') or sway's default.
+func (t *Tables) SwayUnbindLines(binds, ctx, entries any) []string {
 	out := []string{}
 	for _, b := range items(binds) {
 		k := SwayKeyOf(get(b, "key"))
@@ -400,6 +401,16 @@ func (t *Tables) SwayUnbindLines(binds, ctx any) []string {
 	}
 	for _, p := range t.swayKeptPresses(binds, ctx) {
 		out = append(out, "un"+p)
+	}
+	if SwayFloatingModifier(binds) != "" {
+		restore := "floating_modifier none"
+		for _, e := range items(entries) {
+			if d := str(get(e, "description")); strings.HasPrefix(d, "floating_modifier ") {
+				restore = d
+				break
+			}
+		}
+		out = append(out, restore)
 	}
 	return out
 }
@@ -783,6 +794,7 @@ var (
 		"button5": "mouse_down", "button6": "mouse_left", "button7": "mouse_right", "btn_left": "mouse:272",
 		"btn_right": "mouse:273", "btn_middle": "mouse:274", "btn_side": "mouse:275", "btn_extra": "mouse:276"}
 
+	swayFloatingLine = regexp.MustCompile(`^floating_modifier\s+(\S+)(?:\s+(?:normal|inverse))?$`)
 	swaySet          = regexp.MustCompile(`^set\s+(\$\S+)\s+(.*)$`)
 	swayModeQuoted   = regexp.MustCompile(`^mode\s+(?:--pango_markup\s+)?"(.+?)"\s*\{$`)
 	swayModeBare     = regexp.MustCompile(`^mode\s+(?:--pango_markup\s+)?(.+?)\s*\{$`)
@@ -868,6 +880,16 @@ func SwayConfigBinds(text any) *jsonx.Array {
 					break
 				}
 			}
+		}
+		// The user's floating modifier holds its mouse buttons, so axiom's
+		// drag and resize binds on them count as taken
+		if m := swayFloatingLine.FindStringSubmatch(target); m != nil && submap == "" {
+			for _, button := range []string{"button1", "button3"} {
+				if e := swayEntry("bindsym", m[1]+"+"+button, target, ""); e != nil {
+					out.Append(e)
+				}
+			}
+			continue
 		}
 		bind := swayBindLine.FindStringSubmatch(target)
 		if bind == nil {

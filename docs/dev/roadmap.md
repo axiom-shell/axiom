@@ -174,7 +174,6 @@ Every feature works the same under each compositor, or says why not. It follows 
 
 sway and SwayFX:
 - [Sway's special workspaces are floating scratchpad windows](issues.md#sways-special-workspaces-are-floating-scratchpad-windows)
-- [Detached sway keeps the floating modifier after the mouse binds go](issues.md#detached-sway-keeps-the-floating-modifier-after-the-mouse-binds-go)
 - [`noWarps` off maps to sway's `mouse_warping output`](issues.md#nowarps-off-maps-to-sways-mouse_warping-output)
 - [An unreadable sway config file still binds axiom's keys silently](issues.md#an-unreadable-sway-config-file-still-binds-axioms-keys-silently)
 

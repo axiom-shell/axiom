@@ -328,12 +328,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-16, while auditing the sway branch
 
-### Detached sway keeps the floating modifier after the mouse binds go
-- **Where:** `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/render/sway.go` (`SwayUnbindLines`, `SwayFloatingModifier`)
-- **What:** The runtime layer sends `floating_modifier` for the drag/resize binds but its unbind commands don't take it back, so removing them in detached mode leaves sway's floating modifier set until sway reloads. It also overrides a `floating_modifier` of the user's own config, which `render.RuntimeBinds` doesn't see as a taken key.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch
-
 ### `noWarps` off maps to sway's `mouse_warping output`
 - **Where:** `config/schema/sections/WindowBehaviour.yaml` (`noWarps`, `x-compositor.sway.map`)
 - **What:** Hyprland with `cursor.no_warps` off moves the cursor to a window focused by keybind; sway's `mouse_warping output` only moves it when focus changes output (`container` would match Hyprland). Decide which sway value matches what the setting promises.
