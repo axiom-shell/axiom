@@ -1,6 +1,6 @@
 # Monitors (profiles and the Monitors page)
 
-> **Files:** `services/compositor/MonitorManager.qml`, `config/MonitorsConfig.qml`, `components/views/Monitors/Monitors.qml`, `components/views/Monitors/` (`MonitorCanvas`, `MonitorInspector`), `components/methods/MonitorLayout.qml`, `backend/internal/compositor/render/hyprlua.go`, `backend/internal/compositor/manager/outputs.go`, `shell/MonitorPrompt.qml`, `components/surfaces/monitors/MonitorPromptWindow.qml`
+> **Files:** `services/compositor/MonitorManager.qml`, `config/MonitorsConfig.qml`, `components/views/Monitors/Monitors.qml`, `components/views/Monitors/` (`MonitorCanvas`, `MonitorInspector`), `components/methods/MonitorLayout.qml`, `backend/internal/compositor/render/hyprlua.go`, `backend/internal/compositor/manager/outputs.go`, `backend/internal/compositor/render/profiles.go`, `shell/MonitorPrompt.qml`, `components/surfaces/monitors/MonitorPromptWindow.qml`
 > **Config:** `Monitors.items`, `General.primaryMonitor`
 > **Related:** [Config modes](config-modes.md), [Onboarding](../features/onboarding.md) (`useWholeScale`), [Shell targeting](../core/shell-manager-targeting.md)
 
@@ -53,9 +53,12 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - A profile for monitors that aren't connected only saves.
 
 ### How profiles reach Hyprland
-- The daemon switches, as on sway and niri: `manager.Manager`'s profile switch (`profileSwitch`, `manager/outputs.go`) hears each change of its outputs (`outputs.Tracker`), reads `monitors all` (`ipc.Hypr.Outputs`), picks with `render.MatchProfile` and evals the profile's `hl.monitor` calls (`render.SavedRules`, `render.MonitorCalls`; once per set of outputs and rules), in every mode.
+- The daemon switches, as on sway and niri: `manager.Manager`'s profile switch (`profileSwitch`, `manager/outputs.go`) hears each change of its outputs (`outputs.Tracker`), reads `monitors all` (`ipc.Hypr.Outputs`) at once (no settling delay, unlike sway and niri), picks with `render.MatchProfile` and evals the rules as `hl.monitor` calls (`render.MonitorCalls`; once per set of outputs and rules), in every mode.
+- **One modeset where the profiles agree.** Hyprland lays a monitor plugged in out itself before the daemon's switch lands. So the rules are `render.HyprlandRules`: the matched profile's (`render.SavedRules`), plus, for each monitor a profile names that isn't connected, the rule every profile naming it agrees on (an external monitor always set the same way). Hyprland lays such a monitor out by that rule, and the switch then changes nothing. A monitor the profiles set differently gets no rule: Hyprland's own layout, then the switch's, two modesets (the cost the decision accepts).
+  - Writing a disabled rule for every monitor no profile names (so nothing new lights before the daemon picks) was weighed and not taken: `render.MatchProfile` counts only enabled outputs, so a monitor held dark would never pick the profile naming it, and one no profile names, alone at login, would leave Hyprland with no monitor on.
 - **Included / managed:** `M.monitors()` in the module (or the managed config) holds only those calls (`buildInputs`' `outputRules`), rewritten on each switch, so a Hyprland reload keeps the profile. Until the daemon has read the outputs, the file keeps the calls it has (`render.HyprFileMonitorCalls`).
-- **Detached:** nothing is written; the switch's eval is the only copy, applied again after a reload (which drops it).
+- **Detached:** nothing is written. The switch still runs on every hotplug, and its eval is the only copy: Hyprland keeps the evaluated rules, the agreed ones for monitors not connected too, until a reload drops them, after which the switch evaluates them again. So detached mode modesets once where the profiles agree as well.
+- **Included:** the user's own `hl.monitor` lines after the module win over its rules (their doing, as decided).
 - Without axiom running, Hyprland keeps the layout last written and switches no more (decided: the user's doing).
 - **Greeter:** the greeter's axiom runs the same watch for the greeter's lifetime (`greeterProfiles`).
 
@@ -65,5 +68,5 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 
 ### Testing
 - Never Keep a layout while testing. (Rule: AGENTS.md › Never, while testing.)
-- Test the profile picker through `render`'s `TestProfiles` and the switch through `manager`'s `TestHotplugsApplyTheSavedProfile`.
+- Test the profile picker through `render`'s `TestProfiles` (and Hyprland's rules, `TestHyprlandRules`) and the switch through `manager`'s `TestHotplugsApplyTheSavedProfile`.
 - Use only harmless evals: re-applying the current settings, or moving a lone monitor's origin and back.

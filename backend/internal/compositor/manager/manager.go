@@ -120,7 +120,8 @@ type Manager struct {
 	pushed          string
 
 	// profiles: the saved monitor profile for what's connected, read
-	// again hotplugDelay after the daemon's outputs change
+	// again hotplugDelay after the daemon's outputs change (at once on
+	// Hyprland, which lays a new monitor out itself meanwhile)
 	profiles     *profileSwitch
 	hotplugDelay time.Duration
 
@@ -146,7 +147,8 @@ func New(o Options) *Manager {
 	switch m.kind {
 	case "hyprland":
 		m.w = newHypr(e, ipc.HyprFromEnv(o.Getenv))
-		m.profiles = &profileSwitch{io: Outputs{Hypr: ipc.HyprFromEnv(o.Getenv)}}
+		m.profiles = &profileSwitch{io: Outputs{Hypr: ipc.HyprFromEnv(o.Getenv)}, hyprland: true}
+		m.hotplugDelay = 0
 	case "sway":
 		m.w = newSway(e, ipc.SwayFromEnv(o.Getenv))
 		m.profiles = &profileSwitch{io: Outputs{Sway: ipc.SwayFromEnv(o.Getenv)}}
@@ -371,7 +373,7 @@ func (m *Manager) buildInputs() Inputs {
 
 // OutputsChanged tells of an output connected or gone (the daemon's
 // outputs.Tracker): the saved profile for what's connected is applied
-// once they've settled.
+// once they've settled, at once on Hyprland.
 func (m *Manager) OutputsChanged() {
 	if m.profiles != nil {
 		m.hotplug.Reset(m.hotplugDelay)

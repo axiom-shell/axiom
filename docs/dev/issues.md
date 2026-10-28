@@ -230,6 +230,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-28, while merging the niri screenshot fix (CI on PR #184)
 
+### A self-update test once took the build path for a release
+- **Where:** `backend/internal/daemon/selfupdate_test.go` (`TestReplaceInstalled`)
+- **What:** Locally, `go test -count=1 ./internal/compositor/... ./internal/daemon/` failed once with `selfupdate_test.go:68: rebuilt true from "built", reason ""` in the case `a release's` (the fake release server's binary should have been taken), then passed on a rerun. Likely the release fetch failing or timing out under parallel load, so `replaceInstalled` fell back to building; not reproduced.
+- **Size:** small
+- **Found:** 2026-10-29, while running the Go tests for roadmap row 13
+
 ### A binds test fails with pthread_create failed in CI
 - **Where:** `backend/internal/compositor/binds/isolate_test.go` (`TestIsolatedExtractSurvivesAFileTakingAllMemory`)
 - **What:** CI on PR #124 (which touched no Go) failed with `isolate_test.go:115: got reading the binds: runtime/cgo: pthread_create failed: Resource temporarily unavailable: exit status 2`, then passed on a rerun. The test expects the child to be ended by its memory limit (an error naming `MiB`); this time the child couldn't start a thread (`EAGAIN`, likely the limit or a loaded runner's thread cap reached while the Go runtime was still starting threads) and failed with the cgo error instead. A flaky CI failure blocks an unrelated PR.
@@ -279,12 +285,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The log shows `Binding loop detected for property "textSize"` while a Command output card is on a shown page: in statement mode `body`'s `textSize` comes from `body.height / 5`, and a `Layout.fillHeight` text's height follows its implicit height, which follows the size.
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
-
-### A Hyprland hotplug modesets twice once Go switches
-- **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorCalls`)
-- **What:** With the switch in Go, Hyprland lays a new monitor out itself before the daemon's apply lands, then again. Item 6 of the plan: for each output the matched profile leaves out, the written Lua gives the rule every profile naming it agrees on (else `preferred`/`auto`), and on Hyprland the watch switches on the first change without the debounce. A monitor set differently between profiles still modesets twice, the cost the decision accepts. A table test. Candidate to check first (maintainer, 2026-10-28: "add that to item 6"): write the rule for outputs no profile names as disabled, so Hyprland lights nothing new until the daemon has picked, and no monitor modesets twice; a new monitor then stays dark while axiom isn't running (user error, per the decision). It applies in managed and included mode (in included, the user's own monitor rules can override it: user error too); detached writes no config, so confirm whether the runtime switch still runs there and say what it does.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
 
 ### The Monitors page matches profiles in QML
 - **Where:** `services/compositor/MonitorManager.qml` (`liveProfile`, `_detect`), `components/methods/MonitorLayout.qml` (`matchProfile`), `backend/internal/compositor/manager/manager.go` (`state`)

@@ -101,8 +101,8 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	}
 }
 
-// buildInputs gives sway's and niri's writers the saved profile's rules
-// for the outputs read: nil until they're read (the files keep what they
+// buildInputs gives the writers the saved profile's rules for the outputs
+// read: nil until they're read (the files keep what they
 // say), [] when no profile matches
 func TestBuildInputsOutputRules(t *testing.T) {
 	t.Parallel()
@@ -110,17 +110,21 @@ func TestBuildInputsOutputRules(t *testing.T) {
 	cfg := jsonx.Obj("Monitors", jsonx.Obj("items", items))
 	for _, c := range []struct {
 		name    string
+		kind    string
 		outputs []render.Output
 		want    string
 	}{
-		{"unread", nil, "null"},
-		{"both", []render.Output{mainOut, tvOut}, "[" + deskRule + "," + tvRule + "]"},
-		{"desk", []render.Output{mainOut}, "[" + deskRule + "]"},
-		{"no profile", []render.Output{{Name: "DP-9"}}, `[]`},
+		{"unread", "sway", nil, "null"},
+		{"both", "sway", []render.Output{mainOut, tvOut}, "[" + deskRule + "," + tvRule + "]"},
+		{"desk", "sway", []render.Output{mainOut}, "[" + deskRule + "]"},
+		{"no profile", "sway", []render.Output{{Name: "DP-9"}}, `[]`},
+		// Hyprland's also hold the TV's rule, which every profile naming
+		// it agrees on, for when it's plugged in
+		{"desk on Hyprland", "hyprland", []render.Output{mainOut}, "[" + deskRule + "," + tvRule + "]"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			in := buildInputs(cfg, &Facts{Kind: "sway"}, c.outputs)
+			in := buildInputs(cfg, &Facts{Kind: c.kind}, c.outputs)
 			if got := string(jsonx.MarshalCompact(in.get("outputRules"))); got != c.want {
 				t.Errorf("got %s, want %s", got, c.want)
 			}

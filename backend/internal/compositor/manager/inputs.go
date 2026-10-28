@@ -150,7 +150,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	// The saved profile's rules for what's connected ([] for none)
 	var outputRules any
 	if outputs != nil {
-		outputRules = jsonx.Arr(render.SavedRules(at("Monitors", "items"), outputs)...)
+		outputRules = jsonx.Arr(profileRules(f.Kind == "hyprland", at("Monitors", "items"), outputs)...)
 	}
 	spec := func(forFile bool) *jsonx.Object {
 		surfacesBlur := f.Blur.Now
