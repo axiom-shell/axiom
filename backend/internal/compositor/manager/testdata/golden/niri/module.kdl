@@ -336,7 +336,7 @@ input {
         }
         repeat-rate 50
         repeat-delay 300
-        numlock
+        numlock true
     }
     mouse {
         accel-profile "flat"

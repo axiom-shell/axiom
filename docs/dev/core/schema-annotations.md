@@ -119,7 +119,8 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
   - `skip`: a value written as nothing (sway's own default stays), e.g. `"default"`.
   - `configOnly: true`: sway takes the command only from a config file (`xkb_numlock`): left out of what's sent at runtime.
 - niri (`compositor/render`'s `niri.go`; [niri backend](../compositor/niri-backend.md)):
-  - `value`: `"flag"` (a boolean as the node alone when on, left out when off: niri has no `false` for a flag), `"offFlag"` (the node alone when off, for a setting niri turns off with a flag: `animations.off`, `gestures.hot-corners.off`) or `"float"` (written with a point, where niri wants a float).
+  - A boolean is written both ways (`prefer-no-csd false`), so axiom's off wins over a user's own on.
+  - `value`: `"flag"` (the node alone when on, left out when off, for a flag niri has no off form for: `tap`, `focus-follows-mouse`), `"onOff"` (a child `on` or `off` under the key: `animations`, `xwayland-satellite`), `"not"` (a boolean written negated: `clipboard.disable-primary` for middle-click paste), `"offFlag"` (the node alone when off, left out when on: `gestures.hot-corners.off`, `warp-mouse-to-focus` for `noWarps`) or `"float"` (written with a point, where niri wants a float).
   - `skip`: a value written as nothing (niri's own default stays), e.g. `"default"` or `0`.
 
 - `x-greeter: true` on an `Input` option: the greeter's compositor takes it (`methods/GreeterBundle`). See [Greeter install](../features/greeter-install.md).

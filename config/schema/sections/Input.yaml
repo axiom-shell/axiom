@@ -90,7 +90,7 @@ properties:
         x-compositor:
           hyprland: {key: input.numlock_by_default, if: enabled}
           sway: {key: 'input type:keyboard xkb_numlock {}', value: enabled, configOnly: true, if: enabled}
-          niri: {key: input.keyboard.numlock, value: flag, if: enabled}
+          niri: {key: input.keyboard.numlock, if: enabled}
         x-showIf: {enabled: true}
     x-group: Keyboard
   mouse:

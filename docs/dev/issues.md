@@ -346,12 +346,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
 
-### niri's flags can't be turned off from axiom
-- **Where:** `backend/internal/compositor/render/niri.go` (`niriArgs`), `config/schema/` (`x-compositor.niri.value: flag`)
-- **What:** A niri flag (`tap`, `natural-scroll`, `numlock`, `focus-follows-mouse`) is on by being there and has no `false`; axiom writes one on and leaves it out off. Off in axiom while the user's own config has it on, it stays on. Checked with `niri validate` (26.04, 2026-10-28): `cursor.hide-when-typing`, `hotkey-overlay.skip-at-startup`, `input.keyboard.numlock`, `input.workspace-auto-back-and-forth`, `layout.always-center-single-column`, `layout.empty-workspace-above-first`, `prefer-no-csd` and `clipboard.disable-primary` take `false`; `tap`, `natural-scroll`, `dwt`, `mouse.left-handed`, `focus-follows-mouse`, `warp-mouse-to-focus` and `gestures.hot-corners.off` have no off form; `animations` and `xwayland-satellite` have `on`. Decided (maintainer, #179): "hide flags that can't be adjusted / dont exist / cant be turned off from the UI on niri (via schema annotations). Use false/true on/off where necessary for the others".
-- **Size:** small
-- **Found:** 2026-10-17, while adding the niri backend
-
 ### Two exclusive-focus surfaces at once without a native grab
 - **Where:** `services/compositor/FocusGrab.qml` (`exclusive`), `components/hosts/overlay/OverlayPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`
 - **What:** Without `supports.focusGrab`, every active grab's surface asks for `WlrKeyboardFocus.Exclusive`. With the overlay open (exclusive the whole time) and a popout with a text field opened over it, two surfaces on the Overlay layer ask for exclusive focus. Which one gets the keyboard is up to the compositor. On niri the older one keeps it (found fixing the polkit prompt, c49b429, which now turns `exclusive` off while `SurfaceManager.modalShown`), so there typing into a popout over the overlay goes to the overlay. Sway is unchecked (`scripts/dev/nested.sh sway`). A fix in the same spirit: only the newest active grab is `exclusive`.

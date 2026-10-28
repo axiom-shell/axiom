@@ -32,7 +32,7 @@ properties:
     x-compositor:
       hyprland: {key: binds.workspace_back_and_forth}
       sway: {key: 'workspace_auto_back_and_forth {}', value: yesNo}
-      niri: {key: input.workspace-auto-back-and-forth, value: flag}
+      niri: {key: input.workspace-auto-back-and-forth}
   cursorHideTimeout:
     type: integer
     title: Hide the cursor after
@@ -52,7 +52,7 @@ properties:
     x-compositor:
       hyprland: {key: cursor.hide_on_key_press}
       sway: {key: 'seat * hide_cursor when-typing {}', value: enableDisable}
-      niri: {key: cursor.hide-when-typing, value: flag}
+      niri: {key: cursor.hide-when-typing}
   noWarps:
     type: boolean
     title: Never move the cursor
