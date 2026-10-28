@@ -130,6 +130,10 @@ func (w *hyprWriter) liveLines(in Inputs, spec any) []string {
 	return append(out, w.tables.BlurLua(getAny(spec, "surfaces"))...)
 }
 
+func (w *hyprWriter) blurLines(in Inputs, spec any) []string {
+	return append(render.LookBlurLua(getAny(spec, "look")), w.tables.BlurLua(getAny(spec, "surfaces"))...)
+}
+
 func (w *hyprWriter) validate(context.Context, string) string { return "" }
 
 func (w *hyprWriter) eval(ctx context.Context, lua string) bool {

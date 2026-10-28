@@ -175,15 +175,8 @@ func jsOr(a, b any) any {
 // CompositorLayer.look) as the lines of one hl.config(), plus the rule
 // keeping windows unblurred while only axiom's surfaces blur.
 func LookLua(look, lookSchema any) []string {
-	overrides := jsonx.NewObject()
 	blur := get(look, "blur")
-	if truthy(blur) {
-		overrides.Set("decoration.blur.enabled", jsOr(get(blur, "windows"), get(blur, "surfaces")))
-		if !truthy(get(blur, "windows")) {
-			overrides.Set("decoration.blur.popups", false)
-		}
-	}
-	table := ConfigTable(lookSchema, get(look, "values"), nil, overrides)
+	table := ConfigTable(lookSchema, get(look, "values"), nil, blurOverrides(blur))
 	if b := get(look, "borders"); truthy(b) {
 		setPath(table, "general.col", jsonx.Obj("active_border", "rgb("+jsCat(get(b, "active"))+")",
 			"inactive_border", "rgb("+jsCat(get(b, "inactive"))+")"))
@@ -216,17 +209,50 @@ func LookLua(look, lookSchema any) []string {
 		setPath(table, "decoration.dim_inactive", true)
 		setPath(table, "decoration.dim_strength", num(get(d, "strength"))/100)
 	}
-	var out []string
-	if table.Len() > 0 {
-		out = strings.Split(hlConfig(table), "\n")
+	return append(luaLines(table), noWindowBlurRule(blur)...)
+}
+
+// LookBlurLua is the part of LookLua that follows whether axiom's surfaces
+// blur (look.blur.surfaces): sent alone when only that changed.
+func LookBlurLua(look any) []string {
+	blur := get(look, "blur")
+	overrides, table := blurOverrides(blur), jsonx.NewObject()
+	for _, p := range keys(overrides) {
+		setPath(table, p, get(overrides, p))
 	}
-	// Redefined (on or off) while the blur part is on; turning the part off
-	// reloads Hyprland, which drops it
+	return append(luaLines(table), noWindowBlurRule(blur)...)
+}
+
+// blurOverrides: Hyprland's blur is on while windows or axiom's surfaces
+// blur (look.blur, nil while the part is off)
+func blurOverrides(blur any) *jsonx.Object {
+	overrides := jsonx.NewObject()
 	if truthy(blur) {
-		enabled := !truthy(get(blur, "windows")) && truthy(get(blur, "surfaces"))
-		out = append(out, `hl.window_rule({ name = "axiom-no-window-blur", match = { class = ".*" }, no_blur = true, enabled = `+boolText(enabled)+` })`)
+		overrides.Set("decoration.blur.enabled", jsOr(get(blur, "windows"), get(blur, "surfaces")))
+		if !truthy(get(blur, "windows")) {
+			overrides.Set("decoration.blur.popups", false)
+		}
 	}
-	return out
+	return overrides
+}
+
+// noWindowBlurRule keeps windows unblurred while only axiom's surfaces
+// blur: redefined (on or off) while the blur part is on; turning the part
+// off reloads Hyprland, which drops it
+func noWindowBlurRule(blur any) []string {
+	if !truthy(blur) {
+		return nil
+	}
+	enabled := !truthy(get(blur, "windows")) && truthy(get(blur, "surfaces"))
+	return []string{`hl.window_rule({ name = "axiom-no-window-blur", match = { class = ".*" }, no_blur = true, enabled = ` + boolText(enabled) + ` })`}
+}
+
+// luaLines is one hl.config() of table, as lines (none when it's empty)
+func luaLines(table *jsonx.Object) []string {
+	if table.Len() == 0 {
+		return nil
+	}
+	return strings.Split(hlConfig(table), "\n")
 }
 
 func boolText(b bool) string {

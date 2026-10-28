@@ -191,7 +191,6 @@ Hyprland, and every compositor:
 - [A Hyprland hotplug modesets twice once Go switches](issues.md#a-hyprland-hotplug-modesets-twice-once-go-switches)
 - [The Monitors page matches profiles in QML](issues.md#the-monitors-page-matches-profiles-in-qml)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
-- [A fullscreen window re-sends the whole live layer](issues.md#a-fullscreen-window-re-sends-the-whole-live-layer)
 - [A fullscreen window on one screen pauses the blur on every screen](issues.md#a-fullscreen-window-on-one-screen-pauses-the-blur-on-every-screen)
 - [Floating bars sit flush on the border without a backend](issues.md#floating-bars-sit-flush-on-the-border-without-a-backend)
 - [Two exclusive-focus surfaces at once without a native grab](issues.md#two-exclusive-focus-surfaces-at-once-without-a-native-grab)

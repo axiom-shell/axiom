@@ -111,8 +111,9 @@ func tree(v any) any {
 
 // buildInputs is what the layer is made of: the config (cfg, with the
 // shell's previews laid over it) and the shell's facts, as the writers read
-// it, with layerKey (a change re-applies the layer) and liveKey (a change
-// is only evaluated at runtime).
+// it, with layerKey (a change re-applies the layer), liveKey (a change
+// is only evaluated at runtime) and liveRestKey (liveKey but for the blur
+// now).
 func buildInputs(cfg *jsonx.Object, f *Facts) Inputs {
 	if cfg == nil {
 		cfg = jsonx.NewObject()
@@ -194,6 +195,9 @@ func buildInputs(cfg *jsonx.Object, f *Facts) Inputs {
 	in.Set("specFile", specFile)
 	in.Set("specLive", specLive)
 	in.Set("liveKey", string(jsonx.MarshalCompact(jsonx.Arr(specFile, specLive))))
+	// The live spec but for the blur now (specLive is specFile with
+	// Blur.Now): unchanged when only the blur paused or resumed
+	in.Set("liveRestKey", string(jsonx.MarshalCompact(specFile)))
 	return Inputs{in}
 }
 

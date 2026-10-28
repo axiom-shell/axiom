@@ -144,6 +144,13 @@ func (w *swayWriter) liveLines(in Inputs, spec any) []string {
 	return append(out, w.inputLines(spec, true)...)
 }
 
+func (w *swayWriter) blurLines(in Inputs, spec any) []string {
+	if !in.flag("fx") {
+		return nil
+	}
+	return w.tables.SwaySurfaceBlurLines(getAny(spec, "surfaces"))
+}
+
 func (w *swayWriter) validate(context.Context, string) string { return "" }
 
 // run runs commands as one list: true when all succeeded (criteria matching

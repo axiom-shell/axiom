@@ -57,6 +57,9 @@ func (f *fakeWriter) releasedText(in Inputs, mode string) string { return "-- gi
 func (f *fakeWriter) liveLines(in Inputs, spec any) []string {
 	return []string{"live " + jsonx.ToString(getAny(spec, "tag"))}
 }
+func (f *fakeWriter) blurLines(in Inputs, spec any) []string {
+	return []string{"blur " + jsonx.ToString(getAny(spec, "tag"))}
+}
 func (f *fakeWriter) liveByFile() bool                        { return false }
 func (f *fakeWriter) takesBack(part string) bool              { return part == "opacity" }
 func (f *fakeWriter) validate(context.Context, string) string { return f.invalid }
@@ -381,6 +384,26 @@ func TestLivePartsAreEvaluatedAndTakenBack(t *testing.T) {
 	// reloads
 	h.inputs("f1", "l3", "k1", "borders")
 	h.eventually("reloaded", h.called("reload"))
+}
+
+func TestABlurChangeSendsOnlyTheBlur(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "detached")
+	set := func(rest, liveTag string) {
+		look := jsonx.Obj("parts", strs([]string{"borders"}))
+		in := Inputs{jsonx.Obj("kind", "hyprland", "layerKey", "k1", "liveKey", liveTag, "liveRestKey", rest,
+			"supports", jsonx.Obj("windowBorders", true),
+			"specFile", jsonx.Obj("tag", "f1", "look", look), "specLive", jsonx.Obj("tag", liveTag, "look", look))}
+		h.m.enqueue(func(context.Context) { h.m.setInputs(in) })
+	}
+	set("r1", "l1")
+	h.eventually("the runtime layer", h.called("runtime:live l1"))
+	// Only the blur now changed (a fullscreen window paused it)
+	set("r1", "l2")
+	h.eventually("the blur alone", h.called("live:blur l2"))
+	// Anything else sends the whole live layer
+	set("r2", "l3")
+	h.eventually("the whole live layer", h.called("live:live l3"))
 }
 
 func TestAPartTheShellTakesBackReloadsNothing(t *testing.T) {

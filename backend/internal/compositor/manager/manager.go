@@ -94,6 +94,8 @@ type Manager struct {
 	mode    string
 	lastKey string
 	liveKey string
+	// liveRest: the liveRestKey whose live lines were sent last
+	liveRest string
 
 	problem         string
 	runtimeProblem  string // the last runtimeApply's problems().Runtime
@@ -946,6 +948,7 @@ func (m *Manager) liveLines(ctx context.Context) []string {
 	}
 	m.st.LiveCursor = key
 	m.st.save()
+	m.liveRest = m.in.str("liveRestKey")
 	return m.w.liveLines(m.in, now)
 }
 
@@ -1035,15 +1038,26 @@ func (m *Manager) liveChanged(ctx context.Context) {
 			m.apply(ctx)
 			return
 		}
-		m.applyLive(ctx)
+		m.applyLiveChange(ctx)
 		return
 	}
 	if m.w.liveByFile() || m.st.AppliedMode != m.mode || len(m.droppedParts()) > 0 {
 		m.apply(ctx)
 		return
 	}
-	m.applyLive(ctx)
+	m.applyLiveChange(ctx)
 	m.fileSync.Reset(2 * time.Second)
+}
+
+// applyLiveChange evaluates a live change: the blur lines alone when only
+// the blur paused or resumed (a fullscreen window), so a user's runtime
+// tweak to the rest (sway's `border toggle`) isn't undone
+func (m *Manager) applyLiveChange(ctx context.Context) {
+	if rest := m.in.str("liveRestKey"); rest != "" && rest == m.liveRest {
+		m.w.runLive(ctx, m.w.blurLines(m.in, m.in.get("specLive")))
+		return
+	}
+	m.applyLive(ctx)
 }
 
 // syncFile: the file modes' file follows the live parts too, once they've

@@ -54,7 +54,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 
 ### No reload per step
 - The window look and the blur are the layer's live part (`liveKey`, [config modes](../compositor/config-modes.md)): the daemon builds them from `WindowLook` and the facts `CompositorConfigManager` sends (`look`, `blur`).
-- In every mode a change is only evaluated at runtime (`_applyLive`, which also runs after every reload); the file catches up on its next write.
+- In every mode a change is only evaluated at runtime (`manager.applyLive`, which also runs after every reload); the file catches up on its next write. A pause or resume of the blur alone sends only the blur's lines.
 - Turning a look part off rewrites the file (an eval can't take a setting back).
 
 ### Per screen

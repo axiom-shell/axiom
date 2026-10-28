@@ -334,12 +334,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-17, while reviewing the distro-support branch for merge
 
-### A fullscreen window re-sends the whole live layer
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`_liveInputs`)
-- **What:** `BlurManager.active` flips as a fullscreen window opens or closes and is in `_liveInputs`, so each flip re-sends the whole look and input (Hyprland's `hl.config({ input = … })`, sway's `[all] border pixel`, `gaps … all set`), not just the blur rules: a user's runtime tweak (`border toggle`, `gaps current plus`) is undone whenever anything goes fullscreen. A blur-only change should send only the blur lines.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### Quickshell's I3 socket warns on every reload
 - **Where:** `services/compositor/SwayManager.qml` (Quickshell.I3)
 - **What:** Under sway every reload of the shell logs `I3 event socket disconnected` twice (category `quickshell.I3.ipc`), from the old generation's sockets closing. Events still arrive afterwards (checked in nested sway). Quickshell's, not axiom's; nothing to fix here unless it starts dropping events.
