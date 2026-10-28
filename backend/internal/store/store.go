@@ -56,10 +56,12 @@ type State struct {
 	FirstRun bool          `json:"firstRun"`
 }
 
-// Event is one change: the config (nil when only the state changed).
+// Event is one change: the config (nil when only the state changed),
+// and the ops that made it from the one before.
 type Event struct {
-	State  State
-	Config *jsonx.Object
+	State   State
+	Config  *jsonx.Object
+	Changes []config.Op
 	// FromFile: read from the file (an edit made outside, the schema
 	// rebuilt), not a write through the store
 	FromFile bool
@@ -295,7 +297,7 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	if opts.Restore {
 		s.state.Blocked, s.state.Issues = false, nil
 	}
-	ev := Event{State: s.state, Config: checked}
+	ev := Event{State: s.state, Config: checked, Changes: config.Diff(current, checked)}
 	s.queue(ev)
 	s.mu.Unlock()
 	return ev.State.Revision, nil
@@ -484,9 +486,10 @@ func (s *Store) reload() {
 		loaded = s.holdTakeovers(loaded)
 		s.fileTakeovers, s.takeoversUnknown = nil, false
 		if !jsonx.Equal(loaded, s.config) {
+			changes := config.Diff(s.config, loaded)
 			s.config = loaded
 			s.state.Revision++
-			ev = Event{State: s.state, Config: loaded}
+			ev = Event{State: s.state, Config: loaded, Changes: changes}
 		} else {
 			ev = Event{State: s.state}
 		}
@@ -683,10 +686,11 @@ func (s *Store) Reschema(p config.Pipeline) {
 	} else {
 		s.state.Blocked, s.state.Issues = false, nil
 		loaded = s.holdTakeovers(loaded)
+		changes := config.Diff(s.config, loaded)
 		s.config = loaded
 		s.fileTakeovers, s.takeoversUnknown = nil, false
 		s.state.Revision++
-		ev = Event{State: s.state, Config: loaded}
+		ev = Event{State: s.state, Config: loaded, Changes: changes}
 	}
 	ev.FromFile = true
 	s.queue(ev)

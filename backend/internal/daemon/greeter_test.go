@@ -44,7 +44,7 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 		{name: "the hello names another schema", shell: true, client: "shell", schema: "other", want: axerr.Incompatible},
 		{name: "another process", client: "shell", want: axerr.Refused},
 		{name: "a CLI client", shell: true, client: "cli", want: axerr.Refused},
-		{name: "the session daemon's methods aren't there", shell: true, client: "shell", method: "config.replace", want: axerr.Unavailable},
+		{name: "the session daemon's methods aren't there", shell: true, client: "shell", method: "config.set", want: axerr.Unavailable},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

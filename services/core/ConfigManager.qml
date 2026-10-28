@@ -53,7 +53,7 @@ QtObject {
 
   // The config as it shows: `config` with the previews laid over it. What
   // readers read; a save starts from `config`, never from this
-  readonly property var live: Utils.withValuesAt(_config, _previews)
+  readonly property var live: ConfigOps.apply(_config, ConfigOps.previewOps(_previews))
 
   // Unsaved edits shown live, by dotted key path: an editor's whole
   // section ({ Bars: {...} }) or one setting ("Appearance.font.size", the
@@ -98,28 +98,25 @@ QtObject {
     if (_config.Appearance.theme.name === themeName)
       return;
     console.log("[ConfigManager] Setting theme to '" + themeName + "'");
-    _config.Appearance.theme.name = themeName;
-    saveConfig();
+    const next = Utils.clone(_config);
+    next.Appearance.theme.name = themeName;
+    commit(next);
   }
 
   // A monitor's wallpaper (a file URL). The primary monitor's is also
   // Appearance.wallpaper.file. Only picks by hand write these: rotation
   // and the light/dark wallpapers are ThemeManager's.
   function setWallpaper(wallpaperUrl, monitor, primary) {
-    const wallpaper = _config.Appearance.wallpaper;
-    if (wallpaper.perScreen[monitor] === wallpaperUrl && (!primary || wallpaper.file === wallpaperUrl))
-      return;
-    console.log("[ConfigManager] Setting wallpaper on", monitor, "to", wallpaperUrl);
-    wallpaper.perScreen[monitor] = wallpaperUrl;
-    if (primary)
-      wallpaper.file = wallpaperUrl;
-    saveConfig();
+    setWallpapers({
+      [monitor]: wallpaperUrl
+    }, primary ? monitor : "");
   }
 
   // Several monitors' wallpapers (monitor name → file URL) with one save;
   // primary's is also Appearance.wallpaper.file
   function setWallpapers(wallpapers, primary) {
-    const wallpaper = _config.Appearance.wallpaper;
+    const next = Utils.clone(_config);
+    const wallpaper = next.Appearance.wallpaper;
     const monitors = Object.keys(wallpapers).filter(monitor => wallpaper.perScreen[monitor] !== wallpapers[monitor] || (monitor === primary && wallpaper.file !== wallpapers[monitor]));
     if (monitors.length === 0)
       return;
@@ -129,29 +126,15 @@ QtObject {
       if (monitor === primary)
         wallpaper.file = wallpapers[monitor];
     }
-    saveConfig();
-  }
-
-  // Saves the running config (after edits to it in place); true if it was
-  // valid and sent to axiom
-  function saveConfig() {
-    if (!_maySave())
-      return false;
-    if (!SchemaValidation.validateAgainstSchema(root._config, root._configSchema)) {
-      console.error("[ConfigManager] The config doesn't validate against the schema; not saving.");
-      return false;
-    }
-    root._config = Utils.clone(root._config);
-    _send(root._config, false);
-    return true;
+    commit(next);
   }
 
   // Replaces the running config with `object` (defaults filled) and saves
-  // it; false and no change if it doesn't validate. axiom keeps the
-  // `x-takeover` settings as it has them unless `takeover`: only a save
-  // from a takeover setting's own control sends it
-  // (SettingsManager._takesOver), so a save made from a config that
-  // predates a takeover write axiom made can't put the stale value back
+  // what differs from it (config.set's ops); false and no change if it
+  // doesn't validate. axiom keeps the `x-takeover` settings as it has them
+  // unless `takeover`: only a save from a takeover setting's own control
+  // sends it (SettingsManager._takesOver), so a save made from a config
+  // that predates a takeover write axiom made can't put the stale value back
   function commit(object, takeover = false) {
     if (!_maySave())
       return false;
@@ -160,8 +143,19 @@ QtObject {
       console.error("[ConfigManager] Rejected config: it does not validate against the schema.");
       return false;
     }
+    const ops = ConfigOps.diff(root._config, filled);
+    if (ops.length === 0)
+      return true;
     root._config = filled;
-    _send(filled, takeover);
+    BackendManager.call("config.set", {
+      "ops": ops,
+      "takeover": takeover
+    }, (error, result) => {
+      if (!error)
+        return;
+      console.error("[ConfigManager] axiom refused the config:", error.message, (error.issues ?? []).map(i => i.path + ": " + i.message).join("; "));
+      root.hardResetConfig();
+    });
     return true;
   }
 
@@ -188,8 +182,10 @@ QtObject {
   // Discards in-memory edits: the config as axiom has it
   function hardResetConfig() {
     BackendManager.call("config.get", null, (error, result) => {
-      if (!error && result?.config)
+      if (!error && result?.config) {
         root._config = result.config;
+        root._revision = result.revision;
+      }
     });
   }
 
@@ -215,9 +211,20 @@ QtObject {
 
   // What axiom pushes
   function _listen() {
+    // The ops from the revision before: applied when that's the one
+    // here, else (one missed, or ops this can't apply) the config is read
+    // again. The shell's own saves come back too, already applied
     BackendManager.listen("config.changed", params => {
+      if (root._revision < 0 || params.revision <= root._revision)
+        return;
+      const next = params.revision === root._revision + 1 ? ConfigOps.apply(root._config, params.changes ?? []) : null;
       console.log("[ConfigManager] axiom pushed the config, revision", params.revision);
-      root._config = params.config;
+      if (next === null) {
+        root.hardResetConfig();
+        return;
+      }
+      root._config = next;
+      root._revision = params.revision;
     });
     BackendManager.listen("config.state", params => root._applyState(params));
     // `axiom run --dev` rebuilt the schema from its YAML source
@@ -240,7 +247,9 @@ QtObject {
         root._firstRun = true;
         BackendManager.call("config.ackFirstRun", null, null);
       }
-      // A push missed while disconnected (a re-exec): read it again
+      // A push missed while disconnected (a re-exec, which may count
+      // the revisions again): read it again, ignoring pushes until then
+      root._revision = -1;
       root.hardResetConfig();
     }
   }
@@ -251,23 +260,12 @@ QtObject {
     root._savesBlocked = !!state.blocked;
   }
 
-  // Sends a config to axiom, which writes it (or says why not, and what's
-  // running goes back to its)
-  function _send(config, takeover) {
-    BackendManager.call("config.replace", {
-      "config": config,
-      "takeover": takeover
-    }, (error, result) => {
-      if (!error)
-        return;
-      console.error("[ConfigManager] axiom refused the config:", error.message, (error.issues ?? []).map(i => i.path + ": " + i.message).join("; "));
-      root.hardResetConfig();
-    });
-  }
-
   readonly property string _snapshotPath: Quickshell.env("AXIOM_CONFIG") ?? ""
   property var _configSchema: _loadSchema()
   property var _config: _readSnapshot()
+  // The revision `_config` is (axiom's count of changes); -1 until read
+  // (config.get, when the connection says hello)
+  property int _revision: -1
   property bool _savesBlocked: false
   property var _previews: ({})
 

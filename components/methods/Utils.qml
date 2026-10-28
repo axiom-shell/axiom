@@ -37,29 +37,6 @@ QtObject {
     return value;
   }
 
-  // `object` with values laid over it by dotted path ({ "Bars": {...},
-  // "Appearance.font.size": 12 }), shallower paths first so a deeper one
-  // shows through a whole section laid over it. Only the objects along a
-  // path are copied: everything else stays the object it was, and
-  // `object` itself is left alone
-  function withValuesAt(object, values) {
-    const paths = Object.keys(values).sort((a, b) => a.split(".").length - b.split(".").length);
-    if (paths.length === 0)
-      return object;
-    const out = Object.assign({}, object);
-    for (const dotted of paths) {
-      const path = dotted.split(".");
-      let cur = out;
-      for (let i = 0; i < path.length - 1; i++) {
-        const next = cur[path[i]];
-        cur[path[i]] = next !== null && typeof next === "object" && !Array.isArray(next) ? Object.assign({}, next) : {};
-        cur = cur[path[i]];
-      }
-      cur[path[path.length - 1]] = values[dotted];
-    }
-    return out;
-  }
-
   // A copy of the object `map` with `key` set to `value`, or left out when
   // `value` is undefined: for map properties, whose bindings only update
   // when the property is assigned a new object

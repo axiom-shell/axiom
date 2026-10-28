@@ -257,9 +257,11 @@ type configResult struct {
 	State    store.State     `json:"state"`
 }
 
+// configChanged is config.changed: the ops that made this revision from
+// the one before (a peer that missed one reads the config again).
 type configChanged struct {
-	Revision int64           `json:"revision"`
-	Config   json.RawMessage `json:"config"`
+	Revision int64       `json:"revision"`
+	Changes  []config.Op `json:"changes"`
 }
 
 // schemaChanged is schema.changed: the schema rebuilt in dev mode, and
@@ -383,7 +385,7 @@ func (d *Daemon) onConfigEvent(ev store.Event) {
 		if err := d.writeSnapshot(); err != nil {
 			d.opts.Log.Error("writing the config snapshot", "err", err)
 		}
-		pushConfigChanged.Send(d.server, configChanged{Revision: ev.State.Revision, Config: rawJSON(ev.Config)}, subscribedTo(topicConfig))
+		pushConfigChanged.Send(d.server, configChanged{Revision: ev.State.Revision, Changes: ev.Changes}, subscribedTo(topicConfig))
 	}
 	pushConfigState.Send(d.server, ev.State, subscribedTo(topicConfig))
 }
@@ -399,21 +401,6 @@ func (d *Daemon) configMethods(reg *rpc.Registry) {
 			return revisionResult{}, err
 		}
 		rev, err := d.store.Set(p.Ops, store.SetOptions{Takeover: p.Takeover})
-		return revisionResult{Revision: rev}, err
-	})
-
-	// A whole config the shell's editors made (format 2): written as
-	// config.set's ops would be
-	rpc.Handle(reg, "config.replace", func(ctx context.Context, c *rpc.Conn, p restoreParams) (revisionResult, error) {
-		if err := d.writable(); err != nil {
-			return revisionResult{}, err
-		}
-		v, err := jsonx.Unmarshal(p.Config)
-		obj, ok := v.(*jsonx.Object)
-		if err != nil || !ok {
-			return revisionResult{}, axerr.New(axerr.BadRequest, "config.replace takes a config object")
-		}
-		rev, err := d.store.Replace(obj, store.SetOptions{Takeover: p.Takeover})
 		return revisionResult{Revision: rev}, err
 	})
 
@@ -438,7 +425,7 @@ func (d *Daemon) configMethods(reg *rpc.Registry) {
 
 	// The shell sends saves without waiting for the last: they're written
 	// in the order sent
-	reg.InOrder("config.get", "config.set", "config.replace", "config.restore")
+	reg.InOrder("config.get", "config.set", "config.restore")
 }
 
 // ipcPart: the shell's IPC targets, and the lock screen behind them.
