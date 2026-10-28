@@ -316,6 +316,9 @@ Found while porting the scripts (backend stage 4):
 Found while retiring the `qs ipc` fallback (backend stage 6):
 - [A word passed to an int IPC parameter is 0](issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
 
+Found while closing the config path (backend stage 7):
+- [After a refused save, a draft's edits show unsaved but not live](issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
+
 Found by the audits:
 
 ### Phase 12: memory footprint
