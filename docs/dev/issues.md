@@ -280,18 +280,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### Go has no monitor profile picker
-- **Where:** `components/methods/MonitorLayout.qml` (`matchProfile`, `savedRules`), `backend/internal/compositor/render/hyprlua.go` (`applyMonitors`)
-- **What:** The rule choosing the saved profile for what's connected (an exact match wins, else the one turning on most; ties to the earlier) is only QML's and the generated Lua's. Item 1 of the plan: `render.MatchProfile` and `render.SavedRules` in Go, with `tst_MonitorLayout`'s cases as a Go table test; nothing calls them yet.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
-### Go can't read the connected outputs itself
-- **Where:** `backend/internal/compositor/ipc/sway.go`, `backend/internal/compositor/ipc/niri.go`, `backend/internal/compositor/ipc/hypr.go`
-- **What:** Picking a profile in Go needs the compositor's own output list with the shell's descriptions ("make model serial"), which the daemon's `wayland/outputs` Tracker doesn't give (enabled outputs only, wl_output's descriptions). Item 2 of the plan: sway's `GET_OUTPUTS`, niri's `Outputs` and Hyprland's `monitors all`, each as the neutral `{name, description, disabled}`, descriptions built as `SwayState` and `NiriState` build them; fixture tests from recorded replies.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
 ### The session switches monitor profiles in QML on sway and niri
 - **Where:** `services/compositor/MonitorManager.qml` (`_applySavedProfile`, `_applyProfilePending`), `services/compositor/CompositorConfigManager.qml` (`_outputRules`), `backend/internal/compositor/manager/inputs.go` (`Facts.OutputRules`), `backend/internal/compositor/manager/manager.go`
 - **What:** Without `supports.outputProfiles`, `MonitorManager` applies the saved profile after each `outputsHotplugged` and after a detached reload, and `CompositorConfigManager` matches again to send `outputRules` for the files: the shell must be up for a hotplug to switch, and each hotplug reads the outputs three times. Item 3 of the plan: `manager.Manager` watches the Tracker (debounced), reads the outputs, applies `SavedRules`, fills the output rules in `buildInputs`, and applies again after a detached reload; the QML above goes. A hotplug during a trial Apply closes the Keep prompt without reverting.
@@ -306,7 +294,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Hyprland picks monitor profiles in generated Lua
 - **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorsLua`, `GreeterLua`), `backend/internal/compositor/manager/hypr.go` (`monitorsApplied`), `services/compositor/HyprlandManager.qml` (`outputProfiles`)
-- **What:** Hyprland's module, managed config, runtime Lua and greeter carry every profile plus a Lua picker (`applyMonitors`, re-run on `monitor.added`/`removed` through `AXIOM_MONITOR_SUBS`), a second copy of the rule. Item 5 of the plan (option B): the watch runs on Hyprland too, session and greeter, and the Lua carries only `render.MonitorCalls` of the profile matched last, rewritten on each switch so a reload keeps it. `MonitorsLua`, `applyMonitors`, `AXIOM_MONITOR_SUBS`, `TestMonitorsLuaPicks` and the `outputProfiles` capability (every branch and doc line) go. Without axiom running Hyprland no longer switches: user error, as decided.
+- **What:** Hyprland's module, managed config, runtime Lua and greeter carry every profile plus a Lua picker (`applyMonitors`, re-run on `monitor.added`/`removed` through `AXIOM_MONITOR_SUBS`), a second copy of the rule, which differs from `MonitorLayout.matchProfile` and `render.MatchProfile` in two rare cases: it compares descriptions untrimmed, and `MonitorsLua` drops rules with an empty `output` (which the others count as a missing enabled output, so no exact match). Item 5 of the plan (option B): the watch runs on Hyprland too, session and greeter, and the Lua carries only `render.MonitorCalls` of the profile matched last, rewritten on each switch so a reload keeps it. `MonitorsLua`, `applyMonitors`, `AXIOM_MONITOR_SUBS`, `TestMonitorsLuaPicks` and the `outputProfiles` capability (every branch and doc line) go. Without axiom running Hyprland no longer switches: user error, as decided.
 - **Size:** small
 - **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
 

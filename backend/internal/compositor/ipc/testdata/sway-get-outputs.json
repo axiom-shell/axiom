@@ -1,0 +1,102 @@
+[
+  {
+    "id": 3,
+    "type": "output",
+    "orientation": "none",
+    "percent": 1.0,
+    "urgent": false,
+    "marks": [],
+    "layout": "output",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1694,
+      "height": 1336
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "WL-1",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      5
+    ],
+    "fullscreen_mode": 0,
+    "sticky": false,
+    "floating": null,
+    "scratchpad_state": null,
+    "primary": false,
+    "make": "Unknown",
+    "model": "Unknown",
+    "serial": "Unknown",
+    "modes": [],
+    "features": {
+      "adaptive_sync": true,
+      "hdr": false
+    },
+    "non_desktop": false,
+    "active": true,
+    "dpms": true,
+    "power": true,
+    "scale": 1.0,
+    "scale_filter": "nearest",
+    "transform": "normal",
+    "adaptive_sync_status": "enabled",
+    "layer_shell_surfaces": [],
+    "current_workspace": "1",
+    "current_mode": {
+      "width": 1694,
+      "height": 1336,
+      "refresh": 0
+    },
+    "max_render_time": 0,
+    "allow_tearing": false,
+    "hdr": false,
+    "focused": true,
+    "subpixel_hinting": "unknown"
+  },
+  {
+    "primary": false,
+    "make": "Unknown",
+    "model": "Unknown",
+    "serial": "Unknown",
+    "modes": [],
+    "features": {
+      "adaptive_sync": true,
+      "hdr": false
+    },
+    "non_desktop": false,
+    "type": "output",
+    "name": "WL-2",
+    "active": false,
+    "dpms": false,
+    "power": false,
+    "current_workspace": null,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "percent": null
+  }
+]

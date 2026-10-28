@@ -8,6 +8,8 @@ import (
 	"io"
 	"net"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 )
 
 // Sway is a sway instance's IPC socket ($SWAYSOCK, i3's protocol).
@@ -27,6 +29,7 @@ func SwayFromEnv(getenv func(string) string) *Sway {
 const (
 	swayRunCommand      = 0
 	swaySubscribe       = 2
+	swayGetOutputs      = 3
 	swayGetBindingModes = 8
 	swayEventWorkspace  = 0x80000000
 )
@@ -101,6 +104,23 @@ func (s *Sway) BindingModes(ctx context.Context) ([]string, error) {
 	var out []string
 	err := s.request(ctx, swayGetBindingModes, "", &out)
 	return out, err
+}
+
+// Outputs lists sway's outputs (GET_OUTPUTS), disabled ones too.
+func (s *Sway) Outputs(ctx context.Context) ([]render.Output, error) {
+	var reply []struct {
+		Name                string
+		Make, Model, Serial string
+		Active              *bool
+	}
+	if err := s.request(ctx, swayGetOutputs, "", &reply); err != nil {
+		return nil, err
+	}
+	out := make([]render.Output, len(reply))
+	for i, o := range reply {
+		out[i] = render.Output{Name: o.Name, Description: describe(o.Make, o.Model, o.Serial), Disabled: o.Active != nil && !*o.Active}
+	}
+	return out, nil
 }
 
 // Reloads streams sway's config reloads (workspace events whose change is

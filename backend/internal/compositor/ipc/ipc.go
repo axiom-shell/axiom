@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -41,4 +42,17 @@ func dial(ctx context.Context, path string) (net.Conn, error) {
 // one value per config reload (Failed when it couldn't load the config).
 type Reload struct {
 	Failed bool
+}
+
+// describe is an output's description as the shell builds it from the
+// compositor's make, model and serial: the parts it knows, "Unknown" ones
+// dropped (SwayState, NiriState)
+func describe(parts ...string) string {
+	known := parts[:0]
+	for _, part := range parts {
+		if part != "" && part != "Unknown" {
+			known = append(known, part)
+		}
+	}
+	return strings.Join(known, " ")
 }
