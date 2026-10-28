@@ -362,6 +362,12 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     root._json("monitors all", outputs => callback(Array.isArray(outputs) ? outputs : null));
   }
 
+  // axiom set the outputs (CompositorManager.applyOutputs): the windows,
+  // which moving a monitor moves, are read again
+  function outputsApplied() {
+    root._debounce.restart();
+  }
+
   // Whether axiom can set Hyprland up (CompositorManager.withSetupCheck):
   // only 0.55 and newer has the Lua config (not supported while the version
   // is unknown; `problem` says why once it's known to be older), and a

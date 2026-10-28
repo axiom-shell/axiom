@@ -361,8 +361,8 @@ Singleton {
 
   // Sets the outputs as `rules` (MonitorRule) say, now; `details` are the
   // outputs as withOutputDetails gave them. axiom sends them to the
-  // compositor (outputs.apply); a backend whose compositor sends no output
-  // events reads them again after (outputsApplied). Needs monitors
+  // compositor (outputs.apply); the backend reads its state again after
+  // (outputsApplied). Needs monitors
   function applyOutputs(rules, details) {
     if (!root.supports.monitors)
       return;
@@ -372,7 +372,7 @@ Singleton {
     }, error => {
       if (error)
         console.warn("[CompositorManager] setting the outputs:", error.message);
-      root.backend.outputsApplied?.();
+      root.backend.outputsApplied();
     });
   }
 
