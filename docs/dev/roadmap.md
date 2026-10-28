@@ -183,8 +183,13 @@ niri:
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
-- [Profile switching runs in the shell on sway and niri](issues.md#profile-switching-runs-in-the-shell-on-sway-and-niri)
-- [The monitor profile picker exists twice](issues.md#the-monitor-profile-picker-exists-twice) (after the entry above)
+- [Go has no monitor profile picker](issues.md#go-has-no-monitor-profile-picker) (plan: #183)
+- [Go can't read the connected outputs itself](issues.md#go-cant-read-the-connected-outputs-itself)
+- [The session switches monitor profiles in QML on sway and niri](issues.md#the-session-switches-monitor-profiles-in-qml-on-sway-and-niri)
+- [The greeter on sway matches monitors only at its start](issues.md#the-greeter-on-sway-matches-monitors-only-at-its-start)
+- [Hyprland picks monitor profiles in generated Lua](issues.md#hyprland-picks-monitor-profiles-in-generated-lua)
+- [A Hyprland hotplug modesets twice once Go switches](issues.md#a-hyprland-hotplug-modesets-twice-once-go-switches)
+- [The Monitors page matches profiles in QML](issues.md#the-monitors-page-matches-profiles-in-qml)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [A fullscreen window re-sends the whole live layer](issues.md#a-fullscreen-window-re-sends-the-whole-live-layer)
 - [A fullscreen window on one screen pauses the blur on every screen](issues.md#a-fullscreen-window-on-one-screen-pauses-the-blur-on-every-screen)

@@ -286,17 +286,47 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### Profile switching runs in the shell on sway and niri
-- **Where:** `services/compositor/MonitorManager.qml` (`_applySavedProfile`), `services/compositor/CompositorConfigManager.qml` (`_outputRules`), `services/session/GreetdManager.qml` (`_applyCompositor`), `backend/internal/daemon/compositorsocket.go` (`applyGreeter`)
-- **What:** Without `supports.outputProfiles` (sway, niri) the shell picks the saved monitor profile for what's connected (`MonitorLayout.savedRules`) and hands its rules to Go: `MonitorManager` on every hotplug, `CompositorConfigManager` as `compositor.inputs`' `outputRules` fact for the config files, and the greeter once at its start (so a monitor plugged in at the greeter is never matched, where Hyprland's Lua picks again on each hotplug). Maintainer decision (2026-10-28), verbatim: "go owns profile switching for every compositor". The daemon would read the outputs itself (sway's `GET_OUTPUTS`, niri's `Outputs` request), watch hotplugs (niri's event stream is already in Go; sway needs an `output` subscription), pick and apply the profile in the session and the greeter alike, and compute the output rules in `buildInputs`; `_applySavedProfile`, `_outputRules` and the greeter's branch then go. Who reacts to a hotplug changes, so it's designed first.
-- **Size:** needs a plan
-- **Found:** 2026-10-28, while reviewing row 12's batch (5) (backend stage 7)
-
-### The monitor profile picker exists twice
-- **Where:** `components/methods/MonitorLayout.qml` (`matchProfile`, `savedRules`), `backend/internal/compositor/render/hyprlua.go` (`MonitorsLua`)
-- **What:** The rule choosing the saved profile for the connected monitors (an exact match wins, else the one turning on most; ties to the earlier) is written twice: in QML for the session's sway and niri switching, the greeter and the Monitors page (`MonitorManager.liveProfile`, `_detect`), and as the Lua Go sends Hyprland (`render.MonitorsLua`), which picks on each hotplug. Kept in step only by `render/hyprlua_test.go`'s cases and comments naming each other. With profile switching in Go (the entry above), the Monitors page can ask the daemon which profile is live, leaving one Go copy (the Lua generated from it or checked against it).
+### Go has no monitor profile picker
+- **Where:** `components/methods/MonitorLayout.qml` (`matchProfile`, `savedRules`), `backend/internal/compositor/render/hyprlua.go` (`applyMonitors`)
+- **What:** The rule choosing the saved profile for what's connected (an exact match wins, else the one turning on most; ties to the earlier) is only QML's and the generated Lua's. Item 1 of the plan: `render.MatchProfile` and `render.SavedRules` in Go, with `tst_MonitorLayout`'s cases as a Go table test; nothing calls them yet.
 - **Size:** small
-- **Found:** 2026-10-28, while reviewing row 12's batch (5) (backend stage 7)
+- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
+
+### Go can't read the connected outputs itself
+- **Where:** `backend/internal/compositor/ipc/sway.go`, `backend/internal/compositor/ipc/niri.go`, `backend/internal/compositor/ipc/hypr.go`
+- **What:** Picking a profile in Go needs the compositor's own output list with the shell's descriptions ("make model serial"), which the daemon's `wayland/outputs` Tracker doesn't give (enabled outputs only, wl_output's descriptions). Item 2 of the plan: sway's `GET_OUTPUTS`, niri's `Outputs` and Hyprland's `monitors all`, each as the neutral `{name, description, disabled}`, descriptions built as `SwayState` and `NiriState` build them; fixture tests from recorded replies.
+- **Size:** small
+- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
+
+### The session switches monitor profiles in QML on sway and niri
+- **Where:** `services/compositor/MonitorManager.qml` (`_applySavedProfile`, `_applyProfilePending`), `services/compositor/CompositorConfigManager.qml` (`_outputRules`), `backend/internal/compositor/manager/inputs.go` (`Facts.OutputRules`), `backend/internal/compositor/manager/manager.go`
+- **What:** Without `supports.outputProfiles`, `MonitorManager` applies the saved profile after each `outputsHotplugged` and after a detached reload, and `CompositorConfigManager` matches again to send `outputRules` for the files: the shell must be up for a hotplug to switch, and each hotplug reads the outputs three times. Item 3 of the plan: `manager.Manager` watches the Tracker (debounced), reads the outputs, applies `SavedRules`, fills the output rules in `buildInputs`, and applies again after a detached reload; the QML above goes. A hotplug during a trial Apply closes the Keep prompt without reverting.
+- **Size:** small
+- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
+
+### The greeter on sway matches monitors only at its start
+- **Where:** `services/session/GreetdManager.qml` (`_applyCompositor`), `backend/internal/daemon/compositorsocket.go` (`applyGreeter`)
+- **What:** The greeter applies `MonitorLayout.savedRules` once for the outputs it sees at start, and `applyGreeter`'s sway branch sends only input: a monitor plugged in at the greeter is never matched. Item 4 of the plan: `greeter.compositor` starts the session's watch for the greeter's lifetime on sway; `_applyCompositor`'s `savedRules` branch goes.
+- **Size:** small
+- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
+
+### Hyprland picks monitor profiles in generated Lua
+- **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorsLua`, `GreeterLua`), `backend/internal/compositor/manager/hypr.go` (`monitorsApplied`), `services/compositor/HyprlandManager.qml` (`outputProfiles`)
+- **What:** Hyprland's module, managed config, runtime Lua and greeter carry every profile plus a Lua picker (`applyMonitors`, re-run on `monitor.added`/`removed` through `AXIOM_MONITOR_SUBS`), a second copy of the rule. Item 5 of the plan (option B): the watch runs on Hyprland too, session and greeter, and the Lua carries only `render.MonitorCalls` of the profile matched last, rewritten on each switch so a reload keeps it. `MonitorsLua`, `applyMonitors`, `AXIOM_MONITOR_SUBS`, `TestMonitorsLuaPicks` and the `outputProfiles` capability (every branch and doc line) go. Without axiom running Hyprland no longer switches: user error, as decided.
+- **Size:** small
+- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
+
+### A Hyprland hotplug modesets twice once Go switches
+- **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorCalls`)
+- **What:** With the switch in Go, Hyprland lays a new monitor out itself before the daemon's apply lands, then again. Item 6 of the plan: for each output the matched profile leaves out, the written Lua gives the rule every profile naming it agrees on (else `preferred`/`auto`), and on Hyprland the watch switches on the first change without the debounce. A monitor set differently between profiles still modesets twice, the cost the decision accepts. A table test.
+- **Size:** small
+- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
+
+### The Monitors page matches profiles in QML
+- **Where:** `services/compositor/MonitorManager.qml` (`liveProfile`, `_detect`), `components/methods/MonitorLayout.qml` (`matchProfile`, `savedRules`), `backend/internal/compositor/manager/manager.go` (`state`)
+- **What:** The page runs `MonitorLayout.matchProfile` over its draft for the "(connected)" label and `_detect`, the last QML copy of the picker. Item 7 of the plan: `compositor.state` carries the matched profile's name (or `""`), which `liveProfile` and `_detect` find in the draft; `matchProfile`, `savedRules`, their `tst_MonitorLayout` cases and the plan file go.
+- **Size:** small
+- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
 
 ### install.sh still installs the rest of a feature whose COPR was declined
 - **Where:** `install.sh` (the declined-COPR loop after the COPR prompts)

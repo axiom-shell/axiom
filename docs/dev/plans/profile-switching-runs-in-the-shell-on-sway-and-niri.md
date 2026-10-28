@@ -1,9 +1,11 @@
 # Profile switching runs in the shell on sway and niri
 
-> **Issue:** [Profile switching runs in the shell on sway and niri](../issues.md#profile-switching-runs-in-the-shell-on-sway-and-niri) (folds in [The monitor profile picker exists twice](../issues.md#the-monitor-profile-picker-exists-twice))
-> **Status:** proposed
+> **Issue:** Profile switching runs in the shell on sway and niri, replaced on decision by the plan's items in issues.md, from [Go has no monitor profile picker](../issues.md#go-has-no-monitor-profile-picker) on
+> **Status:** decided: B (2026-10-28)
 
 Decided (maintainer, 2026-10-28), verbatim: "go owns profile switching for every compositor". The options below are only about how.
+
+Option chosen (maintainer, 2026-10-28), verbatim: "B; go switched anywhere. A user attempting to switch their monitor profile on hyprland (created in axiom) while axiom is not running is attributed to user error"
 
 ### Problem
 The rule "which saved profile fits what's connected" lives in two places, and on sway and niri the shell does the switching:
@@ -36,16 +38,19 @@ Go already has most of the pieces. `wayland/outputs.Tracker` follows hotplugs ov
 - **Costs:** a hotplug during a qs reload or crash is missed, and each hotplug still makes two reads. The reactor stays in QML, so the switch still depends on the shell being up, which is the dependency the decision is meant to remove. A's watch is about 20 lines over a Tracker the daemon already runs, so C saves little.
 
 ### Recommendation
-**A.** It removes every QML copy of the picker and the switching, makes the greeter follow hotplugs, and leaves one Go picker that the Hyprland Lua is tested against. It keeps Hyprland's ability to switch without axiom, which B gives up only to save a few dozen lines. C is smaller only until a hotplug lands while qs is reloading. If the maintainer wants Lua out of the picture entirely, B can follow A later as one item: everything A builds stays.
+**A** was recommended, for keeping Hyprland's switching without axiom. **B** was chosen: one picker, in Go, on every compositor, and a Hyprland whose files don't switch while axiom isn't running is the user's doing.
 
 ### Items
-1. **One Go picker.** `render.MatchProfile(profiles, outputs)` and `render.SavedRules(profiles, outputs)`, the rule from `MonitorLayout.matchProfile` with its cases ported to a Go table test. `TestMonitorsLuaPicks` runs that same table through the generated Lua, and the comments name `MatchProfile` as the source. Nothing in QML changes yet.
-2. **Go reads the outputs on sway and niri.** `ipc.Sway.Outputs` (`GET_OUTPUTS`) and a niri `Outputs` read, both returning the neutral `{name, description, disabled}`, with descriptions built the way `SwayState` and `NiriState` build them ("make model serial", "Unknown" parts dropped). Fixture tests from recorded replies.
-3. **The session switches in Go.** On sway and niri, `manager.Manager` watches the daemon's `Tracker.OnChange` (debounced) and re-reads the outputs. It applies `SavedRules` live (move `applyOutputs` to where `Manager` can call it), and `buildInputs` fills `outputRules` from that read, so included and managed files are rewritten. In detached mode it applies again after a reload, which replaces `MonitorManager`'s `configReloaded` branch.
+1. **One Go picker.** `render.MatchProfile(profiles, outputs)` and `render.SavedRules(profiles, outputs)`: the rule from `MonitorLayout.matchProfile` (an exact match wins, else the one turning on most, ties to the earlier), its `tst_MonitorLayout` cases ported to a Go table test. Nothing calls it yet; nothing in QML or the Lua changes.
+2. **Go reads the outputs on every compositor.** `ipc.Sway` (`GET_OUTPUTS`), `ipc.Niri` (`Outputs`) and `ipc.Hypr` (`monitors all`) each return the neutral `{name, description, disabled}`, with descriptions built the way `SwayState`, `NiriState` and Hyprland's monitors JSON give the shell ("make model serial", "Unknown" parts dropped). Fixture tests from recorded replies.
+3. **The session switches in Go on sway and niri.** `manager.Manager` watches the daemon's `Tracker.OnChange` (debounced) and re-reads the outputs. It applies `SavedRules` live (`applyOutputs` moved where `Manager` can call it), and `buildInputs` fills the output rules from that read, so included and managed files are rewritten. In detached mode it applies again after a reload, replacing `MonitorManager`'s `configReloaded` branch.
    - **Deletes:** `Facts.OutputRules`, `CompositorConfigManager._outputRules`, `MonitorManager._applySavedProfile`, `_applyProfilePending`, its reload branch and `useWholeScale`'s apply flag.
-   - **Trial Apply:** a hotplug during a trial Apply closes the Keep prompt without reverting, because the daemon has already applied the saved profile for the new set. This is the smallest handling of a rare path.
-   - Docs: `compositor/sway-backend.md`, `niri-backend.md`, `hyprland/monitors.md`.
-4. **The greeter switches in Go.** On sway, `greeter.compositor` also starts a watch for the greeter's lifetime. The greeter daemon binds a `Tracker` (`client.Run`), or else subscribes to sway's `output` events. Each change applies the bundle's `SavedRules`. Deletes `GreetdManager._applyCompositor`'s `savedRules` branch. Hyprland's path is unchanged. Docs: `features/greeter-runtime.md`.
-5. **The Monitors page asks the daemon** (folds in "The monitor profile picker exists twice"). `compositor.state` carries the matched saved profile's name, or `""` for none, on every compositor; on Hyprland it's read from `monitors all` on the same `Tracker.OnChange`. `MonitorManager.liveProfile` and `_detect` find that name in the draft (names are unique, and the draft equals the saved config whenever `_detect` runs).
-   - **Deletes:** `MonitorLayout.matchProfile` and `savedRules` with their `tst_MonitorLayout` cases. `supports.outputProfiles` too, if nothing reads it any more.
-   - Removes both issues.md entries.
+   - **Trial Apply:** a hotplug during a trial Apply closes the Keep prompt without reverting, because the daemon has already applied the saved profile for the new set (the smallest handling of a rare path).
+   - Docs: `compositor/sway-backend.md`, `niri-backend.md`.
+4. **The greeter switches in Go on sway.** `greeter.compositor` (`applyGreeter`) also starts the same watch for the greeter's lifetime, applying the bundle's `SavedRules` on each change. Deletes `GreetdManager._applyCompositor`'s `savedRules` branch. Hyprland's greeter keeps its Lua until item 5. Docs: `features/greeter-runtime.md`.
+5. **Hyprland switches through Go.** The watch from items 3 and 4 runs on Hyprland too, session and greeter. The module, the managed config and the runtime Lua carry only `render.MonitorCalls` of the profile matched at the last read, rewritten on each switch so a Hyprland reload keeps it (the writer's `monitorsApplied` key becomes the matched rules). Without axiom running, Hyprland keeps the layout last written and switches no more: user error, as decided.
+   - **Deletes:** `render.MonitorsLua`, `applyMonitors`, `AXIOM_MONITOR_SUBS`, `GreeterLua`'s picker (it sends the match's calls), `TestMonitorsLuaPicks`, and the `outputProfiles` capability with every branch and doc line on it (`HyprlandManager`'s `supports`, `compositor/contract.md`, the backends' "Not:" lists).
+   - Docs: `hyprland/monitors.md`, `compositor/contract.md`.
+6. **A Hyprland hotplug modesets once where the profiles agree.** B's cost: Hyprland lays a new monitor out itself before the daemon's switch lands, then again. For each output the matched profile leaves out, the written Lua gives the rule every profile naming it agrees on (an external monitor always set the same way, the common case), else `preferred`/`auto` as the Lua does now; and on Hyprland the watch switches on the first change without the debounce. A monitor whose rule differs between profiles still modesets twice; that's the cost B accepts. A table test over `MonitorCalls`' output.
+7. **The Monitors page asks the daemon** (folds in "The monitor profile picker exists twice"). `compositor.state` carries the matched saved profile's name, or `""` for none, from the last read. `MonitorManager.liveProfile` and `_detect` find that name in the draft (names are unique, and the draft equals the saved config whenever `_detect` runs).
+   - **Deletes:** `MonitorLayout.matchProfile` and `savedRules` with their `tst_MonitorLayout` cases, and this plan file.
