@@ -5,7 +5,7 @@ import QtQuick
 // Pure helpers for the Monitors page (MonitorManager): modes, scales,
 // rotation, the layout's rects and snapping, and picking the profile for
 // the connected outputs. A monitor is an entry of `hyprctl monitors all -j`;
-// a rule is a Monitors.profiles profile output (the MonitorRule schema);
+// a rule is a Monitors.items profile output (the MonitorRule schema);
 // rects are { x, y, width, height } in layout (logical) pixels.
 QtObject {
   id: root
