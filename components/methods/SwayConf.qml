@@ -2,8 +2,9 @@ pragma Singleton
 import QtQuick
 
 // Sway commands the shell sends sway itself (SwayManager): the greeter's
-// input, and the names of its transforms (docs/dev/compositor/sway-backend.md). axiom's
-// config layer is the daemon's (internal/compositor/render).
+// input, and the names of its transforms (docs/dev/compositor/
+// sway-backend.md). axiom's config layer is the daemon's
+// (internal/compositor/render).
 QtObject {
   id: root
 

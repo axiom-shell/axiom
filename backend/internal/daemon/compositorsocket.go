@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log/slog"
 	"strings"
-	"sync"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
@@ -40,8 +39,6 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 		Details json.RawMessage `json:"details"`
 	}
 	h, n, s := ipc.HyprFromEnv(getenv), ipc.NiriFromEnv(getenv), ipc.SwayFromEnv(getenv)
-	// One at a time, in order: a revert lands after the Apply it undoes
-	var mu sync.Mutex
 	rpc.Handle(reg, "outputs.apply", func(ctx context.Context, c *rpc.Conn, p applyParams) (struct{}, error) {
 		if !fromShell(c) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell sets the outputs")
@@ -54,10 +51,11 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 		if err != nil {
 			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "details")
 		}
-		mu.Lock()
-		defer mu.Unlock()
 		return struct{}{}, applyOutputs(ctx, h, n, s, rules, details)
 	})
+	// One at a time, in the order sent: a revert lands after the Apply it
+	// undoes
+	reg.InOrder("outputs.apply")
 }
 
 // applyOutputs sends the rules to the first of Hyprland, niri and sway
@@ -73,12 +71,19 @@ func applyOutputs(ctx context.Context, h *ipc.Hypr, n *ipc.Niri, s *ipc.Sway, ru
 			return axerr.New(axerr.Refused, "Hyprland refused the monitor rules: %s", reply)
 		}
 	case n != nil:
+		// Each request on its own: one niri refuses doesn't stop the rest
+		var refused error
 		for _, request := range render.NiriOutputRequests(rules, details).Items {
 			if _, err := n.Request(ctx, json.RawMessage(jsonx.MarshalCompact(request))); errors.Is(err, ipc.ErrRefused) {
-				return axerr.Wrap(axerr.Refused, err, "")
+				if refused == nil {
+					refused = axerr.Wrap(axerr.Refused, err, "")
+				}
 			} else if err != nil {
 				return axerr.Wrap(axerr.Unavailable, err, "no reply from niri")
 			}
+		}
+		if refused != nil {
+			return refused
 		}
 	case s != nil:
 		results, err := s.Run(ctx, render.SwayOutputCommands(rules))

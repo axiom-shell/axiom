@@ -75,7 +75,7 @@ func TestApplyOutputs(t *testing.T) {
 		line, _ := bufio.NewReader(c).ReadString('\n')
 		return strings.TrimSpace(line)
 	}, func(c net.Conn, got string) {
-		if strings.Contains(got, `"Off"`) {
+		if strings.Contains(got, `"On"`) {
 			io.WriteString(c, `{"Err":"no such output"}`+"\n")
 			return
 		}
@@ -83,7 +83,7 @@ func TestApplyOutputs(t *testing.T) {
 	})
 	n := &ipc.Niri{Path: niriPath}
 	// On first, so an output isn't turned off before another takes over;
-	// the refused Off ends it, refused
+	// the refused On doesn't stop the rest, and comes back refused
 	err = applyOutputs(ctx, nil, n, nil, rules, details)
 	if axerr.KindOf(err) != axerr.Refused {
 		t.Fatalf("niri refusing: %v", err)
