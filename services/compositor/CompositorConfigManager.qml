@@ -219,15 +219,26 @@ Singleton {
   // What was last sent, to send only a change
   property string _sent: ""
 
+  // The window look now, for a backend that sets it a window at a time as
+  // windows open (sway: SwayManager.setLiveLook). Its own key: a saved
+  // WindowLook change no fact names (an edit of config.json, a restored
+  // config) changes it too
+  readonly property string _liveLookText: live && CompositorManager.backend.setLiveLook ? JSON.stringify(CompositorLayer.look(WindowLookConfig.look, Object.assign({
+    "surfacesBlur": BlurManager.active
+  }, _look))) : ""
+  property string _sentLook: ""
+
   function _send() {
-    if (!root.live || root._factsText === root._sent)
+    if (!root.live)
+      return;
+    if (root._liveLookText !== root._sentLook) {
+      root._sentLook = root._liveLookText;
+      if (root._sentLook)
+        CompositorManager.backend.setLiveLook(JSON.parse(root._sentLook));
+    }
+    if (root._factsText === root._sent)
       return;
     root._sent = root._factsText;
-    // sway sets the look a window at a time as windows open (SwayManager)
-    if (CompositorManager.backend.setLiveLook)
-      CompositorManager.backend.setLiveLook(CompositorLayer.look(WindowLookConfig.look, Object.assign({
-        "surfacesBlur": BlurManager.active
-      }, root._look)));
     // rpc: unchecked (the facts, built by _facts() and sent as they change; the daemon decodes them strictly)
     BackendManager.call("compositor.inputs", JSON.parse(root._sent), err => {
       if (err)
@@ -241,7 +252,11 @@ Singleton {
   }
 
   on_FactsTextChanged: _sendSoon.restart()
-  onLiveChanged: root._sent = ""
+  on_LiveLookTextChanged: _sendSoon.restart()
+  onLiveChanged: {
+    root._sent = "";
+    root._sentLook = "";
+  }
 
   // The state as soon as the daemon is there (niri's user binds and
   // running config come with it, before the layer goes live)

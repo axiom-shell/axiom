@@ -2,11 +2,11 @@ pragma Singleton
 import QtQuick
 
 // What axiom asks of the compositor, decided once in a neutral shape: the
-// window look and the input that are on, which the shell sends the
-// daemon's config layer (CompositorConfigManager.spec; the daemon's port of
-// the rest is internal/compositor/render). Everything read from config, the
-// theme and the shell's look comes in as arguments
-// (docs/dev/compositor/contract.md).
+// window look and the input that are on, for what the shell itself sets
+// (sway's look a window at a time, the cursor, the greeter's compositor;
+// the daemon's config layer builds its own: internal/compositor/render).
+// Everything read from config, the theme and the shell's look comes in as
+// arguments (docs/dev/compositor/contract.md).
 QtObject {
   id: root
 
