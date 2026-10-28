@@ -25,6 +25,7 @@ func TestSwayFloatingModifier(t *testing.T) {
 		{"none of the user's", "bindsym Mod4+Return exec foot", "SUPER", 0, "floating_modifier none"},
 		{"same mod", "set $mod Mod4\nfloating_modifier $mod normal", "SUPER", 2, ""},
 		{"another mod", "floating_modifier Mod1 inverse", "SUPER", 0, "floating_modifier Mod1 inverse"},
+		{"the last line", "floating_modifier Mod1\nfloating_modifier Mod5 normal", "SUPER", 0, "floating_modifier Mod5 normal"},
 		{"turned off", "floating_modifier none", "SUPER", 0, "floating_modifier none"},
 		{"in a mode", "mode resize {\n floating_modifier Mod4\n}", "SUPER", 0, "floating_modifier none"},
 	}

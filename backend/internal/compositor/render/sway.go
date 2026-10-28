@@ -403,11 +403,11 @@ func (t *Tables) SwayUnbindLines(binds, ctx, entries any) []string {
 		out = append(out, "un"+p)
 	}
 	if SwayFloatingModifier(binds) != "" {
+		// The last of the user's lines, as sway takes it
 		restore := "floating_modifier none"
 		for _, e := range items(entries) {
 			if d := str(get(e, "description")); strings.HasPrefix(d, "floating_modifier ") {
 				restore = d
-				break
 			}
 		}
 		out = append(out, restore)
