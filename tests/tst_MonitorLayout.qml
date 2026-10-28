@@ -242,22 +242,6 @@ TestCase {
     compare(MonitorLayout.matchProfile([], [aoc]), -1);
   }
 
-  function test_savedRules() {
-    const disabledTv = Object.assign({}, tv, {
-      "disabled": true
-    });
-    const outputsOf = rules => rules.map(rule => rule.output);
-    compare(outputsOf(MonitorLayout.savedRules(profiles, [aoc])), ["desc:AOC CU34G4Z XJ9R7HA000231"], "only rules for connected outputs");
-    compare(outputsOf(MonitorLayout.savedRules(profiles, [aoc, disabledTv])), ["desc:AOC CU34G4Z XJ9R7HA000231", "HDMI-A-1"], "a disabled output doesn't pick the profile, but keeps its rule");
-    compare(MonitorLayout.savedRules(profiles, [
-      {
-        "name": "DP-3",
-        "description": "Other"
-      }
-    ]), []);
-    compare(MonitorLayout.savedRules([], [aoc]), []);
-  }
-
   function test_ruleFromMonitor() {
     const monitor = {
       "name": "DP-1",

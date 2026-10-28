@@ -250,15 +250,6 @@ QtObject {
     return best;
   }
 
-  // The rules of the saved profile for what's connected (`outputs`, as
-  // withOutputDetails gives them, disabled ones too), only those naming a
-  // connected output; [] when no profile matches. What a compositor without
-  // its own profile switching (supports.outputProfiles) is told to apply
-  function savedRules(profiles, outputs) {
-    const index = matchProfile(profiles, (outputs ?? []).filter(monitor => !monitor.disabled));
-    return index < 0 ? [] : (profiles[index].outputs ?? []).filter(rule => find(rule.output, outputs) !== null);
-  }
-
   // Color presets hyprctl reports, as the rule's `cm`
   readonly property var _cmPresets: ["srgb", "dcip3", "dp3", "adobe", "wide", "edid", "hdr", "hdredid"]
 

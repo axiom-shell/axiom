@@ -79,7 +79,7 @@ func MatchProfile(profiles any, outputs []Output) int {
 // SavedRules is the matched profile's rules naming a connected output
 // (disabled ones too, so an output turned off stays off), or none when no
 // profile matches: what a compositor is told to apply for what's
-// connected (MonitorLayout.savedRules).
+// connected.
 func SavedRules(profiles any, outputs []Output) []any {
 	index := MatchProfile(profiles, outputs)
 	if index < 0 {

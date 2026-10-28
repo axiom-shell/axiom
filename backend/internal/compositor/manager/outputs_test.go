@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"testing"
 	"time"
@@ -124,5 +125,47 @@ func TestBuildInputsOutputRules(t *testing.T) {
 				t.Errorf("got %s, want %s", got, c.want)
 			}
 		})
+	}
+}
+
+// The greeter's watch (ProfileWatch): the profiles set are applied for
+// what's connected, a burst of hotplugs read once, settled; nothing once
+// its context ends
+func TestProfileWatch(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	f := &fakeOutputs{}
+	f.connect(mainOut, tvOut)
+	w := newProfileWatch(ctx, f, slog.New(slog.DiscardHandler))
+	w.delay = 50 * time.Millisecond
+	eventually := func(what string, cond func() bool) {
+		t.Helper()
+		for deadline := time.Now().Add(3 * time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
+			if cond() {
+				return
+			}
+		}
+		t.Fatalf("never: %s", what)
+	}
+	items, _ := jsonx.Unmarshal([]byte(testProfiles))
+	w.SetProfiles(items)
+	eventually("the profile for both", func() bool { _, a := f.counts(); return len(a) == 1 })
+
+	f.connect(mainOut)
+	for range 3 {
+		w.Changed()
+	}
+	eventually("the desk's profile", func() bool { _, a := f.counts(); return len(a) == 2 })
+	if reads, a := f.counts(); reads != 2 || a[1] != "["+deskRule+"]" {
+		t.Fatalf("reads %d, applied %v", reads, a)
+	}
+
+	cancel()
+	f.connect(mainOut, tvOut)
+	w.Changed()
+	time.Sleep(150 * time.Millisecond)
+	if reads, _ := f.counts(); reads != 2 {
+		t.Fatalf("read after its context ended: %d", reads)
 	}
 }

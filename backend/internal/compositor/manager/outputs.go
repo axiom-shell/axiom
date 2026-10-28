@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
@@ -143,4 +146,62 @@ func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 	}
 	p.applied = key
 	return p.io.Apply(ctx, rules, tree(p.outputs))
+}
+
+// ProfileWatch keeps a saved monitor profile applied where no config
+// layer runs (the greeter's sway), as the session's Manager does: after
+// each hotplug (Changed), once the outputs have settled, it reads them
+// again and applies the profile for them, until ctx ends.
+type ProfileWatch struct {
+	ctx      context.Context
+	log      *slog.Logger
+	mu       sync.Mutex
+	sw       profileSwitch
+	profiles any
+	timer    *time.Timer
+	delay    time.Duration
+}
+
+// NewProfileWatch watches the outputs of o's compositor.
+func NewProfileWatch(ctx context.Context, o Outputs, log *slog.Logger) *ProfileWatch {
+	return newProfileWatch(ctx, o, log)
+}
+
+func newProfileWatch(ctx context.Context, io outputsIO, log *slog.Logger) *ProfileWatch {
+	w := &ProfileWatch{ctx: ctx, log: log, sw: profileSwitch{io: io}, delay: 500 * time.Millisecond}
+	w.timer = time.AfterFunc(time.Hour, w.apply)
+	w.timer.Stop()
+	context.AfterFunc(ctx, func() { w.timer.Stop() })
+	return w
+}
+
+// SetProfiles takes the profiles (Monitors.items) and applies the one
+// for what's connected.
+func (w *ProfileWatch) SetProfiles(profiles any) {
+	w.mu.Lock()
+	w.profiles = profiles
+	w.mu.Unlock()
+	w.Changed()
+}
+
+// Changed tells of an output connected or gone.
+func (w *ProfileWatch) Changed() {
+	if w.ctx.Err() == nil {
+		w.timer.Reset(w.delay)
+	}
+}
+
+func (w *ProfileWatch) apply() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.ctx.Err() != nil {
+		return
+	}
+	if err := w.sw.read(w.ctx); err != nil {
+		w.log.Warn("could not read the outputs", "err", err)
+		return
+	}
+	if err := w.sw.apply(w.ctx, w.profiles); err != nil {
+		w.log.Warn("could not apply the monitor profile", "err", err)
+	}
 }

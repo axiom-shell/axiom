@@ -23,7 +23,7 @@ func TestContractIsTheRegistry(t *testing.T) {
 		t.Fatal("no registry")
 	}
 	greeterOnly := rpc.NewRegistry()
-	greeterOnlyMethods(greeterOnly, func(string) string { return "" }, func() any { return nil })
+	greeterOnlyMethods(greeterOnly, func(string) string { return "" }, func() any { return nil }, func(any) {})
 	running = append(running, greeterOnly.Methods()...)
 	slices.Sort(running)
 

@@ -67,11 +67,12 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 // bundle (the config's Monitors profiles and Input values). Hyprland evals
 // Lua keeping the monitors in the profile for what's connected (picked
 // again on each hotplug) and the Input options marked x-greeter, then sets
-// the cursor; sway gets its live input and seat commands (its monitors the
-// shell applies through outputs.apply), its cursor the theme's companion
+// the cursor; sway gets its live input and seat commands, its monitors
+// kept in the saved profile for what's connected by profiles
+// (greeterProfiles), its cursor the theme's companion
 // when XCURSOR_PATH holds the bundle's copy of it (greeter-session.sh);
 // niri takes input from its config file alone. schema is the config's.
-func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any) {
+func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any, profiles func(any)) {
 	type applyParams struct {
 		Profiles json.RawMessage `json:"profiles"`
 		Input    json.RawMessage `json:"input"`
@@ -81,7 +82,7 @@ func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func(
 		if !fromShell(c) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell sets up the greeter's compositor")
 		}
-		profiles, err := jsonx.Unmarshal(orNull(p.Profiles))
+		monitors, err := jsonx.Unmarshal(orNull(p.Profiles))
 		if err != nil {
 			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "profiles")
 		}
@@ -89,7 +90,7 @@ func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func(
 		if err != nil {
 			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "input")
 		}
-		return struct{}{}, applyGreeter(ctx, h, n != nil, s, profiles, values, inputSchemaOf(schema()), getenv("XCURSOR_PATH"))
+		return struct{}{}, applyGreeter(ctx, h, n != nil, s, monitors, values, inputSchemaOf(schema()), getenv("XCURSOR_PATH"), profiles)
 	})
 }
 
@@ -107,8 +108,9 @@ func inputSchemaOf(schema any) any {
 
 // applyGreeter sets up the first of Hyprland, niri and sway running from
 // the greeter's profiles and input values (greeter.compositor).
-// xcursorPath is the greeter's XCURSOR_PATH.
-func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, profiles, values, inputSchema any, xcursorPath string) error {
+// xcursorPath is the greeter's XCURSOR_PATH; watch keeps sway's monitors
+// in the profiles (greeterProfiles).
+func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, profiles, values, inputSchema any, xcursorPath string, watch func(any)) error {
 	input := render.Input(values, nil)
 	cursor, _ := input.Value("cursor").(*jsonx.Object)
 	if cursor != nil {
@@ -140,6 +142,7 @@ func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, prof
 		return refused
 	case niri:
 	case s != nil:
+		watch(profiles)
 		results, err := s.Run(ctx, strings.Join(render.SwayInputLines(input, inputSchema, true), "; "))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from sway")
