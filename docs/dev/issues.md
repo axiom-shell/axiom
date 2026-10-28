@@ -346,6 +346,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
 
+### niri's hidden input flags fall back to niri's own defaults
+- **Where:** `config/schema/sections/Input.yaml` (`touchpad.tapToClick`, `naturalScroll`, `disableWhileTyping`, `mouse.leftHanded`), `config/schema/sections/WindowBehaviour.yaml` (`followMouse`, `noWarps`), `backend/internal/compositor/manager/niri.go` (`managedText`)
+- **What:** Settings whose niri flag has no off form are hidden on niri and no longer written (#179's decision). Two consequences the decision doesn't settle. (1) A managed takeover of niri's stock config only backs it up, so a fresh managed session gets niri's built-in defaults: no tap-to-click, no natural scroll, no dwt, no focus-follows-mouse, where before axiom wrote its defaults (`tap`, `dwt`, `focus-follows-mouse`, `warp-mouse-to-focus`) and the stock file had `tap` and `natural-scroll`. The user has to add them to `user/*.kdl` by hand. (2) The touchpad and mouse fields are also `x-greeter`: the login screen (sway or Hyprland, which can turn them off) still takes them from the bundle, but on a niri session nothing shows them, so a niri user can't change the greeter's touchpad. Options: seed a `user/` file with the stock touchpad lines at a stock takeover, and show the fields on niri while `Greeter.enabled` (labelled as the login screen's).
+- **Size:** small
+- **Found:** 2026-10-28, while reviewing the niri flags change (roadmap row 13)
+
 ### Two exclusive-focus surfaces at once without a native grab
 - **Where:** `services/compositor/FocusGrab.qml` (`exclusive`), `components/hosts/overlay/OverlayPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`
 - **What:** Without `supports.focusGrab`, every active grab's surface asks for `WlrKeyboardFocus.Exclusive`. With the overlay open (exclusive the whole time) and a popout with a text field opened over it, two surfaces on the Overlay layer ask for exclusive focus. Which one gets the keyboard is up to the compositor. On niri the older one keeps it (found fixing the polkit prompt, c49b429, which now turns `exclusive` off while `SurfaceManager.modalShown`), so there typing into a popout over the overlay goes to the overlay. Sway is unchecked (`scripts/dev/nested.sh sway`). A fix in the same spirit: only the newest active grab is `exclusive`.
