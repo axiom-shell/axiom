@@ -33,7 +33,7 @@ Scope {
   id: root
 
   Variants {
-    // On every compositor that blurs, drawing while BlurManager.backing:
+    // On every compositor that blurs, drawing while BlurManager.backingOn its screen:
     // kept mapped meanwhile (BlurBackingWindow.held), so it keeps its place
     // where layers stack by map order
     model: CompositorManager.supports.blur === true && CompositorManager.surfacesReady ? General.outputs : []
@@ -57,9 +57,9 @@ Scope {
       // the surfaces shown over it (BlurManager.overFullscreen)
       BlurBackingWindow {
         screen: perScreen.modelData
-        shapes: BlurManager.backing ? perScreen.otherShapes : []
+        shapes: BlurManager.backingOn(perScreen.screenName) ? perScreen.otherShapes : []
         cutBy: perScreen.overlayShapes
-        wanted: BlurManager.backing
+        wanted: BlurManager.backingOn(perScreen.screenName)
         stackLayer: BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
         layerNamespace: "axiom-blur-backing"
         part: perScreen.shadowsApart ? "fills" : "all"
@@ -70,9 +70,9 @@ Scope {
 
         BlurBackingWindow {
           screen: perScreen.modelData
-          shapes: BlurManager.backing ? perScreen.otherShapes : []
+          shapes: BlurManager.backingOn(perScreen.screenName) ? perScreen.otherShapes : []
           cutBy: perScreen.overlayShapes
-          wanted: BlurManager.backing
+          wanted: BlurManager.backingOn(perScreen.screenName)
           stackLayer: BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
           layerNamespace: "axiom-shadows"
           part: "shadows"

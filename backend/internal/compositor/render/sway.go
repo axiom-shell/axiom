@@ -523,7 +523,13 @@ func (t *Tables) SwayFxLines(look, surfaces any) []string {
 	if d := get(look, "dim"); truthy(d) {
 		out = append(out, "default_dim_inactive "+fmtNum(clampRound(get(d, "strength"), 0, 100)/100))
 	}
-	// The rules whose layers blur themselves
+	return append(out, t.SwaySurfaceBlurLines(surfaces)...)
+}
+
+// SwaySurfaceBlurLines are the rules whose layers blur themselves: the part
+// of SwayFxLines that follows whether axiom's surfaces blur.
+func (t *Tables) SwaySurfaceBlurLines(surfaces any) []string {
+	out := []string{}
 	for _, rule := range t.SurfaceBlur(surfaces) {
 		if !isTrue(rule.Value("blur")) {
 			continue

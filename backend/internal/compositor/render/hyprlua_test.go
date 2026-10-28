@@ -165,3 +165,22 @@ func TestManagedOptionsAsLua(t *testing.T) {
 	}
 	runLua(t, "hl = { config = function(t) end }\nhl.config("+Serialize(table, "")+")")
 }
+
+// LookBlurLua is only the blur's part of LookLua: Hyprland's blur switch
+// and the no-window-blur rule, none of the look's other options
+func TestLookBlurLua(t *testing.T) {
+	t.Parallel()
+	look := parse(t, `{"parts":["gaps","blur"],"values":{},"gaps":{"inner":5,"outer":10},"blur":{"windows":false,"surfaces":true}}`)
+	got := strings.Join(LookBlurLua(look), "\n")
+	for _, want := range []string{"enabled = true", "popups = false", `"axiom-no-window-blur"`, "no_blur = true, enabled = true"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("no %q in %q", want, got)
+		}
+	}
+	if strings.Contains(got, "gaps") {
+		t.Errorf("the gaps sent with the blur: %q", got)
+	}
+	if lines := LookBlurLua(parse(t, `{"parts":[],"values":{}}`)); len(lines) != 0 {
+		t.Errorf("lines with the blur part off: %q", lines)
+	}
+}

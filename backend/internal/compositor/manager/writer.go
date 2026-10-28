@@ -71,6 +71,9 @@ type writer interface {
 	// What's evaluated at runtime (the look, the input); none where the
 	// compositor takes them only from its files (liveByFile)
 	liveLines(in Inputs, spec any) []string
+	// blurLines: the live lines that follow whether axiom's surfaces blur
+	// now (BlurFacts.Now), sent alone when only that changed
+	blurLines(in Inputs, spec any) []string
 	liveByFile() bool
 	// takesBack: a look part the shell sets back itself once it's off
 	// (sway's window opacity, set a window at a time), so turning it off

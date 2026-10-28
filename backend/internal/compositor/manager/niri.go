@@ -196,6 +196,7 @@ func (w *niriWriter) releasedText(in Inputs, mode string) string {
 }
 
 func (w *niriWriter) liveLines(Inputs, any) []string         { return nil }
+func (w *niriWriter) blurLines(Inputs, any) []string         { return nil }
 func (w *niriWriter) runLive(context.Context, []string) bool { return true }
 func (w *niriWriter) setCursor(context.Context, any)         {}
 func (w *niriWriter) noteReload()                            {}

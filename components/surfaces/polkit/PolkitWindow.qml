@@ -118,7 +118,7 @@ PanelWindow {
   // (attached only there: attached at all, it claims the window's blur, and
   // Hyprland's layer rules no longer blur it)
   Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
-    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegions ? dimBlur : null)
+    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) ? dimBlur : null)
   BoxBlurRegion {
     id: dimBlur
     target: dim

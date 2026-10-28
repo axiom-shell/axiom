@@ -64,7 +64,7 @@ PopupWindow {
     // (attached at all, it claims the window's blur, and Hyprland's layer
     // rules no longer blur it)
     if (CompositorManager.supports.blurRegion === true)
-      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regions ? cardBlur : null);
+      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? cardBlur : null);
   }
 
   // Only hides the toast — the notification stays tracked so it's still

@@ -249,12 +249,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-18, while adding niri's blur
 
 
-### A fullscreen window on one screen pauses the blur on every screen
-- **Where:** `services/ui/BlurManager.qml` (`paused`)
-- **What:** `paused` is on while any screen shows a fullscreen window, because Hyprland's layer rules apply to every monitor. On niri the blur is each window's own region (`supports.blurRegion`), so it could pause per screen. Instead, on two monitors with a fullscreen video on one, the other loses its blur, though its surfaces stay translucent (`fillOn` is per screen). A per-screen pause where `supports.blurRegion` would fix it (`regions`/`backdropRegions` per screen).
-- **Size:** small
-- **Found:** 2026-10-19, while reviewing niri's blur
-
 ### A hot reload while locked leaves niri's red screen
 - **Where:** `services/session/LockManager.qml` (its `PersistentProperties` locked state), `components/surfaces/lockscreen/LockSurface.qml`
 - **What:** A QML reload while the session is locked destroys the lock object: `Session lock object was destroyed without unlocking. The session will stay locked in case this was accidental.` The locked state is kept, so the new generation should lock again, but on niri (2026-10-18) the screen stayed niri's red locked background with no way out, and only restarting niri got the session back. Saving any loaded file while the idle locker has locked the screen does it. Check whether the new generation's `WlSessionLock` takes over the old lock on niri (and on sway/Hyprland), or have the lock object survive a reload.
@@ -333,12 +327,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Declining a COPR on Fedora marks each feature with a package from it as skipped, but drops only that COPR's packages: the feature's other packages stay in the one `dnf install`. Declining `nett00n/hyprland` while setting up niri skips the login screen's feature yet still installs `greetd`. Rebuilding `packages` from the features left (and the required keys) after the prompts would fix it; test with `--dry-run` in a `fedora:latest` container.
 - **Size:** small
 - **Found:** 2026-10-17, while reviewing the distro-support branch for merge
-
-### A fullscreen window re-sends the whole live layer
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`_liveInputs`)
-- **What:** `BlurManager.active` flips as a fullscreen window opens or closes and is in `_liveInputs`, so each flip re-sends the whole look and input (Hyprland's `hl.config({ input = … })`, sway's `[all] border pixel`, `gaps … all set`), not just the blur rules: a user's runtime tweak (`border toggle`, `gaps current plus`) is undone whenever anything goes fullscreen. A blur-only change should send only the blur lines.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
 
 ### Quickshell's I3 socket warns on every reload
 - **Where:** `services/compositor/SwayManager.qml` (Quickshell.I3)

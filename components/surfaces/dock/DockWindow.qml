@@ -449,7 +449,7 @@ Scope {
       // blurs regions (attached at all, it claims the window's blur, and
       // Hyprland's layer rules no longer blur it)
       if (CompositorManager.supports.blurRegion === true)
-        BackgroundEffect.blurRegion = Qt.binding(() => root.preview && BlurManager.regions ? previewBlur : null);
+        BackgroundEffect.blurRegion = Qt.binding(() => root.preview && BlurManager.regionsOn(root.screen) ? previewBlur : null);
     }
     Component.onDestruction: {
       const old = panelWindow._zoneSet;
@@ -499,7 +499,7 @@ Scope {
     // what a window asks, its shape as drawn (attached in onCompleted)
     BlurRegion {
       id: previewBlur
-      pieces: root.preview && BlurManager.regions ? SurfaceOutline.placeRegion(surface.blurPieces(), surface.x, surface.y, null) : []
+      pieces: root.preview && BlurManager.regionsOn(root.screen) ? SurfaceOutline.placeRegion(surface.blurPieces(), surface.x, surface.y, null) : []
     }
 
     // Where the window is on screen: the blur window draws the dock's fill

@@ -142,7 +142,7 @@ properties:
         type: boolean
         title: Pause blur over fullscreen apps
         default: true
-        description: While a fullscreen window (a game, a video) is open, nothing blurs, so a volume popup or notification over it costs nothing extra. Surfaces on that monitor turn opaque; elsewhere they stay translucent, unblurred.
+        description: While a fullscreen window (a game, a video) is open, nothing blurs on its monitor (on any monitor under Hyprland and SwayFX), so a volume popup or notification over it costs nothing extra. Surfaces on that monitor turn opaque; elsewhere they stay translucent.
         x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
         x-enabledIf: {/$supports.blur: true}
     x-group: Blur
