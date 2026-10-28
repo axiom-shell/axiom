@@ -3,11 +3,13 @@ package ipc
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"io"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
@@ -51,6 +53,20 @@ func (h *Hypr) JSON(ctx context.Context, command string) (any, error) {
 		return nil, err
 	}
 	return jsonx.Unmarshal([]byte(reply))
+}
+
+// Outputs lists Hyprland's monitors ("monitors all"), disabled ones too,
+// with the description Hyprland gives the shell.
+func (h *Hypr) Outputs(ctx context.Context) ([]render.Output, error) {
+	reply, err := h.Request(ctx, "j/monitors all")
+	if err != nil {
+		return nil, err
+	}
+	var out []render.Output
+	if err := json.Unmarshal([]byte(reply), &out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // Eval runs Lua in Hyprland's config state: "" when it ran, else Hyprland's

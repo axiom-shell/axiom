@@ -6,7 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 )
 
 // Niri is a niri instance's socket ($NIRI_SOCKET): one JSON request per
@@ -61,6 +65,30 @@ func (n *Niri) Request(ctx context.Context, request any) (json.RawMessage, error
 func (n *Niri) Action(ctx context.Context, action any) error {
 	_, err := n.Request(ctx, map[string]any{"Action": action})
 	return err
+}
+
+// Outputs lists niri's outputs (the Outputs request), disabled ones (no
+// logical output) too, by name.
+func (n *Niri) Outputs(ctx context.Context) ([]render.Output, error) {
+	ok, err := n.Request(ctx, "Outputs")
+	if err != nil {
+		return nil, err
+	}
+	var reply struct {
+		Outputs map[string]struct {
+			Make, Model, Serial string
+			Logical             *struct{}
+		}
+	}
+	if err := json.Unmarshal(ok, &reply); err != nil {
+		return nil, err
+	}
+	var out []render.Output
+	for _, name := range slices.Sorted(maps.Keys(reply.Outputs)) {
+		o := reply.Outputs[name]
+		out = append(out, render.Output{Name: name, Description: describe(o.Make, o.Model, o.Serial), Disabled: o.Logical == nil})
+	}
+	return out, nil
 }
 
 // Reloads streams niri's config loads (ConfigLoaded events, Failed when niri

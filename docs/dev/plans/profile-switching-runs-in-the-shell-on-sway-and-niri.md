@@ -1,6 +1,6 @@
 # Profile switching runs in the shell on sway and niri
 
-> **Issue:** Profile switching runs in the shell on sway and niri, replaced on decision by the plan's items in issues.md, from [Go can't read the connected outputs itself](../issues.md#go-cant-read-the-connected-outputs-itself) on
+> **Issue:** Profile switching runs in the shell on sway and niri, replaced on decision by the plan's items in issues.md, from [The session switches monitor profiles in QML on sway and niri](../issues.md#the-session-switches-monitor-profiles-in-qml-on-sway-and-niri) on
 > **Status:** decided: B (2026-10-28)
 
 Decided (maintainer, 2026-10-28), verbatim: "go owns profile switching for every compositor". The options below are only about how.

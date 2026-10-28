@@ -183,8 +183,7 @@ niri:
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
-- [Go can't read the connected outputs itself](issues.md#go-cant-read-the-connected-outputs-itself) (plan: #183)
-- [The session switches monitor profiles in QML on sway and niri](issues.md#the-session-switches-monitor-profiles-in-qml-on-sway-and-niri)
+- [The session switches monitor profiles in QML on sway and niri](issues.md#the-session-switches-monitor-profiles-in-qml-on-sway-and-niri) (plan: #183)
 - [The greeter on sway matches monitors only at its start](issues.md#the-greeter-on-sway-matches-monitors-only-at-its-start)
 - [Hyprland picks monitor profiles in generated Lua](issues.md#hyprland-picks-monitor-profiles-in-generated-lua)
 - [A Hyprland hotplug modesets twice once Go switches](issues.md#a-hyprland-hotplug-modesets-twice-once-go-switches)

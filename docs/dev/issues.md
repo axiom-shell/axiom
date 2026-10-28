@@ -280,12 +280,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### Go can't read the connected outputs itself
-- **Where:** `backend/internal/compositor/ipc/sway.go`, `backend/internal/compositor/ipc/niri.go`, `backend/internal/compositor/ipc/hypr.go`
-- **What:** Picking a profile in Go needs the compositor's own output list with the shell's descriptions ("make model serial"), which the daemon's `wayland/outputs` Tracker doesn't give (enabled outputs only, wl_output's descriptions). Item 2 of the plan: sway's `GET_OUTPUTS`, niri's `Outputs` and Hyprland's `monitors all`, each as the neutral `{name, description, disabled}`, descriptions built as `SwayState` and `NiriState` build them; fixture tests from recorded replies.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
 ### The session switches monitor profiles in QML on sway and niri
 - **Where:** `services/compositor/MonitorManager.qml` (`_applySavedProfile`, `_applyProfilePending`), `services/compositor/CompositorConfigManager.qml` (`_outputRules`), `backend/internal/compositor/manager/inputs.go` (`Facts.OutputRules`), `backend/internal/compositor/manager/manager.go`
 - **What:** Without `supports.outputProfiles`, `MonitorManager` applies the saved profile after each `outputsHotplugged` and after a detached reload, and `CompositorConfigManager` matches again to send `outputRules` for the files: the shell must be up for a hotplug to switch, and each hotplug reads the outputs three times. Item 3 of the plan: `manager.Manager` watches the Tracker (debounced), reads the outputs, applies `SavedRules`, fills the output rules in `buildInputs`, and applies again after a detached reload; the QML above goes. A hotplug during a trial Apply closes the Keep prompt without reverting.
