@@ -171,7 +171,6 @@ Resolves:
 Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`. Both done: `SchemaValidation` keeps only what previews use, and the four renderers are gone.
 
 Resolved by a stage:
-- [A save axiom refuses leaves its editor clean, showing the refused value](issues.md#a-save-axiom-refuses-leaves-its-editor-clean-showing-the-refused-value) (stage 7)
 - [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (closed by awww's removal; maintainer: "awww is scheduled for remove in favor of axioms own animations")
 
 ### Phase 6: compositor parity

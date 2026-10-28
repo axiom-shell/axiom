@@ -151,10 +151,14 @@ QtObject {
       if (!error)
         return;
       console.error("[ConfigManager] axiom refused the config:", error.message, (error.issues ?? []).map(i => i.path + ": " + i.message).join("; "));
-      root.hardResetConfig();
+      root.hardResetConfig(() => root.saveRefused(filled));
     });
     return true;
   }
+
+  // A save axiom refused, once its config is read back: `refused` is the
+  // config that was sent. A draft that saved it shows its edits unsaved again
+  signal saveRefused(var refused)
 
   // Replaces the whole config with a parsed one (a saved config, an
   // import), of any version axiom reads: axiom loads it as it loads
@@ -176,12 +180,13 @@ QtObject {
     });
   }
 
-  // Discards in-memory edits: the config as axiom has it
-  function hardResetConfig() {
+  // Discards in-memory edits: the config as axiom has it; done() once read
+  function hardResetConfig(done) {
     BackendManager.call("config.get", null, (error, result) => {
       if (!error && result?.config) {
         root._config = result.config;
         root._revision = result.revision;
+        done?.();
       }
     });
   }
