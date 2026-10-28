@@ -414,11 +414,6 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
 hl.timer(function() ${_leaveCaptureLua} end, { timeout = 30000, type = "oneshot" })
 hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
 
-  // The cursor theme and size, for this session
-  function setCursor(theme, size) {
-    root._request(`setcursor ${theme} ${size}`);
-  }
-
   // Ends the Hyprland session (the power menu's log out)
   function exitSession() {
     Hyprland.dispatch("hl.dsp.exit()");

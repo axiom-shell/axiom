@@ -62,9 +62,9 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
   - the cursor (`Input.cursor`): `hyprctl setcursor` at start (its `XCURSOR_*` are in the environment above).
 
 ### Input
-- `Input` (reader `InputConfig`) is in the layer in every mode, as `M.input()` after `M.look()`: one `hl.config` of the parts that are on (`CompositorLayer.input`, `render.InputLua`). Its fields carry `x-hypr` paths gated by `x-hyprIf` on their part, so a part on writes all its fields, defaults too.
+- `Input` (reader `InputConfig`) is in the layer in every mode, as `M.input()` after `M.look()`: one `hl.config` of the parts that are on (`render.Input`, `render.InputLua`). Its fields carry `x-hypr` paths gated by `x-hyprIf` on their part, so a part on writes all its fields, defaults too.
 - Like the look, it is evaluated at runtime as it changes and after every reload, and a part turned off reloads Hyprland's config ([Config modes](../compositor/config-modes.md) › Live parts).
-- The cursor theme is set with `setcursor` (`HyprlandManager.setCursor`).
+- The cursor theme is set with `setcursor` (the daemon's config layer; the greeter's through `input.apply`).
 - Before config version 59 these were `managed` options (the part switches were turned on there).
 
 ### Service creation

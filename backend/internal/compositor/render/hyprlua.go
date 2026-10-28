@@ -206,7 +206,8 @@ func LookLua(look, lookSchema any) []string {
 		setPath(table, "decoration.shadow.enabled", true)
 		setPath(table, "decoration.shadow.range", rng)
 		setPath(table, "decoration.shadow.render_power", power)
-		setPath(table, "decoration.shadow.offset", jsonx.Arr(0.0, get(s, "offset")))
+		// Spread evenly, as axiom's own (0 still resets the user's)
+		setPath(table, "decoration.shadow.offset", jsonx.Arr(0.0, 0.0))
 		if !jsonx.StrictEqual(get(s, "rgb"), "") {
 			setPath(table, "decoration.shadow.color", "rgba("+jsCat(get(s, "rgb"))+AlphaHex(alpha)+")")
 		}

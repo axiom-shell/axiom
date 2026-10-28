@@ -101,6 +101,75 @@ func applyOutputs(ctx context.Context, h *ipc.Hypr, n *ipc.Niri, s *ipc.Sway, ru
 	return nil
 }
 
+// inputHandlers is input.apply, the greeter's axiom's alone: the Input
+// section's values (`input`) set now on a compositor loading no config of
+// axiom's (the session's input is the config layer's): sway's live input
+// and seat commands, Hyprland's cursor (its Lua sets the input:
+// GreetdManager); niri takes input from its config file alone. schema is
+// the config's.
+func inputHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any) {
+	type applyParams struct {
+		Input json.RawMessage `json:"input"`
+	}
+	h, n, s := ipc.HyprFromEnv(getenv), ipc.NiriFromEnv(getenv), ipc.SwayFromEnv(getenv)
+	rpc.Handle(reg, "input.apply", func(ctx context.Context, c *rpc.Conn, p applyParams) (struct{}, error) {
+		if !fromShell(c) {
+			return struct{}{}, axerr.New(axerr.Refused, "only the shell sets the input")
+		}
+		values, err := jsonx.Unmarshal(orNull(p.Input))
+		if err != nil {
+			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "input")
+		}
+		return struct{}{}, applyInput(ctx, h, n != nil, s, render.Input(values, nil), inputSchemaOf(schema()))
+	})
+}
+
+// inputSchemaOf is schema's properties.Input, or nil
+func inputSchemaOf(schema any) any {
+	o, _ := schema.(*jsonx.Object)
+	if o != nil {
+		o, _ = o.Value("properties").(*jsonx.Object)
+	}
+	if o == nil {
+		return nil
+	}
+	return o.Value("Input")
+}
+
+// applyInput sends input (render.Input's) to the first of Hyprland, niri
+// and sway running: Hyprland gets the cursor theme by its own name, sway
+// every command a live sway takes
+func applyInput(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, input *jsonx.Object, inputSchema any) error {
+	cursor, _ := input.Value("cursor").(*jsonx.Object)
+	switch {
+	case h != nil:
+		if cursor == nil {
+			return nil
+		}
+		reply, err := h.Request(ctx, "setcursor "+jsonx.ToString(cursor.Value("theme"))+" "+jsonx.ToString(cursor.Value("size")))
+		if err != nil {
+			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
+		}
+		if reply != "ok" {
+			return axerr.New(axerr.Refused, "Hyprland refused the cursor: %s", reply)
+		}
+	case niri:
+	case s != nil:
+		results, err := s.Run(ctx, strings.Join(render.SwayInputLines(input, inputSchema, true), "; "))
+		if err != nil {
+			return axerr.Wrap(axerr.Unavailable, err, "no reply from sway")
+		}
+		for _, r := range results {
+			if !r.Success {
+				return axerr.New(axerr.Refused, "sway refused an input command: %s", r.Error)
+			}
+		}
+	default:
+		return axerr.New(axerr.Unavailable, "no compositor to set the input on")
+	}
+	return nil
+}
+
 // orNull is data, or JSON's null when it's missing
 func orNull(data json.RawMessage) []byte {
 	if len(data) == 0 {

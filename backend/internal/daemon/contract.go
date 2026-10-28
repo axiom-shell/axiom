@@ -56,8 +56,16 @@ func (d *Daemon) methodSets() []func(*rpc.Registry) {
 	}
 }
 
+// greeterOnlyMethods are the methods the greeter's axiom serves and the
+// session's doesn't (greeterRegistry), which the contract lists too: the
+// shell calls them in greeter mode.
+func greeterOnlyMethods(reg *rpc.Registry, getenv func(string) string, schema func() any) {
+	inputHandlers(reg, getenv, schema)
+}
+
 // BuildContract builds the daemon's registry without starting anything
-// (registering only stores closures) and reports its shapes.
+// (registering only stores closures), with the greeter's own methods, and
+// reports its shapes.
 func BuildContract() Contract {
 	d := &Daemon{opts: Options{Getenv: func(string) string { return "" }, Log: slog.New(slog.DiscardHandler)}}
 	d.topics = topics.New(topics.Options{Log: d.opts.Log})
@@ -66,6 +74,7 @@ func BuildContract() Contract {
 	for _, methods := range d.methodSets() {
 		methods(reg)
 	}
+	greeterOnlyMethods(reg, d.opts.Getenv, func() any { return nil })
 	c := Contract{Methods: reg.Shapes(), Pushes: pushShapes()}
 	slices.SortFunc(c.Pushes, func(a, b rpc.PushShape) int { return strings.Compare(a.Method, b.Method) })
 	for _, src := range d.sources() {

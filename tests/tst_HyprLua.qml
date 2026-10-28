@@ -384,17 +384,6 @@ assert(removed == 2, "earlier handlers removed")
     tryVerify(() => written.done, 2000);
   }
 
-  // The look's spec (CompositorLayer.look) from WindowLook's values
-  function look(values, activeHex, inactiveHex, borderWidth, radius, surfacesBlur) {
-    return shared.calls.CompositorLayer.look(values, {
-      "activeHex": activeHex,
-      "inactiveHex": inactiveHex,
-      "borderWidth": borderWidth,
-      "radius": radius,
-      "surfacesBlur": surfacesBlur
-    });
-  }
-
   function test_leaveSubmap() {
     compare(shared.calls.HyprLua.leaveSubmap("axiom_record"), `if hl.get_current_submap() == "axiom_record" then hl.dispatch(hl.dsp.submap("reset")) end`);
   }

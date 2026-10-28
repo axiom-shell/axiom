@@ -8,8 +8,8 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 )
 
-// The contract lists exactly the methods a running daemon registers, and
-// every push and topic once
+// The contract lists exactly the methods a running daemon registers (and
+// the greeter's own), and every push and topic once
 func TestContractIsTheRegistry(t *testing.T) {
 	t.Parallel()
 	td := newTestDaemon(t)
@@ -22,6 +22,9 @@ func TestContractIsTheRegistry(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Fatal("no registry")
 	}
+	greeterOnly := rpc.NewRegistry()
+	greeterOnlyMethods(greeterOnly, func(string) string { return "" }, func() any { return nil })
+	running = append(running, greeterOnly.Methods()...)
 	slices.Sort(running)
 
 	c := BuildContract()

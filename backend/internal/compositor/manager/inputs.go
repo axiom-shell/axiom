@@ -11,8 +11,8 @@ import (
 // Facts are what only the shell knows of the layer (compositor.inputs):
 // what the compositor can do, the shell's paths and apps, the window look
 // as the theme and the Appearance settings resolve it, the blur behind
-// axiom's surfaces now, the cursor theme's XCursor name, the theme colors
-// the managed options name, the motion, the primary monitor, the matched
+// axiom's surfaces now, the cursor theme's XCursor name, the theme's
+// colors, the motion, the primary monitor, the matched
 // monitor profile's rules and its unsaved edits (previews). The rest (binds,
 // profiles, strips, the look's and input's settings, the session, the
 // options) the manager reads from the config (buildInputs).
@@ -34,9 +34,11 @@ type Facts struct {
 	Blur        BlurFacts       `json:"blur"`
 	// XCursor is the cursor theme's XCursor name (CursorThemeManager)
 	XCursor string `json:"xcursor"`
-	// Colors are the theme colors the managed options name, as "rrggbb"
-	Colors map[string]string `json:"colors"`
-	Motion Motion            `json:"motion"`
+	// Palette is the theme's colors by name (Theme.stringToColorMap), as
+	// the shell writes them (render.TextHex), for those the managed options
+	// name
+	Palette map[string]string `json:"palette"`
+	Motion  Motion            `json:"motion"`
 	// Previews are the shell's unsaved edits of the sections the layer
 	// reads (ConfigOps.previewOps), laid over the config as they show
 	Previews []config.Op `json:"previews"`
@@ -54,23 +56,23 @@ type BindCtx struct {
 }
 
 // LookFacts are the window look's values the shell resolves
-// (WindowLookConfig): the border colors as "rrggbb", the shape (axiom's
-// while it matches it) and the shadow, null while none is cast.
+// (WindowLookConfig): the border colors (as the shell writes them,
+// render.TextHex), the shape (axiom's while it matches it) and the shadow,
+// null while none is cast.
 type LookFacts struct {
-	ActiveHex   string       `json:"activeHex"`
-	InactiveHex string       `json:"inactiveHex"`
+	Active      string       `json:"active"`
+	Inactive    string       `json:"inactive"`
 	BorderWidth float64      `json:"borderWidth"`
 	Radius      float64      `json:"radius"`
 	Shadow      *ShadowFacts `json:"shadow"`
 }
 
-// ShadowFacts are the windows' shadow as cast (CompositorLayer.look's
-// opts.shadow).
+// ShadowFacts are the windows' shadow as cast (render.Look's
+// opts.shadow), its color "" for the compositor's own.
 type ShadowFacts struct {
 	Size     float64 `json:"size"`
 	Color    string  `json:"color"`
 	Alpha    float64 `json:"alpha"`
-	Offset   float64 `json:"offset"`
 	Soft     bool    `json:"soft"`
 	Strength float64 `json:"strength"`
 }
@@ -156,7 +158,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts) Inputs {
 		if forFile {
 			surfacesBlur = f.Blur.Saved
 		}
-		opts := tree(f.Look).(*jsonx.Object)
+		opts := lookOpts(f.Look)
 		opts.Set("surfacesBlur", surfacesBlur)
 		return jsonx.Obj(
 			"look", render.Look(at("WindowLook"), opts),
@@ -182,7 +184,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts) Inputs {
 		"behaviour", behaviour,
 		"swayOptions", at("Compositor", "sway"),
 		"niriOptions", at("Compositor", "niri"),
-		"colors", tree(f.Colors),
+		"colors", colorsNamed(managed, f.Palette),
 		"motion", tree(f.Motion),
 		"idle", flag("Idle", "enabled"),
 		"polkit", flag("Polkit", "enabled"),
@@ -193,6 +195,47 @@ func buildInputs(cfg *jsonx.Object, f *Facts) Inputs {
 	in.Set("specLive", specLive)
 	in.Set("liveKey", string(jsonx.MarshalCompact(jsonx.Arr(specFile, specLive))))
 	return Inputs{in}
+}
+
+// lookOpts are render.Look's opts from the shell's look, its colors as
+// "rrggbb"
+func lookOpts(l LookFacts) *jsonx.Object {
+	var shadow any
+	if s := l.Shadow; s != nil {
+		color := ""
+		if s.Color != "" {
+			color = render.TextHex(s.Color)
+		}
+		shadow = jsonx.Obj("size", s.Size, "color", color, "alpha", s.Alpha, "soft", s.Soft, "strength", s.Strength)
+	}
+	return jsonx.Obj("activeHex", render.TextHex(l.Active), "inactiveHex", render.TextHex(l.Inactive),
+		"borderWidth", l.BorderWidth, "radius", l.Radius, "shadow", shadow)
+}
+
+// colorsNamed are the theme colors (palette) the managed options name
+// (every string in them is tried: one that isn't a color, a curve's name,
+// is left out), as "rrggbb"
+func colorsNamed(managed any, palette map[string]string) *jsonx.Object {
+	out := jsonx.NewObject()
+	var walk func(v any)
+	walk = func(v any) {
+		switch x := v.(type) {
+		case string:
+			if hex := render.TextHex(palette[x]); hex != "" {
+				out.Set(x, hex)
+			}
+		case *jsonx.Object:
+			for _, k := range x.Keys() {
+				walk(x.Value(k))
+			}
+		case *jsonx.Array:
+			for _, item := range x.Items {
+				walk(item)
+			}
+		}
+	}
+	walk(managed)
+	return out
 }
 
 // stripsOf are the strips (Hyprland's scrolling layout) per monitor, as

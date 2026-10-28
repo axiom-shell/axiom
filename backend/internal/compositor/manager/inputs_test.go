@@ -56,3 +56,25 @@ func TestBuildInputs(t *testing.T) {
 		})
 	}
 }
+
+// The shell's colors come as their text: the look's as "rrggbb", and of
+// the palette only the names the managed options hold (a curve's name
+// isn't one)
+func TestShellColors(t *testing.T) {
+	t.Parallel()
+	cfg := jsonx.Obj(
+		"Compositor", jsonx.Obj("hyprland", jsonx.Obj("decoration", jsonx.Obj("col", jsonx.Arr("accent")), "bezier", "easeOut")),
+		"WindowBehaviour", jsonx.Obj("group", "base0D"),
+		"WindowLook", jsonx.Obj("shadow", jsonx.Obj("enabled", true, "power", 2.0)))
+	in := buildInputs(cfg, &Facts{
+		Palette: map[string]string{"accent": "#C4A7E7", "base0D": "#80112233", "base00": "#191724", "easeOut": "x"},
+		Look:    LookFacts{Active: "#9ccfd8", Inactive: "#ff403d52", Shadow: &ShadowFacts{Size: 8, Color: "#101010", Alpha: 0.5, Strength: 1}},
+	})
+	if got := string(jsonx.MarshalCompact(in.get("colors"))); got != `{"accent":"c4a7e7","base0D":"112233"}` {
+		t.Errorf("colors: %s", got)
+	}
+	look := getAny(in.get("specLive"), "look")
+	if got := string(jsonx.MarshalCompact(getAny(look, "shadow"))); got != `{"size":8,"power":2,"color":"10101080","rgb":"101010","alpha":0.5,"baseAlpha":0.5,"strength":1,"soft":false}` {
+		t.Errorf("shadow: %s", got)
+	}
+}

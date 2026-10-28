@@ -30,6 +30,7 @@ type GreeterOptions struct {
 	// socket
 	Dir        string
 	SchemaHash string // the schema written for it, which its hello names
+	Schema     any    // that schema, parsed (input.apply reads its Input)
 	Tree       string
 	Getenv     func(string) string
 	Output     io.Writer // quickshell's stdout and stderr
@@ -145,6 +146,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	hyprHandlers(reg, ipc.HyprFromEnv(o.Getenv))
 	niriHandlers(reg, ipc.NiriFromEnv(o.Getenv), niriStreams)
 	outputHandlers(reg, o.Getenv)
+	greeterOnlyMethods(reg, o.Getenv, func() any { return o.Schema })
 	topics.Register(reg, hub, weather.Source(weather.Options{}))
 	return reg
 }

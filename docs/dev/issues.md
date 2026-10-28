@@ -28,7 +28,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A protocol bump in dev mode leaves the installed CLI on the old protocol
 - **Where:** `backend/cmd/axiom`, `config/json/backend.json` (`protocol`)
-- **What:** In dev mode a Go change rebuilds and re-execs the live daemon (into `~/.local/state/axiom/dev/axiom`), but the installed `~/.local/bin/axiom` stays as it was. After a change that bumps `protocol`, every `axiom ipc` call (keybinds, scripts) fails with `this axiom speaks protocol 5, the client 4` until the user rebuilds it by hand (`go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`). Dev mode's rebuild could rebuild the CLI too, or the CLI could run the dev binary when the daemon says it's newer.
+- **What:** In dev mode a Go change rebuilds and re-execs the live daemon (into `~/.local/state/axiom/dev/axiom`), but the installed `~/.local/bin/axiom` stays as it was. After a change that bumps `protocol`, every `axiom ipc` call (keybinds, scripts) fails with `this axiom speaks protocol 5, the client 4` until the user rebuilds it by hand (`go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`). Dev mode's rebuild could rebuild the CLI too, or the CLI could run the dev binary when the daemon says it's newer. The live shell is hit too (seen 2026-10-28, bumping to protocol 8): the re-exec'd daemon speaks the new protocol before qs reloads `backend.json`, so every call fails (`this axiom speaks protocol 8, the client 7`) until a QML reload.
 - **Size:** small
 - **Found:** 2026-10-28, while sending config saves as path ops (backend stage 7)
 
@@ -309,12 +309,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Declining a COPR on Fedora marks each feature with a package from it as skipped, but drops only that COPR's packages: the feature's other packages stay in the one `dnf install`. Declining `nett00n/hyprland` while setting up niri skips the login screen's feature yet still installs `greetd`. Rebuilding `packages` from the features left (and the required keys) after the prompts would fix it; test with `--dry-run` in a `fedora:latest` container.
 - **Size:** small
 - **Found:** 2026-10-17, while reviewing the distro-support branch for merge
-
-### The window shadow's offset is always 0 but still passed through every writer
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`_look`: `"offset": 0`), `components/methods/CompositorLayer.qml` (`look`), `components/methods/HyprLua.qml`, `components/methods/SwayConf.qml`, `backend/internal/compositor/render/` (`niri.go`)
-- **What:** Since config v66 axiom's shadow only spreads evenly, so the spec's shadow `offset` is a constant 0 that `look()` hands on and each writer writes (`decoration.shadow.offset`, `shadow_offset`, niri's `offset`). Writing 0 still matters (it resets a user's own offset), so each writer could write 0 itself and the field go from the spec and its tests. Done in Go's `compositor/render` when the QML writers go (backend stage 7; the maintainer folded it in, 2026-10-27).
-- **Size:** small
-- **Found:** 2026-10-17, while reviewing the shadow-on-or-off change
 
 ### A niri module refused in detached mode is only logged
 - **Where:** `backend/internal/compositor/manager/niri.go` (`runtimeApply`), `services/compositor/CompositorConfigManager.qml` (`problem`)

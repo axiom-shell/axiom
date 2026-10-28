@@ -504,7 +504,7 @@ func (t *Tables) SwayFxLines(look, surfaces any) []string {
 			size = r
 			color = jsCat(get(s, "rgb")) + AlphaHex(a)
 		}
-		out = append(out, "shadow_blur_radius "+fmtNum(clampRound(size, 0, 100)), "shadow_offset 0 "+fmtNum(clampRound(get(s, "offset"), -99, 99)))
+		out = append(out, "shadow_blur_radius "+fmtNum(clampRound(size, 0, 100)), "shadow_offset 0 0") // spread evenly, as axiom's own
 		if !jsonx.StrictEqual(color, "") {
 			out = append(out, "shadow_color #"+jsCat(color), "shadow_inactive_color #"+jsCat(color))
 		}

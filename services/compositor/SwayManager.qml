@@ -270,7 +270,7 @@ Singleton {
     SwayIpcManager.command(lines.filter(line => line !== "").join("; "), ok => callback?.(ok));
   }
 
-  // The window look as set now (CompositorLayer.look;
+  // The window look as set now (the daemon's, render.Look, through
   // CompositorConfigManager): gapsOut and blur follow its gaps and blur until sway
   // reloads its config, and what sway sets a window at a time (opacity;
   // SwayFX's blur, shadows, dim) is kept up as windows open and focus moves
@@ -367,13 +367,6 @@ Singleton {
   // Switches every keyboard to its "next" or "prev" layout, then calls back
   function cycleKeyboardLayout(direction, callback) {
     SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${direction === "prev" ? "prev" : "next"}`, () => callback?.());
-  }
-
-  // Sets the input options and cursor now (`input`: CompositorLayer.input's,
-  // `inputSchema`: Input's), as their parts say: the greeter's sway, which
-  // loads no config of axiom's
-  function applyInput(input, inputSchema) {
-    root.runCommands(SwayConf.inputLines(input, inputSchema, true));
   }
 
   // Sway can't say where the cursor is, nor list layer surfaces

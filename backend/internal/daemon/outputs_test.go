@@ -14,7 +14,9 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // serveOnce answers each connection to path with reply(what it was sent),
@@ -119,6 +121,69 @@ func TestApplyOutputs(t *testing.T) {
 	}
 
 	if err := applyOutputs(ctx, nil, nil, nil, rules, details); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("no compositor: %v", err)
+	}
+}
+
+// The greeter's input (input.apply): sway's live commands, Hyprland's
+// cursor by the theme's own name, nothing on niri
+func TestApplyInput(t *testing.T) {
+	t.Parallel()
+	dir, err := os.MkdirTemp("", "axin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "config/json/config.schema.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	schema, _ := jsonx.Unmarshal(data)
+	inputSchema := inputSchemaOf(schema)
+	values, _ := jsonx.Unmarshal([]byte(`{"keyboard": {"enabled": true, "layout": "us,de", "variant": "", "options": "", "repeatRate": 25, "repeatDelay": 600, "numlock": true},
+		"mouse": {"enabled": false}, "touchpad": {"enabled": false}, "cursor": {"enabled": true, "theme": "Bibata Modern", "size": 24}}`))
+	input := render.Input(values, nil)
+
+	hypr := serveOnce(t, filepath.Join(dir, ".socket.sock"), func(c net.Conn) string {
+		buf := make([]byte, 1<<16)
+		n, _ := c.Read(buf)
+		return string(buf[:n])
+	}, func(c net.Conn, _ string) { io.WriteString(c, "ok") })
+	if err := applyInput(ctx, &ipc.Hypr{Dir: dir}, false, nil, input, inputSchema); err != nil {
+		t.Fatal(err)
+	}
+	if got := <-hypr; got != "setcursor Bibata Modern 24" {
+		t.Errorf("hyprland: %q", got)
+	}
+
+	swayPath := filepath.Join(dir, "sway.sock")
+	sway := serveOnce(t, swayPath, func(c net.Conn) string {
+		head := make([]byte, 14)
+		io.ReadFull(c, head)
+		body := make([]byte, binary.LittleEndian.Uint32(head[6:]))
+		io.ReadFull(c, body)
+		return string(body)
+	}, func(c net.Conn, _ string) {
+		body := `[{"success":true}]`
+		head := make([]byte, 14)
+		copy(head, "i3-ipc")
+		binary.LittleEndian.PutUint32(head[6:], uint32(len(body)))
+		c.Write(append(head, body...))
+	})
+	if err := applyInput(ctx, nil, false, &ipc.Sway{Path: swayPath}, input, inputSchema); err != nil {
+		t.Fatal(err)
+	}
+	// numlock only from a config file; the cursor last
+	if got := <-sway; got != `input type:keyboard xkb_layout "us,de"; input type:keyboard xkb_variant ""; input type:keyboard xkb_options ""; input type:keyboard repeat_rate 25; input type:keyboard repeat_delay 600; seat * xcursor_theme "Bibata Modern" 24` {
+		t.Errorf("sway: %q", got)
+	}
+
+	if err := applyInput(ctx, nil, true, nil, input, inputSchema); err != nil {
+		t.Errorf("niri: %v", err)
+	}
+	if err := applyInput(ctx, nil, false, nil, input, inputSchema); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("no compositor: %v", err)
 	}
 }
