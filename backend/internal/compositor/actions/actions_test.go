@@ -1,21 +1,14 @@
 package actions
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func table(t *testing.T) *Table {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), File))
-	if err != nil {
-		t.Fatal(err)
-	}
-	tab, err := Parse(string(data))
+	tab, err := parse()
 	if err != nil {
 		t.Fatal(err)
 	}

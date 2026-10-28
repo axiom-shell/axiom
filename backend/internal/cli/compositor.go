@@ -13,7 +13,6 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/takeover"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-	"github.com/axiom-shell/axiom/backend/internal/tree"
 )
 
 func compositorCommand() *Command {
@@ -82,7 +81,6 @@ func bindsCommand(verb, summary, synopsis string) *Command {
 		Setup: func(fs *flag.FlagSet) Runner {
 			kind := fs.String("kind", "", "hyprland, sway or niri")
 			only := fs.String("only", "", "extract: just this file of user/ (the one a takeover adopted)")
-			dir := fs.String("tree", "", "the axiom tree whose bind actions to use (default: $AXIOM_TREE, the one here, else the installed one)")
 			memory := fs.Int64("memory-limit", 0, "extract: cap this process's memory at this many bytes first (the daemon's child running Hyprland's files)")
 			return func(ctx context.Context, e *Env, args []string) error {
 				if want := strings.Count(synopsis, " ") + 1; len(args) != want {
@@ -93,17 +91,9 @@ func bindsCommand(verb, summary, synopsis string) *Command {
 						return err
 					}
 				}
-				wd, _ := os.Getwd()
-				root, err := tree.Find(*dir, e.Getenv, wd)
-				if err != nil {
-					return err
-				}
-				table, err := binds.LoadActions(root)
-				if err != nil {
-					return err
-				}
-				o := binds.Options{Kind: *kind, Dir: args[0], Only: *only, Actions: table, Getenv: e.Getenv}
+				o := binds.Options{Kind: *kind, Dir: args[0], Only: *only, Getenv: e.Getenv}
 				var result *jsonx.Object
+				var err error
 				if verb == "extract" {
 					result, err = binds.Extract(ctx, o)
 				} else {

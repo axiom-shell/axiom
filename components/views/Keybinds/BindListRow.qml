@@ -25,7 +25,7 @@ StyledContainer {
   readonly property bool isRun: root.indices.length > 1
   readonly property int bindIndex: root.indices[0] ?? -1
   readonly property var bind: KeybindManager.editor.binds[root.bindIndex] ?? ({})
-  readonly property string runKey: root.isRun ? BindGroups.runKey(root.bind) : ""
+  readonly property string runKey: root.isRun ? BindGroups.runKey(KeybindManager.actionTable, root.bind) : ""
   readonly property bool expanded: root.isRun && KeybindManager.page.expandedRuns[root.runKey] === true
   readonly property bool selected: !root.isRun && KeybindManager.editor.selectedIndex === root.bindIndex
   readonly property bool paused: root.indices.every(i => KeybindManager.editor.binds[i]?.paused === true)
@@ -39,7 +39,7 @@ StyledContainer {
   // Its own label (less a "Section:" prefix), else its action's
   readonly property string label: {
     if (root.isRun)
-      return BindActions.defaultLabel(Object.assign({}, root.bind, {
+      return BindActions.defaultLabel(KeybindManager.actionTable, Object.assign({}, root.bind, {
         "argument": BindGroups.runNumbers(KeybindManager.editor.binds, root.indices)
       }));
     return KeybindManager.bindLabel(root.bind);

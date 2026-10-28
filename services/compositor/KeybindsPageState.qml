@@ -146,7 +146,7 @@ QtObject {
   // An editor bind's section on the Keybinds page: its description's
   // "Section:" prefix, else its action's
   function _bindSection(bind) {
-    return BindActions.hasOwnSection(bind.description) ? String(bind.description).split(":")[0] : BindActions.sectionFor(bind.action);
+    return BindActions.hasOwnSection(bind.description) ? String(bind.description).split(":")[0] : BindActions.sectionFor(KeybindManager.actionTable, bind.action);
   }
 
   // An editor bind's modifiers, by the names the compositor's binds decode to
@@ -195,7 +195,7 @@ QtObject {
         "index": index,
         "section": root._bindSection(bind),
         "mods": root._bindMods(bind),
-        "text": [key, KeybindManager.displayCombo(key), label, root._bindSection(bind), bind.argument ?? "", bind.description ?? "", BindActions.defaultLabel(bind)].join("\n").toLowerCase()
+        "text": [key, KeybindManager.displayCombo(key), label, root._bindSection(bind), bind.argument ?? "", bind.description ?? "", BindActions.defaultLabel(KeybindManager.actionTable, bind)].join("\n").toLowerCase()
       };
     }).filter(row => (query === "" || row.text.includes(query)) && (sections.length === 0 || sections.includes(row.section)) && mods.every(mod => row.mods.includes(mod)) && state(row.index)).map(row => row.index).join(",");
   }
@@ -205,7 +205,7 @@ QtObject {
   // The shown binds by section, with numbered runs folded
   // (BindGroups.groups): [{ key, indices, rows: [[index]] }]. Through a
   // string, like visibleKey, so the sections only rebuild when it changes.
-  readonly property string _layoutKey: JSON.stringify(BindGroups.groups(root.editor.binds, root.visibleIndices, root.editor.binds.map(bind => root._bindSection(bind)), KeybindManager.actionSections))
+  readonly property string _layoutKey: JSON.stringify(BindGroups.groups(KeybindManager.actionTable, root.editor.binds, root.visibleIndices, root.editor.binds.map(bind => root._bindSection(bind)), KeybindManager.actionSections))
   readonly property var editLayout: JSON.parse(_layoutKey)
 
   // The modifiers the key map shows the keys under

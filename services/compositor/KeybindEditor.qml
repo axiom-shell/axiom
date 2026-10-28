@@ -100,7 +100,7 @@ QtObject {
   // A bind with every field, its flags from its action unless given
   function _completeBind(bind) {
     const action = bind?.action ?? "launcher";
-    const flags = BindActions.actionFlags[action] ?? [];
+    const flags = KeybindManager.actionTable?.actionFlags?.[action] ?? [];
     const full = {
       "key": "",
       "action": action,
@@ -108,7 +108,7 @@ QtObject {
       "call": "toggle",
       "description": ""
     };
-    for (const flag of BindActions.flagNames)
+    for (const flag of KeybindManager.actionTable?.flagNames ?? [])
       full[flag] = flags.includes(flag);
     full.paused = false;
     return Object.assign(full, bind ?? {});
@@ -321,11 +321,11 @@ QtObject {
         bind.compositor = CompositorManager.kind || "hyprland";
       const options = KeybindManager.argumentOptions(value);
       if (!KeybindManager.needsArgument(value) || (options && !options.includes(bind.argument)))
-        bind.argument = BindActions.argumentDefaults[value] ?? "";
-      if (!BindActions.hasCalls(value))
+        bind.argument = KeybindManager.actionTable?.argumentDefaults?.[value] ?? "";
+      if (!BindActions.hasCalls(KeybindManager.actionTable, value))
         bind.call = "toggle";
-      const flags = BindActions.actionFlags[value] ?? [];
-      for (const flag of BindActions.flagNames)
+      const flags = KeybindManager.actionTable?.actionFlags?.[value] ?? [];
+      for (const flag of KeybindManager.actionTable?.flagNames ?? [])
         bind[flag] = flags.includes(flag);
     }
     draft.changed();
@@ -374,7 +374,7 @@ QtObject {
           "text": I18n.tr("Needs an argument, so it isn't bound")
         });
       // The switcher picks when its modifier is released
-      if (BindActions.switcherSteps[bind.action] !== undefined && key !== "" && BindActions.switcherHeld(KeyNames.split(key).mods).length === 0)
+      if (KeybindManager.actionTable?.switcherSteps?.[bind.action] !== undefined && key !== "" && BindActions.switcherHeld(KeyNames.split(key).mods).length === 0)
         found.push({
           "level": "warning",
           "text": I18n.tr("Needs a modifier to hold, like ALT + Tab")
@@ -395,7 +395,7 @@ QtObject {
           "level": "warning",
           "text": I18n.tr("{0} can't bind a modifier on its own", CompositorManager.displayName)
         });
-      else if (!BindActions.appliesUnder(bind, CompositorManager.kind, CompositorManager.supports))
+      else if (!BindActions.appliesUnder(KeybindManager.actionTable, bind, CompositorManager.kind, CompositorManager.supports))
         found.push({
           "level": "warning",
           "text": bind.action === "raw" ? I18n.tr("Written for another compositor, so it does nothing here") : I18n.tr("This compositor can't do this, so it isn't bound")

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -200,7 +201,7 @@ func swayAction(o Options, command string) *jsonx.Object {
 	}
 	if len(words) > 0 && words[0] == "exec" {
 		argument := execText(string([]rune(command)[4:]))
-		if entry := o.Actions.IPCAction(argument); entry != nil {
+		if entry := actions.Default().IPCAction(argument); entry != nil {
 			return entry
 		}
 		return jsonx.Obj("action", "exec", "argument", argument)
@@ -319,7 +320,7 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 			// meant (a held close would close one window after another): an
 			// action repeats as axiom's own does, a raw command as sway had it
 			name, _ := entry.Value("action").(string)
-			if !slices.Contains(flags, "--no-repeat") && (o.Actions.Repeating[name] || name == "raw") {
+			if !slices.Contains(flags, "--no-repeat") && (actions.Default().Repeating[name] || name == "raw") {
 				entry.Set("repeating", true)
 			}
 			push(result, "binds", entry)

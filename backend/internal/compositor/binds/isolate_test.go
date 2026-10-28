@@ -81,7 +81,6 @@ func TestMain(m *testing.M) {
 func (f *fx) isolated() Options {
 	o := f.options()
 	o.Isolate = built(f.t)
-	o.Tree = testkit.RepoRoot()
 	return o
 }
 
@@ -144,7 +143,7 @@ func TestIsolatedExtractTellsAMemoryDeathFromACrash(t *testing.T) {
 		f := newFx(t, "hyprland")
 		f.write("binds.lua", "")
 		o := f.options()
-		o.Isolate, o.Tree = self, testkit.RepoRoot()
+		o.Isolate = self
 		if _, err := Extract(context.Background(), o); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Fatalf("saying %q: got %v, want %q", c.says, err, c.want)
 		}

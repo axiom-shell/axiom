@@ -65,7 +65,8 @@ for f in "${changed[@]}"; do
   case "$f" in
   components/methods/SchemaValidation.qml) schema=1 go=1 ;;
   config/schema/* | backend/internal/schema/*) schema=1 go=1 ;;
-  # The bind merge (backend/internal/compositor/binds) reads its actions
+  # The bind actions' functions, which the binary's port replays
+  # (backend/internal/compositor/render's shared cases)
   components/methods/BindActions.qml) go=1 ;;
   esac
   # backend/ and the repo files the binary embeds (backend/tools/syncassets)

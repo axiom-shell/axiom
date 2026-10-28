@@ -1,6 +1,6 @@
 # Merging user binds (managed mode)
 
-> **Files:** `backend/internal/compositor/binds/`, `backend/internal/compositor/manager/hypr.go`, `services/compositor/CompositorConfigManager.qml` (`mergeUserBinds`, `previewMerge`), `backend/internal/compositor/actions/`, `components/methods/BindKeys.qml`, `components/methods/BindActions.qml`
+> **Files:** `backend/internal/compositor/binds/`, `backend/internal/compositor/manager/hypr.go`, `services/compositor/CompositorConfigManager.qml` (`mergeUserBinds`, `previewMerge`), `backend/internal/compositor/actions/`, `components/methods/BindKeys.qml`
 > **Config:** `Keybinds.binds`
 > **Related:** [Managed takeover](managed-takeover.md), [Keybinds](keybinds.md), [Config modes](config-modes.md)
 
@@ -14,7 +14,7 @@
 
 ### Where it runs
 - The merge is the binary's (`backend/internal/compositor/binds`, every compositor's `extract` and `remove` with the same JSON, documented in its package comment). The daemon runs it (managed mode: the adopted file on a takeover, all of `user/` on the Keybinds page's Merge, `compositor.merge` / `compositor.previewMerge`); `axiom compositor binds extract|remove --kind K DIR [SITES]` runs it from the command line.
-- What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) or a volume, brightness or media command maps onto comes from `compositor/actions`, which reads `BindActions.qml`'s `ipcActions` and `actionFlags` from the tree, so a new IPC action needs no Go change.
+- What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) or a volume, brightness or media command maps onto comes from `compositor/actions`, from its table's `ipcActions` and `actionFlags` (`table.json`, embedded: the one table the daemon also sends the shell), so a new IPC action is a row there and nothing else.
 
 ### Extracting
 - It runs the files under gopher-lua (Lua 5.1), with no `lua` binary.

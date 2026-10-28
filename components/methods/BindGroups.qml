@@ -10,15 +10,15 @@ QtObject {
   // The run a bind belongs to, or "": a bind on a number key whose action
   // takes a workspace number, that number (10 on the 0 key), with no label
   // of its own. Binds in one run share the action, the modifiers and the
-  // flags.
-  function runKey(bind) {
-    if (BindActions.argumentKind(bind?.action) !== "workspace" || String(bind.description ?? "").trim() !== "")
+  // flags. `table` is the bind actions' (KeybindManager.actionTable).
+  function runKey(table, bind) {
+    if (BindActions.argumentKind(table, bind?.action) !== "workspace" || String(bind.description ?? "").trim() !== "")
       return "";
     const parts = KeyNames.split(bind.key);
     const argument = String(bind.argument ?? "").trim();
     if (!/^[0-9]$/.test(parts.key) || !(parts.key === argument || (parts.key === "0" && argument === "10")))
       return "";
-    const flags = BindActions.flagNames.concat(["paused"]).map(flag => bind[flag] === true ? "1" : "0").join("");
+    const flags = (table?.flagNames ?? []).concat(["paused"]).map(flag => bind[flag] === true ? "1" : "0").join("");
     return [bind.action, parts.mods.slice().sort().join("+"), flags].join("|");
   }
 
@@ -29,7 +29,7 @@ QtObject {
    * order (the rest follow by name). A row holds one bind, or a run's
    * binds by number, where its first shown bind is.
    */
-  function groups(binds, shown, sections, order) {
+  function groups(table, binds, shown, sections, order) {
     const bySection = {};
     for (const index of shown ?? []) {
       const section = sections[index] ?? "";
@@ -40,12 +40,12 @@ QtObject {
     return known.concat(others).map(section => ({
           "key": section,
           "indices": bySection[section],
-          "rows": root._rows(binds, bySection[section])
+          "rows": root._rows(table, binds, bySection[section])
         }));
   }
 
-  function _rows(binds, indices) {
-    const keys = indices.map(index => root.runKey(binds[index]));
+  function _rows(table, binds, indices) {
+    const keys = indices.map(index => root.runKey(table, binds[index]));
     const counts = {};
     for (const key of keys)
       if (key !== "")

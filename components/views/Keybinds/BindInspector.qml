@@ -175,7 +175,7 @@ ColumnLayout {
       // own ("Section: Label")
       StyledText {
         visible: !BindActions.hasOwnSection(label.input.text)
-        text: I18n.tr(BindActions.sectionFor(root.bind.action)) + "  ›"
+        text: I18n.tr(BindActions.sectionFor(KeybindManager.actionTable, root.bind.action)) + "  ›"
         opacity: 0.5
         textSize: Appearance.fontSizeBy(-1)
       }
@@ -184,7 +184,7 @@ ColumnLayout {
         id: label
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.height
-        placeholderText: BindActions.defaultLabel(root.bind) || I18n.tr("Label")
+        placeholderText: BindActions.defaultLabel(KeybindManager.actionTable, root.bind) || I18n.tr("Label")
         Component.onCompleted: input.text = root.bind.description ?? ""
         input.onEditingFinished: {
           if (label.typed)

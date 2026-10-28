@@ -34,7 +34,6 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
-	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/luacheck"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -42,12 +41,11 @@ import (
 
 // Options is one merge call.
 type Options struct {
-	Kind    string         // "hyprland", "sway" or "niri"
-	Dir     string         // the compositor's config dir (~/.config/hypr)
-	Only    string         // extract: just this file of user/ (the one a takeover adopted)
-	Actions *actions.Table // BindActions' tables
-	Getenv  func(string) string
-	Now     func() time.Time // backup names (default time.Now)
+	Kind   string // "hyprland", "sway" or "niri"
+	Dir    string // the compositor's config dir (~/.config/hypr)
+	Only   string // extract: just this file of user/ (the one a takeover adopted)
+	Getenv func(string) string
+	Now    func() time.Time // backup names (default time.Now)
 	// Tracked: whether a file is in a git repository (default `git rev-parse`)
 	Tracked func(ctx context.Context, path string) bool
 	Lua     luacheck.Checker
@@ -57,14 +55,14 @@ type Options struct {
 	// takes it
 	Locked bool
 	// Isolate: the axiom binary to read Hyprland's files in, a child
-	// limited to MemoryLimit (the daemon's own, /proc/self/exe), with Tree
-	// the tree whose bind actions it reads; "" reads them in this process
-	Isolate, Tree string
+	// limited to MemoryLimit (the daemon's own, /proc/self/exe); "" reads
+	// them in this process
+	Isolate string
 }
 
 func (o *Options) defaults() error {
-	if o.Dir == "" || o.Actions == nil {
-		return axerr.New(axerr.BadRequest, "a bind merge needs a dir and the bind actions")
+	if o.Dir == "" {
+		return axerr.New(axerr.BadRequest, "a bind merge needs a dir")
 	}
 	// A file name in user/, never a path out of it
 	if o.Only != "" && (o.Only != filepath.Base(o.Only) || o.Only == "." || o.Only == "..") {
@@ -131,16 +129,6 @@ func Remove(ctx context.Context, o Options, sites *jsonx.Array) (*jsonx.Object, 
 		return removeMarked(o, sites, niriMark, true)
 	}
 	return nil, axerr.New(axerr.BadRequest, "unknown compositor %q", o.Kind)
-}
-
-// LoadActions reads the bind actions table from the tree root (what the
-// merge maps commands onto).
-func LoadActions(root string) (*actions.Table, error) {
-	data, err := os.ReadFile(filepath.Join(root, actions.File))
-	if err != nil {
-		return nil, axerr.Wrap(axerr.NotFound, err, "reading the bind actions")
-	}
-	return actions.Parse(string(data))
 }
 
 func emptyResult() *jsonx.Object {

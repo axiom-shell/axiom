@@ -35,7 +35,7 @@ func LimitMemory(limit int64) error {
 // extractIsolated runs extract in a child: `<Isolate> compositor binds
 // extract`, which limits its memory to MemoryLimit before it runs a file
 func extractIsolated(ctx context.Context, o Options) (*jsonx.Object, error) {
-	args := []string{"compositor", "binds", "extract", "--kind", o.Kind, "--tree", o.Tree,
+	args := []string{"compositor", "binds", "extract", "--kind", o.Kind,
 		"--memory-limit", strconv.Itoa(MemoryLimit)}
 	if o.Only != "" {
 		args = append(args, "--only", o.Only)

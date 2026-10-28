@@ -8,8 +8,9 @@
 // and KeyNames' functions), function for function and on the same JSON
 // values (jsonx), checked byte for byte against the calls their tests make
 // (the shared fixtures' <Helper>.<function> suites). What the JS reads from
-// LayerStack and BindActions' tables comes in as Tables, parsed from those
-// files. Values follow the JS: a missing value is nil, as null is.
+// LayerStack's tables and the bind actions' (actions.JSON, handed to
+// BindActions) comes in as Tables. Values follow the JS: a missing value
+// is nil, as null is.
 package render
 
 import (

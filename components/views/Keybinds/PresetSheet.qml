@@ -357,7 +357,7 @@ Popup {
                   }
 
                   StyledText {
-                    text: BindActions.defaultLabel(step.modelData.bind) || (KeybindManager.actionLabels[step.modelData.bind.action] ?? "")
+                    text: BindActions.defaultLabel(KeybindManager.actionTable, step.modelData.bind) || (KeybindManager.actionLabels[step.modelData.bind.action] ?? "")
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                   }
@@ -371,7 +371,7 @@ Popup {
                       case "resume":
                         return I18n.tr("Resumes the paused bind");
                       case "taken":
-                        return I18n.tr("Pauses {0}", step.taken ? (step.taken.description || BindActions.defaultLabel(step.taken) || KeybindManager.actionLabels[step.taken.action]) : "") + (step.modelData.takenBy.length > 1 ? " +" + (step.modelData.takenBy.length - 1) : "");
+                        return I18n.tr("Pauses {0}", step.taken ? (step.taken.description || BindActions.defaultLabel(KeybindManager.actionTable, step.taken) || KeybindManager.actionLabels[step.taken.action]) : "") + (step.modelData.takenBy.length > 1 ? " +" + (step.modelData.takenBy.length - 1) : "");
                       }
                       return I18n.tr("New");
                     }
