@@ -269,6 +269,7 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	}
 	if s.takeoversUnknown && !opts.Takeover {
 		s.mu.Unlock()
+		// SavedConfigsManager._refusal finds this by "take something over"
 		return 0, axerr.New(axerr.Conflict, "%s isn't JSON and the settings that take something over on this PC aren't known: fix it by hand", s.path)
 	}
 	current := s.config

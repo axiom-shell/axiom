@@ -247,8 +247,9 @@ QtObject {
   // Why axiom refused a file, for people
   function _refusal(error, label) {
     const message = error.message ?? "";
+    // store.write's refusal while the takeovers aren't known
     if (message.includes("take something over"))
-      return I18n.tr("config.json is broken and the settings that take something over on this PC aren't known, so nothing replaces it. Fix it by hand or delete it.");
+      return I18n.tr("config.json is broken and the settings that take something over on this PC aren't known, so nothing replaces it. Fix it by hand, or delete it and restart axiom.");
     if (message.includes("newer axiom"))
       return I18n.tr("\"{0}\" is from a newer axiom. Update axiom to import it.", label);
     if (message.includes("no config version"))
