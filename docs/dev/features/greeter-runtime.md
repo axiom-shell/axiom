@@ -75,7 +75,7 @@ Built on `Quickshell.Services.Greetd`.
   - `avatarOf(name)` from AccountsService's icons.
 - **At start** (but not when windowed), `_applyCompositor`:
   - it hands the bundle's monitor profiles and Input values to axiom (`CompositorManager.setUpGreeter` → `greeter.compositor`, `daemon/compositorsocket.go`): on Hyprland axiom evals `render.GreeterLua`, the profiles' `MonitorsLua` (which picks the profile again on each hotplug) plus one `hl.config` of the `x-greeter` input options whose parts are on, then sets the cursor while the cursor part is on with a theme (`setcursor`, even when Hyprland refused the Lua); on sway it sends the live `input` / `seat` commands (`render.SwayInputLines`);
-  - on sway the shell also applies the saved profile for the outputs connected at start (`MonitorLayout.savedRules` → `CompositorManager.applyOutputs`).
+  - without `supports.outputProfiles` (sway, niri) the shell also applies the saved profile for the outputs connected at start (`MonitorLayout.savedRules` → `CompositorManager.applyOutputs`).
 
 ### Surfaces and modules
 - **`surfaces/greeter/GreeterSurface`** is a `ScreenLayoutView`, the same view the lock screen uses ([lockscreen.md](lockscreen.md#layout)).

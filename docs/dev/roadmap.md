@@ -178,7 +178,6 @@ Resolved by a stage:
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
 sway and SwayFX:
-- [The greeter's sway monitors are still picked in QML, by compositor name](issues.md#the-greeters-sway-monitors-are-still-picked-in-qml-by-compositor-name)
 - [The greeter on sway can't use a cursor theme's companion](issues.md#the-greeter-on-sway-cant-use-a-cursor-themes-companion)
 - [SwayFX remaps the chrome on a fresh qs start](issues.md#swayfx-remaps-the-chrome-on-a-fresh-qs-start)
 - [The blur window's Top/Overlay switch may land over the bars on SwayFX](issues.md#the-blur-windows-topoverlay-switch-may-land-over-the-bars-on-swayfx)
@@ -204,6 +203,8 @@ niri:
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
+- [Profile switching runs in the shell on sway and niri](issues.md#profile-switching-runs-in-the-shell-on-sway-and-niri)
+- [The monitor profile picker exists twice](issues.md#the-monitor-profile-picker-exists-twice) (after the entry above)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [A fullscreen window re-sends the whole live layer](issues.md#a-fullscreen-window-re-sends-the-whole-live-layer)
 - [A fullscreen window on one screen pauses the blur on every screen](issues.md#a-fullscreen-window-on-one-screen-pauses-the-blur-on-every-screen)

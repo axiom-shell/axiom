@@ -227,7 +227,7 @@ QtObject {
   // elsewhere the saved profile for what's connected at start is applied
   function _applyCompositor() {
     const config = ConfigManager.config;
-    if (CompositorManager.kind !== "hyprland")
+    if (!CompositorManager.supports.outputProfiles)
       CompositorManager.withOutputDetails(outputs => {
         const rules = MonitorLayout.savedRules(config.Monitors.profiles, outputs ?? []);
         if (rules.length > 0)
