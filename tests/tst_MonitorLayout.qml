@@ -203,45 +203,6 @@ TestCase {
     }, []), "eDP-1");
   }
 
-  readonly property var profiles: [
-    {
-      "name": "Desk",
-      "outputs": [
-        {
-          "output": "desc:AOC CU34G4Z XJ9R7HA000231"
-        },
-        {
-          "output": "HDMI-A-1",
-          "disabled": true
-        }
-      ]
-    },
-    {
-      "name": "TV",
-      "outputs": [
-        {
-          "output": "desc:AOC CU34G4Z XJ9R7HA000231"
-        },
-        {
-          "output": "desc:LG TV"
-        }
-      ]
-    }
-  ]
-
-  function test_matchProfile() {
-    compare(MonitorLayout.matchProfile(profiles, [aoc]), 0, "a disabled output may be missing");
-    compare(MonitorLayout.matchProfile(profiles, [aoc, tv]), 1, "exact match wins");
-    compare(MonitorLayout.matchProfile(profiles, [tv]), 1, "most covered");
-    compare(MonitorLayout.matchProfile(profiles, [
-      {
-        "name": "DP-3",
-        "description": "Other"
-      }
-    ]), -1);
-    compare(MonitorLayout.matchProfile([], [aoc]), -1);
-  }
-
   function test_ruleFromMonitor() {
     const monitor = {
       "name": "DP-1",

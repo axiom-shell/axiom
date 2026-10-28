@@ -549,11 +549,18 @@ func (m *Manager) state() *jsonx.Object {
 	for _, c := range m.monitorConflict {
 		conflicts.Append(c)
 	}
+	// The saved monitor profile for what's connected (the Monitors page's
+	// "(connected)")
+	monitorProfile := ""
+	if m.profiles != nil {
+		profiles, _ := config.Lookup(m.o.Config(), config.Keys("Monitors", "items"))
+		monitorProfile = m.profiles.matched(profiles)
+	}
 	return jsonx.Obj("kind", m.kind, "live", m.live(), "mode", m.mode, "status", m.status(), "problem", m.problem,
 		"takeoverPending", m.takeoverPending, "managedCheck", check, "managedBlockedBy", by, "managedBlockedRepo", repo,
 		"monitorConflicts", conflicts, "skippedKeys", skipped, "complete", complete, "merging", m.merging,
 		"lastMerge", m.lastMerge, "mergeable", m.mergeable, "runningConfig", runningConfig, "userBindsRead", userBindsRead,
-		"releaseProblem", m.releaseProblem, "files", fs, "look", look)
+		"releaseProblem", m.releaseProblem, "files", fs, "look", look, "monitorProfile", monitorProfile)
 }
 
 // push sends the state when it changed

@@ -183,7 +183,6 @@ niri:
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
-- [The Monitors page matches profiles in QML](issues.md#the-monitors-page-matches-profiles-in-qml)
 - [A monitor profile saved under one compositor doesn't match under another](issues.md#a-monitor-profile-saved-under-one-compositor-doesnt-match-under-another)
 - [Two profiles naming one unplugged monitor differently both write a rule](issues.md#two-profiles-naming-one-unplugged-monitor-differently-both-write-a-rule)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)

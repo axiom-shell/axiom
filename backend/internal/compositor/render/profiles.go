@@ -41,7 +41,7 @@ func connected(output string, outputs []Output) bool {
 // outputs count. A profile listing exactly
 // those wins (a disabled rule's output may be missing), else the one
 // turning on most of them; ties go to the earlier profile
-// (MonitorLayout.matchProfile).
+// (compositor.state names it for the Monitors page).
 func MatchProfile(profiles any, outputs []Output) int {
 	var on []Output
 	for _, o := range outputs {

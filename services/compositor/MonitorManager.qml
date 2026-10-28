@@ -12,8 +12,9 @@ import qs.services.ui
  * withOutputDetails, read at startup and when monitors come, go or the
  * config reloads; never polled) and the editor for Monitors.items, a
  * draft of profiles (each a layout for one set of monitors). The saved
- * profile matching what's connected is applied on every hotplug by the
- * daemon, not here.
+ * profile matching what's connected is picked and applied on every
+ * hotplug by the daemon, which names it (CompositorConfigManager.
+ * monitorProfile); the page finds that name in the draft.
  *
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
@@ -45,8 +46,10 @@ QtObject {
   readonly property int selectedIndex: rules.findIndex(rule => rule.output === selectedOutput)
   readonly property var selectedRule: rules[selectedIndex] ?? null
 
-  // The draft's profile for what's connected
-  readonly property int liveProfile: MonitorLayout.matchProfile(profiles, enabledOutputs)
+  // The draft's profile for what's connected: the one _detect found (the
+  // daemon's match, by name: names are unique) or made, through renames
+  readonly property int liveProfile: _named(profiles, _liveName)
+  property string _liveName: ""
   // The selected profile is for what's connected: Apply tries it live
   readonly property bool selectedIsLive: selectedProfile === liveProfile
 
@@ -95,8 +98,8 @@ QtObject {
     return MonitorLayout.ruleRect(rule, monitorFor(rule));
   }
 
-  // What's connected, as a profile: the selected one when it's for these
-  // monitors (adding any it doesn't list), else a new one from how they are
+  // What's connected, as a profile: the one the daemon matched (adding any
+  // monitor it doesn't list), else a new one from how they are
   function _detect() {
     if (outputs.length === 0)
       return;
@@ -105,7 +108,7 @@ QtObject {
     };
     draft.local = local;
     local.items = local.items ?? [];
-    let index = MonitorLayout.matchProfile(local.items, enabledOutputs);
+    let index = _named(local.items, CompositorConfigManager.monitorProfile);
     let edited = false;
     if (index < 0) {
       local.items.push(_newProfile(local.items.length));
@@ -120,8 +123,41 @@ QtObject {
         }
     }
     selectProfile(index);
+    _liveName = local.items[index].name;
     if (edited)
       draft.changed();
+    _detected = JSON.stringify(draft.local);
+  }
+
+  // The index of the profile called `name` in `list`, -1 for "" or none
+  function _named(list, name) {
+    return name ? list.findIndex(profile => profile.name === name) : -1;
+  }
+
+  // The draft as _detect left it
+  property string _detected: ""
+
+  // The draft holds no edits but detection's: a hotplug or the daemon's
+  // new match may detect again
+  function _untouched() {
+    return !draft.isDirty || JSON.stringify(draft.local) === _detected;
+  }
+
+  // The daemon's match for a hotplug may come after the page's read: it
+  // detects again (unless a detect is still waiting for the read, which
+  // will use it). Otherwise the live profile follows the name, the page
+  // closed or not.
+  property Connections _match: Connections {
+    target: CompositorConfigManager
+
+    function onMonitorProfileChanged() {
+      if (root.pending || root._detectPending)
+        return;
+      if (root.pageShown && root._untouched())
+        root.reset();
+      else
+        root._liveName = CompositorConfigManager.monitorProfile;
+    }
   }
 
   function _uniqueName(name) {
@@ -183,6 +219,8 @@ QtObject {
     const target = draft.local?.items?.[index];
     if (!target || target.name === name)
       return;
+    if (target.name === _liveName)
+      _liveName = name;
     target.name = name;
     draft.changed();
   }
@@ -406,7 +444,7 @@ QtObject {
     target: CompositorManager
 
     function onOutputsHotplugged() {
-      if (root.pageShown && !root.pending && !draft.isDirty) {
+      if (root.pageShown && !root.pending && root._untouched()) {
         draft.load();
         root._detectPending = true;
       }
