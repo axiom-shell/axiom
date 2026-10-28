@@ -180,7 +180,6 @@ niri:
 - [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)
 - [niri reports no position for a tiled window](issues.md#niri-reports-no-position-for-a-tiled-window)
 - [niri's flags can't be turned off from axiom](issues.md#niris-flags-cant-be-turned-off-from-axiom)
-- [Nested niri freezes while its window is hidden](issues.md#nested-niri-freezes-while-its-window-is-hidden)
 - [Shift+Enter on an emoji doesn't type it on niri](issues.md#shiftenter-on-an-emoji-doesnt-type-it-on-niri)
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 

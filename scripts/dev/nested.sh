@@ -165,5 +165,8 @@ EOF
     mkdir -p "$(dirname "$conf")"
     [[ -f "$conf" ]] || cp "$scratch/niri.kdl" "$conf"
   fi
+  # niri's own behaviour, not axiom's: its winit backend stops while its
+  # window isn't shown, so the axiom inside hangs on its IPC
+  echo "nested niri: keep its window visible (on a shown workspace) while testing; hidden, niri stops and 'axiom ipc' calls into it never return until it shows again" >&2
   exec dbus-run-session -- niri -c "$conf"
 fi
