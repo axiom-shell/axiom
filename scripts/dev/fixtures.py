@@ -4,8 +4,9 @@ cases the JS helpers and the axiom binary (Go) must agree on, byte for
 byte (docs/dev/backend/README.md › Shared fixtures).
 
   scripts/dev/fixtures.py record     re-record the JS suites: runs tst_Config,
-                                     tst_SchemaValidation and the compositor
-                                     config helpers' tests (HELPERS) with
+                                     tst_SchemaValidation, tst_ConfigOps and
+                                     the compositor config helpers' tests
+                                     (HELPERS) with
                                      recording on, and writes the calls they
                                      make as cases
   scripts/dev/fixtures.py ensure     record only when what the cases are
@@ -42,9 +43,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SHARED = ROOT / "tests/fixtures/shared"
 # Suites recorded from the JS helpers (the rest are written by Go's tests)
-# The compositor config helpers the binary also ports, still used by the
-# shell (backend/internal/compositor/render; the rest's cases are frozen there)
-HELPERS = ("BindActions", "BindKeys", "CompositorLayer", "HyprLua", "KeyNames", "LayerStack", "NiriConf", "SwayConf")
+# ConfigOps (config.set's ops, which the daemon's tests decode) and the
+# compositor config helpers the binary also ports, still used by the shell
+# (backend/internal/compositor/render; the rest's cases are frozen there)
+HELPERS = ("BindActions", "BindKeys", "CompositorLayer", "ConfigOps", "HyprLua", "KeyNames", "LayerStack", "NiriConf", "SwayConf")
 RECORD_TESTS = ("Config", "SchemaValidation") + HELPERS
 BLOB_SIZE = 2048
 # What the recorded cases are made from: a change to any re-records them
