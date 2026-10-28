@@ -14,9 +14,9 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
-// Inputs are what the shell resolves for the layer (its readers' values:
-// the binds, the look and input specs, monitor rules, the session, theme
-// colors; compositor.inputs), as it sends them.
+// Inputs are what the layer is made of (buildInputs: the config's binds,
+// profiles, strips, look and input specs, session and options, with the
+// shell's facts), as the writers read it.
 type Inputs struct{ *jsonx.Object }
 
 func (in Inputs) get(key string) any {
@@ -180,7 +180,7 @@ func strList(v any) []string {
 }
 
 // resolveHex is a theme color name's hex, as the shell resolved it
-// (inputs.colors)
+// (Facts.Colors)
 func resolveHex(in Inputs) render.Func {
 	colors := in.get("colors")
 	return func(args ...any) any {

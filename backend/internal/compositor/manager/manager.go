@@ -17,9 +17,10 @@
 // lines while they're on; niri, taking nothing at runtime, gets them in its
 // files instead.
 //
-// What the layer is made of comes from the shell, resolved by its readers
-// (Inputs: compositor.inputs); the mode is the config's. Everything runs on
-// one goroutine, in order.
+// What the layer is made of is read from the config (binds, profiles,
+// strips, the look's and input's settings, the session, the options), with
+// what only the shell knows (Facts: compositor.inputs); the mode is the
+// config's too. Everything runs on one goroutine, in order.
 package manager
 
 import (
@@ -56,10 +57,11 @@ type Options struct {
 	// "" while it isn't known (config.json didn't load at the start): the
 	// manager then holds, changing no mode it applied (the defaults'
 	// runtime layer only while nothing of axiom's is in the compositor's
-	// config); Binds its
+	// config); Config the config the layer is made of; Binds its
 	// Keybinds.binds; CommitBinds saves Keybinds.binds
 	Schema      func() any
 	Mode        func() string
+	Config      func() *jsonx.Object
 	Binds       func() any
 	CommitBinds func(binds *jsonx.Array) error
 	// Push sends the shell a compositor.* push
@@ -88,6 +90,8 @@ type Manager struct {
 	stop    sync.Once
 
 	in Inputs
+	// facts: the shell's (SetFacts), nil until it sends them
+	facts *Facts
 	// mode: the config's; "" while it isn't known (holding)
 	mode    string
 	lastKey string
@@ -306,31 +310,42 @@ func (m *Manager) live() bool {
 
 // --- From the daemon ---
 
-// SetInputs takes the shell's inputs (compositor.inputs).
-func (m *Manager) SetInputs(in *jsonx.Object) {
+// SetFacts takes what only the shell knows of the layer
+// (compositor.inputs).
+func (m *Manager) SetFacts(f Facts) {
 	m.enqueue(func(ctx context.Context) {
-		wasLive := m.live()
-		m.in = Inputs{in}
-		if !m.live() {
-			return
-		}
-		if !wasLive {
-			m.mode = m.o.Mode()
-			m.noteHolding()
-			m.debounce.Reset(300 * time.Millisecond)
-		}
-		m.checkKey()
-		if key := m.in.str("liveKey"); key != m.liveKey {
-			m.liveKey = key
-			m.liveDebounce.Reset(300 * time.Millisecond)
-		}
+		m.facts = &f
+		m.setInputs(buildInputs(m.o.Config(), m.facts))
 	})
 }
 
-// ConfigChanged tells of a config change (the mode); fromFile when it was
-// read from config.json (an edit made outside), not saved by the shell.
+// setInputs takes what the layer is made of, on the manager's goroutine
+func (m *Manager) setInputs(in Inputs) {
+	wasLive := m.live()
+	m.in = in
+	if !m.live() {
+		return
+	}
+	if !wasLive {
+		m.mode = m.o.Mode()
+		m.noteHolding()
+		m.debounce.Reset(300 * time.Millisecond)
+	}
+	m.checkKey()
+	if key := m.in.str("liveKey"); key != m.liveKey {
+		m.liveKey = key
+		m.liveDebounce.Reset(300 * time.Millisecond)
+	}
+}
+
+// ConfigChanged tells of a config change (what the layer is made of, the
+// mode); fromFile when it was read from config.json (an edit made outside),
+// not saved by the shell.
 func (m *Manager) ConfigChanged(fromFile bool) {
 	m.enqueue(func(ctx context.Context) {
+		if m.facts != nil {
+			m.setInputs(buildInputs(m.o.Config(), m.facts))
+		}
 		if !m.live() {
 			return
 		}
@@ -451,7 +466,9 @@ func (m *Manager) state() *jsonx.Object {
 	}
 	if m.live() {
 		for _, b := range itemsOf(activeBinds(m.in)) {
-			complete.Append(m.w.complete(m.in, b))
+			if m.w.complete(m.in, b) {
+				complete.Append(b)
+			}
 		}
 		for _, k := range m.w.skippedKeys() {
 			skipped.Append(k)

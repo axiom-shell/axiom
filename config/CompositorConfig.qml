@@ -9,5 +9,4 @@ QtObject {
 
   // "detached" | "included" | "managed"
   readonly property string mode: _c.mode
-  readonly property bool requiredSettings: _c.requiredSettings
 }

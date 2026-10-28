@@ -57,6 +57,10 @@ func (d *Daemon) newCompositor() *manager.Manager {
 			s, _ := v.(string)
 			return s
 		},
+		Config: func() *jsonx.Object {
+			cfg, _ := d.store.Config()
+			return cfg
+		},
 		Binds: func() any { return setting("Keybinds", "binds") },
 		CommitBinds: func(b *jsonx.Array) error {
 			if err := d.writable(); err != nil {
@@ -80,8 +84,8 @@ func (d *Daemon) newCompositor() *manager.Manager {
 	})
 }
 
-// compositorPart: the compositor's config. The shell sends what the layer
-// is made of (compositor.inputs, its readers' values); the daemon writes
+// compositorPart: the compositor's config. The layer is made of the config
+// and what only the shell knows (compositor.inputs); the daemon writes
 // the files, takes the config over and gives it back, moves the user's
 // binds in and applies the runtime layer, and pushes what the Compositor
 // settings show (compositor.state).
@@ -107,16 +111,11 @@ func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
 		}
 		return nil
 	}
-	rpc.Handle(reg, "compositor.inputs", func(ctx context.Context, c *rpc.Conn, p json.RawMessage) (struct{}, error) {
+	rpc.Handle(reg, "compositor.inputs", func(ctx context.Context, c *rpc.Conn, p manager.Facts) (struct{}, error) {
 		if err := shellOnly(c); err != nil {
 			return struct{}{}, err
 		}
-		v, err := jsonx.Unmarshal(p)
-		in, ok := v.(*jsonx.Object)
-		if err != nil || !ok {
-			return struct{}{}, axerr.New(axerr.BadRequest, "inputs must be an object")
-		}
-		m.SetInputs(in)
+		m.SetFacts(p)
 		return struct{}{}, nil
 	})
 	rpc.Handle(reg, "compositor.state", func(ctx context.Context, c *rpc.Conn, _ struct{}) (json.RawMessage, error) {
