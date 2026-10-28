@@ -24,7 +24,7 @@ Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.
   - The listener removes itself on leaving.
 - Picking, cancelling and the listener all leave the submap inside Hyprland itself, so it can't stick while qs is down.
 - Redefining a submap adds to its binds, so the chunk first unbinds the keys its last run bound (`AXIOM_SWITCHER_KEYS`).
-- KeybindManager leaves the submap out of the page, and flags a switcher key that has no modifier to hold.
+- KeybindManager leaves the submap out of the page, and its `editor` (KeybindEditor) flags a switcher key that has no modifier to hold.
 
 ### Events and the manager
 - Events arrive on socket2 as `custom>>axiom-switcher:<verb>` (HyprlandManager's `switcherKey(verb, argument)`, the backend signal `WindowSwitcherManager` listens to; [contract](../compositor/contract.md)): no process per key, and in order. HyprlandManager fetches nothing for `custom` events.
