@@ -29,12 +29,14 @@ func TestValidationErrors(t *testing.T) {
 			"mode": {"type": "string", "default": "a", "enum": ["a", "b"]},
 			"nested": {"type": "object", "additionalProperties": false, "properties": {"on": {"type": "boolean", "default": true}}},
 			"widgets": {"type": "array", "default": [], "items": {"$ref": "#/definitions/Widget"}},
-			"free": {"type": "object", "additionalProperties": {"type": "integer"}}
+			"free": {"type": "object", "additionalProperties": {"type": "integer"}},
+			"box": {"$ref": "#/definitions/Box", "default": {"items": ["a"]}}
 		},
 		"definitions": {
 			"Widget": {"oneOf": [{"$ref": "#/definitions/Clock"}, {"$ref": "#/definitions/Label"}]},
 			"Clock": {"type": "object", "additionalProperties": false, "required": ["type"], "properties": {"type": {"const": "Clock"}, "format": {"type": "string", "default": "HH:mm"}}},
-			"Label": {"type": "object", "additionalProperties": false, "required": ["type", "text"], "properties": {"type": {"const": "Label"}, "text": {"type": "string"}}}
+			"Label": {"type": "object", "additionalProperties": false, "required": ["type", "text"], "properties": {"type": {"const": "Label"}, "text": {"type": "string"}}},
+			"Box": {"type": "object", "additionalProperties": false, "properties": {"size": {"type": "integer", "default": 2}, "items": {"type": "array", "default": [], "items": {"type": "string"}}}}
 		}}`)
 	s := schema.New(root)
 	for _, tc := range []struct {
@@ -62,6 +64,17 @@ func TestValidationErrors(t *testing.T) {
 		}
 		if !reflect.DeepEqual(got, tc.want) {
 			t.Errorf("%s: got %q, want %q", tc.value, got, tc.want)
+		}
+	}
+	// Filled with its defaults (a oneOf's by its type, a $ref's own default
+	// over its definition's), a value stays valid
+	for _, value := range []string{`{}`, `{"widgets": [{"type": "Clock"}, {"type": "Label", "text": "hi"}]}`, `{"box": {"size": 5}}`} {
+		filled, ok := config.ApplyDefaults(s, parse(t, value), true, root)
+		if !ok {
+			t.Fatalf("%s: no defaults", value)
+		}
+		if errs := config.ValidationErrors(s, filled, root); len(errs) > 0 {
+			t.Errorf("%s filled: %q", value, errs)
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/migrate/legacy"
@@ -11,12 +12,20 @@ import (
 // The schema.* shared cases (recorded from SchemaValidation.qml, which the
 // shell still fills defaults with, against the live schema and the tests'
 // own) replayed through the Go pipeline: each output must be the JS bytes
-// exactly.
+// exactly. The greeter's exported bundle, filled (tst_GreeterBundle), must
+// also be a valid config.
 func TestSharedSchemaCases(t *testing.T) {
 	t.Parallel()
 	for _, c := range testkit.Cases(t, "schema.") {
 		t.Run(c.Name, func(t *testing.T) {
-			c.Compare(t, runSchemaOp(t, c))
+			out := runSchemaOp(t, c)
+			c.Compare(t, out)
+			if strings.HasPrefix(c.Name, "schema/GreeterBundle/") {
+				s := schema.New(c.Args[1])
+				if errs := ValidationErrors(s, out, s.Root()); len(errs) > 0 {
+					t.Errorf("the filled bundle isn't valid: %q", errs)
+				}
+			}
 		})
 	}
 }

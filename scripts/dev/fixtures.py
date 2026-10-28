@@ -4,7 +4,8 @@ cases the JS helpers and the axiom binary (Go) must agree on, byte for
 byte (docs/dev/backend/README.md › Shared fixtures).
 
   scripts/dev/fixtures.py record     re-record the JS suites: runs tst_Config,
-                                     tst_SchemaValidation, tst_ConfigOps and
+                                     tst_SchemaValidation, tst_GreeterBundle,
+                                     tst_ConfigOps and
                                      the compositor config helpers' tests
                                      (HELPERS) with
                                      recording on, and writes the calls they
@@ -47,11 +48,12 @@ SHARED = ROOT / "tests/fixtures/shared"
 # compositor config helpers the binary also ports, still used by the shell
 # (backend/internal/compositor/render; the rest's cases are frozen there)
 HELPERS = ("BindActions", "BindKeys", "CompositorLayer", "ConfigOps", "HyprLua", "KeyNames", "LayerStack", "NiriConf", "SwayConf")
-RECORD_TESTS = ("Config", "SchemaValidation") + HELPERS
+RECORD_TESTS = ("Config", "SchemaValidation", "GreeterBundle") + HELPERS
 BLOB_SIZE = 2048
 # What the recorded cases are made from: a change to any re-records them
 STAMP_INPUTS = ("components/methods/SchemaValidation.qml", "tests/Shared.qml", "tests/RepoFiles.qml",
                 "tests/tst_Config.qml", "tests/tst_SchemaValidation.qml",
+                "components/methods/GreeterBundle.qml", "tests/tst_GreeterBundle.qml",
                 "config/json/config.schema.json", "scripts/dev/fixtures.py",
                 *(f"components/methods/{h}.qml" for h in HELPERS), *(f"tests/tst_{h}.qml" for h in HELPERS),
                 "components/methods/MonitorLayout.qml", "components/methods/PolkitAgents.qml",

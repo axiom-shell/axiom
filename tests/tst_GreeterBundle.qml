@@ -3,13 +3,17 @@ import QtTest
 import qs.components.methods
 
 TestCase {
+  id: test
   name: "GreeterBundle"
 
-  RepoFiles {
-    id: files
+  // Records the round trip's fill as a shared fixture (Shared.qml): the
+  // binary checks the filled bundle is a valid config
+  Shared {
+    id: shared
+    testCase: test
   }
 
-  readonly property var schema: files.json("config/json/config.schema.json")
+  readonly property var schema: shared.schema
   readonly property var inputSchema: schema.properties.Input
 
   function config(mode) {
@@ -71,10 +75,11 @@ TestCase {
     verify(Object.keys(bundle.Input).every(group => ["keyboard", "mouse", "touchpad", "cursor"].includes(group)), "x-greeter options only");
   }
 
-  // The exported bundle fills to a whole config
+  // The exported bundle fills to a whole config (valid: the binary's
+  // TestSharedSchemaCases validates this fill)
   function test_export_round_trips() {
     const bundle = GreeterBundle.exportConfig(config("managed"), inputSchema, copies);
-    const filled = SchemaValidation.applyDefaults(bundle, schema);
+    const filled = shared.applyDefaults(bundle, schema);
     compare(filled.Chat.keepConversations, schema.properties.Chat.properties.keepConversations.default);
   }
 }
