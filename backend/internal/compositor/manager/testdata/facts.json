@@ -58,15 +58,14 @@
     }
   ],
   "look": {
-    "activeHex": "9ccfd8",
-    "inactiveHex": "403d52",
+    "active": "#9ccfd8",
+    "inactive": "#403d52",
     "borderWidth": 2,
     "radius": 26,
     "shadow": {
       "size": 24,
-      "color": "ffffff",
+      "color": "#ffffff",
       "alpha": 1,
-      "offset": 0,
       "soft": true,
       "strength": 0.9
     }
@@ -79,8 +78,8 @@
     "threshold": 0.5
   },
   "xcursor": "axiom-cursor-Oxygen_White",
-  "colors": {
-    "base00": "191724"
+  "palette": {
+    "base00": "#191724"
   },
   "motion": {
     "fast": 100,

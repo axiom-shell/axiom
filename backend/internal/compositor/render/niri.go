@@ -442,7 +442,8 @@ func NiriLookNodes(look any) *jsonx.Array {
 		}
 		layout("shadow.on")
 		layout("shadow.softness", math.Max(0, round(size)))
-		KdlSetPath(nodes, "layout.shadow.offset", jsonx.Arr(), jsonx.Obj("x", 0.0, "y", round(num(get(s, "offset")))))
+		// Spread evenly, as axiom's own (0 still resets the user's)
+		KdlSetPath(nodes, "layout.shadow.offset", jsonx.Arr(), jsonx.Obj("x", 0.0, "y", 0.0))
 		if !jsonx.StrictEqual(color, "") {
 			layout("shadow.color", "#"+jsCat(color))
 			layout("shadow.inactive-color", "#"+jsCat(color))

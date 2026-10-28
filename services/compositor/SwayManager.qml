@@ -270,7 +270,7 @@ Singleton {
     SwayIpcManager.command(lines.filter(line => line !== "").join("; "), ok => callback?.(ok));
   }
 
-  // The window look as set now (CompositorLayer.look;
+  // The window look as set now (the daemon's, render.Look, through
   // CompositorConfigManager): gapsOut and blur follow its gaps and blur until sway
   // reloads its config, and what sway sets a window at a time (opacity;
   // SwayFX's blur, shadows, dim) is kept up as windows open and focus moves

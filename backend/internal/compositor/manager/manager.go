@@ -469,7 +469,7 @@ func (m *Manager) state() *jsonx.Object {
 	}
 	complete := jsonx.Arr()
 	skipped, conflicts := jsonx.Arr(), jsonx.Arr()
-	var fs any
+	var fs, look any
 	runningConfig, userBindsRead := "", false
 	if m.w != nil {
 		runningConfig, userBindsRead = m.w.runningConfig(m.in), m.w.userBindsRead()
@@ -484,6 +484,9 @@ func (m *Manager) state() *jsonx.Object {
 			skipped.Append(k)
 		}
 		fs = m.w.files(m.in).json()
+		// The window look as set now, for a backend setting it a window at
+		// a time as windows open (sway: SwayManager.setLiveLook)
+		look = getAny(m.in.get("specLive"), "look")
 	}
 	for _, c := range m.monitorConflict {
 		conflicts.Append(c)
@@ -492,7 +495,7 @@ func (m *Manager) state() *jsonx.Object {
 		"takeoverPending", m.takeoverPending, "managedCheck", check, "managedBlockedBy", by, "managedBlockedRepo", repo,
 		"monitorConflicts", conflicts, "skippedKeys", skipped, "complete", complete, "merging", m.merging,
 		"lastMerge", m.lastMerge, "mergeable", m.mergeable, "runningConfig", runningConfig, "userBindsRead", userBindsRead,
-		"releaseProblem", m.releaseProblem, "files", fs)
+		"releaseProblem", m.releaseProblem, "files", fs, "look", look)
 }
 
 // push sends the state when it changed

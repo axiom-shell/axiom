@@ -330,7 +330,7 @@ QtObject {
    * shadows and dimming (their commands without criteria reach only the
    * focused window, and the dim's default only windows opened later).
    * What each of `windows` (the contract's) should have with `focusedId`
-   * focused and `effects`, CompositorLayer.look's parts as {
+   * focused and `effects`, the look's parts (render.Look) as {
    *   opacity  { active, inactive, fullscreen } in percent, or null
    *   blur     true/false (look.blur.windows), or null to leave alone
    *   shadows  true/false, or null to leave alone

@@ -4,6 +4,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -27,6 +28,17 @@ func hexByte(v float64) string {
 // Hex is CompositorLayer.hex: a color ({ r, g, b } in 0-1) as "rrggbb".
 func Hex(color any) string {
 	return hexByte(num(get(color, "r"))*255) + hexByte(num(get(color, "g"))*255) + hexByte(num(get(color, "b"))*255)
+}
+
+var colorText = regexp.MustCompile(`^#(?:[0-9a-fA-F]{2})?([0-9a-fA-F]{6})$`)
+
+// TextHex is a color as the shell writes it ("#rrggbb", or "#aarrggbb"
+// with alpha) as "rrggbb" (its alpha left out), or "" for anything else.
+func TextHex(text string) string {
+	if m := colorText.FindStringSubmatch(text); m != nil {
+		return strings.ToLower(m[1])
+	}
+	return ""
 }
 
 var sixHex = regexp.MustCompile(`^[0-9a-fA-F]{6}`)
@@ -99,7 +111,6 @@ func Look(values, opts any) *jsonx.Object {
 		s.Set("alpha", alpha)
 		s.Set("baseAlpha", clamp01(num(get(cast, "alpha"))))
 		s.Set("strength", strength)
-		setDefined(s, "offset", cast, "offset")
 		s.Set("soft", isTrue(get(cast, "soft")))
 		shadow = s
 	}

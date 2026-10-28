@@ -128,40 +128,29 @@ Singleton {
     return index < 0 ? [] : profiles[index].outputs.filter(rule => MonitorLayout.find(rule.output, outputs) !== null);
   }
 
-  // The window look's values the theme and the Appearance settings resolve
-  // (CompositorLayer.look's opts, but surfacesBlur)
+  // The window look's values the theme and the Appearance settings
+  // resolve, colors as their text ("#rrggbb", "#aarrggbb")
   readonly property var _look: ({
-      "activeHex": CompositorLayer.hex(WindowLookConfig.activeBorder),
-      "inactiveHex": CompositorLayer.hex(WindowLookConfig.inactiveBorder),
+      "active": String(WindowLookConfig.activeBorder),
+      "inactive": String(WindowLookConfig.inactiveBorder),
       "borderWidth": WindowLookConfig.borderWidth,
       "radius": WindowLookConfig.radius,
       "shadow": WindowLookConfig.shadowOn ? {
         "size": WindowLookConfig.shadowSize,
-        "color": WindowLookConfig.shadowThemed ? CompositorLayer.hex(WindowLookConfig.shadowColor) : "",
+        "color": WindowLookConfig.shadowThemed ? String(WindowLookConfig.shadowColor) : "",
         "alpha": WindowLookConfig.shadowAlpha,
-        // Spread evenly, as axiom's own
-        "offset": 0,
         "soft": WindowLookConfig.shadowSoft,
         "strength": WindowLookConfig.shadowStrength
       } : null
     })
 
-  // The theme colors the managed Hyprland options (with the shared ones)
-  // name, as "rrggbb" (every string is tried: one that isn't a color, a
-  // curve's name, is left out)
-  // reads: Compositor.hyprland.*, WindowBehaviour.*
-  readonly property var _colors: {
+  // The theme's colors by name, as their text (the daemon resolves those
+  // the managed options name)
+  readonly property var _palette: {
+    const map = Theme.stringToColorMap;
     const out = {};
-    const walk = v => {
-      if (typeof v === "string") {
-        const hex = CompositorLayer.hex(Theme.resolveColor(v));
-        if (/^[0-9a-fA-F]{6}$/.test(hex))
-          out[v] = hex;
-      } else if (v !== null && typeof v === "object")
-        for (const key in v)
-          walk(v[key]);
-    };
-    walk([HyprlandConfig.managed, WindowBehaviourConfig.behaviour]);
+    for (const name in map)
+      out[name] = String(map[name]);
     return out;
   }
 
@@ -199,7 +188,7 @@ Singleton {
         "threshold": Appearance.blurThreshold
       },
       "xcursor": CursorThemeManager.xcursorTheme,
-      "colors": root._colors,
+      "palette": root._palette,
       // The shell's motion (Look & Feel → Motion), for the managed
       // animations
       "motion": {
@@ -219,23 +208,9 @@ Singleton {
   // What was last sent, to send only a change
   property string _sent: ""
 
-  // The window look now, for a backend that sets it a window at a time as
-  // windows open (sway: SwayManager.setLiveLook). Its own key: a saved
-  // WindowLook change no fact names (an edit of config.json, a restored
-  // config) changes it too
-  readonly property string _liveLookText: live && CompositorManager.backend.setLiveLook ? JSON.stringify(CompositorLayer.look(WindowLookConfig.look, Object.assign({
-    "surfacesBlur": BlurManager.active
-  }, _look))) : ""
-  property string _sentLook: ""
-
   function _send() {
     if (!root.live)
       return;
-    if (root._liveLookText !== root._sentLook) {
-      root._sentLook = root._liveLookText;
-      if (root._sentLook)
-        CompositorManager.backend.setLiveLook(JSON.parse(root._sentLook));
-    }
     if (root._factsText === root._sent)
       return;
     root._sent = root._factsText;
@@ -252,11 +227,7 @@ Singleton {
   }
 
   on_FactsTextChanged: _sendSoon.restart()
-  on_LiveLookTextChanged: _sendSoon.restart()
-  onLiveChanged: {
-    root._sent = "";
-    root._sentLook = "";
-  }
+  onLiveChanged: root._sent = ""
 
   // The state as soon as the daemon is there (niri's user binds and
   // running config come with it, before the layer goes live)
@@ -272,8 +243,19 @@ Singleton {
     });
   }
 
+  // The window look the daemon set last (compositor.state's `look`), for a
+  // backend that sets it a window at a time as windows open (sway:
+  // SwayManager.setLiveLook)
+  property string _lookSet: ""
+
   function _setState(state) {
     root._state = state ?? {};
+    const look = state?.look ? JSON.stringify(state.look) : "";
+    if (look !== root._lookSet && CompositorManager.backend.setLiveLook) {
+      root._lookSet = look;
+      if (look)
+        CompositorManager.backend.setLiveLook(state.look);
+    }
     // The binds the daemon has everything for
     const complete = {};
     (state?.complete ?? []).forEach(bind => complete[JSON.stringify(bind)] = true);

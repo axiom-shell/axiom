@@ -310,12 +310,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-17, while reviewing the distro-support branch for merge
 
-### The window shadow's offset is always 0 but still passed through every writer
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`_look`: `"offset": 0`), `components/methods/CompositorLayer.qml` (`look`), `components/methods/HyprLua.qml`, `components/methods/SwayConf.qml`, `backend/internal/compositor/render/` (`niri.go`)
-- **What:** Since config v66 axiom's shadow only spreads evenly, so the spec's shadow `offset` is a constant 0 that `look()` hands on and each writer writes (`decoration.shadow.offset`, `shadow_offset`, niri's `offset`). Writing 0 still matters (it resets a user's own offset), so each writer could write 0 itself and the field go from the spec and its tests. Done in Go's `compositor/render` when the QML writers go (backend stage 7; the maintainer folded it in, 2026-10-27).
-- **Size:** small
-- **Found:** 2026-10-17, while reviewing the shadow-on-or-off change
-
 ### A niri module refused in detached mode is only logged
 - **Where:** `backend/internal/compositor/manager/niri.go` (`runtimeApply`), `services/compositor/CompositorConfigManager.qml` (`problem`)
 - **What:** In the file modes a module `niri validate` refuses sets `CompositorConfigManager.problem` (the Compositor card shows it). The detached mode's module (also the file modes' fallback) is checked the same way, but a refusal is only a `compositor: niri refuses the config axiom made` warning in the daemon's log in the log: the card says nothing, and niri keeps the module before. A raw bind niri refuses is the likely cause.
