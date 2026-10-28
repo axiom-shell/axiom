@@ -185,6 +185,7 @@ niri:
 Hyprland, and every compositor:
 - [The Monitors page matches profiles in QML](issues.md#the-monitors-page-matches-profiles-in-qml)
 - [A monitor profile saved under one compositor doesn't match under another](issues.md#a-monitor-profile-saved-under-one-compositor-doesnt-match-under-another)
+- [Two profiles naming one unplugged monitor differently both write a rule](issues.md#two-profiles-naming-one-unplugged-monitor-differently-both-write-a-rule)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [Floating bars sit flush on the border without a backend](issues.md#floating-bars-sit-flush-on-the-border-without-a-backend)
 - [Two exclusive-focus surfaces at once without a native grab](issues.md#two-exclusive-focus-surfaces-at-once-without-a-native-grab)
