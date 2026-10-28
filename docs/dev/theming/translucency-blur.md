@@ -62,7 +62,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
 - A surface on the Overlay layer (bar popouts and submenus, edge popouts, OSDs) stays backed while the overlay is open on its screen: the blur window over the overlay draws it then (see [Blur window and openings › Over the overlay](blur-window-openings.md#over-the-overlay)).
   - It reads its host's `onOverlayLayer`, which its submenu follows (not while it slides under a bar).
 - A surface on Top (bars, the border, docks, integrated menus) leaves the blur window while a fullscreen window shows there, since that fades the Top layer out.
-  - The blur window itself then rises to the Overlay layer on that screen (`overFullscreen`, order 9 keeping it under the surfaces there), so what shows over a fullscreen window still blurs.
+  - The blur window itself then rises to the Overlay layer on that screen (`overFullscreen`, order 9 keeping it under the surfaces there), so what shows over a fullscreen window still blurs. Where layers stack by map order, each move lands it on top of its new layer, so the windows ordered over it there map again (`LayerManager.reportSlot`; [layer arrangement](../compositor/layer-arrangement.md)).
 
 ### Paused over fullscreen
 - `surfaceBlurPauseFullscreen` (on by default): while any screen shows a fullscreen window, `BlurManager.active` is false:

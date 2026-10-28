@@ -316,12 +316,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-17, while auditing the niri branch for merge
 
-### The blur window's Top/Overlay switch may land over the bars on SwayFX
-- **Where:** `shell/BlurBacking.qml`, `shell/BlurBackingWindow.qml`
-- **What:** The blur window changes `stackLayer` while a fullscreen window shows; LayerManager keeps its place in the order. If SwayFX puts a window that changed layer on top of its new layer, then after fullscreen ends it draws over the bars. Needs a look in `scripts/dev/nested.sh sway` with SwayFX.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### A fullscreen window re-sends the whole live layer
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`_liveInputs`)
 - **What:** `BlurManager.active` flips as a fullscreen window opens or closes and is in `_liveInputs`, so each flip re-sends the whole look and input (Hyprland's `hl.config({ input = … })`, sway's `[all] border pixel`, `gaps … all set`), not just the blur rules: a user's runtime tweak (`border toggle`, `gaps current plus`) is undone whenever anything goes fullscreen. A blur-only change should send only the blur lines.
