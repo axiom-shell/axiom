@@ -2955,6 +2955,7 @@
     "code": "",
     "commands": "",
     "complete": "",
+    "config.json is broken and the settings that take something over on this PC aren't known, so nothing replaces it. Fix it by hand or delete it.": "",
     "connected": "",
     "copy only": "",
     "day": "",

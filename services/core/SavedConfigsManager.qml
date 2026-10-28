@@ -119,7 +119,7 @@ QtObject {
     }, error => {
       if (error) {
         console.warn("[SavedConfigsManager] Restoring", name, "failed:", error.message);
-        root.status = I18n.tr("\"{0}\" is not a valid config", name);
+        root.status = root._refusal(error, name);
         return;
       }
       SettingsManager.loadConfig();
@@ -247,6 +247,8 @@ QtObject {
   // Why axiom refused a file, for people
   function _refusal(error, label) {
     const message = error.message ?? "";
+    if (message.includes("take something over"))
+      return I18n.tr("config.json is broken and the settings that take something over on this PC aren't known, so nothing replaces it. Fix it by hand or delete it.");
     if (message.includes("newer axiom"))
       return I18n.tr("\"{0}\" is from a newer axiom. Update axiom to import it.", label);
     if (message.includes("no config version"))
