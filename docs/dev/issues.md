@@ -328,9 +328,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while testing layer order in nested sway
 
-### niri reports no position for a tiled window
-- **Where:** `components/methods/NiriState.qml` (`windows`)
-- **What:** niri 26.04's IPC gives no position for a tiled window (`tile_pos_in_workspace_view` is null; only floating windows have one; checked 2026-10-28). So tiled windows are laid out from their column and place in it from the output's edge, without niri's scroll (`windowGeometry` stays off: no screenshot window mode; the dock hides behind a window's `cover`, its column or the whole output, which ignores struts, reserved space and `center-focused-column`).
+### niri reports no position for a tiled window, nor other apps' layers
+- **Where:** `components/methods/NiriState.qml` (`windows`, `outputs`)
+- **What:** niri's IPC gives no layer surface geometry, so an output's `reserved` counts only axiom's own layers (`LayerArrange.arrange`): another app's bar on niri isn't in it, and the dock centres as if it weren't there. Nor, in 26.04, does it give a position for a tiled window (`tile_pos_in_workspace_view` is null; only floating windows have one; checked 2026-10-28). So tiled windows are laid out from their column and place in it from the output's edge, without niri's scroll (`windowGeometry` stays off: no screenshot window mode; the dock hides behind a window's `cover`, its column or the whole output, which ignores struts, reserved space and `center-focused-column`).
 - **Size:** small
 - **Found:** 2026-10-17, while adding the niri backend
 
@@ -360,7 +360,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The lock screen's modules all warn they overlap
 - **Where:** `components/hosts/overlay/ModuleGrid.qml` (`_check`), `components/surfaces/screenlayout/ScreenLayoutView.qml` (`arrangement`)
-- **What:** As the lock screen showed on live niri (2026-10-28 21:43, its Password module taking the keyboard), every one of its seven modules logged `Overlay module … overlaps another` (Greeting, NowPlaying, Password, ClockCalendar, Weather, VolumeDials, Power), though `Lockscreen.layout`'s saved places don't overlap. Likely `_check` running on the first arrangement, before the surface has its size (a zero room squeezes every place together); unconfirmed.
+- **What:** As the lock screen showed on live niri (2026-10-28 21:43, its Password module taking the keyboard), every one of its seven modules logged `[ModuleGrid] Overlay module <name>` … `overlaps another` (Greeting, NowPlaying, Password, ClockCalendar, Weather, VolumeDials, Power), though `Lockscreen.layout`'s saved places don't overlap. Likely `_check` running on the first arrangement, before the surface has its size (a zero room squeezes every place together); unconfirmed.
 - **Size:** small
 - **Found:** 2026-10-28, while giving niri's outputs a reserved space
 

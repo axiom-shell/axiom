@@ -147,10 +147,10 @@ QtObject {
    * Every surface's rect, by output: { [output]: { w, h, layers:
    * [{ id, namespace, x, y, w, h }], reserved: { top, right, bottom,
    * left } } }, output-relative (the shape HyprState.layerRects gives,
-   * plus what the reserving surfaces take from each edge). `outputs` maps names to { w, h };
-   * `surfaces` are { id, output, namespace, layer (layerNames), order,
-   * seq (map order), anchors { left, right, top, bottom }, margins
-   * { left, right, top, bottom }, w, h (0 to stretch), zone (> 0
+   * plus what the reserving surfaces take from each edge). `outputs`
+   * maps names to { w, h }; `surfaces` are { id, output, namespace,
+   * layer (layerNames), order, seq (map order), anchors { left, right,
+   * top, bottom }, margins { left, right, top, bottom }, w, h (0 to stretch), zone (> 0
    * reserves where zoneEdge has an edge, 0 keeps out of what others
    * reserve, -1 ignores it) }.
    * Surfaces reserving are arranged first, layer by layer, each taking

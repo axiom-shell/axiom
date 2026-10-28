@@ -161,7 +161,7 @@ Item {
     const modules = root.modules ?? [];
     modules.forEach((module, i) => {
       if (!GridPlacement.canPlace(modules.slice(0, i), module?.place, -1))
-        console.warn(`Overlay module ${module?.type} overlaps another`);
+        console.warn(`[ModuleGrid] Overlay module ${module?.type} overlaps another`);
     });
   }
 
