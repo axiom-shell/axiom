@@ -2510,7 +2510,6 @@
     "Always running": "常に起動",
     "Left and right": "左右",
     "Always": "常に",
-    "Sway's own options, written while axiom manages its config. Anything else goes in ~/.config/sway/user/.": "axiom が設定を管理している間に書き込まれる Sway 独自のオプション。それ以外は ~/.config/sway/user/ に置きます。",
     "Title bar font": "タイトルバーのフォント",
     "How focus and the cursor behave, written into your compositor's config while axiom manages it.": "フォーカスとカーソルの動作。axiom が管理している間、コンポジターの設定に書き込まれます。",
     "X11 apps (Xwayland)": "X11 アプリ（Xwayland）",
@@ -3171,6 +3170,11 @@
     "Code from Git, following main: root fetches main's newest build from {0}, the commit its prebuilt axiom binary was built from, checked against the build's checksums. Nothing that can write to your clone can change what the login screen runs.": "",
     "config.json is broken and the settings that take something over on this PC aren't known, so nothing replaces it. Fix it by hand, or delete it and restart axiom.": "",
     "On SwayFX, open windows keep their rounding until sway reloads; windows opened later take the new one.": "",
-    "Follow Look & Feel → Shape: its border width and corner radius (only the width on sway, which can't round corners; on SwayFX, open windows keep their rounding until sway reloads).": ""
+    "Follow Look & Feel → Shape: its border width and corner radius (only the width on sway, which can't round corners; on SwayFX, open windows keep their rounding until sway reloads).": "",
+    "Scratchpad windows": "",
+    "How the special workspace binds show a group. Scratchpad windows float over the current workspace, centred and stacked; a workspace of their own tiles them and takes the screen until toggled away.": "",
+    "Special workspaces": "",
+    "A workspace of their own": "",
+    "Sway's own options. All but special workspaces are written while axiom manages its config; anything else goes in ~/.config/sway/user/.": ""
   }
 }

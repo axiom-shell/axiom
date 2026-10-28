@@ -355,6 +355,63 @@ TestCase {
     compare(SwayState.specialToggle(info.windows, marks, "music", "WL-1").ids, []);
   }
 
+  // As a workspace of its own: to it on the focused output, or back
+  function test_specialWorkspaceToggle() {
+    compare(SwayState.specialWorkspace("gaming"), "axiom-special-gaming");
+    compare(SwayState.specialWorkspaceToggle("gaming", "1", "WL-1", ""), ["workspace axiom-special-gaming", "move workspace to output WL-1"]);
+    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-1", ""), ["workspace back_and_forth"]);
+    // Back to the workspace that output showed before, not sway's last one
+    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-2", "2"), ["workspace 2"]);
+    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-2", "3: web"), ["workspace \"3: web\""]);
+    compare(SwayState.specialWorkspaceToggle("my games", "1", "HDMI-A-1", ""), ["workspace \"axiom-special-my games\"", "move workspace to output HDMI-A-1"]);
+  }
+
+  // Into a group, out of any other
+  function test_specialMove() {
+    const marks = {
+      "15": ["axiom-special-music-15", "keep"]
+    };
+    compare(SwayState.specialMove(marks, "15", "gaming", "scratchpad"), ["[con_id=15] unmark axiom-special-music-15", "[con_id=15] mark --add axiom-special-gaming-15", "[con_id=15] move scratchpad"]);
+    compare(SwayState.specialMove(marks, "15", "gaming", "workspace"), ["[con_id=15] unmark axiom-special-music-15", "[con_id=15] move container to workspace axiom-special-gaming"]);
+    compare(SwayState.specialMove({}, "16", "my games", "workspace"), ["[con_id=16] move container to workspace \"axiom-special-my games\""]);
+  }
+
+  // After the kind changed, the other kind's windows move over
+  function test_specialAdopt() {
+    const marks = {
+      "15": ["axiom-special-gaming-15", "keep"],
+      "16": ["axiom-special-music-16"]
+    };
+    const windows = [
+      {
+        "id": "20",
+        "workspaceName": "axiom-special-gaming"
+      },
+      {
+        "id": "21",
+        "workspaceName": "1"
+      }
+    ];
+    // To the workspace: the group's marked windows, unmarked
+    const toWs = SwayState.specialAdopt(windows, marks, "gaming", "workspace", "1");
+    compare(toWs.lines, ["[con_id=15] unmark axiom-special-gaming-15", "[con_id=15] move container to workspace axiom-special-gaming"]);
+    // To the scratchpad: the windows on the group's workspace, marked
+    const toPad = SwayState.specialAdopt(windows, {
+      "20": ["axiom-special-music-20"]
+    }, "gaming", "scratchpad", "1");
+    // ...and back to the workspace shown, which sway leaves for the group's
+    compare(toPad.lines, ["[con_id=20] unmark axiom-special-music-20", "[con_id=20] mark --add axiom-special-gaming-20", "[con_id=20] move scratchpad", "workspace --no-auto-back-and-forth 1"]);
+    compare(toPad.windows.map(w => w.id), ["21"]);
+    compare(toPad.marks["20"], ["axiom-special-gaming-20"]);
+    // Then hidden in the scratchpad: the toggle shows it
+    compare(SwayState.specialToggle(toPad.windows, toPad.marks, "gaming", "WL-1"), {
+      "ids": ["20"],
+      "show": true
+    });
+    // Nothing of the other kind: nothing to do
+    compare(SwayState.specialAdopt(windows, marks, "music", "scratchpad", "1").lines, []);
+  }
+
   // A group's name may hold "-": another group whose name it starts with
   // isn't it
   function test_specialGroup() {

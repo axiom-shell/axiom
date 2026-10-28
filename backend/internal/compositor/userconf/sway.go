@@ -73,8 +73,9 @@ var (
 // $variables set before them, relative to the including file's folder).
 // Files in skip (axiom's own) are left out; a file starting with
 // skipHeader gives only what it includes (axiom's managed config: only
-// what it includes is the user's).
-func SwayText(main string, skip []string, skipHeader string, getenv func(string) string) string {
+// what it includes is the user's). unread are the files that couldn't be
+// read, left out.
+func SwayText(main string, skip []string, skipHeader string, getenv func(string) string) (text string, unread []string) {
 	skipped := map[string]bool{}
 	for _, p := range skip {
 		skipped[realPath(expandUser(p, getenv))] = true
@@ -90,6 +91,7 @@ func SwayText(main string, skip []string, skipHeader string, getenv func(string)
 		seen[real] = true
 		data, err := os.ReadFile(path)
 		if err != nil {
+			unread = append(unread, path)
 			return ""
 		}
 		lines := SplitLines(strings.ToValidUTF8(string(data), "�"))
@@ -128,7 +130,8 @@ func SwayText(main string, skip []string, skipHeader string, getenv func(string)
 		}
 		return strings.Join(out, "\n")
 	}
-	return inline(main)
+	text = inline(main)
+	return text, unread
 }
 
 // SplitLines splits text into lines at \n, \r\n or \r, without a last

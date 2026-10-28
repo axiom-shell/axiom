@@ -3,6 +3,7 @@ package convert_test
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/config"
@@ -98,7 +99,8 @@ func toCurrent(cfg *jsonx.Object) *jsonx.Object {
 // The format-1 defaults, converted and migrated, are the format-2
 // defaults: the schema's shape and the converter agree on every key. A
 // section format 1 never had (Tailscale, from v79) is filled from its
-// defaults at load, like any missing section.
+// defaults at load, like any missing section, and so is a key added to a
+// format-1 section since (addedSinceV1).
 func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	t.Parallel()
 	s := v2Schema(t)
@@ -117,12 +119,24 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			defaults.(*jsonx.Object).Delete(k)
 		}
 	}
+	for _, path := range addedSinceV1 {
+		parts := strings.Split(path, ".")
+		parent, _ := defaults.(*jsonx.Object)
+		for _, k := range parts[:len(parts)-1] {
+			parent, _ = parent.Value(k).(*jsonx.Object)
+		}
+		parent.Delete(parts[len(parts)-1])
+	}
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {
 		t.Error(d)
 	}
 }
+
+// Keys added to a format-1 section after format 1 was frozen: no format-1
+// config has them, so they come from their default at load
+var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces"}
 
 // Every frozen corpus config (each past schema version's defaults, the
 // examples, old configs), as the legacy pipeline loads it, converts to a

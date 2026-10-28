@@ -209,7 +209,8 @@ managed config). Fails when no config is found.`,
 				if info, err := os.Stat(main); main == "" || err != nil || !info.Mode().IsRegular() {
 					return axerr.New(axerr.NotFound, "no sway config found")
 				}
-				_, err := fmt.Fprintln(e.Stdout, userconf.SwayText(main, skip, *skipHeader, e.Getenv))
+				text, _ := userconf.SwayText(main, skip, *skipHeader, e.Getenv)
+				_, err := fmt.Fprintln(e.Stdout, text)
 				return err
 			}
 		},

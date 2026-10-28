@@ -60,5 +60,5 @@ properties:
     description: The compositor won't move the cursor to a window it focuses.
     x-compositor:
       hyprland: {key: cursor.no_warps}
-      sway: {key: 'mouse_warping {}', map: {'true': none, 'false': output}}
+      sway: {key: 'mouse_warping {}', map: {'true': none, 'false': container}}
       niri: {key: input.warp-mouse-to-focus, value: offFlag}

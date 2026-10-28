@@ -337,6 +337,64 @@ QtObject {
     };
   }
 
+  // The workspace special group `name` is when it's a workspace of its own
+  function specialWorkspace(name) {
+    return `axiom-special-${name}`;
+  }
+
+  // The commands toggling special group `name` as a workspace of its own:
+  // back to `previous` (the workspace that output showed before it, or
+  // sway's back_and_forth, which goes to the last one on any output, with
+  // none known) when it's the workspace shown on the focused output
+  // (`active`, that workspace's name), else to it on that output
+  // (`output`), from wherever it is
+  function specialWorkspaceToggle(name, active, output, previous) {
+    const ws = root.specialWorkspace(name);
+    if (active !== ws)
+      return [`workspace ${root.quote(ws)}`, `move workspace to output ${root.quote(output)}`];
+    return [previous ? `workspace ${root.quote(previous)}` : "workspace back_and_forth"];
+  }
+
+  // The commands moving window `id` into special group `name` kept as
+  // `kind` ("scratchpad", marked and hidden, or "workspace"), out of any
+  // group it's in (`marks`, every window's): a window is in one at a time
+  function specialMove(marks, id, name, kind) {
+    const con = `[con_id=${Number(id)}]`;
+    const leave = (marks?.[id] ?? []).filter(mark => root.specialGroup(mark) !== "").map(mark => `${con} unmark ${root.quote(mark)}`);
+    return leave.concat(kind === "workspace" ? [`${con} move container to workspace ${root.quote(root.specialWorkspace(name))}`] : [`${con} mark --add ${root.quote(`axiom-special-${name}-${id}`)}`, `${con} move scratchpad`]);
+  }
+
+  // Special group `name`'s windows the other kind keeps, moved over to
+  // `kind` ("scratchpad" or "workspace") after Compositor.sway.specialWorkspaces
+  // changed: { lines (the commands), windows and marks (`windows` and
+  // `marks` as they are after them, for the scratchpad's toggle) }. To the
+  // workspace, marked windows lose the mark and move there; to the
+  // scratchpad, the windows on the group's workspace are marked (out of
+  // any other group) and moved to it, then back to `active` (the focused
+  // output's workspace): sway goes to the group's workspace when its last
+  // tiled window leaves for the scratchpad
+  function specialAdopt(windows, marks, name, kind, active) {
+    if (kind === "workspace")
+      return {
+        "lines": [].concat(...root.specialToggle([], marks, name, "").ids.map(id => root.specialMove(marks, id, name, kind))),
+        "windows": windows,
+        "marks": marks
+      };
+    const ws = root.specialWorkspace(name);
+    const strays = (windows ?? []).filter(win => win.workspaceName === ws);
+    const after = Object.assign({}, marks ?? {});
+    for (const win of strays)
+      after[win.id] = (marks?.[win.id] ?? []).filter(mark => root.specialGroup(mark) === "").concat([`axiom-special-${name}-${win.id}`]);
+    const lines = [].concat(...strays.map(win => root.specialMove(marks, win.id, name, kind)));
+    if (lines.length > 0 && active && active !== ws)
+      lines.push(`workspace --no-auto-back-and-forth ${root.quote(active)}`);
+    return {
+      "lines": lines,
+      "windows": (windows ?? []).filter(win => !strays.includes(win)),
+      "marks": after
+    };
+  }
+
   // The marks of every window in a get_tree reply: { [id]: [marks] }, for
   // those with any
   function marks(reply) {
