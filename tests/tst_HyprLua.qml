@@ -267,18 +267,6 @@ TestCase {
     });
   }
 
-  function test_monitorCalls_resolve_mirrors() {
-    const calls = shared.calls.HyprLua.monitorCalls([rule({
-        "output": "desc:TV",
-        "mirror": "desc:Main"
-      }), rule({
-        "output": "DP-3",
-        "mirror": "desc:Gone"
-      })], output => output === "desc:Main" ? "DP-1" : "");
-    compare(calls[0], `hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, mirror = "DP-1" })`);
-    verify(!calls[1].includes("mirror"), "an absent mirror target is left out");
-  }
-
   function test_monitorsLua_without_profiles_only_unsubscribes() {
     const lines = shared.calls.HyprLua.monitorsLua([]);
     verify(lines.join("\n").includes("sub:remove()"));

@@ -76,42 +76,4 @@ TestCase {
     verify(!shared.calls.SwayConf.inputLines(input, schema, true).includes("input type:keyboard xkb_numlock enabled"));
     compare(shared.calls.SwayConf.inputLines(input, schema, false), ["input type:keyboard xkb_layout \"us,de\"", "input type:keyboard xkb_variant \"\"", "input type:keyboard xkb_options caps:escape", "input type:keyboard repeat_rate 50", "input type:keyboard repeat_delay 300", "input type:keyboard xkb_numlock enabled", "input type:pointer pointer_accel -0.25", "input type:pointer left_handed disabled", "seat * xcursor_theme \"Bibata Modern\" 24"]);
   }
-
-  function test_outputCommand() {
-    compare(shared.calls.SwayConf.outputCommand({
-      "output": "desc:AOC CU34G4Z XJ9",
-      "mode": "3440x1440@240",
-      "x": 15,
-      "y": 83,
-      "scale": 1,
-      "transform": 0,
-      "vrr": 1
-    }), "output \"AOC CU34G4Z XJ9\" enable mode 3440x1440@240Hz pos 15 83 scale 1 transform normal adaptive_sync on render_bit_depth 8");
-    compare(shared.calls.SwayConf.outputCommand({
-      "output": "HDMI-A-1",
-      "mode": "preferred",
-      "x": 0,
-      "y": 0,
-      "scale": 1.5,
-      "transform": 5,
-      "bitdepth": 10
-    }), "output HDMI-A-1 enable pos 0 0 scale 1.5 transform flipped-90 adaptive_sync off render_bit_depth 10");
-    compare(shared.calls.SwayConf.outputCommand({
-      "output": "DP-2",
-      "disabled": true
-    }), "output DP-2 disable");
-  }
-
-  function test_outputCommandsDisableLast() {
-    compare(shared.calls.SwayConf.outputCommands([
-      {
-        "output": "DP-2",
-        "disabled": true
-      },
-      {
-        "output": "DP-1",
-        "mode": "1920x1080"
-      }
-    ]), "output DP-1 enable mode 1920x1080 pos 0 0 scale 1 transform normal adaptive_sync off render_bit_depth 8; output DP-2 disable");
-  }
 }

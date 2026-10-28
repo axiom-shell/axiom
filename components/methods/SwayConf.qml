@@ -1,8 +1,8 @@
 pragma Singleton
 import QtQuick
 
-// Sway commands the shell sends sway itself (SwayManager): output commands
-// and the greeter's input (docs/dev/compositor/sway-backend.md). axiom's
+// Sway commands the shell sends sway itself (SwayManager): the greeter's
+// input, and the names of its transforms (docs/dev/compositor/sway-backend.md). axiom's
 // config layer is the daemon's (internal/compositor/render).
 QtObject {
   id: root
@@ -70,44 +70,4 @@ QtObject {
 
   // Sway's output names for Wayland's transforms 0-7
   readonly property var transforms: ["normal", "90", "180", "270", "flipped", "flipped-90", "flipped-180", "flipped-270"]
-
-  // How sway names a monitor rule's output: a description ("desc:Make Model
-  // Serial") is sway's own identifier for it, quoted
-  function outputName(output) {
-    const value = String(output ?? "");
-    return quote(value.startsWith("desc:") ? value.slice(5).trim() : value);
-  }
-
-  // A monitor rule (the MonitorRule schema) as one `output` command. Sway
-  // has no mirroring, color management or SDR settings: those are left out
-  // (supports.monitorMirror / monitorColor are off). A "preferred" mode
-  // leaves the mode as it is.
-  function outputCommand(rule) {
-    const name = outputName(rule.output);
-    if (rule.disabled)
-      return `output ${name} disable`;
-    const parts = [`output ${name} enable`];
-    const mode = String(rule.mode ?? "");
-    if (mode !== "" && mode !== "preferred")
-      parts.push("mode " + (/@[\d.]+$/.test(mode) ? mode + "Hz" : mode));
-    parts.push(`pos ${Math.round(rule.x ?? 0)} ${Math.round(rule.y ?? 0)}`);
-    parts.push(`scale ${rule.scale ?? 1}`);
-    parts.push("transform " + (transforms[rule.transform ?? 0] ?? "normal"));
-    parts.push("adaptive_sync " + ((rule.vrr ?? 0) > 0 ? "on" : "off"));
-    // Always: sent at runtime, leaving it out would keep 10 after 10 is off
-    parts.push("render_bit_depth " + (rule.bitdepth === 10 ? 10 : 8));
-    return parts.join(" ");
-  }
-
-  // Every rule's command, in the order sway should run them (disabled
-  // outputs last, so an output isn't turned off before another takes over)
-  function outputLines(rules) {
-    const sorted = (rules ?? []).filter(rule => !rule.disabled).concat((rules ?? []).filter(rule => rule.disabled));
-    return sorted.map(rule => outputCommand(rule));
-  }
-
-  // outputLines as one command line, to run now
-  function outputCommands(rules) {
-    return outputLines(rules).join("; ");
-  }
 }

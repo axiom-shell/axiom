@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strings"
+	"sync"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 )
 
@@ -22,6 +26,82 @@ func (d *Daemon) compositorSocketPart() part {
 func (d *Daemon) compositorSocketMethods(reg *rpc.Registry) {
 	hyprHandlers(reg, ipc.HyprFromEnv(d.opts.Getenv))
 	niriHandlers(reg, ipc.NiriFromEnv(d.opts.Getenv), d.niriStreams)
+	outputHandlers(reg, d.opts.Getenv)
+}
+
+// outputHandlers is outputs.apply: monitor rules (MonitorRule) set now on
+// the compositor the environment names, as the Monitors page's Apply and
+// the greeter's saved profile do. details are the outputs connected
+// (CompositorManager.withOutputDetails), which a rule naming its output or
+// mirror by description is resolved in.
+func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
+	type applyParams struct {
+		Rules   json.RawMessage `json:"rules"`
+		Details json.RawMessage `json:"details"`
+	}
+	h, n, s := ipc.HyprFromEnv(getenv), ipc.NiriFromEnv(getenv), ipc.SwayFromEnv(getenv)
+	// One at a time, in order: a revert lands after the Apply it undoes
+	var mu sync.Mutex
+	rpc.Handle(reg, "outputs.apply", func(ctx context.Context, c *rpc.Conn, p applyParams) (struct{}, error) {
+		if !fromShell(c) {
+			return struct{}{}, axerr.New(axerr.Refused, "only the shell sets the outputs")
+		}
+		rules, err := jsonx.Unmarshal(orNull(p.Rules))
+		if err != nil {
+			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "rules")
+		}
+		details, err := jsonx.Unmarshal(orNull(p.Details))
+		if err != nil {
+			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "details")
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		return struct{}{}, applyOutputs(ctx, h, n, s, rules, details)
+	})
+}
+
+// applyOutputs sends the rules to the first of Hyprland, niri and sway
+// running (as the config layer picks), in their own terms
+func applyOutputs(ctx context.Context, h *ipc.Hypr, n *ipc.Niri, s *ipc.Sway, rules, details any) error {
+	switch {
+	case h != nil:
+		reply, err := h.Eval(ctx, strings.Join(render.MonitorCalls(rules, render.MirrorNames(details)), "\n"))
+		if err != nil {
+			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
+		}
+		if reply != "" {
+			return axerr.New(axerr.Refused, "Hyprland refused the monitor rules: %s", reply)
+		}
+	case n != nil:
+		for _, request := range render.NiriOutputRequests(rules, details).Items {
+			if _, err := n.Request(ctx, json.RawMessage(jsonx.MarshalCompact(request))); errors.Is(err, ipc.ErrRefused) {
+				return axerr.Wrap(axerr.Refused, err, "")
+			} else if err != nil {
+				return axerr.Wrap(axerr.Unavailable, err, "no reply from niri")
+			}
+		}
+	case s != nil:
+		results, err := s.Run(ctx, render.SwayOutputCommands(rules))
+		if err != nil {
+			return axerr.Wrap(axerr.Unavailable, err, "no reply from sway")
+		}
+		for _, r := range results {
+			if !r.Success {
+				return axerr.New(axerr.Refused, "sway refused an output command: %s", r.Error)
+			}
+		}
+	default:
+		return axerr.New(axerr.Unavailable, "no compositor to set the outputs on")
+	}
+	return nil
+}
+
+// orNull is data, or JSON's null when it's missing
+func orNull(data json.RawMessage) []byte {
+	if len(data) == 0 {
+		return []byte("null")
+	}
+	return data
 }
 
 // hyprHandlers is hypr.request on h (nil: not under Hyprland).

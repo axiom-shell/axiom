@@ -73,8 +73,7 @@ func TestSharedCases(t *testing.T) {
 	t.Parallel()
 	tab := repoTables(t)
 	ran := map[string]int{}
-	for _, suite := range []string{"BindActions.", "BindKeys.", "CompositorLayer.", "HyprLua.", "KeyNames.", "LayerStack.",
-		"NiriConf.", "SwayConf."} {
+	for _, suite := range []string{"BindActions.", "BindKeys.", "CompositorLayer.", "HyprLua.", "KeyNames.", "LayerStack.", "SwayConf."} {
 		for _, c := range testkit.Cases(t, suite) {
 			op, ok := ops[c.Op]
 			if !ok {

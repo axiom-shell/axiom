@@ -147,23 +147,6 @@ QtObject {
     return `{ ${keys.map(key => `${key} = ${value(spec[key])}`).join(", ")} }`;
   }
 
-  // hl.monitor() calls for rules applied now (the Monitors page's Apply and
-  // its revert). `mirrorName(output)` gives the connector a mirror target is
-  // on, or "" to leave the mirror out.
-  function monitorCalls(rules, mirrorName) {
-    return rules.map(rule => {
-      const spec = monitorSpec(rule);
-      if (spec.mirror !== undefined) {
-        const name = mirrorName(spec.mirror);
-        if (name)
-          spec.mirror = name;
-        else
-          delete spec.mirror;
-      }
-      return `hl.monitor(${inlineSpec(spec)})`;
-    });
-  }
-
   // Lua lines that keep the monitors in the profile for what's connected:
   // AXIOM_MONITOR_PROFILES, axiom_apply_monitors() (picks as
   // MonitorLayout.matchProfile does, from hl.get_monitors(), which only

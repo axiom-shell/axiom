@@ -382,8 +382,9 @@ func InlineSpec(spec *jsonx.Object) string {
 	return "{ " + strings.Join(parts, ", ") + " }"
 }
 
-// MonitorCalls is HyprLua.monitorCalls: hl.monitor() calls for rules
-// applied now; mirrorName gives the connector a mirror target is on, or "".
+// MonitorCalls is hl.monitor() calls for rules applied now
+// (outputs.apply); mirrorName gives the connector a mirror target is on
+// (MirrorNames), or "".
 func MonitorCalls(rules any, mirrorName any) []string {
 	var out []string
 	for _, rule := range items(rules) {
@@ -398,6 +399,29 @@ func MonitorCalls(rules any, mirrorName any) []string {
 		out = append(out, "hl.monitor("+InlineSpec(spec)+")")
 	}
 	return out
+}
+
+// MirrorNames is MonitorCalls' mirrorName for details (the outputs
+// connected): the name of the one a rule's output names (its connector, or
+// "desc:" and its description), or "".
+func MirrorNames(details any) Func {
+	return func(args ...any) any {
+		value := ""
+		if len(args) > 0 {
+			value = str(or(args[0], ""))
+		}
+		for _, d := range items(details) {
+			name := str(or(get(d, "name"), ""))
+			if desc, ok := strings.CutPrefix(value, "desc:"); ok {
+				if trim(str(or(get(d, "description"), ""))) == trim(desc) {
+					return name
+				}
+			} else if name == value {
+				return name
+			}
+		}
+		return ""
+	}
 }
 
 const applyMonitors = `function axiom_apply_monitors()

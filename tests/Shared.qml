@@ -46,7 +46,6 @@ QtObject {
       "HyprLua": HyprLua,
       "KeyNames": KeyNames,
       "LayerStack": LayerStack,
-      "NiriConf": NiriConf,
       "SwayConf": SwayConf
     })
   readonly property var calls: _proxies()

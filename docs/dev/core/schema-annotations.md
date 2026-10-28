@@ -118,7 +118,7 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
   - `map`: `{ value: sway's word }` for an enum whose names differ from sway's; a value missing from it is left out.
   - `skip`: a value written as nothing (sway's own default stays), e.g. `"default"`.
   - `configOnly: true`: sway takes the command only from a config file (`xkb_numlock`): left out of what's sent at runtime.
-- niri (`methods/NiriConf`; [niri backend](../compositor/niri-backend.md)):
+- niri (`compositor/render`'s `niri.go`; [niri backend](../compositor/niri-backend.md)):
   - `value`: `"flag"` (a boolean as the node alone when on, left out when off: niri has no `false` for a flag), `"offFlag"` (the node alone when off, for a setting niri turns off with a flag: `animations.off`, `gestures.hot-corners.off`) or `"float"` (written with a point, where niri wants a float).
   - `skip`: a value written as nothing (niri's own default stays), e.g. `"default"` or `0`.
 
