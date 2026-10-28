@@ -3175,6 +3175,7 @@
     "How the special workspace binds show a group. Scratchpad windows float over the current workspace, centred and stacked; a workspace of their own tiles them and takes the screen until toggled away.": "",
     "Special workspaces": "",
     "A workspace of their own": "",
-    "Sway's own options. All but special workspaces are written while axiom manages its config; anything else goes in ~/.config/sway/user/.": ""
+    "Sway's own options. All but special workspaces are written while axiom manages its config; anything else goes in ~/.config/sway/user/.": "",
+    "Couldn't read grim's picture of the screen.": ""
   }
 }

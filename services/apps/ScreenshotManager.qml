@@ -349,7 +349,6 @@ QtObject {
       frames[s.name] = path;
       args.push(s.name, String(s.devicePixelRatio), path);
     });
-    root._pendingFrames = frames;
     root._grabbing = true;
     CommandManager.run(["sh", "-c", 'command -v grim >/dev/null || exit 127; while [ $# -gt 0 ]; do grim -t ppm -s "$2" -o "$1" "$3" || exit 1; shift 3; done', "sh"].concat(args), (code, stdout, stderr) => {
       root._grabbing = false;

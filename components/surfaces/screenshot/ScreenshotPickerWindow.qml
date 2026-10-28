@@ -124,7 +124,10 @@ PanelWindow {
       ScreenshotManager.finish(null);
   }
 
-  // The frame arrives once; an immediate capture takes it straight away
+  // The frame arrives once; an immediate capture takes it straight away.
+  // On `frozen` itself: a handler on the Image's status or the view's
+  // hasContent runs before this binding updates, and saw it still false
+  onFrozenChanged: root._onFrame()
   function _onFrame() {
     if (!root.frozen)
       return;
@@ -170,7 +173,6 @@ PanelWindow {
     captureSource: ScreenshotManager.grimFrames ? null : root.screen
     live: false
     paintCursor: false
-    onHasContentChanged: root._onFrame()
   }
 
   // grim's picture of the screen, taken before the picker opened
@@ -183,7 +185,12 @@ PanelWindow {
     asynchronous: true
     cache: false
     smooth: true
-    onStatusChanged: root._onFrame()
+    // A picture grim wrote but that can't be read fails at once, not
+    // after the watchdog
+    onStatusChanged: {
+      if (still.status === Image.Error)
+        ScreenshotManager.fail(I18n.tr("Couldn't read grim's picture of the screen."));
+    }
   }
 
   Item {
