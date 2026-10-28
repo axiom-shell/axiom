@@ -2,8 +2,8 @@ pragma Singleton
 import QtQuick
 
 // What axiom asks of the compositor, decided once in a neutral shape: the
-// window look and the input that are on, for what the shell itself sets
-// (sway's look a window at a time, the cursor, the greeter's compositor;
+// window look that is on, for what the shell itself sets (sway's look a
+// window at a time, the greeter's compositor;
 // the daemon's config layer builds its own: internal/compositor/render).
 // Everything read from config, the theme and the shell's look comes in as
 // arguments (docs/dev/compositor/contract.md).
@@ -103,32 +103,6 @@ QtObject {
         "active": values.opacity.active,
         "inactive": values.opacity.inactive,
         "fullscreen": values.opacity.fullscreen
-      } : null
-    };
-  }
-
-  readonly property var inputPartNames: ["keyboard", "mouse", "touchpad", "cursor"]
-
-  /**
-   * The input (Input's values) as the parts that are on:
-   *   parts    the names of the parts on, in inputPartNames' order
-   *   values   Input's values, for a backend mapping fields by their schema
-   *            annotations (x-compositor, gated by each part's `enabled`)
-   *   cursor   { theme, size, xcursor } while the cursor part is on with a
-   *            theme, or null. `xcursor` is the name XCursor readers get
-   *            (`xcursorTheme`: CursorThemeManager's companion theme
-   *            filling in the standard names the theme lacks), else the
-   *            theme's
-   */
-  function input(values, xcursorTheme) {
-    const cursor = values.cursor;
-    return {
-      "parts": inputPartNames.filter(part => values[part]?.enabled === true),
-      "values": values,
-      "cursor": cursor.enabled && cursor.theme ? {
-        "theme": cursor.theme,
-        "size": cursor.size,
-        "xcursor": xcursorTheme || cursor.theme
       } : null
     };
   }

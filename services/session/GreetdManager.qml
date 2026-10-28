@@ -225,23 +225,19 @@ QtObject {
   // else Hyprland: greeter-session.sh)
   function _applyCompositor() {
     const config = ConfigManager.config;
-    const inputSchema = ConfigManager.configSchema.properties.Input;
     if (CompositorManager.kind === "hyprland") {
       // Its Lua picks the monitor profile again on each hotplug
-      const lua = HyprLua.greeterLua(config.Monitors.profiles, inputSchema, config.Input, name => CompositorLayer.hex(Theme.resolveColor(name)));
+      const lua = HyprLua.greeterLua(config.Monitors.profiles, ConfigManager.configSchema.properties.Input, config.Input, name => CompositorLayer.hex(Theme.resolveColor(name)));
       HyprlandManager.runLua(lua.join("\n"));
-      const cursor = CompositorLayer.input(config.Input).cursor;
-      if (cursor)
-        HyprlandManager.setCursor(cursor.theme, cursor.size);
-      return;
+    } else {
+      // The saved profile for what's connected at start
+      CompositorManager.withOutputDetails(outputs => {
+        const rules = MonitorLayout.savedRules(config.Monitors.profiles, outputs ?? []);
+        if (rules.length > 0)
+          CompositorManager.applyOutputs(rules, outputs);
+      });
     }
-    // The saved profile for what's connected at start
-    CompositorManager.withOutputDetails(outputs => {
-      const rules = MonitorLayout.savedRules(config.Monitors.profiles, outputs ?? []);
-      if (rules.length > 0)
-        CompositorManager.applyOutputs(rules, outputs);
-    });
-    CompositorManager.applyInput(CompositorLayer.input(config.Input), inputSchema);
+    CompositorManager.applyInput(config.Input);
   }
 
   Component.onCompleted: {

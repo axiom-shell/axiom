@@ -276,12 +276,18 @@ Singleton {
 
   // --- Session, input, cursor ---
 
-  // Sets the input options and cursor now (`input`: CompositorLayer.input's,
-  // `inputSchema`: Input's), for a compositor running no config of axiom's
-  // (the greeter's). Sway's backend only: Hyprland's greeter sends its own
-  // Lua (GreetdManager), and niri takes input from its config file alone
-  function applyInput(input, inputSchema) {
-    root.backend?.applyInput?.(input, inputSchema);
+  // Sets the input options and cursor now (`input`: the Input section's
+  // values), for a compositor running no config of axiom's (the greeter's):
+  // axiom sends sway its input and seat commands and Hyprland the cursor
+  // (input.apply; Hyprland's greeter sends the rest in its own Lua,
+  // GreetdManager), and niri takes input from its config file alone
+  function applyInput(input) {
+    BackendManager.call("input.apply", {
+      "input": input
+    }, error => {
+      if (error)
+        console.warn("[CompositorManager] setting the input:", error.message);
+    });
   }
 
   // Calls back with the main keyboard's layouts ({ layouts, index,

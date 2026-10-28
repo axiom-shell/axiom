@@ -369,13 +369,6 @@ Singleton {
     SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${direction === "prev" ? "prev" : "next"}`, () => callback?.());
   }
 
-  // Sets the input options and cursor now (`input`: CompositorLayer.input's,
-  // `inputSchema`: Input's), as their parts say: the greeter's sway, which
-  // loads no config of axiom's
-  function applyInput(input, inputSchema) {
-    root.runCommands(SwayConf.inputLines(input, inputSchema, true));
-  }
-
   // Sway can't say where the cursor is, nor list layer surfaces
   function withCursorPos(callback) {
     callback(null);

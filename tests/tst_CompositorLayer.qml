@@ -168,22 +168,4 @@ TestCase {
     compare(look.opacity.active, 100);
     compare(look.values, values, "the values, for annotation-driven fields");
   }
-
-  function test_input_parts() {
-    const schema = files.json("config/json/config.schema.json");
-    const values = SchemaValidation.applyDefaults({}, schema.properties.Input, schema);
-    compare(shared.calls.CompositorLayer.input(values).parts, []);
-    values.keyboard.enabled = true;
-    values.cursor.enabled = true;
-    compare(shared.calls.CompositorLayer.input(values).parts, ["keyboard", "cursor"]);
-    compare(shared.calls.CompositorLayer.input(values).cursor, null, "no theme: the cursor is left alone");
-    values.cursor.theme = "Bibata";
-    compare(shared.calls.CompositorLayer.input(values).cursor, {
-      "theme": "Bibata",
-      "size": 24,
-      "xcursor": "Bibata"
-    }, "XCursor readers get the theme's own name");
-    compare(shared.calls.CompositorLayer.input(values, "axiom-cursor").cursor.xcursor, "axiom-cursor", "or the companion theme filling in its names");
-    compare(shared.calls.CompositorLayer.input(values, "axiom-cursor").cursor.theme, "Bibata");
-  }
 }
