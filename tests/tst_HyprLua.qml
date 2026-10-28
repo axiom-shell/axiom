@@ -119,11 +119,7 @@ TestCase {
     compare(shared.calls.HyprLua.string("us\r,de"), '"us\\r,de"');
   }
 
-  function test_layer_rules() {
-    const lines = shared.calls.HyprLua.layerRulesLua();
-    compare(lines.length, LayerStack.layers.length);
-    verify(lines.includes('hl.layer_rule({ name = "axiom-bar-pill", match = { namespace = "^axiom-bar-pill$" }, order = -1 })'));
-    verify(lines.includes('hl.layer_rule({ name = "axiom-desktop", match = { namespace = "^axiom-desktop$" }, no_anim = true })'), "no order, no animation");
+  function test_blur_lists() {
     verify(LayerStack.blurChrome.includes("bar-floating-long") && LayerStack.blurBacked.includes("bar-pill"), "blur lists take every bar");
   }
 
@@ -269,18 +265,6 @@ TestCase {
       "output": "HDMI-A-1",
       "disabled": true
     });
-  }
-
-  function test_monitorCalls_resolve_mirrors() {
-    const calls = shared.calls.HyprLua.monitorCalls([rule({
-        "output": "desc:TV",
-        "mirror": "desc:Main"
-      }), rule({
-        "output": "DP-3",
-        "mirror": "desc:Gone"
-      })], output => output === "desc:Main" ? "DP-1" : "");
-    compare(calls[0], `hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, mirror = "DP-1" })`);
-    verify(!calls[1].includes("mirror"), "an absent mirror target is left out");
   }
 
   function test_monitorsLua_without_profiles_only_unsubscribes() {

@@ -362,11 +362,10 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     root._json("monitors all", outputs => callback(Array.isArray(outputs) ? outputs : null));
   }
 
-  // Sets the outputs as `rules` (MonitorRule) say now, `details` being the
-  // outputs as withOutputDetails gave them (for a mirror's connector)
-  function applyOutputs(rules, details) {
-    const mirrorName = output => MonitorLayout.find(output, details)?.name ?? "";
-    root.runLua(HyprLua.monitorCalls(rules, mirrorName).join("\n"));
+  // axiom set the outputs (CompositorManager.applyOutputs): the windows,
+  // which moving a monitor moves, are read again
+  function outputsApplied() {
+    root._debounce.restart();
   }
 
   // Whether axiom can set Hyprland up (CompositorManager.withSetupCheck):
@@ -655,27 +654,18 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     } : null;
   }
 
-  // The layer rules stacking axiom's surfaces (LayerStack.layers, which says
-  // why each sits where it does; docs/dev/generated/layers.md). Named, so
-  // re-adding one replaces it instead of piling up copies. Rules added at
-  // runtime are lost when Hyprland reloads its config.
-  // axiom's config layer also writes them into its Lua files, since a
-  // reload Hyprland does by itself (a watched file changing) doesn't always
-  // send the configreloaded event that re-adds them here.
-  readonly property var _layerRulesLua: HyprLua.layerRulesLua()
-
-  function _addLayerRules() {
-    for (const rule of _layerRulesLua)
-      _eval(rule);
-  }
-
-  // Whether the layer rules are in Hyprland. It reads a rule's `order` as a
-  // surface maps, so a bar or border mapped before the rules (a runtime eval
-  // in the detached mode, where hyprland.lua doesn't hold them) keeps its
-  // mapping order: the border's strip, quicker to draw, lands outside the
-  // bar, with its corners on the bar's outer side. The surfaces with an
-  // `order` that start with the shell (bars, border, docks, edge menus)
-  // wait for this. It stays set across QML reloads, as the rules do.
+  // Whether the layer rules stacking axiom's surfaces are in Hyprland
+  // (LayerStack.layers, which says why each sits where it does;
+  // docs/dev/generated/layers.md). axiom adds them (compositor.layerRules),
+  // and again on every configreloaded, since a reload drops rules added at
+  // runtime; its config layer also writes them into its Lua files. Hyprland
+  // reads a rule's `order` as a surface maps, so a bar or border mapped
+  // before the rules (the detached mode, where hyprland.lua doesn't hold
+  // them) keeps its mapping order: the border's strip, quicker to draw,
+  // lands outside the bar, with its corners on the bar's outer side. The
+  // surfaces with an `order` that start with the shell (bars, border, docks,
+  // edge menus) wait for this. It stays set across QML reloads, as the rules
+  // do.
   readonly property bool surfacesReady: _layerRules.ready
 
   PersistentProperties {
@@ -684,13 +674,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     property bool ready: false
   }
 
-  // One eval for all of them, each in its own pcall, so one Hyprland
-  // rejects doesn't drop the rest (as _addLayerRules' one eval per rule)
-  function _addLayerRulesFirst() {
-    root._evalLua(root._layerRulesLua.map(rule => `pcall(function() ${rule} end)`).join("\n"), () => _layerRules.ready = true);
-  }
-
-  // Shows the shell anyway if Hyprland never answers
+  // Shows the shell anyway if axiom never answers
   property Timer _layerRulesTimeout: Timer {
     interval: 2000
     onTriggered: _layerRules.ready = true
@@ -699,12 +683,12 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
   Component.onCompleted: {
     _fetch();
     refreshOptions();
-    if (_layerRules.ready) {
-      _addLayerRules();
-    } else {
-      _addLayerRulesFirst();
+    // Added again on a QML reload too, as the rules replace themselves; an
+    // error (no axiom, the greeter's, whose surfaces have no rule) is no
+    // reason to wait
+    BackendManager.call("compositor.layerRules", {}, () => _layerRules.ready = true);
+    if (!_layerRules.ready)
       _layerRulesTimeout.start();
-    }
   }
 
   Connections {
@@ -716,10 +700,8 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       // and custom events are axiom's own (the window switcher's keys)
       if (event.name === "openlayer" || event.name === "closelayer" || event.name === "custom")
         return;
-      if (event.name === "configreloaded") {
+      if (event.name === "configreloaded")
         root.refreshOptions();
-        root._addLayerRules();
-      }
       // Quickshell doesn't track special workspaces: refresh the monitors'
       // lastIpcObject, which carries them (specialWorkspaceId)
       if (event.name === "activespecial" || event.name === "activespecialv2")

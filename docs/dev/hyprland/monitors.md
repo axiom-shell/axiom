@@ -44,7 +44,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
   - in managed mode, `user/*.lua` files that call `hl.monitor` (`CompositorConfigManager.monitorConflicts`). Those rules load later and win.
 
 ### Apply, Keep, Revert
-1. **Apply** evals the selected profile's `hl.monitor` calls (`HyprLua.monitorCalls`), after taking a snapshot of the old state.
+1. **Apply** has axiom eval the selected profile's `hl.monitor` calls (`CompositorManager.applyOutputs` → `outputs.apply`, `render.MonitorCalls`), after taking a snapshot of the old state.
 2. It shows `shell/MonitorPrompt` (`surfaces/monitors/MonitorPromptWindow`).
    - It appears on every screen, outside the overlay, because the overlay's screen may change.
    - It sits on the Overlay layer as `axiom-monitor-prompt`; its layer rule stacks it over the overlay.

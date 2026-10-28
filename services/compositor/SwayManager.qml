@@ -406,10 +406,9 @@ Singleton {
     SwayIpcManager.json("get_outputs", outputs => callback(Array.isArray(outputs) ? SwayState.outputDetails(outputs) : null));
   }
 
-  // Sets the outputs as `rules` (MonitorRule) say, now. Sway has no
-  // mirroring, so `details` aren't needed.
-  function applyOutputs(rules, details) {
-    SwayIpcManager.command(SwayConf.outputCommands(rules), () => root.refresh());
+  // axiom set the outputs (CompositorManager.applyOutputs): read again
+  function outputsApplied() {
+    root.refresh();
   }
 
   // --- State behind the members above ---

@@ -16,7 +16,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 - It is on the Top layer, at the screen edge.
 - The border's strip on that edge is arranged after the bar and overlaps its inner part, so the strip's stroke is the bar's inner edge.
 - **Build order.** Hyprland reads a layer rule's `order` only as a surface maps.
-  - So the bars, border, docks and edge menus are built only once `CompositorManager.surfacesReady` is true. The rules are evaluated at startup and kept across QML reloads.
+  - So the bars, border, docks and edge menus are built only once `CompositorManager.surfacesReady` is true. The daemon adds the rules when the shell starts (`compositor.layerRules`, which `HyprlandManager` waits for, at most 2 s) and again on every `configreloaded` (a reload drops rules added at runtime); they're kept across QML reloads.
   - Why: in detached mode, hyprland.lua doesn't hold the rules. A border mapped first would land outside the bar, with its corners on the bar's outer side.
   - Each of these windows also maps in `LayerStack.layers` order, a stage at a time, through its `hosts/popout/LayerSlot`. Where the compositor has no layer rules (sway, niri: no `supports.layerOrder`), map order is all that decides, so a window landing out of place (a bar remade after the border) makes the ones it should have come before map again ([layer arrangement](../compositor/layer-arrangement.md)).
 - **Window keying.** For the same reason, `shell/Bar` keys each bar's window on whether it sits inside the border, as well as on its id.

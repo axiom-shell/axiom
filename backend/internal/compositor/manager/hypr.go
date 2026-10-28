@@ -147,6 +147,18 @@ func (w *hyprWriter) eval(ctx context.Context, lua string) bool {
 	return true
 }
 
+// addLayerRules adds the layer rules stacking axiom's surfaces
+// (render.LayerRulesLua), which a config reload drops: one eval, each
+// rule in its own pcall, so one Hyprland rejects doesn't drop the rest.
+// Named rules, so adding them again replaces them.
+func (w *hyprWriter) addLayerRules(ctx context.Context) {
+	rules := w.tables.LayerRulesLua()
+	for i, rule := range rules {
+		rules[i] = "pcall(function() " + rule + " end)"
+	}
+	w.eval(ctx, strings.Join(rules, "\n"))
+}
+
 func (w *hyprWriter) runLive(ctx context.Context, lines []string) bool {
 	return w.eval(ctx, strings.Join(lines, "\n"))
 }

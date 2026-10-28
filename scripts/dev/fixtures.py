@@ -47,7 +47,7 @@ SHARED = ROOT / "tests/fixtures/shared"
 # ConfigOps (config.set's ops, which the daemon's tests decode) and the
 # compositor config helpers the binary also ports, still used by the shell
 # (backend/internal/compositor/render; the rest's cases are frozen there)
-HELPERS = ("BindActions", "BindKeys", "CompositorLayer", "ConfigOps", "HyprLua", "KeyNames", "LayerStack", "NiriConf", "SwayConf")
+HELPERS = ("BindActions", "BindKeys", "CompositorLayer", "ConfigOps", "HyprLua", "KeyNames", "LayerStack", "SwayConf")
 RECORD_TESTS = ("Config", "SchemaValidation", "GreeterBundle") + HELPERS
 BLOB_SIZE = 2048
 # What the recorded cases are made from: a change to any re-records them

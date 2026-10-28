@@ -101,19 +101,6 @@ QtObject {
     return `{\n${keys.map(key => `${pad}  ${entry(key)},`).join("\n")}\n${pad}}`;
   }
 
-  // --- Layer stacking (LayerStack.layers) ---
-
-  // A named layer rule per LayerStack.layers entry (re-adding one replaces
-  // it): its `order`, which Hyprland reads as a surface maps, and its
-  // animation
-  function layerRulesLua() {
-    return LayerStack.layers.map(l => {
-      const name = string("axiom-" + l.namespace);
-      const effects = (l.noAnim ? ", no_anim = true" : "") + (l.order !== undefined ? `, order = ${l.order}` : "");
-      return `hl.layer_rule({ name = ${name}, match = { namespace = ${string("^axiom-" + l.namespace + "$")} }${effects} })`;
-    });
-  }
-
   // --- Monitors (Monitors.profiles, MonitorLayout) ---
 
   // A monitor rule (the MonitorRule schema) as hl.monitor()'s spec: output,
@@ -158,23 +145,6 @@ QtObject {
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || (a < b ? -1 : a > b ? 1 : 0);
     });
     return `{ ${keys.map(key => `${key} = ${value(spec[key])}`).join(", ")} }`;
-  }
-
-  // hl.monitor() calls for rules applied now (the Monitors page's Apply and
-  // its revert). `mirrorName(output)` gives the connector a mirror target is
-  // on, or "" to leave the mirror out.
-  function monitorCalls(rules, mirrorName) {
-    return rules.map(rule => {
-      const spec = monitorSpec(rule);
-      if (spec.mirror !== undefined) {
-        const name = mirrorName(spec.mirror);
-        if (name)
-          spec.mirror = name;
-        else
-          delete spec.mirror;
-      }
-      return `hl.monitor(${inlineSpec(spec)})`;
-    });
   }
 
   // Lua lines that keep the monitors in the profile for what's connected:

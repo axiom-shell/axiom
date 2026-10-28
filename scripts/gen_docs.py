@@ -1241,7 +1241,7 @@ def json_property(path, name):
 
 def layers_page():
     out = [NOTICE, "# Layer stacking", "",
-           "Every axiom layer namespace, from `LayerStack.layers`: Hyprland's layer rules (`HyprLua.layerRulesLua`), "
+           "Every axiom layer namespace, from `LayerStack.layers`: Hyprland's layer rules (`render.LayerRulesLua`), "
            "and the order axiom maps its surfaces in elsewhere ([layer arrangement](../compositor/layer-arrangement.md)). "
            "Higher `order` is arranged (and drawn) first: closer to the screen edge, and it takes a shared corner. "
            "Hyprland reads `order` only as a surface maps. "

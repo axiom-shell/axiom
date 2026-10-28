@@ -360,10 +360,20 @@ Singleton {
   }
 
   // Sets the outputs as `rules` (MonitorRule) say, now; `details` are the
-  // outputs as withOutputDetails gave them. Needs monitors
+  // outputs as withOutputDetails gave them. axiom sends them to the
+  // compositor (outputs.apply); the backend reads its state again after
+  // (outputsApplied). Needs monitors
   function applyOutputs(rules, details) {
-    if (root.supports.monitors)
-      root.backend.applyOutputs(rules, details);
+    if (!root.supports.monitors)
+      return;
+    BackendManager.call("outputs.apply", {
+      "rules": rules,
+      "details": details
+    }, error => {
+      if (error)
+        console.warn("[CompositorManager] setting the outputs:", error.message);
+      root.backend.outputsApplied();
+    });
   }
 
   // --- Binds (the Keybinds page) ---

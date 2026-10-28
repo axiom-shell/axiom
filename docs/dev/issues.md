@@ -311,7 +311,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-17, while reviewing the distro-support branch for merge
 
 ### The window shadow's offset is always 0 but still passed through every writer
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`_look`: `"offset": 0`), `components/methods/CompositorLayer.qml` (`look`), `components/methods/HyprLua.qml`, `components/methods/SwayConf.qml`, `components/methods/NiriConf.qml`
+- **Where:** `services/compositor/CompositorConfigManager.qml` (`_look`: `"offset": 0`), `components/methods/CompositorLayer.qml` (`look`), `components/methods/HyprLua.qml`, `components/methods/SwayConf.qml`, `backend/internal/compositor/render/` (`niri.go`)
 - **What:** Since config v66 axiom's shadow only spreads evenly, so the spec's shadow `offset` is a constant 0 that `look()` hands on and each writer writes (`decoration.shadow.offset`, `shadow_offset`, niri's `offset`). Writing 0 still matters (it resets a user's own offset), so each writer could write 0 itself and the field go from the spec and its tests. Done in Go's `compositor/render` when the QML writers go (backend stage 7; the maintainer folded it in, 2026-10-27).
 - **Size:** small
 - **Found:** 2026-10-17, while reviewing the shadow-on-or-off change
@@ -425,7 +425,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
 
 ### niri's flags can't be turned off from axiom
-- **Where:** `components/methods/NiriConf.qml` (`_niriArgs`), `config/schema/` (`x-compositor.niri.value: flag`)
+- **Where:** `backend/internal/compositor/render/niri.go` (`niriArgs`), `config/schema/` (`x-compositor.niri.value: flag`)
 - **What:** A niri flag (`tap`, `natural-scroll`, `numlock`, `focus-follows-mouse`) is on by being there and has no `false`; axiom writes one on and leaves it out off. Off in axiom while the user's own config has it on, it stays on.
 - **Size:** small
 - **Found:** 2026-10-17, while adding the niri backend

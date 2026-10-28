@@ -11,7 +11,7 @@ import qs.components.hosts.popout
 
 // An integrated edge menu: a Top-layer strip along the whole edge whose
 // exclusive zone is arranged before everything else's (the axiom-edge-menu
-// layer rule, HyprlandManager._addLayerRules), so it sits outermost and the
+// layer rule, render.LayerRulesLua), so it sits outermost and the
 // border, bars and windows move inwards while it's open. The zone is set
 // once when it opens (windows retile in one step), then the strip slides
 // in; closing slides it out before the zone goes. With `frame` on, a

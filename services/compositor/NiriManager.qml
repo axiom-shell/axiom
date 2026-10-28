@@ -44,7 +44,7 @@ Singleton {
   // niri doesn't say how far it scrolls a strip, so the overview fits it
   readonly property real splitWidthMultiplier: 1
   // niri's blur as in effect, { enabled, size, passes }: the config's
-  // (`axiom compositor niri info`), its offset as the size (NiriConf.lookNodes
+  // (`axiom compositor niri info`), its offset as the size (render.NiriLookNodes
   // writes the window look's size as the offset), niri's defaults until
   // read
   readonly property var blur: root._blur
@@ -416,11 +416,9 @@ Singleton {
     root._request("Outputs", reply => callback(reply?.Outputs ? NiriState.outputDetails(reply.Outputs) : null));
   }
 
-  // Sets the outputs as `rules` (MonitorRule) say, now; `details` resolve
-  // a rule naming its output by description
-  function applyOutputs(rules, details) {
-    const requests = NiriConf.outputRequests(rules, details);
-    requests.forEach((request, i) => root._command(request, i === requests.length - 1 ? () => root._readOutputs() : null));
+  // axiom set the outputs (CompositorManager.applyOutputs): read again
+  function outputsApplied() {
+    root._readOutputs();
   }
 
   // --- State behind the members above ---

@@ -45,7 +45,7 @@ How to look at, exercise and debug the live shell without breaking the user's se
   - It rewrites config.json per scenario and installs a temporary IPC hook in shell.qml. Stop it only with SIGINT (`pkill -INT -f popout_matrix.py`); SIGTERM leaves both modified.
   - About 1 min per scenario. Don't edit loaded QML while it runs. Use `log.sh --all` afterwards, since its cleanup reloads.
   - Edge menus opened over IPC close at once unless pinned, so it pins and unpins them.
-- **Fullscreen must cover bars and the border.** This is a recurring regression. After changing layer rules (`HyprLua.layerRulesLua`), `WlrLayershell.layer` or `aboveWindows`, test a fullscreen window on a normal and on a special workspace.
+- **Fullscreen must cover bars and the border.** This is a recurring regression. After changing layer rules (`render.LayerRulesLua`), `WlrLayershell.layer` or `aboveWindows`, test a fullscreen window on a normal and on a special workspace.
   - Hyprland hides Top layers over fullscreen by fading them (`m_aboveFullscreen`), not by draw order. A Top layer that *maps* while a fullscreen window is up draws over it, so never map a Top window in response to fullscreen. Keep it mapped and hide its contents.
   - Known Hyprland 0.56.2 bug: on scrolling-layout (strip) monitors, a fullscreen window on a special workspace goes under the bars.
 
