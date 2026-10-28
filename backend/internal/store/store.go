@@ -406,13 +406,12 @@ func (s *Store) loadInitial() error {
 	if problems != nil {
 		// Run on the defaults, writes blocked, until the file is fixed
 		s.config = s.opts.Pipeline.Defaults()
-		s.fileTakeovers, s.takeoversUnknown = s.config, loaded == nil
 		if loaded == nil {
 			loaded = s.keptTakeoversFile()
 		}
+		s.fileTakeovers, s.takeoversUnknown = s.config, loaded == nil
 		if loaded != nil {
 			s.fileTakeovers, _ = share.KeepTakeovers(s.config, loaded, s.takeovers).(*jsonx.Object)
-			s.takeoversUnknown = false
 		}
 		s.state.Blocked, s.state.Issues = true, problems
 		s.opts.Log.Warn("the config doesn't load: running on the defaults, saves blocked until it's fixed", "path", s.path, "issues", len(problems))

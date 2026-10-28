@@ -57,10 +57,16 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-28, while reviewing row 11's PRs (#155 to #158)
 
 ### `config.restore` has no caller in the shell
-- **Where:** `services/core/ConfigManager.qml` (`restoreConfig`), `backend/internal/daemon/methods.go` (`config.restore`), `docs/dev/features/community-setups.md`
-- **What:** Nothing in the shell calls `ConfigManager.restoreConfig` (grep finds only its definition), so `config.restore` (`Store.Restore`, the only restore that takes a whole config, takeover settings included) is reached by no UI path: saved configs, examples, community setups and Defaults all go through `saved.*` (`share.Apply`, then `Store.Replace`). `community-setups.md` still says a setup's apply keeps the takeovers through `ConfigManager.restoreConfig`. A saved config holds no takeover values (`share.Pick` never keeps one), so `config.restore` is the only restore that could bring any. Either delete `restoreConfig` and `config.restore` (and `Store.Restore`), or give them a caller, and fix the doc.
+- **Where:** `services/core/ConfigManager.qml` (`restoreConfig`), `backend/internal/daemon/methods.go` (`config.restore`)
+- **What:** Nothing in the shell calls `ConfigManager.restoreConfig` (grep finds only its definition), so `config.restore` (`Store.Restore`, the only restore that takes a whole config, takeover settings included) is reached by no UI path: saved configs, examples, community setups and Defaults all go through `saved.*` (`share.Apply`, then `Store.Replace`). A saved config holds no takeover values (`share.Pick` never keeps one), so `config.restore` is the only restore that could bring any. Either delete `restoreConfig` and `config.restore` (and `Store.Restore`), or give them a caller.
 - **Size:** small
 - **Found:** 2026-10-28, while planning row 12 (the store's one hold)
+
+### With no takeovers kept, a broken config.json can still release the compositor's config
+- **Where:** `backend/internal/store/store.go` (`loadInitial`, `write`, `holdTakeovers`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`)
+- **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore is refused (`write`, an implementer's call: the 2026-10-28 decision assumed they're "never unknown"), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Undecided: refuse or restore with the defaults' takeovers, and whether a hand fix over unknown takeovers should keep what the compositor has applied.
+- **Size:** needs a plan
+- **Found:** 2026-10-28, while reviewing row 12's third batch
 
 ### An unreadable sway config file still binds axiom's keys silently
 - **Where:** `backend/internal/compositor/manager/sway.go` (`userBinds`), `backend/internal/compositor/userconf/sway.go` (`SwayText`)
