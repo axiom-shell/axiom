@@ -74,6 +74,14 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	applied := func(n int) func() bool {
 		return func() bool { _, a := f.counts(); return len(a) == n }
 	}
+	// compositor.state names the profile matched on the last read
+	profile := func(want string) {
+		t.Helper()
+		if got := h.state("monitorProfile"); got != want {
+			t.Fatalf("monitorProfile %v, want %q", got, want)
+		}
+	}
+	profile("")
 	for range 3 {
 		h.m.OutputsChanged()
 	}
@@ -81,6 +89,7 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	if reads, a := f.counts(); reads != 1 || a[0] != "["+deskRule+","+tvRule+"]" {
 		t.Fatalf("reads %d, applied %v", reads, a)
 	}
+	profile("Both")
 
 	// The same outputs again (an output the profile turned off): nothing
 	h.m.OutputsChanged()
@@ -99,6 +108,14 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	if _, a := f.counts(); a[2] != "["+deskRule+"]" {
 		t.Fatalf("unplugged: applied %s", a[2])
 	}
+	profile("Desk")
+
+	// None matches
+	f.connect(render.Output{Name: "DP-9"})
+	h.m.OutputsChanged()
+	h.eventually("read with none matching", func() bool { r, _ := f.counts(); return r == 4 })
+	h.m.do(context.Background(), func(context.Context) {})
+	profile("")
 }
 
 // buildInputs gives the writers the saved profile's rules for the outputs

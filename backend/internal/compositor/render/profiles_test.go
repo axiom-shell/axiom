@@ -7,7 +7,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
-// The profile picker's cases (tst_MonitorLayout's matchProfile, and the
+// The profile picker's cases (the shell's matchProfile had them, and the
 // savedRules it had before the daemon switched profiles)
 func TestProfiles(t *testing.T) {
 	t.Parallel()

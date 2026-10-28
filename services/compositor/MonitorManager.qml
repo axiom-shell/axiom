@@ -12,8 +12,9 @@ import qs.services.ui
  * withOutputDetails, read at startup and when monitors come, go or the
  * config reloads; never polled) and the editor for Monitors.items, a
  * draft of profiles (each a layout for one set of monitors). The saved
- * profile matching what's connected is applied on every hotplug by the
- * daemon, not here.
+ * profile matching what's connected is picked and applied on every
+ * hotplug by the daemon, which names it (CompositorConfigManager.
+ * monitorProfile); the page finds that name in the draft.
  *
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
@@ -45,8 +46,9 @@ QtObject {
   readonly property int selectedIndex: rules.findIndex(rule => rule.output === selectedOutput)
   readonly property var selectedRule: rules[selectedIndex] ?? null
 
-  // The draft's profile for what's connected
-  readonly property int liveProfile: MonitorLayout.matchProfile(profiles, enabledOutputs)
+  // The draft's profile for what's connected (the daemon's match, by name:
+  // names are unique)
+  readonly property int liveProfile: _named(profiles, CompositorConfigManager.monitorProfile)
   // The selected profile is for what's connected: Apply tries it live
   readonly property bool selectedIsLive: selectedProfile === liveProfile
 
@@ -105,7 +107,7 @@ QtObject {
     };
     draft.local = local;
     local.items = local.items ?? [];
-    let index = MonitorLayout.matchProfile(local.items, enabledOutputs);
+    let index = _named(local.items, CompositorConfigManager.monitorProfile);
     let edited = false;
     if (index < 0) {
       local.items.push(_newProfile(local.items.length));
@@ -122,6 +124,25 @@ QtObject {
     selectProfile(index);
     if (edited)
       draft.changed();
+    _detected = JSON.stringify(draft.local);
+  }
+
+  // The index of the profile called `name` in `list`, -1 for "" or none
+  function _named(list, name) {
+    return name ? list.findIndex(profile => profile.name === name) : -1;
+  }
+
+  // The draft as _detect left it: the daemon's match for a hotplug may come
+  // after the page's read, and detects again while nothing else is edited
+  property string _detected: ""
+
+  property Connections _match: Connections {
+    target: CompositorConfigManager
+
+    function onMonitorProfileChanged() {
+      if (root.pageShown && !root.pending && (!draft.isDirty || JSON.stringify(draft.local) === root._detected))
+        root.reset();
+    }
   }
 
   function _uniqueName(name) {

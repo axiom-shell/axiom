@@ -286,12 +286,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### The Monitors page matches profiles in QML
-- **Where:** `services/compositor/MonitorManager.qml` (`liveProfile`, `_detect`), `components/methods/MonitorLayout.qml` (`matchProfile`), `backend/internal/compositor/manager/manager.go` (`state`)
-- **What:** The page runs `MonitorLayout.matchProfile` over its draft for the "(connected)" label and `_detect`, the last QML copy of the picker. Item 7 of the plan: `compositor.state` carries the matched profile's name (or `""`), which `liveProfile` and `_detect` find in the draft; `matchProfile`, its `tst_MonitorLayout` cases and the plan file go.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
 ### A monitor profile saved under one compositor doesn't match under another
 - **Where:** `backend/internal/compositor/ipc/niri.go` (`Outputs`), `backend/internal/compositor/render/profiles.go` (`MatchProfile`)
 - **What:** Profiles name monitors by description (`desc:make model serial`), and the compositors spell the make differently: a profile saved under Hyprland names `desc:AOC CU34G4Z XJ9R7HA000231`, while niri reports the same monitor as `PNP(AOC) CU34G4Z XJ9R7HA000231` (the recorded `niri-outputs.json` fixture). Under niri the saved profile never matches, so nothing is switched and the Monitors page offers a new layout for what's connected. Seen on the maintainer's machine (one monitor, profile saved on Hyprland). Normalising niri's `PNP(XXX)` to the bare code in the readers (Go and `NiriState`), or matching it either way, would fix it.

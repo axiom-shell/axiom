@@ -137,6 +137,20 @@ func (p *profileSwitch) rules(profiles any) *jsonx.Array {
 	return jsonx.Arr(profileRules(p.hyprland, profiles, p.outputs)...)
 }
 
+// matched is the name of the saved profile for the outputs read
+// (compositor.state's monitorProfile), "" for none or before they're read
+func (p *profileSwitch) matched(profiles any) string {
+	if p.outputs == nil {
+		return ""
+	}
+	i := render.MatchProfile(profiles, p.outputs)
+	if i < 0 {
+		return ""
+	}
+	name, _ := getAny(itemsOf(profiles)[i], "name").(string)
+	return name
+}
+
 // apply applies profiles' rules for the outputs read, unless they're
 // what was applied last for the same outputs or no profile matches.
 func (p *profileSwitch) apply(ctx context.Context, profiles any) error {

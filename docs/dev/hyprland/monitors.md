@@ -25,10 +25,10 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 ### Editing
 - The page edits a `ConfigDraft`.
 - `MonitorCanvas` and `MonitorInspector` are streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)).
-- **Detection.** Opening the page detects the current setup (`_detect`):
-  - when no profile matches, a new profile is made from the live state
-  - otherwise the matching profile gains any output it doesn't list.
-- While the page is open, a hotplug re-detects unless the draft has been edited.
+- **Detection.** Opening the page detects the current setup (`_detect`). The match is the daemon's: `compositor.state`'s `monitorProfile` (`CompositorConfigManager.monitorProfile`) names the saved profile it picked on its last read of the outputs (`render.MatchProfile`), and the page finds that name in the draft (also `liveProfile`, the "(connected)" label):
+  - when it named none, a new profile is made from the live state
+  - otherwise the named profile gains any output it doesn't list.
+- While the page is open, a hotplug re-detects unless the draft has been edited, and so does a new name from the daemon (its read can land after the page's) unless the draft has other edits than detection's.
 - **Snapping.** Tiles snap (`MonitorLayout.snap`): edge to edge, or aligned starts/ends/centres, within 14 screen px. Outside that range they drop anywhere, so offsets stay possible.
 - The view holds still during a drag.
 - `General.primaryMonitor` is set from the inspector at once, without waiting for Save.

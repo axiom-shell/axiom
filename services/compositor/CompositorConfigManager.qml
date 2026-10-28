@@ -75,6 +75,9 @@ Singleton {
   // loaded), and whether the user's binds have been read
   readonly property string runningConfig: _state.runningConfig ?? ""
   readonly property bool userBindsRead: _state.userBindsRead === true
+  // The name of the saved monitor profile for what's connected, as the
+  // daemon matched it on its last read, "" for none (MonitorManager)
+  readonly property string monitorProfile: _state.monitorProfile ?? ""
   // The binds a merge moved in for good (KeybindEditor adds them to a
   // draft with unsaved edits)
   signal bindsMerged(var binds)

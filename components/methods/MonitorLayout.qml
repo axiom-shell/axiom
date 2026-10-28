@@ -218,38 +218,6 @@ QtObject {
     return (monitors ?? []).find(monitor => matches(output, monitor)) ?? null;
   }
 
-  // The profile for the connected monitors (enabled ones): one listing
-  // exactly them wins (a disabled output it lists may be missing), else the
-  // one that turns on most of them; -1 when none turns any on. Ties go to
-  // the earlier profile. The daemon's picker does the same
-  // (render.MatchProfile).
-  function matchProfile(profiles, monitors) {
-    let best = -1;
-    let bestScore = 0;
-    (profiles ?? []).forEach((profile, index) => {
-      const outputs = profile?.outputs ?? [];
-      let score = 0;
-      let exact = true;
-      for (const rule of outputs) {
-        const found = find(rule.output, monitors) !== null;
-        if (found && !rule.disabled)
-          score++;
-        if (!found && !rule.disabled)
-          exact = false;
-      }
-      for (const monitor of monitors ?? [])
-        if (!outputs.some(rule => matches(rule.output, monitor)))
-          exact = false;
-      if (exact && score > 0)
-        score += 1000;
-      if (score > bestScore) {
-        best = index;
-        bestScore = score;
-      }
-    });
-    return best;
-  }
-
   // Color presets hyprctl reports, as the rule's `cm`
   readonly property var _cmPresets: ["srgb", "dcip3", "dp3", "adobe", "wide", "edid", "hdr", "hdredid"]
 
