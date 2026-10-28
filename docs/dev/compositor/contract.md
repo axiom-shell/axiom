@@ -20,6 +20,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
   - Optional `cover` (`{ x, y, w, h }`, with `windowCover`): where a window whose geometry isn't exact surely is while its workspace shows; `DockLayout.covered` uses it over the geometry.
 - **Output**: `{ name, description, x, y, width, height, scale, focused, activeWorkspaceId, specialWorkspaceId, reserved: { top, right, bottom, left } }`.
   - `width`/`height` are logical.
+  - `reserved` is what layer surfaces take from each edge: the compositor's own count where it gives one (Hyprland, sway), else axiom's layers' alone (niri: `LayerArrange.arrange`).
   - `activeWorkspaceId` is -1 while unknown.
   - `specialWorkspaceId` is 0 when none is open.
   - `description` is what `MonitorLayout.outputId` keys a stable identity on.

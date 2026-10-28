@@ -22,7 +22,21 @@ Singleton {
   // The windows (NiriState.windows)
   readonly property var windows: NiriState.windows(_state, outputs, _bases, root.blockSize, _gap)
   // The enabled outputs (NiriState.outputs)
-  readonly property var outputs: NiriState.outputs(_outputsReply, _state, _bases, root.blockSize)
+  readonly property var outputs: NiriState.outputs(_outputsReply, _state, _bases, root.blockSize, _reserved)
+  // What axiom's layers reserve on each output ({ [name]: { top, right,
+  // bottom, left } }): niri doesn't say. Replaced only when it changes,
+  // not on every frame a popout resizes.
+  property var _reserved: ({})
+  property Connections _layers: Connections {
+    target: LayerManager
+    function onRectsChanged() {
+      const next = {};
+      for (const name in LayerManager.rects)
+        next[name] = LayerManager.rects[name].reserved;
+      if (JSON.stringify(next) !== JSON.stringify(root._reserved))
+        root._reserved = next;
+    }
+  }
   // The workspaces with an id of axiom's (NiriState.workspaces): each
   // output's first `blockSize`
   readonly property var workspaces: NiriState.workspaces(_state, _bases, root.blockSize)

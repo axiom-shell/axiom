@@ -195,8 +195,9 @@ QtObject {
 
   // The enabled outputs of an Outputs reply ({ [name]: output }) as the
   // contract's outputs. niri doesn't say what layer surfaces reserve, so
-  // `reserved` is 0 all round.
-  function outputs(reply, state, bases, size) {
+  // `reserved` is what axiom's own take (`reserved`: { [name]: { top,
+  // right, bottom, left } }, from LayerArrange.arrange), 0 elsewhere.
+  function outputs(reply, state, bases, size, reserved) {
     const focused = root.focusedOutput(state);
     const active = {};
     for (const key in state.workspaces) {
@@ -221,7 +222,7 @@ QtObject {
         "focused": name === focused,
         "activeWorkspaceId": active[name] ?? -1,
         "specialWorkspaceId": 0,
-        "reserved": {
+        "reserved": reserved?.[name] ?? {
           "top": 0,
           "right": 0,
           "bottom": 0,

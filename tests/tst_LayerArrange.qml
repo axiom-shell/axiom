@@ -206,6 +206,13 @@ TestCase {
     compare(r.top, [0, 10, 100, 20]);
     compare(rectsById(result, "P").other, [0, 0, 50, 30]);
     compare(result.P.w, 50);
+    compare(result.O.reserved, {
+      "top": 30,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    }, "what the reserving surfaces take from each edge");
+    compare(result.P.reserved.top, 30);
   }
 
   // Each computed rect pairs with the nearest reported one of its

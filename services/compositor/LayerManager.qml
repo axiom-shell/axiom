@@ -50,7 +50,8 @@ QtObject {
   }
 
   // Every reported window's rect by output, as LayerArrange.arrange
-  // gives it ({ [output]: { w, h, layers: [{ id, namespace, x, y, w, h }] } });
+  // gives it ({ [output]: { w, h, layers: [{ id, namespace, x, y, w, h }],
+  // reserved: { top, right, bottom, left } } });
   // replaced only when something moved
   property var rects: ({})
 

@@ -328,9 +328,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while testing layer order in nested sway
 
-### niri reports no space reserved by bars, nor where tiled windows are
-- **Where:** `components/methods/NiriState.qml` (`outputs`, `windows`)
-- **What:** niri's IPC gives no layer surface geometry and, in 26.04, no position for a tiled window (`tile_pos_in_workspace_view` is null; only floating windows have one). So an output's `reserved` is 0 (the dock centres on the whole screen, not its work area), and tiled windows are laid out from their column and place in it from the output's edge, without niri's scroll (`windowGeometry` stays off: no screenshot window mode; the dock hides behind a window's `cover`, its column or the whole output, which ignores struts, reserved space and `center-focused-column`).
+### niri reports no position for a tiled window, nor other apps' layers
+- **Where:** `components/methods/NiriState.qml` (`windows`, `outputs`)
+- **What:** niri's IPC gives no layer surface geometry, so an output's `reserved` counts only axiom's own layers (`LayerArrange.arrange`): another app's bar on niri isn't in it, and the dock centres as if it weren't there. Nor, in 26.04, does it give a position for a tiled window (`tile_pos_in_workspace_view` is null; only floating windows have one; checked 2026-10-28). So tiled windows are laid out from their column and place in it from the output's edge, without niri's scroll (`windowGeometry` stays off: no screenshot window mode; the dock hides behind a window's `cover`, its column or the whole output, which ignores struts, reserved space and `center-focused-column`).
 - **Size:** small
 - **Found:** 2026-10-17, while adding the niri backend
 
@@ -352,17 +352,17 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-17, while adding the niri backend
 
-### Nested niri freezes while its window is hidden
-- **Where:** `scripts/dev/nested.sh` (niri)
-- **What:** niri's nested (winit) backend stops its event loop while its window isn't shown on the host (another workspace): its IPC times out and the axiom inside it hangs waiting on it, so an `axiom ipc` call never returns. Keep the nested window visible while testing; it carries on once shown again.
-- **Size:** trivial
-- **Found:** 2026-10-17, while testing the niri backend
-
 ### Two exclusive-focus surfaces at once without a native grab
 - **Where:** `services/compositor/FocusGrab.qml` (`exclusive`), `components/hosts/overlay/OverlayPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`
 - **What:** Without `supports.focusGrab`, every active grab's surface asks for `WlrKeyboardFocus.Exclusive`. With the overlay open (exclusive the whole time) and a popout with a text field opened over it, two surfaces on the Overlay layer ask for exclusive focus. Which one gets the keyboard is up to the compositor. On niri the older one keeps it (found fixing the polkit prompt, c49b429, which now turns `exclusive` off while `SurfaceManager.modalShown`), so there typing into a popout over the overlay goes to the overlay. Sway is unchecked (`scripts/dev/nested.sh sway`). A fix in the same spirit: only the newest active grab is `exclusive`.
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the layer-placement branch
+
+### The lock screen's modules all warn they overlap
+- **Where:** `components/hosts/overlay/ModuleGrid.qml` (`_check`), `components/surfaces/screenlayout/ScreenLayoutView.qml` (`arrangement`)
+- **What:** As the lock screen showed on live niri (2026-10-28 21:43, its Password module taking the keyboard), every one of its seven modules logged `[ModuleGrid] Overlay module <name>` … `overlaps another` (Greeting, NowPlaying, Password, ClockCalendar, Weather, VolumeDials, Power), though `Lockscreen.layout`'s saved places don't overlap. Likely `_check` running on the first arrangement, before the surface has its size (a zero room squeezes every place together); unconfirmed.
+- **Size:** small
+- **Found:** 2026-10-28, while giving niri's outputs a reserved space
 
 ### Missing app icons warn in the log
 - **Where:** `services/ui/LauncherManager.qml` (`Quickshell.iconPath`), `services/ui/DockManager.qml`
