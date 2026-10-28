@@ -6,7 +6,6 @@
 __pycache__/
 *.pyc
 
-
 # Generated (scripts/generate.sh), never committed
 config/json/config.schema.json
 backend/internal/assets/data/

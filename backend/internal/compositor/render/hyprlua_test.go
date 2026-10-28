@@ -81,16 +81,16 @@ func TestGreeterLua(t *testing.T) {
 	profiles := parse(t, `[{"name": "desk", "outputs": [{"output": "DP-1"}]}]`)
 	stub := `hl = { config = function(t) end, monitor = function(t) end, get_monitors = function() return {} end, on = function() return { remove = function() end } end }`
 
-	none := GreeterLua(profiles, inputSchema, nil, nil)
+	none := GreeterLua(profiles, inputSchema, nil)
 	if strings.Contains(strings.Join(none, "\n"), "hl.config") {
 		t.Errorf("no input: nothing set:\n%s", strings.Join(none, "\n"))
 	}
 	off := parse(t, `{"keyboard": {"enabled": false, "layout": "us,de"}, "mouse": {"enabled": false, "sensitivity": -50}}`)
-	if got := GreeterLua(profiles, inputSchema, off, nil); len(got) != len(none) {
+	if got := GreeterLua(profiles, inputSchema, off); len(got) != len(none) {
 		t.Errorf("every part off: nothing set:\n%s", strings.Join(got, "\n"))
 	}
 	on := parse(t, `{"keyboard": {"enabled": true, "layout": "us,de"}, "mouse": {"enabled": true, "sensitivity": -50}, "touchpad": {"enabled": false, "naturalScroll": true}}`)
-	lines := GreeterLua(profiles, inputSchema, on, nil)
+	lines := GreeterLua(profiles, inputSchema, on)
 	config := lines[len(lines)-1]
 	for _, want := range []string{"hl.config(", `kb_layout = "us,de"`, "sensitivity = -0.5"} {
 		if !strings.Contains(config, want) {

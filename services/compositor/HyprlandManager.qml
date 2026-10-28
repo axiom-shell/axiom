@@ -110,8 +110,7 @@ Singleton {
   signal windowFocused(string appId)
   // A window switcher key (a `custom>>axiom-switcher:<verb>` event the
   // switcher's submap sends: axiom's layer, internal/compositor/render's
-  // SwitcherLua): verb `step` (argument
-  // the step), `commit` or `cancel`
+  // SwitcherLua): verb `step` (argument the step), `commit` or `cancel`
   signal switcherKey(string verb, string argument)
 
   // Leaves the window switcher's submap and its release listener (a tile
@@ -120,6 +119,7 @@ Singleton {
     root.runLua("if axiom_switcher_leave then axiom_switcher_leave() end");
   }
 
+  // The daemon's render.SwitcherSubmap and SwitcherEvent
   readonly property string _switcherSubmap: "axiom_switcher"
   readonly property string _switcherEvent: "axiom-switcher:"
 

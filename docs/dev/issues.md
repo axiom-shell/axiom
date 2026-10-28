@@ -298,6 +298,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
+### The greeter's sway monitors are still picked in QML, by compositor name
+- **Where:** `services/session/GreetdManager.qml` (`_applyCompositor`), `backend/internal/daemon/compositorsocket.go` (`applyGreeter`)
+- **What:** Row 12's batch (5) moved the greeter's Hyprland monitors into `greeter.compositor`, but under sway `GreetdManager` still picks the saved profile itself (`MonitorLayout.savedRules` → `CompositorManager.applyOutputs`), gated on `CompositorManager.kind !== "hyprland"` (AGENTS.md: gate on a capability, never a compositor), and only for what's connected at start (Hyprland's Lua picks again on each hotplug). Maintainer decision (batch 5), verbatim: 'A: move all the jobs to go.' Moving it would need `MonitorLayout.matchProfile` in Go (the Monitors page keeps using the QML one), so it was left for a decision: `applyGreeter`'s sway branch applying the matched profile's rules itself, and `_applyCompositor` becoming one `setUpGreeter` call.
+- **Size:** small
+- **Found:** 2026-10-28, while reviewing row 12's batch (5) (backend stage 7)
+
 ### The greeter on sway can't use a cursor theme's companion
 - **Where:** `services/session/GreetdManager.qml` (`_applyCompositor`), `services/ui/CursorThemeManager.qml`
 - **What:** On sway the greeter sets `seat * xcursor_theme` to the theme's own name: the `axiom-cursor-<theme>` companion a theme like Oxygen needs for the standard cursor names lives in the user's `$XDG_DATA_HOME/icons`, which greetd's user can't read. Such a theme shows the default theme's arrow at the login screen. Copying the companion into the bundle (as the wallpapers are) and pointing the greeter's `XCURSOR_PATH` at it would fix it.

@@ -247,7 +247,7 @@ var ops = map[string]func(t *Tables, a []any) any{
 
 	"HyprLua.blurLua":       func(t *Tables, a []any) any { return strList(t.BlurLua(arg(a, 0))) },
 	"HyprLua.configTable":   func(t *Tables, a []any) any { return ConfigTable(arg(a, 0), arg(a, 1), arg(a, 2), arg(a, 3)) },
-	"HyprLua.greeterLua":    func(t *Tables, a []any) any { return strList(GreeterLua(arg(a, 0), arg(a, 1), arg(a, 2), arg(a, 3))) },
+	"HyprLua.greeterLua":    func(t *Tables, a []any) any { return strList(GreeterLua(arg(a, 0), arg(a, 1), arg(a, 2))) },
 	"HyprLua.inputLua":      func(t *Tables, a []any) any { return strList(InputLua(arg(a, 0), arg(a, 1))) },
 	"HyprLua.layerRulesLua": func(t *Tables, a []any) any { return strList(t.LayerRulesLua()) },
 	"HyprLua.leaveSubmap":   func(t *Tables, a []any) any { return LeaveSubmap(argStr(a, 0)) },

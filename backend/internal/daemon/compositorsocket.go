@@ -150,7 +150,7 @@ func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, prof
 	cursor, _ := input.Value("cursor").(*jsonx.Object)
 	switch {
 	case h != nil:
-		reply, err := h.Eval(ctx, strings.Join(render.GreeterLua(profiles, inputSchema, values, nil), "\n"))
+		reply, err := h.Eval(ctx, strings.Join(render.GreeterLua(profiles, inputSchema, values), "\n"))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}

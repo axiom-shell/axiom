@@ -178,6 +178,7 @@ Resolved by a stage:
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
 sway and SwayFX:
+- [The greeter's sway monitors are still picked in QML, by compositor name](issues.md#the-greeters-sway-monitors-are-still-picked-in-qml-by-compositor-name)
 - [The greeter on sway can't use a cursor theme's companion](issues.md#the-greeter-on-sway-cant-use-a-cursor-themes-companion)
 - [SwayFX remaps the chrome on a fresh qs start](issues.md#swayfx-remaps-the-chrome-on-a-fresh-qs-start)
 - [The blur window's Top/Overlay switch may land over the bars on SwayFX](issues.md#the-blur-windows-topoverlay-switch-may-land-over-the-bars-on-swayfx)
