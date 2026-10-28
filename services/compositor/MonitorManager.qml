@@ -410,9 +410,9 @@ QtObject {
         draft.load();
         root._detectPending = true;
       }
-      // The saved profile for the new set is applied already: a trial
-      // Apply ends without reverting
-      if (root.pending) {
+      // On sway and niri the daemon has applied the saved profile for the
+      // new set already: a trial Apply ends without reverting
+      if (root.pending && !CompositorManager.supports.outputProfiles) {
         root.pending = false;
         root._countdown.stop();
       }

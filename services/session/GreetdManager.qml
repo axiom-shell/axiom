@@ -227,7 +227,7 @@ QtObject {
   // hotplug: Hyprland's Lua, axiom's own watch on sway)
   function _applyCompositor() {
     const config = ConfigManager.config;
-    CompositorManager.setUpGreeter(config.Monitors.profiles, config.Input);
+    CompositorManager.setUpGreeter(config.Monitors.items, config.Input);
   }
 
   Component.onCompleted: {
