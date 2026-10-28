@@ -239,7 +239,13 @@ Singleton {
   // workspace, goes to it or back (SwayState.specialWorkspaceToggle)
   function toggleSpecial(name) {
     if (CompositorConfig.swaySpecial === "workspace") {
-      SwayIpcManager.dispatch(SwayState.specialWorkspaceToggle(name, I3.focusedMonitor?.activeWorkspace?.name ?? "", root.focusedOutput).join("; "));
+      const active = I3.focusedMonitor?.activeWorkspace?.name ?? "";
+      const output = root.focusedOutput;
+      SwayIpcManager.dispatch(SwayState.specialWorkspaceToggle(name, active, output, root._specialFrom[output] ?? "").join("; "));
+      if (active !== SwayState.specialWorkspace(name))
+        root._specialFrom = Object.assign({}, root._specialFrom, {
+          [output]: active
+        });
       return;
     }
     const plan = SwayState.specialToggle(root.windows, root._marks, name, root.focusedOutput);
@@ -425,6 +431,10 @@ Singleton {
   property var _info: SwayState.tree(null)
   // Every window's marks ({ [id]: [marks] }), for the special groups
   property var _marks: ({})
+  // The workspace each output showed before toggleSpecial went to a special
+  // workspace there ({ [output]: name }), to go back to: sway's
+  // back_and_forth is one for all outputs
+  property var _specialFrom: ({})
   property string _focusedId: ""
   // Focus events so far, to tell a tree read before the last one (_fetch)
   property int _focusEvents: 0

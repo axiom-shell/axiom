@@ -358,9 +358,12 @@ TestCase {
   // As a workspace of its own: to it on the focused output, or back
   function test_specialWorkspaceToggle() {
     compare(SwayState.specialWorkspace("gaming"), "axiom-special-gaming");
-    compare(SwayState.specialWorkspaceToggle("gaming", "1", "WL-1"), ["workspace axiom-special-gaming", "move workspace to output WL-1"]);
-    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-1"), ["workspace back_and_forth"]);
-    compare(SwayState.specialWorkspaceToggle("my games", "1", "HDMI-A-1"), ["workspace \"axiom-special-my games\"", "move workspace to output HDMI-A-1"]);
+    compare(SwayState.specialWorkspaceToggle("gaming", "1", "WL-1", ""), ["workspace axiom-special-gaming", "move workspace to output WL-1"]);
+    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-1", ""), ["workspace back_and_forth"]);
+    // Back to the workspace that output showed before, not sway's last one
+    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-2", "2"), ["workspace 2"]);
+    compare(SwayState.specialWorkspaceToggle("gaming", "axiom-special-gaming", "WL-2", "3: web"), ["workspace \"3: web\""]);
+    compare(SwayState.specialWorkspaceToggle("my games", "1", "HDMI-A-1", ""), ["workspace \"axiom-special-my games\"", "move workspace to output HDMI-A-1"]);
   }
 
   // A group's name may hold "-": another group whose name it starts with
