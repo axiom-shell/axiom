@@ -266,7 +266,8 @@ QtObject {
   // The previews that show `value` at `path` (path → value; undefined
   // clears one): none for `x-applyOnSave` settings (Hyprland's mode, which
   // can take over files), which wait in the draft until Save; cleared when
-  // it's back as saved; one set at a path drops this page's below it
+  // it's back as saved, unless one of this page's above it still shows
+  // the edit; one set at a path drops this page's below it
   function _previewOf(path, value) {
     if (schemaAt(path)?.["x-applyOnSave"])
       return {};
@@ -276,7 +277,8 @@ QtObject {
       out[shown] = undefined;
       delete root._previewed[shown];
     }
-    if (Utils.deepEqual(value, Utils.valueAt(draft.saved, path))) {
+    const covered = Object.keys(root._previewed).some(shown => key.startsWith(shown + "."));
+    if (!covered && Utils.deepEqual(value, Utils.valueAt(draft.saved, path))) {
       out[key] = undefined;
       delete root._previewed[key];
     } else {
