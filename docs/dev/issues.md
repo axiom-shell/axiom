@@ -322,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### The takeover makes only some of sway's relative includes absolute
-- **Where:** `backend/internal/compositor/takeover/kinds.go` (`sway`'s `absInclude`)
-- **What:** Adopting a sway config makes its relative includes absolute (it moves to `user/`), but only an unquoted first path: a quoted relative include, and all but the first path of a multi-path `include`, stay relative and then resolve from `user/`. (The unchecked edit and the unescaped dir in the old script's sed went with the Go port.)
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### Turning sway's window opacity off reloads sway
 - **Where:** `services/compositor/CompositorConfigManager.qml` (`_appliedParts`)
 - **What:** Opacity counts as an applied part, so turning it off reloads the config (see "Changing a setting under sway can flash the screen"), though SwayManager already sets every window back to 1 itself. A part the backend takes back itself shouldn't count.
