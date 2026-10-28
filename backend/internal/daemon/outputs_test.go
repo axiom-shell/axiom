@@ -14,6 +14,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
@@ -64,7 +65,7 @@ func TestApplyOutputs(t *testing.T) {
 		return string(buf[:n])
 	}, func(c net.Conn, _ string) { io.WriteString(c, hyprReply) })
 	h := &ipc.Hypr{Dir: dir}
-	if err := applyOutputs(ctx, h, nil, nil, rules, details); err != nil {
+	if err := (manager.Outputs{Hypr: h}).Apply(ctx, rules, details); err != nil {
 		t.Fatal(err)
 	}
 	if got := <-hypr; got != `eval hl.monitor({ output = "HDMI-A-1", disabled = true })`+"\n"+`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, mirror = "DP-1" })` {
@@ -85,7 +86,7 @@ func TestApplyOutputs(t *testing.T) {
 	n := &ipc.Niri{Path: niriPath}
 	// On first, so an output isn't turned off before another takes over;
 	// the refused On doesn't stop the rest, and comes back refused
-	err = applyOutputs(ctx, nil, n, nil, rules, details)
+	err = manager.Outputs{Niri: n}.Apply(ctx, rules, details)
 	if axerr.KindOf(err) != axerr.Refused {
 		t.Fatalf("niri refusing: %v", err)
 	}
@@ -111,7 +112,7 @@ func TestApplyOutputs(t *testing.T) {
 		binary.LittleEndian.PutUint32(head[6:], uint32(len(body)))
 		c.Write(append(head, body...))
 	})
-	err = applyOutputs(ctx, nil, nil, &ipc.Sway{Path: swayPath}, rules, details)
+	err = manager.Outputs{Sway: &ipc.Sway{Path: swayPath}}.Apply(ctx, rules, details)
 	if axerr.KindOf(err) != axerr.Refused || !strings.Contains(err.Error(), "Unknown output") {
 		t.Fatalf("sway refusing: %v", err)
 	}
@@ -119,15 +120,16 @@ func TestApplyOutputs(t *testing.T) {
 		t.Errorf("sway: %q", got)
 	}
 
-	if err := applyOutputs(ctx, nil, nil, nil, rules, details); axerr.KindOf(err) != axerr.Unavailable {
+	if err := (manager.Outputs{}).Apply(ctx, rules, details); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("no compositor: %v", err)
 	}
 }
 
 // The greeter's compositor (greeter.compositor): Hyprland's Lua for the
 // profiles and the x-greeter input, then its cursor by the theme's own
-// name; sway's live input commands; nothing on niri
+// name; sway's profiles watched and its live input commands; nothing on niri
 func TestApplyGreeter(t *testing.T) {
+	noWatch := func(any) { t.Error("watched the profiles off sway") }
 	t.Parallel()
 	dir, err := os.MkdirTemp("", "axin")
 	if err != nil {
@@ -151,7 +153,7 @@ func TestApplyGreeter(t *testing.T) {
 		n, _ := c.Read(buf)
 		return string(buf[:n])
 	}, func(c net.Conn, _ string) { io.WriteString(c, "ok") })
-	if err := applyGreeter(ctx, &ipc.Hypr{Dir: dir}, false, nil, profiles, values, inputSchema, ""); err != nil {
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: dir}, false, nil, profiles, values, inputSchema, "", noWatch); err != nil {
 		t.Fatal(err)
 	}
 	lua := <-hypr
@@ -184,7 +186,7 @@ func TestApplyGreeter(t *testing.T) {
 			io.WriteString(c, "ok")
 		}
 	})
-	if err := applyGreeter(ctx, &ipc.Hypr{Dir: refusing}, false, nil, profiles, values, inputSchema, ""); axerr.KindOf(err) != axerr.Refused {
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: refusing}, false, nil, profiles, values, inputSchema, "", noWatch); axerr.KindOf(err) != axerr.Refused {
 		t.Errorf("refused Lua: %v", err)
 	}
 	<-asked
@@ -206,6 +208,8 @@ func TestApplyGreeter(t *testing.T) {
 		binary.LittleEndian.PutUint32(head[6:], uint32(len(body)))
 		c.Write(append(head, body...))
 	})
+	// sway's monitors: the profiles go to the watch (greeterProfiles)
+	var watched any
 	// The bundle's copy of the theme's companion, on XCURSOR_PATH
 	icons := filepath.Join(dir, "icons")
 	if err := os.MkdirAll(filepath.Join(icons, "axiom-cursor-Bibata_Modern"), 0o755); err != nil {
@@ -214,18 +218,21 @@ func TestApplyGreeter(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(icons, "axiom-cursor-Bibata_Modern", "index.theme"), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := applyGreeter(ctx, nil, false, &ipc.Sway{Path: swayPath}, nil, values, inputSchema, filepath.Join(dir, "none")+":"+icons); err != nil {
+	if err := applyGreeter(ctx, nil, false, &ipc.Sway{Path: swayPath}, profiles, values, inputSchema, filepath.Join(dir, "none")+":"+icons, func(p any) { watched = p }); err != nil {
 		t.Fatal(err)
+	}
+	if watched != profiles {
+		t.Errorf("sway: the watch got %v", watched)
 	}
 	// numlock only from a config file; the cursor last
 	if got := <-sway; got != `input type:keyboard xkb_layout "us,de"; input type:keyboard xkb_variant ""; input type:keyboard xkb_options ""; input type:keyboard repeat_rate 25; input type:keyboard repeat_delay 600; seat * xcursor_theme axiom-cursor-Bibata_Modern 24` {
 		t.Errorf("sway: %q", got)
 	}
 
-	if err := applyGreeter(ctx, nil, true, nil, nil, values, inputSchema, ""); err != nil {
+	if err := applyGreeter(ctx, nil, true, nil, nil, values, inputSchema, "", noWatch); err != nil {
 		t.Errorf("niri: %v", err)
 	}
-	if err := applyGreeter(ctx, nil, false, nil, nil, values, inputSchema, ""); axerr.KindOf(err) != axerr.Unavailable {
+	if err := applyGreeter(ctx, nil, false, nil, nil, values, inputSchema, "", noWatch); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("no compositor: %v", err)
 	}
 }

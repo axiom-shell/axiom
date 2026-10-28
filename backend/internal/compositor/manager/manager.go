@@ -40,6 +40,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/takeover"
+	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
@@ -118,13 +119,19 @@ type Manager struct {
 	mergeable       float64
 	pushed          string
 
-	debounce, liveDebounce, fileSync, releaseRetry *time.Timer
+	// profiles: sway's and niri's saved monitor profile for what's
+	// connected (nil where the compositor picks it itself), read again
+	// hotplugDelay after the daemon's outputs change
+	profiles     *profileSwitch
+	hotplugDelay time.Duration
+
+	debounce, liveDebounce, fileSync, releaseRetry, hotplug *time.Timer
 }
 
 // New is the manager for the compositor the environment names; Kind is ""
 // (and it does nothing) under none of axiom's config modes' compositors.
 func New(o Options) *Manager {
-	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second}
+	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second, hotplugDelay: 500 * time.Millisecond}
 	instance := ""
 	switch {
 	case o.Getenv("HYPRLAND_INSTANCE_SIGNATURE") != "":
@@ -142,13 +149,16 @@ func New(o Options) *Manager {
 		m.w = newHypr(e, ipc.HyprFromEnv(o.Getenv))
 	case "sway":
 		m.w = newSway(e, ipc.SwayFromEnv(o.Getenv))
+		m.profiles = &profileSwitch{io: Outputs{Sway: ipc.SwayFromEnv(o.Getenv)}}
 	case "niri":
 		m.w = newNiri(e, ipc.NiriFromEnv(o.Getenv))
+		m.profiles = &profileSwitch{io: Outputs{Niri: ipc.NiriFromEnv(o.Getenv)}}
 	}
 	m.debounce = m.timer(func(ctx context.Context) { m.apply(ctx) })
 	m.liveDebounce = m.timer(m.liveChanged)
 	m.fileSync = m.timer(m.syncFile)
 	m.releaseRetry = m.timer(func(ctx context.Context) { m.apply(ctx) })
+	m.hotplug = m.timer(m.outputsChanged)
 	return m
 }
 
@@ -243,7 +253,7 @@ func (m *Manager) Run(ctx context.Context) error {
 		close(m.stopped)
 		m.queue = nil
 		m.mu.Unlock()
-		for _, t := range []*time.Timer{m.debounce, m.liveDebounce, m.fileSync, m.releaseRetry} {
+		for _, t := range []*time.Timer{m.debounce, m.liveDebounce, m.fileSync, m.releaseRetry, m.hotplug} {
 			t.Stop()
 		}
 	})
@@ -327,7 +337,7 @@ func (m *Manager) live() bool {
 func (m *Manager) SetFacts(f Facts) {
 	m.enqueue(func(ctx context.Context) {
 		m.facts = &f
-		m.setInputs(buildInputs(m.o.Config(), m.facts))
+		m.setInputs(m.buildInputs())
 	})
 }
 
@@ -350,13 +360,57 @@ func (m *Manager) setInputs(in Inputs) {
 	}
 }
 
+// buildInputs is what the layer is made of now
+func (m *Manager) buildInputs() Inputs {
+	var outputs []render.Output
+	if m.profiles != nil {
+		outputs = m.profiles.outputs
+	}
+	return buildInputs(m.o.Config(), m.facts, outputs)
+}
+
+// OutputsChanged tells of an output connected or gone (the daemon's
+// outputs.Tracker): on sway and niri, the saved profile for what's
+// connected is applied once they've settled.
+func (m *Manager) OutputsChanged() {
+	if m.profiles != nil {
+		m.hotplug.Reset(m.hotplugDelay)
+	}
+}
+
+// outputsChanged reads the outputs again, applies the saved profile for
+// them and writes it in the files
+func (m *Manager) outputsChanged(ctx context.Context) {
+	if err := m.profiles.read(ctx); err != nil {
+		m.o.Log.Warn("compositor: could not read the outputs", "err", err)
+		return
+	}
+	m.applyProfile(ctx)
+	if m.facts != nil {
+		m.setInputs(m.buildInputs())
+	}
+}
+
+// applyProfile applies the saved profile for the outputs read, unless it
+// already is
+func (m *Manager) applyProfile(ctx context.Context) {
+	if m.profiles == nil {
+		return
+	}
+	profiles, _ := config.Lookup(m.o.Config(), config.Keys("Monitors", "items"))
+	if err := m.profiles.apply(ctx, profiles); err != nil {
+		m.o.Log.Warn("compositor: could not apply the monitor profile", "err", err)
+	}
+}
+
 // ConfigChanged tells of a config change (what the layer is made of, the
 // mode); fromFile when it was read from config.json (an edit made outside),
 // not saved by the shell.
 func (m *Manager) ConfigChanged(fromFile bool) {
 	m.enqueue(func(ctx context.Context) {
+		m.applyProfile(ctx)
 		if m.facts != nil {
-			m.setInputs(buildInputs(m.o.Config(), m.facts))
+			m.setInputs(m.buildInputs())
 		}
 		if !m.live() {
 			return
@@ -1108,6 +1162,12 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 		if r.Failed {
 			return
 		}
+	}
+	// Unless a file of axiom's holds it, the reload set the outputs as the
+	// user's config says: the saved profile goes back on
+	if m.profiles != nil && !m.loaded {
+		m.profiles.applied = ""
+		m.applyProfile(ctx)
 	}
 	if !m.live() {
 		return

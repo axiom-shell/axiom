@@ -16,9 +16,12 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/outputs"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 	"github.com/axiom-shell/axiom/backend/internal/weather"
 )
 
@@ -77,7 +80,8 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	niri := niriStreams(o.Getenv, o.Log, serveCtx, func(fn func(context.Context)) {
 		streams.Go(func() { fn(serveCtx) })
 	})
-	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches, hub, written, niri), Log: o.Log, OnClose: func(c *rpc.Conn) {
+	profiles := greeterProfiles(serveCtx, o.Getenv, o.Log, func(fn func()) { streams.Go(fn) })
+	server := &rpc.Server{Registry: greeterRegistry(o, env, isShell, watches, hub, written, niri, profiles), Log: o.Log, OnClose: func(c *rpc.Conn) {
 		watches.Forget(c)
 		written.Forget(c)
 		hub.Forget(c)
@@ -109,13 +113,43 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	return nil
 }
 
+// greeterProfiles is what keeps the bundle's saved monitor profile for
+// what's connected applied on the greeter's sway, as the session's config
+// layer does: its first call starts the greeter's own outputs.Tracker
+// (greeter.compositor, which a windowed greeter never sends, so a
+// session's outputs are left alone), its goroutine on goFn until ctx ends;
+// each call sets the profiles.
+func greeterProfiles(ctx context.Context, getenv func(string) string, log *slog.Logger, goFn func(func())) func(profiles any) {
+	var once sync.Once
+	var watch *manager.ProfileWatch
+	return func(profiles any) {
+		once.Do(func() {
+			watch = manager.NewProfileWatch(ctx, manager.Outputs{Sway: ipc.SwayFromEnv(getenv)}, log)
+			socket, err := wire.SocketPath(getenv)
+			if err != nil {
+				log.Warn("not watching the outputs", "err", err)
+				return
+			}
+			tracker := outputs.New(log)
+			tracker.OnChange(watch.Changed)
+			goFn(func() {
+				if err := tracker.Run(ctx, socket); err != nil && ctx.Err() == nil {
+					log.Warn("not watching the outputs", "err", err)
+				}
+			})
+		})
+		watch.SetProfiles(profiles)
+	}
+}
+
 // greeterRegistry is what the greeter's axiom answers: a hello from its
 // quickshell alone, then that quickshell's commands (watched ones too), run with its own
 // environment, its files (its state), lookups, the weather and the
 // compositor's socket (Hyprland's requests, niri's requests and event
-// stream on niriStreams, nil when not under niri). Anything else is unavailable, as it was with
+// stream on niriStreams, nil when not under niri), and greeter.compositor,
+// which hands profiles the bundle's monitor profiles on sway. Anything else is unavailable, as it was with
 // no axiom at all, so the shell's callers stay quiet about it.
-func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub, written *files.Files, niriStreams *ipc.NiriStreams) *rpc.Registry {
+func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, watches *command.Watches, hub *topics.Hub, written *files.Files, niriStreams *ipc.NiriStreams, profiles func(any)) *rpc.Registry {
 	reg := rpc.NewRegistry()
 	reg.Before = func(c *rpc.Conn, method string) error {
 		if method != "daemon.hello" && sessionOf(c) == nil {
@@ -146,7 +180,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	hyprHandlers(reg, ipc.HyprFromEnv(o.Getenv))
 	niriHandlers(reg, ipc.NiriFromEnv(o.Getenv), niriStreams)
 	outputHandlers(reg, o.Getenv)
-	greeterOnlyMethods(reg, o.Getenv, func() any { return o.Schema })
+	greeterOnlyMethods(reg, o.Getenv, func() any { return o.Schema }, profiles)
 	topics.Register(reg, hub, weather.Source(weather.Options{}))
 	return reg
 }

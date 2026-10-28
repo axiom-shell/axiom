@@ -280,18 +280,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### The session switches monitor profiles in QML on sway and niri
-- **Where:** `services/compositor/MonitorManager.qml` (`_applySavedProfile`, `_applyProfilePending`), `services/compositor/CompositorConfigManager.qml` (`_outputRules`), `backend/internal/compositor/manager/inputs.go` (`Facts.OutputRules`), `backend/internal/compositor/manager/manager.go`
-- **What:** Without `supports.outputProfiles`, `MonitorManager` applies the saved profile after each `outputsHotplugged` and after a detached reload, and `CompositorConfigManager` matches again to send `outputRules` for the files: the shell must be up for a hotplug to switch, and each hotplug reads the outputs three times. Item 3 of the plan: `manager.Manager` watches the Tracker (debounced), reads the outputs, applies `SavedRules`, fills the output rules in `buildInputs`, and applies again after a detached reload; the QML above goes. A hotplug during a trial Apply closes the Keep prompt without reverting.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
-### The greeter on sway matches monitors only at its start
-- **Where:** `services/session/GreetdManager.qml` (`_applyCompositor`), `backend/internal/daemon/compositorsocket.go` (`applyGreeter`)
-- **What:** The greeter applies `MonitorLayout.savedRules` once for the outputs it sees at start, and `applyGreeter`'s sway branch sends only input: a monitor plugged in at the greeter is never matched. Item 4 of the plan: `greeter.compositor` starts the session's watch for the greeter's lifetime on sway; `_applyCompositor`'s `savedRules` branch goes.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
 ### Hyprland picks monitor profiles in generated Lua
 - **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorsLua`, `GreeterLua`), `backend/internal/compositor/manager/hypr.go` (`monitorsApplied`), `services/compositor/HyprlandManager.qml` (`outputProfiles`)
 - **What:** Hyprland's module, managed config, runtime Lua and greeter carry every profile plus a Lua picker (`applyMonitors`, re-run on `monitor.added`/`removed` through `AXIOM_MONITOR_SUBS`), a second copy of the rule, which differs from `MonitorLayout.matchProfile` and `render.MatchProfile` in two rare cases: it compares descriptions untrimmed, and `MonitorsLua` drops rules with an empty `output` (which the others count as a missing enabled output, so no exact match). Item 5 of the plan (option B): the watch runs on Hyprland too, session and greeter, and the Lua carries only `render.MonitorCalls` of the profile matched last, rewritten on each switch so a reload keeps it. `MonitorsLua`, `applyMonitors`, `AXIOM_MONITOR_SUBS`, `TestMonitorsLuaPicks` and the `outputProfiles` capability (every branch and doc line) go. Without axiom running Hyprland no longer switches: user error, as decided.
@@ -304,9 +292,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
 
+### The Monitors page edits Monitors.profiles, a key format 2 renamed to items
+- **Where:** `services/compositor/MonitorManager.qml` (`profiles`, `_detect`, `removeProfile`), `backend/internal/migrate/convert/convert.go`
+- **What:** The format-2 conversion renames `Monitors.profiles` to `Monitors.items` (the schema has only `items`, `additionalProperties: false`), but MonitorManager's draft (path `["Monitors"]`) still reads and writes `draft.local.profiles` (`grep -c 'local?.profiles'` = 6): the page lists none of the saved profiles, `_detect` adds a `profiles` array beside `items`, and a Keep saves a section the schema refuses. `MonitorsConfig` and `useWholeScale` use `items` correctly. Rename the draft's `profiles` to `items` throughout (and the header comment), then check Apply/Keep on a nested compositor.
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing roadmap row 13 (GreetdManager sent `Monitors.profiles` to the greeter the same way; fixed there)
+
 ### The Monitors page matches profiles in QML
-- **Where:** `services/compositor/MonitorManager.qml` (`liveProfile`, `_detect`), `components/methods/MonitorLayout.qml` (`matchProfile`, `savedRules`), `backend/internal/compositor/manager/manager.go` (`state`)
-- **What:** The page runs `MonitorLayout.matchProfile` over its draft for the "(connected)" label and `_detect`, the last QML copy of the picker. Item 7 of the plan: `compositor.state` carries the matched profile's name (or `""`), which `liveProfile` and `_detect` find in the draft; `matchProfile`, `savedRules`, their `tst_MonitorLayout` cases and the plan file go.
+- **Where:** `services/compositor/MonitorManager.qml` (`liveProfile`, `_detect`), `components/methods/MonitorLayout.qml` (`matchProfile`), `backend/internal/compositor/manager/manager.go` (`state`)
+- **What:** The page runs `MonitorLayout.matchProfile` over its draft for the "(connected)" label and `_detect`, the last QML copy of the picker. Item 7 of the plan: `compositor.state` carries the matched profile's name (or `""`), which `liveProfile` and `_detect` find in the draft; `matchProfile`, its `tst_MonitorLayout` cases and the plan file go.
 - **Size:** small
 - **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
 

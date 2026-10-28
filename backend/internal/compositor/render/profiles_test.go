@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-// The profile picker's cases (tst_MonitorLayout's matchProfile and
-// savedRules)
+// The profile picker's cases (tst_MonitorLayout's matchProfile, and the
+// savedRules it had before the daemon switched profiles)
 func TestProfiles(t *testing.T) {
 	t.Parallel()
 	profiles := parse(t, `[

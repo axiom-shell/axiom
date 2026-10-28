@@ -76,7 +76,7 @@ Built on `Quickshell.Services.Greetd`.
   - `avatarOf(name)` from AccountsService's icons.
 - **At start** (but not when windowed), `_applyCompositor`:
   - it hands the bundle's monitor profiles and Input values to axiom (`CompositorManager.setUpGreeter` → `greeter.compositor`, `daemon/compositorsocket.go`): on Hyprland axiom evals `render.GreeterLua`, the profiles' `MonitorsLua` (which picks the profile again on each hotplug) plus one `hl.config` of the `x-greeter` input options whose parts are on, then sets the cursor while the cursor part is on with a theme (`setcursor`, even when Hyprland refused the Lua); on sway it sends the live `input` / `seat` commands (`render.SwayInputLines`), the cursor theme being its companion when a folder of `XCURSOR_PATH` holds it (`greeter-session.sh` puts the bundle's `icons/` first on sway's);
-  - without `supports.outputProfiles` (sway, niri) the shell also applies the saved profile for the outputs connected at start (`MonitorLayout.savedRules` → `CompositorManager.applyOutputs`).
+  - on sway the greeter's axiom also keeps the monitors in the saved profile for what's connected for the greeter's lifetime: the first `greeter.compositor` starts its own `outputs.Tracker` (`greeterProfiles`, `daemon/greeter.go`), which reads `GET_OUTPUTS` again after each hotplug and applies the profile for them (`manager.ProfileWatch`, as the session's [sway](../compositor/sway-backend.md) layer does). A windowed greeter sends no `greeter.compositor`, so it never touches the session's outputs.
 
 ### Surfaces and modules
 - **`surfaces/greeter/GreeterSurface`** is a `ScreenLayoutView`, the same view the lock screen uses ([lockscreen.md](lockscreen.md#layout)).

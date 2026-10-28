@@ -222,18 +222,12 @@ QtObject {
   }
 
   // The monitors and the bundle's input, on the greeter's compositor (sway,
-  // else Hyprland: greeter-session.sh). axiom sets up the compositor
-  // (Hyprland's Lua picks the monitor profile again on each hotplug);
-  // elsewhere the saved profile for what's connected at start is applied
+  // else Hyprland: greeter-session.sh). axiom sets up the compositor and
+  // keeps the monitors in the saved profile for what's connected (on each
+  // hotplug: Hyprland's Lua, axiom's own watch on sway)
   function _applyCompositor() {
     const config = ConfigManager.config;
-    if (!CompositorManager.supports.outputProfiles)
-      CompositorManager.withOutputDetails(outputs => {
-        const rules = MonitorLayout.savedRules(config.Monitors.profiles, outputs ?? []);
-        if (rules.length > 0)
-          CompositorManager.applyOutputs(rules, outputs);
-      });
-    CompositorManager.setUpGreeter(config.Monitors.profiles, config.Input);
+    CompositorManager.setUpGreeter(config.Monitors.items, config.Input);
   }
 
   Component.onCompleted: {

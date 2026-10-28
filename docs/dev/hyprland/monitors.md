@@ -4,7 +4,7 @@
 > **Config:** `Monitors.items`, `General.primaryMonitor`
 > **Related:** [Config modes](config-modes.md), [Onboarding](../features/onboarding.md) (`useWholeScale`), [Shell targeting](../core/shell-manager-targeting.md)
 
-Monitor layouts saved per set of connected monitors, edited on the Monitors page and applied on hotplug: by Hyprland itself (its Lua layer, `outputProfiles`), else by `MonitorManager` on `outputsHotplugged`. The page reaches the compositor only through `CompositorManager` (`withOutputDetails`, `applyOutputs`; [contract](../compositor/contract.md)).
+Monitor layouts saved per set of connected monitors, edited on the Monitors page and applied on hotplug: by Hyprland itself (its Lua layer, `outputProfiles`), else by the daemon on sway and niri ([sway](../compositor/sway-backend.md)). The page reaches the compositor only through `CompositorManager` (`withOutputDetails`, `applyOutputs`; [contract](../compositor/contract.md)).
 
 ### Live outputs
 - `outputs` is every output in detail, disabled ones included (`CompositorManager.withOutputDetails`).
