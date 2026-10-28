@@ -182,7 +182,6 @@ sway and SwayFX:
 - [An unreadable sway config file still binds axiom's keys silently](issues.md#an-unreadable-sway-config-file-still-binds-axioms-keys-silently)
 
 niri:
-- [Leaving fullscreen with blur on may remap the chrome on niri](issues.md#leaving-fullscreen-with-blur-on-may-remap-the-chrome-on-niri)
 - [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)
 - [A hot reload while locked leaves niri's red screen](issues.md#a-hot-reload-while-locked-leaves-niris-red-screen)
 - [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)

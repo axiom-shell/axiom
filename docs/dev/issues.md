@@ -242,12 +242,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while renaming the backend's `system` and `lock` packages
 
-### Leaving fullscreen with blur on may remap the chrome on niri
-- **Where:** `services/compositor/LayerManager.qml` (`reportSlot`), `services/compositor/NiriManager.qml` (`supports`)
-- **What:** A mapped slot moved to another layer gets a new map sequence wherever there's no `supports.layerOrder`, niri included, because sway's scene tree puts a layer surface that changes layer on top of its new layer. niri (smithay's `LayerMap`) likely keeps a surface's place in its map order across a layer change, so there the blur window coming back to Top after a fullscreen window would map the bars, border and docks again for nothing (`LayerManager: mapping … again, in its place` on leaving fullscreen, the chrome flashing). Check in `scripts/dev/nested.sh niri` with blur on; if niri keeps the place, gate the new sequence on a capability sway sets (e.g. `supports.layerRestack`).
-- **Size:** small
-- **Found:** 2026-10-28, while reviewing the sway parity batch (roadmap/13-sway-parity-2)
-
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
 - **What:** With blur on under niri, a bar popout switching to another widget's content in the same window shows its old stroke cutting into the box for a frame or two as it resizes: the stroke is the popout's window's, the fill the blur window's, and niri shows the two windows' frames out of step (no `supports.layerFrameSync`). Tried and reverted (2026-10-18), neither changing what the maintainer saw: holding the switch until the popout's window had drawn the new content twice (`SwitchStill`, its window's `frameSwapped`), and drawing the popout's stroke in the blur window with its fill (a stroke-only `AttachedSurfaceCopy` over the fills, the popout's own stroke transparent). That the second didn't help suggests the stroke isn't what's late: perhaps the popout's content, its clip, or the blur region. Next: log each window's `frameSwapped` with what it drew, during a switch.
