@@ -168,7 +168,7 @@ Resolves:
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.
 - Done: **The `execDetached` quick wins.** The files on the allowlist only for `Quickshell.execDetached` (`GreetdManager`, `LockManager`, `LauncherManager`, `CompositorConfigManager`) switched to `CommandManager.runDetached`, which now also takes an argv, shrinking the list early.
 
-Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
+Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`. Both done: `SchemaValidation` keeps only what previews use, and the four renderers are gone.
 
 Resolved by a stage:
 - [A save axiom refuses leaves its editor clean, showing the refused value](issues.md#a-save-axiom-refuses-leaves-its-editor-clean-showing-the-refused-value) (stage 7)

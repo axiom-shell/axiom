@@ -108,15 +108,20 @@ Singleton {
   signal keyboardLayoutChanged
   // A window was focused; appId is its class
   signal windowFocused(string appId)
-  // A window switcher key (HyprLua.switcherEvent): verb `step` (argument
+  // A window switcher key (a `custom>>axiom-switcher:<verb>` event the
+  // switcher's submap sends: axiom's layer, internal/compositor/render's
+  // SwitcherLua): verb `step` (argument
   // the step), `commit` or `cancel`
   signal switcherKey(string verb, string argument)
 
   // Leaves the window switcher's submap and its release listener (a tile
   // was clicked while its keys were held)
   function leaveSwitcher() {
-    root.runLua(HyprLua.switcherLeaveLua);
+    root.runLua("if axiom_switcher_leave then axiom_switcher_leave() end");
   }
+
+  readonly property string _switcherSubmap: "axiom_switcher"
+  readonly property string _switcherEvent: "axiom-switcher:"
 
   // --- Actions ---
 
@@ -397,7 +402,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   // Calls back with the binds in effect outside axiom's own submaps (the
   // key recorder's, the window switcher's), or null (CompositorManager)
   function withMainBinds(callback) {
-    root.withBinds(binds => callback(binds ? binds.filter(entry => entry.submap !== root._captureSubmap && entry.submap !== HyprLua.switcherSubmap) : null));
+    root.withBinds(binds => callback(binds ? binds.filter(entry => entry.submap !== root._captureSubmap && entry.submap !== root._switcherSubmap) : null));
   }
 
   // While on, every key reaches axiom instead of a bind (the Keybinds
@@ -409,7 +414,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   }
 
   readonly property string _captureSubmap: "axiom_record"
-  readonly property string _leaveCaptureLua: HyprLua.leaveSubmap(_captureSubmap)
+  readonly property string _leaveCaptureLua: `if hl.get_current_submap() == "${_captureSubmap}" then hl.dispatch(hl.dsp.submap("reset")) end`
   readonly property string _enterCaptureLua: `hl.define_submap("${_captureSubmap}", function() hl.bind("SUPER + CTRL + ALT + SHIFT + F24", hl.dsp.submap("reset")) end)
 hl.timer(function() ${_leaveCaptureLua} end, { timeout = 30000, type = "oneshot" })
 hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
@@ -727,8 +732,8 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       root.windowFocused(event.data.split(",")[0]);
       break;
     case "custom":
-      if (event.data.startsWith(HyprLua.switcherEvent)) {
-        const [verb, argument = ""] = event.data.slice(HyprLua.switcherEvent.length).split(" ");
+      if (event.data.startsWith(root._switcherEvent)) {
+        const [verb, argument = ""] = event.data.slice(root._switcherEvent.length).split(" ");
         root.switcherKey(verb, argument);
       }
       break;

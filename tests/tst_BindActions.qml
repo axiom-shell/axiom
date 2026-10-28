@@ -149,4 +149,11 @@ TestCase {
     verify(!shared.calls.BindActions.appliesUnder(test.table, tap, "niri", {}));
     verify(shared.calls.BindActions.keySupported("SUPER + Q", {}));
   }
+
+  function test_switcherHeld() {
+    compare(shared.calls.BindActions.switcherHeld(["ALT"]), ["ALT"]);
+    compare(shared.calls.BindActions.switcherHeld(["ALT", "SHIFT"]), ["ALT"], "SHIFT only turns it around");
+    compare(shared.calls.BindActions.switcherHeld(["SHIFT"]), ["SHIFT"], "unless it's all there is");
+    compare(shared.calls.BindActions.switcherHeld([]), [], "nothing to hold");
+  }
 }

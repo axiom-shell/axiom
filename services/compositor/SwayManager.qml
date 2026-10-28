@@ -197,7 +197,7 @@ Singleton {
   // slide, so only the last leg counts.
   function travel(output, legs, mode, focusId) {
     const last = legs[legs.length - 1];
-    const lines = output ? [`focus output ${SwayConf.quote(output)}`] : [];
+    const lines = output ? [`focus output ${SwayState.quote(output)}`] : [];
     if (focusId)
       lines.push(`${_con(focusId)} focus`);
     else if (mode === "move")
@@ -217,12 +217,12 @@ Singleton {
   // workspaces end up empty and go.
   function applyRemap(plan, outputs) {
     const outputOf = id => root.windows.find(w => w.id === id)?.output ?? "";
-    const focus = name => `focus output ${SwayConf.quote(name)}`;
+    const focus = name => `focus output ${SwayState.quote(name)}`;
     const moveAll = target => [].concat(...outputs.map(name => {
         const moves = plan.moves.filter(m => outputOf(m.id) === name);
         return moves.length > 0 ? [focus(name)].concat(moves.map(m => `${_con(m.id)} move container to workspace ${target(m)}`)) : [];
       }));
-    const lines = [].concat(moveAll(m => SwayConf.quote("axiom-remap-" + m.to)), [].concat(...outputs.map((name, i) => [focus(name), `workspace axiom-remap-mon-${i}`])), moveAll(m => "number " + m.to), [].concat(...plan.focus.map(f => [focus(f.monitor), `workspace number ${f.id}`])));
+    const lines = [].concat(moveAll(m => SwayState.quote("axiom-remap-" + m.to)), [].concat(...outputs.map((name, i) => [focus(name), `workspace axiom-remap-mon-${i}`])), moveAll(m => "number " + m.to), [].concat(...plan.focus.map(f => [focus(f.monitor), `workspace number ${f.id}`])));
     SwayIpcManager.command(lines.join("; "), () => root.refresh());
   }
 
@@ -244,8 +244,8 @@ Singleton {
     const id = root.activeWindowId;
     if (!id)
       return;
-    const leave = (root._marks[id] ?? []).filter(mark => SwayState.specialGroup(mark) !== "").map(mark => `${_con(id)} unmark ${SwayConf.quote(mark)}`);
-    SwayIpcManager.command(leave.concat([`${_con(id)} mark --add ${SwayConf.quote(`axiom-special-${name}-${id}`)}`, `${_con(id)} move scratchpad`]).join("; "), () => root._debounce.restart());
+    const leave = (root._marks[id] ?? []).filter(mark => SwayState.specialGroup(mark) !== "").map(mark => `${_con(id)} unmark ${SwayState.quote(mark)}`);
+    SwayIpcManager.command(leave.concat([`${_con(id)} mark --add ${SwayState.quote(`axiom-special-${name}-${id}`)}`, `${_con(id)} move scratchpad`]).join("; "), () => root._debounce.restart());
   }
 
   // --- The window switcher ---

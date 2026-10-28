@@ -347,7 +347,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
 ### SwayFX's corner radius reaches only windows opened later
-- **Where:** `components/methods/SwayConf.qml` (`fxLines`)
+- **Where:** `backend/internal/compositor/render/sway.go` (`SwayFxLines`)
 - **What:** `corner_radius` sent at runtime sets SwayFX 0.6's global only (its per-window reset runs only while the config loads), and it has no per-window command, so a changed rounding shows on new windows while open ones keep theirs until sway reloads its config. A fix would need a reload, which takes back the rest of the runtime look.
 - **Size:** small
 - **Found:** 2026-10-16, while fixing SwayFX's blur on unfocused windows
@@ -371,7 +371,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-16, while auditing the sway branch
 
 ### Detached sway keeps the floating modifier after the mouse binds go
-- **Where:** `backend/internal/compositor/manager/sway.go`, `components/methods/SwayConf.qml` (`unbindLines`, `floatingModifier`)
+- **Where:** `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/render/sway.go` (`SwayUnbindLines`, `SwayFloatingModifier`)
 - **What:** The runtime layer sends `floating_modifier` for the drag/resize binds but its unbind commands don't take it back, so removing them in detached mode leaves sway's floating modifier set until sway reloads. It also overrides a `floating_modifier` of the user's own config, which `render.RuntimeBinds` doesn't see as a taken key.
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch

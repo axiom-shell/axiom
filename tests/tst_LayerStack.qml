@@ -17,6 +17,10 @@ TestCase {
     return LayerStack.layers.find(l => l.namespace === ns).order;
   }
 
+  function test_blur_lists() {
+    verify(LayerStack.blurChrome.includes("bar-floating-long") && LayerStack.blurBacked.includes("bar-pill"), "blur lists take every bar");
+  }
+
   function test_one_entry_per_namespace() {
     const names = LayerStack.layers.map(l => l.namespace);
     compare(names.length, new Set(names).size);

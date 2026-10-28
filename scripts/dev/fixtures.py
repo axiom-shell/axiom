@@ -45,9 +45,9 @@ ROOT = Path(__file__).resolve().parents[2]
 SHARED = ROOT / "tests/fixtures/shared"
 # Suites recorded from the JS helpers (the rest are written by Go's tests)
 # ConfigOps (config.set's ops, which the daemon's tests decode) and the
-# compositor config helpers the binary also ports, still used by the shell
+# bind and layer helpers the binary also ports, still used by the shell
 # (backend/internal/compositor/render; the rest's cases are frozen there)
-HELPERS = ("BindActions", "BindKeys", "CompositorLayer", "ConfigOps", "HyprLua", "KeyNames", "LayerStack", "SwayConf")
+HELPERS = ("BindActions", "BindKeys", "ConfigOps", "KeyNames", "LayerStack")
 RECORD_TESTS = ("Config", "SchemaValidation", "GreeterBundle") + HELPERS
 BLOB_SIZE = 2048
 # What the recorded cases are made from: a change to any re-records them

@@ -59,7 +59,6 @@ TestCase {
 - **JS engine gaps:** no `Array.prototype.flatMap` (use `[].concat(...arr.map(...))`), no `Object.fromEntries` (use `reduce`), no `Intl` (time zones go through `TimeZoneManager` + `TimeZones.shift`).
 - **Don't mutate arguments.** Return new objects (`Utils.clone` for deep copies).
 - **Geometry decisions** (`SurfaceContext`, `EdgeAttach`, `PopoutGeometry`, `BarEnds`, `GridPlacement`) are the single source for every host. A new case is a rule plus a test row, never a special case in a host.
-- **Generated Lua:** a test writing Lua to `tests/.out/` gets it checked with `luac -p` (`*.run.lua` also run, `*.hypr.lua` read by `Hyprland --verify-config` where it's installed). See `tst_HyprLua`.
 
 ## Verify
 - `scripts/run_tests.sh <Name>`

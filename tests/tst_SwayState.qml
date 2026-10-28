@@ -15,6 +15,16 @@ TestCase {
     return files.json("tests/fixtures/sway/" + name + ".json");
   }
 
+  function test_quote() {
+    compare(SwayState.quote("DP-1"), "DP-1");
+    compare(SwayState.quote("AOC CU34G4Z XJ9"), "\"AOC CU34G4Z XJ9\"");
+    // Sway keeps a backslash before a quote, so a `"` is single-quoted
+    compare(SwayState.quote("say \"hi\""), "\"say \"'\"'\"hi\"'\"'");
+    compare(SwayState.quote("\""), "'\"'");
+    compare(SwayState.quote(""), "\"\"");
+    compare(SwayState.quote("it's"), "\"it's\"");
+  }
+
   function test_treeListsTheWindows() {
     const info = SwayState.tree(fixture("get_tree"));
     compare(info.windows.map(w => w.title), ["foot", "second", "floater", "tab1", "tab2"]);

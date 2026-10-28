@@ -6,7 +6,6 @@
 __pycache__/
 *.pyc
 
-tests/.out/
 
 # Generated (scripts/generate.sh), never committed
 config/json/config.schema.json

@@ -356,7 +356,7 @@ def main():
     # backend; besides the Hyprland* services, only the Hyprland-only
     # features use it directly, each gated on CompositorManager.supports.
     hyprland_features = {
-        "services/compositor/CompositorManager.qml", "services/session/GreetdManager.qml",
+        "services/compositor/CompositorManager.qml",
     }
     for path, text in sources.items():
         code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())
@@ -372,8 +372,8 @@ def main():
         code = "\n".join(line.split("//", 1)[0] for line in re.sub(r"/\*.*?\*/", "", text, flags=re.S).splitlines())
         if not path.startswith(("services/", "components/", "shell/", "config/")):
             continue
-        if not re.fullmatch(r"(services/compositor|components/methods)/Hypr\w*\.qml", path) and path not in hyprland_features and re.search(r"\b(HyprLua|HyprState)\.", code):
-            errors.append(f"{path}: uses a Hyprland Lua helper (only the Hyprland* services and helpers may; go through CompositorManager / CompositorConfigManager)")
+        if not re.fullmatch(r"(services/compositor|components/methods)/Hypr\w*\.qml", path) and path not in hyprland_features and re.search(r"\bHyprState\.", code):
+            errors.append(f"{path}: uses a Hyprland helper (only the Hyprland* services and helpers may; go through CompositorManager / CompositorConfigManager)")
         for prefix, name, _, _ in backends:
             if not re.fullmatch(rf"(services/compositor|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b({prefix}Conf|{prefix}State)\.", code):
                 errors.append(f"{path}: uses a {name} helper (only the {prefix}* services and helpers may; go through CompositorManager / CompositorConfigManager)")

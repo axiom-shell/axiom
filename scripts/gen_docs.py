@@ -425,7 +425,7 @@ class ConfigReference:
             read = [r for r in read if "(whole)" not in r] + ["entry field, name match"]
             if not files:
                 # Last resort: a distinctive key read anywhere (pure helpers
-                # like HyprLua get entries handed to them)
+                # like BindActions get entries handed to them)
                 anywhere = self.usage.of(r"\??\." + re.escape(last) + r"\b")
                 if 0 < len(anywhere) <= 6:
                     files.update(anywhere)
