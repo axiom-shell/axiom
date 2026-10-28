@@ -1,6 +1,9 @@
 package render
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 // Output is a connected output as the profile picker sees it: its
 // connector, its description as the shell gives it ("make model serial",
@@ -19,6 +22,9 @@ func names(output, name, description string) bool {
 	}
 	return name == output
 }
+
+// ruleOutput is a rule's output, "" when it has none.
+func ruleOutput(rule any) string { return str(or(get(rule, "output"), "")) }
 
 // connected is whether a rule's output names one of outputs.
 func connected(output string, outputs []Output) bool {
@@ -48,7 +54,7 @@ func MatchProfile(profiles any, outputs []Output) int {
 		rules := items(get(profile, "outputs"))
 		score, exact := 0, true
 		for _, rule := range rules {
-			found := connected(str(or(get(rule, "output"), "")), on)
+			found := connected(ruleOutput(rule), on)
 			disabled := truthy(get(rule, "disabled"))
 			if found && !disabled {
 				score++
@@ -58,14 +64,7 @@ func MatchProfile(profiles any, outputs []Output) int {
 			}
 		}
 		for _, o := range on {
-			listed := false
-			for _, rule := range rules {
-				if names(str(or(get(rule, "output"), "")), o.Name, o.Description) {
-					listed = true
-					break
-				}
-			}
-			exact = exact && listed
+			exact = exact && slices.ContainsFunc(rules, func(rule any) bool { return names(ruleOutput(rule), o.Name, o.Description) })
 		}
 		if exact && score > 0 {
 			score += 1000
@@ -88,7 +87,7 @@ func SavedRules(profiles any, outputs []Output) []any {
 	}
 	var out []any
 	for _, rule := range items(get(items(profiles)[index], "outputs")) {
-		if connected(str(or(get(rule, "output"), "")), outputs) {
+		if connected(ruleOutput(rule), outputs) {
 			out = append(out, rule)
 		}
 	}
