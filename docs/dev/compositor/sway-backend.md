@@ -55,7 +55,7 @@ Outputs and workspaces come live from Quickshell's `I3` module (as Hyprland's do
 - `withOutputDetails`: `get_outputs` (`SwayState.outputDetails`; modes as `WxH@R.RRHz`). `applyOutputs`: axiom sends one `output … enable mode … pos … scale … transform … adaptive_sync … render_bit_depth 8|10` command per rule (`outputs.apply`, `render.SwayOutputCommands`), disabled ones last. No mirroring and no color settings.
 - `cycleKeyboardLayout`: `input type:keyboard xkb_switch_layout next|prev`. `exitSession`: `exit`. `leaveSwitcher`: nothing (the switcher's binds enter no mode).
 - `toplevelFor`: null. Quickshell can't capture a toplevel on sway (`ScreencopyView` calls it not captureable), so the overview shows icons.
-- `withLayerRects`, `withCursorPos`: null; `warpCursorToLayer`, `scrollStrip`: nothing. `surfacesReady` is true at once.
+- `withLayerRects`, `withCursorPos`: null; `warpCursorToLayer`, `scrollStrip`: nothing. `surfacesReady` waits for `ready` (the `get_version` reply, which says whether it's SwayFX), so the blur and shadow windows map in their place with the other chrome rather than after it, which would map each lower-ordered window again; the chrome stays hidden until sway answers.
 
 ### The config writer (the daemon's `manager/sway.go`)
 The [config modes](config-modes.md) on sway; the text comes from `render` (`sway.go`), as Hyprland's does.

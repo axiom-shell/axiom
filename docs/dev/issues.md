@@ -316,12 +316,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-17, while auditing the niri branch for merge
 
-### SwayFX remaps the chrome on a fresh qs start
-- **Where:** `services/compositor/SwayManager.qml` (`surfacesReady`), `shell/BlurBacking.qml`
-- **What:** `surfacesReady` is always true, so bars, border and docks map at once, while the held blur window (order 9) and the shadow window beside it (`axiom-shadows`, order 8) wait for `supports.blur`, known only from the `get_version` reply. Mapped after them, they make LayerManager map each lower-ordered window again. Hot reloads keep the variant, so only a fresh start does it. Waiting for `ready` would fix it, but hides the chrome until sway answers.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### The blur window's Top/Overlay switch may land over the bars on SwayFX
 - **Where:** `shell/BlurBacking.qml`, `shell/BlurBackingWindow.qml`
 - **What:** The blur window changes `stackLayer` while a fullscreen window shows; LayerManager keeps its place in the order. If SwayFX puts a window that changed layer on top of its new layer, then after fullscreen ends it draws over the bars. Needs a look in `scripts/dev/nested.sh sway` with SwayFX.
