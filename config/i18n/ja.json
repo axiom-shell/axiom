@@ -2239,7 +2239,6 @@
     "Translucency": "半透明",
     "Surface opacity": "サーフェスの不透明度",
     "Pause blur over fullscreen apps": "全画面アプリの表示中はぼかしを止める",
-    "While a fullscreen window (a game, a video) is open, nothing blurs, so a volume popup or notification over it costs nothing extra. Surfaces on that monitor turn opaque; elsewhere they stay translucent, unblurred.": "全画面のウィンドウ（ゲームや動画）が開いている間は何もぼかさないため、その上に出る音量表示や通知が余計な負荷になりません。そのモニターのサーフェスは不透明になり、ほかのモニターではぼかしなしの半透明のままです。",
     "Transparency and blur are highly experimental: expect visual glitches and a performance cost.": "透明化とぼかしは非常に実験的な機能です。表示の乱れやパフォーマンスへの影響が出る場合があります。",
     "Blur windows behind surfaces": "サーフェスの背後のウィンドウをぼかす",
     "Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them.": "オフにすると、バー・枠・ポップアウトは壁紙だけをぼかし、負荷が軽くなります。ツールチップとメニューは常に背後をぼかします。",
@@ -3178,6 +3177,7 @@
     "Sway's own options. All but special workspaces are written while axiom manages its config; anything else goes in ~/.config/sway/user/.": "",
     "Couldn't read grim's picture of the screen.": "",
     "Tab indicator": "",
-    "The bar beside a tabbed column, a segment per tab. Shows for a lone window too.": ""
+    "The bar beside a tabbed column, a segment per tab. Shows for a lone window too.": "",
+    "While a fullscreen window (a game, a video) is open, nothing blurs on its monitor (on any monitor under Hyprland and SwayFX), so a volume popup or notification over it costs nothing extra. Surfaces on that monitor turn opaque; elsewhere they stay translucent.": ""
   }
 }
