@@ -51,7 +51,7 @@ Editors create new entries at their definition's defaults with `withDefaults(val
 ### Writes
 (Rule: AGENTS.md › Services, "Config writes".)
 - All writes go through `setTheme()` / `setWallpaper(s)()` / `saveConfig()` / `commit(object)`, or `SettingsManager.setValue(path, value)` from settings UI.
-- They validate against the schema here first: `commit(object)` (the draft services) fills defaults, and returns false, changing nothing, if rejected, so drafts stay dirty. Every save sends `takeover: true` but `commit(object, false)`, which keeps the `x-takeover` settings as axiom has them (a save that changes none).
+- They validate against the schema here first: `commit(object)` (the draft services) fills defaults, and returns false, changing nothing, if rejected, so drafts stay dirty. A save sends `takeover` only from a takeover setting's own control: `commit(object, takeover)` defaults to false, so axiom keeps the `x-takeover` settings as it has them, and `SettingsManager`'s `commitValue(s)` and `saveChanges` pass true only when they write one (`_takesOver`). So a save made from a config predating a takeover write of axiom's can't put the stale value back.
 - Never mutate `ConfigManager.config` fields from UI code and expect persistence.
 
 ### ConfigDraft

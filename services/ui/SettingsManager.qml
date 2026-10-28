@@ -467,7 +467,7 @@ QtObject {
       return false;
     const next = Utils.clone(ConfigManager.config);
     _setAt(next, entry.path, value);
-    if (!ConfigManager.commit(next))
+    if (!ConfigManager.commit(next, _takesOver([entry.path])))
       return false;
     ensureLoaded();
     return true;
@@ -480,7 +480,7 @@ QtObject {
     const next = Utils.clone(ConfigManager.config);
     for (const dottedPath of Object.keys(values))
       _setAt(next, dottedPath.split("."), values[dottedPath]);
-    if (!ConfigManager.commit(next))
+    if (!ConfigManager.commit(next, _takesOver(Object.keys(values).map(dottedPath => dottedPath.split(".")))))
       return false;
     ensureLoaded();
     return true;
@@ -517,9 +517,16 @@ QtObject {
     return entry ? Utils.valueAt(ConfigManager.config, entry.path) : undefined;
   }
 
+  // Whether a save of these key paths is a takeover setting's own: it
+  // names one (`x-takeover`), so axiom lets it change what it takes over
+  function _takesOver(paths) {
+    return paths.some(path => schemaAt(path)?.["x-takeover"] === true);
+  }
+
   // Stays dirty if the save is rejected (invalid, or saves are blocked)
   function saveChanges() {
-    if (!ConfigManager.commit(_merged()))
+    const changed = _diff(draft.local, draft.saved, []).map(path => path.split("."));
+    if (!ConfigManager.commit(_merged(), _takesOver(changed)))
       return false;
     draft.load();
     return true;
