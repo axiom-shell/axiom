@@ -54,7 +54,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 
 ### How profiles reach Hyprland
 - `render.MonitorsLua` produces the same Lua in every mode (and for the greeter's Hyprland, `greeter.compositor`): `AXIOM_MONITOR_PROFILES` plus `axiom_apply_monitors()`.
-- `axiom_apply_monitors()` picks a profile the way `MonitorLayout.matchProfile` does:
+- `axiom_apply_monitors()` picks a profile the way `MonitorLayout.matchProfile` and Go's `render.MatchProfile` (not called yet) do:
   - an exact set of monitors, where a disabled rule's output may be missing (`hl.get_monitors()` doesn't list it)
   - else the profile that turns the most monitors on
   - before any monitor is reported, the first profile.

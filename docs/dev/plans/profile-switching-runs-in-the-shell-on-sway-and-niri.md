@@ -1,6 +1,6 @@
 # Profile switching runs in the shell on sway and niri
 
-> **Issue:** Profile switching runs in the shell on sway and niri, replaced on decision by the plan's items in issues.md, from [Go has no monitor profile picker](../issues.md#go-has-no-monitor-profile-picker) on
+> **Issue:** Profile switching runs in the shell on sway and niri, replaced on decision by the plan's items in issues.md, from [Go can't read the connected outputs itself](../issues.md#go-cant-read-the-connected-outputs-itself) on
 > **Status:** decided: B (2026-10-28)
 
 Decided (maintainer, 2026-10-28), verbatim: "go owns profile switching for every compositor". The options below are only about how.

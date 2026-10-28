@@ -280,12 +280,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### Go has no monitor profile picker
-- **Where:** `components/methods/MonitorLayout.qml` (`matchProfile`, `savedRules`), `backend/internal/compositor/render/hyprlua.go` (`applyMonitors`)
-- **What:** The rule choosing the saved profile for what's connected (an exact match wins, else the one turning on most; ties to the earlier) is only QML's and the generated Lua's. Item 1 of the plan: `render.MatchProfile` and `render.SavedRules` in Go, with `tst_MonitorLayout`'s cases as a Go table test; nothing calls them yet.
-- **Size:** small
-- **Found:** 2026-10-28, while planning profile switching in Go ([plan](plans/profile-switching-runs-in-the-shell-on-sway-and-niri.md), #183)
-
 ### Go can't read the connected outputs itself
 - **Where:** `backend/internal/compositor/ipc/sway.go`, `backend/internal/compositor/ipc/niri.go`, `backend/internal/compositor/ipc/hypr.go`
 - **What:** Picking a profile in Go needs the compositor's own output list with the shell's descriptions ("make model serial"), which the daemon's `wayland/outputs` Tracker doesn't give (enabled outputs only, wl_output's descriptions). Item 2 of the plan: sway's `GET_OUTPUTS`, niri's `Outputs` and Hyprland's `monitors all`, each as the neutral `{name, description, disabled}`, descriptions built as `SwayState` and `NiriState` build them; fixture tests from recorded replies.

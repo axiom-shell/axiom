@@ -439,11 +439,7 @@ func MirrorNames(details any) Func {
 		}
 		for _, d := range items(details) {
 			name := str(or(get(d, "name"), ""))
-			if desc, ok := strings.CutPrefix(value, "desc:"); ok {
-				if trim(str(or(get(d, "description"), ""))) == trim(desc) {
-					return name
-				}
-			} else if name == value {
+			if names(value, name, str(or(get(d, "description"), ""))) {
 				return name
 			}
 		}
