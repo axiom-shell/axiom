@@ -460,12 +460,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-13, while checking reload logs during the docs makeover
 
-### KeybindManager does three jobs
-- **Where:** `services/compositor/KeybindManager.qml`
-- **What:** `KeybindManager` (about 1450 lines) reads the compositor's binds, edits a draft, records keys, merges conflicts, keeps presets and undo and the Keybinds page's view state: a reader, a `KeybindEditor` and page state. It's split with backend stage 7 (`compositor.inputs`: Go reads binds and profiles from the config it owns), which changes what the reader half is, so it's designed in that stage, not with the other singleton splits (#123).
-- **Size:** needs a plan
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### Readers read files through a service
 - **Where:** `config/Paths.qml` (`packagedVersion`), `config/I18n.qml`
 - **What:** Readers read only the data owners and each other (AGENTS.md › Layering), but `Paths.packagedVersion` calls `FileManager.read`, and `I18n` reads with both `FileManager.read` and a FileView of its own. Either the rule names `FileManager` as allowed in readers, or the reads move to a data owner.

@@ -9,9 +9,9 @@ import qs.components.reusable
 import qs.components.content.parts
 
 // The Keybinds editor's presets, over the list: on the left the built-in
-// ones and those saved from here (KeybindManager.savedPresets), each group
+// ones and those saved from here (KeybindManager.editor.savedPresets), each group
 // folding, and a field to save the binds as one; on the right what the
-// chosen one would do bind by bind (KeybindManager.presetPlan), each new
+// chosen one would do bind by bind (KeybindManager.editor.presetPlan), each new
 // or taken key with a checkbox (a taken key's bind pauses), and Apply for
 // the checked ones. A saved preset replaces every bind instead, unless
 // switched to Merge. Like any edit it waits for Save, and Undo takes it
@@ -23,7 +23,7 @@ Popup {
   // Its plan, and the keys (BindKeys.keyId) checked
   property var plan: []
   property var chosen: []
-  readonly property var preset: KeybindManager.presets.find(p => p.id === root.presetId) ?? KeybindManager.savedPresets.find(p => p.id === root.presetId) ?? null
+  readonly property var preset: KeybindManager.editor.presets.find(p => p.id === root.presetId) ?? KeybindManager.editor.savedPresets.find(p => p.id === root.presetId) ?? null
   readonly property bool saved: root.preset?.saved === true
   // A saved preset: "replace" every bind, or "merge" it like a built-in one
   property string mode: "replace"
@@ -34,14 +34,14 @@ Popup {
 
   function choose(id) {
     root.presetId = id;
-    root.plan = KeybindManager.presetPlan(id);
+    root.plan = KeybindManager.editor.presetPlan(id);
     root.chosen = root.plan.filter(step => step.chosen).map(step => step.id);
     if (!nameField.input.activeFocus)
       nameField.input.text = root.preset?.saved ? root.preset.title : "";
   }
 
   function saveAs(name) {
-    const id = KeybindManager.savePreset(name);
+    const id = KeybindManager.editor.savePreset(name);
     if (id === "")
       return;
     newName.input.text = "";
@@ -59,7 +59,7 @@ Popup {
   focus: true
   padding: Widget.padding
   closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-  onAboutToShow: root.choose(root.presetId !== "" ? root.presetId : (KeybindManager.presets[0]?.id ?? ""))
+  onAboutToShow: root.choose(root.presetId !== "" ? root.presetId : (KeybindManager.editor.presets[0]?.id ?? ""))
 
   // Solid, over a dimmed list: the page itself may be see-through
   background: DropdownSurface {
@@ -113,7 +113,7 @@ Popup {
             onToggled: root.builtInFolded = !root.builtInFolded
 
             Repeater {
-              model: KeybindManager.presets
+              model: KeybindManager.editor.presets
 
               delegate: ListEntryRow {
                 id: presetRow
@@ -140,13 +140,13 @@ Popup {
           }
 
           FoldingSection {
-            title: I18n.tr("Saved") + "  " + KeybindManager.savedPresets.length
+            title: I18n.tr("Saved") + "  " + KeybindManager.editor.savedPresets.length
             collapsed: root.savedFolded
             bodySpacing: 2
             onToggled: root.savedFolded = !root.savedFolded
 
             Repeater {
-              model: KeybindManager.savedPresets
+              model: KeybindManager.editor.savedPresets
 
               delegate: ListEntryRow {
                 id: savedRow
@@ -170,15 +170,15 @@ Popup {
                   tooltipText: I18n.tr("Remove this preset")
                   onClicked: {
                     if (root.presetId === savedRow.modelData.id)
-                      root.choose(KeybindManager.presets[0]?.id ?? "");
-                    KeybindManager.deletePreset(savedRow.modelData.id);
+                      root.choose(KeybindManager.editor.presets[0]?.id ?? "");
+                    KeybindManager.editor.deletePreset(savedRow.modelData.id);
                   }
                 }
               }
             }
 
             StyledText {
-              visible: KeybindManager.savedPresets.length === 0
+              visible: KeybindManager.editor.savedPresets.length === 0
               text: I18n.tr("Save your binds as they are to come back to them later.")
               opacity: 0.6
               wrapMode: Text.WordWrap
@@ -203,7 +203,7 @@ Popup {
               SquareIconButton {
                 size: Widget.height
                 iconText: "save"
-                tooltipText: KeybindManager.savedPresets.some(p => p.title === newName.text.trim()) ? I18n.tr("Save over the preset by this name") : I18n.tr("Save the binds as a preset")
+                tooltipText: KeybindManager.editor.savedPresets.some(p => p.title === newName.text.trim()) ? I18n.tr("Save over the preset by this name") : I18n.tr("Save the binds as a preset")
                 enabled: newName.text.trim() !== ""
                 opacity: enabled ? 1 : 0.5
                 onClicked: root.saveAs(newName.text)
@@ -252,7 +252,7 @@ Popup {
             Layout.fillWidth: true
             Layout.preferredHeight: Widget.height
             placeholderText: I18n.tr("Preset name")
-            onAccepted: KeybindManager.renamePreset(root.presetId, nameField.text)
+            onAccepted: KeybindManager.editor.renamePreset(root.presetId, nameField.text)
           }
 
           StyledTextButton {
@@ -260,7 +260,7 @@ Popup {
             iconText: "save"
             text: I18n.tr("Save current binds over it")
             onClicked: {
-              KeybindManager.savePreset(root.preset.title);
+              KeybindManager.editor.savePreset(root.preset.title);
               Qt.callLater(() => root.choose(root.presetId));
             }
           }
@@ -303,7 +303,7 @@ Popup {
                 readonly property bool can: root.merging && step.modelData.status !== "same"
                 readonly property bool on: step.can && root.chosen.includes(step.modelData.id)
                 readonly property var parts: KeyNames.split(step.modelData.bind.key)
-                readonly property var taken: KeybindManager.binds[step.modelData.takenBy[0]] ?? null
+                readonly property var taken: KeybindManager.editor.binds[step.modelData.takenBy[0]] ?? null
 
                 Layout.fillWidth: true
                 implicitHeight: Widget.height + Widget.padding / 2
@@ -399,7 +399,7 @@ Popup {
           StyledText {
             text: {
               if (!root.merging)
-                return I18n.tr("Replaces your {0} binds with these {1}", KeybindManager.binds.length, root.plan.length);
+                return I18n.tr("Replaces your {0} binds with these {1}", KeybindManager.editor.binds.length, root.plan.length);
               if (parent.resuming > 0)
                 return I18n.tr("Adds {0}, pauses {1}, resumes {2}", parent.adding, parent.pausing, parent.resuming);
               if (parent.pausing > 0)
@@ -426,9 +426,9 @@ Popup {
             textColor: Theme.background
             onClicked: {
               if (root.merging)
-                KeybindManager.applyPreset(root.presetId, root.chosen);
+                KeybindManager.editor.applyPreset(root.presetId, root.chosen);
               else
-                KeybindManager.restorePreset(root.presetId);
+                KeybindManager.editor.restorePreset(root.presetId);
               root.close();
             }
           }

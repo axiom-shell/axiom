@@ -1,6 +1,6 @@
 # Editors pattern
 
-> **Files:** `services/core/ConfigDraft.qml`, `services/ui/EditsManager.qml`, `components/views/base/BaseView.qml`, `components/reusable/DragLayer.qml`; editor managers `services/ui/{SettingsManager,BarManager,OverlayManager}.qml`, `services/ui/EdgeMenuEditor.qml`, `services/compositor/{KeybindManager,MonitorManager}.qml`, `services/ui/ScreenLayoutEditor.qml`
+> **Files:** `services/core/ConfigDraft.qml`, `services/ui/EditsManager.qml`, `components/views/base/BaseView.qml`, `components/reusable/DragLayer.qml`; editor managers `services/ui/{SettingsManager,BarManager,OverlayManager}.qml`, `services/ui/EdgeMenuEditor.qml`, `services/compositor/{KeybindEditor,MonitorManager}.qml`, `services/ui/ScreenLayoutEditor.qml`
 > **Config:** whichever path the editor drafts; layout prefs in `~/.local/state/axiom/ui/editors.json`
 > **Related:** [Config manager](config-manager.md), [Bar editor](../bar/bar-editor.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Monitors](../hyprland/monitors.md), [Keybinds](../hyprland/keybinds.md), [Shared UI pieces](shared-ui-pieces.md)
 
@@ -8,7 +8,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 
 ### Draft
 - The manager owns a `ConfigDraft` of its config path.
-  - An editor that is one part of a page's manager is a non-singleton the manager holds, named `*Editor`: the layouts editor's edge menus are `OverlayManager.menus` (`EdgeMenuEditor`), its screen layouts `ScreenLayoutEditor`s (`DesktopManager.editor`, …).
+  - An editor that is one part of a page's manager is a non-singleton the manager holds, named `*Editor`: the layouts editor's edge menus are `OverlayManager.menus` (`EdgeMenuEditor`), the Keybinds page's binds `KeybindManager.editor` (`KeybindEditor`, beside the page's view state `KeybindManager.page`), its screen layouts `ScreenLayoutEditor`s (`DesktopManager.editor`, …).
 - Mutate `draft.local` in place, then `changed()`. It re-clones next tick so bindings see it; `isDirty` is a JSON compare.
 - Editors (the settings page too) show unsaved edits live through `ConfigManager.setPreview`, never by changing `ConfigManager.config`.
 - Save merges onto the latest config (`commit`, which may refuse: the draft stays dirty). Discard (shown only while dirty) reloads.
@@ -16,7 +16,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 - `ensureLoaded()` on page open reloads only a clean draft. Settings and Keybinds use `ConfigDraft.loadIfStale()`, which also skips one already holding the current config, since pages are rebuilt on every open ([streamed building](streamed-building.md) › Editors reopening).
 
 ### Selection
-- Lives in the manager (`selectedBarIndex`, `selectedViewIndex`, `selectedMenuIndex`, `selectedProfile`, `KeybindManager.selectedIndex`, …).
+- Lives in the manager (`selectedBarIndex`, `selectedViewIndex`, `selectedMenuIndex`, `selectedProfile`, `KeybindManager.editor.selectedIndex`, …).
 - Changes through `select*()`, which clears or fixes what hangs off it.
 - Add/remove/move functions keep it on the right entry.
 

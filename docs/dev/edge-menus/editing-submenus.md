@@ -22,7 +22,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
     - binds in the keybind editor's draft or `KeybindsConfig.binds`.
   - **Buttons that add an opener**, drawn by `OpenerButtons` (shared with the page's Opening group):
     - a bar Button: `addBarButton` → `BarManager.addWidgetTo`, into the bar editor's draft, then the bar editor on that bar;
-    - a keybind: `addKeybind` → `KeybindManager.addAndRecord`, then the Keybinds page's editor recording its key.
+    - a keybind: `addKeybind` → `KeybindManager.editor.addAndRecord`, then the Keybinds page's editor recording its key.
 - A new menu (`addMenu`) opens on hover and starts previewing.
 - Beside "Show on screen", "Show other menus" draws the others on the grid.
 

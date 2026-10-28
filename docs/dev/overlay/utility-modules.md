@@ -38,7 +38,7 @@ Tool-like overlay modules. Each keeps its lasting state in its service, so closi
 
 ### Cheatsheet (`KeybindManager`, read-only)
 - Its own search.
-- `content/parts/KeybindSection` (shared with the Keybinds page) in masonry columns; density, glyphs and folds follow the page's (`KeybindManager.refDensity` etc.).
+- `content/parts/KeybindSection` (shared with the Keybinds page) in masonry columns; density, glyphs and folds follow the page's (`KeybindManager.page.refDensity` etc.).
 - `view: "keyboard"`: `KeyboardReference` under its own `mods`, no chips.
 - A click on an axiom bind opens it in the Keybinds editor (`editBind`, `ShellManager.openOverlayPage("Keybinds")`).
 

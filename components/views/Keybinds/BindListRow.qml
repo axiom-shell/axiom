@@ -24,15 +24,15 @@ StyledContainer {
 
   readonly property bool isRun: root.indices.length > 1
   readonly property int bindIndex: root.indices[0] ?? -1
-  readonly property var bind: KeybindManager.binds[root.bindIndex] ?? ({})
+  readonly property var bind: KeybindManager.editor.binds[root.bindIndex] ?? ({})
   readonly property string runKey: root.isRun ? BindGroups.runKey(root.bind) : ""
-  readonly property bool expanded: root.isRun && KeybindManager.expandedRuns[root.runKey] === true
-  readonly property bool selected: !root.isRun && KeybindManager.selectedIndex === root.bindIndex
-  readonly property bool paused: root.indices.every(i => KeybindManager.binds[i]?.paused === true)
-  readonly property var issues: [].concat(...root.indices.map(i => KeybindManager.issues[i] ?? []))
+  readonly property bool expanded: root.isRun && KeybindManager.page.expandedRuns[root.runKey] === true
+  readonly property bool selected: !root.isRun && KeybindManager.editor.selectedIndex === root.bindIndex
+  readonly property bool paused: root.indices.every(i => KeybindManager.editor.binds[i]?.paused === true)
+  readonly property var issues: [].concat(...root.indices.map(i => KeybindManager.editor.issues[i] ?? []))
   readonly property bool hasError: root.issues.some(issue => issue.level === "error")
-  readonly property bool hasWarning: KeybindManager.hasIssue(root.issues)
-  readonly property bool changed: root.indices.some(i => KeybindManager.changedBinds[i] === true)
+  readonly property bool hasWarning: KeybindManager.editor.hasIssue(root.issues)
+  readonly property bool changed: root.indices.some(i => KeybindManager.editor.changedBinds[i] === true)
   readonly property var parts: KeyNames.split(root.bind.key)
   readonly property color ink: root.selected ? Theme.background : Theme.foreground
   readonly property bool hovered: hover.hovered
@@ -40,7 +40,7 @@ StyledContainer {
   readonly property string label: {
     if (root.isRun)
       return BindActions.defaultLabel(Object.assign({}, root.bind, {
-        "argument": BindGroups.runNumbers(KeybindManager.binds, root.indices)
+        "argument": BindGroups.runNumbers(KeybindManager.editor.binds, root.indices)
       }));
     return KeybindManager.bindLabel(root.bind);
   }
@@ -62,28 +62,28 @@ StyledContainer {
   }
 
   // Centred when asked for, unfolding its run first (its rows, built
-  // then, find the ask in KeybindManager.revealIndex)
+  // then, find the ask in KeybindManager.editor.revealIndex)
   function reveal() {
     if (!root.isRun && root.scrollTo)
       Qt.callLater(() => {
         root.scrollTo(root);
-        KeybindManager.revealDone(root.bindIndex);
+        KeybindManager.editor.revealDone(root.bindIndex);
       });
   }
 
   Component.onCompleted: {
-    if (!root.isRun && KeybindManager.revealIndex === root.bindIndex)
+    if (!root.isRun && KeybindManager.editor.revealIndex === root.bindIndex)
       root.reveal();
   }
 
   Connections {
-    target: KeybindManager
+    target: KeybindManager.editor
 
     function onRevealRequested(index) {
       if (!root.indices.includes(index))
         return;
       if (root.isRun && !root.expanded)
-        KeybindManager.toggleRun(root.runKey);
+        KeybindManager.page.toggleRun(root.runKey);
       root.reveal();
     }
   }
@@ -91,7 +91,7 @@ StyledContainer {
   DragArea {
     id: area
     anchors.fill: parent
-    dragEnabled: root.dragLayer !== null && !root.isRun && KeybindManager.reorderable
+    dragEnabled: root.dragLayer !== null && !root.isRun && KeybindManager.page.reorderable
     dragLayer: dragEnabled ? root.dragLayer : null
     payload: ({
         "kind": "bind",
@@ -100,9 +100,9 @@ StyledContainer {
       })
     onTapped: {
       if (root.isRun)
-        KeybindManager.toggleRun(root.runKey);
+        KeybindManager.page.toggleRun(root.runKey);
       else
-        KeybindManager.selectBind(root.selected ? -1 : root.bindIndex, false);
+        KeybindManager.editor.selectBind(root.selected ? -1 : root.bindIndex, false);
     }
   }
 
@@ -118,7 +118,7 @@ StyledContainer {
       checked: !root.paused
       implicitHeight: Widget.smallHeight
       Layout.alignment: Qt.AlignVCenter
-      onClicked: KeybindManager.setPaused(root.indices, !root.paused)
+      onClicked: KeybindManager.editor.setPaused(root.indices, !root.paused)
     }
 
     // The combo, as keycaps
@@ -140,12 +140,12 @@ StyledContainer {
 
       KeyCap {
         visible: root.parts.key !== ""
-        text: root.isRun ? BindGroups.runKeys(KeybindManager.binds, root.indices) : KeybindManager.displayKey(root.parts.key)
+        text: root.isRun ? BindGroups.runKeys(KeybindManager.editor.binds, root.indices) : KeybindManager.displayKey(root.parts.key)
       }
 
       StyledText {
         visible: root.parts.key === ""
-        text: KeybindManager.recordingIndex === root.bindIndex ? I18n.tr("Press a combo…") : I18n.tr("No key")
+        text: KeybindManager.editor.recordingIndex === root.bindIndex ? I18n.tr("Press a combo…") : I18n.tr("No key")
         textColor: root.selected ? root.ink : Theme.warning
         textSize: Appearance.fontSizeBy(-1)
       }
@@ -217,7 +217,7 @@ StyledContainer {
       backgroundColor: "transparent"
       hoverColor: Theme.error
       opacity: root.hovered || root.selected ? 1 : 0
-      onClicked: KeybindManager.removeBind(root.bindIndex)
+      onClicked: KeybindManager.editor.removeBind(root.bindIndex)
     }
   }
 }

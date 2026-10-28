@@ -33,7 +33,7 @@ QtObject {
     },
     {
       "type": "Keybinds",
-      "dirty": KeybindManager.isDirty
+      "dirty": KeybindManager.editor.isDirty
     },
     {
       "type": "Monitors",
@@ -160,8 +160,8 @@ QtObject {
       SettingsManager.saveChanges();
     if (BarManager.isDirty)
       BarManager.saveChanges();
-    if (KeybindManager.isDirty)
-      KeybindManager.save();
+    if (KeybindManager.editor.isDirty)
+      KeybindManager.editor.save();
     if (OverlayManager.menus.isDirty)
       OverlayManager.menus.saveChanges();
     if (OverlayManager.isDirty)
@@ -180,8 +180,8 @@ QtObject {
       SettingsManager.resetChanges();
     if (BarManager.isDirty)
       BarManager.resetChanges();
-    if (KeybindManager.isDirty)
-      KeybindManager.reset();
+    if (KeybindManager.editor.isDirty)
+      KeybindManager.editor.reset();
     if (OverlayManager.menus.isDirty)
       OverlayManager.menus.resetChanges();
     if (OverlayManager.isDirty)

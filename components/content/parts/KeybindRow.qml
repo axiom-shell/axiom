@@ -24,9 +24,9 @@ Item {
   property real keyWidth: -1
   readonly property real keyImplicitWidth: keys.implicitWidth
 
-  readonly property bool compact: KeybindManager.refDensity === "compact"
-  readonly property bool glyphs: KeybindManager.refGlyphs
-  readonly property int bindIndex: root.bind.axiom ? KeybindManager.bindIndexFor(root.bind.ids) : -1
+  readonly property bool compact: KeybindManager.page.refDensity === "compact"
+  readonly property bool glyphs: KeybindManager.page.refGlyphs
+  readonly property int bindIndex: root.bind.axiom ? KeybindManager.editor.bindIndexFor(root.bind.ids) : -1
   readonly property bool editable: root.bindIndex >= 0
 
   signal editRequested(int bindIndex)

@@ -368,7 +368,7 @@ QtObject {
     const view = root.selectedView();
     if (!root.isSaved(view))
       return;
-    KeybindManager.addAndRecord({
+    KeybindManager.editor.addAndRecord({
       "action": "overlayPage",
       "argument": OverlayConfig.pageKey(view)
     });

@@ -6,7 +6,7 @@
 
 Screenshots and wf-recorder recordings, both in `ScreenshotManager`, with one picker surface for both. Slurp is not used; grim only takes the picker's frame under niri (below).
 
-Name clash: `KeybindManager.startRecording(index)` is the key recorder on the Keybinds page. It has nothing to do with screen recording.
+Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on the Keybinds page. It has nothing to do with screen recording.
 
 ### Entry points (screenshots)
 - The `screenshot` bind action, with an argument `region` / `window` / `screen`.

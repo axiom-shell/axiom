@@ -393,7 +393,7 @@ QtObject {
           "menu": m
         });
     });
-    (KeybindManager.isDirty ? KeybindManager.binds : KeybindsConfig.binds).forEach((bind, i) => {
+    (KeybindManager.editor.isDirty ? KeybindManager.editor.binds : KeybindsConfig.binds).forEach((bind, i) => {
       if (bind?.action === "edgeMenu" && bind.argument === id)
         out.push({
           "kind": "bind",
@@ -414,8 +414,8 @@ QtObject {
       BarManager.selectWidget(ref.zone, ref.index);
       ShellManager.followLink("BarEditor");
     } else if (ref.kind === "bind") {
-      KeybindManager.ensureLoaded();
-      KeybindManager.selectBind(ref.index);
+      KeybindManager.editor.ensureLoaded();
+      KeybindManager.editor.selectBind(ref.index);
       ShellManager.followLink("Keybinds");
     } else if (ref.kind === "submenu") {
       root.selectMenu(ref.menu);
@@ -453,7 +453,7 @@ QtObject {
     const menu = root.selectedMenu();
     if (!root.isSaved(menu))
       return;
-    KeybindManager.addAndRecord({
+    KeybindManager.editor.addAndRecord({
       "action": "edgeMenu",
       "argument": menu.id,
       "call": "toggle"

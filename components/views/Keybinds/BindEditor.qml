@@ -10,7 +10,7 @@ import qs.components.forms
 // of its left card: what the last merge did, the binds' issues, the strip
 // to undo the last removal or preset, then the binds by section
 // (BindSection). The selected bind is edited in the inspector
-// (BindInspector); edits wait in KeybindManager's draft until Save.
+// (BindInspector); edits wait in KeybindEditor's draft until Save.
 ColumnLayout {
   id: root
 
@@ -59,7 +59,7 @@ ColumnLayout {
     return entry.detail || String(entry.reason ?? "");
   }
 
-  Component.onDestruction: KeybindManager.stopRecording()
+  Component.onDestruction: KeybindManager.editor.stopRecording()
 
   // Carries rows within their section. Takes no room: it's only the
   // coordinate space, and draws the carried row's label.
@@ -141,11 +141,11 @@ ColumnLayout {
   }
 
   RowLayout {
-    visible: KeybindManager.issueCount > 0 || removeConflicts.visible || mergeButton.visible
+    visible: KeybindManager.editor.issueCount > 0 || removeConflicts.visible || mergeButton.visible
     Layout.fillWidth: true
 
     StyledText {
-      text: KeybindManager.issueCount > 0 ? I18n.tr("{0} with issues", KeybindManager.issueCount) : ""
+      text: KeybindManager.editor.issueCount > 0 ? I18n.tr("{0} with issues", KeybindManager.editor.issueCount) : ""
       textColor: Theme.warning
       textSize: Appearance.fontSizeBy(-1)
       elide: Text.ElideRight
@@ -154,11 +154,11 @@ ColumnLayout {
 
     StyledTextButton {
       id: removeConflicts
-      visible: !(KeybindManager.canMerge && KeybindManager.mergeableCount > 0) && KeybindManager.userConflicts.length > 0
+      visible: !(KeybindManager.editor.canMerge && KeybindManager.editor.mergeableCount > 0) && KeybindManager.editor.userConflicts.length > 0
       implicitHeight: Widget.height
       iconText: "delete_sweep"
-      text: I18n.tr("Remove {0} binds your compositor config also has", KeybindManager.userConflicts.length)
-      onClicked: KeybindManager.removeUserConflicts()
+      text: I18n.tr("Remove {0} binds your compositor config also has", KeybindManager.editor.userConflicts.length)
+      onClicked: KeybindManager.editor.removeUserConflicts()
     }
 
     // Managed mode merges them instead
@@ -171,18 +171,18 @@ ColumnLayout {
     // Managed mode: the user's binds move in instead
     StyledTextButton {
       id: mergeButton
-      visible: KeybindManager.canMerge && KeybindManager.mergeableCount > 0
+      visible: KeybindManager.editor.canMerge && KeybindManager.editor.mergeableCount > 0
       enabled: !CompositorConfigManager.merging
       implicitHeight: Widget.height
       iconText: "merge"
-      text: I18n.tr("Merge {0} binds from your compositor config", KeybindManager.mergeableCount)
-      onClicked: KeybindManager.mergeUserBinds()
+      text: I18n.tr("Merge {0} binds from your compositor config", KeybindManager.editor.mergeableCount)
+      onClicked: KeybindManager.editor.mergeUserBinds()
     }
   }
 
   // Undo for the last removal, preset or pause of several binds
   StyledContainer {
-    visible: KeybindManager.undoText !== ""
+    visible: KeybindManager.editor.undoText !== ""
     Layout.fillWidth: true
     implicitHeight: Widget.height + Widget.padding / 2
     backgroundColor: Theme.backgroundHighlight
@@ -199,7 +199,7 @@ ColumnLayout {
       }
 
       StyledText {
-        text: KeybindManager.undoText
+        text: KeybindManager.editor.undoText
         elide: Text.ElideRight
         Layout.fillWidth: true
       }
@@ -208,7 +208,7 @@ ColumnLayout {
         implicitHeight: Widget.height - Widget.px(4)
         iconText: "undo"
         text: I18n.tr("Undo")
-        onClicked: KeybindManager.undo()
+        onClicked: KeybindManager.editor.undo()
       }
 
       SquareIconButton {
@@ -216,28 +216,28 @@ ColumnLayout {
         iconText: "close"
         tooltipText: I18n.tr("Dismiss")
         backgroundColor: "transparent"
-        onClicked: KeybindManager.dismissUndo()
+        onClicked: KeybindManager.editor.dismissUndo()
       }
     }
   }
 
   StyledText {
-    visible: KeybindManager.binds.length === 0
+    visible: KeybindManager.editor.binds.length === 0
     text: I18n.tr("No binds yet. Add one, or start from a preset.")
     opacity: 0.6
     Layout.fillWidth: true
   }
 
   StyledText {
-    visible: KeybindManager.editQuery.trim() !== "" || KeybindManager.editFiltering
-    text: KeybindManager.visibleIndices.length > 0 ? I18n.tr("Showing {0} of {1}", KeybindManager.visibleIndices.length, KeybindManager.binds.length) : KeybindManager.editQuery.trim() !== "" ? I18n.tr("No binds match \"{0}\"", KeybindManager.editQuery.trim()) : I18n.tr("No keybinds match the filters")
+    visible: KeybindManager.page.editQuery.trim() !== "" || KeybindManager.page.editFiltering
+    text: KeybindManager.page.visibleIndices.length > 0 ? I18n.tr("Showing {0} of {1}", KeybindManager.page.visibleIndices.length, KeybindManager.editor.binds.length) : KeybindManager.page.editQuery.trim() !== "" ? I18n.tr("No binds match \"{0}\"", KeybindManager.page.editQuery.trim()) : I18n.tr("No keybinds match the filters")
     opacity: 0.6
     textSize: Appearance.fontSizeBy(-2)
     Layout.fillWidth: true
   }
 
   Repeater {
-    model: KeybindManager.editLayout
+    model: KeybindManager.page.editLayout
 
     delegate: BindSection {
       required property var modelData

@@ -14,7 +14,7 @@ import qs.components.content.parts
 ColumnLayout {
   id: root
 
-  readonly property var occupancy: KeyMap.occupancy(KeybindManager.binds, KeybindManager.userKeyCounts, KeybindManager.keyMapMods)
+  readonly property var occupancy: KeyMap.occupancy(KeybindManager.editor.binds, KeybindManager.userKeyCounts, KeybindManager.page.keyMapMods)
 
   spacing: Widget.spacing * 1.5
 
@@ -28,10 +28,10 @@ ColumnLayout {
   function pick(key) {
     const held = root.held(key);
     if (held.index >= 0)
-      KeybindManager.selectBind(held.index);
+      KeybindManager.editor.selectBind(held.index);
     else if (held.source === "free")
-      KeybindManager.addBind({
-        "key": KeyNames.join(KeybindManager.keyMapMods, key)
+      KeybindManager.editor.addBind({
+        "key": KeyNames.join(KeybindManager.page.keyMapMods, key)
       });
   }
 
@@ -64,8 +64,8 @@ ColumnLayout {
       delegate: SegmentButton {
         required property string modelData
         text: KeyNames.modifierLabel(modelData)
-        active: KeybindManager.keyMapMods.includes(modelData)
-        onClicked: KeybindManager.toggleKeyMapMod(modelData)
+        active: KeybindManager.page.keyMapMods.includes(modelData)
+        onClicked: KeybindManager.page.toggleKeyMapMod(modelData)
       }
     }
   }

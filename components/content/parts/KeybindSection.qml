@@ -15,7 +15,7 @@ StyledContainer {
   // A KeybindManager section, binds possibly filtered by a search
   required property var section
 
-  readonly property bool compact: KeybindManager.refDensity === "compact"
+  readonly property bool compact: KeybindManager.page.refDensity === "compact"
   // Headers and rows in order: { mods, row } (row null for a header)
   readonly property var items: [].concat(...BindRows.byModifiers(root.section.binds).map(group => (group.mods.length > 0 ? [
         {
@@ -94,8 +94,8 @@ StyledContainer {
         id: item
         required property var modelData
         required property int index
-        readonly property string groupKey: KeybindManager.refGroupKey(root.section, item.modelData.mods)
-        readonly property bool folded: KeybindManager.refFolded.includes(item.groupKey)
+        readonly property string groupKey: KeybindManager.page.refGroupKey(root.section, item.modelData.mods)
+        readonly property bool folded: KeybindManager.page.refFolded.includes(item.groupKey)
         readonly property bool grouped: item.modelData.mods.length > 0
         Layout.fillWidth: true
         visible: !item.modelData.row || !item.folded
@@ -130,7 +130,7 @@ StyledContainer {
 
             ModifierCap {
               mods: item.modelData.mods
-              glyphs: KeybindManager.refGlyphs
+              glyphs: KeybindManager.page.refGlyphs
               compact: true
               opacity: 0.8
             }
@@ -165,7 +165,7 @@ StyledContainer {
             anchors.fill: headerLine
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: KeybindManager.toggleRefFold(item.groupKey)
+            onClicked: KeybindManager.page.toggleRefFold(item.groupKey)
           }
         }
 

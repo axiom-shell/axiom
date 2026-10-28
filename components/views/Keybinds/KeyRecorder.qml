@@ -12,7 +12,7 @@ import qs.components.content.parts
 // A bind's key combo as keycaps; click to record a new one. While it
 // records, combos the compositor binds reach it instead of firing: its
 // window inhibits the compositor's shortcuts (niri's only way), and
-// KeybindManager holds Hyprland or sway in an empty submap or mode. A wheel
+// KeybindEditor holds Hyprland or sway in an empty submap or mode. A wheel
 // turn over it records a scroll (SUPER + mouse_down), and a modifier let go
 // with no other key between records a tap (Super_L) where the compositor
 // binds one. Esc cancels.
@@ -25,7 +25,7 @@ StyledContainer {
   // Shown while it holds no combo
   property string placeholder: I18n.tr("Click to record")
 
-  readonly property bool recording: KeybindManager.recordingIndex === root.bindIndex
+  readonly property bool recording: KeybindManager.editor.recordingIndex === root.bindIndex
   // Modifiers held so far while recording
   property var held: []
   // The modifier key pressed alone, as a tap ("Super_L"), until another
@@ -50,7 +50,7 @@ StyledContainer {
   }
   Component.onDestruction: {
     if (root.recording)
-      KeybindManager.stopRecording();
+      KeybindManager.editor.stopRecording();
   }
 
   RowLayout {
@@ -111,9 +111,9 @@ StyledContainer {
     cursorShape: Qt.PointingHandCursor
     onClicked: {
       if (root.recording)
-        KeybindManager.stopRecording();
+        KeybindManager.editor.stopRecording();
       else
-        KeybindManager.startRecording(root.bindIndex);
+        KeybindManager.editor.startRecording(root.bindIndex);
     }
     onWheel: wheel => {
       wheel.accepted = root.recording;
@@ -121,7 +121,7 @@ StyledContainer {
         return;
       const combo = KeyNames.fromWheel(wheel.angleDelta.x, wheel.angleDelta.y, wheel.modifiers, root.held);
       if (combo !== "")
-        KeybindManager.finishRecording(combo);
+        KeybindManager.editor.finishRecording(combo);
     }
   }
 
@@ -137,7 +137,7 @@ StyledContainer {
     id: catcher
     onActiveFocusChanged: {
       if (!activeFocus && root.recording)
-        KeybindManager.stopRecording();
+        KeybindManager.editor.stopRecording();
     }
 
     Keys.onPressed: event => {
@@ -145,12 +145,12 @@ StyledContainer {
       if (!root.recording || event.isAutoRepeat)
         return;
       if (event.key === Qt.Key_Escape && event.modifiers === Qt.NoModifier) {
-        KeybindManager.stopRecording();
+        KeybindManager.editor.stopRecording();
         return;
       }
       const combo = KeyNames.fromEvent(event.key, event.modifiers, event.nativeScanCode);
       if (combo !== "") {
-        KeybindManager.finishRecording(combo);
+        KeybindManager.editor.finishRecording(combo);
         return;
       }
       const mods = KeyNames.modifiersOf(event.modifiers);
@@ -163,7 +163,7 @@ StyledContainer {
       if (!root.recording || event.isAutoRepeat)
         return;
       if (root.tap !== "" && KeyNames.tapName(event.key, event.nativeScanCode) === root.tap) {
-        KeybindManager.finishRecording(root.tap);
+        KeybindManager.editor.finishRecording(root.tap);
         return;
       }
       const mods = KeyNames.modifiersOf(event.modifiers);

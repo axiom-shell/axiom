@@ -49,7 +49,7 @@
   - any variable it's kept in must be unused.
 
 ### Committing and removing
-1. The daemon saves the binds first (`Keybinds.binds`, through the store; refused while the config is read-only, `saveFailed`). The `compositor.bindsMerged` push lets KeybindManager add them to a dirty draft.
+1. The daemon saves the binds first (`Keybinds.binds`, through the store; refused while the config is read-only, `saveFailed`). The `compositor.bindsMerged` push lets `KeybindEditor` add them to a dirty draft.
 2. `remove` then deletes those calls, plus any `hl.unbind` of a moved key (it would unbind the moved bind too).
    - It first writes a dated `<file>.axiom-backup-<date>` copy, keeping the file's mode.
    - It leaves a file alone if the result doesn't parse (`luacheck`: `luac -p` where it's installed, else gopher-lua).
