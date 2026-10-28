@@ -65,6 +65,27 @@ TestCase {
     compare(outputs[0].focused, true);
     compare(outputs[0].activeWorkspaceId, 1);
     compare(NiriState.focusedOutput(loaded()), "winit");
+    compare(outputs[0].reserved.top, 0, "nothing reserved without axiom's layers");
+  }
+
+  // niri doesn't say what layers reserve: an output's is axiom's own
+  function test_outputs_reserved() {
+    const reserved = {
+      "top": 40,
+      "right": 0,
+      "bottom": 8,
+      "left": 0
+    };
+    const outputs = NiriState.outputs(fixture("outputs"), loaded(), bases, 10, {
+      "winit": reserved,
+      "gone": {
+        "top": 99,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    });
+    compare(outputs[0].reserved, reserved);
   }
 
   function test_windows() {
