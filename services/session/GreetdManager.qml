@@ -222,22 +222,18 @@ QtObject {
   }
 
   // The monitors and the bundle's input, on the greeter's compositor (sway,
-  // else Hyprland: greeter-session.sh)
+  // else Hyprland: greeter-session.sh). axiom sets up the compositor
+  // (Hyprland's Lua picks the monitor profile again on each hotplug);
+  // elsewhere the saved profile for what's connected at start is applied
   function _applyCompositor() {
     const config = ConfigManager.config;
-    if (CompositorManager.kind === "hyprland") {
-      // Its Lua picks the monitor profile again on each hotplug
-      const lua = HyprLua.greeterLua(config.Monitors.profiles, ConfigManager.configSchema.properties.Input, config.Input, name => CompositorLayer.hex(Theme.resolveColor(name)));
-      HyprlandManager.runLua(lua.join("\n"));
-    } else {
-      // The saved profile for what's connected at start
+    if (CompositorManager.kind !== "hyprland")
       CompositorManager.withOutputDetails(outputs => {
         const rules = MonitorLayout.savedRules(config.Monitors.profiles, outputs ?? []);
         if (rules.length > 0)
           CompositorManager.applyOutputs(rules, outputs);
       });
-    }
-    CompositorManager.applyInput(config.Input);
+    CompositorManager.setUpGreeter(config.Monitors.profiles, config.Input);
   }
 
   Component.onCompleted: {

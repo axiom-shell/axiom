@@ -5,7 +5,7 @@ import qs.services.core
 // Reader for the Input section: the keyboard, mouse, touchpad and cursor
 // axiom sets on the compositor, a part at a time ({ keyboard: { enabled,
 // layout, … }, mouse, touchpad, cursor }, each set only while `enabled`),
-// by the daemon (its config layer, and input.apply for the greeter's).
+// by the daemon (its config layer, and greeter.compositor for the greeter's).
 // Named InputConfig as the section is a whole object.
 QtObject {
   id: root

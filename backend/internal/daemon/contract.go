@@ -60,7 +60,7 @@ func (d *Daemon) methodSets() []func(*rpc.Registry) {
 // session's doesn't (greeterRegistry), which the contract lists too: the
 // shell calls them in greeter mode.
 func greeterOnlyMethods(reg *rpc.Registry, getenv func(string) string, schema func() any) {
-	inputHandlers(reg, getenv, schema)
+	greeterHandlers(reg, getenv, schema)
 }
 
 // BuildContract builds the daemon's registry without starting anything
