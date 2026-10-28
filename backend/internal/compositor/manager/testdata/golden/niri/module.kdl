@@ -343,6 +343,8 @@ input {
         accel-speed 0.0
     }
     touchpad {
+        tap
+        dwt
         scroll-factor 0.99
     }
 }

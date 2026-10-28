@@ -138,7 +138,8 @@ properties:
         x-compositor:
           hyprland: {key: input.left_handed, if: enabled}
           sway: {key: 'input type:pointer left_handed {}', value: enabled, if: enabled}
-        x-showIf: {enabled: true, /$compositor: {not: niri}}
+          niri: {key: input.mouse.left-handed, value: flag, if: enabled}
+        x-showIf: {enabled: true}
     x-group: Mouse & cursor
   touchpad:
     type: object
@@ -160,7 +161,8 @@ properties:
         x-compositor:
           hyprland: {key: input.touchpad.natural_scroll, if: enabled}
           sway: {key: 'input type:touchpad natural_scroll {}', value: enabled, if: enabled}
-        x-showIf: {enabled: true, /$compositor: {not: niri}}
+          niri: {key: input.touchpad.natural-scroll, value: flag, if: enabled}
+        x-showIf: {enabled: true}
       tapToClick:
         x-scope: personal
         x-greeter: true
@@ -170,7 +172,8 @@ properties:
         x-compositor:
           hyprland: {key: input.touchpad.tap_to_click, if: enabled}
           sway: {key: 'input type:touchpad tap {}', value: enabled, if: enabled}
-        x-showIf: {enabled: true, /$compositor: {not: niri}}
+          niri: {key: input.touchpad.tap, value: flag, if: enabled}
+        x-showIf: {enabled: true}
       disableWhileTyping:
         x-scope: personal
         x-greeter: true
@@ -180,7 +183,8 @@ properties:
         x-compositor:
           hyprland: {key: input.touchpad.disable_while_typing, if: enabled}
           sway: {key: 'input type:touchpad dwt {}', value: enabled, if: enabled}
-        x-showIf: {enabled: true, /$compositor: {not: niri}}
+          niri: {key: input.touchpad.dwt, value: flag, if: enabled}
+        x-showIf: {enabled: true}
       scrollFactor:
         x-greeter: true
         type: integer

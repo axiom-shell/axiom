@@ -179,7 +179,6 @@ niri:
 - [A hot reload while locked leaves niri's red screen](issues.md#a-hot-reload-while-locked-leaves-niris-red-screen)
 - [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)
 - [niri reports no position for a tiled window, nor other apps' layers](issues.md#niri-reports-no-position-for-a-tiled-window-nor-other-apps-layers)
-- [niri's hidden input flags fall back to niri's own defaults](issues.md#niris-hidden-input-flags-fall-back-to-niris-own-defaults)
 - [Shift+Enter on an emoji doesn't type it on niri](issues.md#shiftenter-on-an-emoji-doesnt-type-it-on-niri)
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 

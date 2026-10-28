@@ -254,7 +254,9 @@ output "Example Display 0001" {
     position x=0 y=0
 }
 input {
+    focus-follows-mouse
     workspace-auto-back-and-forth false
+    warp-mouse-to-focus
     keyboard {
         xkb {
             layout "us"
@@ -270,6 +272,8 @@ input {
         accel-speed 0.0
     }
     touchpad {
+        tap
+        dwt
         scroll-factor 0.99
     }
 }

@@ -482,14 +482,16 @@ func (t *Tables) NiriSurfaceBlurNodes(surfaces any) *jsonx.Array {
 // niriNode is a field's node path and argument as niri takes them, or
 // false to leave it out. A boolean is written both ways (`prefer-no-csd
 // false`, `animations { on }`), so axiom's off wins over the user's own
-// on. A flag with no off form (`tap`) has no niri spec: axiom couldn't
-// turn it off over the user's, so its setting is hidden on niri.
+// on. A flag with no off form (`tap`) is written bare when on and left
+// out when off (`flag`; `offFlag` the other way round).
 func niriNode(spec, value any) (string, *jsonx.Array, bool) {
 	key := str(get(spec, "key"))
 	if skip, ok := prop(spec, "skip"); ok && jsonx.StrictEqual(value, skip) {
 		return "", nil, false
 	}
 	switch str(get(spec, "value")) {
+	case "flag":
+		return key, jsonx.Arr(), truthy(value)
 	case "offFlag":
 		return key, jsonx.Arr(), !truthy(value)
 	case "onOff":

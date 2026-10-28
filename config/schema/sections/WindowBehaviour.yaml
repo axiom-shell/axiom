@@ -15,7 +15,7 @@ properties:
     x-compositor:
       hyprland: {key: input.follow_mouse, value: int, always: true}
       sway: {key: 'focus_follows_mouse {}', value: yesNo}
-    x-showIf: {/$compositor: {not: niri}}
+      niri: {key: input.focus-follows-mouse, value: flag}
   focusOnActivate:
     type: boolean
     title: Focus windows that ask for it
@@ -61,4 +61,4 @@ properties:
     x-compositor:
       hyprland: {key: cursor.no_warps}
       sway: {key: 'mouse_warping {}', map: {'true': none, 'false': container}}
-    x-showIf: {/$compositor: {not: niri}}
+      niri: {key: input.warp-mouse-to-focus, value: offFlag}
