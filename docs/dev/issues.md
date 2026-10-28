@@ -68,12 +68,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while reviewing row 12's third batch
 
-### An unreadable sway config file still binds axiom's keys silently
-- **Where:** `backend/internal/compositor/manager/sway.go` (`userBinds`), `backend/internal/compositor/userconf/sway.go` (`SwayText`)
-- **What:** #109 shows `UnreadBinds` as the manager's problem only when `userconf.SwayMain` finds no config (`w.unread = main == ""`). A main config that exists but can't be read, or an include that can't be read, is skipped silently by `SwayText` (`os.ReadFile` failing returns `""`), so axiom binds over the keys those files hold with no problem shown. The decision behind #109 ("an unreadable config is realistically axiom's own reader failing on one sway accepts") is about exactly this case, not a missing file. `SwayText` could report the paths it failed to read, and `userBinds` could set `unread` when any did.
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
-
 ### CI checks dependencies only when a PR touches Go
 - **Where:** `.github/workflows/checks.yml` (the `go` job's change filter)
 - **What:** Since checks run on pull requests only and the `go` job is skipped unless the binary's inputs changed (#107), govulncheck runs only on PRs that touch Go, with no scheduled run, so a newly published advisory for a dependency goes unseen until the next Go PR. (The amd64/arm64 cross-builds run at every merge now, in `.github/workflows/edge.yml`, so an arm64 break surfaces right after merge, not at release.) A weekly `schedule:` run of the `go` job would cover it.
