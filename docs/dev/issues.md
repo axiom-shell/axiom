@@ -224,6 +224,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-27, while verifying the Tailscale revamp
 
+### A compositor manager test misses its takeover prompt under load
+- **Where:** `backend/internal/compositor/manager/manager_test.go` (`TestAConfigGivenBackMeanwhileIsntWrittenOver`, `harness.eventually`)
+- **What:** CI on PR #184 (which touched no Go) failed with `manager_test.go:555: never: asked again` (state `"status":"pending"`, `"takeoverPending":false`). The wait covers a live change whose file sync comes 2 s later, inside `eventually`'s 3 s bound, so a loaded runner has 1 s of slack; the test runs `t.Parallel()` with the package. A flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or a sync delay the test sets shorter.
+- **Size:** trivial
+- **Found:** 2026-10-28, while merging the niri screenshot fix (CI on PR #184)
+
 ### A binds test fails with pthread_create failed in CI
 - **Where:** `backend/internal/compositor/binds/isolate_test.go` (`TestIsolatedExtractSurvivesAFileTakingAllMemory`)
 - **What:** CI on PR #124 (which touched no Go) failed with `isolate_test.go:115: got reading the binds: runtime/cgo: pthread_create failed: Resource temporarily unavailable: exit status 2`, then passed on a rerun. The test expects the child to be ended by its memory limit (an error naming `MiB`); this time the child couldn't start a thread (`EAGAIN`, likely the limit or a loaded runner's thread cap reached while the Go runtime was still starting threads) and failed with the cgo error instead. A flaky CI failure blocks an unrelated PR.
