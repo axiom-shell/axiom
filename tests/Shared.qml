@@ -3,8 +3,9 @@ import qs.components.methods
 
 // The cases the JS helpers and the axiom binary (Go) must agree on
 // (tests/fixtures/shared/, docs/dev/backend/README.md › Shared fixtures):
-// SchemaValidation, which the shell still validates with and fills defaults
-// from, against the binary's config pipeline. Each op calls one
+// SchemaValidation, which the shell still fills defaults from, against the
+// binary's config pipeline, and ConfigOps, the ops the shell's saves send
+// (config.set) and its pushes carry. Each op calls one
 // helper with JSON arguments and returns a JSON value; the expected output
 // is that value's exact bytes (canonical()). Tests call the helpers through
 // here: while scripts/dev/fixtures.py records, every call is logged as a
@@ -32,7 +33,8 @@ QtObject {
     "schema.resolveRef": args => SchemaValidation.resolveRef(args[0], args[1])
   })
 
-  // The compositor config helpers the axiom binary also ports
+  // ConfigOps (config.set's ops, decoded by the binary's daemon tests) and
+  // the compositor config helpers the axiom binary also ports
   // (backend/internal/compositor/render), still used by the shell itself,
   // by name (the rest went to the binary, their cases frozen there). A test calls one through
   // its proxy here (shared.calls.HyprLua.monitorsLua(…)), which records
@@ -41,6 +43,7 @@ QtObject {
       "BindActions": BindActions,
       "BindKeys": BindKeys,
       "CompositorLayer": CompositorLayer,
+      "ConfigOps": ConfigOps,
       "HyprLua": HyprLua,
       "KeyNames": KeyNames,
       "LayerStack": LayerStack,

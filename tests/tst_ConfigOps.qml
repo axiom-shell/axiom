@@ -2,8 +2,18 @@ import QtQuick
 import QtTest
 import qs.components.methods
 
+// The config's path ops (ConfigOps). diff and apply are called through
+// Shared, so their cases are shared fixtures: the daemon's tests decode
+// each diff as config.set's params, strictly, and check Go's Diff and
+// ApplyOps give the same (backend/internal/daemon/configops_shared_test.go)
 TestCase {
+  id: test
   name: "ConfigOps"
+
+  Shared {
+    id: shared
+    testCase: test
+  }
 
   // The shape config.set decodes (backend/internal/config/ops.go): "op",
   // a path of keys, "value" only on a set
@@ -100,10 +110,23 @@ TestCase {
           }
         ], "an object to a value"]];
     for (const [before, after, expected, message] of rows) {
-      const ops = ConfigOps.diff(before, after);
+      const ops = shared.calls.ConfigOps.diff(before, after);
       compare(ops, expected, message);
-      compare(ConfigOps.apply(before, ops), after, message + ": applied");
+      compare(shared.calls.ConfigOps.apply(before, ops), after, message + ": applied");
     }
+  }
+
+  // A save as ConfigManager.commit makes it: the live schema's defaults
+  // with a setting changed, a list replaced and a key gone
+  function test_diff_a_save() {
+    const before = SchemaValidation.applyDefaults({}, shared.schema);
+    const after = JSON.parse(JSON.stringify(before));
+    after.Appearance.theme.name = "nord";
+    after.Bars.items = [];
+    delete after.General.primaryMonitor;
+    const ops = shared.calls.ConfigOps.diff(before, after);
+    compare(ops.length, 3);
+    compare(shared.calls.ConfigOps.apply(before, ops), after);
   }
 
   function test_apply() {
@@ -120,7 +143,7 @@ TestCase {
       }
     };
     compare(ConfigOps.apply(config, []), config, "no ops: the config itself");
-    const out = ConfigOps.apply(config, [
+    const out = shared.calls.ConfigOps.apply(config, [
       {
         "op": "set",
         "path": ["Bars", "style", "gap"],
@@ -139,7 +162,7 @@ TestCase {
     verify(out.Bars.items === config.Bars.items, "siblings along the path are shared");
     compare(config.Bars.style.gap, 2, "the original is untouched");
     compare(config.General.x, 1, "the original is untouched");
-    compare(ConfigOps.apply(config, [
+    compare(shared.calls.ConfigOps.apply(config, [
       {
         "op": "set",
         "path": ["Bars",
@@ -150,7 +173,7 @@ TestCase {
         "value": {}
       }
     ]), null, "an {id} selector");
-    compare(ConfigOps.apply(config, [
+    compare(shared.calls.ConfigOps.apply(config, [
       {
         "op": "order",
         "path": ["Bars", "items"],
