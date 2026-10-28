@@ -479,26 +479,35 @@ func (t *Tables) NiriSurfaceBlurNodes(surfaces any) *jsonx.Array {
 
 // --- Input and options ---
 
-// niriArgs is a field's value as its niri node takes it, or false to leave
-// it out
-func niriArgs(spec, value any) (*jsonx.Array, bool) {
+// niriNode is a field's node path and argument as niri takes them, or
+// false to leave it out. A boolean is written both ways (`prefer-no-csd
+// false`, `animations { on }`), so axiom's off wins over the user's own
+// on. A flag with no off form (`tap`) has no niri spec: axiom couldn't
+// turn it off over the user's, so its setting is hidden on niri.
+func niriNode(spec, value any) (string, *jsonx.Array, bool) {
+	key := str(get(spec, "key"))
 	if skip, ok := prop(spec, "skip"); ok && jsonx.StrictEqual(value, skip) {
-		return nil, false
+		return "", nil, false
 	}
 	switch str(get(spec, "value")) {
-	case "flag":
-		return jsonx.Arr(), truthy(value)
 	case "offFlag":
-		return jsonx.Arr(), !truthy(value)
+		return key, jsonx.Arr(), !truthy(value)
+	case "onOff":
+		if truthy(value) {
+			return key + ".on", jsonx.Arr(), true
+		}
+		return key + ".off", jsonx.Arr(), true
+	case "not":
+		return key, jsonx.Arr(!truthy(value)), true
 	}
 	scaled := value
 	if s, ok := prop(spec, "scale"); ok {
 		scaled = round(num(value)*num(s)*1000) / 1000
 	}
 	if str(get(spec, "value")) == "float" {
-		return jsonx.Arr(real(scaled)), true
+		return key, jsonx.Arr(real(scaled)), true
 	}
-	return jsonx.Arr(scaled), true
+	return key, jsonx.Arr(scaled), true
 }
 
 // NiriOptionNodes is NiriConf.optionNodes: a section's fields with a niri
@@ -506,8 +515,8 @@ func niriArgs(spec, value any) (*jsonx.Array, bool) {
 func NiriOptionNodes(sectionSchema, values any, gated bool) *jsonx.Array {
 	nodes := jsonx.Arr()
 	for _, f := range AnnotatedFields(sectionSchema, values, "niri", gated) {
-		if args, ok := niriArgs(f.Spec, f.Value); ok {
-			KdlSetPath(nodes, str(get(f.Spec, "key")), args, nil)
+		if key, args, ok := niriNode(f.Spec, f.Value); ok {
+			KdlSetPath(nodes, key, args, nil)
 		}
 	}
 	return nodes

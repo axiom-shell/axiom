@@ -90,7 +90,7 @@ properties:
         x-compositor:
           hyprland: {key: input.numlock_by_default, if: enabled}
           sway: {key: 'input type:keyboard xkb_numlock {}', value: enabled, configOnly: true, if: enabled}
-          niri: {key: input.keyboard.numlock, value: flag, if: enabled}
+          niri: {key: input.keyboard.numlock, if: enabled}
         x-showIf: {enabled: true}
     x-group: Keyboard
   mouse:
@@ -138,8 +138,7 @@ properties:
         x-compositor:
           hyprland: {key: input.left_handed, if: enabled}
           sway: {key: 'input type:pointer left_handed {}', value: enabled, if: enabled}
-          niri: {key: input.mouse.left-handed, value: flag, if: enabled}
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, /$compositor: {not: niri}}
     x-group: Mouse & cursor
   touchpad:
     type: object
@@ -161,8 +160,7 @@ properties:
         x-compositor:
           hyprland: {key: input.touchpad.natural_scroll, if: enabled}
           sway: {key: 'input type:touchpad natural_scroll {}', value: enabled, if: enabled}
-          niri: {key: input.touchpad.natural-scroll, value: flag, if: enabled}
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, /$compositor: {not: niri}}
       tapToClick:
         x-scope: personal
         x-greeter: true
@@ -172,8 +170,7 @@ properties:
         x-compositor:
           hyprland: {key: input.touchpad.tap_to_click, if: enabled}
           sway: {key: 'input type:touchpad tap {}', value: enabled, if: enabled}
-          niri: {key: input.touchpad.tap, value: flag, if: enabled}
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, /$compositor: {not: niri}}
       disableWhileTyping:
         x-scope: personal
         x-greeter: true
@@ -183,8 +180,7 @@ properties:
         x-compositor:
           hyprland: {key: input.touchpad.disable_while_typing, if: enabled}
           sway: {key: 'input type:touchpad dwt {}', value: enabled, if: enabled}
-          niri: {key: input.touchpad.dwt, value: flag, if: enabled}
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, /$compositor: {not: niri}}
       scrollFactor:
         x-greeter: true
         type: integer

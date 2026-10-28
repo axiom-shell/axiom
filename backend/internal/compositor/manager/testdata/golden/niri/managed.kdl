@@ -254,8 +254,7 @@ output "Example Display 0001" {
     position x=0 y=0
 }
 input {
-    focus-follows-mouse
-    warp-mouse-to-focus
+    workspace-auto-back-and-forth false
     keyboard {
         xkb {
             layout "us"
@@ -264,21 +263,25 @@ input {
         }
         repeat-rate 50
         repeat-delay 300
-        numlock
+        numlock true
     }
     mouse {
         accel-profile "flat"
         accel-speed 0.0
     }
     touchpad {
-        tap
-        dwt
         scroll-factor 0.99
     }
 }
+cursor {
+    hide-when-typing false
+    xcursor-theme "axiom-cursor-Oxygen_White"
+    xcursor-size 24
+}
 layout {
     center-focused-column "never"
-    always-center-single-column
+    always-center-single-column true
+    empty-workspace-above-first false
     default-column-display "tabbed"
     default-column-width {
         proportion 0.5
@@ -309,7 +312,7 @@ layout {
         inactive-color "#ffffff92"
     }
 }
-prefer-no-csd
+prefer-no-csd true
 gestures {
     hot-corners {
         off
@@ -319,10 +322,17 @@ overview {
     zoom 0.5
 }
 animations {
+    on
     slowdown 0.6
 }
 hotkey-overlay {
-    skip-at-startup
+    skip-at-startup true
+}
+clipboard {
+    disable-primary false
+}
+xwayland-satellite {
+    on
 }
 window-rule {
     geometry-corner-radius 26
@@ -370,10 +380,6 @@ layer-rule {
     background-effect {
         xray false
     }
-}
-cursor {
-    xcursor-theme "axiom-cursor-Oxygen_White"
-    xcursor-size 24
 }
 environment {
     GDK_BACKEND "wayland,x11,*"

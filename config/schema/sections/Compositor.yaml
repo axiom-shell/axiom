@@ -475,13 +475,13 @@ properties:
         title: Center a lone column
         default: false
         description: A column alone on its workspace sits in the middle.
-        x-compositor: {niri: {key: layout.always-center-single-column, value: flag}}
+        x-compositor: {niri: {key: layout.always-center-single-column}}
       emptyWorkspaceAboveFirst:
         type: boolean
         title: Empty workspace above the first
         default: false
         description: Keeps an empty workspace above the first one, as well as below the last.
-        x-compositor: {niri: {key: layout.empty-workspace-above-first, value: flag}}
+        x-compositor: {niri: {key: layout.empty-workspace-above-first}}
       defaultColumnDisplay:
         x-scope: look
         type: string
@@ -495,7 +495,7 @@ properties:
         title: No title bars on windows
         default: false
         description: Asks apps to leave out their own title bar (with its close and maximize buttons) and window shadow. Apps that don't agree keep theirs; open ones change once restarted.
-        x-compositor: {niri: {key: prefer-no-csd, value: flag}}
+        x-compositor: {niri: {key: prefer-no-csd}}
       hotCorner:
         type: boolean
         title: Top-left corner opens niri's overview
@@ -517,7 +517,7 @@ properties:
         type: boolean
         title: Animations
         default: true
-        x-compositor: {niri: {key: animations.off, value: offFlag}}
+        x-compositor: {niri: {key: animations, value: onOff}}
       animationSlowdown:
         x-scope: look
         type: integer
@@ -535,17 +535,17 @@ properties:
         title: Skip the hotkey help at start
         default: true
         description: niri's list of important keys shows when it starts; axiom's binds aren't niri's.
-        x-compositor: {niri: {key: hotkey-overlay.skip-at-startup, value: flag}}
+        x-compositor: {niri: {key: hotkey-overlay.skip-at-startup}}
       primaryClipboard:
         type: boolean
         title: Middle-click paste
         default: true
         description: Selected text pastes with the middle mouse button.
-        x-compositor: {niri: {key: clipboard.disable-primary, value: offFlag}}
+        x-compositor: {niri: {key: clipboard.disable-primary, value: not}}
       xwayland:
         x-scope: machine
         type: boolean
         title: X11 apps (xwayland-satellite)
         default: true
         description: Runs X11 apps through xwayland-satellite, when it's installed.
-        x-compositor: {niri: {key: xwayland-satellite.off, value: offFlag}}
+        x-compositor: {niri: {key: xwayland-satellite, value: onOff}}
