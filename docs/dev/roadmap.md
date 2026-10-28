@@ -63,9 +63,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 9 | done | [Phase 12](#phase-12-memory-footprint) step 0 and the shell's THP opt-out ([memory](core/memory.md) › Transparent huge pages) | Small and the largest likely win; its numbers order the rest of the phase, and it touches nothing stage 5 does. |
 | 10 | done | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
 | 11 | done | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
-| 12 | in progress | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
-| 13 | next | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
-| 14 | later | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
+| 12 | done | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
+| 13 | in progress | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
+| 14 | next | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 15 | later | Backend stage 8: the last scripts (`pick_path.py`, `bug_info.sh`) | Small, with nothing waiting on it; after stage 7 so it doesn't collide with the config path, and before the audits so they cover it. |
 | 16 | later | [Phase 13](#phase-13-the-maintainers-notes): the maintainer's notes | Bugs and small features from the maintainer's own use; after the parity and log rows (some are compositor-specific, and those land there), before Phase 10 so the last feature and the audits are built on them. |
 | 17 | later | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
@@ -136,10 +136,7 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 ### Phase 1: integrity
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its entries are linked here and fixed there. So is everything that starts from a config.json that doesn't load (decided 2026-10-26): rare, and handled with the other config problems when stage 7 rewrites that path, not patched before it.
 
-Fixed in this phase: none left.
-
-A config.json that doesn't load (decided 2026-10-26):
-- [With no takeovers kept, a broken config.json can still release the compositor's config](issues.md#with-no-takeovers-kept-a-broken-configjson-can-still-release-the-compositors-config)
+Done: every entry is fixed, the last with backend stage 7; the hand-fix gap with no takeovers kept is [Deferred](#deferred).
 
 ### Phase 2: finish stage 2
 Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the hypridle autostart default (dropped, and from saved configs by the v78 step) and the D-Bus match rules' escaping.
@@ -363,3 +360,6 @@ Extremely rare paths, put after real gaps (2026-10-26):
 Deferred by the maintainer (2026-10-27):
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
 - [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
+
+Accepted by the maintainer (2026-10-28, #163): the hand-fix gap with no takeovers kept
+- [With no takeovers kept, a broken config.json can still release the compositor's config](issues.md#with-no-takeovers-kept-a-broken-configjson-can-still-release-the-compositors-config)
