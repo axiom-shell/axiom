@@ -95,7 +95,7 @@ jobs:
     steps:
       - name: Install tools
         run: |
-          pacman -Syu --noconfirm --needed git diffutils qt6-declarative quickshell lua python go
+          pacman -Syu --noconfirm --needed git diffutils qt6-declarative quickshell python go
           /usr/lib/qt6/bin/qmllint --version
 
       - name: Checkout

@@ -276,17 +276,19 @@ Singleton {
 
   // --- Session, input, cursor ---
 
-  // Sets the input options and cursor now (`input`: the Input section's
-  // values), for a compositor running no config of axiom's (the greeter's):
-  // axiom sends sway its input and seat commands and Hyprland the cursor
-  // (input.apply; Hyprland's greeter sends the rest in its own Lua,
-  // GreetdManager), and niri takes input from its config file alone
-  function applyInput(input) {
-    BackendManager.call("input.apply", {
+  // Sets up a compositor running no config of axiom's (the greeter's) from
+  // the bundle's monitor profiles and Input values (greeter.compositor):
+  // axiom sends Hyprland Lua keeping the monitors in the profile for what's
+  // connected and the x-greeter input, then the cursor; sway its input and
+  // seat commands (its monitors: applyOutputs); niri takes input from its
+  // config file alone
+  function setUpGreeter(profiles, input) {
+    BackendManager.call("greeter.compositor", {
+      "profiles": profiles,
       "input": input
     }, error => {
       if (error)
-        console.warn("[CompositorManager] setting the input:", error.message);
+        console.warn("[CompositorManager] setting up the greeter's compositor:", error.message);
     });
   }
 

@@ -101,26 +101,33 @@ func applyOutputs(ctx context.Context, h *ipc.Hypr, n *ipc.Niri, s *ipc.Sway, ru
 	return nil
 }
 
-// inputHandlers is input.apply, the greeter's axiom's alone: the Input
-// section's values (`input`) set now on a compositor loading no config of
-// axiom's (the session's input is the config layer's): sway's live input
-// and seat commands, Hyprland's cursor (its Lua sets the input:
-// GreetdManager); niri takes input from its config file alone. schema is
-// the config's.
-func inputHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any) {
+// greeterHandlers is greeter.compositor, the greeter's axiom's alone: the
+// greeter's compositor, loading no config of axiom's, set up from its
+// bundle (the config's Monitors profiles and Input values). Hyprland evals
+// Lua keeping the monitors in the profile for what's connected (picked
+// again on each hotplug) and the Input options marked x-greeter, then sets
+// the cursor; sway gets its live input and seat commands (its monitors the
+// shell applies through outputs.apply); niri takes input from its config
+// file alone. schema is the config's.
+func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any) {
 	type applyParams struct {
-		Input json.RawMessage `json:"input"`
+		Profiles json.RawMessage `json:"profiles"`
+		Input    json.RawMessage `json:"input"`
 	}
 	h, n, s := ipc.HyprFromEnv(getenv), ipc.NiriFromEnv(getenv), ipc.SwayFromEnv(getenv)
-	rpc.Handle(reg, "input.apply", func(ctx context.Context, c *rpc.Conn, p applyParams) (struct{}, error) {
+	rpc.Handle(reg, "greeter.compositor", func(ctx context.Context, c *rpc.Conn, p applyParams) (struct{}, error) {
 		if !fromShell(c) {
-			return struct{}{}, axerr.New(axerr.Refused, "only the shell sets the input")
+			return struct{}{}, axerr.New(axerr.Refused, "only the shell sets up the greeter's compositor")
+		}
+		profiles, err := jsonx.Unmarshal(orNull(p.Profiles))
+		if err != nil {
+			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "profiles")
 		}
 		values, err := jsonx.Unmarshal(orNull(p.Input))
 		if err != nil {
 			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "input")
 		}
-		return struct{}{}, applyInput(ctx, h, n != nil, s, render.Input(values, nil), inputSchemaOf(schema()))
+		return struct{}{}, applyGreeter(ctx, h, n != nil, s, profiles, values, inputSchemaOf(schema()))
 	})
 }
 
@@ -136,23 +143,33 @@ func inputSchemaOf(schema any) any {
 	return o.Value("Input")
 }
 
-// applyInput sends input (render.Input's) to the first of Hyprland, niri
-// and sway running: Hyprland gets the cursor theme by its own name, sway
-// every command a live sway takes
-func applyInput(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, input *jsonx.Object, inputSchema any) error {
+// applyGreeter sets up the first of Hyprland, niri and sway running from
+// the greeter's profiles and input values (greeter.compositor)
+func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, profiles, values, inputSchema any) error {
+	input := render.Input(values, nil)
 	cursor, _ := input.Value("cursor").(*jsonx.Object)
 	switch {
 	case h != nil:
-		if cursor == nil {
-			return nil
+		reply, err := h.Eval(ctx, strings.Join(render.GreeterLua(profiles, inputSchema, values), "\n"))
+		if err != nil {
+			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}
-		reply, err := h.Request(ctx, "setcursor "+jsonx.ToString(cursor.Value("theme"))+" "+jsonx.ToString(cursor.Value("size")))
+		// A refused Lua (the monitors, the input) still gets the cursor
+		var refused error
+		if reply != "" {
+			refused = axerr.New(axerr.Refused, "Hyprland refused the greeter's Lua: %s", reply)
+		}
+		if cursor == nil {
+			return refused
+		}
+		reply, err = h.Request(ctx, "setcursor "+jsonx.ToString(cursor.Value("theme"))+" "+jsonx.ToString(cursor.Value("size")))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}
 		if reply != "ok" {
 			return axerr.New(axerr.Refused, "Hyprland refused the cursor: %s", reply)
 		}
+		return refused
 	case niri:
 	case s != nil:
 		results, err := s.Run(ctx, strings.Join(render.SwayInputLines(input, inputSchema, true), "; "))
@@ -165,7 +182,7 @@ func applyInput(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, input 
 			}
 		}
 	default:
-		return axerr.New(axerr.Unavailable, "no compositor to set the input on")
+		return axerr.New(axerr.Unavailable, "no compositor to set up")
 	}
 	return nil
 }

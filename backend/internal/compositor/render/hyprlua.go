@@ -521,13 +521,14 @@ func InputLua(input, inputSchema any) []string {
 }
 
 // GreeterLua is HyprLua.greeterLua: the greeter's Hyprland, the monitor
-// layouts and the Input options marked x-greeter.
-func GreeterLua(profiles, inputSchema, input, resolveHex any) []string {
+// layouts and the Input options marked x-greeter (none a color, so no
+// resolveHex).
+func GreeterLua(profiles, inputSchema, input any) []string {
 	out := MonitorsLua(profiles)
 	if !truthy(input) {
 		return out
 	}
-	if table := ConfigTable(greeterSchema(inputSchema), input, resolveHex, jsonx.NewObject()); table.Len() > 0 {
+	if table := ConfigTable(greeterSchema(inputSchema), input, nil, jsonx.NewObject()); table.Len() > 0 {
 		out = append(out, hlConfig(table))
 	}
 	return out

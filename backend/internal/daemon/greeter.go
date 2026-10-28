@@ -30,7 +30,7 @@ type GreeterOptions struct {
 	// socket
 	Dir        string
 	SchemaHash string // the schema written for it, which its hello names
-	Schema     any    // that schema, parsed (input.apply reads its Input)
+	Schema     any    // that schema, parsed (greeter.compositor reads its Input)
 	Tree       string
 	Getenv     func(string) string
 	Output     io.Writer // quickshell's stdout and stderr

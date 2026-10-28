@@ -298,6 +298,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
+### Profile switching runs in the shell on sway and niri
+- **Where:** `services/compositor/MonitorManager.qml` (`_applySavedProfile`), `services/compositor/CompositorConfigManager.qml` (`_outputRules`), `services/session/GreetdManager.qml` (`_applyCompositor`), `backend/internal/daemon/compositorsocket.go` (`applyGreeter`)
+- **What:** Without `supports.outputProfiles` (sway, niri) the shell picks the saved monitor profile for what's connected (`MonitorLayout.savedRules`) and hands its rules to Go: `MonitorManager` on every hotplug, `CompositorConfigManager` as `compositor.inputs`' `outputRules` fact for the config files, and the greeter once at its start (so a monitor plugged in at the greeter is never matched, where Hyprland's Lua picks again on each hotplug). Maintainer decision (2026-10-28), verbatim: "go owns profile switching for every compositor". The daemon would read the outputs itself (sway's `GET_OUTPUTS`, niri's `Outputs` request), watch hotplugs (niri's event stream is already in Go; sway needs an `output` subscription), pick and apply the profile in the session and the greeter alike, and compute the output rules in `buildInputs`; `_applySavedProfile`, `_outputRules` and the greeter's branch then go. Who reacts to a hotplug changes, so it's designed first.
+- **Size:** needs a plan
+- **Found:** 2026-10-28, while reviewing row 12's batch (5) (backend stage 7)
+
+### The monitor profile picker exists twice
+- **Where:** `components/methods/MonitorLayout.qml` (`matchProfile`, `savedRules`), `backend/internal/compositor/render/hyprlua.go` (`MonitorsLua`)
+- **What:** The rule choosing the saved profile for the connected monitors (an exact match wins, else the one turning on most; ties to the earlier) is written twice: in QML for the session's sway and niri switching, the greeter and the Monitors page (`MonitorManager.liveProfile`, `_detect`), and as the Lua Go sends Hyprland (`render.MonitorsLua`), which picks on each hotplug. Kept in step only by `render/hyprlua_test.go`'s cases and comments naming each other. With profile switching in Go (the entry above), the Monitors page can ask the daemon which profile is live, leaving one Go copy (the Lua generated from it or checked against it).
+- **Size:** small
+- **Found:** 2026-10-28, while reviewing row 12's batch (5) (backend stage 7)
+
 ### The greeter on sway can't use a cursor theme's companion
 - **Where:** `services/session/GreetdManager.qml` (`_applyCompositor`), `services/ui/CursorThemeManager.qml`
 - **What:** On sway the greeter sets `seat * xcursor_theme` to the theme's own name: the `axiom-cursor-<theme>` companion a theme like Oxygen needs for the standard cursor names lives in the user's `$XDG_DATA_HOME/icons`, which greetd's user can't read. Such a theme shows the default theme's arrow at the login screen. Copying the companion into the bundle (as the wallpapers are) and pointing the greeter's `XCURSOR_PATH` at it would fix it.
@@ -347,7 +359,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
 ### SwayFX's corner radius reaches only windows opened later
-- **Where:** `components/methods/SwayConf.qml` (`fxLines`)
+- **Where:** `backend/internal/compositor/render/sway.go` (`SwayFxLines`)
 - **What:** `corner_radius` sent at runtime sets SwayFX 0.6's global only (its per-window reset runs only while the config loads), and it has no per-window command, so a changed rounding shows on new windows while open ones keep theirs until sway reloads its config. A fix would need a reload, which takes back the rest of the runtime look.
 - **Size:** small
 - **Found:** 2026-10-16, while fixing SwayFX's blur on unfocused windows
@@ -371,7 +383,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-16, while auditing the sway branch
 
 ### Detached sway keeps the floating modifier after the mouse binds go
-- **Where:** `backend/internal/compositor/manager/sway.go`, `components/methods/SwayConf.qml` (`unbindLines`, `floatingModifier`)
+- **Where:** `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/render/sway.go` (`SwayUnbindLines`, `SwayFloatingModifier`)
 - **What:** The runtime layer sends `floating_modifier` for the drag/resize binds but its unbind commands don't take it back, so removing them in detached mode leaves sway's floating modifier set until sway reloads. It also overrides a `floating_modifier` of the user's own config, which `render.RuntimeBinds` doesn't see as a taken key.
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch

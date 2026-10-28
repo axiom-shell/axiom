@@ -222,7 +222,7 @@ QtObject {
   // Lua sees, so it picks the same one): one listing exactly them wins (a
   // disabled output it lists may be missing), else the one that turns on
   // most of them; -1 when none turns any on. Ties go to the earlier profile.
-  // HyprLua.monitorsLua does the same in Lua.
+  // The greeter's Hyprland Lua does the same (render.MonitorsLua).
   function matchProfile(profiles, monitors) {
     let best = -1;
     let bestScore = 0;

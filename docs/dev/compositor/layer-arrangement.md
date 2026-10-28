@@ -1,6 +1,6 @@
 # How compositors arrange and stack layers
 
-> **Files:** `components/methods/LayerStack.qml`, `tests/tst_LayerStack.qml`, `components/methods/LayerArrange.qml`, `tests/tst_LayerArrange.qml`, `services/compositor/LayerManager.qml`, `components/hosts/popout/LayerOrigin.qml`, `components/methods/HyprLua.qml`
+> **Files:** `components/methods/LayerStack.qml`, `tests/tst_LayerStack.qml`, `components/methods/LayerArrange.qml`, `tests/tst_LayerArrange.qml`, `services/compositor/LayerManager.qml`, `components/hosts/popout/LayerOrigin.qml`
 > **Config:** none
 > **Related:** [The compositor](README.md), [Backend contract](contract.md), [Layer stacking](../generated/layers.md), [Bars and the border](../bar/layering-and-corners.md)
 

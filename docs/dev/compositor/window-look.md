@@ -1,6 +1,6 @@
 # Window look
 
-> **Files:** `config/WindowLookConfig.qml`, `config/BarsConfig.qml`, `services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `components/methods/CompositorLayer.qml`, `components/methods/HyprLua.qml`, `services/compositor/HyprlandManager.qml`, `components/views/Settings/TranslucencyStatus.qml`
+> **Files:** `config/WindowLookConfig.qml`, `config/BarsConfig.qml`, `services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `services/compositor/HyprlandManager.qml`, `components/views/Settings/TranslucencyStatus.qml`
 > **Config:** `WindowLook.*` (borders and their colors, `shape`, `matchShell`, `borderSize`, `rounding`, gaps, `blur`, `opacity`, `windowBlur`)
 > **Related:** [The compositor](README.md), [Contract](contract.md), [Config modes](config-modes.md), [Translucency and blur](../theming/translucency-blur.md), [Lockscreen](../features/lockscreen.md)
 

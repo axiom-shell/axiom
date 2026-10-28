@@ -12,7 +12,7 @@ How axiom reaches the compositor it runs under. Read this before anything that r
 - `CompositorManager.backend` is that compositor's backend singleton (`HyprlandManager`, `SwayManager`, `NiriManager`), or null. Only the one picked is created.
 
 ### The facade
-- **Everything outside the backends goes through `CompositorManager`**: the window, output and workspace lists, focus, workspace switching, the keyboard layout, the cursor, the gaps, the blur, logging out. `check_structure.py` refuses `HyprlandManager.` anywhere else, except in the Hyprland-only features (below), and `SwayManager.`, `SwayIpcManager.`, `swaymsg` and `Quickshell.I3` outside the `Sway*` services, and `NiriManager.`, `NIRI_SOCKET` and a `niri` process outside the `Niri*` services. A backend's text and state helpers (`HyprLua`, `HyprState`; `SwayConf`, `SwayState`; `NiriState`) are refused outside its own services and helpers too.
+- **Everything outside the backends goes through `CompositorManager`**: the window, output and workspace lists, focus, workspace switching, the keyboard layout, the cursor, the gaps, the blur, logging out. `check_structure.py` refuses `HyprlandManager.` anywhere else, and `SwayManager.`, `SwayIpcManager.`, `swaymsg` and `Quickshell.I3` outside the `Sway*` services, and `NiriManager.`, `NIRI_SOCKET` and a `niri` process outside the `Niri*` services. A backend's text and state helpers (`HyprState`, `SwayState`, `NiriState`) are refused outside its own services and helpers too.
 - The state comes in [neutral shapes](contract.md#shapes): plain snapshots rebuilt on events, the same from every backend. Never hand a compositor's own objects (`lastIpcObject`, `HyprlandMonitor`) past the backend.
 - Logic that doesn't depend on the compositor lives in `CompositorManager`, so each backend only has primitives:
   - the workspace layout: `goToWorkspace`, `stepWorkspace`, `nthWorkspace`, `workspaceBase`, `workspaceIds`, `stepStrip`
@@ -27,9 +27,8 @@ How axiom reaches the compositor it runs under. Read this before anything that r
 - **Gate a compositor-specific feature on a capability, not on `kind`.** Only code that is Hyprland's by nature checks `kind === "hyprland"` (the greeter's Hyprland branch).
 
 ### Hyprland-only features
-- These talk to `HyprlandManager` directly (`runLua`, `withBinds`), each gated on its capability. The Keybinds and Monitors pages don't: they go through `CompositorManager` (`withBinds`, `captureKeys`, `withOutputDetails`, `applyOutputs`).
-  - `GreetdManager`
-- Nothing here may write Hyprland's config unless `supports.configModes` is set: under another compositor, managed mode would otherwise rewrite `~/.config/hypr/hyprland.lua`.
+- None talks to `HyprlandManager` directly any more: the Keybinds and Monitors pages go through `CompositorManager` (`withBinds`, `captureKeys`, `withOutputDetails`, `applyOutputs`), and the greeter's Hyprland is set up by axiom (`CompositorManager.setUpGreeter` → `greeter.compositor`).
+- Nothing may write Hyprland's config unless `supports.configModes` is set: under another compositor, managed mode would otherwise rewrite `~/.config/hypr/hyprland.lua`.
 
 ### Hiding what a compositor can't do
 - **Settings.** An `x-showIf` key starting with `/$` reads the compositor, not the config ([schema-annotations](../core/schema-annotations.md)):

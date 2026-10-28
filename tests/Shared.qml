@@ -33,20 +33,17 @@ QtObject {
   })
 
   // ConfigOps (config.set's ops, decoded by the binary's daemon tests) and
-  // the compositor config helpers the axiom binary also ports
+  // the bind and layer helpers the axiom binary also ports
   // (backend/internal/compositor/render), still used by the shell itself,
   // by name (the rest went to the binary, their cases frozen there). A test calls one through
-  // its proxy here (shared.calls.HyprLua.monitorsLua(…)), which records
+  // its proxy here (shared.calls.BindKeys.keyId(…)), which records
   // the call; the helper's properties are read on the helper itself.
   readonly property var helpers: ({
       "BindActions": BindActions,
       "BindKeys": BindKeys,
-      "CompositorLayer": CompositorLayer,
       "ConfigOps": ConfigOps,
-      "HyprLua": HyprLua,
       "KeyNames": KeyNames,
-      "LayerStack": LayerStack,
-      "SwayConf": SwayConf
+      "LayerStack": LayerStack
     })
   readonly property var calls: _proxies()
 

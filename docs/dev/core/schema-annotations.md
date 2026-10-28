@@ -1,6 +1,6 @@
 # Schema and its annotations
 
-> **Files:** `config/schema/`, `config/json/config.schema.json`, `components/methods/SchemaLayout.qml`, `components/methods/SchemaValidation.qml`, `components/forms/SchemaField.qml`, `components/methods/HyprLua.qml`
+> **Files:** `config/schema/`, `config/json/config.schema.json`, `components/methods/SchemaLayout.qml`, `components/methods/SchemaValidation.qml`, `components/forms/SchemaField.qml`, `backend/internal/compositor/render/layer.go`
 > **Config:** every section
 > **Related:** [Settings page](settings-page.md), [Saved configs and sharing](saved-configs-sharing.md), [Config manager](config-manager.md), [Config readers](config-readers.md), [Hyprland config modes](../hyprland/config-modes.md)
 
@@ -105,16 +105,16 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`): a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).
 
 ### Compositor config (`x-compositor`)
-A setting a compositor's config takes says how, per compositor: `x-compositor: { hyprland: {…}, sway: {…}, niri: {…} }`. `render.CompositorFields` in the daemon (and `CompositorLayer.compositorFields` for the greeter's Hyprland Lua) collects a section's annotated fields (inside its objects too) with their spec. Each is written, under a gated part (the input), only while its `if` switch is on, else once changed from its default; a managed config's options every one (`render.AnnotatedFields`).
+A setting a compositor's config takes says how, per compositor: `x-compositor: { hyprland: {…}, sway: {…}, niri: {…} }`. `render.CompositorFields` in the daemon collects a section's annotated fields (inside its objects too) with their spec. Each is written, under a gated part (the input), only while its `if` switch is on, else once changed from its default; a managed config's options every one (`render.AnnotatedFields`).
 - Every compositor's spec takes:
   - `key`: Hyprland's option path (or a list of paths), sway's command with `{}` for the value (`"input type:keyboard repeat_rate {}"`), or niri's node path (`"input.keyboard.repeat-rate"`, its value the node's argument).
   - `scale`: a factor for a value stored scaled (0.01 for a percent, 0.001 for ms written as seconds).
   - `if`: a boolean beside it (a part's `enabled`): written, default or not, only when that is on.
-- Hyprland (`methods/HyprLua`, one value of a nested `hl.config({...})` table):
+- Hyprland (`render.ConfigTable`, one value of a nested `hl.config({...})` table):
   - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"emptyIsDefault"` (`"default"` → `""`), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).
   - `always: true`: written even when it's the schema default. Other fields are only written once changed, so Hyprland's own default (and the user's files) stay in charge otherwise.
-- sway (`methods/SwayConf`; [Sway backend](../compositor/sway-backend.md)):
-  - `value`: `"enabled"` (a boolean as `enabled`/`disabled`), `"yesNo"` (`yes`/`no`), `"enableDisable"` (`enable`/`disable`), `"raw"` (as it is, unquoted). Without one, the value is quoted as one argument (`SwayConf.quote`).
+- sway (`render.SwayOptionLines`; [Sway backend](../compositor/sway-backend.md)):
+  - `value`: `"enabled"` (a boolean as `enabled`/`disabled`), `"yesNo"` (`yes`/`no`), `"enableDisable"` (`enable`/`disable`), `"raw"` (as it is, unquoted). Without one, the value is quoted as one argument (`render.SwayQuote`).
   - `map`: `{ value: sway's word }` for an enum whose names differ from sway's; a value missing from it is left out.
   - `skip`: a value written as nothing (sway's own default stays), e.g. `"default"`.
   - `configOnly: true`: sway takes the command only from a config file (`xkb_numlock`): left out of what's sent at runtime.

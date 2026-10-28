@@ -1,6 +1,6 @@
 # Window switcher (Alt+Tab)
 
-> **Files:** `services/compositor/WindowSwitcherManager.qml`, `config/WindowSwitcherConfig.qml`, `components/methods/HyprLua.qml` (`switcherBindLua`, `switcherLua`, `switcherLeaveLua`), `components/methods/WindowOrder.qml`, `shell/WindowSwitcher.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
+> **Files:** `services/compositor/WindowSwitcherManager.qml`, `config/WindowSwitcherConfig.qml`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherBindLua`, `SwitcherLua`), `components/methods/WindowOrder.qml`, `shell/WindowSwitcher.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
 > **Config:** `WindowSwitcher.*` (`showDelay`, `scope`, `previews`)
 > **Related:** [Keybinds](keybinds.md), [Config modes](config-modes.md), [Workspaces](workspaces.md)
 
@@ -33,7 +33,7 @@ Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.
   - The event-driven `CompositorManager.activeWindowId` goes first, since the fetched window list lags behind a quick second switch.
   - The list is filtered by `DockLayout.inScope` for `scope`, limited to the focused monitor, and fixed until the switcher closes.
 - `commit()` focuses the selection through `CompositorManager.focusWindow`. It does nothing when the selection is the window focused at open.
-- A tile click `pick`s, and leaves through `HyprLua.switcherLeaveLua` (`axiom_switcher_leave()`). The listener stops and `HyprLua.leaveSubmap` resets, the same way the key recorder's submap is left ([Keybinds](keybinds.md#recording-a-key)).
+- A tile click `pick`s, and leaves through `HyprlandManager.leaveSwitcher` (`axiom_switcher_leave()`). The listener stops and the submap resets, the same way the key recorder's submap is left ([Keybinds](keybinds.md#recording-a-key)).
 - A commit while closed does nothing, so a late Return or release can't refocus the last pick.
 
 ### Drawing

@@ -3,11 +3,13 @@
 // window look and input, binds, outputs and the files the config writers
 // write (docs/dev/compositor/config-modes.md). Pure: no I/O.
 //
-// It's a port of the shell's JS helpers (components/methods/HyprLua,
-// HyprConfigLua, SwayConf, NiriConf, CompositorLayer, BindKeys, BindActions'
-// and KeyNames' functions), function for function and on the same JSON
-// values (jsonx), checked byte for byte against the calls their tests make
-// (the shared fixtures' <Helper>.<function> suites). What the JS reads from
+// It began as a port of the shell's JS helpers (HyprLua, HyprConfigLua,
+// SwayConf, NiriConf and CompositorLayer, gone from the shell now and
+// named in the doc comments as <Helper>.<function>; BindKeys, BindActions'
+// and KeyNames' functions, still the shell's), function for function and
+// on the same JSON values (jsonx), checked byte for byte against the calls
+// their tests made (the frozen cases) and make (the shared fixtures'
+// <Helper>.<function> suites). What the JS reads from
 // LayerStack's tables and the bind actions' (actions.JSON, handed to
 // BindActions) comes in as Tables. Values follow the JS: a missing value
 // is nil, as null is.

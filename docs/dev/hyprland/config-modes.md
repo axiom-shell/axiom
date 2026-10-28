@@ -1,6 +1,6 @@
 # Hyprland config writer
 
-> **Files:** `backend/internal/compositor/manager/hypr.go`, `config/HyprlandConfig.qml`, `backend/internal/compositor/render/hyprconfig.go`, `components/methods/HyprLua.qml`, `components/methods/BindKeys.qml`, `config/InputConfig.qml`
+> **Files:** `backend/internal/compositor/manager/hypr.go`, `config/HyprlandConfig.qml`, `backend/internal/compositor/render/hyprconfig.go`, `backend/internal/compositor/render/hyprlua.go`, `components/methods/BindKeys.qml`, `config/InputConfig.qml`
 > **Config:** `Compositor.mode`, `Compositor.requiredSettings`, `Input.*`, `Session.*`, `Keybinds.binds`, `Compositor.hyprland`, `WindowLook`, `Monitors.items`, `Workspaces.strips`
 > **Related:** [Config modes](../compositor/config-modes.md), [Managed takeover](managed-takeover.md), [Window look](../compositor/window-look.md), [Bind merge](bind-merge.md), [Keybinds](keybinds.md), [Monitors](monitors.md), [Workspace strips](workspace-strips.md)
 
@@ -45,8 +45,8 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
 - An `AXIOM_INCLUDED` global tells axiom the file is loaded.
 - `checkLoaded` evals a check of it; when it isn't set, the runtime layer stands in and `problem` says why.
 
-### Managed options (`HyprLua`)
-- The managed options (`Compositor.hyprland`) become one `hl.config({...})` through `components/methods/HyprLua` (pure), driven by each field's `x-compositor.hyprland` spec (`key`, `scale`, `value`, `if`, `always`: [Schema annotations](../core/schema-annotations.md) › Compositor config).
+### Managed options (`render.ConfigTable`)
+- The managed options (`Compositor.hyprland`) become one `hl.config({...})` through `render.ConfigTable` (pure), driven by each field's `x-compositor.hyprland` spec (`key`, `scale`, `value`, `if`, `always`: [Schema annotations](../core/schema-annotations.md) › Compositor config).
 - A field is written only when it differs from its default (Hyprland's own), so a new option is just a schema entry.
 - Its cards come from `x-group`/`x-order`, and it shows only while Hyprland is the compositor and the mode is managed (`x-showIf`).
 - Not mapped through annotations:
@@ -64,7 +64,7 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
 ### Input
 - `Input` (reader `InputConfig`) is in the layer in every mode, as `M.input()` after `M.look()`: one `hl.config` of the parts that are on (`render.Input`, `render.InputLua`). Its fields carry `x-hypr` paths gated by `x-hyprIf` on their part, so a part on writes all its fields, defaults too.
 - Like the look, it is evaluated at runtime as it changes and after every reload, and a part turned off reloads Hyprland's config ([Config modes](../compositor/config-modes.md) › Live parts).
-- The cursor theme is set with `setcursor` (the daemon's config layer; the greeter's through `input.apply`).
+- The cursor theme is set with `setcursor` (the daemon's config layer; the greeter's through `greeter.compositor`).
 - Before config version 59 these were `managed` options (the part switches were turned on there).
 
 ### Service creation

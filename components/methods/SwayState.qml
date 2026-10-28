@@ -3,9 +3,25 @@ import QtQuick
 
 // Sway's IPC replies (SwayManager) as the shapes the rest of the shell reads,
 // which don't depend on the compositor (docs/dev/compositor/contract.md), as
-// HyprState is for Hyprland.
+// HyprState is for Hyprland; and quoting the commands SwayManager sends back.
 QtObject {
   id: root
+
+  // A string as one argument of a sway command, arriving as it is from a
+  // config file and at runtime alike: bare when it's plain word
+  // characters, else each run without a `"` in double quotes and each `"`
+  // in single ones. Sway takes unescaped quotes out but keeps a backslash
+  // before one, so escaping a quote can't work. (The daemon's copy:
+  // render.SwayQuote.)
+  function quote(text) {
+    const value = String(text ?? "");
+    if (/^[A-Za-z0-9_.:+\-\/@~=*]+$/.test(value))
+      return value;
+    return value.split("\"").map(part => part === "" ? "" : `"${part}"`).join("'\"'") || "\"\"";
+  }
+
+  // Sway's output names for Wayland's transforms 0-7
+  readonly property var _transforms: ["normal", "90", "180", "270", "flipped", "flipped-90", "flipped-180", "flipped-270"]
 
   // What one get_tree reply holds: { windows (the contract's windows, without
   // focusRank), counts ({ [workspace num]: windows on it }), workspaceRects
@@ -281,7 +297,7 @@ QtObject {
         "x": o.rect?.x ?? 0,
         "y": o.rect?.y ?? 0,
         "scale": disabled ? 1 : (o.scale > 0 ? o.scale : 1),
-        "transform": Math.max(0, SwayConf.transforms.indexOf(o.transform ?? "normal")),
+        "transform": Math.max(0, root._transforms.indexOf(o.transform ?? "normal")),
         "disabled": disabled,
         "mirrorOf": "none",
         "vrr": o.adaptive_sync_status === "enabled",

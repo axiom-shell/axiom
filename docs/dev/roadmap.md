@@ -168,7 +168,7 @@ Resolves:
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.
 - Done: **The `execDetached` quick wins.** The files on the allowlist only for `Quickshell.execDetached` (`GreetdManager`, `LockManager`, `LauncherManager`, `CompositorConfigManager`) switched to `CommandManager.runDetached`, which now also takes an argv, shrinking the list early.
 
-Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`.
+Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`. Both done: `SchemaValidation` keeps only what previews use, and the four renderers are gone.
 
 Resolved by a stage:
 - [A save axiom refuses leaves its editor clean, showing the refused value](issues.md#a-save-axiom-refuses-leaves-its-editor-clean-showing-the-refused-value) (stage 7)
@@ -203,6 +203,8 @@ niri:
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
+- [Profile switching runs in the shell on sway and niri](issues.md#profile-switching-runs-in-the-shell-on-sway-and-niri)
+- [The monitor profile picker exists twice](issues.md#the-monitor-profile-picker-exists-twice) (after the entry above)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [A fullscreen window re-sends the whole live layer](issues.md#a-fullscreen-window-re-sends-the-whole-live-layer)
 - [A fullscreen window on one screen pauses the blur on every screen](issues.md#a-fullscreen-window-on-one-screen-pauses-the-blur-on-every-screen)

@@ -3,7 +3,7 @@ import QtQuick
 
 // Binds against what the compositor reports (CompositorManager.withBinds
 // entries: { modmask, key, keycode, description, submap }, the modifiers as
-// X11 mask bits, as Hyprland's `hyprctl binds -j` lists them and SwayConf
+// X11 mask bits, as Hyprland's `hyprctl binds -j` lists them and the daemon
 // reads a sway config's): a key's id, which of axiom's binds a runtime
 // layer applies and which it skips because the user's config already binds
 // that key, and how many binds on each key are the user's own.

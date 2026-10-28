@@ -1,6 +1,6 @@
 # Monitors (profiles and the Monitors page)
 
-> **Files:** `services/compositor/MonitorManager.qml`, `config/MonitorsConfig.qml`, `components/views/Monitors/Monitors.qml`, `components/views/Monitors/` (`MonitorCanvas`, `MonitorInspector`), `components/methods/MonitorLayout.qml`, `components/methods/HyprLua.qml`, `shell/MonitorPrompt.qml`, `components/surfaces/monitors/MonitorPromptWindow.qml`
+> **Files:** `services/compositor/MonitorManager.qml`, `config/MonitorsConfig.qml`, `components/views/Monitors/Monitors.qml`, `components/views/Monitors/` (`MonitorCanvas`, `MonitorInspector`), `components/methods/MonitorLayout.qml`, `backend/internal/compositor/render/hyprlua.go`, `shell/MonitorPrompt.qml`, `components/surfaces/monitors/MonitorPromptWindow.qml`
 > **Config:** `Monitors.items`, `General.primaryMonitor`
 > **Related:** [Config modes](config-modes.md), [Onboarding](../features/onboarding.md) (`useWholeScale`), [Shell targeting](../core/shell-manager-targeting.md)
 
@@ -53,7 +53,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - A profile for monitors that aren't connected only saves.
 
 ### How profiles reach Hyprland
-- `HyprLua.monitorsLua` produces the same Lua in every mode: `AXIOM_MONITOR_PROFILES` plus `axiom_apply_monitors()`.
+- `render.MonitorsLua` produces the same Lua in every mode (and for the greeter's Hyprland, `greeter.compositor`): `AXIOM_MONITOR_PROFILES` plus `axiom_apply_monitors()`.
 - `axiom_apply_monitors()` picks a profile the way `MonitorLayout.matchProfile` does:
   - an exact set of monitors, where a disabled rule's output may be missing (`hl.get_monitors()` doesn't list it)
   - else the profile that turns the most monitors on
@@ -69,5 +69,5 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 
 ### Testing
 - Never Keep a layout while testing. (Rule: AGENTS.md › Never, while testing.)
-- Test the profile picker through `tests/tst_HyprLua` (`monitors.run.lua`).
+- Test the profile picker through `render`'s `TestMonitorsLuaPicks` (Go, the Lua run by gopher-lua).
 - Use only harmless evals: re-applying the current settings, or moving a lone monitor's origin and back.

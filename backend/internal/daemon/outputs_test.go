@@ -14,7 +14,6 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
-	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
@@ -125,9 +124,10 @@ func TestApplyOutputs(t *testing.T) {
 	}
 }
 
-// The greeter's input (input.apply): sway's live commands, Hyprland's
-// cursor by the theme's own name, nothing on niri
-func TestApplyInput(t *testing.T) {
+// The greeter's compositor (greeter.compositor): Hyprland's Lua for the
+// profiles and the x-greeter input, then its cursor by the theme's own
+// name; sway's live input commands; nothing on niri
+func TestApplyGreeter(t *testing.T) {
 	t.Parallel()
 	dir, err := os.MkdirTemp("", "axin")
 	if err != nil {
@@ -144,18 +144,52 @@ func TestApplyInput(t *testing.T) {
 	inputSchema := inputSchemaOf(schema)
 	values, _ := jsonx.Unmarshal([]byte(`{"keyboard": {"enabled": true, "layout": "us,de", "variant": "", "options": "", "repeatRate": 25, "repeatDelay": 600, "numlock": true},
 		"mouse": {"enabled": false}, "touchpad": {"enabled": false}, "cursor": {"enabled": true, "theme": "Bibata Modern", "size": 24}}`))
-	input := render.Input(values, nil)
+	profiles, _ := jsonx.Unmarshal([]byte(`[{"name": "Desk", "outputs": [{"output": "DP-1", "mode": "2560x1440@144", "x": 0, "y": 0, "scale": 1}]}]`))
 
 	hypr := serveOnce(t, filepath.Join(dir, ".socket.sock"), func(c net.Conn) string {
 		buf := make([]byte, 1<<16)
 		n, _ := c.Read(buf)
 		return string(buf[:n])
 	}, func(c net.Conn, _ string) { io.WriteString(c, "ok") })
-	if err := applyInput(ctx, &ipc.Hypr{Dir: dir}, false, nil, input, inputSchema); err != nil {
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: dir}, false, nil, profiles, values, inputSchema); err != nil {
 		t.Fatal(err)
+	}
+	lua := <-hypr
+	for _, want := range []string{"eval if AXIOM_MONITOR_SUBS then", `{ output = "DP-1", mode = "2560x1440@144", position = "0x0", scale = 1 },`,
+		"axiom_apply_monitors()\nhl.config({", `kb_layout = "us,de"`, "numlock_by_default = true"} {
+		if !strings.Contains(lua, want) {
+			t.Errorf("hyprland's Lua has no %q:\n%s", want, lua)
+		}
+	}
+	if strings.Contains(lua, "sensitivity") {
+		t.Errorf("hyprland's Lua sets the mouse, which is off:\n%s", lua)
 	}
 	if got := <-hypr; got != "setcursor Bibata Modern 24" {
 		t.Errorf("hyprland: %q", got)
+	}
+
+	// A refused Lua comes back refused, the cursor set all the same
+	refusing := filepath.Join(dir, "refusing")
+	if err := os.Mkdir(refusing, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	asked := serveOnce(t, filepath.Join(refusing, ".socket.sock"), func(c net.Conn) string {
+		buf := make([]byte, 1<<16)
+		n, _ := c.Read(buf)
+		return string(buf[:n])
+	}, func(c net.Conn, got string) {
+		if strings.HasPrefix(got, "eval ") {
+			io.WriteString(c, "error: bad monitor")
+		} else {
+			io.WriteString(c, "ok")
+		}
+	})
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: refusing}, false, nil, profiles, values, inputSchema); axerr.KindOf(err) != axerr.Refused {
+		t.Errorf("refused Lua: %v", err)
+	}
+	<-asked
+	if got := <-asked; got != "setcursor Bibata Modern 24" {
+		t.Errorf("hyprland after a refused Lua: %q", got)
 	}
 
 	swayPath := filepath.Join(dir, "sway.sock")
@@ -172,7 +206,7 @@ func TestApplyInput(t *testing.T) {
 		binary.LittleEndian.PutUint32(head[6:], uint32(len(body)))
 		c.Write(append(head, body...))
 	})
-	if err := applyInput(ctx, nil, false, &ipc.Sway{Path: swayPath}, input, inputSchema); err != nil {
+	if err := applyGreeter(ctx, nil, false, &ipc.Sway{Path: swayPath}, nil, values, inputSchema); err != nil {
 		t.Fatal(err)
 	}
 	// numlock only from a config file; the cursor last
@@ -180,10 +214,10 @@ func TestApplyInput(t *testing.T) {
 		t.Errorf("sway: %q", got)
 	}
 
-	if err := applyInput(ctx, nil, true, nil, input, inputSchema); err != nil {
+	if err := applyGreeter(ctx, nil, true, nil, nil, values, inputSchema); err != nil {
 		t.Errorf("niri: %v", err)
 	}
-	if err := applyInput(ctx, nil, false, nil, input, inputSchema); axerr.KindOf(err) != axerr.Unavailable {
+	if err := applyGreeter(ctx, nil, false, nil, nil, values, inputSchema); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("no compositor: %v", err)
 	}
 }
