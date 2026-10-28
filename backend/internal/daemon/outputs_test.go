@@ -168,6 +168,30 @@ func TestApplyGreeter(t *testing.T) {
 		t.Errorf("hyprland: %q", got)
 	}
 
+	// A refused Lua comes back refused, the cursor set all the same
+	refusing := filepath.Join(dir, "refusing")
+	if err := os.Mkdir(refusing, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	asked := serveOnce(t, filepath.Join(refusing, ".socket.sock"), func(c net.Conn) string {
+		buf := make([]byte, 1<<16)
+		n, _ := c.Read(buf)
+		return string(buf[:n])
+	}, func(c net.Conn, got string) {
+		if strings.HasPrefix(got, "eval ") {
+			io.WriteString(c, "error: bad monitor")
+		} else {
+			io.WriteString(c, "ok")
+		}
+	})
+	if err := applyGreeter(ctx, &ipc.Hypr{Dir: refusing}, false, nil, profiles, values, inputSchema); axerr.KindOf(err) != axerr.Refused {
+		t.Errorf("refused Lua: %v", err)
+	}
+	<-asked
+	if got := <-asked; got != "setcursor Bibata Modern 24" {
+		t.Errorf("hyprland after a refused Lua: %q", got)
+	}
+
 	swayPath := filepath.Join(dir, "sway.sock")
 	sway := serveOnce(t, swayPath, func(c net.Conn) string {
 		head := make([]byte, 14)

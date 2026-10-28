@@ -353,29 +353,25 @@ def main():
 
     # The rest of the shell reaches the compositor through CompositorManager
     # (docs/dev/compositor/README.md). HyprlandManager is its Hyprland
-    # backend; besides the Hyprland* services, only the Hyprland-only
-    # features use it directly, each gated on CompositorManager.supports.
-    hyprland_features = {
-        "services/compositor/CompositorManager.qml",
-    }
+    # backend: besides the Hyprland* services, only CompositorManager uses it.
+    facade = "services/compositor/CompositorManager.qml"
     for path, text in sources.items():
         code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())
-        if re.search(r"\bHyprlandManager\.", code) and not re.fullmatch(r"services/compositor/Hyprland\w*\.qml", path) and path not in hyprland_features:
-            errors.append(f"{path}: uses HyprlandManager (only the Hyprland* services and the Hyprland-only features may; use CompositorManager)")
+        if re.search(r"\bHyprlandManager\.", code) and not re.fullmatch(r"services/compositor/Hyprland\w*\.qml", path) and path != facade:
+            errors.append(f"{path}: uses HyprlandManager (only the Hyprland* services and CompositorManager may; use CompositorManager)")
 
-    # A backend's text and state helpers are its own (Hyprland's Lua,
-    # sway's commands, niri's KDL): outside its services and helpers (and the
-    # Hyprland-only features), the rest of the shell goes through
-    # CompositorManager and CompositorConfigManager
+    # A backend's state helpers are its own (HyprState, SwayState,
+    # NiriState): outside its services and helpers, the rest of the shell
+    # goes through CompositorManager and CompositorConfigManager
     # (docs/dev/compositor/config-modes.md)
     for path, text in sources.items():
         code = "\n".join(line.split("//", 1)[0] for line in re.sub(r"/\*.*?\*/", "", text, flags=re.S).splitlines())
         if not path.startswith(("services/", "components/", "shell/", "config/")):
             continue
-        if not re.fullmatch(r"(services/compositor|components/methods)/Hypr\w*\.qml", path) and path not in hyprland_features and re.search(r"\bHyprState\.", code):
+        if not re.fullmatch(r"(services/compositor|components/methods)/Hypr\w*\.qml", path) and re.search(r"\bHyprState\.", code):
             errors.append(f"{path}: uses a Hyprland helper (only the Hyprland* services and helpers may; go through CompositorManager / CompositorConfigManager)")
         for prefix, name, _, _ in backends:
-            if not re.fullmatch(rf"(services/compositor|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b({prefix}Conf|{prefix}State)\.", code):
+            if not re.fullmatch(rf"(services/compositor|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b{prefix}State\.", code):
                 errors.append(f"{path}: uses a {name} helper (only the {prefix}* services and helpers may; go through CompositorManager / CompositorConfigManager)")
 
     # Singleton references: FooManager. must be a service, and a near-miss

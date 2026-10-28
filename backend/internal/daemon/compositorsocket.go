@@ -154,11 +154,13 @@ func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, prof
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}
+		// A refused Lua (the monitors, the input) still gets the cursor
+		var refused error
 		if reply != "" {
-			return axerr.New(axerr.Refused, "Hyprland refused the greeter's Lua: %s", reply)
+			refused = axerr.New(axerr.Refused, "Hyprland refused the greeter's Lua: %s", reply)
 		}
 		if cursor == nil {
-			return nil
+			return refused
 		}
 		reply, err = h.Request(ctx, "setcursor "+jsonx.ToString(cursor.Value("theme"))+" "+jsonx.ToString(cursor.Value("size")))
 		if err != nil {
@@ -167,6 +169,7 @@ func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, prof
 		if reply != "ok" {
 			return axerr.New(axerr.Refused, "Hyprland refused the cursor: %s", reply)
 		}
+		return refused
 	case niri:
 	case s != nil:
 		results, err := s.Run(ctx, strings.Join(render.SwayInputLines(input, inputSchema, true), "; "))
