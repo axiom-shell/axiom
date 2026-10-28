@@ -3176,6 +3176,8 @@
     "Special workspaces": "",
     "A workspace of their own": "",
     "Sway's own options. All but special workspaces are written while axiom manages its config; anything else goes in ~/.config/sway/user/.": "",
-    "Couldn't read grim's picture of the screen.": ""
+    "Couldn't read grim's picture of the screen.": "",
+    "Tab indicator": "",
+    "The bar beside a tabbed column, a segment per tab. Shows for a lone window too.": ""
   }
 }

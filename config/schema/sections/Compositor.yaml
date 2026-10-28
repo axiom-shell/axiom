@@ -490,6 +490,13 @@ properties:
         x-enumLabels: {normal: Windows stacked, tabbed: Windows as tabs}
         default: normal
         x-compositor: {niri: {key: layout.default-column-display}}
+      tabIndicator:
+        x-scope: look
+        type: boolean
+        title: Tab indicator
+        default: true
+        description: The bar beside a tabbed column, a segment per tab. Shows for a lone window too.
+        x-compositor: {niri: {key: layout.tab-indicator, value: onOff}}
       preferNoCsd:
         type: boolean
         title: No title bars on windows

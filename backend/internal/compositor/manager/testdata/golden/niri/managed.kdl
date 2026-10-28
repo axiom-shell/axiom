@@ -287,6 +287,9 @@ layout {
     always-center-single-column true
     empty-workspace-above-first false
     default-column-display "tabbed"
+    tab-indicator {
+        off
+    }
     default-column-width {
         proportion 0.5
     }

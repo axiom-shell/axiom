@@ -1457,6 +1457,7 @@
     "niri": {
       "alwaysCenterSingleColumn": true,
       "defaultColumnDisplay": "tabbed",
+      "tabIndicator": false,
       "animationSlowdown": 60,
       "preferNoCsd": true,
       "centerFocusedColumn": "never",
