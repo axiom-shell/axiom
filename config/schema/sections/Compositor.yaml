@@ -368,11 +368,18 @@ properties:
   sway:
     x-scope: personal
     type: object
-    x-showIf: {/$compositor: sway, /Compositor.mode: managed}
+    x-showIf: {/$compositor: sway}
     title: Sway
-    description: Sway's own options, written while axiom manages its config. Anything else goes in ~/.config/sway/user/.
+    description: Sway's own options. All but special workspaces are written while axiom manages its config; anything else goes in ~/.config/sway/user/.
     additionalProperties: false
     properties:
+      specialWorkspaces:
+        type: string
+        title: Special workspaces
+        enum: [scratchpad, workspace]
+        x-enumLabels: {scratchpad: Scratchpad windows, workspace: A workspace of their own}
+        default: scratchpad
+        description: How the special workspace binds show a group. Scratchpad windows float over the current workspace, centred and stacked; a workspace of their own tiles them and takes the screen until toggled away.
       workspaceLayout:
         type: string
         title: New workspaces
@@ -380,6 +387,7 @@ properties:
         x-enumLabels: {default: Tiled, stacking: Stacked, tabbed: Tabbed}
         default: default
         x-compositor: {sway: {key: 'workspace_layout {}'}}
+        x-showIf: {/Compositor.mode: managed}
       hideEdgeBorders:
         x-scope: look
         type: string
@@ -394,6 +402,7 @@ properties:
           smart_no_gaps: With one window and no gaps
         default: none
         x-compositor: {sway: {key: 'hide_edge_borders {}'}}
+        x-showIf: {/Compositor.mode: managed}
       smartGaps:
         x-scope: look
         type: string
@@ -405,6 +414,7 @@ properties:
           inverse_outer: Outer gaps only around a lone window
         default: 'off'
         x-compositor: {sway: {key: 'smart_gaps {}'}}
+        x-showIf: {/Compositor.mode: managed}
       focusWrapping:
         type: string
         title: Focus wraps around
@@ -416,6 +426,7 @@ properties:
           workspace: Within the workspace
         default: 'yes'
         x-compositor: {sway: {key: 'focus_wrapping {}'}}
+        x-showIf: {/Compositor.mode: managed}
       popupDuringFullscreen:
         type: string
         title: Popups over a fullscreen window
@@ -423,6 +434,7 @@ properties:
         x-enumLabels: {smart: Show its own, ignore: Never show, leave_fullscreen: Leave fullscreen}
         default: smart
         x-compositor: {sway: {key: 'popup_during_fullscreen {}'}}
+        x-showIf: {/Compositor.mode: managed}
       xwayland:
         x-scope: machine
         type: string
@@ -431,6 +443,7 @@ properties:
         x-enumLabels: {enable: When one starts, disable: 'Off', force: Always running}
         default: enable
         x-compositor: {sway: {key: 'xwayland {}'}}
+        x-showIf: {/Compositor.mode: managed}
       font:
         x-scope: look
         type: string
@@ -438,6 +451,7 @@ properties:
         default: ''
         description: "A Pango font, e.g. pango:Inter 10. Empty keeps sway's."
         x-compositor: {sway: {key: 'font {}', value: raw, skip: ''}}
+        x-showIf: {/Compositor.mode: managed}
   niri:
     x-scope: personal
     type: object

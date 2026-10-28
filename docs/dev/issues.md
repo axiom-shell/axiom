@@ -322,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### Sway's special workspaces are floating scratchpad windows
-- **Where:** `services/compositor/SwayManager.qml` (`toggleSpecial`, `moveToSpecial`), `components/methods/SwayState.qml` (`specialToggle`)
-- **What:** Hyprland's special workspace is a tiled workspace drawn over the current one; sway has none, so a special group is marked scratchpad windows, and sway's scratchpad makes every window floating, centred and stacked on the others (a group of three shows as three overlapping windows). Options: keep the scratchpad and lay the group's windows out in a grid on show (`move position` / `resize set` per window, over the workspace like Hyprland's), or a hidden named workspace per group (tiles, but replaces the view instead of overlaying it). A group name holding `,` or `;` also breaks its `nop axiom special` bind (sway splits the command there). The maintainer's notes (2026-10-28) list it as "figure out what to do for scratchpad".
-- **Size:** needs a plan
-- **Found:** 2026-10-16, while auditing the sway branch
-
 ### `noWarps` off maps to sway's `mouse_warping output`
 - **Where:** `config/schema/sections/WindowBehaviour.yaml` (`noWarps`, `x-compositor.sway.map`)
 - **What:** Hyprland with `cursor.no_warps` off moves the cursor to a window focused by keybind; sway's `mouse_warping output` only moves it when focus changes output (`container` would match Hyprland). Decide which sway value matches what the setting promises.

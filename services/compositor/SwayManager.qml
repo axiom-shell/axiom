@@ -231,11 +231,17 @@ Singleton {
     SwayIpcManager.command(lines.join("; "), () => root.refresh());
   }
 
-  // --- Special workspaces: groups of scratchpad windows ---
+  // --- Special workspaces: groups of scratchpad windows, or a workspace
+  // each (CompositorConfig.swaySpecial) ---
 
   // Shows the windows of special group `name` on the focused output, or
-  // hides them when any is shown there (SwayState.specialToggle)
+  // hides them when any is shown there (SwayState.specialToggle); as a
+  // workspace, goes to it or back (SwayState.specialWorkspaceToggle)
   function toggleSpecial(name) {
+    if (CompositorConfig.swaySpecial === "workspace") {
+      SwayIpcManager.dispatch(SwayState.specialWorkspaceToggle(name, I3.focusedMonitor?.activeWorkspace?.name ?? "", root.focusedOutput).join("; "));
+      return;
+    }
     const plan = SwayState.specialToggle(root.windows, root._marks, name, root.focusedOutput);
     const shown = plan.ids.filter(id => root.windows.some(w => w.id === id));
     const lines = plan.show ? plan.ids.filter(id => !root.windows.some(w => w.id === id && w.output === root.focusedOutput)).map(id => `${_con(id)} scratchpad show`) : shown.map(id => `${_con(id)} move scratchpad`);
@@ -249,6 +255,10 @@ Singleton {
     const id = root.activeWindowId;
     if (!id)
       return;
+    if (CompositorConfig.swaySpecial === "workspace") {
+      SwayIpcManager.command(`${_con(id)} move container to workspace ${SwayState.quote(SwayState.specialWorkspace(name))}`, () => root._debounce.restart());
+      return;
+    }
     const leave = (root._marks[id] ?? []).filter(mark => SwayState.specialGroup(mark) !== "").map(mark => `${_con(id)} unmark ${SwayState.quote(mark)}`);
     SwayIpcManager.command(leave.concat([`${_con(id)} mark --add ${SwayState.quote(`axiom-special-${name}-${id}`)}`, `${_con(id)} move scratchpad`]).join("; "), () => root._debounce.restart());
   }

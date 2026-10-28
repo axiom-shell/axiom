@@ -40,7 +40,7 @@
 - **`x-takeover: true`** is for settings that take something over on this PC (locker, idle, polkit, Hyprland mode, greeter). Loading or importing a config never changes those.
 - **Paths:** a folder setting gets `"x-control": "folder"` (a Browse button; [File picker](../dev/core/file-picker.md)). It may hold `~`, so expand it with `Paths.expandHome` before it reaches a process or a file read (AGENTS.md › Config).
 - **Ordering:** QML sees schema objects as maps with sorted keys. `x-order` puts its keys first, and unlisted keys follow alphabetically, so list a new key where it belongs.
-- **No migration needed:** a purely additive key fills its default on load.
+- **No migration needed:** a purely additive key fills its default on load. In a section format 1 already had, list it in `addedSinceV1` (`backend/internal/migrate/convert/convert_test.go`), or the check that format 1's defaults convert to the current ones fails.
 - **Wrong default type:** a default that doesn't validate (wrong type, outside min/max) makes the whole config fall back to defaults. `tst_Config` catches it.
 - **Drafts:** readers read `ConfigManager.live`, so an editor's unsaved preview of the setting shows through them with nothing more to do.
 - **Live config:** the running axiom validates against the schema it loaded at its start (`AGENTS.md` › Running / reloading). Confirm it has the new schema before relying on the new key in `~/.config/axiom/config.json`.

@@ -337,6 +337,20 @@ QtObject {
     };
   }
 
+  // The workspace special group `name` is when it's a workspace of its own
+  function specialWorkspace(name) {
+    return `axiom-special-${name}`;
+  }
+
+  // The commands toggling special group `name` as a workspace of its own:
+  // back to the one before when it's the workspace shown on the focused
+  // output (`active`, that workspace's name), else to it on that output
+  // (`output`), from wherever it is
+  function specialWorkspaceToggle(name, active, output) {
+    const ws = root.specialWorkspace(name);
+    return active === ws ? ["workspace back_and_forth"] : [`workspace ${root.quote(ws)}`, `move workspace to output ${root.quote(output)}`];
+  }
+
   // The marks of every window in a get_tree reply: { [id]: [marks] }, for
   // those with any
   function marks(reply) {

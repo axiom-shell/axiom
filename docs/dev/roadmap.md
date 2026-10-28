@@ -173,7 +173,6 @@ Resolved by a stage:
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
 sway and SwayFX:
-- [Sway's special workspaces are floating scratchpad windows](issues.md#sways-special-workspaces-are-floating-scratchpad-windows)
 - [`noWarps` off maps to sway's `mouse_warping output`](issues.md#nowarps-off-maps-to-sways-mouse_warping-output)
 - [An unreadable sway config file still binds axiom's keys silently](issues.md#an-unreadable-sway-config-file-still-binds-axioms-keys-silently)
 
