@@ -58,6 +58,7 @@ STAMP_INPUTS = ("components/methods/SchemaValidation.qml", "tests/Shared.qml", "
                 *(f"components/methods/{h}.qml" for h in HELPERS), *(f"tests/tst_{h}.qml" for h in HELPERS),
                 "components/methods/MonitorLayout.qml", "components/methods/PolkitAgents.qml",
                 "components/methods/SwayState.qml", "components/methods/NiriState.qml",
+                "backend/internal/compositor/actions/table.json",
                 "scripts/qml_modules.py", "scripts/run_tests.sh")
 
 

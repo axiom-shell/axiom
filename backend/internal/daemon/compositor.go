@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
-	"github.com/axiom-shell/axiom/backend/internal/compositor/binds"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/config"
@@ -29,11 +29,6 @@ func (d *Daemon) newCompositor() *manager.Manager {
 		d.opts.Log.Error("compositor: reading the tree's tables", "err", err)
 		return nil
 	}
-	actions, err := binds.LoadActions(d.opts.Tree)
-	if err != nil {
-		d.opts.Log.Error("compositor: reading the bind actions", "err", err)
-		return nil
-	}
 	setting := func(path ...string) any {
 		cfg, _ := d.store.Config()
 		v, _ := config.Lookup(cfg, config.Keys(path...))
@@ -44,7 +39,6 @@ func (d *Daemon) newCompositor() *manager.Manager {
 		StateDir:    d.dirs.State,
 		RuntimeFile: d.runtime.File("compositor.json"),
 		Tables:      tables,
-		Actions:     actions,
 		Schema:      func() any { return d.store.Pipeline().Schema().Root() },
 		// The takeover settings in effect (the store's: the file's, or the
 		// ones it kept, while it runs on the defaults), "" while unknown
@@ -78,9 +72,8 @@ func (d *Daemon) newCompositor() *manager.Manager {
 			p.Send(d.server, json.RawMessage(jsonx.MarshalCompact(params)), subscribedTo(topicCompositor))
 		},
 		// This image, even once the file it came from is replaced
-		Bin:  "/proc/self/exe",
-		Tree: d.opts.Tree,
-		Log:  d.opts.Log.With("part", "compositor"),
+		Bin: "/proc/self/exe",
+		Log: d.opts.Log.With("part", "compositor"),
 	})
 }
 
@@ -92,7 +85,7 @@ func (d *Daemon) newCompositor() *manager.Manager {
 func (d *Daemon) compositorPart() part {
 	m := d.compositor
 	if m == nil {
-		return part{name: "compositor"}
+		return part{name: "compositor", methods: bindActionsMethod}
 	}
 	return part{
 		name:     "compositor",
@@ -102,7 +95,16 @@ func (d *Daemon) compositorPart() part {
 	}
 }
 
+// bindActionsMethod: what each bind action is (actions.JSON), which the
+// shell names and files binds by (BindActions), with or without a layer
+func bindActionsMethod(reg *rpc.Registry) {
+	rpc.Handle(reg, "compositor.bindActions", func(ctx context.Context, c *rpc.Conn, _ struct{}) (json.RawMessage, error) {
+		return actions.JSON, nil
+	})
+}
+
 func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
+	bindActionsMethod(reg)
 	// Only the shell drives it: its inputs, and every action that changes
 	// the user's compositor config
 	shellOnly := func(c *rpc.Conn) error {

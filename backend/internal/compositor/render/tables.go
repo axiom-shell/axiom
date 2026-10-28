@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
-// Tables are the data the JS helpers read from LayerStack, BindActions and
-// PolkitAgents:
-// plain JSON in those files, parsed from them (as scripts/gen_docs.py reads
-// LayerStack.layers), never copied by hand.
+// Tables are the data the JS helpers read from LayerStack and
+// PolkitAgents (plain JSON in those files, parsed from them, as
+// scripts/gen_docs.py reads LayerStack.layers, never copied by hand), and
+// the bind actions (actions.JSON).
 type Tables struct {
 	// LayerStack's layers ({ namespace, order, bar, noAnim, why }), and what
 	// blurs behind axiom's surfaces, by namespace
@@ -19,7 +20,7 @@ type Tables struct {
 	BlurSurfaces, BlurBackdrops, BlurOverOverlay []string
 	BlurChrome, BlurBacked                       []string
 
-	// BindActions' tables, as there
+	// The bind actions' tables (actions.JSON)
 	IPCActions, CompositorActions, Calls, Needs, ActionFlags, SwitcherSteps, ArgumentKinds *jsonx.Object
 	FlagNames                                                                              []string
 
@@ -30,12 +31,8 @@ type Tables struct {
 // The files Tables come from, by their repo paths
 const (
 	LayerStackFile   = "components/methods/LayerStack.qml"
-	BindActionsFile  = "components/methods/BindActions.qml"
 	PolkitAgentsFile = "components/methods/PolkitAgents.qml"
 )
-
-// TableFiles are the files ParseTables reads.
-var TableFiles = []string{LayerStackFile, BindActionsFile, PolkitAgentsFile}
 
 // ParseTables reads the tables from their files' text (read: a repo path's
 // text).
@@ -44,7 +41,7 @@ func ParseTables(read func(path string) (string, error)) (*Tables, error) {
 	if err != nil {
 		return nil, err
 	}
-	bindActions, err := read(BindActionsFile)
+	bindActions, err := actions.Tables()
 	if err != nil {
 		return nil, err
 	}
@@ -102,21 +99,13 @@ func ParseTables(read func(path string) (string, error)) (*Tables, error) {
 		{"actionFlags", &t.ActionFlags}, {"switcherSteps", &t.SwitcherSteps}, {"argumentKinds", &t.ArgumentKinds},
 	}
 	for _, o := range objects {
-		v, err := qmlValue(bindActions, o.name)
-		if err != nil {
-			return nil, err
-		}
-		obj, ok := v.(*jsonx.Object)
+		obj, ok := bindActions.Value(o.name).(*jsonx.Object)
 		if !ok {
-			return nil, fmt.Errorf("%s: %s isn't an object", BindActionsFile, o.name)
+			return nil, fmt.Errorf("the bind actions: %s isn't an object", o.name)
 		}
 		*o.to = obj
 	}
-	flags, err := qmlValue(bindActions, "flagNames")
-	if err != nil {
-		return nil, err
-	}
-	t.FlagNames = stringList(flags)
+	t.FlagNames = stringList(bindActions.Value("flagNames"))
 	return t, nil
 }
 

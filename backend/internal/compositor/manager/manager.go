@@ -35,7 +35,6 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
-	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/binds"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
@@ -52,7 +51,6 @@ type Options struct {
 	// RuntimeFile keeps what was applied across re-execs of the daemon
 	RuntimeFile string
 	Tables      *render.Tables
-	Actions     *actions.Table
 	// Schema is the config's schema; Mode the config's Compositor.mode,
 	// "" while it isn't known (config.json didn't load at the start): the
 	// manager then holds, changing no mode it applied (the defaults'
@@ -66,11 +64,11 @@ type Options struct {
 	CommitBinds func(binds *jsonx.Array) error
 	// Push sends the shell a compositor.* push
 	Push func(method string, params any)
-	// Bin and Tree: the binary (the daemon's own, /proc/self/exe) and tree
-	// a bind merge reads Hyprland's files in, a child with its memory
-	// limited (binds.Options.Isolate); "" reads them in this process
-	Bin, Tree string
-	Log       *slog.Logger
+	// Bin: the binary (the daemon's own, /proc/self/exe) a bind merge
+	// reads Hyprland's files in, a child with its memory limited
+	// (binds.Options.Isolate); "" reads them in this process
+	Bin string
+	Log *slog.Logger
 }
 
 // Manager drives the layer for the compositor axiom runs under.
@@ -1135,8 +1133,8 @@ func (m *Manager) PreviewMerge() {
 }
 
 func (m *Manager) mergeOptions(only string) binds.Options {
-	return binds.Options{Kind: m.kind, Dir: m.files().ConfigDir, Only: only, Actions: m.o.Actions, Getenv: m.o.Getenv,
-		Isolate: m.o.Bin, Tree: m.o.Tree}
+	return binds.Options{Kind: m.kind, Dir: m.files().ConfigDir, Only: only, Getenv: m.o.Getenv,
+		Isolate: m.o.Bin}
 }
 
 // merge: every bind in user/ that can move becomes one of axiom's, saved

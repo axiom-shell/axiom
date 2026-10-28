@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/kdl"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -49,7 +50,7 @@ var (
 // commandAction is the axiom action for a command niri runs, `exec` at
 // least
 func commandAction(o Options, command string) *jsonx.Object {
-	if entry := o.Actions.IPCAction(command); entry != nil {
+	if entry := actions.Default().IPCAction(command); entry != nil {
 		return entry
 	}
 	if media := mediaAction(command); media != "" {
@@ -212,7 +213,7 @@ func extractNiri(ctx context.Context, o Options) *jsonx.Object {
 				// another): an action repeats as axiom's own does, a raw one
 				// as niri had it
 				name, _ := entry.Value("action").(string)
-				if repeat, _ := bind.Props.Get("repeat"); repeat != false && (o.Actions.Repeating[name] || name == "raw") {
+				if repeat, _ := bind.Props.Get("repeat"); repeat != false && (actions.Default().Repeating[name] || name == "raw") {
 					entry.Set("repeating", true)
 				}
 				text := ""

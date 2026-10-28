@@ -46,7 +46,7 @@ PanelWindow {
       "SHIFT": Qt.ShiftModifier
     })
   readonly property var _held: {
-    const held = [].concat(...KeybindsConfig.activeBinds.filter(bind => BindActions.switcherSteps[bind.action] !== undefined).map(bind => BindActions.switcherHeld(KeyNames.split(bind.key).mods)));
+    const held = [].concat(...KeybindsConfig.activeBinds.filter(bind => KeybindManager.actionTable?.switcherSteps?.[bind.action] !== undefined).map(bind => BindActions.switcherHeld(KeyNames.split(bind.key).mods)));
     return held.length > 0 ? held.filter((mod, i) => held.indexOf(mod) === i) : ["SUPER", "ALT", "CTRL"];
   }
   readonly property var _heldKeys: [].concat(..._held.map(mod => _qtKeys[mod] ?? []))

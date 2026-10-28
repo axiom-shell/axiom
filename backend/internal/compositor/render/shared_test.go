@@ -85,6 +85,12 @@ func TestSharedCases(t *testing.T) {
 			for i, a := range c.Args {
 				args[i] = replayed(a)
 			}
+			// The bind actions' table the JS is handed first is the one
+			// the port holds (actions.JSON): its ops take what follows, as
+			// the frozen cases recorded them
+			if strings.HasPrefix(c.Op, "BindActions.") && len(args) > 0 && has(args[0], "ipcActions") {
+				args = args[1:]
+			}
 			t.Run(c.Name, func(t *testing.T) {
 				c.Compare(t, op(tab, args))
 			})

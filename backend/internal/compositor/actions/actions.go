@@ -1,22 +1,49 @@
 // Package actions is what every compositor's bind merge shares: axiom's
-// bind actions as components/methods/BindActions.qml has them, and the
-// commands that are one of them (axiom's own IPC calls; volume, brightness
-// and media commands). Pure: the caller reads BindActions.qml.
+// bind actions (table.json, which the daemon also sends the shell:
+// binds.actions), and the commands that are one of them (axiom's own IPC
+// calls; volume, brightness and media commands). Pure: no I/O.
 package actions
 
 import (
+	_ "embed"
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
-// Table is BindActions' tables the merge needs.
+// JSON is what each keybind action (the schema's Keybinds.binds[].action)
+// is, independent of the compositor; how each compositor binds one is
+// render's (DispatcherLua, SwayActionCommand, NiriActionNode). Labels
+// aren't translated: they go to the compositor, like the user's own bind
+// descriptions. Its tables, by key:
+//   - ipcActions: the actions that call axiom over IPC, [IPC call, default
+//     label, section]; {call} is the bind's call (calls), {0} its argument
+//   - compositorActions: the ones the compositor carries out itself,
+//     [default label, section]
+//   - calls: the IPC function behind each call, for actions that open and
+//     close something ({open, close}); a toggle is always `toggle`
+//   - needs: the compositor capabilities (supports) an action needs, any
+//     one of them; actions not listed work everywhere
+//   - actionFlags: the flags an action starts with when it's picked
+//   - flagNames: the flags a bind can set (bind[flag] === true)
+//   - switcherSteps: the window switcher's actions, by the step each takes
+//     through the windows
+//   - argumentKinds: what an action's argument is (the Keybinds page picks
+//     its editor by it); every action with a {0} in its IPC call or label
+//     has one
+//   - argumentDefaults: the argument an action starts with when picked
+//
+//go:embed table.json
+var JSON []byte
+
+// Table is the tables the merge needs.
 type Table struct {
 	ipc []ipcPattern
 	// Repeating: the actions axiom repeats while held by default
-	// (BindActions.actionFlags)
+	// (actionFlags)
 	Repeating map[string]bool
 }
 
@@ -25,51 +52,63 @@ type ipcPattern struct {
 	re     *regexp.Regexp
 }
 
-// The file whose tables Parse reads, from the tree
-const File = "components/methods/BindActions.qml"
-
-var (
-	ipcEntry  = regexp.MustCompile(`"(\w+)": \["([^"]+)"`)
-	flagEntry = regexp.MustCompile(`"(\w+)": \[([^\]]*)\]`)
-)
-
-// Parse reads BindActions.qml's text: each IPC call of ipcActions (its
-// {call} and {0} as what they match), and actionFlags' repeating actions.
-func Parse(qml string) (*Table, error) {
-	ipcTable, err := between(qml, "ipcActions:", "compositorActions:")
+// Tables is JSON parsed, by table name.
+func Tables() (*jsonx.Object, error) {
+	v, err := jsonx.Unmarshal(JSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("the bind actions: %w", err)
 	}
-	flagTable, err := between(qml, "actionFlags:", "flagNames:")
+	o, ok := v.(*jsonx.Object)
+	if !ok {
+		return nil, fmt.Errorf("the bind actions aren't an object")
+	}
+	return o, nil
+}
+
+// Default is the merge's Table, made once from JSON (whose tests check it
+// parses).
+var Default = sync.OnceValue(func() *Table {
+	t, err := parse()
+	if err != nil {
+		panic(err)
+	}
+	return t
+})
+
+// parse makes the Table: each IPC call of ipcActions (its {call} and {0}
+// as what they match), and actionFlags' repeating actions.
+func parse() (*Table, error) {
+	tables, err := Tables()
 	if err != nil {
 		return nil, err
 	}
 	t := &Table{Repeating: map[string]bool{}}
-	for _, m := range ipcEntry.FindAllStringSubmatch(ipcTable, -1) {
-		pattern := regexp.QuoteMeta(m[2])
+	ipc, _ := tables.Value("ipcActions").(*jsonx.Object)
+	for _, action := range ipc.Keys() {
+		entry, _ := ipc.Value(action).(*jsonx.Array)
+		if entry == nil || len(entry.Items) == 0 {
+			return nil, fmt.Errorf("the bind actions: %s has no IPC call", action)
+		}
+		call, _ := entry.Items[0].(string)
+		pattern := regexp.QuoteMeta(call)
 		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{call}"), `(?P<call>\w+)`)
 		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{0}"), `(?P<arg>\S+)`)
 		re, err := regexp.Compile("^" + pattern + "$")
 		if err != nil {
-			return nil, fmt.Errorf("%s: %s: %w", File, m[1], err)
+			return nil, fmt.Errorf("the bind actions: %s: %w", action, err)
 		}
-		t.ipc = append(t.ipc, ipcPattern{m[1], re})
+		t.ipc = append(t.ipc, ipcPattern{action, re})
 	}
-	for _, m := range flagEntry.FindAllStringSubmatch(flagTable, -1) {
-		if strings.Contains(m[2], `"repeating"`) {
-			t.Repeating[m[1]] = true
+	flags, _ := tables.Value("actionFlags").(*jsonx.Object)
+	for _, action := range flags.Keys() {
+		list, _ := flags.Value(action).(*jsonx.Array)
+		for _, f := range list.Items {
+			if f == "repeating" {
+				t.Repeating[action] = true
+			}
 		}
 	}
 	return t, nil
-}
-
-func between(text, from, to string) (string, error) {
-	i := strings.Index(text, from)
-	j := strings.Index(text, to)
-	if i < 0 || j < i {
-		return "", fmt.Errorf("%s has no %s table", File, strings.TrimSuffix(from, ":"))
-	}
-	return text[i:j], nil
 }
 
 // What a call names, for actions that open and close (BindActions.calls)

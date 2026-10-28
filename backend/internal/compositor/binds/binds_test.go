@@ -8,9 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // fx is a scratch compositor dir with a user/ folder
@@ -18,24 +16,19 @@ type fx struct {
 	t    *testing.T
 	dir  string
 	kind string
-	tab  *actions.Table
 }
 
 func newFx(t *testing.T, kind string) *fx {
 	t.Helper()
-	tab, err := LoadActions(testkit.RepoRoot())
-	if err != nil {
-		t.Fatal(err)
-	}
 	dir := filepath.Join(t.TempDir(), kind)
 	if err := os.MkdirAll(filepath.Join(dir, "user"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	return &fx{t: t, dir: dir, kind: kind, tab: tab}
+	return &fx{t: t, dir: dir, kind: kind}
 }
 
 func (f *fx) options() Options {
-	return Options{Kind: f.kind, Dir: f.dir, Actions: f.tab,
+	return Options{Kind: f.kind, Dir: f.dir,
 		Getenv:  func(string) string { return "" },
 		Now:     func() time.Time { return time.Date(2026, 10, 24, 12, 0, 0, 0, time.UTC) },
 		Tracked: func(context.Context, string) bool { return false }}

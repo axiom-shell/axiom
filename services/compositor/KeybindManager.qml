@@ -37,6 +37,26 @@ QtObject {
   // its key. Numbered runs and direction sets are folded (BindRows).
   readonly property var keybindings: root._buildKeybindings(root._entries, root._axiomIds, root._skippedLabels)
 
+  // What each bind action is (labels, sections, calls, arguments; the
+  // BindActions functions read it): the daemon's table
+  // (compositor.bindActions), read again after each hello, since a new
+  // binary may bring another; null until it answers
+  property var actionTable: null
+
+  function _readActionTable() {
+    BackendManager.call("compositor.bindActions", {}, (error, result) => {
+      if (!error)
+        root.actionTable = result;
+    });
+  }
+
+  property Connections _hello: Connections {
+    target: BackendManager
+    function onGreeted() {
+      root._readActionTable();
+    }
+  }
+
   readonly property var _actionSchema: ConfigManager.configSchema?.definitions?.Keybind?.properties?.action ?? ({})
   readonly property var actions: _actionSchema.enum ?? []
   // Action -> its label (translated; the schema's labels are keys already)
@@ -136,12 +156,12 @@ QtObject {
     })
 
   // [{ action, label, section, icon }], one per action, in schema order
-  // The actions the running compositor can do (BindActions.needs); a saved
+  // The actions the running compositor can do (the table's needs); a saved
   // bind with another keeps it, flagged in `issues`
-  readonly property var actionInfo: root.actions.filter(action => BindActions.supported(action, CompositorManager.supports)).map(action => ({
+  readonly property var actionInfo: root.actions.filter(action => BindActions.supported(root.actionTable, action, CompositorManager.supports)).map(action => ({
         "action": action,
         "label": root.actionLabels[action] ?? action,
-        "section": action === "exec" ? "Apps" : BindActions.sectionFor(action),
+        "section": action === "exec" ? "Apps" : BindActions.sectionFor(root.actionTable, action),
         "icon": root._actionIcons[action] ?? "keyboard"
       }))
 
@@ -151,11 +171,11 @@ QtObject {
 
   // What an action's free-text argument is, for its placeholder
   function argumentKind(action) {
-    return BindActions.argumentKind(action);
+    return BindActions.argumentKind(root.actionTable, action);
   }
 
   function needsArgument(action) {
-    return BindActions.needsArgument(action);
+    return BindActions.needsArgument(root.actionTable, action);
   }
 
   // How many workspaces a number can name: the layout's, or ten where the
@@ -164,7 +184,7 @@ QtObject {
 
   // The choices for an action's argument, or null for free text
   function argumentOptions(action) {
-    switch (BindActions.argumentKind(action)) {
+    switch (BindActions.argumentKind(root.actionTable, action)) {
     case "direction":
       return ["left", "right", "up", "down"];
     case "workspace":
@@ -185,7 +205,7 @@ QtObject {
 
   // The choices for an action's call, or null when it has none
   function callOptions(action) {
-    return BindActions.hasCalls(action) ? ["toggle", "open", "close"] : null;
+    return BindActions.hasCalls(root.actionTable, action) ? ["toggle", "open", "close"] : null;
   }
 
   // A call's label for an action (a caffeine or night light bind turns it
@@ -235,7 +255,7 @@ QtObject {
     const own = String(bind?.description ?? "").trim();
     if (own !== "")
       return BindActions.hasOwnSection(own) ? own.slice(own.indexOf(":") + 1).trim() : own;
-    return BindActions.defaultLabel(bind) || (root.actionLabels[bind?.action] ?? "");
+    return BindActions.defaultLabel(root.actionTable, bind) || (root.actionLabels[bind?.action] ?? "");
   }
 
   // The modifiers' names, in the order a combo shows them
@@ -466,5 +486,8 @@ QtObject {
   // CompositorManager.supports is filled in, and a refresh then does nothing
   readonly property bool _canRead: CompositorManager.supports.bindMerge === true
   on_CanReadChanged: refresh()
-  Component.onCompleted: refresh()
+  Component.onCompleted: {
+    refresh();
+    root._readActionTable();
+  }
 }
