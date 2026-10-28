@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Tailscale
+  readonly property var _c: ConfigManager.live.Tailscale
 
   // How often `tailscale status` is read (ms)
   readonly property int interval: _c.interval

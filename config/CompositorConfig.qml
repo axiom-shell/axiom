@@ -5,7 +5,7 @@ import qs.services.core
 // Reader for the Compositor section: how axiom sets the compositor up
 // (CompositorConfigManager)
 QtObject {
-  readonly property var _c: ConfigManager.config.Compositor
+  readonly property var _c: ConfigManager.live.Compositor
 
   // "detached" | "included" | "managed"
   readonly property string mode: _c.mode

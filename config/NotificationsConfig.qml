@@ -6,7 +6,7 @@ import qs.services.core
 // NotificationsConfig because `Notifications` is a surface, module and bar
 // widget type.
 QtObject {
-  readonly property var _c: ConfigManager.config.Notifications
+  readonly property var _c: ConfigManager.live.Notifications
 
   // The ScreenTarget toasts show on (see General.screensFor)
   readonly property var screen: _c.screen

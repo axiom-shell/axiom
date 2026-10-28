@@ -6,7 +6,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Notes
+  readonly property var _c: ConfigManager.live.Notes
 
   // $XDG_DATA_HOME/axiom/notes/
   readonly property string defaultDirectory: Paths.defaultNotesPath

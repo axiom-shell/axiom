@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Weather
+  readonly property var _c: ConfigManager.live.Weather
 
   readonly property string location: _c.location
   readonly property string latitude: _c.latitude

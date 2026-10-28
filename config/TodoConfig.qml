@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Todo
+  readonly property var _c: ConfigManager.live.Todo
 
   readonly property bool showCompleted: _c.showCompleted
 }

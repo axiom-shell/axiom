@@ -6,7 +6,7 @@ import qs.components.methods
 // Reader for the Launcher section (the search launcher). Named
 // LauncherConfig because `Launcher` is the surface type.
 QtObject {
-  readonly property var _c: ConfigManager.config.Launcher
+  readonly property var _c: ConfigManager.live.Launcher
 
   // The ScreenTarget it opens on (see General.screensFor)
   readonly property var screen: _c.screen

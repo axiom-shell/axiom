@@ -6,7 +6,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Chat
+  readonly property var _c: ConfigManager.live.Chat
 
   // Chat.providers, each with an `id` (from its name when left empty) and
   // a `defaultModel` (the first model when left empty)

@@ -6,7 +6,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.SelfUpdate
+  readonly property var _c: ConfigManager.live.SelfUpdate
 
   // "auto" | "notify" | "off"
   readonly property string mode: _c.mode

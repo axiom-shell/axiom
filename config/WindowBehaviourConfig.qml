@@ -7,7 +7,7 @@ import qs.services.core
 // x-compositor annotation). Named WindowBehaviourConfig as the section is read
 // whole.
 QtObject {
-  readonly property var _c: ConfigManager.config.WindowBehaviour
+  readonly property var _c: ConfigManager.live.WindowBehaviour
 
   // Goes through a string so a reload that leaves it unchanged doesn't
   // write it again

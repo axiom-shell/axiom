@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Updates
+  readonly property var _c: ConfigManager.live.Updates
 
   readonly property bool includeAur: _c.includeAur
   // "paru" | "yay"

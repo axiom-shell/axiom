@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -146,6 +147,51 @@ func TestSetValidatesAndRefusesTakeovers(t *testing.T) {
 	if len(events) != 2 || events[0].Config == nil || events[1].State.Revision != 3 {
 		t.Errorf("events %+v", events)
 	}
+}
+
+// An event carries the ops from the config before it: a write's, and an
+// edit made outside's (diffed after the takeovers are held)
+func TestEventsCarryTheChange(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir)
+	events := make(chan Event, 4)
+	s.Subscribe(func(e Event) {
+		if e.Config != nil {
+			events <- e
+		}
+	})
+	if _, err := s.Replace(func() *jsonx.Object {
+		cfg, _ := s.Config()
+		next := jsonx.Clone(cfg).(*jsonx.Object)
+		next.Value("Battery").(*jsonx.Object).Set("lowThreshold", 12.0)
+		return next
+	}(), SetOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := changesOf(t, <-events); got != `[{"op":"set","path":["Battery","lowThreshold"],"value":12}]` {
+		t.Errorf("a write's changes: %s", got)
+	}
+	cfg, _ := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Value("Battery").(*jsonx.Object).Set("notify", false)
+	edited.Value("Idle").(*jsonx.Object).Set("enabled", true)
+	if err := os.WriteFile(s.Path(), jsonx.Marshal(edited), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s.reload()
+	if got := changesOf(t, <-events); got != `[{"op":"set","path":["Battery","notify"],"value":false}]` {
+		t.Errorf("an outside edit's changes: %s", got)
+	}
+}
+
+func changesOf(t *testing.T, ev Event) string {
+	t.Helper()
+	data, err := json.Marshal(ev.Changes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
 }
 
 func TestReplaceKeepsTakeovers(t *testing.T) {

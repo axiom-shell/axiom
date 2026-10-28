@@ -7,7 +7,7 @@ import qs.services.core
 // controls, and the card size every module grid starts from. Bars size
 // their own widgets (BarsConfig.enrichBarConfig).
 QtObject {
-  readonly property var _c: ConfigManager.config.Interface
+  readonly property var _c: ConfigManager.live.Interface
 
   // The Interface scale, as a factor: text (Appearance.fontSize) and the
   // sizes below grow with it

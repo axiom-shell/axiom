@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.General
+  readonly property var _c: ConfigManager.live.General
 
   readonly property string displayName: _c.displayName || Quickshell.env("USER") || "user"
   // Monitor for the lockscreen input, launcher, power menu and overlay

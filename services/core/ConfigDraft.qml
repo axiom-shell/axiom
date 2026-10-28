@@ -18,6 +18,9 @@ QtObject {
   property var saved: null
   property bool isDirty: false
 
+  // load() started over: the editor drops what it showed live
+  signal loaded
+
   Component.onCompleted: load()
 
   function _read() {
@@ -30,6 +33,7 @@ QtObject {
     root.local = Utils.clone(root._loadedFrom);
     root.saved = Utils.clone(root.local);
     root.isDirty = false;
+    root.loaded();
   }
 
   // load(), unless the draft holds unsaved edits or already holds the

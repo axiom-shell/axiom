@@ -58,7 +58,7 @@ QtObject {
   // Appearance reader's darkMode reads currentTheme, which loads from this.
   // reads: Appearance.theme.name, Appearance.theme.schedule.enabled
   readonly property string activeTheme: {
-    const theme = ConfigManager.config.Appearance.theme;
+    const theme = ConfigManager.live.Appearance.theme;
     return Paths.greeter ? theme.name : ShownLook.theme(theme.name, theme.schedule.enabled, root._look.theme ?? null);
   }
   // The wallpapers showing ({ wallpaper, wallpapers }): the fixed ones, the

@@ -5,7 +5,7 @@ import qs.services.core
 // Reader for the WindowSwitcher section (Alt+Tab). Named
 // WindowSwitcherConfig because `WindowSwitcher` is the shell module type.
 QtObject {
-  readonly property var _c: ConfigManager.config.WindowSwitcher
+  readonly property var _c: ConfigManager.live.WindowSwitcher
 
   // all | monitor | workspace (DockLayout.inScope's scopes)
   readonly property string scope: _c.scope

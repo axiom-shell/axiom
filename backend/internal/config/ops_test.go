@@ -32,6 +32,8 @@ func TestOps(t *testing.T) {
 		name, config, ops, want string
 		kind                    axerr.Kind
 	}{
+		// What the shell's ConfigOps.diff sends (tests/tst_ConfigOps.qml)
+		{"the shell's set and delete", `{"a":{"b":1,"c":2}}`, `[{"op":"set","path":["a","c"],"value":3},{"op":"delete","path":["a","b"]}]`, `{"a":{"c":3}}`, ""},
 		{"set makes objects", `{}`, `[{"op":"set","path":["A","b"],"value":1}]`, `{"A":{"b":1}}`, ""},
 		{"set by id", `{"L":[{"id":"x","v":1},{"id":"y","v":2}]}`, `[{"op":"set","path":["L",{"id":"y"},"v"],"value":3}]`, `{"L":[{"id":"x","v":1},{"id":"y","v":3}]}`, ""},
 		{"delete by id", `{"L":[{"id":"x"},{"id":"y"}]}`, `[{"op":"delete","path":["L",{"id":"x"}]}]`, `{"L":[{"id":"y"}]}`, ""},
@@ -70,5 +72,37 @@ func TestPathRefusesPositions(t *testing.T) {
 	}
 	if err := json.Unmarshal([]byte(`["Bars", {"id": ""}]`), &p); err == nil {
 		t.Error("an empty id was accepted")
+	}
+}
+
+func TestDiff(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name, before, after, want string
+	}{
+		{"same", `{"a":{"b":1}}`, `{"a":{"b":1}}`, `null`},
+		{"a leaf", `{"a":{"b":1,"c":2}}`, `{"a":{"b":1,"c":3}}`, `[{"op":"set","path":["a","c"],"value":3}]`},
+		{"a list whole", `{"L":[{"id":"x","v":1}]}`, `{"L":[{"id":"x","v":2}]}`, `[{"op":"set","path":["L"],"value":[{"id":"x","v":2}]}]`},
+		{"a key gone", `{"a":{"b":1,"c":2}}`, `{"a":{"b":1}}`, `[{"op":"delete","path":["a","c"]}]`},
+		{"a key new", `{}`, `{"a":{"b":1}}`, `[{"op":"set","path":["a"],"value":{"b":1}}]`},
+		{"object to value", `{"a":{"b":1}}`, `{"a":null}`, `[{"op":"set","path":["a"],"value":null}]`},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			before, after := cfg(t, c.before), cfg(t, c.after)
+			ops := Diff(before, after)
+			got, _ := json.Marshal(ops)
+			if string(got) != c.want {
+				t.Errorf("got %s want %s", got, c.want)
+			}
+			// The ops, as JSON both ways, turn before into after
+			if err := ApplyOps(before, parseOps(t, string(got))); err != nil {
+				t.Fatal(err)
+			}
+			if !jsonx.Equal(before, after) {
+				t.Errorf("applied: %s, want %s", jsonx.MarshalCompact(before), c.after)
+			}
+		})
 	}
 }

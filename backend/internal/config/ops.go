@@ -285,3 +285,37 @@ func indexOf(list *jsonx.Array, id string) int {
 	}
 	return -1
 }
+
+// Diff is the ops that turn before into after: a set for each value that
+// differs (a list whole, never by id) and a delete for each key gone,
+// objects followed down to what changed. Applied to before, they give
+// after (its key order apart).
+func Diff(before, after *jsonx.Object) []Op {
+	return diff(nil, before, after, nil)
+}
+
+func diff(path Path, before, after *jsonx.Object, ops []Op) []Op {
+	for _, key := range before.Keys() {
+		if !after.Has(key) {
+			ops = append(ops, Op{Op: "delete", Path: appendKey(path, key)})
+		}
+	}
+	for _, key := range after.Keys() {
+		next := after.Value(key)
+		prev, has := before.Get(key)
+		prevObj, wasObj := prev.(*jsonx.Object)
+		nextObj, isObj := next.(*jsonx.Object)
+		switch {
+		case has && wasObj && isObj:
+			ops = diff(appendKey(path, key), prevObj, nextObj, ops)
+		case !has || !jsonx.Equal(prev, next):
+			ops = append(ops, SetValue(appendKey(path, key), jsonx.Clone(next)))
+		}
+	}
+	return ops
+}
+
+// appendKey is path and key, in a new slice (ops keep their paths).
+func appendKey(path Path, key string) Path {
+	return append(append(make(Path, 0, len(path)+1), path...), Segment{Key: key})
+}

@@ -8,7 +8,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Monitors
+  readonly property var _c: ConfigManager.live.Monitors
 
   // Goes through a string so a reload that leaves them unchanged doesn't
   // re-apply them

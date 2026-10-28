@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A protocol bump in dev mode leaves the installed CLI on the old protocol
+- **Where:** `backend/cmd/axiom`, `config/json/backend.json` (`protocol`)
+- **What:** In dev mode a Go change rebuilds and re-execs the live daemon (into `~/.local/state/axiom/dev/axiom`), but the installed `~/.local/bin/axiom` stays as it was. After a change that bumps `protocol`, every `axiom ipc` call (keybinds, scripts) fails with `this axiom speaks protocol 5, the client 4` until the user rebuilds it by hand (`go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`). Dev mode's rebuild could rebuild the CLI too, or the CLI could run the dev binary when the daemon says it's newer.
+- **Size:** small
+- **Found:** 2026-10-28, while sending config saves as path ops (backend stage 7)
+
 ### A word passed to an int IPC parameter is 0
 - **Where:** `services/core/BackendManager.qml` (`_callTarget`), `backend/internal/ipcroute/ipcroute.go` (`Router.Call`)
 - **What:** Since `IpcTarget` stopped being an `IpcHandler`, `axiom ipc` sends the command line's text and the target's typed parameters convert it: JavaScript can't read a function's parameter types, so nothing refuses a word where a number belongs. `axiom ipc brightness set loud` sets 0 % (QML turns `"loud"` into 0 for an `int`), where qs's typed call refused it with `bad_request`. Only `int` and `string` parameters exist today (`brightness` `set` / `dim` / `dimBy`, `workspaces` `nth`); a `bool` parameter would take `"false"` as true. A fix: the functions check their own input, or a parameter-type table generated from the source as `ipc.md` is.
@@ -458,12 +464,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Every config reload logs `Unable to assign [undefined] to bool` at the `paused` declaration (and, seen 2026-10-14, at `UpdatesManager.checking` while it was a readonly bool on a singleton (now a plain one): likely the same cause; seen 2026-10-16 as `Unable to assign [undefined] to QString` at `HyprlandManager.activeWindowId`, a readonly string; seen 2026-10-26 as `Unable to assign [undefined] to QList<QObject*>` at `AudioManager`'s two `PwObjectTracker.objects` and `Unable to assign [undefined] to bool` at its `micInUse`, after a reload from saving an unrelated file). The binding itself evaluates to a boolean (a temporary probe logged `boolean false`), and a constant `paused: false` still warned, so it isn't the expression: something in Quickshell's reload of this singleton assigns it. Harmless (the value is right afterwards), but it's noise in every `scripts/log.sh`. Next step: check whether Quickshell carries readonly properties across a reload, or whether making `paused` a plain function helps.
 - **Size:** small
 - **Found:** 2026-10-13, while checking reload logs during the docs makeover
-
-### Shell saves carry unsaved settings
-- **Where:** `services/ui/SettingsManager.qml` (`setValue`, `setValues`), `services/core/ConfigDraft.qml` (`save`), `services/core/ConfigManager.qml` (`saveConfig`, `commit`, `_send`)
-- **What:** The settings page applies an unsaved change straight into `ConfigManager.config` (`applyConfig`; only `x-applyOnSave` settings wait), and every other save starts from a clone of it: `ConfigDraft.save` merges onto it, `commitValue(s)` and `CommunitySetupsManager`'s wallpaper setter clone it. So an unsaved setting is written by an unrelated save (toggle Handle idle, don't Save, save a bar edit: `Idle.enabled` is written on). The fix is backend stage 7 ([roadmap](backend/roadmap.md)): path ops, live edits through `ConfigManager.setPreview`.
-- **Size:** needs a plan
-- **Found:** 2026-10-26, while reviewing the repository's organization
 
 ### KeybindManager does three jobs
 - **Where:** `services/compositor/KeybindManager.qml`

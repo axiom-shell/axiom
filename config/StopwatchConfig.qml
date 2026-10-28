@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Stopwatch
+  readonly property var _c: ConfigManager.live.Stopwatch
 
   // Durations as typed ("5m", "10m tea"), for StopwatchClock.parse
   readonly property var presets: _c.presets

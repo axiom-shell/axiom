@@ -8,7 +8,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Dock
+  readonly property var _c: ConfigManager.live.Dock
 
   // [DockEntry]. Goes through a string so a reload that leaves the list
   // unchanged doesn't rebuild the docks.

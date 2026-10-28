@@ -10,7 +10,7 @@ import qs.components.methods
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Lockscreen
+  readonly property var _c: ConfigManager.live.Lockscreen
 
   // "quickshell" (built-in) | "none"
   readonly property string mode: _c.mode

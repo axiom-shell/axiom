@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.Pomodoro
+  readonly property var _c: ConfigManager.live.Pomodoro
 
   // Lengths (ms)
   readonly property int work: _c.work

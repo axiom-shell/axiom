@@ -7,7 +7,7 @@ import qs.services.core
 QtObject {
   id: root
 
-  readonly property var _c: ConfigManager.config.NightLight
+  readonly property var _c: ConfigManager.live.NightLight
 
   readonly property bool schedule: _c.schedule
   // "HH:MM", on from startAt until endAt (past midnight when it's earlier)
