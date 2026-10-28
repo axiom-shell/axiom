@@ -29,7 +29,6 @@ QtObject {
   // function of the compositor config helpers as "<Helper>.<function>"
   readonly property var ops: root._withHelperOps({
     "schema.applyDefaults": args => SchemaValidation.applyDefaults(args[0], args[1], args.length > 2 ? args[2] : args[1]),
-    "schema.validationErrors": args => SchemaValidation.validationErrors(args[0], args[1]),
     "schema.resolveRef": args => SchemaValidation.resolveRef(args[0], args[1])
   })
 
@@ -177,9 +176,6 @@ QtObject {
 
   function applyDefaults(value, schema, rootSchema) {
     return call("schema.applyDefaults", rootSchema === undefined ? [value, schema] : [value, schema, rootSchema]);
-  }
-  function validationErrors(value, schema) {
-    return call("schema.validationErrors", [value, schema]);
   }
   function resolveRef(schema, rootSchema) {
     return call("schema.resolveRef", [schema, rootSchema]);

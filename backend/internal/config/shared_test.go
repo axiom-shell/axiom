@@ -1,23 +1,31 @@
 package config
 
 import (
+	"strings"
 	"testing"
 
-	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/migrate/legacy"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // The schema.* shared cases (recorded from SchemaValidation.qml, which the
-// shell still validates and fills defaults with, against the live schema
-// and the tests' own) replayed through the Go pipeline: each output must be
-// the JS bytes exactly.
+// shell still fills defaults with, against the live schema and the tests'
+// own) replayed through the Go pipeline: each output must be the JS bytes
+// exactly. The greeter's exported bundle, filled (tst_GreeterBundle), must
+// also be a valid config.
 func TestSharedSchemaCases(t *testing.T) {
 	t.Parallel()
 	for _, c := range testkit.Cases(t, "schema.") {
 		t.Run(c.Name, func(t *testing.T) {
-			c.Compare(t, runSchemaOp(t, c))
+			out := runSchemaOp(t, c)
+			c.Compare(t, out)
+			if strings.HasPrefix(c.Name, "schema/GreeterBundle/") {
+				s := schema.New(c.Args[1])
+				if errs := ValidationErrors(s, out, s.Root()); len(errs) > 0 {
+					t.Errorf("the filled bundle isn't valid: %q", errs)
+				}
+			}
 		})
 	}
 }
@@ -35,21 +43,11 @@ func runSchemaOp(t *testing.T, c testkit.Case) any {
 			return nil
 		}
 		return out
-	case "schema.validationErrors":
-		return stringArray(ValidationErrors(schema.New(c.Args[1]), c.Args[0], c.Args[1]))
 	case "schema.resolveRef":
 		return schema.New(c.Args[1]).Resolve(c.Args[0])
 	}
 	t.Fatalf("unknown op %s", c.Op)
 	return nil
-}
-
-func stringArray(list []string) *jsonx.Array {
-	a := jsonx.Arr()
-	for _, s := range list {
-		a.Append(s)
-	}
-	return a
 }
 
 // The corpus, frozen when the shell's migrations went: every past schema
