@@ -948,12 +948,12 @@ func (m *Manager) liveLines(ctx context.Context) []string {
 
 // appliedParts are the look's and the input's parts on in spec, of those
 // the compositor applies (one it can't was never evaluated, so turning it
-// off reloads nothing)
+// off reloads nothing) and the shell doesn't take back itself (takesBack)
 func (m *Manager) appliedParts(spec any) []string {
 	supports := m.in.get("supports")
 	var out []string
 	for _, p := range strList(getAny(getAny(spec, "look"), "parts")) {
-		if p != "" && getAny(supports, "window"+strings.ToUpper(p[:1])+p[1:]) == true {
+		if p != "" && getAny(supports, "window"+strings.ToUpper(p[:1])+p[1:]) == true && !m.w.takesBack(p) {
 			out = append(out, p)
 		}
 	}

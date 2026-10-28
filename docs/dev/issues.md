@@ -322,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while auditing the sway branch for merge
 
-### Turning sway's window opacity off reloads sway
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`_appliedParts`)
-- **What:** Opacity counts as an applied part, so turning it off reloads the config (see "Changing a setting under sway can flash the screen"), though SwayManager already sets every window back to 1 itself. A part the backend takes back itself shouldn't count.
-- **Size:** trivial
-- **Found:** 2026-10-16, while auditing the sway branch for merge
-
 ### SwayFX's corner radius reaches only windows opened later
 - **Where:** `backend/internal/compositor/render/sway.go` (`SwayFxLines`)
 - **What:** `corner_radius` sent at runtime sets SwayFX 0.6's global only (its per-window reset runs only while the config loads), and it has no per-window command, so a changed rounding shows on new windows while open ones keep theirs until sway reloads its config. A fix would need a reload, which takes back the rest of the runtime look.
