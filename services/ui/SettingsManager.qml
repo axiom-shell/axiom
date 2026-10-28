@@ -263,29 +263,25 @@ QtObject {
   // of dotted paths
   property var _previewed: ({})
 
-  // The previews that show `value` at `path` (path → value; undefined
-  // clears one): none for `x-applyOnSave` settings (Hyprland's mode, which
+  // The preview that shows `value` at `path` (path → value; undefined
+  // clears it): none for `x-applyOnSave` settings (Hyprland's mode, which
   // can take over files), which wait in the draft until Save; cleared when
-  // it's back as saved, unless one of this page's above it still shows
-  // the edit; one set at a path drops this page's below it
+  // it's back as saved. Each is one setting, never one under another (a
+  // card setting several sets each: LauncherPlace)
   function _previewOf(path, value) {
     if (schemaAt(path)?.["x-applyOnSave"])
       return {};
     const key = path.join(".");
-    const out = {};
-    for (const shown of Object.keys(root._previewed).filter(shown => shown.startsWith(key + "."))) {
-      out[shown] = undefined;
-      delete root._previewed[shown];
-    }
-    const covered = Object.keys(root._previewed).some(shown => key.startsWith(shown + "."));
-    if (!covered && Utils.deepEqual(value, Utils.valueAt(draft.saved, path))) {
-      out[key] = undefined;
+    if (Utils.deepEqual(value, Utils.valueAt(draft.saved, path))) {
       delete root._previewed[key];
-    } else {
-      out[key] = value;
-      root._previewed[key] = true;
+      return {
+        [key]: undefined
+      };
     }
-    return out;
+    root._previewed[key] = true;
+    return {
+      [key]: value
+    };
   }
 
   // The draft was loaded again (saved, reset): nothing unsaved to show

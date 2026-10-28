@@ -9,7 +9,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 ### Draft
 - Editing happens on the Layouts page (see [Layouts editor](../overlay/layouts-editor.md)).
 - The draft lives in `EdgeMenuEditor`, which `OverlayManager` holds as `menus` (not a singleton; `EdgeMenuManager` keeps only the running menus' state): `ConfigDraft { path: ["EdgeMenus"] }`, plus `layout`, the selected menu's `GridEditor` with host `edgeMenu`.
-- While dirty it shows live on the running menus through `previews.EdgeMenus`, as the bar editor's does.
+- While dirty it shows live on the running menus through its `EdgeMenus` preview (`ConfigManager.setPreview`), as the bar editor's does.
 
 ### Field groups
 - The menu's fields come in `x-group`s: General, Opening, Placement, Style, Closing, Advanced (the read-only `id`).

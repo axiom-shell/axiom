@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.ui
-import qs.components.methods
 import qs.components.reusable
 
 // The top of the Launcher card (the section's `x-intro`): where it opens,
@@ -91,7 +90,10 @@ RowLayout {
     Layout.alignment: Qt.AlignTop
     presets: root.presets
     spot: root.launcher ? picker.edgeSpot(root.launcher.edge, root.launcher.position / 100, root.launcher.detached ? root.launcher.distance / 100 : 0) : Qt.point(0.5, 0.5)
-    onPicked: values => SettingsManager.setValue(["Launcher"], Object.assign(Utils.clone(root.launcher), values))
+    onPicked: values => SettingsManager.setValues(Object.keys(values).map(key => ({
+            "path": ["Launcher", key],
+            "value": values[key]
+          })))
   }
 
   StyledText {

@@ -125,7 +125,7 @@ Scope: config loading, readers, schema and annotations, migrations, drafts and p
 Docs: core/config-manager.md core/config-readers.md core/schema-annotations.md core/editors-pattern.md core/settings-page.md core/saved-configs-sharing.md core/i18n.md
 Extra: backend/internal/migrate/steps/steps.go components/methods/LibraryOrder.qml
 Checks:
-- Readers have no `??` default fallbacks (only `previews.X ?? config.X`), read only owners and each other.
+- Readers have no `??` default fallbacks (they read `ConfigManager.live`; only a saved-config reader like `BarsConfig.savedBars` reads `config`), read only owners and each other.
 - No write path except `ConfigManager`/`SettingsManager`; an invalid file never replaces the running config.
 - Migrations are idempotent, each has a `tst_Config` case, schema and `currentVersion` agree.
 - `x-scope` and `x-takeover` right on every setting that names a monitor, path, account or command, or takes something over.
