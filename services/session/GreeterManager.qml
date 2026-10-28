@@ -260,9 +260,14 @@ QtObject {
   readonly property string _themeText: JSON.stringify(ThemeManager.currentTheme, null, 2)
   // [source path, copy relative to the bundle] per wallpaper
   readonly property var _wallpaperPairs: [].concat(...root._wallpaperSources.map(url => [decodeURIComponent(url.replace("file://", "")), root._wallpaperCopies[url]]))
+  // The cursor theme's companion (CursorThemeManager), copied to icons/:
+  // greetd's user can't read the user's own, and the greeter's sway finds
+  // the copy on its XCURSOR_PATH (greeter-session.sh). "" when the theme
+  // needs none
+  readonly property string _cursorCompanion: CursorThemeManager.xcursorTheme.startsWith(CursorThemeManager.companionPrefix) ? Paths.dataSearchDirs[0] + "/icons/" + CursorThemeManager.xcursorTheme : ""
   // Everything the bundle holds; written while installed, a moment after it
   // changes
-  readonly property string _bundleKey: root._exporting ? [root._bundleText, root._themeText].concat(root._wallpaperPairs).join("\n") : ""
+  readonly property string _bundleKey: root._exporting ? [root._bundleText, root._themeText, root._cursorCompanion].concat(root._wallpaperPairs).join("\n") : ""
   on_BundleKeyChanged: if (root._bundleKey)
     _exportDelay.restart()
 
@@ -289,15 +294,16 @@ QtObject {
   // Writes the bundle into `dir`: greeter.json and theme.json (each
   // through a temp file and a rename, so the greeter never reads half of
   // one) and, `withWallpapers`, the wallpapers' copies (copied when new or
-  // changed; copies no longer used removed). Everything is made readable
-  // to greetd's user whatever the umask. then(ok)
+  // changed; copies no longer used removed) and the cursor theme's
+  // companion (its links followed). Everything is made readable to
+  // greetd's user whatever the umask. then(ok)
   function _writeBundle(dir, withWallpapers, then) {
     CommandManager.run(["sh", "-c", `dir=$1; bundle=$2; theme=$3; shift 3
 mkdir -p "$dir" || exit 1
 printf '%s\\n' "$bundle" >"$dir/.greeter.json.part" && mv -f -- "$dir/.greeter.json.part" "$dir/greeter.json" || exit 1
 printf '%s\\n' "$theme" >"$dir/.theme.json.part" && mv -f -- "$dir/.theme.json.part" "$dir/theme.json" || exit 1
 if [ "$1" = "--wallpapers" ]; then
-  shift
+  cursor=$2; shift 2
   mkdir -p "$dir/wallpapers" || exit 1
   keep=""
   while [ $# -ge 2 ]; do
@@ -309,8 +315,10 @@ $dir/$2"; shift 2
     [ -e "$file" ] || continue
     printf '%s\\n' "$keep" | grep -Fqx -- "$file" || rm -f -- "$file"
   done
+  rm -rf -- "$dir/icons"
+  if [ -n "$cursor" ]; then mkdir -p "$dir/icons" && cp -RL -- "$cursor" "$dir/icons/" || exit 1; fi
 fi
-chmod -R go+rX "$dir"`, "sh", dir.replace(/\/$/, ""), root._bundleText, root._themeText].concat(withWallpapers ? ["--wallpapers"].concat(root._wallpaperPairs) : []), (exitCode, out, err) => {
+chmod -R go+rX "$dir"`, "sh", dir.replace(/\/$/, ""), root._bundleText, root._themeText].concat(withWallpapers ? ["--wallpapers", root._cursorCompanion].concat(root._wallpaperPairs) : []), (exitCode, out, err) => {
       if (exitCode !== 0)
         console.warn("[GreeterManager] Writing the login screen's config to", dir, "failed:", err.trim());
       then(exitCode === 0);

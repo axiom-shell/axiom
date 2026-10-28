@@ -5,11 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
+	"github.com/axiom-shell/axiom/backend/internal/cursortheme"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 )
@@ -107,8 +110,9 @@ func applyOutputs(ctx context.Context, h *ipc.Hypr, n *ipc.Niri, s *ipc.Sway, ru
 // Lua keeping the monitors in the profile for what's connected (picked
 // again on each hotplug) and the Input options marked x-greeter, then sets
 // the cursor; sway gets its live input and seat commands (its monitors the
-// shell applies through outputs.apply); niri takes input from its config
-// file alone. schema is the config's.
+// shell applies through outputs.apply), its cursor the theme's companion
+// when XCURSOR_PATH holds the bundle's copy of it (greeter-session.sh);
+// niri takes input from its config file alone. schema is the config's.
 func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any) {
 	type applyParams struct {
 		Profiles json.RawMessage `json:"profiles"`
@@ -127,7 +131,7 @@ func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func(
 		if err != nil {
 			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "input")
 		}
-		return struct{}{}, applyGreeter(ctx, h, n != nil, s, profiles, values, inputSchemaOf(schema()))
+		return struct{}{}, applyGreeter(ctx, h, n != nil, s, profiles, values, inputSchemaOf(schema()), getenv("XCURSOR_PATH"))
 	})
 }
 
@@ -144,10 +148,16 @@ func inputSchemaOf(schema any) any {
 }
 
 // applyGreeter sets up the first of Hyprland, niri and sway running from
-// the greeter's profiles and input values (greeter.compositor)
-func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, profiles, values, inputSchema any) error {
+// the greeter's profiles and input values (greeter.compositor).
+// xcursorPath is the greeter's XCURSOR_PATH.
+func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, profiles, values, inputSchema any, xcursorPath string) error {
 	input := render.Input(values, nil)
 	cursor, _ := input.Value("cursor").(*jsonx.Object)
+	if cursor != nil {
+		if name := companionIn(xcursorPath, jsonx.ToString(cursor.Value("theme"))); name != "" {
+			cursor.Set("xcursor", name)
+		}
+	}
 	switch {
 	case h != nil:
 		reply, err := h.Eval(ctx, strings.Join(render.GreeterLua(profiles, inputSchema, values), "\n"))
@@ -185,6 +195,20 @@ func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, prof
 		return axerr.New(axerr.Unavailable, "no compositor to set up")
 	}
 	return nil
+}
+
+// companionIn is theme's companion (cursortheme) when a folder of path
+// (an XCURSOR_PATH) holds it, else "": the user's own, in their
+// $XDG_DATA_HOME, is out of greetd's user's reach, so the bundle carries a
+// copy (GreeterManager)
+func companionIn(path, theme string) string {
+	name := cursortheme.CompanionName(theme)
+	for _, dir := range filepath.SplitList(path) {
+		if _, err := os.Stat(filepath.Join(dir, name, "index.theme")); err == nil {
+			return name
+		}
+	}
+	return ""
 }
 
 // orNull is data, or JSON's null when it's missing

@@ -75,6 +75,11 @@ shell)
     # Its log beside the greeter's (nowhere, if that can't be written)
     clog="$state/compositor.log"
     true 2>/dev/null >"$clog" || clog=/dev/null
+    # The bundle's copy of the cursor theme's companion (its own is in the
+    # user's data folder, out of reach) first, then XCursor's usual folders:
+    # axiom greeter names it in sway's seat xcursor_theme
+    XCURSOR_PATH="/var/lib/axiom-greeter/config/icons:${XCURSOR_PATH:-/usr/local/share/icons:/usr/share/icons:/usr/share/pixmaps}"
+    export XCURSOR_PATH
     # shellcheck disable=SC2086
     if sway $gpu --config "$here/sway.conf" 2>>"$clog"; then
       [ ! -e "$failed" ] && exit 0
