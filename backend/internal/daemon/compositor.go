@@ -120,6 +120,12 @@ func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
 		m.SetFacts(p)
 		return struct{}{}, nil
 	})
+	rpc.Handle(reg, "compositor.layerRules", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
+		if err := shellOnly(c); err != nil {
+			return struct{}{}, err
+		}
+		return struct{}{}, m.AddLayerRules(ctx)
+	})
 	rpc.Handle(reg, "compositor.state", func(ctx context.Context, c *rpc.Conn, _ struct{}) (json.RawMessage, error) {
 		return jsonx.MarshalCompact(m.State(ctx)), nil
 	})

@@ -208,7 +208,7 @@ PopoutWrapperBase {
   readonly property real attachAt: placement.attachAt
 
   // While the overlay is open on its screen a box that would slide under
-  // a bar draws over the overlay instead (HyprLua.layerRulesLua),
+  // a bar draws over the overlay instead (render.LayerRulesLua),
   // since the layer it slides out from under is one the overlay covers
   // (as BarPopouts.underBar). Followed only while closed: the namespace
   // changes with it.

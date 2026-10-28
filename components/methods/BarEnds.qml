@@ -4,7 +4,7 @@ import QtQuick
 
 // What each end of a bar meets, where bars on perpendicular edges share a
 // corner (pure). Hyprland hands a corner to the bar it arranges first,
-// which the bars' layer rules decide (HyprLua.layerRulesLua):
+// which the bars' layer rules decide (render.LayerRulesLua):
 // solid bars, then the border, then pill bars, then transparent ones, then
 // floating ones; between two of a kind the bar on the screen's shorter
 // edge first (`shortEdge`: the side bars on a landscape monitor), so the

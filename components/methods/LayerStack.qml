@@ -6,7 +6,7 @@ import QtQuick
 // its surfaces in the order they mapped: the first reserves its space
 // nearest the screen edge, takes a shared corner and is drawn underneath
 // (docs/dev/compositor/layer-arrangement.md). Hyprland sorts them by a
-// layer rule's `order` first (HyprLua.layerRulesLua), higher first; on
+// layer rule's `order` first (render.LayerRulesLua), higher first; on
 // the others axiom maps them in this order.
 QtObject {
   id: root

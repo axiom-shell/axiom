@@ -235,8 +235,9 @@ func boolText(b bool) string {
 	return "false"
 }
 
-// LayerRulesLua is HyprLua.layerRulesLua: a named layer rule per layer, its
-// order and animation.
+// LayerRulesLua is a named layer rule per LayerStack.layers entry (adding
+// one again replaces it): its order, which Hyprland reads as a surface
+// maps, and its animation.
 func (t *Tables) LayerRulesLua() []string {
 	out := make([]string, len(t.Layers))
 	for i, l := range t.Layers {

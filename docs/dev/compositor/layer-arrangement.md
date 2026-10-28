@@ -15,7 +15,7 @@ Probed in nested sway and niri: coloured, overlapping layer windows, a screensho
 - **Drawn last is on top.** The surface mapped later is drawn over the earlier one.
 
 ### Hyprland
-- A layer rule's `order` (`LayerStack.layers`, made into rules by `HyprLua.layerRulesLua`) sorts the surfaces before map order applies. Higher is arranged first *and* drawn first (underneath). That's the same as having mapped earlier, so mapping the surfaces in that order on sway and niri reproduces Hyprland's result.
+- A layer rule's `order` (`LayerStack.layers`, made into rules by `render.LayerRulesLua`) sorts the surfaces before map order applies. Higher is arranged first *and* drawn first (underneath). That's the same as having mapped earlier, so mapping the surfaces in that order on sway and niri reproduces Hyprland's result.
 - Hyprland reads `order` only as a surface maps, so a window whose namespace changes is remade.
 - Hyprland also counts what it reserves for itself (`addreserved` on a monitor) and other apps' layers. Axiom's own calculation doesn't see either, so on Hyprland it's corrected from Hyprland's list (below).
 

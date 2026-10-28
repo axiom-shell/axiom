@@ -119,11 +119,7 @@ TestCase {
     compare(shared.calls.HyprLua.string("us\r,de"), '"us\\r,de"');
   }
 
-  function test_layer_rules() {
-    const lines = shared.calls.HyprLua.layerRulesLua();
-    compare(lines.length, LayerStack.layers.length);
-    verify(lines.includes('hl.layer_rule({ name = "axiom-bar-pill", match = { namespace = "^axiom-bar-pill$" }, order = -1 })'));
-    verify(lines.includes('hl.layer_rule({ name = "axiom-desktop", match = { namespace = "^axiom-desktop$" }, no_anim = true })'), "no order, no animation");
+  function test_blur_lists() {
     verify(LayerStack.blurChrome.includes("bar-floating-long") && LayerStack.blurBacked.includes("bar-pill"), "blur lists take every bar");
   }
 

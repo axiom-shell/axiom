@@ -14,6 +14,7 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
   - the [window look](../compositor/window-look.md) and blur
   - monitor profiles ([Monitors](monitors.md))
   - strips ([Workspace strips](workspace-strips.md))
+- The layer rules stacking axiom's surfaces (`render.LayerRulesLua`, from `LayerStack.layers`) are in the module's files, and in every mode the daemon also adds them at runtime: when the shell asks at its start (`compositor.layerRules`, `HyprlandManager.surfacesReady`) and on every `configreloaded` (`Manager.configReloaded`), each in its own `pcall`.
 
 ### `detached`
 - It is evaluated at startup and on every `configreloaded` (the writer's runtime layer).

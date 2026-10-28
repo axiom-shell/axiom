@@ -162,6 +162,18 @@ func (m *Manager) ScreenPower(ctx context.Context, on bool) error {
 	return m.w.screenPower(ctx, on)
 }
 
+// AddLayerRules adds Hyprland's layer rules for axiom's surfaces
+// (compositor.layerRules), which the shell waits for before mapping the
+// ones with an order; one Hyprland didn't take is logged.
+func (m *Manager) AddLayerRules(ctx context.Context) error {
+	h, ok := m.w.(*hyprWriter)
+	if !ok {
+		return axerr.New(axerr.Unavailable, "layer rules are Hyprland's")
+	}
+	h.addLayerRules(ctx)
+	return nil
+}
+
 func (m *Manager) logf(format string, args ...any) {
 	m.o.Log.Info("compositor: " + sprintf(format, args...))
 }
@@ -1066,6 +1078,11 @@ func (m *Manager) syncFile(ctx context.Context) {
 // configReloaded: a reload drops runtime binds, rules, the look and the
 // input
 func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
+	// Hyprland drops the layer rules a reload doesn't load, which the
+	// detached mode's files don't hold and a broken include loses
+	if h, ok := m.w.(*hyprWriter); ok {
+		h.addLayerRules(ctx)
+	}
 	if n, ok := m.w.(*niriWriter); ok {
 		n.lastFailed = r.Failed
 		if r.Failed {

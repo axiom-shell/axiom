@@ -101,19 +101,6 @@ QtObject {
     return `{\n${keys.map(key => `${pad}  ${entry(key)},`).join("\n")}\n${pad}}`;
   }
 
-  // --- Layer stacking (LayerStack.layers) ---
-
-  // A named layer rule per LayerStack.layers entry (re-adding one replaces
-  // it): its `order`, which Hyprland reads as a surface maps, and its
-  // animation
-  function layerRulesLua() {
-    return LayerStack.layers.map(l => {
-      const name = string("axiom-" + l.namespace);
-      const effects = (l.noAnim ? ", no_anim = true" : "") + (l.order !== undefined ? `, order = ${l.order}` : "");
-      return `hl.layer_rule({ name = ${name}, match = { namespace = ${string("^axiom-" + l.namespace + "$")} }${effects} })`;
-    });
-  }
-
   // --- Monitors (Monitors.profiles, MonitorLayout) ---
 
   // A monitor rule (the MonitorRule schema) as hl.monitor()'s spec: output,
