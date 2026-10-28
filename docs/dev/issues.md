@@ -63,7 +63,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   - `CommunitySetupsManager._setWallpaper` saved with `ConfigManager.commit(config, false)` so a stale clone couldn't undo the kept mode (gone: since stage 7, no shell save sends `takeover` unless it writes a takeover setting).
   - #105 writes each held takeover value back into the config.json the user just edited outside (an implementer's call, flagged on the PR and never answered), so the edit is reverted under their editor with only a daemon log `Warn` to say so.
 
-  Stage 7's path ops (`takeover` only on a takeover card's op) remove the reason for most of this. In that stage: one hold in the store for every takeover, the unknown takeovers decided in `Replace` / `Restore` ([restoring resets the other takeovers](#restoring-over-a-configjson-that-doesnt-load-resets-the-other-takeovers)), the manager's kept mode deleted, and the write-back decided.
+  Since stage 7 a shell save sends `takeover` only when it writes a takeover setting, which removes the reason for most of this. Still to do in that stage: one hold in the store for every takeover, the unknown takeovers decided in `Replace` / `Restore` ([restoring resets the other takeovers](#restoring-over-a-configjson-that-doesnt-load-resets-the-other-takeovers)), the manager's kept mode deleted, and the write-back decided.
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
@@ -459,9 +459,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-13, while checking reload logs during the docs makeover
 
-### Shell saves carry unsaved settings and every takeover
+### Shell saves carry unsaved settings
 - **Where:** `services/ui/SettingsManager.qml` (`setValue`, `setValues`), `services/core/ConfigDraft.qml` (`save`), `services/core/ConfigManager.qml` (`saveConfig`, `commit`, `_send`)
-- **What:** The settings page applies an unsaved change straight into `ConfigManager.config` (`applyConfig`; only `x-applyOnSave` settings wait), and every other save starts from a clone of it: `ConfigDraft.save` merges onto it, `commitValue(s)` and `CommunitySetupsManager`'s wallpaper setter clone it. So an unsaved setting is written by an unrelated save (toggle Handle idle, don't Save, save a bar edit: `Idle.enabled` is written on). (Its takeover part is done: a shell save sends `takeover` only when it writes an `x-takeover` setting itself, so the store's guard binds the shell too.) The fix is backend stage 7 ([roadmap](backend/roadmap.md)): path ops, live edits through `ConfigManager.setPreview`.
+- **What:** The settings page applies an unsaved change straight into `ConfigManager.config` (`applyConfig`; only `x-applyOnSave` settings wait), and every other save starts from a clone of it: `ConfigDraft.save` merges onto it, `commitValue(s)` and `CommunitySetupsManager`'s wallpaper setter clone it. So an unsaved setting is written by an unrelated save (toggle Handle idle, don't Save, save a bar edit: `Idle.enabled` is written on). The fix is backend stage 7 ([roadmap](backend/roadmap.md)): path ops, live edits through `ConfigManager.setPreview`.
 - **Size:** needs a plan
 - **Found:** 2026-10-26, while reviewing the repository's organization
 

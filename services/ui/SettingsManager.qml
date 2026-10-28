@@ -227,15 +227,11 @@ QtObject {
     cur[path[path.length - 1]] = Utils.clone(value);
   }
 
-  // The latest config with every changed setting from the draft on top
-  function _merged() {
+  // The latest config with the draft's settings at these key paths on top
+  function _merged(paths) {
     const merged = Utils.clone(ConfigManager.config);
-    // Diffed now, not `changedPaths`: Save first commits typed text, an
-    // edit in place that `changedPaths` sees only next tick
-    for (const changed of _diff(draft.local, draft.saved, [])) {
-      const path = changed.split(".");
+    for (const path of paths)
       _setAt(merged, path, Utils.valueAt(draft.local, path));
-    }
     return merged;
   }
 
@@ -525,8 +521,10 @@ QtObject {
 
   // Stays dirty if the save is rejected (invalid, or saves are blocked)
   function saveChanges() {
+    // Diffed now, not `changedPaths`: Save first commits typed text, an
+    // edit in place that `changedPaths` sees only next tick
     const changed = _diff(draft.local, draft.saved, []).map(path => path.split("."));
-    if (!ConfigManager.commit(_merged(), _takesOver(changed)))
+    if (!ConfigManager.commit(_merged(changed), _takesOver(changed)))
       return false;
     draft.load();
     return true;
