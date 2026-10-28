@@ -56,22 +56,17 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-28, while reviewing row 11's PRs (#155 to #158)
 
-### Restoring over a config.json that doesn't load resets the other takeovers
-- **Where:** `backend/internal/store/store.go` (`Replace`, `Restore`, `takeoverBase`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
-- **What:** While config.json doesn't load at the start, the store knows no takeover values (`takeoversUnknown`), so `Replace` and `Restore` keep `takeoverBase()`: the defaults. Restoring a saved config over that file therefore writes the defaults' `Idle.enabled`, `Polkit.enabled`, `Greeter.enabled` and `Lockscreen.mode`, switching off or changing whatever the user had taken over. Only `Compositor.mode` is repaired afterwards, by the compositor manager keeping the mode it applied and saving it back (`saveKept`, #108). Deciding the unknown takeovers once in the store (take the restored file's own values, or refuse the restore while none are known) would cover all five settings, and would let the manager's separate hold go ([the compositor mode is held twice](#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)). Like every other problem that starts from a config.json that doesn't load, it's rare, and it's fixed by backend stage 7, with the other config problems.
-- **Size:** needs a plan
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+### `config.restore` has no caller in the shell
+- **Where:** `services/core/ConfigManager.qml` (`restoreConfig`), `backend/internal/daemon/methods.go` (`config.restore`)
+- **What:** Nothing in the shell calls `ConfigManager.restoreConfig` (grep finds only its definition), so `config.restore` (`Store.Restore`, the only restore that takes a whole config, takeover settings included) is reached by no UI path: saved configs, examples, community setups and Defaults all go through `saved.*` (`share.Apply`, then `Store.Replace`). A saved config holds no takeover values (`share.Pick` never keeps one), so `config.restore` is the only restore that could bring any. Either delete `restoreConfig` and `config.restore` (and `Store.Restore`), or give them a caller.
+- **Size:** small
+- **Found:** 2026-10-28, while planning row 12 (the store's one hold)
 
-### The compositor mode is held twice while config.json doesn't load
-- **Where:** `backend/internal/store/store.go` (`holdTakeovers`, `Takeovers`), `backend/internal/compositor/manager/manager.go` (`saveKept`, `keptStands`, `ConfigWritable`), `backend/internal/daemon/compositor.go`, `backend/internal/daemon/methods.go` (`pushState`)
-- **What:** #105, #107 and #108 each fixed one case of "a config.json that doesn't load, or was edited outside, releases a managed compositor config", and filed the next. The result is two mechanisms for one rule ("only a takeover setting's own card changes it"): the store's `holdTakeovers` / `Takeovers()`, which covers every `x-takeover` setting, and the compositor manager's own hold of `Compositor.mode` (`KeptMode`, `saveKept`, `keptStands`, `ConfigWritable`; about 155 lines), which keeps the mode it applied and saves it back. Three things in it were never decided by the maintainer:
-  - #108 says it used "the maintainer's choice, option 2" (keep the last applied mode) for #107's question 2, but only question 1 was answered.
-  - `CommunitySetupsManager._setWallpaper` saved with `ConfigManager.commit(config, false)` so a stale clone couldn't undo the kept mode (gone: since stage 7, no shell save sends `takeover` unless it writes a takeover setting).
-  - #105 writes each held takeover value back into the config.json the user just edited outside (an implementer's call, flagged on the PR and never answered), so the edit is reverted under their editor with only a daemon log `Warn` to say so.
-
-  Since stage 7 a shell save sends `takeover` only when it writes a takeover setting, which removes the reason for most of this. Still to do in that stage: one hold in the store for every takeover, the unknown takeovers decided in `Replace` / `Restore` ([restoring resets the other takeovers](#restoring-over-a-configjson-that-doesnt-load-resets-the-other-takeovers)), the manager's kept mode deleted, and the write-back decided.
+### With no takeovers kept, a broken config.json can still release the compositor's config
+- **Where:** `backend/internal/store/store.go` (`loadInitial`, `write`, `holdTakeovers`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`)
+- **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Undecided: whether a hand fix over unknown takeovers should keep what the compositor has applied.
 - **Size:** needs a plan
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
+- **Found:** 2026-10-28, while reviewing row 12's third batch
 
 ### An unreadable sway config file still binds axiom's keys silently
 - **Where:** `backend/internal/compositor/manager/sway.go` (`userBinds`), `backend/internal/compositor/userconf/sway.go` (`SwayText`)
@@ -114,12 +109,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** A daemon re-exec fails every request in flight with `the connection to axiom closed`, and `MediaManager` warns about it, though it's an expected failure it could retry on the next hello. #112 had folded it into "The shell's socket warns when the daemon re-execs", but the socket's warning is Quickshell's and this one is ours to quiet.
 - **Size:** trivial
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
-
-### The Compositor card shows the file's mode while a kept mode isn't saved
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`modeFromDaemon`), `backend/internal/compositor/manager/manager.go` (`saveKept`)
-- **What:** Leaving the hold with the daemon incompatible with the tree, the kept mode's save is refused and stays pending; config.json loads, so `ConfigManager.savesBlocked` is false and the card shows `CompositorConfig.mode` (the file's stale mode, say detached) while managed is in effect. `modeFromDaemon` covers only a blocked file; it could also take the daemon's mode while the daemon reports a kept mode pending (a field in `compositor.state`).
-- **Size:** small
-- **Found:** 2026-10-26, while retrying the kept mode's save
 
 ### The polkit agent fails to register on reloads
 - **Where:** `services/session/PolkitManager.qml` (`_registerCheck`)

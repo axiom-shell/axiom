@@ -19,12 +19,6 @@ type runtimeState struct {
 	// AppliedMode: the mode apply() last set up, "" before the first, so a
 	// load never gives anything back
 	AppliedMode string `json:"appliedMode"`
-	// KeptMode: the mode kept on leaving the hold whose save back to
-	// config.json failed (refused while it doesn't load or the daemon is
-	// incompatible with the tree), retried until it's saved or the card
-	// changes the mode; kept across re-execs, which often bring the
-	// compatible binary
-	KeptMode string `json:"keptMode,omitempty"`
 	// LiveApplied: the live parts evaluated since the last reload
 	// ("borders,gaps,input:keyboard"); LiveCursor the cursor last set
 	LiveApplied string `json:"liveApplied"`

@@ -47,7 +47,7 @@ Walks a value along the schema.
   2. Save the running config as `before-<name>`.
   3. Replace the config with `share.Apply` (takeovers kept).
   4. Save the result as its own snapshot and make it active: `example-<name>`, `import-<title>`, or the shared file's (`community-<id>`). The saved configs list then shows it as Current, with Overwrite and the unsaved dot; the prefixes keep it from replacing one of the user's snapshots. Its `meta.source` names what was applied, which `activeSource` gives while it's the active one ("" once the user saves over it, or for one they saved). Restore defaults (`share.defaults`) saves none.
-- The manager then signals `applied(name)`, or `applyFailed(name)` (`status` says why: `_refusal` reads axiom's error, e.g. a file from a newer axiom).
+- The manager then signals `applied(name)`, or `applyFailed(name)` (`status` says why: `_refusal` reads axiom's error, e.g. a file from a newer axiom, or a broken config.json while no takeovers are kept: the store refuses every replace until it's fixed by hand, or deleted and axiom restarted (deleting it alone leaves them unknown); `restore` reads it too).
 - `browseImport()` opens the desktop's file picker for a JSON file ([File picker](file-picker.md)). `openImport(path)` reads it (`share.open`) as `importing`, with title and description from its header, for the page's confirm row. It offers a switch for its personal parts (`hasPersonal`) and one for its commands (`hasCommands`) only when it holds them; both start off.
 
 ### Saving and restoring a snapshot

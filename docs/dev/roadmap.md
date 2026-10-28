@@ -136,9 +136,8 @@ The config, the takeover and the session must never be damaged by a rarely taken
 Fixed in this phase: none left.
 
 A config.json that doesn't load (decided 2026-10-26):
-- [The compositor mode is held twice while config.json doesn't load](issues.md#the-compositor-mode-is-held-twice-while-configjson-doesnt-load)
-- [Restoring over a config.json that doesn't load resets the other takeovers](issues.md#restoring-over-a-configjson-that-doesnt-load-resets-the-other-takeovers)
-- [The Compositor card shows the file's mode while a kept mode isn't saved](issues.md#the-compositor-card-shows-the-files-mode-while-a-kept-mode-isnt-saved)
+- [`config.restore` has no caller in the shell](issues.md#configrestore-has-no-caller-in-the-shell)
+- [With no takeovers kept, a broken config.json can still release the compositor's config](issues.md#with-no-takeovers-kept-a-broken-configjson-can-still-release-the-compositors-config)
 
 ### Phase 2: finish stage 2
 Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the hypridle autostart default (dropped, and from saved configs by the v78 step) and the D-Bus match rules' escaping.
