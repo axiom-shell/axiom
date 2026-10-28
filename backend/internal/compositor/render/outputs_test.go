@@ -47,6 +47,11 @@ func TestOutputsApplied(t *testing.T) {
 		{"niri, a description nothing connected has", `[{"output": "desc:Gone", "mode": "1920x1080"}]`,
 			func(r any) any { return string(jsonx.MarshalCompact(NiriOutputRequests(r, details))) },
 			`[]`},
+		{"niri, a make Hyprland names by its bare code", `[{"output": "desc:AOC CU34G4Z", "disabled": true}]`,
+			func(r any) any {
+				return string(jsonx.MarshalCompact(NiriOutputRequests(r, parse(t, `[{"name": "DP-2", "description": "PNP(AOC) CU34G4Z"}]`))))
+			},
+			`[{"Output":{"output":"DP-2","action":"Off"}}]`},
 		{"niri, every part, disabled last", `[{"output": "HDMI-A-1", "disabled": true}, {"output": "desc:Main", "mode": "3840x2160@60", "x": 0, "y": 0, "scale": 1.5, "transform": 1, "vrr": 2}]`,
 			func(r any) any { return string(jsonx.MarshalCompact(NiriOutputRequests(r, details))) },
 			`[{"Output":{"output":"DP-1","action":"On"}},` +

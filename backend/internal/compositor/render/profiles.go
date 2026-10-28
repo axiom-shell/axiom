@@ -1,6 +1,7 @@
 package render
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -18,9 +19,20 @@ type Output struct {
 // connector) is the output with this name and description.
 func names(output, name, description string) bool {
 	if desc, ok := strings.CutPrefix(output, "desc:"); ok {
-		return trim(description) == trim(desc)
+		return sameDescription(description, desc)
 	}
 	return name == output
+}
+
+// pnpMake is niri's spelling of a make it has no name for ("PNP(AOC)"),
+// which Hyprland and sway give as the bare code ("AOC")
+var pnpMake = regexp.MustCompile(`^PNP\(([^)]*)\)`)
+
+// sameDescription is whether two descriptions name one monitor: trimmed,
+// and with niri's PNP(XXX) make the bare code, so a profile saved under
+// one compositor matches under another
+func sameDescription(a, b string) bool {
+	return pnpMake.ReplaceAllString(trim(a), "$1") == pnpMake.ReplaceAllString(trim(b), "$1")
 }
 
 // ruleOutput is a rule's output, "" when it has none.
@@ -100,7 +112,9 @@ func SavedRules(profiles any, outputs []Output) []any {
 // not, the rule every profile naming it agrees on (an external monitor
 // always set the same way), so it's laid out once, on plug and after the
 // switch alike. An output the profiles set differently gets no rule
-// (Hyprland's own layout, then the switch: a second modeset).
+// (Hyprland's own layout, then the switch: a second modeset), as do an
+// unplugged monitor named by description and the connector a profile last
+// saw it on (its label), named by another, when their rules disagree.
 func HyprlandRules(profiles any, outputs []Output) []any {
 	out := SavedRules(profiles, outputs)
 	if out == nil {
@@ -115,11 +129,17 @@ func HyprlandRules(profiles any, outputs []Output) []any {
 	var order []string
 	agreed := map[string]any{}
 	specs := map[string]string{}
+	// seenOn: the connectors (rules' labels) each monitor named by
+	// description and not connected was last seen on
+	seenOn := map[string][]string{}
 	for _, profile := range items(profiles) {
 		for _, rule := range items(get(profile, "outputs")) {
 			output := ruleOutput(rule)
 			if output == "" || connected(output, covered) {
 				continue
+			}
+			if label := str(or(get(rule, "label"), "")); strings.HasPrefix(output, "desc:") && label != "" && !connected(output, outputs) {
+				seenOn[output] = append(seenOn[output], label)
 			}
 			spec := InlineSpec(MonitorSpec(rule))
 			if seen, ok := specs[output]; !ok {
@@ -127,6 +147,16 @@ func HyprlandRules(profiles any, outputs []Output) []any {
 				specs[output], agreed[output] = spec, rule
 			} else if seen != spec {
 				agreed[output] = nil
+			}
+		}
+	}
+	// An unplugged monitor named by description may be the one another
+	// profile names by the connector it was seen on: where the two rules
+	// disagree, neither is written (Hyprland would apply the later)
+	for output, labels := range seenOn {
+		for _, label := range labels {
+			if spec, ok := specs[label]; ok && !connected(label, outputs) && spec != specs[output] {
+				agreed[output], agreed[label] = nil, nil
 			}
 		}
 	}

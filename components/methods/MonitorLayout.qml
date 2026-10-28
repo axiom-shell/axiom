@@ -207,10 +207,18 @@ QtObject {
     return description !== "" && !shared ? "desc:" + description : monitor.name;
   }
 
+  // Whether a rule's `output` names the monitor (render.names in Go)
   function matches(output, monitor) {
     if (String(output).startsWith("desc:"))
-      return String(monitor?.description ?? "").trim() === output.slice(5).trim();
+      return _bare(monitor?.description) === _bare(output.slice(5));
     return monitor?.name === output;
+  }
+
+  // A description trimmed, with niri's spelling of a make it has no name
+  // for ("PNP(AOC)") the bare code Hyprland and sway give, so a profile
+  // saved under one compositor matches under another
+  function _bare(description) {
+    return String(description ?? "").trim().replace(/^PNP\(([^)]*)\)/, "$1");
   }
 
   // The connected monitor a rule's `output` names, or null

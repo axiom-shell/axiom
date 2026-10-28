@@ -183,8 +183,7 @@ niri:
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
-- [A monitor profile saved under one compositor doesn't match under another](issues.md#a-monitor-profile-saved-under-one-compositor-doesnt-match-under-another)
-- [Two profiles naming one unplugged monitor differently both write a rule](issues.md#two-profiles-naming-one-unplugged-monitor-differently-both-write-a-rule)
+- [A profile saved under another compositor is written in that one's spelling](issues.md#a-profile-saved-under-another-compositor-is-written-in-that-ones-spelling)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [Floating bars sit flush on the border without a backend](issues.md#floating-bars-sit-flush-on-the-border-without-a-backend)
 - [Two exclusive-focus surfaces at once without a native grab](issues.md#two-exclusive-focus-surfaces-at-once-without-a-native-grab)
