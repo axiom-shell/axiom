@@ -174,9 +174,6 @@ Every feature works the same under each compositor, or says why not. It follows 
 
 Done: every entry is fixed: sway and SwayFX, then Hyprland's and every compositor's (the last with row 13: workspace blocks numbered over the saved monitor profiles, and the scrolling layout's borrowed workspaces, which Hyprland hands back on replug). niri's entries are [deferred](#deferred) (maintainer, 2026-10-29).
 
-Left, a rare path found in row 13's review:
-- [Saving a profile that names a new monitor can move other monitors' blocks](issues.md#saving-a-profile-that-names-a-new-monitor-can-move-other-monitors-blocks)
-
 ### Phase 7: fit, geometry and performance
 Nothing runs off a screen or clips at 1080p, and pages stay fast as their data grows. Take the 1080p entries as one pass in a nested compositor with a 1080p output.
 
@@ -331,6 +328,7 @@ Entries decided against doing now: a plan the maintainer deferred ([Items that n
 
 Extremely rare paths, put after real gaps (2026-10-26):
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads) (transient: corrected after the reload)
+- [Saving a profile that names a new monitor can move other monitors' blocks](issues.md#saving-a-profile-that-names-a-new-monitor-can-move-other-monitors-blocks) (found in row 13's review)
 
 Deferred by the maintainer (2026-10-27):
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)

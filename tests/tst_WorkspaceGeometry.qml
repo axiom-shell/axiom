@@ -315,10 +315,6 @@ TestCase {
     ], "", 10, profiles), {
       "DP-9": 21
     }, "a named monitor on another port keeps its block");
-    compare(WorkspaceGeometry.blockOrder([all[0], all[2]], "", profiles), {
-      "DP-1": 0,
-      "HDMI-A-1": 2
-    }, "the order blockBases numbers by, for the remap");
   }
 
   function test_outputToward() {

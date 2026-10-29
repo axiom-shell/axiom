@@ -237,23 +237,14 @@ QtObject {
   }
 
   // Each output's first workspace id ({ [name]: id }) when every output
-  // owns a block of `size` ids, by blockOrder
-  function blockBases(outputs, primaryName, size, profiles) {
-    const order = root.blockOrder(outputs, primaryName, profiles);
-    return Object.keys(order).reduce((bases, name) => {
-      bases[name] = order[name] * size + 1;
-      return bases;
-    }, {});
-  }
-
-  // Each output's block ({ [name]: index }, from 0). Blocks are numbered over every monitor the
+  // owns a block of `size` ids. Blocks are numbered over every monitor the
   // monitor profiles name (by their rules' `output`; the primary first,
   // matched by connector or by the rule's `label` while unplugged), then the
   // connected ones none names (keyed by MonitorLayout.outputId), each part
   // in orderMonitors' order, so a block never moves with what's connected.
   // outputs: [{ name, description }]; profiles: [{ outputs: [{ output,
   // label }] }] (MonitorsConfig.profiles)
-  function blockOrder(outputs, primaryName, profiles) {
+  function blockBases(outputs, primaryName, size, profiles) {
     const list = outputs ?? [];
     const known = [];
     for (const profile of profiles ?? []) {
@@ -279,10 +270,10 @@ QtObject {
           "connected": o.name
         });
     }
-    return root.orderMonitors(known, primaryName).concat(root.orderMonitors(unknown, primaryName)).reduce((order, o, i) => {
+    return root.orderMonitors(known, primaryName).concat(root.orderMonitors(unknown, primaryName)).reduce((bases, o, i) => {
       if (o.connected)
-        order[o.connected] = i;
-      return order;
+        bases[o.connected] = i * size + 1;
+      return bases;
     }, {});
   }
 
@@ -334,8 +325,9 @@ QtObject {
   // it and the rest take free ids; windows only merge when none is free.
   // from/to: { blocks, size } (blocks: each monitor owns `size` ids, else
   // all share 1..size). monitors: [{ name, block, active, focused }] in
-  // block order (block: its index, blockOrder); windows: [{ id, workspace, output }] (workspace
-  // an id, output a monitor's name). Returns { moves: [{ id, to }], focus:
+  // block order (block: its index from 0, as blockBases numbers them);
+  // windows: [{ id, workspace, output }] (workspace an id, output a
+  // monitor's name). Returns { moves: [{ id, to }], focus:
   // [{ monitor, id }]
   // (every monitor's mapped active workspace, the focused one last),
   // changed }.

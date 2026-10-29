@@ -195,7 +195,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-20, while aligning the schema's scopes
 
 ### Saving a profile that names a new monitor can move other monitors' blocks
-- **Where:** `components/methods/WorkspaceGeometry.qml` (`blockOrder`), `services/compositor/CompositorManager.qml` (`_bases`, `_remapWorkspaces`)
+- **Where:** `components/methods/WorkspaceGeometry.qml` (`blockBases`), `services/compositor/CompositorManager.qml` (`_bases`, `_remapWorkspaces`)
 - **What:** Blocks are numbered over the monitors the saved profiles name, sorted by output identity, so saving a profile that names a monitor no profile named before puts it among them: every monitor sorting after it gets a new base, its workspaces sit outside its block, and in the `perMonitor` and `grid` layouts its list and steps miss them (the scrolling layout lists them as borrowed, which compaction leaves) until `axiom ipc workspaces reconcile`. The same happens once on updating to row 13 where the profiles name a monitor that isn't connected. Nothing remaps when `_bases` changes; a remap from the old block order to the new one would (`remapWorkspaces` takes each monitor's `block`, one per layout today). Rare: a per-monitor layout, a newly saved monitor, and its identity sorting before a connected one.
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing row 13 (stable workspace blocks)

@@ -653,16 +653,12 @@ Singleton {
     return ids;
   }
 
-  // The outputs in block order, each with its block (WorkspaceGeometry.
-  // blockOrder, as _bases numbers them)
+  // The outputs in block order, each with its block (its index, from
+  // _bases)
   function _orderedOutputs() {
-    // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label
-    const order = WorkspaceGeometry.blockOrder(root.outputs, General.primaryMonitor, MonitorsConfig.profiles);
     return root.outputs.map(o => ({
           "name": o.name,
-          "block": order[o.name],
-          "x": o.x,
-          "y": o.y,
+          "block": Math.round((root._bases[o.name] - 1) / root.blockSize),
           "active": o.activeWorkspaceId,
           "focused": o.focused
         })).sort((a, b) => a.block - b.block);
