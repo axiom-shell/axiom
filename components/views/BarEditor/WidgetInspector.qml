@@ -239,7 +239,7 @@ Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.topMargin: Widget.spacing / 2
-        types: BarsConfig.availableWidgetTypes
+        types: BarsConfig.libraryWidgetTypes
         groups: OverlayConfig.libraryGroups
         grouped: EditsManager.libraryGrouped
         // Schema keys (labels, group names)

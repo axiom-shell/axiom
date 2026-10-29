@@ -20,7 +20,7 @@ How the overlay turns `Overlay.items` into pages, and a page's modules into a gr
 - `components/views/<type>/<type>.qml`, a `BaseView` that receives the screen's `grid` and its `viewConfig`.
 - `BaseView` gives hand-built pages their sizes: `pageHeight` (two cards), `cardPageWidth`, `sideWidth`.
 - `Custom` (`views/Custom/Custom.qml`) is one `ModuleGrid` of its `modules`, with its own `icon` in the navigator (`OverlayConfig.pageIcon`; empty is the type's).
-- Tool pages (`x-tool`), hand-built with their pieces in `views/<page>/`: `Settings`, `BarEditor`, `Themes`, `Keybinds`, `Monitors`, `CalendarPage`.
+- Tool pages (`x-tool`), hand-built with their pieces in `views/<page>/`: `Settings`, `BarEditor`, `Themes`, `Keybinds`, `Monitors`, `CalendarPage`, `CustomWidgets`.
   - `CalendarPage`: the month with its events, the selected day's `DayPane`, and the calendars to switch on and off. It is not named `Calendar`, which `views/Themes`' import of `content/` would see twice.
   - The Themes page is described in [Themes](../theming/themes.md).
 - `Layouts` (the layouts editor, `views/Layouts/`) is pinned, not in config: see [Layouts editor](layouts-editor.md).
@@ -92,7 +92,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
   - Timing: each page logs `Overlay page N built in X ms` and a streamed grid `Overlay modules streamed in X ms` (`--debug`); `scripts/dev/bench_overlay.sh` prints them per step ([streamed-building › Measuring](../core/streamed-building.md)).
 - Page order (`OverlayPages.buildViewsModel`; `viewsModel[i].index` is the view's place in config):
   1. the user's own (Custom) pages, in config order;
-  2. the tool pages (view types with `x-tool`: Settings, BarEditor, Themes, Keybinds, Monitors, CalendarPage), in config order;
+  2. the tool pages (view types with `x-tool`: Settings, BarEditor, Themes, Keybinds, Monitors, CalendarPage, CustomWidgets), in config order;
   3. the pinned Layouts page.
 - A view with `visible: false` stays in config but isn't shown.
 

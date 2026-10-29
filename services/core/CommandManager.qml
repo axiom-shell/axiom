@@ -9,6 +9,7 @@ import QtQuick
 //   CommandManager.acquire(owner, { command, interval, mode, format })
 //   CommandManager.outputs[command]    // last stdout, trimmed
 //   CommandManager.values[command]     // with format "json": it parsed
+//   CommandManager.runs[command]       // { exitCode, error, at } of the last
 // Also runs one-off commands: runDetached (a shell string or an argv) for
 // widgets and services that don't wait on it (so they start no processes of
 // their own), and run() for services that want the output:
@@ -26,6 +27,10 @@ QtObject {
   // command -> its output parsed, for a command acquired with format
   // "json" (absent while the output isn't JSON)
   readonly property var values: _values
+  // command -> { exitCode, error ("" when none: it couldn't start, or its
+  // output isn't the JSON asked for), at (ms since the epoch) } of its
+  // last output
+  readonly property var runs: _runs
 
   // request: { command, interval (ms, default 5000, at least 500), mode
   // ("poll"; "once": run once, then on refresh; "stream": run for as long
@@ -98,6 +103,7 @@ QtObject {
   // -- Private --
   property var _outputs: ({})
   property var _values: ({})
+  property var _runs: ({})
   property ConsumerRegistry _registry: ConsumerRegistry {}
   readonly property var _requests: _registry.requests
   on_RequestsChanged: _sync()
@@ -158,14 +164,21 @@ QtObject {
     BackendManager.listen("exec.outputs", state => {
       const outputs = {};
       const values = {};
+      const runs = {};
       for (const command in state.outputs) {
         const entry = state.outputs[command];
         outputs[command] = entry.text;
         if (entry.value !== undefined)
           values[command] = entry.value;
+        runs[command] = {
+          "exitCode": entry.exitCode ?? 0,
+          "error": entry.error ?? "",
+          "at": entry.at ?? 0
+        };
       }
       root._outputs = outputs;
       root._values = values;
+      root._runs = runs;
     });
   }
   // A new connection: axiom knows nothing of the watches yet

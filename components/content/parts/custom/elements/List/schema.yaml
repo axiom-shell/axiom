@@ -1,0 +1,6 @@
+label: List
+icon: list
+defaultSize: [8, 4]
+slots: [items]
+actions: [click]
+color: state

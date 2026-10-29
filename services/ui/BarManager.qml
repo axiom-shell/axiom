@@ -329,17 +329,22 @@ QtObject {
     return sel.zone === "" ? null : (selectedBar()?.widgets?.[sel.zone]?.[sel.index] ?? null);
   }
 
-  // Inserts a new widget at `index` (the end by default) and selects it
+  // Inserts a new widget at `index` (the end by default) and selects it;
+  // `widgetType` may be a library key (CustomWidgetsConfig.splitKey)
   function addWidget(zone, widgetType, index = -1) {
     const arr = _zone(zone);
     if (!arr)
       return;
     const at = index < 0 || index > arr.length ? arr.length : index;
+    const key = CustomWidgetsConfig.splitKey(widgetType);
     // Properties start at the widget schema's defaults
-    arr.splice(at, 0, ConfigManager.withDefaults({
-      "id": root._widgetId(widgetType, selectedBar()),
-      "type": widgetType
-    }, "BarWidget"));
+    const widget = ConfigManager.withDefaults({
+      "id": root._widgetId(key.type, selectedBar()),
+      "type": key.type
+    }, "BarWidget");
+    if (key.properties)
+      widget.properties = Object.assign({}, widget.properties, key.properties);
+    arr.splice(at, 0, widget);
     selectWidget(zone, at);
     applyChanges();
   }
