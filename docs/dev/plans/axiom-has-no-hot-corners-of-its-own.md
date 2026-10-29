@@ -1,7 +1,7 @@
 # axiom has no hot corners of its own
 
-> **Issue:** [axiom has no hot corners of its own](../issues.md#axiom-has-no-hot-corners-of-its-own)
-> **Status:** proposed
+> **Issue:** [Phase 13: the maintainer's notes](../roadmap.md#phase-13-the-maintainers-notes)
+> **Status:** decided: A, a trigger window per corner (2026-10-29)
 
 ### Problem
 The only hot corner is niri's: `Compositor.niri.hotCorner` (`config/schema/sections/Compositor.yaml`, default off) is written in managed mode as `gestures { hot-corners { off } }` (`x-compositor` `offFlag`; `manager/testdata/golden/niri/managed.kdl`), so it can only open niri's overview from the top-left, and only on niri. Hyprland 0.55 and sway 1.12 have no hot corner at all (Hyprland only through plugins). The maintainer (2026-10-29): "hot corners should be implemented (which would cause niris to work the same way (i.e. only exits if axiom sets it in managed mode (which also wouldn't even use niris corner)". Their rule for managed binds applies here as well: "Binds are exactly representative of what there is" (Phase 13 step 4). Detached and included leave niri's own corner alone, as they leave its binds alone (steps 1 and 4).
@@ -26,6 +26,11 @@ Keep niri's corner and map an axiom corner onto it in managed mode (newer niri c
 - Cheapest, but it's what the maintainer ruled out ("wouldn't even use niris corner"), it isn't parity, and it offers one action.
 
 ### Recommendation
+A (maintainer's choice, on #210: "A. Build it as a single card in the overlay and popouts group on settings. Can configure each corner. Any axiom action is configurable, or custom command"). Decided with it:
+- **Actions**: any axiom action, the keybind table's actions that call axiom (`ipcActions`: launcher, overlay, a page, an edge menu, the workspace overview, lock, do not disturb, media, …), with its argument, or a command. Not the compositor's own actions.
+- **Settings**: the `HotCorners` section in Overlay & Popouts, one card listing the corners.
+- Questions 2 to 4, unanswered, as recommended: a `screen` target per corner (every monitor by default), a delay per corner (0 ms by default), and quiet over fullscreen windows (`Top`), as the bars are.
+
 A. It works the same on every compositor, costs nothing until a corner is set, and is mostly existing pieces: `EdgeTrigger`, the bar Button's actions, the screen targeting. B's saving matters only if the stolen corner click turns out to bite. In that case it can come later as a refinement that hands a covered corner to its bar, without changing the config. On niri in managed mode the corner is always off, and `Compositor.niri.hotCorner` goes: a migration turns `true` into an axiom top-left corner running `workspaceOverlay`, which with `WorkspaceOverlay.compositorOverview` opens niri's overview as before.
 
 Questions for the maintainer:
@@ -35,6 +40,6 @@ Questions for the maintainer:
 4. **Fullscreen**: quiet over fullscreen windows (`Top`) or active over them (`Overlay`)? Recommended: quiet, as the bars are.
 
 ### Items
-1. **Shell actions in one place**: the bar Button's `runAction` (`components/bar/widgets/Button/Button.qml`) moves into a shared service function (e.g. ShellManager.runAction(action, args), new) taking the action and its page, menu or command, and Button calls it. No behaviour change. *small*
+1. **Axiom actions in one place**: a shared service function (ShellManager.runAction(action, argument), new) runs any of the keybind table's axiom actions with its argument, as its bind would, or a command. *small*
 2. **The `HotCorners` section and its windows**: schema section (`items[]`: `corner`, `action` with its `x-showIf` arguments, `screen`, `delay`; `x-scope` personal, `screen` machine), reader `HotCornersConfig`, shell/HotCorners.qml, new (a `Variants` over screens × items keyed by item id) with a corner trigger generalized from `EdgeTrigger`, its namespace in `LayerStack.layers`, a feature doc (features/hot-corners.md), and the settings page from the schema. *small*
 3. **niri's corner off in managed mode**: the niri writer always writes `gestures.hot-corners.off` in the managed file, `Compositor.niri.hotCorner` is removed by a format-2 migration step (`true` becomes a top-left `workspaceOverlay` corner on every screen), goldens updated, and `niri-backend.md` and `schema-annotations.md` (its `offFlag` example) follow. *small*

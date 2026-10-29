@@ -26,11 +26,23 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while adding niri's own overview (row 16)
 
-### axiom has no hot corners of its own
-- **Where:** `backend/internal/compositor/render/niri.go`, `backend/internal/compositor/manager/niri.go`
-- **What:** The maintainer (2026-10-29): "note in issues/roadmap that hot corners should be implemented (which would cause niris to work the same way (i.e. only exits if axiom sets it in managed mode (which also wouldn't even use niris corner)". Hot corners become an axiom feature drawn by the shell, so they work on every compositor; in managed mode on niri, niri's own hot corner is turned off and a corner exists only when axiom sets one, matching managed binds ("Binds are exactly representative of what there is"). Detached and included leave niri's corner alone, as they do its binds. Open: which actions a corner runs, per-monitor corners, a delay.
-- **Size:** needs a plan
-- **Found:** 2026-10-29, while adding niri's own overview (row 16)
+### No shared function runs an axiom action
+- **Where:** `components/methods/BindActions.qml`, `services/ui/ShellManager.qml`
+- **What:** Hot corners (plan: [axiom has no hot corners of its own](plans/axiom-has-no-hot-corners-of-its-own.md), item 1) run "Any axiom action [...] or custom command" (the maintainer, #210): the keybind table's `ipcActions` with their argument, or a command. Only a bind runs those today, through the compositor calling `axiom ipc`; the shell has nothing that runs one by name.
+- **Size:** small
+- **Found:** 2026-10-29, while deciding the hot corners plan (row 16)
+
+### axiom draws no hot corners
+- **Where:** `shell.qml`, `components/hosts/popout/EdgeTrigger.qml`, `components/methods/LayerStack.qml`
+- **What:** The maintainer (#210): "A. Build it as a single card in the overlay and popouts group on settings. Can configure each corner. Any axiom action is configurable, or custom command". A `HotCorners` section (`items[]`: corner, action and argument, a screen target, a delay, 0 ms by default), its reader, a transparent corner window per item per screen on `Top` (quiet over fullscreen, as the bars are) and its settings card in Overlay & Popouts (plan item 2).
+- **Size:** small
+- **Found:** 2026-10-29, while deciding the hot corners plan (row 16)
+
+### niri's own hot corner can be on in managed mode
+- **Where:** `backend/internal/compositor/manager/niri.go` (`managedText`), `config/schema/sections/Compositor.yaml` (`niri.hotCorner`)
+- **What:** In managed mode niri's corner should always be off, so a corner exists only where axiom sets one (the maintainer: "only exits if axiom sets it in managed mode (which also wouldn't even use niris corner)"); `Compositor.niri.hotCorner` turns it on. It goes, with a migration turning `true` into an axiom top-left corner opening the workspace overview (plan item 3).
+- **Size:** small
+- **Found:** 2026-10-29, while deciding the hot corners plan (row 16)
 
 ### The overlay's gaps can't be adjusted
 - **Where:** `components/methods/GridPlacement.qml` (`cardSpacing`, `baseCard`, `gapOf`), `config/OverlayConfig.qml` (`boxPadding`)
