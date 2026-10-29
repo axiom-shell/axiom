@@ -52,19 +52,30 @@ QtObject {
 
   // --- Catching clicks for a focus grab the compositor doesn't have ---
 
-  // FocusGrabs without a native grab, active now ({ uid: true }): every
-  // screen's backdrop window then covers its screen, transparent, under
-  // the grabbing surface, and a click on it ends their grabs
+  // FocusGrabs without a native grab, active now ({ uid: order of
+  // activation }): every screen's backdrop window then covers its screen,
+  // transparent, under the grabbing surface, and a click on it ends their
+  // grabs
   property var _catchers: ({})
+  property int _lastCatcher: 0
   readonly property bool catching: Object.keys(root._catchers).length > 0
+  // The catcher that started last (0 with none): only its surface asks for
+  // the keyboard exclusively (FocusGrab.exclusive)
+  readonly property int newestCatcher: {
+    let newest = 0;
+    for (const uid in root._catchers)
+      if (!newest || root._catchers[uid] > root._catchers[newest])
+        newest = Number(uid);
+    return newest;
+  }
   signal clickedOutside
 
   function catchClicks(uid, on) {
-    if ((root._catchers[uid] === true) === on)
+    if ((uid in root._catchers) === on)
       return;
     const catchers = Object.assign({}, root._catchers);
     if (on)
-      catchers[uid] = true;
+      catchers[uid] = ++root._lastCatcher;
     else
       delete catchers[uid];
     root._catchers = catchers;

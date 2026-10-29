@@ -322,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
 
-### Two exclusive-focus surfaces at once without a native grab
-- **Where:** `services/compositor/FocusGrab.qml` (`exclusive`), `components/hosts/overlay/OverlayPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`
-- **What:** Without `supports.focusGrab`, every active grab's surface asks for `WlrKeyboardFocus.Exclusive`. With the overlay open (exclusive the whole time) and a popout with a text field opened over it, two surfaces on the Overlay layer ask for exclusive focus. Which one gets the keyboard is up to the compositor. On niri the older one keeps it (found fixing the polkit prompt, c49b429, which now turns `exclusive` off while `SurfaceManager.modalShown`), so there typing into a popout over the overlay goes to the overlay. Sway is unchecked (`scripts/dev/nested.sh sway`). A fix in the same spirit: only the newest active grab is `exclusive`.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the layer-placement branch
-
 ### The lock screen's modules all warn they overlap
 - **Where:** `components/hosts/overlay/ModuleGrid.qml` (`_check`), `components/surfaces/screenlayout/ScreenLayoutView.qml` (`arrangement`)
 - **What:** As the lock screen showed on live niri (2026-10-28 21:43, its Password module taking the keyboard), every one of its seven modules logged `[ModuleGrid] Overlay module <name>` … `overlaps another` (Greeting, NowPlaying, Password, ClockCalendar, Weather, VolumeDials, Power), though `Lockscreen.layout`'s saved places don't overlap. Likely `_check` running on the first arrangement, before the surface has its size (a zero room squeezes every place together); unconfirmed.
