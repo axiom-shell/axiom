@@ -298,11 +298,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the guard batch (roadmap row 18)
 
-### CI's Go tests run as root, so the unwritable-file tests never run there
-- **Where:** `.github/workflows/checks.yml` (the `go` job), `backend/internal/compositor/binds/binds_test.go` (`TestAnUnwritableFileFailsAlone`), `backend/internal/compositor/manager/manager_test.go` (`TestAFailedReleaseIsRetried`), `backend/internal/compositor/manager/sway_test.go`, `backend/internal/compositor/userconf/userconf_test.go`, `backend/internal/compositor/edit/hookup_test.go`, `backend/internal/daemon/selfupdate_test.go`
-- **What:** The `go` job runs in `archlinux:latest` as root, and six tests skip when `os.Geteuid() == 0` ("root writes anywhere"): the refusal paths for a file the user can't read or write (a failed release retried, an unwritable bind file failing alone, a read-only install). They run only on a developer's machine, so a PR from someone who didn't run them merges with those paths untested. Fix: run `scripts/check_go.sh --ci` as an unprivileged user in the container (`useradd -m ci`, a chown of the workspace and Go caches, `su ci -c …` or `setpriv`).
+### A files watch test fails under -race in a local Arch container
+- **Where:** `backend/internal/files/files.go` (`Write`, `fire`), `backend/internal/files/files_test.go` (`TestWatch`)
+- **What:** Running CI's go job by hand in `archlinux:latest` (docker, overlayfs), `TestWatch` fails every time under `-race` with `pushed [...//todo.json] for its own write and an unwatched file`, as root and as an unprivileged user alike; without `-race`, and under `-race` on a developer's machine or GitHub's runners, it passes. So the daemon's own write was pushed as an outside change there: `Write` records the file it wrote (`written`) only after the rename, under the lock the watcher's events take, so a slow enough run may settle the event first, or the `os.SameFile`/mtime comparison in `fire` differs on that filesystem. Not diagnosed further. Fix: find which; if it's the window, record before the watcher can see the rename (hold `f.mu` across the write).
 - **Size:** small
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+- **Found:** 2026-10-30, while running CI's go job as a user in a container (roadmap row 18, batch 5)
 
 ### The qmllint baseline doesn't shrink when warnings are fixed
 - **Where:** `scripts/check_qmllint.py` (`main`), `scripts/qmllint-baseline.json`

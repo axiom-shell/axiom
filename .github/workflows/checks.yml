@@ -163,12 +163,18 @@ jobs:
       # scripts/check_go.sh --ci, and that the cases the JS helpers and the
       # axiom binary share (both replay them) are indexed. A shared runner
       # is slower than the machine the tests' waits were tuned on: they
-      # wait three times as long (testkit.Bound)
+      # wait three times as long (testkit.Bound). As a user, not the
+      # container's root, who reads and writes any file: the tests of a
+      # file the user can't read or write would skip. Its own home holds
+      # the Go caches; setpriv keeps the environment (the wait factor)
       - name: Checks (scripts/check_all.sh go)
         if: steps.scope.outputs.run
         env:
           AXIOM_TEST_WAIT_FACTOR: "3"
-        run: scripts/check_all.sh --ci go
+        run: |
+          useradd -m ci
+          chown -R ci:ci "$PWD"
+          setpriv --reuid=ci --regid=ci --init-groups env HOME=/home/ci scripts/check_all.sh --ci go
 
   # The script tests (the slowest checks) and the shell script lint, beside
   # the qt job rather than after it
