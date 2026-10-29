@@ -315,7 +315,6 @@ Needs a plan:
 Resolves:
 - [A note's view jumps while typing and forgets its place](issues.md#a-notes-view-jumps-while-typing-and-forgets-its-place)
 - [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop)
-- [Warning triangles say nothing on hover](issues.md#warning-triangles-say-nothing-on-hover)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
 - [Updating the greeter closes the overlay and shows no progress](issues.md#updating-the-greeter-closes-the-overlay-and-shows-no-progress). *Needs testing:* only a real greeter update shows it, which the agents may not run (`AGENTS.md` › Never).

@@ -196,10 +196,12 @@ StyledContainer {
       }
     }
 
-    StyledIcon {
+    IssueIcon {
+      id: issueIcon
       visible: root.hasWarning
-      text: root.hasError ? "error" : "warning"
-      textColor: root.selected ? root.ink : (root.hasError ? Theme.error : Theme.warning)
+      level: root.hasError ? "error" : "warning"
+      tip: root.issues.filter(issue => issue.level !== "info").map(issue => issue.text).join("\n")
+      textColor: root.selected ? root.ink : issueIcon.tone
       textSize: Appearance.fontSize
     }
 

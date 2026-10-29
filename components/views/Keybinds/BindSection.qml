@@ -120,10 +120,10 @@ ColumnLayout {
         textSize: Appearance.fontSizeBy(-2)
       }
 
-      StyledIcon {
+      // What's wrong in the section, each problem once
+      IssueIcon {
         visible: root.issueCount > 0
-        text: "warning"
-        textColor: Theme.warning
+        tip: visible ? [...new Set([].concat(...root.section.indices.map(i => KeybindManager.editor.issues[i] ?? [])).filter(issue => issue.level !== "info").map(issue => issue.text))].join("\n") : ""
         textSize: Appearance.fontSizeBy(-1)
       }
 

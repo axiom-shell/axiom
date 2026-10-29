@@ -358,12 +358,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### Warning triangles say nothing on hover
-- **Where:** `components/views/Keybinds/BindListRow.qml`, `components/reusable/IssueList.qml`
-- **What:** From the maintainer's notes: anywhere the shell shows a yellow warning triangle (a niri bind set while on Hyprland, …) it should be hoverable, with a tooltip saying what's wrong.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### The system stats widget changes width with its digits
 - **Where:** `components/bar/widgets/SystemStats/SystemStats.qml`
 - **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size.

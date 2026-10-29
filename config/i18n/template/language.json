@@ -2230,6 +2230,7 @@
     "Skip the rest? Your choices so far are kept, and /welcome in the launcher brings this back.": "",
     "Skip to the next phase": "",
     "Skipped: you can't change {0}. Add the text yourself.": "",
+    "Skipped: your own config binds {0} too": "",
     "Skipped: {0} is a link to {1}, which you can't change. Add the text to a file of your own.": "",
     "Skipped: {0} isn't installed.": "",
     "Slanted": "",

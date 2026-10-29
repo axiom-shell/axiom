@@ -38,6 +38,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `StatusChip` (filled status pill), `CountBadge` (a count on a button's or icon's corner; bumps when it changes), `UnsavedDot` (`onAccent` on a selected row).
   - All three are `PopInRectangle`s: set `shown` (not `visible`) and they pop in and out; `pulse()` for a bump.
 - `IssueList`: `[{ level, text }]`, errors red, warnings amber.
+- `IssueIcon`: one problem's icon in those colors (`level`, `tone`), saying what's wrong in a tooltip on hover (`tip`). Every warning or error icon shown without its text beside it is one (a bind row, a bind section, the onboarding's binds table, the keybinds reference).
 - `DropdownSurface`: the box of anything that drops down.
 - `TileFlow`: equal tiles, as many columns as fit.
 - `TypeLibrary`: the editors' libraries of types to add.

@@ -3191,6 +3191,7 @@
     "Caffeine for a set time, from the presets, when hovered.": "",
     "Caffeine for a set time from the popout, comma-separated: 30m, 1h30m, 4h.": "",
     "30m, 1h30m, 90s…": "",
-    "Shared with every bar.": ""
+    "Shared with every bar.": "",
+    "Skipped: your own config binds {0} too": ""
   }
 }
