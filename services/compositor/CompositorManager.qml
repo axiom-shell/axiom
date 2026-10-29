@@ -406,8 +406,9 @@ Singleton {
 
   // Goes to workspace `id`. mode: "go" (default), "move" (taking the
   // focused window along) or "moveSilent" (sending it there, staying put).
-  // In a grid or perMonitor layout only the output's own workspaces are
-  // reachable (`output`, a name, the focused one by default), and it goes
+  // In a grid or perMonitor layout only the output's own workspaces (and
+  // with dynamic workspaces, those it borrows) are reachable (`output`, a
+  // name, the focused one by default), and it goes
   // by column, then row, sliding along each in turn (WorkspacesConfig.
   // animate). The standard and perMonitor layouts are one row (columns =
   // count), so they only ever slide sideways. Callers on an output's
@@ -424,7 +425,7 @@ Singleton {
     output = output || root.focusedOutput;
     const base = workspaceBase(output);
     const size = root.blockSize;
-    if (root.perMonitorBlocks && (id < base || id >= base + size)) {
+    if (root.perMonitorBlocks && (id < base || id >= base + size) && workspaceIds(output).indexOf(id) < 0) {
       if (focusId)
         root.backend.activateWindow(focusId);
       else

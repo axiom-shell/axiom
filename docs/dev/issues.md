@@ -194,12 +194,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while aligning the schema's scopes
 
-### The scrolling layout drops a monitor's borrowed workspaces from its list
-- **Where:** `components/methods/DynamicWorkspaces.qml` (`workspaces`, `compaction`), `services/compositor/CompositorManager.qml` (`nthWorkspace`, `stepWorkspace`)
-- **What:** Under `Workspaces.layout: scrolling` on Hyprland, an unplugged monitor's workspaces move to another monitor, outside its block, so `DynamicWorkspaces.workspaces` drops them from every list and their windows are reachable only by the overview or `workspaces reconcile`. Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 3): list a monitor's out-of-block workspaces after its own as borrowed, and leave them where they are (compaction skips them, navigation and the overview's column reach them), so Hyprland's return on replug brings them home. Needs the stable blocks first and the replug check to have passed. `tst_DynamicWorkspaces` rows for borrowed workspaces listed, kept by compaction and stepped through. Docs: `docs/dev/hyprland/workspace-strips.md` › The scrolling layout.
-- **Size:** small
-- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
-
 ### Persistent workspaces sit empty in the scrolling layout's list
 - **Where:** `components/methods/DynamicWorkspaces.qml` (`workspaces`)
 - **What:** A `persistent` workspace rule in the user's Hyprland config keeps an empty workspace alive; `DynamicWorkspaces.workspaces` lists every real in-block workspace, so an empty persistent one past the last occupied one stays in the list and the "one empty after the last" rule no longer holds. Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 4): leave out in-block workspaces that are empty and not active (the synthetic one after the last still covers a new one); `tst_DynamicWorkspaces` rows for a persistent one in the middle and past the end.

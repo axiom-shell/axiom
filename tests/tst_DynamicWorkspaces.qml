@@ -43,9 +43,47 @@ TestCase {
     compare(shown[2].output, "B");
   }
 
-  function test_workspaces_leave_out_what_is_outside_the_block() {
-    const shown = DynamicWorkspaces.workspaces([ws(-98, "A", 1), ws(101, "A", 1), ws(1, "A", 1), ws(102, "B", 1)], bases, 100);
-    compare(shown.map(w => w.id), [1, 2, 102, 103], "a special one, and B's id on A, are left out");
+  function test_workspaces_leave_out_special_and_named_ones() {
+    const shown = DynamicWorkspaces.workspaces([ws(-98, "A", 1), ws(-1337, "A", 1), ws(1, "A", 1), ws(102, "B", 1)], bases, 100);
+    compare(shown.map(w => w.id), [1, 2, 102, 103]);
+  }
+
+  function test_workspaces_list_borrowed_ones_after_their_own() {
+    const shown = DynamicWorkspaces.workspaces([ws(202, "A", 1), ws(201, "A", 2), ws(1, "A", 1, true), ws(101, "B", 1)], bases, 100);
+    compare(shown.map(w => w.id), [1, 201, 202, 2, 101, 102], "an unplugged monitor's on A, then A's empty one");
+    compare(shown.map(w => w.output), ["A", "A", "A", "A", "B", "B"]);
+  }
+
+  function test_workspaces_borrowed_empty_last_one_ends_the_list() {
+    const shown = DynamicWorkspaces.workspaces([ws(1, "A", 1), ws(201, "A", 0, true)], {
+      "A": 1
+    }, 100);
+    compare(shown.map(w => w.id), [1, 201], "the active empty borrowed one is the one at the end");
+  }
+
+  function test_compaction_leaves_borrowed_ones_in_place() {
+    const plan = DynamicWorkspaces.compaction([
+      {
+        "name": "A",
+        "active": 203,
+        "focused": true
+      }
+    ], [
+      {
+        "id": "a",
+        "workspace": 1
+      },
+      {
+        "id": "b",
+        "workspace": 201
+      },
+      {
+        "id": "c",
+        "workspace": 203
+      }
+    ], bases, 100);
+    compare(plan.changed, false, "nothing in A's block has a gap, and 201, 203 aren't A's to close");
+    compare(plan.moves, []);
   }
 
   function test_workspaces_stop_at_the_end_of_the_block() {

@@ -1,6 +1,6 @@
 # The scrolling layout's workspaces don't come back with their monitor
 
-> **Issue:** split into Hyprland's return of workspaces on replug is unconfirmed (done: it returns them), Workspace blocks follow the connected monitors, not the saved profiles (done), [The scrolling layout drops a monitor's borrowed workspaces from its list](../issues.md#the-scrolling-layout-drops-a-monitors-borrowed-workspaces-from-its-list), [Persistent workspaces sit empty in the scrolling layout's list](../issues.md#persistent-workspaces-sit-empty-in-the-scrolling-layouts-list)
+> **Issue:** split into Hyprland's return of workspaces on replug is unconfirmed (done: it returns them), Workspace blocks follow the connected monitors, not the saved profiles (done), The scrolling layout drops a monitor's borrowed workspaces from its list (done), [Persistent workspaces sit empty in the scrolling layout's list](../issues.md#persistent-workspaces-sit-empty-in-the-scrolling-layouts-list)
 > **Status:** decided: C (2026-10-29)
 
 ### Problem

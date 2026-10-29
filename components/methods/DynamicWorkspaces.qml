@@ -3,27 +3,32 @@ import QtQuick
 
 // niri's workspaces for a compositor that only has ids (Hyprland, under the
 // scrolling layout): each output's workspaces are its block's ids from the
-// first, without gaps, with one empty one after the last. `workspaces`
+// first, without gaps, with one empty one after the last (and any it
+// borrows from another output's block before that one). `workspaces`
 // shows them so; `compaction` plans the window moves that close a gap once
 // a workspace in the middle is left empty.
 QtObject {
   id: root
 
   // The workspaces as niri would have them: each output's (by `bases`: {
-  // [name]: first id }, `size` ids each) in id order, then an empty one
-  // after the last unless that one is already empty. Workspaces outside
-  // their output's block (named ones, special ones, one stuck on another
-  // output) are left out. real: [{ id, name, output, windowCount, active,
-  // focused }]. Returns the same shape.
+  // [name]: first id }, `size` ids each) in id order, then the ones it
+  // borrows (numbered ones outside its block, such as an unplugged
+  // monitor's, which Hyprland hands back on replug), then an empty one
+  // after the last unless that one is already empty. Special and named
+  // workspaces (ids below 1) are left out. real: [{ id, name, output,
+  // windowCount, active, focused }]. Returns the same shape.
   function workspaces(real, bases, size) {
     const result = [];
     for (const output of Object.keys(bases)) {
       const base = bases[output];
-      const own = (real ?? []).filter(ws => ws.output === output && ws.id >= base && ws.id < base + size).sort((a, b) => a.id - b.id);
+      const mine = (real ?? []).filter(ws => ws.output === output && ws.id >= 1).sort((a, b) => a.id - b.id);
+      const own = mine.filter(ws => ws.id >= base && ws.id < base + size);
+      const borrowed = mine.filter(ws => ws.id < base || ws.id >= base + size);
+      const listed = own.concat(borrowed);
       const last = own[own.length - 1];
       const next = last ? last.id + 1 : base;
-      const lastEmpty = last && last.windowCount === 0;
-      result.push(...own);
+      const lastEmpty = listed.length > 0 && listed[listed.length - 1].windowCount === 0;
+      result.push(...listed);
       if (!lastEmpty && next < base + size)
         result.push({
           "id": next,
@@ -38,7 +43,8 @@ QtObject {
   }
 
   // The moves that close the gaps in each output's block: its workspaces
-  // with windows and its active one, in id order, go to its first ids. The
+  // with windows and its active one, in id order, go to its first ids
+  // (borrowed ones, outside its block, stay where they are). The
   // active one stays where it is in that order even when empty (niri drops
   // an empty workspace only once it's left). Only ever moves windows to a
   // lower id, so working through `moves` in order never merges two.
