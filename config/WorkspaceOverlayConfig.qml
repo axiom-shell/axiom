@@ -20,4 +20,7 @@ QtObject {
   readonly property bool showNumbers: _c.showNumbers
   readonly property bool showTitles: _c.showTitles
   readonly property bool showHint: _c.showHint
+  // Open the compositor's own overview instead, where it has one
+  // (CompositorManager.supports.overview)
+  readonly property bool compositorOverview: _c.compositorOverview
 }

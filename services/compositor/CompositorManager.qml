@@ -233,6 +233,14 @@ Singleton {
     root.backend?.closeWindow(id);
   }
 
+  // Opens, closes or toggles the compositor's own overview (`verb`: open,
+  // close, toggle), with `supports.overview`: axiom's workspace overview
+  // stands aside for it when WorkspaceOverlay's compositorOverview is on
+  function compositorOverview(verb) {
+    if (root.supports.overview)
+      root.backend.overview(verb);
+  }
+
   // The overview's drag and drop (the backend's placeWindow)
   function placeWindow(id, workspaceId, targetId, side, restore, reinsert, floatAt) {
     root.backend?.placeWindow(id, workspaceId, targetId, side, restore, reinsert, floatAt);

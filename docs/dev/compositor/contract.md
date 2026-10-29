@@ -91,3 +91,4 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `splitToggle` | the `toggleSplit` bind (Hyprland's dwindle layout: on its scrolling layout the bind gets an info note) |
 | `pin` | the `pin` bind (a floating window shown on every workspace) |
 | `windowGroups` | the `toggleGroup` bind |
+| `overview` | the compositor has an overview of its own, the backend's `overview(verb)` (`open`, `close`, `toggle`; `CompositorManager.compositorOverview`): while `WorkspaceOverlay.compositorOverview` is on (shown only with it), everything that opens axiom's workspace overview (its IPC, binds, `/overview`, bar buttons) opens that instead (`shell/WorkspaceOverlay.qml`) |

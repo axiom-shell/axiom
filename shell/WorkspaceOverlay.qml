@@ -11,7 +11,9 @@ import qs.components.surfaces.workspaces
 
 // The workspace overview: the hovered monitor's workspace board
 // (WorkspacesConfig's layout) with its windows, full screen. Drag a window to move it (onto a side of another
-// window), right-drag to resize, middle-click to close.
+// window), right-drag to resize, middle-click to close. Where the
+// compositor has an overview of its own and WorkspaceOverlay's
+// compositorOverview is on, everything that opens this opens that instead.
 Scope {
   id: root
   objectName: "workspaceOverlay"
@@ -19,9 +21,13 @@ Scope {
   property bool overlayVisible: false
   // Screen it opens on: the one under the cursor, fixed when it opens
   property string openScreen: ""
+  // The compositor's own overview stands in for this one
+  readonly property bool useCompositor: CompositorManager.supports.overview === true && WorkspaceOverlayConfig.compositorOverview
 
   function open() {
-    if (root.overlayVisible)
+    if (root.useCompositor)
+      CompositorManager.compositorOverview("open");
+    if (root.useCompositor || root.overlayVisible)
       return;
     CompositorManager.withHoveredScreen(name => {
       root.openScreen = name;
@@ -31,7 +37,9 @@ Scope {
   }
 
   function toggle() {
-    if (root.overlayVisible)
+    if (root.useCompositor)
+      CompositorManager.compositorOverview("toggle");
+    else if (root.overlayVisible)
       root.overlayVisible = false;
     else
       root.open();
@@ -56,6 +64,8 @@ Scope {
     }
 
     function hide(): void {
+      if (root.useCompositor)
+        CompositorManager.compositorOverview("close");
       root.overlayVisible = false;
     }
   }

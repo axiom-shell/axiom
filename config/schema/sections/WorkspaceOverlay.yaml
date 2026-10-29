@@ -7,6 +7,13 @@ title: Workspace overview
 description: 'The full-screen workspace board (laid out as in Workspaces): drag windows between workspaces, right-drag to resize, middle-click to close.'
 additionalProperties: false
 properties:
+  compositorOverview:
+    type: boolean
+    title: Use the compositor's overview
+    x-scope: personal
+    x-showIf: {/$supports.overview: true}
+    default: true
+    description: Open the compositor's own overview instead of this one, wherever axiom's overview opens from (binds, the launcher, bar buttons).
   background:
     type: string
     title: Workspace background

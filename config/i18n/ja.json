@@ -3178,6 +3178,8 @@
     "Couldn't read grim's picture of the screen.": "",
     "Tab indicator": "",
     "The bar beside a tabbed column, a segment per tab. Shows for a lone window too.": "",
-    "While a fullscreen window (a game, a video) is open, nothing blurs on its monitor (on any monitor under Hyprland and SwayFX), so a volume popup or notification over it costs nothing extra. Surfaces on that monitor turn opaque; elsewhere they stay translucent.": ""
+    "While a fullscreen window (a game, a video) is open, nothing blurs on its monitor (on any monitor under Hyprland and SwayFX), so a volume popup or notification over it costs nothing extra. Surfaces on that monitor turn opaque; elsewhere they stay translucent.": "",
+    "Use the compositor's overview": "",
+    "Open the compositor's own overview instead of this one, wherever axiom's overview opens from (binds, the launcher, bar buttons).": ""
   }
 }
