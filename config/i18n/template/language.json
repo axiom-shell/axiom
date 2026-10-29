@@ -716,6 +716,7 @@
     "Draw a rounded box along the whole edge, with the modules inside it, lined up with the screen border.": "",
     "Draw each module's card box, frosted over the wallpaper while the shell blurs. Off shows modules straight on the wallpaper.": "",
     "Draw each module's card box. Off shows modules straight on the background. The password field and the greeting have their own switches.": "",
+    "Draw each module's card box. Off shows the modules straight on the overlay's box.": "",
     "Draw each module's card box. Turn off to show modules straight on the menu's background, e.g. a menu with a single module.": "",
     "Drawn in the gap between neighbouring widgets in a section (not in a powerline). Give them room with Spacing.": "",
     "Drizzle": "",

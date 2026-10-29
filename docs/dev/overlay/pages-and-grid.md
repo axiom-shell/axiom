@@ -54,6 +54,7 @@ Pure, tested by `tst_GridPlacement`.
 - Sizes itself from `grid.sizes(bounds, stretch)`.
 - Places one clipped `OverlaySlot` per module (keyed by count), passing `GridPlacement.rectOf(place)` as the module's `slotRect`.
 - Warns once for a module that overlaps another.
+- Its `host` (handed to each module) is `{ kind: "overlay" }`; a Custom page adds `bare: !OverlayConfig.moduleBorders` (`Overlay.moduleBorders`, one setting for every page, like `Overlay.moduleScale`) and `padded: true`, so with module borders off its modules drop their card box but keep their padding.
 - Growing modules are laid out here too: see [Growing and expanding](grow-expand.md).
 
 ### Module (`OverlaySlot`)

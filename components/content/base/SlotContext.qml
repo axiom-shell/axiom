@@ -30,14 +30,16 @@ QtObject {
   // room for the key figure only (by px once laid out, so a module isn't
   // built compact and rebuilt before it has a size)
   readonly property bool compact: embedded && ((cols <= 2 && rows <= 2) || (width > 0 && width < fullMinWidth) || (height > 0 && height < fullMinHeight))
-  // No card box (an edge menu or the lock screen with moduleBorders off)
+  // No card box (an overlay page, an edge menu or the lock screen with
+  // moduleBorders off)
   readonly property bool bare: embedded && (host?.bare ?? false)
   // Content that draws its own box (e.g. a blurred cover) even when bare,
   // so it keeps its padding inside that box
   property bool drawsBox: false
   // A bare module in an edge menu drops its padding too (the menu pads
   // it); on the lock screen, the greeter and the desktop nothing else
-  // would, nor in an expanded detail (`padded`: ExpandedModule)
+  // would, nor on an overlay page or in an expanded detail (`padded`:
+  // Custom, ExpandedModule)
   readonly property real pad: OverlayConfig.cardPad(compact, bare && !drawsBox && host?.padded !== true && host?.kind !== "lockscreen" && host?.kind !== "greeter" && host?.kind !== "desktop")
   // The room inside `pad`
   readonly property real innerWidth: width - pad * 2

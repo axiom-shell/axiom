@@ -23,5 +23,11 @@ BaseView {
     modules: root.modules
     grid: root.viewConfig?.layout?.grid?.fine ? root.fineGrid : root.grid
     stream: true
+    // Module borders off: no card boxes, the content keeping its padding
+    host: ({
+        "kind": "overlay",
+        "bare": !OverlayConfig.moduleBorders,
+        "padded": true
+      })
   }
 }
