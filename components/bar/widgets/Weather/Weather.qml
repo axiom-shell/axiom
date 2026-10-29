@@ -7,7 +7,8 @@ import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
 // Current conditions (from WeatherManager, for the Weather settings). Hovering opens a 5-day forecast.
-BarIconWidget {
+// Stacked: the temperature over the condition.
+ValueStyleWidget {
   id: root
 
   Component.onCompleted: WeatherManager.acquire(root)
@@ -18,6 +19,9 @@ BarIconWidget {
 
   icon: condition?.icon ?? "cloud"
   text: current ? `${Math.round(current.temperature_2m)}°` + (properties.showCondition ? ` ${condition.label}` : "") : "…"
+
+  styleText: current ? `${Math.round(current.temperature_2m)}°` : "…"
+  subtext: current ? condition.label : ""
 
   PopoutAnchor {
     hitArea: root.hitArea

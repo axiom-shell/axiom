@@ -3375,6 +3375,12 @@
     "Fill and pill show the track's position; ticker scrolls the title; stacked puts the title over the artist.": "",
     "The value is how far through the session or break it is; stacked puts the time over its name.": "",
     "Ring and fill show the time left on a timed caffeine.": "",
-    "Ticker scrolls a long title; stacked puts it over the app's id.": ""
+    "Ticker scrolls a long title; stacked puts it over the app's id.": "",
+    "{0} AUR": "",
+    "Ring and fill show the connected device's battery, when it reports one; stacked puts the device over it.": "",
+    "Stacked puts the label over this machine's tailnet address.": "",
+    "Stacked puts the count over the AUR's share of it.": "",
+    "Stacked puts the temperature over the condition.": "",
+    "Ring and segments show the Wi-Fi signal; sparkline the download speed; ticker and stacked the network's name (stacked over its address).": ""
   }
 }
