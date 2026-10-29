@@ -40,8 +40,10 @@ class Bash(unittest.TestCase):
 
     def test_compound_commands(self):
         self.blocks("(qs kill)", "{ qs kill; }", "echo $(qs kill)", "x=`qs kill`", "if true; then qs kill; fi",
-                    "while true; do axiom lock; done", "! axiom lock", "true && (cd /tmp; axiom lock) > /dev/null 2>&1")
+                    "while true; do axiom lock; done", "! axiom lock", "true && (cd /tmp; axiom lock) > /dev/null 2>&1",
+                    'x="$(axiom lock)"', 'echo "`qs kill`"')
         self.allows("(cd docs && ls)", "echo $(date)", "if true; then echo ok; fi", "{ git status; git log -1; } | head",
+                    'x="$(git rev-parse HEAD)"',
                     "go test ./... 2>&1 | tail -3")
 
     def test_every_rule_holds_in_compound_forms(self):
@@ -65,7 +67,7 @@ class Bash(unittest.TestCase):
 
     def test_wrapper_options(self):
         self.blocks("sudo -u me axiom lock", "nice axiom lock", "nice -n 5 axiom lock", "flock /tmp/l axiom lock",
-                    "flock -w 5 /tmp/l axiom lock", "systemd-run --user axiom quit", "systemd-run --user -u x axiom quit",
+                    "flock -w 5 /tmp/l axiom lock", "flock /tmp/l -c 'axiom lock'", "systemd-run --user axiom quit", "systemd-run --user -u x axiom quit",
                     "ionice -c 3 qs kill", "timeout -s INT 5 axiom lock", "env -u FOO axiom lock")
         self.allows("nice -n 5 go test ./...", "flock /tmp/l scripts/dev/verify.sh", "timeout 5 axiom ping")
 

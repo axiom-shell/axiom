@@ -289,6 +289,7 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 - [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
 - [A self-update test once took the build path for a release](issues.md#a-self-update-test-once-took-the-build-path-for-a-release)
 - [A compositor manager test misses its takeover prompt under load](issues.md#a-compositor-manager-test-misses-its-takeover-prompt-under-load)
+- [The guard judges a heredoc's body as commands](issues.md#the-guard-judges-a-heredocs-body-as-commands)
 - [CI's Go tests run as root, so the unwritable-file tests never run there](issues.md#cis-go-tests-run-as-root-so-the-unwritable-file-tests-never-run-there)
 - [The qmllint baseline doesn't shrink when warnings are fixed](issues.md#the-qmllint-baseline-doesnt-shrink-when-warnings-are-fixed)
 - [gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread](issues.md#gen_docspy-doesnt-see-readers-of-configmanagerlive-so-372-settings-show-as-unread)

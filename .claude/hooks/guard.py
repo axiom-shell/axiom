@@ -9,8 +9,8 @@ the windowed greeter) live here; .claude/settings.json › permissions.deny
 repeats the plain ones. Tests: tests/scripts/test_guard.py.
 
 Bash commands are split into simple commands (on ; && || | & and newlines,
-( ) { } $( ) and backticks, the keywords starting a command such as `then`,
-into `bash -c`/`sh -c` strings) and each is judged on its argv, with leading
+( ) { } $( ) and backticks (inside double quotes too), the keywords starting a
+command such as `then`, into `bash -c`/`sh -c` strings) and each is judged on its argv, with leading
 VAR=value assignments (and `export VAR=…` earlier in the same command) as its
 environment; a wrapper (sudo, nice, flock, …) is judged by the command it
 runs, and a `>`/`>>` redirection as a write to its target. Best effort: it
@@ -43,6 +43,8 @@ WRAPPERS = {
                     "--description", "--working-directory"},
 }
 WRAPPER_POSITIONALS = {"timeout": 1, "flock": 1}
+# A substitution a quoted word still runs: "$(…)", "`…`"
+SUBSTITUTION = re.compile(r"\$\((.*)\)|`([^`]*)`", re.S)
 SHELLS = {"bash", "sh", "zsh"}
 QS = {"qs", "quickshell"}
 QS_VALUE_OPTS = {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}
@@ -87,6 +89,8 @@ def split_commands(command):
             current = []
         else:
             current.append(token)
+            for m in SUBSTITUTION.finditer(token):
+                out.extend(split_commands(m[1] or m[2]))
         i += 1
     if current:
         out.extend(simple(current, exported))
@@ -123,6 +127,8 @@ def simple(tokens, exported):
                 env[name] = value
             argv = argv[2:] if argv[0] in WRAPPERS[wrapper] else argv[1:]
         argv = argv[WRAPPER_POSITIONALS.get(wrapper, 0):]
+        if wrapper == "flock" and argv[:1] in (["-c"], ["--command"]):
+            argv = ["sh", "-c", *argv[1:]]  # flock <file> -c <command>
     if not argv:
         return []
     command_flag = next((i for i, a in enumerate(argv[1:-1], 1) if re.fullmatch(r"-[a-z]*c[a-z]*", a)), None)
