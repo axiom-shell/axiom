@@ -179,7 +179,6 @@ Hyprland, and every compositor:
 - [Workspace blocks follow the connected monitors, not the saved profiles](issues.md#workspace-blocks-follow-the-connected-monitors-not-the-saved-profiles)
 - [The scrolling layout drops a monitor's borrowed workspaces from its list](issues.md#the-scrolling-layout-drops-a-monitors-borrowed-workspaces-from-its-list)
 - [Persistent workspaces sit empty in the scrolling layout's list](issues.md#persistent-workspaces-sit-empty-in-the-scrolling-layouts-list)
-- [Hyprland's default workspace doesn't highlight its first window](issues.md#hyprlands-default-workspace-doesnt-highlight-its-first-window)
 
 ### Phase 7: fit, geometry and performance
 Nothing runs off a screen or clips at 1080p, and pages stay fast as their data grows. Take the 1080p entries as one pass in a nested compositor with a 1080p output.
@@ -350,3 +349,6 @@ Deferred by the maintainer (2026-10-29, Phase 6's niri entries: "defer all six n
 - [niri reports no position for a tiled window, nor other apps' layers](issues.md#niri-reports-no-position-for-a-tiled-window-nor-other-apps-layers)
 - [Shift+Enter on an emoji doesn't type it on niri](issues.md#shiftenter-on-an-emoji-doesnt-type-it-on-niri)
 - [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
+
+Deferred by the maintainer (2026-10-29: "defer hyprland default workspace"; needs their reproduction):
+- [Hyprland's default workspace doesn't highlight its first window](issues.md#hyprlands-default-workspace-doesnt-highlight-its-first-window)
