@@ -211,7 +211,7 @@ func (a *assembler) addPart(file string, src *jsonx.Object, part string, variant
 	}
 	// An override names one of the part's settings, or a field of one
 	// that's an object (`popout: {variant: own, enabled: {…}}` reaches
-	// popout.enabled), or of the definition one $refs (`display:
+	// popout.enabled), or of the definition one $refs (`appearance:
 	// {variant: value, style: {…}}` reaches BarDisplay's style)
 	for _, key := range overrides.Keys() {
 		o, ok := overrides.Value(key).(*jsonx.Object)
@@ -250,7 +250,7 @@ func (a *assembler) addPart(file string, src *jsonx.Object, part string, variant
 }
 
 // inlineRef: a part's setting that's a $ref to a definition with the
-// property key (a widget's `display`, BarDisplay), as a copy of that
+// property key (a widget's `appearance`, BarDisplay), as a copy of that
 // definition with the $ref's sibling keys over it, so an override can
 // reach into it; the setting as it is otherwise.
 func inlineRef(v any, key string, defs *jsonx.Object) *jsonx.Object {

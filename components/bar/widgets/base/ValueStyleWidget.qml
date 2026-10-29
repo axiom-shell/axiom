@@ -3,7 +3,7 @@ import QtQuick
 
 // Base for a bar widget with a display style (docs/dev/bar/display-styles.md):
 // label, icon, ring, fill, pill, segments, sparkline, ticker or stacked, from
-// its `display` settings (WidgetBase's display part, a custom widget's
+// its `appearance` (WidgetBase's appearance part, a custom widget's
 // `bar`). The widget gives its value as `ratio`, its history, its text and
 // subtext; a style it can't draw right now (no value yet, no history)
 // draws as the nearest one it can.
@@ -11,7 +11,7 @@ BarIconWidget {
   id: root
 
   // {style, segments, width, colorText}
-  property var display: properties.display
+  property var appearance: properties.appearance
   // Its value, 0-1, for ring, fill, segments and pill; below 0 while it
   // has none (those draw as a label then)
   property real ratio: -1
@@ -32,7 +32,7 @@ BarIconWidget {
   property bool hasState: true
 
   readonly property string style: {
-    let style = root.display.style;
+    let style = root.appearance.style;
     // Stacked draws its own two lines; on a vertical bar it's a label
     if (style === "stacked" && root.isVertical)
       return "label";
@@ -54,7 +54,7 @@ BarIconWidget {
 
   // Colour the text by state only where it isn't the background already
   // (a filled widget's text must read on it)
-  readonly property bool _textByState: root.display.colorText && root.hasState && root.colors.fill.a < 1
+  readonly property bool _textByState: root.appearance.colorText && root.hasState && root.colors.fill.a < 1
   foregroundColor: root._textByState ? root.stateColor : root.colors.text
   iconColor: root._textByState ? root.stateColor : root.colors.icon
 
@@ -71,8 +71,8 @@ BarIconWidget {
     graphMax: root.graphMax
     text: root.styleText
     subtext: root.subtext
-    segmentCount: root.display.segments
-    preferredLength: root.display.width
+    segmentCount: root.appearance.segments
+    preferredLength: root.appearance.width
     vertical: root.isVertical
     crossSize: root.crossSize
     fontSize: root.fontSize

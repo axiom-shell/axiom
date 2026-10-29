@@ -1,6 +1,6 @@
 # The BarDisplay definition: how a bar widget draws its value
 # (components/bar/widgets/base/ValueStyleWidget, docs/dev/bar/display-styles.md).
-# A built-in widget's `display` (WidgetBase's display part) narrows `style`
+# A built-in widget's `appearance` (WidgetBase's appearance part) narrows `style`
 # to the styles it can draw; a custom widget's `bar` offers them all.
 
 type: object

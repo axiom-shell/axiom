@@ -46,11 +46,11 @@ x-parts:
         title: Popout
         additionalProperties: false
         properties: {enabled: {type: boolean, title: Popout, default: true}}
-  # How it draws its value (`display: {variant: value, style: {enum:
+  # How it draws its value (`appearance: {variant: value, style: {enum:
   # [...]}}` narrows the styles to the ones it can draw)
-  display:
+  appearance:
     value:
-      display: {$ref: '#/definitions/BarDisplay'}
+      appearance: {$ref: '#/definitions/BarDisplay'}
   colors:
     standard:
       backgroundColor: {$ref: '#/definitions/WidgetColor'}

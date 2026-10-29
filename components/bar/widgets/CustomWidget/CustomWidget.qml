@@ -34,7 +34,7 @@ ValueStyleWidget {
   onWidgetIdChanged: CustomWidgetsManager.acquire(root, root.widgetId)
   Component.onDestruction: CustomWidgetsManager.release(root)
 
-  display: root.bar
+  appearance: root.bar
   // No sample yet: a label ("…") until the script has printed one
   ratio: root.fields === null ? -1 : Math.max(0, root.fields.ratio ?? 0)
   history: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
