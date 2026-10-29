@@ -33,7 +33,6 @@ properties:
     default: top
     enum: [top, bottom, left, right]
     x-enumLabels: {top: Top, bottom: Bottom, left: Left, right: Right}
-    x-group: Placement
     description: Screen edge the toasts stack from. On the top or bottom they stack away from the edge; on a side, along it.
   position:
     x-scope: look
@@ -43,14 +42,12 @@ properties:
     default: 0
     minimum: 0
     maximum: 100
-    x-group: Placement
     description: 'Where along the edge they sit: 0 is the start (left/top), 100 the end.'
   detached:
     x-scope: look
     type: boolean
     title: Detach from edge
     default: true
-    x-group: Placement
     description: Separate cards held off the edge. Off, the stack is one box growing out of the screen border or a solid bar, as popouts do, and running straight off a bare screen edge.
   gap:
     x-scope: look
@@ -63,13 +60,11 @@ properties:
     minimum: -1
     maximum: 200
     x-unit: px
-    x-group: Placement
     description: Space between the toasts and the border or bar on their edge, and at the ends. Auto lines them up with a floating bar on their edge, else with your windows.
     x-showIf: {detached: true}
   motion:
     type: object
     title: Motion
-    x-group: Placement
     additionalProperties: false
     properties:
       style:

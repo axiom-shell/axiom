@@ -3157,7 +3157,6 @@
     "Use the compositor's switcher": "",
     "Draw each module's card box. Off shows the modules straight on the overlay's box.": "",
     "Do not disturb is on: a test notification goes only to the history.": "",
-    "Show sends a test notification, toasted with the settings below as edited.": "",
     "A test notification": "",
     "Change the settings below and show another to see them.": "",
     "15 more minutes": "",
@@ -3381,6 +3380,7 @@
     "The edge toasts slide in from and out to. Auto is their own edge when attached, else the screen edge nearest them, so centred ones come from their edge and corner ones from the side.": "",
     "Screen edge the toasts stack from. On the top or bottom they stack away from the edge; on a side, along it.": "",
     "Slide from": "",
-    "How toasts come and go. Either way the others glide into place.": ""
+    "How toasts come and go. Either way the others glide into place.": "",
+    "Click a spot to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.": ""
   }
 }
