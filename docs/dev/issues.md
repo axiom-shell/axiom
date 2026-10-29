@@ -255,6 +255,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the bar display styles branch
 
+### Read-only daemon calls fail across a dev re-exec
+- **Where:** `services/compositor/NiriManager.qml` (`_request`), `services/session/GreeterManager.qml` (`check`), `services/core/BackendManager.qml` (`call`'s `repeatable`)
+- **What:** A dev-mode re-exec (a rebase touching `backend/` test files under the live session, 2026-10-29) logged `[NiriManager] "Outputs": the connection to axiom closed` and `[GreeterManager] check: the connection to axiom closed`: both are reads, safe to send twice, but don't pass `{repeatable: true}`, so the call in flight fails instead of waiting for the next hello. Passing it for read-only niri requests and `greeter.status` would quiet it.
+- **Size:** trivial
+- **Found:** 2026-10-29, while reviewing the bar display styles branch
+
 ### A hot reload while locked leaves niri's red screen
 - **Where:** `services/session/LockManager.qml` (its `PersistentProperties` locked state), `components/surfaces/lockscreen/LockSurface.qml`
 - **What:** A QML reload while the session is locked destroys the lock object: `Session lock object was destroyed without unlocking. The session will stay locked in case this was accidental.` The locked state is kept, so the new generation should lock again, but on niri (2026-10-18) the screen stayed niri's red locked background with no way out, and only restarting niri got the session back. Saving any loaded file while the idle locker has locked the screen does it. Check whether the new generation's `WlSessionLock` takes over the old lock on niri (and on sway/Hyprland), or have the lock object survive a reload.
