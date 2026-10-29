@@ -64,6 +64,20 @@ Wrong: `check_structure.py` refuses any `IpcHandler {` outright (the IpcTarget r
 | `.claude/hooks/guard.py` + `tests/scripts/test_guard.py` (31 cases) | AGENTS.md › Never, plain forms | — | per command | compound commands, wrapper options, Bash writes onto config.json |
 | `.claude/settings.json` deny list | the plain forms again | — | — | one stale path |
 
+## Mutation run
+2026-10-30, at 763264a (Phase 11 step 0 batch 8; how it was run: `docs/dev/testing.md` › Mutation runs). Each package's own tests against one mutant at a time; "killed" counts failing tests, timeouts (a dropped unlock deadlocks) and vet failures. Before → after this batch's tests:
+
+| Package (files, sample) | Mutants | Killed before → after | Survived before → after | Left |
+|---|---|---|---|---|
+| `lockscreen` (lockscreen.go, all) | 64 | 51 → 54 | 13 → 10 | 10 equivalent (log lines) |
+| `store` (store.go: the takeover, write, load and reload functions) | 138 of 270 | 102 → 112 | 36 → 26 | 14 equivalent (logs, a redundant TakeoversFile write, `at` on a non-object); 12 filed |
+| `share` (KeepTakeovers, annotated) | 23 | 19 → 20 | 4 → 3 | 3 equivalent (schema depth bound) |
+| `greeterinstall` (elevate.go, greeterinstall.go, install.go, all) | 421 | 344 → 377 | 75 → 44 | 6 equivalent; 38 filed (I/O error returns, cleanup, root-only branches) |
+| `migrate/steps` (all) | 119 | 113 | 6 | 1 equivalent; 5 filed |
+| `migrate/convert` (every 4th) | 108 of 431 | 87 | 21 | filed |
+
+Two `greeterinstall` mutants (New's default `pkexec`) reached the real pkexec in the first pass and timed out on its prompt; the rerun puts refusing stand-ins for pkexec, sudo, su, doas and run0 first on PATH, and counts them killed. A fake-root pass (`unshare -rm`) over the 45 `greeterinstall` survivors killed one more (install.go:132); nothing needed real root. Filed: issues.md › Mutants that survive in migrate, › Mutants that survive in the store's and the installer's failure paths (fix batches 12 and 13), and › An uninstall in the same second as an install overwrites the backup it restores (found writing a test).
+
 ## Contract
 Holds: every AGENTS.md › Never rule has a guard rule and a `test_guard.py` case for its plain form (lock, cursor, takeover via Edit/Write and `--takeover`, compositor claim/release and binds remove on live dirs, niri quit/load-config/output, hookup/selfupdate/greeter apply, the greeter only windowed on scratch, greetd, daemon lifecycle and dev mode, gh issue, force-push and main). IpcTarget registers only with axiom, so `qs ipc` can't reach the lock screen (SAFE_QS is safe). The allowlist is a true ratchet (unused entries fail). CI's checks/qt/go/scripts jobs together run every check check_all.sh runs (plus JSON validity, which check_all lacks: the known "three places" entry, now with that evidence). The go job's path filter is wider than verify.sh's go trigger, as its comment says. Every methods helper but IconResolver has a test (known). No singleton outside the pure helpers and compositor backends is over 800 lines, though nothing checks it (Phase 11's ratchets bullet). AGENTS.md is 24 KB against Phase 9's 12 KB target (known).
 
@@ -73,3 +87,4 @@ Read deeply: scripts/dev/verify.sh, scripts/check_all.sh, scripts/check_go.sh, s
 ## History
 - 2026-10-29 full: 8 findings; recorded in issues.md
 - 2026-10-29 inventory: 3 new entries (gen_docs misses `ConfigManager.live`, Go test waits, untested check scripts); finding 7 withdrawn; step 0 split into batches (roadmap.md)
+- 2026-10-30 mutation run: 873 mutants over 6 packages; the security paths' survivors got tests, the rest equivalent or filed (Mutation run)

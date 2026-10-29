@@ -72,6 +72,9 @@ How to look at, exercise and debug the live shell without breaking the user's se
   3. Run the workflow's pacman line, then copy to a writable dir and run the steps.
 - This catches dependencies only the dev machine has (e.g. `Qt5Compat.GraphicalEffects`).
 
+### Mutation runs
+- A sampled mutation run (2026-10-30, roadmap Phase 11 step 0 batch 8; numbers in `.claude/reviews/guardrails.md` › Mutation run) used a throwaway mutator kept outside the repo (about 200 lines of Go on `go/ast`, `go/parser`, `go/format`, no dependencies, plus a shell driver). To rebuild it: for each function of a file (optionally filtered by a name regexp) it lists every site of these mutations, applies one at a time to a copy, and runs `go test -overlay <json> -count=1 -timeout 90s ./internal/<pkg>` (the overlay swaps the mutated copy in, so the tree is never touched), six at a time: `==`↔`!=`, `<`→`<=`, `<=`→`<`, `>`→`>=`, `>=`→`>`, `&&`↔`||`, an `if` condition negated, a `!` dropped from an `&&`/`||` operand, `true`↔`false`, a returned error (`err`, an `*Err*` name, or `fmt.Errorf`/`errors.New`/`axerr.New`/`axerr.Wrap*`) replaced by `nil`, and a call statement removed. A passing run is a survivor; a build or vet failure counts as killed. Survivors that only drop a log line are equivalent.
+
 ### Feature testing sections
 - Hyprland: [config-modes](hyprland/config-modes.md), [managed-takeover](hyprland/managed-takeover.md), [monitors](hyprland/monitors.md)
 - Theming: [theme-integrations](theming/theme-integrations.md) (hookups: Go tests in a scratch home, never `hookup.apply` on the live daemon)
