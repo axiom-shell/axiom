@@ -26,8 +26,8 @@ QtObject {
   }
 
   // Calls fn() whenever path (absolute) changes on disk, except by a
-  // write of its own, and fn(true) once after axiom reconnects (it may
-  // have changed while the watch was gone); returns the watch, for
+  // write of its own, and fn(true) once after each hello (it may have
+  // changed while the watch wasn't set); returns the watch, for
   // unwatch(watch)
   function watch(path, fn) {
     const watch = {
@@ -62,8 +62,6 @@ QtObject {
   property var _writes: ({})
   // Watchers by path
   property var _watched: ({})
-  // Greeted before: the next hello is a reconnect
-  property bool _greeted: false
 
   function _write(path, text, done) {
     BackendManager.call("file.write", {
@@ -91,18 +89,17 @@ QtObject {
 
   property Connections _backend: Connections {
     target: BackendManager
-    // A reconnect forgets the watches, and a change while they were
-    // gone pushed nothing: each watcher looks once (not one whose own
+    // A reconnect forgets the watches, and a change while they weren't
+    // set pushed nothing: each watcher looks once (not one whose own
     // write is out, which may still hold the older text)
     function onGreeted() {
       Object.keys(root._watched).forEach(path => {
         BackendManager.call("file.watch", {
           "path": path
         }, root._logFailure);
-        if (root._greeted && !(path in root._writes))
+        if (!(path in root._writes))
           root._watched[path].forEach(watch => watch.fn(true));
       });
-      root._greeted = true;
     }
   }
 

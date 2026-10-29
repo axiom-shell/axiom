@@ -276,6 +276,10 @@ QtObject {
   function _greet() {
     const id = root._nextId++;
     root._pending[id] = (error, result) => {
+      // A connection lost before the answer is no refusal: the drop
+      // keeps what waits and connects again
+      if (error?.kind === "unavailable")
+        return;
       if (error) {
         console.error("[BackendManager] axiom refused the hello:", error.message);
         // Nothing queued would ever go: fail it, and what follows

@@ -447,7 +447,7 @@ QtObject {
           doc._fromDisk(text);
       }
 
-      // maybe: axiom reconnected, and the file may not have changed
+      // maybe: axiom (re)connected, and the file may not have changed
       function _changed(maybe) {
         if (!doc.dirty)
           doc._read();
