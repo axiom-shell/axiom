@@ -30,8 +30,8 @@ func TestProfiles(t *testing.T) {
 		{"most covered", profiles, []Output{tv}, 1, []string{"desc:LG TV"}},
 		{"a disabled output doesn't pick the profile, but keeps its rule", profiles, []Output{aoc, offTV}, 0, []string{"desc:AOC CU34G4Z XJ9R7HA000231", "HDMI-A-1"}},
 		{"a description matches trimmed", profiles, []Output{{Name: "DP-2", Description: " LG TV "}}, 1, []string{"desc:LG TV"}},
-		{"niri's PNP(XXX) make matches the bare code", profiles, []Output{{Name: "DP-1", Description: "PNP(AOC) CU34G4Z XJ9R7HA000231"}}, 0, []string{"desc:AOC CU34G4Z XJ9R7HA000231"}},
-		{"and the bare code a profile saved under niri", parse(t, `[{"outputs": [{"output": "desc:PNP(AOC) CU34G4Z XJ9R7HA000231"}]}]`), []Output{aoc}, 0, []string{"desc:PNP(AOC) CU34G4Z XJ9R7HA000231"}},
+		{"niri's PNP(XXX) make matches the bare code, and is written as niri spells it", profiles, []Output{{Name: "DP-1", Description: "PNP(AOC) CU34G4Z XJ9R7HA000231"}}, 0, []string{"desc:PNP(AOC) CU34G4Z XJ9R7HA000231"}},
+		{"and the bare code a profile saved under niri", parse(t, `[{"outputs": [{"output": "desc:PNP(AOC) CU34G4Z XJ9R7HA000231"}]}]`), []Output{aoc}, 0, []string{"desc:AOC CU34G4Z XJ9R7HA000231"}},
 		{"nothing known", profiles, []Output{other}, -1, nil},
 		{"no profiles", parse(t, `[]`), []Output{aoc}, -1, nil},
 		{"ties go to the earlier", parse(t, `[{"outputs": [{"output": "DP-1"}, {"output": "DP-9"}]}, {"outputs": [{"output": "DP-1"}, {"output": "DP-8"}]}]`), []Output{aoc}, 0, []string{"DP-1"}},
@@ -122,5 +122,44 @@ func TestHyprlandRules(t *testing.T) {
 				t.Errorf("got %q\nwant %q", got, tt.want)
 			}
 		})
+	}
+}
+
+// A profile saved under another compositor is written in the running one's
+// spelling: the connected output's description, or for a monitor not
+// connected (Hyprland's rules only) the bare make code
+func TestProfileSpelling(t *testing.T) {
+	t.Parallel()
+	underNiri := parse(t, `[
+		{"outputs": [{"output": "desc:PNP(AOC) CU34G4Z X1", "mode": "3440x1440@100"}]},
+		{"outputs": [{"output": "eDP-1"}, {"output": "desc:PNP(GSM) LG Y2", "mode": "3840x2160@60"}]}
+	]`)
+	underHyprland := parse(t, `[{"outputs": [{"output": "desc:AOC CU34G4Z X1", "mode": "3440x1440@100"}]}]`)
+	bare := []Output{{Name: "DP-1", Description: "AOC CU34G4Z X1"}}
+	tests := []struct {
+		name string
+		got  any
+		want any
+	}{
+		{"Hyprland", MonitorCalls(jsonx.Arr(HyprlandRules(underNiri, bare)...), MirrorNames(nil)), []string{
+			`hl.monitor({ output = "desc:AOC CU34G4Z X1", mode = "3440x1440@100", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "eDP-1", mode = "preferred", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "desc:GSM LG Y2", mode = "3840x2160@60", position = "0x0", scale = 1 })`,
+		}},
+		{"sway", SwayOutputCommands(jsonx.Arr(SavedRules(underNiri, bare)...)),
+			`output "AOC CU34G4Z X1" enable mode 3440x1440@100Hz pos 0 0 scale 1 transform normal adaptive_sync off render_bit_depth 8`},
+		{"niri", items(get(items(NiriOutputNodes(jsonx.Arr(SavedRules(underHyprland, []Output{{Name: "DP-1", Description: "PNP(AOC) CU34G4Z X1"}})...)))[0], "args"))[0],
+			"PNP(AOC) CU34G4Z X1"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if !reflect.DeepEqual(tt.got, tt.want) {
+				t.Errorf("got %q\nwant %q", tt.got, tt.want)
+			}
+		})
+	}
+	if saved := str(get(items(get(items(underNiri)[0], "outputs"))[0], "output")); saved != "desc:PNP(AOC) CU34G4Z X1" {
+		t.Errorf("the saved profile changed: %q", saved)
 	}
 }

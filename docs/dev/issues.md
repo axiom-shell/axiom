@@ -286,12 +286,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the todo list and pomodoro timer
 
-### A profile saved under another compositor is written in that one's spelling
-- **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorCalls`), `backend/internal/compositor/render/sway.go` (`SwayOutputName`), `backend/internal/compositor/render/niri.go` (`NiriOutputNodes`)
-- **What:** A profile now matches across compositors (niri's `PNP(AOC)` make is the bare code `AOC` Hyprland and sway give), but its rules are written as saved: under Hyprland a profile saved under niri sets `desc:PNP(AOC) …`, which Hyprland doesn't match, so the switch picks it and changes nothing (sway too: its switch sends `output "PNP(AOC) …"`); under niri a profile saved under Hyprland is written to the KDL as `output "AOC …"`, which niri doesn't match at its start (the daemon's switch, which resolves the connector, sets it after). Writing a `desc:` output in the running compositor's spelling (the connected output's description) would fix all three.
-- **Size:** small
-- **Found:** 2026-10-29, while fixing profile matching across compositors (roadmap row 13)
-
 ### install.sh still installs the rest of a feature whose COPR was declined
 - **Where:** `install.sh` (the declined-COPR loop after the COPR prompts)
 - **What:** Declining a COPR on Fedora marks each feature with a package from it as skipped, but drops only that COPR's packages: the feature's other packages stay in the one `dnf install`. Declining `nett00n/hyprland` while setting up niri skips the login screen's feature yet still installs `greetd`. Rebuilding `packages` from the features left (and the required keys) after the prompts would fix it; test with `--dry-run` in a `fedora:latest` container.

@@ -12,7 +12,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 
 ### Profiles
 - `Monitors.items` (`x-settings: false`; `Hyprland.monitors.profiles` before config version 61) is a list of `{ name, outputs: [MonitorRule] }`: one layout per set of monitors.
-- Each rule's `output` is `desc:<description>`, so the rule follows the monitor across ports. When two monitors share a description it is the connector name instead (`MonitorLayout.outputId`). A description matches with niri's spelling of a make it has no name for (`PNP(AOC)`) taken as the bare code Hyprland and sway give (`MonitorLayout.matches`, and the daemon's `render.MatchProfile`), so a profile saved under one compositor is picked under another.
+- Each rule's `output` is `desc:<description>`, so the rule follows the monitor across ports. When two monitors share a description it is the connector name instead (`MonitorLayout.outputId`). A description matches with niri's spelling of a make it has no name for (`PNP(AOC)`) taken as the bare code Hyprland and sway give (`MonitorLayout.matches`, and the daemon's `render.MatchProfile`), so a profile saved under one compositor is picked under another. The daemon writes and applies such a rule in the running compositor's spelling (`render.SavedRules`): the connected output's description, or for a monitor not connected (Hyprland's rules only) the bare code.
 - Each rule also holds:
   - mode, position, scale
   - transform: 0–7, quarter turns, +4 for flipped
