@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Shapes
+import Quickshell.Widgets
 
 import qs.config
 import qs.components.methods
@@ -138,30 +139,32 @@ Item {
     ColorGlide on color {}
   }
 
-  // The level: a shape of its own from where the bar's run starts (up a
-  // vertical bar, from the bottom), keeping the background's cap there and
-  // ending on a rounded edge (a capsule's, else the bar's radius), so a
-  // level in a merged run's flat-ended widget never stops square. Full, it
-  // takes the background's own end unless that's flat.
-  ShapedBox {
+  // The level: the background's own shape in the level's colour, seen from
+  // where the bar's run starts (up a vertical bar, from the bottom) through
+  // a window ending on a rounded edge (a capsule's, else the bar's radius).
+  // Clipped rather than a shape of its own, so a low level stays inside the
+  // background's ends instead of squeezing its corners square. The window
+  // overhangs the start (and, full, the far end unless that's flat), so
+  // only its leading edge rounds and never by less than its radius.
+  ClippingRectangle {
     id: level
+    readonly property bool vertical: root.barConfig.vertical
     readonly property real share: Math.max(0, Math.min(1, root.backgroundLevel))
-    readonly property string edgeCap: root.barConfig.widgetShape === "capsule" ? "capsule" : "round"
+    readonly property real across: vertical ? root.width : root.height
     // The background's cap at the far end, where a full level ends
-    readonly property string farCap: level.vertical ? root.startCap : root.endCap
+    readonly property string farCap: vertical ? root.startCap : root.endCap
+    readonly property real overhang: across
+    readonly property real shown: (vertical ? root.height : root.width) * share + (share >= 1 && farCap !== "flat" ? overhang : 0)
 
     visible: root.backgroundLevel >= 0 && level.share > 0
-    anchors.fill: undefined
-    x: 0
-    y: level.vertical ? root.height - height : 0
-    width: level.vertical ? root.width : root.width * level.share
-    height: level.vertical ? root.height * level.share : root.height
-    bar: root.barConfig
-    startCap: level.vertical ? (level.share >= 1 && level.farCap !== "flat" ? level.farCap : level.edgeCap) : root.startCap
-    endCap: level.vertical ? root.endCap : (level.share >= 1 && level.farCap !== "flat" ? level.farCap : level.edgeCap)
-    seamStart: !level.vertical && root.seamStart
-    seamEnd: level.vertical && root.seamEnd
-    fillColor: root.backgroundLevelColor
+    color: "transparent"
+    // A Rectangle keeps it to half the thickness, which the window never
+    // drops below
+    radius: root.barConfig.widgetShape === "capsule" ? across / 2 : root.barConfig.radius
+    x: vertical ? 0 : -overhang
+    y: vertical ? root.height - shown : 0
+    width: vertical ? root.width : shown + overhang
+    height: vertical ? shown + overhang : root.height
 
     Glide on width {
       duration: Appearance.animNormal
@@ -172,7 +175,22 @@ Item {
     Glide on y {
       duration: Appearance.animNormal
     }
-    ColorGlide on fillColor {}
+
+    ShapedBox {
+      anchors.fill: undefined
+      x: -level.x
+      y: -level.y
+      width: root.width
+      height: root.height
+      bar: root.barConfig
+      startCap: root.startCap
+      endCap: root.endCap
+      seamStart: root.seamStart
+      seamEnd: root.seamEnd
+      fillColor: root.backgroundLevelColor
+
+      ColorGlide on fillColor {}
+    }
   }
 
   ShapedBox {

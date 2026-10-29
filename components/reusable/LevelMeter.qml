@@ -4,8 +4,9 @@ import qs.config
 
 // A level shown, not set: StyledSlider's trough and fill without the
 // handle, `share` (0-1) of the way along, filling up when `vertical`.
-// Centred across its box, `thickness` thick. The bar's custom widgets and
-// a custom widget's Bar element draw it; a bar sets its own sizes.
+// Centred across its box, `thickness` thick. The bar's custom widgets, a
+// custom widget's Bar element and the Disks and Claude usage modules draw
+// it; each sets its own sizes.
 Item {
   id: root
 
