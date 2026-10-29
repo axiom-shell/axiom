@@ -283,6 +283,9 @@ Found while retiring the `qs ipc` fallback (backend stage 6):
 Found while closing the config path (backend stage 7):
 - [After a refused save, a draft's edits show unsaved but not live](issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
 
+Found while adding niri's own overview (row 16):
+- [An open-only workspace overview bind calls a function that doesn't exist](issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
+
 Found by the audits:
 
 ### Phase 12: memory footprint
