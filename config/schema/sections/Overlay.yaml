@@ -39,7 +39,7 @@ properties:
     description: Size of the overlay's cards, relative to the card size in Look & Feel. Their text and content shrink with them. For bigger cards, raise the card size.
   moduleBorders:
     x-scope: look
-    x-group: Size
+    x-group: Look
     type: boolean
     title: Module borders
     default: true
