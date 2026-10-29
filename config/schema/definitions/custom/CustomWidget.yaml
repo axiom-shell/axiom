@@ -49,29 +49,7 @@ properties:
       scrollUp: {x-scope: commands, type: string, title: On scroll up, default: ''}
       scrollDown: {x-scope: commands, type: string, title: On scroll down, default: ''}
       refreshAfter: {type: boolean, title: Run the script again after one, default: true}
-  fields:
-    type: object
-    additionalProperties: false
-    description: 'Where each field comes from: empty reads the key of the same name, a path ("data.temp") reads it from the JSON, a format ("{data.temp}°") fills one.'
-    properties:
-      text: {type: string, default: ''}
-      alt: {type: string, default: ''}
-      tooltip: {type: string, default: ''}
-      class: {type: string, default: ''}
-      percentage: {type: string, default: ''}
-      icon: {type: string, default: ''}
-      value: {type: string, default: ''}
-      min: {type: string, default: ''}
-      max: {type: string, default: ''}
-      unit: {type: string, default: ''}
-      subtext: {type: string, default: ''}
-      state: {type: string, default: ''}
-      badge: {type: string, default: ''}
-      urgent: {type: string, default: ''}
-      image: {type: string, default: ''}
-      items: {type: string, default: ''}
-      hidden: {type: string, default: ''}
-  format: {type: string, title: Format, default: '{}', description: 'Waybar''s format: {} is the text, {icon} the icon picked below, {percentage}, {alt}, or any field or path.'}
+  format: {type: string, title: Format, default: '{}', description: 'Waybar''s format: {} is the text, {icon} the icon picked below, {percentage}, {alt}, or any key or path in the output.'}
   formatIcons:
     title: Icons
     default: {}

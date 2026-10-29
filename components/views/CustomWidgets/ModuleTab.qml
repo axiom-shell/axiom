@@ -6,7 +6,6 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.content.parts.custom
-import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: the module as it's drawn (the bar
 // widget's popout, and the sizes a page may give it: it's laid out
@@ -129,51 +128,10 @@ ColumnLayout {
     }
   }
 
-  GridDragLayer {
-    id: elementLayer
+  ElementEditorLayout {
     Layout.fillWidth: true
     Layout.fillHeight: true
-    editor: root.editor.elements
-    // Element kinds, not module types (labels declared in CustomWidgetData)
-    describe: type => {
-      const kind = CustomWidgetData.elementKind(type);
-      return kind ? {
-        "icon": kind.icon,
-        "label": I18n.tr(kind.label)
-      } : null;
-    }
-    // In grid units (4 sub-cells each)
-    sizeLabel: (w, h) => I18n.tr("{0} × {1}", w / CustomWidgetData.subCells, h / CustomWidgetData.subCells)
-
-    RowLayout {
-      anchors.fill: parent
-      spacing: Widget.spacing * 3
-
-      StyledScrollView {
-        id: side
-        Layout.preferredWidth: Appearance.fontSize * 22
-        Layout.fillHeight: true
-        contentPadding: 0
-
-        ElementInspector {
-          width: side.availableWidth
-          dragLayer: elementLayer
-        }
-      }
-
-      // GridCanvas anchors itself to what holds it
-      Item {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-
-        GridCanvas {
-          dragLayer: elementLayer
-          modules: root.definition ? root.elements : null
-          title: I18n.tr("Module")
-          icon: "widgets"
-          emptyText: I18n.tr("Drag elements here from the left: the module's box fits them.")
-        }
-      }
-    }
+    elements: root.elements
+    editable: root.definition !== null
   }
 }

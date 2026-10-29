@@ -5,7 +5,7 @@ import qs.components.reusable
 
 // A custom widget's Segments element: a row (or column, by its shape) of
 // blocks lit up to the value between min and max.
-// options: min, max, count, color, round (dots)
+// slots: value, min, max; options: count, color, round (dots)
 CustomElementBase {
   id: root
 

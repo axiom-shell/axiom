@@ -46,10 +46,13 @@ Item {
     return v === undefined || v === null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
   }
 
-  // 0-1 from the `value` slot between the min and max options, else the
-  // widget's ratio; -1 without a value
+  // The value, min and max slots as numbers (each bound, else the
+  // output's own: CustomWidgetData.elementRange)
+  readonly property var range: CustomWidgetData.elementRange(root.fields, root.bind)
+
+  // 0-1 of the value between min and max; -1 without a value
   function ratio() {
-    return CustomWidgetData.elementRatio(root.fields, root.bind.value ?? "", parseFloat(root.opt("min", NaN)), parseFloat(root.opt("max", NaN)));
+    return CustomWidgetData.elementRatio(root.fields, root.bind);
   }
 
   // The `color` option: "" (the default), "state" (the widget's state

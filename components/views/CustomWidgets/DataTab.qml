@@ -6,10 +6,10 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 
-// Custom widgets page, Data tab: the script's last output as it came, the
-// paths in it (each can become a field), and every field with where it
-// reads from and what it reads now. Paths are offered from the live
-// sample; the field list is fixed (CustomWidgetData.fieldNames).
+// Custom widgets page, Data tab: the script's last output as it came, and
+// every value in it with its path (what the module's elements bind to).
+// Each field reads the output's key of the same name: the script shapes
+// its own JSON.
 ColumnLayout {
   id: root
 
@@ -20,17 +20,6 @@ ColumnLayout {
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property var sample: root.fields?.sample ?? null
   readonly property var paths: root.sample ? CustomWidgetData.flatten(root.sample) : []
-  // The binding choices: the sample's leaves (an array too, for items)
-  readonly property var pathOptions: [
-    {
-      "value": "",
-      "label": I18n.tr("Its own key")
-    }
-  ].concat(root.paths.filter(p => p.type !== "object").map(p => ({
-        "value": p.path,
-        "label": p.path
-      })))
-
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
@@ -85,7 +74,7 @@ ColumnLayout {
     visible: root.paths.length > 0
     Layout.fillWidth: true
     title: I18n.tr("What's in it")
-    description: I18n.tr("Each value the output holds. Pick a field to show it as.")
+    description: I18n.tr("Each value the output holds, by its path: the module's elements show them. The bar reads Waybar's keys (text, alt, tooltip, class, percentage) and axiom's (icon, value, min, max, unit, subtext, state, badge, urgent, image, items, hidden).")
 
     // By count: a new sample of the same shape rebuilds nothing
     Repeater {
@@ -108,53 +97,6 @@ ColumnLayout {
         StyledText {
           Layout.fillWidth: true
           text: pathRow.entry.type === "array" ? I18n.tr("a list of {0}", pathRow.entry.value) : pathRow.entry.type === "object" ? "{…}" : root.shown(pathRow.entry.value)
-          elide: Text.ElideRight
-          opacity: 0.7
-        }
-        StyledComboEntry {
-          visible: pathRow.entry.type !== "object"
-          Layout.preferredWidth: Appearance.fontSize * 10
-          value: ""
-          placeholderText: I18n.tr("Show as…")
-          options: CustomWidgetData.fieldNames.map(name => ({
-                "value": name,
-                "label": name
-              }))
-          onPicked: name => root.editor.set(["fields", name], pathRow.entry.path)
-        }
-      }
-    }
-  }
-
-  FieldGroup {
-    Layout.fillWidth: true
-    title: I18n.tr("Fields")
-    description: I18n.tr("Where each field reads from: its own key in the output, a path in it, or a format such as {data.temp}°.")
-
-    Repeater {
-      model: CustomWidgetData.fieldNames
-
-      RowLayout {
-        id: fieldRow
-        required property string modelData
-        Layout.fillWidth: true
-        spacing: Widget.spacing
-
-        StyledText {
-          Layout.preferredWidth: Appearance.fontSize * 6
-          text: fieldRow.modelData
-          font.bold: true
-        }
-        StyledComboEntry {
-          Layout.preferredWidth: Appearance.fontSize * 14
-          editable: true
-          value: root.definition?.fields?.[fieldRow.modelData] ?? ""
-          options: root.pathOptions
-          onPicked: value => root.editor.set(["fields", fieldRow.modelData], value)
-        }
-        StyledText {
-          Layout.fillWidth: true
-          text: root.shown(CustomWidgetData.bound(root.sample ?? ({}), fieldRow.modelData, root.definition?.fields?.[fieldRow.modelData] ?? ""))
           elide: Text.ElideRight
           opacity: 0.7
         }

@@ -8,10 +8,10 @@ import qs.components.reusable
 import qs.components.forms
 import qs.components.views.Layouts
 
-// Custom widgets page, Module tab: the selected element's bindings (each
-// slot: the widget's own field, another field, a path in the output or a
-// format), its look (its kind's options, CustomWidgetData.elementKinds) and
-// the commands it runs, under the element library.
+// Custom widgets page, Module tab: the element library, then the selected
+// element's bindings (each slot: the output's own key, a path in it, a
+// format or a number), its look (its kind's options,
+// CustomWidgetData.elementKinds) and the commands it runs.
 ColumnLayout {
   id: root
 
@@ -22,16 +22,14 @@ ColumnLayout {
   readonly property var element: root.grid.selected >= 0 ? (root.editor.selected?.module?.elements?.[root.grid.selected] ?? null) : null
   readonly property var kind: CustomWidgetData.elementKind(root.element?.type ?? "")
   readonly property var fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
-  // The binding choices: the fields, then the sample's paths
+  // The binding choices: the output's own key, or any path in it (a
+  // format or a number can be typed)
   readonly property var bindOptions: [
     {
       "value": "",
-      "label": I18n.tr("The widget's own")
+      "label": I18n.tr("The output's own")
     }
-  ].concat(CustomWidgetData.fieldNames.map(name => ({
-        "value": name,
-        "label": name
-      }))).concat((root.fields?.sample ? CustomWidgetData.flatten(root.fields.sample) : []).filter(p => p.type !== "object" && !CustomWidgetData.fieldNames.includes(p.path)).map(p => ({
+  ].concat((root.fields?.sample ? CustomWidgetData.flatten(root.fields.sample) : []).filter(p => p.type !== "object").map(p => ({
         "value": p.path,
         "label": p.path
       })))
@@ -41,7 +39,7 @@ ColumnLayout {
   // I18n.tr("click") I18n.tr("change") I18n.tr("on") I18n.tr("off")
   // I18n.tr("text") I18n.tr("value") I18n.tr("unit") I18n.tr("label")
   // I18n.tr("icon") I18n.tr("badge") I18n.tr("items") I18n.tr("image")
-  // I18n.tr("state")
+  // I18n.tr("state") I18n.tr("min") I18n.tr("max")
   readonly property var actionTitles: ({
       "click": "On click",
       "change": "On change ({value} is the new value)",

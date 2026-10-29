@@ -7,7 +7,7 @@ properties:
   id: {$ref: '#/definitions/ItemId'}
   type:
     type: string
-    enum: [Text, Figure, Icon, Ring, Gauge, Bar, Segments, Sparkline, List, Image, Button, Toggle, Status, Separator, TextBlock]
+    enum: [Text, Icon, Ring, Gauge, Bar, Segments, Sparkline, List, Image, Button, Toggle, Status, Separator, TextBlock]
     default: Text
   place:
     type: object
@@ -22,7 +22,7 @@ properties:
     type: object
     default: {}
     additionalProperties: {type: string}
-    description: 'Each slot of the element → a field ("percentage"), a path ("data.temp") or a format ("{text}%"). Empty slots read the widget''s own.'
+    description: 'Each slot of the element → a key ("percentage"), a path ("data.temp"), a format ("{text}%") or a number ("100"). Empty slots read the output''s own key.'
   options:
     type: object
     default: {}

@@ -147,21 +147,22 @@ TestCase {
     });
     compare(p.value, 40);
     compare(p.ratio, 0.4, "percentage is the value on 0-100");
-    const v = CustomWidgetData.resolve({
-      "fields": {
-        "value": "mem.used",
-        "max": "mem.total",
-        "subtext": "of {mem.total} GiB"
-      }
-    }, {
+    const v = CustomWidgetData.resolve({}, {
       "text": "x",
-      "mem": {
-        "used": 4,
-        "total": 16
-      }
+      "value": 4,
+      "max": 16
     });
-    compare(v.ratio, 0.25, "bound paths");
-    compare(v.subtext, "of 16 GiB", "a bound format");
+    compare(v.ratio, 0.25, "the script's own max");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "37"
+    }).value, 37, "text that's a number is the value");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "37 %"
+    }).ratio, 0.37);
+    compare(CustomWidgetData.resolve({}, {
+      "text": "37",
+      "percentage": 50
+    }).value, 50, "a percentage wins over the text");
   }
 
   function test_resolveHidden() {
@@ -218,8 +219,30 @@ TestCase {
     compare(CustomWidgetData.elementValue(f, "percentage"), 50, "a field");
     compare(CustomWidgetData.elementValue(f, "cpu.temp"), 70, "a path");
     compare(CustomWidgetData.elementValue(f, "{cpu.temp}°C"), "70°C", "a format");
-    compare(CustomWidgetData.elementRatio(f, "", 0, 100), 0.5, "no binding: the ratio");
-    compare(CustomWidgetData.elementRatio(f, "cpu.temp", 20, 120), 0.5);
+    compare(CustomWidgetData.elementValue(f, "100"), 100, "a number typed");
+    compare(CustomWidgetData.elementRatio(f, {}), 0.5, "no binding: the output's own");
+    compare(CustomWidgetData.elementRatio(f, {
+      "value": "cpu.temp",
+      "min": "20",
+      "max": "120"
+    }), 0.5, "value, min and max bound");
+    const mem = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "value": 5,
+      "max": 20,
+      "items": [
+        {
+          "value": 10
+        }
+      ]
+    });
+    compare(CustomWidgetData.elementRatio(mem, {}), 0.25, "the output's max, not 100");
+    compare(CustomWidgetData.elementRatio(mem, {
+      "value": "items.0.value"
+    }), 0.5, "a bound value keeps the output's max");
+    compare(CustomWidgetData.elementRange(mem, {
+      "value": "nope"
+    }).value, undefined);
   }
 
   function test_lattice() {
@@ -278,7 +301,7 @@ TestCase {
 
   function test_elementKinds() {
     const kinds = CustomWidgetData.elementKinds.map(k => k.type);
-    compare(kinds, ["Text", "TextBlock", "Figure", "Icon", "Ring", "Gauge", "Bar", "Segments", "Sparkline", "List", "Image", "Button", "Toggle", "Status", "Separator"], "every kind the schema allows, in library order");
+    compare(kinds, ["Text", "TextBlock", "Icon", "Ring", "Gauge", "Bar", "Segments", "Sparkline", "List", "Image", "Button", "Toggle", "Status", "Separator"], "every kind the schema allows, in library order");
     compare(CustomWidgetData.elementKind("Bar").actions, ["change"]);
     compare(CustomWidgetData.elementKind("Nope"), null);
   }
@@ -311,19 +334,27 @@ TestCase {
   }
 
   function test_iconPick() {
-    const f = CustomWidgetData.resolve({
+    const d = {
       "formatIcons": {
         "on": "vpn_lock",
         "off": "vpn_key_off"
-      },
-      "fields": {
-        "alt": "text",
-        "icon": "{icon}"
       }
-    }, {
+    };
+    const f = CustomWidgetData.resolve(d, {
       "text": "on"
     });
-    compare(f.icon, "vpn_lock", "the icon field reads the format-icons pick");
+    compare(f.alt, "on", "text matching an icon key is the alt");
+    compare(f.icon, "vpn_lock", "a Material Symbols name picked is the icon");
+    compare(CustomWidgetData.resolve(d, {
+      "text": "on",
+      "icon": "wifi"
+    }).icon, "wifi", "the script's own icon first");
+    compare(CustomWidgetData.resolve({
+      "formatIcons": ["▁", "█"]
+    }, {
+      "text": "x",
+      "percentage": 90
+    }).icon, "", "a glyph isn't an icon name");
   }
 
   function test_presetsLoad() {

@@ -6,14 +6,14 @@ import qs.config
 // and max, across or up by its shape. With a change command it's a slider:
 // dragging shows the new value, releasing runs the command with {value}
 // (between min and max), and the value holds until the next sample.
-// options: min, max, color, step
+// slots: value, min, max; options: color, step
 CustomElementBase {
   id: root
 
   readonly property bool vertical: root.height > root.width * 1.5
   readonly property bool interactive: root.actionsEnabled && (root.actions.change ?? "") !== ""
-  readonly property real lo: parseFloat(root.opt("min", 0))
-  readonly property real hi: parseFloat(root.opt("max", 100))
+  readonly property real lo: root.range.min
+  readonly property real hi: root.range.max
   // The dragged or just-set share, until the next sample
   property real held: -1
   property bool dragging: false

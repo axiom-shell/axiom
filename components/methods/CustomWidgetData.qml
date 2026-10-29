@@ -229,22 +229,12 @@ QtObject {
     return max > 0 && s.length > max ? s.slice(0, Math.max(0, max - 1)) + "…" : s;
   }
 
-  // What one binding gives: "" or absent reads the field's own key in the
-  // sample; a binding with a "{" is a format filled from the sample; any
-  // other is a path in it
-  function bound(sample, key, binding) {
-    if (!binding)
-      return sample?.[key];
-    if (String(binding).indexOf("{") >= 0)
-      return root.fill(binding, {
-        "_sample": sample,
-        "text": sample?.text
-      });
-    return root.get(sample, binding);
-  }
-
-  // The fields of one sample as a definition draws them:
-  //   definition: { fields: { <field>: binding }, format, formatIcons,
+  // The fields of one sample as a definition draws them, each read from
+  // the key of the same name (a script shapes its own JSON). Plain text
+  // that's a number is the value; text matching a format-icons key is the
+  // alt (so a script printing "on" picks the "on" icon); a format-icons
+  // pick that's a Material Symbols name is the icon, when there's none.
+  //   definition: { format, formatIcons,
   //                 states, maxLength, escape, hideEmpty }
   // Returns { text (rich, the format filled), plain (it as plain text),
   // rawText, alt, tooltip (rich), classes, color (a theme name or colour,
@@ -256,13 +246,17 @@ QtObject {
     const s = sample ?? {};
     const f = {};
     for (const key of root.fieldNames)
-      f[key] = root.bound(s, key, d.fields?.[key]);
+      f[key] = s[key];
     const num = v => {
       const n = typeof v === "string" ? parseFloat(v) : v;
       return typeof n === "number" && isFinite(n) ? n : undefined;
     };
     const percentage = num(f.percentage);
-    let value = num(f.value);
+    const textNumber = typeof f.text === "string" && /^\s*-?\d+(\.\d+)?\s*%?\s*$/.test(f.text) ? parseFloat(f.text) : undefined;
+    let value = num(f.value) ?? (percentage === undefined ? textNumber : undefined);
+    const icons = d.formatIcons;
+    if ((f.alt === undefined || f.alt === null) && icons && typeof icons === "object" && !Array.isArray(icons) && typeof f.text === "string" && f.text.trim() in icons)
+      f.alt = f.text.trim();
     let min = num(f.min);
     let max = num(f.max);
     if (value === undefined && percentage !== undefined) {
@@ -288,11 +282,9 @@ QtObject {
       "subtext": esc(str(f.subtext)),
       "badge": str(f.badge)
     };
-    // The icon field may be the format-icons pick ("{icon}": a Material
-    // Symbols name there draws as an icon)
-    const iconBinding = String(d.fields?.icon ?? "");
-    if (iconBinding.indexOf("{icon}") >= 0)
-      f.icon = root.fill(iconBinding, values);
+    // A Material Symbols name picked from format-icons draws as the icon
+    if (!f.icon && /^[a-z][a-z0-9_]*$/.test(glyph))
+      f.icon = glyph;
     const text = root.pango(root.fill(d.format || "{}", values));
     const textPlain = root.plain(text);
     const classList = root.classes(f.class);
@@ -341,6 +333,9 @@ QtObject {
     if (!binding)
       return undefined;
     const b = String(binding);
+    // A number typed as the binding (a max of 100)
+    if (/^-?\d+(\.\d+)?$/.test(b.trim()))
+      return Number(b);
     if (b.indexOf("{") >= 0) {
       const values = Object.assign({}, fields, {
         "_sample": fields?.sample,
@@ -354,17 +349,28 @@ QtObject {
     return root.get(fields?.sample, b);
   }
 
-  // A number (0-1) between min and max for an element: its value binding
-  // read as a number, or the definition's ratio without one. -1: no value.
-  function elementRatio(fields, binding, min, max) {
-    if (!binding)
-      return fields?.ratio ?? -1;
-    const v = parseFloat(root.elementValue(fields, binding));
-    if (!isFinite(v))
+  // An element's value, min and max as numbers: each slot's binding (a
+  // field, a path, a format or a number), else the widget's own value,
+  // min and max (the script's, 0-100 for a percentage)
+  function elementRange(fields, bind) {
+    const num = (slot, own) => {
+      const b = bind?.[slot];
+      const v = b ? parseFloat(root.elementValue(fields, b)) : own;
+      return typeof v === "number" && isFinite(v) ? v : undefined;
+    };
+    return {
+      "value": num("value", fields?.value),
+      "min": num("min", fields?.min) ?? 0,
+      "max": num("max", fields?.max) ?? 100
+    };
+  }
+
+  // 0-1 for an element (elementRange), -1 without a value
+  function elementRatio(fields, bind) {
+    const r = root.elementRange(fields, bind);
+    if (r.value === undefined)
       return -1;
-    const lo = isFinite(min) ? min : 0;
-    const hi = isFinite(max) ? max : 100;
-    return hi === lo ? 0 : Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+    return r.max === r.min ? 0 : Math.max(0, Math.min(1, (r.value - r.min) / (r.max - r.min)));
   }
 
   // The element kinds a module is built from, in the editor's library
@@ -372,7 +378,7 @@ QtObject {
   // slots (its bindings), options (a properties schema for its look),
   // actions (the commands it runs) }. Labels and titles are English, the
   // editor translates them:
-  // I18n.tr("Text") I18n.tr("Text block") I18n.tr("Figure") I18n.tr("Icon")
+  // I18n.tr("Text") I18n.tr("Text block") I18n.tr("Icon")
   // I18n.tr("Ring") I18n.tr("Gauge") I18n.tr("Bar") I18n.tr("Segments")
   // I18n.tr("Sparkline") I18n.tr("List") I18n.tr("Image") I18n.tr("Button")
   // I18n.tr("Toggle") I18n.tr("Status") I18n.tr("Separator")
@@ -382,7 +388,7 @@ QtObject {
   // I18n.tr("Size") I18n.tr("Fit the box") I18n.tr("Small") I18n.tr("Normal")
   // I18n.tr("Large") I18n.tr("Huge") I18n.tr("Align") I18n.tr("Left")
   // I18n.tr("Centre") I18n.tr("Right") I18n.tr("Bold") I18n.tr("Monospace")
-  // I18n.tr("Lowest") I18n.tr("Highest") I18n.tr("Step") I18n.tr("Inside")
+  // I18n.tr("Highest") I18n.tr("Step") I18n.tr("Inside")
   // I18n.tr("Percent") I18n.tr("Value") I18n.tr("None") I18n.tr("Blocks")
   // I18n.tr("Dots") I18n.tr("Source") I18n.tr("Material Symbols")
   // I18n.tr("Format icon") I18n.tr("Show the badge") I18n.tr("Fit")
@@ -405,18 +411,6 @@ QtObject {
         "warning": "Warning",
         "error": "Error",
         "info": "Info"
-      }
-    };
-    const range = {
-      "min": {
-        "type": "number",
-        "title": "Lowest",
-        "default": 0
-      },
-      "max": {
-        "type": "number",
-        "title": "Highest",
-        "default": 100
       }
     };
     const flag = title => ({
@@ -480,17 +474,6 @@ QtObject {
         "actions": []
       },
       {
-        "type": "Figure",
-        "label": "Figure",
-        "icon": "123",
-        "size": [8, 4],
-        "slots": ["value", "unit", "label"],
-        "options": {
-          "color": color
-        },
-        "actions": []
-      },
-      {
         "type": "Icon",
         "label": "Icon",
         "icon": "star",
@@ -517,22 +500,22 @@ QtObject {
         "label": "Ring",
         "icon": "donut_large",
         "size": [6, 6],
-        "slots": ["value", "label"],
-        "options": Object.assign({}, range, {
-          "inside": {
-            "type": "string",
-            "title": "Inside",
-            "default": "percent",
-            "enum": ["percent", "value", "icon", "none"],
-            "x-enumLabels": {
-              "percent": "Percent",
-              "value": "Value",
-              "icon": "Icon",
-              "none": "None"
-            }
-          },
-          "color": color
-        }),
+        "slots": ["value", "min", "max", "label"],
+        "options": ({
+            "inside": {
+              "type": "string",
+              "title": "Inside",
+              "default": "percent",
+              "enum": ["percent", "value", "icon", "none"],
+              "x-enumLabels": {
+                "percent": "Percent",
+                "value": "Value",
+                "icon": "Icon",
+                "none": "None"
+              }
+            },
+            "color": color
+          }),
         "actions": []
       },
       {
@@ -540,22 +523,22 @@ QtObject {
         "label": "Gauge",
         "icon": "speed",
         "size": [6, 6],
-        "slots": ["value", "label"],
-        "options": Object.assign({}, range, {
-          "inside": {
-            "type": "string",
-            "title": "Inside",
-            "default": "percent",
-            "enum": ["percent", "value", "icon", "none"],
-            "x-enumLabels": {
-              "percent": "Percent",
-              "value": "Value",
-              "icon": "Icon",
-              "none": "None"
-            }
-          },
-          "color": color
-        }),
+        "slots": ["value", "min", "max", "label"],
+        "options": ({
+            "inside": {
+              "type": "string",
+              "title": "Inside",
+              "default": "percent",
+              "enum": ["percent", "value", "icon", "none"],
+              "x-enumLabels": {
+                "percent": "Percent",
+                "value": "Value",
+                "icon": "Icon",
+                "none": "None"
+              }
+            },
+            "color": color
+          }),
         "actions": []
       },
       {
@@ -563,15 +546,15 @@ QtObject {
         "label": "Bar",
         "icon": "linear_scale",
         "size": [12, 2],
-        "slots": ["value"],
-        "options": Object.assign({}, range, {
-          "step": {
-            "type": "number",
-            "title": "Step",
-            "default": 1
-          },
-          "color": color
-        }),
+        "slots": ["value", "min", "max"],
+        "options": ({
+            "step": {
+              "type": "number",
+              "title": "Step",
+              "default": 1
+            },
+            "color": color
+          }),
         "actions": ["change"]
       },
       {
@@ -579,18 +562,18 @@ QtObject {
         "label": "Segments",
         "icon": "signal_cellular_alt",
         "size": [12, 2],
-        "slots": ["value"],
-        "options": Object.assign({}, range, {
-          "count": {
-            "type": "integer",
-            "title": "Blocks",
-            "default": 5,
-            "minimum": 2,
-            "maximum": 24
-          },
-          "round": flag("Dots"),
-          "color": color
-        }),
+        "slots": ["value", "min", "max"],
+        "options": ({
+            "count": {
+              "type": "integer",
+              "title": "Blocks",
+              "default": 5,
+              "minimum": 2,
+              "maximum": 24
+            },
+            "round": flag("Dots"),
+            "color": color
+          }),
         "actions": []
       },
       {
@@ -764,7 +747,6 @@ QtObject {
         "mode": interval === "once" ? "once" : typeof interval === "number" && interval > 0 ? "poll" : "stream",
         "output": "waybar",
         "format": typeof m.format === "string" ? m.format : "{}",
-        "fields": {},
         "actions": {}
       };
       if (def.mode === "poll")
@@ -818,9 +800,6 @@ QtObject {
         "dnd-inhibited-notification": "notifications_paused",
         "dnd-inhibited-none": "notifications_off"
       },
-      "fields": {
-        "icon": "{icon}"
-      },
       "bar": {
         "style": "icon"
       },
@@ -841,10 +820,6 @@ QtObject {
         "true": "notifications_off",
         "false": "notifications"
       },
-      "fields": {
-        "alt": "text",
-        "icon": "{icon}"
-      },
       "hideEmpty": false,
       "bar": {
         "style": "icon"
@@ -861,9 +836,6 @@ QtObject {
       "formatIcons": {
         "spotify": "music_note",
         "default": "play_circle"
-      },
-      "fields": {
-        "icon": "{icon}"
       },
       "maxLength": 40,
       "escape": true,
@@ -910,10 +882,6 @@ QtObject {
         "on": "vpn_lock",
         "off": "vpn_key_off"
       },
-      "fields": {
-        "alt": "text",
-        "icon": "{icon}"
-      },
       "bar": {
         "style": "icon"
       }
@@ -927,9 +895,6 @@ QtObject {
       "interval": 3000,
       "output": "text",
       "format": "{}%",
-      "fields": {
-        "percentage": "text"
-      },
       "bar": {
         "style": "ring"
       }
