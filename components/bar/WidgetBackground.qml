@@ -149,13 +149,16 @@ Item {
   // background's ends instead of squeezing its corners square. The window
   // overhangs the start (and, full, the far end unless that's flat), so
   // only its leading edge rounds and never by less than its radius.
-  // In a merged run a widget's start is flat or slanted against the one
-  // before, so there the level is the window alone, rounded at both ends
-  // from the widget's own start.
+  // In a merged run a widget past the run's start starts flat (or the
+  // run's start is slanted, an arrow), so there the level is the window
+  // alone, rounded at both ends from the widget's own start; at the run's
+  // rounded start it's the shape seen through the window as elsewhere.
   ClippingRectangle {
     id: level
     readonly property bool vertical: root.barConfig.vertical
-    readonly property bool merged: root.barConfig.widgetGrouping === "merged"
+    // The cap the level starts from (up a vertical bar: the bottom, its end)
+    readonly property string nearCap: vertical ? root.endCap : root.startCap
+    readonly property bool merged: root.barConfig.widgetGrouping === "merged" && !["round", "capsule"].includes(nearCap)
     readonly property real share: Math.max(0, Math.min(1, root.backgroundLevel))
     readonly property real across: vertical ? root.width : root.height
     // The background's cap at the far end, where a full level ends
