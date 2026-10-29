@@ -30,6 +30,7 @@ x-libraryGroups:
   - Tools
   - Look & layout
   - Session
+  - Custom
 additionalProperties: false
 properties:
   $schema: {type: string, x-settings: false}

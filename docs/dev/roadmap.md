@@ -230,7 +230,7 @@ Steps:
 1. Done: **The plan.**
 2. Done: **Data:** `CommandManager` keeps `exitCode` / `error` / `at`; the pure helper `CustomWidgetData` and its test.
 3. Done: **Definitions:** the `CustomWidgets` section, the `customWidgets` `x-options` source, `CustomWidgetsManager`, and its IPC target (`axiom ipc customWidgets refresh`).
-4. **The module:** the element pieces, the proportional renderer, the `CustomWidget` module type (also the popout; lockscreen opt-in), per-definition module library entries. Never the greeter; no actions on the lockscreen.
+4. Done: **The module:** the element pieces, the proportional renderer, the `CustomWidget` module type (also the popout; lockscreen opt-in), per-definition module library entries. Never the greeter; no actions on the lockscreen.
 5. **The bar widget:** the `Custom` widget type and its styles, per-definition bar library entries.
 6. **Editor, part 1:** the tool page, its editor manager, the definitions list, the Source card and the Bar tab.
 7. **Editor, part 2:** the Module tab (the fine-grid canvas on `GridEditor`).

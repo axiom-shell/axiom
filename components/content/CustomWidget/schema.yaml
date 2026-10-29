@@ -1,0 +1,12 @@
+label: Custom widget
+icon: widgets
+group: Custom
+defaultSize: [4, 2]
+hosts: [lockscreen]
+settings:
+  definition:
+    type: string
+    title: Custom widget
+    default: ''
+    x-options: customWidgets
+    description: Which custom widget it shows. They're made on the Custom widgets page.

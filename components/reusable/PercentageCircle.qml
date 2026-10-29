@@ -3,7 +3,8 @@ import QtQuick
 import qs.config
 
 // A ring gauge: a thin track with a round-capped arc over it, like a
-// StyledSlider bent into a circle, and an icon in the middle
+// StyledSlider bent into a circle, and an icon in the middle. `sweep`
+// below 360 opens it at the bottom (a gauge: 240)
 Item {
   id: root
 
@@ -14,6 +15,8 @@ Item {
   property color trackColor: Theme.backgroundHighlight
   // The stroke, as a share of the side, but never thinner than a slider's trough
   property real thickness: Math.max(Widget.px(4), side * 0.07)
+  // Degrees the track spans, centred on the top
+  property real sweep: 360
 
   readonly property real side: Math.min(root.width, root.height)
 
@@ -35,8 +38,11 @@ Item {
         return;
       ctx.lineWidth = root.thickness;
 
+      const span = Math.max(1, Math.min(360, root.sweep)) * Math.PI / 180;
+      const start = -Math.PI / 2 - span / 2 + (root.sweep >= 360 ? span / 2 : 0);
       ctx.beginPath();
-      ctx.arc(centre, centre, radius, 0, 2 * Math.PI, false);
+      ctx.arc(centre, centre, radius, start, start + span, false);
+      ctx.lineCap = root.sweep >= 360 ? "butt" : "round";
       ctx.strokeStyle = root.trackColor;
       ctx.stroke();
 
@@ -45,7 +51,7 @@ Item {
       if (share <= 0)
         return;
       ctx.beginPath();
-      ctx.arc(centre, centre, radius, -Math.PI / 2, -Math.PI / 2 + share * 2 * Math.PI, false);
+      ctx.arc(centre, centre, radius, start, start + share * span, false);
       ctx.lineCap = "round";
       ctx.strokeStyle = root.fillColor;
       ctx.stroke();
@@ -63,6 +69,9 @@ Item {
         ring.requestPaint();
       }
       function onThicknessChanged() {
+        ring.requestPaint();
+      }
+      function onSweepChanged() {
         ring.requestPaint();
       }
     }

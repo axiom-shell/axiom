@@ -1,6 +1,6 @@
 # Custom widgets
 
-> **Files:** `config/CustomWidgetsConfig.qml`, `services/apps/CustomWidgetsManager.qml`, `components/methods/CustomWidgetData.qml`, `config/schema/sections/CustomWidgets.yaml`, `config/schema/definitions/custom/`
+> **Files:** `config/CustomWidgetsConfig.qml`, `services/apps/CustomWidgetsManager.qml`, `components/methods/CustomWidgetData.qml`, `components/content/CustomWidget/CustomWidget.qml`, `components/content/parts/custom/`, `config/schema/sections/CustomWidgets.yaml`, `config/schema/definitions/custom/`
 > **Config:** `CustomWidgets.items` (reader `CustomWidgetsConfig`)
 > **Related:** [Services pattern](../core/services-pattern.md), [Protocol](../backend/protocol.md) (`exec.watch`), [the plan](../plans/custom-json-widgets.md)
 
@@ -29,3 +29,11 @@ The fields: Waybar's `text`, `alt`, `tooltip`, `class`, `percentage`, and axiom'
 `act(id, action)` and `runCommand(id, command, value)` run actions detached (`{value}` filled in, shell-quoted unless a number), then refresh the script 300 ms later. Nothing runs in the greeter or while the built-in lock screen is up. `axiom ipc customWidgets refresh <name>` (refresh name, id or name) stands in for Waybar's `signal`: a script calling `pkill -RTMIN+N waybar` should call that instead.
 
 A stream is coalesced to 4 pushes a second by axiom (`backend/internal/command/stream.go`), so frame-rate scripts (cava) look choppy.
+
+### The module
+`components/content/CustomWidget/CustomWidget.qml` is a `Panel`: in a card (`properties.definition`) it fills its slot; as the bar widget's popout (`definitionId` from the anchor's `extraData`) it's the definition's design size at the screen's card size (`OverlayConfig.cardUnitOn`, `GridPlacement.span`), declared up front as `maxImplicitWidth/Height`, since an open popout never resizes. It acquires its definition while shown; actions are off on the lock screen (`host.kind`) and in previews (`host.preview`).
+
+`CustomLayout` (`components/content/parts/custom/`) draws the elements: a Repeater by count over `module.elements` (or `CustomWidgetData.defaultElements` when there are none), each a `CustomElement` (a Loader by kind) at `CustomWidgetData.rect` of its place, a `Widget.px(6)` gap between neighbours. Each kind is a `CustomElementBase` with the element's config, the fields, the history and helpers for its bindings (`value`, `text`, `ratio`, `colorOf`, `act`):
+- Text (fitted to its box when plain; rich text at a size from the box), Text block (scrolls; the tooltip by default), Figure (`StatFigure`), Icon (Material name or the format-icons glyph, a `CountBadge`), Ring and Gauge (`PercentageCircle`, `sweep` 360 or 240), Bar (`CustomMeter`: a slider when it has a change command, holding the dragged value until the next sample), Segments, Sparkline (the service's history), List (a ListModel updated in place, a ListView), Image (`ClippingRectangle`), Button, Toggle (holds its new state until the next sample), Status (a `StatusChip` or a dot), Separator.
+
+The module library offers each definition by itself (`OverlayConfig.customModuleTypes`, group Custom, A–Z by name), keyed `CustomWidget:<id>`; `GridEditor._newModule` turns the key into `{type: "CustomWidget", properties: {definition}}` (`OverlayConfig.customModuleKey`), and the definition's design size is where it starts. The lock screen's library lists only definitions with `module.lockscreen`.

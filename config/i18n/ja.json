@@ -3249,6 +3249,10 @@
     "Ring": "",
     "A script's path or a command line, run by sh. Its output is the widget.": "",
     "JSON": "",
-    "The element's look (its kind's options).": ""
+    "The element's look (its kind's options).": "",
+    "Pick a custom widget in this module's settings": "",
+    "Waiting for output…": "",
+    "Which custom widget it shows. They're made on the Custom widgets page.": "",
+    "Custom widget": ""
   }
 }
