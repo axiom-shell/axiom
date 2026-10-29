@@ -322,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The check order is kept in three places
-- **Where:** `scripts/check_all.sh`, `scripts/dev/verify.sh`, `.github/workflows/checks.yml`
-- **What:** The same checks, in the same order, are listed by hand three times; a check added to one can be missed in the others. One list (a file the three read, or `check_all.sh` as the one CI runs) keeps them equal. They have drifted already: CI's `JSON is valid` step (`python3 -m json.tool` over every tracked `.json`) is in neither `check_all.sh` nor verify.sh, so `verify.sh --all` passes a broken JSON file that CI fails.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### verify.sh skips the checks a deletion or a check's own change needs
 - **Where:** `scripts/dev/verify.sh` (`changed`, the step triggers)
 - **What:** `changed` keeps only files that exist (`[[ -f "$f" ]]`), so a deleted file triggers nothing: deleting a Go file runs no Go checks (the package may no longer build), deleting a QML or script file a doc cites runs no `check_docs.py`, and a change that only deletes prints `nothing changed since HEAD`. CI then fails what verify passed; the roadmap's "Delete before adding" makes this the common case. The triggers also miss a check's own change: `check_docs.py` runs only when a `.md` or `.qml` changed (not for `config/schema/` YAML, though it checks the `x-*` annotations, nor for a change to `check_docs.py` itself), `check_qmllint.py` and `check_sizes.py` only when QML changed, `check_docs.py` has a `CheckDocs` class in `tests/scripts/test_scripts.py` the script map doesn't run, and `.githooks/pre-commit` (not `*.sh`) is never shellchecked. Fix: keep deleted paths in `changed` for the triggers (filter only where a step reads the file, as qmlformat does), and map each `scripts/check_*` file to its own check.

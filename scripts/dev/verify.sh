@@ -8,7 +8,9 @@
 #      change touches what they're recorded from)
 #   1. formats changed QML with Qt 6's qmlformat, writing in place so the
 #      file keeps its inode and the running shell still reloads it
-#   2. check_structure, check_sizes, check_docs, check_packages, qmllint, the
+#   2. those of check_all.sh's checks the change reaches (a new check there
+#      gets a trigger here): check_structure, check_sizes, check_docs,
+#      check_packages, qmllint, JSON validity, the
 #      unit tests the change touches (QML, and the test_scripts.py classes of
 #      a changed script), the Go checks (backend/:
 #      go generate, gofmt, vet, staticcheck, tests), shellcheck, i18n
@@ -31,7 +33,7 @@ for arg in "$@"; do
   case "$arg" in
   --all) all=1 ;;
   *)
-    sed -n '2,21p' "$0" >&2
+    sed -n '2,23p' "$0" >&2
     exit 2
     ;;
   esac
@@ -137,6 +139,10 @@ if printf '%s\n' "${changed[@]}" | grep -qE '^(install\.sh|components/methods/Pa
 fi
 if [[ ${#qml[@]} -gt 0 ]]; then
   step "qmllint" python3 scripts/check_qmllint.py
+fi
+mapfile -t jsons < <(printf '%s\n' "${changed[@]}" | grep '\.json$')
+if [[ ${#jsons[@]} -gt 0 ]]; then
+  step "json" bash -c 'for f; do python3 -m json.tool --no-ensure-ascii "$f" >/dev/null || exit 1; done' _ "${jsons[@]}"
 fi
 if [[ ${#tests[@]} -gt 0 ]]; then
   mapfile -t tests < <(printf '%s\n' "${tests[@]}" | sort -u)
