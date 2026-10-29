@@ -194,11 +194,29 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while aligning the schema's scopes
 
-### The scrolling layout's workspaces don't come back with their monitor
-- **Where:** `services/compositor/HyprlandManager.qml` (`dynamicByLayout`, `_compaction`), `components/methods/DynamicWorkspaces.qml`
-- **What:** niri keeps an unplugged monitor's workspaces and gives them back when it returns; under Hyprland's scrolling layout, Hyprland moves them to another monitor, where they're outside its block, so they drop out of its list (`DynamicWorkspaces.workspaces`) until `workspaces reconcile`. Workspaces the user's config makes persistent stay empty in the middle of the list, as compaction moves no workspace without windows. Neither is tried yet.
-- **Size:** needs a plan
-- **Found:** 2026-10-19, while adding the scrolling layout
+### Hyprland's return of workspaces on replug is unconfirmed
+- **Where:** `services/compositor/HyprlandManager.qml` (`dynamicByLayout`), `scripts/dev/nested.sh`
+- **What:** The scrolling layout's give-back (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, decided C, item 1) rests on Hyprland moving an unplugged monitor's workspaces back to it on replug (each workspace keeps the monitor it left), read from Hyprland's code but never tried. Check it on a nested Hyprland (`scripts/dev/nested.sh hyprland`): create a headless output, open windows on its workspaces, remove the output, add it back, and see where they land. Record the result in `docs/dev/hyprland/workspace-strips.md`. If Hyprland doesn't return them, stop and report before the later items are built: the borrowed-workspaces item has nothing to wait for.
+- **Size:** trivial
+- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
+
+### Workspace blocks follow the connected monitors, not the saved profiles
+- **Where:** `components/methods/WorkspaceGeometry.qml` (`blockBases`), `services/compositor/HyprlandManager.qml` (`_bases`), `services/compositor/CompositorManager.qml` (`_bases`), `config/MonitorsConfig.qml` (`profiles`)
+- **What:** `WorkspaceGeometry.blockBases` numbers each monitor's block by its place among the connected monitors (primary first, then output identity), so unplugging a monitor that isn't last gives every monitor after it a new base: its workspaces (201…) sit outside its new block (101…), and its list, grid and steps miss them until `axiom ipc workspaces reconcile`; replugging shifts them back. This hits every per-monitor layout (`perMonitor` and `grid` on Hyprland and sway, `scrolling` on Hyprland, where the list shrinks to the one synthetic empty workspace). Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 2): number blocks over every monitor the saved profiles name (`MonitorsConfig.profiles`, by output identity), connected ones not named after them, so a block never moves with what's connected; both `_bases` pass the same list. Test rows in `tst_WorkspaceGeometry` for a middle monitor unplugged and an unknown one plugged in. Docs: `docs/dev/hyprland/workspaces.md`, `docs/dev/hyprland/workspace-strips.md`.
+- **Size:** small
+- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
+
+### The scrolling layout drops a monitor's borrowed workspaces from its list
+- **Where:** `components/methods/DynamicWorkspaces.qml` (`workspaces`, `compaction`), `services/compositor/CompositorManager.qml` (`nthWorkspace`, `stepWorkspace`)
+- **What:** Under `Workspaces.layout: scrolling` on Hyprland, an unplugged monitor's workspaces move to another monitor, outside its block, so `DynamicWorkspaces.workspaces` drops them from every list and their windows are reachable only by the overview or `workspaces reconcile`. Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 3): list a monitor's out-of-block workspaces after its own as borrowed, and leave them where they are (compaction skips them, navigation and the overview's column reach them), so Hyprland's return on replug brings them home. Needs the stable blocks first and the replug check to have passed. `tst_DynamicWorkspaces` rows for borrowed workspaces listed, kept by compaction and stepped through. Docs: `docs/dev/hyprland/workspace-strips.md` › The scrolling layout.
+- **Size:** small
+- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
+
+### Persistent workspaces sit empty in the scrolling layout's list
+- **Where:** `components/methods/DynamicWorkspaces.qml` (`workspaces`)
+- **What:** A `persistent` workspace rule in the user's Hyprland config keeps an empty workspace alive; `DynamicWorkspaces.workspaces` lists every real in-block workspace, so an empty persistent one past the last occupied one stays in the list and the "one empty after the last" rule no longer holds. Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 4): leave out in-block workspaces that are empty and not active (the synthetic one after the last still covers a new one); `tst_DynamicWorkspaces` rows for a persistent one in the middle and past the end.
+- **Size:** trivial
+- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
 
 ### Calendar times in a Windows zone name with no VTIMEZONE read as local time
 - **Where:** `backend/internal/calendar/ical/zone.go` (`Zones.With`), `backend/internal/calendar/calendar.go` (`New`'s `Lookup`)

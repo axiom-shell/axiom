@@ -176,7 +176,10 @@ Done: sway and SwayFX (nothing left). niri's entries are [deferred](#deferred) (
 
 Hyprland, and every compositor:
 - [After a modal closes, the grabs' newest order is lost](issues.md#after-a-modal-closes-the-grabs-newest-order-is-lost)
-- [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
+- [Hyprland's return of workspaces on replug is unconfirmed](issues.md#hyprlands-return-of-workspaces-on-replug-is-unconfirmed)
+- [Workspace blocks follow the connected monitors, not the saved profiles](issues.md#workspace-blocks-follow-the-connected-monitors-not-the-saved-profiles)
+- [The scrolling layout drops a monitor's borrowed workspaces from its list](issues.md#the-scrolling-layout-drops-a-monitors-borrowed-workspaces-from-its-list)
+- [Persistent workspaces sit empty in the scrolling layout's list](issues.md#persistent-workspaces-sit-empty-in-the-scrolling-layouts-list)
 - [Hyprland's default workspace doesn't highlight its first window](issues.md#hyprlands-default-workspace-doesnt-highlight-its-first-window)
 
 ### Phase 7: fit, geometry and performance
