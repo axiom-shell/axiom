@@ -36,6 +36,9 @@ Panel {
   wantsKeyboardFocus: true
   implicitWidth: Math.max(Appearance.fontSize * 20, body.implicitWidth + margins * 2)
   maxImplicitHeight: Appearance.fontSize * 30
+  // In a popout the laps grow away from the dial and its buttons, which
+  // stay by the bar (Panel.growth)
+  flips: true
   fullMinWidth: Appearance.fontSize * 11
   fullMinHeight: Appearance.fontSize * 10
 

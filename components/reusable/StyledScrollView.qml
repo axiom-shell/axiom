@@ -5,8 +5,8 @@ import QtQuick.Controls
 
 import qs.config
 
-// A ScrollView with the shell's padding and a thin accent scroll bar that
-// shows only when asked.
+// A ScrollView with the shell's padding, clipped to itself, and a thin
+// accent scroll bar that shows only when asked.
 ScrollView {
   id: root
 
@@ -14,11 +14,15 @@ ScrollView {
   property bool showScrollBar: false
 
   contentWidth: availableWidth
+  // Rows scrolled out of view stay inside it, never over what's around it
+  clip: true
 
   topPadding: contentPadding
   bottomPadding: contentPadding
   leftPadding: contentPadding
-  rightPadding: showScrollBar ? contentPadding * 2 : contentPadding
+  // Room for the bar beside the content while it shows, however little
+  // padding the content has
+  rightPadding: showScrollBar ? contentPadding + Math.max(contentPadding, Widget.px(12)) : contentPadding
 
   ScrollBar.vertical.policy: ScrollBar.AsNeeded
   ScrollBar.horizontal.policy: ScrollBar.AlwaysOff

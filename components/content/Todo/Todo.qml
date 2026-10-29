@@ -21,6 +21,9 @@ Panel {
   wantsKeyboardFocus: true
   implicitWidth: Math.max(Appearance.fontSize * 22, body.implicitWidth + margins * 2)
   maxImplicitHeight: Appearance.fontSize * 32
+  // In a popout the list grows away from the header and field, which stay
+  // by the bar (Panel.growth)
+  flips: true
   fullMinWidth: Appearance.fontSize * 12
   fullMinHeight: Appearance.fontSize * 8
 
@@ -48,6 +51,7 @@ Panel {
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
     fill: root.embedded
+    reversed: root.growsUp
     maxListHeight: Appearance.fontSize * 24
   }
 }
