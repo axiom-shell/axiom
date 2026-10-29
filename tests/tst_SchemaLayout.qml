@@ -870,4 +870,12 @@ TestCase {
     visit(schema, "");
     compare(bad, []);
   }
+
+  // The bar editor's links to the shared bar style (BarsPanel's style
+  // groups, WidgetInspector) find their cards
+  function test_bar_style_links_resolve() {
+    const targets = ["Bars.style"].concat(SchemaLayout.objectGroups(schema.definitions.BarStyle, []).map(group => "Bars.style." + group.keys[0]));
+    compare(targets.filter(target => SchemaLayout.locate(schema, target) === null), []);
+    compare(targets.length > 1, true);
+  }
 }

@@ -156,6 +156,13 @@ Item {
               links: root.dragLayer.typeInfo(editorRoot.widget.type)?.link
             }
 
+            // Where every bar's widget look is set (the bar's own, if it
+            // takes one, is in the bar's Style groups)
+            SettingsLink {
+              Layout.fillWidth: true
+              setting: "Bars.style"
+            }
+
             OptionsGroup {
               propertiesSchema: editorRoot.propertiesSchema
               order: editorRoot.propertiesOrder

@@ -334,12 +334,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### The bar editor lost its links to the global bar style
-- **Where:** `components/views/BarEditor/BarsPanel.qml`, `components/views/BarEditor/WidgetInspector.qml`
-- **What:** From the maintainer's notes: the bar editor used to link to the Look and feel settings that style every bar; those links are gone, and it needs a link to the global bar style.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### The layouts editor says a page is shrunk to 99% at the defaults
 - **Where:** `components/views/Layouts/PageTarget.qml` (`Shrunk to {0}% on {1}`)
 - **What:** From the maintainer's notes: with every scale at its default 100 %, the layouts editor still shows a page as shrunk to 99 %: a fit a hair under 1 is reported as shrinking.

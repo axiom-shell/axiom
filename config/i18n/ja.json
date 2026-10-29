@@ -2989,7 +2989,6 @@
     "Follows {0} until set.": "",
     "x-inherit": "",
     "This bar's own": "",
-    "Shared with every bar (Look & Feel › Bars).": "",
     "Failed to export": "",
     "Fade in": "",
     "Borderangle": "",
@@ -3191,6 +3190,7 @@
     "15 more minutes": "",
     "Caffeine for a set time, from the presets, when hovered.": "",
     "Caffeine for a set time from the popout, comma-separated: 30m, 1h30m, 4h.": "",
-    "30m, 1h30m, 90s…": ""
+    "30m, 1h30m, 90s…": "",
+    "Shared with every bar.": ""
   }
 }
