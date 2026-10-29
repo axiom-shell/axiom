@@ -39,7 +39,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 - **So:** while locked, `Lockscreen.qml` turns `Quickshell.watchFiles` off: a saved file doesn't reload the shell, and loads at the next save after unlocking.
 - **Explicit reloads** (`/reload`, an auto self-update) go through `LockManager.reload()`, which waits for the unlock.
 - New code never calls `Quickshell.reload` itself.
-- **Only `AuthManager.authenticationSucceeded` (PAM, `login` stack) unlocks.**
+- **Only `AuthManager.authenticationSucceeded` (PAM, `login` stack) unlocks** (`tests/scripts/test_scripts.py` › `OnlyPamUnlocks` reads the QML for every other way out).
   - There is no IPC unlock.
   - Nothing on the surface may run commands.
 

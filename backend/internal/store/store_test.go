@@ -150,6 +150,32 @@ func TestSetValidatesAndRefusesTakeovers(t *testing.T) {
 	}
 }
 
+// A takeover can't be changed around its own key either: replacing or
+// deleting its section, deleting the key back to its default, or an op
+// list that ends on another value is refused, and the value stays
+func TestNoOpChangesATakeoverSideways(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), true)}, SetOptions{Takeover: true}); err != nil {
+		t.Fatal(err)
+	}
+	section, _ := jsonx.Unmarshal([]byte(`{"enabled": false}`))
+	for name, ops := range map[string][]config.Op{
+		"the section replaced":  {config.SetValue(config.Keys("Idle"), section)},
+		"the section deleted":   {{Op: "delete", Path: config.Keys("Idle")}},
+		"the key deleted":       {{Op: "delete", Path: config.Keys("Idle", "enabled")}},
+		"ending off":            {config.SetValue(config.Keys("Idle", "enabled"), true), config.SetValue(config.Keys("Idle", "enabled"), false)},
+		"hidden among the rest": {config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0), config.SetValue(config.Keys("Idle", "enabled"), false)},
+	} {
+		if _, err := s.Set(ops, SetOptions{}); axerr.KindOf(err) != axerr.TakeoverRefused {
+			t.Errorf("%s: %v", name, err)
+		}
+		if cfg, _ := s.Config(); cfg.Value("Idle").(*jsonx.Object).Value("enabled") != true {
+			t.Fatalf("%s changed Idle.enabled", name)
+		}
+	}
+}
+
 // An event carries the ops from the config before it: a write's, and an
 // edit made outside's (diffed after the takeovers are held)
 func TestEventsCarryTheChange(t *testing.T) {

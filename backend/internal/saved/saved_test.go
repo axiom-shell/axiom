@@ -26,6 +26,12 @@ type fixture struct {
 
 func setup(t *testing.T) fixture {
 	t.Helper()
+	return setupSchema(t, func(*jsonx.Object) {})
+}
+
+// setupSchema is setup with the tree's schema changed by edit first.
+func setupSchema(t *testing.T, edit func(root *jsonx.Object)) fixture {
+	t.Helper()
 	data, err := tree.BuildSchema(testkit.RepoRoot())
 	if err != nil {
 		t.Fatal(err)
@@ -34,6 +40,7 @@ func setup(t *testing.T) fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
+	edit(root.(*jsonx.Object))
 	pipeline := config.V2Pipeline{S: schema.New(root)}
 	dir, home, ex := t.TempDir(), t.TempDir(), t.TempDir()
 	st, err := store.Open(store.Options{Dir: dir, Pipeline: pipeline, Debounce: 20 * time.Millisecond})
@@ -235,5 +242,60 @@ func TestShippedExamplesApply(t *testing.T) {
 	}
 	if checked == 0 {
 		t.Fatal("no examples")
+	}
+}
+
+// No way of loading a config changes a takeover setting (x-takeover): a
+// file setting every one, imported with all its parts, applied as an
+// example or a shared setup, restored as a saved config, or the defaults
+// applied, leaves each as it was. Each is made part of the look here, which
+// every load carries, so the store's keeping them is what's tested, not
+// their machine scope
+func TestNoLoadChangesATakeover(t *testing.T) {
+	t.Parallel()
+	running := map[string]any{"Compositor.mode": "included", "Greeter.enabled": true, "Idle.enabled": true,
+		"Lockscreen.mode": "none", "Polkit.enabled": true}
+	f := setupSchema(t, func(root *jsonx.Object) {
+		for path := range running {
+			section, key, _ := strings.Cut(path, ".")
+			props := root.Value("properties").(*jsonx.Object).Value(section).(*jsonx.Object).Value("properties").(*jsonx.Object)
+			props.Value(key).(*jsonx.Object).Set("x-scope", "look")
+		}
+	})
+	for path, v := range running {
+		p, _ := config.ParsePath(path)
+		if _, err := f.store.Set([]config.Op{config.SetValue(p, v)}, store.SetOptions{Takeover: true}); err != nil {
+			t.Fatalf("%s: %v", path, err)
+		}
+	}
+	hostile := `{"format": 2, "version": 76, "meta": {"title": "Hostile"}, "Compositor": {"mode": "managed"},
+		"Greeter": {"enabled": false}, "Idle": {"enabled": false}, "Lockscreen": {"mode": "quickshell"},
+		"Polkit": {"enabled": false}, "Appearance": {"theme": {"name": "nord"}}}`
+	file := filepath.Join(f.home, "hostile.json")
+	for _, name := range []string{file, filepath.Join(f.ex, "hostile.json"), filepath.Join(f.dir, "saved", "hostile.json")} {
+		os.MkdirAll(filepath.Dir(name), 0o755)
+		os.WriteFile(name, []byte(hostile), 0o644)
+	}
+	for _, c := range []struct {
+		name string
+		load func() error
+	}{
+		{"import", func() error { _, err := f.svc.Import(file, true, true, nil); return err }},
+		{"example", func() error { _, err := f.svc.ApplyExample("hostile", nil); return err }},
+		{"shared", func() error { _, err := f.svc.ApplyShared(file, "Hostile", "", nil); return err }},
+		{"restore", func() error { return f.svc.Restore("hostile") }},
+		{"defaults", func() error { _, err := f.svc.Defaults(); return err }},
+	} {
+		if err := c.load(); err != nil {
+			t.Errorf("%s: %v", c.name, err)
+		}
+		if c.name == "import" && get(t, f.store, "Appearance.theme.name") != "nord" {
+			t.Error("the import loaded nothing: the test proves nothing")
+		}
+		for path, v := range running {
+			if got := get(t, f.store, path); got != v {
+				t.Errorf("%s changed %s to %v", c.name, path, got)
+			}
+		}
 	}
 }
