@@ -570,7 +570,8 @@ func TestAConfigGivenBackMeanwhileIsntWrittenOver(t *testing.T) {
 	// once that's done, or the approved claim adopts it
 	h.m.do(context.Background(), func(context.Context) {})
 	os.WriteFile(f.ManagedPath, []byte("-- mine again\n"), 0o644)
-	// A live change: evaluated, then the file synced after 2 s
+	// A live change: evaluated, then the file synced after 2 s (inside
+	// testkit.Eventually's 10, which CI stretches)
 	h.inputs("f1", "l2", "k1", "borders")
 	h.eventually("asked again", func() bool { return h.state("takeoverPending") == true })
 	if readFile(f.ManagedPath) != "-- mine again\n" || h.approved() {

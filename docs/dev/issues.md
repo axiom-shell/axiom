@@ -200,12 +200,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-19, while building the review-system skill
 
-### A compositor manager test misses its takeover prompt under load
-- **Where:** `backend/internal/compositor/manager/manager_test.go` (`TestAConfigGivenBackMeanwhileIsntWrittenOver`, `harness.eventually`)
-- **What:** CI on PR #184 (which touched no Go) failed with `manager_test.go:555: never: asked again` (state `"status":"pending"`, `"takeoverPending":false`). The wait covers a live change whose file sync comes 2 s later, inside `eventually`'s 3 s bound, so a loaded runner has 1 s of slack; the test runs `t.Parallel()` with the package. A flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or a sync delay the test sets shorter.
-- **Size:** trivial
-- **Found:** 2026-10-28, while merging the niri screenshot fix (CI on PR #184)
-
 ### A self-update test once took the build path for a release
 - **Where:** `backend/internal/daemon/selfupdate_test.go` (`TestReplaceInstalled`)
 - **What:** Locally, `go test -count=1 ./internal/compositor/... ./internal/daemon/` failed once with `selfupdate_test.go:68: rebuilt true from "built", reason ""` in the case `a release's` (the fake release server's binary should have been taken), then passed on a rerun. Likely the release fetch failing or timing out under parallel load, so `replaceInstalled` fell back to building; not reproduced.
