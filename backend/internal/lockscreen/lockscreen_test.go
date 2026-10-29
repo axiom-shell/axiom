@@ -217,3 +217,27 @@ func TestRequestedStopDoesNotRelock(t *testing.T) {
 	case <-time.After(50 * time.Millisecond):
 	}
 }
+
+// A lock request given up on (its context cancelled) before the shell
+// confirms is a failure, never a lock.
+func TestCancelledLockIsNotConfirmed(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	l := New(Options{
+		Confirm:  time.Hour,
+		AskShell: func(context.Context) error { cancel(); return nil },
+	})
+	if err := l.Lock(ctx); err == nil {
+		t.Error("a cancelled lock request counted as locked")
+	}
+}
+
+func TestDefaultConfirmBound(t *testing.T) {
+	t.Parallel()
+	if got := New(Options{}).opts.Confirm; got != 3*time.Second {
+		t.Errorf("Confirm = %v, want 3s", got)
+	}
+	if got := New(Options{Confirm: time.Second}).opts.Confirm; got != time.Second {
+		t.Errorf("Confirm = %v, want the one given", got)
+	}
+}
