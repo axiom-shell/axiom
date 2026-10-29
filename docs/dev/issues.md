@@ -334,18 +334,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### The bar editor lost its links to the global bar style
-- **Where:** `components/views/BarEditor/BarsPanel.qml`, `components/views/BarEditor/WidgetInspector.qml`
-- **What:** From the maintainer's notes: the bar editor used to link to the Look and feel settings that style every bar; those links are gone, and it needs a link to the global bar style.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### The layouts editor says a page is shrunk to 99% at the defaults
-- **Where:** `components/views/Layouts/PageTarget.qml` (`Shrunk to {0}% on {1}`)
-- **What:** From the maintainer's notes: with every scale at its default 100 %, the layouts editor still shows a page as shrunk to 99 %: a fit a hair under 1 is reported as shrinking.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### The monitor editor shows changes nobody made
 - **Where:** `services/compositor/MonitorManager.qml` (`draft`, `ensureLoaded`), `components/views/Monitors/Monitors.qml`
 - **What:** From the maintainer's notes: the monitors page shows unsaved changes when nothing was changed (likely a value the draft normalises on load differing from the saved one).
@@ -367,12 +355,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Typing in modules on the overlay and the desktop
 - **Where:** `components/hosts/overlay/OverlayPanel.qml` (`keyboardFocus`), `components/surfaces/desktop/DesktopWindow.qml` (`keyboardFocus`, `wantsKeyboard`)
 - **What:** From the maintainer's notes: modules that take typing can't be used while they're on the overlay, and a click outside a desktop module stops its typing.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### Warning triangles say nothing on hover
-- **Where:** `components/views/Keybinds/BindListRow.qml`, `components/reusable/IssueList.qml`
-- **What:** From the maintainer's notes: anywhere the shell shows a yellow warning triangle (a niri bind set while on Hyprland, …) it should be hoverable, with a tooltip saying what's wrong.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 

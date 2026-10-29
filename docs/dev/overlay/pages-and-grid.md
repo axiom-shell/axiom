@@ -10,7 +10,7 @@ How the overlay turns `Overlay.items` into pages, and a page's modules into a gr
 - `Overlay.items` in the schema drives the overlay's pages, just as `Bars` drives the bar.
 - A Custom view is a grid of modules, each with a `place` `{ x, y, w, h }` in **grid units, four to a card** (a quarter card each).
 - With `grid.fine` ("Double grid") there are eight units to a card:
-  - `Custom.qml` lays the page out at `OverlayConfig.pageUnit`, `GridPlacement.fineUnit`: two of its units and their gap span one card unit exactly.
+  - `Custom.qml` lays the page out at `OverlayConfig.pageUnit`, `GridPlacement.fineUnit`: two of its units and their gap span one card unit (rounded down, never over).
   - `OverlayManager.fitOf` and the onboarding fit use it too.
   - Toggling it rescales the places (`GridPlacement.scalePlace`), as for edge menus and screen layouts.
 - Everything loads by naming convention, so there are no lookup tables.
@@ -65,9 +65,9 @@ Pure, tested by `tst_GridPlacement`.
 ### Sizing (per screen)
 Cards follow the screen; text and controls don't. A monitor's cards are its card size (`OverlayConfig.cardUnitOn`: two cards fill its short side less `GridPlacement.screenMargin` each side, `GridPlacement.baseCard`, times `Widget.cardSize`%), the same turned either way and on every surface. Content lays out at the card's real size, so text is the Interface scale's (`Widget.scale`) on every monitor; only a Module size zooms it.
 - Each `OverlayPanel` has an `OverlayGrid` (`hosts/overlay/`) on the page area beside the navigator (`OverlayConfig.navigatorRoom`), less a `cardSpacing` margin and the box's padding (`OverlayConfig.boxPadding`, at the Interface scale, not zoomed) on each side (`OverlayConfig.layoutFor`, `GridPlacement.overlayLayout`, tested in `tst_GridPlacement`):
-  - `drawnUnit`: the card size on its screen times `Overlay.moduleScale`%, at most what lets a page two cards high (two cards and a gap) fill the height.
+  - `drawnUnit`: the card size on its screen times `Overlay.moduleScale`%, at most what lets a page two cards high (two cards and a gap) fill the height, rounded down so such a page fits exactly instead of being shrunk by a hair.
   - `zoom`: `Overlay.moduleScale` as a factor (`GridPlacement.zoomOf`: 1 within 2 %, so content isn't resampled for nothing).
-  - `unit`: the card size content lays out at, `drawnUnit / zoom`. Bigger text (the Interface scale) fits less in each card.
+  - `unit`: the card size content lays out at, `drawnUnit / zoom` (rounded down). Bigger text (the Interface scale) fits less in each card.
   - `roomWidth` / `roomHeight`: the room in layout px, what views size against (`BaseView.editorWidth`).
 - Views receive it as `grid` (`BaseView`) and size everything from `grid.unit` / `grid.span(n)` / `grid.sizes(bounds, stretch)`, passing plain numbers down to content. Text and widget sizes stay the shell's px tokens; the zoom scales them with the cards.
 - `OverlayPages` draws the current page at `contentZoom` (`zoom × fitScale`, Item.scale on the views' container); its box is sized in drawn px, so its border and radius stay crisp.
