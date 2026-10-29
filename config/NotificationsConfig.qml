@@ -34,6 +34,14 @@ QtObject {
   readonly property int width: Widget.px(_c.width)
   readonly property bool quietFullscreen: _c.quietFullscreen
 
+  // Do not disturb: on a daily schedule ("HH:MM"), and whether critical
+  // ones toast through it
+  readonly property var _dnd: _c.dnd
+  readonly property bool dndSchedule: _dnd.schedule
+  readonly property string dndStartAt: _dnd.startAt
+  readonly property string dndEndAt: _dnd.endAt
+  readonly property bool dndAllowCritical: _dnd.allowCritical
+
   // History
   readonly property bool clearOnFocus: _c.clearOnFocus
   // Focus the app's window after running a clicked notification's action

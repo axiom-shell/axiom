@@ -40,7 +40,8 @@ Singleton {
   readonly property real maxAge: NotificationsConfig.maxAge
 
   // Do Not Disturb: no toasts but critical ones (notifications still go
-  // into the history). Kept across restarts. Set through setDnd/toggleDnd.
+  // into the history). Kept across restarts. Set through setDnd/toggleDnd,
+  // or by its schedule (NotificationsConfig.dnd).
   readonly property bool dnd: root._dnd
   property bool _dnd: false
   on_DndChanged: {
@@ -56,6 +57,17 @@ Singleton {
 
   function toggleDnd(): void {
     root._dnd = !root._dnd;
+  }
+
+  // NotificationsConfig.dnd's schedule: on and off at its times; a switch
+  // by hand lasts until the next of them
+  property DailySchedule _dndSchedule: DailySchedule {
+    name: "notificationsDnd"
+    enabled: NotificationsConfig.dndSchedule
+    ready: root._stateLoaded
+    startAt: NotificationsConfig.dndStartAt
+    endAt: NotificationsConfig.dndEndAt
+    onDue: on => root.setDnd(on)
   }
 
   // Whether a live notification offers an inline reply: a surface listing
@@ -573,8 +585,9 @@ Singleton {
         root._cacheImage(uid, entry.image);
       }
 
-      // Suppress popups if Do Not Disturb is on, unless the notification is critical.
-      if (!root.dnd || notification.urgency === NotificationUrgency.Critical) {
+      // No toast while Do Not Disturb is on, but a critical one (unless
+      // NotificationsConfig.dndAllowCritical is off)
+      if (!root.dnd || (NotificationsConfig.dndAllowCritical && notification.urgency === NotificationUrgency.Critical)) {
         root.showPopup(notification);
       }
     }

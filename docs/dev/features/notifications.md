@@ -67,6 +67,8 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 
 ### Do not disturb
 - `dnd` is readonly; change it with `setDnd` / `toggleDnd`.
+- `Notifications.dnd.schedule` turns it on at `startAt` and off at `endAt` through a `DailySchedule` (as Night Light's): a switch by hand lasts until the next of them.
+- Critical notifications still toast through it unless `dnd.allowCritical` is off; everything goes to the history either way.
 - Saved in `~/.local/state/axiom/ui/notifications.json`.
 
 ### Click handlers
