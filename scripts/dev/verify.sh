@@ -104,7 +104,11 @@ for f in "${changed[@]}"; do
   scripts/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
   scripts/dev/known_issues.py) script_tests+=(KnownIssues) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
+  scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json) script_tests+=(CheckStructure) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
+  scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
+  scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;
+  scripts/check_packages.py) script_tests+=(CheckPackages) ;;
   scripts/gen_docs.py | scripts/config-usage-baseline.json) script_tests+=(RpcShapes ConfigUsage) ;;
   tests/scripts/test_scripts.py) script_tests+=(all) ;;
   esac

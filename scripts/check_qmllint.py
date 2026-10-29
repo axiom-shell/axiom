@@ -116,14 +116,8 @@ def lint():
     return found, lines
 
 
-def main():
-    found, lines = lint()
-    if "--update-baseline" in sys.argv:
-        baseline = {f: dict(sorted(c.items())) for f, c in sorted(found.items())}
-        BASELINE.write_text(json.dumps(baseline, indent=2) + "\n")
-        print(f"baseline: {sum(sum(c.values()) for c in found.values())} warnings")
-        return
-    baseline = json.loads(BASELINE.read_text()) if BASELINE.exists() else {}
+def against(found, lines, baseline):
+    """The warnings past the baseline's counts, and the baselined ones gone."""
     new, gone = [], []
     for name, counts in sorted(found.items()):
         known = baseline.get(name, {})
@@ -136,6 +130,18 @@ def main():
             left = found.get(name, {}).get(key, 0)
             if n > left:
                 gone.append(f"{name}: {key} ({n - left} gone)")
+    return new, gone
+
+
+def main():
+    found, lines = lint()
+    if "--update-baseline" in sys.argv:
+        baseline = {f: dict(sorted(c.items())) for f, c in sorted(found.items())}
+        BASELINE.write_text(json.dumps(baseline, indent=2) + "\n")
+        print(f"baseline: {sum(sum(c.values()) for c in found.values())} warnings")
+        return
+    baseline = json.loads(BASELINE.read_text()) if BASELINE.exists() else {}
+    new, gone = against(found, lines, baseline)
     for line in new:
         print(f"error: {line}")
     for line in gone:

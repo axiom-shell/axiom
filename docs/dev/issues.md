@@ -303,18 +303,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while making gen_docs.py see readers of ConfigManager.live (roadmap row 18)
 
-### Most check scripts have no tests of their own
-- **Where:** `tests/scripts/test_scripts.py`, `scripts/check_structure.py`, `scripts/check_i18n.py`, `scripts/check_qmllint.py`, `scripts/check_packages.py`, `scripts/check_docs.py`, `scripts/gen_docs.py`
-- **What:** `test_scripts.py` tests `check_sizes.py` and `check_docs.py` (one class), rpc.md and a few runtime scripts. `check_structure.py` (about 25 rules, the layering and compositor gates among them), `check_i18n.py`, `check_qmllint.py`'s baseline logic, `check_packages.py` and `gen_docs.py`'s usage map have no case that they fail on what they catch, so a rule whose pattern stops matching (a renamed member, a new syntax) passes everything, silently. That's how gen_docs.py missed every reader of `ConfigManager.live` until row 18. Fix: a fixture tree per script with one breaking file per rule, asserting the message; each new rule gets its case.
-- **Size:** small
-- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
-
-### Small tooling leftovers
-- **Where:** `components/methods/IconResolver.qml`, `packaging/aur/`, `docs/dev/core/i18n.md`
-- **What:** `IconResolver` is the one methods helper without a test (`tst_IconResolver`) (and the one importing `Quickshell`, for `iconPath`). The `axiom-shell` and `axiom-shell-git` PKGBUILDs are near copies. `check_doc_drift.py` flags `i18n.md` (12 commits behind its files, after the services moved to folders).
-- **Size:** trivial
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### The window switcher's blur and release on sway and niri
 - **Where:** `services/compositor/WindowSwitcherManager.qml` (`commit`, `pick`), `components/surfaces/switcher/SwitcherKeys.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
 - **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". On niri this is only while `WindowSwitcher.compositorSwitcher` is off or in detached mode: by default the included and managed files bind the keys to niri's own switcher (row 16). The plan settles one release path that works on every compositor and the switcher's backing.

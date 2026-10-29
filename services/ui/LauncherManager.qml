@@ -172,7 +172,7 @@ QtObject {
   function _appRow(app) {
     return {
       kind: "app",
-      image: IconResolver.appIcon(app.icon),
+      image: AppIconManager.appIcon(app.icon),
       title: app.name,
       subtitle: app.genericName || app.comment || "",
       hint: app.runInTerminal ? I18n.tr("Terminal") : "",
@@ -183,7 +183,7 @@ QtObject {
   function _windowRow(win) {
     return {
       kind: "window",
-      image: IconResolver.resolveWindowIcon(win.appId, win.title),
+      image: AppIconManager.resolveWindowIcon(win.appId, win.title),
       title: win.title || win.appId,
       subtitle: I18n.tr("{0} · workspace {1}", win.appId, win.workspaceName),
       hint: I18n.tr("Window"),

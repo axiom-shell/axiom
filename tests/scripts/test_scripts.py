@@ -7,6 +7,8 @@
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
     lines marked `// fixed px:`
   - only PAM's success unlocks the built-in lock screen
+  - each check fails on what it catches: a copy of the tree (fixture_root)
+    with one breaking file or edit per rule, and the message it must print
 
   python3 tests/scripts/test_scripts.py [-v] [TestCase[.test_name]]
 """
@@ -43,6 +45,47 @@ def scratch_env(tmp):
     for key in ("HOME", "XDG_RUNTIME_DIR"):
         Path(env[key]).mkdir(parents=True, exist_ok=True)
     return env
+
+
+def fixture_root(tmp, *paths):
+    """A copy of scripts/ and these repo paths under tmp. A check run from
+    the copy checks the copy (each script finds the root from its own path),
+    so a test breaks the copy and asserts the check says so."""
+    tmp = Path(tmp)
+    for p in ("scripts",) + paths:
+        src, dst = ROOT / p, tmp / p
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
+        else:
+            shutil.copy2(src, dst)
+    return tmp
+
+
+def run_check(root, script, *args, files=()):
+    """Write `files` ((path, text) pairs) into root, run scripts/<script>
+    there; its exit code and output."""
+    for path, text in files:
+        (root / path).parent.mkdir(parents=True, exist_ok=True)
+        (root / path).write_text(text)
+    done = subprocess.run([sys.executable, str(root / "scripts" / script), *args],
+                          cwd=root, capture_output=True, text=True)
+    return done.returncode, done.stdout + done.stderr
+
+
+def edit_json(path, change):
+    data = json.loads(path.read_text())
+    change(data)
+    path.write_text(json.dumps(data, indent=2))
+
+
+def qml(body="", imports="", head="pragma ComponentBehavior: Bound", purpose="// A fixture."):
+    return f"{head}\nimport QtQuick\n{imports}\n{purpose}\nItem {{\n    {body}\n}}\n"
+
+
+def missed(out, fragments):
+    """The fragments no line of a check's output contains."""
+    return [f for f in fragments if not any(f in line for line in out.splitlines())]
 
 
 def theme_problems(theme, names):
@@ -307,6 +350,155 @@ class ConfigUsage(unittest.TestCase):
         self.assertTrue(gone.endswith("A.x") and "drop it" in gone)
 
 
+class CheckStructure(unittest.TestCase):
+    """scripts/check_structure.py fails on each rule's breaking file, in a
+    copy of the shell: (file written, what the check must say)."""
+
+    FILES = [
+        ("components/views/Stray.qml", qml(), "components/views/Stray.qml: a root holds only type folders"),
+        ("components/views/Empty/Other.qml", qml(), "components/views/Empty/: a type folder without Empty.qml"),
+        ("components/lonely/Lonely.qml", qml(), None),
+        ("components/views/Reach/Reach.qml", qml(imports="import qs.components.lonely"),
+         "Reach.qml needs qs.components.lonely, which no file reached from shell.qml imports"),
+        # (Reach is also no OverlayView type and nothing uses it: the warning below)
+        ("services/core/Spawner.qml", qml("Process {}"), "services/core/Spawner.qml: uses Process directly"),
+        ("services/Direct.qml", qml(), "services/Direct.qml: directly in services/"),
+        ("shell/Handler.qml", qml("IpcHandler {}"), "shell/Handler.qml: an IpcHandler"),
+        ("shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
+        ("shell/Target.qml", qml('IpcTarget { target: "ghostTarget" }'), "IPC target 'ghostTarget' is missing from the IPC table"),
+        ("shell/NoPurpose.qml", qml(purpose=""), "shell/NoPurpose.qml: no purpose comment"),
+        ("shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no components/content/Ghost/Ghost.qml'),
+        ("components/content/Unused/Unused.qml", qml(), "components/content/Unused/: not an overlay module"),
+        ("components/widgets/Old.qml", qml(), "components/widgets/Old.qml: lives under retired"),
+        ("shell/NoPragma.qml", qml(head=""), "shell/NoPragma.qml: doesn't start with pragma"),
+        ("services/core/BigManager.qml", qml(head="pragma Singleton", body="\n" * 800), "BigManager.qml: a singleton of"),
+        ("shell/BadImport.qml", qml(imports="import qs.nowhere"), "import qs.nowhere — no such directory"),
+        ("shell/Hypr.qml", qml(imports="import Quickshell.Hyprland"), "shell/Hypr.qml: imports Quickshell.Hyprland"),
+        ("shell/I3.qml", qml(imports="import Quickshell.I3"), "shell/I3.qml: imports Quickshell.I3"),
+        ("shell/Swaymsg.qml", qml('property var c: ["swaymsg"]'), "shell/Swaymsg.qml: talks to sway directly"),
+        ("shell/NiriCli.qml", qml('property var c: ["niri", "msg"]'), "shell/NiriCli.qml: talks to niri directly"),
+        ("shell/Hyprm.qml", qml("property var w: HyprlandManager.windows"), "shell/Hyprm.qml: uses HyprlandManager"),
+        ("shell/HState.qml", qml("property var s: HyprState.parse"), "shell/HState.qml: uses a Hyprland helper"),
+        ("shell/SState.qml", qml("property var s: SwayState.parse"), "shell/SState.qml: uses a sway helper"),
+        ("shell/NState.qml", qml("property var s: NiriState.parse"), "shell/NState.qml: uses a niri helper"),
+        ("shell/NotService.qml", qml("property var s: GhostManager.x"), "GhostManager is not a service"),
+        ("shell/Typo.qml", qml("property var s: AudioManger.x"), "AudioManger — did you mean AudioManager?"),
+        ("config/GhostConfig.qml", qml("readonly property int k: _c.key ?? 1", head="pragma Singleton"),
+         "`_c.key ??`: readers use no ?? fallback"),
+        ("components/dupa/Dup.qml", qml(), None),
+        ("components/dupb/Dup.qml", qml(), None),
+        ("shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),
+         "shell/Both.qml: Dup is defined in qs.components.dupa and qs.components.dupb"),
+    ]
+    # What the check must say about the schema, docs/usage.md and the allowlist edits below (and Reach)
+    EDITS = [
+        "components/views/Reach/: not a OverlayView type and not used anywhere",
+        "BarWidget type 'Ghost' has no components/bar/widgets/Ghost/Ghost.qml",
+        "x-libraryGroup 'Nope' isn't one of the schema's x-libraryGroups",
+        "OverlayModule Todo: x-hosts lists overlay but not desktop",
+        "OverlayModule Calculator: has a text field but no x-keyboard",
+        "schema x-card 'Ghost' has no components/views/Settings/GhostCard.qml",
+        "schema x-intro 'GhostIntro' has no components/views/Settings/GhostIntro.qml",
+        "tool page Keybinds isn't in the Overlay.items default",
+        "docs/usage.md: IPC target 'phantom' has no IpcTarget",
+        "services/core/Gone.qml no longer uses Socket",
+    ]
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "shell.qml", "greeter.qml", "components", "shell", "services", "config", "docs/usage.md")
+
+            def schema(s):
+                defs = s["definitions"]
+                defs["BarWidget"]["oneOf"].append({"properties": {"type": {"const": "Ghost"}}, "x-libraryGroup": "Nope"})
+                defs["TodoOverlayModule"]["x-hosts"] = ["overlay"]
+                del defs["CalculatorOverlayModule"]["x-keyboard"]
+                s["x-card"], s["x-intro"] = {"file": "Ghost"}, "GhostIntro"
+                items = s["properties"]["Overlay"]["properties"]["items"]
+                items["default"] = [v for v in items["default"] if v.get("type") != "Keybinds"]
+            edit_json(root / "config/json/config.schema.json", schema)
+            edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"services/core/Gone.qml": ["Socket"]}))
+            usage = root / "docs/usage.md"
+            usage.write_text(usage.read_text().replace("| `overlay` |", "| `phantom` | `open` |\n| `overlay` |", 1))
+            code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [m for _, _, m in self.FILES if m] + self.EDITS), [], out)
+
+
+class CheckI18n(unittest.TestCase):
+    """scripts/check_i18n.py fails on a key a language lacks, an unused one,
+    a file out of format and a stale template, never on an empty entry;
+    --untranslated finds bare UI text and undeclared runtime keys."""
+
+    FILES = [
+        ("config/I18n.qml", 'readonly property var _formats: ({\n  "longDate": "dddd"\n})\n'),
+        ("config/json/config.schema.json", json.dumps({"properties": {"A": {"title": "Alpha"}}, "definitions": {}})),
+        ("components/A.qml", qml('text: I18n.tr("Shown")\n    label: I18n.tr(on ? "Yes" : "No")\n'
+                                 '    title: "Bare words"\n    description: I18n.tr(name)')),
+        ("config/i18n/xx.json", json.dumps({"_meta": {}, "strings": {"Alpha": "a", "Shown": "", "Yes": "y", "Gone": "g"}}, indent=4)),
+    ]
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp)
+            code, out = run_check(root, "check_i18n.py", files=self.FILES)
+            self.assertEqual(code, 1)
+            self.assertEqual(missed(out, ["missing  components/A.qml:6: 'Shown'", "absent   components/A.qml:7: 'No'",
+                                          "unused   'Gone'", "format   not in the canonical format",
+                                          "config/i18n/template/language.json: stale"]), [], out)
+            code, out = run_check(root, "check_i18n.py", "--untranslated")
+            self.assertEqual(code, 1)
+            self.assertEqual(missed(out, ["components/A.qml:8: title: 'Bare words'",
+                                          "components/A.qml:9: dynamic tr() without declared keys"]), [], out)
+            run_check(root, "check_i18n.py", "--fill", "--prune")
+            code, out = run_check(root, "check_i18n.py")
+            self.assertEqual(code, 0, out)
+
+
+class CheckQmllint(unittest.TestCase):
+    """scripts/check_qmllint.py's baseline: a warning past its count fails,
+    and so does a baselined one that's gone."""
+
+    def test_against_the_baseline(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from check_qmllint import against
+        found = {"a.qml": {"k: m": 2, "j: n": 1}, "c.qml": {"z: w": 1}}
+        lines = {("a.qml", "k: m"): [3, 9], ("a.qml", "j: n"): [4], ("c.qml", "z: w"): [5]}
+        baseline = {"a.qml": {"k: m": 1, "j: n": 1}, "b.qml": {"x: y": 1}}
+        self.assertEqual(against(found, lines, baseline), (["a.qml:3,9: k: m (1 new)", "c.qml:5: z: w"], ["b.qml: x: y (1 gone)"]))
+        self.assertEqual(against(found, lines, found), ([], []))
+
+
+class CheckPackages(unittest.TestCase):
+    """scripts/check_packages.py fails when install.sh, Packages.qml and the
+    PKGBUILDs drift: (file, text replaced, its replacement, the message)."""
+
+    EDITS = [
+        ("install.sh", '"grim|grim|grim"', '"grim|grim|grimm"', "grim on fedora is 'grimm', Packages.qml says 'grim'"),
+        ("install.sh", '"git|git|git"', '"git|git|git"\n  "ghost|ghost|ghost"\n  "odd|odd"', "no key 'ghost' (install.sh installs it)"),
+        ("install.sh", None, None, "PACKAGES row 'odd|odd' isn't key|arch|fedora"),
+        ("install.sh", '"Wallpapers|awww|"', '"Wallpapers|awww|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
+        ("install.sh", "REQUIRED=(git ", "REQUIRED=(specter git ", "'specter' isn't in PACKAGES"),
+        ("packaging/aur/axiom-shell/PKGBUILD", "depends=('quickshell", "depends=('extra' 'quickshell",
+         "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell', 'ttf-material-symbols-variable'] aren't"),
+        ("packaging/aur/axiom-shell-git/PKGBUILD", "'awww: wallpapers'", "'phantom: boo'",
+         "axiom-shell-git/PKGBUILD: optdepends phantom, which no install.sh feature or compositor installs"),
+        ("packaging/aur/axiom-shell-git/PKGBUILD", None, None, "axiom-shell-git/PKGBUILD: no optdepends for awww"),
+    ]
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "install.sh", "components/methods/Packages.qml", "packaging/aur")
+            for path, old, new, _ in self.EDITS:
+                if old:
+                    text = (root / path).read_text()
+                    self.assertIn(old, text)
+                    (root / path).write_text(text.replace(old, new, 1))
+            code, out = run_check(root, "check_packages.py")
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [m for *_, m in self.EDITS]), [], out)
+
+
 class CheckSizes(unittest.TestCase):
     """scripts/check_sizes.py finds sizes written as numbers outside the bars."""
 
@@ -356,8 +548,9 @@ class CheckSizes(unittest.TestCase):
 
 
 class CheckDocs(unittest.TestCase):
-    """scripts/check_docs.py flags a retired name; one that is also a schema
-    definition only with a member that isn't a setting."""
+    """scripts/check_docs.py fails on each rule's breaking doc; a retired
+    name that is also a schema definition only with a member that isn't a
+    setting."""
 
     def test_retired_definition_name(self):
         sys.path.insert(0, str(SCRIPTS))
@@ -369,6 +562,40 @@ class CheckDocs(unittest.TestCase):
         self.assertEqual(retired_name("Bar.enrichBarConfig", configs), "Bar")
         self.assertEqual(retired_name("Bar.lookOf(bar)", configs), "Bar")
         self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
+
+    SKILL = "---\nname: {0}\ndescription: x\n---\n{1}\n"
+    FILES = [
+        ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
+                              "`IconConfig.x`\n[b](issues.md#no-such-entry)\n"),
+        ("components/reusable/GhostPiece.qml", qml()),
+        ("docs/recipes/ghost.md", "# Ghost\n"),
+        (".claude/skills/bar-widget/SKILL.md", SKILL.format("bar-widget", "Read the docs.")),
+        (".claude/skills/setting/SKILL.md", SKILL.format("setting", "Read `docs/recipes/setting.md`.\nThen this.\nAnd that.")),
+    ]
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "docs", ".claude/skills", "components", "services", "config",
+                                "AGENTS.md", "README.md", "CONTRIBUTING.md")
+            edit_json(root / "config/json/config.schema.json", lambda s: s.update({"x-ghost": True}))
+            with open(root / "docs/dev/issues.md", "a") as issues:
+                issues.write("\n### Ghost entry\n- **Where:** nowhere\n")
+            code, out = run_check(root, "check_docs.py", files=self.FILES)
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [
+            "docs/dev/ghost.md:1: link to missing nowhere.md",
+            "docs/dev/ghost.md:2: `services/core/GhostlyManager.qml` doesn't exist",
+            "docs/dev/ghost.md:3: `AudioManager.noSuchMember`: AudioManager has no member noSuchMember",
+            "docs/dev/ghost.md:4: `IconConfig.x`: IconConfig was renamed to IconsConfig",
+            "docs/dev/ghost.md:5: link to a missing issues.md entry #no-such-entry",
+            "docs/dev/issues.md: 'Ghost entry': fields ['Where'], expected",
+            "docs/dev/issues.md: 'Ghost entry' isn't linked from docs/dev/roadmap.md",
+            "components/reusable/GhostPiece.qml: not in docs/dev/core/shared-ui-pieces.md",
+            "docs/recipes/ghost.md: no skill .claude/skills/ghost/SKILL.md",
+            ".claude/skills/bar-widget/SKILL.md: doesn't point at docs/recipes/bar-widget.md",
+            ".claude/skills/setting/SKILL.md: 3 lines; a recipe skill only points at its recipe",
+            "`x-ghost` isn't in docs/dev/core/schema-annotations.md",
+        ]), [], out)
 
 
 def block_end(text, open_at):

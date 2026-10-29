@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.services.compositor
-import qs.components.methods
+import qs.services.system
 import qs.components.reusable
 import qs.components.content.parts
 import qs.components.content.base
@@ -97,7 +97,7 @@ Card {
                   height: icons.iconSize
                   fillMode: Image.PreserveAspectFit
                   sourceSize: Qt.size(64, 64)
-                  source: window ? IconResolver.resolveWindowIcon(window.appId, window.title) : ""
+                  source: window ? AppIconManager.resolveWindowIcon(window.appId, window.title) : ""
                 }
               }
             }
