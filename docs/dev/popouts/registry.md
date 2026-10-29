@@ -24,7 +24,7 @@
 - **Location report:** `entries`, visible with `axiom ipc popouts list`.
 
 ### Ranks
-The rules are pure: `methods/PopoutGeometry`, tested by `tests/tst_PopoutGeometry.qml`. Ranks, lowest first:
+The rules are pure: `methods/PopoutGeometry`, tested by `tests/tst_PopoutGeometry.qml`. Notification toasts (kind `toast`, resident) rank under all of these (-1): anything shown over a stack hides it until it closes, except a dock, which never collides with them ([notifications](../features/notifications.md) › Toasts). Ranks, lowest first:
 1. `pinned`: any pinned popout, of any kind, while it isn't `engaged`.
 2. `dock`
 3. `osd`

@@ -175,4 +175,19 @@ TestCase {
     // the other pinned menu waits for the OSD over it
     compare(PopoutGeometry.resumable(entries), ["dock"]);
   }
+
+  function test_toasts() {
+    const toasts = entry("toasts:DP-1", "toast", [rect(1500, 50, 360, 200)], {
+      "resident": true
+    });
+    compare(PopoutGeometry.rankOf(toasts), -1, "under everything");
+    compare(PopoutGeometry.resolve([toasts], entry("bar:clock", "bar", [rect(1400, 40, 400, 300)])).yield, ["toasts:DP-1"], "a popout over them: they give way and come back");
+    compare(PopoutGeometry.resolve([toasts], entry("bar:clock", "bar", [rect(0, 40, 400, 300)])).yield, [], "beside them: nothing happens");
+    verify(!PopoutGeometry.resolve([entry("osd:main:DP-1", "osd", [rect(1500, 100, 300, 60)])], toasts).allowed, "arriving under an OSD: they wait");
+    const dock = entry("dock:main:DP-1", "dock", [rect(1500, 100, 300, 60)], {
+      "resident": true
+    });
+    verify(PopoutGeometry.resolve([dock], toasts).allowed, "a dock and toasts never collide");
+    compare(PopoutGeometry.resolve([toasts], dock).yield, []);
+  }
 }

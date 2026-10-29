@@ -25,7 +25,6 @@ layer_effects axiom-overlay "blur enable; blur_xray disable; blur_ignore_transpa
 layer_effects axiom-launcher "blur enable; blur_xray disable; blur_ignore_transparent enable"
 layer_effects axiom-switcher "blur enable; blur_xray disable; blur_ignore_transparent enable"
 layer_effects axiom-floating-popout "blur enable; blur_xray disable; blur_ignore_transparent enable"
-layer_effects axiom-notifications "blur enable; blur_xray disable; blur_ignore_transparent enable"
 layer_effects axiom-powermenu "blur enable; blur_xray disable; blur_ignore_transparent enable"
 layer_effects axiom-workspaces "blur enable; blur_xray disable; blur_ignore_transparent enable"
 layer_effects axiom-monitor-prompt "blur enable; blur_xray disable; blur_ignore_transparent enable"

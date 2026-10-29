@@ -1,6 +1,7 @@
 label: Notifications
 icon: notifications
 group: Desktop
+keyboard: true
 settings:
   grow:
     type: integer
