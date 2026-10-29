@@ -294,19 +294,41 @@ TestCase {
     }, "half the width, a gap between");
   }
 
+  function test_graphRange() {
+    const def = {
+      "format": "{}"
+    };
+    compare(CustomWidgetData.graphRange(CustomWidgetData.resolve(def, {
+      "value": 3
+    }), {}), {
+      "min": 0,
+      "max": 0
+    }, "no max in the output: scale to the largest");
+    compare(CustomWidgetData.graphRange(CustomWidgetData.resolve(def, {
+      "value": 3,
+      "min": 1,
+      "max": 8
+    }), {}), {
+      "min": 1,
+      "max": 8
+    }, "the output's own");
+    compare(CustomWidgetData.graphRange(CustomWidgetData.resolve(def, {
+      "text": "x",
+      "percentage": 40
+    }), {}).max, 100, "a percentage goes to 100");
+    compare(CustomWidgetData.graphRange(CustomWidgetData.resolve(def, {
+      "value": 3
+    }), {
+      "max": "50"
+    }).max, 50, "a bound max");
+  }
+
   function test_defaultElements() {
     const els = CustomWidgetData.defaultElements([4, 2], true);
     compare(els.length, 2);
     compare(els[0].type, "Ring");
     compare(els[1].place.x + els[1].place.w, 16, "the text fills the rest");
     compare(CustomWidgetData.defaultElements([4, 2], false)[0].type, "Icon");
-  }
-
-  function test_elementKinds() {
-    const kinds = CustomWidgetData.elementKinds.map(k => k.type);
-    compare(kinds, ["Text", "TextBlock", "Icon", "Ring", "Gauge", "Bar", "Segments", "Sparkline", "List", "Image", "Button", "Toggle", "Status", "Separator"], "every kind the schema allows, in library order");
-    compare(CustomWidgetData.elementKind("Bar").actions, ["change"]);
-    compare(CustomWidgetData.elementKind("Nope"), null);
   }
 
   function test_stripJsonc() {

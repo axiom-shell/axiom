@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.services.apps
+import qs.components.methods
 import qs.components.reusable
 import qs.components.content.parts
 import qs.components.hosts.popout
@@ -28,6 +29,7 @@ BarIconWidget {
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property real ratio: Math.max(0, root.fields?.ratio ?? 0)
+  readonly property var graphRange: CustomWidgetData.graphRange(root.fields, {})
   readonly property color stateColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : "transparent"
   // Ticker and stacked draw their own text; on a vertical bar they're labels
   readonly property string style: root.isVertical && ["ticker", "stacked"].includes(root.bar.style) ? "label" : root.bar.style
@@ -59,8 +61,14 @@ BarIconWidget {
   showText: !["icon", "ticker", "stacked"].includes(root.style)
   leadLength: root.graphic ? root.graphicLength : 0
   accentColor: root.fields?.color ? root.stateColor : Theme.resolveColor(properties.backgroundColor)
-  foregroundColor: root.bar.colorText && root.fields?.color ? root.stateColor : colors.text
-  iconColor: root.bar.colorText && root.fields?.color ? root.stateColor : colors.icon
+  // Colour the text by state only where it isn't the background already
+  // (a filled widget's text must read on it)
+  readonly property bool _textByState: root.bar.colorText && !!root.fields?.color && root.colors.fill.a < 1
+  foregroundColor: root._textByState ? root.stateColor : colors.text
+  iconColor: root._textByState ? root.stateColor : colors.icon
+  // Graphics draw in the icon's colour for this bar's style: the state's
+  // on a tint, outline or plain bar, what reads on it when it's the fill
+  readonly property color graphicColor: root.colors.icon
 
   // Urgent: a slow pulse
   dim: root.fields?.urgent ? urgentPulse.level : 1
@@ -93,25 +101,10 @@ BarIconWidget {
   scrollable: !!(root.actions.scrollUp || root.actions.scrollDown)
   onScrolled: steps => CustomWidgetsManager.act(root.widgetId, steps > 0 ? "scrollUp" : "scrollDown")
 
-  // The pill: the widget's box filled to the value
-  Rectangle {
-    visible: root.style === "pill" && !root.hidden && root.fields !== null
-    z: -1
-    x: 0
-    y: root.isVertical ? root.height * (1 - root.ratio) : 0
-    width: root.isVertical ? root.width : root.width * root.ratio
-    height: root.isVertical ? root.height * root.ratio : root.height
-    radius: root.radius
-    color: root.fields?.color ? root.stateColor : Theme.accent
-    opacity: 0.35
-
-    Behavior on width {
-      NumberAnimation {
-        duration: Appearance.animNormal
-        easing.type: Appearance.easing
-      }
-    }
-  }
+  // The pill: its background's shape filled to the value (WidgetGroup
+  // draws it, so it takes the bar's caps and radius)
+  fillShare: root.style === "pill" && !root.hidden && root.fields !== null ? root.ratio : -1
+  fillShareColor: Qt.alpha(root.graphicColor, 0.35)
 
   // The graphic styles, in the lead slot
   Item {
@@ -125,46 +118,33 @@ BarIconWidget {
       height: width
       percentage: root.ratio * 100
       thickness: Math.max(2, width * 0.16)
-      fillColor: root.fields?.color ? root.stateColor : root.colors.icon
+      trackColor: Qt.alpha(root.colors.text, 0.2)
+      fillColor: root.graphicColor
       iconText: ""
     }
 
-    Rectangle {
+    // Sizes from the bar's font, as a bar's pieces are
+    LevelMeter {
       visible: root.style === "fill"
-      anchors.centerIn: parent
-      width: root.isVertical ? Math.max(3, root.fontSize * 0.35) : parent.width
-      height: root.isVertical ? parent.height : Math.max(3, root.fontSize * 0.35)
-      radius: Math.min(width, height) / 2
-      color: Qt.alpha(root.colors.text, 0.2)
-
-      Rectangle {
-        x: 0
-        y: root.isVertical ? parent.height * (1 - root.ratio) : 0
-        width: root.isVertical ? parent.width : parent.width * root.ratio
-        height: root.isVertical ? parent.height * root.ratio : parent.height
-        radius: parent.radius
-        color: root.fields?.color ? root.stateColor : root.colors.icon
-      }
+      anchors.fill: parent
+      share: root.ratio
+      vertical: root.isVertical
+      thickness: Math.max(3, root.fontSize * 0.35)
+      trackColor: Qt.alpha(root.colors.text, 0.2)
+      fillColor: root.graphicColor
     }
 
-    Grid {
+    SegmentMeter {
       visible: root.style === "segments"
-      anchors.centerIn: parent
-      columns: root.isVertical ? 1 : root.bar.segments
-      spacing: 2
-
-      Repeater {
-        model: root.bar.segments
-
-        Rectangle {
-          required property int index
-          readonly property real cell: (root.leadLength - 2 * (root.bar.segments - 1)) / root.bar.segments
-          width: root.isVertical ? root.fontSize * 0.7 : cell
-          height: root.isVertical ? cell : root.fontSize * 0.7
-          radius: 2
-          color: (root.isVertical ? root.bar.segments - 1 - index : index) < Math.round(root.ratio * root.bar.segments) ? (root.fields?.color ? root.stateColor : root.colors.icon) : Qt.alpha(root.colors.text, 0.2)
-        }
-      }
+      anchors.fill: parent
+      count: root.bar.segments
+      share: root.ratio
+      vertical: root.isVertical
+      across: root.fontSize * 0.7
+      gap: 2
+      cornerRadius: 2
+      litColor: root.graphicColor
+      offColor: Qt.alpha(root.colors.text, 0.2)
     }
 
     Sparkline {
@@ -173,8 +153,9 @@ BarIconWidget {
       anchors.topMargin: root.crossSize * 0.2
       anchors.bottomMargin: root.crossSize * 0.2
       values: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
-      maxValue: root.fields?.max ?? 0
-      lineColor: root.fields?.color ? root.stateColor : root.colors.icon
+      minValue: root.graphRange.min
+      maxValue: root.graphRange.max
+      lineColor: root.graphicColor
       showBaseline: false
     }
 

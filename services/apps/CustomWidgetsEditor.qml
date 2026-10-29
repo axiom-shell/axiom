@@ -30,15 +30,8 @@ QtObject {
     host: "overlay"
     scopeKey: root.selectedId
     factory: ({
-        "make": (type, place) => ({
-              "id": Utils.newId(type, root._elements()),
-              "type": type,
-              "place": place,
-              "bind": {},
-              "options": {},
-              "actions": {}
-            }),
-        "size": type => CustomWidgetData.elementKind(type)?.size ?? [4, 4]
+        "make": (type, place) => CustomWidgetsConfig.newElement(type, Utils.newId(type, root._elements()), place),
+        "size": type => CustomWidgetsConfig.elementKind(type)?.size ?? [4, 4]
       })
     onEdited: {
       root._fitSize();
@@ -82,7 +75,7 @@ QtObject {
     if (!def)
       return;
     const fields = CustomWidgetsManager.fields[def.id];
-    root._elements().splice(0, Infinity, ...CustomWidgetData.defaultElements(def.module?.size, (fields?.ratio ?? -1) >= 0));
+    root._elements().splice(0, Infinity, ...CustomWidgetsConfig.defaultElements(def.module?.size, (fields?.ratio ?? -1) >= 0));
     root.elements.clearHistory();
     root._fitSize();
     root._apply();

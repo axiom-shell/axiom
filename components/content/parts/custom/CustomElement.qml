@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-// One element of a custom widget's module, loaded by its kind (the element
-// files beside this one, each a CustomElementBase).
+// One element of a custom widget's module, loaded by its kind
+// (elements/<Type>/<Type>.qml, each a CustomElementBase).
 Loader {
   id: root
 
@@ -14,20 +14,20 @@ Loader {
   property string fallbackIcon: "widgets"
 
   readonly property string kind: root.element?.type ?? "Text"
-  readonly property string file: ({
-      "Gauge": "CustomRing",
-      "Bar": "CustomMeter"
-    })[root.kind] ?? ("Custom" + root.kind)
 
-  // Re-set on a kind change only; the rest are bindings
+  // Built with its config, so it never sees itself empty; the Bindings
+  // below keep it current
   function _load() {
-    root.setSource(Qt.resolvedUrl(root.file + ".qml"), root.file === "CustomRing" ? {
-      "gauge": root.kind === "Gauge"
-    } : {});
+    root.setSource(Qt.resolvedUrl("elements/" + root.kind + "/" + root.kind + ".qml"), {
+      "element": root.element,
+      "fields": root.fields,
+      "history": root.history,
+      "widgetId": root.widgetId,
+      "actionsEnabled": root.actionsEnabled,
+      "fallbackIcon": root.fallbackIcon
+    });
   }
-  onFileChanged: root._load()
-  onKindChanged: if (root.file === "CustomRing")
-    root._load()
+  onKindChanged: root._load()
   Component.onCompleted: root._load()
 
   Binding {

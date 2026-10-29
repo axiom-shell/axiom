@@ -3356,6 +3356,20 @@
     "text": "",
     "unit": "",
     "value": "",
-    "{0} cards across": ""
+    "{0} cards across": "",
+    "A Material Symbols name, unless the icon slot is bound.": "",
+    "A quick-settings pill": "",
+    "A switch beside the label": "",
+    "Auto: the border colour.": "",
+    "Auto: the state's colour when the script gives one, else the accent.": "",
+    "Auto: the text colour.": "",
+    "Colour by state": "",
+    "Commands it runs (x-actions; {value} is filled in): a Button's or List row's click, a Bar's change, a Toggle's on and off.": "",
+    "Each of its slots (x-slots) → a key (\"percentage\"), a path (\"data.temp\"), a format (\"{text}%\") or a number (\"100\"). An empty slot reads the output's own key.": "",
+    "For tables and aligned output (lines aren't wrapped).": "",
+    "Share of its box the line, slash or chevron spans.": "",
+    "Shown unless the label slot is bound.": "",
+    "The state's colour when the script gives one (over the colour above).": "",
+    "What a dragged value is rounded to (0: not rounded).": ""
   }
 }

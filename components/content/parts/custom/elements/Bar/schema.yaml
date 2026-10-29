@@ -1,0 +1,8 @@
+label: Bar
+icon: linear_scale
+defaultSize: [6, 1]
+slots: [value, min, max]
+actions: [change]
+color: state
+settings:
+  step: {type: number, title: Step, default: 1, minimum: 0, description: 'What a dragged value is rounded to (0: not rounded).'}

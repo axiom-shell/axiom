@@ -49,6 +49,7 @@ LOADERS = [
     ("BarWidget", "components/bar/widgets"),
     ("OverlayView", "components/views"),
     ("OverlayModule", "components/content"),
+    ("CustomElement", "components/content/parts/custom/elements"),
 ]
 # Bar popouts load content/<popoutName>/<popoutName>.qml, from the same root
 # as overlay modules (a content type can be both)

@@ -7,8 +7,9 @@ import qs.components.reusable
 
 // One entry in a module's list (clipboard clips, calculator answers,
 // recordings): an icon or a rounded thumbnail, a title and a muted
-// subtitle, and buttons on the right (children), faint until the row is
-// hovered so showing them moves nothing. Clicking the row `activated`s it.
+// subtitle, a muted `detail` on the right (a value), and buttons after it
+// (children), faint until the row is hovered so showing them moves
+// nothing. Clicking the row `activated`s it, unless it isn't `clickable`.
 Rectangle {
   id: root
 
@@ -22,6 +23,9 @@ Rectangle {
   property string titleFamily: Appearance.fontFamily
   // Marked (e.g. pinned): the icon in the accent
   property bool marked: false
+  property color iconColor: root.marked ? Theme.accent : Theme.foregroundAlt
+  property string detail: ""
+  property bool clickable: true
   readonly property bool hovered: rowHover.hovered
   default property alias actions: actionRow.data
 
@@ -40,6 +44,7 @@ Rectangle {
 
   MouseArea {
     anchors.fill: parent
+    enabled: root.clickable
     cursorShape: Qt.PointingHandCursor
     onClicked: root.activated()
   }
@@ -59,7 +64,7 @@ Rectangle {
       horizontalAlignment: Text.AlignHCenter
       text: root.icon
       textSize: Appearance.fontSizeBy(2)
-      textColor: root.marked ? Theme.accent : Theme.foregroundAlt
+      textColor: root.iconColor
     }
 
     ClippingRectangle {
@@ -99,6 +104,13 @@ Rectangle {
         textColor: Theme.foregroundAlt
         elide: Text.ElideRight
       }
+    }
+
+    StyledText {
+      visible: root.detail !== ""
+      text: root.detail
+      textSize: Appearance.fontSizeBy(-1)
+      textColor: Theme.foregroundAlt
     }
 
     RowLayout {

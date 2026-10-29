@@ -19,9 +19,9 @@ GridDragLayer {
   property bool editable: false
 
   editor: CustomWidgetsManager.editor.elements
-  // Element kinds, not module types (labels declared in CustomWidgetData)
+  // Element kinds, not module types (schema labels)
   describe: type => {
-    const kind = CustomWidgetData.elementKind(type);
+    const kind = CustomWidgetsConfig.elementKind(type);
     return kind ? {
       "icon": kind.icon,
       "label": I18n.tr(kind.label)

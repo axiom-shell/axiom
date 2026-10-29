@@ -51,6 +51,11 @@ IconTextWidget {
   // in its shape while it's hovered
   property bool hasBackground: !hidden
   property bool hoverOutline: false
+  // A level (0-1) its WidgetGroup fills its background's shape to, along
+  // the bar (up a vertical one), in fillShareColor; -1 for none (a custom
+  // widget's pill style)
+  property real fillShare: -1
+  property color fillShareColor: "transparent"
 
   showBackground: false
   foregroundColor: colors.text

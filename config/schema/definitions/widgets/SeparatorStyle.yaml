@@ -1,0 +1,10 @@
+# The SeparatorStyle definition (#/definitions/SeparatorStyle): how a
+# divider is drawn (reusable SeparatorMark), for the Separator bar widget
+# and a custom widget's Separator element.
+
+type: string
+title: Style
+default: line
+enum: [line, dot, slash, chevron, space]
+x-enumLabels: {line: Line, dot: Dot, slash: Slash, chevron: Chevron, space: Space}
+x-inline: true

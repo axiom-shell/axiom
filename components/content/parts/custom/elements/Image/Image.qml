@@ -1,11 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.config
+import QtQuick as QQ
 import Quickshell.Widgets
+import qs.config
+import qs.components.content.parts.custom
 
 // A custom widget's Image element: a path or URL (the widget's image field
-// by default), cropped to its box with rounded corners.
-// options: fit (crop, fit), round (a circle)
+// by default), cropped or fitted to its box with rounded corners, or a
+// circle. `QQ.` because this file's own name is Image.
 CustomElementBase {
   id: root
 
@@ -14,15 +16,15 @@ CustomElementBase {
 
   ClippingRectangle {
     anchors.centerIn: parent
-    width: root.opt("round", false) ? Math.min(root.width, root.height) : root.width
-    height: root.opt("round", false) ? width : root.height
-    radius: root.opt("round", false) ? width / 2 : Widget.radius
+    width: root.options.round ? Math.min(root.width, root.height) : root.width
+    height: root.options.round ? width : root.height
+    radius: root.options.round ? width / 2 : Widget.radius
     color: Theme.backgroundHighlight
 
-    Image {
+    QQ.Image {
       anchors.fill: parent
       source: root.source
-      fillMode: root.opt("fit", "crop") === "fit" ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+      fillMode: root.options.fit === "fit" ? QQ.Image.PreserveAspectFit : QQ.Image.PreserveAspectCrop
       asynchronous: true
       cache: false
       sourceSize.width: width

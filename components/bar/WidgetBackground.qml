@@ -32,6 +32,10 @@ Item {
   property bool pressed: false
   // The bar editor's selected widget
   property bool highlighted: false
+  // A level (0-1) filled in its shape along the bar, up a vertical one
+  // (the module's `fillShare`); -1 for none
+  property real fillShare: -1
+  property color fillShareColor: "transparent"
 
   readonly property string _fill: barConfig.widgetStyle
   readonly property bool _boxed: ["filled", "tinted", "outline"].includes(_fill)
@@ -132,6 +136,41 @@ Item {
     height: vertical ? root.height : thickness
 
     ColorGlide on color {}
+  }
+
+  // The level: the whole shape, cut to its share, so it keeps the caps
+  // (capsule, rounded, a powerline's points)
+  Item {
+    readonly property bool vertical: root.barConfig.vertical
+    readonly property real share: Math.max(0, Math.min(1, root.fillShare))
+    visible: root.fillShare >= 0
+    clip: true
+    x: 0
+    y: vertical ? root.height - height : 0
+    width: vertical ? root.width : root.width * share
+    height: vertical ? root.height * share : root.height
+
+    Glide on width {
+      duration: Appearance.animNormal
+    }
+    Glide on height {
+      duration: Appearance.animNormal
+    }
+
+    ShapedBox {
+      anchors.fill: undefined
+      y: parent.vertical ? parent.height - root.height : 0
+      width: root.width
+      height: root.height
+      bar: root.barConfig
+      startCap: root.startCap
+      endCap: root.endCap
+      seamStart: root.seamStart
+      seamEnd: root.seamEnd
+      fillColor: root.fillShareColor
+
+      ColorGlide on fillColor {}
+    }
   }
 
   ShapedBox {

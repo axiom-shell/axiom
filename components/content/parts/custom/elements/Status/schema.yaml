@@ -1,0 +1,7 @@
+label: Status
+icon: radio_button_checked
+defaultSize: [3, 1]
+slots: [text]
+color: state
+settings:
+  dot: {type: boolean, title: Always a dot, default: false}

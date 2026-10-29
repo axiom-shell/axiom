@@ -1,0 +1,20 @@
+label: Text
+icon: text_fields
+defaultSize: [6, 1]
+slots: [text]
+color: text
+settings:
+  size:
+    type: string
+    title: Size
+    default: auto
+    enum: [auto, small, normal, large, huge]
+    x-enumLabels: {auto: Fit the box, small: Small, normal: Normal, large: Large, huge: Huge}
+  align:
+    type: string
+    title: Align
+    default: center
+    enum: [left, center, right]
+    x-enumLabels: {left: Left, center: Centre, right: Right}
+  bold: {type: boolean, title: Bold, default: false}
+  monospace: {type: boolean, title: Monospace, default: false}

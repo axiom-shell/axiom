@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 
-import qs.components.reusable
-
-// A divider between bar widgets, centred where it's placed: a line across
-// the bar, a dot, a slash or a chevron pointing along it. Drawn by the
-// Separator widget and, between every pair of widgets, by WidgetGroup
-// (Bars[].separatorStyle).
+// A divider, centred where it's placed: a line across the bar (or box), a
+// dot, a slash or a chevron pointing along it. Drawn by the Separator
+// widget, between every pair of widgets by WidgetGroup
+// (Bars[].separatorStyle), and by a custom widget's Separator element.
 Item {
   id: root
 
@@ -15,7 +14,7 @@ Item {
   property color color: "white"
   property real thickness: 2
   // How far it reaches across the bar (px)
-  property real length: 16
+  property real length: Widget.px(16)
   property bool vertical: false
 
   implicitWidth: vertical ? length : thickness

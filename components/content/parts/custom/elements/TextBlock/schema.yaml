@@ -1,0 +1,7 @@
+label: Text block
+icon: notes
+defaultSize: [8, 4]
+slots: [text]
+color: text
+settings:
+  monospace: {type: boolean, title: Monospace, default: false, description: For tables and aligned output (lines aren't wrapped).}

@@ -11,7 +11,7 @@ import qs.components.views.Layouts
 // Custom widgets page, Module tab: the element library, then the selected
 // element's bindings (each slot: the output's own key, a path in it, a
 // format or a number), its look (its kind's options,
-// CustomWidgetData.elementKinds) and the commands it runs.
+// CustomWidgetsConfig.elementKinds) and the commands it runs.
 ColumnLayout {
   id: root
 
@@ -20,7 +20,7 @@ ColumnLayout {
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var grid: root.editor.elements
   readonly property var element: root.grid.selected >= 0 ? (root.editor.selected?.module?.elements?.[root.grid.selected] ?? null) : null
-  readonly property var kind: CustomWidgetData.elementKind(root.element?.type ?? "")
+  readonly property var kind: CustomWidgetsConfig.elementKind(root.element?.type ?? "")
   readonly property var fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
   // The binding choices: the output's own key, or any path in it (a
   // format or a number can be typed)
@@ -41,7 +41,7 @@ ColumnLayout {
   // I18n.tr("icon") I18n.tr("badge") I18n.tr("items") I18n.tr("image")
   // I18n.tr("state") I18n.tr("min") I18n.tr("max")
   readonly property var actionTitles: ({
-      "click": "On click",
+      "click": "On click ({value} is the label, or the row's text)",
       "change": "On change ({value} is the new value)",
       "on": "Turning it on",
       "off": "Turning it off"
@@ -55,13 +55,13 @@ ColumnLayout {
     description: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
 
     Repeater {
-      model: CustomWidgetData.elementKinds
+      model: CustomWidgetsConfig.elementKinds
 
       ModuleChip {
         required property var modelData
         Layout.fillWidth: true
         dragLayer: root.dragLayer
-        // Kind labels: declared in CustomWidgetData.elementKinds
+        // Kind labels: the schema's
         typeInfo: modelData
         onClicked: root.grid.addModule(modelData.type)
       }
@@ -149,7 +149,7 @@ ColumnLayout {
         SchemaPropertiesForm {
           Layout.fillWidth: true
           propertiesSchema: root.kind?.options ?? ({})
-          order: Object.keys(root.kind?.options ?? {})
+          order: root.kind?.optionsOrder ?? []
           values: root.element?.options ?? ({})
           onEdited: (path, value) => root.editor.setElement(["options"].concat(path), value)
         }

@@ -39,6 +39,7 @@ UNIONS = [
     ("BarWidget", "BarWidgets", "components/bar/widgets", "properties", "properties"),
     ("OverlayModule", "OverlayModules", "components/content", "properties", "properties"),
     ("OverlayView", "OverlayViews", "components/views", None, "viewConfig|viewConf"),
+    ("CustomElement", "CustomElements", "components/content/parts/custom/elements", "options", "options"),
 ]
 UNION_NAMES = {u[0]: u[1] for u in UNIONS}
 # Plumbing every union member shares, documented once on its page

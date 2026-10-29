@@ -102,3 +102,4 @@ kinds:
   BarWidget: {root: components/bar/widgets, suffix: Widget, base: WidgetBase}
   OverlayModule: {root: components/content, suffix: OverlayModule, base: ModuleBase}
   OverlayView: {root: components/views, suffix: OverlayView, base: ViewBase}
+  CustomElement: {root: components/content/parts/custom/elements, suffix: CustomElement, base: CustomElementBase}

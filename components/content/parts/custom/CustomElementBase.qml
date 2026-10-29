@@ -5,10 +5,11 @@ import qs.components.methods
 import qs.services.apps
 
 // What every custom widget element is given (CustomElement loads one by its
-// kind): its config, the widget's resolved fields and history, and helpers
-// reading its bindings and options. Bindings: a field name, a path in the
-// sample or a format (CustomWidgetData.elementValue); an empty one falls
-// back to the widget's own field.
+// kind, elements/<Type>/<Type>.qml): its config, the widget's resolved
+// fields and history, and helpers reading its bindings. Bindings: a field
+// name, a path in the sample or a format (CustomWidgetData.elementValue);
+// an empty one falls back to the widget's own field. Its options are its
+// kind's schema (elements/<Type>/schema.yaml), every default filled.
 Item {
   id: root
 
@@ -27,12 +28,8 @@ Item {
   readonly property var bind: element?.bind ?? ({})
   readonly property var options: element?.options ?? ({})
   readonly property var actions: element?.actions ?? ({})
-
-  // An option, or `fallback` when unset or empty
-  function opt(key, fallback) {
-    const v = root.options[key];
-    return v === undefined || v === null || v === "" ? fallback : v;
-  }
+  // Drawn down its box rather than across (a Bar, Segments, Separator)
+  readonly property bool vertical: root.height > root.width
 
   // A slot's value: its binding, else the widget's `field`
   function value(slot, field) {
@@ -55,13 +52,19 @@ Item {
     return CustomWidgetData.elementRatio(root.fields, root.bind);
   }
 
-  // The `color` option: "" (the default), "state" (the widget's state
-  // colour, else the default), or a theme name or colour
-  function colorOf(key, fallback) {
-    const name = root.opt(key, "");
-    if (name === "state")
-      return root.fields?.color ? Theme.resolveColor(root.fields.color) : fallback;
-    return name ? Theme.resolveColor(name) : fallback;
+  // The state's colour from the script, or null
+  readonly property var stateColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : null
+
+  // The colour part (CustomElementBase.yaml's x-parts.color): a picked
+  // colour, else `fallback`. Graphics (`state`) take the state's colour
+  // when left on Auto; text (`text`, which has a stateColor switch) only
+  // when asked
+  function colorOf(fallback) {
+    const picked = root.options.color;
+    const byState = "stateColor" in root.options ? root.options.stateColor : picked === "";
+    if (byState && root.stateColor !== null)
+      return root.stateColor;
+    return picked ? Theme.resolveColor(picked) : fallback;
   }
 
   // Run one of the element's actions with `value` filled in

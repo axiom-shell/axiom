@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import qs.services.core
+import qs.components.methods
 
 // Reader for the CustomWidgets section: the custom JSON widgets
 // (CustomWidget definitions: a script, its fields, its bar style and its
@@ -25,6 +26,50 @@ QtObject {
   // A definition by id, or null
   function definition(id) {
     return root.byId[id] ?? null;
+  }
+
+  // The element kinds a module is built from (the CustomElement oneOf:
+  // components/content/parts/custom/elements/<Type>/schema.yaml), by
+  // label: { type, label, icon, size ([w, h] sub-cells it's added at,
+  // `x-defaultSize`), slots (its bindings, `x-slots`), actions (the
+  // commands it runs, `x-actions`), options (its look, a properties
+  // schema), optionsOrder }. Labels and titles are English: the editor
+  // translates them
+  readonly property var elementKinds: {
+    const schema = ConfigManager.configSchema;
+    return (schema?.definitions?.CustomElement?.oneOf ?? []).map(option => {
+      const def = schema.definitions[option.$ref.replace("#/definitions/", "")];
+      return {
+        "type": def.properties.type.const,
+        "label": def.properties.type.description,
+        "icon": def["x-icon"] ?? "widgets",
+        "size": def["x-defaultSize"] ?? [4, 4],
+        "slots": def["x-slots"] ?? [],
+        "actions": def["x-actions"] ?? [],
+        "options": def.properties.options?.properties ?? ({}),
+        "optionsOrder": def.properties.options?.["x-order"] ?? []
+      };
+    }).sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  // An element kind (elementKinds), or null
+  function elementKind(type) {
+    return root.elementKinds.find(k => k.type === type) ?? null;
+  }
+
+  // A new element of `type` at `place`, at its schema defaults
+  function newElement(type, id, place) {
+    return ConfigManager.withDefaults({
+      "id": id,
+      "type": type,
+      "place": place
+    }, "CustomElement");
+  }
+
+  // The elements drawn for a definition without any
+  // (CustomWidgetData.defaultElements), at their schema defaults
+  function defaultElements(size, hasValue) {
+    return CustomWidgetData.defaultElements(size, hasValue).map(e => ConfigManager.withDefaults(e, "CustomElement"));
   }
 
   // A library key as what it adds: the bar widget and module libraries

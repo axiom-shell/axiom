@@ -1,0 +1,60 @@
+# The base every custom widget element's schema.yaml is expanded into
+# (index.yaml's kinds): one piece of a custom widget's module, on its
+# lattice of 4 sub-cells a grid unit (docs/dev/features/custom-widgets.md).
+
+type: object
+required: [type, id]
+additionalProperties: false
+x-settingsAt: /properties/options/properties
+x-parts:
+  color:
+    # Graphics: the state's colour when the script gives one
+    state:
+      color:
+        type: string
+        title: Colour
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+        description: "Auto: the state's colour when the script gives one, else the accent."
+    # Text: the text colour, or the state's when asked
+    text:
+      color:
+        type: string
+        title: Colour
+        x-options: colors
+        default: ''
+        x-emptyLabel: Auto
+        description: 'Auto: the text colour.'
+      stateColor:
+        type: boolean
+        title: Colour by state
+        default: false
+        description: "The state's colour when the script gives one (over the colour above)."
+properties:
+  type: {}
+  id: {$ref: '#/definitions/ItemId'}
+  place:
+    type: object
+    additionalProperties: false
+    description: In sub-cells from the top left (4 to a grid unit).
+    properties:
+      x: {type: integer, default: 0, minimum: 0}
+      'y': {type: integer, default: 0, minimum: 0}
+      w: {type: integer, default: 4, minimum: 1, maximum: 64}
+      h: {type: integer, default: 4, minimum: 1, maximum: 64}
+  bind:
+    type: object
+    default: {}
+    additionalProperties: {type: string}
+    description: 'Each of its slots (x-slots) → a key ("percentage"), a path ("data.temp"), a format ("{text}%") or a number ("100"). An empty slot reads the output''s own key.'
+  options: {type: object, additionalProperties: false, properties: {}}
+  actions:
+    type: object
+    additionalProperties: false
+    description: 'Commands it runs (x-actions; {value} is filled in): a Button''s or List row''s click, a Bar''s change, a Toggle''s on and off.'
+    properties:
+      click: {x-scope: commands, type: string, default: ''}
+      change: {x-scope: commands, type: string, default: ''}
+      'on': {x-scope: commands, type: string, default: ''}
+      'off': {x-scope: commands, type: string, default: ''}

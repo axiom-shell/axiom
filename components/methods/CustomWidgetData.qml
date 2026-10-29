@@ -238,7 +238,8 @@ QtObject {
   //                 states, maxLength, escape, hideEmpty }
   // Returns { text (rich, the format filled), plain (it as plain text),
   // rawText, alt, tooltip (rich), classes, color (a theme name or colour,
-  // "" for none), percentage, value, min, max, ratio (0-1, or -1 without a
+  // "" for none), percentage, value, min, max (0-100 unless given), hasMax
+  // (the output gave a max or a percentage), ratio (0-1, or -1 without a
   // value), unit, subtext, icon (a Material Symbols name), glyph (the
   // format-icons pick), badge, urgent, image, items, hidden, sample }
   function resolve(definition, sample) {
@@ -259,6 +260,8 @@ QtObject {
       f.alt = f.text.trim();
     let min = num(f.min);
     let max = num(f.max);
+    // The output says how far the value goes (a max, or a percentage)
+    const hasMax = max !== undefined || (value === undefined && percentage !== undefined);
     if (value === undefined && percentage !== undefined) {
       value = percentage;
       min = min ?? 0;
@@ -312,6 +315,7 @@ QtObject {
       "value": value,
       "min": min,
       "max": max,
+      "hasMax": hasMax,
       "ratio": ratio,
       "unit": str(f.unit),
       "subtext": str(f.subtext),
@@ -365,322 +369,25 @@ QtObject {
     };
   }
 
+  // The range a graph of an element's value is drawn over (a Sparkline,
+  // the bar's sparkline style): min and max as elementRange, except a max
+  // neither bound nor given by the output (resolve's hasMax) is 0,
+  // scaling to the largest value
+  function graphRange(fields, bind) {
+    const r = root.elementRange(fields, bind);
+    const given = !!bind?.max || fields?.hasMax === true;
+    return {
+      "min": r.min,
+      "max": given ? r.max : 0
+    };
+  }
+
   // 0-1 for an element (elementRange), -1 without a value
   function elementRatio(fields, bind) {
     const r = root.elementRange(fields, bind);
     if (r.value === undefined)
       return -1;
     return r.max === r.min ? 0 : Math.max(0, Math.min(1, (r.value - r.min) / (r.max - r.min)));
-  }
-
-  // The element kinds a module is built from, in the editor's library
-  // order: { type, label, icon, size ([w, h] sub-cells it's added at,
-  // small: dragged out, it's grown from there),
-  // slots (its bindings), options (a properties schema for its look),
-  // actions (the commands it runs) }. Labels and titles are English, the
-  // editor translates them:
-  // I18n.tr("Text") I18n.tr("Text block") I18n.tr("Icon")
-  // I18n.tr("Ring") I18n.tr("Gauge") I18n.tr("Bar") I18n.tr("Segments")
-  // I18n.tr("Sparkline") I18n.tr("List") I18n.tr("Image") I18n.tr("Button")
-  // I18n.tr("Toggle") I18n.tr("Status") I18n.tr("Separator")
-  // I18n.tr("Colour") I18n.tr("Default") I18n.tr("By state") I18n.tr("Accent")
-  // I18n.tr("Second accent") I18n.tr("Text colour") I18n.tr("Dim text")
-  // I18n.tr("Good") I18n.tr("Warning") I18n.tr("Error") I18n.tr("Info")
-  // I18n.tr("Size") I18n.tr("Fit the box") I18n.tr("Small") I18n.tr("Normal")
-  // I18n.tr("Large") I18n.tr("Huge") I18n.tr("Align") I18n.tr("Left")
-  // I18n.tr("Centre") I18n.tr("Right") I18n.tr("Bold") I18n.tr("Monospace")
-  // I18n.tr("Highest") I18n.tr("Step") I18n.tr("Inside")
-  // I18n.tr("Percent") I18n.tr("Value") I18n.tr("None") I18n.tr("Blocks")
-  // I18n.tr("Dots") I18n.tr("Source") I18n.tr("Material Symbols")
-  // I18n.tr("Format icon") I18n.tr("Show the badge") I18n.tr("Fit")
-  // I18n.tr("Crop") I18n.tr("Round") I18n.tr("Label") I18n.tr("Always a dot")
-  // I18n.tr("Draw a line")
-  readonly property var elementKinds: {
-    const color = {
-      "type": "string",
-      "title": "Colour",
-      "default": "",
-      "enum": ["", "state", "accent", "accentAlt", "foreground", "foregroundAlt", "success", "warning", "error", "info"],
-      "x-enumLabels": {
-        "": "Default",
-        "state": "By state",
-        "accent": "Accent",
-        "accentAlt": "Second accent",
-        "foreground": "Text colour",
-        "foregroundAlt": "Dim text",
-        "success": "Good",
-        "warning": "Warning",
-        "error": "Error",
-        "info": "Info"
-      }
-    };
-    const flag = title => ({
-          "type": "boolean",
-          "title": title,
-          "default": false
-        });
-    const text = title => ({
-          "type": "string",
-          "title": title,
-          "default": ""
-        });
-    return [
-      {
-        "type": "Text",
-        "label": "Text",
-        "icon": "text_fields",
-        "size": [6, 1],
-        "slots": ["text"],
-        "options": {
-          "size": {
-            "type": "string",
-            "title": "Size",
-            "default": "auto",
-            "enum": ["auto", "small", "normal", "large", "huge"],
-            "x-enumLabels": {
-              "auto": "Fit the box",
-              "small": "Small",
-              "normal": "Normal",
-              "large": "Large",
-              "huge": "Huge"
-            }
-          },
-          "align": {
-            "type": "string",
-            "title": "Align",
-            "default": "center",
-            "enum": ["left", "center", "right"],
-            "x-enumLabels": {
-              "left": "Left",
-              "center": "Centre",
-              "right": "Right"
-            }
-          },
-          "bold": flag("Bold"),
-          "monospace": flag("Monospace"),
-          "color": color
-        },
-        "actions": []
-      },
-      {
-        "type": "TextBlock",
-        "label": "Text block",
-        "icon": "notes",
-        "size": [8, 4],
-        "slots": ["text"],
-        "options": {
-          "monospace": flag("Monospace"),
-          "color": color
-        },
-        "actions": []
-      },
-      {
-        "type": "Icon",
-        "label": "Icon",
-        "icon": "star",
-        "size": [2, 2],
-        "slots": ["icon", "badge"],
-        "options": {
-          "source": {
-            "type": "string",
-            "title": "Source",
-            "default": "material",
-            "enum": ["material", "glyph"],
-            "x-enumLabels": {
-              "material": "Material Symbols",
-              "glyph": "Format icon"
-            }
-          },
-          "badge": flag("Show the badge"),
-          "color": color
-        },
-        "actions": []
-      },
-      {
-        "type": "Ring",
-        "label": "Ring",
-        "icon": "donut_large",
-        "size": [3, 3],
-        "slots": ["value", "min", "max", "label"],
-        "options": ({
-            "inside": {
-              "type": "string",
-              "title": "Inside",
-              "default": "percent",
-              "enum": ["percent", "value", "icon", "none"],
-              "x-enumLabels": {
-                "percent": "Percent",
-                "value": "Value",
-                "icon": "Icon",
-                "none": "None"
-              }
-            },
-            "color": color
-          }),
-        "actions": []
-      },
-      {
-        "type": "Gauge",
-        "label": "Gauge",
-        "icon": "speed",
-        "size": [3, 3],
-        "slots": ["value", "min", "max", "label"],
-        "options": ({
-            "inside": {
-              "type": "string",
-              "title": "Inside",
-              "default": "percent",
-              "enum": ["percent", "value", "icon", "none"],
-              "x-enumLabels": {
-                "percent": "Percent",
-                "value": "Value",
-                "icon": "Icon",
-                "none": "None"
-              }
-            },
-            "color": color
-          }),
-        "actions": []
-      },
-      {
-        "type": "Bar",
-        "label": "Bar",
-        "icon": "linear_scale",
-        "size": [6, 1],
-        "slots": ["value", "min", "max"],
-        "options": ({
-            "step": {
-              "type": "number",
-              "title": "Step",
-              "default": 1
-            },
-            "color": color
-          }),
-        "actions": ["change"]
-      },
-      {
-        "type": "Segments",
-        "label": "Segments",
-        "icon": "signal_cellular_alt",
-        "size": [6, 1],
-        "slots": ["value", "min", "max"],
-        "options": ({
-            "count": {
-              "type": "integer",
-              "title": "Blocks",
-              "default": 5,
-              "minimum": 2,
-              "maximum": 24
-            },
-            "round": flag("Dots"),
-            "color": color
-          }),
-        "actions": []
-      },
-      {
-        "type": "Sparkline",
-        "label": "Sparkline",
-        "icon": "show_chart",
-        "size": [6, 2],
-        "slots": ["value"],
-        "options": {
-          "max": {
-            "type": "number",
-            "title": "Highest",
-            "default": 0
-          },
-          "color": color
-        },
-        "actions": []
-      },
-      {
-        "type": "List",
-        "label": "List",
-        "icon": "list",
-        "size": [8, 4],
-        "slots": ["items"],
-        "options": {
-          "color": color
-        },
-        "actions": []
-      },
-      {
-        "type": "Image",
-        "label": "Image",
-        "icon": "image",
-        "size": [3, 3],
-        "slots": ["image"],
-        "options": {
-          "fit": {
-            "type": "string",
-            "title": "Fit",
-            "default": "crop",
-            "enum": ["crop", "fit"],
-            "x-enumLabels": {
-              "crop": "Crop",
-              "fit": "Fit"
-            }
-          },
-          "round": flag("Round")
-        },
-        "actions": []
-      },
-      {
-        "type": "Button",
-        "label": "Button",
-        "icon": "smart_button",
-        "size": [3, 1],
-        "slots": ["label", "icon"],
-        "options": {
-          "label": text("Label"),
-          "icon": text("Icon"),
-          "color": color
-        },
-        "actions": ["click"]
-      },
-      {
-        "type": "Toggle",
-        "label": "Toggle",
-        "icon": "toggle_on",
-        "size": [5, 1],
-        "slots": ["state", "label"],
-        "options": {
-          "label": text("Label")
-        },
-        "actions": ["on", "off"]
-      },
-      {
-        "type": "Status",
-        "label": "Status",
-        "icon": "radio_button_checked",
-        "size": [3, 1],
-        "slots": ["text"],
-        "options": {
-          "dot": flag("Always a dot")
-        },
-        "actions": []
-      },
-      {
-        "type": "Separator",
-        "label": "Separator",
-        "icon": "horizontal_rule",
-        "size": [8, 1],
-        "slots": [],
-        "options": {
-          "line": {
-            "type": "boolean",
-            "title": "Draw a line",
-            "default": true
-          }
-        },
-        "actions": []
-      }
-    ];
-  }
-
-  // An element kind's entry in elementKinds, or null
-  function elementKind(type) {
-    return root.elementKinds.find(k => k.type === type) ?? null;
   }
 
   // JSONC (a Waybar config: // and /* */ comments, trailing commas) as

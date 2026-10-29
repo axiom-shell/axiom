@@ -1,6 +1,6 @@
 # Bar widget shapes, runs, separators and accents
 
-> **Files:** `components/bar/WidgetGroup.qml`, `components/bar/WidgetBackground.qml`, `components/methods/BarShapes.qml`, `components/methods/BarLayout.qml`, `components/methods/BarWidgetStyle.qml`, `components/bar/SeparatorMark.qml`, `components/bar/BarContainer.qml` (inline `AccentLine`), `components/bar/BarWidgetHost.qml`
+> **Files:** `components/bar/WidgetGroup.qml`, `components/bar/WidgetBackground.qml`, `components/methods/BarShapes.qml`, `components/methods/BarLayout.qml`, `components/methods/BarWidgetStyle.qml`, `components/reusable/SeparatorMark.qml`, `components/bar/BarContainer.qml` (inline `AccentLine`), `components/bar/BarWidgetHost.qml`
 > **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `widgetEnds`, `widgetGrouping`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach` are derived `barConfig` values.)
 > **Related:** [Widget style](widget-style.md), [Bar composition](composition.md), [Layering and corners](layering-and-corners.md) (the border's shadow window), [Popout shadows](../popouts/shadows.md)
 
@@ -61,6 +61,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 
 ### Separator marks (accents)
 - `WidgetGroup` draws a `SeparatorMark` in each gap between shown widgets (`separatorStyle`).
+- A widget's `fillShare` (0–1, -1 for none; a custom widget's pill style) is drawn by its `WidgetBackground` as the whole shape cut to that share along the bar (up a vertical one), in `fillShareColor`, so a level keeps the caps, radius and powerline points of the background it fills.
 - No mark is drawn beside a widget that `divides` (the Separator), nor in a powerline.
 - With marks on, the gap between a section's widgets is the mark's room along the bar plus `separatorGap` either side (`BarLayout.dividerGap`, as `groupSpacing` in `BarsConfig.enrichBarConfig`) instead of the bar's `spacing`.
 
