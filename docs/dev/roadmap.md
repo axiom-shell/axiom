@@ -308,7 +308,7 @@ Steps:
 5. **Done:** **Caffeine on a timer** (from the waiting list): caffeine (the idle inhibitor) can be turned on for a set time and turns itself off after it. The maintainer (2026-10-29): "decision for caffeine on a timer: works similarity to stopwatch current implementation. Popout shows presets (default 30min, 1hr, 4hr) that start with a timer. Presets are settable in module settings." and "ensure timer starting and selecting and whatnot is a re-used component (i.e. so caffeine and stopwatches look identical)" The IdleInhibitor widget gets its own popout (`content/Caffeine`, on by default for new widgets) with a `CountdownTimer` (`content/parts/`, the one-off timer's start, presets, ring and controls, now shared with `content/Stopwatch`) over the widget's `presets` (30m, 1h, 4h); `IdleManager` keeps the timer in a `DeadlineTicker` that ends caffeine at its end, and the widget, quick action and `/caffeine` show the time left.
 
 Needs a plan:
-- [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other)
+- [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other) (plan: #211)
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri)
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse)
 - [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own)
