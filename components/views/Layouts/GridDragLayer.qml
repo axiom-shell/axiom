@@ -33,6 +33,8 @@ DragLayer {
   property var describe: null
   // A tile's size while it's resized, from its w × h grid units
   property var sizeLabel: (w, h) => I18n.tr("{0} × {1} cards", GridPlacement.cards(w), GridPlacement.cards(h))
+  // How many there are, named (the canvas's count, a carried group)
+  property var countLabel: n => I18n.tr("{0} modules", n)
 
   readonly property string draggingKind: root.dragging?.kind ?? ""
   readonly property bool carryingModule: root.draggingKind === "module-add" || root.draggingKind === "module-move"

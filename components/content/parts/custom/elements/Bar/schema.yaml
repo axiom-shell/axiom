@@ -5,4 +5,4 @@ slots: [value, min, max]
 actions: [change]
 color: state
 settings:
-  step: {type: number, title: Step, default: 1, minimum: 0, description: 'What a dragged value is rounded to (0: not rounded).'}
+  step: {type: integer, x-control: stepper, title: Step, default: 1, minimum: 0, maximum: 1000, description: 'What a dragged value is rounded to (0: not rounded).'}

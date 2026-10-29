@@ -43,21 +43,27 @@ ColumnLayout {
 
   // The library: drag one onto the module, or click it to add it where
   // there's room
-  FieldGroup {
+  // Only while no element is selected, as the layouts editor's library
+  Loader {
+    active: root.element === null
+    visible: active
     Layout.fillWidth: true
-    title: I18n.tr("Elements")
-    description: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
 
-    Repeater {
-      model: CustomWidgetsConfig.elementKinds
+    sourceComponent: FieldGroup {
+      title: I18n.tr("Elements")
+      description: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
 
-      ModuleChip {
-        required property var modelData
-        Layout.fillWidth: true
-        dragLayer: root.dragLayer
-        // Kind labels: the schema's
-        typeInfo: modelData
-        onClicked: root.grid.addModule(modelData.type)
+      Repeater {
+        model: CustomWidgetsConfig.elementKinds
+
+        ModuleChip {
+          required property var modelData
+          Layout.fillWidth: true
+          dragLayer: root.dragLayer
+          // Kind labels: the schema's
+          typeInfo: modelData
+          onClicked: root.grid.addModule(modelData.type)
+        }
       }
     }
   }
@@ -120,6 +126,7 @@ ColumnLayout {
             StyledComboEntry {
               Layout.fillWidth: true
               editable: true
+              placeholderText: I18n.tr("The output's own")
               value: root.element?.bind?.[slot.modelData] ?? ""
               options: root.bindOptions
               onPicked: value => root.editor.setElement(["bind", slot.modelData], value === "" ? undefined : value)

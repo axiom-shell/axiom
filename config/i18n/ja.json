@@ -3339,7 +3339,6 @@
     "Auto: the text colour.": "",
     "A switch beside the label": "",
     "Shown unless the label slot is bound.": "",
-    "Share of its box the line, slash or chevron spans.": "",
     "A quick-settings pill": "",
     "Commands it runs (x-actions; {value} is filled in): a Button's or List row's click, a Bar's change, a Toggle's on and off.": "",
     "The state's colour when the script gives one (over the colour above).": "",
@@ -3351,6 +3350,9 @@
     "On change": "",
     "{value} is the new value.": "",
     "Turning it on": "",
-    "Its script keeps running while the screen is locked, and what it prints shows to anyone at the screen: offer only what's fine to show. Its clicks and commands never run there.": ""
+    "Its script keeps running while the screen is locked, and what it prints shows to anyone at the screen: offer only what's fine to show. Its clicks and commands never run there.": "",
+    "{0} elements": "",
+    "Drawn as": "",
+    "Share of its box's length the line or slash spans; a chevron's of the gap it sits in.": ""
   }
 }

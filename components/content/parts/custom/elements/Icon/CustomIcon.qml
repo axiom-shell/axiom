@@ -14,15 +14,17 @@ CustomElementBase {
   readonly property string badge: root.options.badge ? root.text("badge", "badge") : ""
 
   StyledIcon {
+    id: glyph
     anchors.centerIn: parent
     text: root.shown
     textColor: root.colorOf(Theme.accent)
     textSize: Math.max(Appearance.fontSizeBy(-4), Math.min(root.width, root.height) * 0.75)
   }
 
+  // On the icon's corner, wherever the box puts it
   CountBadge {
-    anchors.right: parent.right
-    anchors.top: parent.top
+    anchors.horizontalCenter: glyph.right
+    anchors.verticalCenter: glyph.top
     text: root.badge
     shown: root.badge !== "" && root.badge !== "0"
   }

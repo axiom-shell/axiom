@@ -6,7 +6,7 @@ actions: ['on', 'off']
 settings:
   look:
     type: string
-    title: Look
+    title: Drawn as
     default: switch
     enum: [switch, pill]
     x-enumLabels: {switch: A switch beside the label, pill: A quick-settings pill}

@@ -101,7 +101,9 @@ QtObject {
     return ids;
   }
   readonly property string _wantedJson: JSON.stringify(_wanted)
-  on_WantedJsonChanged: _sync()
+  // Next tick: an acquire made while a consumer's binding on `fields`
+  // evaluates (its id settling) must not write `fields` inside it
+  on_WantedJsonChanged: Qt.callLater(root._sync)
 
   property var _watching: ({})
   property var _blocked: ({})

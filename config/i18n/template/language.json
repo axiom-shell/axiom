@@ -3377,6 +3377,9 @@
     "Shown unless the label slot is bound.": "",
     "The state's colour when the script gives one (over the colour above).": "",
     "What a dragged value is rounded to (0: not rounded).": "",
-    "…and {0} more": ""
+    "…and {0} more": "",
+    "Drawn as": "",
+    "Share of its box's length the line or slash spans; a chevron's of the gap it sits in.": "",
+    "{0} elements": ""
   }
 }

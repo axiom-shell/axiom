@@ -41,7 +41,8 @@ BarIconWidget {
     case "sparkline":
       return root.bar.width > 0 ? root.bar.width : root.fontSize * (root.isVertical ? 2.5 : 4);
     case "ticker":
-      return root.bar.width > 0 ? root.bar.width : root.fontSize * 12;
+      // As long as its text, up to its room: it scrolls past that
+      return Math.min((graphicLoader.item as Item)?.implicitWidth ?? 0, root.bar.width > 0 ? root.bar.width : root.fontSize * 12);
     case "stacked":
       return (graphicLoader.item as Item)?.implicitWidth ?? 0;
     }
@@ -57,6 +58,8 @@ BarIconWidget {
   text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.fields.plain
   showText: !["icon", "ticker", "stacked"].includes(root.style)
   leadLength: root.graphic ? root.graphicLength : 0
+  // Ticker and stacked are its text: where the label would be
+  leadAfterIcon: ["ticker", "stacked"].includes(root.style)
   accentColor: root.fields?.color ? root.stateColor : Theme.resolveColor(properties.backgroundColor)
   // Colour the text by state only where it isn't the background already
   // (a filled widget's text must read on it)
@@ -185,6 +188,7 @@ BarIconWidget {
     id: ticker
     Item {
       id: tickerBox
+      implicitWidth: tickerText.implicitWidth
       clip: true
 
       Text {

@@ -142,7 +142,7 @@ Rectangle {
         "group": root.grouped ? root.editor.group : [],
         "type": root.type,
         "icon": root.grouped ? "select_all" : root.dragLayer.moduleIcon(root.type),
-        "label": root.grouped ? I18n.tr("{0} modules", root.editor.group.length) : root.dragLayer.moduleLabel(root.type)
+        "label": root.grouped ? root.dragLayer.countLabel(root.editor.group.length) : root.dragLayer.moduleLabel(root.type)
       })
     onPressed: mouse => root._toggling = (mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0
     onTapped: {

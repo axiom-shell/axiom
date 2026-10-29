@@ -20,7 +20,7 @@ settings:
     default: 100
     minimum: 10
     maximum: 100
-    description: Share of its box the line, slash or chevron spans.
+    description: "Share of its box's length the line or slash spans; a chevron's of the gap it sits in."
     x-showIf: {style: [line, slash, chevron]}
   color:
     type: string

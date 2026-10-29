@@ -15,7 +15,9 @@ CustomElementBase {
     style: root.options.style
     color: root.options.color ? Theme.resolveColor(root.options.color) : Theme.border
     thickness: Widget.px(root.options.thickness)
-    length: (root.vertical ? root.height : root.width) * root.options.length / 100
+    // A line or slash spans the box's length; a chevron is a mark the
+    // size of the gap it sits in (its short side), as a bar's is the bar's
+    length: (root.options.style === "chevron" ? Math.min(root.width, root.height) : Math.max(root.width, root.height)) * root.options.length / 100
     vertical: !root.vertical
   }
 }

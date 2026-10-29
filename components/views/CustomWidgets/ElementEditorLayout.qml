@@ -29,6 +29,7 @@ GridDragLayer {
   }
   // In grid units (4 sub-cells each)
   sizeLabel: (w, h) => I18n.tr("{0} × {1}", w / CustomWidgetData.subCells, h / CustomWidgetData.subCells)
+  countLabel: n => I18n.tr("{0} elements", n)
 
   RowLayout {
     anchors.fill: parent
