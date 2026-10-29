@@ -1,0 +1,13 @@
+label: Icon
+icon: star
+defaultSize: [2, 2]
+slots: [icon, badge]
+color: state
+settings:
+  source:
+    type: string
+    title: Source
+    default: material
+    enum: [material, glyph]
+    x-enumLabels: {material: Material Symbols, glyph: Format icon}
+  badge: {type: boolean, title: Show the badge, default: false}

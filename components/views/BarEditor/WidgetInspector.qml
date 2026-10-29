@@ -156,6 +156,13 @@ Item {
               links: root.dragLayer.typeInfo(editorRoot.widget.type)?.link
             }
 
+            // Where every bar's widget look is set (the bar's own, if it
+            // takes one, is in the bar's Style groups)
+            SettingsLink {
+              Layout.fillWidth: true
+              setting: "Bars.style"
+            }
+
             OptionsGroup {
               propertiesSchema: editorRoot.propertiesSchema
               order: editorRoot.propertiesOrder
@@ -232,7 +239,7 @@ Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.topMargin: Widget.spacing / 2
-        types: BarsConfig.availableWidgetTypes
+        types: BarsConfig.libraryWidgetTypes
         groups: OverlayConfig.libraryGroups
         grouped: EditsManager.libraryGrouped
         // Schema keys (labels, group names)

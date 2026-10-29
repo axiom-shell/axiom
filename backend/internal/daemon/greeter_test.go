@@ -112,8 +112,8 @@ func TestGreeterServesWeather(t *testing.T) {
 	}
 }
 
-// The greeter's quickshell watches commands too (a Button's label, a
-// CommandOutput module), their outputs pushed to it.
+// The greeter's quickshell watches commands too (a Button's label),
+// their outputs pushed to it.
 func TestGreeterWatchesCommands(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(shortDir(t), "s.sock")

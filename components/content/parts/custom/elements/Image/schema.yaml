@@ -1,0 +1,12 @@
+label: Image
+icon: image
+defaultSize: [3, 3]
+slots: [image]
+settings:
+  fit:
+    type: string
+    title: Fit
+    default: crop
+    enum: [crop, fit]
+    x-enumLabels: {crop: Crop, fit: Fit}
+  round: {type: boolean, title: Round, default: false}

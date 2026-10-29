@@ -1,0 +1,12 @@
+label: Custom widget
+icon: widgets
+group: Custom
+popout: {variant: own, enabled: {description: Show the custom widget's module when hovered.}}
+colors: standard
+settings:
+  definition:
+    type: string
+    title: Custom widget
+    default: ''
+    x-options: customWidgets
+    description: Which custom widget it shows. Its look is set on the Custom widgets page.

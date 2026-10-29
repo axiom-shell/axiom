@@ -270,7 +270,7 @@ func TestElevate(t *testing.T) {
 			log := filepath.Join(root, "log")
 			env := []string{"FAKE_LOG=" + log, "FAKE_OUT=" + tc.out, fmt.Sprintf("FAKE_CODE=%d", tc.code)}
 			in := New(Options{Root: root, Pkexec: pkexec, Environ: func() []string { return env }})
-			got, err := in.Elevate(context.Background(), req)
+			got, err := in.Elevate(context.Background(), req, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -284,6 +284,37 @@ func TestElevate(t *testing.T) {
 				if strings.TrimSuffix(string(ran), "\n") != want {
 					t.Errorf("ran %q, want %q", ran, want)
 				}
+			}
+		})
+	}
+}
+
+// Authorized once pkexec has run its program (it execs it after the
+// password), never while it only asks
+func TestElevateAuthorized(t *testing.T) {
+	t.Parallel()
+	pkexec := filepath.Join(tools, "pkexec")
+	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: "local", Channel: "tags", Binary: "/home/me/axiom"}
+	for _, tc := range []struct {
+		name string
+		out  string
+		code int
+		want bool
+	}{
+		{"the program runs", `exec sh -c 'sleep 0.6; echo "{\"ok\": true}"'`, 0, true},
+		{"dismissed after a while", "sleep 0.6", 126, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			env := []string{"FAKE_LOG=" + filepath.Join(root, "log"), "FAKE_OUT=" + tc.out, fmt.Sprintf("FAKE_CODE=%d", tc.code)}
+			in := New(Options{Root: root, Pkexec: pkexec, Environ: func() []string { return env }})
+			var authorized atomic.Int32
+			if _, err := in.Elevate(context.Background(), req, func() { authorized.Add(1) }); err != nil {
+				t.Fatal(err)
+			}
+			if got := authorized.Load(); (got == 1) != tc.want || got > 1 {
+				t.Errorf("authorized %d times, want %v", got, tc.want)
 			}
 		})
 	}
@@ -315,7 +346,7 @@ func TestElevateMainNeedsAnEdgeHelper(t *testing.T) {
 			log := filepath.Join(root, "log")
 			env := []string{"FAKE_LOG=" + log, "FAKE_OUT=echo '{\"ok\": true}'", "FAKE_CODE=0"}
 			in := New(Options{Root: root, Pkexec: pkexec, Releases: releases(t, "x", ""), Upstream: filepath.Join(root, "none.git"), Environ: func() []string { return env }})
-			got, err := in.Elevate(context.Background(), req)
+			got, err := in.Elevate(context.Background(), req, nil)
 			if err != nil {
 				t.Fatal(err)
 			}

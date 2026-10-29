@@ -1,6 +1,6 @@
 # Bar widget shapes, runs, separators and accents
 
-> **Files:** `components/bar/WidgetGroup.qml`, `components/bar/WidgetBackground.qml`, `components/methods/BarShapes.qml`, `components/methods/BarLayout.qml`, `components/methods/BarWidgetStyle.qml`, `components/bar/SeparatorMark.qml`, `components/bar/BarContainer.qml` (inline `AccentLine`), `components/bar/BarWidgetHost.qml`
+> **Files:** `components/bar/WidgetGroup.qml`, `components/bar/WidgetBackground.qml`, `components/methods/BarShapes.qml`, `components/methods/BarLayout.qml`, `components/methods/BarWidgetStyle.qml`, `components/reusable/SeparatorMark.qml`, `components/bar/BarContainer.qml` (inline `AccentLine`), `components/bar/BarWidgetHost.qml`
 > **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `widgetEnds`, `widgetGrouping`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach` are derived `barConfig` values.)
 > **Related:** [Widget style](widget-style.md), [Bar composition](composition.md), [Layering and corners](layering-and-corners.md) (the border's shadow window), [Popout shadows](../popouts/shadows.md)
 
@@ -61,6 +61,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 
 ### Separator marks (accents)
 - `WidgetGroup` draws a `SeparatorMark` in each gap between shown widgets (`separatorStyle`).
+- A widget's `backgroundLevel` (0–1, -1 for none; a custom widget's pill style) is drawn by its `WidgetBackground` as a shape of its own along the bar (up a vertical one), in `backgroundLevelColor`: the background's cap where it starts, a rounded edge (a capsule's, else the bar's radius) where it stops, and full, the background's own end unless that's flat (a merged run's middle), so a level never stops square.
 - No mark is drawn beside a widget that `divides` (the Separator), nor in a powerline.
 - With marks on, the gap between a section's widgets is the mark's room along the bar plus `separatorGap` either side (`BarLayout.dividerGap`, as `groupSpacing` in `BarsConfig.enrichBarConfig`) instead of the bar's `spacing`.
 

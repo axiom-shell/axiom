@@ -82,8 +82,14 @@ QtObject {
   readonly property bool installable: Paths.packaged || _report?.clone !== false
 
   // pkexec is running (install, update or uninstall)
-  readonly property bool elevating: _elevating
-  property bool _elevating: false
+  readonly property bool elevating: _phase === "password" || _phase === "running"
+  // Where the last install, update or uninstall (`action`) is: "" (none
+  // yet) | "password" (its prompt is up) | "running" (the password was
+  // given: it runs as root) | "done" | "failed" (lastError says why)
+  readonly property string phase: _phase
+  property string _phase: ""
+  readonly property string action: _action
+  property string _action: ""
   // What the last install, update or uninstall said went wrong ("" when
   // it worked)
   readonly property string lastError: _lastError
@@ -162,9 +168,10 @@ QtObject {
   // snapshots as the copy's fallback; once they're done the bundle itself
   // is written at once, so the greeter never starts before it's there
   function _elevate(action) {
-    if (root._elevating)
+    if (root.elevating)
       return;
-    root._elevating = true;
+    root._action = action;
+    root._phase = "password";
     root._lastError = "";
     const staging = action === "uninstall" ? "" : Paths.runtimePath + "greeter-bundle";
     if (!staging) {
@@ -189,7 +196,7 @@ QtObject {
       "staged": staging
     }, (error, result) => {
       SurfaceManager.endStepAside("greeter");
-      root._elevating = false;
+      root._phase = error || !result.ok ? "failed" : "done";
       if (error || !result.ok) {
         root._lastError = error ? error.message : result.dismissed ? I18n.tr("The password prompt was dismissed.") : result.error;
         console.warn("[GreeterManager]", action, "failed:", root._lastError);
@@ -219,7 +226,11 @@ QtObject {
   // once
   property var _saved: ({})
 
+  // Notifies a new version the copy is behind; once it isn't (updated,
+  // removed or turned off), takes the notification away
   function _notifyOutdated() {
+    if (root.status !== "outdated")
+      NotificationManager.dismissApp(root._desktopEntry);
     const hash = root._report?.currentHash ?? "";
     if (root.status !== "outdated" || !GreeterConfig.enabled || !hash || root._saved.notifiedHash === hash)
       return;
@@ -337,6 +348,11 @@ chmod -R go+rX "$dir"`, "sh", dir.replace(/\/$/, ""), root._bundleText, root._th
   Component.onCompleted: {
     root._saved = root._state.load({});
     NotificationManager.registerHandler(root._desktopEntry, () => root.openSettings());
+    // pkexec ran its program: the password was given
+    BackendManager.listen("greeter.authorized", () => {
+      if (root._phase === "password")
+        root._phase = "running";
+    });
   }
 
   property IpcTarget _ipc: IpcTarget {

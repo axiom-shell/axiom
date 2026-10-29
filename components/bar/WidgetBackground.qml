@@ -32,6 +32,10 @@ Item {
   property bool pressed: false
   // The bar editor's selected widget
   property bool highlighted: false
+  // A level (0-1) filled in its shape along the bar, up a vertical one
+  // (the module's `backgroundLevel`); -1 for none
+  property real backgroundLevel: -1
+  property color backgroundLevelColor: "transparent"
 
   readonly property string _fill: barConfig.widgetStyle
   readonly property bool _boxed: ["filled", "tinted", "outline"].includes(_fill)
@@ -132,6 +136,43 @@ Item {
     height: vertical ? root.height : thickness
 
     ColorGlide on color {}
+  }
+
+  // The level: a shape of its own from where the bar's run starts (up a
+  // vertical bar, from the bottom), keeping the background's cap there and
+  // ending on a rounded edge (a capsule's, else the bar's radius), so a
+  // level in a merged run's flat-ended widget never stops square. Full, it
+  // takes the background's own end unless that's flat.
+  ShapedBox {
+    id: level
+    readonly property real share: Math.max(0, Math.min(1, root.backgroundLevel))
+    readonly property string edgeCap: root.barConfig.widgetShape === "capsule" ? "capsule" : "round"
+    // The background's cap at the far end, where a full level ends
+    readonly property string farCap: level.vertical ? root.startCap : root.endCap
+
+    visible: root.backgroundLevel >= 0 && level.share > 0
+    anchors.fill: undefined
+    x: 0
+    y: level.vertical ? root.height - height : 0
+    width: level.vertical ? root.width : root.width * level.share
+    height: level.vertical ? root.height * level.share : root.height
+    bar: root.barConfig
+    startCap: level.vertical ? (level.share >= 1 && level.farCap !== "flat" ? level.farCap : level.edgeCap) : root.startCap
+    endCap: level.vertical ? root.endCap : (level.share >= 1 && level.farCap !== "flat" ? level.farCap : level.edgeCap)
+    seamStart: !level.vertical && root.seamStart
+    seamEnd: level.vertical && root.seamEnd
+    fillColor: root.backgroundLevelColor
+
+    Glide on width {
+      duration: Appearance.animNormal
+    }
+    Glide on height {
+      duration: Appearance.animNormal
+    }
+    Glide on y {
+      duration: Appearance.animNormal
+    }
+    ColorGlide on fillColor {}
   }
 
   ShapedBox {

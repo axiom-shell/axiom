@@ -199,6 +199,8 @@ Singleton {
     root._save({
       notifiedTag: version
     });
+    // The "available" notification is done with
+    NotificationManager.dismissApp(root._desktopEntry);
     root._notify(I18n.tr("axiom updated to {0}", version), result.notes || I18n.tr("Click to see what's new."));
     // With the binary rebuilt, the daemon re-execs into it; when the
     // update changed the schema, it restarts the shell itself

@@ -68,8 +68,8 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 14 | done | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 15 | done | Backend stage 8: the last scripts (`pick_path.py`, `bug_info.sh`) | Small, with nothing waiting on it; after stage 7 so it doesn't collide with the config path, and before the audits so they cover it. |
 | 16 | in progress | [Phase 13](#phase-13-the-maintainers-notes): the maintainer's notes | Bugs and small features from the maintainer's own use; after the parity and log rows (some are compositor-specific, and those land there), before Phase 10 so the last feature and the audits are built on them. |
-| 17 | next | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
-| 18 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0: audit and tighten the guardrails (checks, tests, CI, agent rules) | The architecture is final once stage 7 and Phase 10 are in, so stricter checks aren't rewritten by a later stage; before the system audits, so the audits, the clear-out and the hardening all run under them. |
+| 17 | done | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
+| 18 | next | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0: audit and tighten the guardrails (checks, tests, CI, agent rules) | The architecture is final once stage 7 and Phase 10 are in, so stricter checks aren't rewritten by a later stage; before the system audits, so the audits, the clear-out and the hardening all run under them. |
 | 19 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
 | 20 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 2: clear out issues.md, then audit again | Fixes after the audits, so the list isn't refilled behind them; the second pass catches what the fixes broke. |
 | 21 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 3: 1–2 weeks of hardening, frozen | The maintainer drives sway and niri daily; only fixes land. |
@@ -131,7 +131,9 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once axiom runs a binary built with #200 (its qs command line has `--log-rules`), click into a desktop Notes module and back to a window, and check `scripts/log.sh` shows no `Trying to disable` from `qt.qpa.wayland.textinput`, under niri, sway and Hyprland. Before the fix niri logged 205 of them (`Trying to disable … but 0x0 is focused`, 2026-10-29), so the path reproduces there (#200).
 - Once the shell runs #201, with `Polkit.enabled` on, restart axiom and reload a few times, and check `scripts/log.sh --all` shows no `[PolkitManager] Could not register as the polkit agent` and Settings → Authentication prompts says running.
 - Once the shell runs row 14's re-exec fix, with axiom in dev mode, save a Go file while a note is being saved or the theme applied, and check `scripts/log.sh` shows no `the connection to axiom closed` from `[FileManager]`, `ThemeManager` or `MediaManager`, and `axiom daemon logs` no `checkupdates failed (-1)`.
+- Once axiom runs a build with Phase 10 (row 17), set up 5–10 popular Waybar custom scripts (`~/waybar-test-scripts`: media, updates, weather, crypto, VPN, …) from the Custom widgets page alone, through the Import from Waybar box or the presets, and check each runs unchanged on a bar and as a module, under niri, sway and Hyprland (Phase 10's "done when").
 - Once axiom runs a binary built with row 15 (stage 8), pick a file from Settings (a wallpaper or a path setting) under each compositor and check the portal's picker opens and its choice lands, then with the portal stopped check zenity or kdialog opens instead; and run `axiom bug-info` under Hyprland, niri and sway and check its Compositor and monitor lines.
+- Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -195,7 +197,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [WorkspaceStrip's Grid briefly has more items than cells](issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
-- [CommandOutput's figure text loops on its size](issues.md#commandoutputs-figure-text-loops-on-its-size)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
 - [The community setups' check doesn't take monitor places yet](issues.md#the-community-setups-check-doesnt-take-monitor-places-yet)
@@ -207,6 +208,9 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
+
+- [Bar widget hosts settle after they're gone](issues.md#bar-widget-hosts-settle-after-theyre-gone)
+- [The shell's hello can be refused across a dev re-exec](issues.md#the-shells-hello-can-be-refused-across-a-dev-re-exec)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
@@ -223,16 +227,20 @@ Resolves:
 ### Phase 10: custom JSON widgets
 The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).
 
-Steps:
-1. **The plan** ([Items that need a plan](#items-that-need-a-plan)): the maintainer re-plans the feature before it's built. The plan settles the shape below, the fields, the styles, the editor's panels, and whether `CommandOutput` and `Button`'s `labelCommand` fold into it later (a migration), then splits into items.
-2. **Definitions and the pure logic:** a new config section holding the definitions (an array with stable ids, recipe `config-section`); each surface refers to one by id through an `x-options` source. A definition holds a name, the command (`x-scope: commands`), the mode (poll, stream, once), the interval, the format (waybar, json, text), the bindings (a style's slot → a path in the JSON), the icon map (Waybar's `format-icons`: by `alt` or by percentage steps), a text template (`{text} {percentage}%`), the style and click and scroll commands. A methods helper (recipe `methods-helper`, with its test) parses each format, flattens a sample's JSON into the paths the dropdowns offer, resolves the bindings, fills templates, picks icons and maps a `class` or state to a theme colour (`ok`, `warning`, `critical` → semantic names). A service acquires a definition for its consumers, exposes the parsed slots per id and keeps a graph's numeric history, so the UI never holds live arrays.
-3. **The surfaces:** a bar widget type (recipe `bar-widget`, with a `PopoutAnchor`), a popout panel (recipe `bar-popout`), and a module type (recipe `overlay-module`) with `hosts: [lockscreen]`. Never the greeter (it's data, never code, and runs as another user); no click commands on the lockscreen.
-4. **The styles** (a fixed set, each declaring its slots; never a layout language): Label (icon and text, the bar's default), Figure (a big value, unit and caption), Ring and Bar (a value between `min` and `max`), Graph (a sparkline from the service's history), List (rows from `items`, a ListView over a model the service keeps, never a Repeater over live values), Text block (monospace optional). Each draws at every size a card or bar gives it.
-5. **Fields beyond Waybar's**, all optional, which presets map: `icon` (a Material Symbols name, over the `alt` map), `value` with `min`, `max` and `unit`, `subtext`, `color` or `state` (a theme name), `badge` (a count), `urgent` (attention), `image` (art, an avatar), `items` (rows of `{text, icon, value, subtext}`, for List and the popout) and `hidden` (as Waybar hides a module whose text is empty).
-6. **The editor page** (part of this phase, not after it; recipe `overlay-view`, a tool page with its default, migration step, launcher command and docs, on `docs/dev/core/editors-pattern.md`): the definitions listed (add, duplicate, delete, a few presets for well-known Waybar scripts); an inspector with the command, mode and interval, a Run button showing the raw output and the parsed fields, binding dropdowns filled from the sample's paths, the style and its slots, the icon map and the colour states; and live previews of one definition as it's drawn: a horizontal bar, a vertical bar, a strip, a square card, a wide card, a large card and the popout.
-7. **The audit's entry:** the feature gets its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
+The plan is [plans/custom-json-widgets.md](plans/custom-json-widgets.md) (decided 2026-10-29: the bar widget draws one style; the module is a fixed set of elements on a fine grid, 16 sub-cells per card, laid out proportionally; CommandOutput folds in). Its items are the steps, one PR each, built on the branch `implementModuleEditor`:
 
-Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone.
+Steps:
+1. Done: **The plan.**
+2. Done: **Data:** `CommandManager` keeps `exitCode` / `error` / `at`; the pure helper `CustomWidgetData` and its test.
+3. Done: **Definitions:** the `CustomWidgets` section, the `customWidgets` `x-options` source, `CustomWidgetsManager`, and its IPC target (`axiom ipc customWidgets refresh`).
+4. Done: **The module:** the element pieces, the proportional renderer, the `CustomWidget` module type (also the popout; lockscreen opt-in), per-definition module library entries. Never the greeter; no actions on the lockscreen.
+5. Done: **The bar widget:** the `Custom` widget type and its styles, per-definition bar library entries.
+6. Done: **Editor, part 1:** the tool page, its editor manager, the definitions list, the Source card and the Bar tab.
+7. Done: **Editor, part 2:** the Module tab (the fine-grid canvas on `GridEditor`).
+8. Done: **Waybar import and presets.**
+9. Done: **Fold CommandOutput**, the feature's doc, and its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
+
+Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone: a [live check](#live-checks), so it doesn't hold the row.
 
 ### Phase 11: audits, clear-out and hardening
 The guardrails tightened first, then every system audited in full, every open entry fixed or deliberately deferred, then a frozen stretch of daily use, before posting on the sway and niri wikis for testers (decided 2026-10-27). Nothing new is built in this phase.
@@ -306,24 +314,25 @@ Steps:
 3. **Done:** **A test notification** (row 16): the notifications settings get a button that shows one, as the OSD and dock settings do, for easy editing. The section's `x-intro` (`NotificationsPreview`) has a Show button sending one through `NotificationManager.sendNotification`; it toasts with the settings as edited.
 4. **Done:** **niri's own window switcher** (row 16): a setting, `WindowSwitcher.compositorSwitcher` (`supports.compositorSwitcher`, on by default where it's offered), has axiom's config writer bind the switch windows keys to niri's own switcher (`recent-windows`, which drops niri's default switcher keys) in included and managed mode. The maintainer: "while you are implementing the niri setting and logic a second setting should also use niri alt tab as acioms (same logic, replaces everything and is default on niri)" and "note this also should disable the default bind on niri (in both cases, force users through axioms bind)"; on detached mode: "detatched mode shouldn't disable binds at all. Logic remains if they have alt tab set in aciom, but niris default / set in config will just be there as well"; on the switcher (2026-10-29): "Writer binds niri's action (Recommended) — When the setting is on, axiom's config writer binds Alt+Tab straight to niri's own switcher action instead of axiom's IPC (included and managed mode only). In detached mode the setting does nothing, and the user's own niri binds handle alt-tab." With no switcher bind of axiom's (2026-10-29): "default to off for window switcher if not bind set. Everything goes through aciom", "on managed mode", "sounds good. (i.e. in managed, if the user doesn't have a window switcher / overlay bind, there is no bind for it). Binds are exactly representative of what there is.": managed writes the switcher's binds empty (the setting off too), so niri's default keys are gone; included leaves them.
 5. **Done:** **Caffeine on a timer** (from the waiting list): caffeine (the idle inhibitor) can be turned on for a set time and turns itself off after it. The maintainer (2026-10-29): "decision for caffeine on a timer: works similarity to stopwatch current implementation. Popout shows presets (default 30min, 1hr, 4hr) that start with a timer. Presets are settable in module settings." and "ensure timer starting and selecting and whatnot is a re-used component (i.e. so caffeine and stopwatches look identical)" The IdleInhibitor widget gets its own popout (`content/Caffeine`, on by default for new widgets) with a `CountdownTimer` (`content/parts/`, the one-off timer's start, presets, ring and controls, now shared with `content/Stopwatch`) over the widget's `presets` (30m, 1h, 4h); `IdleManager` keeps the timer in a `DeadlineTicker` that ends caffeine at its end, and the widget, quick action and `/caffeine` show the time left.
+6. **Built-in stock and crypto trackers** (added 2026-10-29): a bar widget and a module (overlay, desktop, edge menu) for watched symbols, built in rather than through a custom widget script: prices polled by the daemon as a topic (`acquire`/`release`, the interval from config), the symbols and their order in a config section, each with its change, a sparkline of the day and the up/down colour; a ticker on the bar as the custom widget's ticker style does. Needs a plan first ([Items that need a plan](#items-that-need-a-plan)): the data sources (a free stock API and a crypto one, or one for both), API keys through `SecretsManager`, rate limits and caching, and market hours.
+
+Found meanwhile:
+- [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
+- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
+- [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
+- [config.json replaced by rename isn't always read by the live daemon](issues.md#configjson-replaced-by-rename-isnt-always-read-by-the-live-daemon)
 
 Needs a plan:
+- [Notifications can only sit in a corner](issues.md#notifications-can-only-sit-in-a-corner)
 - [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other)
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri)
-- [Setting names that still confuse](issues.md#setting-names-that-still-confuse)
 - [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own) (plan: #210)
 
-Resolves:
-- [A note's view jumps while typing and forgets its place](issues.md#a-notes-view-jumps-while-typing-and-forgets-its-place)
-- [The bar editor lost its links to the global bar style](issues.md#the-bar-editor-lost-its-links-to-the-global-bar-style)
-- [The layouts editor says a page is shrunk to 99% at the defaults](issues.md#the-layouts-editor-says-a-page-is-shrunk-to-99-at-the-defaults)
-- [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made)
-- [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop)
-- [Warning triangles say nothing on hover](issues.md#warning-triangles-say-nothing-on-hover)
-
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
-- [Updating the greeter closes the overlay and shows no progress](issues.md#updating-the-greeter-closes-the-overlay-and-shows-no-progress). *Needs testing:* only a real greeter update shows it, which the agents may not run (`AGENTS.md` › Never).
 - [Notifications have no blur backing on sway and Hyprland](issues.md#notifications-have-no-blur-backing-on-sway-and-hyprland). *Needs testing:* nested niri blurs every toast; on sway and Hyprland, does a toast blur, and does only the first miss it? The entry's fix (toasts as their own layer windows) waits on that.
+- [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.
+- [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made). *Needs testing:* in nested niri a saved profile for what's connected opens the page with nothing unsaved (the draft only changes through an edit or `_detect` adding a profile or a monitor the daemon's match doesn't list); on which compositor, and after what (opening the page, an Apply, a hotplug, a reload), does it show?
+- [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop). *Needs testing:* nothing in the code keeps the keyboard from an overlay module (the overlay asks for it on demand like the edge menus, exclusively under a grab with no native one, the newest grab since #193, and no handler above the modules takes keys), and only a real click into a field shows it, which the agents may not simulate. On which compositor does it happen, in which module, and does the field show a cursor with the keys going nowhere, or not take the click? On the desktop: is the click that ends the typing on a window (where it gives the keyboard back by design, [desktop](features/desktop.md) › Input), on the bare desktop beside the module, or inside the module itself? (Under niri's focus following the mouse, it's the deferred [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri).)
 
 ### Deferred
 Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.

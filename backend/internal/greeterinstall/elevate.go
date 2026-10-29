@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
 	"github.com/axiom-shell/axiom/backend/internal/release"
@@ -28,8 +30,9 @@ type Elevated struct {
 // Elevate runs req as root through pkexec, one password prompt: root's
 // own helper once it's installed (its polkit action's prompt says what
 // it's for), else a binary root may run (firstProgram). A refusal is the reply's error, before any prompt. It
-// runs to the end once started, whatever ctx does.
-func (in *Installer) Elevate(ctx context.Context, req rules.Request) (Elevated, error) {
+// runs to the end once started, whatever ctx does. authorized (nil: none)
+// is called once the password was given and the program runs as root.
+func (in *Installer) Elevate(ctx context.Context, req rules.Request, authorized func()) (Elevated, error) {
 	ctx = context.WithoutCancel(ctx)
 	program := []string{in.path(HelperPath)}
 	var stdin []byte
@@ -50,7 +53,15 @@ func (in *Installer) Elevate(ctx context.Context, req rules.Request) (Elevated, 
 	cmd.Stdin = bytes.NewReader(stdin)
 	var out, errOut bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errOut
-	err := cmd.Run()
+	err := cmd.Start()
+	if err == nil {
+		done := make(chan struct{})
+		if authorized != nil {
+			go watchAuthorized(cmd.Process.Pid, in.opts.Pkexec, authorized, done)
+		}
+		err = cmd.Wait()
+		close(done)
+	}
 	var exit *exec.ExitError
 	if err != nil && !errors.As(err, &exit) {
 		return Elevated{}, fmt.Errorf("running pkexec: %w", err)
@@ -72,6 +83,29 @@ func (in *Installer) Elevate(ctx context.Context, req rules.Request) (Elevated, 
 		r.OK = false
 	}
 	return r, nil
+}
+
+// watchAuthorized calls authorized once pid stops being pkexec: pkexec
+// execs its program only once the password was given, so a process
+// named for something else is that program running as root. It stops
+// when done closes.
+func watchAuthorized(pid int, pkexec string, authorized func(), done <-chan struct{}) {
+	name := filepath.Base(pkexec)
+	name = name[:min(len(name), 15)] // the kernel's TASK_COMM_LEN
+	tick := time.NewTicker(200 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-done:
+			return
+		case <-tick.C:
+		}
+		comm, err := os.ReadFile(fmt.Sprintf("/proc/%d/comm", pid))
+		if err == nil && strings.TrimSpace(string(comm)) != name {
+			authorized()
+			return
+		}
+	}
 }
 
 // firstProgram is what pkexec runs before root has a helper of its own

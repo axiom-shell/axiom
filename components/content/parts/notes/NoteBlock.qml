@@ -143,7 +143,7 @@ Item {
     }
     onCursorRectangleChanged: {
       if (activeFocus)
-        root.editor.ensureVisible(root, cursorRectangle);
+        root.editor.ensureVisible(root.index, cursorPosition);
     }
 
     Keys.onPressed: event => {

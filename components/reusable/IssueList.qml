@@ -27,20 +27,19 @@ ColumnLayout {
         "level": "warning",
         "text": ""
       }
-      readonly property color tone: entry.level === "error" ? Theme.error : entry.level === "info" ? Theme.accent : Theme.warning
       Layout.fillWidth: true
       spacing: Widget.spacing / 2
 
-      StyledIcon {
+      IssueIcon {
+        id: icon
         Layout.alignment: Qt.AlignTop
-        text: issue.entry.level === "error" ? "error" : issue.entry.level === "info" ? "info" : "warning"
-        textColor: issue.tone
+        level: issue.entry.level
         textSize: root.textSize
       }
 
       StyledText {
         text: issue.entry.text
-        textColor: issue.tone
+        textColor: icon.tone
         textSize: root.textSize
         wrapMode: Text.WordWrap
         Layout.fillWidth: true

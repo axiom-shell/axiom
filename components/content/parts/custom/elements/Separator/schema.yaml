@@ -1,0 +1,32 @@
+label: Separator
+icon: horizontal_rule
+defaultSize: [8, 1]
+settings:
+  style: {$ref: '#/definitions/SeparatorStyle'}
+  thickness:
+    type: integer
+    x-control: stepper
+    title: Thickness
+    default: 2
+    minimum: 1
+    maximum: 10
+    x-unit: px
+    description: Line width (px); dots are twice this across.
+    x-showIf: {style: {not: space}}
+  length:
+    type: integer
+    title: Line length
+    x-unit: '%'
+    default: 100
+    minimum: 10
+    maximum: 100
+    description: "Share of its box's length the line or slash spans; a chevron's of the gap it sits in."
+    x-showIf: {style: [line, slash, chevron]}
+  color:
+    type: string
+    title: Colour
+    x-options: colors
+    default: ''
+    x-emptyLabel: Auto
+    description: 'Auto: the border colour.'
+    x-showIf: {style: {not: space}}

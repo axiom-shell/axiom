@@ -44,10 +44,9 @@ GridLayout {
         elide: Text.ElideRight
       }
 
-      StyledIcon {
+      IssueIcon {
         visible: entryRow.skipped
-        text: "warning"
-        textColor: Theme.warning
+        tip: entryRow.skipped ? I18n.tr("Skipped: your own config binds {0} too", entryRow.bind.key) : ""
       }
     }
   }

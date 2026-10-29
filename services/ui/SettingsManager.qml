@@ -366,6 +366,8 @@ QtObject {
       return ["", ...TimeZoneManager.zones];
     case "edgeMenus":
       return ["", ...EdgeMenusConfig.menus.map(menu => menu.id)];
+    case "customWidgets":
+      return CustomWidgetsConfig.items.map(item => item.id);
     case "overlayPages":
       return ["", ...OverlayConfig.views.map(view => OverlayConfig.pageKey(view)).filter(key => key !== "")];
     case "notes":

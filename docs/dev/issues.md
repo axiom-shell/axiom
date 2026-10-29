@@ -38,6 +38,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while splitting Phase 13 step 2 (row 16)
 
+### Submenus don't always get their blur backing
+- **Where:** `components/hosts/popout/SubPopout.qml` (the surface's `backed`, `parentOrigin`)
+- **What:** The maintainer sees submenus (a popout's or an edge menu's) open without the blur behind them some of the time; not reproduced yet. A lead: `backed` also needs `parentOrigin` (`slot.popupScreenOrigin`, where the parent's window is on screen), so a submenu opened before that's known stays unbacked until something re-evaluates it; `onOverlayLayer` follows its host too.
+- **Size:** small
+- **Found:** 2026-10-29, while building custom widgets (reported by the maintainer)
+
+### config.json replaced by rename isn't always read by the live daemon
+- **Where:** `backend/internal/store/store.go` (`Watch`, `reload`)
+- **What:** Twice on 2026-10-29 (dev mode on, the daemon re-exec'd between them) a config.json written to a temp file and renamed over the old one, as AGENTS.md asks, wasn't read: `axiom config status` kept its revision for 15 s and longer, and the daemon log said nothing, neither a reload nor `the config was edited into one that doesn't load`. Rewriting the same bytes in place was read at once (the revision went up). The watch is on the folder and filters by name, so a rename should reach it; not yet reproduced in a test. Related: `axiom config validate` checks against the installed binary's schema, not the running daemon's, so under dev mode it calls a config with new types invalid that the daemon accepts.
+- **Size:** small
+- **Found:** 2026-10-29, while testing custom widgets on the live config
+
 ### After a refused save, a draft's edits show unsaved but not live
 - **Where:** `services/core/ConfigDraft.qml` (`_refusals`), `services/ui/SettingsManager.qml` (`_clearPreviews`), `services/ui/BarManager.qml` (`applyChanges`)
 - **What:** When axiom refuses a save, `ConfigManager.saveRefused` makes the draft dirty again, but the editor's previews were cleared when it saved (the settings page's `draft.load()` → `_clearPreviews`; `BarManager` clears its preview once clean) and nothing sets them again: the running config shows the value read back while the editor shows the edits as unsaved, until the next edit previews them. Rare (a save axiom refuses), so left after the minimal fix (row 12).
@@ -256,12 +268,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the community setups gallery
 
-### CommandOutput's figure text loops on its size
-- **Where:** `components/content/CommandOutput/CommandOutput.qml` (the text `StyledText`, `id: body`)
-- **What:** The log shows `Binding loop detected for property "textSize"` while a Command output card is on a shown page: in statement mode `body`'s `textSize` comes from `body.height / 5`, and a `Layout.fillHeight` text's height follows its implicit height, which follows the size.
-- **Size:** small
-- **Found:** 2026-10-18, while adding the todo list and pomodoro timer
-
 ### install.sh still installs the rest of a feature whose COPR was declined
 - **Where:** `install.sh` (the declined-COPR loop after the COPR prompts)
 - **What:** Declining a COPR on Fedora marks each feature with a package from it as skipped, but drops only that COPR's packages: the feature's other packages stay in the one `dnf install`. Declining `nett00n/hyprland` while setting up niri skips the login screen's feature yet still installs `greetd`. Rebuilding `packages` from the features left (and the required keys) after the prompts would fix it; test with `--dry-run` in a `fedora:latest` container.
@@ -312,7 +318,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Overlay and popouts close or break each other
 - **Where:** `services/ui/ShellManager.qml` (`closeOverlay`), `services/ui/OverlayManager.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/overlay/OverlayPanel.qml` (its `FocusGrab`)
-- **What:** From the maintainer's notes, verbatim: "a little bit of a system re-work/look to ensure all popouts are usable as expected while the overlay is open, without closing the overlay. There are a bit more problems here so this likely needs a plan (i.e. currently open popouts break when overlay is opened, nothing should close the overlay (i.e. after installing greetd and the polkit prompt closes, the overlay closes) The one exception is likely launcher (although it can also just open over the overlay and be usable)". The plan covers which surfaces may close the overlay (callers of `ShellManager.closeOverlay`, focus grabs ending when a prompt like polkit's takes and gives back focus), and how a popout open before the overlay keeps working.
+- **What:** From the maintainer's notes, verbatim: "a little bit of a system re-work/look to ensure all popouts are usable as expected while the overlay is open, without closing the overlay. There are a bit more problems here so this likely needs a plan (i.e. currently open popouts break when overlay is opened, nothing should close the overlay (i.e. after installing greetd and the polkit prompt closes, the overlay closes) The one exception is likely launcher (although it can also just open over the overlay and be usable)". The plan covers which surfaces may close the overlay (callers of `ShellManager.closeOverlay`, focus grabs ending when a prompt like polkit's takes and gives back focus), and how a popout open before the overlay keeps working. The maintainer (2026-10-29), on a greeter update: "The issue is that when the auth prompt closes, the overlay closes." (plan: #211)
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -328,33 +334,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### A note's view jumps while typing and forgets its place
-- **Where:** `components/content/parts/notes/NoteEditor.qml` (`ensureVisible`, `_flick`), `components/content/parts/notes/NoteBlock.qml`
-- **What:** From the maintainer's notes: a newline (and other edits that rebuild blocks) jumps the view around, so you lose where you were; and reopening a note scrolls back to the top (`_flick.contentY = 0`) instead of where you left it.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### The bar editor lost its links to the global bar style
-- **Where:** `components/views/BarEditor/BarsPanel.qml`, `components/views/BarEditor/WidgetInspector.qml`
-- **What:** From the maintainer's notes: the bar editor used to link to the Look and feel settings that style every bar; those links are gone, and it needs a link to the global bar style.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### The layouts editor says a page is shrunk to 99% at the defaults
-- **Where:** `components/views/Layouts/PageTarget.qml` (`Shrunk to {0}% on {1}`)
-- **What:** From the maintainer's notes: with every scale at its default 100 %, the layouts editor still shows a page as shrunk to 99 %: a fit a hair under 1 is reported as shrinking.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### The monitor editor shows changes nobody made
 - **Where:** `services/compositor/MonitorManager.qml` (`draft`, `ensureLoaded`), `components/views/Monitors/Monitors.qml`
 - **What:** From the maintainer's notes: the monitors page shows unsaved changes when nothing was changed (likely a value the draft normalises on load differing from the saved one).
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### Updating the greeter closes the overlay and shows no progress
-- **Where:** `services/session/GreeterManager.qml` (`update`, `_elevate`, `_notifyOutdated`)
-- **What:** From the maintainer's notes: a greeter update needs an indicator while it runs and must not close the overlay; its login screen update notification doesn't go away after the update ("check all notifs for this": every notification that announces something to do should clear once it's done).
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -367,12 +349,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Typing in modules on the overlay and the desktop
 - **Where:** `components/hosts/overlay/OverlayPanel.qml` (`keyboardFocus`), `components/surfaces/desktop/DesktopWindow.qml` (`keyboardFocus`, `wantsKeyboard`)
 - **What:** From the maintainer's notes: modules that take typing can't be used while they're on the overlay, and a click outside a desktop module stops its typing.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### Warning triangles say nothing on hover
-- **Where:** `components/views/Keybinds/BindListRow.qml`, `components/reusable/IssueList.qml`
-- **What:** From the maintainer's notes: anywhere the shell shows a yellow warning triangle (a niri bind set while on Hyprland, …) it should be hoverable, with a tooltip saying what's wrong.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -423,3 +399,33 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** From the maintainer's notes: on the workspace Hyprland starts on, the first window opened isn't highlighted as focused until a workspace move. Checked 2026-10-29 (code read, nested Hyprland): Hyprland's own data is right (the first window on workspace 1 has `focusHistoryID` 0 and is `activewindow`), and `StripWindows` highlights `CompositorManager.lastFocused` of the workspace's windows, which for one window is always it; so the cause isn't in either. Which highlight it is (bar strip, dock `DockManager.focusedId`, overview `WindowPreview.focused`) and under which layout (`StripWindows` shows only under scrolling, whose workspace ids `DynamicWorkspaces` renumbers until `_compaction` runs) needs the maintainer to reproduce it.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### The shell's hello can be refused across a dev re-exec
+- **Where:** `backend/internal/daemon/methods.go` (`daemon.hello`, `isShell`), the re-exec's shell hand-over (`supervising the shell started before the re-exec`)
+- **What:** On 2026-10-29 a rebase replaced QML and Go files under the live session: qs reloaded at 18:18:32, dev mode re-exec'd the daemon at 18:18:33.871, and the reloaded shell's hello at 18:18:34.200 was refused, `only the shell axiom runs may connect as the shell`, one millisecond after the new daemon logged `supervising the shell started before the re-exec` for that same pid (433649). From then on every call failed (`[FileManager] Could not write …selfupdate.json`, `[SelfUpdateManager] Check failed`) until the shell was started again. So the re-exec'd daemon answers a hello before it knows the shell's pid, or matches the wrong one.
+- **Size:** small
+- **Found:** 2026-10-29, while rebasing the custom widgets branch onto main
+
+### A greeter-only module validates on any page
+- **Where:** `components/content/Session/schema.yaml` (`hosts`), `components/content/Login/schema.yaml`, `components/content/Password/schema.yaml`
+- **What:** `hosts: {only: [greeter]}` keeps Session out of the layouts editor's library elsewhere, but the built schema still lists it in every host's `oneOf`: a config with Session in an edge menu and on an overlay page passed `axiom config validate`, and it drew as a bare "Session" field on an empty card. So an import, a community setup or a hand edit can put a greeter- or lock-only module (Session, Login, Password) where it can't work.
+- **Size:** small
+- **Found:** 2026-10-29, while building the revamped example setups
+
+### Opening a hover-closing edge menu by IPC closes it at once
+- **Where:** `services/ui/EdgeMenuManager.qml` (the `edgeMenu` `IpcTarget`'s `open`), `components/surfaces/edgemenu/EdgeMenuSync.qml` (`autoDismiss`)
+- **What:** `axiom edge-menu open <id>` on a menu with `close.onLeave` (the default) shows it for one close delay and closes it, since the pointer isn't in it: the IPC `open` calls `open`, not `reveal`, so it's never `revealing`. `pin` on a closed menu doesn't open it either; only `pin` then `open` keeps it up. A bind or script can't open such a menu.
+- **Size:** small
+- **Found:** 2026-10-29, while building the revamped example setups
+
+### Notifications can only sit in a corner
+- **Where:** `config/NotificationsConfig.qml`, `config/schema/sections/Notifications.yaml` (`position`)
+- **What:** `Notifications.position` is `topLeft` | `topRight` | `bottomLeft` | `bottomRight`. A centred bar (an island pill with `lockCenter`, a frame setup's empty top middle) can't have its toasts come out of the middle of an edge, the way the OSD (`position` 0–100 along an edge) and the launcher already can.
+- **Size:** needs a plan
+- **Found:** 2026-10-29, while building the revamped example setups (the Island example)
+
+### Bar widget hosts settle after they're gone
+- **Where:** `components/bar/BarWidgetHost.qml` (`Component.onCompleted`'s `Qt.callLater`), `components/bar/widgets/Workspaces/ActiveCellIndicator.qml` (`_placed`)
+- **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced.
+- **Size:** small
+- **Found:** 2026-10-29, while building the revamped example setups

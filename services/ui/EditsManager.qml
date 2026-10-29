@@ -3,6 +3,7 @@ import QtQuick
 import qs.services.core
 import qs.services.compositor
 import qs.services.session
+import qs.services.apps
 
 // The editors' unsaved edits, by overlay page: which pages hold a dirty
 // draft (the navigator's dots and the unsaved-changes strip), and saving
@@ -38,6 +39,10 @@ QtObject {
     {
       "type": "Monitors",
       "dirty": MonitorManager.isDirty
+    },
+    {
+      "type": "CustomWidgets",
+      "dirty": CustomWidgetsManager.editor.isDirty
     },
     {
       "type": "Layouts",
@@ -162,6 +167,8 @@ QtObject {
       BarManager.saveChanges();
     if (KeybindManager.editor.isDirty)
       KeybindManager.editor.save();
+    if (CustomWidgetsManager.editor.isDirty)
+      CustomWidgetsManager.editor.save();
     if (OverlayManager.menus.isDirty)
       OverlayManager.menus.saveChanges();
     if (OverlayManager.isDirty)
@@ -182,6 +189,8 @@ QtObject {
       BarManager.resetChanges();
     if (KeybindManager.editor.isDirty)
       KeybindManager.editor.reset();
+    if (CustomWidgetsManager.editor.isDirty)
+      CustomWidgetsManager.editor.reset();
     if (OverlayManager.menus.isDirty)
       OverlayManager.menus.resetChanges();
     if (OverlayManager.isDirty)

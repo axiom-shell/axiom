@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
-import qs.components.bar
+import qs.components.reusable
 import qs.components.bar.widgets.base
 
 // Layout helper for the bar: a divider (a line, dot, slash or chevron) or

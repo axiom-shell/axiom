@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import qs.config
 import qs.services.compositor
 import qs.components.reusable
@@ -140,24 +139,10 @@ Item {
       Layout.fillWidth: true
     }
 
-    StyledIcon {
-      id: warning
+    IssueIcon {
       visible: root.bind.overrides !== ""
-      text: "warning"
-      textColor: Theme.warning
+      tip: I18n.tr("Axiom's \"{0}\" is skipped: this bind holds its key", root.bind.overrides)
       textSize: Appearance.fontSizeBy(-1)
-
-      HoverHandler {
-        id: warningHover
-      }
-
-      LazyLoader {
-        active: warningHover.hovered
-        StyledToolTip {
-          target: warning
-          text: I18n.tr("Axiom's \"{0}\" is skipped: this bind holds its key", root.bind.overrides)
-        }
-      }
     }
   }
 

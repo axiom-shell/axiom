@@ -13,6 +13,15 @@ QtObject {
     return JSON.parse(JSON.stringify(value ?? null));
   }
 
+  // `object` with only `keys` (those it has), in their order
+  function pick(object, keys) {
+    return (keys ?? []).reduce((out, key) => {
+      if (object && key in object)
+        out[key] = object[key];
+      return out;
+    }, {});
+  }
+
   // Whether two pieces of plain JSON data are equal, whatever their objects'
   // key order (JSON.stringify compares order too)
   function deepEqual(a, b) {

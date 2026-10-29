@@ -208,7 +208,7 @@ Card {
 
           StyledText {
             visible: root.editable
-            text: I18n.tr("{0} modules", root.list.length)
+            text: root.dragLayer.countLabel(root.list.length)
             opacity: 0.6
             textSize: Appearance.fontSizeBy(-1)
           }

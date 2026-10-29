@@ -184,9 +184,18 @@ Item {
 
           SchemaSwitch {
             label: I18n.tr("This bar's own")
-            description: styleGroup.owned ? "" : I18n.tr("Shared with every bar (Look & Feel › Bars).")
+            description: styleGroup.owned ? "" : I18n.tr("Shared with every bar.")
             checked: styleGroup.owned
             onToggled: value => BarManager.setStyleOwned(styleGroup.modelData.keys, value)
+          }
+
+          // Where the shared style is set: this group's card on the
+          // settings page
+          SettingsLink {
+            id: sharedLink
+            Layout.fillWidth: true
+            setting: "Bars.style." + styleGroup.modelData.keys[0]
+            text: I18n.tr("{0} in {1}", I18n.tr(styleGroup.modelData.title), I18n.tr(sharedLink.target?.category ?? ""))
           }
 
           SchemaPropertiesForm {

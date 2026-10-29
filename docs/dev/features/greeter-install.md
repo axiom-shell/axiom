@@ -71,6 +71,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 
 #### Around the prompt
 - While pkexec waits, the overlay and the onboarder step aside, unless axiom's own polkit agent is running ([SurfaceManager](../core/shell-manager-targeting.md#stepping-aside)).
+- **Progress:** `GreeterManager.phase` is `password` while the prompt is up, `running` once the password was given, then `done` or `failed` (`lastError`); `GreeterSetup` says so ("Waiting for your password...", "Installing now...", then the error, or a done line once the check after it agrees). pkexec execs its program only once the password was given, so `Elevate` watches the process's `/proc/<pid>/comm` (`watchAuthorized`) and, when it's no longer pkexec's, the daemon pushes `greeter.authorized` to the connection that asked. It works whatever helper runs, so an old install's update shows it too.
 - `finishCommands` are what the user runs to make greetd the display manager (`readlink display-manager.service`). The card shows them as `CodeLine`s.
 
 ### Status
@@ -92,6 +93,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 - **Update notification:** a new `outdated` hash is notified once.
   - The last notified hash is kept in `~/.local/state/axiom/ui/greeterUpdates.json` (`notifiedHash`).
   - The notification's `desktopEntry` is `axiom-greeter-update`; its handler opens Settings → Login screen.
+  - Once a check finds the copy no longer `outdated` (updated, removed, turned off), the notification is taken away (`NotificationManager.dismissApp`).
 - **IPC** `greeter`: `open`, `preview`.
 
 ### Testing

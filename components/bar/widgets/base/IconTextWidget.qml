@@ -35,11 +35,23 @@ BaseWidget {
   readonly property string displayText: !hidden && showText ? (text || "—") : ""
   readonly property bool _hasText: displayText !== ""
   readonly property real _gap: _hasIcon && _hasText ? spacing : 0
+  // Room along the main axis for a graphic the widget draws before the
+  // icon (a custom widget's ring or meter) in `lead`, its first child
+  property real leadLength: 0
+  readonly property real _leadRoom: hidden || leadLength <= 0 ? 0 : leadLength + (_hasIcon || _hasText ? spacing : 0)
+  // Where that graphic goes: the run's start, leadLength long, across the
+  // bar's whole cross size
+  readonly property alias lead: leadSlot
+  // The graphic after the icon instead, where a label would be (a custom
+  // widget's ticker or stacked text)
+  property bool leadAfterIcon: false
+  readonly property real _leadStart: leadAfterIcon ? iconLength + (_hasIcon ? spacing : 0) : 0
+  readonly property real _iconStart: leadAfterIcon ? 0 : _leadRoom
 
   // Icon footprint along the main axis; the label's is its (unrotated) width
   readonly property real iconLength: _hasIcon ? (isVertical ? iconLabel.implicitHeight : iconLabel.implicitWidth) : 0
   readonly property real _textLength: steadyDigits ? Math.max(textLabel.implicitWidth, Math.ceil(steadyMetrics.advanceWidth)) : textLabel.implicitWidth
-  readonly property real _naturalLength: iconLength + _gap + (_hasText ? _textLength : 0)
+  readonly property real _naturalLength: _leadRoom + iconLength + _gap + (_hasText ? _textLength : 0)
 
   readonly property real _padding: hidden ? 0 : padding
 
@@ -55,13 +67,22 @@ BaseWidget {
     width: root.isVertical ? root.width : length
     height: root.isVertical ? length : root.height
 
+    Item {
+      id: leadSlot
+      visible: root._leadRoom > 0
+      x: root.isVertical ? 0 : root._leadStart
+      y: root.isVertical ? root._leadStart : 0
+      width: root.isVertical ? run.width : root.leadLength
+      height: root.isVertical ? root.leadLength : run.height
+    }
+
     // One Text per line, so stacked glyphs (a multi-line icon on a vertical
     // bar) each centre on their own width rather than the widest line's
     Column {
       id: iconLabel
       visible: root._hasIcon
-      x: root.isVertical ? Math.round((run.width - width) / 2) : 0
-      y: root.isVertical ? 0 : Math.round((run.height - height) / 2)
+      x: root.isVertical ? Math.round((run.width - width) / 2) : root._iconStart
+      y: root.isVertical ? root._iconStart : Math.round((run.height - height) / 2)
 
       // Modelled by line count, so a changing icon (battery level, volume)
       // updates the text instead of recreating the delegates
@@ -84,7 +105,7 @@ BaseWidget {
     Item {
       id: textSlot
       visible: root._hasText
-      readonly property real start: root.iconLength + root._gap
+      readonly property real start: root._leadRoom + root.iconLength + root._gap
       x: root.isVertical ? 0 : start
       y: root.isVertical ? start : 0
       width: root.isVertical ? run.width : Math.max(0, run.length - start)
