@@ -149,12 +149,14 @@ Item {
   implicitWidth: root.sizes.width
   implicitHeight: root.sizes.height
 
-  // Logs modules that overlap another
+  // Logs modules that overlap another, a tick after they change: a
+  // screen layout's modules can pass through places not yet arranged
+  // (ScreenLayoutView's `placedModules` read before its `arrangement`)
   readonly property string _checkKey: JSON.stringify((root.modules ?? []).map(module => [module?.type, module?.place]))
-  on_CheckKeyChanged: root._check()
+  on_CheckKeyChanged: Qt.callLater(root._check)
   Component.onCompleted: {
     root._queueModules();
-    root._check();
+    Qt.callLater(root._check);
     Qt.callLater(() => root._settled = true);
   }
   function _check() {

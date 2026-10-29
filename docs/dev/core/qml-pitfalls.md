@@ -19,6 +19,7 @@ Traps of QML, Qt's JS engine and Quickshell that have each cost a debugging sess
 - A derived type must not redeclare a property its base declares (it shadows the base's, e.g. an alias).
 - `visible: visibleChildren.length > 0` locks itself hidden (children read invisible with their parent); use `children.length` or a flag.
 - A function-valued property (`labelOf: x => …`) works as a hook.
+- Bindings re-evaluate one at a time as a change spreads, so one reading two others that both follow the same source can briefly see one new and one stale (ScreenLayoutView's `placedModules`: new modules, old `arrangement`, no places). A handler that judges such a value (a warning) runs it `Qt.callLater`, once it has settled.
 - A Quickshell `Socket` on a listening Unix socket connects synchronously: `connectionStateChanged` fires before `connected: true` (or `createObject` of a component declaring it) returns. Store the socket wherever its handlers look for it before connecting it (`BackendManager._connect`), or the first signal is lost.
 
 ### Types and qmllint

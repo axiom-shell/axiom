@@ -53,7 +53,7 @@ Pure, tested by `tst_GridPlacement`.
 ### Host (`hosts/overlay/ModuleGrid`)
 - Sizes itself from `grid.sizes(bounds, stretch)`.
 - Places one clipped `OverlaySlot` per module (keyed by count), passing `GridPlacement.rectOf(place)` as the module's `slotRect`.
-- Warns once for a module that overlaps another.
+- Warns once for a module that overlaps another, a tick after the modules change (they can pass through unsettled places: [qml-pitfalls](../core/qml-pitfalls.md)).
 - Growing modules are laid out here too: see [Growing and expanding](grow-expand.md).
 
 ### Module (`OverlaySlot`)

@@ -316,12 +316,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
 
-### The lock screen's modules all warn they overlap
-- **Where:** `components/hosts/overlay/ModuleGrid.qml` (`_check`), `components/surfaces/screenlayout/ScreenLayoutView.qml` (`arrangement`)
-- **What:** As the lock screen showed on live niri (2026-10-28 21:43, its Password module taking the keyboard), every one of its seven modules logged `[ModuleGrid] Overlay module <name>` … `overlaps another` (Greeting, NowPlaying, Password, ClockCalendar, Weather, VolumeDials, Power), though `Lockscreen.layout`'s saved places don't overlap. Likely `_check` running on the first arrangement, before the surface has its size (a zero room squeezes every place together); unconfirmed.
-- **Size:** small
-- **Found:** 2026-10-28, while giving niri's outputs a reserved space
-
 ### Text input warnings when the desktop takes the keyboard
 - **Where:** `components/surfaces/desktop/DesktopWindow.qml` (`WlrLayershell.keyboardFocus`)
 - **What:** With a typing module (Notes) on the desktop, clicking into it and back to windows logs bursts of `Trying to disable` from `qt.qpa.wayland.textinput` (`QWaylandTextInputv3::disableSurface`; 174 in one session). Typing and handing focus back work. Likely Qt's text-input-v3 noise when focus moves between surfaces; not yet checked whether an edge menu's Notes logs the same.
