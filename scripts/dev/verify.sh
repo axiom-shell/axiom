@@ -61,7 +61,7 @@ step() {
   "$@" || failed+=("$name")
 }
 
-qml=() tests=() shells=() script_tests=() schema=0 go=0 fixtures=0 lint=0 i18n=0
+qml=() tests=() shells=() script_tests=() schema=0 go=0 fixtures=0 lint=0 i18n=0 qmlformat=0
 for f in "${changed[@]}"; do
   case "$f" in
   *.qml) qml+=("$f") lint=1 i18n=1 ;;
@@ -71,6 +71,7 @@ for f in "${changed[@]}"; do
   scripts/check_qmllint.py | scripts/qmllint-baseline.json | scripts/qml_modules.py) lint=1 ;;
   scripts/check_i18n.py | config/i18n/*) i18n=1 ;;
   scripts/check_go.sh) go=1 ;;
+  scripts/check_qmlformat.sh) qmlformat=1 ;;
   esac
   case "$f" in
   components/methods/SchemaValidation.qml) schema=1 go=1 ;;
@@ -136,6 +137,9 @@ if [[ $go -eq 1 || $fixtures -eq 1 || $schema -eq 1 ]]; then
   step "generated files" scripts/generate.sh --fixtures
 else
   step "generated files" scripts/generate.sh
+fi
+if [[ $qmlformat -eq 1 ]]; then
+  step "qmlformat (every file)" scripts/check_qmlformat.sh
 fi
 step "structure" python3 scripts/check_structure.py
 step "sizes" python3 scripts/check_sizes.py
