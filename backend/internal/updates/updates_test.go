@@ -1,8 +1,10 @@
 package updates
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"os/exec"
 	"reflect"
 	"strings"
@@ -132,5 +134,27 @@ func TestFetchKeepsLastOnFailure(t *testing.T) {
 	got, _ := src.Fetch(context.Background(), requests)
 	if st := got.(State); len(st.Repo) != 1 || st.Error == "" {
 		t.Errorf("got %+v, want the last packages and an error", st)
+	}
+}
+
+// A check killed by its context ending (a re-exec) is no failure: no
+// warning, and nothing replaces the last state
+func TestFetchCancelledIsQuiet(t *testing.T) {
+	t.Parallel()
+	var logged bytes.Buffer
+	ctx, cancel := context.WithCancel(context.Background())
+	src := Source(Options{
+		Log:      slog.New(slog.NewTextHandler(&logged, nil)),
+		LookPath: func(file string) (string, error) { return file, nil },
+		Run: func(ctx context.Context, bin string, args ...string) ([]byte, int, string) {
+			cancel()
+			return nil, -1, ""
+		},
+	})
+	if _, err := src.Fetch(ctx, []json.RawMessage{json.RawMessage(arch + `}`)}); err == nil {
+		t.Error("a cancelled fetch returned no error")
+	}
+	if logged.Len() > 0 {
+		t.Errorf("logged %q, want nothing", logged.String())
 	}
 }

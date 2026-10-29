@@ -74,12 +74,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while handing exec's commands across a re-exec
 
-### The updates check warns when a daemon re-exec kills checkupdates
-- **Where:** `backend/internal/updates/updates.go` (`Source`'s `Fetch`, `runCheck`)
-- **What:** `axiom daemon logs` shows `checking for updates` with `checkupdates failed (-1): ` 7 times since 2026-10-26, each within a few seconds of a `dev build done: re-executing` line (12:33:56.102 after a re-exec at 12:33:55.828 on 2026-10-27). Exit code -1 is a kill by a signal: most likely the old image's context ends at the re-exec, the check's `checkupdates` is killed with it, and `Fetch` logs the failure before the hub drops the fetch as cancelled. A `ctx.Err()` check before the warning would quiet it; the next image checks again anyway.
-- **Size:** small
-- **Found:** 2026-10-27, while merging #133
-
 ### Running it unattended's gate can't get `verify ok` on a committed branch
 - **Where:** `docs/dev/roadmap.md` (Running it unattended, step 5), `scripts/dev/verify.sh`
 - **What:** Step 5 tells the leader to run `scripts/dev/verify.sh` on the pushed branch and expect `verify ok`, but verify.sh checks changes since HEAD, so on a clean committed branch it prints only `nothing changed since HEAD`. The leader used `scripts/dev/verify.sh --all` (`all checks passed`) instead; the step should say so.

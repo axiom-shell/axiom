@@ -141,7 +141,13 @@ func Source(o Options) topics.Source {
 			}
 			st := State{Repo: []Package{}, AUR: []Package{}}
 			if check != nil {
-				if repo, err := runCheck(ctx, o, check); err != nil {
+				repo, err := runCheck(ctx, o, check)
+				// Cancelled (a re-exec, nobody subscribed): the check was
+				// killed, not failed, and the hub drops this fetch
+				if ctx.Err() != nil {
+					return nil, ctx.Err()
+				}
+				if err != nil {
 					st.Repo, st.Error = last.Repo, err.Error()
 					if st.Error != failed {
 						failed = st.Error
