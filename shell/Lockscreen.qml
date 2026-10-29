@@ -101,6 +101,15 @@ Scope {
     id: sessionLock
     locked: lockState.locked
 
+    // The compositor ended the lock without PAM (its `finished`: it refused
+    // the lock, as when another locker holds the session): nothing is
+    // locked, so the shell stops holding it. A PAM unlock clears
+    // lockState first, and a reload's handoff emits nothing
+    onLockedChanged: {
+      if (!locked && lockState.locked)
+        lockState.locked = false;
+    }
+
     WlSessionLockSurface {
       id: surface
       color: "black"

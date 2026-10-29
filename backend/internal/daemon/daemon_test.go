@@ -393,14 +393,14 @@ func TestHandoffIsChecked(t *testing.T) {
 		{"not json", "{", false},
 		{"stdio descriptors", `{"lock":0,"configLock":4,"listener":5}`, false},
 		{"no listener", `{"lock":3,"configLock":4}`, false},
-		{"whole", `{"lock":3,"configLock":4,"listener":5,"shell":42,"dev":true,"installed":"/usr/bin/axiom"}`, true},
+		{"whole", `{"lock":3,"configLock":4,"listener":5,"shell":42,"locked":true,"dev":true,"installed":"/usr/bin/axiom"}`, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			h, err := inherited(func(string) string { return tc.raw })
 			if (err == nil) != tc.ok {
 				t.Fatalf("err %v", err)
 			}
-			if tc.name == "whole" && (!h.Dev || h.Installed != "/usr/bin/axiom" || h.Shell != 42) {
+			if tc.name == "whole" && (!h.Dev || h.Installed != "/usr/bin/axiom" || h.Shell != 42 || !h.Locked) {
 				t.Errorf("handoff %+v", h)
 			}
 		})
