@@ -26,12 +26,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while adding niri's own overview (row 16)
 
-### No shared function runs an axiom action
-- **Where:** `components/methods/BindActions.qml`, `services/ui/ShellManager.qml`
-- **What:** Hot corners (plan: [axiom has no hot corners of its own](plans/axiom-has-no-hot-corners-of-its-own.md), item 1) run "Any axiom action [...] or custom command" (the maintainer, #210): the keybind table's `ipcActions` with their argument, or a command. Only a bind runs those today, through the compositor calling `axiom ipc`; the shell has nothing that runs one by name.
-- **Size:** small
-- **Found:** 2026-10-29, while deciding the hot corners plan (row 16)
-
 ### axiom draws no hot corners
 - **Where:** `shell.qml`, `components/hosts/popout/EdgeTrigger.qml`, `components/methods/LayerStack.qml`
 - **What:** The maintainer (#210): "A. Build it as a single card in the overlay and popouts group on settings. Can configure each corner. Any axiom action is configurable, or custom command". A `HotCorners` section (`items[]`: corner, action and argument, a screen target, a delay, 0 ms by default), its reader, a transparent corner window per item per screen on `Top` (quiet over fullscreen, as the bars are) and its settings card in Overlay & Popouts (plan item 2).

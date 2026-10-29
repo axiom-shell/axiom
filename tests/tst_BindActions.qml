@@ -56,6 +56,27 @@ TestCase {
     }), "toggle");
   }
 
+  function test_ipcCall() {
+    compare(BindActions.ipcCall(test.table, "overlayPage", " Themes "), {
+      "target": "overlay",
+      "function": "page",
+      "args": ["Themes"]
+    });
+    compare(BindActions.ipcCall(test.table, "workspaceOverview", "", "open"), {
+      "target": "workspaceOverlay",
+      "function": "show",
+      "args": []
+    }, "the call's IPC function");
+    compare(BindActions.ipcCall(test.table, "launcherSearch", "two words"), {
+      "target": "appLauncher",
+      "function": "search",
+      "args": ["two words"]
+    }, "an argument with spaces stays one");
+    compare(BindActions.ipcCall(test.table, "workspaceNth", "3").args, ["3", "go"]);
+    compare(BindActions.ipcCall(test.table, "workspaceNth", ""), null, "missing its argument");
+    compare(BindActions.ipcCall(test.table, "closeWindow", ""), null, "a compositor action");
+  }
+
   function test_needsArgument() {
     verify(shared.calls.BindActions.needsArgument(test.table, "exec"));
     verify(shared.calls.BindActions.needsArgument(test.table, "workspaceNth"), "{0} in the IPC call");

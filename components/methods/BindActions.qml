@@ -54,6 +54,26 @@ QtObject {
     return table?.calls?.[bind.action]?.[root.callOf(table, bind)] ?? "toggle";
   }
 
+  // The IPC call ({ target, function, args }) an axiom action (one of
+  // ipcActions) makes with `argument` and `call` (toggle, open or close),
+  // as its bind does; null for another action, or one missing its argument
+  function ipcCall(table, action, argument, call) {
+    const template = table?.ipcActions?.[action]?.[0];
+    const text = String(argument ?? "").trim();
+    if (!template || (template.includes("{0}") && text === ""))
+      return null;
+    const fn = root.callFunction(table, {
+      "action": action,
+      "call": call
+    });
+    const words = template.split(" ").map(word => word === "{call}" ? fn : word.replace("{0}", text));
+    return {
+      "target": words[0],
+      "function": words[1],
+      "args": words.slice(2)
+    };
+  }
+
   // What `action`'s argument is (argumentKinds), or ""
   function argumentKind(table, action) {
     return table?.argumentKinds?.[action] ?? "";
