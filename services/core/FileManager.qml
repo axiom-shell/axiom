@@ -10,7 +10,8 @@ QtObject {
 
   // Replaces the file at path (absolute) with text, atomically, making
   // its folders; done(error) after, error null or { kind, message }.
-  // Writes to one path go out one at a time, in the order asked
+  // Writes to one path go out one at a time, in the order asked; one cut
+  // off by axiom re-execing goes again once it's back
   function write(path, text, done) {
     const queue = root._writes[path];
     if (queue) {
@@ -25,7 +26,9 @@ QtObject {
   }
 
   // Calls fn() whenever path (absolute) changes on disk, except by a
-  // write of its own; returns the watch, for unwatch(watch)
+  // write of its own, and fn(true) once after axiom reconnects (it may
+  // have changed while the watch was gone); returns the watch, for
+  // unwatch(watch)
   function watch(path, fn) {
     const watch = {
       "path": path,
@@ -59,6 +62,8 @@ QtObject {
   property var _writes: ({})
   // Watchers by path
   property var _watched: ({})
+  // Greeted before: the next hello is a reconnect
+  property bool _greeted: false
 
   function _write(path, text, done) {
     BackendManager.call("file.write", {
@@ -73,21 +78,31 @@ QtObject {
         root._write(path, next.text, next.done);
       else
         delete root._writes[path];
+    }, {
+      "repeatable": true
     });
   }
 
+  // A watch lost with the connection is sent again once greeted
   function _logFailure(error) {
-    if (error)
+    if (error && error.kind !== "unavailable")
       console.warn("[FileManager] Could not watch a file:", error.message);
   }
 
   property Connections _backend: Connections {
     target: BackendManager
-    // A reconnect forgets the watches
+    // A reconnect forgets the watches, and a change while they were
+    // gone pushed nothing: each watcher looks once (not one whose own
+    // write is out, which may still hold the older text)
     function onGreeted() {
-      Object.keys(root._watched).forEach(path => BackendManager.call("file.watch", {
+      Object.keys(root._watched).forEach(path => {
+        BackendManager.call("file.watch", {
           "path": path
-        }, root._logFailure));
+        }, root._logFailure);
+        if (root._greeted && !(path in root._writes))
+          root._watched[path].forEach(watch => watch.fn(true));
+      });
+      root._greeted = true;
     }
   }
 

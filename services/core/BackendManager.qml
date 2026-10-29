@@ -49,8 +49,11 @@ QtObject {
   }
 
   // Calls method; done(error, result) with error null or { kind, message,
-  // issues }. Waits for the hello when not connected yet.
-  function call(method, params, done) {
+  // issues }. Waits for the hello when not connected yet. With options
+  // { repeatable: true } (a call the caller knows is safe to send twice:
+  // a whole-file write, a fetch), a call cut off by a lost connection is
+  // sent again after the next hello instead of failing `unavailable`.
+  function call(method, params, done, options) {
     if (!root.active || root._refused) {
       done?.(root._refused ?? {
         "kind": "unavailable",
@@ -61,6 +64,8 @@ QtObject {
     const id = root._nextId++;
     root._pending[id] = done ?? null;
     const line = JsonRpc.request(id, method, params);
+    if (options?.repeatable)
+      root._repeatable[id] = line;
     if (root.ready)
       root._send(line);
     else
@@ -137,6 +142,8 @@ QtObject {
   property var _refused: null
   property int _nextId: 1
   property var _pending: ({})
+  // call's repeatable calls not answered yet: { id: line }
+  property var _repeatable: ({})
   // Waiting for the hello: { id (null for a notification), line }
   property var _queue: []
   property var _handlers: ({
@@ -307,6 +314,7 @@ QtObject {
       {
         const done = root._pending[m.id];
         delete root._pending[m.id];
+        delete root._repeatable[m.id];
         done?.(m.error ?? null, m.error ? null : m.result);
         break;
       }
@@ -343,8 +351,8 @@ QtObject {
   }
 
   // Calls in flight or queued when the connection went fail (a failed one
-  // is never sent after all); queued notifications wait for the next
-  // hello, which is said again
+  // is never sent after all), but repeatable ones and queued
+  // notifications wait for the next hello, which is said again
   function _dropped() {
     root._hello = null;
     root._failQueued({
@@ -387,11 +395,28 @@ QtObject {
     root._reconnect.start();
   }
 
+  // A lost connection (`unavailable`) keeps the repeatable calls: one
+  // already sent goes again first, ahead of the queue
   function _failQueued(error) {
     const pending = root._pending;
     root._pending = {};
-    root._queue = error.kind === "unavailable" ? root._queue.filter(entry => entry.id === null) : [];
+    const unavailable = error.kind === "unavailable";
+    const queued = root._queue.map(entry => String(entry.id));
+    const resend = [];
     for (const id in pending) {
+      if (!unavailable || !(id in root._repeatable))
+        continue;
+      root._pending[id] = pending[id];
+      delete pending[id];
+      if (queued.indexOf(id) < 0)
+        resend.push({
+          "id": Number(id),
+          "line": root._repeatable[id]
+        });
+    }
+    root._queue = unavailable ? resend.concat(root._queue.filter(entry => entry.id === null || entry.id in root._pending)) : [];
+    for (const id in pending) {
+      delete root._repeatable[id];
       // Through a const: V4 crashes compiling an optional call on a
       // computed member (docs/dev/core/qml-pitfalls.md)
       const done = pending[id];
