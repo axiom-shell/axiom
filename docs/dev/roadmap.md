@@ -48,7 +48,7 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 | 13. The maintainer's notes | none | none |
 
 ### Full order
-Both roadmaps as one sequence. A row starts when the one above it has merged; the parallel lane fills the gaps at any time. **Status** is `done`, `in progress` (normally one row), `next` (the row after it) or `later`; it's kept current by [Taking the next step](#taking-the-next-step), so the first row not `done` is always where work resumes.
+Both roadmaps as one sequence. A row starts when the one above it has merged; the parallel lane fills the gaps at any time. **Status** is `done`, `in progress` (normally one row), `next` (the row after it), `later`, or `on hold` (skipped for now by the maintainer; it blocks no later row); it's kept current by [Taking the next step](#taking-the-next-step), so the first row neither `done` nor `on hold` is always where work resumes.
 
 | # | Status | Work | Why here |
 |---|---|---|---|
@@ -67,10 +67,10 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 13 | done | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
 | 14 | done | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 15 | done | Backend stage 8: the last scripts (`pick_path.py`, `bug_info.sh`) | Small, with nothing waiting on it; after stage 7 so it doesn't collide with the config path, and before the audits so they cover it. |
-| 16 | in progress | [Phase 13](#phase-13-the-maintainers-notes): the maintainer's notes | Bugs and small features from the maintainer's own use; after the parity and log rows (some are compositor-specific, and those land there), before Phase 10 so the last feature and the audits are built on them. |
+| 16 | on hold | [Phase 13](#phase-13-the-maintainers-notes): the maintainer's notes | Bugs and small features from the maintainer's own use; after the parity and log rows (some are compositor-specific, and those land there), before Phase 10 so the last feature and the audits are built on them. On hold (maintainer, 2026-10-29: "put maintainers notes on hold (mark it to be skipped for now), and continue forward on Audits, clear-out, and hardening"). |
 | 17 | done | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
-| 18 | next | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0: audit and tighten the guardrails (checks, tests, CI, agent rules) | The architecture is final once stage 7 and Phase 10 are in, so stricter checks aren't rewritten by a later stage; before the system audits, so the audits, the clear-out and the hardening all run under them. |
-| 19 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
+| 18 | in progress | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0: audit and tighten the guardrails (checks, tests, CI, agent rules) | The architecture is final once stage 7 and Phase 10 are in, so stricter checks aren't rewritten by a later stage; before the system audits, so the audits, the clear-out and the hardening all run under them. |
+| 19 | next | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
 | 20 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 2: clear out issues.md, then audit again | Fixes after the audits, so the list isn't refilled behind them; the second pass catches what the fixes broke. |
 | 21 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 3: 1–2 weeks of hardening, frozen | The maintainer drives sway and niri daily; only fixes land. |
 | 22 | later | [Phase 9](#phase-9-docs-tooling-and-process), then post for testers | Last, so the docs describe the final shape; the post follows [the launch gate](#the-launch-gate). |
@@ -83,7 +83,7 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 ### Taking the next step
 What an agent does when asked for "the next step", to "continue the roadmap", or to work on a row or phase by number. The answer to "where do I start" is always this file: nothing else needs explaining.
 
-1. **Find the step.** The first [Full order](#full-order) row not `done`. Its work is the backend stage's bullets in [backend/roadmap.md](backend/roadmap.md) (a stage row) or the phase section below (a phase row). A row named by the user wins; so does a parallel-lane item they name.
+1. **Find the step.** The first [Full order](#full-order) row not `done` (an `on hold` row is skipped). Its work is the backend stage's bullets in [backend/roadmap.md](backend/roadmap.md) (a stage row) or the phase section below (a phase row). A row named by the user wins; so does a parallel-lane item they name.
 2. **Check nobody holds it.** `git log -5` and `git status`: uncommitted changes in that row's files mean another agent is on it. Then take the next unblocked item (the parallel lane, or a later row with nothing waiting), or ask.
 3. **Pick the batch** ([Rules](#rules)): the row's next items in order (a backend stage's next not-`Done` bullets, or a phase's first steps not marked `Done:`, then its listed issues), as many as share an area within the batch's bounds; a move or anything large goes alone. A "needs a plan" entry is taken through [Items that need a plan](#items-that-need-a-plan) instead of being built straight away. Read the item's issues.md entry, the docs for its area (`AGENTS.md` › Where to look), the matching recipe if there is one, and [issues.md](issues.md) for anything else known in those files.
 4. **Do it**, item by item: each a commit after `scripts/dev/verify.sh` prints `verify ok`, and `scripts/dev/verify.sh --all` once before the branch is first pushed.
@@ -280,6 +280,14 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 - [A compositor manager test misses its takeover prompt under load](issues.md#a-compositor-manager-test-misses-its-takeover-prompt-under-load)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 - [CI checks dependencies only when a PR touches Go](issues.md#ci-checks-dependencies-only-when-a-pr-touches-go)
+- [verify.sh skips the checks a deletion or a check's own change needs](issues.md#verifysh-skips-the-checks-a-deletion-or-a-checks-own-change-needs)
+- [The guard misses compound commands, wrapper options and writes onto config.json](issues.md#the-guard-misses-compound-commands-wrapper-options-and-writes-onto-configjson)
+- [CI's Go tests run as root, so the unwritable-file tests never run there](issues.md#cis-go-tests-run-as-root-so-the-unwritable-file-tests-never-run-there)
+- [check_go.sh passes stale generated code except under --ci](issues.md#check_gosh-passes-stale-generated-code-except-under---ci)
+- [CI can't fail on stale translation files](issues.md#ci-cant-fail-on-stale-translation-files)
+- [The qmllint baseline doesn't shrink when warnings are fixed](issues.md#the-qmllint-baseline-doesnt-shrink-when-warnings-are-fixed)
+- [check_structure's Quickshell.Io check doesn't see IpcHandler](issues.md#check_structures-quickshellio-check-doesnt-see-ipchandler)
+- [The permission deny list names a config path that's gone](issues.md#the-permission-deny-list-names-a-config-path-thats-gone)
 
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.
