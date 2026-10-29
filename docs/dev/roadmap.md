@@ -75,7 +75,7 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 21 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 3: 1–2 weeks of hardening, frozen | The maintainer drives sway and niri daily; only fixes land. |
 | 22 | later | [Phase 9](#phase-9-docs-tooling-and-process), then post for testers | Last, so the docs describe the final shape; the post follows [the launch gate](#the-launch-gate). |
 
-**Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); [Phase 12](#phase-12-memory-footprint)'s other entries, before row 13 (Phase 6), so the parity pass checks the windows they change; parity bugs outside the compositor writer (the niri screencopy crash, the red screen after a reload while locked, nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload).
+**Parallel lane** (any time, between rows): [Phase 7](#phase-7-fit-geometry-and-performance); [Phase 12](#phase-12-memory-footprint)'s other entries, before row 13 (Phase 6), so the parity pass checks the windows they change; parity bugs outside the compositor writer (nested niri freezing); log warnings no stage touches (the notification avatar, missing app icons, singleton properties on reload).
 
 **Binaries** (parallel lane, run by its own session on `binaries/*` branches; maintainer, 2026-10-27: "Rolling CI build (Recommended)"; tags: "Download, build fallback (Recommended)"; greeter main: "Allow via CI build (Recommended)"): every clone takes the official binary built from the commit it checks out ([packaging](packaging.md) › Edge builds), `go` only as the fallback.
 - done: the edge prerelease (`.github/workflows/edge.yml`) and the shared `release`, `release/fetch` packages (#144, #145); the greeter's `main` channel through edge (#147); self-update downloading the binary (#148); install.sh downloading before it builds. (The tags channel already has binaries: v1.1.12's release published them.)
@@ -173,14 +173,6 @@ Resolved by a stage:
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
 Done: sway and SwayFX (nothing left).
-
-niri:
-- [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)
-- [A hot reload while locked leaves niri's red screen](issues.md#a-hot-reload-while-locked-leaves-niris-red-screen)
-- [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)
-- [niri reports no position for a tiled window, nor other apps' layers](issues.md#niri-reports-no-position-for-a-tiled-window-nor-other-apps-layers)
-- [Shift+Enter on an emoji doesn't type it on niri](issues.md#shiftenter-on-an-emoji-doesnt-type-it-on-niri)
-- [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
 
 Hyprland, and every compositor:
 - [A profile saved under another compositor is written in that one's spelling](issues.md#a-profile-saved-under-another-compositor-is-written-in-that-ones-spelling)
@@ -350,3 +342,11 @@ Deferred by the maintainer (2026-10-27):
 
 Accepted by the maintainer (2026-10-28, #163): the hand-fix gap with no takeovers kept
 - [With no takeovers kept, a broken config.json can still release the compositor's config](issues.md#with-no-takeovers-kept-a-broken-configjson-can-still-release-the-compositors-config)
+
+Deferred by the maintainer (2026-10-29, Phase 6's niri entries: "defer all six niri items and continue"):
+- [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)
+- [A hot reload while locked leaves niri's red screen](issues.md#a-hot-reload-while-locked-leaves-niris-red-screen)
+- [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)
+- [niri reports no position for a tiled window, nor other apps' layers](issues.md#niri-reports-no-position-for-a-tiled-window-nor-other-apps-layers)
+- [Shift+Enter on an emoji doesn't type it on niri](issues.md#shiftenter-on-an-emoji-doesnt-type-it-on-niri)
+- [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri)
