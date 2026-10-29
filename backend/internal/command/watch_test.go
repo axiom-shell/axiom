@@ -8,6 +8,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // fakeClock moves only when told; Until fires once Advance passes it.
@@ -70,7 +72,7 @@ func (s *fakeSub) next(t *testing.T) Outputs {
 	select {
 	case p := <-s.pushes:
 		return p
-	case <-time.After(5 * time.Second):
+	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("nothing pushed")
 		return Outputs{}
 	}
@@ -117,7 +119,7 @@ func (h *harness) ran(t *testing.T, want string) {
 		if got != want {
 			t.Fatalf("ran %q, want %q", got, want)
 		}
-	case <-time.After(5 * time.Second):
+	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatalf("%q didn't run", want)
 	}
 }

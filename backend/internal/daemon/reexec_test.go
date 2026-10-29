@@ -16,6 +16,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/store"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // A daemon that doesn't get the instance lock leaves whatever sits at the
@@ -143,7 +144,7 @@ func TestAdoptedHandoffServes(t *testing.T) {
 		cancel()
 		select {
 		case <-stopped:
-		case <-time.After(10 * time.Second):
+		case <-time.After(testkit.Bound(10 * time.Second)):
 			t.Error("the daemon didn't stop")
 		}
 	})
@@ -171,7 +172,7 @@ func TestAdoptedHandoffServes(t *testing.T) {
 		if runErr != nil {
 			t.Fatalf("run: %v", runErr)
 		}
-	case <-time.After(10 * time.Second):
+	case <-time.After(testkit.Bound(10 * time.Second)):
 		t.Fatal("the daemon didn't stop")
 	}
 	if _, err := os.Lstat(td.socket); !os.IsNotExist(err) {
