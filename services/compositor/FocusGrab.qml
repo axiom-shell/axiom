@@ -22,16 +22,17 @@ Scope {
   signal cleared
 
   readonly property bool _native: CompositorManager.supports.focusGrab === true
-  // Active without a native grab: a click outside clears it. Not while a
-  // modal is up (SurfaceManager.modalShown): it covers every screen, so no
-  // click needs catching
-  readonly property bool _catching: !root._native && root.active && !SurfaceManager.modalShown
+  // Active without a native grab: a click outside clears it. In
+  // BackdropManager's newest-first order, kept while a modal is up (no
+  // click is caught then: BackdropManager.catching), so the newest grab
+  // gets the keyboard back after it
+  readonly property bool _catching: !root._native && root.active
   // The surface's own window should take the keyboard exclusively
   // (WlrKeyboardFocus.Exclusive) while this is on: only the newest such
-  // grab's, never while a modal is up. Of two exclusive surfaces on one
-  // layer niri keeps the older, so a popout opened over the overlay, or
-  // the prompt, would never get the keyboard
-  readonly property bool exclusive: root._catching && BackdropManager.newestCatcher === root._uid
+  // grab's, never while a modal is up (SurfaceManager.modalShown). Of two
+  // exclusive surfaces on one layer niri keeps the older, so a popout
+  // opened over the overlay, or the prompt, would never get the keyboard
+  readonly property bool exclusive: root._catching && !SurfaceManager.modalShown && BackdropManager.newestCatcher === root._uid
 
   // A click caught outside every surface (BackdropManager.catching)
   property int _uid: 0
