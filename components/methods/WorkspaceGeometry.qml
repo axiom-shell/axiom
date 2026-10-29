@@ -237,16 +237,42 @@ QtObject {
   }
 
   // Each output's first workspace id ({ [name]: id }) when every output
-  // owns a block of `size` ids, blocks in monitor order (orderMonitors,
-  // keyed by MonitorLayout.outputId). outputs: [{ name, description }]
-  function blockBases(outputs, primaryName, size) {
+  // owns a block of `size` ids. Blocks are numbered over every monitor the
+  // monitor profiles name (by their rules' `output`; the primary first,
+  // matched by connector or by the rule's `label` while unplugged), then the
+  // connected ones none names (keyed by MonitorLayout.outputId), each part
+  // in orderMonitors' order, so a block never moves with what's connected.
+  // outputs: [{ name, description }]; profiles: [{ outputs: [{ output,
+  // label }] }] (MonitorsConfig.profiles)
+  function blockBases(outputs, primaryName, size, profiles) {
     const list = outputs ?? [];
-    const keyed = list.map(o => ({
+    const known = [];
+    for (const profile of profiles ?? []) {
+      for (const rule of profile.outputs ?? []) {
+        if (rule.output && !known.some(k => k.key === rule.output))
+          known.push({
+            "key": rule.output,
+            "name": rule.label,
+            "connected": ""
+          });
+      }
+    }
+    const unknown = [];
+    for (const o of list) {
+      const k = known.find(k => !k.connected && MonitorLayout.matches(k.key, o));
+      if (k) {
+        k.connected = o.name;
+        k.name = o.name;
+      } else
+        unknown.push({
           "name": o.name,
-          "key": MonitorLayout.outputId(o, list)
-        }));
-    return root.orderMonitors(keyed, primaryName).reduce((bases, o, i) => {
-      bases[o.name] = i * size + 1;
+          "key": MonitorLayout.outputId(o, list),
+          "connected": o.name
+        });
+    }
+    return root.orderMonitors(known, primaryName).concat(root.orderMonitors(unknown, primaryName)).reduce((bases, o, i) => {
+      if (o.connected)
+        bases[o.connected] = i * size + 1;
       return bases;
     }, {});
   }

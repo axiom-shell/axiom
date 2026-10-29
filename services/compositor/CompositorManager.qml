@@ -610,10 +610,9 @@ Singleton {
   }
 
   // First workspace id an output (its name) shows: 1 in the standard
-  // layout, else its block's (grid/perMonitor, one block per output in a
-  // stable order — the primary first, then the rest by a description-based
-  // identity that survives a port change — not the compositor's discovery
-  // order, which can reshuffle on a hotplug/reconnect/restart)
+  // layout, else its block's (grid/perMonitor: one block per monitor the
+  // saved profiles name, connected or not, then per connected one they
+  // don't, so a hotplug never moves a block; WorkspaceGeometry.blockBases)
   function workspaceBase(output) {
     return root.perMonitorBlocks ? (root._bases[output] ?? 1) : 1;
   }
@@ -623,7 +622,8 @@ Singleton {
   // belong to an output (supports.outputWorkspaces: niri's), as the
   // standard layout's shared ids can't
   readonly property bool perMonitorBlocks: WorkspacesConfig.perMonitorBlocks || root.supports.outputWorkspaces === true
-  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize)
+  // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label
+  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles)
 
   // Whether the compositor makes and removes workspaces itself, one list
   // per output (supports.dynamicWorkspaces: niri's). The Workspaces

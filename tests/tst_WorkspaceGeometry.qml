@@ -244,6 +244,79 @@ TestCase {
     compare(WorkspaceGeometry.blockBases([], "", 5), {});
   }
 
+  function test_blockBases_profiles() {
+    const profiles = [
+      {
+        "outputs": [
+          {
+            "output": "desc:a",
+            "label": "DP-1"
+          },
+          {
+            "output": "desc:b",
+            "label": "DP-2"
+          }
+        ]
+      },
+      {
+        "outputs": [
+          {
+            "output": "desc:b",
+            "label": "DP-2"
+          },
+          {
+            "output": "desc:c",
+            "label": "HDMI-A-1"
+          }
+        ]
+      }
+    ];
+    const all = [
+      {
+        "name": "DP-1",
+        "description": "a"
+      },
+      {
+        "name": "DP-2",
+        "description": "b"
+      },
+      {
+        "name": "HDMI-A-1",
+        "description": "c"
+      }
+    ];
+    compare(WorkspaceGeometry.blockBases(all, "", 100, profiles), {
+      "DP-1": 1,
+      "DP-2": 101,
+      "HDMI-A-1": 201
+    });
+    compare(WorkspaceGeometry.blockBases([all[0], all[2]], "", 100, profiles), {
+      "DP-1": 1,
+      "HDMI-A-1": 201
+    }, "a middle monitor unplugged moves no block");
+    compare(WorkspaceGeometry.blockBases([all[0], all[1]], "HDMI-A-1", 100, profiles), {
+      "DP-1": 101,
+      "DP-2": 201
+    }, "the unplugged primary keeps the first block by its label");
+    compare(WorkspaceGeometry.blockBases([
+      {
+        "name": "DP-3",
+        "description": "0 unknown"
+      },
+      all[1]], "", 100, profiles), {
+      "DP-2": 101,
+      "DP-3": 301
+    }, "an unknown monitor goes after every named one");
+    compare(WorkspaceGeometry.blockBases([
+      {
+        "name": "DP-9",
+        "description": "c"
+      }
+    ], "", 10, profiles), {
+      "DP-9": 21
+    }, "a named monitor on another port keeps its block");
+  }
+
   function test_outputToward() {
     const outputs = [
       {

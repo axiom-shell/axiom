@@ -86,7 +86,7 @@ Singleton {
   readonly property int blockSize: 100
   // Each output's first id while they're dynamic, as CompositorManager
   // numbers them (WorkspaceGeometry.blockBases)
-  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize)
+  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles)
 
   // Re-reads the monitors and the windows soon (Quickshell re-reads the
   // monitors' lastIpcObject only on monitor events)
