@@ -1,6 +1,8 @@
 package greeterinstall
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -521,5 +523,62 @@ func TestBackupsAreDated(t *testing.T) {
 	r := f.runWith(in, rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
 	if !strings.HasSuffix(r.Backup, "config.toml.axiom-bak-20261027-090807") {
 		t.Errorf("backup %q", r.Backup)
+	}
+}
+
+// A hostile archive (the user's clone, a fetched tree) lands nothing
+// outside the copy and no link: escaping names, absolute ones, links,
+// and a file under a link's name are each kept out or made plain
+func TestExtractTakesNoEscapesOrLinks(t *testing.T) {
+	t.Parallel()
+	tmp := t.TempDir()
+	outside := filepath.Join(tmp, "outside")
+	if err := os.MkdirAll(outside, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	var archive bytes.Buffer
+	tw := tar.NewWriter(&archive)
+	for _, h := range []tar.Header{
+		{Name: "../outside/escaped", Typeflag: tar.TypeReg},
+		{Name: "a/../../outside/climbed", Typeflag: tar.TypeReg},
+		{Name: outside + "/absolute", Typeflag: tar.TypeReg},
+		{Name: "link", Typeflag: tar.TypeSymlink, Linkname: outside},
+		{Name: "link/through", Typeflag: tar.TypeReg},
+		{Name: "hard", Typeflag: tar.TypeLink, Linkname: "/etc/hostname"},
+		{Name: "./kept/file", Typeflag: tar.TypeReg},
+	} {
+		h.Mode, h.Size = 0o644, 1
+		if h.Typeflag != tar.TypeReg {
+			h.Size = 0
+		}
+		if err := tw.WriteHeader(&h); err != nil {
+			t.Fatal(err)
+		}
+		if h.Size > 0 {
+			tw.Write([]byte("x"))
+		}
+	}
+	tw.Close()
+	stage := filepath.Join(tmp, "stage")
+	n, err := extract(&archive, stage, func(string, []byte) bool { return true })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries, _ := os.ReadDir(outside); len(entries) != 0 {
+		t.Errorf("wrote outside the copy: %v", entries)
+	}
+	var got []string
+	filepath.WalkDir(stage, func(p string, d os.DirEntry, _ error) error {
+		if d.Type()&os.ModeSymlink != 0 {
+			t.Errorf("made a link: %s", p)
+		}
+		if d.Type().IsRegular() {
+			rel, _ := filepath.Rel(stage, p)
+			got = append(got, rel)
+		}
+		return nil
+	})
+	if want := []string{"kept/file", "link/through"}; n != 2 || !slices.Equal(got, want) {
+		t.Errorf("extracted %d: %v, want %v", n, got, want)
 	}
 }

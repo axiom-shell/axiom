@@ -6,6 +6,7 @@
   - the Neovim module Apply copies compiles and maps the shipped themes
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
     lines marked `// fixed px:`
+  - only PAM's success unlocks the built-in lock screen
 
   python3 tests/scripts/test_scripts.py [-v] [TestCase[.test_name]]
 """
@@ -340,6 +341,75 @@ class CheckDocs(unittest.TestCase):
         self.assertEqual(retired_name("Bar.enrichBarConfig", configs), "Bar")
         self.assertEqual(retired_name("Bar.lookOf(bar)", configs), "Bar")
         self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
+
+
+def unlock_problems(files):
+    """What lets the built-in lock screen unlock other than PAM's success,
+    in `files` ({repo path: QML text}): a `locked = false` anywhere but
+    shell/Lockscreen.qml's onAuthenticationSucceeded, a session lock not
+    bound to its state, authenticationSucceeded emitted for anything but
+    PamResult.Success, or the lockscreen IPC target taking more than lock."""
+    problems = []
+    for path, text in files.items():
+        for m in re.finditer(r"\blocked\s*=\s*false", text):
+            fn = re.findall(r"function\s+(\w+)", text[:m.start()])
+            if path != "shell/Lockscreen.qml" or not fn or fn[-1] != "onAuthenticationSucceeded":
+                problems.append(f"{path}: unlocks in {fn[-1] if fn else 'a binding'}")
+        for m in re.finditer(r"\bauthenticationSucceeded\(\)", text):
+            case = re.findall(r"case\s+([\w.]+):", text[:m.start()])
+            if path != "services/session/AuthManager.qml" or not case or case[-1] != "PamResult.Success":
+                problems.append(f"{path}: authenticationSucceeded after {case[-1] if case else 'no case'}")
+        for m in re.finditer(r"IpcTarget\s*\{", text):
+            depth, end = 0, m.end() - 1
+            for end in range(m.end() - 1, len(text)):
+                depth += {"{": 1, "}": -1}.get(text[end], 0)
+                if depth == 0:
+                    break
+            block = text[m.end():end]
+            if re.search(r'target:\s*"lockscreen"', block):
+                functions = re.findall(r"function\s+(\w+)", block)
+                if functions != ["lock"]:
+                    problems.append(f"{path}: the lockscreen IPC target takes {functions}")
+    if not re.search(r"WlSessionLock\s*\{\s*id:\s*\w+\s*locked:\s*lockState\.locked\s*\n", files.get("shell/Lockscreen.qml", "")):
+        problems.append("shell/Lockscreen.qml: the session lock isn't bound to lockState.locked alone")
+    return problems
+
+
+class OnlyPamUnlocks(unittest.TestCase):
+    """The built-in lock screen unlocks only on PAM's success, never by
+    IPC (docs/dev/features/lockscreen.md). PAM itself can't run here, so
+    the shell's QML is read: each way around it is tried on a copy and
+    must be caught."""
+
+    @classmethod
+    def setUpClass(cls):
+        tracked = subprocess.run(["git", "ls-files", "-z", "*.qml"], cwd=ROOT, capture_output=True, text=True, check=True)
+        cls.files = {p: (ROOT / p).read_text() for p in tracked.stdout.split("\0") if p and not p.startswith("tests/")}
+
+    def test_the_shell_unlocks_only_on_pam_success(self):
+        self.assertEqual(unlock_problems(self.files), [])
+
+    def broken(self, path, old, new):
+        files = dict(self.files)
+        self.assertIn(old, files.get(path, old))
+        files[path] = files.get(path, old).replace(old, new, 1)
+        return unlock_problems(files)
+
+    def test_each_way_around_it_is_caught(self):
+        lock, auth, ipc = "shell/Lockscreen.qml", "services/session/AuthManager.qml", "services/session/LockManager.qml"
+        for path, old, new in [
+            # An IPC unlock
+            (ipc, "function lock(): void {", "function unlock(): void {}\n    function lock(): void {"),
+            # A failed attempt, a PAM error or a message that unlocks
+            (auth, "case PamResult.Failed:", "case PamResult.Failed:\n        root.authenticationSucceeded();"),
+            (auth, "onError: error => {", "onError: error => {\n      root.authenticationSucceeded();"),
+            (lock, "function onLockRequested() {", "function onLockRequested() {\n      lockState.locked = false;"),
+            # Any other file unlocking, or the lock bound to something else
+            ("components/Unlock.qml", "", "Item { function go() { sessionLock.locked = false; } }"),
+            (lock, "locked: lockState.locked\n", "locked: lockState.locked && !AuthManager.isAuthenticating\n"),
+        ]:
+            with self.subTest(path=path, new=new):
+                self.assertNotEqual(self.broken(path, old, new), [])
 
 
 class GreeterShim(unittest.TestCase):

@@ -31,7 +31,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 - While locked, the compositor shows only the lock surfaces and sends them all input.
 - If qs dies, the session stays locked (Hyprland's fallback). `misc:allow_session_lock_restore` lets a restarted qs take the lock back.
 - The locked state lives in a `PersistentProperties`, so a QML reload comes back locked.
-- **Only `AuthManager.authenticationSucceeded` (PAM, `login` stack) unlocks.**
+- **Only `AuthManager.authenticationSucceeded` (PAM, `login` stack) unlocks** (`tests/scripts/test_scripts.py` › `OnlyPamUnlocks` reads the QML for every other way out).
   - There is no IPC unlock.
   - Nothing on the surface may run commands.
 
