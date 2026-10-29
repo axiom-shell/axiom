@@ -282,7 +282,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Quickshell's I3 socket warns on every reload
 - **Where:** `services/compositor/SwayManager.qml` (Quickshell.I3)
-- **What:** Under sway every reload of the shell logs `I3 event socket disconnected` twice (category `quickshell.I3.ipc`), from the old generation's sockets closing. Events still arrive afterwards (checked in nested sway). Quickshell's, not axiom's; nothing to fix here unless it starts dropping events.
+- **What:** Under sway every reload of the shell logs `I3 event socket disconnected` twice (category `quickshell.I3.ipc`); events still arrive afterwards (checked in nested sway). Both come from Quickshell 0.3.2's `I3IpcListener` deleting its own connected socket, which its `stateChanged` handler reports as a disconnect: once when the old generation's listener is destroyed, once when the new one, already connected by setting `subscriptions` at creation, starts over in its `onPostReload` (so a cold start logs it once too). Axiom can't avoid it: any teardown of a connected listener logs it, and `I3.rawEvent` (the process-wide connection, which survives reloads) subscribes only to `workspace` and `output`. Nor is a log rule honest: the category also carries real faults, and sway drops an IPC client whose buffer fills, which Quickshell never reconnects, so this warning is then the only sign the event stream is dead. The fix is upstream: `I3Ipc` disconnecting its socket's signals before deleting it, and `I3IpcListener` not restarting with unchanged subscriptions.
 - **Size:** trivial
 - **Found:** 2026-10-16, while writing the sway backend
 
@@ -303,12 +303,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Seen on niri with a solid bottom bar (border off) whose SystemStats popout joins the left pill bar: while the popout slides in or out, the left bar's end pill, run on to the popout's top wall, trails it by about 8px for two or three frames (below the wall while opening, above it while closing), so the two strokes and their shadows step at the left bar's inner edge. At rest they line up. Probably the other bar's window committing a frame or so after the popout's (as `AttachedSurface`'s fillet opening is taken a stroke ahead for). The end pill leads the wall by a stroke there (niri has no `supports.layerFrameSync`, `EdgePlacement._slideLead`), which helps but doesn't close the gap; sway and Hyprland move the two as one without it.
 - **Size:** small
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
-
-### Singleton properties warn on every reload
-- **Where:** `services/ui/BlurManager.qml` (`paused`), `services/core/SelfUpdateManager.qml`, `services/compositor/HyprlandManager.qml` (`activeWindowId`), `services/system/AudioManager.qml` (`tracker`, `captureTracker`, `micInUse`)
-- **What:** Every config reload logs `Unable to assign [undefined] to bool` at the `paused` declaration (and, seen 2026-10-14, at `UpdatesManager.checking` while it was a readonly bool on a singleton (now a plain one): likely the same cause; seen 2026-10-16 as `Unable to assign [undefined] to QString` at `HyprlandManager.activeWindowId`, a readonly string; seen 2026-10-26 as `Unable to assign [undefined] to QList<QObject*>` at `AudioManager`'s two `PwObjectTracker.objects` and `Unable to assign [undefined] to bool` at its `micInUse`, after a reload from saving an unrelated file). The binding itself evaluates to a boolean (a temporary probe logged `boolean false`), and a constant `paused: false` still warned, so it isn't the expression: something in Quickshell's reload of this singleton assigns it. Harmless (the value is right afterwards), but it's noise in every `scripts/log.sh`. Next step: check whether Quickshell carries readonly properties across a reload, or whether making `paused` a plain function helps.
-- **Size:** small
-- **Found:** 2026-10-13, while checking reload logs during the docs makeover
 
 ### Readers read files through a service
 - **Where:** `config/Paths.qml` (`packagedVersion`), `config/I18n.qml`
