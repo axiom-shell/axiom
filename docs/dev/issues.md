@@ -212,18 +212,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-19, while building the review-system skill
 
-### A supervise test times out under a loaded run
-- **Where:** `backend/internal/supervise/supervise_test.go` (`TestOrphanOfAnEarlierDaemonIsStopped`, `eventually`)
-- **What:** One `scripts/check_go.sh` run failed with `supervise_test.go:143: timed out` (the orphan wasn't seen stopped within `eventually`'s 2 s), then passed on the next two runs with nothing changed in `supervise`. The test runs `t.Parallel()` with the rest of the package and `go test` runs packages at once, so 2 s is tight under load; a flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or stop the orphan before polling.
-- **Size:** trivial
-- **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
-
-### A daemon test finds the instance lock still held
-- **Where:** `backend/internal/daemon/reexec_test.go` (`TestStaleSocketIsRemovedOnlyUnderTheInstanceLock`)
-- **What:** One `scripts/dev/verify.sh` run failed with `reexec_test.go:42: the daemon stopped: axiom is already running on wayland-test: held by process …` and `daemon_test.go:90: the daemon didn't stop`, then passed on a rerun with nothing changed in `daemon`: after `held.Release()`, the daemon `td.start` runs still found the lock held, likely by the refused `runBriefly` daemon's open lock file (or the test's own) not yet closed under a loaded parallel run. A possible fix: wait for `runBriefly`'s daemon to close everything before releasing, or retry the start briefly.
-- **Size:** trivial
-- **Found:** 2026-10-27, while verifying the Tailscale revamp
-
 ### A compositor manager test misses its takeover prompt under load
 - **Where:** `backend/internal/compositor/manager/manager_test.go` (`TestAConfigGivenBackMeanwhileIsntWrittenOver`, `harness.eventually`)
 - **What:** CI on PR #184 (which touched no Go) failed with `manager_test.go:555: never: asked again` (state `"status":"pending"`, `"takeoverPending":false`). The wait covers a live change whose file sync comes 2 s later, inside `eventually`'s 3 s bound, so a loaded runner has 1 s of slack; the test runs `t.Parallel()` with the package. A flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or a sync delay the test sets shorter.
@@ -241,12 +229,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** CI on PR #124 (which touched no Go) failed with `isolate_test.go:115: got reading the binds: runtime/cgo: pthread_create failed: Resource temporarily unavailable: exit status 2`, then passed on a rerun. The test expects the child to be ended by its memory limit (an error naming `MiB`); this time the child couldn't start a thread (`EAGAIN`, likely the limit or a loaded runner's thread cap reached while the Go runtime was still starting threads) and failed with the cgo error instead. A flaky CI failure blocks an unrelated PR.
 - **Size:** trivial
 - **Found:** 2026-10-27, while finishing the singletons plan (#123)
-
-### A dev-mode build test fails with text file busy
-- **Where:** `backend/internal/daemon/dev_test.go` (`TestDevBuild`, `fakeGo`)
-- **What:** One `scripts/check_go.sh` run failed with `dev_test.go:55: err go generate: fork/exec …/go: text file busy`, then passed on the next run with nothing changed in `daemon`. `fakeGo` writes an executable script while parallel subtests fork: a fork made while the file is still open for writing carries that descriptor, and exec of the script fails with ETXTBSY until that child execs. A possible fix: write the fake to a temp name and rename it into place, or retry the exec on ETXTBSY in the test helper.
-- **Size:** trivial
-- **Found:** 2026-10-26, while renaming the backend's `system` and `lock` packages
 
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
@@ -324,9 +306,57 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The check order is kept in three places
 - **Where:** `scripts/check_all.sh`, `scripts/dev/verify.sh`, `.github/workflows/checks.yml`
-- **What:** The same checks, in the same order, are listed by hand three times; a check added to one can be missed in the others. One list (a file the three read, or `check_all.sh` as the one CI runs) keeps them equal.
+- **What:** The same checks, in the same order, are listed by hand three times; a check added to one can be missed in the others. One list (a file the three read, or `check_all.sh` as the one CI runs) keeps them equal. They have drifted already: CI's `JSON is valid` step (`python3 -m json.tool` over every tracked `.json`) is in neither `check_all.sh` nor verify.sh, so `verify.sh --all` passes a broken JSON file that CI fails.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
+
+### verify.sh skips the checks a deletion or a check's own change needs
+- **Where:** `scripts/dev/verify.sh` (`changed`, the step triggers)
+- **What:** `changed` keeps only files that exist (`[[ -f "$f" ]]`), so a deleted file triggers nothing: deleting a Go file runs no Go checks (the package may no longer build), deleting a QML or script file a doc cites runs no `check_docs.py`, and a change that only deletes prints `nothing changed since HEAD`. CI then fails what verify passed; the roadmap's "Delete before adding" makes this the common case. The triggers also miss a check's own change: `check_docs.py` runs only when a `.md` or `.qml` changed (not for `config/schema/` YAML, though it checks the `x-*` annotations, nor for a change to `check_docs.py` itself), `check_qmllint.py` and `check_sizes.py` only when QML changed, `check_docs.py` has a `CheckDocs` class in `tests/scripts/test_scripts.py` the script map doesn't run, and `.githooks/pre-commit` (not `*.sh`) is never shellchecked. Fix: keep deleted paths in `changed` for the triggers (filter only where a step reads the file, as qmlformat does), and map each `scripts/check_*` file to its own check.
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### The guard misses compound commands, wrapper options and writes onto config.json
+- **Where:** `.claude/hooks/guard.py` (`split_commands`, `simple`, `check_argv`), `tests/scripts/test_guard.py`
+- **What:** Probing `guard.check` with ordinary shell forms (not adversarial ones) lets these through: `(qs kill)`, `{ qs kill; }`, `$(qs kill)`, `if true; then qs kill; fi` (`(`, `{`, `$(` and `then` are taken as the command's name); `sudo -u me axiom lock`, `nice axiom lock`, `flock /tmp/l axiom lock`, `systemd-run --user axiom quit` (a wrapper's option value becomes the command; `nice`, `flock`, `systemd-run` aren't wrappers); `gh -R a/b issue create` (only `args[:2] == ["issue", "create"]`); and every Bash write onto the live config.json: `cp x ~/.config/axiom/config.json`, `mv x <it>`, `> <it>`, `tee <it>`, `sed -i … <it>`, which skip the `x-takeover` check `check_config_edit` gives Edit and Write. The last is how a raw copy over config.json once dropped `Compositor.mode` managed. Also `rm -r ~/.config` and `find ~/.config/axiom -name config.json -delete` delete it unchecked. Fix: split on `(`, `)`, `{`, `}`, `$(`, backticks and the shell keywords; skip a wrapper's option values; match `issue create` anywhere in gh's argv; refuse a Bash write whose target is `LIVE_CONFIG` (cp/mv/install destination, `>`/`>>`, tee, `sed -i`), each with a `test_guard.py` case.
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### CI's Go tests run as root, so the unwritable-file tests never run there
+- **Where:** `.github/workflows/checks.yml` (the `go` job), `backend/internal/compositor/binds/binds_test.go` (`TestAnUnwritableFileFailsAlone`), `backend/internal/compositor/manager/manager_test.go` (`TestAFailedReleaseIsRetried`), `backend/internal/compositor/manager/sway_test.go`, `backend/internal/compositor/userconf/userconf_test.go`, `backend/internal/compositor/edit/hookup_test.go`, `backend/internal/daemon/selfupdate_test.go`
+- **What:** The `go` job runs in `archlinux:latest` as root, and six tests skip when `os.Geteuid() == 0` ("root writes anywhere"): the refusal paths for a file the user can't read or write (a failed release retried, an unwritable bind file failing alone, a read-only install). They run only on a developer's machine, so a PR from someone who didn't run them merges with those paths untested. Fix: run `scripts/check_go.sh --ci` as an unprivileged user in the container (`useradd -m ci`, a chown of the workspace and Go caches, `su ci -c …` or `setpriv`).
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### check_go.sh passes stale generated code except under --ci
+- **Where:** `scripts/check_go.sh` (`generated`), `scripts/check_all.sh`
+- **What:** `generated` rewrites the committed `zz_generated_*` files with `go generate`, then fails on a stale one only with `--ci`; check_all.sh (documented as "every check CI runs") calls `check_go.sh` without it, so `verify.sh --all` prints `all checks passed` on a branch CI fails, leaving the regenerated file as an unnoticed working-tree change. The usage says the plain run checks "generated code fresh". Fix: fail on stale generated code whenever `--fix` isn't given (keep `--ci` for govulncheck).
+- **Size:** trivial
+- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### CI can't fail on stale translation files
+- **Where:** `scripts/check_i18n.py` (`main`), `.github/workflows/checks.yml` (Translations, `continue-on-error`)
+- **What:** `check_i18n.py` exits 1 for any key without a translation (empty counts as missing), which is the normal state, so CI runs it as a warning only. The same exit carries the real errors: a stale `config/i18n/template/language.json` (generated, AGENTS.md › Checks), a file not in the canonical format, keys absent from a file or unused. A commit made without the pre-commit hook (a fresh clone or worktree before `git config core.hooksPath .githooks`, or `--no-verify`) lands them with CI green. Fix: exit 1 only for the template, the format, and keys absent or unused; report empty ones without failing; drop `continue-on-error`.
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### The qmllint baseline doesn't shrink when warnings are fixed
+- **Where:** `scripts/check_qmllint.py` (`main`), `scripts/qmllint-baseline.json`
+- **What:** A baselined warning that's gone only prints `note: N baselined warnings are gone`, and the baseline keeps its count, so the warning can come back later without failing. AGENTS.md calls the baselines ratchets, and the allowlist already fails on an unused entry (`check_structure.py`). Fix: fail (or have verify.sh rewrite the baseline) when the counts drop, as the allowlist does.
+- **Size:** trivial
+- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### check_structure's Quickshell.Io check doesn't see IpcHandler
+- **Where:** `scripts/check_structure.py` (`IO_KINDS`)
+- **What:** The comment above the check says IPC handlers are moving to the daemon too, and AGENTS.md says IPC comes through `IpcTarget`, but `IO_KINDS` lists only `Process`, `FileView`, `Socket` and `Quickshell.execDetached`; no QML uses `IpcHandler` now, so a new one (agents add temporary ones to open a popout for a screenshot) would pass. Fix: add `IpcHandler` to `IO_KINDS`.
+- **Size:** trivial
+- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### The permission deny list names a config path that's gone
+- **Where:** `.claude/settings.json` (`permissions.deny`), `.claude/hooks/guard.py` (docstring)
+- **What:** `permissions.deny` still refuses `rm config/user/config.json` (the folder no longer exists) and refuses `git clean -x`/`-X`/`-fdx`, which neither AGENTS.md › Never nor the guard mentions, though the guard's docstring says the deny list "repeats the plain ones". Fix: drop those two lines, and either name `git clean -x` in AGENTS.md (it deletes the generated files and local state) or drop it.
+- **Size:** trivial
+- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
 ### Small tooling leftovers
 - **Where:** `components/methods/IconResolver.qml`, `packaging/aur/`, `docs/dev/core/i18n.md`

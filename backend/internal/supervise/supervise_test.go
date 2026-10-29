@@ -131,7 +131,8 @@ func TestOrphanOfAnEarlierDaemonIsStopped(t *testing.T) {
 	if err := orphan.Start(); err != nil {
 		t.Fatal(err)
 	}
-	go orphan.Wait()
+	exited := make(chan struct{})
+	go func() { orphan.Wait(); close(exited) }()
 	os.WriteFile(pidFile, []byte(strconv.Itoa(orphan.Process.Pid)), 0o600)
 	// A pid file naming an unrelated process must leave it alone
 	other := exec.Command("sleep", "31")
@@ -140,7 +141,13 @@ func TestOrphanOfAnEarlierDaemonIsStopped(t *testing.T) {
 
 	s := New(fast(Options{Command: command, PIDFile: pidFile}))
 	run(t, s)
-	eventually(t, func() bool { return syscall.Kill(orphan.Process.Pid, 0) != nil })
+	// Its exit, not a poll against a bound: a loaded parallel run can take
+	// longer than eventually's 2 s to get here. Left alone, it would sleep 30 s
+	select {
+	case <-exited:
+	case <-time.After(15 * time.Second):
+		t.Fatal("the orphan wasn't stopped")
+	}
 	if syscall.Kill(other.Process.Pid, 0) != nil {
 		t.Error("an unrelated process was stopped")
 	}
