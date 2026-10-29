@@ -72,6 +72,9 @@ ColumnLayout {
 
   spacing: Widget.spacing
 
+  // The top row drawn (FormRow.first)
+  readonly property int _firstRow: Utils.firstFormRow(fields.count, i => fields.itemAt(i))
+
   GridLayout {
     Layout.fillWidth: true
     columns: 2
@@ -99,6 +102,8 @@ ColumnLayout {
         // this one doesn't exist yet when it's made
         readonly property var _partner: fields.count < 0 ? null : _beside ? fields.itemAt(index - 1) : root.rows[index + 1]?.schema?.["x-beside"] === true ? fields.itemAt(index + 1) : null
         readonly property bool half: root.pairs && _partner?.shown === true
+        // Beside the top row, it's on the top line too
+        first: index === root._firstRow || (half && _beside && index - 1 === root._firstRow)
         Layout.columnSpan: half ? 1 : 2
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop

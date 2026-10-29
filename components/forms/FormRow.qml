@@ -23,9 +23,15 @@ Item {
   property real railHeight: root.bodyHeight
   // The gap above the row, kept inside the row's height so it folds too
   property real dividerGap: Widget.spacing * 3
+  // The form's top row (no row above it shown), which has no gap: set by
+  // the host (Utils.firstFormRow), never read from `y`, which the
+  // layout sets from this row's height (a row flipping between the two
+  // kept the layout polishing forever)
+  property bool first: false
   default property alias content: body.data
   readonly property real indent: root.indented ? Widget.spacing * 2 : 0
-  readonly property real topGap: root.y > 0 ? root.dividerGap : 0
+  // None above an empty row either (a field drawing nothing)
+  readonly property real topGap: root.first || root.bodyHeight <= 0 ? 0 : root.dividerGap
 
   // 1 shown, 0 hidden. Set by hand, not bound: a binding and the fold
   // would both answer a change of `shown`, in no set order
