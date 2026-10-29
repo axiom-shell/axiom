@@ -364,17 +364,29 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
-### check_structure's Quickshell.Io check doesn't see IpcHandler
-- **Where:** `scripts/check_structure.py` (`IO_KINDS`)
-- **What:** The comment above the check says IPC handlers are moving to the daemon too, and AGENTS.md says IPC comes through `IpcTarget`, but `IO_KINDS` lists only `Process`, `FileView`, `Socket` and `Quickshell.execDetached`; no QML uses `IpcHandler` now, so a new one (agents add temporary ones to open a popout for a screenshot) would pass. Fix: add `IpcHandler` to `IO_KINDS`.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
 ### The permission deny list names a config path that's gone
 - **Where:** `.claude/settings.json` (`permissions.deny`), `.claude/hooks/guard.py` (docstring)
 - **What:** `permissions.deny` still refuses `rm config/user/config.json` (the folder no longer exists) and refuses `git clean -x`/`-X`/`-fdx`, which neither AGENTS.md › Never nor the guard mentions, though the guard's docstring says the deny list "repeats the plain ones". Fix: drop those two lines, and either name `git clean -x` in AGENTS.md (it deletes the generated files and local state) or drop it.
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread
+- **Where:** `scripts/gen_docs.py` (`CONFIG_REF`, `load_readers`)
+- **What:** `CONFIG_REF` and the reader-alias match in `load_readers` accept only `ConfigManager.config` / `ConfigManager.previews`, but since row 12 (#162) the readers bind `ConfigManager.live` (47 of the files in `config/`; `previews` has no QML use left). So 372 of the 676 settings in `docs/dev/config/` say `read: no reader member or direct use found` though their reader reads them (`WorkspaceOverlay.showHint` is `WorkspaceOverlayConfig.showHint: _c.showHint`), and `--report`'s "reader members with no user" prints 0 because those readers' members aren't seen at all. The generated map agents use to find a setting's users is wrong for half the config, and the one check for dead settings and reader members is blind; nothing failed, since nothing tests the usage map (`RpcShapes` covers only rpc.md). Fix: match `live` (drop `previews`), add a `test_scripts.py` case that a known reader member is found, then fail on a setting with no reader or use and on an unused reader member (the deletion pass's ratchet).
+- **Size:** small
+- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
+
+### Go tests wait with their own short bounds that a loaded CI runner overruns
+- **Where:** `backend/internal/compositor/manager/manager_test.go` (`harness.eventually`), `backend/internal/supervise/supervise_test.go` (`eventually`), `backend/internal/topics/topics_test.go` (`TestShortestIntervalAndFloor`), `backend/internal/daemon/daemon_test.go` (`TestLockScreenOnlyTakesLock`), `backend/internal/testkit/testkit.go`
+- **What:** Every one of the 8 failed Checks runs since 2026-10-26 failed in the `go` job, each a timing or resource flake on a PR that didn't cause it: binds `pthread_create failed` (twice), the compositor manager's `never: asked again` (twice), topics `topics_test.go:220: no fetch` (#152), ipcroute `text file busy` (#149, since fixed), self-update `rebuilt true` (#143), daemon `connect: connection refused` (#119). Three have entries; the rest weren't filed. 18 test files wait in their own poll loop (`eventually`, `waitFor`, a deadline) and 22 call `time.Sleep` (55 times), each bound tuned on a quiet machine, with `t.Parallel()` across the package. Fix: one `testkit.Eventually` with a bound CI can stretch (an env factor), the waits moved onto it, and a stress run (`go test -race -count=20 -cpu 1,4` on the parallel packages) to find the rest before CI does.
+- **Size:** small
+- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
+
+### Most check scripts have no tests of their own
+- **Where:** `tests/scripts/test_scripts.py`, `scripts/check_structure.py`, `scripts/check_i18n.py`, `scripts/check_qmllint.py`, `scripts/check_packages.py`, `scripts/check_docs.py`, `scripts/gen_docs.py`
+- **What:** `test_scripts.py` tests `check_sizes.py` and `check_docs.py` (one class), rpc.md and a few runtime scripts. `check_structure.py` (about 25 rules, the layering and compositor gates among them), `check_i18n.py`, `check_qmllint.py`'s baseline logic, `check_packages.py` and `gen_docs.py`'s usage map have no case that they fail on what they catch, so a rule whose pattern stops matching (a renamed member, a new syntax) passes everything, silently. That's how the `ConfigManager.live` miss above went unseen. Fix: a fixture tree per script with one breaking file per rule, asserting the message; each new rule gets its case.
+- **Size:** small
+- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
 
 ### Small tooling leftovers
 - **Where:** `components/methods/IconResolver.qml`, `packaging/aur/`, `docs/dev/core/i18n.md`
