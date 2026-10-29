@@ -137,7 +137,8 @@ Singleton {
       if (!root.agent || root.registered)
         return;
       root._probe(names => {
-        if (root.registered)
+        // Turned off (or registered) while pgrep ran
+        if (!root.agent || root.registered)
           return;
         if (root._remakes < 3) {
           root._remakes++;
