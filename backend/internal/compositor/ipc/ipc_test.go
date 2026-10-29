@@ -210,3 +210,55 @@ func TestNiri(t *testing.T) {
 		t.Fatal("no reload")
 	}
 }
+
+// Each compositor's version as a bug report shows it
+func TestVersion(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		version func(ctx context.Context, dir string) (string, error)
+		want    string
+	}{
+		{"Hyprland", func(ctx context.Context, dir string) (string, error) {
+			listen(t, filepath.Join(dir, ".socket.sock"), func(c net.Conn) {
+				buf := make([]byte, 64)
+				if n, _ := c.Read(buf); string(buf[:n]) == "j/version" {
+					io.WriteString(c, `{"branch":"main","version":"0.55.0","tag":"v0.55.0-12"}`)
+				}
+			})
+			return (&Hypr{Dir: dir}).Version(ctx)
+		}, "Hyprland 0.55.0"},
+		{"an older Hyprland, by its tag", func(ctx context.Context, dir string) (string, error) {
+			listen(t, filepath.Join(dir, ".socket.sock"), func(c net.Conn) {
+				io.WriteString(c, `{"tag":"v0.49.0"}`)
+			})
+			return (&Hypr{Dir: dir}).Version(ctx)
+		}, "Hyprland 0.49.0"},
+		{"niri", func(ctx context.Context, dir string) (string, error) {
+			path := filepath.Join(dir, "niri.sock")
+			listen(t, path, func(c net.Conn) {
+				if line, _ := bufio.NewReader(c).ReadString('\n'); line == "\"Version\"\n" {
+					io.WriteString(c, `{"Ok":{"Version":"26.04 (abc1234)"}}`+"\n")
+				}
+			})
+			return (&Niri{Path: path}).Version(ctx)
+		}, "niri 26.04 (abc1234)"},
+		{"sway", func(ctx context.Context, dir string) (string, error) {
+			path := filepath.Join(dir, "sway.sock")
+			listen(t, path, func(c net.Conn) {
+				if kind, _, err := swayRead(c); err == nil && kind == swayGetVersion {
+					swayReply(c, kind, `{"human_readable":"1.12","major":1,"minor":12}`)
+				}
+			})
+			return (&Sway{Path: path}).Version(ctx)
+		}, "sway 1.12"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got, err := tc.version(ctx(t), short(t)); err != nil || got != tc.want {
+				t.Errorf("Version = %q, %v; want %q", got, err, tc.want)
+			}
+		})
+	}
+}

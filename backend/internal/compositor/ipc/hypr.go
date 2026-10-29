@@ -69,6 +69,22 @@ func (h *Hypr) Outputs(ctx context.Context) ([]render.Output, error) {
 	return out, nil
 }
 
+// Version is Hyprland's version as people read it ("Hyprland 0.55.0").
+func (h *Hypr) Version(ctx context.Context) (string, error) {
+	reply, err := h.Request(ctx, "j/version")
+	if err != nil {
+		return "", err
+	}
+	var v struct{ Version, Tag string }
+	if err := json.Unmarshal([]byte(reply), &v); err != nil {
+		return "", err
+	}
+	if v.Version == "" {
+		v.Version = strings.TrimPrefix(v.Tag, "v")
+	}
+	return "Hyprland " + v.Version, nil
+}
+
 // Eval runs Lua in Hyprland's config state: "" when it ran, else Hyprland's
 // error.
 func (h *Hypr) Eval(ctx context.Context, lua string) (string, error) {

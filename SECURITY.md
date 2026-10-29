@@ -7,7 +7,7 @@ axiom runs your lock screen, and can run your login screen and your polkit agent
 [Report a vulnerability](https://github.com/axiom-shell/axiom/security/advisories/new) through GitHub's private reporting. Only the maintainers can see it. Include:
 - what an attacker can do, and what they need first (at the keyboard of a locked machine, a local user, a crafted file, …)
 - the steps to reproduce it
-- the output of `scripts/bug_info.sh` (see [CONTRIBUTING.md](CONTRIBUTING.md#reporting-and-requesting))
+- the output of `axiom bug-info` (see [CONTRIBUTING.md](CONTRIBUTING.md#reporting-and-requesting))
 
 We aim to reply within a week. Once a fix is out we publish an advisory, crediting you unless you'd rather not be named.
 

@@ -30,6 +30,7 @@ const (
 	swayRunCommand      = 0
 	swaySubscribe       = 2
 	swayGetOutputs      = 3
+	swayGetVersion      = 7
 	swayGetBindingModes = 8
 	swayEventWorkspace  = 0x80000000
 )
@@ -121,6 +122,17 @@ func (s *Sway) Outputs(ctx context.Context) ([]render.Output, error) {
 		out[i] = render.Output{Name: o.Name, Description: describe(o.Make, o.Model, o.Serial), Disabled: o.Active != nil && !*o.Active}
 	}
 	return out, nil
+}
+
+// Version is sway's version as people read it ("sway 1.12").
+func (s *Sway) Version(ctx context.Context) (string, error) {
+	var reply struct {
+		HumanReadable string `json:"human_readable"`
+	}
+	if err := s.request(ctx, swayGetVersion, "", &reply); err != nil {
+		return "", err
+	}
+	return "sway " + reply.HumanReadable, nil
 }
 
 // Reloads streams sway's config reloads (workspace events whose change is

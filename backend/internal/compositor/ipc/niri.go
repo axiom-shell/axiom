@@ -91,6 +91,19 @@ func (n *Niri) Outputs(ctx context.Context) ([]render.Output, error) {
 	return out, nil
 }
 
+// Version is niri's version as people read it ("niri 26.04 (abc1234)").
+func (n *Niri) Version(ctx context.Context) (string, error) {
+	ok, err := n.Request(ctx, "Version")
+	if err != nil {
+		return "", err
+	}
+	var reply struct{ Version string }
+	if err := json.Unmarshal(ok, &reply); err != nil {
+		return "", err
+	}
+	return "niri " + reply.Version, nil
+}
+
 // Reloads streams niri's config loads (ConfigLoaded events, Failed when niri
 // couldn't load it) until ctx ends or the socket closes. The stream's first
 // ConfigLoaded is the state niri starts it with, not a reload: it's left
