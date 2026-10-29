@@ -60,7 +60,7 @@ body:
         axiom:      clone v1.2.0
         Binary:     axiom v1.2.0 (commit 1a2b3c4d5e6f), running
         Quickshell: Quickshell 0.3.2
-        Compositor: Hyprland 0.55.0
+        Compositor: Hyprland 0.55.0 (commit 1a2b3c4)
         ...
       render: text
     validations:
