@@ -198,7 +198,7 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
 
-- [Surfaces touch a dead screen after the outputs go away](issues.md#surfaces-touch-a-dead-screen-after-the-outputs-go-away)
+- [Surfaces touch a dead screen after the outputs go away](issues.md#surfaces-touch-a-dead-screen-after-the-outputs-go-away) (plan: #197)
 - [The lock screen's modules all warn they overlap](issues.md#the-lock-screens-modules-all-warn-they-overlap)
 - [Text input warnings when the desktop takes the keyboard](issues.md#text-input-warnings-when-the-desktop-takes-the-keyboard)
 - [Qt text-input warnings under sway and niri](issues.md#qt-text-input-warnings-under-sway-and-niri)
