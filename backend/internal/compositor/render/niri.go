@@ -348,6 +348,42 @@ func (t *Tables) NiriBindNode(bind, ctx any) *jsonx.Object {
 	return Node(k, jsonx.Arr(), props, jsonx.Arr(action))
 }
 
+// NiriRecentWindows takes the switcher binds out of binds into niri's own
+// switcher's (`recent-windows { binds { … } }`, which replaces niri's
+// default ones): the rest, and that node (nil with none). A key without a
+// modifier, or a mouse button or wheel, stays in the rest, niri's switcher
+// refusing it.
+func (t *Tables) NiriRecentWindows(binds any) (*jsonx.Array, *jsonx.Object) {
+	rest := jsonx.Arr()
+	var own []any
+	seen := map[string]bool{}
+	for _, b := range items(binds) {
+		step, ok := t.SwitcherSteps.Get(str(get(b, "action")))
+		k := NiriKey(get(b, "key"))
+		c := SplitKey(get(b, "key"))
+		_, mouse := niriMouseNames[strings.ToLower(c.Key)]
+		// niri's switcher takes only a keyboard key with a modifier: the
+		// rest stays axiom's
+		if !ok || len(c.Mods) == 0 || mouse {
+			rest.Append(b)
+			continue
+		}
+		if k == "" || seen[strings.ToLower(k)] {
+			continue
+		}
+		seen[strings.ToLower(k)] = true
+		way := "previous-window"
+		if num(step) > 0 {
+			way = "next-window"
+		}
+		own = append(own, Node(k, nil, nil, jsonx.Arr(node(way))))
+	}
+	if len(own) == 0 {
+		return rest, nil
+	}
+	return rest, block("recent-windows", block("binds", own...))
+}
+
 // NiriIsComplete is NiriConf.isComplete.
 func (t *Tables) NiriIsComplete(bind, ctx any) bool { return t.NiriBindNode(bind, ctx) != nil }
 

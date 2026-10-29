@@ -194,6 +194,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		"motion", tree(f.Motion),
 		"idle", flag("Idle", "enabled"),
 		"polkit", flag("Polkit", "enabled"),
+		"compositorSwitcher", flag("WindowSwitcher", "compositorSwitcher") && f.Supports["compositorSwitcher"],
 	)
 	in.Set("layerKey", string(jsonx.MarshalCompact(in)))
 	specFile, specLive := spec(true), spec(false)

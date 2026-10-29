@@ -283,6 +283,9 @@ Found while retiring the `qs ipc` fallback (backend stage 6):
 Found while closing the config path (backend stage 7):
 - [After a refused save, a draft's edits show unsaved but not live](issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
 
+Found while adding niri's own overview (row 16):
+- [An open-only workspace overview bind calls a function that doesn't exist](issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
+
 Found by the audits:
 
 ### Phase 12: memory footprint
@@ -298,25 +301,29 @@ The shell's RSS at rest and after use, measured rather than guessed: about 840 M
 Bugs and small features from the maintainer's own use, filed from their notes on 2026-10-28 (compositor-specific ones are in [Phase 6](#phase-6-compositor-parity), fit ones in [Phase 7](#phase-7-fit-geometry-and-performance)). Each feature step follows its recipe (`setting`, `settings-card`, …); the plans go through [Items that need a plan](#items-that-need-a-plan).
 
 Steps:
-1. **niri's own overview:** a setting to open niri's built-in overview in place of axiom's workspace overview, on by default where it's offered. It's gated on a `supports.*` capability, never the compositor's name. The maintainer: "simply a button option to use niris builtin instead".
+1. **Done:** **niri's own overview** (row 16): a setting to open niri's built-in overview in place of axiom's workspace overview, on by default where it's offered. It's gated on a `supports.*` capability, never the compositor's name. The maintainer: "simply a button option to use niris builtin instead". Also: "note this also should disable the default bind on niri (in both cases, force users through axioms bind)"; on detached mode: "detatched mode shouldn't disable binds at all. Logic remains if they have alt tab set in aciom, but niris default / set in config will just be there as well"; on the overview bind (2026-10-29): "Managed only (Recommended) — Managed mode comments Mod+O out when it adopts the config, as it does other moved binds. Included mode is treated like detached: it never edits the user's file, so niri's bind stays alongside axiom's." `WorkspaceOverlay.compositorOverview` (`supports.overview`) routes everything that opens axiom's overview to niri's; managed mode's adopt merge moves niri's `toggle-overview` bind into axiom as its overview bind (commented out in the user's file), detached and included leave niri's binds alone.
 2. **Overlay gaps and module borders:** the overlay's gaps become adjustable, and module borders can be turned off.
-3. **Caffeine on a timer:** caffeine (the idle inhibitor) can be turned on for a set time and turns itself off after it.
-4. **A test notification:** the notifications settings get a button that shows one, as the OSD and dock settings do, for easy editing.
+3. **A test notification:** the notifications settings get a button that shows one, as the OSD and dock settings do, for easy editing.
+4. **Done:** **niri's own window switcher** (row 16): a setting, `WindowSwitcher.compositorSwitcher` (`supports.compositorSwitcher`, on by default where it's offered), has axiom's config writer bind the switch windows keys to niri's own switcher (`recent-windows`, which drops niri's default switcher keys) in included and managed mode. The maintainer: "while you are implementing the niri setting and logic a second setting should also use niri alt tab as acioms (same logic, replaces everything and is default on niri)" and "note this also should disable the default bind on niri (in both cases, force users through axioms bind)"; on detached mode: "detatched mode shouldn't disable binds at all. Logic remains if they have alt tab set in aciom, but niris default / set in config will just be there as well"; on the switcher (2026-10-29): "Writer binds niri's action (Recommended) — When the setting is on, axiom's config writer binds Alt+Tab straight to niri's own switcher action instead of axiom's IPC (included and managed mode only). In detached mode the setting does nothing, and the user's own niri binds handle alt-tab." With no switcher bind of axiom's (2026-10-29): "default to off for window switcher if not bind set. Everything goes through aciom", "on managed mode", "sounds good. (i.e. in managed, if the user doesn't have a window switcher / overlay bind, there is no bind for it). Binds are exactly representative of what there is.": managed writes the switcher's binds empty (the setting off too), so niri's default keys are gone; included leaves them.
 
 Needs a plan:
 - [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other)
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri)
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse)
+- [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own)
 
 Resolves:
 - [A note's view jumps while typing and forgets its place](issues.md#a-notes-view-jumps-while-typing-and-forgets-its-place)
 - [The bar editor lost its links to the global bar style](issues.md#the-bar-editor-lost-its-links-to-the-global-bar-style)
 - [The layouts editor says a page is shrunk to 99% at the defaults](issues.md#the-layouts-editor-says-a-page-is-shrunk-to-99-at-the-defaults)
 - [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made)
-- [Updating the greeter closes the overlay and shows no progress](issues.md#updating-the-greeter-closes-the-overlay-and-shows-no-progress)
 - [Notifications have no blur backing and an invisible border](issues.md#notifications-have-no-blur-backing-and-an-invisible-border)
 - [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop)
 - [Warning triangles say nothing on hover](issues.md#warning-triangles-say-nothing-on-hover)
+
+Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
+- **Caffeine on a timer** (was step 3): caffeine (the idle inhibitor) can be turned on for a set time and turns itself off after it. *Question:* how is the time picked (fixed presets in the caffeine widget or module, a setting, an IPC argument), and what shows the time left?
+- [Updating the greeter closes the overlay and shows no progress](issues.md#updating-the-greeter-closes-the-overlay-and-shows-no-progress). *Needs testing:* only a real greeter update shows it, which the agents may not run (`AGENTS.md` › Never).
 
 ### Deferred
 Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.

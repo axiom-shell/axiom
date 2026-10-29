@@ -22,7 +22,10 @@ var (
 	// niri's actions that are an axiom action of their own
 	niriSimple = map[string]string{"close-window": "closeWindow", "fullscreen-window": "fullscreen", "toggle-window-floating": "toggleFloat",
 		"center-window": "centerWindow", "quit": "exitSession", "toggle-column-tabbed-display": "toggleGroup",
-		"expand-column-to-available-width": "stripFit", "center-column": "stripCenter"}
+		"expand-column-to-available-width": "stripFit", "center-column": "stripCenter",
+		// (axiom's overview opens niri's while WorkspaceOverlay.compositorOverview
+		// is on: the bind goes through axiom's)
+		"toggle-overview": "workspaceOverview"}
 	// niri's actions taking a direction: axiom's action and direction
 	niriDirectional = map[string][2]string{
 		"focus-column-left": {"focusDir", "left"}, "focus-column-right": {"focusDir", "right"},

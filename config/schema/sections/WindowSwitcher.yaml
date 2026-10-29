@@ -7,6 +7,12 @@ title: Window switcher
 description: Your windows, most recently used first, while the switch windows keys are held (ALT + Tab and ALT + SHIFT + Tab on the Keybinds page). Releasing the modifier focuses the chosen window; Escape keeps the current one.
 additionalProperties: false
 properties:
+  compositorSwitcher:
+    type: boolean
+    title: Use the compositor's switcher
+    x-showIf: {/$supports.compositorSwitcher: true}
+    default: true
+    description: The switch windows keys open the compositor's own window switcher instead of this one. Only while axiom writes the compositor's config (included or managed mode).
   scope:
     type: string
     title: Windows listed

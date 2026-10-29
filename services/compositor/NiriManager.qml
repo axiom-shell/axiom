@@ -85,7 +85,8 @@ Singleton {
   // change can show a frame or so after the one sliding. It blurs behind
   // the shell's surfaces where each window says (blurRegion: no alpha
   // threshold, a layer rule would blur the whole window), its
-  // ext-background-effect.
+  // ext-background-effect. It has an overview of its own (overview) and a
+  // window switcher its config binds (compositorSwitcher).
   readonly property var supports: ({
       "configModes": true,
       "keybinds": true,
@@ -108,7 +109,9 @@ Singleton {
       "windowCover": true,
       "inputConfig": true,
       "keyCapture": true,
-      "bindMerge": true
+      "bindMerge": true,
+      "overview": true,
+      "compositorSwitcher": true
     })
 
   // --- Events ---
@@ -137,6 +140,14 @@ Singleton {
   // Reads the outputs again (the rest comes as events)
   function refresh() {
     root._readOutputs();
+  }
+
+  // Opens, closes or toggles niri's own overview (`verb`: open, close,
+  // toggle; CompositorManager.compositorOverview)
+  function overview(verb) {
+    const action = {};
+    action[verb === "open" ? "OpenOverview" : verb === "close" ? "CloseOverview" : "ToggleOverview"] = {};
+    root._action(action);
   }
 
   // --- Windows ---

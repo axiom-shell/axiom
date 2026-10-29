@@ -341,6 +341,9 @@ clipboard {
 xwayland-satellite {
     on
 }
+recent-windows {
+    binds {}
+}
 window-rule {
     geometry-corner-radius 26
     clip-to-geometry true

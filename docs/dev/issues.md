@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### An open-only workspace overview bind calls a function that doesn't exist
+- **Where:** `backend/internal/compositor/actions/table.json` (`calls.workspaceOverview`), `shell/WorkspaceOverlay.qml` (its `IpcTarget`)
+- **What:** The bind table maps the `workspaceOverview` action's `open` call to the IPC function `show` (`render.Tables.CallFunction`), so a bind with call `open` runs `axiom ipc workspaceOverlay show`; the `workspaceOverlay` target has only `toggle`, `open` and `hide` (`docs/dev/generated/ipc.md`), so the bind does nothing. The default bind (`toggle`) is unaffected. Fix: the table's `open` names `open`.
+- **Size:** trivial
+- **Found:** 2026-10-29, while adding niri's own overview (row 16)
+
+### axiom has no hot corners of its own
+- **Where:** `backend/internal/compositor/render/niri.go`, `backend/internal/compositor/manager/niri.go`
+- **What:** The maintainer (2026-10-29): "note in issues/roadmap that hot corners should be implemented (which would cause niris to work the same way (i.e. only exits if axiom sets it in managed mode (which also wouldn't even use niris corner)". Hot corners become an axiom feature drawn by the shell, so they work on every compositor; in managed mode on niri, niri's own hot corner is turned off and a corner exists only when axiom sets one, matching managed binds ("Binds are exactly representative of what there is"). Detached and included leave niri's corner alone, as they do its binds. Open: which actions a corner runs, per-monitor corners, a delay.
+- **Size:** needs a plan
+- **Found:** 2026-10-29, while adding niri's own overview (row 16)
+
 ### After a refused save, a draft's edits show unsaved but not live
 - **Where:** `services/core/ConfigDraft.qml` (`_refusals`), `services/ui/SettingsManager.qml` (`_clearPreviews`), `services/ui/BarManager.qml` (`applyChanges`)
 - **What:** When axiom refuses a save, `ConfigManager.saveRefused` makes the draft dirty again, but the editor's previews were cleared when it saved (the settings page's `draft.load()` → `_clearPreviews`; `BarManager` clears its preview once clean) and nothing sets them again: the running config shows the value read back while the editor shows the edits as unsaved, until the next edit previews them. Rare (a save axiom refuses), so left after the minimal fix (row 12).
@@ -300,7 +312,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The window switcher's blur and release on sway and niri
 - **Where:** `services/compositor/WindowSwitcherManager.qml` (`commit`, `pick`), `components/surfaces/switcher/SwitcherKeys.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
-- **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". The plan settles one release path that works on every compositor and the switcher's backing.
+- **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". On niri this is only while `WindowSwitcher.compositorSwitcher` is off or in detached mode: by default the included and managed files bind the keys to niri's own switcher (row 16). The plan settles one release path that works on every compositor and the switcher's backing.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
