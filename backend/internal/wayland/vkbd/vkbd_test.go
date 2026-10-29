@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/seat"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire/wiretest"
@@ -106,12 +107,8 @@ func TestTypeSendsAKeymapThenKeys(t *testing.T) {
 	done := make(chan error, 1)
 	go func() { done <- client.Run(ctx, f.Socket, st, kb) }()
 	t.Cleanup(func() { cancel(); <-done })
-	deadline := time.Now().Add(3 * time.Second)
-	for !kb.Available() || st.ID() == 0 {
-		if time.Now().After(deadline) {
-			t.Fatal("not bound")
-		}
-		time.Sleep(5 * time.Millisecond)
+	if !testkit.Eventually(func() bool { return kb.Available() && st.ID() != 0 }) {
+		t.Fatal("not bound")
 	}
 
 	if err := kb.Type(context.Background(), "hi"); err != nil {
@@ -132,7 +129,7 @@ func TestTypeSendsAKeymapThenKeys(t *testing.T) {
 			case opDestroy:
 				got = append(got, "destroy")
 			}
-		case <-time.After(3 * time.Second):
+		case <-time.After(testkit.Bound(3 * time.Second)):
 			t.Fatalf("got %v", got)
 		}
 	}

@@ -334,12 +334,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
 
-### Go tests wait with their own short bounds that a loaded CI runner overruns
-- **Where:** `backend/internal/compositor/manager/manager_test.go` (`harness.eventually`), `backend/internal/supervise/supervise_test.go` (`eventually`), `backend/internal/topics/topics_test.go` (`TestShortestIntervalAndFloor`), `backend/internal/daemon/daemon_test.go` (`TestLockScreenOnlyTakesLock`), `backend/internal/testkit/testkit.go`
-- **What:** Every one of the 8 failed Checks runs since 2026-10-26 failed in the `go` job, each a timing or resource flake on a PR that didn't cause it: binds `pthread_create failed` (twice), the compositor manager's `never: asked again` (twice), topics `topics_test.go:220: no fetch` (#152), ipcroute `text file busy` (#149, since fixed), self-update `rebuilt true` (#143), daemon `connect: connection refused` (#119). Three have entries; the rest weren't filed. 18 test files wait in their own poll loop (`eventually`, `waitFor`, a deadline) and 22 call `time.Sleep` (55 times), each bound tuned on a quiet machine, with `t.Parallel()` across the package. Fix: one `testkit.Eventually` with a bound CI can stretch (an env factor), the waits moved onto it, and a stress run (`go test -race -count=20 -cpu 1,4` on the parallel packages) to find the rest before CI does.
-- **Size:** small
-- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
-
 ### Most check scripts have no tests of their own
 - **Where:** `tests/scripts/test_scripts.py`, `scripts/check_structure.py`, `scripts/check_i18n.py`, `scripts/check_qmllint.py`, `scripts/check_packages.py`, `scripts/check_docs.py`, `scripts/gen_docs.py`
 - **What:** `test_scripts.py` tests `check_sizes.py` and `check_docs.py` (one class), rpc.md and a few runtime scripts. `check_structure.py` (about 25 rules, the layering and compositor gates among them), `check_i18n.py`, `check_qmllint.py`'s baseline logic, `check_packages.py` and `gen_docs.py`'s usage map have no case that they fail on what they catch, so a rule whose pattern stops matching (a renamed member, a new syntax) passes everything, silently. That's how the `ConfigManager.live` miss above went unseen. Fix: a fixture tree per script with one breaking file per rule, asserting the message; each new rule gets its case.

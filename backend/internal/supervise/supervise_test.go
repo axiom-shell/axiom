@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func fast(opts Options) Options {
@@ -30,13 +32,9 @@ func run(t *testing.T, s *Supervisor) (context.CancelFunc, chan struct{}) {
 
 func eventually(t *testing.T, cond func() bool) {
 	t.Helper()
-	for i := 0; i < 200; i++ {
-		if cond() {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
+	if !testkit.Eventually(cond) {
+		t.Fatal("timed out")
 	}
-	t.Fatal("timed out")
 }
 
 func TestCrashesRestartThenGiveUp(t *testing.T) {
@@ -111,7 +109,7 @@ func TestStopEscalatesToKill(t *testing.T) {
 	cancel()
 	select {
 	case <-done:
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("didn't stop")
 	}
 	if syscall.Kill(pid, 0) == nil {
@@ -145,7 +143,7 @@ func TestOrphanOfAnEarlierDaemonIsStopped(t *testing.T) {
 	// longer than eventually's 2 s to get here. Left alone, it would sleep 30 s
 	select {
 	case <-exited:
-	case <-time.After(15 * time.Second):
+	case <-time.After(testkit.Bound(15 * time.Second)):
 		t.Fatal("the orphan wasn't stopped")
 	}
 	if syscall.Kill(other.Process.Pid, 0) != nil {

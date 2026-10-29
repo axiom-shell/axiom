@@ -98,9 +98,12 @@ type Store struct {
 	// fileTakeovers are only the defaults, so the first reload that loads
 	// takes the file's own, and a restore is refused
 	takeoversUnknown bool
-	keptTakeovers    []byte // what TakeoversFile was last written with
-	subs             map[int]func(Event)
-	nextSub          int
+
+	// watching, when set, is closed once Watch watches the folders (tests)
+	watching      chan struct{}
+	keptTakeovers []byte // what TakeoversFile was last written with
+	subs          map[int]func(Event)
+	nextSub       int
 	// Events not delivered yet, and whether a goroutine is delivering them
 	pending  []Event
 	draining bool
@@ -321,6 +324,9 @@ func (s *Store) Watch(ctx context.Context) error {
 		if err := w.Add(d); err != nil {
 			return err
 		}
+	}
+	if s.watching != nil {
+		close(s.watching)
 	}
 	var timer *time.Timer
 	fire := make(chan struct{}, 1)

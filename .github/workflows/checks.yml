@@ -161,9 +161,13 @@ jobs:
           go version
 
       # scripts/check_go.sh --ci, and that the cases the JS helpers and the
-      # axiom binary share (both replay them) are indexed
+      # axiom binary share (both replay them) are indexed. A shared runner
+      # is slower than the machine the tests' waits were tuned on: they
+      # wait three times as long (testkit.Bound)
       - name: Checks (scripts/check_all.sh go)
         if: steps.scope.outputs.run
+        env:
+          AXIOM_TEST_WAIT_FACTOR: "3"
         run: scripts/check_all.sh --ci go
 
   # The script tests (the slowest checks) and the shell script lint, beside

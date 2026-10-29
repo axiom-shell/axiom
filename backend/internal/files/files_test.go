@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 type fakeConn struct {
@@ -45,17 +46,13 @@ func newFiles(t *testing.T) *Files {
 	}})
 }
 
-// waitFor polls until c has n changes, or fails after a second.
+// waitFor polls until c has n changes.
 func waitFor(t *testing.T, c *fakeConn, n int) []string {
 	t.Helper()
-	for range 100 {
-		if got := c.got(); len(got) >= n {
-			return got
-		}
-		time.Sleep(10 * time.Millisecond)
+	if !testkit.Eventually(func() bool { return len(c.got()) >= n }) {
+		t.Fatalf("waited for %d changes, got %v", n, c.got())
 	}
-	t.Fatalf("waited for %d changes, got %v", n, c.got())
-	return nil
+	return c.got()
 }
 
 // A write makes the folders it needs (0700), replaces the file whole and

@@ -8,6 +8,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func ctx(t *testing.T) context.Context {
@@ -43,7 +44,7 @@ func serve(t *testing.T, bus *dbustest.Bus) (*Server, chan struct{}) {
 // until waits for a change after which cond holds.
 func until(t *testing.T, changes chan struct{}, cond func() bool) {
 	t.Helper()
-	deadline := time.After(3 * time.Second)
+	deadline := time.After(testkit.Bound(3 * time.Second))
 	for !cond() {
 		select {
 		case <-changes:

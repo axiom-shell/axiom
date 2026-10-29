@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/seat"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
@@ -90,19 +91,10 @@ func start(t *testing.T, f *fake) (*Device, chan *Offer) {
 	done := make(chan error, 1)
 	go func() { done <- client.Run(ctx, f.Socket, st, d) }()
 	t.Cleanup(func() { cancel(); <-done })
-	deadline := time.Now().Add(3 * time.Second)
-	for {
-		f.mu.Lock()
-		ok := f.device != 0
-		f.mu.Unlock()
-		if ok {
-			return d, offers
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("no device")
-		}
-		time.Sleep(5 * time.Millisecond)
+	if !testkit.Eventually(func() bool { f.mu.Lock(); defer f.mu.Unlock(); return f.device != 0 }) {
+		t.Fatal("no device")
 	}
+	return d, offers
 }
 
 func next[T any](t *testing.T, ch chan T) T {
@@ -110,7 +102,7 @@ func next[T any](t *testing.T, ch chan T) T {
 	select {
 	case v := <-ch:
 		return v
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("timed out")
 	}
 	var zero T
@@ -156,18 +148,14 @@ func TestReadsTheSelection(t *testing.T) {
 	if _, err := o.Receive(context.Background(), "text/plain", 10, time.Second); err == nil {
 		t.Error("read a replaced offer")
 	}
-	deadline := time.Now().Add(3 * time.Second)
-	for {
+	var destroyed []uint32
+	if !testkit.Eventually(func() bool {
 		f.mu.Lock()
-		destroyed := append([]uint32(nil), f.destroyed...)
+		destroyed = append([]uint32(nil), f.destroyed...)
 		f.mu.Unlock()
-		if len(destroyed) == 1 && destroyed[0] == 0xff000001 {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("destroyed %v", destroyed)
-		}
-		time.Sleep(5 * time.Millisecond)
+		return len(destroyed) == 1 && destroyed[0] == 0xff000001
+	}) {
+		t.Fatalf("destroyed %v", destroyed)
 	}
 	// Cleared
 	f.Send(f.device, evSelection, wire.Uint(0))

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func TestLockConfirmedByTheShell(t *testing.T) {
@@ -133,13 +134,7 @@ func TestOwnLockerRunsItsCommandButNotLoginctl(t *testing.T) {
 	if err := l.Lock(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < 50; i++ {
-		if _, err := os.Stat(marker); err == nil {
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	if _, err := os.Stat(marker); err != nil {
+	if !testkit.Eventually(func() bool { _, err := os.Stat(marker); return err == nil }) {
 		t.Error("the lock command didn't run")
 	}
 	command = "loginctl lock-session"

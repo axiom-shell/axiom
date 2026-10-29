@@ -16,6 +16,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // fakeWriter is a writer whose compositor is a list of what was asked of
@@ -197,12 +198,8 @@ func (h *harness) changeMode(mode string, fromFile bool) {
 // eventually waits for cond
 func (h *harness) eventually(what string, cond func() bool) {
 	h.t.Helper()
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
-		if cond() {
-			return
-		}
-		time.Sleep(20 * time.Millisecond)
+	if testkit.Eventually(cond) {
+		return
 	}
 	h.t.Fatalf("never: %s (calls %v, state %s)", what, h.w.seen(), jsonx.MarshalCompact(h.m.State(context.Background())))
 }
@@ -450,7 +447,7 @@ func TestInertManagerNeverBlocks(t *testing.T) {
 	}()
 	select {
 	case <-done:
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("blocked")
 	}
 	cancel()
@@ -476,7 +473,7 @@ func TestStoppedManagerNeverBlocks(t *testing.T) {
 	}()
 	select {
 	case <-done:
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("blocked")
 	}
 }

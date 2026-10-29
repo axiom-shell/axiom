@@ -12,6 +12,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
@@ -148,7 +149,7 @@ func TestGreeterWatchesCommands(t *testing.T) {
 		if p.Outputs["echo hi"].Text != "hi" {
 			t.Errorf("pushed %+v", p)
 		}
-	case <-time.After(5 * time.Second):
+	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("no output pushed")
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 type echoParams struct {
@@ -310,7 +311,7 @@ func TestServeWaitsForHandlers(t *testing.T) {
 	cancel()
 	select {
 	case <-served:
-	case <-time.After(2 * time.Second):
+	case <-time.After(testkit.Bound(2 * time.Second)):
 		t.Fatal("Serve didn't return")
 	}
 	if !finished.Load() {
@@ -445,14 +446,14 @@ func TestInOrderCallsRunInOrder(t *testing.T) {
 		if id != "9" {
 			t.Fatalf("reply %s came before free's, while write 0 waits", id)
 		}
-	case <-time.After(2 * time.Second):
+	case <-time.After(testkit.Bound(2 * time.Second)):
 		t.Fatal("free waited for the in-order calls")
 	}
 	close(release)
 	for i := 0; i < 5; i++ {
 		select {
 		case <-replies:
-		case <-time.After(2 * time.Second):
+		case <-time.After(testkit.Bound(2 * time.Second)):
 			t.Fatal("the in-order calls didn't all answer")
 		}
 	}

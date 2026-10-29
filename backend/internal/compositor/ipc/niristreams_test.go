@@ -9,6 +9,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // pushes records what a stream notified
@@ -36,15 +38,10 @@ func (p *pushes) list() []string {
 // waitFor waits until p has n pushes and returns them
 func (p *pushes) waitFor(t *testing.T, n int) []string {
 	t.Helper()
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
-		if got := p.list(); len(got) >= n {
-			return got
-		}
-		time.Sleep(10 * time.Millisecond)
+	if !testkit.Eventually(func() bool { return len(p.list()) >= n }) {
+		t.Fatalf("pushes: %q, want %d", p.list(), n)
 	}
-	t.Fatalf("pushes: %q, want %d", p.list(), n)
-	return nil
+	return p.list()
 }
 
 // eventStream serves niri's stream: its reply, then each connection's
@@ -95,7 +92,7 @@ func TestNiriStreams(t *testing.T) {
 	s.Forget(p)
 	select {
 	case <-ended:
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("the stream outlived Forget")
 	}
 }

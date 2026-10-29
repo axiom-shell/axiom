@@ -10,6 +10,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // fakeOutputs is a compositor's outputs: what's connected, and the rules
@@ -182,12 +183,9 @@ func TestProfileWatch(t *testing.T) {
 	w.delay = 50 * time.Millisecond
 	eventually := func(what string, cond func() bool) {
 		t.Helper()
-		for deadline := time.Now().Add(3 * time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
-			if cond() {
-				return
-			}
+		if !testkit.Eventually(cond) {
+			t.Fatalf("never: %s", what)
 		}
-		t.Fatalf("never: %s", what)
 	}
 	items, _ := jsonx.Unmarshal([]byte(testProfiles))
 	w.SetProfiles(items)

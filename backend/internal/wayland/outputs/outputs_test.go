@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire/wiretest"
 )
@@ -87,16 +88,8 @@ func run(t *testing.T, f *fake) (*Tracker, chan error) {
 
 func waitNames(t *testing.T, tr *Tracker, want ...string) {
 	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
-	for {
-		got := tr.Names()
-		if got != nil && slices.Equal(got, want) {
-			return
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("names %q, want %q", got, want)
-		}
-		time.Sleep(5 * time.Millisecond)
+	if !testkit.Eventually(func() bool { got := tr.Names(); return got != nil && slices.Equal(got, want) }) {
+		t.Fatalf("names %q, want %q", tr.Names(), want)
 	}
 }
 
@@ -161,18 +154,8 @@ func TestHotplug(t *testing.T) {
 	waitNames(t, tr, "DP-1", "DP-2")
 	f.RemoveGlobal(10)
 	waitNames(t, tr, "DP-2")
-	deadline := time.Now().Add(5 * time.Second)
-	for {
-		f.mu.Lock()
-		released := dp.released
-		f.mu.Unlock()
-		if released {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("the removed output wasn't released")
-		}
-		time.Sleep(5 * time.Millisecond)
+	if !testkit.Eventually(func() bool { f.mu.Lock(); defer f.mu.Unlock(); return dp.released }) {
+		t.Fatal("the removed output wasn't released")
 	}
 }
 
@@ -184,12 +167,8 @@ func TestNoNamesBeforeTheyAreKnown(t *testing.T) {
 	// No outputs at all is known, and empty: not nil
 	f := newFake(t, true, map[uint32]*fakeOutput{})
 	tr, _ := run(t, f)
-	deadline := time.Now().Add(5 * time.Second)
-	for tr.Names() == nil {
-		if time.Now().After(deadline) {
-			t.Fatal("never ready")
-		}
-		time.Sleep(5 * time.Millisecond)
+	if !testkit.Eventually(func() bool { return tr.Names() != nil }) {
+		t.Fatal("never ready")
 	}
 }
 
@@ -200,15 +179,8 @@ func TestNoNamesWhileAnOutputHasNone(t *testing.T) {
 		2: {name: "", x: 1920, w: 1920, h: 1080, scale: 1},
 	})
 	tr, _ := run(t, f)
-	deadline := time.Now().Add(5 * time.Second)
-	for {
-		if _, ready := tr.Outputs(); ready {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("never ready")
-		}
-		time.Sleep(5 * time.Millisecond)
+	if !testkit.Eventually(func() bool { _, ready := tr.Outputs(); return ready }) {
+		t.Fatal("never ready")
 	}
 	if names := tr.Names(); names != nil {
 		t.Errorf("names %q with an output unnamed, want nil", names)
@@ -227,7 +199,7 @@ func TestRunEndsWithTheCompositor(t *testing.T) {
 			t.Errorf("Run returned %v, want ErrGone", err)
 		}
 		done <- err // for the cleanup
-	case <-time.After(5 * time.Second):
+	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("Run didn't end with the compositor")
 	}
 }
