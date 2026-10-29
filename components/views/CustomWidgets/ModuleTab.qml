@@ -5,6 +5,8 @@ import qs.config
 import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
+import qs.components.forms
+import qs.services.core
 import qs.components.content.parts.custom
 
 // Custom widgets page, Module tab: the module as it's drawn (the bar
@@ -63,7 +65,7 @@ ColumnLayout {
       ColumnLayout {
         id: preview
         required property var modelData
-        readonly property real zoom: Math.min(0.3, root.availableHeight * 0.22 / Math.max(1, GridPlacement.span(Math.max(...[root.designSize[1], 4]), root.card)))
+        readonly property real zoom: Math.min(0.3, root.availableHeight * 0.22 / Math.max(1, GridPlacement.span(Math.max(root.designSize[1], 4), root.card)))
         Layout.alignment: Qt.AlignTop
         spacing: Widget.spacing / 2
 
@@ -108,15 +110,12 @@ ColumnLayout {
       Layout.alignment: Qt.AlignTop
       spacing: Widget.spacing
 
-      RowLayout {
-        spacing: Widget.spacing
-        StyledText {
-          text: I18n.tr("On the lock screen")
-        }
-        StyledSwitch {
-          checked: root.definition?.module?.lockscreen ?? false
-          onToggled: root.editor.set(["module", "lockscreen"], checked)
-        }
+      SchemaPropertiesForm {
+        Layout.preferredWidth: Appearance.fontSize * 16
+        propertiesSchema: Utils.pick(ConfigManager.configSchema.definitions.CustomWidget.properties.module.properties, ["lockscreen"])
+        order: ["lockscreen"]
+        values: root.definition?.module ?? ({})
+        onEdited: (path, value) => root.editor.set(["module"].concat(path), value)
       }
       StyledTextButton {
         visible: root.elements.length === 0

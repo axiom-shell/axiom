@@ -8,6 +8,7 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
+import qs.components.bar
 
 // i18n: keys from the schema (titles, descriptions)
 // Custom widgets page, Bar tab: the widget as it's drawn on a bar across
@@ -111,17 +112,39 @@ ColumnLayout {
     }
   }
 
-  // The bar widget itself, on a strip of the bar's background
+  // The bar widget itself on a strip of the bar's background, over the
+  // background its WidgetGroup would draw (a lone widget's caps: the
+  // bar's widget style and shape, the pill's fill)
   component BarPreview: Rectangle {
     id: preview
     property var barConfig: null
     readonly property bool vertical: preview.barConfig?.vertical ?? false
-    implicitWidth: preview.vertical ? (preview.barConfig?.widgetSize ?? 0) + Widget.padding * 2 : Math.max(Appearance.fontSize * 10, ((widget.item as Item)?.implicitWidth ?? 0) + Widget.padding * 2)
-    implicitHeight: preview.vertical ? Math.max(Appearance.fontSize * 8, ((widget.item as Item)?.implicitHeight ?? 0) + Widget.padding * 2) : (preview.barConfig?.widgetSize ?? 0) + Widget.padding * 2
+    readonly property var item: widget.item
+    readonly property var segment: preview.barConfig ? BarShapes.segment(preview.barConfig.widgetShape, preview.barConfig.widgetEnds, "separate", true, 0, 1, preview.barConfig.widgetSize) : null
+    // The room its caps keep clear, as its BarWidgetHost adds
+    readonly property real ends: preview.segment ? preview.segment.lead + preview.segment.trail : 0
+    implicitWidth: preview.vertical ? (preview.barConfig?.widgetSize ?? 0) + Widget.padding * 2 : Math.max(Appearance.fontSize * 10, (preview.item?.implicitWidth ?? 0) + preview.ends + Widget.padding * 2)
+    implicitHeight: preview.vertical ? Math.max(Appearance.fontSize * 8, (preview.item?.implicitHeight ?? 0) + preview.ends + Widget.padding * 2) : (preview.barConfig?.widgetSize ?? 0) + Widget.padding * 2
     radius: Appearance.borderRadius
     color: Theme.background
     border.color: Theme.border
     border.width: Appearance.borderWidth
+
+    Loader {
+      anchors.centerIn: parent
+      active: preview.item !== null && preview.segment !== null
+      sourceComponent: WidgetBackground {
+        width: preview.item.width + (preview.vertical ? 0 : preview.ends)
+        height: preview.item.height + (preview.vertical ? preview.ends : 0)
+        barConfig: preview.barConfig
+        colors: preview.item.hasBackground ? preview.item.colors : null
+        startCap: preview.segment.startCap
+        endCap: preview.segment.endCap
+        shownStart: preview.segment.shownStart
+        fillShare: preview.item.fillShare
+        fillShareColor: preview.item.fillShareColor
+      }
+    }
 
     Loader {
       id: widget

@@ -61,7 +61,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 
 ### Separator marks (accents)
 - `WidgetGroup` draws a `SeparatorMark` in each gap between shown widgets (`separatorStyle`).
-- A widget's `fillShare` (0–1, -1 for none; a custom widget's pill style) is drawn by its `WidgetBackground` as the whole shape cut to that share along the bar (up a vertical one), in `fillShareColor`, so a level keeps the caps, radius and powerline points of the background it fills.
+- A widget's `fillShare` (0–1, -1 for none; a custom widget's pill style) is drawn by its `WidgetBackground` as a shape of its own along the bar (up a vertical one), in `fillShareColor`: the background's cap where it starts, a rounded edge (a capsule's, else the bar's radius) where it stops, and full, the background's own end unless that's flat (a merged run's middle), so a level never stops square.
 - No mark is drawn beside a widget that `divides` (the Separator), nor in a powerline.
 - With marks on, the gap between a section's widgets is the mark's room along the bar plus `separatorGap` either side (`BarLayout.dividerGap`, as `groupSpacing` in `BarsConfig.enrichBarConfig`) instead of the bar's `spacing`.
 

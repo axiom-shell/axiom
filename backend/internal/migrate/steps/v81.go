@@ -13,7 +13,8 @@ import (
 // menus, the desktop, the lock screen), becomes a CustomWidgets definition
 // running its command every interval as plain text, drawn by a Text block
 // filling the module (monospace when it was), its click command the
-// widget's click action; the module is a CustomWidget showing it.
+// widget's click action (its text escaped, so it shows as typed, never as
+// markup); the module is a CustomWidget showing it.
 func v81(cfg *jsonx.Object) []string {
 	var modules []*jsonx.Object
 	collectModules(cfg, &modules)
@@ -129,6 +130,8 @@ func commandOutputWidget(id string, props *jsonx.Object, place any) *jsonx.Objec
 		"mode", "poll",
 		"interval", interval,
 		"output", "text",
+		// Output shows as typed, as CommandOutput did: a "<" is no markup
+		"escape", true,
 		"hideEmpty", false,
 		"actions", jsonx.Obj("click", str("clickCommand", "")),
 		"module", jsonx.Obj(

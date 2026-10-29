@@ -19,13 +19,10 @@ BarIconWidget {
 
   readonly property string widgetId: properties.definition
   readonly property var definition: CustomWidgetsConfig.definition(root.widgetId)
+  // No definition (none picked, or removed): its label asks for one
   readonly property var bar: root.definition?.bar ?? ({
       "style": "label",
-      "icon": "material",
-      "segments": 5,
-      "width": 0,
-      "colorText": false,
-      "popout": true
+      "icon": "material"
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property real ratio: Math.max(0, root.fields?.ratio ?? 0)

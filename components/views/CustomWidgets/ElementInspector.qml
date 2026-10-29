@@ -79,33 +79,26 @@ ColumnLayout {
       width: selected.width
       spacing: Widget.spacing * 2
 
-      RowLayout {
-        Layout.fillWidth: true
-        spacing: Widget.spacing
+      InspectorHeader {
+        icon: root.kind?.icon ?? "widgets"
+        title: I18n.tr(root.kind?.label ?? root.element?.type ?? "")
+        // In grid units, as the canvas sizes it
+        subtitle: root.element ? I18n.tr("{0} × {1}", root.element.place.w / CustomWidgetData.subCells, root.element.place.h / CustomWidgetData.subCells) : ""
 
-        StyledIcon {
-          text: root.kind?.icon ?? "widgets"
-          textColor: Theme.accent
-        }
-        StyledText {
-          Layout.fillWidth: true
-          text: I18n.tr(root.kind?.label ?? root.element?.type ?? "")
-          font.bold: true
-        }
-        FlatIconButton {
-          size: Widget.iconButton
+        SquareIconButton {
+          size: Widget.height
           iconText: "content_copy"
           tooltipText: I18n.tr("Copy this element")
           onClicked: root.grid.duplicateModule(root.grid.selected)
         }
-        FlatIconButton {
-          size: Widget.iconButton
+        SquareIconButton {
+          size: Widget.height
           iconText: "delete"
           tooltipText: I18n.tr("Remove this element")
           onClicked: root.grid.removeModule(root.grid.selected)
         }
-        FlatIconButton {
-          size: Widget.iconButton
+        SquareIconButton {
+          size: Widget.height
           iconText: "close"
           tooltipText: I18n.tr("Back to the elements")
           onClicked: root.grid.clearSelection()

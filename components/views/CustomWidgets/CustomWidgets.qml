@@ -48,7 +48,7 @@ BaseView {
         visible: root.editor.selected !== null
         tabs: [I18n.tr("Data"), I18n.tr("Bar"), I18n.tr("Module")]
         currentIndex: root.editor.tab
-        onTabClicked: index => root.editor.tab = index
+        onTabClicked: index => root.editor.selectTab(index)
       }
 
       EmptyStateLine {

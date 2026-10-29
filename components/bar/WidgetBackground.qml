@@ -138,17 +138,30 @@ Item {
     ColorGlide on color {}
   }
 
-  // The level: the whole shape, cut to its share, so it keeps the caps
-  // (capsule, rounded, a powerline's points)
-  Item {
-    readonly property bool vertical: root.barConfig.vertical
+  // The level: a shape of its own from where the bar's run starts (up a
+  // vertical bar, from the bottom), keeping the background's cap there and
+  // ending on a rounded edge (a capsule's, else the bar's radius), so a
+  // level in a merged run's flat-ended widget never stops square. Full, it
+  // takes the background's own end unless that's flat.
+  ShapedBox {
+    id: level
     readonly property real share: Math.max(0, Math.min(1, root.fillShare))
-    visible: root.fillShare >= 0
-    clip: true
+    readonly property string edgeCap: root.barConfig.widgetShape === "capsule" ? "capsule" : "round"
+    // The background's cap at the far end, where a full level ends
+    readonly property string farCap: level.vertical ? root.startCap : root.endCap
+
+    visible: root.fillShare >= 0 && level.share > 0
+    anchors.fill: undefined
     x: 0
-    y: vertical ? root.height - height : 0
-    width: vertical ? root.width : root.width * share
-    height: vertical ? root.height * share : root.height
+    y: level.vertical ? root.height - height : 0
+    width: level.vertical ? root.width : root.width * level.share
+    height: level.vertical ? root.height * level.share : root.height
+    bar: root.barConfig
+    startCap: level.vertical ? (level.share >= 1 && level.farCap !== "flat" ? level.farCap : level.edgeCap) : root.startCap
+    endCap: level.vertical ? root.endCap : (level.share >= 1 && level.farCap !== "flat" ? level.farCap : level.edgeCap)
+    seamStart: !level.vertical && root.seamStart
+    seamEnd: level.vertical && root.seamEnd
+    fillColor: root.fillShareColor
 
     Glide on width {
       duration: Appearance.animNormal
@@ -156,21 +169,10 @@ Item {
     Glide on height {
       duration: Appearance.animNormal
     }
-
-    ShapedBox {
-      anchors.fill: undefined
-      y: parent.vertical ? parent.height - root.height : 0
-      width: root.width
-      height: root.height
-      bar: root.barConfig
-      startCap: root.startCap
-      endCap: root.endCap
-      seamStart: root.seamStart
-      seamEnd: root.seamEnd
-      fillColor: root.fillShareColor
-
-      ColorGlide on fillColor {}
+    Glide on y {
+      duration: Appearance.animNormal
     }
+    ColorGlide on fillColor {}
   }
 
   ShapedBox {

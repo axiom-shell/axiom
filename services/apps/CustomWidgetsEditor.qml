@@ -39,8 +39,12 @@ QtObject {
     }
   }
 
-  // The page's tab: 0 data, 1 bar, 2 module
+  // The page's tab: 0 data, 1 bar, 2 module (selectTab)
   property int tab: 0
+
+  function selectTab(index) {
+    root.tab = index;
+  }
 
   // While the page shows, the selected definition runs
   property bool pageShown: false
@@ -188,31 +192,14 @@ QtObject {
     path: ["CustomWidgets"]
   }
 
+  // The draft (the CustomWidgets section, every default filled)
   function _local() {
-    if (!_draft.local)
-      _draft.local = {
-        "items": []
-      };
-    if (!Array.isArray(_draft.local.items))
-      _draft.local.items = [];
     return _draft.local;
   }
 
-  // The selected definition's elements in the draft (made when missing),
-  // or null without one
+  // The selected definition's elements in the draft, or null without one
   function _elements() {
-    const def = root._local().items[root.selectedIndex];
-    if (!def)
-      return null;
-    if (!def.module || typeof def.module !== "object")
-      def.module = {
-        "size": [4, 2],
-        "lockscreen": false,
-        "elements": []
-      };
-    if (!Array.isArray(def.module.elements))
-      def.module.elements = [];
-    return def.module.elements;
+    return root._local().items[root.selectedIndex]?.module.elements ?? null;
   }
 
   // The size a page starts the module at follows its elements

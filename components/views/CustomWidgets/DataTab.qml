@@ -20,6 +20,8 @@ ColumnLayout {
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property var sample: root.fields?.sample ?? null
   readonly property var paths: root.sample ? CustomWidgetData.flatten(root.sample) : []
+  // Rows built at most: a large output lists its first paths
+  readonly property int maxRows: 200
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
@@ -78,7 +80,7 @@ ColumnLayout {
 
     // By count: a new sample of the same shape rebuilds nothing
     Repeater {
-      model: root.paths.length
+      model: Math.min(root.paths.length, root.maxRows)
 
       RowLayout {
         id: pathRow
@@ -101,6 +103,12 @@ ColumnLayout {
           opacity: 0.7
         }
       }
+    }
+
+    StyledText {
+      visible: root.paths.length > root.maxRows
+      text: I18n.tr("…and {0} more", root.paths.length - root.maxRows)
+      opacity: 0.6
     }
   }
 }

@@ -3292,7 +3292,6 @@
     "Crop": "",
     "Round": "",
     "Always a dot": "",
-    "On the lock screen": "",
     "Start from the default layout": "",
     "Square": "",
     "Strip": "",
@@ -3348,6 +3347,7 @@
     "Commands it runs (x-actions; {value} is filled in): a Button's or List row's click, a Bar's change, a Toggle's on and off.": "",
     "The state's colour when the script gives one (over the colour above).": "",
     "For tables and aligned output (lines aren't wrapped).": "",
-    "A Material Symbols name, unless the icon slot is bound.": ""
+    "A Material Symbols name, unless the icon slot is bound.": "",
+    "…and {0} more": ""
   }
 }

@@ -254,6 +254,32 @@ QtObject {
     }
   }
 
+  // A definition edited (its format, icons, states: a preview on the page)
+  // redraws its last output at once, not at the next one (a stream may
+  // send none for a while). The history keeps only real samples.
+  function _reresolve() {
+    let fields = null;
+    for (const id in root._fields) {
+      const def = CustomWidgetsConfig.definition(id);
+      const out = root._outputs[id];
+      if (!def || !out || out.blocked)
+        continue;
+      const resolved = CustomWidgetData.resolve(def, CustomWidgetData.parse(out.text, out.value, def.output, def.mode === "stream"));
+      if (JSON.stringify(resolved) === JSON.stringify(root._fields[id]))
+        continue;
+      fields = fields ?? Object.assign({}, root._fields);
+      fields[id] = resolved;
+    }
+    if (fields)
+      root._fields = fields;
+  }
+  property Connections _definitions: Connections {
+    target: CustomWidgetsConfig
+    function onItemsChanged() {
+      root._reresolve();
+    }
+  }
+
   property IpcTarget _ipc: IpcTarget {
     target: "customWidgets"
 
