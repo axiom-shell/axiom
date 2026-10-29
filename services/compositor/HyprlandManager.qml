@@ -86,6 +86,7 @@ Singleton {
   readonly property int blockSize: 100
   // Each output's first id while they're dynamic, as CompositorManager
   // numbers them (WorkspaceGeometry.blockBases)
+  // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label
   readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles)
 
   // Re-reads the monitors and the windows soon (Quickshell re-reads the
