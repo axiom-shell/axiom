@@ -316,6 +316,10 @@ Steps:
 5. **Done:** **Caffeine on a timer** (from the waiting list): caffeine (the idle inhibitor) can be turned on for a set time and turns itself off after it. The maintainer (2026-10-29): "decision for caffeine on a timer: works similarity to stopwatch current implementation. Popout shows presets (default 30min, 1hr, 4hr) that start with a timer. Presets are settable in module settings." and "ensure timer starting and selecting and whatnot is a re-used component (i.e. so caffeine and stopwatches look identical)" The IdleInhibitor widget gets its own popout (`content/Caffeine`, on by default for new widgets) with a `CountdownTimer` (`content/parts/`, the one-off timer's start, presets, ring and controls, now shared with `content/Stopwatch`) over the widget's `presets` (30m, 1h, 4h); `IdleManager` keeps the timer in a `DeadlineTicker` that ends caffeine at its end, and the widget, quick action and `/caffeine` show the time left.
 6. **Built-in stock and crypto trackers** (added 2026-10-29): a bar widget and a module (overlay, desktop, edge menu) for watched symbols, built in rather than through a custom widget script: prices polled by the daemon as a topic (`acquire`/`release`, the interval from config), the symbols and their order in a config section, each with its change, a sparkline of the day and the up/down colour; a ticker on the bar as the custom widget's ticker style does. Needs a plan first ([Items that need a plan](#items-that-need-a-plan)): the data sources (a free stock API and a crypto one, or one for both), API keys through `SecretsManager`, rate limits and caching, and market hours.
 
+From the [overlay and popouts plan](plans/overlay-and-popouts-close-or-break-each-other.md) (#211, decided 2026-10-29), in order:
+- [The overlay closes when its focus grab ends without a click](issues.md#the-overlay-closes-when-its-focus-grab-ends-without-a-click)
+- [A popout open as the overlay opens ends up under it](issues.md#a-popout-open-as-the-overlay-opens-ends-up-under-it)
+
 Found meanwhile:
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
@@ -324,7 +328,6 @@ Found meanwhile:
 
 Needs a plan:
 - [Notifications can only sit in a corner](issues.md#notifications-can-only-sit-in-a-corner)
-- [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other) (plan: #211)
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri)
 - [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own)
 

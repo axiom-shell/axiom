@@ -316,10 +316,16 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Overlay and popouts close or break each other
-- **Where:** `services/ui/ShellManager.qml` (`closeOverlay`), `services/ui/OverlayManager.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/overlay/OverlayPanel.qml` (its `FocusGrab`)
-- **What:** From the maintainer's notes, verbatim: "a little bit of a system re-work/look to ensure all popouts are usable as expected while the overlay is open, without closing the overlay. There are a bit more problems here so this likely needs a plan (i.e. currently open popouts break when overlay is opened, nothing should close the overlay (i.e. after installing greetd and the polkit prompt closes, the overlay closes) The one exception is likely launcher (although it can also just open over the overlay and be usable)". The plan covers which surfaces may close the overlay (callers of `ShellManager.closeOverlay`, focus grabs ending when a prompt like polkit's takes and gives back focus), and how a popout open before the overlay keeps working. The maintainer (2026-10-29), on a greeter update: "The issue is that when the auth prompt closes, the overlay closes." (plan: #211)
-- **Size:** needs a plan
+### The overlay closes when its focus grab ends without a click
+- **Where:** `components/hosts/overlay/OverlayPanel.qml` (`grab`, `onCleared`), `services/compositor/FocusGrab.qml`
+- **What:** With `Overlay.closeOnOutsideClick` on, the overlay closes on its `FocusGrab`'s `cleared`, which also fires when nobody clicked: when keyboard focus leaves its windows (a polkit prompt closing gives it back to the last app, as after installing the greeter from Settings: the maintainer, "The issue is that when the auth prompt closes, the overlay closes"), and on Hyprland when another surface's grab starts over it (a popout with a text field, the launcher, the dock menu), since only one native grab is active. Decided on #211: "close on outside click currently has the exact desired behaviour. Bar and interactive module clicking does not close it, only where the blur backing would be." Fix: it closes only on a real click, on its empty background (`backgroundClicks`) or on a screen's backdrop where the grab isn't native (`BackdropManager.clickedOutside`), never on focus leaving. Plan: [plans/overlay-and-popouts-close-or-break-each-other.md](plans/overlay-and-popouts-close-or-break-each-other.md).
+- **Size:** small
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### A popout open as the overlay opens ends up under it
+- **Where:** `components/hosts/overlay/OverlayPanel.qml` (`open`), `services/ui/PopoutManager.qml`, `components/hosts/popout/BarPopouts.qml` (`_under`), `components/hosts/popout/EdgePopout.qml` (`_overlayLatch`)
+- **What:** A popout that slides under a transparent bar keeps that layer while open (the latches), so one open when the overlay opens is drawn under its backdrop and its clicks go to the overlay: the maintainer, "currently open popouts break when overlay is opened". Decided on #211: "Close all popouts and menus (except integrated, since they move the overlay) when the overlay is opened." Fix: opening the overlay closes the bar popouts and floating edge menus on its screen (pinned ones too; their submenus with them); integrated menus, docks, OSDs and the launcher stay.
+- **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
 ### The window switcher's blur and release on sway and niri

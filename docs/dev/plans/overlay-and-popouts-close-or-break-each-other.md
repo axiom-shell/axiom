@@ -1,7 +1,12 @@
 # Overlay and popouts close or break each other
 
-> **Issue:** [Overlay and popouts close or break each other](../issues.md#overlay-and-popouts-close-or-break-each-other)
-> **Status:** proposed
+> **Issue:** [Phase 13: the maintainer's notes](../roadmap.md#phase-13-the-maintainers-notes)
+> **Status:** decided: B, reshaped (2026-10-29)
+
+The maintainer, on #211: "close on outside click currently has the exact desired behaviour. Bar and interactive module clicking does not close it, only where the blur backing would be.
+Close all popouts and menus (except integrated, since they move the overlay) when the overlay is opened."
+
+So the items are two (issues.md, Phase 13): the overlay closes only on a real click on its background (item 2 below, keeping today's clicks), and an open popout or floating menu closes as the overlay opens instead of re-opening over it (item 3, reshaped). Item 1's tracing is folded into item 2; item 4 is left out: questions 2–4 weren't answered, so the `closeOverlay` callers and the launcher keep today's behaviour.
 
 ### Problem
 The maintainer: popouts should be "usable as expected while the overlay is open, without closing the overlay", "nothing should close the overlay (i.e. after installing greetd and the polkit prompt closes, the overlay closes)", and "currently open popouts break when overlay is opened". The launcher is the one possible exception ("although it can also just open over the overlay and be usable").
