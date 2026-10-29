@@ -14,7 +14,7 @@ func execCommand() *Command {
 			Summary: "Run a watched command again now (what Waybar's signal did)",
 			Args:    "COMMAND",
 			Help: `COMMAND is the watched shell command exactly as the widget or module
-runs it (a Button's label command, a CommandOutput's command), e.g. in a
+runs it (a Button's label command, a custom widget's script), e.g. in a
 script after it changed what the command shows:
   axiom exec refresh "~/bin/vpn-status"
 A command nobody watches is left alone. A streamed command keeps running

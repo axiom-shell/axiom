@@ -83,6 +83,8 @@ var all = []Step{
 		items.Append(jsonx.Obj("id", "customWidgets", "type", "CustomWidgets"))
 		return []string{"Overlay.items: added the Custom widgets page"}
 	}},
+	// v81: CommandOutput modules became custom widgets (v81.go)
+	{Version: 81, Run: v81},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

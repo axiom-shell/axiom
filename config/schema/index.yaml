@@ -42,7 +42,7 @@ properties:
     description: "The config file's grammar: 2. A file without it is format 1 (versions 1 to 75), which axiom converts once."
   version:
     type: integer
-    default: 80
+    default: 81
     x-settings: false
     description: Config version within format 2, used for automatic migration.
   meta:

@@ -196,7 +196,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [WorkspaceStrip's Grid briefly has more items than cells](issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
-- [CommandOutput's figure text loops on its size](issues.md#commandoutputs-figure-text-loops-on-its-size)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
 - [The community setups' check doesn't take monitor places yet](issues.md#the-community-setups-check-doesnt-take-monitor-places-yet)
@@ -235,7 +234,7 @@ Steps:
 6. Done: **Editor, part 1:** the tool page, its editor manager, the definitions list, the Source card and the Bar tab.
 7. Done: **Editor, part 2:** the Module tab (the fine-grid canvas on `GridEditor`).
 8. Done: **Waybar import and presets.**
-9. **Fold CommandOutput**, the feature's doc, and its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
+9. Done: **Fold CommandOutput**, the feature's doc, and its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
 
 Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone.
 

@@ -112,6 +112,18 @@ Checks:
 - Odd ones out: a module drawing what a part in `content/parts/` or `reusable/` already draws.
 Seams: overlay pages, edge menus, desktop, lockscreen, greeter, bar popouts.
 
+## custom-widgets
+Scope: custom JSON widgets: definitions, the data helper, the service, the bar widget, the module and its elements, the editor page.
+Docs: features/custom-widgets.md
+Extra: components/content/parts/custom/*.qml components/views/CustomWidgets/*.qml config/schema/definitions/custom/*.yaml backend/internal/migrate/steps/v81.go
+Checks:
+- A Waybar script runs unchanged: its JSON (or text lines), format, format-icons, classes, escape and hide-on-empty read as Waybar reads them (`CustomWidgetData`, its test).
+- One script per definition however many surfaces show it (`CustomWidgetsManager` acquires per id through `CommandManager`); nothing runs with no consumer.
+- No actions on the lock screen or in previews, nothing at all in the greeter.
+- Element Repeaters by count; lists are ListModels updated in place; history rings fixed length.
+- The module editor reuses the layouts editor's canvas (`GridCanvas`, `GridDragLayer`, `GridEditor`) rather than growing its own.
+Seams: CommandManager and exec streams, the bar editor and module libraries (`CustomWidget:<id>` keys), the layouts editor's canvas, popouts.
+
 ## edge-menus
 Scope: edge menus, their hosts, editing and submenus.
 Docs: edge-menus/*.md

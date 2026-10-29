@@ -256,12 +256,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding the community setups gallery
 
-### CommandOutput's figure text loops on its size
-- **Where:** `components/content/CommandOutput/CommandOutput.qml` (the text `StyledText`, `id: body`)
-- **What:** The log shows `Binding loop detected for property "textSize"` while a Command output card is on a shown page: in statement mode `body`'s `textSize` comes from `body.height / 5`, and a `Layout.fillHeight` text's height follows its implicit height, which follows the size.
-- **Size:** small
-- **Found:** 2026-10-18, while adding the todo list and pomodoro timer
-
 ### install.sh still installs the rest of a feature whose COPR was declined
 - **Where:** `install.sh` (the declined-COPR loop after the COPR prompts)
 - **What:** Declining a COPR on Fedora marks each feature with a package from it as skipped, but drops only that COPR's packages: the feature's other packages stay in the one `dnf install`. Declining `nett00n/hyprland` while setting up niri skips the login screen's feature yet still installs `greetd`. Rebuilding `packages` from the features left (and the required keys) after the prompts would fix it; test with `--dry-run` in a `fedora:latest` container.
