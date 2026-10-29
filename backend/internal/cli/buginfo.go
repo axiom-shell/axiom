@@ -49,24 +49,28 @@ func bugInfoCommand() *Command {
 func bugReport(ctx context.Context, e *Env) (buginfo.Report, error) {
 	var r buginfo.Report
 	var treeDir string
+	state := "not running"
 	if !e.Globals.Offline {
 		c, hello, err := connect(ctx, e)
-		switch {
-		case err == nil:
+		if err == nil {
 			c.Close()
 			r.Binary = fmt.Sprintf("axiom %s (commit %s), running", hello.Version, shortCommit(hello.Commit))
 			treeDir = hello.Tree
-		case axerr.KindOf(err) != axerr.Unavailable:
-			return r, err
+		} else if axerr.KindOf(err) != axerr.Unavailable {
+			// One that won't answer (an older binary after an update) is
+			// what a report most needs to say: the rest from the files
+			state = fmt.Sprintf("running, but not answering (%s)", axerr.KindOf(err))
 		}
 	}
+	offline := *e
 	if r.Binary == "" {
 		info := buildinfo.Get()
-		r.Binary = fmt.Sprintf("axiom %s (commit %s), not running", info.Version, shortCommit(info.Commit))
+		r.Binary = fmt.Sprintf("axiom %s (commit %s), %s", info.Version, shortCommit(info.Commit), state)
 		// The installed tree, as `axiom run` from $HOME finds it
 		treeDir, _ = tree.Find("", e.Getenv, "/")
+		offline.Globals.Offline = true
 	}
-	cfg, st, _, _, err := current(ctx, e, "")
+	cfg, st, _, _, err := current(ctx, &offline, "")
 	if err != nil && axerr.KindOf(err) != axerr.InvalidConfig {
 		return r, err
 	}

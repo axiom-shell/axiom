@@ -223,17 +223,11 @@ func TestVersion(t *testing.T) {
 			listen(t, filepath.Join(dir, ".socket.sock"), func(c net.Conn) {
 				buf := make([]byte, 64)
 				if n, _ := c.Read(buf); string(buf[:n]) == "j/version" {
-					io.WriteString(c, `{"branch":"main","version":"0.55.0","tag":"v0.55.0-12"}`)
+					io.WriteString(c, `{"branch":"main","commit":"efb50993780079460b0cbed1363e2166a2de1d9f","version":"0.55.0","tag":"v0.55.0-12"}`)
 				}
 			})
 			return (&Hypr{Dir: dir}).Version(ctx)
-		}, "Hyprland 0.55.0"},
-		{"an older Hyprland, by its tag", func(ctx context.Context, dir string) (string, error) {
-			listen(t, filepath.Join(dir, ".socket.sock"), func(c net.Conn) {
-				io.WriteString(c, `{"tag":"v0.49.0"}`)
-			})
-			return (&Hypr{Dir: dir}).Version(ctx)
-		}, "Hyprland 0.49.0"},
+		}, "Hyprland 0.55.0 (commit efb5099)"},
 		{"niri", func(ctx context.Context, dir string) (string, error) {
 			path := filepath.Join(dir, "niri.sock")
 			listen(t, path, func(c net.Conn) {
