@@ -49,7 +49,7 @@ mapfile -t changed < <({
 } | sort -u)
 
 if [[ ${#changed[@]} -eq 0 ]]; then
-  echo "nothing changed since HEAD"
+  echo "nothing changed since HEAD (a committed branch: scripts/dev/verify.sh --all)"
   exit 0
 fi
 
