@@ -304,6 +304,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while consolidating compositor settings
 
+### Without a backend, every gaps reader assumes the screen margin
+- **Where:** `services/compositor/CompositorManager.qml` (`gapsOut`), `config/BarsConfig.qml` (`reserveTrim`), `services/ui/DesktopManager.qml`, `shell/Notifications.qml`, `components/hosts/overlay/ReservedAreaWindow.qml`, `components/hosts/popout/EdgePlacement.qml`
+- **What:** With no compositor backend `CompositorManager.gapsOut` is `Appearance.screenMargin` on each side, which fixes a floating bar's automatic gap but also tells every other reader that windows start that far past the reserved zones. So a transparent bar reserves `screenMargin` less (`reserveTrim`): on a compositor with no outer gaps, windows cover its inner padding, and desktop modules, notifications, the reserved area and popout walls sit `screenMargin` further in. Decide whether only the float gap (and `BarEnds`' automatic end gap) should fall back to the margin.
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing roadmap row 13's gaps fallback
+
 ### niri reports no position for a tiled window, nor other apps' layers
 - **Where:** `components/methods/NiriState.qml` (`windows`, `outputs`)
 - **What:** niri's IPC gives no layer surface geometry, so an output's `reserved` counts only axiom's own layers (`LayerArrange.arrange`): another app's bar on niri isn't in it, and the dock centres as if it weren't there. Nor, in 26.04, does it give a position for a tiled window (`tile_pos_in_workspace_view` is null; only floating windows have one; checked 2026-10-28). So tiled windows are laid out from their column and place in it from the output's edge, without niri's scroll (`windowGeometry` stays off: no screenshot window mode; the dock hides behind a window's `cover`, its column or the whole output, which ignores struts, reserved space and `center-focused-column`).
