@@ -21,29 +21,9 @@ func v81(cfg *jsonx.Object) []string {
 	if len(modules) == 0 {
 		return nil
 	}
-	section, _ := cfg.Value("CustomWidgets").(*jsonx.Object)
-	if section == nil {
-		if cfg.Has("CustomWidgets") {
-			return nil
-		}
-		section = jsonx.NewObject()
-		cfg.Set("CustomWidgets", section)
-	}
-	items, _ := section.Value("items").(*jsonx.Array)
+	items, taken := sectionItems(cfg, "CustomWidgets")
 	if items == nil {
-		if section.Has("items") {
-			return nil
-		}
-		items = jsonx.Arr()
-		section.Set("items", items)
-	}
-	taken := map[string]bool{}
-	for _, item := range items.Items {
-		if o, _ := item.(*jsonx.Object); o != nil {
-			if id, _ := o.Value("id").(string); id != "" {
-				taken[id] = true
-			}
-		}
+		return nil
 	}
 	for _, m := range modules {
 		props, _ := m.Value("properties").(*jsonx.Object)
@@ -79,6 +59,36 @@ func collectModules(v any, out *[]*jsonx.Object) {
 			collectModules(item, out)
 		}
 	}
+}
+
+// sectionItems is the items list of cfg's section `name` (both made when
+// missing) and the ids it holds; nil when either is of another shape.
+func sectionItems(cfg *jsonx.Object, name string) (*jsonx.Array, map[string]bool) {
+	section, _ := cfg.Value(name).(*jsonx.Object)
+	if section == nil {
+		if cfg.Has(name) {
+			return nil, nil
+		}
+		section = jsonx.NewObject()
+		cfg.Set(name, section)
+	}
+	items, _ := section.Value("items").(*jsonx.Array)
+	if items == nil {
+		if section.Has("items") {
+			return nil, nil
+		}
+		items = jsonx.Arr()
+		section.Set("items", items)
+	}
+	taken := map[string]bool{}
+	for _, item := range items.Items {
+		if o, _ := item.(*jsonx.Object); o != nil {
+			if id, _ := o.Value("id").(string); id != "" {
+				taken[id] = true
+			}
+		}
+	}
+	return items, taken
 }
 
 // freeID is base, else base-2, base-3 … not in taken (and takes it)

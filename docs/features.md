@@ -327,6 +327,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 - **Notes:** Markdown files in a folder you choose, edited in place with task checkboxes. A note open in two places stays in sync, and `/notes` in the launcher searches them all.
 - **Todo list and pomodoro timer:** one list and one timer, on the bar, in popouts and as modules. Pick the todo a session is for; a notification marks each session's and break's end. `/todo` adds or ticks off, `/pomodoro` starts, pauses or skips.
 - **Timer and stopwatch:** a one-off timer (`/timer 10m tea`, or a preset) and a stopwatch with laps, both able to run at once, on the bar, in a popout or as a module.
+- **Hot corners:** rest the pointer in a screen corner to run any axiom action (the overlay or a page, the launcher, the workspace overview, lock, media, …) or your own command, per corner and monitor, with an optional delay. They work on every compositor and stay quiet over fullscreen windows.
 - **Power menu:** your choice of session actions, in your order, driven by mouse or keyboard. Log out, reboot and power off ask you to confirm.
 - **Monitors:** a page to arrange monitors by dragging (they snap edge to edge).
   - Set each one's mode, scale, rotation and VRR, and on Hyprland mirroring, bit depth and color management.

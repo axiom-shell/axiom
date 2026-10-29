@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A custom Ring element logs an undefined `inside` on load
+- **Where:** `components/content/parts/custom/elements/Ring/CustomRing.qml` (`inside`)
+- **What:** The live shell logs `CustomRing.qml[17:3]: Unable to assign [undefined] to QString` after a reload: `root.options.inside` is read before the element's options carry it (seen on main after row 17, with a custom widget's Ring element on screen). The ring draws once the options arrive, but the log isn't clean.
+- **Size:** trivial
+- **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
+
+### A hot corner can't close what covers it
+- **Where:** `shell/HotCorners.qml` (its layer, `LayerStack`), `docs/dev/features/hot-corners.md`
+- **What:** Hot corners sit on the Top layer, so a surface on the `Overlay` layer (axiom's workspace overview, a full-screen overlay page) covers the corner pixel: a toggling action opens it from a corner but can't close it there. niri's own corner toggles its overview; the migrated corner (v82) does that only while `WorkspaceOverlay.compositorOverview` is on. Whether a corner should stay live over Overlay-layer surfaces is the maintainer's call.
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
+
 ### Close on outside click differs on Hyprland since the overlay ignores its grab ending
 - **Where:** `components/hosts/overlay/OverlayPanel.qml` (`grab`, `onClickedOutside`), `services/compositor/FocusGrab.qml` (`clickedOutside`)
 - **What:** With `Overlay.closeOnOutsideClick` on, the overlay now closes on its empty background (`backgroundClicks`) everywhere, and, without a native grab (sway, niri), on a press on any screen's backdrop: another monitor, the screen border (its mask is empty), a floating bar's gap. On Hyprland those clicks only end its native grab, which it no longer closes on (that also fires when a popout's or the dock menu's own grab starts over it, one native grab at a time), so they leave it open, where before this change they closed it on every compositor. The maintainer decided on #211 "only where the blur backing would be": whether those places count (another monitor has no backing; the border covers it; a bar's gap shows it) decides the fix: none on sway and niri dropping `clickedOutside`, or on Hyprland a backdrop that takes the click.
@@ -30,12 +42,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `backend/internal/compositor/actions/table.json` (`calls.workspaceOverview`), `shell/WorkspaceOverlay.qml` (its `IpcTarget`)
 - **What:** The bind table maps the `workspaceOverview` action's `open` call to the IPC function `show` (`render.Tables.CallFunction`), so a bind with call `open` runs `axiom ipc workspaceOverlay show`; the `workspaceOverlay` target has only `toggle`, `open` and `hide` (`docs/dev/generated/ipc.md`), so the bind does nothing. The default bind (`toggle`) is unaffected. Fix: the table's `open` names `open`.
 - **Size:** trivial
-- **Found:** 2026-10-29, while adding niri's own overview (row 16)
-
-### axiom has no hot corners of its own
-- **Where:** `backend/internal/compositor/render/niri.go`, `backend/internal/compositor/manager/niri.go`
-- **What:** The maintainer (2026-10-29): "note in issues/roadmap that hot corners should be implemented (which would cause niris to work the same way (i.e. only exits if axiom sets it in managed mode (which also wouldn't even use niris corner)". Hot corners become an axiom feature drawn by the shell, so they work on every compositor; in managed mode on niri, niri's own hot corner is turned off and a corner exists only when axiom sets one, matching managed binds ("Binds are exactly representative of what there is"). Detached and included leave niri's corner alone, as they do its binds. Open: which actions a corner runs, per-monitor corners, a delay.
-- **Size:** needs a plan
 - **Found:** 2026-10-29, while adding niri's own overview (row 16)
 
 ### The overlay's gaps can't be adjusted

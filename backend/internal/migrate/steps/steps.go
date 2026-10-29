@@ -85,6 +85,8 @@ var all = []Step{
 	}},
 	// v81: CommandOutput modules became custom widgets (v81.go)
 	{Version: 81, Run: v81},
+	// v82: niri's hot corner became an axiom one (v82.go)
+	{Version: 82, Run: v82},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

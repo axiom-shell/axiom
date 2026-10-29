@@ -2,6 +2,8 @@ pragma Singleton
 import QtQuick
 
 import qs.config
+import qs.components.methods
+import qs.services.core
 import qs.services.compositor
 
 /* The shell's signals, link navigation and screen targeting */
@@ -70,6 +72,28 @@ QtObject {
       }
     }
     return false;
+  }
+
+  // Runs an axiom action (the keybind table's ipcActions: "overlayPage"
+  // with its page, "lock", …) as its bind would, or `exec`'s command
+  function runAction(action, argument) {
+    if (action === "exec") {
+      CommandManager.runDetached(argument);
+      return;
+    }
+    const call = BindActions.ipcCall(KeybindManager.actionTable, action, argument);
+    if (!call) {
+      console.warn("[ShellManager] can't run action", action);
+      return;
+    }
+    BackendManager.call("ipc.call", {
+      "target": call.target,
+      "function": call.function,
+      "args": call.args
+    }, error => {
+      if (error)
+        console.warn("[ShellManager]", action, "failed:", error.message);
+    });
   }
 
   // A surface's ScreenTarget mode with "inherit" resolved: "primary" |
