@@ -27,7 +27,7 @@ ColumnLayout {
   property Component delegate
   property real minTileWidth: Appearance.fontSize * 14
   property int minColumns: 1
-  // What the search box holds; kept only while the library is shown
+  // What the search box holds, kept as long as the library is built
   property string query: ""
 
   readonly property int columns: Math.max(root.minColumns, Math.floor(scroll.availableWidth / root.minTileWidth))
