@@ -64,7 +64,10 @@ Singleton {
   // Took the agent down to register again (Quickshell deletes the old one
   // later, and a new one made before then doesn't register)
   property bool _paused: false
-  property bool _retried: false
+  // Remakes since it was turned on or reloaded: a reload hands the new
+  // generation the old listener as it is, so one that never registered
+  // never retries
+  property int _remakes: 0
   // Units axiom stopped (started again when it's turned off) and the
   // agents it stopped, as JSON: kept across a reload, as the agent is
   PersistentProperties {
@@ -134,9 +137,14 @@ Singleton {
       if (!root.agent || root.registered)
         return;
       root._probe(names => {
-        if (names.length > 0 && !root._retried) {
-          root._retried = true;
-          root._stopOthers(true);
+        if (root.registered)
+          return;
+        if (root._remakes < 3) {
+          root._remakes++;
+          if (names.length > 0)
+            root._stopOthers(true);
+          else
+            root._remake();
         } else {
           root._blocked = true;
           console.warn("[PolkitManager] Could not register as the polkit agent", names.length > 0 ? `(still running: ${names.join(", ")})` : "");
@@ -172,7 +180,7 @@ Singleton {
     target: PolkitConfig
     function onEnabledChanged() {
       root._blocked = false;
-      root._retried = false;
+      root._remakes = 0;
       if (PolkitConfig.enabled) {
         root._lateCheck.restart();
       } else if (root._stoppedUnits.length > 0) {
@@ -229,11 +237,15 @@ Singleton {
       _state.replaced = JSON.stringify(root.replaced.concat(stopped.filter((name, i) => stopped.indexOf(name) === i && !root.replaced.includes(name))));
       if (stopped.length > 0)
         console.log("[PolkitManager] Stopped", stopped.join(", "));
-      if (register) {
-        root._paused = true;
-        root._resume.restart();
-      }
+      if (register)
+        root._remake();
     });
+  }
+
+  // Deleting the agent deletes its listener, so the next registers afresh
+  function _remake() {
+    root._paused = true;
+    root._resume.restart();
   }
 
   Component.onCompleted: {

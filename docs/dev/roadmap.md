@@ -129,6 +129,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Confirm the missing app icon fallback in the launcher and dock with an icon theme lacking `applications-system-symbolic` (#196).
 - Lock once and check `scripts/log.sh` shows no `[ModuleGrid] … overlaps another` (#198).
 - Click into a desktop Notes module and back to a window, and check `scripts/log.sh` shows no `Trying to disable` from `qt.qpa.wayland.textinput`; also under sway and Hyprland (#200).
+- With `Polkit.enabled` on, restart axiom and reload a few times, and check `scripts/log.sh --all` shows no `[PolkitManager] Could not register as the polkit agent` and Settings → Authentication prompts says running.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -207,7 +208,6 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
 - [Singleton properties warn on every reload](issues.md#singleton-properties-warn-on-every-reload)
-- [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)
 - [Calls in flight are lost across a daemon re-exec, one service at a time](issues.md#calls-in-flight-are-lost-across-a-daemon-re-exec-one-service-at-a-time): one `BackendManager` fix for the three below
 - [A file write or change can be missed across a daemon re-exec](issues.md#a-file-write-or-change-can-be-missed-across-a-daemon-re-exec)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)
