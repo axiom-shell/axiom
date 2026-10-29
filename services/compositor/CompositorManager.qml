@@ -406,8 +406,9 @@ Singleton {
 
   // Goes to workspace `id`. mode: "go" (default), "move" (taking the
   // focused window along) or "moveSilent" (sending it there, staying put).
-  // In a grid or perMonitor layout only the output's own workspaces are
-  // reachable (`output`, a name, the focused one by default), and it goes
+  // In a grid or perMonitor layout only the output's own workspaces (and
+  // with dynamic workspaces, those it borrows) are reachable (`output`, a
+  // name, the focused one by default), and it goes
   // by column, then row, sliding along each in turn (WorkspacesConfig.
   // animate). The standard and perMonitor layouts are one row (columns =
   // count), so they only ever slide sideways. Callers on an output's
@@ -424,7 +425,7 @@ Singleton {
     output = output || root.focusedOutput;
     const base = workspaceBase(output);
     const size = root.blockSize;
-    if (root.perMonitorBlocks && (id < base || id >= base + size)) {
+    if (root.perMonitorBlocks && (id < base || id >= base + size) && workspaceIds(output).indexOf(id) < 0) {
       if (focusId)
         root.backend.activateWindow(focusId);
       else
@@ -610,10 +611,9 @@ Singleton {
   }
 
   // First workspace id an output (its name) shows: 1 in the standard
-  // layout, else its block's (grid/perMonitor, one block per output in a
-  // stable order — the primary first, then the rest by a description-based
-  // identity that survives a port change — not the compositor's discovery
-  // order, which can reshuffle on a hotplug/reconnect/restart)
+  // layout, else its block's (grid/perMonitor: one block per monitor the
+  // saved profiles name, connected or not, then per connected one they
+  // don't, so a hotplug never moves a block; WorkspaceGeometry.blockBases)
   function workspaceBase(output) {
     return root.perMonitorBlocks ? (root._bases[output] ?? 1) : 1;
   }
@@ -623,7 +623,8 @@ Singleton {
   // belong to an output (supports.outputWorkspaces: niri's), as the
   // standard layout's shared ids can't
   readonly property bool perMonitorBlocks: WorkspacesConfig.perMonitorBlocks || root.supports.outputWorkspaces === true
-  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize)
+  // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label
+  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles)
 
   // Whether the compositor makes and removes workspaces itself, one list
   // per output (supports.dynamicWorkspaces: niri's). The Workspaces
@@ -652,18 +653,15 @@ Singleton {
     return ids;
   }
 
-  // The outputs in block order (WorkspaceGeometry.orderMonitors)
+  // The outputs in block order, each with its block (its index, from
+  // _bases)
   function _orderedOutputs() {
-    const outputs = root.outputs;
-    const plain = outputs.map(o => ({
+    return root.outputs.map(o => ({
           "name": o.name,
-          "key": MonitorLayout.outputId(o, outputs),
-          "x": o.x,
-          "y": o.y,
+          "block": Math.round((root._bases[o.name] - 1) / root.blockSize),
           "active": o.activeWorkspaceId,
           "focused": o.focused
-        }));
-    return WorkspaceGeometry.orderMonitors(plain, General.primaryMonitor);
+        })).sort((a, b) => a.block - b.block);
   }
 
   // --- Layout changes ---

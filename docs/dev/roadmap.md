@@ -64,9 +64,9 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 10 | done | Backend stage 5: HTTP | Resolves `ChatProvidersCard` (Phase 5) and unblocks the chat lists (Phase 7). |
 | 11 | done | Backend stage 6: the funnels | Changes the compositor sockets behind several log warnings. |
 | 12 | done | Backend stage 7: the config path, with the `KeybindManager` split | Closes the takeover leak, the save order and what a config.json that doesn't load still breaks; a thin `compositor.inputs` changes what `KeybindManager` reads, so it's split once, on the new shape. |
-| 13 | in progress | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
-| 14 | next | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
-| 15 | later | Backend stage 8: the last scripts (`pick_path.py`, `bug_info.sh`) | Small, with nothing waiting on it; after stage 7 so it doesn't collide with the config path, and before the audits so they cover it. |
+| 13 | done | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
+| 14 | in progress | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
+| 15 | next | Backend stage 8: the last scripts (`pick_path.py`, `bug_info.sh`) | Small, with nothing waiting on it; after stage 7 so it doesn't collide with the config path, and before the audits so they cover it. |
 | 16 | later | [Phase 13](#phase-13-the-maintainers-notes): the maintainer's notes | Bugs and small features from the maintainer's own use; after the parity and log rows (some are compositor-specific, and those land there), before Phase 10 so the last feature and the audits are built on them. |
 | 17 | later | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
 | 18 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0: audit and tighten the guardrails (checks, tests, CI, agent rules) | The architecture is final once stage 7 and Phase 10 are in, so stricter checks aren't rewritten by a later stage; before the system audits, so the audits, the clear-out and the hardening all run under them. |
@@ -172,13 +172,7 @@ Resolved by a stage:
 ### Phase 6: compositor parity
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
-Done: sway and SwayFX (nothing left). niri's entries are [deferred](#deferred) (maintainer, 2026-10-29).
-
-Hyprland, and every compositor:
-- [Hyprland's return of workspaces on replug is unconfirmed](issues.md#hyprlands-return-of-workspaces-on-replug-is-unconfirmed)
-- [Workspace blocks follow the connected monitors, not the saved profiles](issues.md#workspace-blocks-follow-the-connected-monitors-not-the-saved-profiles)
-- [The scrolling layout drops a monitor's borrowed workspaces from its list](issues.md#the-scrolling-layout-drops-a-monitors-borrowed-workspaces-from-its-list)
-- [Persistent workspaces sit empty in the scrolling layout's list](issues.md#persistent-workspaces-sit-empty-in-the-scrolling-layouts-list)
+Done: every entry is fixed: sway and SwayFX, then Hyprland's and every compositor's (the last with row 13: workspace blocks numbered over the saved monitor profiles, and the scrolling layout's borrowed workspaces, which Hyprland hands back on replug). niri's entries are [deferred](#deferred) (maintainer, 2026-10-29).
 
 ### Phase 7: fit, geometry and performance
 Nothing runs off a screen or clips at 1080p, and pages stay fast as their data grows. Take the 1080p entries as one pass in a nested compositor with a 1080p output.
@@ -334,6 +328,7 @@ Entries decided against doing now: a plan the maintainer deferred ([Items that n
 
 Extremely rare paths, put after real gaps (2026-10-26):
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads) (transient: corrected after the reload)
+- [Saving a profile that names a new monitor can move other monitors' blocks](issues.md#saving-a-profile-that-names-a-new-monitor-can-move-other-monitors-blocks) (found in row 13's review)
 
 Deferred by the maintainer (2026-10-27):
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)

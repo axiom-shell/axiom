@@ -244,6 +244,79 @@ TestCase {
     compare(WorkspaceGeometry.blockBases([], "", 5), {});
   }
 
+  function test_blockBases_profiles() {
+    const profiles = [
+      {
+        "outputs": [
+          {
+            "output": "desc:a",
+            "label": "DP-1"
+          },
+          {
+            "output": "desc:b",
+            "label": "DP-2"
+          }
+        ]
+      },
+      {
+        "outputs": [
+          {
+            "output": "desc:b",
+            "label": "DP-2"
+          },
+          {
+            "output": "desc:c",
+            "label": "HDMI-A-1"
+          }
+        ]
+      }
+    ];
+    const all = [
+      {
+        "name": "DP-1",
+        "description": "a"
+      },
+      {
+        "name": "DP-2",
+        "description": "b"
+      },
+      {
+        "name": "HDMI-A-1",
+        "description": "c"
+      }
+    ];
+    compare(WorkspaceGeometry.blockBases(all, "", 100, profiles), {
+      "DP-1": 1,
+      "DP-2": 101,
+      "HDMI-A-1": 201
+    });
+    compare(WorkspaceGeometry.blockBases([all[0], all[2]], "", 100, profiles), {
+      "DP-1": 1,
+      "HDMI-A-1": 201
+    }, "a middle monitor unplugged moves no block");
+    compare(WorkspaceGeometry.blockBases([all[0], all[1]], "HDMI-A-1", 100, profiles), {
+      "DP-1": 101,
+      "DP-2": 201
+    }, "the unplugged primary keeps the first block by its label");
+    compare(WorkspaceGeometry.blockBases([
+      {
+        "name": "DP-3",
+        "description": "0 unknown"
+      },
+      all[1]], "", 100, profiles), {
+      "DP-2": 101,
+      "DP-3": 301
+    }, "an unknown monitor goes after every named one");
+    compare(WorkspaceGeometry.blockBases([
+      {
+        "name": "DP-9",
+        "description": "c"
+      }
+    ], "", 10, profiles), {
+      "DP-9": 21
+    }, "a named monitor on another port keeps its block");
+  }
+
   function test_outputToward() {
     const outputs = [
       {
@@ -383,12 +456,14 @@ TestCase {
       {
         "id": 0,
         "name": "A",
+        "block": 0,
         "active": activeA,
         "focused": true
       },
       {
         "id": 1,
         "name": "B",
+        "block": 1,
         "active": activeB,
         "focused": false
       }
@@ -488,5 +563,21 @@ TestCase {
     const plan = WorkspaceGeometry.remapWorkspaces(_monitors(1, 3), windows, layout, layout);
     compare(_moves(plan), "b3>11");
     compare(_focus(plan), "B:11 A:1");
+  }
+
+  function test_remap_follows_the_blocks_not_the_places() {
+    // B's block is the third (a monitor between them is unplugged)
+    const monitors = _monitors(1, 22);
+    monitors[1].block = 2;
+    const windows = _windows([["a1", 1, 0], ["b2", 22, 1]]);
+    const plan = WorkspaceGeometry.remapWorkspaces(monitors, windows, {
+      "blocks": true,
+      "size": 10
+    }, {
+      "blocks": true,
+      "size": 100
+    });
+    compare(_moves(plan), "b2>202");
+    compare(_focus(plan), "B:202 A:1");
   }
 }

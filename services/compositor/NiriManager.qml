@@ -452,7 +452,8 @@ Singleton {
           "description": NiriState.description(root._outputsReply[name])
         });
     }
-    return WorkspaceGeometry.blockBases(raw, General.primaryMonitor, root.blockSize);
+    // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label
+    return WorkspaceGeometry.blockBases(raw, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles);
   }
   // The gap between windows, where niri lays a strip out from
   readonly property real _gap: root._configGaps.inner
