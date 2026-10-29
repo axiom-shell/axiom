@@ -87,6 +87,7 @@ FieldGroup {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search by name, author, theme or tag")
+      clearable: true
       onTextEdited: root.query = text
     }
 

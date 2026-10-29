@@ -167,6 +167,7 @@ Panel {
     Layout.fillWidth: true
     Layout.preferredHeight: Widget.height
     placeholderText: I18n.tr("Search emoji")
+    clearable: true
     input.wrapMode: Text.NoWrap
     onAccepted: {
       if (root.results.length > 0)

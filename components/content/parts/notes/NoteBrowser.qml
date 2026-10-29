@@ -216,6 +216,7 @@ DropdownSurface {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search notes")
+      clearable: true
       Component.onCompleted: input.forceActiveFocus()
       onAccepted: {
         const first = root.results[0];

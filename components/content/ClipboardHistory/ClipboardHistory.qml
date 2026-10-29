@@ -137,6 +137,7 @@ Panel {
     Layout.fillWidth: true
     Layout.preferredHeight: Widget.height
     placeholderText: I18n.tr("Search the clipboard")
+    clearable: true
     input.wrapMode: Text.NoWrap
     onAccepted: {
       if (root.clips.length > 0)

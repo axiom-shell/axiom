@@ -68,6 +68,7 @@ Panel {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search keybinds")
+      clearable: true
       input.wrapMode: Text.NoWrap
       Keys.onEscapePressed: event => {
         if (field.text === "") {

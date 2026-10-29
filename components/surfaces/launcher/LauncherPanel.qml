@@ -266,6 +266,19 @@ FocusScope {
         textSize: Appearance.fontSizeBy(-2)
       }
     }
+
+    // Clears the search, keeping the focus in it
+    FlatIconButton {
+      visible: input.text !== ""
+      focusPolicy: Qt.NoFocus
+      iconText: "close"
+      iconSize: Appearance.fontSizeBy(2)
+      tooltipText: I18n.tr("Clear")
+      onClicked: {
+        input.clear();
+        input.forceActiveFocus();
+      }
+    }
   }
 
   Rectangle {

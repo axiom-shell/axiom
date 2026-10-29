@@ -36,6 +36,7 @@ Item {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search settings")
+      clearable: true
       Component.onCompleted: input.text = SettingsManager.query
       onTextChanged: SettingsManager.query = text
 

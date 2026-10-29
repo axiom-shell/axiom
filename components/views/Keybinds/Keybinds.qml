@@ -95,6 +95,7 @@ BaseView {
             Layout.fillWidth: true
             Layout.preferredHeight: Widget.height
             placeholderText: I18n.tr("Search keybinds")
+            clearable: true
             Component.onCompleted: input.text = KeybindManager.page.query
             onTextChanged: KeybindManager.page.query = text
           }
@@ -105,6 +106,7 @@ BaseView {
             Layout.fillWidth: true
             Layout.preferredHeight: Widget.height
             placeholderText: I18n.tr("Search binds by key, action or label")
+            clearable: true
             Component.onCompleted: input.text = KeybindManager.page.editQuery
             onTextChanged: KeybindManager.page.editQuery = text
             // Add bind clears the search

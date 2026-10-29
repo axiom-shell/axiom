@@ -159,6 +159,7 @@ Item {
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.height
         placeholderText: I18n.tr("Search actions")
+        clearable: true
         onTextChanged: {
           root.query = text;
           root.highlighted = root.searching ? root.firstAction() : 0;

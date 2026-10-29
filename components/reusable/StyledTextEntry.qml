@@ -5,6 +5,8 @@ import qs.config
 
 // A single-line text field in a StyledContainer. It writes every keystroke
 // back to `text`: push values in and act on textEdited (see AGENTS.md pitfalls).
+// `clearable` (search boxes) adds an X at the right while it holds text,
+// which empties it as a typed edit and keeps the focus in it.
 StyledContainer {
   id: root
 
@@ -24,6 +26,17 @@ StyledContainer {
   // it) isn't written onto what it edits now, and clears it once it has
   // committed or pushed a value in
   property bool typed: false
+  // An X at the right, while there's text, that clears it
+  property bool clearable: false
+  readonly property bool _clearShown: root.clearable && !root.readOnly && textField.text !== ""
+
+  // Empties the field as if typed (textEdited), keeping its focus
+  function clear() {
+    textField.text = "";
+    root.typed = true;
+    root.textEdited();
+    textField.forceActiveFocus();
+  }
 
   implicitHeight: textField.implicitHeight + Widget.padding * 2
   borderColor: textField.activeFocus ? Theme.accent : Theme.border
@@ -40,7 +53,7 @@ StyledContainer {
     id: textField
     anchors.fill: parent
     anchors.leftMargin: Widget.padding
-    anchors.rightMargin: Widget.padding
+    anchors.rightMargin: root._clearShown ? clearButton.width + Widget.spacing : Widget.padding
     verticalAlignment: TextInput.AlignVCenter
     text: root.text
     onTextChanged: root.text = text
@@ -94,5 +107,19 @@ StyledContainer {
         }
       }
     }
+  }
+
+  FlatIconButton {
+    id: clearButton
+    visible: root._clearShown
+    size: Math.min(Widget.iconButton, root.height - Widget.px(4))
+    anchors.right: parent.right
+    anchors.rightMargin: Widget.px(2)
+    anchors.verticalCenter: parent.verticalCenter
+    focusPolicy: Qt.NoFocus
+    iconText: "close"
+    iconSize: Appearance.fontSizeBy(1)
+    tooltipText: I18n.tr("Clear")
+    onClicked: root.clear()
   }
 }

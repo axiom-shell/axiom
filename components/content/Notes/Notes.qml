@@ -259,6 +259,7 @@ Card {
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.height
         placeholderText: I18n.tr("Find in note")
+        clearable: true
         onTextChanged: {
           if (root.findOpen)
             editor.find(text, 0);
