@@ -19,7 +19,8 @@ func fakeGo(t *testing.T, build string) string {
 	// Written with forks held off: a child forked by a parallel test while
 	// the file is open for writing keeps that descriptor until it execs,
 	// and exec'ing the script meanwhile fails with ETXTBSY (text file busy).
-	// A rename wouldn't help (same inode); os/exec forks under ForkLock
+	// A rename wouldn't help (same inode); os/exec forks under ForkLock's
+	// write lock
 	syscall.ForkLock.RLock()
 	err := os.WriteFile(path, []byte(script), 0o755)
 	syscall.ForkLock.RUnlock()

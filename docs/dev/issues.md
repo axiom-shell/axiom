@@ -357,6 +357,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `permissions.deny` still refuses `rm config/user/config.json` (the folder no longer exists) and refuses `git clean -x`/`-X`/`-fdx`, which neither AGENTS.md › Never nor the guard mentions, though the guard's docstring says the deny list "repeats the plain ones". Fix: drop those two lines, and either name `git clean -x` in AGENTS.md (it deletes the generated files and local state) or drop it.
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
 ### Small tooling leftovers
 - **Where:** `components/methods/IconResolver.qml`, `packaging/aur/`, `docs/dev/core/i18n.md`
 - **What:** `IconResolver` is the one methods helper without a test (`tst_IconResolver`) (and the one importing `Quickshell`, for `iconPath`). The `axiom-shell` and `axiom-shell-git` PKGBUILDs are near copies. `check_doc_drift.py` flags `i18n.md` (12 commits behind its files, after the services moved to folders).

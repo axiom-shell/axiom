@@ -90,7 +90,7 @@ What an agent does when asked for "the next step", to "continue the roadmap", or
 5. **Update the roadmaps in each item's commit:**
    - remove the fixed issues.md entry and its link here;
    - mark a finished phase step `Done:` at its start (as backend/roadmap.md marks its bullets);
-   - when a row's last item is done (a deferred item doesn't count; a plan waiting for its decision does), set its Status to `done`, the next row's to `in progress` and the one after to `next`; a stage row also updates its status in backend/roadmap.md;
+   - when a row's last item is done (a deferred item doesn't count; a plan waiting for its decision does), set its Status to `done`, the next row's to `in progress` and the one after to `next` (passing over `on hold` rows); a stage row also updates its status in backend/roadmap.md;
    - anything learned that changes the order is an edit to [Full order](#full-order) with its reason in the "Why here" cell.
 6. **Report** what was done, what the next item is (the user's next "next step"), and anything found and filed in issues.md along the way.
 

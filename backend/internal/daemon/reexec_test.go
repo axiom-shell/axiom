@@ -41,8 +41,9 @@ func TestStaleSocketIsRemovedOnlyUnderTheInstanceLock(t *testing.T) {
 
 	// Released with forks held off: a child a parallel test forked while
 	// the lock was held carries its descriptor (and so the flock) until it
-	// execs. os/exec forks under ForkLock, so with its read lock none is
-	// between fork and exec, and the close frees the lock at once
+	// execs. os/exec holds ForkLock from fork to exec (Linux forks with
+	// CLONE_VFORK, so the parent waits for the exec), so with its read lock
+	// none is between the two, and the close frees the lock at once
 	syscall.ForkLock.RLock()
 	held.Release()
 	syscall.ForkLock.RUnlock()
