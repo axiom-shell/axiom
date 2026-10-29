@@ -38,6 +38,18 @@ class Bash(unittest.TestCase):
         self.allows("scripts/dev/verify.sh", "git status && git diff HEAD", "axiom ipc overlay toggle",
                     "scripts/log.sh -g lock", "grep -rn 'lockscreen lock' docs", "echo 'qs kill'", "qs log -f")
 
+    def test_compound_commands(self):
+        self.blocks("(qs kill)", "{ qs kill; }", "echo $(qs kill)", "x=`qs kill`", "if true; then qs kill; fi",
+                    "while true; do axiom lock; done", "! axiom lock", "true && (cd /tmp; axiom lock) > /dev/null 2>&1")
+        self.allows("(cd docs && ls)", "echo $(date)", "if true; then echo ok; fi", "{ git status; git log -1; } | head",
+                    "go test ./... 2>&1 | tail -3")
+
+    def test_wrapper_options(self):
+        self.blocks("sudo -u me axiom lock", "nice axiom lock", "nice -n 5 axiom lock", "flock /tmp/l axiom lock",
+                    "flock -w 5 /tmp/l axiom lock", "systemd-run --user axiom quit", "systemd-run --user -u x axiom quit",
+                    "ionice -c 3 qs kill", "timeout -s INT 5 axiom lock", "env -u FOO axiom lock")
+        self.allows("nice -n 5 go test ./...", "flock /tmp/l scripts/dev/verify.sh", "timeout 5 axiom ping")
+
     def test_locking(self):
         self.blocks("loginctl lock-session", "sleep 1 && hyprlock", "bash -c 'axiom ipc lockscreen lock'")
 
@@ -51,7 +63,7 @@ class Bash(unittest.TestCase):
                     'qs kill -p "$PWD/greeter.qml"', "qs kill -i abc123", "qs list")
 
     def test_github_issues(self):
-        self.blocks("gh issue create --title x --body y", "gh api repos/a/b/issues -f title=x",
+        self.blocks("gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh api repos/a/b/issues -f title=x",
                     "gh api -X POST /repos/a/b/issues --input body.json", "gh api --method=post repos/a/b/issues",
                     "gh api graphql -f query='mutation { createIssue(input: {}) { issue { id } } }'")
         self.allows("gh issue list", "gh issue view 16", "gh api repos/a/b/issues", "gh api repos/a/b/issues -X GET -f state=open",
@@ -137,6 +149,17 @@ class Bash(unittest.TestCase):
                     )
         self.allows("rm /tmp/config.json", f"cp {guard.LIVE_CONFIG} /tmp/backup.json",
                     f"rm {guard.LIVE_CONFIG.parent}/saved/old.json", "git clean -fd", "mv /tmp/new.json /tmp/other.json")
+
+    def test_bash_writes_onto_live_config(self):
+        live = "~/.config/axiom/config.json" if not os.environ.get("XDG_CONFIG_HOME") else str(guard.LIVE_CONFIG)
+        self.blocks(f"cp /tmp/x.json {live}", f"cp /tmp/config.json {guard.LIVE_CONFIG.parent}/", f"mv /tmp/x.json {live}",
+                    f"install -m 644 /tmp/x.json {live}", f"echo '{{}}' > {live}", f"jq . /tmp/x >>{live}",
+                    f"jq . /tmp/x | tee {live}", f"sed -i 's/a/b/' {live}", f"sed -Ei.bak 's/a/b/' {live}",
+                    f"sed --in-place 's/a/b/' {live}", "rm -r ~/.config", f"rm -rf {guard.HOME}",
+                    "find ~/.config/axiom -name config.json -delete", "find ~/.config -name '*.json' -exec rm {} +")
+        self.allows(f"cat {live}", f"jq . {live}", f"jq .Bar {live} > /tmp/out.json", f"cp {live} /tmp/backup.json",
+                    "cp /tmp/x.json /tmp/y.json", f"sed -n 1p {live}", f"diff {live} /tmp/x 2>/dev/null",
+                    "find . -name '*.pyc' -delete", "find ~/.config -name '*.json' -exec grep -l Bar {} +")
 
     def test_qmlformat_inplace(self):
         self.blocks("qmlformat -i shell.qml", "/usr/lib/qt6/bin/qmlformat --inplace shell.qml")

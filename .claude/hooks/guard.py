@@ -9,9 +9,12 @@ the windowed greeter) live here; .claude/settings.json › permissions.deny
 repeats the plain ones. Tests: tests/scripts/test_guard.py.
 
 Bash commands are split into simple commands (on ; && || | & and newlines,
+( ) { } $( ) and backticks, the keywords starting a command such as `then`,
 into `bash -c`/`sh -c` strings) and each is judged on its argv, with leading
 VAR=value assignments (and `export VAR=…` earlier in the same command) as its
-environment. Best effort: it stops mistakes, not an adversary.
+environment; a wrapper (sudo, nice, flock, …) is judged by the command it
+runs, and a `>`/`>>` redirection as a write to its target. Best effort: it
+stops mistakes, not an adversary.
 """
 import json
 import os
@@ -26,8 +29,20 @@ HOME = Path(os.path.expanduser("~")).resolve()
 # The live config.json (DataDirs.xdg)
 LIVE_CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or HOME / ".config").resolve() / "axiom/config.json"
 SCHEMA = REPO / "config/json/config.schema.json"
-SEPARATORS = {";", "&&", "||", "|", "&", "\n", "|&"}
-WRAPPERS = {"sudo", "pkexec", "env", "nohup", "exec", "command", "time", "timeout", "setsid"}
+PUNCTUATION = ";&|()<>`"
+# Words that start a command without being its name
+KEYWORDS = {"if", "then", "else", "elif", "while", "until", "do", "!", "{", "}"}
+# Wrappers and their options that take a value (`sudo -u me`); timeout and
+# flock take one positional (the duration, the lock file) before the command
+WRAPPERS = {
+    "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-r", "-t", "-U", "-T"}, "pkexec": {"--user"},
+    "env": {"-u", "-C", "--unset", "--chdir"}, "nohup": set(), "exec": {"-a"}, "command": set(), "time": set(),
+    "setsid": set(), "timeout": {"-s", "-k", "--signal", "--kill-after"}, "nice": {"-n", "--adjustment"},
+    "ionice": {"-c", "-n", "-p", "--class", "--classdata"}, "flock": {"-w", "-E", "--timeout", "--conflict-exit-code"},
+    "systemd-run": {"-u", "--unit", "-p", "--property", "-E", "--setenv", "--uid", "--gid", "--slice", "-M", "--machine",
+                    "--description", "--working-directory"},
+}
+WRAPPER_POSITIONALS = {"timeout": 1, "flock": 1}
 SHELLS = {"bash", "sh", "zsh"}
 QS = {"qs", "quickshell"}
 QS_VALUE_OPTS = {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}
@@ -45,21 +60,36 @@ def deny(rule, why):
 # --------------------------------------------------------------- parsing
 
 def split_commands(command):
-    """[(env, argv)] for each simple command in a shell command line."""
+    """[(env, argv)] for each simple command in a shell command line; a
+    redirection `> f` is a command of its own, `[">", f]`."""
     try:
-        lexer = shlex.shlex(command.replace("\n", " ; "), posix=True, punctuation_chars=";&|")
+        lexer = shlex.shlex(command.replace("\n", " ; "), posix=True, punctuation_chars=PUNCTUATION)
         lexer.whitespace_split = True
         tokens = list(lexer)
     except ValueError:
         tokens = command.split()
     out, current, exported = [], [], {}
-    for token in tokens + [";"]:
-        if token in SEPARATORS or set(token) <= set(";&|"):
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        punctuation = set(token) <= set(PUNCTUATION)
+        if punctuation and set(token) & set("<>") and not set(token) & set("()`"):
+            # A redirection: `>`/`>>` write their target, `<` reads it
+            if current and current[-1].isdigit():
+                current.pop()  # the fd of `2>`
+            if ">" in token and i + 1 < len(tokens):
+                out.append((dict(exported), [">", tokens[i + 1]]))
+            i += 2
+            continue
+        if punctuation or not current and token in KEYWORDS:
             if current:
                 out.extend(simple(current, exported))
             current = []
         else:
             current.append(token)
+        i += 1
+    if current:
+        out.extend(simple(current, exported))
     return out
 
 
@@ -85,12 +115,14 @@ def simple(tokens, exported):
         return []
     # Wrappers: judge the command they run
     while argv and Path(argv[0]).name in WRAPPERS:
+        wrapper = Path(argv[0]).name
         argv = argv[1:]
-        while argv and (argv[0].startswith("-") or ASSIGN.match(argv[0]) or re.fullmatch(r"\d+[smhd]?", argv[0])):
+        while argv and (argv[0].startswith("-") or ASSIGN.match(argv[0])):
             if ASSIGN.match(argv[0]):
                 name, value = ASSIGN.match(argv[0]).groups()
                 env[name] = value
-            argv = argv[1:]
+            argv = argv[2:] if argv[0] in WRAPPERS[wrapper] else argv[1:]
+        argv = argv[WRAPPER_POSITIONALS.get(wrapper, 0):]
     if not argv:
         return []
     command_flag = next((i for i, a in enumerate(argv[1:-1], 1) if re.fullmatch(r"-[a-z]*c[a-z]*", a)), None)
@@ -298,7 +330,8 @@ def check_argv(env, argv, cwd):
         check_axiom(env, args, cwd)
 
     # Opening a GitHub issue: problems go in docs/dev/issues.md
-    if name == "gh" and (args[:2] == ["issue", "create"] or args[:1] == ["api"] and gh_api_opens_issue(args[1:])):
+    opens = any(args[i:i + 2] == ["issue", "create"] for i in range(len(args)))
+    if name == "gh" and (opens or args[:1] == ["api"] and gh_api_opens_issue(args[1:])):
         deny("Never, while testing", "don't open GitHub issues; record the problem in docs/dev/issues.md and tell the user.")
 
     # Rewriting history on the remote, or pushing to main past a PR
@@ -343,17 +376,29 @@ def check_argv(env, argv, cwd):
     if sends and any("greeter.apply" in a for a in args) and axiom_live_display(env, args):
         deny("Never, while testing", "greeter.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it installs the greeter for real (test it with go test ./internal/greeterinstall).")
 
-    # The real config.json
-    if name in {"rm", "unlink", "trash", "trash-put", "shred", "mv"}:
-        paths = [a for a in args if not a.startswith("-")]
-        if name == "mv":
-            paths = paths[:-1]  # the sources
-        for a in paths:
-            target = resolve(a, cwd)
-            # The file, or a folder holding it up to its config folder
-            top = LIVE_CONFIG.parent
-            if target == LIVE_CONFIG or target in LIVE_CONFIG.parents and (target == top or top in target.parents):
-                deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}); use `axiom ipc onboarding goTo <n>`.")
+    # The real config.json: deleted or moved (the file or a folder above it)
+    paths = [a for a in args if not a.startswith("-")]
+    holding = {LIVE_CONFIG, *LIVE_CONFIG.parents}
+    deletes = name in {"rm", "unlink", "trash", "trash-put", "shred", "mv"}
+    if name == "find" and any(a == "-delete" or a in {"-exec", "-execdir"} and Path(b).name in {"rm", "shred", "unlink"}
+                              for a, b in zip(args, args[1:] + [""])):
+        deletes, paths = True, args[:next((i for i, a in enumerate(args) if a[:1] in {"-", "(", "!"}), len(args))]
+    for a in (paths[:-1] if name == "mv" else paths) if deletes else []:
+        if resolve(a, cwd, env) in holding:
+            deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}) or a folder holding it; use `axiom ipc onboarding goTo <n>`.")
+    # ... or written by Bash, which skips the x-takeover check Edit and Write get
+    if name in {"cp", "mv", "install"} and len(paths) > 1:
+        written = [paths[-1]]
+    elif name == ">" or name == "tee":
+        written = paths
+    elif name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
+        written = paths
+    else:
+        written = []
+    for a in written:
+        target = resolve(a, cwd, env)
+        if target == LIVE_CONFIG or target == LIVE_CONFIG.parent and any(Path(p).name == LIVE_CONFIG.name for p in paths[:-1]):
+            deny("Never, while testing", f"don't write the real config.json ({LIVE_CONFIG}) from Bash, which skips the x-takeover check; use Edit/Write or `axiom config set`.")
 
     # qmlformat -i replaces the inode
     if name == "qmlformat" and any(a in {"-i", "--inplace"} for a in args):
