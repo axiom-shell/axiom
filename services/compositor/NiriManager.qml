@@ -85,7 +85,8 @@ Singleton {
   // change can show a frame or so after the one sliding. It blurs behind
   // the shell's surfaces where each window says (blurRegion: no alpha
   // threshold, a layer rule would blur the whole window), its
-  // ext-background-effect. It has an overview of its own (overview).
+  // ext-background-effect. It has an overview of its own (overview) and a
+  // window switcher its config binds (compositorSwitcher).
   readonly property var supports: ({
       "configModes": true,
       "keybinds": true,
@@ -109,7 +110,8 @@ Singleton {
       "inputConfig": true,
       "keyCapture": true,
       "bindMerge": true,
-      "overview": true
+      "overview": true,
+      "compositorSwitcher": true
     })
 
   // --- Events ---

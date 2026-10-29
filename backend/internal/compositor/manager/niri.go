@@ -139,20 +139,32 @@ func (w *niriWriter) outputs(in Inputs, path string) any {
 	return render.NiriFileOutputNodes(readFile(path))
 }
 
-// parts are what every file holds
-func (w *niriWriter) parts(in Inputs, spec any, path string) *jsonx.Object {
+// parts are what every file holds. With WindowSwitcher.compositorSwitcher,
+// the switch windows keys are niri's own switcher's in the included and
+// managed files (`ownSwitcher`); detached keeps axiom's (the maintainer,
+// 2026-10-29).
+func (w *niriWriter) parts(in Inputs, spec any, path string, ownSwitcher bool) *jsonx.Object {
 	look := render.NiriLookNodes(getAny(spec, "look"))
 	look.Append(w.tables.NiriSurfaceBlurNodes(getAny(spec, "surfaces")).Items...)
+	binds := w.plan(in).Value("apply")
+	options := render.NiriOptionNodes(w.schemaOf("Workspaces"), in.get("stripOptions"), false)
+	if ownSwitcher && in.get("compositorSwitcher") == true {
+		rest, recent := w.tables.NiriRecentWindows(binds)
+		binds = rest
+		if recent != nil {
+			options.Append(recent)
+		}
+	}
 	return jsonx.Obj("header", niriHeader, "includeLines", w.includeLines(),
-		"binds", nilObj(w.tables.NiriBindsNode(w.plan(in).Value("apply"), in.get("ctx"))),
+		"binds", nilObj(w.tables.NiriBindsNode(binds, in.get("ctx"))),
 		"outputs", w.outputs(in, path),
-		"options", render.NiriOptionNodes(w.schemaOf("Workspaces"), in.get("stripOptions"), false),
+		"options", options,
 		"look", look,
 		"input", render.NiriInputNodes(getAny(spec, "input"), w.schemaOf("Input")))
 }
 
 func (w *niriWriter) moduleText(in Inputs, spec any) string {
-	return render.NiriModuleText(w.parts(in, spec, w.includePath()))
+	return render.NiriModuleText(w.parts(in, spec, w.includePath(), true))
 }
 
 // userFiles are user/*.kdl, in name order, as the managed config includes
@@ -171,7 +183,7 @@ func (w *niriWriter) userFiles() []string {
 }
 
 func (w *niriWriter) managedText(in Inputs, spec any) string {
-	parts := w.parts(in, spec, w.managedPath())
+	parts := w.parts(in, spec, w.managedPath(), true)
 	options := render.NiriOptionNodes(w.schemaOf("WindowBehaviour"), in.get("behaviour"), false)
 	options.Append(render.NiriOptionNodes(w.schemaOf("Compositor", "niri"), in.get("niriOptions"), false).Items...)
 	options.Append(itemsOf(parts.Value("options"))...)
@@ -246,7 +258,7 @@ func (w *niriWriter) runtimeApply(ctx context.Context, in Inputs, _ func() []str
 	if w.userEntries == nil {
 		return
 	}
-	module := render.NiriModuleText(w.parts(in, in.get("specFile"), w.detachedPath()))
+	module := render.NiriModuleText(w.parts(in, in.get("specFile"), w.detachedPath(), false))
 	wrapper := render.NiriWrapperText(niriHeader, w.mainConfig, w.detachedPath())
 	if w.refused = w.validate(ctx, module); w.refused != "" {
 		return

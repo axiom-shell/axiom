@@ -91,4 +91,5 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `splitToggle` | the `toggleSplit` bind (Hyprland's dwindle layout: on its scrolling layout the bind gets an info note) |
 | `pin` | the `pin` bind (a floating window shown on every workspace) |
 | `windowGroups` | the `toggleGroup` bind |
+| `compositorSwitcher` | the compositor has a window switcher of its own its config can bind (niri's `recent-windows`): while `WindowSwitcher.compositorSwitcher` is on (shown only with it), the daemon's writer binds the switch windows keys to it instead of axiom's IPC, in the included and managed files only (`render.NiriRecentWindows`, `manager` `niriWriter.parts`) |
 | `overview` | the compositor has an overview of its own, the backend's `overview(verb)` (`open`, `close`, `toggle`; `CompositorManager.compositorOverview`): while `WorkspaceOverlay.compositorOverview` is on (shown only with it), everything that opens axiom's workspace overview (its IPC, binds, `/overview`, bar buttons) opens that instead (`shell/WorkspaceOverlay.qml`) |

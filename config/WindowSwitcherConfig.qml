@@ -12,4 +12,7 @@ QtObject {
   readonly property bool previews: _c.previews
   readonly property int tileSize: Widget.px(_c.tileSize)
   readonly property int showDelay: _c.showDelay
+  // The switch windows keys open the compositor's own switcher, where
+  // axiom writes its config (the daemon's writer reads it)
+  readonly property bool compositorSwitcher: _c.compositorSwitcher
 }

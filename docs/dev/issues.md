@@ -306,7 +306,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The window switcher's blur and release on sway and niri
 - **Where:** `services/compositor/WindowSwitcherManager.qml` (`commit`, `pick`), `components/surfaces/switcher/SwitcherKeys.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
-- **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". The plan settles one release path that works on every compositor and the switcher's backing.
+- **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". On niri this is only while `WindowSwitcher.compositorSwitcher` is off or in detached mode: by default the included and managed files bind the keys to niri's own switcher (row 16). The plan settles one release path that works on every compositor and the switcher's backing.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
