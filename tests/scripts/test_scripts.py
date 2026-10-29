@@ -422,6 +422,80 @@ class CheckStructure(unittest.TestCase):
         self.assertEqual(missed(out, [m for _, _, m in self.FILES if m] + self.EDITS), [], out)
 
 
+class CheckI18n(unittest.TestCase):
+    """scripts/check_i18n.py fails on a key a language lacks, an unused one,
+    a file out of format and a stale template, never on an empty entry;
+    --untranslated finds bare UI text and undeclared runtime keys."""
+
+    FILES = [
+        ("config/I18n.qml", 'readonly property var _formats: ({\n  "longDate": "dddd"\n})\n'),
+        ("config/json/config.schema.json", json.dumps({"properties": {"A": {"title": "Alpha"}}, "definitions": {}})),
+        ("components/A.qml", qml('text: I18n.tr("Shown")\n    label: I18n.tr(on ? "Yes" : "No")\n'
+                                 '    title: "Bare words"\n    description: I18n.tr(name)')),
+        ("config/i18n/xx.json", json.dumps({"_meta": {}, "strings": {"Alpha": "a", "Shown": "", "Yes": "y", "Gone": "g"}}, indent=4)),
+    ]
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp)
+            code, out = run_check(root, "check_i18n.py", files=self.FILES)
+            self.assertEqual(code, 1)
+            self.assertEqual(missed(out, ["missing  components/A.qml:6: 'Shown'", "absent   components/A.qml:7: 'No'",
+                                          "unused   'Gone'", "format   not in the canonical format",
+                                          "config/i18n/template/language.json: stale"]), [], out)
+            code, out = run_check(root, "check_i18n.py", "--untranslated")
+            self.assertEqual(code, 1)
+            self.assertEqual(missed(out, ["components/A.qml:8: title: 'Bare words'",
+                                          "components/A.qml:9: dynamic tr() without declared keys"]), [], out)
+            run_check(root, "check_i18n.py", "--fill", "--prune")
+            code, out = run_check(root, "check_i18n.py")
+            self.assertEqual(code, 0, out)
+
+
+class CheckQmllint(unittest.TestCase):
+    """scripts/check_qmllint.py's baseline: a warning past its count fails,
+    and so does a baselined one that's gone."""
+
+    def test_against_the_baseline(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from check_qmllint import against
+        found = {"a.qml": {"k: m": 2, "j: n": 1}, "c.qml": {"z: w": 1}}
+        lines = {("a.qml", "k: m"): [3, 9], ("a.qml", "j: n"): [4], ("c.qml", "z: w"): [5]}
+        baseline = {"a.qml": {"k: m": 1, "j: n": 1}, "b.qml": {"x: y": 1}}
+        self.assertEqual(against(found, lines, baseline), (["a.qml:3,9: k: m (1 new)", "c.qml:5: z: w"], ["b.qml: x: y (1 gone)"]))
+        self.assertEqual(against(found, lines, found), ([], []))
+
+
+class CheckPackages(unittest.TestCase):
+    """scripts/check_packages.py fails when install.sh, Packages.qml and the
+    PKGBUILDs drift: (file, text replaced, its replacement, the message)."""
+
+    EDITS = [
+        ("install.sh", '"grim|grim|grim"', '"grim|grim|grimm"', "grim on fedora is 'grimm', Packages.qml says 'grim'"),
+        ("install.sh", '"git|git|git"', '"git|git|git"\n  "ghost|ghost|ghost"\n  "odd|odd"', "no key 'ghost' (install.sh installs it)"),
+        ("install.sh", None, None, "PACKAGES row 'odd|odd' isn't key|arch|fedora"),
+        ("install.sh", '"Wallpapers|awww|"', '"Wallpapers|awww|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
+        ("install.sh", "REQUIRED=(git ", "REQUIRED=(specter git ", "'specter' isn't in PACKAGES"),
+        ("packaging/aur/axiom-shell/PKGBUILD", "depends=('quickshell", "depends=('extra' 'quickshell",
+         "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell', 'ttf-material-symbols-variable'] aren't"),
+        ("packaging/aur/axiom-shell-git/PKGBUILD", "'awww: wallpapers'", "'phantom: boo'",
+         "axiom-shell-git/PKGBUILD: optdepends phantom, which no install.sh feature or compositor installs"),
+        ("packaging/aur/axiom-shell-git/PKGBUILD", None, None, "axiom-shell-git/PKGBUILD: no optdepends for awww"),
+    ]
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "install.sh", "components/methods/Packages.qml", "packaging/aur")
+            for path, old, new, _ in self.EDITS:
+                if old:
+                    text = (root / path).read_text()
+                    self.assertIn(old, text)
+                    (root / path).write_text(text.replace(old, new, 1))
+            code, out = run_check(root, "check_packages.py")
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [m for *_, m in self.EDITS]), [], out)
+
+
 class CheckSizes(unittest.TestCase):
     """scripts/check_sizes.py finds sizes written as numbers outside the bars."""
 
@@ -471,8 +545,9 @@ class CheckSizes(unittest.TestCase):
 
 
 class CheckDocs(unittest.TestCase):
-    """scripts/check_docs.py flags a retired name; one that is also a schema
-    definition only with a member that isn't a setting."""
+    """scripts/check_docs.py fails on each rule's breaking doc; a retired
+    name that is also a schema definition only with a member that isn't a
+    setting."""
 
     def test_retired_definition_name(self):
         sys.path.insert(0, str(SCRIPTS))
@@ -484,6 +559,40 @@ class CheckDocs(unittest.TestCase):
         self.assertEqual(retired_name("Bar.enrichBarConfig", configs), "Bar")
         self.assertEqual(retired_name("Bar.lookOf(bar)", configs), "Bar")
         self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
+
+    SKILL = "---\nname: {0}\ndescription: x\n---\n{1}\n"
+    FILES = [
+        ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
+                              "`IconConfig.x`\n[b](issues.md#no-such-entry)\n"),
+        ("components/reusable/GhostPiece.qml", qml()),
+        ("docs/recipes/ghost.md", "# Ghost\n"),
+        (".claude/skills/bar-widget/SKILL.md", SKILL.format("bar-widget", "Read the docs.")),
+        (".claude/skills/setting/SKILL.md", SKILL.format("setting", "Read `docs/recipes/setting.md`.\nThen this.\nAnd that.")),
+    ]
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "docs", ".claude/skills", "components", "services", "config",
+                                "AGENTS.md", "README.md", "CONTRIBUTING.md")
+            edit_json(root / "config/json/config.schema.json", lambda s: s.update({"x-ghost": True}))
+            with open(root / "docs/dev/issues.md", "a") as issues:
+                issues.write("\n### Ghost entry\n- **Where:** nowhere\n")
+            code, out = run_check(root, "check_docs.py", files=self.FILES)
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [
+            "docs/dev/ghost.md:1: link to missing nowhere.md",
+            "docs/dev/ghost.md:2: `services/core/GhostlyManager.qml` doesn't exist",
+            "docs/dev/ghost.md:3: `AudioManager.noSuchMember`: AudioManager has no member noSuchMember",
+            "docs/dev/ghost.md:4: `IconConfig.x`: IconConfig was renamed to IconsConfig",
+            "docs/dev/ghost.md:5: link to a missing issues.md entry #no-such-entry",
+            "docs/dev/issues.md: 'Ghost entry': fields ['Where'], expected",
+            "docs/dev/issues.md: 'Ghost entry' isn't linked from docs/dev/roadmap.md",
+            "components/reusable/GhostPiece.qml: not in docs/dev/core/shared-ui-pieces.md",
+            "docs/recipes/ghost.md: no skill .claude/skills/ghost/SKILL.md",
+            ".claude/skills/bar-widget/SKILL.md: doesn't point at docs/recipes/bar-widget.md",
+            ".claude/skills/setting/SKILL.md: 3 lines; a recipe skill only points at its recipe",
+            "`x-ghost` isn't in docs/dev/core/schema-annotations.md",
+        ]), [], out)
 
 
 def block_end(text, open_at):
