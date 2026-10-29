@@ -135,9 +135,10 @@ ReservedAreaWindow {
     // Only a real click closes it (here, on a screen's backdrop, and on
     // its empty background, backgroundClicks), never the grab ending:
     // that's also focus leaving, as a polkit prompt closes, or another
-    // surface's grab starting over it (one native grab at a time)
+    // surface's grab starting over it (one native grab at a time). Sent
+    // only while it's active: open, and not stepped aside
     onClickedOutside: {
-      if (root.isOpen && !root.steppedAside && OverlayConfig.closeOnOutsideClick)
+      if (OverlayConfig.closeOnOutsideClick)
         root.close();
     }
   }
