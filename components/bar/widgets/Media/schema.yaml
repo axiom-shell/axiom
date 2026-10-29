@@ -2,6 +2,11 @@ label: Media Player
 icon: music_note
 group: Media & audio
 popout: {variant: own, enabled: {description: Open the media controls when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, fill, pill, ticker, stacked]
+    description: "Fill and pill show the track's position; ticker scrolls the title; stacked puts the title over the artist."
 settings:
   showArtist: {type: boolean, title: Show artist, default: true}
   artistLength:

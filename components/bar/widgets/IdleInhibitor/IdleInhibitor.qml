@@ -10,8 +10,9 @@ import qs.components.bar.widgets.base
 // treat the session as idle. The state and the inhibitor itself live outside the bar
 // (IdleManager, shell/IdleInhibit), so every bar's widget, the IPC
 // target and the quick action stay in sync. On for a set time, it shows the
-// time left (faded while paused); hovering opens the presets (Caffeine).
-BarIconWidget {
+// time left (faded while paused), drawn by its display style too;
+// hovering opens the presets (Caffeine).
+ValueStyleWidget {
   id: root
 
   Component.onCompleted: IdleManager.acquire(root, 1000)
@@ -19,7 +20,8 @@ BarIconWidget {
 
   icon: IdleManager.caffeine ? "coffee" : "bedtime"
   text: IdleManager.caffeineTimed ? IdleManager.caffeineText : I18n.tr(IdleManager.caffeine ? "Awake" : "Idle")
-  showText: properties.showLabel || IdleManager.caffeineTimed
+  labelShown: properties.showLabel || IdleManager.caffeineTimed
+  ratio: IdleManager.caffeineTimed ? 1 - IdleManager.caffeineProgress : -1
   // Ticking: sized by its digit count, not by each second's digits
   steadyDigits: IdleManager.caffeineTimed
   dim: IdleManager.caffeineTimed && !IdleManager.caffeineTimer.running ? 0.6 : 1

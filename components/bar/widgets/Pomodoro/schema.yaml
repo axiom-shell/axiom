@@ -2,6 +2,11 @@ label: Pomodoro timer
 icon: timer
 group: Tools
 popout: {variant: own, enabled: {description: The timer's controls when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill, pill, stacked]
+    description: "The value is how far through the session or break it is; stacked puts the time over its name."
 settings:
   hideWhenIdle:
     type: boolean

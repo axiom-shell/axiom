@@ -3368,6 +3368,13 @@
     "Icon only": "",
     "Stacked puts the charge over the time to full or left.": "",
     "Each metric drawn this way. Pill only with one metric shown; the disk has no sparkline (a fill instead).": "",
-    "The value is the limit's percent: the fullest account's, or the first's. Stacked puts it over the limit's name.": ""
+    "The value is the limit's percent: the fullest account's, or the first's. Stacked puts it over the limit's name.": "",
+    "Break": "",
+    "Fill shows how far through an event under way it is; stacked puts when over the title.": "",
+    "The value is how far through the timer it is, or the stopwatch's way round the minute; stacked puts the time over Timer or the lap.": "",
+    "Fill and pill show the track's position; ticker scrolls the title; stacked puts the title over the artist.": "",
+    "The value is how far through the session or break it is; stacked puts the time over its name.": "",
+    "Ring and fill show the time left on a timed caffeine.": "",
+    "Ticker scrolls a long title; stacked puts it over the app's id.": ""
   }
 }

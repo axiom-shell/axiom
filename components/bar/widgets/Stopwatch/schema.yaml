@@ -4,6 +4,11 @@ group: Tools
 popout:
   variant: own
   enabled: {description: 'The timer and stopwatch, to set and start, when hovered.'}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill, pill, stacked]
+    description: "The value is how far through the timer it is, or the stopwatch's way round the minute; stacked puts the time over Timer or the lap."
 settings:
   hideWhenIdle:
     type: boolean

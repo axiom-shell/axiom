@@ -9,7 +9,8 @@ import qs.components.bar.widgets.base
 // The pomodoro timer (PomodoroManager): the time left while a session or
 // break is on, colored by which. Left click starts or pauses, right click
 // skips to the next phase, middle click stops; hovering opens the timer.
-BarIconWidget {
+// Its display style draws how far through the phase it is.
+ValueStyleWidget {
   id: root
 
   Component.onCompleted: PomodoroManager.acquire(root)
@@ -21,7 +22,9 @@ BarIconWidget {
   text: PomodoroManager.remainingText
   // Ticking: sized by its digit count, not by each second's digits
   steadyDigits: true
-  showText: !PomodoroManager.idle
+  labelShown: !PomodoroManager.idle
+  ratio: PomodoroManager.idle ? -1 : PomodoroManager.progress
+  subtext: PomodoroManager.idle ? "" : PomodoroManager.isBreak ? I18n.tr("Break") : I18n.tr("Focus")
   accentColor: Theme.resolveColor(PomodoroManager.idle ? properties.idleColor : PomodoroManager.isBreak ? properties.breakColor : properties.workColor)
   // Paused part way: faded
   dim: !PomodoroManager.running && !PomodoroManager.idle ? 0.6 : 1
