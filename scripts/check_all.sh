@@ -41,13 +41,12 @@ step() {
 }
 
 # The generated files the checks read (the schema, the reference docs, and
-# with --fixtures the shared fixtures), built once per run
-built=""
-generated() {
-  [[ "$built" == --fixtures || (-n "$built" && $# -eq 0) ]] && return 0
-  step "generated files" scripts/generate.sh "$@"
-  built="${1:-plain}"
-}
+# for the qt job the shared fixtures), built once per run; check_go.sh
+# builds its own
+case " ${jobs[*]} " in
+*" qt "*) step "generated files" scripts/generate.sh --fixtures ;;
+*" checks "* | *" scripts "*) step "generated files" scripts/generate.sh ;;
+esac
 
 json() {
   git ls-files -z '*.json' | xargs -0 -n1 python3 -m json.tool --no-ensure-ascii >/dev/null
@@ -56,7 +55,6 @@ json() {
 for job in "${jobs[@]}"; do
   case "$job" in
   checks)
-    generated
     step "structure" python3 scripts/check_structure.py
     step "sizes" python3 scripts/check_sizes.py
     step "docs" python3 scripts/check_docs.py
@@ -66,18 +64,15 @@ for job in "${jobs[@]}"; do
     step "translations" python3 scripts/check_i18n.py
     ;;
   qt)
-    generated --fixtures
     step "qmlformat" scripts/check_qmlformat.sh
     step "qmllint" python3 scripts/check_qmllint.py
     step "unit tests" scripts/run_tests.sh
     ;;
   go)
-    # check_go.sh builds the generated files itself
     step "go" scripts/check_go.sh "${ci[@]}"
     step "shared fixtures" python3 scripts/dev/fixtures.py check
     ;;
   scripts)
-    generated
     step "shellcheck" shellcheck -x -S warning install.sh scripts/*.sh scripts/lib/*.sh scripts/greeter/*.sh scripts/dev/*.sh .githooks/pre-commit
     step "script tests" python3 tests/scripts/test_scripts.py
     step "guard tests" python3 tests/scripts/test_guard.py

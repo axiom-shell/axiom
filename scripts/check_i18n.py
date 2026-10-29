@@ -264,11 +264,12 @@ def main():
         missing = [k for k in keys if not strings.get(k)]
         unused = [k for k in strings if k not in keys]
         absent = [k for k in keys if k not in strings]
+        empty = [k for k in missing if k in strings]
         print(f"{path.name}: {len(keys) - len(missing)}/{len(keys)} translated, {len(missing)} missing, {len(unused)} unused")
-        for k in missing[:40]:
+        for k in empty[:40]:
             print(f"  missing  {keys[k]}: {k!r}")
-        if len(missing) > 40:
-            print(f"  ... and {len(missing) - 40} more")
+        if len(empty) > 40:
+            print(f"  ... and {len(empty) - 40} more")
         for k in absent:
             print(f"  absent   {keys[k]}: {k!r}")
         for k in unused:
