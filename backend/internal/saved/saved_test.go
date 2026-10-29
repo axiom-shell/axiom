@@ -26,6 +26,12 @@ type fixture struct {
 
 func setup(t *testing.T) fixture {
 	t.Helper()
+	return setupSchema(t, func(*jsonx.Object) {})
+}
+
+// setupSchema is setup with the tree's schema changed by edit first.
+func setupSchema(t *testing.T, edit func(root *jsonx.Object)) fixture {
+	t.Helper()
 	data, err := tree.BuildSchema(testkit.RepoRoot())
 	if err != nil {
 		t.Fatal(err)
@@ -34,6 +40,7 @@ func setup(t *testing.T) fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
+	edit(root.(*jsonx.Object))
 	pipeline := config.V2Pipeline{S: schema.New(root)}
 	dir, home, ex := t.TempDir(), t.TempDir(), t.TempDir()
 	st, err := store.Open(store.Options{Dir: dir, Pipeline: pipeline, Debounce: 20 * time.Millisecond})
@@ -241,12 +248,20 @@ func TestShippedExamplesApply(t *testing.T) {
 // No way of loading a config changes a takeover setting (x-takeover): a
 // file setting every one, imported with all its parts, applied as an
 // example or a shared setup, restored as a saved config, or the defaults
-// applied, leaves each as it was
+// applied, leaves each as it was. Each is made part of the look here, which
+// every load carries, so the store's keeping them is what's tested, not
+// their machine scope
 func TestNoLoadChangesATakeover(t *testing.T) {
 	t.Parallel()
-	f := setup(t)
 	running := map[string]any{"Compositor.mode": "included", "Greeter.enabled": true, "Idle.enabled": true,
 		"Lockscreen.mode": "none", "Polkit.enabled": true}
+	f := setupSchema(t, func(root *jsonx.Object) {
+		for path := range running {
+			section, key, _ := strings.Cut(path, ".")
+			props := root.Value("properties").(*jsonx.Object).Value(section).(*jsonx.Object).Value("properties").(*jsonx.Object)
+			props.Value(key).(*jsonx.Object).Set("x-scope", "look")
+		}
+	})
 	for path, v := range running {
 		p, _ := config.ParsePath(path)
 		if _, err := f.store.Set([]config.Op{config.SetValue(p, v)}, store.SetOptions{Takeover: true}); err != nil {

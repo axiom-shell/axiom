@@ -343,34 +343,56 @@ class CheckDocs(unittest.TestCase):
         self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
 
 
+def block_end(text, open_at):
+    """The index of the brace closing the one at open_at."""
+    depth = 0
+    for i in range(open_at, len(text)):
+        depth += {"{": 1, "}": -1}.get(text[i], 0)
+        if depth == 0:
+            return i
+    return len(text)
+
+
+def handler_at(text, pos):
+    """The function or on-handler whose body holds pos, and where it starts
+    ("a binding", -1 for none): a function's braces, or a handler's own
+    line and the braces opened on it."""
+    found, start = "a binding", -1
+    for m in re.finditer(r"function\s+(\w+)[^{]*\{|\b(on\w+)\s*:[^\n{]*(\{)?", text):
+        body = m.end() - 1 if m.group(1) or m.group(3) else None
+        stop = block_end(text, body) if body is not None else text.find("\n", m.end())
+        if m.start() < pos <= stop and m.start() > start:
+            found, start = m.group(1) or m.group(2), m.start()
+    return found, start
+
+
 def unlock_problems(files):
     """What lets the built-in lock screen unlock other than PAM's success,
     in `files` ({repo path: QML text}): a `locked = false` anywhere but
-    shell/Lockscreen.qml's onAuthenticationSucceeded, a session lock not
-    bound to its state, authenticationSucceeded emitted for anything but
+    shell/Lockscreen.qml's onAuthenticationSucceeded (or its onSecureChanged
+    once the compositor has ended the lock), a session lock not bound to
+    its state, authenticationSucceeded emitted for anything but
     PamResult.Success, or the lockscreen IPC target taking more than lock."""
     problems = []
     for path, text in files.items():
         for m in re.finditer(r"\blocked\s*=\s*false", text):
-            fn = re.findall(r"function\s+(\w+)", text[:m.start()])
-            if path != "shell/Lockscreen.qml" or not fn or fn[-1] != "onAuthenticationSucceeded":
-                problems.append(f"{path}: unlocks in {fn[-1] if fn else 'a binding'}")
+            fn, start = handler_at(text, m.start())
+            allowed = fn == "onAuthenticationSucceeded" or (fn == "onSecureChanged" and "!sessionLock.locked" in text[start : m.start()])
+            if path != "shell/Lockscreen.qml" or not allowed:
+                problems.append(f"{path}: unlocks in {fn}")
         for m in re.finditer(r"\bauthenticationSucceeded\(\)", text):
-            case = re.findall(r"case\s+([\w.]+):", text[:m.start()])
+            case = re.findall(r"case\s+([\w.]+):", text[: m.start()])
             if path != "services/session/AuthManager.qml" or not case or case[-1] != "PamResult.Success":
                 problems.append(f"{path}: authenticationSucceeded after {case[-1] if case else 'no case'}")
         for m in re.finditer(r"IpcTarget\s*\{", text):
-            depth, end = 0, m.end() - 1
-            for end in range(m.end() - 1, len(text)):
-                depth += {"{": 1, "}": -1}.get(text[end], 0)
-                if depth == 0:
-                    break
-            block = text[m.end():end]
+            block = text[m.end() : block_end(text, m.end() - 1)]
             if re.search(r'target:\s*"lockscreen"', block):
                 functions = re.findall(r"function\s+(\w+)", block)
                 if functions != ["lock"]:
                     problems.append(f"{path}: the lockscreen IPC target takes {functions}")
-    if not re.search(r"WlSessionLock\s*\{\s*id:\s*\w+\s*locked:\s*lockState\.locked\s*\n", files.get("shell/Lockscreen.qml", "")):
+    lock = files.get("shell/Lockscreen.qml", "")
+    m = re.search(r"WlSessionLock\s*\{", lock)
+    if not m or not re.search(r"^\s*locked:\s*lockState\.locked\s*$", lock[m.end() : block_end(lock, m.end() - 1)], re.M):
         problems.append("shell/Lockscreen.qml: the session lock isn't bound to lockState.locked alone")
     return problems
 
@@ -404,6 +426,9 @@ class OnlyPamUnlocks(unittest.TestCase):
             (auth, "case PamResult.Failed:", "case PamResult.Failed:\n        root.authenticationSucceeded();"),
             (auth, "onError: error => {", "onError: error => {\n      root.authenticationSucceeded();"),
             (lock, "function onLockRequested() {", "function onLockRequested() {\n      lockState.locked = false;"),
+            # A handler of its own after PAM's, or the compositor's end unguarded
+            (lock, "  WlSessionLock {", "  Timer {\n    onTriggered: lockState.locked = false\n  }\n\n  WlSessionLock {"),
+            (lock, "if (!sessionLock.locked && lockState.locked)", "if (lockState.locked)"),
             # Any other file unlocking, or the lock bound to something else
             ("components/Unlock.qml", "", "Item { function go() { sessionLock.locked = false; } }"),
             (lock, "locked: lockState.locked\n", "locked: lockState.locked && !AuthManager.isAuthenticating\n"),
