@@ -8,7 +8,9 @@
 #      change touches what they're recorded from)
 #   1. formats changed QML with Qt 6's qmlformat, writing in place so the
 #      file keeps its inode and the running shell still reloads it
-#   2. check_structure, check_sizes, check_docs, check_packages, qmllint, the
+#   2. those of check_all.sh's checks the change reaches (a new check there
+#      gets a trigger here): check_structure, check_sizes, check_docs,
+#      check_packages, qmllint, JSON validity, the
 #      unit tests the change touches (QML, and the test_scripts.py classes of
 #      a changed script), the Go checks (backend/:
 #      go generate, gofmt, vet, staticcheck, tests), shellcheck, i18n
@@ -31,7 +33,7 @@ for arg in "$@"; do
   case "$arg" in
   --all) all=1 ;;
   *)
-    sed -n '2,21p' "$0" >&2
+    sed -n '2,23p' "$0" >&2
     exit 2
     ;;
   esac
@@ -138,6 +140,10 @@ fi
 if [[ ${#qml[@]} -gt 0 ]]; then
   step "qmllint" python3 scripts/check_qmllint.py
 fi
+mapfile -t jsons < <(printf '%s\n' "${changed[@]}" | grep '\.json$')
+if [[ ${#jsons[@]} -gt 0 ]]; then
+  step "json" bash -c 'for f; do python3 -m json.tool --no-ensure-ascii "$f" >/dev/null || exit 1; done' _ "${jsons[@]}"
+fi
 if [[ ${#tests[@]} -gt 0 ]]; then
   mapfile -t tests < <(printf '%s\n' "${tests[@]}" | sort -u)
   step "unit tests (${tests[*]})" bash -c 'scripts/run_tests.sh "$@" 2>&1 | grep -E "^(FAIL|Totals|XPASS)|error" ; exit "${PIPESTATUS[0]}"' _ "${tests[@]}"
@@ -163,6 +169,8 @@ if [[ ${#shells[@]} -gt 0 ]]; then
   step "shellcheck" shellcheck -x -S warning "${shells[@]}"
 fi
 if [[ ${#qml[@]} -gt 0 || $schema -eq 1 ]]; then
+  # Warnings only: a new key is absent from config/i18n/ until the
+  # pre-commit hook adds it (check_all.sh fails on that)
   echo "── translations (warnings only)"
   python3 scripts/check_i18n.py 2>&1 | tail -n 15 || true
 fi

@@ -28,12 +28,41 @@ Untranslated keys (normal) and real errors (stale template, format, absent or un
 Gone warnings only print a note; the baseline keeps their count.
 **Fix:** fail (or rewrite the baseline) when counts drop.
 
-### 7. check_structure's Quickshell.Io check doesn't see IpcHandler  `scripts/check_structure.py:65`
-**Fix:** add `IpcHandler` to `IO_KINDS`.
+### 7. (withdrawn) check_structure's Quickshell.Io check doesn't see IpcHandler
+Wrong: `check_structure.py` refuses any `IpcHandler {` outright (the IpcTarget rule), which is stronger than an allowlist kind. Entry dropped 2026-10-29 in the inventory.
 
 ### 8. The permission deny list names a config path that's gone  `.claude/settings.json`
 `rm config/user/config.json` (folder gone); `git clean -x` refused but named nowhere else.
 **Fix:** drop the stale lines; name or drop `git clean -x`.
+
+## Inventory
+2026-10-29, at 25e0d3f. CI history: of the last 200 Checks runs (back to 2026-10-24) 183 were green, 8 failed and 9 cancelled; every failure since 2026-10-26 was a Go timing or resource flake on a PR that didn't cause it (before that, script tests, qmlformat, qmllint and unit tests caught real breaks in the big pre-roadmap PRs). Costs are from the last green run. "Fails" counts the failing step across all 27 failed runs (back to 2026-09-26).
+
+| Guardrail | Catches | Fails | Cost | Gets past it |
+|---|---|---|---|---|
+| CI `checks` job (structure, sizes, docs, packages, JSON, i18n) | layout, layering, px sizes, stale doc citations, package drift, bad JSON | 1 (docs) | 81 s (generate 36 s) | i18n `continue-on-error`; JSON step not local |
+| CI `qt` job (qmlformat, qmllint, unit tests) | formatting, new lint warnings, methods helpers' behaviour | 12 (5 fmt, 2 lint, 3 unit, 2 script tests before they had a job) | 98 s (generate 43 s) | baseline never shrinks |
+| CI `go` job (`check_go.sh --ci`, fixtures index) | Go build, vet, staticcheck, tidy, tests with -race, vulns | 10; the 8 since 10-26 all flakes | 204 s (checks 172 s) | runs as root (6 skips); skipped on non-Go PRs, no schedule |
+| CI `scripts` job (shellcheck, script tests, guard tests) | shell bugs, script behaviour, guard rules | 7 | 57 s (generate 28 s; tests <1 s) | only 8 test classes |
+| `scripts/generate.sh` | stale schema, embedded assets, generated docs, shell/daemon rpc mismatch | (in each job) | 28–43 s per job, four times | nothing cached between jobs |
+| `scripts/check_structure.py` | ~25 rules: type folders, imports, Io allowlist, IpcHandler, compositor and Hyprland gates, singleton typos, `??` in readers, pragmas | 0 standalone | 3 s | no tests of its own; several AGENTS.md rules unchecked (animation literals, `Qt.formatDateTime`, `Quickshell.screens`, polling Timers in UI, Repeater models from live values) |
+| `scripts/check_sizes.py` | literal px outside the bars | 0 | 1 s | one-line expressions only (1 multi-line binding today) |
+| `scripts/check_docs.py` | dead links, paths, `Singleton.member`, issue links, annotation list | 1 | <1 s | Go symbols in `(Name)` not checked; triggers miss YAML |
+| `scripts/check_packages.py` | install.sh / Packages / PKGBUILD drift | 0 | <1 s | untested |
+| `scripts/check_i18n.py` | stale template, format, absent/unused keys | never (warning) | <1 s | can't fail in CI |
+| `scripts/check_qmllint.py` + baseline | new qmllint warnings | 2 | 12 s | baseline doesn't shrink; untested |
+| `scripts/check_qmlformat.sh` | unformatted QML | 5 | 5 s | — |
+| `scripts/check_go.sh` | see go job | — | ~3 min | stale generated code passes without `--ci` |
+| `scripts/run_tests.sh` + 62 `tests/tst_*.qml` | methods helpers, schema defaults, shared fixtures | 3 | 4 s | IconResolver untested; a misnamed test function silently doesn't run |
+| Go tests (74 of 88 packages) | daemon, store, compositor writers, migrations, greeter installer | 10 (8 flakes) | most of 172 s | 18 files with their own waits; 14 packages untested (mostly tools, test doubles, wayland protocol bindings); no mutation run |
+| `scripts/gen_docs.py` | rpc mismatch (fails); config/API/IPC/layers maps | 0 | in generate | misses `ConfigManager.live`: 372 of 676 settings shown unread, unused-member report blind; report never fails |
+| `scripts/gen_theme_template.py` | stale theme template (`--check` in Themes tests) | 0 | <1 s | — |
+| `scripts/check_doc_drift.py` | docs behind their files (warning, verify.sh and CI summary) | never (by design) | <1 s | justified: a nudge, not a gate |
+| `scripts/dev/verify.sh` | the changed-file subset of everything, plus the live log | — | 10–60 s | deletions and a check's own change trigger nothing; prints no `verify ok` on a clean branch |
+| `scripts/check_all.sh` | every CI check, locally | — | ~5 min | lacks the JSON step; `check_go.sh` without `--ci` |
+| `.githooks/pre-commit` | i18n keys, theme template | — | seconds | opt-in (`core.hooksPath`); `--no-verify` skips it and CI doesn't catch it (i18n) |
+| `.claude/hooks/guard.py` + `tests/scripts/test_guard.py` (31 cases) | AGENTS.md › Never, plain forms | — | per command | compound commands, wrapper options, Bash writes onto config.json |
+| `.claude/settings.json` deny list | the plain forms again | — | — | one stale path |
 
 ## Contract
 Holds: every AGENTS.md › Never rule has a guard rule and a `test_guard.py` case for its plain form (lock, cursor, takeover via Edit/Write and `--takeover`, compositor claim/release and binds remove on live dirs, niri quit/load-config/output, hookup/selfupdate/greeter apply, the greeter only windowed on scratch, greetd, daemon lifecycle and dev mode, gh issue, force-push and main). IpcTarget registers only with axiom, so `qs ipc` can't reach the lock screen (SAFE_QS is safe). The allowlist is a true ratchet (unused entries fail). CI's checks/qt/go/scripts jobs together run every check check_all.sh runs (plus JSON validity, which check_all lacks: the known "three places" entry, now with that evidence). The go job's path filter is wider than verify.sh's go trigger, as its comment says. Every methods helper but IconResolver has a test (known). No singleton outside the pure helpers and compositor backends is over 800 lines, though nothing checks it (Phase 11's ratchets bullet). AGENTS.md is 24 KB against Phase 9's 12 KB target (known).
@@ -43,3 +72,4 @@ Read deeply: scripts/dev/verify.sh, scripts/check_all.sh, scripts/check_go.sh, s
 
 ## History
 - 2026-10-29 full: 8 findings; recorded in issues.md
+- 2026-10-29 inventory: 3 new entries (gen_docs misses `ConfigManager.live`, Go test waits, untested check scripts); finding 7 withdrawn; step 0 split into batches (roadmap.md)

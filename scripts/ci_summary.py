@@ -89,13 +89,17 @@ def translations():
             if missing or unused:
                 parts.append(f"{language}: {missing} missing, {unused} unused")
             continue
-        entry = re.match(r"^\s+(missing|unused|format)\s+(.*)$", line)
+        entry = re.match(r"^\s+(missing|absent|unused|format)\s+(.*)$", line)
         if entry:
-            found.append(("warning", link(f"config/i18n/{language}"), f"{entry.group(1)}: {entry.group(2)}"))
+            level = "warning" if entry.group(1) == "missing" else "error"
+            found.append((level, link(f"config/i18n/{language}"), f"{entry.group(1)}: {entry.group(2)}"))
             if entry.group(1) == "format":
                 parts.append(f"{language}: not in the canonical format")
-    # Missing entries fall back to English: the step only warns
-    return (WARN if code != 0 or found else PASS), "; ".join(parts) or "complete", found
+        elif line.endswith("stale: run with --fill"):
+            found.append(("error", link("config/i18n/template/language.json"), "stale: run check_i18n.py --fill"))
+            parts.append("the template is stale")
+    # Empty entries fall back to English: they only warn
+    return (FAIL if code != 0 else WARN if found else PASS), "; ".join(parts) or "complete", found
 
 
 def counted(errors, warnings):

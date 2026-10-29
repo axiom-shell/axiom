@@ -98,12 +98,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while reviewing row 12's third batch
 
-### CI checks dependencies only when a PR touches Go
-- **Where:** `.github/workflows/checks.yml` (the `go` job's change filter)
-- **What:** Since checks run on pull requests only and the `go` job is skipped unless the binary's inputs changed (#107), govulncheck runs only on PRs that touch Go, with no scheduled run, so a newly published advisory for a dependency goes unseen until the next Go PR. (The amd64/arm64 cross-builds run at every merge now, in `.github/workflows/edge.yml`, so an arm64 break surfaces right after merge, not at release.) A weekly `schedule:` run of the `go` job would cover it.
-- **Size:** small
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
-
 ### Setting an awww wallpaper never starts awww's daemon
 - **Where:** `scripts/setWallpaper.sh`, `services/core/ThemeManager.qml` (`_showWallpaper`)
 - **What:** With `Appearance.wallpaperBackend` `awww` and no `awww-daemon` running, the script runs `awww query || awww init`, but awww has no `init` (`error: unrecognized subcommand 'init'`), so the wallpaper isn't set (`set -e` stops it). `ThemeManager` now runs the script through the daemon (`CommandManager.runDetached`, backend stage 6), so starting `awww-daemon` from it would no longer inherit qs's transparent huge pages opt-out ([memory](core/memory.md) › Transparent huge pages): only the script's `awww init` is left to fix.
@@ -322,12 +316,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The check order is kept in three places
-- **Where:** `scripts/check_all.sh`, `scripts/dev/verify.sh`, `.github/workflows/checks.yml`
-- **What:** The same checks, in the same order, are listed by hand three times; a check added to one can be missed in the others. One list (a file the three read, or `check_all.sh` as the one CI runs) keeps them equal. They have drifted already: CI's `JSON is valid` step (`python3 -m json.tool` over every tracked `.json`) is in neither `check_all.sh` nor verify.sh, so `verify.sh --all` passes a broken JSON file that CI fails.
-- **Size:** small
-- **Found:** 2026-10-26, while reviewing the repository's organization
-
 ### verify.sh skips the checks a deletion or a check's own change needs
 - **Where:** `scripts/dev/verify.sh` (`changed`, the step triggers)
 - **What:** `changed` keeps only files that exist (`[[ -f "$f" ]]`), so a deleted file triggers nothing: deleting a Go file runs no Go checks (the package may no longer build), deleting a QML or script file a doc cites runs no `check_docs.py`, and a change that only deletes prints `nothing changed since HEAD`. CI then fails what verify passed; the roadmap's "Delete before adding" makes this the common case. The triggers also miss a check's own change: `check_docs.py` runs only when a `.md` or `.qml` changed (not for `config/schema/` YAML, though it checks the `x-*` annotations, nor for a change to `check_docs.py` itself), `check_qmllint.py` and `check_sizes.py` only when QML changed, `check_docs.py` has a `CheckDocs` class in `tests/scripts/test_scripts.py` the script map doesn't run, and `.githooks/pre-commit` (not `*.sh`) is never shellchecked. Fix: keep deleted paths in `changed` for the triggers (filter only where a step reads the file, as qmlformat does), and map each `scripts/check_*` file to its own check.
@@ -346,27 +334,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
-### check_go.sh passes stale generated code except under --ci
-- **Where:** `scripts/check_go.sh` (`generated`), `scripts/check_all.sh`
-- **What:** `generated` rewrites the committed `zz_generated_*` files with `go generate`, then fails on a stale one only with `--ci`; check_all.sh (documented as "every check CI runs") calls `check_go.sh` without it, so `verify.sh --all` prints `all checks passed` on a branch CI fails, leaving the regenerated file as an unnoticed working-tree change. The usage says the plain run checks "generated code fresh". Fix: fail on stale generated code whenever `--fix` isn't given (keep `--ci` for govulncheck).
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
-### CI can't fail on stale translation files
-- **Where:** `scripts/check_i18n.py` (`main`), `.github/workflows/checks.yml` (Translations, `continue-on-error`)
-- **What:** `check_i18n.py` exits 1 for any key without a translation (empty counts as missing), which is the normal state, so CI runs it as a warning only. The same exit carries the real errors: a stale `config/i18n/template/language.json` (generated, AGENTS.md › Checks), a file not in the canonical format, keys absent from a file or unused. A commit made without the pre-commit hook (a fresh clone or worktree before `git config core.hooksPath .githooks`, or `--no-verify`) lands them with CI green. Fix: exit 1 only for the template, the format, and keys absent or unused; report empty ones without failing; drop `continue-on-error`.
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
 ### The qmllint baseline doesn't shrink when warnings are fixed
 - **Where:** `scripts/check_qmllint.py` (`main`), `scripts/qmllint-baseline.json`
 - **What:** A baselined warning that's gone only prints `note: N baselined warnings are gone`, and the baseline keeps its count, so the warning can come back later without failing. AGENTS.md calls the baselines ratchets, and the allowlist already fails on an unused entry (`check_structure.py`). Fix: fail (or have verify.sh rewrite the baseline) when the counts drop, as the allowlist does.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
-### check_structure's Quickshell.Io check doesn't see IpcHandler
-- **Where:** `scripts/check_structure.py` (`IO_KINDS`)
-- **What:** The comment above the check says IPC handlers are moving to the daemon too, and AGENTS.md says IPC comes through `IpcTarget`, but `IO_KINDS` lists only `Process`, `FileView`, `Socket` and `Quickshell.execDetached`; no QML uses `IpcHandler` now, so a new one (agents add temporary ones to open a popout for a screenshot) would pass. Fix: add `IpcHandler` to `IO_KINDS`.
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
@@ -375,6 +345,24 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `permissions.deny` still refuses `rm config/user/config.json` (the folder no longer exists) and refuses `git clean -x`/`-X`/`-fdx`, which neither AGENTS.md › Never nor the guard mentions, though the guard's docstring says the deny list "repeats the plain ones". Fix: drop those two lines, and either name `git clean -x` in AGENTS.md (it deletes the generated files and local state) or drop it.
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+
+### gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread
+- **Where:** `scripts/gen_docs.py` (`CONFIG_REF`, `load_readers`)
+- **What:** `CONFIG_REF` and the reader-alias match in `load_readers` accept only `ConfigManager.config` / `ConfigManager.previews`, but since row 12 (#162) the readers bind `ConfigManager.live` (47 of the files in `config/`; `previews` has no QML use left). So 372 of the 676 settings in `docs/dev/config/` say `read: no reader member or direct use found` though their reader reads them (`WorkspaceOverlay.showHint` is `WorkspaceOverlayConfig.showHint: _c.showHint`), and `--report`'s "reader members with no user" prints 0 because those readers' members aren't seen at all. The generated map agents use to find a setting's users is wrong for half the config, and the one check for dead settings and reader members is blind; nothing failed, since nothing tests the usage map (`RpcShapes` covers only rpc.md). Fix: match `live` (drop `previews`), add a `test_scripts.py` case that a known reader member is found, then fail on a setting with no reader or use and on an unused reader member (the deletion pass's ratchet).
+- **Size:** small
+- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
+
+### Go tests wait with their own short bounds that a loaded CI runner overruns
+- **Where:** `backend/internal/compositor/manager/manager_test.go` (`harness.eventually`), `backend/internal/supervise/supervise_test.go` (`eventually`), `backend/internal/topics/topics_test.go` (`TestShortestIntervalAndFloor`), `backend/internal/daemon/daemon_test.go` (`TestLockScreenOnlyTakesLock`), `backend/internal/testkit/testkit.go`
+- **What:** Every one of the 8 failed Checks runs since 2026-10-26 failed in the `go` job, each a timing or resource flake on a PR that didn't cause it: binds `pthread_create failed` (twice), the compositor manager's `never: asked again` (twice), topics `topics_test.go:220: no fetch` (#152), ipcroute `text file busy` (#149, since fixed), self-update `rebuilt true` (#143), daemon `connect: connection refused` (#119). Three have entries; the rest weren't filed. 18 test files wait in their own poll loop (`eventually`, `waitFor`, a deadline) and 22 call `time.Sleep` (55 times), each bound tuned on a quiet machine, with `t.Parallel()` across the package. Fix: one `testkit.Eventually` with a bound CI can stretch (an env factor), the waits moved onto it, and a stress run (`go test -race -count=20 -cpu 1,4` on the parallel packages) to find the rest before CI does.
+- **Size:** small
+- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
+
+### Most check scripts have no tests of their own
+- **Where:** `tests/scripts/test_scripts.py`, `scripts/check_structure.py`, `scripts/check_i18n.py`, `scripts/check_qmllint.py`, `scripts/check_packages.py`, `scripts/check_docs.py`, `scripts/gen_docs.py`
+- **What:** `test_scripts.py` tests `check_sizes.py` and `check_docs.py` (one class), rpc.md and a few runtime scripts. `check_structure.py` (about 25 rules, the layering and compositor gates among them), `check_i18n.py`, `check_qmllint.py`'s baseline logic, `check_packages.py` and `gen_docs.py`'s usage map have no case that they fail on what they catch, so a rule whose pattern stops matching (a renamed member, a new syntax) passes everything, silently. That's how the `ConfigManager.live` miss above went unseen. Fix: a fixture tree per script with one breaking file per rule, asserting the message; each new rule gets its case.
+- **Size:** small
+- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
 
 ### Small tooling leftovers
 - **Where:** `components/methods/IconResolver.qml`, `packaging/aur/`, `docs/dev/core/i18n.md`

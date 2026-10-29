@@ -115,7 +115,11 @@ func portal(ctx context.Context, o Options, r Request) (string, error) {
 		return "", fmt.Errorf("%w: %w", errNoPortal, err)
 	}
 	defer sub.Close()
-	reply, err := conn.Call(setup, portalName, portalPath, chooserIface, "OpenFile", "ssa{sv}", "", r.Title, openOptions(r, rand.Text()))
+	// Not cancelled with ctx: once sent, the portal may show the picker, so
+	// a cancel arriving before the reply still needs its handle to close it
+	opening, cancelOpen := context.WithTimeout(context.WithoutCancel(ctx), setupTimeout)
+	defer cancelOpen()
+	reply, err := conn.Call(opening, portalName, portalPath, chooserIface, "OpenFile", "ssa{sv}", "", r.Title, openOptions(r, rand.Text()))
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", errNoPortal, err)
 	}

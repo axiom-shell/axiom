@@ -43,18 +43,15 @@ step() {
 
 generated() {
   "$root/scripts/generate.sh" --fixtures || return 1
-  go generate ./... || return 1
-  [[ $fix -eq 1 ]] && return 0
   # Generated code (committed, unlike the embedded copies) must match its
-  # sources
-  local stale
-  stale="$(git -C "$root" status --porcelain -- backend | grep -E 'zz_generated_' || true)"
-  if [[ -n "$stale" && $ci -eq 1 ]]; then
-    echo "generated files are stale; run scripts/check_go.sh --fix:"
-    echo "$stale"
-    return 1
-  fi
-  return 0
+  # sources: go generate changing it means it was stale
+  local before
+  before="$(find . -name 'zz_generated_*' -exec sha256sum {} + | sort)"
+  go generate ./... || return 1
+  [[ $fix -eq 1 || "$before" == "$(find . -name 'zz_generated_*' -exec sha256sum {} + | sort)" ]] && return 0
+  echo "generated files were stale (now rewritten; commit them):"
+  git -C "$root" status --porcelain -- backend | grep -E 'zz_generated_'
+  return 1
 }
 
 formatted() {
