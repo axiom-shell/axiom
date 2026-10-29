@@ -30,7 +30,8 @@ running anything:
   - no singleton is over SINGLETON_LINES lines, but the pure helpers and
     the compositor backends (split one before it grows past)
 and warns about files in the loaded directories that nothing registers or
-uses.
+uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
+CheckStructure.
 
   scripts/check_structure.py        errors (exit 1) and warnings
 """

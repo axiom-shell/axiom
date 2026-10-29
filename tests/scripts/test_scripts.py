@@ -7,6 +7,8 @@
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
     lines marked `// fixed px:`
   - only PAM's success unlocks the built-in lock screen
+  - each check fails on what it catches: a copy of the tree (fixture_root)
+    with one breaking file or edit per rule, and the message it must print
 
   python3 tests/scripts/test_scripts.py [-v] [TestCase[.test_name]]
 """
@@ -43,6 +45,47 @@ def scratch_env(tmp):
     for key in ("HOME", "XDG_RUNTIME_DIR"):
         Path(env[key]).mkdir(parents=True, exist_ok=True)
     return env
+
+
+def fixture_root(tmp, *paths):
+    """A copy of scripts/ and these repo paths under tmp. A check run from
+    the copy checks the copy (each script finds the root from its own path),
+    so a test breaks the copy and asserts the check says so."""
+    tmp = Path(tmp)
+    for p in ("scripts",) + paths:
+        src, dst = ROOT / p, tmp / p
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
+        else:
+            shutil.copy2(src, dst)
+    return tmp
+
+
+def run_check(root, script, *args, files=()):
+    """Write `files` ((path, text) pairs) into root, run scripts/<script>
+    there; its exit code and output."""
+    for path, text in files:
+        (root / path).parent.mkdir(parents=True, exist_ok=True)
+        (root / path).write_text(text)
+    done = subprocess.run([sys.executable, str(root / "scripts" / script), *args],
+                          cwd=root, capture_output=True, text=True)
+    return done.returncode, done.stdout + done.stderr
+
+
+def edit_json(path, change):
+    data = json.loads(path.read_text())
+    change(data)
+    path.write_text(json.dumps(data, indent=2))
+
+
+def qml(body="", imports="", head="pragma ComponentBehavior: Bound", purpose="// A fixture."):
+    return f"{head}\nimport QtQuick\n{imports}\n{purpose}\nItem {{\n    {body}\n}}\n"
+
+
+def missed(out, fragments):
+    """The fragments no line of a check's output contains."""
+    return [f for f in fragments if not any(f in line for line in out.splitlines())]
 
 
 def theme_problems(theme, names):
@@ -305,6 +348,78 @@ class ConfigUsage(unittest.TestCase):
         new, gone = ratchet_problems({"A.y"}, ["A.x"], "unused")
         self.assertTrue(new.endswith("A.y") and "use or delete" in new)
         self.assertTrue(gone.endswith("A.x") and "drop it" in gone)
+
+
+class CheckStructure(unittest.TestCase):
+    """scripts/check_structure.py fails on each rule's breaking file, in a
+    copy of the shell: (file written, what the check must say)."""
+
+    FILES = [
+        ("components/views/Stray.qml", qml(), "components/views/Stray.qml: a root holds only type folders"),
+        ("components/views/Empty/Other.qml", qml(), "components/views/Empty/: a type folder without Empty.qml"),
+        ("components/lonely/Lonely.qml", qml(), None),
+        ("components/views/Reach/Reach.qml", qml(imports="import qs.components.lonely"),
+         "Reach.qml needs qs.components.lonely, which no file reached from shell.qml imports"),
+        ("services/core/Spawner.qml", qml("Process {}"), "services/core/Spawner.qml: uses Process directly"),
+        ("services/Direct.qml", qml(), "services/Direct.qml: directly in services/"),
+        ("shell/Handler.qml", qml("IpcHandler {}"), "shell/Handler.qml: an IpcHandler"),
+        ("shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
+        ("shell/Target.qml", qml('IpcTarget { target: "ghostTarget" }'), "IPC target 'ghostTarget' is missing from the IPC table"),
+        ("shell/NoPurpose.qml", qml(purpose=""), "shell/NoPurpose.qml: no purpose comment"),
+        ("shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no components/content/Ghost/Ghost.qml'),
+        ("components/content/Unused/Unused.qml", qml(), "components/content/Unused/: not an overlay module"),
+        ("components/widgets/Old.qml", qml(), "components/widgets/Old.qml: lives under retired"),
+        ("shell/NoPragma.qml", qml(head=""), "shell/NoPragma.qml: doesn't start with pragma"),
+        ("services/core/BigManager.qml", qml(head="pragma Singleton", body="\n" * 800), "BigManager.qml: a singleton of"),
+        ("shell/BadImport.qml", qml(imports="import qs.nowhere"), "import qs.nowhere — no such directory"),
+        ("shell/Hypr.qml", qml(imports="import Quickshell.Hyprland"), "shell/Hypr.qml: imports Quickshell.Hyprland"),
+        ("shell/I3.qml", qml(imports="import Quickshell.I3"), "shell/I3.qml: imports Quickshell.I3"),
+        ("shell/Swaymsg.qml", qml('property var c: ["swaymsg"]'), "shell/Swaymsg.qml: talks to sway directly"),
+        ("shell/NiriCli.qml", qml('property var c: ["niri", "msg"]'), "shell/NiriCli.qml: talks to niri directly"),
+        ("shell/Hyprm.qml", qml("property var w: HyprlandManager.windows"), "shell/Hyprm.qml: uses HyprlandManager"),
+        ("shell/HState.qml", qml("property var s: HyprState.parse"), "shell/HState.qml: uses a Hyprland helper"),
+        ("shell/SState.qml", qml("property var s: SwayState.parse"), "shell/SState.qml: uses a sway helper"),
+        ("shell/NotService.qml", qml("property var s: GhostManager.x"), "GhostManager is not a service"),
+        ("shell/Typo.qml", qml("property var s: AudioManger.x"), "AudioManger — did you mean AudioManager?"),
+        ("config/GhostConfig.qml", qml("readonly property int k: _c.key ?? 1", head="pragma Singleton"),
+         "`_c.key ??`: readers use no ?? fallback"),
+        ("components/dupa/Dup.qml", qml(), None),
+        ("components/dupb/Dup.qml", qml(), None),
+        ("shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),
+         "shell/Both.qml: Dup is defined in qs.components.dupa and qs.components.dupb"),
+    ]
+    # What the check must say about the schema, docs/usage.md and the allowlist edits below
+    EDITS = [
+        "BarWidget type 'Ghost' has no components/bar/widgets/Ghost/Ghost.qml",
+        "x-libraryGroup 'Nope' isn't one of the schema's x-libraryGroups",
+        "OverlayModule Todo: x-hosts lists overlay but not desktop",
+        "OverlayModule Calculator: has a text field but no x-keyboard",
+        "schema x-card 'Ghost' has no components/views/Settings/GhostCard.qml",
+        "schema x-intro 'GhostIntro' has no components/views/Settings/GhostIntro.qml",
+        "tool page Keybinds isn't in the Overlay.items default",
+        "docs/usage.md: IPC target 'phantom' has no IpcTarget",
+        "services/core/Gone.qml no longer uses Socket",
+    ]
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "shell.qml", "greeter.qml", "components", "shell", "services", "config", "docs/usage.md")
+
+            def schema(s):
+                defs = s["definitions"]
+                defs["BarWidget"]["oneOf"].append({"properties": {"type": {"const": "Ghost"}}, "x-libraryGroup": "Nope"})
+                defs["TodoOverlayModule"]["x-hosts"] = ["overlay"]
+                del defs["CalculatorOverlayModule"]["x-keyboard"]
+                s["x-card"], s["x-intro"] = {"file": "Ghost"}, "GhostIntro"
+                items = s["properties"]["Overlay"]["properties"]["items"]
+                items["default"] = [v for v in items["default"] if v.get("type") != "Keybinds"]
+            edit_json(root / "config/json/config.schema.json", schema)
+            edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"services/core/Gone.qml": ["Socket"]}))
+            usage = root / "docs/usage.md"
+            usage.write_text(usage.read_text().replace("| `overlay` |", "| `phantom` | `open` |\n| `overlay` |", 1))
+            code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
+        self.assertEqual(code, 1)
+        self.assertEqual(missed(out, [m for _, _, m in self.FILES if m] + self.EDITS), [], out)
 
 
 class CheckSizes(unittest.TestCase):
