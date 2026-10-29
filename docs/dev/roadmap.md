@@ -204,8 +204,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
 
-- [Text input warnings when the desktop takes the keyboard](issues.md#text-input-warnings-when-the-desktop-takes-the-keyboard)
-- [Qt text-input warnings under sway and niri](issues.md#qt-text-input-warnings-under-sway-and-niri)
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
 - [Singleton properties warn on every reload](issues.md#singleton-properties-warn-on-every-reload)
 - [The polkit agent fails to register on reloads](issues.md#the-polkit-agent-fails-to-register-on-reloads)

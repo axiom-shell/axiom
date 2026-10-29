@@ -27,7 +27,7 @@ import (
 
 // GreeterOptions configure the greeter's axiom (`axiom greeter`).
 type GreeterOptions struct {
-	Command []string // qs -p <tree>/greeter.qml
+	Command []string // ShellCommand(qs, <tree>/greeter.qml)
 	Environ []string // its environment, without AXIOM_SOCKET (added here)
 	// Dir is the greeter's private runtime folder (xdg.PrivateDir): its
 	// socket

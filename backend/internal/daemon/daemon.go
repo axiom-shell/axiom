@@ -360,7 +360,7 @@ func Run(ctx context.Context, opts Options) error {
 			adopt = h.Shell
 		}
 		d.shell = supervise.New(supervise.Options{
-			Command:  []string{opts.QS, "-p", opts.Tree},
+			Command:  ShellCommand(opts.QS, opts.Tree),
 			NoTHP:    true,
 			Env:      d.shellEnv(),
 			EnvFunc:  d.shellEnvNow,
@@ -510,6 +510,19 @@ func (d *Daemon) lockSetting(key string) string {
 func (d *Daemon) writeSnapshot() error {
 	cfg, _ := d.store.Config()
 	return fsx.WriteFile(d.runtime.File(SnapshotFile), jsonx.Marshal(cfg), 0o600)
+}
+
+// ShellCommand runs qs on entry (the tree, or its greeter.qml). Its log
+// rule drops Qt's text-input-v3 warnings ("Trying to enable/disable …"),
+// which are Qt's own bookkeeping, not a fault: a surface whose wl_surface
+// goes before Qt moves the focus off its text field (a layer window hiding:
+// the launcher closing) is never disabled client side, so every later
+// enable or disable compares against that gone surface and warns. The
+// compositor's text-input leave has disabled it already: typing works.
+// Quickshell's rule reaches Qt's categories (a QT_LOGGING_RULES pragma
+// comes too late to) and leaves the user's own QT_LOGGING_RULES alone.
+func ShellCommand(qs, entry string) []string {
+	return []string{qs, "-p", entry, "--log-rules", "qt.qpa.wayland.textinput.warning=false"}
 }
 
 // shellEnv is what the shell is started with every time.
