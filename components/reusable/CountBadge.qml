@@ -19,9 +19,20 @@ PopInRectangle {
   color: Theme.error
   onTextChanged: pulse()
 
+  // The glyphs' own box, from the baseline: the line's ascent and descent
+  // aren't even about the digits, so centring the text's line box left
+  // the count off centre
+  TextMetrics {
+    id: ink
+    font: label.font
+    text: root.text
+  }
+
   StyledText {
     id: label
     anchors.centerIn: parent
+    anchors.horizontalCenterOffset: label.width / 2 - (ink.tightBoundingRect.x + ink.tightBoundingRect.width / 2)
+    anchors.verticalCenterOffset: label.height / 2 - (label.baselineOffset + ink.tightBoundingRect.y + ink.tightBoundingRect.height / 2)
     text: root.text
     textSize: root.textSize
     textColor: root.textColor
