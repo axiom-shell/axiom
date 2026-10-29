@@ -1,6 +1,6 @@
 # Notifications
 
-> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`
+> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `components/surfaces/notifications/ToastStack.qml`, `components/surfaces/notifications/ToastItem.qml`, `components/methods/ToastMotion.qml`, `components/methods/NotificationMatch.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`
 > **Config:** `Notifications.*` (reader `NotificationsConfig`)
 > **Related:** [Self-update](self-update.md) (registerHandler), [Calendar](calendar.md) (reminders), [Grow and expand](../overlay/grow-expand.md)
 
@@ -33,10 +33,31 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 - `closeRemoves`.
 
 ### Toasts
-- `shell/Notifications` stacks the toasts once per screen of `NotificationsConfig.screen` (`ShellManager.showsOn`).
-- A toast the user closes closes on every screen.
+- `shell/Notifications` builds a `surfaces/notifications/ToastStack` per screen of `NotificationsConfig.screen` (`ShellManager.showsOn`). A toast goes on every screen (`hideEverywhere`) when the user closes it, or when its app or the list closes it.
 - Toasts take their entry's uid when they're created (`uidOf`), because invoking an action can close the notification.
-- **Placement:** `NotificationsConfig` sets the toasts' corner and gaps. They are measured inside the work area by an Overlay-layer anchor window with Normal exclusion, like `OverlayPanel`. While the screen shows a fullscreen window the anchor ignores exclusive zones, so the gaps are measured from the screen's edges.
+- **One toast** is a `ToastItem`: its timer (paused while hovered or replied to; `followApps` takes the app's own timeout), a sideways swipe, its actions and reply, and its motion. It's a card of its own (detached) or a row of the attached box.
+- **Placement:** `edge`, `position`, `detached` and `gap`, as the OSD's and dock's.
+  - **Detached:** cards in one Overlay-layer window covering the free area, held `gap` in from what's on each side (`ScreenEdgeManager.detachedGaps` / `heldInset`, as the detached launcher does).
+    - The window has Normal exclusion; over a fullscreen window it ignores the zones, and the gaps are measured from the screen's edges.
+    - Its input mask is the cards' bounds.
+    - It's always mapped, lending `NotificationManager` its `imageHost`.
+  - **Attached:** one `EdgePopout` box (no claim, no trigger) grown out of the border or a bar exactly as an OSD's or a floating edge menu's, whatever the bar (SurfaceContext).
+    - The toasts are its rows, divided by hairlines.
+    - Each row grows in from nothing and collapses as it leaves, and the rows' places follow their heights, so the box and the rows move as one.
+- **Order and motion** (`methods/ToastMotion`):
+  - Newest at the stack's start, the rest pushed along. A top or bottom stack grows away from its edge, a side one along it (down from its middle).
+  - All of a stack's toasts slide in from and out to one edge, picked while it's empty (`slideEdge`). Attached, it's the stack's own edge. Detached, it's the screen edge nearest the stack, bars aside: a corner stack slides sideways, a centred one from its edge.
+  - They slide within the window, so they pass under the bars.
+  - When one leaves, the others glide into its place (`leave`):
+    - The one at the stack's start slides all the way out.
+    - One further along a stack sliding the way it grows tucks behind the others, sliding half its height toward the edge as it fades.
+  - `motion.style` (slide, fade, none) and `motion.direction` (auto or an edge) override it.
+- **Making way:** toasts hold no `PopoutClaim`. The stack reads `PopoutManager.entries` and moves along its growth past any popout shown over it (`PopoutGeometry.makeWay`), gliding back when it closes.
+  - An attached stack on a side edge moves along it, still attached.
+  - One on the top or bottom, pushed away from its edge, shows as cards while it is, and joins the edge again after.
+- **Blur:**
+  - A card's fill is drawn by the blur window: a `BlurShape` rect following its slide, clipped to the window (`notifications` is among `LayerStack.blurBacked`).
+  - The attached box blurs as an EdgePopout does.
 - **Test notification:** the settings card's intro (`views/Settings/NotificationsPreview`, its `x-intro`) has a Show button that sends one through `sendNotification`, so it toasts with the settings as edited (readers read the previews), as the OSD and dock cards' Show does.
 
 ### Images

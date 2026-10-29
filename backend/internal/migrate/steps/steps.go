@@ -100,6 +100,8 @@ var all = []Step{
 		}
 		return []string{"Notifications.appTimeouts became Notifications.followApps (which also lets apps withdraw their notifications from the history)"}
 	}},
+	// v84: Notifications' corner became an edge placement (v84.go)
+	{Version: 84, Run: v84},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

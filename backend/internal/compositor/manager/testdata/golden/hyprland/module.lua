@@ -195,10 +195,10 @@ end
 -- Blur behind axiom's surfaces while they're translucent (on or off, so
 -- turning it off takes it back), at Hyprland's blur
 function M.blur()
-  hl.layer_rule({ name = "axiom-blur", match = { namespace = "^axiom-(blur-backing|dock-preview|overlay|launcher|switcher|floating-popout|notifications|powermenu|workspaces|monitor-prompt)$" }, blur = true, blur_popups = true, ignore_alpha = 0.5, xray = false, enabled = true })
+  hl.layer_rule({ name = "axiom-blur", match = { namespace = "^axiom-(blur-backing|dock-preview|overlay|launcher|switcher|floating-popout|powermenu|workspaces|monitor-prompt)$" }, blur = true, blur_popups = true, ignore_alpha = 0.5, xray = false, enabled = true })
   hl.layer_rule({ name = "axiom-blur-popups", match = { namespace = "^axiom-(bar|bar-long|bar-pill|bar-pill-long|bar-transparent|bar-transparent-long|bar-floating|bar-floating-long|popout|popout-under|edge-popout|edge-menu|dock)$" }, blur_popups = true, ignore_alpha = 0.5, xray = false, enabled = true })
   hl.layer_rule({ name = "axiom-blur-backdrops", match = { namespace = "^axiom-(backdrop|polkit)$" }, blur = true, ignore_alpha = 0.01, xray = false, enabled = true })
-  hl.layer_rule({ name = "axiom-blur-no-anim", match = { namespace = "^axiom-(bar|bar-long|bar-pill|bar-pill-long|bar-transparent|bar-transparent-long|bar-floating|bar-floating-long|border|popout|popout-under|edge-popout|osd|edge-menu|dock)$" }, no_anim = true, enabled = true })
+  hl.layer_rule({ name = "axiom-blur-no-anim", match = { namespace = "^axiom-(bar|bar-long|bar-pill|bar-pill-long|bar-transparent|bar-transparent-long|bar-floating|bar-floating-long|border|popout|popout-under|edge-popout|osd|edge-menu|dock|notifications)$" }, no_anim = true, enabled = true })
   hl.layer_rule({ name = "axiom-blur-over-overlay", match = { namespace = "^axiom-(blur-backing-overlay)$" }, blur = true, ignore_alpha = 0.5, xray = false, enabled = true })
 end
 

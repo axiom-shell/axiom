@@ -178,7 +178,7 @@ QtObject {
   // Layers blurred whole, their transparent pixels left out: the blur
   // window (drawing the chrome's fills: the chrome doesn't blur itself)
   // and the big surfaces that blur themselves
-  readonly property var blurSurfaces: ["blur-backing", "dock-preview", "overlay", "launcher", "switcher", "floating-popout", "notifications", "powermenu", "workspaces", "monitor-prompt"]
+  readonly property var blurSurfaces: ["blur-backing", "dock-preview", "overlay", "launcher", "switcher", "floating-popout", "powermenu", "workspaces", "monitor-prompt"]
   // Backdrops (and the polkit prompt, whose window holds its own dim),
   // only when asked: the whole screen, at every alpha
   readonly property var blurBackdrops: ["backdrop", "polkit"]
@@ -192,7 +192,7 @@ QtObject {
   // animated by the compositor while it does (they slide themselves), or
   // their stroke and content fade or pop in and out while what the blur
   // window draws for them doesn't
-  readonly property var blurBacked: root.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "dock"])
+  readonly property var blurBacked: root.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "dock", "notifications"])
 
   // A namespace's order (with or without its "axiom-" prefix); 0 (where
   // Hyprland puts a surface without a rule) for one not listed or without
