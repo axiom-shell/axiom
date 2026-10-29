@@ -31,6 +31,9 @@ Item {
   property int fontSize: Appearance.fontSize
   property color color: "white"
   property color textColor: "white"
+  // Across a bar, where the icon beside it has its middle (IconTextWidget's
+  // iconMiddle), in this item's coordinates; below 0, its own middle
+  property real middle: -1
   readonly property color trackColor: Qt.alpha(root.textColor, 0.2)
 
   // Whether this style draws anything here
@@ -72,17 +75,18 @@ Item {
     id: ring
     Item {
       id: ringBox
-      // Whole pixels, an odd side, centred where the icon and label beside
-      // it land once snapped to pixels (half a pixel below the middle of an
-      // even height): centred by anchors, it would be drawn a pixel high
+      // On whole pixels, centred exactly on the icon's middle beside it (on
+      // a whole or a half pixel, as the icon snapped): its side's parity
+      // follows. Centred by anchors, it was drawn a pixel off the icon
+      readonly property real centre: root.middle >= 0 && !root.vertical ? root.middle : height / 2
       readonly property int side: {
         const side = Math.floor(Math.min(width, height));
-        return side % 2 === 0 ? side - 1 : side;
+        return (side % 2 === 0) === Number.isInteger(centre) ? side : side - 1;
       }
 
       PercentageCircle {
         x: Math.round((ringBox.width - ringBox.side) / 2)
-        y: Math.ceil((ringBox.height - ringBox.side) / 2)
+        y: Math.round(ringBox.centre - ringBox.side / 2)
         width: ringBox.side
         height: ringBox.side
         percentage: root.ratio * 100

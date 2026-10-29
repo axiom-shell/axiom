@@ -4,7 +4,6 @@ import QtQuick
 import qs.services.system
 import qs.components.methods
 import qs.config
-import qs.components.reusable
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
@@ -188,7 +187,9 @@ BarWidget {
       Repeater {
         model: root.segments
 
-        delegate: Grid {
+        // One icon + label each, laid out as every bar widget's is; on a
+        // vertical bar the value small and upright under the icon
+        delegate: IconTextWidget {
           id: segment
           required property var modelData
           readonly property var stat: root.segmentData(modelData)
@@ -197,56 +198,44 @@ BarWidget {
           // vertical bar is a label
           readonly property string style: root.style === "sparkline" && segment.metric.history === "" ? "fill" : root.style === "stacked" && root.isVertical ? "label" : root.style
 
-          columns: root.isVertical ? 1 : 4
+          isVertical: root.isVertical
+          crossSize: root.barConfig.widgetSize
+          padding: 0
+          showBackground: false
+          fontSize: root.barConfig.fontSize
           spacing: root.isVertical ? 0 : 4
-          horizontalItemAlignment: Grid.AlignHCenter
-          verticalItemAlignment: Grid.AlignVCenter
+          textScale: root.isVertical ? 0.7 : 0.9
+          uprightLabel: true
+          // Same-width digits, so the widget (and the bar's layout) doesn't
+          // shift with every sample
+          steadyDigits: true
+          icon: segment.stat.icon
+          text: segment.stat.value
+          showText: segment.style !== "icon" && segment.style !== "stacked"
+          foregroundColor: root.textColor
+          iconColor: root._textByState ? root.accentColor : root.colors.icon
+          leadLength: graphic.drawn ? graphic.length : 0
+          leadAfterIcon: graphic.afterIcon
 
-          // Ring, fill, segments, sparkline: before the icon
           ValueGraphic {
-            id: lead
-            visible: drawn
-            style: segment.style === "stacked" ? "label" : segment.style
-            width: root.isVertical ? root.barConfig.widgetSize : length
-            height: root.isVertical ? length : root.barConfig.widgetSize
+            id: graphic
+            parent: segment.lead
+            anchors.fill: parent
+            style: segment.style
             ratio: Math.max(0, Math.min(1, segment.stat.level / 100))
             history: segment.style === "sparkline" ? SystemManager[segment.metric.history] : []
             graphMin: 0
             graphMax: 100
+            text: segment.stat.value
+            // Stacked: the value over its name, where the value goes
+            subtext: I18n.tr(root._captions[segment.modelData])
             segmentCount: root.appearance.segments
             preferredLength: root.appearance.width
             vertical: root.isVertical
             crossSize: root.barConfig.widgetSize
             fontSize: root.barConfig.fontSize
+            middle: segment.iconMiddle
             color: root.colors.icon
-            textColor: root.textColor
-          }
-          StyledIcon {
-            text: segment.stat.icon
-            textColor: root._textByState ? root.accentColor : root.colors.icon
-            textSize: root.barConfig.fontSize
-          }
-          StyledText {
-            visible: segment.style !== "icon" && segment.style !== "stacked"
-            text: segment.stat.value
-            textColor: root.textColor
-            textSize: root.barConfig.fontSize * (root.isVertical ? 0.7 : 0.9)
-            // Same-width digits, so the widget (and the bar's layout) doesn't
-            // shift with every sample
-            font.features: {
-              "tnum": 1
-            }
-          }
-          // Stacked: the value over its name, where the value goes
-          ValueGraphic {
-            visible: drawn
-            style: segment.style === "stacked" ? "stacked" : "label"
-            width: length
-            height: root.barConfig.widgetSize
-            text: segment.stat.value
-            subtext: I18n.tr(root._captions[segment.modelData])
-            crossSize: root.barConfig.widgetSize
-            fontSize: root.barConfig.fontSize
             textColor: root.textColor
           }
         }

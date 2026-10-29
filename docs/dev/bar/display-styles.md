@@ -12,7 +12,7 @@ How a bar widget with a value, a time or a long text draws it: one set of styles
 - `ring` (`PercentageCircle`), `fill` (`LevelMeter`), `segments` (`SegmentMeter`, `segments` of them), `sparkline` (`Sparkline` over the widget's history): a graphic before the icon, in `IconTextWidget`'s `lead` slot; fill, segments and sparkline are `width` long (0: from the bar's font).
 - `pill`: the widget's background filled to its value (`backgroundLevel`, drawn by its WidgetGroup in the background's own shape).
 - `ticker`: the text, up to `width` long, scrolling past that; `stacked`: the text over a caption. Both sit after the icon, where the label goes (`leadAfterIcon`); a vertical bar turns the ticker along it and draws stacked as a label.
-- The ring is drawn on whole pixels with an odd side, centred where the icon and label beside it land once snapped to pixels, so it lines up with them rather than a pixel high.
+- The ring is drawn on whole pixels, centred exactly on the icon's middle beside it (`IconTextWidget.iconMiddle`, passed as `ValueGraphic.middle`), its side's parity following whether that's on a whole or a half pixel. IconTextWidget centres the label's figures on the same middle, so ring, icon and label line up.
 - `colorText` colours the text in the widget's state colour (its `accentColor`) where that isn't already the background's fill. The graphics draw in `colors.icon`, which reads on a filled background.
 
 ### The schema
@@ -35,7 +35,7 @@ The base (a `BarIconWidget`) for a widget drawing one value. It takes:
 - `labelShown` in place of `showText` (the widget's own "show the value" setting; the style hides the label where it's the graphic);
 - `stateColor` / `hasState`, for `colorText` (default the accent colour; a custom widget's only when its script gives a state).
 
-`style` is the style it draws now, after those fallbacks. The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats draws one per metric (before the icon, or stacked in place of the value), pill only with one metric shown, and a disk's sparkline as a fill (SystemManager keeps no disk history).
+`style` is the style it draws now, after those fallbacks. The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats lays each metric out as an `IconTextWidget` (as every icon + label widget is; `uprightLabel` keeps its small upright values on a vertical bar) with one in its lead slot, pill only with one metric shown, and a disk's sparkline as a fill (SystemManager keeps no disk history).
 
 ### Which widget draws what
 | Widget | Value | Stacked caption |

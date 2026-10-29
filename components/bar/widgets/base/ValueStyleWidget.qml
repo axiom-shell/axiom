@@ -76,6 +76,7 @@ BarIconWidget {
     vertical: root.isVertical
     crossSize: root.crossSize
     fontSize: root.fontSize
+    middle: root.iconMiddle
     color: root.colors.icon
     textColor: root.foregroundColor
   }
