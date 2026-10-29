@@ -15,7 +15,7 @@ import qs.services.system
  * name, checked again whenever it changes). Created from shell.qml's
  * `_services`.
  *
- * Also which commands (and Python modules, as "py:<module>") are installed
+ * Also which commands are installed
  * (`found`, filled by `check(commands)` through axiom's deps.check),
  * for the onboarder: the optional `tools` below, the apps it offers; and
  * what installs them on this distribution (`distro`, `installLines`).
@@ -47,12 +47,9 @@ Singleton {
     return Packages.installLines(root.distro, keys);
   }
 
-  // A key as people read it: "python: gi" for "py:gi", the font's
-  // family for "iconFont"
+  // A key as people read it: the font's family for "iconFont"
   function label(key) {
-    if (key === "iconFont")
-      return Appearance.iconFamily;
-    return String(key).startsWith("py:") ? "python: " + key.slice(3) : key;
+    return key === "iconFont" ? Appearance.iconFamily : key;
   }
 
   // One line that installs a command here ("" on an unknown distribution)
@@ -101,10 +98,6 @@ Singleton {
     {
       "command": "gio",
       "purpose": "Moving notes to the trash"
-    },
-    {
-      "command": "python3",
-      "purpose": "Theme integrations and keybinds"
     },
     {
       "command": "notify-send",
@@ -178,11 +171,10 @@ Singleton {
   // { command: bool } for every command checked so far
   property var found: ({})
 
-  // Looks the commands up (axiom's deps.check: $PATH; a "py:<module>"
-  // with python3's importlib) and adds them to `found`. Without axiom
-  // they stay unknown
+  // Looks the commands up (axiom's deps.check: $PATH) and adds them to
+  // `found`. Without axiom they stay unknown
   function check(commands) {
-    const wanted = (commands ?? []).map(c => String(c).trim().split(/\s+/)[0]).filter(c => /^(py:)?[\w.+-]+$/.test(c));
+    const wanted = (commands ?? []).map(c => String(c).trim().split(/\s+/)[0]).filter(c => /^[\w.+-]+$/.test(c));
     if (wanted.length === 0)
       return;
     _pendingChecks = _pendingChecks.concat(wanted);

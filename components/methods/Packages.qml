@@ -55,7 +55,7 @@ QtObject {
   readonly property string _quickshellCopr: "errornointernet/quickshell"
 
   // { key: { distro: package } }, a key being a command (a compositor by
-  // its lowercase name), a Python module as "py:<module>", a package
+  // its lowercase name), a package
   // without a command ("xdg-desktop-portal-gtk"), or "iconFont". install.sh
   // keeps a table of the same keys (scripts/check_packages.py compares them).
   // A package is a name, { name, repo } (from a repository enabled first),
@@ -111,10 +111,6 @@ QtObject {
         "arch": "xdg-desktop-portal-gtk",
         "fedora": "xdg-desktop-portal-gtk"
       },
-      "py:gi": {
-        "arch": "python-gobject",
-        "fedora": "python3-gobject"
-      },
       "qalc": {
         "arch": "libqalculate",
         "fedora": "qalculate"
@@ -138,10 +134,6 @@ QtObject {
       "gio": {
         "arch": "glib2",
         "fedora": "glib2"
-      },
-      "python3": {
-        "arch": "python",
-        "fedora": "python3"
       },
       "notify-send": {
         "arch": "libnotify",

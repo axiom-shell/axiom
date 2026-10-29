@@ -8,7 +8,7 @@ How axiom gets onto a machine: the installer (a clone in the user's home) or a d
 
 ### Three package lists, kept in step
 - `Packages.packages` (the onboarder's install hints), install.sh's `PACKAGES` table and the PKGBUILDs' `depends`/`optdepends` all say what installs a dependency.
-- They share keys: a command, a compositor by its lowercase name, `py:<module>`, `iconFont`, or a package without a command (`xdg-desktop-portal-gtk`).
+- They share keys: a command, a compositor by its lowercase name, `iconFont`, or a package without a command (`xdg-desktop-portal-gtk`).
 - `scripts/check_packages.py` (CI, `check_all.sh`, `verify.sh` when one of them changes) fails when:
   - an install.sh key's Arch or Fedora package differs from `Packages.packages` (a COPR is `owner/project:name` there and `{ name, repo }` here; `download` is `{ file, to }`, the same URL and file; `-` and `n/a` are `null`);
   - a key in `REQUIRED` or `FEATURES` isn't in `PACKAGES`;

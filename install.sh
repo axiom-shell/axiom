@@ -48,7 +48,6 @@ PACKAGES=(
   "go|go|golang"
   "quickshell|quickshell|errornointernet/quickshell:quickshell"
   "curl|curl|curl"
-  "python3|python|python3"
   "iconFont|ttf-material-symbols-variable|download"
   "hyprland|hyprland|nett00n/hyprland:hyprland"
   "sway|sway|sway"
@@ -67,7 +66,6 @@ PACKAGES=(
   "Xwayland|xorg-xwayland|xorg-x11-server-Xwayland"
   "powerprofilesctl|power-profiles-daemon|power-profiles-daemon"
   "xdg-desktop-portal-gtk|xdg-desktop-portal-gtk|xdg-desktop-portal-gtk"
-  "py:gi|python-gobject|python3-gobject"
   "greetd|greetd|greetd"
   "agreety|greetd-agreety|greetd"
 )
@@ -75,7 +73,7 @@ ICON_FONT_URL="https://github.com/google/material-design-icons/raw/master/variab
 ICON_FONT_FILE=$HOME/.local/share/fonts/MaterialSymbolsRounded.ttf
 # go isn't here: the axiom binary is downloaded (a package brings its own),
 # and go is installed only to build it when there's no official build
-REQUIRED=(git quickshell curl python3 iconFont)
+REQUIRED=(git quickshell curl iconFont)
 # "feature|keys|compositors" (none listed: any), offered one at a time;
 # the AUR package's optdepends say the same
 FEATURES=(
@@ -92,7 +90,7 @@ FEATURES=(
   "X11 apps under niri (Steam, games, older apps)|xwayland-satellite|niri"
   "X11 apps under sway (Steam, games, older apps)|Xwayland|sway"
   "Power profiles|powerprofilesctl|"
-  "Browse buttons for folders and importing configs (the desktop's file picker)|xdg-desktop-portal-gtk py:gi|"
+  "Browse buttons for folders and importing configs (the desktop's file picker)|xdg-desktop-portal-gtk|"
   # The login screen runs in a sway of its own, or in Hyprland where sway
   # isn't installed: with Hyprland, sway is offered on its own (recommended,
   # so "all" takes it) and declining it keeps the login screen. The first

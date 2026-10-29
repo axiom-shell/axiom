@@ -102,16 +102,10 @@ TestCase {
     compare(Packages.installLines("fedora", ["xwayland-satellite", "Xwayland"]), ["sudo dnf install xwayland-satellite xorg-x11-server-Xwayland"]);
   }
 
-  // Python modules ("py:<module>") from each distribution's own repositories
-  function test_pythonModules() {
-    compare(Packages.installCommand("arch", ["py:gi"]), "sudo pacman -S --needed python-gobject");
-    compare(Packages.installCommand("fedora", ["py:gi"]), "sudo dnf install python3-gobject", "no COPR");
-  }
-
   // What install.sh installs: the compositors, and quickshell from its own
   // COPR on Fedora (beside the Hyprland one, when both are needed)
   function test_installerKeys() {
-    compare(Packages.installCommand("arch", ["quickshell", "niri", "nmcli", "py:gi"]), "sudo pacman -S --needed quickshell niri networkmanager python-gobject");
+    compare(Packages.installCommand("arch", ["quickshell", "niri", "nmcli"]), "sudo pacman -S --needed quickshell niri networkmanager");
     compare(Packages.installLines("fedora", ["quickshell", "hyprland", "sway"]), ["sudo dnf copr enable -y errornointernet/quickshell", "sudo dnf copr enable -y nett00n/hyprland", "sudo dnf install quickshell hyprland sway"]);
     compare(Packages.packageFor("fedora", "awww"), null, "not packaged for Fedora");
   }

@@ -77,6 +77,7 @@ var tiers = map[string]int{
 	"internal/greeterinstall":       tierEdge,
 	"internal/release/fetch":        tierEdge,
 	"internal/idle":                 tierEdge,
+	"internal/filepicker":           tierEdge,
 	"internal/files":                tierEdge,
 	"internal/ipcroute":             tierEdge,
 	"internal/lockscreen":           tierEdge,
