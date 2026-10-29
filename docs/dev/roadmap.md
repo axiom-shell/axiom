@@ -274,7 +274,6 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 - [Small tooling leftovers](issues.md#small-tooling-leftovers)
 - [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
 - [A self-update test once took the build path for a release](issues.md#a-self-update-test-once-took-the-build-path-for-a-release)
-- [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
 - [A compositor manager test misses its takeover prompt under load](issues.md#a-compositor-manager-test-misses-its-takeover-prompt-under-load)
 - [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
 - [CI checks dependencies only when a PR touches Go](issues.md#ci-checks-dependencies-only-when-a-pr-touches-go)

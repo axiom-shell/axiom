@@ -212,12 +212,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-19, while building the review-system skill
 
-### A daemon test finds the instance lock still held
-- **Where:** `backend/internal/daemon/reexec_test.go` (`TestStaleSocketIsRemovedOnlyUnderTheInstanceLock`)
-- **What:** One `scripts/dev/verify.sh` run failed with `reexec_test.go:42: the daemon stopped: axiom is already running on wayland-test: held by process …` and `daemon_test.go:90: the daemon didn't stop`, then passed on a rerun with nothing changed in `daemon`: after `held.Release()`, the daemon `td.start` runs still found the lock held, likely by the refused `runBriefly` daemon's open lock file (or the test's own) not yet closed under a loaded parallel run. A possible fix: wait for `runBriefly`'s daemon to close everything before releasing, or retry the start briefly.
-- **Size:** trivial
-- **Found:** 2026-10-27, while verifying the Tailscale revamp
-
 ### A compositor manager test misses its takeover prompt under load
 - **Where:** `backend/internal/compositor/manager/manager_test.go` (`TestAConfigGivenBackMeanwhileIsntWrittenOver`, `harness.eventually`)
 - **What:** CI on PR #184 (which touched no Go) failed with `manager_test.go:555: never: asked again` (state `"status":"pending"`, `"takeoverPending":false`). The wait covers a live change whose file sync comes 2 s later, inside `eventually`'s 3 s bound, so a loaded runner has 1 s of slack; the test runs `t.Parallel()` with the package. A flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or a sync delay the test sets shorter.
