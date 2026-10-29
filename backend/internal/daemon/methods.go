@@ -82,6 +82,10 @@ var (
 	// with each event as niri wrote it ({"WindowFocusChanged": {…}})
 	pushNiriStarted = rpc.Push[struct{}]{Method: "niri.started"}
 	pushNiriEvent   = rpc.Push[json.RawMessage]{Method: "niri.event"}
+
+	// Nor this: sent only to the connection whose greeter.apply is
+	// running, once the password was given and it runs as root
+	pushGreeterAuthorized = rpc.Push[struct{}]{Method: "greeter.authorized"}
 )
 
 // compositorPushes are the compositor's pushes by method, for its
