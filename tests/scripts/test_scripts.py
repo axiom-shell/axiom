@@ -360,6 +360,7 @@ class CheckStructure(unittest.TestCase):
         ("components/lonely/Lonely.qml", qml(), None),
         ("components/views/Reach/Reach.qml", qml(imports="import qs.components.lonely"),
          "Reach.qml needs qs.components.lonely, which no file reached from shell.qml imports"),
+        # (Reach is also no OverlayView type and nothing uses it: the warning below)
         ("services/core/Spawner.qml", qml("Process {}"), "services/core/Spawner.qml: uses Process directly"),
         ("services/Direct.qml", qml(), "services/Direct.qml: directly in services/"),
         ("shell/Handler.qml", qml("IpcHandler {}"), "shell/Handler.qml: an IpcHandler"),
@@ -379,6 +380,7 @@ class CheckStructure(unittest.TestCase):
         ("shell/Hyprm.qml", qml("property var w: HyprlandManager.windows"), "shell/Hyprm.qml: uses HyprlandManager"),
         ("shell/HState.qml", qml("property var s: HyprState.parse"), "shell/HState.qml: uses a Hyprland helper"),
         ("shell/SState.qml", qml("property var s: SwayState.parse"), "shell/SState.qml: uses a sway helper"),
+        ("shell/NState.qml", qml("property var s: NiriState.parse"), "shell/NState.qml: uses a niri helper"),
         ("shell/NotService.qml", qml("property var s: GhostManager.x"), "GhostManager is not a service"),
         ("shell/Typo.qml", qml("property var s: AudioManger.x"), "AudioManger — did you mean AudioManager?"),
         ("config/GhostConfig.qml", qml("readonly property int k: _c.key ?? 1", head="pragma Singleton"),
@@ -388,8 +390,9 @@ class CheckStructure(unittest.TestCase):
         ("shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),
          "shell/Both.qml: Dup is defined in qs.components.dupa and qs.components.dupb"),
     ]
-    # What the check must say about the schema, docs/usage.md and the allowlist edits below
+    # What the check must say about the schema, docs/usage.md and the allowlist edits below (and Reach)
     EDITS = [
+        "components/views/Reach/: not a OverlayView type and not used anywhere",
         "BarWidget type 'Ghost' has no components/bar/widgets/Ghost/Ghost.qml",
         "x-libraryGroup 'Nope' isn't one of the schema's x-libraryGroups",
         "OverlayModule Todo: x-hosts lists overlay but not desktop",
