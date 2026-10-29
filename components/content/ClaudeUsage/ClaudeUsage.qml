@@ -69,17 +69,11 @@ Panel {
         font.bold: true
       }
     }
-    Rectangle {
+    LevelMeter {
       Layout.fillWidth: true
-      implicitHeight: Widget.px(6)
-      radius: height / 2
-      color: Theme.backgroundHighlight
-      Rectangle {
-        width: parent.width * Math.min(1, (meter.usage?.percent ?? 0) / 100)
-        height: parent.height
-        radius: parent.radius
-        color: root.colorFor(meter.usage?.percent ?? 0)
-      }
+      implicitHeight: thickness
+      share: (meter.usage?.percent ?? 0) / 100
+      fillColor: root.colorFor(meter.usage?.percent ?? 0)
     }
     StyledText {
       visible: text !== ""

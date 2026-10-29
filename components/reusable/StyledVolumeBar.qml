@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Widgets
 import qs.config
 
 // A volume bar (vertical or horizontal) with its icon, mute and optional
@@ -59,7 +60,8 @@ Item {
     rowSpacing: Widget.spacing * 2
     columnSpacing: Widget.spacing * 2
 
-    Rectangle {
+    // Clips the fill, so a low level keeps to the trough's rounded ends
+    ClippingRectangle {
       id: barContainer
       Layout.row: 0
       Layout.column: content.isVertical ? 0 : 1
