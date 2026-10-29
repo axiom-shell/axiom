@@ -6,6 +6,7 @@ import Quickshell
 
 import qs.config
 import qs.components.methods
+import qs.services.system
 import qs.services.core
 import qs.services.compositor
 
@@ -51,8 +52,8 @@ QtObject {
   function iconFor(key, win) {
     const entry = root.entryFor(key);
     if (entry?.icon)
-      return IconResolver.appIcon(entry.icon);
-    return IconResolver.resolveWindowIcon(win?.appId ?? key, win?.title ?? "");
+      return AppIconManager.appIcon(entry.icon);
+    return AppIconManager.resolveWindowIcon(win?.appId ?? key, win?.title ?? "");
   }
 
   function nameFor(key, win) {

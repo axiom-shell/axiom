@@ -5,7 +5,7 @@ import Quickshell.Widgets
 
 import qs.services.compositor
 import qs.config
-import qs.components.methods
+import qs.services.system
 import qs.components.reusable
 
 // A window on the overview board (and the window switcher): its live capture (the app icon until it
@@ -26,7 +26,7 @@ Item {
   property bool showTitle: true
 
   readonly property var toplevel: CompositorManager.toplevelFor(root.windowData?.id ?? "")
-  readonly property string iconPath: IconResolver.resolveWindowIcon(root.windowData?.appId, root.windowData?.title)
+  readonly property string iconPath: AppIconManager.resolveWindowIcon(root.windowData?.appId, root.windowData?.title)
   readonly property bool focused: (root.windowData?.focusRank ?? -1) === 0
   // The icon stands in only for a window that never gives a frame: not for
   // the first frame's short wait on open, and not once the window closes

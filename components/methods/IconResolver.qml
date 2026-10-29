@@ -1,14 +1,13 @@
 pragma Singleton
-
-import Quickshell
+import QtQuick
 
 /**
- * Resolves icon names for window classes: desktop entries first, then known
- * substitutions, then name variants that exist in the icon theme. Turns an
- * app's icon name into a source only the theme holds (`appIcon`).
+ * Guesses icon names for window classes: desktop entries first, then known
+ * substitutions, then name variants that exist in the icon theme. Pure: the
+ * caller (AppIconManager) hands it the theme and the desktop entries.
  * Substitution tables adapted from end-4's dots-hyprland.
  */
-Singleton {
+QtObject {
   id: root
 
   readonly property var substitutions: ({
@@ -40,33 +39,15 @@ Singleton {
     }
   ]
 
-  // An icon's source if the theme has it, else the generic program icon's,
-  // else "": an Image given a name the theme lacks logs `Could not load icon`
-  function appIcon(name) {
-    return (name ? Quickshell.iconPath(name, true) : "") || Quickshell.iconPath("application-x-executable", true);
-  }
-
-  function resolveWindowIcon(windowClass, windowTitle) {
-    const baseIcon = appIcon(guessIcon(windowClass));
-    // Special case for kitty running nvim
-    if (baseIcon.includes("kitty") && windowTitle?.toLowerCase().includes("nvim"))
-      return appIcon("nvim");
-    return baseIcon;
-  }
-
-  function iconExists(iconName) {
-    if (!iconName || iconName.length === 0 || iconName.includes("image-missing"))
-      return false;
-    return Quickshell.iconPath(iconName, true).length > 0;
-  }
-
   // Best-effort icon name for a window class; returns the class itself when
-  // nothing better is found
-  function guessIcon(windowClass) {
+  // nothing better is found. `lookup` holds `entry(cls)` (the desktop entry
+  // for a class, or null), `exists(name)` (the icon theme has it) and
+  // `apps()` (every desktop entry)
+  function guessIcon(windowClass, lookup) {
     if (!windowClass || windowClass.length === 0)
       return "image-missing";
 
-    const entry = DesktopEntries.heuristicLookup(windowClass);
+    const entry = lookup.entry(windowClass);
     if (entry)
       return entry.icon;
 
@@ -84,16 +65,17 @@ Singleton {
 
     // org.foo.AppName -> AppName, "App Name" -> app-name
     const reverseDomain = windowClass.split(".").slice(-1)[0];
+    const exists = name => !!name && !name.includes("image-missing") && lookup.exists(name);
     const candidates = [windowClass, lowercased, reverseDomain, reverseDomain.toLowerCase(), lowercased.replace(/\s+/g, "-")];
     for (const candidate of candidates) {
-      if (iconExists(candidate))
+      if (exists(candidate))
         return candidate;
     }
 
     // Last resort: a desktop entry whose icon or name contains the class
-    const apps = DesktopEntries.applications.values;
+    const apps = lookup.apps();
     const match = apps.find(a => a.icon?.toLowerCase().includes(lowercased)) ?? apps.find(a => a.name?.toLowerCase().includes(lowercased));
-    if (match && iconExists(match.icon))
+    if (match && exists(match.icon))
       return match.icon;
 
     return windowClass;

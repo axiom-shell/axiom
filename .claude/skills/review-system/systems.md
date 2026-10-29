@@ -157,7 +157,7 @@ Seams: every service.
 ## ui-kit
 Scope: the shared UI pieces: reusable controls, forms, content parts, motion.
 Docs: core/shared-ui-pieces.md
-Extra: components/reusable/*.qml components/forms/*.qml components/content/parts/*.qml components/methods/IconResolver.qml
+Extra: components/reusable/*.qml components/forms/*.qml components/content/parts/*.qml components/methods/IconResolver.qml services/system/AppIconManager.qml
 Mode: collection
 Checks:
 - Pieces nothing uses, and pieces two of which do the same job.

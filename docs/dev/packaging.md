@@ -34,7 +34,7 @@ How axiom gets onto a machine: the installer (a clone in the user's home) or a d
 ### The AUR packages
 Not on the AUR yet: AUR account registration is closed, so they wait in `packaging/aur/` until it reopens ([#76](https://github.com/axiom-shell/axiom/issues/76), help wanted). The user docs describe installing them and say they aren't published.
 
-- `axiom-shell` (a release's tag tarball) and `axiom-shell-git` (main, `pkgver()` from `git describe`, `provides`/`conflicts` `axiom-shell`). The same `prepare()`, `build()` and `package()` otherwise.
+- `axiom-shell` (a release's tag tarball) and `axiom-shell-git` (main, `pkgver()` from `git describe`, `provides`/`conflicts` `axiom-shell`). The same `prepare()`, `build()` and `package()` otherwise. They stay two whole files: each is its own AUR repository, and a PKGBUILD there must stand alone (makepkg and `.SRCINFO` read only it, so it can't source a shared one). `check_packages.py` keeps their `depends`/`optdepends` in step; an edit to a function goes in both.
 - **The binary:** `arch=(x86_64 aarch64)`, `makedepends` `go`. `prepare()` downloads the modules; `build()` runs `scripts/generate.sh --no-docs` (the embedded copies and `config/json/config.schema.json`, neither committed; not the reference docs, which `package()` would drop anyway) and `go build` with `CGO_ENABLED=0` and `-buildmode=pie -trimpath -mod=readonly`; `package()` installs it as `/usr/bin/axiom`.
 - **No compositor in `depends`:** pacman has no "one of"; `hyprland`, `sway` (which `swayfx` provides) and `niri` are `optdepends`. The package is the shell, not the session.
 - **Layout:**

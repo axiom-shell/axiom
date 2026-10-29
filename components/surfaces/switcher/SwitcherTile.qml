@@ -3,7 +3,7 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
-import qs.components.methods
+import qs.services.system
 import qs.components.reusable
 import qs.components.surfaces.workspaces
 
@@ -63,7 +63,7 @@ Item {
       width: Math.min(box.width, box.height) * 0.6
       height: width
       sourceSize: Qt.size(128, 128)
-      source: IconResolver.resolveWindowIcon(root.windowData?.appId, root.windowData?.title)
+      source: AppIconManager.resolveWindowIcon(root.windowData?.appId, root.windowData?.title)
       fillMode: Image.PreserveAspectFit
     }
   }
