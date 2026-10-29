@@ -6,10 +6,11 @@ import qs.services.core
 import qs.services.system
 import qs.components.hosts.popout
 
-// Base for the Volume and Microphone widgets: a default device's level.
+// Base for the Volume and Microphone widgets: a default device's level, as
+// the value of its display style (full at 100%, above it too).
 // Scroll changes its volume (up to the configured maximum), click mutes,
 // middle click runs a command; hovering opens the mixer on its side.
-BarIconWidget {
+ValueStyleWidget {
   id: root
 
   // The default sink or source
@@ -21,7 +22,8 @@ BarIconWidget {
   readonly property real maxVolume: properties.maxVolume / 100
 
   text: `${Math.round(root.level * 100)}%`
-  showText: properties.showPercentage
+  labelShown: properties.showPercentage
+  ratio: root.node ? Math.min(1, root.level) : -1
 
   clickable: true
   acceptedButtons: Qt.LeftButton | Qt.MiddleButton

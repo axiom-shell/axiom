@@ -11,8 +11,9 @@ import qs.components.bar.widgets.base
 // accounts (one per CLAUDE_CONFIG_DIR, from ClaudeUsageConfig). Shows the
 // session or weekly limit's percent: the fullest account's, or every
 // account's. Hovering lists every limit per account; right click fetches
-// again, left click runs the click command.
-BarIconWidget {
+// again, left click runs the click command. Its display style draws the
+// fullest account's percent (the first's with Accounts shown: first).
+ValueStyleWidget {
   id: root
 
   // One state per configured account, in the configured order, labelled as
@@ -47,6 +48,10 @@ BarIconWidget {
       return rows.map(r => figure(r)).join(" · ");
     return figure(properties.display === "first" ? rows[0] : fullest);
   }
+
+  readonly property int shownPercent: properties.display === "first" ? (rows.length > 0 ? percentOf(rows[0]) : -1) : maxPercent
+  ratio: shownPercent < 0 ? -1 : shownPercent / 100
+  subtext: properties.metric === "weekly" ? I18n.tr("Weekly") : I18n.tr("Session")
 
   accentColor: Theme.resolveColor(maxPercent >= properties.criticalThreshold ? properties.criticalColor : maxPercent >= properties.warnThreshold ? properties.warnColor : properties.backgroundColor)
   dim: stale ? 0.6 : 1

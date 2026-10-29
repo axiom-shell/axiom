@@ -3359,6 +3359,15 @@
     "Close the overlay when you click its empty background, around the page. A click on a bar, a popout or a prompt leaves it open.": "",
     "Less": "",
     "{0} {1}": "",
-    "Reset to default: {0}": ""
+    "Reset to default: {0}": "",
+    "CPU": "",
+    "RAM": "",
+    "Temp": "",
+    "GPU": "",
+    "Disk": "",
+    "Icon only": "",
+    "Stacked puts the charge over the time to full or left.": "",
+    "Each metric drawn this way. Pill only with one metric shown; the disk has no sparkline (a fill instead).": "",
+    "The value is the limit's percent: the fullest account's, or the first's. Stacked puts it over the limit's name.": ""
   }
 }
