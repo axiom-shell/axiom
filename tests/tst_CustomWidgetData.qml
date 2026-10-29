@@ -294,6 +294,29 @@ TestCase {
     }, "half the width, a gap between");
   }
 
+  function test_rows() {
+    compare(CustomWidgetData.rows([
+      {
+        "text": "a",
+        "value": "3"
+      },
+      "b"]), [
+      {
+        "text": "a",
+        "icon": "",
+        "value": 3,
+        "subtext": ""
+      },
+      {
+        "text": "b",
+        "icon": "",
+        "value": undefined,
+        "subtext": ""
+      }
+    ], "objects read, plain entries are their text");
+    compare(CustomWidgetData.rows("nope"), [], "not a list: none");
+  }
+
   function test_graphRange() {
     const def = {
       "format": "{}"

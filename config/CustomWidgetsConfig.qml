@@ -32,8 +32,8 @@ QtObject {
   // components/content/parts/custom/elements/<Type>/schema.yaml), by
   // label: { type, label, icon, size ([w, h] sub-cells it's added at,
   // `x-defaultSize`), slots (its bindings, `x-slots`), actions (the
-  // commands it runs, `x-actions`), options (its look, a properties
-  // schema), optionsOrder }. Labels and titles are English: the editor
+  // commands it runs, `x-actions`), actionsSchema (theirs, a properties
+  // schema), options (its look, a properties schema), optionsOrder }. Labels and titles are English: the editor
   // translates them
   readonly property var elementKinds: {
     const schema = ConfigManager.configSchema;
@@ -46,6 +46,7 @@ QtObject {
         "size": def["x-defaultSize"] ?? [4, 4],
         "slots": def["x-slots"] ?? [],
         "actions": def["x-actions"] ?? [],
+        "actionsSchema": Utils.pick(def.properties.actions.properties, def["x-actions"] ?? []),
         "options": def.properties.options?.properties ?? ({}),
         "optionsOrder": def.properties.options?.["x-order"] ?? []
       };

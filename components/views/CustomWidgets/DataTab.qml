@@ -25,12 +25,6 @@ ColumnLayout {
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
 
-  function shown(value) {
-    if (value === undefined || value === null)
-      return "";
-    return typeof value === "object" ? JSON.stringify(value) : String(value);
-  }
-
   // Run state, and Run now
   RowLayout {
     Layout.fillWidth: true
@@ -98,7 +92,7 @@ ColumnLayout {
         }
         StyledText {
           Layout.fillWidth: true
-          text: pathRow.entry.type === "array" ? I18n.tr("a list of {0}", pathRow.entry.value) : pathRow.entry.type === "object" ? "{…}" : root.shown(pathRow.entry.value)
+          text: pathRow.entry.type === "array" ? I18n.tr("a list of {0}", pathRow.entry.value) : pathRow.entry.type === "object" ? "{…}" : CustomWidgetData.asText(pathRow.entry.value)
           elide: Text.ElideRight
           opacity: 0.7
         }

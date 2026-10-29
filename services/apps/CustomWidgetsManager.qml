@@ -118,12 +118,12 @@ QtObject {
     const wanted = root._wanted;
     const last = root._watching;
     for (const id in last) {
-      if (!(id in wanted) || JSON.stringify(wanted[id]) !== JSON.stringify(last[id]))
+      if (!(id in wanted) || !Utils.deepEqual(wanted[id], last[id]))
         CommandManager.release(root._owner(id));
     }
     root._watching = wanted;
     for (const id in wanted) {
-      if (JSON.stringify(wanted[id]) === JSON.stringify(last[id]))
+      if (Utils.deepEqual(wanted[id], last[id]))
         continue;
       root._seen[id] = -1;
       if (wanted[id].execIf)
@@ -265,7 +265,7 @@ QtObject {
       if (!def || !out || out.blocked)
         continue;
       const resolved = CustomWidgetData.resolve(def, CustomWidgetData.parse(out.text, out.value, def.output, def.mode === "stream"));
-      if (JSON.stringify(resolved) === JSON.stringify(root._fields[id]))
+      if (Utils.deepEqual(resolved, root._fields[id]))
         continue;
       fields = fields ?? Object.assign({}, root._fields);
       fields[id] = resolved;

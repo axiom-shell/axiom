@@ -61,17 +61,39 @@ QtObject {
     };
   }
 
+  // A value as text: "" for nothing, JSON for an object or list
+  function asText(v) {
+    return v === undefined || v === null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+  }
+
+  // A list of rows (an output's items, or a bound list) as
+  // { text, icon, value (a number, or undefined), subtext }: a plain entry
+  // is its text; anything not a list is none
+  function rows(v) {
+    if (!Array.isArray(v))
+      return [];
+    return v.map(i => i !== null && typeof i === "object" ? {
+        "text": root.asText(i.text),
+        "icon": root.asText(i.icon),
+        "value": root._number(i.value),
+        "subtext": root.asText(i.subtext)
+      } : {
+        "text": root.asText(i),
+        "icon": "",
+        "value": undefined,
+        "subtext": ""
+      });
+  }
+
+  // A number, or one in a string; undefined otherwise
+  function _number(v) {
+    const n = typeof v === "string" ? parseFloat(v) : v;
+    return typeof n === "number" && isFinite(n) ? n : undefined;
+  }
+
   // The value at a dotted path ("a.b.0.c") in `sample`, or undefined
   function get(sample, path) {
-    if (!path)
-      return undefined;
-    let v = sample;
-    for (const part of String(path).split(".")) {
-      if (v === null || typeof v !== "object")
-        return undefined;
-      v = v[part];
-    }
-    return v;
+    return path ? Utils.valueAt(sample, String(path).split(".")) : undefined;
   }
 
   // Every path in a sample the editor offers, depth first:
@@ -107,8 +129,7 @@ QtObject {
   function fill(template, values) {
     return String(template ?? "").replace(/\{([^{}:]*)(?::[^{}]*)?\}/g, (match, name) => {
       const key = name === "" || name === "0" ? "text" : name;
-      const v = key in values ? values[key] : root.get(values._sample, key);
-      return v === undefined || v === null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+      return root.asText(key in values ? values[key] : root.get(values._sample, key));
     });
   }
 
@@ -223,12 +244,6 @@ QtObject {
     return String(rich ?? "").replace(/<br\s*\/?>/g, "\n").replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&amp;/g, "&");
   }
 
-  // `text` cut to `max` characters with an ellipsis (max <= 0: as is)
-  function truncate(text, max) {
-    const s = String(text ?? "");
-    return max > 0 && s.length > max ? s.slice(0, Math.max(0, max - 1)) + "…" : s;
-  }
-
   // The fields of one sample as a definition draws them, each read from
   // the key of the same name (a script shapes its own JSON). Plain text
   // that's a number is the value; text matching a format-icons key is the
@@ -248,10 +263,7 @@ QtObject {
     const f = {};
     for (const key of root.fieldNames)
       f[key] = s[key];
-    const num = v => {
-      const n = typeof v === "string" ? parseFloat(v) : v;
-      return typeof n === "number" && isFinite(n) ? n : undefined;
-    };
+    const num = root._number;
     const percentage = num(f.percentage);
     const textNumber = typeof f.text === "string" && /^\s*-?\d+(\.\d+)?\s*%?\s*$/.test(f.text) ? parseFloat(f.text) : undefined;
     let value = num(f.value) ?? (percentage === undefined ? textNumber : undefined);
@@ -270,13 +282,13 @@ QtObject {
     min = min ?? 0;
     max = max ?? 100;
     const ratio = value === undefined ? -1 : max === min ? 0 : Math.max(0, Math.min(1, (value - min) / (max - min)));
-    const str = v => v === undefined || v === null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+    const str = root.asText;
     const esc = v => d.escape ? root.escapeText(v) : v;
     const rawText = str(f.text);
     const glyph = root.pickIcon(d.formatIcons, f.alt, percentage ?? (ratio >= 0 ? ratio * 100 : undefined));
     const values = {
       "_sample": s,
-      "text": esc(root.truncate(rawText, d.maxLength ?? 0)),
+      "text": esc(d.maxLength > 0 ? Utils.truncate(rawText, d.maxLength, "…") : rawText),
       "icon": glyph,
       "alt": esc(str(f.alt)),
       "percentage": percentage === undefined ? "" : String(Math.round(percentage)),
@@ -291,17 +303,7 @@ QtObject {
     const text = root.pango(root.fill(d.format || "{}", values));
     const textPlain = root.plain(text);
     const classList = root.classes(f.class);
-    const items = Array.isArray(f.items) ? f.items.map(i => i !== null && typeof i === "object" ? {
-        "text": str(i.text),
-        "icon": str(i.icon),
-        "value": num(i.value),
-        "subtext": str(i.subtext)
-      } : {
-        "text": str(i),
-        "icon": "",
-        "value": undefined,
-        "subtext": ""
-      }) : [];
+    const items = root.rows(f.items);
     const hidden = f.hidden === true || f.hidden === "true" || (d.hideEmpty !== false && rawText.trim() === "");
     return {
       "text": text,

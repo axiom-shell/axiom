@@ -36,16 +36,10 @@ ColumnLayout {
 
   spacing: Widget.spacing * 2
 
-  // I18n.tr("click") I18n.tr("change") I18n.tr("on") I18n.tr("off")
-  // I18n.tr("text") I18n.tr("value") I18n.tr("unit") I18n.tr("label")
-  // I18n.tr("icon") I18n.tr("badge") I18n.tr("items") I18n.tr("image")
-  // I18n.tr("state") I18n.tr("min") I18n.tr("max")
-  readonly property var actionTitles: ({
-      "click": "On click ({value} is the label, or the row's text)",
-      "change": "On change ({value} is the new value)",
-      "on": "Turning it on",
-      "off": "Turning it off"
-    })
+  // Slot names, shown as is: I18n.tr("text") I18n.tr("value")
+  // I18n.tr("unit") I18n.tr("label") I18n.tr("icon") I18n.tr("badge")
+  // I18n.tr("items") I18n.tr("image") I18n.tr("state") I18n.tr("min")
+  // I18n.tr("max")
 
   // The library: drag one onto the module, or click it to add it where
   // there's room
@@ -156,15 +150,7 @@ ColumnLayout {
 
         SchemaPropertiesForm {
           Layout.fillWidth: true
-          propertiesSchema: (root.kind?.actions ?? []).reduce((schema, action) => {
-            schema[action] = {
-              "type": "string",
-              "title": root.actionTitles[action],
-              "default": "",
-              "x-scope": "commands"
-            };
-            return schema;
-          }, {})
+          propertiesSchema: root.kind?.actionsSchema ?? ({})
           order: root.kind?.actions ?? []
           values: root.element?.actions ?? ({})
           onEdited: (path, value) => root.editor.setElement(["actions"].concat(path), value)

@@ -54,7 +54,7 @@ properties:
     additionalProperties: false
     description: 'Commands it runs (x-actions; {value} is filled in): a Button''s or List row''s click, a Bar''s change, a Toggle''s on and off.'
     properties:
-      click: {x-scope: commands, type: string, default: ''}
-      change: {x-scope: commands, type: string, default: ''}
-      'on': {x-scope: commands, type: string, default: ''}
-      'off': {x-scope: commands, type: string, default: ''}
+      click: {x-scope: commands, type: string, title: On click, default: '', description: '{value} is the label, or the row''s text.'}
+      change: {x-scope: commands, type: string, title: On change, default: '', description: '{value} is the new value.'}
+      'on': {x-scope: commands, type: string, title: Turning it on, default: ''}
+      'off': {x-scope: commands, type: string, title: Turning it off, default: ''}

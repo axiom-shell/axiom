@@ -3295,9 +3295,6 @@
     "Start from the default layout": "",
     "Square": "",
     "Strip": "",
-    "click": "",
-    "change": "",
-    "on": "",
     "text": "",
     "value": "",
     "unit": "",
@@ -3348,6 +3345,11 @@
     "The state's colour when the script gives one (over the colour above).": "",
     "For tables and aligned output (lines aren't wrapped).": "",
     "A Material Symbols name, unless the icon slot is bound.": "",
-    "…and {0} more": ""
+    "…and {0} more": "",
+    "{value} is the label, or the row's text.": "",
+    "Turning it off": "",
+    "On change": "",
+    "{value} is the new value.": "",
+    "Turning it on": ""
   }
 }

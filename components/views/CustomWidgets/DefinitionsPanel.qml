@@ -108,38 +108,42 @@ Item {
         }
       }
 
-      // Paste a custom/* block, or a whole config
-      ColumnLayout {
-        visible: root.importing
+      // Paste a custom/* block, or a whole config: built while open
+      Loader {
+        active: root.importing
+        visible: active
         Layout.fillWidth: true
         Layout.bottomMargin: Widget.spacing
-        spacing: Widget.spacing / 2
 
-        StyledTextArea {
-          id: waybarText
-          Layout.fillWidth: true
-          Layout.preferredHeight: Widget.height * 4
-          input.font.family: "monospace"
-          placeholderText: I18n.tr("Paste a \"custom/…\" module from your Waybar config, or the whole config")
-        }
-        RowLayout {
-          Layout.fillWidth: true
-          StyledText {
+        sourceComponent: ColumnLayout {
+          spacing: Widget.spacing / 2
+
+          StyledTextArea {
+            id: waybarText
             Layout.fillWidth: true
-            text: root.importNote
-            wrapMode: Text.WordWrap
-            textSize: Appearance.fontSizeBy(-2)
-            opacity: 0.8
+            Layout.preferredHeight: Widget.height * 4
+            input.font.family: "monospace"
+            placeholderText: I18n.tr("Paste a \"custom/…\" module from your Waybar config, or the whole config")
           }
-          StyledTextButton {
-            implicitHeight: Widget.height
-            iconText: "download"
-            text: I18n.tr("Import")
-            onClicked: {
-              const result = root.editor.importWaybar(waybarText.text);
-              root.importNote = result.error ? I18n.tr("Couldn't read it: {0}", result.error) : I18n.tr("Added {0}.", result.count);
-              if (!result.error)
-                waybarText.text = "";
+          RowLayout {
+            Layout.fillWidth: true
+            StyledText {
+              Layout.fillWidth: true
+              text: root.importNote
+              wrapMode: Text.WordWrap
+              textSize: Appearance.fontSizeBy(-2)
+              opacity: 0.8
+            }
+            StyledTextButton {
+              implicitHeight: Widget.height
+              iconText: "download"
+              text: I18n.tr("Import")
+              onClicked: {
+                const result = root.editor.importWaybar(waybarText.text);
+                root.importNote = result.error ? I18n.tr("Couldn't read it: {0}", result.error) : I18n.tr("Added {0}.", result.count);
+                if (!result.error)
+                  waybarText.text = "";
+              }
             }
           }
         }

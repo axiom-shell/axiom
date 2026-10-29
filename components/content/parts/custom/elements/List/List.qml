@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 import qs.components.content.parts
 import qs.components.content.parts.custom
 
@@ -12,22 +13,17 @@ CustomElementBase {
   id: root
 
   readonly property bool clickable: root.actionsEnabled && root.actions.click !== ""
-  readonly property var rows: {
-    const v = root.bind.items ? root.value("items") : root.fields?.items;
-    return Array.isArray(v) ? v : [];
-  }
+  // The output's items are rows already; a bound list is made them
+  readonly property var rows: root.bind.items ? CustomWidgetData.rows(root.value("items")) : (root.fields?.items ?? [])
   onRowsChanged: {
     const rows = root.rows;
     for (let i = 0; i < rows.length; i++) {
-      const r = rows[i] !== null && typeof rows[i] === "object" ? rows[i] : {
-        "text": String(rows[i])
-      };
       // Roles named apart from ItemRow's own properties
       const row = {
-        "rowText": String(r.text ?? ""),
-        "rowIcon": String(r.icon ?? ""),
-        "rowValue": r.value === undefined || r.value === null ? "" : String(r.value),
-        "rowSubtext": String(r.subtext ?? "")
+        "rowText": rows[i].text,
+        "rowIcon": rows[i].icon,
+        "rowValue": CustomWidgetData.asText(rows[i].value),
+        "rowSubtext": rows[i].subtext
       };
       if (i < rowsModel.count)
         rowsModel.set(i, row);

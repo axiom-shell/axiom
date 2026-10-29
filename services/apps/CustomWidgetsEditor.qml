@@ -98,7 +98,7 @@ QtObject {
   function changed(index) {
     const item = root.items[index];
     const saved = (_draft.saved?.items ?? []).find(i => i.id === item?.id);
-    return !saved || JSON.stringify(saved) !== JSON.stringify(item);
+    return !saved || !Utils.deepEqual(saved, item);
   }
 
   // A new definition (from `preset`, a partial definition, when given),
@@ -170,7 +170,7 @@ QtObject {
       target = target[key];
     }
     const last = keys[keys.length - 1];
-    if (JSON.stringify(target[last]) === JSON.stringify(value))
+    if (Utils.deepEqual(target[last], value))
       return;
     if (value === undefined)
       delete target[last];

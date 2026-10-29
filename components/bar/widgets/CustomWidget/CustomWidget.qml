@@ -43,7 +43,7 @@ BarIconWidget {
     case "ticker":
       return root.bar.width > 0 ? root.bar.width : root.fontSize * 12;
     case "stacked":
-      return Math.max(stackTop.implicitWidth, stackBottom.implicitWidth);
+      return (graphicLoader.item as Item)?.implicitWidth ?? 0;
     }
     return 0;
   }
@@ -67,25 +67,29 @@ BarIconWidget {
   // on a tint, outline or plain bar, what reads on it when it's the fill
   readonly property color graphicColor: root.colors.icon
 
-  // Urgent: a slow pulse
-  dim: root.fields?.urgent ? urgentPulse.level : 1
-  property real _pulse: 1
+  // Urgent: a slow pulse (as Battery's charging one), back to full when
+  // it stops
   SequentialAnimation {
-    id: urgentPulse
-    property real level: root._pulse
-    running: (root.fields?.urgent ?? false) && Appearance.animations
+    running: (root.fields?.urgent ?? false) && !root.hidden && Appearance.animations
     loops: Animation.Infinite
-    NumberAnimation {
+    onRunningChanged: {
+      if (!running)
+        root.dim = 1;
+    }
+
+    PropertyAnimation {
       target: root
-      property: "_pulse"
+      property: "dim"
+      from: 1.0
       to: 0.45
       duration: Appearance.animSlow * 2
       easing.type: Appearance.easing
     }
-    NumberAnimation {
+    PropertyAnimation {
       target: root
-      property: "_pulse"
-      to: 1
+      property: "dim"
+      from: 0.45
+      to: 1.0
       duration: Appearance.animSlow * 2
       easing.type: Appearance.easing
     }
@@ -103,37 +107,52 @@ BarIconWidget {
   fillShare: root.style === "pill" && !root.hidden && root.fields !== null ? root.ratio : -1
   fillShareColor: Qt.alpha(root.graphicColor, 0.35)
 
-  // The graphic styles, in the lead slot
-  Item {
+  // The graphic styles, in the lead slot: only the shown one is built.
+  // Sizes from the bar's font, as a bar's pieces are
+  Loader {
+    id: graphicLoader
     parent: root.lead
     anchors.fill: parent
+    sourceComponent: ({
+        "ring": ring,
+        "fill": fill,
+        "segments": segments,
+        "sparkline": sparkline,
+        "ticker": ticker,
+        "stacked": stacked
+      })[root.style] ?? null
+  }
 
-    PercentageCircle {
-      visible: root.style === "ring"
-      anchors.centerIn: parent
-      width: Math.min(parent.width, parent.height)
-      height: width
-      percentage: root.ratio * 100
-      thickness: Math.max(2, width * 0.16)
-      trackColor: Qt.alpha(root.colors.text, 0.2)
-      fillColor: root.graphicColor
-      iconText: ""
+  Component {
+    id: ring
+    Item {
+      PercentageCircle {
+        anchors.centerIn: parent
+        width: Math.min(parent.width, parent.height)
+        height: width
+        percentage: root.ratio * 100
+        thickness: Math.max(2, width * 0.16)
+        trackColor: Qt.alpha(root.colors.text, 0.2)
+        fillColor: root.graphicColor
+        iconText: ""
+      }
     }
+  }
 
-    // Sizes from the bar's font, as a bar's pieces are
+  Component {
+    id: fill
     LevelMeter {
-      visible: root.style === "fill"
-      anchors.fill: parent
       share: root.ratio
       vertical: root.isVertical
       thickness: Math.max(3, root.fontSize * 0.35)
       trackColor: Qt.alpha(root.colors.text, 0.2)
       fillColor: root.graphicColor
     }
+  }
 
+  Component {
+    id: segments
     SegmentMeter {
-      visible: root.style === "segments"
-      anchors.fill: parent
       count: root.bar.segments
       share: root.ratio
       vertical: root.isVertical
@@ -143,23 +162,29 @@ BarIconWidget {
       litColor: root.graphicColor
       offColor: Qt.alpha(root.colors.text, 0.2)
     }
+  }
 
-    Sparkline {
-      visible: root.style === "sparkline"
-      anchors.fill: parent
-      anchors.topMargin: root.crossSize * 0.2
-      anchors.bottomMargin: root.crossSize * 0.2
-      values: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
-      minValue: root.graphRange.min
-      maxValue: root.graphRange.max
-      lineColor: root.graphicColor
-      showBaseline: false
-    }
-
-    // Ticker: the text scrolling when it's longer than its room
+  Component {
+    id: sparkline
     Item {
-      visible: root.style === "ticker"
-      anchors.fill: parent
+      Sparkline {
+        anchors.fill: parent
+        anchors.topMargin: root.crossSize * 0.2
+        anchors.bottomMargin: root.crossSize * 0.2
+        values: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
+        minValue: root.graphRange.min
+        maxValue: root.graphRange.max
+        lineColor: root.graphicColor
+        showBaseline: false
+      }
+    }
+  }
+
+  // Ticker: the text scrolling when it's longer than its room
+  Component {
+    id: ticker
+    Item {
+      id: tickerBox
       clip: true
 
       Text {
@@ -169,11 +194,12 @@ BarIconWidget {
         color: root.foregroundColor
         font.family: Appearance.fontFamily
         font.pixelSize: root.fontSize
-        readonly property real overflow: Math.max(0, implicitWidth - parent.width)
+        readonly property real overflow: Math.max(0, implicitWidth - tickerBox.width)
         x: 0
 
+        // The pauses and the scroll's speed are behaviour, not motion
         SequentialAnimation on x {
-          running: tickerText.overflow > 0 && root.style === "ticker" && Appearance.animations
+          running: tickerText.overflow > 0 && Appearance.animations
           loops: Animation.Infinite
           PauseAnimation {
             duration: 1500
@@ -190,33 +216,39 @@ BarIconWidget {
             from: -tickerText.overflow
             to: 0
             duration: Appearance.animSlow
+            easing.type: Appearance.easing
           }
         }
       }
     }
+  }
 
-    // Stacked: the value over the caption
-    Column {
-      visible: root.style === "stacked"
-      anchors.centerIn: parent
-      spacing: 0
+  // Stacked: the value over the caption
+  Component {
+    id: stacked
+    Item {
+      implicitWidth: stack.implicitWidth
 
-      Text {
-        id: stackTop
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: root.fields?.plain ?? ""
-        color: root.foregroundColor
-        font.family: Appearance.fontFamily
-        font.pixelSize: root.fontSize * 0.8
-        font.bold: true
-      }
-      Text {
-        id: stackBottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: root.fields?.subtext || root.fields?.alt || ""
-        color: Qt.alpha(root.foregroundColor, 0.7)
-        font.family: Appearance.fontFamily
-        font.pixelSize: root.fontSize * 0.6
+      Column {
+        id: stack
+        anchors.centerIn: parent
+        spacing: 0
+
+        Text {
+          anchors.horizontalCenter: parent.horizontalCenter
+          text: root.fields?.plain ?? ""
+          color: root.foregroundColor
+          font.family: Appearance.fontFamily
+          font.pixelSize: root.fontSize * 0.8
+          font.bold: true
+        }
+        Text {
+          anchors.horizontalCenter: parent.horizontalCenter
+          text: root.fields?.subtext || root.fields?.alt || ""
+          color: Qt.alpha(root.foregroundColor, 0.7)
+          font.family: Appearance.fontFamily
+          font.pixelSize: root.fontSize * 0.6
+        }
       }
     }
   }

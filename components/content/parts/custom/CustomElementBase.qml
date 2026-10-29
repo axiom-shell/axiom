@@ -39,8 +39,7 @@ Item {
 
   // A slot as text ("" for nothing)
   function text(slot, field) {
-    const v = root.value(slot, field);
-    return v === undefined || v === null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+    return CustomWidgetData.asText(root.value(slot, field));
   }
 
   // The value, min and max slots as numbers (each bound, else the
