@@ -212,6 +212,7 @@ Item {
       pressed: host?.pressed ?? false
       backgroundLevel: host?.backgroundLevel ?? -1
       backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
+      levelStart: segment.back
       highlighted: host?.highlighted ?? false
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)

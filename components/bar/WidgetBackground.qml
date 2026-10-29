@@ -37,6 +37,9 @@ Item {
   // (the module's `backgroundLevel`); -1 for none
   property real backgroundLevel: -1
   property color backgroundLevelColor: "transparent"
+  // How far its start reaches back under the widget before (a merged
+  // run's powerline overlap): a merged run's level starts after it
+  property real levelStart: 0
 
   readonly property string _fill: barConfig.widgetStyle
   readonly property bool _boxed: ["filled", "tinted", "outline"].includes(_fill)
@@ -146,22 +149,27 @@ Item {
   // background's ends instead of squeezing its corners square. The window
   // overhangs the start (and, full, the far end unless that's flat), so
   // only its leading edge rounds and never by less than its radius.
+  // In a merged run a widget's start is flat or slanted against the one
+  // before, so there the level is the window alone, rounded at both ends
+  // from the widget's own start.
   ClippingRectangle {
     id: level
     readonly property bool vertical: root.barConfig.vertical
+    readonly property bool merged: root.barConfig.widgetGrouping === "merged"
     readonly property real share: Math.max(0, Math.min(1, root.backgroundLevel))
     readonly property real across: vertical ? root.width : root.height
     // The background's cap at the far end, where a full level ends
     readonly property string farCap: vertical ? root.startCap : root.endCap
-    readonly property real overhang: across
-    readonly property real shown: (vertical ? root.height : root.width) * share + (share >= 1 && farCap !== "flat" ? overhang : 0)
+    readonly property real overhang: merged ? 0 : across
+    readonly property real room: (vertical ? root.height : root.width) - (merged ? root.levelStart : 0)
+    readonly property real shown: room * share + (share >= 1 && farCap !== "flat" ? overhang : 0)
 
     visible: root.backgroundLevel >= 0 && level.share > 0
-    color: "transparent"
+    color: merged ? root.backgroundLevelColor : "transparent"
     // A Rectangle keeps it to half the thickness, which the window never
     // drops below
     radius: root.barConfig.widgetShape === "capsule" ? across / 2 : root.barConfig.radius
-    x: vertical ? 0 : -overhang
+    x: vertical ? 0 : merged ? root.levelStart : -overhang
     y: vertical ? root.height - shown : 0
     width: vertical ? root.width : shown + overhang
     height: vertical ? shown + overhang : root.height
@@ -177,6 +185,7 @@ Item {
     }
 
     ShapedBox {
+      visible: !level.merged
       anchors.fill: undefined
       x: -level.x
       y: -level.y

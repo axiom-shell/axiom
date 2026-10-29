@@ -12,6 +12,7 @@ How a bar widget with a value, a time or a long text draws it: one set of styles
 - `ring` (`PercentageCircle`), `fill` (`LevelMeter`), `segments` (`SegmentMeter`, `segments` of them), `sparkline` (`Sparkline` over the widget's history): a graphic before the icon, in `IconTextWidget`'s `lead` slot; fill, segments and sparkline are `width` long (0: from the bar's font).
 - `pill`: the widget's background filled to its value (`backgroundLevel`, drawn by its WidgetGroup in the background's own shape).
 - `ticker`: the text, up to `width` long, scrolling past that; `stacked`: the text over a caption. Both sit after the icon, where the label goes (`leadAfterIcon`); a vertical bar turns the ticker along it and draws stacked as a label.
+- The ring and meters centre on the bar font's glyphs rather than its line box (`ValueGraphic.inkOffset`, from the descent), so they line up with the icon and label beside them.
 - `colorText` colours the text in the widget's state colour (its `accentColor`) where that isn't already the background's fill. The graphics draw in `colors.icon`, which reads on a filled background.
 
 ### The schema
