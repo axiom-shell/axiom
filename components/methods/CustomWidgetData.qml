@@ -374,7 +374,8 @@ QtObject {
   }
 
   // The element kinds a module is built from, in the editor's library
-  // order: { type, label, icon, size ([w, h] sub-cells it's added at),
+  // order: { type, label, icon, size ([w, h] sub-cells it's added at,
+  // small: dragged out, it's grown from there),
   // slots (its bindings), options (a properties schema for its look),
   // actions (the commands it runs) }. Labels and titles are English, the
   // editor translates them:
@@ -428,7 +429,7 @@ QtObject {
         "type": "Text",
         "label": "Text",
         "icon": "text_fields",
-        "size": [12, 2],
+        "size": [6, 1],
         "slots": ["text"],
         "options": {
           "size": {
@@ -465,7 +466,7 @@ QtObject {
         "type": "TextBlock",
         "label": "Text block",
         "icon": "notes",
-        "size": [16, 8],
+        "size": [8, 4],
         "slots": ["text"],
         "options": {
           "monospace": flag("Monospace"),
@@ -477,7 +478,7 @@ QtObject {
         "type": "Icon",
         "label": "Icon",
         "icon": "star",
-        "size": [4, 4],
+        "size": [2, 2],
         "slots": ["icon", "badge"],
         "options": {
           "source": {
@@ -499,7 +500,7 @@ QtObject {
         "type": "Ring",
         "label": "Ring",
         "icon": "donut_large",
-        "size": [6, 6],
+        "size": [3, 3],
         "slots": ["value", "min", "max", "label"],
         "options": ({
             "inside": {
@@ -522,7 +523,7 @@ QtObject {
         "type": "Gauge",
         "label": "Gauge",
         "icon": "speed",
-        "size": [6, 6],
+        "size": [3, 3],
         "slots": ["value", "min", "max", "label"],
         "options": ({
             "inside": {
@@ -545,7 +546,7 @@ QtObject {
         "type": "Bar",
         "label": "Bar",
         "icon": "linear_scale",
-        "size": [12, 2],
+        "size": [6, 1],
         "slots": ["value", "min", "max"],
         "options": ({
             "step": {
@@ -561,7 +562,7 @@ QtObject {
         "type": "Segments",
         "label": "Segments",
         "icon": "signal_cellular_alt",
-        "size": [12, 2],
+        "size": [6, 1],
         "slots": ["value", "min", "max"],
         "options": ({
             "count": {
@@ -580,7 +581,7 @@ QtObject {
         "type": "Sparkline",
         "label": "Sparkline",
         "icon": "show_chart",
-        "size": [12, 4],
+        "size": [6, 2],
         "slots": ["value"],
         "options": {
           "max": {
@@ -596,7 +597,7 @@ QtObject {
         "type": "List",
         "label": "List",
         "icon": "list",
-        "size": [16, 8],
+        "size": [8, 4],
         "slots": ["items"],
         "options": {
           "color": color
@@ -607,7 +608,7 @@ QtObject {
         "type": "Image",
         "label": "Image",
         "icon": "image",
-        "size": [6, 6],
+        "size": [3, 3],
         "slots": ["image"],
         "options": {
           "fit": {
@@ -628,7 +629,7 @@ QtObject {
         "type": "Button",
         "label": "Button",
         "icon": "smart_button",
-        "size": [6, 2],
+        "size": [3, 1],
         "slots": ["label", "icon"],
         "options": {
           "label": text("Label"),
@@ -641,7 +642,7 @@ QtObject {
         "type": "Toggle",
         "label": "Toggle",
         "icon": "toggle_on",
-        "size": [10, 2],
+        "size": [5, 1],
         "slots": ["state", "label"],
         "options": {
           "label": text("Label")
@@ -652,7 +653,7 @@ QtObject {
         "type": "Status",
         "label": "Status",
         "icon": "radio_button_checked",
-        "size": [6, 2],
+        "size": [3, 1],
         "slots": ["text"],
         "options": {
           "dot": flag("Always a dot")
@@ -663,7 +664,7 @@ QtObject {
         "type": "Separator",
         "label": "Separator",
         "icon": "horizontal_rule",
-        "size": [16, 1],
+        "size": [8, 1],
         "slots": [],
         "options": {
           "line": {
