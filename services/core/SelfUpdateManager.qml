@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.config
+import qs.services.session
 import qs.services.system
 import qs.services.ui
 
@@ -242,7 +243,7 @@ Singleton {
   Timer {
     id: _reloadTimer
     interval: 1000
-    onTriggered: Quickshell.reload(false)
+    onTriggered: LockManager.reload()
   }
 
   IpcTarget {
