@@ -177,6 +177,7 @@ Panel {
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
         text: I18n.tr("All caught up")
@@ -184,6 +185,7 @@ Panel {
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         visible: NotificationManager.dnd
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter

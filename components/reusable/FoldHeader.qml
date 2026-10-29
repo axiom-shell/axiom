@@ -43,6 +43,7 @@ Item {
       spacing: 2
 
       StyledText {
+        wrapMode: Text.WordWrap
         visible: root.section !== ""
         text: root.section
         opacity: 0.6

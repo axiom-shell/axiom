@@ -279,6 +279,7 @@ Item {
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         visible: root.listing && root.groups.length === 0
         text: root.searching ? I18n.tr("No settings match \"{0}\"", SettingsManager.query) : I18n.tr("Every setting is at its default")
         opacity: 0.6

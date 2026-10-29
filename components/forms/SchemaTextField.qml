@@ -12,8 +12,11 @@ ColumnLayout {
   required property string label
   required property string currentConfigValue
   property string description: ""
+  // After the label (FieldHeader.trailing)
+  property Component headerExtra: null
   property var pattern: null
-  // A growing text area (`x-multiline`), e.g. for a system prompt
+  // Lines of its own (`x-multiline`), e.g. a system prompt: Enter makes a
+  // new one. Otherwise the value is one line, wrapped to show it whole
   property bool multiline: false
   // Values offered as chips under the field (`x-suggestions`); a click
   // puts one in the field, or adds it to a comma-separated list
@@ -45,7 +48,7 @@ ColumnLayout {
   // The Browse button's picker couldn't be shown (until a value commits)
   property bool _pickFailed: false
 
-  readonly property string _text: root.multiline ? textArea.text : textEntry.text
+  readonly property string _text: textArea.text
   // The text as it reads back once committed: a list's typed "a, b," is
   // ["a", "b"], shown as "a, b"
   function _normalized(text) {
@@ -57,10 +60,9 @@ ColumnLayout {
   // new one), except the echo of what's being typed, which mustn't move
   // the cursor or eat a list's trailing ", "
   function _show() {
-    const focused = textEntry.input.activeFocus || textArea.input.activeFocus;
+    const focused = textArea.input.activeFocus;
     if (root._text === root.currentConfigValue || (focused && root._normalized(root._text) === root.currentConfigValue))
       return;
-    textEntry.text = root.currentConfigValue;
     textArea.text = root.currentConfigValue;
     root._typed = false;
   }
@@ -96,7 +98,6 @@ ColumnLayout {
 
   // Reset: back to the value
   function discardTyped() {
-    textEntry.text = root.currentConfigValue;
     textArea.text = root.currentConfigValue;
     root._typed = false;
   }
@@ -109,22 +110,27 @@ ColumnLayout {
   }
 
   Layout.fillWidth: true
-  spacing: Appearance.fontSizeBy(2)
+  spacing: Widget.spacing
 
-  StyledText {
-    text: I18n.tr(root.label)
-    Layout.fillWidth: true
+  FieldHeader {
+    label: root.label
+    description: root.description
+    trailing: root.headerExtra
   }
 
   RowLayout {
-    visible: !root.multiline
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
 
-    StyledTextEntry {
-      id: textEntry
+    StyledTextArea {
+      id: textArea
       Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
+      expandable: true
+      // One line, wrapped up to four, then it scrolls (a long command)
+      singleLine: !root.multiline
+      maxLines: root.multiline ? 0 : 4
+      // Enter is a new line in a multiline field: nothing to submit
+      newlineOnEnter: root.multiline
       text: root.currentConfigValue
 
       onTextEdited: root._type()
@@ -132,15 +138,17 @@ ColumnLayout {
       // Commits on leaving; half-typed text that never matched shows the
       // value again
       input.onActiveFocusChanged: {
-        if (textEntry.input.activeFocus)
+        if (textArea.input.activeFocus)
           return;
         root._commitTyped();
         root._show();
       }
     }
 
+    // Beside the first line, however many the value wraps to
     FlatIconButton {
       visible: root.browse === "folder"
+      Layout.alignment: Qt.AlignTop
       size: Widget.height
       iconText: "folder_open"
       tooltipText: I18n.tr("Choose a folder")
@@ -152,29 +160,10 @@ ColumnLayout {
           "start": root.currentConfigValue,
           "shortenHome": true
         }, path => {
-          textEntry.text = path;
+          textArea.text = path;
           root._accept(path);
         }, () => root._pickFailed = true);
       }
-    }
-  }
-
-  StyledTextArea {
-    id: textArea
-    visible: root.multiline
-    Layout.fillWidth: true
-    expandable: true
-    // Enter is a new line here: nothing to submit
-    newlineOnEnter: true
-    text: root.currentConfigValue
-
-    onTextEdited: root._type()
-    onAccepted: root._commitTyped()
-    input.onActiveFocusChanged: {
-      if (textArea.input.activeFocus)
-        return;
-      root._commitTyped();
-      root._show();
     }
   }
 
@@ -192,14 +181,14 @@ ColumnLayout {
         text: modelData
         onClicked: {
           if (!root.commaList) {
-            textEntry.text = modelData;
+            textArea.text = modelData;
             root._accept(modelData);
             return;
           }
-          const items = textEntry.text.split(",").map(v => v.trim()).filter(v => v !== "");
+          const items = textArea.text.split(",").map(v => v.trim()).filter(v => v !== "");
           if (!items.includes(modelData)) {
-            textEntry.text = items.concat([modelData]).join(", ");
-            root._accept(textEntry.text);
+            textArea.text = items.concat([modelData]).join(", ");
+            root._accept(textArea.text);
           }
         }
       }
@@ -210,15 +199,6 @@ ColumnLayout {
     visible: root._pickFailed
     text: I18n.tr("No file picker could be opened")
     color: Theme.warning
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
-    Layout.fillWidth: true
-  }
-
-  StyledText {
-    visible: root.description !== ""
-    text: I18n.tr(root.description)
-    opacity: 0.7
     textSize: Appearance.fontSizeBy(-2)
     wrapMode: Text.WordWrap
     Layout.fillWidth: true

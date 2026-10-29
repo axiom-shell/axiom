@@ -75,6 +75,7 @@ DropdownSurface {
               spacing: Widget.spacing / 2
 
               StyledText {
+                elide: Text.ElideRight
                 Layout.topMargin: row.index > 0 ? Widget.spacing * 2 : Widget.spacing / 2
                 Layout.bottomMargin: Widget.spacing / 2
                 Layout.leftMargin: Widget.spacing

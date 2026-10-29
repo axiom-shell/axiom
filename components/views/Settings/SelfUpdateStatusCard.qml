@@ -87,6 +87,7 @@ FieldGroup {
       opacity: 0.7
     }
     StyledText {
+      elide: Text.ElideRight
       text: root.installed || "—"
       textFamily: "monospace"
       Layout.fillWidth: true
@@ -97,6 +98,7 @@ FieldGroup {
       opacity: 0.7
     }
     StyledText {
+      elide: Text.ElideRight
       text: SelfUpdateManager.latest || "—"
       textFamily: "monospace"
       Layout.fillWidth: true
@@ -107,6 +109,7 @@ FieldGroup {
       opacity: 0.7
     }
     StyledText {
+      wrapMode: Text.WordWrap
       text: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateFormat("mediumDate") + " " + I18n.dateFormat("time24")) : I18n.tr("Never")
       Layout.fillWidth: true
     }
@@ -147,6 +150,7 @@ FieldGroup {
     spacing: Widget.spacing / 2
 
     StyledText {
+      wrapMode: Text.WordWrap
       text: SelfUpdateManager.behind > 0 ? I18n.tr("What's new in {0} ({1} commits)", SelfUpdateManager.latest, SelfUpdateManager.behind) : I18n.tr("What's new in {0}", SelfUpdateManager.latest)
       font.bold: true
       Layout.fillWidth: true

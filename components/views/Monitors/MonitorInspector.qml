@@ -36,6 +36,8 @@ ColumnLayout {
   readonly property string resolution: root.mode ? `${root.mode.width}x${root.mode.height}` : "preferred"
   readonly property var rates: (root.modes.find(m => `${m.width}x${m.height}` === root.resolution)?.rates ?? []).map(rate => MonitorLayout.formatRate(rate))
   readonly property bool advancedOpen: MonitorManager.advancedOpen
+  // An HDR color mode, where SDR content's brightness and saturation apply
+  readonly property bool hdr: CompositorManager.supports.monitorColor === true && (root.rule?.cm === "hdr" || root.rule?.cm === "hdredid")
 
   function set(key, value) {
     MonitorManager.setField(root.output, key, value);
@@ -106,117 +108,151 @@ ColumnLayout {
     setting: "General.primaryMonitor"
   }
 
-  // Everything else only applies to a monitor that's on
+  // Everything else only applies to a monitor that's on. Each setting is
+  // a FormRow, as in a schema form: a divider between them, and the ones
+  // that come and go (a mirror's position, Advanced) fold open and shut
   ColumnLayout {
     visible: !!root.rule && !root.rule.disabled
     Layout.fillWidth: true
-    spacing: Widget.spacing * 2
+    spacing: 0
 
-    SchemaComboBox {
-      label: "Resolution"
-      options: ["preferred"].concat(root.modes.map(m => `${m.width}x${m.height}`))
-      optionLabels: ({
-          "preferred": I18n.tr("Preferred")
-        })
-      currentValue: root.resolution
-      onSelectionChanged: value => {
-        const picked = root.modes.find(m => `${m.width}x${m.height}` === value);
-        root.set("mode", picked ? MonitorLayout.formatMode(picked.width, picked.height, picked.rates[0]) : "preferred");
+    FormRow {
+      bodyHeight: resolutionField.implicitHeight
+
+      SchemaComboBox {
+        id: resolutionField
+        width: parent.width
+        label: "Resolution"
+        options: ["preferred"].concat(root.modes.map(m => `${m.width}x${m.height}`))
+        optionLabels: ({
+            "preferred": I18n.tr("Preferred")
+          })
+        currentValue: root.resolution
+        onSelectionChanged: value => {
+          const picked = root.modes.find(m => `${m.width}x${m.height}` === value);
+          root.set("mode", picked ? MonitorLayout.formatMode(picked.width, picked.height, picked.rates[0]) : "preferred");
+        }
       }
     }
 
-    SchemaComboBox {
-      visible: root.rates.length > 0
-      label: "Refresh rate"
-      options: root.rates
-      optionLabels: root.rates.reduce((labels, rate) => {
-        labels[rate] = I18n.tr("{0} Hz", rate);
-        return labels;
-      }, {})
-      currentValue: root.mode ? MonitorLayout.formatRate(root.mode.rate) : ""
-      onSelectionChanged: value => root.set("mode", MonitorLayout.formatMode(root.mode.width, root.mode.height, Number(value)))
-    }
+    FormRow {
+      shown: root.rates.length > 0
+      bodyHeight: rateField.implicitHeight
 
-    SchemaComboBox {
-      readonly property var size: root.mode ?? (root.monitor ? {
-          "width": root.monitor.width,
-          "height": root.monitor.height
-        } : null)
-      readonly property var scales: size ? MonitorLayout.validScales(size.width, size.height, root.rule?.scale) : [root.rule?.scale ?? 1]
-      label: "Scale"
-      options: scales.map(scale => String(scale))
-      optionLabels: scales.reduce((labels, scale) => {
-        labels[String(scale)] = size ? I18n.tr("{0}% ({1}×{2})", Math.round(scale * 1000) / 10, Math.round(size.width / scale), Math.round(size.height / scale)) : I18n.tr("{0}%", Math.round(scale * 100));
-        return labels;
-      }, {})
-      currentValue: String(root.rule?.scale ?? 1)
-      onSelectionChanged: value => root.set("scale", Number(value))
-    }
-
-    ColumnLayout {
-      Layout.fillWidth: true
-      spacing: Widget.spacing
-
-      StyledText {
-        text: I18n.tr("Rotation")
+      SchemaComboBox {
+        id: rateField
+        width: parent.width
+        label: "Refresh rate"
+        options: root.rates
+        optionLabels: root.rates.reduce((labels, rate) => {
+          labels[rate] = I18n.tr("{0} Hz", rate);
+          return labels;
+        }, {})
+        currentValue: root.mode ? MonitorLayout.formatRate(root.mode.rate) : ""
+        onSelectionChanged: value => root.set("mode", MonitorLayout.formatMode(root.mode.width, root.mode.height, Number(value)))
       }
+    }
 
-      RowLayout {
+    FormRow {
+      bodyHeight: scaleField.implicitHeight
+
+      SchemaComboBox {
+        id: scaleField
+        readonly property var size: root.mode ?? (root.monitor ? {
+            "width": root.monitor.width,
+            "height": root.monitor.height
+          } : null)
+        readonly property var scales: size ? MonitorLayout.validScales(size.width, size.height, root.rule?.scale) : [root.rule?.scale ?? 1]
+        width: parent.width
+        label: "Scale"
+        options: scales.map(scale => String(scale))
+        optionLabels: scales.reduce((labels, scale) => {
+          labels[String(scale)] = size ? I18n.tr("{0}% ({1}×{2})", Math.round(scale * 1000) / 10, Math.round(size.width / scale), Math.round(size.height / scale)) : I18n.tr("{0}%", Math.round(scale * 100));
+          return labels;
+        }, {})
+        currentValue: String(root.rule?.scale ?? 1)
+        onSelectionChanged: value => root.set("scale", Number(value))
+      }
+    }
+
+    FormRow {
+      bodyHeight: rotationRow.implicitHeight
+
+      ColumnLayout {
+        id: rotationRow
+        width: parent.width
         spacing: Widget.spacing
 
-        SegmentRow {
-          Repeater {
-            model: [0, 90, 180, 270]
+        StyledText {
+          text: I18n.tr("Rotation")
+          font.weight: Font.Medium
+        }
 
-            delegate: SegmentButton {
-              required property int modelData
-              required property int index
-              readonly property bool selected: (root.rule?.transform ?? 0) % 4 === index
-              implicitHeight: Widget.height
-              text: `${modelData}°`
-              active: selected
-              Layout.fillWidth: false
-              onClicked: root.set("transform", index + ((root.rule?.transform ?? 0) >= 4 ? 4 : 0))
+        RowLayout {
+          spacing: Widget.spacing
+
+          SegmentRow {
+            Repeater {
+              model: [0, 90, 180, 270]
+
+              delegate: SegmentButton {
+                required property int modelData
+                required property int index
+                readonly property bool selected: (root.rule?.transform ?? 0) % 4 === index
+                implicitHeight: Widget.height
+                text: `${modelData}°`
+                active: selected
+                Layout.fillWidth: false
+                onClicked: root.set("transform", index + ((root.rule?.transform ?? 0) >= 4 ? 4 : 0))
+              }
             }
           }
-        }
 
-        Item {
-          Layout.fillWidth: true
-        }
+          Item {
+            Layout.fillWidth: true
+          }
 
-        StyledText {
-          text: I18n.tr("Flipped")
-        }
+          StyledText {
+            text: I18n.tr("Flipped")
+            font.weight: Font.Medium
+          }
 
-        StyledSwitch {
-          checked: (root.rule?.transform ?? 0) >= 4
-          onToggled: root.set("transform", (root.rule?.transform ?? 0) % 4 + (checked ? 4 : 0))
+          StyledSwitch {
+            checked: (root.rule?.transform ?? 0) >= 4
+            onToggled: root.set("transform", (root.rule?.transform ?? 0) % 4 + (checked ? 4 : 0))
+          }
         }
       }
     }
 
-    SchemaComboBox {
-      readonly property var targets: MonitorManager.rules.filter(other => other.output !== root.output && !other.disabled && !other.mirror)
-      visible: CompositorManager.supports.monitorMirror === true && (targets.length > 0 || !!root.rule?.mirror)
-      label: "Mirror"
-      options: [""].concat(targets.map(other => other.output))
-      optionLabels: targets.reduce((labels, other) => {
-        labels[other.output] = MonitorManager.labelFor(other);
-        return labels;
-      }, {
-        "": I18n.tr("Off")
-      })
-      currentValue: root.rule?.mirror ?? ""
-      onSelectionChanged: value => root.set("mirror", value)
+    FormRow {
+      shown: CompositorManager.supports.monitorMirror === true && (mirrorField.targets.length > 0 || !!root.rule?.mirror)
+      bodyHeight: mirrorField.implicitHeight
+
+      SchemaComboBox {
+        id: mirrorField
+        readonly property var targets: MonitorManager.rules.filter(other => other.output !== root.output && !other.disabled && !other.mirror)
+        width: parent.width
+        label: "Mirror"
+        options: [""].concat(targets.map(other => other.output))
+        optionLabels: targets.reduce((labels, other) => {
+          labels[other.output] = MonitorManager.labelFor(other);
+          return labels;
+        }, {
+          "": I18n.tr("Off")
+        })
+        currentValue: root.rule?.mirror ?? ""
+        onSelectionChanged: value => root.set("mirror", value)
+      }
     }
 
-    ColumnLayout {
-      visible: !root.rule?.mirror
-      Layout.fillWidth: true
-      spacing: Widget.spacing
+    FormRow {
+      shown: !root.rule?.mirror
+      bodyHeight: xField.implicitHeight
 
       SchemaNumberField {
+        id: xField
+        width: parent.width
         label: "X"
         mode: "stepper"
         unit: "px"
@@ -225,8 +261,15 @@ ColumnLayout {
         currentConfigValue: root.rule?.x ?? 0
         onCommitted: value => MonitorManager.move(root.output, value, root.rule.y)
       }
+    }
+
+    FormRow {
+      shown: !root.rule?.mirror
+      bodyHeight: yField.implicitHeight
 
       SchemaNumberField {
+        id: yField
+        width: parent.width
         label: "Y"
         mode: "stepper"
         unit: "px"
@@ -238,36 +281,41 @@ ColumnLayout {
     }
 
     // Advanced, folded
-    MouseArea {
-      Layout.fillWidth: true
-      Layout.preferredHeight: advancedRow.implicitHeight
-      cursorShape: Qt.PointingHandCursor
-      onClicked: MonitorManager.advancedOpen = !MonitorManager.advancedOpen
+    FormRow {
+      bodyHeight: advancedRow.implicitHeight
 
-      RowLayout {
-        id: advancedRow
-        anchors.fill: parent
-        spacing: Widget.spacing
+      MouseArea {
+        width: parent.width
+        height: advancedRow.implicitHeight
+        cursorShape: Qt.PointingHandCursor
+        onClicked: MonitorManager.advancedOpen = !MonitorManager.advancedOpen
 
-        StyledIcon {
-          text: root.advancedOpen ? "expand_more" : "chevron_right"
-          textColor: Theme.accent
-        }
+        RowLayout {
+          id: advancedRow
+          anchors.fill: parent
+          spacing: Widget.spacing
 
-        StyledText {
-          text: I18n.tr("Advanced")
-          font.bold: true
-          Layout.fillWidth: true
+          StyledIcon {
+            text: root.advancedOpen ? "expand_more" : "chevron_right"
+            textColor: Theme.accent
+          }
+
+          StyledText {
+            text: I18n.tr("Advanced")
+            font.bold: true
+            Layout.fillWidth: true
+          }
         }
       }
     }
 
-    ColumnLayout {
-      visible: root.advancedOpen
-      Layout.fillWidth: true
-      spacing: Widget.spacing * 2
+    FormRow {
+      shown: root.advancedOpen
+      bodyHeight: vrrField.implicitHeight
 
       SchemaComboBox {
+        id: vrrField
+        width: parent.width
         label: "Variable refresh rate"
         options: ["0", "1", "2", "3"]
         optionLabels: ({
@@ -279,15 +327,28 @@ ColumnLayout {
         currentValue: String(root.rule?.vrr ?? 0)
         onSelectionChanged: value => root.set("vrr", Number(value))
       }
+    }
+
+    FormRow {
+      shown: root.advancedOpen
+      bodyHeight: bitDepthField.implicitHeight
 
       SchemaSwitch {
+        id: bitDepthField
+        width: parent.width
         label: "10-bit color"
         checked: root.rule?.bitdepth === 10
         onToggled: value => root.set("bitdepth", value ? 10 : 8)
       }
+    }
+
+    FormRow {
+      shown: root.advancedOpen && CompositorManager.supports.monitorColor === true
+      bodyHeight: colorModeField.implicitHeight
 
       SchemaComboBox {
-        visible: CompositorManager.supports.monitorColor === true
+        id: colorModeField
+        width: parent.width
         label: "Color mode"
         options: ["auto", "srgb", "dcip3", "dp3", "adobe", "wide", "edid", "hdr", "hdredid"]
         optionLabels: ({
@@ -304,9 +365,15 @@ ColumnLayout {
         currentValue: root.rule?.cm ?? "auto"
         onSelectionChanged: value => root.set("cm", value)
       }
+    }
+
+    FormRow {
+      shown: root.advancedOpen && root.hdr
+      bodyHeight: sdrBrightnessField.implicitHeight
 
       SchemaNumberField {
-        visible: CompositorManager.supports.monitorColor === true && (root.rule?.cm === "hdr" || root.rule?.cm === "hdredid")
+        id: sdrBrightnessField
+        width: parent.width
         label: "SDR brightness"
         unit: "%"
         minimum: 50
@@ -314,9 +381,15 @@ ColumnLayout {
         currentConfigValue: Math.round((root.rule?.sdrBrightness ?? 1) * 100)
         onCommitted: value => root.set("sdrBrightness", value / 100)
       }
+    }
+
+    FormRow {
+      shown: root.advancedOpen && root.hdr
+      bodyHeight: sdrSaturationField.implicitHeight
 
       SchemaNumberField {
-        visible: CompositorManager.supports.monitorColor === true && (root.rule?.cm === "hdr" || root.rule?.cm === "hdredid")
+        id: sdrSaturationField
+        width: parent.width
         label: "SDR saturation"
         unit: "%"
         minimum: 50

@@ -301,6 +301,7 @@ FocusScope {
 
     StyledText {
       id: empty
+      wrapMode: Text.WordWrap
       Layout.fillWidth: true
       Layout.margins: Widget.padding * 2
       visible: list.count === 0 && input.text.trim() !== ""

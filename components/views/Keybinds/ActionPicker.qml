@@ -230,6 +230,7 @@ Item {
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         visible: root.rows.length === 0
         text: I18n.tr("No actions match \"{0}\"", root.query.trim())
         opacity: 0.6

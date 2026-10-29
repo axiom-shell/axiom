@@ -453,6 +453,7 @@ DropdownSurface {
     }
 
     StyledText {
+      wrapMode: Text.WordWrap
       visible: root.query !== "" && !root.searching && root.results.length === 0
       Layout.fillWidth: true
       Layout.topMargin: Widget.spacing

@@ -397,6 +397,7 @@ Popup {
           readonly property int resuming: picked.filter(step => step.status === "resume").length
 
           StyledText {
+            wrapMode: Text.WordWrap
             text: {
               if (!root.merging)
                 return I18n.tr("Replaces your {0} binds with these {1}", KeybindManager.editor.binds.length, root.plan.length);

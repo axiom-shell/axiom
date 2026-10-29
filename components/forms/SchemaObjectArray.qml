@@ -11,9 +11,8 @@ ColumnLayout {
   required property var items
   property string description: ""
   property var itemDelegate: null
-  // Room kept clear at the header's right end (the settings page's reset
-  // button sits there)
-  property int headerInset: 0
+  // After the label (the settings row's unsaved dot and reset)
+  property Component headerExtra: null
 
   signal itemAdded
   signal itemRemoved(int index)
@@ -24,14 +23,12 @@ ColumnLayout {
 
   RowLayout {
     Layout.fillWidth: true
-    Layout.rightMargin: root.headerInset
     spacing: Widget.spacing
 
-    StyledText {
-      text: I18n.tr(root.label)
-      textSize: Appearance.fontSizeBy(1)
-      font.bold: true
-      Layout.fillWidth: true
+    FieldHeader {
+      label: root.label
+      title: true
+      trailing: root.headerExtra
     }
 
     StyledRectButton {
@@ -45,13 +42,8 @@ ColumnLayout {
     }
   }
 
-  StyledText {
-    visible: root.description !== ""
-    text: I18n.tr(root.description)
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
-    Layout.fillWidth: true
+  ClampedText {
+    text: root.description === "" ? "" : I18n.tr(root.description)
   }
 
   ColumnLayout {

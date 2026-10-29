@@ -157,6 +157,7 @@ FieldGroup {
             }
 
             StyledText {
+              elide: Text.ElideRight
               text: I18n.tr("by {0}", details.setup?.author ?? "")
               textFormat: Text.PlainText
               opacity: 0.7
@@ -248,6 +249,7 @@ FieldGroup {
             spacing: 0
 
             StyledText {
+              wrapMode: Text.WordWrap
               text: I18n.tr("Also use its wallpaper")
               Layout.fillWidth: true
             }

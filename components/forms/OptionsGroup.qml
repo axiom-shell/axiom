@@ -47,6 +47,7 @@ FieldGroup {
   }
 
   StyledText {
+    wrapMode: Text.WordWrap
     visible: form.rows.length === 0
     text: root.emptyText
     opacity: 0.6
