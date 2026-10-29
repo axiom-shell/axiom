@@ -312,6 +312,10 @@ Found while closing the config path (backend stage 7):
 Found while adding niri's own overview (row 16):
 - [An open-only workspace overview bind calls a function that doesn't exist](issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
 
+Found while fixing the lock screen surviving a reload:
+- [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
+- [A session lock that never takes keeps the shell holding it](issues.md#a-session-lock-that-never-takes-keeps-the-shell-holding-it)
+
 Found by the audits:
 
 ### Phase 12: memory footprint

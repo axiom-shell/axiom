@@ -262,6 +262,11 @@ func Run(ctx context.Context, opts Options) error {
 		Log:         opts.Log.With("part", "lock"),
 		Go:          d.tasks.Go,
 	})
+	if h != nil && h.Locked {
+		// The adopted shell held the lock: until it reports again, it dies
+		// (or restarts for a new schema) locked
+		d.locker.Report(lockscreen.State{Holding: true})
+	}
 	d.saved = saved.New(saved.Options{
 		Dir:      d.dirs.Config,
 		Examples: filepath.Join(opts.Tree, "examples"),
@@ -377,11 +382,7 @@ func Run(ctx context.Context, opts Options) error {
 			// into the new binary): its hello would be refused
 			d.tasks.Go(func(ctx context.Context) {
 				opts.Log.Info("the schema changed across the re-exec: restarting the shell")
-				restart := d.restartShell
-				if h.Locked {
-					restart = d.startLocked
-				}
-				if err := restart(ctx); err != nil && ctx.Err() == nil {
+				if err := d.restartShell(ctx); err != nil && ctx.Err() == nil {
 					opts.Log.Error("restarting the shell for the new schema", "err", err)
 				}
 			})

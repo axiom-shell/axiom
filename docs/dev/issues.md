@@ -249,6 +249,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the bar display styles branch
 
+### Nested Hyprland acknowledges a lock too late for axiom lock
+- **Where:** `backend/internal/lockscreen/lockscreen.go` (`Options.Confirm`, `Locker.Lock`)
+- **What:** In a nested Hyprland (`scripts/dev/nested.sh hyprland`) the compositor takes about 5 s to acknowledge the session lock (`WlSessionLock.secure`), past `Lock`'s 3 s wait, so `axiom lock` restarts the shell locked and then fails: `the shell didn't confirm the lock: starting it locked`. Pre-existing; seen while fixing the lock surviving a reload (2026-10-29). Unknown whether a real Hyprland session is ever that slow; check, then either wait longer under Hyprland or confirm on the lock surfaces alone.
+- **Size:** small
+- **Found:** 2026-10-29, while fixing the lock screen surviving a reload
+
+### A session lock that never takes keeps the shell holding it
+- **Where:** `shell/Lockscreen.qml` (`lockState.locked`), `services/session/LockManager.qml` (`builtinLocked`)
+- **What:** When the compositor refuses the session lock (Quickshell's `Failed to acquire session lock.`, or a `finished` event: another locker holds it), `WlSessionLock` gives up but `lockState.locked` stays true with no lock surface to type the password on. The shell then ignores every later lock request (`onLockRequested` returns), keeps `Quickshell.watchFiles` off and defers `/reload` until an unlock that can't come, and reports `holding`, so axiom starts it locked on its next restart. `axiom lock` recovers it (no confirmation, so it starts the shell locked). Clearing `lockState.locked` when the lock ends without PAM needs care: it must never fire on a reload handoff or a real lock.
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing the lock screen surviving a reload
+
 ### Quickshell's wlr screencopy crashes the shell on niri
 - **Where:** `services/apps/ScreenshotManager.qml` (`grimFrames`, the workaround), `components/surfaces/screenshot/ScreenshotPickerWindow.qml` (its `ScreencopyView`); the bug is Quickshell's
 - **What:** Without ext-image-copy-capture (niri 26.04 has only wlr-screencopy), Quickshell's wlr screencopy binds a second `wl_output` of its own (`WlrScreencopyContext::OutputTransformQuery`, a `QtWayland::wl_output`; still so in upstream master). niri then sends `wl_surface.enter` for it to every surface; Qt takes it for one of its screens (`QWaylandScreen::fromWlOutput` casts it) and keeps a bogus screen in each surface's list. The next `enter`/`leave` on such a surface crashes in `QWaylandWindow::handleScreensChanged` → `QPlatformScreen::screen()` (at once with a popout open, which unmaps as the picker opens). WAYLAND_DEBUG: `bind(46, "wl_output", 3, …)` beside `zwlr_screencopy_manager_v1.capture_output`, `wl_surface.enter(wl_output#198)` on every surface, then `axiom-edge-popout`'s surface `leave(wl_output#19)` and the crash. Worked around: niri has no `supports.outputCapture`, so the picker's frame is grim's. Left: report it upstream (awaiting a second person to confirm), then drop the workaround once fixed. Sway and Hyprland 0.55 keep `outputCapture` (Hyprland checked by hand: no crash with a popout open).
