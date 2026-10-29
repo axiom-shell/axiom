@@ -71,7 +71,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-options`: a dynamic option list.
   - `"colors"`: a picker over `base00`–`base0F`, read with `Theme.resolveColor` (which also takes semantic names and hex).
   - `"screens"`: a monitor. Empty means the primary monitor, resolved by `General.screensNamed` (bars in `BarsConfig.expandBars`, docks, edge menus). Docks and OSDs pick all monitors through `monitors` instead.
-  - Others: `"languages"`, `"edgeMenus"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"calendars"`, `"chatProviders"`, `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
+  - Others: `"languages"`, `"edgeMenus"`, `"customWidgets"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"calendars"`, `"chatProviders"`, `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
 - `x-emptyLabel`: offers or renames the empty value under that label.
   - On a color: automatic (a bar's `widgetTextColor`).
   - A color without it lists its `default` first, labelled as the default, so an override can be undone.

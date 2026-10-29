@@ -69,6 +69,7 @@ axiom ipc <target> <function> [args]
 | `chat` | `open`, `newChat`, `ask <text>`, `settings` |
 | `calendar` | `open`, `newEvent`, `sync`, `add <text>` (as `/event`) |
 | `todo` | `add <text>`, `toggle <text>`, `list`, `count`, `clearCompleted` |
+| `customWidgets` | `refresh <name>` (a custom widget's refresh name, id or name: its script runs again now), `list` |
 | `pomodoro` | `start`, `pause`, `toggle`, `skip`, `stop`, `reset`, `status` |
 | `stopwatch` | `timer <duration [label]>`, `toggleTimer`, `resetTimer`, `toggle`, `lap`, `reset`, `status` |
 | `audio` | `volumeUp`, `volumeDown`, `toggleMute`, `toggleMicMute` |

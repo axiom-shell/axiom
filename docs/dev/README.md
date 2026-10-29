@@ -120,6 +120,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [blur-window-openings](theming/blur-window-openings.md): the shared blur backing window, shadows in it, strokes opened at joins.
 
 ### features/
+- [custom-widgets](features/custom-widgets.md): Waybar-style scripts as bar widgets, popouts and modules; definitions, fields, running.
 - [launcher](features/launcher.md): rows, placement, routing, `/` commands, `/config`, IPC.
 - [launcher-providers](features/launcher-providers.md): calculator, clipboard history, emoji.
 - [lockscreen](features/lockscreen.md): lock modes, the module layout, password, editing and preview.

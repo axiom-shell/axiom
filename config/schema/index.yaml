@@ -79,6 +79,7 @@ sections:
   - Weather
   - ClaudeUsage
   - Tailscale
+  - CustomWidgets
   - Updates
   - Todo
   - Stopwatch
