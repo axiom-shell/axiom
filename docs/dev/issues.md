@@ -305,7 +305,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Most check scripts have no tests of their own
 - **Where:** `tests/scripts/test_scripts.py`, `scripts/check_structure.py`, `scripts/check_i18n.py`, `scripts/check_qmllint.py`, `scripts/check_packages.py`, `scripts/check_docs.py`, `scripts/gen_docs.py`
-- **What:** `test_scripts.py` tests `check_sizes.py` and `check_docs.py` (one class), rpc.md and a few runtime scripts. `check_structure.py` (about 25 rules, the layering and compositor gates among them), `check_i18n.py`, `check_qmllint.py`'s baseline logic, `check_packages.py` and `gen_docs.py`'s usage map have no case that they fail on what they catch, so a rule whose pattern stops matching (a renamed member, a new syntax) passes everything, silently. That's how the `ConfigManager.live` miss above went unseen. Fix: a fixture tree per script with one breaking file per rule, asserting the message; each new rule gets its case.
+- **What:** `test_scripts.py` tests `check_sizes.py` and `check_docs.py` (one class), rpc.md and a few runtime scripts. `check_structure.py` (about 25 rules, the layering and compositor gates among them), `check_i18n.py`, `check_qmllint.py`'s baseline logic, `check_packages.py` and `gen_docs.py`'s usage map have no case that they fail on what they catch, so a rule whose pattern stops matching (a renamed member, a new syntax) passes everything, silently. That's how gen_docs.py missed every reader of `ConfigManager.live` until row 18. Fix: a fixture tree per script with one breaking file per rule, asserting the message; each new rule gets its case.
 - **Size:** small
 - **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
 

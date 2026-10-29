@@ -13,10 +13,11 @@
 
   scripts/gen_docs.py   write them (stale files removed); exit 1, writing
                         nothing, when the shell calls or listens to something
-                        the daemon lacks; exit 1 after writing when a setting
-                        has no reader or use, or a reader member no user,
-                        that scripts/config-usage-baseline.json doesn't list
-                        (or it lists one that's gone: the baseline only
+                        the daemon lacks; exit 1 after writing when a
+                        section's setting (not a bar widget, module or view
+                        type's) has no reader or use, or a reader member no
+                        user, that scripts/config-usage-baseline.json doesn't
+                        list (or it lists one that's gone: the baseline only
                         shrinks)
 
 Usages are file level (no line numbers) and found by name, so they're a map
@@ -340,9 +341,11 @@ class ConfigReference:
             for s, p in CONFIG_REF.findall(text):
                 self.direct.setdefault(s + p.replace("?.", "."), set()).add(f)
         # The daemon reads a key by name, as a call's argument (`o.Value("by")`,
-        # `config.Keys("Idle", "items")`), not a struct tag or a map literal.
-        # The packages walking the schema or old shapes generically (config,
-        # schema, share, migrate) name every key, so they don't count
+        # `config.Keys("Idle", "items")`), so struct tags and comparisons
+        # don't count, though a key-value argument list still does and a
+        # common name (mode, items) matches anywhere. The packages walking
+        # the schema or old shapes generically (config, schema, share,
+        # migrate) name every key, so they don't count
         self.go = {rel(p): p.read_text() for p in go_sources()
                    if not re.match(r"backend/internal/(config|schema|share|migrate)/", rel(p))}
         self.unread = set()

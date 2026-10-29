@@ -330,7 +330,7 @@ def main():
         if head not in ("pragma ComponentBehavior: Bound", "pragma Singleton"):
             errors.append(f"{path}: doesn't start with pragma ComponentBehavior: Bound (or pragma Singleton)")
         lines = text.count("\n")
-        if head == "pragma Singleton" and lines > SINGLETON_LINES and not path.startswith("tests/") and not SINGLETON_EXEMPT.fullmatch(path):
+        if head == "pragma Singleton" and lines > SINGLETON_LINES and not SINGLETON_EXEMPT.fullmatch(path):
             errors.append(f"{path}: a singleton of {lines} lines (over {SINGLETON_LINES}): split it")
 
     # qs.* imports resolve
