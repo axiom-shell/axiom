@@ -47,7 +47,7 @@
 - While stepped aside, the overlay and the onboarder (`ReservedAreaWindow`):
   - stay mapped, so their pages and state survive
   - hide their content, take no input or keys (an empty `mask`) and drop their backdrop.
-- The overlay's grab is off (and its `cleared` ignored) until the last owner ends it.
+- The overlay's grab is off (and a click outside ignored) until the last owner ends it.
 
 #### Required fields
 - `newSurfaceKey(kind)` / `reportRequiredField(key, present)` / `requiredFields` are the screen layouts' required-field reports.

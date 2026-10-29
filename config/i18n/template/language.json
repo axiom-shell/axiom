@@ -511,7 +511,7 @@
     "Close on outside click": "",
     "Close shortly after the pointer leaves the menu. A pinned menu stays open.": "",
     "Close the overlay when Escape is pressed (unless something in it, like a popup, uses the key first).": "",
-    "Close the overlay when you click outside it: on a bar, the screen border or another monitor.": "",
+    "Close the overlay when you click its empty background, around the page. A click on a bar, a popout or a prompt leaves it open.": "",
     "Close when the pointer leaves": "",
     "Close window": "",
     "Close {0} windows": "",

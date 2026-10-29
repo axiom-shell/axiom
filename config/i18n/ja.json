@@ -443,7 +443,6 @@
     "Close on Escape": "Escキーで閉じる",
     "Close the overlay when Escape is pressed (unless something in it, like a popup, uses the key first).": "Escキーを押したときにオーバーレイを閉じます（ポップアップなど、オーバーレイ内の要素が先にキーを使う場合を除く）。",
     "Close on outside click": "外側のクリックで閉じる",
-    "Close the overlay when you click outside it: on a bar, the screen border or another monitor.": "オーバーレイの外側（バー、画面の枠、別のモニター）をクリックしたときに閉じます。",
     "Defaults": "デフォルト",
     "As in General": "一般設定に従う",
     "Focused monitor": "フォーカス中のモニター",
@@ -3352,6 +3351,7 @@
     "Its script keeps running while the screen is locked, and what it prints shows to anyone at the screen: offer only what's fine to show. Its clicks and commands never run there.": "",
     "{0} elements": "",
     "Drawn as": "",
-    "Share of its box's length the line or slash spans; a chevron's of the gap it sits in.": ""
+    "Share of its box's length the line or slash spans; a chevron's of the gap it sits in.": "",
+    "Close the overlay when you click its empty background, around the page. A click on a bar, a popout or a prompt leaves it open.": ""
   }
 }

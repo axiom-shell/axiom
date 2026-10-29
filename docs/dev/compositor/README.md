@@ -44,6 +44,7 @@ How axiom reaches the compositor it runs under. Read this before anything that r
   - Otherwise it clears once keyboard focus (each window's content `Window.active`) has left every one of its windows for 100 ms, or a click lands outside them. While such a grab is active:
     - `FocusGrab.exclusive` is true on the newest such grab (`BackdropManager.newestCatcher`), and its surface asks for `WlrKeyboardFocus.Exclusive` instead of `OnDemand` (an on-demand layer surface gets the keyboard only once clicked, where no grab hands it over). Only the newest, and not while `SurfaceManager.modalShown` (the modal asks for it too): of two exclusive surfaces on one layer niri keeps the older, so a popout with a text field over the overlay would never get the keyboard. Grabs stay in that order while a modal is up, so the newest one gets the keyboard back after it;
     - every screen's backdrop window (`surfaces/backdrop/ScreenBackdrop`) covers its screen, transparent, under the grabbing surface, and a press on it clears the grab (`BackdropManager.catching`, `clickedOutside`). Bars and other surfaces above it take their own clicks.
+  - `cleared` is also keyboard focus leaving (a prompt closing gives it back to an app), so a surface that must close only on a real click (the overlay) uses `FocusGrab.clickedOutside`, sent for a press on the backdrop just before `cleared`.
 
 ### The window look
 - `WindowLook` is compositor-neutral config, edited under Settings › Compositor.
