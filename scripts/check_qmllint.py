@@ -133,8 +133,9 @@ def main():
                 new.append(f"{name}:{at}: {key}" + (f" ({n - known.get(key, 0)} new)" if known.get(key) else ""))
     for name, known in baseline.items():
         for key, n in known.items():
-            if n > found.get(name, {}).get(key, 0):
-                gone.append(f"{name}: {key} ({n - found.get(name, {}).get(key, 0)} gone)")
+            left = found.get(name, {}).get(key, 0)
+            if n > left:
+                gone.append(f"{name}: {key} ({n - left} gone)")
     for line in new:
         print(f"error: {line}")
     for line in gone:

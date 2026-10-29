@@ -339,8 +339,12 @@ class ConfigReference:
                 continue
             for s, p in CONFIG_REF.findall(text):
                 self.direct.setdefault(s + p.replace("?.", "."), set()).add(f)
-        # The daemon reads by key name (migrations apart: they read old shapes)
-        self.go = {rel(p): p.read_text() for p in go_sources() if "/migrate/" not in rel(p)}
+        # The daemon reads a key by name, as a call's argument (`o.Value("by")`,
+        # `config.Keys("Idle", "items")`), not a struct tag or a map literal.
+        # The packages walking the schema or old shapes generically (config,
+        # schema, share, migrate) name every key, so they don't count
+        self.go = {rel(p): p.read_text() for p in go_sources()
+                   if not re.match(r"backend/internal/(config|schema|share|migrate)/", rel(p))}
         self.unread = set()
 
     def reader_for(self, section):
@@ -442,7 +446,8 @@ class ConfigReference:
         if not (read or files):
             if "x-compositor" in node_r:
                 read.append("the daemon's compositor writer (`x-compositor`)")
-            elif go := sorted(f for f, text in self.go.items() if f'"{last}"' in text):
+            elif go := sorted(f for f, text in self.go.items()
+                              if re.search(r'[(,]\s*"' + re.escape(last) + r'"\s*[),]', text)):
                 read.append("the daemon, name match")
                 files.update(go)
         if read or files:
