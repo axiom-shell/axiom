@@ -54,29 +54,10 @@ Item {
     return 0;
   }
 
-  // A line of the bar's text draws its glyphs a little below its box's
-  // middle (the box holds the descent): the ring and meters centre on the
-  // glyphs instead, so they line up with the icon and the label beside
-  // them. Along a vertical bar the label is turned, so none
-  FontMetrics {
-    id: metrics
-    font.family: Appearance.fontFamily
-    font.pixelSize: root.fontSize
-  }
-  readonly property real inkOffset: {
-    if (root.vertical)
-      return 0;
-    const ink = metrics.tightBoundingRect("0");
-    return Math.round(metrics.ascent + ink.y + ink.height / 2 - metrics.height / 2);
-  }
-
   // Only the shown one is built
   Loader {
     id: loader
     anchors.fill: parent
-    transform: Translate {
-      y: ["ring", "fill", "segments"].includes(root.style) ? root.inkOffset : 0
-    }
     sourceComponent: ({
         "ring": ring,
         "fill": fill,
@@ -90,10 +71,20 @@ Item {
   Component {
     id: ring
     Item {
+      id: ringBox
+      // Whole pixels, an odd side, centred where the icon and label beside
+      // it land once snapped to pixels (half a pixel below the middle of an
+      // even height): centred by anchors, it would be drawn a pixel high
+      readonly property int side: {
+        const side = Math.floor(Math.min(width, height));
+        return side % 2 === 0 ? side - 1 : side;
+      }
+
       PercentageCircle {
-        anchors.centerIn: parent
-        width: Math.min(parent.width, parent.height)
-        height: width
+        x: Math.round((ringBox.width - ringBox.side) / 2)
+        y: Math.ceil((ringBox.height - ringBox.side) / 2)
+        width: ringBox.side
+        height: ringBox.side
         percentage: root.ratio * 100
         thickness: Math.max(2, width * 0.16)
         trackColor: root.trackColor
