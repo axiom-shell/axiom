@@ -3,13 +3,15 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
+import qs.services.system
 import qs.components.reusable
 
 // A notification's summary and body (from a Notification or a history
 // entry). Clickable while the live notification has a default action, or
 // with `clickable`; a click emits activated, and the caller runs it
 // (NotificationManager.activate). A TapHandler rather than a MouseArea, so
-// a swipe handler around it still sees the press.
+// a swipe handler around it still sees the press. Links in the body open
+// in their app.
 Item {
   id: root
 
@@ -59,6 +61,12 @@ Item {
       wrapMode: Text.Wrap
       maximumLineCount: root.bodyLines
       elide: Text.ElideRight
+      linkColor: Theme.accent
+      onLinkActivated: link => NotificationManager.openLink(link)
+
+      HoverHandler {
+        cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : (root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor)
+      }
     }
   }
 }

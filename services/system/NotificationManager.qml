@@ -58,6 +58,10 @@ Singleton {
     root._dnd = !root._dnd;
   }
 
+  // Whether a live notification offers an inline reply: a surface listing
+  // them takes the keyboard for its field
+  readonly property bool replyable: root.entries.some(e => e.live && (root._live[e.uid]?.hasInlineReply ?? false))
+
   // An item in a window, set by the toast host (shell/Notifications):
   // caching an image renders it there
   property Item imageHost: null
@@ -153,6 +157,11 @@ Singleton {
     const keys = root._keysOf(entry);
     const windows = CompositorManager.windows.filter(w => NotificationMatch.matches(keys, root._windowKeys(w)));
     return windows.sort((a, b) => (a.focusRank ?? 0) - (b.focusRank ?? 0))[0] ?? null;
+  }
+
+  // Opens a link from a notification's body in its app
+  function openLink(url) {
+    CommandManager.runDetached(["xdg-open", url]);
   }
 
   // Makes clicking a notification with this desktop entry call
@@ -535,6 +544,7 @@ Singleton {
     id: server
 
     actionsSupported: true
+    inlineReplySupported: true
     actionIconsSupported: true
     bodySupported: true
     bodyHyperlinksSupported: true

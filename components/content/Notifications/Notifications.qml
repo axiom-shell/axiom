@@ -17,6 +17,9 @@ import qs.components.content.parts.notifications
 Panel {
   id: root
 
+  // A bar popout takes the keyboard while a notification offers a reply
+  wantsKeyboardFocus: NotificationManager.replyable
+
   compactContent: CompactFigure {
     icon: NotificationManager.dnd ? "notifications_off" : "notifications"
     iconColor: NotificationManager.count > 0 ? Theme.accent : Theme.foregroundAlt

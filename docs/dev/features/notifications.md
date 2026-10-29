@@ -20,6 +20,11 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 - `keepOnReload` keeps live notifications across QML reloads.
 - **The list** (`content/Notifications`, `parts/notifications/`): one card per app. A lone or collapsed card swipes away whole, either way, dismissing what it holds (`NotificationGroupDelegate`); an expanded one swipes entry by entry (`NotificationItemDelegate.swipeable`).
 
+### Actions, replies and links
+- `NotificationActions` draws every action but `default` (a click on the text) and `inline-reply`; with `hasActionIcons` each identifier is an icon name, shown in place of the label (the label a tooltip).
+- The server advertises `inlineReplySupported`: `NotificationReply` (a field with the app's placeholder and a send button, `sendInlineReply`) shows under an entry or toast whose live notification `hasInlineReply`, built only then (a Loader). The list's bar popout takes the keyboard while one is offered (`NotificationManager.replyable` → `Panel.wantsKeyboardFocus`); the module sets `keyboard`.
+- Body links (`bodyHyperlinksSupported`) open through `NotificationManager.openLink` (`xdg-open`).
+
 ### What removes an entry (NotificationsConfig)
 - `maxEntries` and `maxAge` (ms) set the history's size and age.
 - `clearOnFocus`: `CompositorManager.windowFocused` for a window of the entry's app (`NotificationMatch`).

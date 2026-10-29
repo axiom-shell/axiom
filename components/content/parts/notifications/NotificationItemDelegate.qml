@@ -8,7 +8,7 @@ import qs.components.reusable
 
 // One history entry inside a group card: image, summary and body, its time
 // (or a dismiss button while hovered) and, while its notification is live,
-// its actions. Clicking runs the default action, or else opens the app
+// its actions and inline reply. Clicking runs the default action, or else opens the app
 // (and with NotificationsConfig.removeOnClick dismisses it, as an action
 // does). Swipe sideways or press the button to dismiss; it slides out first.
 Item {
@@ -209,6 +209,19 @@ Item {
         onInvoked: {
           if (NotificationsConfig.removeOnClick)
             root.dismiss();
+        }
+      }
+
+      Loader {
+        Layout.fillWidth: true
+        active: root.live?.hasInlineReply ?? false
+        visible: active
+        sourceComponent: NotificationReply {
+          notification: root.live
+          onSent: {
+            if (NotificationsConfig.removeOnClick)
+              root.dismiss();
+          }
         }
       }
     }

@@ -3384,6 +3384,8 @@
     "Let apps manage their notifications": "",
     "When an app asks for its own duration, or for its notification to stay until dismissed, use that instead of the duration above; and when it withdraws a notification (once you've read it there, say), take it out of the history too. Off, a withdrawn notification stays in the history without its actions.": "",
     "After a click runs a notification's action, bring its app's window forward. Apps can't always do this themselves (niri, for one, only lets them with a token the notification doesn't carry).": "",
-    "Clicking focuses the app": ""
+    "Clicking focuses the app": "",
+    "Reply": "",
+    "Send": ""
   }
 }
