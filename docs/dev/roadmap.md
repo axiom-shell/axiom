@@ -272,7 +272,6 @@ Posting for testers waits for all of these:
 Fixed in step 0 (the guardrails; moved from Phase 9):
 - [The check order is kept in three places](issues.md#the-check-order-is-kept-in-three-places)
 - [Small tooling leftovers](issues.md#small-tooling-leftovers)
-- [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
 - [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
 - [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
 - [A self-update test once took the build path for a release](issues.md#a-self-update-test-once-took-the-build-path-for-a-release)

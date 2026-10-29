@@ -212,12 +212,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-19, while building the review-system skill
 
-### A supervise test times out under a loaded run
-- **Where:** `backend/internal/supervise/supervise_test.go` (`TestOrphanOfAnEarlierDaemonIsStopped`, `eventually`)
-- **What:** One `scripts/check_go.sh` run failed with `supervise_test.go:143: timed out` (the orphan wasn't seen stopped within `eventually`'s 2 s), then passed on the next two runs with nothing changed in `supervise`. The test runs `t.Parallel()` with the rest of the package and `go test` runs packages at once, so 2 s is tight under load; a flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or stop the orphan before polling.
-- **Size:** trivial
-- **Found:** 2026-10-26, while reviewing the takeover hold on config.json reloads
-
 ### A daemon test finds the instance lock still held
 - **Where:** `backend/internal/daemon/reexec_test.go` (`TestStaleSocketIsRemovedOnlyUnderTheInstanceLock`)
 - **What:** One `scripts/dev/verify.sh` run failed with `reexec_test.go:42: the daemon stopped: axiom is already running on wayland-test: held by process …` and `daemon_test.go:90: the daemon didn't stop`, then passed on a rerun with nothing changed in `daemon`: after `held.Release()`, the daemon `td.start` runs still found the lock held, likely by the refused `runBriefly` daemon's open lock file (or the test's own) not yet closed under a loaded parallel run. A possible fix: wait for `runBriefly`'s daemon to close everything before releasing, or retry the start briefly.
