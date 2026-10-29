@@ -154,7 +154,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Content and calendar parts
 - **Content parts** (`content/parts/`): see [Content roots](../overlay/content-roots.md) and [Writing modules](../overlay/writing-modules.md). Also `AudioRow` (a mixer line: icon, title, volume slider, percentage, mute) `TrayMenuList` / `TrayMenuItem` (a tray menu's entries, for the tray popout and its submenus) and `CodeLine` (text to paste, a command, in a monospace box with Copy: the greeter setup, onboarding and Settings status cards).
-- **Todo and pomodoro parts** (`content/parts/`): `TodoList` (the add field and the items, `fill` or capped at `maxListHeight`) `PomodoroDial` (the timer's ring, session dots, controls and task picker, `horizontal` for a wide card) and `TimeRing` (a countdown ring with the time and a label in the middle, used by `PomodoroDial` and the one-off timer in `content/Stopwatch/Stopwatch.qml`); see [Todo and pomodoro](../features/todo-pomodoro.md).
+- **Todo and pomodoro parts** (`content/parts/`): `TodoList` (the add field and the items, `fill` or capped at `maxListHeight`) `PomodoroDial` (the timer's ring, session dots, controls and task picker, `horizontal` for a wide card) `TimeRing` (a countdown ring with the time and a label in the middle, used by `PomodoroDial` and `CountdownTimer`) and `CountdownTimer` (a countdown to start from a typed duration or presets, then its ring, reset, pause and more time; the one-off timer in `content/Stopwatch` and caffeine's popout `content/Caffeine`, so both look the same); see [Todo and pomodoro](../features/todo-pomodoro.md).
 - **Calendar parts** (`content/parts/calendar/`): see [Calendar](../features/calendar.md).
 
 ### Pure helpers (`methods/`)

@@ -5,15 +5,17 @@ import qs.config
 import qs.services.core
 import qs.services.system
 
-// The plumbing StopwatchManager and PomodoroManager share (each owns one):
-// their saved state, an alarm at a deadline, a ticking `now` for displays,
-// and the notification they send. `values` (an object of JSON values) is
-// kept across a QML reload (PersistentProperties, keyed by `name`) and a
-// restart (StateManager `name`); `set(changes)` merges into it. `ended`
-// fires once when `deadline` (an object with `running` and `endsAt`, in ms)
-// runs out, with nothing showing it; displays acquire(owner, interval) a
-// `now` ticking at the shortest interval asked while `ticks` holds. Nothing
-// is restored or written in greeter mode.
+// The plumbing StopwatchManager, PomodoroManager and IdleManager (caffeine's
+// timer) share (each owns one): their saved state, an alarm at a deadline, a
+// ticking `now` for displays, and the notification they send. `values` (an
+// object of JSON values) is kept across a QML reload (PersistentProperties,
+// keyed by `name`) and a restart (StateManager `name`, unless `keeps` is
+// off); `set(changes)` merges into it. `ended` fires once when `deadline`
+// (an object with `running` and `endsAt`, in ms) runs out, with nothing
+// showing it; displays acquire(owner, interval) a `now` ticking at the
+// shortest interval asked while `ticks` holds. Nothing is restored or
+// written in greeter mode (with `keeps` off nothing is written, so it runs
+// there too).
 QtObject {
   id: root
 
@@ -21,6 +23,8 @@ QtObject {
   required property string name
   // The values on a restart from what the state file held (null for none)
   required property var restore
+  // Kept across a restart: off, a restart starts from restore(null)
+  property bool keeps: true
   // { running, endsAt }: the alarm's deadline
   property var deadline: null
   // Whether something runs that displays tick for
@@ -38,12 +42,13 @@ QtObject {
 
   // Merges `changes` into `values`, and saves them
   function set(changes) {
-    if (Paths.greeter)
+    if (Paths.greeter && root.keeps)
       return;
     const next = Object.assign({}, root.values, changes);
     _run.values = JSON.stringify(next);
     root.now = Date.now();
-    root._store.save(next);
+    if (root.keeps)
+      root._store.save(next);
   }
 
   // `interval`: ms between updates of `now` this owner wants
@@ -125,11 +130,11 @@ QtObject {
   }
 
   Component.onCompleted: {
-    if (Paths.greeter)
+    if (Paths.greeter && root.keeps)
       return;
     // A restart (not a reload): back from the state file
     if (!_run.restored) {
-      _run.values = JSON.stringify(root.restore(root._store.load(null)));
+      _run.values = JSON.stringify(root.restore(root.keeps ? root._store.load(null) : null));
       _run.restored = true;
     }
     root._started = true;

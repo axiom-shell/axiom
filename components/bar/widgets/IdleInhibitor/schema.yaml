@@ -2,9 +2,17 @@ label: Idle Inhibitor
 link: {setting: Idle}
 icon: coffee
 group: System
-popout: menu
+popout:
+  variant: own
+  enabled: {description: 'Caffeine for a set time, from the presets, when hovered.'}
 settings:
   showLabel: {type: boolean, title: Show label, default: false}
+  presets:
+    type: array
+    items: {type: string}
+    title: Presets
+    default: ['30m', '1h', '4h']
+    description: 'Caffeine for a set time from the popout, comma-separated: 30m, 1h30m, 4h.'
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active color}
   inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
   foregroundColor:

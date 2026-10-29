@@ -286,13 +286,16 @@ QtObject {
       name: "caffeine",
       aliases: ["awake", "inhibit"],
       glyph: "coffee",
-      usage: "[on | off]",
+      usage: "[on | off | 30m]",
       description: () => I18n.tr("Keep the screen awake"),
-      status: () => IdleManager.caffeine ? I18n.tr("On") : I18n.tr("Off"),
+      status: () => IdleManager.caffeineTimed ? IdleManager.caffeineTextNow() : IdleManager.caffeine ? I18n.tr("On") : I18n.tr("Off"),
       options: () => root._onOffOptions(),
       run: (arg, value) => {
+        // A duration: on for that long
+        if (IdleManager.startCaffeineText(value ?? arg))
+          return false;
         const on = root._onOff(value ?? arg);
-        IdleManager.caffeine = on === null ? !IdleManager.caffeine : on;
+        IdleManager.setCaffeine(on === null ? !IdleManager.caffeine : on);
         return false;
       }
     },
