@@ -340,12 +340,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
-### check_go.sh passes stale generated code except under --ci
-- **Where:** `scripts/check_go.sh` (`generated`), `scripts/check_all.sh`
-- **What:** `generated` rewrites the committed `zz_generated_*` files with `go generate`, then fails on a stale one only with `--ci`; check_all.sh (documented as "every check CI runs") calls `check_go.sh` without it, so `verify.sh --all` prints `all checks passed` on a branch CI fails, leaving the regenerated file as an unnoticed working-tree change. The usage says the plain run checks "generated code fresh". Fix: fail on stale generated code whenever `--fix` isn't given (keep `--ci` for govulncheck).
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
 ### CI can't fail on stale translation files
 - **Where:** `scripts/check_i18n.py` (`main`), `.github/workflows/checks.yml` (Translations, `continue-on-error`)
 - **What:** `check_i18n.py` exits 1 for any key without a translation (empty counts as missing), which is the normal state, so CI runs it as a warning only. The same exit carries the real errors: a stale `config/i18n/template/language.json` (generated, AGENTS.md › Checks), a file not in the canonical format, keys absent from a file or unused. A commit made without the pre-commit hook (a fresh clone or worktree before `git config core.hooksPath .githooks`, or `--no-verify`) lands them with CI green. Fix: exit 1 only for the template, the format, and keys absent or unused; report empty ones without failing; drop `continue-on-error`.
