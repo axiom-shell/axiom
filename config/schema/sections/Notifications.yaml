@@ -5,7 +5,7 @@ type: object
 x-category: Notifications
 x-intro: NotificationsPreview
 title: Notifications
-description: "Where notification toasts appear, how long they stay, and what the history keeps. Toasts sit inside the work area, the space the bars and screen border leave free, so a gap is measured from whatever is at that edge: a bar, the border's stroke, or the bare screen edge."
+description: "Where notification toasts appear, how they move, how long they stay, and what the history keeps. Toasts sit inside the space the bars and screen border leave free, and hide while a popout is open over them."
 additionalProperties: false
 properties:
   screen:
@@ -26,86 +26,64 @@ properties:
           all: Every monitor
         x-link: {setting: General.screen}
       names: null
-  position:
+  edge:
     x-scope: look
     type: string
-    title: Corner
-    enum: [topLeft, topRight, bottomLeft, bottomRight]
-    x-enumLabels:
-      topLeft: Top left
-      topRight: Top right
-      bottomLeft: Bottom left
-      bottomRight: Bottom right
-    default: topLeft
-    description: Corner of the work area the toasts stack from. Bottom corners stack upwards.
-  gaps:
+    title: Screen edge
+    default: top
+    enum: [top, bottom, left, right]
+    x-enumLabels: {top: Top, bottom: Bottom, left: Left, right: Right}
+    description: Screen edge the toasts stack from. On the top or bottom they stack away from the edge; on a side, along it.
+  position:
+    x-scope: look
+    type: integer
+    title: Position along edge
+    x-unit: '%'
+    default: 0
+    minimum: 0
+    maximum: 100
+    description: 'Where along the edge they sit: 0 is the start (left/top), 100 the end.'
+  detached:
+    x-scope: look
+    type: boolean
+    title: Detach from edge
+    default: true
+    description: Separate cards held off the edge. Off, the stack is one box growing out of the screen border or a solid bar, as popouts do, and running straight off a bare screen edge.
+  gap:
+    x-scope: look
+    type: integer
+    x-control: stepper
+    x-auto: {value: -1, start: 12}
+    x-beside: true
+    title: Gap
+    default: -1
+    minimum: -1
+    maximum: 200
+    x-unit: px
+    description: Space between the toasts and the border or bar on their edge, and at the ends. Auto lines them up with a floating bar on their edge, else with your windows.
+    x-showIf: {detached: true}
+  motion:
     type: object
-    title: Gaps
-    description: How far toasts sit from the edges of the work area.
+    title: Motion
     additionalProperties: false
     properties:
-      even:
+      style:
         x-scope: look
-        type: boolean
-        title: Even gaps
-        default: true
-        description: Use one gap for both sides of the corner. Turn off to set each side on its own.
-      all:
+        type: string
+        title: Animation
+        default: slide
+        enum: [slide, fade, none]
+        x-enumLabels: {slide: Slide, fade: Fade, none: None}
+        description: How toasts come and go. Either way the others glide into place.
+      direction:
         x-scope: look
-        type: integer
-        x-control: stepper
-        title: Gap
-        x-unit: px
-        default: 12
-        minimum: 0
-        maximum: 200
-        description: Space between the toasts and the edges of the work area.
-        x-showIf: {even: true}
-      top:
-        x-scope: look
-        type: integer
-        x-control: stepper
-        title: Top gap
-        x-unit: px
-        default: 12
-        minimum: 0
-        maximum: 200
-        description: Space between the toasts and the top of the work area.
-        x-showIf: {even: false, ../position: [topLeft, topRight]}
-      bottom:
-        x-scope: look
-        type: integer
-        x-control: stepper
-        title: Bottom gap
-        x-unit: px
-        default: 12
-        minimum: 0
-        maximum: 200
-        description: Space between the toasts and the bottom of the work area.
-        x-showIf: {even: false, ../position: [bottomLeft, bottomRight]}
-      left:
-        x-scope: look
-        type: integer
-        x-control: stepper
-        title: Left gap
-        x-unit: px
-        default: 12
-        minimum: 0
-        maximum: 200
-        description: Space between the toasts and the left of the work area.
-        x-showIf: {even: false, ../position: [topLeft, bottomLeft]}
-      right:
-        x-scope: look
-        type: integer
-        x-control: stepper
-        title: Right gap
-        x-unit: px
-        default: 12
-        minimum: 0
-        maximum: 200
-        description: Space between the toasts and the right of the work area.
-        x-showIf: {even: false, ../position: [topRight, bottomRight]}
-    x-group: Notifications
+        type: string
+        title: Slide from
+        default: auto
+        enum: [auto, top, bottom, left, right]
+        x-enumLabels: {auto: Auto, top: Top, bottom: Bottom, left: Left, right: Right}
+        description: The edge toasts slide in from and out to. Auto is their own edge when attached, else the screen edge nearest them, so centred ones come from their edge and corner ones from the side.
+        x-showIf: {style: slide}
   timeout:
     type: integer
     x-control: stepper
@@ -116,12 +94,12 @@ properties:
     minimum: 1000
     maximum: 60000
     description: How long a toast stays up. Hovering it pauses the countdown.
-  appTimeouts:
+  followApps:
     type: boolean
-    title: Use app timeouts
+    title: Let apps manage their notifications
     x-group: Toasts
     default: true
-    description: When an app asks for its own duration, or for its notification to stay until dismissed, use that instead of the duration above.
+    description: When an app asks for its own duration, or for its notification to stay until dismissed, use that instead of the duration above; and when it withdraws a notification (once you've read it there, say), take it out of the history too. Off, a withdrawn notification stays in the history without its actions.
   criticalStays:
     type: boolean
     title: Critical toasts stay
@@ -154,12 +132,93 @@ properties:
     x-group: Toasts
     default: true
     description: Show no toasts on a monitor whose workspace has a fullscreen window. Critical ones still show, and everything still goes to the history.
+  dnd:
+    type: object
+    title: Do not disturb
+    x-group: Do not disturb
+    additionalProperties: false
+    properties:
+      schedule:
+        type: boolean
+        title: On a schedule
+        default: false
+        description: Turn do not disturb on and off at set times. Switching it by hand lasts until the next scheduled change.
+      startAt:
+        type: string
+        title: Turn on at
+        default: '22:00'
+        pattern: '^([01]?\d|2[0-3]):[0-5]\d$'
+        description: '24-hour time, like 22:00.'
+        x-showIf: {schedule: true}
+      endAt:
+        type: string
+        title: Turn off at
+        default: '07:00'
+        pattern: '^([01]?\d|2[0-3]):[0-5]\d$'
+        description: '24-hour time, like 07:00. Earlier than the start runs past midnight.'
+        x-showIf: {schedule: true}
+      allowCritical:
+        type: boolean
+        title: Critical ones still show
+        default: true
+        description: While do not disturb is on, critical notifications (a low battery, say) still toast. Off, they only go to the history too.
+  apps:
+    type: array
+    title: Per-app rules
+    x-group: Per-app rules
+    x-wide: true
+    default: []
+    description: 'Rules for one app''s notifications: whether they toast, whether they''re kept, their urgency and how long they stay. An app is matched by its name or desktop entry, as its windows are (Vesktop finds dev.vencord.Vesktop).'
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        id: {$ref: '#/definitions/ItemId'}
+        app:
+          type: string
+          title: App
+          default: ''
+          description: Its name, as its notifications show it, or its desktop entry (firefox, org.telegram.desktop).
+        toasts:
+          type: boolean
+          title: Show toasts
+          default: true
+          description: Off, its notifications go only to the history.
+        history:
+          type: boolean
+          title: Keep in the history
+          default: true
+          description: Off, its notifications only toast, and go once they're closed.
+        urgency:
+          type: string
+          title: Urgency
+          default: app
+          enum: [app, low, normal, critical]
+          x-enumLabels: {app: As the app sends it, low: Low, normal: Normal, critical: Critical}
+          description: Treat its notifications as this urgent. Critical ones stay until dismissed (with Critical toasts stay) and can show through do not disturb.
+        timeout:
+          type: integer
+          x-control: stepper
+          x-auto: {value: -1, start: 5000}
+          title: Toast duration
+          x-unit: s
+          default: -1
+          minimum: -1
+          maximum: 60000
+          description: How long its toasts stay. Auto follows the duration above.
+      required: [id]
   clearOnFocus:
     type: boolean
     title: Clear when the app is focused
     x-group: Notification history
     default: false
     description: Focusing an app's window removes its notifications from the history.
+  clickFocuses:
+    type: boolean
+    title: Clicking focuses the app
+    x-group: Notification history
+    default: true
+    description: After a click runs a notification's action, bring its app's window forward. Apps can't always do this themselves (niri, for one, only lets them with a token the notification doesn't carry).
   removeOnClick:
     type: boolean
     title: Remove when clicked

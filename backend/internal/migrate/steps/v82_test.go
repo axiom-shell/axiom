@@ -8,10 +8,7 @@ import (
 
 func TestV82MovesNirisHotCorner(t *testing.T) {
 	t.Parallel()
-	step := all[len(all)-1]
-	if step.Version != 82 {
-		t.Fatalf("step %d", step.Version)
-	}
+	step := stepAt(t, 82)
 	corner := func(id string) string {
 		return `{"id":"` + id + `","corner":"topLeft","action":"workspaceOverview","argument":"","screen":{"mode":"all","names":[]},"delay":0}`
 	}

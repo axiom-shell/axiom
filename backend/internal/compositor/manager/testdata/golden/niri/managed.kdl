@@ -368,7 +368,7 @@ window-rule {
     opacity 0.8
 }
 layer-rule {
-    match namespace="^axiom-(blur-backing|dock-preview|overlay|launcher|switcher|floating-popout|notifications|powermenu|workspaces|monitor-prompt)$"
+    match namespace="^axiom-(blur-backing|dock-preview|overlay|launcher|switcher|floating-popout|powermenu|workspaces|monitor-prompt)$"
     background-effect {
         xray false
     }
