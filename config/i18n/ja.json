@@ -3192,6 +3192,11 @@
     "Caffeine for a set time from the popout, comma-separated: 30m, 1h30m, 4h.": "",
     "30m, 1h30m, 90s…": "",
     "Shared with every bar.": "",
-    "Skipped: your own config binds {0} too": ""
+    "Skipped: your own config binds {0} too": "",
+    "The login screen is installed.": "",
+    "The login screen is up to date.": "",
+    "The login screen is removed.": "",
+    "Removing now...": "",
+    "Installing now...": ""
   }
 }

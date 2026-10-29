@@ -334,12 +334,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### A greeter update shows no progress after the password
-- **Where:** `services/session/GreeterManager.qml` (`update`, `_elevate`, `_notifyOutdated`)
-- **What:** The maintainer (2026-10-29): "Until the update is done, it only says waiting for password. After auth it needs something like \"installing now\"". Once the password prompt is answered, the status says the update is installing, then done or failed. Its login screen update notification also doesn't go away after the update ("check all notifs for this": every notification that announces something to do should clear once it's done). The overlay closing when the prompt closes is [Overlay and popouts close or break each other](#overlay-and-popouts-close-or-break-each-other)'s.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### Notifications have no blur backing on sway and Hyprland
 - **Where:** `components/surfaces/notifications/NotificationToast.qml` (a `PopupWindow`), `shell/Notifications.qml` (`anchorPanel`), `backend/internal/compositor/render/sway.go` (`SwaySurfaceBlurLines`)
 - **What:** From the maintainer's notes: a notification gets no blur backing (always, or likely only the first after launch; on sway too). Not reproduced in nested niri (2026-10-29, at 70% opacity): every toast blurred, the first after launch too (`BoxBlurRegion`). Nested Hyprland doesn't start under niri, and nested sway isn't used. Likely cause on sway: a toast is an xdg_popup of the 1×1 `axiom-notifications` layer window, and SwayFX's `layer_effects` doesn't blur a layer's popups ([sway backend](compositor/sway-backend.md)), so the rule written for that namespace blurs only the invisible anchor. On Hyprland the `axiom-blur` rule's `blur_popups` should cover them; why the first wouldn't is unexplained. A possible fix (a guess for Hyprland, whose cause is unknown): each toast its own layer window in that namespace (corner anchors, the gap plus its stack offset as margins, Normal exclusion), blurred by the rules like the other `blurSurfaces`; it then wants `no_anim` on Hyprland, as it slides itself.

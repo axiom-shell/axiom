@@ -55,6 +55,6 @@ func (d *Daemon) greeterInstallMethods(reg *rpc.Registry) {
 		// A local copy reuses the binary built last: the one running
 		req := rules.Request{Action: p.Action, Repo: d.opts.Tree, User: me.Username, Staged: p.Staged,
 			Source: p.Source, Channel: p.Channel, Binary: d.executable}
-		return in.Elevate(ctx, req)
+		return in.Elevate(ctx, req, func() { c.Notify(pushGreeterAuthorized.Method, struct{}{}) })
 	})
 }

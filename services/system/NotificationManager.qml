@@ -81,6 +81,18 @@ Singleton {
     root._save();
   }
 
+  // Removes every entry of a desktop entry (and closes those still open):
+  // how a notification of the shell's asking for something to be done
+  // goes away once it's done
+  function dismissApp(desktopEntry) {
+    const gone = root.entries.filter(e => e.desktopEntry === desktopEntry);
+    if (gone.length === 0)
+      return;
+    root.entries = root.entries.filter(e => e.desktopEntry !== desktopEntry);
+    gone.forEach(e => root._forget(e));
+    root._save();
+  }
+
   // The uid of a live Notification's entry, or "" (transient ones have
   // none). Look it up while it's live: a closed one is forgotten.
   function uidOf(notif) {

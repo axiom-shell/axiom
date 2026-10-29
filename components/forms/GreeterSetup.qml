@@ -165,6 +165,14 @@ ColumnLayout {
   }
 
   StyledText {
+    visible: GreeterManager.phase === "done"
+    text: GreeterManager.action === "install" ? I18n.tr("The login screen is installed.") : GreeterManager.action === "update" ? I18n.tr("The login screen is up to date.") : I18n.tr("The login screen is removed.")
+    textColor: Theme.success
+    wrapMode: Text.WordWrap
+    Layout.fillWidth: true
+  }
+
+  StyledText {
     visible: GreeterManager.lastError !== ""
     text: GreeterManager.lastError
     textColor: Theme.error
@@ -178,7 +186,7 @@ ColumnLayout {
 
     StyledText {
       visible: root.busy
-      text: I18n.tr("Waiting for your password...")
+      text: GreeterManager.phase === "password" ? I18n.tr("Waiting for your password...") : GreeterManager.action === "uninstall" ? I18n.tr("Removing now...") : I18n.tr("Installing now...")
       opacity: 0.7
     }
 
