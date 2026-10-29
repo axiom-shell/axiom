@@ -492,7 +492,7 @@ func (d *Daemon) startLocked(ctx context.Context) error {
 // locks first: the compositor holds the session locked meanwhile, and
 // nothing but PAM may end that.
 func (d *Daemon) restartShell(ctx context.Context) error {
-	if d.locker.State().Locked {
+	if d.locker.Held() {
 		return d.startLocked(ctx)
 	}
 	return d.shell.Restart(ctx, nil)

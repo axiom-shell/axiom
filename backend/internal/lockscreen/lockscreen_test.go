@@ -180,6 +180,29 @@ func TestShellDyingWhileLockedRelocks(t *testing.T) {
 	}
 }
 
+// A shell holding the lock without the compositor's acknowledgement (a
+// reloaded generation that took the lock over never gets it again) dies
+// locked all the same: restarted unlocked, it left the session locked with
+// nothing on it to unlock (niri's red screen, 2026-10-29).
+func TestShellDyingWhileHoldingTheLockRelocks(t *testing.T) {
+	t.Parallel()
+	restarted := make(chan struct{}, 1)
+	l := New(Options{StartLocked: func(ctx context.Context) error { restarted <- struct{}{}; return nil }})
+	l.Report(State{Holding: true, Surfaces: 1, Outputs: 1})
+	if l.confirmed() {
+		t.Error("confirmed without the compositor's acknowledgement")
+	}
+	if !l.Held() {
+		t.Error("not held")
+	}
+	l.ShellExited()
+	select {
+	case <-restarted:
+	case <-time.After(time.Second):
+		t.Fatal("not restarted locked")
+	}
+}
+
 // A stop axiom asked for (a restart, which locks the next shell itself)
 // never relaunches: relaunching from it restarted the shell in a loop.
 func TestRequestedStopDoesNotRelock(t *testing.T) {
