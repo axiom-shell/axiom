@@ -41,10 +41,10 @@ for arg in "$@"; do
 done
 [[ $all -eq 1 ]] && exec scripts/check_all.sh
 
-# Deleted files included: they trigger the checks too (a step reading a
-# file skips the gone ones)
+# Deleted files included, a rename's old path too (--no-renames): they
+# trigger the checks too (a step reading a file skips the gone ones)
 mapfile -t changed < <({
-  git diff --name-only HEAD
+  git diff --no-renames --name-only HEAD
   git ls-files -o --exclude-standard
 } | sort -u)
 
