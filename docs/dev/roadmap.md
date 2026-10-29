@@ -172,7 +172,7 @@ Resolved by a stage:
 ### Phase 6: compositor parity
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
-Done: sway and SwayFX (nothing left).
+Done: sway and SwayFX (nothing left). niri's entries are [deferred](#deferred) (maintainer, 2026-10-29).
 
 Hyprland, and every compositor:
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)

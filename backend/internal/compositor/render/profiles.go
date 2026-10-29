@@ -57,10 +57,8 @@ func spelled(rule any, outputs []Output) any {
 	if spelling == desc {
 		return rule
 	}
-	copied, ok := jsonx.Clone(rule).(*jsonx.Object)
-	if !ok {
-		return rule
-	}
+	// a "desc:" output means rule is an object (get)
+	copied := jsonx.Clone(rule).(*jsonx.Object)
 	copied.Set("output", "desc:"+spelling)
 	return copied
 }
