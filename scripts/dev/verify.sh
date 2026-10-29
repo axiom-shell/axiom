@@ -105,7 +105,7 @@ for f in "${changed[@]}"; do
   scripts/dev/known_issues.py) script_tests+=(KnownIssues) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
-  scripts/gen_docs.py) script_tests+=(RpcShapes) ;;
+  scripts/gen_docs.py | scripts/config-usage-baseline.json) script_tests+=(RpcShapes ConfigUsage) ;;
   tests/scripts/test_scripts.py) script_tests+=(all) ;;
   esac
 done

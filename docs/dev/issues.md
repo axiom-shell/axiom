@@ -297,21 +297,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the guard batch (roadmap row 18)
 
-### The qmllint baseline doesn't shrink when warnings are fixed
-- **Where:** `scripts/check_qmllint.py` (`main`), `scripts/qmllint-baseline.json`
-- **What:** A baselined warning that's gone only prints `note: N baselined warnings are gone`, and the baseline keeps its count, so the warning can come back later without failing. AGENTS.md calls the baselines ratchets, and the allowlist already fails on an unused entry (`check_structure.py`). Fix: fail (or have verify.sh rewrite the baseline) when the counts drop, as the allowlist does.
+### Three reader members nothing reads
+- **Where:** `config/HyprlandConfig.qml` (`managed`), `config/LauncherConfig.qml` (`clipboardMaxEntries`), `config/WindowBehaviourConfig.qml` (`behaviour`), `scripts/config-usage-baseline.json`
+- **What:** `scripts/gen_docs.py` lists them as reader members with no user (the daemon reads those settings itself: Compositor.hyprland and WindowBehaviour through `x-compositor`, the clipboard's limit by name). `HyprlandConfig` has no other member, so the whole reader can go; `WindowBehaviourConfig` too. They sit in `scripts/config-usage-baseline.json`, which only shrinks: deleting one means dropping its line there. Deletion candidates for the audits' deletion pass.
 - **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
-### gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread
-- **Where:** `scripts/gen_docs.py` (`CONFIG_REF`, `load_readers`)
-- **What:** `CONFIG_REF` and the reader-alias match in `load_readers` accept only `ConfigManager.config` / `ConfigManager.previews`, but since row 12 (#162) the readers bind `ConfigManager.live` (47 of the files in `config/`; `previews` has no QML use left). So 372 of the 676 settings in `docs/dev/config/` say `read: no reader member or direct use found` though their reader reads them (`WorkspaceOverlay.showHint` is `WorkspaceOverlayConfig.showHint: _c.showHint`), and `--report`'s "reader members with no user" prints 0 because those readers' members aren't seen at all. The generated map agents use to find a setting's users is wrong for half the config, and the one check for dead settings and reader members is blind; nothing failed, since nothing tests the usage map (`RpcShapes` covers only rpc.md). Fix: match `live` (drop `previews`), add a `test_scripts.py` case that a known reader member is found, then fail on a setting with no reader or use and on an unused reader member (the deletion pass's ratchet).
-- **Size:** small
-- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
+- **Found:** 2026-10-30, while making gen_docs.py see readers of ConfigManager.live (roadmap row 18)
 
 ### Most check scripts have no tests of their own
 - **Where:** `tests/scripts/test_scripts.py`, `scripts/check_structure.py`, `scripts/check_i18n.py`, `scripts/check_qmllint.py`, `scripts/check_packages.py`, `scripts/check_docs.py`, `scripts/gen_docs.py`
-- **What:** `test_scripts.py` tests `check_sizes.py` and `check_docs.py` (one class), rpc.md and a few runtime scripts. `check_structure.py` (about 25 rules, the layering and compositor gates among them), `check_i18n.py`, `check_qmllint.py`'s baseline logic, `check_packages.py` and `gen_docs.py`'s usage map have no case that they fail on what they catch, so a rule whose pattern stops matching (a renamed member, a new syntax) passes everything, silently. That's how the `ConfigManager.live` miss above went unseen. Fix: a fixture tree per script with one breaking file per rule, asserting the message; each new rule gets its case.
+- **What:** `test_scripts.py` tests `check_sizes.py` and `check_docs.py` (one class), rpc.md and a few runtime scripts. `check_structure.py` (about 25 rules, the layering and compositor gates among them), `check_i18n.py`, `check_qmllint.py`'s baseline logic, `check_packages.py` and `gen_docs.py`'s usage map have no case that they fail on what they catch, so a rule whose pattern stops matching (a renamed member, a new syntax) passes everything, silently. That's how gen_docs.py missed every reader of `ConfigManager.live` until row 18. Fix: a fixture tree per script with one breaking file per rule, asserting the message; each new rule gets its case.
 - **Size:** small
 - **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
 

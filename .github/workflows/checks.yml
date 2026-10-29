@@ -52,7 +52,8 @@ jobs:
 
       # The generated files (config/json/config.schema.json, built from
       # config/schema/, and the reference docs; gen_docs.py also fails when
-      # the shell calls a daemon method or push the daemon doesn't define),
+      # the shell calls a daemon method or push the daemon doesn't define,
+      # and on unread settings or unused reader members),
       # then structure, sizes, docs, package lists, JSON and translations:
       # each job runs its part of scripts/check_all.sh, the one list of checks
       - name: Checks (scripts/check_all.sh checks)

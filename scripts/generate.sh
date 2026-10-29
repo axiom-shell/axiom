@@ -11,7 +11,8 @@
 #     (`axiom schema build`, through go run)
 #   - docs/dev/config/ and docs/dev/generated/, the reference docs made from
 #     the code and the schema (scripts/gen_docs.py, which also fails when the
-#     shell calls a daemon method or push the daemon doesn't define), after
+#     shell calls a daemon method or push the daemon doesn't define, or on
+#     unread settings and unused reader members), after
 #     docs/dev/generated/rpc-shapes.json, the daemon's methods, pushes and
 #     topics with their fields (backend/tools/rpcshapes, through go run); a
 #     developer check, so --no-docs skips it: install.sh and the AUR
@@ -31,7 +32,7 @@ for arg in "$@"; do
   --fixtures) fixtures=1 ;;
   --no-docs) docs=0 ;;
   *)
-    sed -n '2,23p' "$0" >&2
+    sed -n '2,24p' "$0" >&2
     exit 2
     ;;
   esac
