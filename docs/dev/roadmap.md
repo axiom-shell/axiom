@@ -175,6 +175,7 @@ Every feature works the same under each compositor, or says why not. It follows 
 Done: sway and SwayFX (nothing left). niri's entries are [deferred](#deferred) (maintainer, 2026-10-29).
 
 Hyprland, and every compositor:
+- [After a modal closes, the grabs' newest order is lost](issues.md#after-a-modal-closes-the-grabs-newest-order-is-lost)
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [Hyprland's default workspace doesn't highlight its first window](issues.md#hyprlands-default-workspace-doesnt-highlight-its-first-window)
 
