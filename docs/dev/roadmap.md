@@ -207,7 +207,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 A reload, and a session's normal use, log nothing but the two reload lines.
 
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
-- [Singleton properties warn on every reload](issues.md#singleton-properties-warn-on-every-reload)
 - [Calls in flight are lost across a daemon re-exec, one service at a time](issues.md#calls-in-flight-are-lost-across-a-daemon-re-exec-one-service-at-a-time): one `BackendManager` fix for the three below
 - [A file write or change can be missed across a daemon re-exec](issues.md#a-file-write-or-change-can-be-missed-across-a-daemon-re-exec)
 - [MediaManager warns when the daemon's re-exec fails its album art fetch](issues.md#mediamanager-warns-when-the-daemons-re-exec-fails-its-album-art-fetch)

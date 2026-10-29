@@ -11,6 +11,7 @@ Traps of QML, Qt's JS engine and Quickshell that have each cost a debugging sess
 - No `Object.fromEntries`: use `reduce`.
 - No `Intl`: dates go through `I18n.formatDate`.
 - **Never an optional call on a computed member** (`handlers[name]?.(x)`): Qt 6.12's compiler segfaults on it while loading the file, so a hot reload kills the live shell. Take the member into a `const` and test it (`const fn = handlers[name]; if (fn) fn(x);`). An optional call on a plain name (`done?.(x)`) is fine. `check_structure.py` refuses the form.
+- **`Unable to assign [undefined] to …` at a singleton's property on every reload** is Qt 6.12.0's own bug ([QTBUG-149607](https://bugreports.qt.io/browse/QTBUG-149607): with the old and new generations' engines both alive, a composite type's cast fails), not the binding: Arch's `qt6-declarative` 6.12.0-2 carries the fix. Don't work around it in QML.
 
 ### Bindings and properties
 - `StyledTextEntry` writes every keystroke back to `text`, dropping any binding: push the value in (on selection/draft changes, unless focused) and act on its `textEdited` (typing only, never a value pushed in). A field that commits on focus loss commits only if `typed`, or text it was left showing lands on whatever it edits by then.
