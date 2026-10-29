@@ -21,6 +21,7 @@ How to look at, exercise and debug the live shell without breaking the user's se
 - **qs watches files by inode.** `sed -i`, `/usr/lib/qt6/bin/qmlformat -i`, `git checkout <file>` and `git stash push/pop` all replace the inode. Later edits to that file may then not reload, and the shell silently keeps old code.
   - To force a reload, make a real in-place content change to a file that's still watched (append `// x` with Python's `open(p, 'w')`, then remove it). Rewriting identical content doesn't count.
   - Count `Reloading` lines in `scripts/log.sh --all` before and after to confirm.
+  - Nothing reloads while the built-in lock screen is up (`Quickshell.watchFiles` is off, [lockscreen](features/lockscreen.md) › No reload under the lock): edits made meanwhile load at the first save after unlocking.
   - Revert temporary edits in place, not with `git checkout`.
 - A failed reload leaves the old generation running. Force a clean reload before editing config.json.
 - To wait for a reload: `timeout 8 bash -c 'until scripts/log.sh | grep -q "Configuration Loaded"; do :; done'`.

@@ -133,6 +133,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs row 14's re-exec fix, with axiom in dev mode, save a Go file while a note is being saved or the theme applied, and check `scripts/log.sh` shows no `the connection to axiom closed` from `[FileManager]`, `ThemeManager` or `MediaManager`, and `axiom daemon logs` no `checkupdates failed (-1)`.
 - Once axiom runs a build with Phase 10 (row 17), set up 5–10 popular Waybar custom scripts (`~/waybar-test-scripts`: media, updates, weather, crypto, VPN, …) from the Custom widgets page alone, through the Import from Waybar box or the presets, and check each runs unchanged on a bar and as a module, under niri, sway and Hyprland (Phase 10's "done when").
 - Once axiom runs a binary built with row 15 (stage 8), pick a file from Settings (a wallpaper or a path setting) under each compositor and check the portal's picker opens and its choice lands, then with the portal stopped check zenity or kdialog opens instead; and run `axiom bug-info` under Hyprland, niri and sway and check its Compositor and monitor lines.
+- Once the shell runs the lock-survives-reload fix, let the idle lock come up, save a loaded QML file, then unlock with the password: the lock screen stays up throughout, `scripts/log.sh --all` shows no `Session lock object was destroyed without unlocking`, and the next save after unlocking reloads. Nested niri, sway and Hyprland showed it with a test unlock hook; the real idle lock and PAM only the live session can.
 - Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
 
 ### Phase 0: decisions and quick wins
@@ -264,7 +265,7 @@ Steps:
    2. Done: **verify.sh** (verify.sh, the autopilot's gate): verify.sh skips the checks a deletion or a check's own change needs, Running it unattended's gate can't get `verify ok` on a committed branch.
    3. Done: **The guard** (`.claude/hooks/guard.py`, its tests, the deny list): The guard misses compound commands, wrapper options and writes onto config.json, The permission deny list names a config path that's gone; then each AGENTS.md › Never rule gets a compound-form case beside its plain one.
    4. Done: **Flaky Go tests** (backend tests): Go tests wait with their own short bounds that a loaded CI runner overruns, A binds test fails with pthread_create failed in CI, A compositor manager test misses its takeover prompt under load, A self-update test once took the build path for a release.
-   5. **Go tests as a user, and the security paths** (CI's go job, backend tests): [CI's Go tests run as root, so the unwritable-file tests never run there](issues.md#cis-go-tests-run-as-root-so-the-unwritable-file-tests-never-run-there); then a break-it test each for PAM, the greeter installer and the takeovers where one is missing (the step's security-paths bullet; a missing one found is filed, not built here if it's over the size gate).
+   5. **Go tests as a user, and the security paths** (CI's go job, backend tests): [CI's Go tests run as root, so the unwritable-file tests never run there](issues.md#cis-go-tests-run-as-root-so-the-unwritable-file-tests-never-run-there), [TestWatch sees a push for the package's own write under CI load](issues.md#testwatch-sees-a-push-for-the-packages-own-write-under-ci-load); then a break-it test each for PAM, the greeter installer and the takeovers where one is missing (the step's security-paths bullet; a missing one found is filed, not built here if it's over the size gate).
    6. **gen_docs and the ratchets** (gen_docs.py, check_qmllint.py, check_structure.py): [gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread](issues.md#gen_docspy-doesnt-see-readers-of-configmanagerlive-so-372-settings-show-as-unread) (its unused-setting and unused-member checks become failures), [The qmllint baseline doesn't shrink when warnings are fixed](issues.md#the-qmllint-baseline-doesnt-shrink-when-warnings-are-fixed), and a size ratchet: singletons over about 800 lines (outside the pure helpers and compositor backends) fail, with a baseline that only shrinks.
    7. **Checks that can fail** (`tests/scripts/`, `tests/`): [Most check scripts have no tests of their own](issues.md#most-check-scripts-have-no-tests-of-their-own) (one fixture per rule; split per script if it passes the size gate), [Small tooling leftovers](issues.md#small-tooling-leftovers).
    8. **A sampled mutation run** (backend): the store's takeovers, the lock screen, the greeter installer and migrations; each surviving mutant is filed as a missing test, then fixed in batches appended here.
@@ -306,6 +307,9 @@ Found while closing the config path (backend stage 7):
 
 Found while adding niri's own overview (row 16):
 - [An open-only workspace overview bind calls a function that doesn't exist](issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
+
+Found while fixing the lock screen surviving a reload:
+- [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
 
 Found by the audits:
 
@@ -366,7 +370,6 @@ Accepted by the maintainer (2026-10-28, #163): the hand-fix gap with no takeover
 
 Deferred by the maintainer (2026-10-29, Phase 6's niri entries: "defer all six niri items and continue"):
 - [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)
-- [A hot reload while locked leaves niri's red screen](issues.md#a-hot-reload-while-locked-leaves-niris-red-screen)
 - [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)
 - [niri reports no position for a tiled window, nor other apps' layers](issues.md#niri-reports-no-position-for-a-tiled-window-nor-other-apps-layers)
 - [Shift+Enter on an emoji doesn't type it on niri](issues.md#shiftenter-on-an-emoji-doesnt-type-it-on-niri)
