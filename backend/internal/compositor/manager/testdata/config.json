@@ -1462,7 +1462,6 @@
       "preferNoCsd": true,
       "centerFocusedColumn": "never",
       "emptyWorkspaceAboveFirst": false,
-      "hotCorner": false,
       "overviewZoom": 50,
       "animations": true,
       "skipHotkeyOverlay": true,

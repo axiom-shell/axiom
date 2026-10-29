@@ -191,6 +191,8 @@ func (w *niriWriter) managedText(in Inputs, spec any) string {
 	parts := w.parts(in, spec, w.managedPath(), "managed")
 	options := render.NiriOptionNodes(w.schemaOf("WindowBehaviour"), in.get("behaviour"), false)
 	options.Append(render.NiriOptionNodes(w.schemaOf("Compositor", "niri"), in.get("niriOptions"), false).Items...)
+	// niri's own corner is always off: hot corners are axiom's (HotCorners)
+	render.KdlSetPath(options, "gestures.hot-corners.off", jsonx.Arr(), nil)
 	options.Append(itemsOf(parts.Value("options"))...)
 	parts.Set("userDir", w.userDir())
 	parts.Set("userFiles", strs(w.userFiles()))

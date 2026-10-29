@@ -143,6 +143,11 @@ QtObject {
       "why": "Bar popouts: over the bars they open from."
     },
     {
+      "namespace": "hot-corner",
+      "order": -12,
+      "why": "Hot corners' pixel windows (shell/HotCorners): after the bars, border, docks and popouts, so a corner a bar or the border sits in is still the corner's."
+    },
+    {
       "namespace": "screenshot",
       "order": -20,
       "noAnim": true,

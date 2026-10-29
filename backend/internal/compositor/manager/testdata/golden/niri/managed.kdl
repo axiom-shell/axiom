@@ -320,11 +320,6 @@ layout {
     }
 }
 prefer-no-csd true
-gestures {
-    hot-corners {
-        off
-    }
-}
 overview {
     zoom 0.5
 }
@@ -340,6 +335,11 @@ clipboard {
 }
 xwayland-satellite {
     on
+}
+gestures {
+    hot-corners {
+        off
+    }
 }
 recent-windows {
     binds {}

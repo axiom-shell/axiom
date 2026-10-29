@@ -108,6 +108,10 @@ ShellRoot {
         id: dock
       }
 
+      HotCorners {
+        id: hotCorners
+      }
+
       MonitorPrompt {
         id: monitorPrompt
       }

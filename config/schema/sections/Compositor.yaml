@@ -503,12 +503,6 @@ properties:
         default: false
         description: Asks apps to leave out their own title bar (with its close and maximize buttons) and window shadow. Apps that don't agree keep theirs; open ones change once restarted.
         x-compositor: {niri: {key: prefer-no-csd}}
-      hotCorner:
-        type: boolean
-        title: Top-left corner opens niri's overview
-        default: false
-        description: Pushing the cursor into the top-left corner opens niri's own overview.
-        x-compositor: {niri: {key: gestures.hot-corners.off, value: offFlag}}
       overviewZoom:
         x-scope: look
         type: integer
