@@ -104,12 +104,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
-### The polkit agent fails to register on reloads
-- **Where:** `services/session/PolkitManager.qml` (`_registerCheck`)
-- **What:** In the live session the log shows `[PolkitManager] Could not register as the polkit agent` with no other agent named, on most reloads (6 in one session's `scripts/log.sh --all`) and at the start, where Quickshell logs `quickshell.service.polkit.listener` `failed to register listener: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: An authentication agent already exists for the given subject`. `_probe` finds no other agent, so possibly the previous generation's listener (or one left by the daemon's restart) still holds the subject. Not looked into: next step, check `busctl` for the agent's owner across a reload.
-- **Size:** needs a plan
-- **Found:** 2026-10-26, while reading the log for the unloaded config's compositor mode
-
 ### Running it unattended's gate can't get `verify ok` on a committed branch
 - **Where:** `docs/dev/roadmap.md` (Running it unattended, step 5), `scripts/dev/verify.sh`
 - **What:** Step 5 tells the leader to run `scripts/dev/verify.sh` on the pushed branch and expect `verify ok`, but verify.sh checks changes since HEAD, so on a clean committed branch it prints only `nothing changed since HEAD`. The leader used `scripts/dev/verify.sh --all` (`all checks passed`) instead; the step should say so.

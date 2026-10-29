@@ -19,11 +19,14 @@ A session has one agent, and Quickshell never retries a failed registration. So:
   - `PolkitAgents` is pure: process names, systemd user units, `isAgentCommand`, `processPattern`.
   - Matches are anchored to the executable, so a command whose argument names an agent is never killed.
 - **Stopping them:** `systemctl --user stop` for the active units, `pkill -f` for the rest.
-- **Remaking:** it remakes the agent once, after a 300 ms pause. The old agent is deleted later, and a new one made before then doesn't register.
+- **Remaking:** it then remakes the agent after a 300 ms pause, even when it found no agent to stop (a stopped agent can hold the session for a moment after its kill). The old agent is deleted later, and a new one made before then doesn't register.
+  - Deleting the agent deletes its listener, so the new one registers afresh.
+  - At most 3 remakes; still unregistered, `status` is `blocked` and it warns `Could not register as the polkit agent`.
 - **After 15 s:** it looks again and stops any agent started after qs (`replaced`).
 - **Turned off:** the units it stopped start again.
   - Those units and `replaced` are kept in a `PersistentProperties`, so a reload keeps them.
 - **Reloads:** a hot reload keeps the registration and the open request, because Quickshell hands the listener to the new generation.
+  - It hands it over as it is: one that never registered stays unregistered and never retries, so the 2 s check remakes it in the new generation too.
 - The managed mode's autostart (`Session.autostart`) skips agent commands while this is on.
 
 ### Handling a request
