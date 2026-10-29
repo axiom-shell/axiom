@@ -35,6 +35,7 @@ RowLayout {
   StyledTextEntry {
     id: entry
     Layout.fillWidth: true
+    Layout.preferredHeight: Widget.height
     placeholderText: root.notification?.inlineReplyPlaceholder || I18n.tr("Reply")
     onAccepted: root.send()
   }
@@ -43,8 +44,8 @@ RowLayout {
     Layout.fillWidth: false
     Layout.fillHeight: false
     Layout.alignment: Qt.AlignVCenter
-    Layout.preferredWidth: Widget.smallHeight
-    Layout.preferredHeight: Widget.smallHeight
+    Layout.preferredWidth: Widget.iconButton
+    Layout.preferredHeight: Widget.iconButton
     iconText: "send"
     iconSize: Appearance.fontSizeBy(-2)
     borderRadius: width / 2

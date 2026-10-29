@@ -175,4 +175,21 @@ TestCase {
     // the other pinned menu waits for the OSD over it
     compare(PopoutGeometry.resumable(entries), ["dock"]);
   }
+
+  function test_makeWay() {
+    const stack = rect(1500, 50, 360, 200);
+    compare(PopoutGeometry.makeWay([], "DP-1", stack, "y", 1, 8, 800), 0, "nothing showing");
+    const pop = entry("bar:clock", "bar", [rect(1400, 40, 400, 300)]);
+    compare(PopoutGeometry.makeWay([pop], "DP-1", stack, "y", 1, 8, 800), 298, "below the popout, a gap past it");
+    compare(PopoutGeometry.makeWay([pop], "DP-1", rect(1500, 300, 360, 200), "y", -1, 8, 800), 468, "up, above it");
+    const lower = entry("menu:m", "menu", [rect(1600, 350, 300, 100)]);
+    compare(PopoutGeometry.makeWay([pop, lower], "DP-1", stack, "y", 1, 8, 800), 408, "past a second popout the first shift ran into");
+    compare(PopoutGeometry.makeWay([pop], "DP-1", stack, "y", 1, 8, 100), 100, "capped at the room left");
+    compare(PopoutGeometry.makeWay([entry("bar:x", "bar", [rect(1400, 40, 400, 300)], {
+        "screen": "HDMI-1"
+      })], "DP-1", stack, "y", 1, 8, 800), 0, "another screen");
+    compare(PopoutGeometry.makeWay([entry("bar:x", "bar", [rect(1400, 40, 400, 300)], {
+        "phase": "closing"
+      })], "DP-1", stack, "y", 1, 8, 800), 0, "a closing popout");
+  }
 }

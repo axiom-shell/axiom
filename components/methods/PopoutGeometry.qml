@@ -125,4 +125,31 @@ QtObject {
     }
     return back;
   }
+
+  // How far a stack of toasts at `rect` (screen px, at rest) on `screen`
+  // moves along `axis` ("x" | "y") by `sign` (1 | -1) to clear the
+  // popouts showing there (`entries`, closing and yielded ones aside),
+  // `gap` px past the furthest; capped at `room`. Toasts hold no claim:
+  // they read the popouts' footprints and make way, never the other way.
+  function makeWay(entries, screen, rect, axis, sign, gap, room) {
+    const others = [].concat(...entries.filter(e => e.screen === screen && e.phase !== "closing" && e.phase !== "yielded").map(e => e.footprint ?? []));
+    const pos = axis === "x" ? "x" : "y";
+    const size = axis === "x" ? "width" : "height";
+    let shift = 0;
+    // Each pass clears what the last shift ran into
+    for (let pass = 0; pass < 8; pass++) {
+      const moved = Object.assign({}, rect);
+      moved[pos] = rect[pos] + shift * sign;
+      const hit = others.filter(r => rectsOverlap(r, moved));
+      if (hit.length === 0)
+        break;
+      for (const r of hit) {
+        const need = sign > 0 ? r[pos] + r[size] - rect[pos] + gap : rect[pos] + rect[size] - r[pos] + gap;
+        shift = Math.max(shift, need);
+      }
+      if (shift >= room)
+        return room;
+    }
+    return Math.min(shift, room);
+  }
 }
