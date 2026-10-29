@@ -298,6 +298,8 @@ def main():
         else:
             print(f"{TEMPLATE.relative_to(ROOT)}: stale: run with --fill")
             status |= 1
+    if status and not {"--fill", "--prune", "--format"} & set(sys.argv):
+        print("committing through the pre-commit hook fixes these (git config core.hooksPath .githooks)")
     return status
 
 
