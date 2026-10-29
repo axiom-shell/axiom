@@ -9,17 +9,21 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 ### History
 - `NotificationManager` is the D-Bus notification server plus a persistent history.
 - `entries` are plain objects, newest first, capped at 100.
-- An entry stays until the user removes it, even when the app withdraws the notification. Ways to remove one:
+- An entry stays until the user removes it, or (with `followApps`) until its app withdraws the notification (`closed` with `CloseRequested`). Ways to remove one:
   - `dismiss(uid)`
   - `clearAll()`
   - the `notifications` IPC target.
 - The history is saved to `$XDG_STATE_HOME/axiom/notifications.json` (atomically, through axiom: `FileManager.write`).
 - `liveNotification(uid)` gives the still-open `Notification` (needed for actions). Entries restored from disk open their app instead (`openApp`).
+- **A click** goes through `activate(entry, live)`: it runs the default action, then with `clickFocuses` focuses the app's window itself, since the server sends no xdg-activation token with the action and niri (Hyprland without focus_on_activate too) refuses the app's own raise. Without a default action it's `openApp`: a registered handler, else the app's window, else a launch.
+- **Which windows are an entry's app** (`windowOf`, clear on focus): `methods/NotificationMatch` reduces both sides to keys (the desktop entry, app name, the desktop entry's id and `startupClass`; the window's class and its desktop entry's id), lowercased, last reverse-DNS part, without `-desktop`/`-bin`, and they match when they share one (`Vesktop` ↔ `dev.vencord.Vesktop`, `Telegram` ↔ `org.telegram.desktop`).
 - `keepOnReload` keeps live notifications across QML reloads.
+- **The list** (`content/Notifications`, `parts/notifications/`): one card per app. A lone or collapsed card swipes away whole, either way, dismissing what it holds (`NotificationGroupDelegate`); an expanded one swipes entry by entry (`NotificationItemDelegate.swipeable`).
 
 ### What removes an entry (NotificationsConfig)
 - `maxEntries` and `maxAge` (ms) set the history's size and age.
-- `clearOnFocus`: an `activewindow` event whose class matches the entry's desktop entry or app name.
+- `clearOnFocus`: `CompositorManager.windowFocused` for a window of the entry's app (`NotificationMatch`).
+- `followApps`: the app withdrawing it.
 - `removeOnClick`.
 - `closeRemoves`.
 

@@ -1468,7 +1468,6 @@
     "Visible toasts": "表示するトースト数",
     "Names": "名前",
     "Use the theme's light variant during the day and its dark one at night. Switching by hand lasts until the next change.": "昼はテーマのライト版、夜はダーク版を使います。手動で切り替えた場合は、次の切り替え時刻まで維持されます。",
-    "When an app asks for its own duration, or for its notification to stay until dismissed, use that instead of the duration above.": "アプリが独自の表示時間や、閉じるまで表示し続けることを求めた場合は、上の表示時間の代わりにそれを使います。",
     "Show each bar's level as a percentage beside its icon.": "各バーのレベルをアイコンの横にパーセントで表示します。",
     "Keep windows out of the dock's strip, as a bar does. Magnified icons still grow over windows.": "バーと同じように、ウィンドウをドックの領域の外に配置します。拡大したアイコンはウィンドウの上に広がります。",
     "The date's lines on a vertical bar, when no date format is set.": "日付形式が設定されていない場合の、縦向きバーでの日付の行。",
@@ -1555,7 +1554,6 @@
     "Same on every monitor": "すべてのモニターで同じ",
     "Lock after": "ロックするまで",
     "Clear when the app is focused": "アプリにフォーカスしたら消去",
-    "Use app timeouts": "アプリの表示時間を使う",
     "Which windows make an app running here: its indicator, what a click focuses, and the running apps shown.": "アプリが実行中とみなされるウィンドウの範囲：インジケーター、クリックでフォーカスする対象、表示する実行中のアプリに影響します。",
     "Open when the pointer rests on the screen edge.": "ポインターを画面端に置くと開きます。",
     "Edge menu": "エッジメニュー",
@@ -3382,6 +3380,10 @@
     "Stacked puts the count over the AUR's share of it.": "",
     "Stacked puts the temperature over the condition.": "",
     "Ring and segments show the Wi-Fi signal; sparkline the download speed; ticker and stacked the network's name (stacked over its address).": "",
-    "Nothing matches “{0}”": ""
+    "Nothing matches “{0}”": "",
+    "Let apps manage their notifications": "",
+    "When an app asks for its own duration, or for its notification to stay until dismissed, use that instead of the duration above; and when it withdraws a notification (once you've read it there, say), take it out of the history too. Off, a withdrawn notification stays in the history without its actions.": "",
+    "After a click runs a notification's action, bring its app's window forward. Apps can't always do this themselves (niri, for one, only lets them with a token the notification doesn't carry).": "",
+    "Clicking focuses the app": ""
   }
 }

@@ -26,8 +26,9 @@ QtObject {
 
   // Toasts
   readonly property int timeout: _c.timeout
-  // Use a notification's own expireTimeout (0 = never) when it sets one
-  readonly property bool appTimeouts: _c.appTimeouts
+  // Use a notification's own expireTimeout (0 = never) when it sets one,
+  // and drop a notification its app withdraws from the history
+  readonly property bool followApps: _c.followApps
   readonly property bool criticalStays: _c.criticalStays
   readonly property int maxToasts: _c.maxToasts
   readonly property int width: Widget.px(_c.width)
@@ -35,6 +36,8 @@ QtObject {
 
   // History
   readonly property bool clearOnFocus: _c.clearOnFocus
+  // Focus the app's window after running a clicked notification's action
+  readonly property bool clickFocuses: _c.clickFocuses
   readonly property bool removeOnClick: _c.removeOnClick
   readonly property bool closeRemoves: _c.closeRemoves
   readonly property int maxEntries: _c.maxEntries

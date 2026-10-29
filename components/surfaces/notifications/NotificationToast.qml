@@ -140,8 +140,8 @@ PopupWindow {
   // expireTimeout: 0 is the freedesktop-spec signal for "never expire", a
   // positive one is the app's own duration (ms), -1 leaves it to us
   readonly property bool critical: notification.urgency === NotificationUrgency.Critical
-  readonly property bool neverExpires: (NotificationsConfig.appTimeouts && notification.expireTimeout === 0) || (NotificationsConfig.criticalStays && critical)
-  readonly property int duration: NotificationsConfig.appTimeouts && notification.expireTimeout > 0 ? notification.expireTimeout : root.dismissDuration
+  readonly property bool neverExpires: (NotificationsConfig.followApps && notification.expireTimeout === 0) || (NotificationsConfig.criticalStays && critical)
+  readonly property int duration: NotificationsConfig.followApps && notification.expireTimeout > 0 ? notification.expireTimeout : root.dismissDuration
 
   Timer {
     id: dismissTimer
@@ -264,9 +264,8 @@ PopupWindow {
                 // Without a default action, a click opens its app (as in
                 // the history)
                 clickable: !!defaultAction || (root.notification.desktopEntry ?? "") !== ""
-                onActivated: ranAction => {
-                  if (!ranAction)
-                    NotificationManager.openApp(root.notification);
+                onActivated: {
+                  NotificationManager.activate(root.notification, root.notification);
                   root.close(NotificationsConfig.removeOnClick);
                 }
               }

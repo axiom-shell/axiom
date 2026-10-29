@@ -116,12 +116,12 @@ properties:
     minimum: 1000
     maximum: 60000
     description: How long a toast stays up. Hovering it pauses the countdown.
-  appTimeouts:
+  followApps:
     type: boolean
-    title: Use app timeouts
+    title: Let apps manage their notifications
     x-group: Toasts
     default: true
-    description: When an app asks for its own duration, or for its notification to stay until dismissed, use that instead of the duration above.
+    description: When an app asks for its own duration, or for its notification to stay until dismissed, use that instead of the duration above; and when it withdraws a notification (once you've read it there, say), take it out of the history too. Off, a withdrawn notification stays in the history without its actions.
   criticalStays:
     type: boolean
     title: Critical toasts stay
@@ -160,6 +160,12 @@ properties:
     x-group: Notification history
     default: false
     description: Focusing an app's window removes its notifications from the history.
+  clickFocuses:
+    type: boolean
+    title: Clicking focuses the app
+    x-group: Notification history
+    default: true
+    description: After a click runs a notification's action, bring its app's window forward. Apps can't always do this themselves (niri, for one, only lets them with a token the notification doesn't carry).
   removeOnClick:
     type: boolean
     title: Remove when clicked

@@ -87,6 +87,19 @@ var all = []Step{
 	{Version: 81, Run: v81},
 	// v82: niri's hot corner became an axiom one (v82.go)
 	{Version: 82, Run: v82},
+	// v83: Notifications.appTimeouts became followApps
+	{Version: 83, Run: func(cfg *jsonx.Object) []string {
+		n := object(cfg, "Notifications")
+		if n == nil || !n.Has("appTimeouts") {
+			return nil
+		}
+		v, _ := n.Get("appTimeouts")
+		n.Delete("appTimeouts")
+		if !n.Has("followApps") {
+			n.Set("followApps", v)
+		}
+		return []string{"Notifications.appTimeouts became Notifications.followApps (which also lets apps withdraw their notifications from the history)"}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

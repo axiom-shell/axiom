@@ -10,7 +10,9 @@ import qs.components.reusable
 // One app's notifications as a single card: the app header (icon, name,
 // count, newest time, or dismiss-all while hovered), then its entries.
 // Collapsed, a group of several shows only the newest, with the rest as
-// cards stacked underneath; clicking the header expands it.
+// cards stacked underneath; clicking the header expands it. A lone or
+// collapsed card swipes away whole (dismissing what it holds), an
+// expanded one entry by entry.
 Item {
   id: root
 
@@ -19,6 +21,7 @@ Item {
   required property var group
   property real now: Date.now()
   property bool expanded: false
+  property real swipeThreshold: 120
 
   readonly property var entries: root.group?.entries ?? []
   readonly property int count: root.entries.length
@@ -70,6 +73,45 @@ Item {
     id: shift
   }
 
+  DragHandler {
+    id: swipe
+    enabled: !root.expanded
+    target: null
+    yAxis.enabled: false
+    onTranslationChanged: {
+      if (!active || slideOut.running)
+        return;
+      shift.x = translation.x;
+      root.opacity = 1 - Math.min(1, Math.abs(translation.x) / (root.swipeThreshold * 2));
+    }
+    onActiveChanged: {
+      if (active || slideOut.running)
+        return;
+      if (Math.abs(shift.x) > root.swipeThreshold)
+        root.dismissAll();
+      else
+        snapBack.start();
+    }
+  }
+
+  // A swipe short of the threshold: slide back and undo the fade
+  ParallelAnimation {
+    id: snapBack
+    NumberAnimation {
+      target: shift
+      property: "x"
+      to: 0
+      duration: Appearance.animFast
+      easing.type: Easing.OutCubic
+    }
+    NumberAnimation {
+      target: root
+      property: "opacity"
+      to: 1
+      duration: Appearance.animFast
+    }
+  }
+
   ParallelAnimation {
     id: appear
     NumberAnimation {
@@ -99,7 +141,7 @@ Item {
       NumberAnimation {
         target: shift
         property: "x"
-        to: root.width
+        to: shift.x < 0 ? -root.width : root.width
         duration: Appearance.animNormal
         easing.type: Easing.InCubic
       }
@@ -298,6 +340,7 @@ Item {
             now: root.now
             showMeta: root.count > 1
             showTime: root.expanded
+            swipeable: root.expanded
           }
         }
       }

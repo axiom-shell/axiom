@@ -7,6 +7,7 @@ import Quickshell.Services.Notifications
 import qs.config
 import qs.services.core
 import qs.services.compositor
+import qs.components.methods
 
 /*
  * NotificationManager is the DBus notification server and the notification
@@ -24,7 +25,8 @@ import qs.services.compositor
  *
  * The history keeps NotificationsConfig.maxEntries entries, none older
  * than maxAge (when set), and with clearOnFocus an app's entries go
- * when one of its windows is focused. DND is saved in Paths.statePath.
+ * when one of its windows is focused; with followApps one its app
+ * withdraws goes too. DND is saved in Paths.statePath.
  */
 Singleton {
   id: root
@@ -107,27 +109,50 @@ Singleton {
     root._save();
   }
 
+  // A click on a notification (a Notification or an entry, with its live
+  // Notification or null): runs its default action, then focuses its app's
+  // window (NotificationsConfig.clickFocuses: the app can't raise itself
+  // under niri, as the server sends no activation token); without a
+  // default action it opens the app (openApp). False if nothing happened.
+  function activate(entry, live) {
+    const action = (live?.actions ?? []).find(a => a.identifier === "default");
+    if (!action)
+      return root.openApp(entry);
+    action.invoke();
+    if (NotificationsConfig.clickFocuses) {
+      const window = root.windowOf(entry);
+      if (window)
+        CompositorManager.focusWindow(window.id);
+    }
+    return true;
+  }
+
   // Runs the handler registered for the entry's desktop entry, else
   // focuses its app if it has a window, else launches it; false if its app
   // isn't known
   function openApp(entry) {
     const id = entry?.desktopEntry || "";
-    if (!id)
-      return false;
-    if (root._handlers[id]) {
+    if (id && root._handlers[id]) {
       root._handlers[id](entry);
       return true;
     }
-    const window = CompositorManager.windows.find(w => root._matchesClass(entry, w.appId) || root._matchesClass(entry, w.initialAppId));
+    const window = root.windowOf(entry);
     if (window) {
       CompositorManager.focusWindow(window.id);
       return true;
     }
-    const app = DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id);
+    const app = root._appOf(entry);
     if (!app)
       return false;
     CommandManager.runDetached(app.command, app.workingDirectory);
     return true;
+  }
+
+  // The most recently focused window of an entry's app, or null
+  function windowOf(entry) {
+    const keys = root._keysOf(entry);
+    const windows = CompositorManager.windows.filter(w => NotificationMatch.matches(keys, root._windowKeys(w)));
+    return windows.sort((a, b) => (a.focusRank ?? 0) - (b.focusRank ?? 0))[0] ?? null;
   }
 
   // Makes clicking a notification with this desktop entry call
@@ -151,13 +176,25 @@ Singleton {
   readonly property var _state: StateManager.createStateHandler("notifications")
   property bool _stateLoaded: false
 
-  // Whether a window class belongs to an entry's app (its desktop entry,
-  // else its app name)
-  function _matchesClass(entry, cls) {
-    const lower = (cls || "").toLowerCase();
-    if (!lower)
-      return false;
-    return (entry.desktopEntry || "").toLowerCase() === lower || (entry.appName || "").toLowerCase() === lower;
+  // An entry's desktop entry (by its id, else a guess from its id or app
+  // name), or null
+  function _appOf(entry) {
+    const id = entry?.desktopEntry || "";
+    return (id ? DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id) : null) ?? (entry?.appName ? DesktopEntries.heuristicLookup(entry.appName) : null);
+  }
+
+  // An entry's app names as NotificationMatch keys: its desktop entry and
+  // app name, and the desktop entry's id and window class they lead to
+  function _keysOf(entry) {
+    const app = root._appOf(entry);
+    return NotificationMatch.keys([entry?.desktopEntry, entry?.appName, app?.id, app?.startupClass]);
+  }
+
+  // A window's class keys, its desktop entry's id with them
+  function _windowKeys(window) {
+    const cls = window.appId || window.initialAppId || "";
+    const app = cls ? DesktopEntries.heuristicLookup(cls) : null;
+    return NotificationMatch.keys([window.appId, window.initialAppId, app?.id]);
   }
 
   // uid -> Notification, for live entries
@@ -236,7 +273,9 @@ Singleton {
     target: CompositorManager
     enabled: NotificationsConfig.clearOnFocus
     function onWindowFocused(appId) {
-      root.entries.filter(e => root._matchesClass(e, appId)).forEach(e => root.dismiss(e.uid));
+      const app = appId ? DesktopEntries.heuristicLookup(appId) : null;
+      const keys = NotificationMatch.keys([appId, app?.id]);
+      root.entries.filter(e => NotificationMatch.matches(root._keysOf(e), keys)).forEach(e => root.dismiss(e.uid));
     }
   }
 
@@ -311,11 +350,16 @@ Singleton {
       function onImageChanged() {
         root._queueRefresh(uid);
       }
+      // Withdrawn by its app (read there, say): with followApps it
+      // leaves the history too
       function onClosed(reason) {
         root._unlink(uid);
-        root._update(uid, {
-          live: false
-        });
+        if (reason === NotificationCloseReason.CloseRequested && NotificationsConfig.followApps)
+          root.dismiss(uid);
+        else
+          root._update(uid, {
+            live: false
+          });
       }
     }
   }

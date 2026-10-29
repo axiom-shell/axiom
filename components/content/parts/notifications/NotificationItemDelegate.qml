@@ -24,6 +24,8 @@ Item {
   // Collapsed, the header's time is already this one's
   property bool showTime: true
   property real swipeThreshold: 120
+  // Off while its group's card swipes away whole instead
+  property bool swipeable: true
 
   readonly property bool hovered: hover.hovered
 
@@ -48,6 +50,7 @@ Item {
 
   DragHandler {
     id: swipe
+    enabled: root.swipeable
     target: null
     yAxis.enabled: false
     onTranslationChanged: {
@@ -150,9 +153,8 @@ Item {
           notification: root.entry
           live: root.live
           clickable: !!defaultAction || (root.entry?.desktopEntry ?? "") !== ""
-          onActivated: ranAction => {
-            if (!ranAction)
-              NotificationManager.openApp(root.entry);
+          onActivated: {
+            NotificationManager.activate(root.entry, root.live);
             if (NotificationsConfig.removeOnClick)
               root.dismiss();
           }
