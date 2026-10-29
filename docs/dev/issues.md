@@ -194,12 +194,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while aligning the schema's scopes
 
-### Persistent workspaces sit empty in the scrolling layout's list
-- **Where:** `components/methods/DynamicWorkspaces.qml` (`workspaces`)
-- **What:** A `persistent` workspace rule in the user's Hyprland config keeps an empty workspace alive; `DynamicWorkspaces.workspaces` lists every real in-block workspace, so an empty persistent one past the last occupied one stays in the list and the "one empty after the last" rule no longer holds. Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 4): leave out in-block workspaces that are empty and not active (the synthetic one after the last still covers a new one); `tst_DynamicWorkspaces` rows for a persistent one in the middle and past the end.
-- **Size:** trivial
-- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
-
 ### Calendar times in a Windows zone name with no VTIMEZONE read as local time
 - **Where:** `backend/internal/calendar/ical/zone.go` (`Zones.With`), `backend/internal/calendar/calendar.go` (`New`'s `Lookup`)
 - **What:** A TZID the zone database doesn't know is read only from the object's own VTIMEZONE. The Python helper this replaced (icalendar's `tzp.timezone`) also mapped a Windows zone name (`Pacific Standard Time`, about 140 of them in its `WINDOWS_TO_OLSON` table) and a "globally unique" `/vendor/…/Europe/Berlin` TZID to the IANA zone without one. An event naming such a zone with no VTIMEZONE beside it (rare: Outlook's feeds and invitations carry theirs) now shows at its wall time read as local time, off by the zones' difference. A fix is the CLDR windowsZones table and the prefix strip in `Lookup`; whether the rare case is worth the table is the maintainer's call.

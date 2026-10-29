@@ -15,13 +15,14 @@ QtObject {
   // borrows (numbered ones outside its block, such as an unplugged
   // monitor's, which Hyprland hands back on replug), then an empty one
   // after the last unless that one is already empty. Special and named
-  // workspaces (ids below 1) are left out. real: [{ id, name, output,
+  // workspaces (ids below 1) are left out, and so are empty ones not
+  // shown (a `persistent` rule's): the one after the last covers a new one. real: [{ id, name, output,
   // windowCount, active, focused }]. Returns the same shape.
   function workspaces(real, bases, size) {
     const result = [];
     for (const output of Object.keys(bases)) {
       const base = bases[output];
-      const mine = (real ?? []).filter(ws => ws.output === output && ws.id >= 1).sort((a, b) => a.id - b.id);
+      const mine = (real ?? []).filter(ws => ws.output === output && ws.id >= 1 && (ws.windowCount > 0 || ws.active)).sort((a, b) => a.id - b.id);
       const own = mine.filter(ws => ws.id >= base && ws.id < base + size);
       const borrowed = mine.filter(ws => ws.id < base || ws.id >= base + size);
       const listed = own.concat(borrowed);

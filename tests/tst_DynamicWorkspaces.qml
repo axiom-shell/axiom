@@ -48,6 +48,22 @@ TestCase {
     compare(shown.map(w => w.id), [1, 2, 102, 103]);
   }
 
+  function test_workspaces_leave_out_empty_persistent_ones() {
+    const shown = DynamicWorkspaces.workspaces([ws(1, "A", 1), ws(2, "A", 0), ws(3, "A", 1, true)], {
+      "A": 1
+    }, 100);
+    compare(shown.map(w => w.id), [1, 3, 4], "an empty persistent one in the middle");
+    const past = DynamicWorkspaces.workspaces([ws(1, "A", 1, true), ws(3, "A", 0), ws(4, "A", 0)], {
+      "A": 1
+    }, 100);
+    compare(past.map(w => w.id), [1, 2], "empty persistent ones past the end leave one empty one after the last");
+    const next = DynamicWorkspaces.workspaces([ws(1, "A", 1, true), ws(2, "A", 0)], {
+      "A": 1
+    }, 100);
+    compare(next.map(w => w.id), [1, 2], "a persistent one right after the last is the empty one");
+    compare(next[1].windowCount, 0);
+  }
+
   function test_workspaces_list_borrowed_ones_after_their_own() {
     const shown = DynamicWorkspaces.workspaces([ws(202, "A", 1), ws(201, "A", 2), ws(1, "A", 1, true), ws(101, "B", 1)], bases, 100);
     compare(shown.map(w => w.id), [1, 201, 202, 2, 101, 102], "an unplugged monitor's on A, then A's empty one");
