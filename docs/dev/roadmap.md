@@ -300,8 +300,7 @@ Bugs and small features from the maintainer's own use, filed from their notes on
 Steps:
 1. **niri's own overview:** a setting to open niri's built-in overview in place of axiom's workspace overview, on by default where it's offered. It's gated on a `supports.*` capability, never the compositor's name. The maintainer: "simply a button option to use niris builtin instead".
 2. **Overlay gaps and module borders:** the overlay's gaps become adjustable, and module borders can be turned off.
-3. **Caffeine on a timer:** caffeine (the idle inhibitor) can be turned on for a set time and turns itself off after it.
-4. **A test notification:** the notifications settings get a button that shows one, as the OSD and dock settings do, for easy editing.
+3. **A test notification:** the notifications settings get a button that shows one, as the OSD and dock settings do, for easy editing.
 
 Needs a plan:
 - [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other)
@@ -313,10 +312,13 @@ Resolves:
 - [The bar editor lost its links to the global bar style](issues.md#the-bar-editor-lost-its-links-to-the-global-bar-style)
 - [The layouts editor says a page is shrunk to 99% at the defaults](issues.md#the-layouts-editor-says-a-page-is-shrunk-to-99-at-the-defaults)
 - [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made)
-- [Updating the greeter closes the overlay and shows no progress](issues.md#updating-the-greeter-closes-the-overlay-and-shows-no-progress)
 - [Notifications have no blur backing and an invisible border](issues.md#notifications-have-no-blur-backing-and-an-invisible-border)
 - [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop)
 - [Warning triangles say nothing on hover](issues.md#warning-triangles-say-nothing-on-hover)
+
+Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
+- **Caffeine on a timer** (was step 3): caffeine (the idle inhibitor) can be turned on for a set time and turns itself off after it. *Question:* how is the time picked (fixed presets in the caffeine widget or module, a setting, an IPC argument), and what shows the time left?
+- [Updating the greeter closes the overlay and shows no progress](issues.md#updating-the-greeter-closes-the-overlay-and-shows-no-progress). *Needs testing:* only a real greeter update shows it, which the agents may not run (`AGENTS.md` › Never).
 
 ### Deferred
 Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
