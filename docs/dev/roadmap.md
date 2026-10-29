@@ -313,7 +313,6 @@ Needs a plan:
 - [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own)
 
 Resolves:
-- [A note's view jumps while typing and forgets its place](issues.md#a-notes-view-jumps-while-typing-and-forgets-its-place)
 - [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):

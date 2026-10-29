@@ -73,7 +73,6 @@ Item {
   function _load() {
     root._lastText = root._noteText;
     root._set(NoteMarkdown.parse(root._noteText), null);
-    root._flick.contentY = 0;
     root._revealPending();
   }
 
@@ -89,6 +88,8 @@ Item {
       return;
     const at = NoteMarkdown.positionAt(root.doc, root._pendingLine, 0);
     root._pendingLine = -1;
+    // A jump to the line, not back to where the note was left
+    memory.cancel();
     // After the blocks have been laid out
     Qt.callLater(() => root.focusAt(at.block, at.pos));
   }
@@ -145,9 +146,10 @@ Item {
 
   function _scrollToMatch() {
     const match = root.findMatch;
-    const item = match ? root._block(match.block) : null;
-    if (item)
-      root.ensureVisible(item, item.field.positionToRectangle(match.pos));
+    if (match) {
+      memory.cancel();
+      root.ensureVisible(match.block, match.pos);
+    }
   }
 
   // Closes find; with `select`, the match is selected for editing
@@ -214,15 +216,42 @@ Item {
     return false;
   }
 
-  // Scrolls a block's cursor into view
-  function ensureVisible(item, rect) {
+  // Scrolls a block's position (its cursor, a match) into view, once the
+  // blocks have been laid out: a structural edit reloads every block and
+  // adds new ones at the end, so until then their y is stale (a new last
+  // block's is 0, which scrolled to the top)
+  property var _visible: null
+  function ensureVisible(index, pos) {
+    root._visible = {
+      "block": index,
+      "pos": pos
+    };
+    Qt.callLater(root._scrollToVisible);
+  }
+
+  function _scrollToVisible() {
+    const at = root._visible;
+    root._visible = null;
+    const item = at ? root._block(at.block) : null;
+    if (!item)
+      return;
+    blocks.forceLayout();
     const flick = root._flick;
+    const rect = item.field.positionToRectangle(at.pos);
     const top = item.y + rect.y;
     const bottom = top + rect.height;
     if (top < flick.contentY)
       flick.contentY = top;
     else if (bottom > flick.contentY + flick.height)
       flick.contentY = bottom - flick.height;
+  }
+
+  // Where each note was left (EditsManager, by path), so reopening it
+  // comes back there
+  ScrollMemory {
+    id: memory
+    flickable: root._flick
+    key: root.note ? "notes:" + root.note.path : ""
   }
 
   // --- From the blocks ---

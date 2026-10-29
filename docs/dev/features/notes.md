@@ -50,6 +50,10 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
 - Its clickable parts are `MouseArea`s. These accept the press, so the editor's background `MouseArea` (which focuses the note's end) never sees it.
   - This matters because inside a `Flickable` an exclusive-grab `TapHandler` gets cancelled, and a passive one lets the press through.
 
+**Scrolling:**
+- `ensureVisible(block, pos)` keeps the cursor (or a find match) in view after the blocks are laid out (`Qt.callLater`, then the column's `forceLayout()`): a structural edit reloads every block and adds new ones at the end, whose `y` is stale until then.
+- A `ScrollMemory` keyed by the note's path keeps where each note was left (`EditsManager`, in memory), so reopening it comes back there; a reload from disk keeps the place. A jump to a line or a match cancels the restore.
+
 **Find:** Ctrl+F finds within the note (`NoteEditor.find` / `endFind`).
 
 ### Browser and search

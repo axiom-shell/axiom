@@ -328,12 +328,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### A note's view jumps while typing and forgets its place
-- **Where:** `components/content/parts/notes/NoteEditor.qml` (`ensureVisible`, `_flick`), `components/content/parts/notes/NoteBlock.qml`
-- **What:** From the maintainer's notes: a newline (and other edits that rebuild blocks) jumps the view around, so you lose where you were; and reopening a note scrolls back to the top (`_flick.contentY = 0`) instead of where you left it.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### The monitor editor shows changes nobody made
 - **Where:** `services/compositor/MonitorManager.qml` (`draft`, `ensureLoaded`), `components/views/Monitors/Monitors.qml`
 - **What:** From the maintainer's notes: the monitors page shows unsaved changes when nothing was changed (likely a value the draft normalises on load differing from the saved one).
