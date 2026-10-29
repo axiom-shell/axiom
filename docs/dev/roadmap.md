@@ -172,6 +172,7 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 
 Resolves:
 - [A fast chat reply can drop the shell's connection](issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
+- [A dev build during a branch switch re-execs onto the defaults](issues.md#a-dev-build-during-a-branch-switch-re-execs-onto-the-defaults)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.

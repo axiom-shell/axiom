@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A dev build during a branch switch re-execs onto the defaults
+- **Where:** `backend/internal/daemon/dev.go` (`watchSource`, `build`), the re-exec's config load
+- **What:** On 2026-10-30, `git switch main` followed 3 s later by `git pull` (main at config version 82, then 84). The source watch kicked a build of the v82 tree. The pull's changes reached the old process while that build ran, and its kick died with the process when the build re-exec'd. The new image (`the tree's schema isn't the one this binary was built with (fine in dev mode)`) knew version 82, refused the v84 config.json (`version: 84 is newer than this axiom knows (82): update axiom`) and logged `the config doesn't load: running on the defaults, saves blocked until it's fixed`. The shell came up on the defaults until the next build. config.json itself stayed untouched. Two gaps: a kick that arrives during a build should build again rather than re-exec into the stale binary (or the new image should check whether the source is newer than itself), and a re-exec that can't read the config should keep the config the old image had running (the shell's message already claims it keeps the last good config).
+- **Size:** small
+- **Found:** 2026-10-30, while investigating the shell on default config after merging the notifications revamp
+
 ### A custom Ring element logs an undefined `inside` on load
 - **Where:** `components/content/parts/custom/elements/Ring/CustomRing.qml` (`inside`)
 - **What:** The live shell logs `CustomRing.qml[17:3]: Unable to assign [undefined] to QString` after a reload: `root.options.inside` is read before the element's options carry it (seen on main after row 17, with a custom widget's Ring element on screen). The ring draws once the options arrive, but the log isn't clean.
