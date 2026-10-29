@@ -32,7 +32,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 - While locked, the compositor shows only the lock surfaces and sends them all input.
 - If qs dies, the session stays locked (Hyprland's fallback). `misc:allow_session_lock_restore` lets a restarted qs take the lock back.
 - The locked state lives in a `PersistentProperties`, so a QML reload never unlocks.
-- A lock the compositor ends without PAM (its `finished`: it refused the lock, as when another locker holds the session) clears that state (`WlSessionLock.onLockedChanged`), so the shell stops holding a lock it hasn't got.
+- A lock the compositor ends without PAM (its `finished`: it refused the lock, as when another locker holds the session) clears that state (`WlSessionLock.onSecureChanged`: Quickshell 0.3 emits no `lockedChanged` there), so the shell stops holding a lock it hasn't got.
 
 #### No reload under the lock
 - **Why:** Quickshell 0.3's `WlSessionLock` hands its lock to the reloaded generation, but builds that generation's lock surfaces anew while the old ones still stand. A second lock surface for an output is a protocol error on niri (`Output is already locked.`) and sway (`session lock surface already created for the given output`), which ends qs and left niri's red screen with nothing to unlock it (2026-10-18, 2026-10-29). The log shows `Session lock object was destroyed without unlocking` as the old generation goes, on every reload under the lock, even one that worked (Hyprland let it through).

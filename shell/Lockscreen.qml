@@ -103,12 +103,14 @@ Scope {
 
     // The compositor ended the lock without PAM (its `finished`: it refused
     // the lock, as when another locker holds the session): nothing is
-    // locked, so the shell stops holding it. A PAM unlock clears
-    // lockState first, and a reload's handoff emits nothing
-    onLockedChanged: {
-      if (!locked && lockState.locked)
+    // locked, so the shell stops holding it. Quickshell tells only `secure`
+    // of it, while `locked` still reads true, and `locked` never notifies:
+    // checked once the signal is through. A PAM unlock clears lockState
+    // first
+    onSecureChanged: Qt.callLater(() => {
+      if (!sessionLock.locked && lockState.locked)
         lockState.locked = false;
-    }
+    })
 
     WlSessionLockSurface {
       id: surface
