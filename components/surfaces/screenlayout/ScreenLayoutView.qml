@@ -61,9 +61,16 @@ Item {
   // modules kept to their nearest edge from the grid they were placed on
   // (OverlayConfig.screenArrangement)
   readonly property real margin: root.arrangement.margin
-  readonly property var arrangement: OverlayConfig.screenArrangement(root.layout, root.shownModules, root.screen, root.roomWidth, root.roomHeight)
+  // (`modules`: the ones arranged, so `placedModules` never pairs new
+  // modules with the places of old ones while a change spreads)
+  readonly property var arrangement: {
+    const shown = root.shownModules;
+    return Object.assign(OverlayConfig.screenArrangement(root.layout, shown, root.screen, root.roomWidth, root.roomHeight), {
+      "modules": shown
+    });
+  }
   // The modules shown, at their places here
-  readonly property var placedModules: root.shownModules.map((module, i) => Object.assign({}, module, {
+  readonly property var placedModules: root.arrangement.modules.map((module, i) => Object.assign({}, module, {
       "place": root.arrangement.places[i]
     }))
 
