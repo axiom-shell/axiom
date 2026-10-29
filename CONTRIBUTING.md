@@ -16,7 +16,7 @@ Thanks for wanting to help. Bug reports, ideas, translations and code are all we
 | **Compositor or distribution support** | Running on another compositor, or installing on another distribution. Needs someone who runs it to test it |
 | **Translation** | A new language, or wrong or untranslated text |
 
-For a bug, paste the output of two commands from axiom's `scripts/` folder (`~/.config/quickshell/axiom/scripts/` for a clone, `/usr/share/axiom/scripts/` for a package): `bug_info.sh`, which prints your versions and setup, and `log.sh`, which shows the shell's log.
+For a bug, paste the output of two commands: `axiom bug-info`, which prints your versions and setup (`~/.local/bin/axiom bug-info` if `axiom` isn't on your `PATH`), and `log.sh` from axiom's `scripts/` folder (`~/.config/quickshell/axiom/scripts/` for a clone, `/usr/share/axiom/scripts/` for a package), which shows the shell's log.
 
 Each form adds its kind's label plus `triage`, which a maintainer swaps for `needs-info`, `help wanted`, `good first issue` or a `compositor: …` label once it's sorted. Platform requests also carry `needs-maintainer` until someone signs up to test them.
 

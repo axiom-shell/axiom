@@ -20,5 +20,5 @@ body:
     id: system
     attributes:
       label: System info
-      description: Optional. The output of `scripts/bug_info.sh`, from axiom's folder (`~/.config/quickshell/axiom` for a clone, `/usr/share/axiom` for a package).
+      description: Optional. The output of `axiom bug-info`.
       render: text

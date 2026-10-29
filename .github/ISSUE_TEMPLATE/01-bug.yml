@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting! Two commands give us most of what we need: `bug_info.sh` (your versions and setup) and `log.sh` (the shell's log). Both are in axiom's `scripts/` folder: `~/.config/quickshell/axiom/scripts/` for a clone, `/usr/share/axiom/scripts/` for a distribution package.
+        Thanks for reporting! Two commands give us most of what we need: `axiom bug-info` (your versions and setup; `~/.local/bin/axiom bug-info` if `axiom` isn't on your `PATH`) and `log.sh` (the shell's log), in axiom's `scripts/` folder: `~/.config/quickshell/axiom/scripts/` for a clone, `/usr/share/axiom/scripts/` for a distribution package.
 
         Asking how to do something? [Discussions](https://github.com/axiom-shell/axiom/discussions/categories/q-a) is the place.
   - type: textarea
@@ -55,12 +55,12 @@ body:
     id: system
     attributes:
       label: System info
-      description: The output of `scripts/bug_info.sh`.
+      description: The output of `axiom bug-info`.
       placeholder: |
         axiom:      clone v1.2.0
-        Binary:     axiom v1.2.0 (commit …, linux/amd64, protocol 1), running
+        Binary:     axiom v1.2.0 (commit 1a2b3c4d5e6f), running
         Quickshell: Quickshell 0.3.2
-        Compositor: Hyprland 0.55.0
+        Compositor: Hyprland 0.55.0 (commit 1a2b3c4)
         ...
       render: text
     validations:

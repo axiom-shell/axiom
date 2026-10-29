@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
@@ -67,6 +68,20 @@ func (h *Hypr) Outputs(ctx context.Context) ([]render.Output, error) {
 		return nil, err
 	}
 	return out, nil
+}
+
+// Version is Hyprland's version as people read it, with its commit, which
+// tells a build from git ("Hyprland 0.55.0 (commit efb5099)").
+func (h *Hypr) Version(ctx context.Context) (string, error) {
+	reply, err := h.Request(ctx, "j/version")
+	if err != nil {
+		return "", err
+	}
+	var v struct{ Version, Commit string }
+	if err := json.Unmarshal([]byte(reply), &v); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("Hyprland %s (commit %s)", v.Version, v.Commit[:min(len(v.Commit), 7)]), nil
 }
 
 // Eval runs Lua in Hyprland's config state: "" when it ran, else Hyprland's

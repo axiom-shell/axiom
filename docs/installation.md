@@ -10,7 +10,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 - A Wayland compositor: [Hyprland](https://hypr.land) 0.55+ with its Lua config (`hyprland.lua`), [niri](https://github.com/YaLTeR/niri) 26.04+, or [sway](https://swaywm.org) 1.12+ (SwayFX adds blur and rounded corners). What each supports is in the [README](../README.md#compositors)
 - [Quickshell](https://quickshell.org) 0.3.2 or newer (`qs`)
 - [Material Symbols](https://fonts.google.com/icons) for icons (`ttf-material-symbols-variable`). Any font works for text
-- `curl`, `python3`
+- `curl`
 - `go`, only to build the `axiom` binary from a clone by hand. The installer downloads the official build of the release it checks out (checked against the release's checksums), and installs `go` to build it only when there's none for your machine; an AUR package brings it already built. `axiom` is the shell's parent process: it starts the shell, owns your config file, and is the `axiom` command
 
 <details open>
@@ -30,7 +30,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Idle (dim, lock, screen off, suspend) | Nothing: axiom does it itself, on every compositor |
 | Login screen | `greetd` and its text login `agreety` (`greetd-agreety` on Arch), the fallback; `sway` for it to run in (recommended), or Hyprland without one; `pkexec` (polkit) to install it |
 | Calendar | `secret-tool` (libsecret) to keep account passwords in your keyring |
-| Browse buttons for folders, importing a shared config | xdg-desktop-portal with a file chooser backend (`xdg-desktop-portal-gtk` or KDE's) and `python-gobject`; or `zenity` or `kdialog`. Without them, type the path |
+| Browse buttons for folders, importing a shared config | xdg-desktop-portal with a file chooser backend (`xdg-desktop-portal-gtk` or KDE's), or `zenity` or `kdialog`. Without them, type the path |
 | Polkit prompt | Nothing: axiom is the agent itself, and stops another one (hyprpolkitagent, KDE's, GNOME's) while it's on |
 | Night light | nothing on Hyprland and sway; `wlsunset` on niri |
 | X11 apps (Steam, games, older apps) | On niri, `xwayland-satellite` (niri runs X11 apps only through it); on sway, Xwayland (`xorg-xwayland` on Arch, `xorg-x11-server-Xwayland` on Fedora). Hyprland's package brings Xwayland itself |

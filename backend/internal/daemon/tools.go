@@ -2,10 +2,14 @@ package daemon
 
 import (
 	"context"
+	"os/exec"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/community"
+	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/deps"
+	"github.com/axiom-shell/axiom/backend/internal/filepicker"
 	"github.com/axiom-shell/axiom/backend/internal/media"
 	"github.com/axiom-shell/axiom/backend/internal/netif"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
@@ -28,7 +32,7 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 		Found []string `json:"found"`
 	}
 	rpc.Handle(reg, "deps.check", func(ctx context.Context, c *rpc.Conn, p checkParams) (checkResult, error) {
-		return checkResult{Found: append([]string{}, deps.Check(ctx, p.Commands, deps.Options{})...)}, nil
+		return checkResult{Found: append([]string{}, deps.Check(p.Commands, deps.Options{})...)}, nil
 	})
 	type killParams struct {
 		PID int `json:"pid"`
@@ -61,6 +65,37 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "community.fetch", func(ctx context.Context, c *rpc.Conn, p fetchParams) (fetchResult, error) {
 		return fetchResult{Files: fetcher.Fetch(ctx, p.Files)}, nil
 	})
+	type pickResult struct {
+		Path string `json:"path"` // "": cancelled
+	}
+	// Waits for the user: the answer comes when the picker closes
+	rpc.Handle(reg, "filepicker.pick", func(ctx context.Context, c *rpc.Conn, p filepicker.Request) (pickResult, error) {
+		path, err := filepicker.Pick(ctx, d.filePickerOptions(), p)
+		return pickResult{Path: path}, err
+	})
+}
+
+// filePickerOptions: the portal on the session bus; zenity and kdialog
+// run as the shell's commands do (its environment, handed on across a
+// re-exec)
+func (d *Daemon) filePickerOptions() filepicker.Options {
+	log := d.opts.Log.With("part", "filepicker")
+	return filepicker.Options{
+		SessionBus: func(ctx context.Context) (*dbus.Conn, error) {
+			addr, err := dbus.SessionAddress(d.opts.Getenv)
+			if err != nil {
+				return nil, err
+			}
+			return dbus.Dial(ctx, addr, dbus.Options{Log: log})
+		},
+		LookPath: exec.LookPath,
+		Run: func(ctx context.Context, argv []string) (int, string, error) {
+			res, err := command.Run(ctx, d.commandOptions(), argv, nil)
+			return res.ExitCode, res.Stdout, err
+		},
+		Home: d.opts.Getenv("HOME"),
+		Log:  log,
+	}
 }
 
 // lookupMethods are the lookups the greeter's axiom answers too (its
