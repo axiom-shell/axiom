@@ -51,7 +51,7 @@ QtObject {
   function iconFor(key, win) {
     const entry = root.entryFor(key);
     if (entry?.icon)
-      return Quickshell.iconPath(entry.icon, "application-x-executable");
+      return IconResolver.appIcon(entry.icon);
     return IconResolver.resolveWindowIcon(win?.appId ?? key, win?.title ?? "");
   }
 

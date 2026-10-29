@@ -172,7 +172,7 @@ QtObject {
   function _appRow(app) {
     return {
       kind: "app",
-      image: Quickshell.iconPath(app.icon, "application-x-executable"),
+      image: IconResolver.appIcon(app.icon),
       title: app.name,
       subtitle: app.genericName || app.comment || "",
       hint: app.runInTerminal ? I18n.tr("Terminal") : "",

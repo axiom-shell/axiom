@@ -116,12 +116,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while taking the binds-child segfault from the roadmap
 
-### A notification's avatar warns when its saved image is gone
-- **Where:** `components/content/parts/notifications/NotificationAvatar.qml` (`picture`)
-- **What:** A history notification whose image file in `~/.local/state/axiom/notifications/` no longer exists logs `Cannot open: file:///…/notifications/<id>.png` on every build of its row. The avatar should fall back to the app icon quietly (check `picture.status`, or drop the image path from history when the file is removed).
-- **Size:** small
-- **Found:** 2026-10-24, while moving services to the axiom daemon
-
 ### Leaving managed, the runtime layer can go on before the given-back config reloads
 - **Where:** `backend/internal/compositor/manager/manager.go` (`SetInputs`, `liveChanged`, `apply`)
 - **What:** The shell's first inputs arm both `debounce` and `liveDebounce` (300 ms each). When the live one fires first, `liveChanged` sees `AppliedMode != mode` and calls `apply`, which releases the managed config and asks for a reload; the layer debounce's `apply` then runs `runtimeApply` before that reload lands, so the runtime layer reads the managed config's binds (every axiom key looks taken, each logged once) and goes on over it. It's corrected after the reload (`configReloaded` applies again). Holding `runtimeApply` until `configReloaded` after a release that reloads would close it, but a missed reload event would then leave no runtime layer.
@@ -327,12 +321,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** As the lock screen showed on live niri (2026-10-28 21:43, its Password module taking the keyboard), every one of its seven modules logged `[ModuleGrid] Overlay module <name>` … `overlaps another` (Greeting, NowPlaying, Password, ClockCalendar, Weather, VolumeDials, Power), though `Lockscreen.layout`'s saved places don't overlap. Likely `_check` running on the first arrangement, before the surface has its size (a zero room squeezes every place together); unconfirmed.
 - **Size:** small
 - **Found:** 2026-10-28, while giving niri's outputs a reserved space
-
-### Missing app icons warn in the log
-- **Where:** `services/ui/LauncherManager.qml` (`Quickshell.iconPath`), `services/ui/DockManager.qml`
-- **What:** An app whose `.desktop` icon isn't in the icon theme (here `xdg-desktop-portal-gtk`'s `applications-system-symbolic`) logs `Could not load icon` at each size it's drawn, though the fallback icon shows. Noise in `scripts/log.sh`; either skip hidden/`NoDisplay` entries or resolve the name before handing it to an Image.
-- **Size:** trivial
-- **Found:** 2026-10-16, while auditing the layer-placement branch
 
 ### Text input warnings when the desktop takes the keyboard
 - **Where:** `components/surfaces/desktop/DesktopWindow.qml` (`WlrLayershell.keyboardFocus`)

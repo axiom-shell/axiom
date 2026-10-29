@@ -31,6 +31,7 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 
 ### Images
 - Cached as PNGs in `$XDG_STATE_HOME/axiom/notifications/`.
+- On load, an entry whose image file is gone loses its `image` (`_dropMissingImages`), so its avatar shows the app icon without a `Cannot open` warning.
 - Rendered through an `imageHost` item that `shell/Notifications` lends the service, since grabbing an image needs a window.
 
 ### Do not disturb

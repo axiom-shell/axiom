@@ -4,7 +4,8 @@ import Quickshell
 
 /**
  * Resolves icon names for window classes: desktop entries first, then known
- * substitutions, then name variants that exist in the icon theme.
+ * substitutions, then name variants that exist in the icon theme. Turns an
+ * app's icon name into a source only the theme holds (`appIcon`).
  * Substitution tables adapted from end-4's dots-hyprland.
  */
 Singleton {
@@ -39,11 +40,17 @@ Singleton {
     }
   ]
 
+  // An icon's source if the theme has it, else the generic program icon's,
+  // else "": an Image given a name the theme lacks logs `Could not load icon`
+  function appIcon(name) {
+    return (name ? Quickshell.iconPath(name, true) : "") || Quickshell.iconPath("application-x-executable", true);
+  }
+
   function resolveWindowIcon(windowClass, windowTitle) {
-    const baseIcon = Quickshell.iconPath(guessIcon(windowClass), "image-missing");
+    const baseIcon = appIcon(guessIcon(windowClass));
     // Special case for kitty running nvim
     if (baseIcon.includes("kitty") && windowTitle?.toLowerCase().includes("nvim"))
-      return Quickshell.iconPath("nvim", "image-missing");
+      return appIcon("nvim");
     return baseIcon;
   }
 
