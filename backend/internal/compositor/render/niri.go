@@ -350,18 +350,20 @@ func (t *Tables) NiriBindNode(bind, ctx any) *jsonx.Object {
 
 // NiriRecentWindows takes the switcher binds out of binds into niri's own
 // switcher's (`recent-windows { binds { … } }`, which replaces niri's
-// default ones): the rest, and that node (nil with none).
+// default ones): the rest, and that node (nil with none). A key without a
+// modifier stays in the rest, niri's switcher refusing it.
 func (t *Tables) NiriRecentWindows(binds any) (*jsonx.Array, *jsonx.Object) {
 	rest := jsonx.Arr()
 	var own []any
 	seen := map[string]bool{}
 	for _, b := range items(binds) {
 		step, ok := t.SwitcherSteps.Get(str(get(b, "action")))
-		if !ok {
+		k := NiriKey(get(b, "key"))
+		// niri refuses a switcher key without a modifier: it stays axiom's
+		if !ok || len(SplitKey(get(b, "key")).Mods) == 0 {
 			rest.Append(b)
 			continue
 		}
-		k := NiriKey(get(b, "key"))
 		if k == "" || seen[strings.ToLower(k)] {
 			continue
 		}
