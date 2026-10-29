@@ -304,12 +304,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while consolidating compositor settings
 
-### Floating bars sit flush on the border without a backend
-- **Where:** `config/BarsConfig.qml` (`enrichBarConfig`: `floatGap`), `services/compositor/CompositorManager.qml` (`gapsOut`)
-- **What:** A floating bar's automatic gap (`floatGap` -1) is the compositor's outer gaps (`CompositorManager.gapsOut`). With no backend (an unknown compositor) `gapsOut` is all 0, so a floating bar sits flush against the border. Sway's and niri's backends read their gaps from the config (`SwayState.configInfo`, `axiom compositor niri info`); decide what the gap is with no backend at all (a fixed default, or `Appearance.screenMargin`).
-- **Size:** small
-- **Found:** 2026-10-16, while testing layer order in nested sway
-
 ### niri reports no position for a tiled window, nor other apps' layers
 - **Where:** `components/methods/NiriState.qml` (`windows`, `outputs`)
 - **What:** niri's IPC gives no layer surface geometry, so an output's `reserved` counts only axiom's own layers (`LayerArrange.arrange`): another app's bar on niri isn't in it, and the dock centres as if it weren't there. Nor, in 26.04, does it give a position for a tiled window (`tile_pos_in_workspace_view` is null; only floating windows have one; checked 2026-10-28). So tiled windows are laid out from their column and place in it from the output's edge, without niri's scroll (`windowGeometry` stays off: no screenshot window mode; the dock hides behind a window's `cover`, its column or the whole output, which ignores struts, reserved space and `center-focused-column`).
@@ -327,12 +321,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Seen on niri with a solid bottom bar (border off) whose SystemStats popout joins the left pill bar: while the popout slides in or out, the left bar's end pill, run on to the popout's top wall, trails it by about 8px for two or three frames (below the wall while opening, above it while closing), so the two strokes and their shadows step at the left bar's inner edge. At rest they line up. Probably the other bar's window committing a frame or so after the popout's (as `AttachedSurface`'s fillet opening is taken a stroke ahead for). The end pill leads the wall by a stroke there (niri has no `supports.layerFrameSync`, `EdgePlacement._slideLead`), which helps but doesn't close the gap; sway and Hyprland move the two as one without it.
 - **Size:** small
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
-
-### Two exclusive-focus surfaces at once without a native grab
-- **Where:** `services/compositor/FocusGrab.qml` (`exclusive`), `components/hosts/overlay/OverlayPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`
-- **What:** Without `supports.focusGrab`, every active grab's surface asks for `WlrKeyboardFocus.Exclusive`. With the overlay open (exclusive the whole time) and a popout with a text field opened over it, two surfaces on the Overlay layer ask for exclusive focus. Which one gets the keyboard is up to the compositor. On niri the older one keeps it (found fixing the polkit prompt, c49b429, which now turns `exclusive` off while `SurfaceManager.modalShown`), so there typing into a popout over the overlay goes to the overlay. Sway is unchecked (`scripts/dev/nested.sh sway`). A fix in the same spirit: only the newest active grab is `exclusive`.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the layer-placement branch
 
 ### The lock screen's modules all warn they overlap
 - **Where:** `components/hosts/overlay/ModuleGrid.qml` (`_check`), `components/surfaces/screenlayout/ScreenLayoutView.qml` (`arrangement`)
@@ -484,8 +472,14 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
+### After a modal closes, the grabs' newest order is lost
+- **Where:** `services/ui/BackdropManager.qml` (`newestCatcher`), `services/compositor/FocusGrab.qml`
+- **What:** Without `supports.focusGrab`, only the newest active grab asks for exclusive keyboard focus. While a modal is up (`SurfaceManager.modalShown`) the grabs drop out of the ordered list, and when it closes they come back in no set order: after a polkit prompt over the overlay with a popout open, the overlay may take the keyboard instead of the popout. Rare (a modal over two grabs); left after the newest-grab fix (roadmap row 13).
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing roadmap row 13's newest-grab fix
+
 ### Hyprland's default workspace doesn't highlight its first window
 - **Where:** `components/bar/widgets/Workspaces/StripWindows.qml` (`focused`), `services/compositor/HyprlandManager.qml`
-- **What:** From the maintainer's notes: on the workspace Hyprland starts on, the first window opened isn't highlighted as focused until a workspace move.
+- **What:** From the maintainer's notes: on the workspace Hyprland starts on, the first window opened isn't highlighted as focused until a workspace move. Checked 2026-10-29 (code read, nested Hyprland): Hyprland's own data is right (the first window on workspace 1 has `focusHistoryID` 0 and is `activewindow`), and `StripWindows` highlights `CompositorManager.lastFocused` of the workspace's windows, which for one window is always it; so the cause isn't in either. Which highlight it is (bar strip, dock `DockManager.focusedId`, overview `WindowPreview.focused`) and under which layout (`StripWindows` shows only under scrolling, whose workspace ids `DynamicWorkspaces` renumbers until `_compaction` runs) needs the maintainer to reproduce it.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap

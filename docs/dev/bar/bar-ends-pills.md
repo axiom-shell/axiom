@@ -15,7 +15,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
     - The solid bar draws that stroke in pieces around its `openings`. The stroke is left open under the joined end, and under a popout standing on it or joined to it at an end, opaque or not (`BarContainer.barAt`, `solidStart`/`solidEnd`).
   - **`bar`:** a bar it makes way for, with no stroke. This is a **held** end:
     - It is kept clear of that bar's inner edge, `over` into the window, by `gap`.
-    - `gap` is a floating bar's own float gap, else how far windows start past it.
+    - `gap` is a floating bar's own float gap (Automatic: `floatGaps`, the screen margin with no backend), else how far windows start past it.
   - **`pillBar`:** see Pill bars meeting at a corner below.
 - `reach` is how far the window reaches onto the stroke at that end (`BarPanel`'s margins).
 - **How `BarContainer` uses the ends:**

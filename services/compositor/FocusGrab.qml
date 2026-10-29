@@ -11,9 +11,9 @@ import qs.services.ui
 // one of `windows` (a click on another window or surface takes it), or a
 // click lands on a screen's backdrop window, which covers every screen
 // under the surfaces while such a grab is active (BackdropManager.
-// catching). Its surface asks for Exclusive keyboard focus meanwhile
-// (`exclusive`): a layer surface asking on demand gets the keyboard only
-// once clicked. Not a singleton: each surface makes its own.
+// catching). The newest such grab's surface asks for Exclusive keyboard
+// focus meanwhile (`exclusive`): a layer surface asking on demand gets the
+// keyboard only once clicked. Not a singleton: each surface makes its own.
 Scope {
   id: root
 
@@ -22,23 +22,27 @@ Scope {
   signal cleared
 
   readonly property bool _native: CompositorManager.supports.focusGrab === true
-  // Active without a native grab: the surface's own window should take the
-  // keyboard exclusively (WlrKeyboardFocus.Exclusive) while this is on.
-  // Not while a modal is up (SurfaceManager.modalShown): two exclusive
-  // surfaces on one layer leave the keyboard with the older (niri), never
-  // the prompt. The modal covers every screen, so no click needs catching
-  readonly property bool exclusive: !root._native && root.active && !SurfaceManager.modalShown
+  // Active without a native grab: a click outside clears it. Not while a
+  // modal is up (SurfaceManager.modalShown): it covers every screen, so no
+  // click needs catching
+  readonly property bool _catching: !root._native && root.active && !SurfaceManager.modalShown
+  // The surface's own window should take the keyboard exclusively
+  // (WlrKeyboardFocus.Exclusive) while this is on: only the newest such
+  // grab's, never while a modal is up. Of two exclusive surfaces on one
+  // layer niri keeps the older, so a popout opened over the overlay, or
+  // the prompt, would never get the keyboard
+  readonly property bool exclusive: root._catching && BackdropManager.newestCatcher === root._uid
 
   // A click caught outside every surface (BackdropManager.catching)
   property int _uid: 0
   // Not before it has its id: a catcher reported under 0 would never clear
-  onExclusiveChanged: {
+  on_CatchingChanged: {
     if (root._uid > 0)
-      BackdropManager.catchClicks(root._uid, root.exclusive);
+      BackdropManager.catchClicks(root._uid, root._catching);
   }
   Component.onCompleted: {
     root._uid = BackdropManager.register();
-    BackdropManager.catchClicks(root._uid, root.exclusive);
+    BackdropManager.catchClicks(root._uid, root._catching);
   }
   Component.onDestruction: {
     if (root._uid > 0)
@@ -46,7 +50,7 @@ Scope {
   }
   property Connections _outside: Connections {
     target: BackdropManager
-    enabled: root.exclusive
+    enabled: root._catching
     function onClickedOutside() {
       root.cleared();
     }

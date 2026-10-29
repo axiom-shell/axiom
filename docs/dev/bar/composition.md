@@ -9,7 +9,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 ### Bars from config
 - `shell/Bar.qml` renders one `BarPanel` per entry in `ScreenEdgeManager.bars` (a `Variants`/model). Multi-monitor and multi-panel bars therefore come from config data, not from hardcoded code.
 - `ScreenEdgeManager.bars` holds the running bars after `BarsConfig.enrichBarConfig` (the bar editor, `BarManager`, only previews its draft into them). Enrichment adds:
-  - Hyprland's `gapsOut`, which a reader can't read.
+  - The compositor's `gapsOut` and `floatGaps` (what an Automatic float gap keeps: `gapsOut`, or the screen margin with no backend), which a reader can't read.
   - What the bar leaves on each screen edge: `edgesFor`, `screenEdgeOpen`, `barReservedOn`, `frameLine`, `detachedGaps`.
 - A bar whose `monitor` is `"*"` is expanded by `BarsConfig.expandBars` into one entry per screen (id `<id>@<screen>`, plus `sourceId`), the primary monitor's first.
 - Any other bar's monitor is resolved to a connected screen there.
