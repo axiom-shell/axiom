@@ -128,6 +128,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 
 - Confirm the missing app icon fallback in the launcher and dock with an icon theme lacking `applications-system-symbolic` (#196).
 - Lock once and check `scripts/log.sh` shows no `[ModuleGrid] … overlaps another` (#198).
+- Click into a desktop Notes module and back to a window, and check `scripts/log.sh` shows no `Trying to disable` from `qt.qpa.wayland.textinput`; also under sway and Hyprland (#200).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
