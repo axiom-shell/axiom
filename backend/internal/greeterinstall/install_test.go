@@ -678,6 +678,22 @@ func TestUninstallFromTheNewestBackup(t *testing.T) {
 	f.refused("no backup of", rules.ActionUninstall, "", "")
 }
 
+// An uninstall in the same second as the install restores the install's
+// own backup, not the backup it makes of the session config.
+func TestUninstallInTheInstallsSecond(t *testing.T) {
+	t.Parallel()
+	f := newInstallFixture(t)
+	at := time.Date(2026, 10, 27, 9, 8, 7, 0, time.Local)
+	in := New(Options{Root: f.root, Releases: f.releases, Upstream: f.upstream, Now: func() time.Time { return at }, Environ: func() []string { return f.env }})
+	if r := f.runWith(in, rules.ActionInstall, rules.SourceGit, rules.ChannelTags); !r.OK {
+		t.Fatalf("install: %+v", r)
+	}
+	os.Remove(filepath.Join(f.root, "etc/greetd/config.toml.axiom-original"))
+	if r := f.runWith(in, rules.ActionUninstall, "", ""); !r.OK || f.config() != f.original {
+		t.Errorf("restored %q (%+v)", f.config(), r)
+	}
+}
+
 // main's build is taken only for the commit the copy was fetched at.
 func TestEdgeBuildMovedOn(t *testing.T) {
 	t.Parallel()

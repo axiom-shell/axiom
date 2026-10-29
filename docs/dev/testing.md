@@ -74,6 +74,7 @@ How to look at, exercise and debug the live shell without breaking the user's se
 
 ### Mutation runs
 - A sampled mutation run (2026-10-30, roadmap Phase 11 step 0 batch 8; numbers in `.claude/reviews/guardrails.md` › Mutation run) used a throwaway mutator kept outside the repo (about 200 lines of Go on `go/ast`, `go/parser`, `go/format`, no dependencies, plus a shell driver). To rebuild it: for each function of a file (optionally filtered by a name regexp) it lists every site of these mutations, applies one at a time to a copy, and runs `go test -overlay <json> -count=1 -timeout 90s ./internal/<pkg>` (the overlay swaps the mutated copy in, so the tree is never touched), six at a time: `==`↔`!=`, `<`→`<=`, `<=`→`<`, `>`→`>=`, `>=`→`>`, `&&`↔`||`, an `if` condition negated, a `!` dropped from an `&&`/`||` operand, `true`↔`false`, a returned error (`err`, an `*Err*` name, or `fmt.Errorf`/`errors.New`/`axerr.New`/`axerr.Wrap*`) replaced by `nil`, and a call statement removed. A passing run is a survivor; a build or vet failure counts as killed. Survivors that only drop a log line are equivalent.
+- A mutant can undo a test's stub (`greeterinstall.New`'s default `pkexec` reached the real one and waited on its prompt): put refusing stand-ins for `pkexec`, `sudo`, `su`, `doas` and `run0` first on `PATH` for the run, and the root-only branches go through `unshare -rm`, never real root.
 
 ### Feature testing sections
 - Hyprland: [config-modes](hyprland/config-modes.md), [managed-takeover](hyprland/managed-takeover.md), [monitors](hyprland/monitors.md)

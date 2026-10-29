@@ -38,12 +38,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while running the sampled mutation run (Phase 11 step 0 batch 8)
 
-### An uninstall in the same second as an install overwrites the backup it restores
-- **Where:** `backend/internal/greeterinstall/install.go` (`uninstall`)
-- **What:** Without `config.toml.axiom-original`, uninstall restores the newest `config.toml.axiom-bak-*`, but first backs the current config up under the same second-resolution name: within the second of the install's own backup it overwrites that backup with the session config and then "restores" it, leaving greetd pointed at the removed greeter (seen writing `TestUninstallFromTheNewestBackup`). Only a scripted install-then-uninstall hits it.
-- **Size:** trivial
-- **Found:** 2026-10-30, while running the sampled mutation run (Phase 11 step 0 batch 8)
-
 ### A custom Ring element logs an undefined `inside` on load
 - **Where:** `components/content/parts/custom/elements/Ring/CustomRing.qml` (`inside`)
 - **What:** The live shell logs `CustomRing.qml[17:3]: Unable to assign [undefined] to QString` after a reload: `root.options.inside` is read before the element's options carry it (seen on main after row 17, with a custom widget's Ring element on screen). The ring draws once the options arrive, but the log isn't clean.
