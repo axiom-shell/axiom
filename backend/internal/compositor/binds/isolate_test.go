@@ -38,6 +38,10 @@ func built(t *testing.T) string {
 		axiomBin = filepath.Join(dir, "axiom")
 		cmd := exec.Command("go", "build", "-o", axiomBin, "./cmd/axiom")
 		cmd.Dir = filepath.Join(testkit.RepoRoot(), "backend")
+		// As every axiom ships (-race tests set CGO_ENABLED=1): with cgo,
+		// the limit can refuse a thread's stack first, and the child dies
+		// in pthread_create instead of saying it ran out of memory
+		cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 		if out, err := cmd.CombinedOutput(); err != nil {
 			axiomErr = err
 			axiomBin = string(out)
