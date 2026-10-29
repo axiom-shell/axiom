@@ -520,7 +520,8 @@ func (d *Daemon) writeSnapshot() error {
 // enable or disable compares against that gone surface and warns. The
 // compositor's text-input leave has disabled it already: typing works.
 // Quickshell's rule reaches Qt's categories (a QT_LOGGING_RULES pragma
-// comes too late to) and leaves the user's own QT_LOGGING_RULES alone.
+// comes too late to). It applies after the user's QT_LOGGING_RULES, so it
+// overrides only that one category's warnings; their other rules stand.
 func ShellCommand(qs, entry string) []string {
 	return []string{qs, "-p", entry, "--log-rules", "qt.qpa.wayland.textinput.warning=false"}
 }
