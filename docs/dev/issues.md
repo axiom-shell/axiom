@@ -310,11 +310,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The guard misses compound commands, wrapper options and writes onto config.json
-- **Where:** `.claude/hooks/guard.py` (`split_commands`, `simple`, `check_argv`), `tests/scripts/test_guard.py`
-- **What:** Probing `guard.check` with ordinary shell forms (not adversarial ones) lets these through: `(qs kill)`, `{ qs kill; }`, `$(qs kill)`, `if true; then qs kill; fi` (`(`, `{`, `$(` and `then` are taken as the command's name); `sudo -u me axiom lock`, `nice axiom lock`, `flock /tmp/l axiom lock`, `systemd-run --user axiom quit` (a wrapper's option value becomes the command; `nice`, `flock`, `systemd-run` aren't wrappers); `gh -R a/b issue create` (only `args[:2] == ["issue", "create"]`); and every Bash write onto the live config.json: `cp x ~/.config/axiom/config.json`, `mv x <it>`, `> <it>`, `tee <it>`, `sed -i … <it>`, which skip the `x-takeover` check `check_config_edit` gives Edit and Write. The last is how a raw copy over config.json once dropped `Compositor.mode` managed. Also `rm -r ~/.config` and `find ~/.config/axiom -name config.json -delete` delete it unchecked. Fix: split on `(`, `)`, `{`, `}`, `$(`, backticks and the shell keywords; skip a wrapper's option values; match `issue create` anywhere in gh's argv; refuse a Bash write whose target is `LIVE_CONFIG` (cp/mv/install destination, `>`/`>>`, tee, `sed -i`), each with a `test_guard.py` case.
+### The guard judges a heredoc's body as commands
+- **Where:** `.claude/hooks/guard.py` (`split_commands`)
+- **What:** `split_commands` turns every newline into `;` before lexing, so each line of a heredoc's body is judged as a command of its own: a `python3 - <<'PY'` script or a `cat > notes <<EOF` whose text has a line like `axiom lock` is refused, though nothing runs it (only a body fed to a shell, `bash <<EOF`, would). An ordinary form, refused the wrong way; found when a review's probe script listing forbidden commands was refused. Fix: drop the body lines after a `<<WORD`/`<<'WORD'` up to `WORD` unless the command is a shell, with a `test_guard.py` case each way.
 - **Size:** small
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
+- **Found:** 2026-10-29, while reviewing the guard batch (roadmap row 18)
 
 ### CI's Go tests run as root, so the unwritable-file tests never run there
 - **Where:** `.github/workflows/checks.yml` (the `go` job), `backend/internal/compositor/binds/binds_test.go` (`TestAnUnwritableFileFailsAlone`), `backend/internal/compositor/manager/manager_test.go` (`TestAFailedReleaseIsRetried`), `backend/internal/compositor/manager/sway_test.go`, `backend/internal/compositor/userconf/userconf_test.go`, `backend/internal/compositor/edit/hookup_test.go`, `backend/internal/daemon/selfupdate_test.go`
@@ -325,12 +325,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### The qmllint baseline doesn't shrink when warnings are fixed
 - **Where:** `scripts/check_qmllint.py` (`main`), `scripts/qmllint-baseline.json`
 - **What:** A baselined warning that's gone only prints `note: N baselined warnings are gone`, and the baseline keeps its count, so the warning can come back later without failing. AGENTS.md calls the baselines ratchets, and the allowlist already fails on an unused entry (`check_structure.py`). Fix: fail (or have verify.sh rewrite the baseline) when the counts drop, as the allowlist does.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
-### The permission deny list names a config path that's gone
-- **Where:** `.claude/settings.json` (`permissions.deny`), `.claude/hooks/guard.py` (docstring)
-- **What:** `permissions.deny` still refuses `rm config/user/config.json` (the folder no longer exists) and refuses `git clean -x`/`-X`/`-fdx`, which neither AGENTS.md › Never nor the guard mentions, though the guard's docstring says the deny list "repeats the plain ones". Fix: drop those two lines, and either name `git clean -x` in AGENTS.md (it deletes the generated files and local state) or drop it.
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
