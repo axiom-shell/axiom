@@ -284,11 +284,14 @@ func TestSymlinkedConfigStaysALink(t *testing.T) {
 func watch(t *testing.T, s *Store) {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
 	s.watching = make(chan struct{})
-	go s.Watch(ctx)
+	ended := make(chan error, 1)
+	go func() { ended <- s.Watch(ctx) }()
+	t.Cleanup(func() { cancel(); <-ended })
 	select {
 	case <-s.watching:
+	case err := <-ended:
+		t.Fatalf("Watch ended: %v", err)
 	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("not watching")
 	}

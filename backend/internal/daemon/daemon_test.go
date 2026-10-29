@@ -294,16 +294,12 @@ func TestPolledTopicFollowsItsSubscribers(t *testing.T) {
 	default:
 	}
 	sub.Close()
-	deadline := time.Now().Add(5 * time.Second)
-	for {
+	if !testkit.Eventually(func() bool {
 		before := fetches.Load()
 		time.Sleep(100 * time.Millisecond)
-		if fetches.Load() == before {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("still fetching after its subscriber closed")
-		}
+		return fetches.Load() == before
+	}) {
+		t.Fatal("still fetching after its subscriber closed")
 	}
 }
 

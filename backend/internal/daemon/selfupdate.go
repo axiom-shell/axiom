@@ -139,15 +139,19 @@ func (d *Daemon) rebuildInstalled(ctx context.Context) (bool, string) {
 func installBinary(ctx context.Context, data []byte, target string) error {
 	next := target + ".new"
 	defer os.Remove(next)
-	// Written with forks held off (os/exec forks under ForkLock's write
-	// lock): a child forked meanwhile holds the file open for writing
-	// until it execs, and running it then (swapIn) fails with ETXTBSY
-	syscall.ForkLock.RLock()
-	err := os.WriteFile(next, data, 0o755)
-	syscall.ForkLock.RUnlock()
-	if err != nil {
+	if err := writeExecutable(next, data); err != nil {
 		return err
 	}
-	_, err = swapIn(ctx, next, target)
+	_, err := swapIn(ctx, next, target)
 	return err
+}
+
+// writeExecutable writes a program to run right after, with forks held off:
+// a child forked meanwhile holds the file open for writing until it execs,
+// and running the file then fails with ETXTBSY (text file busy). A rename
+// wouldn't help (same inode); os/exec forks under ForkLock's write lock.
+func writeExecutable(path string, data []byte) error {
+	syscall.ForkLock.RLock()
+	defer syscall.ForkLock.RUnlock()
+	return os.WriteFile(path, data, 0o755)
 }
