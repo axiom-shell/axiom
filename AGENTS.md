@@ -71,7 +71,7 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 ## Checks
 
 All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs every one. None runs the shell, so still read the log. What they leave to you:
-- `scripts/check_structure.py`: run after adding, renaming or moving QML files.
+- `scripts/check_structure.py`: run after adding, renaming or moving QML files. It fails a singleton over 800 lines (bar `components/methods/` and the compositor backends): split it.
 - `scripts/run_tests.sh [Name…]` (`tests/tst_<Name>.qml`; schema defaults are `tst_Config`): add a case when changing a methods helper. A migration step's tests are Go (`scripts/check_go.sh`).
 - `scripts/check_qmllint.py` fails on warnings not in `scripts/qmllint-baseline.json`, and on baselined ones gone: fix new ones. `--update-baseline` only for Quickshell type-info gaps or baselined warnings gone.
 - **Agents never translate**, however easy it looks, and never run `scripts/check_i18n.py --fill`/`--prune`: the pre-commit hook adds new keys empty (shown in English) to every `config/i18n/<code>.json` and drops unused ones. `config/i18n/template/language.json` is generated. Edit i18n files only through the checker's format (2-space JSON; `--format` fixes it).

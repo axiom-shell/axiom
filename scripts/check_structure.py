@@ -27,6 +27,8 @@ running anything:
   - only the files in scripts/quickshell-io-allowlist.json use Process,
     FileView, Socket or Quickshell.execDetached directly, and
     the list only shrinks (these move to the axiom daemon)
+  - no singleton is over SINGLETON_LINES lines, but the pure helpers and
+    the compositor backends (split one before it grows past)
 and warns about files in the loaded directories that nothing registers or
 uses.
 
@@ -68,6 +70,12 @@ IO_KINDS = {
     "Socket": re.compile(r"(?<![\w.])Socket\s*\{"),
     "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
 }
+
+# A singleton past this is doing several jobs: split it. The pure helpers
+# (components/methods/, unit-tested tables of rules) and the compositor
+# backends (one compositor's whole contract each) may grow past it
+SINGLETON_LINES = 800
+SINGLETON_EXEMPT = re.compile(r"components/methods/.*|services/compositor/(Hyprland|Sway|Niri)Manager\.qml")
 
 errors, warnings = [], []
 
@@ -321,6 +329,9 @@ def main():
         head = next((line.strip() for line in text.split("\n") if line.strip() and not line.strip().startswith("//")), "")
         if head not in ("pragma ComponentBehavior: Bound", "pragma Singleton"):
             errors.append(f"{path}: doesn't start with pragma ComponentBehavior: Bound (or pragma Singleton)")
+        lines = text.count("\n")
+        if head == "pragma Singleton" and lines > SINGLETON_LINES and not path.startswith("tests/") and not SINGLETON_EXEMPT.fullmatch(path):
+            errors.append(f"{path}: a singleton of {lines} lines (over {SINGLETON_LINES}): split it")
 
     # qs.* imports resolve
     for path, text in sources.items():
