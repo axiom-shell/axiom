@@ -71,7 +71,7 @@ func TestNiriOwnSwitcher(t *testing.T) {
 		}
 	}
 	checkWithCompositor(t, "niri", files)
-	detached := render.NiriModuleText(w.parts(in, spec, w.detachedPath(), false))
+	detached := render.NiriModuleText(w.parts(in, spec, w.detachedPath(), ""))
 	if strings.Contains(detached, "recent-windows") || !strings.Contains(detached, `"windowSwitcher" "next"`) {
 		t.Errorf("detached: niri's switcher bound, or axiom's not:\n%s", detached)
 	}
@@ -85,4 +85,31 @@ func TestNiriOwnSwitcher(t *testing.T) {
 	if buildInputs(cfg, f, nil).get("compositorSwitcher") != false {
 		t.Error("unsupported: passed on")
 	}
+}
+
+// With the setting on and no switcher bind of axiom's, managed mode still
+// writes niri's switcher binds, empty, so niri's default keys are gone
+// (the maintainer: "Binds are exactly representative of what there is");
+// included writes none and leaves niri's defaults.
+func TestNiriOwnSwitcherWithoutBinds(t *testing.T) {
+	t.Parallel()
+	in := goldenInputs(t, "niri")
+	w := goldenWriter(t, "niri").(*niriWriter)
+	spec := in.get("specFile")
+	in.Set("compositorSwitcher", true)
+	kept := jsonx.Arr()
+	for _, b := range itemsOf(in.get("binds")) {
+		if a := getAny(b, "action"); a != "windowSwitcher" && a != "windowSwitcherReverse" {
+			kept.Append(b)
+		}
+	}
+	in.Set("binds", kept)
+	managed, module := w.managedText(in, spec), w.moduleText(in, spec)
+	if strings.Contains(managed, "next-window") || strings.Contains(managed, "previous-window") || !strings.Contains(managed, "recent-windows {") {
+		t.Errorf("managed: no empty recent-windows binds:\n%s", managed)
+	}
+	if strings.Contains(module, "recent-windows") {
+		t.Errorf("included: recent-windows written:\n%s", module)
+	}
+	checkWithCompositor(t, "niri", map[string]string{"managed.kdl": managed})
 }

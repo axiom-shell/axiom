@@ -7,7 +7,7 @@
 Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.
 - The defaults are ALT + Tab and ALT + SHIFT + Tab.
 - The Keybinds page's "Window switcher" preset adds them to an existing config.
-- Where the compositor has a switcher of its own (`supports.compositorSwitcher`, niri) and `WindowSwitcher.compositorSwitcher` is on (the default), the included and managed files bind these keys to that switcher instead ([niri backend](../compositor/niri-backend.md) › Primitives); detached keeps axiom's.
+- Where the compositor has a switcher of its own (`supports.compositorSwitcher`, niri) and `WindowSwitcher.compositorSwitcher` is on (the default), the included and managed files bind these keys to that switcher instead ([niri backend](../compositor/niri-backend.md) › Primitives); detached keeps axiom's. Managed mode without such a bind leaves niri no switcher keys at all.
 
 **Hyprland holds every key.** A surface can't see a modifier released before it maps and takes focus, and a quick tap always is.
 
