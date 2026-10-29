@@ -19,12 +19,13 @@ Item {
   id: root
 
   required property var notification
-  // Its history entry's uid ("" for a transient one), taken while it's
+  // Its history entry's uid ("" for one with none), taken while it's
   // live: invoking an action can close it
   property string uid: ""
   // A card of its own, else a row of the attached box
   property bool card: true
-  // The ScreenEdge it slides in from and out to, "slide" | "fade" | "none"
+  // The ScreenEdge it slides in from and out to, and how it moves:
+  // "slide" | "fade" | "none"
   property int slideEdge: ScreenEdge.Top
   property string motionStyle: "slide"
   // How far it slides to be out of sight (past its window's edge), and the
@@ -69,10 +70,10 @@ Item {
   readonly property bool critical: root.notification ? NotificationManager.urgencyOf(root.notification) === NotificationUrgency.Critical : false
 
   // expireTimeout: 0 is the freedesktop-spec signal for "never expire", a
-  // positive one is the app's own duration (ms), -1 leaves it to us
-  readonly property bool neverExpires: (NotificationsConfig.followApps && root.notification?.expireTimeout === 0) || (NotificationsConfig.criticalStays && root.critical)
-  // (its app's rule's duration first, NotificationsConfig.apps)
+  // positive one is the app's own duration (ms), -1 leaves it to us; its
+  // app's rule's duration (NotificationsConfig.apps) comes before either
   readonly property int _ruleTimeout: root.notification ? NotificationManager.timeoutOf(root.notification) : -1
+  readonly property bool neverExpires: (root._ruleTimeout <= 0 && NotificationsConfig.followApps && root.notification?.expireTimeout === 0) || (NotificationsConfig.criticalStays && root.critical)
   readonly property int duration: root._ruleTimeout > 0 ? root._ruleTimeout : NotificationsConfig.followApps && root.notification?.expireTimeout > 0 ? root.notification.expireTimeout : NotificationsConfig.timeout
 
   // The card's box, for its blur shape (ToastStack)
@@ -87,12 +88,12 @@ Item {
   opacity: 0
 
   // Hides it (the notification stays in the history), as it leaves
-  // `index` in the stack (0: the one at its edge), growing as `grow`
-  function dismiss(index, grow) {
+  // `index` in the stack (0: the one at its edge)
+  function dismiss(index) {
     if (root.leaving)
       return;
     snapBack.stop();
-    const out = ToastMotion.leave(index ?? 0, root.slideEdge, grow ?? ToastMotion.growth(root.slideEdge, 0), root.height, root.hiddenDistance);
+    const out = ToastMotion.leave(index ?? 0, root.slideEdge, root.height, root.hiddenDistance);
     root.tucked = out.tuck && swipe.x === 0;
     if (swipe.x !== 0) {
       // A swipe carries on the way it went, not to the slide edge

@@ -64,7 +64,7 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 - Rendered through an `imageHost` item that `shell/Notifications` lends the service, since grabbing an image needs a window.
 
 ### Per-app rules
-- `Notifications.apps`: per app (`app`, matched through `NotificationMatch` against the notification's keys, as its windows are), whether it toasts (`toasts`), is kept (`history`; off, it's tracked for its actions but gets no entry), its urgency (`urgency`, over the app's: `urgencyOf`, which the entry, the toast and do not disturb use) and its toast duration (`timeout`, ms; -1 the default: `timeoutOf`). `ruleFor` finds an entry's or notification's rule.
+- `Notifications.apps`: per app (`app`, matched through `NotificationMatch` against the notification's keys, as its windows are), whether it toasts (`toasts`), is kept (`history`; off, it gets no entry and is tracked only while a toast shows it: `shell/Notifications` calls `toastsGone` once no screen does, which expires it, and a reload expires one left over), its urgency (`urgency`, over the app's: `urgencyOf`, which the entry, the toast and do not disturb use) and its toast duration (`timeout`, ms; -1 the default: `timeoutOf`). `ruleFor` finds an entry's or notification's rule.
 
 ### Do not disturb
 - `dnd` is readonly; change it with `setDnd` / `toggleDnd`.

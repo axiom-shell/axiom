@@ -65,7 +65,7 @@ Item {
       onLinkActivated: link => NotificationManager.openLink(link)
 
       HoverHandler {
-        cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : (root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor)
+        cursorShape: parent.hoveredLink !== "" || root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
       }
     }
   }

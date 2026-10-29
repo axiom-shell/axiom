@@ -41,15 +41,11 @@ TestCase {
 
   function test_growth() {
     compare(ToastMotion.growth(ScreenEdge.Top, 1), {
-      "axis": "y",
-      "sign": 1,
-      "across": true
+      "sign": 1
     });
     compare(ToastMotion.growth(ScreenEdge.Bottom, 0).sign, -1, "bottom stacks grow up");
     compare(ToastMotion.growth(ScreenEdge.Left, 0), {
-      "axis": "y",
-      "sign": 1,
-      "across": false
+      "sign": 1
     });
     compare(ToastMotion.growth(ScreenEdge.Right, 0.5).sign, 1, "from the middle, down");
     compare(ToastMotion.growth(ScreenEdge.Right, 1).sign, -1, "from the bottom end, up");
@@ -67,22 +63,21 @@ TestCase {
   }
 
   function test_leave() {
-    const down = ToastMotion.growth(ScreenEdge.Top, 0.5);
-    compare(ToastMotion.leave(0, ScreenEdge.Top, down, 80, 300), {
+    compare(ToastMotion.leave(0, ScreenEdge.Top, 80, 300), {
       "shift": {
         "x": 0,
         "y": -300
       },
       "tuck": false
     }, "the edge toast slides all the way out");
-    compare(ToastMotion.leave(2, ScreenEdge.Top, down, 80, 300), {
+    compare(ToastMotion.leave(2, ScreenEdge.Top, 80, 300), {
       "shift": {
         "x": 0,
         "y": -40
       },
       "tuck": true
     }, "a lower one tucks behind those nearer the edge");
-    compare(ToastMotion.leave(2, ScreenEdge.Right, down, 80, 400), {
+    compare(ToastMotion.leave(2, ScreenEdge.Right, 80, 400), {
       "shift": {
         "x": 400,
         "y": 0

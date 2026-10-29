@@ -29,7 +29,6 @@ RowLayout {
   }
 
   Layout.fillWidth: true
-  visible: root.notification?.hasInlineReply ?? false
   spacing: Widget.spacing / 2
 
   StyledTextEntry {

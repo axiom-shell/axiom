@@ -28,6 +28,8 @@ Scope {
 
   // A toast the user closed here: the host closes it on every screen
   signal userClosed(var notification)
+  // A toast is gone from this stack
+  signal dropped(var notification)
 
   // The toasts, newest first: { key, notification, uid }. One stays while
   // it leaves, until it's out of sight.
@@ -50,8 +52,8 @@ Scope {
   // whole screen, its gaps from the screen's edges
   readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screenName)
 
-  // Detached, or attached but pushed away from its edge by a popout,
-  // which it can't stay joined to
+  // One box out of its edge (NotificationsConfig.detached off), but over
+  // a fullscreen window, which leaves no border or bar to grow out of
   readonly property bool attached: !NotificationsConfig.detached && !root.fullscreen
   readonly property var grow: ToastMotion.growth(NotificationsConfig.edge, NotificationsConfig.position)
   readonly property bool vertical: NotificationsConfig.edge === ScreenEdge.Left || NotificationsConfig.edge === ScreenEdge.Right
@@ -90,7 +92,7 @@ Scope {
     root._leaving = Utils.withEntry(root._leaving, key, root._offsets[key] ?? 0);
     const item = (root.attached ? root._rows : root._cards)[key];
     if (item)
-      item.dismiss(index, root.grow);
+      item.dismiss(index);
     else
       root._drop(key);
   }
@@ -101,7 +103,9 @@ Scope {
   }
 
   function _drop(key) {
+    const notification = root.toasts.find(t => t.key === key)?.notification ?? null;
     root.toasts = root.toasts.filter(t => t.key !== key);
+    root.dropped(notification);
     root._leaving = Utils.withEntry(root._leaving, key, undefined);
     root._heights = Utils.withEntry(root._heights, key, undefined);
   }
@@ -121,7 +125,7 @@ Scope {
   }
   readonly property real stackLength: {
     const staying = root.toasts.filter(t => root._leaving[t.key] === undefined);
-    return ToastMotion.rows(staying.map(t => root._heights[t.key] ?? 0), root.spacing).length;
+    return ToastMotion.rows(staying.map(t => root._heights[t.key] ?? 0), root.attached ? 0 : root.spacing).length;
   }
   readonly property real _firstHeight: root._heights[root.toasts.find(t => root._leaving[t.key] === undefined)?.key] ?? 0
 

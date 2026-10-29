@@ -12,24 +12,33 @@ func v84(cfg *jsonx.Object) []string {
 	if n == nil {
 		return nil
 	}
-	corner, ok := n.Value("position").(string)
-	if !ok {
+	corner, isCorner := n.Value("position").(string)
+	gaps, _ := n.Value("gaps").(*jsonx.Object)
+	if !isCorner && gaps == nil {
 		return nil
 	}
-	places := map[string][2]any{
-		"topLeft":     {"top", 0.0},
-		"topRight":    {"top", 100.0},
-		"bottomLeft":  {"bottom", 0.0},
-		"bottomRight": {"bottom", 100.0},
+	// The old default, left out of a file written by hand
+	if !n.Has("position") {
+		corner, isCorner = "topLeft", true
 	}
-	place, known := places[corner]
-	if !known {
-		place = places["topLeft"]
+	var changes []string
+	if isCorner {
+		places := map[string][2]any{
+			"topLeft":     {"top", 0.0},
+			"topRight":    {"top", 100.0},
+			"bottomLeft":  {"bottom", 0.0},
+			"bottomRight": {"bottom", 100.0},
+		}
+		place, known := places[corner]
+		if !known {
+			place = places["topLeft"]
+		}
+		n.Set("edge", place[0])
+		n.Set("position", place[1])
+		n.Set("detached", true)
+		changes = append(changes, "Notifications.position ("+corner+") became Notifications.edge, position and detached")
 	}
-	n.Set("edge", place[0])
-	n.Set("position", place[1])
-	n.Set("detached", true)
-	if gaps, _ := n.Value("gaps").(*jsonx.Object); gaps != nil {
+	if gaps != nil {
 		key := "all"
 		if gaps.Value("even") == false {
 			key = "left"
@@ -40,7 +49,8 @@ func v84(cfg *jsonx.Object) []string {
 		if gap, isNum := gaps.Value(key).(float64); isNum && gap != 12 {
 			n.Set("gap", gap)
 		}
+		n.Delete("gaps")
+		changes = append(changes, "Notifications.gaps became one gap")
 	}
-	n.Delete("gaps")
-	return []string{"Notifications.position (" + corner + ") became Notifications.edge, position and detached, and Notifications.gaps one gap"}
+	return changes
 }

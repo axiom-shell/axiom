@@ -2,7 +2,7 @@ pragma Singleton
 import QtQuick
 
 // How a stack of notification toasts moves (ToastStack): the edge its
-// toasts slide in from and out to, which way it grows and makes way, where
+// toasts slide in from and out to, which way it grows, where
 // each toast sits, and how one leaves. Newest at the stack's start (its
 // edge, or its end of the edge), pushing the rest along.
 QtObject {
@@ -34,28 +34,21 @@ QtObject {
     return p.edge;
   }
 
-  // Which way a stack on `edge` at `position` (0-1 along it) grows, and so
-  // makes way: { axis: "x" | "y", sign: 1 | -1, across } (`across`: away
-  // from its edge rather than along it). A top or bottom stack grows away
-  // from its edge; a side one along it, away from its nearer end (down
-  // from the middle)
+  // Which way a stack on `edge` at `position` (0-1 along it) grows, always
+  // down or up the screen: { sign: 1 (down) | -1 (up) }. A top or bottom
+  // stack grows away from its edge; a side one along it, away from its
+  // nearer end (down from the middle)
   function growth(edge, position) {
     if (edge === ScreenEdge.Top)
       return {
-        "axis": "y",
-        "sign": 1,
-        "across": true
+        "sign": 1
       };
     if (edge === ScreenEdge.Bottom)
       return {
-        "axis": "y",
-        "sign": -1,
-        "across": true
+        "sign": -1
       };
     return {
-      "axis": "y",
-      "sign": position > 0.5 ? -1 : 1,
-      "across": false
+      "sign": position > 0.5 ? -1 : 1
     };
   }
 
@@ -99,12 +92,12 @@ QtObject {
 
   // How a toast leaves: { shift ({ x, y }), tuck }. The one at the stack's
   // start (index 0), or any whose slide crosses no other toast (sideways
-  // out of a stack growing along y), slides all the way out (`distance`,
+  // out of the stack), slides all the way out (`distance`,
   // past the clip). One further along a stack sliding the way it grows
   // would pass behind the others: it tucks under them instead (`tuck`,
   // drawn beneath), sliding `size` / 2 toward the edge as it fades.
-  function leave(index, slide, grow, size, distance) {
-    const along = (slide === ScreenEdge.Top || slide === ScreenEdge.Bottom) === (grow.axis === "y");
+  function leave(index, slide, size, distance) {
+    const along = slide === ScreenEdge.Top || slide === ScreenEdge.Bottom;
     if (index === 0 || !along)
       return {
         "shift": root.hiddenShift(slide, distance),

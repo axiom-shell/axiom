@@ -11,20 +11,32 @@ import qs.components.surfaces.notifications
 // its screen, driven by NotificationManager.showPopup. Closing a toast only
 // hides it (unless closeRemoves / removeOnClick): the notification stays in
 // the history. One the user closes, or its app or the list closes, goes on
-// every screen.
+// every screen. Once no screen shows a notification any more,
+// NotificationManager.toastsGone hears of it.
 Scope {
   id: root
 
   signal hideEverywhere(var notification)
 
+  // Tells NotificationManager when no stack holds a toast of it
+  function _released(notification) {
+    if (stacks.instances.some(s => s.toasts.some(t => t.notification === notification)))
+      return;
+    NotificationManager.toastsGone(notification);
+  }
+
   Connections {
     target: NotificationManager
     function onShowPopup(notification) {
       notification.closed.connect(() => root.hideEverywhere(notification));
+      // (a stack shows none on a screen it doesn't show on, or over a
+      // fullscreen window with quietFullscreen)
+      Qt.callLater(() => root._released(notification));
     }
   }
 
   Variants {
+    id: stacks
     model: General.screensFor(NotificationsConfig.screen)
 
     delegate: ToastStack {
@@ -33,6 +45,7 @@ Scope {
       screen: modelData
 
       onUserClosed: notification => root.hideEverywhere(notification)
+      onDropped: notification => root._released(notification)
 
       Connections {
         target: NotificationManager

@@ -102,13 +102,14 @@ Item {
       property: "x"
       to: 0
       duration: Appearance.animFast
-      easing.type: Easing.OutCubic
+      easing.type: Appearance.easing
     }
     NumberAnimation {
       target: root
       property: "opacity"
       to: 1
       duration: Appearance.animFast
+      easing.type: Appearance.easing
     }
   }
 

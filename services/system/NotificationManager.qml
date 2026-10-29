@@ -117,6 +117,18 @@ Singleton {
     return root._uidOf(notif);
   }
 
+  // Every toast of a notification its app's rule keeps out of the history
+  // is gone (shell/Notifications): it closes, as nothing holds it now
+  function toastsGone(notif) {
+    const held = !!notif && root._toastOnly.includes(notif);
+    root._toastOnly = root._toastOnly.filter(n => n && n !== notif);
+    if (held)
+      notif.expire();
+  }
+  // Those notifications, tracked only for their toasts (a closed one goes
+  // at the next toastsGone)
+  property var _toastOnly: []
+
   function clearAll() {
     const old = root.entries;
     root.entries = [];
@@ -518,6 +530,12 @@ Singleton {
   function _adopt(notif) {
     if (root._uidOf(notif))
       return;
+    // One its app's rule keeps out of the history had only its toasts,
+    // which the reload took
+    if (root.ruleFor(notif)?.history === false) {
+      notif.expire();
+      return;
+    }
     const entry = root.entries.find(e => !root._live[e.uid] && e.nid === notif.id && e.summary === (notif.summary || ""));
     if (entry) {
       root.entries = root.entries.map(e => e === entry ? Object.assign({}, e, {
@@ -597,11 +615,15 @@ Singleton {
         root._adopt(notification);
         return;
       }
-      // Tracked, so the object outlives this handler; transient ones
-      // (e.g. volume changes), and those of an app whose rule keeps none,
-      // only pop up
+      // None for an app whose rule shows none, nor while Do Not Disturb
+      // is on but a critical one (unless NotificationsConfig.
+      // dndAllowCritical is off)
       const rule = root.ruleFor(notification);
       const urgency = root.urgencyOf(notification);
+      const toasts = rule?.toasts !== false && (!root.dnd || (NotificationsConfig.dndAllowCritical && urgency === NotificationUrgency.Critical));
+      // Tracked, so the object outlives this handler; transient ones
+      // (e.g. volume changes) only pop up, and those of an app whose rule
+      // keeps none only while their toasts last (toastsGone)
       if (!notification.transient && rule?.history !== false) {
         notification.tracked = true;
         const uid = root._newUid();
@@ -609,18 +631,12 @@ Singleton {
         root._put(entry);
         root._link(notification, uid);
         root._cacheImage(uid, entry.image);
-      } else if (!notification.transient) {
+      } else if (!notification.transient && toasts) {
         notification.tracked = true;
+        root._toastOnly = root._toastOnly.concat([notification]);
       }
-
-      // None for an app whose rule shows none, nor while Do Not Disturb
-      // is on but a critical one (unless NotificationsConfig.
-      // dndAllowCritical is off)
-      if (rule?.toasts === false)
-        return;
-      if (!root.dnd || (NotificationsConfig.dndAllowCritical && urgency === NotificationUrgency.Critical)) {
+      if (toasts)
         root.showPopup(notification);
-      }
     }
   }
 }
