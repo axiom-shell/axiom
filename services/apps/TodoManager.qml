@@ -107,8 +107,10 @@ QtObject {
       root._items = TodoItems.normalize(data?.items);
       root._unreadable = false;
     } catch (e) {
+      // Once per breakage: each hello looks at the file again (FileManager.watch)
+      if (!root._unreadable)
+        console.warn("[TodoManager] Couldn't read", root.path + ":", e.message, "(keeping the list shown, and not saving over it)");
       root._unreadable = true;
-      console.warn("[TodoManager] Couldn't read", root.path + ":", e.message, "(keeping the list shown, and not saving over it)");
     }
     root._loaded = true;
   }
