@@ -52,7 +52,6 @@ DropdownSurface {
     contentPadding: 0
     // A lane of its own for the scroll bar, so it never covers a row
     showScrollBar: listColumn.implicitHeight > scroll.height
-    rightPadding: showScrollBar ? Widget.px(12) : 0
 
     ColumnLayout {
       id: listColumn

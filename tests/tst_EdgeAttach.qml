@@ -46,6 +46,113 @@ TestCase {
     compare(EdgeAttach.filletMargin(2, 0), 0);
   }
 
+  function grow(extra) {
+    return EdgeAttach.growth(Object.assign({
+      "vertical": true,
+      "bottom": false,
+      "anchorStart": 100,
+      "anchorLength": 40,
+      "openLength": 200,
+      "maxLength": 400,
+      "lo": 54,
+      "hi": 946
+    }, extra));
+  }
+
+  function test_growth_data() {
+    return [
+      // Away from a horizontal bar, centred along it
+      {
+        "tag": "top bar",
+        "extra": {
+          "vertical": false
+        },
+        "direction": "down",
+        "pinned": NaN
+      },
+      {
+        "tag": "bottom bar",
+        "extra": {
+          "vertical": false,
+          "bottom": true
+        },
+        "direction": "up",
+        "pinned": NaN
+      },
+      // Centred on the anchor (from 20), kept within lo: down from 54
+      {
+        "tag": "side bar, high",
+        "extra": {},
+        "direction": "down",
+        "pinned": 54
+      },
+      {
+        "tag": "side bar, middle",
+        "extra": {
+          "anchorStart": 400
+        },
+        "direction": "down",
+        "pinned": 320
+      },
+      // 720 + 400 passes hi: up from its end, 920
+      {
+        "tag": "side bar, low",
+        "extra": {
+          "anchorStart": 800
+        },
+        "direction": "up",
+        "pinned": 920
+      },
+      // Kept within hi as it opens: up from hi
+      {
+        "tag": "side bar, at the end",
+        "extra": {
+          "anchorStart": 900
+        },
+        "direction": "up",
+        "pinned": 946
+      },
+      // Content that doesn't grow stays where it opened
+      {
+        "tag": "side bar, no growth",
+        "extra": {
+          "anchorStart": 800,
+          "maxLength": 0
+        },
+        "direction": "down",
+        "pinned": 720
+      },
+      // Room neither way: the way with more (below 520, above 380)
+      {
+        "tag": "side bar, too long",
+        "extra": {
+          "anchorStart": 400,
+          "maxLength": 1000
+        },
+        "direction": "down",
+        "pinned": 320
+      },
+      {
+        "tag": "side bar, too long, low",
+        "extra": {
+          "anchorStart": 600,
+          "maxLength": 1000
+        },
+        "direction": "up",
+        "pinned": 720
+      }
+    ];
+  }
+
+  function test_growth(data) {
+    const g = grow(data.extra);
+    compare(g.direction, data.direction);
+    if (isNaN(data.pinned))
+      verify(isNaN(g.pinned));
+    else
+      compare(g.pinned, data.pinned);
+  }
+
   function test_joins() {
     // Pushed back from the start, or within a connector gap of it
     compare(EdgeAttach.joins(60, 100, 54, 946, 56, true, true), {

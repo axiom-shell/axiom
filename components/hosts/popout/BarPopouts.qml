@@ -298,11 +298,39 @@ PopoutWrapperBase {
       root._peakAcross = Math.max(root._peakAcross, root._boxAcross);
   }
   on_BoxAcrossChanged: _notePeak()
-  onContentReadyChanged: _notePeak()
+  onContentReadyChanged: {
+    _notePeak();
+    root._openLength = root.contentReady ? mainPopup.boxLength : 0;
+  }
   onOccupiedChanged: {
     if (!root.occupied)
       root._peakAcross = 0;
   }
+
+  // ---- Growing while open ----
+  // Which way the box grows as its content does, so the controls on the
+  // side it grows from stay put (EdgeAttach.growth): away from the bar,
+  // or along a vertical one from where it opened. Content reads it
+  // (Panel.growth) to keep its controls on that side. Taken from the box's
+  // length once its content is ready (again after a switch in place) and
+  // the most its content declares it can take (Panel.maxImplicitHeight).
+  property real _openLength: 0
+  readonly property real _maxAlong: {
+    const declared = root.barConfig.vertical ? root._content?.maxImplicitHeight ?? 0 : 0;
+    return declared > 0 ? declared + surface.contentInset * 2 : 0;
+  }
+  readonly property var _growth: EdgeAttach.growth({
+    "vertical": root.barConfig.vertical,
+    "bottom": root.barConfig.bottom,
+    "anchorStart": root.barConfig.vertical ? root.anchorRect.y : root.anchorRect.x,
+    "anchorLength": root.barConfig.vertical ? root.anchorRect.height : root.anchorRect.width,
+    "openLength": root._openLength,
+    "maxLength": root._maxAlong,
+    "lo": placement.lo,
+    "hi": placement.hi
+  })
+  readonly property string growth: root._growth.direction
+  // ---- end growing while open ----
   // The room past the drawn box, on the side away from the bar: the
   // window's depth stays put while the box animates within it
   // (and room for the shadow the surface casts, see SurfaceShadow)
@@ -358,14 +386,18 @@ PopoutWrapperBase {
     readonly property int contentHeight: root.currentItem?.implicitHeight ?? 100 // fixed px: a placeholder until content loads
 
     // Along the bar, in bar-window coordinates: the box centred on the
-    // anchor, and the surface around it with a fillet margin each side,
-    // placed by EdgeAttach (root.place). One that would be pushed back from
+    // anchor (on a vertical bar, as it opened: see Growing while open),
+    // and the surface around it with a fillet margin each side, placed by
+    // EdgeAttach (root.place). One that would be pushed back from
     // an end, or come within a connector gap of it, joins it instead: flush
     // on the perpendicular stroke, merging into that edge.
     readonly property real boxLength: (root.barConfig.vertical ? mainPopup.contentHeight : mainPopup.contentWidth) + surface.contentInset * 2
     readonly property real alignedBoxStart: {
       if (!root.currentData)
         return 0;
+      // Open along a vertical bar: its start or end held where it opened
+      if (root._openLength > 0 && isFinite(root._growth.pinned))
+        return root.growth === "down" ? root._growth.pinned : root._growth.pinned - mainPopup.boxLength;
       const start = root.barConfig.vertical ? root.anchorRect.y : root.anchorRect.x;
       const length = root.barConfig.vertical ? root.anchorRect.height : root.anchorRect.width;
       return start + (length - mainPopup.boxLength) / 2;

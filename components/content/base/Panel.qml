@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
+import qs.components.reusable
 
 // Content that lays out as a column and can be shown by either host: a bar
 // popout (sized to its content, with the popout's box) or an overlay card
@@ -82,6 +83,20 @@ Item {
   // that big from the start rather than resized (see BarPopouts.spareAcross)
   property real maxImplicitWidth: 0
   property real maxImplicitHeight: 0
+
+  // Bar popout only: which way the popout grows as the content does
+  // (BarPopouts.growth), "down" in a card. Content that grows keeps its
+  // controls on the side it grows from: with `flips`, its column's items
+  // show in reverse order while it grows "up" (from a bottom bar, or low
+  // on a side bar), the controls last, by the bar (see LayoutOrder for
+  // what the column may hold).
+  readonly property string growth: root.embedded ? "down" : root.wrapper?.growth ?? "down"
+  readonly property bool growsUp: root.growth === "up"
+  property bool flips: false
+  property LayoutOrder _order: LayoutOrder {
+    layout: column
+    reversed: root.flips && root.growsUp
+  }
 
   // Bar popout only: keep the keyboard (and a focus grab) while a text
   // field is up; a click outside the popout calls focusLost()
