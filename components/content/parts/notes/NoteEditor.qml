@@ -141,15 +141,8 @@ Item {
     i = (i + matches.length) % matches.length;
     root.findIndex = i;
     root.findMatch = matches[i];
-    Qt.callLater(root._scrollToMatch);
-  }
-
-  function _scrollToMatch() {
-    const match = root.findMatch;
-    if (match) {
-      memory.cancel();
-      root.ensureVisible(match.block, match.pos);
-    }
+    memory.cancel();
+    root.ensureVisible(matches[i].block, matches[i].pos);
   }
 
   // Closes find; with `select`, the match is selected for editing
@@ -219,25 +212,19 @@ Item {
   // Scrolls a block's position (its cursor, a match) into view, once the
   // blocks have been laid out: a structural edit reloads every block and
   // adds new ones at the end, so until then their y is stale (a new last
-  // block's is 0, which scrolled to the top)
-  property var _visible: null
+  // block's is 0, which scrolled to the top). Calls in one frame scroll
+  // once, to the last one's position (Qt.callLater keeps its arguments).
   function ensureVisible(index, pos) {
-    root._visible = {
-      "block": index,
-      "pos": pos
-    };
-    Qt.callLater(root._scrollToVisible);
+    Qt.callLater(root._scrollToVisible, index, pos);
   }
 
-  function _scrollToVisible() {
-    const at = root._visible;
-    root._visible = null;
-    const item = at ? root._block(at.block) : null;
+  function _scrollToVisible(index, pos) {
+    const item = root._block(index);
     if (!item)
       return;
     blocks.forceLayout();
     const flick = root._flick;
-    const rect = item.field.positionToRectangle(at.pos);
+    const rect = item.field.positionToRectangle(pos);
     const top = item.y + rect.y;
     const bottom = top + rect.height;
     if (top < flick.contentY)
@@ -251,7 +238,7 @@ Item {
   ScrollMemory {
     id: memory
     flickable: root._flick
-    key: root.note ? "notes:" + root.note.path : ""
+    key: root.note ? "Notes/" + root.note.path : ""
   }
 
   // --- From the blocks ---
