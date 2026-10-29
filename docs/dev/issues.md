@@ -20,6 +20,24 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A dev build during a branch switch re-execs onto the defaults
+- **Where:** `backend/internal/daemon/dev.go` (`watchSource`, `build`), the re-exec's config load
+- **What:** On 2026-10-30, `git switch main` followed 3 s later by `git pull` (main at config version 82, then 84). The source watch kicked a build of the v82 tree. The pull's changes reached the old process while that build ran, and its kick died with the process when the build re-exec'd. The new image (`the tree's schema isn't the one this binary was built with (fine in dev mode)`) knew version 82, refused the v84 config.json (`version: 84 is newer than this axiom knows (82): update axiom`) and logged `the config doesn't load: running on the defaults, saves blocked until it's fixed`. The shell came up on the defaults until the next build. config.json itself stayed untouched. Two gaps: a kick that arrives during a build should build again rather than re-exec into the stale binary (or the new image should check whether the source is newer than itself), and a re-exec that can't read the config should keep the config the old image had running (the shell's message already claims it keeps the last good config).
+- **Size:** small
+- **Found:** 2026-10-30, while investigating the shell on default config after merging the notifications revamp
+
+### Mutants that survive in migrate
+- **Where:** `backend/internal/migrate/steps/v81.go`, `backend/internal/migrate/convert/convert.go`
+- **What:** The sampled mutation run (`.claude/reviews/guardrails.md` › Mutation run; v79.go:32's `<`→`<=` is an equivalent tie) left these cases untested. steps: v81.go:48 (an array other than `modules` taken for a module list), :108 (an empty string property), :117 (an id of exactly 40 characters), :127 and :130 (a module's `w` and `h` carried over). convert.go (a quarter of its mutants sampled): key order, which the JS reference fixes byte for byte, at :116 and :721 (the earliest of a group's keys), :136 (inserting at the end), :142, :162, :635 and :955 (a moved or re-set key keeping its place); the notes at :71 and :252; :185 (an empty string value); :305 (`maxAge` scaled to ms); :339 and :342 (which calendar account fields are kept, `name` only for a local one); :366 (`WindowBehaviour.cursorHideTimeout` scaled); :384 and :643 (a Greeter's or edge menu's screen `all` made `primary`); :669 (a module without properties); :767 (`durationMs` renamed in custom animations); :837 (a page without `fineGrid`); :881 and :891 (the Monitors profile and Keybinds preset lists).
+- **Size:** small
+- **Found:** 2026-10-30, while running the sampled mutation run (Phase 11 step 0 batch 8)
+
+### Mutants that survive in the store's and the installer's failure paths
+- **Where:** `backend/internal/store/store.go` (`write`, `loadInitial`, `reload`, `holdTakeovers`), `backend/internal/greeterinstall/install.go`, `backend/internal/greeterinstall/greeterinstall.go`, `backend/internal/greeterinstall/elevate.go`
+- **What:** After batch 8's tests, the mutation run's survivors outside the takeover and install rules are paths no test takes. store.go: a failed save (:292, :293), the first config unwritable or config.json unreadable (:385, :394), the `Missing` state (:300 a save clears it, :517 and :518 the event when the file goes, :538 a reload clears it), an outside edit's event saying `FromFile` (:558), and the write-back's bytes recorded so it isn't read again (:596, only an extra no-change event). greeterinstall: I/O errors returned as they are (install.go makeVarDir :208–:215, extract, copyTree and writeFile :567–:652, settle :475 and :483, elevate.go:48 a non-refusal error from firstProgram, greeterinstall.go:298 `git ls-files` failing), replaceCopy's cleanup of `.old` and `.new` (install.go:226, :241–:253), a local archive's tar failing (install.go:329, :349–:353), readUsers given a folder (install.go:668), and elevate.go:63 (the authorized watcher's stop). The branches only root takes (install.go:98 the user's groups, :150 commands run as greetd's user, :477 the copy made root's, :192 and :677 a package folder another account owns) survive a fake-root pass too (`unshare -rm`, which kills only :132): they need a test that checks which account a command runs as. Equivalent and left: log-only lines, share.go's schema depth bound, a `Stat` on an open file failing.
+- **Size:** small
+- **Found:** 2026-10-30, while running the sampled mutation run (Phase 11 step 0 batch 8)
+
 ### A shared file older than v71 resets niri's hot corner
 - **Where:** `backend/internal/share/zz_generated_movedkeys.go` (`movedKeys`), `backend/internal/migrate/steps/v82.go`
 - **What:** `movedKeys` lists `Compositor.niri.hotCorner` (moved into shared files at v71), but step v82 made niri's hot corner an axiom one and the key is gone from the schema. `KeepMovedKeys` looks it up in the user's current config, finds nothing, and a format-1 shared file older than v71 applies without keeping the user's hot corner. The v82 shape isn't a plain rename (it became a `HotCorners` item), so the list can't just name a new path.
@@ -404,3 +422,45 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced.
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
+
+### No caps lock warning when typing a password
+- **Where:** `components/content/Password/Password.qml`, `components/surfaces/lockscreen/`, `components/surfaces/greeter/`
+- **What:** Neither the lock screen's nor the greeter's password field shows that Caps Lock is on (grep for caps lock in both finds nothing), so a password typed with it on just fails with no hint. Also open: where the state comes from (the compositor's keyboard LEDs, or the daemon reading the LED), and whether other password fields (Wi-Fi, polkit) show it too.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### Removable drives aren't handled
+- **Where:** `services/system/` (no service yet)
+- **What:** Nothing in services, components or the schema uses udisks: plugging in a USB stick or SD card gives no notification, no mount or eject, and no list of drives (the Disks module shows only mounted filesystems). Also open: automount or ask, the notification's actions, where the drive list lives (a bar widget, a popout, the Disks module), and running udisks through the daemon.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### No VPN controls
+- **Where:** `services/system/NetworkingManager.qml`, `components/content/Network/`
+- **What:** The Network popout and module have no VPN connections (no "vpn" or "wireguard" anywhere in services or the schema); only Tailscale has its own widget. A user's NetworkManager VPNs (WireGuard, OpenVPN) can't be seen or toggled. Also open: whether Quickshell's Networking exposes VPN connections or the daemon goes to NetworkManager, and where they show.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### Bluetooth pairing that asks for a PIN or a passkey
+- **Where:** `services/system/BluetoothManager.qml` (`_connectAfterPair`), `components/content/BluetoothDevices/`
+- **What:** Pairing trusts, pairs and connects, but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Also open: whether Quickshell's Bluetooth registers an agent, or the daemon does, and the prompt's surface.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### No OSD for caps lock or the keyboard layout
+- **Where:** `config/schema/definitions/common/OSDEntry.yaml` (bar kinds), `components/surfaces/osd/OSDTriggers.qml`, `services/system/KeyboardLayoutManager.qml`
+- **What:** The OSD's bars are only master, other, microphone, brightness and app: toggling Caps Lock or Num Lock, or switching the keyboard layout, shows nothing. These aren't levels, so they need a different OSD shape than a bar. Also open: the lock key state's source (shared with [No caps lock warning when typing a password](#no-caps-lock-warning-when-typing-a-password)).
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### No keyboard backlight control
+- **Where:** `services/system/BrightnessManager.qml`
+- **What:** Laptops' keyboard backlights (`kbd_backlight` LEDs) have no slider, OSD bar or keys: nothing in services reads them. Also open: whether `BrightnessManager` takes them as another device, the OSD bar kind, and writing the LED through the daemon.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### Enterprise and WEP Wi-Fi can't be joined
+- **Where:** `services/system/NetworkingManager.qml` (`toggle`'s `unsupported`)
+- **What:** The Network menu only takes a PSK: an enterprise (EAP: eduroam, work networks) or WEP network fails with `unsupported`, so users at a university or office have to use nmtui or nm-connection-editor. Also open: which EAP methods to offer (PEAP/TTLS with a username and password at least), certificates, and the secrets going through `SecretsManager`.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once

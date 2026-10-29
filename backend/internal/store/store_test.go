@@ -423,6 +423,10 @@ func TestReloadHoldsTakeovers(t *testing.T) {
 	if err != nil || onDisk.Value("Idle").(*jsonx.Object).Value("enabled") != true {
 		t.Errorf("the kept takeover wasn't written back: %v", err)
 	}
+	// A reload leaves the takeovers known: the next save goes ahead
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 10.0)}, SetOptions{}); err != nil {
+		t.Errorf("a save after the reload: %v", err)
+	}
 	// Its own card still changes it
 	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), false)}, SetOptions{Takeover: true}); err != nil {
 		t.Fatal(err)
@@ -461,16 +465,19 @@ func TestTakeoverOnlyEditIsWrittenBackOnce(t *testing.T) {
 func TestFixedUnparsableFileKeepsItsTakeovers(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
-	first := open(t, dir)
+	first := openKeeping(t, dir)
 	if _, err := first.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), true)}, SetOptions{Takeover: true}); err != nil {
 		t.Fatal(err)
 	}
 	good, _ := first.Config()
 	first.Close()
+	kept := filepath.Join(dir, "state", TakeoversFile)
+	os.Remove(kept)
 	path := filepath.Join(dir, FileName)
 	os.WriteFile(path, []byte(`{"version": `), 0o600)
 
-	s := open(t, dir)
+	s := openKeeping(t, dir)
+	t.Cleanup(func() { s.Close() })
 	watch(t, s)
 	os.WriteFile(path, jsonx.Marshal(good), 0o600)
 	waitFor(t, func() bool { _, st := s.Config(); return !st.Blocked })
@@ -479,6 +486,9 @@ func TestFixedUnparsableFileKeepsItsTakeovers(t *testing.T) {
 	}
 	if onDisk, _, _ := Peek(Options{Dir: dir, Pipeline: pipeline(t)}); onDisk.Value("Idle").(*jsonx.Object).Value("enabled") != true {
 		t.Error("the fixed file was written back with the default")
+	}
+	if data, _ := os.ReadFile(kept); !strings.Contains(string(data), `"enabled": true`) {
+		t.Errorf("the fixed file's takeovers weren't kept: %s", data)
 	}
 }
 
@@ -595,14 +605,74 @@ func TestNoKeptTakeoversRefusesARestore(t *testing.T) {
 	if v, _ := jsonx.Unmarshal(data); err != nil || takeover(t, v.(*jsonx.Object), "Compositor", "mode") != "detached" {
 		t.Fatalf("first run kept %s (%v)", data, err)
 	}
-	os.Remove(kept)
 	os.WriteFile(filepath.Join(dir, FileName), []byte(`{"version": `), 0o600)
+	for name, keep := range map[string]func(){
+		"removed":       func() { os.Remove(kept) },
+		"not an object": func() { os.WriteFile(kept, []byte(`[1]`), 0o600) },
+	} {
+		keep()
+		s := openKeeping(t, dir)
+		if _, known := s.Takeovers(); known {
+			t.Errorf("%s: takeovers known with none kept", name)
+		}
+		if _, err := s.Replace(s.Pipeline().Defaults(), SetOptions{Restore: true}); axerr.KindOf(err) != axerr.Conflict {
+			t.Errorf("%s: restore with the takeovers unknown: %v", name, err)
+		}
+		s.Close()
+	}
+}
+
+// A good file at the start is what TakeoversFile keeps, even when it
+// holds other takeovers than the file kept last (or none was kept).
+func TestOpenKeepsTheFilesTakeovers(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	first := openKeeping(t, dir)
+	if _, err := first.Set([]config.Op{config.SetValue(config.Keys("Compositor", "mode"), "managed")}, SetOptions{Takeover: true}); err != nil {
+		t.Fatal(err)
+	}
+	first.Close()
+	kept := filepath.Join(dir, "state", TakeoversFile)
+	os.Remove(kept)
 	s := openKeeping(t, dir)
 	defer s.Close()
-	if _, known := s.Takeovers(); known {
-		t.Fatal("takeovers known with none kept")
+	data, _ := os.ReadFile(kept)
+	if v, _ := jsonx.Unmarshal(data); v == nil || takeover(t, v.(*jsonx.Object), "Compositor", "mode") != "managed" {
+		t.Errorf("kept %s", data)
 	}
-	if _, err := s.Replace(s.Pipeline().Defaults(), SetOptions{Restore: true}); axerr.KindOf(err) != axerr.Conflict {
-		t.Fatalf("restore with the takeovers unknown: %v", err)
+}
+
+// An outside edit that changes no takeover is left as written: only a held
+// takeover writes the file back.
+func TestEditWithoutTakeoversIsNotWrittenBack(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir)
+	watch(t, s)
+	path := filepath.Join(dir, FileName)
+	cfg, _ := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Value("Battery").(*jsonx.Object).Set("lowThreshold", 9.0)
+	written := append(jsonx.Marshal(edited), '\n')
+	os.WriteFile(path, written, 0o600)
+	waitFor(t, func() bool { cfg, _ := s.Config(); return takeover(t, cfg, "Battery", "lowThreshold") == 9.0 })
+	if data, _ := os.ReadFile(path); string(data) != string(written) {
+		t.Error("an edit that held no takeover was written back")
+	}
+}
+
+// A failed op saves nothing and leaves the store writable.
+func TestFailedOpChangesNothing(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	before, st := s.Config()
+	if _, err := s.Set([]config.Op{{Op: "set", Path: config.Keys("Battery", "lowThreshold")}}, SetOptions{}); axerr.KindOf(err) != axerr.BadRequest {
+		t.Errorf("an op without a value: %v", err)
+	}
+	if after, now := s.Config(); !jsonx.Equal(before, after) || now.Revision != st.Revision {
+		t.Error("a failed op changed the config")
+	}
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0)}, SetOptions{}); err != nil {
+		t.Errorf("the next save: %v", err)
 	}
 }

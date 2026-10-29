@@ -538,8 +538,12 @@ func (r *run) uninstall() error {
 		if original == "" {
 			return failf("no backup of %s to put back", path)
 		}
+		// Read before backing up: within the second of the install's own
+		// backup, the new backup takes its name
+		info, err := os.Stat(original)
+		data, rerr := os.ReadFile(original)
 		r.backup = path + ".axiom-bak-" + in.opts.Now().Format("20060102-150405")
-		if copyFile(path, r.backup) != nil || copyFile(original, path) != nil {
+		if err != nil || rerr != nil || copyFile(path, r.backup) != nil || writeFile(path, data, info.Mode().Perm()) != nil {
 			return failf("can't restore %s", path)
 		}
 		// Spent: a later install takes greetd's config as it is then

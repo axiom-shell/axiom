@@ -112,6 +112,15 @@ func TestTakeovers(t *testing.T) {
 	if value(cfg, "Compositor.mode") != "managed" {
 		t.Error("KeepTakeovers changed its input")
 	}
+	// A section missing on either side is left as it is (the store fills
+	// the defaults' in)
+	look, _ := jsonx.Unmarshal([]byte(`{"Battery": {}}`))
+	if kept := KeepTakeovers(look, current, TakeoverPaths(s)); has(kept, "Idle") {
+		t.Error("made a section the config lacks")
+	}
+	if kept := KeepTakeovers(cfg, look, TakeoverPaths(s)); value(kept, "Compositor.mode") != "managed" {
+		t.Error("changed a takeover the current config lacks")
+	}
 }
 
 // Applying replaces the parts the file holds and keeps the rest: machine
