@@ -53,7 +53,7 @@ StyledContainer {
     id: textField
     anchors.fill: parent
     anchors.leftMargin: Widget.padding
-    anchors.rightMargin: root._clearShown ? clearButton.width + Widget.spacing : Widget.padding
+    anchors.rightMargin: root._clearShown ? clearButton.width + clearButton.inset + Widget.spacing : Widget.padding
     verticalAlignment: TextInput.AlignVCenter
     text: root.text
     onTextChanged: root.text = text
@@ -112,9 +112,11 @@ StyledContainer {
   FlatIconButton {
     id: clearButton
     visible: root._clearShown
-    size: Math.min(Widget.iconButton, root.height - Widget.px(4))
+    // Inset from the border all round, so its hover fill never covers it
+    readonly property real inset: Appearance.borderWidth + Widget.px(4)
+    size: Math.min(Widget.iconButton, root.height - inset * 2)
     anchors.right: parent.right
-    anchors.rightMargin: Widget.px(2)
+    anchors.rightMargin: inset
     anchors.verticalCenter: parent.verticalCenter
     focusPolicy: Qt.NoFocus
     iconText: "close"
