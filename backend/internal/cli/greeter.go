@@ -126,7 +126,7 @@ scratch folder.`,
 					"AXIOM_BIN": self,
 				})
 				return daemon.RunGreeter(ctx, daemon.GreeterOptions{
-					Command:    []string{bin, "-p", filepath.Join(root, "greeter.qml")},
+					Command:    daemon.ShellCommand(bin, filepath.Join(root, "greeter.qml")),
 					Environ:    env,
 					Dir:        run,
 					SchemaHash: buildinfo.SchemaHash(schemaBytes),
