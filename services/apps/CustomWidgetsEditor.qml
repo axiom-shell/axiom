@@ -21,25 +21,29 @@ QtObject {
   property int selectedIndex: 0
   readonly property var selected: items[selectedIndex] ?? null
   readonly property string selectedId: selected?.id ?? ""
-  // The selected definition's module elements on their lattice: moves,
-  // resizes, the selection and undo (GridEditor, bounded to the design size)
+  // The selected definition's module elements on their lattice, edited as
+  // the layouts editor edits a submenu's modules: moves, resizes, pushes,
+  // the selection and undo (GridEditor; unbounded, kept from the top left,
+  // so the module's box fits its elements)
   readonly property GridEditor elements: GridEditor {
     modulesOf: () => root._elements()
-    area: CustomWidgetData.lattice(root.selected?.module?.size)
     host: "overlay"
     scopeKey: root.selectedId
     factory: ({
-        "make": (kind, place) => ({
-              "id": Utils.newId(kind, root._elements()),
-              "kind": kind,
+        "make": (type, place) => ({
+              "id": Utils.newId(type, root._elements()),
+              "type": type,
               "place": place,
               "bind": {},
               "options": {},
               "actions": {}
             }),
-        "size": kind => CustomWidgetData.elementKind(kind)?.size ?? [4, 4]
+        "size": type => CustomWidgetData.elementKind(type)?.size ?? [4, 4]
       })
-    onEdited: root._apply()
+    onEdited: {
+      root._fitSize();
+      root._apply();
+    }
   }
 
   // The page's tab: 0 data, 1 bar, 2 module
@@ -72,24 +76,6 @@ QtObject {
     root.elements.clearHistory();
   }
 
-  // The module's design size [w, h] in grid units: its elements scaled to
-  // the new lattice
-  function setDesignSize(size) {
-    const def = root._local().items[root.selectedIndex];
-    if (!def)
-      return;
-    const from = def.module?.size ?? [4, 2];
-    const to = [Math.max(1, Math.min(8, size[0])), Math.max(1, Math.min(8, size[1]))];
-    if (from[0] === to[0] && from[1] === to[1])
-      return;
-    def.module = Object.assign({}, def.module, {
-      "size": to,
-      "elements": CustomWidgetData.scaleElements(def.module?.elements ?? [], from, to)
-    });
-    root.elements.clearHistory();
-    root._apply();
-  }
-
   // Starts the module from the elements drawn while it has none
   function useDefaultElements() {
     const def = root._local().items[root.selectedIndex];
@@ -98,6 +84,7 @@ QtObject {
     const fields = CustomWidgetsManager.fields[def.id];
     root._elements().splice(0, Infinity, ...CustomWidgetData.defaultElements(def.module?.size, (fields?.ratio ?? -1) >= 0));
     root.elements.clearHistory();
+    root._fitSize();
     root._apply();
   }
 
@@ -233,6 +220,13 @@ QtObject {
     if (!Array.isArray(def.module.elements))
       def.module.elements = [];
     return def.module.elements;
+  }
+
+  // The size a page starts the module at follows its elements
+  function _fitSize() {
+    const def = root._local().items[root.selectedIndex];
+    if (def?.module && def.module.elements?.length)
+      def.module.size = CustomWidgetData.pageSize(def.module.elements, def.module.size);
   }
 
   function _load() {

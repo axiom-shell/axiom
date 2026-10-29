@@ -12,7 +12,7 @@ import qs.services.apps
 Item {
   id: root
 
-  // { id, kind, place, bind, options, actions } (a CustomElement)
+  // { id, type, place, bind, options, actions } (a CustomElement)
   property var element: ({})
   // CustomWidgetsManager.fields[id] (CustomWidgetData.resolve), or {}
   property var fields: ({})

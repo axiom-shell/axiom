@@ -3323,12 +3323,8 @@
     "Round": "",
     "Always a dot": "",
     "Draw a line": "",
-    "{0} cards across": "",
     "On the lock screen": "",
-    "No elements yet: the module draws its icon, text and value by itself. Add elements to design it, or start from that layout.": "",
     "Start from the default layout": "",
-    "At other sizes": "",
-    "A page can give the module any size; its elements keep their share of it. The first is the bar widget's popout.": "",
     "Square": "",
     "Strip": "",
     "The widget's own": "",
@@ -3345,7 +3341,6 @@
     "image": "",
     "state": "",
     "Elements": "",
-    "Click one to add it where there's room, then drag it into place on the module.": "",
     "Copy this element": "",
     "Remove this element": "",
     "Back to the elements": "",
@@ -3364,6 +3359,9 @@
     "Couldn't read it: {0}": "",
     "Added {0}.": "",
     "This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.": "",
-    "No custom module (an \"exec\") in it.": ""
+    "No custom module (an \"exec\") in it.": "",
+    "{0} × {1}": "",
+    "Drag elements here from the left: the module's box fits them.": "",
+    "Drag one onto the module, or click it to add it where there's room.": ""
   }
 }

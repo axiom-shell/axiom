@@ -169,7 +169,7 @@ Rectangle {
       id: sizeText
       anchors.centerIn: parent
       readonly property var place: root.dragLayer.landingPlace ?? root.place
-      text: I18n.tr("{0} × {1} cards", GridPlacement.cards(sizeText.place.w), GridPlacement.cards(sizeText.place.h))
+      text: root.dragLayer.sizeLabel(sizeText.place.w, sizeText.place.h)
       textColor: Theme.background
       textSize: Appearance.fontSizeBy(-2)
       font.bold: true

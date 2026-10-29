@@ -223,10 +223,34 @@ TestCase {
   }
 
   function test_lattice() {
-    compare(CustomWidgetData.lattice([4, 2]), {
+    compare(CustomWidgetData.lattice([], [4, 2]), {
       "cols": 16,
       "rows": 8
     }, "16 sub-cells a card");
+    const els = [
+      {
+        "place": {
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 2
+        }
+      },
+      {
+        "place": {
+          "x": 2,
+          "y": 2,
+          "w": 8,
+          "h": 3
+        }
+      }
+    ];
+    compare(CustomWidgetData.lattice(els, [4, 2]), {
+      "cols": 10,
+      "rows": 5
+    }, "the box fits the elements");
+    compare(CustomWidgetData.designSize(els, [4, 2]), [2.5, 1.25]);
+    compare(CustomWidgetData.pageSize(els, [4, 2]), [3, 2], "whole units on a page");
     const r = CustomWidgetData.rect({
       "x": 8,
       "y": 0,
@@ -244,53 +268,16 @@ TestCase {
     }, "half the width, a gap between");
   }
 
-  function test_scaleElements() {
-    const scaled = CustomWidgetData.scaleElements([
-      {
-        "id": "a",
-        "place": {
-          "x": 8,
-          "y": 4,
-          "w": 8,
-          "h": 4
-        }
-      }
-    ], [4, 2], [2, 2]);
-    compare(scaled[0].place, {
-      "x": 4,
-      "y": 4,
-      "w": 4,
-      "h": 4
-    });
-    compare(scaled[0].id, "a");
-    const tiny = CustomWidgetData.scaleElements([
-      {
-        "place": {
-          "x": 15,
-          "y": 0,
-          "w": 1,
-          "h": 1
-        }
-      }
-    ], [4, 2], [1, 1]);
-    compare(tiny[0].place, {
-      "x": 3,
-      "y": 0,
-      "w": 1,
-      "h": 1
-    }, "at least a sub-cell, inside the lattice");
-  }
-
   function test_defaultElements() {
     const els = CustomWidgetData.defaultElements([4, 2], true);
     compare(els.length, 2);
-    compare(els[0].kind, "Ring");
+    compare(els[0].type, "Ring");
     compare(els[1].place.x + els[1].place.w, 16, "the text fills the rest");
-    compare(CustomWidgetData.defaultElements([4, 2], false)[0].kind, "Icon");
+    compare(CustomWidgetData.defaultElements([4, 2], false)[0].type, "Icon");
   }
 
   function test_elementKinds() {
-    const kinds = CustomWidgetData.elementKinds.map(k => k.kind);
+    const kinds = CustomWidgetData.elementKinds.map(k => k.type);
     compare(kinds, ["Text", "TextBlock", "Figure", "Icon", "Ring", "Gauge", "Bar", "Segments", "Sparkline", "List", "Image", "Button", "Toggle", "Status", "Separator"], "every kind the schema allows, in library order");
     compare(CustomWidgetData.elementKind("Bar").actions, ["change"]);
     compare(CustomWidgetData.elementKind("Nope"), null);

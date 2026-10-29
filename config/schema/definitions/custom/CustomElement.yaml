@@ -5,7 +5,7 @@ type: object
 additionalProperties: false
 properties:
   id: {$ref: '#/definitions/ItemId'}
-  kind:
+  type:
     type: string
     enum: [Text, Figure, Icon, Ring, Gauge, Bar, Segments, Sparkline, List, Image, Button, Toggle, Status, Separator, TextBlock]
     default: Text

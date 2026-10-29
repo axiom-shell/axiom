@@ -13,7 +13,7 @@ Loader {
   property bool actionsEnabled: true
   property string fallbackIcon: "widgets"
 
-  readonly property string kind: root.element?.kind ?? "Text"
+  readonly property string kind: root.element?.type ?? "Text"
   readonly property string file: ({
       "Gauge": "CustomRing",
       "Bar": "CustomMeter"

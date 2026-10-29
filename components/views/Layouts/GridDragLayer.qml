@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.ui
+import qs.components.methods
 import qs.components.reusable
 
 // i18n: keys from the schema (module and view labels)
@@ -27,6 +28,11 @@ DragLayer {
   id: root
 
   required property GridEditor editor
+  // For a grid of something other than overlay modules (a custom widget's
+  // elements): type => { icon, label } (label translated), else null
+  property var describe: null
+  // A tile's size while it's resized, from its w × h grid units
+  property var sizeLabel: (w, h) => I18n.tr("{0} × {1} cards", GridPlacement.cards(w), GridPlacement.cards(h))
 
   readonly property string draggingKind: root.dragging?.kind ?? ""
   readonly property bool carryingModule: root.draggingKind === "module-add" || root.draggingKind === "module-move"
@@ -92,10 +98,14 @@ DragLayer {
   }
 
   function moduleIcon(type) {
+    if (root.describe)
+      return root.describe(type)?.icon ?? "extension";
     return OverlayConfig.moduleInfo(type)?.icon ?? "extension";
   }
 
   function moduleLabel(type) {
+    if (root.describe)
+      return root.describe(type)?.label ?? type;
     const info = OverlayConfig.moduleInfo(type);
     return info ? I18n.tr(info.label) : (type || I18n.tr("Unknown"));
   }

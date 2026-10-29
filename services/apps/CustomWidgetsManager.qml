@@ -220,7 +220,7 @@ QtObject {
   // element's binding
   function _pushHistory(last, def, resolved) {
     const next = {};
-    const bindings = [""].concat((def.module?.elements ?? []).filter(e => e.kind === "Sparkline" && e.bind?.value).map(e => e.bind.value));
+    const bindings = [""].concat((def.module?.elements ?? []).filter(e => e.type === "Sparkline" && e.bind?.value).map(e => e.bind.value));
     for (const b of bindings) {
       const v = b === "" ? resolved.value : parseFloat(CustomWidgetData.elementValue(resolved, b));
       const list = (last?.[b] ?? []).slice(-(root.historyLength - 1));

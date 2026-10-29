@@ -78,6 +78,7 @@ BaseView {
         id: moduleTab
         ModuleTab {
           grid: root.grid
+          availableHeight: root.pageHeight - Widget.height * 4
         }
       }
     }

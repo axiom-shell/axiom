@@ -368,7 +368,7 @@ QtObject {
   }
 
   // The element kinds a module is built from, in the editor's library
-  // order: { kind, label, icon, size ([w, h] sub-cells it's added at),
+  // order: { type, label, icon, size ([w, h] sub-cells it's added at),
   // slots (its bindings), options (a properties schema for its look),
   // actions (the commands it runs) }. Labels and titles are English, the
   // editor translates them:
@@ -431,7 +431,7 @@ QtObject {
         });
     return [
       {
-        "kind": "Text",
+        "type": "Text",
         "label": "Text",
         "icon": "text_fields",
         "size": [12, 2],
@@ -468,7 +468,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "TextBlock",
+        "type": "TextBlock",
         "label": "Text block",
         "icon": "notes",
         "size": [16, 8],
@@ -480,7 +480,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Figure",
+        "type": "Figure",
         "label": "Figure",
         "icon": "123",
         "size": [8, 4],
@@ -491,7 +491,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Icon",
+        "type": "Icon",
         "label": "Icon",
         "icon": "star",
         "size": [4, 4],
@@ -513,7 +513,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Ring",
+        "type": "Ring",
         "label": "Ring",
         "icon": "donut_large",
         "size": [6, 6],
@@ -536,7 +536,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Gauge",
+        "type": "Gauge",
         "label": "Gauge",
         "icon": "speed",
         "size": [6, 6],
@@ -559,7 +559,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Bar",
+        "type": "Bar",
         "label": "Bar",
         "icon": "linear_scale",
         "size": [12, 2],
@@ -575,7 +575,7 @@ QtObject {
         "actions": ["change"]
       },
       {
-        "kind": "Segments",
+        "type": "Segments",
         "label": "Segments",
         "icon": "signal_cellular_alt",
         "size": [12, 2],
@@ -594,7 +594,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Sparkline",
+        "type": "Sparkline",
         "label": "Sparkline",
         "icon": "show_chart",
         "size": [12, 4],
@@ -610,7 +610,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "List",
+        "type": "List",
         "label": "List",
         "icon": "list",
         "size": [16, 8],
@@ -621,7 +621,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Image",
+        "type": "Image",
         "label": "Image",
         "icon": "image",
         "size": [6, 6],
@@ -642,7 +642,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Button",
+        "type": "Button",
         "label": "Button",
         "icon": "smart_button",
         "size": [6, 2],
@@ -655,7 +655,7 @@ QtObject {
         "actions": ["click"]
       },
       {
-        "kind": "Toggle",
+        "type": "Toggle",
         "label": "Toggle",
         "icon": "toggle_on",
         "size": [10, 2],
@@ -666,7 +666,7 @@ QtObject {
         "actions": ["on", "off"]
       },
       {
-        "kind": "Status",
+        "type": "Status",
         "label": "Status",
         "icon": "radio_button_checked",
         "size": [6, 2],
@@ -677,7 +677,7 @@ QtObject {
         "actions": []
       },
       {
-        "kind": "Separator",
+        "type": "Separator",
         "label": "Separator",
         "icon": "horizontal_rule",
         "size": [16, 1],
@@ -695,8 +695,8 @@ QtObject {
   }
 
   // An element kind's entry in elementKinds, or null
-  function elementKind(kind) {
-    return root.elementKinds.find(k => k.kind === kind) ?? null;
+  function elementKind(type) {
+    return root.elementKinds.find(k => k.type === type) ?? null;
   }
 
   // JSONC (a Waybar config: // and /* */ comments, trailing commas) as
@@ -936,13 +936,31 @@ QtObject {
     }
   ]
 
-  // The module lattice for a design size [w, h] in grid units:
-  // { cols, rows } in sub-cells
-  function lattice(size) {
+  // The module lattice: the elements' bounds (the editor keeps them from
+  // the top left, so the box fits them), or for none a design size [w, h]
+  // in grid units. { cols, rows } in sub-cells
+  function lattice(elements, size) {
+    const els = elements ?? [];
+    if (els.length)
+      return {
+        "cols": Math.max(1, ...els.map(e => (e.place?.x ?? 0) + (e.place?.w ?? 1))),
+        "rows": Math.max(1, ...els.map(e => (e.place?.y ?? 0) + (e.place?.h ?? 1)))
+      };
     return {
       "cols": Math.max(1, (size?.[0] ?? 4) * root.subCells),
       "rows": Math.max(1, (size?.[1] ?? 2) * root.subCells)
     };
+  }
+
+  // The module's size [w, h] in grid units, as fractions (the popout's)
+  function designSize(elements, size) {
+    const g = root.lattice(elements, size);
+    return [g.cols / root.subCells, g.rows / root.subCells];
+  }
+
+  // The whole grid units a page starts the module at: designSize rounded up
+  function pageSize(elements, size) {
+    return root.designSize(elements, size).map(n => Math.max(1, Math.ceil(n)));
   }
 
   // An element's rect in px: `place` { x, y, w, h } in sub-cells on a
@@ -960,41 +978,16 @@ QtObject {
     };
   }
 
-  // Elements moved from one design size to another: places scaled and
-  // rounded to the new lattice, kept at least a sub-cell and inside it
-  function scaleElements(elements, fromSize, toSize) {
-    const a = root.lattice(fromSize);
-    const b = root.lattice(toSize);
-    return (elements ?? []).map(e => {
-      const p = e.place ?? {
-        "x": 0,
-        "y": 0,
-        "w": 1,
-        "h": 1
-      };
-      const w = Math.max(1, Math.min(b.cols, Math.round(p.w * b.cols / a.cols)));
-      const h = Math.max(1, Math.min(b.rows, Math.round(p.h * b.rows / a.rows)));
-      return Object.assign({}, e, {
-        "place": {
-          "x": Math.max(0, Math.min(b.cols - w, Math.round(p.x * b.cols / a.cols))),
-          "y": Math.max(0, Math.min(b.rows - h, Math.round(p.y * b.rows / a.rows))),
-          "w": w,
-          "h": h
-        }
-      });
-    });
-  }
-
   // The elements drawn for a definition without any (a module never
   // shows empty): an icon, the text, and a ring when there's a value,
   // filling a lattice of `size`
   function defaultElements(size, hasValue) {
-    const g = root.lattice(size);
+    const g = root.lattice([], size);
     const side = Math.max(1, Math.min(g.rows, Math.floor(g.cols / 3)));
     const out = [
       {
         "id": "icon",
-        "kind": hasValue ? "Ring" : "Icon",
+        "type": hasValue ? "Ring" : "Icon",
         "place": {
           "x": 0,
           "y": 0,
@@ -1008,7 +1001,7 @@ QtObject {
     if (g.cols - side > 0)
       out.push({
         "id": "text",
-        "kind": "Text",
+        "type": "Text",
         "place": {
           "x": side,
           "y": 0,

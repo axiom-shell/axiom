@@ -3,8 +3,8 @@ import QtQuick
 import qs.config
 import qs.components.methods
 
-// A custom widget's module drawn at any size: its elements placed on the
-// lattice of its design size (CustomWidgetData: 4 sub-cells a grid unit),
+// A custom widget's module drawn at any size: its elements placed on their
+// lattice (CustomWidgetData: 4 sub-cells a grid unit, the box fitting them),
 // laid out proportionally over this item, a gap between neighbours. A
 // definition with no elements draws CustomWidgetData.defaultElements.
 // Used by the CustomWidget module and popout and the editor's previews.
@@ -19,7 +19,7 @@ Item {
   property real gap: Widget.px(6)
 
   readonly property var size: root.definition?.module?.size ?? [4, 2]
-  readonly property var grid: CustomWidgetData.lattice(root.size)
+  readonly property var grid: CustomWidgetData.lattice(root.definition?.module?.elements, root.size)
   readonly property var elements: {
     const own = root.definition?.module?.elements ?? [];
     return own.length ? own : CustomWidgetData.defaultElements(root.size, (root.fields?.ratio ?? -1) >= 0);

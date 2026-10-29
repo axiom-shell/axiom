@@ -6,18 +6,21 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
+import qs.components.views.Layouts
 
 // Custom widgets page, Module tab: the selected element's bindings (each
 // slot: the widget's own field, another field, a path in the output or a
 // format), its look (its kind's options, CustomWidgetData.elementKinds) and
-// the commands it runs; with none selected, the element library.
+// the commands it runs, under the element library.
 ColumnLayout {
   id: root
 
+  // The GridDragLayer library elements are carried in
+  required property var dragLayer
   readonly property var editor: CustomWidgetsManager.editor
   readonly property var grid: root.editor.elements
   readonly property var element: root.grid.selected >= 0 ? (root.editor.selected?.module?.elements?.[root.grid.selected] ?? null) : null
-  readonly property var kind: CustomWidgetData.elementKind(root.element?.kind ?? "")
+  readonly property var kind: CustomWidgetData.elementKind(root.element?.type ?? "")
   readonly property var fields: CustomWidgetsManager.fields[root.editor.selectedId] ?? null
   // The binding choices: the fields, then the sample's paths
   readonly property var bindOptions: [
@@ -46,28 +49,23 @@ ColumnLayout {
       "off": "Turning it off"
     })
 
-  // Nothing selected: the library
+  // The library: drag one onto the module, or click it to add it where
+  // there's room
   FieldGroup {
-    visible: root.element === null
     Layout.fillWidth: true
     title: I18n.tr("Elements")
-    description: I18n.tr("Click one to add it where there's room, then drag it into place on the module.")
+    description: I18n.tr("Drag one onto the module, or click it to add it where there's room.")
 
-    Flow {
-      Layout.fillWidth: true
-      spacing: Widget.spacing
+    Repeater {
+      model: CustomWidgetData.elementKinds
 
-      Repeater {
-        model: CustomWidgetData.elementKinds
-
-        StyledTextButton {
-          required property var modelData
-          implicitHeight: Widget.height
-          iconText: modelData.icon
-          // Kind labels: declared in CustomWidgetData.elementKinds
-          text: I18n.tr(modelData.label)
-          onClicked: root.grid.addModule(modelData.kind)
-        }
+      ModuleChip {
+        required property var modelData
+        Layout.fillWidth: true
+        dragLayer: root.dragLayer
+        // Kind labels: declared in CustomWidgetData.elementKinds
+        typeInfo: modelData
+        onClicked: root.grid.addModule(modelData.type)
       }
     }
   }
@@ -93,7 +91,7 @@ ColumnLayout {
         }
         StyledText {
           Layout.fillWidth: true
-          text: I18n.tr(root.kind?.label ?? root.element?.kind ?? "")
+          text: I18n.tr(root.kind?.label ?? root.element?.type ?? "")
           font.bold: true
         }
         FlatIconButton {

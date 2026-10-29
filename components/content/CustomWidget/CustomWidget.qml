@@ -28,7 +28,7 @@ Panel {
 
   // A popout is the design size, at the screen's card size
   readonly property real _card: OverlayConfig.cardUnitOn(Screen.width, Screen.height)
-  readonly property var _size: root.definition?.module?.size ?? [4, 2]
+  readonly property var _size: CustomWidgetData.designSize(root.definition?.module?.elements, root.definition?.module?.size)
   readonly property real _popoutWidth: GridPlacement.span(root._size[0], root._card)
   readonly property real _popoutHeight: GridPlacement.span(root._size[1], root._card)
   implicitWidth: root._popoutWidth
