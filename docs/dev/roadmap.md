@@ -311,7 +311,7 @@ Needs a plan:
 - [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other)
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri)
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse)
-- [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own)
+- [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own) (plan: #210)
 
 Resolves:
 - [A note's view jumps while typing and forgets its place](issues.md#a-notes-view-jumps-while-typing-and-forgets-its-place)
