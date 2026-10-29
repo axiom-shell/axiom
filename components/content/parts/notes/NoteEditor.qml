@@ -51,9 +51,13 @@ Item {
   onNoteChanged: {
     root.focusBlock = -1;
     root.findMatch = null;
+    root._keepPlace();
     root._load();
   }
-  Component.onCompleted: root._load()
+  Component.onCompleted: {
+    root._keepPlace();
+    root._load();
+  }
 
   // An empty note loads without its text changing
   Connections {
@@ -234,11 +238,15 @@ Item {
   }
 
   // Where each note was left (EditsManager, by path), so reopening it
-  // comes back there
+  // comes back there. Keyed by the path it was opened at, not bound to it:
+  // a rename of the open note would change the key and scroll to the top
   ScrollMemory {
     id: memory
     flickable: root._flick
-    key: root.note ? "Notes/" + root.note.path : ""
+  }
+
+  function _keepPlace() {
+    memory.key = root.note ? "Notes/" + root.note.path : "";
   }
 
   // --- From the blocks ---
