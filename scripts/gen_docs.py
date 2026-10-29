@@ -11,10 +11,13 @@
                          stacking, from LayerStack.layers), api/<Name>.md (the
                          public members of each service and config reader)
 
-  scripts/gen_docs.py            write them (stale files removed); exit 1,
-                                 writing nothing, when the shell calls or
-                                 listens to something the daemon lacks
-  scripts/gen_docs.py --report   also list reader members nothing uses
+  scripts/gen_docs.py   write them (stale files removed); exit 1, writing
+                        nothing, when the shell calls or listens to something
+                        the daemon lacks; exit 1 after writing when a setting
+                        has no reader or use, or a reader member no user,
+                        that scripts/config-usage-baseline.json doesn't list
+                        (or it lists one that's gone: the baseline only
+                        shrinks)
 
 Usages are file level (no line numbers) and found by name, so they're a map
 to start from, not a proof: a member read dynamically (`Reader[key]`) or off
@@ -145,7 +148,7 @@ def parse_qml(path):
 
 # ------------------------------------------------------------ config readers
 
-CONFIG_REF = re.compile(r"ConfigManager\.(?:config|previews)\.(\w+)((?:\??\.\w+)*)")
+CONFIG_REF = re.compile(r"ConfigManager\.(?:config|live)\.(\w+)((?:\??\.\w+)*)")
 PATH_REF = re.compile(r"@(\w+)((?:\??\.\w+)*)")
 
 
@@ -158,16 +161,13 @@ def load_readers():
     readers = {}
     for path in sorted((ROOT / "config").glob("*.qml")):
         header, members = parse_qml(path)
-        # Aliases of a section: members whose whole value is the section
+        # Aliases of a section or part of one: members whose whole value is
+        # it (`_c: ConfigManager.live.Compositor.hyprland`)
         aliases = {}
         for m in members:
-            if m["kind"] != "property":
-                continue
-            expr = m["expr"].strip()
-            refs = CONFIG_REF.findall(expr)
-            if refs and all(not p for _, p in refs) and re.fullmatch(
-                    r"ConfigManager\.(config|previews)\.\w+(\s*\?\?\s*ConfigManager\.(config|previews)\.\w+)?", expr):
-                aliases[m["name"]] = refs[0][0]
+            ref = CONFIG_REF.fullmatch(m["expr"].strip())
+            if m["kind"] == "property" and ref:
+                aliases[m["name"]] = ref.group(1) + ref.group(2).replace("?.", ".")
         if not aliases and not any(CONFIG_REF.search(m["expr"]) for m in members):
             continue
 
@@ -332,13 +332,16 @@ class ConfigReference:
                 # Used by the reader's own other members
                 if len(re.findall(r"(?<![\w])" + name + r"\b", own)) > 1:
                     self.inside.add((reader, name))
-        # Files outside config/ reading ConfigManager.config / previews
+        # Files outside config/ reading ConfigManager.config / live
         self.direct = {}
         for f, text in usage.files.items():
             if f.startswith("config/"):
                 continue
             for s, p in CONFIG_REF.findall(text):
                 self.direct.setdefault(s + p.replace("?.", "."), set()).add(f)
+        # The daemon reads by key name (migrations apart: they read old shapes)
+        self.go = {rel(p): p.read_text() for p in go_sources() if "/migrate/" not in rel(p)}
+        self.unread = set()
 
     def reader_for(self, section):
         for reader, info in self.readers.items():
@@ -436,9 +439,16 @@ class ConfigReference:
         if marked:
             files.update(marked)
             read.append("`// reads:` marker")
+        if not (read or files):
+            if "x-compositor" in node_r:
+                read.append("the daemon's compositor writer (`x-compositor`)")
+            elif go := sorted(f for f, text in self.go.items() if f'"{last}"' in text):
+                read.append("the daemon, name match")
+                files.update(go)
         if read or files:
             lines.append(f"  - read: {', '.join(read) or 'directly'} · in: {join_files(sorted(files))}")
         else:
+            self.unread.add(plain)
             lines.append("  - read: no reader member or direct use found")
         return lines
 
@@ -633,17 +643,15 @@ def files_page():
     out = [NOTICE, "# QML files", "",
            "Every QML file with the first sentence of its purpose comment (the `//` block above its root object). "
            "Grouped by directory; `grep` a word to find where something lives.", ""]
-    current, missing = None, []
+    current = None
     for path in qml_files():
         header, _ = parse_qml(path)
         folder = rel(path.parent) if path.parent != ROOT else "."
         if folder != current:
             out += ["", f"## {folder}/", ""]
             current = folder
-        if not header:
-            missing.append(rel(path))
         out.append(f"- `{path.name}`: {first_sentence(header) if header else '(no purpose comment)'}")
-    return "\n".join(out).rstrip() + "\n", missing
+    return "\n".join(out).rstrip() + "\n"
 
 
 IPC_BLOCK = re.compile(r"\bIpcTarget\s*\{")
@@ -1306,19 +1314,32 @@ def generate():
         pages.update(ref.section_pages(section))
     for union, page, directory, settings_key, read_as, prefix in UNIONS:
         pages.update(ref.union_pages(union, page, directory, settings_key, read_as, prefix))
-    files, missing = files_page()
-    pages[f"{GEN_OUT}/files.md"] = files
+    pages[f"{GEN_OUT}/files.md"] = files_page()
     pages[f"{GEN_OUT}/ipc.md"] = ipc_page()
     pages[f"{GEN_OUT}/rpc.md"], rpc_problems = rpc_page()
     pages[f"{GEN_OUT}/layers.md"] = layers_page()
     pages.update(api_pages(readers))
     unused = sorted(f"{r}.{n}" for (r, n), users in ref.member_users.items()
                     if not users and (r, n) not in ref.inside and readers[r]["members"][n]["kind"] != "signal")
-    return pages, missing, unused, rpc_problems
+    usage_problems = (ratchet_problems(ref.unread, BASELINE["settings"], "a setting with no reader or use")
+                      + ratchet_problems(unused, BASELINE["members"], "a reader member with no user"))
+    return pages, usage_problems, rpc_problems
+
+
+BASELINE_PATH = ROOT / "scripts/config-usage-baseline.json"
+BASELINE = json.loads(BASELINE_PATH.read_text())
+
+
+def ratchet_problems(found, baseline, what):
+    """A baseline only shrinks: a new entry fails, and so does a listed one
+    that's gone."""
+    found, baseline = set(found), set(baseline)
+    return ([f"{what} (use or delete it): {x}" for x in sorted(found - baseline)]
+            + [f"{what} no longer (drop it from {rel(BASELINE_PATH)}): {x}" for x in sorted(baseline - found)])
 
 
 def main():
-    pages, missing, unused, rpc_problems = generate()
+    pages, usage_problems, rpc_problems = generate()
     if rpc_problems:
         print("the shell and the daemon disagree (docs/dev/generated/rpc.md):")
         print("\n".join("  " + p for p in rpc_problems))
@@ -1327,17 +1348,16 @@ def main():
     stale = sorted(p for p, text in pages.items()
                    if not (ROOT / p).exists() or (ROOT / p).read_text() != text)
     extra = sorted(existing - set(pages))
-    if "--report" in sys.argv:
-        print(f"QML files without a purpose comment ({len(missing)}):")
-        print("\n".join("  " + m for m in missing))
-        print(f"Reader members with no user outside their reader ({len(unused)}):")
-        print("\n".join("  " + u for u in unused))
     for p in stale:
         (ROOT / p).parent.mkdir(parents=True, exist_ok=True)
         (ROOT / p).write_text(pages[p])
     for p in extra:
         (ROOT / p).unlink()
     print(f"wrote {len(stale)}, removed {len(extra)}, {len(pages)} generated files")
+    if usage_problems:
+        print("config usage (docs/dev/config/):")
+        print("\n".join("  " + p for p in usage_problems))
+        return 1
     return 0
 
 

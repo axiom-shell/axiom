@@ -266,7 +266,7 @@ Steps:
    3. Done: **The guard** (`.claude/hooks/guard.py`, its tests, the deny list): The guard misses compound commands, wrapper options and writes onto config.json, The permission deny list names a config path that's gone; then each AGENTS.md › Never rule gets a compound-form case beside its plain one.
    4. Done: **Flaky Go tests** (backend tests): Go tests wait with their own short bounds that a loaded CI runner overruns, A binds test fails with pthread_create failed in CI, A compositor manager test misses its takeover prompt under load, A self-update test once took the build path for a release.
    5. Done: **Go tests as a user, and the security paths** (CI's go job, backend tests): CI's Go tests run as root, so the unwritable-file tests never run there, TestWatch sees a push for the package's own write under CI load; then break-it tests for PAM (only its success unlocks, never IPC: `test_scripts.py` › `OnlyPamUnlocks`), the greeter installer (a hostile archive lands nothing outside the copy) and the takeovers (no load or import, and no op around the key, changes one).
-   6. **gen_docs and the ratchets** (gen_docs.py, check_qmllint.py, check_structure.py): [gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread](issues.md#gen_docspy-doesnt-see-readers-of-configmanagerlive-so-372-settings-show-as-unread) (its unused-setting and unused-member checks become failures), [The qmllint baseline doesn't shrink when warnings are fixed](issues.md#the-qmllint-baseline-doesnt-shrink-when-warnings-are-fixed), and a size ratchet: singletons over about 800 lines (outside the pure helpers and compositor backends) fail, with a baseline that only shrinks.
+   6. **gen_docs and the ratchets** (gen_docs.py, check_qmllint.py, check_structure.py): gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread (its unused-setting and unused-member checks become failures), [The qmllint baseline doesn't shrink when warnings are fixed](issues.md#the-qmllint-baseline-doesnt-shrink-when-warnings-are-fixed), and a size ratchet: singletons over about 800 lines (outside the pure helpers and compositor backends) fail, with a baseline that only shrinks.
    7. **Checks that can fail** (`tests/scripts/`, `tests/`): [Most check scripts have no tests of their own](issues.md#most-check-scripts-have-no-tests-of-their-own) (one fixture per rule; split per script if it passes the size gate), [Small tooling leftovers](issues.md#small-tooling-leftovers).
    8. **A sampled mutation run** (backend): the store's takeovers, the lock screen, the greeter installer and migrations; each surviving mutant is filed as a missing test, then fixed in batches appended here.
    9. **What got past them** (check_structure.py): the bug classes in issues.md and the fix history a mechanical check could have caught, as checks: Repeater models and `acquire()` requests from live values, and the AGENTS.md rules no check holds yet (animation literals, `Qt.formatDateTime`, `Quickshell.screens`, polling Timers in UI); one rule a commit.
@@ -289,7 +289,6 @@ Fixed in step 0 (the guardrails; moved from Phase 9):
 - [Small tooling leftovers](issues.md#small-tooling-leftovers)
 - [The guard judges a heredoc's body as commands](issues.md#the-guard-judges-a-heredocs-body-as-commands)
 - [The qmllint baseline doesn't shrink when warnings are fixed](issues.md#the-qmllint-baseline-doesnt-shrink-when-warnings-are-fixed)
-- [gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread](issues.md#gen_docspy-doesnt-see-readers-of-configmanagerlive-so-372-settings-show-as-unread)
 - [Most check scripts have no tests of their own](issues.md#most-check-scripts-have-no-tests-of-their-own)
 
 #### Size
@@ -311,6 +310,7 @@ Found while fixing the lock screen surviving a reload:
 - [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
 
 Found by the audits:
+- [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

@@ -279,6 +279,34 @@ class RpcShapes(unittest.TestCase):
         self.assertEqual(list(types), ["x.Opts"])
 
 
+class ConfigUsage(unittest.TestCase):
+    """scripts/gen_docs.py maps each setting to the reader members and files
+    reading it, and fails on one nobody reads (its baseline only shrinks)."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, str(SCRIPTS))
+        from gen_docs import load_readers, Usage, ConfigReference
+        cls.readers = load_readers()
+        cls.ref = ConfigReference({}, cls.readers, Usage())
+
+    def test_reader_member_found(self):
+        self.assertEqual(self.ref.members_for("WorkspaceOverlay.showHint"),
+                         [("WorkspaceOverlayConfig", "showHint", "exact")])
+        self.assertTrue(self.ref.member_users[("WorkspaceOverlayConfig", "showHint")])
+
+    def test_alias_of_a_subsection(self):
+        # `_c: ConfigManager.live.Compositor.hyprland` reads that part
+        self.assertIn("Compositor.hyprland", self.readers["HyprlandConfig"]["members"]["managed"]["paths"])
+
+    def test_ratchet(self):
+        from gen_docs import ratchet_problems
+        self.assertEqual(ratchet_problems({"A.x"}, ["A.x"], "unused"), [])
+        new, gone = ratchet_problems({"A.y"}, ["A.x"], "unused")
+        self.assertTrue(new.endswith("A.y") and "use or delete" in new)
+        self.assertTrue(gone.endswith("A.x") and "drop it" in gone)
+
+
 class CheckSizes(unittest.TestCase):
     """scripts/check_sizes.py finds sizes written as numbers outside the bars."""
 

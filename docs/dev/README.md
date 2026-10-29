@@ -16,7 +16,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [../recipes/](../recipes/): step-by-step for each recurring change (files to touch, file to copy, gotchas, checks). Wrapped as skills in `.claude/skills/`.
 
 ### Generated references (`scripts/gen_docs.py`, run by `scripts/generate.sh`; built, never committed)
-- [config/](config/README.md): every setting per section: type, default, annotations, description, reader member, files that use it. Plus one page per bar widget, overlay module and view type.
+- [config/](config/README.md): every setting per section: type, default, annotations, description, reader member, files that use it (the daemon's too: `x-compositor`, or its Go reading the key by name). Plus one page per bar widget, overlay module and view type. A setting nobody reads, or a reader member with no user, fails the script unless `scripts/config-usage-baseline.json` lists it; that list only shrinks (an entry gone fails too).
 - [generated/api.md](generated/api.md): public members of every service and config reader, one page each.
 - [generated/files.md](generated/files.md): every QML file with its purpose comment. Long: grep it.
 - [generated/ipc.md](generated/ipc.md): every IPC target and its functions.
