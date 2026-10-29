@@ -158,7 +158,9 @@ Item {
 
     visible: root.backgroundLevel >= 0 && level.share > 0
     color: "transparent"
-    radius: Math.min(across / 2, root.barConfig.widgetShape === "capsule" ? across / 2 : root.barConfig.radius)
+    // A Rectangle keeps it to half the thickness, which the window never
+    // drops below
+    radius: root.barConfig.widgetShape === "capsule" ? across / 2 : root.barConfig.radius
     x: vertical ? 0 : -overhang
     y: vertical ? root.height - shown : 0
     width: vertical ? root.width : shown + overhang
