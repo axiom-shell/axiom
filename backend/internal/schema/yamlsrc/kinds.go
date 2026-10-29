@@ -52,7 +52,7 @@ func (a *assembler) expandKinds(kinds []Kind, defs, sections *jsonx.Object) {
 				continue // didn't read: already reported
 			}
 			file := k.Root + "/" + t + "/" + TypeFile
-			defs.Set(name, a.expand(file, t, src, base, sections))
+			defs.Set(name, a.expand(file, t, src, base, sections, defs))
 			oneOf.Items = append(oneOf.Items, jsonx.Obj("$ref", "#/definitions/"+name))
 		}
 		if defs.Has(k.Name) {
@@ -63,7 +63,7 @@ func (a *assembler) expandKinds(kinds []Kind, defs, sections *jsonx.Object) {
 	}
 }
 
-func (a *assembler) expand(file, typeName string, src, base, sections *jsonx.Object) *jsonx.Object {
+func (a *assembler) expand(file, typeName string, src, base, sections, defs *jsonx.Object) *jsonx.Object {
 	fail := func(key, format string, args ...any) {
 		a.errs = append(a.errs, a.pos.At(src, key, file, fmt.Sprintf(format, args...)))
 	}
@@ -141,7 +141,7 @@ func (a *assembler) expand(file, typeName string, src, base, sections *jsonx.Obj
 	}
 	// Parts in the base's order, after the type's own settings
 	for _, part := range orderedParts(parts, used) {
-		a.addPart(file, src, part, parts.Value(part).(*jsonx.Object), slot)
+		a.addPart(file, src, part, parts.Value(part).(*jsonx.Object), slot, defs)
 	}
 
 	if !src.Has("link") && sections != nil && onSettingsPage(sections.Value(typeName)) && !def.Has("x-link") {
@@ -179,7 +179,7 @@ func orderedParts(parts *jsonx.Object, used []string) []string {
 
 // addPart adds a picked part's settings: `<part>: <variant>`, or
 // `<part>: {variant: <variant>, <setting>: {overrides}}`.
-func (a *assembler) addPart(file string, src *jsonx.Object, part string, variants *jsonx.Object, slot *jsonx.Object) {
+func (a *assembler) addPart(file string, src *jsonx.Object, part string, variants *jsonx.Object, slot, defs *jsonx.Object) {
 	fail := func(format string, args ...any) {
 		a.errs = append(a.errs, a.pos.At(src, part, file, fmt.Sprintf(format, args...)))
 	}
@@ -211,7 +211,8 @@ func (a *assembler) addPart(file string, src *jsonx.Object, part string, variant
 	}
 	// An override names one of the part's settings, or a field of one
 	// that's an object (`popout: {variant: own, enabled: {…}}` reaches
-	// popout.enabled)
+	// popout.enabled), or of the definition one $refs (`display:
+	// {variant: value, style: {…}}` reaches BarDisplay's style)
 	for _, key := range overrides.Keys() {
 		o, ok := overrides.Value(key).(*jsonx.Object)
 		if !ok {
@@ -224,7 +225,11 @@ func (a *assembler) addPart(file string, src *jsonx.Object, part string, variant
 		}
 		found := false
 		for _, s := range added.Keys() {
-			setting, _ := added.Value(s).(*jsonx.Object)
+			setting := inlineRef(added.Value(s), key, defs)
+			if setting == nil {
+				continue
+			}
+			added.Set(s, setting)
 			if inner, ok := setting.Value("properties").(*jsonx.Object); ok && inner.Has(key) {
 				inner.Set(key, merge(inner.Value(key), o))
 				found = true
@@ -242,6 +247,36 @@ func (a *assembler) addPart(file string, src *jsonx.Object, part string, variant
 		}
 		slot.Set(key, added.Value(key))
 	}
+}
+
+// inlineRef: a part's setting that's a $ref to a definition with the
+// property key (a widget's `display`, BarDisplay), as a copy of that
+// definition with the $ref's sibling keys over it, so an override can
+// reach into it; the setting as it is otherwise.
+func inlineRef(v any, key string, defs *jsonx.Object) *jsonx.Object {
+	setting, _ := v.(*jsonx.Object)
+	if setting == nil || defs == nil {
+		return setting
+	}
+	ref, ok := setting.Value("$ref").(string)
+	if !ok {
+		return setting
+	}
+	target, ok := defs.Value(strings.TrimPrefix(ref, "#/definitions/")).(*jsonx.Object)
+	if !ok {
+		return setting
+	}
+	if props, ok := target.Value("properties").(*jsonx.Object); !ok || !props.Has(key) {
+		return setting
+	}
+	inlined := jsonx.Clone(target).(*jsonx.Object)
+	inlined.Delete("x-inline")
+	for _, k := range setting.Keys() {
+		if k != "$ref" {
+			inlined.Set(k, jsonx.Clone(setting.Value(k)))
+		}
+	}
+	return inlined
 }
 
 // merge lays over's keys over base, recursing into objects both have.

@@ -4,23 +4,21 @@ import QtQuick
 import qs.config
 import qs.services.apps
 import qs.components.methods
-import qs.components.reusable
-import qs.components.content.parts
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
 // A custom widget on the bar (docs/dev/features/custom-widgets.md): its
-// script's output (CustomWidgetsManager) in the definition's bar style:
-// label (Waybar's look), icon, ring, fill, pill, segments, sparkline,
-// ticker or stacked. Clicks and scrolls run its actions; hovering opens its
-// module. Hidden while the script says so (empty text, as Waybar).
-BarIconWidget {
+// script's output (CustomWidgetsManager) in the definition's bar style
+// (ValueStyleWidget's: label is Waybar's look). Clicks and scrolls run its
+// actions; hovering opens its module. Hidden while the script says so
+// (empty text, as Waybar).
+ValueStyleWidget {
   id: root
 
   readonly property string widgetId: properties.definition
   readonly property var definition: CustomWidgetsConfig.definition(root.widgetId)
   // No definition (none picked, or removed): its label asks for one.
-  // Every key this file reads, so none binds undefined
+  // Every key this file and its base read, so none binds undefined
   readonly property var bar: root.definition?.bar ?? ({
       "style": "label",
       "icon": "material",
@@ -30,50 +28,27 @@ BarIconWidget {
       "popout": false
     })
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
-  readonly property real ratio: Math.max(0, root.fields?.ratio ?? 0)
   readonly property var graphRange: CustomWidgetData.graphRange(root.fields, {})
-  readonly property color stateColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : "transparent"
-  // Stacked draws its own two lines; on a vertical bar it's a label
-  readonly property string style: root.isVertical && root.bar.style === "stacked" ? "label" : root.bar.style
-  // A graphic before the icon, along the bar
-  readonly property bool graphic: ["ring", "fill", "segments", "sparkline", "ticker", "stacked"].includes(root.style)
-  readonly property real graphicLength: {
-    switch (root.style) {
-    case "ring":
-      return root.crossSize * 0.62;
-    case "fill":
-    case "segments":
-    case "sparkline":
-      return root.bar.width > 0 ? root.bar.width : root.fontSize * (root.isVertical ? 2.5 : 4);
-    case "ticker":
-      // As long as its text, up to its room: it scrolls past that
-      return Math.min((graphicLoader.item as Item)?.implicitWidth ?? 0, root.bar.width > 0 ? root.bar.width : root.fontSize * 12);
-    case "stacked":
-      return (graphicLoader.item as Item)?.implicitWidth ?? 0;
-    }
-    return 0;
-  }
 
   Component.onCompleted: CustomWidgetsManager.acquire(root, root.widgetId)
   onWidgetIdChanged: CustomWidgetsManager.acquire(root, root.widgetId)
   Component.onDestruction: CustomWidgetsManager.release(root)
 
+  display: root.bar
+  // No sample yet: a label ("…") until the script has printed one
+  ratio: root.fields === null ? -1 : Math.max(0, root.fields.ratio ?? 0)
+  history: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
+  graphMin: root.graphRange.min
+  graphMax: root.graphRange.max
+  styleText: root.fields?.plain ?? ""
+  subtext: root.fields?.subtext || root.fields?.alt || ""
+  hasState: !!root.fields?.color
+  stateColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : "transparent"
+
   hidden: root.fields?.hidden ?? false
   icon: root.bar.icon === "material" ? (root.fields?.icon || root.definition?.icon || "widgets") : ""
   text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.fields.plain
-  showText: !["icon", "ticker", "stacked"].includes(root.style)
-  leadLength: root.graphic ? root.graphicLength : 0
-  // Ticker and stacked are its text: where the label would be
-  leadAfterIcon: ["ticker", "stacked"].includes(root.style)
   accentColor: root.fields?.color ? root.stateColor : Theme.resolveColor(properties.backgroundColor)
-  // Colour the text by state only where it isn't the background already
-  // (a filled widget's text must read on it)
-  readonly property bool _textByState: root.bar.colorText && !!root.fields?.color && root.colors.fill.a < 1
-  foregroundColor: root._textByState ? root.stateColor : colors.text
-  iconColor: root._textByState ? root.stateColor : colors.icon
-  // Graphics draw in the icon's colour for this bar's style: the state's
-  // on a tint, outline or plain bar, what reads on it when it's the fill
-  readonly property color graphicColor: root.colors.icon
 
   // Urgent: a slow pulse (as Battery's charging one), back to full when
   // it stops
@@ -109,173 +84,6 @@ BarIconWidget {
   onClicked: button => CustomWidgetsManager.act(root.widgetId, button === Qt.RightButton ? "rightClick" : button === Qt.MiddleButton ? "middleClick" : "click")
   scrollable: !!(root.actions.scrollUp || root.actions.scrollDown)
   onScrolled: steps => CustomWidgetsManager.act(root.widgetId, steps > 0 ? "scrollUp" : "scrollDown")
-
-  // The pill: its background's shape filled to the value (WidgetGroup
-  // draws it, so it takes the bar's caps and radius)
-  backgroundLevel: root.style === "pill" && !root.hidden && root.fields !== null ? root.ratio : -1
-  backgroundLevelColor: Qt.alpha(root.graphicColor, 0.35)
-
-  // The graphic styles, in the lead slot: only the shown one is built.
-  // Sizes from the bar's font, as a bar's pieces are
-  Loader {
-    id: graphicLoader
-    parent: root.lead
-    anchors.fill: parent
-    sourceComponent: ({
-        "ring": ring,
-        "fill": fill,
-        "segments": segments,
-        "sparkline": sparkline,
-        "ticker": ticker,
-        "stacked": stacked
-      })[root.style] ?? null
-  }
-
-  Component {
-    id: ring
-    Item {
-      PercentageCircle {
-        anchors.centerIn: parent
-        width: Math.min(parent.width, parent.height)
-        height: width
-        percentage: root.ratio * 100
-        thickness: Math.max(2, width * 0.16)
-        trackColor: Qt.alpha(root.colors.text, 0.2)
-        fillColor: root.graphicColor
-        iconText: ""
-      }
-    }
-  }
-
-  Component {
-    id: fill
-    LevelMeter {
-      share: root.ratio
-      vertical: root.isVertical
-      thickness: Math.max(3, root.fontSize * 0.35)
-      trackColor: Qt.alpha(root.colors.text, 0.2)
-      fillColor: root.graphicColor
-    }
-  }
-
-  Component {
-    id: segments
-    SegmentMeter {
-      count: root.bar.segments
-      share: root.ratio
-      vertical: root.isVertical
-      across: root.fontSize * 0.7
-      gap: 2
-      cornerRadius: 2
-      litColor: root.graphicColor
-      offColor: Qt.alpha(root.colors.text, 0.2)
-    }
-  }
-
-  Component {
-    id: sparkline
-    Item {
-      Sparkline {
-        anchors.fill: parent
-        anchors.topMargin: root.crossSize * 0.2
-        anchors.bottomMargin: root.crossSize * 0.2
-        values: CustomWidgetsManager.history[root.widgetId]?.[""] ?? []
-        minValue: root.graphRange.min
-        maxValue: root.graphRange.max
-        lineColor: root.graphicColor
-        showBaseline: false
-      }
-    }
-  }
-
-  // Ticker: the text scrolling when it's longer than its room, turned
-  // along a vertical bar as its label is
-  Component {
-    id: ticker
-    Item {
-      id: tickerBox
-      // Its length along the bar
-      implicitWidth: tickerText.implicitWidth
-      clip: true
-
-      Item {
-        id: strip
-        anchors.centerIn: parent
-        width: root.isVertical ? tickerBox.height : tickerBox.width
-        height: root.isVertical ? tickerBox.width : tickerBox.height
-        rotation: root.isVertical ? -90 : 0
-
-        Text {
-          id: tickerText
-          anchors.verticalCenter: parent.verticalCenter
-          text: root.fields?.plain ?? ""
-          color: root.foregroundColor
-          font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize
-          readonly property real overflow: Math.max(0, implicitWidth - strip.width)
-          x: 0
-
-          // The pauses and the scroll's speed are behaviour, not motion.
-          // Stopped (the text now fits), it's back at the start
-          SequentialAnimation on x {
-            running: tickerText.overflow > 0 && Appearance.animations
-            loops: Animation.Infinite
-            onRunningChanged: {
-              if (!running)
-                tickerText.x = 0;
-            }
-            PauseAnimation {
-              duration: 1500
-            }
-            NumberAnimation {
-              from: 0
-              to: -tickerText.overflow
-              duration: tickerText.overflow * 30
-            }
-            PauseAnimation {
-              duration: 1500
-            }
-            NumberAnimation {
-              from: -tickerText.overflow
-              to: 0
-              duration: Appearance.animSlow
-              easing.type: Appearance.easing
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Stacked: the value over the caption
-  Component {
-    id: stacked
-    Item {
-      implicitWidth: stack.implicitWidth
-
-      Column {
-        id: stack
-        anchors.centerIn: parent
-        spacing: 0
-
-        Text {
-          anchors.horizontalCenter: parent.horizontalCenter
-          text: root.fields?.plain ?? ""
-          color: root.foregroundColor
-          font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize * 0.8
-          font.bold: true
-        }
-        Text {
-          anchors.horizontalCenter: parent.horizontalCenter
-          text: root.fields?.subtext || root.fields?.alt || ""
-          color: Qt.alpha(root.foregroundColor, 0.7)
-          font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize * 0.6
-        }
-      }
-    }
-  }
 
   PopoutAnchor {
     hitArea: root.hitArea

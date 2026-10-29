@@ -65,23 +65,15 @@ properties:
   hideEmpty: {type: boolean, title: Hide when empty, default: true}
   tooltip: {type: boolean, title: Tooltip, default: true}
   bar:
-    type: object
-    additionalProperties: false
-    properties:
-      style:
-        type: string
-        title: Style
-        enum: [label, icon, ring, fill, pill, segments, sparkline, ticker, stacked]
-        default: label
+    $ref: '#/definitions/BarDisplay'
+    x-order: [style, icon, segments, width, colorText, popout]
+    x-properties:
       icon:
         type: string
         title: Icon
         enum: [none, glyph, material]
         default: material
         description: Before the text, the format's icon is drawn in the text itself.
-      segments: {type: integer, title: Segments, default: 5, minimum: 2, maximum: 12, x-showIf: {style: segments}}
-      width: {type: integer, title: Width, x-unit: px, default: 0, minimum: 0, maximum: 600, description: 'The graphic''s length along the bar; 0 picks one.', x-showIf: {style: [fill, segments, sparkline, ticker]}}
-      colorText: {type: boolean, title: Colour the text by state, default: false}
       popout: {type: boolean, title: Open the module on hover, default: true}
   module:
     type: object

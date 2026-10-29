@@ -171,6 +171,46 @@ settings:
 	}
 }
 
+// A part's override reaching into a setting that $refs a definition
+// inlines that definition, so a type narrows one of its fields.
+func TestPartOverrideInlinesRef(t *testing.T) {
+	t.Parallel()
+	fsys := fstest.MapFS{
+		IndexFile:                        {Data: []byte("type: object\nproperties: {}\nsections: [S]\nkinds:\n  Widget: {root: w, suffix: W, base: WBase}\n")},
+		SectionsDir + "/S.yaml":          {Data: []byte("type: object\n")},
+		AnnotationsFile:                  {Data: []byte("x-order: \"\"\nx-inline: \"\"\n")},
+		DefinitionsDir + "/Display.yaml": {Data: []byte("type: object\nx-inline: true\nproperties:\n  style: {type: string, enum: [label, ring, ticker], default: label}\n")},
+		DefinitionsDir + "/WBase.yaml": {Data: []byte(`type: object
+x-settingsAt: /properties/properties/properties
+x-parts:
+  display:
+    value:
+      display: {$ref: '#/definitions/Display', title: Display}
+properties:
+  properties:
+    type: object
+    properties: {}
+`)},
+		"w/Battery/schema.yaml": {Data: []byte("label: Battery\ndisplay: {variant: value, style: {enum: [label, ring], default: ring}}\n")},
+		"w/Window/schema.yaml":  {Data: []byte("label: Window\ndisplay: value\n")},
+	}
+	root, err := Assemble(fsys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defs := root.Value("definitions").(*jsonx.Object)
+	setting := func(name string) string {
+		return string(jsonx.MarshalCompact(defs.Value(name).(*jsonx.Object).Value("properties").(*jsonx.Object).Value("properties").(*jsonx.Object).Value("properties").(*jsonx.Object).Value("display")))
+	}
+	if got, want := setting("BatteryW"), `{"type":"object","properties":{"style":{"type":"string","enum":["label","ring"],"default":"ring"}},"title":"Display"}`; got != want {
+		t.Errorf("Battery's display = %s, want %s", got, want)
+	}
+	// Without an override it's inlined later, as any x-inline definition
+	if got, want := setting("WindowW"), `{"type":"object","properties":{"style":{"type":"string","enum":["label","ring","ticker"],"default":"label"}},"title":"Display"}`; got != want {
+		t.Errorf("Window's display = %s, want %s", got, want)
+	}
+}
+
 // x-inherit on a $ref makes the definition's inheriting copy: every
 // setting null by default, naming where its value comes from.
 func TestInherit(t *testing.T) {
