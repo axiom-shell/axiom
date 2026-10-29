@@ -44,6 +44,25 @@ class Bash(unittest.TestCase):
         self.allows("(cd docs && ls)", "echo $(date)", "if true; then echo ok; fi", "{ git status; git log -1; } | head",
                     "go test ./... 2>&1 | tail -3")
 
+    def test_every_rule_holds_in_compound_forms(self):
+        """Each AGENTS.md › Never rule's plain form, inside a group, after &&,
+        in a substitution or an if, behind a wrapper or an assignment."""
+        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
+        rules = ["loginctl lock-session", "hyprlock", "ydotool mousemove 1 1", "hyprctl dispatch movecursor 1 1",
+                 "axiom compositor claim --kind sway ~/.config/sway h", "axiom compositor binds remove --kind sway ~/.config/sway x",
+                 "axiom config set Idle.enabled on --takeover", "axiom ipc monitors keep", "axiom ipc selfUpdate update",
+                 f"rm {guard.LIVE_CONFIG}", f"cp /tmp/x.json {guard.LIVE_CONFIG}", "niri msg action quit",
+                 f"python3 -c {call % 'hookup.apply'}", f"python3 -c {call % 'selfupdate.apply'}",
+                 f"python3 -c {call % 'greeter.apply'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
+                 "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
+                 "axiom ipc lockscreen lock", "qs kill", "gh issue create -t x", "git push --force", "git push origin main",
+                 "git clean -fdx", "qmlformat -i shell.qml"]
+        forms = ["( {} )", "true && {}", "{{ {}; }}", "echo $({})", "if true; then {}; fi", "sudo -u me {}",
+                 "nice -n 5 {}", "FOO=1 {}"]
+        with mock.patch.dict(os.environ, {"NIRI_SOCKET": "/run/user/1000/niri.wayland-1.100.sock"}):
+            for rule in rules:
+                self.blocks(rule, *(form.format(rule) for form in forms))
+
     def test_wrapper_options(self):
         self.blocks("sudo -u me axiom lock", "nice axiom lock", "nice -n 5 axiom lock", "flock /tmp/l axiom lock",
                     "flock -w 5 /tmp/l axiom lock", "systemd-run --user axiom quit", "systemd-run --user -u x axiom quit",
