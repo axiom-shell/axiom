@@ -216,15 +216,13 @@ DropdownSurface {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search notes")
+      clearable: true
+      escapeClears: true
       Component.onCompleted: input.forceActiveFocus()
       onAccepted: {
         const first = root.results[0];
         if (first)
           root.picked(first.path, first.line);
-      }
-      input.Keys.onEscapePressed: event => {
-        event.accepted = searchField.text !== "";
-        searchField.text = "";
       }
     }
 

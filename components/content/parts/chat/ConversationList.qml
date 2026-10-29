@@ -55,6 +55,7 @@ DropdownSurface {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search conversations")
+      clearable: true
       onTextChanged: root.query = text
     }
 

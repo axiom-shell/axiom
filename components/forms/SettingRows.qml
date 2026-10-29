@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.services.ui
+import qs.components.methods
 
 // Settings by dotted config path ("Apps.terminal"), each a SchemaField
 // row as on the settings page, saved as they change
@@ -68,12 +69,18 @@ ColumnLayout {
   // The rows keep their gaps themselves (FormRow.dividerGap)
   spacing: 0
 
+  // The top row drawn (FormRow.first)
+  readonly property int _firstRow: Utils.firstFormRow(rowItems.count, i => rowItems.itemAt(i))
+
   Repeater {
+    id: rowItems
     model: root.rows
 
     delegate: FormRow {
       id: rowItem
       required property var modelData
+      required property int index
+      first: index === root._firstRow
       shown: field.shown
       indented: field.followsSibling
       bodyHeight: field.implicitHeight

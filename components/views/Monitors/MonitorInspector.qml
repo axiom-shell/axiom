@@ -117,6 +117,7 @@ ColumnLayout {
     spacing: 0
 
     FormRow {
+      first: true
       bodyHeight: resolutionField.implicitHeight
 
       SchemaComboBox {

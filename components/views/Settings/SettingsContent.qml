@@ -20,13 +20,35 @@ Item {
   required property var category
 
   readonly property var schema: ConfigManager.configSchema
-  readonly property string query: SettingsManager.query.trim().toLowerCase()
+  // The search typed, taken once typing pauses (`queryDelay`), so a burst
+  // of keystrokes builds the results once; clearing it takes at once
+  property string query: ""
   readonly property bool searching: query !== ""
   // Listing matches from every category: a search, or the settings
   // changed from their defaults (SettingsManager.changedOnly), or both
   readonly property bool listing: root.searching || SettingsManager.changedOnly
 
-  Component.onCompleted: root._lastPageIndex = root._pageIndex
+  Component.onCompleted: {
+    root.query = root._typed;
+    root._lastPageIndex = root._pageIndex;
+  }
+
+  readonly property string _typed: SettingsManager.query.trim().toLowerCase()
+  on_TypedChanged: {
+    if (root._typed === "") {
+      queryDelay.stop();
+      root.query = "";
+    } else {
+      queryDelay.restart();
+    }
+  }
+
+  // A quiet spell after a keystroke (a behaviour timing, not an animation)
+  Timer {
+    id: queryDelay
+    interval: 150
+    onTriggered: root.query = root._typed
+  }
 
   signal edited(var path, var value)
   onEdited: (path, value) => SettingsManager.setValue(path, value)
@@ -40,11 +62,6 @@ Item {
 
   function valueAt(path) {
     return Utils.valueAt(SettingsManager.localConfig, path);
-  }
-
-  // Matches English and the translation, so either can be typed
-  function _matches(text) {
-    return !!text && (text.toLowerCase().includes(root.query) || I18n.tr(text).toLowerCase().includes(root.query));
   }
 
   // Whether an `x-showIf`-style condition holds, its plain keys being
@@ -61,29 +78,24 @@ Item {
     return group.kind !== "rows" || group.rows.length === 0 || group.rows.some(row => row.kind === "group" || (root.conditionHolds(row.schema?.["x-showIf"], row.path.slice(0, -1)) && (row.groupShowIf ?? []).every(outer => root.conditionHolds(outer.condition, outer.path))));
   }
 
-  function _rowMatches(row) {
-    return row.kind !== "group" && (_matches(row.title) || _matches(row.schema?.description) || row.path[row.path.length - 1].toLowerCase().includes(root.query));
+  // Every category's cards with rows, carrying their category's name, as
+  // what a search reads (SettingsSearch.index): taken once while listing,
+  // again only when the schema, the categories shown or the language
+  // change (I18n.tr reads it). Hand-built cards have no rows to search
+  readonly property var _searchIndex: {
+    if (!root.listing)
+      return [];
+    const groups = [].concat(...root.categories.map(category => SchemaLayout.categoryGroups(root.schema, category).filter(group => group.kind !== "card").map(group => Object.assign({}, group, {
+          "category": category.name,
+          "categoryIcon": category.icon
+        }))));
+    return SettingsSearch.index(groups, text => I18n.tr(text));
   }
 
   // From the schema, category, search and the changed set only: never
   // from config values, so editing doesn't rebuild the cards. Listed
   // results carry their category's name
-  readonly property var groups: {
-    if (!root.listing)
-      return SchemaLayout.categoryGroups(root.schema, root.category);
-    const changed = SettingsManager.changedSet;
-    const changedOnly = SettingsManager.changedOnly;
-    // Hand-built cards have no rows to search
-    return [].concat(...root.categories.map(category => SchemaLayout.categoryGroups(root.schema, category).filter(group => group.kind !== "card").map(group => {
-        const titleMatches = root.searching && (root._matches(group.title) || root._matches(group.section));
-        const rows = group.rows.filter(row => (!root.searching || titleMatches || root._rowMatches(row)) && (!changedOnly || (row.kind !== "group" && changed[row.path.join(".")] === true)));
-        return rows.length > 0 ? Object.assign({}, group, {
-          "rows": rows,
-          "category": category.name,
-          "categoryIcon": category.icon
-        }) : null;
-      }).filter(group => group !== null)));
-  }
+  readonly property var groups: root.listing ? SettingsSearch.filter(root._searchIndex, root.query, SettingsManager.changedSet, SettingsManager.changedOnly) : SchemaLayout.categoryGroups(root.schema, root.category)
 
   // Which groups are shown, as a string so it only notifies when that
   // actually changes, not on every edit
@@ -385,11 +397,11 @@ Item {
               model: block.modelData.groups
 
               // A hand-built card (`x-card`: settings/<name>Card.qml) or rows,
-              // streamed in on opening a category; search results build at
-              // once, so typing doesn't fade them in again
+              // streamed in on opening a category or on a search (one letter
+              // matches most of the page), the ones in view first
               delegate: StreamedLoader {
                 id: card
-                always: !root.listing
+                always: true
                 label: `settings card ${card.modelData.key}`
                 required property var modelData
                 required property int index

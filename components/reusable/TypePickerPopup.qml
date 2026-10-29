@@ -89,6 +89,7 @@ Popup {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: root.placeholderText
+      clearable: true
       onTextChanged: {
         root.query = text;
         root.highlighted = 0;

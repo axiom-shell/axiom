@@ -46,6 +46,19 @@ QtObject {
     return value;
   }
 
+  // The index of a form's top row (FormRow.first): the first of `count`
+  // rows (`rowAt(i)`: { shown, bodyHeight } or null, a Repeater's itemAt)
+  // that draws something, shown or not yet known (undefined) and not
+  // empty; -1 for none
+  function firstFormRow(count, rowAt) {
+    for (let i = 0; i < count; i++) {
+      const row = rowAt(i);
+      if (row && row.shown !== false && row.bodyHeight > 0)
+        return i;
+    }
+    return -1;
+  }
+
   // A copy of the object `map` with `key` set to `value`, or left out when
   // `value` is undefined: for map properties, whose bindings only update
   // when the property is assigned a new object
