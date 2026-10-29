@@ -2,6 +2,11 @@ label: Weather
 icon: partly_cloudy_day
 group: Time & weather
 popout: {variant: own, enabled: {description: Show the forecast when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, stacked]
+    description: "Stacked puts the temperature over the condition."
 colors: standard
 settings:
   showCondition:

@@ -66,6 +66,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [bar-ends-pills](bar/bar-ends-pills.md): what a bar's ends meet, pill bars merging at corners, pill stretch.
 - [layering-and-corners](bar/layering-and-corners.md): bars and the screen border sharing an edge, corner ownership, transparent bars, border off.
 - [bar-editor](bar/bar-editor.md): the BarEditor page and live reports.
+- [display-styles](bar/display-styles.md): how a widget draws its value (ring, fill, sparkline, ticker, stacked, …), shared with custom widgets.
 
 ### popouts/: everything growing out of an edge
 - [surface-context](popouts/surface-context.md): what a surface meets at its ends (`SurfaceContext`, `EdgePlacement`), the window model.

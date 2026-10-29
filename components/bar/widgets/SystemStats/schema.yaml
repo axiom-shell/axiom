@@ -2,6 +2,11 @@ label: System Stats
 icon: memory_alt
 group: System
 popout: {variant: own, enabled: {description: Open live graphs of the shown metrics when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill, pill, segments, sparkline, stacked]
+    description: Each metric drawn this way. Pill only with one metric shown; the disk has no sparkline (a fill instead).
 colors: standard
 settings:
   showCpu: {type: boolean, title: CPU usage, default: true}

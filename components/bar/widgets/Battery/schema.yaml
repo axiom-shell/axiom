@@ -2,6 +2,11 @@ label: Battery Status
 icon: battery_full
 group: System
 popout: menu
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill, pill, segments, stacked]
+    description: Stacked puts the charge over the time to full or left.
 colors: standard
 settings:
   showPercentage: {type: boolean, title: Show percentage, default: true}

@@ -11,7 +11,9 @@ import qs.components.bar.widgets.base
 // The next event within `lookahead` (or the one under way): "in 10
 // min · Standup", "now · Standup", "15:00 · Dentist". Hidden with none.
 // Hovering opens the calendar; a click opens the Calendar page on its day.
-BarIconWidget {
+// Its display style fills with an event under way, or puts when over the
+// title (stacked).
+ValueStyleWidget {
   id: root
 
   Component.onCompleted: CalendarManager.acquire(root)
@@ -46,7 +48,12 @@ BarIconWidget {
 
   hidden: root.event === null
   icon: "event"
-  text: root.event ? I18n.tr("{0} · {1}", root.when, Utils.truncate(root.event.title || I18n.tr("(No title)"), root.properties.maxLength, "…")) : ""
+  text: root.event ? I18n.tr("{0} · {1}", root.when, root.title) : ""
+  readonly property string title: root.event ? Utils.truncate(root.event.title || I18n.tr("(No title)"), root.properties.maxLength, "…") : ""
+  // How far through an event under way (not an all-day one) it is
+  ratio: root.event && !root.event.allDay && root.event.start <= root.now && root.event.end > root.event.start ? Math.min(1, (root.now - root.event.start) / (root.event.end - root.event.start)) : -1
+  styleText: root.style === "stacked" ? root.when : root.text
+  subtext: root.title
   // Soon (a quarter hour or less): the warning color
   accentColor: root.event && !root.event.allDay && root.minutesAway <= 15 ? Theme.warning : Theme.resolveColor(properties.backgroundColor)
 

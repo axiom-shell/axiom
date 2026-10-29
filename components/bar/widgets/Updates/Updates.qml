@@ -11,8 +11,8 @@ import qs.components.bar.widgets.base
 // Fedora; hidden on one UpdatesManager can't check), plus AUR packages via
 // paru/yay when enabled on Arch (UpdatesConfig). Left click opens a
 // terminal to upgrade, right click checks again now; hovering lists the
-// packages.
-BarIconWidget {
+// packages. Stacked: the count over the AUR's share.
+ValueStyleWidget {
   id: root
 
   // [{ name, from, to }], checked by the shared UpdatesManager
@@ -26,6 +26,7 @@ BarIconWidget {
   icon: "download"
   text: String(count)
 
+  subtext: aurPackages.length > 0 ? I18n.tr("{0} AUR", aurPackages.length) : I18n.tr("updates")
   accentColor: Theme.resolveColor(count >= properties.manyThreshold ? properties.manyColor : properties.backgroundColor)
 
   // Re-acquiring replaces the old request

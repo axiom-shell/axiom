@@ -2,6 +2,11 @@ label: Claude Usage
 icon: data_usage
 group: System
 popout: {variant: own, enabled: {description: List every limit per account when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill, pill, segments, stacked]
+    description: "The value is the limit's percent: the fullest account's, or the first's. Stacked puts it over the limit's name."
 colors: standard
 settings:
   metric:

@@ -6,8 +6,9 @@ import qs.config
 import qs.components.bar.widgets.base
 
 // The Battery bar widget: charge level and icon from BatteryManager,
-// colored by charging, low and critical; hidden on machines with no battery.
-BarIconWidget {
+// colored by charging, low and critical, in its display style (charge as the
+// value); hidden on machines with no battery.
+ValueStyleWidget {
   id: root
 
   // From UPower's display device (services/system/BatteryManager.qml)
@@ -20,7 +21,9 @@ BarIconWidget {
 
   icon: BatteryManager.getBatteryIcon()
   text: `${percentage}%`
-  showText: properties.showPercentage
+  labelShown: properties.showPercentage
+  ratio: percentage / 100
+  subtext: timeRemaining
 
   accentColor: getBatteryColor()
 

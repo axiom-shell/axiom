@@ -100,7 +100,8 @@ func toCurrent(cfg *jsonx.Object) *jsonx.Object {
 // defaults: the schema's shape and the converter agree on every key. A
 // section format 1 never had (Tailscale, from v79) is filled from its
 // defaults at load, like any missing section, and so is a key added to a
-// format-1 section since (addedSinceV1).
+// format-1 section since (addedSinceV1), or to a bar widget
+// (widgetKeysAddedSinceV1).
 func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	t.Parallel()
 	s := v2Schema(t)
@@ -127,6 +128,21 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 		}
 		parent.Delete(parts[len(parts)-1])
 	}
+	bars, _ := defaults.(*jsonx.Object).Value("Bars").(*jsonx.Object)
+	items, _ := bars.Value("items").(*jsonx.Array)
+	for _, bar := range items.Items {
+		sections, _ := bar.(*jsonx.Object).Value("widgets").(*jsonx.Object)
+		for _, side := range sections.Keys() {
+			widgets, _ := sections.Value(side).(*jsonx.Array)
+			for _, w := range widgets.Items {
+				if props, ok := w.(*jsonx.Object).Value("properties").(*jsonx.Object); ok {
+					for _, key := range widgetKeysAddedSinceV1 {
+						props.Delete(key)
+					}
+				}
+			}
+		}
+	}
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {
@@ -137,6 +153,9 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
 var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "Overlay.moduleBorders"}
+
+// Bar widget settings added since, the same way (a widget's display style)
+var widgetKeysAddedSinceV1 = []string{"appearance"}
 
 // Every frozen corpus config (each past schema version's defaults, the
 // examples, old configs), as the legacy pipeline loads it, converts to a

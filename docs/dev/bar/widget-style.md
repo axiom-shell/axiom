@@ -15,10 +15,11 @@ The base classes bar widgets extend, where their sizes come from, and how their 
     - `scrollable` → `scrolled(steps)`.
     - `hovered` is what an edge menu opened by a Button stays open for.
     - `dim` is for fades of the widget's own.
-- **`AudioLevelWidget`** is shared by Volume and Microphone.
+- **`ValueStyleWidget`** (a `BarIconWidget`) draws a widget's value in its display style, and `ValueGraphic` is that graphic alone ([Display styles](display-styles.md)).
+- **`AudioLevelWidget`** (a `ValueStyleWidget`) is shared by Volume and Microphone.
 - **`bar/widgets/base/BarWidget.qml`** is the base for widgets that draw their own content. It has the same inputs plus `isVertical`.
 - **`base/BaseWidget`** is the sizing and background wrapper under both.
-- **`base/IconTextWidget`** (under `BarIconWidget`) lays the icon and label along the bar; a graphic of `leadLength` goes in its `lead` slot before the icon, or after it, where the label would be, with `leadAfterIcon` (the custom widget's ring, meters, ticker).
+- **`base/IconTextWidget`** (under `BarIconWidget`) lays the icon and label along the bar, the label's figures (a digit's height) centred on the icon's middle (`iconMiddle`) on a whole pixel rather than its box, which holds the descent and sat it high; on a vertical bar the label is turned along it, or with `uprightLabel` small and upright under the icon (SystemStats' metrics, each one an IconTextWidget); a graphic of `leadLength` goes in its `lead` slot before the icon, or after it, where the label would be, with `leadAfterIcon` (a display style's ring, meters, ticker).
 
 ### Sizes come from the bar
 - (Rule: `components/bar/widgets/AGENTS.md`, "Sized by the bar".)

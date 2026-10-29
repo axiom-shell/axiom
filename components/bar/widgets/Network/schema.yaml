@@ -2,6 +2,11 @@ label: Network Status
 icon: wifi
 group: Network & devices
 popout: {variant: own, enabled: {description: Open the Wi-Fi menu when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, segments, sparkline, ticker, stacked]
+    description: "Ring and segments show the Wi-Fi signal; sparkline the download speed; ticker and stacked the network's name (stacked over its address)."
 colors: {variant: standard, backgroundColor: {title: Connected color}}
 settings:
   showName:

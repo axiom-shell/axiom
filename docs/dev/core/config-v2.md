@@ -88,7 +88,7 @@ Sections that are already one concept with plain keys stay as they are, apart fr
 | Kind | Added by the builder | Written in `schema.yaml` |
 |---|---|---|
 | every kind | `type: object`, `additionalProperties: false`, `required`, `type: {const: <Type>}` with its label, `id` | `icon`, `group` (the library group), `settings` (flat: the builder nests them as `properties.properties`, so config.json's shape doesn't change) |
-| bar widget | `visible`, `layout`, `popout: { enabled, menu }`, the color fields with their `$bar.*` show rules | `popout: own \| menu \| none` (which title and default `popout` gets), `colors: [<autoColor role>, …]` |
+| bar widget | `visible`, `layout`, `popout: { enabled, menu }`, the color fields with their `$bar.*` show rules | `popout: own \| menu \| none` (which title and default `popout` gets), `colors: [<autoColor role>, …]`, `appearance: {variant: value, style: {enum: […]}}` (its display styles, [Display styles](../bar/display-styles.md)) |
 | overlay module | `place`, `x-hosts: [overlay, edgeMenu, desktop]` | only the extra hosts (`hosts: [lockscreen, greeter]`), `size` / `minSize` |
 | overlay view | the page's common keys (`OverlayView`) | `needs` |
 

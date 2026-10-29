@@ -5,6 +5,11 @@ group: System
 popout:
   variant: own
   enabled: {description: 'Caffeine for a set time, from the presets, when hovered.'}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill]
+    description: "Ring and fill show the time left on a timed caffeine."
 settings:
   showLabel: {type: boolean, title: Show label, default: false}
   presets:
