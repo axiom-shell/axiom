@@ -71,7 +71,7 @@ func TestNiriOwnSwitcher(t *testing.T) {
 		}
 	}
 	checkWithCompositor(t, "niri", files)
-	detached := render.NiriModuleText(w.parts(in, spec, w.detachedPath(), ""))
+	detached := render.NiriModuleText(w.parts(in, spec, w.detachedPath(), "detached"))
 	if strings.Contains(detached, "recent-windows") || !strings.Contains(detached, `"windowSwitcher" "next"`) {
 		t.Errorf("detached: niri's switcher bound, or axiom's not:\n%s", detached)
 	}
@@ -87,15 +87,28 @@ func TestNiriOwnSwitcher(t *testing.T) {
 	}
 }
 
-// With the setting on and no switcher bind of axiom's, managed mode still
-// writes niri's switcher binds, empty, so niri's default keys are gone
-// (the maintainer: "Binds are exactly representative of what there is");
-// included writes none and leaves niri's defaults.
-func TestNiriOwnSwitcherWithoutBinds(t *testing.T) {
+// Managed mode always writes niri's switcher binds, so niri's default keys
+// are gone (the maintainer: "Binds are exactly representative of what there
+// is"): empty with the setting on and no switcher bind of axiom's niri's
+// switcher takes, or with the setting off; included writes none then and
+// leaves niri's defaults.
+func TestNiriManagedSwitcherBindsAreAxioms(t *testing.T) {
 	t.Parallel()
 	in := goldenInputs(t, "niri")
 	w := goldenWriter(t, "niri").(*niriWriter)
 	spec := in.get("specFile")
+	empty := "recent-windows {\n    binds {}\n}"
+	check := func(name string) {
+		managed, module := w.managedText(in, spec), w.moduleText(in, spec)
+		if !strings.Contains(managed, empty) {
+			t.Errorf("%s: managed has no empty recent-windows binds:\n%s", name, managed)
+		}
+		if strings.Contains(module, "recent-windows") {
+			t.Errorf("%s: included writes recent-windows:\n%s", name, module)
+		}
+		checkWithCompositor(t, "niri", map[string]string{name + "-managed.kdl": managed})
+	}
+	check("off")
 	in.Set("compositorSwitcher", true)
 	kept := jsonx.Arr()
 	for _, b := range itemsOf(in.get("binds")) {
@@ -104,12 +117,5 @@ func TestNiriOwnSwitcherWithoutBinds(t *testing.T) {
 		}
 	}
 	in.Set("binds", kept)
-	managed, module := w.managedText(in, spec), w.moduleText(in, spec)
-	if strings.Contains(managed, "next-window") || strings.Contains(managed, "previous-window") || !strings.Contains(managed, "recent-windows {") {
-		t.Errorf("managed: no empty recent-windows binds:\n%s", managed)
-	}
-	if strings.Contains(module, "recent-windows") {
-		t.Errorf("included: recent-windows written:\n%s", module)
-	}
-	checkWithCompositor(t, "niri", map[string]string{"managed.kdl": managed})
+	check("no binds")
 }

@@ -139,25 +139,26 @@ func (w *niriWriter) outputs(in Inputs, path string) any {
 	return render.NiriFileOutputNodes(readFile(path))
 }
 
-// parts are what every file holds. With WindowSwitcher.compositorSwitcher,
-// the switch windows keys are niri's own switcher's in the included and
-// managed files (`mode`); detached ("") keeps axiom's (the maintainer,
-// 2026-10-29). Managed with none of them writes the switcher's binds empty,
-// so niri's default keys are gone too: its binds are axiom's.
+// parts are what every file holds (mode: the Compositor.mode it's for).
+// With WindowSwitcher.compositorSwitcher, the switch windows keys are niri's
+// own switcher's in the included and managed files; detached keeps axiom's
+// (the maintainer, 2026-10-29). Managed writes niri's switcher binds even
+// with none of them, empty, so niri's default keys are gone: its binds are
+// exactly axiom's.
 func (w *niriWriter) parts(in Inputs, spec any, path string, mode string) *jsonx.Object {
 	look := render.NiriLookNodes(getAny(spec, "look"))
 	look.Append(w.tables.NiriSurfaceBlurNodes(getAny(spec, "surfaces")).Items...)
 	binds := w.plan(in).Value("apply")
 	options := render.NiriOptionNodes(w.schemaOf("Workspaces"), in.get("stripOptions"), false)
-	if mode != "" && in.get("compositorSwitcher") == true {
-		rest, recent := w.tables.NiriRecentWindows(binds)
-		binds = rest
-		if recent == nil && mode == "managed" {
-			recent = render.Node("recent-windows", nil, nil, jsonx.Arr(render.Node("binds", nil, nil, jsonx.Arr())))
-		}
-		if recent != nil {
-			options.Append(recent)
-		}
+	var recent *jsonx.Object
+	if mode != "detached" && in.get("compositorSwitcher") == true {
+		binds, recent = w.tables.NiriRecentWindows(binds)
+	}
+	if recent == nil && mode == "managed" {
+		recent = render.Node("recent-windows", nil, nil, jsonx.Arr(render.Node("binds", nil, nil, jsonx.Arr())))
+	}
+	if recent != nil {
+		options.Append(recent)
 	}
 	return jsonx.Obj("header", niriHeader, "includeLines", w.includeLines(),
 		"binds", nilObj(w.tables.NiriBindsNode(binds, in.get("ctx"))),
@@ -262,7 +263,7 @@ func (w *niriWriter) runtimeApply(ctx context.Context, in Inputs, _ func() []str
 	if w.userEntries == nil {
 		return
 	}
-	module := render.NiriModuleText(w.parts(in, in.get("specFile"), w.detachedPath(), ""))
+	module := render.NiriModuleText(w.parts(in, in.get("specFile"), w.detachedPath(), "detached"))
 	wrapper := render.NiriWrapperText(niriHeader, w.mainConfig, w.detachedPath())
 	if w.refused = w.validate(ctx, module); w.refused != "" {
 		return
