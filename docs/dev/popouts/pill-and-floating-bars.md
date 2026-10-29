@@ -9,7 +9,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 ### Floating bars (islands)
 - **Settings:** `background: "floating" | "floatingPills"`, with `barConfig.island`/`islandPills`.
 - **Laid out like tiled windows:** the islands are held their float gap in from the border's stroke (or from the bare screen edge). The gap applies across the bar and from both ends (`islandStart`).
-  - **`floatGap` Automatic (-1):** this is Hyprland's gaps_out on the bar's edge, the same gap windows keep. So the islands' ends line up with the windows'.
+  - **`floatGap` Automatic (-1):** this is the compositor's gaps_out on the bar's edge, the same gap windows keep. So the islands' ends line up with the windows'. With no compositor backend (gaps unknown, `gapsOut` 0) it's `Appearance.screenMargin` (`ScreenEdgeManager.floatGaps`), so the bar isn't flush on the border.
   - **Each island** is a rounded box with a stroke all round, holding the widgets and their `padding`.
 - **Read as pills:** `BarContainer.pillRects` holds the islands shaped like pills (`BarLayout.islandRects`), so the popout code reads them as pills.
   - The shape is either one island from limit to limit, or one per group, merged within `pillMerge`.

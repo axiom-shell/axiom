@@ -10,10 +10,10 @@ QtObject {
   // Adds derived orientation flags to a bar entry from the Bars section
   // (whose keys are always filled in from the schema defaults). Laid out
   // with the compositor's outer gaps (`gapsOut`: per edge name,
-  // CompositorManager's),
-  // which a floating bar's islands keep from the screen edges as windows
-  // do (ScreenEdgeManager.bars).
-  function enrichBarConfig(barConfig, gapsOut) {
+  // CompositorManager's) and the gaps an Automatic float gap keeps
+  // (`floatGaps`: ScreenEdgeManager.floatGaps), which a floating bar's
+  // islands keep from the screen edges as windows do.
+  function enrichBarConfig(barConfig, gapsOut, floatGaps) {
     const loc = ScreenEdge.fromConfig(barConfig.location);
     // Its widget style, accents and shadow: its own style's, each key it
     // leaves null the Bars section's
@@ -59,13 +59,13 @@ QtObject {
     const pillDepth = pillInset + widgetSize + pillGap;
     // Laid out like a tiled window: an island sits its float gap in from
     // the border's stroke (or the bare screen edge), across the bar and
-    // from both its ends (Automatic, -1: Hyprland's gaps_out on its edge,
-    // as windows keep; the ends take the same, so a gaps_out differing per
+    // from both its ends (Automatic, -1: the compositor's gaps_out on its
+    // edge, as windows keep, or the screen margin with no backend; the ends take the same, so a gaps_out differing per
     // side leaves them off the windows' edges), and holds the widgets and
     // their padding inside a stroke. Windows keep gaps_out from it, as from
     // a screen edge: gaps_in is only between windows.
     const edge = ScreenEdge.name(loc);
-    const floatGap = barConfig.floatGap >= 0 ? barConfig.floatGap : gapsOut[edge] ?? 0;
+    const floatGap = barConfig.floatGap >= 0 ? barConfig.floatGap : floatGaps[edge] ?? 0;
     const islandStart = outerCover + floatGap;
     const islandDepth = Appearance.borderWidth + padding + widgetSize + padding + Appearance.borderWidth;
     const borderShadowed = solid && Appearance.screenBorder && barConfig.reserveSpace;
@@ -188,12 +188,14 @@ QtObject {
     return barConfig.shortEdge ? kind : kind + "-long";
   }
 
-  // BarEnds' options, from Appearance and Hyprland's gaps_out
-  function endsOptions(gapsOut) {
+  // BarEnds' options, from Appearance, the compositor's gaps_out and the
+  // gaps an Automatic float gap keeps (enrichBarConfig)
+  function endsOptions(gapsOut, floatGaps) {
     return {
       "border": Appearance.screenBorder,
       "borderWidth": Appearance.borderWidth,
-      "gapsOut": gapsOut
+      "gapsOut": gapsOut,
+      "floatGaps": floatGaps
     };
   }
 

@@ -194,17 +194,29 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while aligning the schema's scopes
 
-### The scrolling layout's workspaces don't come back with their monitor
-- **Where:** `services/compositor/HyprlandManager.qml` (`dynamicByLayout`, `_compaction`), `components/methods/DynamicWorkspaces.qml`
-- **What:** niri keeps an unplugged monitor's workspaces and gives them back when it returns; under Hyprland's scrolling layout, Hyprland moves them to another monitor, where they're outside its block, so they drop out of its list (`DynamicWorkspaces.workspaces`) until `workspaces reconcile`. Workspaces the user's config makes persistent stay empty in the middle of the list, as compaction moves no workspace without windows. Neither is tried yet.
-- **Size:** needs a plan
-- **Found:** 2026-10-19, while adding the scrolling layout
+### Hyprland's return of workspaces on replug is unconfirmed
+- **Where:** `services/compositor/HyprlandManager.qml` (`dynamicByLayout`), `scripts/dev/nested.sh`
+- **What:** The scrolling layout's give-back (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, decided C, item 1) rests on Hyprland moving an unplugged monitor's workspaces back to it on replug (each workspace keeps the monitor it left), read from Hyprland's code but never tried. Check it on a nested Hyprland (`scripts/dev/nested.sh hyprland`): create a headless output, open windows on its workspaces, remove the output, add it back, and see where they land. Record the result in `docs/dev/hyprland/workspace-strips.md`. If Hyprland doesn't return them, stop and report before the later items are built: the borrowed-workspaces item has nothing to wait for.
+- **Size:** trivial
+- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
 
-### Per-monitor workspace blocks shift when a monitor unplugs
-- **Where:** `components/methods/WorkspaceGeometry.qml` (`blockBases`), `services/compositor/CompositorManager.qml` (`_bases`, `outputsHotplugged`)
-- **What:** `WorkspaceGeometry.blockBases` numbers each monitor's block by its place among the connected monitors (primary first, then output identity). Under the `perMonitor` and `grid` layouts (Hyprland, sway), unplugging a monitor that isn't last in that order gives every monitor after it a new base: its workspaces (201…) now sit outside its block (101…), so its switcher, grid and steps miss them until `axiom ipc workspaces reconcile`; replugging shifts the blocks back. Nothing reacts to `outputsHotplugged`. The scrolling layout's plan (`docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`) fixes it for that layout only: its option B (the remap on hotplug) fixes this too if it runs for every per-monitor layout rather than only under `dynamicByLayout`, and option C (blocks from the saved monitor profiles) does if `CompositorManager._bases` takes the same numbering.
+### Workspace blocks follow the connected monitors, not the saved profiles
+- **Where:** `components/methods/WorkspaceGeometry.qml` (`blockBases`), `services/compositor/HyprlandManager.qml` (`_bases`), `services/compositor/CompositorManager.qml` (`_bases`), `config/MonitorsConfig.qml` (`profiles`)
+- **What:** `WorkspaceGeometry.blockBases` numbers each monitor's block by its place among the connected monitors (primary first, then output identity), so unplugging a monitor that isn't last gives every monitor after it a new base: its workspaces (201…) sit outside its new block (101…), and its list, grid and steps miss them until `axiom ipc workspaces reconcile`; replugging shifts them back. This hits every per-monitor layout (`perMonitor` and `grid` on Hyprland and sway, `scrolling` on Hyprland, where the list shrinks to the one synthetic empty workspace). Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 2): number blocks over every monitor the saved profiles name (`MonitorsConfig.profiles`, by output identity), connected ones not named after them, so a block never moves with what's connected; both `_bases` pass the same list. Test rows in `tst_WorkspaceGeometry` for a middle monitor unplugged and an unknown one plugged in. Docs: `docs/dev/hyprland/workspaces.md`, `docs/dev/hyprland/workspace-strips.md`.
 - **Size:** small
-- **Found:** 2026-10-29, while planning the scrolling layout's workspaces
+- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
+
+### The scrolling layout drops a monitor's borrowed workspaces from its list
+- **Where:** `components/methods/DynamicWorkspaces.qml` (`workspaces`, `compaction`), `services/compositor/CompositorManager.qml` (`nthWorkspace`, `stepWorkspace`)
+- **What:** Under `Workspaces.layout: scrolling` on Hyprland, an unplugged monitor's workspaces move to another monitor, outside its block, so `DynamicWorkspaces.workspaces` drops them from every list and their windows are reachable only by the overview or `workspaces reconcile`. Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 3): list a monitor's out-of-block workspaces after its own as borrowed, and leave them where they are (compaction skips them, navigation and the overview's column reach them), so Hyprland's return on replug brings them home. Needs the stable blocks first and the replug check to have passed. `tst_DynamicWorkspaces` rows for borrowed workspaces listed, kept by compaction and stepped through. Docs: `docs/dev/hyprland/workspace-strips.md` › The scrolling layout.
+- **Size:** small
+- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
+
+### Persistent workspaces sit empty in the scrolling layout's list
+- **Where:** `components/methods/DynamicWorkspaces.qml` (`workspaces`)
+- **What:** A `persistent` workspace rule in the user's Hyprland config keeps an empty workspace alive; `DynamicWorkspaces.workspaces` lists every real in-block workspace, so an empty persistent one past the last occupied one stays in the list and the "one empty after the last" rule no longer holds. Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 4): leave out in-block workspaces that are empty and not active (the synthetic one after the last still covers a new one); `tst_DynamicWorkspaces` rows for a persistent one in the middle and past the end.
+- **Size:** trivial
+- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
 
 ### Calendar times in a Windows zone name with no VTIMEZONE read as local time
 - **Where:** `backend/internal/calendar/ical/zone.go` (`Zones.With`), `backend/internal/calendar/calendar.go` (`New`'s `Lookup`)
@@ -310,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while consolidating compositor settings
 
-### Floating bars sit flush on the border without a backend
-- **Where:** `config/BarsConfig.qml` (`enrichBarConfig`: `floatGap`), `services/compositor/CompositorManager.qml` (`gapsOut`)
-- **What:** A floating bar's automatic gap (`floatGap` -1) is the compositor's outer gaps (`CompositorManager.gapsOut`). With no backend (an unknown compositor) `gapsOut` is all 0, so a floating bar sits flush against the border. Sway's and niri's backends read their gaps from the config (`SwayState.configInfo`, `axiom compositor niri info`); decide what the gap is with no backend at all (a fixed default, or `Appearance.screenMargin`).
-- **Size:** small
-- **Found:** 2026-10-16, while testing layer order in nested sway
-
 ### niri reports no position for a tiled window, nor other apps' layers
 - **Where:** `components/methods/NiriState.qml` (`windows`, `outputs`)
 - **What:** niri's IPC gives no layer surface geometry, so an output's `reserved` counts only axiom's own layers (`LayerArrange.arrange`): another app's bar on niri isn't in it, and the dock centres as if it weren't there. Nor, in 26.04, does it give a position for a tiled window (`tile_pos_in_workspace_view` is null; only floating windows have one; checked 2026-10-28). So tiled windows are laid out from their column and place in it from the output's edge, without niri's scroll (`windowGeometry` stays off: no screenshot window mode; the dock hides behind a window's `cover`, its column or the whole output, which ignores struts, reserved space and `center-focused-column`).
@@ -333,12 +339,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Seen on niri with a solid bottom bar (border off) whose SystemStats popout joins the left pill bar: while the popout slides in or out, the left bar's end pill, run on to the popout's top wall, trails it by about 8px for two or three frames (below the wall while opening, above it while closing), so the two strokes and their shadows step at the left bar's inner edge. At rest they line up. Probably the other bar's window committing a frame or so after the popout's (as `AttachedSurface`'s fillet opening is taken a stroke ahead for). The end pill leads the wall by a stroke there (niri has no `supports.layerFrameSync`, `EdgePlacement._slideLead`), which helps but doesn't close the gap; sway and Hyprland move the two as one without it.
 - **Size:** small
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
-
-### Two exclusive-focus surfaces at once without a native grab
-- **Where:** `services/compositor/FocusGrab.qml` (`exclusive`), `components/hosts/overlay/OverlayPanel.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`
-- **What:** Without `supports.focusGrab`, every active grab's surface asks for `WlrKeyboardFocus.Exclusive`. With the overlay open (exclusive the whole time) and a popout with a text field opened over it, two surfaces on the Overlay layer ask for exclusive focus. Which one gets the keyboard is up to the compositor. On niri the older one keeps it (found fixing the polkit prompt, c49b429, which now turns `exclusive` off while `SurfaceManager.modalShown`), so there typing into a popout over the overlay goes to the overlay. Sway is unchecked (`scripts/dev/nested.sh sway`). A fix in the same spirit: only the newest active grab is `exclusive`.
-- **Size:** small
-- **Found:** 2026-10-16, while auditing the layer-placement branch
 
 ### The lock screen's modules all warn they overlap
 - **Where:** `components/hosts/overlay/ModuleGrid.qml` (`_check`), `components/surfaces/screenlayout/ScreenLayoutView.qml` (`arrangement`)
@@ -490,8 +490,14 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
+### After a modal closes, the grabs' newest order is lost
+- **Where:** `services/ui/BackdropManager.qml` (`newestCatcher`), `services/compositor/FocusGrab.qml`
+- **What:** Without `supports.focusGrab`, only the newest active grab asks for exclusive keyboard focus. While a modal is up (`SurfaceManager.modalShown`) the grabs drop out of the ordered list, and when it closes they come back in no set order: after a polkit prompt over the overlay with a popout open, the overlay may take the keyboard instead of the popout. Rare (a modal over two grabs); left after the newest-grab fix (roadmap row 13).
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing roadmap row 13's newest-grab fix
+
 ### Hyprland's default workspace doesn't highlight its first window
 - **Where:** `components/bar/widgets/Workspaces/StripWindows.qml` (`focused`), `services/compositor/HyprlandManager.qml`
-- **What:** From the maintainer's notes: on the workspace Hyprland starts on, the first window opened isn't highlighted as focused until a workspace move.
+- **What:** From the maintainer's notes: on the workspace Hyprland starts on, the first window opened isn't highlighted as focused until a workspace move. Checked 2026-10-29 (code read, nested Hyprland): Hyprland's own data is right (the first window on workspace 1 has `focusHistoryID` 0 and is `activewindow`), and `StripWindows` highlights `CompositorManager.lastFocused` of the workspace's windows, which for one window is always it; so the cause isn't in either. Which highlight it is (bar strip, dock `DockManager.focusedId`, overview `WindowPreview.focused`) and under which layout (`StripWindows` shows only under scrolling, whose workspace ids `DynamicWorkspaces` renumbers until `_compaction` runs) needs the maintainer to reproduce it.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
