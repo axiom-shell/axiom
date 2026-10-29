@@ -28,6 +28,9 @@ QtObject {
   readonly property var history: _history
   readonly property int historyLength: 60
 
+  // The Custom widgets page's draft and selection
+  readonly property CustomWidgetsEditor editor: CustomWidgetsEditor {}
+
   function acquire(owner, id) {
     if (!id) {
       release(owner);

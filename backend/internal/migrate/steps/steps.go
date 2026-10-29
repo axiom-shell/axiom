@@ -65,6 +65,24 @@ var all = []Step{
 	// v79: Tailscale's interval moved from each bar widget to the
 	// Tailscale section (v79.go)
 	{Version: 79, Run: v79},
+	// v80: the Custom widgets page, a tool page every config has once
+	{Version: 80, Run: func(cfg *jsonx.Object) []string {
+		overlay := object(cfg, "Overlay")
+		if overlay == nil {
+			return nil
+		}
+		items, _ := overlay.Value("items").(*jsonx.Array)
+		if items == nil {
+			return nil
+		}
+		for _, item := range items.Items {
+			if view, _ := item.(*jsonx.Object); view != nil && view.Value("type") == "CustomWidgets" {
+				return nil
+			}
+		}
+		items.Append(jsonx.Obj("id", "customWidgets", "type", "CustomWidgets"))
+		return []string{"Overlay.items: added the Custom widgets page"}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

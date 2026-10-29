@@ -217,3 +217,42 @@ func TestV79MovesTheTailscaleInterval(t *testing.T) {
 		})
 	}
 }
+
+func TestV80AddsTheCustomWidgetsPage(t *testing.T) {
+	t.Parallel()
+	step := all[3]
+	if step.Version != 80 {
+		t.Fatalf("step %d", step.Version)
+	}
+	cases := []struct {
+		name, in, out string
+		changed       bool
+	}{
+		{"added", `{"Overlay":{"items":[{"id":"settings","type":"Settings"}]}}`,
+			`{"Overlay":{"items":[{"id":"settings","type":"Settings"},{"id":"customWidgets","type":"CustomWidgets"}]}}`, true},
+		{"already there", `{"Overlay":{"items":[{"id":"mine","type":"CustomWidgets"}]}}`,
+			`{"Overlay":{"items":[{"id":"mine","type":"CustomWidgets"}]}}`, false},
+		{"no overlay", `{"Bars":{}}`, `{"Bars":{}}`, false},
+		{"another shape", `{"Overlay":{"items":{}}}`, `{"Overlay":{"items":{}}}`, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			v, err := jsonx.Unmarshal([]byte(c.in))
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg := v.(*jsonx.Object)
+			changes := step.Run(cfg)
+			if got := string(jsonx.MarshalCompact(cfg)); got != c.out {
+				t.Errorf("got %s, want %s", got, c.out)
+			}
+			if (len(changes) > 0) != c.changed {
+				t.Errorf("changes %v", changes)
+			}
+			if again := step.Run(cfg); len(again) > 0 {
+				t.Errorf("a second run: %v", again)
+			}
+		})
+	}
+}

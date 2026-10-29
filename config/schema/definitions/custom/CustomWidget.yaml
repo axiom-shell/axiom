@@ -20,7 +20,7 @@ properties:
     enum: [poll, stream, once]
     default: poll
     x-enumLabels: {poll: Every interval, stream: Continuously (one sample a line), once: Once (then on refresh)}
-  interval: {type: integer, title: Run every, x-unit: ms, default: 5000, minimum: 500, maximum: 86400000}
+  interval: {type: integer, title: Run every, x-unit: ms, default: 5000, minimum: 500, maximum: 86400000, x-showIf: {mode: poll}}
   output:
     type: string
     title: Output
@@ -43,12 +43,12 @@ properties:
     additionalProperties: false
     description: Commands the bar widget and module run (Waybar's on-click and on-scroll). Never on the lock screen.
     properties:
-      click: {x-scope: commands, type: string, default: ''}
-      rightClick: {x-scope: commands, type: string, default: ''}
-      middleClick: {x-scope: commands, type: string, default: ''}
-      scrollUp: {x-scope: commands, type: string, default: ''}
-      scrollDown: {x-scope: commands, type: string, default: ''}
-      refreshAfter: {type: boolean, default: true, description: Run the script again after an action.}
+      click: {x-scope: commands, type: string, title: On click, default: ''}
+      rightClick: {x-scope: commands, type: string, title: On right click, default: ''}
+      middleClick: {x-scope: commands, type: string, title: On middle click, default: ''}
+      scrollUp: {x-scope: commands, type: string, title: On scroll up, default: ''}
+      scrollDown: {x-scope: commands, type: string, title: On scroll down, default: ''}
+      refreshAfter: {type: boolean, title: Run the script again after one, default: true}
   fields:
     type: object
     additionalProperties: false
@@ -101,8 +101,8 @@ properties:
         enum: [none, glyph, material]
         default: material
         description: Before the text, the format's icon is drawn in the text itself.
-      segments: {type: integer, title: Segments, default: 5, minimum: 2, maximum: 12}
-      width: {type: integer, title: Width, x-unit: px, default: 0, minimum: 0, maximum: 600, description: 0 fits the content. The ticker and sparkline need one.}
+      segments: {type: integer, title: Segments, default: 5, minimum: 2, maximum: 12, x-showIf: {style: segments}}
+      width: {type: integer, title: Width, x-unit: px, default: 0, minimum: 0, maximum: 600, description: 'The graphic''s length along the bar; 0 picks one.', x-showIf: {style: [fill, segments, sparkline, ticker]}}
       colorText: {type: boolean, title: Colour the text by state, default: false}
       popout: {type: boolean, title: Open the module on hover, default: true}
   module:

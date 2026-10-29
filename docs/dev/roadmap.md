@@ -232,7 +232,7 @@ Steps:
 3. Done: **Definitions:** the `CustomWidgets` section, the `customWidgets` `x-options` source, `CustomWidgetsManager`, and its IPC target (`axiom ipc customWidgets refresh`).
 4. Done: **The module:** the element pieces, the proportional renderer, the `CustomWidget` module type (also the popout; lockscreen opt-in), per-definition module library entries. Never the greeter; no actions on the lockscreen.
 5. Done: **The bar widget:** the `Custom` widget type and its styles, per-definition bar library entries.
-6. **Editor, part 1:** the tool page, its editor manager, the definitions list, the Source card and the Bar tab.
+6. Done: **Editor, part 1:** the tool page, its editor manager, the definitions list, the Source card and the Bar tab.
 7. **Editor, part 2:** the Module tab (the fine-grid canvas on `GridEditor`).
 8. **Waybar import and presets.**
 9. **Fold CommandOutput**, the feature's doc, and its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.

@@ -139,4 +139,5 @@ properties:
       - {id: themes, type: Themes}
       - {id: monitors, type: Monitors}
       - {id: calendarPage, type: CalendarPage}
+      - {id: customWidgets, type: CustomWidgets}
     items: {$ref: '#/definitions/OverlayView'}

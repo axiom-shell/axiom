@@ -1,6 +1,6 @@
 # Custom widgets
 
-> **Files:** `config/CustomWidgetsConfig.qml`, `services/apps/CustomWidgetsManager.qml`, `components/methods/CustomWidgetData.qml`, `components/content/CustomWidget/CustomWidget.qml`, `components/content/parts/custom/`, `components/bar/widgets/CustomWidget/CustomWidget.qml`, `config/schema/sections/CustomWidgets.yaml`, `config/schema/definitions/custom/`
+> **Files:** `config/CustomWidgetsConfig.qml`, `services/apps/CustomWidgetsManager.qml`, `services/apps/CustomWidgetsEditor.qml`, `components/views/CustomWidgets/`, `components/methods/CustomWidgetData.qml`, `components/content/CustomWidget/CustomWidget.qml`, `components/content/parts/custom/`, `components/bar/widgets/CustomWidget/CustomWidget.qml`, `config/schema/sections/CustomWidgets.yaml`, `config/schema/definitions/custom/`
 > **Config:** `CustomWidgets.items` (reader `CustomWidgetsConfig`)
 > **Related:** [Services pattern](../core/services-pattern.md), [Protocol](../backend/protocol.md) (`exec.watch`), [the plan](../plans/custom-json-widgets.md)
 
@@ -42,3 +42,10 @@ The module library offers each definition by itself (`OverlayConfig.customModule
 `components/bar/widgets/CustomWidget/CustomWidget.qml` is a `BarIconWidget` drawing the definition's `bar.style`: `label` (icon and the format filled, as plain text: Waybar's look), `icon` (the icon alone), `ring`, `fill`, `segments`, `sparkline` (a graphic in `IconTextWidget`'s `lead` slot, `leadLength` long, before the icon), `pill` (the widget's box filled to the value), `ticker` (long text scrolls in `bar.width`) and `stacked` (the text over the subtext); a vertical bar draws ticker and stacked as labels. The state colour is its `accentColor` (and its text's, with `bar.colorText`); `urgent` pulses it; `hidden` hides it. Clicks and scrolls run the definition's actions; hovering opens the CustomWidget popout (`extraData: {definitionId}`) while `bar.popout` and the widget's own popout are on.
 
 The bar editor's library is `BarsConfig.libraryWidgetTypes`: the types without CustomWidget, then one entry per definition (`CustomWidgetsConfig.libraryEntries`, keyed `CustomWidget:<id>`), which `BarManager.addWidget` splits back into the type and its definition; a placed one's chip goes by the same key, so it's named after its definition.
+
+### The page
+The Custom widgets tool page (`components/views/CustomWidgets/`, `/widgets` in the launcher) edits `CustomWidgets` through `CustomWidgetsManager.editor` (`CustomWidgetsEditor`: a `ConfigDraft`, `selectedIndex` / `selectDefinition`, `selectedElement` / `selectElement`, `tab`; registered in `EditsManager`). Edits show live on the bars and pages through `ConfigManager.setPreview("CustomWidgets", …)`, and the selected definition stays acquired while the page is shown (`pageShown`), so its sample is there to bind from.
+- **Left** (`DefinitionsPanel`): the definitions (add, duplicate, remove), the selected one's script fields (`SchemaPropertiesForm` over the definition's schema, limited with `Utils.pick`), Pick a script (`FilePickerManager`), the refresh command, and the script's first lines when the command starts with a path.
+- **Data** (`DataTab`): the run state and Run now, the raw output, every path in the sample (`CustomWidgetData.flatten`, by count) with "Show as…" to bind it to a field, and each field's binding (a path picked or typed, or a format) with what it reads now.
+- **Bar** (`BarTab`): the real bar widget on the first bar's look, across and down a side, then the bar style, the text (format, longest text, escape, hide when empty, tooltip; the format icons and state colours typed as JSON) and the actions.
+- **Module** (`ModuleTab`): the module's design.

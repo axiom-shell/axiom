@@ -20,12 +20,15 @@ Loader {
     })[root.kind] ?? ("Custom" + root.kind)
 
   // Re-set on a kind change only; the rest are bindings
-  onFileChanged: root.setSource(Qt.resolvedUrl(root.file + ".qml"), {
-    "gauge": root.kind === "Gauge"
-  })
-  Component.onCompleted: root.setSource(Qt.resolvedUrl(root.file + ".qml"), root.kind === "Gauge" ? {
-    "gauge": true
-  } : {})
+  function _load() {
+    root.setSource(Qt.resolvedUrl(root.file + ".qml"), root.file === "CustomRing" ? {
+      "gauge": root.kind === "Gauge"
+    } : {});
+  }
+  onFileChanged: root._load()
+  onKindChanged: if (root.file === "CustomRing")
+    root._load()
+  Component.onCompleted: root._load()
 
   Binding {
     when: root.item !== null
