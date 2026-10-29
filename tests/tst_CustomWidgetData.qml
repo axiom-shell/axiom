@@ -295,4 +295,55 @@ TestCase {
     compare(CustomWidgetData.elementKind("Bar").actions, ["change"]);
     compare(CustomWidgetData.elementKind("Nope"), null);
   }
+
+  function test_stripJsonc() {
+    compare(JSON.parse(CustomWidgetData.stripJsonc('{"a": "http://x", // c\n"b": [1, 2,], /* d */ "c": "/* no */",}')), {
+      "a": "http://x",
+      "b": [1, 2],
+      "c": "/* no */"
+    }, "comments and trailing commas go, strings stay");
+  }
+
+  function test_fromWaybar() {
+    const block = '"custom/media": {\n  "format": "{icon} {}", // shown\n  "return-type": "json",\n  "max-length": 40,\n  "escape": true,\n  "format-icons": {"spotify": "S", "default": "D"},\n  "exec": "$HOME/mediaplayer.py 2> /dev/null",\n  "on-click": "playerctl play-pause",\n}';
+    const defs = CustomWidgetData.fromWaybar(block);
+    compare(defs.length, 1);
+    compare(defs[0].name, "Media");
+    compare(defs[0].mode, "stream", "no interval: Waybar reads it line by line");
+    compare(defs[0].command, "$HOME/mediaplayer.py 2> /dev/null");
+    compare(defs[0].formatIcons.spotify, "S");
+    compare(defs[0].maxLength, 40);
+    compare(defs[0].actions.click, "playerctl play-pause");
+    const polled = CustomWidgetData.fromWaybar('{"exec": "x", "interval": 60, "signal": 6}')[0];
+    compare(polled.mode, "poll");
+    compare(polled.interval, 60000, "seconds to ms");
+    compare(polled.refreshName, "script");
+    compare(CustomWidgetData.fromWaybar('{"exec": "x", "interval": "once"}')[0].mode, "once");
+    const config = CustomWidgetData.fromWaybar('{"modules-left": ["custom/a"], "clock": {}, "custom/a": {"exec": "a"}, "custom/b-c": {"exec": "b"}}');
+    compare(config.map(d => d.name), ["A", "B c"], "every custom module of a whole config");
+  }
+
+  function test_iconPick() {
+    const f = CustomWidgetData.resolve({
+      "formatIcons": {
+        "on": "vpn_lock",
+        "off": "vpn_key_off"
+      },
+      "fields": {
+        "alt": "text",
+        "icon": "{icon}"
+      }
+    }, {
+      "text": "on"
+    });
+    compare(f.icon, "vpn_lock", "the icon field reads the format-icons pick");
+  }
+
+  function test_presetsLoad() {
+    for (const preset of CustomWidgetData.presets) {
+      verify(preset.name && preset.command, preset.name);
+      const f = CustomWidgetData.resolve(preset, CustomWidgetData.parse("on", undefined, preset.output ?? "waybar", preset.mode === "stream"));
+      verify(typeof f.text === "string", preset.name);
+    }
+  }
 }

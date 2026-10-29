@@ -130,6 +130,26 @@ QtObject {
     root.selectDefinition(local.items.length - 1);
   }
 
+  // Adds the Waybar module(s) in `text` (CustomWidgetData.fromWaybar),
+  // selecting the last. Returns how many, or the reason it couldn't read it
+  // ({ count, error })
+  function importWaybar(text) {
+    let defs;
+    try {
+      defs = CustomWidgetData.fromWaybar(text);
+    } catch (e) {
+      return {
+        "count": 0,
+        "error": e.message
+      };
+    }
+    defs.forEach(def => root.add(def));
+    return {
+      "count": defs.length,
+      "error": defs.length ? "" : I18n.tr("No custom module (an \"exec\") in it.")
+    };
+  }
+
   function duplicate(index) {
     const local = root._local();
     const source = local.items[index];

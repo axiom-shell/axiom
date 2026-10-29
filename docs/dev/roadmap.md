@@ -234,7 +234,7 @@ Steps:
 5. Done: **The bar widget:** the `Custom` widget type and its styles, per-definition bar library entries.
 6. Done: **Editor, part 1:** the tool page, its editor manager, the definitions list, the Source card and the Bar tab.
 7. Done: **Editor, part 2:** the Module tab (the fine-grid canvas on `GridEditor`).
-8. **Waybar import and presets.**
+8. Done: **Waybar import and presets.**
 9. **Fold CommandOutput**, the feature's doc, and its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
 
 Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone.

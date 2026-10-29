@@ -3349,6 +3349,21 @@
     "Copy this element": "",
     "Remove this element": "",
     "Back to the elements": "",
-    "Never on the lock screen.": ""
+    "Never on the lock screen.": "",
+    "Notifications (SwayNC)": "",
+    "Do not disturb (dunst)": "",
+    "Media (Waybar's mediaplayer.py)": "",
+    "Weather (wttr.in)": "",
+    "Failed services": "",
+    "WireGuard VPN": "",
+    "GPU load (NVIDIA)": "",
+    "From a preset…": "",
+    "Import from Waybar…": "",
+    "Paste a \"custom/…\" module from your Waybar config, or the whole config": "",
+    "Import": "",
+    "Couldn't read it: {0}": "",
+    "Added {0}.": "",
+    "This script refreshes Waybar with a signal (pkill -RTMIN…), which does nothing here: change it to run {0}.": "",
+    "No custom module (an \"exec\") in it.": ""
   }
 }

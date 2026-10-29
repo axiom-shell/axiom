@@ -288,6 +288,11 @@ QtObject {
       "subtext": esc(str(f.subtext)),
       "badge": str(f.badge)
     };
+    // The icon field may be the format-icons pick ("{icon}": a Material
+    // Symbols name there draws as an icon)
+    const iconBinding = String(d.fields?.icon ?? "");
+    if (iconBinding.indexOf("{icon}") >= 0)
+      f.icon = root.fill(iconBinding, values);
     const text = root.pango(root.fill(d.format || "{}", values));
     const textPlain = root.plain(text);
     const classList = root.classes(f.class);
@@ -693,6 +698,243 @@ QtObject {
   function elementKind(kind) {
     return root.elementKinds.find(k => k.kind === kind) ?? null;
   }
+
+  // JSONC (a Waybar config: // and /* */ comments, trailing commas) as
+  // JSON text
+  function stripJsonc(text) {
+    const src = String(text ?? "");
+    let out = "";
+    let inString = false;
+    for (let i = 0; i < src.length; i++) {
+      const c = src[i];
+      if (inString) {
+        out += c;
+        if (c === "\\") {
+          out += src[i + 1] ?? "";
+          i++;
+        } else if (c === "\"") {
+          inString = false;
+        }
+      } else if (c === "\"") {
+        inString = true;
+        out += c;
+      } else if (c === "/" && src[i + 1] === "/") {
+        while (i < src.length && src[i] !== "\n")
+          i++;
+        out += "\n";
+      } else if (c === "/" && src[i + 1] === "*") {
+        i += 2;
+        while (i < src.length && !(src[i] === "*" && src[i + 1] === "/"))
+          i++;
+        i++;
+      } else {
+        out += c;
+      }
+    }
+    return out.replace(/,(\s*[}\]])/g, "$1");
+  }
+
+  // A Waybar module's name ("custom/media") as a definition's name ("Media")
+  function waybarName(name) {
+    const base = String(name ?? "").replace(/^custom\//, "").replace(/[-_#]+/g, " ").trim();
+    return base ? base[0].toUpperCase() + base.slice(1) : "Custom widget";
+  }
+
+  // Waybar custom module config → partial definitions (no ids). `text` is
+  // pasted from a Waybar config: one block `"custom/x": { … }` (with or
+  // without its braces around it), a bare `{ "exec": … }`, or a whole
+  // config, whose custom/* modules each become one. Throws on text that
+  // isn't JSON(C).
+  //   exec → command; interval (s) → poll, "once" → once, none → stream;
+  //   exec-if, format, format-icons, max-length, escape, tooltip,
+  //   on-click(-right, -middle), on-scroll-up/down; signal → refreshName
+  function fromWaybar(text) {
+    let body = root.stripJsonc(text).trim();
+    if (/^"[^"]+"\s*:/.test(body))
+      body = "{" + body + "}";
+    const parsed = JSON.parse(body);
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed))
+      throw new Error("not a Waybar module");
+    const modules = "exec" in parsed ? [["custom/script", parsed]] : Object.keys(parsed).filter(k => /^custom\//.test(k) && parsed[k] && typeof parsed[k] === "object").map(k => [k, parsed[k]]);
+    return modules.map(([name, m]) => {
+      const interval = m.interval;
+      const def = {
+        "name": root.waybarName(name),
+        "command": String(m.exec ?? ""),
+        "mode": interval === "once" ? "once" : typeof interval === "number" && interval > 0 ? "poll" : "stream",
+        "output": "waybar",
+        "format": typeof m.format === "string" ? m.format : "{}",
+        "fields": {},
+        "actions": {}
+      };
+      if (def.mode === "poll")
+        def.interval = Math.max(500, Math.round(interval * 1000));
+      if (m["exec-if"])
+        def.execIf = String(m["exec-if"]);
+      if (m["format-icons"] !== undefined)
+        def.formatIcons = m["format-icons"];
+      if (typeof m["max-length"] === "number")
+        def.maxLength = m["max-length"];
+      if (m.escape === true)
+        def.escape = true;
+      if (m.tooltip === false)
+        def.tooltip = false;
+      if (m.signal !== undefined)
+        def.refreshName = String(name).replace(/^custom\//, "");
+      const actions = {
+        "on-click": "click",
+        "on-click-right": "rightClick",
+        "on-click-middle": "middleClick",
+        "on-scroll-up": "scrollUp",
+        "on-scroll-down": "scrollDown"
+      };
+      for (const key in actions) {
+        if (typeof m[key] === "string")
+          def.actions[actions[key]] = m[key];
+      }
+      return def;
+    });
+  }
+
+  // Ready-made definitions for well-known scripts and commands (partial,
+  // no ids). Names: I18n.tr("Notifications (SwayNC)") I18n.tr("Do not disturb (dunst)")
+  // I18n.tr("Media (Waybar's mediaplayer.py)") I18n.tr("Package updates")
+  // I18n.tr("Weather (wttr.in)") I18n.tr("Failed services") I18n.tr("WireGuard VPN")
+  // I18n.tr("GPU load (NVIDIA)")
+  readonly property var presets: [
+    {
+      "name": "Notifications (SwayNC)",
+      "icon": "notifications",
+      "command": "swaync-client -swb",
+      "execIf": "command -v swaync-client",
+      "mode": "stream",
+      "formatIcons": {
+        "notification": "notifications_active",
+        "none": "notifications",
+        "dnd-notification": "notifications_paused",
+        "dnd-none": "notifications_off",
+        "inhibited-notification": "notifications_active",
+        "inhibited-none": "notifications",
+        "dnd-inhibited-notification": "notifications_paused",
+        "dnd-inhibited-none": "notifications_off"
+      },
+      "fields": {
+        "icon": "{icon}"
+      },
+      "bar": {
+        "style": "icon"
+      },
+      "actions": {
+        "click": "swaync-client -t -sw",
+        "rightClick": "swaync-client -d -sw"
+      }
+    },
+    {
+      "name": "Do not disturb (dunst)",
+      "icon": "notifications",
+      "command": "dunstctl is-paused",
+      "execIf": "command -v dunstctl",
+      "mode": "poll",
+      "interval": 2000,
+      "output": "text",
+      "formatIcons": {
+        "true": "notifications_off",
+        "false": "notifications"
+      },
+      "fields": {
+        "alt": "text",
+        "icon": "{icon}"
+      },
+      "hideEmpty": false,
+      "bar": {
+        "style": "icon"
+      },
+      "actions": {
+        "click": "dunstctl set-paused toggle"
+      }
+    },
+    {
+      "name": "Media (Waybar's mediaplayer.py)",
+      "icon": "music_note",
+      "command": "~/.config/waybar/mediaplayer.py 2> /dev/null",
+      "mode": "stream",
+      "formatIcons": {
+        "spotify": "music_note",
+        "default": "play_circle"
+      },
+      "fields": {
+        "icon": "{icon}"
+      },
+      "maxLength": 40,
+      "escape": true,
+      "actions": {
+        "click": "playerctl play-pause",
+        "scrollUp": "playerctl next",
+        "scrollDown": "playerctl previous"
+      }
+    },
+    {
+      "name": "Package updates",
+      "icon": "system_update",
+      "command": "checkupdates 2>/dev/null | wc -l | grep -v '^0$'",
+      "execIf": "command -v checkupdates",
+      "mode": "poll",
+      "interval": 1800000,
+      "output": "text"
+    },
+    {
+      "name": "Weather (wttr.in)",
+      "icon": "partly_cloudy_day",
+      "command": "curl -sf 'https://wttr.in/?format=%t+%C'",
+      "mode": "poll",
+      "interval": 1800000,
+      "output": "text"
+    },
+    {
+      "name": "Failed services",
+      "icon": "error",
+      "command": "systemctl --failed --plain --no-legend | wc -l | grep -v '^0$'",
+      "mode": "poll",
+      "interval": 60000,
+      "output": "text"
+    },
+    {
+      "name": "WireGuard VPN",
+      "icon": "vpn_lock",
+      "command": "nmcli -t -f TYPE connection show --active | grep -q '^wireguard' && echo on || echo off",
+      "execIf": "command -v nmcli",
+      "mode": "poll",
+      "interval": 5000,
+      "output": "text",
+      "formatIcons": {
+        "on": "vpn_lock",
+        "off": "vpn_key_off"
+      },
+      "fields": {
+        "alt": "text",
+        "icon": "{icon}"
+      },
+      "bar": {
+        "style": "icon"
+      }
+    },
+    {
+      "name": "GPU load (NVIDIA)",
+      "icon": "memory",
+      "command": "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
+      "execIf": "command -v nvidia-smi",
+      "mode": "poll",
+      "interval": 3000,
+      "output": "text",
+      "format": "{}%",
+      "fields": {
+        "percentage": "text"
+      },
+      "bar": {
+        "style": "ring"
+      }
+    }
+  ]
 
   // The module lattice for a design size [w, h] in grid units:
   // { cols, rows } in sub-cells
