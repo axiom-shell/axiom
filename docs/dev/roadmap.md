@@ -209,6 +209,9 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
 
+- [Bar widget hosts settle after they're gone](issues.md#bar-widget-hosts-settle-after-theyre-gone)
+- [The shell's hello can be refused across a dev re-exec](issues.md#the-shells-hello-can-be-refused-across-a-dev-re-exec)
+
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
 
@@ -315,9 +318,12 @@ Steps:
 
 Found meanwhile:
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
+- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
+- [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
 - [config.json replaced by rename isn't always read by the live daemon](issues.md#configjson-replaced-by-rename-isnt-always-read-by-the-live-daemon)
 
 Needs a plan:
+- [Notifications can only sit in a corner](issues.md#notifications-can-only-sit-in-a-corner)
 - [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other)
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri)
 - [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own)
