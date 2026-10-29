@@ -42,6 +42,10 @@ QtObject {
   readonly property string dndEndAt: _dnd.endAt
   readonly property bool dndAllowCritical: _dnd.allowCritical
 
+  // Per-app rules: [{ id, app, toasts, history, urgency ("app" | "low" |
+  // "normal" | "critical"), timeout (ms, -1 for the default) }]
+  readonly property var apps: _c.apps
+
   // History
   readonly property bool clearOnFocus: _c.clearOnFocus
   // Focus the app's window after running a clicked notification's action

@@ -171,6 +171,29 @@ Singleton {
     return windows.sort((a, b) => (a.focusRank ?? 0) - (b.focusRank ?? 0))[0] ?? null;
   }
 
+  // The per-app rule (NotificationsConfig.apps) a notification or entry
+  // falls under, or null
+  function ruleFor(entry) {
+    const rules = NotificationsConfig.apps.filter(r => r.app !== "");
+    if (rules.length === 0)
+      return null;
+    const keys = root._keysOf(entry);
+    return rules.find(r => NotificationMatch.matches(NotificationMatch.keys([r.app]), keys)) ?? null;
+  }
+
+  // A notification's urgency, its app's rule's over its own
+  function urgencyOf(notif) {
+    const rule = root.ruleFor(notif);
+    const forced = ["low", "normal", "critical"].indexOf(rule?.urgency ?? "app");
+    return forced >= 0 ? [NotificationUrgency.Low, NotificationUrgency.Normal, NotificationUrgency.Critical][forced] : notif.urgency;
+  }
+
+  // How long a notification's toast stays (ms) by its app's rule, or -1
+  // for the default
+  function timeoutOf(notif) {
+    return root.ruleFor(notif)?.timeout ?? -1;
+  }
+
   // Opens a link from a notification's body in its app
   function openLink(url) {
     CommandManager.runDetached(["xdg-open", url]);
@@ -239,7 +262,7 @@ Singleton {
       summary: notif.summary || "",
       body: notif.body || "",
       image: notif.image || "",
-      urgency: notif.urgency,
+      urgency: root.urgencyOf(notif),
       time: time,
       live: true
     };
@@ -575,19 +598,27 @@ Singleton {
         return;
       }
       // Tracked, so the object outlives this handler; transient ones
-      // (e.g. volume changes) only pop up
-      if (!notification.transient) {
+      // (e.g. volume changes), and those of an app whose rule keeps none,
+      // only pop up
+      const rule = root.ruleFor(notification);
+      const urgency = root.urgencyOf(notification);
+      if (!notification.transient && rule?.history !== false) {
         notification.tracked = true;
         const uid = root._newUid();
         const entry = root._entryFrom(notification, uid, Date.now());
         root._put(entry);
         root._link(notification, uid);
         root._cacheImage(uid, entry.image);
+      } else if (!notification.transient) {
+        notification.tracked = true;
       }
 
-      // No toast while Do Not Disturb is on, but a critical one (unless
-      // NotificationsConfig.dndAllowCritical is off)
-      if (!root.dnd || (NotificationsConfig.dndAllowCritical && notification.urgency === NotificationUrgency.Critical)) {
+      // None for an app whose rule shows none, nor while Do Not Disturb
+      // is on but a critical one (unless NotificationsConfig.
+      // dndAllowCritical is off)
+      if (rule?.toasts === false)
+        return;
+      if (!root.dnd || (NotificationsConfig.dndAllowCritical && urgency === NotificationUrgency.Critical)) {
         root.showPopup(notification);
       }
     }

@@ -61,7 +61,7 @@ Scope {
   function show(notification) {
     if (!ShellManager.showsOn(root.screen, NotificationsConfig.screen))
       return;
-    const critical = notification.urgency === NotificationUrgency.Critical;
+    const critical = NotificationManager.urgencyOf(notification) === NotificationUrgency.Critical;
     if (NotificationsConfig.quietFullscreen && root.fullscreen && !critical)
       return;
     // Make room: the oldest go

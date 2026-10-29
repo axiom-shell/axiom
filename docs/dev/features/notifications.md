@@ -65,6 +65,9 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 - On load, an entry whose image file is gone loses its `image` (`_dropMissingImages`), so its avatar shows the app icon without a `Cannot open` warning.
 - Rendered through an `imageHost` item that `shell/Notifications` lends the service, since grabbing an image needs a window.
 
+### Per-app rules
+- `Notifications.apps`: per app (`app`, matched through `NotificationMatch` against the notification's keys, as its windows are), whether it toasts (`toasts`), is kept (`history`; off, it's tracked for its actions but gets no entry), its urgency (`urgency`, over the app's: `urgencyOf`, which the entry, the toast and do not disturb use) and its toast duration (`timeout`, ms; -1 the default: `timeoutOf`). `ruleFor` finds an entry's or notification's rule.
+
 ### Do not disturb
 - `dnd` is readonly; change it with `setDnd` / `toggleDnd`.
 - `Notifications.dnd.schedule` turns it on at `startAt` and off at `endAt` through a `DailySchedule` (as Night Light's): a switch by hand lasts until the next of them.

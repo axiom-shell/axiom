@@ -47,12 +47,14 @@ Item {
 
   readonly property bool hovered: hover.hovered
   readonly property bool replying: (replyLoader.item as NotificationReply)?.typing ?? false
-  readonly property bool critical: root.notification?.urgency === NotificationUrgency.Critical
+  readonly property bool critical: root.notification ? NotificationManager.urgencyOf(root.notification) === NotificationUrgency.Critical : false
 
   // expireTimeout: 0 is the freedesktop-spec signal for "never expire", a
   // positive one is the app's own duration (ms), -1 leaves it to us
   readonly property bool neverExpires: (NotificationsConfig.followApps && root.notification?.expireTimeout === 0) || (NotificationsConfig.criticalStays && root.critical)
-  readonly property int duration: NotificationsConfig.followApps && root.notification?.expireTimeout > 0 ? root.notification.expireTimeout : NotificationsConfig.timeout
+  // (its app's rule's duration first, NotificationsConfig.apps)
+  readonly property int _ruleTimeout: root.notification ? NotificationManager.timeoutOf(root.notification) : -1
+  readonly property int duration: root._ruleTimeout > 0 ? root._ruleTimeout : NotificationsConfig.followApps && root.notification?.expireTimeout > 0 ? root.notification.expireTimeout : NotificationsConfig.timeout
 
   // The card's box, for its blur shape (ToastStack)
   readonly property Item box: background
