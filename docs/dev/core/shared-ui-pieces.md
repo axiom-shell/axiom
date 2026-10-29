@@ -58,7 +58,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `PercentageCircle`: a ring gauge with an icon in the middle; `sweep` below 360 opens it at the bottom (a gauge).
 - `LevelMeter`: a level shown, not set: `StyledSlider`'s trough and fill without the handle, across or filling up (`vertical`); the fill is never shorter than its rounded ends. Any meter in a rounded trough is one (the custom widgets', Disks, Claude usage).
 - `SegmentMeter`: a level as blocks or dots lit up to `share`, in a row or a column filling up.
-  - Both are drawn by the custom bar widget's styles and a custom widget's elements; a bar sets their sizes from its font.
+  - Both are drawn by the bar's display styles (`bar/widgets/base/ValueGraphic`, [Display styles](../bar/display-styles.md)) and a custom widget's elements; a bar sets their sizes from its font.
 - `SegmentButton`: a choice, accent when `active`; `Layout.fillWidth: false` in a row of pills.
 - `SegmentRow`: a single choice of SegmentButtons on one track, the accent sliding to the active one. Toggles and multi-select chips stay plain rows or Flows.
 - `StyledTabBar` (of `StyledTabButton`s): its current tab's highlight slides between tabs.

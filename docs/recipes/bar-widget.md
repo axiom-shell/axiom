@@ -53,6 +53,7 @@ settings:
   inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
 ```
 - `popout` and `colors` pick parts of `WidgetBase`'s `x-parts`: `popout: own` adds `popout: { enabled, menu }` with "Its own popout"; `menu` the same as "Menu popout", off by default; `plain` only `enabled`. A part's key can be overridden (`popout: {variant: own, enabled: {default: false}}`).
+- A widget with a value, a time or a long text picks the `appearance` part and names the display styles it draws (`appearance: {variant: value, style: {enum: [label, icon, ring, …]}}`), and extends `ValueStyleWidget` (`ratio`, `subtext`, `labelShown` in place of `showText`): [Display styles](../dev/bar/display-styles.md).
 - `WidgetColor` is the Auto color field (`default: ''`, `x-emptyLabel: Auto`, `x-autoColor: accent`, shown unless the bar's style is plain); override its title and role.
 - A section of the type's own name (`Battery`) is linked from the inspector automatically (`x-link`), unless the type says `link`.
 
