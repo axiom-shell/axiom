@@ -69,11 +69,13 @@ class Bash(unittest.TestCase):
         self.allows("gh issue list", "gh issue view 16", "gh api repos/a/b/issues", "gh api repos/a/b/issues -X GET -f state=open",
                     "gh label list", "gh pr create --fill")
 
-    def test_git_push(self):
+    def test_git_push_and_clean(self):
         self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
                     "git push origin +x", "git push origin :x", "git push --delete origin x", "git push origin main",
-                    "git push origin HEAD:main", "git push origin x:refs/heads/main", "git -C . push --force origin x")
-        self.allows("git push -u origin roadmap/1-x", "git push origin HEAD:roadmap/1-x", "git status", "git pull --ff-only")
+                    "git push origin HEAD:main", "git push origin x:refs/heads/main", "git -C . push --force origin x",
+                    "git clean -fdx", "git clean -X", "git -C . clean -x -f")
+        self.allows("git push -u origin roadmap/1-x", "git push origin HEAD:roadmap/1-x", "git status", "git pull --ff-only",
+                    "git clean -fd", "git clean -n")
         with mock.patch.object(guard, "current_branch", return_value="main"):
             self.blocks("git push", "git push -u origin HEAD")
         with mock.patch.object(guard, "current_branch", return_value="roadmap/1-x"):

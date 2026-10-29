@@ -280,19 +280,21 @@ def current_branch(cwd):
     return out.stdout.strip()
 
 
-def check_git_push(args, cwd):
+def check_git(args, cwd):
     """`git push` that force-pushes, deletes or mirrors, or lands on main: every
     change reaches main through a reviewed PR (docs/dev/roadmap.md ›
-    Running it unattended)."""
+    Running it unattended). `git clean -x`, which deletes the ignored files."""
     i = 0
     while i < len(args) and args[i].startswith("-"):
         if args[i] == "-C" and i + 1 < len(args):
             cwd = str(resolve(args[i + 1], cwd))
         i += 2 if args[i] in GIT_VALUE_OPTS else 1
-    if i >= len(args) or args[i] != "push":
+    rule = "Never, while testing"
+    if args[i:i + 1] == ["clean"] and any(re.fullmatch(r"-[a-zA-Z]*[xX][a-zA-Z]*", a) for a in args[i + 1:]):
+        deny(rule, "`git clean -x`/`-X` deletes the generated files and local state; remove the files you mean by name (`git clean -fd` is fine).")
+    if args[i:i + 1] != ["push"]:
         return
     push = args[i + 1:]
-    rule = "Never, while testing"
     if any(a in {"-f", "--force", "--mirror", "--delete", "-d", "--force-if-includes"} or a.startswith("--force-with-lease")
            or re.fullmatch(r"-[a-zA-Z]*f[a-zA-Z]*", a) for a in push):
         deny(rule, "don't force-push, delete or mirror remote branches; push a new commit instead.")
@@ -334,9 +336,9 @@ def check_argv(env, argv, cwd):
     if name == "gh" and (opens or args[:1] == ["api"] and gh_api_opens_issue(args[1:])):
         deny("Never, while testing", "don't open GitHub issues; record the problem in docs/dev/issues.md and tell the user.")
 
-    # Rewriting history on the remote, or pushing to main past a PR
+    # Rewriting history on the remote, pushing to main past a PR, or git clean -x
     if name == "git":
-        check_git_push(args, cwd)
+        check_git(args, cwd)
 
     # Greetd
     if name in {"systemctl", "service", "pkill", "killall"} and any("greetd" in a for a in args):

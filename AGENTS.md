@@ -66,6 +66,7 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 - Run, quit, restart or re-exec the live `axiom` daemon (`axiom run|quit|restart`, `axiom daemon stop|restart|reexec`), or switch its dev mode (`axiom dev on|off|rebuild`; `status` is fine), lock through it (`axiom lock`, `axiom ipc lockscreen …`), or pass `--takeover` against the live config: point it at a scratch instance instead (`XDG_RUNTIME_DIR=<scratch>`, `--socket`, `--config-dir`). A test lock screen's fallback must never be `loginctl lock-session`, which locks the real session.
 - Open a GitHub issue (`gh issue create`, or `gh api` posting one).
 - Force-push, delete a remote branch, or push to `main`: everything reaches main through a PR.
+- `git clean -x` / `-X`: it deletes the generated files and local state the ignore list keeps (`git clean -fd` is fine).
 
 ## Checks
 

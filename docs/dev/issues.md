@@ -322,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
-### The permission deny list names a config path that's gone
-- **Where:** `.claude/settings.json` (`permissions.deny`), `.claude/hooks/guard.py` (docstring)
-- **What:** `permissions.deny` still refuses `rm config/user/config.json` (the folder no longer exists) and refuses `git clean -x`/`-X`/`-fdx`, which neither AGENTS.md › Never nor the guard mentions, though the guard's docstring says the deny list "repeats the plain ones". Fix: drop those two lines, and either name `git clean -x` in AGENTS.md (it deletes the generated files and local state) or drop it.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
 ### gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread
 - **Where:** `scripts/gen_docs.py` (`CONFIG_REF`, `load_readers`)
 - **What:** `CONFIG_REF` and the reader-alias match in `load_readers` accept only `ConfigManager.config` / `ConfigManager.previews`, but since row 12 (#162) the readers bind `ConfigManager.live` (47 of the files in `config/`; `previews` has no QML use left). So 372 of the 676 settings in `docs/dev/config/` say `read: no reader member or direct use found` though their reader reads them (`WorkspaceOverlay.showHint` is `WorkspaceOverlayConfig.showHint: _c.showHint`), and `--report`'s "reader members with no user" prints 0 because those readers' members aren't seen at all. The generated map agents use to find a setting's users is wrong for half the config, and the one check for dead settings and reader members is blind; nothing failed, since nothing tests the usage map (`RpcShapes` covers only rpc.md). Fix: match `live` (drop `previews`), add a `test_scripts.py` case that a known reader member is found, then fail on a setting with no reader or use and on an unused reader member (the deletion pass's ratchet).
