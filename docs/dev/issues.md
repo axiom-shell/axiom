@@ -304,12 +304,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-16, while consolidating compositor settings
 
-### Floating bars sit flush on the border without a backend
-- **Where:** `config/BarsConfig.qml` (`enrichBarConfig`: `floatGap`), `services/compositor/CompositorManager.qml` (`gapsOut`)
-- **What:** A floating bar's automatic gap (`floatGap` -1) is the compositor's outer gaps (`CompositorManager.gapsOut`). With no backend (an unknown compositor) `gapsOut` is all 0, so a floating bar sits flush against the border. Sway's and niri's backends read their gaps from the config (`SwayState.configInfo`, `axiom compositor niri info`); decide what the gap is with no backend at all (a fixed default, or `Appearance.screenMargin`).
-- **Size:** small
-- **Found:** 2026-10-16, while testing layer order in nested sway
-
 ### niri reports no position for a tiled window, nor other apps' layers
 - **Where:** `components/methods/NiriState.qml` (`windows`, `outputs`)
 - **What:** niri's IPC gives no layer surface geometry, so an output's `reserved` counts only axiom's own layers (`LayerArrange.arrange`): another app's bar on niri isn't in it, and the dock centres as if it weren't there. Nor, in 26.04, does it give a position for a tiled window (`tile_pos_in_workspace_view` is null; only floating windows have one; checked 2026-10-28). So tiled windows are laid out from their column and place in it from the output's edge, without niri's scroll (`windowGeometry` stays off: no screenshot window mode; the dock hides behind a window's `cover`, its column or the whole output, which ignores struts, reserved space and `center-focused-column`).
