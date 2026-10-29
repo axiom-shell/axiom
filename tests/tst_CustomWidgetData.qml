@@ -173,6 +173,14 @@ TestCase {
     }, {
       "text": ""
     }).hidden);
+    verify(CustomWidgetData.resolve({
+      "format": "{icon} {}",
+      "formatIcons": {
+        "default": "♪"
+      }
+    }, {
+      "text": ""
+    }).hidden, "the format's icon alone doesn't show it");
     verify(CustomWidgetData.resolve({}, {
       "text": "x",
       "hidden": true

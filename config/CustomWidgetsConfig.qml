@@ -26,4 +26,36 @@ QtObject {
   function definition(id) {
     return root.byId[id] ?? null;
   }
+
+  // A library key as what it adds: the bar widget and module libraries
+  // offer each custom widget as "CustomWidget:<id>", which adds a
+  // CustomWidget with its definition; any other key is a type as is.
+  // { type, properties (null for a plain type) }
+  function splitKey(key) {
+    const custom = /^CustomWidget:(.+)$/.exec(key ?? "");
+    return custom ? {
+      "type": "CustomWidget",
+      "properties": {
+        "definition": custom[1]
+      }
+    } : {
+      "type": key,
+      "properties": null
+    };
+  }
+
+  // The library entries for the custom widgets, built over `base` (the
+  // CustomWidget type's own entry, null: none): its info with each
+  // definition's key, name, icon and the Custom group
+  function libraryEntries(base) {
+    if (!base)
+      return [];
+    return root.items.map(def => Object.assign({}, base, {
+        "type": "CustomWidget:" + def.id,
+        "label": def.name || def.id,
+        "icon": def.icon || base.icon,
+        "group": "Custom",
+        "definition": def.id
+      }));
+  }
 }

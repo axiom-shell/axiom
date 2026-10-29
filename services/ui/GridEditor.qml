@@ -486,9 +486,9 @@ QtObject {
   }
 
   // A new module of `type` at `place`, its id new in the modules
-  // `type` may be a library key (OverlayConfig.customModuleKey)
+  // `type` may be a library key (CustomWidgetsConfig.splitKey)
   function _newModule(type, place) {
-    const key = OverlayConfig.customModuleKey(type);
+    const key = CustomWidgetsConfig.splitKey(type);
     const module = ConfigManager.withDefaults({
       "id": Utils.newId(key.type, root._modules()),
       "type": key.type

@@ -302,7 +302,7 @@ QtObject {
         "value": undefined,
         "subtext": ""
       }) : [];
-    const hidden = f.hidden === true || f.hidden === "true" || (d.hideEmpty !== false && rawText === "" && textPlain.trim() === "");
+    const hidden = f.hidden === true || f.hidden === "true" || (d.hideEmpty !== false && rawText.trim() === "");
     return {
       "text": text,
       "plain": textPlain,

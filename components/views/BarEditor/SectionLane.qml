@@ -198,7 +198,8 @@ Rectangle {
             compact: true
             width: root.vertical ? flick.width - (root.overflowing ? root.scrollBarRoom : 0) : implicitWidth
             height: root.chipHeight
-            type: chip.widget.type ?? ""
+            // A custom widget by its definition's library key, so it's named
+            type: chip.widget.type === "CustomWidget" && chip.widget.properties?.definition ? "CustomWidget:" + chip.widget.properties.definition : (chip.widget.type ?? "")
             hiddenWidget: chip.widget.visible === false
             crowded: root.crowded.includes(chip.index)
             selected: BarManager.selectedWidget.zone === root.zone && BarManager.selectedWidget.index === chip.index

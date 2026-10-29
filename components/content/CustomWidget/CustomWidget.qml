@@ -47,7 +47,7 @@ Panel {
     Layout.fillHeight: true
 
     CustomLayout {
-      visible: root.fields !== null
+      visible: root.fields !== null && !root.fields.hidden
       anchors.fill: parent
       definition: root.definition
       fields: root.fields ?? ({})
@@ -56,12 +56,12 @@ Panel {
     }
 
     EmptyState {
-      visible: root.fields === null
+      visible: root.fields === null || root.fields.hidden
       anchors.centerIn: parent
       maxWidth: parent.width
       availableHeight: parent.height
       icon: root.definition?.icon ?? "widgets"
-      text: !root.definition ? I18n.tr("Pick a custom widget in this module's settings") : !root.definition.command ? I18n.tr("No command set") : root.output?.error ? root.output.error : I18n.tr("Waiting for output…")
+      text: !root.definition ? I18n.tr("Pick a custom widget in this module's settings") : !root.definition.command ? I18n.tr("No command set") : root.output?.error ? root.output.error : root.fields ? I18n.tr("No output") : I18n.tr("Waiting for output…")
     }
   }
 }

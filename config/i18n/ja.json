@@ -3253,6 +3253,9 @@
     "Pick a custom widget in this module's settings": "",
     "Waiting for output…": "",
     "Which custom widget it shows. They're made on the Custom widgets page.": "",
-    "Custom widget": ""
+    "Custom widget": "",
+    "Pick a custom widget": "",
+    "Which custom widget it shows. Its look is set on the Custom widgets page.": "",
+    "Show the custom widget's module when hovered.": ""
   }
 }

@@ -97,38 +97,17 @@ QtObject {
   readonly property var customViewSchema: ConfigManager.configSchema.definitions.CustomOverlayView.properties
   readonly property var availableViewTypes: _oneOfTypes("OverlayView")
   // The custom widgets as module library entries, one per definition,
-  // keyed "CustomWidget:<id>" (customModuleKey): the CustomWidget type's
+  // keyed "CustomWidget:<id>" (CustomWidgetsConfig.splitKey): the CustomWidget type's
   // info with the definition's name, icon and design size, on the lock
   // screen only when it allows that
-  readonly property var customModuleTypes: {
-    const base = availableModuleTypes.find(t => t.type === "CustomWidget");
-    if (!base)
-      return [];
-    return CustomWidgetsConfig.items.map(def => Object.assign({}, base, {
-        "type": "CustomWidget:" + def.id,
-        "label": def.name || def.id,
-        "icon": def.icon || base.icon,
-        "group": "Custom",
-        "defaultSize": def.module.size,
-        "minSize": null,
-        "hosts": base.hosts.filter(host => host !== "lockscreen" || def.module.lockscreen),
-        "definition": def.id
-      }));
-  }
-  // A library key as the module it adds: { type, properties } (a custom
-  // widget's key carries its definition)
-  function customModuleKey(key) {
-    const custom = /^CustomWidget:(.+)$/.exec(key ?? "");
-    return custom ? {
-      "type": "CustomWidget",
-      "properties": {
-        "definition": custom[1]
-      }
-    } : {
-      "type": key,
-      "properties": null
-    };
-  }
+  readonly property var customModuleTypes: CustomWidgetsConfig.libraryEntries(availableModuleTypes.find(t => t.type === "CustomWidget") ?? null).map(entry => {
+    const def = CustomWidgetsConfig.definition(entry.definition);
+    return Object.assign(entry, {
+      "defaultSize": def.module.size,
+      "minSize": null,
+      "hosts": entry.hosts.filter(host => host !== "lockscreen" || def.module.lockscreen)
+    });
+  })
   // The module types a host's library offers: "overlay" pages,
   // "edgeMenu"s or the "lockscreen" (required ones are always there); the
   // custom widgets one by one rather than the CustomWidget type
