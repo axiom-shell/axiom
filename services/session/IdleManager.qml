@@ -2,22 +2,34 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.config
+import qs.components.methods
 import qs.services.core
+import qs.services.apps
 
 // Idle: what happens when you step away (the Idle section), run by the
 // axiom daemon (idle.state: docs/dev/features/idle.md), and the caffeine
 // switch that keeps the session awake. The Wayland idle inhibitor itself
 // needs a mapped surface, so shell/IdleInhibit holds one while `caffeine`
 // is on; the daemon is told too, as notifications that ignore inhibitors
-// (Idle.respectInhibitors off) would ignore that surface. Caffeine is kept
-// across QML reloads, but a restart always starts with idle allowed.
+// (Idle.respectInhibitors off) would ignore that surface. Caffeine goes on
+// until turned off, or for a set time (a StopwatchClock timer it turns off
+// at the end of, paused it stays on). Both are kept across QML reloads
+// (a DeadlineTicker), but a restart always starts with idle allowed.
 // Created from shell.qml's `_services`.
 //
 //   axiom ipc idleInhibit toggle
+//   axiom ipc idleInhibit timer 30m
 Singleton {
   id: root
 
-  property alias caffeine: _run.caffeine
+  readonly property bool caffeine: root._ticker.values.caffeine === true
+  // Caffeine's timer (StopwatchClock's), set while it's on for a set time
+  readonly property var caffeineTimer: StopwatchClock.normalizeTimer(root._ticker.values.timer)
+  readonly property bool caffeineTimed: !StopwatchClock.timerIdle(root.caffeineTimer)
+  // The time left and how far it's gone, as of a `now` ticking while
+  // something has acquire()d it
+  readonly property string caffeineText: StopwatchClock.format(StopwatchClock.remaining(root.caffeineTimer, root._ticker.now), false, true)
+  readonly property real caffeineProgress: StopwatchClock.timerProgress(root.caffeineTimer, root._ticker.now)
 
   // "off" | "running" | "inhibited" (an app holds idle off) |
   // "unsupported" (the compositor has no idle notifications) |
@@ -47,14 +59,71 @@ Singleton {
 
   property var _state: null
 
-  PersistentProperties {
-    id: _run
-    reloadableId: "axiomIdleInhibit"
-    property bool caffeine: false
+  // On until turned off (the timer, if any, dropped), or off
+  function setCaffeine(on) {
+    root._ticker.set({
+      "caffeine": on,
+      "timer": StopwatchClock.resetTimer(root.caffeineTimer)
+    });
   }
 
   function toggle() {
-    root.caffeine = !root.caffeine;
+    root.setCaffeine(!root.caffeine);
+  }
+
+  // On for a time from text ("30m", "1h30m"); false when it isn't one
+  function startCaffeineText(text) {
+    const parsed = StopwatchClock.parse(text);
+    if (parsed.ms <= 0)
+      return false;
+    root._ticker.set({
+      "caffeine": true,
+      "timer": StopwatchClock.startTimer(root.caffeineTimer, parsed.ms, Date.now(), "")
+    });
+    return true;
+  }
+
+  // Pause ↔ resume the timer (paused, caffeine stays on); an idle one
+  // starts its last duration again
+  function toggleCaffeineTimer() {
+    const timer = root.caffeineTimer;
+    const now = Date.now();
+    root._ticker.set({
+      "caffeine": true,
+      "timer": timer.running ? StopwatchClock.pauseTimer(timer, now) : root.caffeineTimed ? StopwatchClock.resumeTimer(timer, now) : StopwatchClock.startTimer(timer, timer.duration, now, "")
+    });
+  }
+
+  function addCaffeineTime(ms) {
+    root._ticker.set({
+      "timer": StopwatchClock.addTime(root.caffeineTimer, ms)
+    });
+  }
+
+  // The time left at this moment, for a reader holding no acquire
+  function caffeineTextNow() {
+    return StopwatchClock.format(StopwatchClock.remaining(root.caffeineTimer, Date.now()), false, true);
+  }
+
+  // `interval`: ms between updates of caffeineText this owner wants
+  function acquire(owner, interval) {
+    root._ticker.acquire(owner, interval);
+  }
+
+  function release(owner) {
+    root._ticker.release(owner);
+  }
+
+  property DeadlineTicker _ticker: DeadlineTicker {
+    name: "caffeine"
+    keeps: false
+    deadline: root.caffeineTimer
+    ticks: root.caffeineTimer.running
+    restore: () => ({
+          "caffeine": false,
+          "timer": StopwatchClock.idleTimer
+        })
+    onEnded: root.setCaffeine(false)
   }
 
   onCaffeineChanged: root._report()
@@ -96,11 +165,16 @@ Singleton {
     }
 
     function enable(): void {
-      root.caffeine = true;
+      root.setCaffeine(true);
     }
 
     function disable(): void {
-      root.caffeine = false;
+      root.setCaffeine(false);
+    }
+
+    // On for a time: "30m", "1h30m", "90s"
+    function timer(text: string): bool {
+      return root.startCaffeineText(text);
     }
 
     function status(): bool {

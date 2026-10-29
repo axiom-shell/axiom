@@ -11,8 +11,8 @@ import qs.components.content.parts
 
 // The one-off timer and the stopwatch (StopwatchManager), one at a time
 // under a Timer / Stopwatch switch: the Stopwatch widget's popout, or an
-// overlay card. Timer: type a duration ("10m tea") or pick a preset, then
-// pause, +1 min and reset; a ring shows how far it's gone. Stopwatch: the
+// overlay card. Timer: a CountdownTimer (type a duration or pick a
+// preset; then a ring, pause, +1 min and reset). Stopwatch: the
 // time in tenths, start-pause, lap and reset, and the laps. Compact, the
 // time of whichever is going.
 // properties (card): { mode: "auto" | "timer" | "stopwatch" }
@@ -72,87 +72,19 @@ Panel {
 
   // -- Timer --
 
-  // Set: the ring with the time left
-  TimeRing {
-    visible: root.timerMode && !StopwatchManager.timerIdle
-    size: root.dialSize
-    progress: StopwatchManager.timerProgress
+  CountdownTimer {
+    visible: root.timerMode
+    timer: StopwatchManager.timer
+    presets: StopwatchConfig.presets
     text: StopwatchManager.timerText
-    label: StopwatchManager.timerRunning ? StopwatchManager.timer.label : I18n.tr("Paused")
-    running: StopwatchManager.timerRunning
-  }
-
-  // Not set: a duration to type, or a preset
-  ColumnLayout {
-    visible: root.timerMode && StopwatchManager.timerIdle
-    Layout.fillWidth: true
-    Layout.fillHeight: root.embedded
-    spacing: Widget.spacing
-
-    StyledTextEntry {
-      id: durationField
-      Layout.fillWidth: true
-      Layout.preferredHeight: Widget.height
-      placeholderText: I18n.tr("10m, 1h30m, 90s, 10m tea…")
-      onAccepted: {
-        if (StopwatchManager.startTimerText(durationField.text))
-          durationField.text = "";
-      }
-    }
-
-    Flow {
-      Layout.fillWidth: true
-      spacing: Widget.spacing / 2
-
-      Repeater {
-        model: StopwatchConfig.presets.length
-        StyledTextButton {
-          required property int index
-          readonly property string preset: StopwatchConfig.presets[index] ?? ""
-          implicitHeight: Widget.height - Widget.px(4)
-          text: preset
-          onClicked: StopwatchManager.startTimerText(preset)
-        }
-      }
-      StyledTextButton {
-        visible: StopwatchManager.timer.duration > 0
-        implicitHeight: Widget.height - Widget.px(4)
-        iconText: "replay"
-        text: StopwatchClock.format(StopwatchManager.timer.duration, false, true)
-        onClicked: StopwatchManager.toggleTimer()
-      }
-    }
-
-    Item {
-      visible: root.embedded
-      Layout.fillHeight: true
-    }
-  }
-
-  RowLayout {
-    visible: root.timerMode && !StopwatchManager.timerIdle
-    Layout.alignment: Qt.AlignHCenter
-    spacing: Widget.spacing
-
-    FlatIconButton {
-      size: Math.round(Appearance.fontSize * 2)
-      iconText: "stop"
-      tooltipText: I18n.tr("Reset")
-      onClicked: StopwatchManager.resetTimer()
-    }
-    FlatIconButton {
-      size: Math.round(Appearance.fontSize * 2.6)
-      iconText: StopwatchManager.timerRunning ? "pause" : "play_arrow"
-      iconColor: Theme.accent
-      tooltipText: StopwatchManager.timerRunning ? I18n.tr("Pause") : I18n.tr("Resume")
-      onClicked: StopwatchManager.toggleTimer()
-    }
-    FlatIconButton {
-      size: Math.round(Appearance.fontSize * 2)
-      iconText: "more_time"
-      tooltipText: I18n.tr("One more minute")
-      onClicked: StopwatchManager.addTimer(60000)
-    }
+    progress: StopwatchManager.timerProgress
+    label: StopwatchManager.timer.label
+    dialSize: root.dialSize
+    fill: root.embedded
+    onStarted: text => StopwatchManager.startTimerText(text)
+    onToggled: StopwatchManager.toggleTimer()
+    onReset: StopwatchManager.resetTimer()
+    onExtended: ms => StopwatchManager.addTimer(ms)
   }
 
   // -- Stopwatch --

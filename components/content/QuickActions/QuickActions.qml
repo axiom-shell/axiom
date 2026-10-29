@@ -53,7 +53,7 @@ Card {
         "icon": "coffee",
         "label": I18n.tr("Caffeine"),
         "active": IdleManager.caffeine,
-        "status": root.onOff(IdleManager.caffeine)
+        "status": IdleManager.caffeineTimed ? IdleManager.caffeineText : root.onOff(IdleManager.caffeine)
       },
       "dnd": {
         "icon": NotificationManager.dnd ? "notifications_off" : "notifications",
@@ -218,6 +218,10 @@ Card {
       break;
     }
   }
+
+  // Caffeine's time left, while it's on for a set time
+  Component.onCompleted: IdleManager.acquire(root, 1000)
+  Component.onDestruction: IdleManager.release(root)
 
   Timer {
     id: disarm
