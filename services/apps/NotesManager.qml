@@ -447,17 +447,18 @@ QtObject {
           doc._fromDisk(text);
       }
 
-      function _changed() {
-        if (doc.dirty)
-          console.warn("[NotesManager]", doc.path, "changed on disk while it had unsaved edits: keeping the edits");
-        else
+      // maybe: axiom (re)connected, and the file may not have changed
+      function _changed(maybe) {
+        if (!doc.dirty)
           doc._read();
+        else if (!maybe)
+          console.warn("[NotesManager]", doc.path, "changed on disk while it had unsaved edits: keeping the edits");
       }
 
       // Watches and reads _file (again after a rename or a new folder)
       function _follow() {
         FileManager.unwatch(doc._watch);
-        doc._watch = FileManager.watch(doc._file, () => doc._changed());
+        doc._watch = FileManager.watch(doc._file, maybe => doc._changed(maybe));
         doc._read();
       }
 

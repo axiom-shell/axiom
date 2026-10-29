@@ -222,6 +222,8 @@ Singleton {
       // Checks asked for meanwhile go next
       root._busy = false;
       root._runLookup();
+    }, {
+      "repeatable": true
     });
   }
 

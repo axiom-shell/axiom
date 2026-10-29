@@ -311,6 +311,8 @@ QtObject {
         if (problems.length > 0)
           console.warn("[ThemeManager] " + r.key + " integration:", problems.join("\n"));
       }
+    }, {
+      "repeatable": true
     });
   }
 

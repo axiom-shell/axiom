@@ -44,18 +44,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while reviewing the chat move to axiom (backend stage 5)
 
-### A file write or change can be missed across a daemon re-exec
-- **Where:** `services/core/FileManager.qml` (`write`, `watch`), `services/core/BackendManager.qml` (`_failQueued`)
-- **What:** Calls in flight when the connection drops fail with `unavailable` (protocol.md), so a `file.write` out at the moment of a re-exec is dropped (logged `[FileManager] Could not write`; notes show "Couldn't save"), and the file keeps its older content until the next save of it. Likewise a change made on disk between the drop and the next hello pushes nothing (the watch is gone until `onGreeted` sends it again), so a todo list or open note edited elsewhere in that moment isn't reloaded. FileView wrote and watched in-process, with no such gap. Rare (a ~200 ms window per re-exec, which dev mode does on every Go save); a fix would resend a write that failed `unavailable` and call each watcher once after a re-hello.
-- **Size:** small
-- **Found:** 2026-10-28, while reviewing the file.write / file.watch move (backend stage 6)
-
-### Calls in flight are lost across a daemon re-exec, one service at a time
-- **Where:** `services/core/BackendManager.qml` (`_failQueued`, `call`), `services/core/FileManager.qml` (`write`), `services/core/ThemeManager.qml` (`themeIntegrations`), `services/system/MediaManager.qml` (the album art fetch)
-- **What:** Three entries share one cause: a re-exec fails every call in flight with `unavailable` (`the connection to axiom closed`), and each caller then warns or drops its work ("A file write or change can be missed across a daemon re-exec", "ThemeManager warns when the daemon's re-exec fails its integrations", "MediaManager warns when the daemon's re-exec fails its album art fetch"). Each new funnel adds callers, so fixing them one service at a time keeps adding entries. One fix in `BackendManager` would close all three: a call marked safe to repeat (an option on `call`) is held and sent again after the next hello rather than failed, and watchers are called once after a re-hello; the caller decides what's safe (a whole-file `file.write`, `theme.integrate`, `media.art` are; a `share.import` isn't). Not the daemon's own commands ("The daemon's own commands are left zombies across a re-exec") or the updates check's warning, which are Go-side.
-- **Size:** small
-- **Found:** 2026-10-28, while reviewing row 11's PRs (#155 to #158)
-
 ### AGENTS.md's funnel rule doesn't name FileManager.write and watch
 - **Where:** `AGENTS.md` (Services › Quickshell.Io's side effects), `services/core/FileManager.qml` (`write`, `watch`)
 - **What:** The rule lists the funnels new code uses (`CommandManager.run` / `runDetached`, `FileManager.read`, `StateManager`, `IpcTarget`) but still says to ask the daemon for "a file to watch or write", though #157 added `FileManager.write` (atomic, through `file.write`) and `FileManager.watch` (through `file.watch`) for exactly that. An agent following it could call `BackendManager` directly instead of the funnel. The line should name both, as it names `FileManager.read`.
@@ -85,24 +73,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The commands the daemon runs for itself (`checkupdates`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Later the same day the same daemon (about 9 h of dev-mode re-execs) had 104: 61 `qs`, 18 `checkupdates`, 8 `bash`, 7 `bat`, 5 `ddcutil`, 3 `tailscale`, mostly in groups started in the same second, the commands a fresh image runs at once (`ipcroute`'s `qs ipc --pid … show` and `call`, gone since, and the startup checks). The `qs` ones were those `qs ipc` ran, not shells: the shell a re-exec adopts is waited on and reaped (`supervise.Supervisor.adopt`), and only ever one runs. Running them through `command.Run` with the daemon's `Children` would cover them.
 - **Size:** small
 - **Found:** 2026-10-27, while handing exec's commands across a re-exec
-
-### The updates check warns when a daemon re-exec kills checkupdates
-- **Where:** `backend/internal/updates/updates.go` (`Source`'s `Fetch`, `runCheck`)
-- **What:** `axiom daemon logs` shows `checking for updates` with `checkupdates failed (-1): ` 7 times since 2026-10-26, each within a few seconds of a `dev build done: re-executing` line (12:33:56.102 after a re-exec at 12:33:55.828 on 2026-10-27). Exit code -1 is a kill by a signal: most likely the old image's context ends at the re-exec, the check's `checkupdates` is killed with it, and `Fetch` logs the failure before the hub drops the fetch as cancelled. A `ctx.Err()` check before the warning would quiet it; the next image checks again anyway.
-- **Size:** small
-- **Found:** 2026-10-27, while merging #133
-
-### ThemeManager warns when the daemon's re-exec fails its integrations
-- **Where:** `services/core/ThemeManager.qml` (`themeIntegrations`)
-- **What:** As with `MediaManager`'s album art: a daemon re-exec (dev mode rebuilding after a Go edit) fails a `theme.integrate` call in flight, and ThemeManager logs `Theme integrations failed: the connection to axiom closed`, though the call could simply be sent again after the next hello.
-- **Size:** trivial
-- **Found:** 2026-10-27, while porting the greeter installer (a dev-mode re-exec during the batch)
-
-### MediaManager warns when the daemon's re-exec fails its album art fetch
-- **Where:** `services/system/MediaManager.qml` (the album art fetch)
-- **What:** A daemon re-exec fails every request in flight with `the connection to axiom closed`, and `MediaManager` warns about it, though it's an expected failure it could retry on the next hello. #112 had folded it into "The shell's socket warns when the daemon re-execs", but the socket's warning is Quickshell's and this one is ours to quiet.
-- **Size:** trivial
-- **Found:** 2026-10-26, while auditing the autopilot's Phase 1 PRs
 
 ### Running it unattended's gate can't get `verify ok` on a committed branch
 - **Where:** `docs/dev/roadmap.md` (Running it unattended, step 5), `scripts/dev/verify.sh`

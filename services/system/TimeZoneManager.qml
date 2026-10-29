@@ -88,6 +88,8 @@ QtObject {
       }
       root._timer.interval = TimeZones.msToNextCheck(new Date());
       root._timer.restart();
+    }, {
+      "repeatable": true
     });
   }
 
@@ -96,8 +98,7 @@ QtObject {
     onTriggered: root._read()
   }
 
-  // tzdata's own list ($TZDIR where it's set), until it's had: again
-  // after a hello, if the connection dropped before it was answered
+  // tzdata's own list ($TZDIR where it's set)
   function _readZones() {
     if (root._zones.length > 0 || root._readingZones)
       return;
@@ -106,20 +107,11 @@ QtObject {
       root._readingZones = false;
       if (!error)
         root._zones = result.zones;
+    }, {
+      "repeatable": true
     });
   }
   property bool _readingZones: false
-
-  property Connections _hello: Connections {
-    target: BackendManager
-    function onGreeted() {
-      root._readZones();
-      // A read cut off by the connection dropping, not left to the next
-      // half hour (a zone the system lacks never gets one: read again)
-      if (root._wanted.split("\n").some(zone => zone !== "" && !(zone in root._offsets)))
-        root._read();
-    }
-  }
 
   Component.onCompleted: root._readZones()
 }

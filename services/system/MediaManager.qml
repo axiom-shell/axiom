@@ -59,7 +59,8 @@ QtObject {
   // (media.art: downloaded, or copied from a file:// URL, into .part and
   // renamed, so an interrupted one is never mistaken for a cached file;
   // art already there is kept). One at a time: a newer URL is fetched
-  // when the running one ends.
+  // when the running one ends, and one cut off by axiom re-execing goes
+  // again once it's back.
   function _fetchArt() {
     const url = root.artUrl;
     if (!url || root._artFetchUrl !== "")
@@ -83,16 +84,9 @@ QtObject {
         console.warn("[MediaManager] Failed to fetch album art from:", url, error.message);
         root.artDownloaded = false;
       }
+    }, {
+      "repeatable": true
     });
-  }
-
-  // A fetch cut off by axiom restarting is tried again once it's back
-  property Connections _backend: Connections {
-    target: BackendManager
-    function onGreeted() {
-      if (!root.artDownloaded)
-        root._fetchArt();
-    }
   }
 
   // --- Public ---
