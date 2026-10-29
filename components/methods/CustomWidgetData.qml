@@ -77,10 +77,10 @@ QtObject {
   // Every path in a sample the editor offers, depth first:
   // [{ path, type ("string", "number", "boolean", "array", "object", "null"),
   //    value (a leaf's value, an array's length) }].
-  // An array lists its first `maxItems` (default 3) entries.
+  // An array lists its first `maxItems` (default 50) entries.
   function flatten(sample, maxItems) {
     const out = [];
-    const limit = maxItems ?? 3;
+    const limit = maxItems ?? 50;
     const walk = (v, path, depth) => {
       const type = v === null ? "null" : Array.isArray(v) ? "array" : typeof v;
       if (path)

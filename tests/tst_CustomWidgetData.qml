@@ -51,7 +51,7 @@ TestCase {
           "text": "d"
         }
       ]
-    });
+    }, 3);
     const byPath = paths.reduce((m, p) => {
       m[p.path] = p;
       return m;
@@ -61,7 +61,10 @@ TestCase {
     compare(byPath["items"].type, "array");
     compare(byPath["items"].value, 4, "an array's value is its length");
     compare(byPath["items.2.text"].value, "c");
-    verify(!("items.3" in byPath), "only the first three entries");
+    verify(!("items.3" in byPath), "only the first maxItems entries");
+    compare(CustomWidgetData.flatten({
+      "items": [1, 2, 3, 4, 5]
+    }).filter(p => /^items\.\d$/.test(p.path)).length, 5, "every entry of a short list by default");
   }
 
   function test_fill() {
