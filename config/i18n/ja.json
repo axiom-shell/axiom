@@ -443,7 +443,6 @@
     "Close on Escape": "Escキーで閉じる",
     "Close the overlay when Escape is pressed (unless something in it, like a popup, uses the key first).": "Escキーを押したときにオーバーレイを閉じます（ポップアップなど、オーバーレイ内の要素が先にキーを使う場合を除く）。",
     "Close on outside click": "外側のクリックで閉じる",
-    "Close the overlay when you click outside it: on a bar, the screen border or another monitor.": "オーバーレイの外側（バー、画面の枠、別のモニター）をクリックしたときに閉じます。",
     "Defaults": "デフォルト",
     "As in General": "一般設定に従う",
     "Focused monitor": "フォーカス中のモニター",
@@ -3356,6 +3355,7 @@
     "Each runs its action once the pointer has rested in its corner for its delay, and again only after the pointer has left. A corner takes the screen's last pixel: a click there doesn't reach what's under it. Quiet over fullscreen windows.": "",
     "Search text, page, edge menu or dock id, direction, workspace number, screenshot kind (region, window or screen), or the command.": "",
     "Hot corners": "",
-    "Screen corners that run an action when the pointer reaches them, on every compositor.": ""
+    "Screen corners that run an action when the pointer reaches them, on every compositor.": "",
+    "Close the overlay when you click its empty background, around the page. A click on a bar, a popout or a prompt leaves it open.": ""
   }
 }

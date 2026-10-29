@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
 
+### Close on outside click differs on Hyprland since the overlay ignores its grab ending
+- **Where:** `components/hosts/overlay/OverlayPanel.qml` (`grab`, `onClickedOutside`), `services/compositor/FocusGrab.qml` (`clickedOutside`)
+- **What:** With `Overlay.closeOnOutsideClick` on, the overlay now closes on its empty background (`backgroundClicks`) everywhere, and, without a native grab (sway, niri), on a press on any screen's backdrop: another monitor, the screen border (its mask is empty), a floating bar's gap. On Hyprland those clicks only end its native grab, which it no longer closes on (that also fires when a popout's or the dock menu's own grab starts over it, one native grab at a time), so they leave it open, where before this change they closed it on every compositor. The maintainer decided on #211 "only where the blur backing would be": whether those places count (another monitor has no backing; the border covers it; a bar's gap shows it) decides the fix: none on sway and niri dropping `clickedOutside`, or on Hyprland a backdrop that takes the click.
+- **Size:** small
+- **Found:** 2026-10-29, while reviewing the overlay and popouts plan's build (row 16)
+
 ### An open-only workspace overview bind calls a function that doesn't exist
 - **Where:** `backend/internal/compositor/actions/table.json` (`calls.workspaceOverview`), `shell/WorkspaceOverlay.qml` (its `IpcTarget`)
 - **What:** The bind table maps the `workspaceOverview` action's `open` call to the IPC function `show` (`render.Tables.CallFunction`), so a bind with call `open` runs `axiom ipc workspaceOverlay show`; the `workspaceOverlay` target has only `toggle`, `open` and `hide` (`docs/dev/generated/ipc.md`), so the bind does nothing. The default bind (`toggle`) is unaffected. Fix: the table's `open` names `open`.
@@ -315,12 +321,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `IconResolver` is the one methods helper without a test (`tst_IconResolver`) (and the one importing `Quickshell`, for `iconPath`). The `axiom-shell` and `axiom-shell-git` PKGBUILDs are near copies. `check_doc_drift.py` flags `i18n.md` (12 commits behind its files, after the services moved to folders).
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the repository's organization
-
-### Overlay and popouts close or break each other
-- **Where:** `services/ui/ShellManager.qml` (`closeOverlay`), `services/ui/OverlayManager.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/overlay/OverlayPanel.qml` (its `FocusGrab`)
-- **What:** From the maintainer's notes, verbatim: "a little bit of a system re-work/look to ensure all popouts are usable as expected while the overlay is open, without closing the overlay. There are a bit more problems here so this likely needs a plan (i.e. currently open popouts break when overlay is opened, nothing should close the overlay (i.e. after installing greetd and the polkit prompt closes, the overlay closes) The one exception is likely launcher (although it can also just open over the overlay and be usable)". The plan covers which surfaces may close the overlay (callers of `ShellManager.closeOverlay`, focus grabs ending when a prompt like polkit's takes and gives back focus), and how a popout open before the overlay keeps working. The maintainer (2026-10-29), on a greeter update: "The issue is that when the auth prompt closes, the overlay closes." (plan: #211)
-- **Size:** needs a plan
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
 ### The window switcher's blur and release on sway and niri
 - **Where:** `services/compositor/WindowSwitcherManager.qml` (`commit`, `pick`), `components/surfaces/switcher/SwitcherKeys.qml`, `components/surfaces/switcher/SwitcherStrip.qml`

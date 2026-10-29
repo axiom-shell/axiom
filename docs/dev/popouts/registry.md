@@ -54,6 +54,7 @@ While engaged it ranks as its kind, so it opens over a dock. Once let go it drop
   - **Unpinned while away:** it closes.
 - **Showing only once granted:** a host shows only once granted (`PopoutClaim.held`: granted, or closing after it was). The pill it stands on therefore draws back only after its box has slid away.
 - **Same-frame handover:** the evicted popouts start closing in the same frame the new one starts opening.
+- **The overlay opening** closes the `bar` and `menu` claims on its screen, pinned or yielded ones too (`closeOn`): they'd be latched under it. Their submenus close with them.
 - **Footprint changes:** if a claim's footprint changes while it shows (a resize, a switch in place, its window's real place arriving), it re-resolves as a claim does: it closes anything below it that it now covers, and gives way itself (refused, or yielded if resident) to anything above it. A popout never stays open over a higher one.
 
 ### An open popout never moves
