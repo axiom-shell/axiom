@@ -12,6 +12,7 @@ import qs.components.reusable
 // the folders whose files see each other (scripts/check_structure.py)
 import qs.components.content.Palette // qmllint disable unused-imports
 import qs.components.views.BarEditor // qmllint disable unused-imports
+import qs.components.views.CustomWidgets // qmllint disable unused-imports
 import qs.components.views.Keybinds // qmllint disable unused-imports
 import qs.components.views.Settings // qmllint disable unused-imports
 

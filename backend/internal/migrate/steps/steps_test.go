@@ -217,3 +217,83 @@ func TestV79MovesTheTailscaleInterval(t *testing.T) {
 		})
 	}
 }
+
+func TestV80AddsTheCustomWidgetsPage(t *testing.T) {
+	t.Parallel()
+	step := all[3]
+	if step.Version != 80 {
+		t.Fatalf("step %d", step.Version)
+	}
+	cases := []struct {
+		name, in, out string
+		changed       bool
+	}{
+		{"added", `{"Overlay":{"items":[{"id":"settings","type":"Settings"}]}}`,
+			`{"Overlay":{"items":[{"id":"settings","type":"Settings"},{"id":"customWidgets","type":"CustomWidgets"}]}}`, true},
+		{"already there", `{"Overlay":{"items":[{"id":"mine","type":"CustomWidgets"}]}}`,
+			`{"Overlay":{"items":[{"id":"mine","type":"CustomWidgets"}]}}`, false},
+		{"no overlay", `{"Bars":{}}`, `{"Bars":{}}`, false},
+		{"another shape", `{"Overlay":{"items":{}}}`, `{"Overlay":{"items":{}}}`, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			v, err := jsonx.Unmarshal([]byte(c.in))
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg := v.(*jsonx.Object)
+			changes := step.Run(cfg)
+			if got := string(jsonx.MarshalCompact(cfg)); got != c.out {
+				t.Errorf("got %s, want %s", got, c.out)
+			}
+			if (len(changes) > 0) != c.changed {
+				t.Errorf("changes %v", changes)
+			}
+			if again := step.Run(cfg); len(again) > 0 {
+				t.Errorf("a second run: %v", again)
+			}
+		})
+	}
+}
+
+func TestV81FoldsCommandOutput(t *testing.T) {
+	t.Parallel()
+	step := all[4]
+	if step.Version != 81 {
+		t.Fatalf("step %d", step.Version)
+	}
+	cases := []struct {
+		name, in, out string
+		changed       bool
+	}{
+		{"a page's",
+			`{"Overlay":{"items":[{"layout":{"modules":[{"id":"c","type":"CommandOutput","place":{"x":0,"y":0,"w":4,"h":2},"properties":{"title":"Up","command":"uptime -p","interval":5000,"monospace":true,"clickCommand":"x"}}]}}]}}`,
+			`{"Overlay":{"items":[{"layout":{"modules":[{"id":"c","type":"CustomWidget","place":{"x":0,"y":0,"w":4,"h":2},"properties":{"definition":"command"}}]}}]},"CustomWidgets":{"items":[{"id":"command","name":"Up","icon":"terminal","command":"uptime -p","mode":"poll","interval":5000,"output":"text","escape":true,"hideEmpty":false,"actions":{"click":"x"},"module":{"size":[4,2],"elements":[{"id":"output","type":"TextBlock","place":{"x":0,"y":0,"w":16,"h":8},"bind":{"text":"text"},"options":{"monospace":true}}]}}]}}`,
+			true},
+		{"two, an id taken", `{"CustomWidgets":{"items":[{"id":"command"}]},"Lockscreen":{"layout":{"modules":[{"type":"CommandOutput","properties":{"command":"date"}}]}},"EdgeMenus":{"items":[{"layout":{"modules":[{"type":"CommandOutput"}]}}]}}`,
+			`{"CustomWidgets":{"items":[{"id":"command"},{"id":"command-2","name":"date","icon":"terminal","command":"date","mode":"poll","interval":10000,"output":"text","escape":true,"hideEmpty":false,"actions":{"click":""},"module":{"size":[4,2],"elements":[{"id":"output","type":"TextBlock","place":{"x":0,"y":0,"w":16,"h":8},"bind":{"text":"text"},"options":{"monospace":false}}]}},{"id":"command-3","name":"uptime -p","icon":"terminal","command":"uptime -p","mode":"poll","interval":10000,"output":"text","escape":true,"hideEmpty":false,"actions":{"click":""},"module":{"size":[4,2],"elements":[{"id":"output","type":"TextBlock","place":{"x":0,"y":0,"w":16,"h":8},"bind":{"text":"text"},"options":{"monospace":false}}]}}]},"Lockscreen":{"layout":{"modules":[{"type":"CustomWidget","properties":{"definition":"command-2"}}]}},"EdgeMenus":{"items":[{"layout":{"modules":[{"type":"CustomWidget","properties":{"definition":"command-3"}}]}}]}}`,
+			true},
+		{"none", `{"Overlay":{"items":[]}}`, `{"Overlay":{"items":[]}}`, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			v, err := jsonx.Unmarshal([]byte(c.in))
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg := v.(*jsonx.Object)
+			changes := step.Run(cfg)
+			if got := string(jsonx.MarshalCompact(cfg)); got != c.out {
+				t.Errorf("got  %s\nwant %s", got, c.out)
+			}
+			if (len(changes) > 0) != c.changed {
+				t.Errorf("changes %v", changes)
+			}
+			if again := step.Run(cfg); len(again) > 0 {
+				t.Errorf("a second run: %v", again)
+			}
+		})
+	}
+}

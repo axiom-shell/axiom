@@ -1,0 +1,15 @@
+# The CustomWidgets section of the config (config.json's "CustomWidgets").
+
+type: object
+x-category: Modules
+x-settings: false
+x-scope: personal
+title: Custom widgets
+description: Edited on the Custom widgets page.
+additionalProperties: false
+properties:
+  items:
+    type: array
+    default: []
+    description: The custom widgets, each a script drawn as a bar widget, its popout and a module.
+    items: {$ref: '#/definitions/CustomWidget'}

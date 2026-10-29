@@ -65,9 +65,10 @@ QtObject {
   // The card size of a double grid (`fineGrid`) at card size `unit`: two
   // of its units and the gap between them span one of `unit`'s, so places
   // scaled by scalePlace keep their size and spot exactly (half the card
-  // would leave every span a little larger, the gaps staying the same)
+  // would leave every span a little larger, the gaps staying the same).
+  // Rounded down, so a doubled span is never longer than the one it doubles
   function fineUnit(unit, gap) {
-    return Math.round((unit - (gap ?? root.cardSpacing)) / 2);
+    return Math.floor((unit - (gap ?? root.cardSpacing)) / 2);
   }
 
   // A size in grid units as cards: 4 → "1", 2 → "½", 5 → "1¼"
@@ -804,12 +805,13 @@ QtObject {
   // (span(8), its gap drawn at the zoom too) overflows the height. A page
   // too wide is shrunk on its own (OverlayPages.fitScale). { drawn, the
   // card size shown; unit, the size content lays out at (drawn / zoom);
-  // zoom }
+  // zoom }. Rounded down where the height limits it, so a page two cards
+  // high fits exactly rather than a pixel over (and shrunk by a hair)
   function overlayLayout(height, card, zoom) {
-    const drawn = Math.max(1, Math.round(Math.min(card, (height - root.gapOf(zoom)) / 2)));
+    const drawn = Math.max(1, Math.min(Math.round(card), Math.floor((height - root.gapOf(zoom)) / 2)));
     return {
       "drawn": drawn,
-      "unit": Math.round(drawn / zoom),
+      "unit": Math.max(1, Math.floor(drawn / zoom + 1e-6)),
       "zoom": zoom
     };
   }

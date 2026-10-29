@@ -1,0 +1,5 @@
+label: Sparkline
+icon: show_chart
+defaultSize: [6, 2]
+slots: [value, min, max]
+color: state

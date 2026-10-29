@@ -63,6 +63,11 @@ Loader {
         labels[menu.id] = menu.name || menu.id;
         return labels;
       }, {});
+    if (fieldSchema["x-options"] === "customWidgets")
+      return CustomWidgetsConfig.items.reduce((labels, item) => {
+        labels[item.id] = item.name || item.id;
+        return labels;
+      }, {});
     if (fieldSchema["x-options"] === "overlayPages")
       return OverlayConfig.views.reduce((labels, view, index) => {
         const key = OverlayConfig.pageKey(view);

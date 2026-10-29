@@ -41,4 +41,5 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 
 ### Click handlers
 - `NotificationManager.registerHandler(desktopEntry, handler)` routes a click on one of axiom's own notifications by its `desktopEntry`.
+- `NotificationManager.dismissApp(desktopEntry)` removes every notification of that `desktopEntry`: one of axiom's asking for something to be done goes away once it's done (the login screen's update, the "available" one after a self-update, a missing font once it's installed).
 - Services that register one: SelfUpdateManager (`axiom-update`, see [Self-update](self-update.md)), CalendarManager (`axiom-calendar`, see [Calendar](calendar.md)), ScreenshotManager and GreeterManager.

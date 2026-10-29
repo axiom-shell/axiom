@@ -1,0 +1,8 @@
+label: Segments
+icon: signal_cellular_alt
+defaultSize: [6, 1]
+slots: [value, min, max]
+color: state
+settings:
+  count: {type: integer, title: Blocks, default: 5, minimum: 2, maximum: 12}
+  round: {type: boolean, title: Dots, default: false}

@@ -1,6 +1,6 @@
 # Editors pattern
 
-> **Files:** `services/core/ConfigDraft.qml`, `services/ui/EditsManager.qml`, `components/views/base/BaseView.qml`, `components/reusable/DragLayer.qml`; editor managers `services/ui/{SettingsManager,BarManager,OverlayManager}.qml`, `services/ui/EdgeMenuEditor.qml`, `services/compositor/{KeybindEditor,MonitorManager}.qml`, `services/ui/ScreenLayoutEditor.qml`
+> **Files:** `services/core/ConfigDraft.qml`, `services/ui/EditsManager.qml`, `components/views/base/BaseView.qml`, `components/reusable/DragLayer.qml`; editor managers `services/ui/{SettingsManager,BarManager,OverlayManager}.qml`, `services/ui/EdgeMenuEditor.qml`, `services/apps/CustomWidgetsEditor.qml`, `services/compositor/{KeybindEditor,MonitorManager}.qml`, `services/ui/ScreenLayoutEditor.qml`
 > **Config:** whichever path the editor drafts; layout prefs in `~/.local/state/axiom/ui/editors.json`
 > **Related:** [Config manager](config-manager.md), [Bar editor](../bar/bar-editor.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Monitors](../hyprland/monitors.md), [Keybinds](../hyprland/keybinds.md), [Shared UI pieces](shared-ui-pieces.md)
 

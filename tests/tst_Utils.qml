@@ -108,6 +108,18 @@ TestCase {
     compare(map.a, 1, "the original is untouched");
   }
 
+  function test_pick() {
+    compare(Utils.pick({
+      "a": 1,
+      "b": 2,
+      "c": 3
+    }, ["c", "a", "x"]), {
+      "c": 3,
+      "a": 1
+    }, "only the keys it has");
+    compare(Utils.pick(null, ["a"]), {});
+  }
+
   function test_clone() {
     const original = {
       "a": [1,

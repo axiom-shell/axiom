@@ -14,6 +14,7 @@ The BarEditor overlay page: the bar list and field groups, the sections board an
   - The selected bar's field groups.
     - Their form reads `BarsConfig.lookOf(bar)`, so a look field's `x-showIf` sees what the bar draws, even from a group it doesn't override.
   - The Style group's header copies the bar's look (`BarManager.styleKeys`: its Size and Style settings) and pastes it onto one bar or onto all. The copied style follows its bar by index.
+  - The style groups (`BarsConfig.styleGroups`) are shared with every bar until the bar takes its own; each links (`SettingsLink`) to its card in the shared `Bars.style` on the settings page.
 - **Right: `BarDragLayer`.** It holds `SectionsBoard` along the side of the page the selected bar is on, with `WidgetInspector` beside it.
   - A horizontal bar gets a strip across the top or bottom. A vertical bar gets a column at the left or right.
   - The button beside the Widgets title stacks a horizontal bar's board as a column at the left (`EditsManager.barStacked`).
@@ -32,6 +33,7 @@ The BarEditor overlay page: the bar list and field groups, the sections board an
 ### Inspector
 - Shows the widget's options, in its `x-order`, with `x-beside` fields paired (`OptionsGroup`'s `pairs`).
   - Their `x-showIf` can read the selected bar's look as `$bar.<key>` (`BarsConfig.lookContext`, passed as `context`), so colors the bar's style doesn't draw are hidden ([widget style](widget-style.md#which-color-fields-show)).
+  - Under them, the type's `x-link`s and a link to every bar's widget style (`Bars.style`).
   - For a Button opening an edge menu or page, `OverlayManager.openedBy`/`editOpenedBy` take it to the [layouts editor](../overlay/layouts-editor.md).
 - Shows the widget's Sizing: the `LayoutOverrideField`s from `BarsConfig.widgetLayoutSchema`. They are explained from, and start at, what the bar uses now.
 - With nothing selected it shows the widget library. A click there adds to `BarManager.lastZone`, the section last selected or added to.

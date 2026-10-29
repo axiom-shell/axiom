@@ -451,4 +451,8 @@ QtObject {
       };
     }).filter(t => t !== null);
   }
+  // What the bar editor's library offers: the widget types, the custom
+  // widgets one by one (keyed "CustomWidget:<id>",
+  // CustomWidgetsConfig.splitKey) rather than the CustomWidget type
+  readonly property var libraryWidgetTypes: availableWidgetTypes.filter(t => t.type !== "CustomWidget").concat(CustomWidgetsConfig.libraryEntries(availableWidgetTypes.find(t => t.type === "CustomWidget") ?? null))
 }

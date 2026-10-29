@@ -35,9 +35,11 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `KeyHint`: a keycap and what it does (`[↵] open`), for a controls hint.
 - `content/parts/KeyCap` (a key, optionally with an icon), `ModifierCap` (a combo's modifiers in one cap, as glyphs or words), `KeyCluster` (a folded direction set, H J K L): keycaps for binds. `KeybindSection` / `KeybindRow` draw the keybinds reference (the Keybinds page and the Cheatsheet); `compact` follows `KeybindManager.page.refDensity`; a modifier group folds (`KeybindManager.page.refFolded`). `KeyboardMap`: a US keyboard (`methods/KeyMap`) whose keys are coloured, labelled and clicked through hooks (the editor's key map); `KeyboardReference`: the reference drawn on it, under picked modifiers.
 - `StyledSeparator`: border-coloured divider (accent where a divider is accent by design).
+- `SeparatorMark`: a line, dot, slash or chevron divider (the Separator widget's, the bar's `separatorStyle` and a custom widget's Separator element).
 - `StatusChip` (filled status pill), `CountBadge` (a count on a button's or icon's corner; bumps when it changes), `UnsavedDot` (`onAccent` on a selected row).
   - All three are `PopInRectangle`s: set `shown` (not `visible`) and they pop in and out; `pulse()` for a bump.
 - `IssueList`: `[{ level, text }]`, errors red, warnings amber.
+- `IssueIcon`: one problem's icon in those colors (`level`, `tone`), saying what's wrong in a tooltip on hover (`tip`). Every warning or error icon shown without its text beside it is one (a bind row, a bind section, the onboarding's binds table, the keybinds reference).
 - `DropdownSurface`: the box of anything that drops down.
 - `TileFlow`: equal tiles, as many columns as fit.
 - `TypeLibrary`: the editors' libraries of types to add.
@@ -52,7 +54,10 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
 - `StyledSlider`: trough, fill and handle; `moved` while dragged, `released` at the end; a value pushed in animates.
 - `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll); `surfaces/osd/PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).
-- `PercentageCircle`: a ring gauge with an icon in the middle.
+- `PercentageCircle`: a ring gauge with an icon in the middle; `sweep` below 360 opens it at the bottom (a gauge).
+- `LevelMeter`: a level shown, not set: `StyledSlider`'s trough and fill without the handle, across or filling up (`vertical`).
+- `SegmentMeter`: a level as blocks or dots lit up to `share`, in a row or a column filling up.
+  - Both are drawn by the custom bar widget's styles and a custom widget's elements; a bar sets their sizes from its font.
 - `SegmentButton`: a choice, accent when `active`; `Layout.fillWidth: false` in a row of pills.
 - `SegmentRow`: a single choice of SegmentButtons on one track, the accent sliding to the active one. Toggles and multi-select chips stay plain rows or Flows.
 - `StyledTabBar` (of `StyledTabButton`s): its current tab's highlight slides between tabs.
@@ -90,9 +95,8 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
 
 ### Bar pieces (`bar/`)
-- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar); `steadyDigits` sizes a ticking label by its digit count.
+- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); `steadyDigits` sizes a ticking label by its digit count.
 - `WidgetBackground`: a widget's or merged run's background in the bar's widget style and shape, with the hover outline and editor highlight.
-- `SeparatorMark`: a line, dot, slash or chevron divider (the Separator widget's and the bar's `separatorStyle`).
 - `methods/BarShapes` (caps and SVG outlines), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
 
 ### Workspace pieces

@@ -54,12 +54,14 @@ Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement
     - With a tile's `resizePlan` it gives `previewPlaces` / `landingPlace` / `landingValid`.
   - **`EntryListTarget`s** (`"list"`): `takes(drag)`, `indexAt`, `dropRequested`, which reorder their own rows. Each row is an `EntryListRow` carrying its list's `moveKind`.
 - A `TrashTarget` at the bottom of the canvas shows while a module is carried. Dropped there, it goes, with its group (required ones stay).
+- For a grid of something other than overlay modules (a custom widget's elements, `views/CustomWidgets/ElementEditorLayout`), three hooks name what it holds: `describe(type)` → `{ icon, label }`, `sizeLabel(w, h)` (a tile's size while resized; cards by default) and `countLabel(n)` (the canvas's count and a carried group; modules by default).
 
 ### GridEditor (`services/ui/GridEditor`, non-singleton)
 The canvas pieces name no service: they edit through `dragLayer.editor`.
 - Holds one grid of modules and its `selected` index.
 - Edits: `addModule` / `moveModule` / `resizeModule` / `duplicateModule` / `removeModule` / `updateModuleProperty`.
 - Checks: `canAdd` / `canMove` / `canResize`, and `problemsFor(modules, name, area)`.
+- `factory` (`{ make(type, place), size(type) }`, null for overlay modules) makes and sizes the entries of another kind of grid (a custom widget's elements); a library key `CustomWidget:<id>` adds that custom widget's module (`CustomWidgetsConfig.splitKey`).
 
 ### Plans
 - Drops, moves and resizes are first a plan: `planAdd` / `planMove` / `planResize` → `{ kind, index, type, place, places, valid, noop }`, made by `applyPlan`.

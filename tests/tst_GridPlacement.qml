@@ -545,12 +545,25 @@ TestCase {
   function test_overlayLayout() {
     // cardSpacing 20: two cards high is two cards and a gap
     const ultrawide = GridPlacement.overlayLayout(1199, 630, 1);
-    compare([ultrawide.drawn, ultrawide.unit, ultrawide.zoom], [590, 590, 1], "1440p ultrawide with a bar: two cards fill the height");
+    compare([ultrawide.drawn, ultrawide.unit, ultrawide.zoom], [589, 589, 1], "1440p ultrawide with a bar: two cards fill the height, never a pixel over");
     const fhd = GridPlacement.overlayLayout(870, 450, 1);
     compare([fhd.drawn, fhd.unit, fhd.zoom], [425, 425, 1], "1080p: smaller cards, content at its own size");
     compare(GridPlacement.overlayLayout(2000, 450, 1).drawn, 450, "room to spare: the card size");
     const bigger = GridPlacement.overlayLayout(1199, 756, 1.2);
-    compare([bigger.drawn, bigger.unit, bigger.zoom], [588, 490, 1.2], "a bigger Module size zooms the content, its gap too");
+    compare([bigger.drawn, bigger.unit, bigger.zoom], [587, 489, 1.2], "a bigger Module size zooms the content, its gap too");
+    // At the defaults a page two cards high, coarse or double grid, fits
+    // unshrunk wherever the height limits the cards
+    [[1207, 630, 1], [1191, 630, 1], [1199, 756, 1.2], [871, 450, 1]].forEach(([height, card, zoom]) => {
+      const layout = GridPlacement.overlayLayout(height, card, zoom);
+      compare(GridPlacement.fitScale({
+        "cols": 8,
+        "rows": 8
+      }, 4000, height / zoom, layout.unit), 1, `${height} px, coarse`);
+      compare(GridPlacement.fitScale({
+        "cols": 16,
+        "rows": 16
+      }, 4000, height / zoom, GridPlacement.fineUnit(layout.unit)), 1, `${height} px, double grid`);
+    });
     compare(GridPlacement.overlayLayout(1, 1, 1).drawn, 1, "never nothing");
   }
 

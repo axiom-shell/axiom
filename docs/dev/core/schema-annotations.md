@@ -71,7 +71,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-options`: a dynamic option list.
   - `"colors"`: a picker over `base00`–`base0F`, read with `Theme.resolveColor` (which also takes semantic names and hex).
   - `"screens"`: a monitor. Empty means the primary monitor, resolved by `General.screensNamed` (bars in `BarsConfig.expandBars`, docks, edge menus). Docks and OSDs pick all monitors through `monitors` instead.
-  - Others: `"languages"`, `"edgeMenus"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"calendars"`, `"chatProviders"`, `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
+  - Others: `"languages"`, `"edgeMenus"`, `"customWidgets"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"calendars"`, `"chatProviders"`, `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
 - `x-emptyLabel`: offers or renames the empty value under that label.
   - On a color: automatic (a bar's `widgetTextColor`).
   - A color without it lists its `default` first, labelled as the default, so an override can be undone.
@@ -91,7 +91,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `x-unit` (`px`, `%`, `ms`, …) is shown after the value.
 - `x-auto: { value, start }`: a switch in front of an integer whose `value` means automatic. Turning it on stores `start`, then the number shows (an edge menu's `padding`, `triggerLength`).
 
-### Types (bar widgets, overlay modules, views)
+### Types (bar widgets, overlay modules, views, custom widget elements)
 - `x-icon`: a Material Symbols name on bar widget, overlay module and view definitions.
 - On overlay modules:
   - `x-defaultSize` (`[w, h]` in grid units, four to a card): the size it's added at.
@@ -100,6 +100,11 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `x-keyboard: true`: the module takes typing. The desktop, which otherwise never takes the keyboard, takes it on a click while its layout shows one (`OverlayConfig.moduleInfo(type).keyboard`, `ScreenLayoutView.wantsKeyboard`). Needed for a typing module on the desktop: `check_structure` fails a desktop module with a text field (in its file or its content parts) and no `x-keyboard`. `false` says it stays read-only there on purpose (ClockCalendar).
   - `x-required`: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
   - `x-canvasDetail`: a module property the layouts editor shows on its tile (a list joined). `x-canvasFill`: a color property the tile is filled with (`OverlayConfig`).
+- On custom widget elements (`CustomElement`, `components/content/parts/custom/elements/<Type>/schema.yaml`; `CustomWidgetsConfig.elementKinds`):
+  - `x-defaultSize` (`[w, h]` in sub-cells, four to a grid unit): the size it's added at.
+  - `x-slots`: its bindings, in order (keys of its `bind`), each a row of the inspector's Shows.
+  - `x-actions`: the commands it runs, in order (keys of its `actions`), each a row of the inspector's Runs.
+  - Its `options` are its look, a form of its own; `color: state` or `color: text` adds the colour (`CustomElementBase.yaml`'s parts: Auto takes the state's colour on graphics, a switch asks for it on text).
 - `x-tool: true` on the hand-built view types: the navigator's tool group.
 - `x-needs: "<capability>"` on a view type: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
 - `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`): a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).

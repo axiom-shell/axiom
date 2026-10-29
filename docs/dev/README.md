@@ -82,7 +82,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [content-roots](overlay/content-roots.md): `content/<Name>/<Name>.qml`, `Card` / `Panel` roots, what hosts pass in.
 - [writing-modules](overlay/writing-modules.md): any-size modules, shared parts, data sources, Repeater models, safe live testing.
 - [grow-expand](overlay/grow-expand.md): modules growing rows and expanding over the grid.
-- [utility-modules](overlay/utility-modules.md): Calculator, Clipboard, Emoji, WorldClocks, CommandOutput, Cheatsheet.
+- [utility-modules](overlay/utility-modules.md): Calculator, Clipboard, Emoji, WorldClocks, Cheatsheet (a command's output is a [custom widget](features/custom-widgets.md)).
 - [layouts-editor](overlay/layouts-editor.md): the Layouts page and its edit targets (pages, menus, desktop, lock screen, greeter).
 - [grid-canvas](overlay/grid-canvas.md): `GridCanvas`, `GridDragLayer`, `GridEditor` plans and undo.
 
@@ -120,6 +120,7 @@ Dependencies point one way, methods → data owners → readers → services →
 - [blur-window-openings](theming/blur-window-openings.md): the shared blur backing window, shadows in it, strokes opened at joins.
 
 ### features/
+- [custom-widgets](features/custom-widgets.md): Waybar-style scripts as bar widgets, popouts and modules; definitions, fields, running.
 - [launcher](features/launcher.md): rows, placement, routing, `/` commands, `/config`, IPC.
 - [launcher-providers](features/launcher-providers.md): calculator, clipboard history, emoji.
 - [lockscreen](features/lockscreen.md): lock modes, the module layout, password, editing and preview.

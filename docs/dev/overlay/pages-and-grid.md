@@ -10,7 +10,7 @@ How the overlay turns `Overlay.items` into pages, and a page's modules into a gr
 - `Overlay.items` in the schema drives the overlay's pages, just as `Bars` drives the bar.
 - A Custom view is a grid of modules, each with a `place` `{ x, y, w, h }` in **grid units, four to a card** (a quarter card each).
 - With `grid.fine` ("Double grid") there are eight units to a card:
-  - `Custom.qml` lays the page out at `OverlayConfig.pageUnit`, `GridPlacement.fineUnit`: two of its units and their gap span one card unit exactly.
+  - `Custom.qml` lays the page out at `OverlayConfig.pageUnit`, `GridPlacement.fineUnit`: two of its units and their gap span one card unit (rounded down, never over).
   - `OverlayManager.fitOf` and the onboarding fit use it too.
   - Toggling it rescales the places (`GridPlacement.scalePlace`), as for edge menus and screen layouts.
 - Everything loads by naming convention, so there are no lookup tables.
@@ -20,7 +20,7 @@ How the overlay turns `Overlay.items` into pages, and a page's modules into a gr
 - `components/views/<type>/<type>.qml`, a `BaseView` that receives the screen's `grid` and its `viewConfig`.
 - `BaseView` gives hand-built pages their sizes: `pageHeight` (two cards), `cardPageWidth`, `sideWidth`.
 - `Custom` (`views/Custom/Custom.qml`) is one `ModuleGrid` of its `modules`, with its own `icon` in the navigator (`OverlayConfig.pageIcon`; empty is the type's).
-- Tool pages (`x-tool`), hand-built with their pieces in `views/<page>/`: `Settings`, `BarEditor`, `Themes`, `Keybinds`, `Monitors`, `CalendarPage`.
+- Tool pages (`x-tool`), hand-built with their pieces in `views/<page>/`: `Settings`, `BarEditor`, `Themes`, `Keybinds`, `Monitors`, `CalendarPage`, `CustomWidgets`.
   - `CalendarPage`: the month with its events, the selected day's `DayPane`, and the calendars to switch on and off. It is not named `Calendar`, which `views/Themes`' import of `content/` would see twice.
   - The Themes page is described in [Themes](../theming/themes.md).
 - `Layouts` (the layouts editor, `views/Layouts/`) is pinned, not in config: see [Layouts editor](layouts-editor.md).
@@ -65,9 +65,9 @@ Pure, tested by `tst_GridPlacement`.
 ### Sizing (per screen)
 Cards follow the screen; text and controls don't. A monitor's cards are its card size (`OverlayConfig.cardUnitOn`: two cards fill its short side less `GridPlacement.screenMargin` each side, `GridPlacement.baseCard`, times `Widget.cardSize`%), the same turned either way and on every surface. Content lays out at the card's real size, so text is the Interface scale's (`Widget.scale`) on every monitor; only a Module size zooms it.
 - Each `OverlayPanel` has an `OverlayGrid` (`hosts/overlay/`) on the page area beside the navigator (`OverlayConfig.navigatorRoom`), less a `cardSpacing` margin and the box's padding (`OverlayConfig.boxPadding`, at the Interface scale, not zoomed) on each side (`OverlayConfig.layoutFor`, `GridPlacement.overlayLayout`, tested in `tst_GridPlacement`):
-  - `drawnUnit`: the card size on its screen times `Overlay.moduleScale`%, at most what lets a page two cards high (two cards and a gap) fill the height.
+  - `drawnUnit`: the card size on its screen times `Overlay.moduleScale`%, at most what lets a page two cards high (two cards and a gap) fill the height, rounded down so such a page fits exactly instead of being shrunk by a hair.
   - `zoom`: `Overlay.moduleScale` as a factor (`GridPlacement.zoomOf`: 1 within 2 %, so content isn't resampled for nothing).
-  - `unit`: the card size content lays out at, `drawnUnit / zoom`. Bigger text (the Interface scale) fits less in each card.
+  - `unit`: the card size content lays out at, `drawnUnit / zoom` (rounded down). Bigger text (the Interface scale) fits less in each card.
   - `roomWidth` / `roomHeight`: the room in layout px, what views size against (`BaseView.editorWidth`).
 - Views receive it as `grid` (`BaseView`) and size everything from `grid.unit` / `grid.span(n)` / `grid.sizes(bounds, stretch)`, passing plain numbers down to content. Text and widget sizes stay the shell's px tokens; the zoom scales them with the cards.
 - `OverlayPages` draws the current page at `contentZoom` (`zoom × fitScale`, Item.scale on the views' container); its box is sized in drawn px, so its border and radius stay crisp.
@@ -92,7 +92,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
   - Timing: each page logs `Overlay page N built in X ms` and a streamed grid `Overlay modules streamed in X ms` (`--debug`); `scripts/dev/bench_overlay.sh` prints them per step ([streamed-building › Measuring](../core/streamed-building.md)).
 - Page order (`OverlayPages.buildViewsModel`; `viewsModel[i].index` is the view's place in config):
   1. the user's own (Custom) pages, in config order;
-  2. the tool pages (view types with `x-tool`: Settings, BarEditor, Themes, Keybinds, Monitors, CalendarPage), in config order;
+  2. the tool pages (view types with `x-tool`: Settings, BarEditor, Themes, Keybinds, Monitors, CalendarPage, CustomWidgets), in config order;
   3. the pinned Layouts page.
 - A view with `visible: false` stays in config but isn't shown.
 
@@ -102,4 +102,4 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
 - Tool tabs follow a divider as icons only (named in a tooltip), even when current.
 - `Overlay.navigatorLabels`: `auto` drops the other tabs to icons when all names don't fit; `current` names only the current tab; `icons` names none.
 - **Links and the way back.** A link to another page (`SettingsLink`, a settings header link, the layouts editor's "Also opened by" rows, Edit in Layouts) goes through `ShellManager.followLink(type)`. `OverlayPages` keeps the page it left as `ShellManager.linkOrigin`, and the navigator shows a back chip (back arrow and that page's icon) before its arrows until the user navigates themselves (`step`, a tab), another switch comes from outside, or the overlay closes. The chip calls `ShellManager.followLinkBack()`. A link within the same page keeps the way back it already has.
-- **Scroll memory.** Pages are unloaded while the overlay is closed, so their panels keep where they were scrolled to in `EditsManager` (`TitledCard.scrollKey`, `reusable/ScrollMemory`): the settings categories and sidebar, Themes, Keybinds' list and key map, the bar editor and its widget inspector (per widget), Layouts and its module inspector (per module), Monitors and its inspector.
+- **Scroll memory.** Pages are unloaded while the overlay is closed, so their panels keep where they were scrolled to in `EditsManager` (`TitledCard.scrollKey`, `reusable/ScrollMemory`): the settings categories and sidebar, Themes, Keybinds' list and key map, the bar editor and its widget inspector (per widget), Layouts and its module inspector (per module), Monitors and its inspector. A Notes module keeps each note's place the same way (by its path, [notes](../features/notes.md) › Scrolling).
