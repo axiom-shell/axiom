@@ -3350,6 +3350,7 @@
     "Turning it off": "",
     "On change": "",
     "{value} is the new value.": "",
-    "Turning it on": ""
+    "Turning it on": "",
+    "Its script keeps running while the screen is locked, and what it prints shows to anyone at the screen: offer only what's fine to show. Its clicks and commands never run there.": ""
   }
 }

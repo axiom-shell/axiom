@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 // One element of a custom widget's module, loaded by its kind
-// (elements/<Type>/<Type>.qml, each a CustomElementBase).
+// (elements/<Type>/Custom<Type>.qml, each a CustomElementBase).
 Loader {
   id: root
 
@@ -18,7 +18,7 @@ Loader {
   // Built with its config, so it never sees itself empty; the Bindings
   // below keep it current
   function _load() {
-    root.setSource(Qt.resolvedUrl("elements/" + root.kind + "/" + root.kind + ".qml"), {
+    root.setSource(Qt.resolvedUrl("elements/" + root.kind + "/Custom" + root.kind + ".qml"), {
       "element": root.element,
       "fields": root.fields,
       "history": root.history,

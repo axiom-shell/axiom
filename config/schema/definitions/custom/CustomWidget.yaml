@@ -95,7 +95,11 @@ properties:
         minItems: 2
         maxItems: 2
         items: {type: integer, minimum: 1, maximum: 8}
-      lockscreen: {type: boolean, title: Offer on the lock screen, default: false}
+      lockscreen:
+        type: boolean
+        title: Offer on the lock screen
+        default: false
+        description: "Its script keeps running while the screen is locked, and what it prints shows to anyone at the screen: offer only what's fine to show. Its clicks and commands never run there."
       elements:
         type: array
         default: []

@@ -210,8 +210,8 @@ Item {
       shownStart: segment.shownStart
       hovered: host?.outlined ?? false
       pressed: host?.pressed ?? false
-      fillShare: host?.fillShare ?? -1
-      fillShareColor: host?.fillShareColor ?? "transparent"
+      backgroundLevel: host?.backgroundLevel ?? -1
+      backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
       highlighted: host?.highlighted ?? false
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)

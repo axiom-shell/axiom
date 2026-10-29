@@ -1,13 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick as QQ
 import Quickshell.Widgets
 import qs.config
 import qs.components.content.parts.custom
 
 // A custom widget's Image element: a path or URL (the widget's image field
 // by default), cropped or fitted to its box with rounded corners, or a
-// circle. `QQ.` because this file's own name is Image.
+// circle.
 CustomElementBase {
   id: root
 
@@ -21,10 +20,10 @@ CustomElementBase {
     radius: root.options.round ? width / 2 : Widget.radius
     color: Theme.backgroundHighlight
 
-    QQ.Image {
+    Image {
       anchors.fill: parent
       source: root.source
-      fillMode: root.options.fit === "fit" ? QQ.Image.PreserveAspectFit : QQ.Image.PreserveAspectCrop
+      fillMode: root.options.fit === "fit" ? Image.PreserveAspectFit : Image.PreserveAspectCrop
       asynchronous: true
       cache: false
       sourceSize.width: width

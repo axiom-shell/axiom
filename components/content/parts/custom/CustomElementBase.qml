@@ -5,7 +5,7 @@ import qs.components.methods
 import qs.services.apps
 
 // What every custom widget element is given (CustomElement loads one by its
-// kind, elements/<Type>/<Type>.qml): its config, the widget's resolved
+// kind, elements/<Type>/Custom<Type>.qml): its config, the widget's resolved
 // fields and history, and helpers reading its bindings. Bindings: a field
 // name, a path in the sample or a format (CustomWidgetData.elementValue);
 // an empty one falls back to the widget's own field. Its options are its

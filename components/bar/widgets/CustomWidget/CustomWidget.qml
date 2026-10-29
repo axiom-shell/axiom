@@ -104,8 +104,8 @@ BarIconWidget {
 
   // The pill: its background's shape filled to the value (WidgetGroup
   // draws it, so it takes the bar's caps and radius)
-  fillShare: root.style === "pill" && !root.hidden && root.fields !== null ? root.ratio : -1
-  fillShareColor: Qt.alpha(root.graphicColor, 0.35)
+  backgroundLevel: root.style === "pill" && !root.hidden && root.fields !== null ? root.ratio : -1
+  backgroundLevelColor: Qt.alpha(root.graphicColor, 0.35)
 
   // The graphic styles, in the lead slot: only the shown one is built.
   // Sizes from the bar's font, as a bar's pieces are

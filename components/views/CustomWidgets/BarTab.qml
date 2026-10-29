@@ -141,8 +141,8 @@ ColumnLayout {
         startCap: preview.segment.startCap
         endCap: preview.segment.endCap
         shownStart: preview.segment.shownStart
-        fillShare: preview.item.fillShare
-        fillShareColor: preview.item.fillShareColor
+        backgroundLevel: preview.item.backgroundLevel
+        backgroundLevelColor: preview.item.backgroundLevelColor
       }
     }
 

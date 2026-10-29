@@ -43,13 +43,15 @@ from qml_modules import qml_files
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMA = ROOT / "config" / "json" / "config.schema.json"
 
-# (schema oneOf definition, root its types load from): a type is a folder
-# <root>/<Type>/ with <Type>.qml (docs/dev/core/config-v2.md, rule 11)
+# (schema oneOf definition, root its types load from, file prefix): a type
+# is a folder <root>/<Type>/ with <prefix><Type>.qml (docs/dev/core/config-v2.md,
+# rule 11). Custom widget elements are Custom<Type>.qml, so an element
+# named after a Qt type (Text, Image, List) never shadows it
 LOADERS = [
-    ("BarWidget", "components/bar/widgets"),
-    ("OverlayView", "components/views"),
-    ("OverlayModule", "components/content"),
-    ("CustomElement", "components/content/parts/custom/elements"),
+    ("BarWidget", "components/bar/widgets", ""),
+    ("OverlayView", "components/views", ""),
+    ("OverlayModule", "components/content", ""),
+    ("CustomElement", "components/content/parts/custom/elements", "Custom"),
 ]
 # Bar popouts load content/<popoutName>/<popoutName>.qml, from the same root
 # as overlay modules (a content type can be both)
@@ -99,21 +101,21 @@ def main():
     # Schema types -> folders. A root holds only type folders (and the
     # shared ones); a folder whose files use each other is imported
     # somewhere, so qs scans it for the one loaded by URL
-    for definition, directory in LOADERS:
+    for definition, directory, prefix in LOADERS:
         types = schema_types(schema, definition)
         for t in types:
-            if not (ROOT / directory / t / f"{t}.qml").exists():
-                errors.append(f"{definition} type '{t}' has no {directory}/{t}/{t}.qml")
+            if not (ROOT / directory / t / f"{prefix}{t}.qml").exists():
+                errors.append(f"{definition} type '{t}' has no {directory}/{t}/{prefix}{t}.qml")
         for f in sorted((ROOT / directory).glob("*.qml")):
             errors.append(f"{rel(f)}: a root holds only type folders: move it to {directory}/{f.stem}/ (or base/)")
         for d in sorted(p for p in (ROOT / directory).iterdir() if p.is_dir()):
             if d.name in SHARED_FOLDERS:
                 continue
-            if not (d / f"{d.name}.qml").exists():
-                errors.append(f"{rel(d)}/: a type folder without {d.name}.qml")
+            if not (d / f"{prefix}{d.name}.qml").exists():
+                errors.append(f"{rel(d)}/: a type folder without {prefix}{d.name}.qml")
             if directory == POPOUT_DIR:
                 continue  # content: checked below, with popout names
-            if d.name not in types and not used_as_type(d.name, f"{rel(d)}/{d.name}.qml"):
+            if d.name not in types and not used_as_type(d.name, f"{rel(d)}/{prefix}{d.name}.qml"):
                 warnings.append(f"{rel(d)}/: not a {definition} type and not used anywhere")
 
     # qs scans a module folder only when the import graph from shell.qml
@@ -132,7 +134,7 @@ def main():
         for f in (ROOT / Path(*module.split(".")[1:])).glob("*.qml"):
             todo |= imports_of(sources.get(rel(f), "")) - scanned
     unreached = {}
-    for _, directory in LOADERS:
+    for _, directory, _ in LOADERS:
         for f in sorted((ROOT / directory).rglob("*.qml")):
             own = "qs." + rel(f.parent).replace("/", ".")
             needed = imports_of(sources[rel(f)])

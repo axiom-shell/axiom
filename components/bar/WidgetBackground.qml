@@ -33,9 +33,9 @@ Item {
   // The bar editor's selected widget
   property bool highlighted: false
   // A level (0-1) filled in its shape along the bar, up a vertical one
-  // (the module's `fillShare`); -1 for none
-  property real fillShare: -1
-  property color fillShareColor: "transparent"
+  // (the module's `backgroundLevel`); -1 for none
+  property real backgroundLevel: -1
+  property color backgroundLevelColor: "transparent"
 
   readonly property string _fill: barConfig.widgetStyle
   readonly property bool _boxed: ["filled", "tinted", "outline"].includes(_fill)
@@ -145,12 +145,12 @@ Item {
   // takes the background's own end unless that's flat.
   ShapedBox {
     id: level
-    readonly property real share: Math.max(0, Math.min(1, root.fillShare))
+    readonly property real share: Math.max(0, Math.min(1, root.backgroundLevel))
     readonly property string edgeCap: root.barConfig.widgetShape === "capsule" ? "capsule" : "round"
     // The background's cap at the far end, where a full level ends
     readonly property string farCap: level.vertical ? root.startCap : root.endCap
 
-    visible: root.fillShare >= 0 && level.share > 0
+    visible: root.backgroundLevel >= 0 && level.share > 0
     anchors.fill: undefined
     x: 0
     y: level.vertical ? root.height - height : 0
@@ -161,7 +161,7 @@ Item {
     endCap: level.vertical ? root.endCap : (level.share >= 1 && level.farCap !== "flat" ? level.farCap : level.edgeCap)
     seamStart: !level.vertical && root.seamStart
     seamEnd: level.vertical && root.seamEnd
-    fillColor: root.fillShareColor
+    fillColor: root.backgroundLevelColor
 
     Glide on width {
       duration: Appearance.animNormal

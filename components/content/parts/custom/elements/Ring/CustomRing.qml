@@ -4,7 +4,8 @@ import qs.config
 import qs.components.reusable
 import qs.components.content.parts.custom
 
-// A custom widget's Ring element (and, with `gauge`, the Gauge's): the
+// A custom widget's Ring element (and, with `gauge`, the Gauge's:
+// CustomGauge): the
 // value between min and max as a ring (a gauge opens at the bottom), a
 // label inside: the percentage, the value with the output's unit, or an
 // icon.
