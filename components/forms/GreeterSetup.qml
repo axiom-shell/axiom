@@ -164,8 +164,10 @@ ColumnLayout {
     }
   }
 
+  // Once the check after it agrees (an update the check still finds
+  // behind says why above instead)
   StyledText {
-    visible: GreeterManager.phase === "done"
+    visible: GreeterManager.phase === "done" && (GreeterManager.action === "uninstall" ? root.report?.installed === false : root.status === "installed")
     text: GreeterManager.action === "install" ? I18n.tr("The login screen is installed.") : GreeterManager.action === "update" ? I18n.tr("The login screen is up to date.") : I18n.tr("The login screen is removed.")
     textColor: Theme.success
     wrapMode: Text.WordWrap
