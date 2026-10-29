@@ -4,7 +4,8 @@ import Quickshell
 
 /**
  * Resolves icon names for window classes: desktop entries first, then known
- * substitutions, then name variants that exist in the icon theme.
+ * substitutions, then name variants that exist in the icon theme. Turns an
+ * app's icon name into a source only the theme holds (`appIcon`).
  * Substitution tables adapted from end-4's dots-hyprland.
  */
 Singleton {
