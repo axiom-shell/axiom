@@ -133,6 +133,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs row 14's re-exec fix, with axiom in dev mode, save a Go file while a note is being saved or the theme applied, and check `scripts/log.sh` shows no `the connection to axiom closed` from `[FileManager]`, `ThemeManager` or `MediaManager`, and `axiom daemon logs` no `checkupdates failed (-1)`.
 - Once axiom runs a build with Phase 10 (row 17), set up 5–10 popular Waybar custom scripts (`~/waybar-test-scripts`: media, updates, weather, crypto, VPN, …) from the Custom widgets page alone, through the Import from Waybar box or the presets, and check each runs unchanged on a bar and as a module, under niri, sway and Hyprland (Phase 10's "done when").
 - Once axiom runs a binary built with row 15 (stage 8), pick a file from Settings (a wallpaper or a path setting) under each compositor and check the portal's picker opens and its choice lands, then with the portal stopped check zenity or kdialog opens instead; and run `axiom bug-info` under Hyprland, niri and sway and check its Compositor and monitor lines.
+- Once the shell runs the lock-survives-reload fix, let the idle lock come up, save a loaded QML file, then unlock with the password: the lock screen stays up throughout, `scripts/log.sh --all` shows no `Session lock object was destroyed without unlocking`, and the next save after unlocking reloads. Nested niri, sway and Hyprland showed it with a test unlock hook; the real idle lock and PAM only the live session can.
 - Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
 
 ### Phase 0: decisions and quick wins
@@ -307,6 +308,9 @@ Found while closing the config path (backend stage 7):
 Found while adding niri's own overview (row 16):
 - [An open-only workspace overview bind calls a function that doesn't exist](issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
 
+Found while fixing the lock screen surviving a reload:
+- [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
+
 Found by the audits:
 
 ### Phase 12: memory footprint
@@ -366,7 +370,6 @@ Accepted by the maintainer (2026-10-28, #163): the hand-fix gap with no takeover
 
 Deferred by the maintainer (2026-10-29, Phase 6's niri entries: "defer all six niri items and continue"):
 - [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)
-- [A hot reload while locked leaves niri's red screen](issues.md#a-hot-reload-while-locked-leaves-niris-red-screen)
 - [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)
 - [niri reports no position for a tiled window, nor other apps' layers](issues.md#niri-reports-no-position-for-a-tiled-window-nor-other-apps-layers)
 - [Shift+Enter on an emoji doesn't type it on niri](issues.md#shiftenter-on-an-emoji-doesnt-type-it-on-niri)

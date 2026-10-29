@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 
 import qs.config
 import qs.components.methods
@@ -590,7 +589,7 @@ QtObject {
       aliases: [],
       glyph: "refresh",
       description: () => I18n.tr("Reload the shell"),
-      run: () => Quickshell.reload(false)
+      run: () => LockManager.reload()
     },
     // --- Other searches ---
     root._prefix("calc", ["math"], "calculate", "Calculate (or start with =)", "=", () => LauncherConfig.calculator), root._prefix("run", ["exec", "sh"], "terminal", "Run a shell command (or start with >)", ">", () => LauncherConfig.runCommands), root._prefix("web", ["search"], "web", "Search the web (or start with ?)", "?", () => LauncherConfig.webSearch), root._prefix("clipboard", ["clip", "paste"], "content_paste", "Search the clipboard history (or start with :)", ":", () => LauncherConfig.clipboard), root._prefix("emoji", ["emojis", "emoticon"], "mood", "Search emoji (or start with ;)", ";", () => LauncherConfig.emoji), root._prefix("help", ["commands"], "help", "List every command", "/", () => true)]
