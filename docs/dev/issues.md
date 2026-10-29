@@ -422,3 +422,45 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced.
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
+
+### No caps lock warning when typing a password
+- **Where:** `components/content/Password/Password.qml`, `components/surfaces/lockscreen/`, `components/surfaces/greeter/`
+- **What:** Neither the lock screen's nor the greeter's password field shows that Caps Lock is on (grep for caps lock in both finds nothing), so a password typed with it on just fails with no hint. Also open: where the state comes from (the compositor's keyboard LEDs, or the daemon reading the LED), and whether other password fields (Wi-Fi, polkit) show it too.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### Removable drives aren't handled
+- **Where:** `services/system/` (no service yet)
+- **What:** Nothing in services, components or the schema uses udisks: plugging in a USB stick or SD card gives no notification, no mount or eject, and no list of drives (the Disks module shows only mounted filesystems). Also open: automount or ask, the notification's actions, where the drive list lives (a bar widget, a popout, the Disks module), and running udisks through the daemon.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### No VPN controls
+- **Where:** `services/system/NetworkingManager.qml`, `components/content/Network/`
+- **What:** The Network popout and module have no VPN connections (no "vpn" or "wireguard" anywhere in services or the schema); only Tailscale has its own widget. A user's NetworkManager VPNs (WireGuard, OpenVPN) can't be seen or toggled. Also open: whether Quickshell's Networking exposes VPN connections or the daemon goes to NetworkManager, and where they show.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### Bluetooth pairing that asks for a PIN or a passkey
+- **Where:** `services/system/BluetoothManager.qml` (`_connectAfterPair`), `components/content/BluetoothDevices/`
+- **What:** Pairing trusts, pairs and connects, but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Also open: whether Quickshell's Bluetooth registers an agent, or the daemon does, and the prompt's surface.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### No OSD for caps lock or the keyboard layout
+- **Where:** `config/schema/definitions/common/OSDEntry.yaml` (bar kinds), `components/surfaces/osd/OSDTriggers.qml`, `services/system/KeyboardLayoutManager.qml`
+- **What:** The OSD's bars are only master, other, microphone, brightness and app: toggling Caps Lock or Num Lock, or switching the keyboard layout, shows nothing. These aren't levels, so they need a different OSD shape than a bar. Also open: the lock key state's source (shared with [No caps lock warning when typing a password](#no-caps-lock-warning-when-typing-a-password)).
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### No keyboard backlight control
+- **Where:** `services/system/BrightnessManager.qml`
+- **What:** Laptops' keyboard backlights (`kbd_backlight` LEDs) have no slider, OSD bar or keys: nothing in services reads them. Also open: whether `BrightnessManager` takes them as another device, the OSD bar kind, and writing the LED through the daemon.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once
+
+### Enterprise and WEP Wi-Fi can't be joined
+- **Where:** `services/system/NetworkingManager.qml` (`toggle`'s `unsupported`)
+- **What:** The Network menu only takes a PSK: an enterprise (EAP: eduroam, work networks) or WEP network fails with `unsupported`, so users at a university or office have to use nmtui or nm-connection-editor. Also open: which EAP methods to offer (PEAP/TTLS with a username and password at least), certificates, and the secrets going through `SecretsManager`.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while listing small gaps users notice at once

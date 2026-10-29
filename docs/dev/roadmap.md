@@ -388,3 +388,12 @@ Deferred by the maintainer (2026-10-29, plan #197: "defer"):
 
 Deferred by the maintainer (2026-10-29: "move what is necessary to deferred"; Quickshell's to fix, #202):
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
+
+Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log everything except notif sound … Build them into roadmap in the correct spot but deferred and issues (all should need a plan)"; Phase 13 features, each through [Items that need a plan](#items-that-need-a-plan) once taken up; notification sounds are the maintainer's own system sounds plan):
+- [No caps lock warning when typing a password](issues.md#no-caps-lock-warning-when-typing-a-password)
+- [Removable drives aren't handled](issues.md#removable-drives-arent-handled)
+- [No VPN controls](issues.md#no-vpn-controls)
+- [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
+- [No OSD for caps lock or the keyboard layout](issues.md#no-osd-for-caps-lock-or-the-keyboard-layout)
+- [No keyboard backlight control](issues.md#no-keyboard-backlight-control)
+- [Enterprise and WEP Wi-Fi can't be joined](issues.md#enterprise-and-wep-wi-fi-cant-be-joined)
