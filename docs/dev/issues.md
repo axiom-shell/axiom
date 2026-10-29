@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while adding niri's own overview (row 16)
 
+### axiom has no hot corners of its own
+- **Where:** `backend/internal/compositor/render/niri.go`, `backend/internal/compositor/manager/niri.go`
+- **What:** The maintainer (2026-10-29): "note in issues/roadmap that hot corners should be implemented (which would cause niris to work the same way (i.e. only exits if axiom sets it in managed mode (which also wouldn't even use niris corner)". Hot corners become an axiom feature drawn by the shell, so they work on every compositor; in managed mode on niri, niri's own hot corner is turned off and a corner exists only when axiom sets one, matching managed binds ("Binds are exactly representative of what there is"). Detached and included leave niri's corner alone, as they do its binds. Open: which actions a corner runs, per-monitor corners, a delay.
+- **Size:** needs a plan
+- **Found:** 2026-10-29, while adding niri's own overview (row 16)
+
 ### After a refused save, a draft's edits show unsaved but not live
 - **Where:** `services/core/ConfigDraft.qml` (`_refusals`), `services/ui/SettingsManager.qml` (`_clearPreviews`), `services/ui/BarManager.qml` (`applyChanges`)
 - **What:** When axiom refuses a save, `ConfigManager.saveRefused` makes the draft dirty again, but the editor's previews were cleared when it saved (the settings page's `draft.load()` → `_clearPreviews`; `BarManager` clears its preview once clean) and nothing sets them again: the running config shows the value read back while the editor shows the edits as unsaved, until the next edit previews them. Rare (a save axiom refuses), so left after the minimal fix (row 12).
