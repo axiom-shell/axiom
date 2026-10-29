@@ -204,7 +204,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
 
-- [Surfaces touch a dead screen after the outputs go away](issues.md#surfaces-touch-a-dead-screen-after-the-outputs-go-away)
 - [Text input warnings when the desktop takes the keyboard](issues.md#text-input-warnings-when-the-desktop-takes-the-keyboard)
 - [Qt text-input warnings under sway and niri](issues.md#qt-text-input-warnings-under-sway-and-niri)
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
@@ -350,3 +349,6 @@ Deferred by the maintainer (2026-10-29, Phase 6's niri entries: "defer all six n
 
 Deferred by the maintainer (2026-10-29: "defer hyprland default workspace"; needs their reproduction):
 - [Hyprland's default workspace doesn't highlight its first window](issues.md#hyprlands-default-workspace-doesnt-highlight-its-first-window)
+
+Deferred by the maintainer (2026-10-29, plan #197: "defer"):
+- [Surfaces touch a dead screen after the outputs go away](issues.md#surfaces-touch-a-dead-screen-after-the-outputs-go-away)
