@@ -388,10 +388,29 @@ Singleton {
         image: (e.image || "").startsWith("image://") ? "" : (e.image || "")
       }));
     root.entries = root._prune(entries);
+    root._dropMissingImages();
     // Usually empty here: the server only goes live after this, and then
     // re-emits each kept notification (see onNotification)
     for (const notif of server.trackedNotifications.values)
       root._adopt(notif);
+  }
+
+  // Forgets saved images no longer on disk (removed by hand), which would
+  // warn on every row built from them; the avatar falls back to the app icon
+  function _dropMissingImages() {
+    const pathOf = image => image.startsWith("file://") ? image.slice(7).split("?")[0] : "";
+    const paths = root.entries.map(e => pathOf(e.image)).filter(p => p !== "");
+    if (paths.length === 0)
+      return;
+    CommandManager.run(["sh", "-c", "for f; do [ -e \"$f\" ] || echo \"$f\"; done", "sh"].concat(paths), (code, out) => {
+      const gone = out.split("\n").filter(p => p !== "");
+      if (gone.length === 0)
+        return;
+      root.entries = root.entries.map(e => gone.includes(pathOf(e.image)) ? Object.assign({}, e, {
+          image: ""
+        }) : e);
+      root._save();
+    });
   }
 
   // Relinks a notification kept across a QML reload to its saved entry

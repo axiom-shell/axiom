@@ -198,7 +198,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
 
-- [A notification's avatar warns when its saved image is gone](issues.md#a-notifications-avatar-warns-when-its-saved-image-is-gone)
 - [Surfaces touch a dead screen after the outputs go away](issues.md#surfaces-touch-a-dead-screen-after-the-outputs-go-away)
 - [Missing app icons warn in the log](issues.md#missing-app-icons-warn-in-the-log)
 - [The lock screen's modules all warn they overlap](issues.md#the-lock-screens-modules-all-warn-they-overlap)
