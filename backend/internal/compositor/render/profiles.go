@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
 // Output is a connected output as the profile picker sees it: its
@@ -33,6 +35,32 @@ var pnpMake = regexp.MustCompile(`^PNP\(([^)]*)\)`)
 // one compositor matches under another
 func sameDescription(a, b string) bool {
 	return pnpMake.ReplaceAllString(trim(a), "$1") == pnpMake.ReplaceAllString(trim(b), "$1")
+}
+
+// spelled is rule with a "desc:" output in the running compositor's
+// spelling, as a profile saved under another may name a make its own way:
+// the description of the output it names among outputs, or, naming none,
+// with niri's PNP(XXX) make the bare code (only Hyprland, which gives the
+// bare code, writes a rule for a monitor not connected).
+func spelled(rule any, outputs []Output) any {
+	desc, ok := strings.CutPrefix(ruleOutput(rule), "desc:")
+	if !ok {
+		return rule
+	}
+	spelling := pnpMake.ReplaceAllString(trim(desc), "$1")
+	for _, o := range outputs {
+		if sameDescription(o.Description, desc) {
+			spelling = trim(o.Description)
+			break
+		}
+	}
+	if spelling == desc {
+		return rule
+	}
+	// a "desc:" output means rule is an object (get)
+	copied := jsonx.Clone(rule).(*jsonx.Object)
+	copied.Set("output", "desc:"+spelling)
+	return copied
 }
 
 // ruleOutput is a rule's output, "" when it has none.
@@ -91,7 +119,7 @@ func MatchProfile(profiles any, outputs []Output) int {
 // SavedRules is the matched profile's rules naming a connected output
 // (disabled ones too, so an output turned off stays off), or none when no
 // profile matches: what a compositor is told to apply for what's
-// connected.
+// connected, each output in its spelling (spelled).
 func SavedRules(profiles any, outputs []Output) []any {
 	index := MatchProfile(profiles, outputs)
 	if index < 0 {
@@ -100,7 +128,7 @@ func SavedRules(profiles any, outputs []Output) []any {
 	var out []any
 	for _, rule := range items(get(items(profiles)[index], "outputs")) {
 		if connected(ruleOutput(rule), outputs) {
-			out = append(out, rule)
+			out = append(out, spelled(rule, outputs))
 		}
 	}
 	return out
@@ -134,6 +162,7 @@ func HyprlandRules(profiles any, outputs []Output) []any {
 	seenOn := map[string][]string{}
 	for _, profile := range items(profiles) {
 		for _, rule := range items(get(profile, "outputs")) {
+			rule = spelled(rule, outputs)
 			output := ruleOutput(rule)
 			if output == "" || connected(output, covered) {
 				continue
