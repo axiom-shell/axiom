@@ -110,12 +110,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while handing exec's commands across a re-exec
 
-### Running it unattended's gate can't get `verify ok` on a committed branch
-- **Where:** `docs/dev/roadmap.md` (Running it unattended, step 5), `scripts/dev/verify.sh`
-- **What:** Step 5 tells the leader to run `scripts/dev/verify.sh` on the pushed branch and expect `verify ok`, but verify.sh checks changes since HEAD, so on a clean committed branch it prints only `nothing changed since HEAD`. The leader used `scripts/dev/verify.sh --all` (`all checks passed`) instead; the step should say so.
-- **Size:** trivial
-- **Found:** 2026-10-26, while taking the binds-child segfault from the roadmap
-
 ### Leaving managed, the runtime layer can go on before the given-back config reloads
 - **Where:** `backend/internal/compositor/manager/manager.go` (`SetInputs`, `liveChanged`, `apply`)
 - **What:** The shell's first inputs arm both `debounce` and `liveDebounce` (300 ms each). When the live one fires first, `liveChanged` sees `AppliedMode != mode` and calls `apply`, which releases the managed config and asks for a reload; the layer debounce's `apply` then runs `runtimeApply` before that reload lands, so the runtime layer reads the managed config's binds (every axiom key looks taken, each logged once) and goes on over it. It's corrected after the reload (`configReloaded` applies again). Holding `runtimeApply` until `configReloaded` after a release that reloads would close it, but a missed reload event would then leave no runtime layer.
@@ -315,12 +309,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Readers read only the data owners and each other (AGENTS.md › Layering), but `Paths.packagedVersion` calls `FileManager.read`, and `I18n` reads with both `FileManager.read` and a FileView of its own. Either the rule names `FileManager` as allowed in readers, or the reads move to a data owner.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
-
-### verify.sh skips the checks a deletion or a check's own change needs
-- **Where:** `scripts/dev/verify.sh` (`changed`, the step triggers)
-- **What:** `changed` keeps only files that exist (`[[ -f "$f" ]]`), so a deleted file triggers nothing: deleting a Go file runs no Go checks (the package may no longer build), deleting a QML or script file a doc cites runs no `check_docs.py`, and a change that only deletes prints `nothing changed since HEAD`. CI then fails what verify passed; the roadmap's "Delete before adding" makes this the common case. The triggers also miss a check's own change: `check_docs.py` runs only when a `.md` or `.qml` changed (not for `config/schema/` YAML, though it checks the `x-*` annotations, nor for a change to `check_docs.py` itself), `check_qmllint.py` and `check_sizes.py` only when QML changed, `check_docs.py` has a `CheckDocs` class in `tests/scripts/test_scripts.py` the script map doesn't run, and `.githooks/pre-commit` (not `*.sh`) is never shellchecked. Fix: keep deleted paths in `changed` for the triggers (filter only where a step reads the file, as qmlformat does), and map each `scripts/check_*` file to its own check.
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
 ### The guard misses compound commands, wrapper options and writes onto config.json
 - **Where:** `.claude/hooks/guard.py` (`split_commands`, `simple`, `check_argv`), `tests/scripts/test_guard.py`
