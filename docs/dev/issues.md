@@ -237,6 +237,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while fixing the lock screen surviving a reload
 
+### TestWatch sees a push for the package's own write under CI load
+- **Where:** `backend/internal/files/files_test.go` (`TestWatch`)
+- **What:** CI's go job failed once on PR #224 (2026-10-29, after #227's flake fixes): `pushed [/tmp/TestWatch…/001//todo.json] for its own write and an unwatched file`. Locally it passes 30 runs in a row. Either the watcher's own-write suppression lets a late event through on a slow runner, or the 50 ms sleep before the check isn't a bound the test controls; find which, then fix the suppression or wait on an event instead of sleeping.
+- **Size:** small
+- **Found:** 2026-10-30, while merging the lock-survives-reload fix
+
 ### Quickshell's wlr screencopy crashes the shell on niri
 - **Where:** `services/apps/ScreenshotManager.qml` (`grimFrames`, the workaround), `components/surfaces/screenshot/ScreenshotPickerWindow.qml` (its `ScreencopyView`); the bug is Quickshell's
 - **What:** Without ext-image-copy-capture (niri 26.04 has only wlr-screencopy), Quickshell's wlr screencopy binds a second `wl_output` of its own (`WlrScreencopyContext::OutputTransformQuery`, a `QtWayland::wl_output`; still so in upstream master). niri then sends `wl_surface.enter` for it to every surface; Qt takes it for one of its screens (`QWaylandScreen::fromWlOutput` casts it) and keeps a bogus screen in each surface's list. The next `enter`/`leave` on such a surface crashes in `QWaylandWindow::handleScreensChanged` → `QPlatformScreen::screen()` (at once with a popout open, which unmaps as the picker opens). WAYLAND_DEBUG: `bind(46, "wl_output", 3, …)` beside `zwlr_screencopy_manager_v1.capture_output`, `wl_surface.enter(wl_output#198)` on every surface, then `axiom-edge-popout`'s surface `leave(wl_output#19)` and the crash. Worked around: niri has no `supports.outputCapture`, so the picker's frame is grim's. Left: report it upstream (awaiting a second person to confirm), then drop the workaround once fixed. Sway and Hyprland 0.55 keep `outputCapture` (Hyprland checked by hand: no crash with a popout open).
