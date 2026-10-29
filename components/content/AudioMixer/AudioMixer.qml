@@ -47,7 +47,6 @@ Panel {
   }
   readonly property real listHeight: root.rowsHeight(4) // fixed px: a row count, not a size
   readonly property real shownListHeight: Math.max(root.rowsHeight(2), Math.min(list.implicitHeight, root.listHeight))
-  readonly property bool flipped: !root.embedded && root.growth === "up"
   maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + root.listHeight - scroll.height
 
   implicitWidth: Widget.px(380)
@@ -93,7 +92,7 @@ Panel {
     rowSpacing: Widget.spacing
 
     ColumnLayout {
-      Layout.row: root.flipped ? 2 : 0
+      Layout.row: root.growsUp ? 2 : 0
       Layout.column: 0
       Layout.fillWidth: true
       Layout.preferredWidth: root.sideBySide ? root.sideWidth : -1
@@ -170,7 +169,7 @@ Panel {
 
     GridLayout {
       visible: !root.sliderOnly
-      Layout.row: root.sideBySide || root.flipped ? 0 : 2
+      Layout.row: root.sideBySide || root.growsUp ? 0 : 2
       Layout.column: root.sideBySide ? 2 : 0
       Layout.fillWidth: true
       Layout.fillHeight: root.embedded
@@ -179,7 +178,7 @@ Panel {
       rowSpacing: Widget.spacing
 
       StyledTabBar {
-        Layout.row: root.flipped ? 1 : 0
+        Layout.row: root.growsUp ? 1 : 0
         Layout.column: 0
         tabs: [I18n.tr("Applications ({0})", root.apps.length), I18n.tr("Devices")]
         currentIndex: root.currentTab
@@ -188,7 +187,7 @@ Panel {
 
       StyledScrollView {
         id: scroll
-        Layout.row: root.flipped ? 0 : 1
+        Layout.row: root.growsUp ? 0 : 1
         Layout.column: 0
         Layout.fillWidth: true
         Layout.preferredHeight: root.embedded ? -1 : root.shownListHeight

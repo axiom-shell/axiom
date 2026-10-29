@@ -17,7 +17,6 @@ QtObject {
   }
 
   onReversedChanged: root.apply()
-  onLayoutChanged: root.apply()
   Component.onCompleted: root.apply()
 
   function apply() {
