@@ -490,12 +490,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### After a modal closes, the grabs' newest order is lost
-- **Where:** `services/ui/BackdropManager.qml` (`newestCatcher`), `services/compositor/FocusGrab.qml`
-- **What:** Without `supports.focusGrab`, only the newest active grab asks for exclusive keyboard focus. While a modal is up (`SurfaceManager.modalShown`) the grabs drop out of the ordered list, and when it closes they come back in no set order: after a polkit prompt over the overlay with a popout open, the overlay may take the keyboard instead of the popout. Rare (a modal over two grabs); left after the newest-grab fix (roadmap row 13).
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing roadmap row 13's newest-grab fix
-
 ### Hyprland's default workspace doesn't highlight its first window
 - **Where:** `components/bar/widgets/Workspaces/StripWindows.qml` (`focused`), `services/compositor/HyprlandManager.qml`
 - **What:** From the maintainer's notes: on the workspace Hyprland starts on, the first window opened isn't highlighted as focused until a workspace move. Checked 2026-10-29 (code read, nested Hyprland): Hyprland's own data is right (the first window on workspace 1 has `focusHistoryID` 0 and is `activewindow`), and `StripWindows` highlights `CompositorManager.lastFocused` of the workspace's windows, which for one window is always it; so the cause isn't in either. Which highlight it is (bar strip, dock `DockManager.focusedId`, overview `WindowPreview.focused`) and under which layout (`StripWindows` shows only under scrolling, whose workspace ids `DynamicWorkspaces` renumbers until `_compaction` runs) needs the maintainer to reproduce it.

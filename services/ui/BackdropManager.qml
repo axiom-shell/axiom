@@ -52,11 +52,14 @@ QtObject {
 
   // --- Catching clicks for a focus grab the compositor doesn't have ---
 
-  // FocusGrabs without a native grab, active now (uids, oldest first):
-  // every screen's backdrop window then covers its screen, transparent,
-  // under the grabbing surface, and a click on it ends their grabs
+  // FocusGrabs without a native grab, active now (uids, oldest first,
+  // kept while a modal is up so their order outlives it): every screen's
+  // backdrop window then covers its screen, transparent, under the
+  // grabbing surface, and a click on it ends their grabs. Not while a
+  // modal is up (SurfaceManager.modalShown): it covers every screen, so no
+  // click needs catching
   property var _catchers: []
-  readonly property bool catching: root._catchers.length > 0
+  readonly property bool catching: root._catchers.length > 0 && !SurfaceManager.modalShown
   // The catcher that started last (0 with none): only its surface asks for
   // the keyboard exclusively (FocusGrab.exclusive)
   readonly property int newestCatcher: root._catchers.length > 0 ? root._catchers[root._catchers.length - 1] : 0

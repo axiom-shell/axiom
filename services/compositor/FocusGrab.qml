@@ -22,10 +22,13 @@ Scope {
   signal cleared
 
   readonly property bool _native: CompositorManager.supports.focusGrab === true
-  // Active without a native grab: a click outside clears it. Not while a
-  // modal is up (SurfaceManager.modalShown): it covers every screen, so no
-  // click needs catching
-  readonly property bool _catching: !root._native && root.active && !SurfaceManager.modalShown
+  // Active without a native grab: in BackdropManager's newest-first order
+  // (kept while a modal is up, so the newest grab gets the keyboard back
+  // after it), and a click outside clears it
+  readonly property bool _ordered: !root._native && root.active
+  // Not while a modal is up (SurfaceManager.modalShown): it covers every
+  // screen, so no click needs catching
+  readonly property bool _catching: root._ordered && !SurfaceManager.modalShown
   // The surface's own window should take the keyboard exclusively
   // (WlrKeyboardFocus.Exclusive) while this is on: only the newest such
   // grab's, never while a modal is up. Of two exclusive surfaces on one
@@ -36,13 +39,13 @@ Scope {
   // A click caught outside every surface (BackdropManager.catching)
   property int _uid: 0
   // Not before it has its id: a catcher reported under 0 would never clear
-  on_CatchingChanged: {
+  on_OrderedChanged: {
     if (root._uid > 0)
-      BackdropManager.catchClicks(root._uid, root._catching);
+      BackdropManager.catchClicks(root._uid, root._ordered);
   }
   Component.onCompleted: {
     root._uid = BackdropManager.register();
-    BackdropManager.catchClicks(root._uid, root._catching);
+    BackdropManager.catchClicks(root._uid, root._ordered);
   }
   Component.onDestruction: {
     if (root._uid > 0)
