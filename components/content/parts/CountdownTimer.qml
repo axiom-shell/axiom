@@ -26,7 +26,8 @@ ColumnLayout {
   property real dialSize: Appearance.fontSize * 9
   // Fills its height (an overlay card), the idle part on top
   property bool fill: false
-  property color color: Theme.accent
+  // The duration field's hint
+  property string placeholderText: I18n.tr("10m, 1h30m, 90s, 10m tea…")
   // The more-time button's ms, and its tooltip
   property real moreTime: 60000
   property string moreTimeText: I18n.tr("One more minute")
@@ -51,7 +52,6 @@ ColumnLayout {
     size: root.dialSize
     progress: root.progress
     text: root.text
-    color: root.color
     label: root.timer.running ? root.label : I18n.tr("Paused")
     running: root.timer.running
   }
@@ -70,7 +70,7 @@ ColumnLayout {
     FlatIconButton {
       size: Math.round(Appearance.fontSize * 2.6)
       iconText: root.timer.running ? "pause" : "play_arrow"
-      iconColor: root.color
+      iconColor: Theme.accent
       tooltipText: root.timer.running ? I18n.tr("Pause") : I18n.tr("Resume")
       onClicked: root.toggled()
     }
@@ -88,7 +88,7 @@ ColumnLayout {
     visible: root.idle
     Layout.fillWidth: true
     Layout.preferredHeight: Widget.height
-    placeholderText: I18n.tr("10m, 1h30m, 90s, 10m tea…")
+    placeholderText: root.placeholderText
     onAccepted: {
       if (StopwatchClock.parse(durationField.text).ms <= 0)
         return;

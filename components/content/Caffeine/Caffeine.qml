@@ -38,6 +38,7 @@ Panel {
     text: IdleManager.caffeineText
     progress: IdleManager.caffeineProgress
     label: I18n.tr("Awake")
+    placeholderText: I18n.tr("30m, 1h30m, 90s…")
     moreTime: 15 * 60000
     moreTimeText: I18n.tr("15 more minutes")
     resetText: I18n.tr("Turn off")
