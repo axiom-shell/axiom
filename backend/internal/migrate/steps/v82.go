@@ -17,29 +17,9 @@ func v82(cfg *jsonx.Object) []string {
 	if !on || object(cfg, "Compositor").Value("mode") != "managed" {
 		return []string{"Compositor.niri.hotCorner removed: hot corners are axiom's own (HotCorners)"}
 	}
-	section, _ := cfg.Value("HotCorners").(*jsonx.Object)
-	if section == nil {
-		if cfg.Has("HotCorners") {
-			return []string{"Compositor.niri.hotCorner removed: HotCorners isn't an object, so no corner was added"}
-		}
-		section = jsonx.NewObject()
-		cfg.Set("HotCorners", section)
-	}
-	items, _ := section.Value("items").(*jsonx.Array)
+	items, taken := sectionItems(cfg, "HotCorners")
 	if items == nil {
-		if section.Has("items") {
-			return []string{"Compositor.niri.hotCorner removed: HotCorners.items isn't a list, so no corner was added"}
-		}
-		items = jsonx.Arr()
-		section.Set("items", items)
-	}
-	taken := map[string]bool{}
-	for _, item := range items.Items {
-		if o, _ := item.(*jsonx.Object); o != nil {
-			if id, _ := o.Value("id").(string); id != "" {
-				taken[id] = true
-			}
-		}
+		return []string{"Compositor.niri.hotCorner removed: HotCorners or its items are of another shape, so no corner was added"}
 	}
 	items.Append(jsonx.Obj(
 		"id", freeID("niri-corner", taken),
