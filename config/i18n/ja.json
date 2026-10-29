@@ -3375,7 +3375,6 @@
     "Space between the toasts and the border or bar on their edge, and at the ends. Auto lines them up with a floating bar on their edge, else with your windows.": "",
     "Separate cards held off the edge. Off, the stack is one box growing out of the screen border or a solid bar, as popouts do, and running straight off a bare screen edge.": "",
     "Where along the edge they sit: 0 is the start (left/top), 100 the end.": "",
-    "Where notification toasts appear, how they move, how long they stay, and what the history keeps. Toasts sit inside the space the bars and screen border leave free and make way for popouts open over them.": "",
     "Slide": "",
     "The edge toasts slide in from and out to. Auto is their own edge when attached, else the screen edge nearest them, so centred ones come from their edge and corner ones from the side.": "",
     "Screen edge the toasts stack from. On the top or bottom they stack away from the edge; on a side, along it.": "",
@@ -3398,6 +3397,7 @@
     "Show toasts": "",
     "Per-app rules": "",
     "Its name, as its notifications show it, or its desktop entry (firefox, org.telegram.desktop).": "",
-    "Rules for one app's notifications: whether they toast, whether they're kept, their urgency and how long they stay. An app is matched by its name or desktop entry, as its windows are (Vesktop finds dev.vencord.Vesktop).": ""
+    "Rules for one app's notifications: whether they toast, whether they're kept, their urgency and how long they stay. An app is matched by its name or desktop entry, as its windows are (Vesktop finds dev.vencord.Vesktop).": "",
+    "Where notification toasts appear, how they move, how long they stay, and what the history keeps. Toasts sit inside the space the bars and screen border leave free, and hide while a popout is open over them.": ""
   }
 }

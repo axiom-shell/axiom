@@ -176,20 +176,18 @@ TestCase {
     compare(PopoutGeometry.resumable(entries), ["dock"]);
   }
 
-  function test_makeWay() {
-    const stack = rect(1500, 50, 360, 200);
-    compare(PopoutGeometry.makeWay([], "DP-1", stack, "y", 1, 8, 800), 0, "nothing showing");
-    const pop = entry("bar:clock", "bar", [rect(1400, 40, 400, 300)]);
-    compare(PopoutGeometry.makeWay([pop], "DP-1", stack, "y", 1, 8, 800), 298, "below the popout, a gap past it");
-    compare(PopoutGeometry.makeWay([pop], "DP-1", rect(1500, 300, 360, 200), "y", -1, 8, 800), 468, "up, above it");
-    const lower = entry("menu:m", "menu", [rect(1600, 350, 300, 100)]);
-    compare(PopoutGeometry.makeWay([pop, lower], "DP-1", stack, "y", 1, 8, 800), 408, "past a second popout the first shift ran into");
-    compare(PopoutGeometry.makeWay([pop], "DP-1", stack, "y", 1, 8, 100), 100, "capped at the room left");
-    compare(PopoutGeometry.makeWay([entry("bar:x", "bar", [rect(1400, 40, 400, 300)], {
-        "screen": "HDMI-1"
-      })], "DP-1", stack, "y", 1, 8, 800), 0, "another screen");
-    compare(PopoutGeometry.makeWay([entry("bar:x", "bar", [rect(1400, 40, 400, 300)], {
-        "phase": "closing"
-      })], "DP-1", stack, "y", 1, 8, 800), 0, "a closing popout");
+  function test_toasts() {
+    const toasts = entry("toasts:DP-1", "toast", [rect(1500, 50, 360, 200)], {
+      "resident": true
+    });
+    compare(PopoutGeometry.rankOf(toasts), -1, "under everything");
+    compare(PopoutGeometry.resolve([toasts], entry("bar:clock", "bar", [rect(1400, 40, 400, 300)])).yield, ["toasts:DP-1"], "a popout over them: they give way and come back");
+    compare(PopoutGeometry.resolve([toasts], entry("bar:clock", "bar", [rect(0, 40, 400, 300)])).yield, [], "beside them: nothing happens");
+    verify(!PopoutGeometry.resolve([entry("osd:main:DP-1", "osd", [rect(1500, 100, 300, 60)])], toasts).allowed, "arriving under an OSD: they wait");
+    const dock = entry("dock:main:DP-1", "dock", [rect(1500, 100, 300, 60)], {
+      "resident": true
+    });
+    verify(PopoutGeometry.resolve([dock], toasts).allowed, "a dock and toasts never collide");
+    compare(PopoutGeometry.resolve([toasts], dock).yield, []);
   }
 }

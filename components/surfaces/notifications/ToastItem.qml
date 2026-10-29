@@ -31,6 +31,25 @@ Item {
   // shift it leaves by (ToastMotion.leave, set as it starts leaving)
   property real hiddenDistance: 0
   property real swipeThreshold: 150
+  // A popout is shown over the stack: it slides out of sight, its timer
+  // paused, and comes back when that closes (ToastStack.covered)
+  property bool covered: false
+  onCoveredChanged: {
+    if (root.leaving || root.motionStyle === "none") {
+      root.opacity = root.covered ? 0 : 1;
+      return;
+    }
+    if (root.covered) {
+      enter.stop();
+      const to = root._hidden();
+      coverX.to = to.x;
+      coverY.to = to.y;
+      cover.start();
+    } else {
+      cover.stop();
+      enter.start();
+    }
+  }
 
   // Leaving: sliding or fading out (the stack keeps it in place meanwhile)
   readonly property bool leaving: leave.running || root.gone
@@ -107,6 +126,12 @@ Item {
   }
 
   Component.onCompleted: {
+    if (root.covered) {
+      const hidden = root._hidden();
+      slide.x = hidden.x;
+      slide.y = hidden.y;
+      return;
+    }
     const from = root._hidden();
     slide.x = from.x;
     slide.y = from.y;
@@ -149,6 +174,31 @@ Item {
       property: "opacity"
       to: 1
       duration: Appearance.animNormal
+      easing.type: Appearance.easing
+    }
+  }
+
+  ParallelAnimation {
+    id: cover
+    NumberAnimation {
+      id: coverX
+      target: slide
+      property: "x"
+      duration: Appearance.animFast
+      easing.type: Appearance.easing
+    }
+    NumberAnimation {
+      id: coverY
+      target: slide
+      property: "y"
+      duration: Appearance.animFast
+      easing.type: Appearance.easing
+    }
+    NumberAnimation {
+      target: root
+      property: "opacity"
+      to: 0
+      duration: Appearance.animFast
       easing.type: Appearance.easing
     }
   }
@@ -207,7 +257,7 @@ Item {
 
   Timer {
     interval: root.duration
-    running: !root.neverExpires && !root.hovered && !root.replying && !root.leaving && !dragger.active
+    running: !root.neverExpires && !root.hovered && !root.replying && !root.leaving && !root.covered && !dragger.active
     onTriggered: root.timedOut()
   }
 

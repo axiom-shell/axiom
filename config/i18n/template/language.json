@@ -2937,7 +2937,7 @@
     "Where along the edge they sit: 0 is the start (left/top), 100 the end.": "",
     "Where and how every weather widget and module gets its weather, from Open-Meteo (no account needed).": "",
     "Where chats are sent. The OpenAI kind also covers Ollama, LM Studio, llama.cpp, OpenRouter, Groq and anything else with an OpenAI-style API: set its address.": "",
-    "Where notification toasts appear, how they move, how long they stay, and what the history keeps. Toasts sit inside the space the bars and screen border leave free and make way for popouts open over them.": "",
+    "Where notification toasts appear, how they move, how long they stay, and what the history keeps. Toasts sit inside the space the bars and screen border leave free, and hide while a popout is open over them.": "",
     "Where recordings are saved, and listed from by the Screen recording card. Empty saves them with the screenshots.": "",
     "Where screenshots and screen recordings are saved, whichever way they're taken: the screenshot and screenRecord binds, the launcher, the Screenshot and Screen recording cards.": "",
     "Where screenshots are saved (~ is your home). Empty uses Pictures/Screenshots.": "",

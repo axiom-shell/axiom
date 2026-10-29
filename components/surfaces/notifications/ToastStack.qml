@@ -18,8 +18,8 @@ import qs.components.reusable
 // over the free area; attached, rows of one box grown out of the border
 // or a bar (an EdgePopout). Newest at the stack's start, the rest gliding
 // along as toasts come and go; they slide in from and out to one edge
-// (ToastMotion.slideEdge) and the stack makes way for popouts open over
-// it (PopoutGeometry.makeWay).
+// (ToastMotion.slideEdge). They rank under every popout (PopoutGeometry):
+// one shown over them hides them until it closes, their timers paused.
 Scope {
   id: root
 
@@ -52,7 +52,7 @@ Scope {
 
   // Detached, or attached but pushed away from its edge by a popout,
   // which it can't stay joined to
-  readonly property bool attached: !NotificationsConfig.detached && !root.fullscreen && !(root.grow.across && root.makeWay > 0)
+  readonly property bool attached: !NotificationsConfig.detached && !root.fullscreen
   readonly property var grow: ToastMotion.growth(NotificationsConfig.edge, NotificationsConfig.position)
   readonly property bool vertical: NotificationsConfig.edge === ScreenEdge.Left || NotificationsConfig.edge === ScreenEdge.Right
 
@@ -148,7 +148,7 @@ Scope {
   readonly property real insetLeft: root._inset(ScreenEdge.Left)
   readonly property real insetRight: root._inset(ScreenEdge.Right)
 
-  // The stack's box at rest in its window, makeWay aside:
+  // The stack's box at rest in its window:
   // { x, y, width, height }
   readonly property var restRect: {
     const w = NotificationsConfig.width;
@@ -172,25 +172,32 @@ Scope {
     }
   }
 
-  // How far it moves along its growth to clear the popouts showing over
-  // it (none while it shows nothing)
-  readonly property real makeWay: {
-    if (!root.showing)
-      return 0;
-    const o = area.origin;
-    const r = root.restRect;
-    const room = root.grow.sign > 0 ? root.areaHeight - root.insetBottom - (r.y + r.height) : r.y - root.insetTop;
-    return PopoutGeometry.makeWay(PopoutManager.entries, root.screenName, Qt.rect(o.x + r.x, o.y + r.y, r.width, r.height), "y", root.grow.sign, root.spacing, Math.max(0, room));
+  // Its place among the popouts (PopoutManager): under all of them, so one
+  // shown over it hides it (`covered`) until it closes, and one arriving
+  // under one waits (docks aside, PopoutGeometry.resolve)
+  property PopoutClaim claim: PopoutClaim {
+    key: "toasts:" + root.screenName
+    kind: "toast"
+    screen: root.screenName
+    edge: ScreenEdge.name(NotificationsConfig.edge)
+    resident: true
+    occupied: root.showing
+    wanted: root.showing && placeOnScreen.settled
+    footprint: {
+      const o = area.origin;
+      const r = root.restRect;
+      return [Qt.rect(o.x + r.x, o.y + r.y, r.width, r.height)];
+    }
   }
+  readonly property bool covered: root.claim.yielded
 
   // A toast's place in its window: { x, y } of its top-left
   function placeOf(key, height) {
     const r = root.restRect;
     const off = root._offsets[key] ?? 0;
-    const shift = root.makeWay * root.grow.sign;
     if (root.grow.sign > 0)
-      return Qt.point(r.x, r.y + off + shift);
-    return Qt.point(r.x, r.y + r.height - off - height + shift);
+      return Qt.point(r.x, r.y + off);
+    return Qt.point(r.x, r.y + r.height - off - height);
   }
 
   // The edge toasts slide from, picked while the stack is empty so it
@@ -261,7 +268,7 @@ Scope {
     }
 
     mask: Region {
-      item: root.attached || !root.showing ? null : bounds
+      item: root.attached || !root.showing || root.covered ? null : bounds
     }
 
     // Every toast's box, for the input mask
@@ -306,6 +313,7 @@ Scope {
         height: implicitHeight
         visible: !SurfaceManager.captureFrozen
         screenName: root.screenName
+        covered: root.covered
         backed: BlurManager.backsOn(root.screen, true) && placeOnScreen.settled
 
         x: toastCard.place.x
@@ -369,8 +377,6 @@ Scope {
     screen: root.screen
     edge: NotificationsConfig.edge
     position: NotificationsConfig.position
-    // Along a side edge it makes way by moving along it
-    positionOffset: root.vertical ? root.makeWay * root.grow.sign : 0
     triggerEnabled: false
     claimKey: ""
     keyboardOnDemand: root.replyable
@@ -448,6 +454,7 @@ Scope {
               // Out of the row's clip
               hiddenDistance: root.slideEdge === ScreenEdge.Left || root.slideEdge === ScreenEdge.Right ? row.width : toast.implicitHeight
               screenName: root.screenName
+              covered: root.covered
 
               Component.onCompleted: {
                 root._rows = Utils.withEntry(root._rows, row.key, toast);
@@ -471,7 +478,7 @@ Scope {
       }
     }
   }
-  readonly property bool _attachedShowing: root.attached && root.toasts.some(t => root._leaving[t.key] === undefined)
+  readonly property bool _attachedShowing: root.attached && !root.covered && root.toasts.some(t => root._leaving[t.key] === undefined)
   on_AttachedShowingChanged: {
     if (root._attachedShowing)
       box.show();

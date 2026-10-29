@@ -5,7 +5,7 @@ type: object
 x-category: Notifications
 x-intro: NotificationsPreview
 title: Notifications
-description: "Where notification toasts appear, how they move, how long they stay, and what the history keeps. Toasts sit inside the space the bars and screen border leave free and make way for popouts open over them."
+description: "Where notification toasts appear, how they move, how long they stay, and what the history keeps. Toasts sit inside the space the bars and screen border leave free, and hide while a popout is open over them."
 additionalProperties: false
 properties:
   screen:

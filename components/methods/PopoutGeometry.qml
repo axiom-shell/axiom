@@ -8,7 +8,8 @@ import QtQuick
 //
 // An entry is { id, kind, pinned, resident, screen, parentId, phase,
 // footprint }:
-// - kind: "dock" | "osd" | "bar" | "menu" | "launcher" | "submenu"
+// - kind: "toast" | "dock" | "osd" | "bar" | "menu" | "launcher" |
+//   "submenu"
 // - pinned: held open by the user; ranks lowest whatever its kind
 // - resident: gives way and comes back (the dock, pinned popouts, a menu
 //   previewing from its editor) rather than closing for good
@@ -18,11 +19,14 @@ import QtQuick
 QtObject {
   id: root
 
-  // Lowest first. A submenu takes its parent's rank.
+  // Lowest first. A submenu takes its parent's rank; notification toasts
+  // rank under them all (-1), giving way to anything that covers them
   readonly property var ranks: ["pinned", "dock", "osd", "bar", "menu", "launcher"]
 
   // An entry's rank, `parent` its parent's entry for a submenu
   function rankOf(entry, parent) {
+    if (entry.kind === "toast")
+      return -1;
     if (entry.kind === "submenu")
       return parent ? rankOf(parent, null) : 0;
     if (entry.pinned)
@@ -78,6 +82,10 @@ QtObject {
         continue;
       if (e.parentId === claim.id || claim.parentId === e.id)
         continue;
+      // Toasts and docks never collide: an always-shown dock would hide a
+      // stack over it for good
+      if ((e.kind === "toast" && claim.kind === "dock") || (e.kind === "dock" && claim.kind === "toast"))
+        continue;
       // A submenu goes with its parent: only the parent collides
       if (e.kind === "submenu" && claim.parentId && e.parentId === claim.parentId)
         continue;
@@ -124,32 +132,5 @@ QtObject {
       }
     }
     return back;
-  }
-
-  // How far a stack of toasts at `rect` (screen px, at rest) on `screen`
-  // moves along `axis` ("x" | "y") by `sign` (1 | -1) to clear the
-  // popouts showing there (`entries`, closing and yielded ones aside),
-  // `gap` px past the furthest; capped at `room`. Toasts hold no claim:
-  // they read the popouts' footprints and make way, never the other way.
-  function makeWay(entries, screen, rect, axis, sign, gap, room) {
-    const others = [].concat(...entries.filter(e => e.screen === screen && e.phase !== "closing" && e.phase !== "yielded").map(e => e.footprint ?? []));
-    const pos = axis === "x" ? "x" : "y";
-    const size = axis === "x" ? "width" : "height";
-    let shift = 0;
-    // Each pass clears what the last shift ran into
-    for (let pass = 0; pass < 8; pass++) {
-      const moved = Object.assign({}, rect);
-      moved[pos] = rect[pos] + shift * sign;
-      const hit = others.filter(r => rectsOverlap(r, moved));
-      if (hit.length === 0)
-        break;
-      for (const r of hit) {
-        const need = sign > 0 ? r[pos] + r[size] - rect[pos] + gap : rect[pos] + rect[size] - r[pos] + gap;
-        shift = Math.max(shift, need);
-      }
-      if (shift >= room)
-        return room;
-    }
-    return Math.min(shift, room);
   }
 }

@@ -52,9 +52,7 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
     - The one at the stack's start slides all the way out.
     - One further along a stack sliding the way it grows tucks behind the others, sliding half its height toward the edge as it fades.
   - `motion.style` (slide, fade, none) and `motion.direction` (auto or an edge) override it.
-- **Making way:** toasts hold no `PopoutClaim`. The stack reads `PopoutManager.entries` and moves along its growth past any popout shown over it (`PopoutGeometry.makeWay`), gliding back when it closes.
-  - An attached stack on a side edge moves along it, still attached.
-  - One on the top or bottom, pushed away from its edge, shows as cards while it is, and joins the edge again after.
+- **Under popouts:** the stack holds a resident `PopoutClaim` (kind `toast`, `toasts:<screen>`) ranked under every popout (`PopoutGeometry.rankOf`: -1). One shown over it yields it (`covered`): its toasts slide out of sight, their timers paused, and slide back once that closes; toasts arriving under one wait the same way. Docks and toasts never collide, or an always-shown dock would hide a stack over it for good. The maintainer, 2026-10-30: "Yield, then come back".
 - **Blur:**
   - A card's fill is drawn by the blur window: a `BlurShape` rect following its slide, clipped to the window (`notifications` is among `LayerStack.blurBacked`).
   - The attached box blurs as an EdgePopout does.
