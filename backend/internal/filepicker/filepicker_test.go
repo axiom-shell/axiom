@@ -13,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func testCtx(t *testing.T) context.Context {
@@ -200,8 +201,8 @@ func TestPortalClosedWhenAbandoned(t *testing.T) {
 		_, err := Pick(ctx, (&fallbacks{}).options(bus, "/"), Request{Title: "Pick", Start: "/"})
 		done <- err
 	}()
-	for portal.sent() == nil {
-		time.Sleep(5 * time.Millisecond)
+	if !testkit.Eventually(func() bool { return portal.sent() != nil }) {
+		t.Fatal("nothing sent to the portal")
 	}
 	cancel()
 	if err := <-done; axerr.KindOf(err) != axerr.Unavailable {
@@ -209,7 +210,7 @@ func TestPortalClosedWhenAbandoned(t *testing.T) {
 	}
 	select {
 	case <-portal.closed:
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("the request wasn't closed")
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/seat"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire/wiretest"
@@ -59,7 +60,7 @@ func next[T any](t *testing.T, ch chan T) T {
 	select {
 	case v := <-ch:
 		return v
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("timed out")
 	}
 	var zero T

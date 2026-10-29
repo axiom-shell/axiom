@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 )
 
@@ -16,15 +15,8 @@ func fakeGo(t *testing.T, build string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "go")
 	script := "#!/bin/sh\ncase \"$1\" in\ngenerate) exit 0 ;;\nbuild) " + build + " ;;\nesac\n"
-	// Written with forks held off: a child forked by a parallel test while
-	// the file is open for writing keeps that descriptor until it execs,
-	// and exec'ing the script meanwhile fails with ETXTBSY (text file busy).
-	// A rename wouldn't help (same inode); os/exec forks under ForkLock's
-	// write lock
-	syscall.ForkLock.RLock()
-	err := os.WriteFile(path, []byte(script), 0o755)
-	syscall.ForkLock.RUnlock()
-	if err != nil {
+	// A parallel test's fork would leave it busy (writeExecutable)
+	if err := writeExecutable(path, []byte(script)); err != nil {
 		t.Fatal(err)
 	}
 	return path

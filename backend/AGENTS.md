@@ -24,7 +24,7 @@ tools/            go generate programs (syncassets, …)
 ## Style
 
 - Every package has a doc comment saying what it is for (it feeds `docs/dev/generated/files.md`); exported names are documented; comments say why, at the density of the surrounding code.
-- Tests are table-driven with `t.Parallel()`, fakes are written by hand (no mocking library), files are tested in `t.TempDir()`. Behaviour shared with the QML side is tested through the shared fixtures (`docs/dev/backend/README.md` › Shared fixtures), never re-stated inline.
+- Tests are table-driven with `t.Parallel()`, fakes are written by hand (no mocking library), files are tested in `t.TempDir()`. A test waiting for something to happen polls with `testkit.Eventually` or bounds its `select` by `testkit.Bound(d)`, never a bound of its own: CI stretches them (`AXIOM_TEST_WAIT_FACTOR`). Behaviour shared with the QML side is tested through the shared fixtures (`docs/dev/backend/README.md` › Shared fixtures), never re-stated inline.
 - Generated Go files are named `zz_generated_*.go` and start with the standard `// Code generated … DO NOT EDIT.` line.
 
 ## Dependencies

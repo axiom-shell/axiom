@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // streamed watches script as a stream and returns the harness and the
@@ -127,12 +129,8 @@ func TestStreamStops(t *testing.T) {
 				h.w.Unwatch(s, script)
 			}
 			for _, pid := range strings.Fields(string(data)) {
-				deadline := time.Now().Add(stopGrace + 3*time.Second)
-				for alive(pid) {
-					if time.Now().After(deadline) {
-						t.Fatalf("%s still runs", pid)
-					}
-					time.Sleep(20 * time.Millisecond)
+				if !testkit.Eventually(func() bool { return !alive(pid) }) {
+					t.Fatalf("%s still runs", pid)
 				}
 			}
 		})

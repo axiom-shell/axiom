@@ -12,6 +12,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/assets"
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // fakeClock moves only when told; After fires once Advance passes it.
@@ -115,7 +116,7 @@ func fetched(t *testing.T, h *harness) []json.RawMessage {
 	select {
 	case r := <-h.fetches:
 		return r
-	case <-time.After(5 * time.Second):
+	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("no fetch")
 		return nil
 	}
@@ -135,7 +136,7 @@ func state(t *testing.T, s *fakeSub) string {
 	select {
 	case st := <-s.states:
 		return st
-	case <-time.After(5 * time.Second):
+	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("no state")
 		return ""
 	}
@@ -169,17 +170,9 @@ func settle(t *testing.T, h *harness) {
 // clock between its reading Now and its asking After.
 func settleWaits(t *testing.T, h *harness, want int) {
 	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
-	for time.Now().Before(deadline) {
-		h.clock.mu.Lock()
-		n := len(h.clock.waits)
-		h.clock.mu.Unlock()
-		if n >= want {
-			return
-		}
-		time.Sleep(time.Millisecond)
+	if !testkit.Eventually(func() bool { h.clock.mu.Lock(); defer h.clock.mu.Unlock(); return len(h.clock.waits) >= want }) {
+		t.Fatal("the loop never waited")
 	}
-	t.Fatal("the loop never waited")
 }
 
 func TestFetchesOnlyWithSubscribers(t *testing.T) {

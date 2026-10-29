@@ -14,6 +14,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func ctx(t *testing.T) context.Context {
@@ -163,7 +164,7 @@ func TestCallsSignalsAndDescriptors(t *testing.T) {
 				if m.Body[0] != "pong" || m.Sender != server.UniqueName() {
 					t.Errorf("signal %+v", m)
 				}
-			case <-time.After(3 * time.Second):
+			case <-time.After(testkit.Bound(3 * time.Second)):
 				t.Fatal("no signal")
 			}
 			sub.Close()
@@ -200,7 +201,7 @@ func TestNameOwnerChangedOnDisconnect(t *testing.T) {
 				t.Errorf("pid %d, %v", pid, err)
 			}
 			owner.Close()
-			deadline := time.After(3 * time.Second)
+			deadline := time.After(testkit.Bound(3 * time.Second))
 			for {
 				select {
 				case m := <-sub.C:

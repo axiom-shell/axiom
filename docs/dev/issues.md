@@ -200,24 +200,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-19, while building the review-system skill
 
-### A compositor manager test misses its takeover prompt under load
-- **Where:** `backend/internal/compositor/manager/manager_test.go` (`TestAConfigGivenBackMeanwhileIsntWrittenOver`, `harness.eventually`)
-- **What:** CI on PR #184 (which touched no Go) failed with `manager_test.go:555: never: asked again` (state `"status":"pending"`, `"takeoverPending":false`). The wait covers a live change whose file sync comes 2 s later, inside `eventually`'s 3 s bound, so a loaded runner has 1 s of slack; the test runs `t.Parallel()` with the package. A flaky CI failure blocks an unrelated PR. A possible fix: a longer bound for this wait, or a sync delay the test sets shorter.
-- **Size:** trivial
-- **Found:** 2026-10-28, while merging the niri screenshot fix (CI on PR #184)
-
-### A self-update test once took the build path for a release
-- **Where:** `backend/internal/daemon/selfupdate_test.go` (`TestReplaceInstalled`)
-- **What:** Locally, `go test -count=1 ./internal/compositor/... ./internal/daemon/` failed once with `selfupdate_test.go:68: rebuilt true from "built", reason ""` in the case `a release's` (the fake release server's binary should have been taken), then passed on a rerun. Likely the release fetch failing or timing out under parallel load, so `replaceInstalled` fell back to building; not reproduced.
-- **Size:** small
-- **Found:** 2026-10-29, while running the Go tests for roadmap row 13
-
-### A binds test fails with pthread_create failed in CI
-- **Where:** `backend/internal/compositor/binds/isolate_test.go` (`TestIsolatedExtractSurvivesAFileTakingAllMemory`)
-- **What:** CI on PR #124 (which touched no Go) failed with `isolate_test.go:115: got reading the binds: runtime/cgo: pthread_create failed: Resource temporarily unavailable: exit status 2`, then passed on a rerun. The test expects the child to be ended by its memory limit (an error naming `MiB`); this time the child couldn't start a thread (`EAGAIN`, likely the limit or a loaded runner's thread cap reached while the Go runtime was still starting threads) and failed with the cgo error instead. A flaky CI failure blocks an unrelated PR.
-- **Size:** trivial
-- **Found:** 2026-10-27, while finishing the singletons plan (#123)
-
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
 - **What:** With blur on under niri, a bar popout switching to another widget's content in the same window shows its old stroke cutting into the box for a frame or two as it resizes: the stroke is the popout's window's, the fill the blur window's, and niri shows the two windows' frames out of step (no `supports.layerFrameSync`). Tried and reverted (2026-10-18), neither changing what the maintainer saw: holding the switch until the popout's window had drawn the new content twice (`SwitchStill`, its window's `frameSwapped`), and drawing the popout's stroke in the blur window with its fill (a stroke-only `AttachedSurfaceCopy` over the fills, the popout's own stroke transparent). That the second didn't help suggests the stroke isn't what's late: perhaps the popout's content, its clip, or the blur region. Next: log each window's `frameSwapped` with what it drew, during a switch.
@@ -331,12 +313,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread
 - **Where:** `scripts/gen_docs.py` (`CONFIG_REF`, `load_readers`)
 - **What:** `CONFIG_REF` and the reader-alias match in `load_readers` accept only `ConfigManager.config` / `ConfigManager.previews`, but since row 12 (#162) the readers bind `ConfigManager.live` (47 of the files in `config/`; `previews` has no QML use left). So 372 of the 676 settings in `docs/dev/config/` say `read: no reader member or direct use found` though their reader reads them (`WorkspaceOverlay.showHint` is `WorkspaceOverlayConfig.showHint: _c.showHint`), and `--report`'s "reader members with no user" prints 0 because those readers' members aren't seen at all. The generated map agents use to find a setting's users is wrong for half the config, and the one check for dead settings and reader members is blind; nothing failed, since nothing tests the usage map (`RpcShapes` covers only rpc.md). Fix: match `live` (drop `previews`), add a `test_scripts.py` case that a known reader member is found, then fail on a setting with no reader or use and on an unused reader member (the deletion pass's ratchet).
-- **Size:** small
-- **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
-
-### Go tests wait with their own short bounds that a loaded CI runner overruns
-- **Where:** `backend/internal/compositor/manager/manager_test.go` (`harness.eventually`), `backend/internal/supervise/supervise_test.go` (`eventually`), `backend/internal/topics/topics_test.go` (`TestShortestIntervalAndFloor`), `backend/internal/daemon/daemon_test.go` (`TestLockScreenOnlyTakesLock`), `backend/internal/testkit/testkit.go`
-- **What:** Every one of the 8 failed Checks runs since 2026-10-26 failed in the `go` job, each a timing or resource flake on a PR that didn't cause it: binds `pthread_create failed` (twice), the compositor manager's `never: asked again` (twice), topics `topics_test.go:220: no fetch` (#152), ipcroute `text file busy` (#149, since fixed), self-update `rebuilt true` (#143), daemon `connect: connection refused` (#119). Three have entries; the rest weren't filed. 18 test files wait in their own poll loop (`eventually`, `waitFor`, a deadline) and 22 call `time.Sleep` (55 times), each bound tuned on a quiet machine, with `t.Parallel()` across the package. Fix: one `testkit.Eventually` with a bound CI can stretch (an env factor), the waits moved onto it, and a stress run (`go test -race -count=20 -cpu 1,4` on the parallel packages) to find the rest before CI does.
 - **Size:** small
 - **Found:** 2026-10-29, while taking the guardrails inventory (roadmap row 18)
 

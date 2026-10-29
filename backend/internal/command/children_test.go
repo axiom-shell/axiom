@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"syscall"
 	"testing"
-	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // A running command is listed for a re-exec with its output's
@@ -22,10 +23,7 @@ func TestChildrenHandoff(t *testing.T) {
 		done <- res
 	}()
 	var listed []Child
-	for deadline := time.Now().Add(5 * time.Second); len(listed) == 0; time.Sleep(10 * time.Millisecond) {
-		if time.Now().After(deadline) {
-			t.Fatal("the run isn't listed")
-		}
+	if !testkit.Eventually(func() bool {
 		children.mu.Lock()
 		n := len(children.m)
 		children.mu.Unlock()
@@ -33,6 +31,9 @@ func TestChildrenHandoff(t *testing.T) {
 			listed = children.Handoff()
 			children.Resume()
 		}
+		return len(listed) > 0
+	}) {
+		t.Fatal("the run isn't listed")
 	}
 	if len(listed) != 1 || len(listed[0].Output) != 2 || listed[0].Stream {
 		t.Fatalf("listed %+v", listed)
@@ -74,13 +75,8 @@ func TestAdopt(t *testing.T) {
 	}
 	children.Resume()
 	pid := strconv.Itoa(cmd.Process.Pid)
-	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(20 * time.Millisecond) {
-		if _, err := os.Stat("/proc/" + pid); err != nil {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("not reaped")
-		}
+	if !testkit.Eventually(func() bool { _, err := os.Stat("/proc/" + pid); return err != nil }) {
+		t.Fatal("not reaped")
 	}
 	if _, err := os.Stat(marker); err != nil {
 		t.Error("the child didn't finish:", err)
