@@ -312,7 +312,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Overlay and popouts close or break each other
 - **Where:** `services/ui/ShellManager.qml` (`closeOverlay`), `services/ui/OverlayManager.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/overlay/OverlayPanel.qml` (its `FocusGrab`)
-- **What:** From the maintainer's notes, verbatim: "a little bit of a system re-work/look to ensure all popouts are usable as expected while the overlay is open, without closing the overlay. There are a bit more problems here so this likely needs a plan (i.e. currently open popouts break when overlay is opened, nothing should close the overlay (i.e. after installing greetd and the polkit prompt closes, the overlay closes) The one exception is likely launcher (although it can also just open over the overlay and be usable)". The plan covers which surfaces may close the overlay (callers of `ShellManager.closeOverlay`, focus grabs ending when a prompt like polkit's takes and gives back focus), and how a popout open before the overlay keeps working.
+- **What:** From the maintainer's notes, verbatim: "a little bit of a system re-work/look to ensure all popouts are usable as expected while the overlay is open, without closing the overlay. There are a bit more problems here so this likely needs a plan (i.e. currently open popouts break when overlay is opened, nothing should close the overlay (i.e. after installing greetd and the polkit prompt closes, the overlay closes) The one exception is likely launcher (although it can also just open over the overlay and be usable)". The plan covers which surfaces may close the overlay (callers of `ShellManager.closeOverlay`, focus grabs ending when a prompt like polkit's takes and gives back focus), and how a popout open before the overlay keeps working. The maintainer (2026-10-29), on a greeter update: "The issue is that when the auth prompt closes, the overlay closes." (plan: #211)
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -334,9 +334,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### Updating the greeter closes the overlay and shows no progress
+### A greeter update shows no progress after the password
 - **Where:** `services/session/GreeterManager.qml` (`update`, `_elevate`, `_notifyOutdated`)
-- **What:** From the maintainer's notes: a greeter update needs an indicator while it runs and must not close the overlay; its login screen update notification doesn't go away after the update ("check all notifs for this": every notification that announces something to do should clear once it's done).
+- **What:** The maintainer (2026-10-29): "Until the update is done, it only says waiting for password. After auth it needs something like \"installing now\"". Once the password prompt is answered, the status says the update is installing, then done or failed. Its login screen update notification also doesn't go away after the update ("check all notifs for this": every notification that announces something to do should clear once it's done). The overlay closing when the prompt closes is [Overlay and popouts close or break each other](#overlay-and-popouts-close-or-break-each-other)'s.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
