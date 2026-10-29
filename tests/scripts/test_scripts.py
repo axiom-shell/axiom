@@ -377,7 +377,9 @@ def unlock_problems(files):
     for path, text in files.items():
         for m in re.finditer(r"\blocked\s*=\s*false", text):
             fn, start = handler_at(text, m.start())
-            allowed = fn == "onAuthenticationSucceeded" or (fn == "onSecureChanged" and "!sessionLock.locked" in text[start : m.start()])
+            # The compositor's end: only as the statement of that one guard
+            guarded = re.search(r"if \(!sessionLock\.locked && lockState\.locked\)\s*lockState\.$", text[start : m.start()])
+            allowed = fn == "onAuthenticationSucceeded" or (fn == "onSecureChanged" and guarded)
             if path != "shell/Lockscreen.qml" or not allowed:
                 problems.append(f"{path}: unlocks in {fn}")
         for m in re.finditer(r"\bauthenticationSucceeded\(\)", text):
@@ -429,6 +431,8 @@ class OnlyPamUnlocks(unittest.TestCase):
             # A handler of its own after PAM's, or the compositor's end unguarded
             (lock, "  WlSessionLock {", "  Timer {\n    onTriggered: lockState.locked = false\n  }\n\n  WlSessionLock {"),
             (lock, "if (!sessionLock.locked && lockState.locked)", "if (lockState.locked)"),
+            (lock, "if (!sessionLock.locked && lockState.locked)", "if (!sessionLock.locked || true)"),
+            (lock, "lockState.locked)\n        lockState.locked = false;", "lockState.locked) {}\n        lockState.locked = false;"),
             # Any other file unlocking, or the lock bound to something else
             ("components/Unlock.qml", "", "Item { function go() { sessionLock.locked = false; } }"),
             (lock, "locked: lockState.locked\n", "locked: lockState.locked && !AuthManager.isAuthenticating\n"),
