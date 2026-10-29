@@ -30,7 +30,13 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - One `WlSessionLockSurface` per Wayland output (Quickshell adds one for an output connected while locked), showing `surfaces/lockscreen/LockSurface.qml`.
 - While locked, the compositor shows only the lock surfaces and sends them all input.
 - If qs dies, the session stays locked (Hyprland's fallback). `misc:allow_session_lock_restore` lets a restarted qs take the lock back.
-- The locked state lives in a `PersistentProperties`, so a QML reload comes back locked.
+- The locked state lives in a `PersistentProperties`, so a QML reload never unlocks.
+
+#### No reload under the lock
+- **Why:** Quickshell 0.3's `WlSessionLock` hands its lock to the reloaded generation, but builds that generation's lock surfaces anew while the old ones still stand. A second lock surface for an output is a protocol error on niri (`Output is already locked.`) and sway (`session lock surface already created for the given output`), which ends qs and left niri's red screen with nothing to unlock it (2026-10-18, 2026-10-29). The log shows `Session lock object was destroyed without unlocking` as the old generation goes, on every reload under the lock, even one that worked (Hyprland let it through).
+- **So:** while locked, `Lockscreen.qml` turns `Quickshell.watchFiles` off: a saved file doesn't reload the shell, and loads at the next save after unlocking.
+- **Explicit reloads** (`/reload`, an auto self-update) go through `LockManager.reload()`, which waits for the unlock.
+- New code never calls `Quickshell.reload` itself.
 - **Only `AuthManager.authenticationSucceeded` (PAM, `login` stack) unlocks.**
   - There is no IPC unlock.
   - Nothing on the surface may run commands.

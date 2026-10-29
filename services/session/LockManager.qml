@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 
 import qs.config
 import qs.services.core
@@ -33,7 +34,11 @@ QtObject {
   // relock a shell that dies while locked. Never the other way: nothing
   // axiom says unlocks
   onBuiltinSecureChanged: _report()
-  onBuiltinLockedChanged: _report()
+  onBuiltinLockedChanged: {
+    _report();
+    if (!root.builtinLocked && root._reloadWhenUnlocked)
+      Quickshell.reload(false);
+  }
   onBuiltinSurfacesChanged: _report()
 
   // The surfaces actually built against the monitors connected (not Qt's
@@ -81,6 +86,17 @@ QtObject {
     }
     root.lockStarted();
   }
+
+  // The one way to reload the shell's QML (Quickshell.reload). Never under
+  // the built-in lock, which a reload ends (shell/Lockscreen.qml, its
+  // watchFiles): then it waits for the unlock
+  function reload() {
+    if (root.builtinLocked)
+      root._reloadWhenUnlocked = true;
+    else
+      Quickshell.reload(false);
+  }
+  property bool _reloadWhenUnlocked: false
 
   // --- The layouts editor's draft (Lockscreen.layout) and its preview ---
 
