@@ -340,12 +340,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
 
-### CI can't fail on stale translation files
-- **Where:** `scripts/check_i18n.py` (`main`), `.github/workflows/checks.yml` (Translations, `continue-on-error`)
-- **What:** `check_i18n.py` exits 1 for any key without a translation (empty counts as missing), which is the normal state, so CI runs it as a warning only. The same exit carries the real errors: a stale `config/i18n/template/language.json` (generated, AGENTS.md › Checks), a file not in the canonical format, keys absent from a file or unused. A commit made without the pre-commit hook (a fresh clone or worktree before `git config core.hooksPath .githooks`, or `--no-verify`) lands them with CI green. Fix: exit 1 only for the template, the format, and keys absent or unused; report empty ones without failing; drop `continue-on-error`.
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
 ### The qmllint baseline doesn't shrink when warnings are fixed
 - **Where:** `scripts/check_qmllint.py` (`main`), `scripts/qmllint-baseline.json`
 - **What:** A baselined warning that's gone only prints `note: N baselined warnings are gone`, and the baseline keeps its count, so the warning can come back later without failing. AGENTS.md calls the baselines ratchets, and the allowlist already fails on an unused entry (`check_structure.py`). Fix: fail (or have verify.sh rewrite the baseline) when the counts drop, as the allowlist does.

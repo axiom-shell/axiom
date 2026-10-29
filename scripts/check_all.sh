@@ -62,8 +62,8 @@ for job in "${jobs[@]}"; do
     step "docs" python3 scripts/check_docs.py
     step "package lists" python3 scripts/check_packages.py
     step "json" json
-    echo "── translations (warnings only)"
-    python3 scripts/check_i18n.py || true
+    # Fails on what the pre-commit hook fixes; empty entries only warn
+    step "translations" python3 scripts/check_i18n.py
     ;;
   qt)
     generated --fixtures

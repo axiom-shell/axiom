@@ -169,6 +169,8 @@ if [[ ${#shells[@]} -gt 0 ]]; then
   step "shellcheck" shellcheck -x -S warning "${shells[@]}"
 fi
 if [[ ${#qml[@]} -gt 0 || $schema -eq 1 ]]; then
+  # Warnings only: a new key is absent from config/i18n/ until the
+  # pre-commit hook adds it (check_all.sh fails on that)
   echo "── translations (warnings only)"
   python3 scripts/check_i18n.py 2>&1 | tail -n 15 || true
 fi
