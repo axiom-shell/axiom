@@ -29,6 +29,8 @@ ValueStyleWidget {
   // Ticking: sized by its digit count, not by each second's digits
   steadyDigits: true
   labelShown: root.showsTimer || root.showsStopwatch
+  // Idle, stacked shows no time either, as the label doesn't
+  styleText: root.labelShown ? root.text : ""
   ratio: root.showsTimer ? StopwatchManager.timerProgress : root.showsStopwatch ? (StopwatchManager.elapsed % 60000) / 60000 : -1
   subtext: root.showsTimer ? I18n.tr("Timer") : root.showsStopwatch ? I18n.tr("Lap {0}", StopwatchManager.laps.length + 1) : ""
   accentColor: Theme.resolveColor(root.showsTimer ? properties.timerColor : root.showsStopwatch ? properties.stopwatchColor : properties.idleColor)

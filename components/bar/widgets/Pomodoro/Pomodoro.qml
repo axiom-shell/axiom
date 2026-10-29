@@ -24,6 +24,8 @@ ValueStyleWidget {
   steadyDigits: true
   labelShown: !PomodoroManager.idle
   ratio: PomodoroManager.idle ? -1 : PomodoroManager.progress
+  // Idle, stacked shows no time either, as the label doesn't
+  styleText: PomodoroManager.idle ? "" : root.text
   subtext: PomodoroManager.idle ? "" : PomodoroManager.isBreak ? I18n.tr("Break") : I18n.tr("Focus")
   accentColor: Theme.resolveColor(PomodoroManager.idle ? properties.idleColor : PomodoroManager.isBreak ? properties.breakColor : properties.workColor)
   // Paused part way: faded

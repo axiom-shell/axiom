@@ -126,7 +126,7 @@ BaseWidget {
         // Across a bar, its figures (a digit's height) centred where the
         // icon's middle is (the run's, with none) on a whole pixel: centred
         // as a box, a label sits high, its box holding the descent
-        readonly property rect _figure: figureMetrics.tightBoundingRect("0")
+        readonly property rect _figure: figureMetrics.tightBoundingRect
         x: root._turned ? (textSlot.width - width) / 2 : 0
         y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - baselineOffset + _figure.height / 2)
         width: root._turned ? textSlot.height : textSlot.width
@@ -146,9 +146,12 @@ BaseWidget {
     }
   }
 
-  FontMetrics {
+  // A digit's ink, measured again with the font (FontMetrics'
+  // tightBoundingRect() is a call, which a binding never re-runs)
+  TextMetrics {
     id: figureMetrics
     font: textLabel.font
+    text: "0"
   }
 
   // The label with its digits as zeros, for steadyDigits
