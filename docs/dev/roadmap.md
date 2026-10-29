@@ -177,7 +177,6 @@ Done: sway and SwayFX (nothing left). niri's entries are [deferred](#deferred) (
 Hyprland, and every compositor:
 - [The scrolling layout's workspaces don't come back with their monitor](issues.md#the-scrolling-layouts-workspaces-dont-come-back-with-their-monitor)
 - [Hyprland's default workspace doesn't highlight its first window](issues.md#hyprlands-default-workspace-doesnt-highlight-its-first-window)
-- [Without a backend, every gaps reader assumes the screen margin](issues.md#without-a-backend-every-gaps-reader-assumes-the-screen-margin)
 
 ### Phase 7: fit, geometry and performance
 Nothing runs off a screen or clips at 1080p, and pages stay fast as their data grows. Take the 1080p entries as one pass in a nested compositor with a 1080p output.

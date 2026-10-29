@@ -136,13 +136,12 @@ Singleton {
   // The focused window's id, or ""
   readonly property string activeWindowId: root.backend?.activeWindowId ?? ""
   // The gaps the compositor leaves at the screen edges, after reserved
-  // zones ({ top, right, bottom, left }). With no backend to ask, the
-  // screen margin, so a floating bar isn't flush on the border
+  // zones ({ top, right, bottom, left })
   readonly property var gapsOut: root.backend?.gapsOut ?? ({
-      "top": Appearance.screenMargin,
-      "right": Appearance.screenMargin,
-      "bottom": Appearance.screenMargin,
-      "left": Appearance.screenMargin
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
     })
   // The compositor's blur as in effect ({ enabled, size, passes }). With
   // none, the strength is Hyprland's default, which the lock screen's and

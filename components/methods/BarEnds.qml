@@ -16,7 +16,8 @@ import QtQuick
 // `floatGapAuto`, `trim` (how much less than its extent it reserves),
 // `enabled`, `reserveSpace`, `monitor`, `top`/`bottom`/`left`/`right`.
 // `opts`: { border (the screen border is on), borderWidth, gapsOut (per
-// edge name) }.
+// edge name), floatGaps (what an Automatic float gap keeps, per edge
+// name) }.
 //
 // An end is { kind, joinable, straight, held, reach, over, gap }:
 // - kind: "border" (the border's stroke), "bare" (a bare screen edge),
@@ -119,9 +120,10 @@ QtObject {
     // Nothing to join: held clear of it. Its window ends at that bar's
     // reserved line, `trim` short of its inner edge (a transparent bar's
     // gaps_out). Its own float gap past that edge, or (Automatic, and for
-    // bars without one) as far as windows start past it.
+    // bars without one) as far as windows start past it: a floating bar's
+    // Automatic gap is floatGaps', the screen margin with no backend.
     const over = other.trim ?? 0;
-    const auto = Math.max(0, (opts.gapsOut?.[edge] ?? 0) - over);
+    const auto = Math.max(0, ((bar.island ? opts.floatGaps : opts.gapsOut)?.[edge] ?? 0) - over);
     return {
       "kind": "bar",
       "joinable": false,

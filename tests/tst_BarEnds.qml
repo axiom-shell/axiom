@@ -13,6 +13,12 @@ TestCase {
         "bottom": 10,
         "left": 10,
         "right": 10
+      },
+      "floatGaps": {
+        "top": 10,
+        "bottom": 10,
+        "left": 10,
+        "right": 10
       }
     })
   readonly property var borderless: Object.assign({}, withBorder, {
@@ -152,6 +158,28 @@ TestCase {
     compare(owner.start.kind, "border");
     compare(under.end.kind, "bar");
     compare(under.end.over, 10);
+  }
+
+  function test_automatic_float_gap_without_a_backend() {
+    // No backend: gaps_out is 0, a floating bar's Automatic gap the margin
+    const opts = Object.assign({}, withBorder, {
+      "gapsOut": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "floatGaps": {
+        "top": 8,
+        "bottom": 8,
+        "left": 8,
+        "right": 8
+      }
+    });
+    const [island] = ends([bar("left", "floating"), bar("bottom", "pills")], opts);
+    compare(island.end.gap, 8, "a floating bar keeps the margin");
+    const [pills] = ends([bar("left", "transparent"), bar("bottom", "pills")], opts);
+    compare(pills.end.gap, 0, "any other bar keeps gaps_out");
   }
 
   function test_solid_owns_its_corners() {
