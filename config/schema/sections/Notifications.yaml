@@ -3,6 +3,7 @@
 x-scope: personal
 type: object
 x-category: Notifications
+x-intro: NotificationsPreview
 title: Notifications
 description: "Where notification toasts appear, how long they stay, and what the history keeps. Toasts sit inside the work area, the space the bars and screen border leave free, so a gap is measured from whatever is at that edge: a bar, the border's stroke, or the bare screen edge."
 additionalProperties: false

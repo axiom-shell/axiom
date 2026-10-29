@@ -358,11 +358,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### Notifications have no blur backing and an invisible border
-- **Where:** `components/surfaces/notifications/NotificationToast.qml` (`BoxBlurRegion`, `borderColor`)
-- **What:** From the maintainer's notes: a notification gets no blur backing (always, or likely only the first after launch; on sway too), and its border is `Theme.backgroundAlt`, the background's colour, so its edge can't be seen: it wants a foreground colour.
+### Notifications have no blur backing on sway and Hyprland
+- **Where:** `components/surfaces/notifications/NotificationToast.qml` (a `PopupWindow`), `shell/Notifications.qml` (`anchorPanel`), `backend/internal/compositor/render/sway.go` (`SwaySurfaceBlurLines`)
+- **What:** From the maintainer's notes: a notification gets no blur backing (always, or likely only the first after launch; on sway too). Not reproduced in nested niri (2026-10-29, at 70% opacity): every toast blurred, the first after launch too (`BoxBlurRegion`). Nested Hyprland doesn't start under niri, and nested sway isn't used. Likely cause on sway: a toast is an xdg_popup of the 1×1 `axiom-notifications` layer window, and SwayFX's `layer_effects` doesn't blur a layer's popups ([sway backend](compositor/sway-backend.md)), so the rule written for that namespace blurs only the invisible anchor. On Hyprland the `axiom-blur` rule's `blur_popups` should cover them; why the first wouldn't is unexplained. A possible fix (a guess for Hyprland, whose cause is unknown): each toast its own layer window in that namespace (corner anchors, the gap plus its stack offset as margins, Normal exclusion), blurred by the rules like the other `blurSurfaces`; it then wants `no_anim` on Hyprland, as it slides itself.
 - **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap; narrowed 2026-10-29 (the border half fixed)
 
 ### Typing in modules on the overlay and the desktop
 - **Where:** `components/hosts/overlay/OverlayPanel.qml` (`keyboardFocus`), `components/surfaces/desktop/DesktopWindow.qml` (`keyboardFocus`, `wantsKeyboard`)
