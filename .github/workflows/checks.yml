@@ -2,10 +2,14 @@ name: Checks
 
 # Pull requests only: a PR's run checks its merge commit, which is what
 # lands on main (merges are serial), so main isn't checked again. Run by hand
-# (Actions → Checks → Run workflow) for a full run on any branch
+# (Actions → Checks → Run workflow) for a full run on any branch. Weekly on
+# main, the go job alone: govulncheck sees advisories published since the
+# last PR touching Go
 on:
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * 1"
 
 permissions:
   contents: read
@@ -21,6 +25,7 @@ concurrency:
 
 jobs:
   checks:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     # Arch, for a go new enough to build the schema (the other jobs' image)
     container: archlinux:latest
@@ -72,6 +77,7 @@ jobs:
   # Quickshell (with its type info) as the shell does. A container image is
   # not an action, so the org's action policy doesn't apply to it.
   qt:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     container: archlinux:latest
     steps:
@@ -163,6 +169,7 @@ jobs:
   # The script tests (the slowest checks) and the shell script lint, beside
   # the qt job rather than after it
   scripts:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     container: archlinux:latest
     steps:
