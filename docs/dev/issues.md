@@ -200,6 +200,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-19, while adding the scrolling layout
 
+### Per-monitor workspace blocks shift when a monitor unplugs
+- **Where:** `components/methods/WorkspaceGeometry.qml` (`blockBases`), `services/compositor/CompositorManager.qml` (`_bases`, `outputsHotplugged`)
+- **What:** `WorkspaceGeometry.blockBases` numbers each monitor's block by its place among the connected monitors (primary first, then output identity). Under the `perMonitor` and `grid` layouts (Hyprland, sway), unplugging a monitor that isn't last in that order gives every monitor after it a new base: its workspaces (201…) now sit outside its block (101…), so its switcher, grid and steps miss them until `axiom ipc workspaces reconcile`; replugging shifts the blocks back. Nothing reacts to `outputsHotplugged`. The scrolling layout's plan (`docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`) fixes it for that layout only: its option B (the remap on hotplug) fixes this too if it runs for every per-monitor layout rather than only under `dynamicByLayout`, and option C (blocks from the saved monitor profiles) does if `CompositorManager._bases` takes the same numbering.
+- **Size:** small
+- **Found:** 2026-10-29, while planning the scrolling layout's workspaces
+
 ### Calendar times in a Windows zone name with no VTIMEZONE read as local time
 - **Where:** `backend/internal/calendar/ical/zone.go` (`Zones.With`), `backend/internal/calendar/calendar.go` (`New`'s `Lookup`)
 - **What:** A TZID the zone database doesn't know is read only from the object's own VTIMEZONE. The Python helper this replaced (icalendar's `tzp.timezone`) also mapped a Windows zone name (`Pacific Standard Time`, about 140 of them in its `WINDOWS_TO_OLSON` table) and a "globally unique" `/vendor/…/Europe/Berlin` TZID to the IANA zone without one. An event naming such a zone with no VTIMEZONE beside it (rare: Outlook's feeds and invitations carry theirs) now shows at its wall time read as local time, off by the zones' difference. A fix is the CLDR windowsZones table and the prefix strip in `Lookup`; whether the rare case is worth the table is the maintainer's call.
