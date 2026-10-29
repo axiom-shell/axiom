@@ -297,6 +297,7 @@ BaseView {
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         visible: !root.editing && !root.keyboard && root.narrowed && root.sections.length === 0
         text: root.lookupId !== "" ? I18n.tr("Nothing is bound to {0}", KeybindManager.displayCombo(KeybindManager.page.lookupCombo)) : root.query !== "" ? I18n.tr("No keybinds match \"{0}\"", root.query) : I18n.tr("No keybinds match the filters")
         opacity: 0.6

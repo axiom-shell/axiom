@@ -212,8 +212,9 @@ Item {
             text: root.scriptHead
             textFamily: "monospace"
             textSize: Appearance.fontSizeBy(-3)
-            wrapMode: Text.NoWrap
-            elide: Text.ElideRight
+            // A long line wraps inside the card (multi-line text doesn't
+            // elide without a wrap)
+            wrapMode: Text.Wrap
             opacity: 0.8
           }
         }

@@ -28,7 +28,8 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Text and structure (`reusable/`)
 - `StyledText` / `StyledIcon`.
-- `SectionHeading`: accent title + muted description.
+- `SectionHeading`: accent title + muted description, folded past three lines.
+- `ClampedText`: muted help text cut to `maxLines` (3) with a More / Less link, shown only when it's longer. Field and card descriptions use it.
 - `FieldGroup`: a titled card of fields; `headerExtras` beside the heading.
 - `StyledContainer`: a themed box (surface opacity or solid, optional border and radius).
 - `StyledScrollView`: a ScrollView with the shell's padding and a thin accent scroll bar.
@@ -61,7 +62,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `SegmentButton`: a choice, accent when `active`; `Layout.fillWidth: false` in a row of pills.
 - `SegmentRow`: a single choice of SegmentButtons on one track, the accent sliding to the active one. Toggles and multi-select chips stay plain rows or Flows.
 - `StyledTabBar` (of `StyledTabButton`s): its current tab's highlight slides between tabs.
-- `StyledTextEntry`: see [QML pitfalls](qml-pitfalls.md) (push the value in, act on `textEdited`). `StyledTextArea`: multi-line, optionally growing with its text.
+- `StyledTextEntry`: see [QML pitfalls](qml-pitfalls.md) (push the value in, act on `textEdited`). `StyledTextArea`: multi-line, optionally growing with its text (`expandable`, capped at `maxLines`, then it scrolls); `singleLine` makes it a one-line value that wraps (line breaks become spaces, Enter submits, Tab moves on).
 - `PasswordEntry`: a password field with a message, a busy bar and `shake()`.
   - It has no authenticator of its own: the lock screen's `PasswordField`, the greeter's `LoginField` and the polkit prompt wire it.
 - `StyledComboEntry`: a choice from a list dropping down under a field, optionally typed. In a popout or edge menu (its window declares `popoutRoom`) the list opens inline (`expandsInline`), inside the field's layout, since a dropdown Popup there is a window the popout's hover and blur don't reach. It's capped by the room the box has left to grow, or in an edge menu by the Flickable around it, which scrolls it into view.
@@ -85,7 +86,9 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `content/base/SaveResetActions`: an editor's Save/Discard pair, both shown only with unsaved edits or typed text. `compact` drops to icons, as `CardHeader` does when its row is too narrow. Items placed in a `CardHeader` sit just after its title.
 
 ### Forms (`forms/`)
-- `SchemaField`: one schema row, any type. It picks `SchemaSwitch`, `SchemaNumberField` (slider or stepper), `SchemaComboBox`, `SchemaTextField` (commits on Enter, focus loss or a suggestion; a Browse button with `x-control: "folder"`) or `SchemaObjectArray` (a list of `SchemaArrayItem`s): use `SchemaField`, not those, unless you need one alone.
+- `SchemaField`: one schema row, any type. It picks `SchemaSwitch`, `SchemaNumberField` (slider or stepper), `SchemaComboBox`, `SchemaTextField` (commits on Enter, focus loss or a suggestion; a long value wraps, growing to four lines, then scrolls; a Browse button with `x-control: "folder"`) or `SchemaObjectArray` (a list of `SchemaArrayItem`s): use `SchemaField`, not those, unless you need one alone.
+- `FieldHeader`: a field's label (medium weight) with its description right under it, and a `trailing` slot on the label's line (the settings row's unsaved dot and reset, passed down as `SchemaField.headerExtra`). Every schema control draws its label through it; a switch sits at the row's right end, centred on the label and description, the row clickable. On a field at least `Widget.fieldInlineFrom` wide, a dropdown or slider sits beside the label too (`Widget.fieldControlWidth`); text boxes stay under it. The settings page's reset button's tooltip names the default.
+- `FormRow`: one row of any schema form (the settings page's `SettingsField`, `SchemaPropertiesForm`'s and `SettingRows`' rows): a hairline across the gap above it (`dividerGap`, none on the top row), an accent rail beside a row shown by a sibling's value (`indented`: `SchemaField.followsSibling`), and a fold open and shut as `shown` flips. A form's grid or column keeps no row spacing of its own.
 - `SchemaPropertiesForm`: a flat object; `order`.
 - `SettingRows`: dotted config paths as rows, saved debounced.
 - `OptionsGroup`: an inspector's Options card (problem, form, empty text).

@@ -278,6 +278,7 @@ Panel {
     }
 
     StyledText {
+      wrapMode: Text.WordWrap
       visible: root.recent.length === 0
       Layout.fillWidth: true
       horizontalAlignment: Text.AlignHCenter

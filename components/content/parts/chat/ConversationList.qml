@@ -84,6 +84,7 @@ DropdownSurface {
             Component {
               id: headerRow
               StyledText {
+                elide: Text.ElideRight
                 width: row.width
                 topPadding: row.index > 0 ? Widget.spacing * 2 : Widget.spacing / 2
                 bottomPadding: Widget.spacing / 2

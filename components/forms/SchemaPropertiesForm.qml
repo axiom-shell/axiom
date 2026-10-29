@@ -76,51 +76,58 @@ ColumnLayout {
     Layout.fillWidth: true
     columns: 2
     columnSpacing: Widget.spacing * 2
-    rowSpacing: root.spacing
+    // The rows keep their gaps themselves (FormRow.dividerGap)
+    rowSpacing: 0
 
     Repeater {
       id: fields
       model: root.rows
 
-      // The field, then its `x-link`s
-      delegate: ColumnLayout {
+      // The field, then its `x-link`s, as a FormRow
+      delegate: FormRow {
         id: cell
         required property var modelData
         required property int index
-        // SchemaField hides itself for `x-showIf`; follow it so the layout
-        // doesn't keep its space (`shown`, not `visible`: that would read
-        // false forever once this cell hides)
-        readonly property bool shown: field.item?.shown ?? false
+        // Unknown until the field streams in, so it takes its height then
+        // rather than folding open
+        shown: field.item ? field.item.shown : undefined
+        indented: field.item?.followsSibling ?? false
+        bodyHeight: column.implicitHeight
         readonly property bool _beside: modelData.schema?.["x-beside"] === true
         // Read again once every field exists (`count` changes after the
         // Repeater made them): itemAt doesn't notify, and the field after
         // this one doesn't exist yet when it's made
         readonly property var _partner: fields.count < 0 ? null : _beside ? fields.itemAt(index - 1) : root.rows[index + 1]?.schema?.["x-beside"] === true ? fields.itemAt(index + 1) : null
-        readonly property bool half: root.pairs && (_partner?.shown ?? false)
-        Layout.fillWidth: true
+        readonly property bool half: root.pairs && _partner?.shown === true
         Layout.columnSpan: half ? 1 : 2
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
-        visible: shown
-        spacing: Widget.spacing / 2
 
-        // Loaded by URL: SchemaField (through SchemaObjectArray and
-        // SchemaArrayItem) instantiates this type, so naming it here would
-        // make the types depend on each other. Streamed: a page's forms
-        // fill in over the frames after it opens
-        StreamedLoader {
-          id: field
-          Layout.fillWidth: true
-          label: "form field"
-          Component.onCompleted: setSource(Qt.resolvedUrl("SchemaField.qml"), {
-            "row": cell.modelData,
-            "form": root
-          })
-        }
+        ColumnLayout {
+          id: column
+          width: parent.width
+          spacing: Widget.spacing / 2
 
-        FieldLinks {
-          Layout.fillWidth: true
-          links: cell.modelData.schema?.["x-link"]
+          // Loaded by URL: SchemaField (through SchemaObjectArray and
+          // SchemaArrayItem) instantiates this type, so naming it here would
+          // make the types depend on each other. Streamed: a page's forms
+          // fill in over the frames after it opens. Kept drawn while the
+          // row folds shut (the row hides once it has)
+          StreamedLoader {
+            id: field
+            Layout.fillWidth: true
+            label: "form field"
+            Component.onCompleted: setSource(Qt.resolvedUrl("SchemaField.qml"), {
+              "row": cell.modelData,
+              "form": root,
+              "visible": true
+            })
+          }
+
+          FieldLinks {
+            Layout.fillWidth: true
+            links: cell.modelData.schema?.["x-link"]
+          }
         }
       }
     }

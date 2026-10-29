@@ -120,6 +120,7 @@ ColumnLayout {
             spacing: Widget.spacing
 
             StyledText {
+              elide: Text.ElideRight
               Layout.preferredWidth: Appearance.fontSize * 5
               text: I18n.tr(slot.modelData)
             }

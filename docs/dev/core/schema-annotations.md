@@ -79,7 +79,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-allScreens`: adds All monitors (`"*"`) to a `"screens"` picker.
 - `x-enumLabels` (`{ value: label }`): labels shown instead of raw enum values in dropdowns.
 - `x-suggestions` (e.g. `"audioApps"`): chips under a text field (`SettingsManager.suggestionsFor`).
-- `x-multiline: true`: a growing text area.
+- `x-multiline: true`: a growing text area that holds line breaks (Enter makes one, Ctrl+Enter commits). Without it a text field is one line, wrapped to four as it grows.
 - `x-control`:
   - `"slider"` | `"stepper"`: overrides the integer control choice (below).
   - `"readonly"`: shows a string with a copy button instead of a field (an edge menu's `id`).

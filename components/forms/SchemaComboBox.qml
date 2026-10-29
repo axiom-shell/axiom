@@ -7,12 +7,16 @@ import qs.components.reusable
 import qs.components.methods
 
 // i18n: keys from callers and the schema (titles, descriptions, type labels)
-ColumnLayout {
+// A choice from a list: the box beside its label on a wide form
+// (Widget.fieldInlineFrom), under it on a narrow one
+GridLayout {
   id: root
   required property string label
   required property var options
   required property string currentValue
   property string description: ""
+  // After the label (FieldHeader.trailing)
+  property Component headerExtra: null
   // Options are color names (Theme.resolveColor): paint the box and each
   // row in the color it names (an empty one, automatic, shows its label)
   property bool swatches: false
@@ -31,18 +35,27 @@ ColumnLayout {
 
   signal selectionChanged(string newValue)
 
-  Layout.fillWidth: true
-  spacing: Widget.spacing
+  readonly property bool inline: root.label !== "" && root.width >= Widget.fieldInlineFrom
 
-  StyledText {
-    text: I18n.tr(root.label)
-    visible: root.label !== ""
-    Layout.fillWidth: true
+  Layout.fillWidth: true
+  columns: root.inline ? 2 : 1
+  rowSpacing: Widget.spacing
+  columnSpacing: Widget.spacing * 2
+
+  FieldHeader {
+    label: root.label
+    description: root.description
+    trailing: root.headerExtra
+    // Centred on a control taller than it (a label alone)
+    Layout.alignment: Qt.AlignVCenter
   }
 
   StyledContainer {
     id: comboContainer
-    Layout.fillWidth: true
+    Layout.fillWidth: !root.inline
+    Layout.preferredWidth: root.inline ? Widget.fieldControlWidth(root.width) : -1
+    // Beside the label: centred on it and its description
+    Layout.alignment: Qt.AlignVCenter
     Layout.preferredHeight: Widget.height
     backgroundColor: root._currentColor
     borderColor: comboBox.popup.visible ? Theme.accent : Theme.border
@@ -150,14 +163,5 @@ ColumnLayout {
         comboBox.popup.open();
       }
     }
-  }
-
-  StyledText {
-    visible: root.description !== ""
-    text: I18n.tr(root.description)
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
-    Layout.fillWidth: true
   }
 }

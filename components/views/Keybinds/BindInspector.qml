@@ -221,6 +221,7 @@ ColumnLayout {
           spacing: 0
 
           StyledText {
+            wrapMode: Text.WordWrap
             text: flag.modelData[1]
             Layout.fillWidth: true
           }

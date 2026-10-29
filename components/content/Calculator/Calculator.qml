@@ -409,6 +409,7 @@ Panel {
               }
             }
             StyledText {
+              elide: Text.ElideRight
               visible: !root.strip
               Layout.fillWidth: true
               horizontalAlignment: answerBox.centred ? Text.AlignHCenter : Text.AlignRight

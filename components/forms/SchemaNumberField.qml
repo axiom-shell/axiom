@@ -29,9 +29,8 @@ ColumnLayout {
   readonly property int highest: Math.floor(root.maximum / root.unitScale)
   readonly property int step: Math.max(1, Math.round(root.stepSize / root.unitScale))
   readonly property int shownConfigValue: Math.round(root.currentConfigValue / root.unitScale)
-  // Room kept free at the header's right end (the settings row's reset
-  // button sits there)
-  property int headerInset: 0
+  // After the label (FieldHeader.trailing)
+  property Component headerExtra: null
   // Shown after the value, e.g. "px", "%", "ms"
   property string unit: ""
   // "auto" picks by range; "slider" or "stepper" forces one
@@ -52,6 +51,7 @@ ColumnLayout {
   readonly property int buttonSize: controlHeight - (containerMargins * 2)
 
   readonly property int steps: Math.round((highest - lowest) / step)
+  readonly property bool inline: root.label !== "" && root.width >= Widget.fieldInlineFrom
   readonly property bool isSlider: mode === "slider" || (mode === "auto" && steps >= 7 && steps <= 200)
   // Word units are translated; symbols (px, %, ms, ‰) pass through
   // I18n.tr("min") I18n.tr("days") I18n.tr("tokens")
@@ -112,20 +112,27 @@ ColumnLayout {
     onTriggered: root.commit()
   }
 
-  RowLayout {
+  // The label, then the stepper beside it, or the slider: beside it on a
+  // wide form (Widget.fieldInlineFrom), under it on a narrow one
+  GridLayout {
     Layout.fillWidth: true
-    Layout.rightMargin: root.headerInset
-    spacing: Widget.spacing
+    columns: root.isSlider && !root.inline ? 1 : 2
+    rowSpacing: Widget.spacing
+    columnSpacing: Widget.spacing * 2
 
-    StyledText {
-      text: I18n.tr(root.label)
-      Layout.fillWidth: true
-      elide: Text.ElideRight
+    FieldHeader {
+      label: root.label
+      description: root.description
+      trailing: root.headerExtra
+      // Centred on a control taller than it (a label alone)
+      Layout.alignment: Qt.AlignVCenter
     }
 
     // Stepper: [−10][−][ value ][+][+10]
     StyledContainer {
       visible: !root.isSlider
+      // Centred on the label and description beside it
+      Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
       borderColor: Theme.border
       Layout.preferredHeight: root.controlHeight
       Layout.preferredWidth: stepperRow.implicitWidth + root.containerMargins * 2
@@ -171,42 +178,35 @@ ColumnLayout {
         }
       }
     }
-  }
 
-  // Slider: track, then the value box
-  RowLayout {
-    visible: root.isSlider
-    Layout.fillWidth: true
-    spacing: Widget.spacing
+    // Slider: track, then the value box
+    RowLayout {
+      visible: root.isSlider
+      Layout.fillWidth: !root.inline
+      Layout.preferredWidth: root.inline ? Widget.fieldControlWidth(root.width) : -1
+      Layout.alignment: Qt.AlignVCenter
+      spacing: Widget.spacing
 
-    StyledSlider {
-      Layout.fillWidth: true
-      Layout.preferredHeight: root.controlHeight
-      troughHeight: Widget.px(6)
-      troughColor: Theme.border
-      fillColor: Theme.accent
-      handleColor: Theme.foreground
-      handleWidth: Widget.px(14)
-      handleHeight: Widget.px(14)
-      handleRadius: Widget.px(7)
-      // Not `value`: dragging assigns that, which would drop the binding
-      targetValue: root.highest > root.lowest ? (root.value - root.lowest) / (root.highest - root.lowest) : 0
-      onMoved: ratio => root.value = root.clamp(root.lowest + ratio * (root.highest - root.lowest))
-      onReleased: ratio => root.setValue(root.lowest + ratio * (root.highest - root.lowest), true)
+      StyledSlider {
+        Layout.fillWidth: true
+        Layout.preferredHeight: root.controlHeight
+        troughHeight: Widget.px(6)
+        troughColor: Theme.border
+        fillColor: Theme.accent
+        handleColor: Theme.foreground
+        handleWidth: Widget.px(14)
+        handleHeight: Widget.px(14)
+        handleRadius: Widget.px(7)
+        // Not `value`: dragging assigns that, which would drop the binding
+        targetValue: root.highest > root.lowest ? (root.value - root.lowest) / (root.highest - root.lowest) : 0
+        onMoved: ratio => root.value = root.clamp(root.lowest + ratio * (root.highest - root.lowest))
+        onReleased: ratio => root.setValue(root.lowest + ratio * (root.highest - root.lowest), true)
+      }
+
+      ValueBox {
+        Layout.preferredHeight: root.controlHeight
+      }
     }
-
-    ValueBox {
-      Layout.preferredHeight: root.controlHeight
-    }
-  }
-
-  StyledText {
-    visible: root.description !== ""
-    text: I18n.tr(root.description)
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
-    Layout.fillWidth: true
   }
 
   // Wide enough for the longest value in range, so it doesn't jitter

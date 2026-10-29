@@ -73,6 +73,12 @@ QtObject {
   function px(n: real): int {
     return Math.round(n * scale);
   }
+  // A form field at least this wide puts a short control (a dropdown, a
+  // slider) beside its label, at fieldControlWidth; narrower, under it
+  readonly property int fieldInlineFrom: px(420)
+  function fieldControlWidth(fieldWidth: real): int {
+    return Math.round(Math.min(px(260), fieldWidth * 0.42));
+  }
   // Corners of what sits inside something (cards, controls, rows, bar
   // widgets); outer edges use Appearance.borderRadius
   // (null: the main radius, Appearance's: x-inherit)

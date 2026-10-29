@@ -222,6 +222,7 @@ ColumnLayout {
   }
 
   StyledText {
+    wrapMode: Text.WordWrap
     visible: KeybindManager.editor.binds.length === 0
     text: I18n.tr("No binds yet. Add one, or start from a preset.")
     opacity: 0.6
@@ -229,6 +230,7 @@ ColumnLayout {
   }
 
   StyledText {
+    wrapMode: Text.WordWrap
     visible: KeybindManager.page.editQuery.trim() !== "" || KeybindManager.page.editFiltering
     text: KeybindManager.page.visibleIndices.length > 0 ? I18n.tr("Showing {0} of {1}", KeybindManager.page.visibleIndices.length, KeybindManager.editor.binds.length) : KeybindManager.page.editQuery.trim() !== "" ? I18n.tr("No binds match \"{0}\"", KeybindManager.page.editQuery.trim()) : I18n.tr("No keybinds match the filters")
     opacity: 0.6

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
-import qs.config
 import qs.services.ui
 
 // Settings by dotted config path ("Apps.terminal"), each a SchemaField
@@ -66,16 +65,27 @@ ColumnLayout {
     onTriggered: root.flush()
   }
 
-  spacing: Widget.spacing * 1.5
+  // The rows keep their gaps themselves (FormRow.dividerGap)
+  spacing: 0
 
   Repeater {
     model: root.rows
 
-    delegate: SchemaField {
+    delegate: FormRow {
+      id: rowItem
       required property var modelData
-      Layout.fillWidth: true
-      row: modelData
-      form: root
+      shown: field.shown
+      indented: field.followsSibling
+      bodyHeight: field.implicitHeight
+
+      SchemaField {
+        id: field
+        width: parent.width
+        row: rowItem.modelData
+        form: root
+        // Kept drawn while the row folds shut (the row hides once it has)
+        visible: true
+      }
     }
   }
 }

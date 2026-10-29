@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import qs.config
 
 // A section's title in the accent, with an optional muted description under
-// it (FieldGroup, the theme list)
+// it, folded to three lines behind More (FieldGroup, the theme list)
 ColumnLayout {
   id: root
 
@@ -15,6 +15,7 @@ ColumnLayout {
   spacing: 2
 
   StyledText {
+    wrapMode: Text.WordWrap
     Layout.fillWidth: true
     text: root.title
     textColor: Theme.accent
@@ -22,12 +23,8 @@ ColumnLayout {
     font.bold: true
   }
 
-  StyledText {
-    visible: root.description !== ""
-    Layout.fillWidth: true
+  ClampedText {
     text: root.description
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
+    textOpacity: 0.7
   }
 }

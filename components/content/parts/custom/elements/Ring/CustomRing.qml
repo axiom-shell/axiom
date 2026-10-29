@@ -38,6 +38,7 @@ CustomElementBase {
   }
 
   StyledText {
+    elide: Text.ElideRight
     visible: root.label !== ""
     anchors.centerIn: parent
     width: ring.side * 0.7
