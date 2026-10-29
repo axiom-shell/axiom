@@ -9,6 +9,7 @@
 ### joins and place
 - **`joins`:** an end joins a joinable perpendicular stroke when the box would either be pushed back from that stroke or come within a connector gap of it.
   - Every surface does this unless it is held off its edge. OSDs and the launcher are included.
+- **`growth`:** which way a bar popout grows while open, so its controls stay put, and where its start (`down`) or end (`up`) stays along a vertical bar. `place` then gets that as its `aligned` start. See [Hosts and switching](hosts-and-switching.md) › Bar popout window sizing.
 - **`place`:** returns the mode, which is one of:
   - `plain`
   - out of a `pill` or out of an `island`. These follow the same rules: a pill bar's pills are met the way islands are; see [Floating bars](pill-and-floating-bars.md#floating-bars-islands).

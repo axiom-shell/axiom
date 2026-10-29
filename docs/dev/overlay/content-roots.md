@@ -24,7 +24,8 @@
   - `scrollTo(item, center)` (animated) brings a descendant to the top, or to the middle with `center`.
 - All of them expose `properties`, `slotRect`, `cols`/`rows`, `shape`, `compact`, `pad` and `innerWidth`/`innerHeight` (the room inside `pad`). They take what they derive from their place from `base/SlotContext`.
 - A popout with a text field sets `wantsKeyboardFocus`: BarPopouts then takes a focus grab and the bar takes keyboard focus on demand; a click outside emits `focusLost`.
-- How a bar popout's window is sized around its content (`spareAcross`, `maxImplicitHeight`/`maxImplicitWidth`, the shown-box animation): see [Popout hosts and switching](../popouts/hosts-and-switching.md).
+- Content that grows in a popout reads which way it grows as `growth` (`growsUp`; always `down` in a card) and sets `flips` to show its column in reverse while it grows up, so its controls stay by the bar (`reusable/LayoutOrder`).
+- How a bar popout's window is sized around its content (`spareAcross`, `maxImplicitHeight`/`maxImplicitWidth`, the shown-box animation, growing while open): see [Popout hosts and switching](../popouts/hosts-and-switching.md).
 
 ### Content can be both
 - A `Panel`-rooted file is a bar popout and a card at once.

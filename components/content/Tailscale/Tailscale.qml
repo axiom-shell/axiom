@@ -39,6 +39,10 @@ Panel {
   implicitWidth: Widget.px(380)
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 11
+  // In a popout the list grows away from the controls, which stay by the
+  // bar (Panel.growth)
+  flips: true
+  maxImplicitHeight: root.implicitHeight + list.growRoom
 
   Component.onCompleted: TailscaleManager.acquire(root)
   Component.onDestruction: TailscaleManager.release(root)
@@ -236,16 +240,22 @@ Panel {
       onClicked: TailscaleManager.openLogin()
     }
   }
-  Repeater {
-    // a count, so the rows outlive each state
-    model: TailscaleManager.health.length
-    StyledText {
-      required property int index
-      Layout.fillWidth: true
-      wrapMode: Text.Wrap
-      text: TailscaleManager.health[index] ?? ""
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.warning
+  // In a column of its own, so the panel's column can flip (Panel.flips)
+  ColumnLayout {
+    visible: TailscaleManager.health.length > 0
+    Layout.fillWidth: true
+    spacing: root.spacing
+    Repeater {
+      // a count, so the rows outlive each state
+      model: TailscaleManager.health.length
+      StyledText {
+        required property int index
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: TailscaleManager.health[index] ?? ""
+        textSize: Appearance.fontSizeBy(-2)
+        textColor: Theme.warning
+      }
     }
   }
   StyledText {

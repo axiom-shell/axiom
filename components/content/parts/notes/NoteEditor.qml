@@ -344,7 +344,6 @@ Item {
     anchors.fill: parent
     contentPadding: 0
     showScrollBar: blocks.implicitHeight > scroll.height
-    rightPadding: showScrollBar ? Widget.px(12) : 0
 
     Item {
       width: scroll.availableWidth

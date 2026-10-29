@@ -66,6 +66,33 @@ QtObject {
     };
   }
 
+  // Which way a bar popout grows while it's open, so its controls (kept on
+  // the side it grows from) never move: away from the bar on a horizontal
+  // one (`up` from a bottom bar), and along a vertical one `down` from
+  // where it opened centred on its anchor, or `up` from its end when its
+  // most length wouldn't fit below (a widget low on the bar). With room
+  // neither way, the way with more. `s`: vertical, bottom, anchorStart,
+  // anchorLength, openLength (the box's length as it opened), maxLength
+  // (the most it may grow to), lo, hi (where an unjoined box keeps
+  // within). Returns { direction: "down" | "up", pinned: along a vertical
+  // bar, where the box's start (down) or end (up) stays; NaN on a
+  // horizontal one, whose box stays centred }
+  function growth(s) {
+    if (!s.vertical)
+      return {
+        "direction": s.bottom ? "up" : "down",
+        "pinned": NaN
+      };
+    const start = Math.max(s.lo, Math.min(s.anchorStart + (s.anchorLength - s.openLength) / 2, s.hi - s.openLength));
+    const end = start + s.openLength;
+    const length = Math.max(s.maxLength, s.openLength);
+    const down = start + length <= s.hi || (end - length < s.lo && s.hi - start >= end - s.lo);
+    return {
+      "direction": down ? "down" : "up",
+      "pinned": down ? start : end
+    };
+  }
+
   // The pill (or island) a box centred at `centre` belongs to, with its
   // index: the one under the centre, or for an island the nearest
   function pillAt(pills, centre, island) {
