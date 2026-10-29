@@ -314,7 +314,6 @@ Needs a plan:
 
 Resolves:
 - [A note's view jumps while typing and forgets its place](issues.md#a-notes-view-jumps-while-typing-and-forgets-its-place)
-- [The layouts editor says a page is shrunk to 99% at the defaults](issues.md#the-layouts-editor-says-a-page-is-shrunk-to-99-at-the-defaults)
 - [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made)
 - [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop)
 - [Warning triangles say nothing on hover](issues.md#warning-triangles-say-nothing-on-hover)

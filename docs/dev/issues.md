@@ -334,12 +334,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### The layouts editor says a page is shrunk to 99% at the defaults
-- **Where:** `components/views/Layouts/PageTarget.qml` (`Shrunk to {0}% on {1}`)
-- **What:** From the maintainer's notes: with every scale at its default 100 %, the layouts editor still shows a page as shrunk to 99 %: a fit a hair under 1 is reported as shrinking.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### The monitor editor shows changes nobody made
 - **Where:** `services/compositor/MonitorManager.qml` (`draft`, `ensureLoaded`), `components/views/Monitors/Monitors.qml`
 - **What:** From the maintainer's notes: the monitors page shows unsaved changes when nothing was changed (likely a value the draft normalises on load differing from the saved one).
