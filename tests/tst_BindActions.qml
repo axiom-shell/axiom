@@ -62,11 +62,11 @@ TestCase {
       "function": "page",
       "args": ["Themes"]
     });
-    compare(BindActions.ipcCall(test.table, "workspaceOverview", "", "open"), {
+    compare(BindActions.ipcCall(test.table, "workspaceOverview", ""), {
       "target": "workspaceOverlay",
-      "function": "show",
+      "function": "toggle",
       "args": []
-    }, "the call's IPC function");
+    }, "a call's toggle");
     compare(BindActions.ipcCall(test.table, "launcherSearch", "two words"), {
       "target": "appLauncher",
       "function": "search",

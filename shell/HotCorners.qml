@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
+import qs.services.compositor
 import qs.services.ui
 import qs.components.hosts.popout
 
@@ -15,7 +16,9 @@ import qs.components.hosts.popout
 // id, so editing one corner rebuilds only it.
 Scope {
   Variants {
-    model: HotCornersConfig.ids
+    // Once the layer rules are in (CompositorManager.surfacesReady), so
+    // each maps in its place after the bars and border
+    model: CompositorManager.surfacesReady ? HotCornersConfig.ids : []
 
     delegate: Scope {
       id: entry
