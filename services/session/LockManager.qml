@@ -36,8 +36,10 @@ QtObject {
   onBuiltinSecureChanged: _report()
   onBuiltinLockedChanged: {
     _report();
+    // Once the unlock has gone through: Quickshell.reload builds the next
+    // generation at once, and the lock must be gone before it does
     if (!root.builtinLocked && root._reloadWhenUnlocked)
-      Quickshell.reload(false);
+      Qt.callLater(() => Quickshell.reload(false));
   }
   onBuiltinSurfacesChanged: _report()
 
