@@ -79,7 +79,7 @@ func (d *Daemon) reexec(exe string) (err error) {
 		ConfigLock: int(d.store.LockFile().Fd()),
 		Listener:   int(listener.Fd()),
 		Shell:      d.shellPID(),
-		Locked:     d.locker.State().Locked,
+		Locked:     d.locker.Held(),
 		Dev:        d.dev.Enabled(),
 		Installed:  d.installed,
 		Started:    d.started.UnixMilli(),

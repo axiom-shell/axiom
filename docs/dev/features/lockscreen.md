@@ -19,6 +19,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - A stopped shell's last report confirms nothing until the next shell reports.
 - If that doesn't come within 3 s, the binary restarts the shell with `AXIOM_LOCK_ON_START=1`, which locks before anything else shows. If that fails too, `axiom lock` fails: the built-in locker has nothing to fall back on.
 - A shell that dies while locked is restarted at once, locked. The compositor keeps the session locked meanwhile.
+  - Locked here is the shell holding the lock (`holding`, `LockManager.builtinLocked`), acknowledged or not: a lock a reloaded generation took over never sees the compositor's acknowledgement again (`secure` stays false), and a shell restarted unlocked then left niri's red screen (2026-10-29).
 - Nothing goes the other way: `lock.state` only informs, `lockscreen` takes no function but `lock`, and only PAM unlocks.
 - With `Lockscreen.mode` `none`, `axiom lock` runs `Lockscreen.lockCommand`, except `loginctl lock-session`, which would come back to axiom through the idle daemon.
 

@@ -49,6 +49,7 @@ QtObject {
       return;
     BackendManager.call("lock.state", {
       "locked": root.builtinLocked && root.builtinSecure,
+      "holding": root.builtinLocked,
       "surfaces": root.builtinSecure ? root.builtinSurfaces : 0,
       "outputs": General.outputs.length
     }, null);
