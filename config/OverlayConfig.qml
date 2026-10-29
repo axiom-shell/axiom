@@ -11,6 +11,9 @@ QtObject {
   // The overlay's own Module size, in %: its cards are the card size
   // (cardUnitOn) times it, and their content drawn at it (see layoutFor)
   readonly property int moduleScale: ConfigManager.live.Overlay.moduleScale
+  // Whether its pages draw their modules' card boxes (off: bare, as
+  // edge menus' moduleBorders)
+  readonly property bool moduleBorders: ConfigManager.live.Overlay.moduleBorders
   // The page switcher's edge, "bottom" | "top", and which tabs show their
   // names: "auto" (all while they fit) | "current" | "icons"
   readonly property string navigator: ConfigManager.live.Overlay.navigator

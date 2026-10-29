@@ -37,6 +37,13 @@ properties:
     maximum: 100
     x-unit: '%'
     description: Size of the overlay's cards, relative to the card size in Look & Feel. Their text and content shrink with them. For bigger cards, raise the card size.
+  moduleBorders:
+    x-scope: look
+    x-group: Size
+    type: boolean
+    title: Module borders
+    default: true
+    description: Draw each module's card box. Off shows the modules straight on the overlay's box.
   navigator:
     x-scope: look
     x-group: Page switcher

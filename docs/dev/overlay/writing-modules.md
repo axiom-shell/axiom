@@ -31,6 +31,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 - Thresholds that depend on text are in px from `Appearance.fontSize`, not grid units.
 - An edge menu's units aren't square. A layout choice that must match the slot's real proportions reads `innerWidth` / `innerHeight` rather than `shape` (NowPlaying's side-by-side).
 - A bare edge menu module drops its padding, unless it draws a box of its own (`drawsBox`, e.g. NowPlaying's blurred cover), which keeps it inside that box.
+- On an overlay page with `Overlay.moduleBorders` off a module is bare too, but keeps its padding (`host.padded`).
 
 ### Shared parts (`content/parts/`)
 - `ModuleHeader`, `Sparkline`, `StatFigure`, `RateLabel`.

@@ -136,7 +136,7 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
-var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher"}
+var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "Overlay.moduleBorders"}
 
 // Every frozen corpus config (each past schema version's defaults, the
 // examples, old configs), as the legacy pipeline loads it, converts to a
