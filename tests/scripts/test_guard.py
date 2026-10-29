@@ -41,9 +41,11 @@ class Bash(unittest.TestCase):
     def test_compound_commands(self):
         self.blocks("(qs kill)", "{ qs kill; }", "echo $(qs kill)", "x=`qs kill`", "if true; then qs kill; fi",
                     "while true; do axiom lock; done", "! axiom lock", "true && (cd /tmp; axiom lock) > /dev/null 2>&1",
-                    'x="$(axiom lock)"', 'echo "`qs kill`"')
+                    'x="$(axiom lock)"', 'echo "`qs kill`"', 'x="$(axiom ipc lockscreen "lock")"',
+                    """bash -c 'echo "$(axiom lock)"'""")
         self.allows("(cd docs && ls)", "echo $(date)", "if true; then echo ok; fi", "{ git status; git log -1; } | head",
-                    'x="$(git rev-parse HEAD)"',
+                    'x="$(git rev-parse HEAD)"', "git commit -m 'never run `axiom lock`'", "grep -n '$(qs kill)' docs",
+                    'git commit -m "never run \\`axiom lock\\`"', """echo "don't" '`axiom lock`'""",
                     "go test ./... 2>&1 | tail -3")
 
     def test_every_rule_holds_in_compound_forms(self):

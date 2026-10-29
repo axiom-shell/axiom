@@ -43,8 +43,10 @@ WRAPPERS = {
                     "--description", "--working-directory"},
 }
 WRAPPER_POSITIONALS = {"timeout": 1, "flock": 1}
-# A substitution a quoted word still runs: "$(…)", "`…`"
+# A substitution a double-quoted word still runs: "$(…)", "`…`"; single-quoted
+# text (a commit message, a grep pattern) runs nothing, so it's blanked first
 SUBSTITUTION = re.compile(r"\$\((.*)\)|`([^`]*)`", re.S)
+QUOTED = re.compile(r"""\\.|"(?:\\.|[^"\\])*"|'[^']*'""", re.S)
 SHELLS = {"bash", "sh", "zsh"}
 QS = {"qs", "quickshell"}
 QS_VALUE_OPTS = {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}
@@ -61,16 +63,23 @@ def deny(rule, why):
 
 # --------------------------------------------------------------- parsing
 
-def split_commands(command):
-    """[(env, argv)] for each simple command in a shell command line; a
-    redirection `> f` is a command of its own, `[">", f]`."""
+def lex(command):
     try:
         lexer = shlex.shlex(command.replace("\n", " ; "), posix=True, punctuation_chars=PUNCTUATION)
         lexer.whitespace_split = True
-        tokens = list(lexer)
+        return list(lexer)
     except ValueError:
-        tokens = command.split()
+        return command.split()
+
+
+def split_commands(command):
+    """[(env, argv)] for each simple command in a shell command line; a
+    redirection `> f` is a command of its own, `[">", f]`."""
+    tokens = lex(command)
     out, current, exported = [], [], {}
+    for token in lex(QUOTED.sub(lambda m: "''" if m[0][0] == "'" else m[0], command)):
+        for m in SUBSTITUTION.finditer(token):
+            out.extend(split_commands(m[1] or m[2]))
     i = 0
     while i < len(tokens):
         token = tokens[i]
@@ -89,8 +98,6 @@ def split_commands(command):
             current = []
         else:
             current.append(token)
-            for m in SUBSTITUTION.finditer(token):
-                out.extend(split_commands(m[1] or m[2]))
         i += 1
     if current:
         out.extend(simple(current, exported))
