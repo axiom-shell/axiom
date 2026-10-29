@@ -138,17 +138,11 @@ Panel {
     Layout.preferredHeight: Widget.height
     placeholderText: I18n.tr("Search the clipboard")
     clearable: true
+    escapeClears: true
     input.wrapMode: Text.NoWrap
     onAccepted: {
       if (root.clips.length > 0)
         root.copy(root.clips[0]);
-    }
-    Keys.onEscapePressed: event => {
-      if (field.text === "") {
-        event.accepted = false;
-        return;
-      }
-      field.text = "";
     }
   }
 

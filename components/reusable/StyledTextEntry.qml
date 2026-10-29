@@ -6,7 +6,8 @@ import qs.config
 // A single-line text field in a StyledContainer. It writes every keystroke
 // back to `text`: push values in and act on textEdited (see AGENTS.md pitfalls).
 // `clearable` (search boxes) adds an X at the right while it holds text,
-// which empties it as a typed edit and keeps the focus in it.
+// which empties it as a typed edit and keeps the focus in it; with
+// `escapeClears`, Escape does too (passed on when it's already empty).
 StyledContainer {
   id: root
 
@@ -28,11 +29,15 @@ StyledContainer {
   property bool typed: false
   // An X at the right, while there's text, that clears it
   property bool clearable: false
+  // Escape clears it too, or goes on to the parent when it's empty
+  property bool escapeClears: false
   readonly property bool _clearShown: root.clearable && !root.readOnly && textField.text !== ""
 
-  // Empties the field as if typed (textEdited), keeping its focus
+  // Empties the field as if typed (textEdited), keeping its focus.
+  // TextInput.clear(), not an assignment, which would drop the field's
+  // `text: root.text` binding and leave later pushes unshown
   function clear() {
-    textField.text = "";
+    textField.clear();
     root.typed = true;
     root.textEdited();
     textField.forceActiveFocus();
@@ -67,6 +72,15 @@ StyledContainer {
     onActiveFocusChanged: {
       if (activeFocus)
         root.typed = false;
+    }
+    // onPressed, not onEscapePressed: connecting that would accept Escape
+    // on every entry, and a caller's own input.Keys handler shares this
+    // object. Untouched (passed on) unless it clears
+    Keys.onPressed: event => {
+      if (event.key === Qt.Key_Escape && root.escapeClears && textField.text !== "") {
+        root.clear();
+        event.accepted = true;
+      }
     }
 
     // --- Core Properties ---

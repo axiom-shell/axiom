@@ -69,14 +69,8 @@ Panel {
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search keybinds")
       clearable: true
+      escapeClears: true
       input.wrapMode: Text.NoWrap
-      Keys.onEscapePressed: event => {
-        if (field.text === "") {
-          event.accepted = false;
-          return;
-        }
-        field.text = "";
-      }
     }
     StyledText {
       text: I18n.tr("{0} binds", root.bindCount)

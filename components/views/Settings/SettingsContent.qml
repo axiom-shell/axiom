@@ -81,10 +81,9 @@ Item {
   // Every category's cards with rows, carrying their category's name, as
   // what a search reads (SettingsSearch.index): taken once while listing,
   // again only when the schema, the categories shown or the language
-  // change. Hand-built cards have no rows to search
+  // change (I18n.tr reads it). Hand-built cards have no rows to search
   readonly property var _searchIndex: {
-    // (I18n.current: read so a new language indexes again)
-    if (!root.listing || !I18n.current)
+    if (!root.listing)
       return [];
     const groups = [].concat(...root.categories.map(category => SchemaLayout.categoryGroups(root.schema, category).filter(group => group.kind !== "card").map(group => Object.assign({}, group, {
           "category": category.name,

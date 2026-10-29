@@ -70,15 +70,9 @@ ColumnLayout {
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search")
       clearable: true
+      escapeClears: true
       input.wrapMode: Text.NoWrap
       onTextEdited: root.query = text
-      Keys.onEscapePressed: event => {
-        if (search.text === "") {
-          event.accepted = false;
-          return;
-        }
-        search.clear();
-      }
     }
   }
 
