@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/user"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -580,5 +581,112 @@ func TestExtractTakesNoEscapesOrLinks(t *testing.T) {
 	})
 	if want := []string{"kept/file", "link/through"}; n != 2 || !slices.Equal(got, want) {
 		t.Errorf("extracted %d: %v, want %v", n, got, want)
+	}
+}
+
+// Through pkexec, only the user who authenticated gets the bundle's folder.
+func TestOnlyThePkexecCallerIsTheUser(t *testing.T) {
+	t.Parallel()
+	f := newInstallFixture(t)
+	me, err := user.Current()
+	if err != nil {
+		t.Skip(err)
+	}
+	for _, tc := range []struct {
+		name, uid string
+		ok        bool
+	}{
+		{"someone else", "0", me.Uid == "0"},
+		{"no such account", "4294967294", false},
+		{"the user", me.Uid, true},
+	} {
+		in := New(Options{Root: f.root, Releases: f.releases, Upstream: f.upstream, Environ: func() []string { return f.env },
+			Getenv: func(key string) string {
+				if key == "PKEXEC_UID" {
+					return tc.uid
+				}
+				return os.Getenv(key)
+			}})
+		r := f.runWith(in, rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+		if r.OK != tc.ok || (!tc.ok && !strings.Contains(r.Error, "isn't the user who ran pkexec")) {
+			t.Errorf("%s: %+v", tc.name, r)
+		}
+	}
+}
+
+// The snapshot is the staged bundle only when it's a folder: otherwise the
+// greeter's config/, never through a link.
+func TestSnapshotWithoutAStagedFolder(t *testing.T) {
+	t.Parallel()
+	f := newInstallFixture(t)
+	f.write(f.root, "var/lib/axiom-greeter/config/greeter.json", `{"bundle": true}`, 0o644)
+	staged := filepath.Join(f.tmp, "staged")
+	f.write(staged, "greeter.json", `{"staged": true}`, 0o644)
+	link := filepath.Join(f.tmp, "link")
+	if err := os.Symlink(staged, link); err != nil {
+		t.Fatal(err)
+	}
+	for name, path := range map[string]string{"none": "", "missing": filepath.Join(f.tmp, "missing"), "a link": link, "a file": filepath.Join(staged, "greeter.json")} {
+		f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags, func(r *rules.Request) { r.Staged = path })
+		if got := f.copied("fallback/greeter.json"); got != `{"bundle": true}` {
+			t.Errorf("%s: the snapshot is %s", name, got)
+		}
+	}
+}
+
+// Settling the copy changes the modes of its own files, never a link's
+// target.
+func TestSettleFollowsNoLink(t *testing.T) {
+	t.Parallel()
+	stage, outside := t.TempDir(), filepath.Join(t.TempDir(), "secret")
+	os.WriteFile(outside, nil, 0o600)
+	os.Symlink(outside, filepath.Join(stage, "link"))
+	os.WriteFile(filepath.Join(stage, "file"), nil, 0o600)
+	os.WriteFile(filepath.Join(stage, "program"), nil, 0o700)
+	if err := settle(stage); err != nil {
+		t.Fatal(err)
+	}
+	for path, want := range map[string]os.FileMode{outside: 0o600, filepath.Join(stage, "file"): 0o644, filepath.Join(stage, "program"): 0o755} {
+		if info, _ := os.Stat(path); info.Mode().Perm() != want {
+			t.Errorf("%s: mode %o, want %o", filepath.Base(path), info.Mode().Perm(), want)
+		}
+	}
+}
+
+// Without the original, uninstall puts back the newest backup, and with no
+// backup at all it refuses.
+func TestUninstallFromTheNewestBackup(t *testing.T) {
+	t.Parallel()
+	f := newInstallFixture(t)
+	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	config := filepath.Join(f.root, "etc/greetd/config.toml")
+	clear := func() {
+		backups, _ := filepath.Glob(config + ".axiom-*")
+		for _, b := range backups {
+			os.Remove(b)
+		}
+	}
+	clear()
+	f.write(f.root, "etc/greetd/config.toml.axiom-bak-20000101-000000", "older", 0o644)
+	f.write(f.root, "etc/greetd/config.toml.axiom-bak-20010101-000000", f.original, 0o644)
+	f.ok(rules.ActionUninstall, "", "")
+	if f.config() != f.original {
+		t.Errorf("restored %q", f.config())
+	}
+	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	clear()
+	f.refused("no backup of", rules.ActionUninstall, "", "")
+}
+
+// main's build is taken only for the commit the copy was fetched at.
+func TestEdgeBuildMovedOn(t *testing.T) {
+	t.Parallel()
+	commit := strings.Repeat("a", 40)
+	in := New(Options{Releases: releasesWithEdge(t, released, "", func() string { return commit })})
+	for target, moved := range map[string]bool{commit: false, strings.Repeat("b", 40): true} {
+		data, _, err := in.releaseBinary(context.Background(), rules.MainTarget(target))
+		if moved != (err != nil && strings.Contains(err.Error(), "moved on")) || (!moved && string(data) != released) {
+			t.Errorf("target %.7s: %q, %v", target, data, err)
+		}
 	}
 }

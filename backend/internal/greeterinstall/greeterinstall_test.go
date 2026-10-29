@@ -253,6 +253,7 @@ func TestElevate(t *testing.T) {
 		{"the installer's refusal", "", `echo '{"ok": false, "changed": [], "backup": "", "error": "no such user: me"}'; exit 1`, 0,
 			"", Elevated{Result: rules.Result{Changed: []string{}, Error: "no such user: me"}}},
 		{"dismissed", "", "", 126, "", Elevated{Dismissed: true}},
+		{"a refusal without a reason", "", `echo '{"ok": false}'`, 0, "", Elevated{Result: rules.Result{Error: "pkexec failed (0)"}}},
 		{"no agent", "", "echo 'Error executing command as another user: No authentication agent found.' >&2", 127,
 			"", Elevated{Result: rules.Result{Error: "Error executing command as another user: No authentication agent found."}}},
 	} {
@@ -326,14 +327,15 @@ func TestElevateAuthorized(t *testing.T) {
 func TestElevateMainNeedsAnEdgeHelper(t *testing.T) {
 	t.Parallel()
 	pkexec := filepath.Join(tools, "pkexec")
-	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: rules.SourceGit, Channel: rules.ChannelMain}
 	for _, tc := range []struct {
-		name, helper string
-		ranHelper    bool
+		name, channel, helper string
+		ranHelper             bool
 	}{
-		{"a helper from before main's builds", "#!/bin/sh\n" + binariesMarker + " ...)\n", false},
-		{"a helper taking main's builds", "#!/bin/sh\n" + binariesMarker + " ...)\n" + edgeMarker + " ...)\n", true},
+		{"a helper from before main's builds", rules.ChannelMain, "#!/bin/sh\n" + binariesMarker + " ...)\n", false},
+		{"a helper taking main's builds", rules.ChannelMain, "#!/bin/sh\n" + binariesMarker + " ...)\n" + edgeMarker + " ...)\n", true},
+		{"tags with a helper from before main's builds", rules.ChannelTags, "#!/bin/sh\n" + binariesMarker + " ...)\n", true},
 	} {
+		req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: rules.SourceGit, Channel: tc.channel}
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			root := t.TempDir()
@@ -451,5 +453,131 @@ func TestFirstProgram(t *testing.T) {
 				t.Errorf("ran through a link: %v %s", err, out)
 			}
 		})
+	}
+}
+
+func TestElevateWithoutPkexec(t *testing.T) {
+	t.Parallel()
+	in := New(Options{Root: t.TempDir(), Pkexec: filepath.Join(t.TempDir(), "pkexec")})
+	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: rules.SourceLocal, Channel: rules.ChannelTags, Binary: "/home/me/axiom"}
+	if got, err := in.Elevate(context.Background(), req, nil); err == nil {
+		t.Errorf("ran without pkexec: %+v", got)
+	}
+}
+
+// Root's helper counts only with its polkit action beside it.
+func TestHelperInstalled(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name                string
+		helper              string // "" for none
+		policy              bool
+		installed, binaries bool
+	}{
+		{"none", "", false, false, false},
+		{"no polkit action", "#!/bin/sh\n" + binariesMarker + "\n", false, false, false},
+		{"only the polkit action", "", true, false, false},
+		{"from before the binary", "#!/bin/sh\n", true, true, false},
+		{"installing the binary", "#!/bin/sh\n" + binariesMarker + " ...)\n", true, true, true},
+	} {
+		root := t.TempDir()
+		in := New(Options{Root: root})
+		if tc.helper != "" {
+			os.MkdirAll(filepath.Dir(in.path(HelperPath)), 0o755)
+			os.WriteFile(in.path(HelperPath), []byte(tc.helper), 0o755)
+		}
+		if tc.policy {
+			os.MkdirAll(filepath.Dir(in.policy()), 0o755)
+			os.WriteFile(in.policy(), nil, 0o644)
+		}
+		if installed, binaries := in.helper(); installed != tc.installed || binaries != tc.binaries {
+			t.Errorf("%s: helper() = %v, %v", tc.name, installed, binaries)
+		}
+	}
+}
+
+// Only a regular file root owns and no one else may write counts as
+// root's (on a test root, the user running the tests).
+func TestRootOwned(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	in := New(Options{Root: root})
+	for _, tc := range []struct {
+		name string
+		mode os.FileMode // 0: missing
+		dir  bool
+		want bool
+	}{
+		{"root's", 0o755, false, true},
+		{"group-writable", 0o775, false, false},
+		{"writable by all", 0o757, false, false},
+		{"a folder", 0o755, true, false},
+		{"missing", 0, false, false},
+	} {
+		path := filepath.Join(root, tc.name)
+		switch {
+		case tc.dir:
+			os.Mkdir(path, tc.mode)
+		case tc.mode != 0:
+			os.WriteFile(path, nil, tc.mode)
+			os.Chmod(path, tc.mode)
+		}
+		if got := in.rootOwned(path); got != tc.want {
+			t.Errorf("%s: rootOwned = %v", tc.name, got)
+		}
+	}
+	// On the real root, the user's own file isn't root's
+	if os.Getuid() != 0 && New(Options{}).rootOwned(filepath.Join(root, "root's")) {
+		t.Error("a user's file counted as root's")
+	}
+}
+
+// A command's failure is an error, saying its first line of stderr when
+// it has one.
+func TestCommandErrors(t *testing.T) {
+	t.Parallel()
+	in := New(Options{Environ: func() []string { return []string{"PATH=/usr/bin:/bin"} }})
+	for _, tc := range []struct {
+		script, out, err string // err "-": any error
+	}{
+		{"echo hi", "hi\n", ""},
+		{"echo out; echo first >&2; echo second >&2; exit 3", "", "first"},
+		{"exit 3", "", "-"},
+	} {
+		out, err := in.command(context.Background(), cmd{}, "sh", "-c", tc.script)
+		switch {
+		case tc.err == "" && (err != nil || string(out) != tc.out):
+			t.Errorf("%q: %q, %v", tc.script, out, err)
+		case tc.err == "-" && err == nil, tc.err != "" && tc.err != "-" && (err == nil || err.Error() != tc.err):
+			t.Errorf("%q: error %v, want %q", tc.script, err, tc.err)
+		}
+	}
+}
+
+// Programs come from the environment's PATH, executable regular files only.
+func TestLookPath(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "prog"), nil, 0o755)
+	os.WriteFile(filepath.Join(dir, "plain"), nil, 0o644)
+	os.Mkdir(filepath.Join(dir, "folder"), 0o755)
+	path := "::" + filepath.Join(dir, "none") + ":" + dir
+	for name, want := range map[string]string{
+		"prog":    filepath.Join(dir, "prog"),
+		"plain":   "plain",
+		"folder":  "folder",
+		"missing": "missing",
+		"/bin/sh": "/bin/sh",
+		"a/prog":  "a/prog",
+	} {
+		if got := lookPath(name, path); got != want {
+			t.Errorf("lookPath(%q) = %q, want %q", name, got, want)
+		}
+	}
+	env := []string{"PATH=/first", "A=1", "AB=x", "A=2"}
+	for key, want := range map[string]string{"PATH": "/first", "A": "2", "B": ""} {
+		if got := lookupEnv(env, key); got != want {
+			t.Errorf("lookupEnv(%q) = %q, want %q", key, got, want)
+		}
 	}
 }
