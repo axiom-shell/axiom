@@ -297,12 +297,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the guard batch (roadmap row 18)
 
-### The qmllint baseline doesn't shrink when warnings are fixed
-- **Where:** `scripts/check_qmllint.py` (`main`), `scripts/qmllint-baseline.json`
-- **What:** A baselined warning that's gone only prints `note: N baselined warnings are gone`, and the baseline keeps its count, so the warning can come back later without failing. AGENTS.md calls the baselines ratchets, and the allowlist already fails on an unused entry (`check_structure.py`). Fix: fail (or have verify.sh rewrite the baseline) when the counts drop, as the allowlist does.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the guardrails system (roadmap row 18)
-
 ### Three reader members nothing reads
 - **Where:** `config/HyprlandConfig.qml` (`managed`), `config/LauncherConfig.qml` (`clipboardMaxEntries`), `config/WindowBehaviourConfig.qml` (`behaviour`), `scripts/config-usage-baseline.json`
 - **What:** `scripts/gen_docs.py` lists them as reader members with no user (the daemon reads those settings itself: Compositor.hyprland and WindowBehaviour through `x-compositor`, the clipboard's limit by name). `HyprlandConfig` has no other member, so the whole reader can go; `WindowBehaviourConfig` too. They sit in `scripts/config-usage-baseline.json`, which only shrinks: deleting one means dropping its line there. Deletion candidates for the audits' deletion pass.
