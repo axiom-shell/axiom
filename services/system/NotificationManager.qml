@@ -179,8 +179,7 @@ Singleton {
   // The most recently focused window of an entry's app, or null
   function windowOf(entry) {
     const keys = root._keysOf(entry);
-    const windows = CompositorManager.windows.filter(w => NotificationMatch.matches(keys, root._windowKeys(w)));
-    return windows.sort((a, b) => (a.focusRank ?? 0) - (b.focusRank ?? 0))[0] ?? null;
+    return CompositorManager.lastFocused(CompositorManager.windows.filter(w => NotificationMatch.matches(keys, root._windowKeys(w))));
   }
 
   // The per-app rule (NotificationsConfig.apps) a notification or entry
