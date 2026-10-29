@@ -3,6 +3,7 @@ import QtQuick
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.ui
 
 // The Custom widgets page's editor (CustomWidgetsManager.editor): a draft of
 // the CustomWidgets section, the selected definition and element, and the
@@ -20,8 +21,26 @@ QtObject {
   property int selectedIndex: 0
   readonly property var selected: items[selectedIndex] ?? null
   readonly property string selectedId: selected?.id ?? ""
-  // The selected element of its module, by id ("" for none)
-  property string selectedElement: ""
+  // The selected definition's module elements on their lattice: moves,
+  // resizes, the selection and undo (GridEditor, bounded to the design size)
+  readonly property GridEditor elements: GridEditor {
+    modulesOf: () => root._elements()
+    area: CustomWidgetData.lattice(root.selected?.module?.size)
+    host: "overlay"
+    scopeKey: root.selectedId
+    factory: ({
+        "make": (kind, place) => ({
+              "id": Utils.newId(kind, root._elements()),
+              "kind": kind,
+              "place": place,
+              "bind": {},
+              "options": {},
+              "actions": {}
+            }),
+        "size": kind => CustomWidgetData.elementKind(kind)?.size ?? [4, 4]
+      })
+    onEdited: root._apply()
+  }
 
   // The page's tab: 0 data, 1 bar, 2 module
   property int tab: 0
@@ -49,11 +68,46 @@ QtObject {
 
   function selectDefinition(index) {
     root.selectedIndex = Math.max(0, Math.min(index, root.items.length - 1));
-    root.selectedElement = "";
+    root.elements.clearSelection();
+    root.elements.clearHistory();
   }
 
-  function selectElement(id) {
-    root.selectedElement = id ?? "";
+  // The module's design size [w, h] in grid units: its elements scaled to
+  // the new lattice
+  function setDesignSize(size) {
+    const def = root._local().items[root.selectedIndex];
+    if (!def)
+      return;
+    const from = def.module?.size ?? [4, 2];
+    const to = [Math.max(1, Math.min(8, size[0])), Math.max(1, Math.min(8, size[1]))];
+    if (from[0] === to[0] && from[1] === to[1])
+      return;
+    def.module = Object.assign({}, def.module, {
+      "size": to,
+      "elements": CustomWidgetData.scaleElements(def.module?.elements ?? [], from, to)
+    });
+    root.elements.clearHistory();
+    root._apply();
+  }
+
+  // Starts the module from the elements drawn while it has none
+  function useDefaultElements() {
+    const def = root._local().items[root.selectedIndex];
+    if (!def)
+      return;
+    const fields = CustomWidgetsManager.fields[def.id];
+    root._elements().splice(0, Infinity, ...CustomWidgetData.defaultElements(def.module?.size, (fields?.ratio ?? -1) >= 0));
+    root.elements.clearHistory();
+    root._apply();
+  }
+
+  // Sets a key of the selected element: `path` a list of keys into it
+  // (["options", "color"])
+  function setElement(path, value) {
+    const index = root.elements.selected;
+    if (index < 0)
+      return;
+    root.set(["module", "elements", index].concat(path), value);
   }
 
   // Whether a definition differs from its saved version (matched by id)
@@ -144,7 +198,25 @@ QtObject {
     return _draft.local;
   }
 
+  // The selected definition's elements in the draft (made when missing),
+  // or null without one
+  function _elements() {
+    const def = root._local().items[root.selectedIndex];
+    if (!def)
+      return null;
+    if (!def.module || typeof def.module !== "object")
+      def.module = {
+        "size": [4, 2],
+        "lockscreen": false,
+        "elements": []
+      };
+    if (!Array.isArray(def.module.elements))
+      def.module.elements = [];
+    return def.module.elements;
+  }
+
   function _load() {
+    root.elements.clearHistory();
     _draft.load();
     ConfigManager.clearPreview("CustomWidgets");
     root.selectDefinition(root.selectedIndex);

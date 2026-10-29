@@ -55,6 +55,10 @@ QtObject {
     })
   // What's being edited (a page, a menu): forms are rebuilt when it changes
   property string scopeKey: ""
+  // For a grid of something other than overlay modules (a custom widget's
+  // elements): { make(type, place) → a new entry, size(type) → [w, h] }.
+  // null: overlay modules, by their schema
+  property var factory: null
 
   // Called in every edit, as the grid shifts back to 0, 0: with the shift
   // taken off ({ x, y } grid units, a place left of or above the grid
@@ -105,11 +109,15 @@ QtObject {
 
   // A new `type` module's [w, h] on this grid
   function defaultSize(type) {
+    if (root.factory)
+      return root.factory.size(type);
     return OverlayConfig.defaultSize(type).map(n => Math.min(GridPlacement.maxSpan, n * root.sizeScale));
   }
 
   // The least [w, h] a new `type` module dropped into a gap shrinks to
   function minSize(type) {
+    if (root.factory)
+      return [1, 1];
     return OverlayConfig.minSize(type).map(n => Math.min(GridPlacement.maxSpan, n * root.sizeScale));
   }
 
@@ -488,6 +496,8 @@ QtObject {
   // A new module of `type` at `place`, its id new in the modules
   // `type` may be a library key (CustomWidgetsConfig.splitKey)
   function _newModule(type, place) {
+    if (root.factory)
+      return root.factory.make(type, place);
     const key = CustomWidgetsConfig.splitKey(type);
     const module = ConfigManager.withDefaults({
       "id": Utils.newId(key.type, root._modules()),

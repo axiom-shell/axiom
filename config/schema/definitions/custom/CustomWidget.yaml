@@ -116,7 +116,7 @@ properties:
         default: [4, 2]
         minItems: 2
         maxItems: 2
-        items: {type: integer, minimum: 1, maximum: 16}
+        items: {type: integer, minimum: 1, maximum: 8}
       lockscreen: {type: boolean, title: Offer on the lock screen, default: false}
       elements:
         type: array

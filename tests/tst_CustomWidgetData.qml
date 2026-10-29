@@ -288,4 +288,11 @@ TestCase {
     compare(els[1].place.x + els[1].place.w, 16, "the text fills the rest");
     compare(CustomWidgetData.defaultElements([4, 2], false)[0].kind, "Icon");
   }
+
+  function test_elementKinds() {
+    const kinds = CustomWidgetData.elementKinds.map(k => k.kind);
+    compare(kinds, ["Text", "TextBlock", "Figure", "Icon", "Ring", "Gauge", "Bar", "Segments", "Sparkline", "List", "Image", "Button", "Toggle", "Status", "Separator"], "every kind the schema allows, in library order");
+    compare(CustomWidgetData.elementKind("Bar").actions, ["change"]);
+    compare(CustomWidgetData.elementKind("Nope"), null);
+  }
 }
