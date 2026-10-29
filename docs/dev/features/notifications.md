@@ -1,6 +1,6 @@
 # Notifications
 
-> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`
+> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`
 > **Config:** `Notifications.*` (reader `NotificationsConfig`)
 > **Related:** [Self-update](self-update.md) (registerHandler), [Calendar](calendar.md) (reminders), [Grow and expand](../overlay/grow-expand.md)
 
@@ -28,6 +28,7 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 - A toast the user closes closes on every screen.
 - Toasts take their entry's uid when they're created (`uidOf`), because invoking an action can close the notification.
 - **Placement:** `NotificationsConfig` sets the toasts' corner and gaps. They are measured inside the work area by an Overlay-layer anchor window with Normal exclusion, like `OverlayPanel`. While the screen shows a fullscreen window the anchor ignores exclusive zones, so the gaps are measured from the screen's edges.
+- **Test notification:** the settings card's intro (`views/Settings/NotificationsPreview`, its `x-intro`) has a Show button that sends one through `sendNotification`, so it toasts with the settings as edited (readers read the previews), as the OSD and dock cards' Show does.
 
 ### Images
 - Cached as PNGs in `$XDG_STATE_HOME/axiom/notifications/`.
