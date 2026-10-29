@@ -228,7 +228,7 @@ The plan is [plans/custom-json-widgets.md](plans/custom-json-widgets.md) (decide
 
 Steps:
 1. Done: **The plan.**
-2. **Data:** `CommandManager` keeps `exitCode` / `error` / `at`; the pure helper `CustomWidgetData` and its test.
+2. Done: **Data:** `CommandManager` keeps `exitCode` / `error` / `at`; the pure helper `CustomWidgetData` and its test.
 3. **Definitions:** the `CustomWidgets` section, the `customWidgets` `x-options` source, `CustomWidgetsManager`, and `axiom widget refresh`.
 4. **The module:** the element pieces, the proportional renderer, the `CustomWidget` module type (also the popout; lockscreen opt-in), per-definition module library entries. Never the greeter; no actions on the lockscreen.
 5. **The bar widget:** the `Custom` widget type and its styles, per-definition bar library entries.
