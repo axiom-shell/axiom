@@ -26,12 +26,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while adding niri's own overview (row 16)
 
-### niri's own hot corner can be on in managed mode
-- **Where:** `backend/internal/compositor/manager/niri.go` (`managedText`), `config/schema/sections/Compositor.yaml` (`niri.hotCorner`)
-- **What:** In managed mode niri's corner should always be off, so a corner exists only where axiom sets one (the maintainer: "only exits if axiom sets it in managed mode (which also wouldn't even use niris corner)"); `Compositor.niri.hotCorner` turns it on. It goes, with a migration turning `true` into an axiom top-left corner opening the workspace overview (plan item 3).
-- **Size:** small
-- **Found:** 2026-10-29, while deciding the hot corners plan (row 16)
-
 ### The overlay's gaps can't be adjusted
 - **Where:** `components/methods/GridPlacement.qml` (`cardSpacing`, `baseCard`, `gapOf`), `config/OverlayConfig.qml` (`boxPadding`)
 - **What:** The maintainer's note: "the overlay's gaps become adjustable". The gaps are one design value, `GridPlacement.cardSpacing` = 20: the gap between modules, the margin around the grid, the overlay box's padding and the tool pages' spacing; through `baseCard` and `gapOf` edge menus, the desktop, the lock screen and the greeter are drawn as the overlay's grid scaled. Answered so far (2026-10-29): "one setting, gaps between modules and edges of the overlay page look the same". Open: the overlay's alone, or one Look & Feel setting for the overlay, lock screen, greeter and desktop with edge menus kept at today's value (the maintainer: "Menus already seem smaller"); a bigger gap shrinks the cards on a page fitted to its screen. Deferred: "defer for now, still unsure".
