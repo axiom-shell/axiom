@@ -90,6 +90,7 @@ sections:
   - ThemeIntegrations
   - Icons
   - Overlay
+  - HotCorners
   - Workspaces
   - WorkspaceOverlay
   - WindowSwitcher

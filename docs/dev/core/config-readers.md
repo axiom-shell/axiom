@@ -29,6 +29,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader n
   - Edges are numbers from `methods/ScreenEdge` (`ScreenEdge.fromConfig(location)`), not this reader's.
 - **`PopoutsConfig`**: open/dismiss delays and edge trigger size, shared by bar and edge popouts.
 - **`OSDConfig`**: the OSDs; see [OSD](../features/osd.md).
+- **`HotCornersConfig`**: the hot corners; see [Hot corners](../features/hot-corners.md).
 - **`LauncherConfig`**: launcher placement, size and providers.
 - **`Apps`**: the terminal, file manager and browser that binds and the launcher open.
 - **`Screenshots`**: the screenshot and recording folders, `~` expanded, empty for `ScreenshotManager`'s defaults ([Screenshots and screen recording](../features/screenshots-recording.md)).

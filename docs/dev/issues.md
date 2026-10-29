@@ -26,12 +26,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while adding niri's own overview (row 16)
 
-### axiom draws no hot corners
-- **Where:** `shell.qml`, `components/hosts/popout/EdgeTrigger.qml`, `components/methods/LayerStack.qml`
-- **What:** The maintainer (#210): "A. Build it as a single card in the overlay and popouts group on settings. Can configure each corner. Any axiom action is configurable, or custom command". A `HotCorners` section (`items[]`: corner, action and argument, a screen target, a delay, 0 ms by default), its reader, a transparent corner window per item per screen on `Top` (quiet over fullscreen, as the bars are) and its settings card in Overlay & Popouts (plan item 2).
-- **Size:** small
-- **Found:** 2026-10-29, while deciding the hot corners plan (row 16)
-
 ### niri's own hot corner can be on in managed mode
 - **Where:** `backend/internal/compositor/manager/niri.go` (`managedText`), `config/schema/sections/Compositor.yaml` (`niri.hotCorner`)
 - **What:** In managed mode niri's corner should always be off, so a corner exists only where axiom sets one (the maintainer: "only exits if axiom sets it in managed mode (which also wouldn't even use niris corner)"); `Compositor.niri.hotCorner` turns it on. It goes, with a migration turning `true` into an axiom top-left corner opening the workspace overview (plan item 3).

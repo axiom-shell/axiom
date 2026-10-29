@@ -317,7 +317,6 @@ Steps:
 6. **Built-in stock and crypto trackers** (added 2026-10-29): a bar widget and a module (overlay, desktop, edge menu) for watched symbols, built in rather than through a custom widget script: prices polled by the daemon as a topic (`acquire`/`release`, the interval from config), the symbols and their order in a config section, each with its change, a sparkline of the day and the up/down colour; a ticker on the bar as the custom widget's ticker style does. Needs a plan first ([Items that need a plan](#items-that-need-a-plan)): the data sources (a free stock API and a crypto one, or one for both), API keys through `SecretsManager`, rate limits and caching, and market hours.
 
 Hot corners (plan [decided](plans/axiom-has-no-hot-corners-of-its-own.md) on #210):
-- [axiom draws no hot corners](issues.md#axiom-draws-no-hot-corners)
 - [niri's own hot corner can be on in managed mode](issues.md#niris-own-hot-corner-can-be-on-in-managed-mode)
 
 Found meanwhile:

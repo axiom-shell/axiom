@@ -55,11 +55,12 @@ QtObject {
   }
 
   // The IPC call ({ target, function, args }) an axiom action (one of
-  // ipcActions) makes with `argument` and `call` (toggle, open or close),
-  // as its bind does; null for another action, or one missing its argument
+  // ipcActions) makes with `argument` (else the table's default for it)
+  // and `call` (toggle, open or close), as its bind does; null for another
+  // action, or one missing its argument
   function ipcCall(table, action, argument, call) {
     const template = table?.ipcActions?.[action]?.[0];
-    const text = String(argument ?? "").trim();
+    const text = String(argument ?? "").trim() || (table?.argumentDefaults?.[action] ?? "");
     if (!template || (template.includes("{0}") && text === ""))
       return null;
     const fn = root.callFunction(table, {
