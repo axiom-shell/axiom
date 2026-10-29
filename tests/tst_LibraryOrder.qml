@@ -84,4 +84,46 @@ TestCase {
     compare(LibraryOrder.sections([], ["Time"], label, false), []);
     compare(LibraryOrder.sections([], ["Time"], label, true), []);
   }
+
+  function heading(name) {
+    return name || "Other";
+  }
+
+  function test_filtered_blank_keeps_all() {
+    compare(names(LibraryOrder.filtered(types, "", label, heading)), names(types));
+    compare(names(LibraryOrder.filtered(types, "  ", label, heading)), names(types));
+  }
+
+  function test_filtered_by_label_any_case() {
+    compare(names(LibraryOrder.filtered(types, " PLAY", label, heading)), ["Media"]);
+  }
+
+  function test_filtered_by_shown_label() {
+    compare(names(LibraryOrder.filtered(types, "uhr", t => t.type === "Clock" ? "Uhr" : t.label, heading)), ["Clock"]);
+  }
+
+  function test_filtered_by_type() {
+    compare(names(LibraryOrder.filtered([
+      {
+        "type": "SysTray",
+        "label": "Tray"
+      }
+    ], "systray", label, heading)), ["SysTray"]);
+  }
+
+  function test_filtered_by_group_heading() {
+    compare(names(LibraryOrder.filtered(types, "time", label, heading)), ["Clock", "Agenda"]);
+    compare(names(LibraryOrder.filtered(types, "other", label, heading)), ["Mystery"]);
+  }
+
+  function test_filtered_no_match() {
+    compare(LibraryOrder.filtered(types, "nothing", label, heading), []);
+    compare(LibraryOrder.sections(LibraryOrder.filtered(types, "nothing", label, heading), ["Time"], label, true), []);
+  }
+
+  function test_filtered_then_grouped() {
+    const sections = LibraryOrder.sections(LibraryOrder.filtered(types, "media", label, heading), ["Time", "Media"], label, true);
+    compare(sections.map(s => s.name), ["Media"]);
+    compare(names(sections[0].types), ["Media", "Volume"]);
+  }
 }

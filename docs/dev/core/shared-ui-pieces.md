@@ -47,6 +47,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - An A–Z / By category switch over equal tiles of a caller's `delegate`, by label or under a heading per group (`methods/LibraryOrder`).
   - The label and heading come from the caller's `labelOf` / `headingOf` hooks (the editors translate the schema's).
   - The caller keeps `grouped`.
+  - A search box beside the switch, at the right, narrows the tiles to the types whose label, type or group heading holds the text (`LibraryOrder.filtered`); the query lasts only while the library is shown.
 - `KeyedLoader`: rebuilds a form when `key` changes, so rows never write old values onto a new selection.
 - `StreamedLoader`: a Loader built a moment later from `BuildQueueManager`'s queue, then faded in: a page's panels, cards, sections and long lists, so a page shows at once. `wanted` gates it like `active`; `always` streams after the page's first build too. See [streamed-building](streamed-building.md).
 

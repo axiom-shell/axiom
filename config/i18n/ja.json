@@ -3381,6 +3381,7 @@
     "Stacked puts the label over this machine's tailnet address.": "",
     "Stacked puts the count over the AUR's share of it.": "",
     "Stacked puts the temperature over the condition.": "",
-    "Ring and segments show the Wi-Fi signal; sparkline the download speed; ticker and stacked the network's name (stacked over its address).": ""
+    "Ring and segments show the Wi-Fi signal; sparkline the download speed; ticker and stacked the network's name (stacked over its address).": "",
+    "Nothing matches “{0}”": ""
   }
 }
