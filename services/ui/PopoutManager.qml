@@ -162,6 +162,18 @@ QtObject {
     }
   }
 
+  // Closes the bar popouts and floating edge menus on a screen, pinned
+  // ones too (their submenus close with them): the overlay opening there
+  // would cover them. Docks, OSDs and the launcher stay; integrated menus
+  // hold no claim
+  function closeOn(screenName) {
+    root._apply({
+      "yield": [],
+      "evict": root.entries.filter(e => e.screen === screenName && (e.kind === "bar" || e.kind === "menu")).map(e => e.id)
+    });
+    root._resume();
+  }
+
   // `axiom ipc popouts list`: every popout registered, one per line, with
   // where it shows (its footprint's bounds, in screen px)
   property IpcTarget _ipc: IpcTarget {

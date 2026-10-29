@@ -22,6 +22,10 @@ ReservedAreaWindow {
   id: root
 
   property bool isOpen: false
+  // What's open on its screen and would end up under it (a popout keeps
+  // its layer while open) closes as it opens
+  onIsOpenChanged: if (isOpen)
+    PopoutManager.closeOn(root.screen?.name ?? "")
   // Closed, it waits off the edge it slides in from (Overlay.animation),
   // or in place, faded out
   readonly property bool _fades: OverlayConfig.animation === "fade"

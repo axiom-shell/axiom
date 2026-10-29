@@ -316,12 +316,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### A popout open as the overlay opens ends up under it
-- **Where:** `components/hosts/overlay/OverlayPanel.qml` (`open`), `services/ui/PopoutManager.qml`, `components/hosts/popout/BarPopouts.qml` (`_under`), `components/hosts/popout/EdgePopout.qml` (`_overlayLatch`)
-- **What:** A popout that slides under a transparent bar keeps that layer while open (the latches), so one open when the overlay opens is drawn under its backdrop and its clicks go to the overlay: the maintainer, "currently open popouts break when overlay is opened". Decided on #211: "Close all popouts and menus (except integrated, since they move the overlay) when the overlay is opened." Fix: opening the overlay closes the bar popouts and floating edge menus on its screen (pinned ones too; their submenus with them); integrated menus, docks, OSDs and the launcher stay.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### The window switcher's blur and release on sway and niri
 - **Where:** `services/compositor/WindowSwitcherManager.qml` (`commit`, `pick`), `components/surfaces/switcher/SwitcherKeys.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
 - **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". On niri this is only while `WindowSwitcher.compositorSwitcher` is off or in detached mode: by default the included and managed files bind the keys to niri's own switcher (row 16). The plan settles one release path that works on every compositor and the switcher's backing.
