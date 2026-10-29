@@ -35,7 +35,8 @@ CustomElementBase {
     wrapMode: Text.Wrap
     elide: Text.ElideRight
     maximumLineCount: Math.max(1, Math.floor(root.height / Math.max(1, Appearance.fontSizeBy(-4) * 1.3)))
-    textSize: root.fixedSize || Math.max(Appearance.fontSizeBy(-4), Math.min(Appearance.fontSize * 4, root.height * 0.7))
+    // Fitted, it's never larger than a built-in module's figure (StatFigure)
+    textSize: root.fixedSize || Math.max(Appearance.fontSizeBy(-4), Math.min(Appearance.fontSize * 2, root.height * 0.7))
     fontSizeMode: root.fixedSize || root.rich ? Text.FixedSize : Text.Fit
     minimumPixelSize: Appearance.fontSizeBy(-4)
     clip: true

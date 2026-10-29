@@ -67,8 +67,9 @@ QtObject {
     }, "CustomElement");
   }
 
-  // The elements drawn for a definition without any
-  // (CustomWidgetData.defaultElements), at their schema defaults
+  // The elements drawn for a definition without any, and what "Start
+  // from the default layout" copies (CustomWidgetData.defaultElements), at
+  // their schema defaults
   function defaultElements(size, hasValue) {
     return CustomWidgetData.defaultElements(size, hasValue).map(e => ConfigManager.withDefaults(e, "CustomElement"));
   }

@@ -352,6 +352,7 @@ TestCase {
     compare(els[0].type, "Ring");
     compare(els[1].place.x + els[1].place.w, 16, "the text fills the rest");
     compare(CustomWidgetData.defaultElements([4, 2], false)[0].type, "Icon");
+    compare(els[1].options.align, "left", "the text against the icon");
   }
 
   function test_stripJsonc() {

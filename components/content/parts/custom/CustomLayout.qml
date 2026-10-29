@@ -6,7 +6,8 @@ import qs.components.methods
 // A custom widget's module drawn at any size: its elements placed on their
 // lattice (CustomWidgetData: 4 sub-cells a grid unit, the box fitting them),
 // laid out proportionally over this item, a gap between neighbours. A
-// definition with no elements draws CustomWidgetsConfig.defaultElements.
+// definition with no elements draws CustomWidgetsConfig.defaultElements
+// (its icon, or a ring, and the text against it).
 // Used by the CustomWidget module and popout and the editor's previews.
 Item {
   id: root

@@ -28,8 +28,8 @@ BarIconWidget {
   readonly property real ratio: Math.max(0, root.fields?.ratio ?? 0)
   readonly property var graphRange: CustomWidgetData.graphRange(root.fields, {})
   readonly property color stateColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : "transparent"
-  // Ticker and stacked draw their own text; on a vertical bar they're labels
-  readonly property string style: root.isVertical && ["ticker", "stacked"].includes(root.bar.style) ? "label" : root.bar.style
+  // Stacked draws its own two lines; on a vertical bar it's a label
+  readonly property string style: root.isVertical && root.bar.style === "stacked" ? "label" : root.bar.style
   // A graphic before the icon, along the bar
   readonly property bool graphic: ["ring", "fill", "segments", "sparkline", "ticker", "stacked"].includes(root.style)
   readonly property real graphicLength: {
@@ -183,44 +183,59 @@ BarIconWidget {
     }
   }
 
-  // Ticker: the text scrolling when it's longer than its room
+  // Ticker: the text scrolling when it's longer than its room, turned
+  // along a vertical bar as its label is
   Component {
     id: ticker
     Item {
       id: tickerBox
+      // Its length along the bar
       implicitWidth: tickerText.implicitWidth
       clip: true
 
-      Text {
-        id: tickerText
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.fields?.plain ?? ""
-        color: root.foregroundColor
-        font.family: Appearance.fontFamily
-        font.pixelSize: root.fontSize
-        readonly property real overflow: Math.max(0, implicitWidth - tickerBox.width)
-        x: 0
+      Item {
+        id: strip
+        anchors.centerIn: parent
+        width: root.isVertical ? tickerBox.height : tickerBox.width
+        height: root.isVertical ? tickerBox.width : tickerBox.height
+        rotation: root.isVertical ? -90 : 0
 
-        // The pauses and the scroll's speed are behaviour, not motion
-        SequentialAnimation on x {
-          running: tickerText.overflow > 0 && Appearance.animations
-          loops: Animation.Infinite
-          PauseAnimation {
-            duration: 1500
-          }
-          NumberAnimation {
-            from: 0
-            to: -tickerText.overflow
-            duration: tickerText.overflow * 30
-          }
-          PauseAnimation {
-            duration: 1500
-          }
-          NumberAnimation {
-            from: -tickerText.overflow
-            to: 0
-            duration: Appearance.animSlow
-            easing.type: Appearance.easing
+        Text {
+          id: tickerText
+          anchors.verticalCenter: parent.verticalCenter
+          text: root.fields?.plain ?? ""
+          color: root.foregroundColor
+          font.family: Appearance.fontFamily
+          font.pixelSize: root.fontSize
+          readonly property real overflow: Math.max(0, implicitWidth - strip.width)
+          x: 0
+
+          // The pauses and the scroll's speed are behaviour, not motion.
+          // Stopped (the text now fits), it's back at the start
+          SequentialAnimation on x {
+            running: tickerText.overflow > 0 && Appearance.animations
+            loops: Animation.Infinite
+            onRunningChanged: {
+              if (!running)
+                tickerText.x = 0;
+            }
+            PauseAnimation {
+              duration: 1500
+            }
+            NumberAnimation {
+              from: 0
+              to: -tickerText.overflow
+              duration: tickerText.overflow * 30
+            }
+            PauseAnimation {
+              duration: 1500
+            }
+            NumberAnimation {
+              from: -tickerText.overflow
+              to: 0
+              duration: Appearance.animSlow
+              easing.type: Appearance.easing
+            }
           }
         }
       }

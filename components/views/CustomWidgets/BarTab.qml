@@ -27,17 +27,25 @@ ColumnLayout {
   readonly property var verticalBar: root.barConfig ? Object.assign({}, root.barConfig, {
     "vertical": true
   }) : null
-  // The widget's own settings in a bar, with this definition
-  readonly property var widgetProperties: ConfigManager.withDefaults({
-    "id": "preview",
-    "type": "CustomWidget",
-    "properties": {
-      "definition": root.editor.selectedId,
-      "popout": {
-        "enabled": false
+  // The widget's own settings in a bar, with this definition, its Auto
+  // colours picked as that bar picks a lone widget's
+  readonly property var widgetProperties: {
+    const widget = ConfigManager.withDefaults({
+      "id": "preview",
+      "type": "CustomWidget",
+      "properties": {
+        "definition": root.editor.selectedId,
+        "popout": {
+          "enabled": false
+        }
       }
-    }
-  }, "BarWidget").properties
+    }, "BarWidget");
+    if (!root.barConfig)
+      return widget.properties;
+    return BarsConfig.withAutoColors({
+      "center": [widget]
+    }, root.barConfig.widgetStyle, root.barConfig.widgetGrouping, root.barConfig.groupColor).center[0].properties;
+  }
 
   width: parent?.width ?? 0
   spacing: Widget.spacing * 2
@@ -51,9 +59,11 @@ ColumnLayout {
       spacing: Widget.spacing * 3
 
       BarPreview {
+        Layout.alignment: Qt.AlignTop
         barConfig: root.barConfig
       }
       BarPreview {
+        Layout.alignment: Qt.AlignTop
         barConfig: root.verticalBar
       }
       Item {

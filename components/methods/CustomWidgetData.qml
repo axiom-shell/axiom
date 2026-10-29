@@ -653,9 +653,10 @@ QtObject {
     };
   }
 
-  // The elements drawn for a definition without any (a module never
-  // shows empty): an icon, the text, and a ring when there's a value,
-  // filling a lattice of `size`
+  // The elements drawn for a definition without any (a module never shows
+  // empty): an icon (a ring when there's a value) and the text beside it,
+  // filling a lattice of `size`, the text against the icon as a built-in
+  // figure sits
   function defaultElements(size, hasValue) {
     const g = root.lattice([], size);
     const side = Math.max(1, Math.min(g.rows, Math.floor(g.cols / 3)));
@@ -684,7 +685,9 @@ QtObject {
           "h": g.rows
         },
         "bind": {},
-        "options": {}
+        "options": {
+          "align": "left"
+        }
       });
     return out;
   }
