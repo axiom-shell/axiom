@@ -194,12 +194,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while aligning the schema's scopes
 
-### Hyprland's return of workspaces on replug is unconfirmed
-- **Where:** `services/compositor/HyprlandManager.qml` (`dynamicByLayout`), `scripts/dev/nested.sh`
-- **What:** The scrolling layout's give-back (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, decided C, item 1) rests on Hyprland moving an unplugged monitor's workspaces back to it on replug (each workspace keeps the monitor it left), read from Hyprland's code but never tried. Check it on a nested Hyprland (`scripts/dev/nested.sh hyprland`): create a headless output, open windows on its workspaces, remove the output, add it back, and see where they land. Record the result in `docs/dev/hyprland/workspace-strips.md`. If Hyprland doesn't return them, stop and report before the later items are built: the borrowed-workspaces item has nothing to wait for.
-- **Size:** trivial
-- **Found:** 2026-10-29, while splitting the scrolling layout's plan into items
-
 ### Workspace blocks follow the connected monitors, not the saved profiles
 - **Where:** `components/methods/WorkspaceGeometry.qml` (`blockBases`), `services/compositor/HyprlandManager.qml` (`_bases`), `services/compositor/CompositorManager.qml` (`_bases`), `config/MonitorsConfig.qml` (`profiles`)
 - **What:** `WorkspaceGeometry.blockBases` numbers each monitor's block by its place among the connected monitors (primary first, then output identity), so unplugging a monitor that isn't last gives every monitor after it a new base: its workspaces (201…) sit outside its new block (101…), and its list, grid and steps miss them until `axiom ipc workspaces reconcile`; replugging shifts them back. This hits every per-monitor layout (`perMonitor` and `grid` on Hyprland and sway, `scrolling` on Hyprland, where the list shrinks to the one synthetic empty workspace). Fix (plan `docs/dev/plans/scrolling-layouts-workspaces-dont-come-back-with-their-monitor.md`, item 2): number blocks over every monitor the saved profiles name (`MonitorsConfig.profiles`, by output identity), connected ones not named after them, so a block never moves with what's connected; both `_bases` pass the same list. Test rows in `tst_WorkspaceGeometry` for a middle monitor unplugged and an unknown one plugged in. Docs: `docs/dev/hyprland/workspaces.md`, `docs/dev/hyprland/workspace-strips.md`.

@@ -175,7 +175,6 @@ Every feature works the same under each compositor, or says why not. It follows 
 Done: sway and SwayFX (nothing left). niri's entries are [deferred](#deferred) (maintainer, 2026-10-29).
 
 Hyprland, and every compositor:
-- [Hyprland's return of workspaces on replug is unconfirmed](issues.md#hyprlands-return-of-workspaces-on-replug-is-unconfirmed)
 - [Workspace blocks follow the connected monitors, not the saved profiles](issues.md#workspace-blocks-follow-the-connected-monitors-not-the-saved-profiles)
 - [The scrolling layout drops a monitor's borrowed workspaces from its list](issues.md#the-scrolling-layout-drops-a-monitors-borrowed-workspaces-from-its-list)
 - [Persistent workspaces sit empty in the scrolling layout's list](issues.md#persistent-workspaces-sit-empty-in-the-scrolling-layouts-list)
