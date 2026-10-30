@@ -10,30 +10,17 @@ import qs.components.forms
 
 // How workspaces are laid out (the Workspaces section), with a small
 // picture of two monitors in the chosen layout. Windows tile here: strips
-// are set up in Settings. Where the compositor makes its workspaces itself
-// (CompositorManager.dynamicWorkspaces), it says so instead of offering
-// what doesn't apply.
+// are set up in Settings. Not shown where the compositor makes its
+// workspaces itself (OnboardingManager.pages).
 OnboardingPage {
   id: root
 
   readonly property string layout: WorkspacesConfig.layout
 
-  // The compositor's own (niri), not the scrolling layout's
-  readonly property bool dynamic: CompositorManager.dynamicWorkspaces && !CompositorManager.dynamicByLayout
   readonly property bool canScroll: CompositorManager.supports.strips === true && CompositorManager.supports.stripsAlways !== true
 
   title: I18n.tr("Workspaces")
   intro: I18n.tr("Workspaces are the desktops you switch between with Super + a number. The bar, the overview and the keybinds all follow the layout you pick here.")
-
-  IssueList {
-    visible: root.dynamic
-    issues: [
-      {
-        "level": "info",
-        "text": I18n.tr("{0} makes and removes workspaces itself: each monitor has one column of them, with an empty one at the end. The layout below doesn't apply; up and down step through the column, left and right go to the next monitor.", CompositorManager.displayName)
-      }
-    ]
-  }
 
   Repeater {
     model: [
@@ -67,7 +54,7 @@ OnboardingPage {
       required property var modelData
       // Scrolling needs strips, and is what a compositor that only has
       // strips does already
-      visible: !root.dynamic && (modelData.layout !== "scrolling" || root.canScroll)
+      visible: modelData.layout !== "scrolling" || root.canScroll
       icon: modelData.icon
       title: modelData.title
       description: modelData.description
@@ -81,7 +68,6 @@ OnboardingPage {
 
   // Two monitors in the chosen layout
   Row {
-    visible: !root.dynamic
     Layout.alignment: Qt.AlignHCenter
     Layout.topMargin: Widget.spacing
     spacing: Widget.spacing * 2
@@ -136,7 +122,6 @@ OnboardingPage {
 
   SettingRows {
     Layout.fillWidth: true
-    // The layout's size doesn't apply where the compositor makes them
-    paths: root.dynamic ? ["Workspaces.wrap"] : ["Workspaces.count", "Workspaces.columns", "Workspaces.rows", "Workspaces.wrap"]
+    paths: ["Workspaces.count", "Workspaces.columns", "Workspaces.rows", "Workspaces.wrap"]
   }
 }
