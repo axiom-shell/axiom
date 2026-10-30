@@ -157,13 +157,16 @@ class Bash(unittest.TestCase):
                     "echo $((1<<2))\naxiom lock\n2", "cat <<E'OF'\nx\nEOF\naxiom lock", "cat <<EOF\naxiom lock",
                     "bash <<< 'axiom lock'", "sh <<<\"qs kill\"")
         self.allows("git add . && git commit -F - <<'EOF'\naxiom lock\nEOF", "cat <<A <<B\naxiom lock\nA\nqs kill\nB",
-                    "cat > /tmp/p.py <<'EOF'\naxiom lock\nEOF\npython3 /tmp/p.py", "cd /tmp && cat > out/n <<'EOF'\naxiom lock\nEOF")
+                    "cat > /tmp/p.py <<'EOF'\naxiom lock\nEOF\npython3 /tmp/p.py", "cd /tmp && cat > out/n <<'EOF'\naxiom lock\nEOF",
+                    # a path run that isn't the file the command writes
+                    "cat > /tmp/p.py <<'EOF'\naxiom lock\nEOF\n/usr/bin/grep -n x /tmp/p.py",
+                    "scripts/dev/verify.sh && git commit -F - <<'EOF'\naxiom lock\nEOF")
 
     def test_comments(self):
         """A `#` comment ends at its newline; `#` inside a word or quotes isn't one; an unbalanced quote keeps separators."""
         self.blocks("echo hi # note\naxiom lock", "# step 2\nqs kill", "git status # don't\naxiom lock",
                     "echo a#b; axiom lock", "echo \"#x\" && qs kill", "echo ${#v} && axiom lock",
-                    "echo \"unbalanced; axiom lock", "echo it's && qs kill")
+                    "echo \"unbalanced; axiom lock", "echo it's && qs kill", "echo hi # a \\\naxiom lock")
         self.allows("echo hi # axiom lock", "# qs kill\ngit status", "git status  # then axiom lock; qs kill",
                     "echo '# x'\n# axiom lock")
 
@@ -173,7 +176,7 @@ class Bash(unittest.TestCase):
         self.blocks("echo # <<EOF\naxiom lock\nEOF", "echo $'\\' #'; axiom lock", "echo $'\\' #\n'; axiom lock\n'",
                     'echo "$(echo " #")"; axiom lock', f'cp /tmp/x "{guard.LIVE_CONFIG}" # don\'t',
                     "cat > /tmp/x.sh <<'EOF'\ndon't\nEOF\nbash /tmp/x.sh; echo ' #'; axiom lock")
-        self.allows("git commit -F - <<'EOF'\nFix #12: don't lock\n\n# it's text\nEOF", "printf $'a\\tb'",
+        self.allows("git commit -F - <<'EOF'\nFix #12: don't lock\n\n# it's text\nEOF", "printf $'a\\tb'", "printf $'$(axiom lock)'",
                     "gh pr create --body \"$(cat <<'EOF'\n## Summary\n- don't break #241\nEOF\n)\"",
                     'git status # see "x"\ngit diff')
 

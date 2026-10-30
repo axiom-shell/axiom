@@ -99,10 +99,12 @@ HEREDOC = re.compile(r"""(?<!<)<<(?!<)(-?)[ \t]*(['"]?)([A-Za-z_][\w.-]*)\2(?![^
 def drop_heredoc_bodies(command):
     """A heredoc's body is text, not commands: it is dropped, unless the
     command runs text it's given (a shell, `source`, `.`, `eval` or a script run
-    by its path anywhere outside the bodies: `bash <<EOF`, `cat <<EOF | sh`,
+    by a path the command names elsewhere too: `bash <<EOF`, `cat <<EOF | sh`,
     `cat > x.sh <<EOF … bash x.sh` or `… ./x.sh`), the body is unquoted and substitutes (`$(…)`, backticks) or
-    its delimiter never comes: then it is judged as written."""
-    lines, out = command.replace("\\\n", "").split("\n"), []
+    its delimiter never comes: then it is judged as written. Line continuations
+    are joined first, outside quotes and comments (a comment ends at its newline)."""
+    command = COMMENT.sub(lambda m: "" if m[0] == "\\\n" else m[0], command)
+    lines, out = command.split("\n"), []
     while lines:
         line = lines.pop(0)
         out.append(line)
@@ -115,8 +117,10 @@ def drop_heredoc_bodies(command):
             if not quote and SUBSTITUTION.search("\n".join(body)):
                 out.extend(body)
     words = lex("\n".join(out))
-    # `.` or a script run by its path (`./t.sh`, `sudo /tmp/t.sh`) where a command starts, not a redirection's target
-    runs = any(Path(w).name in SHELLS | {"source", "eval"} or (w == "." or "/" in w)
+    named = [os.path.normpath(w) for w in words]
+    # `.`, or a script run by a path the command names elsewhere too, as the file it writes
+    # (`./t.sh`, `sudo /tmp/t.sh`; not `/usr/bin/grep`), where a command starts, not a redirection's target
+    runs = any(Path(w).name in SHELLS | {"source", "eval"} or (w == "." or "/" in w and named.count(named[i]) > 1)
                and (not i or words[i - 1] in KEYWORDS | WRAPPERS.keys() or set(words[i - 1]) <= set(";&|()`"))
                for i, w in enumerate(words))
     return command if runs else "\n".join(out)
@@ -128,7 +132,7 @@ def split_commands(command):
     command = drop_heredoc_bodies(command)
     tokens = lex(command)
     out, current, exported = [], [], {}
-    for token in lex(QUOTED.sub(lambda m: "''" if m[0][0] == "'" else m[0], command)):
+    for token in lex(QUOTED.sub(lambda m: "''" if m[0].startswith(("'", "$'")) else m[0], command)):
         for m in SUBSTITUTION.finditer(token):
             out.extend(split_commands(m[1] or m[2]))
     i = 0
