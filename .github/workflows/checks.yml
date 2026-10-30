@@ -56,18 +56,18 @@ jobs:
           echo "GO_VERSION=$(go env GOVERSION)" >> "$GITHUB_ENV"
 
       # Go's build and module caches across runs (generate.sh compiles the
-      # binary). Both are keyed by content, so a hit only skips compiling
-      # what didn't change; the tests run with -count=1, never from cache.
-      # A PR's run sees its own earlier runs' caches and main's (the go
-      # job's weekly run): this job's first, else the go job's
+      # binary). Both are content-addressed, so a hit only skips compiling
+      # what didn't change, and the key needs only the Go version and the
+      # dependencies (go.sum): it changes rarely, so a run saves only when
+      # it's new. The tests run with -count=1, never from cache. A PR's run
+      # restores main's cache, which the go job's weekly run saves (also
+      # under this key: the two jobs share one)
       - name: Go caches
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: /var/cache/go
-          key: go-${{ runner.os }}-${{ env.GO_VERSION }}-checks-${{ hashFiles('backend/go.sum', 'backend/**/*.go') }}
-          restore-keys: |
-            go-${{ runner.os }}-${{ env.GO_VERSION }}-checks-
-            go-${{ runner.os }}-${{ env.GO_VERSION }}-
+          key: go-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-${{ env.GO_VERSION }}-
 
       # The generated files (config/json/config.schema.json, built from
       # config/schema/, and the reference docs; gen_docs.py also fails when
@@ -181,16 +181,14 @@ jobs:
           go version
           echo "GO_VERSION=$(go env GOVERSION)" >> "$GITHUB_ENV"
 
-      # As the checks job's Go caches: this job's first, else the checks job's
+      # The checks job's Go caches (the same key)
       - name: Go caches
         if: steps.scope.outputs.run
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: /var/cache/go
-          key: go-${{ runner.os }}-${{ env.GO_VERSION }}-test-${{ hashFiles('backend/go.sum', 'backend/**/*.go') }}
-          restore-keys: |
-            go-${{ runner.os }}-${{ env.GO_VERSION }}-test-
-            go-${{ runner.os }}-${{ env.GO_VERSION }}-
+          key: go-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-${{ env.GO_VERSION }}-
 
       # scripts/check_go.sh --ci, and that the cases the JS helpers and the
       # axiom binary share (both replay them) are indexed. A shared runner
