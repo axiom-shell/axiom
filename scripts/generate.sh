@@ -5,10 +5,10 @@
 # clone runs this once (verify.sh, check_all.sh, check_go.sh and CI run it
 # first):
 #   - backend/internal/assets/data/, the repo files compiled into the binary,
-#     the schema among them (`go generate`, backend/tools/syncassets): the
-#     binary doesn't compile without it
-#   - config/json/config.schema.json, from its YAML source config/schema/
-#     (`axiom schema build`, through go run)
+#     the schema among them, and config/json/config.schema.json, the schema
+#     built from its YAML source config/schema/ (`go generate`,
+#     backend/tools/syncassets, a small program: with --no-docs nothing
+#     compiles the whole binary); the binary doesn't compile without data/
 #   - docs/dev/config/ and docs/dev/generated/, the reference docs made from
 #     the code and the schema (scripts/gen_docs.py, which also fails when the
 #     shell calls a daemon method or push the daemon doesn't define, or on
@@ -42,10 +42,9 @@ if ! command -v go >/dev/null; then
   echo "generate: go isn't installed (it builds config/json/config.schema.json)" >&2
   exit 1
 fi
-# The embedded copies first (the binary needs them to compile), then the
-# tree's schema (the docs and the fixtures are made from it)
+# The embedded copies and the tree's schema (the binary needs the first to
+# compile; the docs and the fixtures are made from the second)
 (cd "$root/backend" && go generate ./internal/assets)
-(cd "$root/backend" && go run ./cmd/axiom schema build --tree .. >/dev/null)
 if [[ $docs -eq 1 ]]; then
   mkdir -p "$root/docs/dev/generated"
   (cd "$root/backend" && go run ./tools/rpcshapes >"$root/docs/dev/generated/rpc-shapes.json.new")
