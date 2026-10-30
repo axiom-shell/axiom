@@ -120,6 +120,31 @@ TestCase {
     compare(m.naturalBoxStart, 0);
   }
 
+  function test_corners_capped_at_the_box() {
+    // A shallow filleted box: the wall runs from the fillet's end (29) to
+    // farV 47, so a corner gets 18 of its 27, and the box keeps its size
+    const shallow = SurfaceOutline.metrics(spec({
+      "boxDepth": 20
+    }));
+    compare(shallow.startCornerRadius, 18);
+    compare(shallow.endCornerRadius, 18);
+    compare(shallow.depth, 76);
+    // A pill (no fillets) 30 along and 10 deep on the attach edge, radius
+    // 20: capped at its depth less half the stroke, then half its length
+    const s = spec({
+      "boxAlong": 30,
+      "boxDepth": 10,
+      "cornerRadius": 20,
+      "straight": true
+    });
+    const pill = SurfaceOutline.withBoxStart(s, SurfaceOutline.metrics(s), 0);
+    compare(pill.startCornerRadius, 9);
+    const along = SurfaceOutline.withBoxStart(s, SurfaceOutline.metrics(s), 20);
+    compare(along.endCornerRadius, 14);
+    // A box with room keeps its radius
+    compare(SurfaceOutline.metrics(spec({})).startCornerRadius, 27);
+  }
+
   function test_toItem_edges() {
     // 100 wide, 50 high; u = 10 along, v = 5 away from the edge
     compare(SurfaceOutline.toItem(ScreenEdge.Top, 100, 50, 0, 10, 5), {

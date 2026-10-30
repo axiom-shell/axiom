@@ -84,7 +84,7 @@ Mode: collection
 Docs: bar/widget-style.md bar/composition.md
 Extra: components/bar/widgets/*/*.qml
 Checks:
-- Sized from `barConfig`, never `Widget.*`; ticking labels set `steadyDigits`.
+- Sized from `barConfig`, never `Widget.*`; a changing number never resizes a label (`minimumText` for one whose digit count changes).
 - Polled data: request from `properties` only, acquire/release paired.
 - Popout through `PopoutAnchor` with `EdgeMenusConfig.opensOwnPopout`.
 - Each has its schema `oneOf` entry with the required fields; color fields shown only where they apply.

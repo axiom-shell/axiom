@@ -71,6 +71,7 @@ BarIconWidget {
     graphMax: root.graphMax
     text: root.styleText
     subtext: root.subtext
+    minimumText: root.minimumText
     segmentCount: root.appearance.segments
     preferredLength: root.appearance.width
     vertical: root.isVertical

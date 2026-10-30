@@ -7,4 +7,4 @@ The shared pieces every popout is built from: bar popouts, edge popouts (OSDs, f
 - **Every popout holds a `PopoutClaim`** in `PopoutManager` with its footprint; never check other popouts yourself. An open popout never moves.
 - Shadows of visible surfaces go through `OutsideShadow` (explicit padding), never a `MultiEffect` on the item's own layer.
 - Layer order comes from `LayerStack.layers` (`docs/dev/generated/layers.md`; see `components/bar/AGENTS.md`). Bars and the border must never draw over fullscreen; never map a Top window in response to fullscreen (`docs/dev/testing.md`).
-- Verify with `tst_SurfaceContext` rows and one targeted screenshot. `scripts/dev/popout_matrix.py` (SIGINT only to stop) is slow: only when asked.
+- Verify with `tst_SurfaceContext` rows and one targeted screenshot.

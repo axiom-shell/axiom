@@ -100,24 +100,28 @@ BarWidget {
       return {
         "icon": "memory",
         "value": `${SystemManager.cpuUsage}%`,
+        "widest": "100%",
         "level": SystemManager.cpuUsage
       };
     case "mem":
       return {
         "icon": "memory_alt",
         "value": p.memoryFormat === "used" ? (SystemManager.memUsedBytes / Utils.bytesPerGiB).toFixed(1) + "G" : `${SystemManager.memUsage}%`,
+        "widest": p.memoryFormat === "used" ? "00.0G" : "100%",
         "level": SystemManager.memUsage
       };
     case "temp":
       return {
         "icon": "thermometer",
         "value": `${SystemManager.cpuTemp}°`,
+        "widest": "100°",
         "level": SystemManager.cpuTemp
       };
     case "gpu":
       return {
         "icon": "developer_board",
         "value": `${SystemManager.gpuUsage}%`,
+        "widest": "100%",
         "level": SystemManager.gpuUsage
       };
     default:
@@ -126,6 +130,7 @@ BarWidget {
         return {
           "icon": "hard_drive",
           "value": `${usage}%`,
+          "widest": "100%",
           "level": usage
         };
       }
@@ -203,14 +208,12 @@ BarWidget {
           padding: 0
           showBackground: false
           fontSize: root.barConfig.fontSize
-          spacing: root.isVertical ? 0 : 4
+          spacing: root.isVertical ? 0 : root.barConfig.widgetSpacing * 1.5
           textScale: root.isVertical ? 0.7 : 0.9
           uprightLabel: true
-          // Same-width digits, so the widget (and the bar's layout) doesn't
-          // shift with every sample
-          steadyDigits: true
           icon: segment.stat.icon
           text: segment.stat.value
+          minimumText: segment.stat.widest
           showText: segment.style !== "icon" && segment.style !== "stacked"
           foregroundColor: root.textColor
           iconColor: root._textByState ? root.accentColor : root.colors.icon
@@ -227,6 +230,7 @@ BarWidget {
             graphMin: 0
             graphMax: 100
             text: segment.stat.value
+            minimumText: segment.stat.widest
             // Stacked: the value over its name, where the value goes
             subtext: I18n.tr(root._captions[segment.modelData])
             segmentCount: root.appearance.segments
