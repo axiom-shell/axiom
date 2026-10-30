@@ -41,7 +41,7 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 ## Checks
 
 `scripts/dev/verify.sh --all` runs every CI check (`docs/dev/testing.md` › The checks); none runs the shell, so still read the log. Left to you:
-- Fix a new qmllint warning (`--update-baseline` only for Quickshell type-info gaps); every baseline only shrinks.
+- Fix a new qmllint warning (`--update-baseline` only for Quickshell type-info gaps or baselined warnings gone); every baseline only shrinks.
 - A changed methods helper gets a `tests/tst_<Name>.qml` case, a migration step a Go test, a new check rule a breaking fixture.
 - **Agents never translate**, however easy it looks, nor run `check_i18n.py --fill`/`--prune` (the pre-commit hook does).
 - Generated files (listed in `docs/dev/testing.md` › The checks) are never edited by hand.
@@ -55,7 +55,7 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 
 ## Layout
 
-Each kind of file has its folder and naming (`docs/dev/README.md` › Layout; `check_structure` enforces it). `components/reusable/` holds generic `Styled*` widgets with no feature logic; only `StyledToolTip` and the plumbing `StreamedLoader`, `BackdropRequest`, `ScrollMemory`, `SurfaceGroup` read services. Imports use `qs.`, never relative paths.
+Each kind of file has its folder and naming (`docs/dev/README.md` › Layout; `check_structure` holds the folders types load by). `components/reusable/` holds generic `Styled*` widgets with no feature logic; only `StyledToolTip` and the plumbing `StreamedLoader`, `BackdropRequest`, `ScrollMemory`, `SurfaceGroup` read services. Imports use `qs.`, never relative paths.
 
 ## Layering
 
@@ -85,7 +85,7 @@ How they're built: `docs/dev/core/services-pattern.md`.
 - Every default is filled at load: **readers use no `??` fallbacks**.
 - **Prefer a new schema annotation to a hand-kept list in QML** (`docs/dev/core/schema-annotations.md`). `x-scope`: a setting naming a monitor, path or account is `machine`, one that runs something `commands` (`docs/dev/core/saved-configs-sharing.md`). An `x-takeover` setting changes only through its own card, never by a load or import.
 - An empty monitor means the primary monitor (except `General.primaryMonitor` itself). A path setting may hold `~`: expand it (`Paths.expandHome`) before use. Processes run without a shell.
-- **Theme** colours by name (`Theme.resolveColor` for names from config). Theme integrations write only their own `axiom.*` file; only the hookup's Apply (a user's click) edits the user's config.
+- **Theme**: `Theme.base00`–`base0F` plus semantic names; `Theme.resolveColor(name)` for names from config. Theme integrations write only their own `axiom.*` file; only the hookup's Apply (a user's click) edits the user's config.
 - **Animation**: a `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` with `Appearance.easing`, or marked `// behaviour timing: <reason>` (`check_structure`); looping animations gate `running` on `Appearance.animations`.
 
 ## Translation
@@ -98,6 +98,6 @@ How they're built: `docs/dev/core/services-pattern.md`.
 - **Data-driven surfaces**: bars, pages, edge menus, docks, OSDs are config arrays, built by `Variants`/Repeaters keyed by stable ids; types load by name (file + schema `oneOf` entry).
 - **Pages show at once and fill in** (`docs/dev/core/streamed-building.md`): panels and anything long are `StreamedLoader`s, nothing is built hidden, unbounded lists are ListViews.
 - **Repeater models and `acquire()` requests come from config and tool availability only, never live values** (`check_structure`): one re-evaluated per sample once pushed qs past 25 GB.
-- **Sizes** from `Widget`, `Widget.px(n)` and `Appearance.fontSize(By)` (`scripts/check_sizes.py`); `Appearance.borderRadius` only for outer edges, `Widget.radius` inside; rounded clipping is `ClippingRectangle`; icons are `StyledIcon`, never in a Text with a label.
-- **Screen targeting**: surfaces on `General.screensFor(target)` or `General.outputs`, never `Quickshell.screens` (`check_structure`); only `ShellManager.isTarget(screen, target)` answers shortcuts, IPC and OSD events, and IPC handlers are `enabled` there only. An outside click closes through `FocusGrab`.
+- **Sizes** outside the bars from `Widget`, `Widget.px(n)` and `Appearance.fontSize(By)` (`scripts/check_sizes.py`); `Appearance.borderRadius` only for outer edges, `Widget.radius` inside; rounded clipping is `ClippingRectangle`; icons are `StyledIcon`, never in a Text with a label.
+- **Screen targeting**: surfaces on `General.screensFor(target)` or `General.outputs`, never `Quickshell.screens` (`check_structure`); only `ShellManager.isTarget(screen, target)` answers shortcuts, IPC and OSD events, and IPC handlers are `enabled` on the target instance only. An outside click closes through `FocusGrab`.
 - **Subsystem invariants** (`components/content/`, `components/bar/`, `components/hosts/popout/`, `services/` `AGENTS.md`): modules exist only while shown; corners are `BarEnds`' alone; nothing draws over fullscreen; an open popout never moves. The greeter runs data, never code (side effects check `Paths.greeter`). Only `LockManager.lock()` locks; only PAM unlocks.
