@@ -28,7 +28,7 @@ OnboardingPage {
 
   SettingRows {
     Layout.fillWidth: true
-    paths: ["Widget.cardSize", "Widget.scale"]
+    paths: ["Interface.cardSize", "Interface.scale"]
   }
 
   Notice {
