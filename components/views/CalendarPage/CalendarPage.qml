@@ -187,10 +187,13 @@ BaseView {
               spacing: 0
 
               Repeater {
-                model: CalendarManager.calendars.filter(calendar => calendar.events)
+                id: calendarRepeater
+                readonly property var calendars: CalendarManager.calendars.filter(calendar => calendar.events)
+                model: calendars.length
                 RowLayout {
                   id: calendarRow
-                  required property var modelData
+                  required property int index
+                  readonly property var calendar: calendarRepeater.calendars[index] ?? ({})
                   Layout.fillWidth: true
                   spacing: Widget.spacing
 
@@ -198,19 +201,19 @@ BaseView {
                     Layout.preferredWidth: Appearance.fontSize * 0.7
                     Layout.preferredHeight: width
                     radius: width / 2
-                    color: calendarRow.modelData.color
-                    opacity: calendarRow.modelData.enabled ? 1 : 0.4
+                    color: calendarRow.calendar.color
+                    opacity: calendarRow.calendar.enabled ? 1 : 0.4
                   }
                   StyledText {
                     Layout.fillWidth: true
-                    text: calendarRow.modelData.name
+                    text: calendarRow.calendar.name
                     textFormat: Text.PlainText
                     elide: Text.ElideRight
-                    opacity: calendarRow.modelData.enabled ? 1 : 0.6
+                    opacity: calendarRow.calendar.enabled ? 1 : 0.6
                   }
                   StyledSwitch {
-                    checked: calendarRow.modelData.enabled
-                    onToggled: root.setShown(calendarRow.modelData, checked)
+                    checked: calendarRow.calendar.enabled
+                    onToggled: root.setShown(calendarRow.calendar, checked)
                   }
                 }
               }

@@ -12,9 +12,7 @@ Scope {
     active: GreeterManager.editor.previewing && !LockManager.builtinLocked
 
     GreeterPreviewWindow {
-      // Quickshell's list, not General.outputs: there's always a screen to
-      // put it on, a stand-in one while no monitor is connected
-      screen: Quickshell.screens.find(screen => screen.name === GreeterManager.editor.previewScreen) ?? Quickshell.screens[0]
+      screen: Quickshell.screens.find(screen => screen.name === GreeterManager.editor.previewScreen) ?? Quickshell.screens[0] // allowed: there's always a screen to put it on, a stand-in one while no monitor is connected
     }
   }
 }

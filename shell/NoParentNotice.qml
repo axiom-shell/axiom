@@ -30,7 +30,7 @@ Scope {
     })[root._compositor] ?? "axiom run   (from your compositor's autostart)"
 
   Variants {
-    model: Quickshell.screens
+    model: Quickshell.screens // allowed: it reads no config, so General isn't there to ask
 
     PanelWindow {
       id: window
