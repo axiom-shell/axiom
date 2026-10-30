@@ -21,6 +21,7 @@ ValueStyleWidget {
 
   icon: BatteryManager.getBatteryIcon()
   text: `${percentage}%`
+  minimumText: "100%"
   labelShown: properties.showPercentage
   ratio: percentage / 100
   subtext: timeRemaining

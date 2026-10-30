@@ -621,12 +621,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### The system stats widget changes width with its digits
-- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml`, `components/bar/widgets/base/IconTextWidget.qml` (`steadyDigits`)
-- **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size. The cause is in the base (bar-widgets audit, 2026-10-30): `steadyDigits` sizes a label by its digit count by design ("changing only when it gains or drops a digit"), and stacked (`ValueGraphic`) does the same, so Volume/Microphone, Battery, ClaudeUsage, Updates and SystemStats' used memory shift too, and Stopwatch, Pomodoro and IdleInhibitor grow a step past an hour. **Decided** (maintainer, 2026-10-30, with the ticking labels): "Everything should always not be affected by ticking, and there shouldn't be a way to turn it off via a setting (i.e. everything acts like monospace without moving the bar around when changing numubers)". Fix, in the base for every bar widget's label, with no setting: a per-widget minimum text the label never measures below ("100%" for a percent), measured as `steadyMetrics` is. Lands together with [Ticking labels without steadyDigits resize the bar under a proportional font](#ticking-labels-without-steadydigits-resize-the-bar-under-a-proportional-font).
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
 ### Modules inside borders aren't sized evenly
 - **Where:** `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/OverlaySlot.qml`
 - **What:** From the maintainer's notes: module sizing within borders isn't even (the space around modules framed by a border differs from side to side or between modules).
@@ -1453,17 +1447,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `BarsConfig.lookOf({})` returns what `BarStyle.look` holds: every `Bars.style` key with the shadow flattened. Every other user of the shared look reads `BarStyle.look` (RoundedBorders, SurfaceShadow, AttachedSurface, EdgePlacement). Fix: `readonly property var _barLook: BarStyle.look`.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
-
-### Ticking labels without steadyDigits resize the bar under a proportional font
-- **Where:** `components/bar/widgets/ScreenRecord/ScreenRecord.qml:17` (`text`), `components/bar/widgets/NextEvent/NextEvent.qml:44` (`when`), `components/bar/widgets/Button/Button.qml:31` (`text`)
-- **What:** `components/bar/widgets/AGENTS.md` says "**A ticking label** (countdown, elapsed time) sets `steadyDigits: true`". `grep -rln steadyDigits components/bar/widgets` lists only SystemStats, Stopwatch, Pomodoro, IdleInhibitor and the base. These three tick without it:
-  - ScreenRecord's label is the time recorded (`m:ss`), set again every second from `ScreenshotManager.recordingElapsed`.
-  - NextEvent's "in {0} min" counts down every minute.
-  - A Button's `labelCommand` output is sampled every `labelInterval` (default 5 s) and is usually a number.
-
-  Without `steadyDigits`, `IconTextWidget` sets no `tnum`, and `_textLength` is the text's own width. The default `Appearance.font.family` is `monospace`, where nothing moves. With a proportional font (Inter, Noto Sans, …), `0:11` → `0:08` changes the widget's width and moves its neighbours on most ticks. **Decided** (maintainer, 2026-10-30): "Everything should always not be affected by ticking, and there shouldn't be a way to turn it off via a setting (i.e. everything acts like monospace without moving the bar around when changing numubers)". Fix: steady digits become the behaviour of every bar widget's label, with no setting, and the four `steadyDigits: true` opt-ins are deleted. Lands together with [The system stats widget changes width with its digits](#the-system-stats-widget-changes-width-with-its-digits).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
 
 ### Media squeezed to its minimum in the fill style shows the meter, not its icon
 - **Where:** `components/bar/widgets/Media/Media.qml:20` (`minimumSize`), `components/bar/widgets/base/IconTextWidget.qml:46` (`_leadRoom`), `components/bar/widgets/base/IconTextWidget.qml:54` (`_iconStart`)

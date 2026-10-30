@@ -26,8 +26,6 @@ ValueStyleWidget {
 
   icon: root.showsTimer ? "hourglass_top" : "timer_play"
   text: root.showsTimer ? StopwatchManager.timerText : StopwatchManager.elapsedText
-  // Ticking: sized by its digit count, not by each second's digits
-  steadyDigits: true
   labelShown: root.showsTimer || root.showsStopwatch
   // Idle, stacked shows no time either, as the label doesn't
   styleText: root.labelShown ? root.text : ""

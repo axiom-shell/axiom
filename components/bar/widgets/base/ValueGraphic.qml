@@ -23,6 +23,9 @@ Item {
   // The ticker's text, and stacked's two lines
   property string text: ""
   property string subtext: ""
+  // Stacked's widest value (IconTextWidget's minimumText): the value never
+  // takes less room, so a changing one doesn't resize the widget
+  property string minimumText: ""
   property int segmentCount: 5
   // The graphic's length along the bar; 0 picks one
   property real preferredLength: 0
@@ -163,6 +166,9 @@ Item {
           color: root.textColor
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize
+          font.features: {
+            "tnum": 1
+          }
           readonly property real overflow: Math.max(0, implicitWidth - strip.width)
           x: 0
 
@@ -202,7 +208,14 @@ Item {
   Component {
     id: stacked
     Item {
-      implicitWidth: stack.implicitWidth
+      implicitWidth: Math.ceil(Math.max(stack.implicitWidth, valueMetrics.advanceWidth))
+
+      // The room of the longer of the value and its minimum, digits as zeros
+      TextMetrics {
+        id: valueMetrics
+        font: value.font
+        text: (root.minimumText.length > root.text.length ? root.minimumText : root.text).replace(/[0-9]/g, "0")
+      }
 
       Column {
         id: stack
@@ -210,6 +223,7 @@ Item {
         spacing: 0
 
         Text {
+          id: value
           anchors.horizontalCenter: parent.horizontalCenter
           text: root.text
           color: root.textColor
