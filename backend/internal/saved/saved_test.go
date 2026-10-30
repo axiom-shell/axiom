@@ -134,8 +134,16 @@ func TestApplyExampleFormat1(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(f.dir, "saved", "before-tall.json")); err != nil {
 		t.Error("no backup")
 	}
-	if got := f.svc.Examples(); len(got) != 1 || got[0].Title != "Tall" {
-		t.Errorf("examples %+v", got)
+	got := f.svc.Examples()
+	if len(got) != 1 || got[0].Title != "Tall" {
+		t.Fatalf("examples %+v", got)
+	}
+	// What its preview draws, read converted and filled
+	if bars := got[0].Bars; len(bars) != 1 || bars[0].Location != "left" || bars[0].Background == "" {
+		t.Errorf("bars %+v", bars)
+	}
+	if got[0].Theme == "" || len(got[0].Docks) != 0 {
+		t.Errorf("theme %q, docks %+v (the default dock is off)", got[0].Theme, got[0].Docks)
 	}
 }
 
@@ -230,7 +238,15 @@ func TestShippedExamplesApply(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			// The onboarder offers them after its Workspaces step: an
+			// example applying a layout (or strips) would undo that pick
+			if parsed, _ := jsonx.Unmarshal(data); parsed.(*jsonx.Object).Has("Workspaces") {
+				t.Error("carries Workspaces")
+			}
 			os.WriteFile(filepath.Join(f.ex, e.Name()), data, 0o644)
+			if got := f.svc.Examples(); len(got) != 1 || got[0].Theme == "" || len(got[0].Bars) == 0 {
+				t.Errorf("preview %+v", got)
+			}
 			if _, err := f.svc.ApplyExample(name, nil); err != nil {
 				t.Fatal(err)
 			}

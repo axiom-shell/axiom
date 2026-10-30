@@ -10,6 +10,7 @@ Snapshots of the config, the shipped example setups, and sharing a config throug
 - The Maintenance category's own card `SavedConfigsCard` (its `x-categories` `card`, wide, last).
 - It shows `SavedConfigsManager`'s snapshots in `~/.config/axiom/saved/`.
 - Below them: sharing (Share: Export, Import…) and the example setups in `examples/` (`SavedConfigsManager.examples`).
+- The onboarder's Look page shows the examples too, as cards that apply on a click ([Onboarding](../features/onboarding.md)). `share.examples` gives each `{ name, title, description, theme, screenBorder, bars: [{ location, background }], docks: [{ edge }] }`: the shown bars and docks read from the example loaded as applying takes it, for the card's drawn preview.
 - The launcher's `/config` can also save and restore snapshots: see [Launcher](../features/launcher.md).
 
 ### What a shared file carries: `x-scope`
@@ -62,6 +63,7 @@ Walks a value along the schema.
 ### Adding an example setup
 - Build the setup in the shell, then Settings → Maintenance → Share → Export, with both switches off unless the example needs a command. It writes `~/axiom-<name>-<date>-<time>.json`, holding only the look (`x-scope`) minus defaults.
 - Move it to `examples/<name>.json` and fill in its `meta`: `{ "title": "…", "description": "…" }`.
+- Remove its `Workspaces`: the onboarder offers the examples after its Workspaces step, and a layout (or strips) in one would undo that pick (`TestShippedExamplesApply` fails on one).
 - Wallpapers, accounts and paths are `machine` scope, so they're never in an export, and monitors only by place: don't add them by hand.
 
 ### Snapshot rows

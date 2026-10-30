@@ -1323,7 +1323,6 @@
     "One bar along the edge": "画面端に沿った 1 本のバー",
     "Widgets on the wallpaper": "壁紙の上にウィジェットを表示",
     "Edge": "画面端",
-    "Widgets are arranged in the overlay's Bar editor.": "ウィジェットはオーバーレイのバーエディターで配置します。",
     "Welcome to axiom": "axiom へようこそ",
     "Next to the step names at the bottom are the arrows, and you can click any step to jump to it. Skip setup keeps what you chose so far.": "下部のステップ名の横に矢印があり、どのステップもクリックして移動できます。「セットアップをスキップ」を押しても、ここまでの選択は保持されます。",
     "Apps & keys": "アプリとキー",
@@ -3482,6 +3481,7 @@
     "The apps axiom opens: by the Terminal, File manager and Browser keybinds, the launcher's terminal apps and Shift+Enter commands, and the network editor.": "",
     "Network editor": "",
     "Command the Wi-Fi menu's Settings button and the VPN module's Edit connections button run, to add or change network connections and VPNs. Empty hides both.": "",
-    "Finish changes how axiom sets up {0}: what the current mode set up is undone.": ""
+    "Finish changes how axiom sets up {0}: what the current mode set up is undone.": "",
+    "Applies a whole look (bars, theme, menus) at once. Your wallpaper and the rest of this setup stay.": ""
   }
 }
