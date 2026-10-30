@@ -676,3 +676,82 @@ func TestFailedOpChangesNothing(t *testing.T) {
 		t.Errorf("the next save: %v", err)
 	}
 }
+
+// A save that can't be written keeps the config, its revision and the store
+// writable; an Open whose first config can't be written, or whose file
+// can't be read, fails.
+func TestUnwritableFiles(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir)
+	before, st := s.Config()
+	// A link into a folder that isn't there: the save can't make its file
+	os.Remove(s.Path())
+	os.Symlink(filepath.Join(dir, "gone", FileName), s.Path())
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0)}, SetOptions{}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("a save that can't be written: %v", err)
+	}
+	if after, now := s.Config(); !jsonx.Equal(before, after) || now.Revision != st.Revision {
+		t.Error("a failed save changed the config")
+	}
+
+	first := t.TempDir()
+	os.Symlink(filepath.Join(first, "gone", FileName), filepath.Join(first, FileName))
+	if _, err := Open(Options{Dir: first, Pipeline: pipeline(t)}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("a first config that can't be written: %v", err)
+	}
+	unreadable := t.TempDir()
+	os.Mkdir(filepath.Join(unreadable, FileName), 0o700)
+	if _, err := Open(Options{Dir: unreadable, Pipeline: pipeline(t)}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("a config that can't be read: %v", err)
+	}
+}
+
+// The file going is told once, from the file; a save or a reload of the
+// file back clears it. An outside edit's event says it came from the file.
+func TestMissingFileEvents(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	var events []Event
+	s.Subscribe(func(e Event) { events = append(events, e) })
+	good, _ := os.ReadFile(s.Path())
+
+	os.Remove(s.Path())
+	s.reload()
+	s.reload()
+	if len(events) != 1 || !events[0].State.Missing || !events[0].FromFile || events[0].Config != nil {
+		t.Fatalf("the file going: %+v", events)
+	}
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0)}, SetOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, st := s.Config(); st.Missing || events[1].State.Missing || events[1].FromFile {
+		t.Errorf("a save didn't clear Missing: %+v", events[1])
+	}
+
+	os.Remove(s.Path())
+	s.reload()
+	os.WriteFile(s.Path(), good, 0o600)
+	s.reload()
+	if _, st := s.Config(); st.Missing || len(events) != 4 || events[3].State.Missing || !events[3].FromFile || events[3].Config == nil {
+		t.Errorf("the file back: %+v", events)
+	}
+}
+
+// A takeover written back is recorded as the store's own bytes: reading
+// the file again tells nothing.
+func TestTakeoverWriteBackIsNotReadAgain(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	var events []Event
+	s.Subscribe(func(e Event) { events = append(events, e) })
+	cfg, _ := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Value("Idle").(*jsonx.Object).Set("enabled", true)
+	os.WriteFile(s.Path(), jsonx.Marshal(edited), 0o600)
+	s.reload()
+	s.reload()
+	if len(events) != 1 {
+		t.Errorf("%d events for one takeover-only edit", len(events))
+	}
+}

@@ -8,14 +8,16 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/greeterinstall/rules"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
-// tools holds the fake programs the tests run (pkexec), written by
+// tools holds the fake programs the tests run (pkexec, tar), written by
 // TestMain before any test forks: a program written while another test
 // forks can't be run ("text file busy").
 var tools string
@@ -34,6 +36,12 @@ func TestMain(m *testing.M) {
 	// pkexec, logging its arguments to $FAKE_LOG, running $FAKE_OUT and
 	// exiting $FAKE_CODE
 	write("pkexec", "#!/bin/sh\nprintf '%s\\n' \"$*\" >\"$FAKE_LOG\"\neval \"$FAKE_OUT\"\nexit \"$FAKE_CODE\"\n")
+	// tar/tar, the real tar's archive cut before its end and followed by
+	// $FAKE_TAR_JUNK bytes that aren't a tar header
+	if tar, err := exec.LookPath("tar"); err == nil {
+		os.Mkdir(filepath.Join(dir, "tar"), 0o755)
+		write("tar/tar", "#!/bin/sh\n"+tar+" -b 1 \"$@\" | head -c -1024\nhead -c \"$FAKE_TAR_JUNK\" /dev/zero | tr '\\0' x\n")
+	}
 	code := m.Run()
 	os.RemoveAll(dir)
 	os.Exit(code)
@@ -294,6 +302,15 @@ func TestElevate(t *testing.T) {
 // password), never while it only asks
 func TestElevateAuthorized(t *testing.T) {
 	t.Parallel()
+	// The watcher stops with pkexec, authorized or not (after every case)
+	t.Cleanup(func() {
+		if !testkit.Eventually(func() bool {
+			buf := make([]byte, 1<<20)
+			return !bytes.Contains(buf[:runtime.Stack(buf, true)], []byte("watchAuthorized"))
+		}) {
+			t.Error("the watcher outlived pkexec")
+		}
+	})
 	pkexec := filepath.Join(tools, "pkexec")
 	req := rules.Request{Action: rules.ActionUpdate, Repo: "/r", User: "me", Source: "local", Channel: "tags", Binary: "/home/me/axiom"}
 	for _, tc := range []struct {
