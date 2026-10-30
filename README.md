@@ -11,7 +11,7 @@ Runs on [Hyprland](https://hypr.land), [niri](https://github.com/YaLTeR/niri) an
 <a href="https://github.com/axiom-shell/axiom/commits/main"><picture><source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/last-commit/axiom-shell/axiom?style=for-the-badge&color=587539&labelColor=e1e2e7"><img alt="Latest Commit" src="https://img.shields.io/github/last-commit/axiom-shell/axiom?style=for-the-badge&color=9ece6a&labelColor=1a1b26"></picture></a>
 <a href="#compositors"><picture><source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/Wayland-Hyprland%20%C2%B7%20niri%20%C2%B7%20sway-2e7de9?style=for-the-badge&labelColor=e1e2e7"><img alt="Hyprland, niri and sway" src="https://img.shields.io/badge/Wayland-Hyprland%20%C2%B7%20niri%20%C2%B7%20sway-7aa2f7?style=for-the-badge&labelColor=1a1b26"></picture></a>
 <a href="https://quickshell.org"><picture><source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/Quickshell-0.3.2%2B-9854f1?style=for-the-badge&labelColor=e1e2e7"><img alt="Quickshell" src="https://img.shields.io/badge/Quickshell-0.3.2%2B-bb9af7?style=for-the-badge&labelColor=1a1b26"></picture></a>
-<a href="LICENSE"><picture><source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/License-MIT-118c74?style=for-the-badge&labelColor=e1e2e7"><img alt="License" src="https://img.shields.io/badge/License-MIT-73daca?style=for-the-badge&labelColor=1a1b26"></picture></a>
+<a href="LICENSE"><picture><source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/License-GPL--3.0-118c74?style=for-the-badge&labelColor=e1e2e7"><img alt="License" src="https://img.shields.io/badge/License-GPL--3.0-73daca?style=for-the-badge&labelColor=1a1b26"></picture></a>
 
 [Why axiom](#why-axiom) · [Highlights](#highlights) · [Example setups](#example-setups) · [What's included](#whats-included) · [Compositors](#compositors) · [Install](#installation) · [Docs](#documentation)
 
@@ -245,4 +245,10 @@ AI assistance is part of my development workflow, not a substitute for architect
 
 ## License
 
-[MIT](LICENSE)
+Copyright © 2025–2026 Travis Hepworth.
+
+axiom is free software: you can redistribute it and/or modify it under the terms of the [GNU General Public License](LICENSE) as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. A modified version you distribute must keep this license and come with its source.
+
+Versions before this change were released under the MIT License, which still applies to those versions.
+
+Forks are welcome; please give yours another name, so it isn't mistaken for axiom.
