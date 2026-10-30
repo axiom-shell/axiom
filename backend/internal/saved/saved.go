@@ -334,10 +334,13 @@ func (s *Service) remove(name string) error {
 
 // keep makes sure the running config is on disk before something replaces
 // it: the active snapshot unchanged already is (""), else it's saved as
-// "unsaved", whose name it returns.
+// "unsaved", whose name it returns. An active one that didn't load (no
+// baseline) or whose file is gone doesn't count.
 func (s *Service) keep() (string, error) {
-	if s.state.Active != "" && !s.modified() {
-		return "", nil
+	if s.state.Active != "" && s.baseline != nil && !s.modified() {
+		if _, err := os.Stat(s.path(s.state.Active)); err == nil {
+			return "", nil
+		}
 	}
 	return s.save(unsaved, "")
 }
@@ -459,7 +462,8 @@ func (s *Service) preview(path string, parsed any) (Preview, error) {
 
 // Import applies the shared file at path (its personal parts too with
 // personal, its commands with commands), after keeping the running config
-// (keep); the result is saved as "import-<name>".
+// (keep); the result is saved as "import-<name>", kept like one the user
+// saved (the file may not be there to apply it again).
 func (s *Service) Import(path string, personal, commands bool, monitors share.Monitors) (Applied, error) {
 	// Read once: what's applied is what the preview judged, even if the
 	// file changes meanwhile
@@ -478,7 +482,8 @@ func (s *Service) Import(path string, personal, commands bool, monitors share.Mo
 	if commands && preview.HasCommands {
 		carry = append(carry, "commands")
 	}
-	return s.apply(preview.Name, parsed, carry, monitors, "import-"+preview.Name, preview.Name)
+	// No source: its file may be gone, so its copy is the user's to keep
+	return s.apply(preview.Name, parsed, carry, monitors, "import-"+preview.Name, "")
 }
 
 // summarize fills in what a preview of the example draws, from it loaded
@@ -532,9 +537,10 @@ func (s *Service) ApplyShared(path, name, snapshot string, monitors share.Monito
 
 // Defaults applies the schema's defaults like an example (the look,
 // personal parts and commands; machine settings stay), after keeping the
-// running config (keep).
+// running config (keep); the result is saved as "defaults", a copy like an
+// example's, so the next apply doesn't keep it over "unsaved".
 func (s *Service) Defaults() (Applied, error) {
-	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "", "")
+	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "defaults", "defaults")
 }
 
 // apply: the running config kept, then the file's parts in carry applied,

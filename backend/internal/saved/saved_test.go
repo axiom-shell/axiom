@@ -155,7 +155,7 @@ func TestApplyExampleFormat1(t *testing.T) {
 func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 	t.Parallel()
 	type step struct {
-		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"
+		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"
 		backup  string // Applied.Backup of an apply or restore
 		files   string // saved/ afterwards, sorted, space-separated
 		content string // what saved/unsaved.json then holds of Bars.style.widgetStyle ("" to skip)
@@ -190,6 +190,21 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "save example-a", files: "example-a mine"},
 			{do: "b", files: "example-a example-b mine"},
 		}},
+		{"an import's copy stays (its file may be gone)", []step{
+			{do: "save mine", files: "mine"},
+			{do: "import", files: "import-friend mine"},
+			{do: "a", files: "example-a import-friend mine"},
+		}},
+		{"defaults are a copy too", []step{
+			{do: "edit outline", files: ""},
+			{do: "defaults", backup: "unsaved", files: "defaults unsaved", content: "outline"},
+			{do: "a", files: "example-a unsaved", content: "outline"},
+		}},
+		{"an active snapshot whose file is gone doesn't count", []step{
+			{do: "save mine", files: "mine"},
+			{do: "delete mine", files: ""},
+			{do: "a", backup: "unsaved", files: "example-a unsaved"},
+		}},
 		{"restoring unsaved takes it as it was", []step{
 			{do: "save mine", files: "mine"},
 			{do: "edit outline", files: "mine"},
@@ -206,6 +221,8 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 				os.WriteFile(filepath.Join(f.ex, name+".json"), []byte(`{"format": 2, "version": 76, "meta": {"title": "`+name+`"},
 					"Appearance": {"theme": {"name": "`+map[string]string{"a": "nord", "b": "gruvbox-dark"}[name]+`"}}}`), 0o644)
 			}
+			os.WriteFile(filepath.Join(f.home, "friend.json"), []byte(`{"format": 2, "version": 76, "meta": {"title": "friend"},
+				"Appearance": {"theme": {"name": "nord-light"}}}`), 0o644)
 			for i, st := range tt.steps {
 				verb, arg, _ := strings.Cut(st.do, " ")
 				var applied Applied
@@ -219,6 +236,12 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 					_, err = f.svc.Save(arg, "")
 				case "restore":
 					applied, err = f.svc.Restore(arg)
+				case "import":
+					applied, err = f.svc.Import(filepath.Join(f.home, "friend.json"), false, false, nil)
+				case "defaults":
+					applied, err = f.svc.Defaults()
+				case "delete":
+					err = os.Remove(filepath.Join(f.dir, "saved", arg+".json"))
 				}
 				if err != nil {
 					t.Fatalf("step %d (%s): %v", i, st.do, err)

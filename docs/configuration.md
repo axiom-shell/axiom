@@ -43,14 +43,14 @@ axiom ships the setups from the README in `examples/`. Apply one from **Settings
 
 - An example holds only the look and the layout: the theme, font and shape, the bars and their style, overlay pages, edge menus, docks, OSDs, popouts, the lock screen layout, workspaces, notifications' placement, the power menu and the window switcher.
 - Everything else stays as it is: wallpapers, monitors, apps, keybinds, calendars, chat providers, compositor settings, idle and the login screen.
-- If your current config has changes that aren't saved (no saved config is active, or it shows the unsaved dot), they're saved first as `unsaved`, so going back is one **Restore** away. An unchanged saved config is already on disk, so nothing is added. `unsaved` is a single snapshot, replaced each time.
+- If your current config has changes that aren't saved (no saved config is active, or it shows the unsaved dot), they're saved first as `unsaved`, so going back is one **Restore** away. An unchanged saved config is already on disk, so nothing is added. `unsaved` is a single snapshot, replaced each time, so don't save one of your own under that name.
 - An applied example is saved as `example-<name>`, the active one. It's deleted once you apply or restore something else, unless you saved over it, since the example applies it again.
 - An example is a partial `config.json` with a `_example` header (`title`, `description`). What it may hold is each setting's `x-scope` in `config/json/config.schema.json`. If it uses a font you don't have, the text falls back to another; a theme you don't have falls back to the default palette.
 
 ### Sharing a setup
 
 - **Settings → Maintenance → Share → Export** writes the current look and layout to `~/axiom-<name>-<date>-<time>.json`, holding only what differs from the defaults. Monitors, wallpapers, accounts and paths are never in it. Keybinds, apps and commands are left out unless you switch them on, and so are your personal preferences, such as your interface scale, card size and density.
-- **Import…** opens a file (an export, an example or a whole `config.json`) and applies it the way an example applies, keeping unsaved changes as `unsaved` first. A file without a `version`, or from a newer axiom, is refused.
+- **Import…** opens a file (an export, an example or a whole `config.json`) and applies it the way an example applies, keeping unsaved changes as `unsaved` first. The result is saved as `import-<name>`, and stays until you delete it. A file without a `version`, or from a newer axiom, is refused.
 - If the file holds keybinds, apps and commands, you can take those too, but the switch is off by default: a command runs as you, so read every command in a file someone else made before turning it on.
 
 ### Community setups
