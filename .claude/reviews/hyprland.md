@@ -1,50 +1,51 @@
 # hyprland
-reviewed: 028e7ea 2026-10-30  (full)
+reviewed: 9c58b36 2026-10-30  (full, re-audit with the corrected scope)
 
-The Hyprland backend holds its contract on the main paths: only the `Hyprland*` services import Quickshell.Hyprland or send `hl.*`, the writer and runtime layer render from one table, user strings reaching Lua are quoted, and the takeover's refusals, record and atomic writes hold. Its weak spots are failure and rare paths: the bind merge can delete binds it never read (a helper's `hl.bind`) or split an `hl.unbind` from its bind, a trial monitor Apply that turns a monitor off ends its own Keep/Revert, restoring a saved keybind preset makes Revert delete binds, and several evals and applies don't survive one refused line or one failed request. No blockers; 16 major, 11 cleanups, 1 outside the system (all recorded in issues.md, Phase 11 › Found by the audits). Deletion pass: about 210 lines can go.
+The Hyprland backend holds its contract on the main paths: only the `Hyprland*` services import Quickshell.Hyprland or send `hl.*`, the writer and runtime layer render from one table, user strings reaching Lua are quoted, the takeover's refusals, record, lock and atomic writes hold, and the isolated bind extract classifies memory deaths as documented. Its weak spots are rare and failure paths and the views: the Hyprland bind merge maps IPC binds to exec and removes by bare line number (sway and niri do neither), a claim can comment out axiom's start line inside a Lua long string, the overview can stick "open" after its monitor goes, and the Keybinds page has several state slips (lookup under a stale search, typed inspector text missing Save, the key map selecting hidden binds, renaming the wrong preset). Batch 1: 16 major, 11 cleanups; this re-audit: 13 major, 7 cleanups, 7 minor.
 
 ## Open findings
-All recorded in docs/dev/issues.md (`Found:` 2026-10-30, while reviewing the hyprland system); each entry there holds the scenario and fix. Recheck each by its `Where`:
+Batch 1's 27 (recorded 2026-10-30; recheck each by its `Where` in docs/dev/issues.md): the trial monitor Apply that turns a monitor off; a reload during a trial Apply; restoring a saved keybind preset; Keybinds page stale after a detached Save; bind merge deleting an hl.bind inside a helper; removing an hl.unbind whether or not its bind went; a failed profile apply never retried; one refused line stopping an eval; a user/ file with a dot; a moved raw bind with a Lua keyword key; a failed options read zeroing gaps; a slide throwing when animations go off; direct dispatches overtaking queued Lua; two recordings within 30 s; two reference paths dropping binds; the monitor prompt's bare padding; and cleanups (HyprlandManager members, `compositorSwitcher` reader, section parsed three ways, KeybindManager tables, strips repeating ActiveStrip's loader, catch-all monitor line, exit command twice, `noteReload`, Go dead helpers, bind helpers' JS halves, stale doc lines).
 
-Major
-1. A trial monitor Apply that turns a monitor off drops its Keep/Revert — `services/compositor/MonitorManager.qml:451-456` (`onOutputsHotplugged`). PLAUSIBLE on the event: needs Hyprland's `monitorremoved` for a rule-disabled monitor (nested run).
-2. A shell reload during a trial monitor Apply loses the way back — `MonitorManager.qml:303-308`. PLAUSIBLE.
-3. Restoring a saved keybind preset marks every bind new, and Revert deletes it — `services/compositor/KeybindEditor.qml:101-114` (`_completeBind`), `:711` (`restorePreset`).
-4. The Keybinds page goes stale after a detached-mode Save — `services/compositor/KeybindManager.qml:348` (`refreshSoon`, one caller).
-5. The bind merge deletes an hl.bind inside a helper — `backend/internal/compositor/binds/hyprlua.go:340-355` (`callSite`). Reproduced.
-6. The bind merge removes an hl.unbind whether or not its bind went — `binds/hypr.go:459-474`, `manager/manager.go:1290-1310` (`left`).
-7. A failed monitor profile apply is never retried — `manager/outputs.go:170-171`.
-8. One refused line stops the rest of a Hyprland eval — `manager/hypr.go:221-228` (`runtimeApply`), `manager/outputs.go:52`. PLAUSIBLE (does `hl.config`/`hl.monitor` raise?).
-9. A user/ file with a dot in its name never loads — `render/hyprconfig.go:503`, `binds/hypr.go:383`. Reproduced.
-10. A moved raw bind with a Lua keyword key compiles to nothing — `binds/hyprlua.go:467` (`luaSource`). Reproduced.
-11. A failed options read sets the gaps to 0 — `services/compositor/HyprlandManager.qml:295`, `:822-824` (`_gapSides`).
-12. A workspace slide throws when animations go off between legs — `HyprlandManager.qml:517-534` (`_nextSlide`).
-13. Direct dispatches can overtake queued Lua — `HyprlandManager.qml:141-143,455-457,490` vs `_eval`. PLAUSIBLE.
-14. Two recordings within 30 s: the first timer ends the second — `HyprlandManager.qml:412-420` (`_enterCaptureLua`). PLAUSIBLE, likely softened by KeyRecorder's `ShortcutInhibitor`.
-15. Two keybind reference paths drop a key's binds — `KeybindsPageState.qml:153-156` (`_bindMods`), `components/methods/BindRows.qml:107-119` (`collapseDirections`).
-16. Monitor prompt padding is a bare 18 px; check_sizes misses `pad` — `components/surfaces/monitors/MonitorPromptWindow.qml:19`.
+This re-audit's, recorded:
+- Major: [Hyprland's bind merge moves axiom's own IPC binds as exec](../../docs/dev/issues.md#hyprlands-bind-merge-moves-axioms-own-ipc-binds-as-exec)
+- Major: [Hyprland's remove deletes whatever hl.bind is on a site's line now](../../docs/dev/issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
+- Major: [A claim comments out axiom's start inside a long string, breaking the script](../../docs/dev/issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
+- Major: [An unknown IPC function word merges as a toggle](../../docs/dev/issues.md#an-unknown-ipc-function-word-merges-as-a-toggle)
+- Major: [The overview stays open with nothing shown after its monitor goes away](../../docs/dev/issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)
+- Major: [Wide active is hidden in the perMonitor layout but still applies there](../../docs/dev/issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
+- Major: [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](../../docs/dev/issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
+- Major: [The bind inspector's typed label and argument miss Save](../../docs/dev/issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
+- Major: [Picking a key in the key map under an edit search selects a bind the list doesn't show](../../docs/dev/issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
+- Major: [Renaming a saved preset after switching presets renames the wrong one](../../docs/dev/issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
+- Major: [The reference's sections and both chip rows are built while hidden](../../docs/dev/issues.md#the-references-sections-and-both-chip-rows-are-built-while-hidden)
+- Major: [In the standard layout, a switch past `count` slides through an unrelated workspace](../../docs/dev/issues.md#in-the-standard-layout-a-switch-past-count-slides-through-an-unrelated-workspace)
+- Major: [Where the compositor can't mirror, a profile's mirror can't be turned off or its monitor placed](../../docs/dev/issues.md#where-the-compositor-cant-mirror-a-profiles-mirror-cant-be-turned-off-or-its-monitor-placed)
+- Cleanup: [The workspace strips' panel property is never read](../../docs/dev/issues.md#the-workspace-strips-panel-property-is-never-read)
+- Cleanup: [Three copies of the wheel-notch accumulator](../../docs/dev/issues.md#three-copies-of-the-wheel-notch-accumulator)
+- Cleanup: [The key map and the keyboard reference each carry the same modifier chips and legend](../../docs/dev/issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
+- Cleanup: [A reference section's folded count re-derives BindRows.byModifiers' grouping](../../docs/dev/issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
+- Cleanup: [PresetSheet defers its re-choose a tick for a config that updates at once](../../docs/dev/issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
+- Cleanup: [The bind list's flag icons carry tooltip strings nothing shows](../../docs/dev/issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
+- Cleanup: [A reference section's title is worked out twice](../../docs/dev/issues.md#a-reference-sections-title-is-worked-out-twice)
 
-Cleanup (deletion pass, with line counts in the entries)
-17. HyprlandManager keeps members only it reads (`withAnimations`+`_optionsWaiting`, `runLua`, `withBinds`, `layerApplied`, `animations*`, chunk builder, `_bases` gate; ipc.md's user list is wrong) — about 40 lines.
-18. `WindowSwitcherConfig.compositorSwitcher` unread — 3 lines (filed in the outside finding's entry, "The unused reader member check counts a member named after its key as used", whose fix finds it).
-19. A bind description's section is parsed three ways (the editor's doesn't trim).
-20. KeybindManager keeps `_modifiers` and nine `_keyNames` that BindKeys/KeyMap hold; skipped list twice — about 36 lines.
-21. The workspace strips repeat ActiveStrip's loader — about 20 lines.
-22. `HyprFileMonitorCalls` copies the managed catch-all monitor line — `render/hyprlua.go:451-459`.
-23. The exit command kept in two packages — `binds/hypr.go:44`, `render/hyprconfig.go:30`.
-24. `noteReload` double-counts reloads — about 9 lines; config-modes.md names it.
-25. Go dead/doubled helpers (`Kind.record`, `SwitcherLeaveLua`, `UserKeyCounts`, `quoteLua`, anonymous struct ×6, setcursor ×2) — about 65 lines.
-26. `BindActions.descriptionFor` dead; `withIds`/`withIDs` parity unpinned (they differ on a nil key).
-27. Stale doc and comment lines (window-switcher.md scope, `orderMonitors`, BindKeys header, keys.go, EdgePopout).
+Unrecorded (Minor, in report.md in full):
+- Minor: An isolated extract's timeout reads "reading the binds: axiom: reading the binds took too long…"
+- Minor: The merge's `crashed` reason isn't in the binds package's list
+- Minor: bind-merge.md's Files header names manager/hypr.go, not manager.go
+- Minor: The two bar strips' wheels step by different rules
+- Minor: Workspace docs: showEmpty's default and the strip members' owner
+- Minor: A tall key's corner label sits a bare 4 px in
+- Minor: The 10-bit switch shows where nothing applies it, and the contract says monitorColor covers it
 
-Not filed (minor or refuted): compaction renumbering another output's workspaces after a replug (refuted: Hyprland hands them back before the fetch compaction waits on, workspace-strips.md › Replug; only a raw-hyprctl placement remains).
+Notes on filed entries (from this re-audit, not refiled): the Monitors inspector's Primary switch is a common trigger for "Saving a profile that names a new monitor can move other monitors' blocks"; the trial-Apply fix should also register MonitorPromptWindow as modal in `Component.onCompleted`; the dot-name fix should skip hidden user/ files.
 
 ## Contract
-Holds: C1 (only HyprlandManager/HyprlandGrab import Quickshell.Hyprland or dispatch; `check_structure` enforces it), C2 (one table, `render` for every mode; LuaString/ShellWord quote every user string; the writer touches only its module, managed file and takeover's records), C3 on the main path (backup first, `luacheck` before writing, atomic `edit.Replace`, failed files taken back out; broken by entries 5, 6, 10), C4 (layer rules re-added on `surfacesReady` and every `configreloaded`, each in a pcall). I1 (one connection per request, 5 s deadline, partial reply never taken as success), I2 (no eval batched), I3 (one chunk at a time, refetch after drain), I4 (six signals, no fetch for `custom`), I6, I7 (one batch at start, on reload, after `layerApplied`; but see 11). W2 (reload during read retries up to 3 times; but see 8), W5, W6, W9 (`HyprFromEnv` needs the instance signature). B2 sandbox, B6 (statementSpan rejects return/two calls/trailing code/used variable; but helpers, entry 5), B7 order, B8 (`mergeBinds`/`MergeBinds` pinned by shared cases). T1–T7 (stockSkip/releasedSkip, record, refusals). M1, M3, M4, M6 (but see 1, 2), M7 (`MatchProfile`/`HyprlandRules`; but see 7). S1–S5. K2–K6 (but see 12). KB1–KB5 (but see 3, 4, 14).
-Doesn't hold: ipc.md's list of HyprlandManager's users (17); window-switcher.md "limited to the focused monitor" (27); config-modes.md's `noteReload()` (24).
+Holds: C1, C2, C4; C3 on the main path (but see the Hyprland site check and batch 1's helper/unbind entries). Binds: B2–B4, B9, B12 (codes handled; `crashed` missing from the package comment), B13; isolated extract classification pinned by `TestDiedOfMemory`. Takeover: T1 (lock across claim and managed write, released before merge), T2, T5–T8; `luacheck.WholeLines`/`CodeOnly` on escapes, long brackets, EOF. IPC I1–I4, I6, I7, W2, W5, W6, W9; monitors M1–M7 (bit depth's gate aside); switcher S1–S5; keybinds K1 (but hidden builds), K2–K14 (recording lifetimes, reveal, reorder, preset plans); workspaces W1–W8 (overview board, dynamic one column, strip squeeze/drop, bar strips, indicator wrap, pinStart); every navigation through `CompositorManager`.
+Doesn't hold: bind-merge.md's IPC mapping on Hyprland; bind-merge.md's and workspace-strips.md's Files headers; workspaces.md's `showEmpty` default; contract.md's `monitorColor` row; plus batch 1's ipc.md user list, window-switcher.md's "limited to the focused monitor", config-modes.md's `noteReload()`.
 
 ## Coverage
-Read deeply (by three reviewers, verified by three): HyprlandManager.qml, MonitorManager.qml, WindowSwitcherManager.qml, CompositorConfigManager.qml, KeybindEditor.qml, KeybindManager.qml, KeybindsPageState.qml, the methods helpers (WorkspaceGeometry, MonitorLayout, HyprState, HyprReply, DynamicWorkspaces, WindowOrder, BindActions, KeyNames, BindKeys, KeybindFilter, BindGroups, BindRows, KeyMap), the system's readers, render/hyprlua.go, render/hyprconfig.go, render/profiles.go, binds/hypr.go, binds/hyprlua.go, manager/hypr.go, manager/outputs.go, ipc/hypr.go, daemon/compositor.go, daemon/compositorsocket.go, takeover/kinds.go. Outlined: CompositorManager.qml (Hyprland-facing parts only: travel, remap, blocks, strips), Keybinds.qml and views/Keybinds/*, Monitors.qml, the bar Workspaces widget, shell/WindowSwitcher.qml, MonitorPromptWindow.qml, SwitcherStrip.qml, WorkspacesStatus.qml, takeover.go, manager.go (merge/left/reload paths). Skipped: nothing run against a live or nested Hyprland (findings 1, 8, 13, 14 left PLAUSIBLE for that); OnboardingManager and GreetdManager seams only by grep.
+Read deeply: batch 1's set (HyprlandManager, MonitorManager, WindowSwitcherManager, CompositorConfigManager, KeybindEditor/Manager/PageState, the methods helpers, render/*.go, binds/hypr.go, hyprlua.go, manager/hypr.go, outputs.go, ipc/hypr.go, daemon/compositor*.go, takeover/kinds.go) and this re-audit's (binds/binds.go, isolate.go, marked.go, actions/actions.go, luacheck/*, takeover/takeover.go, components/surfaces/workspaces/*, shell/WorkspaceOverlay.qml, the bar Workspaces widget, the switcher UI, components/views/Keybinds/*, the keybind content parts, components/views/Monitors/*, the monitor prompt, MonitorsConfig, WorkspacesConfig, WorkspaceOverlayConfig, WorkspacesStatus, HyprlandGrab, CompositorManager's Hyprland-facing parts). Outlined: binds/sway.go, binds/niri.go, manager/manager.go (merge/remove/claim). Skipped: nothing run against a nested Hyprland (overview unplug with the native grab, batch 1's PLAUSIBLE items); OnboardingManager and GreetdManager seams by grep.
 
 ## History
 - 2026-10-30 full (--deep, 3 reviewers + 3 verifiers): 28 findings (16 major, 11 cleanup, 1 outside); recorded in issues.md.
+- 2026-10-30 full re-audit (--deep, 4 reviewers, lead verified; Go folders and the docs' folders now in scope): 27 new findings (13 major, 7 cleanup, 7 minor); major and cleanups for recording (--out).
