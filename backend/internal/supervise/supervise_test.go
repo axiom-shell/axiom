@@ -131,11 +131,15 @@ func TestOrphanOfAnEarlierDaemonIsStopped(t *testing.T) {
 	}
 	exited := make(chan struct{})
 	go func() { orphan.Wait(); close(exited) }()
+	// A failed run leaves no sleep behind
+	t.Cleanup(func() { orphan.Process.Kill(); <-exited })
 	os.WriteFile(pidFile, []byte(strconv.Itoa(orphan.Process.Pid)), 0o600)
-	// A pid file naming an unrelated process must leave it alone
+	// A process the pid file doesn't name is left alone, even one alike
 	other := exec.Command("sleep", "31")
-	other.Start()
-	defer other.Process.Kill()
+	if err := other.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { other.Process.Kill(); other.Wait() })
 
 	s := New(fast(Options{Command: command, PIDFile: pidFile}))
 	// Start returns once exec has replaced the image but before the kernel
