@@ -2,17 +2,25 @@
 // compositor can't tell when its modifier is let go (sway, niri): a
 // 1×1 transparent Overlay layer surface with exclusive keyboard focus,
 // mapped while the switcher is open. The compositor still runs its binds
-// first, so the switcher's Tab keeps stepping. wl_keyboard.enter carries
-// the keys already down, so a modifier let go before the surface had the
-// keyboard is seen too: then it picks at once. Otherwise it picks when a
-// held modifier is let go, or on Return, and cancels on Escape. Other
-// keys are ignored (they reach no window while it's held).
+// first, so the switcher's Tab keeps stepping. The modifiers held are read
+// from wl_keyboard.modifiers, which follows enter with the seat's state,
+// so a modifier let go before the surface had the keyboard is seen too:
+// then it picks. Otherwise it picks when the held modifiers are let go,
+// or on Return, and cancels on Escape. A let go counts once it lasts
+// (Options.Grace): a keyboard may report a modifier still held as up for
+// a report or two around another key, as Hyprland's switcher listener
+// waits 10 ms for. Other keys are ignored
+// (they reach no window while it's held). Not the key events' own
+// releases, nor enter's keys: a keyboard that is several devices (a
+// keyboard's boot and NKRO interfaces) has sway report a modifier still
+// held as released, and leave it out of enter's keys after that.
 package keyhold
 
 import (
-	"slices"
+	"log/slog"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
@@ -59,6 +67,7 @@ const (
 	evEnter           = 1 // (serial, surface, keys)
 	evLeave           = 2 // (serial, surface)
 	evKey             = 3 // (serial, time, key, state)
+	evModifiers       = 4 // (serial, depressed, latched, locked, group)
 	keyPressed        = 1
 )
 
@@ -72,27 +81,30 @@ const (
 	keyKPEnter = 96
 )
 
-// modifierKeys are each modifier's evdev keycodes, left and right, by
-// the names the switcher binds are held by (BindActions.switcherHeld).
-var modifierKeys = map[string][]uint32{
-	"ALT":   {56, 100},
-	"CTRL":  {29, 97},
-	"SHIFT": {42, 54},
-	"SUPER": {125, 126},
+// modifierBits are each modifier's bit in wl_keyboard.modifiers' masks,
+// by the names the switcher binds are held by (BindActions.switcherHeld):
+// xkbcommon gives the eight core modifiers the same indices in every
+// keymap (Shift 0, Lock 1, Control 2, Mod1 3, …, Mod4 6), Alt being Mod1
+// and Super Mod4.
+var modifierBits = map[string]uint32{
+	"SHIFT": 1 << 0,
+	"CTRL":  1 << 2,
+	"ALT":   1 << 3,
+	"SUPER": 1 << 6,
 }
 
-// ModifierKeys are the evdev keycodes of the named modifiers (ALT,
-// CTRL, SHIFT, SUPER); an unknown name is an error.
-func ModifierKeys(names []string) ([]uint32, error) {
-	var keys []uint32
+// ModifierMask is the named modifiers' (ALT, CTRL, SHIFT, SUPER) mask;
+// an unknown name is an error.
+func ModifierMask(names []string) (uint32, error) {
+	var mask uint32
 	for _, name := range names {
-		codes, ok := modifierKeys[strings.ToUpper(name)]
+		bit, ok := modifierBits[strings.ToUpper(name)]
 		if !ok {
-			return nil, axerr.New(axerr.BadRequest, "unknown modifier %q", name)
+			return 0, axerr.New(axerr.BadRequest, "unknown modifier %q", name)
 		}
-		keys = append(keys, codes...)
+		mask |= bit
 	}
-	return keys, nil
+	return mask, nil
 }
 
 // Verb is what a held keyboard decided.
@@ -106,7 +118,17 @@ const (
 // Options configure the holder.
 type Options struct {
 	Seat *seat.Tracker
+	// Log gets what each hold sees and decides, at debug level (nil:
+	// nothing)
+	Log *slog.Logger
+	// Grace is how long the held modifiers must stay up to pick
+	// (DefaultGrace when 0)
+	Grace time.Duration
 }
+
+// DefaultGrace outlasts a keyboard's blip (its reports come every 1–8
+// ms) and is too short to feel on a real let go.
+const DefaultGrace = 40 * time.Millisecond
 
 // Holder holds the keyboard on demand; it is a client.Client.
 type Holder struct {
@@ -127,15 +149,23 @@ type Holder struct {
 type hold struct {
 	surface, layer, pool, buffer uint32
 	attached                     bool
-	mods                         []uint32
+	mods                         uint32
 	focused                      bool
 	done                         bool
-	onVerb                       func(Verb)
+	// letGo picks once the held modifiers stay up for the grace
+	letGo  *time.Timer
+	onVerb func(Verb)
 }
 
 // New returns a holder, able to hold once the compositor's globals are
 // bound.
 func New(opts Options) *Holder {
+	if opts.Log == nil {
+		opts.Log = slog.New(slog.DiscardHandler)
+	}
+	if opts.Grace <= 0 {
+		opts.Grace = DefaultGrace
+	}
 	return &Holder{opts: opts}
 }
 
@@ -151,12 +181,12 @@ func (h *Holder) available() bool {
 }
 
 // Hold maps the surface and takes the keyboard until Release, telling
-// onVerb (once, on the connection's goroutine, which it mustn't block or
-// call back into the holder from) when the switcher should pick or
-// cancel. mods are the evdev keycodes the switcher is held by. A
-// hold already running keeps going, with the new mods and onVerb.
-func (h *Holder) Hold(mods []uint32, onVerb func(Verb)) error {
-	if len(mods) == 0 {
+// onVerb (once, on the connection's goroutine or a timer's, never
+// blocking nor calling back into the holder) when the switcher should
+// pick or cancel. mods are the modifiers the switcher is held by (ModifierMask).
+// A hold already running keeps going, with the new mods and onVerb.
+func (h *Holder) Hold(mods uint32, onVerb func(Verb)) error {
+	if mods == 0 {
 		return axerr.New(axerr.BadRequest, "no modifiers to hold")
 	}
 	h.mu.Lock()
@@ -230,6 +260,9 @@ func (h *Holder) destroy(hd *hold) {
 			c.Forget(o.id)
 		}
 	}
+	if hd.letGo != nil {
+		hd.letGo.Stop()
+	}
 	hd.done = true
 }
 
@@ -297,15 +330,37 @@ func (h *Holder) keyboardEvent(op uint16, a *wire.Args) {
 		if a.Uint() != hd.surface {
 			return
 		}
+		// The modifiers event that follows says what's held
 		hd.focused = true
-		if !anyDown(keysOf(a.Array()), hd.mods) {
-			// Let go before the surface had the keyboard
-			h.decide(hd, Commit)
-		}
+		h.opts.Log.Debug("the switcher's keys held: the keyboard came", "mods", hd.mods)
 	case evLeave:
 		a.Uint()
 		if a.Uint() == hd.surface {
 			hd.focused = false
+		}
+	case evModifiers:
+		if !hd.focused {
+			return
+		}
+		a.Uint()
+		depressed := a.Uint()
+		h.opts.Log.Debug("the switcher's keys held: modifiers", "depressed", depressed)
+		switch {
+		case depressed&hd.mods == 0 && hd.letGo == nil:
+			// Let go, before the surface had the keyboard or since: picks
+			// if it lasts
+			hd.letGo = time.AfterFunc(h.opts.Grace, func() {
+				h.mu.Lock()
+				defer h.mu.Unlock()
+				if h.hold == hd {
+					h.decide(hd, Commit)
+				}
+			})
+		case depressed&hd.mods != 0 && hd.letGo != nil:
+			// Held again: it was a blip
+			hd.letGo.Stop()
+			hd.letGo = nil
+			h.opts.Log.Debug("the switcher's keys held: held again within the grace")
 		}
 	case evKey:
 		if !hd.focused {
@@ -314,12 +369,11 @@ func (h *Holder) keyboardEvent(op uint16, a *wire.Args) {
 		a.Uint()
 		a.Uint()
 		key, state := a.Uint(), a.Uint()
+		h.opts.Log.Debug("the switcher's keys held: a key", "key", key, "state", state)
 		switch {
 		case state == keyPressed && key == keyEsc:
 			h.decide(hd, Cancel)
 		case state == keyPressed && (key == keyEnter || key == keyKPEnter):
-			h.decide(hd, Commit)
-		case state != keyPressed && slices.Contains(hd.mods, key):
 			h.decide(hd, Commit)
 		}
 	}
@@ -331,25 +385,8 @@ func (h *Holder) decide(hd *hold, v Verb) {
 		return
 	}
 	hd.done = true
+	h.opts.Log.Debug("the switcher's keys held: decided", "verb", v)
 	hd.onVerb(v)
-}
-
-// keysOf reads wl_keyboard.enter's keys: evdev keycodes, 32 bits each.
-func keysOf(b []byte) []uint32 {
-	keys := make([]uint32, 0, len(b)/4)
-	for i := 0; i+4 <= len(b); i += 4 {
-		keys = append(keys, uint32(b[i])|uint32(b[i+1])<<8|uint32(b[i+2])<<16|uint32(b[i+3])<<24)
-	}
-	return keys
-}
-
-func anyDown(down, mods []uint32) bool {
-	for _, k := range down {
-		if slices.Contains(mods, k) {
-			return true
-		}
-	}
-	return false
 }
 
 // Interfaces (client.Client)

@@ -310,7 +310,7 @@ func Run(ctx context.Context, opts Options) error {
 		OnChange: func() { d.idle.NotifierChanged() },
 	})
 	d.keyboard = vkbd.New(vkbd.Options{Seat: d.seat, OnChange: d.pushWayland, Gap: 2 * time.Millisecond})
-	d.keyHolder = keyhold.New(keyhold.Options{Seat: d.seat})
+	d.keyHolder = keyhold.New(keyhold.Options{Seat: d.seat, Log: opts.Log.With("part", "wayland")})
 	d.newNightLight()
 	d.newClipboard()
 	d.newVPN()

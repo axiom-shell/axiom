@@ -98,17 +98,24 @@ func keysArray(keys ...uint32) wire.Arg {
 }
 
 const (
-	keyAlt = 56
-	keyTab = 15
+	keyCtrl = 29
+	keyTab  = 15
+	// The mask bits
+	ctrl  = 1 << 2
+	shift = 1 << 0
 )
 
 // step is a keyboard event the test sends: an enter with the keys down,
-// or a key pressed or let go
+// the modifiers held, or a key pressed or let go
 type step struct {
 	enter   bool
 	keys    []uint32
+	mods    bool
+	held    uint32
 	key     uint32
 	pressed bool
+	// wait outlasts the grace
+	wait bool
 }
 
 func TestHold(t *testing.T) {
@@ -118,12 +125,18 @@ func TestHold(t *testing.T) {
 		steps []step
 		want  Verb
 	}{
-		{"let go before the keyboard came", []step{{enter: true}}, Commit},
-		{"let go after", []step{{enter: true, keys: []uint32{keyAlt}}, {key: keyAlt}}, Commit},
-		{"other keys wait", []step{{enter: true, keys: []uint32{keyAlt, keyTab}}, {key: keyTab}, {key: keyTab, pressed: true}, {key: keyAlt}}, Commit},
-		{"escape cancels", []step{{enter: true, keys: []uint32{keyAlt}}, {key: keyEsc, pressed: true}}, Cancel},
-		{"return picks", []step{{enter: true, keys: []uint32{keyAlt}}, {key: keyEnter, pressed: true}}, Commit},
-		{"only once", []step{{enter: true, keys: []uint32{keyAlt}}, {key: keyEsc, pressed: true}, {key: keyAlt}}, Cancel},
+		{"let go before the keyboard came", []step{{enter: true}, {mods: true}}, Commit},
+		{"let go after", []step{{enter: true, keys: []uint32{keyCtrl}}, {mods: true, held: ctrl}, {key: keyCtrl}, {mods: true}}, Commit},
+		{"other keys and modifiers wait", []step{{enter: true, keys: []uint32{keyCtrl, keyTab}}, {mods: true, held: ctrl}, {key: keyTab}, {key: keyTab, pressed: true}, {mods: true, held: ctrl | shift}, {mods: true, held: ctrl}, {mods: true}}, Commit},
+		// A keyboard of several devices: sway reports the held Ctrl
+		// let go and leaves it out of enter, while its mask holds it
+		{"the mask, not the keys", []step{{enter: true}, {mods: true, held: ctrl}, {key: keyCtrl}, {key: keyEsc, pressed: true}}, Cancel},
+		// A keyboard's blip: Ctrl reported up for a moment around Tab
+		{"a blip isn't a let go", []step{{enter: true}, {mods: true, held: ctrl}, {mods: true}, {mods: true, held: ctrl}, {wait: true}, {key: keyEsc, pressed: true}}, Cancel},
+		{"a blip on arrival", []step{{enter: true}, {mods: true}, {mods: true, held: ctrl}, {wait: true}, {key: keyEsc, pressed: true}}, Cancel},
+		{"escape cancels", []step{{enter: true, keys: []uint32{keyCtrl}}, {mods: true, held: ctrl}, {key: keyEsc, pressed: true}}, Cancel},
+		{"return picks", []step{{enter: true, keys: []uint32{keyCtrl}}, {mods: true, held: ctrl}, {key: keyEnter, pressed: true}}, Commit},
+		{"only once", []step{{enter: true}, {mods: true, held: ctrl}, {key: keyEsc, pressed: true}, {mods: true}}, Cancel},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -138,7 +151,7 @@ func TestHold(t *testing.T) {
 				t.Fatal("not bound")
 			}
 
-			mods, err := ModifierKeys([]string{"alt"})
+			mods, err := ModifierMask([]string{"ctrl"})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -165,6 +178,14 @@ func TestHold(t *testing.T) {
 					f.Send(s.keyboard, evEnter, wire.Uint(1), wire.Uint(s.surface), keysArray(e.keys...))
 					continue
 				}
+				if e.wait {
+					time.Sleep(2 * DefaultGrace)
+					continue
+				}
+				if e.mods {
+					f.Send(s.keyboard, evModifiers, wire.Uint(1), wire.Uint(e.held), wire.Uint(0), wire.Uint(0), wire.Uint(0))
+					continue
+				}
 				state := uint32(0)
 				if e.pressed {
 					state = keyPressed
@@ -180,7 +201,7 @@ func TestHold(t *testing.T) {
 				t.Fatal("no verb")
 			}
 			// Nothing more: one verb per hold
-			f.Send(s.keyboard, evKey, wire.Uint(3), wire.Uint(0), wire.Uint(keyAlt), wire.Uint(0))
+			f.Send(s.keyboard, evModifiers, wire.Uint(3), wire.Uint(0), wire.Uint(0), wire.Uint(0), wire.Uint(0))
 			select {
 			case v := <-verbs:
 				t.Errorf("a second verb: %s", v)
@@ -211,14 +232,14 @@ func TestHoldBeforeTheKeyboardIsntFocused(t *testing.T) {
 		t.Fatal("not bound")
 	}
 	verbs := make(chan Verb, 1)
-	if err := h.Hold([]uint32{keyAlt}, func(v Verb) { verbs <- v }); err != nil {
+	if err := h.Hold(ctrl, func(v Verb) { verbs <- v }); err != nil {
 		t.Fatal(err)
 	}
 	if !testkit.Eventually(func() bool { return f.state().keyboard != 0 }) {
 		t.Fatal("no keyboard")
 	}
-	// A key while another surface has the keyboard: not ours
-	f.Send(f.state().keyboard, evKey, wire.Uint(1), wire.Uint(0), wire.Uint(keyAlt), wire.Uint(0))
+	// Modifiers while another surface has the keyboard: not ours
+	f.Send(f.state().keyboard, evModifiers, wire.Uint(1), wire.Uint(0), wire.Uint(0), wire.Uint(0), wire.Uint(0))
 	select {
 	case v := <-verbs:
 		t.Errorf("decided %s without the keyboard", v)
@@ -226,13 +247,13 @@ func TestHoldBeforeTheKeyboardIsntFocused(t *testing.T) {
 	}
 }
 
-func TestModifierKeys(t *testing.T) {
+func TestModifierMask(t *testing.T) {
 	t.Parallel()
-	keys, err := ModifierKeys([]string{"SUPER", "ctrl"})
-	if err != nil || len(keys) != 4 || keys[0] != 125 || keys[2] != 29 {
-		t.Errorf("got %v, %v", keys, err)
+	mask, err := ModifierMask([]string{"SUPER", "ctrl", "Alt"})
+	if err != nil || mask != 1<<6|1<<2|1<<3 {
+		t.Errorf("got %b, %v", mask, err)
 	}
-	if _, err := ModifierKeys([]string{"HYPER"}); err == nil {
+	if _, err := ModifierMask([]string{"HYPER"}); err == nil {
 		t.Error("an unknown modifier was taken")
 	}
 }
@@ -240,7 +261,7 @@ func TestModifierKeys(t *testing.T) {
 func TestHoldWithoutTheProtocols(t *testing.T) {
 	t.Parallel()
 	h := New(Options{Seat: seat.New()})
-	if err := h.Hold([]uint32{keyAlt}, nil); err == nil {
+	if err := h.Hold(ctrl, nil); err == nil {
 		t.Error("held without a compositor")
 	}
 }

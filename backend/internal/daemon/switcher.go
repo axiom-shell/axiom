@@ -39,7 +39,7 @@ func (d *Daemon) switcherMethods(reg *rpc.Registry) {
 		if !fromShell(c) {
 			return struct{}{}, axerr.New(axerr.Refused, "only the shell holds the switcher's keys")
 		}
-		mods, err := keyhold.ModifierKeys(p.Mods)
+		mods, err := keyhold.ModifierMask(p.Mods)
 		if err != nil {
 			return struct{}{}, err
 		}
