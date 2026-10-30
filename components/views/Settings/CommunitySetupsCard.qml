@@ -390,7 +390,7 @@ FieldGroup {
         iconText: "upload"
         text: I18n.tr("Export and submit…")
         onClicked: {
-          SavedConfigsManager.exportConfig(false, false, false);
+          SavedConfigsManager.exportConfig(false, false);
           Qt.openUrlExternally(CommunitySetupsManager.submitUrl(SavedConfigsManager.active));
         }
       }

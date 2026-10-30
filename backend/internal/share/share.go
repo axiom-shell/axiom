@@ -38,6 +38,23 @@ type context struct {
 	s        *schema.Schema
 	kept     []string
 	monitors Monitors
+	// dropped, when not nil, collects what pick leaves out (Dropped)
+	dropped *[]Drop
+}
+
+// Drop is a value a pick leaves out: its path (keys joined by dots, a
+// list's item as [its id or name], else its index) and why, by its scope
+// ("personal", "commands", "machine"), or "takeover" for an x-takeover
+// setting.
+type Drop struct {
+	Path  string `json:"path"`
+	Scope string `json:"scope"`
+}
+
+func (c *context) drop(path, scope string) {
+	if c.dropped != nil {
+		*c.dropped = append(*c.dropped, Drop{Path: path, Scope: scope})
+	}
 }
 
 func newContext(s *schema.Schema, carry []string, monitors Monitors) *context {
@@ -59,12 +76,23 @@ func (c *context) keeps(scope string) bool {
 // by its place: "#1" the leftmost, "@primary" the primary, "*" all.
 func Pick(s *schema.Schema, cfg any, carry []string, monitors Monitors) *jsonx.Object {
 	ctx := newContext(s, carry, monitors)
-	if v, ok := ctx.pick(cfg, true, s.Root(), "machine"); ok && v != nil {
+	if v, ok := ctx.pick(cfg, true, s.Root(), "machine", ""); ok && v != nil {
 		if obj, ok := v.(*jsonx.Object); ok {
 			return obj
 		}
 	}
 	return jsonx.NewObject()
+}
+
+// Dropped is what Pick(s, cfg, carry, monitors) leaves out, each value at
+// the highest place it's left out from: pass a Sparse config, so a value
+// that is only its default isn't reported.
+func Dropped(s *schema.Schema, cfg any, carry []string, monitors Monitors) []Drop {
+	dropped := []Drop{}
+	ctx := newContext(s, carry, monitors)
+	ctx.dropped = &dropped
+	ctx.pick(cfg, true, s.Root(), "machine", "")
+	return dropped
 }
 
 // Apply is a copy of current with the example's parts in place of its own.
@@ -412,27 +440,34 @@ func (c *context) carries(n any, scope string, depth int) bool {
 	return false
 }
 
-// pick is value with only its kept parts (ok false for none). A takeover
-// setting is never kept.
-func (c *context) pick(value any, present bool, n any, scope string) (any, bool) {
+// pick is value (at path, for Dropped) with only its kept parts (ok false
+// for none). A takeover setting is never kept.
+func (c *context) pick(value any, present bool, n any, scope, path string) (any, bool) {
 	nd := c.node(value, present, n, scope)
 	if schema.Get(nd.schema, "x-takeover") == true {
+		c.drop(path, "takeover")
 		return nil, false
 	}
 	if jsonx.Truthy(schema.Get(nd.schema, "x-monitorRef")) && c.monitors != nil {
 		switch v := value.(type) {
 		case string:
-			return monitorToken(v, c.monitors)
+			token, ok := monitorToken(v, c.monitors)
+			if !ok {
+				c.drop(path, "machine")
+			}
+			return token, ok
 		case *jsonx.Array:
 			// A list of monitors (a ScreenTarget's names): each by its
 			// place, the ones not connected left out
 			out := jsonx.Arr()
-			for _, item := range v.Items {
+			for i, item := range v.Items {
 				if name, ok := item.(string); ok {
 					if token, ok := monitorToken(name, c.monitors); ok {
 						out.Append(token)
+						continue
 					}
 				}
+				c.drop(itemPath(path, item, i), "machine")
 			}
 			return out, true
 		}
@@ -441,6 +476,7 @@ func (c *context) pick(value any, present bool, n any, scope string) (any, bool)
 	switch v := value.(type) {
 	case *jsonx.Array:
 		if !keep {
+			c.drop(path, nd.scope)
 			return nil, false
 		}
 		items := schema.Get(nd.schema, "items")
@@ -448,11 +484,12 @@ func (c *context) pick(value any, present bool, n any, scope string) (any, bool)
 			return clone(v, true), true
 		}
 		out := jsonx.Arr()
-		for _, item := range v.Items {
+		for i, item := range v.Items {
 			if c.ownNotKept(item, items, nd.scope) {
+				c.drop(itemPath(path, item, i), c.node(item, true, items, nd.scope).scope)
 				continue
 			}
-			if picked, ok := c.pick(item, true, items, nd.scope); ok {
+			if picked, ok := c.pick(item, true, items, nd.scope, itemPath(path, item, i)); ok {
 				out.Append(picked)
 			}
 		}
@@ -464,9 +501,11 @@ func (c *context) pick(value any, present bool, n any, scope string) (any, bool)
 				var picked any
 				var ok bool
 				if ch := child(nd.schema, k); jsonx.Truthy(ch) {
-					picked, ok = c.pick(v.Value(k), true, ch, nd.scope)
+					picked, ok = c.pick(v.Value(k), true, ch, nd.scope, keyPath(path, k))
 				} else if keep {
 					picked, ok = clone(v.Value(k), true), true
+				} else {
+					c.drop(keyPath(path, k), nd.scope)
 				}
 				if ok {
 					result.Set(k, picked)
@@ -481,7 +520,25 @@ func (c *context) pick(value any, present bool, n any, scope string) (any, bool)
 	if keep {
 		return clone(value, present), true
 	}
+	c.drop(path, nd.scope)
 	return nil, false
+}
+
+func keyPath(path, key string) string {
+	if path == "" {
+		return key
+	}
+	return path + "." + key
+}
+
+// itemPath is a list item's path: [its id or name], else its index.
+func itemPath(path string, item any, index int) string {
+	for _, key := range []string{"id", "name"} {
+		if v, ok := schema.Get(item, key).(string); ok && v != "" {
+			return path + "[" + v + "]"
+		}
+	}
+	return path + "[" + strconv.Itoa(index) + "]"
 }
 
 // merge is the applied value at one place. strict: current is the
@@ -686,12 +743,12 @@ func match(list any, listOK bool, item any, index int, own []any) matched {
 var placeToken = regexp.MustCompile(`^#[1-9][0-9]*$`)
 
 // monitorToken is a monitor name as its place, or not ok for one that
-// isn't connected.
+// isn't connected. A place stays itself (a shared file picked again).
 func monitorToken(name string, monitors Monitors) (any, bool) {
-	switch name {
-	case "":
+	switch {
+	case name == "":
 		return "@primary", true
-	case "*":
+	case isMonitorToken(name):
 		return name, true
 	}
 	for i, m := range monitors {
