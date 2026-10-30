@@ -1,6 +1,6 @@
 # Launcher
 
-> **Files:** `services/ui/LauncherManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherConfigBrowser.qml`, `components/surfaces/launcher/Launcher.qml`, `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`, `components/views/Settings/LauncherPlace.qml`
+> **Files:** `services/ui/LauncherManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherConfigBrowser.qml`, `components/surfaces/launcher/Launcher.qml`, `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`, `components/views/Settings/LauncherPlace.qml`, `components/hosts/popout/FloatPlacement.qml`
 > **Config:** `Launcher.*` (reader `LauncherConfig`)
 > **Related:** [Launcher providers](launcher-providers.md), [Saved configs](../core/saved-configs-sharing.md), [Edge attach](../popouts/edge-attach.md), [Dock](dock.md), [OSD](osd.md)
 
@@ -17,7 +17,8 @@ This doc covers the app launcher: how search text becomes rows, how the window i
 - **Detached:** a `FloatingPopout`.
   - It claims `launcher:<screen>` as the attached one does, so it closes the popouts it covers ([Registry](../popouts/registry.md)).
   - Its fraction and its align across are both that distance, measured from the far side on the bottom or right edge. 0% sits against its margin; 50% is centred.
-  - Its margins are where a detached dock or OSD with an automatic gap sits (`ScreenEdgeManager.detachedGaps`, per side; `Launcher._marginOn`).
+  - Its margins are where a detached dock or OSD with an automatic gap sits (`ScreenEdgeManager.detachedGaps`, per side).
+  - `hosts/popout/FloatPlacement` works out the fractions, aligns and margins. The window switcher shares it ([Window switcher](../hyprland/window-switcher.md)).
   - `maxContentHeight` keeps it from moving, and `growUp` keeps a reversed field in place.
 - **Attached:** an `EdgePopout` at `position` on its edge.
   - On a side edge its height runs along the edge, so the panel holds its tallest (`LauncherPanel.holdHeight`, the blocks against the field) instead of the window keeping room across (`maxContentDepth`).

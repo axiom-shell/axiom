@@ -3497,6 +3497,8 @@
     "Click a spot or drag to place it, to an edge to attach it; fine-tune below. Detached, it floats a distance across the free screen; attached, it grows out of the edge.": "",
     "Click a spot or drag to place it; fine-tune below. Show opens it as a change would.": "",
     "Click a spot or drag to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.": "",
-    "Click a spot or drag to place it; fine-tune below. Show slides it in for a moment.": ""
+    "Click a spot or drag to place it; fine-tune below. Show slides it in for a moment.": "",
+    "Screen edge the switcher opens from, or is held off when detached.": "",
+    "A separate box floating off the edge. Off, the switcher grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.": ""
   }
 }

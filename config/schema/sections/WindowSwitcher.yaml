@@ -5,6 +5,7 @@ type: object
 x-category: Workspaces
 title: Window switcher
 description: Your windows, most recently used first, while the switch windows keys are held (ALT + Tab and ALT + SHIFT + Tab on the Keybinds page). Releasing the modifier focuses the chosen window; Escape keeps the current one.
+x-intro: WindowSwitcherPlace
 additionalProperties: false
 properties:
   compositorSwitcher:
@@ -22,6 +23,38 @@ properties:
       all: Every window
       monitor: Windows on the focused monitor
       workspace: Windows on the focused workspace
+  edge:
+    x-scope: look
+    type: string
+    title: Screen edge
+    default: top
+    enum: [top, bottom, left, right]
+    description: Screen edge the switcher opens from, or is held off when detached.
+  position:
+    x-scope: look
+    type: integer
+    title: Position along edge
+    x-unit: '%'
+    default: 50
+    minimum: 0
+    maximum: 100
+    description: 'Where along the edge its centre sits: 0 is the start (left/top), 100 the end. It never runs off the screen.'
+  detached:
+    x-scope: look
+    type: boolean
+    title: Detach from edge
+    default: true
+    description: A separate box floating off the edge. Off, the switcher grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.
+  distance:
+    x-scope: look
+    type: integer
+    title: Distance from edge
+    x-unit: '%'
+    default: 50
+    minimum: 0
+    maximum: 50
+    description: 'How far across the free screen it sits: 0 lines it up with a detached dock or OSD on that edge, 50 centres it.'
+    x-showIf: {detached: true}
   previews:
     x-scope: look
     type: boolean
