@@ -71,4 +71,4 @@ Walks a value along the schema.
 ### Snapshot rows
 - `active` is the one last saved or restored, kept in `ui/savedconfigs.json` and pushed as `saved.state`. Only its row offers Overwrite.
 - `modified` dots it: the running config's `Snapshot` differs from the saved file's (`Service.Changed`, on every config change). A machine-only change leaves it off, and so does anything that changes on its own (rotation, light/dark wallpapers and schedule), which never writes the config.
-- `unsaved`: the running config isn't on disk (`Service.onDisk`, alongside `modified`), so an apply or restore keeps it first. The community gallery's Apply hint shows on it.
+- `unsaved`: the running config isn't on disk (`Service.onDisk`, alongside `modified`), so an apply or restore keeps it first; `unsavedWallpaper` the same for one that changes the wallpaper setup too (`onDisk(true)`). The community gallery's Apply hint shows on the one its wallpaper switch picks.

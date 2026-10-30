@@ -317,6 +317,9 @@ func TestStateUnsaved(t *testing.T) {
 	if f.svc.State().Unsaved {
 		t.Error("unsaved at the defaults")
 	}
+	if !f.svc.State().UnsavedWallpaper {
+		t.Error("the defaults hold the wallpaper setup")
+	}
 	set(t, f.store, "Bars.style.widgetStyle", "outline")
 	f.svc.Changed()
 	if !f.svc.State().Unsaved {
@@ -325,7 +328,7 @@ func TestStateUnsaved(t *testing.T) {
 	if _, err := f.svc.Save("mine", ""); err != nil {
 		t.Fatal(err)
 	}
-	if f.svc.State().Unsaved {
+	if f.svc.State().Unsaved || f.svc.State().UnsavedWallpaper {
 		t.Error("unsaved right after saving")
 	}
 	set(t, f.store, "Bars.style.widgetStyle", "plain")

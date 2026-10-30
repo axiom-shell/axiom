@@ -332,6 +332,10 @@ Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
 
+Found while reviewing the saved configs' backups:
+- [Restoring the kept unsaved snapshot drops the running config's edits](issues.md#restoring-the-kept-unsaved-snapshot-drops-the-running-configs-edits)
+- [A community setup's copy is saved before its wallpaper is set](issues.md#a-community-setups-copy-is-saved-before-its-wallpaper-is-set)
+
 Found by the audits:
 - [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)
 - [The guard reads the branch from the session's folder, not a `cd` before the push](issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)

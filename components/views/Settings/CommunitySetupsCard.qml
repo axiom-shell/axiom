@@ -273,7 +273,7 @@ FieldGroup {
 
           StyledText {
             Layout.fillWidth: true
-            text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id && SavedConfigsManager.unsaved ? I18n.tr("Your unsaved changes are saved first.") : ""
+            text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id && (useWallpaper.checked && details.setup.wallpaper !== null ? SavedConfigsManager.unsavedWallpaper : SavedConfigsManager.unsaved) ? I18n.tr("Your unsaved changes are saved first.") : ""
             opacity: 0.7
             textSize: Appearance.fontSizeBy(-1)
             elide: Text.ElideRight

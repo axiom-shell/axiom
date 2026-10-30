@@ -69,6 +69,9 @@ type State struct {
 	// The running config isn't on disk, so an apply or restore keeps it
 	// first (as the kindUnsaved snapshot)
 	Unsaved bool `json:"unsaved"`
+	// The same when what replaces it changes the wallpaper setup too (a
+	// community setup with its wallpaper): onDisk(true)
+	UnsavedWallpaper bool `json:"unsavedWallpaper"`
 }
 
 // Entry is one snapshot on disk.
@@ -234,6 +237,7 @@ func (s *Service) Changed() {
 	before := s.state
 	s.state.Modified = s.modified()
 	s.state.Unsaved = !s.onDisk(false)
+	s.state.UnsavedWallpaper = !s.onDisk(true)
 	after := s.state
 	s.mu.Unlock()
 	if after != before && s.opts.OnState != nil {
@@ -454,6 +458,7 @@ func (s *Service) setActive(name string, baseline *jsonx.Object, source, kind st
 	}
 	s.state.Modified = s.modified()
 	s.state.Unsaved = !s.onDisk(false)
+	s.state.UnsavedWallpaper = !s.onDisk(true)
 	if s.opts.OnState != nil {
 		s.opts.OnState(s.state)
 	}

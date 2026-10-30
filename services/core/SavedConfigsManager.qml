@@ -45,6 +45,9 @@ QtObject {
   // The running config isn't on disk (no saved one active and not the
   // defaults, or the active one changed): an apply or restore keeps it first
   readonly property bool unsaved: _state.unsaved ?? false
+  // The same for an apply that changes the wallpaper setup too (a community
+  // setup with its wallpaper): only a snapshot that stays holds it
+  readonly property bool unsavedWallpaper: _state.unsavedWallpaper ?? false
   // The shared setup the active saved config was saved from, unchanged
   // since: "" for one the user saved, or saved over
   readonly property string activeSource: _state.activeSource ?? ""
