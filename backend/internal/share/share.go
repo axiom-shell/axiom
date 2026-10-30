@@ -277,6 +277,19 @@ func TakeoverPaths(s *schema.Schema) [][]string { return annotated(s, "x-takeove
 // SnapshotPaths is the paths of the x-snapshot settings, through objects.
 func SnapshotPaths(s *schema.Schema) [][]string { return annotated(s, "x-snapshot") }
 
+// SnapshotChanged says whether an x-snapshot setting (the wallpaper setup)
+// differs between before and after.
+func SnapshotChanged(s *schema.Schema, before, after any) bool {
+	for _, path := range SnapshotPaths(s) {
+		a, _ := at(before, path)
+		b, _ := at(after, path)
+		if !jsonx.Equal(a, b) {
+			return true
+		}
+	}
+	return false
+}
+
 func annotated(s *schema.Schema, annotation string) [][]string {
 	paths := [][]string{}
 	var walk func(node any, path []string, depth int)

@@ -154,7 +154,7 @@ func TestApplyExampleFormat1(t *testing.T) {
 func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 	t.Parallel()
 	type step struct {
-		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source; "wall": example a as a community setup whose wallpaper is set next
+		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source; "wall": example a as a community setup whose wallpaper is set next; "rotating <name>": a snapshot of the user's whose wallpaper rotates
 		backup  string // Applied.Backup of an apply or restore
 		files   string // saved/ afterwards, sorted, space-separated
 		content string // what saved/unsaved.json then holds of Bars.style.widgetStyle ("" to skip)
@@ -203,6 +203,10 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "wall", backup: "unsaved", files: "community-a unsaved"},
 			{do: "b", files: "example-b unsaved"},
 			{do: "wall", backup: "unsaved", files: "community-a unsaved"},
+		}},
+		{"a restore that changes the wallpaper setup keeps it, files or not", []step{
+			{do: "rotating spin", files: "spin"},
+			{do: "restore spin", backup: "unsaved", files: "spin unsaved"},
 		}},
 		{"a snapshot of the user's holds the wallpaper", []step{
 			{do: "save mine", files: "mine"},
@@ -272,6 +276,9 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 					err = os.Remove(filepath.Join(f.dir, "saved", arg+".json"))
 				case "wall":
 					applied, err = f.svc.ApplyShared(filepath.Join(f.ex, "a.json"), "a", "community-a", true, nil)
+				case "rotating":
+					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
+						"meta": {"title": "`+arg+`"}, "Appearance": {"wallpaper": {"mode": "rotate"}}}`), 0o600)
 				case "old":
 					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
 						"meta": {"title": "`+arg+`", "source": "`+arg+`"}, "Appearance": {"theme": {"name": "nord-light"}}}`), 0o600)

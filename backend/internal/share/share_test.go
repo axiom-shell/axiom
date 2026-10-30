@@ -200,6 +200,9 @@ func TestSnapshotRoundTrip(t *testing.T) {
 	if value(restored, "Battery.lowThreshold") != 30.0 || value(restored, "Appearance.theme.name") != "nord" || value(restored, "Apps.terminal") != "foot" {
 		t.Error("machine settings weren't kept, or the look and commands not restored")
 	}
+	if !SnapshotChanged(s, now, restored) || SnapshotChanged(s, now, now) {
+		t.Error("SnapshotChanged misjudged the wallpaper setup")
+	}
 	// A wallpaper whose file is gone keeps the current one
 	missing := WithSnapshot(s, applied, snap, nil)
 	if value(missing, "Appearance.wallpaper.file") != "file:///home/u/b.png" {

@@ -320,14 +320,14 @@ func (s *Service) Restore(name string) (Applied, error) {
 			existing = append(existing, file)
 		}
 	}
-	if h.Kind != kindUnsaved {
-		if result.Backup, err = s.keep(len(existing) > 0); err != nil {
-			return Applied{}, err
-		}
-	}
 	current, _ := s.opts.Store.Config()
 	applied := share.Apply(sch, current, loaded, share.Everything, nil)
 	applied = share.WithSnapshot(sch, applied, loaded, existing)
+	if h.Kind != kindUnsaved {
+		if result.Backup, err = s.keep(share.SnapshotChanged(sch, current, applied)); err != nil {
+			return Applied{}, err
+		}
+	}
 	if _, err := s.opts.Store.Replace(applied.(*jsonx.Object), store.SetOptions{Restore: true}); err != nil {
 		return result, err
 	}
