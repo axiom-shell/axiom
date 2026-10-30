@@ -617,7 +617,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The system stats widget changes width with its digits
 - **Where:** `components/bar/widgets/SystemStats/SystemStats.qml`, `components/bar/widgets/base/IconTextWidget.qml` (`steadyDigits`)
-- **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size. The cause is in the base (bar-widgets audit, 2026-10-30): `steadyDigits` sizes a label by its digit count by design ("changing only when it gains or drops a digit"), and stacked (`ValueGraphic`) does the same, so Volume/Microphone, Battery, ClaudeUsage, Updates and SystemStats' used memory shift too, and Stopwatch, Pomodoro and IdleInhibitor grow a step past an hour. A fix in the base covers them all: a per-widget minimum text the label never measures below ("100%" for a percent), measured as `steadyMetrics` is.
+- **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size. The cause is in the base (bar-widgets audit, 2026-10-30): `steadyDigits` sizes a label by its digit count by design ("changing only when it gains or drops a digit"), and stacked (`ValueGraphic`) does the same, so Volume/Microphone, Battery, ClaudeUsage, Updates and SystemStats' used memory shift too, and Stopwatch, Pomodoro and IdleInhibitor grow a step past an hour. **Decided** (maintainer, 2026-10-30, with the ticking labels): "Everything should always not be affected by ticking, and there shouldn't be a way to turn it off via a setting (i.e. everything acts like monospace without moving the bar around when changing numubers)". Fix, in the base for every bar widget's label, with no setting: a per-widget minimum text the label never measures below ("100%" for a percent), measured as `steadyMetrics` is. Lands together with [Ticking labels without steadyDigits resize the bar under a proportional font](#ticking-labels-without-steadydigits-resize-the-bar-under-a-proportional-font).
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -1236,9 +1236,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   - **Evidence:** a scratch qmltestrunner probe on a 30×10 pill box at R 20 gives `… L 20 10 A 19.5 19.5 0 0 0 39.5 29.5 …`: the wall runs 10.5 px back.
   - **What it breaks:** the fill uses the same path (OddEvenFill leaves holes where it crosses), and the footprint and blur region disagree with what's drawn.
   - PLAUSIBLE (how it looks): a nested screenshot of a pill bar at radius 20+.
-  - **Question for the maintainer:** at a large radius, should only the corners clamp, or should pills also get deeper with the radius?
+  - **Decided** (maintainer, 2026-10-30): "Calmp corners only. Radius shouldn't affect sizing at all".
 
-  Fix (clamp): in `SurfaceOutline.withBoxStart`, cap `startCornerRadius`/`endCornerRadius` at the room the box has (`boxStart + boxDepth - half - (filleted ? half + R : 0)`, and `boxAlong / 2 - half`). Add a `tst_SurfaceOutline` row for a box shallower than its corners.
+  Fix: clamp the corners only, as a Rectangle does its radius; pill and popout sizes don't change with the radius. In `SurfaceOutline.withBoxStart`, cap `startCornerRadius`/`endCornerRadius` at the room the box has (`boxStart + boxDepth - half - (filleted ? half + R : 0)`, and `boxAlong / 2 - half`). Add a `tst_SurfaceOutline` row for a box shallower than its corners.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
@@ -1278,7 +1278,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
     - It writes the live config.json from a script and restores a whole-file backup at the end, dropping anything the user saved meanwhile. AGENTS.md › Never forbids writing config.json from Bash because "that skips the `x-takeover` check".
   - **Nobody runs it:** components/hosts/popout/AGENTS.md already says "slow: only when asked", and it has been broken since the sections took `items`.
 
-  Deletion: the script (338 lines), surface-context.md's Testing bullets about it (2 lines), testing.md:64-65 (2 lines) and the clause in components/hosts/popout/AGENTS.md: 342 lines and a clause. Question for the maintainer: delete it, or keep it? If kept, it needs the `items` keys and the workspace taken through `axiom ipc`, and it should run only on a nested session's scratch config (`scripts/dev/nested.sh`).
+  **Decided** (maintainer, 2026-10-30): "Delete popout matrix". Fix: delete the script (338 lines), surface-context.md's Testing bullets about it (2 lines), testing.md:64-65 (2 lines) and the clause in components/hosts/popout/AGENTS.md: 342 lines and a clause.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the popouts system
 
@@ -1398,8 +1398,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   The editor creates this case. `addBar` fills every field from the Bar defaults (location top, screen primary), so on the default config **New bar** stacks a second bar on the default top bar. `duplicateBar` moves its copy to a free screen "so it doesn't sit on the original", which suggests stacking isn't meant.
 
-  **Question for the maintainer:** are stacked bars on one edge supported? If not, `addBar` picks a free edge or screen as `duplicateBar` does (small). If so, `edgesOn` returns every bar on an edge, and the reserved, frame-line and corner answers add them up (needs a plan). Fix: per that answer.
-- **Size:** small
+  **Decided** (maintainer, 2026-10-30): "Stacked bars will be planned as supported. Mark it as needs a plan and move to deferred". Fix: `edgesOn` returns every bar on an edge, and the reserved, frame-line and corner answers add them up, designed first through a plan; deferred until then.
+- **Size:** needs a plan
 - **Found:** 2026-10-30, while reviewing the bar system
 
 ### Plugging in or unplugging a monitor remakes the bar that stays
@@ -1484,7 +1484,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   - NextEvent's "in {0} min" counts down every minute.
   - A Button's `labelCommand` output is sampled every `labelInterval` (default 5 s) and is usually a number.
 
-  Without `steadyDigits`, `IconTextWidget` sets no `tnum`, and `_textLength` is the text's own width. The default `Appearance.font.family` is `monospace`, where nothing moves. With a proportional font (Inter, Noto Sans, …), `0:11` → `0:08` changes the widget's width and moves its neighbours on most ticks. Fix: `steadyDigits: true` on ScreenRecord and NextEvent, and `steadyDigits: properties.labelCommand !== ""` on Button (3 lines). The alternative is the maintainer's call: make it BarIconWidget's default (it costs nothing on a label with no digits) and delete the four opt-ins.
+  Without `steadyDigits`, `IconTextWidget` sets no `tnum`, and `_textLength` is the text's own width. The default `Appearance.font.family` is `monospace`, where nothing moves. With a proportional font (Inter, Noto Sans, …), `0:11` → `0:08` changes the widget's width and moves its neighbours on most ticks. **Decided** (maintainer, 2026-10-30): "Everything should always not be affected by ticking, and there shouldn't be a way to turn it off via a setting (i.e. everything acts like monospace without moving the bar around when changing numubers)". Fix: steady digits become the behaviour of every bar widget's label, with no setting, and the four `steadyDigits: true` opt-ins are deleted. Lands together with [The system stats widget changes width with its digits](#the-system-stats-widget-changes-width-with-its-digits).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
@@ -1514,7 +1514,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Tray icons keep their pixel size on a bar thinner than them
 - **Where:** `components/bar/widgets/SystemTray/SystemTray.qml:13` (`iconSize`), `components/bar/widgets/SystemTray/SystemTray.qml:70`
-- **What:** Each tray item is `properties.iconSize` px (default 18, 8–64), whatever the bar's `widgetSize` (10 and up) or `fontSize`. Every other widget's icon is `barConfig.fontSize * iconScale`. With `iconSize` 24 on a 20 px bar, the icons draw past the widget's box across the bar, and nothing clips them. They also don't grow with the bar's font as every other icon does. Fix: `readonly property int iconSize: Math.min(properties.iconSize, barConfig.widgetSize)`. Question for the maintainer: should the tray's size follow the bar instead (a share of `widgetSize`, or relative to `fontSize`) rather than being a px setting?
+- **What:** Each tray item is `properties.iconSize` px (default 18, 8–64), whatever the bar's `widgetSize` (10 and up) or `fontSize`. Every other widget's icon is `barConfig.fontSize * iconScale`. With `iconSize` 24 on a 20 px bar, the icons draw past the widget's box across the bar, and nothing clips them. They also don't grow with the bar's font as every other icon does. **Decided** (maintainer, 2026-10-30): "Follow the bar and size it like every other icon". Fix: each tray icon is `barConfig.fontSize * iconScale`, as every other widget's icon, and the `iconSize` px setting goes. Removing a setting needs a format-2 migration step (`docs/recipes/migration.md`).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
@@ -1528,11 +1528,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   Fix:
   - `spacing: root.isVertical ? 0 : root.barConfig.widgetSpacing * 1.5`
-  - `preferredSize: barConfig.fontSize * 17`, `minimumSize: barConfig.fontSize * 6` (today's values at the default 14)
+  - Window: no cap and no setting. It is elastic, as Media is, and gives up its width first when the section is crowded.
   - `gap`/`cornerRadius: Math.max(1, Math.round(root.fontSize * 0.15))`
   - `textSize: Math.round(root.fontSize * 0.65)` (0.7 for the badge)
 
-  Question for the maintainer: should Window's cap be a setting instead, as Media's is through `layout.size`?
+  **Decided** (maintainer, 2026-10-30, on Window): "The window widget should be fixed and be automatic (i.e. cut itself when it needs to at highest priority like the media one does)."
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
