@@ -47,7 +47,7 @@ WRAPPER_POSITIONALS = {"timeout": 1, "flock": 1}
 # A substitution a double-quoted word still runs: "$(…)", "`…`"; single-quoted
 # text (a commit message, a grep pattern) runs nothing, so it's blanked first
 SUBSTITUTION = re.compile(r"\$\((.*)\)|`([^`]*)`", re.S)
-QUOTED = re.compile(r"""\\.|"(?:\\.|[^"\\])*"|'[^']*'""", re.S)
+QUOTED = re.compile(r"""\\.|"(?:\\.|[^"\\])*"|\$'(?:\\.|[^'\\])*'|'[^']*'""", re.S)
 SHELLS = {"bash", "sh", "zsh"}
 QS = {"qs", "quickshell"}
 QS_VALUE_OPTS = {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}
@@ -64,27 +64,47 @@ def deny(rule, why):
 
 # --------------------------------------------------------------- parsing
 
+# A quoted string or escape (kept), or a `#` comment (dropped): one starts a
+# word and ends at its newline, so `a#b`, `"#x"` and `${#var}` aren't comments
+COMMENT = re.compile(QUOTED.pattern + r"|(?<![^\s;&|()<>])#[^\n]*", re.S)
+
+
+def uncomment(m):
+    text = m[0]
+    if text[0] == "#":
+        # A comment holding a quote is judged as a command of its own: a quote
+        # read differently from the shell (`"$(echo ")"`) may end inside it
+        return " ; " + text if set(text) & set("'\"") else ""
+    if text[:2] == "$'":  # an ANSI-C string, which shlex can't read: as a plain one
+        return "'" + text[2:-1].replace("'", "") + "'"
+    return text
+
+
 def lex(command):
+    command = COMMENT.sub(uncomment, command).replace("\n", " ; ")
     try:
-        lexer = shlex.shlex(command.replace("\n", " ; "), posix=True, punctuation_chars=PUNCTUATION)
+        lexer = shlex.shlex(command, posix=True, punctuation_chars=PUNCTUATION)
         lexer.whitespace_split = True
+        lexer.commenters = ""
         return list(lexer)
-    except ValueError:
-        return command.split()
+    except ValueError:  # an unbalanced quote: split on separators still, quotes dropped
+        return re.findall(r"[;&|()<>`]+|[^\s;&|()<>`]+", re.sub(r"['\"]", "", command))
 
 
 # `<<WORD`, `<<-WORD`, `<<'WORD'` (not a `<<<` here-string, nor a `<<` inside
-# a quoted string, which the other branches consume)
-HEREDOC = re.compile(r"""(?<!<)<<(?!<)(-?)[ \t]*(['"]?)([A-Za-z_][\w.-]*)\2(?![^\s;&|<>()])|\\.|"(?:\\.|[^"\\])*"|'[^']*'""")
+# a quoted string or a comment, which COMMENT's branches consume)
+HEREDOC = re.compile(r"""(?<!<)<<(?!<)(-?)[ \t]*(['"]?)([A-Za-z_][\w.-]*)\2(?![^\s;&|<>()])|""" + COMMENT.pattern)
 
 
 def drop_heredoc_bodies(command):
     """A heredoc's body is text, not commands: it is dropped, unless the
     command runs text it's given (a shell, `source`, `.`, `eval` or a script run
-    by its path anywhere outside the bodies: `bash <<EOF`, `cat <<EOF | sh`,
+    by a path the command names elsewhere too: `bash <<EOF`, `cat <<EOF | sh`,
     `cat > x.sh <<EOF … bash x.sh` or `… ./x.sh`), the body is unquoted and substitutes (`$(…)`, backticks) or
-    its delimiter never comes: then it is judged as written."""
-    lines, out = command.replace("\\\n", "").split("\n"), []
+    its delimiter never comes: then it is judged as written. Line continuations
+    are joined first, outside quotes and comments (a comment ends at its newline)."""
+    command = COMMENT.sub(lambda m: "" if m[0] == "\\\n" else m[0], command)
+    lines, out = command.split("\n"), []
     while lines:
         line = lines.pop(0)
         out.append(line)
@@ -97,8 +117,10 @@ def drop_heredoc_bodies(command):
             if not quote and SUBSTITUTION.search("\n".join(body)):
                 out.extend(body)
     words = lex("\n".join(out))
-    # `.` or a script run by its path (`./t.sh`, `sudo /tmp/t.sh`) where a command starts, not a redirection's target
-    runs = any(Path(w).name in SHELLS | {"source", "eval"} or (w == "." or "/" in w)
+    named = [os.path.normpath(w) for w in words]
+    # `.`, or a script run by a path the command names elsewhere too, as the file it writes
+    # (`./t.sh`, `sudo /tmp/t.sh`; not `/usr/bin/grep`), where a command starts, not a redirection's target
+    runs = any(Path(w).name in SHELLS | {"source", "eval"} or (w == "." or "/" in w and named.count(named[i]) > 1)
                and (not i or words[i - 1] in KEYWORDS | WRAPPERS.keys() or set(words[i - 1]) <= set(";&|()`"))
                for i, w in enumerate(words))
     return command if runs else "\n".join(out)
@@ -110,7 +132,7 @@ def split_commands(command):
     command = drop_heredoc_bodies(command)
     tokens = lex(command)
     out, current, exported = [], [], {}
-    for token in lex(QUOTED.sub(lambda m: "''" if m[0][0] == "'" else m[0], command)):
+    for token in lex(QUOTED.sub(lambda m: "''" if m[0].startswith(("'", "$'")) else m[0], command)):
         for m in SUBSTITUTION.finditer(token):
             out.extend(split_commands(m[1] or m[2]))
     i = 0
