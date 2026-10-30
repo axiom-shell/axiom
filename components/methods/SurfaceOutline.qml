@@ -74,8 +74,6 @@ QtObject {
       "startMargin": startMargin,
       "endMargin": endMargin,
       "alongLength": alongLength,
-      "startCornerRadius": cs,
-      "endCornerRadius": ce,
       "naturalBoxStart": naturalBoxStart,
       "sideU": startMargin + half,
       "farSideU": startMargin + s.boxAlong - half
@@ -83,9 +81,17 @@ QtObject {
   }
 
   // The metrics with the box starting `boxStart` from the attach edge (a
-  // bar's pills keep a half connector gap instead of the natural start)
+  // bar's pills keep a half connector gap instead of the natural start).
+  // Each far corner is capped at the room the box has, as a Rectangle's
+  // radius is: past it, a wall would run backwards and the outline cross
+  // itself. The radius never changes the box's size.
   function withBoxStart(s, m, boxStart) {
+    const h = m.half, R = s.filletRadius;
+    const along = Math.max(0, s.boxAlong / 2 - h);
+    const room = filleted => Math.max(0, Math.min(along, boxStart + s.boxDepth - h - (filleted ? h + R : 0)));
     return Object.assign({}, m, {
+      "startCornerRadius": Math.min(s.startCornerRadius ?? s.cornerRadius, room(m.filletStart)),
+      "endCornerRadius": Math.min(s.endCornerRadius ?? s.cornerRadius, room(m.filletEnd)),
       "boxStart": boxStart,
       "depth": m.back + boxStart + s.boxDepth + s.connectorGap / 2 + (m.joinFillet ? s.filletRadius : 0),
       "farV": boxStart + s.boxDepth - m.half

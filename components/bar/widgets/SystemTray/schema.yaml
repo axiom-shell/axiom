@@ -5,15 +5,6 @@ popout:
   variant: plain
   enabled: {title: Menus, description: Open an item's menu when it's hovered.}
 settings:
-  iconSize:
-    type: integer
-    x-control: stepper
-    title: Icon size
-    default: 18
-    minimum: 8
-    maximum: 64
-    x-unit: px
-    description: Size of tray icons (px).
   showPassive:
     type: boolean
     title: Show passive

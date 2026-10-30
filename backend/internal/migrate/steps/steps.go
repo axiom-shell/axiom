@@ -6,6 +6,8 @@
 package steps
 
 import (
+	"fmt"
+
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/migrate/convert"
 )
@@ -102,6 +104,20 @@ var all = []Step{
 	}},
 	// v84: Notifications' corner became an edge placement (v84.go)
 	{Version: 84, Run: v84},
+	// v85: the tray's icons follow the bar's font, as every other bar
+	// widget's icon does: its iconSize went
+	{Version: 85, Run: func(cfg *jsonx.Object) []string {
+		removed := 0
+		for _, w := range barWidgets(cfg, "SystemTray") {
+			if p, _ := w.Value("properties").(*jsonx.Object); p != nil && p.Delete("iconSize") {
+				removed++
+			}
+		}
+		if removed == 0 {
+			return nil
+		}
+		return []string{fmt.Sprintf("iconSize removed from %d System Tray bar widget(s): tray icons now follow the bar's font size", removed)}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

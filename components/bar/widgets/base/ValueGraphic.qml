@@ -23,6 +23,12 @@ Item {
   // The ticker's text, and stacked's two lines
   property string text: ""
   property string subtext: ""
+  // The value's widest (IconTextWidget's minimumText): ticker and stacked
+  // never take less room, so a changing one doesn't resize the widget
+  property string minimumText: ""
+  // What they're measured by: the longer of the value and its minimum,
+  // digits as zeros
+  readonly property string _measuredText: (root.minimumText.length > root.text.length ? root.minimumText : root.text).replace(/[0-9]/g, "0")
   property int segmentCount: 5
   // The graphic's length along the bar; 0 picks one
   property real preferredLength: 0
@@ -116,8 +122,8 @@ Item {
       share: root.ratio
       vertical: root.vertical
       across: root.fontSize * 0.7
-      gap: 2
-      cornerRadius: 2
+      gap: Math.max(1, Math.round(root.fontSize * 0.15))
+      cornerRadius: Math.max(1, Math.round(root.fontSize * 0.15))
       litColor: root.color
       offColor: root.trackColor
     }
@@ -146,8 +152,14 @@ Item {
     Item {
       id: tickerBox
       // Its length along the bar
-      implicitWidth: tickerText.implicitWidth
+      implicitWidth: Math.ceil(Math.max(tickerText.implicitWidth, tickerMetrics.advanceWidth))
       clip: true
+
+      TextMetrics {
+        id: tickerMetrics
+        font: tickerText.font
+        text: root._measuredText
+      }
 
       Item {
         id: strip
@@ -163,6 +175,9 @@ Item {
           color: root.textColor
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize
+          font.features: {
+            "tnum": 1
+          }
           readonly property real overflow: Math.max(0, implicitWidth - strip.width)
           x: 0
 
@@ -202,7 +217,13 @@ Item {
   Component {
     id: stacked
     Item {
-      implicitWidth: stack.implicitWidth
+      implicitWidth: Math.ceil(Math.max(stack.implicitWidth, valueMetrics.advanceWidth))
+
+      TextMetrics {
+        id: valueMetrics
+        font: value.font
+        text: root._measuredText
+      }
 
       Column {
         id: stack
@@ -210,6 +231,7 @@ Item {
         spacing: 0
 
         Text {
+          id: value
           anchors.horizontalCenter: parent.horizontalCenter
           text: root.text
           color: root.textColor

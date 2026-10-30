@@ -2441,7 +2441,6 @@
     "Size of the modules, relative to the card size in Look & Feel. Their text and content grow and shrink with them, and each monitor fits as many as its screen holds.": "",
     "Size of the overlay's cards, relative to the card size in Look & Feel. Their text and content shrink with them. For bigger cards, raise the card size.": "",
     "Size of the result icons.": "",
-    "Size of tray icons (px).": "",
     "Sizing": "",
     "Sizing for the overlay, edge menus, desktop, lock screen, popouts, launcher and settings. Each bar has its own, in the bar editor.": "",
     "Skip setup": "",

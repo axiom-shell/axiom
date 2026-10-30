@@ -100,7 +100,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
 
 ### Bar pieces (`bar/`)
-- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); `steadyDigits` sizes a ticking label by its digit count.
+- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`).
 - `WidgetBackground`: a widget's or merged run's background in the bar's widget style and shape, with the hover outline and editor highlight.
 - `methods/BarShapes` (caps and SVG outlines), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
 
@@ -148,7 +148,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `hosts/popout/ClosedLatch`: a value followed only while its host is closed (a window's layer or namespace).
 - `hosts/popout/StrokeOpening`: a stroke a surface covers, left open by whatever draws it.
 - `hosts/popout/SubmenuSide`: what a submenu meets on its parent's side.
-- `methods/SurfaceOutline`: the shape of anything growing out of an edge (metrics, fill and stroke paths, footprint); `AttachedSurface` draws from it.
+- `methods/SurfaceOutline`: the shape of anything growing out of an edge (metrics, fill and stroke paths, footprint); `AttachedSurface` draws from it. Its far corners are capped at the room the box has, as a Rectangle's radius is: the radius never changes a surface's size.
 - `hosts/popout/PopoutClaim`: a host's place among the popouts; what it overlaps closes, what's above refuses it. See [Popout registry](../popouts/registry.md).
 - `hosts/popout/SubPopout`: a popout's submenu.
 - `PopoutAnchor`: opens one from anything in a bar or popout; `openOnHover: false` leaves opening to its owner's click.
