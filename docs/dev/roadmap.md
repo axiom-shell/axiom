@@ -435,7 +435,6 @@ Found by the audits:
 - [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](issues.md#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway)
 - [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
 - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
-- [leaveSwitcher is stubbed on sway and niri, and called on them](issues.md#leaveswitcher-is-stubbed-on-sway-and-niri-and-called-on-them)
 - [sway and niri build output details and descriptions twice](issues.md#sway-and-niri-build-output-details-and-descriptions-twice)
 - [The bind merge lists user/ files three times, once per compositor](issues.md#the-bind-merge-lists-user-files-three-times-once-per-compositor)
 - [sway's and niri's merges build a moved bind the same way twice](issues.md#sways-and-niris-merges-build-a-moved-bind-the-same-way-twice)
