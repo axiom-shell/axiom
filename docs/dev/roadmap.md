@@ -335,6 +335,11 @@ Found while investigating Hyprland starting on workspace 10:
 Found by the audits:
 - [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)
 - [The guard reads the branch from the session's folder, not a `cd` before the push](issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)
+- [The daemon picks a compositor the shell may not run under](issues.md#the-daemon-picks-a-compositor-the-shell-may-not-run-under)
+- [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
+- [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
+- [Backends keep stubs for calls the facade gates](issues.md#backends-keep-stubs-for-calls-the-facade-gates)
+- [Small shrinks in the compositor layer](issues.md#small-shrinks-in-the-compositor-layer)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
