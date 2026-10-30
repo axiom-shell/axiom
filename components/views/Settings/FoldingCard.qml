@@ -29,6 +29,8 @@ StyledContainer {
 
   Layout.fillWidth: true
   implicitHeight: column.implicitHeight + Widget.padding * 2
+  // Faint, so cards side by side don't run together
+  borderColor: Qt.alpha(Theme.border, 0.25)
 
   ColumnLayout {
     id: column

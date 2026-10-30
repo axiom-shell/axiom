@@ -30,7 +30,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `StyledText` / `StyledIcon`.
 - `SectionHeading`: accent title + muted description, folded past three lines.
 - `ClampedText`: muted help text cut to `maxLines` (3) with a More / Less link, shown only when it's longer. Field and card descriptions use it.
-- `FieldGroup`: a titled card of fields; `headerExtras` beside the heading.
+- `FieldGroup`: a titled card of fields, with a faint border (as `FoldingCard`'s); `headerExtras` beside the heading.
 - `StyledContainer`: a themed box (surface opacity or solid, optional border and radius).
 - `StyledScrollView`: a ScrollView with the shell's padding and a thin accent scroll bar.
 - `KeyHint`: a keycap and what it does (`[↵] open`), for a controls hint.
@@ -155,7 +155,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `content/Submenu`: a module opening another edge menu as a submenu.
 
 ### Settings cards (`views/Settings/`)
-- `FoldingCard`: fold header + a `FoldingColumn` body.
+- `FoldingCard`: fold header + a `FoldingColumn` body, in a faint border so neighbouring cards stay apart.
 - `SettingsGroupCard`: generated.
 - `EntryListCard`: a list of entries as tabs with a screen picker.
 - `ScreenSpotPicker`: a small screen with a spot and preset dots to click; `edgeSpot(edge, along, across)`. Used by docks, OSDs, and the launcher's `LauncherPlace` intro.
