@@ -370,8 +370,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while reviewing the compositor system
 
 ### Backends keep stubs for calls the facade gates
-- **Where:** `services/compositor/SwayManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`), `services/compositor/NiriManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`), `services/compositor/CompositorManager.qml` (`withLayerRects`), `docs/dev/compositor/contract.md`
-- **What:** Deletion pass. `CompositorManager.withCursorPos` and `warpCursorToLayer` call the backend only with `supports.cursorPos` / `cursorWarp`, which only Hyprland sets, so sway's and niri's `withCursorPos` (calls back null) and empty `warpCursorToLayer` are never reached. `withLayerRects` is called ungated, but both only call back null, which the facade's no-backend branch already does. About 22 lines over the two backends. Fix: delete the four gated stubs; make `withLayerRects` optional in the facade (`root.backend?.withLayerRects ? … : callback(null)`) and delete its two stubs; mark the three optional in contract.md › Session and input and the compositor-backend recipe.
+- **Where:** `services/compositor/SwayManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`, `scrollStrip`, `leaveSwitcher`), `services/compositor/NiriManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`, `applyRemap`, `leaveSwitcher`), `services/compositor/CompositorManager.qml` (`withLayerRects`), `services/compositor/WindowSwitcherManager.qml` (`pick`), `docs/dev/compositor/contract.md`
+- **What:** Deletion pass. `CompositorManager.withCursorPos` and `warpCursorToLayer` call the backend only with `supports.cursorPos` / `cursorWarp`, which only Hyprland sets, so sway's and niri's `withCursorPos` (calls back null) and empty `warpCursorToLayer` are never reached. `withLayerRects` is called ungated, but both only call back null, which the facade's no-backend branch already does. About 22 lines over the two backends. The sway review (2026-10-30) adds sway's `scrollStrip` (3 lines): the facade calls it only past `if (!root.supports.strips …) return;`, and sway has no `strips`. The compositor-parity review (2026-10-30) adds niri's empty `applyRemap` (3 lines with its comment): the facade returns before calling it when `root.supports.outputWorkspaces === true`, which niri sets. It also adds sway's and niri's empty `leaveSwitcher` (5 + 4 lines with their comments, which say "Nothing to let go"): `WindowSwitcherManager.pick` calls it under `supports.switcher`, which all three set, but only Hyprland holds the switcher's keys in a mode to leave (its `axiom_switcher` submap, `switcherRelease`). Fix: delete the six gated stubs; gate `pick`'s call on `CompositorManager.supports.switcherRelease` and delete the two `leaveSwitcher` stubs (list `leaveSwitcher()` under `switcherRelease` in contract.md); make `withLayerRects` optional in the facade (`root.backend?.withLayerRects ? … : callback(null)`) and delete its two stubs; mark the three optional in contract.md › Session and input and the compositor-backend recipe.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
@@ -515,7 +515,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### noteReload counts every compositor reload a second time
 - **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
-- **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30).
+- **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30). The sway review (2026-10-30) found an apply between the count and that reset still sends the old list: [The detached layer's unbind list can drift from what sway holds](#the-detached-layers-unbind-list-can-drift-from-what-sway-holds) wants the reset where the reload is counted; fix the two together.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -944,3 +944,249 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** niri's plain `quit` asks first (`/usr/share/doc/niri/default-config.kdl:625`: "The quit action will show a confirmation dialog to avoid accidental exits"); only `quit skip-confirmation=true` doesn't. The merge maps both to `exitSession` (`node.Name == "quit" || plain`), which axiom writes as `quit skip-confirmation=true` (`render/niri.go`, `exitSession`) and `NiriManager.exitSession` sends as `Quit { skip_confirmation: true }`. A user config kept from niri's default, adopted on a managed takeover or merged from the Keybinds page, has `Mod+Shift+E { quit; }` and `Ctrl+Alt+Delete { quit; }`: after the merge either key ends the session at once, losing unsaved work, where it used to ask. The code's comment ("quit asks first unless skip-confirmation: axiom's log out doesn't") and `binds_test.go:554` take the change as intended, but nothing tells the user. Decided by the maintainer (asked 2026-10-30: "when axiom moves the user's niri binds in, niri's default Mod+Shift+E and Ctrl+Alt+Delete `quit` (which in niri shows a confirmation dialog) becomes axiom's `exitSession`, an instant log out with no confirmation. The code and a test treat this as intended. What should it do?"): "Keep a confirmation (Recommended)": "File as a bug: a moved `quit` should still confirm (axiom's power menu / a confirm step, or keep niri's own quit), not log out instantly." The audit's fix: map `quit` only with `skip-confirmation=true` (the condition becomes `quit` with that property true, or another action `plain`; dropping `node.Name == "quit" ||` alone would do the reverse, as a bare `quit` is `plain`), so a confirming quit moves as `raw` and keeps its dialog; reword the comment above it and flip the test row (`binds_test.go:554` expects `"raw"`).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
+
+### After a sway reload, gapsOut and SwayFX's per-window blur and shadows stay off until the look changes
+- **Where:** `services/compositor/SwayManager.qml:518` (`_onEvent`), `services/compositor/CompositorConfigManager.qml:243` (`_setState`), `docs/dev/compositor/sway-backend.md:90`
+- **What:** On a sway config reload (Super+Shift+C, `swaymsg reload`, or in managed mode an edit to a `user/` file), SwayManager drops what the look set: `root._liveGaps = null; root._liveBlur = null;` (518-519), and it nulls `_windowEffects.blur`/`shadows` (522-526) "Until the look is sent again". But `setLiveLook` is only called from `CompositorConfigManager._setState`, and only when the look's JSON differs from the last one: `if (look !== root._lookSet && CompositorManager.backend.setLiveLook)` (243). The daemon's state `look` is `specLive`'s look (`manager.go:547`), and a reload doesn't change it, so `setLiveLook` is skipped. Nothing resets `_lookSet` (only lines 238, 243 and 244 touch it). The daemon re-sends the gaps and the SwayFX lines after the reload, so sway itself shows axiom's look. But until the user changes a look setting or reloads the shell:
+  - `gapsOut` falls back to `_gaps`, which comes from `sway-text`. That text leaves axiom's own file out, so it is the user's gaps (sway's default 0 when they set none), while sway shows axiom's (default 3 + 6).
+  - Every output's `reserved` (`SwayState.output` subtracts `gapsOut`) is off by the difference, and so are the bars and popouts that follow `CompositorManager.gapsOut`.
+  - `blur` reverts to the config's.
+  - On SwayFX, `windowCommands` with `blur`/`shadows` null leaves new windows alone. The global lines reach only the focused window, so windows opened after the reload get no blur and no shadows.
+
+  The doc promises otherwise: "A config reload … resets blur and shadows, which the look sent after it sets again" (sway-backend.md:90).
+
+  Fix: after each reload, CompositorConfigManager asks for the state again with `_lookSet` cleared, so the backend gets the look whether or not it changed: `Connections { target: CompositorManager; function onConfigReloaded() { root._lookSet = ""; root._fetchState(); } }`. About 5 lines.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### A sway title-bar mouse bind moves in as a whole-window bind
+- **Where:** `backend/internal/compositor/binds/sway.go:29` (`swayHarmless`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/render/sway.go:245` (`swayConflictFlags`)
+- **What:** sway(5) says mouse bindings "are only triggered when over the title bar" unless `--whole-window` is given. `swayHarmless` lists `--whole-window` as droppable, so a mouse bind *without* it moves in as well. axiom then writes every mouse key with `--whole-window` (`if k.Mouse { flags = append(flags, "--whole-window") }`). The i3 guide's own examples are `bindsym --release button2 kill` and `bindsym button3 floating toggle`. A probe of the worktree's extract on `bindsym --release button2 kill` gave `{"key":"mouse:274","action":"closeWindow","release":true}`, and the line was commented out. After a takeover, a middle click anywhere (a paste in a terminal) closes the window. The binds are shared, so Hyprland gets the same bind too.
+
+  Fix: keep a mouse key whose flags lack `--whole-window` as `kept` `options` with the detail `title bar`, and add a `TestSwayExtract` row for it. About 4 lines.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### A sway exec chained with ; or , moves in as one shell command
+- **Where:** `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
+- **What:** sway runs a bind's command as a list split at unquoted `;`/`,` (sway(5) › Command conventions). The `exec` branch (202) takes everything after `exec` as one argument (`execText(string([]rune(command)[4:]))`). A probe on `bindsym $mod+q exec notify-send bye; kill` moved it as `{"action":"exec","argument":"notify-send bye; kill"}`: the shell runs `kill` with no arguments, and the window no longer closes. `exec "foot", focus left` became an exec of `"foot", focus left`, so nothing starts. Both original lines were commented out. `TestSwayExecReadAsSwayRunsIt` covers only the quoted form, which sway keeps whole.
+
+  Fix: before the `exec` branch, a stored command holding `;` or `,` outside quotes returns `raw` for sway, which keeps sway's behaviour. That is a small scan, plus a test row for each separator.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### A sway include path with a space breaks after a takeover
+- **Where:** `backend/internal/compositor/takeover/kinds.go:196` (`swayInclude`), `backend/internal/compositor/render/sway.go:683` (`SwayManagedText`), `backend/internal/compositor/render/sway.go:694` (`SwayReleasedText`)
+- **What:** sway expands an include through wordexp(3). A C probe showed a double-quoted `"<dir>/user/*"` stays literal (no glob), and an unquoted path with a space splits into two words. With a space in `$HOME` or `$XDG_CONFIG_HOME`, two things break:
+  - `swayInclude` makes a relative include absolute as `quote + dir + "/" + inner + quote`, unquoted when the original was. `include conf.d/*` becomes two words and loads nothing.
+  - The managed and released configs write `include ` + `SwayQuote(userDir+"/*")`. `SwayQuote` double-quotes the whole path, `*` included, so sway loads nothing from `user/`: the adopted config and every user file are dropped.
+
+  `userconf.SwayText` still reads the quoted glob (`shellSplit`, then `glob`), so the daemon reads binds from files sway doesn't load. This is a rare path.
+
+  Fix: quote only the folder, never the glob: one helper in render, `SwayQuote(dir+"/") + rest`, used by the three writers, plus a takeover test row and a golden row with a spaced dir.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### A sway output rule by description misses a monitor with no serial
+- **Where:** `backend/internal/compositor/render/sway.go:721` (`SwayOutputName`), `backend/internal/compositor/ipc/sway.go:122` (`Outputs`), `docs/dev/compositor/sway-backend.md:40`
+- **What:** Profile rules name a monitor by `desc:<description>` by default. On sway the description is make, model and serial with every `Unknown` part left out (`describe`; `SwayState.output` does the same). `SwayOutputName` writes that text as the output's name in `output "Make Model" …`. sway matches an output by its name or its identifier, and the identifier keeps `Unknown` for a missing part (`output_get_identifier`). So for a monitor with no serial (common on laptop panels), the command names an output that never appears, and the saved profile does nothing on that monitor, both at runtime (`Outputs.Apply`) and in the files (`SwayOutputLines`). The doc's "sway's own identifier for an output" holds only when no part is `Unknown`. `outputs_test.go` covers `desc:` only with a full serial.
+
+  PLAUSIBLE: settle it in a nested sway with a wayland-backend output (no serial). `swaymsg -t get_outputs` shows the `Unknown` part, and `swaymsg 'output "<make> <model>" scale 2'` should do nothing.
+
+  Fix: resolve `desc:` to the connected output's name, as niri does (`connectorFor`, `render/niri.go`). Pass the details into `SwayOutputCommands` from `Outputs.Apply`, which already has them, and resolve the files' output rules the same way. Correct the doc line. [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway) changes the same sway branch: resolving through `sameDescription` there fixes its sway half too, so land the two together.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### Managed mode's monitor-conflict check misses quoted and block output lines
+- **Where:** `backend/internal/compositor/manager/sway.go:84` (`monitorPattern`), `backend/internal/compositor/manager/manager.go:966` (`findMonitorConflicts`)
+- **What:** In managed mode, `user/` files that set monitors (they load after axiom's lines and win) should show as `monitorConflicts` on the Monitors page. sway's pattern takes the output name as `[^[:space:]]+`, so it misses the forms sway users write most for a particular monitor. Running the regex:
+  - `output DP-1 mode 1920x1080` matches.
+  - `output "Dell Inc. DELL U2720Q 123" mode 3840x2160` doesn't.
+  - `output DP-1 {` doesn't.
+  - `output 'LG 27' pos 0 0` doesn't.
+
+  A takeover adopts the old config's output lines into `user/00-previous.conf`, so after a claim they override the Monitors page's profile with no warning. No test covers the sway pattern.
+
+  Fix: `^\s*output\s+("[^"]*"|'[^']*'|\S+)\s+(\{|mode|res|resolution|pos|position|scale|transform|enable|disable|power)`, with a test row for each form.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### The detached layer's unbind list can drift from what sway holds
+- **Where:** `backend/internal/compositor/manager/sway.go:225` (`runtimeApply`), `backend/internal/compositor/manager/sway.go:193` (`sendEach`)
+- **What:** `runtimeApply` replaces and saves `SwayUnbind` (235-237) before anything is sent, and `sendEach` drops `run`'s transport failure. If the socket call fails (dial error, the 5 s timeout), neither the old unbinds nor the new binds reach sway. The old runtime binds stay bound but are no longer recorded, so a bind removed in axiom keeps firing until sway reloads.
+
+  Second path: a reload is counted in `watchReloads`, but `SwayUnbind` is cleared only later, in `noteReload` on the manager goroutine. An apply in between still sends the old `unbindsym` lines, which can remove a key the user just bound in their reloaded config. The known entry "noteReload counts every compositor reload a second time" moves that reset into `configReloaded`; this path wants it where the reload is counted instead.
+
+  Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### Small shrinks in SwayManager
+- **Where:** `services/compositor/SwayManager.qml:95` (`layersChanged`), `services/compositor/NiriManager.qml:120` (`layersChanged`), `services/compositor/SwayManager.qml:288` (`runCommands`), `services/compositor/SwayManager.qml:330` (`_lookSeen`), `services/compositor/SwayManager.qml:342` (`onActiveWindowIdChanged`), `services/compositor/SwayManager.qml:319` (`_configBlur`)
+- **What:** Deletion pass, 21 lines, every behaviour kept (the compositor-parity review found `runCommands` too, noting Hyprland's `runLua` has the same shape and is filed under "HyprlandManager keeps members only it reads"):
+  - `signal layersChanged` with its comment (94-95, 2 lines). It is never emitted, and the facade connects with `ignoreUnknownSignals: true` (`CompositorManager.qml:199`). niri's (`NiriManager.qml:119-120`, never emitted either) goes the same way, 2 more lines. contract.md › Signals then marks `layersChanged` optional (only Hyprland has it), and sway-backend.md drops its "`layersChanged`: never".
+  - `runCommands` (287-290, 4 lines). Its only callers are SwayManager's own (339, 370); neither passes an empty line or a callback, so its filter and `callback?.(ok)` do nothing. Call `SwayIpcManager.command(lines.join("; "))` instead.
+  - `_lookSeen` (328-330 and 313, 4 lines). It is always `root._windowEffects !== null`, so 334 becomes `if (!root._windowEffects)`.
+  - `onActiveWindowIdChanged: _applyWindowLook()` (342, 1 line). `windows` is bound to `SwayState.ranked(…, activeWindowId)`, so `onWindowsChanged` already runs it on every focus change, and today it runs twice.
+  - The blur default is written out twice (319-323 and 586-590), and `SwayState.configInfo("").blur` already holds it. That is 10 lines that become 2; keep the `fx` gate.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### Sway and niri each forward withMainBinds to the daemon
+- **Where:** `services/compositor/SwayManager.qml:358` (`withMainBinds`), `services/compositor/NiriManager.qml:391` (`withMainBinds`), `services/compositor/CompositorManager.qml:399` (`withBinds`)
+- **What:** Deletion pass, 10 lines. Since stage 7 both backends' `withMainBinds` are the same forward to `CompositorConfigManager.withEntries(callback)` (sway 356-360, niri 389-393), a layer whose job has shrunk to forwarding. Fix: the facade's `withBinds` calls `root.backend.withMainBinds ? root.backend.withMainBinds(callback) : CompositorConfigManager.withEntries(callback)` (only Hyprland reads its own), both forwards go, and contract.md marks `withMainBinds` optional.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### SwayConfigBinds keeps its own copy of sway's $variables
+- **Where:** `backend/internal/compositor/render/sway.go:804` (`swaySet`), `backend/internal/compositor/render/sway.go:815` (`SwayConfigBinds`)
+- **What:** Deletion pass, 12 lines. `userconf` already has `Vars` (`Set`, and `Expand` longest name first) and `SetLine`, and `extractSway` and `SwayText` use them. `SwayConfigBinds` re-implements all of it: `swaySet` is `SetLine` character for character, plus a names slice, a map, and a sort by length on every line. `render` can import `userconf` without a cycle. Fix: `vars := &userconf.Vars{}`, `SetLine` for `set` lines, `line = vars.Expand(line)`. That removes 18 lines (804: 1, 816-825: 10, 843-849: 7) and adds about 6, leaving one set of variable rules instead of two.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### Small shrinks in the sway writer and IPC
+- **Where:** `backend/internal/compositor/manager/sway.go:203` (`setCursor`), `backend/internal/compositor/render/sway.go:478` (`numberOr0`), `backend/internal/compositor/ipc/sway.go:45` (`swayWrite`)
+- **What:** Deletion pass, about 10 lines:
+  - `setCursor` (203-205) sends `seat * xcursor_theme …`, but the live lines carry the same line every time (`SwayInputLines` appends `SwayCursorLine` whenever a cursor is set, `live` or not), so a cursor change sends it twice. Make it a no-op (3 lines to 1).
+  - `numberOr0` (478-485) has one caller, `clampRound`. Inline it as a NaN check (8 lines out, about 2 in).
+  - `swayWrite`'s tail (45-48) becomes `_, err := conn.Write(…); return err` (4 lines to 2).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### The sway extract's input-device case and isSwayFlag repeat the general rule
+- **Where:** `backend/internal/compositor/binds/sway.go:37` (`isSwayFlag`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
+- **What:** Deletion pass, about 17 lines. `--input-device=<id>` is in neither `swayFlags` nor `swayHarmless`, so the general `other` branch already keeps such a bind as `options`. The `device` boolean (288-302) exists only so the detail lists every flag instead of the unknown one, which nothing pins (`input-device` appears only in sway.go). `isSwayFlag` (37-45, 9 lines) has one caller. Fix: `slices.ContainsFunc(swayFlags, …)` inline, plus `if len(other) > 0 { push(… strings.Join(other, " ")) }`. The 17 lines at 287-303 become about 9, and `isSwayFlag` goes. `swayAction`'s `o Options` parameter is never read and goes too. These are the lines [A sway title-bar mouse bind moves in as a whole-window bind](#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind) changes: land the two together.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### binds and takeover each keep their own isFile and git check
+- **Where:** `backend/internal/compositor/binds/binds.go:185` (`isFile`), `backend/internal/compositor/takeover/kinds.go:215` (`isFile`), `backend/internal/compositor/userconf/niri.go:453` (`isFile`), `backend/internal/compositor/binds/binds.go:86` (`inGit`), `backend/internal/compositor/takeover/takeover.go:112` (`gitRepo`)
+- **What:** Deletion pass, 11 lines. There are three identical 4-line `isFile` functions. `inGit` and `gitRepo` both run `git -C <dir> rev-parse --show-toplevel`; one keeps the answer, the other the repo. Fix: one exported `IsFile` (in `fsx`) and one `GitRepo` in a shared package, with binds' default tracker calling it. That removes two `isFile`s (8 lines) and `inGit` (3).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### niri's overview drop moves a window's whole column and switches workspace
+- **Where:** `services/compositor/NiriManager.qml:176` (`placeWindow`), `services/compositor/HyprlandManager.qml:228` (`_luaPrelude`'s `aim`)
+- **What:** The same drop (`CompositorManager.placeWindow` from the overview, a tiled window dropped beside a target) does more on niri than on Hyprland and sway, in two ways. (1) The whole column moves. niri's `MoveColumnToIndex` moves the focused *column*, and nothing expels the dragged window from it first. Take workspace 1 with column 1 `[A, B]` (stacked or tabbed) and column 2 `[C]`, and drag A onto C's right side. `reinsert` is true, so no `MoveWindowToWorkspace` runs. Then `FocusWindow A` and `MoveColumnToIndex` (index `target.column - shift + 1`) move `[A, B]` past C: B goes along, and A isn't put on its own. A top/bottom drop then runs `ConsumeOrExpelWindowLeft` on A, which *expels* it, since it shares a column, rather than consuming it into C's column. Hyprland and sway move only the window (`hl.dsp.window.move({ window })`, `[con_id] move container to mark`). (2) The output switches workspace. Line 208 focuses the dragged window unconditionally, and niri's `FocusWindow` activates that window's workspace. So dropping onto a workspace that isn't showing leaves that workspace showing. Hyprland's `aim` focuses the target only `if t.workspace and t.workspace.active` (HyprlandManager.qml:228), so its drop doesn't switch, and sway's mark move changes no focus. The niri semantics are from niri's IPC docs; a live check in a nested niri would confirm. Fix: (1) when the dragged window shares its column on the same workspace, `ExpelWindowFromColumn` after the `FocusWindow` and count its new column in `shift`. (2) Read `root.activeWindowId` first, and when the target's workspace wasn't its output's active one, end with `FocusWindow` on it again.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### sway's named workspaces all share workspace id -1
+- **Where:** `components/methods/SwayState.qml:129` (`window`), `components/methods/SwayState.qml:193` (`output`), `services/compositor/CompositorManager.qml:264` (`hasFullscreen`), `components/methods/DockLayout.qml:20` (`inScope`)
+- **What:** On sway, a workspace without a number has `num` -1. That covers the user's own `workspace music` and axiom's `axiom-special-<name>` (with `Compositor.sway.specialWorkspaces: workspace`). Every window on any of them gets `workspaceId: -1` (`"workspaceId": ws?.num ?? -1`), and an output showing one gets `activeWorkspaceId: -1`, which is the contract's "unknown". sway's `specialWorkspaceId` is always 0. Hyprland gives a named or special workspace its own negative id, so the same consumers work there. Two scenarios on sway. (1) A fullscreen video on the special group's workspace or a named one: `hasFullscreen` filters -1 out (`.filter(id => id !== -1 && id !== 0)`) and answers false. The dock's trigger strip, toasts, edge popouts and the blur pause then behave as if nothing were fullscreen, against the rule "nothing draws over fullscreen". (2) A dock or the switcher scoped to `workspace` while a named workspace shows: `inScope` compares `win.workspaceId === workspaceId`, and -1 === -1, so it lists the windows of every named workspace on every output. Fix: give a named sway workspace an id of its own that no layout uses, as Hyprland does, e.g. minus its con id. Use it for both a window's `workspaceId` and the output's `activeWorkspaceId`. Update `tst_SwayState` `test_outputOnANamedWorkspace` and add a window row.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### sway lists disabled outputs as outputs
+- **Where:** `services/compositor/SwayManager.qml:26` (`outputs`), `services/compositor/CompositorManager.qml:635` (`_bases`), `services/compositor/CompositorManager.qml:666` (`_orderedOutputs`)
+- **What:** `SwayManager.outputs` maps every `I3.monitors` value without checking `active`. sway's `get_outputs` lists disabled outputs too (`active: false`, rect 0×0), and `SwayState.output` doesn't filter them. Hyprland's `Hyprland.monitors` and `NiriState.outputs` (`if (!logical) continue`) list only enabled ones. Scenario on sway: a laptop with its panel off (`output eDP-1 disable`, clamshell), one external monitor, the `perMonitor` layout and no profile. `blockBases` gives the disabled panel a block, and sorting by `MonitorLayout.outputId` can put it first. The external monitor's workspaces are then 11–20 on sway, where Hyprland and niri give it 1–10. A layout change's remap (`_orderedOutputs` → `SwayManager.applyRemap`) also focuses the disabled output. PLAUSIBLE: depends on Quickshell's I3 module making a monitor for an inactive output; settle it in a nested sway with `swaymsg output HEADLESS-2 disable`, then read `CompositorManager.outputs`. Fix: `I3.monitors.values.filter(m => m.lastIpcObject?.active !== false).map(…)`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### niri doesn't send windowFocused for a window that opens focused
+- **Where:** `services/compositor/NiriManager.qml:625` (`_event`), `services/system/NotificationManager.qml:330` (`onWindowFocused`)
+- **What:** The contract's `windowFocused(appId)` fires on Hyprland's `activewindow` and sway's `window` focus events, both sent when a new window maps focused. niri sends no `WindowFocusChanged` then. The window arrives as `WindowOpenedOrChanged` with `is_focused: true`: in the captured stream, `tests/fixtures/niri/events.jsonl` line 10, window 6 "foot" opens focused, and no `WindowFocusChanged` names it. `NiriState.reduce` moves the focus, so `activeWindowId` is right, but `_event` emits `windowFocused` only in its `WindowFocusChanged` case. Scenario: `clearOnFocus` is on, an app sends a notification, and the user starts that app. On Hyprland and sway its notifications go when its window opens. On niri they stay until focus leaves the window and comes back. Fix: emit when `NiriState.focusedWindowId` changes between `before` and the new state, for every event but the stream's initial `WindowsChanged`, replacing the `WindowFocusChanged` case.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### sway's merge moves workspace binds as raw sway commands
+- **Where:** `backend/internal/compositor/binds/sway.go:188` (`swayAction`), `backend/internal/compositor/binds/niri.go:75` (`niriNumbered`), `backend/internal/compositor/binds/hypr.go:147` (`mapDispatcher`)
+- **What:** Hyprland's merge maps `focus` and `window.move` `{ workspace = N }` to `workspaceNth` and `moveWindowNth`, and niri's maps `focus-workspace N` and `move-column-to-workspace N` the same way. `swayAction` knows only `kill`, `fullscreen`, `floating`, `sticky`, `layout toggle split`, `move position center`, `exit`, `focus` and `move` with a direction, and `exec`. Everything else is `raw` with `compositor: sway`. A probe extract gives `{"key":"SUPER + 1","action":"raw","argument":"workspace number 1","compositor":"sway"}`, where niri and Hyprland give `workspaceNth`. Every sway config derived from `/etc/sway/config` binds `$mod+1…0` and `$mod+Shift+1…0` this way. axiom's defaults hold those keys (`super-1` … `workspaceNth`), so `MergeBinds` puts the 20 raw binds in place of axiom's. Then: (1) on sway they bypass axiom's workspace layout (`CompositorManager.nthWorkspace`: per-monitor and grid blocks) and go to sway's global workspace N. (2) The binds are shared across compositors, and every other writer skips a raw sway bind, so the same config.json on Hyprland or niri leaves those 20 keys bound to nothing. (3) The Keybinds page lists them as raw commands, not "Workspace 1". Fix: in `swayAction`, `workspace [number] N` → `workspaceNth`, `move [container|window] [to] workspace [number] N` → `moveWindowNth`, and `workspace next|prev` (and `move … workspace next|prev`) → `workspaceStep` / `moveWindowStep`. Anything else stays raw as now. Add a `TestSwayExtract` row each.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### "Fire on release" is offered on niri and silently dropped
+- **Where:** `backend/internal/compositor/render/niri.go:332` (`NiriBindNode`), `components/views/Keybinds/BindInspector.qml:209`, `backend/internal/compositor/render/hyprconfig.go:144` (`BindLua`)
+- **What:** For a bind's `release` flag, Hyprland writes `release = true` and sway `--release`. `NiriBindNode` writes only `hotkey-overlay-title`, `repeat`, `allow-when-locked` and `cooldown-ms`, and reads no `release` (`grep -n release render/niri.go` hits only a comment): niri has no release binds. Nothing gates the flag: no `supports` key and no `isComplete` issue. The inspector's "Fire on release" switch is shown and saved on every compositor. Scenario on niri: a user turns it on for a bind, or a bind merged from sway or Hyprland arrives with `release: true`. axiom's own `restartShell` and `exitSession` defaults are release binds too. The action fires on press while the switch still reads on. Fix: a `releaseBinds` supports key (true on Hyprland and sway) that greys out the switch where it's false. axiom's release defaults then work on niri as press binds.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway
+- **Where:** `backend/internal/compositor/manager/outputs.go:49` (`Outputs.Apply`), `backend/internal/compositor/render/hyprlua.go:413` (`MonitorCalls`), `backend/internal/compositor/render/profiles.go:45` (`spelled`), `services/compositor/MonitorManager.qml:322`
+- **What:** `hyprland/monitors.md` says a profile saved under one compositor is picked under another, and that "the daemon writes and applies such a rule in the running compositor's spelling (`render.SavedRules`)". That holds for the daemon's own profile switch (`SavedRules` → `spelled`). It doesn't hold for `outputs.apply`, which the Monitors page's Apply uses: it sends the profile's rules unchanged (`MonitorManager.qml:322`). The same `desc:PNP(AOC) …` rule (niri's spelling of a make it has no name for) gives three results. niri resolves it (`NiriOutputRequests` → `connectorFor`, through `sameDescription`). Hyprland gets `hl.monitor({ output = "desc:PNP(AOC) …" })`, because `MonitorCalls` resolves only a rule's `mirror` (416-420), never its `output`, and that misses Hyprland's "AOC …". sway gets `output "PNP(AOC) …" enable …`, which it stores for an output that doesn't exist and answers success. Scenario: a profile saved under niri for an AOC monitor, applied under sway or Hyprland. The page matches it as live (`MonitorLayout` strips `PNP(…)`), Apply reports nothing wrong, the monitor doesn't change, and the Keep/Revert countdown runs over nothing. Fix: in `Outputs.Apply`, put each rule through `render.spelled` against `details` before the Hyprland and sway branches (export it as `render.Spelled`). For sway, [A sway output rule by description misses a monitor with no serial](#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial) resolves `desc:` to the connector, which covers this too: land the two together.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### Three settings stay editable on niri though its writer drops them
+- **Where:** `config/schema/definitions/shared/Blur.yaml:73` (`contrast`), `config/schema/sections/WindowLook.yaml:259` (`opacity.fullscreen`), `config/schema/sections/WindowBehaviour.yaml:19` (`focusOnActivate`), `backend/internal/compositor/render/niri.go:462` (`NiriLookNodes`)
+- **What:** compositor/README.md › Hiding what a compositor can't do: settings a compositor can't apply are gated by `x-showIf`/`x-enabledIf` on a capability. These three are gated only on keys niri sets, or not at all. So on niri each is shown, editable, and does nothing, while Hyprland and sway honour it. Blur contrast has `x-enabledIf: {/$supports.windowBlur: true}`: Hyprland writes `decoration.blur.contrast` and SwayFX `blur_contrast`, while `NiriLookNodes` writes only `passes`, `offset` and `noise`. Fullscreen opacity has `x-enabledIf: {/$supports.windowOpacity: true}`: Hyprland writes `decoration.fullscreen_opacity`, sway sets it per window, and niri's opacity rules read only `active`/`inactive`. niri-backend.md says "no fullscreen opacity", but the page doesn't. `focusOnActivate` has `hyprland` and `sway` `x-compositor` specs, no `niri` one and no gate. Scenario under niri: Fullscreen opacity 100 with active 90 leaves a fullscreen video at 90 %, while the setting reads as applied. Fix: a supports key each where niri lacks the option (`blurContrast` for Hyprland and SwayFX, `fullscreenOpacity` for Hyprland and sway), or a `niri` spec where niri has one (`focusOnActivate`; otherwise a key too).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland
+- **Where:** `config/schema/sections/Input.yaml:115` (`mouse.accel`), `config/schema/sections/Input.yaml:128` (`mouse.sensitivity`), `config/schema/sections/Input.yaml:139` (`mouse.leftHanded`)
+- **What:** The Mouse part's three fields are written as Hyprland's global `input.accel_profile` / `input.sensitivity` / `input.left_handed`, which apply to every pointer device, the touchpad included. sway's are `input type:pointer …`, which a touchpad (`type:touchpad`) doesn't match, and niri's are `input.mouse.*`. Scenario on a laptop: Mouse › Pointer speed −50 slows the touchpad on Hyprland and leaves it alone on sway and niri, and Left-handed swaps the touchpad's buttons only on Hyprland. No supports key or description says so. Decided by the maintainer (asked 2026-10-30: should the Mouse part reach the touchpad?): "Mouse and touchpad settings need to be seperate (i.e. one should be able to turn on mouse acceleration for touchpad only and adjust it seperatly)."
+  Hyprland sets these only globally (`input.*`, every pointer) or per device by name (no device rules exist in render), so a touchpad apart from the mouse there needs a design first; sway's `type:touchpad` and niri's `input.touchpad` have the fields.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### sway and niri build output details and descriptions twice
+- **Where:** `components/methods/SwayState.qml:183` (`output`), `components/methods/SwayState.qml:298` (`outputDetails`), `components/methods/NiriState.qml:135` (`description`), `components/methods/NiriState.qml:351` (`outputDetails`)
+- **What:** Deletion pass, about 12 lines. The make/model/serial description (`[make, model, serial].filter(part => part && part !== "Unknown").join(" ")`) is written three times: twice in SwayState and once as `NiriState.description`. Both `outputDetails` repeat the same mHz→Hz `rate` lambda, the `availableModes` template (`${m.width}x${m.height}@${rate(m).toFixed(2)}Hz`) and the 13-key object (24 and 30 lines). `MonitorLayout` matches modes as strings across compositors, so the two spellings must stay identical. Fix: one pure helper (`description`, `mode(width, height, mHz)`, `detail({…})`) with a test row, used by both. It removes about 12 lines and keeps the spellings identical by construction.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### The bind merge lists user/ files three times, once per compositor
+- **Where:** `backend/internal/compositor/binds/hypr.go:336` (`hyprFiles`), `backend/internal/compositor/binds/sway.go:212` (`swayFiles`), `backend/internal/compositor/binds/niri.go:128` (`niriFiles`)
+- **What:** Deletion pass, about 32 lines. `swayFiles` and `niriFiles` are the same 21 lines each; `diff` shows only the name, the comment and the filter line. `hyprFiles` (13 lines) does the same with a `.lua` filter but no hidden-file filter. That's 55 lines in all. Fix: one `userFiles(o Options, keep func(name string) bool) []string` (about 20 lines, `only` handled once, hidden files always skipped) plus a one-line filter per kind. It removes about 32 lines, and Hyprland's merge stops reading a hidden `.x.lua` the managed file never loads. Do it with [Three listings of niri's user files](#three-listings-of-niris-user-files), which moves the writer's copy.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### sway's and niri's merges build a moved bind the same way twice
+- **Where:** `backend/internal/compositor/binds/sway.go:309` (`extractSway`), `backend/internal/compositor/binds/niri.go:203` (`extractNiri`)
+- **What:** Deletion pass, about 11 lines. Both copy the mapped action's keys into `{key}` (sway 310-313, niri 204-207). Both then apply the same repeat rule under the same three-line comment (sway 319-325, niri 214-221: `if <native repeat on> && (actions.Default().Repeating[name] || name == "raw")`): 23 lines. Fix: one `movedBind(key, action, nativeRepeat)` of about 10 lines with the comment, called from both. It keeps every output, and the next change to the rule happens once.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### The merge keeps key and variable tables render already has
+- **Where:** `backend/internal/compositor/binds/hypr.go:183` (`keyID`), `backend/internal/compositor/binds/sway.go:22` (`swayMouse`), `backend/internal/compositor/binds/hypr.go:41` (`hyprDirections`), `backend/internal/compositor/binds/sway.go:30` (`swayDirections`)
+- **What:** Deletion pass, about 16 lines. (1) `keyID` (15 lines) is a third key normaliser beside `render.KeyID`/`BindKeys.keyId`. It lowercases and sorts but resolves no modifier alias, so `hl.unbind("WIN + Q")` doesn't match a moved `SUPER + Q`, which `render.KeyID` would. `binds` can import `render` with no cycle. (2) `swayMouse` (3 lines) holds the same 12 entries as `render`'s `swayMouseKeys`. (3) `hyprDirections` and `swayDirections` are the same four-entry map. Fix: use `render.KeyID` in the merge (re-keying `exampleKeys` and `TestKeyID`'s rows to its spelling), export one mouse table, and share one directions map. `SwayConfigBinds`' own `$variable` expander is [SwayConfigBinds keeps its own copy of sway's $variables](#swayconfigbinds-keeps-its-own-copy-of-sways-variables).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system
+
+### A backed toast's blur fill is at the surface opacity twice
+- **Where:** `components/surfaces/notifications/ToastStack.qml:346` (the card's `BlurShape`), `shell/BlurBackingWindow.qml:168` (`fills`)
+- **What:** The blur window draws each copy opaque, then applies `Appearance.surfaceAlpha` once to all of them (`opacity: Appearance.surfaceAlpha`, line 168). Every other `kind: "rect"` shape hands it a raw colour: `BarContainer.qml:541`/`:643` use `BlurShape`'s default `Theme.background`, and `IntegratedEdgeMenu.qml:190` uses `Theme.background`. The toast card hands it `Qt.alpha(Appearance.fill(Theme.background), Appearance.fill(Theme.background).a * toastCard.opacity)`, and `Appearance.fill` has already multiplied in `surfaceAlpha` (`config/Appearance.qml:113`). With translucency at 80% and blur on, a toast's fill comes out at 0.64. It is lighter than the edge popout and bar it sits beside, and lighter than the same toast unbacked (`BlurManager.fillOn`, 0.8), so its tone jumps when the blur pauses or resumes. Fix: `color: Qt.alpha(Theme.background, toastCard.opacity)`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the blur system
+
+### A keepFill opening leaves an unfilled row in an unbacked translucent pill
+- **Where:** `components/bar/BarContainer.qml:750` (`strokeHoles`), `components/bar/BarContainer.qml:771` (the keepFill paint `Repeater`)
+- **What:** `keepFill` openings come from `CornerMerge` (a pill bar's end pill merging into this bar's corner) and `PillBarJoin` (a popout's side joining a pill bar). The cut is `_farHole(start, end, o.keepFill && !Appearance.translucent ? "outer" : "both")`. When translucent, `"both"` also removes the stroke's inner fringe row, and that row lies inside the pill's own fill (`from = near ? foot - row + 1 : …`). The row is painted back only when opaque (`model: Appearance.translucent ? [] : …`). Backed, the blur window fills that row, so nothing is lost. But "translucent" is not "backed". A pill is unbacked yet translucent when the window look's blur part is off with opacity below 100, on the other screens during Hyprland's or SwayFX's compositor-wide pause, and before `CompositorManager.surfacesReady`. The pill then fills itself, nothing paints the cut row back, and the surface joining end-on covers only the stroke. The result is a 1px unfilled line along the whole opening. PLAUSIBLE: a nested-compositor screenshot of two pill bars meeting at a corner settles it, with translucency at 80% and the look's blur off. Fix: cut `"both"` always, and paint the row back whenever the pill fills itself: `model: root.backed ? [] : root._openingList.filter(o => o.keepFill ?? false)`, keeping `color: BlurManager.fillOn(…)`. `_farHole`'s `"outer"` mode then has no caller and goes. At opacity 100 it draws what it does today.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the blur system
+
+### The editable dropdown's list fills translucent over the overlay
+- **Where:** `components/reusable/StyledComboEntry.qml:289` (`dropdown`'s `background`), `components/forms/SchemaComboBox.qml:107`, `config/schema/sections/WindowLook.yaml:130` (`throughWindows`' description)
+- **What:** `StyledComboEntry`'s list (a text entry that also drops down a list, `editable` or not) opens as a `Popup` inside its window, as on the overlay's pages, with `color: Appearance.fill(Theme.backgroundAlt)`: at the surface opacity, over the page under it, which no blur reaches inside the window. `SchemaComboBox`'s list, the same kind of dropdown, fills solid (`color: Theme.backgroundAlt`). Below 100 the combo entry's list shows the settings under it through its rows. The inline list (`expandsInline`, in a popout or edge menu) is backed like its popout and stays as it is. Decided by the maintainer (asked 2026-10-30 whether SwayFX's tooltips and the dock's menu should fill solid): "the only problem remaining that I find about lack of blur on tooltips and popups is for textentry/dropdown boxes (the ones that allow either), the dropdown doesn't have a solid background. No need for blur on the ones that open over the overlay (i.e. these)." Tooltips and the dock's menu stay as they are; only the setting's description, "Tooltips and menus always blur what's behind them", overstates it on SwayFX, whose `SwaySurfaceBlurLines` skips the `axiom-blur-popups` group. (An earlier answer, on notifications: "notifications on swayfx are blurred and work properly between all 3 compositors. If that is what you were talking about you can remove it".) Fix: `color: Theme.backgroundAlt` in the popup's `DropdownSurface`, as `SchemaComboBox`'s; reword the description's last sentence for SwayFX.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the blur system
+### SlideAnimation's fade, easing and container aliases are dead
+- **Where:** `components/hosts/popout/SlideAnimation.qml:21` (`enableFade`), `components/hosts/popout/SlideAnimation.qml:22` (`easingType`), `components/hosts/popout/SlideAnimation.qml:24` (`containerHeight`, `containerWidth`), `components/hosts/popout/SlideAnimation.qml:58` (`targetX`, `targetY`), `components/hosts/popout/AttachedSurface.qml:411`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml:169`
+- **What:** None of these members changes anything. Both users (the only two `SlideAnimation {`) set `enableFade: false`, so the opacity is always 1 and the fade `Behavior` (lines 111-120) never runs; `easingType` is set by no one; `containerHeight`/`containerWidth` re-set `contentWrapper`'s size to the size it already binds, since both users fill their parent; `targetX`/`targetY` are the constant 0. Fix: remove 1 + 1 + 2 + 2 + 10 lines in the file and 3 + 3 at the users, 22 lines. The 2 easing reads become `Appearance.easing` and the 4 target reads become 0. Every behaviour is kept.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the blur system
+
+### The blur window builds stand-ins and copies it never uses
+- **Where:** `shell/BlurBackingWindow.qml:303` (`blankSurface`, `blankRect`), `shell/BlurBackingWindow.qml:189` (the `cutBy` `Copies`)
+- **What:** Each window builds a whole hidden `AttachedSurface` (`blankSurface`) and a `Rectangle` (`blankRect`), used only as `?? blankSurface` / `?? blankRect` while a source is going. `AttachedSurfaceCopy` already handles a null source (`visible: root.source !== null`, and every read is `root.source?.… ?? …`), and the rect mirror's `visible: src !== null` (line 365) can never be false while the stand-in is there. Separately, a `part: "fills"` window still mirrors every shape of the other window (`Copies { shapes: backing.cutBy }`) and bursts `FrameNudge` for them, though `cutByUnion` (line 38) is `backing.part !== "fills" && …`, so they are never read. That happens on SwayFX with the overlay open. Fix: `?? null` at both sites, delete lines 301-311 (11 lines), and use `shapes: backing.part !== "fills" ? backing.cutBy : []`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the blur system
+
+### BlurBacking spells out four near-identical blur windows
+- **Where:** `shell/BlurBacking.qml:58`, `shell/BlurBacking.qml:68`, `shell/BlurBacking.qml:85`, `shell/BlurBacking.qml:99`
+- **What:** The four `BlurBackingWindow`s (9 + 13 + 13 + 13 = 48 lines) differ only in their shapes and `cutBy` pair, `wanted`, `held` and `stackLayer` (all set by whether they're below or over the overlay), their `part`, and their namespace, which is `(part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (over ? "-overlay" : "")`. Fix: one inline component taking `over`, with an `Instantiator` over `shadowsApart ? ["fills", "shadows"] : ["all"]`. It is used twice, the over-overlay one under its `aboveOverlay` gate: about 25 lines in place of 48. SwayFX's map order (fills, then shadows) is kept.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the blur system
+
+### The border frame's path is built three times
+- **Where:** `shell/BlurBackingWindow.qml:379` (`frameMirror`), `components/surfaces/border/RoundedBorders.qml:112` (`shadowWindow`), `components/surfaces/border/RoundedBorders.qml:212`, `components/surfaces/border/RoundedBorders.qml:252`
+- **What:** The same rounded inner-rect path (the `A ${r} ${r} 0 0 1` template) is written out three times: `BlurBackingWindow.qml:407`, `RoundedBorders.qml:219` and `RoundedBorders.qml:261`. The copies have already drifted: line 259 has no `Math.max(0, …)`, while lines 217 and 405 do. `shadowWindow`'s `radius` (line 121) repeats `root.innerRadius`, and its `left`/`right`/`top`/`bottom` (lines 116-119) only forward `root.inner*`. Fix: `RoundedBorders` exposes `innerPath` (and the frame path built from it), and the three users read it. That is about 30 lines out, 8 in.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the blur system
+
+### Small shrinks in the blur system
+- **Where:** `components/methods/SurfaceContext.qml:140` (`shadow`), `services/ui/BlurManager.qml:33` (`_wanted`), `components/views/Settings/TranslucencyStatus.qml:36`, `backend/internal/compositor/render/layer.go:202` (`SurfaceBlur`), `backend/internal/compositor/render/niri.go:506` (`NiriSurfaceBlurNodes`)
+- **What:** Deletion pass, about 17 lines. (1) `SurfaceContext.shadow`'s submenu branch has no caller: `if (s.parent) return s.parent;` is never reached, because its one caller, `layout` (line 363), never passes `parent`; submenus take their parent's look in `SubPopout`, and `SurfaceContext.shadow(` appears otherwise only in tests. `layout`'s `"onBar": !p.held && …` also repeats what `shadow` checks first, since a held surface is always `detached`. Drop the branch, its 2 comment mentions, `test_submenuTakesItsParentsShadow` (11 lines) and `!p.held && `, 14 lines in all. (2) `supports.blur` is tested again after `Appearance.blur`: `Appearance.blur` needs `translucent`, which needs `compositorBlurs`, and `CompositorManager` binds that to `supports.blur === true && !Paths.greeter`, so `&& CompositorManager.supports.blur === true` in `BlurManager._wanted` and in `TranslucencyStatus` (line 36) adds nothing. (3) Two Go expressions do nothing: `or(get(surfaces, "threshold"), nil)` (`layer.go:202`) returns its first argument, since `or` returns `b` only for a nil `a`; `|| rule.Value("xray") == nil` (`niri.go:506`) can't be true, because every `SurfaceBlur` row with `blur` or `popups` sets `xray`. Fix: remove each one; output unchanged.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the blur system
