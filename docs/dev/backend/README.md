@@ -76,7 +76,7 @@ The daemon's own client ([dbus.md](dbus.md), `backend/internal/dbus`): logind an
 ### Building and checking
 - `cd backend && go build ./cmd/axiom` builds it (pure Go, `CGO_ENABLED=0` works).
 - `scripts/check_go.sh` runs the Go checks of CI's go job (`check_all.sh --ci go`; `--ci` adds govulncheck), failing on stale generated code; `--fix` regenerates and formats. `scripts/dev/verify.sh` runs it when `backend/` or an embedded file changed.
-- The embedded copies under `backend/internal/assets/data/` are generated and gitignored, the schema among them (built from `config/schema/` by `go generate`, since the binary can't build what it embeds before it compiles): edit `config/json/…` and the YAML. A fresh clone runs `scripts/generate.sh` once before `go build`.
+- The embedded copies under `backend/internal/assets/data/` are generated and gitignored, the schema among them (built from `config/schema/` by `go generate`, since the binary can't build what it embeds before it compiles; the same run writes the tree's `config/json/config.schema.json`): edit `config/json/…` and the YAML. A fresh clone runs `scripts/generate.sh` once before `go build`.
 
 ### Security
 Code handling sockets, locks, runtime directories, atomic writes, the child's environment or the lock screen is security-relevant: every rule it enforces has a test, and a change to it is reviewed against this list.

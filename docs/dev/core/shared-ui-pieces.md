@@ -120,7 +120,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - A Behavior with another easing or animation is written out.
 - `CrossFade`: `value` shown through a `delegate` with `required property var value`; a new copy fades in over the old on change.
   - A copy with `ready` false (an image loading) waits. Used by the cover and track text, weather and OSD icons.
-- Everything else animates with Behaviors on `Appearance.animFast` / `animNormal` / `animSlow` and `Appearance.easing`.
+- Everything else animates with Behaviors on `Appearance.animFast` / `animNormal` / `animSlow` and `Appearance.easing`. A `duration:` in ms fails `check_structure` unless its line says why it's a behaviour timing (`// behaviour timing: the cursor blink`).
   - Gate it with a `_settled` / `_placed` flag (`Qt.callLater` from `Component.onCompleted`) where a first layout would otherwise fly in from 0.
 - (Rule: AGENTS.md › Config, "Animation".)
 

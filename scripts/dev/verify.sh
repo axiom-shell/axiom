@@ -118,9 +118,9 @@ done
 reloads_before=$(scripts/log.sh --all 2>/dev/null | grep -c "Reloading configuration" || true)
 
 # 1. Format in place (cat > keeps the inode; -i would replace the file)
+formatted=0
 if [[ ${#qml[@]} -gt 0 ]]; then
   echo "── qmlformat (${#qml[@]} changed QML files)"
-  formatted=0
   for f in "${qml[@]}"; do
     [[ -f "$f" ]] || continue
     out="$("$qt_bin/qmlformat" "$f")" || {
@@ -136,9 +136,11 @@ if [[ ${#qml[@]} -gt 0 ]]; then
   [[ $formatted -eq 0 ]] && echo "already formatted"
 fi
 
-# 2. Checks (the generated files built first: the docs and checks read them)
-if [[ $go -eq 1 || $fixtures -eq 1 || $schema -eq 1 ]]; then
-  step "generated files" scripts/generate.sh --fixtures
+# 2. Checks (the generated files built first: the docs and checks read
+# them). The Go checks build them first themselves, with the fixtures (a
+# schema or fixtures change sets go too), so they run first instead
+if [[ $go -eq 1 ]]; then
+  step "go" scripts/check_go.sh --fix
 else
   step "generated files" scripts/generate.sh
 fi
@@ -174,9 +176,6 @@ fi
 if [[ $fixtures -eq 1 ]]; then
   step "shared fixtures" python3 scripts/dev/fixtures.py check
 fi
-if [[ $go -eq 1 ]]; then
-  step "go" scripts/check_go.sh --fix
-fi
 if [[ ${#shells[@]} -gt 0 ]]; then
   step "shellcheck" shellcheck -x -S warning "${shells[@]}"
 fi
@@ -187,11 +186,12 @@ if [[ $i18n -eq 1 ]]; then
   python3 scripts/check_i18n.py 2>&1 | tail -n 15 || true
 fi
 
-# 3. The live shell: wait briefly for the reload a save (or the formatting)
-# triggered, then show what it logged
+# 3. The live shell: wait briefly for the reload the formatting triggered
+# (a save's came before this script started), then show what it logged
 if [[ ${#qml[@]} -gt 0 || $schema -eq 1 ]] && command -v qs >/dev/null; then
   echo "── shell log since the last reload"
   for _ in 1 2 3 4 5 6; do
+    [[ $formatted -eq 1 ]] || break
     now=$(scripts/log.sh --all 2>/dev/null | grep -c "Reloading configuration" || true)
     [[ $now -gt $reloads_before ]] && break
     sleep 0.5

@@ -20,11 +20,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### Hyprland 0.57 refuses an empty accel_profile
-- **Where:** `config/schema/sections/Input.yaml` (the pointer `accelProfile`'s `hyprland` mapping, `emptyIsDefault`), `backend/internal/compositor/render`
-- **What:** `TestCompositorsReadTheFiles/HyprConfigLua/…/test_everything_on_is_a_config_hyprland_reads.2` fails on main with Hyprland 0.57.0: `error setting 'input.accel_profile': bad value "", allowed values are: "adaptive", "flat", "custom"`. The rendered Lua sets the option to `""`, which older Hyprland took as its default; 0.57 doesn't, so a managed config with that value may fail to load. Leaving the key out when it's empty (as sway's `skip: default` does) would likely fix it.
-- **Size:** small
-- **Found:** 2026-10-30, while adding VPN controls (verify.sh's Go tests)
+### Hyprland 0.57 refuses the empty pointer acceleration profile
+- **Where:** `config/schema/sections/Input.yaml` (`accel`'s hyprland `value: emptyIsDefault`), `backend/internal/compositor/render`
+- **What:** With pointer settings on and acceleration left at `default`, the writer sets `input.accel_profile` to `""`. Hyprland 0.57.0 rejects it (`error setting 'input.accel_profile': bad value "", allowed values are: "adaptive", "flat", "custom"`), so `TestCompositorsReadTheFiles/HyprConfigLua` fails wherever Hyprland 0.57 is installed (CI has none, so it passes there), and a user on 0.57 gets a config error. `default` should skip the key instead, as sway and niri do.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing row 18's batch 9 (check_all.sh's Go tests)
 
 ### BlurManager.paused reads undefined on a reload
 - **Where:** `services/ui/BlurManager.qml` (`paused`)
@@ -223,6 +223,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Blocks are numbered over the monitors the saved profiles name, sorted by output identity, so saving a profile that names a monitor no profile named before puts it among them: every monitor sorting after it gets a new base, its workspaces sit outside its block, and in the `perMonitor` and `grid` layouts its list and steps miss them (the scrolling layout lists them as borrowed, which compaction leaves) until `axiom ipc workspaces reconcile`. The same happens once on updating to row 13 where the profiles name a monitor that isn't connected. Nothing remaps when `_bases` changes; a remap from the old block order to the new one would (`remapWorkspaces` takes each monitor's `block`, one per layout today). Rare: a per-monitor layout, a newly saved monitor, and its identity sorting before a connected one.
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing row 13 (stable workspace blocks)
+
+### A remap runs at startup, from the layout before the config loaded
+- **Where:** `services/compositor/CompositorManager.qml` (`_appliedLayout`, `_remapTimer`, `onBlockSizeChanged`)
+- **What:** `Component.onCompleted` records `_appliedLayout` before the config has arrived, so the config's arrival changes `blockSize` and the timer remaps from that pre-config layout to the configured one, though nothing changed. With no windows to move, the plan still sends every output to its block's matching workspace. Seen 2026-10-30 under Hyprland with a 3×3 grid: the session came up on workspace 10, with `[CompositorManager] remapping workspaces: 0 windows, outputs to DP-1:10` in the debug log (10 from the next entry). Fix: record the applied layout once the config is loaded, so only a real layout change remaps.
+- **Size:** small
+- **Found:** 2026-10-30, while investigating Hyprland starting on workspace 10
+
+### A monitor a profile names by description gets the next block until its description arrives
+- **Where:** `components/methods/WorkspaceGeometry.qml` (`blockBases`), `components/methods/HyprState.qml` (the output's `description`), `services/compositor/CompositorManager.qml` (`_bases`)
+- **What:** Under Hyprland an output's description comes from Quickshell's `lastIpcObject`, which is empty until the monitors are refreshed. Until then a profile rule naming the monitor by `desc:` matches nothing: the rule keeps block 0 as an unplugged monitor and the connected monitor falls in among the unknown ones, block 1. With one monitor and a 3×3 grid that's ids 10–18 instead of 1–9, so anything going to the output's workspaces in that window lands in the wrong block (the startup remap above sent DP-1 to 10, and it stayed there when the base went back to 1). Fix: refresh the monitors before `_bases` is trusted, or match an unplugged rule's `label` against the connector name while the description is empty.
+- **Size:** small
+- **Found:** 2026-10-30, while investigating Hyprland starting on workspace 10
 
 ### Calendar times in a Windows zone name with no VTIMEZONE read as local time
 - **Where:** `backend/internal/calendar/ical/zone.go` (`Zones.With`), `backend/internal/calendar/calendar.go` (`New`'s `Lookup`)

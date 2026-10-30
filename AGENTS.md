@@ -139,7 +139,7 @@ Dependencies point one way:
 
 ## Config
 
-- The schema is the single source of truth: shape, defaults, the generated settings page. Its source is YAML, `config/schema/` (`index.yaml`, `sections/`, `definitions/`, `annotations.yaml`), built into `config/json/config.schema.json` (never committed) by `axiom schema build` (`scripts/generate.sh`, which verify.sh runs): never edit the JSON. A new setting = schema entry with a `default` + a reader property. Reshaping existing config is a format-2 step in `backend/internal/migrate/steps/` (`docs/recipes/migration.md`); the format-1 migrations (`backend/internal/migrate/legacy/legacy.js`, kept until format 1 is retired) are frozen at v75 and never change.
+- The schema is the single source of truth: shape, defaults, the generated settings page. Its source is YAML, `config/schema/` (`index.yaml`, `sections/`, `definitions/`, `annotations.yaml`), built into `config/json/config.schema.json` (never committed) by `scripts/generate.sh` (which verify.sh runs; `axiom schema build` builds the same): never edit the JSON. A new setting = schema entry with a `default` + a reader property. Reshaping existing config is a format-2 step in `backend/internal/migrate/steps/` (`docs/recipes/migration.md`); the format-1 migrations (`backend/internal/migrate/legacy/legacy.js`, kept until format 1 is retired) are frozen at v75 and never change.
 - Every default is filled at load, so **readers use no `??` fallbacks**. Readers are named for their section, `Config`-suffixed where the name is a type (`OSDConfig`). A reader exposing the saved config says so (`BarsConfig.savedBars`).
 - **Schema annotations drive the UI; prefer a new annotation to a hand-kept list in QML** (complete list: `docs/dev/core/schema-annotations.md`). With rules attached:
   - `x-scope` (`look`/`personal`/`commands`/`machine`, inherited, root `machine`) decides what an example, import or export carries: a setting in a look section naming a monitor, path or account is `machine`, one that runs something `commands`, a preference meaningful on any PC `personal`. A setting moved out of `machine` needs older shared files to keep the user's value (`share.KeepMovedKeys`, format 1 only so far), or applying one resets it.
@@ -149,12 +149,12 @@ Dependencies point one way:
 - An empty monitor means the primary monitor everywhere (`General.screensNamed`) except `General.primaryMonitor` itself.
 - A path setting may hold `~`: expand it (`Paths.expandHome`) in its reader, or the service using it, before a process or file read. Processes run without a shell.
 - **Theme**: `Theme.base00`–`base0F` plus semantic names; `Theme.resolveColor(name)` for names from config; `config/json/theme-defaults.json` fills omissions. Theme integrations write only their own `axiom.*` file; only the hookup's Apply (user's click) edits a user's config.
-- **Animation**: every `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` eased with `Appearance.easing` (Behaviors: `Glide on x {}` / `ColorGlide`); looping animations gate `running` on `Appearance.animations`. Only behaviour timings (blink, timeouts, polling) are literals. Bar geometry animates what's drawn, never what's measured; content changing in place cross-fades through `CrossFade`.
+- **Animation**: every `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` eased with `Appearance.easing` (Behaviors: `Glide on x {}` / `ColorGlide`); looping animations gate `running` on `Appearance.animations`. Only behaviour timings (blink, timeouts, polling) are literals; a `duration:` one is marked `// behaviour timing: <reason>` (`check_structure`). Bar geometry animates what's drawn, never what's measured; content changing in place cross-fades through `CrossFade`.
 
 ## Translation
 
 - English source text inline: `I18n.tr("Text")`, placeholders for values (`I18n.tr("{0} updates", count)`), never template-string sentences.
-- Dates through `I18n.formatDate(date, I18n.dateFormat("longDate" | …))`, never `Qt.formatDateTime`.
+- Dates through `I18n.formatDate(date, I18n.dateFormat("longDate" | …))`, never `Qt.formatDateTime` (`check_structure`; a use that must stay, a file name, is marked `// allowed: <reason>`).
 - Keys chosen at runtime are declared in a comment as `I18n.tr("…")` so the checker sees them. Schema forms translate their own text.
 - Logs, validation errors and migration notes stay English.
 
@@ -164,12 +164,12 @@ Dependencies point one way:
 - **Data-driven surfaces**: `Bars`, `Overlay.items`, `EdgeMenus`, `Dock.items`, `OSD.items` are config arrays; surfaces are `Variants`/Repeaters over them, keyed by stable ids.
 - **Loaded by name**: `bar/widgets/<type>/<type>.qml`, `content/<Name>/<Name>.qml`, `views/<type>/<type>.qml`. A new one = the file + its schema `oneOf` entry (see those directories' `AGENTS.md`).
 - **Pages show at once and fill in** (`docs/dev/core/streamed-building.md`): a tool page's panels, cards and sections, and anything long, are `StreamedLoader`s sized from the page, never built in the frame it opens. Nothing is built hidden (a Loader gated on its mode, not `visible: false`), unbounded lists are ListViews, and `scripts/dev/bench_overlay.sh` measures it.
-- **Repeater models and `acquire()` requests come from config and tool availability only, never live values** (model by a count or joined string key). A model re-evaluated per sample once pushed qs past 25 GB.
+- **Repeater models and `acquire()` requests come from config and tool availability only, never live values** (model by a count or joined string key; `check_structure` refuses a polled service's member in either, a model's count aside). A model re-evaluated per sample once pushed qs past 25 GB.
 - **Sizes** outside the bars come from `Widget` (`height`, `padding`, `spacing`, `iconButton`, `smallHeight`, `smallPadding`) or `Widget.px(n)` for widths and decorations, and text sizes from `Appearance.fontSize` / `fontSizeBy(n)`, so they follow the Interface scale and Density; only hairlines (≤2 px) stay numbers (`scripts/check_sizes.py`; table: `docs/dev/core/shared-ui-pieces.md` › Sizes).
 - **Radii**: `Appearance.borderRadius` only for outer edges (border, bars, pills, popout surfaces, overlay box, windows); `Widget.radius` inside.
 - **Rounded clipping** is Quickshell.Widgets' `ClippingRectangle` (set its `color`; it defaults to white), never a MultiEffect mask.
 - **Icons**: Material Symbols names drawn by `reusable/StyledIcon`, never sharing a Text with a label.
-- **Screen targeting**: surfaces are built on `General.screensFor(target)` (a `ScreenTarget`) or `General.outputs`, never `Quickshell.screens` (stand-ins while no monitor is connected); only `ShellManager.isTarget(screen, target)` answers shortcuts, IPC and OSD events, and IPC handlers are `enabled` on the target instance only.
+- **Screen targeting**: surfaces are built on `General.screensFor(target)` (a `ScreenTarget`) or `General.outputs`, never `Quickshell.screens` (stand-ins while no monitor is connected; `check_structure`, a window that must exist with no monitor marked `// allowed: <reason>`); only `ShellManager.isTarget(screen, target)` answers shortcuts, IPC and OSD events, and IPC handlers are `enabled` on the target instance only.
 
 Subsystem invariants (details in the named files):
 - **Overlay modules** exist only while their page is shown (acquire/release, lasting state in a service): `components/content/AGENTS.md`.

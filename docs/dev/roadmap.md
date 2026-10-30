@@ -193,8 +193,6 @@ Every feature works the same under each compositor, or says why not. It follows 
 
 Done: every entry is fixed: sway and SwayFX, then Hyprland's and every compositor's (the last with row 13: workspace blocks numbered over the saved monitor profiles, and the scrolling layout's borrowed workspaces, which Hyprland hands back on replug). niri's entries are [deferred](#deferred) (maintainer, 2026-10-29).
 
-- [Hyprland 0.57 refuses an empty accel_profile](issues.md#hyprland-057-refuses-an-empty-accel_profile)
-
 ### Phase 7: fit, geometry and performance
 Nothing runs off a screen or clips at 1080p, and pages stay fast as their data grows. Take the 1080p entries as one pass in a nested compositor with a 1080p output.
 
@@ -277,8 +275,8 @@ Steps:
    6. Done: **gen_docs and the ratchets** (gen_docs.py, check_qmllint.py, check_structure.py): gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread (its unused-setting and unused-member checks fail now, over `scripts/config-usage-baseline.json`), The qmllint baseline doesn't shrink when warnings are fixed, and a size ratchet: singletons over 800 lines (outside the pure helpers and compositor backends) fail; none is over today, so it has no baseline.
    7. Done: **Checks that can fail** (`tests/scripts/`, `tests/`): Most check scripts have no tests of their own (one fixture per rule: `test_scripts.py` › `CheckStructure`, `CheckI18n`, `CheckQmllint`, `CheckPackages`, `CheckDocs`), Small tooling leftovers (`tst_IconResolver`, with the helper made pure and its Quickshell lookups in `AppIconManager`; the PKGBUILDs stay two files, as AUR packages stand alone; i18n.md reread).
    8. Done: **A sampled mutation run** (backend): the store's takeovers, the lock screen, the greeter installer and migrations; each surviving mutant is filed as a missing test, then fixed in batches appended here. 873 mutants; the takeover, lock and installer survivors got tests (survivors 128 → 83), the rest equivalent or filed as batches 12 and 13 (`.claude/reviews/guardrails.md` › Mutation run).
-   9. **What got past them** (check_structure.py): the bug classes in issues.md and the fix history a mechanical check could have caught, as checks: Repeater models and `acquire()` requests from live values, and the AGENTS.md rules no check holds yet (animation literals, `Qt.formatDateTime`, `Quickshell.screens`, polling Timers in UI); one rule a commit.
-   10. **Speed** (CI workflow, verify.sh): `scripts/generate.sh` takes 28–43 s in each of CI's four jobs (go job 3.4 min end to end); share or cache it, and measure verify.sh on a typical change.
+   9. Done: **What got past them** (check_structure.py): the bug classes in issues.md and the fix history a mechanical check could have caught, as checks: Repeater models and `acquire()` requests from live values, and the AGENTS.md rules no check holds yet (animation literals, `Qt.formatDateTime`, `Quickshell.screens`, polling Timers in UI); one rule a commit. Four checks landed: a Repeater model or `acquire()` request reading a polled service's member (the calendar page's and idle card's models key by count now), a `duration:` in ms not marked `// behaviour timing:`, `Qt.formatDateTime` and `Quickshell.screens` outside General (the uses that must stay, screenshot file names and windows that must exist with no monitor, marked `// allowed: <reason>` on their line). Left: polling Timers in UI (none in `components/` or `shell/` today; a `Process` there is already refused by the allowlist).
+   10. Done: **Speed** (CI workflow, verify.sh): `scripts/generate.sh` takes 28–43 s in each of CI's four jobs (go job 3.4 min end to end); share or cache it, and measure verify.sh on a typical change. Neither shared nor cached (the repository allows local actions only, so no `actions/cache` or artifacts): almost all of it was compiling the binary, which only the reference docs need, so `syncassets` writes the tree's schema too and the `qt` and `scripts` jobs pass `--no-docs` (their generate 41 s and 27 s in CI, 5 s and 2 s cold locally against ~12 s); the `go` job (compile and tests) is unchanged. verify.sh ran generate.sh twice on a Go or schema change and waited 3 s for a reload that had already happened: a one-line QML edit 15 → 11 s, a schema edit 42 → 27 s, a Go edit 32 → 27 s (`.claude/reviews/guardrails.md` › Inventory).
    11. **The agent rules** (AGENTS.md, skills, [Running it unattended](#running-it-unattended)): checked against what went wrong in rows 1–18; rules nothing broke are trimmed (with Phase 9's 12 KB target). Last, so it describes the checks as they end up.
    12. **Migration mutants** (`migrate/steps`, `migrate/convert`; tests only): [Mutants that survive in migrate](issues.md#mutants-that-survive-in-migrate).
    13. **Failure-path mutants** (store, greeter installer; tests only): [Mutants that survive in the store's and the installer's failure paths](issues.md#mutants-that-survive-in-the-stores-and-the-installers-failure-paths).
@@ -315,6 +313,13 @@ Found while adding niri's own overview (row 16):
 
 Found while fixing the lock screen surviving a reload:
 - [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
+
+Found while investigating Hyprland starting on workspace 10:
+- [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
+- [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
+
+Found while reviewing row 18's batch 9:
+- [Hyprland 0.57 refuses the empty pointer acceleration profile](issues.md#hyprland-057-refuses-the-empty-pointer-acceleration-profile)
 
 Found by the audits:
 - [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)

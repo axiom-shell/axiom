@@ -185,7 +185,7 @@ QtObject {
       root._callBack(!!result && result.saveToFile(root._target.path));
       return;
     }
-    const name = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".png";
+    const name = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".png"; // allowed: a file name, kept out of the language
     const path = (root.copyOnly ? root._scratchDir + "/screenshot-" : root._directory + "/") + name;
     if (!result || !result.saveToFile(path)) {
       root.fail(I18n.tr("Couldn't save the picture in {0}.", root.copyOnly ? root._scratchDir : root._directory));
@@ -292,7 +292,7 @@ QtObject {
     root.picking = false;
     root.request = null;
     root._watchdog.stop();
-    const path = root._directory + "/Recording_" + Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".mp4";
+    const path = root._directory + "/Recording_" + Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".mp4"; // allowed: a file name, kept out of the language
     const target = screenName ? ["-o", screenName] : ["-g", `${Math.round(area.x)},${Math.round(area.y)} ${Math.round(area.width)}x${Math.round(area.height)}`];
     root._recordPath = path;
     const args = target.concat(["-f", path]);
