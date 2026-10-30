@@ -23,9 +23,12 @@ Item {
   // The ticker's text, and stacked's two lines
   property string text: ""
   property string subtext: ""
-  // Stacked's widest value (IconTextWidget's minimumText): the value never
-  // takes less room, so a changing one doesn't resize the widget
+  // The value's widest (IconTextWidget's minimumText): ticker and stacked
+  // never take less room, so a changing one doesn't resize the widget
   property string minimumText: ""
+  // What they're measured by: the longer of the value and its minimum,
+  // digits as zeros
+  readonly property string _measuredText: (root.minimumText.length > root.text.length ? root.minimumText : root.text).replace(/[0-9]/g, "0")
   property int segmentCount: 5
   // The graphic's length along the bar; 0 picks one
   property real preferredLength: 0
@@ -149,8 +152,14 @@ Item {
     Item {
       id: tickerBox
       // Its length along the bar
-      implicitWidth: tickerText.implicitWidth
+      implicitWidth: Math.ceil(Math.max(tickerText.implicitWidth, tickerMetrics.advanceWidth))
       clip: true
+
+      TextMetrics {
+        id: tickerMetrics
+        font: tickerText.font
+        text: root._measuredText
+      }
 
       Item {
         id: strip
@@ -210,11 +219,10 @@ Item {
     Item {
       implicitWidth: Math.ceil(Math.max(stack.implicitWidth, valueMetrics.advanceWidth))
 
-      // The room of the longer of the value and its minimum, digits as zeros
       TextMetrics {
         id: valueMetrics
         font: value.font
-        text: (root.minimumText.length > root.text.length ? root.minimumText : root.text).replace(/[0-9]/g, "0")
+        text: root._measuredText
       }
 
       Column {
