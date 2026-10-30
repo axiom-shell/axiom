@@ -368,6 +368,14 @@ Found by the audits:
 - [Bind helpers keep JS halves the daemon owns now](issues.md#bind-helpers-keep-js-halves-the-daemon-owns-now)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [The unused reader member check counts a member named after its key as used](issues.md#the-unused-reader-member-check-counts-a-member-named-after-its-key-as-used)
+- [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
+- [niri started on a broken config reads as loaded](issues.md#niri-started-on-a-broken-config-reads-as-loaded)
+- [Nothing reads userBindsRead or lastLoadFailed](issues.md#nothing-reads-userbindsread-or-lastloadfailed)
+- [The niri writer's runtimeOn and unread-binds guards are dead](issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
+- [Three listings of niri's user files](issues.md#three-listings-of-niris-user-files)
+- [RunningNested has its own niri socket client](issues.md#runningnested-has-its-own-niri-socket-client)
+- [NiriManager queues actions the daemon could order](issues.md#nirimanager-queues-actions-the-daemon-could-order)
+- [A second KDL writer in the kdl package](issues.md#a-second-kdl-writer-in-the-kdl-package)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
