@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func testCtx(t *testing.T) context.Context {
@@ -92,8 +93,10 @@ func TestSpawn(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	out := filepath.Join(dir, "out")
-	// Its session, its parent and its descriptors, written once it runs
-	script := `read -r _ _ _ _ _ sid _ < /proc/$$/stat; echo "$$ $sid $PPID"; ls /proc/$$/fd | wc -l`
+	// Its session, its parent and its descriptors, written once it runs:
+	// ls's own, which it inherits (the shell's may hold the pipe it's
+	// making for ls)
+	script := `read -r _ _ _ _ _ sid _ < /proc/$$/stat; echo "$$ $sid $PPID"; ls /proc/self/fd | wc -l`
 	argv := []string{"sh", "-c", "{ " + script + "; } > " + out + ".tmp; mv " + out + ".tmp " + out}
 	if err := Spawn(testCtx(t), Options{}, argv, ""); err != nil {
 		t.Fatal(err)
@@ -109,7 +112,7 @@ func TestSpawn(t *testing.T) {
 	if f[2] == strconv.Itoa(os.Getpid()) {
 		t.Errorf("spawned as this process's child")
 	}
-	// stdin, stdout (the file), stderr, and ls's own directory
+	// stdin, stdout (the pipe), stderr, and ls's own directory
 	if n, _ := strconv.Atoi(f[3]); n > 4 {
 		t.Errorf("%d descriptors open: inherited some", n)
 	}
@@ -157,15 +160,13 @@ func TestSpawnErrors(t *testing.T) {
 
 func waitFor(t *testing.T, path string) string {
 	t.Helper()
-	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(20 * time.Millisecond) {
-		data, err := os.ReadFile(path)
-		if err == nil {
-			return string(data)
-		}
-		if !errors.Is(err, os.ErrNotExist) {
-			t.Fatal(err)
-		}
+	var data []byte
+	var err error
+	if !testkit.Eventually(func() bool { data, err = os.ReadFile(path); return !errors.Is(err, os.ErrNotExist) }) {
+		t.Fatalf("%s never appeared", path)
 	}
-	t.Fatalf("%s never appeared", path)
-	return ""
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
 }

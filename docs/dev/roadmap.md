@@ -48,7 +48,7 @@ It runs alongside [the backend roadmap](backend/roadmap.md), which moves the ser
 | 13. The maintainer's notes | none | none |
 
 ### Full order
-Both roadmaps as one sequence. A row starts when the one above it has merged; the parallel lane fills the gaps at any time. **Status** is `done`, `in progress` (normally one row), `next` (the row after it) or `later`; it's kept current by [Taking the next step](#taking-the-next-step), so the first row not `done` is always where work resumes.
+Both roadmaps as one sequence. A row starts when the one above it has merged; the parallel lane fills the gaps at any time. **Status** is `done`, `in progress` (normally one row), `next` (the row after it), `later`, or `on hold` (skipped for now by the maintainer; it blocks no later row); it's kept current by [Taking the next step](#taking-the-next-step), so the first row neither `done` nor `on hold` is always where work resumes.
 
 | # | Status | Work | Why here |
 |---|---|---|---|
@@ -67,11 +67,11 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 | 13 | done | [Phase 6](#phase-6-compositor-parity) | After stage 7 only Go writes compositor configs, so a sway or niri fix lands once, not in both renderers. |
 | 14 | done | [Phase 8](#phase-8-a-clean-log) | After stage 6, the socket warnings are gone or real. |
 | 15 | done | Backend stage 8: the last scripts (`pick_path.py`, `bug_info.sh`) | Small, with nothing waiting on it; after stage 7 so it doesn't collide with the config path, and before the audits so they cover it. |
-| 16 | in progress | [Phase 13](#phase-13-the-maintainers-notes): the maintainer's notes | Bugs and small features from the maintainer's own use; after the parity and log rows (some are compositor-specific, and those land there), before Phase 10 so the last feature and the audits are built on them. |
-| 17 | next | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
-| 18 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0: audit and tighten the guardrails (checks, tests, CI, agent rules) | The architecture is final once stage 7 and Phase 10 are in, so stricter checks aren't rewritten by a later stage; before the system audits, so the audits, the clear-out and the hardening all run under them. |
-| 19 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
-| 20 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 2: clear out issues.md, then audit again | Fixes after the audits, so the list isn't refilled behind them; the second pass catches what the fixes broke. |
+| 16 | on hold | [Phase 13](#phase-13-the-maintainers-notes): the maintainer's notes | Bugs and small features from the maintainer's own use; after the parity and log rows (some are compositor-specific, and those land there), before Phase 10 so the last feature and the audits are built on them. On hold (maintainer, 2026-10-29: "put maintainers notes on hold (mark it to be skipped for now), and continue forward on Audits, clear-out, and hardening"). |
+| 17 | done | [Phase 10](#phase-10-custom-json-widgets): custom JSON widgets, with their editor page | The last feature before testers: sway and niri users mostly come from Waybar, and this runs their custom scripts. On stage 3b's streamed commands; after the cleanup rows, so it's built on the final structure, and before the audits, so they cover it. |
+| 18 | done | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 0: audit and tighten the guardrails (checks, tests, CI, agent rules) | The architecture is final once stage 7 and Phase 10 are in, so stricter checks aren't rewritten by a later stage; before the system audits, so the audits, the clear-out and the hardening all run under them. |
+| 19 | in progress | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 1: a full audit of every system | Nothing left to build, so every finding is about the code testers will run. |
+| 20 | next | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 2: clear out issues.md, then audit again | Fixes after the audits, so the list isn't refilled behind them; the second pass catches what the fixes broke. |
 | 21 | later | [Phase 11](#phase-11-audits-clear-out-and-hardening) step 3: 1–2 weeks of hardening, frozen | The maintainer drives sway and niri daily; only fixes land. |
 | 22 | later | [Phase 9](#phase-9-docs-tooling-and-process), then post for testers | Last, so the docs describe the final shape; the post follows [the launch gate](#the-launch-gate). |
 
@@ -83,14 +83,14 @@ Both roadmaps as one sequence. A row starts when the one above it has merged; th
 ### Taking the next step
 What an agent does when asked for "the next step", to "continue the roadmap", or to work on a row or phase by number. The answer to "where do I start" is always this file: nothing else needs explaining.
 
-1. **Find the step.** The first [Full order](#full-order) row not `done`. Its work is the backend stage's bullets in [backend/roadmap.md](backend/roadmap.md) (a stage row) or the phase section below (a phase row). A row named by the user wins; so does a parallel-lane item they name.
+1. **Find the step.** The first [Full order](#full-order) row not `done` (an `on hold` row is skipped). Its work is the backend stage's bullets in [backend/roadmap.md](backend/roadmap.md) (a stage row) or the phase section below (a phase row). A row named by the user wins; so does a parallel-lane item they name.
 2. **Check nobody holds it.** `git log -5` and `git status`: uncommitted changes in that row's files mean another agent is on it. Then take the next unblocked item (the parallel lane, or a later row with nothing waiting), or ask.
-3. **Pick the batch** ([Rules](#rules)): the row's next items in order (a backend stage's next not-`Done` bullets, or a phase's first steps not marked `Done:`, then its listed issues), as many as share an area within the batch's bounds; a move or anything large goes alone. A "needs a plan" entry is taken through [Items that need a plan](#items-that-need-a-plan) instead of being built straight away. Read the item's issues.md entry, the docs for its area (`AGENTS.md` › Where to look), the matching recipe if there is one, and [issues.md](issues.md) for anything else known in those files.
+3. **Pick the batch** ([Rules](#rules)): the row's next items in order (a backend stage's next not-`Done` bullets, or a phase's first steps not marked `Done:`, then its listed issues), as many as share an area within the batch's bounds; a move or anything large goes alone. A "needs a plan" entry is taken through [Items that need a plan](#items-that-need-a-plan) instead of being built straight away. Read the item's issues.md entry, the docs for its area (`docs/dev/README.md` › Where to look), the matching recipe if there is one, and [issues.md](issues.md) for anything else known in those files.
 4. **Do it**, item by item: each a commit after `scripts/dev/verify.sh` prints `verify ok`, and `scripts/dev/verify.sh --all` once before the branch is first pushed.
 5. **Update the roadmaps in each item's commit:**
    - remove the fixed issues.md entry and its link here;
    - mark a finished phase step `Done:` at its start (as backend/roadmap.md marks its bullets);
-   - when a row's last item is done (a deferred item doesn't count; a plan waiting for its decision does), set its Status to `done`, the next row's to `in progress` and the one after to `next`; a stage row also updates its status in backend/roadmap.md;
+   - when a row's last item is done (a deferred item doesn't count; a plan waiting for its decision does), set its Status to `done`, the next row's to `in progress` and the one after to `next` (passing over `on hold` rows); a stage row also updates its status in backend/roadmap.md;
    - anything learned that changes the order is an edit to [Full order](#full-order) with its reason in the "Why here" cell.
 6. **Report** what was done, what the next item is (the user's next "next step"), and anything found and filed in issues.md along the way.
 
@@ -110,28 +110,35 @@ The cycle the `roadmap-autopilot` skill runs, one batch (one PR) per iteration, 
 
 **Bounds.** A leader does at most three batches, then stops and asks for a fresh session even mid-row, and every row starts in a fresh session (the pause after a row ends the loop). Agents answer in the report shape asked for: a report that runs long is read for its fields, not reread. A failing gate's output is read as `tail` / `grep`, never whole.
 
-1. **Preflight** (leader). On `main`, `git status` clean (anything uncommitted means someone else is working here: stop), `git pull --ff-only`. An open PR labelled `roadmap` (`gh pr list --label roadmap`) is resumed at the step it reached instead of starting a new batch, unless it's a plan waiting for its decision, which never holds up the row ([Items that need a plan](#items-that-need-a-plan) step 2). One labelled `needs-decision` waits for the maintainer: if it's a plan with a decision on it (an approval, a chosen option, or `defer`), finish [Items that need a plan](#items-that-need-a-plan) step 4 or 5 for it first; any other one blocks its row until the maintainer answers.
-2. **Pick** (leader) the batch with [Taking the next step](#taking-the-next-step) steps 1–3, reading only the Full order, that phase's section (or the stage's bullets in [backend/roadmap.md](backend/roadmap.md)) and the items' issues.md entries; a batch is never wider than one row. A "needs a plan" item gets a plan PR ([Items that need a plan](#items-that-need-a-plan) step 1, by a fresh agent with a brief like step 3's) and the leader moves on to the row's next item; when only plans waiting for decisions are left in the row, stop and report them. An item that needs a decision or a forbidden action ends the batch before it (the items before it still go); when it's the first, stop and report instead of starting. That's an item that needs a maintainer decision (a changed default, whether a migration is worth it, a behaviour trade-off), or waits on a row that isn't `done`. An item that can only be built or confirmed in the live environment (a live action `AGENTS.md` › Never forbids: takeovers, the greeter, the real lock, idle on the live config, restarting axiom; or a fix only the maintainer's session shows) never holds anything up (maintainer, 2026-10-29: "mark accordingly in the roadmap and don't let it hold everything up - I can get to that later"): it's built as far as tests and nested runs take it, or skipped, and listed under [Live checks](#live-checks); the batch and the row go on.
-3. **Brief** (leader), ten to fifteen lines plus two or three per item: the row and the items in order; each issues.md entry's title and its **Where**/**What**; what done looks like (the behaviour, and the entry removed with its link here); the docs to start from (`AGENTS.md` › Where to look, the recipe if one fits); the branch name `roadmap/<row>-<slug>`; and the stop conditions above, so the agent stops rather than guesses. The brief also quotes [Rules](#rules)' Delete before adding and the rare-path cap (about 150 lines), so the agent stops there rather than building on.
+1. **Preflight** (leader). In the worktree, `git status` clean (anything uncommitted means someone else is working there: stop; the live checkout's state is the maintainer's), then `git fetch` and `git switch --detach origin/main`. The maintainer also answers in PR comments, after a merge too: read the comments on the recent `roadmap` PRs (`gh pr view <n> --json comments`) and write any answer into its issues.md entry, quoted. An open PR labelled `roadmap` (`gh pr list --label roadmap`) is resumed at the step it reached instead of starting a new batch, unless it's a plan waiting for its decision, which never holds up the row ([Items that need a plan](#items-that-need-a-plan) step 2). One labelled `needs-decision` waits for the maintainer: if it's a plan with a decision on it (an approval, a chosen option, or `defer`), finish [Items that need a plan](#items-that-need-a-plan) step 4 or 5 for it first; any other one blocks its row until the maintainer answers.
+2. **Pick** (leader) the batch with [Taking the next step](#taking-the-next-step) steps 1–3, reading only the Full order, that phase's section (or the stage's bullets in [backend/roadmap.md](backend/roadmap.md)) and the items' issues.md entries; a batch is never wider than one row. A "needs a plan" item gets a plan PR ([Items that need a plan](#items-that-need-a-plan) step 1, by a fresh agent with a brief like step 3's) and the leader moves on to the row's next item; when only plans waiting for decisions are left in the row, stop and report them. An item that needs a decision or a forbidden action ends the batch before it (the items before it still go); when it's the first, stop and report instead of starting. That's an item that needs a maintainer decision (a changed default, whether a migration is worth it, a behaviour trade-off), or waits on a row that isn't `done`. An item that can only be built or confirmed in the live environment (a live action `AGENTS.md` › Never forbids, or a fix only the maintainer's session shows) never holds anything up (maintainer, 2026-10-29: "mark accordingly in the roadmap and don't let it hold everything up - I can get to that later"): it's built as far as tests and nested runs take it, or skipped, and listed under [Live checks](#live-checks); the batch and the row go on.
+3. **Brief** (leader), ten to fifteen lines plus two or three per item: the row and the items in order; each issues.md entry's title and its **Where**/**What**; what done looks like (the behaviour, and the entry removed with its link here); the docs to start from (`docs/dev/README.md` › Where to look, the recipe if one fits); the branch name `roadmap/<row>-<slug>`; and the stop conditions above, so the agent stops rather than guesses. A maintainer decision the item rests on is quoted word for word from roadmap.md or issues.md, with no step of the leader's own on how to build it (2026-10-26: a brief that added "so set the schema minimum to 5000" to a quoted decision broke saved configs), and a decision that seems to clash with its entry's title is a stop, not a reading. Every brief says: never `sudo`, `pkexec`, `su` or anything prompting for a password; a test needing root runs in a user namespace (`unshare -rm`), and what can't is skipped and reported (maintainer, 2026-10-30: "tell claude to stop asking for admin rights"). The brief also quotes [Rules](#rules)' Delete before adding and the rare-path cap (about 150 lines), so the agent stops there rather than building on.
 4. **Implement** (a fresh `general-purpose` agent, given the brief): branch in the worktree from `origin/main`, never pushing it; then per item: implement, `scripts/dev/verify.sh` until `verify ok`, and commit it with [Taking the next step](#taking-the-next-step) step 5 (statuses, `Done:` marks, issues.md removals) and the attribution trailer. An item it has to stop on is left out (reset to the last item's commit) and reported; the committed ones go on. The live session runs the maintainer's checkout, so a change rests on its tests, nested runs and the review; what only the live session can show is reported under **Not verifiable live**. It reports in at most 250 words: **Commits** (sha and item, one line each), **Changed** (one line per file group), **Verified** (the `verify ok` line, the tests run), **Not verifiable live**, **Filed** (issues.md titles added), **Stopped** (why, if it did).
-5. **Gate** (leader): the branch is at the last commit's sha, `git status` is clean, `git diff --stat main...HEAD` touches the batch's area plus `docs/dev/roadmap.md` / `docs/dev/issues.md`, the closed entries' headings are gone from issues.md, and the batch is within the size gate: `git diff --shortstat main...HEAD -- . ':!**/*_test.go' ':!tests/' ':!docs/'` at about 800 changed lines or fewer, unless its commits are pure moves. An oversized batch isn't sent back to be cut: it stops, and the leader reports it with a proposed split. A failed gate goes back to the same agent once (by `SendMessage`, with the failing lines); a second failure stops.
-6. **Review** (a second fresh `general-purpose` agent, so the review isn't anchored on the implementer's reasoning), on the local branch before anything is pushed: runs the `review-branch` skill with the batch's intent and `--fix`, told to rate as Major any added mechanism a smaller change would do (a new state, cache, retry or hold for a rare path) and any code a fix leaves behind that nothing needs any more, commits its fixes after `verify ok` (one commit per round, never pushing), and reports in at most 200 words: findings fixed (by severity), **Questions**, unfixed **Blockers**, the new sha. At most two rounds (a second agent if the first fixed a Blocker or Major), until none is left. Questions, or a Blocker it couldn't fix: push and open the PR as step 7 does, labelled `needs-decision` too, comment the findings on it, and stop.
-7. **PR** (leader): `scripts/dev/verify.sh --all > <scratch>/verify.log; tail -3` ends in `verify ok` (every CI check, so CI only confirms), then `git push -u origin HEAD` once and `gh pr create --label roadmap`; the body lists the row, each item with its commit and the issues.md entries it closed, and the reports' Verified and Not verifiable live.
+5. **Gate** (leader): the branch is at the last commit's sha, `git status` is clean, `git diff --stat origin/main...HEAD` touches the batch's area plus `docs/dev/roadmap.md` / `docs/dev/issues.md`, the closed entries' headings are gone from issues.md, and the batch is within the size gate: `git diff --shortstat origin/main...HEAD -- . ':!**/*_test.go' ':!tests/' ':!docs/'` at about 800 changed lines or fewer, unless its commits are pure moves. An oversized batch isn't sent back to be cut: it stops, and the leader reports it with a proposed split. A failed gate goes back to the same agent once (by `SendMessage`, with the failing lines); a second failure stops.
+6. **Review** (a second fresh `general-purpose` agent, so the review isn't anchored on the implementer's reasoning), on the local branch before anything is pushed: runs the `review-branch` skill with the batch's intent and `--fix`, commits its fixes after `verify ok` (one commit per round, never pushing), and reports in at most 200 words: findings fixed (by severity), **Questions**, unfixed **Blockers**, the new sha. Each round that fixed a Blocker or Major gets another, by a fresh agent, up to five rounds (maintainer, 2026-10-30: "up the Maxx to 5", "as long as there is a major fix it needs another review"); a round that fixed only minors ends it. Row 19's audit batches get one review round: a round there that fixed a Blocker or Major opens the PR labelled `needs-decision` rather than starting another (maintainer, 2026-10-30: "let 5 finish but cap at one round. Implement accordingly to keep it cheaper as described"). A question with no product stake (how far a technical fix reaches) the leader decides, comments its reason on the PR and carries on (maintainer, 2026-10-29: "I don't care, as long as it is smartly implemented for the stack"). A product question (a changed default, a trade-off users notice, a migration, a takeover), a Blocker it couldn't fix, or a fifth round that still fixed a Blocker or Major (so no such fix merges unreviewed): push and open the PR as step 7 does, labelled `needs-decision` too, comment the findings on it, and stop.
+7. **PR** (leader): `scripts/dev/verify.sh --all > <scratch>/verify.log; tail -3` ends in `all checks passed` (every CI check, so CI only confirms; a plain `verify.sh` checks only uncommitted changes, so on the committed branch it prints `nothing changed since HEAD`), then `git push -u origin HEAD` once and `gh pr create --label roadmap`; the body lists the row, each item with its commit and the issues.md entries it closed, and the reports' Verified and Not verifiable live.
 8. **CI** (leader): `gh pr checks <n> --watch`. A failure goes to a fresh agent with the failing job's log tail (`gh run view --log-failed | tail -60`) to fix, run `verify.sh --all` and push once, at most twice; then stop with the PR open.
-9. **Merge** (leader): `gh pr merge <n> --squash --delete-branch` (the squash message keeps each item's commit message as a bullet), and in the worktree `git fetch` and `git switch --detach origin/main` (the live checkout is left alone). A merged item whose report has a **Not verifiable live** that matters gets a line under [Live checks](#live-checks) in the next batch.
+9. **Merge** (leader): first `git switch --detach` in the worktree (`--delete-branch` deletes the local branch, and with it a worktree holding it), then `gh pr merge <n> --squash --delete-branch` as a command of its own (a compound command doesn't match its allow rule), then `git fetch` and `git switch --detach origin/main` there (the live checkout is left alone). The squash message keeps each item's commit message as a bullet. A merged item whose report has a **Not verifiable live** that matters gets a line under [Live checks](#live-checks) in the next batch.
 10. **After** (leader): rebuild and republish the maintainer's roadmap page, which lives outside the repo; the leader's memory names its builder and URL. Its statuses come from this file and backend/roadmap.md, so it's a build and a publish, never hand edits. Do this after every merge and at every stop. Stop the loop and report if this merge set a Full order row to `done` (the pause between rows, so the maintainer looks before the next one starts) or this was the session's third batch; otherwise schedule the next iteration. A report says what merged (PR links), where it stopped and why, and what the next batch is.
 
-Never, besides `AGENTS.md` › Never: merge a PR without the `roadmap` label, put two rows or more than four items in one PR, push before the review, skip the review or CI, or retry a stop condition. A wallpaper-only screenshot means the session locked while idle: stop and ask the user to unlock.
+Never, besides `AGENTS.md` › Never: open a PR of roadmap.md or issues.md edits alone (a plan PR aside: an answer or a moved entry goes in the next batch's first commit), merge a PR without the `roadmap` label, put two rows or more than four items in one PR, push before the review, skip the review or CI, or retry a stop condition. A wallpaper-only screenshot means the session locked while idle: stop and ask the user to unlock.
 
 ### Live checks
 What waits for the maintainer's own session (see [Running it unattended](#running-it-unattended) › Pick): a merged fix to confirm live, or an item only the live environment can build. None of it holds up a row; a confirmed check is deleted, a failed one becomes an issues.md entry.
 
+- On sway and on Hyprland, show a few notifications, detached and attached, and check each toast blurs behind (the first after launch too): they're blur-backed shapes now, no longer popups of a 1x1 layer window (notifications revamp).
 - Confirm the missing app icon fallback in the launcher and dock with an icon theme lacking `applications-system-symbolic` (#196).
 - Lock once and check `scripts/log.sh` shows no `[ModuleGrid] … overlaps another` (#198).
 - Once axiom runs a binary built with #200 (its qs command line has `--log-rules`), click into a desktop Notes module and back to a window, and check `scripts/log.sh` shows no `Trying to disable` from `qt.qpa.wayland.textinput`, under niri, sway and Hyprland. Before the fix niri logged 205 of them (`Trying to disable … but 0x0 is focused`, 2026-10-29), so the path reproduces there (#200).
 - Once the shell runs #201, with `Polkit.enabled` on, restart axiom and reload a few times, and check `scripts/log.sh --all` shows no `[PolkitManager] Could not register as the polkit agent` and Settings → Authentication prompts says running.
 - Once the shell runs row 14's re-exec fix, with axiom in dev mode, save a Go file while a note is being saved or the theme applied, and check `scripts/log.sh` shows no `the connection to axiom closed` from `[FileManager]`, `ThemeManager` or `MediaManager`, and `axiom daemon logs` no `checkupdates failed (-1)`.
+- Once axiom runs a build with Phase 10 (row 17), set up 5–10 popular Waybar custom scripts (`~/waybar-test-scripts`: media, updates, weather, crypto, VPN, …) from the Custom widgets page alone, through the Import from Waybar box or the presets, and check each runs unchanged on a bar and as a module, under niri, sway and Hyprland (Phase 10's "done when").
+- On Hyprland 0.57 with `Input` pointer settings on and acceleration left at `default`, check Hyprland reports no config error for `input.accel_profile` (#238).
 - Once axiom runs a binary built with row 15 (stage 8), pick a file from Settings (a wallpaper or a path setting) under each compositor and check the portal's picker opens and its choice lands, then with the portal stopped check zenity or kdialog opens instead; and run `axiom bug-info` under Hyprland, niri and sway and check its Compositor and monitor lines.
+- Once the shell runs the lock-survives-reload fix, let the idle lock come up, save a loaded QML file, then unlock with the password: the lock screen stays up throughout, `scripts/log.sh --all` shows no `Session lock object was destroyed without unlocking`, and the next save after unlocking reloads. Nested niri, sway and Hyprland showed it with a test unlock hook; the real idle lock and PAM only the live session can.
+- Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
+- Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
+- Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -147,6 +154,8 @@ Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; pac
 The config, the takeover and the session must never be damaged by a rarely taken path. The shell's save path itself is stage 7's (rewritten there), so its entries are linked here and fixed there. So is everything that starts from a config.json that doesn't load (decided 2026-10-26): rare, and handled with the other config problems when stage 7 rewrites that path, not patched before it.
 
 Done: every entry is fixed, the last with backend stage 7; the hand-fix gap with no takeovers kept is [Deferred](#deferred).
+
+- [A shared file older than v71 resets niri's hot corner](issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
 
 ### Phase 2: finish stage 2
 Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the hypridle autostart default (dropped, and from saved configs by the v78 step) and the D-Bus match rules' escaping.
@@ -169,6 +178,7 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 
 Resolves:
 - [A fast chat reply can drop the shell's connection](issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
+- [A dev build during a branch switch re-execs onto the defaults](issues.md#a-dev-build-during-a-branch-switch-re-execs-onto-the-defaults)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.
@@ -195,10 +205,8 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [WorkspaceStrip's Grid briefly has more items than cells](issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
-- [CommandOutput's figure text loops on its size](issues.md#commandoutputs-figure-text-loops-on-its-size)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
-- [The community setups' check doesn't take monitor places yet](issues.md#the-community-setups-check-doesnt-take-monitor-places-yet)
 - [The keybinds page on a small monitor with large binds](issues.md#the-keybinds-page-on-a-small-monitor-with-large-binds) (with the 1080p pass)
 - [The system stats widget changes width with its digits](issues.md#the-system-stats-widget-changes-width-with-its-digits)
 - [Modules inside borders aren't sized evenly](issues.md#modules-inside-borders-arent-sized-evenly)
@@ -207,6 +215,15 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
+
+- [Bar widget hosts settle after they're gone](issues.md#bar-widget-hosts-settle-after-theyre-gone)
+- [The shell's hello can be refused across a dev re-exec](issues.md#the-shells-hello-can-be-refused-across-a-dev-re-exec)
+- [A custom Ring element logs an undefined `inside` on load](issues.md#a-custom-ring-element-logs-an-undefined-inside-on-load)
+- [The Layouts canvas logs null reads as it's torn down](issues.md#the-layouts-canvas-logs-null-reads-as-its-torn-down)
+- [Keybind sections log null reads as they're torn down](issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
+- [A custom layout's element rect reads an undefined place](issues.md#a-custom-layouts-element-rect-reads-an-undefined-place)
+- [Read-only daemon calls fail across a dev re-exec](issues.md#read-only-daemon-calls-fail-across-a-dev-re-exec)
+- [A tray menu logs an undefined menu handle](issues.md#a-tray-menu-logs-an-undefined-menu-handle)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
@@ -223,16 +240,20 @@ Resolves:
 ### Phase 10: custom JSON widgets
 The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).
 
-Steps:
-1. **The plan** ([Items that need a plan](#items-that-need-a-plan)): the maintainer re-plans the feature before it's built. The plan settles the shape below, the fields, the styles, the editor's panels, and whether `CommandOutput` and `Button`'s `labelCommand` fold into it later (a migration), then splits into items.
-2. **Definitions and the pure logic:** a new config section holding the definitions (an array with stable ids, recipe `config-section`); each surface refers to one by id through an `x-options` source. A definition holds a name, the command (`x-scope: commands`), the mode (poll, stream, once), the interval, the format (waybar, json, text), the bindings (a style's slot → a path in the JSON), the icon map (Waybar's `format-icons`: by `alt` or by percentage steps), a text template (`{text} {percentage}%`), the style and click and scroll commands. A methods helper (recipe `methods-helper`, with its test) parses each format, flattens a sample's JSON into the paths the dropdowns offer, resolves the bindings, fills templates, picks icons and maps a `class` or state to a theme colour (`ok`, `warning`, `critical` → semantic names). A service acquires a definition for its consumers, exposes the parsed slots per id and keeps a graph's numeric history, so the UI never holds live arrays.
-3. **The surfaces:** a bar widget type (recipe `bar-widget`, with a `PopoutAnchor`), a popout panel (recipe `bar-popout`), and a module type (recipe `overlay-module`) with `hosts: [lockscreen]`. Never the greeter (it's data, never code, and runs as another user); no click commands on the lockscreen.
-4. **The styles** (a fixed set, each declaring its slots; never a layout language): Label (icon and text, the bar's default), Figure (a big value, unit and caption), Ring and Bar (a value between `min` and `max`), Graph (a sparkline from the service's history), List (rows from `items`, a ListView over a model the service keeps, never a Repeater over live values), Text block (monospace optional). Each draws at every size a card or bar gives it.
-5. **Fields beyond Waybar's**, all optional, which presets map: `icon` (a Material Symbols name, over the `alt` map), `value` with `min`, `max` and `unit`, `subtext`, `color` or `state` (a theme name), `badge` (a count), `urgent` (attention), `image` (art, an avatar), `items` (rows of `{text, icon, value, subtext}`, for List and the popout) and `hidden` (as Waybar hides a module whose text is empty).
-6. **The editor page** (part of this phase, not after it; recipe `overlay-view`, a tool page with its default, migration step, launcher command and docs, on `docs/dev/core/editors-pattern.md`): the definitions listed (add, duplicate, delete, a few presets for well-known Waybar scripts); an inspector with the command, mode and interval, a Run button showing the raw output and the parsed fields, binding dropdowns filled from the sample's paths, the style and its slots, the icon map and the colour states; and live previews of one definition as it's drawn: a horizontal bar, a vertical bar, a strip, a square card, a wide card, a large card and the popout.
-7. **The audit's entry:** the feature gets its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
+The plan is [plans/custom-json-widgets.md](plans/custom-json-widgets.md) (decided 2026-10-29: the bar widget draws one style; the module is a fixed set of elements on a fine grid, 16 sub-cells per card, laid out proportionally; CommandOutput folds in). Its items are the steps, one PR each, built on the branch `implementModuleEditor`:
 
-Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone.
+Steps:
+1. Done: **The plan.**
+2. Done: **Data:** `CommandManager` keeps `exitCode` / `error` / `at`; the pure helper `CustomWidgetData` and its test.
+3. Done: **Definitions:** the `CustomWidgets` section, the `customWidgets` `x-options` source, `CustomWidgetsManager`, and its IPC target (`axiom ipc customWidgets refresh`).
+4. Done: **The module:** the element pieces, the proportional renderer, the `CustomWidget` module type (also the popout; lockscreen opt-in), per-definition module library entries. Never the greeter; no actions on the lockscreen.
+5. Done: **The bar widget:** the `Custom` widget type and its styles, per-definition bar library entries.
+6. Done: **Editor, part 1:** the tool page, its editor manager, the definitions list, the Source card and the Bar tab.
+7. Done: **Editor, part 2:** the Module tab (the fine-grid canvas on `GridEditor`).
+8. Done: **Waybar import and presets.**
+9. Done: **Fold CommandOutput**, the feature's doc, and its system in `.claude/skills/review-system/systems.md`, so [Phase 11](#phase-11-audits-clear-out-and-hardening) audits it with the rest.
+
+Done when 5–10 popular Waybar custom scripts run unchanged through the Waybar preset, and each can be set up from the editor page alone: a [live check](#live-checks), so it doesn't hold the row.
 
 ### Phase 11: audits, clear-out and hardening
 The guardrails tightened first, then every system audited in full, every open entry fixed or deliberately deferred, then a frozen stretch of daily use, before posting on the sway and niri wikis for testers (decided 2026-10-27). Nothing new is built in this phase.
@@ -246,7 +267,21 @@ Steps:
    - **Security paths:** every rule in `AGENTS.md` › Never has its case in `tests/scripts/test_guard.py`, and PAM, the greeter installer and the takeovers each have a test that tries to break them.
    - **Speed:** `scripts/dev/verify.sh` and CI stay fast enough that nobody routes around them.
    - **The agent rules:** `AGENTS.md`, the skills and [Running it unattended](#running-it-unattended) checked against what went wrong in the rows before; rules nothing broke are trimmed (with Phase 9's 12 KB target).
-1. **Audit every system** (row 19) with the `review-system` skill: `--full --record` (findings land in issues.md, linked from this phase under Found by the audits), adding `--deep` for systems over about 5k lines. Every system `scope.py --list` names, plus the custom widgets, plus every `feature:<name>` doc that no system covers; the modules' sizing and the popouts nobody has touched in a while get a close look (maintainer's notes, 2026-10-28: "check modules, their sizing, and minor improvements to popouts that havn't been touched in awhile"). Audits only file; nothing is fixed in this step. Systems can run in parallel (findings only), the fixes can't. Each audit also runs a **deletion pass**, its findings filed like any other: what in the system can go or shrink (dead members, mechanisms nothing needs since a stage moved their work, duplicates of a shared piece, special cases the general path covers, options nobody would miss), each with its line count. Before the first audit, record the repository's size under [Size](#size) below.
+   Asked (maintainer, 2026-10-29): "for the next branch, there should be an audit of the CI tests, and their guardrails (as well as scripts used in repo (i.e. gen docs, check variable usage, etc)), and those should be hardened", and "Next loop, do a quick inventory and pre-split what makes sense between all the entire repo guardrail hardening for PRs before starting the first review". Done: the audit (#220) and the inventory (the table in `.claude/reviews/guardrails.md` › Inventory). The rest of step 0 is these **Batches**, taken in order (one PR each, under [Rules](#rules)):
+   1. Done: **CI and check_all.sh agree** (CI workflow, check_all.sh, check_go.sh, check_i18n.py): The check order is kept in three places, check_go.sh passes stale generated code except under --ci, CI can't fail on stale translation files, CI checks dependencies only when a PR touches Go.
+   2. Done: **verify.sh** (verify.sh, the autopilot's gate): verify.sh skips the checks a deletion or a check's own change needs, Running it unattended's gate can't get `verify ok` on a committed branch.
+   3. Done: **The guard** (`.claude/hooks/guard.py`, its tests, the deny list): The guard misses compound commands, wrapper options and writes onto config.json, The permission deny list names a config path that's gone; then each AGENTS.md › Never rule gets a compound-form case beside its plain one.
+   4. Done: **Flaky Go tests** (backend tests): Go tests wait with their own short bounds that a loaded CI runner overruns, A binds test fails with pthread_create failed in CI, A compositor manager test misses its takeover prompt under load, A self-update test once took the build path for a release.
+   5. Done: **Go tests as a user, and the security paths** (CI's go job, backend tests): CI's Go tests run as root, so the unwritable-file tests never run there, TestWatch sees a push for the package's own write under CI load; then break-it tests for PAM (only its success unlocks, never IPC: `test_scripts.py` › `OnlyPamUnlocks`), the greeter installer (a hostile archive lands nothing outside the copy) and the takeovers (no load or import, and no op around the key, changes one).
+   6. Done: **gen_docs and the ratchets** (gen_docs.py, check_qmllint.py, check_structure.py): gen_docs.py doesn't see readers of ConfigManager.live, so 372 settings show as unread (its unused-setting and unused-member checks fail now, over `scripts/config-usage-baseline.json`), The qmllint baseline doesn't shrink when warnings are fixed, and a size ratchet: singletons over 800 lines (outside the pure helpers and compositor backends) fail; none is over today, so it has no baseline.
+   7. Done: **Checks that can fail** (`tests/scripts/`, `tests/`): Most check scripts have no tests of their own (one fixture per rule: `test_scripts.py` › `CheckStructure`, `CheckI18n`, `CheckQmllint`, `CheckPackages`, `CheckDocs`), Small tooling leftovers (`tst_IconResolver`, with the helper made pure and its Quickshell lookups in `AppIconManager`; the PKGBUILDs stay two files, as AUR packages stand alone; i18n.md reread).
+   8. Done: **A sampled mutation run** (backend): the store's takeovers, the lock screen, the greeter installer and migrations; each surviving mutant is filed as a missing test, then fixed in batches appended here. 873 mutants; the takeover, lock and installer survivors got tests (survivors 128 → 83), the rest equivalent or filed as batches 12 and 13 (`.claude/reviews/guardrails.md` › Mutation run).
+   9. Done: **What got past them** (check_structure.py): the bug classes in issues.md and the fix history a mechanical check could have caught, as checks: Repeater models and `acquire()` requests from live values, and the AGENTS.md rules no check holds yet (animation literals, `Qt.formatDateTime`, `Quickshell.screens`, polling Timers in UI); one rule a commit. Four checks landed: a Repeater model or `acquire()` request reading a polled service's member (the calendar page's and idle card's models key by count now), a `duration:` in ms not marked `// behaviour timing:`, `Qt.formatDateTime` and `Quickshell.screens` outside General (the uses that must stay, screenshot file names and windows that must exist with no monitor, marked `// allowed: <reason>` on their line). Left: polling Timers in UI (none in `components/` or `shell/` today; a `Process` there is already refused by the allowlist).
+   10. Done: **Speed** (CI workflow, verify.sh): `scripts/generate.sh` takes 28–43 s in each of CI's four jobs (go job 3.4 min end to end); share or cache it, and measure verify.sh on a typical change. Neither shared nor cached (the repository allows local actions only, so no `actions/cache` or artifacts): almost all of it was compiling the binary, which only the reference docs need, so `syncassets` writes the tree's schema too and the `qt` and `scripts` jobs pass `--no-docs` (their generate 41 s and 27 s in CI, 5 s and 2 s cold locally against ~12 s); the `go` job (compile and tests) is unchanged. verify.sh ran generate.sh twice on a Go or schema change and waited 3 s for a reload that had already happened: a one-line QML edit 15 → 11 s, a schema edit 42 → 27 s, a Go edit 32 → 27 s (`.claude/reviews/guardrails.md` › Inventory). Once the repository allowed `actions/cache`, a follow-up PR cached Go's build and module caches across runs in the `checks` and `go` jobs (keyed on the Go version and `backend/go.sum`, so a run saves only when that changes; PR runs restore what the go job's weekly run on main saved; tests still `-count=1`).
+   11. Done: **The agent rules** (AGENTS.md, skills, [Running it unattended](#running-it-unattended)): checked against what went wrong in rows 1–18; rules nothing broke are trimmed (with Phase 9's 12 KB target). Last, so it describes the checks as they end up. AGENTS.md 25.1 → 11.9 KB: its mechanics moved to the docs it points at (the Where to look table, layout and naming to `docs/dev/README.md`, what each check catches to `testing.md` › The checks), rules a check holds kept as a line naming it, the Never list whole; Running it unattended gained what broke in its runs (preflight in the worktree and the PR comments read, decisions quoted verbatim, no elevation, technical questions decided by the leader, detach before the merge, no roadmap-only PRs); the review lenses stop re-checking what `check_structure` holds.
+   12. Done: **Migration mutants** (`migrate/steps`, `migrate/convert`; tests only): every listed survivor killed by a test (`TestConvertShapes`, `TestConvertNotesItsChanges`, `TestV81FoldsCommandOutput`), each checked by hand; the ties and two deletes a re-set key makes redundant are equivalent (`.claude/reviews/guardrails.md` › Mutation run).
+   13. Done: **Failure-path mutants** (store, greeter installer; tests only): every listed survivor a test can reach killed, each checked by hand (a dead field deleted); the rest equivalent or root-only (`.claude/reviews/guardrails.md` › Mutation run).
+1. **Audit every system** (row 19) with the `review-system` skill: `--full --record` (findings land in issues.md, linked from this phase under Found by the audits). From batch 6 on, one system per batch, with `--deep` only where the maintainer or a prior finding calls for it (maintainer, 2026-10-30: "let 5 finish but cap at one round. Implement accordingly to keep it cheaper as described"). Every system `scope.py --list` names, plus the custom widgets, plus every `feature:<name>` doc that no system covers; the modules' sizing and the popouts nobody has touched in a while get a close look (maintainer's notes, 2026-10-28: "check modules, their sizing, and minor improvements to popouts that havn't been touched in awhile"). Audits only file; nothing is fixed in this step. Each audit also runs a **deletion pass**, its findings filed like any other: what in the system can go or shrink (dead members, mechanisms nothing needs since a stage moved their work, duplicates of a shared piece, special cases the general path covers, options nobody would miss), each with its line count. Before the first audit, record the repository's size under [Size](#size) below. Done (batch 3): `scope.py --orphans` lists no file: each file it listed went into a system's Docs or Extra, or a new system (`daemon`, `dbus-wayland`, `config-pipeline`) where none fit (on 2026-10-30 it listed 195 files, about 30k lines, 108 of them Go). Then compositor, hyprland and niri were audited with `--full` again, before the remaining systems: the first batch's scopes missed the Go code of folders named in doc headers (`scope.py` dropped them; it expands them now: 8085 → 19885, 11118 → 21062 and 4448 → 4673 lines) (maintainer, 2026-10-30: "Expand + re-audit (c): Expand folders everywhere, and re-run full audits of compositor and hyprland (and niri if its scope grew) in the next audit batch, since batch 1 missed that Go code."). Done (batch 4): sway, `--full --deep` (its first review since stage 7 moved its config writing into Go), compositor-parity and blur, `--full --deep` (first reviews of both). Done (batch 5): popouts, `--full --deep` (its close look went to the panels with no substantive change since the history began on 2026-10-24: NowPlaying, SystemGraphs, Updates, WorkspaceStrips, WorkspaceGrid, WeatherForecast, Pomodoro and the tray parts); bar and bar-widgets, `--full --deep` (first reviews of both; the bar widgets' sizing got the close look). Next, before the remaining audits, one PR (maintainer, 2026-10-30: "Mark the easy ones here to be done next instead of audit (i.e. 2-6) in a single pr."): [A large corner radius folds a pill's or shallow box's outline back on itself](issues.md#a-large-corner-radius-folds-a-pills-or-shallow-boxs-outline-back-on-itself), [popout_matrix.py crashes on the current config and nothing runs it](issues.md#popout_matrixpy-crashes-on-the-current-config-and-nothing-runs-it), [Ticking labels without steadyDigits resize the bar under a proportional font](issues.md#ticking-labels-without-steadydigits-resize-the-bar-under-a-proportional-font) (with [The system stats widget changes width with its digits](issues.md#the-system-stats-widget-changes-width-with-its-digits)), [Tray icons keep their pixel size on a bar thinner than them](issues.md#tray-icons-keep-their-pixel-size-on-a-bar-thinner-than-them) and [Some bar widget sizes are fixed pixels, not the bar's](issues.md#some-bar-widget-sizes-are-fixed-pixels-not-the-bars).
 2. **Clear out issues.md** (row 20): every open entry, highest severity first, as ordinary batches. Each is fixed, or the maintainer defers it (to [Deferred](#deferred), then GitHub, listed as a known issue in the post); rare paths get the smallest fix or stay logged. The deletion findings go first in each system's batches (deleting first shrinks everything the fixes then touch). A "needs a plan" entry goes through [Items that need a plan](#items-that-need-a-plan). Then an incremental `review-system` pass of every system (it rereads only what changed since its last review), and again, until a pass finds nothing above minor.
 3. **Harden, frozen** (row 21; the maintainer's, so the autopilot stops before it): 1–2 weeks of daily use under sway and niri. Only fixes land: each new finding is fixed at once or becomes a known issue. Also: a first run from nothing (`install.sh` and the AUR packages for a fresh user, onboarding without a config.json, importing saved configs), and the Waybar scripts from Phase 10 again.
 
@@ -259,20 +294,24 @@ Posting for testers waits for all of these:
 - the code is smaller than before the audits ([Size](#size)): QML and Go lines (tests apart) went down, or each system that grew says why;
 - the hardening weeks ended with no fix pending.
 
-Fixed in step 0 (the guardrails; moved from Phase 9):
-- [The check order is kept in three places](issues.md#the-check-order-is-kept-in-three-places)
-- [Small tooling leftovers](issues.md#small-tooling-leftovers)
-- [A supervise test times out under a loaded run](issues.md#a-supervise-test-times-out-under-a-loaded-run)
-- [A dev-mode build test fails with text file busy](issues.md#a-dev-mode-build-test-fails-with-text-file-busy)
-- [A binds test fails with pthread_create failed in CI](issues.md#a-binds-test-fails-with-pthread_create-failed-in-ci)
-- [A self-update test once took the build path for a release](issues.md#a-self-update-test-once-took-the-build-path-for-a-release)
-- [A daemon test finds the instance lock still held](issues.md#a-daemon-test-finds-the-instance-lock-still-held)
-- [A compositor manager test misses its takeover prompt under load](issues.md#a-compositor-manager-test-misses-its-takeover-prompt-under-load)
-- [Running it unattended's gate can't get `verify ok` on a committed branch](issues.md#running-it-unattendeds-gate-cant-get-verify-ok-on-a-committed-branch)
-- [CI checks dependencies only when a PR touches Go](issues.md#ci-checks-dependencies-only-when-a-pr-touches-go)
-
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.
+
+Each reading is the `insertions` of a shortstat against the empty tree, so it needs no checkout (`C` is the commit read; `--name-only` in place of `--shortstat` lists the files counted):
+
+```sh
+E=$(git hash-object -t tree /dev/null)
+git diff --shortstat $E $C -- '*.qml' ':!tests/'                                    # QML
+git diff --shortstat $E $C -- '*.go' ':!*_test.go' ':!*/testdata/*' ':!*test/*' \
+    ':!backend/internal/testkit/' ':!*/zz_generated_*'                              # Go
+git diff --shortstat $E $C -- '*.sh' '*.py' '.githooks/pre-commit' ':!tests/'       # scripts
+```
+
+Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`testkit`, `dbustest`, `logindtest`, `wiretest`); the only committed generated code is `zz_generated_*.go` (the other generated files are JSON or never committed: [testing](testing.md#the-checks)). Lines include comments and blank lines.
+
+| Reading | Commit | QML | Go | Scripts |
+|---|---|---|---|---|
+| Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
 
 Found while porting the scripts (backend stage 4):
 - [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
@@ -286,7 +325,177 @@ Found while closing the config path (backend stage 7):
 Found while adding niri's own overview (row 16):
 - [An open-only workspace overview bind calls a function that doesn't exist](issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
 
+Found while fixing the lock screen surviving a reload:
+- [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
+
+Found while investigating Hyprland starting on workspace 10:
+- [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
+- [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
+
 Found by the audits:
+- [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)
+- [The guard reads the branch from the session's folder, not a `cd` before the push](issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)
+- [The daemon picks a compositor the shell may not run under](issues.md#the-daemon-picks-a-compositor-the-shell-may-not-run-under)
+- [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
+- [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
+- [Backends keep stubs for calls the facade gates](issues.md#backends-keep-stubs-for-calls-the-facade-gates)
+- [Small shrinks in the compositor layer](issues.md#small-shrinks-in-the-compositor-layer)
+- [A trial monitor Apply that turns a monitor off drops its Keep/Revert](issues.md#a-trial-monitor-apply-that-turns-a-monitor-off-drops-its-keeprevert)
+- [A shell reload during a trial monitor Apply loses the way back](issues.md#a-shell-reload-during-a-trial-monitor-apply-loses-the-way-back)
+- [Restoring a saved keybind preset marks every bind new, and Revert deletes it](issues.md#restoring-a-saved-keybind-preset-marks-every-bind-new-and-revert-deletes-it)
+- [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
+- [The bind merge deletes an hl.bind inside a helper, losing binds it never read](issues.md#the-bind-merge-deletes-an-hlbind-inside-a-helper-losing-binds-it-never-read)
+- [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
+- [A failed monitor profile apply is never retried for the same outputs](issues.md#a-failed-monitor-profile-apply-is-never-retried-for-the-same-outputs)
+- [One refused line stops the rest of a Hyprland eval](issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
+- [A user/ file with a dot in its name never loads](issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
+- [A moved raw bind with a Lua keyword key compiles to nothing](issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
+- [A failed options read sets Hyprland's gaps to 0](issues.md#a-failed-options-read-sets-hyprlands-gaps-to-0)
+- [A workspace slide throws when animations go off between its legs](issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
+- [Direct Hyprland dispatches can overtake queued Lua](issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
+- [Recording two keys within 30 s can end the second recording early on Hyprland](issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
+- [Two keybind reference paths drop a key's binds](issues.md#two-keybind-reference-paths-drop-a-keys-binds)
+- [The monitor prompt's padding is a bare 18 px, and check_sizes misses it](issues.md#the-monitor-prompts-padding-is-a-bare-18-px-and-check_sizes-misses-it)
+- [HyprlandManager keeps members only it reads](issues.md#hyprlandmanager-keeps-members-only-it-reads)
+- [A bind description's section is parsed three ways](issues.md#a-bind-descriptions-section-is-parsed-three-ways)
+- [KeybindManager keeps tables the methods helpers already hold](issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold)
+- [The workspace strips repeat ActiveStrip's loader](issues.md#the-workspace-strips-repeat-activestrips-loader)
+- [The managed file's catch-all monitor line is copied into M.monitors](issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
+- [Hyprland's exit command is kept in two packages](issues.md#hyprlands-exit-command-is-kept-in-two-packages)
+- [noteReload counts every compositor reload a second time](issues.md#notereload-counts-every-compositor-reload-a-second-time)
+- [The Hyprland Go code keeps dead and doubled helpers](issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers)
+- [Bind helpers keep JS halves the daemon owns now](issues.md#bind-helpers-keep-js-halves-the-daemon-owns-now)
+- [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
+- [The unused reader member check counts a member named after its key as used](issues.md#the-unused-reader-member-check-counts-a-member-named-after-its-key-as-used)
+- [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
+- [niri started on a broken config reads as loaded](issues.md#niri-started-on-a-broken-config-reads-as-loaded)
+- [Nothing reads userBindsRead or lastLoadFailed](issues.md#nothing-reads-userbindsread-or-lastloadfailed)
+- [The niri writer's runtimeOn and unread-binds guards are dead](issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
+- [Three listings of niri's user files](issues.md#three-listings-of-niris-user-files)
+- [RunningNested has its own niri socket client](issues.md#runningnested-has-its-own-niri-socket-client)
+- [NiriManager queues actions the daemon could order](issues.md#nirimanager-queues-actions-the-daemon-could-order)
+- [A second KDL writer in the kdl package](issues.md#a-second-kdl-writer-in-the-kdl-package)
+- [A file mode that stops loading keeps the saved monitor profile off](issues.md#a-file-mode-that-stops-loading-keeps-the-saved-monitor-profile-off)
+- [Leaving included between sessions leaves the full module loaded](issues.md#leaving-included-between-sessions-leaves-the-full-module-loaded)
+- [A failed takeover leaves no layer and no problem](issues.md#a-failed-takeover-leaves-no-layer-and-no-problem)
+- [A failed takeover check reuses the last answer and can adopt without approval](issues.md#a-failed-takeover-check-reuses-the-last-answer-and-can-adopt-without-approval)
+- [Claim keeps writing a symlinked or git-tracked config that release refuses to give back](issues.md#claim-keeps-writing-a-symlinked-or-git-tracked-config-that-release-refuses-to-give-back)
+- [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)
+- [A relative -c is read from the daemon's folder](issues.md#a-relative--c-is-read-from-the-daemons-folder)
+- [Gaps to the edges are wider on sway than the setting says](issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says)
+- [A $' or $& in a bind's argument is read as a replacement pattern](issues.md#a--or--in-a-binds-argument-is-read-as-a-replacement-pattern)
+- [A niri merge of two binds on one line loses one](issues.md#a-niri-merge-of-two-binds-on-one-line-loses-one)
+- [A sway bind using a variable from an include moves as a literal $name](issues.md#a-sway-bind-using-a-variable-from-an-include-moves-as-a-literal-name)
+- [A niri spawn of one word with a space moves as a broken shell command](issues.md#a-niri-spawn-of-one-word-with-a-space-moves-as-a-broken-shell-command)
+- [A sway line continuing a non-bind line is moved as a bind of its own](issues.md#a-sway-line-continuing-a-non-bind-line-is-moved-as-a-bind-of-its-own)
+- [Small shrinks in the compositor manager](issues.md#small-shrinks-in-the-compositor-manager)
+- [niri's bind plan is a copy of runtimeLayer.plan](issues.md#niris-bind-plan-is-a-copy-of-runtimelayerplan)
+- [Go copies of bind helpers that only the parity replay calls](issues.md#go-copies-of-bind-helpers-that-only-the-parity-replay-calls)
+- [sway and niri each fit the shadow to axiom's themselves](issues.md#sway-and-niri-each-fit-the-shadow-to-axioms-themselves)
+- [The Hyprland and sway bind merges each skip half of compositor/actions](issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
+- [Hyprland's remove deletes whatever hl.bind is on a site's line now](issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
+- [A claim comments out axiom's start inside a long string, breaking the script](issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
+- [An unknown IPC function word merges as a toggle](issues.md#an-unknown-ipc-function-word-merges-as-a-toggle)
+- [The overview stays open with nothing shown after its monitor goes away](issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)
+- [Wide active is hidden in the perMonitor layout but still applies there](issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
+- [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
+- [The bind inspector's typed label and argument miss Save](issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
+- [Picking a key in the key map under an edit search selects a bind the list doesn't show](issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
+- [Renaming a saved preset after switching presets renames the wrong one](issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
+- [The reference's sections and both chip rows are built while hidden](issues.md#the-references-sections-and-both-chip-rows-are-built-while-hidden)
+- [In the standard layout, a switch past `count` slides through an unrelated workspace](issues.md#in-the-standard-layout-a-switch-past-count-slides-through-an-unrelated-workspace)
+- [Where the compositor can't mirror, a profile's mirror can't be turned off or its monitor placed](issues.md#where-the-compositor-cant-mirror-a-profiles-mirror-cant-be-turned-off-or-its-monitor-placed)
+- [The workspace strips' panel property is never read](issues.md#the-workspace-strips-panel-property-is-never-read)
+- [Three copies of the wheel-notch accumulator](issues.md#three-copies-of-the-wheel-notch-accumulator)
+- [The key map and the keyboard reference each carry the same modifier chips and legend](issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
+- [A reference section's folded count re-derives BindRows.byModifiers' grouping](issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
+- [PresetSheet defers its re-choose a tick for a config that updates at once](issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
+- [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
+- [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
+- [niri's confirming quit moves in as an instant log out](issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
+- [After a sway reload, gapsOut and SwayFX's per-window blur and shadows stay off until the look changes](issues.md#after-a-sway-reload-gapsout-and-swayfxs-per-window-blur-and-shadows-stay-off-until-the-look-changes)
+- [A sway title-bar mouse bind moves in as a whole-window bind](issues.md#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind)
+- [A sway exec chained with ; or , moves in as one shell command](issues.md#a-sway-exec-chained-with--or--moves-in-as-one-shell-command)
+- [A sway include path with a space breaks after a takeover](issues.md#a-sway-include-path-with-a-space-breaks-after-a-takeover)
+- [A sway output rule by description misses a monitor with no serial](issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)
+- [Managed mode's monitor-conflict check misses quoted and block output lines](issues.md#managed-modes-monitor-conflict-check-misses-quoted-and-block-output-lines)
+- [The detached layer's unbind list can drift from what sway holds](issues.md#the-detached-layers-unbind-list-can-drift-from-what-sway-holds)
+- [Small shrinks in SwayManager](issues.md#small-shrinks-in-swaymanager)
+- [Sway and niri each forward withMainBinds to the daemon](issues.md#sway-and-niri-each-forward-withmainbinds-to-the-daemon)
+- [SwayConfigBinds keeps its own copy of sway's $variables](issues.md#swayconfigbinds-keeps-its-own-copy-of-sways-variables)
+- [Small shrinks in the sway writer and IPC](issues.md#small-shrinks-in-the-sway-writer-and-ipc)
+- [The sway extract's input-device case and isSwayFlag repeat the general rule](issues.md#the-sway-extracts-input-device-case-and-isswayflag-repeat-the-general-rule)
+- [binds and takeover each keep their own isFile and git check](issues.md#binds-and-takeover-each-keep-their-own-isfile-and-git-check)
+- [niri's overview drop moves a window's whole column and switches workspace](issues.md#niris-overview-drop-moves-a-windows-whole-column-and-switches-workspace)
+- [sway's named workspaces all share workspace id -1](issues.md#sways-named-workspaces-all-share-workspace-id--1)
+- [sway lists disabled outputs as outputs](issues.md#sway-lists-disabled-outputs-as-outputs)
+- [niri doesn't send windowFocused for a window that opens focused](issues.md#niri-doesnt-send-windowfocused-for-a-window-that-opens-focused)
+- [sway's merge moves workspace binds as raw sway commands](issues.md#sways-merge-moves-workspace-binds-as-raw-sway-commands)
+- ["Fire on release" is offered on niri and silently dropped](issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
+- [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](issues.md#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway)
+- [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
+- [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
+- [sway and niri build output details and descriptions twice](issues.md#sway-and-niri-build-output-details-and-descriptions-twice)
+- [The bind merge lists user/ files three times, once per compositor](issues.md#the-bind-merge-lists-user-files-three-times-once-per-compositor)
+- [sway's and niri's merges build a moved bind the same way twice](issues.md#sways-and-niris-merges-build-a-moved-bind-the-same-way-twice)
+- [The merge keeps key and variable tables render already has](issues.md#the-merge-keeps-key-and-variable-tables-render-already-has)
+- [A backed toast's blur fill is at the surface opacity twice](issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)
+- [A keepFill opening leaves an unfilled row in an unbacked translucent pill](issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
+- [The editable dropdown's list fills translucent over the overlay](issues.md#the-editable-dropdowns-list-fills-translucent-over-the-overlay)
+- [SlideAnimation's fade, easing and container aliases are dead](issues.md#slideanimations-fade-easing-and-container-aliases-are-dead)
+- [The blur window builds stand-ins and copies it never uses](issues.md#the-blur-window-builds-stand-ins-and-copies-it-never-uses)
+- [BlurBacking spells out four near-identical blur windows](issues.md#blurbacking-spells-out-four-near-identical-blur-windows)
+- [The border frame's path is built three times](issues.md#the-border-frames-path-is-built-three-times)
+- [Small shrinks in the blur system](issues.md#small-shrinks-in-the-blur-system)
+- [Edge and floating popouts never close when their focus grab clears](issues.md#edge-and-floating-popouts-never-close-when-their-focus-grab-clears)
+- [An open edge popout's layer and namespace still follow its edge's bar](issues.md#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar)
+- [EdgePopout works out its attach edge and slide distance itself](issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)
+- [A large corner radius folds a pill's or shallow box's outline back on itself](issues.md#a-large-corner-radius-folds-a-pills-or-shallow-boxs-outline-back-on-itself)
+- [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
+- [The Updates popout's package list is frozen at opening](issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
+- [NowPlaying builds its strip layout and a second transport hidden in every mode](issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
+- [popout_matrix.py crashes on the current config and nothing runs it](issues.md#popout_matrixpy-crashes-on-the-current-config-and-nothing-runs-it)
+- [PopoutWrapperBase's aboutToDismiss signal has no listener](issues.md#popoutwrapperbases-abouttodismiss-signal-has-no-listener)
+- [Three EdgePopout members nothing reads](issues.md#three-edgepopout-members-nothing-reads)
+- [PopoutGeometry handles a phase and a submenu pair the registry never produces](issues.md#popoutgeometry-handles-a-phase-and-a-submenu-pair-the-registry-never-produces)
+- [PillBarJoin's available repeats what joined already says](issues.md#pillbarjoins-available-repeats-what-joined-already-says)
+- [Geometry members nothing reads](issues.md#geometry-members-nothing-reads)
+- [SurfaceContext.layout's pill and merged results have no test row](issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
+- [The tray menu's isVertical and barConfig are never read](issues.md#the-tray-menus-isvertical-and-barconfig-are-never-read)
+- [Both tray menu lists override the same width cap](issues.md#both-tray-menu-lists-override-the-same-width-cap)
+- [The tray menu draws its own separator](issues.md#the-tray-menu-draws-its-own-separator)
+- [The two workspace popouts share 28 lines of payload and colour properties](issues.md#the-two-workspace-popouts-share-28-lines-of-payload-and-colour-properties)
+- [Small improvements to WorkspaceGrid](issues.md#small-improvements-to-workspacegrid)
+- [The dock's footprint assumes fillets at both ends](issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
+- [Nothing listens to the bar's layoutUpdated any more](issues.md#nothing-listens-to-the-bars-layoutupdated-any-more)
+- [A bar made while the bar editor is open may never report to it](issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
+- [Plugging in or unplugging a monitor remakes the bar that stays](issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
+- [Removing or copying another bar moves the editor's selection to a different bar](issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)
+- [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](issues.md#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp)
+- [The pill merge in BarContainer repeats BarLayout's, untested](issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
+- [StandaloneBar only wraps BarPanel's BarContainer](issues.md#standalonebar-only-wraps-barpanels-barcontainer)
+- [BarContainer._withEntry rebuilds Utils.withEntry](issues.md#barcontainer_withentry-rebuilds-utilswithentry)
+- [enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks](issues.md#enrichbarconfig-hands-out-two-fields-nothing-reads-and-keeps-three-dead-fallbacks)
+- [A bar's reserve trim is worked out again by callers holding the enriched bar](issues.md#a-bars-reserve-trim-is-worked-out-again-by-callers-holding-the-enriched-bar)
+- [Missing test rows for two helper decisions](issues.md#missing-test-rows-for-two-helper-decisions)
+- [An overlay misses a transparent bar's inner accent line](issues.md#an-overlay-misses-a-transparent-bars-inner-accent-line)
+- [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
+- [Ticking labels without steadyDigits resize the bar under a proportional font](issues.md#ticking-labels-without-steadydigits-resize-the-bar-under-a-proportional-font)
+- [Media squeezed to its minimum in the fill style shows the meter, not its icon](issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
+- [The Workspaces widget's measured length glides when the active cell widens](issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
+- [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
+- [Tray icons keep their pixel size on a bar thinner than them](issues.md#tray-icons-keep-their-pixel-size-on-a-bar-thinner-than-them)
+- [Some bar widget sizes are fixed pixels, not the bar's](issues.md#some-bar-widget-sizes-are-fixed-pixels-not-the-bars)
+- [SystemStats' used memory clips on a vertical bar](issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
+- [The stacked style clips on a thin bar](issues.md#the-stacked-style-clips-on-a-thin-bar)
+- [BaseWidget's background box and panel-size defaults are dead](issues.md#basewidgets-background-box-and-panel-size-defaults-are-dead)
+- [SystemStats works out ValueStyleWidget's style fallbacks again](issues.md#systemstats-works-out-valuestylewidgets-style-fallbacks-again)
+- [The workspace switchers find a workspace by id with hand-written loops](issues.md#the-workspace-switchers-find-a-workspace-by-id-with-hand-written-loops)
+
+Found while reworking the onboarder:
+- [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
+- [The onboarder's Integrations page is too long for one step](issues.md#the-onboarders-integrations-page-is-too-long-for-one-step)
+- [The Look page offers Hyprland's wallpapers under any compositor](issues.md#the-look-page-offers-hyprlands-wallpapers-under-any-compositor)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
@@ -306,24 +515,29 @@ Steps:
 3. **Done:** **A test notification** (row 16): the notifications settings get a button that shows one, as the OSD and dock settings do, for easy editing. The section's `x-intro` (`NotificationsPreview`) has a Show button sending one through `NotificationManager.sendNotification`; it toasts with the settings as edited.
 4. **Done:** **niri's own window switcher** (row 16): a setting, `WindowSwitcher.compositorSwitcher` (`supports.compositorSwitcher`, on by default where it's offered), has axiom's config writer bind the switch windows keys to niri's own switcher (`recent-windows`, which drops niri's default switcher keys) in included and managed mode. The maintainer: "while you are implementing the niri setting and logic a second setting should also use niri alt tab as acioms (same logic, replaces everything and is default on niri)" and "note this also should disable the default bind on niri (in both cases, force users through axioms bind)"; on detached mode: "detatched mode shouldn't disable binds at all. Logic remains if they have alt tab set in aciom, but niris default / set in config will just be there as well"; on the switcher (2026-10-29): "Writer binds niri's action (Recommended) — When the setting is on, axiom's config writer binds Alt+Tab straight to niri's own switcher action instead of axiom's IPC (included and managed mode only). In detached mode the setting does nothing, and the user's own niri binds handle alt-tab." With no switcher bind of axiom's (2026-10-29): "default to off for window switcher if not bind set. Everything goes through aciom", "on managed mode", "sounds good. (i.e. in managed, if the user doesn't have a window switcher / overlay bind, there is no bind for it). Binds are exactly representative of what there is.": managed writes the switcher's binds empty (the setting off too), so niri's default keys are gone; included leaves them.
 5. **Done:** **Caffeine on a timer** (from the waiting list): caffeine (the idle inhibitor) can be turned on for a set time and turns itself off after it. The maintainer (2026-10-29): "decision for caffeine on a timer: works similarity to stopwatch current implementation. Popout shows presets (default 30min, 1hr, 4hr) that start with a timer. Presets are settable in module settings." and "ensure timer starting and selecting and whatnot is a re-used component (i.e. so caffeine and stopwatches look identical)" The IdleInhibitor widget gets its own popout (`content/Caffeine`, on by default for new widgets) with a `CountdownTimer` (`content/parts/`, the one-off timer's start, presets, ring and controls, now shared with `content/Stopwatch`) over the widget's `presets` (30m, 1h, 4h); `IdleManager` keeps the timer in a `DeadlineTicker` that ends caffeine at its end, and the widget, quick action and `/caffeine` show the time left.
+6. **Built-in stock and crypto trackers** (added 2026-10-29): a bar widget and a module (overlay, desktop, edge menu) for watched symbols, built in rather than through a custom widget script: prices polled by the daemon as a topic (`acquire`/`release`, the interval from config), the symbols and their order in a config section, each with its change, a sparkline of the day and the up/down colour; a ticker on the bar as the custom widget's ticker style does. Needs a plan first ([Items that need a plan](#items-that-need-a-plan)): the data sources (a free stock API and a crypto one, or one for both), API keys through `SecretsManager`, rate limits and caching, and market hours.
+7. **Done:** **Notifications revamp** (added 2026-10-30, the maintainer's own request while row 16 is on hold): toasts placed like the OSD, dock and launcher, attached or detached; motion; clicks, withdrawals and matching; interactivity; settings. The maintainer: "when close to a bar and popping out from the border, it wraps a floating bar identically to how the menu does … if a popout is open it would have to appear below and animate to it's correct spot when the popout closes). Pill, standard and transparent bars also need to be taken into account"; attached, "The whole stack, one box"; "when attatched to the right edge, they should slide in and out towards the edge as well. Detatched should probably go to the closest edge (actual edge, disregarding bars)"; a lower toast leaving: "Tuck behind and fade"; clicks: "Run action, then focus app"; app control: "One 'Follow apps' setting"; extras: "Inline reply + action icons, DND schedule, Per-app rules"; sounds wait for a later axiom-sounds PR. `ToastStack`/`ToastItem` on `methods/ToastMotion`, ranked under every popout (`PopoutGeometry`; the maintainer on collisions: "Yield, then come back") (steps v83, v84), `NotificationMatch`, `NotificationReply`, `Notifications.dnd` and `Notifications.apps` ([notifications](features/notifications.md)).
+
+- **Done:** **Overlay and popouts close or break each other** (row 16; plan #211, the maintainer: "close on outside click currently has the exact desired behaviour. Bar and interactive module clicking does not close it, only where the blur backing would be. Close all popouts and menus (except integrated, since they move the overlay) when the overlay is opened."): the overlay closes only on a real click (its empty background, or a screen's backdrop without a native grab: `FocusGrab.clickedOutside`), never on its grab ending (a polkit prompt closing, another surface's grab), and opening it closes the bar popouts and floating edge menus on its screen (`PopoutManager.closeOn`).
+
+- **Done:** **Low levels spill out of their rounded troughs** (row 16; the maintainer: "anything with a bar with corner radius that extends to fill a container (the two I directly notice are the custom module pill style mode (with the colored fill that fills the module based on percentage), and the osd bars, there may be more though), has a problem of when appearing (i.e. 0-10 ish percentage), since it has a small width, the corner radius doesn't get fully fleshed out, causing a rectangle look (which spills out of its "trough"'s corner radius.)) Fix this"): a fill shorter than twice its radius had its radius clamped. A bar widget's `backgroundLevel` is now the background's own shape seen through a `ClippingRectangle` window with a rounded leading edge (`WidgetBackground`), `StyledVolumeBar`'s trough (the OSD's bars) clips its fill, and the Disks and Claude usage modules' meters are `LevelMeter`s (never shorter than their rounded ends), as the custom widgets' already were.
+Found meanwhile:
+- [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
+- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
+- [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
+- [config.json replaced by rename isn't always read by the live daemon](issues.md#configjson-replaced-by-rename-isnt-always-read-by-the-live-daemon)
+- [BlurManager.paused reads undefined on a reload](issues.md#blurmanagerpaused-reads-undefined-on-a-reload)
 
 Needs a plan:
-- [Overlay and popouts close or break each other](issues.md#overlay-and-popouts-close-or-break-each-other)
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri) (plan: #212)
-- [Setting names that still confuse](issues.md#setting-names-that-still-confuse)
-- [axiom has no hot corners of its own](issues.md#axiom-has-no-hot-corners-of-its-own)
-
-Resolves:
-- [A note's view jumps while typing and forgets its place](issues.md#a-notes-view-jumps-while-typing-and-forgets-its-place)
-- [The bar editor lost its links to the global bar style](issues.md#the-bar-editor-lost-its-links-to-the-global-bar-style)
-- [The layouts editor says a page is shrunk to 99% at the defaults](issues.md#the-layouts-editor-says-a-page-is-shrunk-to-99-at-the-defaults)
-- [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made)
-- [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop)
-- [Warning triangles say nothing on hover](issues.md#warning-triangles-say-nothing-on-hover)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
-- [Updating the greeter closes the overlay and shows no progress](issues.md#updating-the-greeter-closes-the-overlay-and-shows-no-progress). *Needs testing:* only a real greeter update shows it, which the agents may not run (`AGENTS.md` › Never).
-- [Notifications have no blur backing on sway and Hyprland](issues.md#notifications-have-no-blur-backing-on-sway-and-hyprland). *Needs testing:* nested niri blurs every toast; on sway and Hyprland, does a toast blur, and does only the first miss it? The entry's fix (toasts as their own layer windows) waits on that.
+- [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.
+- [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made). *Needs testing:* in nested niri a saved profile for what's connected opens the page with nothing unsaved (the draft only changes through an edit or `_detect` adding a profile or a monitor the daemon's match doesn't list); on which compositor, and after what (opening the page, an Apply, a hotplug, a reload), does it show?
+- [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop). *Needs testing:* nothing in the code keeps the keyboard from an overlay module (the overlay asks for it on demand like the edge menus, exclusively under a grab with no native one, the newest grab since #193, and no handler above the modules takes keys), and only a real click into a field shows it, which the agents may not simulate. On which compositor does it happen, in which module, and does the field show a cursor with the keys going nowhere, or not take the click? On the desktop: is the click that ends the typing on a window (where it gives the keyboard back by design, [desktop](features/desktop.md) › Input), on the bare desktop beside the module, or inside the module itself? (Under niri's focus following the mouse, it's the deferred [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri).)
+- [A hot corner can't close what covers it](issues.md#a-hot-corner-cant-close-what-covers-it). *Needs the maintainer:* should a corner stay live over Overlay-layer surfaces (the workspace overview, a full-screen page), so it can close what it opened, as niri's own corner does?
+- [A VPN's password request can go unseen](issues.md#a-vpns-password-request-can-go-unseen). *Needs the maintainer:* which surface shows a request no open row shows (open the VPN popout, a notification, or decline so nm-applet asks).
+- [Close on outside click differs on Hyprland since the overlay ignores its grab ending](issues.md#close-on-outside-click-differs-on-hyprland-since-the-overlay-ignores-its-grab-ending). *Needs the maintainer:* should a click outside the overlay's window (another monitor, the screen border, a floating bar's gap) close it, as it still does on sway and niri, or not, as now on Hyprland?
 
 ### Deferred
 Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
@@ -341,7 +555,6 @@ Accepted by the maintainer (2026-10-28, #163): the hand-fix gap with no takeover
 
 Deferred by the maintainer (2026-10-29, Phase 6's niri entries: "defer all six niri items and continue"):
 - [A bar popout's stroke flashes off its fill switching content on niri](issues.md#a-bar-popouts-stroke-flashes-off-its-fill-switching-content-on-niri)
-- [A hot reload while locked leaves niri's red screen](issues.md#a-hot-reload-while-locked-leaves-niris-red-screen)
 - [Quickshell's wlr screencopy crashes the shell on niri](issues.md#quickshells-wlr-screencopy-crashes-the-shell-on-niri)
 - [niri reports no position for a tiled window, nor other apps' layers](issues.md#niri-reports-no-position-for-a-tiled-window-nor-other-apps-layers)
 - [Shift+Enter on an emoji doesn't type it on niri](issues.md#shiftenter-on-an-emoji-doesnt-type-it-on-niri)
@@ -358,3 +571,13 @@ Deferred by the maintainer (2026-10-29, plan #197: "defer"):
 
 Deferred by the maintainer (2026-10-29: "move what is necessary to deferred"; Quickshell's to fix, #202):
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
+
+Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log everything except notif sound … Build them into roadmap in the correct spot but deferred and issues (all should need a plan)"; Phase 13 features, each through [Items that need a plan](#items-that-need-a-plan) once taken up; notification sounds are the maintainer's own system sounds plan):
+- [No caps lock warning when typing a password](issues.md#no-caps-lock-warning-when-typing-a-password)
+- [Removable drives aren't handled](issues.md#removable-drives-arent-handled)
+- [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
+- [No OSD for caps lock or the keyboard layout](issues.md#no-osd-for-caps-lock-or-the-keyboard-layout)
+- [No keyboard backlight control](issues.md#no-keyboard-backlight-control)
+
+Deferred by the maintainer (2026-10-30, stacked bars: "Stacked bars will be planned as supported. Mark it as needs a plan and move to deferred"; through [Items that need a plan](#items-that-need-a-plan) once taken up):
+- [A second bar on an edge is invisible to the screen-edge answers, and New bar makes one](issues.md#a-second-bar-on-an-edge-is-invisible-to-the-screen-edge-answers-and-new-bar-makes-one)

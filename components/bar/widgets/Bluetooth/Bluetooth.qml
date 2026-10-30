@@ -10,8 +10,9 @@ import qs.components.bar.widgets.base
 // Bluetooth status: off / on / connected, optionally with the connected
 // device's name and battery. Click toggles power, middle click runs a
 // command; hovering opens the Bluetooth menu. (Reads BluetoothManager
-// only: inside this file `Bluetooth` would mean this component.)
-BarIconWidget {
+// only: inside this file `Bluetooth` would mean this component.) Its
+// display style draws a lone device's battery.
+ValueStyleWidget {
   id: root
 
   readonly property var connected: BluetoothManager.connectedDevices
@@ -28,7 +29,12 @@ BarIconWidget {
     const battery = properties.showBattery && firstDevice.batteryAvailable ? ` ${Math.round(firstDevice.battery * 100)}%` : "";
     return BluetoothManager.deviceLabel(firstDevice) + battery;
   }
-  showText: properties.showDevice && text !== ""
+  labelShown: properties.showDevice && text !== ""
+  // One device reporting its battery
+  readonly property bool hasBattery: connected.length === 1 && firstDevice.batteryAvailable
+  ratio: hasBattery ? firstDevice.battery : -1
+  styleText: connected.length > 1 ? text : firstDevice ? BluetoothManager.deviceLabel(firstDevice) : ""
+  subtext: hasBattery ? `${Math.round(firstDevice.battery * 100)}%` : ""
 
   accentColor: Theme.resolveColor(!BluetoothManager.enabled ? properties.disabledColor : connected.length > 0 ? properties.connectedColor : properties.backgroundColor)
   clickable: true

@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 
 import qs.config
 import qs.components.methods
@@ -66,7 +65,7 @@ QtObject {
           ShellManager.openOverlayPage(page);
       }
     },
-    root._page("settings", ["prefs", "options"], "Settings", "Open the settings"), root._page("themes", [], "Themes", "Open the themes page"), root._page("bar", ["bareditor"], "BarEditor", "Open the bar editor"), root._page("keybinds", ["keys", "shortcuts"], "Keybinds", "Show the keybinds"), root._page("layouts", ["editor", "overlay-editor"], "Layouts", "Edit the overlay pages and edge menus", () => OverlayManager.editPages()), root._page("menus", ["edge-menus", "menu-editor"], "Layouts", "Edit the edge menus", () => OverlayManager.editMenus()), root._page("monitors", ["displays", "screens"], "Monitors", "Arrange and set up monitors"),
+    root._page("settings", ["prefs", "options"], "Settings", "Open the settings"), root._page("themes", [], "Themes", "Open the themes page"), root._page("bar", ["bareditor"], "BarEditor", "Open the bar editor"), root._page("keybinds", ["keys", "shortcuts"], "Keybinds", "Show the keybinds"), root._page("layouts", ["editor", "overlay-editor"], "Layouts", "Edit the overlay pages and edge menus", () => OverlayManager.editPages()), root._page("menus", ["edge-menus", "menu-editor"], "Layouts", "Edit the edge menus", () => OverlayManager.editMenus()), root._page("monitors", ["displays", "screens"], "Monitors", "Arrange and set up monitors"), root._page("widgets", ["custom-widgets", "waybar"], "CustomWidgets", "Make widgets from scripts"),
     // --- Appearance ---
     {
       name: "theme",
@@ -234,6 +233,30 @@ QtObject {
       run: (arg, value) => {
         const on = root._onOff(value ?? arg);
         BluetoothManager.setEnabled(on === null ? !BluetoothManager.enabled : on);
+        return false;
+      }
+    },
+    {
+      name: "vpn",
+      aliases: ["wireguard", "openvpn"],
+      glyph: "vpn_lock",
+      usage: "[name]",
+      description: () => I18n.tr("Connect or disconnect a VPN"),
+      available: () => VpnManager.rows.length > 0,
+      status: () => VpnManager.primary?.name ?? I18n.tr("Off"),
+      options: () => VpnManager.rows.map(row => ({
+              title: row.name,
+              subtitle: VpnManager.statusText(row),
+              glyph: VpnManager.kindIcon(row.kind),
+              value: row.id
+            })),
+      run: (arg, value) => {
+        const wanted = String(arg ?? "").trim().toLowerCase();
+        const row = value ? VpnManager.rowById(value) : wanted !== "" ? VpnManager.rows.find(r => r.name.toLowerCase().startsWith(wanted)) : null;
+        if (row)
+          VpnManager.toggle(row);
+        else if (wanted === "")
+          VpnManager.toggleLast();
         return false;
       }
     },
@@ -590,7 +613,7 @@ QtObject {
       aliases: [],
       glyph: "refresh",
       description: () => I18n.tr("Reload the shell"),
-      run: () => Quickshell.reload(false)
+      run: () => LockManager.reload()
     },
     // --- Other searches ---
     root._prefix("calc", ["math"], "calculate", "Calculate (or start with =)", "=", () => LauncherConfig.calculator), root._prefix("run", ["exec", "sh"], "terminal", "Run a shell command (or start with >)", ">", () => LauncherConfig.runCommands), root._prefix("web", ["search"], "web", "Search the web (or start with ?)", "?", () => LauncherConfig.webSearch), root._prefix("clipboard", ["clip", "paste"], "content_paste", "Search the clipboard history (or start with :)", ":", () => LauncherConfig.clipboard), root._prefix("emoji", ["emojis", "emoticon"], "mood", "Search emoji (or start with ;)", ";", () => LauncherConfig.emoji), root._prefix("help", ["commands"], "help", "List every command", "/", () => true)]
@@ -620,6 +643,7 @@ QtObject {
       // I18n.tr("Open the settings") I18n.tr("Open the themes page") I18n.tr("Open the bar editor")
       // I18n.tr("Show the keybinds") I18n.tr("Edit the overlay pages and edge menus")
       // I18n.tr("Edit the edge menus") I18n.tr("Arrange and set up monitors")
+      // I18n.tr("Make widgets from scripts")
       description: () => I18n.tr(description),
       // Not where the compositor can't do what the page needs (`x-needs`)
       available: () => {

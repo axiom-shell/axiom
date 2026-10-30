@@ -71,11 +71,27 @@ type Entry struct {
 	Modified time.Time `json:"modified"`
 }
 
-// Example is one of the tree's examples.
+// Example is one of the tree's examples, with what a preview draws of it:
+// its theme, the screen border, and its shown bars and docks.
 type Example struct {
-	Name        string `json:"name"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Name         string        `json:"name"`
+	Title        string        `json:"title"`
+	Description  string        `json:"description"`
+	Theme        string        `json:"theme"`
+	ScreenBorder bool          `json:"screenBorder"`
+	Bars         []ExampleBar  `json:"bars"`
+	Docks        []ExampleDock `json:"docks"`
+}
+
+// ExampleBar is an example's bar: its edge and background style.
+type ExampleBar struct {
+	Location   string `json:"location"`
+	Background string `json:"background"`
+}
+
+// ExampleDock is an example's dock: its edge.
+type ExampleDock struct {
+	Edge string `json:"edge"`
 }
 
 // Preview is a shared file read for the settings page to confirm.
@@ -343,7 +359,11 @@ func (s *Service) Examples() []Example {
 		if title == "" {
 			title = name
 		}
-		out = append(out, Example{Name: name, Title: title, Description: h.Description})
+		example := Example{Name: name, Title: title, Description: h.Description, Bars: []ExampleBar{}, Docks: []ExampleDock{}}
+		if loaded, err := s.load(parsed); err == nil {
+			summarize(&example, loaded)
+		}
+		out = append(out, example)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
@@ -412,6 +432,34 @@ func (s *Service) Import(path string, personal, commands bool, monitors share.Mo
 		carry = append(carry, "commands")
 	}
 	return s.apply(preview.Name, parsed, carry, monitors, "import-"+preview.Name, preview.Name)
+}
+
+// summarize fills in what a preview of the example draws, from it loaded
+// (converted and filled, as applying it would take it).
+func summarize(e *Example, cfg *jsonx.Object) {
+	at := func(path string) any {
+		p, _ := config.ParsePath(path)
+		v, _ := config.Lookup(cfg, p)
+		return v
+	}
+	str := func(o *jsonx.Object, k string) string { v, _ := o.Value(k).(string); return v }
+	shown := func(o *jsonx.Object) bool { v, ok := o.Value("enabled").(bool); return !ok || v }
+	e.Theme, _ = at("Appearance.theme.name").(string)
+	e.ScreenBorder, _ = at("Appearance.shape.screenBorder").(bool)
+	if bars, ok := at("Bars.items").(*jsonx.Array); ok {
+		for _, item := range bars.Items {
+			if bar, ok := item.(*jsonx.Object); ok && shown(bar) {
+				e.Bars = append(e.Bars, ExampleBar{Location: str(bar, "location"), Background: str(bar, "background")})
+			}
+		}
+	}
+	if docks, ok := at("Dock.items").(*jsonx.Array); ok {
+		for _, item := range docks.Items {
+			if dock, ok := item.(*jsonx.Object); ok && shown(dock) {
+				e.Docks = append(e.Docks, ExampleDock{Edge: str(dock, "edge")})
+			}
+		}
+	}
 }
 
 // ApplyExample applies the tree's example name (its look), after saving
@@ -595,16 +643,27 @@ func readShared(path string) (any, error) {
 	if err != nil {
 		return nil, axerr.Wrap(axerr.InvalidConfig, err, "%s", filepath.Base(path))
 	}
+	obj, err := versioned(parsed, filepath.Base(path))
+	if err != nil {
+		return nil, err
+	}
+	version := obj.Value("version").(float64)
+	if format, has := obj.Get("format"); has && format != float64(convert.Format) || version > float64(steps.Current()) {
+		return nil, axerr.New(axerr.InvalidConfig, "%s is from a newer axiom: update axiom to import it", filepath.Base(path))
+	}
+	return obj, nil
+}
+
+// versioned is parsed (the file name) when it's an object with a version:
+// a file without one would be taken for version 1.
+func versioned(parsed any, name string) (*jsonx.Object, error) {
 	obj, ok := parsed.(*jsonx.Object)
 	if !ok {
-		return nil, axerr.New(axerr.InvalidConfig, "%s isn't a config", filepath.Base(path))
+		return nil, axerr.New(axerr.InvalidConfig, "%s isn't a config", name)
 	}
 	version, ok := obj.Value("version").(float64)
 	if !ok || version < 1 || version != float64(int64(version)) {
-		return nil, axerr.New(axerr.InvalidConfig, "%s has no config version, so it can't be imported", filepath.Base(path))
-	}
-	if format, has := obj.Get("format"); has && format != float64(convert.Format) || version > float64(steps.Current()) {
-		return nil, axerr.New(axerr.InvalidConfig, "%s is from a newer axiom: update axiom to import it", filepath.Base(path))
+		return nil, axerr.New(axerr.InvalidConfig, "%s has no config version, so it can't be imported", name)
 	}
 	return obj, nil
 }

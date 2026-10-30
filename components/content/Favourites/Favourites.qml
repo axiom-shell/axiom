@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.config
-import qs.components.methods
+import qs.services.system
 import qs.services.ui
 import qs.components.reusable
 import qs.components.content.parts
@@ -68,7 +68,7 @@ Card {
             Layout.preferredWidth: side
             Layout.preferredHeight: side
             sourceSize: Qt.size(128, 128)
-            source: IconResolver.appIcon(app.modelData.icon)
+            source: AppIconManager.appIcon(app.modelData.icon)
           }
           StyledText {
             visible: app.labelled

@@ -71,7 +71,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-options`: a dynamic option list.
   - `"colors"`: a picker over `base00`–`base0F`, read with `Theme.resolveColor` (which also takes semantic names and hex).
   - `"screens"`: a monitor. Empty means the primary monitor, resolved by `General.screensNamed` (bars in `BarsConfig.expandBars`, docks, edge menus). Docks and OSDs pick all monitors through `monitors` instead.
-  - Others: `"languages"`, `"edgeMenus"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"calendars"`, `"chatProviders"`, `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
+  - Others: `"languages"`, `"edgeMenus"`, `"customWidgets"`, `"overlayPages"`, `"notes"`, `"timezones"`, `"calendars"`, `"chatProviders"`, `"chatPresets"`, `"cursorThemes"` (`SettingsManager.optionsFor`).
 - `x-emptyLabel`: offers or renames the empty value under that label.
   - On a color: automatic (a bar's `widgetTextColor`).
   - A color without it lists its `default` first, labelled as the default, so an override can be undone.
@@ -79,7 +79,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-allScreens`: adds All monitors (`"*"`) to a `"screens"` picker.
 - `x-enumLabels` (`{ value: label }`): labels shown instead of raw enum values in dropdowns.
 - `x-suggestions` (e.g. `"audioApps"`): chips under a text field (`SettingsManager.suggestionsFor`).
-- `x-multiline: true`: a growing text area.
+- `x-multiline: true`: a growing text area that holds line breaks (Enter makes one, Ctrl+Enter commits). Without it a text field is one line, wrapped to four as it grows.
 - `x-control`:
   - `"slider"` | `"stepper"`: overrides the integer control choice (below).
   - `"readonly"`: shows a string with a copy button instead of a field (an edge menu's `id`).
@@ -91,7 +91,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `x-unit` (`px`, `%`, `ms`, …) is shown after the value.
 - `x-auto: { value, start }`: a switch in front of an integer whose `value` means automatic. Turning it on stores `start`, then the number shows (an edge menu's `padding`, `triggerLength`).
 
-### Types (bar widgets, overlay modules, views)
+### Types (bar widgets, overlay modules, views, custom widget elements)
 - `x-icon`: a Material Symbols name on bar widget, overlay module and view definitions.
 - On overlay modules:
   - `x-defaultSize` (`[w, h]` in grid units, four to a card): the size it's added at.
@@ -100,6 +100,11 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `x-keyboard: true`: the module takes typing. The desktop, which otherwise never takes the keyboard, takes it on a click while its layout shows one (`OverlayConfig.moduleInfo(type).keyboard`, `ScreenLayoutView.wantsKeyboard`). Needed for a typing module on the desktop: `check_structure` fails a desktop module with a text field (in its file or its content parts) and no `x-keyboard`. `false` says it stays read-only there on purpose (ClockCalendar).
   - `x-required`: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
   - `x-canvasDetail`: a module property the layouts editor shows on its tile (a list joined). `x-canvasFill`: a color property the tile is filled with (`OverlayConfig`).
+- On custom widget elements (`CustomElement`, `components/content/parts/custom/elements/<Type>/schema.yaml`; `CustomWidgetsConfig.elementKinds`):
+  - `x-defaultSize` (`[w, h]` in sub-cells, four to a grid unit): the size it's added at.
+  - `x-slots`: its bindings, in order (keys of its `bind`), each a row of the inspector's Shows.
+  - `x-actions`: the commands it runs, in order (keys of its `actions`), each a row of the inspector's Runs.
+  - Its `options` are its look, a form of its own; `color: state` or `color: text` adds the colour (`CustomElementBase.yaml`'s parts: Auto takes the state's colour on graphics, a switch asks for it on text).
 - `x-tool: true` on the hand-built view types: the navigator's tool group.
 - `x-needs: "<capability>"` on a view type: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
 - `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`): a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).
@@ -110,18 +115,17 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
   - `key`: Hyprland's option path (or a list of paths), sway's command with `{}` for the value (`"input type:keyboard repeat_rate {}"`), or niri's node path (`"input.keyboard.repeat-rate"`, its value the node's argument).
   - `scale`: a factor for a value stored scaled (0.01 for a percent, 0.001 for ms written as seconds).
   - `if`: a boolean beside it (a part's `enabled`): written, default or not, only when that is on.
+  - `skip`: a value written as nothing, so the compositor's own default stays (`"default"`, or niri's `0`).
 - Hyprland (`render.ConfigTable`, one value of a nested `hl.config({...})` table):
-  - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"emptyIsDefault"` (`"default"` → `""`), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).
+  - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).
   - `always: true`: written even when it's the schema default. Other fields are only written once changed, so Hyprland's own default (and the user's files) stay in charge otherwise.
 - sway (`render.SwayOptionLines`; [Sway backend](../compositor/sway-backend.md)):
   - `value`: `"enabled"` (a boolean as `enabled`/`disabled`), `"yesNo"` (`yes`/`no`), `"enableDisable"` (`enable`/`disable`), `"raw"` (as it is, unquoted). Without one, the value is quoted as one argument (`render.SwayQuote`).
   - `map`: `{ value: sway's word }` for an enum whose names differ from sway's; a value missing from it is left out.
-  - `skip`: a value written as nothing (sway's own default stays), e.g. `"default"`.
   - `configOnly: true`: sway takes the command only from a config file (`xkb_numlock`): left out of what's sent at runtime.
 - niri (`compositor/render`'s `niri.go`; [niri backend](../compositor/niri-backend.md)):
   - A boolean is written both ways (`prefer-no-csd false`), so axiom's off wins over a user's own on.
-  - `value`: `"flag"` (the node alone when on, left out when off, for a flag niri has no off form for: `tap`, `focus-follows-mouse`), `"onOff"` (a child `on` or `off` under the key: `animations`, `xwayland-satellite`, `layout.tab-indicator`), `"not"` (a boolean written negated: `clipboard.disable-primary` for middle-click paste), `"offFlag"` (the node alone when off, left out when on: `gestures.hot-corners.off`, `warp-mouse-to-focus` for `noWarps`) or `"float"` (written with a point, where niri wants a float).
-  - `skip`: a value written as nothing (niri's own default stays), e.g. `"default"` or `0`.
+  - `value`: `"flag"` (the node alone when on, left out when off, for a flag niri has no off form for: `tap`, `focus-follows-mouse`), `"onOff"` (a child `on` or `off` under the key: `animations`, `xwayland-satellite`, `layout.tab-indicator`), `"not"` (a boolean written negated: `clipboard.disable-primary` for middle-click paste), `"offFlag"` (the node alone when off, left out when on: `warp-mouse-to-focus` for `noWarps`) or `"float"` (written with a point, where niri wants a float).
 
 - `x-greeter: true` on an `Input` option: the greeter's compositor takes it (`methods/GreeterBundle`). See [Greeter install](../features/greeter-install.md).
 - Details: [Hyprland config modes](../hyprland/config-modes.md), [Window look](../compositor/window-look.md).

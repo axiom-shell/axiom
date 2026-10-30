@@ -96,10 +96,23 @@ QtObject {
   // A Custom page's own fields (name, icon, layout), for the layouts editor
   readonly property var customViewSchema: ConfigManager.configSchema.definitions.CustomOverlayView.properties
   readonly property var availableViewTypes: _oneOfTypes("OverlayView")
+  // The custom widgets as module library entries, one per definition,
+  // keyed "CustomWidget:<id>" (CustomWidgetsConfig.splitKey): the CustomWidget type's
+  // info with the definition's name, icon and design size, on the lock
+  // screen only when it allows that
+  readonly property var customModuleTypes: CustomWidgetsConfig.libraryEntries(availableModuleTypes.find(t => t.type === "CustomWidget") ?? null).map(entry => {
+    const def = CustomWidgetsConfig.definition(entry.definition);
+    return Object.assign(entry, {
+      "defaultSize": def.module.size,
+      "minSize": null,
+      "hosts": entry.hosts.filter(host => host !== "lockscreen" || def.module.lockscreen)
+    });
+  })
   // The module types a host's library offers: "overlay" pages,
-  // "edgeMenu"s or the "lockscreen" (required ones are always there)
+  // "edgeMenu"s or the "lockscreen" (required ones are always there); the
+  // custom widgets one by one rather than the CustomWidget type
   function modulesFor(host) {
-    return availableModuleTypes.filter(t => t.hosts.includes(host) && !t.required);
+    return availableModuleTypes.filter(t => t.hosts.includes(host) && !t.required && t.type !== "CustomWidget").concat(customModuleTypes.filter(t => t.hosts.includes(host)));
   }
   // The required module types on a host
   function requiredFor(host) {
@@ -114,7 +127,7 @@ QtObject {
   }
 
   function moduleInfo(type) {
-    return availableModuleTypes.find(t => t.type === type) ?? null;
+    return availableModuleTypes.find(t => t.type === type) ?? customModuleTypes.find(t => t.type === type) ?? null;
   }
   function viewInfo(type) {
     return availableViewTypes.find(t => t.type === type) ?? null;

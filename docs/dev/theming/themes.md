@@ -14,7 +14,7 @@ How the active theme is loaded, how themes are grouped into dark/light families,
 - The choice of theme is persisted through `ConfigManager.setTheme`.
 
 ### Theme families (discovery)
-- `themeFamilies`: one entry `{ label, dark, light, shared, generated, community }` per theme, built by `methods/ThemeFamilies` (`tests/tst_ThemeFamilies.qml`).
+- `themeFamilies`: one entry `{ label, dark, light, shared, generated, community }` per theme, built by `methods/ThemeFamilies` (`tests/tst_ThemeFamilies.qml`). `ThemeFamilies.previewOf(families, name)` gives one theme's preview colors by name (the onboarder's example cards).
 - A dark/light pair (each file's `paired` naming the other) is one theme, labelled by the words their names share.
 - A family's extra darks (Catppuccin Frappé and Macchiato, Tokyo Storm and Moon, Ayu Mirage, Rosé Pine Moon, Kanagawa Dragon, Nordfox/Carbonfox/Terafox) name its light in `paired` while the light names the main dark back. Each is a family of its own, keeping its name, that shares the light (`shared: true`), as upstream does: those schemes ship one light. No light themes are invented for them.
 - `currentFamily`: the family of the active theme. A shared light belongs to the family it was picked from (`lightFrom` in the look state, saved by `applyFamily` / `setLightMode`), else to its main family, so Light then Dark goes back to the dark you started from. `Appearance.theme` changing any other way (a restored or applied config, the settings field) forgets it.

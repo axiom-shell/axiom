@@ -11,13 +11,26 @@ import qs.components.content.base
 import qs.components.content.parts
 
 // Tailscale (from TailscaleManager): this machine (name, addresses,
-// version), the exit node in use, tailscaled's warnings, a login link when
-// it needs one, Connect / Disconnect (TailscaleConfig.actions) and the
-// tailnet's devices, online first; clicking one copies its address. The
-// Tailscale widget's popout, and an overlay card (compact: devices online).
+// version), tailscaled's warnings and the key's coming expiry, a login
+// link when it needs one, Connect / Disconnect, folds for the account
+// (switch, add), the exit node and the node's switches
+// (TailscaleConfig.actions, which need operator rights: a Grant access
+// button asks polkit for them), and the tailnet's devices, online first;
+// clicking one copies its address. The Tailscale widget's popout, and an
+// overlay card (compact: devices online).
 Panel {
   id: root
 
+  readonly property bool canAct: TailscaleConfig.actions && TailscaleManager.available && TailscaleManager.backendState !== ""
+  readonly property var exitOptions: TailscaleManager.peers.filter(p => p.exitNodeOption && (p.online || p.exitNode))
+  property bool accountOpen: false
+  property bool exitOpen: false
+  property bool optionsOpen: false
+  // Days until this machine's key expires (NaN when it never does)
+  readonly property real keyDays: {
+    void TailscaleManager.peers;
+    return TailscaleManager.keyExpiry ? (Date.parse(TailscaleManager.keyExpiry) - Date.now()) / 86400000 : NaN;
+  }
   readonly property var shownPeers: TailscaleConfig.showOffline ? TailscaleManager.peers : TailscaleManager.peers.filter(p => p.online)
   // I18n.tr("Connected") I18n.tr("Stopped") I18n.tr("Needs login") I18n.tr("Starting…") I18n.tr("Not running")
   readonly property var stateLabels: ({
@@ -39,9 +52,19 @@ Panel {
   implicitWidth: Widget.px(380)
   fullMinWidth: Appearance.fontSize * 14
   fullMinHeight: Appearance.fontSize * 11
+  // In a popout the list grows away from the controls, which stay by the
+  // bar (Panel.growth)
+  flips: true
+  maxImplicitHeight: root.implicitHeight + list.growRoom
 
-  Component.onCompleted: TailscaleManager.acquire(root)
-  Component.onDestruction: TailscaleManager.release(root)
+  Component.onCompleted: {
+    TailscaleManager.acquire(root);
+    TailscaleManager.acquireDetails(root);
+  }
+  Component.onDestruction: {
+    TailscaleManager.release(root);
+    TailscaleManager.releaseDetails(root);
+  }
 
   compactContent: CompactFigure {
     icon: TailscaleManager.connected ? "vpn_lock" : "signal_disconnected"
@@ -143,6 +166,238 @@ Panel {
     }
   }
 
+  // Something that needs the user before the rest works (operator rights,
+  // a login): a tinted box with what and why, and one small button
+  component Notice: Rectangle {
+    id: notice
+    property string icon
+    property string title
+    property string detail
+    property string action
+    property color tint: Theme.warning
+    // The button works (not while another action runs, by default)
+    property bool ready: !TailscaleManager.busy
+    signal triggered
+
+    Layout.fillWidth: true
+    implicitHeight: noticeRow.implicitHeight + Widget.padding
+    radius: Widget.radius
+    color: Qt.alpha(notice.tint, 0.12)
+    border.color: Qt.alpha(notice.tint, 0.4)
+    border.width: Appearance.borderWidth
+
+    RowLayout {
+      id: noticeRow
+      anchors.fill: parent
+      anchors.leftMargin: Widget.padding
+      anchors.rightMargin: Widget.padding / 2
+      spacing: Widget.padding
+      StyledIcon {
+        text: notice.icon
+        textColor: notice.tint
+        textSize: Appearance.fontSizeBy(2)
+      }
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 0
+        StyledText {
+          Layout.fillWidth: true
+          text: notice.title
+          wrapMode: Text.Wrap
+          font.bold: true
+          textSize: Appearance.fontSizeBy(-1)
+        }
+        StyledText {
+          Layout.fillWidth: true
+          visible: notice.detail !== ""
+          text: notice.detail
+          wrapMode: Text.Wrap
+          textSize: Appearance.fontSizeBy(-3)
+          textColor: Theme.foregroundAlt
+        }
+      }
+      StyledTextButton {
+        enabled: notice.ready
+        opacity: enabled ? 1 : 0.5
+        text: notice.action
+        textSize: Appearance.fontSizeBy(-2)
+        textPadding: Widget.smallPadding
+        backgroundColor: notice.tint
+        textColor: Theme.background
+        onClicked: notice.triggered()
+      }
+    }
+  }
+
+  // A section that folds open (account, exit node, options): its icon,
+  // name and current value on one row, the body built only while open,
+  // on the side away from the bar so the row never moves (Panel.flips)
+  component Fold: ColumnLayout {
+    id: fold
+    property string icon
+    property string label
+    property string value
+    property bool open: false
+    property bool foldable: true
+    property Component body
+    signal toggled
+
+    Layout.fillWidth: true
+    spacing: Widget.spacing / 2
+
+    property LayoutOrder _order: LayoutOrder {
+      layout: fold
+      reversed: root.flips && root.growsUp
+    }
+
+    FoldRow {
+      id: foldRow
+      Layout.preferredHeight: Widget.iconButton
+      foldable: fold.foldable
+      open: fold.open && fold.foldable
+      onToggled: fold.toggled()
+
+      StyledIcon {
+        Layout.preferredWidth: Widget.iconButton
+        horizontalAlignment: Text.AlignHCenter
+        text: fold.icon
+        textColor: foldRow.hovered && fold.foldable ? Theme.accent : Theme.foregroundAlt
+      }
+      StyledText {
+        text: fold.label
+        textSize: Appearance.fontSizeBy(-1)
+      }
+      StyledText {
+        Layout.fillWidth: true
+        horizontalAlignment: Text.AlignRight
+        text: fold.value
+        elide: Text.ElideRight
+        textSize: Appearance.fontSizeBy(-2)
+        textColor: Theme.foregroundAlt
+      }
+    }
+    Loader {
+      Layout.fillWidth: true
+      active: fold.open && fold.foldable
+      visible: active
+      sourceComponent: fold.body
+    }
+  }
+
+  // One choice in a fold (an account, an exit node, adding one): a check
+  // on the chosen one, a click picks another
+  component ChoiceRow: Rectangle {
+    id: choice
+    property string icon
+    property string title
+    property string subtitle
+    property bool chosen: false
+    signal picked
+
+    Layout.fillWidth: true
+    implicitHeight: Math.max(choiceColumn.implicitHeight, Widget.iconButton) + Widget.spacing
+    radius: Widget.radius
+    color: choiceHover.hovered && choiceArea.enabled ? Qt.alpha(Theme.backgroundHighlight, 0.5) : Qt.alpha(Theme.backgroundHighlight, 0)
+
+    ColorGlide on color {}
+
+    HoverHandler {
+      id: choiceHover
+    }
+    MouseArea {
+      id: choiceArea
+      anchors.fill: parent
+      enabled: !choice.chosen && !TailscaleManager.busy
+      cursorShape: Qt.PointingHandCursor
+      onClicked: choice.picked()
+    }
+    RowLayout {
+      anchors.fill: parent
+      anchors.rightMargin: Widget.padding
+      spacing: Widget.spacing
+      StyledIcon {
+        Layout.preferredWidth: Widget.iconButton
+        horizontalAlignment: Text.AlignHCenter
+        text: choice.chosen ? "check" : choice.icon
+        textColor: choice.chosen ? Theme.accent : Theme.foregroundAlt
+      }
+      ColumnLayout {
+        id: choiceColumn
+        Layout.fillWidth: true
+        spacing: 0
+        StyledText {
+          Layout.fillWidth: true
+          text: choice.title
+          elide: Text.ElideRight
+          textSize: Appearance.fontSizeBy(-1)
+          textColor: choice.chosen ? Theme.accent : Theme.foreground
+        }
+        StyledText {
+          Layout.fillWidth: true
+          visible: choice.subtitle !== ""
+          text: choice.subtitle
+          elide: Text.ElideRight
+          textSize: Appearance.fontSizeBy(-3)
+          textColor: Theme.foregroundAlt
+        }
+      }
+    }
+  }
+
+  // One of the node's switches (TailscaleManager.prefs[key]): toggling
+  // runs `tailscale set`, the switch following the state again once it
+  // comes back (or the action failed)
+  component PrefRow: RowLayout {
+    id: pref
+    property string key
+    property string label
+
+    Layout.fillWidth: true
+    Layout.leftMargin: Widget.iconButton + Widget.spacing
+    spacing: Widget.spacing
+
+    function follow() {
+      prefSwitch.checked = Qt.binding(() => TailscaleManager.prefs[pref.key] ?? false);
+    }
+
+    Connections {
+      target: TailscaleManager
+      function onPrefsChanged() {
+        pref.follow();
+      }
+      function onBusyChanged() {
+        if (!TailscaleManager.busy && TailscaleManager.lastError !== "")
+          pref.follow();
+      }
+    }
+
+    StyledText {
+      Layout.fillWidth: true
+      text: pref.label
+      elide: Text.ElideRight
+      textSize: Appearance.fontSizeBy(-2)
+    }
+    StyledSwitch {
+      id: prefSwitch
+      enabled: !TailscaleManager.busy
+      opacity: enabled ? 1 : 0.5
+      checked: TailscaleManager.prefs[pref.key] ?? false
+      onToggled: TailscaleManager.setPref(pref.key, checked)
+    }
+  }
+
+  // Without operator rights tailscaled refuses every change: polkit can
+  // grant them (`tailscale set --operator=$USER`). First, so it's by the
+  // bar whichever way the popout grows.
+  Notice {
+    visible: root.canAct && TailscaleManager.profilesDenied
+    icon: "admin_panel_settings"
+    title: I18n.tr("Tailscale needs your permission")
+    detail: I18n.tr("Allow your user to connect, switch accounts and change options.")
+    action: I18n.tr("Grant access")
+    onTriggered: TailscaleManager.grantOperator()
+  }
+
   ModuleHeader {
     icon: "vpn_lock"
     iconColor: TailscaleManager.connected ? Theme.accent : Theme.foregroundAlt
@@ -154,13 +409,35 @@ Panel {
       textSize: Appearance.fontSizeBy(-2)
       textColor: TailscaleManager.connected ? Theme.accent : Theme.foregroundAlt
     }
-    StyledTextButton {
-      visible: TailscaleConfig.actions && TailscaleManager.available && TailscaleManager.backendState !== ""
-      enabled: !TailscaleManager.busy
+    // Connected or not; while connecting or disconnecting, where it's going
+    StyledSwitch {
+      id: connectSwitch
+      visible: root.canAct
+      enabled: !TailscaleManager.busy && !TailscaleManager.profilesDenied
       opacity: enabled ? 1 : 0.5
-      text: TailscaleManager.connected ? I18n.tr("Disconnect") : I18n.tr("Connect")
-      onClicked: TailscaleManager.connected ? TailscaleManager.disconnect() : TailscaleManager.connect()
+      checked: TailscaleManager.pending === "tailscale.up" || TailscaleManager.pending !== "tailscale.down" && TailscaleManager.connected
+      onToggled: {
+        if (checked)
+          TailscaleManager.connect();
+        else
+          TailscaleManager.disconnect();
+        connectSwitch.checked = Qt.binding(() => TailscaleManager.pending === "tailscale.up" || TailscaleManager.pending !== "tailscale.down" && TailscaleManager.connected);
+      }
     }
+  }
+
+  // A pending login's link opens for anyone; without one, logging in runs
+  // `tailscale up`, an action (TailscaleConfig.actions) needing the rights
+  Notice {
+    visible: TailscaleManager.needsLogin && (TailscaleManager.authURL !== "" || root.canAct && !TailscaleManager.profilesDenied)
+    icon: "login"
+    tint: Theme.accent
+    title: I18n.tr("Log in to Tailscale")
+    detail: TailscaleManager.authURL ? I18n.tr("Finish logging in in your browser.") : I18n.tr("This machine isn't logged in.")
+    action: I18n.tr("Log in")
+    // Opening a link doesn't wait for `tailscale up` to give up
+    ready: TailscaleManager.authURL !== "" || !TailscaleManager.busy
+    onTriggered: TailscaleManager.authURL ? TailscaleManager.openLogin() : TailscaleManager.connect()
   }
 
   // This machine
@@ -211,42 +488,133 @@ Panel {
     StyledText {
       Layout.fillWidth: true
       elide: Text.ElideRight
-      text: [TailscaleManager.version ? I18n.tr("Tailscale {0}", TailscaleManager.version) : "", TailscaleManager.exitNode ? I18n.tr("Exit node: {0}", TailscaleManager.exitNode) : ""].filter(s => s).join(" · ")
+      text: TailscaleManager.version ? I18n.tr("Tailscale {0}", TailscaleManager.version) : ""
       visible: text !== ""
       textSize: Appearance.fontSizeBy(-2)
       textColor: Theme.foregroundAlt
     }
   }
 
-  // Login, warnings and the last action's failure
-  RowLayout {
-    visible: TailscaleManager.needsLogin
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-    StyledText {
-      Layout.fillWidth: true
-      wrapMode: Text.Wrap
-      text: TailscaleManager.authURL ? I18n.tr("This machine needs to log in.") : I18n.tr("This machine needs to log in: press Connect.")
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.warning
-    }
-    StyledTextButton {
-      visible: TailscaleManager.authURL !== ""
-      text: I18n.tr("Log in")
-      onClicked: TailscaleManager.openLogin()
+  Fold {
+    visible: root.canAct && (TailscaleManager.profiles.length > 0 || TailscaleManager.account.loginName !== "")
+    icon: "account_circle"
+    label: I18n.tr("Account")
+    value: TailscaleManager.account.displayName || TailscaleManager.account.loginName || I18n.tr("Not logged in")
+    foldable: !TailscaleManager.profilesDenied
+    open: root.accountOpen
+    onToggled: root.accountOpen = !root.accountOpen
+    body: ColumnLayout {
+      spacing: 0
+      Repeater {
+        // A count, so the rows outlive each state
+        model: TailscaleManager.profiles.length
+        ChoiceRow {
+          required property int index
+          readonly property var profile: TailscaleManager.profiles[index] ?? null
+          icon: "person"
+          title: profile ? (profile.nickname || profile.account) : ""
+          subtitle: profile ? [profile.nickname && profile.nickname !== profile.account ? profile.account : "", profile.tailnet].filter(s => s).join(" · ") : ""
+          chosen: profile?.selected ?? false
+          onPicked: TailscaleManager.switchAccount(profile.id)
+        }
+      }
+      ChoiceRow {
+        icon: "person_add"
+        title: I18n.tr("Add account")
+        onPicked: TailscaleManager.addAccount()
+      }
     }
   }
-  Repeater {
-    // a count, so the rows outlive each state
-    model: TailscaleManager.health.length
-    StyledText {
-      required property int index
-      Layout.fillWidth: true
-      wrapMode: Text.Wrap
-      text: TailscaleManager.health[index] ?? ""
-      textSize: Appearance.fontSizeBy(-2)
-      textColor: Theme.warning
+
+  Fold {
+    visible: root.canAct && TailscaleManager.connected && (root.exitOptions.length > 0 || TailscaleManager.exitNode !== "")
+    icon: "alt_route"
+    label: I18n.tr("Exit node")
+    value: TailscaleManager.exitNode || I18n.tr("None")
+    foldable: !TailscaleManager.profilesDenied
+    open: root.exitOpen
+    onToggled: root.exitOpen = !root.exitOpen
+    body: ColumnLayout {
+      spacing: 0
+      ChoiceRow {
+        icon: "block"
+        title: I18n.tr("None")
+        chosen: TailscaleManager.exitNodeIP === ""
+        onPicked: TailscaleManager.setExitNode("")
+      }
+      Repeater {
+        // A count, so the rows outlive each state
+        model: root.exitOptions.length
+        ChoiceRow {
+          required property int index
+          readonly property var peer: root.exitOptions[index] ?? null
+          icon: "public"
+          title: peer?.name ?? ""
+          subtitle: peer ? (peer.online ? peer.ips[0] ?? "" : I18n.tr("Offline")) : ""
+          chosen: peer?.exitNode ?? false
+          onPicked: TailscaleManager.setExitNode(peer.ips[0] ?? "")
+        }
+      }
+      PrefRow {
+        visible: TailscaleManager.prefs.known
+        key: "exitNodeAllowLAN"
+        label: I18n.tr("Allow local network access")
+      }
     }
+  }
+
+  Fold {
+    visible: root.canAct && TailscaleManager.connected && TailscaleManager.prefs.known
+    icon: "tune"
+    label: I18n.tr("Options")
+    // I18n.tr("Subnet routes") I18n.tr("Tailscale DNS") I18n.tr("Shields up")
+    value: [TailscaleManager.prefs.acceptRoutes ? "Subnet routes" : "", TailscaleManager.prefs.acceptDNS ? "Tailscale DNS" : "", TailscaleManager.prefs.shieldsUp ? "Shields up" : ""].filter(s => s).map(s => I18n.tr(s)).join(" · ")
+    foldable: !TailscaleManager.profilesDenied
+    open: root.optionsOpen
+    onToggled: root.optionsOpen = !root.optionsOpen
+    body: ColumnLayout {
+      spacing: Widget.spacing / 2
+      PrefRow {
+        key: "acceptRoutes"
+        label: I18n.tr("Use subnet routes")
+      }
+      PrefRow {
+        key: "acceptDNS"
+        label: I18n.tr("Use Tailscale DNS")
+      }
+      PrefRow {
+        key: "shieldsUp"
+        label: I18n.tr("Shields up (block incoming connections)")
+      }
+    }
+  }
+
+  // Warnings while connected (stopped, tailscaled only repeats the state),
+  // in a column of its own, so the panel's column can flip (Panel.flips)
+  ColumnLayout {
+    visible: TailscaleManager.connected && TailscaleManager.health.length > 0
+    Layout.fillWidth: true
+    spacing: root.spacing
+    Repeater {
+      // a count, so the rows outlive each state
+      model: TailscaleManager.health.length
+      StyledText {
+        required property int index
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: TailscaleManager.health[index] ?? ""
+        textSize: Appearance.fontSizeBy(-2)
+        textColor: Theme.warning
+      }
+    }
+  }
+  StyledText {
+    visible: !isNaN(root.keyDays) && root.keyDays < 7
+    Layout.fillWidth: true
+    wrapMode: Text.Wrap
+    text: root.keyDays <= 0 ? I18n.tr("This machine's key has expired: log in again.") : I18n.tr("This machine's key expires in {0} days.", Math.ceil(root.keyDays))
+    textSize: Appearance.fontSizeBy(-2)
+    textColor: Theme.warning
   }
   StyledText {
     visible: TailscaleManager.lastError !== ""

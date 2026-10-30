@@ -2,6 +2,11 @@ label: Window Title
 icon: wrap_text
 group: Desktop
 popout: menu
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ticker, stacked]
+    description: "Ticker scrolls a long title; stacked puts it over the app's id."
 colors: standard
 settings:
   icon:

@@ -28,35 +28,43 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Text and structure (`reusable/`)
 - `StyledText` / `StyledIcon`.
-- `SectionHeading`: accent title + muted description.
+- `SectionHeading`: accent title + muted description, folded past three lines.
+- `ClampedText`: muted help text cut to `maxLines` (3) with a More / Less link, shown only when it's longer. Field and card descriptions use it.
 - `FieldGroup`: a titled card of fields; `headerExtras` beside the heading.
 - `StyledContainer`: a themed box (surface opacity or solid, optional border and radius).
 - `StyledScrollView`: a ScrollView with the shell's padding and a thin accent scroll bar.
 - `KeyHint`: a keycap and what it does (`[↵] open`), for a controls hint.
 - `content/parts/KeyCap` (a key, optionally with an icon), `ModifierCap` (a combo's modifiers in one cap, as glyphs or words), `KeyCluster` (a folded direction set, H J K L): keycaps for binds. `KeybindSection` / `KeybindRow` draw the keybinds reference (the Keybinds page and the Cheatsheet); `compact` follows `KeybindManager.page.refDensity`; a modifier group folds (`KeybindManager.page.refFolded`). `KeyboardMap`: a US keyboard (`methods/KeyMap`) whose keys are coloured, labelled and clicked through hooks (the editor's key map); `KeyboardReference`: the reference drawn on it, under picked modifiers.
 - `StyledSeparator`: border-coloured divider (accent where a divider is accent by design).
+- `SeparatorMark`: a line, dot, slash or chevron divider (the Separator widget's, the bar's `separatorStyle` and a custom widget's Separator element).
 - `StatusChip` (filled status pill), `CountBadge` (a count on a button's or icon's corner; bumps when it changes), `UnsavedDot` (`onAccent` on a selected row).
   - All three are `PopInRectangle`s: set `shown` (not `visible`) and they pop in and out; `pulse()` for a bump.
 - `IssueList`: `[{ level, text }]`, errors red, warnings amber.
+- `IssueIcon`: one problem's icon in those colors (`level`, `tone`), saying what's wrong in a tooltip on hover (`tip`). Every warning or error icon shown without its text beside it is one (a bind row, a bind section, the onboarding's binds table, the keybinds reference).
 - `DropdownSurface`: the box of anything that drops down.
 - `TileFlow`: equal tiles, as many columns as fit.
 - `TypeLibrary`: the editors' libraries of types to add.
   - An A–Z / By category switch over equal tiles of a caller's `delegate`, by label or under a heading per group (`methods/LibraryOrder`).
   - The label and heading come from the caller's `labelOf` / `headingOf` hooks (the editors translate the schema's).
   - The caller keeps `grouped`.
+  - A search box beside the switch, at the right, narrows the tiles to the types whose label, type or group heading holds the text (`LibraryOrder.filtered`); the query lasts as long as the library is built (the layouts editor keeps it under a module's options).
 - `KeyedLoader`: rebuilds a form when `key` changes, so rows never write old values onto a new selection.
 - `StreamedLoader`: a Loader built a moment later from `BuildQueueManager`'s queue, then faded in: a page's panels, cards, sections and long lists, so a page shows at once. `wanted` gates it like `active`; `always` streams after the page's first build too. See [streamed-building](streamed-building.md).
+- `LayoutOrder`: shows a layout's items in reverse order while `reversed` (`Panel.flips`: a popout growing up keeps its controls last, by the bar). Only for a layout of plain items, no Repeater directly in it.
 
 ### Controls (`reusable/`)
 - `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors, optional `CountBadge`).
 - `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
 - `StyledSlider`: trough, fill and handle; `moved` while dragged, `released` at the end; a value pushed in animates.
-- `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll); `surfaces/osd/PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).
-- `PercentageCircle`: a ring gauge with an icon in the middle.
+- `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll; its trough clips the fill, so a low level keeps to its rounded ends); `surfaces/osd/PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).
+- `PercentageCircle`: a ring gauge with an icon in the middle; `sweep` below 360 opens it at the bottom (a gauge).
+- `LevelMeter`: a level shown, not set: `StyledSlider`'s trough and fill without the handle, across or filling up (`vertical`); the fill is never shorter than its rounded ends. Any meter in a rounded trough is one (the custom widgets', Disks, Claude usage).
+- `SegmentMeter`: a level as blocks or dots lit up to `share`, in a row or a column filling up.
+  - Both are drawn by the bar's display styles (`bar/widgets/base/ValueGraphic`, [Display styles](../bar/display-styles.md)) and a custom widget's elements; a bar sets their sizes from its font.
 - `SegmentButton`: a choice, accent when `active`; `Layout.fillWidth: false` in a row of pills.
 - `SegmentRow`: a single choice of SegmentButtons on one track, the accent sliding to the active one. Toggles and multi-select chips stay plain rows or Flows.
 - `StyledTabBar` (of `StyledTabButton`s): its current tab's highlight slides between tabs.
-- `StyledTextEntry`: see [QML pitfalls](qml-pitfalls.md) (push the value in, act on `textEdited`). `StyledTextArea`: multi-line, optionally growing with its text.
+- `StyledTextEntry`: see [QML pitfalls](qml-pitfalls.md) (push the value in, act on `textEdited`). Search boxes set `clearable`: an X at the right while there's text, which clears it as a typed edit (`clear()`) and keeps the focus; with `escapeClears`, Escape clears it too (passed on when it's empty). The launcher's own field has the same X. `StyledTextArea`: multi-line, optionally growing with its text (`expandable`, capped at `maxLines`, then it scrolls); `singleLine` makes it a one-line value that wraps (line breaks become spaces, Enter submits, Tab moves on).
 - `PasswordEntry`: a password field with a message, a busy bar and `shake()`.
   - It has no authenticator of its own: the lock screen's `PasswordField`, the greeter's `LoginField` and the polkit prompt wire it.
 - `StyledComboEntry`: a choice from a list dropping down under a field, optionally typed. In a popout or edge menu (its window declares `popoutRoom`) the list opens inline (`expandsInline`), inside the field's layout, since a dropdown Popup there is a window the popout's hover and blur don't reach. It's capped by the room the box has left to grow, or in an edge menu by the Flickable around it, which scrolls it into view.
@@ -80,7 +88,9 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `content/base/SaveResetActions`: an editor's Save/Discard pair, both shown only with unsaved edits or typed text. `compact` drops to icons, as `CardHeader` does when its row is too narrow. Items placed in a `CardHeader` sit just after its title.
 
 ### Forms (`forms/`)
-- `SchemaField`: one schema row, any type. It picks `SchemaSwitch`, `SchemaNumberField` (slider or stepper), `SchemaComboBox`, `SchemaTextField` (commits on Enter, focus loss or a suggestion; a Browse button with `x-control: "folder"`) or `SchemaObjectArray` (a list of `SchemaArrayItem`s): use `SchemaField`, not those, unless you need one alone.
+- `SchemaField`: one schema row, any type. It picks `SchemaSwitch`, `SchemaNumberField` (slider or stepper), `SchemaComboBox`, `SchemaTextField` (commits on Enter, focus loss or a suggestion; a long value wraps, growing to four lines, then scrolls; a Browse button with `x-control: "folder"`) or `SchemaObjectArray` (a list of `SchemaArrayItem`s): use `SchemaField`, not those, unless you need one alone.
+- `FieldHeader`: a field's label (medium weight) with its description right under it, and a `trailing` slot on the label's line (the settings row's unsaved dot and reset, passed down as `SchemaField.headerExtra`). Every schema control draws its label through it; a switch sits at the row's right end, centred on the label and description, the row clickable. On a field at least `Widget.fieldInlineFrom` wide, a dropdown or slider sits beside the label too (`Widget.fieldControlWidth`); text boxes stay under it. The settings page's reset button's tooltip names the default.
+- `FormRow`: one row of any schema form (the settings page's `SettingsField`, `SchemaPropertiesForm`'s and `SettingRows`' rows): a hairline across the gap above it (`dividerGap`; none on the top row, which the host marks `first` from `Utils.firstFormRow`, and none above an empty row; never from the row's own `y`, which the layout sets from its height: a row flipping between the two once kept the layout polishing forever and froze the shell), an accent rail beside a row shown by a sibling's value (`indented`: `SchemaField.followsSibling`), and a fold open and shut as `shown` flips. A form's grid or column keeps no row spacing of its own.
 - `SchemaPropertiesForm`: a flat object; `order`.
 - `SettingRows`: dotted config paths as rows, saved debounced.
 - `OptionsGroup`: an inspector's Options card (problem, form, empty text).
@@ -90,9 +100,8 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
 
 ### Bar pieces (`bar/`)
-- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar); `steadyDigits` sizes a ticking label by its digit count.
+- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); `steadyDigits` sizes a ticking label by its digit count.
 - `WidgetBackground`: a widget's or merged run's background in the bar's widget style and shape, with the hover outline and editor highlight.
-- `SeparatorMark`: a line, dot, slash or chevron divider (the Separator widget's and the bar's `separatorStyle`).
 - `methods/BarShapes` (caps and SVG outlines), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
 
 ### Workspace pieces
@@ -111,7 +120,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - A Behavior with another easing or animation is written out.
 - `CrossFade`: `value` shown through a `delegate` with `required property var value`; a new copy fades in over the old on change.
   - A copy with `ready` false (an image loading) waits. Used by the cover and track text, weather and OSD icons.
-- Everything else animates with Behaviors on `Appearance.animFast` / `animNormal` / `animSlow` and `Appearance.easing`.
+- Everything else animates with Behaviors on `Appearance.animFast` / `animNormal` / `animSlow` and `Appearance.easing`. A `duration:` in ms fails `check_structure` unless its line says why it's a behaviour timing (`// behaviour timing: the cursor blink`).
   - Gate it with a `_settled` / `_placed` flag (`Qt.callLater` from `Component.onCompleted`) where a first layout would otherwise fly in from 0.
 - (Rule: AGENTS.md › Config, "Animation".)
 
@@ -122,7 +131,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - **Scroll memory** (`reusable/ScrollMemory`): keeps where a Flickable was scrolled to, by `key` (`EditsManager.scrollOf`, in memory), and puts it back when it's rebuilt (overlay pages are unloaded while it's closed), applied as soon as its content is long enough while it settles. A user's scroll or `cancel()` (a jump) stops it. `TitledCard.scrollKey` sets one up for a panel; an empty key keeps nothing.
 - **Flash outline** (`reusable/FlashOutline`): an accent outline that shows for a moment on `flash()`: what a jump to a settings card or row lands on.
 - **Surface group** (`reusable/SurfaceGroup`): keeps a surface's instances on every monitor in step when its `monitors` mode is `all`.
-- **Folding** (`reusable/FoldingColumn`): a column whose height animates open and shut on `open` (not when built), clipped, its content fading with it, with paddings that fold too. `shown` stays true until fully shut, so content can be held until then. `reusable/FoldingSection` puts a `reusable/FoldHeader` (a clickable `SectionHeading` and chevron, with the unsaved dot and a section line when asked) over one, for a folding section inside a card (the theme list's groups); `FoldingCard` is the card version, on the same header.
+- **Folding** (`reusable/FoldingColumn`): a column whose height animates open and shut on `open` (not when built), clipped, its content fading with it, with paddings that fold too. `shown` stays true until fully shut, so content can be held until then. `reusable/FoldingSection` puts a `reusable/FoldHeader` (a clickable `SectionHeading` and chevron, with the unsaved dot and a section line when asked) over one, for a folding section inside a card (the theme list's groups); `FoldingCard` is the card version, on the same header. `reusable/FoldRow` is the compact one: any content, then a chevron, the whole row clickable (`toggled`; children read `hovered`), for a line that folds something open inside a popout (the Wi-Fi menu's connection details, VPN section and More options).
 
 ### Blur and joins
 - `reusable/CornerPiece`: a concave "inverted corner" filled up to a quarter circle, with its two edges stroked.
@@ -153,7 +162,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - See [Settings page](settings-page.md).
 
 ### Content and calendar parts
-- **Content parts** (`content/parts/`): see [Content roots](../overlay/content-roots.md) and [Writing modules](../overlay/writing-modules.md). Also `AudioRow` (a mixer line: icon, title, volume slider, percentage, mute) `TrayMenuList` / `TrayMenuItem` (a tray menu's entries, for the tray popout and its submenus) and `CodeLine` (text to paste, a command, in a monospace box with Copy: the greeter setup, onboarding and Settings status cards).
+- **Content parts** (`content/parts/`): see [Content roots](../overlay/content-roots.md) and [Writing modules](../overlay/writing-modules.md). Also `AudioRow` (a mixer line: icon, title, volume slider, percentage, mute) `TrayMenuList` / `TrayMenuItem` (a tray menu's entries, for the tray popout and its submenus) `VpnRow` (one VPN of `VpnManager.rows` as a `DeviceRow`: toggles on click, and shows a password field per secret while NetworkManager asks for them; the VPN popout and the Wi-Fi menu) `WifiJoinForm` (what joining a Wi-Fi network asks for by its security, `NetworkingManager.join`'s fields: password, WEP key, LEAP or PEAP/TTLS login with the inner method, outer identity and CA check under More; `hidden` adds the name and a choice of security) `ConnectionDetails` (`NetworkingManager.details` as label / value lines, the addresses copyable) `DeviceRow`'s `hoverActions` (buttons shown on hover before forget, over the end of the name so no row's layout depends on them: the Wi-Fi menu's autoconnect) and `iconBadge` (a small icon on the icon's corner: the Wi-Fi menu's lock) and `RadioHeader`'s children (before the switch: Wi-Fi's airplane mode; `switchShown` false drops the switch) and `CodeLine` (text to paste, a command, in a monospace box with Copy: the greeter setup, onboarding and Settings status cards).
 - **Todo and pomodoro parts** (`content/parts/`): `TodoList` (the add field and the items, `fill` or capped at `maxListHeight`) `PomodoroDial` (the timer's ring, session dots, controls and task picker, `horizontal` for a wide card) `TimeRing` (a countdown ring with the time and a label in the middle, used by `PomodoroDial` and `CountdownTimer`) and `CountdownTimer` (a countdown to start from a typed duration or presets, then its ring, reset, pause and more time; the one-off timer in `content/Stopwatch` and caffeine's popout `content/Caffeine`, so both look the same); see [Todo and pomodoro](../features/todo-pomodoro.md).
 - **Calendar parts** (`content/parts/calendar/`): see [Calendar](../features/calendar.md).
 

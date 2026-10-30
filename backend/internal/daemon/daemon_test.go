@@ -86,28 +86,27 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 			if err != nil {
 				t.Errorf("run: %v", err)
 			}
-		case <-time.After(10 * time.Second):
+		case <-time.After(testkit.Bound(10 * time.Second)):
 			t.Error("the daemon didn't stop")
 		}
 	})
 	// Ready once a connection gets through: the socket's file is there
 	// from the bind, a moment before the listen, and a connect between
 	// the two is refused
-	deadline := time.Now().Add(10 * time.Second)
-	for {
-		if nc, err := net.Dial("unix", td.socket); err == nil {
-			nc.Close()
-			return
-		}
+	ready := testkit.Eventually(func() bool {
 		select {
 		case err := <-done:
 			t.Fatalf("the daemon stopped: %v", err)
 		default:
 		}
-		if time.Now().After(deadline) {
-			t.Fatal("no socket")
+		nc, err := net.Dial("unix", td.socket)
+		if err == nil {
+			nc.Close()
 		}
-		time.Sleep(10 * time.Millisecond)
+		return err == nil
+	})
+	if !ready {
+		t.Fatal("no socket")
 	}
 }
 
@@ -241,7 +240,7 @@ func TestPushesFollowTopics(t *testing.T) {
 		if m != "config.changed" {
 			t.Errorf("first push %s", m)
 		}
-	case <-time.After(5 * time.Second):
+	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("no push to a subscriber of everything")
 	}
 	select {
@@ -285,7 +284,7 @@ func TestPolledTopicFollowsItsSubscribers(t *testing.T) {
 			if m != "probe.state" {
 				t.Errorf("push %s", m)
 			}
-		case <-time.After(5 * time.Second):
+		case <-time.After(testkit.Bound(5 * time.Second)):
 			t.Fatal("no state")
 		}
 	}
@@ -295,16 +294,12 @@ func TestPolledTopicFollowsItsSubscribers(t *testing.T) {
 	default:
 	}
 	sub.Close()
-	deadline := time.Now().Add(5 * time.Second)
-	for {
+	if !testkit.Eventually(func() bool {
 		before := fetches.Load()
 		time.Sleep(100 * time.Millisecond)
-		if fetches.Load() == before {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("still fetching after its subscriber closed")
-		}
+		return fetches.Load() == before
+	}) {
+		t.Fatal("still fetching after its subscriber closed")
 	}
 }
 
@@ -332,7 +327,7 @@ func TestDevModeIsSwitchedAndRemembered(t *testing.T) {
 		select {
 		case m := <-pushes:
 			seen[m] = true
-		case <-time.After(5 * time.Second):
+		case <-time.After(testkit.Bound(5 * time.Second)):
 			t.Fatalf("pushes %v", seen)
 		}
 	}
@@ -393,14 +388,14 @@ func TestHandoffIsChecked(t *testing.T) {
 		{"not json", "{", false},
 		{"stdio descriptors", `{"lock":0,"configLock":4,"listener":5}`, false},
 		{"no listener", `{"lock":3,"configLock":4}`, false},
-		{"whole", `{"lock":3,"configLock":4,"listener":5,"shell":42,"dev":true,"installed":"/usr/bin/axiom"}`, true},
+		{"whole", `{"lock":3,"configLock":4,"listener":5,"shell":42,"locked":true,"dev":true,"installed":"/usr/bin/axiom"}`, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			h, err := inherited(func(string) string { return tc.raw })
 			if (err == nil) != tc.ok {
 				t.Fatalf("err %v", err)
 			}
-			if tc.name == "whole" && (!h.Dev || h.Installed != "/usr/bin/axiom" || h.Shell != 42) {
+			if tc.name == "whole" && (!h.Dev || h.Installed != "/usr/bin/axiom" || h.Shell != 42 || !h.Locked) {
 				t.Errorf("handoff %+v", h)
 			}
 		})

@@ -5,6 +5,8 @@ import qs.config
 // (scripts/check_structure.py)
 import qs.components.content.parts.calendar // qmllint disable unused-imports
 import qs.components.content.parts.chat // qmllint disable unused-imports
+import qs.components.content.parts.custom // qmllint disable unused-imports
+import qs.components.content.parts.custom.elements.Ring // qmllint disable unused-imports
 import qs.components.content.parts.notes // qmllint disable unused-imports
 
 // Hosts one overlay module in its slot on a grid: loads content/<type>.qml and

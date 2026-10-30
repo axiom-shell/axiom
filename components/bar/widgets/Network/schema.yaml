@@ -2,6 +2,11 @@ label: Network Status
 icon: wifi
 group: Network & devices
 popout: {variant: own, enabled: {description: Open the Wi-Fi menu when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, segments, sparkline, ticker, stacked]
+    description: "Ring and segments show the Wi-Fi signal; sparkline the download speed; ticker and stacked the network's name (stacked over its address)."
 colors: {variant: standard, backgroundColor: {title: Connected color}}
 settings:
   showName:
@@ -19,3 +24,18 @@ settings:
     $ref: '#/definitions/WidgetColor'
     title: Disconnected color
     x-autoColor: critical
+  showVpn:
+    type: boolean
+    title: Show VPN
+    default: true
+    description: "A lock on the icon while a VPN is up, and the VPN's name after the network's in the ticker and stacked styles."
+  popoutVpn:
+    type: boolean
+    title: VPNs in the popout
+    default: true
+    description: The VPN section (each VPN, its toggle and the public IP check) and the Import VPN action in the Wi-Fi menu.
+  vpnColor:
+    $ref: '#/definitions/WidgetColor'
+    title: VPN lock color
+    x-autoColor: accent
+    x-showIf: {showVpn: true}

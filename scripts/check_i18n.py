@@ -9,7 +9,8 @@ Keys come from:
     translate those themselves, so they need no code).
 
   scripts/check_i18n.py                 missing / unused entries per language,
-                                        and files not in the canonical format
+                                        and files not in the canonical format;
+                                        fails on all but an empty entry
   scripts/check_i18n.py --fill          also add missing keys (empty) to each file
   scripts/check_i18n.py --prune         also remove unused keys
   scripts/check_i18n.py --format        also rewrite each file in the format
@@ -23,7 +24,10 @@ it; a plain run fails when it's stale. It sits in a subfolder so neither
 the shell's language list nor this script's per-language pass sees it.
 
 An empty or missing entry falls back to English at runtime, so a partly
-translated file is always safe to ship.
+translated file is always safe to ship. An empty one is the normal state
+(the pre-commit hook adds new keys empty), so it's reported, never a
+failure; a key absent from a file, an unused one, a file not in the format
+and a stale template mean the hook didn't run, and fail.
 
 The canonical format is json.dumps(indent=2, ensure_ascii=False) plus a
 newline: anything else rewrites every line in a diff. Files are written
@@ -259,11 +263,15 @@ def main():
         strings = data.setdefault("strings", {})
         missing = [k for k in keys if not strings.get(k)]
         unused = [k for k in strings if k not in keys]
+        absent = [k for k in keys if k not in strings]
+        empty = [k for k in missing if k in strings]
         print(f"{path.name}: {len(keys) - len(missing)}/{len(keys)} translated, {len(missing)} missing, {len(unused)} unused")
-        for k in missing[:40]:
+        for k in empty[:40]:
             print(f"  missing  {keys[k]}: {k!r}")
-        if len(missing) > 40:
-            print(f"  ... and {len(missing) - 40} more")
+        if len(empty) > 40:
+            print(f"  ... and {len(empty) - 40} more")
+        for k in absent:
+            print(f"  absent   {keys[k]}: {k!r}")
         for k in unused:
             print(f"  unused   {k!r}")
         if "--fill" in sys.argv:
@@ -278,7 +286,7 @@ def main():
         elif text != canonical(json.loads(text)):
             print("  format   not in the canonical format (2-space indent): run with --format")
             status |= 1
-        status |= 1 if missing else 0
+        status |= 1 if absent or unused else 0
 
     expected = canonical(template(keys))
     current = TEMPLATE.read_text(encoding="utf-8") if TEMPLATE.exists() else None
@@ -290,6 +298,8 @@ def main():
         else:
             print(f"{TEMPLATE.relative_to(ROOT)}: stale: run with --fill")
             status |= 1
+    if status and not {"--fill", "--prune", "--format"} & set(sys.argv):
+        print("committing through the pre-commit hook fixes these (git config core.hooksPath .githooks)")
     return status
 
 

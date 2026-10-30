@@ -3,7 +3,7 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
-import qs.components.methods
+import qs.services.system
 
 // A bar switcher's row (a column on a vertical bar) of WorkspaceCells for
 // workspaces `ids`: the cells' boxes at rest, the active one's sliding over
@@ -144,7 +144,7 @@ Item {
         // in the grid)
         label: root.properties.relativeNumbers ? wsId - root.base + 1 : wsId
         glyph: _glyph
-        iconPath: biggestWindow ? IconResolver.resolveWindowIcon(biggestWindow.appId, biggestWindow.title) : ""
+        iconPath: biggestWindow ? AppIconManager.resolveWindowIcon(biggestWindow.appId, biggestWindow.title) : ""
         clickable: root.properties.clickToSwitch
         onClicked: CompositorManager.goToWorkspace(wsId, "go", root.monitor?.name ?? "")
         // Also when the cell under the pointer comes to stand for another

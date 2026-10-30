@@ -34,14 +34,14 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 - On an overlay page with `Overlay.moduleBorders` off a module is bare too, but keeps its padding (`host.padded`).
 
 ### Shared parts (`content/parts/`)
-- `ModuleHeader`, `Sparkline`, `StatFigure`, `RateLabel`.
+- `ModuleHeader`, `Sparkline` (between `minValue` and `maxValue`), `StatFigure`, `RateLabel`.
 - `TileGrid`: lays out `reusable/ActionTile`s (the icon-well tiles the power menu also uses), or `ActionPill`s with a `minAspect`.
 - `ExpandButton`: a strip's button growing its detail, hidden where it can't (see [Growing and expanding](grow-expand.md)).
 - Radio menus, shared by WifiNetworks and BluetoothDevices:
   - `RadioHeader`
-  - `DeviceList`: fixed-height in a popout, off and empty states. A ListView, so only the rows in view are built (Wi-Fi can see dozens of networks); its rows are `DeviceRow`s, as wide as the list.
+  - `DeviceList`: in a popout as high as its rows (at least one, off its message, up to `visibleRows`, then it scrolls; `growRoom` for the panel's `maxImplicitHeight`), off and empty states. A ListView, so only the rows in view are built (Wi-Fi can see dozens of networks); its rows are `DeviceRow`s, as wide as the list.
   - `DeviceRow`: confirm-to-forget, connect; extras beside the title and content under it. Content under it that only shows while `expanded` goes in a Loader active then (as Wi-Fi's password field), or every row builds it.
-- `ItemRow`: a plain list entry. An icon or rounded thumbnail, a title of `titleLines`, a muted subtitle, `activated` on a click, and its children as buttons on the right, faint until hovered. Used for clipboard clips, calculator answers, recordings.
+- `ItemRow`: a plain list entry. An icon or rounded thumbnail, a title of `titleLines`, a muted subtitle, a muted `detail` on the right (a value), `activated` on a click (unless not `clickable`), and its children as buttons after it, faint until hovered. Used for clipboard clips, calculator answers, recordings.
 - `KeybindSection` (a section of binds as a card, grouped by modifiers), `KeybindRow` (keys first), `KeyCap`, `ModifierCap` and `KeyCluster` draw keybinds read-only, for the Keybinds page and the Cheatsheet module.
 - `FigureValue`: the bold value + unit row of `StatFigure` and `CompactFigure`.
 - `CompactFigure`: fills its box (inside `pad`).
@@ -65,6 +65,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 (Rule: AGENTS.md › UI conventions.)
 - For a derived set, use `model: rows.length` with the delegate reading `rows[index] ?? fallback`.
 - An `int` / `string` only notifies when it actually changes, so delegates (and Canvases) survive each sample or keystroke.
+- `check_structure` refuses a model reading a polled service's member (one polling through a `ConsumerRegistry` or `DeadlineTicker`), directly or through a property of the same file, unless it counts it (`.length`, `.count`); and an `acquire()` request reading one at all.
 
 ### Testing
 Testing a module safely on the running shell:

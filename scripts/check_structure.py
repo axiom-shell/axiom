@@ -27,8 +27,24 @@ running anything:
   - only the files in scripts/quickshell-io-allowlist.json use Process,
     FileView, Socket or Quickshell.execDetached directly, and
     the list only shrinks (these move to the axiom daemon)
+  - no singleton is over SINGLETON_LINES lines, but the pure helpers and
+    the compositor backends (split one before it grows past)
+  - no Repeater model or acquire() request in the UI reads a polled
+    service's member (one owning a ConsumerRegistry or DeadlineTicker),
+    in the expression or through a property of the file; a model may
+    count one (`.length`, `.count`)
+  - no `duration:` is a number of ms (Appearance.animFast / animNormal /
+    animSlow follow the animation speed), but a line marked
+    `// behaviour timing: <reason>` (a blink, a pause)
+  - nothing formats a date with Qt.formatDateTime / formatDate /
+    formatTime (I18n.formatDate follows the language), and only General
+    reads Quickshell.screens (its outputs leave out the stand-ins shown
+    while no monitor is connected), but a line marked
+    `// allowed: <reason>` (a file name, a window that must exist with no
+    monitor)
 and warns about files in the loaded directories that nothing registers or
-uses.
+uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
+CheckStructure.
 
   scripts/check_structure.py        errors (exit 1) and warnings
 """
@@ -43,12 +59,15 @@ from qml_modules import qml_files
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMA = ROOT / "config" / "json" / "config.schema.json"
 
-# (schema oneOf definition, root its types load from): a type is a folder
-# <root>/<Type>/ with <Type>.qml (docs/dev/core/config-v2.md, rule 11)
+# (schema oneOf definition, root its types load from, file prefix): a type
+# is a folder <root>/<Type>/ with <prefix><Type>.qml (docs/dev/core/config-v2.md,
+# rule 11). Custom widget elements are Custom<Type>.qml, so an element
+# named after a Qt type (Text, Image, List) never shadows it
 LOADERS = [
-    ("BarWidget", "components/bar/widgets"),
-    ("OverlayView", "components/views"),
-    ("OverlayModule", "components/content"),
+    ("BarWidget", "components/bar/widgets", ""),
+    ("OverlayView", "components/views", ""),
+    ("OverlayModule", "components/content", ""),
+    ("CustomElement", "components/content/parts/custom/elements", "Custom"),
 ]
 # Bar popouts load content/<popoutName>/<popoutName>.qml, from the same root
 # as overlay modules (a content type can be both)
@@ -65,6 +84,12 @@ IO_KINDS = {
     "Socket": re.compile(r"(?<![\w.])Socket\s*\{"),
     "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
 }
+
+# A singleton past this is doing several jobs: split it. The pure helpers
+# (components/methods/, unit-tested tables of rules) and the compositor
+# backends (one compositor's whole contract each) may grow past it
+SINGLETON_LINES = 800
+SINGLETON_EXEMPT = re.compile(r"components/methods/.*|services/compositor/(Hyprland|Sway|Niri)Manager\.qml")
 
 errors, warnings = [], []
 
@@ -84,6 +109,24 @@ def schema_types(schema, name):
     return types
 
 
+def binding(code, start):
+    """A QML binding's expression from `start`: to the end of its line, or
+    of the brackets it opens."""
+    depth, i = 0, start
+    while i < len(code):
+        c = code[i]
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if not depth:
+                break
+            depth -= 1
+        elif c in "\n;" and not depth:
+            break
+        i += 1
+    return code[start:i]
+
+
 def main():
     schema = json.loads(SCHEMA.read_text())
     sources = {rel(f): f.read_text() for f in qml_files()}
@@ -98,21 +141,21 @@ def main():
     # Schema types -> folders. A root holds only type folders (and the
     # shared ones); a folder whose files use each other is imported
     # somewhere, so qs scans it for the one loaded by URL
-    for definition, directory in LOADERS:
+    for definition, directory, prefix in LOADERS:
         types = schema_types(schema, definition)
         for t in types:
-            if not (ROOT / directory / t / f"{t}.qml").exists():
-                errors.append(f"{definition} type '{t}' has no {directory}/{t}/{t}.qml")
+            if not (ROOT / directory / t / f"{prefix}{t}.qml").exists():
+                errors.append(f"{definition} type '{t}' has no {directory}/{t}/{prefix}{t}.qml")
         for f in sorted((ROOT / directory).glob("*.qml")):
             errors.append(f"{rel(f)}: a root holds only type folders: move it to {directory}/{f.stem}/ (or base/)")
         for d in sorted(p for p in (ROOT / directory).iterdir() if p.is_dir()):
             if d.name in SHARED_FOLDERS:
                 continue
-            if not (d / f"{d.name}.qml").exists():
-                errors.append(f"{rel(d)}/: a type folder without {d.name}.qml")
+            if not (d / f"{prefix}{d.name}.qml").exists():
+                errors.append(f"{rel(d)}/: a type folder without {prefix}{d.name}.qml")
             if directory == POPOUT_DIR:
                 continue  # content: checked below, with popout names
-            if d.name not in types and not used_as_type(d.name, f"{rel(d)}/{d.name}.qml"):
+            if d.name not in types and not used_as_type(d.name, f"{rel(d)}/{prefix}{d.name}.qml"):
                 warnings.append(f"{rel(d)}/: not a {definition} type and not used anywhere")
 
     # qs scans a module folder only when the import graph from shell.qml
@@ -131,7 +174,7 @@ def main():
         for f in (ROOT / Path(*module.split(".")[1:])).glob("*.qml"):
             todo |= imports_of(sources.get(rel(f), "")) - scanned
     unreached = {}
-    for _, directory in LOADERS:
+    for _, directory, _ in LOADERS:
         for f in sorted((ROOT / directory).rglob("*.qml")):
             own = "qs." + rel(f.parent).replace("/", ".")
             needed = imports_of(sources[rel(f)])
@@ -318,6 +361,9 @@ def main():
         head = next((line.strip() for line in text.split("\n") if line.strip() and not line.strip().startswith("//")), "")
         if head not in ("pragma ComponentBehavior: Bound", "pragma Singleton"):
             errors.append(f"{path}: doesn't start with pragma ComponentBehavior: Bound (or pragma Singleton)")
+        lines = text.count("\n")
+        if head == "pragma Singleton" and lines > SINGLETON_LINES and not SINGLETON_EXEMPT.fullmatch(path):
+            errors.append(f"{path}: a singleton of {lines} lines (over {SINGLETON_LINES}): split it")
 
     # qs.* imports resolve
     for path, text in sources.items():
@@ -392,6 +438,72 @@ def main():
             close = difflib.get_close_matches(name, singletons, n=1, cutoff=0.85)
             if close:
                 errors.append(f"{path}: {name} — did you mean {close[0]}?")
+
+    # Repeater models and acquire() requests never come from live values
+    # (AGENTS.md › UI conventions): a model re-evaluated per sample once
+    # pushed qs past 25 GB. Live means a member of a polled service (one
+    # polling through a ConsumerRegistry or DeadlineTicker, not
+    # BackendManager's or NotesManager's acquire()), read in the expression
+    # or through one property of the same file. A model may count one
+    # (`.length`, `.count`: an int notifies only when it changes); a request
+    # may not read one at all
+    polled = {f.stem for f in ROOT.glob("services/*/*.qml") if re.search(r"\b(?:ConsumerRegistry|DeadlineTicker)\s*\{", f.read_text())}
+    chain = re.compile(r"(?<![\w.])(?:root\.)?([A-Za-z_]\w*)((?:\??\.\w+)*)")
+
+    def live_reads(expr, props, counts, depth=0):
+        found = []
+        for m in chain.finditer(expr):
+            name, members = m.group(1), re.findall(r"\w+", m.group(2))
+            if (expr[m.end():m.end() + 1] == "(" and len(members) < 2) or (counts and members[-1:] in (["length"], ["count"])):
+                continue
+            if name in polled and members and members[0] not in ("acquire", "release"):
+                found.append(f"{name}.{members[0]}")
+            elif name in props and not depth:
+                found += [f"{name} → {r}" for r in live_reads(props[name], props, counts, 1)]
+        return found
+    for path, text in sources.items():
+        if not path.startswith(("components/", "shell/")):
+            continue
+        code = re.sub(r"//[^\n]*", "", re.sub(r'"(?:[^"\\\n]|\\.)*"|\'(?:[^\'\\\n]|\\.)*\'', '""', text))
+        props = {m.group(1): binding(code, m.end()) for m in re.finditer(r"\bproperty\s+[\w<>.]+\s+(\w+)\s*:", code)}
+        for m in re.finditer(r"(?<![\w.])Repeater\s*\{", code):
+            model = re.search(r"(?<![\w.])model:\s*", code[m.end():m.end() + 800])
+            found = model and live_reads(binding(code, m.end() + model.end()), props, True)
+            if found:
+                errors.append(f"{path}:{code.count(chr(10), 0, m.start()) + 1}: a Repeater model from live values ({', '.join(found)}): key it by a count (`model: rows.length`)")
+        requests = [(m.start(), binding(code, m.end())) for m in re.finditer(r"\b\w+\.acquire\(", code)]
+        requests += [(m.start(), props.get(m.group(1)[0].lower() + m.group(1)[1:], "")) for m in re.finditer(r"\bon(\w+)Changed:[^\n]*\bacquire\(", code)]
+        for at, request in requests:
+            found = live_reads(request, props, False)
+            if found:
+                errors.append(f"{path}:{code.count(chr(10), 0, at) + 1}: an acquire() request from live values ({', '.join(found)}): build it from config")
+
+    # Motion follows the animation speed setting: a `duration:` is
+    # Appearance.animFast / animNormal / animSlow (AGENTS.md › Config,
+    # Animation). A bare number is only a behaviour timing (a blink, a
+    # pause), marked on its line
+    for path, text in sources.items():
+        for n, line in enumerate(text.split("\n"), 1):
+            if re.search(r"\bduration:\s*[1-9]\d*\s*(?:[;}]|//|$)", line) and "// behaviour timing:" not in line:
+                errors.append(f"{path}:{n}: a duration in ms: use Appearance.animFast / animNormal / animSlow (or mark a blink or pause `// behaviour timing: <reason>`)")
+
+    # Dates the user reads follow the language: I18n.formatDate(date,
+    # I18n.dateFormat(name)), never Qt.formatDateTime (AGENTS.md › Translation).
+    # Surfaces go on General.outputs / screensFor(target): Quickshell.screens
+    # holds stand-ins while no monitor is connected, and a window left on
+    # one can crash qs when they come back (General filters them). A use
+    # that must stay says why on its line
+    for path, text in sources.items():
+        if path.startswith("tests/"):
+            continue
+        for n, line in enumerate(text.split("\n"), 1):
+            code = line.split("//")[0]
+            if "// allowed:" in line:
+                continue
+            if re.search(r"\bQt\.format(?:DateTime|Date|Time)\(", code):
+                errors.append(f"{path}:{n}: Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name)) (or mark a use that must stay `// allowed: <reason>`)")
+            if path != "config/General.qml" and re.search(r"\bQuickshell\.screens\b", code):
+                errors.append(f"{path}:{n}: Quickshell.screens: build on General.outputs or General.screensFor(target) (or mark a window that must exist with no monitor `// allowed: <reason>`)")
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

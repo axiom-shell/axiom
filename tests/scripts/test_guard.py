@@ -38,6 +38,41 @@ class Bash(unittest.TestCase):
         self.allows("scripts/dev/verify.sh", "git status && git diff HEAD", "axiom ipc overlay toggle",
                     "scripts/log.sh -g lock", "grep -rn 'lockscreen lock' docs", "echo 'qs kill'", "qs log -f")
 
+    def test_compound_commands(self):
+        self.blocks("(qs kill)", "{ qs kill; }", "echo $(qs kill)", "x=`qs kill`", "if true; then qs kill; fi",
+                    "while true; do axiom lock; done", "! axiom lock", "true && (cd /tmp; axiom lock) > /dev/null 2>&1",
+                    'x="$(axiom lock)"', 'echo "`qs kill`"', 'x="$(axiom ipc lockscreen "lock")"',
+                    """bash -c 'echo "$(axiom lock)"'""")
+        self.allows("(cd docs && ls)", "echo $(date)", "if true; then echo ok; fi", "{ git status; git log -1; } | head",
+                    'x="$(git rev-parse HEAD)"', "git commit -m 'never run `axiom lock`'", "grep -n '$(qs kill)' docs",
+                    'git commit -m "never run \\`axiom lock\\`"', """echo "don't" '`axiom lock`'""",
+                    "go test ./... 2>&1 | tail -3")
+
+    def test_every_rule_holds_in_compound_forms(self):
+        """Each AGENTS.md › Never rule's plain form, inside a group, after &&,
+        in a substitution or an if, behind a wrapper or an assignment."""
+        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
+        rules = ["loginctl lock-session", "hyprlock", "ydotool mousemove 1 1", "hyprctl dispatch movecursor 1 1",
+                 "axiom compositor claim --kind sway ~/.config/sway h", "axiom compositor binds remove --kind sway ~/.config/sway x",
+                 "axiom config set Idle.enabled on --takeover", "axiom ipc monitors keep", "axiom ipc selfUpdate update",
+                 f"rm {guard.LIVE_CONFIG}", f"cp /tmp/x.json {guard.LIVE_CONFIG}", "niri msg action quit",
+                 f"python3 -c {call % 'hookup.apply'}", f"python3 -c {call % 'selfupdate.apply'}",
+                 f"python3 -c {call % 'greeter.apply'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
+                 "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
+                 "axiom ipc lockscreen lock", "qs kill", "gh issue create -t x", "git push --force", "git push origin main",
+                 "git clean -fdx", "qmlformat -i shell.qml"]
+        forms = ["( {} )", "true && {}", "{{ {}; }}", "echo $({})", "if true; then {}; fi", "sudo -u me {}",
+                 "nice -n 5 {}", "FOO=1 {}"]
+        with mock.patch.dict(os.environ, {"NIRI_SOCKET": "/run/user/1000/niri.wayland-1.100.sock"}):
+            for rule in rules:
+                self.blocks(rule, *(form.format(rule) for form in forms))
+
+    def test_wrapper_options(self):
+        self.blocks("sudo -u me axiom lock", "nice axiom lock", "nice -n 5 axiom lock", "flock /tmp/l axiom lock",
+                    "flock -w 5 /tmp/l axiom lock", "flock /tmp/l -c 'axiom lock'", "systemd-run --user axiom quit", "systemd-run --user -u x axiom quit",
+                    "ionice -c 3 qs kill", "timeout -s INT 5 axiom lock", "env -u FOO axiom lock")
+        self.allows("nice -n 5 go test ./...", "flock /tmp/l scripts/dev/verify.sh", "timeout 5 axiom ping")
+
     def test_locking(self):
         self.blocks("loginctl lock-session", "sleep 1 && hyprlock", "bash -c 'axiom ipc lockscreen lock'")
 
@@ -51,17 +86,19 @@ class Bash(unittest.TestCase):
                     'qs kill -p "$PWD/greeter.qml"', "qs kill -i abc123", "qs list")
 
     def test_github_issues(self):
-        self.blocks("gh issue create --title x --body y", "gh api repos/a/b/issues -f title=x",
+        self.blocks("gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh api repos/a/b/issues -f title=x",
                     "gh api -X POST /repos/a/b/issues --input body.json", "gh api --method=post repos/a/b/issues",
                     "gh api graphql -f query='mutation { createIssue(input: {}) { issue { id } } }'")
         self.allows("gh issue list", "gh issue view 16", "gh api repos/a/b/issues", "gh api repos/a/b/issues -X GET -f state=open",
                     "gh label list", "gh pr create --fill")
 
-    def test_git_push(self):
+    def test_git_push_and_clean(self):
         self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
                     "git push origin +x", "git push origin :x", "git push --delete origin x", "git push origin main",
-                    "git push origin HEAD:main", "git push origin x:refs/heads/main", "git -C . push --force origin x")
-        self.allows("git push -u origin roadmap/1-x", "git push origin HEAD:roadmap/1-x", "git status", "git pull --ff-only")
+                    "git push origin HEAD:main", "git push origin x:refs/heads/main", "git -C . push --force origin x",
+                    "git clean -fdx", "git clean -X", "git -C . clean -x -f")
+        self.allows("git push -u origin roadmap/1-x", "git push origin HEAD:roadmap/1-x", "git status", "git pull --ff-only",
+                    "git clean -fd", "git clean -n")
         with mock.patch.object(guard, "current_branch", return_value="main"):
             self.blocks("git push", "git push -u origin HEAD")
         with mock.patch.object(guard, "current_branch", return_value="roadmap/1-x"):
@@ -103,6 +140,46 @@ class Bash(unittest.TestCase):
         self.blocks("bash -lc 'qs -c axiom kill'")
         self.allows("axiom compositor claim --kind sway scratch/sway axiom", "bash scripts/greeter/greeter_install.sh check .")
 
+    def test_heredoc_bodies(self):
+        """A heredoc's body is judged only when the command could run it (a shell, source, ., eval) or it substitutes."""
+        self.allows("python3 - <<'PY'\nprint('axiom lock')\naxiom lock\nPY", "cat > notes <<EOF\naxiom lock\nqs kill\nEOF",
+                    "cd /tmp && python3 - <<'PY'\naxiom lock\nPY\ngit status", "cat <<-EOF\n\taxiom lock\n\tEOF",
+                    "cat <<EOF\n$(git rev-parse HEAD)\nEOF")
+        self.blocks("bash <<EOF\naxiom lock\nEOF", "sh <<'EOF'\nqs kill\nEOF", "zsh <<-\"X\"\n\taxiom lock\n\tX",
+                    "cd /tmp && bash -s <<'EOF'\naxiom lock\nEOF", "cat <<'EOF' | sh\naxiom lock\nEOF",
+                    "python3 - <<'PY'\nx = 1\nPY\naxiom lock", "cat <<EOF\n$(axiom lock)\nEOF",
+                    "cat <<A; bash <<B\ntext\nA\naxiom lock\nB")
+        # A command that runs text it's given anywhere, a body that substitutes, a `<<` that isn't a heredoc
+        self.blocks("eval \"$(cat)\" <<EOF\naxiom lock\nEOF", "cat <<EOF |\naxiom lock\nEOF\nsh", "cat <<EOF \\\n| sh\naxiom lock\nEOF",
+                    "cat > x.sh <<'EOF'\naxiom lock\nEOF\nbash x.sh", "cat > x.sh <<'EOF'\naxiom lock\nEOF\n. ./x.sh",
+                    "cat > x.sh <<'EOF'\naxiom lock\nEOF\nchmod +x x.sh && ./x.sh", "cat > /tmp/x <<'EOF'\naxiom lock\nEOF\nsudo /tmp/x",
+                    "cat <<EOF\n$(\naxiom lock\n)\nEOF", "git commit -m \"a <<b\"\naxiom lock\nb", "echo 'x <<EOF'\naxiom lock\nEOF",
+                    "echo $((1<<2))\naxiom lock\n2", "cat <<E'OF'\nx\nEOF\naxiom lock", "cat <<EOF\naxiom lock",
+                    "bash <<< 'axiom lock'", "sh <<<\"qs kill\"")
+        self.allows("git add . && git commit -F - <<'EOF'\naxiom lock\nEOF", "cat <<A <<B\naxiom lock\nA\nqs kill\nB",
+                    "cat > /tmp/p.py <<'EOF'\naxiom lock\nEOF\npython3 /tmp/p.py", "cd /tmp && cat > out/n <<'EOF'\naxiom lock\nEOF",
+                    # a path run that isn't the file the command writes
+                    "cat > /tmp/p.py <<'EOF'\naxiom lock\nEOF\n/usr/bin/grep -n x /tmp/p.py",
+                    "scripts/dev/verify.sh && git commit -F - <<'EOF'\naxiom lock\nEOF")
+
+    def test_comments(self):
+        """A `#` comment ends at its newline; `#` inside a word or quotes isn't one; an unbalanced quote keeps separators."""
+        self.blocks("echo hi # note\naxiom lock", "# step 2\nqs kill", "git status # don't\naxiom lock",
+                    "echo a#b; axiom lock", "echo \"#x\" && qs kill", "echo ${#v} && axiom lock",
+                    "echo \"unbalanced; axiom lock", "echo it's && qs kill", "echo hi # a \\\naxiom lock")
+        self.allows("echo hi # axiom lock", "# qs kill\ngit status", "git status  # then axiom lock; qs kill",
+                    "echo '# x'\n# axiom lock")
+
+    def test_comments_the_shell_may_read_differently(self):
+        """A `<<` in a comment starts no heredoc; a quote this reads unlike the shell
+        (`$'…'`, quotes nested in `"$(…)"`) can't hide what follows behind a comment."""
+        self.blocks("echo # <<EOF\naxiom lock\nEOF", "echo $'\\' #'; axiom lock", "echo $'\\' #\n'; axiom lock\n'",
+                    'echo "$(echo " #")"; axiom lock', f'cp /tmp/x "{guard.LIVE_CONFIG}" # don\'t',
+                    "cat > /tmp/x.sh <<'EOF'\ndon't\nEOF\nbash /tmp/x.sh; echo ' #'; axiom lock")
+        self.allows("git commit -F - <<'EOF'\nFix #12: don't lock\n\n# it's text\nEOF", "printf $'a\\tb'", "printf $'$(axiom lock)'",
+                    "gh pr create --body \"$(cat <<'EOF'\n## Summary\n- don't break #241\nEOF\n)\"",
+                    'git status # see "x"\ngit diff')
+
     def test_a_custom_xdg_config_home_is_live(self):
         with mock.patch.object(guard, "CONFIG_HOMES", guard.CONFIG_HOMES | {Path("/srv/conf")}):
             self.assertTrue(denied("axiom compositor claim --kind sway /srv/conf/sway axiom"))
@@ -137,6 +214,17 @@ class Bash(unittest.TestCase):
                     )
         self.allows("rm /tmp/config.json", f"cp {guard.LIVE_CONFIG} /tmp/backup.json",
                     f"rm {guard.LIVE_CONFIG.parent}/saved/old.json", "git clean -fd", "mv /tmp/new.json /tmp/other.json")
+
+    def test_bash_writes_onto_live_config(self):
+        live = "~/.config/axiom/config.json" if not os.environ.get("XDG_CONFIG_HOME") else str(guard.LIVE_CONFIG)
+        self.blocks(f"cp /tmp/x.json {live}", f"cp /tmp/config.json {guard.LIVE_CONFIG.parent}/", f"mv /tmp/x.json {live}",
+                    f"install -m 644 /tmp/x.json {live}", f"echo '{{}}' > {live}", f"jq . /tmp/x >>{live}",
+                    f"jq . /tmp/x | tee {live}", f"sed -i 's/a/b/' {live}", f"sed -Ei.bak 's/a/b/' {live}",
+                    f"sed --in-place 's/a/b/' {live}", "rm -r ~/.config", f"rm -rf {guard.HOME}",
+                    "find ~/.config/axiom -name config.json -delete", "find ~/.config -name '*.json' -exec rm {} +")
+        self.allows(f"cat {live}", f"jq . {live}", f"jq .Bar {live} > /tmp/out.json", f"cp {live} /tmp/backup.json",
+                    "cp /tmp/x.json /tmp/y.json", f"sed -n 1p {live}", f"diff {live} /tmp/x 2>/dev/null",
+                    "find . -name '*.pyc' -delete", "find ~/.config -name '*.json' -exec grep -l Bar {} +")
 
     def test_qmlformat_inplace(self):
         self.blocks("qmlformat -i shell.qml", "/usr/lib/qt6/bin/qmlformat --inplace shell.qml")

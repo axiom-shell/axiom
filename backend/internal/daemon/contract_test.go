@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // The contract lists exactly the methods a running daemon registers (and
@@ -19,7 +20,7 @@ func TestContractIsTheRegistry(t *testing.T) {
 	var running []string
 	select {
 	case running = <-got:
-	case <-time.After(10 * time.Second):
+	case <-time.After(testkit.Bound(10 * time.Second)):
 		t.Fatal("no registry")
 	}
 	greeterOnly := rpc.NewRegistry()

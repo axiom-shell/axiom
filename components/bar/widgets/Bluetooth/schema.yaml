@@ -2,6 +2,11 @@ label: Bluetooth
 icon: bluetooth
 group: Network & devices
 popout: {variant: own, enabled: {description: Open the Bluetooth menu when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill, stacked]
+    description: "Ring and fill show the connected device's battery, when it reports one; stacked puts the device over it."
 colors: standard
 settings:
   showDevice:

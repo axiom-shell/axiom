@@ -98,7 +98,7 @@ properties:
     type: boolean
     title: Close on outside click
     default: false
-    description: 'Close the overlay when you click outside it: on a bar, the screen border or another monitor.'
+    description: 'Close the overlay when you click its empty background, around the page. A click on a bar, a popout or a prompt leaves it open.'
   items:
     x-scope: look
     type: array
@@ -139,4 +139,5 @@ properties:
       - {id: themes, type: Themes}
       - {id: monitors, type: Monitors}
       - {id: calendarPage, type: CalendarPage}
+      - {id: customWidgets, type: CustomWidgets}
     items: {$ref: '#/definitions/OverlayView'}

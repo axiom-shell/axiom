@@ -3,8 +3,8 @@ import QtQuick
 
 // How the editors' libraries (bar widgets, overlay modules) order their
 // types: by label, or by group (the schema's `x-libraryGroups`, in order)
-// and by label within each. `labelOf` gives a type's shown (translated)
-// label.
+// and by label within each, and which of them a search finds. `labelOf`
+// gives a type's shown (translated) label, `headingOf` a group's heading.
 QtObject {
   id: root
 
@@ -14,6 +14,16 @@ QtObject {
           "type": type,
           "label": String(labelOf(type))
         })).sort((a, b) => a.label.localeCompare(b.label)).map(entry => entry.type);
+  }
+
+  // The types whose shown label, type or group heading holds `query`
+  // (any case); all of them for a blank one
+  function filtered(types, query, labelOf, headingOf) {
+    const q = String(query ?? "").trim().toLowerCase();
+    if (q === "")
+      return types ?? [];
+    const has = text => String(text ?? "").toLowerCase().includes(q);
+    return (types ?? []).filter(type => has(labelOf(type)) || has(type.type) || has(headingOf(type.group ?? "")));
   }
 
   // Sections [{ name, types }]: one per group in `groups` that has types,

@@ -107,17 +107,13 @@ Card {
                 opacity: 0.7
               }
             }
-            Rectangle {
+            LevelMeter {
               Layout.fillWidth: true
-              Layout.preferredHeight: Widget.px(8)
-              radius: height / 2
-              color: Theme.backgroundAlt
-              Rectangle {
-                width: parent.width * disk.ratio
-                height: parent.height
-                radius: height / 2
-                color: root.barColor(disk.ratio)
-              }
+              Layout.preferredHeight: thickness
+              thickness: Widget.px(8)
+              share: disk.ratio
+              trackColor: Theme.backgroundAlt
+              fillColor: root.barColor(disk.ratio)
             }
           }
         }

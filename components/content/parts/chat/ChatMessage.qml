@@ -231,6 +231,7 @@ Item {
               textColor: Theme.error
             }
             StyledText {
+              wrapMode: Text.WordWrap
               Layout.fillWidth: true
               text: {
                 switch (root.message?.errorKind) {

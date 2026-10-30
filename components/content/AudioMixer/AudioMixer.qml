@@ -39,9 +39,15 @@ Panel {
   // grid's, which depends on it)
   readonly property real sideWidth: (root.innerWidth - Appearance.borderWidth - root.pad * 2) / 2
 
-  // A popout's list is a fixed four app rows high, so switching tabs or
-  // apps coming and going never resizes (and moves) the popout
-  readonly property real listHeight: defaultRow.implicitHeight * 4 + list.spacing * 3
+  // A popout's list is as high as its rows, from one (also when empty) to
+  // four, then it scrolls: the popout grows away from its controls, which
+  // stay by the bar (Panel.growth: growing up, they go below the list)
+  function rowsHeight(rows) {
+    return defaultRow.implicitHeight * rows + list.spacing * (rows - 1);
+  }
+  readonly property real listHeight: root.rowsHeight(4) // fixed px: a row count, not a size
+  readonly property real shownListHeight: Math.max(root.rowsHeight(1), Math.min(list.implicitHeight, root.listHeight))
+  maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + root.listHeight - scroll.height
 
   implicitWidth: Widget.px(380)
   fullMinWidth: Appearance.fontSize * 12
@@ -86,6 +92,8 @@ Panel {
     rowSpacing: Widget.spacing
 
     ColumnLayout {
+      Layout.row: root.growsUp ? 2 : 0
+      Layout.column: 0
       Layout.fillWidth: true
       Layout.preferredWidth: root.sideBySide ? root.sideWidth : -1
       Layout.alignment: root.sliderOnly ? Qt.AlignVCenter : Qt.AlignTop
@@ -150,6 +158,8 @@ Panel {
 
     StyledSeparator {
       visible: !root.sliderOnly
+      Layout.row: root.sideBySide ? 0 : 1
+      Layout.column: root.sideBySide ? 1 : 0
       Layout.fillWidth: !root.sideBySide
       Layout.fillHeight: root.sideBySide
       Layout.preferredWidth: root.sideBySide ? Appearance.borderWidth : -1
@@ -157,14 +167,19 @@ Panel {
       separatorColor: Theme.backgroundHighlight
     }
 
-    ColumnLayout {
+    GridLayout {
       visible: !root.sliderOnly
+      Layout.row: root.sideBySide || root.growsUp ? 0 : 2
+      Layout.column: root.sideBySide ? 2 : 0
       Layout.fillWidth: true
       Layout.fillHeight: root.embedded
       Layout.preferredWidth: root.sideBySide ? root.sideWidth : -1
-      spacing: Widget.spacing
+      columns: 1
+      rowSpacing: Widget.spacing
 
       StyledTabBar {
+        Layout.row: root.growsUp ? 1 : 0
+        Layout.column: 0
         tabs: [I18n.tr("Applications ({0})", root.apps.length), I18n.tr("Devices")]
         currentIndex: root.currentTab
         onTabClicked: index => root.currentTab = index
@@ -172,8 +187,10 @@ Panel {
 
       StyledScrollView {
         id: scroll
+        Layout.row: root.growsUp ? 0 : 1
+        Layout.column: 0
         Layout.fillWidth: true
-        Layout.preferredHeight: root.embedded ? -1 : root.listHeight
+        Layout.preferredHeight: root.embedded ? -1 : root.shownListHeight
         Layout.fillHeight: root.embedded
         contentPadding: 0
         showScrollBar: list.implicitHeight > scroll.height
@@ -215,10 +232,11 @@ Panel {
             }
           }
 
-          // An empty list says so in the middle of the (fixed-height) view
+          // An empty list says so in the middle of the view (a popout's
+          // one row)
           StyledText {
             Layout.fillWidth: true
-            Layout.preferredHeight: scroll.availableHeight
+            Layout.preferredHeight: root.embedded ? scroll.availableHeight : root.rowsHeight(1)
             visible: root.currentTab === 0 ? root.apps.length === 0 : root.devices.length === 0
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter

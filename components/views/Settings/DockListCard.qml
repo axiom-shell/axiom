@@ -149,6 +149,7 @@ EntryListCard {
     StyledTextEntry {
       id: search
       placeholderText: I18n.tr("Search apps to pin…")
+      clearable: true
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
     },

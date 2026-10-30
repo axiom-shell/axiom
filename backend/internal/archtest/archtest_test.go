@@ -93,6 +93,8 @@ var tiers = map[string]int{
 	"internal/secrets":              tierEdge,
 	"internal/selfupdate":           tierEdge,
 	"internal/shellcmd":             tierEdge,
+	"internal/nmnet":                tierEdge,
+	"internal/nmvpn":                tierEdge,
 	"internal/store":                tierEdge,
 	"internal/supervise":            tierEdge,
 	"internal/sysmon":               tierEdge,

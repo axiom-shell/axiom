@@ -228,14 +228,13 @@ FocusScope {
         SequentialAnimation on opacity {
           loops: Animation.Infinite
           running: input.activeFocus && root.shown
-          // Cursor blink: a behaviour timing, not motion, so not scaled
           PropertyAnimation {
             to: 1
-            duration: 500
+            duration: 500 // behaviour timing: the cursor blink
           }
           PropertyAnimation {
             to: 0
-            duration: 500
+            duration: 500 // behaviour timing: the cursor blink
           }
         }
       }
@@ -264,6 +263,19 @@ FocusScope {
         text: parent.labels[LauncherManager.mode] ?? ""
         textColor: Theme.accent
         textSize: Appearance.fontSizeBy(-2)
+      }
+    }
+
+    // Clears the search, keeping the focus in it
+    FlatIconButton {
+      visible: input.text !== ""
+      focusPolicy: Qt.NoFocus
+      iconText: "close"
+      iconSize: Appearance.fontSizeBy(2)
+      tooltipText: I18n.tr("Clear")
+      onClicked: {
+        input.clear();
+        input.forceActiveFocus();
       }
     }
   }
@@ -301,6 +313,7 @@ FocusScope {
 
     StyledText {
       id: empty
+      wrapMode: Text.WordWrap
       Layout.fillWidth: true
       Layout.margins: Widget.padding * 2
       visible: list.count === 0 && input.text.trim() !== ""

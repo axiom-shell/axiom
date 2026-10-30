@@ -2,6 +2,11 @@ label: Tailscale Status
 icon: vpn_lock
 group: Network & devices
 popout: {variant: own, enabled: {description: 'Show this machine, the tailnet and its devices when hovered.'}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, stacked]
+    description: "Stacked puts the label over this machine's tailnet address."
 settings:
   showLabel: {type: boolean, title: Show label, default: true}
   label:

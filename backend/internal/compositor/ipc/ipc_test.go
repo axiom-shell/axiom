@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // listen serves path with handle, one connection at a time on its own
@@ -95,7 +97,7 @@ func TestHypr(t *testing.T) {
 	io.WriteString(conn, "workspace>>2\nconfigreloaded>>\n")
 	select {
 	case <-out:
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("no reload")
 	}
 }
@@ -161,7 +163,7 @@ func TestSway(t *testing.T) {
 	go s.Reloads(c, out)
 	select {
 	case <-out:
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("no reload")
 	}
 	select {
@@ -206,7 +208,7 @@ func TestNiri(t *testing.T) {
 		if !r.Failed {
 			t.Fatal("the start state read as a reload")
 		}
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("no reload")
 	}
 }

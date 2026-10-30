@@ -20,6 +20,9 @@ Scope {
   property var windows: []
   property bool active: false
   signal cleared
+  // A click on a screen's backdrop ended it (no native grab): a real
+  // click, never just focus leaving. Sent before `cleared`
+  signal clickedOutside
 
   readonly property bool _native: CompositorManager.supports.focusGrab === true
   // Active without a native grab: a click outside clears it. In
@@ -53,6 +56,7 @@ Scope {
     target: BackdropManager
     enabled: root._catching
     function onClickedOutside() {
+      root.clickedOutside();
       root.cleared();
     }
   }

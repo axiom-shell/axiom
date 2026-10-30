@@ -87,6 +87,7 @@ FieldGroup {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search by name, author, theme or tag")
+      clearable: true
       onTextEdited: root.query = text
     }
 
@@ -157,6 +158,7 @@ FieldGroup {
             }
 
             StyledText {
+              elide: Text.ElideRight
               text: I18n.tr("by {0}", details.setup?.author ?? "")
               textFormat: Text.PlainText
               opacity: 0.7
@@ -248,6 +250,7 @@ FieldGroup {
             spacing: 0
 
             StyledText {
+              wrapMode: Text.WordWrap
               text: I18n.tr("Also use its wallpaper")
               Layout.fillWidth: true
             }
@@ -387,7 +390,7 @@ FieldGroup {
         iconText: "upload"
         text: I18n.tr("Export and submit…")
         onClicked: {
-          SavedConfigsManager.exportConfig(false, false, false);
+          SavedConfigsManager.exportConfig(false, false);
           Qt.openUrlExternally(CommunitySetupsManager.submitUrl(SavedConfigsManager.active));
         }
       }

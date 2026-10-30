@@ -13,7 +13,7 @@ QtObject {
 
   // Unique per popout: "bar:<id>", "osd:<id>:<screen>", "menu:<id>", …
   required property string key
-  // "dock" | "osd" | "bar" | "menu" | "launcher" | "submenu"
+  // "toast" | "dock" | "osd" | "bar" | "menu" | "launcher" | "submenu"
   required property string kind
   property string screen: ""
   // A ScreenEdge.name, or "" for one floating free of the edges

@@ -41,6 +41,9 @@ Panel {
   implicitWidth: Math.max(Appearance.fontSize * 20, pane.actionsWidth)
   // In a popout, room for the editor from the start
   maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + pane.growth
+  // In a popout the day grows away from the month, which stays by the bar
+  // (Panel.growth: growing up, the day above it and the sync row on top)
+  flips: true
   Component.onCompleted: {
     CalendarManager.acquire(root);
     root._takeRequest();
@@ -93,6 +96,8 @@ Panel {
     MonthGrid {
       id: grid
       visible: root.showGrid
+      Layout.row: root.growsUp ? 1 : 0
+      Layout.column: 0
       Layout.fillWidth: !root.sideBySide
       Layout.preferredWidth: root.sideBySide ? Math.min(root.innerWidth * 0.5, root.innerHeight * 1.15) : -1
       Layout.preferredHeight: root.gridHeight
@@ -107,6 +112,8 @@ Panel {
     DayPane {
       id: pane
       visible: root.showDay
+      Layout.row: root.sideBySide || root.growsUp ? 0 : 1
+      Layout.column: root.sideBySide ? 1 : 0
       Layout.fillWidth: true
       Layout.fillHeight: root.embedded
       Layout.preferredHeight: root.embedded ? -1 : implicitHeight

@@ -50,9 +50,9 @@ type run struct {
 	req     rules.Request
 	changed []string
 	backup  string
-	// The user's and greetd's user's accounts; nil while this process
-	// isn't root (a test), where their commands run as it
-	user, greeter *account
+	// The user's account; nil while this process isn't root (a test),
+	// where their commands run as it
+	user *account
 }
 
 // Run carries req out as root: install or update the copy (its code from
@@ -81,7 +81,7 @@ func (in *Installer) Run(ctx context.Context, req rules.Request) rules.Result {
 }
 
 // isRoot says whether this process is root, which then runs the user's
-// commands as them and greetd's user's as that user.
+// commands as them.
 func (in *Installer) isRoot() bool { return os.Geteuid() == 0 }
 
 // lookup is a user's account, for running commands as them.
@@ -146,9 +146,6 @@ func (r *run) install(ctx context.Context) error {
 	greeterAccount, _, err := lookup(greeterName)
 	if err != nil {
 		return failf("greetd's user %s doesn't exist", greeterName)
-	}
-	if in.isRoot() {
-		r.greeter = greeterAccount
 	}
 
 	// The greeter's folder: config/ the user's (the bundle), state/
@@ -538,8 +535,12 @@ func (r *run) uninstall() error {
 		if original == "" {
 			return failf("no backup of %s to put back", path)
 		}
+		// Read before backing up: within the second of the install's own
+		// backup, the new backup takes its name
+		info, err := os.Stat(original)
+		data, rerr := os.ReadFile(original)
 		r.backup = path + ".axiom-bak-" + in.opts.Now().Format("20060102-150405")
-		if copyFile(path, r.backup) != nil || copyFile(original, path) != nil {
+		if err != nil || rerr != nil || copyFile(path, r.backup) != nil || writeFile(path, data, info.Mode().Perm()) != nil {
 			return failf("can't restore %s", path)
 		}
 		// Spent: a later install takes greetd's config as it is then

@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // A lock adopted across an exec (inherited without close-on-exec) gets
@@ -121,7 +122,7 @@ func TestLockDirWaitsForTheHolder(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("never got the lock once released")
 	}
 	// Nothing was added to the folder

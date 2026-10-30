@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/store"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // A daemon that doesn't get the instance lock leaves whatever sits at the
@@ -38,7 +40,14 @@ func TestStaleSocketIsRemovedOnlyUnderTheInstanceLock(t *testing.T) {
 		t.Fatalf("the socket's path was touched without the lock: %q %v", data, err)
 	}
 
+	// Released with forks held off: a child a parallel test forked while
+	// the lock was held carries its descriptor (and so the flock) until it
+	// execs. os/exec holds ForkLock from fork to exec (Linux forks with
+	// CLONE_VFORK, so the parent waits for the exec), so with its read lock
+	// none is between the two, and the close frees the lock at once
+	syscall.ForkLock.RLock()
 	held.Release()
+	syscall.ForkLock.RUnlock()
 	td.start(t, nil)
 	info, err := os.Lstat(td.socket)
 	if err != nil {
@@ -135,7 +144,7 @@ func TestAdoptedHandoffServes(t *testing.T) {
 		cancel()
 		select {
 		case <-stopped:
-		case <-time.After(10 * time.Second):
+		case <-time.After(testkit.Bound(10 * time.Second)):
 			t.Error("the daemon didn't stop")
 		}
 	})
@@ -163,7 +172,7 @@ func TestAdoptedHandoffServes(t *testing.T) {
 		if runErr != nil {
 			t.Fatalf("run: %v", runErr)
 		}
-	case <-time.After(10 * time.Second):
+	case <-time.After(testkit.Bound(10 * time.Second)):
 		t.Fatal("the daemon didn't stop")
 	}
 	if _, err := os.Lstat(td.socket); !os.IsNotExist(err) {

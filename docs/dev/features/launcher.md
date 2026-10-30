@@ -72,7 +72,7 @@ The first character picks the provider:
   - `restore` lists the active snapshot first.
   - There is no delete, since a row runs without a confirm.
 - It works inside the options contract: each option's title is the whole argument, so matching and Tab work unchanged.
-- It offers `SettingsManager.settingPaths` only: the settings page's fields, minus `x-applyOnSave` ones and anything under `_blockedPrefixes` (`Bars.items`, `Overlay.items`, `EdgeMenus`). It can never edit bars, overlay pages or edge menus. (Rule: AGENTS.md › UI conventions.)
+- It offers `SettingsManager.settingPaths` only: the settings page's fields, minus `x-applyOnSave` ones and anything under `_blockedPrefixes` (`Bars.items`, `Overlay.items`, `EdgeMenus`). It can never edit bars, overlay pages or edge menus. (Rule: `services/AGENTS.md`, Launcher.)
 - Values are parsed and checked by `SettingsManager.parseValue`. Choices come from `SettingsManager.optionsFor`, shared with `SchemaField`.
 - Once a setting is typed, its last row is **Show in settings** (while a settings card shows it) (`{ show: key }`): it opens the settings page on that setting (`SettingsManager.openSetting`) after the launcher closes.
 

@@ -5,11 +5,13 @@ import qs.config
 import qs.components.reusable
 
 // A radio menu's list of devices or networks (Wi-Fi, Bluetooth). In a
-// popout it's a fixed `visibleRows` rows high, so rows coming and going, or
-// the radio switching off, never resize the popout; in a card it fills the
-// height. Off, a message takes the list's place. Rows are `delegate`s
-// (DeviceRows, with `required property int index`), modelled by `count` so
-// they survive the list being re-evaluated.
+// popout it's as high as its rows (off, its message; empty, one row) up to
+// `visibleRows`, then it scrolls: the popout grows away from
+// its controls (Panel.growth), and its content declares `growRoom` in its
+// maxImplicitHeight. In a card it fills the height. Off, a message takes
+// the list's place. Rows are `delegate`s (DeviceRows, with `required
+// property int index`), modelled by `count` so they survive the list being
+// re-evaluated.
 Item {
   id: root
 
@@ -28,7 +30,14 @@ Item {
 
   // One row's height (DeviceRow.rowHeight): its two lines, or a button
   readonly property real rowHeight: Math.max(titleMetrics.height + statusMetrics.height, Widget.iconButton) + Widget.spacing * 2
-  readonly property real listHeight: rowHeight * visibleRows + list.spacing * (visibleRows - 1)
+  function rowsHeight(rows) {
+    return root.rowHeight * rows + list.spacing * (rows - 1);
+  }
+  readonly property real listHeight: root.rowsHeight(root.visibleRows)
+  // In a popout: its rows, up to visibleRows; off, its message; empty, a row
+  readonly property real shownHeight: !root.on ? offState.implicitHeight : Math.max(root.rowHeight, Math.min(list.implicitHeight, root.listHeight))
+  // How much taller it can grow in a popout (for Panel.maxImplicitHeight)
+  readonly property real growRoom: root.embedded ? 0 : root.listHeight - root.shownHeight
 
   // Fades the rows in, e.g. on a tab switch
   function fadeIn() {
@@ -36,7 +45,7 @@ Item {
   }
 
   Layout.fillWidth: true
-  Layout.preferredHeight: root.embedded ? -1 : root.listHeight
+  Layout.preferredHeight: root.embedded ? -1 : root.shownHeight
   Layout.fillHeight: root.embedded
 
   FontMetrics {
@@ -51,6 +60,7 @@ Item {
   }
 
   EmptyState {
+    id: offState
     visible: !root.on
     anchors.centerIn: parent
     maxWidth: parent.width

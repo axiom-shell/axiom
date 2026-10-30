@@ -95,6 +95,7 @@ BaseView {
             Layout.fillWidth: true
             Layout.preferredHeight: Widget.height
             placeholderText: I18n.tr("Search keybinds")
+            clearable: true
             Component.onCompleted: input.text = KeybindManager.page.query
             onTextChanged: KeybindManager.page.query = text
           }
@@ -105,6 +106,7 @@ BaseView {
             Layout.fillWidth: true
             Layout.preferredHeight: Widget.height
             placeholderText: I18n.tr("Search binds by key, action or label")
+            clearable: true
             Component.onCompleted: input.text = KeybindManager.page.editQuery
             onTextChanged: KeybindManager.page.editQuery = text
             // Add bind clears the search
@@ -297,6 +299,7 @@ BaseView {
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         visible: !root.editing && !root.keyboard && root.narrowed && root.sections.length === 0
         text: root.lookupId !== "" ? I18n.tr("Nothing is bound to {0}", KeybindManager.displayCombo(KeybindManager.page.lookupCombo)) : root.query !== "" ? I18n.tr("No keybinds match \"{0}\"", root.query) : I18n.tr("No keybinds match the filters")
         opacity: 0.6

@@ -13,6 +13,15 @@ QtObject {
     return JSON.parse(JSON.stringify(value ?? null));
   }
 
+  // `object` with only `keys` (those it has), in their order
+  function pick(object, keys) {
+    return (keys ?? []).reduce((out, key) => {
+      if (object && key in object)
+        out[key] = object[key];
+      return out;
+    }, {});
+  }
+
   // Whether two pieces of plain JSON data are equal, whatever their objects'
   // key order (JSON.stringify compares order too)
   function deepEqual(a, b) {
@@ -35,6 +44,19 @@ QtObject {
     for (const key of path)
       value = value?.[key];
     return value;
+  }
+
+  // The index of a form's top row (FormRow.first): the first of `count`
+  // rows (`rowAt(i)`: { shown, bodyHeight } or null, a Repeater's itemAt)
+  // that draws something, shown or not yet known (undefined) and not
+  // empty; -1 for none
+  function firstFormRow(count, rowAt) {
+    for (let i = 0; i < count; i++) {
+      const row = rowAt(i);
+      if (row && row.shown !== false && row.bodyHeight > 0)
+        return i;
+    }
+    return -1;
   }
 
   // A copy of the object `map` with `key` set to `value`, or left out when

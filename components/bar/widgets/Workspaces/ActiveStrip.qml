@@ -3,7 +3,6 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
-import qs.components.bar
 import qs.components.reusable
 
 // What a switcher shows after its workspaces on a strip monitor: a divider

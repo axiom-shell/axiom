@@ -104,9 +104,6 @@
     "missing-property: Member \"implicitHeight\" not found on type \"QObject\"": 1,
     "missing-property: Member \"implicitWidth\" not found on type \"QObject\"": 1
   },
-  "components/surfaces/notifications/NotificationToast.qml": {
-    "missing-type: No type found for property \"adjustment\". This may be due to a missing import statement or incomplete qmltypes files.": 1
-  },
   "services/system/BluetoothManager.qml": {
     "unresolved-type: Type \"BluetoothAdapter\" of property \"defaultAdapter\" not found. This is likely due to a missing dependency entry or a type not being exposed declaratively.": 1
   },
@@ -114,10 +111,6 @@
     "unqualified: Unqualified access": 1
   },
   "shell/NoParentNotice.qml": {
-    "unqualified: unknown grouped property scope margins.": 1,
-    "unresolved-type: Type margins is used but it is not resolved": 1
-  },
-  "shell/Notifications.qml": {
     "unqualified: unknown grouped property scope margins.": 1,
     "unresolved-type: Type margins is used but it is not resolved": 1
   }

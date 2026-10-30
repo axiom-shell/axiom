@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func fast(opts Options) Options {
@@ -30,13 +32,9 @@ func run(t *testing.T, s *Supervisor) (context.CancelFunc, chan struct{}) {
 
 func eventually(t *testing.T, cond func() bool) {
 	t.Helper()
-	for i := 0; i < 200; i++ {
-		if cond() {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
+	if !testkit.Eventually(cond) {
+		t.Fatal("timed out")
 	}
-	t.Fatal("timed out")
 }
 
 func TestCrashesRestartThenGiveUp(t *testing.T) {
@@ -111,7 +109,7 @@ func TestStopEscalatesToKill(t *testing.T) {
 	cancel()
 	select {
 	case <-done:
-	case <-time.After(3 * time.Second):
+	case <-time.After(testkit.Bound(3 * time.Second)):
 		t.Fatal("didn't stop")
 	}
 	if syscall.Kill(pid, 0) == nil {
@@ -131,16 +129,30 @@ func TestOrphanOfAnEarlierDaemonIsStopped(t *testing.T) {
 	if err := orphan.Start(); err != nil {
 		t.Fatal(err)
 	}
-	go orphan.Wait()
+	exited := make(chan struct{})
+	go func() { orphan.Wait(); close(exited) }()
+	// A failed run leaves no sleep behind
+	t.Cleanup(func() { orphan.Process.Kill(); <-exited })
 	os.WriteFile(pidFile, []byte(strconv.Itoa(orphan.Process.Pid)), 0o600)
-	// A pid file naming an unrelated process must leave it alone
+	// A process the pid file doesn't name is left alone, even one alike
 	other := exec.Command("sleep", "31")
-	other.Start()
-	defer other.Process.Kill()
+	if err := other.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { other.Process.Kill(); other.Wait() })
 
 	s := New(fast(Options{Command: command, PIDFile: pidFile}))
+	// Start returns once exec has replaced the image but before the kernel
+	// fills in its cmdline (empty until then, for long under load): an
+	// orphan of an earlier daemon has long shown it
+	eventually(t, func() bool { return s.isOurChild(orphan.Process.Pid) })
 	run(t, s)
-	eventually(t, func() bool { return syscall.Kill(orphan.Process.Pid, 0) != nil })
+	// Left alone, it would sleep 30 s
+	select {
+	case <-exited:
+	case <-time.After(testkit.Bound(15 * time.Second)):
+		t.Fatal("the orphan wasn't stopped")
+	}
 	if syscall.Kill(other.Process.Pid, 0) != nil {
 		t.Error("an unrelated process was stopped")
 	}
@@ -204,7 +216,7 @@ func TestRequestedStopIsNotAnExit(t *testing.T) {
 		if pid != first {
 			t.Errorf("OnStop got %d, want %d", pid, first)
 		}
-	case <-time.After(time.Second):
+	case <-time.After(testkit.Bound(time.Second)):
 		t.Fatal("no OnStop for the restart")
 	}
 	cancel()

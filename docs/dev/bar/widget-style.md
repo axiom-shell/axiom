@@ -15,9 +15,11 @@ The base classes bar widgets extend, where their sizes come from, and how their 
     - `scrollable` → `scrolled(steps)`.
     - `hovered` is what an edge menu opened by a Button stays open for.
     - `dim` is for fades of the widget's own.
-- **`AudioLevelWidget`** is shared by Volume and Microphone.
+- **`ValueStyleWidget`** (a `BarIconWidget`) draws a widget's value in its display style, and `ValueGraphic` is that graphic alone ([Display styles](display-styles.md)).
+- **`AudioLevelWidget`** (a `ValueStyleWidget`) is shared by Volume and Microphone.
 - **`bar/widgets/base/BarWidget.qml`** is the base for widgets that draw their own content. It has the same inputs plus `isVertical`.
 - **`base/BaseWidget`** is the sizing and background wrapper under both.
+- **`base/IconTextWidget`** (under `BarIconWidget`) lays the icon and label along the bar, the label's figures (a digit's height) centred on the icon's middle (`iconMiddle`) on a whole pixel rather than its box, which holds the descent and sat it high; on a vertical bar the label is turned along it, or with `uprightLabel` small and upright under the icon (SystemStats' metrics, each one an IconTextWidget); a graphic of `leadLength` goes in its `lead` slot before the icon, or after it, where the label would be, with `leadAfterIcon` (a display style's ring, meters, ticker).
 
 ### Sizes come from the bar
 - (Rule: `components/bar/widgets/AGENTS.md`, "Sized by the bar".)
@@ -32,6 +34,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
   - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, underline, colored icons or plain.
   - `widgetTextColor` overrides the automatic text color.
 - Colors that are content rather than a background stay the widget's own: workspace cells, separators, badges, the DND icon.
+- `backgroundLevel` (0–1, -1 for none) with `backgroundLevelColor`: a level its WidgetGroup fills the background's shape to (the custom widget's pill), in the background's caps with a rounded leading edge ([Shapes and runs](widget-shapes-runs.md)). A graphic a widget draws itself reads in `colors.icon`, which contrasts with a filled background.
 
 ### Auto colors
 - A widget color field with an `x-autoColor` role is Auto when empty, which is its default.

@@ -69,6 +69,7 @@ Item {
 
     // Empty state
     StyledText {
+      wrapMode: Text.WordWrap
       visible: root.contentReady && menuRepeater.count === 0
       text: root.emptyText
       textColor: Theme.accent

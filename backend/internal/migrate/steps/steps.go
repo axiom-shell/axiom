@@ -65,6 +65,43 @@ var all = []Step{
 	// v79: Tailscale's interval moved from each bar widget to the
 	// Tailscale section (v79.go)
 	{Version: 79, Run: v79},
+	// v80: the Custom widgets page, a tool page every config has once
+	{Version: 80, Run: func(cfg *jsonx.Object) []string {
+		overlay := object(cfg, "Overlay")
+		if overlay == nil {
+			return nil
+		}
+		items, _ := overlay.Value("items").(*jsonx.Array)
+		if items == nil {
+			return nil
+		}
+		for _, item := range items.Items {
+			if view, _ := item.(*jsonx.Object); view != nil && view.Value("type") == "CustomWidgets" {
+				return nil
+			}
+		}
+		items.Append(jsonx.Obj("id", "customWidgets", "type", "CustomWidgets"))
+		return []string{"Overlay.items: added the Custom widgets page"}
+	}},
+	// v81: CommandOutput modules became custom widgets (v81.go)
+	{Version: 81, Run: v81},
+	// v82: niri's hot corner became an axiom one (v82.go)
+	{Version: 82, Run: v82},
+	// v83: Notifications.appTimeouts became followApps
+	{Version: 83, Run: func(cfg *jsonx.Object) []string {
+		n := object(cfg, "Notifications")
+		if n == nil || !n.Has("appTimeouts") {
+			return nil
+		}
+		v, _ := n.Get("appTimeouts")
+		n.Delete("appTimeouts")
+		if !n.Has("followApps") {
+			n.Set("followApps", v)
+		}
+		return []string{"Notifications.appTimeouts became Notifications.followApps (which also lets apps withdraw their notifications from the history)"}
+	}},
+	// v84: Notifications' corner became an edge placement (v84.go)
+	{Version: 84, Run: v84},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

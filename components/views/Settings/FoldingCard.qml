@@ -64,6 +64,14 @@ StyledContainer {
       }
     }
 
+    // Between the header and the fields, while unfolded
+    StyledSeparator {
+      visible: !root.collapsed && body.content.length > 0
+      Layout.fillWidth: true
+      separatorHeight: 1
+      opacity: 0.6
+    }
+
     FoldingColumn {
       id: body
       open: !root.collapsed

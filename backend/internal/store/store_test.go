@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -149,6 +150,32 @@ func TestSetValidatesAndRefusesTakeovers(t *testing.T) {
 	}
 }
 
+// A takeover can't be changed around its own key either: replacing or
+// deleting its section, deleting the key back to its default, or an op
+// list that ends on another value is refused, and the value stays
+func TestNoOpChangesATakeoverSideways(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), true)}, SetOptions{Takeover: true}); err != nil {
+		t.Fatal(err)
+	}
+	section, _ := jsonx.Unmarshal([]byte(`{"enabled": false}`))
+	for name, ops := range map[string][]config.Op{
+		"the section replaced":  {config.SetValue(config.Keys("Idle"), section)},
+		"the section deleted":   {{Op: "delete", Path: config.Keys("Idle")}},
+		"the key deleted":       {{Op: "delete", Path: config.Keys("Idle", "enabled")}},
+		"ending off":            {config.SetValue(config.Keys("Idle", "enabled"), true), config.SetValue(config.Keys("Idle", "enabled"), false)},
+		"hidden among the rest": {config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0), config.SetValue(config.Keys("Idle", "enabled"), false)},
+	} {
+		if _, err := s.Set(ops, SetOptions{}); axerr.KindOf(err) != axerr.TakeoverRefused {
+			t.Errorf("%s: %v", name, err)
+		}
+		if cfg, _ := s.Config(); cfg.Value("Idle").(*jsonx.Object).Value("enabled") != true {
+			t.Fatalf("%s changed Idle.enabled", name)
+		}
+	}
+}
+
 // An event carries the ops from the config before it: a write's, and an
 // edit made outside's (diffed after the takeovers are held)
 func TestEventsCarryTheChange(t *testing.T) {
@@ -214,10 +241,7 @@ func TestBrokenFileBlocksSavesUntilFixed(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	s := open(t, dir)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.Watch(ctx)
-	time.Sleep(50 * time.Millisecond)
+	watch(t, s)
 
 	path := filepath.Join(dir, FileName)
 	os.WriteFile(path, []byte(`{"version": 75, "Battery": {"lowThreshold": "x"}`), 0o600)
@@ -239,15 +263,14 @@ func TestOwnWritesDontReload(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	s := open(t, dir)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.Watch(ctx)
-	time.Sleep(50 * time.Millisecond)
-	n := 0
-	s.Subscribe(func(Event) { n++ })
+	watch(t, s)
+	// Delivered by whichever goroutine publishes next (a reload too)
+	var n atomic.Int32
+	s.Subscribe(func(Event) { n.Add(1) })
 	s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 16.0)}, SetOptions{})
+	waitFor(t, func() bool { return n.Load() > 0 })
 	time.Sleep(150 * time.Millisecond)
-	if n != 1 {
+	if n := n.Load(); n != 1 {
 		t.Errorf("%d events for one write", n)
 	}
 }
@@ -256,10 +279,7 @@ func TestDeletedFileIsNotRecreated(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	s := open(t, dir)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.Watch(ctx)
-	time.Sleep(50 * time.Millisecond)
+	watch(t, s)
 	os.Remove(filepath.Join(dir, FileName))
 	waitFor(t, func() bool { _, st := s.Config(); return st.Missing })
 	if _, err := os.Stat(filepath.Join(dir, FileName)); err == nil {
@@ -285,15 +305,29 @@ func TestSymlinkedConfigStaysALink(t *testing.T) {
 	}
 }
 
+// watch runs s.Watch until the test ends, once it watches the folders:
+// an edit before then would go unseen.
+func watch(t *testing.T, s *Store) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.watching = make(chan struct{})
+	ended := make(chan error, 1)
+	go func() { ended <- s.Watch(ctx) }()
+	t.Cleanup(func() { cancel(); <-ended })
+	select {
+	case <-s.watching:
+	case err := <-ended:
+		t.Fatalf("Watch ended: %v", err)
+	case <-time.After(testkit.Bound(5 * time.Second)):
+		t.Fatal("not watching")
+	}
+}
+
 func waitFor(t *testing.T, cond func() bool) {
 	t.Helper()
-	for i := 0; i < 100; i++ {
-		if cond() {
-			return
-		}
-		time.Sleep(20 * time.Millisecond)
+	if !testkit.Eventually(cond) {
+		t.Fatal("timed out")
 	}
-	t.Fatal("timed out")
 }
 
 // Breaking the file and undoing back to the bytes the store last wrote is
@@ -302,10 +336,7 @@ func TestUndoToOwnBytesUnblocks(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	s := open(t, dir)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.Watch(ctx)
-	time.Sleep(50 * time.Millisecond)
+	watch(t, s)
 	path := filepath.Join(dir, FileName)
 	good, _ := os.ReadFile(path)
 	os.WriteFile(path, []byte(`{"format": 2, "Battery": `), 0o600)
@@ -355,7 +386,7 @@ func TestSubscriberMayWrite(t *testing.T) {
 	}()
 	select {
 	case <-done:
-	case <-time.After(5 * time.Second):
+	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("deadlocked")
 	}
 	if len(revisions) != 2 || revisions[0] != 2 || revisions[1] != 3 {
@@ -373,10 +404,7 @@ func TestReloadHoldsTakeovers(t *testing.T) {
 	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), true)}, SetOptions{Takeover: true}); err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.Watch(ctx)
-	time.Sleep(50 * time.Millisecond)
+	watch(t, s)
 
 	path := filepath.Join(dir, FileName)
 	cfg, _ := s.Config()
@@ -395,6 +423,10 @@ func TestReloadHoldsTakeovers(t *testing.T) {
 	if err != nil || onDisk.Value("Idle").(*jsonx.Object).Value("enabled") != true {
 		t.Errorf("the kept takeover wasn't written back: %v", err)
 	}
+	// A reload leaves the takeovers known: the next save goes ahead
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 10.0)}, SetOptions{}); err != nil {
+		t.Errorf("a save after the reload: %v", err)
+	}
 	// Its own card still changes it
 	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), false)}, SetOptions{Takeover: true}); err != nil {
 		t.Fatal(err)
@@ -410,10 +442,7 @@ func TestTakeoverOnlyEditIsWrittenBackOnce(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	s := open(t, dir)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.Watch(ctx)
-	time.Sleep(50 * time.Millisecond)
+	watch(t, s)
 
 	path := filepath.Join(dir, FileName)
 	cfg, st := s.Config()
@@ -436,20 +465,20 @@ func TestTakeoverOnlyEditIsWrittenBackOnce(t *testing.T) {
 func TestFixedUnparsableFileKeepsItsTakeovers(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
-	first := open(t, dir)
+	first := openKeeping(t, dir)
 	if _, err := first.Set([]config.Op{config.SetValue(config.Keys("Idle", "enabled"), true)}, SetOptions{Takeover: true}); err != nil {
 		t.Fatal(err)
 	}
 	good, _ := first.Config()
 	first.Close()
+	kept := filepath.Join(dir, "state", TakeoversFile)
+	os.Remove(kept)
 	path := filepath.Join(dir, FileName)
 	os.WriteFile(path, []byte(`{"version": `), 0o600)
 
-	s := open(t, dir)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.Watch(ctx)
-	time.Sleep(50 * time.Millisecond)
+	s := openKeeping(t, dir)
+	t.Cleanup(func() { s.Close() })
+	watch(t, s)
 	os.WriteFile(path, jsonx.Marshal(good), 0o600)
 	waitFor(t, func() bool { _, st := s.Config(); return !st.Blocked })
 	if cfg, _ := s.Config(); cfg.Value("Idle").(*jsonx.Object).Value("enabled") != true {
@@ -457,6 +486,9 @@ func TestFixedUnparsableFileKeepsItsTakeovers(t *testing.T) {
 	}
 	if onDisk, _, _ := Peek(Options{Dir: dir, Pipeline: pipeline(t)}); onDisk.Value("Idle").(*jsonx.Object).Value("enabled") != true {
 		t.Error("the fixed file was written back with the default")
+	}
+	if data, _ := os.ReadFile(kept); !strings.Contains(string(data), `"enabled": true`) {
+		t.Errorf("the fixed file's takeovers weren't kept: %s", data)
 	}
 }
 
@@ -546,10 +578,7 @@ func TestKeptTakeoversOverAFileThatIsntJSON(t *testing.T) {
 		t.Fatalf("restore: blocked %v, mode %v, idle %v", st.Blocked, takeover(t, got, "Compositor", "mode"), takeover(t, got, "Idle", "enabled"))
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.Watch(ctx)
-	time.Sleep(50 * time.Millisecond)
+	watch(t, s)
 	edited := jsonx.Clone(got).(*jsonx.Object)
 	edited.Value("Compositor").(*jsonx.Object).Set("mode", "detached")
 	edited.Value("Battery").(*jsonx.Object).Set("lowThreshold", 7.0)
@@ -576,14 +605,153 @@ func TestNoKeptTakeoversRefusesARestore(t *testing.T) {
 	if v, _ := jsonx.Unmarshal(data); err != nil || takeover(t, v.(*jsonx.Object), "Compositor", "mode") != "detached" {
 		t.Fatalf("first run kept %s (%v)", data, err)
 	}
-	os.Remove(kept)
 	os.WriteFile(filepath.Join(dir, FileName), []byte(`{"version": `), 0o600)
+	for name, keep := range map[string]func(){
+		"removed":       func() { os.Remove(kept) },
+		"not an object": func() { os.WriteFile(kept, []byte(`[1]`), 0o600) },
+	} {
+		keep()
+		s := openKeeping(t, dir)
+		if _, known := s.Takeovers(); known {
+			t.Errorf("%s: takeovers known with none kept", name)
+		}
+		if _, err := s.Replace(s.Pipeline().Defaults(), SetOptions{Restore: true}); axerr.KindOf(err) != axerr.Conflict {
+			t.Errorf("%s: restore with the takeovers unknown: %v", name, err)
+		}
+		s.Close()
+	}
+}
+
+// A good file at the start is what TakeoversFile keeps, even when it
+// holds other takeovers than the file kept last (or none was kept).
+func TestOpenKeepsTheFilesTakeovers(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	first := openKeeping(t, dir)
+	if _, err := first.Set([]config.Op{config.SetValue(config.Keys("Compositor", "mode"), "managed")}, SetOptions{Takeover: true}); err != nil {
+		t.Fatal(err)
+	}
+	first.Close()
+	kept := filepath.Join(dir, "state", TakeoversFile)
+	os.Remove(kept)
 	s := openKeeping(t, dir)
 	defer s.Close()
-	if _, known := s.Takeovers(); known {
-		t.Fatal("takeovers known with none kept")
+	data, _ := os.ReadFile(kept)
+	if v, _ := jsonx.Unmarshal(data); v == nil || takeover(t, v.(*jsonx.Object), "Compositor", "mode") != "managed" {
+		t.Errorf("kept %s", data)
 	}
-	if _, err := s.Replace(s.Pipeline().Defaults(), SetOptions{Restore: true}); axerr.KindOf(err) != axerr.Conflict {
-		t.Fatalf("restore with the takeovers unknown: %v", err)
+}
+
+// An outside edit that changes no takeover is left as written: only a held
+// takeover writes the file back.
+func TestEditWithoutTakeoversIsNotWrittenBack(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir)
+	watch(t, s)
+	path := filepath.Join(dir, FileName)
+	cfg, _ := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Value("Battery").(*jsonx.Object).Set("lowThreshold", 9.0)
+	written := append(jsonx.Marshal(edited), '\n')
+	os.WriteFile(path, written, 0o600)
+	waitFor(t, func() bool { cfg, _ := s.Config(); return takeover(t, cfg, "Battery", "lowThreshold") == 9.0 })
+	if data, _ := os.ReadFile(path); string(data) != string(written) {
+		t.Error("an edit that held no takeover was written back")
+	}
+}
+
+// A failed op saves nothing and leaves the store writable.
+func TestFailedOpChangesNothing(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	before, st := s.Config()
+	if _, err := s.Set([]config.Op{{Op: "set", Path: config.Keys("Battery", "lowThreshold")}}, SetOptions{}); axerr.KindOf(err) != axerr.BadRequest {
+		t.Errorf("an op without a value: %v", err)
+	}
+	if after, now := s.Config(); !jsonx.Equal(before, after) || now.Revision != st.Revision {
+		t.Error("a failed op changed the config")
+	}
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0)}, SetOptions{}); err != nil {
+		t.Errorf("the next save: %v", err)
+	}
+}
+
+// A save that can't be written keeps the config, its revision and the store
+// writable; an Open whose first config can't be written, or whose file
+// can't be read, fails.
+func TestUnwritableFiles(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir)
+	before, st := s.Config()
+	// A link into a folder that isn't there: the save can't make its file
+	os.Remove(s.Path())
+	os.Symlink(filepath.Join(dir, "gone", FileName), s.Path())
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0)}, SetOptions{}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("a save that can't be written: %v", err)
+	}
+	if after, now := s.Config(); !jsonx.Equal(before, after) || now.Revision != st.Revision {
+		t.Error("a failed save changed the config")
+	}
+
+	first := t.TempDir()
+	os.Symlink(filepath.Join(first, "gone", FileName), filepath.Join(first, FileName))
+	if _, err := Open(Options{Dir: first, Pipeline: pipeline(t)}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("a first config that can't be written: %v", err)
+	}
+	unreadable := t.TempDir()
+	os.Mkdir(filepath.Join(unreadable, FileName), 0o700)
+	if _, err := Open(Options{Dir: unreadable, Pipeline: pipeline(t)}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("a config that can't be read: %v", err)
+	}
+}
+
+// The file going is told once, from the file; a save or a reload of the
+// file back clears it. An outside edit's event says it came from the file.
+func TestMissingFileEvents(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	var events []Event
+	s.Subscribe(func(e Event) { events = append(events, e) })
+	good, _ := os.ReadFile(s.Path())
+
+	os.Remove(s.Path())
+	s.reload()
+	s.reload()
+	if len(events) != 1 || !events[0].State.Missing || !events[0].FromFile || events[0].Config != nil {
+		t.Fatalf("the file going: %+v", events)
+	}
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0)}, SetOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, st := s.Config(); st.Missing || len(events) != 2 || events[1].State.Missing || events[1].FromFile {
+		t.Fatalf("a save didn't clear Missing: %+v", events)
+	}
+
+	os.Remove(s.Path())
+	s.reload()
+	os.WriteFile(s.Path(), good, 0o600)
+	s.reload()
+	if _, st := s.Config(); st.Missing || len(events) != 4 || events[3].State.Missing || !events[3].FromFile || events[3].Config == nil {
+		t.Errorf("the file back: %+v", events)
+	}
+}
+
+// A takeover written back is recorded as the store's own bytes: reading
+// the file again tells nothing.
+func TestTakeoverWriteBackIsNotReadAgain(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	var events []Event
+	s.Subscribe(func(e Event) { events = append(events, e) })
+	cfg, _ := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Value("Idle").(*jsonx.Object).Set("enabled", true)
+	os.WriteFile(s.Path(), jsonx.Marshal(edited), 0o600)
+	s.reload()
+	s.reload()
+	if len(events) != 1 {
+		t.Errorf("%d events for one takeover-only edit", len(events))
 	}
 }

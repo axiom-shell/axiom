@@ -36,7 +36,7 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 
 | Definition | Shape | Replaces |
 |---|---|---|
-| `ScreenTarget` | `{ mode: "inherit" \| "primary" \| "focused" \| "all" \| "named", names: [] }`. `names` is `machine` scope (with `x-monitorRef`); `mode` is look. A use narrows `mode`'s enum with a sibling override. | General's `monitors` + `primaryMonitor` (kept as `General.primaryMonitor`); `Launcher/PowerMenu/Notifications/Overlay.monitors`; `Dock/OSD` `monitors` + `monitor`; `Bars[].monitor` and `EdgeMenus[].monitor` (`""` primary, `*` all); `Greeter.monitor`; `Desktop.*.monitor`; `Workspaces.strips[].monitor` |
+| `ScreenTarget` | `{ mode: "inherit" \| "primary" \| "focused" \| "all" \| "named", names: [] }`. `names` is `machine` scope (with `x-monitorRef`); `mode` is look (personal in `Workspaces.strips`, as the whole section is). A use narrows `mode`'s enum with a sibling override. | General's `monitors` + `primaryMonitor` (kept as `General.primaryMonitor`); `Launcher/PowerMenu/Notifications/Overlay.monitors`; `Dock/OSD` `monitors` + `monitor`; `Bars[].monitor` and `EdgeMenus[].monitor` (`""` primary, `*` all); `Greeter.monitor`; `Desktop.*.monitor`; `Workspaces.strips[].monitor` |
 | `Layout` | `{ grid: { columns, rows, fine }, moduleScale, moduleBorders, modules: [Module] }` | `DesktopLayout`, `ScreenLayout`'s grid half, `EdgeMenu`'s grid keys, the Custom page's modules |
 | `ScreenLayout` | `Layout` + `backdrop: { source: "wallpaper" \| "color", blur, color, dim }`, `otherScreens`, `borders: { password, greeting }` | `ScreenLayout` (lock screen, greeter) |
 | `Blur` | `{ enabled, size, passes, … }` | `WindowLook.blur*` |
@@ -88,7 +88,7 @@ Sections that are already one concept with plain keys stay as they are, apart fr
 | Kind | Added by the builder | Written in `schema.yaml` |
 |---|---|---|
 | every kind | `type: object`, `additionalProperties: false`, `required`, `type: {const: <Type>}` with its label, `id` | `icon`, `group` (the library group), `settings` (flat: the builder nests them as `properties.properties`, so config.json's shape doesn't change) |
-| bar widget | `visible`, `layout`, `popout: { enabled, menu }`, the color fields with their `$bar.*` show rules | `popout: own \| menu \| none` (which title and default `popout` gets), `colors: [<autoColor role>, …]` |
+| bar widget | `visible`, `layout`, `popout: { enabled, menu }`, the color fields with their `$bar.*` show rules | `popout: own \| menu \| none` (which title and default `popout` gets), `colors: [<autoColor role>, …]`, `appearance: {variant: value, style: {enum: […]}}` (its display styles, [Display styles](../bar/display-styles.md)) |
 | overlay module | `place`, `x-hosts: [overlay, edgeMenu, desktop]` | only the extra hosts (`hosts: [lockscreen, greeter]`), `size` / `minSize` |
 | overlay view | the page's common keys (`OverlayView`) | `needs` |
 

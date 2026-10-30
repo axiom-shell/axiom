@@ -11,8 +11,8 @@ import qs.components.bar.widgets.base
 // The Tailscale bar widget: connected or not, and the tailnet's name, from
 // TailscaleManager (acquired at the Tailscale section's interval). Hovering
 // opens the Tailscale popout; left click runs the click command, right
-// click checks again now.
-BarIconWidget {
+// click checks again now. Stacked: the label over this machine's address.
+ValueStyleWidget {
   id: root
 
   readonly property bool isConnected: TailscaleManager.connected
@@ -23,7 +23,8 @@ BarIconWidget {
 
   icon: isConnected ? properties.connectedIcon : properties.disconnectedIcon
   text: isConnected ? (properties.label || tailnetName) : ""
-  showText: properties.showLabel
+  labelShown: properties.showLabel
+  subtext: isConnected ? TailscaleManager.ip : ""
 
   accentColor: Theme.resolveColor(isConnected ? properties.connectedColor : properties.disconnectedColor)
 

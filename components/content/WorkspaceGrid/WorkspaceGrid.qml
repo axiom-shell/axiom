@@ -3,7 +3,7 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
-import qs.components.methods
+import qs.services.system
 import qs.components.content.base
 import qs.components.bar.widgets.Workspaces
 import qs.components.reusable
@@ -92,7 +92,7 @@ Panel {
         labels: root.properties.labels
         // The workspace id, or its place in the grid counted from 1, as on the bar
         label: root.properties.relativeNumbers ? index + 1 : wsId
-        iconPath: windowData ? IconResolver.resolveWindowIcon(windowData.appId, windowData.title) : ""
+        iconPath: windowData ? AppIconManager.resolveWindowIcon(windowData.appId, windowData.title) : ""
         clickable: root.properties.clickToSwitch ?? false
         animated: root._settled
         opacity: inBar ? 1.0 : 0.85

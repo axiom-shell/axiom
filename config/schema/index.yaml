@@ -30,6 +30,7 @@ x-libraryGroups:
   - Tools
   - Look & layout
   - Session
+  - Custom
 additionalProperties: false
 properties:
   $schema: {type: string, x-settings: false}
@@ -41,7 +42,7 @@ properties:
     description: "The config file's grammar: 2. A file without it is format 1 (versions 1 to 75), which axiom converts once."
   version:
     type: integer
-    default: 79
+    default: 84
     x-settings: false
     description: Config version within format 2, used for automatic migration.
   meta:
@@ -79,6 +80,8 @@ sections:
   - Weather
   - ClaudeUsage
   - Tailscale
+  - Vpn
+  - CustomWidgets
   - Updates
   - Todo
   - Stopwatch
@@ -88,6 +91,7 @@ sections:
   - ThemeIntegrations
   - Icons
   - Overlay
+  - HotCorners
   - Workspaces
   - WorkspaceOverlay
   - WindowSwitcher
@@ -100,3 +104,4 @@ kinds:
   BarWidget: {root: components/bar/widgets, suffix: Widget, base: WidgetBase}
   OverlayModule: {root: components/content, suffix: OverlayModule, base: ModuleBase}
   OverlayView: {root: components/views, suffix: OverlayView, base: ViewBase}
+  CustomElement: {root: components/content/parts/custom/elements, suffix: CustomElement, base: CustomElementBase}

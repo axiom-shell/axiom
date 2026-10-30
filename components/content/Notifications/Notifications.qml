@@ -17,6 +17,9 @@ import qs.components.content.parts.notifications
 Panel {
   id: root
 
+  // A bar popout takes the keyboard while a notification offers a reply
+  wantsKeyboardFocus: NotificationManager.replyable
+
   compactContent: CompactFigure {
     icon: NotificationManager.dnd ? "notifications_off" : "notifications"
     iconColor: NotificationManager.count > 0 ? Theme.accent : Theme.foregroundAlt
@@ -25,6 +28,32 @@ Panel {
   }
 
   readonly property int maxListHeight: Widget.px(440)
+  // One notification's card (a one-line summary and body, no actions:
+  // NotificationGroupDelegate's padding, app header and entry), the height
+  // empty, so a popout only grows from there and is the same size again
+  // after the last one is cleared
+  readonly property real oneHeight: Widget.padding * 2 + Math.max(Widget.px(18), Widget.smallHeight, Math.ceil(smallMetrics.height)) + Widget.spacing + Math.ceil(summaryMetrics.height) + 2 + Math.ceil(bodyMetrics.height)
+  readonly property real emptyHeight: Math.max(root.oneHeight, emptyState.implicitHeight)
+  // In a popout the list grows away from the header, which stays by the
+  // bar (Panel.growth)
+  flips: true
+  maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + root.maxListHeight - (root.groupKeys.length > 0 ? scroll.height : root.emptyHeight)
+
+  FontMetrics {
+    id: smallMetrics
+    font.family: Appearance.fontFamily
+    font.pixelSize: Appearance.fontSizeBy(-2)
+  }
+  FontMetrics {
+    id: summaryMetrics
+    font.family: Appearance.fontFamily
+    font.pixelSize: Appearance.fontSize
+  }
+  FontMetrics {
+    id: bodyMetrics
+    font.family: Appearance.fontFamily
+    font.pixelSize: Appearance.fontSizeBy(-1)
+  }
   // A header and a notification, else the figure
   fullMinWidth: Appearance.fontSize * 16
   fullMinHeight: Appearance.fontSize * 11
@@ -130,8 +159,6 @@ Panel {
     Layout.fillHeight: root.embedded
     contentPadding: 0
     showScrollBar: list.implicitHeight > (root.embedded ? scroll.height : root.maxListHeight)
-    rightPadding: showScrollBar ? Widget.px(12) : 0
-    clip: true
 
     ColumnLayout {
       id: list
@@ -153,13 +180,13 @@ Panel {
     }
   }
 
-  // Empty: centred in whatever room is left (the card's slot, or a fixed
-  // height in a popout)
+  // Empty: centred in whatever room is left (the card's slot, or one
+  // notification's height in a popout)
   Item {
     visible: root.groupKeys.length === 0
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
-    Layout.preferredHeight: root.embedded ? -1 : emptyState.implicitHeight + Widget.padding * 6
+    Layout.preferredHeight: root.embedded ? -1 : root.emptyHeight
 
     ColumnLayout {
       id: emptyState
@@ -172,11 +199,13 @@ Panel {
         horizontalAlignment: Text.AlignHCenter
         text: NotificationManager.dnd ? "notifications_paused" : "notifications_active"
         textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSize * 3
+        // Smaller in a popout, to fit one notification's height
+        textSize: Appearance.fontSize * (root.embedded ? 3 : 2)
         opacity: 0.4
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
         text: I18n.tr("All caught up")
@@ -184,6 +213,7 @@ Panel {
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         visible: NotificationManager.dnd
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter

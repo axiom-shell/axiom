@@ -70,22 +70,23 @@ FieldGroup {
   // What holds idle off (i18n: the sources, chosen at runtime:
   // I18n.tr("Keeping awake") for caffeine)
   Repeater {
-    model: Idle.enabled ? IdleManager.inhibitors : []
+    model: Idle.enabled ? IdleManager.inhibitors.length : 0
 
     delegate: RowLayout {
       id: inhibitor
-      required property var modelData
+      required property int index
+      readonly property var held: IdleManager.inhibitors[index] ?? ({})
       Layout.fillWidth: true
       spacing: Widget.spacing
 
       StyledIcon {
-        text: inhibitor.modelData.source === "caffeine" ? "coffee" : "visibility"
+        text: inhibitor.held.source === "caffeine" ? "coffee" : "visibility"
         textColor: Theme.accent
       }
 
       StyledText {
         Layout.fillWidth: true
-        text: inhibitor.modelData.source === "caffeine" ? I18n.tr("Keeping awake") : inhibitor.modelData.reason ? `${inhibitor.modelData.app}: ${inhibitor.modelData.reason}` : inhibitor.modelData.app
+        text: inhibitor.held.source === "caffeine" ? I18n.tr("Keeping awake") : inhibitor.held.reason ? `${inhibitor.held.app}: ${inhibitor.held.reason}` : inhibitor.held.app
         elide: Text.ElideRight
       }
     }

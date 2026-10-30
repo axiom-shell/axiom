@@ -1,0 +1,19 @@
+# The BarDisplay definition: how a bar widget draws its value
+# (components/bar/widgets/base/ValueStyleWidget, docs/dev/bar/display-styles.md).
+# A built-in widget's `appearance` (WidgetBase's appearance part) narrows `style`
+# to the styles it can draw; a custom widget's `bar` offers them all.
+
+type: object
+title: Display
+additionalProperties: false
+x-inline: true
+properties:
+  style:
+    type: string
+    title: Style
+    enum: [label, icon, ring, fill, pill, segments, sparkline, ticker, stacked]
+    default: label
+    x-enumLabels: {label: Label, icon: Icon only, ring: Ring, fill: Fill, pill: Pill, segments: Segments, sparkline: Sparkline, ticker: Ticker, stacked: Stacked}
+  segments: {type: integer, title: Segments, default: 5, minimum: 2, maximum: 12, x-showIf: {style: segments}}
+  width: {type: integer, title: Width, x-unit: px, default: 0, minimum: 0, maximum: 600, description: 'The graphic''s length along the bar; 0 picks one.', x-showIf: {style: [fill, segments, sparkline, ticker]}}
+  colorText: {type: boolean, title: Colour the text by state, default: false}

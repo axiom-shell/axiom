@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func wireString(s string) []byte {
@@ -95,7 +97,7 @@ func TestWatchEndsWithTheCompositor(t *testing.T) {
 		if !errors.Is(err, ErrGone) {
 			t.Fatalf("Watch returned %v, want ErrGone", err)
 		}
-	case <-time.After(2 * time.Second):
+	case <-time.After(testkit.Bound(2 * time.Second)):
 		t.Fatal("Watch didn't return when the compositor closed the connection")
 	}
 }
@@ -124,7 +126,7 @@ func TestWatchStopsWithItsContext(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Watch returned %v after its context ended, want nil", err)
 		}
-	case <-time.After(2 * time.Second):
+	case <-time.After(testkit.Bound(2 * time.Second)):
 		t.Fatal("Watch didn't return when its context ended")
 	}
 }

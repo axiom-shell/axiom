@@ -8,9 +8,12 @@
 #      change touches what they're recorded from)
 #   1. formats changed QML with Qt 6's qmlformat, writing in place so the
 #      file keeps its inode and the running shell still reloads it
-#   2. check_structure, check_sizes, check_docs, check_packages, qmllint, the
-#      unit tests the change touches (QML, and the test_scripts.py classes of
-#      a changed script), the Go checks (backend/:
+#   2. check_structure, check_sizes, check_docs and check_packages (a few
+#      seconds) on every change, then those of check_all.sh's other checks
+#      the change reaches, a deletion or a check script's own change
+#      included (a new check there gets a trigger here): qmllint, JSON
+#      validity, the unit tests the change touches (QML, and the
+#      test_scripts.py classes of a changed script), the Go checks (backend/:
 #      go generate, gofmt, vet, staticcheck, tests), shellcheck, i18n
 #   3. the shell's log since its last reload, lines issues.md already
 #      covers marked (known: …)
@@ -31,20 +34,22 @@ for arg in "$@"; do
   case "$arg" in
   --all) all=1 ;;
   *)
-    sed -n '2,21p' "$0" >&2
+    sed -n '2,24p' "$0" >&2
     exit 2
     ;;
   esac
 done
 [[ $all -eq 1 ]] && exec scripts/check_all.sh
 
+# Deleted files included, a rename's old path too (--no-renames): they
+# trigger the checks too (a step reading a file skips the gone ones)
 mapfile -t changed < <({
-  git diff --name-only HEAD
+  git diff --no-renames --name-only HEAD
   git ls-files -o --exclude-standard
-} | sort -u | while read -r f; do [[ -f "$f" ]] && echo "$f"; done)
+} | sort -u)
 
 if [[ ${#changed[@]} -eq 0 ]]; then
-  echo "nothing changed since HEAD"
+  echo "nothing changed since HEAD (a committed branch: scripts/dev/verify.sh --all)"
   exit 0
 fi
 
@@ -56,11 +61,17 @@ step() {
   "$@" || failed+=("$name")
 }
 
-qml=() tests=() shells=() script_tests=() schema=0 go=0 fixtures=0
+qml=() tests=() shells=() script_tests=() schema=0 go=0 fixtures=0 lint=0 i18n=0 qmlformat=0
 for f in "${changed[@]}"; do
   case "$f" in
-  *.qml) qml+=("$f") ;;
-  *.sh) shells+=("$f") ;;
+  *.qml) qml+=("$f") lint=1 i18n=1 ;;
+  *.sh | .githooks/*) [[ -f "$f" ]] && shells+=("$f") ;;
+  esac
+  case "$f" in
+  scripts/check_qmllint.py | scripts/qmllint-baseline.json | scripts/qml_modules.py) lint=1 ;;
+  scripts/check_i18n.py | config/i18n/*) i18n=1 ;;
+  scripts/check_go.sh) go=1 ;;
+  scripts/check_qmlformat.sh) qmlformat=1 ;;
   esac
   case "$f" in
   components/methods/SchemaValidation.qml) schema=1 go=1 ;;
@@ -82,7 +93,7 @@ for f in "${changed[@]}"; do
     ;;
   tests/tst_*.qml)
     name="$(basename "$f" .qml)"
-    tests+=("${name#tst_}")
+    [[ -f "$f" ]] && tests+=("${name#tst_}")
     ;;
   esac
   # tests/scripts/test_scripts.py's classes for each script (the whole
@@ -93,19 +104,26 @@ for f in "${changed[@]}"; do
   scripts/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
   scripts/dev/known_issues.py) script_tests+=(KnownIssues) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
-  scripts/gen_docs.py) script_tests+=(RpcShapes) ;;
+  scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json) script_tests+=(CheckStructure) ;;
+  scripts/check_docs.py) script_tests+=(CheckDocs) ;;
+  .claude/skills/review-system/scope.py) script_tests+=(ReviewScope) ;;
+  scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
+  scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;
+  scripts/check_packages.py) script_tests+=(CheckPackages) ;;
+  scripts/gen_docs.py | scripts/config-usage-baseline.json) script_tests+=(RpcShapes ConfigUsage) ;;
   tests/scripts/test_scripts.py) script_tests+=(all) ;;
   esac
 done
-[[ $schema -eq 1 ]] && tests+=(Config)
+[[ $schema -eq 1 ]] && tests+=(Config) i18n=1
 
 reloads_before=$(scripts/log.sh --all 2>/dev/null | grep -c "Reloading configuration" || true)
 
 # 1. Format in place (cat > keeps the inode; -i would replace the file)
+formatted=0
 if [[ ${#qml[@]} -gt 0 ]]; then
   echo "── qmlformat (${#qml[@]} changed QML files)"
-  formatted=0
   for f in "${qml[@]}"; do
+    [[ -f "$f" ]] || continue
     out="$("$qt_bin/qmlformat" "$f")" || {
       failed+=("qmlformat $f")
       continue
@@ -119,24 +137,27 @@ if [[ ${#qml[@]} -gt 0 ]]; then
   [[ $formatted -eq 0 ]] && echo "already formatted"
 fi
 
-# 2. Checks (the generated files built first: the docs and checks read them)
-if [[ $go -eq 1 || $fixtures -eq 1 || $schema -eq 1 ]]; then
-  step "generated files" scripts/generate.sh --fixtures
+# 2. Checks (the generated files built first: the docs and checks read
+# them). The Go checks build them first themselves, with the fixtures (a
+# schema or fixtures change sets go too), so they run first instead
+if [[ $go -eq 1 ]]; then
+  step "go" scripts/check_go.sh --fix
 else
   step "generated files" scripts/generate.sh
 fi
+if [[ $qmlformat -eq 1 ]]; then
+  step "qmlformat (every file)" scripts/check_qmlformat.sh
+fi
 step "structure" python3 scripts/check_structure.py
-if [[ ${#qml[@]} -gt 0 ]]; then
-  step "sizes" python3 scripts/check_sizes.py
-fi
-if printf '%s\n' "${changed[@]}" | grep -qE '\.(md|qml)$'; then
-  step "doc citations" python3 scripts/check_docs.py
-fi
-if printf '%s\n' "${changed[@]}" | grep -qE '^(install\.sh|components/methods/Packages\.qml|packaging/|scripts/check_packages\.py)'; then
-  step "package lists" python3 scripts/check_packages.py
-fi
-if [[ ${#qml[@]} -gt 0 ]]; then
+step "sizes" python3 scripts/check_sizes.py
+step "doc citations" python3 scripts/check_docs.py
+step "package lists" python3 scripts/check_packages.py
+if [[ $lint -eq 1 ]]; then
   step "qmllint" python3 scripts/check_qmllint.py
+fi
+mapfile -t jsons < <(printf '%s\n' "${changed[@]}" | grep '\.json$')
+if [[ ${#jsons[@]} -gt 0 ]]; then
+  step "json" bash -c 'for f; do [[ -f "$f" ]] || continue; python3 -m json.tool --no-ensure-ascii "$f" >/dev/null || exit 1; done' _ "${jsons[@]}"
 fi
 if [[ ${#tests[@]} -gt 0 ]]; then
   mapfile -t tests < <(printf '%s\n' "${tests[@]}" | sort -u)
@@ -156,22 +177,22 @@ fi
 if [[ $fixtures -eq 1 ]]; then
   step "shared fixtures" python3 scripts/dev/fixtures.py check
 fi
-if [[ $go -eq 1 ]]; then
-  step "go" scripts/check_go.sh --fix
-fi
 if [[ ${#shells[@]} -gt 0 ]]; then
   step "shellcheck" shellcheck -x -S warning "${shells[@]}"
 fi
-if [[ ${#qml[@]} -gt 0 || $schema -eq 1 ]]; then
+if [[ $i18n -eq 1 ]]; then
+  # Warnings only: a new key is absent from config/i18n/ until the
+  # pre-commit hook adds it (check_all.sh fails on that)
   echo "── translations (warnings only)"
   python3 scripts/check_i18n.py 2>&1 | tail -n 15 || true
 fi
 
-# 3. The live shell: wait briefly for the reload a save (or the formatting)
-# triggered, then show what it logged
+# 3. The live shell: wait briefly for the reload the formatting triggered
+# (a save's came before this script started), then show what it logged
 if [[ ${#qml[@]} -gt 0 || $schema -eq 1 ]] && command -v qs >/dev/null; then
   echo "── shell log since the last reload"
   for _ in 1 2 3 4 5 6; do
+    [[ $formatted -eq 1 ]] || break
     now=$(scripts/log.sh --all 2>/dev/null | grep -c "Reloading configuration" || true)
     [[ $now -gt $reloads_before ]] && break
     sleep 0.5

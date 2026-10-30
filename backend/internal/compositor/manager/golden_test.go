@@ -184,7 +184,7 @@ func checkWithCompositor(t *testing.T, kind string, files map[string]string) {
 		go func() { out, err = cmd.CombinedOutput(); close(done) }()
 		select {
 		case <-done:
-		case <-time.After(30 * time.Second):
+		case <-time.After(testkit.Bound(30 * time.Second)):
 			cmd.Process.Kill()
 			t.Fatalf("%s took too long", tool)
 		}

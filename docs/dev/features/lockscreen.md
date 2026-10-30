@@ -4,7 +4,7 @@
 > **Config:** `Lockscreen.mode`, `Lockscreen.lockCommand`, `Lockscreen.layout` (reader `LockscreenConfig`)
 > **Related:** [Idle](idle.md), [Greeter runtime](greeter-runtime.md), [Desktop](desktop.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Themes](../theming/themes.md), [Shell targeting](../core/shell-manager-targeting.md)
 
-This doc covers the three lock modes, how the built-in lock screen's layout of modules works (grid, hosts, password, background), and how it is edited and previewed. (Rule: AGENTS.md › UI conventions › Lockscreen; never lock the session while testing.)
+This doc covers the three lock modes, how the built-in lock screen's layout of modules works (grid, hosts, password, background), and how it is edited and previewed. (Rule: `services/AGENTS.md`, Lockscreen; never lock the session while testing.)
 
 ### Locking
 - `LockManager.lock()` is the one way to lock.
@@ -19,6 +19,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - A stopped shell's last report confirms nothing until the next shell reports.
 - If that doesn't come within 3 s, the binary restarts the shell with `AXIOM_LOCK_ON_START=1`, which locks before anything else shows. If that fails too, `axiom lock` fails: the built-in locker has nothing to fall back on.
 - A shell that dies while locked is restarted at once, locked. The compositor keeps the session locked meanwhile.
+  - Locked here is the shell holding the lock (`holding`, `LockManager.builtinLocked`), acknowledged or not: a lock a reloaded generation took over never sees the compositor's acknowledgement again (`secure` stays false), and a shell restarted unlocked then left niri's red screen (2026-10-29).
 - Nothing goes the other way: `lock.state` only informs, `lockscreen` takes no function but `lock`, and only PAM unlocks.
 - With `Lockscreen.mode` `none`, `axiom lock` runs `Lockscreen.lockCommand`, except `loginctl lock-session`, which would come back to axiom through the idle daemon.
 
@@ -30,8 +31,15 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - One `WlSessionLockSurface` per Wayland output (Quickshell adds one for an output connected while locked), showing `surfaces/lockscreen/LockSurface.qml`.
 - While locked, the compositor shows only the lock surfaces and sends them all input.
 - If qs dies, the session stays locked (Hyprland's fallback). `misc:allow_session_lock_restore` lets a restarted qs take the lock back.
-- The locked state lives in a `PersistentProperties`, so a QML reload comes back locked.
-- **Only `AuthManager.authenticationSucceeded` (PAM, `login` stack) unlocks.**
+- The locked state lives in a `PersistentProperties`, so a QML reload never unlocks.
+- A lock the compositor ends without PAM (its `finished`: it refused the lock, as when another locker holds the session) clears that state (`WlSessionLock.onSecureChanged`: Quickshell 0.3 emits no `lockedChanged` there), so the shell stops holding a lock it hasn't got.
+
+#### No reload under the lock
+- **Why:** Quickshell 0.3's `WlSessionLock` hands its lock to the reloaded generation, but builds that generation's lock surfaces anew while the old ones still stand. A second lock surface for an output is a protocol error on niri (`Output is already locked.`) and sway (`session lock surface already created for the given output`), which ends qs and left niri's red screen with nothing to unlock it (2026-10-18, 2026-10-29). The log shows `Session lock object was destroyed without unlocking` as the old generation goes, on every reload under the lock, even one that worked (Hyprland let it through).
+- **So:** while locked, `Lockscreen.qml` turns `Quickshell.watchFiles` off: a saved file doesn't reload the shell, and loads at the next save after unlocking.
+- **Explicit reloads** (`/reload`, an auto self-update) go through `LockManager.reload()`, which waits for the unlock.
+- New code never calls `Quickshell.reload` itself.
+- **Only `AuthManager.authenticationSucceeded` (PAM, `login` stack) unlocks** (`tests/scripts/test_scripts.py` › `OnlyPamUnlocks` reads the QML for every other way out).
   - There is no IPC unlock.
   - Nothing on the surface may run commands.
 

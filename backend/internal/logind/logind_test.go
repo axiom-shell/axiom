@@ -9,6 +9,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
 	"github.com/axiom-shell/axiom/backend/internal/logind/logindtest"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func ctx(t *testing.T) context.Context {
@@ -107,7 +108,7 @@ func TestWatch(t *testing.T) {
 		select {
 		case e := <-events:
 			return e
-		case <-time.After(3 * time.Second):
+		case <-time.After(testkit.Bound(3 * time.Second)):
 			t.Fatal("no event")
 		}
 		return Event{}

@@ -1,6 +1,6 @@
 # Chat
 
-> **Files:** `services/apps/ChatManager.qml`, `backend/internal/chat/`, `backend/internal/daemon/chat.go`, `components/methods/ChatMarkdown.qml`, `components/content/Chat/Chat.qml`
+> **Files:** `services/apps/ChatManager.qml`, `backend/internal/chat/`, `backend/internal/daemon/chat.go`, `components/methods/ChatMarkdown.qml`, `components/content/Chat/Chat.qml`, `components/content/parts/chat/`, `config/ChatConfig.qml`
 > **Config:** `Chat.*` (reader `ChatConfig`)
 > **Related:** [Secrets](../core/secrets.md), [Screenshots and recording](screenshots-recording.md), [Launcher](launcher.md), [Services pattern](../core/services-pattern.md)
 

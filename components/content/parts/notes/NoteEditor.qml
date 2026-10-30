@@ -51,9 +51,13 @@ Item {
   onNoteChanged: {
     root.focusBlock = -1;
     root.findMatch = null;
+    root._keepPlace();
     root._load();
   }
-  Component.onCompleted: root._load()
+  Component.onCompleted: {
+    root._keepPlace();
+    root._load();
+  }
 
   // An empty note loads without its text changing
   Connections {
@@ -73,7 +77,6 @@ Item {
   function _load() {
     root._lastText = root._noteText;
     root._set(NoteMarkdown.parse(root._noteText), null);
-    root._flick.contentY = 0;
     root._revealPending();
   }
 
@@ -89,6 +92,8 @@ Item {
       return;
     const at = NoteMarkdown.positionAt(root.doc, root._pendingLine, 0);
     root._pendingLine = -1;
+    // A jump to the line, not back to where the note was left
+    memory.cancel();
     // After the blocks have been laid out
     Qt.callLater(() => root.focusAt(at.block, at.pos));
   }
@@ -140,14 +145,8 @@ Item {
     i = (i + matches.length) % matches.length;
     root.findIndex = i;
     root.findMatch = matches[i];
-    Qt.callLater(root._scrollToMatch);
-  }
-
-  function _scrollToMatch() {
-    const match = root.findMatch;
-    const item = match ? root._block(match.block) : null;
-    if (item)
-      root.ensureVisible(item, item.field.positionToRectangle(match.pos));
+    memory.cancel();
+    root.ensureVisible(matches[i].block, matches[i].pos);
   }
 
   // Closes find; with `select`, the match is selected for editing
@@ -214,15 +213,40 @@ Item {
     return false;
   }
 
-  // Scrolls a block's cursor into view
-  function ensureVisible(item, rect) {
+  // Scrolls a block's position (its cursor, a match) into view, once the
+  // blocks have been laid out: a structural edit reloads every block and
+  // adds new ones at the end, so until then their y is stale (a new last
+  // block's is 0, which scrolled to the top). Calls in one frame scroll
+  // once, to the last one's position (Qt.callLater keeps its arguments).
+  function ensureVisible(index, pos) {
+    Qt.callLater(root._scrollToVisible, index, pos);
+  }
+
+  function _scrollToVisible(index, pos) {
+    const item = root._block(index);
+    if (!item)
+      return;
+    blocks.forceLayout();
     const flick = root._flick;
+    const rect = item.field.positionToRectangle(pos);
     const top = item.y + rect.y;
     const bottom = top + rect.height;
     if (top < flick.contentY)
       flick.contentY = top;
     else if (bottom > flick.contentY + flick.height)
       flick.contentY = bottom - flick.height;
+  }
+
+  // Where each note was left (EditsManager, by path), so reopening it
+  // comes back there. Keyed by the path it was opened at, not bound to it:
+  // a rename of the open note would change the key and scroll to the top
+  ScrollMemory {
+    id: memory
+    flickable: root._flick
+  }
+
+  function _keepPlace() {
+    memory.key = root.note ? "Notes/" + root.note.path : "";
   }
 
   // --- From the blocks ---
@@ -320,7 +344,6 @@ Item {
     anchors.fill: parent
     contentPadding: 0
     showScrollBar: blocks.implicitHeight > scroll.height
-    rightPadding: showScrollBar ? Widget.px(12) : 0
 
     Item {
       width: scroll.availableWidth

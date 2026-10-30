@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire/wiretest"
 )
@@ -28,17 +29,14 @@ func TestConnReusesDeletedIDs(t *testing.T) {
 	}
 	<-done
 	// delete_id follows done: once it's handled, the next object gets 2
-	deadline := time.Now().Add(5 * time.Second)
-	for {
-		id := c.NewObject(nil)
-		if id == 2 {
-			break
+	var id uint32
+	if !testkit.Eventually(func() bool {
+		if id = c.NewObject(nil); id != 2 {
+			c.Forget(id)
 		}
-		c.Forget(id)
-		if time.Now().After(deadline) {
-			t.Fatalf("id %d, want 2 reused", id)
-		}
-		time.Sleep(5 * time.Millisecond)
+		return id == 2
+	}) {
+		t.Fatalf("id %d, want 2 reused", id)
 	}
 }
 
@@ -142,7 +140,7 @@ func TestConnPassesDescriptorsAndValues(t *testing.T) {
 			if ch == events && (g.text != "from the compositor" || g.fixed != -1.5 || len(g.array) != 5) {
 				t.Errorf("event %+v", g)
 			}
-		case <-time.After(3 * time.Second):
+		case <-time.After(testkit.Bound(3 * time.Second)):
 			t.Fatal("timed out")
 		}
 	}

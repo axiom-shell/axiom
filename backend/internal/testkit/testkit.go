@@ -1,7 +1,8 @@
-// Package testkit loads the shared fixtures (tests/fixtures/shared/): the
-// cases the shell's JS helpers and this binary must agree on byte for byte.
-// tests/Shared.qml is the JS side of the same format; see
-// docs/dev/backend/README.md › Shared fixtures.
+// Package testkit is what the Go tests share: the shared fixtures
+// (tests/fixtures/shared/), the cases the shell's JS helpers and this binary
+// must agree on byte for byte (tests/Shared.qml is the JS side of the same
+// format; see docs/dev/backend/README.md › Shared fixtures), and the waits
+// whose bound CI can stretch (Eventually, Bound).
 package testkit
 
 import (

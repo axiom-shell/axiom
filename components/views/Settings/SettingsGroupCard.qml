@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.ui
+import qs.components.methods
 import qs.components.reusable
 
 // i18n: keys from the schema (titles, descriptions)
@@ -64,6 +65,9 @@ FoldingCard {
     source: active ? Qt.resolvedUrl(root.group.intro + ".qml") : ""
   }
 
+  // The top row drawn (FormRow.first)
+  readonly property int _firstRow: Utils.firstFormRow(fieldRows.count, i => fieldRows.itemAt(i))
+
   // Rows a field marked `x-beside` shares with the field before it, each
   // taking half; every other field takes the whole width. The pair should
   // share an `x-showIf`, or one shown alone keeps half the width
@@ -71,7 +75,8 @@ FoldingCard {
     Layout.fillWidth: true
     columns: 2
     columnSpacing: Widget.spacing * 2
-    rowSpacing: Widget.spacing * 1.5
+    // The rows keep their gaps themselves (FormRow.dividerGap)
+    rowSpacing: 0
 
     Repeater {
       id: fieldRows
@@ -81,6 +86,8 @@ FoldingCard {
         required property var modelData
         required property int index
         readonly property bool half: modelData.schema?.["x-beside"] === true || root.group.rows[index + 1]?.schema?.["x-beside"] === true
+        // Beside the top row, it's on the top line too
+        first: index === root._firstRow || (modelData.schema?.["x-beside"] === true && index - 1 === root._firstRow)
         row: modelData
         form: root.form
         Layout.columnSpan: half ? 1 : 2

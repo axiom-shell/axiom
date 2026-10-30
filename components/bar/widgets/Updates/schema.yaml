@@ -2,6 +2,11 @@ label: Package Updates
 icon: package_2
 group: System
 popout: {variant: own, enabled: {description: List pending packages when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, stacked]
+    description: "Stacked puts the count over the AUR's share of it."
 colors: standard
 settings:
   interval:

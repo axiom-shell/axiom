@@ -4,7 +4,7 @@
 > **Config:** one reader per section
 > **Related:** [Config manager](config-manager.md), [Schema annotations](schema-annotations.md), [Themes](../theming/themes.md)
 
-Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader naming and no `??` fallbacks; › Layering.)
+Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` fallbacks; › Layering. Reader naming: [README](../README.md) › Layout.)
 
 ### What a reader is
 - `pragma Singleton`, but a reader, not an owner: one per config section, exposing `readonly property` values from `ConfigManager.live` (the config with editors' unsaved previews over it, [Previews](config-manager.md#previews)).
@@ -17,6 +17,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader n
   - `outputs`: the connected monitors.
     - It is `Quickshell.screens` without Qt's nameless placeholder and Hyprland's headless `FALLBACK`, which stand in while no monitor is connected.
     - A window left on a stand-in when monitors return is moved off a screen Qt then frees, and qs crashed configuring it.
+    - `check_structure` refuses `Quickshell.screens` outside `General`; the windows that must exist with no monitor (the lock and greeter previews, the windowed greeter, the no-parent notice) say why on the line: `// allowed: <reason>`.
   - `screensNamed(name)`: that screen, else the primary, else the first.
   - `screensFor(mode, name)`: see [Shell manager and screen targeting](shell-manager-targeting.md).
 - **`Idle`**: hypridle ([Idle](../features/idle.md)).
@@ -29,14 +30,17 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader n
   - Edges are numbers from `methods/ScreenEdge` (`ScreenEdge.fromConfig(location)`), not this reader's.
 - **`PopoutsConfig`**: open/dismiss delays and edge trigger size, shared by bar and edge popouts.
 - **`OSDConfig`**: the OSDs; see [OSD](../features/osd.md).
+- **`HotCornersConfig`**: the hot corners; see [Hot corners](../features/hot-corners.md).
 - **`LauncherConfig`**: launcher placement, size and providers.
-- **`Apps`**: the terminal, file manager and browser that binds and the launcher open.
+- **`Apps`**: the terminal, file manager and browser that binds and the launcher open, and the network editor (the Wi-Fi menu, the VPN module).
 - **`Screenshots`**: the screenshot and recording folders, `~` expanded, empty for `ScreenshotManager`'s defaults ([Screenshots and screen recording](../features/screenshots-recording.md)).
 - **`NotificationsConfig`**: the toasts' corner and gaps; see [Notifications](../features/notifications.md).
 - **`OverlayConfig`**: views and card-grid constants.
 - **`EdgeMenusConfig`**: edge menus.
 - **`IconsConfig`**, **`ChatConfig`**, **`ThemeIntegrations`**.
 - **`TailscaleConfig`**: what every Tailscale widget and module shares: the poll `interval`, `showOffline` peers, the Connect/Disconnect `actions`.
+- **`VpnConfig`**: what every VPN widget and module shares: `notifyOnDrop`, `showTailscale` (Tailscale as a VPN row), `publicIpUrl`.
+- **`CustomWidgetsConfig`**: the custom widgets (`items`, `byId`, `definition(id)`), read through a JSON string so an unrelated change doesn't notify ([custom widgets](../features/custom-widgets.md)).
 - **`CommunitySetups`**: whether the gallery is on, and its catalog URL ([Community setups](../features/community-setups.md)).
 - **`CalendarConfig`**:
   - accounts with their ids filled in

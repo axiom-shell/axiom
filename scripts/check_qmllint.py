@@ -6,9 +6,10 @@ shell laid out as QML modules (scripts/qml_modules.py). Many of its warnings
 are gaps in Quickshell's type info rather than bugs, so the known ones are
 kept in scripts/qmllint-baseline.json, per file, as "category: message"
 with a count (no line numbers, so unrelated edits don't churn it). A new
-warning, or one more of a known kind in the same file, fails the check.
+warning, or one more of a known kind in the same file, fails the check; so
+does a baselined one that's gone, since the baseline only shrinks.
 
-  scripts/check_qmllint.py                    lint (exit 1 on new warnings)
+  scripts/check_qmllint.py                    lint (exit 1 on new or gone warnings)
   scripts/check_qmllint.py --update-baseline  accept the current warnings
 """
 import collections
@@ -115,15 +116,9 @@ def lint():
     return found, lines
 
 
-def main():
-    found, lines = lint()
-    if "--update-baseline" in sys.argv:
-        baseline = {f: dict(sorted(c.items())) for f, c in sorted(found.items())}
-        BASELINE.write_text(json.dumps(baseline, indent=2) + "\n")
-        print(f"baseline: {sum(sum(c.values()) for c in found.values())} warnings")
-        return
-    baseline = json.loads(BASELINE.read_text()) if BASELINE.exists() else {}
-    new, fixed = [], 0
+def against(found, lines, baseline):
+    """The warnings past the baseline's counts, and the baselined ones gone."""
+    new, gone = [], []
     for name, counts in sorted(found.items()):
         known = baseline.get(name, {})
         for key, n in sorted(counts.items()):
@@ -132,13 +127,30 @@ def main():
                 new.append(f"{name}:{at}: {key}" + (f" ({n - known.get(key, 0)} new)" if known.get(key) else ""))
     for name, known in baseline.items():
         for key, n in known.items():
-            fixed += max(0, n - found.get(name, {}).get(key, 0))
+            left = found.get(name, {}).get(key, 0)
+            if n > left:
+                gone.append(f"{name}: {key} ({n - left} gone)")
+    return new, gone
+
+
+def main():
+    found, lines = lint()
+    if "--update-baseline" in sys.argv:
+        baseline = {f: dict(sorted(c.items())) for f, c in sorted(found.items())}
+        BASELINE.write_text(json.dumps(baseline, indent=2) + "\n")
+        print(f"baseline: {sum(sum(c.values()) for c in found.values())} warnings")
+        return
+    baseline = json.loads(BASELINE.read_text()) if BASELINE.exists() else {}
+    new, gone = against(found, lines, baseline)
     for line in new:
         print(f"error: {line}")
-    if fixed:
-        print(f"note: {fixed} baselined warnings are gone; run with --update-baseline to drop them")
+    for line in gone:
+        print(f"error: fixed, still baselined: {line}")
     if new:
         print(f"{len(new)} new qmllint warnings (fix them, or --update-baseline if they're false positives)")
+    if gone:
+        print(f"{len(gone)} baselined warnings are gone: run with --update-baseline to drop them")
+    if new or gone:
         sys.exit(1)
     print("qmllint ok")
 

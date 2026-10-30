@@ -10,7 +10,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - `methods/SchemaLayout` turns the schema into categories → groups → rows.
 - The cards are built from the schema, the category and the search only. What a card's showing depends on config (`x-showIf`) reaches the page as strings (`Settings._categoriesKey`, `SettingsContent._shownKey`), so they notify only when the answer changes: a new array on every edit rebuilds every card, flashing the page.
 - Only this page builds its own rows. Flat objects (array items, widget/module options, a bar's fields) render through `forms/SchemaPropertiesForm`.
-- Streamed (`StreamedLoader`, [streamed building](streamed-building.md)): the sidebar, and each card of a category, on opening the page and on switching category (`always`), so a category shows at once and its cards fill in, top to bottom. Search results and Changed from default build at once (`listing`), so typing doesn't fade them in again. The columns settle as the cards arrive (the 150 ms quiet spell below). `SchemaPropertiesForm` streams its fields the same way wherever it's used.
+- Streamed (`StreamedLoader`, [streamed building](streamed-building.md)): the sidebar, and each card of a category, on opening the page and on switching category (`always`), so a category shows at once and its cards fill in, top to bottom. Search results and Changed from default stream too: one letter matches most of the page, and building every card in one frame froze the shell. The columns settle as the cards arrive (the 150 ms quiet spell below). `SchemaPropertiesForm` streams its fields the same way wherever it's used.
 - An `array` of objects renders as an add/remove/reorder list (`SchemaObjectArray`, items `SchemaArrayItem`).
 - Text and number boxes (`forms/SchemaTextField`, `SchemaNumberField`'s value box) show their edit as unsaved on the first keystroke and apply it only on Enter (Ctrl+Enter when multiline), focus loss, teardown or Save; a suggestion click or a folder picked with Browse (`x-control: "folder"`, [File picker](file-picker.md)) commits at once. Each live apply re-evaluates the readers (~35 ms of JS before layout), and half-typed values had side effects: a font re-shaped every text, a notes folder ran `find` on `/`, a widget's label command ran per keystroke.
   - Every page: the box holding typed text registers with `EditsManager.holdTyping`, which shows Save and Discard in its window (`SaveResetActions`); Save commits it first (`EditsManager.commitTyping`), Discard drops it.
@@ -30,7 +30,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 
 ### Discarding
 - Three sizes: the page header's Discard (every unsaved edit, `SettingsManager.resetChanges`), a generated card's Discard (shown while it has any: its rows only), and a field's unsaved dot (click it: that edit only). The last two go through `SettingsManager.discard(paths)`, dropping text typed in that card or field (`EditsManager.discardTypingIn`). The list cards (docks, OSDs, calendar accounts) have only the page's.
-- A field's small reset button is different: it sets the schema default (an edit, which Discard undoes).
+- A field's small reset button is different: it sets the schema default (an edit, which Discard undoes). The dot and reset sit right after the field's label, on its line (`FieldHeader.trailing`).
 
 ### Folding
 - Clicking a card's header folds it (`SettingsManager.collapsed`, by group key, saved to `~/.local/state/axiom/ui/settings.json`). Search results never fold.
@@ -59,10 +59,12 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 ### Transitions and search
 - A new category, or entering/leaving search, fades the content in, sliding from the side of the sidebar it was picked from (`_pageIndex`).
 - Search results are grouped by category (`blocks`): a heading with the category's icon, then its own two columns.
+- The search applies once typing pauses for 150 ms (`SettingsContent.query`, behind `SettingsManager.query`; clearing it applies at once), so a burst of keystrokes builds the results once and the old ones stay up meanwhile.
+- What each card and row is found by (title, description, section and key, in English and translated) is lowercased once on entering search (`SettingsContent._searchIndex`, `methods/SettingsSearch.index`), and each query only filters it (`SettingsSearch.filter`).
 
 ### Opening it from elsewhere
 - `SettingsManager.openSetting(path, link)` opens the page on the card showing a setting, object or section (`"Appearance.font.size"`, `"Calendar"`), found by `SchemaLayout.locate` (cached per path in `SettingsManager.locate` until the schema or the sections shown change), and jumps to it. So callers don't depend on category names or card keys.
   - `link` true: followed from another overlay page (`ShellManager.followLink`), which the navigator then offers to go back to. Services opening it from outside (a notification, the launcher) leave it off.
   - In the schema, `x-link` puts such links under fields and on widget/module types (`SettingsLink`, `FieldLinks`: [Schema annotations](schema-annotations.md)); `x-links` puts page links in a category's header.
 - The launcher's `/config <setting>` lists **Show in settings** last, which calls `openSetting`.
-- A category has no IPC; for testing use a temporary `IpcTarget` (AGENTS.md › Running / reloading).
+- A category has no IPC; for testing use a temporary `IpcTarget` ([testing](../testing.md) › Seeing a page or surface).

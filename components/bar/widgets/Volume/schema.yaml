@@ -2,6 +2,10 @@ label: Volume
 icon: volume_up
 group: Media & audio
 popout: {variant: own, enabled: {description: Open the output mixer when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill, pill, segments]
 colors: standard
 settings:
   showPercentage: {type: boolean, title: Show percentage, default: false}

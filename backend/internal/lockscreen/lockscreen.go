@@ -40,9 +40,21 @@ type Options struct {
 
 // State is what the shell last reported.
 type State struct {
-	Locked   bool `json:"locked"`
+	// Locked: the session lock is up and the compositor acknowledged it
+	Locked bool `json:"locked"`
+	// Holding: the shell holds the session lock or is taking it,
+	// acknowledged or not. A shell that dies so is restarted locked: the
+	// acknowledgement can be missing while the compositor keeps the
+	// session locked (a lock taken over by a reloaded generation never
+	// sees it again), and nothing else would take the lock back
+	Holding  bool `json:"holding"`
 	Surfaces int  `json:"surfaces"`
 	Outputs  int  `json:"outputs"`
+}
+
+// held: the session is locked, or being locked, by the shell.
+func (s State) held() bool {
+	return s.Locked || s.Holding
 }
 
 // Locker tracks the lock screen and locks on request.
@@ -89,15 +101,24 @@ func (l *Locker) State() State {
 	return l.state
 }
 
+// Held is whether the last report holds the session locked (or locking):
+// what a restarted shell must lock again.
+func (l *Locker) Held() bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.state.held()
+}
+
 // ShellStopped is told when the shell was stopped on purpose (a restart,
 // which starts the next one locked itself, or the daemon stopping): its
-// surfaces went with it. It reports whether the session was locked.
+// surfaces went with it. It reports whether the session was locked
+// (held).
 func (l *Locker) ShellStopped() bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.state.Surfaces = 0
 	l.gone = true
-	return l.state.Locked
+	return l.state.held()
 }
 
 // confirmed: the session lock is up, with a lock surface on every output

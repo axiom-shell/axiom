@@ -1,0 +1,12 @@
+label: Gauge
+icon: speed
+defaultSize: [3, 3]
+slots: [value, min, max, label]
+color: state
+settings:
+  inside:
+    type: string
+    title: Inside
+    default: percent
+    enum: [percent, value, icon, none]
+    x-enumLabels: {percent: Percent, value: Value, icon: Icon, none: None}

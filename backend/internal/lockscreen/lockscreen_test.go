@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func TestLockConfirmedByTheShell(t *testing.T) {
@@ -133,13 +134,7 @@ func TestOwnLockerRunsItsCommandButNotLoginctl(t *testing.T) {
 	if err := l.Lock(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < 50; i++ {
-		if _, err := os.Stat(marker); err == nil {
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	if _, err := os.Stat(marker); err != nil {
+	if !testkit.Eventually(func() bool { _, err := os.Stat(marker); return err == nil }) {
 		t.Error("the lock command didn't run")
 	}
 	command = "loginctl lock-session"
@@ -180,6 +175,29 @@ func TestShellDyingWhileLockedRelocks(t *testing.T) {
 	}
 }
 
+// A shell holding the lock without the compositor's acknowledgement (a
+// reloaded generation that took the lock over never gets it again) dies
+// locked all the same: restarted unlocked, it left the session locked with
+// nothing on it to unlock (niri's red screen, 2026-10-29).
+func TestShellDyingWhileHoldingTheLockRelocks(t *testing.T) {
+	t.Parallel()
+	restarted := make(chan struct{}, 1)
+	l := New(Options{StartLocked: func(ctx context.Context) error { restarted <- struct{}{}; return nil }})
+	l.Report(State{Holding: true, Surfaces: 1, Outputs: 1})
+	if l.confirmed() {
+		t.Error("confirmed without the compositor's acknowledgement")
+	}
+	if !l.Held() {
+		t.Error("not held")
+	}
+	l.ShellExited()
+	select {
+	case <-restarted:
+	case <-time.After(time.Second):
+		t.Fatal("not restarted locked")
+	}
+}
+
 // A stop axiom asked for (a restart, which locks the next shell itself)
 // never relaunches: relaunching from it restarted the shell in a loop.
 func TestRequestedStopDoesNotRelock(t *testing.T) {
@@ -197,5 +215,29 @@ func TestRequestedStopDoesNotRelock(t *testing.T) {
 	case <-restarted:
 		t.Error("relaunched after a requested stop")
 	case <-time.After(50 * time.Millisecond):
+	}
+}
+
+// A lock request given up on (its context cancelled) before the shell
+// confirms is a failure, never a lock.
+func TestCancelledLockIsNotConfirmed(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	l := New(Options{
+		Confirm:  time.Hour,
+		AskShell: func(context.Context) error { cancel(); return nil },
+	})
+	if err := l.Lock(ctx); err == nil {
+		t.Error("a cancelled lock request counted as locked")
+	}
+}
+
+func TestDefaultConfirmBound(t *testing.T) {
+	t.Parallel()
+	if got := New(Options{}).opts.Confirm; got != 3*time.Second {
+		t.Errorf("Confirm = %v, want 3s", got)
+	}
+	if got := New(Options{Confirm: time.Second}).opts.Confirm; got != time.Second {
+		t.Errorf("Confirm = %v, want the one given", got)
 	}
 }

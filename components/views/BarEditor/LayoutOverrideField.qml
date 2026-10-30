@@ -38,6 +38,7 @@ ColumnLayout {
       spacing: 2
 
       StyledText {
+        wrapMode: Text.WordWrap
         text: I18n.tr(root.fieldSchema.title ?? root.key)
         Layout.fillWidth: true
       }

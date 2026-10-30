@@ -11,6 +11,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
 	"github.com/axiom-shell/axiom/backend/internal/logind/logindtest"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // fakeNotifier records the watches armed; the test fires them.
@@ -48,20 +49,20 @@ func (n *fakeNotifier) Watch(timeout time.Duration, respect bool, onIdle, onResu
 // at is the armed watch with that timeout.
 func (n *fakeNotifier) at(t *testing.T, timeout time.Duration) *fakeWatch {
 	t.Helper()
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
+	var found *fakeWatch
+	if !testkit.Eventually(func() bool {
 		n.mu.Lock()
+		defer n.mu.Unlock()
 		for _, w := range n.watches {
 			if w.timeout == timeout {
-				n.mu.Unlock()
-				return w
+				found = w
 			}
 		}
-		n.mu.Unlock()
-		time.Sleep(5 * time.Millisecond)
+		return found != nil
+	}) {
+		t.Fatalf("no watch at %v", timeout)
 	}
-	t.Fatalf("no watch at %v", timeout)
-	return nil
+	return found
 }
 
 func (n *fakeNotifier) count() (int, int) {
@@ -103,7 +104,7 @@ func (r *recorder) actions() Actions {
 // expect waits for the actions recorded to be want.
 func (r *recorder) expect(t *testing.T, want ...string) {
 	t.Helper()
-	deadline := time.After(3 * time.Second)
+	deadline := time.After(testkit.Bound(3 * time.Second))
 	for {
 		r.mu.Lock()
 		got := fmt.Sprint(r.got)
@@ -163,7 +164,7 @@ func start(t *testing.T, buses bool) *harness {
 // until waits for a state that cond accepts.
 func (h *harness) until(t *testing.T, cond func(State) bool) State {
 	t.Helper()
-	deadline := time.After(3 * time.Second)
+	deadline := time.After(testkit.Bound(3 * time.Second))
 	for {
 		if s := h.svc.State(); cond(s) {
 			return s
@@ -333,11 +334,7 @@ func TestSuspendThroughLogind(t *testing.T) {
 	h.svc.Configure(s)
 	h.until(t, func(s State) bool { return s.Logind && s.Armed == 1 })
 	h.n.at(t, time.Hour).onIdle()
-	deadline := time.Now().Add(3 * time.Second)
-	for h.logind.Suspended() != 1 {
-		if time.Now().After(deadline) {
-			t.Fatal("not suspended")
-		}
-		time.Sleep(10 * time.Millisecond)
+	if !testkit.Eventually(func() bool { return h.logind.Suspended() == 1 }) {
+		t.Fatal("not suspended")
 	}
 }

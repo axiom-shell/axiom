@@ -233,9 +233,16 @@ Singleton {
     id: _notify
     interval: 3000
     onTriggered: {
+      // Installed since it was notified (a restart ago)
+      if (root.iconFontInstalled) {
+        NotificationManager.dismissApp(root._iconFontEntry);
+        return;
+      }
       _run.notified = true;
       const command = root.installCommand("iconFont");
-      NotificationManager.sendNotification("axiom", I18n.tr("Icon font missing"), command !== "" ? I18n.tr("Install {0} ({1}), then restart the shell.", Appearance.iconFamily, command) : I18n.tr("Install {0}, then restart the shell.", Appearance.iconFamily));
+      NotificationManager.sendNotification("axiom", I18n.tr("Icon font missing"), command !== "" ? I18n.tr("Install {0} ({1}), then restart the shell.", Appearance.iconFamily, command) : I18n.tr("Install {0}, then restart the shell.", Appearance.iconFamily), {
+        "desktopEntry": root._iconFontEntry
+      });
     }
   }
 
@@ -247,22 +254,32 @@ Singleton {
     id: _checkTextFont
     interval: 3000
     onTriggered: {
-      if (root.textFontInstalled)
+      if (root.textFontInstalled) {
+        NotificationManager.dismissApp(root._fontEntry);
         return;
+      }
       const family = Appearance.fontFamily;
       console.warn(`[DependencyManager] font family "${family}" is not installed: text falls back to fontconfig's default`);
       if (_run.notifiedFont === family)
         return;
       _run.notifiedFont = family;
-      NotificationManager.sendNotification("axiom", I18n.tr("Font not found"), I18n.tr("No installed font is named \"{0}\", so text uses a fallback. Check the name in Settings → Look & Feel → Font.", family));
+      NotificationManager.sendNotification("axiom", I18n.tr("Font not found"), I18n.tr("No installed font is named \"{0}\", so text uses a fallback. Check the name in Settings → Look & Feel → Font.", family), {
+        "desktopEntry": root._fontEntry
+      });
     }
   }
 
+  // The font notifications' desktop entries, which take them away once
+  // the font is there (clicking one opens nothing)
+  readonly property string _iconFontEntry: "axiom-icon-font"
+  readonly property string _fontEntry: "axiom-font"
+
   Component.onCompleted: {
+    NotificationManager.registerHandler(root._iconFontEntry, () => {});
+    NotificationManager.registerHandler(root._fontEntry, () => {});
     _checkTextFont.start();
-    if (root.iconFontInstalled)
-      return;
-    console.warn(`[DependencyManager] ${Appearance.iconFamily} is not installed: icons will show as words`);
+    if (!root.iconFontInstalled)
+      console.warn(`[DependencyManager] ${Appearance.iconFamily} is not installed: icons will show as words`);
     if (!_run.notified)
       _notify.start();
   }

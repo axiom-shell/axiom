@@ -20,6 +20,12 @@ ColumnLayout {
   property bool showFocus: true
   // The item being renamed ("" for none)
   property string editing: ""
+  // The field last, below the items (a popout growing up: Panel.growth)
+  property bool reversed: false
+  property LayoutOrder _order: LayoutOrder {
+    layout: root
+    reversed: root.reversed
+  }
   readonly property var items: TodoManager.shownItems
 
   spacing: Widget.spacing / 2

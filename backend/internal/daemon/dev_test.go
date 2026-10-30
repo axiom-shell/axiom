@@ -15,7 +15,8 @@ func fakeGo(t *testing.T, build string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "go")
 	script := "#!/bin/sh\ncase \"$1\" in\ngenerate) exit 0 ;;\nbuild) " + build + " ;;\nesac\n"
-	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+	// A parallel test's fork would leave it busy (writeExecutable)
+	if err := writeExecutable(path, []byte(script)); err != nil {
 		t.Fatal(err)
 	}
 	return path

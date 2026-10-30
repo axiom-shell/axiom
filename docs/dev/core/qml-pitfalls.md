@@ -35,3 +35,4 @@ Bar widgets, content and views are loaded by URL.
 
 ### Effects
 - A `MultiEffect` handed a visible item's own layer (`layer.enabled` source) pads that layer and redraws the item shrunk and offset; handed a `ShaderEffectSource` with `autoPaddingEnabled`, it stretches it. Shadows of visible surfaces go through `OutsideShadow` (explicit padding).
+- Rounded clipping is Quickshell.Widgets' `ClippingRectangle`, never a `MultiEffect` mask; set its `color`, which defaults to white.

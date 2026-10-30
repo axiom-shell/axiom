@@ -34,5 +34,13 @@ StyledContainer {
         description: root.description
       }
     }
+
+    // Between the heading and the fields, as on a settings card
+    StyledSeparator {
+      visible: root.title !== ""
+      Layout.fillWidth: true
+      separatorHeight: 1
+      opacity: 0.6
+    }
   }
 }

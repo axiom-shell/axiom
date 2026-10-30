@@ -3,14 +3,16 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
+import qs.services.core
 import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
 import qs.components.content.ThemePicker
 import qs.components.content.WallpaperPicker
 
-// The look: the wallpaper folder, bar style and screen border here, with the Themes
-// page's wallpaper picker and theme list beside it
+// The look: the wallpaper folder, bar style, screen border and the example
+// setups (applied at once) here, with the wallpaper picker and theme list
+// beside it
 OnboardingPage {
   id: root
 
@@ -170,11 +172,37 @@ OnboardingPage {
     paths: ["Appearance.shape.screenBorder"]
   }
 
+  // --- Example setups ---
+
+  StyledText {
+    Layout.topMargin: Widget.spacing
+    visible: SavedConfigsManager.examples.length > 0
+    text: I18n.tr("Example setups")
+    font.bold: true
+  }
+
   StyledText {
     Layout.fillWidth: true
-    text: I18n.tr("Widgets are arranged in the overlay's Bar editor.")
+    visible: SavedConfigsManager.examples.length > 0
+    text: I18n.tr("Applies a whole look (bars, theme, menus) at once. Your wallpaper and the rest of this setup stay.")
     wrapMode: Text.WordWrap
     textColor: Theme.foregroundAlt
+  }
+
+  TileFlow {
+    id: examples
+    Layout.fillWidth: true
+    minColumns: 2
+
+    Repeater {
+      model: SavedConfigsManager.examples
+
+      delegate: ExampleCard {
+        required property var modelData
+        width: examples.tileWidth
+        example: modelData
+      }
+    }
   }
 
   extras: [

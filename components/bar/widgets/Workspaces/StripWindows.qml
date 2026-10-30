@@ -3,7 +3,7 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
-import qs.components.methods
+import qs.services.system
 
 // A strip workspace's windows as bar cells (WorkspaceCell), in strip order
 // (CompositorManager.stripWindows), each showing its app icon: the one
@@ -60,7 +60,7 @@ Grid {
       length: root.cellLength
       radius: root.radius
       hoverColor: root.hoverColor
-      iconPath: window ? IconResolver.resolveWindowIcon(window.appId, window.title) : ""
+      iconPath: window ? AppIconManager.resolveWindowIcon(window.appId, window.title) : ""
       clickable: root.clickable
       hitArea: root.hitArea
       animated: root.animated

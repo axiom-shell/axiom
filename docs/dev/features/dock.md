@@ -1,6 +1,6 @@
 # Dock
 
-> **Files:** `services/ui/DockManager.qml`, `config/DockConfig.qml`, `shell/Dock.qml`, `components/surfaces/dock/DockWindow.qml`, `components/surfaces/dock/DockMenu.qml`, `components/methods/DockLayout.qml`, `components/views/Settings/DockListCard.qml`
+> **Files:** `services/ui/DockManager.qml`, `config/DockConfig.qml`, `shell/Dock.qml`, `components/surfaces/dock/`, `components/methods/DockLayout.qml`, `components/views/Settings/DockListCard.qml`
 > **Config:** `Dock.*` (reader `DockConfig`); entries are `definitions/DockEntry`; `Apps.pinned` (reader `Apps`)
 > **Related:** [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Popout registry](../popouts/registry.md), [Layering and corners](../bar/layering-and-corners.md), [OSD](osd.md)
 

@@ -1,0 +1,99 @@
+# The CustomWidget definition (#/definitions/CustomWidget): one custom JSON
+# widget, a script drawn as a bar widget, its popout and a module
+# (docs/dev/features/custom-widgets.md).
+
+type: object
+additionalProperties: false
+properties:
+  id: {$ref: '#/definitions/ItemId'}
+  name: {type: string, title: Name, default: Custom widget, description: Its name in the widget and module libraries.}
+  icon: {type: string, title: Icon, default: widgets, description: 'A Material Symbols name, for the libraries and when the script gives none.'}
+  command:
+    x-scope: commands
+    type: string
+    title: Command
+    default: ''
+    description: A script's path or a command line, run by sh. Its output is the widget.
+  mode:
+    type: string
+    title: Runs
+    enum: [poll, stream, once]
+    default: poll
+    x-enumLabels: {poll: Every interval, stream: Continuously (one sample a line), once: Once (then on refresh)}
+  interval: {type: integer, title: Run every, x-unit: ms, default: 5000, minimum: 500, maximum: 86400000, x-showIf: {mode: poll}}
+  output:
+    type: string
+    title: Output
+    enum: [waybar, json, text]
+    default: waybar
+    x-enumLabels: {waybar: Waybar (JSON or text lines), json: JSON, text: Plain text}
+  execIf:
+    x-scope: commands
+    type: string
+    title: Run only if
+    default: ''
+    description: Waybar's exec-if, a command that must succeed before the script runs. Checked when the widget is first shown.
+  refreshName:
+    type: string
+    title: Refresh name
+    default: ''
+    description: '`axiom ipc customWidgets refresh <name>` runs it again now (what Waybar''s signal did).'
+  actions:
+    type: object
+    additionalProperties: false
+    description: Commands the bar widget and module run (Waybar's on-click and on-scroll). Never on the lock screen.
+    properties:
+      click: {x-scope: commands, type: string, title: On click, default: ''}
+      rightClick: {x-scope: commands, type: string, title: On right click, default: ''}
+      middleClick: {x-scope: commands, type: string, title: On middle click, default: ''}
+      scrollUp: {x-scope: commands, type: string, title: On scroll up, default: ''}
+      scrollDown: {x-scope: commands, type: string, title: On scroll down, default: ''}
+      refreshAfter: {type: boolean, title: Run the script again after one, default: true}
+  format: {type: string, title: Format, default: '{}', description: 'Waybar''s format: {} is the text, {icon} the icon picked below, {percentage}, {alt}, or any key or path in the output.'}
+  formatIcons:
+    title: Icons
+    default: {}
+    description: Waybar's format-icons, as {icon} in the format. A list is picked by percentage; an object by alt, else its "default".
+  states:
+    type: object
+    title: State colours
+    default: {}
+    additionalProperties: {type: string}
+    description: A class or state → a theme colour name (ok, warning and critical are already known).
+  maxLength: {type: integer, title: Longest text, default: 0, minimum: 0, maximum: 500, description: 0 is no limit.}
+  escape: {type: boolean, title: Text is plain, default: false, description: Waybar's escape. Show markup in the text as typed instead of drawing it.}
+  hideEmpty: {type: boolean, title: Hide when empty, default: true}
+  tooltip: {type: boolean, title: Tooltip, default: true}
+  bar:
+    $ref: '#/definitions/BarDisplay'
+    x-order: [style, icon, segments, width, colorText, popout]
+    x-properties:
+      icon:
+        type: string
+        title: Icon
+        enum: [none, glyph, material]
+        default: material
+        description: Before the text, the format's icon is drawn in the text itself.
+      popout: {type: boolean, title: Open the module on hover, default: true}
+  module:
+    type: object
+    additionalProperties: false
+    properties:
+      size:
+        type: array
+        title: Design size
+        description: In grid units (4 to a card). Where the module starts when placed on a page, and the popout's size.
+        default: [4, 2]
+        minItems: 2
+        maxItems: 2
+        items: {type: integer, minimum: 1, maximum: 8}
+      lockscreen:
+        type: boolean
+        title: Offer on the lock screen
+        default: false
+        description: "Its script keeps running while the screen is locked, and what it prints shows to anyone at the screen: offer only what's fine to show. Its clicks and commands never run there."
+      elements:
+        type: array
+        default: []
+        items: {$ref: '#/definitions/CustomElement'}
+required: [id]

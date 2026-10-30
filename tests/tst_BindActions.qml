@@ -56,6 +56,36 @@ TestCase {
     }), "toggle");
   }
 
+  function test_ipcCall() {
+    compare(BindActions.ipcCall(test.table, "overlayPage", " Themes "), {
+      "target": "overlay",
+      "function": "page",
+      "args": ["Themes"]
+    });
+    compare(BindActions.ipcCall(test.table, "workspaceOverview", ""), {
+      "target": "workspaceOverlay",
+      "function": "toggle",
+      "args": []
+    }, "a call's toggle");
+    compare(BindActions.ipcCall(test.table, "launcherSearch", "two words"), {
+      "target": "appLauncher",
+      "function": "search",
+      "args": ["two words"]
+    }, "an argument with spaces stays one");
+    compare(BindActions.ipcCall(test.table, "workspaceNth", "3").args, ["3", "go"]);
+    compare(BindActions.ipcCall(test.table, "workspaceNth", ""), null, "missing its argument");
+    compare(BindActions.ipcCall(test.table, "screenshot", "").args, ["region"], "the table's default argument");
+    compare(BindActions.ipcCall(test.table, "closeWindow", ""), null, "a compositor action");
+  }
+
+  // A hot corner runs any axiom action (the IPC ones) or a command, with
+  // its argument shown exactly where the call takes one
+  function test_hotCornerActionsAreTheAxiomActions() {
+    const item = files.json("config/json/config.schema.json").properties.HotCorners.properties.items.items.properties;
+    compare(item.action.enum, Object.keys(test.table.ipcActions).concat(["exec"]));
+    compare(item.argument["x-showIf"].action, item.action.enum.filter(action => action === "exec" || test.table.ipcActions[action][0].includes("{0}")));
+  }
+
   function test_needsArgument() {
     verify(shared.calls.BindActions.needsArgument(test.table, "exec"));
     verify(shared.calls.BindActions.needsArgument(test.table, "workspaceNth"), "{0} in the IPC call");

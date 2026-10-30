@@ -22,8 +22,8 @@ Loader {
 
   required property var row
   required property var form
-  // Room a wrapper keeps at the header's right end (SettingsField's reset)
-  property int headerInset: 0
+  // Shown after the field's label (SettingsField's unsaved dot and reset)
+  property Component headerExtra: null
 
   readonly property var fieldSchema: row.schema ?? ({})
   readonly property var current: form?.valueAt(row.path)
@@ -61,6 +61,11 @@ Loader {
     if (fieldSchema["x-options"] === "edgeMenus")
       return EdgeMenusConfig.menus.reduce((labels, menu) => {
         labels[menu.id] = menu.name || menu.id;
+        return labels;
+      }, {});
+    if (fieldSchema["x-options"] === "customWidgets")
+      return CustomWidgetsConfig.items.reduce((labels, item) => {
+        labels[item.id] = item.name || item.id;
         return labels;
       }, {});
     if (fieldSchema["x-options"] === "overlayPages")
@@ -135,12 +140,13 @@ Loader {
   // under its switch) is greyed with it, without repeating it.
   readonly property string _blockedBy: SchemaLayout.failingKey(fieldSchema["x-enabledIf"], root._valueOf)
   readonly property bool allowed: _blockedBy === ""
-  readonly property bool _followsSibling: Object.keys(fieldSchema["x-showIf"] ?? {}).some(key => !key.startsWith("/"))
+  // Shown by a sibling's value (a part's fields, under its switch)
+  readonly property bool followsSibling: Object.keys(fieldSchema["x-showIf"] ?? {}).some(key => !key.startsWith("/"))
   // I18n.tr("{0} only.")
   readonly property string disabledNote: {
     // (A field one compositor alone has says so even under its part's
     // switch: the switch itself isn't greyed out for it)
-    if (root.allowed || (root._followsSibling && _blockedBy !== "/$compositor"))
+    if (root.allowed || (root.followsSibling && _blockedBy !== "/$compositor"))
       return "";
     // false: none (the section's intro says why)
     const own = fieldSchema["x-disabledNote"] ?? "";
@@ -253,6 +259,7 @@ Loader {
     SchemaSwitch {
       label: root.label
       description: root.description
+      headerExtra: root.headerExtra
       checked: root.current === true
       onToggled: value => root.commit(value)
     }
@@ -267,7 +274,7 @@ Loader {
       minimum: root.fieldSchema.minimum ?? 0
       maximum: root.fieldSchema.maximum ?? 9999
       stepSize: root.fieldSchema.multipleOf ?? 1
-      headerInset: root.headerInset
+      headerExtra: root.headerExtra
       unit: root.fieldSchema["x-unit"] ?? ""
       unitScale: SchemaLayout.unitScale(unit)
       mode: root.form?.numberMode || (root.fieldSchema["x-control"] ?? "auto")
@@ -293,6 +300,7 @@ Loader {
       SchemaSwitch {
         label: root.label
         description: root.description
+        headerExtra: root.headerExtra
         checked: autoField.custom
         onToggled: value => root.commit(value ? autoField.auto.start : autoField.auto.value)
       }
@@ -303,7 +311,6 @@ Loader {
         minimum: Math.max(root.fieldSchema.minimum ?? 0, autoField.auto.value + 1)
         maximum: root.fieldSchema.maximum ?? 9999
         stepSize: root.fieldSchema.multipleOf ?? 1
-        headerInset: root.headerInset
         unit: root.fieldSchema["x-unit"] ?? ""
         unitScale: SchemaLayout.unitScale(unit)
         mode: root.form?.numberMode || (root.fieldSchema["x-control"] ?? "auto")
@@ -316,35 +323,29 @@ Loader {
   // A value shown, not edited (`x-control: "readonly"`), with a copy button
   Component {
     id: readonlyField
-    ColumnLayout {
+    RowLayout {
       spacing: Widget.spacing
-      RowLayout {
-        Layout.fillWidth: true
-        spacing: Widget.spacing
-        StyledText {
-          text: I18n.tr(root.label)
-        }
-        StyledText {
-          Layout.fillWidth: true
-          horizontalAlignment: Text.AlignRight
-          text: String(root.current ?? "")
-          elide: Text.ElideMiddle
-          opacity: 0.8
-        }
-        SquareIconButton {
-          size: Widget.height - Widget.px(6)
-          iconText: "content_copy"
-          tooltipText: I18n.tr("Copy")
-          onClicked: ClipboardManager.copyText(String(root.current ?? ""))
-        }
+      FieldHeader {
+        label: root.label
+        description: root.description
+        trailing: root.headerExtra
+        // Centred on a control taller than it (a label alone)
+        Layout.alignment: Qt.AlignVCenter
       }
       StyledText {
-        visible: root.description !== ""
         Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        text: I18n.tr(root.description)
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
+        Layout.alignment: Qt.AlignVCenter
+        horizontalAlignment: Text.AlignRight
+        text: String(root.current ?? "")
+        elide: Text.ElideMiddle
+        opacity: 0.8
+      }
+      SquareIconButton {
+        Layout.alignment: Qt.AlignVCenter
+        size: Widget.height - Widget.px(6)
+        iconText: "content_copy"
+        tooltipText: I18n.tr("Copy")
+        onClicked: ClipboardManager.copyText(String(root.current ?? ""))
       }
     }
   }
@@ -354,6 +355,7 @@ Loader {
     SchemaComboBox {
       label: root.label
       description: root.description
+      headerExtra: root.headerExtra
       options: root.options
       optionLabels: root.optionLabels
       swatches: root.isColor
@@ -366,9 +368,10 @@ Loader {
     id: searchField
     ColumnLayout {
       spacing: Widget.spacing
-      StyledText {
-        text: I18n.tr(root.label)
-        Layout.fillWidth: true
+      FieldHeader {
+        label: root.label
+        description: root.description
+        trailing: root.headerExtra
       }
       StyledComboEntry {
         Layout.fillWidth: true
@@ -385,14 +388,6 @@ Loader {
             root.commit(value);
         }
       }
-      StyledText {
-        visible: root.description !== ""
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        text: I18n.tr(root.description)
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
-      }
     }
   }
 
@@ -401,7 +396,7 @@ Loader {
     SchemaObjectArray {
       label: root.label
       description: root.description
-      headerInset: root.headerInset
+      headerExtra: root.headerExtra
       items: root.current ?? []
       itemDelegate: Component {
         SchemaArrayItem {
@@ -421,6 +416,7 @@ Loader {
     SchemaTextField {
       label: root.label
       description: root.description
+      headerExtra: root.headerExtra
       multiline: root.fieldSchema["x-multiline"] === true
       browse: root.fieldSchema["x-control"] === "folder" ? "folder" : ""
       // Text that doesn't match yet (a half-typed time) isn't committed
@@ -438,9 +434,10 @@ Loader {
     id: chipsField
     ColumnLayout {
       spacing: Widget.spacing
-      StyledText {
-        text: I18n.tr(root.label)
-        Layout.fillWidth: true
+      FieldHeader {
+        label: root.label
+        description: root.description
+        trailing: root.headerExtra
       }
       Flow {
         Layout.fillWidth: true
@@ -461,14 +458,6 @@ Loader {
           }
         }
       }
-      StyledText {
-        visible: root.description !== ""
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        text: I18n.tr(root.description)
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
-      }
     }
   }
 
@@ -478,6 +467,7 @@ Loader {
     SchemaTextField {
       label: root.label
       description: root.description
+      headerExtra: root.headerExtra
       suggestions: SettingsManager.suggestionsFor(root.fieldSchema)
       commaList: true
       currentConfigValue: (root.current ?? []).join(", ")

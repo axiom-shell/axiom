@@ -1,7 +1,7 @@
 # Utility modules
 
-> **Files:** `components/content/Calculator/Calculator.qml`, `components/content/ClipboardHistory/ClipboardHistory.qml`, `components/content/EmojiPicker/EmojiPicker.qml`, `components/content/WorldClocks/WorldClocks.qml`, `components/content/NightLightControls/NightLightControls.qml`, `components/content/CommandOutput/CommandOutput.qml`, `components/content/ScreenRecord/ScreenRecord.qml`, `components/content/Cheatsheet/Cheatsheet.qml`, `components/content/Brightness/Brightness.qml`
-> **Config:** each module's `properties` (e.g. `WorldClocks.clocks`, `CommandOutput.clickCommand`)
+> **Files:** `components/content/Calculator/Calculator.qml`, `components/content/ClipboardHistory/ClipboardHistory.qml`, `components/content/EmojiPicker/EmojiPicker.qml`, `components/content/WorldClocks/WorldClocks.qml`, `components/content/NightLightControls/NightLightControls.qml`, `components/content/ScreenRecord/ScreenRecord.qml`, `components/content/Cheatsheet/Cheatsheet.qml`, `components/content/Brightness/Brightness.qml`
+> **Config:** each module's `properties` (e.g. `WorldClocks.clocks`)
 > **Related:** [Writing modules](writing-modules.md), [Launcher providers](../features/launcher-providers.md), [Night light](../theming/night-light.md), [Screenshots and recording](../features/screenshots-recording.md), [Brightness](../features/brightness.md), [Keybinds](../hyprland/keybinds.md)
 
 Tool-like overlay modules. Each keeps its lasting state in its service, so closing the overlay loses nothing.
@@ -28,10 +28,6 @@ Tool-like overlay modules. Each keeps its lasting state in its service, so closi
 
 ### NightLightControls
 - Reads the `NightLight` reader. Described in [Night light](../theming/night-light.md).
-
-### CommandOutput (`CommandManager`)
-- One short line shows as a figure, a sentence or two larger and centred, anything longer as text.
-- Optional `clickCommand`.
 
 ### ScreenRecord (`ScreenshotManager`)
 - Region or screen, the sound, and recent recordings. Described in [Screenshots and recording](../features/screenshots-recording.md).

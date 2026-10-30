@@ -108,6 +108,18 @@ TestCase {
     compare(map.a, 1, "the original is untouched");
   }
 
+  function test_pick() {
+    compare(Utils.pick({
+      "a": 1,
+      "b": 2,
+      "c": 3
+    }, ["c", "a", "x"]), {
+      "c": 3,
+      "a": 1
+    }, "only the keys it has");
+    compare(Utils.pick(null, ["a"]), {});
+  }
+
   function test_clone() {
     const original = {
       "a": [1,
@@ -265,5 +277,28 @@ TestCase {
         "end": 100
       }
     ]), []);
+  }
+
+  function test_firstFormRow() {
+    const rows = [null,
+      {
+        "shown": false,
+        "bodyHeight": 20
+      },
+      {
+        "shown": true,
+        "bodyHeight": 0
+      },
+      {
+        "shown": undefined,
+        "bodyHeight": 20
+      },
+      {
+        "shown": true,
+        "bodyHeight": 20
+      }
+    ];
+    compare(Utils.firstFormRow(rows.length, i => rows[i]), 3, "skips missing, hidden and empty rows; unknown counts as shown");
+    compare(Utils.firstFormRow(3, i => rows[i]), -1);
   }
 }

@@ -2,13 +2,25 @@ name: Checks
 
 # Pull requests only: a PR's run checks its merge commit, which is what
 # lands on main (merges are serial), so main isn't checked again. Run by hand
-# (Actions → Checks → Run workflow) for a full run on any branch
+# (Actions → Checks → Run workflow) for a full run on any branch. Weekly on
+# main, the go job alone: govulncheck sees advisories published since the
+# last PR touching Go
 on:
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * 1"
 
 permissions:
   contents: read
+
+# Build with the container's go, never a download. Its caches outside any
+# home, so the go job's user and the other jobs' root find what
+# actions/cache restores
+env:
+  GOTOOLCHAIN: local
+  GOCACHE: /var/cache/go/build
+  GOMODCACHE: /var/cache/go/mod
 
 # A new push to a PR cancels its older run
 concurrency:
@@ -17,6 +29,7 @@ concurrency:
 
 jobs:
   checks:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     # Arch, for a go new enough to build the schema (the other jobs' image)
     container: archlinux:latest
@@ -40,36 +53,33 @@ jobs:
           git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q origin "$GITHUB_SHA"
           git checkout -q FETCH_HEAD
           python3 --version
+          echo "GO_VERSION=$(go env GOVERSION)" >> "$GITHUB_ENV"
 
-      # config/json/config.schema.json, which the docs and checks read, is
-      # built from config/schema/, and the reference docs from the code and
-      # the schema (never committed). gen_docs.py also fails here when the
-      # shell calls a daemon method or push the daemon doesn't define
-      - name: Generated files (scripts/generate.sh)
-        env:
-          GOTOOLCHAIN: local
-        run: scripts/generate.sh
+      # Go's build and module caches across runs (generate.sh compiles the
+      # binary). Both are content-addressed, so a hit only skips compiling
+      # what didn't change, and the key needs only the Go version and the
+      # dependencies (go.sum): it changes rarely, so a run saves only when
+      # it's new. The tests run with -count=1, never from cache. A PR's run
+      # restores main's cache, which the go job's weekly run saves (also
+      # under this key: the two jobs share one; when both save a new key,
+      # the later one only logs that it exists). Never re-saved under one
+      # key, it goes stale only in axiom's own packages, recompiled each
+      # run; the key rolls with each Go release Arch ships
+      - name: Go caches
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /var/cache/go
+          key: go-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-${{ env.GO_VERSION }}-
 
-      - name: Structure (naming conventions, imports, singleton references)
-        run: python3 scripts/check_structure.py
-
-      - name: Sizes follow the Interface scale (no literal px outside the bars)
-        run: python3 scripts/check_sizes.py
-
-      - name: Docs match the code (links, paths, members)
-        run: python3 scripts/check_docs.py
-
-      # install.sh, Packages.qml (the onboarder's hints) and the AUR PKGBUILDs
-      - name: Package lists agree
-        run: python3 scripts/check_packages.py
-
-      - name: JSON is valid
-        run: git ls-files -z '*.json' | xargs -0 -n1 python3 -m json.tool --no-ensure-ascii > /dev/null
-
-      # Missing entries fall back to English at runtime, so this only warns
-      - name: Translations
-        continue-on-error: true
-        run: python3 scripts/check_i18n.py
+      # The generated files (config/json/config.schema.json, built from
+      # config/schema/, and the reference docs; gen_docs.py also fails when
+      # the shell calls a daemon method or push the daemon doesn't define,
+      # and on unread settings or unused reader members),
+      # then structure, sizes, docs, package lists, JSON and translations:
+      # each job runs its part of scripts/check_all.sh, the one list of checks
+      - name: Checks (scripts/check_all.sh checks)
+        run: scripts/check_all.sh --ci checks
 
       # The job's summary page: each check's result and findings as tables,
       # the docs describing what a pull request changes, and doc drift.
@@ -90,6 +100,7 @@ jobs:
   # Quickshell (with its type info) as the shell does. A container image is
   # not an action, so the org's action policy doesn't apply to it.
   qt:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     container: archlinux:latest
     steps:
@@ -112,21 +123,11 @@ jobs:
           git checkout -q FETCH_HEAD
 
       # The schema and the shared fixtures tst_Shared replays (recorded
-      # from SchemaValidation against the live schema)
-      - name: Generated files (scripts/generate.sh --fixtures)
-        env:
-          GOTOOLCHAIN: local
-        run: scripts/generate.sh --fixtures
-
-      - name: qmlformat
-        run: scripts/check_qmlformat.sh
-
-      # Fails only on warnings not in scripts/qmllint-baseline.json
-      - name: qmllint
-        run: python3 scripts/check_qmllint.py
-
-      - name: Unit tests (components/methods, schema, migrations)
-        run: scripts/run_tests.sh
+      # from SchemaValidation against the live schema), then qmlformat,
+      # qmllint (failing only on warnings not in
+      # scripts/qmllint-baseline.json) and the unit tests
+      - name: Checks (scripts/check_all.sh qt)
+        run: scripts/check_all.sh --ci qt
 
   # backend/ (the axiom binary): generated files, gofmt, vet, staticcheck,
   # tests under -race and govulncheck (the release cross-builds are
@@ -170,7 +171,7 @@ jobs:
             { git show "HEAD:$f"; git show "HEAD^1:$f"; } 2>/dev/null | grep -qE 'IpcTarget[[:space:]]*[{]' && echo "$f" || true
           done)
           if [ "$EVENT" != pull_request ] || [ -n "$ipc" ] || printf '%s\n' "$changed" |
-            grep -qE '^(backend/|config/(schema|json)/|components/methods/|examples/|tests/(Shared|RepoFiles|tst_)|scripts/(check_go|generate|gen_docs|qml_modules|run_tests)\.|scripts/dev/fixtures\.py|\.github/workflows/)'; then
+            grep -qE '^(backend/|config/(schema|json)/|components/methods/|examples/|tests/(Shared|RepoFiles|tst_)|scripts/(check_all|check_go|generate|gen_docs|qml_modules|run_tests)\.|scripts/dev/fixtures\.py|\.github/workflows/)'; then
             echo "run=1" >> "$GITHUB_OUTPUT"
           else
             echo "Nothing the binary is built or tested from changed: skipping the Go checks"
@@ -181,22 +182,38 @@ jobs:
         run: |
           pacman -S --noconfirm --needed go gcc python qt6-declarative quickshell lua
           go version
+          echo "GO_VERSION=$(go env GOVERSION)" >> "$GITHUB_ENV"
 
-      # GOTOOLCHAIN=local: build with the container's go, never a download
-      - name: Go checks
+      # The checks job's Go caches (the same key)
+      - name: Go caches
+        if: steps.scope.outputs.run
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /var/cache/go
+          key: go-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-${{ env.GO_VERSION }}-
+
+      # scripts/check_go.sh --ci, and that the cases the JS helpers and the
+      # axiom binary share (both replay them) are indexed. A shared runner
+      # is slower than the machine the tests' waits were tuned on: they
+      # wait three times as long (testkit.Bound). As a user, not the
+      # container's root, who reads and writes any file: the tests of a
+      # file the user can't read or write would skip. setpriv keeps the
+      # environment (the wait factor, the Go cache paths)
+      - name: Checks (scripts/check_all.sh go)
         if: steps.scope.outputs.run
         env:
-          GOTOOLCHAIN: local
-        run: scripts/check_go.sh --ci
-
-      # The cases the JS helpers and the axiom binary share (both replay them)
-      - name: Shared fixtures are indexed
-        if: steps.scope.outputs.run
-        run: python3 scripts/dev/fixtures.py check
+          AXIOM_TEST_WAIT_FACTOR: "3"
+        run: |
+          useradd -m ci
+          mkdir -p /var/cache/go
+          chown -R ci:ci "$PWD" /var/cache/go
+          setpriv --reuid=ci --regid=ci --init-groups env HOME=/home/ci scripts/check_all.sh --ci go
 
   # The script tests (the slowest checks) and the shell script lint, beside
   # the qt job rather than after it
   scripts:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     container: archlinux:latest
     steps:
@@ -216,19 +233,8 @@ jobs:
           git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth=1 origin "$GITHUB_SHA"
           git checkout -q FETCH_HEAD
 
-      # The generated files (the schema and its kin) the script tests read
-      - name: Generated files (scripts/generate.sh)
-        env:
-          GOTOOLCHAIN: local
-        run: scripts/generate.sh
-
-      - name: shellcheck
-        run: shellcheck -x -S warning install.sh scripts/*.sh scripts/lib/*.sh scripts/greeter/*.sh scripts/dev/*.sh .githooks/pre-commit
-
-      # Themes, the Neovim module, the dev scripts
-      - name: Script tests
-        run: python3 tests/scripts/test_scripts.py -v
-
-      # The agent guard (.claude/hooks/guard.py) enforcing AGENTS.md's "Never" rules
-      - name: Guard tests
-        run: python3 tests/scripts/test_guard.py -v
+      # The generated files the script tests read, shellcheck, the script
+      # tests (themes, the Neovim module, the dev scripts) and the agent
+      # guard's tests (.claude/hooks/guard.py, AGENTS.md's "Never" rules)
+      - name: Checks (scripts/check_all.sh scripts)
+        run: scripts/check_all.sh --ci scripts

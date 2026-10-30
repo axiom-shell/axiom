@@ -27,6 +27,7 @@
 - The workspace overview is built on every screen and opens on the one under the cursor (`CompositorManager.withHoveredScreen`, a cursor position lookup).
 - Wallpapers are per monitor (`ThemeManager.wallpaperFor(monitor)`; picked ones are `Appearance.wallpaper.perScreen[monitor]`, set from the overlay's Themes page); the primary monitor's is also `Appearance.wallpaper.file`, the fallback for the others. See [Wallpaper and schedules](../theming/wallpaper-and-schedules.md).
 - `openModule(types)` opens the overlay page with the biggest module of the first type any page has, else reveals an edge menu with one (false with neither): what a notification click or a service's "show me" uses (Chat, Pomodoro, Stopwatch).
+- `runAction(action, argument)` runs an axiom action by its keybind name (the daemon's table's `ipcActions`, `BindActions.ipcCall` making the call) through the daemon's `ipc.call`, so it lands on the target instance as its bind would; `exec` runs a command. What hot corners run.
 - Which popouts give way to which is PopoutManager's: see [Popout registry](../popouts/registry.md). An integrated edge menu holds no popout claim and takes no part (its exclusive zone pushes the others inwards instead).
 
 ### The surface registry
@@ -47,7 +48,7 @@
 - While stepped aside, the overlay and the onboarder (`ReservedAreaWindow`):
   - stay mapped, so their pages and state survive
   - hide their content, take no input or keys (an empty `mask`) and drop their backdrop.
-- The overlay's grab is off (and its `cleared` ignored) until the last owner ends it.
+- The overlay's grab is off (and a click outside ignored) until the last owner ends it.
 
 #### Required fields
 - `newSurfaceKey(kind)` / `reportRequiredField(key, present)` / `requiredFields` are the screen layouts' required-field reports.

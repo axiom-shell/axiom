@@ -100,7 +100,8 @@ func toCurrent(cfg *jsonx.Object) *jsonx.Object {
 // defaults: the schema's shape and the converter agree on every key. A
 // section format 1 never had (Tailscale, from v79) is filled from its
 // defaults at load, like any missing section, and so is a key added to a
-// format-1 section since (addedSinceV1).
+// format-1 section since (addedSinceV1), or to a bar widget
+// (widgetKeysAddedSinceV1).
 func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	t.Parallel()
 	s := v2Schema(t)
@@ -127,6 +128,21 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 		}
 		parent.Delete(parts[len(parts)-1])
 	}
+	bars, _ := defaults.(*jsonx.Object).Value("Bars").(*jsonx.Object)
+	items, _ := bars.Value("items").(*jsonx.Array)
+	for _, bar := range items.Items {
+		sections, _ := bar.(*jsonx.Object).Value("widgets").(*jsonx.Object)
+		for _, side := range sections.Keys() {
+			widgets, _ := sections.Value(side).(*jsonx.Array)
+			for _, w := range widgets.Items {
+				if props, ok := w.(*jsonx.Object).Value("properties").(*jsonx.Object); ok {
+					for _, key := range widgetKeysAddedSinceV1 {
+						props.Delete(key)
+					}
+				}
+			}
+		}
+	}
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {
@@ -136,7 +152,11 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
-var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "Overlay.moduleBorders"}
+var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Apps.networkEditor"}
+
+// Bar widget settings added since, the same way (a widget's display style,
+// the Network widget's VPN lock and its popout's VPN section)
+var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn"}
 
 // Every frozen corpus config (each past schema version's defaults, the
 // examples, old configs), as the legacy pipeline loads it, converts to a
@@ -201,5 +221,93 @@ func TestConvertKeepsIDs(t *testing.T) {
 				t.Errorf("ids %v, want %v", ids, c.want)
 			}
 		})
+	}
+}
+
+// Sections convert to their format-2 shape, each moved or grouped key
+// where the first of its old keys was (key order is part of the output).
+// section "" checks the whole config.
+func TestConvertShapes(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name, section, in, want string
+	}{
+		{"the envelope first, sections in place", "",
+			`{"$schema":"s","EdgeMenus":[],"Bars":[],"Weather":{},"version":75,"format":1}`,
+			`{"$schema":"s","format":2,"version":76,"EdgeMenus":{"items":[]},"Bars":{"items":[]},"Weather":{},"Compositor":{}}`},
+		{"a monitors setting renamed in place", "General",
+			`{"General":{"monitors":"all","scale":1}}`,
+			`{"screen":{"mode":"all"},"scale":1}`},
+		{"a group first where its first key was, durations scaled", "Notifications",
+			`{"Notifications":{"evenGaps":true,"timeout":5,"gapTop":1,"maxAgeDays":2}}`,
+			`{"gaps":{"even":true,"top":1},"timeout":5000,"maxAge":172800000}`},
+		{"a group where its earliest key was", "Notifications",
+			`{"Notifications":{"enabled":true,"gapTop":1,"position":"top","evenGaps":true}}`,
+			`{"enabled":true,"gaps":{"even":true,"top":1},"position":"top"}`},
+		{"a renamed key in place", "Weather",
+			`{"Weather":{"intervalMinutes":5,"location":"x"}}`,
+			`{"interval":300000,"location":"x"}`},
+		{"an empty edge left empty", "Launcher",
+			`{"Launcher":{"edge":""}}`,
+			`{"edge":"","providers":{"web":{},"clipboard":{}}}`},
+		{"edges lowered, empty ones kept", "OSD",
+			`{"OSD":{"osds":[{"edge":"Right","orientation":""}]}}`,
+			`{"items":[{"edge":"right","orientation":"","screen":{"mode":"inherit","names":[]}}]}`},
+		{"a fetched calendar's fields dropped, a local one's name kept", "Calendar",
+			`{"Calendar":{"accounts":[{"kind":"local","calendars":[{"href":"a","name":"Mine","color":"#f00","enabled":true,"readOnly":false}]},{"kind":"caldav","calendars":[{"href":"b","name":"Work","color":"#0f0","enabled":false,"components":["VEVENT"]}]}]}}`,
+			`{"items":[{"kind":"local","calendars":[{"href":"a","name":"Mine","color":"#f00","enabled":true}]},{"kind":"caldav","calendars":[{"href":"b","color":"#0f0","enabled":false}]}]}`},
+		{"the cursor timeout in ms", "WindowBehaviour",
+			`{"WindowBehaviour":{"cursorHideTimeout":3}}`,
+			`{"cursorHideTimeout":3000}`},
+		{"a greeter on every monitor is on the primary one", "Greeter",
+			`{"Greeter":{"monitor":"*"}}`,
+			`{"screen":{"mode":"primary","names":[]}}`},
+		{"a greeter's named monitor", "Greeter",
+			`{"Greeter":{"monitor":"DP-1"}}`,
+			`{"screen":{"mode":"named","names":["DP-1"]}}`},
+		{"edge menus: one screen, a layout, modules with and without properties", "EdgeMenus",
+			`{"EdgeMenus":[{"monitor":"*","edge":"Left","fineGrid":true,"modules":[{"type":"CommandOutput","properties":{"interval":5}},{"type":"Clock"}],"openOnHover":true},{"monitor":"DP-1","edge":"Top"}]}`,
+			`{"items":[{"screen":{"mode":"primary","names":[]},"edge":"left","layout":{"grid":{"fine":true},"modules":[{"id":"commandOutput","type":"CommandOutput","properties":{"interval":5000}},{"id":"clock","type":"Clock"}]},"open":{"onHover":true}},{"screen":{"mode":"named","names":["DP-1"]},"edge":"top"}]}`},
+		{"a grid where its earliest key was", "Lockscreen",
+			`{"Lockscreen":{"layout":{"columns":8,"background":"wallpaper","rows":4}}}`,
+			`{"layout":{"grid":{"columns":8,"rows":4},"backdrop":{"source":"wallpaper"}}}`},
+		{"custom animations' duration renamed, an unnamed curve's id", "Compositor",
+			`{"Hyprland":{"managed":{"curves":[{"points":[0,0,1,1]}],"customAnimations":[{"name":"Fade In","durationMs":200}]}}}`,
+			`{"hyprland":{"curves":[{"id":"curve","points":[0,0,1,1]}],"customAnimations":[{"id":"fade-in","name":"Fade In","duration":200}]}}`},
+		{"a custom page's layout where its grid or modules were", "Overlay",
+			`{"Overlay":{"views":[{"fineGrid":true,"type":"Custom","name":"My Page","modules":[]},{"type":"Custom","modules":[],"name":"Q"},{"type":"Settings"}]}}`,
+			`{"items":[{"id":"my-page","layout":{"grid":{"fine":true},"modules":[]},"type":"Custom","name":"My Page"},{"id":"q","type":"Custom","layout":{"modules":[]},"name":"Q"},{"id":"settings","type":"Settings"}]}`},
+		{"monitor profiles get ids", "Monitors",
+			`{"Monitors":{"profiles":[{"name":"Desk Setup"}]}}`,
+			`{"items":[{"id":"desk-setup","name":"Desk Setup"}]}`},
+		{"keybind presets and their binds get ids", "Keybinds",
+			`{"Keybinds":{"presets":[{"name":"Vim","binds":[{"key":"SUPER + a"}]}]}}`,
+			`{"presets":[{"id":"vim","name":"Vim","binds":[{"id":"super-a","key":"SUPER + a"}]}]}`},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			in, err := jsonx.Unmarshal([]byte(c.in))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var got any = convert.ToV2(in.(*jsonx.Object)).Config
+			if c.section != "" {
+				got = got.(*jsonx.Object).Value(c.section)
+			}
+			if s := string(jsonx.MarshalCompact(got)); s != c.want {
+				t.Errorf("got  %s\nwant %s", s, c.want)
+			}
+		})
+	}
+}
+
+// What a conversion did is listed for the log.
+func TestConvertNotesItsChanges(t *testing.T) {
+	t.Parallel()
+	got := convert.ToV2(jsonx.Obj("General", jsonx.Obj("monitors", "all"))).Changes
+	want := []string{"monitors settings became screen targets", "converted to config format 2 (version 76)"}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("changes %q, want %q", got, want)
 	}
 }

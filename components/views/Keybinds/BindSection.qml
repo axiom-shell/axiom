@@ -120,10 +120,9 @@ ColumnLayout {
         textSize: Appearance.fontSizeBy(-2)
       }
 
-      StyledIcon {
+      IssueIcon {
         visible: root.issueCount > 0
-        text: "warning"
-        textColor: Theme.warning
+        tip: KeybindManager.editor.issueTip(root.section.indices)
         textSize: Appearance.fontSizeBy(-1)
       }
 

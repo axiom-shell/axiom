@@ -441,6 +441,12 @@ QtObject {
     return (found ?? []).some(issue => issue.level !== "info");
   }
 
+  // What's wrong with the binds at `indices`, each problem once, a line
+  // each (notes left out): an IssueIcon's tip
+  function issueTip(indices) {
+    return [...new Set([].concat(...indices.map(i => root.issues[i] ?? [])).filter(issue => issue.level !== "info").map(issue => issue.text))].join("\n");
+  }
+
   // The binds on keys the user's compositor config binds too
   readonly property var userConflicts: root.binds.map((bind, index) => {
     const id = bind.paused ? "" : BindKeys.keyId(bind.key);

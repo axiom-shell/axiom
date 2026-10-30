@@ -8,7 +8,8 @@ import QtQuick
 //
 // An entry is { id, kind, pinned, resident, screen, parentId, phase,
 // footprint }:
-// - kind: "dock" | "osd" | "bar" | "menu" | "launcher" | "submenu"
+// - kind: "toast" | "dock" | "osd" | "bar" | "menu" | "launcher" |
+//   "submenu"
 // - pinned: held open by the user; ranks lowest whatever its kind
 // - resident: gives way and comes back (the dock, pinned popouts, a menu
 //   previewing from its editor) rather than closing for good
@@ -18,11 +19,14 @@ import QtQuick
 QtObject {
   id: root
 
-  // Lowest first. A submenu takes its parent's rank.
+  // Lowest first. A submenu takes its parent's rank; notification toasts
+  // rank under them all (-1), giving way to anything that covers them
   readonly property var ranks: ["pinned", "dock", "osd", "bar", "menu", "launcher"]
 
   // An entry's rank, `parent` its parent's entry for a submenu
   function rankOf(entry, parent) {
+    if (entry.kind === "toast")
+      return -1;
     if (entry.kind === "submenu")
       return parent ? rankOf(parent, null) : 0;
     if (entry.pinned)
@@ -77,6 +81,10 @@ QtObject {
       if (e.phase === "closing" || e.phase === "yielded")
         continue;
       if (e.parentId === claim.id || claim.parentId === e.id)
+        continue;
+      // Toasts and docks never collide: an always-shown dock would hide a
+      // stack over it for good
+      if ((e.kind === "toast" && claim.kind === "dock") || (e.kind === "dock" && claim.kind === "toast"))
         continue;
       // A submenu goes with its parent: only the parent collides
       if (e.kind === "submenu" && claim.parentId && e.parentId === claim.parentId)

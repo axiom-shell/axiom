@@ -43,7 +43,7 @@
 - **No migration needed:** a purely additive key fills its default on load. In a section format 1 already had, list it in `addedSinceV1` (`backend/internal/migrate/convert/convert_test.go`), or the check that format 1's defaults convert to the current ones fails.
 - **Wrong default type:** a default that doesn't validate (wrong type, outside min/max) makes the whole config fall back to defaults. `tst_Config` catches it.
 - **Drafts:** readers read `ConfigManager.live`, so an editor's unsaved preview of the setting shows through them with nothing more to do.
-- **Live config:** the running axiom validates against the schema it loaded at its start (`AGENTS.md` › Running / reloading). Confirm it has the new schema before relying on the new key in `~/.config/axiom/config.json`.
+- **Live config:** the running axiom validates against the schema it loaded at its start (`docs/dev/testing.md` › Reloads and logs). Confirm it has the new schema before relying on the new key in `~/.config/axiom/config.json`.
 
 ## Verify
 - `scripts/dev/verify.sh`: formats changed QML in place, runs `check_structure`, regenerates docs, runs related tests, shows the shell's log since the reload.

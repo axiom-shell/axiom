@@ -1,0 +1,24 @@
+# The Vpn section of the config (config.json's "Vpn").
+
+type: object
+x-category: Modules
+x-scope: personal
+title: VPN
+description: "How the VPN widgets, modules and the Wi-Fi menu show NetworkManager's VPNs (WireGuard, OpenVPN and other plugins), and Tailscale with them."
+additionalProperties: false
+properties:
+  notifyOnDrop:
+    type: boolean
+    title: Notify when a VPN drops
+    default: true
+    description: "Send a notification when a VPN goes down without being asked to (the connection under it was lost, or the server stopped answering)."
+  showTailscale:
+    type: boolean
+    title: List Tailscale
+    default: true
+    description: "Show Tailscale as a row with the other VPNs when it's installed. Its own widget and module keep showing the tailnet's devices."
+  publicIpUrl:
+    type: string
+    title: Public IP lookup
+    default: https://api.ipify.org
+    description: "Address the Wi-Fi menu asks, when you click Check, for the IP the internet sees (to confirm traffic goes through the VPN). It answers with the address as plain text. Nothing is sent until you click; empty hides the check."

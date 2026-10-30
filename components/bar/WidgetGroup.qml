@@ -5,6 +5,7 @@ import QtQuick
 import qs.config
 import qs.services.ui
 import qs.components.methods
+import qs.components.reusable
 
 // One bar section: a row (or column, on a vertical bar) of BarWidgetHosts that
 // fits itself into `maxExtent` along the main axis by shrinking elastic
@@ -209,6 +210,9 @@ Item {
       shownStart: segment.shownStart
       hovered: host?.outlined ?? false
       pressed: host?.pressed ?? false
+      backgroundLevel: host?.backgroundLevel ?? -1
+      backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
+      levelStart: segment.back
       highlighted: host?.highlighted ?? false
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)

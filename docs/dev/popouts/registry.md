@@ -4,7 +4,7 @@
 > **Config:** none
 > **Related:** [Surface context](surface-context.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Edge menu hosts](../edge-menus/hosts.md)
 
-`services/ui/PopoutManager` knows every popout that is showing, and where. A popout opening closes only what it overlaps, decided by rank. Read this before adding a popout kind or changing which one wins. (Rule: AGENTS.md › UI conventions, "Popout collisions".)
+`services/ui/PopoutManager` knows every popout that is showing, and where. A popout opening closes only what it overlaps, decided by rank. Read this before adding a popout kind or changing which one wins. (Rule: `components/hosts/popout/AGENTS.md`.)
 
 ### Claims
 - **Who holds a claim:** every bar popout, edge popout (OSDs, floating edge menus, the attached launcher), floating popout (the detached launcher, the window switcher), dock and submenu holds a `hosts/popout/PopoutClaim`.
@@ -24,7 +24,7 @@
 - **Location report:** `entries`, visible with `axiom ipc popouts list`.
 
 ### Ranks
-The rules are pure: `methods/PopoutGeometry`, tested by `tests/tst_PopoutGeometry.qml`. Ranks, lowest first:
+The rules are pure: `methods/PopoutGeometry`, tested by `tests/tst_PopoutGeometry.qml`. Notification toasts (kind `toast`, resident) rank under all of these (-1): anything shown over a stack hides it until it closes, except a dock, which never collides with them ([notifications](../features/notifications.md) › Toasts). Ranks, lowest first:
 1. `pinned`: any pinned popout, of any kind, while it isn't `engaged`.
 2. `dock`
 3. `osd`
@@ -54,6 +54,7 @@ While engaged it ranks as its kind, so it opens over a dock. Once let go it drop
   - **Unpinned while away:** it closes.
 - **Showing only once granted:** a host shows only once granted (`PopoutClaim.held`: granted, or closing after it was). The pill it stands on therefore draws back only after its box has slid away.
 - **Same-frame handover:** the evicted popouts start closing in the same frame the new one starts opening.
+- **The overlay opening** closes the `bar` and `menu` claims on its screen, pinned or yielded ones too (`closeOn`): they'd be latched under it. Their submenus close with them.
 - **Footprint changes:** if a claim's footprint changes while it shows (a resize, a switch in place, its window's real place arriving), it re-resolves as a claim does: it closes anything below it that it now covers, and gives way itself (refused, or yielded if resident) to anything above it. A popout never stays open over a higher one.
 
 ### An open popout never moves

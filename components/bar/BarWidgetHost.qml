@@ -52,6 +52,9 @@ Item {
   // show through), else its opacity
   readonly property real contentOpacity: _item ? ("dim" in _item ? _item.dim : _item.opacity) : 1
   readonly property bool pressed: _item?.pressed ?? false
+  // A level filling its background's shape (the module's `backgroundLevel`), -1 none
+  readonly property real backgroundLevel: _item?.backgroundLevel ?? -1
+  readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
   // A divider of its own (Separator): the group draws none beside it
   readonly property bool divides: _item?.divides ?? false
   // Hovered, on a module that shows an outline then (its hoverOutline)

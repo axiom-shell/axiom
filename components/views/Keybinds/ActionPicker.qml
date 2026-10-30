@@ -159,6 +159,7 @@ Item {
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.height
         placeholderText: I18n.tr("Search actions")
+        clearable: true
         onTextChanged: {
           root.query = text;
           root.highlighted = root.searching ? root.firstAction() : 0;
@@ -230,6 +231,7 @@ Item {
       }
 
       StyledText {
+        wrapMode: Text.WordWrap
         visible: root.rows.length === 0
         text: I18n.tr("No actions match \"{0}\"", root.query.trim())
         opacity: 0.6

@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.config
+import qs.services.session
 import qs.services.system
 import qs.services.ui
 
@@ -199,6 +200,8 @@ Singleton {
     root._save({
       notifiedTag: version
     });
+    // The "available" notification is done with
+    NotificationManager.dismissApp(root._desktopEntry);
     root._notify(I18n.tr("axiom updated to {0}", version), result.notes || I18n.tr("Click to see what's new."));
     // With the binary rebuilt, the daemon re-execs into it; when the
     // update changed the schema, it restarts the shell itself
@@ -240,7 +243,7 @@ Singleton {
   Timer {
     id: _reloadTimer
     interval: 1000
-    onTriggered: Quickshell.reload(false)
+    onTriggered: LockManager.reload()
   }
 
   IpcTarget {

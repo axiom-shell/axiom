@@ -9,9 +9,13 @@ the windowed greeter) live here; .claude/settings.json › permissions.deny
 repeats the plain ones. Tests: tests/scripts/test_guard.py.
 
 Bash commands are split into simple commands (on ; && || | & and newlines,
-into `bash -c`/`sh -c` strings) and each is judged on its argv, with leading
+( ) { } $( ) and backticks (inside double quotes too), the keywords starting a
+command such as `then`, into `bash -c`/`sh -c` strings; heredoc bodies only when
+something could run them: drop_heredoc_bodies) and each is judged on its argv, with leading
 VAR=value assignments (and `export VAR=…` earlier in the same command) as its
-environment. Best effort: it stops mistakes, not an adversary.
+environment; a wrapper (sudo, nice, flock, …) is judged by the command it
+runs, and a `>`/`>>` redirection as a write to its target. Best effort: it
+stops mistakes, not an adversary.
 """
 import json
 import os
@@ -26,8 +30,24 @@ HOME = Path(os.path.expanduser("~")).resolve()
 # The live config.json (DataDirs.xdg)
 LIVE_CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or HOME / ".config").resolve() / "axiom/config.json"
 SCHEMA = REPO / "config/json/config.schema.json"
-SEPARATORS = {";", "&&", "||", "|", "&", "\n", "|&"}
-WRAPPERS = {"sudo", "pkexec", "env", "nohup", "exec", "command", "time", "timeout", "setsid"}
+PUNCTUATION = ";&|()<>`"
+# Words that start a command without being its name
+KEYWORDS = {"if", "then", "else", "elif", "while", "until", "do", "!", "{", "}"}
+# Wrappers and their options that take a value (`sudo -u me`); timeout and
+# flock take one positional (the duration, the lock file) before the command
+WRAPPERS = {
+    "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-r", "-t", "-U", "-T"}, "pkexec": {"--user"},
+    "env": {"-u", "-C", "--unset", "--chdir"}, "nohup": set(), "exec": {"-a"}, "command": set(), "time": set(),
+    "setsid": set(), "timeout": {"-s", "-k", "--signal", "--kill-after"}, "nice": {"-n", "--adjustment"},
+    "ionice": {"-c", "-n", "-p", "--class", "--classdata"}, "flock": {"-w", "-E", "--timeout", "--conflict-exit-code"},
+    "systemd-run": {"-u", "--unit", "-p", "--property", "-E", "--setenv", "--uid", "--gid", "--slice", "-M", "--machine",
+                    "--description", "--working-directory"},
+}
+WRAPPER_POSITIONALS = {"timeout": 1, "flock": 1}
+# A substitution a double-quoted word still runs: "$(…)", "`…`"; single-quoted
+# text (a commit message, a grep pattern) runs nothing, so it's blanked first
+SUBSTITUTION = re.compile(r"\$\((.*)\)|`([^`]*)`", re.S)
+QUOTED = re.compile(r"""\\.|"(?:\\.|[^"\\])*"|\$'(?:\\.|[^'\\])*'|'[^']*'""", re.S)
 SHELLS = {"bash", "sh", "zsh"}
 QS = {"qs", "quickshell"}
 QS_VALUE_OPTS = {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}
@@ -44,22 +64,100 @@ def deny(rule, why):
 
 # --------------------------------------------------------------- parsing
 
-def split_commands(command):
-    """[(env, argv)] for each simple command in a shell command line."""
+# A quoted string or escape (kept), or a `#` comment (dropped): one starts a
+# word and ends at its newline, so `a#b`, `"#x"` and `${#var}` aren't comments
+COMMENT = re.compile(QUOTED.pattern + r"|(?<![^\s;&|()<>])#[^\n]*", re.S)
+
+
+def uncomment(m):
+    text = m[0]
+    if text[0] == "#":
+        # A comment holding a quote is judged as a command of its own: a quote
+        # read differently from the shell (`"$(echo ")"`) may end inside it
+        return " ; " + text if set(text) & set("'\"") else ""
+    if text[:2] == "$'":  # an ANSI-C string, which shlex can't read: as a plain one
+        return "'" + text[2:-1].replace("'", "") + "'"
+    return text
+
+
+def lex(command):
+    command = COMMENT.sub(uncomment, command).replace("\n", " ; ")
     try:
-        lexer = shlex.shlex(command.replace("\n", " ; "), posix=True, punctuation_chars=";&|")
+        lexer = shlex.shlex(command, posix=True, punctuation_chars=PUNCTUATION)
         lexer.whitespace_split = True
-        tokens = list(lexer)
-    except ValueError:
-        tokens = command.split()
+        lexer.commenters = ""
+        return list(lexer)
+    except ValueError:  # an unbalanced quote: split on separators still, quotes dropped
+        return re.findall(r"[;&|()<>`]+|[^\s;&|()<>`]+", re.sub(r"['\"]", "", command))
+
+
+# `<<WORD`, `<<-WORD`, `<<'WORD'` (not a `<<<` here-string, nor a `<<` inside
+# a quoted string or a comment, which COMMENT's branches consume)
+HEREDOC = re.compile(r"""(?<!<)<<(?!<)(-?)[ \t]*(['"]?)([A-Za-z_][\w.-]*)\2(?![^\s;&|<>()])|""" + COMMENT.pattern)
+
+
+def drop_heredoc_bodies(command):
+    """A heredoc's body is text, not commands: it is dropped, unless the
+    command runs text it's given (a shell, `source`, `.`, `eval` or a script run
+    by a path the command names elsewhere too: `bash <<EOF`, `cat <<EOF | sh`,
+    `cat > x.sh <<EOF … bash x.sh` or `… ./x.sh`), the body is unquoted and substitutes (`$(…)`, backticks) or
+    its delimiter never comes: then it is judged as written. Line continuations
+    are joined first, outside quotes and comments (a comment ends at its newline)."""
+    command = COMMENT.sub(lambda m: "" if m[0] == "\\\n" else m[0], command)
+    lines, out = command.split("\n"), []
+    while lines:
+        line = lines.pop(0)
+        out.append(line)
+        for m in HEREDOC.finditer(line):
+            dash, quote, word = m.groups()
+            end = next((i for i, body in enumerate(lines) if (body.lstrip("\t") if dash else body) == word), None) if word else None
+            if end is None:
+                continue
+            body, lines = lines[:end], lines[end:]
+            if not quote and SUBSTITUTION.search("\n".join(body)):
+                out.extend(body)
+    words = lex("\n".join(out))
+    named = [os.path.normpath(w) for w in words]
+    # `.`, or a script run by a path the command names elsewhere too, as the file it writes
+    # (`./t.sh`, `sudo /tmp/t.sh`; not `/usr/bin/grep`), where a command starts, not a redirection's target
+    runs = any(Path(w).name in SHELLS | {"source", "eval"} or (w == "." or "/" in w and named.count(named[i]) > 1)
+               and (not i or words[i - 1] in KEYWORDS | WRAPPERS.keys() or set(words[i - 1]) <= set(";&|()`"))
+               for i, w in enumerate(words))
+    return command if runs else "\n".join(out)
+
+
+def split_commands(command):
+    """[(env, argv)] for each simple command in a shell command line; a
+    redirection `> f` is a command of its own, `[">", f]`."""
+    command = drop_heredoc_bodies(command)
+    tokens = lex(command)
     out, current, exported = [], [], {}
-    for token in tokens + [";"]:
-        if token in SEPARATORS or set(token) <= set(";&|"):
+    for token in lex(QUOTED.sub(lambda m: "''" if m[0].startswith(("'", "$'")) else m[0], command)):
+        for m in SUBSTITUTION.finditer(token):
+            out.extend(split_commands(m[1] or m[2]))
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        punctuation = set(token) <= set(PUNCTUATION)
+        if punctuation and set(token) & set("<>") and not set(token) & set("()`"):
+            # A redirection: `>`/`>>` write their target, `<` reads it
+            if current and current[-1].isdigit():
+                current.pop()  # the fd of `2>`
+            if ">" in token and i + 1 < len(tokens):
+                out.append((dict(exported), [">", tokens[i + 1]]))
+            if token == "<<<" and i + 1 < len(tokens):
+                out.extend(split_commands(tokens[i + 1]))  # a here-string may be fed to a shell
+            i += 2
+            continue
+        if punctuation or not current and token in KEYWORDS:
             if current:
                 out.extend(simple(current, exported))
             current = []
         else:
             current.append(token)
+        i += 1
+    if current:
+        out.extend(simple(current, exported))
     return out
 
 
@@ -85,12 +183,16 @@ def simple(tokens, exported):
         return []
     # Wrappers: judge the command they run
     while argv and Path(argv[0]).name in WRAPPERS:
+        wrapper = Path(argv[0]).name
         argv = argv[1:]
-        while argv and (argv[0].startswith("-") or ASSIGN.match(argv[0]) or re.fullmatch(r"\d+[smhd]?", argv[0])):
+        while argv and (argv[0].startswith("-") or ASSIGN.match(argv[0])):
             if ASSIGN.match(argv[0]):
                 name, value = ASSIGN.match(argv[0]).groups()
                 env[name] = value
-            argv = argv[1:]
+            argv = argv[2:] if argv[0] in WRAPPERS[wrapper] else argv[1:]
+        argv = argv[WRAPPER_POSITIONALS.get(wrapper, 0):]
+        if wrapper == "flock" and argv[:1] in (["-c"], ["--command"]):
+            argv = ["sh", "-c", *argv[1:]]  # flock <file> -c <command>
     if not argv:
         return []
     command_flag = next((i for i, a in enumerate(argv[1:-1], 1) if re.fullmatch(r"-[a-z]*c[a-z]*", a)), None)
@@ -190,11 +292,11 @@ def check_axiom(env, args, cwd):
     live = axiom_live_display(env, args)
     sub = words[0]
     if live and sub in {"run", "quit", "restart"}:
-        deny("Running / reloading", f"`axiom {sub}` starts or stops the live shell; never from this session (test with a scratch XDG_RUNTIME_DIR, or nested.sh).")
+        deny("Never, while testing", f"`axiom {sub}` starts or stops the live shell; never from this session (test with a scratch XDG_RUNTIME_DIR, or nested.sh).")
     if live and sub == "daemon" and words[1:2] and words[1] in {"stop", "restart", "reexec"}:
-        deny("Running / reloading", f"`axiom daemon {words[1]}` stops or replaces the live daemon; never from this session.")
+        deny("Never, while testing", f"`axiom daemon {words[1]}` stops or replaces the live daemon; never from this session.")
     if live and sub == "dev" and words[1:2] and words[1] in {"on", "off", "rebuild"}:
-        deny("Running / reloading", f"`axiom dev {words[1]}` switches dev mode or re-execs the live daemon; ask the user (`axiom dev status` reads it).")
+        deny("Never, while testing", f"`axiom dev {words[1]}` switches dev mode or re-execs the live daemon; ask the user (`axiom dev status` reads it).")
     if live and (sub == "lock" or sub == "ipc" and words[1:2] == ["lockscreen"]):
         deny("Never, while testing", "don't lock the session; only the user can type the password (lock a scratch instance: XDG_RUNTIME_DIR=<scratch>).")
     if live and sub == "ipc" and words[1:3] in (["monitors", "keep"], ["selfUpdate", "update"]):
@@ -248,19 +350,21 @@ def current_branch(cwd):
     return out.stdout.strip()
 
 
-def check_git_push(args, cwd):
+def check_git(args, cwd):
     """`git push` that force-pushes, deletes or mirrors, or lands on main: every
     change reaches main through a reviewed PR (docs/dev/roadmap.md ›
-    Running it unattended)."""
+    Running it unattended). `git clean -x`, which deletes the ignored files."""
     i = 0
     while i < len(args) and args[i].startswith("-"):
         if args[i] == "-C" and i + 1 < len(args):
             cwd = str(resolve(args[i + 1], cwd))
         i += 2 if args[i] in GIT_VALUE_OPTS else 1
-    if i >= len(args) or args[i] != "push":
+    rule = "Never, while testing"
+    if args[i:i + 1] == ["clean"] and any(re.fullmatch(r"-[a-zA-Z]*[xX][a-zA-Z]*", a) for a in args[i + 1:]):
+        deny(rule, "`git clean -x`/`-X` deletes the generated files and local state; remove the files you mean by name (`git clean -fd` is fine).")
+    if args[i:i + 1] != ["push"]:
         return
     push = args[i + 1:]
-    rule = "Never, while testing"
     if any(a in {"-f", "--force", "--mirror", "--delete", "-d", "--force-if-includes"} or a.startswith("--force-with-lease")
            or re.fullmatch(r"-[a-zA-Z]*f[a-zA-Z]*", a) for a in push):
         deny(rule, "don't force-push, delete or mirror remote branches; push a new commit instead.")
@@ -298,12 +402,13 @@ def check_argv(env, argv, cwd):
         check_axiom(env, args, cwd)
 
     # Opening a GitHub issue: problems go in docs/dev/issues.md
-    if name == "gh" and (args[:2] == ["issue", "create"] or args[:1] == ["api"] and gh_api_opens_issue(args[1:])):
+    opens = any(args[i:i + 2] == ["issue", "create"] for i in range(len(args)))
+    if name == "gh" and (opens or args[:1] == ["api"] and gh_api_opens_issue(args[1:])):
         deny("Never, while testing", "don't open GitHub issues; record the problem in docs/dev/issues.md and tell the user.")
 
-    # Rewriting history on the remote, or pushing to main past a PR
+    # Rewriting history on the remote, pushing to main past a PR, or git clean -x
     if name == "git":
-        check_git_push(args, cwd)
+        check_git(args, cwd)
 
     # Greetd
     if name in {"systemctl", "service", "pkill", "killall"} and any("greetd" in a for a in args):
@@ -343,17 +448,29 @@ def check_argv(env, argv, cwd):
     if sends and any("greeter.apply" in a for a in args) and axiom_live_display(env, args):
         deny("Never, while testing", "greeter.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it installs the greeter for real (test it with go test ./internal/greeterinstall).")
 
-    # The real config.json
-    if name in {"rm", "unlink", "trash", "trash-put", "shred", "mv"}:
-        paths = [a for a in args if not a.startswith("-")]
-        if name == "mv":
-            paths = paths[:-1]  # the sources
-        for a in paths:
-            target = resolve(a, cwd)
-            # The file, or a folder holding it up to its config folder
-            top = LIVE_CONFIG.parent
-            if target == LIVE_CONFIG or target in LIVE_CONFIG.parents and (target == top or top in target.parents):
-                deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}); use `axiom ipc onboarding goTo <n>`.")
+    # The real config.json: deleted or moved (the file or a folder above it)
+    paths = [a for a in args if not a.startswith("-")]
+    holding = {LIVE_CONFIG, *LIVE_CONFIG.parents}
+    deletes = name in {"rm", "unlink", "trash", "trash-put", "shred", "mv"}
+    if name == "find" and any(a == "-delete" or a in {"-exec", "-execdir"} and Path(b).name in {"rm", "shred", "unlink"}
+                              for a, b in zip(args, args[1:] + [""])):
+        deletes, paths = True, args[:next((i for i, a in enumerate(args) if a[:1] in {"-", "(", "!"}), len(args))]
+    for a in (paths[:-1] if name == "mv" else paths) if deletes else []:
+        if resolve(a, cwd, env) in holding:
+            deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}) or a folder holding it; use `axiom ipc onboarding goTo <n>`.")
+    # ... or written by Bash, which skips the x-takeover check Edit and Write get
+    if name in {"cp", "mv", "install"} and len(paths) > 1:
+        written = [paths[-1]]
+    elif name == ">" or name == "tee":
+        written = paths
+    elif name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
+        written = paths
+    else:
+        written = []
+    for a in written:
+        target = resolve(a, cwd, env)
+        if target == LIVE_CONFIG or target == LIVE_CONFIG.parent and any(Path(p).name == LIVE_CONFIG.name for p in paths[:-1]):
+            deny("Never, while testing", f"don't write the real config.json ({LIVE_CONFIG}) from Bash, which skips the x-takeover check; use Edit/Write or `axiom config set`.")
 
     # qmlformat -i replaces the inode
     if name == "qmlformat" and any(a in {"-i", "--inplace"} for a in args):
@@ -385,7 +502,7 @@ def check_qs(env, args):
     if sub is None:
         if greeter:
             return
-        deny("Running / reloading", "the shell runs detached; never start another from this session (the windowed greeter: AXIOM_GREETER_WINDOWED=1 axiom greeter --dir <scratch>).")
+        deny("Running / reloading", "the shell runs detached; never start another from this session (the windowed greeter: AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --dir <scratch>).")
 
 
 # ---------------------------------------------------- Edit/Write config.json
@@ -462,7 +579,7 @@ def check_generated_edit(tool_input):
     if resolved in GENERATED:
         deny("Checks", f"`{resolved.relative_to(REPO)}` is generated: {GENERATED[resolved]}.")
     if resolved in FROZEN:
-        deny("Checks", f"`{resolved.relative_to(REPO)}` is frozen: {FROZEN[resolved]}.")
+        deny("Config", f"`{resolved.relative_to(REPO)}` is frozen: {FROZEN[resolved]}.")
     for generated, why in GENERATED_DIRS.items():
         if resolved.is_relative_to(generated):
             deny("Checks", f"`{resolved.relative_to(REPO)}` is generated: {why}.")

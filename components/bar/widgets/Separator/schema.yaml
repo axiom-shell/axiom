@@ -2,11 +2,7 @@ label: Separator / Spacer
 icon: more_vert
 group: Look & layout
 settings:
-  style:
-    type: string
-    title: Style
-    default: line
-    enum: [line, dot, slash, chevron, space]
+  style: {$ref: '#/definitions/SeparatorStyle'}
   size:
     type: integer
     title: Size

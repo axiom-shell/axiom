@@ -1,0 +1,14 @@
+label: Toggle
+icon: toggle_on
+defaultSize: [5, 1]
+slots: [state, label]
+actions: ['on', 'off']
+settings:
+  look:
+    type: string
+    title: Drawn as
+    default: switch
+    enum: [switch, pill]
+    x-enumLabels: {switch: A switch beside the label, pill: A quick-settings pill}
+  label: {type: string, title: Label, default: '', description: Shown unless the label slot is bound.}
+  icon: {type: string, title: Icon, default: toggle_on, x-showIf: {look: pill}}

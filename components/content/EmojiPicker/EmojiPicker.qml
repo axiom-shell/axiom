@@ -167,17 +167,12 @@ Panel {
     Layout.fillWidth: true
     Layout.preferredHeight: Widget.height
     placeholderText: I18n.tr("Search emoji")
+    clearable: true
+    escapeClears: true
     input.wrapMode: Text.NoWrap
     onAccepted: {
       if (root.results.length > 0)
         root.copy(root.results[0].e);
-    }
-    Keys.onEscapePressed: event => {
-      if (field.text === "") {
-        event.accepted = false;
-        return;
-      }
-      field.text = "";
     }
   }
 
@@ -278,6 +273,7 @@ Panel {
     }
 
     StyledText {
+      wrapMode: Text.WordWrap
       visible: root.recent.length === 0
       Layout.fillWidth: true
       horizontalAlignment: Text.AlignHCenter

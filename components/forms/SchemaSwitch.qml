@@ -5,33 +5,46 @@ import qs.config
 import qs.components.reusable
 
 // i18n: keys from callers and the schema (titles, descriptions, type labels)
-ColumnLayout {
+// A boolean setting: its label and description, the switch at the row's
+// right end, centred on them; a click anywhere on the row toggles it
+Item {
   id: root
   required property string label
   required property bool checked
   property string description: ""
+  // After the label (FieldHeader.trailing)
+  property Component headerExtra: null
 
   signal toggled(bool newValue)
 
   Layout.fillWidth: true
-  spacing: Widget.spacing
+  implicitWidth: row.implicitWidth
+  implicitHeight: row.implicitHeight
 
-  StyledText {
-    text: I18n.tr(root.label)
-    Layout.fillWidth: true
+  // Under the switch, which takes its own clicks
+  MouseArea {
+    anchors.fill: parent
+    cursorShape: Qt.PointingHandCursor
+    onClicked: root.toggled(!root.checked)
   }
 
-  StyledSwitch {
-    checked: root.checked
-    onToggled: root.toggled(checked)
-  }
+  RowLayout {
+    id: row
+    anchors.left: parent.left
+    anchors.right: parent.right
+    spacing: Widget.spacing * 2
 
-  StyledText {
-    visible: root.description !== ""
-    text: I18n.tr(root.description)
-    opacity: 0.7
-    textSize: Appearance.fontSizeBy(-2)
-    wrapMode: Text.WordWrap
-    Layout.fillWidth: true
+    FieldHeader {
+      label: root.label
+      description: root.description
+      trailing: root.headerExtra
+    }
+
+    // Centred on the label and description together
+    StyledSwitch {
+      checked: root.checked
+      Layout.alignment: Qt.AlignVCenter
+      onToggled: root.toggled(checked)
+    }
   }
 }

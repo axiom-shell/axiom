@@ -28,7 +28,7 @@ ShellRoot {
   // (CompositorConfigManager only with configModes, where it has work at
   // start; elsewhere other services may still create it, and it stays
   // inert: live)
-  readonly property var _services: run ? [DependencyManager, WaylandManager, CompositorManager, CompositorManager.supports.configModes ? CompositorConfigManager : null, IdleManager, SelfUpdateManager, ChatManager, AudioManager, MediaManager, EdgeMenuManager, BrightnessManager, NotesManager, TodoManager, PomodoroManager, StopwatchManager, MonitorManager, OnboardingManager, ClipboardManager, NightLightManager, WallpaperManager, DockManager, SystemManager, BatteryManager, PolkitManager, GreeterManager, CalendarManager, CommunitySetupsManager] : []
+  readonly property var _services: run ? [DependencyManager, WaylandManager, CompositorManager, CompositorManager.supports.configModes ? CompositorConfigManager : null, IdleManager, SelfUpdateManager, ChatManager, AudioManager, MediaManager, EdgeMenuManager, BrightnessManager, NotesManager, TodoManager, PomodoroManager, StopwatchManager, MonitorManager, OnboardingManager, ClipboardManager, NightLightManager, WallpaperManager, DockManager, SystemManager, BatteryManager, PolkitManager, GreeterManager, CalendarManager, CommunitySetupsManager, CustomWidgetsManager] : []
 
   LazyLoader {
     active: !shellRoot.run
@@ -106,6 +106,10 @@ ShellRoot {
 
       Dock {
         id: dock
+      }
+
+      HotCorners {
+        id: hotCorners
       }
 
       MonitorPrompt {

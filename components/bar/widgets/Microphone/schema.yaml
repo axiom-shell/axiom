@@ -2,6 +2,10 @@ label: Microphone
 icon: mic
 group: Media & audio
 popout: {variant: own, enabled: {description: Open the input mixer when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ring, fill, pill, segments]
 colors: standard
 settings:
   showPercentage: {type: boolean, title: Show percentage, default: false}

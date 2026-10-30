@@ -4,7 +4,9 @@ import QtQuick
 import qs.config
 import qs.components.views.Monitors
 
-// saying what to do with it
+// The monitor layout: the Monitors page as it is (without its links into
+// Settings, which would open the overlay over this), beside a card saying
+// what to do with it
 OnboardingPage {
   id: root
 
@@ -26,6 +28,7 @@ OnboardingPage {
   extras: [
     Monitors {
       grid: root.grid
+      settingsLinks: false
       viewConfig: ({
           "type": "Monitors"
         })

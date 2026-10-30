@@ -6,8 +6,11 @@ import qs.services.core
 // Tailscale's state for every widget and module that shows it: axiom's
 // `tailscale` topic (`tailscale status --json` every Tailscale.interval;
 // the setting's minimum is the only floor), subscribed only
-// while something has acquire()d it. connect() / disconnect() run
-// `tailscale up` / `down` in axiom, which fetches the state again after.
+// while something has acquire()d it, and the `tailscaledetails` topic
+// (the node's prefs and the accounts logged in) while something has
+// acquireDetails()d it. The actions (connect, switching account, the exit
+// node, the switches, granting operator rights) run in axiom, which
+// fetches both again after.
 QtObject {
   id: root
 
@@ -30,15 +33,33 @@ QtObject {
   property string authURL: ""
   // tailscaled's warnings
   property var health: []
-  // The peer used as exit node ("" none)
+  // The peer used as exit node ("" none), and its address
   property string exitNode: ""
+  property string exitNodeIP: ""
+  // Who this machine is logged in as: { loginName, displayName }
+  property var account: ({
+      "loginName": "",
+      "displayName": ""
+    })
+  // When this machine's key expires (RFC 3339, "" never)
+  property string keyExpiry: ""
+  // From acquireDetails() only. { known, acceptRoutes, acceptDNS,
+  // shieldsUp, exitNodeAllowLAN }; known false hides the switches
+  property var prefs: ({
+      "known": false
+    })
+  // The accounts logged in: [{ id, nickname, tailnet, account, selected }]
+  property var profiles: []
+  // Listing them needs operator rights, which this user doesn't have
+  property bool profilesDenied: false
   // [{ name, dnsName, os, ips, online, active, exitNode, exitNodeOption,
   // relay, direct, lastSeen, rxBytes, txBytes }], online first, then by name
   property var peers: []
   readonly property int onlineCount: peers.filter(p => p.online).length
 
-  // A connect() or disconnect() is running
-  property bool busy: false
+  // The action running ("tailscale.up", …; "" none), and whether one is
+  property string pending: ""
+  readonly property bool busy: root.pending !== ""
   // Why the last one failed, for the user ("" after a success)
   property string lastError: ""
 
@@ -51,8 +72,19 @@ QtObject {
     _registry.release(owner);
   }
 
+  // The prefs and accounts too (the popout and the module)
+  function acquireDetails(owner) {
+    _detailsRegistry.acquire(owner, {});
+  }
+
+  function releaseDetails(owner) {
+    _detailsRegistry.release(owner);
+  }
+
   function refresh() {
     BackendManager.refresh("tailscale");
+    if (root._detailsInterval > 0)
+      BackendManager.refresh("tailscaledetails");
   }
 
   // `tailscale up`, with the node's saved settings
@@ -65,6 +97,40 @@ QtObject {
     root._run("tailscale.down");
   }
 
+  // `tailscale switch <id>`, to one of profiles
+  function switchAccount(id) {
+    root._run("tailscale.switch", {
+      "id": id
+    });
+  }
+
+  // `tailscale login`: another account, its login link then in authURL
+  function addAccount() {
+    root._run("tailscale.login");
+  }
+
+  // `tailscale set --exit-node=<ip>` ("" for none)
+  function setExitNode(ip) {
+    root._run("tailscale.set", {
+      "exitNode": ip
+    });
+  }
+
+  // `tailscale set` for one of prefs' switches: "acceptRoutes",
+  // "acceptDNS", "shieldsUp" or "exitNodeAllowLAN"
+  function setPref(key, value) {
+    // rpc: unchecked (the field is one of tailscale.SetRequest's, named by the caller)
+    root._run("tailscale.set", {
+      [key]: value
+    });
+  }
+
+  // `pkexec tailscale set --operator=$USER`: polkit asks for an
+  // administrator's password once, then every action runs without
+  function grantOperator() {
+    root._run("tailscale.grantOperator");
+  }
+
   // Opens the pending login's link in the browser
   function openLogin() {
     if (root.authURL.startsWith("https://") || root.authURL.startsWith("http://"))
@@ -75,6 +141,8 @@ QtObject {
   property ConsumerRegistry _registry: ConsumerRegistry {}
   // 0 while nothing has acquired it
   readonly property int _interval: _registry.active ? TailscaleConfig.interval : 0
+  property ConsumerRegistry _detailsRegistry: ConsumerRegistry {}
+  readonly property int _detailsInterval: _detailsRegistry.active ? TailscaleConfig.interval : 0
 
   on_IntervalChanged: {
     if (root._interval > 0)
@@ -85,33 +153,52 @@ QtObject {
       BackendManager.release("tailscale");
   }
 
-  // rpc: tailscale.up, tailscale.down
-  function _run(method) {
+  on_DetailsIntervalChanged: {
+    if (root._detailsInterval > 0)
+      BackendManager.acquire("tailscaledetails", {
+        "interval": root._detailsInterval
+      });
+    else
+      BackendManager.release("tailscaledetails");
+  }
+
+  // rpc: tailscale.up, tailscale.down, tailscale.switch, tailscale.login, tailscale.set, tailscale.grantOperator
+  function _run(method, params) {
     if (root.busy)
       return;
-    root.busy = true;
-    BackendManager.call(method, {}, error => {
-      root.busy = false;
+    root.pending = method;
+    BackendManager.call(method, params ?? {}, error => {
+      root.pending = "";
       // The daemon's message stays English; the shell words it by kind
-      root.lastError = !error ? "" : error.kind === "refused" ? I18n.tr("Not allowed: run `sudo tailscale set --operator=$USER` once, then try again.") : error.kind === "unavailable" ? I18n.tr("Tailscale isn't available.") : String(error.message ?? "");
+      root.lastError = !error ? "" : error.kind === "refused" ? I18n.tr("Your user can't change Tailscale: allow it with Grant access.") : error.kind === "unauthorized" ? I18n.tr("Access wasn't granted.") : error.kind === "unavailable" ? I18n.tr("Tailscale isn't available.") : String(error.message ?? "");
       if (error)
         console.warn(`[TailscaleManager] ${method}: ${error.message}`);
     });
   }
 
-  Component.onCompleted: BackendManager.listen("tailscale.state", state => {
-    root.available = state.available;
-    root.backendState = state.backendState;
-    root.tailnetName = state.tailnetName;
-    root.ip = state.ip;
-    root.ips = state.ips ?? [];
-    root.version = state.version ?? "";
-    root.hostName = state.hostName ?? "";
-    root.dnsName = state.dnsName ?? "";
-    root.magicDNSSuffix = state.magicDNSSuffix ?? "";
-    root.authURL = state.authURL ?? "";
-    root.health = state.health ?? [];
-    root.exitNode = state.exitNode ?? "";
-    root.peers = state.peers ?? [];
-  })
+  Component.onCompleted: {
+    BackendManager.listen("tailscale.state", state => {
+      root.available = state.available;
+      root.backendState = state.backendState;
+      root.tailnetName = state.tailnetName;
+      root.ip = state.ip;
+      root.ips = state.ips ?? [];
+      root.version = state.version ?? "";
+      root.hostName = state.hostName ?? "";
+      root.dnsName = state.dnsName ?? "";
+      root.magicDNSSuffix = state.magicDNSSuffix ?? "";
+      root.authURL = state.authURL ?? "";
+      root.health = state.health ?? [];
+      root.exitNode = state.exitNode ?? "";
+      root.exitNodeIP = state.exitNodeIP ?? "";
+      root.account = state.account;
+      root.keyExpiry = state.keyExpiry ?? "";
+      root.peers = state.peers ?? [];
+    });
+    BackendManager.listen("tailscaledetails.state", state => {
+      root.prefs = state.prefs;
+      root.profiles = state.profiles;
+      root.profilesDenied = state.profilesDenied;
+    });
+  }
 }

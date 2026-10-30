@@ -63,6 +63,7 @@ FieldGroup {
   }
 
   StyledText {
+    wrapMode: Text.WordWrap
     visible: SavedConfigsManager.model.count === 0
     text: I18n.tr("No saved configurations yet.")
     opacity: 0.5

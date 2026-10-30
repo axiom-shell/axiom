@@ -99,11 +99,13 @@ func (f *Files) Write(path, text string) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "making %s", dir)
 	}
+	// Held across the write: the rename's event can't settle and push
+	// before the file is recorded as this package's (a slow fsync after it)
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if err := fsx.WriteFile(path, []byte(text), 0o644); err != nil {
 		return err
 	}
-	f.mu.Lock()
-	defer f.mu.Unlock()
 	if f.watched(path) {
 		if info, err := os.Stat(path); err == nil {
 			f.written[path] = info

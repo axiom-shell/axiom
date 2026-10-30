@@ -3,6 +3,11 @@ link: {setting: Calendar}
 icon: event
 group: Time & weather
 popout: {variant: own, enabled: {description: Open the calendar when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, fill, ticker, stacked]
+    description: "Fill shows how far through an event under way it is; stacked puts when over the title."
 colors: standard
 settings:
   lookahead:

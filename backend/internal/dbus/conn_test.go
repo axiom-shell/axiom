@@ -14,6 +14,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 func ctx(t *testing.T) context.Context {
@@ -163,7 +164,7 @@ func TestCallsSignalsAndDescriptors(t *testing.T) {
 				if m.Body[0] != "pong" || m.Sender != server.UniqueName() {
 					t.Errorf("signal %+v", m)
 				}
-			case <-time.After(3 * time.Second):
+			case <-time.After(testkit.Bound(3 * time.Second)):
 				t.Fatal("no signal")
 			}
 			sub.Close()
@@ -200,7 +201,7 @@ func TestNameOwnerChangedOnDisconnect(t *testing.T) {
 				t.Errorf("pid %d, %v", pid, err)
 			}
 			owner.Close()
-			deadline := time.After(3 * time.Second)
+			deadline := time.After(testkit.Bound(3 * time.Second))
 			for {
 				select {
 				case m := <-sub.C:
@@ -231,5 +232,57 @@ func TestBusGoneEndsTheConnection(t *testing.T) {
 	}
 	if _, err := c.Call(ctx(t), "x.y", "/", "x.y", "Z", ""); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("a call after the end: %v", err)
+	}
+}
+
+// A deferred method answers after it returned, from another goroutine,
+// while the connection keeps answering other calls; a second reply is
+// dropped.
+func TestDeferredReply(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	server, client := dial(t, bus.Address), dial(t, bus.Address)
+	release := make(chan struct{})
+	_, err := server.Export("/test", dbus.Interface{Name: "test.Wait", Methods: map[string]dbus.Method{
+		"Wait": {In: "s", Out: "s", Defer: func(_ context.Context, call *dbus.Message, reply func([]any, error)) {
+			s := call.Body[0].(string)
+			go func() {
+				<-release
+				reply([]any{s + "!"}, nil)
+				reply([]any{"twice"}, nil)
+			}()
+		}},
+		"Refuse": {Defer: func(_ context.Context, _ *dbus.Message, reply func([]any, error)) {
+			go reply(nil, dbus.NewError("test.Error.Later", "no"))
+		}},
+		"Now": {Out: "s", Fn: func(context.Context, *dbus.Message) ([]any, error) { return []any{"now"}, nil }},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	waited := make(chan string, 1)
+	go func() {
+		reply, err := client.Call(ctx(t), server.UniqueName(), "/test", "test.Wait", "Wait", "s", "done")
+		if err != nil {
+			waited <- err.Error()
+			return
+		}
+		waited <- reply.Body[0].(string)
+	}()
+	// The pending call doesn't hold the dispatcher up
+	if reply, err := client.Call(ctx(t), server.UniqueName(), "/test", "test.Wait", "Now", ""); err != nil || reply.Body[0] != "now" {
+		t.Fatalf("Now: %v", err)
+	}
+	close(release)
+	select {
+	case got := <-waited:
+		if got != "done!" {
+			t.Errorf("Wait: %q", got)
+		}
+	case <-time.After(testkit.Bound(3 * time.Second)):
+		t.Fatal("no deferred reply")
+	}
+	if _, err := client.Call(ctx(t), server.UniqueName(), "/test", "test.Wait", "Refuse", ""); dbus.ErrorName(err) != "test.Error.Later" {
+		t.Errorf("Refuse: %v", err)
 	}
 }

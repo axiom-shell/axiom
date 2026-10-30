@@ -8,7 +8,7 @@ import qs.components.reusable
 
 // One history entry inside a group card: image, summary and body, its time
 // (or a dismiss button while hovered) and, while its notification is live,
-// its actions. Clicking runs the default action, or else opens the app
+// its actions and inline reply. Clicking runs the default action, or else opens the app
 // (and with NotificationsConfig.removeOnClick dismisses it, as an action
 // does). Swipe sideways or press the button to dismiss; it slides out first.
 Item {
@@ -24,6 +24,8 @@ Item {
   // Collapsed, the header's time is already this one's
   property bool showTime: true
   property real swipeThreshold: 120
+  // Off while its group's card swipes away whole instead
+  property bool swipeable: true
 
   readonly property bool hovered: hover.hovered
 
@@ -48,6 +50,7 @@ Item {
 
   DragHandler {
     id: swipe
+    enabled: root.swipeable
     target: null
     yAxis.enabled: false
     onTranslationChanged: {
@@ -150,9 +153,8 @@ Item {
           notification: root.entry
           live: root.live
           clickable: !!defaultAction || (root.entry?.desktopEntry ?? "") !== ""
-          onActivated: ranAction => {
-            if (!ranAction)
-              NotificationManager.openApp(root.entry);
+          onActivated: {
+            NotificationManager.activate(root.entry, root.live);
             if (NotificationsConfig.removeOnClick)
               root.dismiss();
           }
@@ -207,6 +209,19 @@ Item {
         onInvoked: {
           if (NotificationsConfig.removeOnClick)
             root.dismiss();
+        }
+      }
+
+      Loader {
+        Layout.fillWidth: true
+        active: root.live?.hasInlineReply ?? false
+        visible: active
+        sourceComponent: NotificationReply {
+          notification: root.live
+          onSent: {
+            if (NotificationsConfig.removeOnClick)
+              root.dismiss();
+          }
         }
       }
     }

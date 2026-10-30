@@ -12,6 +12,7 @@ import qs.components.reusable
 // the folders whose files see each other (scripts/check_structure.py)
 import qs.components.content.Palette // qmllint disable unused-imports
 import qs.components.views.BarEditor // qmllint disable unused-imports
+import qs.components.views.CustomWidgets // qmllint disable unused-imports
 import qs.components.views.Keybinds // qmllint disable unused-imports
 import qs.components.views.Settings // qmllint disable unused-imports
 
@@ -21,6 +22,10 @@ ReservedAreaWindow {
   id: root
 
   property bool isOpen: false
+  // What's open on its screen and would end up under it (a popout keeps
+  // its layer while open) closes as it opens
+  onIsOpenChanged: if (isOpen)
+    PopoutManager.closeOn(root.screen?.name ?? "")
   // Closed, it waits off the edge it slides in from (Overlay.animation),
   // or in place, faded out
   readonly property bool _fades: OverlayConfig.animation === "fade"
@@ -47,14 +52,7 @@ ReservedAreaWindow {
     hideTimer.start();
   }
 
-  // When the overlay last closed from a click outside it: a click on a
-  // button outside the grab (e.g. another monitor's bar) clears the grab
-  // (closing it) before the button toggles, which must not reopen it
-  property real _outsideCloseTime: 0
-
   function toggle() {
-    if (!isOpen && Date.now() - _outsideCloseTime < 300)
-      return;
     if (isOpen) {
       close();
     } else {
@@ -134,11 +132,14 @@ ReservedAreaWindow {
     // This screen's bars and their popouts stay usable while it's open
     // (every screen's, and the other instances, when it's on all of them)
     windows: group.windows.concat(SurfaceManager.grabPartnersFor(group.everywhere ? null : root.screen), SurfaceManager.modalWindows)
-    onCleared: {
-      if (root.isOpen && !root.steppedAside && OverlayConfig.closeOnOutsideClick) {
-        root._outsideCloseTime = Date.now();
+    // Only a real click closes it (here, on a screen's backdrop, and on
+    // its empty background, backgroundClicks), never the grab ending:
+    // that's also focus leaving, as a polkit prompt closes, or another
+    // surface's grab starting over it (one native grab at a time). Sent
+    // only while it's active: open, and not stepped aside
+    onClickedOutside: {
+      if (OverlayConfig.closeOnOutsideClick)
         root.close();
-      }
     }
   }
 

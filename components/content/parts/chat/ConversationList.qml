@@ -55,6 +55,7 @@ DropdownSurface {
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
       placeholderText: I18n.tr("Search conversations")
+      clearable: true
       onTextChanged: root.query = text
     }
 
@@ -65,7 +66,6 @@ DropdownSurface {
       contentPadding: 0
       // A lane of its own for the scroll bar, so it never covers a row
       showScrollBar: listColumn.implicitHeight > scroll.height
-      rightPadding: showScrollBar ? Widget.px(12) : 0
 
       ColumnLayout {
         id: listColumn
@@ -84,6 +84,7 @@ DropdownSurface {
             Component {
               id: headerRow
               StyledText {
+                elide: Text.ElideRight
                 width: row.width
                 topPadding: row.index > 0 ? Widget.spacing * 2 : Widget.spacing / 2
                 bottomPadding: Widget.spacing / 2

@@ -112,6 +112,15 @@ func TestTakeovers(t *testing.T) {
 	if value(cfg, "Compositor.mode") != "managed" {
 		t.Error("KeepTakeovers changed its input")
 	}
+	// A section missing on either side is left as it is (the store fills
+	// the defaults' in)
+	look, _ := jsonx.Unmarshal([]byte(`{"Battery": {}}`))
+	if kept := KeepTakeovers(look, current, TakeoverPaths(s)); has(kept, "Idle") {
+		t.Error("made a section the config lacks")
+	}
+	if kept := KeepTakeovers(cfg, look, TakeoverPaths(s)); value(kept, "Compositor.mode") != "managed" {
+		t.Error("changed a takeover the current config lacks")
+	}
 }
 
 // Applying replaces the parts the file holds and keeps the rest: machine
@@ -230,5 +239,45 @@ func TestSparse(t *testing.T) {
 	got := Sparse(s, filled(t, s, `{"Battery": {"lowThreshold": 12}}`))
 	if string(jsonx.MarshalCompact(got)) != `{"Battery":{"lowThreshold":12}}` {
 		t.Errorf("sparse: %s", jsonx.MarshalCompact(got))
+	}
+}
+
+// Dropped names what a pick leaves out, at the highest place, by scope;
+// places stay places once monitors is given, and a connector name not
+// connected is left out.
+func TestDropped(t *testing.T) {
+	t.Parallel()
+	s := v2(t)
+	cfg := Sparse(s, filled(t, s, `{"format": 2,
+		"Appearance": {"theme": {"name": "nord"}, "wallpaper": {"folder": "~/walls"}},
+		"Apps": {"terminal": "foot"},
+		"Compositor": {"mode": "managed"},
+		"Keybinds": {"binds": [{"id": "mine", "key": "SUPER + T", "action": "exec", "argument": "foot"}]},
+		"Bars": {"items": [{"id": "side", "screen": {"mode": "named", "names": ["#2", "DP-3"]}}]}}`))
+	for _, tc := range []struct {
+		name     string
+		carry    []string
+		monitors Monitors
+		want     []string
+	}{
+		{"look", nil, nil, []string{"machine Appearance.wallpaper.folder", "commands Apps.terminal", "takeover Compositor.mode", "personal Keybinds.binds", "machine Bars.items[side].screen.names"}},
+		{"places", nil, Monitors{}, []string{"machine Appearance.wallpaper.folder", "commands Apps.terminal", "takeover Compositor.mode", "personal Keybinds.binds", "machine Bars.items[side].screen.names[1]"}},
+		{"personal", []string{"personal"}, Monitors{}, []string{"machine Appearance.wallpaper.folder", "commands Apps.terminal", "takeover Compositor.mode", "commands Keybinds.binds[mine]", "machine Bars.items[side].screen.names[1]"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := []string{}
+			for _, d := range Dropped(s, cfg, tc.carry, tc.monitors) {
+				got = append(got, d.Scope+" "+d.Path)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("dropped %v\nwant    %v", got, tc.want)
+			}
+			// Given monitors, Pick keeps the place it doesn't report
+			picked := Pick(s, cfg, tc.carry, tc.monitors)
+			if names := value(picked, "Bars.items"); tc.monitors != nil && !strings.Contains(string(jsonx.MarshalCompact(names)), `"names":["#2"]`) {
+				t.Errorf("places: %s", jsonx.MarshalCompact(names))
+			}
+		})
 	}
 }

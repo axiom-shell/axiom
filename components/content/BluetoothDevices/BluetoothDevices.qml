@@ -36,6 +36,10 @@ Panel {
   // The switch, the tabs and a row or two, else the figure
   fullMinWidth: Appearance.fontSize * 15
   fullMinHeight: Appearance.fontSize * 12
+  // In a popout the list grows away from the controls, which stay by the
+  // bar (Panel.growth)
+  flips: true
+  maxImplicitHeight: root.implicitHeight + list.growRoom
 
   function updateScan() {
     const want = currentTab === 1 && BluetoothManager.enabled;

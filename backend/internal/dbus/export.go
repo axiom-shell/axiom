@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // Method is one method an exported interface answers: its in and out
@@ -14,9 +15,15 @@ import (
 // *Error is sent as it is; any other as org.freedesktop.DBus.Error.Failed).
 // Fn runs on the connection's one dispatch goroutine, so it must not
 // block for long; ctx ends with the connection.
+//
+// A method whose answer waits on something (a person typing a password)
+// sets Defer instead: it returns at once and calls reply later, from any
+// goroutine, once (later calls are ignored). The call's descriptors are
+// closed when Defer returns.
 type Method struct {
 	In, Out string
 	Fn      func(ctx context.Context, call *Message) ([]any, error)
+	Defer   func(ctx context.Context, call *Message, reply func(out []any, err error))
 }
 
 // Interface is an exported interface: its methods, and the signals it
@@ -114,16 +121,28 @@ func (c *Conn) handle(call *Message) {
 		c.replyError(call, NewError(ErrInvalidArgs, "%s takes %q, not %q", call.Member, method.In, call.Signature))
 		return
 	}
+	if method.Defer != nil {
+		var once sync.Once
+		method.Defer(c.ctx, call, func(out []any, err error) {
+			once.Do(func() { c.answer(call, method.Out, out, err) })
+		})
+		return
+	}
 	out, ferr := method.Fn(c.ctx, call)
-	if ferr != nil {
+	c.answer(call, method.Out, out, ferr)
+}
+
+// answer replies to call with out, or with err (see Method).
+func (c *Conn) answer(call *Message, sig string, out []any, err error) {
+	if err != nil {
 		var e *Error
-		if !errors.As(ferr, &e) {
-			e = NewError(ErrFailed, "%v", ferr)
+		if !errors.As(err, &e) {
+			e = NewError(ErrFailed, "%v", err)
 		}
 		c.replyError(call, e)
 		return
 	}
-	c.reply(call, method.Out, out)
+	c.reply(call, sig, out)
 }
 
 // lookup finds the method a call names; without an interface, the first
