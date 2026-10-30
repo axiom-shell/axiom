@@ -13,7 +13,7 @@ Arguments: `$ARGUMENTS`
 - Free text after it narrows the review to a concern. Its words are never flags; only the `--` forms are.
 - `--full` ignores the last review and reviews everything.
 - `--record` files the Blockers, Major and Cleanups in `docs/dev/issues.md` (Phase 6).
-- `--out <dir>`: `--record` with the filing deferred, for audits run in parallel (each its own `<dir>`). Change nothing in the tree and work in `<dir>`, where the report and the reviews file end up; whoever started the audits files them all at once with `scope.py --apply <dir>…` (Phase 6). Never with `--fix`.
+- `--out <dir>`: `--record` with the filing deferred, for audits run in parallel (each its own `<dir>`). Change nothing in the tree and work in `<dir>`, where the report and the reviews file end up; whoever started the audits files them with `scope.py --apply` (Phase 6). Never with `--fix`.
 - `--fix` fixes the confirmed findings after the report (Phase 6).
 - `--deep` fans out agents (Phase 3): for a big system, only when asked.
 
@@ -69,7 +69,7 @@ Read deeply: <files> · Outlined: <files> · Skipped: <files, why>
 ## Phase 6: record or fix
 
 - `--record`: `python3 .claude/skills/review-system/scope.py --apply <work folder>` files Blockers, Major, Cleanups and Outside the system, links each under `docs/dev/roadmap.md` › "Found by the audits:", lists pairs of entries naming the same `path` (`symbol`), and runs `check_docs`. Settle each pair (one cause: merge into one entry; two fixes to one function: one entry with one fix), each title it skipped as taken (a different problem: retitle it and file it by hand) and each check_docs error, until `docs ok`; a merged or retitled entry's link in the reviews files changes with it.
-- `--out <dir>`: nothing here; the caller runs `scope.py --apply` on every audit's dir at once (so pairs across audits show), then settles pairs and errors as above.
+- `--out <dir>`: nothing here; the caller runs `scope.py --apply <dir>` one audit's dir at a time, settling its pairs and errors as above and committing before the next (a commit per audit; pairs with an earlier audit's entries show then, as they're filed by that time).
 - Without either: file only Outside the system, by hand (`issues.md` format at its top, linked from the roadmap phase that fixes it).
 - `--fix`: fix the confirmed findings, smallest change each, following the repo rules and recipes; skip and list any that need the maintainer's decision. `scripts/dev/verify.sh` until `verify ok`, reading the log section and the docs it lists; remove any `issues.md` entry a fix closes. Don't commit.
 

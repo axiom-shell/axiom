@@ -19,7 +19,7 @@ Unchanged since batch 1 and still in good shape at its core (event stream, reduc
 
 ### Minor (report only, not recorded)
 - `docs/dev/compositor/niri-backend.md` › supports: the "Not:" list omits `layerFrameSync`.
-- `userconf.startedWith`: a relative `-c` is resolved against the daemon's cwd, not niri's (`/proc/<pid>/cwd`).
+- `userconf.startedWith`'s relative `-c`: filed by the compositor audit as [A relative -c is read from the daemon's folder](../../docs/dev/issues.md#a-relative--c-is-read-from-the-daemons-folder).
 - `tests/tst_NiriState.qml`: no rows for `KeyboardLayoutSwitched` (before and after `KeyboardLayoutsChanged`), `WorkspaceUrgencyChanged`, `WindowUrgencyChanged`, or a `ConfigLoaded` with `failed: true`.
 - `binds/niri.go` (`niriHarmless`): `cooldown-ms` on a non-wheel key is dropped on a move.
 - `kdl.go` (`multiline`): KDL 2 `"""` strings' escapes aren't processed.
