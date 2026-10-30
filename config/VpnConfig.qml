@@ -15,4 +15,6 @@ QtObject {
   readonly property bool showTailscale: _c.showTailscale
   // What Edit connections runs ("" hides it)
   readonly property string editorCommand: _c.editorCommand
+  // Asked for the public IP on Check ("" hides it)
+  readonly property string publicIpUrl: _c.publicIpUrl
 }

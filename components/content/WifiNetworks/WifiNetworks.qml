@@ -2,38 +2,55 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
+import qs.services.apps
+import qs.services.core
 import qs.services.system
 import qs.config
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
 
-// Wi-Fi menu for the Network widget: radio switch, the current connection
-// (address and throughput), the VPNs (those up and the last used, all on
-// Show all; none without any), and the networks in range (scanning while
-// shown). Click a network to connect or disconnect; a secured new one asks
-// for its password inline, and saved ones can be forgotten on hover. The
-// popout keeps one size and rows keep their order, as in BluetoothDevices.
+// Wi-Fi menu for the Network widget: radio switch and airplane mode, the
+// current connection (address and throughput, folding open its details:
+// open by themselves on a wire with Wi-Fi off), the VPNs (one summary row
+// with a toggle for the VPN up or last used, folding open every VPN and
+// the public IP check), the networks in range (scanning while shown), and
+// a footer (connection editor, hidden network, VPN import). Click a
+// network to connect or disconnect; a secured new one asks inline for
+// what it needs (a password, a WEP key, an enterprise login), and saved
+// ones can be forgotten or kept from joining on their own on hover. The
+// popout keeps one size and rows keep their order, as in BluetoothDevices;
+// its window keeps room for whatever folds open.
 Panel {
   id: root
 
   readonly property var info: NetworkingManager.netInfo
   readonly property var networks: NetworkingManager.networks
   readonly property bool radioOn: NetworkingManager.wifiEnabled && NetworkingManager.available
-  readonly property string offMessage: I18n.tr(!NetworkingManager.available ? "No Wi-Fi adapter found" : NetworkingManager.hardwareBlocked ? "Wi-Fi is blocked (rfkill)" : "Wi-Fi is off")
+  readonly property string offMessage: I18n.tr(!NetworkingManager.available ? "No Wi-Fi adapter found" : NetworkingManager.hardwareBlocked ? "Wi-Fi is blocked (rfkill)" : NetworkingManager.airplane ? "Airplane mode is on" : "Wi-Fi is off")
   readonly property string kindIcon: info.kind === "wifi" ? NetworkingManager.signalIcon(info.signal / 100) : info.kind === "ethernet" ? "lan" : "signal_wifi_0_bar"
 
-  // VPN rows: all of them, or those up, the last used and the one asking
-  // for a password
-  property bool allVpns: false
-  readonly property var vpns: root.allVpns ? VpnManager.rows : VpnManager.rows.filter(r => r.state !== "off" || r.id === VpnManager.lastRow?.id || r.id === VpnManager.secretRequest?.uuid)
+  // The details: open by themselves on a wire with Wi-Fi off (a click
+  // decides from then on)
+  property bool detailsOpen: !root.radioOn && root.info.kind === "ethernet"
+  onDetailsOpenChanged: {
+    if (root.detailsOpen)
+      NetworkingManager.refreshDetails();
+  }
+  // Every VPN shown: unfolded, or one is asking for its password
+  readonly property bool vpnOpen: !VpnManager.folded || VpnManager.secretRequest !== null
+  property bool hiddenOpen: false
 
-  // A password field is up: keep the keyboard, and the popout open
-  wantsKeyboardFocus: NetworkingManager.passwordFor !== null || (VpnManager.secretRequest !== null && root.vpns.some(r => r.id === VpnManager.secretRequest.uuid))
+  // A field is up: keep the keyboard, and the popout open
+  wantsKeyboardFocus: NetworkingManager.passwordFor !== null || root.hiddenOpen || VpnManager.secretRequest !== null
   hovered: pointerInside || wantsKeyboardFocus
   onFocusLost: {
+    // The file picker (a CA certificate) took it: the form waits for it
+    if (FilePickerManager.running)
+      return;
     NetworkingManager.cancelPassword();
     VpnManager.cancelSecret();
+    root.hiddenOpen = false;
   }
 
   implicitWidth: Widget.px(380)
@@ -43,11 +60,19 @@ Panel {
   // In a popout the list grows away from the controls, which stay by the
   // bar (Panel.growth)
   flips: true
-  maxImplicitHeight: root.implicitHeight + list.growRoom
+  // Room for the list's rows and for whatever folds open (each part's
+  // most, less what it shows now), so the window is never resized
+  maxImplicitHeight: root.implicitHeight + list.growRoom + Math.max(0, root.detailsRoom - detailsLoader.height) + Math.max(0, root.vpnRoom - vpnLoader.height) + Math.max(0, root.hiddenRoom - hiddenLoader.height)
+  readonly property real smallLine: Math.max(smallMetrics.height, Widget.smallHeight)
+  readonly property real detailsRoom: 7 * root.smallLine + Widget.spacing
+  readonly property real vpnRoom: VpnManager.rows.length === 0 ? 0 : (VpnManager.rows.length + 1) * (list.rowHeight + 2) + 2 * root.smallLine + Widget.spacing * 3
+  readonly property real hiddenRoom: (Widget.height + Widget.spacing) * 11
 
   Component.onCompleted: {
     NetworkingManager.acquireScan(root);
     NetworkingManager.refreshIp();
+    if (root.detailsOpen)
+      NetworkingManager.refreshDetails();
     VpnManager.acquire(root);
     SystemManager.acquire(root, {
       "metrics": ["net"],
@@ -61,6 +86,12 @@ Panel {
     SystemManager.release(root);
   }
 
+  FontMetrics {
+    id: smallMetrics
+    font.family: Appearance.fontFamily
+    font.pixelSize: Appearance.fontSizeBy(-3)
+  }
+
   compactContent: CompactFigure {
     icon: root.radioOn ? root.kindIcon : "signal_wifi_0_bar"
     iconColor: root.info.kind !== "" ? Theme.accent : Theme.foregroundAlt
@@ -68,11 +99,23 @@ Panel {
     label: root.info.name || I18n.tr(root.radioOn ? "Disconnected" : "off")
   }
 
+  // A flat footer action: an icon and a label, filled only on hover
+  component FooterAction: StyledTextButton {
+    textSize: Appearance.fontSizeBy(-2)
+    backgroundColor: Qt.alpha(Theme.backgroundHighlight, 0)
+    hoverColor: Theme.backgroundHighlight
+    pressColor: Theme.backgroundAlt
+    textColor: Theme.foregroundAlt
+    textHoverColor: Theme.foreground
+  }
+
   component NetworkRow: DeviceRow {
     id: row
     required property int index
     readonly property var network: root.networks[index] ?? null
     readonly property bool asking: network !== null && NetworkingManager.passwordFor === network
+    readonly property string kind: NetworkingManager.securityKind(row.network)
+    readonly property bool autoconnects: NetworkingManager.autoconnects(row.network)
 
     rowHeight: list.rowHeight
     icon: NetworkingManager.signalIcon(row.network?.signalStrength ?? 0)
@@ -94,62 +137,116 @@ Panel {
     onConnectClicked: NetworkingManager.toggleNetwork(row.network)
     onForgetConfirmed: NetworkingManager.forget(row.network)
 
-    titleExtras: StyledIcon {
-      visible: NetworkingManager.isSecure(row.network)
-      text: "lock"
-      textSize: Appearance.fontSizeBy(-3)
-      textColor: Theme.foregroundAlt
+    titleExtras: [
+      StyledIcon {
+        visible: NetworkingManager.isSecure(row.network)
+        text: row.kind === "eap" || row.kind === "dynamic-wep" || row.kind === "leap" ? "badge" : "lock"
+        textSize: Appearance.fontSizeBy(-3)
+        textColor: Theme.foregroundAlt
+      },
+      StyledIcon {
+        visible: row.known && !row.autoconnects
+        text: "sync_disabled"
+        textSize: Appearance.fontSizeBy(-3)
+        textColor: Theme.foregroundAlt
+      }
+    ]
+
+    // Whether it joins on its own when in range
+    hoverActions: StyledRectButton {
+      size: Widget.iconButton
+      visible: row.known
+      enabled: row.hovered && !row.busy
+      opacity: row.hovered ? 1 : 0
+      iconText: row.autoconnects ? "sync" : "sync_disabled"
+      iconColor: row.autoconnects ? Theme.accent : Theme.foregroundAlt
+      backgroundColor: "transparent"
+      borderHoverColor: Theme.accent
+      tooltipText: row.autoconnects ? I18n.tr("Joins automatically: click to stop") : I18n.tr("Doesn't join automatically: click to allow")
+      onClicked: NetworkingManager.setAutoconnect(row.network, !row.autoconnects)
+
+      Glide on opacity {}
     }
 
-    // The password, for a secured network not saved yet: built only while
-    // asked for (each new ask starts empty), as every row would carry one
+    // What joining it asks for: built only while asked (each new ask
+    // starts empty), as every row would carry one. A WPA password goes
+    // through Quickshell; anything more through axiom's net.join
     Loader {
       width: parent.width
       active: row.asking
+      sourceComponent: row.kind === "psk" ? pskForm : joinForm
 
-      sourceComponent: RowLayout {
-        spacing: Widget.spacing
+      Component {
+        id: pskForm
 
-        StyledTextEntry {
-          id: passwordField
-          Layout.fillWidth: true
-          placeholderText: I18n.tr("Password")
-          input.echoMode: TextInput.Password
-          input.wrapMode: Text.NoWrap
-          onAccepted: NetworkingManager.connectWithPsk(row.network, passwordField.text)
-          // The field leaves Escape to its parents
-          Keys.onEscapePressed: NetworkingManager.cancelPassword()
-          Component.onCompleted: Qt.callLater(() => passwordField.input.forceActiveFocus())
+        RowLayout {
+          spacing: Widget.spacing
+
+          StyledTextEntry {
+            id: passwordField
+            Layout.fillWidth: true
+            placeholderText: I18n.tr("Password")
+            input.echoMode: TextInput.Password
+            input.wrapMode: Text.NoWrap
+            onAccepted: NetworkingManager.connectWithPsk(row.network, passwordField.text)
+            // The field leaves Escape to its parents
+            Keys.onEscapePressed: NetworkingManager.cancelPassword()
+            Component.onCompleted: Qt.callLater(() => passwordField.input.forceActiveFocus())
+          }
+
+          StyledRectButton {
+            size: Widget.iconButton
+            enabled: passwordField.text !== ""
+            opacity: enabled ? 1 : 0.5
+            iconText: "link"
+            iconColor: Theme.accent
+            backgroundColor: "transparent"
+            borderHoverColor: Theme.accent
+            tooltipText: I18n.tr("Connect")
+            onClicked: NetworkingManager.connectWithPsk(row.network, passwordField.text)
+          }
         }
+      }
 
-        StyledRectButton {
-          size: Widget.iconButton
-          enabled: passwordField.text !== ""
-          opacity: enabled ? 1 : 0.5
-          iconText: "link"
-          iconColor: Theme.accent
-          backgroundColor: "transparent"
-          borderHoverColor: Theme.accent
-          tooltipText: I18n.tr("Connect")
-          onClicked: NetworkingManager.connectWithPsk(row.network, passwordField.text)
+      Component {
+        id: joinForm
+
+        WifiJoinForm {
+          security: row.kind
+          error: NetworkingManager.joinError
+          onSubmitted: fields => NetworkingManager.join(row.network, fields)
+          onCancelled: NetworkingManager.cancelPassword()
         }
       }
     }
   }
 
   RadioHeader {
-    title: I18n.tr("Wi-Fi")
+    title: NetworkingManager.available ? I18n.tr("Wi-Fi") : I18n.tr("Network")
     scanning: NetworkingManager.scanning
     checked: NetworkingManager.wifiEnabled
+    switchShown: NetworkingManager.available
     switchEnabled: NetworkingManager.available && !NetworkingManager.hardwareBlocked
+
     onToggled: checked => NetworkingManager.setWifiEnabled(checked)
+
+    FlatIconButton {
+      visible: NetworkingManager.available || BluetoothManager.available
+      iconText: "flight"
+      iconColor: NetworkingManager.airplane ? Theme.accent : Theme.foregroundAlt
+      tooltipText: NetworkingManager.airplane ? I18n.tr("Airplane mode: on") : I18n.tr("Airplane mode: off")
+      onClicked: NetworkingManager.setAirplane(!NetworkingManager.airplane)
+    }
   }
 
-  // The primary connection (wired or wireless): address and throughput
-  RowLayout {
-    Layout.fillWidth: true
+  // The primary connection (wired or wireless): address and throughput,
+  // folding open its details
+  FoldRow {
+    id: connectionRow
     Layout.fillHeight: false
-    spacing: Widget.padding
+    foldable: root.info.kind !== ""
+    open: root.detailsOpen
+    onToggled: root.detailsOpen = !root.detailsOpen
 
     StyledIcon {
       Layout.preferredWidth: Widget.iconButton
@@ -172,10 +269,10 @@ Panel {
       StyledText {
         Layout.fillWidth: true
         visible: root.info.kind !== ""
-        text: root.info.ip !== "" ? `${root.info.ip} · ${root.info.device}` : root.info.device
+        text: NetworkingManager.connectivity === "portal" ? I18n.tr("Sign-in needed: open a web page") : NetworkingManager.connectivity === "limited" ? I18n.tr("Connected, no internet") : root.info.ip !== "" ? `${root.info.ip} · ${root.info.device}` : root.info.device
         elide: Text.ElideRight
         textSize: Appearance.fontSizeBy(-3)
-        textColor: Theme.foregroundAlt
+        textColor: NetworkingManager.connectivity === "portal" ? Theme.accent : NetworkingManager.connectivity === "limited" ? Theme.warning : Theme.foregroundAlt
       }
     }
 
@@ -199,6 +296,19 @@ Panel {
     }
   }
 
+  // Built only while open
+  Loader {
+    id: detailsLoader
+    Layout.fillWidth: true
+    Layout.leftMargin: Widget.iconButton + Widget.padding
+    active: root.detailsOpen && root.info.kind !== ""
+    visible: active
+
+    sourceComponent: ConnectionDetails {
+      details: NetworkingManager.details
+    }
+  }
+
   StyledSeparator {
     Layout.fillWidth: true
     separatorColor: Theme.backgroundHighlight
@@ -206,81 +316,98 @@ Panel {
 
   // The VPNs: built only when there are some
   Loader {
+    id: vpnLoader
     Layout.fillWidth: true
     active: VpnManager.rows.length > 0
     visible: active
 
     sourceComponent: ColumnLayout {
+      id: vpnSection
       spacing: 2
+
+      // The one up, else the one a click brings up
+      readonly property var target: VpnManager.primary ?? VpnManager.lastRow
+
+      // Folded, the section's one row: what's up and a toggle for it
+      FoldRow {
+        id: vpnSummary
+        Layout.preferredHeight: Widget.iconButton
+        open: root.vpnOpen
+        foldable: VpnManager.secretRequest === null
+        onToggled: VpnManager.setFolded(root.vpnOpen)
+
+        StyledText {
+          text: I18n.tr("VPN")
+          font.bold: true
+          textColor: Theme.accent
+        }
+        StyledText {
+          Layout.fillWidth: true
+          text: VpnManager.primary ? `${VpnManager.primary.name} · ${VpnManager.statusText(VpnManager.primary)}` : I18n.tr("Off · {0} saved", VpnManager.rows.length)
+          elide: Text.ElideRight
+          textSize: Appearance.fontSizeBy(-2)
+          textColor: VpnManager.anyActive ? Theme.foreground : vpnSummary.hovered ? Theme.accent : Theme.foregroundAlt
+        }
+        StyledRectButton {
+          readonly property var target: vpnSection.target
+          visible: !root.vpnOpen && target !== null
+          size: Widget.iconButton
+          enabled: !VpnManager.busy(target)
+          opacity: enabled ? 1 : 0.5
+          iconText: target?.state === "on" ? "link_off" : "link"
+          iconColor: target?.state === "on" ? Theme.accent : Theme.foreground
+          backgroundColor: "transparent"
+          borderHoverColor: Theme.accent
+          tooltipText: target?.state === "on" ? I18n.tr("Disconnect {0}", target.name) : I18n.tr("Connect {0}", target?.name ?? "")
+          onClicked: VpnManager.toggle(target)
+        }
+      }
 
       FontMetrics {
         id: vpnTitle
         font.family: Appearance.fontFamily
         font.pixelSize: Appearance.fontSizeBy(-1)
       }
-      FontMetrics {
-        id: vpnStatus
-        font.family: Appearance.fontFamily
-        font.pixelSize: Appearance.fontSizeBy(-3)
-      }
-
-      // The title, as RadioHeader's; with VPNs left out, the whole row
-      // folds them in and out under a chevron, as FoldHeader's
-      Item {
-        id: vpnHeader
-        readonly property int hidden: VpnManager.rows.length - root.vpns.length
-        readonly property bool foldable: root.allVpns || hidden > 0
-        Layout.fillWidth: true
-        implicitHeight: vpnHeaderRow.implicitHeight
-
-        MouseArea {
-          id: vpnHeaderArea
-          anchors.fill: parent
-          enabled: vpnHeader.foldable
-          hoverEnabled: true
-          cursorShape: Qt.PointingHandCursor
-          onClicked: root.allVpns = !root.allVpns
-        }
-
-        RowLayout {
-          id: vpnHeaderRow
-          anchors.left: parent.left
-          anchors.right: parent.right
-          spacing: Widget.spacing
-
-          StyledText {
-            Layout.fillWidth: true
-            text: I18n.tr("VPN")
-            font.bold: true
-            textColor: Theme.accent
-          }
-          StyledText {
-            visible: vpnHeader.hidden > 0
-            text: I18n.tr("{0} more", vpnHeader.hidden)
-            textSize: Appearance.fontSizeBy(-2)
-            textColor: vpnHeaderArea.containsMouse ? Theme.accent : Theme.foregroundAlt
-          }
-          StyledIcon {
-            visible: vpnHeader.foldable
-            text: "expand_more"
-            textColor: vpnHeaderArea.containsMouse ? Theme.accent : Theme.foregroundAlt
-            rotation: root.allVpns ? 0 : -90
-
-            Glide on rotation {}
-          }
-        }
-      }
 
       Repeater {
         // A count, so the rows outlive each state
-        model: root.vpns.length
+        model: root.vpnOpen ? VpnManager.rows.length : 0
 
         VpnRow {
           required property int index
           Layout.fillWidth: true
           // DeviceList.rowHeight's
-          rowHeight: Math.max(vpnTitle.height + vpnStatus.height, Widget.iconButton) + Widget.spacing * 2
-          vpn: root.vpns[index] ?? null
+          rowHeight: Math.max(vpnTitle.height + smallMetrics.height, Widget.iconButton) + Widget.spacing * 2
+          vpn: VpnManager.rows[index] ?? null
+        }
+      }
+
+      // What the internet sees, to check the traffic goes through the VPN
+      RowLayout {
+        visible: root.vpnOpen && VpnManager.anyActive && VpnConfig.publicIpUrl !== ""
+        Layout.fillWidth: true
+        Layout.leftMargin: Widget.padding
+        Layout.preferredHeight: root.smallLine
+        spacing: Widget.spacing
+
+        StyledText {
+          text: I18n.tr("Public IP")
+          textSize: Appearance.fontSizeBy(-3)
+          textColor: Theme.foregroundAlt
+        }
+        StyledText {
+          Layout.fillWidth: true
+          text: VpnManager.publicIpBusy ? I18n.tr("Checking…") : VpnManager.publicIp || "—"
+          elide: Text.ElideRight
+          textSize: Appearance.fontSizeBy(-3)
+        }
+        FlatIconButton {
+          size: root.smallLine
+          enabled: !VpnManager.publicIpBusy
+          iconText: "travel_explore"
+          iconSize: Appearance.fontSizeBy(-2)
+          tooltipText: I18n.tr("Check (asks {0})", VpnConfig.publicIpUrl)
+          onClicked: VpnManager.checkPublicIp()
         }
       }
 
@@ -300,11 +427,66 @@ Panel {
     id: list
     embedded: root.embedded
     on: root.radioOn
-    offIcon: "signal_wifi_0_bar"
+    offIcon: NetworkingManager.airplane ? "flight" : "signal_wifi_0_bar"
     offMessage: root.offMessage
     count: root.networks.length
     emptyText: I18n.tr("Looking for networks…")
     visibleRows: 6
     delegate: NetworkRow {}
+  }
+
+  // A network that doesn't broadcast its name: built only while open
+  Loader {
+    id: hiddenLoader
+    Layout.fillWidth: true
+    active: root.hiddenOpen && root.radioOn
+    visible: active
+
+    sourceComponent: WifiJoinForm {
+      id: hiddenForm
+      hidden: true
+      onSubmitted: fields => {
+        hiddenForm.error = "";
+        NetworkingManager.join(null, fields, error => {
+          if (error)
+            hiddenForm.error = error.message;
+          else
+            root.hiddenOpen = false;
+        });
+      }
+      onCancelled: root.hiddenOpen = false
+    }
+  }
+
+  StyledSeparator {
+    Layout.fillWidth: true
+    separatorColor: Theme.backgroundHighlight
+  }
+
+  Flow {
+    Layout.fillWidth: true
+    spacing: Widget.spacing / 2
+
+    FooterAction {
+      visible: VpnConfig.editorCommand !== ""
+      iconText: "settings"
+      text: I18n.tr("Settings")
+      tooltipText: I18n.tr("Edit connections ({0})", VpnConfig.editorCommand)
+      onClicked: CommandManager.runDetached(VpnConfig.editorCommand)
+    }
+    FooterAction {
+      visible: root.radioOn
+      iconText: "wifi_find"
+      text: I18n.tr("Hidden network")
+      onClicked: root.hiddenOpen = !root.hiddenOpen
+    }
+    FooterAction {
+      visible: VpnManager.available
+      iconText: "vpn_key"
+      text: I18n.tr("Import VPN")
+      tooltipText: VpnManager.importError || I18n.tr("Add a WireGuard (.conf) or OpenVPN (.ovpn) file")
+      textColor: VpnManager.importError !== "" ? Theme.error : Theme.foregroundAlt
+      onClicked: VpnManager.pickImport()
+    }
   }
 }

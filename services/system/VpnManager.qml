@@ -55,6 +55,15 @@ QtObject {
   // toggles), else the first one
   readonly property var lastRow: rows.find(r => r.id === root.lastUsed) ?? rows[0] ?? null
   property string lastUsed: ""
+  // The Wi-Fi menu's VPN section shows one summary row (remembered)
+  property bool folded: true
+
+  // The address the internet sees (VpnConfig.publicIpUrl's answer), read
+  // on checkPublicIp(); "" until then, and again when the VPN up changes
+  property string publicIp: ""
+  property bool publicIpBusy: false
+  // The last import's error ("" none)
+  property string importError: ""
 
   // NetworkManager asking for a VPN's secrets: { id, uuid, name, kind,
   // user, message, fields }, else null
@@ -120,6 +129,56 @@ QtObject {
         "uuid": row.id
       }, root._settle(row, "vpn.down"));
     }
+  }
+
+  function setFolded(on) {
+    if (root.folded === on)
+      return;
+    root.folded = on;
+    root._saveState();
+  }
+
+  // Asks for a WireGuard (.conf) or OpenVPN (.ovpn) file and imports it.
+  // The picker belongs to this service, as the popout asking may close
+  // while it's open
+  function pickImport() {
+    FilePickerManager.pick(root, I18n.tr("Import a VPN"), {
+      "filter": I18n.tr("VPN files") + ":*.conf *.ovpn"
+    }, path => root.importFile(path));
+  }
+
+  // rpc: vpn.import
+  function importFile(path) {
+    root.importError = "";
+    BackendManager.call("vpn.import", {
+      "path": path
+    }, error => {
+      if (!error)
+        return;
+      console.warn(`[VpnManager] vpn.import ${path}: ${error.message}`);
+      root.importError = error.message;
+    });
+  }
+
+  function checkPublicIp() {
+    const url = VpnConfig.publicIpUrl;
+    if (url === "" || root.publicIpBusy)
+      return;
+    root.publicIpBusy = true;
+    const asked = root.primary?.id ?? "";
+    const xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState !== XMLHttpRequest.DONE)
+        return;
+      root.publicIpBusy = false;
+      // The VPN changed meanwhile: the answer is about the old one
+      if ((root.primary?.id ?? "") !== asked)
+        return;
+      const text = xhr.status === 200 ? xhr.responseText.trim() : "";
+      root.publicIp = text.length > 0 && text.length <= 45 ? text : "?";
+    };
+    xhr.open("GET", url);
+    xhr.send();
   }
 
   // values: { field: text } for the request's fields
@@ -234,10 +293,18 @@ QtObject {
     if (root.lastUsed === id)
       return;
     root.lastUsed = id;
+    root._saveState();
+  }
+
+  function _saveState() {
     root._lastState.save({
-      "lastUsed": id
+      "lastUsed": root.lastUsed,
+      "folded": root.folded
     });
   }
+
+  readonly property string _primaryId: primary?.id ?? ""
+  on_PrimaryIdChanged: root.publicIp = ""
 
   // Shows a row's state at once, while its call runs
   function _pend(row, state) {
@@ -301,7 +368,9 @@ QtObject {
   }
 
   Component.onCompleted: {
-    root.lastUsed = root._lastState.load({}).lastUsed ?? "";
+    const saved = root._lastState.load({});
+    root.lastUsed = saved.lastUsed ?? "";
+    root.folded = saved.folded ?? true;
     BackendManager.listen("vpn.state", state => root._show(state));
     BackendManager.listen("vpn.secretRequest", request => root.secretRequest = request);
     BackendManager.listen("vpn.secretDone", done => {

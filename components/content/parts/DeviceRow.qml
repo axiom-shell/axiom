@@ -6,7 +6,8 @@ import qs.components.reusable
 
 // One device or network in a radio menu (DeviceList): its icon, name and
 // status, a forget button on hover (for a known one; a second click within
-// a few seconds forgets it) and connect / disconnect. Clicking the row
+// a few seconds forgets it) after any other `hoverActions`, and connect /
+// disconnect. Clicking the row
 // `activated`s it. Children go under the row, shown while `expanded` (e.g.
 // a password field).
 Rectangle {
@@ -30,6 +31,10 @@ Rectangle {
   property string disconnectTip: I18n.tr("Disconnect")
   // Beside the title (e.g. a lock)
   property alias titleExtras: titleExtrasRow.data
+  // Buttons before forget, shown as it is (e.g. autoconnect); read
+  // `hovered` for their opacity
+  property alias hoverActions: hoverActionsRow.data
+  readonly property bool hovered: rowHover.hovered
   default property alias below: belowItem.data
 
   property bool _confirmForget: false
@@ -119,6 +124,11 @@ Rectangle {
         textSize: Appearance.fontSizeBy(-3)
         textColor: root._confirmForget || root.failed ? Theme.error : root.busy || root.connected ? Theme.accent : Theme.foregroundAlt
       }
+    }
+
+    RowLayout {
+      id: hoverActionsRow
+      spacing: Widget.spacing / 2
     }
 
     // Only on hover, but always laid out so showing it moves nothing

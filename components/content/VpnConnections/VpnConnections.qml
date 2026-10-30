@@ -11,7 +11,8 @@ import qs.components.content.parts
 
 // Every VPN (VpnManager.rows: NetworkManager's, and Tailscale), each a row
 // that connects or disconnects on click and asks for its password inline
-// when the VPN needs one; Edit connections runs VpnConfig.editorCommand.
+// when the VPN needs one; Import asks for a .conf or .ovpn file
+// (VpnManager.pickImport), Edit connections runs VpnConfig.editorCommand.
 // The Vpn widget's popout, and an overlay card (compact: the VPN up, or
 // off).
 Panel {
@@ -51,6 +52,13 @@ Panel {
       text: VpnManager.anyActive ? I18n.tr("{0} on", VpnManager.activeRows.length) : I18n.tr("Off")
       textSize: Appearance.fontSizeBy(-2)
       textColor: VpnManager.anyActive ? Theme.accent : Theme.foregroundAlt
+    }
+    FlatIconButton {
+      visible: VpnManager.available
+      iconText: "upload_file"
+      iconColor: VpnManager.importError !== "" ? Theme.error : Theme.foregroundAlt
+      tooltipText: VpnManager.importError || I18n.tr("Import a WireGuard (.conf) or OpenVPN (.ovpn) file")
+      onClicked: VpnManager.pickImport()
     }
     FlatIconButton {
       visible: VpnConfig.editorCommand !== ""

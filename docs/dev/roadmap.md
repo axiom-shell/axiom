@@ -348,6 +348,7 @@ Found meanwhile:
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
 - [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
 - [config.json replaced by rename isn't always read by the live daemon](issues.md#configjson-replaced-by-rename-isnt-always-read-by-the-live-daemon)
+- [BlurManager.paused reads undefined on a reload](issues.md#blurmanagerpaused-reads-undefined-on-a-reload)
 
 Needs a plan:
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri)
@@ -398,4 +399,3 @@ Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log ev
 - [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
 - [No OSD for caps lock or the keyboard layout](issues.md#no-osd-for-caps-lock-or-the-keyboard-layout)
 - [No keyboard backlight control](issues.md#no-keyboard-backlight-control)
-- [Enterprise and WEP Wi-Fi can't be joined](issues.md#enterprise-and-wep-wi-fi-cant-be-joined)

@@ -22,4 +22,9 @@ properties:
     type: string
     title: Connection editor
     default: nm-connection-editor
-    description: "Command the Edit connections button runs, to add or change VPNs. Empty hides the button."
+    description: "Command the Edit connections button (VPN module) and the Network settings button (Wi-Fi menu) run, to add or change connections. Empty hides both."
+  publicIpUrl:
+    type: string
+    title: Public IP lookup
+    default: https://api.ipify.org
+    description: "Address the Wi-Fi menu asks, when you click Check, for the IP the internet sees (to confirm traffic goes through the VPN). It answers with the address as plain text. Nothing is sent until you click; empty hides the check."
