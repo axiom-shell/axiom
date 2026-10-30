@@ -491,7 +491,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The managed file's catch-all monitor line is copied into M.monitors
 - **Where:** `backend/internal/compositor/render/hyprlua.go` (`HyprFileMonitorCalls`), `backend/internal/compositor/manager/hypr.go`
-- **What:** Until the outputs are read, `M.monitors()` is refilled from the file: every line starting `hl.monitor({ output = "`. In managed mode that matches the managed file's fixed catch-all `hl.monitor({ output = "", mode = "preferred", … })` (hyprconfig.go:528) too, so each write made before the first read adds one more copy inside `M.monitors()`. Harmless (each replaces the default rule; the next write after a read cleans up) but the file churns and the layer key changes. Fix: read only the lines inside `function M.monitors()`, or skip `output = ""`.
+- **What:** Until the outputs are read, `M.monitors()` is refilled from the file: every line starting `hl.monitor({ output = "`. In managed mode that matches the managed file's fixed catch-all `hl.monitor({ output = "", mode = "preferred", … })` (hyprconfig.go:531) too, so each write made before the first read adds one more copy inside `M.monitors()`. Harmless (each replaces the default rule; the next write after a read cleans up) but the file churns and the layer key changes. Fix: read only the lines inside `function M.monitors()`, or skip `output = ""`.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -557,13 +557,13 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Three listings of niri's user files
 - **Where:** `backend/internal/compositor/manager/niri.go` (`userFiles`), `backend/internal/compositor/binds/niri.go` (`niriFiles`), `backend/internal/compositor/takeover/kinds.go` (`left`)
-- **What:** Deletion pass. The managed config's `user/*.kdl` (regular `.kdl` files, no hidden ones, by name) is listed three times: the writer's `userFiles` (12 lines), the merge's `niriFiles` (18, with `--only`), and the takeover's `left` (13), which counts what a restored config doesn't include. The copies disagree: `left` counts hidden `.kdl` files (an editor's swap file, a staged write) that the writer never includes, and skips a symlinked `.kdl` (`DirEntry.Type`) that the writer includes (`os.Stat`), so a release can report files left out that were never in. One `userconf.NiriUserFiles(dir)` used by all three saves about 25 lines and makes them agree.
+- **What:** Deletion pass. The managed config's `user/*.kdl` (regular `.kdl` files, no hidden ones, by name) is listed three times: the writer's `userFiles` (12 lines), the merge's `niriFiles` (21, with `--only`), and the takeover's `left` (13), which counts what a restored config doesn't include. The copies disagree: `left` counts hidden `.kdl` files (an editor's swap file, a staged write) that the writer never includes, and skips a symlinked `.kdl` (`DirEntry.Type`) that the writer includes (`os.Stat`), so a release can report files left out that were never in. One `userconf.NiriUserFiles(dir)` used by all three saves about 25 lines and makes them agree.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the niri system
 
 ### RunningNested has its own niri socket client
 - **Where:** `backend/internal/compositor/userconf/niri.go` (`RunningNested`), `backend/internal/compositor/ipc/niri.go` (`Outputs`)
-- **What:** Deletion pass. `RunningNested` dials `$NIRI_SOCKET`, writes `"Outputs"` and parses the reply by hand (29 lines), which `ipc.NiriFromEnv(getenv).Outputs(ctx)` already does with the shared dial and timeout (`userconf` can import `ipc`: `ipc` depends only on `render`, `actions` and `jsonx`). As one `Outputs` call, a single output named `winit`: about 8 lines.
+- **What:** Deletion pass. `RunningNested` dials `$NIRI_SOCKET`, writes `"Outputs"` and parses the reply by hand (28 lines), which `ipc.NiriFromEnv(getenv).Outputs(ctx)` already does with the shared dial and timeout (`userconf` can import `ipc`: `ipc` depends only on `render`, `actions` and `jsonx`). As one `Outputs` call, a single output named `winit`: about 8 lines.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 

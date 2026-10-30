@@ -1,7 +1,7 @@
 # niri
 reviewed: 028e7ea 2026-10-30  (full)
 
-The niri backend is in good shape: the event stream, the reducer and the primitives match the docs, the stream rebuilds state from niri's full-state events on every (re)connect, and the tests never reach a live niri. Its biggest problem is at the seam: the daemon picks its compositor by environment-variable order, not the one running as the shell does, so a stale variable sends the writer and the outputs to the wrong compositor. Two rarer bugs (the user's `blur { off }` overriding axiom's blur, a failed start reading as loaded) and six deletion-pass cleanups (about 160 lines).
+The niri backend is in good shape: the event stream, the reducer and the primitives match the docs, the stream rebuilds state from niri's full-state events on every (re)connect, and the tests never reach a live niri. Its biggest problem is at the seam: the daemon picks its compositor by environment-variable order, not the one running as the shell does, so a stale variable sends the writer and the outputs to the wrong compositor. Two rarer bugs (the user's `blur { off }` overriding axiom's blur, a failed start reading as loaded) and six deletion-pass cleanups (about 150 lines).
 
 ## Open findings
 ### 1. The daemon picks the compositor by variable order, not the one running  `backend/internal/compositor/manager/manager.go:136`
@@ -26,7 +26,7 @@ The niri backend is in good shape: the event stream, the reducer and the primiti
 (Cleanup) `userFiles`, `binds.niriFiles`, `takeover` niri `left` list `user/*.kdl` three ways and disagree on hidden and symlinked files. One `userconf` helper, ~25 lines saved. Recorded.
 
 ### 7. RunningNested has its own niri socket client  `backend/internal/compositor/userconf/niri.go:212`
-(Cleanup) Use `ipc.Niri.Outputs`; 29 → ~8 lines. Recorded.
+(Cleanup) Use `ipc.Niri.Outputs`; 28 → ~8 lines. Recorded.
 
 ### 8. NiriManager queues actions the daemon could order  `services/compositor/NiriManager.qml:561`
 (Cleanup) A `niri.command` method under `reg.InOrder` replaces the QML queue (~30 lines) and its per-action round trip. Recorded.
