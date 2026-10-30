@@ -47,7 +47,7 @@ WRAPPER_POSITIONALS = {"timeout": 1, "flock": 1}
 # A substitution a double-quoted word still runs: "$(…)", "`…`"; single-quoted
 # text (a commit message, a grep pattern) runs nothing, so it's blanked first
 SUBSTITUTION = re.compile(r"\$\((.*)\)|`([^`]*)`", re.S)
-QUOTED = re.compile(r"""\\.|"(?:\\.|[^"\\])*"|'[^']*'""", re.S)
+QUOTED = re.compile(r"""\\.|"(?:\\.|[^"\\])*"|\$'(?:\\.|[^'\\])*'|'[^']*'""", re.S)
 SHELLS = {"bash", "sh", "zsh"}
 QS = {"qs", "quickshell"}
 QS_VALUE_OPTS = {"-c", "--config", "-p", "--path", "-m", "--manifest", "-i", "--id", "--pid", "--log-rules", "-n", "--newest"}
@@ -69,20 +69,31 @@ def deny(rule, why):
 COMMENT = re.compile(QUOTED.pattern + r"|(?<![^\s;&|()<>])#[^\n]*", re.S)
 
 
+def uncomment(m):
+    text = m[0]
+    if text[0] == "#":
+        # A comment holding a quote is judged as a command of its own: a quote
+        # read differently from the shell (`"$(echo ")"`) may end inside it
+        return " ; " + text if set(text) & set("'\"") else ""
+    if text[:2] == "$'":  # an ANSI-C string, which shlex can't read: as a plain one
+        return "'" + text[2:-1].replace("'", "") + "'"
+    return text
+
+
 def lex(command):
-    command = COMMENT.sub(lambda m: "" if m[0][0] == "#" else m[0], command).replace("\n", " ; ")
+    command = COMMENT.sub(uncomment, command).replace("\n", " ; ")
     try:
         lexer = shlex.shlex(command, posix=True, punctuation_chars=PUNCTUATION)
         lexer.whitespace_split = True
         lexer.commenters = ""
         return list(lexer)
-    except ValueError:  # an unbalanced quote: split on separators still
-        return re.findall(r"[;&|()<>`]+|[^\s;&|()<>`]+", command)
+    except ValueError:  # an unbalanced quote: split on separators still, quotes dropped
+        return re.findall(r"[;&|()<>`]+|[^\s;&|()<>`]+", re.sub(r"['\"]", "", command))
 
 
 # `<<WORD`, `<<-WORD`, `<<'WORD'` (not a `<<<` here-string, nor a `<<` inside
-# a quoted string, which the other branches consume)
-HEREDOC = re.compile(r"""(?<!<)<<(?!<)(-?)[ \t]*(['"]?)([A-Za-z_][\w.-]*)\2(?![^\s;&|<>()])|\\.|"(?:\\.|[^"\\])*"|'[^']*'""")
+# a quoted string or a comment, which COMMENT's branches consume)
+HEREDOC = re.compile(r"""(?<!<)<<(?!<)(-?)[ \t]*(['"]?)([A-Za-z_][\w.-]*)\2(?![^\s;&|<>()])|""" + COMMENT.pattern)
 
 
 def drop_heredoc_bodies(command):
