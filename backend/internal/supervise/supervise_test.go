@@ -131,16 +131,23 @@ func TestOrphanOfAnEarlierDaemonIsStopped(t *testing.T) {
 	}
 	exited := make(chan struct{})
 	go func() { orphan.Wait(); close(exited) }()
+	// A failed run leaves no sleep behind
+	t.Cleanup(func() { orphan.Process.Kill(); <-exited })
 	os.WriteFile(pidFile, []byte(strconv.Itoa(orphan.Process.Pid)), 0o600)
-	// A pid file naming an unrelated process must leave it alone
+	// A process the pid file doesn't name is left alone, even one alike
 	other := exec.Command("sleep", "31")
-	other.Start()
-	defer other.Process.Kill()
+	if err := other.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { other.Process.Kill(); other.Wait() })
 
 	s := New(fast(Options{Command: command, PIDFile: pidFile}))
+	// Start returns once exec has replaced the image but before the kernel
+	// fills in its cmdline (empty until then, for long under load): an
+	// orphan of an earlier daemon has long shown it
+	eventually(t, func() bool { return s.isOurChild(orphan.Process.Pid) })
 	run(t, s)
-	// Its exit, not a poll against a bound: a loaded parallel run can take
-	// longer than eventually's 2 s to get here. Left alone, it would sleep 30 s
+	// Left alone, it would sleep 30 s
 	select {
 	case <-exited:
 	case <-time.After(testkit.Bound(15 * time.Second)):
@@ -209,7 +216,7 @@ func TestRequestedStopIsNotAnExit(t *testing.T) {
 		if pid != first {
 			t.Errorf("OnStop got %d, want %d", pid, first)
 		}
-	case <-time.After(time.Second):
+	case <-time.After(testkit.Bound(time.Second)):
 		t.Fatal("no OnStop for the restart")
 	}
 	cancel()
