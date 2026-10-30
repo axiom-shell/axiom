@@ -60,6 +60,16 @@ func TestGreeterLua(t *testing.T) {
 		t.Errorf("its part is off: %s", config)
 	}
 	runLua(t, stub, strings.Join(lines, "\n"))
+
+	// acceleration left at default writes no accel_profile (Hyprland 0.57
+	// refuses ""); another profile is written
+	for accel, want := range map[string]string{"default": "", "flat": `accel_profile = "flat"`} {
+		mouse := parse(t, `{"mouse": {"enabled": true, "accel": "`+accel+`"}}`)
+		got := strings.Join(GreeterLua(inputSchema, mouse), "\n")
+		if want == "" && strings.Contains(got, "accel_profile") || !strings.Contains(got, want) {
+			t.Errorf("accel %s: want %q in %s", accel, want, got)
+		}
+	}
 }
 
 // Every managed Hyprland option, each changed from its default, makes Lua

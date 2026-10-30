@@ -116,7 +116,8 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
   - `scale`: a factor for a value stored scaled (0.01 for a percent, 0.001 for ms written as seconds).
   - `if`: a boolean beside it (a part's `enabled`): written, default or not, only when that is on.
 - Hyprland (`render.ConfigTable`, one value of a nested `hl.config({...})` table):
-  - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"emptyIsDefault"` (`"default"` → `""`), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).
+  - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).
+  - `skip`: a value written as nothing (Hyprland's own default stays), e.g. `"default"`.
   - `always: true`: written even when it's the schema default. Other fields are only written once changed, so Hyprland's own default (and the user's files) stay in charge otherwise.
 - sway (`render.SwayOptionLines`; [Sway backend](../compositor/sway-backend.md)):
   - `value`: `"enabled"` (a boolean as `enabled`/`disabled`), `"yesNo"` (`yes`/`no`), `"enableDisable"` (`enable`/`disable`), `"raw"` (as it is, unquoted). Without one, the value is quoted as one argument (`render.SwayQuote`).

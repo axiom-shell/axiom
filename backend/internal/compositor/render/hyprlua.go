@@ -43,11 +43,6 @@ func convert(spec, v any, resolveHex any) any {
 		return 0.0
 	case "number":
 		return num(v)
-	case "emptyIsDefault":
-		if v == "default" {
-			return ""
-		}
-		return v
 	case "color":
 		return "rgba(" + jsCat(call(resolveHex, v)) + str(or(get(spec, "alpha"), "ff")) + ")"
 	}
@@ -85,6 +80,9 @@ func ConfigTable(objectSchema, values, resolveHex, overrides any) *jsonx.Object 
 			if def, ok := prop(f.Schema, "default"); ok && jsonx.StrictEqual(f.Value, def) {
 				continue
 			}
+		}
+		if skip, ok := prop(spec, "skip"); ok && jsonx.StrictEqual(f.Value, skip) {
+			continue
 		}
 		v := convert(spec, f.Value, resolveHex)
 		var paths []string

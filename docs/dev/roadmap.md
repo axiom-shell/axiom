@@ -318,7 +318,6 @@ Found while investigating Hyprland starting on workspace 10:
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
 
 Found while reviewing row 18 (batch 9, the Go cache):
-- [Hyprland 0.57 refuses the empty pointer acceleration profile](issues.md#hyprland-057-refuses-the-empty-pointer-acceleration-profile)
 - [TestOrphanOfAnEarlierDaemonIsStopped misses the orphan's stop under a loaded run](issues.md#testorphanofanearlierdaemonisstopped-misses-the-orphans-stop-under-a-loaded-run)
 
 Found by the audits:
