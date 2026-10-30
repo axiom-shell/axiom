@@ -10,7 +10,8 @@ import qs.components.content.parts
 import qs.components.content.base
 
 // The primary connection (name, IP, wifi signal), live throughput with a
-// graph, and Tailscale's state when it's installed. A strip is one row over
+// graph, and the VPNs up (VpnManager, Tailscale among them unless
+// VpnConfig.showTailscale is off: then Tailscale's own state). A strip is one row over
 // the graphs (opening the Wi-Fi networks over the grid); compact, the
 // connection and its download rate.
 Card {
@@ -18,8 +19,11 @@ Card {
 
   readonly property var info: NetworkingManager.netInfo
   readonly property string kindIcon: root.info.kind === "wifi" ? "signal_wifi_4_bar" : root.info.kind === "ethernet" ? "lan" : "dns"
-  // "Running 100.x.y.z", or "" when Tailscale isn't installed
-  readonly property string tailscale: TailscaleManager.available ? (TailscaleManager.backendState + " " + TailscaleManager.ip).trim() : ""
+  // "Running 100.x.y.z", or "" when Tailscale isn't installed or is a VPN
+  // row
+  readonly property string tailscale: TailscaleManager.available && !VpnConfig.showTailscale ? (TailscaleManager.backendState + " " + TailscaleManager.ip).trim() : ""
+  // "Work, Home", or "" with no VPN up
+  readonly property string vpns: VpnManager.activeRows.map(r => r.name).join(", ")
 
   Component.onCompleted: {
     NetworkingManager.refreshIp();
@@ -29,10 +33,12 @@ Card {
       "interval": 1000
     });
     TailscaleManager.acquire(root);
+    VpnManager.acquire(root);
   }
   Component.onDestruction: {
     SystemManager.release(root);
     TailscaleManager.release(root);
+    VpnManager.release(root);
   }
 
   // Short of room for the full layout (a strip): one row over the graphs
@@ -131,7 +137,7 @@ Card {
         opacity: 0.7
       }
     }
-    // Address and Tailscale on one line where there's room
+    // Address, the VPNs and Tailscale on one line where there's room
     Flow {
       Layout.fillWidth: true
       spacing: Widget.spacing * 1.5
@@ -140,6 +146,15 @@ Card {
         text: root.info.ip
         textSize: Appearance.fontSizeBy(-2)
         opacity: 0.7
+      }
+      StyledText {
+        visible: root.vpns !== ""
+        width: Math.min(implicitWidth, parent.width)
+        elide: Text.ElideRight
+        text: I18n.tr("VPN · {0}", root.vpns)
+        textSize: Appearance.fontSizeBy(-2)
+        textColor: Theme.success
+        opacity: 0.8
       }
       StyledText {
         visible: root.tailscale !== ""

@@ -38,6 +38,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader n
 - **`EdgeMenusConfig`**: edge menus.
 - **`IconsConfig`**, **`ChatConfig`**, **`ThemeIntegrations`**.
 - **`TailscaleConfig`**: what every Tailscale widget and module shares: the poll `interval`, `showOffline` peers, the Connect/Disconnect `actions`.
+- **`VpnConfig`**: what every VPN widget and module shares: `notifyOnDrop`, `showTailscale` (Tailscale as a VPN row), the `editorCommand` for Edit connections.
 - **`CustomWidgetsConfig`**: the custom widgets (`items`, `byId`, `definition(id)`), read through a JSON string so an unrelated change doesn't notify ([custom widgets](../features/custom-widgets.md)).
 - **`CommunitySetups`**: whether the gallery is on, and its catalog URL ([Community setups](../features/community-setups.md)).
 - **`CalendarConfig`**:

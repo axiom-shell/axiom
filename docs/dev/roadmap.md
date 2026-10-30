@@ -137,6 +137,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs the lock-survives-reload fix, let the idle lock come up, save a loaded QML file, then unlock with the password: the lock screen stays up throughout, `scripts/log.sh --all` shows no `Session lock object was destroyed without unlocking`, and the next save after unlocking reloads. Nested niri, sway and Hyprland showed it with a test unlock hook; the real idle lock and PAM only the live session can.
 - Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
 - Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
+- Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -191,6 +192,8 @@ Resolved by a stage:
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
 Done: every entry is fixed: sway and SwayFX, then Hyprland's and every compositor's (the last with row 13: workspace blocks numbered over the saved monitor profiles, and the scrolling layout's borrowed workspaces, which Hyprland hands back on replug). niri's entries are [deferred](#deferred) (maintainer, 2026-10-29).
+
+- [Hyprland 0.57 refuses an empty accel_profile](issues.md#hyprland-057-refuses-an-empty-accel_profile)
 
 ### Phase 7: fit, geometry and performance
 Nothing runs off a screen or clips at 1080p, and pages stay fast as their data grows. Take the 1080p entries as one pass in a nested compositor with a 1080p output.
@@ -392,7 +395,6 @@ Deferred by the maintainer (2026-10-29: "move what is necessary to deferred"; Qu
 Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log everything except notif sound … Build them into roadmap in the correct spot but deferred and issues (all should need a plan)"; Phase 13 features, each through [Items that need a plan](#items-that-need-a-plan) once taken up; notification sounds are the maintainer's own system sounds plan):
 - [No caps lock warning when typing a password](issues.md#no-caps-lock-warning-when-typing-a-password)
 - [Removable drives aren't handled](issues.md#removable-drives-arent-handled)
-- [No VPN controls](issues.md#no-vpn-controls)
 - [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
 - [No OSD for caps lock or the keyboard layout](issues.md#no-osd-for-caps-lock-or-the-keyboard-layout)
 - [No keyboard backlight control](issues.md#no-keyboard-backlight-control)

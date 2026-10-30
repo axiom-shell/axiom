@@ -9,7 +9,8 @@ import qs.components.content.base
 import qs.components.content.parts
 
 // Wi-Fi menu for the Network widget: radio switch, the current connection
-// (address and throughput), and the networks in range (scanning while
+// (address and throughput), the VPNs (those up and the last used, all on
+// Show all; none without any), and the networks in range (scanning while
 // shown). Click a network to connect or disconnect; a secured new one asks
 // for its password inline, and saved ones can be forgotten on hover. The
 // popout keeps one size and rows keep their order, as in BluetoothDevices.
@@ -22,10 +23,18 @@ Panel {
   readonly property string offMessage: I18n.tr(!NetworkingManager.available ? "No Wi-Fi adapter found" : NetworkingManager.hardwareBlocked ? "Wi-Fi is blocked (rfkill)" : "Wi-Fi is off")
   readonly property string kindIcon: info.kind === "wifi" ? NetworkingManager.signalIcon(info.signal / 100) : info.kind === "ethernet" ? "lan" : "signal_wifi_0_bar"
 
+  // VPN rows: all of them, or those up, the last used and the one asking
+  // for a password
+  property bool allVpns: false
+  readonly property var vpns: root.allVpns ? VpnManager.rows : VpnManager.rows.filter(r => r.state !== "off" || r.id === VpnManager.lastRow?.id || r.id === VpnManager.secretRequest?.uuid)
+
   // A password field is up: keep the keyboard, and the popout open
-  wantsKeyboardFocus: NetworkingManager.passwordFor !== null
+  wantsKeyboardFocus: NetworkingManager.passwordFor !== null || (VpnManager.secretRequest !== null && root.vpns.some(r => r.id === VpnManager.secretRequest.uuid))
   hovered: pointerInside || wantsKeyboardFocus
-  onFocusLost: NetworkingManager.cancelPassword()
+  onFocusLost: {
+    NetworkingManager.cancelPassword();
+    VpnManager.cancelSecret();
+  }
 
   implicitWidth: Widget.px(380)
   // The switch, the connection and a row or two, else the figure
@@ -39,6 +48,7 @@ Panel {
   Component.onCompleted: {
     NetworkingManager.acquireScan(root);
     NetworkingManager.refreshIp();
+    VpnManager.acquire(root);
     SystemManager.acquire(root, {
       "metrics": ["net"],
       "interval": 2000
@@ -47,6 +57,7 @@ Panel {
   Component.onDestruction: {
     NetworkingManager.releaseScan(root);
     NetworkingManager.cancelPassword();
+    VpnManager.release(root);
     SystemManager.release(root);
   }
 
@@ -191,6 +202,94 @@ Panel {
   StyledSeparator {
     Layout.fillWidth: true
     separatorColor: Theme.backgroundHighlight
+  }
+
+  // The VPNs: built only when there are some
+  Loader {
+    Layout.fillWidth: true
+    active: VpnManager.rows.length > 0
+    visible: active
+
+    sourceComponent: ColumnLayout {
+      spacing: 2
+
+      FontMetrics {
+        id: vpnTitle
+        font.family: Appearance.fontFamily
+        font.pixelSize: Appearance.fontSizeBy(-1)
+      }
+      FontMetrics {
+        id: vpnStatus
+        font.family: Appearance.fontFamily
+        font.pixelSize: Appearance.fontSizeBy(-3)
+      }
+
+      // The title, as RadioHeader's; with VPNs left out, the whole row
+      // folds them in and out under a chevron, as FoldHeader's
+      Item {
+        id: vpnHeader
+        readonly property int hidden: VpnManager.rows.length - root.vpns.length
+        readonly property bool foldable: root.allVpns || hidden > 0
+        Layout.fillWidth: true
+        implicitHeight: vpnHeaderRow.implicitHeight
+
+        MouseArea {
+          id: vpnHeaderArea
+          anchors.fill: parent
+          enabled: vpnHeader.foldable
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: root.allVpns = !root.allVpns
+        }
+
+        RowLayout {
+          id: vpnHeaderRow
+          anchors.left: parent.left
+          anchors.right: parent.right
+          spacing: Widget.spacing
+
+          StyledText {
+            Layout.fillWidth: true
+            text: I18n.tr("VPN")
+            font.bold: true
+            textColor: Theme.accent
+          }
+          StyledText {
+            visible: vpnHeader.hidden > 0
+            text: I18n.tr("{0} more", vpnHeader.hidden)
+            textSize: Appearance.fontSizeBy(-2)
+            textColor: vpnHeaderArea.containsMouse ? Theme.accent : Theme.foregroundAlt
+          }
+          StyledIcon {
+            visible: vpnHeader.foldable
+            text: "expand_more"
+            textColor: vpnHeaderArea.containsMouse ? Theme.accent : Theme.foregroundAlt
+            rotation: root.allVpns ? 0 : -90
+
+            Glide on rotation {}
+          }
+        }
+      }
+
+      Repeater {
+        // A count, so the rows outlive each state
+        model: root.vpns.length
+
+        VpnRow {
+          required property int index
+          Layout.fillWidth: true
+          // DeviceList.rowHeight's
+          rowHeight: Math.max(vpnTitle.height + vpnStatus.height, Widget.iconButton) + Widget.spacing * 2
+          vpn: root.vpns[index] ?? null
+        }
+      }
+
+      StyledSeparator {
+        Layout.fillWidth: true
+        Layout.topMargin: Widget.spacing
+        separatorColor: Theme.backgroundHighlight
+      }
+    }
   }
 
   // Grows to list every row (from compact, to the full layout); off, back

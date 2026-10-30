@@ -24,3 +24,13 @@ settings:
     $ref: '#/definitions/WidgetColor'
     title: Disconnected color
     x-autoColor: critical
+  showVpn:
+    type: boolean
+    title: Show VPN
+    default: true
+    description: "A lock on the icon while a VPN is up, and the VPN's name after the network's in the ticker and stacked styles."
+  vpnColor:
+    $ref: '#/definitions/WidgetColor'
+    title: VPN lock color
+    x-autoColor: accent
+    x-showIf: {showVpn: true}

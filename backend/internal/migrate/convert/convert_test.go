@@ -154,8 +154,9 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 // config has them, so they come from their default at load
 var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps"}
 
-// Bar widget settings added since, the same way (a widget's display style)
-var widgetKeysAddedSinceV1 = []string{"appearance"}
+// Bar widget settings added since, the same way (a widget's display style,
+// the Network widget's VPN lock)
+var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor"}
 
 // Every frozen corpus config (each past schema version's defaults, the
 // examples, old configs), as the legacy pipeline loads it, converts to a

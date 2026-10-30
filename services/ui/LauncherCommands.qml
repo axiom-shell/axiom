@@ -237,6 +237,30 @@ QtObject {
       }
     },
     {
+      name: "vpn",
+      aliases: ["wireguard", "openvpn"],
+      glyph: "vpn_lock",
+      usage: "[name]",
+      description: () => I18n.tr("Connect or disconnect a VPN"),
+      available: () => VpnManager.rows.length > 0,
+      status: () => VpnManager.primary?.name ?? I18n.tr("Off"),
+      options: () => VpnManager.rows.map(row => ({
+              title: row.name,
+              subtitle: VpnManager.statusText(row),
+              glyph: VpnManager.kindIcon(row.kind),
+              value: row.id
+            })),
+      run: (arg, value) => {
+        const wanted = String(arg ?? "").trim().toLowerCase();
+        const row = value ? VpnManager.rowById(value) : wanted !== "" ? VpnManager.rows.find(r => r.name.toLowerCase().startsWith(wanted)) : null;
+        if (row)
+          VpnManager.toggle(row);
+        else if (wanted === "")
+          VpnManager.toggleLast();
+        return false;
+      }
+    },
+    {
       name: "connect",
       aliases: ["disconnect", "device"],
       glyph: "bluetooth_connected",

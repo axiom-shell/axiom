@@ -2,9 +2,9 @@
 
 > **Files:** `services/system/NetworkingManager.qml`, `services/system/BluetoothManager.qml`
 > **Config:** none
-> **Related:** [Services pattern](../core/services-pattern.md)
+> **Related:** [Services pattern](../core/services-pattern.md), [VPN](vpn.md)
 
-Wi-Fi, wired and Bluetooth state, built on Quickshell's D-Bus modules. Throughput is not here: it stays in SystemManager.
+Wi-Fi, wired and Bluetooth state, built on Quickshell's D-Bus modules. Throughput is not here: it stays in SystemManager. VPNs are VpnManager's ([VPN](vpn.md)).
 
 ### NetworkingManager
 - Wi-Fi over `Quickshell.Networking`: NetworkManager over D-Bus, event-driven. Nothing runs `nmcli`.

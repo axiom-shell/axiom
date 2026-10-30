@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Hyprland 0.57 refuses an empty accel_profile
+- **Where:** `config/schema/sections/Input.yaml` (the pointer `accelProfile`'s `hyprland` mapping, `emptyIsDefault`), `backend/internal/compositor/render`
+- **What:** `TestCompositorsReadTheFiles/HyprConfigLua/…/test_everything_on_is_a_config_hyprland_reads.2` fails on main with Hyprland 0.57.0: `error setting 'input.accel_profile': bad value "", allowed values are: "adaptive", "flat", "custom"`. The rendered Lua sets the option to `""`, which older Hyprland took as its default; 0.57 doesn't, so a managed config with that value may fail to load. Leaving the key out when it's empty (as sway's `skip: default` does) would likely fix it.
+- **Size:** small
+- **Found:** 2026-10-30, while adding VPN controls (verify.sh's Go tests)
+
 ### A dev build during a branch switch re-execs onto the defaults
 - **Where:** `backend/internal/daemon/dev.go` (`watchSource`, `build`), the re-exec's config load
 - **What:** On 2026-10-30, `git switch main` followed 3 s later by `git pull` (main at config version 82, then 84). The source watch kicked a build of the v82 tree. The pull's changes reached the old process while that build ran, and its kick died with the process when the build re-exec'd. The new image (`the tree's schema isn't the one this binary was built with (fine in dev mode)`) knew version 82, refused the v84 config.json (`version: 84 is newer than this axiom knows (82): update axiom`) and logged `the config doesn't load: running on the defaults, saves blocked until it's fixed`. The shell came up on the defaults until the next build. config.json itself stayed untouched. Two gaps: a kick that arrives during a build should build again rather than re-exec into the stale binary (or the new image should check whether the source is newer than itself), and a re-exec that can't read the config should keep the config the old image had running (the shell's message already claims it keeps the last good config).
@@ -432,12 +438,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Removable drives aren't handled
 - **Where:** `services/system/` (no service yet)
 - **What:** Nothing in services, components or the schema uses udisks: plugging in a USB stick or SD card gives no notification, no mount or eject, and no list of drives (the Disks module shows only mounted filesystems). Also open: automount or ask, the notification's actions, where the drive list lives (a bar widget, a popout, the Disks module), and running udisks through the daemon.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while listing small gaps users notice at once
-
-### No VPN controls
-- **Where:** `services/system/NetworkingManager.qml`, `components/content/Network/`
-- **What:** The Network popout and module have no VPN connections (no "vpn" or "wireguard" anywhere in services or the schema); only Tailscale has its own widget. A user's NetworkManager VPNs (WireGuard, OpenVPN) can't be seen or toggled. Also open: whether Quickshell's Networking exposes VPN connections or the daemon goes to NetworkManager, and where they show.
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
