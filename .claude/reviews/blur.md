@@ -1,12 +1,12 @@
 # blur
 reviewed: b85084b 2026-10-30  (full)
 
-Sound at its core. One rule table feeds all three backends, and pausing and translucency off stop blur everywhere. Open problems are in the fills (a backed toast's double alpha, the keepFill row, SwayFX's popups), plus about 95 lines of deletions.
+Sound at its core. One rule table feeds all three backends, and pausing and translucency off stop blur everywhere. Open problems are in the fills (a backed toast's double alpha, the keepFill row, the editable dropdown's list), plus about 95 lines of deletions.
 
 ## Open findings
 - Major: [A backed toast's blur fill is at the surface opacity twice](../../docs/dev/issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)
 - Major: [A keepFill opening leaves an unfilled row in an unbacked translucent pill](../../docs/dev/issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
-- Major: [SwayFX leaves tooltips and the dock's menu translucent and unblurred](../../docs/dev/issues.md#swayfx-leaves-tooltips-and-the-docks-menu-translucent-and-unblurred)
+- Major: [The editable dropdown's list fills translucent over the overlay](../../docs/dev/issues.md#the-editable-dropdowns-list-fills-translucent-over-the-overlay)
 - Cleanup: [SlideAnimation's fade, easing and container aliases are dead](../../docs/dev/issues.md#slideanimations-fade-easing-and-container-aliases-are-dead)
 - Cleanup: [The blur window builds stand-ins and copies it never uses](../../docs/dev/issues.md#the-blur-window-builds-stand-ins-and-copies-it-never-uses)
 - Cleanup: [BlurBacking spells out four near-identical blur windows](../../docs/dev/issues.md#blurbacking-spells-out-four-near-identical-blur-windows)
