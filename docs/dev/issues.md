@@ -497,7 +497,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The workspace strips repeat ActiveStrip's loader
 - **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml`, `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml`, `components/bar/widgets/Workspaces/ActiveStrip.qml` (`hasWindows`)
-- **What:** Both strips hold the same `Loader { active: stripDirection !== ""; visible: hasWindows; ActiveStrip { 12 bindings } }` (only the text colour differs) and the same `stripOnly` expression but for the id count; `ActiveStrip.hasWindows` also calls `CompositorManager.stripWindows` again beside its `StripWindows`. Deletion pass: move the loader into ActiveStrip (it sets its own `active`/`visible` and exposes `stripOnly(count)`), about 20 lines.
+- **What:** Both strips hold the same `Loader { active: stripDirection !== ""; visible: hasWindows; ActiveStrip { 12 bindings } }` (only the text colour differs) and the same `stripOnly` expression but for the id count; `ActiveStrip.hasWindows` also calls `CompositorManager.stripWindows` again beside its `StripWindows`. Deletion pass: move the loader into ActiveStrip (it sets its own `active`/`visible` and exposes `stripOnly(count)`), about 20 lines. The two strips also repeat about 15 more lines each (the five resolved colours, `monitor`/`output`/`base`/`activeId`/`stripDirection`, `cell`/`cellRadius`/`cellLength`); the shared piece can take those too (bar-widgets audit, 2026-10-30).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -616,8 +616,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
 ### The system stats widget changes width with its digits
-- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml`
-- **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size.
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml`, `components/bar/widgets/base/IconTextWidget.qml` (`steadyDigits`)
+- **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size. The cause is in the base (bar-widgets audit, 2026-10-30): `steadyDigits` sizes a label by its digit count by design ("changing only when it gains or drops a digit"), and stacked (`ValueGraphic`) does the same, so Volume/Microphone, Battery, ClaudeUsage, Updates and SystemStats' used memory shift too, and Stopwatch, Pomodoro and IdleInhibitor grow a step past an hour. A fix in the base covers them all: a per-widget minimum text the label never measures below ("100%" for a percent), measured as `steadyMetrics` is.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -1476,3 +1476,103 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `BarsConfig.lookOf({})` returns what `BarStyle.look` holds: every `Bars.style` key with the shadow flattened. Every other user of the shared look reads `BarStyle.look` (RoundedBorders, SurfaceShadow, AttachedSurface, EdgePlacement). Fix: `readonly property var _barLook: BarStyle.look`.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
+
+### Ticking labels without steadyDigits resize the bar under a proportional font
+- **Where:** `components/bar/widgets/ScreenRecord/ScreenRecord.qml:17` (`text`), `components/bar/widgets/NextEvent/NextEvent.qml:44` (`when`), `components/bar/widgets/Button/Button.qml:31` (`text`)
+- **What:** `components/bar/widgets/AGENTS.md` says "**A ticking label** (countdown, elapsed time) sets `steadyDigits: true`". `grep -rln steadyDigits components/bar/widgets` lists only SystemStats, Stopwatch, Pomodoro, IdleInhibitor and the base. These three tick without it:
+  - ScreenRecord's label is the time recorded (`m:ss`), set again every second from `ScreenshotManager.recordingElapsed`.
+  - NextEvent's "in {0} min" counts down every minute.
+  - A Button's `labelCommand` output is sampled every `labelInterval` (default 5 s) and is usually a number.
+
+  Without `steadyDigits`, `IconTextWidget` sets no `tnum`, and `_textLength` is the text's own width. The default `Appearance.font.family` is `monospace`, where nothing moves. With a proportional font (Inter, Noto Sans, …), `0:11` → `0:08` changes the widget's width and moves its neighbours on most ticks. Fix: `steadyDigits: true` on ScreenRecord and NextEvent, and `steadyDigits: properties.labelCommand !== ""` on Button (3 lines). The alternative is the maintainer's call: make it BarIconWidget's default (it costs nothing on a label with no digits) and delete the four opt-ins.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### Media squeezed to its minimum in the fill style shows the meter, not its icon
+- **Where:** `components/bar/widgets/Media/Media.qml:20` (`minimumSize`), `components/bar/widgets/base/IconTextWidget.qml:46` (`_leadRoom`), `components/bar/widgets/base/IconTextWidget.qml:54` (`_iconStart`)
+- **What:** Media is elastic, with `minimumSize: root.iconLength + root.padding * 2`. Its header says it shrinks "down to just the icon when the bar is crowded", and a crowded section or a `layout.size` cap squeezes it to that minimum. Its schema offers `fill`. In that style the meter is a lead graphic *before* the icon (`ValueGraphic.afterIcon` is only ticker/stacked). `leadSlot` sits at x 0 with its full `leadLength` (`fontSize * 4`, 56 px at the defaults), and the icon is drawn at `_iconStart = _leadRoom`, past the room the minimum leaves. The widget clips to its box (BaseWidget `clip: true`), so a squeezed Media in fill style shows about 20 px of the progress meter and no icon. Ticker and stacked draw after the icon and are fine. Fix: count the lead in the minimum, `minimumSize: root.iconLength + (root.leadAfterIcon ? 0 : root.leadLength + root.spacing) + root.padding * 2` (or expose `_leadRoom` as `leadRoom`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### The Workspaces widget's measured length glides when the active cell widens
+- **Where:** `components/bar/widgets/Workspaces/WorkspaceCell.qml:151` (`Glide on width`), `components/bar/widgets/Workspaces/WorkspaceCellRow.qml:48` (`implicitWidth: cells.implicitWidth`)
+- **What:** With `wideActive` (the default), each cell's `width`/`height` glides over animNormal. The row's implicit size is the `cells` Grid's, the sum of those drawn widths, and so is `BarWidgetHost.naturalSize`.
+  - When a switch changes the total, the measured size moves on every frame of the glide. Each frame re-runs the bar layout and re-targets the host's own animFast glide.
+  - The total changes when the new active workspace wasn't shown before (showEmpty off, and always on niri through `_hideEmpty`): its cell appears at 2× length while the old active one shrinks. It also changes when the active workspace leaves the row.
+  - This breaks composition.md › Bar motion: "**Measured, never animated:** the layout is measured from the modules' implicit sizes. That covers `naturalSize`/`preferredSize`…".
+  - `Glide on width|height` under `components/bar` is otherwise only on WidgetBackground and BarWidgetHost, both drawn sizes.
+
+  PLAUSIBLE that it shows (a neighbour jittering or lagging over the glide): a TRACE of `naturalSize` while switching to a new niri workspace settles it. Fix: measure the row from its targets, `ids.length * cellLength + (wide active shown ? cellLength : 0) + (ids.length - 1) * spacing` across the main axis, and clip the row while a cell still glides.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### A custom clock format without spaces spills past a vertical bar
+- **Where:** `components/bar/widgets/Time/Time.qml:108` (`_split`)
+- **What:** On a vertical bar the clock is `widgetSize` wide, and a custom format is stacked one part per line, split only on whitespace and `:` (`text.split(/[\s:]+/)`). With `dateFormat: "yyyy-MM-dd"` (or `dd.MM.yyyy`, `HH.mm`) the whole value is one line ("2026-10-30" is about 70 px at font 14), centred in a ~26 px column. BarWidget doesn't clip, and the host clips only while resizing, so the text draws across the bar's edge onto the windows beside it. The file's header promises "On a vertical bar each is stacked into short lines". Fix: split on `/[\s:.\-\/,]+/`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### Tray icons keep their pixel size on a bar thinner than them
+- **Where:** `components/bar/widgets/SystemTray/SystemTray.qml:13` (`iconSize`), `components/bar/widgets/SystemTray/SystemTray.qml:70`
+- **What:** Each tray item is `properties.iconSize` px (default 18, 8–64), whatever the bar's `widgetSize` (10 and up) or `fontSize`. Every other widget's icon is `barConfig.fontSize * iconScale`. With `iconSize` 24 on a 20 px bar, the icons draw past the widget's box across the bar, and nothing clips them. They also don't grow with the bar's font as every other icon does. Fix: `readonly property int iconSize: Math.min(properties.iconSize, barConfig.widgetSize)`. Question for the maintainer: should the tray's size follow the bar instead (a share of `widgetSize`, or relative to `fontSize`) rather than being a px setting?
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### Some bar widget sizes are fixed pixels, not the bar's
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:206` (`spacing`), `components/bar/widgets/Window/Window.qml:13` (`preferredSize`), `components/bar/widgets/Window/Window.qml:14` (`minimumSize`), `components/bar/widgets/base/ValueGraphic.qml:119` (`gap`), `components/bar/widgets/base/ValueGraphic.qml:120` (`cornerRadius`), `components/bar/widgets/Network/Network.qml:89` (`textSize`), `components/bar/widgets/Notifications/Notifications.qml:41` (`textSize`)
+- **What:** `components/bar/widgets/AGENTS.md`: "**Sized by the bar**: cross size `barConfig.widgetSize`; padding, spacing, font size and radius from `barConfig`". These don't follow it:
+  - SystemStats' icon-to-value gap is `root.isVertical ? 0 : 4`. Every other icon widget's gap is `barConfig.widgetSpacing * 1.5` (BarIconWidget), so SystemStats alone ignores the bar's inner spacing.
+  - Window's title is capped at 240 px and floored at 80 px, whatever the bar's font. At font 20 it elides at about 18 characters.
+  - The segments style's gap and corner radius are 2 px at any font size.
+  - Network's VPN lock and the notification badge are `fontSize - 5` and `fontSize - 4`. At font 8 the lock is 3 px; at font 30 it is 25 px, nearly the icon's size.
+
+  Fix:
+  - `spacing: root.isVertical ? 0 : root.barConfig.widgetSpacing * 1.5`
+  - `preferredSize: barConfig.fontSize * 17`, `minimumSize: barConfig.fontSize * 6` (today's values at the default 14)
+  - `gap`/`cornerRadius: Math.max(1, Math.round(root.fontSize * 0.15))`
+  - `textSize: Math.round(root.fontSize * 0.65)` (0.7 for the badge)
+
+  Question for the maintainer: should Window's cap be a setting instead, as Media's is through `layout.size`?
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### SystemStats' used memory clips on a vertical bar
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:108` (`segmentData`, `mem`), `components/bar/widgets/base/IconTextWidget.qml:140` (`elide`)
+- **What:** On a vertical bar each value is upright under its icon, at `textScale` 0.7 with `Text.ElideNone`, centred in the `widgetSize` column of a box that clips (BaseWidget `clip: true`). With `memoryFormat: used` the value is `toFixed(1) + "G"`, five characters from 10 GiB up ("15.6G"). That is about 5 × 0.6 em × 9.8 px ≈ 29.5 px in monospace, in a 26 px column, so both outer glyphs lose about 2 px; "125.3G" loses most of a glyph each side. Percent values ("100%", about 23.5 px) fit. PLAUSIBLE: a screenshot of a vertical bar with `memoryFormat: used` on a machine using 10 GiB or more settles it. Fix: whole GiB on a vertical bar (`toFixed(root.isVertical ? 0 : 1)`), or let an upright label shrink to fit (`fontSizeMode: Text.HorizontalFit` with a `minimumPixelSize`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### The stacked style clips on a thin bar
+- **Where:** `components/bar/widgets/base/ValueGraphic.qml:217` (value `font.pixelSize`), `components/bar/widgets/base/ValueGraphic.qml:229` (caption `font.pixelSize`)
+- **What:** Stacked's two lines are `fontSize * 0.8` and `fontSize * 0.6`, sized from the font alone: about 1.17 × 1.4 × fontSize ≈ 23 px at font 14. They are centred in the widget's `widgetSize`, and the widget clips. At the default 26 px they fit. At `widgetSize` 20 with font 14, where a one-line label (about 16 px) still fits, about 1.5 px comes off the top of the value and the bottom of the caption. PLAUSIBLE: a screenshot of a stacked widget on a 20 px bar settles it. Fix: scale both lines by `Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize))`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### BaseWidget's background box and panel-size defaults are dead
+- **Where:** `components/bar/widgets/base/BaseWidget.qml:13` (`backgroundColor`), `components/bar/widgets/base/BaseWidget.qml:15` (`showBackground`), `components/bar/widgets/base/BaseWidget.qml:17` (`contentItem`), `components/bar/widgets/base/BaseWidget.qml:19` (`radius`), `components/bar/widgets/base/BaseWidget.qml:29` (the `Rectangle`), `components/bar/widgets/base/IconTextWidget.qml:22` (`spacing`), `components/bar/widgets/base/IconTextWidget.qml:25` (`fontSize`), `components/bar/widgets/base/ValueGraphic.qml:31` (`fontSize`), `docs/dev/core/shared-ui-pieces.md:103`
+- **What:** Widgets don't draw their own backgrounds; WidgetGroup does (widget-style.md › Widget style). BaseWidget still has its own box, and it is never drawn. Its three instances all set `showBackground: false`: BarIconWidget:60, SystemStats:179 (`box`) and SystemStats:204 (the segments).
+  - `backgroundColor` and `radius` feed only that Rectangle. The two `radius:` setters (BarIconWidget:43, SystemStats:178) therefore do nothing.
+  - `contentItem` has no reader (its declaration is its only hit in `components/bar`).
+  - Deletion pass: BaseWidget lines 13–15, 17, 19 and 29–35 (12 lines) plus the five setters, 17 lines in all.
+  - shared-ui-pieces.md:103 still calls BaseWidget "the rounded box a bar widget sits in": it becomes "the sizing wrapper".
+
+  The bases' remaining defaults are the panels' sizes, and every instance replaces them from `barConfig`:
+  - BaseWidget: `padding: Widget.padding`, `crossSize: Widget.height`
+  - IconTextWidget: `spacing: Widget.spacing * 1.5`, `fontSize: Appearance.fontSize`
+  - ValueGraphic: `fontSize: Appearance.fontSize`
+
+  These five are the only `Widget.*`/`Appearance.fontSize` reads under `components/bar/widgets`, and they read as though the bar's pieces size from the Interface section. Default them to 0.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### SystemStats works out ValueStyleWidget's style fallbacks again
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:199` (segment `style`), `components/bar/widgets/SystemStats/SystemStats.qml:139` (`backgroundLevelColor`), `components/bar/widgets/SystemStats/SystemStats.qml:141` (`_textByState`), `components/bar/widgets/base/ValueStyleWidget.qml:34` (`style`)
+- **What:** Two rules live in both `ValueStyleWidget.style` and SystemStats' per-segment `style`: "stacked on a vertical bar is a label" and "a sparkline with no history is a fill". `Qt.alpha(colors.icon, 0.35)` and `colorText && colors.fill.a < 1` are copied word for word too. A new style rule added to one copy will be missed in the other. Fix: put the fallbacks in one function on ValueGraphic (`resolvedStyle(style, vertical, hasHistory, ratio)`) and read it from both places, about 4 lines out of SystemStats. The pill colour can be a ValueGraphic constant.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### The workspace switchers find a workspace by id with hand-written loops
+- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml:74` (`wsById`), `components/bar/widgets/Workspaces/WorkspaceStrip.qml:83` (`hasWindows`), `components/bar/widgets/Workspaces/WorkspaceCellRow.qml:56` (`_occupied`)
+- **What:** `WorkspaceStrip.wsById` and `hasWindows` (lines 74–85, 12 lines; `hasWindows` has one call, line 63), and `WorkspaceCellRow._occupied` (8 lines), each walk `CompositorManager.workspaces` with an index loop to find one id. WorkspaceGrid already does it in one line: `CompositorManager.workspaces.find(ws => ws.id === id) ?? null` (WorkspaceGrid.qml:61). Fix: `wsById` becomes that `find`, `hasWindows` is inlined at its call, and `_occupied` becomes `return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;`. That is 20 lines down to about 6, with the same results.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
