@@ -42,6 +42,9 @@ QtObject {
   // saved one's (machine settings, which restoring doesn't change, are left
   // out)
   readonly property bool modified: _state.modified ?? false
+  // The running config isn't on disk (no saved one active and not the
+  // defaults, or the active one changed): an apply or restore keeps it first
+  readonly property bool unsaved: _state.unsaved ?? false
   // The shared setup the active saved config was saved from, unchanged
   // since: "" for one the user saved, or saved over
   readonly property string activeSource: _state.activeSource ?? ""

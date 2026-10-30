@@ -204,6 +204,14 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "restore import-old", files: "import-old"},
 			{do: "a", files: "example-a import-old"},
 		}},
+		{"the kept one is found by its kind, not its name", []step{
+			{do: "save unsaved", files: "unsaved"},
+			{do: "edit outline", files: "unsaved"},
+			{do: "a", backup: "unsaved 2", files: "example-a unsaved unsaved 2"},
+			{do: "delete unsaved", files: "example-a unsaved 2"},
+			{do: "edit plain", files: "example-a unsaved 2"},
+			{do: "b", backup: "unsaved 2", files: "example-b unsaved 2", content: ""},
+		}},
 		{"a snapshot the user named unsaved is never replaced", []step{
 			{do: "save unsaved", files: "unsaved"},
 			{do: "edit outline", files: "unsaved"},
@@ -280,6 +288,32 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// State.Unsaved says what keep would do: nothing at the defaults or on an
+// unchanged snapshot, else keep the running config.
+func TestStateUnsaved(t *testing.T) {
+	t.Parallel()
+	f := setup(t)
+	if f.svc.State().Unsaved {
+		t.Error("unsaved at the defaults")
+	}
+	set(t, f.store, "Bars.style.widgetStyle", "outline")
+	f.svc.Changed()
+	if !f.svc.State().Unsaved {
+		t.Error("not unsaved after a change with none active")
+	}
+	if _, err := f.svc.Save("mine", ""); err != nil {
+		t.Fatal(err)
+	}
+	if f.svc.State().Unsaved {
+		t.Error("unsaved right after saving")
+	}
+	set(t, f.store, "Bars.style.widgetStyle", "plain")
+	f.svc.Changed()
+	if !f.svc.State().Unsaved {
+		t.Error("not unsaved after changing the active snapshot")
 	}
 }
 

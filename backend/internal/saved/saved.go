@@ -66,6 +66,9 @@ type State struct {
 	ActiveSource string `json:"activeSource"`
 	// The running config's snapshot parts differ from the active one's
 	Modified bool `json:"modified"`
+	// The running config isn't on disk, so an apply or restore keeps it
+	// first (as the kindUnsaved snapshot)
+	Unsaved bool `json:"unsaved"`
 }
 
 // Entry is one snapshot on disk.
@@ -230,6 +233,7 @@ func (s *Service) Changed() {
 	s.mu.Lock()
 	before := s.state
 	s.state.Modified = s.modified()
+	s.state.Unsaved = !s.onDisk()
 	after := s.state
 	s.mu.Unlock()
 	if after != before && s.opts.OnState != nil {
@@ -354,36 +358,49 @@ func (s *Service) remove(name string) error {
 }
 
 // keep makes sure the running config is on disk before something replaces
-// it: the active snapshot unchanged already is, and so are the schema's
-// defaults with none active (Restore defaults applies them again): "".
-// Else it's saved as the kindUnsaved snapshot, whose name it returns. An
-// active one that didn't load (no baseline) or whose file is gone doesn't
-// count.
+// it (onDisk: ""), else saves it as the kindUnsaved snapshot, whose name it
+// returns.
 func (s *Service) keep() (string, error) {
-	if s.state.Active != "" && s.baseline != nil && !s.modified() {
-		if _, err := os.Stat(s.path(s.state.Active)); err == nil {
-			return "", nil
-		}
-	}
-	if s.state.Active == "" {
-		sch := s.opts.Pipeline().Schema()
-		cfg, _ := s.opts.Store.Config()
-		if jsonx.Equal(share.Pick(sch, cfg, share.Everything, nil), share.Pick(sch, s.opts.Pipeline().Defaults(), share.Everything, nil)) {
-			return "", nil
-		}
+	if s.onDisk() {
+		return "", nil
 	}
 	return s.save(s.unsavedName(), "", kindUnsaved)
 }
 
-// unsavedName is the kindUnsaved snapshot's name: "unsaved", or "unsaved
-// <n>" past snapshots of the user's that have it.
+// onDisk says whether the running config needn't be kept: the active
+// snapshot unchanged is on disk, and so are the schema's defaults with none
+// active (Restore defaults applies them again). An active one that didn't
+// load (no baseline) or whose file is gone doesn't count.
+func (s *Service) onDisk() bool {
+	if s.state.Active != "" && s.baseline != nil && !s.modified() {
+		_, err := os.Stat(s.path(s.state.Active))
+		return err == nil
+	}
+	if s.state.Active != "" {
+		return false
+	}
+	sch := s.opts.Pipeline().Schema()
+	cfg, _ := s.opts.Store.Config()
+	return jsonx.Equal(share.Pick(sch, cfg, share.Everything, nil), share.Pick(sch, s.opts.Pipeline().Defaults(), share.Everything, nil))
+}
+
+// unsavedName is the kindUnsaved snapshot's name: the one there is, else
+// "unsaved", or "unsaved <n>" past snapshots of the user's that have it.
 func (s *Service) unsavedName() string {
-	name := unsaved
-	for n := 2; ; n++ {
-		if _, err := os.Stat(s.path(name)); errors.Is(err, fs.ErrNotExist) {
+	entries, _ := os.ReadDir(s.savedDir())
+	for _, e := range entries {
+		name, ok := strings.CutSuffix(e.Name(), ".json")
+		if !ok || !e.Type().IsRegular() {
+			continue
+		}
+		if parsed, err := readJSON(filepath.Join(s.savedDir(), e.Name())); err == nil && header(parsed).Kind == kindUnsaved {
 			return name
 		}
-		if parsed, err := readJSON(s.path(name)); err == nil && header(parsed).Kind == kindUnsaved {
+	}
+	name := unsaved
+	// Any error but "it's there" counts as free: save then says what's wrong
+	for n := 2; ; n++ {
+		if _, err := os.Stat(s.path(name)); err != nil {
 			return name
 		}
 		name = fmt.Sprintf("%s %d", unsaved, n)
@@ -433,6 +450,7 @@ func (s *Service) setActive(name string, baseline *jsonx.Object, source, kind st
 		}
 	}
 	s.state.Modified = s.modified()
+	s.state.Unsaved = !s.onDisk()
 	if s.opts.OnState != nil {
 		s.opts.OnState(s.state)
 	}

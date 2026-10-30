@@ -3196,7 +3196,7 @@
     "Your own settings go in {0}.": "",
     "Your shell isn't zsh, bash or fish: add the line to its startup file yourself.": "",
     "Your theme, wallpapers and monitor layout from the first screen on. Installing it asks for your password once.": "",
-    "Your unsaved changes are saved as \"unsaved\" first.": "",
+    "Your unsaved changes are saved first.": "",
     "Your user can't change Tailscale: allow it with Grant access.": "",
     "Your windows, most recently used first, while the switch windows keys are held (ALT + Tab and ALT + SHIFT + Tab on the Keybinds page). Releasing the modifier focuses the chosen window; Escape keeps the current one.": "",
     "Your {0} config is a symlink or in a git repository, so axiom won't take it over.": "",

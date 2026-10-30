@@ -3497,9 +3497,9 @@
     "Access wasn't granted.": "",
     "Show Connect / Disconnect, switching and adding accounts, the exit node and the node's options. They need operator rights once (`tailscale set --operator=$USER`): the popout's Grant access button asks for them.": "",
     "Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file": "",
-    "Your unsaved changes are saved as \"unsaved\" first.": "",
     "Restored \"{0}\". Your unsaved changes are saved as \"{1}\".": "",
     "Applied \"{0}\" as \"{1}\".": "",
-    "Applied \"{0}\".": ""
+    "Applied \"{0}\".": "",
+    "Your unsaved changes are saved first.": ""
   }
 }
