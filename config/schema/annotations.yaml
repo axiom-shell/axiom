@@ -13,7 +13,7 @@ x-canvasFill: a color property the layouts editor fills a module's tile with (`O
 x-card: 'a hand-built settings card: `{ file, title, wide, folds, perField }` (`file`: `views/Settings/<file>Card.qml` as the first card, titled `title`; `wide` spans both columns; `folds` folds like the generated cards; `perField` makes each direct field a card of its own).'
 x-categories: orders the categories and gives their icons (`SchemaLayout.categories`).
 x-category: names its sidebar category.
-x-compositor: 'how a compositor config writer writes it, per compositor: `hyprland: { key, value, scale, if, always }`, `sway: { key, value, scale, map, skip, configOnly }`, `niri: { key, value, scale, skip }` (schema-annotations.md › Compositor).'
+x-compositor: 'how a compositor config writer writes it, per compositor: `hyprland: { key, value, scale, if, skip, always }`, `sway: { key, value, scale, if, map, skip, configOnly }`, `niri: { key, value, scale, if, skip }` (schema-annotations.md › Compositor).'
 x-control: the form control drawing a field instead of the one its type picks (see schema-annotations.md › Fields).
 x-defaultSize: the size it's added at.
 x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).

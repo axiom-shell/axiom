@@ -115,19 +115,17 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
   - `key`: Hyprland's option path (or a list of paths), sway's command with `{}` for the value (`"input type:keyboard repeat_rate {}"`), or niri's node path (`"input.keyboard.repeat-rate"`, its value the node's argument).
   - `scale`: a factor for a value stored scaled (0.01 for a percent, 0.001 for ms written as seconds).
   - `if`: a boolean beside it (a part's `enabled`): written, default or not, only when that is on.
+  - `skip`: a value written as nothing, so the compositor's own default stays (`"default"`, or niri's `0`).
 - Hyprland (`render.ConfigTable`, one value of a nested `hl.config({...})` table):
   - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).
-  - `skip`: a value written as nothing (Hyprland's own default stays), e.g. `"default"`.
   - `always: true`: written even when it's the schema default. Other fields are only written once changed, so Hyprland's own default (and the user's files) stay in charge otherwise.
 - sway (`render.SwayOptionLines`; [Sway backend](../compositor/sway-backend.md)):
   - `value`: `"enabled"` (a boolean as `enabled`/`disabled`), `"yesNo"` (`yes`/`no`), `"enableDisable"` (`enable`/`disable`), `"raw"` (as it is, unquoted). Without one, the value is quoted as one argument (`render.SwayQuote`).
   - `map`: `{ value: sway's word }` for an enum whose names differ from sway's; a value missing from it is left out.
-  - `skip`: a value written as nothing (sway's own default stays), e.g. `"default"`.
   - `configOnly: true`: sway takes the command only from a config file (`xkb_numlock`): left out of what's sent at runtime.
 - niri (`compositor/render`'s `niri.go`; [niri backend](../compositor/niri-backend.md)):
   - A boolean is written both ways (`prefer-no-csd false`), so axiom's off wins over a user's own on.
   - `value`: `"flag"` (the node alone when on, left out when off, for a flag niri has no off form for: `tap`, `focus-follows-mouse`), `"onOff"` (a child `on` or `off` under the key: `animations`, `xwayland-satellite`, `layout.tab-indicator`), `"not"` (a boolean written negated: `clipboard.disable-primary` for middle-click paste), `"offFlag"` (the node alone when off, left out when on: `warp-mouse-to-focus` for `noWarps`) or `"float"` (written with a point, where niri wants a float).
-  - `skip`: a value written as nothing (niri's own default stays), e.g. `"default"` or `0`.
 
 - `x-greeter: true` on an `Input` option: the greeter's compositor takes it (`methods/GreeterBundle`). See [Greeter install](../features/greeter-install.md).
 - Details: [Hyprland config modes](../hyprland/config-modes.md), [Window look](../compositor/window-look.md).
