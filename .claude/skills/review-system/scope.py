@@ -18,8 +18,9 @@ what reviews found.
 
 <system> is a name from systems.md, or feature:<name>, doc:<path>, files:<glob>.
 A folder (`dir/`) in a doc's Files header or in Extra means the files directly
-in it, `**` any depth and `{a,b}` both names; a glob in a doc header is reported, not
-expanded. A path that matches nothing is reported as not found.
+in it, and `{a,b}` both names. A glob expands in Extra (`**` any depth) but is
+only reported in a doc header. A path that matches nothing is reported as not
+found.
 """
 import glob
 import os

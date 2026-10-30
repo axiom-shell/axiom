@@ -13,7 +13,7 @@ Arguments: `$ARGUMENTS`
 - Free text after it narrows the review to a concern. Its words are never flags; only the `--` forms are.
 - `--full` ignores the last review and reviews everything.
 - `--record` files the Blockers, Major and Cleanups in `docs/dev/issues.md` (Phase 6).
-- `--out <dir>` (audits run in parallel, each with its own `<dir>`): `--record`, deferred. Change nothing in the tree and work in `<dir>`, where the report and the reviews file end up; whoever started the audits files them all at once with `scope.py --apply <dir>…` (Phase 6). Never with `--fix`.
+- `--out <dir>`: `--record` with the filing deferred, for audits run in parallel (each its own `<dir>`). Change nothing in the tree and work in `<dir>`, where the report and the reviews file end up; whoever started the audits files them all at once with `scope.py --apply <dir>…` (Phase 6). Never with `--fix`.
 - `--fix` fixes the confirmed findings after the report (Phase 6).
 - `--deep` fans out agents (Phase 3): for a big system, only when asked.
 
