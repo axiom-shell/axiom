@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing row 18's batch 9 (check_all.sh's Go tests)
 
+### TestOrphanOfAnEarlierDaemonIsStopped misses the orphan's stop under a loaded run
+- **Where:** `backend/internal/supervise` (`TestOrphanOfAnEarlierDaemonIsStopped`)
+- **What:** In a full local `scripts/dev/verify.sh --all` run the test failed after its 15 s bound with `the orphan wasn't stopped` (supervise_test.go:147); run alone it passes in 0.05 s, three times in a row. Like the flaky tests batch 4 fixed, its wait is likely too tight, or racy, under a loaded machine.
+- **Size:** small
+- **Found:** 2026-10-30, while running verify.sh --all for row 18's Go cache follow-up
+
 ### A dev build during a branch switch re-execs onto the defaults
 - **Where:** `backend/internal/daemon/dev.go` (`watchSource`, `build`), the re-exec's config load
 - **What:** On 2026-10-30, `git switch main` followed 3 s later by `git pull` (main at config version 82, then 84). The source watch kicked a build of the v82 tree. The pull's changes reached the old process while that build ran, and its kick died with the process when the build re-exec'd. The new image (`the tree's schema isn't the one this binary was built with (fine in dev mode)`) knew version 82, refused the v84 config.json (`version: 84 is newer than this axiom knows (82): update axiom`) and logged `the config doesn't load: running on the defaults, saves blocked until it's fixed`. The shell came up on the defaults until the next build. config.json itself stayed untouched. Two gaps: a kick that arrives during a build should build again rather than re-exec into the stale binary (or the new image should check whether the source is newer than itself), and a re-exec that can't read the config should keep the config the old image had running (the shell's message already claims it keeps the last good config).
