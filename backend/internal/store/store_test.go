@@ -725,8 +725,8 @@ func TestMissingFileEvents(t *testing.T) {
 	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "lowThreshold"), 12.0)}, SetOptions{}); err != nil {
 		t.Fatal(err)
 	}
-	if _, st := s.Config(); st.Missing || events[1].State.Missing || events[1].FromFile {
-		t.Errorf("a save didn't clear Missing: %+v", events[1])
+	if _, st := s.Config(); st.Missing || len(events) != 2 || events[1].State.Missing || events[1].FromFile {
+		t.Fatalf("a save didn't clear Missing: %+v", events)
 	}
 
 	os.Remove(s.Path())
