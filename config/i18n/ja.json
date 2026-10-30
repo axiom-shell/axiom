@@ -2535,7 +2535,6 @@
     "{0} or its config is a symlink (dotfiles?), so axiom won't replace it.": "{0} またはその設定がシンボリックリンク（dotfiles？）のため、axiom は置き換えません。",
     "Your {0} config is a symlink or in a git repository, so axiom won't take it over.": "あなたの {0} 設定はシンボリックリンクか git リポジトリの中にあるため、axiom は引き継ぎません。",
     "Match axiom's shadow": "axiom の影に合わせる",
-    "Finish changes how axiom sets up {0}: what the mode it's in now set up is given back.": "「完了」で axiom による {0} の設定方法が変わります。現在のモードが設定したものは元に戻されます。",
     "Shadow strength": "影の強さ",
     "How strong windows cast it, matching axiom's or not. The compositor's own color keeps its strength.": "ウィンドウが落とす影の強さ（axiom に合わせる場合もそうでない場合も）。コンポジターの標準色ではその強さのままです。",
     "Action, e.g. focus-column-first": "アクション（例：focus-column-first）",
@@ -3482,6 +3481,7 @@
     "VPNs in the popout": "",
     "The apps axiom opens: by the Terminal, File manager and Browser keybinds, the launcher's terminal apps and Shift+Enter commands, and the network editor.": "",
     "Network editor": "",
-    "Command the Wi-Fi menu's Settings button and the VPN module's Edit connections button run, to add or change network connections and VPNs. Empty hides both.": ""
+    "Command the Wi-Fi menu's Settings button and the VPN module's Edit connections button run, to add or change network connections and VPNs. Empty hides both.": "",
+    "Finish changes how axiom sets up {0}: what the current mode set up is undone.": ""
   }
 }

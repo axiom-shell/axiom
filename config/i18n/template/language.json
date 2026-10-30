@@ -920,7 +920,7 @@
     "Filled": "",
     "Find in note": "",
     "Finish": "",
-    "Finish changes how axiom sets up {0}: what the mode it's in now set up is given back.": "",
+    "Finish changes how axiom sets up {0}: what the current mode set up is undone.": "",
     "Finish moves your {1} into user/ (a dated backup stays too), writes axiom's in its place and reloads {0}. axiom starts with every session from then on.": "",
     "Finish replaces {0}'s example {1} with axiom's (a dated backup stays beside it) and reloads {0}. axiom starts with every session from then on.": "",
     "Finish setting up": "",
