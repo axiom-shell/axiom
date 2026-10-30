@@ -1362,7 +1362,6 @@
     "Dock": "ドック",
     "Docks": "ドック",
     "Add": "追加",
-    "Click a spot to place it; fine-tune below. Show slides it in for a moment.": "クリックで配置し、下で微調整します。「表示」で少しの間スライドインします。",
     "Show": "表示",
     "Pinned apps": "固定したアプリ",
     "None yet: search below, or right-click a running app on the dock and pick Keep in dock.": "まだありません。下で検索するか、ドック上の実行中のアプリを右クリックして「ドックに固定」を選んでください。",
@@ -1371,7 +1370,6 @@
     "First-time setup": "初回セットアップ",
     "Run setup": "セットアップを実行",
     "OSDs": "OSD",
-    "Click a spot to place it; fine-tune below. Show opens it as a change would.": "クリックで配置し、下で微調整します。「表示」で変更時と同じように開きます。",
     "Next wallpaper of the rotation": "ローテーションの次の壁紙",
     "Warmer screen colors": "画面の色を暖かくする",
     "Search the notes, by name and text": "ノートを名前と本文で検索",
@@ -2185,7 +2183,6 @@
     "Type": "種類",
     "Most events": "最大件数",
     "Upper": "上寄り",
-    "Click a spot to place it; fine-tune below. Detached, it floats a distance across the free screen; attached, it grows out of the edge.": "クリックで配置し、下で微調整します。離すと空いた画面の中で端から指定の距離に浮かび、離さないと端から伸びます。",
     "A separate box floating off the edge. Off, the launcher grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.": "画面端から離れて浮かぶ独立したボックスにします。オフの場合、ランチャーはポップアウトと同じように画面の枠や塗りつぶしのバーから伸び、何もない画面端ではそのまま端に接します。",
     "Distance from edge": "端からの距離",
     "Screen edge the launcher opens from, or is held off when detached.": "ランチャーが開く画面の端(離す場合は離れる側の端)。",
@@ -3364,7 +3361,6 @@
     "Screen edge the toasts stack from. On the top or bottom they stack away from the edge; on a side, along it.": "",
     "Slide from": "",
     "How toasts come and go. Either way the others glide into place.": "",
-    "Click a spot to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.": "",
     "Critical ones still show": "",
     "24-hour time, like 22:00.": "",
     "While do not disturb is on, critical notifications (a low battery, say) still toast. Off, they only go to the history too.": "",
@@ -3497,6 +3493,10 @@
     "Your user can't change Tailscale: allow it with Grant access.": "",
     "Access wasn't granted.": "",
     "Show Connect / Disconnect, switching and adding accounts, the exit node and the node's options. They need operator rights once (`tailscale set --operator=$USER`): the popout's Grant access button asks for them.": "",
-    "Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file": ""
+    "Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file": "",
+    "Click a spot or drag to place it, to an edge to attach it; fine-tune below. Detached, it floats a distance across the free screen; attached, it grows out of the edge.": "",
+    "Click a spot or drag to place it; fine-tune below. Show opens it as a change would.": "",
+    "Click a spot or drag to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.": "",
+    "Click a spot or drag to place it; fine-tune below. Show slides it in for a moment.": ""
   }
 }

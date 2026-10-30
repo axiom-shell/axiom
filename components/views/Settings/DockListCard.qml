@@ -21,7 +21,7 @@ EntryListCard {
   listKey: "items"
   entryType: "DockEntry"
   savedEntries: DockConfig.docks
-  pickerHint: I18n.tr("Click a spot to place it; fine-tune below. Show slides it in for a moment.")
+  pickerHint: I18n.tr("Click a spot or drag to place it; fine-tune below. Show slides it in for a moment.")
   idBase: "dock"
   labelOf: dock => DockConfig.labelOf(dock)
   // The dock as edited, saved or not

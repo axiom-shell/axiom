@@ -96,7 +96,7 @@ FoldingCard {
   // Functions: an entry's tab name, and where it sits on the screen (0-1
   // from the top left): by default at `position` % along its `edge`
   required property var labelOf
-  property var spotOf: entry => picker.edgeSpot(entry.edge, entry.position / 100, 0)
+  property var spotOf: entry => ScreenEdge.edgeSpot(entry.edge, entry.position / 100, 0)
   // Between the picker and the settings
   property alias entryContent: entrySlot.data
 
@@ -189,12 +189,13 @@ FoldingCard {
     Layout.fillWidth: true
     spacing: Widget.spacing * 2
 
-    // The screen, with the shown entry's spot and the presets to click
+    // The screen, with the shown entry's spot, the presets to click and a
+    // drag to place it on an edge
     ScreenSpotPicker {
-      id: picker
       Layout.alignment: Qt.AlignTop
       presets: root.presets
       spot: root.spot
+      edge: root.entry?.edge ?? "bottom"
       onPicked: values => root.edit(values)
     }
 

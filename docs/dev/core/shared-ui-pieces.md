@@ -1,6 +1,6 @@
 # Shared UI pieces
 
-> **Files:** `components/reusable/`, `components/forms/`, `components/content/parts/`, `components/methods/Utils.qml`, `components/methods/Search.qml`, `components/views/Settings/FoldingCard.qml`, `components/views/Settings/EntryListCard.qml`, `components/views/Settings/ScreenSpotPicker.qml`
+> **Files:** `components/reusable/`, `components/forms/`, `components/content/parts/`, `components/methods/Utils.qml`, `components/methods/Search.qml`, `components/views/Settings/FoldingCard.qml`, `components/views/Settings/EntryListCard.qml`, `components/views/Settings/ScreenSpotPicker.qml`, `components/views/Settings/PlaceIntro.qml`
 > **Config:** none
 > **Related:** [Editors pattern](editors-pattern.md), [Content roots](../overlay/content-roots.md), [Writing modules](../overlay/writing-modules.md), [Popout surface context](../popouts/surface-context.md), [Translucency and blur](../theming/translucency-blur.md)
 
@@ -158,7 +158,8 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `FoldingCard`: fold header + a `FoldingColumn` body, in a faint border so neighbouring cards stay apart.
 - `SettingsGroupCard`: generated.
 - `EntryListCard`: a list of entries as tabs with a screen picker.
-- `ScreenSpotPicker`: a small screen with a spot and preset dots to click; `edgeSpot(edge, along, across)`. Used by docks, OSDs, and the launcher's `LauncherPlace` intro.
+- `ScreenSpotPicker`: a small screen with a spot and preset dots to click, and a press or drag anywhere on it that places the thing on the nearest edge (`ScreenEdge.spotPlace`, the inverse of `ScreenEdge.edgeSpot`; a tie keeps its `edge`, so the middle doesn't flip). With `floats` the drag also sets `distance` and `detached`, attaching it within `snap` of an edge. Either way it emits `picked(values)`, as a preset does, only when the whole-percent values change. Used by docks and OSDs (`EntryListCard`), notifications (`NotificationsPreview`) and `PlaceIntro`.
+- `PlaceIntro`: the `x-intro` of a section placed anywhere (`edge`, `position`, `detached`, `distance`): a floating `ScreenSpotPicker` with the Top/Upper/Center/Bottom/Left/Right presets and its hint, writing `sectionKey` through the settings draft. `LauncherPlace` and `WindowSwitcherPlace` only name their section.
 - See [Settings page](settings-page.md).
 
 ### Content and calendar parts

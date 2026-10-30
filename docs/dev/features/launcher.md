@@ -22,7 +22,7 @@ This doc covers the app launcher: how search text becomes rows, how the window i
 - **Attached:** an `EdgePopout` at `position` on its edge.
   - On a side edge its height runs along the edge, so the panel holds its tallest (`LauncherPanel.holdHeight`, the blocks against the field) instead of the window keeping room across (`maxContentDepth`).
 - **Shared:** both hosts have the same API (`show`/`hide`/`isOpen`/`contentItem`/`window`). Only the host in use is created, through `LazyLoader`s.
-- **Settings card:** its top is `LauncherPlace` (the section's `x-intro`), a `ScreenSpotPicker` with presets (Top, Upper, Center, Bottom, Left, Right) over the place fields.
+- **Settings card:** its top is `LauncherPlace` (the section's `x-intro`, a `PlaceIntro`): a `ScreenSpotPicker` with presets (Top, Upper, Center, Bottom, Left, Right) and a drag (at an edge it attaches, elsewhere it detaches at that distance), over the place fields.
 
 ### Motion
 - As matches come and go, the list's frame (`LauncherPanel.listFrame`) glides to its rows' height (animFast). The list keeps its target height, clipped meanwhile.
