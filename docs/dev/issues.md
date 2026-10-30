@@ -184,7 +184,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Images decoded at full size or more than once
 - **Where:** `components/surfaces/wallpaper/WallpaperWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/content/NowPlaying/NowPlaying.qml`
-- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer).
+- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer), and a third time in its hidden strip layout's `Art` (`NowPlaying.qml:338`; popouts audit, 2026-10-30: [NowPlaying builds its strip layout and a second transport hidden in every mode](#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode) brings it back to two).
 - **Size:** small
 - **Found:** 2026-10-27, while measuring the shell's memory
 
@@ -202,7 +202,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A popout taller than the screen runs off it
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`popoutRoom`), `components/content/Calendar/Calendar.qml`
-- **What:** Nothing keeps a bar popout's content within the screen: content taller than the room past the bar (the Calendar popout with its event editor open on a short screen, 1080 px or less with a top bar) draws its box past the screen's far side, and what's there is cut off. `popoutRoom` measures the room left, and only `StyledComboEntry`'s inline list keeps to it. A general guard would hand the content a most height (as `SubPopout.maxContentHeight` does for submenus) for it to scroll within.
+- **What:** Nothing keeps a bar popout's content within the screen: content taller than the room past the bar (the Calendar popout with its event editor open on a short screen, 1080 px or less with a top bar) draws its box past the screen's far side, and what's there is cut off. `popoutRoom` measures the room left, and only `StyledComboEntry`'s inline list keeps to it. A general guard would hand the content a most height (as `SubPopout.maxContentHeight` does for submenus) for it to scroll within. The tray's own menu (`content/SystemTray`, a `TrayMenuList` with no height cap or Flickable) is another case (popouts audit, 2026-10-30); [A tray submenu longer than the screen runs off it](#a-tray-submenu-longer-than-the-screen-runs-off-it) gives `TrayMenuList` the `maxHeight` this guard could set.
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
@@ -497,7 +497,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The workspace strips repeat ActiveStrip's loader
 - **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml`, `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml`, `components/bar/widgets/Workspaces/ActiveStrip.qml` (`hasWindows`)
-- **What:** Both strips hold the same `Loader { active: stripDirection !== ""; visible: hasWindows; ActiveStrip { 12 bindings } }` (only the text colour differs) and the same `stripOnly` expression but for the id count; `ActiveStrip.hasWindows` also calls `CompositorManager.stripWindows` again beside its `StripWindows`. Deletion pass: move the loader into ActiveStrip (it sets its own `active`/`visible` and exposes `stripOnly(count)`), about 20 lines.
+- **What:** Both strips hold the same `Loader { active: stripDirection !== ""; visible: hasWindows; ActiveStrip { 12 bindings } }` (only the text colour differs) and the same `stripOnly` expression but for the id count; `ActiveStrip.hasWindows` also calls `CompositorManager.stripWindows` again beside its `StripWindows`. Deletion pass: move the loader into ActiveStrip (it sets its own `active`/`visible` and exposes `stripOnly(count)`), about 20 lines. The two strips also repeat about 15 more lines each (the five resolved colours, `monitor`/`output`/`base`/`activeId`/`stripDirection`, `cell`/`cellRadius`/`cellLength`); the shared piece can take those too (bar-widgets audit, 2026-10-30).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -616,8 +616,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
 ### The system stats widget changes width with its digits
-- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml`
-- **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size.
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml`, `components/bar/widgets/base/IconTextWidget.qml` (`steadyDigits`)
+- **What:** From the maintainer's notes: going between one and two digits changes the widget's width, moving everything beside it; it should keep a constant size. The cause is in the base (bar-widgets audit, 2026-10-30): `steadyDigits` sizes a label by its digit count by design ("changing only when it gains or drops a digit"), and stacked (`ValueGraphic`) does the same, so Volume/Microphone, Battery, ClaudeUsage, Updates and SystemStats' used memory shift too, and Stopwatch, Pomodoro and IdleInhibitor grow a step past an hour. **Decided** (maintainer, 2026-10-30, with the ticking labels): "Everything should always not be affected by ticking, and there shouldn't be a way to turn it off via a setting (i.e. everything acts like monospace without moving the bar around when changing numubers)". Fix, in the base for every bar widget's label, with no setting: a per-widget minimum text the label never measures below ("100%" for a percent), measured as `steadyMetrics` is. Lands together with [Ticking labels without steadyDigits resize the bar under a proportional font](#ticking-labels-without-steadydigits-resize-the-bar-under-a-proportional-font).
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -682,8 +682,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-29, while building the revamped example setups
 
 ### Bar widget hosts settle after they're gone
-- **Where:** `components/bar/BarWidgetHost.qml` (`Component.onCompleted`'s `Qt.callLater`), `components/bar/widgets/Workspaces/ActiveCellIndicator.qml` (`_placed`)
-- **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced.
+- **Where:** `components/bar/BarWidgetHost.qml` (`Component.onCompleted`'s `Qt.callLater`), `components/bar/widgets/Workspaces/ActiveCellIndicator.qml` (`_placed`), `components/bar/BarContainer.qml` (the inline `Section`'s `Component.onCompleted`)
+- **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced. BarContainer's inline `Section` settles through the same `Qt.callLater`; the fix should cover it too (bar audit, 2026-10-30).
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
 
@@ -1190,3 +1190,389 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Deletion pass, about 17 lines. (1) `SurfaceContext.shadow`'s submenu branch has no caller: `if (s.parent) return s.parent;` is never reached, because its one caller, `layout` (line 363), never passes `parent`; submenus take their parent's look in `SubPopout`, and `SurfaceContext.shadow(` appears otherwise only in tests. `layout`'s `"onBar": !p.held && …` also repeats what `shadow` checks first, since a held surface is always `detached`. Drop the branch, its 2 comment mentions, `test_submenuTakesItsParentsShadow` (11 lines) and `!p.held && `, 14 lines in all. (2) `supports.blur` is tested again after `Appearance.blur`: `Appearance.blur` needs `translucent`, which needs `compositorBlurs`, and `CompositorManager` binds that to `supports.blur === true && !Paths.greeter`, so `&& CompositorManager.supports.blur === true` in `BlurManager._wanted` and in `TranslucencyStatus` (line 36) adds nothing. (3) Two Go expressions do nothing: `or(get(surfaces, "threshold"), nil)` (`layer.go:202`) returns its first argument, since `or` returns `b` only for a nil `a`; `|| rule.Value("xray") == nil` (`niri.go:506`) can't be true, because every `SurfaceBlur` row with `blur` or `popups` sets `xray`. Fix: remove each one; output unchanged.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the blur system
+
+### Edge and floating popouts never close when their focus grab clears
+- **Where:** `components/hosts/popout/EdgePopout.qml:460` (`focusGrab`), `components/hosts/popout/FloatingPopout.qml:162` (`focusGrab`), `services/compositor/FocusGrab.qml:57` (`_outside`)
+- **What:** Both hosts handle the grab ending with `onCleared: { if (!active) root.hide(); }`. Inside `FocusGrab { … }`, `active` is the wrapper's own property, bound to `surfaceWindow.visible && root.grabEnabled && (…)` (EdgePopout.qml:452) or `root.isOpen && …` (FloatingPopout.qml:154), and the wrapper emits `cleared` only while that property is true:
+  - **No native grab (sway, niri):** the backdrop `Connections` is `enabled: root._catching`, which is `!_native && active`. The `_lost` timer checks `root.active && …` (FocusGrab.qml:135).
+  - **Hyprland:** the inner `HyprlandGrab` clears. Its own `active` goes false, but the wrapper's binding doesn't.
+
+  So `!active` is always false when `cleared` arrives, and `hide()` never runs. The guard dates from when the handler sat on Quickshell's `HyprlandFocusGrab` directly, whose `active` does drop. The wrapper's other users close unconditionally (`PowerMenuWindow.qml:133` `onCleared: root.shown = false`, `DockMenu.qml:64` `onCleared: root.close()`).
+
+  What users see:
+  - A floating edge menu with `close.onOutsideClick` stays open on a click outside (FloatingEdgeMenu.qml:111 sets `closeOnClickOutside`).
+  - The attached launcher (EdgePopout, `closeOnClickOutside: true`, Launcher.qml:191, commented "until Esc, a pick or a click elsewhere") stays open.
+  - The detached launcher closes only on a click in its own window's free area (FloatingPopout.qml:169's MouseArea), not on a bar, the border or another monitor.
+
+  Fix: `onCleared: root.hide()` in both hosts (`hide()` already checks `isOpen`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### An open edge popout's layer and namespace still follow its edge's bar
+- **Where:** `components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `components/hosts/popout/EdgePopout.qml:97` (`windowLayer`), `components/hosts/popout/EdgePopout.qml:113` (`layerNamespace`), `components/hosts/popout/EdgePopout.qml:216` (`_overlayLatch`), `components/hosts/popout/BarPopouts.qml:42` (`_under`)
+- **What:** BarPopouts latches `placement.slidesUnder` in a `ClosedLatch`, so an open bar popout never changes layer. EdgePopout latches only two of that output's inputs (`_overlayLatch`, `_fullscreenLatch`) and reads `placement.slidesUnder` live. That value also depends on the edge's bar: `bar?.background === "transparent"`, from `SurfaceContext.layout`.
+  - **Scenario:** a pinned floating edge menu or an OSD is open on a transparent bar's edge, and the bar's background changes or the bar goes away (`axiom config set`, an edit, a restored setup).
+  - **What happens:** `slidesUnder` flips while the window shows, and with it `WlrLayershell.layer`, the namespace (`axiom-popout-under` ↔ `overNamespace`) and the margin (`slideDistance`).
+  - **Rule broken:** ClosedLatch's own header ("what changes a popout's window layer or namespace … so an open popout never moves or restacks"), and AGENTS.md's "an open popout never moves".
+  - PLAUSIBLE: what Hyprland does with a namespace changed on a mapped layer (ignored until a remap, or a remap) needs a nested session.
+
+  Fix: `property ClosedLatch _under: ClosedLatch { source: placement.slidesUnder; closed: !root.occupied }`, read in `slideDistance`. Then `placement.overOverlay` can take `root.overlayOpen` directly, and `_overlayLatch`/`_overOverlay` (EdgePopout.qml:216-220, 5 lines) go.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### EdgePopout works out its attach edge and slide distance itself
+- **Where:** `components/hosts/popout/EdgePopout.qml:204` (`attachBase`), `components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `components/methods/SurfaceContext.qml:340` (`layout`)
+- **What:** `attachBase = ScreenEdgeManager.reservedWithMenusOn(screen, edge) - (bareEdge ? 0 : Appearance.borderWidth)` repeats `SurfaceContext.layout`'s no-bar `attachAt` branch, and it is read by `edgeOffset` and by FloatingEdgeMenu's `before` gap (`components/surfaces/edgemenu/FloatingEdgeMenu.qml:63`). `slideDistance` subtracts `barConfig?.insideBorder ? Appearance.borderWidth : 0`, a stroke rule `layout` doesn't return. That breaks components/hosts/popout/AGENTS.md: "Never add a rule in a host: a new case is a `SurfaceContext` rule plus a `tst_SurfaceContext` row". A change to either rule in SurfaceContext would leave the edge popout's window apart from its box. Fix: `layout` returns the attach base and the slide distance, with `tst_SurfaceContext` rows; EdgePopout reads both from `placement`, and keeps `attachBase` as that output for FloatingEdgeMenu. Both this and [An open edge popout's layer and namespace still follow its edge's bar](#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar) change `slideDistance`: take them in one batch.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### A large corner radius folds a pill's or shallow box's outline back on itself
+- **Where:** `components/methods/SurfaceOutline.qml:191` (`_outline`), `components/methods/SurfaceOutline.qml:201`, `components/methods/SurfaceOutline.qml:214`, `components/methods/SurfaceOutline.qml:54` (`metrics`), `components/bar/BarContainer.qml:682` (`depthBox`)
+- **What:** `_outline` draws each side wall from the attach fillet's end (`h + R`) to `farV - cs`, and the far edge from `sideU + cs` to `farSideU - ce`. It never limits `cs`/`ce` to the box, as a Rectangle does its radius.
+  - **When it folds:** the box is shallower than `h + R + cs`, or shorter than `cs + ce`. The wall and far edge then run backwards and the path crosses itself.
+  - **The settings that get there:** `shape.radius` goes up to 50, and `connectorGap` is `borderRadius * 2`.
+    - Pills: BarContainer fixes `boxStart` at `connectorGap / 2` and sets `depthBox = max(0, pillDepth - connectorGap / 2)`, so a pill folds once `pillDepth < 2R + h`. That is radius 15 or more at the tests' pill depth of 30.
+    - Popouts: `naturalBoxStart` pushes a shallow box back only as far as `connectorGap / 2`, so a 40 px OSD at radius 50 still folds.
+  - **Evidence:** a scratch qmltestrunner probe on a 30×10 pill box at R 20 gives `… L 20 10 A 19.5 19.5 0 0 0 39.5 29.5 …`: the wall runs 10.5 px back.
+  - **What it breaks:** the fill uses the same path (OddEvenFill leaves holes where it crosses), and the footprint and blur region disagree with what's drawn.
+  - PLAUSIBLE (how it looks): a nested screenshot of a pill bar at radius 20+.
+  - **Decided** (maintainer, 2026-10-30): "Calmp corners only. Radius shouldn't affect sizing at all".
+
+  Fix: clamp the corners only, as a Rectangle does its radius; pill and popout sizes don't change with the radius. In `SurfaceOutline.withBoxStart`, cap `startCornerRadius`/`endCornerRadius` at the room the box has (`boxStart + boxDepth - half - (filleted ? half + R : 0)`, and `boxAlong / 2 - half`). Add a `tst_SurfaceOutline` row for a box shallower than its corners.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### A tray submenu longer than the screen runs off it
+- **Where:** `components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)
+- **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The Updates popout's package list is frozen at opening
+- **Where:** `components/bar/widgets/Updates/Updates.qml:54` (`extraData`), `components/content/Updates/Updates.qml:20` (`repoPackages`), `components/content/Updates/Updates.qml:21` (`aurPackages`), `components/hosts/popout/BarPopouts.qml:547`
+- **What:** The widget sends `repoPackages`/`aurPackages` as `extraData`. BarPopouts copies each key once in `onLoaded` (`item[key] = root.currentData[key];`), which replaces the panel's live bindings (`property var repoPackages: UpdatesManager.repoPackages`) with the arrays as they were at opening. `PopoutAnchor.open()` returns early while the popout is open.
+  - **Scenario:** with the popout open, right-click the widget (`UpdatesManager.refresh()`), or let an upgrade finish in a terminal. The bar's count changes, but the popout still lists the old packages, or still says it's up to date, until it is reopened.
+  - **Why the keys exist:** only to apply the widget's AUR filter.
+
+  Fix: delete the widget's `extraData` (4 lines). The panel's `aurPackages` binds the same filter itself (`UpdatesConfig.includeAur && UpdatesManager.hasAur ? UpdatesManager.aurPackages : []`), which cards then share; both properties become `readonly`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### NowPlaying builds its strip layout and a second transport hidden in every mode
+- **Where:** `components/content/NowPlaying/NowPlaying.qml:330` (the strip), `components/content/NowPlaying/NowPlaying.qml:440` (the grid's `Transport`), `components/content/NowPlaying/NowPlaying.qml:453` (the popout's `Transport`)
+- **What:** components/content/AGENTS.md says "a part shown in one mode only is a Loader gated on it, not `visible: false`". All three parts here are gated by `visible` only:
+  - The strip `RowLayout` (lines 329-402, 74 lines, `visible: root.hasPlayer && root.mini`) shows only in a short card. It is built in the Media popout and in every other card too, including its `Art`, whose CrossFade decodes the cover once more while hidden.
+  - The grid's `Transport { visible: root.embedded }` is built in the popout.
+  - The popout's `Transport { visible: root.hasPlayer && !root.embedded }` is built in every card.
+
+  So each opening of the Media popout builds a seek slider, two time labels and three buttons it never shows, and a hidden cover decode, a third beside the two [Images decoded at full size or more than once](#images-decoded-at-full-size-or-more-than-once) counts. Fix: Loaders gated on `root.mini` for the strip and grid, and on `root.embedded` / `!root.embedded` for the two transports (Layout attached properties on the Loaders).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### popout_matrix.py crashes on the current config and nothing runs it
+- **Where:** `scripts/dev/popout_matrix.py:264`, `scripts/dev/popout_matrix.py:273`, `scripts/dev/popout_matrix.py:310`, `docs/dev/popouts/surface-context.md:83`, `docs/dev/testing.md:64`
+- **What:** The script reads `base["EdgeMenus"]` as a list (`for menu in [m["id"] for m in base["EdgeMenus"] if m.get("mode") …]`) and `base["Dock"]["docks"]`. Both sections are objects whose list is `items` (`config/schema/sections/EdgeMenus.yaml:9`, `Dock.yaml:10`).
+  - **What happens:** iterating the dict yields the string `"items"`, so `m.get` raises AttributeError in the first scenario, after the bar shots. The `finally` then restores config.json.
+  - **Other faults:**
+    - It reads the workspace through `hyprctl` (line 310), so it can't start on sway or niri.
+    - It writes the live config.json from a script and restores a whole-file backup at the end, dropping anything the user saved meanwhile. AGENTS.md › Never forbids writing config.json from Bash because "that skips the `x-takeover` check".
+  - **Nobody runs it:** components/hosts/popout/AGENTS.md already says "slow: only when asked", and it has been broken since the sections took `items`.
+
+  **Decided** (maintainer, 2026-10-30): "Delete popout matrix". Fix: delete the script (338 lines), surface-context.md's Testing bullets about it (2 lines), testing.md:64-65 (2 lines) and the clause in components/hosts/popout/AGENTS.md: 342 lines and a clause.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### PopoutWrapperBase's aboutToDismiss signal has no listener
+- **Where:** `components/hosts/popout/PopoutWrapperBase.qml:161` (`aboutToDismiss`)
+- **What:** A repo-wide grep for `boutToDismiss` finds only the declaration, its example comment (line 160) and the emit in `requestDismiss` (line 165); no wrapper handles it. Fix: delete the comment and signal (159-161) and the emit (165): 4 lines.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Three EdgePopout members nothing reads
+- **Where:** `components/hosts/popout/EdgePopout.qml:80` (`detached`), `components/hosts/popout/EdgePopout.qml:149` (`yielded`), `components/hosts/popout/EdgePopout.qml:191` (`gaps`)
+- **What:** Each forwards `placement.*` or `claim.*`, and nothing reads them on an EdgePopout. Internal users read `placement`/`claim` directly. `SubmenuHost`'s `geometry.detached` is EdgePlacement's, and the only outside mention is FloatingEdgeMenu.qml:25's comment `(EdgePopout.gaps)`. Fix: delete lines 77-80 (`detached` and its comment), 149 and 191 (6 lines), and point that comment at `EdgePlacement.gaps`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### PopoutGeometry handles a phase and a submenu pair the registry never produces
+- **Where:** `components/methods/PopoutGeometry.qml:81` (`resolve`), `components/methods/PopoutGeometry.qml:120` (`resumable`), `tests/tst_PopoutGeometry.qml:115`
+- **What:** Two branches handle cases nothing produces:
+  - **The "closing" phase:** PopoutManager writes only the phases "open" and "yielded", plus "opening" through `resumable`. A grep for `"closing"` over services/, components/ and tests/ finds only PopoutGeometry's comment (line 17), lines 81 and 120, and the test.
+  - **The sibling-submenu skip** (lines 89-91, `e.kind === "submenu" && claim.parentId && e.parentId === claim.parentId`): it needs two submenu claims with one parent. A submenu's key is its parent's plus `/submenu`, with one SubPopout per host, so the only such entry is the claim itself, which line 79 already skips.
+
+  Fix: drop both `"closing"` clauses, lines 89-91, the comment's "closing" part and the test's "gone" row (about 6 lines).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### PillBarJoin's available repeats what joined already says
+- **Where:** `components/hosts/popout/PillBarJoin.qml:45` (`available`), `components/methods/SurfaceContext.qml:114` (`end`), `docs/dev/popouts/pill-and-floating-bars.md:34`
+- **What:** `available` asks `ScreenEdgeManager.surfaceEnd(screen, side).kind === "pillBar"` again. EdgePlacement sets `joined` from `place.joinStart && startEnd.sink === "pillBar"`, and `SurfaceContext.end` gives sink `"pillBar"` only when `joins && e.kind === "pillBar"`. So `joined` implies `available` wherever both are read. The doc's "Its `available` is what makes the end joinable" is wrong too. Fix: drop lines 43-45 and the two `available` terms, and point the doc at `sink: "pillBar"`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Geometry members nothing reads
+- **Where:** `components/hosts/popout/AttachedSurface.qml:330` (`sideU`), `components/hosts/popout/AttachedSurface.qml:331` (`farSideU`), `components/hosts/popout/EdgePlacement.qml:225` (`merged`), `components/methods/SurfaceOutline.qml:97` (`size`)
+- **What:** No `.sideU`/`.farSideU` read of AttachedSurface and no `.merged` read of an EdgePlacement exist. `SurfaceOutline.size` is called only by `tests/tst_SurfaceOutline.qml` (lines 146, 329), while AttachedSurface works the size out again itself. Fix: delete the three properties (3 lines). Then either AttachedSurface takes its implicit size from `SurfaceOutline.size(root._spec, root._m)`, or `size` goes (lines 95-103, 9 lines) and the tests inline it.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### SurfaceContext.layout's pill and merged results have no test row
+- **Where:** `tests/tst_SurfaceContext.qml:553` (`test_layout_between_pills`), `components/methods/SurfaceContext.qml:337` (`layout`)
+- **What:** No row pins `layout`'s result for:
+  - a box on a pill: `backfill` 1, `attachFromBar` = pill foot, `ownSink` null, shadow look `"bar"`. The one pill-mode row checks only `mode` and `pill.index`.
+  - a pill bar showing no pills (`merged`): `attachClearance`, `straight`, `ownSink`.
+  - `ownSink`'s null branches: a bare edge and a non-solid bar.
+
+  A slip in any of these passes today (63 rows pass). A lost backfill shows the pill stroke's fringe as a line; a wrong `attachClearance` puts a merged box's content where the pills would be. Fix: add `test_layout_on_pill`, `test_layout_merged` and a bare-edge `ownSink` row.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The tray menu's isVertical and barConfig are never read
+- **Where:** `components/content/SystemTray/SystemTray.qml:14` (`isVertical`), `components/content/SystemTray/SystemTray.qml:15` (`barConfig`), `components/bar/widgets/SystemTray/SystemTray.qml:99`
+- **What:** The tray content declares both from its payload and nothing reads either: no host reads them off `currentItem`/`currentData`, and inside the content only the declarations match. The widget's `extraData` sends them only to feed these. Fix: drop the two properties and the two `extraData` keys (4 lines).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Both tray menu lists override the same width cap
+- **Where:** `components/content/parts/TrayMenuList.qml:22` (`maxWidth`), `components/content/SystemTray/SystemTray.qml:38`, `components/content/parts/TraySubmenu.qml:21` (`_window`), `components/content/parts/TraySubmenu.qml:34`
+- **What:** TrayMenuList's only two users both replace its default `Widget.px(600)` with the same stand-in, 30% of the screen's width: `(root.wrapper.screen?.width ?? 2000) * 0.3` and `(root._window?.screen?.width ?? 2000) * 0.3`, each marked `// fixed px`. TraySubmenu keeps `_window` only for this, and the default is never used. Fix: make the stand-in TrayMenuList's default, read through its own `QsWindow.window`, and drop SystemTray.qml:38 and TraySubmenu.qml:20-21 and 34 (4 lines).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The tray menu draws its own separator
+- **Where:** `components/content/parts/TrayMenuItem.qml:99` (the separator `Rectangle`)
+- **What:** A separator entry draws a hand-made line (lines 98-106, 9 lines: `height: 1`, `color: Theme.foreground`, `opacity: 0.2`). docs/dev/core/shared-ui-pieces.md lists `StyledSeparator` ("border-coloured divider"), and AGENTS.md says "Reuse before building". It is the only popout divider that ignores the theme's border colour and width. Fix: `StyledSeparator { anchors.centerIn: parent; width: parent.width - root.itemPadding * 2; visible: root.menuItem.isSeparator }`, 4 lines fewer.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The two workspace popouts share 28 lines of payload and colour properties
+- **Where:** `components/content/WorkspaceStrips/WorkspaceStrips.qml:18`, `components/content/WorkspaceGrid/WorkspaceGrid.qml:18`
+- **What:** `diff` shows the same payload comment and members in both files: `output`, `monitor`, `vertical`, `cellSize`, `cellLength`, `barConfig`, `cellSpacing`, `radius`, the four colours, `base` and `activeId` (23 lines), plus the `_settled` latch and its comment (5 lines). AGENTS.md: "a second copy of a pattern becomes a shared piece". Fix: a `WorkspacePopoutPanel.qml` (a `Panel`) in components/bar/widgets/Workspaces/, which both already import, holds those 28 lines. Each panel keeps only its own members (`stripVertical`/`ids`; `emptyColor`, `gridColumns`, `gridRows`, `activeIndex`). About 23 lines fewer. BarPopouts' `hasOwnProperty` copy covers inherited properties, so the payload still lands.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Small improvements to WorkspaceGrid
+- **Where:** `components/content/WorkspaceGrid/WorkspaceGrid.qml:36` (`fontSize`), `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml:218`, `components/content/WorkspaceGrid/WorkspaceGrid.qml:87` (`look`), `components/bar/widgets/Workspaces/WorkspaceCellRow.qml:69` (`_look`)
+- **What:** Two small fixes:
+  1. **`fontSize` is dead.** `grep -cw fontSize` in WorkspaceGrid.qml is 1 (the declaration), yet the widget still sends `fontSize: root.barConfig.fontSize,`. WorkspaceCell reads `barConfig.fontSize` itself. Fix: delete both lines (2 lines).
+  2. **The cell's `look` is a copy.** It repeats `WorkspaceCellRow._look`'s `BarsConfig.cellColors(…)` expression with only the variable names changed, so a change to how the bar colours cells would leave the popout behind. Fix: one `BarsConfig` function both call.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The dock's footprint assumes fillets at both ends
+- **Where:** `components/surfaces/dock/DockWindow.qml:298` (`_footprint`)
+- **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Nothing listens to the bar's layoutUpdated any more
+- **Where:** `components/bar/BarContainer.qml:31` (`layoutUpdated`), `components/bar/BarContainer.qml:313` (`layoutMoved`, `_slotsKey`, `_settle`), `components/bar/BarContainer.qml:401` (`onAllocationUpdated`), `components/bar/WidgetGroup.qml:109` (`allocationUpdated`, `_allocationKey`), `docs/dev/bar/composition.md`
+- **What:** The signal has no handler. `grep -rn 'layoutUpdated'` over QML and docs finds only its declaration, its two emits (BarContainer.qml:314, 320) and composition.md's "`BarContainer.layoutMoved()` emits `layoutUpdated` … so an open popout re-anchors on the settled widget". Its listener was BarPopouts' `onLayoutUpdated`, removed in "Rework and harden popouts (#53)". The chain still runs on the hot path:
+  - Every `slots` change `JSON.stringify`s the slots.
+  - Every section allocation change (a ticking clock's width, a tray icon) `JSON.stringify`s the allocation, emits `allocationUpdated` and calls `layoutMoved()`.
+  - `layoutMoved()` emits to nobody and restarts a Timer that emits to nobody again `animNormal` later.
+
+  Fix: delete the chain and its doc line, 35 lines: the signal and its comment (BarContainer.qml:29-31), `_slotsKey`/`onSlotsChanged`/`layoutMoved`/`_settle` (301-321), Section's `onAllocationUpdated` (401), WidgetGroup's `allocationUpdated`/`_allocationKey`/`onAllocationChanged` (108-117).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### A bar made while the bar editor is open may never report to it
+- **Where:** `components/bar/BarContainer.qml:346` (`on_ReportKeyChanged`), `components/bar/BarContainer.qml:349` (`_report`)
+- **What:** A bar's report reaches `BarManager.setLive` only from `on_ReportKeyChanged`, and a change handler doesn't run for a property's first value.
+  - Bars that exist when the editor opens are fine: their key goes from `"null"` to the report.
+  - A BarContainer created while `BarManager.editing` is already true starts with its report. On a bar with room, `hidden` stays `{zone: []}` and `selected` stays null, so the key may never change and nothing is sent.
+  - The editor remakes bars often: changing a bar's Background, or moving it to the other axis, changes `BarsConfig.layerNamespace`, which `shell/Bar.qml:25` keys the window on. Adding a bar makes a new one.
+  - The old container's `Component.onDestruction` clears the id, so `BarManager.liveReports` drops that bar. The board's "Fits …" line goes blank, and the lanes and inspector lose their crowded marks and sizing text.
+
+  PLAUSIBLE: whether the first value already has `root.screen` depends on binding order. To settle it, open the bar editor, switch a bar's Background, and check that the fit line stays. Fix: `Component.onCompleted: root._report()`. `setLive` ignores an unchanged report and an empty id.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### A second bar on an edge is invisible to the screen-edge answers, and New bar makes one
+- **Where:** `components/methods/BarEnds.qml:161` (`edgesOn`), `services/ui/ScreenEdgeManager.qml:91` (`barReservedOn`), `services/ui/ScreenEdgeManager.qml:206` (`barOn`), `services/ui/BarManager.qml:155` (`addBar`)
+- **What:** `edgesOn` keeps only the first enabled bar on each edge (`if (!edges[edge]) edges[edge] = bar;`). Every screen-edge answer goes through it: `barReservedOn`, `frameLine`, `detachedGaps`, `surfaceEnd`, `barStartOn` and each bar's `ends`.
+  - The compositors stack both bars' exclusive zones, so with two reserving bars on one edge `reservedWithMenusOn` is short by the second bar's zone.
+  - Docks (`components/surfaces/dock/DockWindow.qml:60`), floating edge menus (`components/surfaces/edgemenu/FloatingEdgeMenu.qml`) and bar popouts (`EdgePlacement`) then sit under the second bar.
+  - Bars on the perpendicular edges never yield to the second bar.
+  - The first bar wins even when it reserves nothing. `barOn` picks by panel registration order and `edgesOn` by config order, so the two can disagree.
+
+  The editor creates this case. `addBar` fills every field from the Bar defaults (location top, screen primary), so on the default config **New bar** stacks a second bar on the default top bar. `duplicateBar` moves its copy to a free screen "so it doesn't sit on the original", which suggests stacking isn't meant.
+
+  **Decided** (maintainer, 2026-10-30): "Stacked bars will be planned as supported. Mark it as needs a plan and move to deferred". Fix: `edgesOn` returns every bar on an edge, and the reserved, frame-line and corner answers add them up, designed first through a plan; deferred until then.
+- **Size:** needs a plan
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### Plugging in or unplugging a monitor remakes the bar that stays
+- **Where:** `config/BarsConfig.qml:409` (`expandBars`), `shell/Bar.qml:25`
+- **What:** The id depends on how many of the bar's screens are connected.
+  - A bar on every monitor (or on several named ones) keeps the plain `bar.id` while one of its screens is connected (`if (screens.length <= 1 || bar.screen.mode === "primary")`). It gets `<id>@<screen>` once two are.
+  - `shell/Bar.qml` keys each `BarPanel` on `b.id + "|" + namespace`. Docking a laptop with an "Every monitor" bar changes the laptop bar's key from `bar` to `bar@eDP-1`, so its window is destroyed and rebuilt. Undocking does the same to the bar that stays.
+  - That bar flickers and loses its open popout and its owner-keyed requests (`"corner:" + id`, `"barPopout:" + id`). On sway and niri, the remade bar maps after the border, which then maps the border again (layering-and-corners.md › Build order).
+
+  Running bars already carry `sourceId` for the config entry. Fix: suffix `@<screen>` whenever `bar.screen.mode !== "primary"`, so an entry's id depends only on its screen. Check every reader that compares a running id with a config id first; `liveReports` and `isSelectedWidget` match on `sourceId`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### Removing or copying another bar moves the editor's selection to a different bar
+- **Where:** `services/ui/BarManager.qml:247` (`removeBar`), `services/ui/BarManager.qml:189` (`duplicateBar`)
+- **What:** The selected bar is held only as `selectedBarIndex`, and BarsPanel offers Remove and Duplicate on every row.
+  - Remove: in `[A, B, C]` with B selected, removing A leaves `selectedBarIndex` at 1 (`Math.max(0, Math.min(root.selectedBarIndex, …))`). The inspector and style groups now edit C, and the widget selection is cleared. `_moveCopied` on the line before remaps the copied style's index, but nothing remaps the selection.
+  - Duplicate: with B selected, duplicating A sets `selectedBarIndex = index + 1`, still 1, so its change handler doesn't fire. B's selected widget `{zone, index}` then applies to the new copy.
+
+  Fix: in `removeBar`, `if (index < root.selectedBarIndex) root.selectedBarIndex--;`, and clear the widget selection only when the selected bar was the one removed; `duplicateBar` calls `clearSelection()`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### A corner piece's pull-out re-derives a bar's reserve and misses its clamp
+- **Where:** `components/surfaces/border/RoundedBorders.qml:39` (`cornerMargin`), `config/BarsConfig.qml:351` (`reservedZone`)
+- **What:** `cornerMargin` pulls a corner piece back out over a bar inside the border "As far as the bar reserves (see BarPanel)". It works that distance out again as `-(bar.extent - reserveTrim(bar, gapsOut))`, but what `BarPanel` reserves is `BarsConfig.reservedZone`, which clamps: `return Math.max(0, barConfig.extent - trim);` (BarsConfig.qml:356). Scenario: a transparent bar inside the border on Hyprland, with `gaps_out` larger than the bar's extent (40 against 34). The bar reserves 0, but `cornerMargin` returns +6, so both corners on that edge sit 6 px in from the frame's corner. PLAUSIBLE: the code difference is certain; what gets drawn needs that setup in a nested Hyprland. Fix: read the reserve the bar sets, as `innerInset` does a few lines down: `const zone = bar?.insideBorder ? BarsConfig.reservedZone(bar, CompositorManager.gapsOut[edge] ?? 0) : 0; return (zone > 0 ? -zone : -root.strokeWidth) - docks;` (9 lines to 5).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### The pill merge in BarContainer repeats BarLayout's, untested
+- **Where:** `components/bar/BarContainer.qml:96` (`sectionPills`), `components/methods/BarLayout.qml:523` (`_mergeSpans`)
+- **What:** `sectionPills` hand-rolls the loop that joins spans at most `pillMerge` apart (99-107), which `BarLayout._mergeSpans` already does for islands, then decides each pill's joins in the host (`root.ends.start.joinable && m.start - gap <= reach`). That breaks composition.md (main-axis layout math lives in `methods/BarLayout`) and AGENTS.md ("A methods helper's decision … is read from its output, never re-derived in a host"). No row tests when an end pill joins. The copy also writes into `_spans`' own objects (`spans.slice()` is shallow, and `last.end = …` mutates the pushed span). Fix: a BarLayout `pillRects(spans, merge, gap, reach, length, joinStart, joinEnd)` on `_mergeSpans` (which copies), with rows for a free end, a joined end at each side, and a held end. `sectionPills` (96-126, 31 lines) becomes one call of about 3 lines.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### StandaloneBar only wraps BarPanel's BarContainer
+- **Where:** `components/bar/StandaloneBar.qml:7`, `components/bar/BarPanel.qml:127` (`bar`), `components/bar/BarContainer.qml:215` (`borderOpening`), `components/bar/BarContainer.qml:515` (`blurOrigin`)
+- **What:** Its header calls it "A bar's BarContainer outside a window of its own", but nothing draws a bar outside a window any more. BarPanel is its only user, and it overrides StandaloneBar's own logic (the implicit 300 px size) with explicit x/y/width/height; what's left forwards `barConfig`/`panel`/`screen` into a BarContainer filling it. The comments about "the bar editor's preview" (215, 515) describe a preview that is gone. Fix: put the `BarContainer` straight into BarPanel with the same x/y/width/height (`container: bar`), read the container's own `x`/`y` in `blurOrigin`, drop the preview clauses, and drop its `Extra:` line in `.claude/skills/review-system/systems.md`. This removes StandaloneBar.qml (27 lines).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### BarContainer._withEntry rebuilds Utils.withEntry
+- **Where:** `components/bar/BarContainer.qml:174` (`_withEntry`), `components/methods/Utils.qml:65` (`withEntry`)
+- **What:** `_withEntry` copies the map and sets or deletes `owner` (177-182), which is `Utils.withEntry`; the same file already uses `Utils.withEntry` at line 341. Fix: `return Utils.deepEqual(map[owner] ?? null, value ?? null) ? null : Utils.withEntry(map, owner, value || undefined);`, 12 lines (172-183) down to 4.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
+- **Where:** `config/BarsConfig.qml:106` (`enrichBarConfig`), `config/BarsConfig.qml:145`, `config/BarsConfig.qml:25`, `config/BarsConfig.qml:47`, `config/BarsConfig.qml:113`
+- **What:** Nothing reads an enriched bar's `joinable` or `separatorGap` (every `.joinable` read is an end's or SurfaceContext's own edge; `separatorGap` is read only as `look.separatorGap`, line 118). The bar comes from `ConfigManager.live` with every default filled, so `barConfig.background ?? "solid"`, `barConfig.pillPadding ?? 0` and `barConfig.pillMerge ?? 0` never fall back (AGENTS.md: "readers use no `??` fallbacks"; check_structure only catches `_c.key ?? x`). Fix: delete lines 105-106 and 145 (3 lines) and the three `??` tails.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### A bar's reserve trim is worked out again by callers holding the enriched bar
+- **Where:** `config/BarsConfig.qml:354` (`reservedZone`), `config/BarsConfig.qml:345` (`detachedPush`), `config/BarsConfig.qml:176` (`enrichBarConfig`)
+- **What:** `enrichBarConfig` already sets `bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0)`. Every caller of `reservedZone` and `detachedPush` passes an enriched bar and its own edge's `gapsOut`, then gets the same number again from `reserveTrim`: `components/bar/BarPanel.qml:38`, `services/ui/ScreenEdgeManager.qml:91` (without `?? 0`, so the two sources can differ), `components/hosts/popout/EdgePlacement.qml:201`. Fix: read `barConfig.trim`; `reservedZone(barConfig)` loses its `gapsOut` parameter, and `detachedPush` becomes `gapsOut - barConfig.trim - connectorGap / 2`. Take it with [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp), whose fix calls `reservedZone`. (`cornerMargin`'s copy is the Major above.)
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### Missing test rows for two helper decisions
+- **Where:** `components/methods/BarEnds.qml:111` (`endOf`), `components/methods/BarLayout.qml:181` (`overflowHidden`)
+- **What:** `tst_BarEnds` has no row for a solid bar meeting a solid bar: the `|| bar.solid` arm (a solid bar with the border off gets `_frame`, i.e. `bare`) is untested, and changing it to `_barStroke("solidBar", opts)` passes every row. `tst_BarLayout`'s two `lockCenter` rows never let the centre alone overflow, so line 181's `return [2]` is untested: returning `[0, 1]` would hide side widgets while the centre still doesn't fit. Fix: add those two rows.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### An overlay misses a transparent bar's inner accent line
+- **Where:** `components/hosts/overlay/ReservedAreaWindow.qml:46` (`_margin`)
+- **What:** `_margin` returns `gapsOut` for every transparent bar. A transparent bar with `accentLine: inner` reserves its full extent instead (`BarsConfig.reserveTrim` is 0 for it), so the overlay sits `gapsOut` past that bar's inner edge rather than on it. The last line's `reserveTrim` call can then only return 0, since the transparent case already returned. Fix: `if (bar?.background === "transparent") return bar.trim;` and make the last line `return -Appearance.borderWidth;`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### WindowLookConfig rebuilds BarStyle.look
+- **Where:** `config/WindowLookConfig.qml:31` (`_barLook`), `config/BarStyle.qml:15` (`look`)
+- **What:** `BarsConfig.lookOf({})` returns what `BarStyle.look` holds: every `Bars.style` key with the shadow flattened. Every other user of the shared look reads `BarStyle.look` (RoundedBorders, SurfaceShadow, AttachedSurface, EdgePlacement). Fix: `readonly property var _barLook: BarStyle.look`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### Ticking labels without steadyDigits resize the bar under a proportional font
+- **Where:** `components/bar/widgets/ScreenRecord/ScreenRecord.qml:17` (`text`), `components/bar/widgets/NextEvent/NextEvent.qml:44` (`when`), `components/bar/widgets/Button/Button.qml:31` (`text`)
+- **What:** `components/bar/widgets/AGENTS.md` says "**A ticking label** (countdown, elapsed time) sets `steadyDigits: true`". `grep -rln steadyDigits components/bar/widgets` lists only SystemStats, Stopwatch, Pomodoro, IdleInhibitor and the base. These three tick without it:
+  - ScreenRecord's label is the time recorded (`m:ss`), set again every second from `ScreenshotManager.recordingElapsed`.
+  - NextEvent's "in {0} min" counts down every minute.
+  - A Button's `labelCommand` output is sampled every `labelInterval` (default 5 s) and is usually a number.
+
+  Without `steadyDigits`, `IconTextWidget` sets no `tnum`, and `_textLength` is the text's own width. The default `Appearance.font.family` is `monospace`, where nothing moves. With a proportional font (Inter, Noto Sans, …), `0:11` → `0:08` changes the widget's width and moves its neighbours on most ticks. **Decided** (maintainer, 2026-10-30): "Everything should always not be affected by ticking, and there shouldn't be a way to turn it off via a setting (i.e. everything acts like monospace without moving the bar around when changing numubers)". Fix: steady digits become the behaviour of every bar widget's label, with no setting, and the four `steadyDigits: true` opt-ins are deleted. Lands together with [The system stats widget changes width with its digits](#the-system-stats-widget-changes-width-with-its-digits).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### Media squeezed to its minimum in the fill style shows the meter, not its icon
+- **Where:** `components/bar/widgets/Media/Media.qml:20` (`minimumSize`), `components/bar/widgets/base/IconTextWidget.qml:46` (`_leadRoom`), `components/bar/widgets/base/IconTextWidget.qml:54` (`_iconStart`)
+- **What:** Media is elastic, with `minimumSize: root.iconLength + root.padding * 2`. Its header says it shrinks "down to just the icon when the bar is crowded", and a crowded section or a `layout.size` cap squeezes it to that minimum. Its schema offers `fill`. In that style the meter is a lead graphic *before* the icon (`ValueGraphic.afterIcon` is only ticker/stacked). `leadSlot` sits at x 0 with its full `leadLength` (`fontSize * 4`, 56 px at the defaults), and the icon is drawn at `_iconStart = _leadRoom`, past the room the minimum leaves. The widget clips to its box (BaseWidget `clip: true`), so a squeezed Media in fill style shows about 20 px of the progress meter and no icon. Ticker and stacked draw after the icon and are fine. Fix: count the lead in the minimum, `minimumSize: root.iconLength + (root.leadAfterIcon ? 0 : root.leadLength + root.spacing) + root.padding * 2` (or expose `_leadRoom` as `leadRoom`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### The Workspaces widget's measured length glides when the active cell widens
+- **Where:** `components/bar/widgets/Workspaces/WorkspaceCell.qml:151` (`Glide on width`), `components/bar/widgets/Workspaces/WorkspaceCellRow.qml:48` (`implicitWidth: cells.implicitWidth`)
+- **What:** With `wideActive` (the default), each cell's `width`/`height` glides over animNormal. The row's implicit size is the `cells` Grid's, the sum of those drawn widths, and so is `BarWidgetHost.naturalSize`.
+  - When a switch changes the total, the measured size moves on every frame of the glide. Each frame re-runs the bar layout and re-targets the host's own animFast glide.
+  - The total changes when the new active workspace wasn't shown before (showEmpty off, and always on niri through `_hideEmpty`): its cell appears at 2× length while the old active one shrinks. It also changes when the active workspace leaves the row.
+  - This breaks composition.md › Bar motion: "**Measured, never animated:** the layout is measured from the modules' implicit sizes. That covers `naturalSize`/`preferredSize`…".
+  - `Glide on width|height` under `components/bar` is otherwise only on WidgetBackground and BarWidgetHost, both drawn sizes.
+
+  PLAUSIBLE that it shows (a neighbour jittering or lagging over the glide): a TRACE of `naturalSize` while switching to a new niri workspace settles it. Fix: measure the row from its targets, `ids.length * cellLength + (wide active shown ? cellLength : 0) + (ids.length - 1) * spacing` across the main axis, and clip the row while a cell still glides.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### A custom clock format without spaces spills past a vertical bar
+- **Where:** `components/bar/widgets/Time/Time.qml:108` (`_split`)
+- **What:** On a vertical bar the clock is `widgetSize` wide, and a custom format is stacked one part per line, split only on whitespace and `:` (`text.split(/[\s:]+/)`). With `dateFormat: "yyyy-MM-dd"` (or `dd.MM.yyyy`, `HH.mm`) the whole value is one line ("2026-10-30" is about 70 px at font 14), centred in a ~26 px column. BarWidget doesn't clip, and the host clips only while resizing, so the text draws across the bar's edge onto the windows beside it. The file's header promises "On a vertical bar each is stacked into short lines". Fix: split on `/[\s:.\-\/,]+/`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### Tray icons keep their pixel size on a bar thinner than them
+- **Where:** `components/bar/widgets/SystemTray/SystemTray.qml:13` (`iconSize`), `components/bar/widgets/SystemTray/SystemTray.qml:70`
+- **What:** Each tray item is `properties.iconSize` px (default 18, 8–64), whatever the bar's `widgetSize` (10 and up) or `fontSize`. Every other widget's icon is `barConfig.fontSize * iconScale`. With `iconSize` 24 on a 20 px bar, the icons draw past the widget's box across the bar, and nothing clips them. They also don't grow with the bar's font as every other icon does. **Decided** (maintainer, 2026-10-30): "Follow the bar and size it like every other icon". Fix: each tray icon is `barConfig.fontSize * iconScale`, as every other widget's icon, and the `iconSize` px setting goes. Removing a setting needs a format-2 migration step (`docs/recipes/migration.md`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### Some bar widget sizes are fixed pixels, not the bar's
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:206` (`spacing`), `components/bar/widgets/Window/Window.qml:13` (`preferredSize`), `components/bar/widgets/Window/Window.qml:14` (`minimumSize`), `components/bar/widgets/base/ValueGraphic.qml:119` (`gap`), `components/bar/widgets/base/ValueGraphic.qml:120` (`cornerRadius`), `components/bar/widgets/Network/Network.qml:89` (`textSize`), `components/bar/widgets/Notifications/Notifications.qml:41` (`textSize`)
+- **What:** `components/bar/widgets/AGENTS.md`: "**Sized by the bar**: cross size `barConfig.widgetSize`; padding, spacing, font size and radius from `barConfig`". These don't follow it:
+  - SystemStats' icon-to-value gap is `root.isVertical ? 0 : 4`. Every other icon widget's gap is `barConfig.widgetSpacing * 1.5` (BarIconWidget), so SystemStats alone ignores the bar's inner spacing.
+  - Window's title is capped at 240 px and floored at 80 px, whatever the bar's font. At font 20 it elides at about 18 characters.
+  - The segments style's gap and corner radius are 2 px at any font size.
+  - Network's VPN lock and the notification badge are `fontSize - 5` and `fontSize - 4`. At font 8 the lock is 3 px; at font 30 it is 25 px, nearly the icon's size.
+
+  Fix:
+  - `spacing: root.isVertical ? 0 : root.barConfig.widgetSpacing * 1.5`
+  - Window: no cap and no setting. It is elastic, as Media is, and gives up its width first when the section is crowded.
+  - `gap`/`cornerRadius: Math.max(1, Math.round(root.fontSize * 0.15))`
+  - `textSize: Math.round(root.fontSize * 0.65)` (0.7 for the badge)
+
+  **Decided** (maintainer, 2026-10-30, on Window): "The window widget should be fixed and be automatic (i.e. cut itself when it needs to at highest priority like the media one does)."
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### SystemStats' used memory clips on a vertical bar
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:108` (`segmentData`, `mem`), `components/bar/widgets/base/IconTextWidget.qml:140` (`elide`)
+- **What:** On a vertical bar each value is upright under its icon, at `textScale` 0.7 with `Text.ElideNone`, centred in the `widgetSize` column of a box that clips (BaseWidget `clip: true`). With `memoryFormat: used` the value is `toFixed(1) + "G"`, five characters from 10 GiB up ("15.6G"). That is about 5 × 0.6 em × 9.8 px ≈ 29.5 px in monospace, in a 26 px column, so both outer glyphs lose about 2 px; "125.3G" loses most of a glyph each side. Percent values ("100%", about 23.5 px) fit. PLAUSIBLE: a screenshot of a vertical bar with `memoryFormat: used` on a machine using 10 GiB or more settles it. Fix: whole GiB on a vertical bar (`toFixed(root.isVertical ? 0 : 1)`), or let an upright label shrink to fit (`fontSizeMode: Text.HorizontalFit` with a `minimumPixelSize`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### The stacked style clips on a thin bar
+- **Where:** `components/bar/widgets/base/ValueGraphic.qml:217` (value `font.pixelSize`), `components/bar/widgets/base/ValueGraphic.qml:229` (caption `font.pixelSize`)
+- **What:** Stacked's two lines are `fontSize * 0.8` and `fontSize * 0.6`, sized from the font alone: about 1.17 × 1.4 × fontSize ≈ 23 px at font 14. They are centred in the widget's `widgetSize`, and the widget clips. At the default 26 px they fit. At `widgetSize` 20 with font 14, where a one-line label (about 16 px) still fits, about 1.5 px comes off the top of the value and the bottom of the caption. PLAUSIBLE: a screenshot of a stacked widget on a 20 px bar settles it. Fix: scale both lines by `Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize))`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### BaseWidget's background box and panel-size defaults are dead
+- **Where:** `components/bar/widgets/base/BaseWidget.qml:13` (`backgroundColor`), `components/bar/widgets/base/BaseWidget.qml:15` (`showBackground`), `components/bar/widgets/base/BaseWidget.qml:17` (`contentItem`), `components/bar/widgets/base/BaseWidget.qml:19` (`radius`), `components/bar/widgets/base/BaseWidget.qml:29` (the `Rectangle`), `components/bar/widgets/base/IconTextWidget.qml:22` (`spacing`), `components/bar/widgets/base/IconTextWidget.qml:25` (`fontSize`), `components/bar/widgets/base/ValueGraphic.qml:31` (`fontSize`), `docs/dev/core/shared-ui-pieces.md:103`
+- **What:** Widgets don't draw their own backgrounds; WidgetGroup does (widget-style.md › Widget style). BaseWidget still has its own box, and it is never drawn. Its three instances all set `showBackground: false`: BarIconWidget:60, SystemStats:179 (`box`) and SystemStats:204 (the segments).
+  - `backgroundColor` and `radius` feed only that Rectangle. The two `radius:` setters (BarIconWidget:43, SystemStats:178) therefore do nothing.
+  - `contentItem` has no reader (its declaration is its only hit in `components/bar`).
+  - Deletion pass: BaseWidget lines 13–15, 17, 19 and 29–35 (12 lines) plus the five setters, 17 lines in all.
+  - shared-ui-pieces.md:103 still calls BaseWidget "the rounded box a bar widget sits in": it becomes "the sizing wrapper".
+
+  The bases' remaining defaults are the panels' sizes, and every instance replaces them from `barConfig`:
+  - BaseWidget: `padding: Widget.padding`, `crossSize: Widget.height`
+  - IconTextWidget: `spacing: Widget.spacing * 1.5`, `fontSize: Appearance.fontSize`
+  - ValueGraphic: `fontSize: Appearance.fontSize`
+
+  These five are the only `Widget.*`/`Appearance.fontSize` reads under `components/bar/widgets`, and they read as though the bar's pieces size from the Interface section. Default them to 0.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### SystemStats works out ValueStyleWidget's style fallbacks again
+- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:199` (segment `style`), `components/bar/widgets/SystemStats/SystemStats.qml:139` (`backgroundLevelColor`), `components/bar/widgets/SystemStats/SystemStats.qml:141` (`_textByState`), `components/bar/widgets/base/ValueStyleWidget.qml:34` (`style`)
+- **What:** Two rules live in both `ValueStyleWidget.style` and SystemStats' per-segment `style`: "stacked on a vertical bar is a label" and "a sparkline with no history is a fill". `Qt.alpha(colors.icon, 0.35)` and `colorText && colors.fill.a < 1` are copied word for word too. A new style rule added to one copy will be missed in the other. Fix: put the fallbacks in one function on ValueGraphic (`resolvedStyle(style, vertical, hasHistory, ratio)`) and read it from both places, about 4 lines out of SystemStats. The pill colour can be a ValueGraphic constant.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### The workspace switchers find a workspace by id with hand-written loops
+- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml:74` (`wsById`), `components/bar/widgets/Workspaces/WorkspaceStrip.qml:83` (`hasWindows`), `components/bar/widgets/Workspaces/WorkspaceCellRow.qml:56` (`_occupied`)
+- **What:** `WorkspaceStrip.wsById` and `hasWindows` (lines 74–85, 12 lines; `hasWindows` has one call, line 63), and `WorkspaceCellRow._occupied` (8 lines), each walk `CompositorManager.workspaces` with an index loop to find one id. WorkspaceGrid already does it in one line: `CompositorManager.workspaces.find(ws => ws.id === id) ?? null` (WorkspaceGrid.qml:61). Fix: `wsById` becomes that `find`, `hasWindows` is inlined at its call, and `_occupied` becomes `return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;`. That is 20 lines down to about 6, with the same results.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar-widgets system
