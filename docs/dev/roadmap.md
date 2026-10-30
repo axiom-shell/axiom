@@ -313,6 +313,10 @@ Found while adding niri's own overview (row 16):
 Found while fixing the lock screen surviving a reload:
 - [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
 
+Found while investigating Hyprland starting on workspace 10:
+- [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
+- [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
+
 Found by the audits:
 - [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)
 
