@@ -3,6 +3,7 @@ package saved
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -95,7 +96,7 @@ func TestSaveRestoreModified(t *testing.T) {
 	if !f.svc.State().Modified {
 		t.Error("not modified after a change")
 	}
-	if err := f.svc.Restore("My look"); err != nil {
+	if _, err := f.svc.Restore("My look"); err != nil {
 		t.Fatal(err)
 	}
 	if v := get(t, f.store, "Bars.style.widgetStyle"); v != "outline" {
@@ -112,7 +113,7 @@ func TestSaveRestoreModified(t *testing.T) {
 }
 
 // An example of format 1 (as examples/ ship today) applies converted, after
-// a backup, and is saved as example-<name>; takeovers stay.
+// the running config is kept, and is saved as example-<name>; takeovers stay.
 func TestApplyExampleFormat1(t *testing.T) {
 	t.Parallel()
 	f := setup(t)
@@ -122,7 +123,7 @@ func TestApplyExampleFormat1(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if applied.Backup != "before-tall" || applied.Saved != "example-tall" {
+	if applied.Backup != "unsaved" || applied.Saved != "example-tall" {
 		t.Errorf("applied %+v", applied)
 	}
 	if v := get(t, f.store, "Bars.items[primary].location"); v != "left" {
@@ -131,8 +132,8 @@ func TestApplyExampleFormat1(t *testing.T) {
 	if v := get(t, f.store, "Compositor.mode"); v != "detached" {
 		t.Errorf("a takeover changed: %v", v)
 	}
-	if _, err := os.Stat(filepath.Join(f.dir, "saved", "before-tall.json")); err != nil {
-		t.Error("no backup")
+	if _, err := os.Stat(filepath.Join(f.dir, "saved", "unsaved.json")); err != nil {
+		t.Error("the running config wasn't kept")
 	}
 	got := f.svc.Examples()
 	if len(got) != 1 || got[0].Title != "Tall" {
@@ -144,6 +145,104 @@ func TestApplyExampleFormat1(t *testing.T) {
 	}
 	if got[0].Theme == "" || len(got[0].Docks) != 0 {
 		t.Errorf("theme %q, docks %+v (the default dock is off)", got[0].Theme, got[0].Docks)
+	}
+}
+
+// What an apply or restore keeps of the running config: nothing while the
+// active snapshot is unchanged (it's on disk), else one "unsaved" file; and
+// the copy the last applied file was saved as goes once it's replaced,
+// unless the user saved over it.
+func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
+	t.Parallel()
+	type step struct {
+		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"
+		backup  string // Applied.Backup of an apply or restore
+		files   string // saved/ afterwards, sorted, space-separated
+		content string // what saved/unsaved.json then holds of Bars.style.widgetStyle ("" to skip)
+	}
+	tests := []struct {
+		name  string
+		steps []step
+	}{
+		{"switching back and forth", []step{
+			{do: "a", backup: "unsaved", files: "example-a unsaved"},
+			{do: "b", files: "example-b unsaved"},
+			{do: "a", files: "example-a unsaved"},
+			{do: "a", files: "example-a unsaved"},
+		}},
+		{"edits are kept, in one file", []step{
+			{do: "a", backup: "unsaved", files: "example-a unsaved"},
+			{do: "edit outline", files: "example-a unsaved"},
+			{do: "b", backup: "unsaved", files: "example-b unsaved", content: "outline"},
+			{do: "edit plain", files: "example-b unsaved"},
+			{do: "a", backup: "unsaved", files: "example-a unsaved", content: "plain"},
+		}},
+		{"a named snapshot is never touched", []step{
+			{do: "save mine", files: "mine"},
+			{do: "a", files: "example-a mine"},
+			{do: "restore mine", files: "mine"},
+			{do: "edit outline", files: "mine"},
+			{do: "b", backup: "unsaved", files: "example-b mine unsaved", content: "outline"},
+		}},
+		{"a copy saved over stays", []step{
+			{do: "save mine", files: "mine"},
+			{do: "a", files: "example-a mine"},
+			{do: "save example-a", files: "example-a mine"},
+			{do: "b", files: "example-a example-b mine"},
+		}},
+		{"restoring unsaved takes it as it was", []step{
+			{do: "save mine", files: "mine"},
+			{do: "edit outline", files: "mine"},
+			{do: "a", backup: "unsaved", files: "example-a mine unsaved", content: "outline"},
+			{do: "edit plain", files: "example-a mine unsaved"},
+			{do: "restore unsaved", files: "mine unsaved", content: "outline"},
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			f := setup(t)
+			for _, name := range []string{"a", "b"} {
+				os.WriteFile(filepath.Join(f.ex, name+".json"), []byte(`{"format": 2, "version": 76, "meta": {"title": "`+name+`"},
+					"Appearance": {"theme": {"name": "`+map[string]string{"a": "nord", "b": "gruvbox-dark"}[name]+`"}}}`), 0o644)
+			}
+			for i, st := range tt.steps {
+				verb, arg, _ := strings.Cut(st.do, " ")
+				var applied Applied
+				var err error
+				switch verb {
+				case "a", "b":
+					applied, err = f.svc.ApplyExample(verb, nil)
+				case "edit":
+					set(t, f.store, "Bars.style.widgetStyle", arg)
+				case "save":
+					_, err = f.svc.Save(arg, "")
+				case "restore":
+					applied, err = f.svc.Restore(arg)
+				}
+				if err != nil {
+					t.Fatalf("step %d (%s): %v", i, st.do, err)
+				}
+				if applied.Backup != st.backup {
+					t.Errorf("step %d (%s): kept as %q, want %q", i, st.do, applied.Backup, st.backup)
+				}
+				var files []string
+				list, _ := f.svc.List()
+				for _, e := range list {
+					files = append(files, e.Name)
+				}
+				sort.Strings(files)
+				if got := strings.Join(files, " "); got != st.files {
+					t.Errorf("step %d (%s): saved/ holds %q, want %q", i, st.do, got, st.files)
+				}
+				if st.content != "" {
+					data, _ := os.ReadFile(filepath.Join(f.dir, "saved", "unsaved.json"))
+					if !strings.Contains(string(data), `"`+st.content+`"`) {
+						t.Errorf("step %d (%s): unsaved.json doesn't hold %q:\n%s", i, st.do, st.content, data)
+					}
+				}
+			}
+		})
 	}
 }
 
@@ -314,7 +413,7 @@ func TestNoLoadChangesATakeover(t *testing.T) {
 		{"import", func() error { _, err := f.svc.Import(file, true, true, nil); return err }},
 		{"example", func() error { _, err := f.svc.ApplyExample("hostile", nil); return err }},
 		{"shared", func() error { _, err := f.svc.ApplyShared(file, "Hostile", "", nil); return err }},
-		{"restore", func() error { return f.svc.Restore("hostile") }},
+		{"restore", func() error { _, err := f.svc.Restore("hostile"); return err }},
 		{"defaults", func() error { _, err := f.svc.Defaults(); return err }},
 	} {
 		if err := c.load(); err != nil {

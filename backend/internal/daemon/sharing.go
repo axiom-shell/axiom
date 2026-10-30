@@ -49,11 +49,11 @@ func (d *Daemon) sharingMethods(reg *rpc.Registry) {
 		name, err := d.saved.Save(p.Name, "")
 		return map[string]string{"name": name}, err
 	})
-	rpc.Handle(reg, "saved.restore", func(ctx context.Context, c *rpc.Conn, p sharedParams) (struct{}, error) {
+	rpc.Handle(reg, "saved.restore", func(ctx context.Context, c *rpc.Conn, p sharedParams) (saved.Applied, error) {
 		if err := d.writable(); err != nil {
-			return struct{}{}, err
+			return saved.Applied{}, err
 		}
-		return struct{}{}, d.saved.Restore(p.Name)
+		return d.saved.Restore(p.Name)
 	})
 	rpc.Handle(reg, "saved.remove", func(ctx context.Context, c *rpc.Conn, p sharedParams) (struct{}, error) {
 		return struct{}{}, d.saved.Remove(p.Name)
