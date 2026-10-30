@@ -176,14 +176,13 @@ StyledContainer {
         SequentialAnimation on opacity {
           loops: Animation.Infinite
           running: textInput.activeFocus
-          // Cursor blink: a behaviour timing, not motion, so not scaled
           PropertyAnimation {
             to: 1
-            duration: 500
+            duration: 500 // behaviour timing: the cursor blink
           }
           PropertyAnimation {
             to: 0
-            duration: 500
+            duration: 500 // behaviour timing: the cursor blink
           }
         }
       }

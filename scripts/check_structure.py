@@ -32,6 +32,9 @@ running anything:
   - no Repeater model or acquire() request in the UI reads a polled
     service's member (one with an acquire()), in the expression or through
     a property of the file; a model may count one (`.length`, `.count`)
+  - no `duration:` is a number of ms (Appearance.animFast / animNormal /
+    animSlow follow the animation speed), but a line marked
+    `// behaviour timing: <reason>` (a blink, a pause)
 and warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
@@ -466,6 +469,15 @@ def main():
             found = live_reads(request, props, False)
             if found:
                 errors.append(f"{path}:{code.count(chr(10), 0, at) + 1}: an acquire() request from live values ({', '.join(found)}): build it from config")
+
+    # Motion follows the animation speed setting: a `duration:` is
+    # Appearance.animFast / animNormal / animSlow (AGENTS.md › Config,
+    # Animation). A bare number is only a behaviour timing (a blink, a
+    # pause), marked on its line
+    for path, text in sources.items():
+        for n, line in enumerate(text.split("\n"), 1):
+            if re.search(r"\bduration:\s*[1-9]\d*\s*(?:[;}]|//|$)", line) and "// behaviour timing:" not in line:
+                errors.append(f"{path}:{n}: a duration in ms: use Appearance.animFast / animNormal / animSlow (or mark a blink or pause `// behaviour timing: <reason>`)")
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

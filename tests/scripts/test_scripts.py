@@ -389,6 +389,7 @@ class CheckStructure(unittest.TestCase):
          "shell/LiveModel.qml:6: a Repeater model from live values (SystemManager.processes)"),
         ("shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
          "an acquire() request from live values (req → SystemManager.cpu)"),
+        ("shell/Motion.qml", qml("Behavior on x { NumberAnimation { duration: 200 } }"), "shell/Motion.qml:6: a duration in ms"),
         ("components/dupa/Dup.qml", qml(), None),
         ("components/dupb/Dup.qml", qml(), None),
         ("shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),

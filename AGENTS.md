@@ -149,7 +149,7 @@ Dependencies point one way:
 - An empty monitor means the primary monitor everywhere (`General.screensNamed`) except `General.primaryMonitor` itself.
 - A path setting may hold `~`: expand it (`Paths.expandHome`) in its reader, or the service using it, before a process or file read. Processes run without a shell.
 - **Theme**: `Theme.base00`–`base0F` plus semantic names; `Theme.resolveColor(name)` for names from config; `config/json/theme-defaults.json` fills omissions. Theme integrations write only their own `axiom.*` file; only the hookup's Apply (user's click) edits a user's config.
-- **Animation**: every `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` eased with `Appearance.easing` (Behaviors: `Glide on x {}` / `ColorGlide`); looping animations gate `running` on `Appearance.animations`. Only behaviour timings (blink, timeouts, polling) are literals. Bar geometry animates what's drawn, never what's measured; content changing in place cross-fades through `CrossFade`.
+- **Animation**: every `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` eased with `Appearance.easing` (Behaviors: `Glide on x {}` / `ColorGlide`); looping animations gate `running` on `Appearance.animations`. Only behaviour timings (blink, timeouts, polling) are literals; a `duration:` one is marked `// behaviour timing: <reason>` (`check_structure`). Bar geometry animates what's drawn, never what's measured; content changing in place cross-fades through `CrossFade`.
 
 ## Translation
 

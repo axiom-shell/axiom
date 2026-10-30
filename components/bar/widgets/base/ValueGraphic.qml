@@ -176,7 +176,7 @@ Item {
                 tickerText.x = 0;
             }
             PauseAnimation {
-              duration: 1500
+              duration: 1500 // behaviour timing: the ticker rests at each end
             }
             NumberAnimation {
               from: 0
@@ -184,7 +184,7 @@ Item {
               duration: tickerText.overflow * 30
             }
             PauseAnimation {
-              duration: 1500
+              duration: 1500 // behaviour timing: the ticker rests at each end
             }
             NumberAnimation {
               from: -tickerText.overflow
