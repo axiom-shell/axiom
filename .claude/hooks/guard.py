@@ -80,9 +80,9 @@ HEREDOC = re.compile(r"""(?<!<)<<(?!<)(-?)[ \t]*(['"]?)([A-Za-z_][\w.-]*)\2(?![^
 
 def drop_heredoc_bodies(command):
     """A heredoc's body is text, not commands: it is dropped, unless the
-    command runs text it's given (a shell, `source`, `.` or `eval` anywhere
-    outside the bodies: `bash <<EOF`, `cat <<EOF | sh`, `cat > x.sh <<EOF …
-    bash x.sh`), the body is unquoted and substitutes (`$(…)`, backticks) or
+    command runs text it's given (a shell, `source`, `.`, `eval` or a script run
+    by its path anywhere outside the bodies: `bash <<EOF`, `cat <<EOF | sh`,
+    `cat > x.sh <<EOF … bash x.sh` or `… ./x.sh`), the body is unquoted and substitutes (`$(…)`, backticks) or
     its delimiter never comes: then it is judged as written."""
     lines, out = command.replace("\\\n", "").split("\n"), []
     while lines:
@@ -97,7 +97,9 @@ def drop_heredoc_bodies(command):
             if not quote and SUBSTITUTION.search("\n".join(body)):
                 out.extend(body)
     words = lex("\n".join(out))
-    runs = any(Path(w).name in SHELLS | {"source", "eval"} or w == "." and (not i or words[i - 1] in KEYWORDS or set(words[i - 1]) <= set(PUNCTUATION))
+    # `.` or a script run by its path (`./t.sh`, `sudo /tmp/t.sh`) where a command starts, not a redirection's target
+    runs = any(Path(w).name in SHELLS | {"source", "eval"} or (w == "." or "/" in w)
+               and (not i or words[i - 1] in KEYWORDS | WRAPPERS.keys() or set(words[i - 1]) <= set(";&|()`"))
                for i, w in enumerate(words))
     return command if runs else "\n".join(out)
 

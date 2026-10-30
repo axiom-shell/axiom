@@ -152,10 +152,12 @@ class Bash(unittest.TestCase):
         # A command that runs text it's given anywhere, a body that substitutes, a `<<` that isn't a heredoc
         self.blocks("eval \"$(cat)\" <<EOF\naxiom lock\nEOF", "cat <<EOF |\naxiom lock\nEOF\nsh", "cat <<EOF \\\n| sh\naxiom lock\nEOF",
                     "cat > x.sh <<'EOF'\naxiom lock\nEOF\nbash x.sh", "cat > x.sh <<'EOF'\naxiom lock\nEOF\n. ./x.sh",
+                    "cat > x.sh <<'EOF'\naxiom lock\nEOF\nchmod +x x.sh && ./x.sh", "cat > /tmp/x <<'EOF'\naxiom lock\nEOF\nsudo /tmp/x",
                     "cat <<EOF\n$(\naxiom lock\n)\nEOF", "git commit -m \"a <<b\"\naxiom lock\nb", "echo 'x <<EOF'\naxiom lock\nEOF",
                     "echo $((1<<2))\naxiom lock\n2", "cat <<E'OF'\nx\nEOF\naxiom lock", "cat <<EOF\naxiom lock",
                     "bash <<< 'axiom lock'", "sh <<<\"qs kill\"")
-        self.allows("git add . && git commit -F - <<'EOF'\naxiom lock\nEOF", "cat <<A <<B\naxiom lock\nA\nqs kill\nB")
+        self.allows("git add . && git commit -F - <<'EOF'\naxiom lock\nEOF", "cat <<A <<B\naxiom lock\nA\nqs kill\nB",
+                    "cat > /tmp/p.py <<'EOF'\naxiom lock\nEOF\npython3 /tmp/p.py", "cd /tmp && cat > out/n <<'EOF'\naxiom lock\nEOF")
 
     def test_a_custom_xdg_config_home_is_live(self):
         with mock.patch.object(guard, "CONFIG_HOMES", guard.CONFIG_HOMES | {Path("/srv/conf")}):
