@@ -17,7 +17,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader n
   - `outputs`: the connected monitors.
     - It is `Quickshell.screens` without Qt's nameless placeholder and Hyprland's headless `FALLBACK`, which stand in while no monitor is connected.
     - A window left on a stand-in when monitors return is moved off a screen Qt then frees, and qs crashed configuring it.
-    - `check_structure` refuses `Quickshell.screens` outside `General`; the windows that must exist with no monitor (the lock and greeter previews, the windowed greeter, the no-parent notice) are counted in `scripts/structure-baseline.json`.
+    - `check_structure` refuses `Quickshell.screens` outside `General`; the windows that must exist with no monitor (the lock and greeter previews, the windowed greeter, the no-parent notice) say why on the line: `// allowed: <reason>`.
   - `screensNamed(name)`: that screen, else the primary, else the first.
   - `screensFor(mode, name)`: see [Shell manager and screen targeting](shell-manager-targeting.md).
 - **`Idle`**: hypridle ([Idle](../features/idle.md)).

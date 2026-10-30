@@ -30,19 +30,19 @@ running anything:
   - no singleton is over SINGLETON_LINES lines, but the pure helpers and
     the compositor backends (split one before it grows past)
   - no Repeater model or acquire() request in the UI reads a polled
-    service's member (one owning a ConsumerRegistry or DeadlineTicker), in the expression or through
-    a property of the file; a model may count one (`.length`, `.count`)
+    service's member (one owning a ConsumerRegistry or DeadlineTicker),
+    in the expression or through a property of the file; a model may
+    count one (`.length`, `.count`)
   - no `duration:` is a number of ms (Appearance.animFast / animNormal /
     animSlow follow the animation speed), but a line marked
     `// behaviour timing: <reason>` (a blink, a pause)
   - nothing formats a date with Qt.formatDateTime / formatDate /
-    formatTime (I18n.formatDate follows the language)
-  - only General reads Quickshell.screens (its outputs leave out the
-    stand-ins shown while no monitor is connected)
-and, for the rules counting the uses they allow in
-scripts/structure-baseline.json (screenshot file names, windows that must
-exist with no monitor), fails on a file past its count and on a count no
-longer reached (each only shrinks); it also warns about files in the loaded directories that nothing registers or
+    formatTime (I18n.formatDate follows the language), and only General
+    reads Quickshell.screens (its outputs leave out the stand-ins shown
+    while no monitor is connected), but a line marked
+    `// allowed: <reason>` (a file name, a window that must exist with no
+    monitor)
+and warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
 
@@ -89,10 +89,6 @@ IO_KINDS = {
 # (components/methods/, unit-tested tables of rules) and the compositor
 # backends (one compositor's whole contract each) may grow past it
 SINGLETON_LINES = 800
-# The uses a rule allows, per file (a file name kept out of the language, a
-# window that must exist with no monitor): each count only shrinks
-# (structure-baseline.json)
-BASELINE = ROOT / "scripts" / "structure-baseline.json"
 SINGLETON_EXEMPT = re.compile(r"components/methods/.*|services/compositor/(Hyprland|Sway|Niri)Manager\.qml")
 
 errors, warnings = [], []
@@ -491,31 +487,23 @@ def main():
             if re.search(r"\bduration:\s*[1-9]\d*\s*(?:[;}]|//|$)", line) and "// behaviour timing:" not in line:
                 errors.append(f"{path}:{n}: a duration in ms: use Appearance.animFast / animNormal / animSlow (or mark a blink or pause `// behaviour timing: <reason>`)")
 
-    # The rules with a baseline: a file past its count fails, and so does a
-    # count it no longer reaches (lower it: the baseline only shrinks)
-    baseline = json.loads(BASELINE.read_text())
-
-    def ratchet(rule, counts, problem):
-        known = baseline.get(rule, {})
-        for path, n in sorted(counts.items()):
-            if n > known.get(path, 0):
-                errors.append(f"{path}: {problem} ({n}, {known.get(path, 0)} in {rel(BASELINE)})")
-        for path, n in sorted(known.items()):
-            if counts.get(path, 0) < n:
-                errors.append(f"{rel(BASELINE)}: {path} has {counts.get(path, 0)} {rule} now, not {n}: lower it (it only shrinks)")
-
     # Dates the user reads follow the language: I18n.formatDate(date,
-    # I18n.dateFormat(name)), never Qt.formatDateTime (AGENTS.md › Translation)
-    ratchet("formatDateTime", {path: n for path, text in sources.items() if not path.startswith("tests/")
-                               for n in [len(re.findall(r"\bQt\.format(?:DateTime|Date|Time)\(", re.sub(r"//[^\n]*", "", text)))] if n},
-            "Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name))")
-
+    # I18n.dateFormat(name)), never Qt.formatDateTime (AGENTS.md › Translation).
     # Surfaces go on General.outputs / screensFor(target): Quickshell.screens
     # holds stand-ins while no monitor is connected, and a window left on
-    # one can crash qs when they come back (General filters them)
-    ratchet("Quickshell.screens", {path: n for path, text in sources.items() if not path.startswith("tests/") and path != "config/General.qml"
-                                   for n in [len(re.findall(r"\bQuickshell\.screens\b", re.sub(r"//[^\n]*", "", text)))] if n},
-            "Quickshell.screens: build on General.outputs or General.screensFor(target) (no stand-in screens)")
+    # one can crash qs when they come back (General filters them). A use
+    # that must stay says why on its line
+    for path, text in sources.items():
+        if path.startswith("tests/"):
+            continue
+        for n, line in enumerate(text.split("\n"), 1):
+            code = line.split("//")[0]
+            if "// allowed:" in line:
+                continue
+            if re.search(r"\bQt\.format(?:DateTime|Date|Time)\(", code):
+                errors.append(f"{path}:{n}: Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name)) (or mark a use that must stay `// allowed: <reason>`)")
+            if path != "config/General.qml" and re.search(r"\bQuickshell\.screens\b", code):
+                errors.append(f"{path}:{n}: Quickshell.screens: build on General.outputs or General.screensFor(target) (or mark a window that must exist with no monitor `// allowed: <reason>`)")
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():
