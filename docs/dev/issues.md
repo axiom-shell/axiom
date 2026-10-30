@@ -333,11 +333,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The guard judges a heredoc's body as commands
-- **Where:** `.claude/hooks/guard.py` (`split_commands`)
-- **What:** `split_commands` turns every newline into `;` before lexing, so each line of a heredoc's body is judged as a command of its own: a `python3 - <<'PY'` script or a `cat > notes <<EOF` whose text has a line like `axiom lock` is refused, though nothing runs it (only a body fed to a shell, `bash <<EOF`, would). An ordinary form, refused the wrong way; found when a review's probe script listing forbidden commands was refused. Fix: drop the body lines after a `<<WORD`/`<<'WORD'` up to `WORD` unless the command is a shell, with a `test_guard.py` case each way.
+### A `#` comment hides the rest of a command from the guard
+- **Where:** `.claude/hooks/guard.py` (`lex`)
+- **What:** `lex` turns newlines into ` ; ` before shlex reads the command, and shlex's comments run to the next newline, so a `#` comment swallows every line after it: `echo hi # note` followed by a forbidden command on the next line is allowed, as is one after a `# step 2` line. Comment lines are ordinary in an agent's multi-line command. Related: an unbalanced quote shlex can't read (an apostrophe in a comment of a script body the guard judges) makes `lex` fall back to `str.split`, which keeps no separators, so the whole command is judged as one. Fix: end a comment at its newline (lex line by line, or strip comments quote-aware before the newlines are replaced) and drop comments before the fallback, with a `test_guard.py` case each way.
 - **Size:** small
-- **Found:** 2026-10-29, while reviewing the guard batch (roadmap row 18)
+- **Found:** 2026-10-30, while reviewing the guard's heredoc change (roadmap row 18)
 
 ### Three reader members nothing reads
 - **Where:** `config/HyprlandConfig.qml` (`managed`), `config/LauncherConfig.qml` (`clipboardMaxEntries`), `config/WindowBehaviourConfig.qml` (`behaviour`), `scripts/config-usage-baseline.json`

@@ -295,7 +295,7 @@ Posting for testers waits for all of these:
 - the hardening weeks ended with no fix pending.
 
 Fixed in step 0 (the guardrails; moved from Phase 9):
-- [The guard judges a heredoc's body as commands](issues.md#the-guard-judges-a-heredocs-body-as-commands)
+- [A `#` comment hides the rest of a command from the guard](issues.md#a--comment-hides-the-rest-of-a-command-from-the-guard)
 
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.
