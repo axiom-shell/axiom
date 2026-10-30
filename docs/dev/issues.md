@@ -1222,7 +1222,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### EdgePopout works out its attach edge and slide distance itself
 - **Where:** `components/hosts/popout/EdgePopout.qml:204` (`attachBase`), `components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `components/methods/SurfaceContext.qml:340` (`layout`)
-- **What:** `attachBase = ScreenEdgeManager.reservedWithMenusOn(screen, edge) - (bareEdge ? 0 : Appearance.borderWidth)` repeats `SurfaceContext.layout`'s no-bar `attachAt` branch, and its only use is `edgeOffset`. `slideDistance` subtracts `barConfig?.insideBorder ? Appearance.borderWidth : 0`, a stroke rule `layout` doesn't return. That breaks components/hosts/popout/AGENTS.md: "Never add a rule in a host: a new case is a `SurfaceContext` rule plus a `tst_SurfaceContext` row". A change to either rule in SurfaceContext would leave the edge popout's window apart from its box. Fix: `layout` returns the attach base and the slide distance, with `tst_SurfaceContext` rows; EdgePopout reads both from `placement`. Both this and [An open edge popout's layer and namespace still follow its edge's bar](#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar) change `slideDistance`: take them in one batch.
+- **What:** `attachBase = ScreenEdgeManager.reservedWithMenusOn(screen, edge) - (bareEdge ? 0 : Appearance.borderWidth)` repeats `SurfaceContext.layout`'s no-bar `attachAt` branch, and it is read by `edgeOffset` and by FloatingEdgeMenu's `before` gap (`components/surfaces/edgemenu/FloatingEdgeMenu.qml:63`). `slideDistance` subtracts `barConfig?.insideBorder ? Appearance.borderWidth : 0`, a stroke rule `layout` doesn't return. That breaks components/hosts/popout/AGENTS.md: "Never add a rule in a host: a new case is a `SurfaceContext` rule plus a `tst_SurfaceContext` row". A change to either rule in SurfaceContext would leave the edge popout's window apart from its box. Fix: `layout` returns the attach base and the slide distance, with `tst_SurfaceContext` rows; EdgePopout reads both from `placement`, and keeps `attachBase` as that output for FloatingEdgeMenu. Both this and [An open edge popout's layer and namespace still follow its edge's bar](#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar) change `slideDistance`: take them in one batch.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
@@ -1265,7 +1265,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   - The grid's `Transport { visible: root.embedded }` is built in the popout.
   - The popout's `Transport { visible: root.hasPlayer && !root.embedded }` is built in every card.
 
-  So each opening of the Media popout builds a seek slider, two time labels and three buttons it never shows, and a hidden cover decode. Fix: Loaders gated on `root.mini` for the strip and grid, and on `root.embedded` / `!root.embedded` for the two transports (Layout attached properties on the Loaders).
+  So each opening of the Media popout builds a seek slider, two time labels and three buttons it never shows, and a hidden cover decode, a third beside the two [Images decoded at full size or more than once](#images-decoded-at-full-size-or-more-than-once) counts. Fix: Loaders gated on `root.mini` for the strip and grid, and on `root.embedded` / `!root.embedded` for the two transports (Layout attached properties on the Loaders).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
