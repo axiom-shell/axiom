@@ -64,13 +64,20 @@ def deny(rule, why):
 
 # --------------------------------------------------------------- parsing
 
+# A quoted string or escape (kept), or a `#` comment (dropped): one starts a
+# word and ends at its newline, so `a#b`, `"#x"` and `${#var}` aren't comments
+COMMENT = re.compile(QUOTED.pattern + r"|(?<![^\s;&|()<>])#[^\n]*", re.S)
+
+
 def lex(command):
+    command = COMMENT.sub(lambda m: "" if m[0][0] == "#" else m[0], command).replace("\n", " ; ")
     try:
-        lexer = shlex.shlex(command.replace("\n", " ; "), posix=True, punctuation_chars=PUNCTUATION)
+        lexer = shlex.shlex(command, posix=True, punctuation_chars=PUNCTUATION)
         lexer.whitespace_split = True
+        lexer.commenters = ""
         return list(lexer)
-    except ValueError:
-        return command.split()
+    except ValueError:  # an unbalanced quote: split on separators still
+        return re.findall(r"[;&|()<>`]+|[^\s;&|()<>`]+", command)
 
 
 # `<<WORD`, `<<-WORD`, `<<'WORD'` (not a `<<<` here-string, nor a `<<` inside

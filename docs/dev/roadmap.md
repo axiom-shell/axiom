@@ -267,7 +267,7 @@ Steps:
    - **Security paths:** every rule in `AGENTS.md` › Never has its case in `tests/scripts/test_guard.py`, and PAM, the greeter installer and the takeovers each have a test that tries to break them.
    - **Speed:** `scripts/dev/verify.sh` and CI stay fast enough that nobody routes around them.
    - **The agent rules:** `AGENTS.md`, the skills and [Running it unattended](#running-it-unattended) checked against what went wrong in the rows before; rules nothing broke are trimmed (with Phase 9's 12 KB target).
-   Asked (maintainer, 2026-10-29): "for the next branch, there should be an audit of the CI tests, and their guardrails (as well as scripts used in repo (i.e. gen docs, check variable usage, etc)), and those should be hardened", and "Next loop, do a quick inventory and pre-split what makes sense between all the entire repo guardrail hardening for PRs before starting the first review". Done: the audit (#220) and the inventory (the table in `.claude/reviews/guardrails.md` › Inventory). Its entries are linked below under Fixed in step 0; the rest of step 0 is these **Batches**, taken in order (one PR each, under [Rules](#rules)):
+   Asked (maintainer, 2026-10-29): "for the next branch, there should be an audit of the CI tests, and their guardrails (as well as scripts used in repo (i.e. gen docs, check variable usage, etc)), and those should be hardened", and "Next loop, do a quick inventory and pre-split what makes sense between all the entire repo guardrail hardening for PRs before starting the first review". Done: the audit (#220) and the inventory (the table in `.claude/reviews/guardrails.md` › Inventory). The rest of step 0 is these **Batches**, taken in order (one PR each, under [Rules](#rules)):
    1. Done: **CI and check_all.sh agree** (CI workflow, check_all.sh, check_go.sh, check_i18n.py): The check order is kept in three places, check_go.sh passes stale generated code except under --ci, CI can't fail on stale translation files, CI checks dependencies only when a PR touches Go.
    2. Done: **verify.sh** (verify.sh, the autopilot's gate): verify.sh skips the checks a deletion or a check's own change needs, Running it unattended's gate can't get `verify ok` on a committed branch.
    3. Done: **The guard** (`.claude/hooks/guard.py`, its tests, the deny list): The guard misses compound commands, wrapper options and writes onto config.json, The permission deny list names a config path that's gone; then each AGENTS.md › Never rule gets a compound-form case beside its plain one.
@@ -293,9 +293,6 @@ Posting for testers waits for all of these:
 - the last audit pass found nothing above minor;
 - the code is smaller than before the audits ([Size](#size)): QML and Go lines (tests apart) went down, or each system that grew says why;
 - the hardening weeks ended with no fix pending.
-
-Fixed in step 0 (the guardrails; moved from Phase 9):
-- [A `#` comment hides the rest of a command from the guard](issues.md#a--comment-hides-the-rest-of-a-command-from-the-guard)
 
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.
