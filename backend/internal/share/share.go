@@ -86,20 +86,13 @@ func Pick(s *schema.Schema, cfg any, carry []string, monitors Monitors) *jsonx.O
 
 // Dropped is what Pick(s, cfg, carry, monitors) leaves out, each value at
 // the highest place it's left out from: pass a Sparse config, so a value
-// that is only its default isn't reported. The format and version aren't:
-// a shared file's head carries its own.
+// that is only its default isn't reported.
 func Dropped(s *schema.Schema, cfg any, carry []string, monitors Monitors) []Drop {
-	var dropped []Drop
+	dropped := []Drop{}
 	ctx := newContext(s, carry, monitors)
 	ctx.dropped = &dropped
 	ctx.pick(cfg, true, s.Root(), "machine", "")
-	out := []Drop{}
-	for _, d := range dropped {
-		if d.Path != "format" && d.Path != "version" {
-			out = append(out, d)
-		}
-	}
-	return out
+	return dropped
 }
 
 // Apply is a copy of current with the example's parts in place of its own.

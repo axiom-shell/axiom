@@ -248,7 +248,7 @@ func TestSparse(t *testing.T) {
 func TestDropped(t *testing.T) {
 	t.Parallel()
 	s := v2(t)
-	cfg := Sparse(s, filled(t, s, `{"format": 2, "version": 76,
+	cfg := Sparse(s, filled(t, s, `{"format": 2,
 		"Appearance": {"theme": {"name": "nord"}, "wallpaper": {"folder": "~/walls"}},
 		"Apps": {"terminal": "foot"},
 		"Compositor": {"mode": "managed"},
@@ -273,7 +273,7 @@ func TestDropped(t *testing.T) {
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("dropped %v\nwant    %v", got, tc.want)
 			}
-			// Pick is the same walk without the record
+			// Given monitors, Pick keeps the place it doesn't report
 			picked := Pick(s, cfg, tc.carry, tc.monitors)
 			if names := value(picked, "Bars.items"); tc.monitors != nil && !strings.Contains(string(jsonx.MarshalCompact(names)), `"names":["#2"]`) {
 				t.Errorf("places: %s", jsonx.MarshalCompact(names))
