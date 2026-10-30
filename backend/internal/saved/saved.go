@@ -18,6 +18,7 @@ package saved
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -125,6 +126,9 @@ type Service struct {
 	// the active snapshot's parts as it loads, for Modified
 	baseline *jsonx.Object
 	state    State
+	// the active snapshot's meta.kind: kindCopy, kindUnsaved or "" (the
+	// user's)
+	activeKind string
 }
 
 // New returns a service, its active snapshot read back.
@@ -146,7 +150,7 @@ func New(opts Options) *Service {
 	if data, err := os.ReadFile(opts.UIState); err == nil {
 		_ = json.Unmarshal(data, &remembered)
 	}
-	s.setActive(remembered.Active, nil, "")
+	s.setActive(remembered.Active, nil, "", "")
 	return s
 }
 
@@ -160,8 +164,21 @@ func Sanitize(name string) string {
 	return strings.TrimLeft(unsafeName.ReplaceAllString(strings.TrimSpace(name), "_"), ".")
 }
 
-// unsaved is the snapshot the running config is kept as before something
-// replaces it, when it isn't on disk already.
+// What a snapshot is for, in its meta.kind: a decision about a snapshot
+// reads this, never its name. None (every file saved before kinds) is the
+// user's: never replaced or deleted unasked.
+const (
+	// The copy an applied file (an example, a community setup) was saved
+	// as: deleted once something else replaces it, as that file applies it
+	// again
+	kindCopy = "copy"
+	// The running config, kept before something replaced it when it wasn't
+	// on disk: one file, replaced each time
+	kindUnsaved = "unsaved"
+)
+
+// unsaved is the name the kindUnsaved snapshot is saved under, when no
+// snapshot of the user's has it.
 const unsaved = "unsaved"
 
 func (s *Service) path(name string) string {
@@ -234,17 +251,17 @@ func (s *Service) modified() bool {
 func (s *Service) Save(name, source string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.save(name, source)
+	return s.save(name, source, "")
 }
 
-func (s *Service) save(name, source string) (string, error) {
+func (s *Service) save(name, source, kind string) (string, error) {
 	file := Sanitize(name)
 	if file == "" {
 		return "", axerr.New(axerr.BadRequest, "a snapshot needs a name")
 	}
 	cfg, _ := s.opts.Store.Config()
 	sch := s.opts.Pipeline().Schema()
-	out := envelope(file, "", source)
+	out := envelope(file, "", source, kind)
 	body := share.Sparse(sch, share.Snapshot(sch, cfg)).(*jsonx.Object)
 	for _, k := range body.Keys() {
 		out.Set(k, body.Value(k))
@@ -255,16 +272,19 @@ func (s *Service) save(name, source string) (string, error) {
 	if err := fsx.WriteFile(s.path(file), jsonx.Marshal(out), 0o600); err != nil {
 		return "", axerr.Wrap(axerr.Unavailable, err, "saving %s", file)
 	}
-	s.setActive(file, cfg, source)
+	s.setActive(file, cfg, source, kind)
 	s.opts.Log.Info("saved the config", "as", file)
 	return file, nil
 }
 
 // envelope is a shared file's head: its format and version, and meta.
-func envelope(title, description, source string) *jsonx.Object {
+func envelope(title, description, source, kind string) *jsonx.Object {
 	meta := jsonx.Obj("title", title, "description", description)
 	if source != "" {
 		meta.Set("source", source)
+	}
+	if kind != "" {
+		meta.Set("kind", kind)
 	}
 	return jsonx.Obj("format", float64(convert.Format), "version", float64(steps.Current()), "meta", meta)
 }
@@ -285,10 +305,11 @@ func (s *Service) Restore(name string) (Applied, error) {
 		return Applied{}, err
 	}
 	result := Applied{Name: Sanitize(name), Saved: Sanitize(name)}
-	// Restoring "unsaved" itself takes its file as it was: keeping the
+	h := header(parsed)
+	// Restoring the kept one itself takes its file as it was: keeping the
 	// running config there would replace what's being restored
-	previous, copied := s.state.Active, s.state.ActiveSource != ""
-	if result.Name != unsaved {
+	previous, copied := s.state.Active, s.activeKind == kindCopy
+	if h.Kind != kindUnsaved {
 		if result.Backup, err = s.keep(); err != nil {
 			return Applied{}, err
 		}
@@ -307,7 +328,7 @@ func (s *Service) Restore(name string) (Applied, error) {
 		return result, err
 	}
 	after, _ := s.opts.Store.Config()
-	s.setActive(result.Name, after, header(parsed).Source)
+	s.setActive(result.Name, after, h.Source, h.Kind)
 	if copied {
 		s.drop(previous, result.Name)
 	}
@@ -327,22 +348,46 @@ func (s *Service) remove(name string) error {
 		return err
 	}
 	if Sanitize(name) == s.state.Active {
-		s.setActive("", nil, "")
+		s.setActive("", nil, "", "")
 	}
 	return nil
 }
 
 // keep makes sure the running config is on disk before something replaces
-// it: the active snapshot unchanged already is (""), else it's saved as
-// "unsaved", whose name it returns. An active one that didn't load (no
-// baseline) or whose file is gone doesn't count.
+// it: the active snapshot unchanged already is, and so are the schema's
+// defaults with none active (Restore defaults applies them again): "".
+// Else it's saved as the kindUnsaved snapshot, whose name it returns. An
+// active one that didn't load (no baseline) or whose file is gone doesn't
+// count.
 func (s *Service) keep() (string, error) {
 	if s.state.Active != "" && s.baseline != nil && !s.modified() {
 		if _, err := os.Stat(s.path(s.state.Active)); err == nil {
 			return "", nil
 		}
 	}
-	return s.save(unsaved, "")
+	if s.state.Active == "" {
+		sch := s.opts.Pipeline().Schema()
+		cfg, _ := s.opts.Store.Config()
+		if jsonx.Equal(share.Pick(sch, cfg, share.Everything, nil), share.Pick(sch, s.opts.Pipeline().Defaults(), share.Everything, nil)) {
+			return "", nil
+		}
+	}
+	return s.save(s.unsavedName(), "", kindUnsaved)
+}
+
+// unsavedName is the kindUnsaved snapshot's name: "unsaved", or "unsaved
+// <n>" past snapshots of the user's that have it.
+func (s *Service) unsavedName() string {
+	name := unsaved
+	for n := 2; ; n++ {
+		if _, err := os.Stat(s.path(name)); errors.Is(err, fs.ErrNotExist) {
+			return name
+		}
+		if parsed, err := readJSON(s.path(name)); err == nil && header(parsed).Kind == kindUnsaved {
+			return name
+		}
+		name = fmt.Sprintf("%s %d", unsaved, n)
+	}
 }
 
 // drop deletes previous, the copy an applied file was saved as (active,
@@ -358,9 +403,10 @@ func (s *Service) drop(previous, current string) {
 }
 
 // setActive makes name the active snapshot, baseline the config it holds
-// (nil: read it from its file), remembered across restarts.
-func (s *Service) setActive(name string, baseline *jsonx.Object, source string) {
-	s.state.Active, s.state.ActiveSource = name, source
+// (nil: read it, its source and kind from its file), remembered across
+// restarts.
+func (s *Service) setActive(name string, baseline *jsonx.Object, source, kind string) {
+	s.state.Active, s.state.ActiveSource, s.activeKind = name, source, kind
 	s.baseline = nil
 	if name != "" {
 		if baseline == nil {
@@ -368,8 +414,9 @@ func (s *Service) setActive(name string, baseline *jsonx.Object, source string) 
 				if cfg, err := s.load(parsed); err == nil {
 					baseline = cfg
 				}
-				if source == "" {
-					s.state.ActiveSource = header(parsed).Source
+				if source == "" && kind == "" {
+					h := header(parsed)
+					s.state.ActiveSource, s.activeKind = h.Source, h.Kind
 				}
 			} else {
 				s.state.Active = ""
@@ -537,15 +584,15 @@ func (s *Service) ApplyShared(path, name, snapshot string, monitors share.Monito
 
 // Defaults applies the schema's defaults like an example (the look,
 // personal parts and commands; machine settings stay), after keeping the
-// running config (keep); the result is saved as "defaults", a copy like an
-// example's, so the next apply doesn't keep it over "unsaved".
+// running config (keep).
 func (s *Service) Defaults() (Applied, error) {
-	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "defaults", "defaults")
+	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "", "")
 }
 
 // apply: the running config kept, then the file's parts in carry applied,
-// then (snapshot not "") the result saved as snapshot from source, and the
-// copy the last applied file was saved as dropped.
+// then (snapshot not "") the result saved as snapshot from source (a
+// kindCopy one with a source: its file applies it again), and the copy the
+// last applied file was saved as dropped.
 func (s *Service) apply(name string, parsed any, carry []string, monitors share.Monitors, snapshot, source string) (Applied, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -553,7 +600,7 @@ func (s *Service) apply(name string, parsed any, carry []string, monitors share.
 	if err != nil {
 		return Applied{}, err
 	}
-	previous, copied := s.state.Active, s.state.ActiveSource != ""
+	previous, copied := s.state.Active, s.activeKind == kindCopy
 	backup, err := s.keep()
 	if err != nil {
 		return Applied{}, err
@@ -563,10 +610,14 @@ func (s *Service) apply(name string, parsed any, carry []string, monitors share.
 	if _, err := s.opts.Store.Replace(applied.(*jsonx.Object), store.SetOptions{Restore: true}); err != nil {
 		return Applied{}, err
 	}
-	s.setActive("", nil, "")
+	s.setActive("", nil, "", "")
 	result := Applied{Name: name, Backup: backup}
 	if snapshot != "" {
-		if result.Saved, err = s.save(snapshot, source); err != nil {
+		kind := ""
+		if source != "" {
+			kind = kindCopy
+		}
+		if result.Saved, err = s.save(snapshot, source, kind); err != nil {
 			return result, err
 		}
 	}
@@ -599,7 +650,7 @@ func (s *Service) Export(personal, commands, places bool, monitors share.Monitor
 	if title == "" {
 		title = "axiom"
 	}
-	out := envelope(title, "", "")
+	out := envelope(title, "", "", "")
 	body := share.Sparse(sch, share.Pick(sch, cfg, carry, monitors)).(*jsonx.Object)
 	for _, k := range body.Keys() {
 		out.Set(k, body.Value(k))
@@ -666,7 +717,7 @@ func withoutHeader(parsed any) any {
 	return out
 }
 
-type headerInfo struct{ Title, Description, Source string }
+type headerInfo struct{ Title, Description, Source, Kind string }
 
 // header is a shared file's meta (format 1: _example).
 func header(parsed any) headerInfo {
@@ -682,7 +733,7 @@ func header(parsed any) headerInfo {
 		return headerInfo{}
 	}
 	str := func(k string) string { v, _ := meta.Value(k).(string); return v }
-	return headerInfo{Title: str("title"), Description: str("description"), Source: str("source")}
+	return headerInfo{Title: str("title"), Description: str("description"), Source: str("source"), Kind: str("kind")}
 }
 
 func readJSON(path string) (any, error) {

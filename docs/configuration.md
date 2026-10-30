@@ -43,7 +43,7 @@ axiom ships the setups from the README in `examples/`. Apply one from **Settings
 
 - An example holds only the look and the layout: the theme, font and shape, the bars and their style, overlay pages, edge menus, docks, OSDs, popouts, the lock screen layout, workspaces, notifications' placement, the power menu and the window switcher.
 - Everything else stays as it is: wallpapers, monitors, apps, keybinds, calendars, chat providers, compositor settings, idle and the login screen.
-- If your current config has changes that aren't saved (no saved config is active, or it shows the unsaved dot), they're saved first as `unsaved`, so going back is one **Restore** away. An unchanged saved config is already on disk, so nothing is added. `unsaved` is a single snapshot, replaced each time, so don't save one of your own under that name.
+- If your current config has changes that aren't saved (it differs from the defaults with no saved config active, or shows the unsaved dot), they're saved first as `unsaved`, so going back is one **Restore** away. An unchanged saved config is already on disk, so nothing is added. `unsaved` is a single snapshot, replaced each time. One of your own with that name is never replaced: the next free name, such as `unsaved 2`, is used instead.
 - An applied example is saved as `example-<name>`, the active one. It's deleted once you apply or restore something else, unless you saved over it, since the example applies it again.
 - An example is a partial `config.json` with a `_example` header (`title`, `description`). What it may hold is each setting's `x-scope` in `config/json/config.schema.json`. If it uses a font you don't have, the text falls back to another; a theme you don't have falls back to the default palette.
 

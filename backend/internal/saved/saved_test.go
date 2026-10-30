@@ -123,7 +123,8 @@ func TestApplyExampleFormat1(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if applied.Backup != "unsaved" || applied.Saved != "example-tall" {
+	// The running config was the defaults, which Restore defaults gives back
+	if applied.Backup != "" || applied.Saved != "example-tall" {
 		t.Errorf("applied %+v", applied)
 	}
 	if v := get(t, f.store, "Bars.items[primary].location"); v != "left" {
@@ -131,9 +132,6 @@ func TestApplyExampleFormat1(t *testing.T) {
 	}
 	if v := get(t, f.store, "Compositor.mode"); v != "detached" {
 		t.Errorf("a takeover changed: %v", v)
-	}
-	if _, err := os.Stat(filepath.Join(f.dir, "saved", "unsaved.json")); err != nil {
-		t.Error("the running config wasn't kept")
 	}
 	got := f.svc.Examples()
 	if len(got) != 1 || got[0].Title != "Tall" {
@@ -151,11 +149,12 @@ func TestApplyExampleFormat1(t *testing.T) {
 // What an apply or restore keeps of the running config: nothing while the
 // active snapshot is unchanged (it's on disk), else one "unsaved" file; and
 // the copy the last applied file was saved as goes once it's replaced,
-// unless the user saved over it.
+// unless the user saved over it. Each is decided by the file's meta.kind,
+// never its name.
 func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 	t.Parallel()
 	type step struct {
-		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"
+		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source
 		backup  string // Applied.Backup of an apply or restore
 		files   string // saved/ afterwards, sorted, space-separated
 		content string // what saved/unsaved.json then holds of Bars.style.widgetStyle ("" to skip)
@@ -165,14 +164,14 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 		steps []step
 	}{
 		{"switching back and forth", []step{
-			{do: "a", backup: "unsaved", files: "example-a unsaved"},
-			{do: "b", files: "example-b unsaved"},
-			{do: "a", files: "example-a unsaved"},
-			{do: "a", files: "example-a unsaved"},
+			{do: "a", files: "example-a"},
+			{do: "b", files: "example-b"},
+			{do: "a", files: "example-a"},
+			{do: "a", files: "example-a"},
 		}},
 		{"edits are kept, in one file", []step{
-			{do: "a", backup: "unsaved", files: "example-a unsaved"},
-			{do: "edit outline", files: "example-a unsaved"},
+			{do: "a", files: "example-a"},
+			{do: "edit outline", files: "example-a"},
 			{do: "b", backup: "unsaved", files: "example-b unsaved", content: "outline"},
 			{do: "edit plain", files: "example-b unsaved"},
 			{do: "a", backup: "unsaved", files: "example-a unsaved", content: "plain"},
@@ -195,10 +194,22 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "import", files: "import-friend mine"},
 			{do: "a", files: "example-a import-friend mine"},
 		}},
-		{"defaults are a copy too", []step{
+		{"the defaults are on disk already", []step{
 			{do: "edit outline", files: ""},
-			{do: "defaults", backup: "unsaved", files: "defaults unsaved", content: "outline"},
+			{do: "defaults", backup: "unsaved", files: "unsaved", content: "outline"},
 			{do: "a", files: "example-a unsaved", content: "outline"},
+		}},
+		{"a snapshot from before kinds is the user's, source or not", []step{
+			{do: "old import-old", files: "import-old"},
+			{do: "restore import-old", files: "import-old"},
+			{do: "a", files: "example-a import-old"},
+		}},
+		{"a snapshot the user named unsaved is never replaced", []step{
+			{do: "save unsaved", files: "unsaved"},
+			{do: "edit outline", files: "unsaved"},
+			{do: "a", backup: "unsaved 2", files: "example-a unsaved unsaved 2"},
+			{do: "edit plain", files: "example-a unsaved unsaved 2"},
+			{do: "b", backup: "unsaved 2", files: "example-b unsaved unsaved 2"},
 		}},
 		{"an active snapshot whose file is gone doesn't count", []step{
 			{do: "save mine", files: "mine"},
@@ -242,6 +253,9 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 					applied, err = f.svc.Defaults()
 				case "delete":
 					err = os.Remove(filepath.Join(f.dir, "saved", arg+".json"))
+				case "old":
+					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
+						"meta": {"title": "`+arg+`", "source": "`+arg+`"}, "Appearance": {"theme": {"name": "nord-light"}}}`), 0o600)
 				}
 				if err != nil {
 					t.Fatalf("step %d (%s): %v", i, st.do, err)
