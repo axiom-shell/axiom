@@ -1609,7 +1609,6 @@
     "Widget corner radius": "ウィジェットの角の丸み",
     "A dot per window (up to 3)": "ウィンドウごとに点（最大 3 つ）",
     "Day over month number": "日を月の上に",
-    "The apps axiom opens: by the Terminal, File manager and Browser keybinds, and the launcher's terminal apps and Shift+Enter commands.": "axiom が開くアプリ：ターミナル、ファイルマネージャー、ブラウザのキーバインド、ランチャーのターミナルアプリと Shift+Enter のコマンドで使います。",
     "Emoji (;)": "絵文字（;）",
     "Visibility": "表示方法",
     "Show one wallpaper on all monitors. Off, each monitor gets its own.": "すべてのモニターに同じ壁紙を表示します。オフにすると、モニターごとに別の壁紙になります。",
@@ -3432,7 +3431,6 @@
     "Shell command run on middle click (e.g. nm-connection-editor). Empty does nothing. A left click connects or disconnects the VPN used last.": "",
     "Show the widget only while a VPN is up.": "",
     "Show every VPN, to connect or disconnect one, when hovered.": "",
-    "Connection editor": "",
     "Notify when a VPN drops": "",
     "Stacked puts the VPN's name over its address.": "",
     "Send a notification when a VPN goes down without being asked to (the connection under it was lost, or the server stopped answering).": "",
@@ -3482,12 +3480,14 @@
     "VPN files": "",
     "Needs a client certificate": "",
     "Address the Wi-Fi menu asks, when you click Check, for the IP the internet sees (to confirm traffic goes through the VPN). It answers with the address as plain text. Nothing is sent until you click; empty hides the check.": "",
-    "Command the Edit connections button (VPN module) and the Network settings button (Wi-Fi menu) run, to add or change connections. Empty hides both.": "",
     "Public IP lookup": "",
     "{0} · manual": "",
     "The VPN section (each VPN, its toggle and the public IP check) and the Import VPN action.": "",
     "Show VPNs": "",
     "The VPN section (each VPN, its toggle and the public IP check) and the Import VPN action in the Wi-Fi menu.": "",
-    "VPNs in the popout": ""
+    "VPNs in the popout": "",
+    "The apps axiom opens: by the Terminal, File manager and Browser keybinds, the launcher's terminal apps and Shift+Enter commands, and the network editor.": "",
+    "Network editor": "",
+    "Command the Wi-Fi menu's Settings button and the VPN module's Edit connections button run, to add or change network connections and VPNs. Empty hides both.": ""
   }
 }

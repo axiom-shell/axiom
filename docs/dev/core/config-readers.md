@@ -32,14 +32,14 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader n
 - **`OSDConfig`**: the OSDs; see [OSD](../features/osd.md).
 - **`HotCornersConfig`**: the hot corners; see [Hot corners](../features/hot-corners.md).
 - **`LauncherConfig`**: launcher placement, size and providers.
-- **`Apps`**: the terminal, file manager and browser that binds and the launcher open.
+- **`Apps`**: the terminal, file manager and browser that binds and the launcher open, and the network editor (the Wi-Fi menu, the VPN module).
 - **`Screenshots`**: the screenshot and recording folders, `~` expanded, empty for `ScreenshotManager`'s defaults ([Screenshots and screen recording](../features/screenshots-recording.md)).
 - **`NotificationsConfig`**: the toasts' corner and gaps; see [Notifications](../features/notifications.md).
 - **`OverlayConfig`**: views and card-grid constants.
 - **`EdgeMenusConfig`**: edge menus.
 - **`IconsConfig`**, **`ChatConfig`**, **`ThemeIntegrations`**.
 - **`TailscaleConfig`**: what every Tailscale widget and module shares: the poll `interval`, `showOffline` peers, the Connect/Disconnect `actions`.
-- **`VpnConfig`**: what every VPN widget and module shares: `notifyOnDrop`, `showTailscale` (Tailscale as a VPN row), the `editorCommand` for Edit connections.
+- **`VpnConfig`**: what every VPN widget and module shares: `notifyOnDrop`, `showTailscale` (Tailscale as a VPN row), `publicIpUrl`.
 - **`CustomWidgetsConfig`**: the custom widgets (`items`, `byId`, `definition(id)`), read through a JSON string so an unrelated change doesn't notify ([custom widgets](../features/custom-widgets.md)).
 - **`CommunitySetups`**: whether the gallery is on, and its catalog URL ([Community setups](../features/community-setups.md)).
 - **`CalendarConfig`**:

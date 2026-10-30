@@ -152,7 +152,7 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
-var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps"}
+var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Apps.networkEditor"}
 
 // Bar widget settings added since, the same way (a widget's display style,
 // the Network widget's VPN lock and its popout's VPN section)

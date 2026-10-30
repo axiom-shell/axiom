@@ -17,12 +17,6 @@ properties:
     title: List Tailscale
     default: true
     description: "Show Tailscale as a row with the other VPNs when it's installed. Its own widget and module keep showing the tailnet's devices."
-  editorCommand:
-    x-scope: commands
-    type: string
-    title: Connection editor
-    default: nm-connection-editor
-    description: "Command the Edit connections button (VPN module) and the Network settings button (Wi-Fi menu) run, to add or change connections. Empty hides both."
   publicIpUrl:
     type: string
     title: Public IP lookup

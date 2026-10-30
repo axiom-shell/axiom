@@ -478,11 +478,11 @@ Panel {
     spacing: Widget.spacing / 2
 
     FooterAction {
-      visible: VpnConfig.editorCommand !== ""
+      visible: Apps.networkEditor !== ""
       iconText: "settings"
       text: I18n.tr("Settings")
-      tooltipText: I18n.tr("Edit connections ({0})", VpnConfig.editorCommand)
-      onClicked: CommandManager.runDetached(VpnConfig.editorCommand)
+      tooltipText: I18n.tr("Edit connections ({0})", Apps.networkEditor)
+      onClicked: CommandManager.runDetached(Apps.networkEditor)
     }
     FooterAction {
       visible: root.radioOn

@@ -12,7 +12,7 @@ import qs.components.content.parts
 // Every VPN (VpnManager.rows: NetworkManager's, and Tailscale), each a row
 // that connects or disconnects on click and asks for its password inline
 // when the VPN needs one; Import asks for a .conf or .ovpn file
-// (VpnManager.pickImport), Edit connections runs VpnConfig.editorCommand.
+// (VpnManager.pickImport), Edit connections runs Apps.networkEditor.
 // The Vpn widget's popout, and an overlay card (compact: the VPN up, or
 // off).
 Panel {
@@ -61,10 +61,10 @@ Panel {
       onClicked: VpnManager.pickImport()
     }
     FlatIconButton {
-      visible: VpnConfig.editorCommand !== ""
+      visible: Apps.networkEditor !== ""
       iconText: "edit"
       tooltipText: I18n.tr("Edit connections")
-      onClicked: CommandManager.runDetached(VpnConfig.editorCommand)
+      onClicked: CommandManager.runDetached(Apps.networkEditor)
     }
   }
 
@@ -83,7 +83,7 @@ Panel {
     offIcon: "vpn_key_off"
     offMessage: I18n.tr("NetworkManager isn't running")
     count: root.vpns.length
-    emptyText: VpnConfig.editorCommand !== "" ? I18n.tr("No VPNs yet: add one with the edit button") : I18n.tr("No VPNs set up in NetworkManager")
+    emptyText: Apps.networkEditor !== "" ? I18n.tr("No VPNs yet: add one with the edit button") : I18n.tr("No VPNs set up in NetworkManager")
     visibleRows: 6
     delegate: VpnRow {
       required property int index
