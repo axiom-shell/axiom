@@ -22,6 +22,6 @@ properties:
     description: List the tailnet's offline devices too, after the online ones.
   actions:
     type: boolean
-    title: Connect and disconnect buttons
+    title: Actions
     default: true
-    description: 'Show Connect / Disconnect (`tailscale up` / `down`). They need `sudo tailscale set --operator=$USER` once.'
+    description: 'Show Connect / Disconnect, switching and adding accounts, the exit node and the node''s options. They need operator rights once (`tailscale set --operator=$USER`): the popout''s Grant access button asks for them.'
