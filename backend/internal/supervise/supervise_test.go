@@ -138,9 +138,11 @@ func TestOrphanOfAnEarlierDaemonIsStopped(t *testing.T) {
 	defer other.Process.Kill()
 
 	s := New(fast(Options{Command: command, PIDFile: pidFile}))
+	// Start returns before the kernel shows the new cmdline (empty, or still
+	// ours, under load): an orphan of an earlier daemon has long shown it
+	eventually(t, func() bool { return s.isOurChild(orphan.Process.Pid) })
 	run(t, s)
-	// Its exit, not a poll against a bound: a loaded parallel run can take
-	// longer than eventually's 2 s to get here. Left alone, it would sleep 30 s
+	// Left alone, it would sleep 30 s
 	select {
 	case <-exited:
 	case <-time.After(testkit.Bound(15 * time.Second)):
