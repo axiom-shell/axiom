@@ -115,7 +115,7 @@ The cycle the `roadmap-autopilot` skill runs, one batch (one PR) per iteration, 
 3. **Brief** (leader), ten to fifteen lines plus two or three per item: the row and the items in order; each issues.md entry's title and its **Where**/**What**; what done looks like (the behaviour, and the entry removed with its link here); the docs to start from (`docs/dev/README.md` › Where to look, the recipe if one fits); the branch name `roadmap/<row>-<slug>`; and the stop conditions above, so the agent stops rather than guesses. A maintainer decision the item rests on is quoted word for word from roadmap.md or issues.md, with no step of the leader's own on how to build it (2026-10-26: a brief that added "so set the schema minimum to 5000" to a quoted decision broke saved configs), and a decision that seems to clash with its entry's title is a stop, not a reading. Every brief says: never `sudo`, `pkexec`, `su` or anything prompting for a password; a test needing root runs in a user namespace (`unshare -rm`), and what can't is skipped and reported (maintainer, 2026-10-30: "tell claude to stop asking for admin rights"). The brief also quotes [Rules](#rules)' Delete before adding and the rare-path cap (about 150 lines), so the agent stops there rather than building on.
 4. **Implement** (a fresh `general-purpose` agent, given the brief): branch in the worktree from `origin/main`, never pushing it; then per item: implement, `scripts/dev/verify.sh` until `verify ok`, and commit it with [Taking the next step](#taking-the-next-step) step 5 (statuses, `Done:` marks, issues.md removals) and the attribution trailer. An item it has to stop on is left out (reset to the last item's commit) and reported; the committed ones go on. The live session runs the maintainer's checkout, so a change rests on its tests, nested runs and the review; what only the live session can show is reported under **Not verifiable live**. It reports in at most 250 words: **Commits** (sha and item, one line each), **Changed** (one line per file group), **Verified** (the `verify ok` line, the tests run), **Not verifiable live**, **Filed** (issues.md titles added), **Stopped** (why, if it did).
 5. **Gate** (leader): the branch is at the last commit's sha, `git status` is clean, `git diff --stat origin/main...HEAD` touches the batch's area plus `docs/dev/roadmap.md` / `docs/dev/issues.md`, the closed entries' headings are gone from issues.md, and the batch is within the size gate: `git diff --shortstat origin/main...HEAD -- . ':!**/*_test.go' ':!tests/' ':!docs/'` at about 800 changed lines or fewer, unless its commits are pure moves. An oversized batch isn't sent back to be cut: it stops, and the leader reports it with a proposed split. A failed gate goes back to the same agent once (by `SendMessage`, with the failing lines); a second failure stops.
-6. **Review** (a second fresh `general-purpose` agent, so the review isn't anchored on the implementer's reasoning), on the local branch before anything is pushed: runs the `review-branch` skill with the batch's intent and `--fix`, told to rate as Major any added mechanism a smaller change would do (a new state, cache, retry or hold for a rare path) and any code a fix leaves behind that nothing needs any more, commits its fixes after `verify ok` (one commit per round, never pushing), and reports in at most 200 words: findings fixed (by severity), **Questions**, unfixed **Blockers**, the new sha. At most two rounds (a second agent if the first fixed a Blocker or Major), until none is left. A question with no product stake (how far a technical fix reaches) the leader decides, comments its reason on the PR and carries on (maintainer, 2026-10-29: "I don't care, as long as it is smartly implemented for the stack"). A product question (a changed default, a trade-off users notice, a migration, a takeover), or a Blocker it couldn't fix: push and open the PR as step 7 does, labelled `needs-decision` too, comment the findings on it, and stop.
+6. **Review** (a second fresh `general-purpose` agent, so the review isn't anchored on the implementer's reasoning), on the local branch before anything is pushed: runs the `review-branch` skill with the batch's intent and `--fix`, told to rate as Major any added mechanism a smaller change would do (a new state, cache, retry or hold for a rare path) and any code a fix leaves behind that nothing needs any more, commits its fixes after `verify ok` (one commit per round, never pushing), and reports in at most 200 words: findings fixed (by severity), **Questions**, unfixed **Blockers**, the new sha. Each round that fixed a Blocker or Major gets another, by a fresh agent, up to five rounds (maintainer, 2026-10-30: "up the Maxx to 5", "as long as there is a major fix it needs another review"); a round that fixed only minors ends it. A question with no product stake (how far a technical fix reaches) the leader decides, comments its reason on the PR and carries on (maintainer, 2026-10-29: "I don't care, as long as it is smartly implemented for the stack"). A product question (a changed default, a trade-off users notice, a migration, a takeover), a Blocker it couldn't fix, or a fifth round that still fixed a Blocker or Major (so no such fix merges unreviewed): push and open the PR as step 7 does, labelled `needs-decision` too, comment the findings on it, and stop.
 7. **PR** (leader): `scripts/dev/verify.sh --all > <scratch>/verify.log; tail -3` ends in `all checks passed` (every CI check, so CI only confirms; a plain `verify.sh` checks only uncommitted changes, so on the committed branch it prints `nothing changed since HEAD`), then `git push -u origin HEAD` once and `gh pr create --label roadmap`; the body lists the row, each item with its commit and the issues.md entries it closed, and the reports' Verified and Not verifiable live.
 8. **CI** (leader): `gh pr checks <n> --watch`. A failure goes to a fresh agent with the failing job's log tail (`gh run view --log-failed | tail -60`) to fix, run `verify.sh --all` and push once, at most twice; then stop with the PR open.
 9. **Merge** (leader): first `git switch --detach` in the worktree (`--delete-branch` deletes the local branch, and with it a worktree holding it), then `gh pr merge <n> --squash --delete-branch` as a command of its own (a compound command doesn't match its allow rule), then `git fetch` and `git switch --detach origin/main` there (the live checkout is left alone). The squash message keeps each item's commit message as a bullet. A merged item whose report has a **Not verifiable live** that matters gets a line under [Live checks](#live-checks) in the next batch.
@@ -297,6 +297,22 @@ Posting for testers waits for all of these:
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.
 
+Each reading is the `insertions` of a shortstat against the empty tree, so it needs no checkout (`C` is the commit read; `--name-only` in place of `--shortstat` lists the files counted):
+
+```sh
+E=$(git hash-object -t tree /dev/null)
+git diff --shortstat $E $C -- '*.qml' ':!tests/'                                    # QML
+git diff --shortstat $E $C -- '*.go' ':!*_test.go' ':!*/testdata/*' ':!*test/*' \
+    ':!backend/internal/testkit/' ':!*/zz_generated_*'                              # Go
+git diff --shortstat $E $C -- '*.sh' '*.py' '.githooks/pre-commit' ':!tests/'       # scripts
+```
+
+Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`testkit`, `dbustest`, `logindtest`, `wiretest`); the only committed generated code is `zz_generated_*.go` (the other generated files are JSON or never committed: [testing](testing.md#the-checks)). Lines include comments and blank lines.
+
+| Reading | Commit | QML | Go | Scripts |
+|---|---|---|---|---|
+| Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
+
 Found while porting the scripts (backend stage 4):
 - [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
 
@@ -318,6 +334,47 @@ Found while investigating Hyprland starting on workspace 10:
 
 Found by the audits:
 - [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)
+- [The guard reads the branch from the session's folder, not a `cd` before the push](issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)
+- [The daemon picks a compositor the shell may not run under](issues.md#the-daemon-picks-a-compositor-the-shell-may-not-run-under)
+- [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
+- [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
+- [Backends keep stubs for calls the facade gates](issues.md#backends-keep-stubs-for-calls-the-facade-gates)
+- [Small shrinks in the compositor layer](issues.md#small-shrinks-in-the-compositor-layer)
+- [A trial monitor Apply that turns a monitor off drops its Keep/Revert](issues.md#a-trial-monitor-apply-that-turns-a-monitor-off-drops-its-keeprevert)
+- [A shell reload during a trial monitor Apply loses the way back](issues.md#a-shell-reload-during-a-trial-monitor-apply-loses-the-way-back)
+- [Restoring a saved keybind preset marks every bind new, and Revert deletes it](issues.md#restoring-a-saved-keybind-preset-marks-every-bind-new-and-revert-deletes-it)
+- [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
+- [The bind merge deletes an hl.bind inside a helper, losing binds it never read](issues.md#the-bind-merge-deletes-an-hlbind-inside-a-helper-losing-binds-it-never-read)
+- [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
+- [A failed monitor profile apply is never retried for the same outputs](issues.md#a-failed-monitor-profile-apply-is-never-retried-for-the-same-outputs)
+- [One refused line stops the rest of a Hyprland eval](issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
+- [A user/ file with a dot in its name never loads](issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
+- [A moved raw bind with a Lua keyword key compiles to nothing](issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
+- [A failed options read sets Hyprland's gaps to 0](issues.md#a-failed-options-read-sets-hyprlands-gaps-to-0)
+- [A workspace slide throws when animations go off between its legs](issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
+- [Direct Hyprland dispatches can overtake queued Lua](issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
+- [Recording two keys within 30 s can end the second recording early on Hyprland](issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
+- [Two keybind reference paths drop a key's binds](issues.md#two-keybind-reference-paths-drop-a-keys-binds)
+- [The monitor prompt's padding is a bare 18 px, and check_sizes misses it](issues.md#the-monitor-prompts-padding-is-a-bare-18-px-and-check_sizes-misses-it)
+- [HyprlandManager keeps members only it reads](issues.md#hyprlandmanager-keeps-members-only-it-reads)
+- [A bind description's section is parsed three ways](issues.md#a-bind-descriptions-section-is-parsed-three-ways)
+- [KeybindManager keeps tables the methods helpers already hold](issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold)
+- [The workspace strips repeat ActiveStrip's loader](issues.md#the-workspace-strips-repeat-activestrips-loader)
+- [The managed file's catch-all monitor line is copied into M.monitors](issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
+- [Hyprland's exit command is kept in two packages](issues.md#hyprlands-exit-command-is-kept-in-two-packages)
+- [noteReload counts every compositor reload a second time](issues.md#notereload-counts-every-compositor-reload-a-second-time)
+- [The Hyprland Go code keeps dead and doubled helpers](issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers)
+- [Bind helpers keep JS halves the daemon owns now](issues.md#bind-helpers-keep-js-halves-the-daemon-owns-now)
+- [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
+- [The unused reader member check counts a member named after its key as used](issues.md#the-unused-reader-member-check-counts-a-member-named-after-its-key-as-used)
+- [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
+- [niri started on a broken config reads as loaded](issues.md#niri-started-on-a-broken-config-reads-as-loaded)
+- [Nothing reads userBindsRead or lastLoadFailed](issues.md#nothing-reads-userbindsread-or-lastloadfailed)
+- [The niri writer's runtimeOn and unread-binds guards are dead](issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
+- [Three listings of niri's user files](issues.md#three-listings-of-niris-user-files)
+- [RunningNested has its own niri socket client](issues.md#runningnested-has-its-own-niri-socket-client)
+- [NiriManager queues actions the daemon could order](issues.md#nirimanager-queues-actions-the-daemon-could-order)
+- [A second KDL writer in the kdl package](issues.md#a-second-kdl-writer-in-the-kdl-package)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

@@ -333,6 +333,252 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while making gen_docs.py see readers of ConfigManager.live (roadmap row 18)
 
+### The guard reads the branch from the session's folder, not a `cd` before the push
+- **Where:** `.claude/hooks/guard.py` (`check_git`, `current_branch`), `tests/scripts/test_guard.py`
+- **What:** `git push … origin HEAD` (or a push with no refspec) is refused when `current_branch` of the hook's `cwd` is main, and that `cwd` is the session's folder: a `cd` earlier in the same command isn't followed (`git -C` is). An agent whose session sits in a checkout on main and pushes a branch from a worktree with `cd <worktree> && git push -q -u origin HEAD && gh pr create --label roadmap --base main --body "$(cat <<'EOF' … EOF)"` gets `don't push to main; open a PR from a branch.` (refused once on 2026-10-30, autopilot for #232; reproduced 2026-10-30 by feeding `guard.check` that command with `cwd` a scratch repository on main: refused; with `cwd` the worktree, or `git -C <worktree> push`: allowed). The plain shape from the branch's own folder passes since #241 (a heredoc body with rule-like text passes too). The workaround is an explicit `branch:branch` refspec or `git -C`. Fix: follow a leading `cd <dir> &&` into the cwd `check_git` uses, with a test case.
+- **Size:** trivial
+- **Found:** 2026-10-30, while recording the size before the audits (roadmap row 19)
+
+### The daemon picks a compositor the shell may not run under
+- **Where:** `backend/internal/compositor/manager/manager.go` (`New`), `backend/internal/compositor/manager/outputs.go` (`OutputsFromEnv`, `Outputs.Read`), `backend/internal/daemon/compositorsocket.go` (`greeterHandlers`, `outputHandlers`, `applyGreeter`), `components/methods/CompositorKind.qml`
+- **What:** The shell picks its compositor with `CompositorKind`: with more than one of `HYPRLAND_INSTANCE_SIGNATURE` / `SWAYSOCK` / `NIRI_SOCKET` set (one left in the systemd user environment by an earlier session), the one whose process still runs wins. The daemon doesn't: `manager.New` takes the first set in a fixed order (Hyprland, niri, sway; the shell's is Hyprland, sway, niri) and `Outputs.Read`/`Apply` switch on the same order, with no process check. Under niri with a stale `HYPRLAND_INSTANCE_SIGNATURE` (or under sway with a stale `NIRI_SOCKET`) the manager is Hyprland's: `live()` needs the shell's facts to name its kind, so the layer is never applied (no binds, look or input in any mode), the status card stays on Checking, monitor profiles and `outputs.apply` go to a dead socket, and idle's `ScreenPower` fails. `applyGreeter` takes the same order. A stale variable is a case `docs/dev/compositor/README.md` names; the live session (sway) has none, so it isn't seen there. Both the compositor and the niri audits found this from the code; the niri one adds that `outputs.apply` (the Monitors page's Apply, profile switching) then fails with "no reply from Hyprland". Fix: one Go `Detect(getenv)` (CompositorKind's rule, `/proc/<pid>/comm`, as `userconf.NiriMain` and the sway reader already check their pid) used by all three, or the daemon passes the kind it picked to all three; then the daemon can start qs with only the running compositor's variable set, and `CompositorKind.qml` (68 lines), `tests/tst_CompositorKind.qml` (73) and `CompositorManager._running` go.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor system (and again reviewing the niri system)
+
+### The Translucency card reads the window look's blur object as a switch
+- **Where:** `components/views/Settings/TranslucencyStatus.qml`, `config/WindowLookConfig.qml` (`look`)
+- **What:** `WindowLook.blur` is the `Blur` object (`{ enabled, windowBlur, size, … }`), but the card tests `WindowLookConfig.look.blur` as a bool, so it's always truthy: the status always ends "Set in Compositor → Window look." even when the blur comes from the user's own config, and the "Set the compositor's blur" button (`root.off && !look.blur`) is never offered. Its branch would also `setValue(["WindowLook", "blur"], true)`, writing `true` over the whole object. Fix: read `blur.enabled` (a new reader property on `WindowLookConfig`, `blurSet`) and set `["WindowLook", "blur", "enabled"]`; `look` and `_lookJson` (5 lines, whose comment about applying it again is stale since the daemon applies the look) then have no reader and go.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor system
+
+### A failed cursor theme call keeps the theme's own name all session
+- **Where:** `services/ui/CursorThemeManager.qml` (`_resolve`)
+- **What:** When `cursor.theme` fails, `_resolve` takes the theme's own name as resolved and sets `_resolvedOnce`, and nothing asks again until the theme or size changes. The log has it three times across dev re-execs (`[CursorThemeManager] cursor.theme: the connection to axiom closed`): `xcursorTheme` is then the plain theme, so for a theme that needs its companion (Oxygen) the compositor, `XCURSOR_THEME` and GTK get the name without it, the very fallback the companion exists to stop, and the companion of the theme is never made. Related to, not covered by, Read-only daemon calls fail across a dev re-exec (this call writes, but is idempotent). Fix: pass `{ repeatable: true }`, and on an error keep `_resolved` as it was and retry on `BackendManager.ready`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor system
+
+### Backends keep stubs for calls the facade gates
+- **Where:** `services/compositor/SwayManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`), `services/compositor/NiriManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`), `services/compositor/CompositorManager.qml` (`withLayerRects`), `docs/dev/compositor/contract.md`
+- **What:** Deletion pass. `CompositorManager.withCursorPos` and `warpCursorToLayer` call the backend only with `supports.cursorPos` / `cursorWarp`, which only Hyprland sets, so sway's and niri's `withCursorPos` (calls back null) and empty `warpCursorToLayer` are never reached. `withLayerRects` is called ungated, but both only call back null, which the facade's no-backend branch already does. About 22 lines over the two backends. Fix: delete the four gated stubs; make `withLayerRects` optional in the facade (`root.backend?.withLayerRects ? … : callback(null)`) and delete its two stubs; mark the three optional in contract.md › Session and input and the compositor-backend recipe.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor system
+
+### Small shrinks in the compositor layer
+- **Where:** `services/compositor/CompositorManager.qml` (`stepWorkspace`), `services/compositor/CompositorConfigManager.qml` (`copyIncludeLines`, `copyAutostartLines`), `config/WindowLookConfig.qml` (`shadowSoft`), `components/views/Settings/CompositorStatusCard.qml`
+- **What:** Deletion pass, about 12 lines. `stepWorkspace` re-derives `WorkspacesConfig.columns` and `rows` (`grid ? columns : size`, `grid ? rows : 1` equal them in every layout: `columns` is `count` and `rows` 1 outside the grid), a re-derivation of a reader's decision. `copyIncludeLines` / `copyAutostartLines` each wrap one `ClipboardManager.copyText` for one caller (the status card, which can call it itself). `WindowLookConfig.shadowSoft` is `_shadowMatched` under a second name, read once by `CompositorConfigManager._look`. Fix: use the readers' `columns`/`rows`; have the card call `ClipboardManager.copyText(CompositorConfigManager.includeLines)` and drop the wrappers; send `_shadowMatched` as a public `shadowMatched` (or keep one name).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor system
+
+### A trial monitor Apply that turns a monitor off drops its Keep/Revert
+- **Where:** `services/compositor/MonitorManager.qml` (`onOutputsHotplugged`, `apply`, `revert`), `services/compositor/HyprlandManager.qml` (`_announce`)
+- **What:** `apply()` evaluates the trial rules and sets `pending`; the hotplug handler (MonitorManager.qml:451-456) ends any pending trial (`pending = false; _countdown.stop()`), assuming the hotplug means the daemon already switched profiles. A trial whose rules disable or mirror a monitor makes Hyprland remove that output (`monitorremoved` → `outputsHotplugged`), so the trial ends itself: the prompt goes, the 15 s auto-revert is cancelled, `axiom ipc monitors revert` does nothing (`revert()` returns while `!pending`), and the trial layout stays live, unsaved. Turning the wrong monitor off is the case the revert exists for. Code path confirmed; that Hyprland sends `monitorremoved` for a rule-disabled monitor wants one nested Hyprland run (`scripts/dev/nested.sh hyprland`). Fix: end the trial only on a hotplug the trial's own rules don't explain (record the outputs `apply()` expects to stay enabled), or keep the countdown running.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### A shell reload during a trial monitor Apply loses the way back
+- **Where:** `services/compositor/MonitorManager.qml` (`pending`, `_revertRules`, `_revertDetails`, the `monitors` IPC `revert`)
+- **What:** The trial state is plain properties (MonitorManager.qml:303-308), no `PersistentProperties`. A QML reload or a crash `axiom run` restarts within the 15 s leaves `pending` false and the snapshot gone: the countdown never reverts, and `axiom ipc monitors revert` (documented as the recovery from a layout that can't be seen) is a no-op. The unsaved trial layout stays until the next hotplug or config reload. PLAUSIBLE as a scenario (needs a reload or crash in the window; a monitor change is a common crash trigger). Fix: keep `pending`, `secondsLeft` and the two snapshots in `PersistentProperties`; for a crash, the daemon could own the trial (`outputs.apply` with a trial flag it reverts itself unless `outputs.keep` arrives).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### Restoring a saved keybind preset marks every bind new, and Revert deletes it
+- **Where:** `services/compositor/KeybindEditor.qml` (`_completeBind`, `restorePreset`, `_matchOrigins`, `changedBinds`, `revertBind`), `services/core/ConfigDraft.qml` (`changed`)
+- **What:** `_completeBind` (KeybindEditor.qml:101-114) builds a template and `Object.assign`s the bind onto it, so keys the template lacks (`id`, `compositor`) move to the end. Origins, the unsaved dots and the draft's dirty check all compare `JSON.stringify` text, which depends on key order. Save a preset, then Restore it unchanged: no bind matches its saved twin, every row gets an unsaved dot and origin -1, Save lights up with nothing changed, and Revert on any row calls `removeBind` ("origin < 0 → new"), deleting a bind the user never touched. Fix: keep the bind's own key order in `_completeBind` (`Object.assign({}, bind, <missing fields only>)`), or compare order-insensitively (`Utils.deepEqual`, or a key-sorted stringify) in `_matchOrigins` and `changedBinds`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### The Keybinds page goes stale after a detached-mode Save
+- **Where:** `services/compositor/KeybindManager.qml` (`refreshSoon`, `_appliedBinds`, `userKeyCounts`), `backend/internal/compositor/manager/hypr.go` (`runtimeApply`)
+- **What:** In detached mode the daemon re-applies binds by eval only (`runtimeApply`, no reload, so no `configreloaded`). The page re-reads Hyprland's binds only on `configReloaded`, on open, and through `refreshSoon`, whose one caller is the merge (KeybindEditor.qml:500); the Go port (dd773ed) dropped the two `refreshSoon()` calls the QML runtime layer (`RuntimeLayer.qml`) made after each apply. `_appliedBinds` follows the daemon's state at once, so the two disagree until the page reopens: move a bind from SUPER + Q to SUPER + W and Save, and SUPER + Q shows as the user's own bind (reference, key map colour, "Your compositor config uses this key" on a new bind there) while SUPER + W is missing. Fix: `on_AppliedBindsChanged: refreshSoon()` in KeybindManager (its debounce and `_readAgain` guard already absorb bursts).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### The bind merge deletes an hl.bind inside a helper, losing binds it never read
+- **Where:** `backend/internal/compositor/binds/hyprlua.go` (`callSite`), `backend/internal/compositor/binds/hypr.go` (`extractHypr`)
+- **What:** A bind's site is the line of its `hl.bind` call (`callSite`: `GetStack(1)`, `CurrentLine`), not the top-level statement that ran it. A `user/*.lua` file binding through its own helper (`local function bindx(k, c) hl.bind(k, hl.dsp.exec_cmd(c)) end`, then `bindx("SUPER + A", "foo")` and, in a `hl.define_submap` handler, `bindx("x", "bar")`) gives one site, the helper's body, holding only the binds extract saw. Everything it saw maps, so the merge moves it and `remove` deletes the helper's `hl.bind` line: the submap's `x` bind (and any bind the helper makes from an `hl.on` handler or an untaken branch) is silently gone, with only the dated backup to recover it. Reproduced against `extractHypr`/`removeHypr` with an overlay test (no tree edits). bind-merge.md › What can move doesn't cover it. Fix: record on each `luaBind`/`luaUnbind` whether the call ran in the file's main chunk (`L.GetInfo("S", …)`'s `What` at level 1) and keep a site that didn't, with a new reason (e.g. `inFunction`); a top-level loop still moves. A test row with the file above, and a line in bind-merge.md.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### The bind merge removes an hl.unbind whether or not its bind went
+- **Where:** `backend/internal/compositor/binds/hypr.go` (`extractHypr`'s unbind sites), `backend/internal/compositor/manager/manager.go` (`left`)
+- **What:** Extract adds an `hl.unbind(K)` site, with no binds, when K is a moved bind's key (hypr.go:459-474), and `remove` handles it on its own, per file. `left()` takes back only the binds of failed sites, matched by file and line, so the two outcomes split: the bind goes but the unbind's file fails (`syntax`, `io`, `changed`), and the user's surviving `hl.unbind(K)` runs after axiom's module and unbinds the moved bind (the key does nothing); or the unbind goes but the bind's file fails, the re-commit restores axiom's bind on K, and the user's `hl.bind(K)` fires alongside it, which bind-merge.md › Committing and removing says can't happen. Rare: needs one file of a merge to fail. Fix: give each unbind site the keys it covers; remove an unbind site only when its keys' bind sites all went, and treat a failed unbind site in `left()` as failing those binds.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### A failed monitor profile apply is never retried for the same outputs
+- **Where:** `backend/internal/compositor/manager/outputs.go` (`profileSwitch.apply`, `ProfileWatch`)
+- **What:** `p.applied = key` is set (outputs.go:170) before `p.io.Apply` (:171). When Apply fails (a 5 s socket timeout from a busy Hyprland, a refused rule), the same outputs and rules count as applied, and later calls return early until a hotplug, a rules edit or a compositor reload changes the key. Both callers only log the error. In the greeter nothing resets `applied`, so its monitors keep Hyprland's own layout until something is replugged. Fix: set `p.applied = key` only once Apply returns nil.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### One refused line stops the rest of a Hyprland eval
+- **Where:** `backend/internal/compositor/manager/hypr.go` (`runtimeApply`), `backend/internal/compositor/manager/outputs.go` (the Hyprland branch of `apply`)
+- **What:** Two chunks are sent as one eval with no `pcall`, unlike `addLayerRules`, which wraps each rule for exactly this. `runtimeApply` (hypr.go:221-228) puts the binds, required settings, look/input/blur and strips lines first and `AXIOM_RUNTIME_KEYS = {…}` last: a look or strips line Hyprland raises on (an option this version doesn't know) leaves the binds live but unrecorded, so the next apply unbinds nothing, reads axiom's own binds as the user's, reports them in `skippedKeys` and stops managing them until Hyprland reloads (and `AXIOM_STRIPS` stays unset). `outputs.apply` joins every `hl.monitor` call into one eval (outputs.go:52), so the first refused rule leaves the monitors after it unlaid; niri's branch below sends them one at a time for that reason. PLAUSIBLE: whether `hl.config`/`hl.monitor` raise on a bad value wants one nested Hyprland run. Fix: emit `AXIOM_RUNTIME_KEYS` right after the binds and wrap the look/input/blur and strips groups each in `pcall`; wrap each `hl.monitor` in `pcall`, collect the errors and `error(table.concat(e, "; "))` at the end so the refusal is still reported.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### A user/ file with a dot in its name never loads
+- **Where:** `backend/internal/compositor/render/hyprconfig.go` (`UserFilesLua`), `backend/internal/compositor/binds/hypr.go` (the extract's module name)
+- **What:** The managed and released files load each `user/*.lua` as `require("user." .. name)`, and the bind extract uses the same module name. Lua's `require` turns every `.` into `/`, so `user/my.binds.lua` is looked for as `user/my/binds.lua`: it never loads (Hyprland's config errors say module not found) and the merge reports an error for it. Reproduced against the extract. Nothing warns about dotted names (docs/installation.md only says `require("user.<name>")`). Fix: load such files with `dofile` (or skip them with a reported error), and say so in config-modes.md › managed.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### A moved raw bind with a Lua keyword key compiles to nothing
+- **Where:** `backend/internal/compositor/binds/hyprlua.go` (`luaSource`)
+- **What:** `luaSource` writes a table key that looks like a name bare, keywords included (hyprlua.go:467): `{ ["end"] = 1 }` becomes `{ end = 1 }`, and NaN/Inf come out as `nan`/`inf` (nil globals). A dispatcher the merge maps to `raw` keeps that source as its argument; `DispatcherLua`'s `raw` case compiles it with `load`, which fails, so the moved bind becomes `hl.dsp.no_op()` while the user's original call is already deleted. Reproduced (`{["end"]=1}` → `{ end = 1 }`). Rare. Fix: exclude Lua's keywords from the bare form; better, `load`-check the rebuilt source at extract time and keep the site when it doesn't compile.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### A failed options read sets Hyprland's gaps to 0
+- **Where:** `services/compositor/HyprlandManager.qml` (`_readOptions`, `_gapSides`)
+- **What:** `_readOptions` keeps every option's old value when its reply is missing, except the gaps: `gapsOut = _gapSides(gaps) ?? gapsOut` relies on `_gapSides(null)` being null, but `String(option?.css ?? "").trim().split(/\s+/)` is `[""]` → `[0]`, so it returns `{0,0,0,0}`. A failed batch (the 5 s `unavailable` while Hyprland is busy, e.g. right after a reload) gives null for every option, so `gapsOut` drops to 0 and bars that subtract it jump until the next good read. Fix: `if (typeof option?.css !== "string") return null;` first; better, move `_gapSides` into `HyprState` with test rows for a null reply and 1, 2 and 4 values.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### A workspace slide throws when animations go off between its legs
+- **Where:** `services/compositor/HyprlandManager.qml` (`_nextSlide`, `travel`, `travelingTo`)
+- **What:** `travel` checks `_workspaceAnim` for the first leg only; `_nextSlide` re-reads it per leg and uses `anim.bezier`/`anim.style` unchecked (HyprlandManager.qml:517-534). An options read landing in the timer gap between the two legs of a diagonal grid switch with animations now off (`animations:enabled` false, the `instant` preset) makes the second leg throw a TypeError: the switch stops at the corner workspace, and `travelingTo` keeps the first leg's id, so `CompositorManager` plans the next switch from it and `_compaction` keeps deferring (`travelingTo > 0`) until another travel resets it. Rare. Fix: snapshot `anim` into each step in `travel`, or in `_nextSlide` dispatch the rest directly and reset `_slideSteps`/`travelingTo` when it's null.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### Direct Hyprland dispatches can overtake queued Lua
+- **Where:** `services/compositor/HyprlandManager.qml` (`sendWindowToWorkspace`, `activateWindow`, `travel`, `_eval`)
+- **What:** Workspace and window actions use two routes nothing orders: `Hyprland.dispatch` (Quickshell's socket, at once) and `_eval` (queued behind any Lua, through the daemon). A slide's chunk queued behind a compaction or remap chunk, followed by a quick `moveSilent` that dispatches at once, moves the focused window first; the queued chunk's focus-relative `hl.dsp.window.move({ workspace })` then acts on whatever window is focused by then. The same for an un-animated leg after a sliding one. PLAUSIBLE: the window is one `hypr.request` round trip, longer while a long chunk or a 5 s timeout holds the queue. Fix: while `_evaluating || _evalQueue.length > 0`, send direct dispatches through `_eval` too.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### Recording two keys within 30 s can end the second recording early on Hyprland
+- **Where:** `services/compositor/HyprlandManager.qml` (`_enterCaptureLua`, `captureKeys`), `services/compositor/KeybindEditor.qml` (`startRecording`)
+- **What:** Each `captureKeys(true)` arms a 30 s `hl.timer` that leaves `axiom_record` if it's the current submap, and nothing cancels it when the recording stops. Record a key at t=0, finish at t=3, Add bind at t=10: the first timer leaves the second recording's submap at t=30, while QML still shows "Press a combo…" until its own 25 s timeout (`_recordTimeout`) ends it at t=35. Each start also redefines the submap, adding another copy of its unreachable bind (redefining a submap adds to it, as window-switcher.md notes). PLAUSIBLE and likely softened: the recorder's `ShortcutInhibitor` (KeyRecorder.qml) should keep Hyprland's binds from firing while it has focus. Sway already avoids the race by naming each mode anew. Fix: a generation in Lua (`AXIOM_CAPTURE_GEN`) checked by the timer and bumped on leave, and define the submap once.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### Two keybind reference paths drop a key's binds
+- **Where:** `services/compositor/KeybindsPageState.qml` (`_bindMods`), `components/methods/BindRows.qml` (`collapseDirections`)
+- **What:** `_bindMods` decodes a bind's modifiers from its `BindKeys.keyId`, which leaves a tap's own modifier out, so a hand-written or merged `SUPER + Super_L` bind has no modifiers and the SUPER chip filters it out (the recorder's plain `Super_L` is unaffected). `collapseDirections` keeps only the first row per direction and merges only those (`_merged(ordered, …)`, BindRows.qml:107-119), while `_buildKeybindings` keeps rows whose labels differ in case apart ("Focus Left" next to "Focus left"), so the second row's `ids`, `user` and `overrides` are lost and the key map and combo lookup miss its key. Both rare. Fix: take the modifiers from `KeyNames.split(bind.key).mods`; pass all `members` to `_merged` and keep `ordered` for the cluster, with a test row of two "left" rows.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### The monitor prompt's padding is a bare 18 px, and check_sizes misses it
+- **Where:** `components/surfaces/monitors/MonitorPromptWindow.qml` (`pad`), `scripts/check_sizes.py` (`SIZE_WORD`)
+- **What:** `readonly property int pad: 18` (MonitorPromptWindow.qml:19, used at :50-51) stays 18 px at every Interface scale while the card's text scales; AGENTS.md has sizes outside the bars from `Widget.px(n)`. `check_sizes.py` doesn't flag it because its size words have no `pad`. Fix: `Widget.px(18)`, and add `pad` to `SIZE_WORD` (the check that would have caught it).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### HyprlandManager keeps members only it reads
+- **Where:** `services/compositor/HyprlandManager.qml` (`withAnimations`, `_optionsWaiting`, `runLua`, `withBinds`, `layerApplied`, `refreshOptions`, `animations`, `animationsEnabled`, `_compaction`, `applyRemap`, `_bases`), `docs/dev/hyprland/ipc.md`, `docs/recipes/service.md`
+- **What:** Deletion pass, about 40 lines. `withAnimations` has no caller, and `_optionsWaiting` serves only it (about 11 lines). `runLua` is a public wrapper whose only callers are its own `captureKeys` and `leaveSwitcher` (7 lines; `_eval` there). `withBinds` is used only by `withMainBinds` (inline, about 4). `layerApplied` only forwards to `refreshOptions` under two stacked comments (one function, about 4). `animations`/`animationsEnabled` are public but feed only `_workspaceAnim` (compute it in `_readOptions`, about 6). `_compaction` and `applyRemap` wrap their lines in the same animation-off/on prelude and epilogue (one `_runPlan(lines)`, about 4). `_bases` is recomputed on every output change though only the scrolling layout reads it (gate on `dynamicByLayout`, 2; the copy itself is by design, workspaces.md › Layouts). ipc.md's list of what `CompositorManager` uses ("`runLua`, `withOutputs`, `withBinds`, `refreshOptions`, `animations`, `switcherKey`") names a `withOutputs` that doesn't exist and four members no other file calls, leaves out `WindowSwitcherManager` (`leaveSwitcher`, `switcherKey`) and `CompositorConfigManager` (`layerApplied`) reaching the backend, and says the runtime layer's unbind goes through `runLua` (it's the daemon's now); service.md:109 also names `runLua`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### A bind description's section is parsed three ways
+- **Where:** `services/compositor/KeybindsPageState.qml` (`_bindSection`), `services/compositor/KeybindManager.qml` (`bindLabel`, `_buildKeybindings`), `components/methods/BindActions.qml` (`hasOwnSection`)
+- **What:** "Section: Label" is split three ways: `indexOf(": ")`, `indexOf(":")` and `split(":")[0]`. Only the editor's (`_bindSection`) doesn't trim, so `" Media: Play"` or `"Media : Play"` passes `hasOwnSection` (which trims) and gets its own " Media"/"Media " section and chip in the editor, while the reference shows it under Media. Fix: one `BindActions.splitDescription(text) → { section, label }` (trimmed), with test rows for a leading space and `a:b: c`, used by all three.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### KeybindManager keeps tables the methods helpers already hold
+- **Where:** `services/compositor/KeybindManager.qml` (`_modifiers`, `decodeMods`, `_keyNames`, `_appliedBinds`, `userKeyCounts`), `components/methods/BindKeys.qml` (`_modBits`), `components/methods/KeyMap.qml` (`labelOf`), `services/compositor/KeybindsPageState.qml` (`_bindMods`)
+- **What:** Deletion pass, about 36 lines. `_modifiers` (33 lines) is a second name↔mask table, the inverse of `BindKeys._modBits`, and `_bindMods` parses keyId's string (`parseInt`) to get a mask back: one `decodeMods(mask)` in BindKeys, built from `_modBits`, replaces it (net about -25), and the two can't disagree (its other caller is Hyprland's `modmask`, KeybindManager.qml:395; `_bindMods` stops decoding a mask with the fix in "Two keybind reference paths drop a key's binds"). Nine `_keyNames` entries (`mouse:272/273/274`, `mouse_up/down`, `left/right/up/down`) return what `KeyMap.labelOf` already does, which `_formatKey` asks next (about 9 lines). The skipped-key list is computed twice (KeybindManager.qml:230 and :245; one property, -2).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### The workspace strips repeat ActiveStrip's loader
+- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml`, `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml`, `components/bar/widgets/Workspaces/ActiveStrip.qml` (`hasWindows`)
+- **What:** Both strips hold the same `Loader { active: stripDirection !== ""; visible: hasWindows; ActiveStrip { 12 bindings } }` (only the text colour differs) and the same `stripOnly` expression but for the id count; `ActiveStrip.hasWindows` also calls `CompositorManager.stripWindows` again beside its `StripWindows`. Deletion pass: move the loader into ActiveStrip (it sets its own `active`/`visible` and exposes `stripOnly(count)`), about 20 lines.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### The managed file's catch-all monitor line is copied into M.monitors
+- **Where:** `backend/internal/compositor/render/hyprlua.go` (`HyprFileMonitorCalls`), `backend/internal/compositor/manager/hypr.go`
+- **What:** Until the outputs are read, `M.monitors()` is refilled from the file: every line starting `hl.monitor({ output = "`. In managed mode that matches the managed file's fixed catch-all `hl.monitor({ output = "", mode = "preferred", … })` (hyprconfig.go:531) too, so each write made before the first read adds one more copy inside `M.monitors()`. Harmless (each replaces the default rule; the next write after a read cleans up) but the file churns and the layer key changes. Fix: read only the lines inside `function M.monitors()`, or skip `output = ""`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### Hyprland's exit command is kept in two packages
+- **Where:** `backend/internal/compositor/binds/hypr.go` (`exitCommand`), `backend/internal/compositor/render/hyprconfig.go` (`exitLua`)
+- **What:** The merge maps `exec_cmd(<exitCommand>)` to `exitSession` and the writer emits `exitLua` for `exitSession`: the same string, kept by hand in two places (hypr.go:44, hyprconfig.go:30), with no test tying them. Changed alone, a written exit bind merges back as a plain `exec`. Fix: one constant (e.g. in `actions`) used by both; deletion pass 1 line.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### noteReload counts every compositor reload a second time
+- **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
+- **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### The Hyprland Go code keeps dead and doubled helpers
+- **Where:** `backend/internal/compositor/takeover/kinds.go` (`record`), `backend/internal/compositor/takeover/takeover.go`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherLeaveLua`), `backend/internal/compositor/render/keys.go` (`UserKeyCounts`), `backend/internal/compositor/binds/hyprlua.go` (`quoteLua`), `backend/internal/daemon/compositor.go`, `backend/internal/daemon/compositorsocket.go`
+- **What:** Deletion pass, about 65 lines. `Kind.record` is true for all three kinds, so the field and its `!record` halves are dead (about 13; the `err != nil` fallback for claims older than `.axiom-claimed` stays, and whether that fallback can go too is the maintainer's call, about 6 more). `render.SwitcherLeaveLua` has no Go caller (HyprlandManager.qml hard-codes the same Lua; 1). `render.UserKeyCounts` has only `shared_test.go`'s op row as caller (the shell counts user keys itself; about 18, with its row; the op row there for BindKeys' `runtimeBinds` replays a JS function that no longer exists). `binds.quoteLua` (31 lines) is a second Lua string quoter beside `render.LuaString`; `binds` can import `render` with no cycle (moved `raw` arguments would keep raw control bytes instead of `\ddd`, which no test pins). `daemon/compositor.go` spells the anonymous `struct{ Only string }` six times (a named type, about -15). The `hyprctl setcursor` request is built twice (`manager/hypr.go`, `daemon/compositorsocket.go`): one `ipc` helper. `render.SoftShadow`, `LeaveSubmap` and `AnimationSet` are exported but used only inside `render`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### Bind helpers keep JS halves the daemon owns now
+- **Where:** `components/methods/BindActions.qml` (`descriptionFor`), `components/methods/BindKeys.qml` (`withIds`), `tests/tst_BindKeys.qml`, `backend/internal/compositor/manager/manager.go` (`withIDs`)
+- **What:** `BindActions.descriptionFor` has no QML caller (only a comment in KeybindEditor.qml and its test): Go's `DescriptionFor` renders every description, so its test rows belong in a Go test and the function can go (deletion pass, 4 lines plus the test). `BindKeys.withIds` and Go's `withIDs` follow one rule (bind-merge.md › Duplicates), but tst_BindKeys.qml says "withIds has no Go counterpart to replay it", no shared case pins them, and they already differ on a bind with no `key` (`bind` in QML, `null` in Go). Fix: record `withIds` as a shared case and replay it against `withIDs` (nil key → "").
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### Stale lines in the Hyprland docs and comments
+- **Where:** `docs/dev/hyprland/window-switcher.md`, `components/methods/WorkspaceGeometry.qml` (`orderMonitors`), `components/methods/BindKeys.qml`, `backend/internal/compositor/render/keys.go` (`RuntimeBinds`), `components/hosts/popout/EdgePopout.qml`
+- **What:** window-switcher.md › Events and the manager says the list is "limited to the focused monitor", but with `scope: all` `DockLayout.inScope` keeps every monitor's windows; what's tied to the focused monitor is where it shows. `orderMonitors`' comment says CompositorManager fills its keys; `blockBases` does. BindKeys' header still lists "which of axiom's binds a runtime layer applies and which it skips", gone from QML, and keys.go's comment calls `RuntimeBinds` the copy of BindKeys' `runtimeBinds`, which no longer exists. EdgePopout.qml (outside the system, lines 89 and 383) twice credits "HyprlandManager's layer rules", which are the daemon's now (`render.LayerRulesLua`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### The unused reader member check counts a member named after its key as used
+- **Where:** `scripts/gen_docs.py` (the reader-member usage count), `scripts/config-usage-baseline.json`, `config/WindowSwitcherConfig.qml` (`compositorSwitcher`)
+- **What:** gen_docs.py (around line 334) counts a reader member as used inside its reader when its name appears more than once there. `(?<![\w])name\b` also matches the `.name` in the member's own `_c.name` binding, so every member named after its config key passes, read or not: `WindowSwitcherConfig.compositorSwitcher` has no QML reader (the daemon reads the setting itself, `manager/niri_test.go` pins it) and isn't listed. Fix: don't count a match preceded by `.`, or count `<Reader>.<member>` uses outside the reader; then delete what it newly finds (the baseline only shrinks): `compositorSwitcher` is 3 lines.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the hyprland system
+
+### A user's blur off overrides axiom's blur on niri
+- **Where:** `backend/internal/compositor/render/niri.go` (`NiriLookNodes`), `backend/internal/compositor/userconf/niri.go` (`NiriInfo`)
+- **What:** `niri-backend.md` says axiom's look wins over the user's files, and a boolean is written both ways so axiom's choice wins. The look's blur isn't: with blur on, `NiriLookNodes` writes `blur { passes; offset; noise }` but never `on`. A `blur { off }` in the user's config (included mode) or in a `user/*.kdl` (managed mode, e.g. the adopted `00-previous.kdl`) stays in effect, since niri merges a later definition per field, so axiom's window and surface blur silently does nothing. `niri validate` (niri 26.04) accepts `blur { on }`. `NiriInfo` has the mirror gap: it sets `enabled` false on any `off` and never back on a later `on`, so `NiriManager.blur` would read wrong once the writer writes `on`. Fix: `KdlSetPath(nodes, "blur.on", …)` with blur on; `NiriInfo` takes the last of `on` / `off`; a frozen render case.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the niri system
+
+### niri started on a broken config reads as loaded
+- **Where:** `backend/internal/compositor/ipc/niri.go` (`Reloads`), `backend/internal/compositor/manager/niri.go` (`checkLoaded`, `lastFailed`), `backend/internal/compositor/manager/manager.go` (`configReloaded`)
+- **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (`NiriManager.lastLoadFailed` has no reader). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the niri system
+
+### Nothing reads userBindsRead or lastLoadFailed
+- **Where:** `services/compositor/CompositorConfigManager.qml` (`userBindsRead`), `backend/internal/compositor/manager/writer.go` (`userBindsRead`), `backend/internal/compositor/manager/manager.go` (`state`), `services/compositor/NiriManager.qml` (`lastLoadFailed`)
+- **What:** Deletion pass. `CompositorConfigManager.userBindsRead` has no reader in QML (grep: its declaration only). In Go it's a writer interface method whose three implementations always return true: Hyprland's and sway's are the constant, and niri's `userEntries != nil` is set by `newNiri` before the first state is sent. About 9 lines (QML property, interface method, three implementations, the fake's, the state field) plus the doc comment. `NiriManager.lastLoadFailed` (2 lines plus a sentence in `niri-backend.md` › State) has no reader either, unless the fix for "niri started on a broken config reads as loaded" gives it one.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the niri system
+
+### The niri writer's runtimeOn and unread-binds guards are dead
+- **Where:** `backend/internal/compositor/manager/niri.go` (`runtimeOn`, `runtimeApply`, `entries`, `readUserConfig`)
+- **What:** Deletion pass. `niriWriter.runtimeOn` is set in `runtimeApply` and `runtimeClear` and never read (sway's is; niri's was copied along): 3 lines. `newNiri` calls `readUserConfig`, which always leaves `userEntries` non-nil (an empty array when the config can't be read), so `runtimeApply`'s and `entries`' `if w.userEntries == nil` returns and `readUserConfig`'s own nil guard can't happen: about 9 more lines, and `entries` never returns nil on niri.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the niri system
+
+### Three listings of niri's user files
+- **Where:** `backend/internal/compositor/manager/niri.go` (`userFiles`), `backend/internal/compositor/binds/niri.go` (`niriFiles`), `backend/internal/compositor/takeover/kinds.go` (`left`)
+- **What:** Deletion pass. The managed config's `user/*.kdl` (regular `.kdl` files, no hidden ones, by name) is listed three times: the writer's `userFiles` (12 lines), the merge's `niriFiles` (21, with `--only`), and the takeover's `left` (13), which counts what a restored config doesn't include. The copies disagree: `left` counts hidden `.kdl` files (an editor's swap file, a staged write) that the writer never includes, and skips a symlinked `.kdl` (`DirEntry.Type`) that the writer includes (`os.Stat`), so a release can report files left out that were never in. One `userconf.NiriUserFiles(dir)` used by all three saves about 25 lines and makes them agree.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the niri system
+
+### RunningNested has its own niri socket client
+- **Where:** `backend/internal/compositor/userconf/niri.go` (`RunningNested`), `backend/internal/compositor/ipc/niri.go` (`Outputs`)
+- **What:** Deletion pass. `RunningNested` dials `$NIRI_SOCKET`, writes `"Outputs"` and parses the reply by hand (28 lines), which `ipc.NiriFromEnv(getenv).Outputs(ctx)` already does with the shared dial and timeout (`userconf` can import `ipc`: `ipc` depends only on `render`, `actions` and `jsonx`). As one `Outputs` call, a single output named `winit`: about 8 lines.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the niri system
+
+### NiriManager queues actions the daemon could order
+- **Where:** `services/compositor/NiriManager.qml` (`_command`, `_next`), `backend/internal/daemon/compositorsocket.go` (`niriHandlers`)
+- **What:** Deletion pass. `NiriManager` keeps its own queue (`_command`, `_queue`, `_running`, `_next`: about 30 lines) so a chain of actions can't overtake itself, sending each only after the last one's reply came back through the daemon: one full round trip per action. The daemon already has the mechanism, `rpc.Registry.InOrder` (used for `outputs.apply`). A `niri.command` method registered in order, alongside `niri.request` for state, lets `_action` / `_command` send at once and drops the queue: about 30 QML lines for about 5 Go lines.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the niri system
+
+### A second KDL writer in the kdl package
+- **Where:** `backend/internal/compositor/kdl/kdl.go` (`ValueText`, `PyFloat`, `NodeText`, `Str`), `backend/internal/compositor/render/niri.go` (`KdlValue`, `KdlString`, `KdlSerialize`)
+- **What:** Deletion pass. The niri system's Check is that KDL is written by one module; `niri-backend.md` names `render`'s serializer. The parser package carries a second writer from the Python port: `ValueText` (its own escapes, without `\r`), `PyFloat` (floats as Python's `str` spells them, "1e+16"), `NodeText` (no quoting of names), and `Str`'s Python spellings ("True", "None"). They're used only for a moved bind's `raw` text and a bind's description (`binds/niri.go`, `userconf/niri.go`), where `render`'s writer gives the same text for the values niri's binds hold. Writing those through `render` (or one shared value writer) removes about 50 lines and the second set of escaping rules.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the niri system
+
 ### The window switcher's blur and release on sway and niri
 - **Where:** `services/compositor/WindowSwitcherManager.qml` (`commit`, `pick`), `components/surfaces/switcher/SwitcherKeys.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
 - **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". On niri this is only while `WindowSwitcher.compositorSwitcher` is off or in detached mode: by default the included and managed files bind the keys to niri's own switcher (row 16). The plan settles one release path that works on every compositor and the switcher's backing.
