@@ -392,7 +392,7 @@ Found by the audits:
 - [niri's bind plan is a copy of runtimeLayer.plan](issues.md#niris-bind-plan-is-a-copy-of-runtimelayerplan)
 - [Go copies of bind helpers that only the parity replay calls](issues.md#go-copies-of-bind-helpers-that-only-the-parity-replay-calls)
 - [sway and niri each fit the shadow to axiom's themselves](issues.md#sway-and-niri-each-fit-the-shadow-to-axioms-themselves)
-- [Hyprland's bind merge moves axiom's own IPC binds as exec](issues.md#hyprlands-bind-merge-moves-axioms-own-ipc-binds-as-exec)
+- [The Hyprland and sway bind merges each skip half of compositor/actions](issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
 - [Hyprland's remove deletes whatever hl.bind is on a site's line now](issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
 - [A claim comments out axiom's start inside a long string, breaking the script](issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
 - [An unknown IPC function word merges as a toggle](issues.md#an-unknown-ipc-function-word-merges-as-a-toggle)
@@ -412,6 +412,7 @@ Found by the audits:
 - [PresetSheet defers its re-choose a tick for a config that updates at once](issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
 - [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
 - [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
+- [niri's confirming quit moves in as an instant log out](issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
