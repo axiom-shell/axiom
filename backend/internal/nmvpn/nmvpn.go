@@ -118,6 +118,9 @@ type Options struct {
 	OnSecret func(SecretRequest) bool
 	// OnSecretDone hides a request NetworkManager or the user ended
 	OnSecretDone func(id string)
+	// Run runs a command (nmcli, to import a VPN), returning its exit
+	// code and what it said on stderr
+	Run func(ctx context.Context, argv []string) (code int, stderr string, err error)
 	// Retry is how long to wait before connecting to the bus again
 	// (default 10 s); Settle how long signals are gathered into one
 	// reload (default 50 ms)
@@ -680,6 +683,43 @@ func (s *Service) Down(ctx context.Context, uuid string) error {
 	}
 	s.kickReload()
 	return firstErr
+}
+
+// Import adds the VPN in a WireGuard (.conf) or OpenVPN (.ovpn) file
+// with nmcli: NetworkManager's import is its plugins' code, which only
+// libnm clients run, not a D-Bus call.
+func (s *Service) Import(ctx context.Context, path string) error {
+	var kind string
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".conf":
+		kind = "wireguard"
+	case ".ovpn":
+		kind = "openvpn"
+		if !s.plugins()["org.freedesktop.NetworkManager.openvpn"] {
+			return axerr.New(axerr.Unavailable, "the NetworkManager plugin for openvpn isn't installed")
+		}
+	default:
+		return axerr.New(axerr.BadRequest, "not a VPN file NetworkManager imports (.conf or .ovpn): %s", filepath.Base(path))
+	}
+	if !filepath.IsAbs(path) {
+		return axerr.New(axerr.BadRequest, "the path isn't absolute")
+	}
+	if s.o.Run == nil {
+		return axerr.New(axerr.Unavailable, "no command runner")
+	}
+	code, stderr, err := s.o.Run(ctx, []string{"nmcli", "connection", "import", "type", kind, "file", path})
+	if err != nil {
+		return err
+	}
+	if code != 0 {
+		msg := strings.TrimSpace(stderr)
+		if msg == "" {
+			msg = "nmcli failed"
+		}
+		return axerr.New(axerr.Refused, "%s", strings.TrimPrefix(msg, "Error: "))
+	}
+	s.kickReload()
+	return nil
 }
 
 func (s *Service) connFor(uuid string) (*dbus.Conn, error) {

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
@@ -507,5 +508,49 @@ func TestSecretRequestFields(t *testing.T) {
 				t.Errorf("got %v %+v, want %v %q", ok, req, tc.want, tc.message)
 			}
 		})
+	}
+}
+
+func TestImport(t *testing.T) {
+	t.Parallel()
+	var ran [][]string
+	code, stderr := 0, ""
+	svc := New(Options{
+		PluginDirs: pluginDir(t),
+		Run: func(_ context.Context, argv []string) (int, string, error) {
+			ran = append(ran, argv)
+			return code, stderr, nil
+		},
+	})
+	ctx := context.Background()
+	if err := svc.Import(ctx, "/home/me/work.ovpn"); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.Import(ctx, "/home/me/wg0.CONF"); err != nil {
+		t.Fatal(err)
+	}
+	want := [][]string{
+		{"nmcli", "connection", "import", "type", "openvpn", "file", "/home/me/work.ovpn"},
+		{"nmcli", "connection", "import", "type", "wireguard", "file", "/home/me/wg0.CONF"},
+	}
+	if !reflect.DeepEqual(ran, want) {
+		t.Errorf("ran %q", ran)
+	}
+	for _, path := range []string{"/home/me/notes.txt", "relative.ovpn"} {
+		if err := svc.Import(ctx, path); axerr.KindOf(err) != axerr.BadRequest {
+			t.Errorf("%s: %v", path, err)
+		}
+	}
+	code, stderr = 1, "Error: failed to import: bad file\n"
+	if err := svc.Import(ctx, "/home/me/bad.conf"); axerr.KindOf(err) != axerr.Refused || err.Error() == "" {
+		t.Errorf("a failed import: %v", err)
+	}
+	// OpenVPN's plugin missing: said before nmcli runs
+	noPlugin := New(Options{PluginDirs: []string{t.TempDir()}, Run: func(context.Context, []string) (int, string, error) {
+		t.Error("nmcli ran without the plugin")
+		return 0, "", nil
+	}})
+	if err := noPlugin.Import(ctx, "/home/me/work.ovpn"); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("no plugin: %v", err)
 	}
 }

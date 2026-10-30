@@ -5,7 +5,9 @@ import (
 	"slices"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
+	"github.com/axiom-shell/axiom/backend/internal/nmnet"
 	"github.com/axiom-shell/axiom/backend/internal/nmvpn"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 )
@@ -17,12 +19,20 @@ type vpnSecretDone struct {
 }
 
 // newVPN is NetworkManager's VPNs on the system bus (VpnManager), and the
-// secret agent asking the shell for their passwords.
+// secret agent asking the shell for their passwords; and nmnet, the rest
+// the Wi-Fi menu asks NetworkManager (netPart).
 func (d *Daemon) newVPN() {
 	log := d.opts.Log.With("part", "vpn")
+	systemBus := func(ctx context.Context) (*dbus.Conn, error) {
+		return dbus.Dial(ctx, dbus.SystemAddress(d.opts.Getenv), dbus.Options{Log: log})
+	}
+	d.net = nmnet.New(nmnet.Options{SystemBus: systemBus, Log: d.opts.Log.With("part", "net")})
 	d.vpn = nmvpn.New(nmvpn.Options{
-		SystemBus: func(ctx context.Context) (*dbus.Conn, error) {
-			return dbus.Dial(ctx, dbus.SystemAddress(d.opts.Getenv), dbus.Options{Log: log})
+		SystemBus: systemBus,
+		// nmcli imports a VPN file, run as the shell's commands are
+		Run: func(ctx context.Context, argv []string) (int, string, error) {
+			res, err := command.Run(ctx, d.commandOptions(), argv, nil)
+			return res.ExitCode, res.Stderr, err
 		},
 		OnChange: func(st nmvpn.State) {
 			if d.server != nil {
@@ -74,6 +84,12 @@ func (d *Daemon) vpnMethods(reg *rpc.Registry) {
 	})
 	rpc.Handle(reg, "vpn.up", func(ctx context.Context, c *rpc.Conn, p uuidParams) (struct{}, error) {
 		return struct{}{}, d.vpn.Up(ctx, p.UUID)
+	})
+	type importParams struct {
+		Path string `json:"path"`
+	}
+	rpc.Handle(reg, "vpn.import", func(ctx context.Context, c *rpc.Conn, p importParams) (struct{}, error) {
+		return struct{}{}, d.vpn.Import(ctx, p.Path)
 	})
 	rpc.Handle(reg, "vpn.down", func(ctx context.Context, c *rpc.Conn, p uuidParams) (struct{}, error) {
 		return struct{}{}, d.vpn.Down(ctx, p.UUID)
