@@ -1,6 +1,6 @@
 # Testing and debugging the running shell
 
-> **Files:** `scripts/dev/verify.sh`, `scripts/dev/shot.sh`, `scripts/dev/bench_overlay.sh`, `scripts/dev/mem.sh`, `scripts/log.sh`, `backend/internal/buginfo/buginfo.go`, `backend/internal/cli/buginfo.go`, `scripts/check_all.sh`, `scripts/run_tests.sh`, `scripts/dev/popout_matrix.py`
+> **Files:** `scripts/dev/verify.sh`, `scripts/dev/shot.sh`, `scripts/dev/bench_overlay.sh`, `scripts/dev/mem.sh`, `scripts/log.sh`, `backend/internal/buginfo/buginfo.go`, `backend/internal/cli/buginfo.go`, `scripts/check_all.sh`, `scripts/run_tests.sh`
 > **Config:** none
 > **Related:** [Developer docs](README.md), [AGENTS.md](../../AGENTS.md) (Running / reloading, Never while testing, Checks)
 
@@ -61,10 +61,6 @@ All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs eve
   - Another compositor: [sway-backend.md › Running it](compositor/sway-backend.md) (`scripts/dev/nested.sh <sway|niri|hyprland>`: a nested compositor with a second axiom on scratch folders and its own D-Bus; kill only the nested compositor you started). Nested niri: [niri-backend.md › Running it](compositor/niri-backend.md). Keep its window visible: hidden (another workspace), niri's winit backend stops, and the axiom in it, and any `axiom ipc` call into it, hangs until it's shown again.
 
 ### Popout and layering checks
-- `scripts/dev/popout_matrix.py OUT_DIR [--only layout__variant ...]` shoots every bar layout × border × opacity scenario: [surface-context.md › Testing](popouts/surface-context.md).
-  - It rewrites config.json per scenario and installs a temporary IPC hook in shell.qml. Stop it only with SIGINT (`pkill -INT -f popout_matrix.py`); SIGTERM leaves both modified.
-  - About 1 min per scenario. Don't edit loaded QML while it runs. Use `log.sh --all` afterwards, since its cleanup reloads.
-  - Edge menus opened over IPC close at once unless pinned, so it pins and unpins them.
 - **Fullscreen must cover bars and the border.** This is a recurring regression. After changing layer rules (`render.LayerRulesLua`), `WlrLayershell.layer` or `aboveWindows`, test a fullscreen window on a normal and on a special workspace.
   - Hyprland hides Top layers over fullscreen by fading them (`m_aboveFullscreen`), not by draw order. A Top layer that *maps* while a fullscreen window is up draws over it, so never map a Top window in response to fullscreen. Keep it mapped and hide its contents.
   - Known Hyprland 0.56.2 bug: on scrolling-layout (strip) monitors, a fullscreen window on a special workspace goes under the bars.

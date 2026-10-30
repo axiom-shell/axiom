@@ -1275,19 +1275,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### popout_matrix.py crashes on the current config and nothing runs it
-- **Where:** `scripts/dev/popout_matrix.py:264`, `scripts/dev/popout_matrix.py:273`, `scripts/dev/popout_matrix.py:310`, `docs/dev/popouts/surface-context.md:83`, `docs/dev/testing.md:64`
-- **What:** The script reads `base["EdgeMenus"]` as a list (`for menu in [m["id"] for m in base["EdgeMenus"] if m.get("mode") …]`) and `base["Dock"]["docks"]`. Both sections are objects whose list is `items` (`config/schema/sections/EdgeMenus.yaml:9`, `Dock.yaml:10`).
-  - **What happens:** iterating the dict yields the string `"items"`, so `m.get` raises AttributeError in the first scenario, after the bar shots. The `finally` then restores config.json.
-  - **Other faults:**
-    - It reads the workspace through `hyprctl` (line 310), so it can't start on sway or niri.
-    - It writes the live config.json from a script and restores a whole-file backup at the end, dropping anything the user saved meanwhile. AGENTS.md › Never forbids writing config.json from Bash because "that skips the `x-takeover` check".
-  - **Nobody runs it:** components/hosts/popout/AGENTS.md already says "slow: only when asked", and it has been broken since the sections took `items`.
-
-  **Decided** (maintainer, 2026-10-30): "Delete popout matrix". Fix: delete the script (338 lines), surface-context.md's Testing bullets about it (2 lines), testing.md:64-65 (2 lines) and the clause in components/hosts/popout/AGENTS.md: 342 lines and a clause.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### PopoutWrapperBase's aboutToDismiss signal has no listener
 - **Where:** `components/hosts/popout/PopoutWrapperBase.qml:161` (`aboutToDismiss`)
 - **What:** A repo-wide grep for `boutToDismiss` finds only the declaration, its example comment (line 160) and the emit in `requestDismiss` (line 165); no wrapper handles it. Fix: delete the comment and signal (159-161) and the emit (165): 4 lines.
