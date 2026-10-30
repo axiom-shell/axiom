@@ -14,7 +14,7 @@ Major
 5. The bind merge deletes an hl.bind inside a helper — `backend/internal/compositor/binds/hyprlua.go:340-355` (`callSite`). Reproduced.
 6. The bind merge removes an hl.unbind whether or not its bind went — `binds/hypr.go:459-474`, `manager/manager.go:1290-1310` (`left`).
 7. A failed monitor profile apply is never retried — `manager/outputs.go:170-171`.
-8. One refused line stops the rest of a Hyprland eval — `manager/hypr.go:221-228` (`runtimeApply`), `manager/outputs.go:55`. PLAUSIBLE (does `hl.config`/`hl.monitor` raise?).
+8. One refused line stops the rest of a Hyprland eval — `manager/hypr.go:221-228` (`runtimeApply`), `manager/outputs.go:52`. PLAUSIBLE (does `hl.config`/`hl.monitor` raise?).
 9. A user/ file with a dot in its name never loads — `render/hyprconfig.go:503`, `binds/hypr.go:383`. Reproduced.
 10. A moved raw bind with a Lua keyword key compiles to nothing — `binds/hyprlua.go:467` (`luaSource`). Reproduced.
 11. A failed options read sets the gaps to 0 — `services/compositor/HyprlandManager.qml:295`, `:822-824` (`_gapSides`).
@@ -26,7 +26,7 @@ Major
 
 Cleanup (deletion pass, with line counts in the entries)
 17. HyprlandManager keeps members only it reads (`withAnimations`+`_optionsWaiting`, `runLua`, `withBinds`, `layerApplied`, `animations*`, chunk builder, `_bases` gate; ipc.md's user list is wrong) — about 40 lines.
-18. `WindowSwitcherConfig.compositorSwitcher` unread — 3 lines.
+18. `WindowSwitcherConfig.compositorSwitcher` unread — 3 lines (filed in the outside finding's entry, "The unused reader member check counts a member named after its key as used", whose fix finds it).
 19. A bind description's section is parsed three ways (the editor's doesn't trim).
 20. KeybindManager keeps `_modifiers` and nine `_keyNames` that BindKeys/KeyMap hold; skipped list twice — about 36 lines.
 21. The workspace strips repeat ActiveStrip's loader — about 20 lines.
