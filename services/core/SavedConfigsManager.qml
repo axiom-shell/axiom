@@ -24,7 +24,8 @@ QtObject {
   id: root
 
   readonly property string savedDir: Paths.userConfigPath + "saved/"
-  // [{ name, title, description }] by name, from examples/*.json
+  // [{ name, title, description, theme, screenBorder, bars: [{ location,
+  // background }], docks: [{ edge }] }] by name, from examples/*.json
   readonly property var examples: _examples
   // Newest first; roles: fileBaseName, filePath, fileModified
   readonly property FolderListModel model: _model

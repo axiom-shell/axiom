@@ -75,4 +75,16 @@ QtObject {
     const withLight = families.filter(family => family.light === theme);
     return families.find(family => family.dark === theme) ?? withLight.find(family => family.dark === lightFrom) ?? withLight.find(family => !family.shared) ?? withLight[0] ?? null;
   }
+
+  // The preview ({ background, foreground, accent, colors }) of the theme
+  // named `theme`, the variant it is, or null for one no family has
+  function previewOf(families, theme) {
+    for (const family of families) {
+      if (family.dark === theme && family.darkPreview)
+        return family.darkPreview;
+      if (family.light === theme && family.lightPreview)
+        return family.lightPreview;
+    }
+    return null;
+  }
 }

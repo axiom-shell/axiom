@@ -1,6 +1,6 @@
 # Screenshots and screen recording
 
-> **Files:** `services/apps/ScreenshotManager.qml`, `shell/Screenshot.qml`, `components/surfaces/screenshot/ScreenshotPickerWindow.qml`, `components/content/ScreenRecord/ScreenRecord.qml`, `components/bar/widgets/ScreenRecord/ScreenRecord.qml`
+> **Files:** `services/apps/ScreenshotManager.qml`, `shell/Screenshot.qml`, `components/surfaces/screenshot/ScreenshotPickerWindow.qml`, `components/content/ScreenRecord/ScreenRecord.qml`, `components/bar/widgets/ScreenRecord/ScreenRecord.qml`, `config/Screenshots.qml`
 > **Config:** `Screenshots` (`folder`, `recordingFolder`; reader `config/Screenshots.qml`); the picker's choices persist in `~/.local/state/axiom/ui/screenshot.json`
 > **Related:** [Keybinds](../hyprland/keybinds.md), [Chat](chat.md) (region attachments), [Utility modules](../overlay/utility-modules.md)
 

@@ -57,6 +57,21 @@ TestCase {
     compare(ThemeFamilies.current(families, "nope", ""), null);
   }
 
+  function test_previewOf() {
+    const dark = theme("a-dark", "Ayu Dark", "dark", "a-light");
+    dark.preview = {
+      "background": "#000"
+    };
+    const light = theme("a-light", "Ayu Light", "light", "a-dark");
+    light.preview = {
+      "background": "#fff"
+    };
+    const families = ThemeFamilies.build([dark, light], false);
+    compare(ThemeFamilies.previewOf(families, "a-dark").background, "#000");
+    compare(ThemeFamilies.previewOf(families, "a-light").background, "#fff", "the light variant's, not its family's dark");
+    compare(ThemeFamilies.previewOf(families, "nope"), null);
+  }
+
   function test_commonLabel() {
     compare(ThemeFamilies.commonLabel("Nightfox", "Dayfox"), "Nightfox");
     compare(ThemeFamilies.commonLabel("Rosé Pine", "Rosé Pine Dawn"), "Rosé Pine");

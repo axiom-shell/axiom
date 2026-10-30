@@ -847,20 +847,5 @@
     "showNumbers": true,
     "showTitles": true,
     "showHint": true
-  },
-  "Workspaces": {
-    "layout": "standard",
-    "count": 6,
-    "columns": 5,
-    "rows": 5,
-    "wrap": false,
-    "animate": true,
-    "strips": [
-      {
-        "direction": "horizontal"
-      }
-    ],
-    "stripColumnWidth": 45,
-    "stripFollowFocus": true
   }
 }

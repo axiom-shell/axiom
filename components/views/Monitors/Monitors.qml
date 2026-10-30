@@ -22,6 +22,10 @@ BaseView {
   }
   Component.onDestruction: MonitorManager.pageShown = false
 
+  // Whether its settings links show: off in the onboarder, where
+  // following one would open the overlay over it
+  property bool settingsLinks: true
+
   // Where the compositor gets the profiles from, per Compositor.mode
   readonly property string modeNote: {
     switch (CompositorConfig.mode) {
@@ -141,7 +145,9 @@ BaseView {
           StreamedLoader {
             width: inspectorScroll.availableWidth
             label: "monitor inspector"
-            sourceComponent: MonitorInspector {}
+            sourceComponent: MonitorInspector {
+              settingsLinks: root.settingsLinks
+            }
           }
         }
 
@@ -172,7 +178,9 @@ BaseView {
       }
 
       SettingsLink {
+        id: modeLink
         Layout.fillWidth: true
+        visible: root.settingsLinks && modeLink.available
         setting: "Compositor.mode"
       }
     }

@@ -10,6 +10,7 @@ Snapshots of the config, the shipped example setups, and sharing a config throug
 - The Maintenance category's own card `SavedConfigsCard` (its `x-categories` `card`, wide, last).
 - It shows `SavedConfigsManager`'s snapshots in `~/.config/axiom/saved/`.
 - Below them: sharing (Share: Export, Import…) and the example setups in `examples/` (`SavedConfigsManager.examples`).
+- The onboarder's Look page shows the examples too, as cards that apply on a click ([Onboarding](../features/onboarding.md)). `share.examples` gives each `{ name, title, description, theme, screenBorder, bars: [{ location, background }], docks: [{ edge }] }`: the shown bars and docks read from the example loaded as applying takes it, for the card's drawn preview.
 - The launcher's `/config` can also save and restore snapshots: see [Launcher](../features/launcher.md).
 
 ### What a shared file carries: `x-scope`
@@ -18,7 +19,7 @@ Inherited down the schema; the root is `machine`.
 | Scope | What | Export / import | Snapshot |
 |---|---|---|---|
 | `look` | the layout and style sections, the theme, font, shape and motion, the launcher's and notifications' look, each surface's Module size (`moduleScale`: a ratio over the card size), compositor animations and decoration, cursor theme, the theme schedule | always | ✅ |
-| `personal` | how big the UI is (`Widget.scale`, `cardSize`, `density`: a shared look keeps its proportions at your size), preferences (notification, idle, night light, input, window behaviour, launcher search, chat, calendar, notes), `Keybinds.binds`, `Apps.pinned`, a dock's own `pinned`, Favourites' apps, OSD app bars | its own switch, off by default | ✅ |
+| `personal` | how big the UI is (`Widget.scale`, `cardSize`, `density`: a shared look keeps its proportions at your size), the workspace layout and strips (`Workspaces`: the onboarder offers the examples after its Workspaces step, so one mustn't undo that pick), preferences (notification, idle, night light, input, window behaviour, launcher search, chat, calendar, notes), `Keybinds.binds`, `Apps.pinned`, a dock's own `pinned`, Favourites' apps, OSD app bars | its own switch, off by default | ✅ |
 | `commands` | anything that runs as you: every command field, `Apps` terminal/file manager/browser, `Updates` terminal and upgrade, idle listeners, exec and raw binds | its own switch, off by default, warned | ✅ |
 | `machine` | monitor names, wallpapers, accounts, paths, hardware, services, takeovers, and every section not marked | never | wallpaper setup only (`x-snapshot`) |
 

@@ -9,38 +9,18 @@ import qs.components.reusable
 import qs.components.forms
 
 // How workspaces are laid out (the Workspaces section), with a small
-// picture of two monitors in the chosen layout, then whether windows tile
-// or sit on strips (Workspaces.strips: every monitor here, one by one in
-// the list below), which the scrolling layout answers itself. Where the compositor makes its workspaces itself
-// (CompositorManager.dynamicWorkspaces) and only has strips (stripsAlways),
-// it says so instead of offering what doesn't apply.
+// picture of two monitors in the chosen layout. Windows tile here: strips
+// are set up in Settings. Not shown where the compositor makes its
+// workspaces itself (OnboardingManager.pages).
 OnboardingPage {
   id: root
 
   readonly property string layout: WorkspacesConfig.layout
-  // "" (tiling), the direction when every monitor is a strip, else
-  // "custom" (strips per monitor, from the list below: no card selected)
-  readonly property string strips: WorkspacesConfig.strips.length === 1 && WorkspacesConfig.strips[0].monitor === "*" ? WorkspacesConfig.strips[0].direction : WorkspacesConfig.hasStrips ? "custom" : ""
 
-  // The compositor's own (niri), not the scrolling layout's
-  readonly property bool dynamic: CompositorManager.dynamicWorkspaces && !CompositorManager.dynamicByLayout
   readonly property bool canScroll: CompositorManager.supports.strips === true && CompositorManager.supports.stripsAlways !== true
-  // Tiling or strips is asked only where the layout leaves it open: the
-  // scrolling layout is all strips, as is a compositor that only has them
-  readonly property bool asksWindows: CompositorManager.supports.stripsAlways !== true && !(root.layout === "scrolling" && root.canScroll)
 
   title: I18n.tr("Workspaces")
   intro: I18n.tr("Workspaces are the desktops you switch between with Super + a number. The bar, the overview and the keybinds all follow the layout you pick here.")
-
-  IssueList {
-    visible: root.dynamic
-    issues: [
-      {
-        "level": "info",
-        "text": I18n.tr("{0} makes and removes workspaces itself: each monitor has one column of them, with an empty one at the end. The layout below doesn't apply; up and down step through the column, left and right go to the next monitor.", CompositorManager.displayName)
-      }
-    ]
-  }
 
   Repeater {
     model: [
@@ -74,7 +54,7 @@ OnboardingPage {
       required property var modelData
       // Scrolling needs strips, and is what a compositor that only has
       // strips does already
-      visible: !root.dynamic && (modelData.layout !== "scrolling" || root.canScroll)
+      visible: modelData.layout !== "scrolling" || root.canScroll
       icon: modelData.icon
       title: modelData.title
       description: modelData.description
@@ -88,7 +68,6 @@ OnboardingPage {
 
   // Two monitors in the chosen layout
   Row {
-    visible: !root.dynamic
     Layout.alignment: Qt.AlignHCenter
     Layout.topMargin: Widget.spacing
     spacing: Widget.spacing * 2
@@ -143,61 +122,6 @@ OnboardingPage {
 
   SettingRows {
     Layout.fillWidth: true
-    // The layout's size doesn't apply where the compositor makes them
-    paths: root.dynamic ? ["Workspaces.wrap"] : ["Workspaces.count", "Workspaces.columns", "Workspaces.rows", "Workspaces.wrap"]
-  }
-
-  StyledText {
-    visible: root.asksWindows
-    Layout.topMargin: Widget.spacing
-    text: I18n.tr("Windows")
-    font.bold: true
-  }
-
-  Repeater {
-    model: [
-      {
-        "direction": "",
-        "icon": "dashboard",
-        "title": I18n.tr("Tiling"),
-        "description": I18n.tr("Windows share the screen, splitting it between them as they open.")
-      },
-      {
-        "direction": "horizontal",
-        "icon": "view_carousel",
-        "title": I18n.tr("Horizontal strips"),
-        "description": I18n.tr("Windows open side by side on a strip wider than the screen, which scrolls sideways to the focused one.")
-      },
-      {
-        "direction": "vertical",
-        "icon": "view_day",
-        "title": I18n.tr("Vertical strips"),
-        "description": I18n.tr("Windows open one under another on a strip taller than the screen, which scrolls up and down to the focused one.")
-      }
-    ]
-
-    delegate: OptionCard {
-      required property var modelData
-      visible: root.asksWindows
-      icon: modelData.icon
-      title: modelData.title
-      description: modelData.description
-      selected: root.strips === modelData.direction
-      recommended: modelData.direction === ""
-      onClicked: SettingsManager.commitValues({
-        "Workspaces.strips": modelData.direction === "" ? [] : [
-          {
-            "monitor": "*",
-            "direction": modelData.direction
-          }
-        ]
-      })
-    }
-  }
-
-  SettingRows {
-    visible: root.asksWindows
-    Layout.fillWidth: true
-    paths: ["Workspaces.strips"]
+    paths: ["Workspaces.count", "Workspaces.columns", "Workspaces.rows", "Workspaces.wrap"]
   }
 }

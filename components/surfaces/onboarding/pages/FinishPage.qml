@@ -31,7 +31,7 @@ OnboardingPage {
   Notice {
     visible: root.changesMode && CompositorConfig.mode !== "detached"
     tone: "warning"
-    text: I18n.tr("Finish changes how axiom sets up {0}: what the mode it's in now set up is given back.", root.compositor)
+    text: I18n.tr("Finish changes how axiom sets up {0}: what the current mode set up is undone.", root.compositor)
   }
 
   Notice {

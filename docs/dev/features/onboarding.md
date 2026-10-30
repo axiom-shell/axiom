@@ -1,6 +1,6 @@
 # Onboarding
 
-> **Files:** `services/session/OnboardingManager.qml`, `shell/Onboarding.qml`, `components/surfaces/onboarding/OnboardingWindow.qml`, `components/surfaces/onboarding/pages/CompositorPage.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `services/core/DependencyManager.qml`, `components/methods/Packages.qml`, `components/views/Settings/OnboardingCard.qml`
+> **Files:** `services/session/OnboardingManager.qml`, `shell/Onboarding.qml`, `components/surfaces/onboarding/OnboardingWindow.qml`, `components/surfaces/onboarding/pages/CompositorPage.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `components/surfaces/onboarding/pages/ExampleCard.qml`, `services/core/DependencyManager.qml`, `components/methods/Packages.qml`, `components/views/Settings/OnboardingCard.qml`
 > **Config:** none of its own (pages write other sections); state in `~/.local/state/axiom/ui/onboarding.json`
 > **Related:** [Config modes](../compositor/config-modes.md), [Hyprland's writer](../hyprland/config-modes.md), [Monitors](../hyprland/monitors.md), [Greeter install](greeter-install.md), [Pages and grid](../overlay/pages-and-grid.md)
 
@@ -51,8 +51,10 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - See [Monitors](../hyprland/monitors.md).
 
 ### Other pages
-- It reuses the Monitors view, `WallpaperPicker` and `ThemePicker` as they are.
+- It reuses the Monitors view (with `settingsLinks: false`: a link into Settings would open the overlay over the onboarder), `WallpaperPicker` and `ThemePicker` as they are.
+- The Workspaces page offers the layouts only: windows tile, and strips are set up in Settings. It isn't shown where the compositor makes its workspaces itself (`CompositorManager.dynamicWorkspaces`, not `dynamicByLayout`: niri), as nothing there would apply.
 - The Look page's folder check, create and open are `WallpaperManager.checkFolder()` / `folderImages` / `createFolder()` / `openFolder()`.
+- Below its screen border, the [example setups](../core/saved-configs-sharing.md) are `pages/ExampleCard`s: a small screen drawn in the example's theme (`ThemeFamilies.previewOf`) with its bars, docks and screen border (`share.examples`' summary), then its palette, title and description. A click applies it at once (`SavedConfigsManager.applyExample`, with its `before-<name>` backup); the applied one is marked. `Workspaces` is `personal` scope, so one doesn't undo the Workspaces step.
 - `DependencyManager.check(commands)` / `found` / `tools` say what's installed. Calls made together are batched into one `deps.check` to axiom (`backend/internal/deps`: `$PATH` through `exec.LookPath`), and without axiom the commands stay unknown.
 - The Apps page shows the main modifier and the keys to know only where axiom binds keys (`CompositorManager.supports.keybinds`); elsewhere it's just the apps.
 - The Integrations page, top to bottom: updates, clipboard history, [Idle](idle.md), the lock screen, [Polkit](polkit.md), the login screen, then theme integrations.

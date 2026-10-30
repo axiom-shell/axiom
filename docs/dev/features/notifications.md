@@ -1,6 +1,6 @@
 # Notifications
 
-> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `components/surfaces/notifications/ToastStack.qml`, `components/surfaces/notifications/ToastItem.qml`, `components/methods/ToastMotion.qml`, `components/methods/NotificationMatch.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`
+> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `components/surfaces/notifications/ToastStack.qml`, `components/surfaces/notifications/ToastItem.qml`, `components/methods/ToastMotion.qml`, `components/methods/NotificationMatch.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`, `components/content/parts/notifications/`
 > **Config:** `Notifications.*` (reader `NotificationsConfig`)
 > **Related:** [Self-update](self-update.md) (registerHandler), [Calendar](calendar.md) (reminders), [Grow and expand](../overlay/grow-expand.md)
 
