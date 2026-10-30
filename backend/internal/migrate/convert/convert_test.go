@@ -270,9 +270,9 @@ func TestConvertShapes(t *testing.T) {
 		{"a grid where its earliest key was", "Lockscreen",
 			`{"Lockscreen":{"layout":{"columns":8,"background":"wallpaper","rows":4}}}`,
 			`{"layout":{"grid":{"columns":8,"rows":4},"backdrop":{"source":"wallpaper"}}}`},
-		{"custom animations' duration renamed, curves' not", "Compositor",
-			`{"Hyprland":{"managed":{"curves":[{"durationMs":1}],"customAnimations":[{"name":"Fade In","durationMs":200}]}}}`,
-			`{"hyprland":{"curves":[{"id":"curve","durationMs":1}],"customAnimations":[{"id":"fade-in","name":"Fade In","duration":200}]}}`},
+		{"custom animations' duration renamed, an unnamed curve's id", "Compositor",
+			`{"Hyprland":{"managed":{"curves":[{"points":[0,0,1,1]}],"customAnimations":[{"name":"Fade In","durationMs":200}]}}}`,
+			`{"hyprland":{"curves":[{"id":"curve","points":[0,0,1,1]}],"customAnimations":[{"id":"fade-in","name":"Fade In","duration":200}]}}`},
 		{"a custom page's layout where its grid or modules were", "Overlay",
 			`{"Overlay":{"views":[{"fineGrid":true,"type":"Custom","name":"My Page","modules":[]},{"type":"Custom","modules":[],"name":"Q"},{"type":"Settings"}]}}`,
 			`{"items":[{"id":"my-page","layout":{"grid":{"fine":true},"modules":[]},"type":"Custom","name":"My Page"},{"id":"q","type":"Custom","layout":{"modules":[]},"name":"Q"},{"id":"settings","type":"Settings"}]}`},
@@ -301,10 +301,10 @@ func TestConvertShapes(t *testing.T) {
 	}
 }
 
-// What a conversion did is listed for the log
+// What a conversion did is listed for the log.
 func TestConvertNotesItsChanges(t *testing.T) {
 	t.Parallel()
-	got := convert.ToV2(jsonx.Obj("General", jsonx.NewObject())).Changes
+	got := convert.ToV2(jsonx.Obj("General", jsonx.Obj("monitors", "all"))).Changes
 	want := []string{"monitors settings became screen targets", "converted to config format 2 (version 76)"}
 	if fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Errorf("changes %q, want %q", got, want)
