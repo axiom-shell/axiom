@@ -376,6 +376,11 @@ Found by the audits:
 - [NiriManager queues actions the daemon could order](issues.md#nirimanager-queues-actions-the-daemon-could-order)
 - [A second KDL writer in the kdl package](issues.md#a-second-kdl-writer-in-the-kdl-package)
 
+Found while reworking the onboarder:
+- [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
+- [The onboarder's Integrations page is too long for one step](issues.md#the-onboarders-integrations-page-is-too-long-for-one-step)
+- [The Look page offers Hyprland's wallpapers under any compositor](issues.md#the-look-page-offers-hyprlands-wallpapers-under-any-compositor)
+
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
 

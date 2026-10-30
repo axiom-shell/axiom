@@ -33,6 +33,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - The view holds still during a drag.
 - `General.primaryMonitor` is set from the inspector at once, without waiting for Save.
 - For `useWholeScale`, see [Onboarding](../features/onboarding.md).
+- `settingsLinks: false` hides its links into Settings (the inspector's primary monitor, the page's Compositor mode): the onboarder sets it, as following one would open the overlay over it.
 
 ### Issues
 - Apply is blocked by:

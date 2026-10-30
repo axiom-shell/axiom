@@ -33,8 +33,9 @@ Singleton {
   // I18n.tr("Workspaces") I18n.tr("Look") I18n.tr("Integrations") I18n.tr("Checks") I18n.tr("Finish")
   // The Compositor page sets the compositor up (its config mode), where
   // axiom can (configModes); the Monitors page needs the compositor's
-  // monitors
-  readonly property var pages: _pages.filter(page => (page.id !== "compositor" || CompositorManager.supports.configModes) && (page.id !== "monitors" || CompositorManager.supports.monitors))
+  // monitors; the Workspaces page has nothing to pick where the compositor
+  // makes its workspaces itself (niri's own, not the scrolling layout's)
+  readonly property var pages: _pages.filter(page => (page.id !== "compositor" || CompositorManager.supports.configModes) && (page.id !== "monitors" || CompositorManager.supports.monitors) && (page.id !== "workspaces" || !CompositorManager.dynamicWorkspaces || CompositorManager.dynamicByLayout))
   readonly property var _pages: [
     {
       "id": "welcome",

@@ -134,8 +134,16 @@ func TestApplyExampleFormat1(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(f.dir, "saved", "before-tall.json")); err != nil {
 		t.Error("no backup")
 	}
-	if got := f.svc.Examples(); len(got) != 1 || got[0].Title != "Tall" {
-		t.Errorf("examples %+v", got)
+	got := f.svc.Examples()
+	if len(got) != 1 || got[0].Title != "Tall" {
+		t.Fatalf("examples %+v", got)
+	}
+	// What its preview draws, read converted and filled
+	if bars := got[0].Bars; len(bars) != 1 || bars[0].Location != "left" || bars[0].Background == "" {
+		t.Errorf("bars %+v", bars)
+	}
+	if got[0].Theme == "" || len(got[0].Docks) != 0 {
+		t.Errorf("theme %q, docks %+v (the default dock is off)", got[0].Theme, got[0].Docks)
 	}
 }
 
@@ -192,6 +200,26 @@ func TestImportReadsTheFileOnce(t *testing.T) {
 	}
 }
 
+// Applying an example keeps the running Workspaces (personal scope): the
+// onboarder offers the examples after its Workspaces step.
+func TestApplyExampleKeepsWorkspaces(t *testing.T) {
+	t.Parallel()
+	f := setup(t)
+	set(t, f.store, "Workspaces.layout", "grid")
+	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "examples", "clean.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(filepath.Join(f.ex, "clean.json"), data, 0o644)
+	if _, err := f.svc.ApplyExample("clean", nil); err != nil {
+		t.Fatal(err)
+	}
+	cfg, _ := f.store.Config()
+	if got := cfg.Value("Workspaces").(*jsonx.Object).Value("layout"); got != "grid" {
+		t.Errorf("layout %v", got)
+	}
+}
+
 func TestExport(t *testing.T) {
 	t.Parallel()
 	f := setup(t)
@@ -231,6 +259,9 @@ func TestShippedExamplesApply(t *testing.T) {
 				t.Fatal(err)
 			}
 			os.WriteFile(filepath.Join(f.ex, e.Name()), data, 0o644)
+			if got := f.svc.Examples(); len(got) != 1 || got[0].Theme == "" || len(got[0].Bars) == 0 {
+				t.Errorf("preview %+v", got)
+			}
 			if _, err := f.svc.ApplyExample(name, nil); err != nil {
 				t.Fatal(err)
 			}

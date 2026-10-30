@@ -790,16 +790,5 @@
     "showNumbers": true,
     "showTitles": true,
     "showHint": true
-  },
-  "Workspaces": {
-    "layout": "grid",
-    "count": 3,
-    "columns": 6,
-    "rows": 2,
-    "wrap": true,
-    "animate": true,
-    "strips": [],
-    "stripColumnWidth": 50,
-    "stripFollowFocus": true
   }
 }

@@ -1323,7 +1323,6 @@
     "One bar along the edge": "画面端に沿った 1 本のバー",
     "Widgets on the wallpaper": "壁紙の上にウィジェットを表示",
     "Edge": "画面端",
-    "Widgets are arranged in the overlay's Bar editor.": "ウィジェットはオーバーレイのバーエディターで配置します。",
     "Welcome to axiom": "axiom へようこそ",
     "Next to the step names at the bottom are the arrows, and you can click any step to jump to it. Skip setup keeps what you chose so far.": "下部のステップ名の横に矢印があり、どのステップもクリックして移動できます。「セットアップをスキップ」を押しても、ここまでの選択は保持されます。",
     "Apps & keys": "アプリとキー",
@@ -2060,12 +2059,6 @@
     "Git (axiom's repository)": "Git（axiom のリポジトリ）",
     "Local (your clone)": "ローカル（あなたのクローン）",
     "Windows": "ウィンドウ",
-    "Tiling": "タイル",
-    "Windows share the screen, splitting it between them as they open.": "ウィンドウが開くたびに画面を分け合います。",
-    "Horizontal strips": "横のストリップ",
-    "Windows open side by side on a strip wider than the screen, which scrolls sideways to the focused one.": "ウィンドウは画面より広いストリップに横並びで開き、フォーカスしたウィンドウへ左右にスクロールします。",
-    "Vertical strips": "縦のストリップ",
-    "Windows open one under another on a strip taller than the screen, which scrolls up and down to the focused one.": "ウィンドウは画面より高いストリップに縦に並んで開き、フォーカスしたウィンドウへ上下にスクロールします。",
     "Strips": "ストリップ",
     "Direction": "方向",
     "Monitors whose windows sit side by side on a strip that scrolls (Hyprland's scrolling layout) instead of tiling. New windows open as a new column after the focused one.": "ウィンドウをタイル配置せず、スクロールするストリップに並べるモニター(Hyprland の scrolling レイアウト)。新しいウィンドウはフォーカス中の列の後ろに新しい列として開きます。",
@@ -2541,7 +2534,6 @@
     "{0} or its config is a symlink (dotfiles?), so axiom won't replace it.": "{0} またはその設定がシンボリックリンク（dotfiles？）のため、axiom は置き換えません。",
     "Your {0} config is a symlink or in a git repository, so axiom won't take it over.": "あなたの {0} 設定はシンボリックリンクか git リポジトリの中にあるため、axiom は引き継ぎません。",
     "Match axiom's shadow": "axiom の影に合わせる",
-    "Finish changes how axiom sets up {0}: what the mode it's in now set up is given back.": "「完了」で axiom による {0} の設定方法が変わります。現在のモードが設定したものは元に戻されます。",
     "Shadow strength": "影の強さ",
     "How strong windows cast it, matching axiom's or not. The compositor's own color keeps its strength.": "ウィンドウが落とす影の強さ（axiom に合わせる場合もそうでない場合も）。コンポジターの標準色ではその強さのままです。",
     "Action, e.g. focus-column-first": "アクション（例：focus-column-first）",
@@ -3488,6 +3480,8 @@
     "VPNs in the popout": "",
     "The apps axiom opens: by the Terminal, File manager and Browser keybinds, the launcher's terminal apps and Shift+Enter commands, and the network editor.": "",
     "Network editor": "",
-    "Command the Wi-Fi menu's Settings button and the VPN module's Edit connections button run, to add or change network connections and VPNs. Empty hides both.": ""
+    "Command the Wi-Fi menu's Settings button and the VPN module's Edit connections button run, to add or change network connections and VPNs. Empty hides both.": "",
+    "Finish changes how axiom sets up {0}: what the current mode set up is undone.": "",
+    "Applies a whole look (bars, theme, menus) at once. Your wallpaper and the rest of this setup stay.": ""
   }
 }

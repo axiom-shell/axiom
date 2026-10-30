@@ -18,6 +18,9 @@ import qs.components.methods
 ColumnLayout {
   id: root
 
+  // Whether the link to the primary monitor's setting shows
+  property bool settingsLinks: true
+
   readonly property var rule: MonitorManager.selectedRule
   readonly property string output: rule?.output ?? ""
   readonly property var monitor: MonitorManager.monitorFor(rule)
@@ -103,7 +106,7 @@ ColumnLayout {
   // What the primary monitor decides
   SettingsLink {
     id: primaryLink
-    visible: primaryLink.available && !!root.monitor
+    visible: root.settingsLinks && primaryLink.available && !!root.monitor
     Layout.fillWidth: true
     setting: "General.primaryMonitor"
   }

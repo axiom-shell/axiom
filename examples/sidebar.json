@@ -964,20 +964,5 @@
     "showNumbers": true,
     "showTitles": true,
     "showHint": true
-  },
-  "Workspaces": {
-    "layout": "perMonitor",
-    "count": 3,
-    "columns": 5,
-    "rows": 5,
-    "wrap": true,
-    "animate": true,
-    "strips": [
-      {
-        "direction": "horizontal"
-      }
-    ],
-    "stripColumnWidth": 60,
-    "stripFollowFocus": true
   }
 }

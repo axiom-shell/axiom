@@ -1,6 +1,6 @@
 # The Workspaces section of the config (config.json's "Workspaces").
 
-x-scope: look
+x-scope: personal
 type: object
 x-category: Workspaces
 x-intro: WorkspacesStatus
@@ -92,7 +92,7 @@ properties:
           description: Empty uses the primary monitor; All monitors makes every monitor a strip, unless another entry names it.
           x-properties:
             mode:
-              x-scope: look
+              x-scope: personal
               type: string
               title: Monitors
               enum: [primary, all, named]
