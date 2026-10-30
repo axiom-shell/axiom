@@ -10,13 +10,14 @@ import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
 
-// Wi-Fi menu for the Network widget: radio switch and airplane mode, the
+// Wi-Fi menu for the Network widget: radio switch, the connection editor,
+// VPN import and airplane mode (icon buttons as high as the switch), the
 // current connection (address and throughput, folding open its details,
 // folded at first), the VPNs (one summary row
 // with a toggle for the VPN up or last used, folding open every VPN and
 // the public IP check; left out by showVpn / the widget's popoutVpn), the
-// networks in range (scanning while shown), and a footer (connection
-// editor, hidden network, VPN import). Click a
+// networks in range (scanning while shown), and a footer (hidden
+// network). Click a
 // network to connect or disconnect; a secured new one asks inline for
 // what it needs (a password, a WEP key, an enterprise login; a lock on
 // the icon says it's secured), and saved ones can be forgotten or kept
@@ -29,6 +30,8 @@ Panel {
   readonly property var info: NetworkingManager.netInfo
   readonly property var networks: NetworkingManager.networks
   readonly property bool radioOn: NetworkingManager.wifiEnabled && NetworkingManager.available
+  // The header's icon buttons, as high as its switch (StyledSwitch's)
+  readonly property int headerButton: Widget.height - Widget.px(4)
   readonly property string offMessage: I18n.tr(!NetworkingManager.available ? "No Wi-Fi adapter found" : NetworkingManager.hardwareBlocked ? "Wi-Fi is blocked (rfkill)" : NetworkingManager.airplane ? "Airplane mode is on" : "Wi-Fi is off")
   readonly property string kindIcon: info.kind === "wifi" ? NetworkingManager.signalIcon(info.signal / 100) : info.kind === "ethernet" ? "lan" : "signal_wifi_0_bar"
 
@@ -228,7 +231,23 @@ Panel {
     onToggled: checked => NetworkingManager.setWifiEnabled(checked)
 
     FlatIconButton {
+      visible: Apps.networkEditor !== ""
+      size: root.headerButton
+      iconText: "settings"
+      tooltipText: I18n.tr("Edit connections ({0})", Apps.networkEditor)
+      onClicked: CommandManager.runDetached(Apps.networkEditor)
+    }
+    FlatIconButton {
+      visible: root.showsVpn && VpnManager.available
+      size: root.headerButton
+      iconText: "vpn_key"
+      iconColor: VpnManager.importError !== "" ? Theme.error : Theme.foregroundAlt
+      tooltipText: VpnManager.importError || I18n.tr("Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file")
+      onClicked: VpnManager.pickImport()
+    }
+    FlatIconButton {
       visible: NetworkingManager.available || BluetoothManager.available
+      size: root.headerButton
       iconText: "flight"
       iconColor: NetworkingManager.airplane ? Theme.accent : Theme.foregroundAlt
       tooltipText: NetworkingManager.airplane ? I18n.tr("Airplane mode: on") : I18n.tr("Airplane mode: off")
@@ -468,35 +487,22 @@ Panel {
     }
   }
 
+  // The footer holds only Hidden network, so it goes with the radio
   StyledSeparator {
+    visible: root.radioOn
     Layout.fillWidth: true
     separatorColor: Theme.backgroundHighlight
   }
 
   Flow {
+    visible: root.radioOn
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
 
     FooterAction {
-      visible: Apps.networkEditor !== ""
-      iconText: "settings"
-      text: I18n.tr("Settings")
-      tooltipText: I18n.tr("Edit connections ({0})", Apps.networkEditor)
-      onClicked: CommandManager.runDetached(Apps.networkEditor)
-    }
-    FooterAction {
-      visible: root.radioOn
       iconText: "wifi_find"
       text: I18n.tr("Hidden network")
       onClicked: root.hiddenOpen = !root.hiddenOpen
-    }
-    FooterAction {
-      visible: root.showsVpn && VpnManager.available
-      iconText: "vpn_key"
-      text: I18n.tr("Import VPN")
-      tooltipText: VpnManager.importError || I18n.tr("Add a WireGuard (.conf) or OpenVPN (.ovpn) file")
-      textColor: VpnManager.importError !== "" ? Theme.error : Theme.foregroundAlt
-      onClicked: VpnManager.pickImport()
     }
   }
 }

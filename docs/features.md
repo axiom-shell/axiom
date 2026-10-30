@@ -14,7 +14,7 @@ Everything below is one shell and one config, and everything is set from inside 
 - **26 widget types:**
   - Workspaces, Window, Time, NextEvent (the next event from your calendars), Media
   - Volume, Microphone, Network, Bluetooth, Battery, SystemStats, SystemTray, Notifications
-  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices and Connect / Disconnect), KeyboardLayout, IdleInhibitor, Privacy
+  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), KeyboardLayout, IdleInhibitor, Privacy
   - ScreenRecord (shown while recording; click to stop), Claude usage (your Claude Code plan limits, for one or more logins), Todo (open count), Pomodoro (the time left), Timer & stopwatch
   - Button (runs any command, opens a page or toggles an edge menu) and Separator
 - **Popouts** grow out of the bar, or out of the screen border, with filleted corners. Widgets open theirs on hover, and Buttons can run their action on hover too.

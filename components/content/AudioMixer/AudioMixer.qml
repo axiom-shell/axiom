@@ -39,14 +39,14 @@ Panel {
   // grid's, which depends on it)
   readonly property real sideWidth: (root.innerWidth - Appearance.borderWidth - root.pad * 2) / 2
 
-  // A popout's list is as high as its rows, from two (also when empty) to
+  // A popout's list is as high as its rows, from one (also when empty) to
   // four, then it scrolls: the popout grows away from its controls, which
   // stay by the bar (Panel.growth: growing up, they go below the list)
   function rowsHeight(rows) {
     return defaultRow.implicitHeight * rows + list.spacing * (rows - 1);
   }
   readonly property real listHeight: root.rowsHeight(4) // fixed px: a row count, not a size
-  readonly property real shownListHeight: Math.max(root.rowsHeight(2), Math.min(list.implicitHeight, root.listHeight))
+  readonly property real shownListHeight: Math.max(root.rowsHeight(1), Math.min(list.implicitHeight, root.listHeight))
   maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + root.listHeight - scroll.height
 
   implicitWidth: Widget.px(380)
@@ -233,10 +233,10 @@ Panel {
           }
 
           // An empty list says so in the middle of the view (a popout's
-          // two rows)
+          // one row)
           StyledText {
             Layout.fillWidth: true
-            Layout.preferredHeight: root.embedded ? scroll.availableHeight : root.rowsHeight(2)
+            Layout.preferredHeight: root.embedded ? scroll.availableHeight : root.rowsHeight(1)
             visible: root.currentTab === 0 ? root.apps.length === 0 : root.devices.length === 0
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter

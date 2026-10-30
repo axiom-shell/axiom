@@ -39,7 +39,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 - `ExpandButton`: a strip's button growing its detail, hidden where it can't (see [Growing and expanding](grow-expand.md)).
 - Radio menus, shared by WifiNetworks and BluetoothDevices:
   - `RadioHeader`
-  - `DeviceList`: in a popout as high as its rows (`minRows` to `visibleRows`, then it scrolls; `growRoom` for the panel's `maxImplicitHeight`), off and empty states. A ListView, so only the rows in view are built (Wi-Fi can see dozens of networks); its rows are `DeviceRow`s, as wide as the list.
+  - `DeviceList`: in a popout as high as its rows (at least one, off its message, up to `visibleRows`, then it scrolls; `growRoom` for the panel's `maxImplicitHeight`), off and empty states. A ListView, so only the rows in view are built (Wi-Fi can see dozens of networks); its rows are `DeviceRow`s, as wide as the list.
   - `DeviceRow`: confirm-to-forget, connect; extras beside the title and content under it. Content under it that only shows while `expanded` goes in a Loader active then (as Wi-Fi's password field), or every row builds it.
 - `ItemRow`: a plain list entry. An icon or rounded thumbnail, a title of `titleLines`, a muted subtitle, a muted `detail` on the right (a value), `activated` on a click (unless not `clickable`), and its children as buttons after it, faint until hovered. Used for clipboard clips, calculator answers, recordings.
 - `KeybindSection` (a section of binds as a card, grouped by modifiers), `KeybindRow` (keys first), `KeyCap`, `ModifierCap` and `KeyCluster` draw keybinds read-only, for the Keybinds page and the Cheatsheet module.

@@ -5,8 +5,8 @@ import qs.config
 import qs.components.reusable
 
 // A radio menu's list of devices or networks (Wi-Fi, Bluetooth). In a
-// popout it's as high as its rows, from `minRows` (also its height off or
-// empty) up to `visibleRows`, then it scrolls: the popout grows away from
+// popout it's as high as its rows (off, its message; empty, one row) up to
+// `visibleRows`, then it scrolls: the popout grows away from
 // its controls (Panel.growth), and its content declares `growRoom` in its
 // maxImplicitHeight. In a card it fills the height. Off, a message takes
 // the list's place. Rows are `delegate`s (DeviceRows, with `required
@@ -30,13 +30,12 @@ Item {
 
   // One row's height (DeviceRow.rowHeight): its two lines, or a button
   readonly property real rowHeight: Math.max(titleMetrics.height + statusMetrics.height, Widget.iconButton) + Widget.spacing * 2
-  property int minRows: 2
   function rowsHeight(rows) {
     return root.rowHeight * rows + list.spacing * (rows - 1);
   }
   readonly property real listHeight: root.rowsHeight(root.visibleRows)
-  // In a popout: its rows, within minRows and visibleRows
-  readonly property real shownHeight: Math.max(root.rowsHeight(root.minRows), root.on ? Math.min(list.implicitHeight, root.listHeight) : 0)
+  // In a popout: its rows, up to visibleRows; off, its message; empty, a row
+  readonly property real shownHeight: !root.on ? offState.implicitHeight : Math.max(root.rowHeight, Math.min(list.implicitHeight, root.listHeight))
   // How much taller it can grow in a popout (for Panel.maxImplicitHeight)
   readonly property real growRoom: root.embedded ? 0 : root.listHeight - root.shownHeight
 
@@ -61,6 +60,7 @@ Item {
   }
 
   EmptyState {
+    id: offState
     visible: !root.on
     anchors.centerIn: parent
     maxWidth: parent.width
