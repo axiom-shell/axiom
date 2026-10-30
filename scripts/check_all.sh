@@ -40,12 +40,15 @@ step() {
   fi
 }
 
-# The generated files the checks read (the schema, the reference docs, and
-# for the qt job the shared fixtures), built once per run; check_go.sh
-# builds its own
+# The generated files the checks read (the schema, for the checks job the
+# reference docs, for the qt job the shared fixtures), built once per run;
+# check_go.sh builds its own. Only the docs compile the whole binary (their
+# rpc-shapes.json), which a qt or scripts job alone doesn't need
+docs=(--no-docs)
+[[ " ${jobs[*]} " == *" checks "* ]] && docs=()
 case " ${jobs[*]} " in
-*" qt "*) step "generated files" scripts/generate.sh --fixtures ;;
-*" checks "* | *" scripts "*) step "generated files" scripts/generate.sh ;;
+*" qt "*) step "generated files" scripts/generate.sh --fixtures "${docs[@]}" ;;
+*" checks "* | *" scripts "*) step "generated files" scripts/generate.sh "${docs[@]}" ;;
 esac
 
 json() {

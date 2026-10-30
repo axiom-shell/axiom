@@ -10,7 +10,7 @@
 # The config schema the translations are made from,
 # config/json/config.schema.json, is built from config/schema/ and the
 # components' schema.yaml files in the snapshot
-# (`axiom schema build`, through go run) and never committed, like the
+# (backend/tools/syncassets, through go generate) and never committed, like the
 # reference docs in docs/dev/config and docs/dev/generated (scripts/generate.sh
 # builds both in the tree).
 # Enabled per clone with
@@ -45,7 +45,7 @@ if [[ $i18n -eq 1 ]]; then
     echo "pre-commit: go isn't installed to build the config schema the translations are made from" >&2
     exit 1
   fi
-  (cd "$tmp/backend" && go generate ./internal/assets && go run ./cmd/axiom schema build --tree "$tmp" >/dev/null)
+  (cd "$tmp/backend" && go generate ./internal/assets)
 fi
 
 if [[ $i18n -eq 1 && -f "$tmp/scripts/check_i18n.py" ]]; then

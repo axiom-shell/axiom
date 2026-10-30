@@ -2,8 +2,10 @@
 // internal/assets/data, because go:embed can't reach outside the module
 // directory: copies of the sources, and the config schema built from its
 // YAML source (here rather than by `axiom schema build`, which can't
-// compile before its embedded copy exists). Run through `go generate`
-// (scripts/generate.sh); data/ is gitignored.
+// compile before its embedded copy exists). It writes the tree's own
+// config/json/config.schema.json too, the one the shell and the checks
+// read, so building it compiles this small program, not the whole binary.
+// Run through `go generate` (scripts/generate.sh); data/ is gitignored.
 package main
 
 import (
@@ -14,6 +16,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 )
 
@@ -93,5 +96,12 @@ func sync(root, out string) error {
 			return err
 		}
 	}
-	return nil
+
+	// The tree's copy by rename, as `axiom schema build` writes it: the
+	// shell may be reading it
+	own := filepath.Join(root, tree.SchemaJSON)
+	if old, err := os.ReadFile(own); err == nil && bytes.Equal(old, schema) {
+		return nil
+	}
+	return fsx.WriteFile(own, schema, 0o644)
 }
