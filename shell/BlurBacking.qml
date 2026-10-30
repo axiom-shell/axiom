@@ -48,9 +48,7 @@ Scope {
       readonly property bool aboveOverlay: BlurManager.aboveOverlay(perScreen.screenName)
       readonly property var overlayShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => shape.overlayLayer) : []
       readonly property var otherShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => !shape.overlayLayer) : perScreen.onScreen
-      // Whether the shadows go to windows of their own: where the blur
-      // would reach them (no threshold, no region of its own)
-      readonly property bool shadowsApart: CompositorManager.supports.blurThreshold !== true && CompositorManager.supports.blurRegion !== true
+      readonly property bool shadowsApart: BlurManager.shadowsApart
 
       // On Top, under the chrome; on Overlay (under every surface there,
       // by its order) while a fullscreen window hides the Top layer, for

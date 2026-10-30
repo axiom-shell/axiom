@@ -92,6 +92,10 @@ var (
 	// Nor this: sent only to the connection whose greeter.apply is
 	// running, once the password was given and it runs as root
 	pushGreeterAuthorized = rpc.Push[struct{}]{Method: "greeter.authorized"}
+
+	// Nor this: sent only to the connection holding the window
+	// switcher's keyboard (switcher.hold), once per hold
+	pushSwitcherKey = rpc.Push[switcherKey]{Method: "switcher.key"}
 )
 
 // compositorPushes are the compositor's pushes by method, for its

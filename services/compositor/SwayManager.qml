@@ -269,9 +269,9 @@ Singleton {
 
   // --- The window switcher ---
 
-  // Nothing to let go: sway's switcher binds enter no mode (SwitcherKeys
-  // reads the keys while it's open), and `mode default` would leave one of
-  // the user's own
+  // Nothing to let go: sway's switcher binds enter no mode (the daemon
+  // holds the keys while it's open: WindowSwitcherManager), and `mode
+  // default` would leave one of the user's own
   function leaveSwitcher() {
   }
 

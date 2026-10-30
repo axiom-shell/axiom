@@ -379,8 +379,8 @@ Singleton {
 
   // --- The window switcher ---
 
-  // Nothing to let go: niri's switcher binds enter no mode (SwitcherKeys
-  // reads the keys while it's open)
+  // Nothing to let go: niri's switcher binds enter no mode (the daemon
+  // holds the keys while it's open: WindowSwitcherManager)
   function leaveSwitcher() {
   }
 
