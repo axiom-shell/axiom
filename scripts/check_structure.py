@@ -29,6 +29,9 @@ running anything:
     the list only shrinks (these move to the axiom daemon)
   - no singleton is over SINGLETON_LINES lines, but the pure helpers and
     the compositor backends (split one before it grows past)
+  - no Repeater model or acquire() request in the UI reads a polled
+    service's member (one with an acquire()), in the expression or through
+    a property of the file; a model may count one (`.length`, `.count`)
 and warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
@@ -94,6 +97,24 @@ def schema_types(schema, name):
         if const:
             types.append(const)
     return types
+
+
+def binding(code, start):
+    """A QML binding's expression from `start`: to the end of its line, or
+    of the brackets it opens."""
+    depth, i = 0, start
+    while i < len(code):
+        c = code[i]
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if not depth:
+                break
+            depth -= 1
+        elif c in "\n;" and not depth:
+            break
+        i += 1
+    return code[start:i]
 
 
 def main():
@@ -407,6 +428,44 @@ def main():
             close = difflib.get_close_matches(name, singletons, n=1, cutoff=0.85)
             if close:
                 errors.append(f"{path}: {name} — did you mean {close[0]}?")
+
+    # Repeater models and acquire() requests never come from live values
+    # (AGENTS.md › UI conventions): a model re-evaluated per sample once
+    # pushed qs past 25 GB. Live means a member of a polled service (one
+    # with an acquire()), read in the expression or through one property
+    # of the same file. A model may count one (`.length`, `.count`: an int
+    # notifies only when it changes); a request may not read one at all
+    polled = {f.stem for f in ROOT.glob("services/*/*.qml") if re.search(r"^\s*function acquire\(", f.read_text(), re.M)}
+    polled.discard("ConsumerRegistry")
+    chain = re.compile(r"(?<![\w.])(?:root\.)?([A-Za-z_]\w*)((?:\??\.\w+)*)")
+
+    def live_reads(expr, props, counts, depth=0):
+        found = []
+        for m in chain.finditer(expr):
+            name, members = m.group(1), re.findall(r"\w+", m.group(2))
+            if (expr[m.end():m.end() + 1] == "(" and len(members) < 2) or (counts and members[-1:] in (["length"], ["count"])):
+                continue
+            if name in polled and members and members[0] not in ("acquire", "release"):
+                found.append(f"{name}.{members[0]}")
+            elif name in props and not depth:
+                found += [f"{name} → {r}" for r in live_reads(props[name], props, counts, 1)]
+        return found
+    for path, text in sources.items():
+        if not path.startswith(("components/", "shell/")):
+            continue
+        code = re.sub(r"//[^\n]*", "", re.sub(r'"(?:[^"\\\n]|\\.)*"|\'(?:[^\'\\\n]|\\.)*\'', '""', text))
+        props = {m.group(1): binding(code, m.end()) for m in re.finditer(r"\bproperty\s+[\w<>.]+\s+(\w+)\s*:", code)}
+        for m in re.finditer(r"(?<![\w.])Repeater\s*\{", code):
+            model = re.search(r"(?<![\w.])model:\s*", code[m.end():m.end() + 800])
+            found = model and live_reads(binding(code, m.end() + model.end()), props, True)
+            if found:
+                errors.append(f"{path}:{code.count(chr(10), 0, m.start()) + 1}: a Repeater model from live values ({', '.join(found)}): key it by a count (`model: rows.length`)")
+        requests = [(m.start(), binding(code, m.end())) for m in re.finditer(r"\b\w+\.acquire\(", code)]
+        requests += [(m.start(), props.get(m.group(1)[0].lower() + m.group(1)[1:], "")) for m in re.finditer(r"\bon(\w+)Changed:[^\n]*\bacquire\(", code)]
+        for at, request in requests:
+            found = live_reads(request, props, False)
+            if found:
+                errors.append(f"{path}:{code.count(chr(10), 0, at) + 1}: an acquire() request from live values ({', '.join(found)}): build it from config")
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():
