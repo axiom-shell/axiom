@@ -175,6 +175,8 @@ Panel {
     property string detail
     property string action
     property color tint: Theme.warning
+    // The button works (not while another action runs, by default)
+    property bool ready: !TailscaleManager.busy
     signal triggered
 
     Layout.fillWidth: true
@@ -215,7 +217,7 @@ Panel {
         }
       }
       StyledTextButton {
-        enabled: !TailscaleManager.busy
+        enabled: notice.ready
         opacity: enabled ? 1 : 0.5
         text: notice.action
         textSize: Appearance.fontSizeBy(-2)
@@ -407,21 +409,19 @@ Panel {
       textSize: Appearance.fontSizeBy(-2)
       textColor: TailscaleManager.connected ? Theme.accent : Theme.foregroundAlt
     }
-    // Connected or not; while an action runs it shows where it's going
+    // Connected or not; while connecting or disconnecting, where it's going
     StyledSwitch {
       id: connectSwitch
-      property bool wantUp: false
       visible: root.canAct
       enabled: !TailscaleManager.busy && !TailscaleManager.profilesDenied
       opacity: enabled ? 1 : 0.5
-      checked: TailscaleManager.busy ? connectSwitch.wantUp : TailscaleManager.connected
+      checked: TailscaleManager.pending === "tailscale.up" || TailscaleManager.pending !== "tailscale.down" && TailscaleManager.connected
       onToggled: {
-        connectSwitch.wantUp = checked;
         if (checked)
           TailscaleManager.connect();
         else
           TailscaleManager.disconnect();
-        connectSwitch.checked = Qt.binding(() => TailscaleManager.busy ? connectSwitch.wantUp : TailscaleManager.connected);
+        connectSwitch.checked = Qt.binding(() => TailscaleManager.pending === "tailscale.up" || TailscaleManager.pending !== "tailscale.down" && TailscaleManager.connected);
       }
     }
   }
@@ -435,6 +435,8 @@ Panel {
     title: I18n.tr("Log in to Tailscale")
     detail: TailscaleManager.authURL ? I18n.tr("Finish logging in in your browser.") : I18n.tr("This machine isn't logged in.")
     action: I18n.tr("Log in")
+    // Opening a link doesn't wait for `tailscale up` to give up
+    ready: TailscaleManager.authURL !== "" || !TailscaleManager.busy
     onTriggered: TailscaleManager.authURL ? TailscaleManager.openLogin() : TailscaleManager.connect()
   }
 

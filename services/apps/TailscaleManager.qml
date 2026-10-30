@@ -57,8 +57,9 @@ QtObject {
   property var peers: []
   readonly property int onlineCount: peers.filter(p => p.online).length
 
-  // A connect() or disconnect() is running
-  property bool busy: false
+  // The action running ("tailscale.up", …; "" none), and whether one is
+  property string pending: ""
+  readonly property bool busy: root.pending !== ""
   // Why the last one failed, for the user ("" after a success)
   property string lastError: ""
 
@@ -165,9 +166,9 @@ QtObject {
   function _run(method, params) {
     if (root.busy)
       return;
-    root.busy = true;
+    root.pending = method;
     BackendManager.call(method, params ?? {}, error => {
-      root.busy = false;
+      root.pending = "";
       // The daemon's message stays English; the shell words it by kind
       root.lastError = !error ? "" : error.kind === "refused" ? I18n.tr("Your user can't change Tailscale: allow it with Grant access.") : error.kind === "unauthorized" ? I18n.tr("Access wasn't granted.") : error.kind === "unavailable" ? I18n.tr("Tailscale isn't available.") : String(error.message ?? "");
       if (error)

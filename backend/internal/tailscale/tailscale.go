@@ -426,8 +426,8 @@ func GrantOperator(ctx context.Context, o Options, user string) error {
 	if err == nil {
 		return nil
 	}
-	// pkexec exits 126 when the request was dismissed or not allowed, 127
-	// when authentication failed
+	// pkexec exits 126 when the dialog was dismissed, 127 when not
+	// authorized (authentication failed, or polkit refused)
 	if exit := (*exec.ExitError)(nil); errors.As(err, &exit) && (exit.ExitCode() == 126 || exit.ExitCode() == 127) {
 		return axerr.Wrap(axerr.Unauthorized, err, "tailscale operator: not authorized")
 	}

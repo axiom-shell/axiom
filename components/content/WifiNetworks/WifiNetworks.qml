@@ -500,7 +500,6 @@ Panel {
     spacing: Widget.spacing / 2
 
     FooterAction {
-      visible: root.radioOn
       iconText: "wifi_find"
       text: I18n.tr("Hidden network")
       onClicked: root.hiddenOpen = !root.hiddenOpen
