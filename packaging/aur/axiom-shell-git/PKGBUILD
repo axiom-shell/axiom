@@ -28,6 +28,7 @@ optdepends=(
   'awww: wallpapers'
   'libsecret: calendar accounts and feeds'
   'networkmanager: Wi-Fi menu and network widget'
+  'nm-connection-editor: adding and editing VPNs'
   'pacman-contrib: package update checks'
   'wf-recorder: screen recording'
   'grim: screenshots (niri)'

@@ -107,6 +107,10 @@ QtObject {
         "arch": "networkmanager",
         "fedora": "NetworkManager"
       },
+      "nm-connection-editor": {
+        "arch": "nm-connection-editor",
+        "fedora": "nm-connection-editor"
+      },
       "xdg-desktop-portal-gtk": {
         "arch": "xdg-desktop-portal-gtk",
         "fedora": "xdg-desktop-portal-gtk"

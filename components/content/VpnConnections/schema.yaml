@@ -1,0 +1,13 @@
+label: VPN connections
+keyboard: true
+icon: vpn_lock
+group: Network & devices
+settings:
+  grow:
+    type: integer
+    title: Grow by up to
+    default: 0
+    minimum: 0
+    maximum: 16
+    x-unit: rows
+    description: 'Rows it may take while its list needs them: free rows towards the edge first (above it, or below it in a bottom menu), then away from it, pushing the modules there along (not on the lock or login screen). 0 keeps it at its size.'

@@ -3,7 +3,8 @@ import QtQuick
 import qs.services.core
 
 // Reader for the Apps section: the apps axiom opens (keybinds, the
-// launcher's terminal apps and Shift+Enter commands)
+// launcher's terminal apps and Shift+Enter commands, the network
+// editor)
 QtObject {
   id: root
 
@@ -13,6 +14,9 @@ QtObject {
   // Empty is the system default (xdg-open / xdg-settings)
   readonly property string fileManager: _c.fileManager
   readonly property string browser: _c.browser
+  // The connection editor the Wi-Fi menu and VPN module open ("" hides
+  // their buttons)
+  readonly property string networkEditor: _c.networkEditor
   // Desktop entry ids every dock shows first, unless it has its own
   // (DockConfig.pinnedOf). Through a string, like DockConfig.docks
   readonly property string _pinnedJson: JSON.stringify(_c.pinned)

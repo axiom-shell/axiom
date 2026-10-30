@@ -32,6 +32,8 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
 	"github.com/axiom-shell/axiom/backend/internal/nightlight"
+	"github.com/axiom-shell/axiom/backend/internal/nmnet"
+	"github.com/axiom-shell/axiom/backend/internal/nmvpn"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
@@ -135,6 +137,10 @@ type Daemon struct {
 	// clip is the clipboard's data control; clipboard its history
 	clip      *datacontrol.Device
 	clipboard *clipboard.History
+	// vpn is NetworkManager's VPNs and the secret agent
+	vpn *nmvpn.Service
+	// net is the rest the Wi-Fi menu asks NetworkManager
+	net *nmnet.Service
 	// idle is the Idle section's service
 	idle *idle.Service
 	// topics are the polled topics and their subscribers
@@ -302,12 +308,13 @@ func Run(ctx context.Context, opts Options) error {
 	d.keyboard = vkbd.New(vkbd.Options{Seat: d.seat, OnChange: d.pushWayland, Gap: 2 * time.Millisecond})
 	d.newNightLight()
 	d.newClipboard()
+	d.newVPN()
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.clipboardPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.clipboardPart(), d.vpnPart(), d.netPart(), d.dev.part()}
 	reg := d.registry(parts)
 	if opts.registered != nil {
 		opts.registered(reg)
