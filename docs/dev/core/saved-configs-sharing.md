@@ -46,16 +46,17 @@ Walks a value along the schema.
 ### Loading an example or import
 - `applyExample(name)`, `confirmImport(personal, commands)` and `applyShared(name, path, title, snapshot)` (a [community setup](../features/community-setups.md), personal parts and commands always off, no confirm row) call `share.example` / `share.import` / `share.applyShared`, which (`Service.apply`, one at a time):
   1. Load the file (`saved.load`), refusing one that isn't a valid config.
-  2. Save the running config as `before-<name>`.
+  2. Keep the running config (`keep`): nothing while the active snapshot is unchanged (it's on disk), else save it as `unsaved`, one snapshot replaced each time. `Applied.backup` names it ("" for none).
   3. Replace the config with `share.Apply` (takeovers kept).
   4. Save the result as its own snapshot and make it active: `example-<name>`, `import-<title>`, or the shared file's (`community-<id>`). The saved configs list then shows it as Current, with Overwrite and the unsaved dot; the prefixes keep it from replacing one of the user's snapshots. Its `meta.source` names what was applied, which `activeSource` gives while it's the active one ("" once the user saves over it, or for one they saved). Restore defaults (`share.defaults`) saves none.
+  5. If the active snapshot before step 2 was an applied copy (its `activeSource` set: unchanged, never saved over), delete it (`drop`): its file applies it again. So switching between examples leaves one copy, the current one.
 - The manager then signals `applied(name)`, or `applyFailed(name)` (`status` says why: `_refusal` reads axiom's error, e.g. a file from a newer axiom, or a broken config.json while no takeovers are kept: the store refuses every replace until it's fixed by hand, or deleted and axiom restarted (deleting it alone leaves them unknown); `restore` reads it too).
 - `browseImport()` opens the desktop's file picker for a JSON file ([File picker](file-picker.md)). `openImport(path)` reads it (`share.open`) as `importing`, with title and description from its header, for the page's confirm row. It offers a switch for its personal parts (`hasPersonal`) and one for its commands (`hasCommands`) only when it holds them; both start off.
 
 ### Saving and restoring a snapshot
 - `save(name)` (`saved.save`) writes `~/.config/axiom/saved/<name>.json`: the envelope plus `Sparse(Snapshot(config))`.
-- `restore(name)` (`saved.restore`) loads the file, checks which of its `SnapshotFiles` exist, and replaces the config with `WithSnapshot(Apply(current, saved, everything), saved, existing)`. Monitors, accounts, theme integrations and other machine settings stay as they are. No backup is made.
-- `restoreDefaults()` applies the schema defaults like an example (with personal parts and commands), after a `before-defaults` backup.
+- `restore(name)` (`saved.restore`) loads the file, checks which of its `SnapshotFiles` exist, and replaces the config with `WithSnapshot(Apply(current, saved, everything), saved, existing)`. Monitors, accounts, theme integrations and other machine settings stay as they are. Like an apply, it keeps the running config first (except when restoring `unsaved` itself, which would replace what's restored) and drops the applied copy it replaces. It answers an `Applied`, whose `backup` the status line names.
+- `restoreDefaults()` applies the schema defaults like an example (with personal parts and commands), after keeping the running config.
 
 ### Export
 - `exportConfig(personal, commands, places)` (`share.export`) writes `~/axiom-[<active>-]<date>-<time>.json`, with monitors by place unless `places` is false.

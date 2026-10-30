@@ -14,8 +14,11 @@ import qs.services.apps
  * look, personal parts and commands (by the schema's x-scope) and the
  * wallpaper setup (x-snapshot), in the export format, so a saved file can
  * be shared or imported as it is; restoring applies it like an example,
- * plus the wallpaper setup where its files are still there. Applying a
- * shared file first saves the running config as "before-<name>". Files of
+ * plus the wallpaper setup where its files are still there. Restoring or
+ * applying a shared file first keeps the running config: it's on disk
+ * already while the active snapshot is unchanged, else it's saved as
+ * "unsaved" (one snapshot, replaced each time); an applied file's copy goes
+ * once another replaces it, unless the user saved over it. Files of
  * any version axiom reads are taken (an older one is converted), and
  * nothing loaded changes a takeover setting (x-takeover). This keeps what
  * the settings page shows: the list, the active snapshot, a status line.
@@ -49,8 +52,8 @@ QtObject {
   // The file picker is open
   readonly property bool picking: FilePickerManager.running
 
-  // An example, import or shared setup was applied as `name` (its backup
-  // is "before-<name>"), or failed to be (status says why). Once applied,
+  // An example, import or shared setup was applied as `name`, or failed
+  // to be (status says why). Once applied,
   // it's saved as its own snapshot ("example-<name>", "import-<name>" or
   // the shared file's), the active one.
   signal applied(string name)
@@ -117,26 +120,24 @@ QtObject {
   function restore(name) {
     BackendManager.call("saved.restore", {
       "name": name
-    }, error => {
+    }, (error, result) => {
       if (error) {
         console.warn("[SavedConfigsManager] Restoring", name, "failed:", error.message);
         root.status = root._refusal(error, name);
         return;
       }
       SettingsManager.loadConfig();
-      root.status = I18n.tr("Restored \"{0}\"", name);
+      root.status = result.backup ? I18n.tr("Restored \"{0}\". Your unsaved changes are saved as \"{1}\".", name, result.backup) : I18n.tr("Restored \"{0}\"", name);
     });
   }
 
   // Applies the schema defaults like an example (the look, personal parts
-  // and commands; machine settings stay), after saving the running config as
-  // "before-defaults"
+  // and commands; machine settings stay), after keeping the running config
   function restoreDefaults() {
     root._apply("defaults", "share.defaults", {}, "defaults");
   }
 
-  // Applies an example's look, after saving the running config as
-  // "before-<name>"
+  // Applies an example's look, after keeping the running config
   function applyExample(name) {
     root._apply(name, "share.example", {
       "name": name
@@ -170,7 +171,7 @@ QtObject {
 
   // Applies `importing` (its personal parts too when `personal`:
   // preferences, keybinds, apps; its commands when `commands`), after
-  // saving the running config as "before-<name>"
+  // keeping the running config
   function confirmImport(personal, commands) {
     const pending = root.importing;
     root.importing = null;
@@ -188,7 +189,7 @@ QtObject {
   }
 
   // Applies a shared file at `path` straight away, its look only, after
-  // saving the running config as "before-<name>", then saves the result as
+  // keeping the running config, then saves the result as
   // `snapshot`: a community setup (CommunitySetupsManager). False when
   // another apply is under way.
   function applyShared(name, path, title, snapshot) {
@@ -222,7 +223,7 @@ QtObject {
     }, error => root.status = error ? I18n.tr("Failed to delete \"{0}\"", name) : I18n.tr("Deleted \"{0}\"", name));
   }
 
-  // One apply at a time: a second would replace the first's backup
+  // One apply at a time: a second would race the first's keep
   // rpc: share.defaults, share.example, share.import, share.applyShared
   function _apply(name, method, params, label) {
     if (root._busy) {
@@ -239,7 +240,10 @@ QtObject {
         return;
       }
       SettingsManager.loadConfig();
-      root.status = result.saved ? I18n.tr("Applied \"{0}\" as \"{1}\". The previous configuration is saved as \"{2}\".", label, result.saved, result.backup) : I18n.tr("Applied \"{0}\". The previous configuration is saved as \"{1}\".", label, result.backup);
+      if (result.backup)
+        root.status = result.saved ? I18n.tr("Applied \"{0}\" as \"{1}\". The previous configuration is saved as \"{2}\".", label, result.saved, result.backup) : I18n.tr("Applied \"{0}\". The previous configuration is saved as \"{1}\".", label, result.backup);
+      else
+        root.status = result.saved ? I18n.tr("Applied \"{0}\" as \"{1}\".", label, result.saved) : I18n.tr("Applied \"{0}\".", label);
       root.applied(name);
     });
     return true;

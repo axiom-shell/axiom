@@ -9,7 +9,7 @@ import qs.services.core
 // downloads the catalog (CommunitySetups.indexUrl) when the gallery is
 // opened, never before, and the setups' thumbnails and screenshots into
 // the cache; applies one through SavedConfigsManager.applyShared (its
-// look only, after a "before-<id>" backup), first installing its palette
+// look only, after keeping the running config), first installing its palette
 // as the theme "community/<id>" and, when asked, its wallpaper; the result
 // is saved as the snapshot "community-<id>", the active one. Every
 // download goes through the daemon (community.fetch) and is checked

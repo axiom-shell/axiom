@@ -2769,7 +2769,6 @@
     "Needs a newer axiom": "",
     "Also use its wallpaper": "",
     "License: {0} · Source: {1}": "",
-    "Your current setup is saved as \"{0}\" first.": "",
     "Applied": "",
     "by {0} · needs a newer axiom": "",
     "Share yours": "",
@@ -3497,6 +3496,10 @@
     "Your user can't change Tailscale: allow it with Grant access.": "",
     "Access wasn't granted.": "",
     "Show Connect / Disconnect, switching and adding accounts, the exit node and the node's options. They need operator rights once (`tailscale set --operator=$USER`): the popout's Grant access button asks for them.": "",
-    "Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file": ""
+    "Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file": "",
+    "Your unsaved changes are saved as \"unsaved\" first.": "",
+    "Restored \"{0}\". Your unsaved changes are saved as \"{1}\".": "",
+    "Applied \"{0}\" as \"{1}\".": "",
+    "Applied \"{0}\".": ""
   }
 }
