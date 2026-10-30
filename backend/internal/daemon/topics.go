@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"os/user"
 
 	"github.com/axiom-shell/axiom/backend/internal/claudeusage"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
@@ -32,6 +33,7 @@ func (d *Daemon) topicsPart() part {
 func (d *Daemon) sources() []topics.Source {
 	return append([]topics.Source{
 		tailscale.Source(tailscale.Options{}),
+		tailscale.DetailsSource(tailscale.Options{}),
 		updates.Source(updates.Options{Log: d.opts.Log}),
 		sysmon.Source(sysmon.Options{Home: d.opts.Getenv("HOME")}),
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
@@ -39,16 +41,42 @@ func (d *Daemon) sources() []topics.Source {
 	}, d.opts.topics...)
 }
 
-// tailscaleMethods: `tailscale.up` / `tailscale.down`, the popout's
-// Connect and Disconnect, each fetching the topic again after.
+// tailscaleMethods: the popout's actions (`tailscale up` / `down`,
+// `switch`, `login`, `set`, and granting operator rights), each fetching
+// both Tailscale topics again after.
 func (d *Daemon) tailscaleMethods(reg *rpc.Registry, o tailscale.Options) {
-	connect := func(up bool) func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
-		return func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
-			err := tailscale.Connect(ctx, o, up)
-			d.topics.Refresh("tailscale")
+	handle := func(name string, act func(ctx context.Context) error) {
+		rpc.Handle(reg, name, func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
+			err := act(ctx)
+			d.refreshTailscale()
 			return struct{}{}, err
-		}
+		})
 	}
-	rpc.Handle(reg, "tailscale.up", connect(true))
-	rpc.Handle(reg, "tailscale.down", connect(false))
+	handle("tailscale.up", func(ctx context.Context) error { return tailscale.Connect(ctx, o, true) })
+	handle("tailscale.down", func(ctx context.Context) error { return tailscale.Connect(ctx, o, false) })
+	handle("tailscale.login", func(ctx context.Context) error { return tailscale.Login(ctx, o) })
+	handle("tailscale.grantOperator", func(ctx context.Context) error {
+		u, err := user.Current()
+		if err != nil {
+			return err
+		}
+		return tailscale.GrantOperator(ctx, o, u.Username)
+	})
+	rpc.Handle(reg, "tailscale.switch", func(ctx context.Context, c *rpc.Conn, p struct {
+		ID string `json:"id"`
+	}) (struct{}, error) {
+		err := tailscale.Switch(ctx, o, p.ID)
+		d.refreshTailscale()
+		return struct{}{}, err
+	})
+	rpc.Handle(reg, "tailscale.set", func(ctx context.Context, c *rpc.Conn, p tailscale.SetRequest) (struct{}, error) {
+		err := tailscale.Set(ctx, o, p)
+		d.refreshTailscale()
+		return struct{}{}, err
+	})
+}
+
+func (d *Daemon) refreshTailscale() {
+	d.topics.Refresh("tailscale")
+	d.topics.Refresh("tailscaledetails")
 }

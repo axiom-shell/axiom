@@ -1,7 +1,9 @@
-// Package tailscale is Tailscale's state for the shell, the `tailscale`
+// Package tailscale is Tailscale's state for the shell: the `tailscale`
 // polled topic (`tailscale status --json` at the shortest interval a
 // widget asks for, and only what the widgets and the popout show of it),
-// and the `tailscale up` / `down` the popout's buttons run.
+// the `tailscaledetails` topic the popout adds (the node's prefs and the
+// accounts logged in), and the actions its controls run (`up`, `down`,
+// `switch`, `login`, `set`, and granting operator rights through pkexec).
 package tailscale
 
 import (
@@ -12,7 +14,9 @@ import (
 	"os/exec"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -41,10 +45,23 @@ type State struct {
 	AuthURL string `json:"authURL"`
 	// Health is tailscaled's warnings, as it words them
 	Health []string `json:"health"`
-	// ExitNode is the name of the peer used as exit node ("" none)
-	ExitNode string `json:"exitNode"`
+	// ExitNode is the name of the peer used as exit node ("" none), and
+	// ExitNodeIP its first address
+	ExitNode   string `json:"exitNode"`
+	ExitNodeIP string `json:"exitNodeIP"`
+	// Account is who this machine is logged in as
+	Account Account `json:"account"`
+	// KeyExpiry is when this machine's node key expires (RFC 3339), ""
+	// when it never does
+	KeyExpiry string `json:"keyExpiry"`
 	// Peers are the tailnet's other devices, online first, then by name
 	Peers []Peer `json:"peers"`
+}
+
+// Account is a Tailscale user ("" fields when unknown).
+type Account struct {
+	LoginName   string `json:"loginName"`
+	DisplayName string `json:"displayName"`
 }
 
 // Peer is another device on the tailnet.
@@ -85,6 +102,8 @@ type statusNode struct {
 	Active         bool
 	ExitNode       bool
 	ExitNodeOption bool
+	UserID         int64
+	KeyExpiry      string
 }
 
 // Parse reads `tailscale status --json`. Output it can't read is a state
@@ -99,6 +118,7 @@ func Parse(out []byte) State {
 		CurrentTailnet *struct{ Name string }
 		Self           *statusNode
 		Peer           map[string]statusNode
+		User           map[string]Account
 	}
 	st := State{Available: true, IPs: []string{}, Health: []string{}, Peers: []Peer{}}
 	if json.Unmarshal(out, &status) != nil {
@@ -121,11 +141,18 @@ func Parse(out []byte) State {
 			st.IPs = self.TailscaleIPs
 			st.IP = self.TailscaleIPs[0]
 		}
+		st.Account = status.User[strconv.FormatInt(self.UserID, 10)]
+		if t, err := time.Parse(time.RFC3339, self.KeyExpiry); err == nil && !t.IsZero() {
+			st.KeyExpiry = self.KeyExpiry
+		}
 	}
 	for _, n := range status.Peer {
 		p := peer(n)
 		if p.ExitNode {
 			st.ExitNode = p.Name
+			if len(p.IPs) > 0 {
+				st.ExitNodeIP = p.IPs[0]
+			}
 		}
 		st.Peers = append(st.Peers, p)
 	}
@@ -164,17 +191,75 @@ func peer(n statusNode) Peer {
 	return p
 }
 
-// Options are what the source and the actions run; zero values are the
+// Details is what the popout adds to State: the node's prefs its
+// switches show, and the accounts logged in on this machine. Profiles is
+// never null.
+type Details struct {
+	Prefs    Prefs     `json:"prefs"`
+	Profiles []Profile `json:"profiles"`
+	// ProfilesDenied: listing the accounts needs operator rights, which
+	// this user doesn't have
+	ProfilesDenied bool `json:"profilesDenied"`
+}
+
+// Prefs are the node's settings the popout switches (`tailscale set`).
+type Prefs struct {
+	// Known: `tailscale debug prefs` was read (it isn't a stable
+	// interface: the switches hide when it can't be)
+	Known            bool `json:"known"`
+	AcceptRoutes     bool `json:"acceptRoutes"`
+	AcceptDNS        bool `json:"acceptDNS"`
+	ShieldsUp        bool `json:"shieldsUp"`
+	ExitNodeAllowLAN bool `json:"exitNodeAllowLAN"`
+}
+
+// Profile is an account logged in on this machine (`tailscale switch
+// --list --json`).
+type Profile struct {
+	ID       string `json:"id"`
+	Nickname string `json:"nickname"`
+	Tailnet  string `json:"tailnet"`
+	Account  string `json:"account"`
+	Selected bool   `json:"selected"`
+}
+
+// ParsePrefs reads `tailscale debug prefs`; output it can't read is
+// prefs unknown.
+func ParsePrefs(out []byte) Prefs {
+	var p struct {
+		RouteAll, ShieldsUp, ExitNodeAllowLANAccess bool
+		CorpDNS                                     *bool
+	}
+	if json.Unmarshal(out, &p) != nil || p.CorpDNS == nil {
+		return Prefs{}
+	}
+	return Prefs{Known: true, AcceptRoutes: p.RouteAll, AcceptDNS: *p.CorpDNS, ShieldsUp: p.ShieldsUp, ExitNodeAllowLAN: p.ExitNodeAllowLANAccess}
+}
+
+// ParseProfiles reads `tailscale switch --list --json`; output it can't
+// read is no accounts.
+func ParseProfiles(out []byte) []Profile {
+	var ps []Profile
+	if json.Unmarshal(out, &ps) != nil || ps == nil {
+		return []Profile{}
+	}
+	return ps
+}
+
+// Options are what the sources and the actions run; zero values are the
 // real ones.
 type Options struct {
 	LookPath func(file string) (string, error)
-	// Status runs `tailscale status --json` and returns its stdout (its
-	// exit status doesn't matter: a stopped tailscaled exits non-zero)
-	Status func(ctx context.Context, bin string) []byte
-	// Run runs `tailscale <args>` and returns its combined output
+	// Query runs a read-only `tailscale <args>` (at most 5 s) and returns
+	// its stdout and stderr (its exit status doesn't matter: a stopped
+	// tailscaled exits non-zero, and a refusal says so on stderr)
+	Query func(ctx context.Context, bin string, args ...string) (stdout, stderr []byte)
+	// Run runs `<bin> <args>` (tailscale, or pkexec) and returns its
+	// combined output
 	Run func(ctx context.Context, bin string, args ...string) ([]byte, error)
-	// UpTimeout bounds `tailscale up`, which waits for a login while one
-	// is needed (15 s); the login link then shows in the state (AuthURL)
+	// UpTimeout bounds `tailscale up` and `login`, which wait for a login
+	// while one is needed (15 s); the login link then shows in the state
+	// (AuthURL)
 	UpTimeout time.Duration
 }
 
@@ -182,8 +267,8 @@ func (o Options) withDefaults() Options {
 	if o.LookPath == nil {
 		o.LookPath = exec.LookPath
 	}
-	if o.Status == nil {
-		o.Status = status
+	if o.Query == nil {
+		o.Query = query
 	}
 	if o.Run == nil {
 		o.Run = run
@@ -211,7 +296,41 @@ func Source(o Options) topics.Source {
 			if err != nil {
 				return nil, err
 			}
-			return Parse(o.Status(ctx, bin)), nil
+			out, _ := o.Query(ctx, bin, "status", "--json")
+			return Parse(out), nil
+		},
+	}
+}
+
+// DetailsSource is the `tailscaledetails` topic: `tailscale debug prefs`
+// and `switch --list --json`, read together, only while the popout or a
+// module shows them.
+func DetailsSource(o Options) topics.Source {
+	o = o.withDefaults()
+	return topics.Source{
+		Name:    "tailscaledetails",
+		Floor:   topics.MinInterval,
+		Default: 10 * time.Second,
+		Request: reflect.TypeFor[struct{}](),
+		State:   reflect.TypeFor[Details](),
+		Fetch: func(ctx context.Context, _ []json.RawMessage) (any, error) {
+			d := Details{Profiles: []Profile{}}
+			bin, err := o.LookPath("tailscale")
+			if errors.Is(err, exec.ErrNotFound) {
+				return d, nil
+			}
+			if err != nil {
+				return nil, err
+			}
+			var wg sync.WaitGroup
+			var prefs, profiles, profilesErr []byte
+			wg.Go(func() { prefs, _ = o.Query(ctx, bin, "debug", "prefs") })
+			wg.Go(func() { profiles, profilesErr = o.Query(ctx, bin, "switch", "--list", "--json") })
+			wg.Wait()
+			d.Prefs = ParsePrefs(prefs)
+			d.Profiles = ParseProfiles(profiles)
+			d.ProfilesDenied = deniedText(string(profilesErr))
+			return d, nil
 		},
 	}
 }
@@ -220,31 +339,130 @@ func Source(o Options) topics.Source {
 // node's saved settings. Changing them needs operator rights: without,
 // the error is Refused and says how to grant them.
 func Connect(ctx context.Context, o Options, up bool) error {
+	if up {
+		return cli(ctx, o, true, "up")
+	}
+	return cli(ctx, o, false, "down")
+}
+
+// Login runs `tailscale login`: a new account beside the ones logged in,
+// whose login link then shows in the state.
+func Login(ctx context.Context, o Options) error {
+	return cli(ctx, o, true, "login")
+}
+
+// Switch runs `tailscale switch <id>`, to an account of `switch --list`.
+func Switch(ctx context.Context, o Options, id string) error {
+	if id == "" || strings.HasPrefix(id, "-") {
+		return axerr.New(axerr.BadRequest, "tailscale switch: no account id %q", id)
+	}
+	return cli(ctx, o, false, "switch", id)
+}
+
+// SetRequest is what `tailscale set` changes: only the fields given.
+// ExitNode is a peer's address, or "" for none.
+type SetRequest struct {
+	ExitNode         *string `json:"exitNode,omitempty"`
+	ExitNodeAllowLAN *bool   `json:"exitNodeAllowLAN,omitempty"`
+	AcceptRoutes     *bool   `json:"acceptRoutes,omitempty"`
+	AcceptDNS        *bool   `json:"acceptDNS,omitempty"`
+	ShieldsUp        *bool   `json:"shieldsUp,omitempty"`
+}
+
+// Args are the `tailscale set` arguments for r, each `--flag=value` so
+// no value reads as a flag (nil with nothing to change).
+func (r SetRequest) Args() []string {
+	var args []string
+	if r.ExitNode != nil {
+		args = append(args, "--exit-node="+*r.ExitNode)
+	}
+	for _, f := range []struct {
+		flag string
+		v    *bool
+	}{
+		{"exit-node-allow-lan-access", r.ExitNodeAllowLAN},
+		{"accept-routes", r.AcceptRoutes},
+		{"accept-dns", r.AcceptDNS},
+		{"shields-up", r.ShieldsUp},
+	} {
+		if f.v != nil {
+			args = append(args, "--"+f.flag+"="+strconv.FormatBool(*f.v))
+		}
+	}
+	if args == nil {
+		return nil
+	}
+	return append([]string{"set"}, args...)
+}
+
+// Set runs `tailscale set` with what r changes, never `up` with flags
+// (which resets every setting it isn't given).
+func Set(ctx context.Context, o Options, r SetRequest) error {
+	args := r.Args()
+	if args == nil {
+		return axerr.New(axerr.BadRequest, "tailscale set: nothing to change")
+	}
+	return cli(ctx, o, false, args...)
+}
+
+// GrantOperator runs `pkexec tailscale set --operator=<user>`: polkit
+// asks for an administrator's password (axiom's agent, or the session's),
+// after which user runs every action without it. Dismissed or refused,
+// the error is Unauthorized.
+func GrantOperator(ctx context.Context, o Options, user string) error {
+	o = o.withDefaults()
+	if user == "" || strings.HasPrefix(user, "-") {
+		return axerr.New(axerr.BadRequest, "tailscale operator: no user name %q", user)
+	}
+	bin, err := o.LookPath("tailscale")
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "tailscale isn't installed")
+	}
+	pkexec, err := o.LookPath("pkexec")
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "pkexec isn't installed")
+	}
+	out, err := o.Run(ctx, pkexec, bin, "set", "--operator="+user)
+	if err == nil {
+		return nil
+	}
+	// pkexec exits 126 when the request was dismissed or not allowed, 127
+	// when authentication failed
+	if exit := (*exec.ExitError)(nil); errors.As(err, &exit) && (exit.ExitCode() == 126 || exit.ExitCode() == 127) {
+		return axerr.Wrap(axerr.Unauthorized, err, "tailscale operator: not authorized")
+	}
+	if msg := strings.TrimSpace(string(out)); msg != "" {
+		return axerr.Wrap(axerr.Internal, err, "tailscale operator: %s", msg)
+	}
+	return axerr.Wrap(axerr.Internal, err, "tailscale operator failed")
+}
+
+// cli runs `tailscale <args>`. waits: it may wait for a login (up,
+// login), so it's cut off after UpTimeout, which isn't a failure: the
+// login link shows in the state. Without operator rights the error is
+// Refused and says how to grant them.
+func cli(ctx context.Context, o Options, waits bool, args ...string) error {
 	o = o.withDefaults()
 	bin, err := o.LookPath("tailscale")
 	if err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "tailscale isn't installed")
 	}
-	verb := "down"
-	if up {
-		verb = "up"
-	}
+	verb := args[0]
 	runCtx, cancel := ctx, context.CancelFunc(func() {})
-	if up {
+	if waits {
 		runCtx, cancel = context.WithTimeout(ctx, o.UpTimeout)
 	}
 	defer cancel()
-	out, err := o.Run(runCtx, bin, verb)
+	out, err := o.Run(runCtx, bin, args...)
 	if err == nil {
 		return nil
 	}
-	if up && ctx.Err() == nil && errors.Is(runCtx.Err(), context.DeadlineExceeded) {
+	if waits && ctx.Err() == nil && errors.Is(runCtx.Err(), context.DeadlineExceeded) {
 		// still waiting for a login: the state carries its link
 		return nil
 	}
 	msg := strings.TrimSpace(string(out))
-	lower := strings.ToLower(msg)
-	if strings.Contains(lower, "access denied") || strings.Contains(lower, "permission denied") {
+	if deniedText(msg) {
 		return axerr.Wrap(axerr.Refused, err, "tailscale %s: access denied: run `sudo tailscale set --operator=$USER` once to allow it", verb)
 	}
 	if msg == "" {
@@ -253,15 +471,22 @@ func Connect(ctx context.Context, o Options, up bool) error {
 	return axerr.Wrap(axerr.Internal, err, "tailscale %s: %s", verb, msg)
 }
 
-func status(ctx context.Context, bin string) []byte {
+// deniedText: tailscaled refused for want of operator rights.
+func deniedText(msg string) bool {
+	lower := strings.ToLower(msg)
+	return strings.Contains(lower, "access denied") || strings.Contains(lower, "permission denied")
+}
+
+func query(ctx context.Context, bin string, args ...string) (stdout, stderr []byte) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	var out bytes.Buffer
-	cmd := exec.CommandContext(ctx, bin, "status", "--json")
+	var out, errOut bytes.Buffer
+	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Stdout = &out
+	cmd.Stderr = &errOut
 	cmd.WaitDelay = time.Second
 	cmd.Run()
-	return out.Bytes()
+	return out.Bytes(), errOut.Bytes()
 }
 
 func run(ctx context.Context, bin string, args ...string) ([]byte, error) {

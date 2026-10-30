@@ -8,6 +8,8 @@
   "Self": {
     "ID": "1",
     "HostName": "laptop",
+    "UserID": 42,
+    "KeyExpiry": "2027-04-28T11:48:50Z",
     "DNSName": "laptop.example.ts.net.",
     "OS": "linux",
     "TailscaleIPs": ["100.64.0.7", "fd7a:115c:a1e0::7"],
@@ -70,5 +72,9 @@
       "Active": true
     }
   },
-  "User": {}
+  "User": {},
+  "User": {
+    "42": {"ID": 42, "LoginName": "me@example.com", "DisplayName": "Me", "ProfilePicURL": ""},
+    "7": {"ID": 7, "LoginName": "other@example.com", "DisplayName": "Other", "ProfilePicURL": ""}
+  }
 }

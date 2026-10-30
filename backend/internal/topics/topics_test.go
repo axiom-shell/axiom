@@ -393,7 +393,7 @@ func TestIntervalSettingsMeetMinInterval(t *testing.T) {
 		t.Fatal(err)
 	}
 	feeds := map[string]bool{
-		"/properties/Tailscale.interval":                                   false, // tailscale
+		"/properties/Tailscale.interval":                                   false, // tailscale, tailscaledetails
 		"/definitions/SystemStatsWidget/properties/properties.interval":    false, // system
 		"/definitions/UpdatesWidget/properties/properties.interval":        false, // updates
 		"/definitions/UpdatesOverlayModule/properties/properties.interval": false, // updates
