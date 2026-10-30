@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### Hyprland 0.57 refuses the empty pointer acceleration profile
-- **Where:** `config/schema/sections/Input.yaml` (`accel`'s hyprland `value: emptyIsDefault`), `backend/internal/compositor/render`
-- **What:** With pointer settings on and acceleration left at `default`, the writer sets `input.accel_profile` to `""`. Hyprland 0.57.0 rejects it (`error setting 'input.accel_profile': bad value "", allowed values are: "adaptive", "flat", "custom"`), so `TestCompositorsReadTheFiles/HyprConfigLua` fails wherever Hyprland 0.57 is installed (CI has none, so it passes there), and a user on 0.57 gets a config error. `default` should skip the key instead, as sway and niri do.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing row 18's batch 9 (check_all.sh's Go tests)
-
 ### TestOrphanOfAnEarlierDaemonIsStopped misses the orphan's stop under a loaded run
 - **Where:** `backend/internal/supervise` (`TestOrphanOfAnEarlierDaemonIsStopped`)
 - **What:** In a full local `scripts/dev/verify.sh --all` run the test failed after its 15 s bound with `the orphan wasn't stopped` (supervise_test.go:147); run alone it passes in 0.05 s, three times in a row. Like the flaky tests batch 4 fixed, its wait is likely too tight, or racy, under a loaded machine.

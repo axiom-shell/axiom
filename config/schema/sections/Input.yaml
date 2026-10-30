@@ -112,7 +112,7 @@ properties:
         x-enumLabels: {default: Device default, flat: Flat (none), adaptive: Adaptive}
         default: default
         x-compositor:
-          hyprland: {key: input.accel_profile, value: emptyIsDefault, if: enabled}
+          hyprland: {key: input.accel_profile, skip: default, if: enabled}
           sway: {key: 'input type:pointer accel_profile {}', skip: default, if: enabled}
           niri: {key: input.mouse.accel-profile, skip: default, if: enabled}
         x-showIf: {enabled: true}
