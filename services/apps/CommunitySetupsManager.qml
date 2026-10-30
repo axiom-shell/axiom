@@ -285,7 +285,7 @@ QtObject {
     }
     if (setup.files.theme)
       ThemeManager.reloadCommunityThemes();
-    if (!SavedConfigsManager.applyShared(id, root._setupDir(id) + "config.json", setup.title, root._snapshotPrefix + id)) {
+    if (!SavedConfigsManager.applyShared(id, root._setupDir(id) + "config.json", setup.title, root._snapshotPrefix + id, root._applyWallpaper !== "")) {
       root._applying = "";
       root._status = SavedConfigsManager.status;
     }

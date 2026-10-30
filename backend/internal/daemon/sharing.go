@@ -18,6 +18,8 @@ type sharedParams struct {
 	Personal bool   `json:"personal"`
 	Commands bool   `json:"commands"`
 	Places   bool   `json:"places"`
+	// share.applyShared: the shell sets the setup's wallpaper next
+	Wallpaper bool `json:"wallpaper"`
 }
 
 // monitors are this PC's outputs by place; nil while the daemon has no
@@ -80,7 +82,7 @@ func (d *Daemon) sharingMethods(reg *rpc.Registry) {
 		if err := d.writable(); err != nil {
 			return saved.Applied{}, err
 		}
-		return d.saved.ApplyShared(p.Path, p.Name, p.Snapshot, d.monitors())
+		return d.saved.ApplyShared(p.Path, p.Name, p.Snapshot, p.Wallpaper, d.monitors())
 	})
 	rpc.Handle(reg, "share.defaults", func(ctx context.Context, c *rpc.Conn, _ struct{}) (saved.Applied, error) {
 		if err := d.writable(); err != nil {

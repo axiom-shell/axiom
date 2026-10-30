@@ -233,7 +233,7 @@ func (s *Service) Changed() {
 	s.mu.Lock()
 	before := s.state
 	s.state.Modified = s.modified()
-	s.state.Unsaved = !s.onDisk()
+	s.state.Unsaved = !s.onDisk(false)
 	after := s.state
 	s.mu.Unlock()
 	if after != before && s.opts.OnState != nil {
@@ -313,20 +313,20 @@ func (s *Service) Restore(name string) (Applied, error) {
 	// Restoring the kept one itself takes its file as it was: keeping the
 	// running config there would replace what's being restored
 	previous, copied := s.state.Active, s.activeKind == kindCopy
-	if h.Kind != kindUnsaved {
-		if result.Backup, err = s.keep(); err != nil {
-			return Applied{}, err
-		}
-	}
 	sch := s.opts.Pipeline().Schema()
-	current, _ := s.opts.Store.Config()
-	applied := share.Apply(sch, current, loaded, share.Everything, nil)
 	var existing []string
 	for _, file := range share.SnapshotFiles(sch, loaded) {
 		if _, err := os.Stat(file); err == nil {
 			existing = append(existing, file)
 		}
 	}
+	if h.Kind != kindUnsaved {
+		if result.Backup, err = s.keep(len(existing) > 0); err != nil {
+			return Applied{}, err
+		}
+	}
+	current, _ := s.opts.Store.Config()
+	applied := share.Apply(sch, current, loaded, share.Everything, nil)
 	applied = share.WithSnapshot(sch, applied, loaded, existing)
 	if _, err := s.opts.Store.Replace(applied.(*jsonx.Object), store.SetOptions{Restore: true}); err != nil {
 		return result, err
@@ -359,9 +359,9 @@ func (s *Service) remove(name string) error {
 
 // keep makes sure the running config is on disk before something replaces
 // it (onDisk: ""), else saves it as the kindUnsaved snapshot, whose name it
-// returns.
-func (s *Service) keep() (string, error) {
-	if s.onDisk() {
+// returns. wallpaper: what replaces it changes the wallpaper setup too.
+func (s *Service) keep(wallpaper bool) (string, error) {
+	if s.onDisk(wallpaper) {
 		return "", nil
 	}
 	return s.save(s.unsavedName(), "", kindUnsaved)
@@ -370,13 +370,16 @@ func (s *Service) keep() (string, error) {
 // onDisk says whether the running config needn't be kept: the active
 // snapshot unchanged is on disk, and so are the schema's defaults with none
 // active (Restore defaults applies them again). An active one that didn't
-// load (no baseline) or whose file is gone doesn't count.
-func (s *Service) onDisk() bool {
-	if s.state.Active != "" && s.baseline != nil && !s.modified() {
+// load (no baseline) or whose file is gone doesn't count. With wallpaper
+// (the wallpaper setup changes too), only a snapshot that stays holds it:
+// not the defaults (they leave machine settings as they are), nor a
+// kindCopy one, dropped once replaced.
+func (s *Service) onDisk(wallpaper bool) bool {
+	if s.state.Active != "" && s.baseline != nil && !s.modified() && !(wallpaper && s.activeKind == kindCopy) {
 		_, err := os.Stat(s.path(s.state.Active))
 		return err == nil
 	}
-	if s.state.Active != "" {
+	if s.state.Active != "" || wallpaper {
 		return false
 	}
 	sch := s.opts.Pipeline().Schema()
@@ -450,7 +453,7 @@ func (s *Service) setActive(name string, baseline *jsonx.Object, source, kind st
 		}
 	}
 	s.state.Modified = s.modified()
-	s.state.Unsaved = !s.onDisk()
+	s.state.Unsaved = !s.onDisk(false)
 	if s.opts.OnState != nil {
 		s.opts.OnState(s.state)
 	}
@@ -548,7 +551,7 @@ func (s *Service) Import(path string, personal, commands bool, monitors share.Mo
 		carry = append(carry, "commands")
 	}
 	// No source: its file may be gone, so its copy is the user's to keep
-	return s.apply(preview.Name, parsed, carry, monitors, "import-"+preview.Name, "")
+	return s.apply(preview.Name, parsed, carry, monitors, "import-"+preview.Name, "", false)
 }
 
 // summarize fills in what a preview of the example draws, from it loaded
@@ -586,32 +589,34 @@ func (s *Service) ApplyExample(name string, monitors share.Monitors) (Applied, e
 	if err != nil {
 		return Applied{}, axerr.Wrap(axerr.NotFound, err, "the example %q", name)
 	}
-	return s.apply(name, parsed, nil, monitors, "example-"+Sanitize(name), name)
+	return s.apply(name, parsed, nil, monitors, "example-"+Sanitize(name), name, false)
 }
 
 // ApplyShared applies a shared file's look (a community setup's), after
 // keeping the running config (keep); the result is saved as snapshot (""
-// for none), its source the setup's name.
-func (s *Service) ApplyShared(path, name, snapshot string, monitors share.Monitors) (Applied, error) {
+// for none), its source the setup's name. wallpaper: the caller sets its
+// wallpaper next, so the wallpaper setup is kept too.
+func (s *Service) ApplyShared(path, name, snapshot string, wallpaper bool, monitors share.Monitors) (Applied, error) {
 	parsed, err := readShared(path)
 	if err != nil {
 		return Applied{}, err
 	}
-	return s.apply(name, parsed, nil, monitors, snapshot, name)
+	return s.apply(name, parsed, nil, monitors, snapshot, name, wallpaper)
 }
 
 // Defaults applies the schema's defaults like an example (the look,
 // personal parts and commands; machine settings stay), after keeping the
 // running config (keep).
 func (s *Service) Defaults() (Applied, error) {
-	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "", "")
+	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "", "", false)
 }
 
 // apply: the running config kept, then the file's parts in carry applied,
 // then (snapshot not "") the result saved as snapshot from source (a
 // kindCopy one with a source: its file applies it again), and the copy the
-// last applied file was saved as dropped.
-func (s *Service) apply(name string, parsed any, carry []string, monitors share.Monitors, snapshot, source string) (Applied, error) {
+// last applied file was saved as dropped. wallpaper: the wallpaper setup
+// changes too (keep).
+func (s *Service) apply(name string, parsed any, carry []string, monitors share.Monitors, snapshot, source string, wallpaper bool) (Applied, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	loaded, err := s.load(parsed)
@@ -619,7 +624,7 @@ func (s *Service) apply(name string, parsed any, carry []string, monitors share.
 		return Applied{}, err
 	}
 	previous, copied := s.state.Active, s.activeKind == kindCopy
-	backup, err := s.keep()
+	backup, err := s.keep(wallpaper)
 	if err != nil {
 		return Applied{}, err
 	}

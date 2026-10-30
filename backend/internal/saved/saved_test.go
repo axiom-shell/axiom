@@ -154,7 +154,7 @@ func TestApplyExampleFormat1(t *testing.T) {
 func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 	t.Parallel()
 	type step struct {
-		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source
+		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source; "wall": example a as a community setup whose wallpaper is set next
 		backup  string // Applied.Backup of an apply or restore
 		files   string // saved/ afterwards, sorted, space-separated
 		content string // what saved/unsaved.json then holds of Bars.style.widgetStyle ("" to skip)
@@ -198,6 +198,15 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "edit outline", files: ""},
 			{do: "defaults", backup: "unsaved", files: "unsaved", content: "outline"},
 			{do: "a", files: "example-a unsaved", content: "outline"},
+		}},
+		{"a wallpaper is kept: the defaults and copies don't hold it", []step{
+			{do: "wall", backup: "unsaved", files: "community-a unsaved"},
+			{do: "b", files: "example-b unsaved"},
+			{do: "wall", backup: "unsaved", files: "community-a unsaved"},
+		}},
+		{"a snapshot of the user's holds the wallpaper", []step{
+			{do: "save mine", files: "mine"},
+			{do: "wall", files: "community-a mine"},
 		}},
 		{"a snapshot from before kinds is the user's, source or not", []step{
 			{do: "old import-old", files: "import-old"},
@@ -261,6 +270,8 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 					applied, err = f.svc.Defaults()
 				case "delete":
 					err = os.Remove(filepath.Join(f.dir, "saved", arg+".json"))
+				case "wall":
+					applied, err = f.svc.ApplyShared(filepath.Join(f.ex, "a.json"), "a", "community-a", true, nil)
 				case "old":
 					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
 						"meta": {"title": "`+arg+`", "source": "`+arg+`"}, "Appearance": {"theme": {"name": "nord-light"}}}`), 0o600)
@@ -483,7 +494,7 @@ func TestNoLoadChangesATakeover(t *testing.T) {
 	}{
 		{"import", func() error { _, err := f.svc.Import(file, true, true, nil); return err }},
 		{"example", func() error { _, err := f.svc.ApplyExample("hostile", nil); return err }},
-		{"shared", func() error { _, err := f.svc.ApplyShared(file, "Hostile", "", nil); return err }},
+		{"shared", func() error { _, err := f.svc.ApplyShared(file, "Hostile", "", false, nil); return err }},
 		{"restore", func() error { _, err := f.svc.Restore("hostile"); return err }},
 		{"defaults", func() error { _, err := f.svc.Defaults(); return err }},
 	} {

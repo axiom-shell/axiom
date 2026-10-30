@@ -192,14 +192,16 @@ QtObject {
   }
 
   // Applies a shared file at `path` straight away, its look only, after
-  // keeping the running config, then saves the result as
-  // `snapshot`: a community setup (CommunitySetupsManager). False when
-  // another apply is under way.
-  function applyShared(name, path, title, snapshot) {
+  // keeping the running config (its wallpaper setup too with
+  // `withWallpaper`: the caller sets the setup's wallpaper next), then saves
+  // the result as `snapshot`: a community setup (CommunitySetupsManager).
+  // False when another apply is under way.
+  function applyShared(name, path, title, snapshot, withWallpaper) {
     return root._apply(name, "share.applyShared", {
       "name": name,
       "path": path,
-      "snapshot": snapshot
+      "snapshot": snapshot,
+      "wallpaper": withWallpaper
     }, title);
   }
 
