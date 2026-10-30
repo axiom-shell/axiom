@@ -44,7 +44,7 @@ Wrong: `check_structure.py` refuses any `IpcHandler {` outright (the IpcTarget r
 | CI `qt` job (qmlformat, qmllint, unit tests) | formatting, new lint warnings, methods helpers' behaviour | 12 (5 fmt, 2 lint, 3 unit, 2 script tests before they had a job) | 98 s (generate 43 s) | baseline never shrinks |
 | CI `go` job (`check_go.sh --ci`, fixtures index) | Go build, vet, staticcheck, tidy, tests with -race, vulns | 10; the 8 since 10-26 all flakes | 204 s (checks 172 s) | runs as root (6 skips); skipped on non-Go PRs, no schedule |
 | CI `scripts` job (shellcheck, script tests, guard tests) | shell bugs, script behaviour, guard rules | 7 | 57 s (generate 28 s; tests <1 s) | only 8 test classes |
-| `scripts/generate.sh` | stale schema, embedded assets, generated docs, shell/daemon rpc mismatch | (in each job) | 28–43 s per job, four times | nothing cached between jobs |
+| `scripts/generate.sh` | stale schema, embedded assets, generated docs, shell/daemon rpc mismatch | (in each job) | 28–43 s per job, four times, nearly all compiling the binary; since batch 10 only the `checks` and `go` jobs compile it (`--no-docs` builds the schema with `syncassets`: 5 s and 2 s cold locally for the `qt` and `scripts` jobs' generate, against ~12 s) | nothing cached between jobs: the repository allows local actions only (no `actions/cache`, no artifacts) |
 | `scripts/check_structure.py` | ~25 rules: type folders, imports, Io allowlist, IpcHandler, compositor and Hyprland gates, singleton typos, `??` in readers, pragmas | 0 standalone | 3 s | no tests of its own; several AGENTS.md rules unchecked (animation literals, `Qt.formatDateTime`, `Quickshell.screens`, polling Timers in UI, Repeater models from live values) |
 | `scripts/check_sizes.py` | literal px outside the bars | 0 | 1 s | one-line expressions only (1 multi-line binding today) |
 | `scripts/check_docs.py` | dead links, paths, `Singleton.member`, issue links, annotation list | 1 | <1 s | Go symbols in `(Name)` not checked; triggers miss YAML |
@@ -58,7 +58,7 @@ Wrong: `check_structure.py` refuses any `IpcHandler {` outright (the IpcTarget r
 | `scripts/gen_docs.py` | rpc mismatch (fails); config/API/IPC/layers maps | 0 | in generate | misses `ConfigManager.live`: 372 of 676 settings shown unread, unused-member report blind; report never fails |
 | `scripts/gen_theme_template.py` | stale theme template (`--check` in Themes tests) | 0 | <1 s | — |
 | `scripts/check_doc_drift.py` | docs behind their files (warning, verify.sh and CI summary) | never (by design) | <1 s | justified: a nudge, not a gate |
-| `scripts/dev/verify.sh` | the changed-file subset of everything, plus the live log | — | 10–60 s | deletions and a check's own change trigger nothing; prints no `verify ok` on a clean branch |
+| `scripts/dev/verify.sh` | the changed-file subset of everything, plus the live log | — | 10–60 s; measured 2026-10-30 (warm caches), before → after batch 10: a one-line QML edit 15 → 11 s, a schema edit 42 → 27 s, a Go edit 32 → 27 s (generate.sh ran twice, the log waited 3 s for a reload already past) | deletions and a check's own change trigger nothing; prints no `verify ok` on a clean branch |
 | `scripts/check_all.sh` | every CI check, locally | — | ~5 min | lacks the JSON step; `check_go.sh` without `--ci` |
 | `.githooks/pre-commit` | i18n keys, theme template | — | seconds | opt-in (`core.hooksPath`); `--no-verify` skips it and CI doesn't catch it (i18n) |
 | `.claude/hooks/guard.py` + `tests/scripts/test_guard.py` (31 cases) | AGENTS.md › Never, plain forms | — | per command | compound commands, wrapper options, Bash writes onto config.json |
@@ -87,4 +87,5 @@ Read deeply: scripts/dev/verify.sh, scripts/check_all.sh, scripts/check_go.sh, s
 ## History
 - 2026-10-29 full: 8 findings; recorded in issues.md
 - 2026-10-29 inventory: 3 new entries (gen_docs misses `ConfigManager.live`, Go test waits, untested check scripts); finding 7 withdrawn; step 0 split into batches (roadmap.md)
+- 2026-10-30 speed (batch 10): generate.sh's schema without the binary, verify.sh's double generate and reload wait (Inventory › Cost)
 - 2026-10-30 mutation run: 873 mutants over 6 packages; the security paths' survivors got tests, the rest equivalent or filed (Mutation run)
