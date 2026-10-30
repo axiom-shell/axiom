@@ -14,9 +14,13 @@ on:
 permissions:
   contents: read
 
-# Build with the container's go, never a download
+# Build with the container's go, never a download. Its caches outside any
+# home, so the go job's user and the other jobs' root find what
+# actions/cache restores
 env:
   GOTOOLCHAIN: local
+  GOCACHE: /var/cache/go/build
+  GOMODCACHE: /var/cache/go/mod
 
 # A new push to a PR cancels its older run
 concurrency:
@@ -49,6 +53,24 @@ jobs:
           git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q origin "$GITHUB_SHA"
           git checkout -q FETCH_HEAD
           python3 --version
+          echo "GO_VERSION=$(go env GOVERSION)" >> "$GITHUB_ENV"
+
+      # Go's build and module caches across runs (generate.sh compiles the
+      # binary). Both are content-addressed, so a hit only skips compiling
+      # what didn't change, and the key needs only the Go version and the
+      # dependencies (go.sum): it changes rarely, so a run saves only when
+      # it's new. The tests run with -count=1, never from cache. A PR's run
+      # restores main's cache, which the go job's weekly run saves (also
+      # under this key: the two jobs share one; when both save a new key,
+      # the later one only logs that it exists). Never re-saved under one
+      # key, it goes stale only in axiom's own packages, recompiled each
+      # run; the key rolls with each Go release Arch ships
+      - name: Go caches
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /var/cache/go
+          key: go-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-${{ env.GO_VERSION }}-
 
       # The generated files (config/json/config.schema.json, built from
       # config/schema/, and the reference docs; gen_docs.py also fails when
@@ -160,21 +182,32 @@ jobs:
         run: |
           pacman -S --noconfirm --needed go gcc python qt6-declarative quickshell lua
           go version
+          echo "GO_VERSION=$(go env GOVERSION)" >> "$GITHUB_ENV"
+
+      # The checks job's Go caches (the same key)
+      - name: Go caches
+        if: steps.scope.outputs.run
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /var/cache/go
+          key: go-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: go-${{ runner.os }}-${{ env.GO_VERSION }}-
 
       # scripts/check_go.sh --ci, and that the cases the JS helpers and the
       # axiom binary share (both replay them) are indexed. A shared runner
       # is slower than the machine the tests' waits were tuned on: they
       # wait three times as long (testkit.Bound). As a user, not the
       # container's root, who reads and writes any file: the tests of a
-      # file the user can't read or write would skip. Its own home holds
-      # the Go caches; setpriv keeps the environment (the wait factor)
+      # file the user can't read or write would skip. setpriv keeps the
+      # environment (the wait factor, the Go cache paths)
       - name: Checks (scripts/check_all.sh go)
         if: steps.scope.outputs.run
         env:
           AXIOM_TEST_WAIT_FACTOR: "3"
         run: |
           useradd -m ci
-          chown -R ci:ci "$PWD"
+          mkdir -p /var/cache/go
+          chown -R ci:ci "$PWD" /var/cache/go
           setpriv --reuid=ci --regid=ci --init-groups env HOME=/home/ci scripts/check_all.sh --ci go
 
   # The script tests (the slowest checks) and the shell script lint, beside
