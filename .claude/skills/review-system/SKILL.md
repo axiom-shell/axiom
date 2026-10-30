@@ -38,7 +38,7 @@ Read every doc the scope lists, in full (they're short), and the system's entry 
 ## Phase 2: mechanical, cheap
 
 On the system's files only, as greps (CI already runs the `check_*` scripts: don't rerun them):
-- the `rules` lens greps that apply (`Quickshell.screens`, literal `duration:`, `ConfigManager.config` outside services/readers, `Timer`/`Process` in UI, `??` in readers, `Quickshell.Hyprland` outside `Hyprland*`, compositor names in gating);
+- the `rules` lens greps that apply, for what no check holds (`ConfigManager.config` outside services/readers, a `Timer` in UI, compositor names in gating);
 - dead members: each `function`/`property`/`signal`/`readonly property` defined in the system, counted repo-wide (`grep -rnw <name> --include=*.qml --include=*.py --include=*.sh --include=*.json . | wc -l`): one hit is a candidate (check name-loaded uses before reporting);
 - `scripts/log.sh` lines naming the system's files.
 
