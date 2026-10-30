@@ -1472,12 +1472,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
-### Tray icons keep their pixel size on a bar thinner than them
-- **Where:** `components/bar/widgets/SystemTray/SystemTray.qml:13` (`iconSize`), `components/bar/widgets/SystemTray/SystemTray.qml:70`
-- **What:** Each tray item is `properties.iconSize` px (default 18, 8–64), whatever the bar's `widgetSize` (10 and up) or `fontSize`. Every other widget's icon is `barConfig.fontSize * iconScale`. With `iconSize` 24 on a 20 px bar, the icons draw past the widget's box across the bar, and nothing clips them. They also don't grow with the bar's font as every other icon does. **Decided** (maintainer, 2026-10-30): "Follow the bar and size it like every other icon". Fix: each tray icon is `barConfig.fontSize * iconScale`, as every other widget's icon, and the `iconSize` px setting goes. Removing a setting needs a format-2 migration step (`docs/recipes/migration.md`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
 ### Some bar widget sizes are fixed pixels, not the bar's
 - **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:206` (`spacing`), `components/bar/widgets/Window/Window.qml:13` (`preferredSize`), `components/bar/widgets/Window/Window.qml:14` (`minimumSize`), `components/bar/widgets/base/ValueGraphic.qml:119` (`gap`), `components/bar/widgets/base/ValueGraphic.qml:120` (`cornerRadius`), `components/bar/widgets/Network/Network.qml:89` (`textSize`), `components/bar/widgets/Notifications/Notifications.qml:41` (`textSize`)
 - **What:** `components/bar/widgets/AGENTS.md`: "**Sized by the bar**: cross size `barConfig.widgetSize`; padding, spacing, font size and radius from `barConfig`". These don't follow it:

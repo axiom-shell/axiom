@@ -273,7 +273,6 @@
     "Shown when no window is focused.": "フォーカスされたウィンドウがないときに表示します。",
     "Shown when nothing is playing.": "何も再生していないときに表示します。",
     "Size": "サイズ",
-    "Size of tray icons (px).": "トレイアイコンのサイズ（px）。",
     "Smallest length the widget may shrink to when the bar is crowded (px).": "バーが混み合ったときにウィジェットが縮む最小の長さ（px）。",
     "Snow": "雪",
     "Sort by": "並べ替え",
