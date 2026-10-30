@@ -10,7 +10,8 @@ repeats the plain ones. Tests: tests/scripts/test_guard.py.
 
 Bash commands are split into simple commands (on ; && || | & and newlines,
 ( ) { } $( ) and backticks (inside double quotes too), the keywords starting a
-command such as `then`, into `bash -c`/`sh -c` strings) and each is judged on its argv, with leading
+command such as `then`, into `bash -c`/`sh -c` strings; heredoc bodies only when
+something could run them: drop_heredoc_bodies) and each is judged on its argv, with leading
 VAR=value assignments (and `export VAR=…` earlier in the same command) as its
 environment; a wrapper (sudo, nice, flock, …) is judged by the command it
 runs, and a `>`/`>>` redirection as a write to its target. Best effort: it
@@ -72,30 +73,33 @@ def lex(command):
         return command.split()
 
 
-# `<<WORD`, `<<-WORD`, `<<'WORD'` (not a `<<<` here-string)
-HEREDOC = re.compile(r"(?<!<)<<(?!<)(-?)\s*(['\"]?)([\w.-]+)\2")
+# `<<WORD`, `<<-WORD`, `<<'WORD'` (not a `<<<` here-string, nor a `<<` inside
+# a quoted string, which the other branches consume)
+HEREDOC = re.compile(r"""(?<!<)<<(?!<)(-?)[ \t]*(['"]?)([A-Za-z_][\w.-]*)\2(?![^\s;&|<>()])|\\.|"(?:\\.|[^"\\])*"|'[^']*'""")
 
 
 def drop_heredoc_bodies(command):
-    """A heredoc's body is text, not commands, unless its line names a shell
-    (`bash <<EOF`, `cat <<EOF | sh`): otherwise it is dropped, keeping only
-    the substitutions an unquoted delimiter still runs."""
-    lines, out = command.split("\n"), []
+    """A heredoc's body is text, not commands: it is dropped, unless the
+    command runs text it's given (a shell, `source`, `.` or `eval` anywhere
+    outside the bodies: `bash <<EOF`, `cat <<EOF | sh`, `cat > x.sh <<EOF …
+    bash x.sh`), the body is unquoted and substitutes (`$(…)`, backticks) or
+    its delimiter never comes: then it is judged as written."""
+    lines, out = command.replace("\\\n", "").split("\n"), []
     while lines:
         line = lines.pop(0)
         out.append(line)
-        shell = any(Path(word).name in SHELLS | {"source", "."} for word in lex(line))
-        for dash, quote, word in HEREDOC.findall(line):
-            while lines:
-                body = lines.pop(0)
-                if (body.lstrip("\t") if dash else body) == word:
-                    out.append(body)
-                    break
-                if shell:
-                    out.append(body)
-                elif not quote:
-                    out.extend(": " + m[0] for m in SUBSTITUTION.finditer(body))
-    return "\n".join(out)
+        for m in HEREDOC.finditer(line):
+            dash, quote, word = m.groups()
+            end = next((i for i, body in enumerate(lines) if (body.lstrip("\t") if dash else body) == word), None) if word else None
+            if end is None:
+                continue
+            body, lines = lines[:end], lines[end:]
+            if not quote and SUBSTITUTION.search("\n".join(body)):
+                out.extend(body)
+    words = lex("\n".join(out))
+    runs = any(Path(w).name in SHELLS | {"source", "eval"} or w == "." and (not i or words[i - 1] in KEYWORDS or set(words[i - 1]) <= set(PUNCTUATION))
+               for i, w in enumerate(words))
+    return command if runs else "\n".join(out)
 
 
 def split_commands(command):
@@ -117,6 +121,8 @@ def split_commands(command):
                 current.pop()  # the fd of `2>`
             if ">" in token and i + 1 < len(tokens):
                 out.append((dict(exported), [">", tokens[i + 1]]))
+            if token == "<<<" and i + 1 < len(tokens):
+                out.extend(split_commands(tokens[i + 1]))  # a here-string may be fed to a shell
             i += 2
             continue
         if punctuation or not current and token in KEYWORDS:
