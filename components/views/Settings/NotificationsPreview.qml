@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.system
 import qs.services.ui
+import qs.components.methods
 import qs.components.reusable
 
 // The top of the Notifications card (the section's `x-intro`): where the
@@ -32,11 +33,11 @@ RowLayout {
       }))
 
   ScreenSpotPicker {
-    id: picker
     Layout.alignment: Qt.AlignTop
     visible: root.section !== null
     presets: root.presets
-    spot: root.section ? picker.edgeSpot(root.section.edge, root.section.position / 100, 0) : Qt.point(0.5, 0.5)
+    edge: root.section?.edge ?? "top"
+    spot: root.section ? ScreenEdge.edgeSpot(root.section.edge, root.section.position / 100, 0) : Qt.point(0.5, 0.5)
     onPicked: values => SettingsManager.setValues(Object.keys(values).map(key => ({
             "path": ["Notifications", key],
             "value": values[key]
@@ -44,7 +45,7 @@ RowLayout {
   }
 
   StyledText {
-    text: NotificationManager.dnd ? I18n.tr("Do not disturb is on: a test notification goes only to the history.") : I18n.tr("Click a spot to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.")
+    text: NotificationManager.dnd ? I18n.tr("Do not disturb is on: a test notification goes only to the history.") : I18n.tr("Click a spot or drag to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.")
     textColor: NotificationManager.dnd ? Theme.warning : Theme.foregroundAlt
     textSize: Appearance.fontSizeBy(-2)
     wrapMode: Text.WordWrap

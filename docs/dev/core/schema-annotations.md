@@ -42,7 +42,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 ### Hand-built parts
 - `x-card: { file, title, wide, folds, perField }` (section):
   - `file`: adds `views/Settings/<file>Card.qml` as the section's first card, titled `title` (on the card and in the sidebar; the card's QML sets none).
-  - `wide: true`: it spans both columns (the calendar accounts, chat API keys, the Dock and OSD lists).
+  - `wide: true`: it spans both columns (the calendar accounts, chat API keys).
   - `folds: true`: it folds like the generated cards and joins Fold all, getting its group key `<Section>:<file>` as `foldKey`.
   - `perField: true` (with or without a `file`): each direct field becomes a card of its own, titled and described by the field, sorted by title, a switch's row labelled "Enabled" (`row.label`, `row.description` override the field's in `SchemaField`). The section's description gets a card first. Example: `ThemeIntegrations`, one card per app.
   - `check_structure.py` checks the file exists.

@@ -8,15 +8,15 @@ import qs.config
 import qs.services.core
 import qs.services.session
 import qs.services.ui
-import qs.components.methods
 
 // The search launcher on one screen. LauncherManager builds the rows from
 // the text and runs them, LauncherPanel shows them, and this picks the
 // host, placed as a dock or OSD is (an edge, a position along it,
 // detached or not): detached, a FloatingPopout `distance` across the free
-// screen from its edge; else an EdgePopout that grows out of the border or
-// bar there. Both have the same API (show/hide/isOpen/contentItem/window),
-// and only the one in use is created.
+// screen from its edge (FloatPlacement); else an EdgePopout that grows
+// out of the border or bar there. Both have the same API
+// (show/hide/isOpen/contentItem/window), and only the one in use is
+// created.
 Scope {
   id: root
 
@@ -107,24 +107,6 @@ Scope {
     fillOpacity: LauncherConfig.backdrop
   }
 
-  // Detached, its distance 0 is where a detached dock or OSD on its edge
-  // sits with an automatic gap (ScreenEdgeManager.detachedGaps): the free area's margin
-  // on each side, in from the window, which starts past what's reserved
-  // there
-  readonly property var _edgeGaps: ScreenEdgeManager.detachedGaps(root.screen, LauncherConfig.edge, -1)
-  readonly property var _oppositeGaps: ScreenEdgeManager.detachedGaps(root.screen, ScreenEdge.opposite(LauncherConfig.edge), -1)
-  function _marginOn(side) {
-    const vertical = LauncherConfig.edge === ScreenEdge.Left || LauncherConfig.edge === ScreenEdge.Right;
-    let gap = root._edgeGaps.end;
-    if (side === LauncherConfig.edge)
-      gap = root._edgeGaps.across;
-    else if (side === ScreenEdge.opposite(LauncherConfig.edge))
-      gap = root._oppositeGaps.across;
-    else if (side === (vertical ? ScreenEdge.Top : ScreenEdge.Left))
-      gap = root._edgeGaps.start;
-    return ScreenEdgeManager.heldInset(root.screen, side, gap);
-  }
-
   LazyLoader {
     id: floatingLoader
     active: LauncherConfig.detached
@@ -132,21 +114,23 @@ Scope {
     FloatingPopout {
       id: floating
 
-      readonly property bool vertical: LauncherConfig.edge === ScreenEdge.Left || LauncherConfig.edge === ScreenEdge.Right
-      // How far across from its edge: the fraction with the same align
-      // spreads the room left over, 0 against the edge, 0.5 centred
-      readonly property real across: LauncherConfig.edge === ScreenEdge.Bottom || LauncherConfig.edge === ScreenEdge.Right ? 1 - LauncherConfig.distance : LauncherConfig.distance
+      // Its centre at `position` along the edge, `distance` across
+      readonly property FloatPlacement place: FloatPlacement {
+        screen: root.screen
+        edge: LauncherConfig.edge
+        position: LauncherConfig.position
+        distance: LauncherConfig.distance
+      }
 
       screen: root.screen
-      // Its centre at `position` along the edge
-      xFraction: floating.vertical ? floating.across : LauncherConfig.position
-      xAlign: floating.vertical ? floating.across : 0.5
-      yFraction: floating.vertical ? LauncherConfig.position : floating.across
-      yAlign: floating.vertical ? 0.5 : floating.across
-      leftMargin: root._marginOn(ScreenEdge.Left)
-      topMargin: root._marginOn(ScreenEdge.Top)
-      rightMargin: root._marginOn(ScreenEdge.Right)
-      bottomMargin: root._marginOn(ScreenEdge.Bottom)
+      xFraction: floating.place.xFraction
+      xAlign: floating.place.xAlign
+      yFraction: floating.place.yFraction
+      yAlign: floating.place.yAlign
+      leftMargin: floating.place.leftMargin
+      topMargin: floating.place.topMargin
+      rightMargin: floating.place.rightMargin
+      bottomMargin: floating.place.bottomMargin
       // Resized as results come and go, the box would move
       maxContentHeight: (floating.contentItem as LauncherPanel)?.maxHeight ?? 0
       // The panel's list glides to its rows' height itself

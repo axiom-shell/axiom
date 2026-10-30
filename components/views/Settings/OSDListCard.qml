@@ -13,7 +13,7 @@ EntryListCard {
   listKey: "items"
   entryType: "OSDEntry"
   savedEntries: OSDConfig.osds
-  pickerHint: I18n.tr("Click a spot to place it; fine-tune below. Show opens it as a change would.")
+  pickerHint: I18n.tr("Click a spot or drag to place it; fine-tune below. Show opens it as a change would.")
   idBase: "osd"
   // A second OSD held off the right edge, so it doesn't sit on the first
   seed: ({

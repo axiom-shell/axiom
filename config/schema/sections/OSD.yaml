@@ -3,7 +3,7 @@
 x-scope: look
 type: object
 x-category: Dock & OSD
-x-card: {file: OSDList, title: OSDs, wide: true, folds: true}
+x-card: {file: OSDList, title: OSDs, folds: true}
 title: OSD
 description: On-screen displays of volume, microphone and brightness bars, shown when one of their bars changes.
 additionalProperties: false
