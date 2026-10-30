@@ -1,7 +1,7 @@
 # Window switcher (Alt+Tab)
 
 > **Files:** `services/compositor/WindowSwitcherManager.qml`, `config/WindowSwitcherConfig.qml`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherBindLua`, `SwitcherLua`), `components/methods/WindowOrder.qml`, `shell/WindowSwitcher.qml`, `components/hosts/popout/FloatPlacement.qml`, `components/views/Settings/WindowSwitcherPlace.qml`, `components/surfaces/switcher/SwitcherStrip.qml`, `backend/internal/wayland/keyhold/`, `backend/internal/daemon/switcher.go`
-> **Config:** `WindowSwitcher.*` (`showDelay`, `scope`, `previews`, `compositorSwitcher`, `edge`, `position`, `detached`, `distance`)
+> **Config:** `WindowSwitcher.*` (`showDelay`, `scope`, `previews`, `compositorSwitcher`, `edge`, `position`, `detached`, `distance`, `order`)
 > **Related:** [Keybinds](keybinds.md), [Config modes](config-modes.md), [Workspaces](workspaces.md)
 
 Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.
@@ -55,7 +55,7 @@ sway fires a release bind only when no other key came between, and niri has no r
   - **Attached:** an `EdgePopout` growing out of the border or bar on its edge, with no hover trigger.
   - Either one claims `switcher:<screen>` (ranked `launcher`), so it closes the popouts it covers ([Registry](../popouts/registry.md)). It closes when the switcher does, not on hover loss (`autoDismiss` off).
 - **Settings card:** its top is `WindowSwitcherPlace` (the section's `x-intro`, a `PlaceIntro`), as the launcher's.
-- It holds `surfaces/switcher/SwitcherStrip`: a `TileFlow` of `SwitcherTile`s by count, up to 80% of the screen wide (40% on a left or right edge, so it wraps instead of running across the screen).
+- It holds `surfaces/switcher/SwitcherStrip`: `SwitcherTile`s by count, placed by `WindowOrder.tileGrid` in `order` (left to right, right to left, top to bottom or bottom to top). A line holds as many as fit in 80% of the screen that way; they wrap to another row (below) or column (to the right) only past that.
 - Each tile shows the overview's `WindowPreview` (live while selected), or the app icon when `previews` is off, over the title.
 - It takes no keyboard focus, so focus stays on the window until one is picked.
 

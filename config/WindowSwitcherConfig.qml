@@ -18,6 +18,9 @@ QtObject {
   readonly property real position: _c.position / 100
   readonly property bool detached: _c.detached
   readonly property real distance: _c.distance / 100
+  // leftToRight | rightToLeft | topToBottom | bottomToTop
+  // (WindowOrder.tileGrid's orders)
+  readonly property string order: _c.order
   readonly property bool previews: _c.previews
   readonly property int tileSize: Widget.px(_c.tileSize)
   readonly property int showDelay: _c.showDelay

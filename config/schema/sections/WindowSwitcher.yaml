@@ -55,6 +55,18 @@ properties:
     maximum: 50
     description: 'How far across the free screen it sits: 0 lines it up with a detached dock or OSD on that edge, 50 centres it.'
     x-showIf: {detached: true}
+  order:
+    x-scope: look
+    type: string
+    title: Tile order
+    default: leftToRight
+    enum: [leftToRight, rightToLeft, topToBottom, bottomToTop]
+    x-enumLabels:
+      leftToRight: Left to right
+      rightToLeft: Right to left
+      topToBottom: Top to bottom
+      bottomToTop: Bottom to top
+    description: Which way the windows run, most recently used first. They wrap to another row (or column) only once one runs out of room.
   previews:
     x-scope: look
     type: boolean

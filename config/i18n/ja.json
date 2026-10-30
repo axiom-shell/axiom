@@ -3499,6 +3499,12 @@
     "Click a spot or drag to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.": "",
     "Click a spot or drag to place it; fine-tune below. Show slides it in for a moment.": "",
     "Screen edge the switcher opens from, or is held off when detached.": "",
-    "A separate box floating off the edge. Off, the switcher grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.": ""
+    "A separate box floating off the edge. Off, the switcher grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.": "",
+    "Top to bottom": "",
+    "Bottom to top": "",
+    "Left to right": "",
+    "Right to left": "",
+    "Tile order": "",
+    "Which way the windows run, most recently used first. They wrap to another row (or column) only once one runs out of room.": ""
   }
 }

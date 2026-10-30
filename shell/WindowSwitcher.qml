@@ -4,7 +4,6 @@ import Quickshell
 
 import qs.config
 import qs.services.compositor
-import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.surfaces.switcher
 
@@ -40,12 +39,12 @@ Scope {
           screenScope.host?.hide();
       }
 
-      // Wraps to more rows past 80% of the screen's width, or 40% on a side
-      // edge, where a long row would run across the screen from it
+      // Wraps to another row or column past 80% of the screen
       Component {
         id: strip
         SwitcherStrip {
-          maxWidth: screenScope.modelData.width * (WindowSwitcherConfig.edge === ScreenEdge.Left || WindowSwitcherConfig.edge === ScreenEdge.Right ? 0.4 : 0.8)
+          maxWidth: screenScope.modelData.width * 0.8
+          maxHeight: screenScope.modelData.height * 0.8
         }
       }
 
