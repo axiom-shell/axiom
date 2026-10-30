@@ -682,8 +682,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-29, while building the revamped example setups
 
 ### Bar widget hosts settle after they're gone
-- **Where:** `components/bar/BarWidgetHost.qml` (`Component.onCompleted`'s `Qt.callLater`), `components/bar/widgets/Workspaces/ActiveCellIndicator.qml` (`_placed`)
-- **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced.
+- **Where:** `components/bar/BarWidgetHost.qml` (`Component.onCompleted`'s `Qt.callLater`), `components/bar/widgets/Workspaces/ActiveCellIndicator.qml` (`_placed`), `components/bar/BarContainer.qml` (the inline `Section`'s `Component.onCompleted`)
+- **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced. BarContainer's inline `Section` settles through the same `Qt.callLater`; the fix should cover it too (bar audit, 2026-10-30).
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
 
@@ -1364,3 +1364,115 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
+
+### Nothing listens to the bar's layoutUpdated any more
+- **Where:** `components/bar/BarContainer.qml:31` (`layoutUpdated`), `components/bar/BarContainer.qml:313` (`layoutMoved`, `_slotsKey`, `_settle`), `components/bar/BarContainer.qml:401` (`onAllocationUpdated`), `components/bar/WidgetGroup.qml:109` (`allocationUpdated`, `_allocationKey`), `docs/dev/bar/composition.md`
+- **What:** The signal has no handler. `grep -rn 'layoutUpdated'` over QML and docs finds only its declaration, its two emits (BarContainer.qml:314, 320) and composition.md's "`BarContainer.layoutMoved()` emits `layoutUpdated` … so an open popout re-anchors on the settled widget". Its listener was BarPopouts' `onLayoutUpdated`, removed in "Rework and harden popouts (#53)". The chain still runs on the hot path:
+  - Every `slots` change `JSON.stringify`s the slots.
+  - Every section allocation change (a ticking clock's width, a tray icon) `JSON.stringify`s the allocation, emits `allocationUpdated` and calls `layoutMoved()`.
+  - `layoutMoved()` emits to nobody and restarts a Timer that emits to nobody again `animNormal` later.
+
+  Fix: delete the chain and its doc line, 35 lines: the signal and its comment (BarContainer.qml:29-31), `_slotsKey`/`onSlotsChanged`/`layoutMoved`/`_settle` (301-321), Section's `onAllocationUpdated` (401), WidgetGroup's `allocationUpdated`/`_allocationKey`/`onAllocationChanged` (108-117).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### A bar made while the bar editor is open may never report to it
+- **Where:** `components/bar/BarContainer.qml:346` (`on_ReportKeyChanged`), `components/bar/BarContainer.qml:349` (`_report`)
+- **What:** A bar's report reaches `BarManager.setLive` only from `on_ReportKeyChanged`, and a change handler doesn't run for a property's first value.
+  - Bars that exist when the editor opens are fine: their key goes from `"null"` to the report.
+  - A BarContainer created while `BarManager.editing` is already true starts with its report. On a bar with room, `hidden` stays `{zone: []}` and `selected` stays null, so the key may never change and nothing is sent.
+  - The editor remakes bars often: changing a bar's Background, or moving it to the other axis, changes `BarsConfig.layerNamespace`, which `shell/Bar.qml:25` keys the window on. Adding a bar makes a new one.
+  - The old container's `Component.onDestruction` clears the id, so `BarManager.liveReports` drops that bar. The board's "Fits …" line goes blank, and the lanes and inspector lose their crowded marks and sizing text.
+
+  PLAUSIBLE: whether the first value already has `root.screen` depends on binding order. To settle it, open the bar editor, switch a bar's Background, and check that the fit line stays. Fix: `Component.onCompleted: root._report()`. `setLive` ignores an unchanged report and an empty id.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### A second bar on an edge is invisible to the screen-edge answers, and New bar makes one
+- **Where:** `components/methods/BarEnds.qml:161` (`edgesOn`), `services/ui/ScreenEdgeManager.qml:91` (`barReservedOn`), `services/ui/ScreenEdgeManager.qml:206` (`barOn`), `services/ui/BarManager.qml:155` (`addBar`)
+- **What:** `edgesOn` keeps only the first enabled bar on each edge (`if (!edges[edge]) edges[edge] = bar;`). Every screen-edge answer goes through it: `barReservedOn`, `frameLine`, `detachedGaps`, `surfaceEnd`, `barStartOn` and each bar's `ends`.
+  - The compositors stack both bars' exclusive zones, so with two reserving bars on one edge `reservedWithMenusOn` is short by the second bar's zone.
+  - Docks (`components/surfaces/dock/DockWindow.qml:60`), floating edge menus (`components/surfaces/edgemenu/FloatingEdgeMenu.qml`) and bar popouts (`EdgePlacement`) then sit under the second bar.
+  - Bars on the perpendicular edges never yield to the second bar.
+  - The first bar wins even when it reserves nothing. `barOn` picks by panel registration order and `edgesOn` by config order, so the two can disagree.
+
+  The editor creates this case. `addBar` fills every field from the Bar defaults (location top, screen primary), so on the default config **New bar** stacks a second bar on the default top bar. `duplicateBar` moves its copy to a free screen "so it doesn't sit on the original", which suggests stacking isn't meant.
+
+  **Question for the maintainer:** are stacked bars on one edge supported? If not, `addBar` picks a free edge or screen as `duplicateBar` does (small). If so, `edgesOn` returns every bar on an edge, and the reserved, frame-line and corner answers add them up (needs a plan). Fix: per that answer.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### Plugging in or unplugging a monitor remakes the bar that stays
+- **Where:** `config/BarsConfig.qml:409` (`expandBars`), `shell/Bar.qml:25`
+- **What:** The id depends on how many of the bar's screens are connected.
+  - A bar on every monitor (or on several named ones) keeps the plain `bar.id` while one of its screens is connected (`if (screens.length <= 1 || bar.screen.mode === "primary")`). It gets `<id>@<screen>` once two are.
+  - `shell/Bar.qml` keys each `BarPanel` on `b.id + "|" + namespace`. Docking a laptop with an "Every monitor" bar changes the laptop bar's key from `bar` to `bar@eDP-1`, so its window is destroyed and rebuilt. Undocking does the same to the bar that stays.
+  - That bar flickers and loses its open popout and its owner-keyed requests (`"corner:" + id`, `"barPopout:" + id`). On sway and niri, the remade bar maps after the border, which then maps the border again (layering-and-corners.md › Build order).
+
+  Running bars already carry `sourceId` for the config entry. Fix: suffix `@<screen>` whenever `bar.screen.mode !== "primary"`, so an entry's id depends only on its screen. Check every reader that compares a running id with a config id first; `liveReports` and `isSelectedWidget` match on `sourceId`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### Removing or copying another bar moves the editor's selection to a different bar
+- **Where:** `services/ui/BarManager.qml:247` (`removeBar`), `services/ui/BarManager.qml:189` (`duplicateBar`)
+- **What:** The selected bar is held only as `selectedBarIndex`, and BarsPanel offers Remove and Duplicate on every row.
+  - Remove: in `[A, B, C]` with B selected, removing A leaves `selectedBarIndex` at 1 (`Math.max(0, Math.min(root.selectedBarIndex, …))`). The inspector and style groups now edit C, and the widget selection is cleared. `_moveCopied` on the line before remaps the copied style's index, but nothing remaps the selection.
+  - Duplicate: with B selected, duplicating A sets `selectedBarIndex = index + 1`, still 1, so its change handler doesn't fire. B's selected widget `{zone, index}` then applies to the new copy.
+
+  Fix: in `removeBar`, `if (index < root.selectedBarIndex) root.selectedBarIndex--;`, and clear the widget selection only when the selected bar was the one removed; `duplicateBar` calls `clearSelection()`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### A corner piece's pull-out re-derives a bar's reserve and misses its clamp
+- **Where:** `components/surfaces/border/RoundedBorders.qml:39` (`cornerMargin`), `config/BarsConfig.qml:351` (`reservedZone`)
+- **What:** `cornerMargin` pulls a corner piece back out over a bar inside the border "As far as the bar reserves (see BarPanel)". It works that distance out again as `-(bar.extent - reserveTrim(bar, gapsOut))`, but what `BarPanel` reserves is `BarsConfig.reservedZone`, which clamps: `return Math.max(0, barConfig.extent - trim);` (BarsConfig.qml:356). Scenario: a transparent bar inside the border on Hyprland, with `gaps_out` larger than the bar's extent (40 against 34). The bar reserves 0, but `cornerMargin` returns +6, so both corners on that edge sit 6 px in from the frame's corner. PLAUSIBLE: the code difference is certain; what gets drawn needs that setup in a nested Hyprland. Fix: read the reserve the bar sets, as `innerInset` does a few lines down: `const zone = bar?.insideBorder ? BarsConfig.reservedZone(bar, CompositorManager.gapsOut[edge] ?? 0) : 0; return (zone > 0 ? -zone : -root.strokeWidth) - docks;` (9 lines to 5).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### The pill merge in BarContainer repeats BarLayout's, untested
+- **Where:** `components/bar/BarContainer.qml:96` (`sectionPills`), `components/methods/BarLayout.qml:523` (`_mergeSpans`)
+- **What:** `sectionPills` hand-rolls the loop that joins spans at most `pillMerge` apart (99-107), which `BarLayout._mergeSpans` already does for islands, then decides each pill's joins in the host (`root.ends.start.joinable && m.start - gap <= reach`). That breaks composition.md (main-axis layout math lives in `methods/BarLayout`) and AGENTS.md ("A methods helper's decision … is read from its output, never re-derived in a host"). No row tests when an end pill joins. The copy also writes into `_spans`' own objects (`spans.slice()` is shallow, and `last.end = …` mutates the pushed span). Fix: a BarLayout `pillRects(spans, merge, gap, reach, length, joinStart, joinEnd)` on `_mergeSpans` (which copies), with rows for a free end, a joined end at each side, and a held end. `sectionPills` (96-126, 31 lines) becomes one call of about 3 lines.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### StandaloneBar only wraps BarPanel's BarContainer
+- **Where:** `components/bar/StandaloneBar.qml:7`, `components/bar/BarPanel.qml:127` (`bar`), `components/bar/BarContainer.qml:215` (`borderOpening`), `components/bar/BarContainer.qml:515` (`blurOrigin`)
+- **What:** Its header calls it "A bar's BarContainer outside a window of its own", but nothing draws a bar outside a window any more. BarPanel is its only user, and it overrides StandaloneBar's own logic (the implicit 300 px size) with explicit x/y/width/height; what's left forwards `barConfig`/`panel`/`screen` into a BarContainer filling it. The comments about "the bar editor's preview" (215, 515) describe a preview that is gone. Fix: put the `BarContainer` straight into BarPanel with the same x/y/width/height (`container: bar`), read the container's own `x`/`y` in `blurOrigin`, drop the preview clauses, and drop its `Extra:` line in `.claude/skills/review-system/systems.md`. This removes StandaloneBar.qml (27 lines).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### BarContainer._withEntry rebuilds Utils.withEntry
+- **Where:** `components/bar/BarContainer.qml:174` (`_withEntry`), `components/methods/Utils.qml:65` (`withEntry`)
+- **What:** `_withEntry` copies the map and sets or deletes `owner` (177-182), which is `Utils.withEntry`; the same file already uses `Utils.withEntry` at line 341. Fix: `return Utils.deepEqual(map[owner] ?? null, value ?? null) ? null : Utils.withEntry(map, owner, value || undefined);`, 12 lines (172-183) down to 4.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
+- **Where:** `config/BarsConfig.qml:106` (`enrichBarConfig`), `config/BarsConfig.qml:145`, `config/BarsConfig.qml:25`, `config/BarsConfig.qml:47`, `config/BarsConfig.qml:113`
+- **What:** Nothing reads an enriched bar's `joinable` or `separatorGap` (every `.joinable` read is an end's or SurfaceContext's own edge; `separatorGap` is read only as `look.separatorGap`, line 118). The bar comes from `ConfigManager.live` with every default filled, so `barConfig.background ?? "solid"`, `barConfig.pillPadding ?? 0` and `barConfig.pillMerge ?? 0` never fall back (AGENTS.md: "readers use no `??` fallbacks"; check_structure only catches `_c.key ?? x`). Fix: delete lines 105-106 and 145 (3 lines) and the three `??` tails.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### A bar's reserve trim is worked out again by callers holding the enriched bar
+- **Where:** `config/BarsConfig.qml:354` (`reservedZone`), `config/BarsConfig.qml:345` (`detachedPush`), `config/BarsConfig.qml:176` (`enrichBarConfig`)
+- **What:** `enrichBarConfig` already sets `bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0)`. Every caller of `reservedZone` and `detachedPush` passes an enriched bar and its own edge's `gapsOut`, then gets the same number again from `reserveTrim`: `components/bar/BarPanel.qml:38`, `services/ui/ScreenEdgeManager.qml:91` (without `?? 0`, so the two sources can differ), `components/hosts/popout/EdgePlacement.qml:201`. Fix: read `barConfig.trim`; `reservedZone(barConfig)` loses its `gapsOut` parameter, and `detachedPush` becomes `gapsOut - barConfig.trim - connectorGap / 2`. Take it with [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp), whose fix calls `reservedZone`. (`cornerMargin`'s copy is the Major above.)
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### Missing test rows for two helper decisions
+- **Where:** `components/methods/BarEnds.qml:111` (`endOf`), `components/methods/BarLayout.qml:181` (`overflowHidden`)
+- **What:** `tst_BarEnds` has no row for a solid bar meeting a solid bar: the `|| bar.solid` arm (a solid bar with the border off gets `_frame`, i.e. `bare`) is untested, and changing it to `_barStroke("solidBar", opts)` passes every row. `tst_BarLayout`'s two `lockCenter` rows never let the centre alone overflow, so line 181's `return [2]` is untested: returning `[0, 1]` would hide side widgets while the centre still doesn't fit. Fix: add those two rows.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### An overlay misses a transparent bar's inner accent line
+- **Where:** `components/hosts/overlay/ReservedAreaWindow.qml:46` (`_margin`)
+- **What:** `_margin` returns `gapsOut` for every transparent bar. A transparent bar with `accentLine: inner` reserves its full extent instead (`BarsConfig.reserveTrim` is 0 for it), so the overlay sits `gapsOut` past that bar's inner edge rather than on it. The last line's `reserveTrim` call can then only return 0, since the transparent case already returned. Fix: `if (bar?.background === "transparent") return bar.trim;` and make the last line `return -Appearance.borderWidth;`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
+
+### WindowLookConfig rebuilds BarStyle.look
+- **Where:** `config/WindowLookConfig.qml:31` (`_barLook`), `config/BarStyle.qml:15` (`look`)
+- **What:** `BarsConfig.lookOf({})` returns what `BarStyle.look` holds: every `Bars.style` key with the shadow flattened. Every other user of the shared look reads `BarStyle.look` (RoundedBorders, SurfaceShadow, AttachedSurface, EdgePlacement). Fix: `readonly property var _barLook: BarStyle.look`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the bar system
