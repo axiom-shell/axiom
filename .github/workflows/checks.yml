@@ -61,7 +61,10 @@ jobs:
       # dependencies (go.sum): it changes rarely, so a run saves only when
       # it's new. The tests run with -count=1, never from cache. A PR's run
       # restores main's cache, which the go job's weekly run saves (also
-      # under this key: the two jobs share one)
+      # under this key: the two jobs share one; when both save a new key,
+      # the later one only logs that it exists). Never re-saved under one
+      # key, it goes stale only in axiom's own packages, recompiled each
+      # run; the key rolls with each Go release Arch ships
       - name: Go caches
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
