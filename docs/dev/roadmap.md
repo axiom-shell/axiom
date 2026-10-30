@@ -317,8 +317,9 @@ Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
 
-Found while reviewing row 18's batch 9:
+Found while reviewing row 18 (batch 9, the Go cache):
 - [Hyprland 0.57 refuses the empty pointer acceleration profile](issues.md#hyprland-057-refuses-the-empty-pointer-acceleration-profile)
+- [TestOrphanOfAnEarlierDaemonIsStopped misses the orphan's stop under a loaded run](issues.md#testorphanofanearlierdaemonisstopped-misses-the-orphans-stop-under-a-loaded-run)
 
 Found by the audits:
 - [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)
