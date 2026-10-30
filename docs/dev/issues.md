@@ -333,12 +333,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The guard judges a heredoc's body as commands
-- **Where:** `.claude/hooks/guard.py` (`split_commands`)
-- **What:** `split_commands` turns every newline into `;` before lexing, so each line of a heredoc's body is judged as a command of its own: a `python3 - <<'PY'` script or a `cat > notes <<EOF` whose text has a line like `axiom lock` is refused, though nothing runs it (only a body fed to a shell, `bash <<EOF`, would). An ordinary form, refused the wrong way; found when a review's probe script listing forbidden commands was refused. Fix: drop the body lines after a `<<WORD`/`<<'WORD'` up to `WORD` unless the command is a shell, with a `test_guard.py` case each way.
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing the guard batch (roadmap row 18)
-
 ### Three reader members nothing reads
 - **Where:** `config/HyprlandConfig.qml` (`managed`), `config/LauncherConfig.qml` (`clipboardMaxEntries`), `config/WindowBehaviourConfig.qml` (`behaviour`), `scripts/config-usage-baseline.json`
 - **What:** `scripts/gen_docs.py` lists them as reader members with no user (the daemon reads those settings itself: Compositor.hyprland and WindowBehaviour through `x-compositor`, the clipboard's limit by name). `HyprlandConfig` has no other member, so the whole reader can go; `WindowBehaviourConfig` too. They sit in `scripts/config-usage-baseline.json`, which only shrinks: deleting one means dropping its line there. Deletion candidates for the audits' deletion pass.

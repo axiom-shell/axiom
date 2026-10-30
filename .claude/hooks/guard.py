@@ -72,9 +72,36 @@ def lex(command):
         return command.split()
 
 
+# `<<WORD`, `<<-WORD`, `<<'WORD'` (not a `<<<` here-string)
+HEREDOC = re.compile(r"(?<!<)<<(?!<)(-?)\s*(['\"]?)([\w.-]+)\2")
+
+
+def drop_heredoc_bodies(command):
+    """A heredoc's body is text, not commands, unless its line names a shell
+    (`bash <<EOF`, `cat <<EOF | sh`): otherwise it is dropped, keeping only
+    the substitutions an unquoted delimiter still runs."""
+    lines, out = command.split("\n"), []
+    while lines:
+        line = lines.pop(0)
+        out.append(line)
+        shell = any(Path(word).name in SHELLS | {"source", "."} for word in lex(line))
+        for dash, quote, word in HEREDOC.findall(line):
+            while lines:
+                body = lines.pop(0)
+                if (body.lstrip("\t") if dash else body) == word:
+                    out.append(body)
+                    break
+                if shell:
+                    out.append(body)
+                elif not quote:
+                    out.extend(": " + m[0] for m in SUBSTITUTION.finditer(body))
+    return "\n".join(out)
+
+
 def split_commands(command):
     """[(env, argv)] for each simple command in a shell command line; a
     redirection `> f` is a command of its own, `[">", f]`."""
+    command = drop_heredoc_bodies(command)
     tokens = lex(command)
     out, current, exported = [], [], {}
     for token in lex(QUOTED.sub(lambda m: "''" if m[0][0] == "'" else m[0], command)):

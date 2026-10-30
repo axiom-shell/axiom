@@ -140,6 +140,16 @@ class Bash(unittest.TestCase):
         self.blocks("bash -lc 'qs -c axiom kill'")
         self.allows("axiom compositor claim --kind sway scratch/sway axiom", "bash scripts/greeter/greeter_install.sh check .")
 
+    def test_heredoc_bodies(self):
+        """A heredoc's body is judged only when a shell runs it."""
+        self.allows("python3 - <<'PY'\nprint('axiom lock')\naxiom lock\nPY", "cat > notes <<EOF\naxiom lock\nqs kill\nEOF",
+                    "cd /tmp && python3 - <<'PY'\naxiom lock\nPY\ngit status", "cat <<-EOF\n\taxiom lock\n\tEOF",
+                    "cat <<EOF\n$(git rev-parse HEAD)\nEOF")
+        self.blocks("bash <<EOF\naxiom lock\nEOF", "sh <<'EOF'\nqs kill\nEOF", "zsh <<-\"X\"\n\taxiom lock\n\tX",
+                    "cd /tmp && bash -s <<'EOF'\naxiom lock\nEOF", "cat <<'EOF' | sh\naxiom lock\nEOF",
+                    "python3 - <<'PY'\nx = 1\nPY\naxiom lock", "cat <<EOF\n$(axiom lock)\nEOF",
+                    "cat <<A; bash <<B\ntext\nA\naxiom lock\nB")
+
     def test_a_custom_xdg_config_home_is_live(self):
         with mock.patch.object(guard, "CONFIG_HOMES", guard.CONFIG_HOMES | {Path("/srv/conf")}):
             self.assertTrue(denied("axiom compositor claim --kind sway /srv/conf/sway axiom"))
