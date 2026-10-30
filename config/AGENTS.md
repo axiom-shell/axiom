@@ -1,6 +1,6 @@
 # Config (`config/`)
 
-Reader singletons (`<Section>.qml` / `<Section>Config.qml`), `json/config.schema.json` (the single source of truth, built from its YAML source `schema/` by `axiom schema build`, never committed: edit the YAML), `json/theme-defaults.json`, `themes/`, `i18n/`. The live config and state are in the XDG folders, never here (`docs/dev/core/config-manager.md` › Where files live). Docs: `docs/dev/core/config-readers.md`, `config-manager.md`, `schema-annotations.md`. Every setting, its reader member and its users: `docs/dev/config/<Section>.md` (generated).
+Reader singletons (`<Section>.qml` / `<Section>Config.qml`), `json/config.schema.json` (the single source of truth, built from its YAML source `schema/` by `scripts/generate.sh` or `axiom schema build`, never committed: edit the YAML), `json/theme-defaults.json`, `themes/`, `i18n/`. The live config and state are in the XDG folders, never here (`docs/dev/core/config-manager.md` › Where files live). Docs: `docs/dev/core/config-readers.md`, `config-manager.md`, `schema-annotations.md`. Every setting, its reader member and its users: `docs/dev/config/<Section>.md` (generated).
 
 **Recipe:** `docs/recipes/setting.md` / `docs/recipes/config-section.md` / `docs/recipes/migration.md`; verify with `scripts/dev/verify.sh`.
 
