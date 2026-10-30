@@ -148,7 +148,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `hosts/popout/ClosedLatch`: a value followed only while its host is closed (a window's layer or namespace).
 - `hosts/popout/StrokeOpening`: a stroke a surface covers, left open by whatever draws it.
 - `hosts/popout/SubmenuSide`: what a submenu meets on its parent's side.
-- `methods/SurfaceOutline`: the shape of anything growing out of an edge (metrics, fill and stroke paths, footprint); `AttachedSurface` draws from it.
+- `methods/SurfaceOutline`: the shape of anything growing out of an edge (metrics, fill and stroke paths, footprint); `AttachedSurface` draws from it. Its far corners are capped at the room the box has, as a Rectangle's radius is: the radius never changes a surface's size.
 - `hosts/popout/PopoutClaim`: a host's place among the popouts; what it overlaps closes, what's above refuses it. See [Popout registry](../popouts/registry.md).
 - `hosts/popout/SubPopout`: a popout's submenu.
 - `PopoutAnchor`: opens one from anything in a bar or popout; `openOnHover: false` leaves opening to its owner's click.

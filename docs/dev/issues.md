@@ -1232,22 +1232,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### A large corner radius folds a pill's or shallow box's outline back on itself
-- **Where:** `components/methods/SurfaceOutline.qml:191` (`_outline`), `components/methods/SurfaceOutline.qml:201`, `components/methods/SurfaceOutline.qml:214`, `components/methods/SurfaceOutline.qml:54` (`metrics`), `components/bar/BarContainer.qml:682` (`depthBox`)
-- **What:** `_outline` draws each side wall from the attach fillet's end (`h + R`) to `farV - cs`, and the far edge from `sideU + cs` to `farSideU - ce`. It never limits `cs`/`ce` to the box, as a Rectangle does its radius.
-  - **When it folds:** the box is shallower than `h + R + cs`, or shorter than `cs + ce`. The wall and far edge then run backwards and the path crosses itself.
-  - **The settings that get there:** `shape.radius` goes up to 50, and `connectorGap` is `borderRadius * 2`.
-    - Pills: BarContainer fixes `boxStart` at `connectorGap / 2` and sets `depthBox = max(0, pillDepth - connectorGap / 2)`, so a pill folds once `pillDepth < 2R + h`. That is radius 15 or more at the tests' pill depth of 30.
-    - Popouts: `naturalBoxStart` pushes a shallow box back only as far as `connectorGap / 2`, so a 40 px OSD at radius 50 still folds.
-  - **Evidence:** a scratch qmltestrunner probe on a 30×10 pill box at R 20 gives `… L 20 10 A 19.5 19.5 0 0 0 39.5 29.5 …`: the wall runs 10.5 px back.
-  - **What it breaks:** the fill uses the same path (OddEvenFill leaves holes where it crosses), and the footprint and blur region disagree with what's drawn.
-  - PLAUSIBLE (how it looks): a nested screenshot of a pill bar at radius 20+.
-  - **Decided** (maintainer, 2026-10-30): "Calmp corners only. Radius shouldn't affect sizing at all".
-
-  Fix: clamp the corners only, as a Rectangle does its radius; pill and popout sizes don't change with the radius. In `SurfaceOutline.withBoxStart`, cap `startCornerRadius`/`endCornerRadius` at the room the box has (`boxStart + boxDepth - half - (filleted ? half + R : 0)`, and `boxAlong / 2 - half`). Add a `tst_SurfaceOutline` row for a box shallower than its corners.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### A tray submenu longer than the screen runs off it
 - **Where:** `components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)
 - **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.
