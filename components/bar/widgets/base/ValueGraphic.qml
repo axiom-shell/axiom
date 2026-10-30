@@ -119,8 +119,8 @@ Item {
       share: root.ratio
       vertical: root.vertical
       across: root.fontSize * 0.7
-      gap: 2
-      cornerRadius: 2
+      gap: Math.max(1, Math.round(root.fontSize * 0.15))
+      cornerRadius: Math.max(1, Math.round(root.fontSize * 0.15))
       litColor: root.color
       offColor: root.trackColor
     }

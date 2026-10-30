@@ -1472,24 +1472,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
-### Some bar widget sizes are fixed pixels, not the bar's
-- **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:206` (`spacing`), `components/bar/widgets/Window/Window.qml:13` (`preferredSize`), `components/bar/widgets/Window/Window.qml:14` (`minimumSize`), `components/bar/widgets/base/ValueGraphic.qml:119` (`gap`), `components/bar/widgets/base/ValueGraphic.qml:120` (`cornerRadius`), `components/bar/widgets/Network/Network.qml:89` (`textSize`), `components/bar/widgets/Notifications/Notifications.qml:41` (`textSize`)
-- **What:** `components/bar/widgets/AGENTS.md`: "**Sized by the bar**: cross size `barConfig.widgetSize`; padding, spacing, font size and radius from `barConfig`". These don't follow it:
-  - SystemStats' icon-to-value gap is `root.isVertical ? 0 : 4`. Every other icon widget's gap is `barConfig.widgetSpacing * 1.5` (BarIconWidget), so SystemStats alone ignores the bar's inner spacing.
-  - Window's title is capped at 240 px and floored at 80 px, whatever the bar's font. At font 20 it elides at about 18 characters.
-  - The segments style's gap and corner radius are 2 px at any font size.
-  - Network's VPN lock and the notification badge are `fontSize - 5` and `fontSize - 4`. At font 8 the lock is 3 px; at font 30 it is 25 px, nearly the icon's size.
-
-  Fix:
-  - `spacing: root.isVertical ? 0 : root.barConfig.widgetSpacing * 1.5`
-  - Window: no cap and no setting. It is elastic, as Media is, and gives up its width first when the section is crowded.
-  - `gap`/`cornerRadius: Math.max(1, Math.round(root.fontSize * 0.15))`
-  - `textSize: Math.round(root.fontSize * 0.65)` (0.7 for the badge)
-
-  **Decided** (maintainer, 2026-10-30, on Window): "The window widget should be fixed and be automatic (i.e. cut itself when it needs to at highest priority like the media one does)."
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
 ### SystemStats' used memory clips on a vertical bar
 - **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:108` (`segmentData`, `mem`), `components/bar/widgets/base/IconTextWidget.qml:140` (`elide`)
 - **What:** On a vertical bar each value is upright under its icon, at `textScale` 0.7 with `Text.ElideNone`, centred in the `widgetSize` column of a box that clips (BaseWidget `clip: true`). With `memoryFormat: used` the value is `toFixed(1) + "G"`, five characters from 10 GiB up ("15.6G"). That is about 5 × 0.6 em × 9.8 px ≈ 29.5 px in monospace, in a 26 px column, so both outer glyphs lose about 2 px; "125.3G" loses most of a glyph each side. Percent values ("100%", about 23.5 px) fit. PLAUSIBLE: a screenshot of a vertical bar with `memoryFormat: used` on a machine using 10 GiB or more settles it. Fix: whole GiB on a vertical bar (`toFixed(root.isVertical ? 0 : 1)`), or let an upright label shrink to fit (`fontSizeMode: Text.HorizontalFit` with a `minimumPixelSize`).

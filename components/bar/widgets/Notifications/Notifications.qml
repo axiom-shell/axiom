@@ -38,7 +38,7 @@ BarIconWidget {
     color: Theme.resolveColor(root.properties.badgeColor)
     text: NotificationManager.countLabel
     // The bar's own text size, not the Interface scale
-    textSize: root.fontSize - 4
+    textSize: Math.round(root.fontSize * 0.7)
   }
 
   PopoutAnchor {
