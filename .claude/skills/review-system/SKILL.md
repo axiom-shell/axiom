@@ -1,68 +1,52 @@
 ---
 name: review-system
 description: Deep review of one whole axiom system (compositor layer, a backend, backend parity, popouts, bar, modules, config, theming, blur, lockscreen, greeter, launcher, …, or any feature): docs vs code, bugs on rarely taken paths, dead and repeated code, simpler shapes, rule breaks, seams. Remembers each review so the next one only rereads what changed. Use when the user says "review the X system", "audit X", "is X in good shape", or runs /review-system.
-argument-hint: "<system> [focus text] [--full] [--record] [--fix] [--deep]"
+argument-hint: "<system> [focus text] [--full] [--record] [--out <dir>] [--fix] [--deep]"
 ---
 
 # System review
 
-You are reviewing one whole system of axiom, not a change. The maintainer wants to know what is wrong in it, what is dead or repeated, and where it could be simpler, each item proven and with its fix. A review that pads the list with guesses is worse than a short one.
+You are reviewing one whole system of axiom, not a change. The maintainer wants to know what is wrong in it, what is dead or repeated, and where it could be simpler, each item proven and with its fix: every finding becomes work, so a guess costs more than a miss.
 
 Arguments: `$ARGUMENTS`
 - `<system>`: a name from `systems.md` (next to this file), or `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`. Missing or unknown: print `python3 .claude/skills/review-system/scope.py --list` and stop.
-- Free text after it narrows the review to a concern ("event stream recovery"). Words in it are never flags; only the `--` forms are.
+- Free text after it narrows the review to a concern. Its words are never flags; only the `--` forms are.
 - `--full` ignores the last review and reviews everything.
-- `--record` adds the confirmed findings to `docs/dev/issues.md` after the report.
+- `--record` files the Blockers, Major and Cleanups in `docs/dev/issues.md` (Phase 6).
+- `--out <dir>` (audits run in parallel): `--record`, deferred: change nothing in the tree; the report and the reviews file go to `<dir>`, and whoever started the audits files them all at once with `scope.py --apply <dir>…` (Phase 6).
 - `--fix` fixes the confirmed findings after the report (Phase 6).
-- `--deep` fans out agents (Phase 3b): for a first review of a big system, only when asked.
+- `--deep` fans out agents (Phase 3): for a big system, only when asked.
 
-## Budget
-
-A review stays **under ~200k tokens in all**, done by you alone. Reading is what costs; spend it on the code where bugs live.
-- `AGENTS.md` is already in your context. Never read it, a doc or a file twice.
-- Command output to `$SCRATCH/review-system/` (`$SCRATCH` = this session's scratchpad), then read only what you need.
-- Deep reading: the enclosing function (`grep -n` its bounds, `sed -n`), not whole files, except small ones or the system's core. Everything else by outline: `grep -n 'function \|property \|signal \|Connections\|Process\|Timer\|IpcHandler' <file>`.
-- Tests and `.json` data: grep for what you need, never read whole. The schema: read the system's own files under `config/schema/` (`sections/<Section>.yaml`, `definitions/**/<Name>.yaml`), never the generated `config.schema.json`.
-- Past ~150k, stop opening new files and say in Coverage what you only outlined.
+Read `../review-branch/lenses.md` › Every reviewer and The lead reviewer first: your rules for reading, proving and writing findings. Work in `$SCRATCH/review-system/` (`$SCRATCH` = this session's scratchpad). **Budget:** under ~200k tokens in all. Deep reading is the risky parts of the deep set; everything else by outline (`grep -n 'func \|function \|property \|signal \|Connections\|Process\|Timer\|IpcHandler' <file>`). Past ~150k, stop opening files and say in Coverage what you only outlined.
 
 ## Phase 0: scope
 
-1. `python3 .claude/skills/review-system/scope.py <system> > $SCRATCH/review-system/scope.txt` and read it: the docs, the code ranked by risk (size × churn × fix commits), files shared with other systems (`[also in: …]`: seams here, outline them unless they're this system's core), tests and data, the last review and what changed since, and the open `issues.md` entries on these files.
-2. **Incremental by default.** If there's a last review (`.claude/reviews/<system>.md`) and no `--full`: read it; the deep pass covers only the files changed since its commit plus rechecking each of its open findings (still there? fixed?). Unchanged files get no reading beyond what a check needs. Nothing changed and nothing open: say so and stop.
-3. Open `issues.md` entries are known: don't report them again; say if the code now fixes one or makes it worse.
+1. `python3 .claude/skills/review-system/scope.py <system> > $SCRATCH/review-system/scope.txt` and read it: the docs, the code ranked by risk (size × churn × fix commits), files shared with other systems (`[also in: …]`: seams; outline them unless they're this system's core), tests and data, the last review and what changed since, and the open `issues.md` entries on these files (known: never report them again; say if the code now fixes one or makes it worse).
+2. **Incremental by default.** With a last review (`.claude/reviews/<system>.md`) and no `--full`: read it; the deep set is the files changed since its commit, plus a recheck of each open finding (its `issues.md` entry gone means fixed). Nothing changed and nothing open: say so and stop.
 
 ## Phase 1: the contract
 
-Read every doc the scope lists, in full (they're short), and the system's entry in `systems.md` (its Checks are the most valuable things to verify). Write `$SCRATCH/review-system/contract.md`: one line per behavioural statement the docs make and per Check, each with how to verify it (a grep, a function to read).
+Read every doc the scope lists, in full, and the system's entry in `systems.md` (its Checks are the most valuable things to verify). Write `contract.md`: one line per behavioural statement and per Check, each with how to verify it (a grep, a function to read).
 
-## Phase 2: mechanical, cheap
+## Phase 2: mechanical
 
-On the system's files only, as greps (CI already runs the `check_*` scripts: don't rerun them):
-- the `rules` lens greps that apply, for what no check holds (`ConfigManager.config` outside services/readers, a `Timer` in UI, compositor names in gating);
-- dead members: each `function`/`property`/`signal`/`readonly property` defined in the system, counted repo-wide (`grep -rnw <name> --include=*.qml --include=*.py --include=*.sh --include=*.json . | wc -l`): one hit is a candidate (check name-loaded uses before reporting);
-- `scripts/log.sh` lines naming the system's files.
+On the system's files, as greps (CI runs the `check_*` scripts: don't): the `rules` lens's unchecked breaks; dead members (each `function`/`property`/`signal`/Go func defined in the system, counted repo-wide with `grep -rnw <name> . --include=*.qml --include=*.go --include=*.py --include=*.sh --include=*.json | wc -l`: one hit is a candidate, then check name-loaded uses); `scripts/log.sh` lines naming the system's files.
 
 ## Phase 3: review
 
-Read `lenses.md` once. For `parity` and `collection` modes, do what their lens says first (the table), then read the cells and outliers.
+Read `lenses.md` (next to this file). For `parity` and `collection` modes, build their table first, then read its cells and outliers. Then down the risk ranking: each file in the deep set, its risky parts (state, processes, event handling, geometry, anything a Check or contract line points at) through all lenses at once, ticking off `contract.md` lines as you reach their code. Candidates go in `findings.md`, one line each (`path:line`, claim, lens, proof). Then the seams.
 
-Then go down the risk ranking: for each file in the deep set, read its risky parts (state, processes, event handling, geometry, anything a Check or contract line points at) through all lenses at once. Verify each `contract.md` line as you reach its code; tick it off. Keep candidates in `$SCRATCH/review-system/findings.md` (one line each: `path:line`, claim, lens, what proves it). Then grep the system's public members from outside it (seams lens).
+To settle a finding against a real compositor, use a nested one (`scripts/dev/nested.sh <sway|niri|hyprland>`), never the live session.
 
-**One helper agent at most**, for a question that needs a lot of reading (e.g. "do all 40 users of X use it as the docs say?"): give it the exact question and files, ask for under 300 words with `path:line` evidence, no edits.
+**`--deep`:** split the deep set into chunks of ≤ ~5k lines along the docs' boundaries, one reviewer agent each, given both lenses files, `contract.md`, its files and output path; do the seams and the parity/collection table yourself meanwhile (`../review-branch/lenses.md` › The lead reviewer › Deep mode).
 
-To settle a finding against a real compositor (does sway accept this line, does niri send that event), use a nested one through `scripts/dev/nested.sh <sway|niri|hyprland>` (scratch folders, its own socket), never the live session and never one you start by hand.
+## Phase 4: prove
 
-### Phase 3b: deep (only with `--deep`)
-
-Split the deep set into chunks of ≤ ~5k lines along the docs' boundaries; one `general-purpose` Agent per chunk, all in one message, each given "Every reviewer" from `../review-branch/lenses.md`, this `lenses.md`, `contract.md`, its file list and output path. Do the seams and parity/collection table yourself meanwhile. Then verifier agents (about six findings each) told to refute each finding: `CONFIRMED` / `PLAUSIBLE` / `REFUTED` with evidence, no edits. Under ten agents in all.
-
-## Phase 4: verify
-
-Try to prove each candidate false before it goes in the report: is the path reachable, handled elsewhere, the "dead" code reached by name, the rule actually stated, the simpler shape keeping every behaviour? Drop what fails; mark `PLAUSIBLE` what only running the shell can settle, keeping those only at major or above.
+Every candidate passes `../review-branch/lenses.md` › Proving it before it goes in the report, agents' ones included: the cited line re-read, every count and total recomputed, `issues.md` grepped for the same function or cause. Drop what fails.
 
 ## Phase 5: report
 
-Print the report and save it to `$SCRATCH/review-system/report.md`:
+`report.md` (in `--out <dir>`, else in `$SCRATCH/review-system/`), printed too:
 
 ```
 # System review: <system>  (full | incremental since <sha>)
@@ -70,45 +54,38 @@ Print the report and save it to `$SCRATCH/review-system/report.md`:
 **Verdict:** <one or two sentences: the state of the system, the biggest problem>
 **Since last review:** <fixed / still open / new, when incremental>
 
-## Blockers   (wrong behaviour users hit, safety or security rules broken)
-## Major      (bugs on rarer paths, contract broken, rule breaks the checks miss, design that will bite)
-## Cleanups   (dead code, duplication, simpler shapes: each with the simpler version)
-## Minor      (misleading names, comments, docs)
-
-### <n>. <claim>  `path:line`
-<what is wrong and the concrete scenario>
-**Fix:** <the change; code when short>
+<the findings by severity, in the lenses' shape>
 
 ## Contract
-<docs statements that hold, briefly; those that don't are findings above>
+<the docs' statements that hold, briefly; those that don't are findings above>
 
 ## Coverage
 Read deeply: <files> · Outlined: <files> · Skipped: <files, why>
 
 ## Outside the system
-<problems found in other systems' files>
+<problems in other systems' files, in the same entry shape>
 ```
 
-With `--record`, add the Blockers, Major and Cleanups to `docs/dev/issues.md` in its format (`Found:` "while reviewing the <system> system"). Problems outside the system go in `issues.md` whatever the flags, as `AGENTS.md` asks. Either way, grep `issues.md` for the files and the problem first: never add an entry that's already there.
+## Phase 6: record or fix
 
-## Phase 6: fix (only with `--fix`)
-
-Fix the confirmed findings, smallest change each, following the repo rules and recipes; skip and list any that need the maintainer's decision. Then `scripts/dev/verify.sh` until `verify ok`, read the log section and the docs it lists; remove any `issues.md` entry the fix closes. Don't commit.
+- `--record`: `python3 .claude/skills/review-system/scope.py --apply $SCRATCH/review-system` files Blockers, Major, Cleanups and Outside the system (entries already in `issues.md` by title are skipped), links each under `docs/dev/roadmap.md` › "Found by the audits:", lists pairs of entries naming the same `path` (`symbol`), and runs `check_docs`. Settle each pair (one cause: merge into one entry; two fixes to one function: one entry with one fix) and each check_docs error, until `docs ok`.
+- `--out <dir>`: nothing here; the caller runs `scope.py --apply` on every audit's dir at once (so pairs across audits show), then settles pairs and errors as above.
+- Neither: file only Outside the system, by hand (`issues.md` format at its top, linked from the roadmap phase that fixes it).
+- `--fix`: fix the confirmed findings, smallest change each, following the repo rules and recipes; skip and list any that need the maintainer's decision. `scripts/dev/verify.sh` until `verify ok`, reading the log section and the docs it lists; remove any `issues.md` entry a fix closes. Don't commit.
 
 ## Phase 7: the reviews file
 
-Last, write `.claude/reviews/<system>.md` (`:` and `/` in the name become `_`), replacing the previous one. It is what the next review starts from, not a copy of the report: **only what is still true**. A fixed finding leaves it (git history has the fix); one that is still open stays in full, so the next review can recheck it without this one.
+Last, write `.claude/reviews/<system>.md` (`:` and `/` become `_`; with `--out`, `<dir>/review.md`, which `--apply` copies there), replacing the previous one. It is what the next review starts from: **only what is still true**.
 
 ```
 # <system>
 reviewed: <short sha of the code reviewed> <date>  (full | incremental since <sha>)
 
-<the verdict, rewritten for the state after any fixes>
+<the verdict, for the state after any fixes>
 
 ## Open findings
-### <n>. <claim>  `path:line`
-<the finding as in the report, with its Fix>
-(or "None.")
+- <severity>: [<title>](../../docs/dev/issues.md#<anchor>)   (one line per recorded finding)
+<unrecorded ones (Minor, or all without --record) in the lenses' shape; or "None.">
 
 ## Contract
 <from the report: what holds, so the next review needn't re-derive it>
@@ -117,8 +94,7 @@ reviewed: <short sha of the code reviewed> <date>  (full | incremental since <sh
 <from the report>
 
 ## History
-- <date> <full | incremental>: <n> findings; <fixed in <sha> | recorded in issues.md | left open: numbers>
-  (one line per review; keep the earlier lines)
+- <date> <full | incremental>: <n> findings; <fixed in <sha> | recorded | left open>   (one line per review, earlier lines kept)
 ```
 
-`reviewed:` stays the commit the review read, even after `--fix`: the next incremental review then rereads the fixes too. The file is meant to be committed: say so, and leave committing to the user unless they asked for it.
+`reviewed:` stays the commit read, even after `--fix`, so the next incremental review rereads the fixes. The file is meant to be committed: say so, and leave committing to the user unless they asked.

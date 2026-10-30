@@ -1,6 +1,6 @@
 # Systems
 
-The systems `/review-system` knows. `scope.py` reads this file: each `## <name>` entry's **Docs** (under `docs/dev/`, globs allowed) give the code through their `> **Files:**` headers; **Extra** adds files no doc lists (globs allowed); **Mode** is `files` (default), `collection` (many files of one kind: compare them against their rules and each other, read the odd ones out) or `parity` (compare the backends member by member). **Checks** are what's most worth verifying here, beyond the lenses. Anything not listed: `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`.
+The systems `/review-system` knows. `scope.py` reads this file: each `## <name>` entry's **Docs** (under `docs/dev/`, globs allowed) give the code through their `> **Files:**` headers; **Extra** adds files no doc lists (globs allowed; a folder `dir/` means the files directly in it, as in a header); **Mode** is `files` (default), `collection` (many files of one kind: compare them against their rules and each other, read the odd ones out) or `parity` (compare the backends member by member). **Checks** are what's most worth verifying here, beyond the lenses. Anything not listed: `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`.
 
 ## compositor
 Scope: the neutral compositor layer: the contract, `supports`, layers and their order, config modes, window look.
@@ -48,7 +48,7 @@ Seams: CompositorManager.
 Scope: the three backends compared: same contract, same semantics, same edge cases.
 Mode: parity
 Docs: compositor/contract.md compositor/sway-backend.md compositor/niri-backend.md hyprland/config-modes.md hyprland/bind-merge.md
-Extra: services/compositor/HyprlandManager.qml services/compositor/SwayManager.qml services/compositor/NiriManager.qml backend/internal/compositor/
+Extra: services/compositor/HyprlandManager.qml services/compositor/SwayManager.qml services/compositor/NiriManager.qml
 Checks:
 - Build a table: each contract member and `supports` key × backend. Every cell is implemented the same way, or the difference is a declared `supports` key, or it's a finding.
 - Same inputs → same outputs: workspace numbering and naming, focus order, output names and scale, window shapes (class/app id, title, workspace, floating, fullscreen).
