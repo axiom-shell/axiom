@@ -1,89 +1,73 @@
 # Review lenses
 
-The checklist the lead reviewer walks through in `SKILL.md`, one lens at a time. In `deep` mode each lens is also a reviewer agent's prompt: "Every reviewer" plus one lens.
+What every axiom review shares: how to read, what counts as a finding and how it's proven, its shape, the lead's agents, then the five lenses. `review-branch` walks all five over a diff; `review-system` (`../review-system/lenses.md`) adds its own and reads "the branch" as "the system", where nothing is pre-existing. In deep mode an agent's prompt is "Every reviewer" plus its lens.
 
 ## Every reviewer
 
-You are reviewing one angle of an axiom branch (a Quickshell/QML desktop shell for Hyprland, sway and niri). `AGENTS.md` is already in your context (CLAUDE.md imports it): don't read it again. Read `brief.md`, then your lens below.
+You review axiom, a Quickshell/QML desktop for Hyprland, sway and niri with a Go daemon. `AGENTS.md` is in your context (CLAUDE.md imports it): never read it, nor any file or doc twice. Read the brief (`brief.md` or `contract.md`) first.
 
-How to work:
-- **The diff is where to start; read only what a judgement needs.** For a hunk that changes behaviour, read the enclosing function or component (`grep -n` for its bounds, then `sed -n 'a,bp'`; a whole file only when it's under ~150 lines or is the heart of the change), and grep for its callers (`grep -rn '<name>' --include='*.qml' --include='*.py' --include='*.sh' --include='*.json' . | head -30`). Files loaded by name don't show up as imports: bar widgets (`type`), content (`popoutName`, module `type`), views, settings cards (`x-card`, `x-intro`), IPC targets, schema `x-*` annotations.
-- Docs and local `AGENTS.md` files the brief lists: `grep -n '^###'` for the outline, then read only the section about your code. A choice that looks odd may be documented there, and a documented rule may be what the change breaks.
-- Stop reading once a finding is proven or ruled out; never re-read a file you already have.
-- Only lines the branch adds or changes, or behaviour it changes, are findings. Something already wrong before the branch goes under "Pre-existing" at the end of your file.
-- **Every finding must be provable from the code.** Give the file and line, the concrete scenario (state, input, compositor, sequence) and what goes wrong. If you can't name the scenario, it isn't a finding; if it depends on runtime behaviour you can't trace, say what would settle it and mark it `PLAUSIBLE`.
-- No style points the tooling already enforces (qmlformat, qmllint, check_structure, check_i18n, check_docs). No "consider adding a comment / test / error handling" without a failure it would prevent. No restating the code.
-- Change no files. Don't run the shell, IPC that changes state, or anything `AGENTS.md` › "Never, while testing" forbids. Reading logs (`scripts/log.sh`), running `scripts/run_tests.sh <Name>` and the `check_*` scripts is fine.
-- Aim for every real problem in your lens and nothing else. Five proven findings beat twenty maybes; zero is a valid answer when the code is sound.
+**Reading.** Command output goes to a file in the scratch folder you were given; read only the part you need (`grep`, `tail`, `sed -n`). For code that matters, read the enclosing function (`grep -n` its bounds, `sed -n 'a,bp'`), a whole file only under ~150 lines or at the heart of the matter; callers by `grep -rn '<name>' --include='*.qml' --include='*.go' --include='*.py' --include='*.sh' --include='*.json' . | head -30`. Files loaded by name don't show as imports: bar widget and module `type`, `popoutName`, views, `x-card`/`x-intro`, IPC targets, `x-*` annotations, daemon method names (`// rpc:`), `Qt.createComponent` strings. Docs and local `AGENTS.md`: `grep -n '^##'` for the outline, then the one section; a choice that looks odd may be documented there. Never the generated files (`docs/dev/config/`, `docs/dev/generated/`, `config/i18n/`, `config/json/config.schema.json`, `config/themes/template/`): the schema's source is its YAML under `config/schema/`. Tests and `.json` data by grep, never whole. Stop reading once a finding is proven or ruled out.
 
-Write your file in this shape and end your reply with its path:
+**What is a finding.** Something provable from the code: the file and line, a concrete scenario (input, state, compositor, sequence) and what goes wrong. No scenario, no finding. In a branch, only what it adds or changes (code or behaviour) is a finding; what was wrong before goes under Pre-existing. Nothing the checks enforce (`scripts/check_all.sh`: format, lint, structure, sizes, i18n keys, docs paths and members, the shell–daemon method names), no "consider adding a test / comment / error handling" without the failure it prevents, no taste, no restating the code. A cleanup shows the simpler version and why it keeps every behaviour. Five proven findings beat twenty maybes; none is a valid answer.
+
+**Proving it.** Before a finding is written, try to refute it: is the path reachable, handled elsewhere, the "dead" code reached by name, the rule actually stated (quote it), does the simpler version keep every behaviour? Then make every fact in it one a command just showed, never one remembered: `sed -n '<n>p'` the cited line (the number is that line's, not the function's), count lines and calls with `wc -l` / `grep -c` and sum a total from its listed parts, and grep `docs/dev/issues.md` and the other findings for the same function or cause (one finding per cause; two fixes to one function are one finding). What only running the shell can settle is marked PLAUSIBLE with what would settle it, and kept only at Major or above. Don't run the shell, IPC that changes state, or anything `AGENTS.md` › Never forbids; reading logs (`scripts/log.sh`), `scripts/run_tests.sh <Name>`, `go test` and the `check_*` scripts are fine. Change no files unless your caller asked for fixes.
+
+**Severity.** Blocker: wrong behaviour users hit, a regression, a failing check, a safety or security rule broken. Major: a bug on a rarer path, a contract or rule broken that no check catches, design that will bite, any added mechanism a smaller change would do (a new state, cache, retry or hold for a rare path), and code a fix leaves behind that nothing needs any more. Cleanup: other dead code, duplication, a simpler shape. Minor: misleading names, comments or docs, small inconsistencies.
+
+**Shape.** Findings go under `## Blockers`, `## Major`, `## Cleanups`, `## Minor`, each in the shape of a `docs/dev/issues.md` entry, so a recorded one is pasted as is (`scripts/check_docs.py` checks paths and `Name.member`s cited, and the field names and order):
 
 ```
-## <n>. <claim in a few words>
-- **Where:** `path:line` (and other places)
-- **Severity:** blocker | major | cleanup | minor
-- **Confidence:** high | medium (PLAUSIBLE: <what would settle it>)
-- **Problem:** <what's wrong, the scenario, the evidence (quoted code, grep result, doc line)>
-- **Fix:** <the concrete change; code when short>
-
-## Pre-existing
-- <title>: `path:line`, <one line>
-
-## Checked and fine
-- <risky things you looked at that hold up>
+### <the claim in a few words: it becomes the entry's title and anchor>
+- **Where:** `path:line` (`symbol`), and other places the same way
+- **What:** the scenario and what happens instead of what should, with the evidence (quoted code, a grep count, a doc line); "PLAUSIBLE: <what settles it>" when it applies. Fix: <the change, code when short; for a deletion, the lines it removes>.
+- **Size:** trivial | small | needs a plan   (the bare words, nothing after them)
+- **Found:** YYYY-MM-DD, while reviewing <the branch's purpose | the <system> system>
 ```
+
+After the findings: `## Pre-existing` (problems outside what you were asked to review: a title and `path:line` each) and `## Checked and fine` (risky things you looked at that hold up). An agent ends its reply with its file's path.
+
+## The lead reviewer
+
+- **One helper agent at most** outside deep mode, for a question that needs a lot of reading ("do all 15 callers still work with X's new meaning?"): the exact question and files, "under 300 words, `path:line` evidence, change no files".
+- **Deep mode:** reviewer agents (`general-purpose`), all in one message, each given "Every reviewer", its lens or files, the brief's path and its output file. While they run, do what the skill keeps for you. Then merge by root cause and give the findings to verifier agents, about six each grouped by file, told to refute each (`CONFIRMED` / `PLAUSIBLE` / `REFUTED`, with evidence, changing no files). Under ten agents in all.
+- **Before the report**, every finding passes "Proving it" again in your own hands: an agent's line number, count or "nothing else does this" is a claim until you've run the command.
 
 ## bugs: correctness
 
-Find code that does the wrong thing. Trace every changed path with real values.
+Find code that does the wrong thing; trace every changed path with real values.
 - Logic: inverted conditions, wrong operator, off-by-one, `==` vs `===` on mixed types, `||` swallowing a valid `0`/`""`/`false`, a `??` hiding a value that should be there, wrong unit (px vs grid, logical vs physical pixels, ms vs s).
 - `undefined`/`null`: a property read before its object exists (Loader not loaded, `screen` null while monitors change, a config section in preview), an array assumed non-empty, a monitor or window that went away.
-- QML binding semantics: an assignment that silently breaks a binding, a binding loop, a value read once in `Component.onCompleted` that should be a binding (or the reverse), a `Connections` target that is null or changes, a signal handler with the wrong parameter names, `visible` vs `opacity` vs `enabled` mixed up, implicit vs explicit size fighting, z/layer order.
-- Lifetimes: Loader/Repeater delegates destroyed while a Timer, Process or callback still uses them; `acquire` without `release`; a `Process` whose `running` is toggled while running, whose output is parsed before it exits, or whose args contain an unexpanded `~`; state that a hot reload loses and should be in `PersistentProperties`.
-- Events and ordering: two signals arriving in the other order, a handler firing during startup with half the config, rapid toggling (open/close/open), monitors added or removed, the overlay closed mid-animation, a config reload mid-edit.
-- Scripts: quoting, `set -e` traps, a temp file not written atomically, paths with spaces, a missing command not checked, Python reading untrusted JSON without a shape check.
-- The **Claims** in the brief: does each fix actually remove the cause, on every path that reaches it?
+- QML bindings: an assignment that silently breaks a binding, a binding loop, a value read once in `Component.onCompleted` that should be a binding (or the reverse), a null or changing `Connections` target, a handler with the wrong parameter names, `visible`/`opacity`/`enabled` mixed up, implicit vs explicit size fighting, z/layer order; the traps in `docs/dev/core/qml-pitfalls.md`.
+- Lifetimes: a delegate destroyed while a Timer, Process or callback still uses it; `acquire` without `release`; a `Process` toggled while running, parsed before it exits, or given an unexpanded `~`; state a hot reload loses that belongs in `PersistentProperties`; handlers that double-connect across reloads.
+- The paths nobody takes daily: monitors added, removed, renamed, rescaled, none, several; startup order (a reader or service used before it's ready, a signal fired before its listener exists); each compositor the code runs under (what `supports` says vs what the code assumes); every setting it reads off, empty, at its minimum and maximum; rapid repeats (open/close/open, two requests in flight); the overlay closed mid-animation, a config reload mid-edit; failure (a command missing, a file unreadable, malformed JSON, a socket gone, a daemon call that errors).
+- Scripts and Go: quoting, `set -e` traps, non-atomic writes of watched files, paths with spaces, an unchecked missing command, untrusted JSON read without a shape check, an error dropped or a goroutine leaked.
+- The claims in the brief: does each fix remove the cause on every path that reaches it, or a symptom one caller over?
 
 ## regressions: what used to work
 
-For each changed function, property, signal, schema key, file name or script interface, find everything that depended on its old behaviour and check it still works.
-- Callers and readers: grep every use of anything renamed, removed, retyped or given a new meaning, including string-built names, QML property aliases, IPC targets, `docs/usage.md`, tests and scripts.
-- Other compositors: a change made for one (the brief says which) must not change Hyprland, sway or niri behaviour it wasn't meant to. Look for logic that should be gated on `CompositorManager.supports.<key>` and isn't, a `supports` key read where none is set, a backend-specific default reaching the others.
-- Config: an old config.json must still load and mean the same thing. A key renamed, moved or reshaped needs a version bump, a format-2 step in `backend/internal/migrate/steps/` (idempotent) and its Go test; a changed default changes existing users' shells; `x-scope` and `x-takeover` must still be right for anything moved.
-- Settings off: features disabled (blur off, animations off, border off, a bar on each edge, vertical bars, no bar, several monitors, a monitor unplugged) must behave as before.
-- Performance: a new binding on a hot path (per frame, per sample, per window), a Repeater model rebuilt from live values, polling that no longer stops, a new layer or window per screen.
-- Removed tests or weakened assertions: why, and is what they covered still covered?
+For each changed function, property, signal, schema key, file name or script interface, find everything that relied on the old behaviour.
+- Callers and readers of anything renamed, removed, retyped or given a new meaning, including string-built names, aliases, IPC targets, `docs/usage.md`, tests and scripts.
+- Other compositors: a change for one must not change the others; logic that should be gated on `CompositorManager.supports.<key>` and isn't, a key read that no backend sets.
+- Config: an old config.json still loads and means the same; a reshaped key needs a format-2 step and its Go test (`docs/recipes/migration.md`); a changed default changes existing users' shells; `x-scope` and `x-takeover` still right for what moved.
+- Settings off: blur, animations, border off, bars on each edge, vertical bars, no bar, several monitors, one unplugged.
+- Performance: a new binding on a hot path (per frame, sample or window), a Repeater model rebuilt from live values, polling that no longer stops, a new window per screen.
+- A removed test or weakened assertion: is what it covered still covered?
 
 ## cleanup: dead, repeated and over-built code
 
-The branch should leave the code smaller and plainer than the first draft that worked.
-- Dead code: properties, functions, signals, imports, ids, files, schema keys, reader members, CSS-like style props, `supports` keys, script flags or test helpers that nothing uses after this branch (grep, and remember name-loaded files). **Leftovers of attempts that were tried and abandoned** (the brief's `issues.md` entries and commit messages say what was tried): code, comments, debug `console.log`, temporary IPC handlers, flags that only one branch of now reaches.
-- Repetition: the same logic written twice in the branch, or written again when a shared piece already does it (`docs/dev/core/shared-ui-pieces.md`, `components/methods/`, `components/reusable/`). A decision a methods helper makes (`SurfaceContext`, `EdgeAttach`, `BarEnds`, `GridPlacement`, `LayerStack`, …) worked out again in a host is both a repeat and a rule break.
-- Simpler shapes: a condition that can be one expression, a state machine that is a boolean, a Timer that should be a binding, a wrapper Item that only forwards, a property kept in sync by hand that can be a binding, a parameter every caller passes the same, a special case that the general path already handles, a generalisation with one user.
-- Comments: ones that describe what the code used to do, narrate the debugging history, or say what the next line plainly says. Match the surrounding comment density.
-- For every cleanup, show the simpler version and say why it keeps every behaviour. Don't propose churn that is only taste.
+The code should end smaller and plainer than the first draft that worked.
+- Dead: members, imports, ids, files, schema keys, reader members, `supports` keys, script flags, IPC functions, test helpers nothing reaches (grep, and remember what loads by name); leftovers of abandoned attempts (code, comments, debug `console.log`, temporary IPC handlers); code alive but powerless (a condition always false, a parameter every caller passes the same, a property always overwritten before it's read).
+- Repeated: the same logic twice, or again where a shared piece does it (`docs/dev/core/shared-ui-pieces.md`, `components/methods/`, `components/reusable/`). A decision a methods helper makes (`SurfaceContext`, `EdgeAttach`, `BarEnds`, `GridPlacement`, `LayerStack`, …) worked out again in a host is also a rules break.
+- Simpler shapes: a state machine that is a boolean, a Timer that should be a binding, a wrapper that only forwards, state synced by hand that can be a binding, a special case the general path covers, a generalisation with one user.
+- Comments that describe old code or the debugging history, or repeat the next line.
 
-## rules: axiom's rules and architecture
+## rules: axiom's rules
 
-Check the changed code against `AGENTS.md`, the local `AGENTS.md` of each touched directory, and the docs the brief lists. Report a break only when you can quote the rule. Skip what the checks already hold (`check_structure`, `check_sizes`: the live Repeater models and requests, `duration:` literals, `Quickshell.screens`, `Qt.formatDateTime`, `??` in readers, the compositor imports); these are the ones changes most often break:
-- Layering: methods pure (no files, processes, `qs.*`); readers read only owners and each other; services own every side effect; UI runs no polling Process or repeating Timer and never reads `ConfigManager.config` directly.
-- The compositor only through `CompositorManager` (neutral shapes; `goToWorkspace`/`focusWindow`, never a direct dispatch); only the backend talks to its compositor; gate on `supports.<key>`, never on a compositor's name; nothing writes compositor config unless `supports.configModes`.
-- Polled data through `acquire`/`release`, acquired in `Component.onCompleted` and released in `onDestruction`.
-- Config writes only through `ConfigManager`/`SettingsManager`; editors through a `ConfigDraft` and the manager's `select*()`; unsaved edits show through `ConfigManager.setPreview`, never by changing `config`; readers read `ConfigManager.live`.
-- Schema: a new setting has a `default`, title, description, the right `x-scope`; a layout change has version bump + migration + test, schema edited first; module `x-hosts` lists overlay, edgeMenu and desktop, lockscreen/greeter only when safe.
-- Geometry and popouts: from `SurfaceContext`/`EdgeAttach` only, collisions through `PopoutClaim`, an open popout never moves, shadows through `OutsideShadow`, layer order only from `LayerStack.layers`, bars and border never over fullscreen, nothing maps a Top window in response to fullscreen.
-- UI: animations eased with `Appearance.easing` (`Glide`/`ColorGlide`), looping ones gated on `Appearance.animations`; `Appearance.borderRadius` only for outer edges, `Widget.radius` inside; rounded clipping by `ClippingRectangle` with `color` set; icons through `StyledIcon`, never sharing a Text with a label; IPC handlers enabled on the target instance only; reuse of shared pieces.
-- Text: `I18n.tr("…")` with placeholders, never template-string sentences; logs and migration notes English; agents never fill translations.
-- Files: nothing written under `Paths.axiomPath`; watched files written atomically; secrets only through `SecretsManager`; paths with `~` expanded before a process or read; greeter-reachable side effects check `Paths.greeter`; lock only through `LockManager.lock()`, unlock only by PAM.
-- Naming: services `*Manager`, no shadowing Quickshell singletons, `Styled*` stand-ins, root id `root`, `Window` suffix rule, purpose comment above each root object, `// reads:` comments for config reads grep can't see.
-- Tests: a changed methods helper or migration step has a new test case; a new script's test class is in verify.sh's `script_tests`; a new dependency is in install.sh, `Packages.packages` and the PKGBUILDs.
-- The traps in `docs/dev/core/qml-pitfalls.md` (StyledTextEntry write-back, object literal without parentheses, assigning a bound property, redeclared base property, `visibleChildren` self-hide, `Item`-typed params read for custom members, inline component using another in a URL-loaded file, MultiEffect on own layer).
+Walk `AGENTS.md` and each touched directory's `AGENTS.md` against the code; report a break only with the rule quoted. The checks hold structure, sizes, imports, the Quickshell.Io allowlist, live Repeater models, `duration:` literals, `Quickshell.screens`, `Qt.formatDateTime` and readers' `??`: skip those. Most often broken and unchecked: the layering (UI polling or reading `ConfigManager.config`); the compositor reached past `CompositorManager` or gated on a name, not `supports`; `acquire`/`release` pairing; config written past `ConfigManager`/`SettingsManager` or a preview by mutation; a schema change without default, `x-scope`, migration or test; geometry not from `SurfaceContext`/`EdgeAttach`, a popout that moves, anything over fullscreen; radii, easing, `StyledIcon`, `ClippingRectangle`; `I18n.tr` sentences; `~` unexpanded, writes under `Paths.axiomPath`, secrets past `SecretsManager`, greeter side effects without `Paths.greeter`; a new methods case, migration step or script without its test; a new dependency missing from install.sh, `Packages.packages` or the PKGBUILDs.
 
 ## design: does it make sense, and is it described truthfully
 
-Step back from the lines and judge the choices.
-- Is each piece in the right place and layer? Would the maintainer, reading the docs for this area, expect it there? Is a new abstraction earning its keep, or is an existing one being bent to fit?
-- Illogical choices: a value computed in one place and corrected in another, a workaround where the cause is reachable and fixable, a fix in the consumer for a problem in the producer, two sources of truth for one fact, a flag whose name says the opposite of what it does, a timing hack (`Qt.callLater` chains, magic delays) standing in for an ordering the code could state.
-- Names: does every new name say what the thing is or does, in the vocabulary the docs use?
-- Docs: every doc the brief lists must still be true after the branch. A changed mechanism with an unchanged doc, a doc describing the first attempt rather than the final code, an `issues.md` entry that the branch fixes but doesn't remove (or removes without fixing), a new user-visible feature missing from `README.md` / `docs/features.md` / `docs/usage.md` where its kind is listed.
-- Intent: anything the brief's intent implies that the branch doesn't do (a compositor left out, a setting not exposed, a case not handled), and anything the branch does that its intent doesn't explain (unrelated changes riding along).
+- Is each piece in the layer and place the area's docs lead a reader to expect? Does a new abstraction earn its keep, or is an existing one bent to fit?
+- Illogical choices: a value computed in one place and corrected in another, a workaround where the cause is fixable, a fix in the consumer for the producer's problem, two sources of truth, a name saying the opposite of what it does, a timing hack (`Qt.callLater` chains, magic delays) standing in for an ordering the code could state.
+- Docs: every doc covering the changed files still true, describing the final code; an `issues.md` entry fixed but not removed (or removed unfixed); a user-visible feature missing from `README.md` / `docs/features.md` / `docs/usage.md` where its kind is listed.
+- Intent: what the intent implies and the change doesn't do (a compositor left out, a setting not exposed), and changes the intent doesn't explain.
