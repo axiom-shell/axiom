@@ -1030,7 +1030,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Small shrinks in SwayManager
 - **Where:** `services/compositor/SwayManager.qml:95` (`layersChanged`), `services/compositor/NiriManager.qml:120` (`layersChanged`), `services/compositor/SwayManager.qml:288` (`runCommands`), `services/compositor/SwayManager.qml:330` (`_lookSeen`), `services/compositor/SwayManager.qml:342` (`onActiveWindowIdChanged`), `services/compositor/SwayManager.qml:319` (`_configBlur`)
 - **What:** Deletion pass, 21 lines, every behaviour kept (the compositor-parity review found `runCommands` too, noting Hyprland's `runLua` has the same shape and is filed under "HyprlandManager keeps members only it reads"):
-  - `signal layersChanged` with its comment (94-95, 2 lines). It is never emitted, and the facade connects with `ignoreUnknownSignals: true` (`CompositorManager.qml:198`). niri's (`NiriManager.qml:119-120`, never emitted either) goes the same way, 2 more lines. contract.md › Signals then marks `layersChanged` optional (only Hyprland has it), and sway-backend.md drops its "`layersChanged`: never".
+  - `signal layersChanged` with its comment (94-95, 2 lines). It is never emitted, and the facade connects with `ignoreUnknownSignals: true` (`CompositorManager.qml:199`). niri's (`NiriManager.qml:119-120`, never emitted either) goes the same way, 2 more lines. contract.md › Signals then marks `layersChanged` optional (only Hyprland has it), and sway-backend.md drops its "`layersChanged`: never".
   - `runCommands` (287-290, 4 lines). Its only callers are SwayManager's own (339, 370); neither passes an empty line or a callback, so its filter and `callback?.(ok)` do nothing. Call `SwayIpcManager.command(lines.join("; "))` instead.
   - `_lookSeen` (328-330 and 313, 4 lines). It is always `root._windowEffects !== null`, so 334 becomes `if (!root._windowEffects)`.
   - `onActiveWindowIdChanged: _applyWindowLook()` (342, 1 line). `windows` is bound to `SwayState.ranked(…, activeWindowId)`, so `onWindowsChanged` already runs it on every focus change, and today it runs twice.
@@ -1039,8 +1039,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while reviewing the sway system
 
 ### Sway and niri each forward withMainBinds to the daemon
-- **Where:** `services/compositor/SwayManager.qml:357` (`withMainBinds`), `services/compositor/NiriManager.qml:391` (`withMainBinds`), `services/compositor/CompositorManager.qml:399` (`withBinds`)
-- **What:** Deletion pass, 10 lines. Since stage 7 both backends' `withMainBinds` are the same forward to `CompositorConfigManager.withEntries(callback)` (sway 355-359, niri 389-393), a layer whose job has shrunk to forwarding. Fix: the facade's `withBinds` calls `root.backend.withMainBinds ? root.backend.withMainBinds(callback) : CompositorConfigManager.withEntries(callback)` (only Hyprland reads its own), both forwards go, and contract.md marks `withMainBinds` optional.
+- **Where:** `services/compositor/SwayManager.qml:358` (`withMainBinds`), `services/compositor/NiriManager.qml:391` (`withMainBinds`), `services/compositor/CompositorManager.qml:399` (`withBinds`)
+- **What:** Deletion pass, 10 lines. Since stage 7 both backends' `withMainBinds` are the same forward to `CompositorConfigManager.withEntries(callback)` (sway 356-360, niri 389-393), a layer whose job has shrunk to forwarding. Fix: the facade's `withBinds` calls `root.backend.withMainBinds ? root.backend.withMainBinds(callback) : CompositorConfigManager.withEntries(callback)` (only Hyprland reads its own), both forwards go, and contract.md marks `withMainBinds` optional.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
@@ -1151,7 +1151,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 
 ### A backed toast's blur fill is at the surface opacity twice
-- **Where:** `components/surfaces/notifications/ToastStack.qml:351` (the card's `BlurShape`), `shell/BlurBackingWindow.qml:168` (`fills`)
+- **Where:** `components/surfaces/notifications/ToastStack.qml:346` (the card's `BlurShape`), `shell/BlurBackingWindow.qml:168` (`fills`)
 - **What:** The blur window draws each copy opaque, then applies `Appearance.surfaceAlpha` once to all of them (`opacity: Appearance.surfaceAlpha`, line 168). Every other `kind: "rect"` shape hands it a raw colour: `BarContainer.qml:541`/`:643` use `BlurShape`'s default `Theme.background`, and `IntegratedEdgeMenu.qml:190` uses `Theme.background`. The toast card hands it `Qt.alpha(Appearance.fill(Theme.background), Appearance.fill(Theme.background).a * toastCard.opacity)`, and `Appearance.fill` has already multiplied in `surfaceAlpha` (`config/Appearance.qml:113`). With translucency at 80% and blur on, a toast's fill comes out at 0.64. It is lighter than the edge popout and bar it sits beside, and lighter than the same toast unbacked (`BlurManager.fillOn`, 0.8), so its tone jumps when the blur pauses or resumes. Fix: `color: Qt.alpha(Theme.background, toastCard.opacity)`.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the blur system
