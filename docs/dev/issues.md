@@ -376,8 +376,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while reviewing the compositor system
 
 ### Backends keep stubs for calls the facade gates
-- **Where:** `services/compositor/SwayManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`), `services/compositor/NiriManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`), `services/compositor/CompositorManager.qml` (`withLayerRects`), `docs/dev/compositor/contract.md`
-- **What:** Deletion pass. `CompositorManager.withCursorPos` and `warpCursorToLayer` call the backend only with `supports.cursorPos` / `cursorWarp`, which only Hyprland sets, so sway's and niri's `withCursorPos` (calls back null) and empty `warpCursorToLayer` are never reached. `withLayerRects` is called ungated, but both only call back null, which the facade's no-backend branch already does. About 22 lines over the two backends. Fix: delete the four gated stubs; make `withLayerRects` optional in the facade (`root.backend?.withLayerRects ? … : callback(null)`) and delete its two stubs; mark the three optional in contract.md › Session and input and the compositor-backend recipe.
+- **Where:** `services/compositor/SwayManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`, `scrollStrip`), `services/compositor/NiriManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`), `services/compositor/CompositorManager.qml` (`withLayerRects`), `docs/dev/compositor/contract.md`
+- **What:** Deletion pass. `CompositorManager.withCursorPos` and `warpCursorToLayer` call the backend only with `supports.cursorPos` / `cursorWarp`, which only Hyprland sets, so sway's and niri's `withCursorPos` (calls back null) and empty `warpCursorToLayer` are never reached. `withLayerRects` is called ungated, but both only call back null, which the facade's no-backend branch already does. About 22 lines over the two backends. The sway review (2026-10-30) adds sway's `scrollStrip` (3 lines): the facade calls it only past `if (!root.supports.strips …) return;`, and sway has no `strips`. Fix: delete the five gated stubs; make `withLayerRects` optional in the facade (`root.backend?.withLayerRects ? … : callback(null)`) and delete its two stubs; mark the three optional in contract.md › Session and input and the compositor-backend recipe.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
@@ -521,7 +521,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### noteReload counts every compositor reload a second time
 - **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
-- **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30).
+- **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30). The sway review (2026-10-30) found an apply between the count and that reset still sends the old list: [The detached layer's unbind list can drift from what sway holds](#the-detached-layers-unbind-list-can-drift-from-what-sway-holds) wants the reset where the reload is counted; fix the two together.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -950,3 +950,123 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** niri's plain `quit` asks first (`/usr/share/doc/niri/default-config.kdl:625`: "The quit action will show a confirmation dialog to avoid accidental exits"); only `quit skip-confirmation=true` doesn't. The merge maps both to `exitSession` (`node.Name == "quit" || plain`), which axiom writes as `quit skip-confirmation=true` (`render/niri.go`, `exitSession`) and `NiriManager.exitSession` sends as `Quit { skip_confirmation: true }`. A user config kept from niri's default, adopted on a managed takeover or merged from the Keybinds page, has `Mod+Shift+E { quit; }` and `Ctrl+Alt+Delete { quit; }`: after the merge either key ends the session at once, losing unsaved work, where it used to ask. The code's comment ("quit asks first unless skip-confirmation: axiom's log out doesn't") and `binds_test.go:554` take the change as intended, but nothing tells the user. Decided by the maintainer (asked 2026-10-30: "when axiom moves the user's niri binds in, niri's default Mod+Shift+E and Ctrl+Alt+Delete `quit` (which in niri shows a confirmation dialog) becomes axiom's `exitSession`, an instant log out with no confirmation. The code and a test treat this as intended. What should it do?"): "Keep a confirmation (Recommended)": "File as a bug: a moved `quit` should still confirm (axiom's power menu / a confirm step, or keep niri's own quit), not log out instantly." The audit's fix: map `quit` only with `skip-confirmation=true` (the condition becomes `quit` with that property true, or another action `plain`; dropping `node.Name == "quit" ||` alone would do the reverse, as a bare `quit` is `plain`), so a confirming quit moves as `raw` and keeps its dialog; reword the comment above it and flip the test row (`binds_test.go:554` expects `"raw"`).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
+
+### After a sway reload, gapsOut and SwayFX's per-window blur and shadows stay off until the look changes
+- **Where:** `services/compositor/SwayManager.qml:518` (`_onEvent`), `services/compositor/CompositorConfigManager.qml:243` (`_setState`), `docs/dev/compositor/sway-backend.md:90`
+- **What:** On a sway config reload (Super+Shift+C, `swaymsg reload`, or in managed mode an edit to a `user/` file), SwayManager drops what the look set: `root._liveGaps = null; root._liveBlur = null;` (518-519), and it nulls `_windowEffects.blur`/`shadows` (522-526) "Until the look is sent again". But `setLiveLook` is only called from `CompositorConfigManager._setState`, and only when the look's JSON differs from the last one: `if (look !== root._lookSet && CompositorManager.backend.setLiveLook)` (243). The daemon's state `look` is `specLive`'s look (`manager.go:547`), and a reload doesn't change it, so `setLiveLook` is skipped. Nothing resets `_lookSet` (only lines 238, 243 and 244 touch it). The daemon re-sends the gaps and the SwayFX lines after the reload, so sway itself shows axiom's look. But until the user changes a look setting or reloads the shell:
+  - `gapsOut` falls back to `_gaps`, which comes from `sway-text`. That text leaves axiom's own file out, so it is the user's gaps (sway's default 0 when they set none), while sway shows axiom's (default 3 + 6).
+  - Every output's `reserved` (`SwayState.output` subtracts `gapsOut`) is off by the difference, and so are the bars and popouts that follow `CompositorManager.gapsOut`.
+  - `blur` reverts to the config's.
+  - On SwayFX, `windowCommands` with `blur`/`shadows` null leaves new windows alone. The global lines reach only the focused window, so windows opened after the reload get no blur and no shadows.
+
+  The doc promises otherwise: "A config reload … resets blur and shadows, which the look sent after it sets again" (sway-backend.md:90).
+
+  Fix: after each reload, CompositorConfigManager asks for the state again with `_lookSet` cleared, so the backend gets the look whether or not it changed: `Connections { target: CompositorManager; function onConfigReloaded() { root._lookSet = ""; root._fetchState(); } }`. About 5 lines.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### A sway title-bar mouse bind moves in as a whole-window bind
+- **Where:** `backend/internal/compositor/binds/sway.go:29` (`swayHarmless`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/render/sway.go:245` (`swayConflictFlags`)
+- **What:** sway(5) says mouse bindings "are only triggered when over the title bar" unless `--whole-window` is given. `swayHarmless` lists `--whole-window` as droppable, so a mouse bind *without* it moves in as well. axiom then writes every mouse key with `--whole-window` (`if k.Mouse { flags = append(flags, "--whole-window") }`). The i3 guide's own examples are `bindsym --release button2 kill` and `bindsym button3 floating toggle`. A probe of the worktree's extract on `bindsym --release button2 kill` gave `{"key":"mouse:274","action":"closeWindow","release":true}`, and the line was commented out. After a takeover, a middle click anywhere (a paste in a terminal) closes the window. The binds are shared, so Hyprland gets the same bind too.
+
+  Fix: keep a mouse key whose flags lack `--whole-window` as `kept` `options` with the detail `title bar`, and add a `TestSwayExtract` row for it. About 4 lines.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### A sway exec chained with ; or , moves in as one shell command
+- **Where:** `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
+- **What:** sway runs a bind's command as a list split at unquoted `;`/`,` (sway(5) › Command conventions). The `exec` branch (202) takes everything after `exec` as one argument (`execText(string([]rune(command)[4:]))`). A probe on `bindsym $mod+q exec notify-send bye; kill` moved it as `{"action":"exec","argument":"notify-send bye; kill"}`: the shell runs `kill` with no arguments, and the window no longer closes. `exec "foot", focus left` became an exec of `"foot", focus left`, so nothing starts. Both original lines were commented out. `TestSwayExecReadAsSwayRunsIt` covers only the quoted form, which sway keeps whole.
+
+  Fix: before the `exec` branch, a stored command holding `;` or `,` outside quotes returns `raw` for sway, which keeps sway's behaviour. That is a small scan, plus a test row for each separator.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### A sway include path with a space breaks after a takeover
+- **Where:** `backend/internal/compositor/takeover/kinds.go:196` (`swayInclude`), `backend/internal/compositor/render/sway.go:683` (`SwayManagedText`), `backend/internal/compositor/render/sway.go:694` (`SwayReleasedText`)
+- **What:** sway expands an include through wordexp(3). A C probe showed a double-quoted `"<dir>/user/*"` stays literal (no glob), and an unquoted path with a space splits into two words. With a space in `$HOME` or `$XDG_CONFIG_HOME`, two things break:
+  - `swayInclude` makes a relative include absolute as `quote + dir + "/" + inner + quote`, unquoted when the original was. `include conf.d/*` becomes two words and loads nothing.
+  - The managed and released configs write `include ` + `SwayQuote(userDir+"/*")`. `SwayQuote` double-quotes the whole path, `*` included, so sway loads nothing from `user/`: the adopted config and every user file are dropped.
+
+  `userconf.SwayText` still reads the quoted glob (`shellSplit`, then `glob`), so the daemon reads binds from files sway doesn't load. This is a rare path.
+
+  Fix: quote only the folder, never the glob: one helper in render, `SwayQuote(dir+"/") + rest`, used by the three writers, plus a takeover test row and a golden row with a spaced dir.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### A sway output rule by description misses a monitor with no serial
+- **Where:** `backend/internal/compositor/render/sway.go:721` (`SwayOutputName`), `backend/internal/compositor/ipc/sway.go:122` (`Outputs`), `docs/dev/compositor/sway-backend.md:40`
+- **What:** Profile rules name a monitor by `desc:<description>` by default. On sway the description is make, model and serial with every `Unknown` part left out (`describe`; `SwayState.output` does the same). `SwayOutputName` writes that text as the output's name in `output "Make Model" …`. sway matches an output by its name or its identifier, and the identifier keeps `Unknown` for a missing part (`output_get_identifier`). So for a monitor with no serial (common on laptop panels), the command names an output that never appears, and the saved profile does nothing on that monitor, both at runtime (`Outputs.Apply`) and in the files (`SwayOutputLines`). The doc's "sway's own identifier for an output" holds only when no part is `Unknown`. `outputs_test.go` covers `desc:` only with a full serial.
+
+  PLAUSIBLE: settle it in a nested sway with a wayland-backend output (no serial). `swaymsg -t get_outputs` shows the `Unknown` part, and `swaymsg 'output "<make> <model>" scale 2'` should do nothing.
+
+  Fix: resolve `desc:` to the connected output's name, as niri does (`connectorFor`, `render/niri.go`). Pass the details into `SwayOutputCommands` from `Outputs.Apply`, which already has them, and resolve the files' output rules the same way. Correct the doc line.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### Managed mode's monitor-conflict check misses quoted and block output lines
+- **Where:** `backend/internal/compositor/manager/sway.go:83` (`monitorPattern`), `backend/internal/compositor/manager/manager.go:966` (`findMonitorConflicts`)
+- **What:** In managed mode, `user/` files that set monitors (they load after axiom's lines and win) should show as `monitorConflicts` on the Monitors page. sway's pattern takes the output name as `[^[:space:]]+`, so it misses the forms sway users write most for a particular monitor. Running the regex:
+  - `output DP-1 mode 1920x1080` matches.
+  - `output "Dell Inc. DELL U2720Q 123" mode 3840x2160` doesn't.
+  - `output DP-1 {` doesn't.
+  - `output 'LG 27' pos 0 0` doesn't.
+
+  A takeover adopts the old config's output lines into `user/00-previous.conf`, so after a claim they override the Monitors page's profile with no warning. No test covers the sway pattern.
+
+  Fix: `^\s*output\s+("[^"]*"|'[^']*'|\S+)\s+(\{|mode|res|resolution|pos|position|scale|transform|enable|disable|power)`, with a test row for each form.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### The detached layer's unbind list can drift from what sway holds
+- **Where:** `backend/internal/compositor/manager/sway.go:225` (`runtimeApply`), `backend/internal/compositor/manager/sway.go:193` (`sendEach`)
+- **What:** `runtimeApply` replaces and saves `SwayUnbind` (235-237) before anything is sent, and `sendEach` drops `run`'s transport failure. If the socket call fails (dial error, the 5 s timeout), neither the old unbinds nor the new binds reach sway. The old runtime binds stay bound but are no longer recorded, so a bind removed in axiom keeps firing until sway reloads.
+
+  Second path: a reload is counted in `watchReloads`, but `SwayUnbind` is cleared only later, in `noteReload` on the manager goroutine. An apply in between still sends the old `unbindsym` lines, which can remove a key the user just bound in their reloaded config. The known entry "noteReload counts every compositor reload a second time" moves that reset into `configReloaded`; this path wants it where the reload is counted instead.
+
+  Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### Small shrinks in SwayManager
+- **Where:** `services/compositor/SwayManager.qml:95` (`layersChanged`), `services/compositor/SwayManager.qml:288` (`runCommands`), `services/compositor/SwayManager.qml:330` (`_lookSeen`), `services/compositor/SwayManager.qml:342` (`onActiveWindowIdChanged`), `services/compositor/SwayManager.qml:319` (`_configBlur`)
+- **What:** Deletion pass, 19 lines, every behaviour kept:
+  - `signal layersChanged` with its comment (94-95, 2 lines). It is never emitted, and the facade connects with `ignoreUnknownSignals: true` (`CompositorManager.qml:198`).
+  - `runCommands` (287-290, 4 lines). Its only callers are SwayManager's own (339, 370); neither passes an empty line or a callback, so its filter and `callback?.(ok)` do nothing. Call `SwayIpcManager.command(lines.join("; "))` instead.
+  - `_lookSeen` (328-330 and 313, 4 lines). It is always `root._windowEffects !== null`, so 334 becomes `if (!root._windowEffects)`.
+  - `onActiveWindowIdChanged: _applyWindowLook()` (342, 1 line). `windows` is bound to `SwayState.ranked(…, activeWindowId)`, so `onWindowsChanged` already runs it on every focus change, and today it runs twice.
+  - The blur default is written out twice (319-323 and 586-590), and `SwayState.configInfo("").blur` already holds it. That is 10 lines that become 2; keep the `fx` gate.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### Sway and niri each forward withMainBinds to the daemon
+- **Where:** `services/compositor/SwayManager.qml:358` (`withMainBinds`), `services/compositor/NiriManager.qml:391` (`withMainBinds`), `services/compositor/CompositorManager.qml:399` (`withBinds`)
+- **What:** Deletion pass, 10 lines. Since stage 7 both backends' `withMainBinds` are the same forward to `CompositorConfigManager.withEntries(callback)` (sway 356-360, niri 389-393), a layer whose job has shrunk to forwarding. Fix: the facade's `withBinds` calls `root.backend.withMainBinds ? root.backend.withMainBinds(callback) : CompositorConfigManager.withEntries(callback)` (only Hyprland reads its own), both forwards go, and contract.md marks `withMainBinds` optional.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### SwayConfigBinds keeps its own copy of sway's $variables
+- **Where:** `backend/internal/compositor/render/sway.go:804` (`swaySet`), `backend/internal/compositor/render/sway.go:816` (`SwayConfigBinds`)
+- **What:** Deletion pass, 12 lines. `userconf` already has `Vars` (`Set`, and `Expand` longest name first) and `SetLine`, and `extractSway` and `SwayText` use them. `SwayConfigBinds` re-implements all of it: `swaySet` is `SetLine` character for character, plus a names slice, a map, and a sort by length on every line. `render` can import `userconf` without a cycle. Fix: `vars := &userconf.Vars{}`, `SetLine` for `set` lines, `line = vars.Expand(line)`. That removes 18 lines (804: 1, 816-825: 10, 843-849: 7) and adds about 6, leaving one set of variable rules instead of two.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### Small shrinks in the sway writer and IPC
+- **Where:** `backend/internal/compositor/manager/sway.go:203` (`setCursor`), `backend/internal/compositor/render/sway.go:478` (`numberOr0`), `backend/internal/compositor/ipc/sway.go:45` (`swayWrite`)
+- **What:** Deletion pass, about 10 lines:
+  - `setCursor` (203-205) sends `seat * xcursor_theme …`, but the live lines carry the same line every time (`SwayInputLines` appends `SwayCursorLine` whenever a cursor is set, `live` or not), so a cursor change sends it twice. Make it a no-op (3 lines to 1).
+  - `numberOr0` (478-485) has one caller, `clampRound`. Inline it as a NaN check (8 lines out, about 2 in).
+  - `swayWrite`'s tail (45-48) becomes `_, err := conn.Write(…); return err` (4 lines to 2).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### The sway extract's input-device case and isSwayFlag repeat the general rule
+- **Where:** `backend/internal/compositor/binds/sway.go:37` (`isSwayFlag`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
+- **What:** Deletion pass, about 17 lines. `--input-device=<id>` is in neither `swayFlags` nor `swayHarmless`, so the general `other` branch already keeps such a bind as `options`. The `device` boolean (288-302) exists only so the detail lists every flag instead of the unknown one, which nothing pins (`input-device` appears only in sway.go). `isSwayFlag` (37-45, 9 lines) has one caller. Fix: `slices.ContainsFunc(swayFlags, …)` inline, plus `if len(other) > 0 { push(… strings.Join(other, " ")) }`. The 17 lines at 287-303 become about 9, and `isSwayFlag` goes. `swayAction`'s `o Options` parameter is never read and goes too. These are the lines [A sway title-bar mouse bind moves in as a whole-window bind](#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind) changes: land the two together.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
+
+### binds and takeover each keep their own isFile and git check
+- **Where:** `backend/internal/compositor/binds/binds.go:185` (`isFile`), `backend/internal/compositor/takeover/kinds.go:215` (`isFile`), `backend/internal/compositor/userconf/niri.go:453` (`isFile`), `backend/internal/compositor/binds/binds.go:86` (`inGit`), `backend/internal/compositor/takeover/takeover.go:112` (`gitRepo`)
+- **What:** Deletion pass, 11 lines. There are three identical 4-line `isFile` functions. `inGit` and `gitRepo` both run `git -C <dir> rev-parse --show-toplevel`; one keeps the answer, the other the repo. Fix: one exported `IsFile` (in `fsx`) and one `GitRepo` in a shared package, with binds' default tracker calling it. That removes two `isFile`s (8 lines) and `inGit` (3).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the sway system
