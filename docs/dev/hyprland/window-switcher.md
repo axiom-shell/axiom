@@ -29,7 +29,7 @@ Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.
 
 ### sway and niri: the daemon holds the keys
 sway fires a release bind only when no other key came between, and niri has no release binds, so their binds report steps only (sway's `nop axiom switcher step ±1`, niri's `axiom ipc windowSwitcher next|previous`; no `supports.switcherRelease`). While the switcher is open the daemon holds the keyboard instead:
-- On opening, `WindowSwitcherManager` calls `switcher.hold` with the modifiers the switcher binds are held by (`BindActions.switcherHeld` over the active binds; SUPER, ALT and CTRL with none bound), and `switcher.release` on closing.
+- On opening, `WindowSwitcherManager` calls `switcher.hold` with the modifiers the switcher binds are held by (`BindActions.switcherHeld` over the active binds; SUPER, ALT and CTRL with none bound), and `switcher.release` on closing; the daemon runs the two in the order sent (`InOrder`), so a close and the next open sent together never leave the new one unheld.
 - The daemon (`wayland/keyhold`) maps a 1×1 clear Overlay layer surface, `axiom-switcher-keys`, with exclusive keyboard focus. The compositor still runs its binds first, so Tab keeps stepping.
 - `wl_keyboard.modifiers` follows `enter` with the modifiers already down. **With none of the held ones among them, it picks**: a tap let go before the surface had the keyboard (the race a shell window taking the keyboard lost, eating the next key).
 - Otherwise it picks when the held modifiers are let go or on Return, and cancels on Escape. Other keys are ignored, and reach no window while it's held.

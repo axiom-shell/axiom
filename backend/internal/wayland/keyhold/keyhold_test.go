@@ -142,7 +142,10 @@ func TestHold(t *testing.T) {
 			t.Parallel()
 			f := newFake(t)
 			st := seat.New()
-			h := New(Options{Seat: st})
+			// Long enough that the blips' two reports land within it
+			// however slow the runner
+			grace := testkit.Bound(200 * time.Millisecond)
+			h := New(Options{Seat: st, Grace: grace})
 			ctx, cancel := context.WithCancel(context.Background())
 			done := make(chan error, 1)
 			go func() { done <- client.Run(ctx, f.Socket, st, h) }()
@@ -179,7 +182,7 @@ func TestHold(t *testing.T) {
 					continue
 				}
 				if e.wait {
-					time.Sleep(2 * DefaultGrace)
+					time.Sleep(2 * grace)
 					continue
 				}
 				if e.mods {

@@ -57,6 +57,9 @@ func (d *Daemon) switcherMethods(reg *rpc.Registry) {
 		d.releaseSwitcher(nil)
 		return struct{}{}, nil
 	})
+	// A close and the next open sent together must land in that order:
+	// a release after the hold would leave the new switcher unheld
+	reg.InOrder("switcher.hold", "switcher.release")
 }
 
 // releaseSwitcher gives the keyboard back: always (c nil), or when c held

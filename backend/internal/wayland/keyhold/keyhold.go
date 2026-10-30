@@ -448,6 +448,7 @@ func (h *Holder) Removed(name uint32) {
 	delete(h.globals, name)
 	if h.hold != nil {
 		h.decide(h.hold, Cancel)
+		h.destroy(h.hold)
 		h.hold = nil
 	}
 }
