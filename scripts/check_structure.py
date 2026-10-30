@@ -35,7 +35,11 @@ running anything:
   - no `duration:` is a number of ms (Appearance.animFast / animNormal /
     animSlow follow the animation speed), but a line marked
     `// behaviour timing: <reason>` (a blink, a pause)
-and warns about files in the loaded directories that nothing registers or
+  - nothing formats a date with Qt.formatDateTime / formatDate /
+    formatTime (I18n.formatDate follows the language)
+and, for the rules listing earlier uses in scripts/structure-baseline.json,
+fails on a file past its count and on a count no longer reached (each
+only shrinks); it also warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
 
@@ -82,6 +86,9 @@ IO_KINDS = {
 # (components/methods/, unit-tested tables of rules) and the compositor
 # backends (one compositor's whole contract each) may grow past it
 SINGLETON_LINES = 800
+# The uses of a rule that were there before it, per file: each count only
+# shrinks (structure-baseline.json)
+BASELINE = ROOT / "scripts" / "structure-baseline.json"
 SINGLETON_EXEMPT = re.compile(r"components/methods/.*|services/compositor/(Hyprland|Sway|Niri)Manager\.qml")
 
 errors, warnings = [], []
@@ -478,6 +485,25 @@ def main():
         for n, line in enumerate(text.split("\n"), 1):
             if re.search(r"\bduration:\s*[1-9]\d*\s*(?:[;}]|//|$)", line) and "// behaviour timing:" not in line:
                 errors.append(f"{path}:{n}: a duration in ms: use Appearance.animFast / animNormal / animSlow (or mark a blink or pause `// behaviour timing: <reason>`)")
+
+    # The rules with a baseline: a file past its count fails, and so does a
+    # count it no longer reaches (lower it: the baseline only shrinks)
+    baseline = json.loads(BASELINE.read_text())
+
+    def ratchet(rule, counts, problem):
+        known = baseline.get(rule, {})
+        for path, n in sorted(counts.items()):
+            if n > known.get(path, 0):
+                errors.append(f"{path}: {problem} ({n}, {known.get(path, 0)} in {rel(BASELINE)})")
+        for path, n in sorted(known.items()):
+            if counts.get(path, 0) < n:
+                errors.append(f"{rel(BASELINE)}: {path} has {counts.get(path, 0)} {rule} now, not {n}: lower it (it only shrinks)")
+
+    # Dates the user reads follow the language: I18n.formatDate(date,
+    # I18n.dateFormat(name)), never Qt.formatDateTime (AGENTS.md › Translation)
+    ratchet("formatDateTime", {path: n for path, text in sources.items() if not path.startswith("tests/")
+                               for n in [len(re.findall(r"\bQt\.format(?:DateTime|Date|Time)\(", re.sub(r"//[^\n]*", "", text)))] if n},
+            "Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name))")
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

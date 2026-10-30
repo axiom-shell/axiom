@@ -390,6 +390,7 @@ class CheckStructure(unittest.TestCase):
         ("shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
          "an acquire() request from live values (req → SystemManager.cpu)"),
         ("shell/Motion.qml", qml("Behavior on x { NumberAnimation { duration: 200 } }"), "shell/Motion.qml:6: a duration in ms"),
+        ("shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "shell/Stamp.qml: Qt.formatDateTime"),
         ("components/dupa/Dup.qml", qml(), None),
         ("components/dupb/Dup.qml", qml(), None),
         ("shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),
@@ -407,6 +408,7 @@ class CheckStructure(unittest.TestCase):
         "tool page Keybinds isn't in the Overlay.items default",
         "docs/usage.md: IPC target 'phantom' has no IpcTarget",
         "services/core/Gone.qml no longer uses Socket",
+        "scripts/structure-baseline.json: shell/Gone.qml has 0 formatDateTime now, not 1",
     ]
 
     def test_each_rule_fails(self):
@@ -423,6 +425,7 @@ class CheckStructure(unittest.TestCase):
                 items["default"] = [v for v in items["default"] if v.get("type") != "Keybinds"]
             edit_json(root / "config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"services/core/Gone.qml": ["Socket"]}))
+            edit_json(root / "scripts/structure-baseline.json", lambda b: b["formatDateTime"].update({"shell/Gone.qml": 1}))
             usage = root / "docs/usage.md"
             usage.write_text(usage.read_text().replace("| `overlay` |", "| `phantom` | `open` |\n| `overlay` |", 1))
             code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
