@@ -13,7 +13,7 @@ pkgrel=1
 pkgdesc='A Quickshell desktop shell for Hyprland, sway and niri: bar, launcher, notifications, lock and login screens, overlay pages'
 arch=('x86_64' 'aarch64')
 url='https://github.com/axiom-shell/axiom'
-license=('MIT')
+license=('GPL-3.0-or-later')
 # No compositor: it's the shell, not the session, and any one of
 # hyprland, sway (or swayfx, which provides it) and niri runs it
 provides=('axiom-shell')
