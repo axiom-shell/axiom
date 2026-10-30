@@ -2,6 +2,7 @@ package nmnet
 
 import (
 	"context"
+	"maps"
 	"path/filepath"
 	"slices"
 
@@ -191,13 +192,7 @@ func (s *Service) Join(ctx context.Context, r JoinRequest) error {
 		if p.SSID != r.SSID {
 			continue
 		}
-		// Its own id and uuid stay
-		for k, v := range p.settings["connection"] {
-			if k != "type" {
-				settings["connection"][k] = v
-			}
-		}
-		if _, err := conn.Call(ctx, busName, p.path, ifaceConn, "Update", "a{sa{sv}}", settings); err != nil {
+		if _, err := conn.Call(ctx, busName, p.path, ifaceConn, "Update", "a{sa{sv}}", joined(p.settings, settings)); err != nil {
 			return axerr.Wrap(axerr.Refused, err, "NetworkManager refused the settings")
 		}
 		if _, err := conn.Call(ctx, busName, managerPath, ifaceManager, "ActivateConnection", "ooo", p.path, dev, noObject); err != nil {
@@ -209,4 +204,27 @@ func (s *Service) Join(ctx context.Context, r JoinRequest) error {
 		return axerr.Wrap(axerr.Refused, err, "couldn't connect to %s", r.SSID)
 	}
 	return nil
+}
+
+// joined is a saved profile with a join's Wi-Fi settings over it: its
+// connection (id, uuid, autoconnect) and everything else (addresses,
+// DNS, a fixed MAC) stay, its security is the join's.
+func joined(saved, join map[string]map[string]dbus.Variant) map[string]map[string]dbus.Variant {
+	out := map[string]map[string]dbus.Variant{}
+	for name, sec := range saved {
+		out[name] = maps.Clone(sec)
+	}
+	if out[wifiType] == nil {
+		out[wifiType] = map[string]dbus.Variant{}
+	}
+	delete(out[wifiType], "security")
+	maps.Copy(out[wifiType], join[wifiType])
+	for _, name := range []string{wifiSecurity, eapSetting} {
+		if sec, ok := join[name]; ok {
+			out[name] = sec
+		} else {
+			delete(out, name)
+		}
+	}
+	return out
 }

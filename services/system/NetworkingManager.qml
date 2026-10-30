@@ -145,12 +145,6 @@ QtObject {
     return s !== undefined && s !== WifiSecurityType.Open && s !== WifiSecurityType.Owe;
   }
 
-  // Only these take a PSK (see WifiNetwork.connectWithPsk)
-  function takesPsk(network) {
-    const s = network?.security;
-    return s === WifiSecurityType.WpaPsk || s === WifiSecurityType.Wpa2Psk || s === WifiSecurityType.Sae;
-  }
-
   // What joining it takes (net.join's security): "open", "psk", "wep",
   // "eap", "dynamic-wep", "leap", or "unsupported" (WPA3 192-bit, which
   // needs a client certificate)
@@ -222,8 +216,10 @@ QtObject {
       if (!error)
         return;
       console.warn("[NetworkingManager] Could not join", ssid + ":", error.message);
-      root.joinError = error.message;
+      // A hidden network's form hears it through done: joinError is the
+      // status of the network in range that failed
       if (network) {
+        root.joinError = error.message;
         root._setFailure(network, "join");
         root.passwordFor = network;
       }
@@ -357,9 +353,11 @@ QtObject {
   }
 
   readonly property string _primaryKey: primaryDevice ? `${primaryDevice.name}:${primaryDevice.state}:${activeNetwork?.name ?? ""}` : ""
+  // Details once asked for, even while there are none: the connection
+  // going away clears them, and the next one must read them again
   on_PrimaryKeyChanged: {
     refreshIp();
-    if (details !== null)
+    if (_detailsLookup > 0)
       refreshDetails();
   }
   Component.onCompleted: {

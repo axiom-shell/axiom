@@ -14,10 +14,10 @@ Wi-Fi, wired and Bluetooth state, built on Quickshell's D-Bus modules. Throughpu
 - **Actions:** connect, disconnect, forget.
 - **Password prompt:**
   - `passwordFor`, and what it takes by `securityKind(network)` (`psk`, `wep`, `eap`, `dynamic-wep`, `leap`, `open`, or `unsupported`: WPA3 192-bit, which needs a client certificate).
-  - A WPA password goes through Quickshell (`connectWithPsk`); anything else through `join(network, fields, done)` (axiom's `net.join`, below), whose refusal is `joinError` and asks again.
+  - A WPA password goes through Quickshell (`connectWithPsk`); anything else through `join(network, fields, done)` (axiom's `net.join`, below), whose refusal for a network in range is `joinError` and asks again (a hidden network's goes to `done` only).
   - Asked again after a `NoSecrets` failure.
 - **Saved networks:** `saved` (name → `{ uuid, autoconnect }`, `net.savedWifi`), read again as one is saved or forgotten while something scans; `autoconnects(network)` and `setAutoconnect(network, on)`.
-- **Details:** `details` is `net.details` for the primary device, read on `refreshDetails()` (when the Wi-Fi menu's details open) and again as the connection changes once read. `connectivity` is NetworkManager's check: `portal` (a sign-in page in the way), `limited`, else "".
+- **Details:** `details` is `net.details` for the primary device, read on `refreshDetails()` (when the Wi-Fi menu's details open) and again as the connection changes once asked for (a connection going away clears them). `connectivity` is NetworkManager's check: `portal` (a sign-in page in the way), `limited`, else "".
 - **Primary connection:**
   - `primaryDevice` prefers wired over Wi-Fi.
   - `netInfo` is `{ kind, name, device, signal, ip }`, all bindings.
@@ -34,9 +34,9 @@ What the Wi-Fi menu asks NetworkManager beyond Quickshell.Networking, over the s
 ### The Wi-Fi menu
 `content/WifiNetworks`, the Network widget's popout:
 - **Header:** the radio switch (none, and titled Network, without a Wi-Fi adapter) and airplane mode.
-- **The connection:** a `FoldRow` folding open `ConnectionDetails`; open by itself on a wire with Wi-Fi off.
-- **VPN section:** folded to one row ([VPN](vpn.md)).
-- **Networks:** `NetworkRow`s; a known one's hover shows autoconnect before forget (`DeviceRow.hoverActions`), and a network that doesn't join on its own shows `sync_disabled` by its name. An unsaved secured one opens a password field (WPA) or a `WifiJoinForm`.
+- **The connection:** a `FoldRow` folding open `ConnectionDetails`, folded until clicked.
+- **VPN section:** folded to one row ([VPN](vpn.md)). Left out, with Import VPN, when the card's `showVpn` or the widget's `popoutVpn` is off (`showsVpn`; the popout's arrives through `extraData` after it's built, so VPN data is acquired as it changes).
+- **Networks:** `NetworkRow`s; a secured one has a lock (`badge` for enterprise) on its signal icon (`DeviceRow.iconBadge`), so every row's name and buttons line up. A known one's hover shows autoconnect before forget (`DeviceRow.hoverActions`, over the end of the name), and one that doesn't join on its own says "manual" in its status. An unsaved secured one opens a password field (WPA) or a `WifiJoinForm`, Connect beside its last field.
 - **Footer:** Settings (`Vpn.editorCommand`), Hidden network (a `WifiJoinForm` with `hidden`, closed once NetworkManager takes it), Import VPN.
 - **Room:** the window never grows while shown: `maxImplicitHeight` keeps, beside the list's growth, each folding part's most less what it shows now (details, the VPN rows, the hidden form). Focus lost to the file picker (a CA certificate) doesn't cancel the form.
 

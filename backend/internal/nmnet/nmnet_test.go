@@ -46,6 +46,7 @@ func startFake(t *testing.T) (*Service, *fakeNM) {
 				"connection": {"uuid": dbus.MakeVariant("home"), "id": dbus.MakeVariant("Home"), "type": dbus.MakeVariant(wifiType)},
 				wifiType:     {"ssid": dbus.MakeVariant([]byte("Home"))},
 				wifiSecurity: {"key-mgmt": dbus.MakeVariant("wpa-psk")},
+				"ipv4":       {"method": dbus.MakeVariant("manual")},
 			},
 			"/c/2": {"connection": {"uuid": dbus.MakeVariant("eth"), "id": dbus.MakeVariant("Wired"), "type": dbus.MakeVariant("802-3-ethernet")}},
 		},
@@ -255,6 +256,10 @@ func TestJoin(t *testing.T) {
 	}
 	if p := f.profiles["/c/1"]; p["connection"]["uuid"].Value != "home" || p[wifiSecurity]["psk"].Value != "correct horse" {
 		t.Errorf("updated %+v", p)
+	}
+	// The rest of the saved profile (its addresses) stays
+	if p := f.profiles["/c/1"]; p["ipv4"]["method"].Value != "manual" {
+		t.Errorf("the update dropped the profile's other settings: %+v", p)
 	}
 	if !reflect.DeepEqual(f.activated, []dbus.ObjectPath{"/c/1"}) {
 		t.Errorf("activated %v", f.activated)

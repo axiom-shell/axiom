@@ -3483,6 +3483,11 @@
     "Needs a client certificate": "",
     "Address the Wi-Fi menu asks, when you click Check, for the IP the internet sees (to confirm traffic goes through the VPN). It answers with the address as plain text. Nothing is sent until you click; empty hides the check.": "",
     "Command the Edit connections button (VPN module) and the Network settings button (Wi-Fi menu) run, to add or change connections. Empty hides both.": "",
-    "Public IP lookup": ""
+    "Public IP lookup": "",
+    "{0} · manual": "",
+    "The VPN section (each VPN, its toggle and the public IP check) and the Import VPN action.": "",
+    "Show VPNs": "",
+    "The VPN section (each VPN, its toggle and the public IP check) and the Import VPN action in the Wi-Fi menu.": "",
+    "VPNs in the popout": ""
   }
 }

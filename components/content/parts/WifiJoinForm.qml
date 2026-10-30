@@ -12,8 +12,7 @@ import qs.components.reusable
 // method, an outer identity and how the server is checked (the system's
 // CAs, a CA file, or not at all). `hidden` adds the network's name and a
 // choice of security, for a network that doesn't broadcast. Enter in any
-// field submits, Escape cancels. `maxHeight` is its most, for the room
-// kept before it shows (Panel.maxImplicitHeight).
+// field submits, Escape cancels.
 ColumnLayout {
   id: root
 
@@ -21,7 +20,7 @@ ColumnLayout {
   // "open", "psk", "wep", "eap", "dynamic-wep" or "leap"; a hidden
   // network's starts as "psk" and is chosen in the form
   property string security: "psk"
-  // The last attempt's error, shown above the button
+  // The last attempt's error, shown under the fields
   property string error: ""
 
   // fields: net.join's (ssid for a hidden one, security, password, …)
@@ -32,8 +31,6 @@ ColumnLayout {
   readonly property bool needsIdentity: root.enterprise || root.security === "leap"
   readonly property bool needsPassword: root.security !== "open"
   readonly property real fieldHeight: Widget.height
-  // Its tallest: a hidden enterprise network with More open
-  readonly property real maxHeight: (root.fieldHeight + root.spacing) * 11
 
   property string eap: "peap"
   property string phase2: "mschapv2"
@@ -82,10 +79,32 @@ ColumnLayout {
     Keys.onEscapePressed: root.cancelled()
   }
 
-  Field {
-    id: ssidField
+  // Beside the last field: the password, else (an open hidden network)
+  // the name
+  component ConnectButton: StyledRectButton {
+    size: Widget.iconButton
+    enabled: root.complete
+    opacity: enabled ? 1 : 0.5
+    iconText: "link"
+    iconColor: Theme.accent
+    backgroundColor: "transparent"
+    borderHoverColor: Theme.accent
+    tooltipText: I18n.tr("Connect")
+    onClicked: root.submit()
+  }
+
+  RowLayout {
     visible: root.hidden
-    placeholderText: I18n.tr("Network name")
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    Field {
+      id: ssidField
+      placeholderText: I18n.tr("Network name")
+    }
+    ConnectButton {
+      visible: !root.needsPassword
+    }
   }
 
   SegmentRow {
@@ -127,11 +146,27 @@ ColumnLayout {
     placeholderText: I18n.tr("User name")
   }
 
-  Field {
-    id: passwordField
+  RowLayout {
     visible: root.needsPassword
-    placeholderText: root.security === "wep" ? I18n.tr("Key or passphrase") : I18n.tr("Password")
-    input.echoMode: TextInput.Password
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    Field {
+      id: passwordField
+      placeholderText: root.security === "wep" ? I18n.tr("Key or passphrase") : I18n.tr("Password")
+      input.echoMode: TextInput.Password
+    }
+    ConnectButton {}
+  }
+
+  // The last attempt's error
+  StyledText {
+    visible: root.error !== ""
+    Layout.fillWidth: true
+    text: root.error
+    wrapMode: Text.WordWrap
+    textSize: Appearance.fontSizeBy(-3)
+    textColor: Theme.error
   }
 
   // More: the inner method, an outer identity and the server's check
@@ -209,30 +244,6 @@ ColumnLayout {
           "filter": I18n.tr("Certificates") + ":*.pem *.crt *.cer *.der"
         }, path => root.caCert = path)
       }
-    }
-  }
-
-  RowLayout {
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    StyledText {
-      Layout.fillWidth: true
-      text: root.error
-      wrapMode: Text.WordWrap
-      textSize: Appearance.fontSizeBy(-3)
-      textColor: Theme.error
-    }
-    StyledRectButton {
-      size: Widget.iconButton
-      enabled: root.complete
-      opacity: enabled ? 1 : 0.5
-      iconText: "link"
-      iconColor: Theme.accent
-      backgroundColor: "transparent"
-      borderHoverColor: Theme.accent
-      tooltipText: I18n.tr("Connect")
-      onClicked: root.submit()
     }
   }
 }

@@ -4,10 +4,11 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
 
-// One device or network in a radio menu (DeviceList): its icon, name and
-// status, a forget button on hover (for a known one; a second click within
-// a few seconds forgets it) after any other `hoverActions`, and connect /
-// disconnect. Clicking the row
+// One device or network in a radio menu (DeviceList): its icon (with an
+// optional badge on its corner, e.g. a lock), name and status, and connect
+// / disconnect. On hover, any `hoverActions` and a forget button (for a
+// known one; a second click within a few seconds forgets it) show over the
+// end of the name, so every row lays out alike. Clicking the row
 // `activated`s it. Children go under the row, shown while `expanded` (e.g.
 // a password field).
 Rectangle {
@@ -29,10 +30,9 @@ Rectangle {
   property bool expanded: false
   property string connectTip: I18n.tr("Connect")
   property string disconnectTip: I18n.tr("Disconnect")
-  // Beside the title (e.g. a lock)
-  property alias titleExtras: titleExtrasRow.data
-  // Buttons before forget, shown as it is (e.g. autoconnect); read
-  // `hovered` for their opacity
+  // A small icon on the icon's bottom-right corner (e.g. "lock")
+  property string iconBadge: ""
+  // Buttons before forget, shown with it on hover (e.g. autoconnect)
   property alias hoverActions: hoverActionsRow.data
   readonly property bool hovered: rowHover.hovered
   default property alias below: belowItem.data
@@ -88,21 +88,35 @@ Rectangle {
     spacing: Widget.padding
 
     StyledIcon {
+      id: mainIcon
       Layout.preferredWidth: Widget.iconButton
       horizontalAlignment: Text.AlignHCenter
       text: root.icon
       textSize: Appearance.fontSize * 1.4
       textColor: root.connected ? Theme.accent : Theme.foregroundAlt
+
+      // On the glyph's bottom-right corner
+      StyledIcon {
+        visible: root.iconBadge !== ""
+        x: Math.round((mainIcon.width + mainIcon.contentWidth) / 2 - width * 0.7)
+        y: Math.round((mainIcon.height + mainIcon.contentHeight) / 2 - height * 0.85)
+        text: root.iconBadge
+        fill: 1
+        textSize: Appearance.fontSizeBy(-4)
+        textColor: mainIcon.textColor
+      }
     }
 
-    ColumnLayout {
+    Item {
       Layout.fillWidth: true
-      spacing: 0
+      Layout.fillHeight: true
 
-      RowLayout {
-        id: titleRow
-        Layout.fillWidth: true
-        spacing: Widget.spacing / 2
+      ColumnLayout {
+        anchors.left: parent.left
+        anchors.right: actions.shown ? actions.left : parent.right
+        anchors.rightMargin: actions.shown ? Widget.spacing : 0
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 0
 
         StyledText {
           Layout.fillWidth: true
@@ -111,44 +125,48 @@ Rectangle {
           textSize: Appearance.fontSizeBy(-1)
           textColor: root.connected ? Theme.foreground : Theme.foregroundAlt
         }
-
-        RowLayout {
-          id: titleExtrasRow
-          spacing: Widget.spacing / 2
+        StyledText {
+          Layout.fillWidth: true
+          text: root._confirmForget ? I18n.tr("Click again to forget") : root.status
+          elide: Text.ElideRight
+          textSize: Appearance.fontSizeBy(-3)
+          textColor: root._confirmForget || root.failed ? Theme.error : root.busy || root.connected ? Theme.accent : Theme.foregroundAlt
         }
       }
-      StyledText {
-        Layout.fillWidth: true
-        text: root._confirmForget ? I18n.tr("Click again to forget") : root.status
-        elide: Text.ElideRight
-        textSize: Appearance.fontSizeBy(-3)
-        textColor: root._confirmForget || root.failed ? Theme.error : root.busy || root.connected ? Theme.accent : Theme.foregroundAlt
+
+      // Over the end of the name while hovered: laid out by no row, so
+      // every row's icons and buttons line up
+      RowLayout {
+        id: actions
+        readonly property bool shown: (rowHover.hovered || root._confirmForget) && (root.known || hoverActionsRow.implicitWidth > 0)
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Widget.spacing / 2
+        opacity: actions.shown ? 1 : 0
+
+        Glide on opacity {}
+
+        RowLayout {
+          id: hoverActionsRow
+          spacing: Widget.spacing / 2
+        }
+
+        StyledRectButton {
+          size: Widget.iconButton
+          visible: root.known
+          enabled: rowHover.hovered && !root.busy
+          iconText: "delete"
+          iconColor: Theme.error
+          backgroundColor: Qt.alpha(Theme.error, root._confirmForget ? 0.2 : 0)
+          borderHoverColor: Theme.error
+          tooltipText: I18n.tr("Forget")
+          onClicked: {
+            if (root._confirmForget)
+              root.forgetConfirmed();
+            root._confirmForget = !root._confirmForget;
+          }
+        }
       }
-    }
-
-    RowLayout {
-      id: hoverActionsRow
-      spacing: Widget.spacing / 2
-    }
-
-    // Only on hover, but always laid out so showing it moves nothing
-    StyledRectButton {
-      size: Widget.iconButton
-      visible: root.known
-      enabled: rowHover.hovered && !root.busy
-      opacity: rowHover.hovered || root._confirmForget ? 1 : 0
-      iconText: "delete"
-      iconColor: Theme.error
-      backgroundColor: Qt.alpha(Theme.error, root._confirmForget ? 0.2 : 0)
-      borderHoverColor: Theme.error
-      tooltipText: I18n.tr("Forget")
-      onClicked: {
-        if (root._confirmForget)
-          root.forgetConfirmed();
-        root._confirmForget = !root._confirmForget;
-      }
-
-      Glide on opacity {}
     }
 
     StyledRectButton {

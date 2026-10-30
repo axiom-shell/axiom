@@ -9,14 +9,12 @@ import qs.components.reusable
 // A connection's details (NetworkingManager.details) as label / value
 // lines: addresses, gateway, DNS, MAC, and the link (a wire's speed, or
 // Wi-Fi's band, channel and bitrate); the addresses can be copied. Lines
-// with nothing to say are left out. `rowCount` is its most lines, for
-// room kept before it shows (Panel.maxImplicitHeight).
+// with nothing to say are left out.
 GridLayout {
   id: root
 
   // net.details' answer, or null while it's read
   property var details: null
-  readonly property int rowCount: 7
   // One line's height
   readonly property real lineHeight: Math.max(metrics.height, Widget.smallHeight)
 
