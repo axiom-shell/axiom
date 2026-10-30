@@ -20,18 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### Restoring the kept unsaved snapshot drops the running config's edits
-- **Where:** `backend/internal/saved/saved.go` (`Service.Restore`, the `h.Kind != kindUnsaved` skip of `keep`)
-- **What:** Restoring the `kind: unsaved` snapshot never keeps the running config, since keeping it there would replace what's being restored. So with unsaved edits (an example applied, then changed), Restore on `unsaved` loses those edits with nothing kept, and the status line says only `Restored "unsaved"`; the test row "restoring unsaved takes it as it was" asserts exactly this. The way out is the maintainer's call: adopt the restored one as the user's (clear its kind, so the edits go to a new `unsaved`, at the price of one more file per such restore), or keep the edits under a second name, or warn on the Restore confirm while `SavedConfigsManager.unsaved`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the saved configs' backups (saved-backups)
-
-### A community setup's copy is saved before its wallpaper is set
-- **Where:** `services/apps/CommunitySetupsManager.qml` (`_savedConfigs.onApplied`, `_setWallpaper`), `backend/internal/saved/saved.go` (`Service.apply`)
-- **What:** With **Also use its wallpaper**, `share.applyShared` saves `community-<id>` first, then the shell commits the wallpaper (mode, file, perScreen: all `x-snapshot`). So the active copy is `modified` at once: its row shows the unsaved dot, the setup's **Applied** chip (`applied` needs `!modified`) never shows, and the next apply keeps the running config as `unsaved`. community-setups.md's step 5 ("saves the result (wallpaper included)") describes what doesn't happen. Fix: hand the wallpaper URL to `share.applyShared` and set it in the daemon before the copy is saved, dropping `_setWallpaper`'s commit.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the saved configs' backups (saved-backups)
-
 ### A tray menu logs an undefined menu handle
 - **Where:** `components/content/parts/TrayMenuList.qml` (`menuOpener`)
 - **What:** Using the tray logged `@components/content/parts/TrayMenuList.qml[45:5]: Unable to assign [undefined] to qs::menu::QsMenuHandle*`: `QsMenuOpener.menu` is bound to `root.menu` while that's still (or again) undefined, likely as a menu opens or closes. Seen once in the live log (not reproduced).

@@ -273,7 +273,9 @@ FieldGroup {
 
           StyledText {
             Layout.fillWidth: true
-            text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id && (useWallpaper.checked && details.setup.wallpaper !== null ? SavedConfigsManager.unsavedWallpaper : SavedConfigsManager.unsaved) ? I18n.tr("Your unsaved changes are saved first.") : ""
+            readonly property var hint: SavedConfigsManager.keepHint(useWallpaper.checked && details.setup?.wallpaper ? SavedConfigsManager.keepWallpaper : SavedConfigsManager.keep, "")
+            text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id ? hint.text : ""
+            textColor: hint.warning && root.armed === details.setup?.id ? Theme.warning : Theme.foreground
             opacity: 0.7
             textSize: Appearance.fontSizeBy(-1)
             elide: Text.ElideRight

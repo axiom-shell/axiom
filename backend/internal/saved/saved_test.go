@@ -146,42 +146,48 @@ func TestApplyExampleFormat1(t *testing.T) {
 	}
 }
 
-// What an apply or restore keeps of the running config: nothing while the
-// active snapshot is unchanged (it's on disk), else one "unsaved" file; and
-// the copy the last applied file was saved as goes once it's replaced,
-// unless the user saved over it. Each is decided by the file's meta.kind,
-// never its name.
+// What an apply or restore does with the running config first: edits go
+// into the active snapshot, and with none active the config is saved as one
+// "unsaved" backup; the copy the last applied file was saved as goes once
+// it's replaced untouched. Each is decided by the file's meta.kind, never
+// its name.
 func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 	t.Parallel()
 	type step struct {
-		do      string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source; "wall": example a as a community setup whose wallpaper is set next; "rotating <name>": a snapshot of the user's whose wallpaper rotates
-		backup  string // Applied.Backup of an apply or restore
-		files   string // saved/ afterwards, sorted, space-separated
-		content string // what saved/unsaved.json then holds of Bars.style.widgetStyle ("" to skip)
+		do     string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source; "wall": example a as a community setup with its wallpaper; "rotating <name>": a snapshot of the user's whose wallpaper rotates
+		kept   string // Applied.Kept of an apply or restore
+		backup string // Applied.Backup
+		files  string // saved/ afterwards, sorted, space-separated
+		holds  string // "<file> <value>": that snapshot then holds Bars.style.widgetStyle <value> ("" to skip)
 	}
 	tests := []struct {
 		name  string
 		steps []step
 	}{
-		{"switching back and forth", []step{
+		{"switching back and forth leaves one copy", []step{
 			{do: "a", files: "example-a"},
 			{do: "b", files: "example-b"},
 			{do: "a", files: "example-a"},
 			{do: "a", files: "example-a"},
 		}},
-		{"edits are kept, in one file", []step{
+		{"edits go into the active snapshot, which stays", []step{
 			{do: "a", files: "example-a"},
 			{do: "edit outline", files: "example-a"},
-			{do: "b", backup: "unsaved", files: "example-b unsaved", content: "outline"},
-			{do: "edit plain", files: "example-b unsaved"},
-			{do: "a", backup: "unsaved", files: "example-a unsaved", content: "plain"},
+			{do: "b", kept: "example-a", files: "example-a example-b", holds: "example-a outline"},
+			{do: "edit plain", files: "example-a example-b"},
+			{do: "a", kept: "example-b", files: "example-a example-a 2 example-b", holds: "example-b plain"},
 		}},
-		{"a named snapshot is never touched", []step{
+		{"a named snapshot takes its edits", []step{
 			{do: "save mine", files: "mine"},
 			{do: "a", files: "example-a mine"},
 			{do: "restore mine", files: "mine"},
 			{do: "edit outline", files: "mine"},
-			{do: "b", backup: "unsaved", files: "example-b mine unsaved", content: "outline"},
+			{do: "b", kept: "mine", files: "example-b mine", holds: "mine outline"},
+		}},
+		{"restoring the active one reverts it", []step{
+			{do: "save mine", files: "mine"},
+			{do: "edit outline", files: "mine"},
+			{do: "restore mine", files: "mine"},
 		}},
 		{"a copy saved over stays", []step{
 			{do: "save mine", files: "mine"},
@@ -194,15 +200,21 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "import", files: "import-friend mine"},
 			{do: "a", files: "example-a import-friend mine"},
 		}},
-		{"the defaults are on disk already", []step{
+		{"with none active, the defaults are on disk and edits are backed up", []step{
 			{do: "edit outline", files: ""},
-			{do: "defaults", backup: "unsaved", files: "unsaved", content: "outline"},
-			{do: "a", files: "example-a unsaved", content: "outline"},
+			{do: "defaults", backup: "unsaved", files: "unsaved", holds: "unsaved outline"},
+			{do: "a", files: "example-a unsaved", holds: "unsaved outline"},
 		}},
-		{"a wallpaper is kept: the defaults and copies don't hold it", []step{
+		{"the backup is replaced each time", []step{
+			{do: "edit outline", files: ""},
+			{do: "defaults", backup: "unsaved", files: "unsaved", holds: "unsaved outline"},
+			{do: "edit plain", files: "unsaved"},
+			{do: "a", backup: "unsaved", files: "example-a unsaved", holds: "unsaved plain"},
+		}},
+		{"a wallpaper is kept: the defaults don't hold it, a copy is kept", []step{
 			{do: "wall", backup: "unsaved", files: "community-a unsaved"},
 			{do: "b", files: "example-b unsaved"},
-			{do: "wall", backup: "unsaved", files: "community-a unsaved"},
+			{do: "wall", kept: "example-b", files: "community-a example-b unsaved"},
 		}},
 		{"a restore that changes the wallpaper setup keeps it, files or not", []step{
 			{do: "rotating spin", files: "spin"},
@@ -217,32 +229,33 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "restore import-old", files: "import-old"},
 			{do: "a", files: "example-a import-old"},
 		}},
-		{"the kept one is found by its kind, not its name", []step{
+		{"the backup is found by its kind, never the user's of that name", []step{
 			{do: "save unsaved", files: "unsaved"},
+			{do: "defaults", files: "unsaved"},
 			{do: "edit outline", files: "unsaved"},
-			{do: "a", backup: "unsaved 2", files: "example-a unsaved unsaved 2"},
+			{do: "a", backup: "unsaved 2", files: "example-a unsaved unsaved 2", holds: "unsaved 2 outline"},
 			{do: "delete unsaved", files: "example-a unsaved 2"},
-			{do: "edit plain", files: "example-a unsaved 2"},
-			{do: "b", backup: "unsaved 2", files: "example-b unsaved 2", content: ""},
-		}},
-		{"a snapshot the user named unsaved is never replaced", []step{
-			{do: "save unsaved", files: "unsaved"},
-			{do: "edit outline", files: "unsaved"},
-			{do: "a", backup: "unsaved 2", files: "example-a unsaved unsaved 2"},
-			{do: "edit plain", files: "example-a unsaved unsaved 2"},
-			{do: "b", backup: "unsaved 2", files: "example-b unsaved unsaved 2"},
+			{do: "defaults", files: "unsaved 2"},
+			{do: "edit plain", files: "unsaved 2"},
+			{do: "b", backup: "unsaved 2", files: "example-b unsaved 2", holds: "unsaved 2 plain"},
 		}},
 		{"an active snapshot whose file is gone doesn't count", []step{
 			{do: "save mine", files: "mine"},
 			{do: "delete mine", files: ""},
 			{do: "a", backup: "unsaved", files: "example-a unsaved"},
 		}},
-		{"restoring unsaved takes it as it was", []step{
-			{do: "save mine", files: "mine"},
-			{do: "edit outline", files: "mine"},
-			{do: "a", backup: "unsaved", files: "example-a mine unsaved", content: "outline"},
-			{do: "edit plain", files: "example-a mine unsaved"},
-			{do: "restore unsaved", files: "mine unsaved", content: "outline"},
+		{"restoring the backup saves edits into the active snapshot", []step{
+			{do: "edit outline", files: ""},
+			{do: "defaults", backup: "unsaved", files: "unsaved"},
+			{do: "a", files: "example-a unsaved"},
+			{do: "edit plain", files: "example-a unsaved"},
+			{do: "restore unsaved", kept: "example-a", files: "example-a unsaved", holds: "example-a plain"},
+		}},
+		{"restoring the backup with none active takes it as it was", []step{
+			{do: "edit outline", files: ""},
+			{do: "defaults", backup: "unsaved", files: "unsaved"},
+			{do: "edit plain", files: "unsaved"},
+			{do: "restore unsaved", files: "unsaved", holds: "unsaved outline"},
 		}},
 	}
 	for _, tt := range tests {
@@ -264,6 +277,7 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 					applied, err = f.svc.ApplyExample(verb, nil)
 				case "edit":
 					set(t, f.store, "Bars.style.widgetStyle", arg)
+					f.svc.Changed()
 				case "save":
 					_, err = f.svc.Save(arg, "")
 				case "restore":
@@ -275,7 +289,7 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 				case "delete":
 					err = os.Remove(filepath.Join(f.dir, "saved", arg+".json"))
 				case "wall":
-					applied, err = f.svc.ApplyShared(filepath.Join(f.ex, "a.json"), "a", "community-a", true, nil)
+					applied, err = f.svc.ApplyShared(filepath.Join(f.ex, "a.json"), "a", "community-a", "file:///walls/a.png", []string{"DP-1"})
 				case "rotating":
 					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
 						"meta": {"title": "`+arg+`"}, "Appearance": {"wallpaper": {"mode": "rotate"}}}`), 0o600)
@@ -286,8 +300,8 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 				if err != nil {
 					t.Fatalf("step %d (%s): %v", i, st.do, err)
 				}
-				if applied.Backup != st.backup {
-					t.Errorf("step %d (%s): kept as %q, want %q", i, st.do, applied.Backup, st.backup)
+				if applied.Kept != st.kept || applied.Backup != st.backup {
+					t.Errorf("step %d (%s): kept in %q, backed up as %q, want %q, %q", i, st.do, applied.Kept, applied.Backup, st.kept, st.backup)
 				}
 				var files []string
 				list, _ := f.svc.List()
@@ -298,10 +312,12 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 				if got := strings.Join(files, " "); got != st.files {
 					t.Errorf("step %d (%s): saved/ holds %q, want %q", i, st.do, got, st.files)
 				}
-				if st.content != "" {
-					data, _ := os.ReadFile(filepath.Join(f.dir, "saved", "unsaved.json"))
-					if !strings.Contains(string(data), `"`+st.content+`"`) {
-						t.Errorf("step %d (%s): unsaved.json doesn't hold %q:\n%s", i, st.do, st.content, data)
+				if st.holds != "" {
+					cut := strings.LastIndex(st.holds, " ")
+					file, value := st.holds[:cut], st.holds[cut+1:]
+					data, _ := os.ReadFile(filepath.Join(f.dir, "saved", file+".json"))
+					if !strings.Contains(string(data), `"`+value+`"`) {
+						t.Errorf("step %d (%s): %s.json doesn't hold %q:\n%s", i, st.do, file, value, data)
 					}
 				}
 			}
@@ -309,33 +325,56 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 	}
 }
 
-// State.Unsaved says what keep would do: nothing at the defaults or on an
-// unchanged snapshot, else keep the running config.
-func TestStateUnsaved(t *testing.T) {
+// A community setup's wallpaper is set before its copy is saved, so the
+// copy holds it and is unchanged after the apply.
+func TestApplySharedSetsWallpaper(t *testing.T) {
 	t.Parallel()
 	f := setup(t)
-	if f.svc.State().Unsaved {
-		t.Error("unsaved at the defaults")
+	os.WriteFile(filepath.Join(f.ex, "a.json"), []byte(`{"format": 2, "version": 76, "meta": {"title": "a"},
+		"Appearance": {"theme": {"name": "nord"}}}`), 0o644)
+	if _, err := f.svc.ApplyShared(filepath.Join(f.ex, "a.json"), "a", "community-a", "file:///walls/a.png", []string{"DP-1"}); err != nil {
+		t.Fatal(err)
 	}
-	if !f.svc.State().UnsavedWallpaper {
-		t.Error("the defaults hold the wallpaper setup")
+	if got := get(t, f.store, "Appearance.wallpaper.mode"); got != "fixed" {
+		t.Errorf("mode %v, want fixed", got)
 	}
-	set(t, f.store, "Bars.style.widgetStyle", "outline")
+	if got := get(t, f.store, "Appearance.wallpaper.perScreen.DP-1"); got != "file:///walls/a.png" {
+		t.Errorf("DP-1's wallpaper %v", got)
+	}
 	f.svc.Changed()
-	if !f.svc.State().Unsaved {
-		t.Error("not unsaved after a change with none active")
+	if st := f.svc.State(); st.Active != "community-a" || st.Modified || st.ActiveSource != "a" {
+		t.Errorf("state %+v, want community-a unchanged from a", st)
 	}
+}
+
+// State.Keep says what an apply or restore would do with the running
+// config, as keep does it.
+func TestStateKeep(t *testing.T) {
+	t.Parallel()
+	f := setup(t)
+	check := func(what string, keep, wallpaper KeepPlan) {
+		t.Helper()
+		f.svc.Changed()
+		if st := f.svc.State(); st.Keep != keep || st.KeepWallpaper != wallpaper {
+			t.Errorf("%s: keep %+v, with a wallpaper %+v; want %+v, %+v", what, st.Keep, st.KeepWallpaper, keep, wallpaper)
+		}
+	}
+	backup := KeepPlan{Into: "unsaved", Backup: true}
+	check("at the defaults", KeepPlan{}, backup)
+	set(t, f.store, "Bars.style.widgetStyle", "outline")
+	check("changed with none active", backup, backup)
+	if _, err := f.svc.Defaults(); err != nil {
+		t.Fatal(err)
+	}
+	set(t, f.store, "Bars.style.widgetStyle", "plain")
+	replaces := KeepPlan{Into: "unsaved", Backup: true, Replaces: true}
+	check("a backup there", replaces, replaces)
 	if _, err := f.svc.Save("mine", ""); err != nil {
 		t.Fatal(err)
 	}
-	if f.svc.State().Unsaved || f.svc.State().UnsavedWallpaper {
-		t.Error("unsaved right after saving")
-	}
-	set(t, f.store, "Bars.style.widgetStyle", "plain")
-	f.svc.Changed()
-	if !f.svc.State().Unsaved {
-		t.Error("not unsaved after changing the active snapshot")
-	}
+	check("right after saving", KeepPlan{}, KeepPlan{})
+	set(t, f.store, "Bars.style.widgetStyle", "outline")
+	check("the active one changed", KeepPlan{Into: "mine"}, KeepPlan{Into: "mine"})
 }
 
 func TestOpenAndImport(t *testing.T) {
@@ -504,7 +543,7 @@ func TestNoLoadChangesATakeover(t *testing.T) {
 	}{
 		{"import", func() error { _, err := f.svc.Import(file, true, true, nil); return err }},
 		{"example", func() error { _, err := f.svc.ApplyExample("hostile", nil); return err }},
-		{"shared", func() error { _, err := f.svc.ApplyShared(file, "Hostile", "", false, nil); return err }},
+		{"shared", func() error { _, err := f.svc.ApplyShared(file, "Hostile", "", "", nil); return err }},
 		{"restore", func() error { _, err := f.svc.Restore("hostile"); return err }},
 		{"defaults", func() error { _, err := f.svc.Defaults(); return err }},
 	} {

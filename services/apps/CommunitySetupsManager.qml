@@ -10,8 +10,9 @@ import qs.services.core
 // opened, never before, and the setups' thumbnails and screenshots into
 // the cache; applies one through SavedConfigsManager.applyShared (its
 // look only, after keeping the running config), first installing its palette
-// as the theme "community/<id>" and, when asked, its wallpaper; the result
-// is saved as the snapshot "community-<id>", the active one. Every
+// as the theme "community/<id>" and, when asked, its wallpaper (set by
+// axiom with the look); the result is saved as the snapshot
+// "community-<id>", the active one. Every
 // download goes through the daemon (community.fetch) and is checked
 // against the catalog's sha256. Nothing here runs in the greeter.
 QtObject {
@@ -285,23 +286,10 @@ QtObject {
     }
     if (setup.files.theme)
       ThemeManager.reloadCommunityThemes();
-    if (!SavedConfigsManager.applyShared(id, root._setupDir(id) + "config.json", setup.title, root._snapshotPrefix + id, root._applyWallpaper !== "")) {
+    if (!SavedConfigsManager.applyShared(id, root._setupDir(id) + "config.json", setup.title, root._snapshotPrefix + id, root._applyWallpaper ? "file://" + root._applyWallpaper : "")) {
       root._applying = "";
       root._status = SavedConfigsManager.status;
     }
-  }
-
-  // Sets the setup's wallpaper on every monitor, as the fixed one, in one
-  // save
-  function _setWallpaper(url) {
-    const config = Utils.clone(ConfigManager.config);
-    const wallpaper = config.Appearance.wallpaper;
-    wallpaper.mode = "fixed";
-    wallpaper.file = url;
-    for (const output of General.outputs)
-      wallpaper.perScreen[output.name] = url;
-    if (!ConfigManager.commit(config))
-      console.warn("[CommunitySetupsManager] Could not set the wallpaper", url);
   }
 
   property Connections _savedConfigs: Connections {
@@ -311,8 +299,6 @@ QtObject {
       if (name !== root._applying || name === "")
         return;
       const setup = root.setup(name);
-      if (root._applyWallpaper)
-        root._setWallpaper("file://" + root._applyWallpaper);
       root._applying = "";
       root._status = SavedConfigsManager.status;
       console.log("[CommunitySetupsManager] Applied", name, setup?.title ?? "");

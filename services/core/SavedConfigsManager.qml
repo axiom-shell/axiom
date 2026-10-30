@@ -15,10 +15,10 @@ import qs.services.apps
  * wallpaper setup (x-snapshot), in the export format, so a saved file can
  * be shared or imported as it is; restoring applies it like an example,
  * plus the wallpaper setup where its files are still there. Restoring or
- * applying a shared file first keeps the running config: it's on disk
- * already while the active snapshot is unchanged, else it's saved as
- * "unsaved" (one snapshot, replaced each time); an applied file's copy goes
- * once another replaces it, unless the user saved over it. Files of
+ * applying a shared file first keeps the running config (keep): edits go
+ * into the active snapshot, and with none active it's saved as "unsaved"
+ * (one snapshot, replaced each time). An applied file becomes the active
+ * snapshot; untouched, it goes once another replaces it. Files of
  * any version axiom reads are taken (an older one is converted), and
  * nothing loaded changes a takeover setting (x-takeover). This keeps what
  * the settings page shows: the list, the active snapshot, a status line.
@@ -42,12 +42,13 @@ QtObject {
   // saved one's (machine settings, which restoring doesn't change, are left
   // out)
   readonly property bool modified: _state.modified ?? false
-  // The running config isn't on disk (no saved one active and not the
-  // defaults, or the active one changed): an apply or restore keeps it first
-  readonly property bool unsaved: _state.unsaved ?? false
-  // The same for an apply that changes the wallpaper setup too (a community
-  // setup with its wallpaper): only a snapshot that stays holds it
-  readonly property bool unsavedWallpaper: _state.unsavedWallpaper ?? false
+  // Where an apply or restore saves the running config first: { into,
+  // backup, replaces } (into: the active one, its edits; with backup, the
+  // "unsaved" backup, there being none active; "" for nothing to keep)
+  readonly property var keep: _state.keep ?? null
+  // The same for one that changes the wallpaper setup too (a community
+  // setup with its wallpaper)
+  readonly property var keepWallpaper: _state.keepWallpaper ?? null
   // The shared setup the active saved config was saved from, unchanged
   // since: "" for one the user saved, or saved over
   readonly property string activeSource: _state.activeSource ?? ""
@@ -133,7 +134,7 @@ QtObject {
         return;
       }
       SettingsManager.loadConfig();
-      root.status = result.backup ? I18n.tr("Restored \"{0}\". Your unsaved changes are saved as \"{1}\".", name, result.backup) : I18n.tr("Restored \"{0}\"", name);
+      root.status = root._withKept(I18n.tr("Restored \"{0}\".", name), result);
     });
   }
 
@@ -195,16 +196,16 @@ QtObject {
   }
 
   // Applies a shared file at `path` straight away, its look only, after
-  // keeping the running config (its wallpaper setup too with
-  // `withWallpaper`: the caller sets the setup's wallpaper next), then saves
-  // the result as `snapshot`: a community setup (CommunitySetupsManager).
-  // False when another apply is under way.
-  function applyShared(name, path, title, snapshot, withWallpaper) {
+  // keeping the running config, with `wallpaper` (a file:// URL, "" for
+  // none) as the fixed wallpaper on every monitor, then saves the result as
+  // `snapshot`: a community setup (CommunitySetupsManager). False when
+  // another apply is under way.
+  function applyShared(name, path, title, snapshot, wallpaper) {
     return root._apply(name, "share.applyShared", {
       "name": name,
       "path": path,
       "snapshot": snapshot,
-      "wallpaper": withWallpaper
+      "wallpaper": wallpaper
     }, title);
   }
 
@@ -248,13 +249,56 @@ QtObject {
         return;
       }
       SettingsManager.loadConfig();
-      if (result.backup)
-        root.status = result.saved ? I18n.tr("Applied \"{0}\" as \"{1}\". The previous configuration is saved as \"{2}\".", label, result.saved, result.backup) : I18n.tr("Applied \"{0}\". The previous configuration is saved as \"{1}\".", label, result.backup);
-      else
-        root.status = result.saved ? I18n.tr("Applied \"{0}\" as \"{1}\".", label, result.saved) : I18n.tr("Applied \"{0}\".", label);
+      root.status = root._withKept(result.saved ? I18n.tr("Applied \"{0}\" as \"{1}\".", label, result.saved) : I18n.tr("Applied \"{0}\".", label), result);
       root.applied(name);
     });
     return true;
+  }
+
+  // What confirming an apply or restore does with the running config, as
+  // { text, warning } (warning: it loses something unless saved by hand):
+  // plan is keep or keepWallpaper, restoring the snapshot a restore takes
+  // ("" for an apply). A restore that changes the wallpaper setup may still
+  // back up where keep says nothing; its status line names it.
+  function keepHint(plan, restoring) {
+    if (restoring !== "" && restoring === root.active)
+      return {
+        text: root.modified ? I18n.tr("Your changes to \"{0}\" are discarded", restoring) : "",
+        warning: false
+      };
+    if (!plan?.into)
+      return {
+        text: "",
+        warning: false
+      };
+    if (!plan.backup)
+      return {
+        text: I18n.tr("Your changes are saved to \"{0}\" first", plan.into),
+        warning: false
+      };
+    if (plan.into === restoring)
+      return {
+        text: I18n.tr("Your current config isn't saved and will be lost: save it under a name first"),
+        warning: true
+      };
+    if (plan.replaces)
+      return {
+        text: I18n.tr("Your current config replaces the backup \"{0}\": save it under a name to keep both", plan.into),
+        warning: true
+      };
+    return {
+      text: I18n.tr("Your current config is kept as \"{0}\" first", plan.into),
+      warning: false
+    };
+  }
+
+  // status after an apply or restore, plus where the running config went
+  function _withKept(status, result) {
+    if (result.kept)
+      return status + " " + I18n.tr("Your changes are saved to \"{0}\".", result.kept);
+    if (result.backup)
+      return status + " " + I18n.tr("The previous configuration is saved as \"{0}\".", result.backup);
+    return status;
   }
 
   // Why axiom refused a file, for people

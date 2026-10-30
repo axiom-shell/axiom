@@ -18,8 +18,9 @@ type sharedParams struct {
 	Personal bool   `json:"personal"`
 	Commands bool   `json:"commands"`
 	Places   bool   `json:"places"`
-	// share.applyShared: the shell sets the setup's wallpaper next
-	Wallpaper bool `json:"wallpaper"`
+	// share.applyShared: a file:// URL to set as the fixed wallpaper ("" for
+	// none)
+	Wallpaper string `json:"wallpaper"`
 }
 
 // monitors are this PC's outputs by place; nil while the daemon has no
