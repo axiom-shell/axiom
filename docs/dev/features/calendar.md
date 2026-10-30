@@ -1,6 +1,6 @@
 # Calendar
 
-> **Files:** `services/apps/CalendarManager.qml`, `backend/internal/calendar/`, `backend/internal/daemon/calendar.go`, `config/CalendarConfig.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `components/methods/CalendarEvents.qml`, `components/content/Calendar/Calendar.qml`, `components/content/Agenda/Agenda.qml`, `components/content/ClockCalendar/ClockCalendar.qml`, `components/content/parts/calendar/`
+> **Files:** `services/apps/CalendarManager.qml`, `backend/internal/calendar/`, `backend/internal/calendar/ical/`, `backend/internal/daemon/calendar.go`, `config/CalendarConfig.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `components/methods/CalendarEvents.qml`, `components/content/Calendar/Calendar.qml`, `components/content/Agenda/Agenda.qml`, `components/content/ClockCalendar/ClockCalendar.qml`, `components/content/parts/calendar/`, `components/views/CalendarPage/CalendarPage.qml`
 > **Config:** `Calendar.*` (reader `CalendarConfig`)
 > **Related:** [Secrets](../core/secrets.md), [Services pattern](../core/services-pattern.md), [Notifications](notifications.md), [Lockscreen](lockscreen.md), [Greeter runtime](greeter-runtime.md)
 
