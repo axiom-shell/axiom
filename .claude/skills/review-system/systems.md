@@ -81,7 +81,7 @@ Seams: widgets, popouts, the screen border.
 Scope: every bar widget type, against the widget rules.
 Mode: collection
 Docs: bar/widget-style.md bar/composition.md
-Extra: components/bar/widgets/*.qml
+Extra: components/bar/widgets/*/*.qml
 Checks:
 - Sized from `barConfig`, never `Widget.*`; ticking labels set `steadyDigits`.
 - Polled data: request from `properties` only, acquire/release paired.
@@ -103,7 +103,7 @@ Seams: modules, views, edge menus, desktop.
 Scope: every overlay module (content type), against the module rules.
 Mode: collection
 Docs: overlay/writing-modules.md overlay/content-roots.md overlay/utility-modules.md
-Extra: components/content/*.qml
+Extra: components/content/*/*.qml
 Checks:
 - Root is `Card` or `Panel`; min sizes set and `compactContent` below them.
 - Acquire in `onCompleted`, release in `onDestruction`; lasting state in a service.

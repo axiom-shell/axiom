@@ -9,7 +9,8 @@ what reviews found.
   scope.py --orphans       code files no system covers, and files in several
   scope.py --apply <dir>…  record reviews: each dir's report.md Blockers,
                            Major, Cleanups and Outside the system entries
-                           appended to issues.md and
+                           appended to issues.md (a title whose anchor is
+                           taken is skipped, so a re-run files nothing) and
                            linked under the roadmap's "Found by the audits:",
                            its review.md copied to .claude/reviews/; lists
                            entries naming a symbol another names, then runs
@@ -17,7 +18,8 @@ what reviews found.
 
 <system> is a name from systems.md, or feature:<name>, doc:<path>, files:<glob>.
 A folder (`dir/`) in a doc's Files header or in Extra means the files directly
-in it; a glob in a doc header is reported, not expanded.
+in it, and `{a,b}` both names; a glob in a doc header is reported, not
+expanded. A path that matches nothing is reported as not found.
 """
 import glob
 import os
@@ -56,25 +58,35 @@ def systems():
     return out
 
 
+def braces(pattern):
+    m = re.search(r"\{([^{}]*)\}", pattern)
+    if not m:
+        return [pattern]
+    return [p for alt in m.group(1).split(",") for p in braces(pattern[:m.start()] + alt + pattern[m.end():])]
+
+
 def expand(pattern, base=ROOT):
-    if pattern.endswith("/"):
-        pattern += "*"
-    hits = sorted(glob.glob(os.path.join(base, pattern)))
-    return [os.path.relpath(h, base) for h in hits if os.path.isfile(h)]
+    hits = []
+    for p in braces(pattern):
+        hits += glob.glob(os.path.join(base, p + "*" if p.endswith("/") else p))
+    return [os.path.relpath(h, base) for h in sorted(set(hits)) if os.path.isfile(h)]
 
 
 def doc_files(doc):
-    """Files a doc's header lists; globs are reported, not expanded."""
-    files, broad = [], []
+    """Files a doc's header lists, its globs (reported, not expanded) and
+    the paths in it that match nothing."""
+    files, broad, missing = [], [], []
     for line in open(os.path.join(DOCS, doc)):
         if line.startswith("> **Files:**"):
             for p in re.findall(r"`([^`]+)`", line):
                 if "*" in p:
                     broad.append(p)
-                else:
-                    files += expand(p)
+                elif "<" not in p:  # a member name matches nothing; a path that matches nothing is reported
+                    hits = expand(p)
+                    files += hits
+                    missing += [] if hits or "/" not in p else ["%s (docs/dev/%s)" % (p, doc)]
             break
-    return files, broad
+    return files, broad, missing
 
 
 def resolve(name):
@@ -89,17 +101,20 @@ def resolve(name):
         spec = table[name]
     else:
         return None
-    docs = [d for pat in spec["docs"] for d in expand(pat, DOCS)]
-    files, broad = [], []
-    for d in docs:
-        f, b = doc_files(d)
+    docs, files, broad = [], [], []
+    missing = ["docs/dev/" + p for p in spec["docs"] if not expand(p, DOCS)]
+    missing += [p for p in spec["extra"] if not expand(p)]
+    for d in (d for pat in spec["docs"] for d in expand(pat, DOCS)):
+        f, b, m = doc_files(d)
+        docs.append(d)
         files += f
         broad += b
+        missing += m
     for pat in spec["extra"]:
         files += expand(pat)
     seen = set()
     files = [f for f in files if not (f in seen or seen.add(f))]
-    return {**spec, "docs": docs, "files": files, "broad": sorted(set(broad))}
+    return {**spec, "docs": docs, "files": files, "broad": sorted(set(broad)), "missing": missing}
 
 
 def lines(path):
@@ -144,6 +159,8 @@ def show(name):
     print("docs: " + " ".join("docs/dev/" + d for d in s["docs"]))
     if s["broad"]:
         print("globs in doc headers (not expanded): " + " ".join(s["broad"]))
+    if s["missing"]:
+        print("NOT FOUND (a moved file or a bad pattern: its code is missing below): " + ", ".join(s["missing"]))
     print("\ncode by risk (lines, commits 6mo, fix commits 6mo; also in = another system's file, a seam here):")
     for f, n, c, x in rows:
         also = [o for o in others.get(f, []) if o != name]
@@ -197,8 +214,19 @@ def symbols(entry):
 def apply(dirs):
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
     import check_docs
+    title = lambda entry: entry.splitlines()[0][4:]
+    missing = [d for d in dirs if not os.path.isfile(os.path.join(d, "report.md"))]
+    if not dirs or missing:
+        print("no report.md in: " + (" ".join(missing) or "(no dirs given)"))
+        return 2
     issues = open(ISSUES).read()
-    titles = {line[4:] for line in issues.splitlines() if line.startswith("### ")}
+    roadmap_path = os.path.join(DOCS, "roadmap.md")
+    roadmap = open(roadmap_path).read()
+    if LINKS not in roadmap:
+        print("docs/dev/roadmap.md has no %r line to link the entries under" % LINKS.strip())
+        return 2
+    # An anchor already taken (the same title, or one GitHub's slug can't tell apart) is skipped
+    slugs = {check_docs.heading_slug(line[4:]) for line in issues.splitlines() if line.startswith("### ")}
     new = []
     for d in dirs:
         report = open(os.path.join(d, "report.md")).read()
@@ -206,32 +234,32 @@ def apply(dirs):
             if section.startswith(RECORDED):
                 for entry in re.split(r"(?m)^### ", section)[1:]:
                     entry = "### " + entry.strip()
-                    if entry.splitlines()[0][4:] in titles:
-                        print("already in issues.md, skipped: " + entry.splitlines()[0][4:])
+                    slug = check_docs.heading_slug(title(entry))
+                    if slug in slugs:
+                        print("title already taken, skipped (merge it by hand if it differs): %s (%s)" % (title(entry), d))
                     else:
+                        slugs.add(slug)
                         new.append(entry)
-        record = os.path.join(d, "review.md")
-        if os.path.isfile(record):
-            shutil.copy(record, review_path(open(record).readline()[2:].strip()))
-    old = re.split(r"(?m)^(?=### )", issues.split("\n## Open", 1)[1])[1:]
+    old = re.split(r"(?m)^(?=### )", issues.split("\n## Open", 1)[-1])[1:]
     for i, entry in enumerate(new):
         for other in old + new[:i]:
             shared = symbols(entry) & symbols(other)
             if shared:
                 print("same symbol, one cause or one fix? %s / %s: %s" % (
-                    entry.splitlines()[0][4:], other.splitlines()[0][4:], ", ".join("%s (%s)" % p for p in sorted(shared))))
+                    title(entry), title(other), ", ".join("%s (%s)" % p for p in sorted(shared))))
     if new:
+        end = roadmap.index(LINKS) + len(LINKS)
+        while roadmap.startswith("- [", end):
+            end = roadmap.find("\n", end) + 1 or len(roadmap)
+        links = "".join("- [%s](issues.md#%s)\n" % (title(e), check_docs.heading_slug(title(e))) for e in new)
         with open(ISSUES, "w") as f:
             f.write(issues.rstrip("\n") + "\n\n" + "\n\n".join(new) + "\n")
-        roadmap = os.path.join(DOCS, "roadmap.md")
-        text = open(roadmap).read()
-        end = text.index(LINKS) + len(LINKS)
-        while text.startswith("- [", end):
-            end = text.index("\n", end) + 1
-        links = "".join("- [%s](issues.md#%s)\n" % (t, check_docs.heading_slug(t))
-                        for t in (e.splitlines()[0][4:] for e in new))
-        with open(roadmap, "w") as f:
-            f.write(text[:end] + links + text[end:])
+        with open(roadmap_path, "w") as f:
+            f.write(roadmap[:end] + links + roadmap[end:])
+    for d in dirs:
+        record = os.path.join(d, "review.md")
+        if os.path.isfile(record):
+            shutil.copy(record, review_path(open(record).readline()[2:].strip()))
     print("%d entries filed" % len(new))
     return check_docs.main()
 
@@ -242,10 +270,14 @@ def main():
     if arg == "--list":
         print("%-20s %-10s %5s %7s  %s" % ("system", "mode", "files", "lines", "last review"))
         print("(code only: tests and .json data left out)")
+        missing = []
         for name in table:
             s = resolve(name)
             code = [f for f in s["files"] if not is_side(f)]
             print("%-20s %-10s %5d %7d  %s" % (name, s["mode"], len(code), sum(map(lines, code)), last_review(name) or "-"))
+            missing += ["%s: %s" % (name, m) for m in s["missing"]]
+        if missing:
+            print("\nNOT FOUND (fix systems.md or the doc header):\n  " + "\n  ".join(missing))
         print("\nalso: feature:<name> (%s), doc:<path>, files:<glob>"
               % " ".join(os.path.basename(f)[:-3] for f in sorted(glob.glob(os.path.join(DOCS, "features", "*.md")))))
         return 0

@@ -13,15 +13,15 @@ Arguments: `$ARGUMENTS`
 - Free text after it narrows the review to a concern. Its words are never flags; only the `--` forms are.
 - `--full` ignores the last review and reviews everything.
 - `--record` files the Blockers, Major and Cleanups in `docs/dev/issues.md` (Phase 6).
-- `--out <dir>` (audits run in parallel): `--record`, deferred: change nothing in the tree; the report and the reviews file go to `<dir>`, and whoever started the audits files them all at once with `scope.py --apply <dir>…` (Phase 6).
+- `--out <dir>` (audits run in parallel, each with its own `<dir>`): `--record`, deferred. Change nothing in the tree and work in `<dir>`, where the report and the reviews file end up; whoever started the audits files them all at once with `scope.py --apply <dir>…` (Phase 6). Never with `--fix`.
 - `--fix` fixes the confirmed findings after the report (Phase 6).
 - `--deep` fans out agents (Phase 3): for a big system, only when asked.
 
-Read `../review-branch/lenses.md` › Every reviewer and The lead reviewer first: your rules for reading, proving and writing findings. Work in `$SCRATCH/review-system/` (`$SCRATCH` = this session's scratchpad). **Budget:** under ~200k tokens in all. Deep reading is the risky parts of the deep set; everything else by outline (`grep -n 'func \|function \|property \|signal \|Connections\|Process\|Timer\|IpcHandler' <file>`). Past ~150k, stop opening files and say in Coverage what you only outlined.
+Read `../review-branch/lenses.md` › Every reviewer and The lead reviewer first: your rules for reading, proving and writing findings. Your work folder is `$SCRATCH/review-system/` (`$SCRATCH` = this session's scratchpad), or `<dir>` with `--out`; every file below goes there. **Budget:** under ~200k tokens in all. Deep reading is the risky parts of the deep set; everything else by outline (`grep -n 'func \|function \|property \|signal \|Connections\|Process\|Timer\|IpcHandler' <file>`). Past ~150k, stop opening files and say in Coverage what you only outlined.
 
 ## Phase 0: scope
 
-1. `python3 .claude/skills/review-system/scope.py <system> > $SCRATCH/review-system/scope.txt` and read it: the docs, the code ranked by risk (size × churn × fix commits), files shared with other systems (`[also in: …]`: seams; outline them unless they're this system's core), tests and data, the last review and what changed since, and the open `issues.md` entries on these files (known: never report them again; say if the code now fixes one or makes it worse).
+1. `python3 .claude/skills/review-system/scope.py <system> > scope.txt` (in the work folder) and read it: anything NOT FOUND first (a moved file or a bad pattern hides code: find the files it meant and review them too; the stale pattern is a finding), the docs, the code ranked by risk (size × churn × fix commits), files shared with other systems (`[also in: …]`: seams; outline them unless they're this system's core), tests and data, the last review and what changed since, and the open `issues.md` entries on these files (known: never report them again; say if the code now fixes one or makes it worse).
 2. **Incremental by default.** With a last review (`.claude/reviews/<system>.md`) and no `--full`: read it; the deep set is the files changed since its commit, plus a recheck of each open finding (its `issues.md` entry gone means fixed). Nothing changed and nothing open: say so and stop.
 
 ## Phase 1: the contract
@@ -46,7 +46,7 @@ Every candidate passes `../review-branch/lenses.md` › Proving it before it goe
 
 ## Phase 5: report
 
-`report.md` (in `--out <dir>`, else in `$SCRATCH/review-system/`), printed too:
+`report.md`, printed too:
 
 ```
 # System review: <system>  (full | incremental since <sha>)
@@ -68,14 +68,14 @@ Read deeply: <files> · Outlined: <files> · Skipped: <files, why>
 
 ## Phase 6: record or fix
 
-- `--record`: `python3 .claude/skills/review-system/scope.py --apply $SCRATCH/review-system` files Blockers, Major, Cleanups and Outside the system (entries already in `issues.md` by title are skipped), links each under `docs/dev/roadmap.md` › "Found by the audits:", lists pairs of entries naming the same `path` (`symbol`), and runs `check_docs`. Settle each pair (one cause: merge into one entry; two fixes to one function: one entry with one fix) and each check_docs error, until `docs ok`.
+- `--record`: `python3 .claude/skills/review-system/scope.py --apply <work folder>` files Blockers, Major, Cleanups and Outside the system, links each under `docs/dev/roadmap.md` › "Found by the audits:", lists pairs of entries naming the same `path` (`symbol`), and runs `check_docs`. Settle each pair (one cause: merge into one entry; two fixes to one function: one entry with one fix), each title it skipped as taken (a different problem: retitle it and file it by hand) and each check_docs error, until `docs ok`; a merged or retitled entry's link in the reviews files changes with it.
 - `--out <dir>`: nothing here; the caller runs `scope.py --apply` on every audit's dir at once (so pairs across audits show), then settles pairs and errors as above.
-- Neither: file only Outside the system, by hand (`issues.md` format at its top, linked from the roadmap phase that fixes it).
+- Without either: file only Outside the system, by hand (`issues.md` format at its top, linked from the roadmap phase that fixes it).
 - `--fix`: fix the confirmed findings, smallest change each, following the repo rules and recipes; skip and list any that need the maintainer's decision. `scripts/dev/verify.sh` until `verify ok`, reading the log section and the docs it lists; remove any `issues.md` entry a fix closes. Don't commit.
 
 ## Phase 7: the reviews file
 
-Last, write `.claude/reviews/<system>.md` (`:` and `/` become `_`; with `--out`, `<dir>/review.md`, which `--apply` copies there), replacing the previous one. It is what the next review starts from: **only what is still true**.
+Last, write `.claude/reviews/<system>.md` (`:` and `/` become `_`; with `--out`, `review.md` in the work folder, which `--apply` copies there), replacing the previous one. It is what the next review starts from: **only what is still true**.
 
 ```
 # <system>

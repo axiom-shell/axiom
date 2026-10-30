@@ -7,6 +7,8 @@
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
     lines marked `// fixed px:`
   - only PAM's success unlocks the built-in lock screen
+  - the review skills' scope.py resolves doc headers and files audits'
+    findings once
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -603,6 +605,82 @@ class CheckDocs(unittest.TestCase):
             ".claude/skills/setting/SKILL.md: 3 lines; a recipe skill only points at its recipe",
             "`x-ghost` isn't in docs/dev/core/schema-annotations.md",
         ]), [], out)
+
+
+class ReviewScope(unittest.TestCase):
+    """.claude/skills/review-system/scope.py: a doc header's folders and
+    {a,b} name their files, a path matching nothing is reported; --apply
+    files each title once (across reports and re-runs), links it from the
+    roadmap, flags a symbol two entries name and copies the reviews file."""
+
+    SCOPE = ".claude/skills/review-system/scope.py"
+
+    @staticmethod
+    def entry(title, where, system):
+        return (f"### {title}\n- **Where:** {where}\n- **What:** x. Fix: y.\n- **Size:** small\n"
+                f"- **Found:** 2026-10-30, while reviewing the {system} system\n")
+
+    def run_scope(self, root, *args):
+        done = subprocess.run([sys.executable, str(root / self.SCOPE), *args], cwd=root, capture_output=True, text=True)
+        return done.returncode, done.stdout + done.stderr
+
+    def test_header_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "docs/dev/issues.md", ".claude/skills/review-system", "services/compositor",
+                                "shell.qml")
+            (root / "docs/dev/ghost.md").write_text(
+                "> **Files:** `services/compositor/{NiriManager,SwayManager}.qml`, `services/compositor/`,"
+                " `services/gone.qml`, `shell.qml`, `LayoutsPanel`, `components/content/<Type>/<Type>.qml`\n")
+            _, out = self.run_scope(root, "doc:docs/dev/ghost.md")
+        self.assertIn("NOT FOUND (a moved file or a bad pattern: its code is missing below): "
+                      "services/gone.qml (docs/dev/ghost.md)\n", out)
+        self.assertEqual(out.count("services/compositor/NiriManager.qml"), 1, out)
+        self.assertIn("services/compositor/CompositorManager.qml", out)
+        self.assertIn("  shell.qml\n", out)
+
+    def test_apply(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, "docs", ".claude/skills", ".claude/reviews", "components", "services", "config",
+                                "AGENTS.md", "README.md", "CONTRIBUTING.md")
+            niri, comp = Path(tmp) / "out/niri", Path(tmp) / "out/compositor"
+            where = "`services/compositor/NiriManager.qml:10` (`queueAction`)"
+            shared = self.entry("Both audits saw it", "`services/compositor/CompositorManager.qml`", "niri")
+            for d, report in (
+                (niri, "## Major\n" + self.entry("The `niri` writer: drops binds", where, "niri")
+                 + "\n## Minor\n" + self.entry("A minor one", where, "niri")
+                 + "\n## Outside the system\n" + shared),
+                (comp, "## Cleanups\n" + shared + "\n" + self.entry("Another on queueAction", where, "compositor")),
+            ):
+                d.mkdir(parents=True)
+                (d / "report.md").write_text("# System review\n\n**Verdict:** x\n\n" + report)
+            (niri / "review.md").write_text("# niri\nreviewed: abc 2026-10-30\n")
+            _, out = self.run_scope(root, "--apply", str(niri), str(comp))
+            issues = (root / "docs/dev/issues.md").read_text()
+            roadmap = (root / "docs/dev/roadmap.md").read_text()
+            review = (root / ".claude/reviews/niri.md").read_text()
+            _, out2 = self.run_scope(root, "--apply", str(niri), str(comp))
+            unchanged = (root / "docs/dev/issues.md").read_text() == issues
+            gone, out3 = self.run_scope(root, "--apply", str(Path(tmp) / "out/none"))
+        self.assertEqual(missed(out, [
+            "title already taken, skipped (merge it by hand if it differs): Both audits saw it",
+            "same symbol, one cause or one fix? Another on queueAction / The `niri` writer: drops binds: "
+            "services/compositor/NiriManager.qml (queueAction)",
+            "3 entries filed",
+        ]), [], out)
+        # check_docs ran on the result (the fixture lacks the rest of the tree: only the new entries count)
+        self.assertEqual([l for l in out.splitlines() if l.startswith(("error", "warning"))
+                          and re.search(r"drops binds|Both audits|queueAction|drops-binds|both-audits", l)], [])
+        for title in ("The `niri` writer: drops binds", "Both audits saw it", "Another on queueAction"):
+            self.assertEqual(issues.count(f"\n### {title}\n"), 1, title)
+        self.assertNotIn("A minor one", issues)
+        self.assertIn("Found by the audits:\n", roadmap)
+        self.assertIn("- [The `niri` writer: drops binds](issues.md#the-niri-writer-drops-binds)\n"
+                      "- [Both audits saw it](issues.md#both-audits-saw-it)\n"
+                      "- [Another on queueAction](issues.md#another-on-queueaction)\n", roadmap)
+        self.assertEqual(review, "# niri\nreviewed: abc 2026-10-30\n")
+        self.assertIn("0 entries filed", out2)
+        self.assertTrue(unchanged)
+        self.assertEqual(gone, 2, out3)
 
 
 def block_end(text, open_at):

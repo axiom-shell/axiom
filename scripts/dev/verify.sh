@@ -106,6 +106,7 @@ for f in "${changed[@]}"; do
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json) script_tests+=(CheckStructure) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
+  .claude/skills/review-system/scope.py) script_tests+=(ReviewScope) ;;
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
   scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;
   scripts/check_packages.py) script_tests+=(CheckPackages) ;;
