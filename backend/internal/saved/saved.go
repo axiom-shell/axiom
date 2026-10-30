@@ -595,16 +595,27 @@ func readShared(path string) (any, error) {
 	if err != nil {
 		return nil, axerr.Wrap(axerr.InvalidConfig, err, "%s", filepath.Base(path))
 	}
+	obj, err := versioned(parsed, filepath.Base(path))
+	if err != nil {
+		return nil, err
+	}
+	version := obj.Value("version").(float64)
+	if format, has := obj.Get("format"); has && format != float64(convert.Format) || version > float64(steps.Current()) {
+		return nil, axerr.New(axerr.InvalidConfig, "%s is from a newer axiom: update axiom to import it", filepath.Base(path))
+	}
+	return obj, nil
+}
+
+// versioned is parsed (the file name) when it's an object with a version:
+// a file without one would be taken for version 1.
+func versioned(parsed any, name string) (*jsonx.Object, error) {
 	obj, ok := parsed.(*jsonx.Object)
 	if !ok {
-		return nil, axerr.New(axerr.InvalidConfig, "%s isn't a config", filepath.Base(path))
+		return nil, axerr.New(axerr.InvalidConfig, "%s isn't a config", name)
 	}
 	version, ok := obj.Value("version").(float64)
 	if !ok || version < 1 || version != float64(int64(version)) {
-		return nil, axerr.New(axerr.InvalidConfig, "%s has no config version, so it can't be imported", filepath.Base(path))
-	}
-	if format, has := obj.Get("format"); has && format != float64(convert.Format) || version > float64(steps.Current()) {
-		return nil, axerr.New(axerr.InvalidConfig, "%s is from a newer axiom: update axiom to import it", filepath.Base(path))
+		return nil, axerr.New(axerr.InvalidConfig, "%s has no config version, so it can't be imported", name)
 	}
 	return obj, nil
 }
