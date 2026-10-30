@@ -391,6 +391,7 @@ class CheckStructure(unittest.TestCase):
          "an acquire() request from live values (req → SystemManager.cpu)"),
         ("shell/Motion.qml", qml("Behavior on x { NumberAnimation { duration: 200 } }"), "shell/Motion.qml:6: a duration in ms"),
         ("shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "shell/Stamp.qml: Qt.formatDateTime"),
+        ("shell/Screens.qml", qml("property var s: Quickshell.screens"), "shell/Screens.qml: Quickshell.screens"),
         ("components/dupa/Dup.qml", qml(), None),
         ("components/dupb/Dup.qml", qml(), None),
         ("shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),

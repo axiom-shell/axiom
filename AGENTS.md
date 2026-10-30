@@ -169,7 +169,7 @@ Dependencies point one way:
 - **Radii**: `Appearance.borderRadius` only for outer edges (border, bars, pills, popout surfaces, overlay box, windows); `Widget.radius` inside.
 - **Rounded clipping** is Quickshell.Widgets' `ClippingRectangle` (set its `color`; it defaults to white), never a MultiEffect mask.
 - **Icons**: Material Symbols names drawn by `reusable/StyledIcon`, never sharing a Text with a label.
-- **Screen targeting**: surfaces are built on `General.screensFor(target)` (a `ScreenTarget`) or `General.outputs`, never `Quickshell.screens` (stand-ins while no monitor is connected); only `ShellManager.isTarget(screen, target)` answers shortcuts, IPC and OSD events, and IPC handlers are `enabled` on the target instance only.
+- **Screen targeting**: surfaces are built on `General.screensFor(target)` (a `ScreenTarget`) or `General.outputs`, never `Quickshell.screens` (stand-ins while no monitor is connected; `check_structure`); only `ShellManager.isTarget(screen, target)` answers shortcuts, IPC and OSD events, and IPC handlers are `enabled` on the target instance only.
 
 Subsystem invariants (details in the named files):
 - **Overlay modules** exist only while their page is shown (acquire/release, lasting state in a service): `components/content/AGENTS.md`.

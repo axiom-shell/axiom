@@ -37,6 +37,8 @@ running anything:
     `// behaviour timing: <reason>` (a blink, a pause)
   - nothing formats a date with Qt.formatDateTime / formatDate /
     formatTime (I18n.formatDate follows the language)
+  - only General reads Quickshell.screens (its outputs leave out the
+    stand-ins shown while no monitor is connected)
 and, for the rules listing earlier uses in scripts/structure-baseline.json,
 fails on a file past its count and on a count no longer reached (each
 only shrinks); it also warns about files in the loaded directories that nothing registers or
@@ -504,6 +506,13 @@ def main():
     ratchet("formatDateTime", {path: n for path, text in sources.items() if not path.startswith("tests/")
                                for n in [len(re.findall(r"\bQt\.format(?:DateTime|Date|Time)\(", re.sub(r"//[^\n]*", "", text)))] if n},
             "Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name))")
+
+    # Surfaces go on General.outputs / screensFor(target): Quickshell.screens
+    # holds stand-ins while no monitor is connected, and a window left on
+    # one can crash qs when they come back (General filters them)
+    ratchet("Quickshell.screens", {path: n for path, text in sources.items() if not path.startswith("tests/") and path != "config/General.qml"
+                                   for n in [len(re.findall(r"\bQuickshell\.screens\b", re.sub(r"//[^\n]*", "", text)))] if n},
+            "Quickshell.screens: build on General.outputs or General.screensFor(target) (no stand-in screens)")
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

@@ -2,5 +2,11 @@
   "_comment": "The uses of a rule scripts/check_structure.py holds that were there before the rule, per rule and file. Each count only shrinks: the check fails on a use past it and on a count no longer reached (lower it).",
   "formatDateTime": {
     "services/apps/ScreenshotManager.qml": 2
+  },
+  "Quickshell.screens": {
+    "shell/Greeter.qml": 1,
+    "shell/GreeterPreview.qml": 2,
+    "shell/Lockscreen.qml": 2,
+    "shell/NoParentNotice.qml": 1
   }
 }
