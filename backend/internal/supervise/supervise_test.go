@@ -138,8 +138,9 @@ func TestOrphanOfAnEarlierDaemonIsStopped(t *testing.T) {
 	defer other.Process.Kill()
 
 	s := New(fast(Options{Command: command, PIDFile: pidFile}))
-	// Start returns before the kernel shows the new cmdline (empty, or still
-	// ours, under load): an orphan of an earlier daemon has long shown it
+	// Start returns once exec has replaced the image but before the kernel
+	// fills in its cmdline (empty until then, for long under load): an
+	// orphan of an earlier daemon has long shown it
 	eventually(t, func() bool { return s.isOurChild(orphan.Process.Pid) })
 	run(t, s)
 	// Left alone, it would sleep 30 s
@@ -211,7 +212,7 @@ func TestRequestedStopIsNotAnExit(t *testing.T) {
 		if pid != first {
 			t.Errorf("OnStop got %d, want %d", pid, first)
 		}
-	case <-time.After(time.Second):
+	case <-time.After(testkit.Bound(time.Second)):
 		t.Fatal("no OnStop for the restart")
 	}
 	cancel()
