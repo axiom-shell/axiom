@@ -200,6 +200,26 @@ func TestImportReadsTheFileOnce(t *testing.T) {
 	}
 }
 
+// Applying an example keeps the running Workspaces (personal scope): the
+// onboarder offers the examples after its Workspaces step.
+func TestApplyExampleKeepsWorkspaces(t *testing.T) {
+	t.Parallel()
+	f := setup(t)
+	set(t, f.store, "Workspaces.layout", "grid")
+	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "examples", "clean.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(filepath.Join(f.ex, "clean.json"), data, 0o644)
+	if _, err := f.svc.ApplyExample("clean", nil); err != nil {
+		t.Fatal(err)
+	}
+	cfg, _ := f.store.Config()
+	if got := cfg.Value("Workspaces").(*jsonx.Object).Value("layout"); got != "grid" {
+		t.Errorf("layout %v", got)
+	}
+}
+
 func TestExport(t *testing.T) {
 	t.Parallel()
 	f := setup(t)
@@ -237,11 +257,6 @@ func TestShippedExamplesApply(t *testing.T) {
 			data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "examples", e.Name()))
 			if err != nil {
 				t.Fatal(err)
-			}
-			// The onboarder offers them after its Workspaces step: an
-			// example applying a layout (or strips) would undo that pick
-			if parsed, _ := jsonx.Unmarshal(data); parsed.(*jsonx.Object).Has("Workspaces") {
-				t.Error("carries Workspaces")
 			}
 			os.WriteFile(filepath.Join(f.ex, e.Name()), data, 0o644)
 			if got := f.svc.Examples(); len(got) != 1 || got[0].Theme == "" || len(got[0].Bars) == 0 {

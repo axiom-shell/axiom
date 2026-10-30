@@ -36,7 +36,7 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 
 | Definition | Shape | Replaces |
 |---|---|---|
-| `ScreenTarget` | `{ mode: "inherit" \| "primary" \| "focused" \| "all" \| "named", names: [] }`. `names` is `machine` scope (with `x-monitorRef`); `mode` is look. A use narrows `mode`'s enum with a sibling override. | General's `monitors` + `primaryMonitor` (kept as `General.primaryMonitor`); `Launcher/PowerMenu/Notifications/Overlay.monitors`; `Dock/OSD` `monitors` + `monitor`; `Bars[].monitor` and `EdgeMenus[].monitor` (`""` primary, `*` all); `Greeter.monitor`; `Desktop.*.monitor`; `Workspaces.strips[].monitor` |
+| `ScreenTarget` | `{ mode: "inherit" \| "primary" \| "focused" \| "all" \| "named", names: [] }`. `names` is `machine` scope (with `x-monitorRef`); `mode` is look (personal in `Workspaces.strips`, as the whole section is). A use narrows `mode`'s enum with a sibling override. | General's `monitors` + `primaryMonitor` (kept as `General.primaryMonitor`); `Launcher/PowerMenu/Notifications/Overlay.monitors`; `Dock/OSD` `monitors` + `monitor`; `Bars[].monitor` and `EdgeMenus[].monitor` (`""` primary, `*` all); `Greeter.monitor`; `Desktop.*.monitor`; `Workspaces.strips[].monitor` |
 | `Layout` | `{ grid: { columns, rows, fine }, moduleScale, moduleBorders, modules: [Module] }` | `DesktopLayout`, `ScreenLayout`'s grid half, `EdgeMenu`'s grid keys, the Custom page's modules |
 | `ScreenLayout` | `Layout` + `backdrop: { source: "wallpaper" \| "color", blur, color, dim }`, `otherScreens`, `borders: { password, greeting }` | `ScreenLayout` (lock screen, greeter) |
 | `Blur` | `{ enabled, size, passes, … }` | `WindowLook.blur*` |

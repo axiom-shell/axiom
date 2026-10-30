@@ -19,7 +19,7 @@ Inherited down the schema; the root is `machine`.
 | Scope | What | Export / import | Snapshot |
 |---|---|---|---|
 | `look` | the layout and style sections, the theme, font, shape and motion, the launcher's and notifications' look, each surface's Module size (`moduleScale`: a ratio over the card size), compositor animations and decoration, cursor theme, the theme schedule | always | ✅ |
-| `personal` | how big the UI is (`Widget.scale`, `cardSize`, `density`: a shared look keeps its proportions at your size), preferences (notification, idle, night light, input, window behaviour, launcher search, chat, calendar, notes), `Keybinds.binds`, `Apps.pinned`, a dock's own `pinned`, Favourites' apps, OSD app bars | its own switch, off by default | ✅ |
+| `personal` | how big the UI is (`Widget.scale`, `cardSize`, `density`: a shared look keeps its proportions at your size), the workspace layout and strips (`Workspaces`: the onboarder offers the examples after its Workspaces step, so one mustn't undo that pick), preferences (notification, idle, night light, input, window behaviour, launcher search, chat, calendar, notes), `Keybinds.binds`, `Apps.pinned`, a dock's own `pinned`, Favourites' apps, OSD app bars | its own switch, off by default | ✅ |
 | `commands` | anything that runs as you: every command field, `Apps` terminal/file manager/browser, `Updates` terminal and upgrade, idle listeners, exec and raw binds | its own switch, off by default, warned | ✅ |
 | `machine` | monitor names, wallpapers, accounts, paths, hardware, services, takeovers, and every section not marked | never | wallpaper setup only (`x-snapshot`) |
 
@@ -63,7 +63,6 @@ Walks a value along the schema.
 ### Adding an example setup
 - Build the setup in the shell, then Settings → Maintenance → Share → Export, with both switches off unless the example needs a command. It writes `~/axiom-<name>-<date>-<time>.json`, holding only the look (`x-scope`) minus defaults.
 - Move it to `examples/<name>.json` and fill in its `meta`: `{ "title": "…", "description": "…" }`.
-- Remove its `Workspaces`: the onboarder offers the examples after its Workspaces step, and a layout (or strips) in one would undo that pick (`TestShippedExamplesApply` fails on one).
 - Wallpapers, accounts and paths are `machine` scope, so they're never in an export, and monitors only by place: don't add them by hand.
 
 ### Snapshot rows
