@@ -1,5 +1,5 @@
 {
-  "_comment": "The uses of a rule scripts/check_structure.py holds that were there before the rule, per rule and file. Each count only shrinks: the check fails on a use past it and on a count no longer reached (lower it).",
+  "_comment": "The uses a rule of scripts/check_structure.py allows, per rule and file: screenshot file names (no locale digits), windows that must exist with no monitor connected. Each count only shrinks: the check fails on a use past it and on a count no longer reached (lower it).",
   "formatDateTime": {
     "services/apps/ScreenshotManager.qml": 2
   },

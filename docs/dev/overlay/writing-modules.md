@@ -65,7 +65,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 (Rule: AGENTS.md › UI conventions.)
 - For a derived set, use `model: rows.length` with the delegate reading `rows[index] ?? fallback`.
 - An `int` / `string` only notifies when it actually changes, so delegates (and Canvases) survive each sample or keystroke.
-- `check_structure` refuses a model reading a polled service's member (a service with an `acquire()`), directly or through a property of the same file, unless it counts it (`.length`, `.count`); and an `acquire()` request reading one at all.
+- `check_structure` refuses a model reading a polled service's member (one polling through a `ConsumerRegistry` or `DeadlineTicker`), directly or through a property of the same file, unless it counts it (`.length`, `.count`); and an `acquire()` request reading one at all.
 
 ### Testing
 Testing a module safely on the running shell:

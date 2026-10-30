@@ -30,7 +30,7 @@ running anything:
   - no singleton is over SINGLETON_LINES lines, but the pure helpers and
     the compositor backends (split one before it grows past)
   - no Repeater model or acquire() request in the UI reads a polled
-    service's member (one with an acquire()), in the expression or through
+    service's member (one owning a ConsumerRegistry or DeadlineTicker), in the expression or through
     a property of the file; a model may count one (`.length`, `.count`)
   - no `duration:` is a number of ms (Appearance.animFast / animNormal /
     animSlow follow the animation speed), but a line marked
@@ -39,9 +39,10 @@ running anything:
     formatTime (I18n.formatDate follows the language)
   - only General reads Quickshell.screens (its outputs leave out the
     stand-ins shown while no monitor is connected)
-and, for the rules listing earlier uses in scripts/structure-baseline.json,
-fails on a file past its count and on a count no longer reached (each
-only shrinks); it also warns about files in the loaded directories that nothing registers or
+and, for the rules counting the uses they allow in
+scripts/structure-baseline.json (screenshot file names, windows that must
+exist with no monitor), fails on a file past its count and on a count no
+longer reached (each only shrinks); it also warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
 
@@ -88,8 +89,9 @@ IO_KINDS = {
 # (components/methods/, unit-tested tables of rules) and the compositor
 # backends (one compositor's whole contract each) may grow past it
 SINGLETON_LINES = 800
-# The uses of a rule that were there before it, per file: each count only
-# shrinks (structure-baseline.json)
+# The uses a rule allows, per file (a file name kept out of the language, a
+# window that must exist with no monitor): each count only shrinks
+# (structure-baseline.json)
 BASELINE = ROOT / "scripts" / "structure-baseline.json"
 SINGLETON_EXEMPT = re.compile(r"components/methods/.*|services/compositor/(Hyprland|Sway|Niri)Manager\.qml")
 
@@ -444,11 +446,12 @@ def main():
     # Repeater models and acquire() requests never come from live values
     # (AGENTS.md › UI conventions): a model re-evaluated per sample once
     # pushed qs past 25 GB. Live means a member of a polled service (one
-    # with an acquire()), read in the expression or through one property
-    # of the same file. A model may count one (`.length`, `.count`: an int
-    # notifies only when it changes); a request may not read one at all
-    polled = {f.stem for f in ROOT.glob("services/*/*.qml") if re.search(r"^\s*function acquire\(", f.read_text(), re.M)}
-    polled.discard("ConsumerRegistry")
+    # polling through a ConsumerRegistry or DeadlineTicker, not
+    # BackendManager's or NotesManager's acquire()), read in the expression
+    # or through one property of the same file. A model may count one
+    # (`.length`, `.count`: an int notifies only when it changes); a request
+    # may not read one at all
+    polled = {f.stem for f in ROOT.glob("services/*/*.qml") if re.search(r"\b(?:ConsumerRegistry|DeadlineTicker)\s*\{", f.read_text())}
     chain = re.compile(r"(?<![\w.])(?:root\.)?([A-Za-z_]\w*)((?:\??\.\w+)*)")
 
     def live_reads(expr, props, counts, depth=0):

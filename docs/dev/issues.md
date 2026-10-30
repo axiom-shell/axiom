@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Hyprland 0.57 refuses the empty pointer acceleration profile
+- **Where:** `config/schema/sections/Input.yaml` (`accel`'s hyprland `value: emptyIsDefault`), `backend/internal/compositor/render`
+- **What:** With pointer settings on and acceleration left at `default`, the writer sets `input.accel_profile` to `""`. Hyprland 0.57.0 rejects it (`error setting 'input.accel_profile': bad value "", allowed values are: "adaptive", "flat", "custom"`), so `TestCompositorsReadTheFiles/HyprConfigLua` fails wherever Hyprland 0.57 is installed (CI has none, so it passes there), and a user on 0.57 gets a config error. `default` should skip the key instead, as sway and niri do.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing row 18's batch 9 (check_all.sh's Go tests)
+
 ### A dev build during a branch switch re-execs onto the defaults
 - **Where:** `backend/internal/daemon/dev.go` (`watchSource`, `build`), the re-exec's config load
 - **What:** On 2026-10-30, `git switch main` followed 3 s later by `git pull` (main at config version 82, then 84). The source watch kicked a build of the v82 tree. The pull's changes reached the old process while that build ran, and its kick died with the process when the build re-exec'd. The new image (`the tree's schema isn't the one this binary was built with (fine in dev mode)`) knew version 82, refused the v84 config.json (`version: 84 is newer than this axiom knows (82): update axiom`) and logged `the config doesn't load: running on the defaults, saves blocked until it's fixed`. The shell came up on the defaults until the next build. config.json itself stayed untouched. Two gaps: a kick that arrives during a build should build again rather than re-exec into the stale binary (or the new image should check whether the source is newer than itself), and a re-exec that can't read the config should keep the config the old image had running (the shell's message already claims it keeps the last good config).
