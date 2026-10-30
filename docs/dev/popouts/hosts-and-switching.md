@@ -1,6 +1,6 @@
 # Popout hosts, window sizing and switching in place
 
-> **Files:** `components/hosts/popout/PopoutWrapperBase.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/FloatingPopout.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/SlideAnimation.qml`, `components/hosts/popout/SwitchStill.qml`, `shell/OSD.qml`
+> **Files:** `components/hosts/popout/PopoutWrapperBase.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/FloatingPopout.qml`, `components/hosts/popout/FloatingShadow.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/SlideAnimation.qml`, `components/hosts/popout/SwitchStill.qml`, `shell/OSD.qml`
 > **Config:** none directly
 > **Related:** [Surface context](surface-context.md), [Edge attach](edge-attach.md), [Submenus](submenus.md), [Registry](registry.md), [Content roots](../overlay/content-roots.md), [Pill and floating bars](pill-and-floating-bars.md)
 
@@ -10,7 +10,7 @@ This doc covers the shared host pieces in `components/hosts/popout/`, how a bar 
 - **`PopoutWrapperBase`:**
   - Open/close/queue state: `isOpen`, `show(data)`, `hide()`, and a timer that dismisses on hover loss.
   - A wrapper may switch an open popout to another payload in place instead of closing it first, via its `canSwitchTo(anchor, data)` and `prepareSwitch(done)` hooks.
-- **`FloatingPopout`:** a box floating in the free area, placed at a fraction across and down inside per-side margins.
+- **`FloatingPopout`:** a box floating in the free area, placed at a fraction across and down inside per-side margins. Its shadow is a `FloatingShadow`, a copy of the box that scales with it; where the blur would frost it (SwayFX, `BlurManager.shadowsApart`), that copy and the box's stroke are drawn in a window of its own (`<namespace>-shadow`, not blurred), mapped over the box's once that has committed a frame, so the stack is the popouts' (blurred fill, shadow, stroke): a stroke in the blurred window gets blur under its anti-aliased outer edge, a dark line between it and the shadow round the corners.
   - `xAlign`/`yAlign` say which part of the box sits at that point.
   - It fades in, once granted its `PopoutClaim` (`claimKey`; its footprint is its box where it's placed).
   - Used by the detached launcher and the window switcher.
