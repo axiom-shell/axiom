@@ -74,6 +74,11 @@ PopoutWrapperBase {
   // Other windows the grab lets input through to
   property var grabWindows: []
   window: surfaceWindow
+  // The shadow and stroke drawn by a window of their own (below)
+  readonly property bool _shadowApart: BarStyle.shadowed && BlurManager.shadowsApart
+  // The box's window has drawn since it mapped, so the shadow's window,
+  // mapped after it, lands over it
+  property bool _boxDrawn: false
 
   currentItem: root.contentItem
   keepAlive: boxHover.hovered || (focusGrab.active && root.wantsKeyboardFocus)
@@ -106,6 +111,8 @@ PopoutWrapperBase {
     color: "transparent"
     // Stays mapped while the box fades out
     visible: root.occupied || box.opacity > 0
+    onVisibleChanged: if (!visible)
+      root._boxDrawn = false
     focusable: root.wantsKeyboardFocus
 
     // Normal exclusion with no zone of its own: the window covers the area
@@ -170,26 +177,9 @@ PopoutWrapperBase {
       onClicked: root.hide()
     }
 
-    // The box's shadow (SurfaceShadow), cast by a copy of its shape
-    // behind it, so the content isn't drawn through a layer. Only what
-    // falls outside the box is kept, so none shows through a translucent one.
-    // Not OutsideShadow: its capture drops the target's own transform, and
-    // this copy scales with the box as it opens.
-    Rectangle {
-      visible: BarStyle.shadowed
-      x: box.x
-      y: box.y
-      width: box.width
-      height: box.height
-      radius: box.radius
-      color: "black"
-      opacity: box.opacity
-      scale: box.scale
-      transformOrigin: box.transformOrigin
-      layer.enabled: BarStyle.shadowed
-      layer.effect: SurfaceShadow {
-        cut: true
-      }
+    FloatingShadow {
+      target: box
+      shown: BarStyle.shadowed && !root._shadowApart
     }
 
     Rectangle {
@@ -209,7 +199,8 @@ PopoutWrapperBase {
       y: root.growUp ? box.placedY + box.placedHeight - box.height : box.placedY
       color: BlurManager.fillOn(root.fillColor, root.screen)
       border.color: root.strokeColor
-      border.width: Appearance.borderWidth
+      // Drawn over the shadow by its own window while that's apart
+      border.width: root._shadowApart ? 0 : Appearance.borderWidth
       radius: Appearance.borderRadius
       clip: true
 
@@ -247,6 +238,69 @@ PopoutWrapperBase {
         sourceComponent: root.content
 
         onLoaded: root.updateDismissTimer()
+      }
+    }
+  }
+
+  // Where the blur would frost the shadow out to its reach
+  // (BlurManager.shadowsApart: SwayFX), it's cast from a window of its own
+  // in a namespace nothing blurs, with the box's stroke over it, stacked
+  // as a popout over the blur window: SwayFX blurs under every pixel of
+  // the box's window that isn't clear, the stroke's anti-aliased outer
+  // edge too, so a stroke drawn there leaves a dark line of blur between
+  // it and the shadow round the corners. Mapped once the box's window has
+  // committed a frame, so it lands over it (SwayFX stacks by map order,
+  // and the blur under the box's window is opaque); the content, inside
+  // the stroke, isn't covered.
+  Connections {
+    target: root._shadowApart && !root._boxDrawn ? box.Window.window : null
+    function onFrameSwapped() {
+      if (surfaceWindow.visible)
+        root._boxDrawn = true;
+    }
+  }
+
+  LazyLoader {
+    active: root._shadowApart
+
+    PanelWindow {
+      screen: root.screen
+      color: "transparent"
+      visible: surfaceWindow.visible && root._boxDrawn
+
+      // Placed as the box's window, so the box's coordinates hold here
+      WlrLayershell.layer: WlrLayer.Overlay
+      WlrLayershell.namespace: root.layerNamespace + "-shadow"
+      WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+      exclusionMode: ExclusionMode.Normal
+      exclusiveZone: 0
+
+      anchors {
+        top: true
+        bottom: true
+        left: true
+        right: true
+      }
+
+      mask: Region {}
+
+      FloatingShadow {
+        target: box
+        shown: true
+      }
+
+      Rectangle {
+        x: box.x
+        y: box.y
+        width: box.width
+        height: box.height
+        radius: box.radius
+        color: "transparent"
+        border.color: root.strokeColor
+        border.width: Appearance.borderWidth
+        opacity: box.opacity
+        scale: box.scale
+        transformOrigin: box.transformOrigin
       }
     }
   }

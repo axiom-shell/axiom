@@ -35,6 +35,12 @@ QtObject {
   readonly property bool _perScreen: CompositorManager.supports.blurRegion === true
   readonly property bool paused: root._pauses && !root._perScreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))
   readonly property bool active: root._wanted && !root.paused
+  // Whether shadows go to windows of their own that aren't blurred: where
+  // the blur reaches every pixel that isn't clear (SwayFX's
+  // blur_ignore_transparent: no supports.blurThreshold, no blur region of
+  // a window's own), a shadow in a blurred window would be frosted out to
+  // its reach
+  readonly property bool shadowsApart: CompositorManager.supports.blur === true && CompositorManager.supports.blurThreshold !== true && CompositorManager.supports.blurRegion !== true
 
   function _name(screen) {
     return typeof screen === "string" ? screen : screen?.name ?? "";

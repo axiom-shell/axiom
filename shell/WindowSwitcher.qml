@@ -9,16 +9,10 @@ import qs.components.surfaces.switcher
 
 // The window switcher (WindowSwitcherManager): a box of window tiles in
 // the middle of the monitor that was focused when it opened. It takes no
-// keyboard: the compositor holds the keys (Hyprland's submap), so focus
-// stays on the window until one is picked; where the compositor can't tell
-// the keys' release (no supports.switcherRelease), SwitcherKeys takes the
-// keyboard while it's open.
+// keyboard: the compositor holds the keys (Hyprland's submap), or the
+// daemon does where the compositor can't tell their release (no
+// supports.switcherRelease), so no window gets them until one is picked.
 Scope {
-  LazyLoader {
-    active: CompositorManager.supports.switcher && !CompositorManager.supports.switcherRelease
-    SwitcherKeys {}
-  }
-
   Variants {
     model: General.screensFor({
       "mode": "focused"
