@@ -14,8 +14,9 @@ import qs.services.ui
 // host, placed as a dock or OSD is (an edge, a position along it,
 // detached or not): detached, a FloatingPopout `distance` across the free
 // screen from its edge (FloatPlacement); else an EdgePopout that grows
-// out of the border or bar there. Both have the same API (show/hide/isOpen/contentItem/window),
-// and only the one in use is created.
+// out of the border or bar there. Both have the same API
+// (show/hide/isOpen/contentItem/window), and only the one in use is
+// created.
 Scope {
   id: root
 
