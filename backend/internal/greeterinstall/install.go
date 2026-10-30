@@ -50,9 +50,9 @@ type run struct {
 	req     rules.Request
 	changed []string
 	backup  string
-	// The user's and greetd's user's accounts; nil while this process
-	// isn't root (a test), where their commands run as it
-	user, greeter *account
+	// The user's account; nil while this process isn't root (a test),
+	// where their commands run as it
+	user *account
 }
 
 // Run carries req out as root: install or update the copy (its code from
@@ -81,7 +81,7 @@ func (in *Installer) Run(ctx context.Context, req rules.Request) rules.Result {
 }
 
 // isRoot says whether this process is root, which then runs the user's
-// commands as them and greetd's user's as that user.
+// commands as them.
 func (in *Installer) isRoot() bool { return os.Geteuid() == 0 }
 
 // lookup is a user's account, for running commands as them.
@@ -146,9 +146,6 @@ func (r *run) install(ctx context.Context) error {
 	greeterAccount, _, err := lookup(greeterName)
 	if err != nil {
 		return failf("greetd's user %s doesn't exist", greeterName)
-	}
-	if in.isRoot() {
-		r.greeter = greeterAccount
 	}
 
 	// The greeter's folder: config/ the user's (the bundle), state/

@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -703,6 +704,162 @@ func TestEdgeBuildMovedOn(t *testing.T) {
 		data, _, err := in.releaseBinary(context.Background(), rules.MainTarget(target))
 		if moved != (err != nil && strings.Contains(err.Error(), "moved on")) || (!moved && string(data) != released) {
 			t.Errorf("target %.7s: %q, %v", target, data, err)
+		}
+	}
+}
+
+// A folder the install can't make, set or hand over stops it, and so does
+// a staging folder it can't make; a stale stage or old copy beside the copy
+// is cleared, and one that can't be leaves the copy as it was.
+func TestInstallStopsWhereItCantWrite(t *testing.T) {
+	t.Parallel()
+	if os.Getuid() == 0 {
+		t.Skip("root writes anywhere")
+	}
+	for _, tc := range []struct {
+		name, want string
+		setup      func(f *fixture)
+		user       string // "" for the fixture's
+	}{
+		{"the greeter's folder under a file", "can't make", func(f *fixture) { f.write(f.root, "var/lib", "", 0o644) }, ""},
+		{"the greeter's folder another account's", "can't make", func(f *fixture) {
+			os.MkdirAll(filepath.Join(f.root, "var/lib"), 0o755)
+			os.Symlink("/", filepath.Join(f.root, "var/lib/axiom-greeter"))
+		}, ""},
+		{"config/ handed to another account", "can't make", func(*fixture) {}, "root"},
+		{"no staging folder", "can't write " + "ROOT/usr/share/axiom-greeter.new", func(f *fixture) {
+			dir := filepath.Join(f.root, "usr/share")
+			os.MkdirAll(dir, 0o555)
+			os.Chmod(dir, 0o555)
+			f.t.Cleanup(func() { os.Chmod(dir, 0o755) })
+		}, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			f := newInstallFixture(t)
+			tc.setup(f)
+			f.refused(strings.Replace(tc.want, "ROOT", f.root, 1), rules.ActionInstall, rules.SourceLocal, rules.ChannelTags, func(r *rules.Request) {
+				if tc.user != "" {
+					r.User = tc.user
+				}
+			})
+		})
+	}
+}
+
+// replaceCopy clears a stage and an old copy left by a run that stopped,
+// and leaves neither behind; an old copy it can't clear stops the update
+// with the copy as it was and no stage left.
+func TestReplaceCopyClearsLeftovers(t *testing.T) {
+	t.Parallel()
+	f := newInstallFixture(t)
+	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	f.write(f.root, "usr/share/axiom-greeter.new/stray", "x", 0o644)
+	f.write(f.root, "usr/share/axiom-greeter.old/stray", "x", 0o644)
+	f.ok(rules.ActionUpdate, rules.SourceGit, rules.ChannelTags)
+	if f.exists("usr/share/axiom-greeter.new") || f.exists("usr/share/axiom-greeter.old") || f.exists("usr/share/axiom-greeter/stray") {
+		t.Error("a leftover stayed")
+	}
+	if os.Getuid() == 0 {
+		return // root removes anything
+	}
+	f.write(f.root, "usr/share/axiom-greeter.old/stuck/file", "x", 0o644)
+	stuck := filepath.Join(f.root, "usr/share/axiom-greeter.old/stuck")
+	os.Chmod(stuck, 0o555)
+	t.Cleanup(func() { os.Chmod(stuck, 0o755) })
+	f.refused("can't replace", rules.ActionUpdate, rules.SourceGit, rules.ChannelTags)
+	if f.exists("usr/share/axiom-greeter.new") || !f.exists("usr/share/axiom-greeter/greeter.qml") {
+		t.Error("a stopped update left a stage, or lost the copy")
+	}
+}
+
+// A local copy whose archive breaks off stops: tar's junk read whole (tar
+// exits well), or more than the pipe holds (tar is stopped, not waited on
+// forever).
+func TestLocalArchiveBreaksOff(t *testing.T) {
+	t.Parallel()
+	if _, err := os.Stat(filepath.Join(tools, "tar/tar")); err != nil {
+		t.Skip("tar isn't installed")
+	}
+	for _, junk := range []string{"512", "1048576"} {
+		t.Run(junk, func(t *testing.T) {
+			t.Parallel()
+			f := newInstallFixture(t)
+			f.env = append(f.env, "PATH="+filepath.Join(tools, "tar")+":"+os.Getenv("PATH"), "FAKE_TAR_JUNK="+junk)
+			f.refused("copying", rules.ActionInstall, rules.SourceLocal, rules.ChannelTags)
+		})
+	}
+}
+
+// A package whose scripts/greeter is another account's is refused.
+func TestPackageFolderAnotherAccountOwns(t *testing.T) {
+	t.Parallel()
+	if os.Getuid() == 0 {
+		t.Skip("root owns the stand-in")
+	}
+	f := newInstallFixture(t)
+	dir := f.packageAxiom("1.2.0-1")
+	os.RemoveAll(filepath.Join(dir, "scripts/greeter"))
+	os.Symlink("/dev/null", filepath.Join(dir, "scripts/greeter"))
+	f.refused("isn't root's", rules.ActionInstall, rules.SourcePackage, rules.ChannelTags)
+}
+
+// The file helpers return their I/O errors.
+func TestFileHelpersFail(t *testing.T) {
+	t.Parallel()
+	if os.Getuid() == 0 {
+		t.Skip("root reads anything")
+	}
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "file")
+	os.WriteFile(file, []byte("x"), 0o644)
+	unreadable := filepath.Join(tmp, "unreadable")
+	os.WriteFile(unreadable, []byte("x"), 0)
+	closed := filepath.Join(tmp, "closed")
+	os.Mkdir(closed, 0)
+	t.Cleanup(func() { os.Chmod(closed, 0o755) })
+	tree := filepath.Join(tmp, "tree")
+	os.Mkdir(tree, 0o755)
+	os.WriteFile(filepath.Join(tree, "unreadable"), nil, 0)
+	archive := func(name string, size int64, data string) io.Reader {
+		var b bytes.Buffer
+		tw := tar.NewWriter(&b)
+		tw.WriteHeader(&tar.Header{Name: name, Typeflag: tar.TypeReg, Mode: 0o644, Size: size})
+		b.WriteString(data)
+		return &b
+	}
+	into := func(made ...string) string {
+		dir := t.TempDir()
+		for _, m := range made {
+			if strings.HasSuffix(m, "/") {
+				os.MkdirAll(filepath.Join(dir, m), 0o755)
+			} else {
+				os.WriteFile(filepath.Join(dir, m), nil, 0o644)
+			}
+		}
+		return dir
+	}
+	all := func(string, []byte) bool { return true }
+	for name, run := range map[string]func() error{
+		"extract into a folder under a file":  func() error { _, err := extract(archive("a", 1, "x"), filepath.Join(file, "x"), all); return err },
+		"extract into a folder it can't open": func() error { _, err := extract(archive("a", 1, "x"), closed, all); return err },
+		"extract junk": func() error {
+			_, err := extract(strings.NewReader(strings.Repeat("x", 512)), into(), all)
+			return err
+		},
+		"extract a file cut short":       func() error { _, err := extract(archive("a", 10, "x"), into(), all); return err },
+		"extract a file under a file":    func() error { _, err := extract(archive("a/b", 1, "x"), into("a"), all); return err },
+		"extract a file over a folder":   func() error { _, err := extract(archive("a", 1, "x"), into("a/"), all); return err },
+		"copyTree of nothing":            func() error { return copyTree(filepath.Join(tmp, "missing"), t.TempDir()) },
+		"copyTree of an unreadable file": func() error { return copyTree(tree, t.TempDir()) },
+		"copyFile of nothing":            func() error { return copyFile(filepath.Join(tmp, "missing"), filepath.Join(t.TempDir(), "x")) },
+		"copyFile of an unreadable file": func() error { return copyFile(unreadable, filepath.Join(t.TempDir(), "x")) },
+		"writeFile under a file":         func() error { return writeFile(filepath.Join(file, "x"), nil, 0o644) },
+		"settle nothing":                 func() error { return settle(filepath.Join(tmp, "missing")) },
+		"readUsers of a folder":          func() error { _, err := readUsers(tmp); return err },
+	} {
+		if run() == nil {
+			t.Errorf("%s: no error", name)
 		}
 	}
 }
