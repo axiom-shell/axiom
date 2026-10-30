@@ -38,7 +38,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - a shadow runs unbroken round joined surfaces;
   - none falls on a surface joined to the one casting it (no holes needed).
 - Kept under the blur threshold, they aren't blurred.
-- Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the blur windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies.
+- Where the blur has no threshold (SwayFX's `blur_ignore_transparent` blurs every pixel that isn't clear; no `supports.blurThreshold`), it would frost the whole halo. So the blur windows draw only the fills (`BlurBackingWindow.part`), and a window beside each, in a namespace nothing blurs (`axiom-shadows`, `axiom-shadows-overlay`; `LayerStack.layers`), casts the shadows from its own copies (`BlurManager.shadowsApart`). A floating popout (the switcher, the floating launcher) does the same for its own box: its `FloatingShadow` and stroke move to a window over it, `<its namespace>-shadow`, which nothing blurs ([hosts and switching](../popouts/hosts-and-switching.md)).
 - Meanwhile the surfaces' own shadows (`OutsideShadow`, inactive while `backed`) and the border's shadow window stand down.
 
 ### Unbacked shadows

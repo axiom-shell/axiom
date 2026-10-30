@@ -46,6 +46,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/wayland/datacontrol"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/gamma"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/idlenotify"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/keyhold"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/outputs"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/seat"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/vkbd"
@@ -129,6 +130,9 @@ type Daemon struct {
 	seat         *seat.Tracker
 	idleNotifier *idlenotify.Notifier
 	keyboard     *vkbd.Keyboard
+	// keyHolder holds the keyboard for the window switcher (switcher.go)
+	keyHolder    *keyhold.Holder
+	switcherHold switcherHold
 	ctm          *ctm.Control
 	gamma        *gamma.Control
 	wayland      *waylandSession
@@ -306,6 +310,7 @@ func Run(ctx context.Context, opts Options) error {
 		OnChange: func() { d.idle.NotifierChanged() },
 	})
 	d.keyboard = vkbd.New(vkbd.Options{Seat: d.seat, OnChange: d.pushWayland, Gap: 2 * time.Millisecond})
+	d.keyHolder = keyhold.New(keyhold.Options{Seat: d.seat, Log: opts.Log.With("part", "wayland")})
 	d.newNightLight()
 	d.newClipboard()
 	d.newVPN()
@@ -314,7 +319,7 @@ func Run(ctx context.Context, opts Options) error {
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.clipboardPart(), d.vpnPart(), d.netPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.netPart(), d.dev.part()}
 	reg := d.registry(parts)
 	if opts.registered != nil {
 		opts.registered(reg)
@@ -327,6 +332,7 @@ func Run(ctx context.Context, opts Options) error {
 			d.topics.Forget(c)
 			d.watches.Forget(c)
 			d.files.Forget(c)
+			d.releaseSwitcher(c)
 			if d.niriStreams != nil {
 				d.niriStreams.Forget(c)
 			}
@@ -408,7 +414,7 @@ func Run(ctx context.Context, opts Options) error {
 // for that.
 func (d *Daemon) followCompositor(ctx context.Context, socket string) {
 	log := d.opts.Log
-	err := client.Run(ctx, socket, d.outputs, d.seat, d.idleNotifier, d.keyboard, d.ctm, d.gamma, d.clip, d.wayland)
+	err := client.Run(ctx, socket, d.outputs, d.seat, d.idleNotifier, d.keyboard, d.keyHolder, d.ctm, d.gamma, d.clip, d.wayland)
 	// Unavailable: no compositor to connect to, nor to watch
 	if err != nil && !errors.Is(err, wire.ErrGone) && axerr.KindOf(err) != axerr.Unavailable {
 		log.Warn("the Wayland connection failed: monitors aren't known", "err", err)

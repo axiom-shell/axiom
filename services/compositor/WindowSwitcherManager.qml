@@ -13,8 +13,11 @@ import qs.services.ui
  * The window switcher (Alt+Tab). The compositor reports each step, pick
  * and cancel to the backend's switcherKey: on Hyprland a switcher bind
  * enters the submap axiom's layer defines (render.SwitcherLua), so nothing here can miss
- * a quick release; sway's binds report steps only (`nop axiom switcher`),
- * and SwitcherKeys sees the release. The first step opens it on the focused
+ * a quick release. sway's and niri's binds report steps only (`nop axiom
+ * switcher`, `axiom ipc windowSwitcher`), so while it's open the daemon
+ * holds the keyboard (switcher.hold): it sees the keys already down when
+ * it takes it, so a modifier let go before then still picks, and pushes
+ * switcher.key on the release, Return or Escape. The first step opens it on the focused
  * monitor with the windows most recently used first, fixed until it
  * closes; it only shows once held for WindowSwitcherConfig.showDelay, so a
  * tap swaps windows without drawing anything.
@@ -38,6 +41,15 @@ Singleton {
   property string _screenName: ""
   // The window focused when it opened, which picking leaves alone
   property string _focusedId: ""
+  // The daemon holds the keyboard for it (no supports.switcherRelease)
+  property bool _held: false
+
+  // The modifiers the switcher binds are held by
+  // (BindActions.switcherHeld), or the usual ones with none bound
+  readonly property var _heldMods: {
+    const held = [].concat(...KeybindsConfig.activeBinds.filter(bind => KeybindManager.actionTable?.switcherSteps?.[bind.action] !== undefined).map(bind => BindActions.switcherHeld(KeyNames.split(bind.key).mods)));
+    return held.length > 0 ? held.filter((mod, i) => held.indexOf(mod) === i) : ["SUPER", "ALT", "CTRL"];
+  }
 
   // Moves the selection `n` windows on, opening first when closed (the
   // first step from the current window is the last one used)
@@ -80,13 +92,41 @@ Singleton {
     root._screenName = ShellManager.targetFor("focused");
     root._active = true;
     showTimer.restart();
+    if (CompositorManager.supports.switcher && !CompositorManager.supports.switcherRelease)
+      root._hold();
+  }
+
+  function _hold() {
+    root._held = true;
+    BackendManager.call("switcher.hold", {
+      "mods": root._heldMods
+    }, error => {
+      if (!error)
+        return;
+      // Nothing would see the release: a tap's pick
+      console.warn("WindowSwitcherManager: can't hold the keyboard:", error.message);
+      root._held = false;
+      root.commit();
+    });
   }
 
   function _close() {
     showTimer.stop();
     root._active = false;
     root._shown = false;
+    if (root._held) {
+      root._held = false;
+      BackendManager.call("switcher.release", {}, null);
+    }
   }
+
+  // The held keyboard's pick or cancel (switcher.hold)
+  Component.onCompleted: BackendManager.listen("switcher.key", key => {
+    if (key.verb === "commit")
+      root.commit();
+    else if (key.verb === "cancel")
+      root.cancel();
+  })
 
   Timer {
     id: showTimer
@@ -110,7 +150,8 @@ Singleton {
   }
 
   // `axiom ipc windowSwitcher …`, for scripts and testing: it
-  // doesn't enter the submap, so nothing picks on a release here
+  // doesn't enter Hyprland's submap, so nothing picks on a release there
+  // (sway and niri: the daemon's hold does)
   IpcTarget {
     target: "windowSwitcher"
 

@@ -32,3 +32,19 @@ func SealedFile(name string, data []byte) (*os.File, error) {
 	}
 	return f, nil
 }
+
+// ShmFile is size zeroed bytes in an anonymous memory file, for a
+// wl_shm pool: not sealed, since the compositor may map a pool
+// writable. The caller closes it once sent.
+func ShmFile(name string, size int64) (*os.File, error) {
+	fd, err := unix.MemfdCreate(name, unix.MFD_CLOEXEC)
+	if err != nil {
+		return nil, axerr.Wrap(axerr.Internal, err, "memfd_create")
+	}
+	f := os.NewFile(uintptr(fd), name)
+	if err := f.Truncate(size); err != nil {
+		f.Close()
+		return nil, axerr.Wrap(axerr.Internal, err, "sizing %s", name)
+	}
+	return f, nil
+}
