@@ -17,6 +17,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
 	"github.com/axiom-shell/axiom/backend/internal/nightlight"
+	"github.com/axiom-shell/axiom/backend/internal/nmvpn"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
 	"github.com/axiom-shell/axiom/backend/internal/store"
@@ -34,6 +35,7 @@ const (
 	topicIdle       = "idle"      // idle.state
 	topicWayland    = "wayland"   // wayland.state, nightlight.state
 	topicClipboard  = "clipboard" // clipboard.state
+	topicVPN        = "vpn"       // vpn.state, vpn.secretRequest, vpn.secretDone
 )
 
 // Pushes, each declared once with the type of its params and sent to the
@@ -63,6 +65,10 @@ var (
 	pushNightLightState = rpc.Push[nightlight.State]{Method: "nightlight.state", Latest: true}
 
 	pushClipboardState = rpc.Push[clipboardState]{Method: "clipboard.state", Latest: true}
+
+	pushVPNState         = rpc.Push[nmvpn.State]{Method: "vpn.state", Latest: true}
+	pushVPNSecretRequest = rpc.Push[nmvpn.SecretRequest]{Method: "vpn.secretRequest"}
+	pushVPNSecretDone    = rpc.Push[vpnSecretDone]{Method: "vpn.secretDone"}
 
 	// Not a hello topic: sent only to a connection watching commands
 	// (exec.watch), every watched command's output in one
@@ -177,10 +183,10 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	topics = map[string]bool{}
 	for _, t := range list {
 		switch t {
-		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard:
+		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN:
 			topics[t] = true
 		default:
-			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard)", t)
+			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn)", t)
 		}
 	}
 	return false, topics, nil

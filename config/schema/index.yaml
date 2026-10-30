@@ -80,6 +80,7 @@ sections:
   - Weather
   - ClaudeUsage
   - Tailscale
+  - Vpn
   - CustomWidgets
   - Updates
   - Todo

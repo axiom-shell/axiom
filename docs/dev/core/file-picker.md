@@ -8,7 +8,7 @@ The desktop's own file picker, for a file or a folder. Axiom draws no picker of 
 
 ### The daemon
 - `filepicker.pick` (`{ title, start, folder, filter }` → `{ path }`, `""` when cancelled; `backend/internal/filepicker`, registered in `daemon/tools.go`) shows a picker and answers when it closes.
-- It tries xdg-desktop-portal's FileChooser (`OpenFile`, with `directory` for a folder and `filters` for `"NAME:GLOB"`) on a session bus connection of its own (`internal/dbus`). Without a bus, a portal, or a FileChooser backend (xdg-desktop-portal-hyprland has none; the GTK or KDE portal provides it), it falls back to `zenity`, then `kdialog`, run as the shell's commands are (`command.Run`, the shell's environment). With none, it's `unavailable`.
+- It tries xdg-desktop-portal's FileChooser (`OpenFile`, with `directory` for a folder and `filters` for `"NAME:GLOB"`, GLOB split on spaces into one pattern each: zenity and kdialog take the spaces as they are) on a session bus connection of its own (`internal/dbus`). Without a bus, a portal, or a FileChooser backend (xdg-desktop-portal-hyprland has none; the GTK or KDE portal provides it), it falls back to `zenity`, then `kdialog`, run as the shell's commands are (`command.Run`, the shell's environment). With none, it's `unavailable`.
 - It subscribes to the portal's `Response` signals by interface before calling, and takes the one on the handle `OpenFile` returns, so a quick answer isn't missed and a portal older than `handle_token` (answering on a path of its own) still works.
 - A `start` that doesn't exist opens home.
 - A folder needs FileChooser version 3+ (`directory`); an older portal would hand back a file, so it falls back too.
@@ -24,4 +24,5 @@ The desktop's own file picker, for a file or a folder. Axiom draws no picker of 
 
 ### Callers
 - Config import: `SavedConfigsManager.browseImport()`, with a `JSON:*.json` filter.
+- VPN import: `VpnManager.pickImport()` (`*.conf *.ovpn`), and a CA certificate in the Wi-Fi menu's `WifiJoinForm`.
 - Folder settings: `SchemaField` passes `x-control: "folder"` to `SchemaTextField` as `browse`. Its folder button opens the picker in the current folder and commits the path picked at once, as a picked suggestion does. The path comes back as `~/…`: a reader of a `folder` setting expands it (`Paths.expandHome`; axiom's `system` topic does for disk usage). When no picker could be shown, the field says so; typing a path still works.

@@ -4,7 +4,7 @@ x-scope: personal
 type: object
 x-category: General
 title: Apps
-description: "The apps axiom opens: by the Terminal, File manager and Browser keybinds, and the launcher's terminal apps and Shift+Enter commands."
+description: "The apps axiom opens: by the Terminal, File manager and Browser keybinds, the launcher's terminal apps and Shift+Enter commands, and the network editor."
 additionalProperties: false
 properties:
   terminal:
@@ -25,6 +25,12 @@ properties:
     title: Browser
     default: ''
     description: Command the Browser keybind runs. Empty starts the system's default web browser.
+  networkEditor:
+    x-scope: commands
+    type: string
+    title: Network editor
+    default: nm-connection-editor
+    description: "Command the Wi-Fi menu's Settings button and the VPN module's Edit connections button run, to add or change network connections and VPNs. Empty hides both."
   pinned:
     x-scope: personal
     type: array

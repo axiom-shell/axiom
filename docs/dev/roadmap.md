@@ -137,6 +137,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs the lock-survives-reload fix, let the idle lock come up, save a loaded QML file, then unlock with the password: the lock screen stays up throughout, `scripts/log.sh --all` shows no `Session lock object was destroyed without unlocking`, and the next save after unlocking reloads. Nested niri, sway and Hyprland showed it with a test unlock hook; the real idle lock and PAM only the live session can.
 - Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
 - Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
+- Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -352,6 +353,7 @@ Found meanwhile:
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
 - [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
 - [config.json replaced by rename isn't always read by the live daemon](issues.md#configjson-replaced-by-rename-isnt-always-read-by-the-live-daemon)
+- [BlurManager.paused reads undefined on a reload](issues.md#blurmanagerpaused-reads-undefined-on-a-reload)
 
 Needs a plan:
 - [The window switcher's blur and release on sway and niri](issues.md#the-window-switchers-blur-and-release-on-sway-and-niri)
@@ -361,6 +363,7 @@ Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; t
 - [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made). *Needs testing:* in nested niri a saved profile for what's connected opens the page with nothing unsaved (the draft only changes through an edit or `_detect` adding a profile or a monitor the daemon's match doesn't list); on which compositor, and after what (opening the page, an Apply, a hotplug, a reload), does it show?
 - [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop). *Needs testing:* nothing in the code keeps the keyboard from an overlay module (the overlay asks for it on demand like the edge menus, exclusively under a grab with no native one, the newest grab since #193, and no handler above the modules takes keys), and only a real click into a field shows it, which the agents may not simulate. On which compositor does it happen, in which module, and does the field show a cursor with the keys going nowhere, or not take the click? On the desktop: is the click that ends the typing on a window (where it gives the keyboard back by design, [desktop](features/desktop.md) › Input), on the bare desktop beside the module, or inside the module itself? (Under niri's focus following the mouse, it's the deferred [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri).)
 - [A hot corner can't close what covers it](issues.md#a-hot-corner-cant-close-what-covers-it). *Needs the maintainer:* should a corner stay live over Overlay-layer surfaces (the workspace overview, a full-screen page), so it can close what it opened, as niri's own corner does?
+- [A VPN's password request can go unseen](issues.md#a-vpns-password-request-can-go-unseen). *Needs the maintainer:* which surface shows a request no open row shows (open the VPN popout, a notification, or decline so nm-applet asks).
 - [Close on outside click differs on Hyprland since the overlay ignores its grab ending](issues.md#close-on-outside-click-differs-on-hyprland-since-the-overlay-ignores-its-grab-ending). *Needs the maintainer:* should a click outside the overlay's window (another monitor, the screen border, a floating bar's gap) close it, as it still does on sway and niri, or not, as now on Hyprland?
 
 ### Deferred
@@ -399,8 +402,6 @@ Deferred by the maintainer (2026-10-29: "move what is necessary to deferred"; Qu
 Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log everything except notif sound … Build them into roadmap in the correct spot but deferred and issues (all should need a plan)"; Phase 13 features, each through [Items that need a plan](#items-that-need-a-plan) once taken up; notification sounds are the maintainer's own system sounds plan):
 - [No caps lock warning when typing a password](issues.md#no-caps-lock-warning-when-typing-a-password)
 - [Removable drives aren't handled](issues.md#removable-drives-arent-handled)
-- [No VPN controls](issues.md#no-vpn-controls)
 - [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
 - [No OSD for caps lock or the keyboard layout](issues.md#no-osd-for-caps-lock-or-the-keyboard-layout)
 - [No keyboard backlight control](issues.md#no-keyboard-backlight-control)
-- [Enterprise and WEP Wi-Fi can't be joined](issues.md#enterprise-and-wep-wi-fi-cant-be-joined)

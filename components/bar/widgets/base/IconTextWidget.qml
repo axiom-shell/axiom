@@ -60,6 +60,9 @@ BaseWidget {
 
   // Icon footprint along the main axis; the label's is its (unrotated) width
   readonly property real iconLength: _hasIcon ? (isVertical ? iconLabel.implicitHeight : iconLabel.implicitWidth) : 0
+  // Where the icon is drawn, in the widget's coordinates (for a badge on
+  // it); empty with no icon
+  readonly property rect iconRect: _hasIcon ? Qt.rect(run.x + iconLabel.x, run.y + iconLabel.y, iconLabel.width, iconLabel.height) : Qt.rect(0, 0, 0, 0)
   readonly property real _textLength: isVertical && uprightLabel ? textLabel.implicitHeight : steadyDigits ? Math.max(textLabel.implicitWidth, Math.ceil(steadyMetrics.advanceWidth)) : textLabel.implicitWidth
   readonly property real _naturalLength: _leadRoom + iconLength + _gap + (_hasText ? _textLength : 0)
 

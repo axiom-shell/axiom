@@ -18,6 +18,8 @@ Rectangle {
   property string iconText: ""
   // Draw the icon after the label instead of before it
   property bool iconAfter: false
+  // The label's and the icon's size
+  property real textSize: Appearance.fontSize
   property string tooltipText: ""
 
   // -- Configurable Appearance --
@@ -67,14 +69,14 @@ Rectangle {
       visible: root.iconText !== ""
       text: root.iconText
       textColor: root._contentColor
-      textSize: Appearance.fontSize
+      textSize: root.textSize
     }
 
     StyledText {
       id: label
       visible: text !== ""
       textColor: root._contentColor
-      textSize: Appearance.fontSize
+      textSize: root.textSize
       font.bold: true
     }
   }

@@ -136,12 +136,17 @@ func TestPortal(t *testing.T) {
 		portal *fakePortal
 		req    Request
 		want   string
+		// The filter's name and patterns sent
+		filter []any
 	}{
-		{"a file", &fakePortal{version: 4, uris: []string{"file:///home/u/My%20Config.json"}}, Request{Title: "Import", Filter: "JSON:*.json"}, "/home/u/My Config.json"},
-		{"a folder", &fakePortal{version: 3, uris: []string{"file:///home/u/Pictures"}}, Request{Title: "Pick", Folder: true, Filter: "JSON:*.json"}, "/home/u/Pictures"},
-		{"cancelled", &fakePortal{version: 4, code: 1}, Request{Title: "Pick"}, ""},
-		{"nothing chosen", &fakePortal{version: 4}, Request{Title: "Pick"}, ""},
-		{"a portal older than handle_token", &fakePortal{version: 1, uris: []string{"file:///tmp/x"}, oldPaths: true}, Request{Title: "Pick"}, "/tmp/x"},
+		{"several patterns", &fakePortal{version: 4, uris: []string{"file:///home/u/wg0.conf"}}, Request{Title: "Import", Filter: "VPN files:*.conf *.ovpn"}, "/home/u/wg0.conf",
+			[]any{"VPN files", []any{[]any{uint32(0), "*.conf"}, []any{uint32(0), "*.ovpn"}}}},
+		{"a file", &fakePortal{version: 4, uris: []string{"file:///home/u/My%20Config.json"}}, Request{Title: "Import", Filter: "JSON:*.json"}, "/home/u/My Config.json",
+			[]any{"JSON", []any{[]any{uint32(0), "*.json"}}}},
+		{"a folder", &fakePortal{version: 3, uris: []string{"file:///home/u/Pictures"}}, Request{Title: "Pick", Folder: true, Filter: "JSON:*.json"}, "/home/u/Pictures", nil},
+		{"cancelled", &fakePortal{version: 4, code: 1}, Request{Title: "Pick"}, "", nil},
+		{"nothing chosen", &fakePortal{version: 4}, Request{Title: "Pick"}, "", nil},
+		{"a portal older than handle_token", &fakePortal{version: 1, uris: []string{"file:///tmp/x"}, oldPaths: true}, Request{Title: "Pick"}, "/tmp/x", nil},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -168,7 +173,7 @@ func TestPortal(t *testing.T) {
 				t.Errorf("options = %v", sent)
 			}
 			if filters {
-				want := []any{[]any{"JSON", []any{[]any{uint32(0), "*.json"}}}}
+				want := []any{tc.filter}
 				if got := sent["filters"].Value; !equalAny(got, want) {
 					t.Errorf("filters = %#v", got)
 				}

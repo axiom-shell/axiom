@@ -234,3 +234,55 @@ func TestBusGoneEndsTheConnection(t *testing.T) {
 		t.Errorf("a call after the end: %v", err)
 	}
 }
+
+// A deferred method answers after it returned, from another goroutine,
+// while the connection keeps answering other calls; a second reply is
+// dropped.
+func TestDeferredReply(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	server, client := dial(t, bus.Address), dial(t, bus.Address)
+	release := make(chan struct{})
+	_, err := server.Export("/test", dbus.Interface{Name: "test.Wait", Methods: map[string]dbus.Method{
+		"Wait": {In: "s", Out: "s", Defer: func(_ context.Context, call *dbus.Message, reply func([]any, error)) {
+			s := call.Body[0].(string)
+			go func() {
+				<-release
+				reply([]any{s + "!"}, nil)
+				reply([]any{"twice"}, nil)
+			}()
+		}},
+		"Refuse": {Defer: func(_ context.Context, _ *dbus.Message, reply func([]any, error)) {
+			go reply(nil, dbus.NewError("test.Error.Later", "no"))
+		}},
+		"Now": {Out: "s", Fn: func(context.Context, *dbus.Message) ([]any, error) { return []any{"now"}, nil }},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	waited := make(chan string, 1)
+	go func() {
+		reply, err := client.Call(ctx(t), server.UniqueName(), "/test", "test.Wait", "Wait", "s", "done")
+		if err != nil {
+			waited <- err.Error()
+			return
+		}
+		waited <- reply.Body[0].(string)
+	}()
+	// The pending call doesn't hold the dispatcher up
+	if reply, err := client.Call(ctx(t), server.UniqueName(), "/test", "test.Wait", "Now", ""); err != nil || reply.Body[0] != "now" {
+		t.Fatalf("Now: %v", err)
+	}
+	close(release)
+	select {
+	case got := <-waited:
+		if got != "done!" {
+			t.Errorf("Wait: %q", got)
+		}
+	case <-time.After(testkit.Bound(3 * time.Second)):
+		t.Fatal("no deferred reply")
+	}
+	if _, err := client.Call(ctx(t), server.UniqueName(), "/test", "test.Wait", "Refuse", ""); dbus.ErrorName(err) != "test.Error.Later" {
+		t.Errorf("Refuse: %v", err)
+	}
+}

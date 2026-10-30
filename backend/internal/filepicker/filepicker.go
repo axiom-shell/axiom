@@ -38,7 +38,7 @@ type Request struct {
 	// A folder, not a file
 	Folder bool `json:"folder,omitempty"`
 	// "NAME:GLOB": offer only files matching GLOB, under NAME (a bare GLOB
-	// is its own name). Files only.
+	// is its own name); GLOB may be several, space-separated. Files only.
 	Filter string `json:"filter,omitempty"`
 }
 
@@ -156,7 +156,12 @@ func openOptions(r Request, token string) map[string]dbus.Variant {
 	if r.Folder {
 		options["directory"] = dbus.MakeVariant(true)
 	} else if name, glob := filter(r); glob != "" {
-		options["filters"] = dbus.Variant{Sig: "a(sa(us))", Value: []any{[]any{name, []any{[]any{uint32(0), glob}}}}}
+		// One pattern each: zenity and kdialog split the spaces themselves
+		var patterns []any
+		for _, g := range strings.Fields(glob) {
+			patterns = append(patterns, []any{uint32(0), g})
+		}
+		options["filters"] = dbus.Variant{Sig: "a(sa(us))", Value: []any{[]any{name, patterns}}}
 	}
 	return options
 }

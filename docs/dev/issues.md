@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A VPN's password request can go unseen
+- **Where:** `services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)
+- **What:** axiom takes NetworkManager's secret request whenever the shell is connected, but only a `VpnRow` shows it: the Wi-Fi menu (with its VPN section), the VPN popout or a VPN card. A VPN needing a password brought up from `/vpn` in the launcher, or by a click on a `Vpn` widget in an edge menu, shows its field nowhere: the row reads "Connecting…" until NetworkManager gives up, and nm-applet is never asked. Open: whether the request opens the VPN popout, sends a notification that opens it, or axiom answers `NoSecrets` while no row is shown (so another agent asks).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the VPN branch
+
+### BlurManager.paused reads undefined on a reload
+- **Where:** `services/ui/BlurManager.qml` (`paused`)
+- **What:** A hot reload logged `@services/ui/BlurManager.qml[36:3]: Unable to assign [undefined] to bool` once (2026-10-30, after saving QML files under `components/content/`; neither file the binding reads had changed). `paused` is a `&&` chain whose last term is `General.outputs.some(…)`; something in it (likely a singleton not ready yet during the reload, or `Appearance.blurPauseFullscreen`) reads undefined for a moment. Harmless (it settles at once), but it's log noise; `=== true` on the term that can be undefined, or `!!` on the chain, would silence it once the term is found.
+- **Size:** trivial
+- **Found:** 2026-10-30, while building the network popout's VPN fold and connection details
+
 ### TestOrphanOfAnEarlierDaemonIsStopped misses the orphan's stop under a loaded run
 - **Where:** `backend/internal/supervise` (`TestOrphanOfAnEarlierDaemonIsStopped`)
 - **What:** In a full local `scripts/dev/verify.sh --all` run the test failed after its 15 s bound with `the orphan wasn't stopped` (supervise_test.go:147); run alone it passes in 0.05 s, three times in a row. Like the flaky tests batch 4 fixed, its wait is likely too tight, or racy, under a loaded machine.
@@ -453,12 +465,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
-### No VPN controls
-- **Where:** `services/system/NetworkingManager.qml`, `components/content/Network/`
-- **What:** The Network popout and module have no VPN connections (no "vpn" or "wireguard" anywhere in services or the schema); only Tailscale has its own widget. A user's NetworkManager VPNs (WireGuard, OpenVPN) can't be seen or toggled. Also open: whether Quickshell's Networking exposes VPN connections or the daemon goes to NetworkManager, and where they show.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while listing small gaps users notice at once
-
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `services/system/BluetoothManager.qml` (`_connectAfterPair`), `components/content/BluetoothDevices/`
 - **What:** Pairing trusts, pairs and connects, but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Also open: whether Quickshell's Bluetooth registers an agent, or the daemon does, and the prompt's surface.
@@ -474,11 +480,5 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### No keyboard backlight control
 - **Where:** `services/system/BrightnessManager.qml`
 - **What:** Laptops' keyboard backlights (`kbd_backlight` LEDs) have no slider, OSD bar or keys: nothing in services reads them. Also open: whether `BrightnessManager` takes them as another device, the OSD bar kind, and writing the LED through the daemon.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while listing small gaps users notice at once
-
-### Enterprise and WEP Wi-Fi can't be joined
-- **Where:** `services/system/NetworkingManager.qml` (`toggle`'s `unsupported`)
-- **What:** The Network menu only takes a PSK: an enterprise (EAP: eduroam, work networks) or WEP network fails with `unsupported`, so users at a university or office have to use nmtui or nm-connection-editor. Also open: which EAP methods to offer (PEAP/TTLS with a username and password at least), certificates, and the secrets going through `SecretsManager`.
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
