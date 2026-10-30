@@ -426,9 +426,10 @@ Panel {
     }
   }
 
-  // Logging in runs `tailscale up`, which needs the rights first
+  // A pending login's link opens for anyone; without one, logging in runs
+  // `tailscale up`, an action (TailscaleConfig.actions) needing the rights
   Notice {
-    visible: TailscaleManager.needsLogin && !TailscaleManager.profilesDenied
+    visible: TailscaleManager.needsLogin && (TailscaleManager.authURL !== "" || root.canAct && !TailscaleManager.profilesDenied)
     icon: "login"
     tint: Theme.accent
     title: I18n.tr("Log in to Tailscale")
@@ -528,6 +529,7 @@ Panel {
     icon: "alt_route"
     label: I18n.tr("Exit node")
     value: TailscaleManager.exitNode || I18n.tr("None")
+    foldable: !TailscaleManager.profilesDenied
     open: root.exitOpen
     onToggled: root.exitOpen = !root.exitOpen
     body: ColumnLayout {
@@ -565,6 +567,7 @@ Panel {
     label: I18n.tr("Options")
     // I18n.tr("Subnet routes") I18n.tr("Tailscale DNS") I18n.tr("Shields up")
     value: [TailscaleManager.prefs.acceptRoutes ? "Subnet routes" : "", TailscaleManager.prefs.acceptDNS ? "Tailscale DNS" : "", TailscaleManager.prefs.shieldsUp ? "Shields up" : ""].filter(s => s).map(s => I18n.tr(s)).join(" · ")
+    foldable: !TailscaleManager.profilesDenied
     open: root.optionsOpen
     onToggled: root.optionsOpen = !root.optionsOpen
     body: ColumnLayout {

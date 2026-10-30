@@ -72,7 +72,6 @@
       "Active": true
     }
   },
-  "User": {},
   "User": {
     "42": {"ID": 42, "LoginName": "me@example.com", "DisplayName": "Me", "ProfilePicURL": ""},
     "7": {"ID": 7, "LoginName": "other@example.com", "DisplayName": "Other", "ProfilePicURL": ""}
