@@ -26,12 +26,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the VPN branch
 
-### Hyprland 0.57 refuses the empty pointer acceleration profile
-- **Where:** `config/schema/sections/Input.yaml` (`accel`'s hyprland `value: emptyIsDefault`), `backend/internal/compositor/render`
-- **What:** With pointer settings on and acceleration left at `default`, the writer sets `input.accel_profile` to `""`. Hyprland 0.57.0 rejects it (`error setting 'input.accel_profile': bad value "", allowed values are: "adaptive", "flat", "custom"`), so `TestCompositorsReadTheFiles/HyprConfigLua` fails wherever Hyprland 0.57 is installed (CI has none, so it passes there), and a user on 0.57 gets a config error. `default` should skip the key instead, as sway and niri do.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing row 18's batch 9 (check_all.sh's Go tests)
-
 ### BlurManager.paused reads undefined on a reload
 - **Where:** `services/ui/BlurManager.qml` (`paused`)
 - **What:** A hot reload logged `@services/ui/BlurManager.qml[36:3]: Unable to assign [undefined] to bool` once (2026-10-30, after saving QML files under `components/content/`; neither file the binding reads had changed). `paused` is a `&&` chain whose last term is `General.outputs.some(…)`; something in it (likely a singleton not ready yet during the reload, or `Appearance.blurPauseFullscreen`) reads undefined for a moment. Harmless (it settles at once), but it's log noise; `=== true` on the term that can be undefined, or `!!` on the chain, would silence it once the term is found.
