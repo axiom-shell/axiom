@@ -21,7 +21,7 @@ Read `../review-branch/lenses.md` › Every reviewer and The lead reviewer first
 
 ## Phase 0: scope
 
-1. `python3 .claude/skills/review-system/scope.py <system> > scope.txt` (in the work folder) and read it: anything NOT FOUND first (a moved file or a bad pattern hides code: find the files it meant and review them too; the stale pattern is a finding), the docs, the code ranked by risk (size × churn × fix commits), files shared with other systems (`[also in: …]`: seams; outline them unless they're this system's core), tests and data, the last review and what changed since, and the open `issues.md` entries on these files (known: never report them again; say if the code now fixes one or makes it worse).
+1. `python3 .claude/skills/review-system/scope.py <system> > scope.txt` (in the work folder) and read it: anything NOT FOUND first (a moved file or a bad pattern hides code: find the files it meant and review them too; the stale pattern is a finding), any glob in a doc header (the kind of file that doc's rules cover: grep them against those rules, as `collection` mode does), the docs, the code ranked by risk (size × churn × fix commits), files shared with other systems (`[also in: …]`: seams; outline them unless they're this system's core), tests and data, the last review and what changed since, and the open `issues.md` entries on these files (known: never report them again; say if the code now fixes one or makes it worse).
 2. **Incremental by default.** With a last review (`.claude/reviews/<system>.md`) and no `--full`: read it; the deep set is the files changed since its commit, plus a recheck of each open finding (its `issues.md` entry gone means fixed). Nothing changed and nothing open: say so and stop.
 
 ## Phase 1: the contract

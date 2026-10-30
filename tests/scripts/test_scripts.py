@@ -609,7 +609,8 @@ class CheckDocs(unittest.TestCase):
 
 class ReviewScope(unittest.TestCase):
     """.claude/skills/review-system/scope.py: a doc header's folders and
-    {a,b} name their files, a path matching nothing is reported; --apply
+    {a,b} name their files, a path matching nothing is reported, --orphans
+    sees files at any depth; --apply
     files each title once (across reports and re-runs), links it from the
     roadmap, flags a symbol two entries name and copies the reviews file."""
 
@@ -632,6 +633,10 @@ class ReviewScope(unittest.TestCase):
                 "> **Files:** `services/compositor/{NiriManager,SwayManager}.qml`, `services/compositor/`,"
                 " `services/gone.qml`, `shell.qml`, `LayoutsPanel`, `components/content/<Type>/<Type>.qml`\n")
             _, out = self.run_scope(root, "doc:docs/dev/ghost.md")
+            (root / "backend/internal/pkg/sub").mkdir(parents=True)
+            (root / "backend/internal/pkg/sub/deep.go").write_text("package sub\n")
+            _, orphans = self.run_scope(root, "--orphans")
+        self.assertIn("  backend/internal/pkg/sub/deep.go\n", orphans)
         self.assertIn("NOT FOUND (a moved file or a bad pattern: its code is missing below): "
                       "services/gone.qml (docs/dev/ghost.md)\n", out)
         self.assertEqual(out.count("services/compositor/NiriManager.qml"), 1, out)

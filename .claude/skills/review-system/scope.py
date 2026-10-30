@@ -18,7 +18,7 @@ what reviews found.
 
 <system> is a name from systems.md, or feature:<name>, doc:<path>, files:<glob>.
 A folder (`dir/`) in a doc's Files header or in Extra means the files directly
-in it, and `{a,b}` both names; a glob in a doc header is reported, not
+in it, `**` any depth and `{a,b}` both names; a glob in a doc header is reported, not
 expanded. A path that matches nothing is reported as not found.
 """
 import glob
@@ -68,7 +68,7 @@ def braces(pattern):
 def expand(pattern, base=ROOT):
     hits = []
     for p in braces(pattern):
-        hits += glob.glob(os.path.join(base, p + "*" if p.endswith("/") else p))
+        hits += glob.glob(os.path.join(base, p + "*" if p.endswith("/") else p), recursive=True)
     return [os.path.relpath(h, base) for h in sorted(set(hits)) if os.path.isfile(h)]
 
 
