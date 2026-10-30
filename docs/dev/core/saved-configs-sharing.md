@@ -28,7 +28,8 @@ Inherited down the schema; the root is `machine`.
 
 ### What travels (`share`, pure)
 Walks a value along the schema.
-- `Pick(schema, config, carry, monitors)`: keeps the carried leaves (`carry`: none, `personal`, `commands`, or both), writing monitors by place when given them.
+- `Pick(schema, config, carry, monitors)`: keeps the carried leaves (`carry`: none, `personal`, `commands`, or both), writing monitors by place when given them (a value already a place stays one).
+- `Dropped(schema, config, carry, monitors)`: what that pick leaves out, `{ path, scope }` at the highest place (`takeover` for an `x-takeover` setting); given a sparse config, so defaults aren't listed.
 - `Apply(schema, current, example, carry, monitors)`: takes the example's carried parts.
   - An array is taken outright, so nothing of the old layout stays.
   - Inside the carried parts it keeps the user's other values from the same item: by `id` (every collection item has one), then `name`; anything else by position (machine values only); else the default. Position matching is machine-only because a personal value such as a command must not land on another button.
@@ -57,8 +58,9 @@ Walks a value along the schema.
 - `restoreDefaults()` applies the schema defaults like an example (with personal parts and commands), after a `before-defaults` backup.
 
 ### Export
-- `exportConfig(personal, commands, places)` (`share.export`) writes `~/axiom-[<active>-]<date>-<time>.json`, with monitors by place unless `places` is false (the community export, until its check takes them: [issues](../issues.md)).
+- `exportConfig(personal, commands, places)` (`share.export`) writes `~/axiom-[<active>-]<date>-<time>.json`, with monitors by place unless `places` is false.
 - Contents: the envelope plus the sparse pick. It applies as the whole pick would.
+- `axiom config share FILE [--places]` (`saved.Share`, offline) prints a shared file of any version as Export would write it again, plus `dropped`: the community setups' CI ([community setups](../features/community-setups.md)). With `--places` and no monitors, places stay and connector names are dropped.
 
 ### Adding an example setup
 - Build the setup in the shell, then Settings → Maintenance → Share → Export, with both switches off unless the example needs a command. It writes `~/axiom-<name>-<date>-<time>.json`, holding only the look (`x-scope`) minus defaults.

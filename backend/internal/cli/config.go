@@ -14,6 +14,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/saved"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
@@ -34,6 +35,7 @@ Bars[main].location, quoted in zsh).`,
 			configSetCommand(),
 			configResetCommand(),
 			configValidateCommand(),
+			configShareCommand(),
 			configStatusCommand(),
 		},
 	}
@@ -290,13 +292,9 @@ func configValidateCommand() *Command {
 				} else if len(args) > 1 {
 					return usageError([]string{"axiom", "config", "validate"}, "takes one file")
 				}
-				data, err := os.ReadFile(file)
+				parsed, err := readConfigFile(file)
 				if err != nil {
-					return axerr.Wrap(axerr.NotFound, err, "reading %s", file)
-				}
-				parsed, err := jsonx.Unmarshal(data)
-				if err != nil {
-					return &axerr.Error{Kind: axerr.InvalidConfig, Message: file + " isn't JSON", Issues: []axerr.Issue{{Path: "", Message: err.Error()}}}
+					return err
 				}
 				pipeline, err := offlinePipeline(e, *treeDir)
 				if err != nil {
@@ -324,6 +322,72 @@ func configValidateCommand() *Command {
 						fmt.Fprintf(w, "; unknown keys dropped: %s", strings.Join(loaded.Removed, ", "))
 					}
 					fmt.Fprintln(w)
+				})
+			}
+		},
+	}
+}
+
+// readConfigFile is file parsed, or an invalid_config error when it isn't
+// JSON.
+func readConfigFile(file string) (any, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, axerr.Wrap(axerr.NotFound, err, "reading %s", file)
+	}
+	parsed, err := jsonx.Unmarshal(data)
+	if err != nil {
+		return nil, &axerr.Error{Kind: axerr.InvalidConfig, Message: file + " isn't JSON", Issues: []axerr.Issue{{Path: "", Message: err.Error()}}}
+	}
+	return parsed, nil
+}
+
+func configShareCommand() *Command {
+	return &Command{
+		Name:    "share",
+		Summary: "Print a shared config file as Export would write it",
+		Args:    "FILE",
+		Help: `FILE (an export of any version) is loaded as an import is, then printed as
+Export writes it: its title and description, then only its look, without what
+it holds that's personal (keybinds, apps), runs a command, belongs to the PC
+(monitor names, wallpapers, accounts) or takes something over. Those are listed
+as dropped, each with its scope. With --places, a monitor already named by its
+place (#2, @primary, *) is kept. Nothing is changed or applied; the
+community setups' checks run this.`,
+		Setup: func(fs *flag.FlagSet) Runner {
+			treeDir := fs.String("tree", "", "load through this tree's schema")
+			places := fs.Bool("places", false, "keep monitors named by their place")
+			return func(ctx context.Context, e *Env, args []string) error {
+				if len(args) != 1 {
+					return usageError([]string{"axiom", "config", "share"}, "takes one file")
+				}
+				file := args[0]
+				parsed, err := readConfigFile(file)
+				if err != nil {
+					return err
+				}
+				pipeline, err := offlinePipeline(e, *treeDir)
+				if err != nil {
+					return err
+				}
+				shared, err := saved.Share(pipeline, parsed, filepath.Base(file), *places)
+				if err != nil {
+					return err
+				}
+				l := shared.Loaded
+				result := map[string]any{
+					"file": file, "valid": true, "migrated": l.Migrated, "removed": l.Removed, "changes": l.Changes,
+					"format": shared.Export.Value("format"), "version": shared.Export.Value("version"),
+					"config": json.RawMessage(jsonx.Marshal(shared.Export)), "dropped": shared.Dropped,
+				}
+				return e.Output(result, func(w io.Writer) {
+					w.Write(jsonx.Marshal(shared.Export))
+					for _, d := range shared.Dropped {
+						fmt.Fprintf(e.Stderr, "left out (%s): %s\n", d.Scope, d.Path)
+					}
+					if len(l.Removed) > 0 {
+						fmt.Fprintf(e.Stderr, "unknown keys dropped: %s\n", strings.Join(l.Removed, ", "))
+					}
 				})
 			}
 		},
