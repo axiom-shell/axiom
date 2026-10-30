@@ -4,7 +4,7 @@ import QtQuick.Controls
 import qs.config
 
 // A single-line text field in a StyledContainer. It writes every keystroke
-// back to `text`: push values in and act on textEdited (see AGENTS.md pitfalls).
+// back to `text`: push values in and act on textEdited (see docs/dev/core/qml-pitfalls.md).
 // `clearable` (search boxes) adds an X at the right while it holds text,
 // which empties it as a typed edit and keeps the focus in it; with
 // `escapeClears`, Escape does too (passed on when it's already empty).

@@ -64,7 +64,7 @@ Dependencies point one way:
 - **Data owners** (`ConfigManager`, `ThemeManager`, `I18n`) load and watch files; `ConfigManager` reads no reader.
 - **`config/` readers** read only the owners and each other.
 - **Services** use readers and methods and own every side effect: processes, dispatches, file writes, polling.
-- **UI** uses everything below, but runs no polling Process or Timer and never reads `ConfigManager.config`.
+- **UI** uses everything below, but runs no polling Process or repeating Timer and never reads `ConfigManager.config`.
 - **A methods helper's decision** (`BarEnds`, `SurfaceContext`, `EdgeAttach`, …) is read from its output, never re-derived in a host: a new case is a rule in the helper plus a test row.
 
 ## Services
@@ -99,5 +99,5 @@ How they're built: `docs/dev/core/services-pattern.md`.
 - **Pages show at once and fill in** (`docs/dev/core/streamed-building.md`): panels and anything long are `StreamedLoader`s, nothing is built hidden, unbounded lists are ListViews.
 - **Repeater models and `acquire()` requests come from config and tool availability only, never live values** (`check_structure`): one re-evaluated per sample once pushed qs past 25 GB.
 - **Sizes** from `Widget`, `Widget.px(n)` and `Appearance.fontSize(By)` (`scripts/check_sizes.py`); `Appearance.borderRadius` only for outer edges, `Widget.radius` inside; rounded clipping is `ClippingRectangle`; icons are `StyledIcon`, never in a Text with a label.
-- **Screen targeting**: surfaces on `General.screensFor(target)` or `General.outputs`, never `Quickshell.screens` (`check_structure`); only `ShellManager.isTarget(screen, target)` answers shortcuts, IPC and OSD events. An outside click closes through `FocusGrab`.
+- **Screen targeting**: surfaces on `General.screensFor(target)` or `General.outputs`, never `Quickshell.screens` (`check_structure`); only `ShellManager.isTarget(screen, target)` answers shortcuts, IPC and OSD events, and IPC handlers are `enabled` there only. An outside click closes through `FocusGrab`.
 - **Subsystem invariants** (`components/content/`, `components/bar/`, `components/hosts/popout/`, `services/` `AGENTS.md`): modules exist only while shown; corners are `BarEnds`' alone; nothing draws over fullscreen; an open popout never moves. The greeter runs data, never code (side effects check `Paths.greeter`). Only `LockManager.lock()` locks; only PAM unlocks.
