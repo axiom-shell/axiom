@@ -4,7 +4,7 @@
 > **Config:** one reader per section
 > **Related:** [Config manager](config-manager.md), [Schema annotations](schema-annotations.md), [Themes](../theming/themes.md)
 
-Typed, read-only views of config sections. (Rule: AGENTS.md › Config, reader naming and no `??` fallbacks; › Layering.)
+Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` fallbacks; › Layering. Reader naming: [README](../README.md) › Layout.)
 
 ### What a reader is
 - `pragma Singleton`, but a reader, not an owner: one per config section, exposing `readonly property` values from `ConfigManager.live` (the config with editors' unsaved previews over it, [Previews](config-manager.md#previews)).

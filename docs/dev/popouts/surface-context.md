@@ -4,7 +4,7 @@
 > **Config:** none directly (reads bars, border and integrated menus through `ScreenEdgeManager`)
 > **Related:** [Edge attach](edge-attach.md), [Registry](registry.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Shadows](shadows.md), [Bar layering and corners](../bar/layering-and-corners.md)
 
-Every surface that grows out of a screen edge asks one pure helper what each of its ends meets. Read this before changing how any popout, dock or submenu joins, walls off or fillets at an intersection. (Rule: AGENTS.md › UI conventions, "Popout geometry".)
+Every surface that grows out of a screen edge asks one pure helper what each of its ends meets. Read this before changing how any popout, dock or submenu joins, walls off or fillets at an intersection. (Rule: `components/hosts/popout/AGENTS.md`.)
 
 ### One rule set for what a surface meets
 - Surfaces covered:

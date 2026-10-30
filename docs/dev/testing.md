@@ -13,8 +13,26 @@ How to look at, exercise and debug the live shell without breaking the user's se
 - `scripts/dev/mem.sh PID` reads a qs's memory (RSS, Private_Dirty, AnonHugePages, the JS heap, render threads), and `bench_overlay.sh -p PID --mem -n CYCLES` reads it after each overlay cycle of a nested shell: [memory.md](core/memory.md).
 - `scripts/dev/shot.sh` takes a screenshot of a surface and closes it again, printing the PNG's path: `page <ViewType>`, `launcher [text]`, `ipc <target> <open> [close]`, `screen`; `-m MONITOR` (default the focused one), `-w SECONDS`.
 
+### The checks
+All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs every one. None runs the shell, so still read the log. (The rules they hold: AGENTS.md › Checks.)
+- `scripts/check_structure.py`: folders, imports, layering gates, the Quickshell.Io allowlist, and the AGENTS.md rules a pattern can hold (live Repeater models, `duration:` literals, `Qt.formatDateTime`, `Quickshell.screens`). Run it after adding, renaming or moving QML files. It fails a singleton over 800 lines (bar `components/methods/` and the compositor backends): split it.
+- `scripts/run_tests.sh [Name…]` runs `tests/tst_<Name>.qml` (schema defaults are `tst_Config`); a migration step's tests are Go (`scripts/check_go.sh`).
+- `scripts/check_qmllint.py` fails on warnings not in `scripts/qmllint-baseline.json`, and on baselined ones gone. `--update-baseline` only for Quickshell type-info gaps or baselined warnings gone.
+- `scripts/check_i18n.py`: the pre-commit hook (`git config core.hooksPath .githooks`; verify.sh warns if it isn't set up) adds new keys empty (shown in English) to every `config/i18n/<code>.json` and drops unused ones ([i18n](core/i18n.md)). `config/i18n/template/language.json` is generated. Edit i18n files only in the checker's format (2-space JSON; `--format` fixes it).
+- `scripts/check_docs.py` fails on a hand-written doc citing a path or `Singleton.member` that's gone (fix the doc with the code), and on an `x-*` annotation missing from [schema-annotations](core/schema-annotations.md).
+- `scripts/check_go.sh`: the Go checks for `backend/` (`--fix` regenerates and formats); rules in `backend/AGENTS.md`.
+- `scripts/check_packages.py`: a new dependency goes in install.sh's table, `Packages.packages` and the AUR PKGBUILDs ([packaging](packaging.md)).
+- `scripts/check_sizes.py`: literal pixel sizes outside the bars ([shared-ui-pieces](core/shared-ui-pieces.md) › Sizes).
+- **Built, never committed** (`.gitignore`; `scripts/generate.sh` builds them when stale, and verify.sh, check_all.sh, check_go.sh and CI run it first; a fresh clone runs it once): `config/json/config.schema.json` (from `config/schema/`), the binary's embedded copies `backend/internal/assets/data/`, the reference docs `docs/dev/config/` and `docs/dev/generated/` (`scripts/gen_docs.py`, which also fails when the shell calls a daemon method the daemon doesn't define, and on a setting nobody reads or a reader member nobody uses that `scripts/config-usage-baseline.json` doesn't list: that list only shrinks), and with `--fixtures` the shared fixtures `tests/fixtures/shared/` (recorded from the JS helpers; needs qmltestrunner and the whole git history).
+- Generated but committed, never edited by hand: `config/themes/template/theme.json` (`scripts/gen_theme_template.py`; the pre-commit hook rebuilds it) and `config/i18n/template/language.json`.
+- `scripts/check_doc_drift.py` (warnings) lists docs whose `Files:` changed in 5+ commits since the doc did: reread one against the code before relying on it, and touch it to reset the count.
+- Formatting: verify.sh formats changed QML in place with Qt 6's qmlformat (`.qmlformat.ini`), keeping the inode; the `qmlformat` on PATH is Qt 5's and fails silently. A `// reads: Section.path, …` comment's `*` matches any part; `// rpc:` comments: [protocol](backend/protocol.md) › Changing the protocol.
+
 ### Reloads and logs
-- The shell runs under `axiom run` and hot-reloads QML files it has loaded. Never start, stop or restart it (or the daemon) yourself; ask the user to restart.
+- The shell runs under `axiom run` and hot-reloads QML files it has loaded. Never start, stop or restart it (or the daemon) yourself; ask the user to restart. A second axiom runs only nested: `scripts/dev/nested.sh <sway|niri|hyprland>`.
+- A scratch environment in zsh: `E="XDG_RUNTIME_DIR=/x XDG_CONFIG_HOME=/y"; env $E …` passes one argument, so the command falls back to the live folders (two test writes once landed in the real config.json this way). Put the assignments inline, use `env ${=E}`, or source a file in `bash -c`, and check `axiom config path` resolves to the scratch folder before any write.
+- `~/.config/axiom/config.json` belongs to the settings UI but may be edited to test (with Edit or Write, never from Bash: AGENTS.md › Never). An invalid file never replaces the running config (`savesBlocked` refuses saves until it's fixed).
+- `console.log` is for tracing (`scripts/log.sh --debug` shows it), `console.warn` only for real problems.
 - Outside dev mode the daemon reads the schema once, at its start: after a schema change, the live shell keeps the old schema until the user restarts axiom, on a binary rebuilt with the new one (`scripts/generate.sh`, then `go -C backend build -o ~/.local/bin/axiom ./cmd/axiom` or wherever theirs lives). Test a schema change in `scripts/dev/nested.sh`, or with `axiom config validate`.
 - **Dev mode** (`axiom dev status`; only the user switches it: `axiom dev on|off|rebuild` is refused against the live daemon): while it's on, a YAML edit rebuilds the live schema, and saving a Go file under `backend/` builds axiom and re-execs the live daemon by itself (the shell keeps running): that's expected, not something to avoid. A failed build shows in `axiom dev status` and the daemon log (`axiom daemon logs`).
 - `scripts/log.sh` shows warnings and errors since the last reload. `--debug` adds `console.log`, `--all` covers earlier reloads, `-f` follows, `-g PATTERN` filters. A clean reload is just `Reloading configuration...` + `Configuration Loaded`.
@@ -33,7 +51,7 @@ How to look at, exercise and debug the live shell without breaking the user's se
 ### Seeing a page or surface
 - Overlay pages: `scripts/dev/shot.sh page <ViewType>` does all of this. By hand: `axiom ipc overlay page <ViewType>`, then `grim -o <monitor>` (or `grim -g "X,Y WxH"`), crop with `magick`, read the PNG, then `axiom ipc overlay close`.
 - The overlay only instantiates the current page and its neighbours, so a page's QML errors only reach `scripts/log.sh` once it's been opened like this.
-- A temporary `IpcTarget` (for a settings category, a lockscreen preview, a screenshot hook) goes in `shell.qml`, called with `axiom ipc`. Revert it in place afterwards.
+- A temporary `IpcTarget` (for a settings category, calling `SettingsManager.openCategory(name)`; a lockscreen preview; a screenshot hook) goes in `shell.qml`, called with `axiom ipc`. Revert it in place afterwards.
 - Never simulate cursor movement to verify UI. Reason from logs and bindings; if it really needs interactive checking, ask the user to look.
 - Per-feature recipes:
   - Launcher: [launcher.md › Testing](features/launcher.md) (`appLauncher search`, focus stealing).
@@ -56,7 +74,7 @@ How to look at, exercise and debug the live shell without breaking the user's se
 - Adding a module to the live config: [writing-modules.md › Testing](overlay/writing-modules.md). Confirm the schema reloaded (the latest `Loading config schema` line in the instance's `log.log` is newer than the schema file's mtime), back up config.json to a scratch dir and restore it afterwards, add one module at a time, and watch qs's RSS.
 
 ### JS and QML experiments
-- Engine gaps (`flatMap`, `Object.fromEntries`, `Intl`) are in AGENTS.md › Formatting, the inline-component trap in › QML pitfalls. `toLocaleString(..., { timeZone })` is ignored too: see [clock-timezones](features/clock-timezones.md).
+- Engine gaps (`flatMap`, `Object.fromEntries`, `Intl`) and the inline-component trap are in [qml-pitfalls](core/qml-pitfalls.md). `toLocaleString(..., { timeZone })` is ignored too: see [clock-timezones](features/clock-timezones.md).
 - For quick JS checks, run a scratch `tst_x.qml` with `QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input <dir>`. The dev scripts find Qt 6's tools through `scripts/lib/qt_paths.sh` (`$QT_BIN`, else `qmake6 -query`, else `/usr/lib/qt6/bin`; Fedora's are in `/usr/lib64/qt6/bin`). The plain `qml` tool prints nothing.
 
 ### CI

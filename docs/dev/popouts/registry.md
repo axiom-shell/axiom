@@ -4,7 +4,7 @@
 > **Config:** none
 > **Related:** [Surface context](surface-context.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Edge menu hosts](../edge-menus/hosts.md)
 
-`services/ui/PopoutManager` knows every popout that is showing, and where. A popout opening closes only what it overlaps, decided by rank. Read this before adding a popout kind or changing which one wins. (Rule: AGENTS.md › UI conventions, "Popout collisions".)
+`services/ui/PopoutManager` knows every popout that is showing, and where. A popout opening closes only what it overlaps, decided by rank. Read this before adding a popout kind or changing which one wins. (Rule: `components/hosts/popout/AGENTS.md`.)
 
 ### Claims
 - **Who holds a claim:** every bar popout, edge popout (OSDs, floating edge menus, the attached launcher), floating popout (the detached launcher, the window switcher), dock and submenu holds a `hosts/popout/PopoutClaim`.

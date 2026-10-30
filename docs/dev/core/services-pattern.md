@@ -8,7 +8,8 @@ How `services/` is built: one singleton per domain, owning state and side effect
 
 ### Shape
 - Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders, `services/AGENTS.md`). The non-singleton parts beside them (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, …) are listed in `services/AGENTS.md` › Folders.
-- (Rule: AGENTS.md › Services, for naming, `_services` and singleton shadowing.)
+- (Rule: AGENTS.md › Services, for naming and singleton shadowing.)
+- State that must survive a QML reload lives in `PersistentProperties` (JSON strings for arrays); small persisted state in `StateManager` or under `Paths.userStatePath`.
 - A service with an IPC target that nothing else references is created from `shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
 
 ### Polled data: acquire / release
