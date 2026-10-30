@@ -1,6 +1,6 @@
 # Window switcher (Alt+Tab)
 
-> **Files:** `services/compositor/WindowSwitcherManager.qml`, `config/WindowSwitcherConfig.qml`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherBindLua`, `SwitcherLua`), `components/methods/WindowOrder.qml`, `shell/WindowSwitcher.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
+> **Files:** `services/compositor/WindowSwitcherManager.qml`, `config/WindowSwitcherConfig.qml`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherBindLua`, `SwitcherLua`), `components/methods/WindowOrder.qml`, `shell/WindowSwitcher.qml`, `components/surfaces/switcher/SwitcherStrip.qml`, `backend/internal/wayland/keyhold/`, `backend/internal/daemon/switcher.go`
 > **Config:** `WindowSwitcher.*` (`showDelay`, `scope`, `previews`, `compositorSwitcher`)
 > **Related:** [Keybinds](keybinds.md), [Config modes](config-modes.md), [Workspaces](workspaces.md)
 
@@ -9,7 +9,7 @@ Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.
 - The Keybinds page's "Window switcher" preset adds them to an existing config.
 - Where the compositor has a switcher of its own (`supports.compositorSwitcher`, niri) and `WindowSwitcher.compositorSwitcher` is on (the default), the included and managed files bind these keys to that switcher instead ([niri backend](../compositor/niri-backend.md) › Primitives); detached keeps axiom's. Managed mode always drops niri's default switcher keys: without such a bind (or with the setting off) niri's switcher has none.
 
-**Hyprland holds every key.** A surface can't see a modifier released before it maps and takes focus, and a quick tap always is.
+**Hyprland holds every key.** A surface can't see a modifier released before it maps and takes focus, and a quick tap always is. sway and niri can't, so the daemon holds them (below).
 
 ### The bind and the submap
 - The bind is a Lua function (`render.SwitcherBindLua`). On the press itself it:
@@ -26,6 +26,15 @@ Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.
 - Picking, cancelling and the listener all leave the submap inside Hyprland itself, so it can't stick while qs is down.
 - Redefining a submap adds to its binds, so the chunk first unbinds the keys its last run bound (`AXIOM_SWITCHER_KEYS`).
 - KeybindManager leaves the submap out of the page, and its `editor` (KeybindEditor) flags a switcher key that has no modifier to hold.
+
+### sway and niri: the daemon holds the keys
+sway fires a release bind only when no other key came between, and niri has no release binds, so their binds report steps only (sway's `nop axiom switcher step ±1`, niri's `axiom ipc windowSwitcher next|previous`; no `supports.switcherRelease`). While the switcher is open the daemon holds the keyboard instead:
+- On opening, `WindowSwitcherManager` calls `switcher.hold` with the modifiers the switcher binds are held by (`BindActions.switcherHeld` over the active binds; SUPER, ALT and CTRL with none bound), and `switcher.release` on closing.
+- The daemon (`wayland/keyhold`) maps a 1×1 clear Overlay layer surface, `axiom-switcher-keys`, with exclusive keyboard focus. The compositor still runs its binds first, so Tab keeps stepping.
+- `wl_keyboard.enter` carries the keys already down. **With none of the held modifiers among them, it picks at once**: a tap let go before the surface had the keyboard (the race a shell window taking the keyboard lost, eating the next key).
+- Otherwise it picks when a held modifier is let go or on Return, and cancels on Escape. Other keys are ignored, and reach no window while it's held.
+- It decides once per hold, pushing `switcher.key` (`{verb}`, `commit` or `cancel`) to the shell's connection only. A shell reload closing that connection releases the hold.
+- Where the daemon can't hold (an older binary, no layer shell), the call's error commits at once, as a tap would.
 
 ### Events and the manager
 - Events arrive on socket2 as `custom>>axiom-switcher:<verb>` (HyprlandManager's `switcherKey(verb, argument)`, the backend signal `WindowSwitcherManager` listens to; [contract](../compositor/contract.md)): no process per key, and in order. HyprlandManager fetches nothing for `custom` events.
@@ -46,4 +55,5 @@ Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.
 
 ### IPC
 - `windowSwitcher`: `next`, `previous`, `commit`, `cancel`.
-- No submap is involved, so nothing picks on a release. This is for scripts and testing.
+- No submap is involved, so nothing picks on a release on Hyprland. This is for scripts and testing. On sway and niri it holds the keys as a bind does.
+

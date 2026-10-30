@@ -58,7 +58,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `keybinds` | the Keybinds page (`x-needs`), `KeybindManager` |
 | `monitors` | the Monitors page, `MonitorManager` |
 | `switcher` | Alt+Tab driven by compositor keys (`WindowSwitcherManager`) |
-| `switcherRelease` | the compositor reports letting go of the switcher's modifier itself (Hyprland's submap). Without it `SwitcherKeys` takes the keyboard while the switcher is open, to see the release |
+| `switcherRelease` | the compositor reports letting go of the switcher's modifier itself (Hyprland's submap). Without it the daemon holds the keyboard while the switcher is open (`switcher.hold`, [window switcher](../hyprland/window-switcher.md) › sway and niri), to see the release |
 | `strips` | the strip settings, scrolling a strip |
 | `stripsAlways` | every output is a strip (niri): `stripDirection` is `horizontal` everywhere, the strip list is hidden |
 | `outputWorkspaces` | the compositor's workspaces belong to an output: every layout gets a block of ids per output (`CompositorManager.perMonitorBlocks`), and nothing is remapped |
