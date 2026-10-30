@@ -297,6 +297,22 @@ Posting for testers waits for all of these:
 #### Size
 Lines of code (tests, generated files and docs apart) for QML, Go and scripts, recorded with their commit before step 1, after step 2 and at the launch gate, with the shortstat command used, so each reading compares like with like.
 
+Each reading is the `insertions` of a shortstat against the empty tree, so it needs no checkout (`C` is the commit read; `git ls-files` shows the files counted):
+
+```sh
+E=$(git hash-object -t tree /dev/null)
+git diff --shortstat $E $C -- '*.qml' ':!tests/'                                    # QML
+git diff --shortstat $E $C -- '*.go' ':!*_test.go' ':!*/testdata/*' ':!*test/*' \
+    ':!backend/internal/testkit/' ':!*/zz_generated_*'                              # Go
+git diff --shortstat $E $C -- '*.sh' '*.py' '.githooks/pre-commit' ':!tests/'       # scripts
+```
+
+Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`testkit`, `dbustest`, `logindtest`, `wiretest`); the only committed generated code is `zz_generated_*.go` (the other generated files are JSON or never committed: [testing](testing.md#the-checks)). Lines include comments and blank lines.
+
+| Reading | Commit | QML | Go | Scripts |
+|---|---|---|---|---|
+| Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
+
 Found while porting the scripts (backend stage 4):
 - [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
 
@@ -318,6 +334,7 @@ Found while investigating Hyprland starting on workspace 10:
 
 Found by the audits:
 - [Three reader members nothing reads](issues.md#three-reader-members-nothing-reads)
+- [The guard reads the branch from the session's folder, not a `cd` before the push](issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

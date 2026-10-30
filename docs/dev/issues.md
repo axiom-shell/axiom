@@ -333,6 +333,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while making gen_docs.py see readers of ConfigManager.live (roadmap row 18)
 
+### The guard reads the branch from the session's folder, not a `cd` before the push
+- **Where:** `.claude/hooks/guard.py` (`check_git`, `current_branch`), `tests/scripts/test_guard.py`
+- **What:** `git push … origin HEAD` (or a push with no refspec) is refused when `current_branch` of the hook's `cwd` is main, and that `cwd` is the session's folder: a `cd` earlier in the same command isn't followed (`git -C` is). An agent whose session sits in a checkout on main and pushes a branch from a worktree with `cd <worktree> && git push -q -u origin HEAD && gh pr create --label roadmap --base main --body "$(cat <<'EOF' … EOF)"` gets `don't push to main; open a PR from a branch.` (refused once on 2026-10-30, autopilot for #232; reproduced 2026-10-30 by feeding `guard.check` that command with `cwd` a scratch repository on main: refused; with `cwd` the worktree, or `git -C <worktree> push`: allowed). The plain shape from the branch's own folder passes since #241 (a heredoc body with rule-like text passes too). The workaround is an explicit `branch:branch` refspec or `git -C`. Fix: follow a leading `cd <dir> &&` into the cwd `check_git` uses, with a test case.
+- **Size:** trivial
+- **Found:** 2026-10-30, while recording the size before the audits (roadmap row 19)
+
 ### The window switcher's blur and release on sway and niri
 - **Where:** `services/compositor/WindowSwitcherManager.qml` (`commit`, `pick`), `components/surfaces/switcher/SwitcherKeys.qml`, `components/surfaces/switcher/SwitcherStrip.qml`
 - **What:** From the maintainer's notes: the switcher's blur background is broken, and releasing the modifier doesn't always switch to the picked window on compositors other than Hyprland (sway's binds report steps only, and `SwitcherKeys` has to see the release). It "should work the same on niri since it just shows windows". On niri this is only while `WindowSwitcher.compositorSwitcher` is off or in detached mode: by default the included and managed files bind the keys to niri's own switcher (row 16). The plan settles one release path that works on every compositor and the switcher's backing.
