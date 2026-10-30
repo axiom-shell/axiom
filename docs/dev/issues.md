@@ -184,7 +184,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Images decoded at full size or more than once
 - **Where:** `components/surfaces/wallpaper/WallpaperWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/content/NowPlaying/NowPlaying.qml`
-- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer).
+- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer), and a third time in its hidden strip layout's `Art` (`NowPlaying.qml:338`; popouts audit, 2026-10-30: [NowPlaying builds its strip layout and a second transport hidden in every mode](#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode) brings it back to two).
 - **Size:** small
 - **Found:** 2026-10-27, while measuring the shell's memory
 
@@ -202,7 +202,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A popout taller than the screen runs off it
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`popoutRoom`), `components/content/Calendar/Calendar.qml`
-- **What:** Nothing keeps a bar popout's content within the screen: content taller than the room past the bar (the Calendar popout with its event editor open on a short screen, 1080 px or less with a top bar) draws its box past the screen's far side, and what's there is cut off. `popoutRoom` measures the room left, and only `StyledComboEntry`'s inline list keeps to it. A general guard would hand the content a most height (as `SubPopout.maxContentHeight` does for submenus) for it to scroll within.
+- **What:** Nothing keeps a bar popout's content within the screen: content taller than the room past the bar (the Calendar popout with its event editor open on a short screen, 1080 px or less with a top bar) draws its box past the screen's far side, and what's there is cut off. `popoutRoom` measures the room left, and only `StyledComboEntry`'s inline list keeps to it. A general guard would hand the content a most height (as `SubPopout.maxContentHeight` does for submenus) for it to scroll within. The tray's own menu (`content/SystemTray`, a `TrayMenuList` with no height cap or Flickable) is another case (popouts audit, 2026-10-30); [A tray submenu longer than the screen runs off it](#a-tray-submenu-longer-than-the-screen-runs-off-it) gives `TrayMenuList` the `maxHeight` this guard could set.
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
@@ -1190,3 +1190,177 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Deletion pass, about 17 lines. (1) `SurfaceContext.shadow`'s submenu branch has no caller: `if (s.parent) return s.parent;` is never reached, because its one caller, `layout` (line 363), never passes `parent`; submenus take their parent's look in `SubPopout`, and `SurfaceContext.shadow(` appears otherwise only in tests. `layout`'s `"onBar": !p.held && …` also repeats what `shadow` checks first, since a held surface is always `detached`. Drop the branch, its 2 comment mentions, `test_submenuTakesItsParentsShadow` (11 lines) and `!p.held && `, 14 lines in all. (2) `supports.blur` is tested again after `Appearance.blur`: `Appearance.blur` needs `translucent`, which needs `compositorBlurs`, and `CompositorManager` binds that to `supports.blur === true && !Paths.greeter`, so `&& CompositorManager.supports.blur === true` in `BlurManager._wanted` and in `TranslucencyStatus` (line 36) adds nothing. (3) Two Go expressions do nothing: `or(get(surfaces, "threshold"), nil)` (`layer.go:202`) returns its first argument, since `or` returns `b` only for a nil `a`; `|| rule.Value("xray") == nil` (`niri.go:506`) can't be true, because every `SurfaceBlur` row with `blur` or `popups` sets `xray`. Fix: remove each one; output unchanged.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the blur system
+
+### Edge and floating popouts never close when their focus grab clears
+- **Where:** `components/hosts/popout/EdgePopout.qml:460` (`focusGrab`), `components/hosts/popout/FloatingPopout.qml:162` (`focusGrab`), `services/compositor/FocusGrab.qml:57` (`_outside`)
+- **What:** Both hosts handle the grab ending with `onCleared: { if (!active) root.hide(); }`. Inside `FocusGrab { … }`, `active` is the wrapper's own property, bound to `surfaceWindow.visible && root.grabEnabled && (…)` (EdgePopout.qml:452) or `root.isOpen && …` (FloatingPopout.qml:154), and the wrapper emits `cleared` only while that property is true:
+  - **No native grab (sway, niri):** the backdrop `Connections` is `enabled: root._catching`, which is `!_native && active`. The `_lost` timer checks `root.active && …` (FocusGrab.qml:135).
+  - **Hyprland:** the inner `HyprlandGrab` clears. Its own `active` goes false, but the wrapper's binding doesn't.
+
+  So `!active` is always false when `cleared` arrives, and `hide()` never runs. The guard dates from when the handler sat on Quickshell's `HyprlandFocusGrab` directly, whose `active` does drop. The wrapper's other users close unconditionally (`PowerMenuWindow.qml:133` `onCleared: root.shown = false`, `DockMenu.qml:64` `onCleared: root.close()`).
+
+  What users see:
+  - A floating edge menu with `close.onOutsideClick` stays open on a click outside (FloatingEdgeMenu.qml:111 sets `closeOnClickOutside`).
+  - The attached launcher (EdgePopout, `closeOnClickOutside: true`, Launcher.qml:191, commented "until Esc, a pick or a click elsewhere") stays open.
+  - The detached launcher closes only on a click in its own window's free area (FloatingPopout.qml:169's MouseArea), not on a bar, the border or another monitor.
+
+  Fix: `onCleared: root.hide()` in both hosts (`hide()` already checks `isOpen`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### An open edge popout's layer and namespace still follow its edge's bar
+- **Where:** `components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `components/hosts/popout/EdgePopout.qml:97` (`windowLayer`), `components/hosts/popout/EdgePopout.qml:113` (`layerNamespace`), `components/hosts/popout/EdgePopout.qml:216` (`_overlayLatch`), `components/hosts/popout/BarPopouts.qml:42` (`_under`)
+- **What:** BarPopouts latches `placement.slidesUnder` in a `ClosedLatch`, so an open bar popout never changes layer. EdgePopout latches only two of that output's inputs (`_overlayLatch`, `_fullscreenLatch`) and reads `placement.slidesUnder` live. That value also depends on the edge's bar: `bar?.background === "transparent"`, from `SurfaceContext.layout`.
+  - **Scenario:** a pinned floating edge menu or an OSD is open on a transparent bar's edge, and the bar's background changes or the bar goes away (`axiom config set`, an edit, a restored setup).
+  - **What happens:** `slidesUnder` flips while the window shows, and with it `WlrLayershell.layer`, the namespace (`axiom-popout-under` ↔ `overNamespace`) and the margin (`slideDistance`).
+  - **Rule broken:** ClosedLatch's own header ("what changes a popout's window layer or namespace … so an open popout never moves or restacks"), and AGENTS.md's "an open popout never moves".
+  - PLAUSIBLE: what Hyprland does with a namespace changed on a mapped layer (ignored until a remap, or a remap) needs a nested session.
+
+  Fix: `property ClosedLatch _under: ClosedLatch { source: placement.slidesUnder; closed: !root.occupied }`, read in `slideDistance`. Then `placement.overOverlay` can take `root.overlayOpen` directly, and `_overlayLatch`/`_overOverlay` (EdgePopout.qml:216-220, 5 lines) go.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### EdgePopout works out its attach edge and slide distance itself
+- **Where:** `components/hosts/popout/EdgePopout.qml:204` (`attachBase`), `components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `components/methods/SurfaceContext.qml:340` (`layout`)
+- **What:** `attachBase = ScreenEdgeManager.reservedWithMenusOn(screen, edge) - (bareEdge ? 0 : Appearance.borderWidth)` repeats `SurfaceContext.layout`'s no-bar `attachAt` branch, and its only use is `edgeOffset`. `slideDistance` subtracts `barConfig?.insideBorder ? Appearance.borderWidth : 0`, a stroke rule `layout` doesn't return. That breaks components/hosts/popout/AGENTS.md: "Never add a rule in a host: a new case is a `SurfaceContext` rule plus a `tst_SurfaceContext` row". A change to either rule in SurfaceContext would leave the edge popout's window apart from its box. Fix: `layout` returns the attach base and the slide distance, with `tst_SurfaceContext` rows; EdgePopout reads both from `placement`. Both this and [An open edge popout's layer and namespace still follow its edge's bar](#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar) change `slideDistance`: take them in one batch.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### A large corner radius folds a pill's or shallow box's outline back on itself
+- **Where:** `components/methods/SurfaceOutline.qml:191` (`_outline`), `components/methods/SurfaceOutline.qml:201`, `components/methods/SurfaceOutline.qml:214`, `components/methods/SurfaceOutline.qml:54` (`metrics`), `components/bar/BarContainer.qml:682` (`depthBox`)
+- **What:** `_outline` draws each side wall from the attach fillet's end (`h + R`) to `farV - cs`, and the far edge from `sideU + cs` to `farSideU - ce`. It never limits `cs`/`ce` to the box, as a Rectangle does its radius.
+  - **When it folds:** the box is shallower than `h + R + cs`, or shorter than `cs + ce`. The wall and far edge then run backwards and the path crosses itself.
+  - **The settings that get there:** `shape.radius` goes up to 50, and `connectorGap` is `borderRadius * 2`.
+    - Pills: BarContainer fixes `boxStart` at `connectorGap / 2` and sets `depthBox = max(0, pillDepth - connectorGap / 2)`, so a pill folds once `pillDepth < 2R + h`. That is radius 15 or more at the tests' pill depth of 30.
+    - Popouts: `naturalBoxStart` pushes a shallow box back only as far as `connectorGap / 2`, so a 40 px OSD at radius 50 still folds.
+  - **Evidence:** a scratch qmltestrunner probe on a 30×10 pill box at R 20 gives `… L 20 10 A 19.5 19.5 0 0 0 39.5 29.5 …`: the wall runs 10.5 px back.
+  - **What it breaks:** the fill uses the same path (OddEvenFill leaves holes where it crosses), and the footprint and blur region disagree with what's drawn.
+  - PLAUSIBLE (how it looks): a nested screenshot of a pill bar at radius 20+.
+  - **Question for the maintainer:** at a large radius, should only the corners clamp, or should pills also get deeper with the radius?
+
+  Fix (clamp): in `SurfaceOutline.withBoxStart`, cap `startCornerRadius`/`endCornerRadius` at the room the box has (`boxStart + boxDepth - half - (filleted ? half + R : 0)`, and `boxAlong / 2 - half`). Add a `tst_SurfaceOutline` row for a box shallower than its corners.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### A tray submenu longer than the screen runs off it
+- **Where:** `components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)
+- **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The Updates popout's package list is frozen at opening
+- **Where:** `components/bar/widgets/Updates/Updates.qml:54` (`extraData`), `components/content/Updates/Updates.qml:20` (`repoPackages`), `components/content/Updates/Updates.qml:21` (`aurPackages`), `components/hosts/popout/BarPopouts.qml:547`
+- **What:** The widget sends `repoPackages`/`aurPackages` as `extraData`. BarPopouts copies each key once in `onLoaded` (`item[key] = root.currentData[key];`), which replaces the panel's live bindings (`property var repoPackages: UpdatesManager.repoPackages`) with the arrays as they were at opening. `PopoutAnchor.open()` returns early while the popout is open.
+  - **Scenario:** with the popout open, right-click the widget (`UpdatesManager.refresh()`), or let an upgrade finish in a terminal. The bar's count changes, but the popout still lists the old packages, or still says it's up to date, until it is reopened.
+  - **Why the keys exist:** only to apply the widget's AUR filter.
+
+  Fix: delete the widget's `extraData` (4 lines). The panel's `aurPackages` binds the same filter itself (`UpdatesConfig.includeAur && UpdatesManager.hasAur ? UpdatesManager.aurPackages : []`), which cards then share; both properties become `readonly`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### NowPlaying builds its strip layout and a second transport hidden in every mode
+- **Where:** `components/content/NowPlaying/NowPlaying.qml:330` (the strip), `components/content/NowPlaying/NowPlaying.qml:440` (the grid's `Transport`), `components/content/NowPlaying/NowPlaying.qml:453` (the popout's `Transport`)
+- **What:** components/content/AGENTS.md says "a part shown in one mode only is a Loader gated on it, not `visible: false`". All three parts here are gated by `visible` only:
+  - The strip `RowLayout` (lines 329-402, 74 lines, `visible: root.hasPlayer && root.mini`) shows only in a short card. It is built in the Media popout and in every other card too, including its `Art`, whose CrossFade decodes the cover once more while hidden.
+  - The grid's `Transport { visible: root.embedded }` is built in the popout.
+  - The popout's `Transport { visible: root.hasPlayer && !root.embedded }` is built in every card.
+
+  So each opening of the Media popout builds a seek slider, two time labels and three buttons it never shows, and a hidden cover decode. Fix: Loaders gated on `root.mini` for the strip and grid, and on `root.embedded` / `!root.embedded` for the two transports (Layout attached properties on the Loaders).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### popout_matrix.py crashes on the current config and nothing runs it
+- **Where:** `scripts/dev/popout_matrix.py:264`, `scripts/dev/popout_matrix.py:273`, `scripts/dev/popout_matrix.py:310`, `docs/dev/popouts/surface-context.md:83`, `docs/dev/testing.md:64`
+- **What:** The script reads `base["EdgeMenus"]` as a list (`for menu in [m["id"] for m in base["EdgeMenus"] if m.get("mode") …]`) and `base["Dock"]["docks"]`. Both sections are objects whose list is `items` (`config/schema/sections/EdgeMenus.yaml:9`, `Dock.yaml:10`).
+  - **What happens:** iterating the dict yields the string `"items"`, so `m.get` raises AttributeError in the first scenario, after the bar shots. The `finally` then restores config.json.
+  - **Other faults:**
+    - It reads the workspace through `hyprctl` (line 310), so it can't start on sway or niri.
+    - It writes the live config.json from a script and restores a whole-file backup at the end, dropping anything the user saved meanwhile. AGENTS.md › Never forbids writing config.json from Bash because "that skips the `x-takeover` check".
+  - **Nobody runs it:** components/hosts/popout/AGENTS.md already says "slow: only when asked", and it has been broken since the sections took `items`.
+
+  Deletion: the script (338 lines), surface-context.md's Testing bullets about it (2 lines), testing.md:64-65 (2 lines) and the clause in components/hosts/popout/AGENTS.md: 342 lines and a clause. Question for the maintainer: delete it, or keep it? If kept, it needs the `items` keys and the workspace taken through `axiom ipc`, and it should run only on a nested session's scratch config (`scripts/dev/nested.sh`).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### PopoutWrapperBase's aboutToDismiss signal has no listener
+- **Where:** `components/hosts/popout/PopoutWrapperBase.qml:161` (`aboutToDismiss`)
+- **What:** A repo-wide grep for `boutToDismiss` finds only the declaration, its example comment (line 160) and the emit in `requestDismiss` (line 165); no wrapper handles it. Fix: delete the comment and signal (159-161) and the emit (165): 4 lines.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Three EdgePopout members nothing reads
+- **Where:** `components/hosts/popout/EdgePopout.qml:80` (`detached`), `components/hosts/popout/EdgePopout.qml:149` (`yielded`), `components/hosts/popout/EdgePopout.qml:191` (`gaps`)
+- **What:** Each forwards `placement.*` or `claim.*`, and nothing reads them on an EdgePopout. Internal users read `placement`/`claim` directly. `SubmenuHost`'s `geometry.detached` is EdgePlacement's, and the only outside mention is FloatingEdgeMenu.qml:25's comment `(EdgePopout.gaps)`. Fix: delete lines 77-80 (`detached` and its comment), 149 and 191 (6 lines), and point that comment at `EdgePlacement.gaps`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### PopoutGeometry handles a phase and a submenu pair the registry never produces
+- **Where:** `components/methods/PopoutGeometry.qml:81` (`resolve`), `components/methods/PopoutGeometry.qml:120` (`resumable`), `tests/tst_PopoutGeometry.qml:115`
+- **What:** Two branches handle cases nothing produces:
+  - **The "closing" phase:** PopoutManager writes only the phases "open" and "yielded", plus "opening" through `resumable`. A grep for `"closing"` over services/, components/ and tests/ finds only PopoutGeometry's comment (line 17), lines 81 and 120, and the test.
+  - **The sibling-submenu skip** (lines 89-91, `e.kind === "submenu" && claim.parentId && e.parentId === claim.parentId`): it needs two submenu claims with one parent. A submenu's key is its parent's plus `/submenu`, with one SubPopout per host, so the only such entry is the claim itself, which line 79 already skips.
+
+  Fix: drop both `"closing"` clauses, lines 89-91, the comment's "closing" part and the test's "gone" row (about 6 lines).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### PillBarJoin's available repeats what joined already says
+- **Where:** `components/hosts/popout/PillBarJoin.qml:45` (`available`), `components/methods/SurfaceContext.qml:114` (`end`), `docs/dev/popouts/pill-and-floating-bars.md:34`
+- **What:** `available` asks `ScreenEdgeManager.surfaceEnd(screen, side).kind === "pillBar"` again. EdgePlacement sets `joined` from `place.joinStart && startEnd.sink === "pillBar"`, and `SurfaceContext.end` gives sink `"pillBar"` only when `joins && e.kind === "pillBar"`. So `joined` implies `available` wherever both are read. The doc's "Its `available` is what makes the end joinable" is wrong too. Fix: drop lines 43-45 and the two `available` terms, and point the doc at `sink: "pillBar"`.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Geometry members nothing reads
+- **Where:** `components/hosts/popout/AttachedSurface.qml:330` (`sideU`), `components/hosts/popout/AttachedSurface.qml:331` (`farSideU`), `components/hosts/popout/EdgePlacement.qml:225` (`merged`), `components/methods/SurfaceOutline.qml:97` (`size`)
+- **What:** No `.sideU`/`.farSideU` read of AttachedSurface and no `.merged` read of an EdgePlacement exist. `SurfaceOutline.size` is called only by `tests/tst_SurfaceOutline.qml` (lines 146, 329), while AttachedSurface works the size out again itself. Fix: delete the three properties (3 lines). Then either AttachedSurface takes its implicit size from `SurfaceOutline.size(root._spec, root._m)`, or `size` goes (lines 95-103, 9 lines) and the tests inline it.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### SurfaceContext.layout's pill and merged results have no test row
+- **Where:** `tests/tst_SurfaceContext.qml:553` (`test_layout_between_pills`), `components/methods/SurfaceContext.qml:337` (`layout`)
+- **What:** No row pins `layout`'s result for:
+  - a box on a pill: `backfill` 1, `attachFromBar` = pill foot, `ownSink` null, shadow look `"bar"`. The one pill-mode row checks only `mode` and `pill.index`.
+  - a pill bar showing no pills (`merged`): `attachClearance`, `straight`, `ownSink`.
+  - `ownSink`'s null branches: a bare edge and a non-solid bar.
+
+  A slip in any of these passes today (63 rows pass). A lost backfill shows the pill stroke's fringe as a line; a wrong `attachClearance` puts a merged box's content where the pills would be. Fix: add `test_layout_on_pill`, `test_layout_merged` and a bare-edge `ownSink` row.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The tray menu's isVertical and barConfig are never read
+- **Where:** `components/content/SystemTray/SystemTray.qml:14` (`isVertical`), `components/content/SystemTray/SystemTray.qml:15` (`barConfig`), `components/bar/widgets/SystemTray/SystemTray.qml:99`
+- **What:** The tray content declares both from its payload and nothing reads either: no host reads them off `currentItem`/`currentData`, and inside the content only the declarations match. The widget's `extraData` sends them only to feed these. Fix: drop the two properties and the two `extraData` keys (4 lines).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Both tray menu lists override the same width cap
+- **Where:** `components/content/parts/TrayMenuList.qml:22` (`maxWidth`), `components/content/SystemTray/SystemTray.qml:38`, `components/content/parts/TraySubmenu.qml:21` (`_window`), `components/content/parts/TraySubmenu.qml:34`
+- **What:** TrayMenuList's only two users both replace its default `Widget.px(600)` with the same stand-in, 30% of the screen's width: `(root.wrapper.screen?.width ?? 2000) * 0.3` and `(root._window?.screen?.width ?? 2000) * 0.3`, each marked `// fixed px`. TraySubmenu keeps `_window` only for this, and the default is never used. Fix: make the stand-in TrayMenuList's default, read through its own `QsWindow.window`, and drop SystemTray.qml:38 and TraySubmenu.qml:20-21 and 34 (4 lines).
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The tray menu draws its own separator
+- **Where:** `components/content/parts/TrayMenuItem.qml:99` (the separator `Rectangle`)
+- **What:** A separator entry draws a hand-made line (lines 98-106, 9 lines: `height: 1`, `color: Theme.foreground`, `opacity: 0.2`). docs/dev/core/shared-ui-pieces.md lists `StyledSeparator` ("border-coloured divider"), and AGENTS.md says "Reuse before building". It is the only popout divider that ignores the theme's border colour and width. Fix: `StyledSeparator { anchors.centerIn: parent; width: parent.width - root.itemPadding * 2; visible: root.menuItem.isSeparator }`, 4 lines fewer.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The two workspace popouts share 28 lines of payload and colour properties
+- **Where:** `components/content/WorkspaceStrips/WorkspaceStrips.qml:18`, `components/content/WorkspaceGrid/WorkspaceGrid.qml:18`
+- **What:** `diff` shows the same payload comment and members in both files: `output`, `monitor`, `vertical`, `cellSize`, `cellLength`, `barConfig`, `cellSpacing`, `radius`, the four colours, `base` and `activeId` (23 lines), plus the `_settled` latch and its comment (5 lines). AGENTS.md: "a second copy of a pattern becomes a shared piece". Fix: a `WorkspacePopoutPanel.qml` (a `Panel`) in components/bar/widgets/Workspaces/, which both already import, holds those 28 lines. Each panel keeps only its own members (`stripVertical`/`ids`; `emptyColor`, `gridColumns`, `gridRows`, `activeIndex`). About 23 lines fewer. BarPopouts' `hasOwnProperty` copy covers inherited properties, so the payload still lands.
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### Small improvements to WorkspaceGrid
+- **Where:** `components/content/WorkspaceGrid/WorkspaceGrid.qml:36` (`fontSize`), `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml:218`, `components/content/WorkspaceGrid/WorkspaceGrid.qml:87` (`look`), `components/bar/widgets/Workspaces/WorkspaceCellRow.qml:69` (`_look`)
+- **What:** Two small fixes:
+  1. **`fontSize` is dead.** `grep -cw fontSize` in WorkspaceGrid.qml is 1 (the declaration), yet the widget still sends `fontSize: root.barConfig.fontSize,`. WorkspaceCell reads `barConfig.fontSize` itself. Fix: delete both lines (2 lines).
+  2. **The cell's `look` is a copy.** It repeats `WorkspaceCellRow._look`'s `BarsConfig.cellColors(…)` expression with only the variable names changed, so a change to how the bar colours cells would leave the popout behind. Fix: one `BarsConfig` function both call.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the popouts system
+
+### The dock's footprint assumes fillets at both ends
+- **Where:** `components/surfaces/dock/DockWindow.qml:298` (`_footprint`)
+- **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the popouts system
