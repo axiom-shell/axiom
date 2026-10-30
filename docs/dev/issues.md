@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A tray menu logs an undefined menu handle
+- **Where:** `components/content/parts/TrayMenuList.qml` (`menuOpener`)
+- **What:** Using the tray logged `@components/content/parts/TrayMenuList.qml[45:5]: Unable to assign [undefined] to qs::menu::QsMenuHandle*`: `QsMenuOpener.menu` is bound to `root.menu` while that's still (or again) undefined, likely as a menu opens or closes. Seen once in the live log (not reproduced).
+- **Size:** small
+- **Found:** 2026-10-30, while moving the Wi-Fi popout's buttons
+
 ### The onboarder's Integrations page names Hyprland's tools everywhere
 - **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`
 - **What:** Under sway and niri the Idle cards say "Remove any hypridle you start yourself" and "such as hypridle", the hint for your own idle daemon shows a `~/.config/hypr/hypridle.conf` block, and the polkit cards name hyprpolkitagent. These should name the compositor's usual tools (swayidle, …) or stay neutral.

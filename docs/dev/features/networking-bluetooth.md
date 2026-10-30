@@ -33,11 +33,11 @@ What the Wi-Fi menu asks NetworkManager beyond Quickshell.Networking, over the s
 
 ### The Wi-Fi menu
 `content/WifiNetworks`, the Network widget's popout:
-- **Header:** the radio switch (none, and titled Network, without a Wi-Fi adapter) and airplane mode.
+- **Header:** the radio switch (none, and titled Network, without a Wi-Fi adapter), then icon buttons as high as it: Settings (`Apps.networkEditor`), Import VPN (red while `VpnManager.importError`) and airplane mode.
 - **The connection:** a `FoldRow` folding open `ConnectionDetails`, folded until clicked.
 - **VPN section:** folded to one row ([VPN](vpn.md)). Left out, with Import VPN, when the card's `showVpn` or the widget's `popoutVpn` is off (`showsVpn`; the popout's arrives through `extraData` after it's built, so VPN data is acquired as it changes).
 - **Networks:** `NetworkRow`s; a secured one has a lock (`badge` for enterprise) on its signal icon (`DeviceRow.iconBadge`), so every row's name and buttons line up. A known one's hover shows autoconnect before forget (`DeviceRow.hoverActions`, over the end of the name), and one that doesn't join on its own says "manual" in its status. An unsaved secured one opens a password field (WPA) or a `WifiJoinForm`, Connect beside its last field.
-- **Footer:** Settings (`Apps.networkEditor`), Hidden network (a `WifiJoinForm` with `hidden`, closed once NetworkManager takes it), Import VPN.
+- **Footer:** Hidden network (a `WifiJoinForm` with `hidden`, closed once NetworkManager takes it).
 - **Room:** the window never grows while shown: `maxImplicitHeight` keeps, beside the list's growth, each folding part's most less what it shows now (details, the VPN rows, the hidden form). Focus lost to the file picker (a CA certificate) doesn't cancel the form.
 
 ### BluetoothManager

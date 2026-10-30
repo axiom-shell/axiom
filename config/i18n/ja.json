@@ -3459,8 +3459,6 @@
     "Check (asks {0})": "",
     "Edit connections ({0})": "",
     "Hidden network": "",
-    "Import VPN": "",
-    "Add a WireGuard (.conf) or OpenVPN (.ovpn) file": "",
     "Import a WireGuard (.conf) or OpenVPN (.ovpn) file": "",
     "Import a VPN": "",
     "VPN files": "",
@@ -3498,6 +3496,7 @@
     "This machine's key expires in {0} days.": "",
     "Your user can't change Tailscale: allow it with Grant access.": "",
     "Access wasn't granted.": "",
-    "Show Connect / Disconnect, switching and adding accounts, the exit node and the node's options. They need operator rights once (`tailscale set --operator=$USER`): the popout's Grant access button asks for them.": ""
+    "Show Connect / Disconnect, switching and adding accounts, the exit node and the node's options. They need operator rights once (`tailscale set --operator=$USER`): the popout's Grant access button asks for them.": "",
+    "Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file": ""
   }
 }
