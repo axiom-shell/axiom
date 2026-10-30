@@ -39,7 +39,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 - And, in memory, where each panel was scrolled to (`scrollOf` / `rememberScroll`): a page's `TitledCard` takes a `scrollKey`, an inspector's ScrollView a `reusable/ScrollMemory` keyed by its selection, so they come back where they were when the overlay reopens.
 
 ### Text fields
-- Fields bound to draft values follow the push pattern (AGENTS.md › QML pitfalls).
+- Fields bound to draft values follow the push pattern ([qml-pitfalls](qml-pitfalls.md)).
   - Set the text on selection change, and on draft change unless focused.
   - Write on `textEdited` (`LayoutsPanel`, `Monitors`), or on focus loss only if `typed` (`BindInspector`, `StyledComboEntry`).
 

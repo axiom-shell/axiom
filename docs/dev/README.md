@@ -10,6 +10,62 @@ Read the doc for a feature before changing it, and update it when you change how
 
 Dependencies point one way, methods → data owners → readers → services → UI: [AGENTS.md › Layering](../../AGENTS.md).
 
+## Where to look
+
+| Task / area | Read |
+|---|---|
+| **Writing any QML** (JS engine gaps, binding traps) | `docs/dev/core/qml-pitfalls.md` |
+| Services, polling, `acquire`/`release` | `docs/dev/core/services-pattern.md` |
+| Config loading, writes, drafts, previews, XDG paths | `docs/dev/core/config-manager.md`, `config-readers.md` |
+| Schema `x-*` annotations (complete list) | `docs/dev/core/schema-annotations.md` |
+| Settings page, saved configs, import/export | `docs/dev/core/settings-page.md`, `saved-configs-sharing.md` |
+| A new editor (draft, selection, inspector) | `docs/dev/core/editors-pattern.md` |
+| Before drawing any card, row, chip, drag | `docs/dev/core/shared-ui-pieces.md` |
+| Bar / popouts, edge surfaces / overlay / edge menus | `docs/dev/bar/`, `popouts/` (start at `surface-context.md`), `overlay/`, `edge-menus/` |
+| Compositor: windows, outputs, workspaces, capabilities, sway/niri | `docs/dev/compositor/` |
+| Config modes (detached / included / managed), the config writer | `docs/dev/compositor/config-modes.md` |
+| Moving a service's side effects into the axiom binary (the staged plan) | `docs/dev/backend/roadmap.md`; what's left: `scripts/quickshell-io-allowlist.json` |
+| The shell ↔ axiom binary connection (env, socket, methods, pushes) | `docs/dev/backend/protocol.md`; every method and push: `docs/dev/generated/rpc.md` (generated) |
+| Hyprland's writer, binds, monitors, workspaces | `docs/dev/hyprland/` |
+| Themes, integrations, wallpaper, blur | `docs/dev/theming/` |
+| A feature (launcher, lockscreen, greeter, dock, OSD, chat, …) | `docs/dev/features/<feature>.md` |
+| Looking at or debugging the live shell; what each check catches | `docs/dev/testing.md` |
+| A page or panel slow to open, streaming (`StreamedLoader`), measuring it | `docs/dev/core/streamed-building.md` |
+| install.sh, AUR packages, packaged installs | `docs/dev/packaging.md` |
+| Known unfixed problems (check before working in an area) | `docs/dev/issues.md` |
+| What to clean up next, phased (each issue's phase) | `docs/dev/roadmap.md` |
+| A setting: meaning, default, readers | `docs/dev/config/<Section>.md` (generated; `grep -rn 'Section.key' docs/dev/config/`) |
+| A bar widget / overlay module / view type's settings | `docs/dev/config/{BarWidgets,OverlayModules,OverlayViews}/<Type>.md` (generated) |
+| A service's or reader's public API | `docs/dev/generated/api/<Name>.md` (generated) |
+| Which file does X | `grep -n '<word>' docs/dev/generated/files.md` (generated; grep it, never read it whole) |
+| IPC targets / layer stacking order | `docs/dev/generated/ipc.md`, `layers.md` (generated) |
+
+## Layout
+
+```
+shell.qml       entrypoint: one top-level Item per surface, plus `_services` (services only reached by IPC)
+shell/          top-level pieces, one per surface
+components/
+  methods/      pure singleton helpers (unit-tested)
+  reusable/     generic Styled* widgets, no feature logic (AGENTS.md › Layout names the few that read services)
+  forms/        schema-driven form widgets
+  content/      loadable panels by name: overlay module types, bar popouts (base/, parts/)
+  hosts/        where content appears: popout/, overlay/
+  views/        overlay pages by view type
+  bar/          the bar; widgets/ = bar widget types
+  surfaces/     standalone windows (launcher, lockscreen, toasts, dock, onboarding, …)
+services/       pragma Singleton managers: state and side effects; core/ compositor/ session/ system/ ui/ apps/ (services/AGENTS.md › Folders)
+config/         reader singletons; json/ (schema, theme defaults), themes/, i18n/
+scripts/        external scripts and the dev checks
+backend/        the axiom binary (Go): its own AGENTS.md
+tests/          qmltestrunner tests, fixtures, tests/scripts/
+docs/dev/       developer docs
+```
+
+- Imports use the `qs.` namespace (`import qs.services.core`); no qmldir files. Every file starts with `pragma ComponentBehavior: Bound` or `pragma Singleton` (`check_structure`).
+- Types are loaded by name: `bar/widgets/<type>/<type>.qml`, `content/<Name>/<Name>.qml`, `views/<type>/<type>.qml`; a new one is the file plus its schema `oneOf` entry (those folders' `AGENTS.md`).
+- Naming: services `*Manager`, the non-singleton parts beside them named for what they are (`ConfigDraft`, `ConsumerRegistry`, `DeadlineTicker`); readers per section, `Config`-suffixed where the name is a type (`OSDConfig`), and one exposing the saved config says so (`BarsConfig.savedBars`); hosts say what they host (`BarWidgetHost`, `OverlaySlot`); content by module type or popout name; Qt control stand-ins `Styled*`; composites named for what they are. A surface window gets a `Window` suffix when its shell entry shares the name (`shell/PowerMenu` → `PowerMenuWindow`). Root ids are `root`. Bar widget and content names may overlap, but no file may see both.
+
 ## Index
 
 ### Recipes

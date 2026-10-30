@@ -4,7 +4,7 @@
 > **Config:** `Greeter.enabled`, `Greeter.source`, `SelfUpdate.channel` (reader `GreeterConfig`)
 > **Related:** [Greeter runtime](greeter-runtime.md), [Lockscreen](lockscreen.md), [Self-update](self-update.md), [Polkit](polkit.md), [Shell targeting](../core/shell-manager-targeting.md)
 
-Axiom as greetd's login screen, laid out like the lock screen. This doc covers the user-side half: installing, updating and removing the root-owned copy, and the status the card shows. For what runs at the login screen (the bundle, the session script, greeter mode, GreetdManager, modules), see [greeter-runtime.md](greeter-runtime.md). (Rule: AGENTS.md › UI conventions › Greeter; never install or update the greeter for real, or restart greetd.)
+Axiom as greetd's login screen, laid out like the lock screen. This doc covers the user-side half: installing, updating and removing the root-owned copy, and the status the card shows. For what runs at the login screen (the bundle, the session script, greeter mode, GreetdManager, modules), see [greeter-runtime.md](greeter-runtime.md). (Rule: AGENTS.md › UI conventions; never install or update the greeter for real, or restart greetd.)
 
 ### Overview
 - Off by default.
