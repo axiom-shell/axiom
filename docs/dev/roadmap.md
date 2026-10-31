@@ -532,6 +532,16 @@ Found by the audits:
 - [The validator and the schema check carry patternProperties nothing uses](issues.md#the-validator-and-the-schema-check-carry-patternproperties-nothing-uses)
 - [Every step test copies the same case runner](issues.md#every-step-test-copies-the-same-case-runner)
 - [The config Pipeline interface has one implementation](issues.md#the-config-pipeline-interface-has-one-implementation)
+- [Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot](issues.md#over-a-configjson-that-didnt-load-at-the-start-keeping-the-running-config-saves-the-defaults-over-the-active-snapshot)
+- [A save overwrites an outside edit of config.json the store hasn't read yet](issues.md#a-save-overwrites-an-outside-edit-of-configjson-the-store-hasnt-read-yet)
+- [Takeover settings go live through the settings page's preview before Save](issues.md#takeover-settings-go-live-through-the-settings-pages-preview-before-save)
+- [A number box keeps its typed text when the setting it edits switches under it](issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
+- [Escape in a settings-page number box leaves the half-typed value in the draft](issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)
+- [Changed from default never lists the bar widget style](issues.md#changed-from-default-never-lists-the-bar-widget-style)
+- [Store.Reschema repeats reload's load-and-apply](issues.md#storereschema-repeats-reloads-load-and-apply)
+- [OpenAdopting repeats Open's setup](issues.md#openadopting-repeats-opens-setup)
+- [Five more reader members nothing reads](issues.md#five-more-reader-members-nothing-reads)
+- [The launcher's /config can switch a takeover setting](issues.md#the-launchers-config-can-switch-a-takeover-setting)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
