@@ -218,7 +218,7 @@ QtObject {
       root._sessions = GreeterSessions.sorted(files.map(entry => GreeterSessions.parse(FileManager.read("file://" + entry.file), entry.id)));
       if (root._sessions.length === 0)
         console.warn("[GreetdManager] No sessions in", folders.join(", "));
-    });
+    }, null, true);
   }
 
   // The monitors and the bundle's input, on the greeter's compositor (sway,
@@ -238,7 +238,7 @@ QtObject {
     if (GreeterConfig.rememberUser && root._saved.lastUser)
       root.selectUser(root._saved.lastUser);
     root._readSessions();
-    CommandManager.run(["ls", "-1", "/var/lib/AccountsService/icons"], (exitCode, out) => root._avatars = out.split("\n").filter(name => name !== ""));
+    CommandManager.run(["ls", "-1", "/var/lib/AccountsService/icons"], (exitCode, out) => root._avatars = out.split("\n").filter(name => name !== ""), null, true);
     // Windowed (looked at from a running session), the compositor is the
     // session's own: left alone
     if (Quickshell.env("AXIOM_GREETER_WINDOWED") !== "1")

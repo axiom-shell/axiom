@@ -303,7 +303,7 @@ QtObject {
       if (dir !== root.directory)
         return;
       root.allNotes = ok ? out.split("\n").filter(line => line !== "").map(line => line.replace(/^\.\//, "")).sort((a, b) => a.localeCompare(b)) : [];
-    });
+    }, true);
   }
 
   function _fileName(name) {
@@ -349,9 +349,10 @@ QtObject {
     _errorClear.restart();
   }
 
-  // Runs a command, calling back with (ok, stdout, exit code)
-  function _run(command, callback) {
-    CommandManager.run(command, (code, out) => callback(code === 0, out, code));
+  // Runs a command, calling back with (ok, stdout, exit code);
+  // `repeatable` as CommandManager.run's
+  function _run(command, callback, repeatable) {
+    CommandManager.run(command, (code, out) => callback(code === 0, out, code), null, repeatable);
   }
 
   function _start() {
@@ -359,7 +360,7 @@ QtObject {
       root.refreshList();
       return;
     }
-    root._run(["mkdir", "-p", "--", root.directory], () => root.refreshList());
+    root._run(["mkdir", "-p", "--", root.directory], () => root.refreshList(), true);
   }
 
   onDirectoryChanged: {

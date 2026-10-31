@@ -521,7 +521,7 @@ Singleton {
           image: ""
         }) : e);
       root._save();
-    });
+    }, null, true);
   }
 
   // Relinks a notification kept across a QML reload to its saved entry

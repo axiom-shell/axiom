@@ -140,6 +140,8 @@ Singleton {
       }
       if (!root.busy)
         root._result = result;
+    }, {
+      "repeatable": true
     });
   }
 

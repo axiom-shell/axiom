@@ -178,7 +178,7 @@ QtObject {
         "blocked": true
       };
       root._outputs = outputs;
-    });
+    }, null, true);
   }
 
   // Each push: read the outputs that changed into fields and history
