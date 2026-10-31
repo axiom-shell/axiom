@@ -585,15 +585,25 @@ QtObject {
 
   // How many units at card size `unit` (`gap` px between cards) fit
   // `width` × `height` px with `margin` px all round: a screen layout's
-  // grid on a screen, { cols, rows }, at least one each way
+  // grid on a screen, { cols, rows }, at least one each way. Each count
+  // is even (rounded down; a lone unit stays one), so the screen's centre
+  // falls between units and the editor's centre guides between cells
   function screenLattice(unit, width, height, margin, gap) {
     const spacing = gap ?? root.cardSpacing;
     const step = root.stepOf(unit, spacing);
-    const fit = room => Math.max(1, Math.floor((room - 2 * margin + spacing) / step));
+    const fit = room => root.evenCount(Math.max(1, Math.floor((room - 2 * margin + spacing) / step)), false);
     return {
       "cols": fit(width),
       "rows": fit(height)
     };
+  }
+
+  // `count` (at least 1) made even, so a grid's middle falls between
+  // units: rounded down, or up with `up`; 1 stays 1
+  function evenCount(count, up) {
+    if (count <= 1 || count % 2 === 0)
+      return count;
+    return up ? count + 1 : count - 1;
   }
 
   // The groups of `places` that touch or overlap (sharing some length of
@@ -706,7 +716,14 @@ QtObject {
         break;
       card *= 0.96;
     }
-    const reach = root.layoutReach(places, from);
+    // As far as they reach, each count made even in whole units as
+    // screenLattice's are (rounded up, so every module still fits)
+    const reached = root.layoutReach(places, from);
+    const even = count => root.evenCount(Math.ceil(count / scale), true) * scale;
+    const reach = {
+      "cols": even(reached.cols),
+      "rows": even(reached.rows)
+    };
     // A double grid's units are (card - gap) / 2: its gap per px of unit
     const ratio = fine ? 2 * per / (1 - per) : per;
     const fitted = Math.min(asked, root.latticeUnit(reach.cols, reach.rows, width, height, margin, ratio));

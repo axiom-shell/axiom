@@ -569,10 +569,20 @@ TestCase {
 
   function test_screenLattice() {
     // card 425: unit (425 - 60) / 4 = 91.25, step 111.25
+    // 17 × 9 fit: each count rounded down to even, so the centre falls
+    // between units
     compare(GridPlacement.screenLattice(425, 1920, 1080, 20), {
-      "cols": 17,
-      "rows": 9
+      "cols": 16,
+      "rows": 8
     }, "1080p");
+    // At each screen's own card size (baseCard: 450 px at 1080p, 630 px
+    // at 1440p), where 16 × 9, 15 × 8 and 21 × 8 fit
+    [[1920, 1080, 16, 8], [2560, 1440, 14, 8], [3440, 1440, 20, 8]].forEach(([width, height, cols, rows]) => {
+      compare(GridPlacement.screenLattice(GridPlacement.baseCard(width, height), width, height, 20), {
+        "cols": cols,
+        "rows": rows
+      }, `${width} × ${height}`);
+    });
     compare(GridPlacement.screenLattice(425, 2560, 1080, 20).cols, 22, "21:9: more across, as many down");
     compare(GridPlacement.screenLattice(850, 1920, 1080, 20), {
       "cols": 8,
@@ -582,6 +592,11 @@ TestCase {
       "cols": 1,
       "rows": 1
     }, "never none");
+  }
+
+  function test_evenCount() {
+    compare([1, 2, 3, 9, 10].map(count => GridPlacement.evenCount(count, false)), [1, 2, 2, 8, 10], "down");
+    compare([1, 2, 3, 9, 10].map(count => GridPlacement.evenCount(count, true)), [1, 2, 4, 10, 10], "up");
   }
 
   function test_anchorPlaces() {
@@ -745,7 +760,7 @@ TestCase {
     ];
     // Card 425 at zoom 1: gap 20, unit 91.25, step 111.25
     const fits = GridPlacement.screenArrangement(places, from, 425, 2560, 1080, 20, false, 1);
-    compare([fits.cols, fits.rows, fits.unit, fits.gap, fits.zoom, fits.shrunk], [22, 9, 425, 20, 1, false]);
+    compare([fits.cols, fits.rows, fits.unit, fits.gap, fits.zoom, fits.shrunk], [22, 8, 425, 20, 1, false]);
     compare(fits.places[1].x, 17, "kept to the right edge");
     const zoomed = GridPlacement.screenArrangement(places, from, 425, 2560, 1080, 20, false, 1.2);
     compare([zoomed.gap, zoomed.zoom], [24, 1.2], "content and gaps drawn at its Module size");
@@ -763,7 +778,7 @@ TestCase {
       "cols": 32,
       "rows": 18
     }, 425, 2560, 1080, 20, true, 1);
-    compare([fine.cols, fine.rows, fine.unit, fine.zoom], [44, 18, GridPlacement.fineUnit(425, 20), 1]);
+    compare([fine.cols, fine.rows, fine.unit, fine.zoom], [44, 16, GridPlacement.fineUnit(425, 20), 1], "22 × 8 whole units");
     // Too big for the room even on its own grid: fitted into it
     const fitted = GridPlacement.screenArrangement([at(0, 0, 4, 4).place], {
       "cols": 16,
@@ -771,6 +786,21 @@ TestCase {
     }, 850, 800, 450, 20, false, 1);
     verify(fitted.shrunk && fitted.unit < 850);
     fuzzyCompare(fitted.gap / fitted.unit, 20 / 850, 1e-4, "its gaps shrink with its cards");
+    // Fitting no smaller grid at all: the grid it was placed on, each
+    // count made even upward so nothing moves off it
+    const kept = GridPlacement.screenArrangement([at(0, 0, 15, 9).place], {
+      "cols": 15,
+      "rows": 9
+    }, 425, 300, 200, 20, false, 1);
+    compare([kept.cols, kept.rows], [16, 10]);
+    compare(kept.places[0], at(0, 0, 15, 9).place, "nothing moves");
+    // On a double grid, even in whole units: 33 half units reach 17
+    // whole, so 18
+    const keptFine = GridPlacement.screenArrangement([at(0, 0, 33, 18).place], {
+      "cols": 33,
+      "rows": 18
+    }, 425, 300, 200, 20, true, 1);
+    compare([keptFine.cols, keptFine.rows], [36, 20]);
   }
 
   function test_fitScale() {
