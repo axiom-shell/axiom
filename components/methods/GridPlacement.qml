@@ -783,7 +783,9 @@ QtObject {
   // optional) is room to grow into: that axis's units share it evenly. A
   // grid never shrinks below its natural size, unless `fit`: then it takes
   // exactly the room, shrinking down to half a unit at the least. `gap`:
-  // the px between cards (cardSpacing unless given), kept in the result
+  // the px between cards (cardSpacing unless given), kept in the result.
+  // Units may be fractional; the grid's width and height are whole px, as
+  // rectPx's edges are, so it and its host's box sit on whole pixels
   function trackSizes(bounds, unit, stretch, gap) {
     const spacing = gap ?? root.cardSpacing;
     const size = root.unitOf(unit, spacing);
@@ -795,19 +797,26 @@ QtObject {
       "unitW": unitW,
       "unitH": unitH,
       "gap": spacing,
-      "width": bounds.cols > 0 ? bounds.cols * unitW + (bounds.cols - 1) * spacing : 0,
-      "height": bounds.rows > 0 ? bounds.rows * unitH + (bounds.rows - 1) * spacing : 0
+      "width": bounds.cols > 0 ? Math.round(bounds.cols * unitW + (bounds.cols - 1) * spacing) : 0,
+      "height": bounds.rows > 0 ? Math.round(bounds.rows * unitH + (bounds.rows - 1) * spacing) : 0
     };
   }
 
-  // A place's pixel rect for trackSizes' `sizes`
+  // A place's pixel rect for trackSizes' `sizes`, its edges on whole px
+  // (each rounded, so neighbours keep their gap): a slot clips its module,
+  // and a clip at a fractional edge shaves the pixel a module draws its
+  // stroke in there (a borderless Chat's composer)
   function rectPx(place, sizes) {
     const spacing = sizes.gap ?? root.cardSpacing;
+    const x = place.x * (sizes.unitW + spacing);
+    const y = place.y * (sizes.unitH + spacing);
+    const left = Math.round(x);
+    const top = Math.round(y);
     return {
-      "x": place.x * (sizes.unitW + spacing),
-      "y": place.y * (sizes.unitH + spacing),
-      "width": place.w * sizes.unitW + (place.w - 1) * spacing,
-      "height": place.h * sizes.unitH + (place.h - 1) * spacing
+      "x": left,
+      "y": top,
+      "width": Math.round(x + place.w * sizes.unitW + (place.w - 1) * spacing) - left,
+      "height": Math.round(y + place.h * sizes.unitH + (place.h - 1) * spacing) - top
     };
   }
 

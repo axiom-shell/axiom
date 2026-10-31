@@ -535,11 +535,12 @@ TestCase {
     const zoom = 0.73;
     const layout = GridPlacement.trackSizes(bounds, 450, null, GridPlacement.gapOf(1));
     const drawn = GridPlacement.trackSizes(bounds, 450 * zoom, null, GridPlacement.gapOf(zoom));
-    fuzzyCompare(drawn.width, layout.width * zoom, 1e-6);
-    fuzzyCompare(drawn.height, layout.height * zoom, 1e-6);
+    // Within a pixel: both are rounded to whole px
+    fuzzyCompare(drawn.width, layout.width * zoom, 1);
+    fuzzyCompare(drawn.height, layout.height * zoom, 1);
     const a = GridPlacement.rectPx(place, layout);
     const b = GridPlacement.rectPx(place, drawn);
-    ["x", "y", "width", "height"].forEach(key => fuzzyCompare(b[key], a[key] * zoom, 1e-6, key));
+    ["x", "y", "width", "height"].forEach(key => fuzzyCompare(b[key], a[key] * zoom, 1, key));
   }
 
   function test_overlayLayout() {
@@ -1078,6 +1079,39 @@ TestCase {
       "width": 500,
       "height": 760
     });
+  }
+
+  function test_rectPxWholePixels() {
+    // Fractional units (a stretched menu): every edge on a whole pixel, the
+    // right one where the next slot's left would be less the gap
+    const sizes = {
+      "unitW": 37.375,
+      "unitH": 41.6,
+      "gap": 10
+    };
+    const a = GridPlacement.rectPx({
+      "x": 1,
+      "y": 1,
+      "w": 2,
+      "h": 3
+    }, sizes);
+    [a.x, a.y, a.width, a.height].forEach(value => compare(value, Math.round(value)));
+    compare([a.x, a.y, a.width, a.height], [47, 52, 85, 144]);
+    const b = GridPlacement.rectPx({
+      "x": 3,
+      "y": 1,
+      "w": 1,
+      "h": 1
+    }, sizes);
+    compare(b.x, Math.round(3 * 47.375), "the next slot starts where the place does");
+    const grid = GridPlacement.trackSizes({
+      "cols": 3,
+      "rows": 4
+    }, 400, {
+      "width": 467.5,
+      "fit": true
+    });
+    compare(grid.width, Math.round(grid.width), "the grid's size is whole px");
   }
 
   function test_guideFrame() {

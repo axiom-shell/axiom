@@ -35,8 +35,8 @@ Pure, tested by `tst_GridPlacement`.
 - `firstFree(modules, w, h)`: finds a spot in reading order, else beside (or below a wide grid).
 - `revealOrder(modules)`: each module's rank when a page streams them in, by diagonal (`x + y`), then the higher.
 - `normalize`: shifts a grid so its top left module sits at 0, 0.
-- `trackSizes(bounds, unit, stretch)`: one unit's width and height and the grid's size, growing either axis evenly into `stretch` room (never shrinking).
-- `rectPx(place, sizes)`: places a module.
+- `trackSizes(bounds, unit, stretch)`: one unit's width and height and the grid's size, growing either axis evenly into `stretch` room (never shrinking). Units may be fractional; the grid's size is rounded to whole px.
+- `rectPx(place, sizes)`: places a module, each edge rounded to a whole px (not its size, so neighbours keep their gap). Each slot clips its module, and a clip on a fractional edge shaves the pixel a module draws its stroke in (a borderless Chat's composer in an edge menu).
 - `fitScale`: how much an overlay's room shrinks a page.
 - Edge menu geometry (see [Edge menu hosts](../edge-menus/hosts.md)):
   - `menuLattice` / `latticeOf`: the cells a menu sits on along its edge. As many as fit between the frame's pads, centred there, moved `gridOffset` px.
