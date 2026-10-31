@@ -90,8 +90,8 @@ QtObject {
     return menu.frame ? Math.max(0, Appearance.screenMargin - Appearance.borderWidth) : 0;
   }
 
-  // From an integrated menu's strip's edges to its body: the frame and
-  // its stroke (its padding is inside the body, EdgeMenuBody.inset)
+  // From an integrated menu's strip's edges to its padding: the frame and
+  // its stroke
   function outerPadOf(menu) {
     return root.frameInsetOf(menu) + (menu.frame ? Appearance.borderWidth : 0);
   }

@@ -22,7 +22,6 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
   - Submenus (`MenuSubmenu`) do the same on their parent menu's screen.
 - Taking its whole edge (`fillsEdge`, `GridPlacement.menuFillsEdge`: `length` `edge`, or any integrated menu) it's stretched along the edge to `maxLength`; otherwise it scrolls along it past that.
 - Its modules are laid out as `GridPlacement.menuModules` gives them: an integrated menu's moved back along the edge to start at its first module, so a lone module placed past the grid's start still spans the edge end to end. A whole-edge floating menu keeps a gap before its modules (`menuKeepsLead`: the layouts editor holds it on purpose); `menuOnScreen` draws both the same.
-- The menu's `padding` is inside the body (`inset`): the body's scrolling `Flickable` clips at the box's stroke (floating) or the frame's (integrated), with the modules `inset` in from it. So what a module draws just past its slot (a ring's stroke, a hover background) shows in the padding instead of being cut, which matters most for modules without card boxes (`moduleBorders` off, which pad nothing: `OverlayConfig.cardPad`). The hosts add only their stroke and frame outside the body.
 - With `pinButton` it draws a pin in the corner away from the edge (`EdgeMenuManager.togglePinned`).
 
 ### The lattice along the edge
@@ -45,7 +44,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 - Both hosts centre their hover strip on the modules from config (`EdgeTrigger.centre`; the floating one through `EdgePopout.triggerCentre`), since the body only loads while open.
 
 ### `floating`: `FloatingEdgeMenu`
-- An `EdgePopout` (`contentPadding`: just the stroke, the padding being the body's; `edgeOffset`, `fillColor` / `strokeColor`, defaulting to what the OSD uses).
+- An `EdgePopout` (`contentPadding`, `edgeOffset`, `fillColor` / `strokeColor`, defaulting to what the OSD uses).
 - It's `detached` (a plain box) when:
   - held (`menu.detached`: `gap` from the frame lines on its edge and at both ends, through `EdgePopout.held` / `gap`; see [Held off an edge](../popouts/held-off-edge.md)); or
   - its edge has a transparent bar.
