@@ -657,7 +657,7 @@ class ReviewScope(unittest.TestCase):
                 (comp, "## Cleanups\n" + shared + "\n" + self.entry("Another on queueAction", where, "compositor")),
             ):
                 d.mkdir(parents=True)
-                (d / "report.md").write_text("# System review\n\n**Verdict:** x\n\n" + report)
+                (d / "findings.md").write_text("# System review\n\n**Verdict:** x\n\n" + report)
             (niri / "review.md").write_text("# niri\nreviewed: abc 2026-10-30\n")
             _, out = self.run_scope(root, "--apply", str(niri), str(comp))
             issues = (root / "docs/dev/issues.md").read_text()

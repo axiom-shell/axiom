@@ -46,7 +46,7 @@ Every candidate passes `../review-branch/lenses.md` › Proving it before it goe
 
 ## Phase 5: report
 
-`report.md`, printed too:
+`findings.md`, printed too:
 
 ```
 # System review: <system>  (full | incremental since <sha>)

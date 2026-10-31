@@ -7,7 +7,7 @@ what reviews found.
                            entries touching the files
   scope.py --list          every system: mode, files, lines, last reviewed
   scope.py --orphans       code files no system covers, and files in several
-  scope.py --apply <dir>…  record reviews: each dir's report.md Blockers,
+  scope.py --apply <dir>…  record reviews: each dir's findings.md Blockers,
                            Major, Cleanups and Outside the system entries
                            appended to issues.md (a title whose anchor is
                            taken is skipped, so a re-run files nothing) and
@@ -216,9 +216,9 @@ def apply(dirs):
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
     import check_docs
     title = lambda entry: entry.splitlines()[0][4:]
-    missing = [d for d in dirs if not os.path.isfile(os.path.join(d, "report.md"))]
+    missing = [d for d in dirs if not os.path.isfile(os.path.join(d, "findings.md"))]
     if not dirs or missing:
-        print("no report.md in: " + (" ".join(missing) or "(no dirs given)"))
+        print("no findings.md in: " + (" ".join(missing) or "(no dirs given)"))
         return 2
     issues = open(ISSUES).read()
     roadmap_path = os.path.join(DOCS, "roadmap.md")
@@ -230,7 +230,7 @@ def apply(dirs):
     slugs = {check_docs.heading_slug(line[4:]) for line in issues.splitlines() if line.startswith("### ")}
     new = []
     for d in dirs:
-        report = open(os.path.join(d, "report.md")).read()
+        report = open(os.path.join(d, "findings.md")).read()
         for section in re.split(r"(?m)^## ", report)[1:]:
             if section.startswith(RECORDED):
                 for entry in re.split(r"(?m)^### ", section)[1:]:

@@ -20,7 +20,7 @@ Read `lenses.md` (next to this file) first: its "Every reviewer" and "The lead r
 
 ## Phase 0: scope and brief
 
-Work in `$SCRATCH/review/` (`$SCRATCH` = this session's scratchpad). An earlier run's `report.md` there becomes `report.prev.md`.
+Work in `$SCRATCH/review/` (`$SCRATCH` = this session's scratchpad). An earlier run's `findings.md` there becomes `findings.prev.md`.
 
 1. `mb=$(git merge-base <base> HEAD)`. The review covers `git diff $mb` (committed and uncommitted) plus untracked files (`git ls-files -o --exclude-standard`). Nothing changed: say so and stop.
 2. `git log --format='%h %s%n%b' $mb..HEAD` and `git diff --stat $mb`; rank the changed files by risk: logic in services, methods, geometry, compositor backends, the daemon, schema, migrations and scripts first; UI wiring next; docs, tests and renames last.
@@ -40,14 +40,14 @@ Instead of Phase 2's single pass: one reviewer agent per lens (`lenses.md` › T
 
 ## Phase 3: report
 
-Write `report.md` and print it:
+Write `findings.md` and print it:
 
 ```
 # Review: <branch> vs <base> (<n> commits, <files> files, +<a> −<d>)
 
 **Verdict:** ready / ready after the fixes below / needs rework: <one sentence why>
 **Intent check:** <does the branch do what it says; any claim that doesn't hold>
-<with report.prev.md: which earlier findings are fixed, which still stand>
+<with findings.prev.md: which earlier findings are fixed, which still stand>
 
 <the findings by severity, in lenses.md's shape>
 
