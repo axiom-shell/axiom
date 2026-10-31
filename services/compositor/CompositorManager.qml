@@ -663,7 +663,7 @@ Singleton {
 
   // The outputs in block order, each with its block (its index, from
   // _bases)
-  function _orderedOutputs() {
+  function orderedOutputs() {
     return root.outputs.map(o => ({
           "name": o.name,
           "block": Math.round((root._bases[o.name] - 1) / root.blockSize),
@@ -672,68 +672,20 @@ Singleton {
         })).sort((a, b) => a.block - b.block);
   }
 
-  // --- Layout changes ---
-
-  // The layout the workspaces were last laid out for ({ blocks, size })
-  property var _appliedLayout: null
-
-  function _currentLayout() {
-    return {
-      "blocks": WorkspacesConfig.perMonitorBlocks,
-      "size": root.blockSize
-    };
-  }
-
-  // A layout or count change saved together is one remap
-  property Timer _remapTimer: Timer {
-    interval: 200
-    onTriggered: {
-      const layout = root._currentLayout();
-      if (root._appliedLayout)
-        root._remapWorkspaces(root._appliedLayout, layout);
-      root._appliedLayout = layout;
-    }
-  }
-
-  property Connections _layoutWatch: Connections {
-    target: WorkspacesConfig
-
-    function onPerMonitorBlocksChanged() {
-      root._remapTimer.restart();
-    }
-  }
-
-  // The layout's size, or the backend's block where workspaces turn
-  // dynamic (Hyprland's scrolling layout)
-  onBlockSizeChanged: root._remapTimer.restart()
-
-  // Moves every window from its workspace under the `from` layout to the
-  // matching one in its output's ids under `to` (WorkspaceGeometry.
-  // remapWorkspaces), and switches each output to the workspace matching
-  // the one it showed (the backend's applyRemap)
-  function _remapWorkspaces(from, to) {
-    // Workspaces that belong to their output keep their place in it
-    if (!root.backend || root.supports.outputWorkspaces === true)
-      return;
-    const windows = root.windows.map(w => ({
-          "id": w.id,
-          "workspace": w.workspaceId,
-          "output": w.output
-        }));
-    const outputs = _orderedOutputs();
-    const plan = WorkspaceGeometry.remapWorkspaces(outputs, windows, from, to);
-    if (!plan.changed)
-      return;
-    const focused = plan.focus[plan.focus.length - 1];
+  // A switch made outside goToWorkspace (a remap), as the last one gone to
+  function noteSwitch(id) {
     root._lastGo = {
-      "id": focused?.id ?? -1,
+      "id": id,
       "time": Date.now()
     };
-    console.log(`[CompositorManager] remapping workspaces: ${plan.moves.length} windows, outputs to ${plan.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
-    root.backend.applyRemap(plan, outputs.map(o => o.name));
   }
 
-  Component.onCompleted: _appliedLayout = _currentLayout()
+  // Remaps the workspaces on a layout change, starts a grid at its centre
+  property WorkspaceRemap _remap: WorkspaceRemap {
+    manager: root
+  }
+
+  Component.onCompleted: _remap.begin()
 
   // `axiom ipc workspaces …`, for workspace keybinds. mode:
   // "go", "move" (take the focused window along) or "moveSilent"
@@ -760,7 +712,7 @@ Singleton {
     // Moves workspaces left outside their output's ids (by a change made
     // while axiom wasn't running) back into them
     function reconcile(): void {
-      root._remapWorkspaces(root._currentLayout(), root._currentLayout());
+      root._remap.reconcile();
     }
 
     // direction: left, right, up or down

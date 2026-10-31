@@ -580,4 +580,24 @@ TestCase {
     compare(_moves(plan), "b2>202");
     compare(_focus(plan), "B:202 A:1");
   }
+
+  function test_centreWorkspace() {
+    compare(WorkspaceGeometry.centreWorkspace(1, 3, 3), 5, "3 × 3: the middle");
+    compare(WorkspaceGeometry.centreWorkspace(10, 3, 3), 14, "a second block's middle");
+    compare(WorkspaceGeometry.centreWorkspace(1, 4, 4), 11, "4 × 4: after the middle, right and down");
+    compare(WorkspaceGeometry.centreWorkspace(1, 5, 1), 3, "one row");
+    compare(WorkspaceGeometry.centreWorkspace(1, 1, 1), 1, "one cell");
+  }
+
+  function test_centreFocus() {
+    // 3 × 3 blocks: A owns 1-9, B 10-18
+    const start = WorkspaceGeometry.centreFocus(_monitors(1, 2), 9, 3, 3, true);
+    compare(_focus(start), "B:14 A:5", "both where the compositor started them, the focused one last");
+    verify(start.changed);
+    const moved = WorkspaceGeometry.centreFocus(_monitors(1, 12), 9, 3, 3, true);
+    compare(_focus(moved), "B:12 A:5", "B already moved within its block: kept");
+    const all = WorkspaceGeometry.centreFocus(_monitors(3, 12), 9, 3, 3, false);
+    compare(_focus(all), "B:14 A:5", "turning the grid on: every monitor");
+    verify(!WorkspaceGeometry.centreFocus(_monitors(5, 14), 9, 3, 3, false).changed, "already there");
+  }
 }

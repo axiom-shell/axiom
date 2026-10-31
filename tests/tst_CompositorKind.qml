@@ -58,6 +58,17 @@ TestCase {
     compare(CompositorKind.pick(both, () => false), "sway", "none running: the first");
   }
 
+  function test_sessionKey() {
+    const env = {
+      "HYPRLAND_INSTANCE_SIGNATURE": "abc_1_2",
+      "SWAYSOCK": "/run/user/1000/sway-ipc.1000.130759.sock"
+    };
+    compare(CompositorKind.sessionKey(env, "hyprland"), "abc_1_2");
+    compare(CompositorKind.sessionKey(env, "sway"), "/run/user/1000/sway-ipc.1000.130759.sock");
+    compare(CompositorKind.sessionKey(env, "niri"), "", "not set");
+    compare(CompositorKind.sessionKey(env, ""), "", "no compositor");
+  }
+
   function test_lockPid() {
     compare(CompositorKind.lockPid("1234\nwayland-1\n"), "1234");
     compare(CompositorKind.lockPid(null), "");

@@ -1,6 +1,6 @@
 # Workspaces (layout, navigation, the bar widget)
 
-> **Files:** `config/WorkspacesConfig.qml`, `services/compositor/CompositorManager.qml`, `services/compositor/HyprlandManager.qml`, `components/methods/WorkspaceGeometry.qml`, `components/bar/widgets/Workspaces/Workspaces.qml`, `components/bar/widgets/Workspaces/`, `components/surfaces/workspaces/`, `components/views/Settings/WorkspacesStatus.qml`
+> **Files:** `config/WorkspacesConfig.qml`, `services/compositor/CompositorManager.qml`, `services/compositor/WorkspaceRemap.qml`, `services/compositor/HyprlandManager.qml`, `components/methods/WorkspaceGeometry.qml`, `components/bar/widgets/Workspaces/Workspaces.qml`, `components/bar/widgets/Workspaces/`, `components/surfaces/workspaces/`, `components/views/Settings/WorkspacesStatus.qml`
 > **Config:** `Workspaces.*` (`layout`, `count`, `columns`, `rows`, …)
 > **Related:** [Workspace strips](workspace-strips.md), [Keybinds](keybinds.md), [Bar composition](../bar/composition.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 
@@ -43,17 +43,23 @@ One workspace layout serves everything that shows workspaces or moves between th
 - Keybinds call `axiom ipc workspaces …` rather than scripts of their own.
 
 ### Layout changes (remap)
-- The compositor's workspaces stay where they are when the layout or size changes, so `CompositorManager` remaps them.
-  - `_remapWorkspaces` runs 200 ms after `perMonitorBlocks`/`size` change, starting from the layout it last applied.
+- The compositor's workspaces stay where they are when the layout or size changes, so `CompositorManager` remaps them, through its `_remap` (`compositor/WorkspaceRemap`, a part it holds).
+  - `WorkspaceRemap.remap` runs 200 ms after `perMonitorBlocks`/`size`/`workspaceGrid` change, starting from the layout it last applied.
 - `WorkspaceGeometry.remapWorkspaces` (pure, tested) sends each workspace's windows to the same place in its own monitor's new ids.
   - The first monitor in monitor order keeps a contested id; the rest take free ones, merging only when none is free.
-  - It picks each monitor's new active workspace.
+  - It picks each monitor's new active workspace. When the change turns the grid on (`workspaceGrid` true where the state file below keeps it false, so the config settling at the shell's start never counts), every monitor goes to its block's centre instead (`WorkspaceGeometry.centreFocus`).
 - The backend carries the plan out (`applyRemap`). On Hyprland one Lua chunk does it, with the `workspaces` animation off:
   1. windows go to `name:axiom-remap-<id>`, created on their own monitor, so a chain like 10 → 11, 11 → 12 can't merge
   2. every monitor goes to `name:axiom-remap-mon-<i>`, so its old (maybe empty) workspace is gone before its id is reused
   3. windows go to their ids
   4. monitors go to theirs, the focused one last.
-- IPC `workspaces reconcile` runs the remap for the current layout, re-homing workspaces left outside their monitor's ids.
+- IPC `workspaces reconcile` (`WorkspaceRemap.reconcile`) runs the remap for the current layout, re-homing workspaces left outside their monitor's ids.
+
+### The grid's start
+- A grid starts at its centre cell (`WorkspaceGeometry.centreWorkspace`: the middle row's middle column, after the middle with an even count), not the compositor's first id (the top left): when the grid is turned on (above), and when a run of the compositor starts in a grid.
+- **A new run, not a reload.** `WorkspaceRemap` keeps the run it last started in (`CompositorKind.sessionKey`: Hyprland's instance signature, sway's socket, each new when the compositor starts) and whether the workspaces were last laid out in a grid in the `workspaces` state file (`StateManager`; `{ session, grid }`). Only a key it hasn't seen counts: a reload of the shell, or axiom restarting it, finds the same key and leaves the workspaces alone. Not in the greeter, nor with no key (and then turning the grid on doesn't centre either).
+- Once the outputs and their active workspaces are known (`_ready`), `_start` sends each output still where the compositor started it (on its block's first id, or outside its block, where Hyprland numbers later monitors on) to its centre, through the backend's `applyRemap` with no moves: one batch, focused output last. An output already moved by then keeps its workspace. `goToWorkspace` isn't used: each call's slide cancels the one before (`HyprlandManager.travel`), and only the focused output's would land. It goes by the block bases then, so it shares [the entry on a monitor named by description](../issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives).
+- Only where `workspaceGrid` holds (never with dynamic workspaces) and the workspaces aren't the output's own (`supports.outputWorkspaces`).
 
 ### The bar widget
 - `bar/widgets/Workspaces/Workspaces.qml` loads a strip by layout:
