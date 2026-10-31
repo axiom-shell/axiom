@@ -554,6 +554,15 @@ Found by the audits:
 - [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)
 - [setWallpaperAndGenerate only forwards for one caller](issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)
 - [~/.current_wallpaper is written but nothing reads it](issues.md#current_wallpaper-is-written-but-nothing-reads-it)
+- [Icons.overrides never reaches window icons](issues.md#iconsoverrides-never-reaches-window-icons)
+- [A cancelled rename's typed text comes back in the notes and chat rename fields](issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
+- [Nine shared controls animate with their own easing, written out where Glide does it](issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)
+- [Every StyledSlider overrides its look and its value the same way](issues.md#every-styledslider-overrides-its-look-and-its-value-the-same-way)
+- [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
+- [StyledRectButton's badge and border press colour have no user](issues.md#styledrectbuttons-badge-and-border-press-colour-have-no-user)
+- [ActionTile and ActionPill carry the same countdown bar](issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
+- [StyledTextEntry and StyledTextArea carry the same blinking cursor](issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
+- [TileGrid and StyledVolumeBar keep lines nothing reads](issues.md#tilegrid-and-styledvolumebar-keep-lines-nothing-reads)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
