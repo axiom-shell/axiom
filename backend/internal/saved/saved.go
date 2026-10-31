@@ -10,9 +10,9 @@
 // first keeps the running config: edits go into the active snapshot, and
 // with none active it's saved as "unsaved" (one file, replaced each time).
 // An applied file becomes the active snapshot at once; untouched, it goes
-// once another replaces it, as that file applies it again. Nothing loaded changes a takeover
-// setting (x-takeover): the store keeps them. Any format axiom reads is
-// taken (an older file is converted on the way).
+// once another replaces it, as that file applies it again. Nothing loaded
+// changes a takeover setting (x-takeover): the store keeps them. Any format
+// axiom reads is taken (an older file is converted on the way).
 package saved
 
 import (
@@ -359,8 +359,11 @@ func (s *Service) Restore(name string) (Applied, error) {
 // Remove deletes the snapshot name.
 func (s *Service) Remove(name string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.remove(name)
+	err := s.remove(name)
+	s.mu.Unlock()
+	// Deleting the backup changes what an apply would do with it (plan)
+	s.Changed()
+	return err
 }
 
 func (s *Service) remove(name string) error {

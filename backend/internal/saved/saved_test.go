@@ -369,6 +369,12 @@ func TestStateKeep(t *testing.T) {
 	set(t, f.store, "Bars.style.widgetStyle", "plain")
 	replaces := KeepPlan{Into: "unsaved", Backup: true, Replaces: true}
 	check("a backup there", replaces, replaces)
+	if err := f.svc.Remove("unsaved"); err != nil {
+		t.Fatal(err)
+	}
+	if st := f.svc.State(); st.Keep != backup {
+		t.Errorf("after deleting the backup: keep %+v, want %+v", st.Keep, backup)
+	}
 	if _, err := f.svc.Save("mine", ""); err != nil {
 		t.Fatal(err)
 	}
