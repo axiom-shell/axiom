@@ -37,4 +37,4 @@ Holds:
 Read deeply: ThemeManager, Theme, WallpaperManager, ShownLook, Schedules, ThemeFamilies, DailySchedule, NightLightManager, NightLight, WallpaperWindow, shell/Wallpaper, setWallpaper.sh, theme.go, nightlight.go, NightLightStatus · Outlined: ThemePicker, WallpaperPicker, NightLightControls, Themes view, palette.go (Themes), Appearance (theming members) · Skipped: integrate.go, effects.go (theme-integrations), wayland gamma/ctm (dbus-wayland), palette analyze/color (golden-tested), Palette, SettingRows, gen_theme_template.py, ColorTemperature.
 
 ## History
-- 2026-10-31 full: 9 findings (3 Major, 3 Cleanup incl. one merged into an existing entry, 4 Minor); recorded
+- 2026-10-31 full: 10 findings (3 Major, 3 Cleanup incl. one merged into an existing entry, 4 Minor); recorded
