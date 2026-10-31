@@ -38,15 +38,17 @@ PopoutWrapperBase {
   // margin reaches its stroke's inner edge, as the screen border's does, so
   // the two strokes line up
   readonly property int frameInset: root.framed ? Math.max(0, Appearance.screenMargin - Appearance.borderWidth) : 0
-  // From the strip's edges to the cards: the frame and its stroke, then
-  // the padding
-  readonly property int pad: root.frameInset + (root.framed ? Appearance.borderWidth : 0) + root.padding
+  // From the strip's edges to the body: the frame and its stroke
+  readonly property int outerPad: root.frameInset + (root.framed ? Appearance.borderWidth : 0)
+  // From the strip's edges to the cards: then the padding, which is inside
+  // the body (EdgeMenuBody.inset), within its clip
+  readonly property int pad: root.outerPad + root.padding
   // With the screen border off, the strip's own inner stroke (with it on,
   // the border's strip inside this one draws it)
   readonly property int innerStroke: Appearance.screenBorder ? 0 : Appearance.borderWidth
   readonly property real edgeLength: root.vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0
   readonly property real bodyDepth: root.vertical ? (loader.item?.implicitWidth ?? 0) : (loader.item?.implicitHeight ?? 0)
-  readonly property int depth: Math.ceil(root.bodyDepth + root.pad * 2 + root.innerStroke)
+  readonly property int depth: Math.ceil(root.bodyDepth + root.outerPad * 2 + root.innerStroke)
   // Where the modules start along the edge, from config (the body loads
   // only while open, and the hover strip needs it closed)
   // Its card size (EdgeMenusConfig.cardUnitOf)
@@ -105,7 +107,7 @@ PopoutWrapperBase {
     startInset: 0
     endInset: 0
     triggerWidth: root.menu.trigger.size
-    triggerLength: sync.triggerLength(loader.item, root.vertical, root.pad)
+    triggerLength: sync.triggerLength(loader.item, root.vertical, root.outerPad)
     hoverDelay: root.menu.open.delay
     onTriggered: root.show()
   }
@@ -225,15 +227,17 @@ PopoutWrapperBase {
           id: loader
           active: root.occupied
 
-          readonly property real across: root.pad + (root.edge === ScreenEdge.Right || root.edge === ScreenEdge.Bottom ? root.innerStroke : 0)
+          readonly property real across: root.outerPad + (root.edge === ScreenEdge.Right || root.edge === ScreenEdge.Bottom ? root.innerStroke : 0)
 
-          x: root.vertical ? across : root.alongPos
-          y: root.vertical ? root.alongPos : across
+          // The body starts its padding before the modules
+          x: root.vertical ? across : root.alongPos - root.padding
+          y: root.vertical ? root.alongPos - root.padding : across
 
           sourceComponent: EdgeMenuBody {
             menu: root.menu
             vertical: root.vertical
-            maxLength: root.edgeLength - root.pad * 2
+            maxLength: root.edgeLength - root.outerPad * 2
+            inset: root.padding
           }
 
           onLoaded: root.updateDismissTimer()

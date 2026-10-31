@@ -43,10 +43,15 @@ EdgePopout {
   // reserved on the perpendicular edge at its start
   readonly property real screenLength: root.vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0
   readonly property real alongOrigin: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.startSide)
+  // The menu's padding: inside the body (EdgeMenuBody.inset), within its
+  // clip, so only the stroke is the box's own `contentPadding`
+  readonly property int padding: EdgeMenusConfig.paddingOf(root.menu)
+  // From the box's outer edge to the modules: its stroke and padding
+  readonly property real modulesPad: root.contentPadding + root.padding
   // The least room from the modules to the screen's ends: what's reserved
   // there, the box's inset and its padding
-  readonly property real startPad: root.alongOrigin + root.startInset + root.contentPadding
-  readonly property real endPad: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide) + root.endInset + root.contentPadding
+  readonly property real startPad: root.alongOrigin + root.startInset + root.modulesPad
+  readonly property real endPad: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide) + root.endInset + root.modulesPad
   // From config, so the hover strip lines up before the body has loaded
   // Its card size (EdgeMenusConfig.cardUnitOf)
   readonly property int unit: EdgeMenusConfig.cardUnitOf(root.menu)
@@ -59,9 +64,9 @@ EdgePopout {
       "screen": root.screen?.name ?? "",
       "startPad": root.startPad,
       "endPad": root.endPad,
-      "across": root.attachAt + root.contentPadding + root.attachClearance,
+      "across": root.attachAt + root.modulesPad + root.attachClearance,
       "before": Math.max(0, root.attachBase),
-      "after": root.contentPadding,
+      "after": root.modulesPad,
       "reserves": false
     })
 
@@ -72,7 +77,7 @@ EdgePopout {
   // as a widget's popout with `popoutAtWidget`, centred on that widget
   // instead, as a bar popout is (its ends clamped and joined alike).
   position: 0
-  positionOffset: isNaN(root._widgetCentre) ? root.modulesStart - root.alongOrigin - root.contentPadding + (isFinite(root.naturalBox) ? root.naturalBox / 2 : 0) : root._widgetCentre - root.alongOrigin
+  positionOffset: isNaN(root._widgetCentre) ? root.modulesStart - root.alongOrigin - root.modulesPad + (isFinite(root.naturalBox) ? root.naturalBox / 2 : 0) : root._widgetCentre - root.alongOrigin
 
   // The centre along the edge, in screen px, of the widget that opened it
   // as its popout, when it places itself there (on this edge and screen
@@ -96,7 +101,7 @@ EdgePopout {
   roomForSubmenus: root.menu.layout.modules.some(module => module?.type === "Submenu")
   // Read through a var: EdgeMenuBody's members, on EdgePopout's Item
   readonly property var _body: root.contentItem
-  contentPadding: Appearance.borderWidth + EdgeMenusConfig.paddingOf(root.menu)
+  contentPadding: Appearance.borderWidth
   fillColor: EdgeMenusConfig.colorsOf(root.menu).fill
   strokeColor: EdgeMenusConfig.colorsOf(root.menu).stroke
   triggerEnabled: root.menu.open.onHover
@@ -133,6 +138,7 @@ EdgePopout {
       menu: root.menu
       vertical: root.vertical
       maxLength: root.maxBoxLength - root.contentPadding * 2
+      inset: root.padding
     }
   }
 }
