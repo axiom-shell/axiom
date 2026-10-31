@@ -128,7 +128,7 @@ Singleton {
       console.log("[NightLightManager] Probed wlsunset running:", exitCode === 0);
       _run.active = exitCode === 0;
       _run.probed = true;
-    });
+    }, null, true);
   }
   onAvailableChanged: root._probeOnce()
 

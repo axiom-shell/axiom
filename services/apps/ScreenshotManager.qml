@@ -430,7 +430,7 @@ QtObject {
       NotificationManager.sendNotification("axiom", I18n.tr("Recording saved"), I18n.tr("Saved in {0}. Click to open it.", path.replace(/\/[^/]*$/, "")), {
         "desktopEntry": root._desktopEntry
       });
-    });
+    }, null, true);
   }
 
   // Lists the newest recordings in recordingFolder into `recordings`
@@ -459,7 +459,7 @@ QtObject {
         root._relist = false;
         Qt.callLater(root.refreshRecordings);
       }
-    });
+    }, null, true);
   }
   onRecordingFolderChanged: {
     if (!root._listed)
@@ -496,7 +496,7 @@ QtObject {
       if (lines[0]?.startsWith("/"))
         root._picturesDir = lines[0];
       root.recording = root.recording || lines.includes("rec");
-    });
+    }, null, true);
     NotificationManager.registerHandler(_desktopEntry, () => {
       if (root._lastPath !== "")
         CommandManager.runDetached(["xdg-open", root._lastPath]);

@@ -588,7 +588,7 @@ Singleton {
         "size": 5,
         "passes": 2
       };
-    });
+    }, null, true);
   }
 
   // Events arrive in bursts (a window opening sends several), so they are

@@ -31,7 +31,7 @@ QtObject {
         console.warn(`[SwayIpcManager] ${type}: no reply from sway`, String(out).slice(0, 200));
       }
       callback?.(value);
-    });
+    }, null, true);
   }
 
   // Runs sway commands (`text`: one or several, split by ";" or ","), after

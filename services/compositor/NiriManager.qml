@@ -438,7 +438,7 @@ Singleton {
   // Calls back with every output in detail, disabled ones too
   // (NiriState.outputDetails), or null
   function withOutputDetails(callback) {
-    root._request("Outputs", reply => callback(reply?.Outputs ? NiriState.outputDetails(reply.Outputs) : null));
+    root._request("Outputs", reply => callback(reply?.Outputs ? NiriState.outputDetails(reply.Outputs) : null), true);
   }
 
   // axiom set the outputs (CompositorManager.applyOutputs): read again
@@ -509,7 +509,7 @@ Singleton {
         if (JSON.stringify(blur) !== JSON.stringify(root._blur))
           root._blur = blur;
       } catch (e) {}
-    });
+    }, null, true);
   }
   property int _configReads: 0
   // The outputs' names when last read, to tell a hotplug
@@ -528,21 +528,25 @@ Singleton {
       root._outputNames = names;
       if (changed)
         root.outputsHotplugged();
-    });
+    }, true);
   }
 
   // --- niri's socket, through axiom (niri.request, niri.watch): Quickshell
   // has no niri module ---
 
   // Sends `request` ("Outputs", or an object) and calls back with its Ok
-  // value, or null when niri refused it (logged) or didn't answer
-  function _request(request, callback) {
+  // value, or null when niri refused it (logged) or didn't answer.
+  // `repeatable` for a read (Outputs): a reply lost with the connection
+  // is asked again after the next hello
+  function _request(request, callback, repeatable) {
     BackendManager.call("niri.request", {
       "request": request
     }, (error, result) => {
       if (error)
         console.warn("[NiriManager]", JSON.stringify(request).slice(0, 160) + ":", error.message);
       callback?.(error ? null : result);
+    }, {
+      "repeatable": !!repeatable
     });
   }
 

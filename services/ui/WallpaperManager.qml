@@ -118,7 +118,7 @@ Singleton {
       const lines = stdout.split("\n").filter(line => line !== "");
       root.folderImages = parseInt(lines[0] ?? "-1");
       root._hyprlandWallpapers = lines[1] ?? "";
-    });
+    }, null, true);
   }
   property int _folderChecks: 0
 
@@ -204,6 +204,6 @@ Singleton {
       ThemeManager.setLastRotated(Date.now());
     // awww's daemon, unless it runs already (Appearance.wallpaperDaemon)
     if (Appearance.wallpaperDaemon && Appearance.wallpaperBackend === "awww")
-      CommandManager.run(["sh", "-c", "command -v awww-daemon >/dev/null || exit 0; awww query >/dev/null 2>&1 || setsid -f awww-daemon >/dev/null 2>&1"]);
+      CommandManager.run(["sh", "-c", "command -v awww-daemon >/dev/null || exit 0; awww query >/dev/null 2>&1 || setsid -f awww-daemon >/dev/null 2>&1"], null, null, true);
   }
 }
