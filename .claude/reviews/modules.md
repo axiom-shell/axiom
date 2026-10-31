@@ -29,7 +29,6 @@ Unrecorded (Minor):
 - **EmojiPicker's group-tab threshold is bare px** (`10 × 26 + 30`), not `Widget.iconButton`, so tabs squeeze on roomy density.
 - **Keycap text sizes are `Appearance.fontSize - n`**, not `fontSizeBy(-n)` (four places).
 - **NowPlaying's `drawsBox: true` is unconditional**, so a bare edge-menu NowPlaying keeps 18 px of padding with no cover box drawn.
-- **NowPlaying's compact play button** (line 304) lacks `enabled: MediaManager.canTogglePlaying`, unlike its other two.
 - **Battery's charge circle is about 7 px tall at `fullMinHeight`** (6f).
 - **Greeting and Session draw an opaque `Theme.background` box**, not `Appearance.fill(...)`, so they ignore surface translucency.
 - **AudioMixer's slider-only row** needs about 163 px at its 168 px `fullMinWidth` (132 inside): percent and mute squeeze in 168–199 px wide one-row cards.
@@ -42,4 +41,4 @@ Holds: roots are Card, Panel or TitledCard (SystemTray is a popout-only Item); `
 Read deeply (five reviewer agents, one per chunk): the roots and figure parts and the small modules (A); network, VPN, Bluetooth and audio modules and device parts (B); utility modules and timer parts (C); notifications, quick actions, clocks, calendar, agenda, weather, pickers, submenus, Login and Password (D); NowPlaying, Updates, the keyboard parts (E). Outlined: Chat, ThemePicker, WorkspacesMap, WallpaperPicker, CodeLine; WeatherForecast, WorkspaceGrid, WorkspaceStrips and SystemTray (popout-only, reviewed in batch 5's popouts audit). Seams outlined, not reread: `BarPopouts.qml` (popouts audit), `GridPlacement.qml` (overlay audit); tray parts (popouts audit); CustomWidget (custom-widgets audit). Nothing was run in the shell: the sizing figures are arithmetic at font 14, normal density.
 
 ## History
-- 2026-10-31 full (--deep): 14 findings recorded (7 Major, 7 Cleanup), 13 Minor left open
+- 2026-10-31 full (--deep): 14 findings recorded (7 Major, 7 Cleanup), 12 Minor left open
