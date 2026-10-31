@@ -38,7 +38,7 @@ Read `lenses.md` (next to this file). For `parity` and `collection` modes, build
 
 To settle a finding against a real compositor, use a nested one (`scripts/dev/nested.sh <sway|niri|hyprland>`), never the live session.
 
-**`--deep`:** split the deep set into chunks of ≤ ~5k lines along the docs' boundaries, one reviewer agent each, given both lenses files, `contract.md`, its files and output path; do the seams and the parity/collection table yourself meanwhile (`../review-branch/lenses.md` › The lead reviewer › Deep mode).
+**`--deep`:** split the deep set into chunks of ≤ ~5k lines along the docs' boundaries, one reviewer agent each, given both lenses files (the deletion lens included), `contract.md`, its files and output path; do the seams and the parity/collection table yourself meanwhile (`../review-branch/lenses.md` › The lead reviewer › Deep mode).
 
 ## Phase 4: prove
 
@@ -53,6 +53,7 @@ Every candidate passes `../review-branch/lenses.md` › Proving it before it goe
 
 **Verdict:** <one or two sentences: the state of the system, the biggest problem>
 **Since last review:** <fixed / still open / new, when incremental>
+**Deletion pass:** <its findings' titles with their line counts and the total; or "nothing found" and what was checked>
 
 <the findings by severity, in the lenses' shape>
 

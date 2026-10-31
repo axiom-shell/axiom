@@ -8,8 +8,8 @@ The system's docs are its contract. For each statement about behaviour (who deci
 ## edges
 `bugs` › the paths nobody takes daily, walked for each risky function: long-lived code hides its bugs there.
 
-## deletion: what can go or shrink
-`cleanup` over the whole system, plus mechanisms nothing needs since a stage moved their work, options nobody would miss, and a layer whose job has shrunk to forwarding. Each finding states the lines it removes, counted (`sed -n 'a,bp' <file> | wc -l` per part, summed), and names the simpler shape and what moves where.
+## deletion: what can go, shrink or be simpler
+Never skipped: every audit (each `--deep` chunk too) looks for code to delete or shrink, dead code (Phase 2's candidates confirmed) and needlessly complicated mechanisms (a simpler shape doing the same job: fewer states, layers, files or special cases). `cleanup` over the whole system, plus mechanisms nothing needs since a stage moved their work, options nobody would miss, and a layer whose job has shrunk to forwarding. Each finding states the lines it removes, counted (`sed -n 'a,bp' <file> | wc -l` per part, summed), and names the simpler shape and what moves where.
 
 ## seams: how the rest of axiom uses it
 Grep the system's public members from outside it (the scope's `[also in: …]` files are where it meets other systems): users reaching into private (`_`) members, decisions re-derived outside instead of read from the system, uses the docs forbid, two users relying on contradictory behaviour.
