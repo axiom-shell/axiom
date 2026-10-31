@@ -511,6 +511,7 @@ Found by the audits:
 - [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
 - [Three keycap parts draw the same cap, and KeyCap's icon slot has no user](issues.md#three-keycap-parts-draw-the-same-cap-and-keycaps-icon-slot-has-no-user)
 - [WeatherForecast repeats the Weather card's current conditions](issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
+- [What a lock screen module may do is a list kept by hand in two docs that disagree](issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - [Any custom widget reaches the lock screen past its Offer switch](issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
 - [A custom widget's module past 8 grid units can't be saved](issues.md#a-custom-widgets-module-past-8-grid-units-cant-be-saved)
 - [A custom widget's Tooltip switch does nothing](issues.md#a-custom-widgets-tooltip-switch-does-nothing)
@@ -519,7 +520,6 @@ Found by the audits:
 - [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
 - [A custom layout without elements rebuilds its default elements every sample](issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
 - [An integrated menu's zone stays behind when it changes edge or screen](issues.md#an-integrated-menus-zone-stays-behind-when-it-changes-edge-or-screen)
-- [An integrated top or bottom menu's zone follows its growing modules](issues.md#an-integrated-top-or-bottom-menus-zone-follows-its-growing-modules)
 - [A whole-edge menu's hover strip covers only its modules' length while closed](issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
@@ -654,3 +654,9 @@ Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log ev
 
 Deferred by the maintainer (2026-10-30, stacked bars: "Stacked bars will be planned as supported. Mark it as needs a plan and move to deferred"; through [Items that need a plan](#items-that-need-a-plan) once taken up):
 - [A second bar on an edge is invisible to the screen-edge answers, and New bar makes one](issues.md#a-second-bar-on-an-edge-is-invisible-to-the-screen-edge-answers-and-new-bar-makes-one)
+
+Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put this on hold - note that growing modules kinda needs a re-work or removal"):
+- [An integrated top or bottom menu's zone follows its growing modules](issues.md#an-integrated-top-or-bottom-menus-zone-follows-its-growing-modules)
+
+Deferred by the maintainer (2026-10-31, the system graphs' history: "Drop it now - mark accordingly in issues / roadmap for the robust daemon implementation"; the drop itself stays under Phase 11):
+- [The system graphs start empty until the daemon keeps their history](issues.md#the-system-graphs-start-empty-until-the-daemon-keeps-their-history)
