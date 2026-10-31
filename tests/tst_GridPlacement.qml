@@ -803,6 +803,14 @@ TestCase {
     compare([keptFine.cols, keptFine.rows], [36, 20]);
   }
 
+  function test_samePlace() {
+    verify(GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 2, 3, 4).place), "equal fields, other objects");
+    verify(!GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 3, 3, 4).place));
+    verify(!GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 2, 3, 5).place));
+    verify(GridPlacement.samePlace(null, null));
+    verify(!GridPlacement.samePlace(null, at(0, 0, 1, 1).place));
+  }
+
   function test_fitScale() {
     const bounds = {
       "cols": 8,

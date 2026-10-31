@@ -217,7 +217,7 @@ Rectangle {
         const p = zone.mapToItem(root.parent, mouse.x, mouse.y);
         const place = GridPlacement.resizeFrom(zone.startPlace, zone.modelData, Math.round((p.x - zone.start.x) / root.step), Math.round((p.y - zone.start.y) / root.step));
         const current = root.dragLayer.resizePlan?.place ?? zone.startPlace;
-        if (place.x !== current.x || place.y !== current.y || place.w !== current.w || place.h !== current.h || !root.dragLayer.resizePlan)
+        if (!GridPlacement.samePlace(place, current) || !root.dragLayer.resizePlan)
           root.dragLayer.resizePlan = root.editor.planResize(root.index, place);
       }
       onReleased: {
