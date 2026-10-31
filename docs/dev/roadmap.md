@@ -446,7 +446,6 @@ Found by the audits:
 - [The merge keeps key and variable tables render already has](issues.md#the-merge-keeps-key-and-variable-tables-render-already-has)
 - [A backed toast's blur fill is at the surface opacity twice](issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)
 - [A keepFill opening leaves an unfilled row in an unbacked translucent pill](issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
-- [The editable dropdown's list fills translucent over the overlay](issues.md#the-editable-dropdowns-list-fills-translucent-over-the-overlay)
 - [SlideAnimation's fade, easing and container aliases are dead](issues.md#slideanimations-fade-easing-and-container-aliases-are-dead)
 - [The blur window builds stand-ins and copies it never uses](issues.md#the-blur-window-builds-stand-ins-and-copies-it-never-uses)
 - [BlurBacking spells out four near-identical blur windows](issues.md#blurbacking-spells-out-four-near-identical-blur-windows)

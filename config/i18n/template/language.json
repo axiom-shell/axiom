@@ -1781,7 +1781,7 @@
     "Off while typing": "",
     "Off · {0} saved": "",
     "Off, a break ends waiting for you to start the next session.": "",
-    "Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them.": "",
+    "Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them, except on SwayFX.": "",
     "Off, its notifications go only to the history.": "",
     "Off, its notifications only toast, and go once they're closed.": "",
     "Off, only axiom's surfaces blur (Blur behind axiom's surfaces, above).": "",

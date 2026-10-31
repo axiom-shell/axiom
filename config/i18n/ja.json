@@ -2209,7 +2209,6 @@
     "Pause blur over fullscreen apps": "全画面アプリの表示中はぼかしを止める",
     "Transparency and blur are highly experimental: expect visual glitches and a performance cost.": "透明化とぼかしは非常に実験的な機能です。表示の乱れやパフォーマンスへの影響が出る場合があります。",
     "Blur windows behind surfaces": "サーフェスの背後のウィンドウをぼかす",
-    "Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them.": "オフにすると、バー・枠・ポップアウトは壁紙だけをぼかし、負荷が軽くなります。ツールチップとメニューは常に背後をぼかします。",
     "Blur backdrops": "背景をぼかす",
     "Also blur the whole screen behind the overlay, launcher, power menu and workspace overview. Costs more while they open.": "オーバーレイ、ランチャー、電源メニュー、ワークスペース一覧の背後の画面全体もぼかします。開いている間は負荷が増えます。",
     "Change": "変更",
@@ -3506,6 +3505,7 @@
     "Right to left": "",
     "Tile order": "",
     "Which way the windows run, most recently used first. They wrap to another row (or column) only once one runs out of room.": "",
-    "Your current config is saved as \"{0}\" first": ""
+    "Your current config is saved as \"{0}\" first": "",
+    "Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them, except on SwayFX.": ""
   }
 }

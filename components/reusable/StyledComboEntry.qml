@@ -286,8 +286,9 @@ Item {
       }
     }
 
+    // Solid: it opens inside its window, where no blur reaches
     background: DropdownSurface {
-      color: Appearance.fill(Theme.backgroundAlt)
+      color: Theme.backgroundAlt
       border.width: Appearance.borderWidth
     }
 
