@@ -68,6 +68,9 @@ Singleton {
         "name": name
       };
       root._resolvedOnce = true;
+    }, {
+      // Writing the companion again leaves it as it was
+      "repeatable": true
     });
   }
 }

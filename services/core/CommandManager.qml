@@ -13,9 +13,10 @@ import QtQuick
 // Also runs one-off commands: runDetached (a shell string or an argv) for
 // widgets and services that don't wait on it (so they start no processes of
 // their own), and run() for services that want the output:
-//   CommandManager.run(["cmd", "arg"], (exitCode, stdout, stderr) => ..., input)
+//   CommandManager.run(["cmd", "arg"], (exitCode, stdout, stderr) => ..., input, repeatable)
 // `input` (optional) is written to stdin, which is then closed: how secrets
 // and clipboard text reach a command without going through argv.
+// `repeatable`: a read-only command, sent again after a lost connection.
 // Every command runs in axiom (the session's `axiom run`, or the
 // greeter's `axiom greeter`); a shell started by hand, with no axiom, runs
 // none.
@@ -77,8 +78,10 @@ QtObject {
   // A command that can't run, or whose answer is lost (axiom re-exec'd
   // meanwhile), calls back with -1, the reason as stderr and the error
   // (its `kind` "unavailable" when the answer was lost) as a fourth
-  // argument; -1 without it is a command killed by a signal.
-  function run(command, callback, input) {
+  // argument; -1 without it is a command killed by a signal. With
+  // `repeatable` (a command safe to run twice: a listing, a lookup), an
+  // answer lost with the connection is asked again after the next hello.
+  function run(command, callback, input, repeatable) {
     BackendManager.call("exec.run", {
       "argv": command,
       "input": input ?? null
@@ -89,6 +92,8 @@ QtObject {
         callback?.(-1, "", error.message, error);
       else
         callback?.(result.exitCode, result.stdout, result.stderr);
+    }, {
+      "repeatable": !!repeatable
     });
   }
 

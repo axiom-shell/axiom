@@ -132,6 +132,8 @@ QtObject {
       root._checkFailed = false;
       root._report = result;
       root._notifyOutdated();
+    }, {
+      "repeatable": true
     });
   }
   property bool _checking: false

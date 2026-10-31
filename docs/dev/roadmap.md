@@ -221,7 +221,6 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [The Layouts canvas logs null reads as it's torn down](issues.md#the-layouts-canvas-logs-null-reads-as-its-torn-down)
 - [Keybind sections log null reads as they're torn down](issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
 - [A custom layout's element rect reads an undefined place](issues.md#a-custom-layouts-element-rect-reads-an-undefined-place)
-- [Read-only daemon calls fail across a dev re-exec](issues.md#read-only-daemon-calls-fail-across-a-dev-re-exec)
 - [A tray menu logs an undefined menu handle](issues.md#a-tray-menu-logs-an-undefined-menu-handle)
 
 ### Phase 9: docs, tooling and process

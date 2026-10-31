@@ -139,6 +139,6 @@ Singleton {
         root.evaluated(key);
       }
       Qt.callLater(root._next);
-    });
+    }, null, true);
   }
 }

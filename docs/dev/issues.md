@@ -273,12 +273,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the bar display styles branch
 
-### Read-only daemon calls fail across a dev re-exec
-- **Where:** `services/compositor/NiriManager.qml` (`_request`), `services/session/GreeterManager.qml` (`check`), `services/core/BackendManager.qml` (`call`'s `repeatable`)
-- **What:** A dev-mode re-exec (a rebase touching `backend/` test files under the live session, 2026-10-29) logged `[NiriManager] "Outputs": the connection to axiom closed` and `[GreeterManager] check: the connection to axiom closed`: both are reads, safe to send twice, but don't pass `{repeatable: true}`, so the call in flight fails instead of waiting for the next hello. Passing it for read-only niri requests and `greeter.status` would quiet it.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the bar display styles branch
-
 ### Nested Hyprland acknowledges a lock too late for axiom lock
 - **Where:** `backend/internal/lockscreen/lockscreen.go` (`Options.Confirm`, `Locker.Lock`)
 - **What:** In a nested Hyprland (`scripts/dev/nested.sh hyprland`) the compositor takes about 5 s to acknowledge the session lock (`WlSessionLock.secure`), past `Lock`'s 3 s wait, so `axiom lock` restarts the shell locked and then fails: `the shell didn't confirm the lock: starting it locked`. Pre-existing; seen while fixing the lock surviving a reload (2026-10-29). Unknown whether a real Hyprland session is ever that slow; check, then either wait longer under Hyprland or confirm on the lock surfaces alone.

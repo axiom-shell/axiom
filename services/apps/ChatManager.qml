@@ -396,7 +396,7 @@ Singleton {
           name: name
         }
       ]);
-    });
+    }, true);
   }
 
   function _reply() {
@@ -571,9 +571,10 @@ Singleton {
     }
   }
 
-  // Runs a command and calls back with (ok, stdout)
-  function _run(command, callback) {
-    CommandManager.run(command, (code, out) => callback(code === 0, out));
+  // Runs a command and calls back with (ok, stdout); `repeatable` as
+  // CommandManager.run's
+  function _run(command, callback, repeatable) {
+    CommandManager.run(command, (code, out) => callback(code === 0, out), null, repeatable);
   }
 
   Timer {

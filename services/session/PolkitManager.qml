@@ -124,7 +124,7 @@ Singleton {
         root._actionInfo = info;
       else if ((root.flow?.actionId ?? id) !== id)
         Qt.callLater(root._describe);
-    });
+    }, null, true);
   }
 
   // --- Other agents ---
@@ -202,7 +202,7 @@ Singleton {
       const names = root._agentNames(stdout);
       for (const then of waiting)
         then(names);
-    });
+    }, null, true);
   }
 
   property var _probeWaiting: []
