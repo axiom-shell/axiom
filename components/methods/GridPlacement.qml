@@ -848,11 +848,50 @@ QtObject {
     return menu.edge === "left" || menu.edge === "right" ? reach.rows : reach.cols;
   }
 
+  // Whether a menu takes its whole edge, stretched along it: one set to
+  // (`length` "edge"), and an integrated one always, as its strip spans
+  // the edge
+  function menuFillsEdge(menu) {
+    return menu.length === "edge" || menu.mode === "integrated";
+  }
+
+  // Whether a gap before a menu's modules along its edge is kept: a
+  // whole-edge floating menu's, laid out on purpose (the layouts editor
+  // holds it). An integrated menu's modules start at its edge's start
+  // (menuModules)
+  function menuKeepsLead(menu) {
+    return menu.length === "edge" && menu.mode !== "integrated";
+  }
+
+  // A menu's `modules` (its own by default) as it lays them out: one
+  // taking its whole edge without keeping a lead (menuKeepsLead) moved
+  // back along the edge to start at its first module, so an offset lone
+  // module still spans the edge; others as placed
+  function menuModules(menu, modules) {
+    const list = modules ?? menu.layout.modules ?? [];
+    if (!root.menuFillsEdge(menu) || root.menuKeepsLead(menu))
+      return list;
+    const key = menu.edge === "left" || menu.edge === "right" ? "y" : "x";
+    const starts = list.filter(module => module?.place).map(module => module.place[key]);
+    const lead = starts.length > 0 ? Math.min(...starts) : 0;
+    if (lead <= 0)
+      return list;
+    return list.map(module => {
+      if (!module?.place)
+        return module;
+      const place = Object.assign({}, module.place);
+      place[key] -= lead;
+      return Object.assign({}, module, {
+        "place": place
+      });
+    });
+  }
+
   // Where a menu's modules start along its edge, `edgeLength` px long: on
   // its lattice, `menu.offset` cells from centred (alongStart), or at
-  // `startPad` when it takes the whole edge (`menu.length` "edge")
+  // `startPad` when it takes the whole edge (menuFillsEdge)
   function menuAlong(menu, edgeLength, unit, startPad, endPad, gap) {
-    if (menu.length === "edge")
+    if (root.menuFillsEdge(menu))
       return startPad;
     return root.alongStart(root.latticeOf(menu, edgeLength, unit, startPad, endPad, gap), menu.offset, root.unitsAlong(menu));
   }
@@ -870,7 +909,7 @@ QtObject {
     const edgeLength = vertical ? screenHeight : screenWidth;
     const lattice = root.latticeOf(menu, edgeLength, unit, frame.startPad, frame.endPad, gap);
     const units = root.unitsAlong(menu, bounds);
-    const cell = menu.length === "edge" ? null : root.menuCell(lattice, menu.offset, units);
+    const cell = root.menuFillsEdge(menu) ? null : root.menuCell(lattice, menu.offset, units);
     return {
       "along": cell === null ? frame.startPad : lattice.origin + cell * lattice.step,
       "across": frame.across,
@@ -889,19 +928,20 @@ QtObject {
   // A menu as it sits on its screen (`place`, from menuPlacement), in
   // screen px: { rect (its box: the modules plus the frame's `after` all
   // round), modules: [{ type, rect }] } (rects { x, y, width, height }),
-  // fitted to its edge when it takes the whole edge (as EdgeMenuBody), `gap`
-  // px between its cards
+  // fitted to its edge when it takes the whole edge (as EdgeMenuBody:
+  // menuFillsEdge, menuModules), `gap` px between its cards
   function menuOnScreen(menu, place, unit, gap) {
     const vertical = menu.edge === "left" || menu.edge === "right";
     const room = place.edgeLength - place.frame.startPad - place.frame.endPad;
-    const stretch = menu.length !== "edge" ? null : vertical ? {
+    const modules = root.menuModules(menu);
+    const stretch = !root.menuFillsEdge(menu) ? null : vertical ? {
       "height": room,
       "fit": true
     } : {
       "width": room,
       "fit": true
     };
-    const sizes = root.trackSizes(root.bounds(menu.layout.modules), unit, stretch, gap);
+    const sizes = root.trackSizes(root.bounds(modules), unit, stretch, gap);
     const depth = vertical ? sizes.width : sizes.height;
     const acrossAt = menu.edge === "right" ? place.screenWidth - place.across - depth : menu.edge === "bottom" ? place.screenHeight - place.across - depth : place.across;
     const x = vertical ? acrossAt : place.along;
@@ -914,7 +954,7 @@ QtObject {
         "width": sizes.width + pad * 2,
         "height": sizes.height + pad * 2
       },
-      "modules": (menu.layout.modules ?? []).map(module => {
+      "modules": modules.map(module => {
         const r = root.rectPx(module.place, sizes);
         return {
           "type": module.type,

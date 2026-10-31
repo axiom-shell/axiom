@@ -37,7 +37,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 - The arrows under the canvas title are `EditTarget`'s nudge fields, from `MenuTarget`: left/right on a top or bottom edge, up/down on a side.
 - They step `offset` a cell at a time within `GridPlacement.offsetRange` (`nudgeSelected(step)`; `centreSelected()` recentres), saying where it is: Centred, n cells from the centre, at an end.
 - The Grid stepper beside them moves the lattice up to half a cell either way (`setGridOffset`, `gridOffsetLimit`).
-- A menu taking its whole edge has no place along it, and no arrows.
+- A menu taking its whole edge (`GridPlacement.menuFillsEdge`: an integrated menu always) has no place along it, and no arrows. A whole-edge floating menu keeps a gap before its modules along the edge through edits (the layouts editor's `hold`, `GridPlacement.menuKeepsLead`); an integrated menu's are normalised to its start as a content-length menu's are.
 
 ### Submenus: the Submenu module
 - `content/Submenu`: icon, label, an arrow pointing where it opens; `openOnHover`, else a click.

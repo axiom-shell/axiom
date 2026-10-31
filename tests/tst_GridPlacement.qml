@@ -848,6 +848,47 @@ TestCase {
     menu.length = "edge";
     const whole = GridPlacement.menuOnScreen(menu, GridPlacement.menuPlacement(menu, GridPlacement.bounds(menu.layout.modules), 500, frame, 1920, 1080), 500);
     compare(r4(whole.modules[0].rect), [1660, 10, 240, 1060], "taking the whole edge: stretched along it");
+    // An integrated menu always takes its whole edge, its modules from its
+    // start: a lone module two units down still spans it
+    const integrated = {
+      "edge": "right",
+      "mode": "integrated",
+      "length": "content",
+      "offset": -1,
+      "layout": {
+        "modules": [at(0, 2, 2, 4)]
+      }
+    };
+    const strip = GridPlacement.menuPlacement(integrated, GridPlacement.bounds(integrated.layout.modules), 500, frame, 1920, 1080);
+    compare([strip.along, strip.cell], [10, null], "at its edge's start, off the lattice");
+    compare(GridPlacement.menuAlong(integrated, 1080, 500, 10, 10), 10);
+    compare(r4(GridPlacement.menuOnScreen(integrated, strip, 500).modules[0].rect), [1660, 10, 240, 1060], "stretched end to end");
+  }
+
+  function test_menuFillsEdge_and_modules() {
+    const menu = (mode, length, edge, modules) => ({
+          "mode": mode,
+          "length": length,
+          "edge": edge,
+          "layout": {
+            "modules": modules
+          }
+        });
+    compare(GridPlacement.menuFillsEdge(menu("floating", "content", "left", [])), false);
+    compare(GridPlacement.menuFillsEdge(menu("floating", "edge", "left", [])), true);
+    compare(GridPlacement.menuFillsEdge(menu("integrated", "content", "left", [])), true, "integrated: always");
+    compare(GridPlacement.menuKeepsLead(menu("floating", "edge", "left", [])), true, "a whole-edge floating menu keeps its lead");
+    compare(GridPlacement.menuKeepsLead(menu("integrated", "edge", "left", [])), false);
+    const offset = [at(1, 3, 2, 4), at(0, 7, 2, 2)];
+    const side = GridPlacement.menuModules(menu("integrated", "content", "left", offset));
+    compare(side.map(module => [module.place.x, module.place.y]), [[1, 0], [0, 4]], "moved up to start at the first, across untouched");
+    compare(offset[0].place.y, 3, "the config's own places untouched");
+    const top = GridPlacement.menuModules(menu("integrated", "content", "top", [at(2, 1, 4, 4)]));
+    compare([top[0].place.x, top[0].place.y], [0, 1], "a top menu: along is x");
+    const kept = menu("floating", "edge", "left", offset);
+    compare(GridPlacement.menuModules(kept), offset, "a kept lead: as placed");
+    compare(GridPlacement.menuModules(menu("floating", "content", "left", offset)), offset, "content length: as placed");
+    compare(GridPlacement.menuModules(menu("integrated", "content", "left", [])), [], "none");
   }
 
   function test_canvasExtent() {

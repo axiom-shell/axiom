@@ -83,6 +83,23 @@ QtObject {
     return menu.padding >= 0 ? Widget.px(menu.padding) : PopoutsConfig.padding;
   }
 
+  // An integrated menu's frame's inset from its strip's edges (0 without
+  // one): the screen margin reaches its stroke's inner edge, as the screen
+  // border's does, so the two strokes line up
+  function frameInsetOf(menu) {
+    return menu.frame ? Math.max(0, Appearance.screenMargin - Appearance.borderWidth) : 0;
+  }
+
+  // From an integrated menu's strip's edges to its body: the frame and
+  // its stroke (its padding is inside the body, EdgeMenuBody.inset)
+  function outerPadOf(menu) {
+    return root.frameInsetOf(menu) + (menu.frame ? Appearance.borderWidth : 0);
+  }
+
+  // An integrated strip's own inner stroke: with the screen border off
+  // (with it on, the border's strip inside it draws it)
+  readonly property int innerStroke: Appearance.screenBorder ? 0 : Appearance.borderWidth
+
   // A menu's card size: the card size on its screen (OverlayConfig.
   // cardUnitOn, the card size setting's, not the overlay's own Module
   // size), scaled by the menu's moduleScale. A submenu's is on the screen

@@ -20,7 +20,8 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
   - `zoomOf`: the menu's `moduleScale` as a factor (`GridPlacement.zoomOf`, 1 within 2 %).
   - So `moduleScale` scales text with the cards, while the screen only changes how big the cards are. Text size itself is the Interface scale's (`Widget.scale`, through `Appearance.fontSize` and the Widget sizes).
   - Submenus (`MenuSubmenu`) do the same on their parent menu's screen.
-- When `length` is `edge` (`fillsEdge`) it's stretched along the edge to `maxLength`; otherwise it scrolls along it past that.
+- Taking its whole edge (`fillsEdge`, `GridPlacement.menuFillsEdge`: `length` `edge`, or any integrated menu) it's stretched along the edge to `maxLength`; otherwise it scrolls along it past that.
+- Its modules are laid out as `GridPlacement.menuModules` gives them: an integrated menu's moved back along the edge to start at its first module, so a lone module placed past the grid's start still spans the edge end to end. A whole-edge floating menu keeps a gap before its modules (`menuKeepsLead`: the layouts editor holds it on purpose); `menuOnScreen` draws both the same.
 - The menu's `padding` is inside the body (`inset`): the body's scrolling `Flickable` clips at the box's stroke (floating) or the frame's (integrated), with the modules `inset` in from it. So what a module draws just past its slot (a ring's stroke, a hover background) shows in the padding instead of being cut, which matters most for modules without card boxes (`moduleBorders` off, which pad nothing: `OverlayConfig.cardPad`). The hosts add only their stroke and frame outside the body.
 - With `pinButton` it draws a pin in the corner away from the edge (`EdgeMenuManager.togglePinned`).
 
@@ -28,14 +29,14 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 - Along the edge the modules sit on a lattice fixed to the screen (`GridPlacement.menuAlong`, at the host's `unit`).
   - As many whole cells as fit between the host's `startPad` / `endPad`, centred there and moved `gridOffset` px.
 - The modules start `offset` cells from centred on it (negative: towards the start), kept on it. An offset past it is flush with that end's cell.
-- A menu longer than its lattice starts at `startPad` and scrolls.
+- A menu longer than its lattice starts at `startPad` and scrolls, as does one taking its whole edge (`menuAlong`; such a menu has no `cell` on the lattice).
+- `frameOf(menu)` falls back, for a menu without a running host, to what its host would report: the stroke and padding (an integrated one's frame inset and stroke, `EdgeMenusConfig.outerPadOf`, plus its padding, and its inner stroke after).
 - `offset` and `gridOffset` aren't form fields (`x-settings: false`, which `SchemaLayout.objectGroups` leaves out): the layouts editor sets them (see [Editing and submenus](editing-submenus.md)).
 
 ### Frames reported to the editor
 - Each host reports where its modules can sit: `EdgeMenuSync.frame` → `EdgeMenuManager.setFrame(id, { screen, startPad, endPad, across, before, after, reserves })`.
   - Cleared on destruction or an id change.
 - The editor uses it, and also draws the other menus from it (`OverlayManager.menus.screenRectsOf`).
-- `frameOf(menu)` falls back to the menu's padding for one without a host (disabled).
 
 ### Shared behaviour (`EdgeMenuSync`)
 - Follows `EdgeMenuManager`, and tells it when the menu closes by itself.
@@ -61,11 +62,12 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 
 ### `integrated`: `IntegratedEdgeMenu`
 - A `PopoutWrapperBase` with a Top-layer `axiom-edge-menu` window along the whole edge.
+- It always takes the whole edge: its modules stretch along the strip from end to end, whatever `length` says (`GridPlacement.menuFillsEdge`), and its hover strip is centred on the edge.
 - Its layer rule (above every bar's, [layer stacking](../generated/layers.md)) arranges it first, so it sits outermost, and the border, bars and every Normal-exclusion surface move inwards (see [Layering and corners](../bar/layering-and-corners.md)).
 - Its window shows through a `LayerSlot`. With layer rules it maps only while open. Without them it's `held`: mapped from the start, a pixel deep, reserving nothing and taking no input while closed (`LayerSlot.idle`), so opening never maps it after the bars it pushes inwards ([layer arrangement](../compositor/layer-arrangement.md)).
 - The zone is set once while it's open (windows retile in one step), and the strip slides in.
 - With `frame`, a rounded stroked box runs the strip's whole length.
-  - Its stroke's inner edge is `screenMargin` in from the strip's edges (as the border's is, so the two line up).
+  - Its stroke's inner edge is `screenMargin` in from the strip's edges (as the border's is, so the two line up: `EdgeMenusConfig.frameInsetOf`, `outerPadOf`).
   - It holds the modules `padding` in from its stroke.
 - It reports its zone (`ScreenEdgeManager.setZone`), which `BarPopouts.borderInset` takes off the perpendicular bars' length.
 - No `SubPopout`, so Submenu rows are dimmed and inert here.

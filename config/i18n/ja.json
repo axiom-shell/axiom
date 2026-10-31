@@ -1712,7 +1712,6 @@
     "Keybind (no key yet)": "キーバインド（キー未設定）",
     "Pages shown in the overlay, in order: your Custom pages, each a grid of modules, and the tool pages (shown as icons after them).": "オーバーレイに表示するページ（順番どおり）：モジュールを並べたカスタムページと、その後にアイコンで表示されるツールページ。",
     "Pin button": "固定ボタン",
-    "Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge).": "「辺全体」ではメニューを辺に沿って引き伸ばし、空きを行（上下の辺では列）に均等に分けます。",
     "Close shortly after the pointer leaves the menu. A pinned menu stays open.": "ポインターがメニューから離れると少しして閉じます。固定したメニューは開いたままです。",
     "Wallpapers": "壁紙",
     "Whole edge": "辺全体",
@@ -3506,6 +3505,7 @@
     "Tile order": "",
     "Which way the windows run, most recently used first. They wrap to another row (or column) only once one runs out of room.": "",
     "Your current config is saved as \"{0}\" first": "",
-    "Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them, except on SwayFX.": ""
+    "Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them, except on SwayFX.": "",
+    "Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge). An integrated menu always takes its whole edge.": ""
   }
 }

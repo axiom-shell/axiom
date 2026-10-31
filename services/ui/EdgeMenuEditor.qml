@@ -139,14 +139,15 @@ QtObject {
         "y": side ? 1 : 0
       };
     }
-    // A whole-edge menu starts at its edge's start whatever its modules
-    // reach, so a gap before them along the edge is kept (a content-length
-    // menu keeps its modules in place through its offset instead:
-    // _keepPlace)
+    // A whole-edge floating menu starts at its edge's start whatever its
+    // modules reach, so a gap before them along the edge is kept
+    // (GridPlacement.menuKeepsLead; a content-length menu keeps its
+    // modules in place through its offset instead: _keepPlace, and an
+    // integrated one starts at its first module: menuModules)
     hold: {
       const menu = root.localMenus?.[root.selectedMenuIndex];
       const side = menu?.edge === "left" || menu?.edge === "right";
-      return menu?.length === "edge" ? {
+      return menu && GridPlacement.menuKeepsLead(menu) ? {
         "x": !side,
         "y": side
       } : {};
