@@ -7,10 +7,11 @@
 // can be shared or imported as it is. Restoring applies it like an example,
 // plus its wallpaper setup where the files are still there. Restoring one
 // or applying a shared file (an example, an import, a community setup)
-// first keeps the running config: edits go into the active snapshot, and
-// with none active it's saved as "unsaved" (one file, replaced each time).
-// An applied file becomes the active snapshot at once; untouched, it goes
-// once another replaces it, as that file applies it again. Nothing loaded
+// first keeps the running config: its edits go into the active snapshot.
+// One is always active: with none (a first start, or its file gone), the
+// running config is saved as "My setup". An applied file (the defaults
+// too) becomes the active snapshot at once; untouched, it goes once
+// another replaces it, as that file applies it again. Nothing loaded
 // changes a takeover setting (x-takeover): the store keeps them. Any format
 // axiom reads is taken (an older file is converted on the way).
 package saved
@@ -66,22 +67,9 @@ type State struct {
 	ActiveSource string `json:"activeSource"`
 	// The running config's snapshot parts differ from the active one's
 	Modified bool `json:"modified"`
-	// What an apply or restore does with the running config first (plan)
-	Keep KeepPlan `json:"keep"`
-	// The same for one that changes the wallpaper setup too (a community
-	// setup with its wallpaper)
-	KeepWallpaper KeepPlan `json:"keepWallpaper"`
-}
-
-// KeepPlan is where the running config goes before something replaces it.
-type KeepPlan struct {
-	// The snapshot it's saved into: the active one (its edits), the
-	// kindUnsaved backup, or "" (it's on disk already)
-	Into string `json:"into"`
-	// Into is the kindUnsaved backup: there's no active snapshot to hold it
-	Backup bool `json:"backup"`
-	// The backup there is gets replaced, losing what it holds
-	Replaces bool `json:"replaces"`
+	// The snapshot an apply or restore saves the running config into
+	// first, "" when it's on disk already (plan)
+	Keep string `json:"keep"`
 }
 
 // Entry is one snapshot on disk.
@@ -126,26 +114,23 @@ type Preview struct {
 }
 
 // Applied says what an apply or restore did: the snapshot the config
-// before it was saved as ("" when it was already on disk), and the one the
-// result is ("" for none).
+// before it was saved into ("" when it was already on disk), and the one
+// the result is.
 type Applied struct {
-	Name string `json:"name"`
-	// The active snapshot the running config's edits were saved into
-	Kept   string `json:"kept"`
-	Backup string `json:"backup"`
-	Saved  string `json:"saved"`
+	Name  string `json:"name"`
+	Kept  string `json:"kept"`
+	Saved string `json:"saved"`
 }
 
 // Service is the snapshots and sharing, over one store.
 type Service struct {
 	opts Options
 
-	mu sync.Mutex // one change at a time: a backup, then its apply
+	mu sync.Mutex // one change at a time: a keep, then its apply
 	// the active snapshot's parts as it loads, for Modified
 	baseline *jsonx.Object
 	state    State
-	// the active snapshot's meta.kind: kindCopy, kindUnsaved or "" (the
-	// user's)
+	// the active snapshot's meta.kind: kindCopy or "" (the user's)
 	activeKind string
 }
 
@@ -185,19 +170,15 @@ func Sanitize(name string) string {
 // What a snapshot is for, in its meta.kind: a decision about a snapshot
 // reads this, never its name. None (every file saved before kinds) is the
 // user's: never replaced or deleted unasked.
-const (
-	// The copy an applied file (an example, a community setup) was saved
-	// as: deleted once something else replaces it, as that file applies it
-	// again
-	kindCopy = "copy"
-	// The running config, kept before something replaced it when it wasn't
-	// on disk: one file, replaced each time
-	kindUnsaved = "unsaved"
-)
+//
+// kindCopy is the copy an applied file (an example, a community setup, the
+// defaults) was saved as: deleted once something else replaces it, as that
+// file applies it again.
+const kindCopy = "copy"
 
-// unsaved is the name the kindUnsaved snapshot is saved under, when no
-// snapshot of the user's has it.
-const unsaved = "unsaved"
+// mySetup is the name the running config is saved under when no snapshot
+// is active (a free one past the user's).
+const mySetup = "My setup"
 
 func (s *Service) path(name string) string {
 	return filepath.Join(s.savedDir(), Sanitize(name)+".json")
@@ -241,14 +222,20 @@ func (s *Service) State() State {
 	return s.state
 }
 
-// Changed recomputes Modified after the config changed, telling OnState.
-// The store's change events come while an apply may hold the service, so
-// they call it on a goroutine of their own.
+// Changed recomputes Modified after the config changed (or at the start),
+// telling OnState; with no snapshot active, it saves the running config as
+// one (plan). The store's change events come while an apply may hold the
+// service, so they call it on a goroutine of their own.
 func (s *Service) Changed() {
 	s.mu.Lock()
 	before := s.state
+	if _, st := s.opts.Store.Config(); !st.Blocked && !s.hasActive() {
+		if _, err := s.save(s.plan(), "", ""); err != nil {
+			s.opts.Log.Warn("could not save the running config", "err", err)
+		}
+	}
 	s.state.Modified = s.modified()
-	s.state.Keep, s.state.KeepWallpaper = s.plan(false), s.plan(true)
+	s.state.Keep = s.plan()
 	after := s.state
 	s.mu.Unlock()
 	if after != before && s.opts.OnState != nil {
@@ -335,17 +322,9 @@ func (s *Service) Restore(name string) (Applied, error) {
 	current, _ := s.opts.Store.Config()
 	applied := share.Apply(sch, current, loaded, share.Everything, nil)
 	applied = share.WithSnapshot(sch, applied, loaded, existing)
-	// Restoring the active one itself discards its edits (Revert), and the
-	// backup with none active takes its file as it was: keeping the running
-	// config there would replace what's being restored
-	plan := s.plan(share.SnapshotChanged(sch, current, applied))
-	// The confirm said what plan(false) does (keepHint): with the look at
-	// the defaults, the backup isn't replaced for a wallpaper setup alone
-	if plan.Replaces && s.plan(false).Into == "" {
-		plan = KeepPlan{}
-	}
-	if result.Name != s.state.Active && !(plan.Backup && plan.Into == result.Name) {
-		if err := s.keep(plan, &result); err != nil {
+	// Restoring the active one itself discards its edits (Revert)
+	if result.Name != s.state.Active {
+		if err := s.keep(&result); err != nil {
 			return Applied{}, err
 		}
 	}
@@ -358,16 +337,16 @@ func (s *Service) Restore(name string) (Applied, error) {
 	if copied {
 		s.drop(previous, result.Name)
 	}
-	s.opts.Log.Info("restored a saved config", "name", name, "kept", result.Kept, "backup", result.Backup)
+	s.opts.Log.Info("restored a saved config", "name", name, "kept", result.Kept)
 	return result, nil
 }
 
-// Remove deletes the snapshot name.
+// Remove deletes the snapshot name; the active one's running config is
+// then saved as "My setup" (Changed).
 func (s *Service) Remove(name string) error {
 	s.mu.Lock()
 	err := s.remove(name)
 	s.mu.Unlock()
-	// Deleting the backup changes what an apply would do with it (plan)
 	s.Changed()
 	return err
 }
@@ -382,70 +361,40 @@ func (s *Service) remove(name string) error {
 	return nil
 }
 
-// keep carries out plan, the running config saved where it says, naming
-// it in result (Kept or Backup).
-func (s *Service) keep(plan KeepPlan, result *Applied) error {
-	if plan.Into == "" {
+// keep saves the running config where plan says, naming it in result.
+// Saved into, a kindCopy one is the user's.
+func (s *Service) keep(result *Applied) error {
+	into := s.plan()
+	if into == "" {
 		return nil
 	}
-	// Saved into, a kindCopy one is the user's; the backup stays the backup
-	kind := ""
-	if plan.Backup || s.activeKind == kindUnsaved {
-		kind = kindUnsaved
-	}
-	if _, err := s.save(plan.Into, "", kind); err != nil {
+	if _, err := s.save(into, "", ""); err != nil {
 		return err
 	}
-	if plan.Backup {
-		result.Backup = plan.Into
-	} else {
-		result.Kept = plan.Into
-	}
+	result.Kept = into
 	return nil
 }
 
-// plan says where the running config goes before something replaces it.
-// With an active snapshot (loaded, its file there): its edits go into it,
-// and an unchanged one is on disk, except a kindCopy one when wallpaper
-// (what replaces it changes the wallpaper setup too, which the file it
-// came from doesn't hold): saved into, it stays. With none, the schema's
-// defaults are on disk (Restore defaults applies them again; not with
-// wallpaper: they leave machine settings as they are), and anything else
-// is saved as the kindUnsaved backup.
-func (s *Service) plan(wallpaper bool) KeepPlan {
-	if s.state.Active != "" && s.baseline != nil {
-		if _, err := os.Stat(s.path(s.state.Active)); err == nil {
-			if s.modified() || wallpaper && s.activeKind == kindCopy {
-				return KeepPlan{Into: s.state.Active}
-			}
-			return KeepPlan{}
-		}
+// plan says where the running config goes before something replaces it:
+// into the active snapshot when it has edits ("" unchanged: it's on disk),
+// and with none active a new snapshot of the user's, mySetup.
+func (s *Service) plan() string {
+	if !s.hasActive() {
+		return s.freeName(mySetup)
 	}
-	if s.state.Active == "" && !wallpaper {
-		sch := s.opts.Pipeline().Schema()
-		cfg, _ := s.opts.Store.Config()
-		if jsonx.Equal(share.Pick(sch, cfg, share.Everything, nil), share.Pick(sch, s.opts.Pipeline().Defaults(), share.Everything, nil)) {
-			return KeepPlan{}
-		}
+	if s.modified() {
+		return s.state.Active
 	}
-	name, exists := s.unsavedName()
-	return KeepPlan{Into: name, Backup: true, Replaces: exists}
+	return ""
 }
 
-// unsavedName is the kindUnsaved snapshot's name and whether it exists: the
-// one there is, else a free name from "unsaved".
-func (s *Service) unsavedName() (string, bool) {
-	entries, _ := os.ReadDir(s.savedDir())
-	for _, e := range entries {
-		name, ok := strings.CutSuffix(e.Name(), ".json")
-		if !ok || !e.Type().IsRegular() {
-			continue
-		}
-		if parsed, err := readJSON(filepath.Join(s.savedDir(), e.Name())); err == nil && header(parsed).Kind == kindUnsaved {
-			return name, true
-		}
+// hasActive says whether a snapshot is active: loaded, its file there.
+func (s *Service) hasActive() bool {
+	if s.state.Active == "" || s.baseline == nil {
+		return false
 	}
-	return s.freeName(unsaved), false
+	_, err := os.Stat(s.path(s.state.Active))
+	return err == nil
 }
 
 // freeName is base, or "base <n>" past the snapshots that have it.
@@ -475,7 +424,7 @@ func (s *Service) copyOrFree(snapshot string) string {
 // unchanged since, when it was replaced), unless it's still the one in
 // use: the file it came from applies it again.
 func (s *Service) drop(previous, current string) {
-	if previous == "" || previous == current {
+	if previous == current {
 		return
 	}
 	if err := s.remove(previous); err != nil {
@@ -514,7 +463,7 @@ func (s *Service) setActive(name string, baseline *jsonx.Object, source, kind st
 		}
 	}
 	s.state.Modified = s.modified()
-	s.state.Keep, s.state.KeepWallpaper = s.plan(false), s.plan(true)
+	s.state.Keep = s.plan()
 	if s.opts.OnState != nil {
 		s.opts.OnState(s.state)
 	}
@@ -654,8 +603,8 @@ func (s *Service) ApplyExample(name string, monitors share.Monitors) (Applied, e
 }
 
 // ApplyShared applies a shared file's look (a community setup's), after
-// keeping the running config (keep); the result is saved as snapshot (""
-// for none), its source the setup's name. wallpaper: a file:// URL set as
+// keeping the running config (keep); the result is saved as snapshot, its
+// source the setup's name. wallpaper: a file:// URL set as
 // the fixed wallpaper on every monitor ("" for none).
 func (s *Service) ApplyShared(path, name, snapshot, wallpaper string, monitors share.Monitors) (Applied, error) {
 	parsed, err := readShared(path)
@@ -667,14 +616,14 @@ func (s *Service) ApplyShared(path, name, snapshot, wallpaper string, monitors s
 
 // Defaults applies the schema's defaults like an example (the look,
 // personal parts and commands; machine settings stay), after keeping the
-// running config (keep).
+// running config (keep); the result is saved as "defaults".
 func (s *Service) Defaults() (Applied, error) {
-	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "", "", "")
+	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "defaults", "defaults", "")
 }
 
 // apply: the running config kept, then the file's parts in carry applied,
-// then (wallpaper not "") that wallpaper set, then (snapshot not "") the
-// result saved as snapshot from source (a kindCopy one with a source: its
+// then (wallpaper not "") that wallpaper set, then the result saved as
+// snapshot from source (a kindCopy one with a source: its
 // file applies it again; copyOrFree), and the untouched copy the last
 // applied file was saved as dropped.
 func (s *Service) apply(name string, parsed any, carry []string, monitors share.Monitors, snapshot, source, wallpaper string) (Applied, error) {
@@ -685,7 +634,7 @@ func (s *Service) apply(name string, parsed any, carry []string, monitors share.
 		return Applied{}, err
 	}
 	result := Applied{Name: name}
-	if err := s.keep(s.plan(wallpaper != ""), &result); err != nil {
+	if err := s.keep(&result); err != nil {
 		return Applied{}, err
 	}
 	previous, copied := s.state.Active, s.activeKind == kindCopy
@@ -697,20 +646,17 @@ func (s *Service) apply(name string, parsed any, carry []string, monitors share.
 	if _, err := s.opts.Store.Replace(applied, store.SetOptions{Restore: true}); err != nil {
 		return Applied{}, err
 	}
-	s.setActive("", nil, "", "")
-	if snapshot != "" {
-		kind := ""
-		if source != "" {
-			kind = kindCopy
-		}
-		if result.Saved, err = s.save(s.copyOrFree(snapshot), source, kind); err != nil {
-			return result, err
-		}
+	kind := ""
+	if source != "" {
+		kind = kindCopy
+	}
+	if result.Saved, err = s.save(s.copyOrFree(snapshot), source, kind); err != nil {
+		return result, err
 	}
 	if copied {
 		s.drop(previous, result.Saved)
 	}
-	s.opts.Log.Info("applied a shared config", "name", name, "carry", carry, "kept", result.Kept, "backup", result.Backup)
+	s.opts.Log.Info("applied a shared config", "name", name, "carry", carry, "kept", result.Kept)
 	return result, nil
 }
 

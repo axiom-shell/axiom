@@ -34,9 +34,14 @@ func (d *Daemon) monitors() share.Monitors {
 // the shell's settings page and the CLI.
 func (d *Daemon) sharingPart() part {
 	return part{
-		name:     "sharing",
-		methods:  d.sharingMethods,
-		run:      d.savedKick.run,
+		name:    "sharing",
+		methods: d.sharingMethods,
+		run: func(ctx context.Context) error {
+			// Once at the start too: with no snapshot active, the running
+			// config is saved as one
+			d.savedKick.Kick()
+			return d.savedKick.run(ctx)
+		},
 		onConfig: func(store.Event) { d.savedKick.Kick() },
 	}
 }

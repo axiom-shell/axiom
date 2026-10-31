@@ -273,9 +273,7 @@ FieldGroup {
 
           StyledText {
             Layout.fillWidth: true
-            readonly property var hint: SavedConfigsManager.keepHint(useWallpaper.checked && details.setup?.wallpaper ? SavedConfigsManager.keepWallpaper : SavedConfigsManager.keep, "")
-            text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id ? hint.text : ""
-            textColor: hint.warning && root.armed === details.setup?.id ? Theme.warning : Theme.foreground
+            text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id ? SavedConfigsManager.keepHint("") : ""
             opacity: 0.7
             textSize: Appearance.fontSizeBy(-1)
             elide: Text.ElideRight

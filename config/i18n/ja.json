@@ -3489,16 +3489,11 @@
     "Show Connect / Disconnect, switching and adding accounts, the exit node and the node's options. They need operator rights once (`tailscale set --operator=$USER`): the popout's Grant access button asks for them.": "",
     "Import a VPN: a WireGuard (.conf) or OpenVPN (.ovpn) file": "",
     "Applied \"{0}\" as \"{1}\".": "",
-    "Applied \"{0}\".": "",
     "Apply an example's look and layout: bars, pages, menus, docks and the theme. Wallpapers, monitors, apps and accounts stay as they are. It's saved as a configuration of its own, and changes to the current one are saved first.": "",
     "Restored \"{0}\".": "",
     "Your changes to \"{0}\" are discarded": "",
     "Your changes are saved to \"{0}\" first": "",
-    "Your current config isn't saved and will be lost: save it under a name first": "",
-    "Your current config replaces the backup \"{0}\": save it under a name to keep both": "",
-    "Your current config is kept as \"{0}\" first": "",
     "Your changes are saved to \"{0}\".": "",
-    "The previous configuration is saved as \"{0}\".": "",
     "Click a spot or drag to place it, to an edge to attach it; fine-tune below. Detached, it floats a distance across the free screen; attached, it grows out of the edge.": "",
     "Click a spot or drag to place it; fine-tune below. Show opens it as a change would.": "",
     "Click a spot or drag to place the toasts; fine-tune below. Show sends a test notification, toasted with the settings below as edited.": "",
@@ -3510,6 +3505,7 @@
     "Left to right": "",
     "Right to left": "",
     "Tile order": "",
-    "Which way the windows run, most recently used first. They wrap to another row (or column) only once one runs out of room.": ""
+    "Which way the windows run, most recently used first. They wrap to another row (or column) only once one runs out of room.": "",
+    "Your current config is saved as \"{0}\" first": ""
   }
 }

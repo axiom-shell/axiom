@@ -8,14 +8,14 @@ import qs.components.reusable
 /**
  * Settings page, Maintenance (the category's `card`, wide): save the config's
  * look, layout, keybinds, apps and wallpapers under a name, and restore or
- * delete saved ones. Only the active one (last saved or restored) can be
- * overwritten from its row; it's marked Current, with an unsaved dot once
- * the running config differs, and its Restore is Revert (its edits
- * discarded). Overwrite, restore, delete and reverting to the defaults ask
- * for a second click to confirm; an armed restore or apply says in place of
- * its subtitle where the running config goes first, warned when that loses
- * something unless saved by hand (SavedConfigsManager.keepHint). Restoring (a snapshot or
- * the defaults) leaves machine settings as they are. Below them, exporting
+ * delete saved ones. Only the active one (last saved or restored, always
+ * there) can be overwritten from its row, and only the others deleted; it's
+ * marked Current, with an unsaved dot once the running config differs, and
+ * its Restore is Revert (its edits discarded). Overwrite, restore, delete
+ * and reverting to the defaults ask for a second click to confirm; an
+ * armed restore or apply says in place of its subtitle where the running
+ * config goes first (SavedConfigsManager.keepHint). Restoring (a snapshot
+ * or the defaults) leaves machine settings as they are. Below them, exporting
  * the look to share and importing a shared file (confirmed on its own row),
  * then the example setups (SavedConfigsManager.examples), applied the same
  * way.
@@ -38,10 +38,9 @@ FieldGroup {
     required property bool armed
     required property string restoring
     property string idle: ""
-    readonly property var hint: SavedConfigsManager.keepHint(SavedConfigsManager.keep, restoring)
-    readonly property bool hinting: armed && hint.text !== ""
-    text: hinting ? hint.text : idle
-    textColor: hinting && hint.warning ? Theme.warning : Theme.foreground
+    readonly property string hint: SavedConfigsManager.keepHint(restoring)
+    readonly property bool hinting: armed && hint !== ""
+    text: hinting ? hint : idle
     opacity: hinting ? 1 : 0.6
     textSize: Appearance.fontSizeBy(-2)
     elide: Text.ElideRight
@@ -171,7 +170,9 @@ FieldGroup {
           onClicked: root.confirm(row.fileBaseName, "restore")
         }
 
+        // Not the active one: one is always active
         StyledTextButton {
+          visible: !row.active
           Layout.preferredHeight: Widget.height
           text: I18n.tr(row.pendingAction === "delete" ? "Confirm" : "Delete")
           hoverColor: Theme.error
@@ -393,10 +394,8 @@ FieldGroup {
       }
 
       StyledText {
-        readonly property var hint: SavedConfigsManager.keepHint(SavedConfigsManager.keep, "")
         visible: text !== ""
-        text: hint.text
-        textColor: hint.warning ? Theme.warning : Theme.foreground
+        text: SavedConfigsManager.keepHint("")
         textSize: Appearance.fontSizeBy(-1)
         wrapMode: Text.WordWrap
         Layout.fillWidth: true

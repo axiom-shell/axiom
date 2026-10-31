@@ -235,13 +235,17 @@ func TestPushesFollowTopics(t *testing.T) {
 	if err := writer.Call(context.Background(), "config.set", map[string]any{"ops": ops}, nil); err != nil {
 		t.Fatal(err)
 	}
-	select {
-	case m := <-all:
-		if m != "config.changed" {
-			t.Errorf("first push %s", m)
+	// The one saved.state sends at the start may come first
+	m := "saved.state"
+	for m == "saved.state" {
+		select {
+		case m = <-all:
+		case <-time.After(testkit.Bound(5 * time.Second)):
+			t.Fatal("no push to a subscriber of everything")
 		}
-	case <-time.After(testkit.Bound(5 * time.Second)):
-		t.Fatal("no push to a subscriber of everything")
+	}
+	if m != "config.changed" {
+		t.Errorf("first push %s", m)
 	}
 	select {
 	case m := <-savedOnly:
@@ -288,10 +292,11 @@ func TestPolledTopicFollowsItsSubscribers(t *testing.T) {
 			t.Fatal("no state")
 		}
 	}
-	select {
-	case m := <-all:
-		t.Errorf("%s pushed to a connection that didn't subscribe", m)
-	default:
+	// Other topics' pushes (saved.state at the start) may be there
+	for len(all) > 0 {
+		if m := <-all; m == "probe.state" {
+			t.Errorf("%s pushed to a connection that didn't subscribe", m)
+		}
 	}
 	sub.Close()
 	if !testkit.Eventually(func() bool {
