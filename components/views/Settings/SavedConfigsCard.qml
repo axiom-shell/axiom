@@ -187,6 +187,10 @@ FieldGroup {
     Layout.preferredHeight: Widget.height + Widget.padding * 2
 
     RowLayout {
+      id: defaultsRow
+
+      readonly property bool armed: root.pending?.name === "" && root.pending?.action === "restore"
+
       anchors.fill: parent
       anchors.leftMargin: Widget.padding
       anchors.rightMargin: Widget.padding
@@ -204,16 +208,15 @@ FieldGroup {
         }
 
         Subtitle {
-          armed: root.pending?.name === "" && root.pending?.action === "restore"
+          armed: defaultsRow.armed
           restoring: ""
           idle: I18n.tr("The look, layout, keybinds and apps a first run starts with")
         }
       }
 
       StyledTextButton {
-        readonly property bool armed: root.pending?.name === "" && root.pending?.action === "restore"
         Layout.preferredHeight: Widget.height
-        text: I18n.tr(armed ? "Confirm" : "Restore")
+        text: I18n.tr(defaultsRow.armed ? "Confirm" : "Restore")
         hoverColor: Theme.error
         onClicked: root.confirm("", "restore")
       }

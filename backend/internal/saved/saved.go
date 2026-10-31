@@ -60,7 +60,8 @@ type Options struct {
 // State is what the settings page shows of the snapshots.
 type State struct {
 	// The snapshot the running config was last saved as or restored from,
-	// "" for none (or once its file is gone)
+	// "" only until Changed saves it as "My setup" (as it does once this
+	// one's file is gone: hasActive)
 	Active string `json:"active"`
 	// The shared setup it was saved from, unchanged since ("" for one the
 	// user saved)
@@ -380,7 +381,7 @@ func (s *Service) keep(result *Applied) error {
 // and with none active a new snapshot of the user's, mySetup.
 func (s *Service) plan() string {
 	if !s.hasActive() {
-		return s.freeName(mySetup)
+		return s.freeName(mySetup, false)
 	}
 	if s.modified() {
 		return s.state.Active
@@ -397,27 +398,24 @@ func (s *Service) hasActive() bool {
 	return err == nil
 }
 
-// freeName is base, or "base <n>" past the snapshots that have it.
-func (s *Service) freeName(base string) string {
+// freeName is base, or "base <n>": the first name no snapshot has, or with
+// copies one an applied file was saved as (kindCopy: that file makes it
+// again).
+func (s *Service) freeName(base string, copies bool) string {
 	name := base
-	// Any error but "it's there" counts as free: save then says what's wrong
 	for n := 2; ; n++ {
-		if _, err := os.Stat(s.path(name)); err != nil {
+		path := s.path(name)
+		// Any error but "it's there" counts as free: save then says what's
+		// wrong
+		if _, err := os.Stat(path); err != nil {
+			return name
+		}
+		// One that can't be read is taken: it may be the user's
+		if parsed, err := readJSON(path); copies && err == nil && header(parsed).Kind == kindCopy {
 			return name
 		}
 		name = fmt.Sprintf("%s %d", base, n)
 	}
-}
-
-// copyOrFree is the name to save an applied file's result as: snapshot,
-// unless one of the user's has it (an applied copy saved into, say), then
-// a free name.
-func (s *Service) copyOrFree(snapshot string) string {
-	parsed, err := readJSON(s.path(snapshot))
-	if err != nil || header(parsed).Kind == kindCopy {
-		return snapshot
-	}
-	return s.freeName(Sanitize(snapshot))
 }
 
 // drop deletes previous, the copy an applied file was saved as (active,
@@ -623,8 +621,8 @@ func (s *Service) Defaults() (Applied, error) {
 
 // apply: the running config kept, then the file's parts in carry applied,
 // then (wallpaper not "") that wallpaper set, then the result saved as
-// snapshot from source (a kindCopy one with a source: its
-// file applies it again; copyOrFree), and the untouched copy the last
+// snapshot from source (a kindCopy one with a source: its file applies it
+// again; freeName past the user's), and the untouched copy the last
 // applied file was saved as dropped.
 func (s *Service) apply(name string, parsed any, carry []string, monitors share.Monitors, snapshot, source, wallpaper string) (Applied, error) {
 	s.mu.Lock()
@@ -650,7 +648,7 @@ func (s *Service) apply(name string, parsed any, carry []string, monitors share.
 	if source != "" {
 		kind = kindCopy
 	}
-	if result.Saved, err = s.save(s.copyOrFree(snapshot), source, kind); err != nil {
+	if result.Saved, err = s.save(s.freeName(Sanitize(snapshot), true), source, kind); err != nil {
 		return result, err
 	}
 	if copied {

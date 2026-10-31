@@ -154,7 +154,7 @@ func TestApplyExampleFormat1(t *testing.T) {
 func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 	t.Parallel()
 	type step struct {
-		do    string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source; "wall": example a as a community setup with its wallpaper; "rotating <name>": a snapshot of the user's whose wallpaper rotates
+		do    string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source; "wall": example a as a community setup with its wallpaper; "rotating <name>": a snapshot of the user's whose wallpaper rotates; "broken <name>": a snapshot that isn't JSON
 		kept  string // Applied.Kept of an apply or restore
 		files string // saved/ afterwards, sorted, space-separated
 		holds string // "<file> <value>": that snapshot then holds Bars.style.widgetStyle <value> ("" to skip)
@@ -209,6 +209,11 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "edit plain", files: "My setup defaults"},
 			{do: "a", kept: "defaults", files: "My setup defaults example-a", holds: "defaults plain"},
 			{do: "defaults", files: "My setup defaults defaults 2"},
+			{do: "defaults", files: "My setup defaults defaults 2"},
+		}},
+		{"a user's snapshot that can't be read is never replaced", []step{
+			{do: "broken example-a", files: "example-a"},
+			{do: "a", kept: "My setup", files: "My setup example-a example-a 2"},
 		}},
 		{"an untouched copy's wallpaper setup is in the one it came from", []step{
 			{do: "wall", kept: "My setup", files: "My setup community-a"},
@@ -276,6 +281,8 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 				case "rotating":
 					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
 						"meta": {"title": "`+arg+`"}, "Appearance": {"wallpaper": {"mode": "rotate"}}}`), 0o600)
+				case "broken":
+					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2,`), 0o600)
 				case "old":
 					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
 						"meta": {"title": "`+arg+`", "source": "`+arg+`"}, "Appearance": {"theme": {"name": "nord-light"}}}`), 0o600)
