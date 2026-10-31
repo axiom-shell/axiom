@@ -479,7 +479,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The monitor prompt's padding is a bare 18 px, and check_sizes misses it
 - **Where:** `components/surfaces/monitors/MonitorPromptWindow.qml` (`pad`), `scripts/check_sizes.py` (`SIZE_WORD`)
-- **What:** `readonly property int pad: 18` (MonitorPromptWindow.qml:19, used at :50-51) stays 18 px at every Interface scale while the card's text scales; AGENTS.md has sizes outside the bars from `Widget.px(n)`. `check_sizes.py` doesn't flag it because its size words have no `pad`. Fix: `Widget.px(18)`, and add `pad` to `SIZE_WORD` (the check that would have caught it).
+- **What:** `readonly property int pad: 18` (MonitorPromptWindow.qml:19, used at :50-51) stays 18 px at every Interface scale while the card's text scales; AGENTS.md has sizes outside the bars from `Widget.px(n)`. `check_sizes.py` doesn't flag it because its size words have no `pad`. Fix: `Widget.px(18)`, and add `pad` to `SIZE_WORD` (the check that would have caught it). The overlay's page navigator has the same gap: `readonly property real inset: 6` (`components/hosts/overlay/OverlayPageNavigator.qml:38`) insets its arrows, tabs and pill in a bar whose height follows `Widget.height`. It should be `Widget.px(6)`, and `inset` belongs in `SIZE_WORD` too (found while reviewing the overlay system, 2026-10-31).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -617,7 +617,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Modules inside borders aren't sized evenly
 - **Where:** `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/OverlaySlot.qml`
-- **What:** From the maintainer's notes: module sizing within borders isn't even (the space around modules framed by a border differs from side to side or between modules).
+- **What:** From the maintainer's notes: module sizing within borders isn't even (the space around modules framed by a border differs from side to side or between modules). Seen while reviewing the overlay system (2026-10-31), two likely causes. First, `GridPlacement.rectPx` returns unrounded px (`unitOf` is `(card - 3 × gap) / 4`, fractional for most card sizes), and `OverlayPages` then scales the whole page by `contentZoom`, so the slots' edges and `Card`'s border fall on fractional pixels and are drawn a pixel apart unevenly. Snapping each slot's edges (not its size) to whole drawn px would settle that. Second, `Card` doesn't pad its content (`full` fills the box), while `Panel`'s column takes `pad`, so each of the 25 `Card` modules applies `pad` itself, some once and ColorSwatch not at all. PLAUSIBLE: a screenshot at a non-1 zoom, compared with one at 100 %.
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -1506,3 +1506,37 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `WorkspaceStrip.wsById` and `hasWindows` (lines 74–85, 12 lines; `hasWindows` has one call, line 63), and `WorkspaceCellRow._occupied` (8 lines), each walk `CompositorManager.workspaces` with an index loop to find one id. WorkspaceGrid already does it in one line: `CompositorManager.workspaces.find(ws => ws.id === id) ?? null` (WorkspaceGrid.qml:61). Fix: `wsById` becomes that `find`, `hasWindows` is inlined at its call, and `_occupied` becomes `return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;`. That is 20 lines down to about 6, with the same results.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### Reopening the overlay while it closes leaves it open but hidden
+- **Where:** `components/hosts/overlay/OverlayPanel.qml:44` (`open`), `components/hosts/overlay/OverlayPanel.qml:69` (`hideTimer`)
+- **What:** `close()` sets `isOpen = false` and starts `hideTimer` (`Appearance.animSlow`, 300 ms at the default motion), which sets `visible = false` when it fires. `open()` sets `visible = true; isOpen = true` but never stops the timer. So toggling the overlay twice within the slide-out (a double tap of its keybind or of `axiom ipc overlay toggle`, or a `SurfaceGroup` sync from another monitor) leaves it open but hidden: `isOpen` is true while the window isn't visible. `OverlayPages.open` (bound to `visible`) unloads its pages, the backdrop stays dimmed (`shell/Overlay.qml` shows it on `panel.isOpen`) and its focus grab stays active. The next toggle closes the hidden overlay, so the user has to press twice to get it back. It has been this way since the restructure commit (`git log -S"hideTimer.start"`). Fix: `hideTimer.stop();` first thing in `open()`.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### A clean layout's problem blocks saving the others in the Layouts editor
+- **Where:** `components/views/Layouts/Layouts.qml:78` (`canvas.canSave`), `components/views/Layouts/LayoutsPanel.qml:34` (`problems`)
+- **What:** The canvas's Save is enabled only while none of the five drafts has `problems`, yet `onSave` saves only the dirty ones, and each `saveChanges()` already refuses its own problems. So a saved layout that `GridEditor.problemsFor` objects to, even one nobody touched, disables saving every page and menu. Example: a config imported or edited by hand whose lock screen layout lacks its required module ("the lock screen: needs its … module") while `Lockscreen.mode` isn't `quickshell`. The lock screen's row is then hidden (`OverlayManager.lockscreenEditable`), so it can't be fixed from the editor, and "Can't save yet" lists it under every edit. The same happens with a hidden login screen (`greeterEditable`) and with a saved overlay page whose modules overlap, a case `ModuleGrid._check` expects (it warns about them). The navigator's Save all (`EditsManager.saveAll`) already saves around it, so the two Save buttons disagree. Fix: gate `canSave`, and the problems listed, on the dirty drafts only: `drafts.every(d => !d.isDirty || d.problems.length === 0)`.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### The five layouts drafts are listed by hand in eight places
+- **Where:** `components/views/Layouts/Layouts.qml:38` (`Component.onCompleted`), `components/views/Layouts/Layouts.qml:77` (`canvas.dirty`, `canvas.canSave`, `onSave`, `onReset`), `components/views/Layouts/LayoutsPanel.qml:34` (`problems`), `services/ui/EditsManager.qml:49` (the Layouts `dirty`), `services/ui/EditsManager.qml:172` (`saveAll`), `services/ui/EditsManager.qml:194` (`discardAll`)
+- **What:** `OverlayManager`, `OverlayManager.menus`, `DesktopManager.editor`, `LockManager.editor` and `GreeterManager.editor` share one interface (`isDirty`, `problems`, `ensureLoaded`, `saveChanges`, `resetChanges`), but every caller spells all five out. Layouts.qml loads them (7 lines), reads dirty and canSave (2) and saves and resets them (19). LayoutsPanel concatenates their problems (1). EditsManager reads dirty (1), and saves (10) and discards (10) them. That makes 50 lines, and the orders already differ: EditsManager saves the menus before the pages, Layouts.qml after. A sixth draft would need all eight edits. Fix: `OverlayManager.drafts: [root, root.menus, DesktopManager.editor, LockManager.editor, GreeterManager.editor]`, with `layoutsDirty`, `layoutsProblems`, `loadLayouts()`, `saveLayouts()` and `resetLayouts()` over it (about 15 lines). Each place becomes one call (about 8 lines), about 27 lines fewer, and the Save gate above becomes one line.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### GridEditor's canAdd and canMove have no caller
+- **Where:** `services/ui/GridEditor.qml:370` (`canAdd`), `services/ui/GridEditor.qml:375` (`canMove`)
+- **What:** `grep -rnw 'canAdd\|canMove' --include=*.qml .` finds only their definitions, plus the Checks line in grid-canvas.md (`CompositorStatusCard`'s `canAdd` is its own property). The canvas and the drag layer use the plans (`hoverPlan.valid`) instead; only `canResize` has a caller (`EditorInspector.qml:195`). Fix: delete both (lines 369–378, 10 lines) and drop them from grid-canvas.md's "Checks" line.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### Small shrinks in the overlay
+- **Where:** `config/OverlayConfig.qml:34` (`pinnedPages`), `config/OverlayConfig.qml:253` (`slotShape`), `components/hosts/overlay/OverlayPages.qml:52` (`pageCount`, `pages`, `_onPinned`), `components/views/Custom/Custom.qml:17` (`fineGrid`), `components/hosts/overlay/OverlayPageNavigator.qml:228` (the pill's `Behavior`s)
+- **What:** Four things can go or shrink, about 15 lines in all:
+  - `pinnedPages` is a list of one (Layouts). `OverlayPages` counts `pinnedPages.length` into `pageCount` and `pages`, but draws a single hard-wired `editorPage`, so a second entry would get a tab and an index with nothing behind them. A single `layoutsPage` object on OverlayConfig, with `_onPinned` a bool, says what the code does (about 4 lines fewer).
+  - `OverlayConfig.slotShape` only forwards to `GridPlacement.slotShape`, and has one caller, `SlotContext.qml:28`. That caller can call `GridPlacement.slotShape` itself, importing `qs.components.methods` (3 lines fewer).
+  - In `Custom.qml`, the fine grid sets `availableWidth` / `availableHeight` (lines 17–18). An `OverlayGrid` with a `fixedUnit` uses them only for `roomWidth`, which nothing reads on this grid (`ModuleGrid` reads `unit`, `gap` and `sizes`), so both lines can go.
+  - The navigator pill's two `Behavior { NumberAnimation { duration: Appearance.animNormal; easing.type: Easing.OutCubic } }` (lines 228–239, 12 lines) are `Glide on x { duration: Appearance.animNormal }` and the same on `width` (6 lines): the shared piece, with `Appearance.easing` in place of a literal.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the overlay system
