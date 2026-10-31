@@ -21,8 +21,8 @@ Read `../review-branch/lenses.md` › Every reviewer and The lead reviewer first
 
 ## Phase 0: scope
 
-1. `python3 .claude/skills/review-system/scope.py <system> > scope.txt` (in the work folder) and read it: anything NOT FOUND first (a moved file or a bad pattern hides code: find the files it meant and review them too; the stale pattern is a finding), any glob in a doc header (the kind of file that doc's rules cover: grep them against those rules, as `collection` mode does), the docs, the code ranked by risk (size × churn × fix commits), files shared with other systems (`[also in: …]`: seams; outline them unless they're this system's core), tests and data, the last review and what changed since, and the open `issues.md` entries on these files (known: never report them again; say if the code now fixes one or makes it worse).
-2. **Incremental by default.** With a last review (`.claude/reviews/<system>.md`) and no `--full`: read it; the deep set is the files changed since its commit, plus a recheck of each open finding (its `issues.md` entry gone means fixed). Nothing changed and nothing open: say so and stop.
+1. `python3 .claude/skills/review-system/scope.py <system> > scope.txt` (in the work folder) and read it: anything NOT FOUND first (a moved file or a bad pattern hides code: find the files it meant and review them too; the stale pattern is a finding), any glob in a doc header (the kind of file that doc's rules cover: grep them against those rules, as `collection` mode does), the docs, the code ranked by risk (size × churn × fix commits), files shared with other systems (`[also in: …]`: seams; outline them unless they're this system's core), tests and data, the last review and what changed since, and the titles of the open `issues.md` entries on these files (known: never report them again; say if the code now fixes one or makes it worse). Read only those entries (`grep -n '^### <title>' docs/dev/issues.md`, then `sed -n` that entry), never issues.md whole.
+2. **Incremental by default.** With a last review (`.claude/reviews/<system>.md`) and no `--full`: read it; the deep set is the files changed since its commit, plus a recheck of each open finding (its `issues.md` title gone, by `grep -n '^### '`, means fixed). Nothing changed and nothing open: say so and stop.
 
 ## Phase 1: the contract
 
@@ -38,11 +38,11 @@ Read `lenses.md` (next to this file). For `parity` and `collection` modes, build
 
 To settle a finding against a real compositor, use a nested one (`scripts/dev/nested.sh <sway|niri|hyprland>`), never the live session.
 
-**`--deep`:** split the deep set into chunks of ≤ ~5k lines along the docs' boundaries, one reviewer agent each, given both lenses files, `contract.md`, its files and output path; do the seams and the parity/collection table yourself meanwhile (`../review-branch/lenses.md` › The lead reviewer › Deep mode).
+**`--deep`:** split the deep set into chunks of about 8–10k lines along the docs' boundaries, one reviewer agent each, given both lenses files (the deletion lens included), `contract.md`, its files and output path; do the seams and the parity/collection table yourself meanwhile (`../review-branch/lenses.md` › The lead reviewer › Deep mode).
 
 ## Phase 4: prove
 
-Every candidate passes `../review-branch/lenses.md` › Proving it before it goes in the report, agents' ones included: the cited line re-read, every count and total recomputed, `issues.md` grepped for the same function or cause. Drop what fails.
+Every candidate passes `../review-branch/lenses.md` › Proving it before it goes in the report, agents' ones included: the cited line re-read, every count and total recomputed, `issues.md` searched by entry title for the same function or cause, only the matching entries read. Drop what fails.
 
 ## Phase 5: report
 
@@ -53,6 +53,7 @@ Every candidate passes `../review-branch/lenses.md` › Proving it before it goe
 
 **Verdict:** <one or two sentences: the state of the system, the biggest problem>
 **Since last review:** <fixed / still open / new, when incremental>
+**Deletion pass:** <its findings' titles with their line counts and the total; or "nothing found" and what was checked>
 
 <the findings by severity, in the lenses' shape>
 

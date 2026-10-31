@@ -172,7 +172,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Compact cards still build their full layout
 - **Where:** `components/content/base/Card.qml` (`full`), `components/content/base/Panel.qml` (`column`, `background`)
-- **What:** A module's children go into `Card.full` / `Panel.column` (a default property alias), which is only hidden while `compactContent` shows, so a compact card builds its whole layout as well as its figure. On the Tiny page (34 modules in quarter-card slots) this is most of what's left of its build: WifiNetworks about 65 ms, each ClockCalendar about 45 ms (`Built overlay module <Type> in X ms` with `--debug`). It also slows the bar popouts using those panels. A fix is an optional `fullContent: Component` on both roots, loaded only while not compact, then moving the heavy modules to it one by one (their ids are referenced from the module root, so each needs its own pass): see [streamed-building](core/streamed-building.md).
+- **What:** A module's children go into `Card.full` / `Panel.column` (a default property alias), which is only hidden while `compactContent` shows, so a compact card builds its whole layout as well as its figure. On the Tiny page (34 modules in quarter-card slots) this is most of what's left of its build: WifiNetworks about 65 ms, each ClockCalendar about 45 ms (`Built overlay module <Type> in X ms` with `--debug`). It also slows the bar popouts using those panels. A fix is an optional `fullContent: Component` on both roots, loaded only while not compact, then moving the heavy modules to it one by one (their ids are referenced from the module root, so each needs its own pass): see [streamed-building](core/streamed-building.md). The modules review (2026-10-31) found the same in Tailscale, VpnConnections, BluetoothDevices, AudioMixer, Palette, Pomodoro, Focus, Todo, Battery and TopProcesses; Notes always builds both its `tiny` figure and its editor; Disks, SystemGraphs and VolumeDials already skip part of their layout while compact. Parts hidden by mode rather than by compactness are [their own entry](#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts).
 - **Size:** needs a plan
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
@@ -479,7 +479,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The monitor prompt's padding is a bare 18 px, and check_sizes misses it
 - **Where:** `components/surfaces/monitors/MonitorPromptWindow.qml` (`pad`), `scripts/check_sizes.py` (`SIZE_WORD`)
-- **What:** `readonly property int pad: 18` (MonitorPromptWindow.qml:19, used at :50-51) stays 18 px at every Interface scale while the card's text scales; AGENTS.md has sizes outside the bars from `Widget.px(n)`. `check_sizes.py` doesn't flag it because its size words have no `pad`. Fix: `Widget.px(18)`, and add `pad` to `SIZE_WORD` (the check that would have caught it).
+- **What:** `readonly property int pad: 18` (MonitorPromptWindow.qml:19, used at :50-51) stays 18 px at every Interface scale while the card's text scales; AGENTS.md has sizes outside the bars from `Widget.px(n)`. `check_sizes.py` doesn't flag it because its size words have no `pad`. Fix: `Widget.px(18)`, and add `pad` to `SIZE_WORD` (the check that would have caught it). The overlay's page navigator has the same gap: `readonly property real inset: 6` (`components/hosts/overlay/OverlayPageNavigator.qml:38`) insets its arrows, tabs and pill in a bar whose height follows `Widget.height`. It should be `Widget.px(6)`, and `inset` belongs in `SIZE_WORD` too (found while reviewing the overlay system, 2026-10-31).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -617,7 +617,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Modules inside borders aren't sized evenly
 - **Where:** `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/OverlaySlot.qml`
-- **What:** From the maintainer's notes: module sizing within borders isn't even (the space around modules framed by a border differs from side to side or between modules).
+- **What:** From the maintainer's notes: module sizing within borders isn't even (the space around modules framed by a border differs from side to side or between modules). Seen while reviewing the overlay system (2026-10-31), two likely causes. First, `GridPlacement.rectPx` returns unrounded px (`unitOf` is `(card - 3 × gap) / 4`, fractional for most card sizes), and `OverlayPages` then scales the whole page by `contentZoom`, so the slots' edges and `Card`'s border fall on fractional pixels and are drawn a pixel apart unevenly. Snapping each slot's edges (not its size) to whole drawn px would settle that. Second, `Card` doesn't pad its content (`full` fills the box), while `Panel`'s column takes `pad`, so each of the 25 `Card` modules applies `pad` itself, some once and ColorSwatch not at all. PLAUSIBLE: a screenshot at a non-1 zoom, compared with one at 100 %. Seen again while reviewing the modules system (2026-10-31): the `Card` modules padding differently are ColorSwatch (not at all), KeyboardLayout (width only), Greeting (`anchors.margins`) and Session (its own `margin`, 0 when tight); and padding also skews which layout a slot gets, since `SlotContext.compact` compares `fullMin*` with the slot padding included ([its entry](#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)).
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -1243,7 +1243,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   - The grid's `Transport { visible: root.embedded }` is built in the popout.
   - The popout's `Transport { visible: root.hasPlayer && !root.embedded }` is built in every card.
 
-  So each opening of the Media popout builds a seek slider, two time labels and three buttons it never shows, and a hidden cover decode, a third beside the two [Images decoded at full size or more than once](#images-decoded-at-full-size-or-more-than-once) counts. Fix: Loaders gated on `root.mini` for the strip and grid, and on `root.embedded` / `!root.embedded` for the two transports (Layout attached properties on the Loaders).
+  So each opening of the Media popout builds a seek slider, two time labels and three buttons it never shows, and a hidden cover decode, a third beside the two [Images decoded at full size or more than once](#images-decoded-at-full-size-or-more-than-once) counts. Fix: Loaders gated on `root.mini` for the strip and grid, and on `root.embedded` / `!root.embedded` for the two transports (Layout attached properties on the Loaders). Fix it together with NowPlaying's thresholds in [the sizing entry](#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding): the Loaders gate on the `mini`/`short` switches that entry recomputes. The compact play `MediaButton` also lacks the `enabled: MediaManager.canTogglePlaying` its two siblings have (modules review, 2026-10-31).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
@@ -1506,3 +1506,184 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `WorkspaceStrip.wsById` and `hasWindows` (lines 74–85, 12 lines; `hasWindows` has one call, line 63), and `WorkspaceCellRow._occupied` (8 lines), each walk `CompositorManager.workspaces` with an index loop to find one id. WorkspaceGrid already does it in one line: `CompositorManager.workspaces.find(ws => ws.id === id) ?? null` (WorkspaceGrid.qml:61). Fix: `wsById` becomes that `find`, `hasWindows` is inlined at its call, and `_occupied` becomes `return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;`. That is 20 lines down to about 6, with the same results.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
+
+### Reopening the overlay while it closes leaves it open but hidden
+- **Where:** `components/hosts/overlay/OverlayPanel.qml:44` (`open`), `components/hosts/overlay/OverlayPanel.qml:69` (`hideTimer`)
+- **What:** `close()` sets `isOpen = false` and starts `hideTimer` (`Appearance.animSlow`, 300 ms at the default motion), which sets `visible = false` when it fires. `open()` sets `visible = true; isOpen = true` but never stops the timer. So toggling the overlay twice within the slide-out (a double tap of its keybind or of `axiom ipc overlay toggle`, or a `SurfaceGroup` sync from another monitor) leaves it open but hidden: `isOpen` is true while the window isn't visible. `OverlayPages.open` (bound to `visible`) unloads its pages, the backdrop stays dimmed (`shell/Overlay.qml` shows it on `panel.isOpen`) and its focus grab stays active. The next toggle closes the hidden overlay, so the user has to press twice to get it back. It has been this way since the restructure commit (`git log -S"hideTimer.start"`). Fix: `hideTimer.stop();` first thing in `open()`.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### A clean layout's problem blocks saving the others in the Layouts editor
+- **Where:** `components/views/Layouts/Layouts.qml:78` (`canvas.canSave`), `components/views/Layouts/LayoutsPanel.qml:34` (`problems`)
+- **What:** The canvas's Save is enabled only while none of the five drafts has `problems`, yet `onSave` saves only the dirty ones, and each `saveChanges()` already refuses its own problems. So a saved layout that `GridEditor.problemsFor` objects to, even one nobody touched, disables saving every page and menu. Example: a config imported or edited by hand whose lock screen layout lacks its required module ("the lock screen: needs its … module") while `Lockscreen.mode` isn't `quickshell`. The lock screen's row is then hidden (`OverlayManager.lockscreenEditable`), so it can't be fixed from the editor, and "Can't save yet" lists it under every edit. The same happens with a hidden login screen (`greeterEditable`) and with a saved overlay page whose modules overlap, a case `ModuleGrid._check` expects (it warns about them). The navigator's Save all (`EditsManager.saveAll`) already saves around it, so the two Save buttons disagree. Fix: gate `canSave`, and the problems listed, on the dirty drafts only: `drafts.every(d => !d.isDirty || d.problems.length === 0)`.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### The five layouts drafts are listed by hand in eight places
+- **Where:** `components/views/Layouts/Layouts.qml:38` (`Component.onCompleted`), `components/views/Layouts/Layouts.qml:77` (`canvas.dirty`, `canvas.canSave`, `onSave`, `onReset`), `components/views/Layouts/LayoutsPanel.qml:34` (`problems`), `services/ui/EditsManager.qml:49` (the Layouts `dirty`), `services/ui/EditsManager.qml:172` (`saveAll`), `services/ui/EditsManager.qml:194` (`discardAll`)
+- **What:** `OverlayManager`, `OverlayManager.menus`, `DesktopManager.editor`, `LockManager.editor` and `GreeterManager.editor` share one interface (`isDirty`, `problems`, `ensureLoaded`, `saveChanges`, `resetChanges`), but every caller spells all five out. Layouts.qml loads them (7 lines), reads dirty and canSave (2) and saves and resets them (19). LayoutsPanel concatenates their problems (1). EditsManager reads dirty (1), and saves (10) and discards (10) them. That makes 50 lines, and the orders already differ: EditsManager saves the menus before the pages, Layouts.qml after. A sixth draft would need all eight edits. Fix: `OverlayManager.drafts: [root, root.menus, DesktopManager.editor, LockManager.editor, GreeterManager.editor]`, with `layoutsDirty`, `layoutsProblems`, `loadLayouts()`, `saveLayouts()` and `resetLayouts()` over it (about 15 lines). Each place becomes one call (about 8 lines), about 27 lines fewer, and the Save gate above becomes one line.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### GridEditor's canAdd and canMove have no caller
+- **Where:** `services/ui/GridEditor.qml:370` (`canAdd`), `services/ui/GridEditor.qml:375` (`canMove`)
+- **What:** `grep -rnw 'canAdd\|canMove' --include=*.qml .` finds only their definitions, plus the Checks line in grid-canvas.md (`CompositorStatusCard`'s `canAdd` is its own property). The canvas and the drag layer use the plans (`hoverPlan.valid`) instead; only `canResize` has a caller (`EditorInspector.qml:195`). Fix: delete both (lines 369–378, 10 lines) and drop them from grid-canvas.md's "Checks" line.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### Small shrinks in the overlay
+- **Where:** `config/OverlayConfig.qml:34` (`pinnedPages`), `config/OverlayConfig.qml:253` (`slotShape`), `components/hosts/overlay/OverlayPages.qml:52` (`pageCount`, `pages`, `_onPinned`), `components/views/Custom/Custom.qml:17` (`fineGrid`), `components/hosts/overlay/OverlayPageNavigator.qml:228` (the pill's `Behavior`s)
+- **What:** Four things can go or shrink, about 15 lines in all:
+  - `pinnedPages` is a list of one (Layouts). `OverlayPages` counts `pinnedPages.length` into `pageCount` and `pages`, but draws a single hard-wired `editorPage`, so a second entry would get a tab and an index with nothing behind them. A single `layoutsPage` object on OverlayConfig, with `_onPinned` a bool, says what the code does (about 4 lines fewer).
+  - `OverlayConfig.slotShape` only forwards to `GridPlacement.slotShape`, and has one caller, `SlotContext.qml:28`. That caller can call `GridPlacement.slotShape` itself, importing `qs.components.methods` (3 lines fewer).
+  - In `Custom.qml`, the fine grid sets `availableWidth` / `availableHeight` (lines 17–18). An `OverlayGrid` with a `fixedUnit` uses them only for `roomWidth`, which nothing reads on this grid (`ModuleGrid` reads `unit`, `gap` and `sizes`), so both lines can go.
+  - The navigator pill's two `Behavior { NumberAnimation { duration: Appearance.animNormal; easing.type: Easing.OutCubic } }` (lines 228–239, 12 lines) are `Glide on x { duration: Appearance.animNormal }` and the same on `width` (6 lines): the shared piece, with `Appearance.easing` in place of a literal.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the overlay system
+
+### fullMinWidth and fullMinHeight are compared with the slot's size, padding included
+- **Where:** `components/content/base/SlotContext.qml:32` (`compact`), `components/content/base/Card.qml:38` (`growHeight`), `components/content/base/Panel.qml:48` (`growHeight`), `docs/dev/overlay/writing-modules.md:24`
+- **What:** `compact` tests `(width > 0 && width < fullMinWidth) || (height > 0 && height < fullMinHeight)`, where `width`/`height` are the whole slot. Every module writes `fullMin*` as the px its content needs, with no padding: none of the 30 `fullMinHeight:` settings in `components/content` adds a pad, and Weather sets `fullMinHeight: Appearance.fontSize * 6`, the same figure as its `currentHeight`, which it compares with `innerHeight` everywhere else. So from `fullMin*` up to `fullMin* + 2 × pad` (36 px in a bordered card at the defaults) the full layout is laid into room up to 36 px short of what it asked for. Cases at font 14, normal density: Weather in a 4x1 strip 360×90 px has 54 px inside for a 72 px block, and `Card`'s clip cuts it where the compact figure would have fit. Stopwatch with the timer set at a 140 px slot has 104 px for 130 px (segment row 30, ring 56, buttons 36, spacing 8), so the ring overlaps the buttons. The strips of Calculator, ClipboardHistory, EmojiPicker, ScreenRecord, AudioMixer, Brightness and NowPlaying (`fullMinHeight` 3.5 × font = 49) have 13 px inside at 49 px for a 28–34 px row. NightLightControls and WorldClocks (2.4 × font) reach the border. `growHeight` grows a card to `fullMinHeight`, short by the same pad. Fix, in one place: in `SlotContext`, compare the room inside the full layout's padding, with `fullPad: OverlayConfig.cardPad(false, <the bare test pad uses>)` (the non-compact pad, so `compact` doesn't depend on itself): `(width > 0 && width - 2 * fullPad < fullMinWidth) || (height > 0 && height - 2 * fullPad < fullMinHeight)`. Add `2 * fullPad` in `growHeight`, and say in writing-modules.md that `fullMin*` are inner px. It is likely the cause of [High module padding clips edge menu modules](#high-module-padding-clips-edge-menu-modules) too (a higher padding shrinks the room inside while `compact` still sees the whole slot): fix them together.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### Eight modules' full layouts need more room than their fullMin sizes, even inside the padding
+- **Where:** `components/content/Palette/Palette.qml:17` (`columns`), `components/content/Pomodoro/Pomodoro.qml:20` (`fullMinHeight`), `components/content/Focus/Focus.qml:30` (`fullMinHeight`), `components/content/Disks/Disks.qml:25` (`columns`), `components/content/Tailscale/Tailscale.qml:54` (`fullMinHeight`), `components/content/WifiNetworks/WifiNetworks.qml:75` (`fullMinHeight`), `components/content/Updates/Updates.qml:44` (`fullMinHeight`), `components/content/NowPlaying/NowPlaying.qml:32` (`short`, `mini`)
+- **What:** Contract (writing-modules.md): a module sets `fullMinWidth` / `fullMinHeight`, "the px its full layout needs". These don't cover it even once the entry above is fixed. All figures are inner px at font 14, normal density.
+  - **Palette** picks 2, 4 or 8 columns from width alone. `fullMinHeight` 12f (132 px inside today) covers only 8 columns. 4 columns need about 266 px and 2 about 502 px (16 chips of about 57 px each with one role line). The default `[8, 4]` on a card under about 300 px tall cuts the bottom rows. Fix: choose the columns from both axes, and set the minimum from the chip count.
+  - **Pomodoro**: the dial is at least 4f (56 px) plus 86.8 px of dots, play button and task picker, so it needs 142.8 px. `fullMinHeight` is 9f (126 px). Fix: about 13f, or derive the dial's reserve and the minimum from one `controlsHeight`.
+  - **Focus**, stacked (under 34f wide): timer row 84 + separators 9 + todo field 30 + 4 + `DayPane`'s `Layout.minimumHeight` 8f (112) = 239 px, with no todo row showing. `fullMinHeight` is 14f (196 px).
+  - **Disks**: a second column needs `innerWidth >= 12f`, but a disk lays out down to 7f. Two paths in a 4x1 strip at a 60 px unit (204×24 inside) stack 65 px into 24 px rather than going side by side. Its `fullMinHeight` 3f (42 px) is also under one disk (29.6 px) plus the pad.
+  - **Tailscale**, connected with `actions` on (default): header 28 + this machine 47 + three folds 84 + separator + gaps 60 is about 220 px before one peer row. `fullMinHeight` is 11f (154 px), and a 4×2 card at 1080p (179 px inside) gives the device list 0 px. Fix: drop the folds in a short card (S4), or raise the minimum.
+  - **WifiNetworks**: `fullMinHeight` 12f leaves about 23 px for the list (one row is 37 px). With VPNs, the controls alone need 146 px.
+  - **Updates**: by its own `maxRows` terms, one section needs about 109 px and two need 180 px. `fullMinHeight` is 6f (84 px), and `Math.max(1, …)` forces one row. A 4x2 at a 50 px unit with AUR updates cuts off the AUR section entirely, with nothing to show it exists. Fix: derive `fullMinHeight` from the same terms.
+  - **NowPlaying**: only the side-by-side layout sheds parts (`short` requires `sideBySide`). Stacked needs about 152 px but is used from `mini`'s 7f (98 px). Side by side and short needs about 86 px, so the schema's own `defaultSize: [4, 2]` at a 50 px unit (64 px inside) is about 22 px short. The strip at `fullMinHeight` 3.5f has 13 px for a 17 px title. Fix: let `short` apply when stacked too, raise `mini` to about 9f, and set the strip's minimum to its title line.
+
+  These are arithmetic from the code, not screenshots. PLAUSIBLE in the exact px (font metrics vary), but each is more than 20 px over; re-measure in a nested shell at the sizes named.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns
+- **Where:** `components/content/SystemGraphs/SystemGraphs.qml:105` (`columns`)
+- **What:** SystemGraphs sets no `fullMinWidth`/`fullMinHeight` (`grep -c fullMin` = 0), so it is compact only at 2×2 grid units or less. A panel (a `StatFigure` of about 53 px + spacing + a `Sparkline` of at least `Appearance.fontSize`) needs about 69 px. Scenarios: one metric in a 3x1 strip at a 60 px unit has 24 px inside, and the panel is cut to the top of its value. All five metrics in a 2x6 column at a 60 px unit get rows of 50 px, so each sparkline sits over its label. `columns` picks by aspect ratio only, never by px. Fix: `fullMinHeight` about `Appearance.fontSize * 5` (one panel) and `fullMinWidth` about 6f, and skip a column count whose rows would be shorter than one panel.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### The Clock's date and label keep their room while the time shrinks to nothing
+- **Where:** `components/content/Clock/Clock.qml:48` (`captionSize`), `components/content/Clock/Clock.qml:50` (`captionsHeight`), `components/content/Clock/Clock.qml:54` (`faceHeight`)
+- **What:** The captions always take `captionCount * (captionSize * lineRatio + spacing)`, with `captionSize` at least `Appearance.fontSizeBy(-2)`. The face gets what's left (`faceHeight: Math.max(0, root.innerHeight - root.captionsHeight)`), and the digits are fitted to it. Clock has no `fullMin*` and no compact form. Example: the default stacked style with the date on, in a 4x1 strip at a 60 px unit, has 24 px inside. The date takes about 14 px, which leaves about 10 px for two lines of digits, so the time is about 3 px tall under a 10 px date. With a `label` as well, the face gets 0. The same happens on the lock screen and the greeter, which both host Clock. Fix: the time is the key figure, so count a caption only while the face keeps at least that caption's own height. Drop the label first, then the date.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout
+- **Where:** `components/content/Cheatsheet/Cheatsheet.qml:46` (`fullMinHeight`), `components/content/Cheatsheet/Cheatsheet.qml:36` (`strip`), `components/content/parts/KeyboardMap.qml`, `components/content/parts/KeyboardReference.qml:75` (the legend `Row`)
+- **What:** With `view: "keyboard"`, the module shows only `KeyboardReference`. Its height is fixed and it sits in no `Flickable`: 8 rows of `Math.round(Widget.height * 1.9)` = 57 px keys (6 `KeyMap.rows` plus the 20 `KeyMap.extras`), the gaps and the legend come to about 493 px inside, a card about 529 px tall. `fullMinHeight` is `Appearance.fontSize * 3` (42 px), the list view's figure, used for both views, and `strip` excludes the keyboard. So any card from 42 to about 529 px tall loses the legend, then the extra keys, then the lower rows, with no way to scroll to them. That includes the schema's `defaultSize: [8, 6]` at any unit under about 88 px. Across, at `fullMinWidth` (inner 160 px) a key unit is 8 px. Below about 24 px a unit, a key's corner name (never elided) spills into its neighbour. The legend is a non-wrapping `Row` of about 340 px. Fix: give the keyboard view its own minimums (about 28f × 38f), so a smaller slot shows the count figure, or a short key form, or put it in the list view's `Flickable`. Make the legend a `Flow`.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### A DeviceList squeezed to nothing wants no growth
+- **Where:** `components/content/parts/DeviceList.qml:29` (`overflow`)
+- **What:** `overflow: scroll.height <= 0 ? 0 : …` returns 0 whenever the list has no height. So `wantedHeight` is the card's own height, and `growHeight` doesn't grow it. A list gets 0 px exactly when the controls above it take the whole card (Tailscale's 4×2 card and WifiNetworks with VPNs, in the entry above). So a WifiNetworks, Tailscale, BluetoothDevices or VpnConnections card with `properties.grow` stays at a size that shows no rows, which is the one case growing is for. Notifications handles the unmeasured case the other way (`components/content/Notifications/Notifications.qml:64`: `scroll.height > 0 ? … : 1`). Fix: `root.on ? list.implicitHeight - Math.max(0, scroll.height) : -Math.max(0, scroll.height)`.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### Parts shown in one mode are built hidden in every mode, in ten modules and parts
+- **Where:** `components/content/Network/Network.qml:84` (strip `Graphs`), `components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `components/content/Calculator/Calculator.qml:472` (`Keypad`), `components/content/WorldClocks/WorldClocks.qml:178`, `components/content/parts/CountdownTimer.qml:50` (`TimeRing`), `components/content/Stopwatch/Stopwatch.qml:78` (`CountdownTimer`), `components/content/parts/TodoList.qml:120` (rename field), `components/content/ClockCalendar/ClockCalendar.qml:149` (`InlineAgenda`), `components/content/Agenda/Agenda.qml:156` (`EventEditor`), `components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
+- **What:** components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`", and "a row's expansion is built only while expanded". These parts are gated by `visible` only:
+  - Network builds both its strip (lines 84–122) and its full column (124–191), each with two Sparklines, in every card.
+  - AudioMixer builds its tabs and list (170–308, one `AudioRow` per playing app) in every slider-only card, and its card header in every popout.
+  - Calculator builds its 20–24 key `Keypad` with `showKeypad` off and in every strip.
+  - WorldClocks builds both a tile and a row layout for each clock (lines 178 and 225).
+  - CountdownTimer builds its ring and buttons while idle, and its duration field and presets while set.
+  - Stopwatch builds the whole `CountdownTimer` in stopwatch mode, and its time, buttons and laps in timer mode (in the Stopwatch popout too).
+  - TodoList gives every item its own rename `StyledTextEntry`, though at most one row renames at a time.
+  - ClockCalendar builds two `InlineAgenda`s, of which at most one shows, and a `DayPane` (a third agenda and the 360-line `EventEditor`). Where `showEvents` is false (always on the greeter, on the lock screen unless `Calendar.showOnLockscreen`), none of them can ever show, yet every lock and greeter surface builds them.
+  - Agenda and DayPane each build an `EventEditor` that shows only after a click.
+
+  This is the same rule as the NowPlaying entry, in other files. It is separate from "Compact cards still build their full layout": these parts are built at full size too. Fix: Loaders gated on each mode (`root.strip`, `!root.sliderOnly`, `showKeypad`, `tiles`, `idle`, `timerMode`, the row being renamed, `inlineAgenda && sideBySide`, `showEvents`, editing), with the Layout attached properties moved onto the Loaders. Done module by module, since ids read from the root need the loader's `item`.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### Card and Panel each spell out the grow and expand members
+- **Where:** `components/content/base/Card.qml:28` (`wantedHeight`, `growHeight`), `components/content/base/Panel.qml:38` (`wantedHeight`, `growHeight`)
+- **What:** Both roots declare `wantedHeight` and the same `growHeight` formula, each with its comment (11 lines each, word for word), beside an otherwise shared `SlotContext`, which already has every value `growHeight` reads (`width`, `fullMinWidth`, `fullMinHeight`). Fix: move `wantedHeight` and `growHeight` into `SlotContext`, bind `wantedHeight` in each root's `SlotContext {}` and alias `growHeight`. That is about 7 lines fewer, with one formula to change, which the padding entry above also touches. `canExpand`/`expand` stay, since their default `from ?? root` needs the root.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### Tailscale's PeerRow redraws DeviceRow without its buttons
+- **Where:** `components/content/Tailscale/Tailscale.qml:103` (`PeerRow`), `components/content/parts/DeviceRow.qml`
+- **What:** PeerRow (lines 103–167, 65 lines) is DeviceRow's row drawn again: the same `Rectangle` with `Widget.radius`, the hover colour with `ColorGlide`, the `RowLayout` margins, a `StyledIcon` at `Appearance.fontSize * 1.4` coloured by state, and a name (`fontSizeBy(-1)`) over a status (`fontSizeBy(-3)`), both elided. The only differences are that it has no connect or forget buttons, and that it shows "Copied" for 2 s. Fix: give DeviceRow `property bool connectable: true` to gate its connect button, and write PeerRow as a DeviceRow with `connectable: false` and its copy handler and timer. That is about 20 lines, so 45 fewer.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### WifiNetworks' WPA password form repeats WifiJoinForm's
+- **Where:** `components/content/WifiNetworks/WifiNetworks.qml:179` (`pskForm`), `components/content/parts/WifiJoinForm.qml`
+- **What:** For `row.kind === "psk"`, the row loads `pskForm` (lines 179–209, 31 lines): a password field (echo Password, Enter submits, Escape calls `NetworkingManager.cancelPassword()`, focused on load) and a connect button enabled while the field isn't empty. `WifiJoinForm { security: "psk" }` draws the same: only its password row and connect button, focused first, and complete when the password isn't empty. The only difference is where the password goes, Quickshell's `connectWithPsk` rather than `join`. Fix: drop `pskForm` and the `sourceComponent` switch, and make the join form's `onSubmitted` choose `NetworkingManager.connectWithPsk(row.network, fields.password)` for psk rows. That is 32 lines fewer. Check that WifiJoinForm's Escape also reaches `cancelPassword`.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### Three row options nothing sets
+- **Where:** `components/content/parts/DeviceRow.qml:32` (`disconnectTip`), `components/content/parts/ItemRow.qml:23` (`titleFamily`), `components/content/parts/TodoList.qml:20` (`showFocus`)
+- **What:** `grep -rnw` over qml, yaml, json and py finds each name twice: its declaration and its one read. No DeviceRow user sets `disconnectTip` (BluetoothDevices sets only `connectTip`). No ItemRow user sets `titleFamily`, which defaults to `Appearance.fontFamily`, StyledText's own. No TodoList user (Todo, Focus) sets `showFocus`, so it is always true despite its comment "off where no timer is near". Fix: inline `I18n.tr("Disconnect")`, drop the `titleFamily` binding, and drop `showFocus` and its test (about 4 lines).
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### Login and Password each carry the same required-field report
+- **Where:** `components/content/Login/Login.qml:43` (`_report`), `components/content/Password/Password.qml:41` (`_report`)
+- **What:** Both modules hold the same 12 lines: `_reportedKey`, a `_report()` that unreports the old key and reports the new one through `SurfaceManager.reportRequiredField`, and `Component.onCompleted`, `onHostChanged` and `Component.onDestruction`. They differ only in the host test (`onGreeter` / `onLockscreen`). Fix: one small QtObject part in `content/parts/` holding the 12 lines, given the host and whether it applies. Each module keeps 1–3 lines, so about 20 lines fewer.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### Three keycap parts draw the same cap, and KeyCap's icon slot has no user
+- **Where:** `components/content/parts/KeyCap.qml:12` (`icon`), `components/content/parts/KeyCluster.qml`, `components/content/parts/KeybindRow.qml:109`, `components/content/parts/ModifierCap.qml`
+- **What:** KeyCap, KeyCluster and ModifierCap repeat the same `Rectangle` shell: the height `Math.round(Widget.height * (compact ? 0.62 : 0.75))`, the width, radius and colour, and the text size. KeyCluster is a KeyCap whose text is its keys with a gap between them, and KeybindRow builds both a KeyCap and a KeyCluster for every alternative and hides one (lines 109–121). No `KeyCap {` user sets `icon`. Fix: delete KeyCluster.qml (35 lines), and replace KeybindRow's pair (13 lines) with one `KeyCap { text: alternative.modelData.join(" ") }` (about 5): about 43 lines fewer, and one cap built per alternative. Delete `icon` and its `StyledIcon` (7 lines) unless ModifierCap folds into KeyCap too, which needs SUPER ordered first; check `KeybindManager`'s modifier order before doing that. About 50 lines in all.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### WeatherForecast repeats the Weather card's current conditions
+- **Where:** `components/content/WeatherForecast/WeatherForecast.qml:23`, `components/content/Weather/Weather.qml:70` (`Current`)
+- **What:** The popout's place name, condition icon, temperature, condition and details (lines 23–57, 35 lines) are the card's `Current` component drawn again with its own sizes. `Current`'s own comment says "as in the bar's forecast popout". A change to how the current weather reads (units, details) has to be made twice. Fix: move `Current` into a part in `content/parts/` and use it in both, so the popout is about 30 lines shorter. Or make the Weather card a Panel that is also the popout (content-roots.md's one-file shape) and drop WeatherForecast (96 lines).
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the modules system
+
+### Any custom widget reaches the lock screen past its Offer switch
+- **Where:** `components/content/CustomWidget/CustomWidget.qml:23` (`widgetId`), `config/OverlayConfig.qml:108` (`customModuleTypes`), `services/ui/SettingsManager.qml:370` (the `customWidgets` options), `components/views/Layouts/EditorInspector.qml:244`
+- **What:** `module.lockscreen` ("Offer on the lock screen": "what it prints shows to anyone at the screen: offer only what's fine to show") is checked only by the lock screen's library (`OverlayConfig.customModuleTypes` drops the `lockscreen` host when it's off). A placed module draws whatever its `properties.definition` names: (1) turning the switch off after placing one leaves it on the lock screen, its script running; (2) the lock screen's inspector shows the module's settings form (`EditorInspector.qml:244`), whose definition picker lists every definition (`x-options: customWidgets` → `CustomWidgetsConfig.items.map(item => item.id)`), so any definition can be switched in. Nothing in `CustomWidget.qml` reads `module.lockscreen` (grep: only `actionsEnabled` checks `host.kind`). Fix: on the lock screen, a definition without `module.lockscreen` is treated as none: `widgetId` empty when `root.host?.kind === "lockscreen" && !CustomWidgetsConfig.definition(id)?.module.lockscreen` (so nothing is acquired), with its EmptyState saying it isn't offered there.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A custom widget's module past 8 grid units can't be saved
+- **Where:** `services/apps/CustomWidgetsEditor.qml:209` (`_fitSize`), `config/schema/definitions/custom/CustomWidget.yaml:89` (`module.size` items, `maximum: 8`), `config/schema/definitions/kinds/CustomElementBase.yaml:44` (`place.w`, `maximum: 64`)
+- **What:** The element canvas is unbounded (`GridEditor` with no `area`), an element's place may be 64 sub-cells (16 units) wide or tall and `x`/`y` have no maximum, and every edit sets `module.size` to the elements' bounds rounded up (`CustomWidgetData.pageSize`). Resizing or dragging an element past the 32nd sub-cell (two cards) makes `module.size` 9 or more; the preview draws it, but Save sends a config the daemon's `Pipeline.Check` refuses (`module.size.0: value 9 is greater than maximum 8`): `ConfigManager.commit` logs `axiom refused the config` and the draft turns dirty again, with no word on the page about why. Fix: make the limits agree: `module.size`'s `maximum` 16 (the place's 64 sub-cells), or bound the canvas (`GridEditor.area` of 32 × 32 sub-cells, a module's largest).
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A custom widget's Tooltip switch does nothing
+- **Where:** `config/schema/definitions/custom/CustomWidget.yaml:66` (`tooltip`), `components/views/CustomWidgets/BarTab.qml:95`, `components/methods/CustomWidgetData.qml:472` (`fromWaybar`)
+- **What:** The Bar tab offers a Tooltip switch (default on) and Waybar's `"tooltip": false` imports into it, but nothing reads a definition's `tooltip` (repo-wide grep: the schema, BarTab's `order` and `fromWaybar` only). The bar widget shows no tooltip at all (no bar widget base has one: hovering opens the module popout), while the plan says every bar style shows `tooltip` (`docs/dev/plans/custom-json-widgets.md`, Bar styles). The output's `tooltip` field reaches only the Text block element. Fix: either draw it (a `StyledToolTip` of `fields.tooltip` on the bar widget while its popout doesn't open, gated on the switch) or delete the switch: the schema line, BarTab's `"tooltip"` and `fromWaybar`'s two lines (3 lines; the key prunes on load). Open question for the maintainer: should a custom widget on the bar show the script's tooltip on hover when its popout is off, as Waybar does, or is the popout the only hover?
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A stale exec-if check can block a widget after its exec-if changed
+- **Where:** `services/apps/CustomWidgetsManager.qml:163` (`_checkIf`)
+- **What:** The check's callback only asks whether the id is still watched (`if (!(id in root._watching))`), not whether its `execIf` is still the one checked. Editing Run only if on the page re-checks on every keystroke (`_wanted` changes, `_sync` calls `_checkIf`), and clearing it watches at once (`_watch`). A check that ends after a newer one, e.g. typing `ping -c1 -W1 myhost` (the partial `ping -c1 -W1 myh` waits its second to fail while the full one answers in milliseconds), sets `_blocked`, releases the watch the newer check started and shows `"ping -c1 -W1 myh" failed` until the next refresh. PLAUSIBLE: the order the checks end in; a slow failing prefix settles it. Fix: `if (root._watching[id]?.execIf !== def.execIf) return;` in place of the `in` check (`_watching` holds each id's `execIf`).
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A command naming a program shows the program as its script
+- **Where:** `components/views/CustomWidgets/DefinitionsPanel.qml:26` (`scriptText`), `services/apps/CustomWidgetsEditor.qml:184` (`scriptPath`)
+- **What:** `scriptPath` is the command's first word whenever it starts with `/` or `~/`, so a command like `/usr/bin/sensors -j` or `/opt/cuda/bin/nvidia-smi …` names a binary: `FileManager.read` (a blocking FileView, on the UI thread, of the whole file) reads the ELF into a string, The script group shows its first 40 "lines" of binary as the script, and `signalsWaybar` regex-scans it. A large binary stalls the page while it reads. Fix: show only a script, text starting with `#!` (`scriptText.startsWith("#!")` for `scriptHead` and `signalsWaybar`); reading only the head needs a size cap `FileManager.read` doesn't have.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### CustomElement's six Binding blocks are Qt.binding in its setSource
+- **Where:** `components/content/parts/custom/CustomElement.qml:33` (the `Binding` blocks), `components/content/parts/custom/CustomElement.qml:21` (`_load`)
+- **What:** `_load` hands the element its six properties as plain values, then six `Binding { when: root.item !== null … }` blocks (lines 33-68, 36 lines) keep them current. Passing each as `Qt.binding(() => root.element)` (and so on) in `setSource`'s properties, as `BarTab`'s `BarPreview` loads the bar widget, keeps them bound from creation, across a kind change (each `_load` binds the new item) and drops the 36 lines. Fix: wrap the six values in `Qt.binding`, delete the Binding blocks; the file goes from 69 to 33 lines.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A custom layout without elements rebuilds its default elements every sample
+- **Where:** `components/content/parts/custom/CustomLayout.qml:24` (`elements`)
+- **What:** For a definition with no elements, `elements` reads `root.fields?.ratio`, so every push (4 a second for a stream, per surface showing it, plus the Module tab's five previews) runs `CustomWidgetsConfig.defaultElements` (two `ConfigManager.withDefaults` schema walks) and hands every element a new `element` object, re-evaluating its `place`, `bind`, `options` and `rect`. Only whether there is a value matters. Fix: `readonly property bool _hasValue: (root.fields?.ratio ?? -1) >= 0` read by `elements` (a bool that doesn't change doesn't notify), keeping the Icon/Ring switch.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the custom-widgets system

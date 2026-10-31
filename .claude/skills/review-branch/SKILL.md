@@ -56,7 +56,7 @@ Write `report.md` and print it:
 ## Pre-existing               (added to docs/dev/issues.md, listed by title)
 ```
 
-Problems outside the branch go into `docs/dev/issues.md` (format at its top; grep it first, never twice), each linked from the roadmap phase that will fix it (`AGENTS.md` › Found a problem outside the task), then `python3 scripts/check_docs.py` until `docs ok`. That is the only edit a review makes without `--fix`; say that you made it.
+Problems outside the branch go into `docs/dev/issues.md` (format at its top; search its titles first, as `lenses.md` › Proving it says, never file one twice), each linked from the roadmap phase that will fix it (`AGENTS.md` › Found a problem outside the task), then `python3 scripts/check_docs.py` until `docs ok`. That is the only edit a review makes without `--fix`; say that you made it.
 
 ## Phase 4: fix (only with `--fix`)
 
