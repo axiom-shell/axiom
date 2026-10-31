@@ -366,7 +366,6 @@ Found by the audits:
 - [Bind helpers keep JS halves the daemon owns now](issues.md#bind-helpers-keep-js-halves-the-daemon-owns-now)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [The unused reader member check counts a member named after its key as used](issues.md#the-unused-reader-member-check-counts-a-member-named-after-its-key-as-used)
-- [check_docs reads AGENTS.md files inside agents' worktrees](issues.md#check_docs-reads-agentsmd-files-inside-agents-worktrees)
 - [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
 - [niri started on a broken config reads as loaded](issues.md#niri-started-on-a-broken-config-reads-as-loaded)
 - [Nothing reads userBindsRead or lastLoadFailed](issues.md#nothing-reads-userbindsread-or-lastloadfailed)

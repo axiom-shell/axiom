@@ -543,12 +543,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### check_docs reads AGENTS.md files inside agents' worktrees
-- **Where:** `scripts/check_docs.py` (`ROOT.rglob("AGENTS.md")`)
-- **What:** An agent's worktree under `.claude/worktrees/` (another branch's checkout) is read like the repo's own docs, so its stale citations fail `verify.sh` on an unrelated branch: `.claude/worktrees/community-setups-cli/components/hosts/popout/AGENTS.md:10: \`scripts/dev/popout_matrix.py\` doesn't exist`. CI never sees it (no worktrees there). Fix: skip `.claude/worktrees` alongside `.git` in that glob.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing saved configs: edits into the active snapshot, one backup
-
 ### The unused reader member check counts a member named after its key as used
 - **Where:** `scripts/gen_docs.py` (the reader-member usage count), `scripts/config-usage-baseline.json`, `config/WindowSwitcherConfig.qml` (`compositorSwitcher`)
 - **What:** gen_docs.py (around line 334) counts a reader member as used inside its reader when its name appears more than once there. `(?<![\w])name\b` also matches the `.name` in the member's own `_c.name` binding, so every member named after its config key passes, read or not: `WindowSwitcherConfig.compositorSwitcher` has no QML reader (the daemon reads the setting itself, `manager/niri_test.go` pins it) and isn't listed. Fix: don't count a match preceded by `.`, or count `<Reader>.<member>` uses outside the reader; then delete what it newly finds (the baseline only shrinks): `compositorSwitcher` is 3 lines.
