@@ -338,7 +338,13 @@ func (s *Service) Restore(name string) (Applied, error) {
 	// Restoring the active one itself discards its edits (Revert), and the
 	// backup with none active takes its file as it was: keeping the running
 	// config there would replace what's being restored
-	if plan := s.plan(share.SnapshotChanged(sch, current, applied)); result.Name != s.state.Active && !(plan.Backup && plan.Into == result.Name) {
+	plan := s.plan(share.SnapshotChanged(sch, current, applied))
+	// The confirm said what plan(false) does (keepHint): with the look at
+	// the defaults, the backup isn't replaced for a wallpaper setup alone
+	if plan.Replaces && s.plan(false).Into == "" {
+		plan = KeepPlan{}
+	}
+	if result.Name != s.state.Active && !(plan.Backup && plan.Into == result.Name) {
 		if err := s.keep(plan, &result); err != nil {
 			return Applied{}, err
 		}

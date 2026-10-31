@@ -220,6 +220,12 @@ func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
 			{do: "rotating spin", files: "spin"},
 			{do: "restore spin", backup: "unsaved", files: "spin unsaved"},
 		}},
+		{"a restore after the defaults never replaces the backup unwarned", []step{
+			{do: "edit outline", files: ""},
+			{do: "defaults", backup: "unsaved", files: "unsaved"},
+			{do: "rotating spin", files: "spin unsaved"},
+			{do: "restore spin", files: "spin unsaved", holds: "unsaved outline"},
+		}},
 		{"a snapshot of the user's holds the wallpaper", []step{
 			{do: "save mine", files: "mine"},
 			{do: "wall", files: "community-a mine"},
