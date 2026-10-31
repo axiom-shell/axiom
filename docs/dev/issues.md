@@ -1729,3 +1729,39 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** MenuSubmenu copies EdgeMenuBody's parts one for one: the `_modulesKey` re-parse ("as EdgeMenuBody", lines 24–27), the `host` map (29–34, adding `submenu`), the `OverlayGrid` at `cardUnitOf`/`gapOf` (36–40, on the parent's screen) and the clipped Flickable around a `ModuleGrid` at the menu's `zoomOf` (54–71): 33 lines that must change together (a fix to how a menu's modules are keyed, zoomed or hosted lands twice). Fix: EdgeMenuBody takes a `screen` (for `cardUnitOf`) and `submenu` (no pin, no Escape, no stretch, `host.submenu`), and MenuSubmenu becomes an `EdgeMenuBody` (`vertical: true`, `maxLength` from `root.wrapper?.maxContentHeight`) plus its empty text: 33 lines out, about 12 in.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
+
+### A format-2 config without a version runs every step again
+- **Where:** `backend/internal/migrate/steps/steps.go:156` (`migrate`), `backend/internal/config/format.go:82` (`Load`)
+- **What:** `migrate` reads the version as `from, _ := cfg.Value("version").(float64)`, so a format-2 file whose `version` is missing (or not a number, e.g. a hand-written config.json with just `"format": 2`) counts as version 0: every step from v77 runs, `migrated` is true and the store writes the result back. Most steps find nothing in a current-shape config, but v78 and v80 act on one. A probe through `V2Pipeline.Load` of `{"format":2,"Session":{"autostart":[{"id":"hypridle","command":"hypridle"}]},"Overlay":{"items":[{"id":"settings","type":"Settings"}]}}` returned `migrated=true`, changes "Session.autostart: the hypridle entry removed …" and "Overlay.items: added the Custom widgets page": the user's own hypridle autostart (the entry v78's note tells them to add back) is deleted and a page they removed comes back, both written to disk. Saved and shared files are refused without a version (`readShared` › `versioned` in `backend/internal/saved/saved.go`), so only the live config.json takes this path. Fix: in `V2Pipeline.Load`, a format-2 file without a numeric `version` is taken as `steps.Current()` (format 2 says its format, so it is the current shape; the default fills the key), or refused as format 1 refuses a version past 75; the steps then never run on it. A `format_test.go` row pins it.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the config-pipeline system
+
+### The condition grammar has no shared fixtures
+- **Where:** `backend/internal/schema/conditions.go:20` (`Holds`), `backend/internal/config/shared_test.go:33` (`runSchemaOp`), `tests/Shared.qml`
+- **What:** `docs/dev/core/config-v2.md` rule 9 says `x-showIf`, `x-enabledIf`, `x-enumShowIf` and `x-scopeIf` share one grammar, "implemented once in Go and once in `SchemaLayout`, with shared fixtures". No fixture exists: `tests/Shared.qml` records only `schema.applyDefaults` and `schema.resolveRef`, and the `schema` package's only test is `pattern_test.go`, so `Holds`' `anyOf`, `{not: …}` and `{notEmpty: true}` branches run in no Go test (the share tests reach the plain-value and list forms through the exec bind). `Holds` decides `x-scopeIf`, which decides whether an imported or exported file's commands (an exec or raw bind, `Keybind.yaml`'s `when: {action: [exec, raw]}`; an exec hot corner) are carried or kept: a rule written with `not` or `anyOf` that evaluates differently in Go than in `SchemaLayout.showIfHolds` would carry commands the settings page shows as personal, and nothing would catch it. Fix: a `schema.showIfHolds` op in `tests/Shared.qml` (rows for each form, a missing key, null, a list value) and its case in `runSchemaOp` calling `schema.Holds`.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the config-pipeline system
+
+### Format-1 secrets plumbing nothing fills or reads
+- **Where:** `backend/internal/config/load.go:15` (`Loaded`), `backend/internal/migrate/legacy/legacy.go:45` (`Result`)
+- **What:** `legacy.js`'s `migrate` declares `const secrets = {}` and returns it without ever writing a key (`grep -n secrets legacy.js`: the declaration, the doc comment and the return only), and no production code reads `Loaded.Secrets` (`grep -rn '\.Secrets\b' backend` outside tests: only its assignment in `LoadLegacy`). `Loaded.Object` and `Result.Object`, with `stringsArray`, exist only for the frozen-hash tests (`legacy_test.go`, `shared_test.go`). Fix: drop the two `Secrets` fields and their assignments (load.go:15, :39; legacy.go:45, :89; legacy.go:90 checks only `Config`): 4 lines; move the fixture encoders (load.go:45-62, legacy.go:101-108: 26 lines) into the `_test.go` files, writing an empty `"secrets"` object so the frozen hashes still match.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the config-pipeline system
+
+### The validator and the schema check carry patternProperties nothing uses
+- **Where:** `backend/internal/config/pipeline.go:264` (`validateObject`), `backend/internal/schema/yamlsrc/check.go:16` (`keywords`)
+- **What:** No schema uses `patternProperties`: 0 in `config/json/config.schema.json`, 0 in the frozen `schema-v75.json` (only `config/themes/theme.schema.json` has it, which the Go validator never reads). `Prune` and `ApplyDefaults` already ignore it, so only validation and the build's keyword check carry it. Fix: drop the `patternProperties` keyword (check.go:16's entry, the `"patterns"` case at check.go:134 and its branch at :141-143) and its validation (pipeline.go:264-272): 12 lines; a schema using it then fails the build as an unknown keyword instead of half-working.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the config-pipeline system
+
+### Every step test copies the same case runner
+- **Where:** `backend/internal/migrate/steps/steps_test.go` (`TestV81FoldsCommandOutput`), `backend/internal/migrate/steps/v83_test.go` (`stepAt`)
+- **What:** Nine step tests each repeat the same loop: parse the input, run the step, compare the compact bytes, check `changed`, run it again and expect nothing (steps_test.go:91-106, 135-151, 203-218, 238-257, 283-302; v82_test.go:33-52; v83_test.go:35-54; v84_test.go:42-61; v85_test.go:35-54: 169 lines). The older five also pick their step by index (`all[1]`, then a version check) where the newer ones use `stepAt`. Fix: one `runStepCases(t, version, cases)` helper beside `stepAt` doing the loop once (about 20 lines), each test keeping only its table: about 149 lines fewer, and a new step's test is its rows.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the config-pipeline system
+
+### The config Pipeline interface has one implementation
+- **Where:** `backend/internal/config/format.go:16` (`Pipeline`, `V2Pipeline`)
+- **What:** `Pipeline` is "what the config store does … for one config format", but format 1 is read inside `V2Pipeline.Load` (the frozen chain, then the conversion), and nothing else implements it: no fake in any test (a grep for `) Check(cfg *jsonx.Object)` finds only `V2Pipeline`'s). Store, saved, greeter, the CLI and the daemon all hold a `config.Pipeline` built as `config.V2Pipeline{S: …}` (17 mentions). Fix: make `Pipeline` the struct (`config.Pipeline{S: …}`), the interface's per-method docs moving onto the methods: the interface's 17 lines (format.go:14-30) go, and the "V2" that names a choice there isn't.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the config-pipeline system

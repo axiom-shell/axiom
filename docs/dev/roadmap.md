@@ -526,6 +526,12 @@ Found by the audits:
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call](issues.md#integratededgemenus-empty-engage-exists-only-for-edgemenusyncs-call)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
+- [A format-2 config without a version runs every step again](issues.md#a-format-2-config-without-a-version-runs-every-step-again)
+- [The condition grammar has no shared fixtures](issues.md#the-condition-grammar-has-no-shared-fixtures)
+- [Format-1 secrets plumbing nothing fills or reads](issues.md#format-1-secrets-plumbing-nothing-fills-or-reads)
+- [The validator and the schema check carry patternProperties nothing uses](issues.md#the-validator-and-the-schema-check-carry-patternproperties-nothing-uses)
+- [Every step test copies the same case runner](issues.md#every-step-test-copies-the-same-case-runner)
+- [The config Pipeline interface has one implementation](issues.md#the-config-pipeline-interface-has-one-implementation)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
