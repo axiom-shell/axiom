@@ -539,7 +539,7 @@ Found by the audits:
 - [Changed from default never lists the bar widget style](issues.md#changed-from-default-never-lists-the-bar-widget-style)
 - [Store.Reschema repeats reload's load-and-apply](issues.md#storereschema-repeats-reloads-load-and-apply)
 - [OpenAdopting repeats Open's setup](issues.md#openadopting-repeats-opens-setup)
-- [Five more reader members nothing reads](issues.md#five-more-reader-members-nothing-reads)
+- [Six more reader members nothing reads](issues.md#six-more-reader-members-nothing-reads)
 - [The launcher's /config can switch a takeover setting](issues.md#the-launchers-config-can-switch-a-takeover-setting)
 - [A failed update check shows as up to date](issues.md#a-failed-update-check-shows-as-up-to-date)
 - [A weather fetch that fails shows Loading forever](issues.md#a-weather-fetch-that-fails-shows-loading-forever)
@@ -549,6 +549,11 @@ Found by the audits:
 - [MediaManager ticks the position with nothing showing it](issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
 - [runDetached warns about a lost connection](issues.md#rundetached-warns-about-a-lost-connection)
 - [Small shrinks in the core services](issues.md#small-shrinks-in-the-core-services)
+- [Rescanning the theme folders lists the shell's working directory as themes](issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
+- [A generated theme from a wallpaper reached through a symlink is regenerated at every start](issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)
+- [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)
+- [setWallpaperAndGenerate only forwards for one caller](issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)
+- [~/.current_wallpaper is written but nothing reads it](issues.md#current_wallpaper-is-written-but-nothing-reads-it)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
