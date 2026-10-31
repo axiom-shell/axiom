@@ -22,14 +22,14 @@ import qs.services.apps
 Singleton {
   id: root
 
-  readonly property bool caffeine: root._ticker.values.caffeine === true
+  readonly property bool caffeine: _ticker.values.caffeine === true
   // Caffeine's timer (StopwatchClock's), set while it's on for a set time
-  readonly property var caffeineTimer: StopwatchClock.normalizeTimer(root._ticker.values.timer)
+  readonly property var caffeineTimer: StopwatchClock.normalizeTimer(_ticker.values.timer)
   readonly property bool caffeineTimed: !StopwatchClock.timerIdle(root.caffeineTimer)
   // The time left and how far it's gone, as of a `now` ticking while
   // something has acquire()d it
-  readonly property string caffeineText: StopwatchClock.format(StopwatchClock.remaining(root.caffeineTimer, root._ticker.now), false, true)
-  readonly property real caffeineProgress: StopwatchClock.timerProgress(root.caffeineTimer, root._ticker.now)
+  readonly property string caffeineText: StopwatchClock.format(StopwatchClock.remaining(root.caffeineTimer, _ticker.now), false, true)
+  readonly property real caffeineProgress: StopwatchClock.timerProgress(root.caffeineTimer, _ticker.now)
 
   // "off" | "running" | "inhibited" (an app holds idle off) |
   // "unsupported" (the compositor has no idle notifications) |
@@ -61,7 +61,7 @@ Singleton {
 
   // On until turned off (the timer, if any, dropped), or off
   function setCaffeine(on) {
-    root._ticker.set({
+    _ticker.set({
       "caffeine": on,
       "timer": StopwatchClock.resetTimer(root.caffeineTimer)
     });
@@ -76,7 +76,7 @@ Singleton {
     const parsed = StopwatchClock.parse(text);
     if (parsed.ms <= 0)
       return false;
-    root._ticker.set({
+    _ticker.set({
       "caffeine": true,
       "timer": StopwatchClock.startTimer(root.caffeineTimer, parsed.ms, Date.now(), "")
     });
@@ -88,14 +88,14 @@ Singleton {
   function toggleCaffeineTimer() {
     const timer = root.caffeineTimer;
     const now = Date.now();
-    root._ticker.set({
+    _ticker.set({
       "caffeine": true,
       "timer": timer.running ? StopwatchClock.pauseTimer(timer, now) : root.caffeineTimed ? StopwatchClock.resumeTimer(timer, now) : StopwatchClock.startTimer(timer, timer.duration, now, "")
     });
   }
 
   function addCaffeineTime(ms) {
-    root._ticker.set({
+    _ticker.set({
       "timer": StopwatchClock.addTime(root.caffeineTimer, ms)
     });
   }
@@ -107,14 +107,15 @@ Singleton {
 
   // `interval`: ms between updates of caffeineText this owner wants
   function acquire(owner, interval) {
-    root._ticker.acquire(owner, interval);
+    _ticker.acquire(owner, interval);
   }
 
   function release(owner) {
-    root._ticker.release(owner);
+    _ticker.release(owner);
   }
 
-  property DeadlineTicker _ticker: DeadlineTicker {
+  DeadlineTicker {
+    id: _ticker
     name: "caffeine"
     keeps: false
     deadline: root.caffeineTimer
@@ -124,11 +125,18 @@ Singleton {
           "timer": StopwatchClock.idleTimer
         })
     onEnded: root.setCaffeine(false)
+    // Restored: told now if the hello came first
+    onReadyChanged: if (BackendManager.ready)
+      root._report()
   }
 
   onCaffeineChanged: root._report()
 
+  // Not before the ticker is restored: on a reload caffeine reads off
+  // until then, and the daemon would see it go off and on
   function _report() {
+    if (!_ticker.ready)
+      return;
     BackendManager.call("idle.caffeine", {
       "on": root.caffeine
     }, null);

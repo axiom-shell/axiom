@@ -15,8 +15,12 @@ import qs.services.system
 // showing it; displays acquire(owner, interval) a `now` ticking at the
 // shortest interval asked while `ticks` holds. Nothing is restored or
 // written in greeter mode (with `keeps` off nothing is written, so it runs
-// there too).
-QtObject {
+// there too). Its owner declares it as a default child (`DeadlineTicker {
+// id: … }`), or a reload loses `values`; they are real once `ready`.
+// A Scope, not a QtObject: a Singleton's reload passes only to its default
+// children that are Reloadable (a plain QObject child is skipped), and
+// matches them by their order.
+Scope {
   id: root
 
   // The StateManager file and the reload key
@@ -33,6 +37,9 @@ QtObject {
   property string desktopEntry: ""
 
   readonly property var values: root._parse(_run.values) ?? ({})
+  // `values` are restored (empty until then: on a reload, until the old
+  // ones are copied in)
+  readonly property bool ready: root._started
   property real now: Date.now()
 
   // The deadline ran out: `late` when it ended long ago, with axiom not
@@ -73,12 +80,17 @@ QtObject {
   readonly property var _store: StateManager.createStateHandler(root.name)
   property ConsumerRegistry _registry: ConsumerRegistry {}
 
-  property PersistentProperties _persisted: PersistentProperties {
+  // Matched on a reload to the old ticker's (both the Scope's first
+  // child): loaded fires once, after the old values were copied in, or
+  // with none to copy (a restart)
+  PersistentProperties {
     id: _run
     reloadableId: "axiomTicker-" + root.name
     // `values` as JSON ("" until restored from the state file)
     property string values: ""
     property bool restored: false
+
+    onLoaded: root._load()
   }
 
   function _parse(text) {
@@ -129,7 +141,9 @@ QtObject {
     onTriggered: root.now = Date.now()
   }
 
-  Component.onCompleted: {
+  // Restored (on a restart from the state file, on a reload kept): only
+  // then are `values` real, so nothing acts on the empty ones before
+  function _load() {
     if (Paths.greeter && root.keeps)
       return;
     // A restart (not a reload): back from the state file

@@ -31,9 +31,9 @@ Singleton {
   readonly property real progress: PomodoroCycle.progress(root._state, root.now, PomodoroConfig.settings)
   readonly property string remainingText: PomodoroCycle.format(root.remaining)
   // Updated every second while running and acquired
-  readonly property real now: root._ticker.now
+  readonly property real now: _ticker.now
   // The todo the sessions are for ("" for none), and its text
-  readonly property string todoUid: root._ticker.values.todoUid ?? ""
+  readonly property string todoUid: _ticker.values.todoUid ?? ""
   readonly property string todoText: TodoManager.find(root.todoUid)?.summary ?? ""
   // I18n.tr("Focus") I18n.tr("Short break") I18n.tr("Long break")
   readonly property string phaseLabel: I18n.tr(root.phase === "short" ? "Short break" : root.phase === "long" ? "Long break" : "Focus")
@@ -46,11 +46,11 @@ Singleton {
   }
 
   function acquire(owner) {
-    root._ticker.acquire(owner, 1000);
+    _ticker.acquire(owner, 1000);
   }
 
   function release(owner) {
-    root._ticker.release(owner);
+    _ticker.release(owner);
   }
 
   function start() {
@@ -84,7 +84,7 @@ Singleton {
   }
 
   function setTodo(uid) {
-    root._ticker.set({
+    _ticker.set({
       "todoUid": uid ?? ""
     });
   }
@@ -96,9 +96,10 @@ Singleton {
 
   // -- Private --
 
-  readonly property var _state: PomodoroCycle.normalize(root._ticker.values.state)
+  readonly property var _state: PomodoroCycle.normalize(_ticker.values.state)
 
-  property DeadlineTicker _ticker: DeadlineTicker {
+  DeadlineTicker {
+    id: _ticker
     name: "pomodoro"
     desktopEntry: "axiom-pomodoro"
     deadline: root._state
@@ -120,7 +121,7 @@ Singleton {
   }
 
   function _set(state) {
-    root._ticker.set({
+    _ticker.set({
       "state": state
     });
   }
@@ -144,7 +145,7 @@ Singleton {
     }
     if (task !== "" && next.phase === "work")
       body += "\n" + task;
-    root._ticker.notify(summary, body);
+    _ticker.notify(summary, body);
   }
 
   property IpcTarget _ipc: IpcTarget {

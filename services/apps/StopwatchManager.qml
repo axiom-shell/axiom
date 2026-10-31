@@ -31,7 +31,7 @@ Singleton {
   readonly property string timerText: StopwatchClock.format(root.timerRemaining, false, true)
   readonly property string elapsedText: StopwatchClock.format(root.elapsed, false, false)
   readonly property var laps: StopwatchClock.lapRows(root._stopwatch)
-  readonly property real now: root._ticker.now
+  readonly property real now: _ticker.now
 
   // The times as of this moment, for a reader holding no acquire (the
   // launcher, IPC): `timerText` and `elapsedText` follow `now`, which ticks
@@ -46,11 +46,11 @@ Singleton {
 
   // `interval`: ms between updates of `now` this owner wants
   function acquire(owner, interval) {
-    root._ticker.acquire(owner, interval);
+    _ticker.acquire(owner, interval);
   }
 
   function release(owner) {
-    root._ticker.release(owner);
+    _ticker.release(owner);
   }
 
   // -- Timer --
@@ -109,10 +109,11 @@ Singleton {
 
   // -- Private --
 
-  readonly property var _timer: StopwatchClock.normalizeTimer(root._ticker.values.timer)
-  readonly property var _stopwatch: StopwatchClock.normalizeStopwatch(root._ticker.values.stopwatch)
+  readonly property var _timer: StopwatchClock.normalizeTimer(_ticker.values.timer)
+  readonly property var _stopwatch: StopwatchClock.normalizeStopwatch(_ticker.values.stopwatch)
 
-  property DeadlineTicker _ticker: DeadlineTicker {
+  DeadlineTicker {
+    id: _ticker
     name: "stopwatch"
     desktopEntry: "axiom-stopwatch"
     deadline: root._timer
@@ -127,13 +128,13 @@ Singleton {
   }
 
   function _setTimer(state) {
-    root._ticker.set({
+    _ticker.set({
       "timer": state
     });
   }
 
   function _setStopwatch(state) {
-    root._ticker.set({
+    _ticker.set({
       "stopwatch": state
     });
   }
@@ -146,7 +147,7 @@ Singleton {
     root._setTimer(StopwatchClock.resetTimer(root._timer));
     if (!StopwatchConfig.notify || late)
       return;
-    root._ticker.notify(label !== "" ? label : I18n.tr("Timer done"), label !== "" ? I18n.tr("Your {0} timer is done.", StopwatchClock.format(duration, false, true)) : I18n.tr("{0} are up.", StopwatchClock.format(duration, false, true)));
+    _ticker.notify(label !== "" ? label : I18n.tr("Timer done"), label !== "" ? I18n.tr("Your {0} timer is done.", StopwatchClock.format(duration, false, true)) : I18n.tr("{0} are up.", StopwatchClock.format(duration, false, true)));
   }
 
   property IpcTarget _ipc: IpcTarget {

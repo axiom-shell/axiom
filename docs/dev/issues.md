@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### DailySchedule's persisted state never survives a reload
+- **Where:** `services/core/DailySchedule.qml` (`_state`), `services/system/NotificationManager.qml` (`_dndSchedule`), `services/system/NightLightManager.qml` (`_schedule`), `services/ui/WallpaperManager.qml` (`_themeSchedule`)
+- **What:** `DailySchedule` is a QtObject holding its `PersistentProperties` in a named property, and each owner holds it in a named property too. Quickshell's Singleton passes a reload only to its default children, and only to Reloadable ones (a plain QObject child is skipped), so `persisted.last` always starts empty and every QML reload reports `due` again: a scheduled dark theme or night light switched off by hand comes back, as do do-not-disturb windows. DeadlineTicker had the same shape and was fixed by making it a `Scope` declared as a default child (`DeadlineTicker { id: … }`); the same change fits here.
+- **Size:** small
+- **Found:** 2026-10-31, while making caffeine survive reloads
+
 ### A tray menu logs an undefined menu handle
 - **Where:** `components/content/parts/TrayMenuList.qml` (`menuOpener`)
 - **What:** Using the tray logged `@components/content/parts/TrayMenuList.qml[45:5]: Unable to assign [undefined] to qs::menu::QsMenuHandle*`: `QsMenuOpener.menu` is bound to `root.menu` while that's still (or again) undefined, likely as a menu opens or closes. Seen once in the live log (not reproduced).
