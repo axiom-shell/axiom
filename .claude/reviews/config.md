@@ -12,7 +12,7 @@ The store, drafts and previews keep their contract on the paths taken daily: tak
 - Major: [Changed from default never lists the bar widget style](../../docs/dev/issues.md#changed-from-default-never-lists-the-bar-widget-style)
 - Cleanup: [Store.Reschema repeats reload's load-and-apply](../../docs/dev/issues.md#storereschema-repeats-reloads-load-and-apply)
 - Cleanup: [OpenAdopting repeats Open's setup](../../docs/dev/issues.md#openadopting-repeats-opens-setup)
-- Cleanup: [Five more reader members nothing reads](../../docs/dev/issues.md#five-more-reader-members-nothing-reads)
+- Cleanup: [Six more reader members nothing reads](../../docs/dev/issues.md#six-more-reader-members-nothing-reads)
 - Outside: [The launcher's /config can switch a takeover setting](../../docs/dev/issues.md#the-launchers-config-can-switch-a-takeover-setting)
 - Minor: config.json deleted and put back unchanged stays "missing": `backend/internal/store/store.go:526` (`reload`) returns at `bytes.Equal(data, s.written)` before clearing `Missing`, so `axiom config status` says missing until the next save. Fix: clear `Missing` (and queue a state event) in that early return.
 - Minor: `services/core/SavedConfigsManager.qml:108` (`save`)'s comment says the settings page saves unsaved edits first; nothing does, and a restore or apply drops them. Fix: correct the comment.

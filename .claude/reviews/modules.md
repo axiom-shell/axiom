@@ -11,6 +11,7 @@ The roots, shared parts, lock screen and greeter rules and acquire/release pairi
 - Major: [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](../../docs/dev/issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
 - Major: [A DeviceList squeezed to nothing wants no growth](../../docs/dev/issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
 - Major: [Parts shown in one mode are built hidden in every mode, in ten modules and parts](../../docs/dev/issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
+- Major (filed from a Minor, maintainer 2026-10-31): [What a lock screen module may do is a list kept by hand in two docs that disagree](../../docs/dev/issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - Cleanup: [Card and Panel each spell out the grow and expand members](../../docs/dev/issues.md#card-and-panel-each-spell-out-the-grow-and-expand-members)
 - Cleanup: [Tailscale's PeerRow redraws DeviceRow without its buttons](../../docs/dev/issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
 - Cleanup: [WifiNetworks' WPA password form repeats WifiJoinForm's](../../docs/dev/issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
@@ -21,7 +22,6 @@ The roots, shared parts, lock screen and greeter rules and acquire/release pairi
 - Noted on existing entries: [Modules inside borders aren't sized evenly](../../docs/dev/issues.md#modules-inside-borders-arent-sized-evenly), [Compact cards still build their full layout](../../docs/dev/issues.md#compact-cards-still-build-their-full-layout), [NowPlaying builds its strip layout and a second transport hidden in every mode](../../docs/dev/issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode).
 
 Unrecorded (Minor):
-- **The lock screen's exceptions differ between two docs:** `components/content/AGENTS.md:13` says "the one exception is `Power`"; `docs/dev/features/lockscreen.md:81` also allows NowPlaying (media transport) and VolumeDials (mute), which their schemas host there.
 - **Template-string labels:** `VolumeDials.qml:58` (unmuted label) and `Updates.qml:85` (section title) build text by concatenation instead of `I18n.tr("{0} …", …)`.
 - **Calculator reopened after `=` says "No result" for its own answer:** the answer flag lives in the module, not `CalculatorManager`, so it's lost on close (utility-modules.md: lasting state in the service).
 - **A short ClipboardHistory card on a compositor without clipboard control says "Nothing copied yet"** instead of that it's unsupported.
