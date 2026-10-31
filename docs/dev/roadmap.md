@@ -512,6 +512,13 @@ Found by the audits:
 - [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
 - [Three keycap parts draw the same cap, and KeyCap's icon slot has no user](issues.md#three-keycap-parts-draw-the-same-cap-and-keycaps-icon-slot-has-no-user)
 - [WeatherForecast repeats the Weather card's current conditions](issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
+- [Any custom widget reaches the lock screen past its Offer switch](issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
+- [A custom widget's module past 8 grid units can't be saved](issues.md#a-custom-widgets-module-past-8-grid-units-cant-be-saved)
+- [A custom widget's Tooltip switch does nothing](issues.md#a-custom-widgets-tooltip-switch-does-nothing)
+- [A stale exec-if check can block a widget after its exec-if changed](issues.md#a-stale-exec-if-check-can-block-a-widget-after-its-exec-if-changed)
+- [A command naming a program shows the program as its script](issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
+- [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
+- [A custom layout without elements rebuilds its default elements every sample](issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)

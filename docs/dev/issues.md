@@ -1645,3 +1645,45 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The popout's place name, condition icon, temperature, condition and details (lines 23–57, 35 lines) are the card's `Current` component drawn again with its own sizes. `Current`'s own comment says "as in the bar's forecast popout". A change to how the current weather reads (units, details) has to be made twice. Fix: move `Current` into a part in `content/parts/` and use it in both, so the popout is about 30 lines shorter. Or make the Weather card a Panel that is also the popout (content-roots.md's one-file shape) and drop WeatherForecast (96 lines).
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
+
+### Any custom widget reaches the lock screen past its Offer switch
+- **Where:** `components/content/CustomWidget/CustomWidget.qml:23` (`widgetId`), `config/OverlayConfig.qml:108` (`customModuleTypes`), `services/ui/SettingsManager.qml:370` (the `customWidgets` options), `components/views/Layouts/EditorInspector.qml:244`
+- **What:** `module.lockscreen` ("Offer on the lock screen": "what it prints shows to anyone at the screen: offer only what's fine to show") is checked only by the lock screen's library (`OverlayConfig.customModuleTypes` drops the `lockscreen` host when it's off). A placed module draws whatever its `properties.definition` names: (1) turning the switch off after placing one leaves it on the lock screen, its script running; (2) the lock screen's inspector shows the module's settings form (`EditorInspector.qml:244`), whose definition picker lists every definition (`x-options: customWidgets` → `CustomWidgetsConfig.items.map(item => item.id)`), so any definition can be switched in. Nothing in `CustomWidget.qml` reads `module.lockscreen` (grep: only `actionsEnabled` checks `host.kind`). Fix: on the lock screen, a definition without `module.lockscreen` is treated as none: `widgetId` empty when `root.host?.kind === "lockscreen" && !CustomWidgetsConfig.definition(id)?.module.lockscreen` (so nothing is acquired), with its EmptyState saying it isn't offered there.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A custom widget's module past 8 grid units can't be saved
+- **Where:** `services/apps/CustomWidgetsEditor.qml:209` (`_fitSize`), `config/schema/definitions/custom/CustomWidget.yaml:89` (`module.size` items, `maximum: 8`), `config/schema/definitions/kinds/CustomElementBase.yaml:44` (`place.w`, `maximum: 64`)
+- **What:** The element canvas is unbounded (`GridEditor` with no `area`), an element's place may be 64 sub-cells (16 units) wide or tall and `x`/`y` have no maximum, and every edit sets `module.size` to the elements' bounds rounded up (`CustomWidgetData.pageSize`). Resizing or dragging an element past the 32nd sub-cell (two cards) makes `module.size` 9 or more; the preview draws it, but Save sends a config the daemon's `Pipeline.Check` refuses (`module.size.0: value 9 is greater than maximum 8`): `ConfigManager.commit` logs `axiom refused the config` and the draft turns dirty again, with no word on the page about why. Fix: make the limits agree: `module.size`'s `maximum` 16 (the place's 64 sub-cells), or bound the canvas (`GridEditor.area` of 32 × 32 sub-cells, a module's largest).
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A custom widget's Tooltip switch does nothing
+- **Where:** `config/schema/definitions/custom/CustomWidget.yaml:66` (`tooltip`), `components/views/CustomWidgets/BarTab.qml:95`, `components/methods/CustomWidgetData.qml:472` (`fromWaybar`)
+- **What:** The Bar tab offers a Tooltip switch (default on) and Waybar's `"tooltip": false` imports into it, but nothing reads a definition's `tooltip` (repo-wide grep: the schema, BarTab's `order` and `fromWaybar` only). The bar widget shows no tooltip at all (no bar widget base has one: hovering opens the module popout), while the plan says every bar style shows `tooltip` (`docs/dev/plans/custom-json-widgets.md`, Bar styles). The output's `tooltip` field reaches only the Text block element. Fix: either draw it (a `StyledToolTip` of `fields.tooltip` on the bar widget while its popout doesn't open, gated on the switch) or delete the switch: the schema line, BarTab's `"tooltip"` and `fromWaybar`'s two lines (3 lines; the key prunes on load). Open question for the maintainer: should a custom widget on the bar show the script's tooltip on hover when its popout is off, as Waybar does, or is the popout the only hover?
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A stale exec-if check can block a widget after its exec-if changed
+- **Where:** `services/apps/CustomWidgetsManager.qml:163` (`_checkIf`)
+- **What:** The check's callback only asks whether the id is still watched (`if (!(id in root._watching))`), not whether its `execIf` is still the one checked. Editing Run only if on the page re-checks on every keystroke (`_wanted` changes, `_sync` calls `_checkIf`), and clearing it watches at once (`_watch`). A check that ends after a newer one, e.g. typing `ping -c1 -W1 myhost` (the partial `ping -c1 -W1 myh` waits its second to fail while the full one answers in milliseconds), sets `_blocked`, releases the watch the newer check started and shows `"ping -c1 -W1 myh" failed` until the next refresh. PLAUSIBLE: the order the checks end in; a slow failing prefix settles it. Fix: `if (root._watching[id]?.execIf !== def.execIf) return;` in place of the `in` check (`_watching` holds each id's `execIf`).
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A command naming a program shows the program as its script
+- **Where:** `components/views/CustomWidgets/DefinitionsPanel.qml:26` (`scriptText`), `services/apps/CustomWidgetsEditor.qml:184` (`scriptPath`)
+- **What:** `scriptPath` is the command's first word whenever it starts with `/` or `~/`, so a command like `/usr/bin/sensors -j` or `/opt/cuda/bin/nvidia-smi …` names a binary: `FileManager.read` (a blocking FileView, on the UI thread, of the whole file) reads the ELF into a string, The script group shows its first 40 "lines" of binary as the script, and `signalsWaybar` regex-scans it. A large binary stalls the page while it reads. Fix: show only a script, text starting with `#!` (`scriptText.startsWith("#!")` for `scriptHead` and `signalsWaybar`); reading only the head needs a size cap `FileManager.read` doesn't have.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### CustomElement's six Binding blocks are Qt.binding in its setSource
+- **Where:** `components/content/parts/custom/CustomElement.qml:33` (the `Binding` blocks), `components/content/parts/custom/CustomElement.qml:21` (`_load`)
+- **What:** `_load` hands the element its six properties as plain values, then six `Binding { when: root.item !== null … }` blocks (lines 33-68, 36 lines) keep them current. Passing each as `Qt.binding(() => root.element)` (and so on) in `setSource`'s properties, as `BarTab`'s `BarPreview` loads the bar widget, keeps them bound from creation, across a kind change (each `_load` binds the new item) and drops the 36 lines. Fix: wrap the six values in `Qt.binding`, delete the Binding blocks; the file goes from 69 to 33 lines.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
+
+### A custom layout without elements rebuilds its default elements every sample
+- **Where:** `components/content/parts/custom/CustomLayout.qml:24` (`elements`)
+- **What:** For a definition with no elements, `elements` reads `root.fields?.ratio`, so every push (4 a second for a stream, per surface showing it, plus the Module tab's five previews) runs `CustomWidgetsConfig.defaultElements` (two `ConfigManager.withDefaults` schema walks) and hands every element a new `element` object, re-evaluating its `place`, `bind`, `options` and `rect`. Only whether there is a value matters. Fix: `readonly property bool _hasValue: (root.fields?.ratio ?? -1) >= 0` read by `elements` (a bool that doesn't change doesn't notify), keeping the Icon/Ring switch.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the custom-widgets system
