@@ -606,6 +606,98 @@ TestCase {
     compare(near.pill.index, 1);
   }
 
+  // The plain fill joined between the screen edge and the attach edge,
+  // which a host takes off its padding there: the border's margin, or a
+  // floating or pill bar's empty depth it grows over; none on anything
+  // with content of its own, nor for a box of its own
+  function test_layout_attach_fill() {
+    const base = params();
+    const f = SurfaceContext.frame(base);
+    const at = extra => SurfaceContext.layout(f, Object.assign({}, base, {
+        "centre": 500,
+        "aligned": 450,
+        "length": 100,
+        "joinStart": false,
+        "joinEnd": false,
+        "frameLine": 14,
+        "reserved": 14
+      }, extra));
+    compare(at({}).attachFill, 12, "on the border: its margin up to the stroke");
+    compare(at({
+      "border": false,
+      "bareEdge": true,
+      "frameLine": 0,
+      "reserved": 0
+    }).attachFill, 0, "a bare edge: nothing");
+    compare(at({
+      "menuZone": 60,
+      "frameLine": 74,
+      "reserved": 74
+    }).attachFill, 0, "on an integrated menu");
+    compare(at({
+      "ownBar": bar("solid"),
+      "frameLine": 54,
+      "reserved": 54
+    }).attachFill, 0, "on a solid bar");
+    compare(at({
+      "held": true,
+      "across": 10
+    }).attachFill, 0, "held");
+    const pills = kind => Object.assign(bar(kind), {
+        "extent": 40,
+        "pillDepth": 30,
+        "pillMerge": 12
+      });
+    const floating = {
+      "frameLine": 54,
+      "reserved": 54
+    };
+    const between = at(Object.assign({
+      "bar": pills("floatingPills"),
+      "ownBar": pills("floatingPills"),
+      "pills": [
+        {
+          "start": 100,
+          "length": 200
+        },
+        {
+          "start": 700,
+          "length": 200
+        }
+      ]
+    }, floating));
+    compare(between.mode, "between");
+    compare(between.attachFill, between.attachAt, "between pills: up to the bar's outer edge");
+    verify(between.attachFill > 0);
+    const merged = at(Object.assign({
+      "bar": pills("pills"),
+      "ownBar": pills("pills"),
+      "pills": []
+    }, floating));
+    verify(merged.merged);
+    compare(merged.attachFill, merged.attachAt, "a pill bar showing no pills: the same");
+    const onPill = at(Object.assign({
+      "bar": pills("pills"),
+      "ownBar": pills("pills"),
+      "pills": [
+        {
+          "start": 400,
+          "length": 200
+        }
+      ]
+    }, floating));
+    verify(onPill.onPill);
+    compare(onPill.attachFill, 0, "on a pill");
+    const clear = Object.assign(bar("transparent"), {
+      "extent": 40,
+      "innerStroke": false
+    });
+    compare(at(Object.assign({
+      "bar": clear,
+      "ownBar": clear
+    }, floating)).attachFill, 0, "detached past a transparent bar");
+  }
+
   // A detached box past a transparent bar slides out from under it, only
   // where layer rules order windows and the overlay isn't open over it
   function test_layout_slides_under() {

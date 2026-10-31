@@ -59,7 +59,7 @@ EdgePopout {
       "screen": root.screen?.name ?? "",
       "startPad": root.startPad,
       "endPad": root.endPad,
-      "across": root.attachAt + root.contentPadding + root.attachClearance,
+      "across": root.attachAt + root.contentPadding + root.attachExtra,
       "before": Math.max(0, root.attachBase),
       "after": root.contentPadding,
       "reserves": false
