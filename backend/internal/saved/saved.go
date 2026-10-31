@@ -5,16 +5,21 @@
 // A snapshot holds what share.Snapshot picks (the look, personal parts,
 // commands, and the wallpaper setup), in the export format, so a saved file
 // can be shared or imported as it is. Restoring applies it like an example,
-// plus its wallpaper setup where the files are still there. Applying a
-// shared file (an example, an import, a community setup) first saves the
-// running config as "before-<name>". Nothing loaded changes a takeover
-// setting (x-takeover): the store keeps them. Any format axiom reads is
-// taken (an older file is converted on the way).
+// plus its wallpaper setup where the files are still there. Restoring one
+// or applying a shared file (an example, an import, a community setup)
+// first keeps the running config: its edits go into the active snapshot.
+// One is always active: with none (a first start, or its file gone), the
+// running config is saved as "My setup". An applied file (the defaults
+// too) becomes the active snapshot at once; untouched, it goes once
+// another replaces it, as that file applies it again. Nothing loaded
+// changes a takeover setting (x-takeover): the store keeps them. Any format
+// axiom reads is taken (an older file is converted on the way).
 package saved
 
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -55,13 +60,17 @@ type Options struct {
 // State is what the settings page shows of the snapshots.
 type State struct {
 	// The snapshot the running config was last saved as or restored from,
-	// "" for none (or once its file is gone)
+	// "" only until Changed saves it as "My setup" (as it does once this
+	// one's file is gone: hasActive)
 	Active string `json:"active"`
 	// The shared setup it was saved from, unchanged since ("" for one the
 	// user saved)
 	ActiveSource string `json:"activeSource"`
 	// The running config's snapshot parts differ from the active one's
 	Modified bool `json:"modified"`
+	// The snapshot an apply or restore saves the running config into
+	// first, "" when it's on disk already (plan)
+	Keep string `json:"keep"`
 }
 
 // Entry is one snapshot on disk.
@@ -105,22 +114,25 @@ type Preview struct {
 	HasCommands bool `json:"hasCommands"`
 }
 
-// Applied says what an apply did: the snapshot of the config before it,
-// and the one the result was saved as ("" for none).
+// Applied says what an apply or restore did: the snapshot the config
+// before it was saved into ("" when it was already on disk), and the one
+// the result is.
 type Applied struct {
-	Name   string `json:"name"`
-	Backup string `json:"backup"`
-	Saved  string `json:"saved"`
+	Name  string `json:"name"`
+	Kept  string `json:"kept"`
+	Saved string `json:"saved"`
 }
 
 // Service is the snapshots and sharing, over one store.
 type Service struct {
 	opts Options
 
-	mu sync.Mutex // one change at a time: a backup, then its apply
+	mu sync.Mutex // one change at a time: a keep, then its apply
 	// the active snapshot's parts as it loads, for Modified
 	baseline *jsonx.Object
 	state    State
+	// the active snapshot's meta.kind: kindCopy or "" (the user's)
+	activeKind string
 }
 
 // New returns a service, its active snapshot read back.
@@ -142,7 +154,7 @@ func New(opts Options) *Service {
 	if data, err := os.ReadFile(opts.UIState); err == nil {
 		_ = json.Unmarshal(data, &remembered)
 	}
-	s.setActive(remembered.Active, nil, "")
+	s.setActive(remembered.Active, nil, "", "")
 	return s
 }
 
@@ -155,6 +167,19 @@ var unsafeName = regexp.MustCompile(`[^A-Za-z0-9 _.-]`)
 func Sanitize(name string) string {
 	return strings.TrimLeft(unsafeName.ReplaceAllString(strings.TrimSpace(name), "_"), ".")
 }
+
+// What a snapshot is for, in its meta.kind: a decision about a snapshot
+// reads this, never its name. None (every file saved before kinds) is the
+// user's: never replaced or deleted unasked.
+//
+// kindCopy is the copy an applied file (an example, a community setup, the
+// defaults) was saved as: deleted once something else replaces it, as that
+// file applies it again.
+const kindCopy = "copy"
+
+// mySetup is the name the running config is saved under when no snapshot
+// is active (a free one past the user's).
+const mySetup = "My setup"
 
 func (s *Service) path(name string) string {
 	return filepath.Join(s.savedDir(), Sanitize(name)+".json")
@@ -198,13 +223,20 @@ func (s *Service) State() State {
 	return s.state
 }
 
-// Changed recomputes Modified after the config changed, telling OnState.
-// The store's change events come while an apply may hold the service, so
-// they call it on a goroutine of their own.
+// Changed recomputes Modified after the config changed (or at the start),
+// telling OnState; with no snapshot active, it saves the running config as
+// one (plan). The store's change events come while an apply may hold the
+// service, so they call it on a goroutine of their own.
 func (s *Service) Changed() {
 	s.mu.Lock()
 	before := s.state
+	if _, st := s.opts.Store.Config(); !st.Blocked && !s.hasActive() {
+		if _, err := s.save(s.plan(), "", ""); err != nil {
+			s.opts.Log.Warn("could not save the running config", "err", err)
+		}
+	}
 	s.state.Modified = s.modified()
+	s.state.Keep = s.plan()
 	after := s.state
 	s.mu.Unlock()
 	if after != before && s.opts.OnState != nil {
@@ -226,17 +258,17 @@ func (s *Service) modified() bool {
 func (s *Service) Save(name, source string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.save(name, source)
+	return s.save(name, source, "")
 }
 
-func (s *Service) save(name, source string) (string, error) {
+func (s *Service) save(name, source, kind string) (string, error) {
 	file := Sanitize(name)
 	if file == "" {
 		return "", axerr.New(axerr.BadRequest, "a snapshot needs a name")
 	}
 	cfg, _ := s.opts.Store.Config()
 	sch := s.opts.Pipeline().Schema()
-	out := envelope(file, "", source)
+	out := envelope(file, "", source, kind)
 	body := share.Sparse(sch, share.Snapshot(sch, cfg)).(*jsonx.Object)
 	for _, k := range body.Keys() {
 		out.Set(k, body.Value(k))
@@ -247,70 +279,162 @@ func (s *Service) save(name, source string) (string, error) {
 	if err := fsx.WriteFile(s.path(file), jsonx.Marshal(out), 0o600); err != nil {
 		return "", axerr.Wrap(axerr.Unavailable, err, "saving %s", file)
 	}
-	s.setActive(file, cfg, source)
+	s.setActive(file, cfg, source, kind)
 	s.opts.Log.Info("saved the config", "as", file)
 	return file, nil
 }
 
 // envelope is a shared file's head: its format and version, and meta.
-func envelope(title, description, source string) *jsonx.Object {
+func envelope(title, description, source, kind string) *jsonx.Object {
 	meta := jsonx.Obj("title", title, "description", description)
 	if source != "" {
 		meta.Set("source", source)
+	}
+	if kind != "" {
+		meta.Set("kind", kind)
 	}
 	return jsonx.Obj("format", float64(convert.Format), "version", float64(steps.Current()), "meta", meta)
 }
 
 // Restore applies the snapshot name: its parts, and its wallpaper setup
-// where the files are still there; it becomes the active one.
-func (s *Service) Restore(name string) error {
+// where the files are still there; it becomes the active one, after the
+// running config is kept (keep).
+func (s *Service) Restore(name string) (Applied, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	path := s.path(name)
 	parsed, err := readJSON(path)
 	if err != nil {
-		return axerr.Wrap(axerr.NotFound, err, "%q can't be read", name)
+		return Applied{}, axerr.Wrap(axerr.NotFound, err, "%q can't be read", name)
 	}
 	loaded, err := s.load(parsed)
 	if err != nil {
-		return err
+		return Applied{}, err
 	}
+	result := Applied{Name: Sanitize(name), Saved: Sanitize(name)}
+	h := header(parsed)
 	sch := s.opts.Pipeline().Schema()
-	current, _ := s.opts.Store.Config()
-	applied := share.Apply(sch, current, loaded, share.Everything, nil)
 	var existing []string
 	for _, file := range share.SnapshotFiles(sch, loaded) {
 		if _, err := os.Stat(file); err == nil {
 			existing = append(existing, file)
 		}
 	}
+	current, _ := s.opts.Store.Config()
+	applied := share.Apply(sch, current, loaded, share.Everything, nil)
 	applied = share.WithSnapshot(sch, applied, loaded, existing)
+	// Restoring the active one itself discards its edits (Revert)
+	if result.Name != s.state.Active {
+		if err := s.keep(&result); err != nil {
+			return Applied{}, err
+		}
+	}
+	previous, copied := s.state.Active, s.activeKind == kindCopy
 	if _, err := s.opts.Store.Replace(applied.(*jsonx.Object), store.SetOptions{Restore: true}); err != nil {
-		return err
+		return result, err
 	}
 	after, _ := s.opts.Store.Config()
-	s.setActive(Sanitize(name), after, header(parsed).Source)
-	s.opts.Log.Info("restored a saved config", "name", name)
-	return nil
+	s.setActive(result.Name, after, h.Source, h.Kind)
+	if copied {
+		s.drop(previous, result.Name)
+	}
+	s.opts.Log.Info("restored a saved config", "name", name, "kept", result.Kept)
+	return result, nil
 }
 
-// Remove deletes the snapshot name.
+// Remove deletes the snapshot name; the active one's running config is
+// then saved as "My setup" (Changed).
 func (s *Service) Remove(name string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	err := s.remove(name)
+	s.mu.Unlock()
+	s.Changed()
+	return err
+}
+
+func (s *Service) remove(name string) error {
 	if err := os.Remove(s.path(name)); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 	if Sanitize(name) == s.state.Active {
-		s.setActive("", nil, "")
+		s.setActive("", nil, "", "")
 	}
 	return nil
 }
 
+// keep saves the running config where plan says, naming it in result.
+// Saved into, a kindCopy one is the user's.
+func (s *Service) keep(result *Applied) error {
+	into := s.plan()
+	if into == "" {
+		return nil
+	}
+	if _, err := s.save(into, "", ""); err != nil {
+		return err
+	}
+	result.Kept = into
+	return nil
+}
+
+// plan says where the running config goes before something replaces it:
+// into the active snapshot when it has edits ("" unchanged: it's on disk),
+// and with none active a new snapshot of the user's, mySetup.
+func (s *Service) plan() string {
+	if !s.hasActive() {
+		return s.freeName(mySetup, false)
+	}
+	if s.modified() {
+		return s.state.Active
+	}
+	return ""
+}
+
+// hasActive says whether a snapshot is active: loaded, its file there.
+func (s *Service) hasActive() bool {
+	if s.state.Active == "" || s.baseline == nil {
+		return false
+	}
+	_, err := os.Stat(s.path(s.state.Active))
+	return err == nil
+}
+
+// freeName is base, or "base <n>": the first name no snapshot has, or with
+// copies one an applied file was saved as (kindCopy: that file makes it
+// again).
+func (s *Service) freeName(base string, copies bool) string {
+	name := base
+	for n := 2; ; n++ {
+		path := s.path(name)
+		// Any error but "it's there" counts as free: save then says what's
+		// wrong
+		if _, err := os.Stat(path); err != nil {
+			return name
+		}
+		// One that can't be read is taken: it may be the user's
+		if parsed, err := readJSON(path); copies && err == nil && header(parsed).Kind == kindCopy {
+			return name
+		}
+		name = fmt.Sprintf("%s %d", base, n)
+	}
+}
+
+// drop deletes previous, the copy an applied file was saved as (active,
+// unchanged since, when it was replaced), unless it's still the one in
+// use: the file it came from applies it again.
+func (s *Service) drop(previous, current string) {
+	if previous == current {
+		return
+	}
+	if err := s.remove(previous); err != nil {
+		s.opts.Log.Warn("could not delete an applied copy", "name", previous, "err", err)
+	}
+}
+
 // setActive makes name the active snapshot, baseline the config it holds
-// (nil: read it from its file), remembered across restarts.
-func (s *Service) setActive(name string, baseline *jsonx.Object, source string) {
-	s.state.Active, s.state.ActiveSource = name, source
+// (nil: read it, its source and kind from its file), remembered across
+// restarts.
+func (s *Service) setActive(name string, baseline *jsonx.Object, source, kind string) {
+	s.state.Active, s.state.ActiveSource, s.activeKind = name, source, kind
 	s.baseline = nil
 	if name != "" {
 		if baseline == nil {
@@ -318,8 +442,9 @@ func (s *Service) setActive(name string, baseline *jsonx.Object, source string) 
 				if cfg, err := s.load(parsed); err == nil {
 					baseline = cfg
 				}
-				if source == "" {
-					s.state.ActiveSource = header(parsed).Source
+				if source == "" && kind == "" {
+					h := header(parsed)
+					s.state.ActiveSource, s.activeKind = h.Source, h.Kind
 				}
 			} else {
 				s.state.Active = ""
@@ -336,6 +461,7 @@ func (s *Service) setActive(name string, baseline *jsonx.Object, source string) 
 		}
 	}
 	s.state.Modified = s.modified()
+	s.state.Keep = s.plan()
 	if s.opts.OnState != nil {
 		s.opts.OnState(s.state)
 	}
@@ -411,8 +537,9 @@ func (s *Service) preview(path string, parsed any) (Preview, error) {
 }
 
 // Import applies the shared file at path (its personal parts too with
-// personal, its commands with commands), after saving the running config
-// as "before-<name>"; the result is saved as "import-<name>".
+// personal, its commands with commands), after keeping the running config
+// (keep); the result is saved as "import-<name>", kept like one the user
+// saved (the file may not be there to apply it again).
 func (s *Service) Import(path string, personal, commands bool, monitors share.Monitors) (Applied, error) {
 	// Read once: what's applied is what the preview judged, even if the
 	// file changes meanwhile
@@ -431,7 +558,8 @@ func (s *Service) Import(path string, personal, commands bool, monitors share.Mo
 	if commands && preview.HasCommands {
 		carry = append(carry, "commands")
 	}
-	return s.apply(preview.Name, parsed, carry, monitors, "import-"+preview.Name, preview.Name)
+	// No source: its file may be gone, so its copy is the user's to keep
+	return s.apply(preview.Name, parsed, carry, monitors, "import-"+preview.Name, "", "")
 }
 
 // summarize fills in what a preview of the example draws, from it loaded
@@ -462,62 +590,96 @@ func summarize(e *Example, cfg *jsonx.Object) {
 	}
 }
 
-// ApplyExample applies the tree's example name (its look), after saving
-// the running config as "before-<name>"; the result is saved as
-// "example-<name>".
+// ApplyExample applies the tree's example name (its look), after keeping
+// the running config (keep); the result is saved as "example-<name>".
 func (s *Service) ApplyExample(name string, monitors share.Monitors) (Applied, error) {
 	parsed, err := readJSON(filepath.Join(s.opts.Examples, Sanitize(name)+".json"))
 	if err != nil {
 		return Applied{}, axerr.Wrap(axerr.NotFound, err, "the example %q", name)
 	}
-	return s.apply(name, parsed, nil, monitors, "example-"+Sanitize(name), name)
+	return s.apply(name, parsed, nil, monitors, "example-"+Sanitize(name), name, "")
 }
 
 // ApplyShared applies a shared file's look (a community setup's), after
-// saving the running config as "before-<name>"; the result is saved as
-// snapshot ("" for none), its source the setup's name.
-func (s *Service) ApplyShared(path, name, snapshot string, monitors share.Monitors) (Applied, error) {
+// keeping the running config (keep); the result is saved as snapshot, its
+// source the setup's name. wallpaper: a file:// URL set as
+// the fixed wallpaper on every monitor ("" for none).
+func (s *Service) ApplyShared(path, name, snapshot, wallpaper string, monitors share.Monitors) (Applied, error) {
 	parsed, err := readShared(path)
 	if err != nil {
 		return Applied{}, err
 	}
-	return s.apply(name, parsed, nil, monitors, snapshot, name)
+	return s.apply(name, parsed, nil, monitors, snapshot, name, wallpaper)
 }
 
 // Defaults applies the schema's defaults like an example (the look,
-// personal parts and commands; machine settings stay), after saving the
-// running config as "before-defaults".
+// personal parts and commands; machine settings stay), after keeping the
+// running config (keep); the result is saved as "defaults".
 func (s *Service) Defaults() (Applied, error) {
-	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "", "")
+	return s.apply("defaults", s.opts.Pipeline().Defaults(), share.Everything, nil, "defaults", "defaults", "")
 }
 
-// apply: backup, then the file's parts in carry applied, then (snapshot
-// not "") the result saved as snapshot from source.
-func (s *Service) apply(name string, parsed any, carry []string, monitors share.Monitors, snapshot, source string) (Applied, error) {
+// apply: the running config kept, then the file's parts in carry applied,
+// then (wallpaper not "") that wallpaper set, then the result saved as
+// snapshot from source (a kindCopy one with a source: its file applies it
+// again; freeName past the user's), and the untouched copy the last
+// applied file was saved as dropped.
+func (s *Service) apply(name string, parsed any, carry []string, monitors share.Monitors, snapshot, source, wallpaper string) (Applied, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	loaded, err := s.load(parsed)
 	if err != nil {
 		return Applied{}, err
 	}
-	backup, err := s.save("before-"+name, "")
-	if err != nil {
+	result := Applied{Name: name}
+	if err := s.keep(&result); err != nil {
 		return Applied{}, err
 	}
+	previous, copied := s.state.Active, s.activeKind == kindCopy
 	current, _ := s.opts.Store.Config()
-	applied := share.Apply(s.opts.Pipeline().Schema(), current, loaded, carry, monitors)
-	if _, err := s.opts.Store.Replace(applied.(*jsonx.Object), store.SetOptions{Restore: true}); err != nil {
+	applied := share.Apply(s.opts.Pipeline().Schema(), current, loaded, carry, monitors).(*jsonx.Object)
+	if wallpaper != "" {
+		setWallpaper(applied, wallpaper, monitors)
+	}
+	if _, err := s.opts.Store.Replace(applied, store.SetOptions{Restore: true}); err != nil {
 		return Applied{}, err
 	}
-	s.setActive("", nil, "")
-	result := Applied{Name: name, Backup: backup}
-	if snapshot != "" {
-		if result.Saved, err = s.save(snapshot, source); err != nil {
-			return result, err
-		}
+	kind := ""
+	if source != "" {
+		kind = kindCopy
 	}
-	s.opts.Log.Info("applied a shared config", "name", name, "carry", carry)
+	if result.Saved, err = s.save(s.freeName(Sanitize(snapshot), true), source, kind); err != nil {
+		return result, err
+	}
+	if copied {
+		s.drop(previous, result.Saved)
+	}
+	s.opts.Log.Info("applied a shared config", "name", name, "carry", carry, "kept", result.Kept)
 	return result, nil
+}
+
+// setWallpaper makes url cfg's fixed wallpaper, on every monitor.
+func setWallpaper(cfg *jsonx.Object, url string, monitors share.Monitors) {
+	appearance, _ := cfg.Value("Appearance").(*jsonx.Object)
+	if appearance == nil {
+		appearance = jsonx.NewObject()
+		cfg.Set("Appearance", appearance)
+	}
+	wallpaper, _ := appearance.Value("wallpaper").(*jsonx.Object)
+	if wallpaper == nil {
+		wallpaper = jsonx.NewObject()
+		appearance.Set("wallpaper", wallpaper)
+	}
+	wallpaper.Set("mode", "fixed")
+	wallpaper.Set("file", url)
+	perScreen, _ := wallpaper.Value("perScreen").(*jsonx.Object)
+	if perScreen == nil {
+		perScreen = jsonx.NewObject()
+		wallpaper.Set("perScreen", perScreen)
+	}
+	for _, output := range monitors {
+		perScreen.Set(output, url)
+	}
 }
 
 // Export writes the running config's look (its personal parts with
@@ -542,7 +704,7 @@ func (s *Service) Export(personal, commands, places bool, monitors share.Monitor
 	if title == "" {
 		title = "axiom"
 	}
-	out := envelope(title, "", "")
+	out := envelope(title, "", "", "")
 	body := share.Sparse(sch, share.Pick(sch, cfg, carry, monitors)).(*jsonx.Object)
 	for _, k := range body.Keys() {
 		out.Set(k, body.Value(k))
@@ -609,7 +771,7 @@ func withoutHeader(parsed any) any {
 	return out
 }
 
-type headerInfo struct{ Title, Description, Source string }
+type headerInfo struct{ Title, Description, Source, Kind string }
 
 // header is a shared file's meta (format 1: _example).
 func header(parsed any) headerInfo {
@@ -625,7 +787,7 @@ func header(parsed any) headerInfo {
 		return headerInfo{}
 	}
 	str := func(k string) string { v, _ := meta.Value(k).(string); return v }
-	return headerInfo{Title: str("title"), Description: str("description"), Source: str("source")}
+	return headerInfo{Title: str("title"), Description: str("description"), Source: str("source"), Kind: str("kind")}
 }
 
 func readJSON(path string) (any, error) {

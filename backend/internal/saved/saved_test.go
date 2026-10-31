@@ -3,6 +3,7 @@ package saved
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -95,7 +96,7 @@ func TestSaveRestoreModified(t *testing.T) {
 	if !f.svc.State().Modified {
 		t.Error("not modified after a change")
 	}
-	if err := f.svc.Restore("My look"); err != nil {
+	if _, err := f.svc.Restore("My look"); err != nil {
 		t.Fatal(err)
 	}
 	if v := get(t, f.store, "Bars.style.widgetStyle"); v != "outline" {
@@ -112,7 +113,7 @@ func TestSaveRestoreModified(t *testing.T) {
 }
 
 // An example of format 1 (as examples/ ship today) applies converted, after
-// a backup, and is saved as example-<name>; takeovers stay.
+// the running config is kept, and is saved as example-<name>; takeovers stay.
 func TestApplyExampleFormat1(t *testing.T) {
 	t.Parallel()
 	f := setup(t)
@@ -122,7 +123,8 @@ func TestApplyExampleFormat1(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if applied.Backup != "before-tall" || applied.Saved != "example-tall" {
+	// With none active, the running config is kept as "My setup"
+	if applied.Kept != "My setup" || applied.Saved != "example-tall" {
 		t.Errorf("applied %+v", applied)
 	}
 	if v := get(t, f.store, "Bars.items[primary].location"); v != "left" {
@@ -130,9 +132,6 @@ func TestApplyExampleFormat1(t *testing.T) {
 	}
 	if v := get(t, f.store, "Compositor.mode"); v != "detached" {
 		t.Errorf("a takeover changed: %v", v)
-	}
-	if _, err := os.Stat(filepath.Join(f.dir, "saved", "before-tall.json")); err != nil {
-		t.Error("no backup")
 	}
 	got := f.svc.Examples()
 	if len(got) != 1 || got[0].Title != "Tall" {
@@ -144,6 +143,231 @@ func TestApplyExampleFormat1(t *testing.T) {
 	}
 	if got[0].Theme == "" || len(got[0].Docks) != 0 {
 		t.Errorf("theme %q, docks %+v (the default dock is off)", got[0].Theme, got[0].Docks)
+	}
+}
+
+// What an apply or restore does with the running config first: edits go
+// into the active snapshot, and with none active the config is saved as
+// "My setup"; the copy the last applied file was saved as goes once it's
+// replaced untouched. Each is decided by the file's meta.kind, never its
+// name.
+func TestApplyKeepsOnlyWhatIsntSaved(t *testing.T) {
+	t.Parallel()
+	type step struct {
+		do    string // "a"/"b": apply that example; "edit"; "save <name>"; "restore <name>"; "import"; "defaults"; "delete <name>"; "old <name>": a snapshot saved before kinds, with a source; "wall": example a as a community setup with its wallpaper; "rotating <name>": a snapshot of the user's whose wallpaper rotates; "broken <name>": a snapshot that isn't JSON
+		kept  string // Applied.Kept of an apply or restore
+		files string // saved/ afterwards, sorted, space-separated
+		holds string // "<file> <value>": that snapshot then holds Bars.style.widgetStyle <value> ("" to skip)
+	}
+	tests := []struct {
+		name  string
+		steps []step
+	}{
+		{"switching back and forth leaves one copy", []step{
+			{do: "a", kept: "My setup", files: "My setup example-a"},
+			{do: "b", files: "My setup example-b"},
+			{do: "a", files: "My setup example-a"},
+			{do: "a", files: "My setup example-a"},
+		}},
+		{"edits go into the active snapshot, which stays", []step{
+			{do: "a", kept: "My setup", files: "My setup example-a"},
+			{do: "edit outline", files: "My setup example-a"},
+			{do: "b", kept: "example-a", files: "My setup example-a example-b", holds: "example-a outline"},
+			{do: "edit plain", files: "My setup example-a example-b"},
+			{do: "a", kept: "example-b", files: "My setup example-a example-a 2 example-b", holds: "example-b plain"},
+		}},
+		{"a named snapshot takes its edits", []step{
+			{do: "save mine", files: "mine"},
+			{do: "a", files: "example-a mine"},
+			{do: "restore mine", files: "mine"},
+			{do: "edit outline", files: "mine"},
+			{do: "b", kept: "mine", files: "example-b mine", holds: "mine outline"},
+		}},
+		{"restoring the active one reverts it", []step{
+			{do: "save mine", files: "mine"},
+			{do: "edit outline", files: "mine"},
+			{do: "restore mine", files: "mine"},
+		}},
+		{"a copy saved over stays", []step{
+			{do: "save mine", files: "mine"},
+			{do: "a", files: "example-a mine"},
+			{do: "save example-a", files: "example-a mine"},
+			{do: "b", files: "example-a example-b mine"},
+		}},
+		{"an import's copy stays (its file may be gone)", []step{
+			{do: "save mine", files: "mine"},
+			{do: "import", files: "import-friend mine"},
+			{do: "a", files: "example-a import-friend mine"},
+		}},
+		{"the running config is saved as My setup once changed, and the defaults are a copy", []step{
+			{do: "edit outline", files: "My setup", holds: "My setup outline"},
+			{do: "defaults", files: "My setup defaults"},
+			{do: "a", files: "My setup example-a"},
+		}},
+		{"edits to the defaults are kept in them", []step{
+			{do: "defaults", kept: "My setup", files: "My setup defaults"},
+			{do: "edit plain", files: "My setup defaults"},
+			{do: "a", kept: "defaults", files: "My setup defaults example-a", holds: "defaults plain"},
+			{do: "defaults", files: "My setup defaults defaults 2"},
+			{do: "defaults", files: "My setup defaults defaults 2"},
+		}},
+		{"a user's snapshot that can't be read is never replaced", []step{
+			{do: "broken example-a", files: "example-a"},
+			{do: "a", kept: "My setup", files: "My setup example-a example-a 2"},
+		}},
+		{"an untouched copy's wallpaper setup is in the one it came from", []step{
+			{do: "wall", kept: "My setup", files: "My setup community-a"},
+			{do: "b", files: "My setup example-b"},
+			{do: "wall", files: "My setup community-a"},
+		}},
+		{"a restore that changes the wallpaper setup keeps the running config", []step{
+			{do: "rotating spin", files: "spin"},
+			{do: "restore spin", kept: "My setup", files: "My setup spin"},
+		}},
+		{"a snapshot of the user's holds the wallpaper", []step{
+			{do: "save mine", files: "mine"},
+			{do: "wall", files: "community-a mine"},
+		}},
+		{"a snapshot from before kinds is the user's, source or not", []step{
+			{do: "old import-old", files: "import-old"},
+			{do: "restore import-old", kept: "My setup", files: "My setup import-old"},
+			{do: "a", files: "My setup example-a import-old"},
+		}},
+		{"My setup takes a free name past the user's", []step{
+			{do: "save My setup", files: "My setup"},
+			{do: "save mine", files: "My setup mine"},
+			{do: "delete mine", files: "My setup"},
+			{do: "a", kept: "My setup 2", files: "My setup My setup 2 example-a"},
+		}},
+		{"restoring keeps edits in the active snapshot", []step{
+			{do: "edit outline", files: "My setup"},
+			{do: "a", files: "My setup example-a"},
+			{do: "edit plain", files: "My setup example-a"},
+			{do: "restore My setup", kept: "example-a", files: "My setup example-a", holds: "example-a plain"},
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			f := setup(t)
+			for _, name := range []string{"a", "b"} {
+				os.WriteFile(filepath.Join(f.ex, name+".json"), []byte(`{"format": 2, "version": 76, "meta": {"title": "`+name+`"},
+					"Appearance": {"theme": {"name": "`+map[string]string{"a": "nord", "b": "gruvbox-dark"}[name]+`"}}}`), 0o644)
+			}
+			os.WriteFile(filepath.Join(f.home, "friend.json"), []byte(`{"format": 2, "version": 76, "meta": {"title": "friend"},
+				"Appearance": {"theme": {"name": "nord-light"}}}`), 0o644)
+			for i, st := range tt.steps {
+				verb, arg, _ := strings.Cut(st.do, " ")
+				var applied Applied
+				var err error
+				switch verb {
+				case "a", "b":
+					applied, err = f.svc.ApplyExample(verb, nil)
+				case "edit":
+					set(t, f.store, "Bars.style.widgetStyle", arg)
+					f.svc.Changed()
+				case "save":
+					_, err = f.svc.Save(arg, "")
+				case "restore":
+					applied, err = f.svc.Restore(arg)
+				case "import":
+					applied, err = f.svc.Import(filepath.Join(f.home, "friend.json"), false, false, nil)
+				case "defaults":
+					applied, err = f.svc.Defaults()
+				case "delete":
+					err = os.Remove(filepath.Join(f.dir, "saved", arg+".json"))
+				case "wall":
+					applied, err = f.svc.ApplyShared(filepath.Join(f.ex, "a.json"), "a", "community-a", "file:///walls/a.png", []string{"DP-1"})
+				case "rotating":
+					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
+						"meta": {"title": "`+arg+`"}, "Appearance": {"wallpaper": {"mode": "rotate"}}}`), 0o600)
+				case "broken":
+					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2,`), 0o600)
+				case "old":
+					err = os.WriteFile(filepath.Join(f.dir, "saved", arg+".json"), []byte(`{"format": 2, "version": 76,
+						"meta": {"title": "`+arg+`", "source": "`+arg+`"}, "Appearance": {"theme": {"name": "nord-light"}}}`), 0o600)
+				}
+				if err != nil {
+					t.Fatalf("step %d (%s): %v", i, st.do, err)
+				}
+				if applied.Kept != st.kept {
+					t.Errorf("step %d (%s): kept in %q, want %q", i, st.do, applied.Kept, st.kept)
+				}
+				var files []string
+				list, _ := f.svc.List()
+				for _, e := range list {
+					files = append(files, e.Name)
+				}
+				sort.Strings(files)
+				if got := strings.Join(files, " "); got != st.files {
+					t.Errorf("step %d (%s): saved/ holds %q, want %q", i, st.do, got, st.files)
+				}
+				if st.holds != "" {
+					cut := strings.LastIndex(st.holds, " ")
+					file, value := st.holds[:cut], st.holds[cut+1:]
+					data, _ := os.ReadFile(filepath.Join(f.dir, "saved", file+".json"))
+					if !strings.Contains(string(data), `"`+value+`"`) {
+						t.Errorf("step %d (%s): %s.json doesn't hold %q:\n%s", i, st.do, file, value, data)
+					}
+				}
+			}
+		})
+	}
+}
+
+// A community setup's wallpaper is set before its copy is saved, so the
+// copy holds it and is unchanged after the apply.
+func TestApplySharedSetsWallpaper(t *testing.T) {
+	t.Parallel()
+	f := setup(t)
+	os.WriteFile(filepath.Join(f.ex, "a.json"), []byte(`{"format": 2, "version": 76, "meta": {"title": "a"},
+		"Appearance": {"theme": {"name": "nord"}}}`), 0o644)
+	if _, err := f.svc.ApplyShared(filepath.Join(f.ex, "a.json"), "a", "community-a", "file:///walls/a.png", []string{"DP-1"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := get(t, f.store, "Appearance.wallpaper.mode"); got != "fixed" {
+		t.Errorf("mode %v, want fixed", got)
+	}
+	if got := get(t, f.store, "Appearance.wallpaper.perScreen.DP-1"); got != "file:///walls/a.png" {
+		t.Errorf("DP-1's wallpaper %v", got)
+	}
+	f.svc.Changed()
+	if st := f.svc.State(); st.Active != "community-a" || st.Modified || st.ActiveSource != "a" {
+		t.Errorf("state %+v, want community-a unchanged from a", st)
+	}
+}
+
+// State.Keep says what an apply or restore would do with the running
+// config, as keep does it; with none active, Changed saves it as one.
+func TestStateKeep(t *testing.T) {
+	t.Parallel()
+	f := setup(t)
+	check := func(what, keep, active string) {
+		t.Helper()
+		f.svc.Changed()
+		if st := f.svc.State(); st.Keep != keep || st.Active != active {
+			t.Errorf("%s: keep %q, active %q; want %q, %q", what, st.Keep, st.Active, keep, active)
+		}
+	}
+	check("at the start", "", "My setup")
+	set(t, f.store, "Bars.style.widgetStyle", "outline")
+	check("changed", "My setup", "My setup")
+	if _, err := f.svc.Defaults(); err != nil {
+		t.Fatal(err)
+	}
+	set(t, f.store, "Bars.style.widgetStyle", "plain")
+	check("the defaults changed", "defaults", "defaults")
+	if _, err := f.svc.Save("mine", ""); err != nil {
+		t.Fatal(err)
+	}
+	check("right after saving", "", "mine")
+	set(t, f.store, "Bars.style.widgetStyle", "outline")
+	check("the active one changed", "mine", "mine")
+	if err := f.svc.Remove("mine"); err != nil {
+		t.Fatal(err)
+	}
+	if st := f.svc.State(); st.Active != "My setup 2" {
+		t.Errorf("after deleting the active one: active %q, want My setup 2", st.Active)
 	}
 }
 
@@ -313,8 +537,8 @@ func TestNoLoadChangesATakeover(t *testing.T) {
 	}{
 		{"import", func() error { _, err := f.svc.Import(file, true, true, nil); return err }},
 		{"example", func() error { _, err := f.svc.ApplyExample("hostile", nil); return err }},
-		{"shared", func() error { _, err := f.svc.ApplyShared(file, "Hostile", "", nil); return err }},
-		{"restore", func() error { return f.svc.Restore("hostile") }},
+		{"shared", func() error { _, err := f.svc.ApplyShared(file, "Hostile", "community-hostile", "", nil); return err }},
+		{"restore", func() error { _, err := f.svc.Restore("hostile"); return err }},
 		{"defaults", func() error { _, err := f.svc.Defaults(); return err }},
 	} {
 		if err := c.load(); err != nil {

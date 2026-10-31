@@ -49,7 +49,9 @@ NOT_MEMBERS = {"Quickshell", "Qt", "Math", "JSON", "Object", "Array", "String", 
 
 def docs():
     files = [p for p in (ROOT / "docs").rglob("*.md") if not str(p.relative_to(ROOT)).startswith(GENERATED)]
-    files += [p for p in ROOT.rglob("AGENTS.md") if ".git" not in p.parts]
+    # Not agents' worktrees: other branches' checkouts, absent in CI
+    worktrees = ROOT / ".claude" / "worktrees"
+    files += [p for p in ROOT.rglob("AGENTS.md") if ".git" not in p.parts and not p.is_relative_to(worktrees)]
     files += [ROOT / "README.md", ROOT / "CONTRIBUTING.md"]
     files += list((ROOT / ".claude/skills").rglob("*.md"))
     return sorted(p for p in files if p.exists())
