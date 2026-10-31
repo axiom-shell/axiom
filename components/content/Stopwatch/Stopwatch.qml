@@ -12,7 +12,8 @@ import qs.components.content.parts
 // The one-off timer and the stopwatch (StopwatchManager), one at a time
 // under a Timer / Stopwatch switch: the Stopwatch widget's popout, or an
 // overlay card. Timer: a CountdownTimer (type a duration or pick a
-// preset; then a ring, pause, +1 min and reset). Stopwatch: the
+// preset; then a ring, pause, +1 min and reset, centred in the card and
+// beside each other in a wide, short one). Stopwatch: the
 // time in tenths, start-pause, lap and reset, and the laps. Compact, the
 // time of whichever is going.
 // properties (card): { mode: "auto" | "timer" | "stopwatch" }
@@ -56,8 +57,6 @@ Panel {
     label: !StopwatchManager.timerIdle ? (StopwatchManager.timer.label || I18n.tr("Timer")) : I18n.tr("Stopwatch")
   }
 
-  readonly property real dialSize: root.embedded ? Math.max(Appearance.fontSize * 4, Math.min(root.innerWidth, root.innerHeight - Appearance.fontSize * 8)) : Appearance.fontSize * 9
-
   SegmentRow {
     Layout.fillWidth: true
 
@@ -82,7 +81,6 @@ Panel {
     text: StopwatchManager.timerText
     progress: StopwatchManager.timerProgress
     label: StopwatchManager.timer.label
-    dialSize: root.dialSize
     fill: root.embedded
     onStarted: text => StopwatchManager.startTimerText(text)
     onToggled: StopwatchManager.toggleTimer()

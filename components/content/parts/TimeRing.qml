@@ -46,7 +46,7 @@ Item {
       text: root.label
       visible: text !== ""
       elide: Text.ElideRight
-      textSize: Appearance.fontSizeBy(-2)
+      textSize: Math.max(Appearance.fontSizeBy(-2), Math.round(root.size * 0.07))
       textColor: root.color
     }
   }

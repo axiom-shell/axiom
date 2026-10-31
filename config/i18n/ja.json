@@ -3506,6 +3506,12 @@
     "Which way the windows run, most recently used first. They wrap to another row (or column) only once one runs out of room.": "",
     "Your current config is saved as \"{0}\" first": "",
     "Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them, except on SwayFX.": "",
-    "Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge). An integrated menu always takes its whole edge.": ""
+    "Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge). An integrated menu always takes its whole edge.": "",
+    "Again": "",
+    "Awake until turned off": "",
+    "The screen won't lock or turn off while you're away.": "",
+    "Set a timer": "",
+    "Keep on with no timer": "",
+    "Caffeine for a set time, comma-separated: 30m, 1h30m, 4h.": ""
   }
 }
