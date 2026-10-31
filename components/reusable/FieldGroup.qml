@@ -15,6 +15,8 @@ StyledContainer {
   Layout.fillWidth: true
   Layout.alignment: Qt.AlignTop
   implicitHeight: groupColumn.implicitHeight + Widget.padding * 2
+  // Faint, as a settings card's (FoldingCard)
+  borderColor: Qt.alpha(Theme.border, 0.25)
 
   ColumnLayout {
     id: groupColumn

@@ -23,10 +23,11 @@ BaseWidget {
   property color foregroundColor: Theme.background
   property color iconColor: foregroundColor
   property int fontSize: Appearance.fontSize
-  // Digits of equal width (tabular figures), the label taking the room of
-  // its text with every digit a 0: a ticking time keeps its size, changing
-  // only when it gains or drops a digit (passing an hour)
-  property bool steadyDigits: false
+  // The label's digits are of equal width (tabular figures), and it takes
+  // the room of its text with every digit a 0, never less than
+  // `minimumText`'s (its widest value, "100%" for a percent): a ticking or
+  // sampled value never resizes the widget, or the bar around it
+  property string minimumText: ""
   // Draws nothing and takes no room, padding included (a widget with
   // nothing to show). Not `visible: false`, which would still be measured.
   property bool hidden: false
@@ -63,7 +64,7 @@ BaseWidget {
   // Where the icon is drawn, in the widget's coordinates (for a badge on
   // it); empty with no icon
   readonly property rect iconRect: _hasIcon ? Qt.rect(run.x + iconLabel.x, run.y + iconLabel.y, iconLabel.width, iconLabel.height) : Qt.rect(0, 0, 0, 0)
-  readonly property real _textLength: isVertical && uprightLabel ? textLabel.implicitHeight : steadyDigits ? Math.max(textLabel.implicitWidth, Math.ceil(steadyMetrics.advanceWidth)) : textLabel.implicitWidth
+  readonly property real _textLength: isVertical && uprightLabel ? textLabel.implicitHeight : Math.ceil(Math.max(textLabel.implicitWidth, steadyMetrics.advanceWidth, minimumMetrics.advanceWidth))
   readonly property real _naturalLength: _leadRoom + iconLength + _gap + (_hasText ? _textLength : 0)
 
   readonly property real _padding: hidden ? 0 : padding
@@ -140,9 +141,9 @@ BaseWidget {
         elide: root.isVertical && root.uprightLabel ? Text.ElideNone : Text.ElideRight
         font.family: Appearance.fontFamily
         font.pixelSize: root.fontSize * root.textScale
-        font.features: root.steadyDigits ? ({
-            "tnum": 1
-          }) : ({})
+        font.features: {
+          "tnum": 1
+        }
 
         ColorGlide on color {}
       }
@@ -157,10 +158,15 @@ BaseWidget {
     text: "0"
   }
 
-  // The label with its digits as zeros, for steadyDigits
+  // The label, and its minimum, with their digits as zeros
   TextMetrics {
     id: steadyMetrics
     font: textLabel.font
-    text: root.steadyDigits ? root.displayText.replace(/[0-9]/g, "0") : ""
+    text: root.displayText.replace(/[0-9]/g, "0")
+  }
+  TextMetrics {
+    id: minimumMetrics
+    font: textLabel.font
+    text: root._hasText ? root.minimumText.replace(/[0-9]/g, "0") : ""
   }
 }

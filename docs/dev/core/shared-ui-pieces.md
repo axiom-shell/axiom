@@ -1,6 +1,6 @@
 # Shared UI pieces
 
-> **Files:** `components/reusable/`, `components/forms/`, `components/content/parts/`, `components/methods/Utils.qml`, `components/methods/Search.qml`, `components/views/Settings/FoldingCard.qml`, `components/views/Settings/EntryListCard.qml`, `components/views/Settings/ScreenSpotPicker.qml`
+> **Files:** `components/reusable/`, `components/forms/`, `components/content/parts/`, `components/methods/Utils.qml`, `components/methods/Search.qml`, `components/views/Settings/FoldingCard.qml`, `components/views/Settings/EntryListCard.qml`, `components/views/Settings/ScreenSpotPicker.qml`, `components/views/Settings/PlaceIntro.qml`
 > **Config:** none
 > **Related:** [Editors pattern](editors-pattern.md), [Content roots](../overlay/content-roots.md), [Writing modules](../overlay/writing-modules.md), [Popout surface context](../popouts/surface-context.md), [Translucency and blur](../theming/translucency-blur.md)
 
@@ -30,7 +30,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `StyledText` / `StyledIcon`.
 - `SectionHeading`: accent title + muted description, folded past three lines.
 - `ClampedText`: muted help text cut to `maxLines` (3) with a More / Less link, shown only when it's longer. Field and card descriptions use it.
-- `FieldGroup`: a titled card of fields; `headerExtras` beside the heading.
+- `FieldGroup`: a titled card of fields, with a faint border (as `FoldingCard`'s); `headerExtras` beside the heading.
 - `StyledContainer`: a themed box (surface opacity or solid, optional border and radius).
 - `StyledScrollView`: a ScrollView with the shell's padding and a thin accent scroll bar.
 - `KeyHint`: a keycap and what it does (`[↵] open`), for a controls hint.
@@ -100,7 +100,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
 
 ### Bar pieces (`bar/`)
-- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); `steadyDigits` sizes a ticking label by its digit count.
+- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`).
 - `WidgetBackground`: a widget's or merged run's background in the bar's widget style and shape, with the hover outline and editor highlight.
 - `methods/BarShapes` (caps and SVG outlines), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
 
@@ -148,17 +148,18 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `hosts/popout/ClosedLatch`: a value followed only while its host is closed (a window's layer or namespace).
 - `hosts/popout/StrokeOpening`: a stroke a surface covers, left open by whatever draws it.
 - `hosts/popout/SubmenuSide`: what a submenu meets on its parent's side.
-- `methods/SurfaceOutline`: the shape of anything growing out of an edge (metrics, fill and stroke paths, footprint); `AttachedSurface` draws from it.
+- `methods/SurfaceOutline`: the shape of anything growing out of an edge (metrics, fill and stroke paths, footprint); `AttachedSurface` draws from it. Its far corners are capped at the room the box has, as a Rectangle's radius is: the radius never changes a surface's size.
 - `hosts/popout/PopoutClaim`: a host's place among the popouts; what it overlaps closes, what's above refuses it. See [Popout registry](../popouts/registry.md).
 - `hosts/popout/SubPopout`: a popout's submenu.
 - `PopoutAnchor`: opens one from anything in a bar or popout; `openOnHover: false` leaves opening to its owner's click.
 - `content/Submenu`: a module opening another edge menu as a submenu.
 
 ### Settings cards (`views/Settings/`)
-- `FoldingCard`: fold header + a `FoldingColumn` body.
+- `FoldingCard`: fold header + a `FoldingColumn` body, in a faint border so neighbouring cards stay apart.
 - `SettingsGroupCard`: generated.
 - `EntryListCard`: a list of entries as tabs with a screen picker.
-- `ScreenSpotPicker`: a small screen with a spot and preset dots to click; `edgeSpot(edge, along, across)`. Used by docks, OSDs, and the launcher's `LauncherPlace` intro.
+- `ScreenSpotPicker`: a small screen with a spot and preset dots to click, and a press or drag anywhere on it that places the thing on the nearest edge (`ScreenEdge.spotPlace`, the inverse of `ScreenEdge.edgeSpot`; a tie keeps its `edge`, so the middle doesn't flip). With `floats` the drag also sets `distance` and `detached`, attaching it within `snap` of an edge. Either way it emits `picked(values)`, as a preset does, only when the whole-percent values change. Used by docks and OSDs (`EntryListCard`), notifications (`NotificationsPreview`) and `PlaceIntro`.
+- `PlaceIntro`: the `x-intro` of a section placed anywhere (`edge`, `position`, `detached`, `distance`): a floating `ScreenSpotPicker` with the Top/Upper/Center/Bottom/Left/Right presets and its hint, writing `sectionKey` through the settings draft. `LauncherPlace` and `WindowSwitcherPlace` only name their section.
 - See [Settings page](settings-page.md).
 
 ### Content and calendar parts

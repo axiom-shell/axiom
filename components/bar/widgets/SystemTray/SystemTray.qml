@@ -10,7 +10,8 @@ import qs.components.bar.widgets.base
 BarWidget {
   id: root
 
-  readonly property int iconSize: properties.iconSize
+  // Each icon the size of every other bar widget's (IconTextWidget's)
+  readonly property int iconSize: Math.round(barConfig.fontSize)
   readonly property bool showPassive: properties.showPassive
   // Sized by the bar, as BarIconWidget does
   readonly property real padding: barConfig.widgetPadding

@@ -22,8 +22,6 @@ ValueStyleWidget {
   text: IdleManager.caffeineTimed ? IdleManager.caffeineText : I18n.tr(IdleManager.caffeine ? "Awake" : "Idle")
   labelShown: properties.showLabel || IdleManager.caffeineTimed
   ratio: IdleManager.caffeineTimed ? 1 - IdleManager.caffeineProgress : -1
-  // Ticking: sized by its digit count, not by each second's digits
-  steadyDigits: IdleManager.caffeineTimed
   dim: IdleManager.caffeineTimed && !IdleManager.caffeineTimer.running ? 0.6 : 1
 
   accentColor: Theme.resolveColor(IdleManager.caffeine ? properties.activeColor : properties.inactiveColor)

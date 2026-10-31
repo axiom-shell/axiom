@@ -2,7 +2,8 @@ pragma Singleton
 import QtQuick
 
 // Windows in the order they were used (the window switcher): the
-// compositor's windows by focusRank, and stepping through them.
+// compositor's windows by focusRank, stepping through them, and where each
+// one's tile goes.
 QtObject {
   id: root
 
@@ -24,5 +25,34 @@ QtObject {
     if (count <= 0)
       return 0;
     return ((index + step) % count + count) % count;
+  }
+
+  // Where `count` tiles go in `order` (leftToRight | rightToLeft |
+  // topToBottom | bottomToTop), `perLine` to a line before the next line
+  // starts (below a row, right of a column): { columns, rows, cells:
+  // [{ column, row }] } by index. A line short of tiles is the last one,
+  // filled from its start.
+  function tileGrid(count, perLine, order) {
+    const vertical = order === "topToBottom" || order === "bottomToTop";
+    const reversed = order === "rightToLeft" || order === "bottomToTop";
+    const along = Math.max(1, Math.min(count, perLine));
+    const lines = count > 0 ? Math.ceil(count / along) : 0;
+    const cells = [];
+    for (let i = 0; i < count; i++) {
+      const step = reversed ? along - 1 - i % along : i % along;
+      const line = Math.floor(i / along);
+      cells.push(vertical ? {
+        "column": line,
+        "row": step
+      } : {
+        "column": step,
+        "row": line
+      });
+    }
+    return {
+      "columns": vertical ? lines : (count > 0 ? along : 0),
+      "rows": vertical ? (count > 0 ? along : 0) : lines,
+      "cells": cells
+    };
   }
 }

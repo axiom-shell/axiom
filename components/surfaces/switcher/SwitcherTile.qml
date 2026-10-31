@@ -13,19 +13,18 @@ Item {
   id: root
 
   required property int index
-  property real tileWidth: WindowSwitcherConfig.tileSize
 
   readonly property var windowData: WindowSwitcherManager.windows[root.index] ?? null
   readonly property bool selected: WindowSwitcherManager.index === root.index
   readonly property real pad: Widget.padding / 2
   // The capture's box: the window's shape fitted into 16:10
-  readonly property real boxWidth: root.tileWidth - root.pad * 2
+  readonly property real boxWidth: WindowSwitcherConfig.tileSize - root.pad * 2
   readonly property real boxHeight: root.boxWidth * 10 / 16
   readonly property real windowWidth: root.windowData?.w || 16 // fixed px: a shape (16:10) for a window with no size
   readonly property real windowHeight: root.windowData?.h || 10 // fixed px: a shape (16:10) for a window with no size
   readonly property real fit: Math.min(root.boxWidth / root.windowWidth, root.boxHeight / root.windowHeight)
 
-  width: root.tileWidth
+  width: WindowSwitcherConfig.tileSize
   implicitHeight: root.boxHeight + Widget.spacing + title.implicitHeight + root.pad * 2
 
   Rectangle {

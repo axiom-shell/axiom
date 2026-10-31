@@ -25,6 +25,7 @@ ValueStyleWidget {
 
   icon: "download"
   text: String(count)
+  minimumText: "00"
 
   subtext: aurPackages.length > 0 ? I18n.tr("{0} AUR", aurPackages.length) : I18n.tr("updates")
   accentColor: Theme.resolveColor(count >= properties.manyThreshold ? properties.manyColor : properties.backgroundColor)

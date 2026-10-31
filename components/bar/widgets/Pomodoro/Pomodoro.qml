@@ -20,8 +20,6 @@ ValueStyleWidget {
 
   icon: PomodoroManager.isBreak ? "coffee" : "timer"
   text: PomodoroManager.remainingText
-  // Ticking: sized by its digit count, not by each second's digits
-  steadyDigits: true
   labelShown: !PomodoroManager.idle
   ratio: PomodoroManager.idle ? -1 : PomodoroManager.progress
   // Idle, stacked shows no time either, as the label doesn't

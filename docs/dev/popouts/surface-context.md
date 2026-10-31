@@ -1,6 +1,6 @@
 # Surface context: what a surface meets at its ends
 
-> **Files:** `components/methods/SurfaceContext.qml`, `tests/tst_SurfaceContext.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgeSurface.qml`, `components/hosts/popout/StrokeOpening.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/SubmenuSide.qml`, `components/hosts/popout/PopoutAnchor.qml`, `scripts/dev/popout_matrix.py`
+> **Files:** `components/methods/SurfaceContext.qml`, `tests/tst_SurfaceContext.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgeSurface.qml`, `components/hosts/popout/StrokeOpening.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/SubmenuSide.qml`, `components/hosts/popout/PopoutAnchor.qml`
 > **Config:** none directly (reads bars, border and integrated menus through `ScreenEdgeManager`)
 > **Related:** [Edge attach](edge-attach.md), [Registry](registry.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Shadows](shadows.md), [Bar layering and corners](../bar/layering-and-corners.md)
 
@@ -80,6 +80,4 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
 - **`PopoutAnchor`** finds its host by itself through its window's `popoutHost` (`QsWindow.window`). That host is either a bar's popouts or a popout's submenu.
 
 ### Testing
-- `scripts/dev/popout_matrix.py` shoots every kind of popout across combinations of bar, border and opacity, for checking them by eye.
-- It rewrites config.json and restores it afterwards.
 - A new intersection case is a `SurfaceContext` rule plus a `tst_SurfaceContext` row.
