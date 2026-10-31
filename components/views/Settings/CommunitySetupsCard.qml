@@ -14,8 +14,8 @@ import qs.components.reusable
  * The catalog is downloaded when this card is first shown (never before),
  * with each setup's thumbnail. Search and tag chips narrow the grid; a
  * tile opens its details (the full screenshot, what it needs, its
- * wallpaper's license) with Apply, which asks for a second click, saves
- * the current setup as "before-<id>" and takes the look only. The
+ * wallpaper's license) with Apply, which asks for a second click, keeps
+ * unsaved changes and takes the look only. The
  * catalog's text is someone else's, so it shows as plain text (`about` as
  * Markdown CommunityCatalog made inert) and only web links open.
  */
@@ -273,7 +273,7 @@ FieldGroup {
 
           StyledText {
             Layout.fillWidth: true
-            text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id ? I18n.tr("Your current setup is saved as \"{0}\" first.", "before-" + details.setup.id) : ""
+            text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id ? SavedConfigsManager.keepHint("") : ""
             opacity: 0.7
             textSize: Appearance.fontSizeBy(-1)
             elide: Text.ElideRight

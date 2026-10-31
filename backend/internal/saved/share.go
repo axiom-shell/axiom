@@ -44,7 +44,7 @@ func Share(p config.Pipeline, parsed any, name string, places bool) (Shared, err
 	}
 	sch := p.Schema()
 	h := header(obj)
-	out := envelope(h.Title, h.Description, "")
+	out := envelope(h.Title, h.Description, "", "")
 	body := share.Sparse(sch, share.Pick(sch, loaded.Config, nil, monitors)).(*jsonx.Object)
 	for _, k := range body.Keys() {
 		out.Set(k, body.Value(k))

@@ -43,13 +43,14 @@ axiom ships the setups from the README in `examples/`. Apply one from **Settings
 
 - An example holds only the look and the layout: the theme, font and shape, the bars and their style, overlay pages, edge menus, docks, OSDs, popouts, the lock screen layout, workspaces, notifications' placement, the power menu and the window switcher.
 - Everything else stays as it is: wallpapers, monitors, apps, keybinds, calendars, chat providers, compositor settings, idle and the login screen.
-- Your current config is saved first, as `before-<name>`, so going back is one **Restore** away.
+- One saved config is always the current one (marked Current, with a dot once you change something): at first it's `My setup`, which axiom saves for you. Changes you made to it are saved into it first, so nothing is lost and nothing is added. Confirming says where they go. **Revert** on the current one discards its changes. To delete it, switch to another first.
+- An applied example is saved as `example-<name>` (the defaults as `defaults`), the current one. If you don't change it, it's deleted once you apply or restore something else, since the example applies it again; once your changes are saved into it, it's yours, and applying the example again saves it as `example-<name> 2`.
 - An example is a partial `config.json` with a `_example` header (`title`, `description`). What it may hold is each setting's `x-scope` in `config/json/config.schema.json`. If it uses a font you don't have, the text falls back to another; a theme you don't have falls back to the default palette.
 
 ### Sharing a setup
 
 - **Settings → Maintenance → Share → Export** writes the current look and layout to `~/axiom-<name>-<date>-<time>.json`, holding only what differs from the defaults. Monitors, wallpapers, accounts and paths are never in it. Keybinds, apps and commands are left out unless you switch them on, and so are your personal preferences, such as your interface scale, card size and density.
-- **Import…** opens a file (an export, an example or a whole `config.json`) and applies it the way an example applies, after saving the current config as `before-<name>`. A file without a `version`, or from a newer axiom, is refused.
+- **Import…** opens a file (an export, an example or a whole `config.json`) and applies it the way an example applies, saving changes first the same way. The result is saved as `import-<name>`, and stays until you delete it. A file without a `version`, or from a newer axiom, is refused.
 - If the file holds keybinds, apps and commands, you can take those too, but the switch is off by default: a command runs as you, so read every command in a file someone else made before turning it on.
 
 ### Community setups
@@ -57,7 +58,7 @@ axiom ships the setups from the README in `examples/`. Apply one from **Settings
 Setups other people built and shared at [axiom-shell/community-setups](https://github.com/axiom-shell/community-setups). Browse them in **Settings → Maintenance → Community setups**, or search with `/config community <text>` in the launcher.
 
 - Nothing is downloaded until you open the gallery. Every file is checked against the catalog's checksum.
-- Applying one works like an import with keybinds, apps and commands off: only the look and layout change, and your current config is saved first as `before-<id>`. Shared setups never contain commands, monitors, accounts or paths, and the repository's checks refuse any that try.
+- Applying one works like an import with keybinds, apps and commands off: only the look and layout change, and changes are saved first the same way. Its wallpaper, if you take it, is part of its saved config. Shared setups never contain commands, monitors, accounts or paths, and the repository's checks refuse any that try.
 - A setup may bring its own palette, installed as the theme `community/<id>` (in `~/.local/share/axiom/themes/`, listed on the Themes page), and a wallpaper, which you get only with **Also use its wallpaper**.
 - A setup lists the compositors its author ran it on and the fonts it uses; a missing font is flagged, and the text falls back to another.
 - To share yours: **Export and submit…** under the gallery exports your look and opens the submission form. See the repository's [contributing guide](https://github.com/axiom-shell/community-setups/blob/main/CONTRIBUTING.md).

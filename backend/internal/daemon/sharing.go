@@ -18,6 +18,9 @@ type sharedParams struct {
 	Personal bool   `json:"personal"`
 	Commands bool   `json:"commands"`
 	Places   bool   `json:"places"`
+	// share.applyShared: a file:// URL to set as the fixed wallpaper ("" for
+	// none)
+	Wallpaper string `json:"wallpaper"`
 }
 
 // monitors are this PC's outputs by place; nil while the daemon has no
@@ -31,9 +34,14 @@ func (d *Daemon) monitors() share.Monitors {
 // the shell's settings page and the CLI.
 func (d *Daemon) sharingPart() part {
 	return part{
-		name:     "sharing",
-		methods:  d.sharingMethods,
-		run:      d.savedKick.run,
+		name:    "sharing",
+		methods: d.sharingMethods,
+		run: func(ctx context.Context) error {
+			// Once at the start too: with no snapshot active, the running
+			// config is saved as one
+			d.savedKick.Kick()
+			return d.savedKick.run(ctx)
+		},
 		onConfig: func(store.Event) { d.savedKick.Kick() },
 	}
 }
@@ -49,11 +57,11 @@ func (d *Daemon) sharingMethods(reg *rpc.Registry) {
 		name, err := d.saved.Save(p.Name, "")
 		return map[string]string{"name": name}, err
 	})
-	rpc.Handle(reg, "saved.restore", func(ctx context.Context, c *rpc.Conn, p sharedParams) (struct{}, error) {
+	rpc.Handle(reg, "saved.restore", func(ctx context.Context, c *rpc.Conn, p sharedParams) (saved.Applied, error) {
 		if err := d.writable(); err != nil {
-			return struct{}{}, err
+			return saved.Applied{}, err
 		}
-		return struct{}{}, d.saved.Restore(p.Name)
+		return d.saved.Restore(p.Name)
 	})
 	rpc.Handle(reg, "saved.remove", func(ctx context.Context, c *rpc.Conn, p sharedParams) (struct{}, error) {
 		return struct{}{}, d.saved.Remove(p.Name)
@@ -80,7 +88,7 @@ func (d *Daemon) sharingMethods(reg *rpc.Registry) {
 		if err := d.writable(); err != nil {
 			return saved.Applied{}, err
 		}
-		return d.saved.ApplyShared(p.Path, p.Name, p.Snapshot, d.monitors())
+		return d.saved.ApplyShared(p.Path, p.Name, p.Snapshot, p.Wallpaper, d.monitors())
 	})
 	rpc.Handle(reg, "share.defaults", func(ctx context.Context, c *rpc.Conn, _ struct{}) (saved.Applied, error) {
 		if err := d.writable(); err != nil {

@@ -14,8 +14,12 @@ import qs.services.apps
  * look, personal parts and commands (by the schema's x-scope) and the
  * wallpaper setup (x-snapshot), in the export format, so a saved file can
  * be shared or imported as it is; restoring applies it like an example,
- * plus the wallpaper setup where its files are still there. Applying a
- * shared file first saves the running config as "before-<name>". Files of
+ * plus the wallpaper setup where its files are still there. Restoring or
+ * applying a shared file first keeps the running config (keep): edits go
+ * into the active snapshot. One is always active: with none, axiom saves
+ * the running config as "My setup". An applied file (the defaults too)
+ * becomes the active snapshot; untouched, it goes once another replaces
+ * it. Files of
  * any version axiom reads are taken (an older one is converted), and
  * nothing loaded changes a takeover setting (x-takeover). This keeps what
  * the settings page shows: the list, the active snapshot, a status line.
@@ -31,14 +35,17 @@ QtObject {
   readonly property FolderListModel model: _model
   // Last save/restore/delete outcome, for the settings UI
   property string status: ""
-  // The saved config the running one was last saved as or restored from,
-  // "" for none (or once its file is gone): the one the settings UI offers
-  // to overwrite
+  // The saved config the running one was last saved as or restored from
+  // ("" only until axiom saves it as "My setup"): the one the settings UI
+  // offers to overwrite
   readonly property string active: _state.active ?? ""
   // Whether the running config's snapshot parts differ from the active
   // saved one's (machine settings, which restoring doesn't change, are left
   // out)
   readonly property bool modified: _state.modified ?? false
+  // The saved config an apply or restore saves the running config into
+  // first: the active one with its edits, "" for nothing to keep
+  readonly property string keep: _state.keep ?? ""
   // The shared setup the active saved config was saved from, unchanged
   // since: "" for one the user saved, or saved over
   readonly property string activeSource: _state.activeSource ?? ""
@@ -49,10 +56,10 @@ QtObject {
   // The file picker is open
   readonly property bool picking: FilePickerManager.running
 
-  // An example, import or shared setup was applied as `name` (its backup
-  // is "before-<name>"), or failed to be (status says why). Once applied,
-  // it's saved as its own snapshot ("example-<name>", "import-<name>" or
-  // the shared file's), the active one.
+  // An example, import, shared setup or the defaults was applied as
+  // `name`, or failed to be (status says why). Once applied, it's saved as
+  // its own snapshot ("example-<name>", "import-<name>", the shared file's
+  // or "defaults"), the active one.
   signal applied(string name)
   signal applyFailed(string name)
 
@@ -117,26 +124,25 @@ QtObject {
   function restore(name) {
     BackendManager.call("saved.restore", {
       "name": name
-    }, error => {
+    }, (error, result) => {
       if (error) {
         console.warn("[SavedConfigsManager] Restoring", name, "failed:", error.message);
         root.status = root._refusal(error, name);
         return;
       }
       SettingsManager.loadConfig();
-      root.status = I18n.tr("Restored \"{0}\"", name);
+      root.status = root._withKept(I18n.tr("Restored \"{0}\".", name), result);
     });
   }
 
   // Applies the schema defaults like an example (the look, personal parts
-  // and commands; machine settings stay), after saving the running config as
-  // "before-defaults"
+  // and commands; machine settings stay), after keeping the running config;
+  // saved as "defaults"
   function restoreDefaults() {
     root._apply("defaults", "share.defaults", {}, "defaults");
   }
 
-  // Applies an example's look, after saving the running config as
-  // "before-<name>"
+  // Applies an example's look, after keeping the running config
   function applyExample(name) {
     root._apply(name, "share.example", {
       "name": name
@@ -170,7 +176,7 @@ QtObject {
 
   // Applies `importing` (its personal parts too when `personal`:
   // preferences, keybinds, apps; its commands when `commands`), after
-  // saving the running config as "before-<name>"
+  // keeping the running config
   function confirmImport(personal, commands) {
     const pending = root.importing;
     root.importing = null;
@@ -188,14 +194,16 @@ QtObject {
   }
 
   // Applies a shared file at `path` straight away, its look only, after
-  // saving the running config as "before-<name>", then saves the result as
+  // keeping the running config, with `wallpaper` (a file:// URL, "" for
+  // none) as the fixed wallpaper on every monitor, then saves the result as
   // `snapshot`: a community setup (CommunitySetupsManager). False when
   // another apply is under way.
-  function applyShared(name, path, title, snapshot) {
+  function applyShared(name, path, title, snapshot, wallpaper) {
     return root._apply(name, "share.applyShared", {
       "name": name,
       "path": path,
-      "snapshot": snapshot
+      "snapshot": snapshot,
+      "wallpaper": wallpaper
     }, title);
   }
 
@@ -222,7 +230,7 @@ QtObject {
     }, error => root.status = error ? I18n.tr("Failed to delete \"{0}\"", name) : I18n.tr("Deleted \"{0}\"", name));
   }
 
-  // One apply at a time: a second would replace the first's backup
+  // One apply at a time: a second would race the first's keep
   // rpc: share.defaults, share.example, share.import, share.applyShared
   function _apply(name, method, params, label) {
     if (root._busy) {
@@ -239,10 +247,25 @@ QtObject {
         return;
       }
       SettingsManager.loadConfig();
-      root.status = result.saved ? I18n.tr("Applied \"{0}\" as \"{1}\". The previous configuration is saved as \"{2}\".", label, result.saved, result.backup) : I18n.tr("Applied \"{0}\". The previous configuration is saved as \"{1}\".", label, result.backup);
+      root.status = root._withKept(I18n.tr("Applied \"{0}\" as \"{1}\".", label, result.saved), result);
       root.applied(name);
     });
     return true;
+  }
+
+  // What confirming an apply or restore does with the running config:
+  // restoring, the snapshot a restore takes ("" for an apply)
+  function keepHint(restoring) {
+    if (restoring !== "" && restoring === root.active)
+      return root.modified ? I18n.tr("Your changes to \"{0}\" are discarded", restoring) : "";
+    if (root.keep === "")
+      return "";
+    return root.keep === root.active ? I18n.tr("Your changes are saved to \"{0}\" first", root.keep) : I18n.tr("Your current config is saved as \"{0}\" first", root.keep);
+  }
+
+  // status after an apply or restore, plus where the running config went
+  function _withKept(status, result) {
+    return result.kept ? status + " " + I18n.tr("Your changes are saved to \"{0}\".", result.kept) : status;
   }
 
   // Why axiom refused a file, for people

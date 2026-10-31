@@ -8,11 +8,14 @@ import qs.components.reusable
 /**
  * Settings page, Maintenance (the category's `card`, wide): save the config's
  * look, layout, keybinds, apps and wallpapers under a name, and restore or
- * delete saved ones. Only the active one (last saved or restored) can be
- * overwritten from its row; it's marked Current, with an unsaved dot once
- * the running config differs. Overwrite, restore, delete and reverting to
- * the defaults ask for a second click to confirm. Restoring (a snapshot or
- * the defaults) leaves machine settings as they are. Below them, exporting
+ * delete saved ones. Only the active one (last saved or restored, always
+ * there) can be overwritten from its row, and only the others deleted; it's
+ * marked Current, with an unsaved dot once the running config differs, and
+ * its Restore is Revert (its edits discarded). Overwrite, restore, delete
+ * and reverting to the defaults ask for a second click to confirm; an
+ * armed restore or apply says in place of its subtitle where the running
+ * config goes first (SavedConfigsManager.keepHint). Restoring (a snapshot
+ * or the defaults) leaves machine settings as they are. Below them, exporting
  * the look to share and importing a shared file (confirmed on its own row),
  * then the example setups (SavedConfigsManager.examples), applied the same
  * way.
@@ -28,6 +31,21 @@ FieldGroup {
   // Where SavedConfigsManager.status shows: under the Share row after an
   // export, import or example, else under the name field
   property bool shareStatus: false
+
+  // An armed restore's or apply's subtitle: where the running config goes
+  // first (SavedConfigsManager.keepHint), else `idle`
+  component Subtitle: StyledText {
+    required property bool armed
+    required property string restoring
+    property string idle: ""
+    readonly property string hint: SavedConfigsManager.keepHint(restoring)
+    readonly property bool hinting: armed && hint !== ""
+    text: hinting ? hint : idle
+    opacity: hinting ? 1 : 0.6
+    textSize: Appearance.fontSizeBy(-2)
+    elide: Text.ElideRight
+    Layout.fillWidth: true
+  }
 
   // The last outcome, shown beside the controls that caused it
   component StatusLine: StyledText {
@@ -130,11 +148,10 @@ FieldGroup {
             }
           }
 
-          StyledText {
-            text: I18n.formatDate(row.fileModified, I18n.dateFormat("dateTime"))
-            opacity: 0.6
-            textSize: Appearance.fontSizeBy(-2)
-            Layout.fillWidth: true
+          Subtitle {
+            armed: row.pendingAction === "restore"
+            restoring: row.fileBaseName
+            idle: I18n.formatDate(row.fileModified, I18n.dateFormat("dateTime"))
           }
         }
 
@@ -145,13 +162,17 @@ FieldGroup {
           onClicked: root.confirm(row.fileBaseName, "overwrite")
         }
 
+        // On the active one, Revert: there's nothing to restore unchanged
         StyledTextButton {
+          visible: !row.active || SavedConfigsManager.modified
           Layout.preferredHeight: Widget.height
-          text: I18n.tr(row.pendingAction === "restore" ? "Confirm" : "Restore")
+          text: row.pendingAction === "restore" ? I18n.tr("Confirm") : row.active ? I18n.tr("Revert") : I18n.tr("Restore")
           onClicked: root.confirm(row.fileBaseName, "restore")
         }
 
+        // Not the active one: one is always active
         StyledTextButton {
+          visible: !row.active
           Layout.preferredHeight: Widget.height
           text: I18n.tr(row.pendingAction === "delete" ? "Confirm" : "Delete")
           hoverColor: Theme.error
@@ -166,6 +187,10 @@ FieldGroup {
     Layout.preferredHeight: Widget.height + Widget.padding * 2
 
     RowLayout {
+      id: defaultsRow
+
+      readonly property bool armed: root.pending?.name === "" && root.pending?.action === "restore"
+
       anchors.fill: parent
       anchors.leftMargin: Widget.padding
       anchors.rightMargin: Widget.padding
@@ -182,19 +207,16 @@ FieldGroup {
           Layout.fillWidth: true
         }
 
-        StyledText {
-          text: I18n.tr("The look, layout, keybinds and apps a first run starts with")
-          opacity: 0.6
-          textSize: Appearance.fontSizeBy(-2)
-          elide: Text.ElideRight
-          Layout.fillWidth: true
+        Subtitle {
+          armed: defaultsRow.armed
+          restoring: ""
+          idle: I18n.tr("The look, layout, keybinds and apps a first run starts with")
         }
       }
 
       StyledTextButton {
-        readonly property bool armed: root.pending?.name === "" && root.pending?.action === "restore"
         Layout.preferredHeight: Widget.height
-        text: I18n.tr(armed ? "Confirm" : "Restore")
+        text: I18n.tr(defaultsRow.armed ? "Confirm" : "Restore")
         hoverColor: Theme.error
         onClicked: root.confirm("", "restore")
       }
@@ -375,6 +397,14 @@ FieldGroup {
       }
 
       StyledText {
+        visible: text !== ""
+        text: SavedConfigsManager.keepHint("")
+        textSize: Appearance.fontSizeBy(-1)
+        wrapMode: Text.WordWrap
+        Layout.fillWidth: true
+      }
+
+      StyledText {
         visible: importRow.importing?.hasCommands ?? false
         text: I18n.tr("This file holds commands. They run as you, with your files and accounts, so a file from someone else can do anything you can. Before turning this on, open the file in a text editor and read every command in it, and only take them from a source you trust.")
         textColor: takeCommands.checked ? Theme.error : Theme.warning
@@ -389,7 +419,7 @@ FieldGroup {
     visible: SavedConfigsManager.examples.length > 0
     Layout.topMargin: Widget.spacing
     title: I18n.tr("Example setups")
-    description: I18n.tr("Apply an example's look and layout: bars, pages, menus, docks and the theme. Wallpapers, monitors, apps and accounts stay as they are, and the current configuration is saved first.")
+    description: I18n.tr("Apply an example's look and layout: bars, pages, menus, docks and the theme. Wallpapers, monitors, apps and accounts stay as they are. It's saved as a configuration of its own, and changes to the current one are saved first.")
   }
 
   Repeater {
@@ -420,13 +450,11 @@ FieldGroup {
             Layout.fillWidth: true
           }
 
-          StyledText {
+          Subtitle {
             visible: text !== ""
-            text: exampleRow.modelData.description
-            opacity: 0.6
-            textSize: Appearance.fontSizeBy(-2)
-            elide: Text.ElideRight
-            Layout.fillWidth: true
+            armed: exampleRow.armed
+            restoring: ""
+            idle: exampleRow.modelData.description
           }
         }
 
