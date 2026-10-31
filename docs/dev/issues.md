@@ -1819,3 +1819,57 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `settingPaths` leaves out `x-applyOnSave` settings but offers the other `x-takeover` ones (`Polkit.enabled`, `Idle.enabled`, `Lockscreen.mode`, `Greeter.enabled`), and `/config Polkit.enabled true` reaches `SettingsManager.commitValue`, which saves with `takeover` true (`_takesOver`). schema-annotations.md says such a setting changes only through its own card, while config-manager.md lets `commitValue(s)` pass true for one. Maintainer question: may the launcher's `/config` switch takeover settings? If not, fix: filter `row.schema["x-takeover"]` in `settingPaths` as `x-applyOnSave` is; if so, say so in schema-annotations.md › `x-takeover`.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the config system
+
+### A failed update check shows as up to date
+- **Where:** `services/system/UpdatesManager.qml:103` (`repoPackages`), `components/content/Updates/Updates.qml:171`, `backend/internal/updates/updates.go:41` (`State`)
+- **What:** Go ends every check in a state, a failed one with its `error` and the last packages (`st.Repo, st.Error = last.Repo, err.Error()`), but the shell's listener reads only `state.repo` and `state.aur`, so nothing in the UI can tell a failed check from an empty one. Scenario: log in before the Wi-Fi connects (or with the pacman db locked): the first `checkupdates` fails, `last.Repo` is still empty, and the Updates card says "System is up to date" (and the widget shows 0, or hides with `hideWhenEmpty`) until the next check, 30 minutes later by default. Fix: keep `state.error` in a new `error` property of UpdatesManager; the card shows it in place of "System is up to date" and the widget's tooltip names it.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the services-core system
+
+### A weather fetch that fails shows Loading forever
+- **Where:** `backend/internal/weather/weather.go:148` (`fetch`), `services/apps/WeatherManager.qml:109` (`_shown`), `components/content/Weather/Weather.qml:52`
+- **What:** A failed fetch returns an error, which the topics hub only logs (once per distinct error) and never pushes, so the shell keeps its last state. That's right while the settings are unchanged, but `_shown` drops a state fetched for other settings, so with no good fetch yet for the current ones nothing ever says why. Scenarios: log in offline, and the card says "Loading weather…" until the next fetch, 15 minutes later by default, even once the network is back; type a location Open-Meteo doesn't know (`unknown location "…"`), and it says "Loading weather…" for good. Fix: on a failure, `fetch` returns a state for the request with an `error` and no weather (the hub pushes it since it differs), a new `error` property of WeatherManager exposes it while it answers the current settings, and the card and the widget's tooltip show it in place of loading.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the services-core system
+
+### SystemManager samples every second while nothing is shown
+- **Where:** `services/system/SystemManager.qml:91` (`_graphMetrics`), `services/system/SystemManager.qml:117` (`_keepGraphHistory`), `docs/dev/core/services-pattern.md`
+- **What:** The services pattern says the `system` topic "Stops entirely with no consumers" and AGENTS.md › Services that anything polled is fetched "not at all with no consumer". But SystemManager acquires for itself, at 1000 ms with `history: true`, every metric any configured SystemGraphs module or SystemStats popout shows, from launch and whether or not anything is open (so a graph opens with a minute already drawn; created from `shell.qml`'s `_services` for this). The default config has a SystemGraphs module on the overlay's Home page (`config/schema/sections/Overlay.yaml`, metrics `[cpu, mem]`), so every default install samples once a second for the whole session, and each sample reallocates two 60-entry history arrays in QML. With `gpu` in a graph on an NVIDIA machine without an AMD card, that's an `nvidia-smi` process every second. Neither doc mentions the exception. Fix, the maintainer's call: (a) keep it and say so in services-pattern.md and the AGENTS.md rule (and that `gpu` on NVIDIA costs a process a second); or (b) drop the self-consumer (lines 88 to 126, 39 lines, and its `_services` entry) so graphs start empty, as every other polled view does.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the services-core system
+
+### The active media player is Spotify first and never follows playback
+- **Where:** `services/system/MediaManager.qml:215` (`_pickActivePlayer`), `services/system/MediaManager.qml:264` (`onPlayersChanged`)
+- **What:** `_pickActivePlayer` returns any player whose bus name contains `org.mpris.MediaPlayer2.spotify` before it looks for one that is playing, and the pick is only redone when the player list changes, never when a player starts or stops playing. Scenarios: with Spotify open and paused, play a video in the browser: its player appears, the pick runs and keeps paused Spotify, so the bar's Media widget and NowPlaying show Spotify, and the media keys (`media` IPC `playPause`) start Spotify over the video. With two players open, pausing one and playing the other leaves the active player on the paused one. No doc mentions the preference (MediaManager has no doc beyond its name in services-pattern.md). Fix: pick the playing player first (then the last active, then one that can play), drop the Spotify case, and re-pick when any player's `playbackState` changes while none is pinned (`selectPlayer` keeps a user's choice); the three loops (28 lines) become one ordered `find`. Question for the maintainer: is the Spotify preference wanted (it could be a setting), or a leftover?
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the services-core system
+
+### Album art piles up in the runtime folder for the whole session
+- **Where:** `backend/internal/media/media.go:47` (`Art`), `services/system/MediaManager.qml:34` (`artFilePath`)
+- **What:** Each track's art is saved as `<md5 of its URL>.jpg` in `$XDG_RUNTIME_DIR/axiom/media-art` and kept ("A file already there (and not empty) is kept"), and nothing ever deletes one: `grep -rn media-art` finds only the shell's path and Go's `ArtDir`. The runtime folder is a tmpfs, so the art of every track played stays in RAM until logout: on 2026-10-31, 1 h 36 min after boot, it held 15 files, 2.3 MB; a day of music is a few hundred covers, tens of MB. Fix: after a fetch lands, `Art` removes all but the newest few files in `o.Dir` (by mtime; say 16, which keeps a playlist going back and forth cached).
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the services-core system
+
+### MediaManager ticks the position with nothing showing it
+- **Where:** `services/system/MediaManager.qml:198` (`_positionTimer`)
+- **What:** AGENTS.md › Services: "Anything polled goes through `acquire(owner, request)` / `release(owner)`: fetched once at the shortest interval asked, not at all with no consumer". `_positionTimer` runs every 500 ms whenever a player is playing (`running: root.isPlaying && root.hasActivePlayer`), copying the position into `position` for its two readers (the Media bar widget and the NowPlaying module), whether or not either exists; MediaManager is created from `shell.qml`'s `_services`, so it ticks through every song with no media UI configured or the overlay closed. The same kind of ticker in StopwatchManager and PomodoroManager goes through `acquire(owner)` (services-pattern.md › Other polled services). Fix: a `ConsumerRegistry` with `acquire(owner)` / `release(owner)` from Media and NowPlaying, and `running` also gated on `_registry.active`.
+- **Size:** small
+- **Found:** 2026-10-31, while reviewing the services-core system
+
+### runDetached warns about a lost connection
+- **Where:** `services/core/CommandManager.qml:71` (`runDetached`)
+- **What:** `run()` and `_logFailure` skip an error of kind `unavailable` (the connection to axiom closed: a re-exec or restart, already logged where it happens), but `runDetached` warns on any error. The live log shows it after reloads: `[CommandManager] mkdir: the connection to axiom closed` (NotificationManager's startup `mkdir -p` of its image folder, queued as the connection went). Fix: `if (error && error.kind !== "unavailable")`, as `run` does.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the services-core system
+
+### Small shrinks in the core services
+- **Where:** `services/core/StateManager.qml:25` (`createStateHandler`), `services/core/StateManager.qml:12` (`stateDir`), `services/system/AudioManager.qml:35` (`name`, `description`, `micUsers`), `backend/internal/daemon/tools.go:47` (`artResult`), `components/bar/widgets/Privacy/Privacy.qml:27` (`appName`)
+- **What:** Each keeps every behaviour but the last, which says what it changes:
+  - StateManager's `save` wraps `FileManager.write` in a `try` that can't catch (the write is asynchronous and reports through `done`) and returns `true`/`false` that no caller reads (none of the 21 `createStateHandler` users uses `save`'s result); its "state saved." debug line runs before the write. `save: data => FileManager.write(filepath, JSON.stringify(data, null, 2))`: lines 25 to 34 (10) become 1, 9 removed.
+  - `StateManager.stateDir` is public but read only by the line below it: use `Paths.statePath` there, 2 lines (with its blank line).
+  - `AudioManager.name`, `description` (lines 35 and 36) and `micUsers` (line 263) are read nowhere (grep: no reader outside the file or inside it): 3 lines.
+  - `media.art` answers `artResult{Path: p.Path}`, the path it was sent, and MediaManager reads only the error: answer `struct{}{}` and drop the 3-line type.
+  - Privacy's `appName` (3 lines) is AudioManager's without the binary fallback, so a stream with no `application.name` is named by its nickname in the privacy tooltip and by its binary in the mixer: use `AudioManager.appName` (the only change: such a stream gets the mixer's name).
+  Total: 20 lines.
+- **Size:** trivial
+- **Found:** 2026-10-31, while reviewing the services-core system
