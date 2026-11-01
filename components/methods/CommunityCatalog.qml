@@ -20,8 +20,9 @@ QtObject {
   // `compatible` (its config version is one `currentVersion` reads):
   // [{ id, title, author, description, about, tags, tested, fonts, theme,
   // compatible, wallpaper, page, files }], where files are { config,
-  // theme?, wallpaper?, screenshot, thumb } of { path, sha256 }. Malformed entries are left out; null when the
-  // index isn't one this axiom reads.
+  // theme?, wallpaper?, screenshot, thumb } of { path, sha256 }.
+  // Malformed entries are left out; null when the index isn't one this
+  // axiom reads.
   function parse(index, currentVersion) {
     if (!_isObject(index) || index.format !== root.format || !Array.isArray(index.setups))
       return null;

@@ -321,7 +321,7 @@ func TestFeedSync(t *testing.T) {
 	if len(r.Errors) != 1 || r.Errors[0].Kind != axerr.NotFound || len(readEvents(t, s).Events) != 1 || len(readEvents(t, s).Errors) != 1 {
 		t.Errorf("gone sync %+v", r)
 	}
-	// A dropped calendar is a change
+	// A dropped calendar's events go
 	if s.Sync(ctx, SyncRequest{Range: july}); len(readEvents(t, s).Events) != 0 {
 		t.Errorf("no calendars: %+v", readEvents(t, s).Events)
 	}
