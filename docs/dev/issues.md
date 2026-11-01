@@ -2367,3 +2367,51 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `copy(text)` is `ClipboardManager.copyText(text)` and nothing else; its two callers can call `ClipboardManager.copyText` directly, as `CodeLine` does. Fix: delete it (lines 206–208, 3 lines) and import `qs.services.system` in the two parts.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
+
+### Renaming a note whose new name holds a dot drops its extension and hides it
+- **Where:** `services/apps/NotesManager.qml:253` (`rename`), `services/apps/NotesManager.qml:236` (`createNote`)
+- **What:** `rename` keeps the old extension only when the new name has no dot at all (`if (ext && !isFolder && !/\.[^.]+$/.test(base)) base += ext[0];`), while `createNote` asks whether the name ends in one of `NotesConfig.extensions`. The rename field shows the title without its extension (`NotesManager.titleOf`), so renaming "Meeting 31.10.md" to "Meeting 1.11" (or opening its rename field and pressing Enter unchanged, "Meeting 31.10") moves the file to "Meeting 1.11" with no `.md` (checked by running those two lines in node: `Meeting 1.11`). The file then matches no name filter: it leaves the note list, `allNotes`, the settings' note picker and the search, and once the module shows another note it can't be opened again from axiom. CONFIRMED. Fix: decide "has an extension" one way for both, `NotesConfig.extensions.some(ext => base.toLowerCase().endsWith("." + ext))`, in a small helper `createNote` and `rename` share.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### A folder name holding `#` or `?` opens the wrong folder in the note list
+- **Where:** `components/content/parts/notes/NoteBrowser.qml:87` (`folderModel`), `services/core/ThemeManager.qml:34` (the wallpaper folder's FolderListModel)
+- **What:** The browser's `FolderListModel` is given `"file://" + NotesManager.absolute(…)` unencoded, so a `#` starts the URL's fragment and a `?` its query. Folder names come from the user (`createFolder` keeps both characters). Checked with qmltestrunner: a model given `file:///…/d/C#/` listed the contents of `d/C` (`names= ["x"]`), not `d/C#`. So opening a folder "C#" (or "Q&A?") shows another folder's notes, or nothing, under a breadcrumb saying "C#", and a notes folder set to such a path lists nothing at all; a `%20` in a name is read as a space. The wallpaper folder (`Appearance.wallpaperPath`, a user path too) is built the same way. CONFIRMED. Fix: build the URL from encoded segments, a new Paths helper, `fileUrl(path)`, returning `"file://" + path.split("/").map(encodeURIComponent).join("/")`, used by both models.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### A changed notes folder keeps showing the old folder's note and saves it into the new one
+- **Where:** `services/apps/NotesManager.qml:443` (`_read`), `services/apps/NotesManager.qml:400` (`_file`), `services/apps/NotesManager.qml:366` (`onDirectoryChanged`)
+- **What:** An open document's `_file` is bound to `root.absolute(doc.path)`, so when `Notes.directory` changes every open document follows to the same relative path in the new folder (`on_FileChanged: doc._follow()`). Where the new folder has no such file, `_read` keeps the old text (`if (text === null) doc.loaded = true;`, meant for a new note). A Notes module in an edge menu or on the desktop showing "notes.md" thus keeps showing the old folder's notes.md after the folder is switched to a synced vault, and the first keystroke writes all of it into the vault as notes.md. The order against `onDirectoryChanged`'s `flushAll()` is not stated either: if the binding updates first, edits less than 600 ms old are flushed into the new folder (PLAUSIBLE: QML's notify order). CONFIRMED for the kept text. Fix: on a directory change, flush every document to its old file, then reload each from the new one with a missing file reading as empty (`_file` a plain property set by `_follow()`, called from `onDirectoryChanged` after `flushAll()`; `_read` empties the text when it follows to a missing file); or have the modules release their documents and show their place's note again.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### Typing in a note creates a linked notes folder that doesn't exist
+- **Where:** `services/apps/NotesManager.qml:411` (`flush`), `services/apps/NotesManager.qml:302` (`refreshList`)
+- **What:** notes.md: "A linked folder is never created", and the note list says "The notes folder doesn't exist" (`directoryMissing`). But a module still opens its last note (a missing file reads as an empty note) and `flush()` saves through `FileManager.write`, which writes the file "making its folders" (FileManager.qml's comment). With `Notes.directory` on a drive that isn't mounted yet (or mistyped), the first keystroke in an edge-menu scratchpad creates the whole path on the root disk; mounting the drive later hides that note under the mount. CONFIRMED by reading. Fix: when `NotesConfig.linked`, `flush()` checks the folder first (`[ -d "$1" ]` through `_run`) and keeps the edit dirty with `_fail(I18n.tr("The notes folder doesn't exist: {0}", …))` when it's gone, refreshing `directoryMissing` on the way.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives
+- **Where:** `components/methods/NoteMarkdown.qml:517` (`toggleBullet`), `components/methods/NoteMarkdown.qml:457` (`toggleTask`)
+- **What:** notes.md: "Every structural edit re-parses (`_normalize`), so the blocks are always what `parse()` would give." `toggleBullet`'s text branch and `toggleTask`'s "add a task at the end" branch return the edited copy without `_normalize`. Checked with qmltestrunner: the bullet button on a line "[ ] foo" gives a text block "- [ ] foo" that parses as a task (no checkbox, `progress` uncounted until the next structural edit); the checklist button with nothing focused in a note ending in an unclosed code fence shows a checkbox row that is plain "- [ ] " inside the fence once the note reloads. CONFIRMED. Fix: return `root._normalize(copy, focus)` from both branches, and a `tst_NoteMarkdown` row asserting, for each edit, `parse(serialize(result.doc))` equals `result.doc` (it would have caught both).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### Notes documents count a revision nothing reads
+- **Where:** `services/apps/NotesManager.qml:394` (`revision`)
+- **What:** Each document's `revision` is bumped when the text is replaced from disk (`doc.revision += 1;`, line 434), and nothing reads it: no `.revision` in the Notes module or its parts, and NoteEditor tells its own edits apart by `_lastText`. Fix: delete the property, its comment and the increment (lines 393, 394, 434: 3 lines).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### NotesConfig expands ~ by hand where Paths.expandHome does it
+- **Where:** `config/NotesConfig.qml:15` (`directory`), `config/NotesConfig.qml:12` (`defaultDirectory`)
+- **What:** AGENTS.md: "A path setting may hold `~`: expand it (`Paths.expandHome`) before use." `directory` trims, expands `~` and `~/` itself and keeps a `defaultDirectory` member read only there. Fix: `readonly property string directory: root.linked ? Paths.expandHome(_c.directory).replace(/\/*$/, "/") : Paths.defaultNotesPath` (expandHome trims and strips trailing slashes; `defaultNotesPath` ends in "/" already): lines 11–22 (12) become 2, 10 lines removed.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### NoteMarkdown's reparse repeats _normalize
+- **Where:** `components/methods/NoteMarkdown.qml:229` (`reparse`), `components/methods/NoteMarkdown.qml:266` (`_normalize`)
+- **What:** `reparse(doc, index, pos)` is `_normalize(doc, { block: index, pos })` line for line (`lineOf`, `parse(serialize(doc))`, `positionAt`); `_normalize` only adds the empty-doc and null-focus cases. Fix: delete `reparse` and its comment (lines 227–236, 10 lines) and make `_normalize` the public `reparse(doc, focus)`; its caller (`NoteEditor.blockEdited`) and two test calls pass `{ block, pos }` (about 3 lines more: 7 net).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system

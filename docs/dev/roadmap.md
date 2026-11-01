@@ -624,6 +624,14 @@ Found by the audits:
 - [An attachment's thumbnail pokes past its rounded corners](issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
 - [package chat's Log option is never used](issues.md#package-chats-log-option-is-never-used)
 - [ChatManager.copy only forwards to ClipboardManager.copyText](issues.md#chatmanagercopy-only-forwards-to-clipboardmanagercopytext)
+- [Renaming a note whose new name holds a dot drops its extension and hides it](issues.md#renaming-a-note-whose-new-name-holds-a-dot-drops-its-extension-and-hides-it)
+- [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
+- [A changed notes folder keeps showing the old folder's note and saves it into the new one](issues.md#a-changed-notes-folder-keeps-showing-the-old-folders-note-and-saves-it-into-the-new-one)
+- [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
+- [Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives](issues.md#two-toolbar-edits-skip-the-re-parse-so-the-editors-blocks-arent-what-parse-gives)
+- [Notes documents count a revision nothing reads](issues.md#notes-documents-count-a-revision-nothing-reads)
+- [NotesConfig expands ~ by hand where Paths.expandHome does it](issues.md#notesconfig-expands--by-hand-where-pathsexpandhome-does-it)
+- [NoteMarkdown's reparse repeats _normalize](issues.md#notemarkdowns-reparse-repeats-_normalize)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
