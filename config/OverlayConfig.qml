@@ -28,16 +28,14 @@ QtObject {
   readonly property bool closeOnEscape: ConfigManager.live.Overlay.closeOnEscape
   readonly property bool closeOnOutsideClick: ConfigManager.live.Overlay.closeOnOutsideClick
 
-  // The pages that aren't in config, after the configured ones: the
-  // layouts editor (overlay pages and edge menus), which can't be removed.
-  // Labels: I18n.tr("Layouts")
-  readonly property var pinnedPages: [
-    {
+  // The page that isn't in config, after the configured ones: the layouts
+  // editor (overlay pages and edge menus), which can't be removed.
+  // Label: I18n.tr("Layouts")
+  readonly property var layoutsPage: ({
       "type": "Layouts",
       "icon": "dashboard_customize",
       "label": "Layouts"
-    }
-  ]
+    })
 
   // What the overlay editor offers, read from the schema's oneOfs so new
   // module/view types show up there automatically
@@ -148,16 +146,16 @@ QtObject {
     return view?.type === "Custom" ? view.name ?? "" : view?.type ?? "";
   }
   function viewIcon(type) {
-    return pinnedPages.find(page => page.type === type)?.icon ?? viewInfo(type)?.icon ?? "dashboard";
+    return type === layoutsPage.type ? layoutsPage.icon : viewInfo(type)?.icon ?? "dashboard";
   }
   // A page's icon: a Custom page's own, else its type's
   function pageIcon(view) {
     return (view?.type === "Custom" && view.icon) || viewIcon(view?.type);
   }
   // Whether the overlay has a page of this type to go to (a link's): the
-  // pinned pages always, others while they're in Overlay.views and shown
+  // Layouts page always, others while they're in Overlay.views and shown
   function hasPage(type) {
-    return pinnedPages.some(page => page.type === type) || views.some(view => view.type === type && view.visible !== false);
+    return type === layoutsPage.type || views.some(view => view.type === type && view.visible !== false);
   }
   function isTool(type) {
     return viewInfo(type)?.tool ?? false;
@@ -248,10 +246,6 @@ QtObject {
   // the units across (GridPlacement.fineUnit)
   function pageUnit(view, unit) {
     return view?.layout?.grid?.fine ? GridPlacement.fineUnit(unit) : unit;
-  }
-
-  function slotShape(rect) {
-    return GridPlacement.slotShape(rect);
   }
 
   // The size [w, h] a module is added at: its declared one, else a card.

@@ -8,10 +8,10 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 
 ### The page
 - `views/Layouts/Layouts.qml`, with its pieces in `views/Layouts/`.
-- It's not in config: `OverlayPages` adds it (`pinnedPages`) as a persistent page after the Repeater, so it:
+- It's not in config: `OverlayPages` adds it (`OverlayConfig.layoutsPage`) as a persistent page after the Repeater, so it:
   - is always last;
   - can't be removed;
-  - survives the page rebuild that every `Overlay.items` change causes. Pages are keyed by the views' JSON, so other config edits don't rebuild them; `_onPinned` keeps the user on it across that rebuild.
+  - survives the page rebuild that every `Overlay.items` change causes. Pages are keyed by the views' JSON, so other config edits don't rebuild them; `_onLayouts` keeps the user on it across that rebuild.
 
 ### Edit targets (`OverlayManager.editTarget`)
 | Target | What it edits | Draft |

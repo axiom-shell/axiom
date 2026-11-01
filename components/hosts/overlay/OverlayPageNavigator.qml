@@ -219,17 +219,11 @@ Rectangle {
         color: Theme.accent
         visible: parent.currentTab !== null
 
-        Behavior on x {
-          NumberAnimation {
-            duration: Appearance.animNormal
-            easing.type: Easing.OutCubic
-          }
+        Glide on x {
+          duration: Appearance.animNormal
         }
-        Behavior on width {
-          NumberAnimation {
-            duration: Appearance.animNormal
-            easing.type: Easing.OutCubic
-          }
+        Glide on width {
+          duration: Appearance.animNormal
         }
       }
 
