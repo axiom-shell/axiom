@@ -93,6 +93,14 @@ QtObject {
     });
   }
 
+  // Whether a setting waits for the user's own Save or card instead of
+  // going live or being set from the launcher: `x-applyOnSave` (Hyprland's
+  // mode) or `x-takeover` (the locker, idle, polkit, the greeter), whose
+  // effect is a takeover
+  function waitsForUser(schema) {
+    return schema?.["x-applyOnSave"] === true || schema?.["x-takeover"] === true;
+  }
+
   // Stored values per shown one for a number with `x-unit`: a duration
   // is stored in ms and shown in its unit (`s`, `min`, `h`, `d`); any
   // other unit shows the value as stored

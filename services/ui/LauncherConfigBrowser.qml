@@ -142,6 +142,9 @@ QtObject {
         }
       }
     ] : [];
+    // A takeover setting changes only on the settings page
+    if (entry.openOnly)
+      return showRows;
     const typed = rest.trim();
     if (typed === "" && !choices)
       return [

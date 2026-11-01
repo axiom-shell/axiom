@@ -245,8 +245,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A save overwrites an outside edit of config.json the store hasn't read yet
   - Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot
 - **config-03** (4): The two takeover entries are one fix (decided 2026-10-31).
-  - [Takeover settings go live through the settings page's preview before Save](../issues.md#takeover-settings-go-live-through-the-settings-pages-preview-before-save)
-  - [The launcher's /config can switch a takeover setting](../issues.md#the-launchers-config-can-switch-a-takeover-setting)
+  - Takeover settings go live through the settings page's preview before Save
+  - The launcher's /config can switch a takeover setting
   - [Changed from default never lists the bar widget style](../issues.md#changed-from-default-never-lists-the-bar-widget-style)
   - [The condition grammar has no shared fixtures](../issues.md#the-condition-grammar-has-no-shared-fixtures)
 - **config-04** (3): Before compositor-16 and -17, which edit KeybindEditor's presets too.

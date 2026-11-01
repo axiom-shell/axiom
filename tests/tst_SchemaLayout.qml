@@ -59,6 +59,26 @@ TestCase {
     compare(rows.map(r => r.kind + ":" + r.path.join(".")), ["field:S.a", "group:S.group", "field:S.group.b", "array:S.list", "field:S.tags"]);
   }
 
+  function test_waitsForUser() {
+    verify(SchemaLayout.waitsForUser({
+      "type": "string",
+      "x-applyOnSave": true
+    }), "Hyprland's mode waits for Save");
+    verify(SchemaLayout.waitsForUser({
+      "type": "boolean",
+      "x-takeover": true
+    }), "a takeover setting (Polkit.enabled) waits too");
+    verify(!SchemaLayout.waitsForUser({
+      "type": "boolean"
+    }));
+    verify(!SchemaLayout.waitsForUser(undefined));
+    // The real schema's takeover switches shown as plain rows
+    for (const path of [["Polkit", "enabled"], ["Idle", "enabled"], ["Lockscreen", "mode"], ["Compositor", "mode"]]) {
+      const prop = schema.properties[path[0]].properties[path[1]];
+      verify(SchemaLayout.waitsForUser(prop), path.join("."));
+    }
+  }
+
   function test_defaultAt() {
     const objectSchema = {
       "properties": {

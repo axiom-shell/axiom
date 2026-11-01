@@ -265,12 +265,12 @@ QtObject {
   property var _previewed: ({})
 
   // The preview that shows `value` at `path` (path → value; undefined
-  // clears it): none for `x-applyOnSave` settings (Hyprland's mode, which
-  // can take over files), which wait in the draft until Save; cleared when
-  // it's back as saved. Each is one setting, never one under another (a
-  // card setting several sets each: LauncherPlace)
+  // clears it): none for takeover settings (SchemaLayout.waitsForUser),
+  // which wait in the draft until Save; cleared when it's back as saved.
+  // Each is one setting, never one under another (a card setting several
+  // sets each: LauncherPlace)
   function _previewOf(path, value) {
-    if (schemaAt(path)?.["x-applyOnSave"])
+    if (SchemaLayout.waitsForUser(schemaAt(path)))
       return {};
     const key = path.join(".");
     if (Utils.deepEqual(value, Utils.valueAt(draft.saved, path))) {
@@ -397,10 +397,10 @@ QtObject {
   // own these
   readonly property var _blockedPrefixes: ["Bars.items", "Overlay.items", "EdgeMenus"]
 
-  // Every value the settings page shows, as { path, key, schema }, with
-  // key the dotted path. `x-applyOnSave` settings are left out: they wait
-  // for the page's Save for a reason (Hyprland's mode can take over files).
-  // So are those the running compositor can't do (their `/$` showIf
+  // Every value the settings page shows, as { path, key, schema, openOnly },
+  // with key the dotted path. A takeover setting (SchemaLayout.waitsForUser)
+  // is `openOnly`: it changes only on the settings page, so /config only
+  // opens it there. Those the running compositor can't do are left out (their `/$` showIf
   // conditions, SchemaLayout.compositorAllows: the Hyprland section
   // elsewhere); conditions on the config aren't, as /config sets them
   // whatever the rest says.
@@ -408,10 +408,11 @@ QtObject {
     const schema = ConfigManager.configSchema;
     if (!schema?.properties)
       return [];
-    return SchemaLayout.rows(schema, []).filter(row => row.kind === "field" && !row.schema["x-applyOnSave"] && SchemaLayout.compositorAllows(schema, row.path, root.showIfValue)).map(row => ({
+    return SchemaLayout.rows(schema, []).filter(row => row.kind === "field" && SchemaLayout.compositorAllows(schema, row.path, root.showIfValue)).map(row => ({
           path: row.path,
           key: row.path.join("."),
-          schema: row.schema
+          schema: row.schema,
+          openOnly: SchemaLayout.waitsForUser(row.schema)
         })).filter(entry => !root._blockedPrefixes.some(prefix => entry.key === prefix || entry.key.startsWith(prefix + ".")));
   }
 
@@ -486,15 +487,15 @@ QtObject {
   }
 
   // Sets one setting and saves it straight away, leaving any unsaved edits
-  // on the page alone. False if it's not a setting offered here, or saves
-  // can't be made (ConfigManager.commit).
+  // on the page alone. False if it's not a setting offered here, is a
+  // takeover one (`openOnly`), or saves can't be made (ConfigManager.commit).
   function commitValue(key, value) {
     const entry = settingFor(key);
-    if (!entry)
+    if (!entry || entry.openOnly)
       return false;
     const next = Utils.clone(ConfigManager.config);
     _setAt(next, entry.path, value);
-    if (!ConfigManager.commit(next, _takesOver([entry.path])))
+    if (!ConfigManager.commit(next))
       return false;
     ensureLoaded();
     return true;
