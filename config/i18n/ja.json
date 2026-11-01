@@ -3643,6 +3643,14 @@
     "Drives": "",
     "Eject all": "",
     "udisks2 isn't running: it's what reaches removable drives": "",
-    "No removable drives plugged in": ""
+    "No removable drives plugged in": "",
+    "Show the widget only while a removable drive is plugged in.": "",
+    "List the drives, to open, eject or unlock one, when hovered.": "",
+    "Show how many drives are plugged in next to the icon.": "",
+    "Mounted color": "",
+    "Hide with no drives": "",
+    "Not mounted color": "",
+    "Removable Drives": "",
+    "Stacked puts the count over how many are mounted.": ""
   }
 }
