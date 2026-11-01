@@ -1421,12 +1421,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
-### IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call
-- **Where:** `components/surfaces/edgemenu/EdgeMenuSync.qml:64` (`_edgeHost`, `_engage`), `components/surfaces/edgemenu/IntegratedEdgeMenu.qml:70` (`engage`)
-- **What:** EdgeMenuSync connects `EdgeMenuManager.engageRequested` for both hosts and calls `engage()` through a `var` (`_edgeHost`, since PopoutWrapperBase has no `engage`), so IntegratedEdgeMenu defines an empty `engage()` ("it holds no popout claim, so there's no rank to raise"). Only the floating host has anything to do. Fix: move the `Connections` into FloatingEdgeMenu (`if (id === root.menuId) root.engage()`), deleting EdgeMenuSync.qml:64–74 (11 lines) and IntegratedEdgeMenu.qml:70–73 (4 lines), about 6 added.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
 ### MenuSubmenu repeats EdgeMenuBody's module grid
 - **Where:** `components/content/Submenu/MenuSubmenu.qml:24` (`_modulesKey`, `host`, `overlayGrid`), `components/surfaces/edgemenu/EdgeMenuBody.qml:25` (`_modulesKey`)
 - **What:** MenuSubmenu copies EdgeMenuBody's parts one for one: the `_modulesKey` re-parse ("as EdgeMenuBody", lines 24–27), the `host` map (29–34, adding `submenu`), the `OverlayGrid` at `cardUnitOf`/`gapOf` (36–40, on the parent's screen) and the clipped Flickable around a `ModuleGrid` at the menu's `zoomOf` (54–71): 33 lines that must change together (a fix to how a menu's modules are keyed, zoomed or hosted lands twice). Fix: EdgeMenuBody takes a `screen` (for `cardUnitOf`) and `submenu` (no pin, no Escape, no stretch, `host.submenu`), and MenuSubmenu becomes an `EdgeMenuBody` (`vertical: true`, `maxLength` from `root.wrapper?.maxContentHeight`) plus its empty text: 33 lines out, about 12 in.

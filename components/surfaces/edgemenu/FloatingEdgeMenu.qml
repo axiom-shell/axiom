@@ -128,6 +128,18 @@ EdgePopout {
     }
   }
 
+  // Asked for again while open (EdgeMenuManager.engageRequested): it comes
+  // forward (EdgePopout.engage). The integrated host holds no popout
+  // claim, so it has no rank to raise
+  Connections {
+    target: EdgeMenuManager
+
+    function onEngageRequested(id) {
+      if (id === root.menuId)
+        root.engage();
+    }
+  }
+
   content: Component {
     EdgeMenuBody {
       menu: root.menu

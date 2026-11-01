@@ -466,7 +466,6 @@ Found by the audits:
 - [A whole-edge menu's hover strip covers only its modules' length while closed](issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
-- [IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call](issues.md#integratededgemenus-empty-engage-exists-only-for-edgemenusyncs-call)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - [A format-2 config without a version runs every step again](issues.md#a-format-2-config-without-a-version-runs-every-step-again)
 - [The condition grammar has no shared fixtures](issues.md#the-condition-grammar-has-no-shared-fixtures)
