@@ -2292,3 +2292,27 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `SettingsManager.localConfig?.Calendar?.accounts` names the key format 2 renamed to `items`, so it's always undefined and the card always reads `CalendarConfig.savedAccounts`, which is right anyway (the draft's edits are previews, in `ConfigManager.live`). And an account's `id` is a required `ItemId` (pattern `^[A-Za-z0-9]…`, never empty; `add()` sets one), so `account.id || "account-" + (index + 1)` (lines 33 and 73), connect's copy with the id filled in (lines 114–116) and the id written back at lines 138 and 172 handle a case that can't occur. Fix: `accounts: CalendarConfig.savedAccounts`, `defaultCalendar: CalendarConfig.defaultCalendar`, `accountId: root.account?.id ?? ""`, `freeId` over `account.id`, `const account = root.account`, and lines 138 and 172 go: 4 lines removed, 3 shortened.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the calendar system
+
+### An own brightness set opens the OSD, which refreshes the monitor beside the write
+- **Where:** `services/system/BrightnessManager.qml:63` (`set`), `components/surfaces/osd/OSDTriggers.qml:32` (`_open`)
+- **What:** `set` emits `brightnessChanged(name)` (line 63) before `_write` marks `_writing[name]` (line 136). With the OSD shut, a brightness key goes `brightnessChanged` → OSDBar `poked` → `OSDTriggers.poke(true)` → `host.show()`, which sets `occupied` synchronously, so `_open` turns true and calls `BrightnessManager.refresh` while `_writing[name]` is still false: a `brightness.get` goes out, then the `brightness.set`. The daemon runs calls concurrently (`rpc.go` handles each in its own goroutine), so on a DDC monitor `ddcutil getvcp` and `ddcutil setvcp` run on one I2C bus at once. The get can fail (DDC/CI transfers interleaved), or read the old level and answer after the set's callback cleared `_writing`: the guard at line 109 then lets the stale level overwrite the new one, the OSD bar jumps back, and the next press steps from the old value. Every first press with the OSD shut pays a ddcutil run for a value axiom just set. PLAUSIBLE: settle with a DDC monitor, pressing brightness up with the OSD shut and reading the log and the bar. Fix: in `set`, emit `brightnessChanged` after the write/pending branch, so `refresh` sees `_writing[name]` and returns.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:brightness system
+
+### Idle dimming is forgotten across a shell reload
+- **Where:** `services/system/BrightnessManager.qml:92` (`_dimmed`)
+- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload (as a default child of a `Scope`/`Singleton` root: a named property doesn't, see [DailySchedule's persisted state never survives a reload](issues.md#dailyschedules-persisted-state-never-survives-a-reload)).
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:brightness system
+
+### Two members of the brightness system nothing needs
+- **Where:** `services/system/BrightnessManager.qml:114` (`_focused`), `components/content/Brightness/Brightness.qml:102` (`allRow`)
+- **What:** `_focused()` only returns `CompositorManager.focusedOutput`, for the three IPC functions (`up`, `down`, `set`); `id: allRow` is never referenced (`grep -c allRow` gives 1, the definition). Fix: the IPC functions read `CompositorManager.focusedOutput` directly and the id goes: 5 lines (lines 114-117 of BrightnessManager.qml, line 102 of Brightness.qml).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:brightness system
+
+### The brightness icon thresholds are written three times
+- **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:114` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
+- **What:** The same `level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high"` is in the module, the OSD bar and the Quick actions tile; changing the icons or thresholds means finding all three. Fix: one `icon(level)` function in BrightnessManager (as `AudioManager.inputIcon` serves the OSD's microphone bar), called from all three; Brightness.qml's own `icon` (4 lines) goes.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:brightness system
