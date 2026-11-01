@@ -811,20 +811,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### After a sway reload, gapsOut and SwayFX's per-window blur and shadows stay off until the look changes
-- **Where:** `services/compositor/SwayManager.qml:518` (`_onEvent`), `services/compositor/CompositorConfigManager.qml:243` (`_setState`), `docs/dev/compositor/sway-backend.md:90`
-- **What:** On a sway config reload (Super+Shift+C, `swaymsg reload`, or in managed mode an edit to a `user/` file), SwayManager drops what the look set: `root._liveGaps = null; root._liveBlur = null;` (518-519), and it nulls `_windowEffects.blur`/`shadows` (522-526) "Until the look is sent again". But `setLiveLook` is only called from `CompositorConfigManager._setState`, and only when the look's JSON differs from the last one: `if (look !== root._lookSet && CompositorManager.backend.setLiveLook)` (243). The daemon's state `look` is `specLive`'s look (`manager.go:547`), and a reload doesn't change it, so `setLiveLook` is skipped. Nothing resets `_lookSet` (only lines 238, 243 and 244 touch it). The daemon re-sends the gaps and the SwayFX lines after the reload, so sway itself shows axiom's look. But until the user changes a look setting or reloads the shell:
-  - `gapsOut` falls back to `_gaps`, which comes from `sway-text`. That text leaves axiom's own file out, so it is the user's gaps (sway's default 0 when they set none), while sway shows axiom's (default 3 + 6).
-  - Every output's `reserved` (`SwayState.output` subtracts `gapsOut`) is off by the difference, and so are the bars and popouts that follow `CompositorManager.gapsOut`.
-  - `blur` reverts to the config's.
-  - On SwayFX, `windowCommands` with `blur`/`shadows` null leaves new windows alone. The global lines reach only the focused window, so windows opened after the reload get no blur and no shadows.
-
-  The doc promises otherwise: "A config reload … resets blur and shadows, which the look sent after it sets again" (sway-backend.md:90).
-
-  Fix: after each reload, CompositorConfigManager asks for the state again with `_lookSet` cleared, so the backend gets the look whether or not it changed: `Connections { target: CompositorManager; function onConfigReloaded() { root._lookSet = ""; root._fetchState(); } }`. About 5 lines.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### A sway title-bar mouse bind moves in as a whole-window bind
 - **Where:** `backend/internal/compositor/binds/sway.go:29` (`swayHarmless`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/render/sway.go:245` (`swayConflictFlags`)
 - **What:** sway(5) says mouse bindings "are only triggered when over the title bar" unless `--whole-window` is given. `swayHarmless` lists `--whole-window` as droppable, so a mouse bind *without* it moves in as well. axiom then writes every mouse key with `--whole-window` (`if k.Mouse { flags = append(flags, "--whole-window") }`). The i3 guide's own examples are `bindsym --release button2 kill` and `bindsym button3 floating toggle`. A probe of the worktree's extract on `bindsym --release button2 kill` gave `{"key":"mouse:274","action":"closeWindow","release":true}`, and the line was commented out. After a takeover, a middle click anywhere (a paste in a terminal) closes the window. The binds are shared, so Hyprland gets the same bind too.
