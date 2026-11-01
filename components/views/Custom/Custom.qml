@@ -14,8 +14,6 @@ BaseView {
   property var modules: root.viewConfig?.layout?.modules ?? []
 
   property OverlayGrid fineGrid: OverlayGrid {
-    availableWidth: root.grid?.roomWidth ?? 0
-    availableHeight: root.grid?.roomHeight ?? 0
     fixedUnit: OverlayConfig.pageUnit(root.viewConfig, root.grid?.unit ?? 0)
   }
 

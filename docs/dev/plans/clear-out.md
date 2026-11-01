@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03 and bar-popouts-01 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, bar-popouts-01 and overlay-modules-01 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -53,7 +53,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 5 | compositor-02 | deletion | Done: QML compositor services, keybind helpers, workspace strips | 12 | ~450 | none |  |
 | 6 | compositor-03 | deletion | Done: The blur system | 5 | ~200 | none |  |
 | 7 | bar-popouts-01 | deletion | Done: Dead members, signals and wrappers across popouts, the bar, bar widgets and edge menus | 12 | ~150 | none |  |
-| 8 | overlay-modules-01 | deletion | Overlay and modules: dead members and small shrinks | 6 | ~200 touched (~-150 net) | compositor-02 |  |
+| 8 | overlay-modules-01 | deletion | Done: Overlay and modules: dead members and small shrinks | 6 | ~200 touched (~-150 net) | compositor-02 |  |
 | 9 | features-01 | deletion | Dead and forwarding members across the feature systems | 14 | ~250 | none |  |
 | 10 | compositor-04 | blocker | Sway's look lost after a reload | 1 | ~10 | compositor-02 |  |
 | 11 | bar-popouts-02 | blocker | Outside clicks never close edge and floating popouts | 1 | ~4 | none |  |
@@ -205,13 +205,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
   - BaseWidget's background box and panel-size defaults are dead
   - IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call
-- **overlay-modules-01** (6): After compositor-02, which also edits OverlayPageNavigator (the wheel notch).
-  - [GridEditor's canAdd and canMove have no caller](../issues.md#grideditors-canadd-and-canmove-have-no-caller)
-  - [ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room](../issues.md#screenlayouteditorsavedlayout-is-dead-and-desktoptarget-forwards-the-editors-room)
-  - [Three row options nothing sets](../issues.md#three-row-options-nothing-sets)
-  - [PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon](../issues.md#pipewirevolumebar-keeps-a-mute-toggle-nothing-calls-and-its-own-volume-icon)
-  - [Three keycap parts draw the same cap, and KeyCap's icon slot has no user](../issues.md#three-keycap-parts-draw-the-same-cap-and-keycaps-icon-slot-has-no-user)
-  - [Small shrinks in the overlay](../issues.md#small-shrinks-in-the-overlay)
+- **overlay-modules-01** (6, done): After compositor-02, which also edits OverlayPageNavigator (the wheel notch).
+  - GridEditor's canAdd and canMove have no caller
+  - ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room
+  - Three row options nothing sets
+  - PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon
+  - Three keycap parts draw the same cap, and KeyCap's icon slot has no user
+  - Small shrinks in the overlay
 - **features-01** (14):
   - [Calendar results and members nothing reads](../issues.md#calendar-results-and-members-nothing-reads)
   - [The Accounts card's fallbacks for a renamed key and for empty account ids](../issues.md#the-accounts-cards-fallbacks-for-a-renamed-key-and-for-empty-account-ids)

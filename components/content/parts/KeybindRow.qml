@@ -106,17 +106,10 @@ Item {
                 visible: alternative.index > 0
               }
 
+              // A folded direction set's keys share one cap (H J K L)
               KeyCap {
-                visible: alternative.modelData.length === 1
                 anchors.verticalCenter: parent.verticalCenter
-                text: alternative.modelData[0] ?? ""
-                compact: root.compact
-              }
-
-              KeyCluster {
-                visible: alternative.modelData.length > 1
-                anchors.verticalCenter: parent.verticalCenter
-                keys: alternative.modelData
+                text: alternative.modelData.join(" ")
                 compact: root.compact
               }
             }

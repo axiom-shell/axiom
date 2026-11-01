@@ -89,7 +89,6 @@ QtObject {
   // The whole draft, and the layout edited in it
   readonly property alias local: draft.local
   readonly property var localLayout: root.layoutOf(draft.local)
-  readonly property var savedLayout: root.layoutOf(draft.saved)
   readonly property alias isDirty: draft.isDirty
 
   property GridEditor layout: GridEditor {

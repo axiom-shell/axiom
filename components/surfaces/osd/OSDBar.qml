@@ -50,13 +50,8 @@ Loader {
       otherApps: root.type === "other"
       excludedApps: root.type === "other" ? OSDConfig.excludedApps : []
       useSystemVolume: isMaster
-      iconSource: {
-        if (!isMaster || root.entry.icon)
-          return root.entry.icon;
-        if (AudioManager.muted || AudioManager.volume === 0)
-          return "volume_mute";
-        return AudioManager.volume > 0.4 ? "volume_up" : "volume_down";
-      }
+      // The master bar's icon is the bar's Volume widget's
+      iconSource: root.entry.icon || (isMaster ? AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), AudioManager.muted, AudioManager.volume) : "")
 
       onPoked: root.poked()
     }

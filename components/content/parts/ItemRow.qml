@@ -20,7 +20,6 @@ Rectangle {
   property string subtitle: ""
   // Title lines before it elides
   property int titleLines: 1
-  property string titleFamily: Appearance.fontFamily
   // Marked (e.g. pinned): the icon in the accent
   property bool marked: false
   property color iconColor: root.marked ? Theme.accent : Theme.foregroundAlt
@@ -90,7 +89,6 @@ Rectangle {
       StyledText {
         Layout.fillWidth: true
         text: root.title
-        textFamily: root.titleFamily
         textSize: Appearance.fontSizeBy(-1)
         elide: Text.ElideRight
         wrapMode: root.titleLines > 1 ? Text.Wrap : Text.NoWrap

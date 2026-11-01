@@ -1214,22 +1214,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the overlay system
 
-### GridEditor's canAdd and canMove have no caller
-- **Where:** `services/ui/GridEditor.qml:370` (`canAdd`), `services/ui/GridEditor.qml:375` (`canMove`)
-- **What:** `grep -rnw 'canAdd\|canMove' --include=*.qml .` finds only their definitions, plus the Checks line in grid-canvas.md (`CompositorStatusCard`'s `canAdd` is its own property). The canvas and the drag layer use the plans (`hoverPlan.valid`) instead; only `canResize` has a caller (`EditorInspector.qml:195`). Fix: delete both (lines 369–378, 10 lines) and drop them from grid-canvas.md's "Checks" line.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the overlay system
-
-### Small shrinks in the overlay
-- **Where:** `config/OverlayConfig.qml:34` (`pinnedPages`), `config/OverlayConfig.qml:253` (`slotShape`), `components/hosts/overlay/OverlayPages.qml:52` (`pageCount`, `pages`, `_onPinned`), `components/views/Custom/Custom.qml:17` (`fineGrid`), `components/hosts/overlay/OverlayPageNavigator.qml:228` (the pill's `Behavior`s)
-- **What:** Four things can go or shrink, about 15 lines in all:
-  - `pinnedPages` is a list of one (Layouts). `OverlayPages` counts `pinnedPages.length` into `pageCount` and `pages`, but draws a single hard-wired `editorPage`, so a second entry would get a tab and an index with nothing behind them. A single `layoutsPage` object on OverlayConfig, with `_onPinned` a bool, says what the code does (about 4 lines fewer).
-  - `OverlayConfig.slotShape` only forwards to `GridPlacement.slotShape`, and has one caller, `SlotContext.qml:28`. That caller can call `GridPlacement.slotShape` itself, importing `qs.components.methods` (3 lines fewer).
-  - In `Custom.qml`, the fine grid sets `availableWidth` / `availableHeight` (lines 17–18). An `OverlayGrid` with a `fixedUnit` uses them only for `roomWidth`, which nothing reads on this grid (`ModuleGrid` reads `unit`, `gap` and `sizes`), so both lines can go.
-  - The navigator pill's two `Behavior { NumberAnimation { duration: Appearance.animNormal; easing.type: Easing.OutCubic } }` (lines 228–239, 12 lines) are `Glide on x { duration: Appearance.animNormal }` and the same on `width` (6 lines): the shared piece, with `Appearance.easing` in place of a literal.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the overlay system
-
 ### fullMinWidth and fullMinHeight are compared with the slot's size, padding included
 - **Where:** `components/content/base/SlotContext.qml:32` (`compact`), `components/content/base/Card.qml:38` (`growHeight`), `components/content/base/Panel.qml:48` (`growHeight`), `docs/dev/overlay/writing-modules.md:24`
 - **What:** `compact` tests `(width > 0 && width < fullMinWidth) || (height > 0 && height < fullMinHeight)`, where `width`/`height` are the whole slot. Every module writes `fullMin*` as the px its content needs, with no padding: none of the 30 `fullMinHeight:` settings in `components/content` adds a pad, and Weather sets `fullMinHeight: Appearance.fontSize * 6`, the same figure as its `currentHeight`, which it compares with `innerHeight` everywhere else. So from `fullMin*` up to `fullMin* + 2 × pad` (36 px in a bordered card at the defaults) the full layout is laid into room up to 36 px short of what it asked for. Cases at font 14, normal density: Weather in a 4x1 strip 360×90 px has 54 px inside for a 72 px block, and `Card`'s clip cuts it where the compact figure would have fit. Stopwatch with the timer set at a 140 px slot has 104 px for 130 px (segment row 30, ring 56, buttons 36, spacing 8), so the ring overlaps the buttons. The strips of Calculator, ClipboardHistory, EmojiPicker, ScreenRecord, AudioMixer, Brightness and NowPlaying (`fullMinHeight` 3.5 × font = 49) have 13 px inside at 49 px for a 28–34 px row. NightLightControls and WorldClocks (2.4 × font) reach the border. `growHeight` grows a card to `fullMinHeight`, short by the same pad. Fix, in one place: in `SlotContext`, compare the room inside the full layout's padding, with `fullPad: OverlayConfig.cardPad(false, <the bare test pad uses>)` (the non-compact pad, so `compact` doesn't depend on itself): `(width > 0 && width - 2 * fullPad < fullMinWidth) || (height > 0 && height - 2 * fullPad < fullMinHeight)`. Add `2 * fullPad` in `growHeight`, and say in writing-modules.md that `fullMin*` are inner px. It is also the cause of a note merged into this entry (row 20 triage, 2026-11-01; it was "High module padding clips edge menu modules", filed 2026-10-28 from the maintainer's notes): "on an edge menu, a module padding too high for the menu clips the modules instead of making them smaller". A higher padding shrinks the room inside while `compact` still sees the whole slot; once fixed, check it in an edge menu with module borders on and a high padding.
@@ -1311,21 +1295,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the modules system
 
-### Three row options nothing sets
-- **Where:** `components/content/parts/DeviceRow.qml:32` (`disconnectTip`), `components/content/parts/ItemRow.qml:23` (`titleFamily`), `components/content/parts/TodoList.qml:20` (`showFocus`)
-- **What:** `grep -rnw` over qml, yaml, json and py finds each name twice: its declaration and its one read. No DeviceRow user sets `disconnectTip` (BluetoothDevices sets only `connectTip`). No ItemRow user sets `titleFamily`, which defaults to `Appearance.fontFamily`, StyledText's own. No TodoList user (Todo, Focus) sets `showFocus`, so it is always true despite its comment "off where no timer is near". Fix: inline `I18n.tr("Disconnect")`, drop the `titleFamily` binding, and drop `showFocus` and its test (about 4 lines).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
 ### Login and Password each carry the same required-field report
 - **Where:** `components/content/Login/Login.qml:43` (`_report`), `components/content/Password/Password.qml:41` (`_report`)
 - **What:** Both modules hold the same 12 lines: `_reportedKey`, a `_report()` that unreports the old key and reports the new one through `SurfaceManager.reportRequiredField`, and `Component.onCompleted`, `onHostChanged` and `Component.onDestruction`. They differ only in the host test (`onGreeter` / `onLockscreen`). Fix: one small QtObject part in `content/parts/` holding the 12 lines, given the host and whether it applies. Each module keeps 1–3 lines, so about 20 lines fewer.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### Three keycap parts draw the same cap, and KeyCap's icon slot has no user
-- **Where:** `components/content/parts/KeyCap.qml:12` (`icon`), `components/content/parts/KeyCluster.qml`, `components/content/parts/KeybindRow.qml:109`, `components/content/parts/ModifierCap.qml`
-- **What:** KeyCap, KeyCluster and ModifierCap repeat the same `Rectangle` shell: the height `Math.round(Widget.height * (compact ? 0.62 : 0.75))`, the width, radius and colour, and the text size. KeyCluster is a KeyCap whose text is its keys with a gap between them, and KeybindRow builds both a KeyCap and a KeyCluster for every alternative and hides one (lines 109–121). No `KeyCap {` user sets `icon`. Fix: delete KeyCluster.qml (35 lines), and replace KeybindRow's pair (13 lines) with one `KeyCap { text: alternative.modelData.join(" ") }` (about 5): about 43 lines fewer, and one cap built per alternative. Delete `icon` and its `StyledIcon` (7 lines) unless ModifierCap folds into KeyCap too, which needs SUPER ordered first; check `KeybindManager`'s modifier order before doing that. About 50 lines in all.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the modules system
 
@@ -1882,7 +1854,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
 ### The brightness icon thresholds are written three times
-- **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:114` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
+- **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:109` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
 - **What:** The same `level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high"` is in the module, the OSD bar and the Quick actions tile; changing the icons or thresholds means finding all three. Fix: one `icon(level)` function in BrightnessManager (as `AudioManager.inputIcon` serves the OSD's microphone bar), called from all three; Brightness.qml's own `icon` (4 lines) goes.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
@@ -2040,12 +2012,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the desktop system
 
-### ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room
-- **Where:** `services/ui/ScreenLayoutEditor.qml:92` (`savedLayout`), `components/views/Layouts/DesktopTarget.qml:15` (`roomWidth`, `roomHeight`)
-- **What:** `savedLayout` has no reader (`grep -rnw savedLayout` finds only its definition). `DesktopTarget.roomWidth`/`roomHeight` (and their comment) only forward `DesktopManager.editor.room` to the one `fitText` line in the same file. Fix: delete `savedLayout` (1 line) and lines 14-16 of DesktopTarget (3 lines), reading `Math.round(root.screenEditor.room.width)` / `.height` in `fitText` (the `int` properties rounded); 4 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the desktop system
-
 ### The system volume bar opens the OSD when the default output switches
 - **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:78` (`onVolumeChanged`), `components/surfaces/osd/PipewireVolumeBar.qml:82` (`onIsMutedChanged`)
 - **What:** The OSD's `poked` signal is meant for changes the user makes, "not a stream appearing or a device switch" (PipewireVolumeBar.qml:12-13, OSDBar.qml:25-26), and the microphone bar keeps to it (`_levelChanged` skips the first change after `AudioManager.defaultSource` changes) and so do the app bars (`_nodeKey`). The master bar doesn't: `onVolumeChanged` and `onIsMutedChanged` call `root.poked()` whenever `useSystemVolume`, and `AudioManager.volume` / `muted` follow `Pipewire.defaultAudioSink`. Connecting Bluetooth headphones, plugging a headset, or picking another output in the audio mixer changes the default sink; when its volume or mute differs from the old one's, the bar pokes and, with the default `showOsd: true`, the OSD opens though nobody changed a level. The same path opens it at startup if the default sink binds after the OSD's bars are built (PLAUSIBLE: settle by starting the shell before PipeWire is ready, or in a nested session, and watching whether the OSD shows). Fix: mirror the microphone bar: keep `property var _sink: null`, set it in `Component.onCompleted`, and in both handlers `if (root.useSystemVolume) { if (AudioManager.defaultSink === root._sink) root.poked(); root._sink = AudioManager.defaultSink; }`.
@@ -2059,15 +2025,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:osd system
 
 ### The OSD's stream bar tracks its streams by hand
-- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:49` (`_audioStreams`), `components/surfaces/osd/PipewireVolumeBar.qml:53` (Instantiator), `components/surfaces/osd/PipewireVolumeBar.qml:109` (`onTargetAppsChanged` and the three handlers after it), `components/surfaces/osd/PipewireVolumeBar.qml:123` (`Component.onCompleted`), `components/surfaces/osd/PipewireVolumeBar.qml:129` (the two `Connections`), `components/surfaces/osd/PipewireVolumeBar.qml:156` (`_setTargetNodes`, `_updateTargetNode`)
-- **What:** `_targetNodes` is re-assigned by hand from seven triggers (a watcher per playback stream for `ready`, node insert and remove, `Pipewire.ready`, four config properties, completion), each calling `AudioManager.matchStreams`. Every one of them is a property `matchStreams` already reads (`_playbackStreams`, each node's `audio`, `ready`, `properties`, `nickname`, and the three arguments), so a binding re-evaluates on exactly those changes, and also on a stream's `properties` arriving late, which no trigger covers now. Every bar runs the whole mechanism, the master bar too, whose result is always `[]`. Fix: `readonly property var _targetNodes: useSystemVolume ? [] : AudioManager.matchStreams(targetApps, otherApps, excludedApps)`, and fold the node ids into `_levels` (`_keyOf(_targetNodes) + "|" + …`) so a change in the set of streams always changes it and `on_LevelsChanged` keeps telling a level change from a set change (what `_setTargetNodes`'s early `_nodeKey` write does now). Removes lines 46-67, 108-150 and 156-168: 22 + 43 + 13 = 78 lines.
+- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:49` (`_audioStreams`), `components/surfaces/osd/PipewireVolumeBar.qml:53` (Instantiator), `components/surfaces/osd/PipewireVolumeBar.qml:102` (`onTargetAppsChanged` and the three handlers after it), `components/surfaces/osd/PipewireVolumeBar.qml:116` (`Component.onCompleted`), `components/surfaces/osd/PipewireVolumeBar.qml:122` (the two `Connections`), `components/surfaces/osd/PipewireVolumeBar.qml:149` (`_setTargetNodes`, `_updateTargetNode`)
+- **What:** `_targetNodes` is re-assigned by hand from seven triggers (a watcher per playback stream for `ready`, node insert and remove, `Pipewire.ready`, four config properties, completion), each calling `AudioManager.matchStreams`. Every one of them is a property `matchStreams` already reads (`_playbackStreams`, each node's `audio`, `ready`, `properties`, `nickname`, and the three arguments), so a binding re-evaluates on exactly those changes, and also on a stream's `properties` arriving late, which no trigger covers now. Every bar runs the whole mechanism, the master bar too, whose result is always `[]`. Fix: `readonly property var _targetNodes: useSystemVolume ? [] : AudioManager.matchStreams(targetApps, otherApps, excludedApps)`, and fold the node ids into `_levels` (`_keyOf(_targetNodes) + "|" + …`) so a change in the set of streams always changes it and `on_LevelsChanged` keeps telling a level change from a set change (what `_setTargetNodes`'s early `_nodeKey` write does now). Removes lines 46-67, 101-143 and 149-161: 22 + 43 + 13 = 78 lines.
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:osd system
-
-### PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon
-- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:101` (`toggleMute`), `components/surfaces/osd/OSDBar.qml:53` (`iconSource`)
-- **What:** `toggleMute()` has no caller: the bar is built inside OSDBar's Loader with no id, and StyledVolumeBar has no mute signal to call it from (its only signal is `volumeChanged`); `grep -rn 'toggleMute'` finds the bar's own definition and AudioManager's. The master bar's icon writes its own thresholds (`volume_mute` when muted or at 0, `volume_up` above 0.4, else `volume_down`) where the bar's Volume widget and the audio mixer use `AudioManager.outputIcon(kind, muted, level)`, so the OSD and the bar disagree (muted: `volume_mute` here, `volume_off` there; headphones: a speaker here, `headphones` there), while the microphone bar beside it already uses `AudioManager.inputIcon`. Fix: delete lines 101-106 of PipewireVolumeBar.qml (6 lines), and replace OSDBar.qml lines 53-59 with `iconSource: root.entry.icon || (isMaster ? AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), AudioManager.muted, AudioManager.volume) : "")` (7 lines become 1). 12 lines.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:osd system
 
 ### Hot corners' action list is a hand-kept copy of the keybind one

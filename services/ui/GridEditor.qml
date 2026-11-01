@@ -366,16 +366,6 @@ QtObject {
     root.applyPlan(root.planCentre(axis));
   }
 
-  // Whether a new module of `type` may be dropped at `place`
-  function canAdd(type, place) {
-    return root.planAdd(type, place).valid;
-  }
-
-  // Whether module `index` may move with its top left to x, y
-  function canMove(index, x, y) {
-    return root.planMove(index, x, y).valid;
-  }
-
   // Whether module `index` may take the size w × h (top left kept)
   function canResize(index, w, h) {
     const place = root.module(index)?.place;
