@@ -136,7 +136,8 @@ TestCase {
     const column = {
       "dynamic": true,
       "vertical": true,
-      "ids": [7, 3, 9]
+      "ids": [7, 3, 9],
+      "steps": 3
     };
     compare(WallpaperFill.parallax(3, column), {
       "x": 0,
@@ -150,6 +151,27 @@ TestCase {
       "x": 0,
       "y": 0
     }, "not listed");
+    // A fixed step each: a workspace added at the end (niri's empty one
+    // taken) moves none of the others; past `steps`, it stays at the end
+    const five = Object.assign({}, column, {
+      "steps": 5
+    });
+    compare(WallpaperFill.parallax(3, five), {
+      "x": 0,
+      "y": -0.5
+    }, "the second of five steps");
+    compare(WallpaperFill.parallax(3, Object.assign({}, five, {
+      "ids": [7, 3, 9, 12]
+    })), {
+      "x": 0,
+      "y": -0.5
+    }, "unmoved by another workspace");
+    compare(WallpaperFill.parallax(6, Object.assign({}, five, {
+      "ids": [7, 3, 9, 12, 2, 4, 6]
+    })), {
+      "x": 0,
+      "y": 1
+    }, "past the last step: at the end");
     compare(WallpaperFill.parallax(-1, null), {
       "x": 0,
       "y": 0
@@ -192,6 +214,7 @@ TestCase {
       "dynamic": true,
       "vertical": true,
       "ids": [7, 3, 9],
+      "steps": 3,
       "strip": "horizontal",
       "windows": strip(2),
       "width": 1920,

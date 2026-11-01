@@ -55,6 +55,7 @@ QtObject {
   // Slide with the workspaces, drawn this much (%) larger than the screen
   readonly property bool wallpaperParallax: _c.wallpaper.parallax.enabled
   readonly property int wallpaperParallaxStrength: _c.wallpaper.parallax.strength
+  readonly property int wallpaperParallaxWorkspaces: _c.wallpaper.parallax.workspaces
   // { dark, light }: file URLs, "" for none
   readonly property string darkWallpaper: _c.wallpaper.variants.dark
   readonly property string lightWallpaper: _c.wallpaper.variants.light

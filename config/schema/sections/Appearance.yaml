@@ -226,6 +226,14 @@ properties:
             maximum: 15
             x-showIf: {enabled: true}
             description: How much larger than the screen the wallpaper is drawn, and so how far it can slide.
+          workspaces:
+            type: integer
+            title: Workspaces it spans
+            default: 5
+            minimum: 2
+            maximum: 20
+            x-showIf: {enabled: true, /$supports.dynamicWorkspaces: true}
+            description: Where the compositor makes workspaces as you need them, how many it takes to slide from one end to the other. Each workspace down moves it the same step, so opening and closing windows never moves it; past the last, it stays at the end.
   font:
     x-scope: look
     type: object

@@ -28,6 +28,7 @@ PanelWindow {
     "dynamic": CompositorManager.supports.dynamicWorkspaces === true,
     "vertical": CompositorManager.supports.verticalWorkspaces === true,
     "ids": CompositorManager.workspaces.filter(w => w.output === root.name).map(w => w.id),
+    "steps": Appearance.wallpaperParallaxWorkspaces,
     "still": CompositorManager.wallpaperStill,
     "strip": root._strip,
     "windows": root._strip === "" ? [] : CompositorManager.windows.filter(w => w.output === root.name && w.workspaceId === root._activeId && !w.floating && !w.hidden && !w.fullscreen),

@@ -78,14 +78,17 @@ QtObject {
   // The parallax shift { x, y } of an output showing workspace `activeId`.
   // `spec`: { grid, columns, rows (the grid layout's), base (the output's
   // first id), size (its count of ids), dynamic (the compositor keeps the
-  // list itself: `ids`, the output's workspace ids in its order), vertical
+  // list itself: `ids`, the output's workspace ids in its order, and
+  // `steps`, how many of them span the slide), vertical
   // (its workspaces stack top to bottom), still (false where the wallpaper
   // slides away with each workspace, so following them shows nothing),
   // strip ("horizontal" | "vertical" | "": the output's scrolling strip),
   // windows (the active workspace's tiled windows there, { x, y, w, h,
   // focusRank }), width / height (the output's) }.
   // A grid moves both ways, by column and row; the rest along one axis, by
-  // place. A strip takes its axis, by how far along it the view is
+  // place. Dynamic workspaces move a fixed step each (`steps` span it), not
+  // a share of how many there are: their count changes as windows open and
+  // close (niri's empty last one), which would move every one. A strip takes its axis, by how far along it the view is
   // (stripShift); the workspaces' shift on that axis moves to the other
   // one while it's free.
   function parallax(activeId, spec) {
@@ -159,7 +162,7 @@ QtObject {
       };
     }
     const index = spec.dynamic ? (spec.ids ?? []).indexOf(activeId) : activeId - spec.base;
-    const count = spec.dynamic ? (spec.ids ?? []).length : spec.size;
+    const count = spec.dynamic ? spec.steps : spec.size;
     const shift = root.parallaxShift(index, count);
     return spec.vertical ? {
       "x": 0,

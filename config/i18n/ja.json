@@ -3718,6 +3718,8 @@
     "Bottom left to top right": "",
     "Starts from": "",
     "Steady": "",
-    "The center": ""
+    "The center": "",
+    "Where the compositor makes workspaces as you need them, how many it takes to slide from one end to the other. Each workspace down moves it the same step, so opening and closing windows never moves it; past the last, it stays at the end.": "",
+    "Workspaces it spans": ""
   }
 }
