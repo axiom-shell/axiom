@@ -546,13 +546,15 @@ func mapError(err error, passphrase string) error {
 		return err
 	}
 	msg := de.Message
-	if passphrase != "" {
-		msg = strings.ReplaceAll(msg, passphrase, "…")
-	}
 	if msg == "" {
 		msg = name
 	}
+	// Told apart before the passphrase is taken out: it may be a word of
+	// the message ("pass" in "passphrase")
 	lower := strings.ToLower(msg)
+	if passphrase != "" {
+		msg = strings.ReplaceAll(msg, passphrase, "…")
+	}
 	kind := axerr.Failed
 	switch {
 	case name == errDeviceBusy || strings.Contains(lower, "target is busy") || strings.Contains(lower, "device is busy"):

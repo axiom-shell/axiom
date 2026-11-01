@@ -196,6 +196,7 @@ func TestMapError(t *testing.T) {
 		{reply(errPrefix+"NotAuthorizedCanObtain", "no"), "", axerr.NotAuthorized},
 		{reply(errPrefix+"Failed", "Error unlocking /dev/sdc1: Failed to activate device: Incorrect passphrase."), "x", axerr.WrongPassphrase},
 		{reply(errPrefix+"Failed", "Error unlocking /dev/sdc1: Failed to activate device: Operation not permitted"), "x", axerr.WrongPassphrase},
+		{reply(errPrefix+"Failed", "Error unlocking /dev/sdc1: Failed to activate device: Incorrect passphrase."), "pass", axerr.WrongPassphrase},
 		{reply(errPrefix+"Failed", "Error mounting: wrong fs type"), "", axerr.Failed},
 		{axerr.New(axerr.Unavailable, "gone"), "", axerr.Unavailable},
 		{axerr.Wrap(axerr.Unavailable, &dbus.Error{Name: dbus.ErrServiceUnknown}, "call"), "", axerr.Unavailable},
