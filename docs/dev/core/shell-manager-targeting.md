@@ -4,7 +4,7 @@
 > **Config:** `General.screen`, `General.primaryMonitor`; each surface's own `screen` (a `ScreenTarget`: OSD, overlay, launcher, notifications, power menu, docks, bars, edge menus)
 > **Related:** [Popout registry](../popouts/registry.md), [Lockscreen](../features/lockscreen.md), [Greeter runtime](../features/greeter-runtime.md), [Polkit](../features/polkit.md), [Screenshots and recording](../features/screenshots-recording.md)
 
-`ShellManager` holds the shell's signals (power menu, launcher, overlays) that modules connect to instead of calling each other directly, link navigation, and which screen answers a shortcut. (Rule: AGENTS.md › UI conventions, "Screen targeting".) Which surfaces are up, and which windows focus grabs let through, is `SurfaceManager`: [The surface registry](#the-surface-registry).
+`ShellManager` holds the shell's signals (power menu, launcher, overlays, the OSD's Show and messages, with the `osd` IPC target that sends them) that modules connect to instead of calling each other directly, link navigation, and which screen answers a shortcut. (Rule: AGENTS.md › UI conventions, "Screen targeting".) Which surfaces are up, and which windows focus grabs let through, is `SurfaceManager`: [The surface registry](#the-surface-registry).
 
 ### Screen targets
 - Every surface placed on monitors has a `screen`: a `ScreenTarget`, `{ mode, names }`. `mode` is `"inherit"` (General's) | `"primary"` | `"focused"` | `"all"` | `"named"` (the monitors in `names`, else the primary one). A use may narrow the enum (General's own has no `inherit`).

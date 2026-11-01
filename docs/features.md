@@ -243,7 +243,8 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 - **Visibility:** always shown, shown on hover, or hidden while a window overlaps it. Running apps can count windows everywhere, on the dock's monitor only, or on its workspace only.
 
 **OSD:**
-- **Bars:** each OSD holds the bars you pick: output and microphone volume, brightness, the volume of the apps you choose, or of every other app. A change opens every OSD holding that bar.
+- **Levels:** each OSD holds the bars you pick: output and microphone volume, brightness, the volume of the apps you choose, or of every other app. A change opens every OSD holding that bar.
+- **Statuses:** Caps, Num and Scroll Lock, the keyboard layout, the microphone muted, the output device switched, the power profile, caffeine, do not disturb, night light, Wi-Fi, Bluetooth, airplane mode and the charger each show as one line when they change, in place of the bars, and the track playing as a card. Scripts can show their own line: `axiom ipc osd message <icon> <text>`.
 - **Layout:** it can open on hover too, and lay its bars along the edge or across it.
 
 **Both:**

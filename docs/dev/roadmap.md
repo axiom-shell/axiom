@@ -140,6 +140,9 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
 - Once the shell runs the workspace grid's centre start, with `Workspaces.layout` `grid` (3 × 3): log in under sway and Hyprland with two monitors and check each starts on its block's centre (5, 14); restart axiom after moving away and check nothing moves; on sway, switch the layout to `perMonitor` and back to `grid` and check every monitor goes to its centre, windows kept on their workspaces. Nested Hyprland (one output) showed the start, a reload leaving workspace 1 alone, and perMonitor → grid going to 5.
 - Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
+- Once the shell runs the OSD's statuses (config v86), add Lock keys, Keyboard layout, Microphone muted and Output device to an OSD (the default has them; a custom OSD gets them in Settings → Dock & OSD): toggle Caps Lock and Num Lock, switch the layout, mute the microphone and switch the output in the audio mixer, and check each shows its line on the focused screen and that a volume key while one shows swaps back to the bars without the OSD moving; that plugging in a headset no longer opens the bars; and that nothing shows in the first moments after a reload. Then on a laptop, the power profile, charger, Wi-Fi, Bluetooth and airplane mode items (airplane mode's line isn't replaced by its radios switching), and a Now playing item on a track change.
+- With a DDC/CI monitor, press brightness up with the OSD shut: `scripts/log.sh` shows no failed `brightness.get`, the bar doesn't jump back, and the next press steps from the new level (an own set now marks its write before the OSD's refresh runs).
+
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -602,10 +605,8 @@ Found by the audits:
 - [Event titles from a feed render as styled text and load remote images](issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
 - [Calendar results and members nothing reads](issues.md#calendar-results-and-members-nothing-reads)
 - [The Accounts card's fallbacks for a renamed key and for empty account ids](issues.md#the-accounts-cards-fallbacks-for-a-renamed-key-and-for-empty-account-ids)
-- [An own brightness set opens the OSD, which refreshes the monitor beside the write](issues.md#an-own-brightness-set-opens-the-osd-which-refreshes-the-monitor-beside-the-write)
 - [Idle dimming is forgotten across a shell reload](issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
 - [Two members of the brightness system nothing needs](issues.md#two-members-of-the-brightness-system-nothing-needs)
-- [The brightness icon thresholds are written three times](issues.md#the-brightness-icon-thresholds-are-written-three-times)
 - [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
 - [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
 - [An image sent without text to Anthropic carries a whitespace-only text block](issues.md#an-image-sent-without-text-to-anthropic-carries-a-whitespace-only-text-block)
@@ -632,10 +633,6 @@ Found by the audits:
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
 - [ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room](issues.md#screenlayouteditorsavedlayout-is-dead-and-desktoptarget-forwards-the-editors-room)
-- [The system volume bar opens the OSD when the default output switches](issues.md#the-system-volume-bar-opens-the-osd-when-the-default-output-switches)
-- [Every OSD's opening reads the monitor's brightness, brightness bar or not](issues.md#every-osds-opening-reads-the-monitors-brightness-brightness-bar-or-not)
-- [The OSD's stream bar tracks its streams by hand](issues.md#the-osds-stream-bar-tracks-its-streams-by-hand)
-- [PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon](issues.md#pipewirevolumebar-keeps-a-mute-toggle-nothing-calls-and-its-own-volume-icon)
 - [Hot corners' action list is a hand-kept copy of the keybind one](issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
 - [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
 - [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)
@@ -682,6 +679,10 @@ Steps:
 - **Done:** **The window switcher's blur and release on sway and niri** (row 16; plan #212, the maintainer: "For the blur, it just looks really bad, and goes out WAY to many pixels away", "For the key release, it sometimes works but is really inconsistent", and "B: daemon holds keys"): SwayFX blurs every pixel that isn't clear, so a floating popout's shadow cast in its own blurred window (the switcher, the floating launcher) was frosted out to its reach; the shadow and stroke now go to a window of their own over the box's (`FloatingShadow`, `BlurManager.shadowsApart`), the popouts' stack. On sway and niri the daemon holds the keyboard while the switcher is open (`switcher.hold`, `wayland/keyhold`): the modifiers' mask that follows `wl_keyboard.enter` says which are already down, so a modifier let go before it had the keyboard picks (after a 40 ms grace that rides out a keyboard's blip; the maintainer's custom keyboard showed one) instead of leaving the switcher open to eat the next key; `SwitcherKeys` is gone ([window switcher](hyprland/window-switcher.md) › sway and niri).
 
 - **Done:** **Low levels spill out of their rounded troughs** (row 16; the maintainer: "anything with a bar with corner radius that extends to fill a container (the two I directly notice are the custom module pill style mode (with the colored fill that fills the module based on percentage), and the osd bars, there may be more though), has a problem of when appearing (i.e. 0-10 ish percentage), since it has a small width, the corner radius doesn't get fully fleshed out, causing a rectangle look (which spills out of its "trough"'s corner radius.)) Fix this"): a fill shorter than twice its radius had its radius clamped. A bar widget's `backgroundLevel` is now the background's own shape seen through a `ClippingRectangle` window with a rounded leading edge (`WidgetBackground`), `StyledVolumeBar`'s trough (the OSD's bars) clips its fill, and the Disks and Claude usage modules' meters are `LevelMeter`s (never shorter than their rounded ends), as the custom widgets' already were.
+- **Done:** **A Caps Lock warning in password fields** (#270; from the small gaps users notice at once, 2026-10-30): the daemon's `lockKeys` topic reads Caps, Num and Scroll Lock from the keyboard LEDs, every hidden-text field shows a Caps Lock icon while it has focus, `PasswordEntry` (lock screen, greeter, polkit) also says so on its message line, and a LockKeys bar widget shows the keys that are on ([Lock keys](features/lock-keys.md)).
+
+- **Done:** **The OSD's statuses** (the maintainer, 2026-11-01: "with the implementation of lock keys handling, the OSD is finally ready for it's final pass of improvements"; plan choices: "Swap in a pill", every extra in this pass, "Rename to items"): an OSD's `bars` became `items` (step v86, which gives an OSD on the old default the new default's statuses), each a level bar, a one-line status or the now playing card, the OSD showing whichever changed last. Statuses: lock keys, the keyboard layout, the microphone muted, the output device switched, the power profile, caffeine, do not disturb, night light, Wi-Fi, Bluetooth, airplane mode, the charger, and messages from `axiom ipc osd message <icon> <text>` ([OSD](features/osd.md)). Closes "No OSD for caps lock or the keyboard layout" and, as it rewrote the same files, the OSD audit's four entries and two of the brightness audit's.
+
 Found meanwhile:
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
@@ -736,7 +737,6 @@ Deferred by the maintainer (2026-10-29: "move what is necessary to deferred"; Qu
 Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log everything except notif sound … Build them into roadmap in the correct spot but deferred and issues (all should need a plan)"; Phase 13 features, each through [Items that need a plan](#items-that-need-a-plan) once taken up; notification sounds are the maintainer's own system sounds plan):
 - [Removable drives aren't handled](issues.md#removable-drives-arent-handled)
 - [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
-- [No OSD for caps lock or the keyboard layout](issues.md#no-osd-for-caps-lock-or-the-keyboard-layout)
 - [No keyboard backlight control](issues.md#no-keyboard-backlight-control)
 
 Deferred by the maintainer (2026-10-30, stacked bars: "Stacked bars will be planned as supported. Mark it as needs a plan and move to deferred"; through [Items that need a plan](#items-that-need-a-plan) once taken up):

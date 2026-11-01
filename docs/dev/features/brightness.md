@@ -18,8 +18,9 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
 - **Writing:**
   - `set` / `stepBy` update the value at once.
   - Writes are coalesced per monitor: one `brightness.set` in flight, with the latest value next.
-- **`brightnessChanged(name)`** fires only for axiom's own sets, so the OSD opens on them.
-  - Brightness changed outside axiom is picked up when the OSD opens (`OSDTriggers` calls `refresh`).
+- **`brightnessChanged(name)`** fires only for axiom's own sets, so the OSD opens on them. It fires after the write is marked (`_writing`), so the `refresh` of the OSD opening on it skips the monitor being written instead of running `ddcutil getvcp` beside `setvcp`.
+  - Brightness changed outside axiom is picked up when the OSD opens (`OSDTriggers` calls `refresh` for the monitors its brightness bars show).
+- **`icon(level)`**: `brightness_low`, `_medium` or `_high`, for the module, the OSD bar and the Quick actions tile.
 - **Several monitors:**
   - `names` comes from `namesKey`, a string that only notifies when a monitor comes or goes.
   - `average(names)`.
