@@ -19,10 +19,10 @@ BaseWidget {
   property real iconScale: 1.0
   property bool showText: true
   property bool showIcon: true
-  property real spacing: Widget.spacing * 1.5
+  property real spacing: 0
   property color foregroundColor: Theme.background
   property color iconColor: foregroundColor
-  property int fontSize: Appearance.fontSize
+  property int fontSize: 0
   // The label's digits are of equal width (tabular figures), and it takes
   // the room of its text with every digit a 0, never less than
   // `minimumText`'s (its widest value, "100%" for a percent): a ticking or

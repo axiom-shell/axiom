@@ -46,22 +46,23 @@ Item {
     root.currentIndex = index;
   }
 
-  // The configured views, then the pages that aren't in config
-  readonly property var pinnedPages: OverlayConfig.pinnedPages
+  // The configured views, then the Layouts page (not in config)
   readonly property int editorIndex: viewsModel.length
-  readonly property int pageCount: viewsModel.length + pinnedPages.length
-  // What the navigator shows for each page: the views, then the pinned ones
+  readonly property int pageCount: viewsModel.length + 1
+  // What the navigator shows for each page: the views, then Layouts
   readonly property var pages: viewsModel.map(view => ({
         "type": view.viewConfig.type,
         "icon": OverlayConfig.pageIcon(view.viewConfig),
         "label": OverlayConfig.viewLabel(view.viewConfig, view.index),
         "tool": OverlayConfig.isTool(view.viewConfig.type)
-      })).concat(pinnedPages.map(page => ({
-        "type": page.type,
-        "icon": page.icon,
-        "label": I18n.tr(page.label),
-        "tool": true
-      })))
+      })).concat([
+    {
+      "type": OverlayConfig.layoutsPage.type,
+      "icon": OverlayConfig.layoutsPage.icon,
+      "label": I18n.tr(OverlayConfig.layoutsPage.label),
+      "tool": true
+    }
+  ])
   // itemAt() isn't a notifying read: `count` makes this re-evaluate once
   // the Repeater has created its pages (on launch they don't exist yet)
   readonly property Item currentPage: root.currentIndex >= root.editorIndex ? editorPage : (viewsRepeater.count > root.currentIndex ? viewsRepeater.itemAt(root.currentIndex) : null)
@@ -69,20 +70,19 @@ Item {
   // A new launch opens on the first page; closing and re-opening keeps the
   // page (this item lives as long as the overlay window). The views
   // rebuild whenever Overlay.views changes, including saves from the
-  // overlay editor: stay on a pinned page if the user is on one, otherwise
-  // keep the index valid. Tracked from real navigation only: while the
-  // views are still loading the pinned pages briefly sit at the start,
-  // which isn't the user being on them.
-  // Which pinned page the user is on (index into pinnedPages), or -1
-  property int _onPinned: -1
+  // overlay editor: stay on Layouts if the user is on it, otherwise keep
+  // the index valid. Tracked from real navigation only: while the views
+  // are still loading Layouts briefly sits at the start, which isn't the
+  // user being on it.
+  property bool _onLayouts: false
   onCurrentIndexChanged: {
-    root._onPinned = root.viewsModel.length > 0 && root.currentIndex >= root.editorIndex ? root.currentIndex - root.editorIndex : -1;
+    root._onLayouts = root.viewsModel.length > 0 && root.currentIndex >= root.editorIndex;
     if (root.open)
       settleTimer.restart();
   }
   onPageCountChanged: {
-    if (root._onPinned >= 0)
-      root.currentIndex = root.editorIndex + root._onPinned;
+    if (root._onLayouts)
+      root.currentIndex = root.editorIndex;
     else
       root.currentIndex = Math.max(0, Math.min(root.currentIndex, root.editorIndex - 1));
   }
@@ -90,8 +90,7 @@ Item {
   Connections {
     target: ShellManager
     function onShowOverlayPage(type) {
-      const pinned = root.pinnedPages.findIndex(page => page.type === type);
-      const index = pinned >= 0 ? root.editorIndex + pinned : root.viewsModel.findIndex(view => view.viewConfig.type === type || view.viewConfig.name === type);
+      const index = type === OverlayConfig.layoutsPage.type ? root.editorIndex : root.viewsModel.findIndex(view => view.viewConfig.type === type || view.viewConfig.name === type);
       if (index < 0)
         return;
       // A link keeps the page it left, for the navigator's way back; any

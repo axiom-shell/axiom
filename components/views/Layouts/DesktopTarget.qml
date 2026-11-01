@@ -11,9 +11,6 @@ import qs.services.ui
 ScreenLayoutTarget {
   id: root
 
-  // The room its grid is fitted to on the screen it's laid out on, px
-  readonly property int roomWidth: DesktopManager.editor.room.width
-  readonly property int roomHeight: DesktopManager.editor.room.height
   readonly property var target: DesktopManager.targets.find(t => t.key === DesktopManager.selectedTarget) ?? null
 
   screenEditor: DesktopManager.editor
@@ -22,6 +19,6 @@ ScreenLayoutTarget {
   title: root.target ? I18n.tr("Desktop: {0}", root.target.label) : I18n.tr("Desktop")
   description: I18n.tr("Modules on the desktop, under your windows. They take clicks but not typing. A monitor shows its own layout if it has one, else the primary monitor's, else the one for all monitors.")
   emptyText: root.target ? I18n.tr("{0}: give it a layout of its own to edit it here.", root.target.status) : ""
-  fitText: !root.layout ? "" : !root.layout.enabled ? I18n.tr("Turned off: the desktop doesn't show it") : root.screenEditor.shrunk ? root.shrinkText : I18n.tr("{0} × {1} units, fitted to {2} × {3} px inside the bars and border; modules keep to their nearest edge on other monitors", root.grid.cols, root.grid.rows, root.roomWidth, root.roomHeight)
+  fitText: !root.layout ? "" : !root.layout.enabled ? I18n.tr("Turned off: the desktop doesn't show it") : root.screenEditor.shrunk ? root.shrinkText : I18n.tr("{0} × {1} units, fitted to {2} × {3} px inside the bars and border; modules keep to their nearest edge on other monitors", root.grid.cols, root.grid.rows, Math.round(root.screenEditor.room.width), Math.round(root.screenEditor.room.height))
   fitWarning: root.layout !== null && (!root.layout.enabled || root.screenEditor.shrunk)
 }

@@ -1022,40 +1022,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### PopoutWrapperBase's aboutToDismiss signal has no listener
-- **Where:** `components/hosts/popout/PopoutWrapperBase.qml:161` (`aboutToDismiss`)
-- **What:** A repo-wide grep for `boutToDismiss` finds only the declaration, its example comment (line 160) and the emit in `requestDismiss` (line 165); no wrapper handles it. Fix: delete the comment and signal (159-161) and the emit (165): 4 lines.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### Three EdgePopout members nothing reads
-- **Where:** `components/hosts/popout/EdgePopout.qml:80` (`detached`), `components/hosts/popout/EdgePopout.qml:149` (`yielded`), `components/hosts/popout/EdgePopout.qml:191` (`gaps`)
-- **What:** Each forwards `placement.*` or `claim.*`, and nothing reads them on an EdgePopout. Internal users read `placement`/`claim` directly. `SubmenuHost`'s `geometry.detached` is EdgePlacement's, and the only outside mention is FloatingEdgeMenu.qml:25's comment `(EdgePopout.gaps)`. Fix: delete lines 77-80 (`detached` and its comment), 149 and 191 (6 lines), and point that comment at `EdgePlacement.gaps`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### PopoutGeometry handles a phase and a submenu pair the registry never produces
-- **Where:** `components/methods/PopoutGeometry.qml:81` (`resolve`), `components/methods/PopoutGeometry.qml:120` (`resumable`), `tests/tst_PopoutGeometry.qml:115`
-- **What:** Two branches handle cases nothing produces:
-  - **The "closing" phase:** PopoutManager writes only the phases "open" and "yielded", plus "opening" through `resumable`. A grep for `"closing"` over services/, components/ and tests/ finds only PopoutGeometry's comment (line 17), lines 81 and 120, and the test.
-  - **The sibling-submenu skip** (lines 89-91, `e.kind === "submenu" && claim.parentId && e.parentId === claim.parentId`): it needs two submenu claims with one parent. A submenu's key is its parent's plus `/submenu`, with one SubPopout per host, so the only such entry is the claim itself, which line 79 already skips.
-
-  Fix: drop both `"closing"` clauses, lines 89-91, the comment's "closing" part and the test's "gone" row (about 6 lines).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### PillBarJoin's available repeats what joined already says
-- **Where:** `components/hosts/popout/PillBarJoin.qml:45` (`available`), `components/methods/SurfaceContext.qml:114` (`end`), `docs/dev/popouts/pill-and-floating-bars.md:34`
-- **What:** `available` asks `ScreenEdgeManager.surfaceEnd(screen, side).kind === "pillBar"` again. EdgePlacement sets `joined` from `place.joinStart && startEnd.sink === "pillBar"`, and `SurfaceContext.end` gives sink `"pillBar"` only when `joins && e.kind === "pillBar"`. So `joined` implies `available` wherever both are read. The doc's "Its `available` is what makes the end joinable" is wrong too. Fix: drop lines 43-45 and the two `available` terms, and point the doc at `sink: "pillBar"`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### Geometry members nothing reads
-- **Where:** `components/hosts/popout/AttachedSurface.qml:330` (`sideU`), `components/hosts/popout/AttachedSurface.qml:331` (`farSideU`), `components/hosts/popout/EdgePlacement.qml:225` (`merged`), `components/methods/SurfaceOutline.qml:97` (`size`)
-- **What:** No `.sideU`/`.farSideU` read of AttachedSurface and no `.merged` read of an EdgePlacement exist. `SurfaceOutline.size` is called only by `tests/tst_SurfaceOutline.qml` (lines 146, 329), while AttachedSurface works the size out again itself. Fix: delete the three properties (3 lines). Then either AttachedSurface takes its implicit size from `SurfaceOutline.size(root._spec, root._m)`, or `size` goes (lines 95-103, 9 lines) and the tests inline it.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### SurfaceContext.layout's pill and merged results have no test row
 - **Where:** `tests/tst_SurfaceContext.qml:553` (`test_layout_between_pills`), `components/methods/SurfaceContext.qml:337` (`layout`)
 - **What:** No row pins `layout`'s result for:
@@ -1065,12 +1031,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   A slip in any of these passes today (63 rows pass). A lost backfill shows the pill stroke's fringe as a line; a wrong `attachClearance` puts a merged box's content where the pills would be. Fix: add `test_layout_on_pill`, `test_layout_merged` and a bare-edge `ownSink` row.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### The tray menu's isVertical and barConfig are never read
-- **Where:** `components/content/SystemTray/SystemTray.qml:14` (`isVertical`), `components/content/SystemTray/SystemTray.qml:15` (`barConfig`), `components/bar/widgets/SystemTray/SystemTray.qml:99`
-- **What:** The tray content declares both from its payload and nothing reads either: no host reads them off `currentItem`/`currentData`, and inside the content only the declarations match. The widget's `extraData` sends them only to feed these. Fix: drop the two properties and the two `extraData` keys (4 lines).
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the popouts system
 
 ### Both tray menu lists override the same width cap
@@ -1104,17 +1064,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
-
-### Nothing listens to the bar's layoutUpdated any more
-- **Where:** `components/bar/BarContainer.qml:31` (`layoutUpdated`), `components/bar/BarContainer.qml:313` (`layoutMoved`, `_slotsKey`, `_settle`), `components/bar/BarContainer.qml:401` (`onAllocationUpdated`), `components/bar/WidgetGroup.qml:109` (`allocationUpdated`, `_allocationKey`), `docs/dev/bar/composition.md`
-- **What:** The signal has no handler. `grep -rn 'layoutUpdated'` over QML and docs finds only its declaration, its two emits (BarContainer.qml:314, 320) and composition.md's "`BarContainer.layoutMoved()` emits `layoutUpdated` … so an open popout re-anchors on the settled widget". Its listener was BarPopouts' `onLayoutUpdated`, removed in "Rework and harden popouts (#53)". The chain still runs on the hot path:
-  - Every `slots` change `JSON.stringify`s the slots.
-  - Every section allocation change (a ticking clock's width, a tray icon) `JSON.stringify`s the allocation, emits `allocationUpdated` and calls `layoutMoved()`.
-  - `layoutMoved()` emits to nobody and restarts a Timer that emits to nobody again `animNormal` later.
-
-  Fix: delete the chain and its doc line, 35 lines: the signal and its comment (BarContainer.qml:29-31), `_slotsKey`/`onSlotsChanged`/`layoutMoved`/`_settle` (301-321), Section's `onAllocationUpdated` (401), WidgetGroup's `allocationUpdated`/`_allocationKey`/`onAllocationChanged` (108-117).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
 
 ### A bar made while the bar editor is open may never report to it
 - **Where:** `components/bar/BarContainer.qml:346` (`on_ReportKeyChanged`), `components/bar/BarContainer.qml:349` (`_report`)
@@ -1173,24 +1122,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/bar/BarContainer.qml:96` (`sectionPills`), `components/methods/BarLayout.qml:523` (`_mergeSpans`)
 - **What:** `sectionPills` hand-rolls the loop that joins spans at most `pillMerge` apart (99-107), which `BarLayout._mergeSpans` already does for islands, then decides each pill's joins in the host (`root.ends.start.joinable && m.start - gap <= reach`). That breaks composition.md (main-axis layout math lives in `methods/BarLayout`) and AGENTS.md ("A methods helper's decision … is read from its output, never re-derived in a host"). No row tests when an end pill joins. The copy also writes into `_spans`' own objects (`spans.slice()` is shallow, and `last.end = …` mutates the pushed span). Fix: a BarLayout `pillRects(spans, merge, gap, reach, length, joinStart, joinEnd)` on `_mergeSpans` (which copies), with rows for a free end, a joined end at each side, and a held end. `sectionPills` (96-126, 31 lines) becomes one call of about 3 lines.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### StandaloneBar only wraps BarPanel's BarContainer
-- **Where:** `components/bar/StandaloneBar.qml:7`, `components/bar/BarPanel.qml:127` (`bar`), `components/bar/BarContainer.qml:215` (`borderOpening`), `components/bar/BarContainer.qml:515` (`blurOrigin`)
-- **What:** Its header calls it "A bar's BarContainer outside a window of its own", but nothing draws a bar outside a window any more. BarPanel is its only user, and it overrides StandaloneBar's own logic (the implicit 300 px size) with explicit x/y/width/height; what's left forwards `barConfig`/`panel`/`screen` into a BarContainer filling it. The comments about "the bar editor's preview" (215, 515) describe a preview that is gone. Fix: put the `BarContainer` straight into BarPanel with the same x/y/width/height (`container: bar`), read the container's own `x`/`y` in `blurOrigin`, drop the preview clauses, and drop its `Extra:` line in `.claude/skills/review-system/systems.md`. This removes StandaloneBar.qml (27 lines).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### BarContainer._withEntry rebuilds Utils.withEntry
-- **Where:** `components/bar/BarContainer.qml:174` (`_withEntry`), `components/methods/Utils.qml:65` (`withEntry`)
-- **What:** `_withEntry` copies the map and sets or deletes `owner` (177-182), which is `Utils.withEntry`; the same file already uses `Utils.withEntry` at line 341. Fix: `return Utils.deepEqual(map[owner] ?? null, value ?? null) ? null : Utils.withEntry(map, owner, value || undefined);`, 12 lines (172-183) down to 4.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
-- **Where:** `config/BarsConfig.qml:106` (`enrichBarConfig`), `config/BarsConfig.qml:145`, `config/BarsConfig.qml:25`, `config/BarsConfig.qml:47`, `config/BarsConfig.qml:113`
-- **What:** Nothing reads an enriched bar's `joinable` or `separatorGap` (every `.joinable` read is an end's or SurfaceContext's own edge; `separatorGap` is read only as `look.separatorGap`, line 118). The bar comes from `ConfigManager.live` with every default filled, so `barConfig.background ?? "solid"`, `barConfig.pillPadding ?? 0` and `barConfig.pillMerge ?? 0` never fall back (AGENTS.md: "readers use no `??` fallbacks"; check_structure only catches `_c.key ?? x`). Fix: delete lines 105-106 and 145 (3 lines) and the three `??` tails.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
 
 ### A bar's reserve trim is worked out again by callers holding the enriched bar
@@ -1253,23 +1184,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
-### BaseWidget's background box and panel-size defaults are dead
-- **Where:** `components/bar/widgets/base/BaseWidget.qml:13` (`backgroundColor`), `components/bar/widgets/base/BaseWidget.qml:15` (`showBackground`), `components/bar/widgets/base/BaseWidget.qml:17` (`contentItem`), `components/bar/widgets/base/BaseWidget.qml:19` (`radius`), `components/bar/widgets/base/BaseWidget.qml:29` (the `Rectangle`), `components/bar/widgets/base/IconTextWidget.qml:22` (`spacing`), `components/bar/widgets/base/IconTextWidget.qml:25` (`fontSize`), `components/bar/widgets/base/ValueGraphic.qml:31` (`fontSize`), `docs/dev/core/shared-ui-pieces.md:103`
-- **What:** Widgets don't draw their own backgrounds; WidgetGroup does (widget-style.md › Widget style). BaseWidget still has its own box, and it is never drawn. Its three instances all set `showBackground: false`: BarIconWidget:60, SystemStats:179 (`box`) and SystemStats:204 (the segments).
-  - `backgroundColor` and `radius` feed only that Rectangle. The two `radius:` setters (BarIconWidget:43, SystemStats:178) therefore do nothing.
-  - `contentItem` has no reader (its declaration is its only hit in `components/bar`).
-  - Deletion pass: BaseWidget lines 13–15, 17, 19 and 29–35 (12 lines) plus the five setters, 17 lines in all.
-  - shared-ui-pieces.md:103 still calls BaseWidget "the rounded box a bar widget sits in": it becomes "the sizing wrapper".
-
-  The bases' remaining defaults are the panels' sizes, and every instance replaces them from `barConfig`:
-  - BaseWidget: `padding: Widget.padding`, `crossSize: Widget.height`
-  - IconTextWidget: `spacing: Widget.spacing * 1.5`, `fontSize: Appearance.fontSize`
-  - ValueGraphic: `fontSize: Appearance.fontSize`
-
-  These five are the only `Widget.*`/`Appearance.fontSize` reads under `components/bar/widgets`, and they read as though the bar's pieces size from the Interface section. Default them to 0.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
 ### SystemStats works out ValueStyleWidget's style fallbacks again
 - **Where:** `components/bar/widgets/SystemStats/SystemStats.qml:199` (segment `style`), `components/bar/widgets/SystemStats/SystemStats.qml:139` (`backgroundLevelColor`), `components/bar/widgets/SystemStats/SystemStats.qml:141` (`_textByState`), `components/bar/widgets/base/ValueStyleWidget.qml:34` (`style`)
 - **What:** Two rules live in both `ValueStyleWidget.style` and SystemStats' per-segment `style`: "stacked on a vertical bar is a label" and "a sparkline with no history is a fill". `Qt.alpha(colors.icon, 0.35)` and `colorText && colors.fill.a < 1` are copied word for word too. A new style rule added to one copy will be missed in the other. Fix: put the fallbacks in one function on ValueGraphic (`resolvedStyle(style, vertical, hasHistory, ratio)`) and read it from both places, about 4 lines out of SystemStats. The pill colour can be a ValueGraphic constant.
@@ -1297,22 +1211,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### The five layouts drafts are listed by hand in eight places
 - **Where:** `components/views/Layouts/Layouts.qml:38` (`Component.onCompleted`), `components/views/Layouts/Layouts.qml:77` (`canvas.dirty`, `canvas.canSave`, `onSave`, `onReset`), `components/views/Layouts/LayoutsPanel.qml:34` (`problems`), `services/ui/EditsManager.qml:49` (the Layouts `dirty`), `services/ui/EditsManager.qml:172` (`saveAll`), `services/ui/EditsManager.qml:194` (`discardAll`)
 - **What:** `OverlayManager`, `OverlayManager.menus`, `DesktopManager.editor`, `LockManager.editor` and `GreeterManager.editor` share one interface (`isDirty`, `problems`, `ensureLoaded`, `saveChanges`, `resetChanges`), but every caller spells all five out. Layouts.qml loads them (7 lines), reads dirty and canSave (2) and saves and resets them (19). LayoutsPanel concatenates their problems (1). EditsManager reads dirty (1), and saves (10) and discards (10) them. That makes 50 lines, and the orders already differ: EditsManager saves the menus before the pages, Layouts.qml after. A sixth draft would need all eight edits. Fix: `OverlayManager.drafts: [root, root.menus, DesktopManager.editor, LockManager.editor, GreeterManager.editor]`, with `layoutsDirty`, `layoutsProblems`, `loadLayouts()`, `saveLayouts()` and `resetLayouts()` over it (about 15 lines). Each place becomes one call (about 8 lines), about 27 lines fewer, and the Save gate above becomes one line.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the overlay system
-
-### GridEditor's canAdd and canMove have no caller
-- **Where:** `services/ui/GridEditor.qml:370` (`canAdd`), `services/ui/GridEditor.qml:375` (`canMove`)
-- **What:** `grep -rnw 'canAdd\|canMove' --include=*.qml .` finds only their definitions, plus the Checks line in grid-canvas.md (`CompositorStatusCard`'s `canAdd` is its own property). The canvas and the drag layer use the plans (`hoverPlan.valid`) instead; only `canResize` has a caller (`EditorInspector.qml:195`). Fix: delete both (lines 369–378, 10 lines) and drop them from grid-canvas.md's "Checks" line.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the overlay system
-
-### Small shrinks in the overlay
-- **Where:** `config/OverlayConfig.qml:34` (`pinnedPages`), `config/OverlayConfig.qml:253` (`slotShape`), `components/hosts/overlay/OverlayPages.qml:52` (`pageCount`, `pages`, `_onPinned`), `components/views/Custom/Custom.qml:17` (`fineGrid`), `components/hosts/overlay/OverlayPageNavigator.qml:228` (the pill's `Behavior`s)
-- **What:** Four things can go or shrink, about 15 lines in all:
-  - `pinnedPages` is a list of one (Layouts). `OverlayPages` counts `pinnedPages.length` into `pageCount` and `pages`, but draws a single hard-wired `editorPage`, so a second entry would get a tab and an index with nothing behind them. A single `layoutsPage` object on OverlayConfig, with `_onPinned` a bool, says what the code does (about 4 lines fewer).
-  - `OverlayConfig.slotShape` only forwards to `GridPlacement.slotShape`, and has one caller, `SlotContext.qml:28`. That caller can call `GridPlacement.slotShape` itself, importing `qs.components.methods` (3 lines fewer).
-  - In `Custom.qml`, the fine grid sets `availableWidth` / `availableHeight` (lines 17–18). An `OverlayGrid` with a `fixedUnit` uses them only for `roomWidth`, which nothing reads on this grid (`ModuleGrid` reads `unit`, `gap` and `sizes`), so both lines can go.
-  - The navigator pill's two `Behavior { NumberAnimation { duration: Appearance.animNormal; easing.type: Easing.OutCubic } }` (lines 228–239, 12 lines) are `Glide on x { duration: Appearance.animNormal }` and the same on `width` (6 lines): the shared piece, with `Appearance.easing` in place of a literal.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the overlay system
 
@@ -1397,21 +1295,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the modules system
 
-### Three row options nothing sets
-- **Where:** `components/content/parts/DeviceRow.qml:32` (`disconnectTip`), `components/content/parts/ItemRow.qml:23` (`titleFamily`), `components/content/parts/TodoList.qml:20` (`showFocus`)
-- **What:** `grep -rnw` over qml, yaml, json and py finds each name twice: its declaration and its one read. No DeviceRow user sets `disconnectTip` (BluetoothDevices sets only `connectTip`). No ItemRow user sets `titleFamily`, which defaults to `Appearance.fontFamily`, StyledText's own. No TodoList user (Todo, Focus) sets `showFocus`, so it is always true despite its comment "off where no timer is near". Fix: inline `I18n.tr("Disconnect")`, drop the `titleFamily` binding, and drop `showFocus` and its test (about 4 lines).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
 ### Login and Password each carry the same required-field report
 - **Where:** `components/content/Login/Login.qml:43` (`_report`), `components/content/Password/Password.qml:41` (`_report`)
 - **What:** Both modules hold the same 12 lines: `_reportedKey`, a `_report()` that unreports the old key and reports the new one through `SurfaceManager.reportRequiredField`, and `Component.onCompleted`, `onHostChanged` and `Component.onDestruction`. They differ only in the host test (`onGreeter` / `onLockscreen`). Fix: one small QtObject part in `content/parts/` holding the 12 lines, given the host and whether it applies. Each module keeps 1–3 lines, so about 20 lines fewer.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### Three keycap parts draw the same cap, and KeyCap's icon slot has no user
-- **Where:** `components/content/parts/KeyCap.qml:12` (`icon`), `components/content/parts/KeyCluster.qml`, `components/content/parts/KeybindRow.qml:109`, `components/content/parts/ModifierCap.qml`
-- **What:** KeyCap, KeyCluster and ModifierCap repeat the same `Rectangle` shell: the height `Math.round(Widget.height * (compact ? 0.62 : 0.75))`, the width, radius and colour, and the text size. KeyCluster is a KeyCap whose text is its keys with a gap between them, and KeybindRow builds both a KeyCap and a KeyCluster for every alternative and hides one (lines 109–121). No `KeyCap {` user sets `icon`. Fix: delete KeyCluster.qml (35 lines), and replace KeybindRow's pair (13 lines) with one `KeyCap { text: alternative.modelData.join(" ") }` (about 5): about 43 lines fewer, and one cap built per alternative. Delete `icon` and its `StyledIcon` (7 lines) unless ModifierCap folds into KeyCap too, which needs SUPER ordered first; check `KeybindManager`'s modifier order before doing that. About 50 lines in all.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the modules system
 
@@ -1505,12 +1391,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/content/Submenu/Submenu.qml:35` (`_firstOpener`)
 - **What:** "Show on screen" on a submenu menu holds the parent open, and the parent's first Submenu row opening it opens it (`previewed` needs `_firstOpener`). `_firstOpener` finds that row by comparing the config's `place.x`/`place.y` with `root.slotRect[0]`/`[1]`, but `slotRect` is `GridPlacement.rectOf(slot.place)` from `ModuleGrid.places`, the grown places: a growing module above the row in its columns (Notifications with a notification, say) pushes it down (`GridPlacement.grown`), the coordinates differ, no row is the first opener, and the submenu never opens while the editor says it's shown. Fix: match the row by something growth doesn't move: hand modules their config place beside `slotRect` (OverlaySlot) and compare that, or compare the row's `properties` with the first opener's (two identical rows open the same menu alike).
 - **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call
-- **Where:** `components/surfaces/edgemenu/EdgeMenuSync.qml:64` (`_edgeHost`, `_engage`), `components/surfaces/edgemenu/IntegratedEdgeMenu.qml:70` (`engage`)
-- **What:** EdgeMenuSync connects `EdgeMenuManager.engageRequested` for both hosts and calls `engage()` through a `var` (`_edgeHost`, since PopoutWrapperBase has no `engage`), so IntegratedEdgeMenu defines an empty `engage()` ("it holds no popout claim, so there's no rank to raise"). Only the floating host has anything to do. Fix: move the `Connections` into FloatingEdgeMenu (`if (id === root.menuId) root.engage()`), deleting EdgeMenuSync.qml:64–74 (11 lines) and IntegratedEdgeMenu.qml:70–73 (4 lines), about 6 added.
-- **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
 ### MenuSubmenu repeats EdgeMenuBody's module grid
@@ -1974,7 +1854,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
 ### The brightness icon thresholds are written three times
-- **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:114` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
+- **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:109` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
 - **What:** The same `level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high"` is in the module, the OSD bar and the Quick actions tile; changing the icons or thresholds means finding all three. Fix: one `icon(level)` function in BrightnessManager (as `AudioManager.inputIcon` serves the OSD's microphone bar), called from all three; Brightness.qml's own `icon` (4 lines) goes.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
@@ -2132,12 +2012,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the desktop system
 
-### ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room
-- **Where:** `services/ui/ScreenLayoutEditor.qml:92` (`savedLayout`), `components/views/Layouts/DesktopTarget.qml:15` (`roomWidth`, `roomHeight`)
-- **What:** `savedLayout` has no reader (`grep -rnw savedLayout` finds only its definition). `DesktopTarget.roomWidth`/`roomHeight` (and their comment) only forward `DesktopManager.editor.room` to the one `fitText` line in the same file. Fix: delete `savedLayout` (1 line) and lines 14-16 of DesktopTarget (3 lines), reading `Math.round(root.screenEditor.room.width)` / `.height` in `fitText` (the `int` properties rounded); 4 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the desktop system
-
 ### The system volume bar opens the OSD when the default output switches
 - **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:78` (`onVolumeChanged`), `components/surfaces/osd/PipewireVolumeBar.qml:82` (`onIsMutedChanged`)
 - **What:** The OSD's `poked` signal is meant for changes the user makes, "not a stream appearing or a device switch" (PipewireVolumeBar.qml:12-13, OSDBar.qml:25-26), and the microphone bar keeps to it (`_levelChanged` skips the first change after `AudioManager.defaultSource` changes) and so do the app bars (`_nodeKey`). The master bar doesn't: `onVolumeChanged` and `onIsMutedChanged` call `root.poked()` whenever `useSystemVolume`, and `AudioManager.volume` / `muted` follow `Pipewire.defaultAudioSink`. Connecting Bluetooth headphones, plugging a headset, or picking another output in the audio mixer changes the default sink; when its volume or mute differs from the old one's, the bar pokes and, with the default `showOsd: true`, the OSD opens though nobody changed a level. The same path opens it at startup if the default sink binds after the OSD's bars are built (PLAUSIBLE: settle by starting the shell before PipeWire is ready, or in a nested session, and watching whether the OSD shows). Fix: mirror the microphone bar: keep `property var _sink: null`, set it in `Component.onCompleted`, and in both handlers `if (root.useSystemVolume) { if (AudioManager.defaultSink === root._sink) root.poked(); root._sink = AudioManager.defaultSink; }`.
@@ -2151,15 +2025,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:osd system
 
 ### The OSD's stream bar tracks its streams by hand
-- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:49` (`_audioStreams`), `components/surfaces/osd/PipewireVolumeBar.qml:53` (Instantiator), `components/surfaces/osd/PipewireVolumeBar.qml:109` (`onTargetAppsChanged` and the three handlers after it), `components/surfaces/osd/PipewireVolumeBar.qml:123` (`Component.onCompleted`), `components/surfaces/osd/PipewireVolumeBar.qml:129` (the two `Connections`), `components/surfaces/osd/PipewireVolumeBar.qml:156` (`_setTargetNodes`, `_updateTargetNode`)
-- **What:** `_targetNodes` is re-assigned by hand from seven triggers (a watcher per playback stream for `ready`, node insert and remove, `Pipewire.ready`, four config properties, completion), each calling `AudioManager.matchStreams`. Every one of them is a property `matchStreams` already reads (`_playbackStreams`, each node's `audio`, `ready`, `properties`, `nickname`, and the three arguments), so a binding re-evaluates on exactly those changes, and also on a stream's `properties` arriving late, which no trigger covers now. Every bar runs the whole mechanism, the master bar too, whose result is always `[]`. Fix: `readonly property var _targetNodes: useSystemVolume ? [] : AudioManager.matchStreams(targetApps, otherApps, excludedApps)`, and fold the node ids into `_levels` (`_keyOf(_targetNodes) + "|" + …`) so a change in the set of streams always changes it and `on_LevelsChanged` keeps telling a level change from a set change (what `_setTargetNodes`'s early `_nodeKey` write does now). Removes lines 46-67, 108-150 and 156-168: 22 + 43 + 13 = 78 lines.
+- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:49` (`_audioStreams`), `components/surfaces/osd/PipewireVolumeBar.qml:53` (Instantiator), `components/surfaces/osd/PipewireVolumeBar.qml:102` (`onTargetAppsChanged` and the three handlers after it), `components/surfaces/osd/PipewireVolumeBar.qml:116` (`Component.onCompleted`), `components/surfaces/osd/PipewireVolumeBar.qml:122` (the two `Connections`), `components/surfaces/osd/PipewireVolumeBar.qml:149` (`_setTargetNodes`, `_updateTargetNode`)
+- **What:** `_targetNodes` is re-assigned by hand from seven triggers (a watcher per playback stream for `ready`, node insert and remove, `Pipewire.ready`, four config properties, completion), each calling `AudioManager.matchStreams`. Every one of them is a property `matchStreams` already reads (`_playbackStreams`, each node's `audio`, `ready`, `properties`, `nickname`, and the three arguments), so a binding re-evaluates on exactly those changes, and also on a stream's `properties` arriving late, which no trigger covers now. Every bar runs the whole mechanism, the master bar too, whose result is always `[]`. Fix: `readonly property var _targetNodes: useSystemVolume ? [] : AudioManager.matchStreams(targetApps, otherApps, excludedApps)`, and fold the node ids into `_levels` (`_keyOf(_targetNodes) + "|" + …`) so a change in the set of streams always changes it and `on_LevelsChanged` keeps telling a level change from a set change (what `_setTargetNodes`'s early `_nodeKey` write does now). Removes lines 46-67, 101-143 and 149-161: 22 + 43 + 13 = 78 lines.
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:osd system
-
-### PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon
-- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:101` (`toggleMute`), `components/surfaces/osd/OSDBar.qml:53` (`iconSource`)
-- **What:** `toggleMute()` has no caller: the bar is built inside OSDBar's Loader with no id, and StyledVolumeBar has no mute signal to call it from (its only signal is `volumeChanged`); `grep -rn 'toggleMute'` finds the bar's own definition and AudioManager's. The master bar's icon writes its own thresholds (`volume_mute` when muted or at 0, `volume_up` above 0.4, else `volume_down`) where the bar's Volume widget and the audio mixer use `AudioManager.outputIcon(kind, muted, level)`, so the OSD and the bar disagree (muted: `volume_mute` here, `volume_off` there; headphones: a speaker here, `headphones` there), while the microphone bar beside it already uses `AudioManager.inputIcon`. Fix: delete lines 101-106 of PipewireVolumeBar.qml (6 lines), and replace OSDBar.qml lines 53-59 with `iconSource: root.entry.icon || (isMaster ? AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), AudioManager.muted, AudioManager.volume) : "")` (7 lines become 1). 12 lines.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:osd system
 
 ### Hot corners' action list is a hand-kept copy of the keybind one

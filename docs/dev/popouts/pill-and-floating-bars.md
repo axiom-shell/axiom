@@ -14,7 +14,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 - **Read as pills:** `BarContainer.pillRects` holds the islands shaped like pills (`BarLayout.islandRects`), so the popout code reads them as pills.
   - The shape is either one island from limit to limit, or one per group, merged within `pillMerge`.
   - They are drawn from `pillShapes` (`BarLayout.stretchIslands`).
-- **Nothing joins a floating bar.** `joinable` is true only for a solid bar.
+- **Nothing joins a floating bar.** Its edge is a wall to the surfaces beside it (`SurfaceContext.endKind`).
 - **Surfaces on an island:**
   - **Which island:** a popout, edge popout or dock uses the island under its centre, otherwise the nearest.
   - **Where it grows from:** out of the island's inner stroke (`attachAt`). It never merges (`EdgeAttach.place`, island mode).
@@ -31,7 +31,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 ### Bar popouts and pill bars
 - **Joining ends:** bar popouts join an end the same way edge popouts do (`EdgeAttach.joins`).
 - **Pill bar on a perpendicular edge:** bar popouts, edge popouts and docks all also join a pill bar (`background: "pills"`) there.
-  - **The joining piece:** `hosts/popout/PillBarJoin`, a `PillStretch` on that bar's container. Its `available` is what makes the end joinable.
+  - **The joining piece:** `hosts/popout/PillBarJoin`, a `PillStretch` on that bar's container. Its `joined` comes from the end's `sink: "pillBar"` (`SurfaceContext.end`).
   - **Where the end sits:** on that bar's far stroke. Its window reaches a stroke's width onto it, as it does onto the border's or a solid bar's stroke.
     - Every end does this except a bare screen edge's (`EdgePopout.startStrokeInset`/`endStrokeInset`; the dock's likewise).
   - **The bar's end pill runs out along the box** (the `endReach` of its `BarContainer.setRequest`).
@@ -65,7 +65,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - Its content starts at that edge (`attachClearance` 0, unlike `merged`), so a dock there sits in the bar's empty room. An edge popout there takes the bar's empty depth off its padding on that side (`SurfaceContext.layout`'s `attachFill`), as it does the border's margin.
   - It stretches no pill. Too close to a pill, it grows out of the nearest one as above.
 - **`BarContainer.pillShapes`** is the pills (or islands) as drawn: stretched and merged.
-- **Merged boxes:** only a pill bar showing no pills leaves a box to grow from its outer edge (`EdgePlacement.merged`). That box is as deep as the pills would be.
+- **Merged boxes:** only a pill bar showing no pills leaves a box to grow from its outer edge (`SurfaceContext.layout`'s `merged`). That box is as deep as the pills would be.
 - **Flush wall through the backfill:** a flush wall runs on through the surface's backfill, covering the end of the stroke it continues. The backfill leaves that spot open, and the glow used to show through it as a seam.
 
 ### Transparent bars (detached popouts)

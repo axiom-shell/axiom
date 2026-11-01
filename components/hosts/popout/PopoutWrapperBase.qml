@@ -156,13 +156,8 @@ Item {
     }
   }
 
-  // Subclasses that need to do something extra on dismiss connect via:
-  //   onAboutToDismiss: { ... }
-  signal aboutToDismiss
-
   function requestDismiss() {
     parkTimer.stop();
-    aboutToDismiss();
     closePopout();
   }
   // ---- end centralized dismiss logic ----

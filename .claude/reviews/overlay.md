@@ -21,14 +21,14 @@ Unrecorded (Minor):
 - **grow-expand.md leaves out the desktop:** the docs say only the lock screen and greeter don't grow or expand, but the desktop's bounded grid (`ScreenLayoutView`, host kind `desktop`) doesn't either. Also, `expander` isn't null "for types the host's x-hosts don't take": `canExpand(type)` is what filters those.
 - **The desktop's link chip and its row differ:** `OverlayManager._linkTargets.desktop.icon` is `wallpaper`, while `PagesSection` and `DesktopTarget` use `desktop_windows`.
 - **ModuleGrid's header names only three hosts:** it lists Custom page, edge menu and lock screen, and leaves out the desktop, greeter and submenus.
-- **With no visible page, a save moves the user off Layouts:** `OverlayPages.onCurrentIndexChanged` records `_onPinned` only while `viewsModel.length > 0`.
+- **With no visible page, a save moves the user off Layouts:** `OverlayPages.onCurrentIndexChanged` records `_onLayouts` only while `viewsModel.length > 0`.
 
 ## Contract
 These hold:
 - Placement comes only from `GridPlacement`.
 - `OverlayManager` edits a `ConfigDraft`, with selection through `selectView` / `GridEditor.select*`.
 - Only the current page and its neighbours exist, and only while the window is visible; neighbours follow `_settled`.
-- Pages are keyed by the views' JSON, and Layouts survives the rebuild (`_onPinned`).
+- Pages are keyed by the views' JSON, and Layouts survives the rebuild (`_onLayouts`).
 - Page order is Custom, then tools, then Layouts.
 - `fitScale` / `contentZoom` scale the views' container while the box keeps drawn px.
 - Close on outside click comes only from `backgroundClicks` and `clickedOutside`.

@@ -62,7 +62,7 @@ Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement
 The canvas pieces name no service: they edit through `dragLayer.editor`.
 - Holds one grid of modules and its `selected` index.
 - Edits: `addModule` / `moveModule` / `resizeModule` / `duplicateModule` / `removeModule` / `updateModuleProperty`.
-- Checks: `canAdd` / `canMove` / `canResize`, and `problemsFor(modules, name, area)`.
+- Checks: `canResize`, and `problemsFor(modules, name, area)`.
 - `factory` (`{ make(type, place), size(type) }`, null for overlay modules) makes and sizes the entries of another kind of grid (a custom widget's elements); a library key `CustomWidget:<id>` adds that custom widget's module (`CustomWidgetsConfig.splitKey`).
 
 ### Plans

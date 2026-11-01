@@ -98,13 +98,6 @@ Item {
       AudioManager.setNodesVolume(_targetNodes, newVolume);
   }
 
-  function toggleMute() {
-    if (useSystemVolume)
-      AudioManager.toggleMute();
-    else if (nodeFound)
-      AudioManager.setNodesMuted(_targetNodes, !_targetNode.audio.muted);
-  }
-
   // Config changes (a reload, another saved config) pick the stream again
   onTargetAppsChanged: _updateTargetNode()
   onOtherAppsChanged: {

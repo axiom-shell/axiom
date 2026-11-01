@@ -34,7 +34,7 @@ Item {
   property real preferredLength: 0
   property bool vertical: false
   property real crossSize: 0
-  property int fontSize: Appearance.fontSize
+  property int fontSize: 0
   property color color: "white"
   property color textColor: "white"
   // Across a bar, where the icon beside it has its middle (IconTextWidget's

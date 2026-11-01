@@ -59,6 +59,5 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
   - Each `Section`'s `drawnPos`/`drawnLength` glide too. `_spans`, and through it the pills, read these.
 - Backgrounds and separator marks follow the hosts as drawn.
 - A widget that is going keeps its last place and colors while its host still draws, fading with its opacity.
-- `BarContainer.layoutMoved()` emits `layoutUpdated` at once and again after `animNormal`, so an open popout re-anchors on the settled widget.
 - Colors (`WidgetBackground`, `IconTextWidget`) fade with ColorAnimations. The tray's icons grow in (Grid `add`/`move`).
 - (Rule: AGENTS.md › Config, Animation.)

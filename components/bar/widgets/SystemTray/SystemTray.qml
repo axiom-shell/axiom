@@ -96,9 +96,7 @@ BarWidget {
           openDelay: 150
           active: root.properties.popout.enabled && trayItem.modelData.hasMenu
           extraData: ({
-              "trayItem": trayItem.modelData,
-              "barConfig": root.barConfig,
-              "isVertical": root.isVertical
+              "trayItem": trayItem.modelData
             })
         }
       }

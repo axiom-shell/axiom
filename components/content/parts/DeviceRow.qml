@@ -29,7 +29,6 @@ Rectangle {
   property bool selected: false
   property bool expanded: false
   property string connectTip: I18n.tr("Connect")
-  property string disconnectTip: I18n.tr("Disconnect")
   // A small icon on the icon's bottom-right corner (e.g. "lock")
   property string iconBadge: ""
   // Buttons before forget, shown with it on hover (e.g. autoconnect)
@@ -177,7 +176,7 @@ Rectangle {
       iconColor: root.connected ? Theme.accent : Theme.foreground
       backgroundColor: "transparent"
       borderHoverColor: Theme.accent
-      tooltipText: root.connected ? root.disconnectTip : root.connectTip
+      tooltipText: root.connected ? I18n.tr("Disconnect") : root.connectTip
       onClicked: root.connectClicked()
     }
   }

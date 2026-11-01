@@ -111,8 +111,6 @@ TestCase {
     const fp = [rect(0, 0, 100, 100)];
     const entries = [entry("other", "launcher", fp, {
         "screen": "HDMI-A-1"
-      }), entry("gone", "launcher", fp, {
-        "phase": "closing"
       }), entry("away", "launcher", fp, {
         "phase": "yielded"
       }), entry("self", "menu", fp)];
