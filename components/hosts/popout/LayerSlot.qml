@@ -21,6 +21,10 @@ QtObject {
   // (the border's corner pieces after its strips, so they're drawn over
   // the strips' ends: Hyprland breaks ties by map order too)
   property int rank: 0
+  // Ranks compare only within one group: windows of one order that never
+  // meet keep no order between them (bars on different edges sharing a
+  // layer rule), so one remade doesn't map the others again
+  property string rankGroup: ""
   // Whether its owner wants it shown
   property bool wanted: true
   // Kept mapped while not wanted, where the compositor stacks by map order
@@ -37,6 +41,7 @@ QtObject {
       "layer": LayerManager.layerName(root.layer),
       "namespace": root.namespace,
       "rank": root.rank,
+      "rankGroup": root.rankGroup,
       "wanted": root.wanted,
       "held": root.held,
       "mapped": root.window?.visible ?? false

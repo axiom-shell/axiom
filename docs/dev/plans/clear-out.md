@@ -422,10 +422,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **bar-popouts-03** (2):
   - [An open edge popout's layer and namespace still follow its edge's bar](../issues.md#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar)
   - [EdgePopout works out its attach edge and slide distance itself](../issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)
-- **bar-popouts-04** (7): Seven entries: splits into reserve (first three) and editor/rebuild (last four) if it passes the gate.
-  - [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](../issues.md#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp)
-  - [A bar's reserve trim is worked out again by callers holding the enriched bar](../issues.md#a-bars-reserve-trim-is-worked-out-again-by-callers-holding-the-enriched-bar)
-  - [An overlay misses a transparent bar's inner accent line](../issues.md#an-overlay-misses-a-transparent-bars-inner-accent-line)
+- **bar-popouts-04** (4; its three reserve entries fixed by the stacked bars PR): the editor and rebuild entries.
   - [Plugging in or unplugging a monitor remakes the bar that stays](../issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
   - [A bar made while the bar editor is open may never report to it](../issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
   - [Removing or copying another bar moves the editor's selection to a different bar](../issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)

@@ -200,10 +200,11 @@ Rectangle {
   // SurfaceManager.setBorderOpening takes it (screen px along the edge), so
   // the border leaves its stroke open under a translucent fill: a pill, a
   // popout merged into the bar or on a solid bar's inner edge. Null while
-  // surfaces are solid, with the border off, or until the bar's place on
-  // screen is known.
+  // surfaces are solid, with the border off, on a bar the border's stroke
+  // isn't on (stacked inside another, BarEnds' offBorder), or until the
+  // bar's place on screen is known.
   function borderOpening(from, to) {
-    if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || to <= from)
+    if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from)
       return null;
     const at = root.isVertical ? root.blurOrigin.y : root.blurOrigin.x;
     return {
@@ -230,11 +231,13 @@ Rectangle {
   // (BarEnds' end kind) and showing: a solid bar with the border off
   // ("solidBar"), whose inner stroke a pill joined there curves into, or a
   // pill bar ("pillBar"), whose end pill this bar's end pill merges into
-  // (CornerMerge)
+  // (CornerMerge); the one the end meets (`barId`) among the bars stacked
+  // on that edge
   function barAt(atStart, kind) {
-    if ((atStart ? root.ends.start : root.ends.end).kind !== kind)
+    const end = atStart ? root.ends.start : root.ends.end;
+    if (end.kind !== kind)
       return null;
-    const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right));
+    const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right), end.barId);
     return panel?.visible ? panel.container : null;
   }
   readonly property var solidStart: root.barAt(true, "solidBar")
@@ -365,6 +368,14 @@ Rectangle {
 
     x: section.bar.isVertical ? section.crossPos : section.drawnPos
     y: section.bar.isVertical ? section.drawnPos : section.crossPos
+    // Gives way under an outer bar's popout (coveredSpans)
+    opacity: section.bar.covers(section.drawnPos, section.drawnPos + section.drawnLength) ? 0 : 1
+    Behavior on opacity {
+      NumberAnimation {
+        duration: Appearance.animFast
+        easing.type: Appearance.easing
+      }
+    }
   }
 
   // The shadow the bar's surface casts, evenly and only outside it, so
@@ -483,6 +494,25 @@ Rectangle {
   readonly property string blurScreen: root.panel?.screen?.name ?? ""
   readonly property bool backed: BlurManager.backsOn(root.blurScreen, false) && root.blurOrigin !== null
 
+  // Where the open popouts of the bars outside it on its edge lie over it,
+  // along it in its own coordinates (ScreenEdgeManager.coveredOn): the
+  // islands and sections there give way (fade out) while they're open, as
+  // a popout's fill, drawn in the blur window under every bar, can't
+  // cover them
+  readonly property var coveredSpans: {
+    const placed = root.panel?.screenPlaced ?? null;
+    if (!placed)
+      return [];
+    const at = (root.isVertical ? placed.y : placed.x) + (root.isVertical ? root.y : root.x);
+    return ScreenEdgeManager.coveredOn(root.panel.screen, root.barConfig).map(c => ({
+          "start": c.start - at,
+          "end": c.end - at
+        }));
+  }
+  function covers(start, end) {
+    return root.coveredSpans.some(c => c.start < end && c.end > start);
+  }
+
   // What the bar paints under its widgets: its background, inner stroke
   // and pills, which the shadow follows
   Item {
@@ -551,6 +581,16 @@ Rectangle {
         readonly property real depth: root.barConfig.extent - root.barConfig.islandStart
         readonly property real across: root.barConfig.right || root.barConfig.bottom ? (root.isVertical ? root.width : root.height) - root.barConfig.islandStart - depth : root.barConfig.islandStart
         readonly property real corner: Appearance.borderRadius
+        // Under an outer bar's popout it gives way (coveredSpans): faded,
+        // its fill and shadow left out of the blur window
+        readonly property bool covered: root.covers(rect.start, rect.start + rect.length)
+        opacity: covered ? 0 : 1
+        Behavior on opacity {
+          NumberAnimation {
+            duration: Appearance.animFast
+            easing.type: Appearance.easing
+          }
+        }
         // The inner side's corners at the bar's start and end
         property real startInner: rect.squareStart ? 0 : corner
         property real endInner: rect.squareEnd ? 0 : corner
@@ -597,6 +637,7 @@ Rectangle {
           y: island.y
           width: island.width
           height: island.height
+          visible: !island.covered
           topLeftRadius: island.topLeftRadius
           topRightRadius: island.topRightRadius
           bottomLeftRadius: island.bottomLeftRadius
@@ -610,7 +651,7 @@ Rectangle {
           screen: root.blurScreen
           x: (root.blurOrigin?.x ?? 0) + island.x
           y: (root.blurOrigin?.y ?? 0) + island.y
-          shown: root.backed
+          shown: root.backed && !island.covered
           shadow: root.barConfig
         }
         // Inner side: bottom on a top bar, right on a left one, and so on
@@ -792,10 +833,19 @@ Rectangle {
 
   // A line along the bar's inner or outer edge, from its color fading
   // into another along the bar. Inline components can't see this file's
-  // ids, hence `bar`.
+  // ids, hence `bar`. Where an outer bar's popout lies over it
+  // (coveredSpans) it gives way, as the islands and sections do: on a pill
+  // bar not, its pills merging with the popout.
   component AccentLine: Rectangle {
     id: line
     required property Item bar
+    opacity: !line.bar.pills && line.bar.covers(line.start, line.start + line.length) ? 0 : 1
+    Behavior on opacity {
+      NumberAnimation {
+        duration: Appearance.animFast
+        easing.type: Appearance.easing
+      }
+    }
     // Along the bar, and in from its outer edge
     required property real start
     required property real length

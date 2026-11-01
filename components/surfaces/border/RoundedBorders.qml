@@ -5,9 +5,9 @@ import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import qs.config
-import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
+import qs.components.methods
 import qs.components.hosts.popout
 
 // One screen's border (Appearance.screenBorder): an edge strip per side
@@ -26,34 +26,30 @@ Item {
   // The corner's curve plus its stroke
   readonly property int cornerSize: root.innerBorderRadius + root.strokeWidth
 
-  // Corners sit in the space left once every edge is reserved, so a bar
-  // or a dock inside the border (reserving their own space)
-  // would push them in past it. Pull them back out to the border's corners.
-  readonly property var edges: ScreenEdgeManager.edgesFor(root.screen)
+  // Corners sit in the space left once every edge is reserved, so bars
+  // or a dock inside the border (reserving their own space) would push
+  // them in past it. Pull them back out to the border's corners: past
+  // what the bars inside the border take (BarEnds.edgeOf's insideTaken)
+  // and the stroke they reach back onto.
+  function _edge(edge) {
+    return ScreenEdgeManager.edgeOn(root.screen, ScreenEdge.fromName(edge));
+  }
   function cornerMargin(edge) {
     const docks = DockManager.zoneOn(root.screen?.name ?? "", edge);
-    const bar = root.edges[edge];
-    if (!bar?.insideBorder || !bar.reserveSpace)
-      return -root.strokeWidth - docks;
-    // As far as the bar reserves (see BarPanel)
-    const gap = BarsConfig.reserveTrim(bar, CompositorManager.gapsOut[edge] ?? 0);
-    return -(bar.extent - gap) - docks;
+    return -root._edge(edge).insideTaken - root.strokeWidth - docks;
   }
-  // How far in from a screen edge the frame's inner edge lies: past a solid
-  // bar reserving that edge (the strip is arranged after it, see
+  // How far in from a screen edge the frame's inner edge lies: past the
+  // solid bars reserving that edge (the strip is arranged after them, see
   // BarPanel), else the frame's own width
   function innerInset(edge) {
-    const bar = root.edges[edge];
-    const panel = bar?.solid && bar.reserveSpace ? ScreenEdgeManager.barOn(root.screen?.name ?? "", bar.location) : null;
-    return (panel?.reservedZone ?? 0) + root.frameWidth;
+    return root._edge(edge).solidZone + root.frameWidth;
   }
 
-  // A solid bar's strip lies over the bar's inner part (see
-  // BarPanel.reservedZone): there it draws only its stroke, past the bar,
-  // so the bar and its widgets show through
+  // A solid bar's strip lies over the innermost reserving solid bar's
+  // inner part (BarEnds.placeStack): there it draws only its stroke, past
+  // the bar, so the bar and its widgets show through
   function frameColorFor(edge) {
-    const bar = root.edges[edge];
-    return root.backed || (bar && bar.solid && bar.reserveSpace) ? "transparent" : root.frameColor;
+    return root.backed || root._edge(edge).strip ? "transparent" : root.frameColor;
   }
 
   // The blur window draws the frame's fill (BlurManager): the strips and

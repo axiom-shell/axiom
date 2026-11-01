@@ -213,19 +213,21 @@ QtObject {
    * On each output and layer a window shows once every window ordered
    * before it there that shows is mapped, so they map highest order
    * first. One already showing stays (a window ordered before it starting
-   * to show, a backdrop, doesn't take it down). Unless the compositor
-   * sorts by order itself (`ordered`), a mapped window that one ordered
-   * before it mapped after is out of place: it maps again (`remap`), and
-   * so lands after it.
+   * to show, a backdrop, doesn't take it down). A mapped window that one
+   * ordered before it mapped after is out of place: it maps again
+   * (`remap`), and so lands after it. Where the compositor sorts by order
+   * itself (`ordered`), only between windows of one order, whose tie it
+   * breaks by map order (two bars of a kind stacked on an edge).
    * Returns { show: [ids], remap: [ids] }.
    */
   function sequence(entries, ordered) {
     const wants = e => e.wanted || (!ordered && e.held);
     const peers = e => entries.filter(o => o !== e && o.output === e.output && o.layer === e.layer);
     // `o` belongs before `e`: a higher order, or a lower rank of the same
-    // (the border's corners after its strips, drawn over their ends)
-    const before = (o, e) => o.order > e.order || (o.order === e.order && (o.rank ?? 0) < (e.rank ?? 0));
-    const remap = ordered ? [] : entries.filter(e => e.mapped && peers(e).some(o => o.mapped && before(o, e) && o.seq > e.seq)).map(e => e.id);
+    // in its rank group (the border's corners after its strips, drawn over
+    // their ends; bars stacked on one edge)
+    const before = (o, e) => o.order > e.order || (o.order === e.order && (o.rankGroup ?? "") === (e.rankGroup ?? "") && (o.rank ?? 0) < (e.rank ?? 0));
+    const remap = entries.filter(e => e.mapped && peers(e).some(o => o.mapped && before(o, e) && o.seq > e.seq && (!ordered || o.order === e.order))).map(e => e.id);
     const show = entries.filter(e => wants(e) && !remap.includes(e.id) && (e.showing || peers(e).every(o => !wants(o) || !before(o, e) || o.mapped))).map(e => e.id);
     return {
       "show": show,

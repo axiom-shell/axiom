@@ -343,6 +343,7 @@
     "Bar {0}": "",
     "Bars": "",
     "Bars and border": "",
+    "Bars can share an edge, one inside the other: solid bars nearest the screen's edge, then pill, transparent, floating and floating pill bars; bars with the same background in list order.": "",
     "Base font size (px). Larger text is derived from it.": "",
     "Battery": "",
     "Battery Status": "",

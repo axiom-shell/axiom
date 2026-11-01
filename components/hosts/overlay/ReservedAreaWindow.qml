@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
-import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 
@@ -33,19 +32,21 @@ PanelWindow {
     bottom: true
   }
 
-  // A transparent bar reserves Hyprland's gaps_out less than its extent
-  // (see BarPanel) and has no stroke to land on: sit at its invisible
-  // inner edge instead, past the reserved space by that gap. A floating
-  // bar reserves up to its islands' inner side: land on their stroke, as
-  // on any other bar's.
-  readonly property var _edges: ScreenEdgeManager.edgesFor(root.screen)
+  // A transparent bar facing the windows reserves Hyprland's gaps_out
+  // less than its extent (its `trim`, BarEnds.placeStack) and has no
+  // stroke to land on: sit at its invisible inner edge instead, past the
+  // reserved space by that gap (none with an inner accent line, which it
+  // reserves up to). A floating bar reserves up to its islands' inner
+  // side: land on their stroke, as on any other bar's. The innermost
+  // reserving bar on the edge decides (BarEnds.edgeOf's facing), where
+  // the reserved space ends.
   function _margin(side, location) {
     if (ScreenEdgeManager.screenEdgeOpen(root.screen, location))
       return 0;
-    const bar = root._edges[side];
+    const bar = ScreenEdgeManager.edgeOn(root.screen, location).facing;
     if (bar?.background === "transparent")
-      return CompositorManager.gapsOut[side] ?? 0;
-    return (bar ? BarsConfig.reserveTrim(bar, CompositorManager.gapsOut[side] ?? 0) : 0) - Appearance.borderWidth;
+      return bar.trim;
+    return -Appearance.borderWidth;
   }
   margins {
     left: root._margin("left", ScreenEdge.Left)

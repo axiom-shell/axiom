@@ -18,13 +18,14 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
     - `gap` is a floating bar's own float gap (Automatic: `floatGaps`, the screen margin with no backend), else how far windows start past it.
   - **`pillBar`:** see Pill bars meeting at a corner below.
 - `reach` is how far the window reaches onto the stroke at that end (`BarPanel`'s margins).
+- `barId` is the bar it meets on the perpendicular edge ("" for the frame), and `from` how far from that edge its window starts, before `reach`: past every bar there it makes way for (bars stacked on one edge: [Layering and corners](layering-and-corners.md#bars-stacked-on-one-edge-barendsstackson-placestack-edgeof)). `BarContainer.barAt` finds the bar it joins by `barId`.
 - **How `BarContainer` uses the ends:**
   - It takes per-end `endMargins`; `BarLayout.layoutSections`/`overflowHidden` take `[start, end]`.
   - It takes `islandFrom`/`islandEnd`.
   - It joins an end pill only where that end is `joinable`.
   - A transparent bar's widgets keep the same gap from each end as across the bar.
 - **Placing things along the bar:**
-  - `ScreenEdgeManager.barStartOn` says where a bar's window starts at each end. `EdgePlacement` places things along the bar from it (`barStart`).
+  - `ScreenEdgeManager.barStartOn` says where a bar's window starts at each end (its end's `from` less `reach`, integrated menus added). `EdgePlacement` places things along the bar from it (`barStart`).
   - Where an end can't be joined, a bar popout's walls stop where windows start instead. See [Edge attach](../popouts/edge-attach.md) (Walls).
 - **Joining a bar end.** A bar popout joins an end only where `ScreenEdgeManager.surfaceEnd` says it may:
   - at the border, a solid bar or a bare edge, with no integrated menu; or
