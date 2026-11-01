@@ -870,7 +870,7 @@ def shape_key_problems(src, shape, where):
     return problems
 
 
-QML_CALL_OPEN = re.compile(r"\b(?:(?:BackendManager|root)\.(call)|JsonRpc\.(request))\(")
+QML_CALL_OPEN = re.compile(r"\b(?:(?:BackendManager|root)\.call|JsonRpc\.(request))\(")
 JS_STRING = re.compile(r'^"([\w.]+)"$')
 
 
@@ -881,7 +881,7 @@ def qml_call_sites(text):
     sites = []
     for m in QML_CALL_OPEN.finditer(text):
         args = call_args(text, m.end() - 1)
-        if m.group(2):  # JsonRpc.request(id, method, params)
+        if m.group(1):  # JsonRpc.request(id, method, params)
             args = args[1:]
         method = JS_STRING.match(args[0]) if args else None
         sites.append((text.count("\n", 0, m.start()) + 1, method and method.group(1), args[1] if len(args) > 1 else ""))
