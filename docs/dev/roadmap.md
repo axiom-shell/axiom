@@ -141,6 +141,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
 - Once the shell runs the workspace grid's centre start, with `Workspaces.layout` `grid` (3 × 3): log in under sway and Hyprland with two monitors and check each starts on its block's centre (5, 14); restart axiom after moving away and check nothing moves; on sway, switch the layout to `perMonitor` and back to `grid` and check every monitor goes to its centre, windows kept on their workspaces. Nested Hyprland (one output) showed the start, a reload leaving workspace 1 alone, and perMonitor → grid going to 5.
 - Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
+- Once the shell runs #279 (StandaloneBar removed), check the bar's blur and the border opening still sit right under a popout on a top, side and floating bar, and that a floating edge menu comes forward when engaged.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -438,7 +439,6 @@ Found by the audits:
 - [Reopening the overlay while it closes leaves it open but hidden](issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
 - [A clean layout's problem blocks saving the others in the Layouts editor](issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
 - [The five layouts drafts are listed by hand in eight places](issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
-- [GridEditor's canAdd and canMove have no caller](issues.md#grideditors-canadd-and-canmove-have-no-caller)
 - [Small shrinks in the overlay](issues.md#small-shrinks-in-the-overlay)
 - [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)
 - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding)
@@ -564,7 +564,6 @@ Found by the audits:
 - [Tailscale carries two state fields and a guard nothing needs](issues.md#tailscale-carries-two-state-fields-and-a-guard-nothing-needs)
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
-- [ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room](issues.md#screenlayouteditorsavedlayout-is-dead-and-desktoptarget-forwards-the-editors-room)
 - [The system volume bar opens the OSD when the default output switches](issues.md#the-system-volume-bar-opens-the-osd-when-the-default-output-switches)
 - [Every OSD's opening reads the monitor's brightness, brightness bar or not](issues.md#every-osds-opening-reads-the-monitors-brightness-brightness-bar-or-not)
 - [The OSD's stream bar tracks its streams by hand](issues.md#the-osds-stream-bar-tracks-its-streams-by-hand)

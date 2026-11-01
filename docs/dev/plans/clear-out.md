@@ -206,8 +206,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - BaseWidget's background box and panel-size defaults are dead
   - IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call
 - **overlay-modules-01** (6): After compositor-02, which also edits OverlayPageNavigator (the wheel notch).
-  - [GridEditor's canAdd and canMove have no caller](../issues.md#grideditors-canadd-and-canmove-have-no-caller)
-  - [ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room](../issues.md#screenlayouteditorsavedlayout-is-dead-and-desktoptarget-forwards-the-editors-room)
   - [Three row options nothing sets](../issues.md#three-row-options-nothing-sets)
   - [PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon](../issues.md#pipewirevolumebar-keeps-a-mute-toggle-nothing-calls-and-its-own-volume-icon)
   - [Three keycap parts draw the same cap, and KeyCap's icon slot has no user](../issues.md#three-keycap-parts-draw-the-same-cap-and-keycaps-icon-slot-has-no-user)
