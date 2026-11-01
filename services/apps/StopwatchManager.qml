@@ -31,6 +31,8 @@ Singleton {
   readonly property string timerText: StopwatchClock.format(root.timerRemaining, false, true)
   readonly property string elapsedText: StopwatchClock.format(root.elapsed, false, false)
   readonly property var laps: StopwatchClock.lapRows(root._stopwatch)
+  // The last timers started, [{ ms, label }], the newest first
+  readonly property var recent: StopwatchClock.normalizeRecent(_ticker.values.recent)
   readonly property real now: _ticker.now
 
   // The times as of this moment, for a reader holding no acquire (the
@@ -55,18 +57,24 @@ Singleton {
 
   // -- Timer --
 
-  // Starts a timer from text ("10m", "1h30m tea", "1:30"); false when it
-  // doesn't start with a duration
+  // Starts a timer from text ("10m", "1h30m tea", "1:30", "at 17:30");
+  // false when it doesn't start with a duration
   function startTimerText(text) {
-    const parsed = StopwatchClock.parse(text);
+    const parsed = StopwatchClock.parse(text, Date.now());
     if (parsed.ms <= 0)
       return false;
-    root.startTimer(parsed.ms, parsed.label);
+    root.startTimer(parsed.ms, parsed.label, parsed.clock === true);
     return true;
   }
 
-  function startTimer(ms, label) {
-    root._setTimer(StopwatchClock.startTimer(root._timer, ms, Date.now(), label ?? ""));
+  // `ms` from now; `once` (a time of day) stays out of the recent ones
+  function startTimer(ms, label, once) {
+    if (!(ms > 0))
+      return;
+    _ticker.set({
+      "timer": StopwatchClock.startTimer(root._timer, ms, Date.now(), label ?? ""),
+      "recent": once ? root.recent : StopwatchClock.pushRecent(root.recent, ms, label ?? "", 3)
+    });
   }
 
   // Pause ↔ resume; an idle timer starts its last duration again
@@ -79,8 +87,9 @@ Singleton {
       root._setTimer(StopwatchClock.resumeTimer(root._timer, Date.now()));
   }
 
+  // More time, or less (a negative `ms`)
   function addTimer(ms) {
-    root._setTimer(StopwatchClock.addTime(root._timer, ms));
+    root._setTimer(StopwatchClock.addTime(root._timer, ms, Date.now()));
   }
 
   function resetTimer() {
@@ -121,7 +130,8 @@ Singleton {
     // StopwatchClock's states
     restore: saved => ({
           "timer": StopwatchClock.normalizeTimer(saved?.timer),
-          "stopwatch": StopwatchClock.normalizeStopwatch(saved?.stopwatch)
+          "stopwatch": StopwatchClock.normalizeStopwatch(saved?.stopwatch),
+          "recent": StopwatchClock.normalizeRecent(saved?.recent)
         })
     onEnded: late => root._finish(late)
     onNotificationClicked: root.openModule()
@@ -147,7 +157,24 @@ Singleton {
     root._setTimer(StopwatchClock.resetTimer(root._timer));
     if (!StopwatchConfig.notify || late)
       return;
-    _ticker.notify(label !== "" ? label : I18n.tr("Timer done"), label !== "" ? I18n.tr("Your {0} timer is done.", StopwatchClock.format(duration, false, true)) : I18n.tr("{0} are up.", StopwatchClock.format(duration, false, true)));
+    _ticker.notify(label !== "" ? label : I18n.tr("Timer done"), label !== "" ? I18n.tr("Your {0} timer is done.", StopwatchClock.format(duration, false, true)) : I18n.tr("{0} are up.", StopwatchClock.format(duration, false, true)), [
+      {
+        "id": "minute",
+        "label": I18n.tr("+1 min")
+      },
+      {
+        "id": "restart",
+        "label": I18n.tr("Restart")
+      }
+    ], id => {
+      // Only while nothing else was started meanwhile
+      if (!root.timerIdle)
+        return;
+      if (id === "minute")
+        root.startTimer(60000, label);
+      else if (id === "restart")
+        root.startTimer(duration, label);
+    });
   }
 
   property IpcTarget _ipc: IpcTarget {

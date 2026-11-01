@@ -28,8 +28,12 @@ Singleton {
   readonly property bool caffeineTimed: !StopwatchClock.timerIdle(root.caffeineTimer)
   // The time left and how far it's gone, as of a `now` ticking while
   // something has acquire()d it
-  readonly property string caffeineText: StopwatchClock.format(StopwatchClock.remaining(root.caffeineTimer, _ticker.now), false, true)
+  readonly property real caffeineRemaining: StopwatchClock.remaining(root.caffeineTimer, _ticker.now)
+  readonly property string caffeineText: StopwatchClock.format(root.caffeineRemaining, false, true)
   readonly property real caffeineProgress: StopwatchClock.timerProgress(root.caffeineTimer, _ticker.now)
+  // The last caffeine timers, [{ ms, label }], the newest first (kept
+  // across reloads only, as caffeine is)
+  readonly property var caffeineRecent: StopwatchClock.normalizeRecent(_ticker.values.recent)
 
   // "off" | "running" | "inhibited" (an app holds idle off) |
   // "unsupported" (the compositor has no idle notifications) |
@@ -71,14 +75,17 @@ Singleton {
     root.setCaffeine(!root.caffeine);
   }
 
-  // On for a time from text ("30m", "1h30m"); false when it isn't one
+  // On for a time from text ("30m", "1h30m", "until 17:00"); false when
+  // it isn't one
   function startCaffeineText(text) {
-    const parsed = StopwatchClock.parse(text);
+    const parsed = StopwatchClock.parse(text, Date.now());
     if (parsed.ms <= 0)
       return false;
     _ticker.set({
       "caffeine": true,
-      "timer": StopwatchClock.startTimer(root.caffeineTimer, parsed.ms, Date.now(), "")
+      "timer": StopwatchClock.startTimer(root.caffeineTimer, parsed.ms, Date.now(), ""),
+      // A time of day stays out of them
+      "recent": parsed.clock ? root.caffeineRecent : StopwatchClock.pushRecent(root.caffeineRecent, parsed.ms, "", 3)
     });
     return true;
   }
@@ -94,9 +101,10 @@ Singleton {
     });
   }
 
+  // More time, or less (a negative `ms`)
   function addCaffeineTime(ms) {
     _ticker.set({
-      "timer": StopwatchClock.addTime(root.caffeineTimer, ms)
+      "timer": StopwatchClock.addTime(root.caffeineTimer, ms, Date.now())
     });
   }
 
@@ -122,9 +130,20 @@ Singleton {
     ticks: root.caffeineTimer.running
     restore: () => ({
           "caffeine": false,
-          "timer": StopwatchClock.idleTimer
+          "timer": StopwatchClock.idleTimer,
+          "recent": []
         })
+    warnBefore: Idle.caffeineWarning ? 5 * 60000 : 0
     onEnded: root.setCaffeine(false)
+    onWarned: _ticker.notify(I18n.tr("Caffeine ends soon"), I18n.tr("The screen can lock again in 5 minutes."), [
+      {
+        "id": "more",
+        "label": I18n.tr("30 more minutes")
+      }
+    ], id => {
+      if (id === "more" && root.caffeineTimed)
+        root.addCaffeineTime(30 * 60000);
+    })
     // Restored: told now if the hello came first
     onReadyChanged: if (BackendManager.ready)
       root._report()
@@ -180,7 +199,7 @@ Singleton {
       root.setCaffeine(false);
     }
 
-    // On for a time: "30m", "1h30m", "90s"
+    // On for a time: "30m", "1h30m", "90s", "until 17:00"
     function timer(text: string): bool {
       return root.startCaffeineText(text);
     }

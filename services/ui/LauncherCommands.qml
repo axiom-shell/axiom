@@ -793,7 +793,7 @@ QtObject {
   // A row starting the typed timer (or saying what to type), then pause and
   // reset while one is set
   function _timer(arg) {
-    const parsed = StopwatchClock.parse(arg);
+    const parsed = StopwatchClock.parse(arg, Date.now());
     const rows = [];
     if (parsed.ms > 0)
       rows.push({
@@ -808,7 +808,7 @@ QtObject {
     else if (arg.trim() === "")
       rows.push({
         title: I18n.tr("How long"),
-        subtitle: I18n.tr("10m, 1h30m, 90s or 1:30, then a label if you like"),
+        subtitle: I18n.tr("10m, 1h30m, 90s, 1:30 or at 17:30, then a label if you like"),
         glyph: "hourglass_top",
         matched: true,
         value: {
