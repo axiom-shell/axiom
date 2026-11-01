@@ -60,6 +60,7 @@ axiom ipc <target> <function> [args]
 | `wifi` | `enable`, `disable`, `toggle` |
 | `bluetooth` | `enable`, `disable`, `toggle` |
 | `vpn` | `toggle` (the VPN last used, as the Vpn widget's click) |
+| `drives` | `list` (the removable drives as JSON), `mount <id>` (a drive's volumes, or one volume), `eject <id>`, `ejectAll` |
 | `brightness` | `up`, `down`, `set <percent>`, `dim <percent>`, `dimBy <percent>`, `undim` |
 | `screenshot` | `take <region\|window\|screen>`, `cancel` |
 | `screenRecord` | `toggle`, `enable`, `disable`, `status` |

@@ -1,0 +1,32 @@
+# The Drives section of the config (config.json's "Drives").
+
+type: object
+x-category: Modules
+title: Removable drives
+description: "What happens when a USB stick, memory card or other removable drive is plugged in, and how the Drives widget and module open one. Drives are reached through udisks2."
+additionalProperties: false
+x-order: [onInsert, openAfterMount, ignore]
+properties:
+  onInsert:
+    type: string
+    title: When a drive is plugged in
+    enum: [ask, mount, nothing]
+    x-enumLabels:
+      ask: Ask
+      mount: Mount it
+      nothing: Do nothing
+    default: ask
+    description: "Ask sends a notification offering to mount or open it (or, for an encrypted drive, to unlock it). Mount it mounts it at once and says where; nothing is mounted while the screen is locked, it waits for the unlock. Do nothing leaves it to the Drives widget and module."
+  openAfterMount:
+    type: boolean
+    title: Open after mounting
+    default: false
+    description: "Open the drive's folder in the file manager each time it's mounted, not only when you ask to open it."
+    x-link: {setting: Apps.fileManager}
+  ignore:
+    x-scope: machine
+    type: array
+    items: {type: string}
+    title: Ignored drives
+    default: []
+    description: "Volume UUIDs or labels of drives to leave alone: no notification, no mounting, and not listed. Find them with `lsblk -f`."
