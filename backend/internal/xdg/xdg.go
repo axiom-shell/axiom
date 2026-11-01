@@ -6,7 +6,6 @@ package xdg
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -200,9 +199,4 @@ func checkOwned(dir string, narrow bool) error {
 		}
 	}
 	return nil
-}
-
-// Describe is dirs as text, for `axiom config path` and logs.
-func (d Dirs) Describe() string {
-	return fmt.Sprintf("config %s\nstate %s\ndata %s\ncache %s", d.Config, d.State, d.Data, d.Cache)
 }

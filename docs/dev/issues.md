@@ -2039,12 +2039,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the packaging system
 
-### Two dead Go helpers and a forwarding wrapper
-- **Where:** `backend/internal/fsx/lock.go:52` (`Holder`), `backend/internal/xdg/xdg.go:206` (`Dirs.Describe`), `backend/internal/daemon/contract.go:66` (`greeterOnlyMethods`)
-- **What:** `fsx.Holder` is called only by `backend/internal/fsx/fsx_test.go:124` (`TryLock` reads the pid itself through `readPID` for its error); `Dirs.Describe` by nothing at all, not even a test, though its comment says it is "for `axiom config path` and logs" (`configPathCommand` in `backend/internal/cli/config.go` prints the file, and `dirs` as JSON, without it); `greeterOnlyMethods` (called from `backend/internal/daemon/greeter.go:183` and `contract.go:81`) only forwards to `greeterHandlers` (`backend/internal/daemon/compositorsocket.go:74`) with the same arguments. Fix: delete `Holder` (lines 51-59, 9; the test reads the lock file with `os.ReadFile`), `Describe` (205-208, 4), and fold the wrapper by renaming `greeterHandlers` to `greeterOnlyMethods`, its comment kept (contract.go 62-68, 7): 20 lines.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the daemon system
-
 ### daemon.shutdown starts its goroutine past tasks.Go
 - **Where:** `backend/internal/daemon/methods.go:340` (`coreMethods`)
 - **What:** The daemon's docs state "Every goroutine is started through `tasks.Go` … and `Run` waits for all of them" (`docs/dev/backend/README.md` › What exists now, the daemon's parts; the daemon system's Checks repeat it), but `daemon.shutdown` runs `announceClosing` and `d.stop()` on a bare `go func()`: `Run` doesn't wait for it, so it can still be sending `daemon.closing` through a server whose `Serve` has returned. Every other goroutine of the package goes through `tasks.Go` (or, in dev mode's `watch`, a wait group its stop function waits on; the greeter's `Serve`, a channel its function waits on before returning). Fix: `d.tasks.Go(func(context.Context) { announceClosing(d.server, false, closingWait); d.stop() })`, as `reexecSoon` does.

@@ -62,7 +62,9 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 	reg.InOrder("outputs.apply")
 }
 
-// greeterHandlers is greeter.compositor, the greeter's axiom's alone: the
+// greeterOnlyMethods are the methods the greeter's axiom serves and the
+// session's doesn't (greeterRegistry), which the contract lists too: the
+// shell calls them in greeter mode. That is greeter.compositor: the
 // greeter's compositor, loading no config of axiom's, set up from its
 // bundle (the config's Monitors profiles and Input values). On Hyprland and
 // sway the monitors are kept in the saved profile for what's connected by
@@ -71,7 +73,7 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 // commands, its cursor the theme's companion when XCURSOR_PATH holds the
 // bundle's copy of it (greeter-session.sh); niri takes input from its
 // config file alone. schema is the config's.
-func greeterHandlers(reg *rpc.Registry, getenv func(string) string, schema func() any, profiles func(any)) {
+func greeterOnlyMethods(reg *rpc.Registry, getenv func(string) string, schema func() any, profiles func(any)) {
 	type applyParams struct {
 		Profiles json.RawMessage `json:"profiles"`
 		Input    json.RawMessage `json:"input"`

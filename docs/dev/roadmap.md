@@ -558,7 +558,6 @@ Found by the audits:
 - [install.sh and the AUR packages never install notify-send, gio or pactl](issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl) (decided: `notify-send` is replaced by a daemon method in Go, not added as a dependency; maintainer, 2026-11-01)
 - [A main-channel update applied after edge moved on needs go to rebuild the binary](issues.md#a-main-channel-update-applied-after-edge-moved-on-needs-go-to-rebuild-the-binary)
 - [The onboarder's Checks-page purposes don't match their declared keys](issues.md#the-onboarders-checks-page-purposes-dont-match-their-declared-keys)
-- [Two dead Go helpers and a forwarding wrapper](issues.md#two-dead-go-helpers-and-a-forwarding-wrapper)
 - [daemon.shutdown starts its goroutine past tasks.Go](issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
 - [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
 - [Three Wayland client members nothing in the daemon calls](issues.md#three-wayland-client-members-nothing-in-the-daemon-calls)
