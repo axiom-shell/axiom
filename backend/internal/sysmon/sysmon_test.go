@@ -342,6 +342,9 @@ func TestHistory(t *testing.T) {
 	if _, ok := st.History["netRx"]; ok {
 		t.Errorf("net wasn't kept before this request: %v", st.History)
 	}
+	if st := fetch(`{"interval": 1000, "metrics": ["mem"], "history": ["mem"]}`); len(st.History) != 1 || st.History[Mem] == nil {
+		t.Errorf("only the history asked for is pushed: %v", st.History)
+	}
 	if st := fetch(`{"metrics": ["cpu"]}`); st.History != nil {
 		t.Errorf("history wasn't asked for: %v", st.History)
 	}
@@ -548,6 +551,34 @@ func TestNvidiaKeptAndRetried(t *testing.T) {
 	}
 }
 
+// A stream the topic alone wants starts again after a failure with
+// nothing but the topic's fetches waking the loop
+func TestNvidiaRetriedForTheTopic(t *testing.T) {
+	t.Parallel()
+	m := newMachine(t)
+	c := &clock{now: time.UnixMilli(0)}
+	f := &streams{line: "37, 61\n", fail: true}
+	mon := m.monitor(c, true, f)
+	fetch := m.fetcher(mon)
+	run(t, mon)
+	req := `{"interval": 1000, "metrics": ["gpu"]}`
+	fetch(req)
+	if !testkit.Eventually(func() bool { starts, _ := f.state(); return len(starts) == 1 }) {
+		t.Fatal("the topic never started the stream")
+	}
+	f.mu.Lock()
+	f.fail = false
+	f.mu.Unlock()
+	// Fetched every second until the wait is over, the lease never ending
+	for range streamRetry / time.Second {
+		c.add(time.Second)
+		fetch(req)
+	}
+	if !testkit.Eventually(func() bool { _, live := f.state(); return live == 1 }) {
+		t.Fatal("never retried")
+	}
+}
+
 func TestParseNvidia(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
@@ -564,5 +595,36 @@ func TestParseNvidia(t *testing.T) {
 		if usage != tc.usage || temp != tc.temp || ok != tc.ok {
 			t.Errorf("%q: %d %d %v", tc.line, usage, temp, ok)
 		}
+	}
+}
+
+// A card asleep when the topic asks is streamed once it wakes, with
+// nothing but the topic's fetches waking the loop
+func TestNvidiaStreamedOnceAwake(t *testing.T) {
+	t.Parallel()
+	m := newMachine(t)
+	dev := "sys/bus/pci/devices/0000:01:00.0/"
+	m.write(dev+"vendor", "0x10de\n")
+	m.write(dev+"class", "0x030000\n")
+	m.write(dev+"power/control", "auto\n")
+	m.write(dev+"power/runtime_status", "suspended\n")
+	c := &clock{now: time.UnixMilli(0)}
+	f := &streams{line: "37, 61\n"}
+	mon := m.monitor(c, true, f)
+	fetch := m.fetcher(mon)
+	run(t, mon)
+	req := `{"interval": 1000, "metrics": ["gpu"]}`
+	fetch(req)
+	time.Sleep(50 * time.Millisecond)
+	if starts, _ := f.state(); len(starts) != 0 {
+		t.Fatalf("a card asleep was streamed: %v", starts)
+	}
+	m.write(dev+"power/runtime_status", "active\n")
+	for range 3 {
+		c.add(time.Second)
+		fetch(req)
+	}
+	if !testkit.Eventually(func() bool { _, live := f.state(); return live == 1 }) {
+		t.Fatal("a card that woke was never streamed")
 	}
 }

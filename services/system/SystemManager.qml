@@ -121,8 +121,9 @@ QtObject {
       "metrics": root._graphMetrics
     }, root._keepFailed);
   }
+  // (a call lost to a reconnect is sent again on the next hello)
   function _keepFailed(error) {
-    if (error)
+    if (error && error.kind !== "unavailable")
       console.warn(`[SystemManager] Could not keep the graphs' history: ${error.message}`);
   }
   readonly property var _requests: _registry.requests

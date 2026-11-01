@@ -38,7 +38,8 @@ type nvidia struct {
 }
 
 // leaseStream is the topic's ask for the GPU: the stream runs at its
-// interval until the lease ends.
+// interval until the lease ends. Each fetch wakes Run, which starts the
+// stream once the card is awake or a failed one's wait is over.
 func (m *Monitor) leaseStream(every time.Duration, until time.Time) {
 	m.mu.Lock()
 	m.discover()
@@ -46,21 +47,18 @@ func (m *Monitor) leaseStream(every time.Duration, until time.Time) {
 		m.mu.Unlock()
 		return
 	}
-	changed := m.gpu.hubEvery != every || !m.o.Now().Before(m.gpu.hubUntil)
 	m.gpu.hubEvery, m.gpu.hubUntil = every, until
 	m.mu.Unlock()
-	if changed {
-		m.signal()
-	}
+	m.signal()
 }
 
 // streamWant is the interval the stream should run at, 0 for none: the
 // history's second while it keeps the GPU, the topic's while its lease
-// lasts, never for a card asleep (that would wake it); and whether a
-// failed one may start again yet (m.mu held).
-func (m *Monitor) streamWant(now time.Time) (every time.Duration, retry bool) {
+// lasts, never for a card asleep (that would wake it); and when a failed
+// one may start again (m.mu held).
+func (m *Monitor) streamWant(now time.Time) (every time.Duration, retryAt time.Time) {
 	if m.sn.nvidia == "" || m.sn.asleep() {
-		return 0, false
+		return 0, time.Time{}
 	}
 	if slices.Contains(m.kept(now), GPU) {
 		every = historyEvery
@@ -71,7 +69,10 @@ func (m *Monitor) streamWant(now time.Time) (every time.Duration, retry bool) {
 	if every > 0 {
 		every = max(every, streamFloor)
 	}
-	return every, m.gpu.failedAt.IsZero() || now.Sub(m.gpu.failedAt) >= streamRetry
+	if !m.gpu.failedAt.IsZero() {
+		retryAt = m.gpu.failedAt.Add(streamRetry)
+	}
+	return every, retryAt
 }
 
 // streamProc is a running stream, owned by Run.

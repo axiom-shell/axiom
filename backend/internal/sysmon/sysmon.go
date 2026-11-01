@@ -73,8 +73,8 @@ type State struct {
 	Disks         map[string]Usage `json:"disks,omitempty"` // by the path as asked
 	Processes     []Process        `json:"processes,omitempty"`
 	// History is the last HistoryLength samples, oldest first, one a
-	// second, of each metric kept (cpu, mem, gpu, cpuTemp, netRx, netTx),
-	// only while some request asks for it
+	// second, of each metric some request asks the history of (cpu, mem,
+	// gpu, cpuTemp, netRx, netTx)
 	History map[string][]float64 `json:"history,omitempty"`
 }
 
@@ -261,14 +261,14 @@ func (m *Monitor) Run(ctx context.Context) error {
 		m.mu.Lock()
 		now := m.o.Now()
 		ringOn := len(m.kept(now)) > 0
-		want, retry := m.streamWant(now)
+		want, retryAt := m.streamWant(now)
 		m.mu.Unlock()
 
 		if stream != nil && (stream.every != want || stream.ended()) {
 			stream.stop()
 			stream = nil
 		}
-		if stream == nil && want > 0 && retry {
+		if stream == nil && want > 0 && !now.Before(retryAt) {
 			stream = m.startStream(ctx, want)
 		}
 
@@ -285,6 +285,8 @@ func (m *Monitor) Run(ctx context.Context) error {
 		} else {
 			next = time.Time{}
 		}
+		// (a stream wanted but not running is started at the next wake:
+		// the ring's second or the topic's fetch)
 		var ended <-chan struct{}
 		if stream != nil {
 			ended = stream.done
@@ -397,11 +399,18 @@ func (m *Monitor) record() {
 	}
 }
 
-// historyCopy is every kept history as it is (m.mu held).
-func (m *Monitor) historyCopy() map[string][]float64 {
-	out := make(map[string][]float64, len(m.history))
+// historyCopy is the histories of metrics as they are, net's as netRx and
+// netTx (m.mu held).
+func (m *Monitor) historyCopy(metrics []string) map[string][]float64 {
+	out := map[string][]float64{}
 	for key, list := range m.history {
-		out[key] = slices.Clone(list)
+		metric := key
+		if key == "netRx" || key == "netTx" {
+			metric = Net
+		}
+		if slices.Contains(metrics, metric) {
+			out[key] = slices.Clone(list)
+		}
 	}
 	return out
 }
@@ -591,7 +600,7 @@ func (s *sampler) sample(ctx context.Context, requests []json.RawMessage) State 
 		st.GPUUsage, st.GPUTemp = m.gpuNow(now, interval)
 	}
 	if len(history) > 0 {
-		st.History = m.historyCopy()
+		st.History = m.historyCopy(history)
 	}
 	// A first CPU or network sample has nothing to measure against: the
 	// history's newest stands in, when it's fresh
