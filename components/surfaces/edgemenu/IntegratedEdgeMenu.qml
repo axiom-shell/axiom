@@ -166,9 +166,6 @@ PopoutWrapperBase {
       slideFromRight: root.edge === ScreenEdge.Right
       slideFromTop: root.edge === ScreenEdge.Top
       slideFromBottom: root.edge === ScreenEdge.Bottom
-      enableFade: false
-      containerWidth: panel.width
-      containerHeight: panel.height
 
       // One item, since the slide's content takes items only
       Item {

@@ -408,10 +408,7 @@ Item {
     slideFromBottom: root.attachBottom
     animationDuration: root.animationDuration
 
-    containerHeight: root.height
-    containerWidth: root.width
-    enableFade: false
-    // (and the row past a joined end, joinBackfill, which it covers)
+    // Room for the shadow (and the row past a joined end, joinBackfill, which it covers)
     overflow: Math.max(root.shadowReach, root.joinBackfill)
 
     // The shadow the outline casts, only outside it (none shows

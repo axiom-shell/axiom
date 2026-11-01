@@ -292,17 +292,6 @@ TestCase {
     });
   }
 
-  function test_submenuTakesItsParentsShadow() {
-    const parent = SurfaceContext.shadow({
-      "detached": false,
-      "bar": null,
-      "onBar": false
-    });
-    compare(SurfaceContext.shadow({
-      "parent": parent
-    }), parent);
-  }
-
   function test_opening() {
     compare(SurfaceContext.opening(10.4, 50.6), {
       "start": 11,

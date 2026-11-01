@@ -50,61 +50,31 @@ Scope {
       readonly property var otherShapes: perScreen.aboveOverlay ? perScreen.onScreen.filter(shape => !shape.overlayLayer) : perScreen.onScreen
       readonly property bool shadowsApart: BlurManager.shadowsApart
 
-      // On Top, under the chrome; on Overlay (under every surface there,
-      // by its order) while a fullscreen window hides the Top layer, for
-      // the surfaces shown over it (BlurManager.overFullscreen)
-      BlurBackingWindow {
-        screen: perScreen.modelData
-        shapes: BlurManager.backingOn(perScreen.screenName) ? perScreen.otherShapes : []
-        cutBy: perScreen.overlayShapes
-        wanted: BlurManager.backingOn(perScreen.screenName)
-        stackLayer: BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
-        layerNamespace: "axiom-blur-backing"
-        part: perScreen.shadowsApart ? "fills" : "all"
-      }
+      // Its blur windows: the fills and the shadows apart (in that order,
+      // as SwayFX stacks by map order) or one drawing both. Below the
+      // overlay: on Top, under the chrome; on Overlay (under every surface
+      // there, by its order) while a fullscreen window hides the Top
+      // layer, for the surfaces shown over it (BlurManager.overFullscreen).
+      // Over the overlay ("-overlay") and under the surfaces on the Overlay
+      // layer (by its order), while the overlay is open here: their blur is
+      // the overlay's content, not what the overlay covers
+      readonly property var parts: perScreen.shadowsApart ? ["fills", "shadows"] : ["all"]
 
-      LazyLoader {
-        active: perScreen.shadowsApart
+      Variants {
+        model: perScreen.parts.concat(perScreen.aboveOverlay ? perScreen.parts.map(part => part + "-overlay") : [])
 
-        BlurBackingWindow {
+        delegate: BlurBackingWindow {
+          id: blurWindow
+          required property string modelData
+          readonly property bool over: blurWindow.modelData.endsWith("-overlay")
           screen: perScreen.modelData
-          shapes: BlurManager.backingOn(perScreen.screenName) ? perScreen.otherShapes : []
-          cutBy: perScreen.overlayShapes
-          wanted: BlurManager.backingOn(perScreen.screenName)
-          stackLayer: BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
-          layerNamespace: "axiom-shadows"
-          part: "shadows"
-        }
-      }
-
-      // Over the overlay and under the surfaces on the Overlay layer (by
-      // its order), while the overlay is open here: their blur is the
-      // overlay's content, not what the overlay covers
-      LazyLoader {
-        active: perScreen.aboveOverlay
-
-        BlurBackingWindow {
-          screen: perScreen.modelData
-          shapes: perScreen.overlayShapes
-          cutBy: perScreen.otherShapes
-          held: false
-          stackLayer: WlrLayer.Overlay
-          layerNamespace: "axiom-blur-backing-overlay"
-          part: perScreen.shadowsApart ? "fills" : "all"
-        }
-      }
-
-      LazyLoader {
-        active: perScreen.aboveOverlay && perScreen.shadowsApart
-
-        BlurBackingWindow {
-          screen: perScreen.modelData
-          shapes: perScreen.overlayShapes
-          cutBy: perScreen.otherShapes
-          held: false
-          stackLayer: WlrLayer.Overlay
-          layerNamespace: "axiom-shadows-overlay"
-          part: "shadows"
+          part: blurWindow.modelData.replace("-overlay", "")
+          shapes: blurWindow.over ? perScreen.overlayShapes : BlurManager.backingOn(perScreen.screenName) ? perScreen.otherShapes : []
+          cutBy: blurWindow.over ? perScreen.otherShapes : perScreen.overlayShapes
+          wanted: blurWindow.over || BlurManager.backingOn(perScreen.screenName)
+          held: !blurWindow.over
+          stackLayer: blurWindow.over || BlurManager.overFullscreen(perScreen.screenName) ? WlrLayer.Overlay : WlrLayer.Top
+          layerNamespace: (blurWindow.part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (blurWindow.over ? "-overlay" : "")
         }
       }
     }

@@ -129,17 +129,14 @@ QtObject {
   // How a surface casts its shadow: { look ("style": BarStyle's, "bar":
   // its bar's) }. It takes it from what it grows out of, so joined shapes
   // cast one shadow (BlurBacking groups them by look) running unbroken
-  // round them:
-  //   a submenu, its parent's (`parent`, as returned here)
+  // round them (a submenu takes its parent's):
   //   a detached box, BarStyle's
   //   out of a bar (its pills, islands, outer edge, or a solid bar's own
   //   stroke with the border off), the bar's
   //   out of the border's stroke or off a bare edge, BarStyle's
   // `s`: { detached, bar (enriched, or null), onBar (it grows out of the
-  //   bar: onPill, merged, or bar.innerStroke), parent }
+  //   bar: onPill, merged, or bar.innerStroke) }
   function shadow(s) {
-    if (s.parent)
-      return s.parent;
     return {
       "look": !s.detached && s.bar && s.onBar ? "bar" : "style"
     };
@@ -373,7 +370,7 @@ QtObject {
       "shadow": root.shadow({
         "detached": detached,
         "bar": ownBar,
-        "onBar": !p.held && (onPill || fromOuter || (ownBar?.innerStroke ?? false))
+        "onBar": onPill || fromOuter || (ownBar?.innerStroke ?? false)
       }),
       // A joined submenu's reach along the pill it stands on stays between
       // the strokes at the edge's ends

@@ -30,7 +30,7 @@ QtObject {
   // Where each window asks for its own blur (supports.blurRegion: niri)
   // it pauses per screen instead (pausedOn). The chrome then fills itself,
   // solid on the screens showing one (opaqueOn).
-  readonly property bool _wanted: Appearance.blur && CompositorManager.supports.blur === true
+  readonly property bool _wanted: Appearance.blur
   readonly property bool _pauses: root._wanted && Appearance.blurPauseFullscreen
   readonly property bool _perScreen: CompositorManager.supports.blurRegion === true
   readonly property bool paused: root._pauses && !root._perScreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))
