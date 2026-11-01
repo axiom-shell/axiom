@@ -2511,3 +2511,39 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The hot corner's `action` enum (35 lines) is the actions table's `ipcActions` keys plus `exec`, its `x-enumLabels` (35 lines) are word for word the Keybind definition's labels for those actions (a script comparing the built schema found no difference), and the argument's `x-showIf` list (15 lines) is the actions whose template has `{0}`, plus `exec`. All three are kept by hand and only a test (7 lines) catches drift, so every new axiom action is added in three more places. AGENTS.md: "Prefer a new schema annotation to a hand-kept list". Fix: let the schema assembler (`backend/internal/schema/yamlsrc`) fill an `action` marked e.g. `x-axiomActions: true` from `table.json` (`ipcActions` + `exec`, labels from the Keybind definition's `x-enumLabels`) and its argument's `x-showIf` from the templates; this removes the 85 schema lines and the test, for an assembler rule and its Go test.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the hot-corners system
+
+### Re-applying a community setup over its edited copy never shows Applied
+- **Where:** `services/apps/CommunitySetupsManager.qml:37` (`applied`), `backend/internal/saved/saved.go:651` (`apply`)
+- **What:** Apply setup `foo` (saved as the copy `community-foo`), change the look, then apply `foo` again to get it back: `keep` saves the edits into `community-foo` as the user's (`s.save(into, "", "")`, no longer `kindCopy`), so `freeName(Sanitize(snapshot), true)` skips it and saves the result as `community-foo 2`, active with `activeSource` `foo`. `applied` requires `SavedConfigsManager.active === _snapshotPrefix + source`, so it stays "" and the tile never shows **Applied**, though the doc says the chip shows while the setup's saved config is active and unchanged. CONFIRMED by reading both sides. Fix: accept the numbered copy, `const name = SavedConfigsManager.active; return source !== "" && (name === _snapshotPrefix + source || name.startsWith(_snapshotPrefix + source + " ")) && !SavedConfigsManager.modified ? source : "";` (an example or import never has a `community-` name, so the prefix still keeps them apart).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the community-setups system
+
+### IPC community apply does nothing until the catalog was read
+- **Where:** `services/apps/CommunitySetupsManager.qml:331` (`apply`), `services/apps/CommunitySetupsManager.qml:125` (`apply`)
+- **What:** The doc says the `community` target "exists before the gallery is opened", with `apply <id>`. But only `list` calls `root.open()`; `apply` goes straight to `root.apply(id, false)`, where `root.setup(id)` searches `_setups`, which is `[]` until `open()` or `refresh()` read an index. So `qs ipc call community apply foo` in a fresh session (gallery and launcher not used yet) returns silently, sets no status and logs nothing, even with the catalog cached; an unknown id is equally silent. CONFIRMED. Fix: in the IPC `apply`, call `root.open()` first (it reads the cached index synchronously through `FileManager.read`), and `console.warn` an id `setup()` doesn't find.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the community-setups system
+
+### Turning the gallery on while its card is shown leaves it empty
+- **Where:** `components/views/Settings/CommunitySetupsCard.qml:37` (`Component.onCompleted`), `services/apps/CommunitySetupsManager.qml:46` (`open`)
+- **What:** The card calls `CommunitySetupsManager.open()` once, when built; with `CommunitySetups.enabled` off, `open()` returns at once. The card's description then says "Turn on Browse community setups below to see the gallery." Doing so shows the search field and the empty grid, but nothing calls `open()` again (the card is a `StreamedLoader` built once per page, `always: true`, and nothing watches `enabled`), so no catalog is read, `loading` and `loaded` stay false and the status line is empty: a blank gallery until **Refresh** or reopening the page. CONFIRMED from the code (the card isn't rebuilt by a setting change); a screenshot would show it. Fix: in the card, `Connections { target: CommunitySetupsManager; function onEnabledChanged() { CommunitySetupsManager.open(); } }` (open() is a no-op while off).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the community-setups system
+
+### community.fetch isn't sent again after a daemon re-exec, and blanks every thumbnail
+- **Where:** `services/apps/CommunitySetupsManager.qml:258` (`_fetch`), `services/apps/CommunitySetupsManager.qml:237` (`_fetchThumbs`)
+- **What:** `BackendManager.call` documents `{ repeatable: true }` for "a call the caller knows is safe to send twice: a whole-file write, a fetch"; `community.fetch` is exactly that (hash-checked atomic writes, the cache skips what landed) but `_fetch` doesn't pass it. A daemon re-exec (self-update, dev rebuild) during a download fails the call `unavailable`: an apply ends "could not be downloaded", and a thumbnails run sets `root._thumbs = thumbs` with none ok, so every thumbnail already shown disappears until the next Refresh. CONFIRMED (BackendManager.qml:402-423 fails non-repeatable calls on a lost connection). Fix: pass `{ "repeatable": true }` as `_fetch`'s fourth argument.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the community-setups system
+
+### CommunityCatalog's setups carry three fields nothing reads
+- **Where:** `components/methods/CommunityCatalog.qml:77` (`_setup`), `components/methods/CommunityCatalog.qml:84` (`_setup`), `components/methods/CommunityCatalog.qml:101` (`_file`)
+- **What:** `configVersion` (only used to compute `compatible` on the line after), `updated` and each file's `size` are copied into the parsed setups, but no reader exists: `grep -rn '\.updated\b\|\.size\b\|\.configVersion'` over the manager, the card, LauncherConfigBrowser and tst_CommunityCatalog finds none. Fix: drop the three lines and their names from `parse`'s comment (`compatible` reads `entry.configVersion` already). 3 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the community-setups system
+
+### The apply's wallpaper rides in a property instead of the callback
+- **Where:** `services/apps/CommunitySetupsManager.qml:172` (`_applyWallpaper`), `services/apps/CommunitySetupsManager.qml:140` (`apply`)
+- **What:** `apply` stores the wallpaper file in `_applyWallpaper` only for `_finishApply` to read it from the callback it starts; its comment ("set once SavedConfigsManager has applied it") is also wrong (it's set before the download). Fix: `root._fetch(downloads, fetched => root._finishApply(fetched.failures, wallpaper))` and `_finishApply(failures, wallpaper)`: removes the property with its comment (3 lines) and the assignment (1). 4 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the community-setups system

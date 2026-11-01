@@ -647,6 +647,12 @@ Found by the audits:
 - [The OSD's stream bar tracks its streams by hand](issues.md#the-osds-stream-bar-tracks-its-streams-by-hand)
 - [PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon](issues.md#pipewirevolumebar-keeps-a-mute-toggle-nothing-calls-and-its-own-volume-icon)
 - [Hot corners' action list is a hand-kept copy of the keybind one](issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
+- [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
+- [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)
+- [Turning the gallery on while its card is shown leaves it empty](issues.md#turning-the-gallery-on-while-its-card-is-shown-leaves-it-empty)
+- [community.fetch isn't sent again after a daemon re-exec, and blanks every thumbnail](issues.md#communityfetch-isnt-sent-again-after-a-daemon-re-exec-and-blanks-every-thumbnail)
+- [CommunityCatalog's setups carry three fields nothing reads](issues.md#communitycatalogs-setups-carry-three-fields-nothing-reads)
+- [The apply's wallpaper rides in a property instead of the callback](issues.md#the-applys-wallpaper-rides-in-a-property-instead-of-the-callback)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
