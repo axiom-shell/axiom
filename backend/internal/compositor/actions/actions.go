@@ -94,8 +94,9 @@ func parse() (*Table, error) {
 		call, _ := entry.Items[0].(string)
 		pattern := regexp.QuoteMeta(call)
 		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{call}"), `(?P<call>`+callNames+`)`)
-		// An argument is one word, or quoted with spaces (ShellWord's form)
-		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{0}"), `(?P<arg>'[^']*'|"[^"]*"|\S+)`)
+		// An argument is one word, or quoted with spaces (ShellWord's form,
+		// a ' inside written '\'')
+		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{0}"), `(?P<arg>'(?:[^']|'\\'')*'|"[^"]*"|\S+)`)
 		re, err := regexp.Compile("^" + pattern + "$")
 		if err != nil {
 			return nil, fmt.Errorf("the bind actions: %s: %w", action, err)
@@ -164,7 +165,10 @@ func (t *Table) IPCAction(command string) *jsonx.Object {
 
 func unquote(text string) string {
 	text = strings.TrimSpace(text)
-	if len(text) >= 2 && text[0] == text[len(text)-1] && (text[0] == '"' || text[0] == '\'') {
+	if len(text) >= 2 && text[0] == '\'' && text[len(text)-1] == '\'' {
+		return strings.ReplaceAll(text[1:len(text)-1], `'\''`, "'")
+	}
+	if len(text) >= 2 && text[0] == '"' && text[len(text)-1] == '"' {
 		return text[1 : len(text)-1]
 	}
 	return text
