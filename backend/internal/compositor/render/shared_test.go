@@ -209,14 +209,13 @@ func objects(list []*jsonx.Object) any {
 
 // ops maps each recorded op onto the port
 var ops = map[string]func(t *Tables, a []any) any{
-	"BindActions.callFunction":   func(t *Tables, a []any) any { return t.CallFunction(arg(a, 0)) },
-	"BindActions.callOf":         func(t *Tables, a []any) any { return t.CallOf(arg(a, 0)) },
-	"BindActions.defaultLabel":   func(t *Tables, a []any) any { return t.DefaultLabel(arg(a, 0)) },
-	"BindActions.descriptionFor": func(t *Tables, a []any) any { return t.DescriptionFor(arg(a, 0)) },
-	"BindActions.hasOwnSection":  func(t *Tables, a []any) any { return HasOwnSection(arg(a, 0)) },
-	"BindActions.needsArgument":  func(t *Tables, a []any) any { return t.NeedsArgument(arg(a, 0)) },
-	"BindActions.sectionFor":     func(t *Tables, a []any) any { return t.SectionFor(arg(a, 0)) },
-	"BindActions.switcherHeld":   func(t *Tables, a []any) any { return strList(SwitcherHeld(stringList(arg(a, 0)))) },
+	"BindActions.callFunction":  func(t *Tables, a []any) any { return t.CallFunction(arg(a, 0)) },
+	"BindActions.callOf":        func(t *Tables, a []any) any { return t.CallOf(arg(a, 0)) },
+	"BindActions.defaultLabel":  func(t *Tables, a []any) any { return t.DefaultLabel(arg(a, 0)) },
+	"BindActions.hasOwnSection": func(t *Tables, a []any) any { return HasOwnSection(arg(a, 0)) },
+	"BindActions.needsArgument": func(t *Tables, a []any) any { return t.NeedsArgument(arg(a, 0)) },
+	"BindActions.sectionFor":    func(t *Tables, a []any) any { return t.SectionFor(arg(a, 0)) },
+	"BindActions.switcherHeld":  func(t *Tables, a []any) any { return strList(SwitcherHeld(stringList(arg(a, 0)))) },
 
 	"BindKeys.entryId":      func(t *Tables, a []any) any { return EntryID(arg(a, 0)) },
 	"BindKeys.keyId":        func(t *Tables, a []any) any { return KeyID(arg(a, 0)) },

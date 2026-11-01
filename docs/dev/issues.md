@@ -399,18 +399,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### Backends keep stubs for calls the facade gates
-- **Where:** `services/compositor/SwayManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`, `scrollStrip`, `leaveSwitcher`), `services/compositor/NiriManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`, `applyRemap`, `leaveSwitcher`), `services/compositor/CompositorManager.qml` (`withLayerRects`), `services/compositor/WindowSwitcherManager.qml` (`pick`), `docs/dev/compositor/contract.md`
-- **What:** Deletion pass. `CompositorManager.withCursorPos` and `warpCursorToLayer` call the backend only with `supports.cursorPos` / `cursorWarp`, which only Hyprland sets, so sway's and niri's `withCursorPos` (calls back null) and empty `warpCursorToLayer` are never reached. `withLayerRects` is called ungated, but both only call back null, which the facade's no-backend branch already does. About 22 lines over the two backends. The sway review (2026-10-30) adds sway's `scrollStrip` (3 lines): the facade calls it only past `if (!root.supports.strips …) return;`, and sway has no `strips`. The compositor-parity review (2026-10-30) adds niri's empty `applyRemap` (3 lines with its comment): the facade returns before calling it when `root.supports.outputWorkspaces === true`, which niri sets. It also adds sway's and niri's empty `leaveSwitcher` (5 + 4 lines with their comments, which say "Nothing to let go"): `WindowSwitcherManager.pick` calls it under `supports.switcher`, which all three set, but only Hyprland holds the switcher's keys in a mode to leave (its `axiom_switcher` submap, `switcherRelease`). Fix: delete the six gated stubs; gate `pick`'s call on `CompositorManager.supports.switcherRelease` and delete the two `leaveSwitcher` stubs (list `leaveSwitcher()` under `switcherRelease` in contract.md); make `withLayerRects` optional in the facade (`root.backend?.withLayerRects ? … : callback(null)`) and delete its two stubs; mark the three optional in contract.md › Session and input and the compositor-backend recipe.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Small shrinks in the compositor layer
-- **Where:** `services/compositor/CompositorManager.qml` (`stepWorkspace`), `services/compositor/CompositorConfigManager.qml` (`copyIncludeLines`, `copyAutostartLines`), `config/WindowLookConfig.qml` (`shadowSoft`), `components/views/Settings/CompositorStatusCard.qml`
-- **What:** Deletion pass, about 12 lines. `stepWorkspace` re-derives `WorkspacesConfig.columns` and `rows` (`grid ? columns : size`, `grid ? rows : 1` equal them in every layout: `columns` is `count` and `rows` 1 outside the grid), a re-derivation of a reader's decision. `copyIncludeLines` / `copyAutostartLines` each wrap one `ClipboardManager.copyText` for one caller (the status card, which can call it itself). `WindowLookConfig.shadowSoft` is `_shadowMatched` under a second name, read once by `CompositorConfigManager._look`. Fix: use the readers' `columns`/`rows`; have the card call `ClipboardManager.copyText(CompositorConfigManager.includeLines)` and drop the wrappers; send `_shadowMatched` as a public `shadowMatched` (or keep one name).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### A trial monitor Apply that turns a monitor off drops its Keep/Revert
 - **Where:** `services/compositor/MonitorManager.qml` (`onOutputsHotplugged`, `apply`, `revert`), `services/compositor/HyprlandManager.qml` (`_announce`)
 - **What:** `apply()` evaluates the trial rules and sets `pending`; the hotplug handler (MonitorManager.qml:451-456) ends any pending trial (`pending = false; _countdown.stop()`), assuming the hotplug means the daemon already switched profiles. A trial whose rules disable or mirror a monitor makes Hyprland remove that output (`monitorremoved` → `outputsHotplugged`), so the trial ends itself: the prompt goes, the 15 s auto-revert is cancelled, `axiom ipc monitors revert` does nothing (`revert()` returns while `!pending`), and the trial layout stays live, unsaved. Turning the wrong monitor off is the case the revert exists for. Code path confirmed; that Hyprland sends `monitorremoved` for a rule-disabled monitor wants one nested Hyprland run (`scripts/dev/nested.sh hyprland`). Fix: end the trial only on a hotplug the trial's own rules don't explain (record the outputs `apply()` expects to stay enabled), or keep the countdown running. That makes a prompt window created while shown reachable, and `MonitorPromptWindow.qml:33` registers as modal only in `onVisibleChanged`: the fix should also register in `Component.onCompleted` (`PolkitWindow.qml:53` has the same pattern) (the hyprland review, 2026-10-30).
@@ -507,12 +495,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### HyprlandManager keeps members only it reads
-- **Where:** `services/compositor/HyprlandManager.qml` (`withAnimations`, `_optionsWaiting`, `runLua`, `withBinds`, `layerApplied`, `refreshOptions`, `animations`, `animationsEnabled`, `_compaction`, `applyRemap`, `_bases`), `docs/dev/hyprland/ipc.md`, `docs/recipes/service.md`
-- **What:** Deletion pass, about 40 lines. `withAnimations` has no caller, and `_optionsWaiting` serves only it (about 11 lines). `runLua` is a public wrapper whose only callers are its own `captureKeys` and `leaveSwitcher` (7 lines; `_eval` there). `withBinds` is used only by `withMainBinds` (inline, about 4). `layerApplied` only forwards to `refreshOptions` under two stacked comments (one function, about 4). `animations`/`animationsEnabled` are public but feed only `_workspaceAnim` (compute it in `_readOptions`, about 6). `_compaction` and `applyRemap` wrap their lines in the same animation-off/on prelude and epilogue (one `_runPlan(lines)`, about 4). `_bases` is recomputed on every output change though only the scrolling layout reads it (gate on `dynamicByLayout`, 2; the copy itself is by design, workspaces.md › Layouts). ipc.md's list of what `CompositorManager` uses ("`runLua`, `withOutputs`, `withBinds`, `refreshOptions`, `animations`, `switcherKey`") names a `withOutputs` that doesn't exist and four members no other file calls, leaves out `WindowSwitcherManager` (`leaveSwitcher`, `switcherKey`) and `CompositorConfigManager` (`layerApplied`) reaching the backend, and says the runtime layer's unbind goes through `runLua` (it's the daemon's now); service.md:109 also names `runLua`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### A bind description's section is parsed three ways
 - **Where:** `services/compositor/KeybindsPageState.qml` (`_bindSection`), `services/compositor/KeybindManager.qml` (`bindLabel`, `_buildKeybindings`), `components/methods/BindActions.qml` (`hasOwnSection`)
 - **What:** "Section: Label" is split three ways: `indexOf(": ")`, `indexOf(":")` and `split(":")[0]`. Only the editor's (`_bindSection`) doesn't trim, so `" Media: Play"` or `"Media : Play"` passes `hasOwnSection` (which trims) and gets its own " Media"/"Media " section and chip in the editor, while the reference shows it under Media. Fix: one `BindActions.splitDescription(text) → { section, label }` (trimmed), with test rows for a leading space and `a:b: c`, used by all three.
@@ -520,15 +502,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### KeybindManager keeps tables the methods helpers already hold
-- **Where:** `services/compositor/KeybindManager.qml` (`_modifiers`, `decodeMods`, `_keyNames`, `_appliedBinds`, `userKeyCounts`), `components/methods/BindKeys.qml` (`_modBits`), `components/methods/KeyMap.qml` (`labelOf`), `services/compositor/KeybindsPageState.qml` (`_bindMods`)
-- **What:** Deletion pass, about 36 lines. `_modifiers` (33 lines) is a second name↔mask table, the inverse of `BindKeys._modBits`, and `_bindMods` parses keyId's string (`parseInt`) to get a mask back: one `decodeMods(mask)` in BindKeys, built from `_modBits`, replaces it (net about -25), and the two can't disagree (its other caller is Hyprland's `modmask`, KeybindManager.qml:395; `_bindMods` stops decoding a mask with the fix in "Two keybind reference paths drop a key's binds"). Nine `_keyNames` entries (`mouse:272/273/274`, `mouse_up/down`, `left/right/up/down`) return what `KeyMap.labelOf` already does, which `_formatKey` asks next (about 9 lines). The skipped-key list is computed twice (KeybindManager.qml:230 and :245; one property, -2).
+- **Where:** `services/compositor/KeybindsPageState.qml` (`_bindMods`), `components/methods/BindKeys.qml` (`decodeMods`)
+- **What:** Deletion pass. `_bindMods` parses keyId's string (`parseInt`) to get a mask back and decodes it (`BindKeys.decodeMods`); it stops decoding a mask with the fix in "Two keybind reference paths drop a key's binds". The rest of this entry (the second modifier table, the key names KeyMap holds, the skipped keys worked out twice) was done in the clear-out's compositor-02.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The workspace strips repeat ActiveStrip's loader
-- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml`, `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml`, `components/bar/widgets/Workspaces/ActiveStrip.qml` (`hasWindows`)
-- **What:** Both strips hold the same `Loader { active: stripDirection !== ""; visible: hasWindows; ActiveStrip { 12 bindings } }` (only the text colour differs) and the same `stripOnly` expression but for the id count; `ActiveStrip.hasWindows` also calls `CompositorManager.stripWindows` again beside its `StripWindows`. Deletion pass: move the loader into ActiveStrip (it sets its own `active`/`visible` and exposes `stripOnly(count)`), about 20 lines. The two strips also repeat about 15 more lines each (the five resolved colours, `monitor`/`output`/`base`/`activeId`/`stripDirection`, `cell`/`cellRadius`/`cellLength`); the shared piece can take those too (bar-widgets audit, 2026-10-30).
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### The managed file's catch-all monitor line is copied into M.monitors
@@ -540,12 +516,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### noteReload counts every compositor reload a second time
 - **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
 - **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30). The sway review (2026-10-30) found an apply between the count and that reset still sends the old list: [The detached layer's unbind list can drift from what sway holds](#the-detached-layers-unbind-list-can-drift-from-what-sway-holds) wants the reset where the reload is counted; fix the two together.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Bind helpers keep JS halves the daemon owns now
-- **Where:** `components/methods/BindActions.qml` (`descriptionFor`), `components/methods/BindKeys.qml` (`withIds`), `tests/tst_BindKeys.qml`, `backend/internal/compositor/manager/manager.go` (`withIDs`)
-- **What:** `BindActions.descriptionFor` has no QML caller (only a comment in KeybindEditor.qml and its test): Go's `DescriptionFor` renders every description, so its test rows belong in a Go test and the function can go (deletion pass, 4 lines plus the test). `BindKeys.withIds` and Go's `withIDs` follow one rule (bind-merge.md › Duplicates), but tst_BindKeys.qml says "withIds has no Go counterpart to replay it", no shared case pins them, and they already differ on a bind with no `key` (`bind` in QML, `null` in Go). Fix: record `withIds` as a shared case and replay it against `withIDs` (nil key → "").
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -565,12 +535,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `backend/internal/compositor/ipc/niri.go` (`Reloads`), `backend/internal/compositor/manager/niri.go` (`checkLoaded`, `lastFailed`), `backend/internal/compositor/manager/manager.go` (`configReloaded`)
 - **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (the unread `NiriManager` property that forwarded it is gone). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### NiriManager queues actions the daemon could order
-- **Where:** `services/compositor/NiriManager.qml` (`_command`, `_next`), `backend/internal/daemon/compositorsocket.go` (`niriHandlers`)
-- **What:** Deletion pass. `NiriManager` keeps its own queue (`_command`, `_queue`, `_running`, `_next`: about 30 lines) so a chain of actions can't overtake itself, sending each only after the last one's reply came back through the daemon: one full round trip per action. The daemon already has the mechanism, `rpc.Registry.InOrder` (used for `outputs.apply`). A `niri.command` method registered in order, alongside `niri.request` for state, lets `_action` / `_command` send at once and drops the queue: about 30 QML lines for about 5 Go lines.
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the niri system
 
 ### Setting names that still confuse
@@ -821,18 +785,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### The workspace strips' panel property is never read
-- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml:20` (`panel`), `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml:21` (`panel`), `components/bar/widgets/Workspaces/Workspaces.qml:46`, `components/bar/widgets/Workspaces/Workspaces.qml:58`
-- **What:** Both strips declare `property var panel` and `Workspaces.qml` sets it, but neither file reads it (`grep -c panel` is 1 in each strip: the declaration); popouts go through `PopoutAnchor { hitArea }`. Nothing else instantiates the strips (only Workspaces.qml:44 and :56). Fix: delete the two declarations and the two `panel: root.panel` lines (4 lines).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Three copies of the wheel-notch accumulator
-- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml:106` (`WheelHandler`), `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml:102` (`WheelHandler`), `components/hosts/overlay/OverlayPageNavigator.qml:65` (`WheelHandler`)
-- **What:** Each holds the same `WheelHandler { acceptedDevices: Mouse | TouchPad; property real _accumulated; onWheel: add angleDelta.y (else .x), return under 120, act on the sign, reset }` (15 + 16 + 14 = 45 lines); AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: a shared `NotchWheel` in components/reusable/ (a `WheelHandler` with `signal stepped(int direction)`, -1 for up/left), each user becoming `NotchWheel { enabled: …; onStepped: d => … }` (about 4 lines each): about 30 lines fewer, the same 120 threshold and reset in one place.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### The key map and the keyboard reference each carry the same modifier chips and legend
 - **Where:** `components/views/Keybinds/KeyMapPanel.qml:57`, `components/views/Keybinds/KeyMapPanel.qml:82`, `components/content/parts/KeyboardReference.qml:46`, `components/content/parts/KeyboardReference.qml:75`
 - **What:** KeyMapPanel.qml:57-71 (15 lines) and KeyboardReference.qml:46-61 (16) are the same `Flow` of `KeyNames.modifiers` `SegmentButton`s toggling `KeybindManager.page.keyMapMods`. The only differences are `visible: root.showMods` and `root.mods` for `keyMapMods`. KeyMapPanel.qml:82-111 and KeyboardReference.qml:75-104 (30 lines each) are the same colour legend (a swatch `Rectangle` from `root.fill(source)` plus a label). Only the entry list differs ("paused" is in one only) and Flow/Row. Both also define the same `inkOf` rule. That is about 45 repeated lines around one shared part (`KeyboardMap`, "through hooks"). Fix: give `KeyboardMap` a `legend: [[source, label]]` with a `fillFor: source => color` hook (fillOf/inkOf then read `fillFor(sourceOf(key))`), and the chips behind a `showMods`/`mods` pair. Each caller passes its entries and colours. That removes about 40 lines from one side and keeps both looks.
@@ -947,23 +899,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the sway system
 
-### Small shrinks in SwayManager
-- **Where:** `services/compositor/SwayManager.qml:95` (`layersChanged`), `services/compositor/NiriManager.qml:120` (`layersChanged`), `services/compositor/SwayManager.qml:288` (`runCommands`), `services/compositor/SwayManager.qml:330` (`_lookSeen`), `services/compositor/SwayManager.qml:342` (`onActiveWindowIdChanged`), `services/compositor/SwayManager.qml:319` (`_configBlur`)
-- **What:** Deletion pass, 21 lines, every behaviour kept (the compositor-parity review found `runCommands` too, noting Hyprland's `runLua` has the same shape and is filed under "HyprlandManager keeps members only it reads"):
-  - `signal layersChanged` with its comment (94-95, 2 lines). It is never emitted, and the facade connects with `ignoreUnknownSignals: true` (`CompositorManager.qml:199`). niri's (`NiriManager.qml:119-120`, never emitted either) goes the same way, 2 more lines. contract.md › Signals then marks `layersChanged` optional (only Hyprland has it), and sway-backend.md drops its "`layersChanged`: never".
-  - `runCommands` (287-290, 4 lines). Its only callers are SwayManager's own (339, 370); neither passes an empty line or a callback, so its filter and `callback?.(ok)` do nothing. Call `SwayIpcManager.command(lines.join("; "))` instead.
-  - `_lookSeen` (328-330 and 313, 4 lines). It is always `root._windowEffects !== null`, so 334 becomes `if (!root._windowEffects)`.
-  - `onActiveWindowIdChanged: _applyWindowLook()` (342, 1 line). `windows` is bound to `SwayState.ranked(…, activeWindowId)`, so `onWindowsChanged` already runs it on every focus change, and today it runs twice.
-  - The blur default is written out twice (319-323 and 586-590), and `SwayState.configInfo("").blur` already holds it. That is 10 lines that become 2; keep the `fx` gate.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### Sway and niri each forward withMainBinds to the daemon
-- **Where:** `services/compositor/SwayManager.qml:358` (`withMainBinds`), `services/compositor/NiriManager.qml:391` (`withMainBinds`), `services/compositor/CompositorManager.qml:399` (`withBinds`)
-- **What:** Deletion pass, 10 lines. Since stage 7 both backends' `withMainBinds` are the same forward to `CompositorConfigManager.withEntries(callback)` (sway 356-360, niri 389-393), a layer whose job has shrunk to forwarding. Fix: the facade's `withBinds` calls `root.backend.withMainBinds ? root.backend.withMainBinds(callback) : CompositorConfigManager.withEntries(callback)` (only Hyprland reads its own), both forwards go, and contract.md marks `withMainBinds` optional.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### The sway extract's input-device case and isSwayFlag repeat the general rule
 - **Where:** `backend/internal/compositor/binds/sway.go:37` (`isSwayFlag`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
 - **What:** Deletion pass, about 17 lines. `--input-device=<id>` is in neither `swayFlags` nor `swayHarmless`, so the general `other` branch already keeps such a bind as `options`. The `device` boolean (288-302) exists only so the detail lists every flag instead of the unknown one, which nothing pins (`input-device` appears only in sway.go). `isSwayFlag` (37-45, 9 lines) has one caller. Fix: `slices.ContainsFunc(swayFlags, …)` inline, plus `if len(other) > 0 { push(… strings.Join(other, " ")) }`. The 17 lines at 287-303 become about 9, and `isSwayFlag` goes. `swayAction`'s `o Options` parameter is never read and goes too. These are the lines [A sway title-bar mouse bind moves in as a whole-window bind](#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind) changes: land the two together.
@@ -1025,12 +960,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 
-### sway and niri build output details and descriptions twice
-- **Where:** `components/methods/SwayState.qml:183` (`output`), `components/methods/SwayState.qml:298` (`outputDetails`), `components/methods/NiriState.qml:135` (`description`), `components/methods/NiriState.qml:351` (`outputDetails`)
-- **What:** Deletion pass, about 12 lines. The make/model/serial description (`[make, model, serial].filter(part => part && part !== "Unknown").join(" ")`) is written three times: twice in SwayState and once as `NiriState.description`. Both `outputDetails` repeat the same mHz→Hz `rate` lambda, the `availableModes` template (`${m.width}x${m.height}@${rate(m).toFixed(2)}Hz`) and the 13-key object (24 and 30 lines). `MonitorLayout` matches modes as strings across compositors, so the two spellings must stay identical. Fix: one pure helper (`description`, `mode(width, height, mHz)`, `detail({…})`) with a test row, used by both. It removes about 12 lines and keeps the spellings identical by construction.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
 ### A backed toast's blur fill is at the surface opacity twice
 - **Where:** `components/surfaces/notifications/ToastStack.qml:346` (the card's `BlurShape`), `shell/BlurBackingWindow.qml:168` (`fills`)
 - **What:** The blur window draws each copy opaque, then applies `Appearance.surfaceAlpha` once to all of them (`opacity: Appearance.surfaceAlpha`, line 168). Every other `kind: "rect"` shape hands it a raw colour: `BarContainer.qml:541`/`:643` use `BlurShape`'s default `Theme.background`, and `IntegratedEdgeMenu.qml:190` uses `Theme.background`. The toast card hands it `Qt.alpha(Appearance.fill(Theme.background), Appearance.fill(Theme.background).a * toastCard.opacity)`, and `Appearance.fill` has already multiplied in `surfaceAlpha` (`config/Appearance.qml:113`). With translucency at 80% and blur on, a toast's fill comes out at 0.64. It is lighter than the edge popout and bar it sits beside, and lighter than the same toast unbacked (`BlurManager.fillOn`, 0.8), so its tone jumps when the blur pauses or resumes. Fix: `color: Qt.alpha(Theme.background, toastCard.opacity)`.
@@ -1041,36 +970,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/bar/BarContainer.qml:750` (`strokeHoles`), `components/bar/BarContainer.qml:771` (the keepFill paint `Repeater`)
 - **What:** `keepFill` openings come from `CornerMerge` (a pill bar's end pill merging into this bar's corner) and `PillBarJoin` (a popout's side joining a pill bar). The cut is `_farHole(start, end, o.keepFill && !Appearance.translucent ? "outer" : "both")`. When translucent, `"both"` also removes the stroke's inner fringe row, and that row lies inside the pill's own fill (`from = near ? foot - row + 1 : …`). The row is painted back only when opaque (`model: Appearance.translucent ? [] : …`). Backed, the blur window fills that row, so nothing is lost. But "translucent" is not "backed". A pill is unbacked yet translucent when the window look's blur part is off with opacity below 100, on the other screens during Hyprland's or SwayFX's compositor-wide pause, and before `CompositorManager.surfacesReady`. The pill then fills itself, nothing paints the cut row back, and the surface joining end-on covers only the stroke. The result is a 1px unfilled line along the whole opening. PLAUSIBLE: a nested-compositor screenshot of two pill bars meeting at a corner settles it, with translucency at 80% and the look's blur off. Fix: cut `"both"` always, and paint the row back whenever the pill fills itself: `model: root.backed ? [] : root._openingList.filter(o => o.keepFill ?? false)`, keeping `color: BlurManager.fillOn(…)`. `_farHole`'s `"outer"` mode then has no caller and goes. At opacity 100 it draws what it does today.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the blur system
-
-### SlideAnimation's fade, easing and container aliases are dead
-- **Where:** `components/hosts/popout/SlideAnimation.qml:21` (`enableFade`), `components/hosts/popout/SlideAnimation.qml:22` (`easingType`), `components/hosts/popout/SlideAnimation.qml:24` (`containerHeight`, `containerWidth`), `components/hosts/popout/SlideAnimation.qml:58` (`targetX`, `targetY`), `components/hosts/popout/AttachedSurface.qml:411`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml:169`
-- **What:** None of these members changes anything. Both users (the only two `SlideAnimation {`) set `enableFade: false`, so the opacity is always 1 and the fade `Behavior` (lines 111-120) never runs; `easingType` is set by no one; `containerHeight`/`containerWidth` re-set `contentWrapper`'s size to the size it already binds, since both users fill their parent; `targetX`/`targetY` are the constant 0. Fix: remove 1 + 1 + 2 + 2 + 10 lines in the file and 3 + 3 at the users, 22 lines. The 2 easing reads become `Appearance.easing` and the 4 target reads become 0. Every behaviour is kept.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the blur system
-
-### The blur window builds stand-ins and copies it never uses
-- **Where:** `shell/BlurBackingWindow.qml:303` (`blankSurface`, `blankRect`), `shell/BlurBackingWindow.qml:189` (the `cutBy` `Copies`)
-- **What:** Each window builds a whole hidden `AttachedSurface` (`blankSurface`) and a `Rectangle` (`blankRect`), used only as `?? blankSurface` / `?? blankRect` while a source is going. `AttachedSurfaceCopy` already handles a null source (`visible: root.source !== null`, and every read is `root.source?.… ?? …`), and the rect mirror's `visible: src !== null` (line 365) can never be false while the stand-in is there. Separately, a `part: "fills"` window still mirrors every shape of the other window (`Copies { shapes: backing.cutBy }`) and bursts `FrameNudge` for them, though `cutByUnion` (line 38) is `backing.part !== "fills" && …`, so they are never read. That happens on SwayFX with the overlay open. Fix: `?? null` at both sites, delete lines 301-311 (11 lines), and use `shapes: backing.part !== "fills" ? backing.cutBy : []`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the blur system
-
-### BlurBacking spells out four near-identical blur windows
-- **Where:** `shell/BlurBacking.qml:58`, `shell/BlurBacking.qml:68`, `shell/BlurBacking.qml:85`, `shell/BlurBacking.qml:99`
-- **What:** The four `BlurBackingWindow`s (9 + 13 + 13 + 13 = 48 lines) differ only in their shapes and `cutBy` pair, `wanted`, `held` and `stackLayer` (all set by whether they're below or over the overlay), their `part`, and their namespace, which is `(part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (over ? "-overlay" : "")`. Fix: one inline component taking `over`, with an `Instantiator` over `shadowsApart ? ["fills", "shadows"] : ["all"]`. It is used twice, the over-overlay one under its `aboveOverlay` gate: about 25 lines in place of 48. SwayFX's map order (fills, then shadows) is kept.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the blur system
-
-### The border frame's path is built three times
-- **Where:** `shell/BlurBackingWindow.qml:379` (`frameMirror`), `components/surfaces/border/RoundedBorders.qml:112` (`shadowWindow`), `components/surfaces/border/RoundedBorders.qml:212`, `components/surfaces/border/RoundedBorders.qml:252`
-- **What:** The same rounded inner-rect path (the `A ${r} ${r} 0 0 1` template) is written out three times: `BlurBackingWindow.qml:407`, `RoundedBorders.qml:219` and `RoundedBorders.qml:261`. The copies have already drifted: line 259 has no `Math.max(0, …)`, while lines 217 and 405 do. `shadowWindow`'s `radius` (line 121) repeats `root.innerRadius`, and its `left`/`right`/`top`/`bottom` (lines 116-119) only forward `root.inner*`. Fix: `RoundedBorders` exposes `innerPath` (and the frame path built from it), and the three users read it. That is about 30 lines out, 8 in.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the blur system
-
-### Small shrinks in the blur system
-- **Where:** `components/methods/SurfaceContext.qml:140` (`shadow`), `services/ui/BlurManager.qml:33` (`_wanted`), `components/views/Settings/TranslucencyStatus.qml:36`, `backend/internal/compositor/render/layer.go:202` (`SurfaceBlur`), `backend/internal/compositor/render/niri.go:506` (`NiriSurfaceBlurNodes`)
-- **What:** Deletion pass, about 17 lines. (1) `SurfaceContext.shadow`'s submenu branch has no caller: `if (s.parent) return s.parent;` is never reached, because its one caller, `layout` (line 363), never passes `parent`; submenus take their parent's look in `SubPopout`, and `SurfaceContext.shadow(` appears otherwise only in tests. `layout`'s `"onBar": !p.held && …` also repeats what `shadow` checks first, since a held surface is always `detached`. Drop the branch, its 2 comment mentions, `test_submenuTakesItsParentsShadow` (11 lines) and `!p.held && `, 14 lines in all. (2) `supports.blur` is tested again after `Appearance.blur`: `Appearance.blur` needs `translucent`, which needs `compositorBlurs`, and `CompositorManager` binds that to `supports.blur === true && !Paths.greeter`, so `&& CompositorManager.supports.blur === true` in `BlurManager._wanted` and in `TranslucencyStatus` (line 36) adds nothing. (3) Two Go expressions do nothing: `or(get(surfaces, "threshold"), nil)` (`layer.go:202`) returns its first argument, since `or` returns `b` only for a nil `a`; `|| rule.Value("xray") == nil` (`niri.go:506`) can't be true, because every `SurfaceBlur` row with `blur` or `popups` sets `xray`. Fix: remove each one; output unchanged.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the blur system
 
 ### Edge and floating popouts never close when their focus grab clears
@@ -1703,20 +1602,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A weather fetch that fails shows Loading forever
 - **Where:** `backend/internal/weather/weather.go:148` (`fetch`), `services/apps/WeatherManager.qml:109` (`_shown`), `components/content/Weather/Weather.qml:52`
 - **What:** A failed fetch returns an error, which the topics hub only logs (once per distinct error) and never pushes, so the shell keeps its last state. That's right while the settings are unchanged, but `_shown` drops a state fetched for other settings, so with no good fetch yet for the current ones nothing ever says why. Scenarios: log in offline, and the card says "Loading weather…" until the next fetch, 15 minutes later by default, even once the network is back; type a location Open-Meteo doesn't know (`unknown location "…"`), and it says "Loading weather…" for good. Fix: on a failure, `fetch` returns a state for the request with an `error` and no weather (the hub pushes it since it differs), a new `error` property of WeatherManager exposes it while it answers the current settings, and the card and the widget's tooltip show it in place of loading.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### SystemManager samples every second while nothing is shown
-- **Where:** `services/system/SystemManager.qml:91` (`_graphMetrics`), `services/system/SystemManager.qml:117` (`_keepGraphHistory`), `docs/dev/core/services-pattern.md`
-- **What:** The services pattern says the `system` topic "Stops entirely with no consumers" and AGENTS.md › Services that anything polled is fetched "not at all with no consumer". But SystemManager acquires for itself, at 1000 ms with `history: true`, every metric any configured SystemGraphs module or SystemStats popout shows, from launch and whether or not anything is open (so a graph opens with a minute already drawn; created from `shell.qml`'s `_services` for this). The default config has a SystemGraphs module on the overlay's Home page (`config/schema/sections/Overlay.yaml`, metrics `[cpu, mem]`), so every default install samples once a second for the whole session, and each sample reallocates two 60-entry history arrays in QML. With `gpu` in a graph on an NVIDIA machine without an AMD card, that's an `nvidia-smi` process every second. Neither doc mentions the exception.
-
-  **Decided** (maintainer, 2026-10-31): "Drop it now - mark accordingly in issues / roadmap for the robust daemon implementation". Fix: drop the self-consumer in `_graphMetrics` (lines 88 to 126, about 39 lines, and its `_services` entry in `shell.qml`); graphs start empty, as every other polled view does. The history from launch comes back later in the daemon: [The system graphs start empty until the daemon keeps their history](#the-system-graphs-start-empty-until-the-daemon-keeps-their-history).
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### The system graphs start empty until the daemon keeps their history
-- **Where:** `backend/internal/sysmon/sysmon.go:111` (`Source`), `backend/internal/sysmon/sysmon_test.go`, `services/system/SystemManager.qml`, `docs/dev/core/services-pattern.md`
-- **What:** Once [SystemManager samples every second while nothing is shown](#systemmanager-samples-every-second-while-nothing-is-shown) drops the shell's self-consumer, a SystemGraphs module or SystemStats popout opens with an empty graph that fills over a minute: the history lives in the shell and is only gathered while something is shown. The maintainer (2026-10-31): "Drop it now - mark accordingly in issues / roadmap for the robust daemon implementation". Proposed design: sysmon keeps a 60-slot ring per metric, sampled in-process only for the metrics some config graph names (the shell sends that list once, from config); cheap `/proc` metrics only (cpu, mem, net, cpuTemp; never `nvidia-smi`); sent as a backfill in the first push to a `history: true` subscriber; nothing pushed with no subscriber. services-pattern.md documents it as the one exception. A `sysmon_test.go` case for the backfill's length and order.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the services-core system
 

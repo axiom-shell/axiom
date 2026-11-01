@@ -18,7 +18,6 @@ import qs.components.hosts.popout
 Item {
   id: root
   property var screen
-  property var panel
   // The widget's (BarWidget.hitArea), which its popout reads hover from
   property var hitArea: null
   property var barConfig
@@ -42,9 +41,6 @@ Item {
   readonly property int activeId: root.monitor?.activeWorkspaceId ?? -1
   // "horizontal" | "vertical" on a strip monitor, else ""
   readonly property string stripDirection: CompositorManager.stripDirection(root.screen?.name ?? "")
-  // One workspace shown on a strip monitor: its windows show alone while it
-  // has any (WorkspaceStrip.stripOnly)
-  readonly property bool stripOnly: root.lineIds(root.activeLine, root.activeId).length <= 1 && root.stripDirection !== "" && ((activeStrip.item as ActiveStrip)?.hasWindows ?? false)
   // The active workspace's place in the grid (the first cell when the
   // monitor is on a workspace outside it)
   readonly property int activeIndex: {
@@ -99,57 +95,45 @@ Item {
     return position === 0 ? "keyboard_double_arrow_up" : position === count - 1 ? "keyboard_double_arrow_down" : position < middle ? "keyboard_arrow_up" : "keyboard_arrow_down";
   }
 
-  WheelHandler {
+  NotchWheel {
     enabled: root.properties.scrollToSwitch
-    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-    property real _accumulated: 0
-    onWheel: event => {
-      _accumulated += event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
-      if (Math.abs(_accumulated) < 120)
-        return;
-      const forward = _accumulated < 0;
+    onStepped: direction => {
       if (root.stripDirection !== "")
-        CompositorManager.stepStrip(forward ? 1 : -1, root.output);
+        CompositorManager.stepStrip(direction, root.output);
       else
-        CompositorManager.stepWorkspace(root.isVertical ? (forward ? "down" : "up") : (forward ? "right" : "left"), "go");
-      _accumulated = 0;
+        CompositorManager.stepWorkspace(root.isVertical ? (direction > 0 ? "down" : "up") : (direction > 0 ? "right" : "left"), "go");
     }
   }
 
   Grid {
     id: layout
     // Only what's shown: a Grid keeps spacing for an empty column or row
-    readonly property int shown: Math.max(1, (root.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0))
+    readonly property int shown: Math.max(1, (activeStrip.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0))
     rows: root.isVertical ? shown : 1
     columns: root.isVertical ? 1 : shown
     spacing: root.spacing
 
     // The active row (or column) of the grid
     CrossFade {
-      visible: !root.stripOnly
+      visible: !activeStrip.stripOnly
       value: root.activeLine
       delegate: shownLine
     }
 
-    Loader {
+    ActiveStrip {
       id: activeStrip
-      active: root.stripDirection !== ""
-      visible: (item as ActiveStrip)?.hasWindows ?? false
-
-      sourceComponent: ActiveStrip {
-        barConfig: root.barConfig
-        divider: !root.stripOnly
-        workspaceId: root.activeId
-        stripVertical: root.stripDirection === "vertical"
-        cell: root.cell
-        cellRadius: root.cellRadius
-        activeColor: root.activeColor
-        occupiedColor: root.occupiedColor
-        textColor: root.iconColor
-        hoverColor: root.hoverColor
-        clickable: root.properties.clickToSwitch
-        hitArea: root.hitArea
-      }
+      barConfig: root.barConfig
+      workspaceId: root.activeId
+      stripDirection: root.stripDirection
+      shownCount: root.lineIds(root.activeLine, root.activeId).length
+      cell: root.cell
+      cellRadius: root.cellRadius
+      activeColor: root.activeColor
+      occupiedColor: root.occupiedColor
+      textColor: root.iconColor
+      hoverColor: root.hoverColor
+      clickable: root.properties.clickToSwitch
+      hitArea: root.hitArea
     }
   }
 

@@ -18,7 +18,7 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
 
 ### `detached`
 - It is evaluated at startup and on every `configreloaded` (the writer's runtime layer).
-- It skips keys Hyprland's binds show taken (`HyprlandManager.withBinds`, read after unbinding its own). `components/methods/BindKeys` provides `keyId`, `runtimeBinds`, and `userKeyCounts` for KeybindManager.
+- It skips keys Hyprland's binds show taken (`HyprlandManager.withMainBinds`, read after unbinding its own). `components/methods/BindKeys` provides `keyId`, `runtimeBinds`, and `userKeyCounts` for KeybindManager.
 - The keys it bound live in Hyprland's Lua state (`AXIOM_RUNTIME_KEYS`):
   - a Hyprland reload resets them, along with the binds
   - they survive a qs reload

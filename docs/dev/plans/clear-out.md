@@ -50,8 +50,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 2 | platform-01 | deletion | Done: Dead code across the daemon, launcher, greeter and security | 6 | ~190 | config-01 |  |
 | 3 | core-ui-theming-01 | deletion | Done: Dead members and pure shrinks in core services, ui-kit, theming and Wayland | 7 | ~-100 net | config-01 |  |
 | 4 | compositor-01 | deletion | Done: Go compositor backend: dead and doubled helpers | 17 | ~550 (~370 out) | none | Q6 |
-| 5 | compositor-02 | deletion | QML compositor services, keybind helpers, workspace strips | 12 | ~450 | none |  |
-| 6 | compositor-03 | deletion | The blur system | 5 | ~200 | none |  |
+| 5 | compositor-02 | deletion | Done: QML compositor services, keybind helpers, workspace strips | 12 | ~450 | none |  |
+| 6 | compositor-03 | deletion | Done: The blur system | 5 | ~200 | none |  |
 | 7 | bar-popouts-01 | deletion | Dead members, signals and wrappers across popouts, the bar, bar widgets and edge menus | 12 | ~150 | none |  |
 | 8 | overlay-modules-01 | deletion | Overlay and modules: dead members and small shrinks | 5 | ~200 touched (~-150 net) | compositor-02 |  |
 | 9 | features-01 | deletion | Dead and forwarding members across the feature systems | 14 | ~250 | none |  |
@@ -69,7 +69,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 21 | platform-06 | minor-sweep | The onboarder | 3 | ~150 | platform-03 | Q3 |
 | 22 | platform-07 | minor-sweep | The launcher with its providers | 2 | ~80 | platform-05 |  |
 | 23 | platform-08 | minor-sweep | Security: the session actions | 1 | ~60 | platform-02 | Q4 |
-| 24 | core-ui-theming-02 | major | Services that run with nothing shown, the media pick, schedules lost on reload | 5 | ~220 | core-ui-theming-01 |  |
+| 24 | core-ui-theming-02 | major | Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
 | 25 | core-ui-theming-03 | major | Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
 | 26 | core-ui-theming-04 | major | Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
 | 27 | core-ui-theming-05 | major | ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
@@ -89,7 +89,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 41 | compositor-14 | major | Capability gates in the schema | 3 | ~80 | none |  |
 | 42 | compositor-15 | major | The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
 | 43 | compositor-16 | major | The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
-| 44 | compositor-17 | minor-sweep | Hyprland, with the keybind helpers and UI it owns | 17 | ~450 | compositor-01, -02, -07, -16 | Q8 |
+| 44 | compositor-17 | minor-sweep | Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
 | 45 | compositor-18 | plan | Touchpad settings apart from the mouse's | 1 | needs a plan | none |  |
 | 46 | bar-popouts-03 | major | EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
 | 47 | bar-popouts-04 | major | The bar's reserve and rebuild identity | 7 | ~120 | bar-popouts-01 |  |
@@ -173,25 +173,25 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The bind merge lists user/ files three times, once per compositor
   - sway's and niri's merges build a moved bind the same way twice
   - The merge keeps key and variable tables render already has
-- **compositor-02** (12): Leaves the keybind tables entry's _bindMods change to compositor-17.
-  - [Backends keep stubs for calls the facade gates](../issues.md#backends-keep-stubs-for-calls-the-facade-gates)
-  - [Small shrinks in the compositor layer](../issues.md#small-shrinks-in-the-compositor-layer)
-  - [HyprlandManager keeps members only it reads](../issues.md#hyprlandmanager-keeps-members-only-it-reads)
-  - [KeybindManager keeps tables the methods helpers already hold](../issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold)
-  - [Bind helpers keep JS halves the daemon owns now](../issues.md#bind-helpers-keep-js-halves-the-daemon-owns-now)
-  - [NiriManager queues actions the daemon could order](../issues.md#nirimanager-queues-actions-the-daemon-could-order)
-  - [Small shrinks in SwayManager](../issues.md#small-shrinks-in-swaymanager)
-  - [Sway and niri each forward withMainBinds to the daemon](../issues.md#sway-and-niri-each-forward-withmainbinds-to-the-daemon)
-  - [sway and niri build output details and descriptions twice](../issues.md#sway-and-niri-build-output-details-and-descriptions-twice)
-  - [The workspace strips repeat ActiveStrip's loader](../issues.md#the-workspace-strips-repeat-activestrips-loader)
-  - [The workspace strips' panel property is never read](../issues.md#the-workspace-strips-panel-property-is-never-read)
-  - [Three copies of the wheel-notch accumulator](../issues.md#three-copies-of-the-wheel-notch-accumulator)
-- **compositor-03** (5):
-  - [SlideAnimation's fade, easing and container aliases are dead](../issues.md#slideanimations-fade-easing-and-container-aliases-are-dead)
-  - [The blur window builds stand-ins and copies it never uses](../issues.md#the-blur-window-builds-stand-ins-and-copies-it-never-uses)
-  - [BlurBacking spells out four near-identical blur windows](../issues.md#blurbacking-spells-out-four-near-identical-blur-windows)
-  - [The border frame's path is built three times](../issues.md#the-border-frames-path-is-built-three-times)
-  - [Small shrinks in the blur system](../issues.md#small-shrinks-in-the-blur-system)
+- **compositor-02** (12, done): Leaves the keybind tables entry's _bindMods change to compositor-17.
+  - Backends keep stubs for calls the facade gates
+  - Small shrinks in the compositor layer
+  - HyprlandManager keeps members only it reads
+  - KeybindManager keeps tables the methods helpers already hold (its _bindMods part listed under compositor-17)
+  - Bind helpers keep JS halves the daemon owns now
+  - NiriManager queues actions the daemon could order
+  - Small shrinks in SwayManager
+  - Sway and niri each forward withMainBinds to the daemon
+  - sway and niri build output details and descriptions twice
+  - The workspace strips repeat ActiveStrip's loader
+  - The workspace strips' panel property is never read
+  - Three copies of the wheel-notch accumulator
+- **compositor-03** (5, done):
+  - SlideAnimation's fade, easing and container aliases are dead
+  - The blur window builds stand-ins and copies it never uses
+  - BlurBacking spells out four near-identical blur windows
+  - The border frame's path is built three times
+  - Small shrinks in the blur system
 - **bar-popouts-01** (12): The layoutUpdated entry is filed Major; its fix is a pure deletion.
   - [PopoutWrapperBase's aboutToDismiss signal has no listener](../issues.md#popoutwrapperbases-abouttodismiss-signal-has-no-listener)
   - [Three EdgePopout members nothing reads](../issues.md#three-edgepopout-members-nothing-reads)
@@ -289,8 +289,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **core-ui-theming**
 
-- **core-ui-theming-02** (5): Before features-08, which gives idle dimming the same reload fix.
-  - [SystemManager samples every second while nothing is shown](../issues.md#systemmanager-samples-every-second-while-nothing-is-shown)
+- **core-ui-theming-02** (4): Before features-08, which gives idle dimming the same reload fix. SystemManager's self-consumer went with the graphs' history moving into the daemon (its own PR).
   - [MediaManager ticks the position with nothing showing it](../issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
   - [The active media player is Spotify first and never follows playback](../issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
   - [Album art piles up in the runtime folder for the whole session](../issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
@@ -397,7 +396,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Picking a key in the key map under an edit search selects a bind the list doesn't show](../issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
   - [Renaming a saved preset after switching presets renames the wrong one](../issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
   - [The reference's sections and both chip rows are built while hidden](../issues.md#the-references-sections-and-both-chip-rows-are-built-while-hidden)
-- **compositor-17** (17): Six file groups, one commit each; fine under the gate.
+- **compositor-17** (18): Six file groups, one commit each; fine under the gate.
   - [The bind merge removes an hl.unbind whether or not its bind went](../issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
   - [A user/ file with a dot in its name never loads](../issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
   - [A moved raw bind with a Lua keyword key compiles to nothing](../issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
@@ -406,6 +405,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Direct Hyprland dispatches can overtake queued Lua](../issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
   - [Recording two keys within 30 s can end the second recording early on Hyprland](../issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
   - [Two keybind reference paths drop a key's binds](../issues.md#two-keybind-reference-paths-drop-a-keys-binds)
+  - [KeybindManager keeps tables the methods helpers already hold](../issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold) (its _bindMods part, left by compositor-02)
   - [A bind description's section is parsed three ways](../issues.md#a-bind-descriptions-section-is-parsed-three-ways)
   - [Keybind sections log null reads as they're torn down](../issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
   - [WorkspaceStrip's Grid briefly has more items than cells](../issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)

@@ -22,6 +22,24 @@ TestCase {
     compare(MonitorLayout.formatMode(1920, 1080, 0), "1920x1080");
   }
 
+  function test_availableMode_and_describe() {
+    compare(MonitorLayout.availableMode(3440, 1440, 239991), "3440x1440@239.99Hz", "a rate in mHz, two decimals");
+    compare(MonitorLayout.availableMode(1920, 1080, 60000), "1920x1080@60.00Hz");
+    compare(MonitorLayout.hz(59940), 59.94);
+    compare(MonitorLayout.hz(undefined), 0);
+    compare(MonitorLayout.parseMode(MonitorLayout.availableMode(2560, 1440, 143912)), {
+      "width": 2560,
+      "height": 1440,
+      "rate": 143.91
+    }, "parseMode reads it back");
+    compare(MonitorLayout.describe({
+      "make": "Dell Inc.",
+      "model": "U2720Q",
+      "serial": "Unknown"
+    }), "Dell Inc. U2720Q", "an Unknown part is left out");
+    compare(MonitorLayout.describe(null), "");
+  }
+
   function test_parseModes_groups_and_sorts() {
     const modes = MonitorLayout.parseModes(["1920x1080@60.00Hz", "3440x1440@60.00Hz", "3440x1440@240.00Hz", "1920x1080@60.00Hz", "1920x1080@119.88Hz", "junk"]);
     compare(modes.length, 2);

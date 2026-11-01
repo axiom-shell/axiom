@@ -130,12 +130,6 @@ QtObject {
     return next;
   }
 
-  // An output's stable identity (MonitorLayout.outputId): its make, model
-  // and serial, those it has
-  function description(output) {
-    return [output?.make, output?.model, output?.serial].filter(part => part && part !== "Unknown").join(" ");
-  }
-
   // axiom's id for a niri workspace: its output's block base + idx - 1,
   // or -1 past the block (`size` long) or on an output without a base
   function workspaceId(ws, bases, size) {
@@ -213,7 +207,7 @@ QtObject {
         continue;
       list.push({
         "name": name,
-        "description": root.description(o),
+        "description": MonitorLayout.describe(o),
         "x": logical.x,
         "y": logical.y,
         "width": logical.width,
@@ -349,7 +343,6 @@ QtObject {
   // Every output of an Outputs reply in detail, disabled ones too (the
   // Monitors page's shape: CompositorManager.withOutputDetails)
   function outputDetails(reply) {
-    const rate = mode => Math.round((mode?.refresh_rate ?? 0) / 10) / 100;
     const list = [];
     for (const name in reply ?? {}) {
       const o = reply[name];
@@ -357,10 +350,10 @@ QtObject {
       const logical = o.logical;
       list.push({
         "name": name,
-        "description": root.description(o),
+        "description": MonitorLayout.describe(o),
         "width": mode.width ?? 0,
         "height": mode.height ?? 0,
-        "refreshRate": rate(mode),
+        "refreshRate": MonitorLayout.hz(mode.refresh_rate),
         "x": logical?.x ?? 0,
         "y": logical?.y ?? 0,
         "scale": logical?.scale > 0 ? logical.scale : 1,
@@ -368,7 +361,7 @@ QtObject {
         "disabled": !logical,
         "mirrorOf": "none",
         "vrr": o.vrr_enabled === true,
-        "availableModes": (o.modes ?? []).map(m => `${m.width}x${m.height}@${rate(m).toFixed(2)}Hz`)
+        "availableModes": (o.modes ?? []).map(m => MonitorLayout.availableMode(m.width, m.height, m.refresh_rate))
       });
     }
     return list.sort((a, b) => a.name.localeCompare(b.name));

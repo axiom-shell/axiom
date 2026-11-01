@@ -1352,7 +1352,11 @@ func withIDs(list *jsonx.Array) *jsonx.Array {
 			taken[id] = true
 			continue
 		}
-		base := strings.Trim(nonSlug.ReplaceAllString(strings.ToLower(jsonx.ToString(o.Value("key"))), "-"), "-")
+		key := o.Value("key")
+		if key == nil {
+			key = ""
+		}
+		base := strings.Trim(nonSlug.ReplaceAllString(strings.ToLower(jsonx.ToString(key)), "-"), "-")
 		if len(base) > 40 {
 			base = strings.TrimRight(base[:40], "-")
 		}

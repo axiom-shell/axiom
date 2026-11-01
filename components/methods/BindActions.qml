@@ -105,11 +105,4 @@ QtObject {
   function hasOwnSection(description) {
     return /^[^:]+: \S/.test(String(description ?? "").trim());
   }
-
-  // The description the compositor gets for a bind: "Section: Label", the
-  // section from the action unless the description names its own
-  function descriptionFor(table, bind) {
-    const own = String(bind.description ?? "").trim();
-    return root.hasOwnSection(own) ? own : root.sectionFor(table, bind.action) + ": " + (own || root.defaultLabel(table, bind));
-  }
 }

@@ -223,7 +223,7 @@ func niriStreams(getenv func(string) string, log *slog.Logger, ctx context.Conte
 		Log:     log.With("part", "niri"), Context: ctx, Go: goFn})
 }
 
-// niriHandlers are niri.request and niri.watch on n (nil:
+// niriHandlers are niri.request, niri.command and niri.watch on n (nil:
 // not under niri) and its streams.
 func niriHandlers(reg *rpc.Registry, n *ipc.Niri, streams *ipc.NiriStreams) {
 	type requestParams struct {
@@ -240,7 +240,7 @@ func niriHandlers(reg *rpc.Registry, n *ipc.Niri, streams *ipc.NiriStreams) {
 		return nil
 	}
 	// The reply's Ok value; refused when niri answered Err
-	rpc.Handle(reg, "niri.request", func(ctx context.Context, c *rpc.Conn, p requestParams) (json.RawMessage, error) {
+	request := func(ctx context.Context, c *rpc.Conn, p requestParams) (json.RawMessage, error) {
 		if err := available(c); err != nil {
 			return nil, err
 		}
@@ -252,7 +252,13 @@ func niriHandlers(reg *rpc.Registry, n *ipc.Niri, streams *ipc.NiriStreams) {
 			return nil, axerr.Wrap(axerr.Unavailable, err, "no reply from niri")
 		}
 		return ok, nil
-	})
+	}
+	rpc.Handle(reg, "niri.request", request)
+	// A request that changes something (an action, an output): one at a
+	// time, in the order sent, so a chain split over several calls can't
+	// overtake itself
+	rpc.Handle(reg, "niri.command", request)
+	reg.InOrder("niri.command")
 	// Events come as niri.started and niri.event pushes, to this
 	// connection only, until it closes; watching again keeps its stream
 	rpc.Handle(reg, "niri.watch", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {

@@ -15,7 +15,7 @@
 
 ### IPC (through axiom)
 - Quickshell has no niri module: the daemon talks to `$NIRI_SOCKET` for `NiriManager` (`daemon/compositorsocket.go`, shell only), never a process.
-- niri answers one request per connection: `niri.request` (`{ request }` → the reply's `Ok`; an `Err` is a `refused` error, logged) opens one per call. `NiriManager._request(r, cb)` sends state requests at once; `_command(r, cb)` / `_action(a, cb)` queue, one at a time in order, so a chain split over several calls can't overtake itself. Requests are JSON objects (`{"Action":{"FocusWorkspace":{"reference":{"Index":3}}}}`), so names and indexes can't be confused.
+- niri answers one request per connection: `niri.request` (`{ request }` → the reply's `Ok`; an `Err` is a `refused` error, logged) opens one per call. `NiriManager._request(r, cb)` sends state requests at once; `_command(r, cb)` / `_action(a, cb)` send `niri.command`, the same request, which axiom runs one at a time in the order sent (`rpc.Registry.InOrder`), so a chain split over several calls can't overtake itself. Requests are JSON objects (`{"Action":{"FocusWorkspace":{"reference":{"Index":3}}}}`), so names and indexes can't be confused.
 - The event stream: `niri.watch` gives the asking connection a stream of its own (`ipc.NiriStreams`), pushed as `niri.started` when it (re)connects, then one `niri.event` per event as niri wrote it (one message each, not latest-wins: they're deltas). It opens with the full state, a `ConfigLoaded` included, which isn't a reload. A dropped or failed connect is tried again a second later, until the connection closes (there is no unwatch). `NiriManager` watches after every hello (a new connection to axiom has no stream); a second watch keeps the stream it has.
 
 ### State (`NiriState`, `tst_NiriState` on replies and an event stream captured in nested niri, `tests/fixtures/niri/`)
@@ -31,7 +31,7 @@
 - `activateWindow` / `closeWindow`: `FocusWindow` / `CloseWindow` by id.
 - `travel`: niri slides by itself, so only the last leg: `FocusMonitor` when given, then `FocusWorkspace`, `MoveWindowToWorkspace` (focus on) or `FocusWindow`. A workspace niri has is referred to by its id, else by its place on the output (niri goes to its last, empty one for a place past it).
 - `focusOutput` / `moveWindowToOutput` (left and right steps): `FocusMonitor` / `MoveWindowToMonitor`, then `FocusMonitor` on the output focus should end on (the new one, or the old one for a silent move).
-- `sendWindowToWorkspace`: `MoveWindowToWorkspace` with focus off. `scrollStrip`: `FocusColumnLeft`/`Right`. `applyRemap`: nothing.
+- `sendWindowToWorkspace`: `MoveWindowToWorkspace` with focus off. `scrollStrip`: `FocusColumnLeft`/`Right`. No `applyRemap` (`outputWorkspaces`).
 - `placeWindow` (the overview's drop): onto the workspace, then beside the target's column (`MoveColumnToIndex`, the window focused first: niri moves the focused column), or into it (`ConsumeOrExpelWindowLeft`, at the column's end), or a floating window to its place (`MoveFloatingWindow`).
 - `resizeWindow`: `SetWindowWidth`/`SetWindowHeight` by a fixed step; a floating window also moves.
 - `withOutputDetails`: `Outputs` (`NiriState.outputDetails`). `applyOutputs`: axiom sends one `Output` request per change of each rule (`outputs.apply`, `render.NiriOutputRequests`: on/off, mode, scale, transform, position, VRR), disabled outputs last. A config reload keeps them unless the config's own `output` for that output changed (checked in niri 26.04), so the writer writes the matching profile into its files, and the daemon switches profiles on hotplug and after a detached reload, as on sway ([sway](sway-backend.md), reading niri's `Outputs`).
@@ -41,7 +41,7 @@
 - X11 apps need `xwayland-satellite` on the PATH: niri starts it on demand and sets `DISPLAY` for what it spawns (axiom included, so apps axiom launches get it). Without it every X11 app (Steam) fails to open its display. It's a dependency of its own (`DependencyManager.tools`, install.sh's niri feature); the `Niri.xwayland` setting only turns it off.
 - No `modifierTap`: niri has no release binds, so a bind on a modifier alone would fire on press, starting every combo. `render.NiriKey` leaves it out. Tapping Super can still reach niri as a spare key remapped outside it (keyd's `leftmeta = overload(meta, f13)`, then bind F13).
 - `captureKeys` (`keyCapture`): nothing, niri having no empty mode: the key recorder's window inhibits niri's shortcuts while it records (`KeyRecorder`'s `ShortcutInhibitor`, keyboard-shortcuts-inhibit), so a combo niri binds reaches it and doesn't fire. Binds the user marked `allow-inhibiting=false` still fire.
-- `toplevelFor`, `withCursorPos`, `withLayerRects`: null; `warpCursorToLayer`: nothing.
+- `toplevelFor`: null. No `withCursorPos`, `withLayerRects`, `warpCursorToLayer`, `leaveSwitcher`, `layersChanged` or `withMainBinds` (the facade's `withBinds` reads the daemon's entries).
 
 ### The config writer (the daemon's `manager/niri.go`)
 The [config modes](config-modes.md) on niri. niri takes nothing of axiom's layer at runtime (no runtime binds, rules or look), so everything is a file (`liveByFile`), and niri reloads a file it loads when it changes. The text comes from `render` (`niri.go`: its frozen cases, and `TestCompositorsReadTheFiles` has niri validate the files).

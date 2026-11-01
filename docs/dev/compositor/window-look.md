@@ -26,11 +26,11 @@ The themed window look axiom gives the compositor: borders, shape, gaps, blur an
 ### Blur and windows
 - With the blur part on, Hyprland's blur stays enabled while axiom's surfaces blur, even if `windowBlur` is off.
 - The `axiom-no-window-blur` rule (redefined on or off) then keeps windows and their popups unblurred.
-- `CompositorManager.blur` reads the blur in effect (`refreshOptions`). It is used by:
+- `CompositorManager.blur` reads the blur in effect (`HyprlandManager.layerApplied`). It is used by:
   - the Translucency card's status (`views/Settings/TranslucencyStatus`, that card's `x-intro`)
   - the lock screen's frost.
 
 ### Where it's applied
 - Every part shows in every mode. A managed config writes them through `M.look()`, like the rest of the layer.
 - It is a live part ([config modes](config-modes.md) › Live parts): evaluated at runtime as it changes and after every reload in the file modes, so it wins over the user's own lines while it's on, and a part turned off reloads the compositor's config (`manager.undoLive`).
-- `HyprlandManager.refreshOptions()` waits for queued Lua, so `gapsOut` reads what the look set, and Automatic bars follow it.
+- `HyprlandManager.layerApplied()` waits for queued Lua, so `gapsOut` reads what the look set, and Automatic bars follow it.

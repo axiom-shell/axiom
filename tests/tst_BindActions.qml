@@ -124,18 +124,8 @@ TestCase {
     }), "App launcher (open)");
   }
 
-  function test_descriptionFor() {
-    compare(shared.calls.BindActions.descriptionFor(test.table, {
-      "action": "closeWindow"
-    }), "Window: Close");
-    compare(shared.calls.BindActions.descriptionFor(test.table, {
-      "action": "closeWindow",
-      "description": "Kill it"
-    }), "Window: Kill it");
-    compare(shared.calls.BindActions.descriptionFor(test.table, {
-      "action": "closeWindow",
-      "description": "Mine: Kill it"
-    }), "Mine: Kill it", "a description naming its own section keeps it");
+  function test_hasOwnSection() {
+    verify(shared.calls.BindActions.hasOwnSection("Mine: Kill it"));
     verify(!shared.calls.BindActions.hasOwnSection("Mine:no space"));
   }
 

@@ -12,16 +12,17 @@ import qs.services.ui
 // entirely when nothing is registered.
 //
 // Everything is a sysfs / procfs read in Go, so sampling never spawns a
-// process; the exception is NVIDIA GPUs (`nvidia-smi`, only without an AMD
-// card). Disk usage is re-read once a minute. Metric names: "cpu", "mem",
+// process; the exception is NVIDIA GPUs (one streamed `nvidia-smi`, only
+// without an AMD card). Disk usage is re-read once a minute. Metric names: "cpu", "mem",
 // "cpuTemp", "gpu", "disk", "net" (throughput from /proc/net/dev; the
 // connection itself is NetworkingManager's) and "processes" (/proc/<pid>/
 // stat, %CPU since the last sample).
-// Request `history: true` to also keep the last `historyLength` samples of
-// each polled metric (for graphs), one per sample axiom pushes. The
-// metrics any configured graph shows (SystemGraphs modules, SystemStats
-// popouts) are kept from launch, so a graph opens with a minute already
-// drawn.
+// Request `history: true` to also get the last `historyLength` samples,
+// one a second, of the graphed metrics requested (cpu, mem, gpu, cpuTemp,
+// net). axiom keeps them: those of any configured graph (SystemGraphs
+// modules, SystemStats popouts) from launch (`system.keep`, sampled in the
+// daemon, nothing pushed), so a graph opens with a minute already drawn;
+// any other while it's requested.
 QtObject {
   id: root
 
@@ -41,7 +42,8 @@ QtObject {
   // [{ pid, user, cpu, mem, command }], every process, by CPU (descending)
   property var processes: []
 
-  // Oldest first, `historyLength` samples at most (only kept on request)
+  // Oldest first, `historyLength` samples at most, one a second (only
+  // while some consumer requests history)
   readonly property int historyLength: 60
   property var cpuHistory: []
   property var memHistory: []
@@ -111,32 +113,34 @@ QtObject {
         })));
     return ["cpu", "mem", "gpu", "cpuTemp", "net"].filter(m => found.includes(m));
   }
-  on_GraphMetricsChanged: _keepGraphHistory()
+  on_GraphMetricsChanged: _keep()
 
-  // Held under the service itself; the interval matches SystemGraphs'
-  function _keepGraphHistory() {
-    if (_graphMetrics.length === 0)
-      release(root);
-    else
-      acquire(root, {
-        "metrics": _graphMetrics,
-        "history": true,
-        "interval": 1000
-      });
+  // Their history is kept in axiom whether or not anything shows them
+  function _keep() {
+    BackendManager.call("system.keep", {
+      "metrics": root._graphMetrics
+    }, root._keepFailed);
+  }
+  // (a call lost to a reconnect is sent again on the next hello)
+  function _keepFailed(error) {
+    if (error && error.kind !== "unavailable")
+      console.warn(`[SystemManager] Could not keep the graphs' history: ${error.message}`);
   }
   readonly property var _requests: _registry.requests
 
   // (the QML JS engine has no Array.flatMap)
   readonly property var _metrics: [...new Set([].concat(..._requests.map(r => r.metrics)))]
   readonly property var _diskPaths: [...new Set([].concat(..._requests.map(r => r.diskPaths)))]
-  readonly property bool _history: _requests.some(r => r.history)
+  // The graphed metrics some consumer wants the history of
+  readonly property var _history: [...new Set([].concat(..._requests.filter(r => r.history).map(r => r.metrics)))].filter(m => ["cpu", "mem", "gpu", "cpuTemp", "net"].includes(m))
   readonly property int _interval: _requests.length > 0 ? Math.min(..._requests.map(r => r.interval)) : 0
   // The request as one string, so axiom is asked again only when it
   // really changes (axiom keys disks by the path as asked, ~ and all)
   readonly property string _requestKey: _registry.active ? JSON.stringify({
     "interval": root._interval,
     "metrics": root._metrics,
-    "diskPaths": root._diskPaths
+    "diskPaths": root._diskPaths,
+    "history": root._history
   }) : ""
 
   on_RequestKeyChanged: {
@@ -144,28 +148,6 @@ QtObject {
       BackendManager.acquire("system", JSON.parse(root._requestKey));
     else
       BackendManager.release("system");
-  }
-
-  // Samples the new values into the histories
-  function _record() {
-    if (!_history)
-      return;
-    const push = (list, value) => {
-      const next = list.concat([value]);
-      return next.length > historyLength ? next.slice(next.length - historyLength) : next;
-    };
-    if (wants("cpu"))
-      cpuHistory = push(cpuHistory, cpuUsage);
-    if (wants("mem"))
-      memHistory = push(memHistory, memUsage);
-    if (wants("gpu"))
-      gpuHistory = push(gpuHistory, gpuUsage);
-    if (wants("cpuTemp"))
-      cpuTempHistory = push(cpuTempHistory, cpuTemp);
-    if (wants("net")) {
-      netRxHistory = push(netRxHistory, netRx);
-      netTxHistory = push(netTxHistory, netTx);
-    }
   }
 
   // One sample: a metric left out wasn't asked for, or has nothing to
@@ -177,11 +159,24 @@ QtObject {
       if (state[key] !== undefined)
         root[key] = state[key];
     }
-    root._record();
+    const history = state.history;
+    if (history) {
+      for (const [key, property] of [["cpu", "cpuHistory"], ["mem", "memHistory"], ["gpu", "gpuHistory"], ["cpuTemp", "cpuTempHistory"], ["netRx", "netRxHistory"], ["netTx", "netTxHistory"]])
+        root[property] = history[key] ?? [];
+    }
+  }
+
+  property Connections _backend: Connections {
+    target: BackendManager
+    function onGreeted() {
+      root._keep();
+    }
   }
 
   Component.onCompleted: {
-    root._keepGraphHistory();
+    // Made after the hello (a QML reload): no greeted to wait for
+    if (BackendManager.ready)
+      root._keep();
     BackendManager.listen("system.state", state => root._apply(state));
   }
 }

@@ -62,18 +62,12 @@ Rectangle {
   border.color: Theme.foreground
   border.width: Appearance.borderWidth
 
-  WheelHandler {
-    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-    property real _accumulated: 0
-    onWheel: event => {
-      _accumulated += event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
-      if (Math.abs(_accumulated) < 120)
-        return;
-      if (_accumulated < 0)
+  NotchWheel {
+    onStepped: direction => {
+      if (direction > 0)
         root.next();
       else
         root.previous();
-      _accumulated = 0;
     }
   }
 

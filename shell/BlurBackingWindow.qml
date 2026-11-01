@@ -185,8 +185,9 @@ PanelWindow {
       anchors.fill: parent
       visible: backing.cutBy.length > 0
 
+      // (none for a fills-only window, which never reads them)
       Copies {
-        shapes: backing.cutBy
+        shapes: backing.part !== "fills" ? backing.cutBy : []
         onChanged: nudge.burst()
       }
     }
@@ -298,18 +299,6 @@ PanelWindow {
     signal changed
     anchors.fill: parent
 
-    // What a copy reads while its source is going (destroyed before its
-    // BlurShape leaves the list)
-    AttachedSurface {
-      id: blankSurface
-      visible: false
-      edge: ScreenEdge.Top
-    }
-    Rectangle {
-      id: blankRect
-      visible: false
-    }
-
     KeyedModel {
       id: shapeModel
       keys: copies.shapes.map(shape => shape.uid)
@@ -351,7 +340,7 @@ PanelWindow {
           id: attachedMirror
 
           AttachedSurfaceCopy {
-            source: slot.shape?.source ?? blankSurface
+            source: slot.shape?.source ?? null
           }
         }
 
@@ -359,9 +348,10 @@ PanelWindow {
           id: rectMirror
 
           Rectangle {
-            // (null for a moment while the window is torn down, as on a
-            // reload: it draws nothing then, as AttachedSurfaceCopy)
-            readonly property var src: slot.shape?.source ?? blankRect
+            // (null while its source is going, destroyed before its
+            // BlurShape leaves the list, or the window is torn down, as on
+            // a reload: it draws nothing then, as AttachedSurfaceCopy)
+            readonly property var src: slot.shape?.source ?? null
             visible: src !== null
             width: src?.width ?? 0
             height: src?.height ?? 0
@@ -392,19 +382,7 @@ PanelWindow {
               strokeWidth: 0
 
               PathSvg {
-                readonly property real w: frame.width
-                readonly property real h: frame.height
-                readonly property real ox0: (frame.src?.outerLeft ?? 0)
-                readonly property real oy0: (frame.src?.outerTop ?? 0)
-                readonly property real ox1: w - (frame.src?.outerRight ?? 0)
-                readonly property real oy1: h - (frame.src?.outerBottom ?? 0)
-                readonly property real x0: (frame.src?.innerLeft ?? 0)
-                readonly property real y0: (frame.src?.innerTop ?? 0)
-                readonly property real x1: w - (frame.src?.innerRight ?? 0)
-                readonly property real y1: h - (frame.src?.innerBottom ?? 0)
-                readonly property real r: Math.max(0, Math.min((frame.src?.innerRadius ?? 0), (x1 - x0) / 2, (y1 - y0) / 2))
-
-                path: `M ${ox0} ${oy0} L ${ox1} ${oy0} L ${ox1} ${oy1} L ${ox0} ${oy1} Z M ${x0 + r} ${y0} L ${x1 - r} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y0 + r} L ${x1} ${y1 - r} A ${r} ${r} 0 0 1 ${x1 - r} ${y1} L ${x0 + r} ${y1} A ${r} ${r} 0 0 1 ${x0} ${y1 - r} L ${x0} ${y0 + r} A ${r} ${r} 0 0 1 ${x0 + r} ${y0} Z`
+                path: frame.src?.framePath(frame.width, frame.height, true) ?? ""
               }
             }
           }
