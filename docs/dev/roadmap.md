@@ -637,6 +637,11 @@ Found by the audits:
 - [net.join's first-Wi-Fi fallback is never reached](issues.md#netjoins-first-wi-fi-fallback-is-never-reached)
 - [The VPN list's Tailscale row hides why Tailscale refused](issues.md#the-vpn-lists-tailscale-row-hides-why-tailscale-refused)
 - [The VPN state's device and autoconnect fields nothing reads](issues.md#the-vpn-states-device-and-autoconnect-fields-nothing-reads)
+- [The panel's relative times go stale while Tailscale's state stays the same](issues.md#the-panels-relative-times-go-stale-while-tailscales-state-stays-the-same)
+- [Tailscale carries two state fields and a guard nothing needs](issues.md#tailscale-carries-two-state-fields-and-a-guard-nothing-needs)
+- [The VPN list's Tailscale row does nothing while it needs a login with no link yet](issues.md#the-vpn-lists-tailscale-row-does-nothing-while-it-needs-a-login-with-no-link-yet)
+- [The VPN list shows Tailscale connecting or disconnecting during any Tailscale action](issues.md#the-vpn-list-shows-tailscale-connecting-or-disconnecting-during-any-tailscale-action)
+- [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)

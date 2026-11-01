@@ -2451,3 +2451,33 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `vpn.state` sends each VPN's `device` and `autoconnect`, and `reload` makes one more D-Bus call per active WireGuard connection (the device's `Interface`) to fill `device`. Nothing reads either: `VpnManager.rows` maps only id, name, kind, state, ipv4, error and plugin, nothing outside VpnManager reads `VpnManager.profiles`, and the only Go users of `nmvpn` are the daemon's `vpn.*` handlers, which pass the state through. Fix: drop `Autoconnect` (line 78), `Device` with its comment (81–83), `profile.autoconnect` (153), the device lookup (463–471) and the autoconnect read (554–556), 17 lines; `pr := profile{autoconnect: true}` becomes `profile{}`, `activeConn` loses `device`, line 498 stops assigning it, the fake NetworkManager in `nmvpn_test.go` loses its `/dev/wg` object and the test's `Device` and `Autoconnect` expectations, and `vpn.md` › State and the `profiles` comment stop naming them.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:vpn system
+
+### The panel's relative times go stale while Tailscale's state stays the same
+- **Where:** `components/content/Tailscale/Tailscale.qml:46` (`now`, `keyDays`), `components/content/ClaudeUsage/ClaudeUsage.qml:22` (`now`)
+- **What:** `now` and `keyDays` are re-read only when `TailscaleManager.peers` is reassigned (`void TailscaleManager.peers; return Date.now();`). The daemon's topic hub pushes a state only when its JSON changed (`backend/internal/topics/topics.go:344`, `if bytes.Equal(data, t.last)`), and `Parse` keeps only the peers' online/active/relay/last seen/traffic fields. On a quiet tailnet (all peers offline or idle), nothing changes between polls. A module left on the desktop or in an edge menu then keeps saying "Offline · seen 3m ago" for hours, and the key-expiry warning appears only at the next unrelated change after the 7-day mark. ClaudeUsage's `now` is built the same way. PLAUSIBLE: what's unproven is whether an idle tailnet's parsed state really repeats byte for byte; to settle it, compare two `tailscale status --json` runs parsed a minute apart on a connected, idle tailnet. Fix: drive the times from a minute clock, as Notifications does (`SystemClock { id: clock; precision: SystemClock.Minutes }`, `readonly property real now: clock.date.getTime()`), and compute `keyDays` from `root.now`.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the tailscale system
+
+### Tailscale carries two state fields and a guard nothing needs
+- **Where:** `backend/internal/tailscale/tailscale.go:43` (`State.MagicDNSSuffix`, `State.ExitNodeIP`), `services/apps/TailscaleManager.qml:31` (`magicDNSSuffix`, `exitNodeIP`, `refresh`)
+- **What:** `TailscaleManager.magicDNSSuffix` has no reader (`grep -rnw TailscaleManager.magicDNSSuffix` finds none). `exitNodeIP` has one: the exit-node fold's None row (`chosen: TailscaleManager.exitNodeIP === ""`, `components/content/Tailscale/Tailscale.qml:542`), which `TailscaleManager.exitNode === ""` answers the same way, since both are set from the one peer with `ExitNode`. `refresh()` guards the details refresh with `if (root._detailsInterval > 0)`, but `BackendManager.refresh` already does nothing for a topic not acquired (`if (topic in root._acquired && root.ready)`). Fix: drop `MagicDNSSuffix` (tailscale.go lines 42, 43, 116, 130) and `ExitNodeIP` (line 51, lines 153–155, and the comment's half-line at 49), along with the manager's two properties and their assignments (TailscaleManager.qml 31, 38, 189, 193) and the guard line (86). Point the None row at `exitNode`, and remove the field from `TestParse`'s want and from the doc's Parse list. In all, 14 lines (9 Go, 5 QML).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the tailscale system
+
+### The VPN list's Tailscale row does nothing while it needs a login with no link yet
+- **Where:** `services/system/VpnManager.qml:106` (`up`)
+- **What:** For the Tailscale row, `up` calls `TailscaleManager.openLogin()` whenever `needsLogin`. `openLogin` opens only a non-empty `authURL` (`services/apps/TailscaleManager.qml:136`). After a logout, tailscaled is `NeedsLogin` with no `AuthURL` until a login starts, so clicking the row in the VPN popout, the Wi-Fi menu or the Vpn widget does nothing. The Tailscale panel handles that very case (`onTriggered: TailscaleManager.authURL ? TailscaleManager.openLogin() : TailscaleManager.connect()`, `components/content/Tailscale/Tailscale.qml:440`, labelled "This machine isn't logged in."). CONFIRMED by the code. Fix: move the panel's choice into `TailscaleManager` (`function logIn() { authURL ? openLogin() : connect() }`) and call it from both places.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the tailscale system
+
+### The VPN list shows Tailscale connecting or disconnecting during any Tailscale action
+- **Where:** `services/system/VpnManager.qml:43` (`rows`)
+- **What:** The Tailscale row's state is `TailscaleManager.busy ? (connected ? "disconnecting" : "connecting") : …`. `busy` is true for every action (`pending !== ""`): switching account, `tailscale login` (Add account, up to 15 s), an exit node, a switch, Grant access (until the polkit dialog closes). During any of these, the row reads "disconnecting" while nothing disconnects, and `toggle` ignores clicks on it (`row.state === "disconnecting"`, line 93). CONFIRMED by the code. Fix: read the action itself, `TailscaleManager.pending === "tailscale.down" ? "disconnecting" : TailscaleManager.pending === "tailscale.up" ? "connecting" : …`, or have TailscaleManager expose `connecting` / `disconnecting`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the tailscale system
+
+### The Network card shows Tailscale's raw state, untranslated
+- **Where:** `components/content/Network/Network.qml:24` (`tailscale`), `components/content/Tailscale/Tailscale.qml:36` (`stateLabels`)
+- **What:** With `VpnConfig.showTailscale` off, the Network card writes "Tailscale · Running 100.x.y.z" from `TailscaleManager.backendState` as is: "NeedsLogin", "NoState" and the like appear in English camel case. Only the Tailscale panel maps the states to `I18n.tr` labels (`stateLabels`), and only the panel can use that map. Fix: move `stateLabels` and `stateText` into `TailscaleManager` and read the manager's `stateText` in both.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the tailscale system
