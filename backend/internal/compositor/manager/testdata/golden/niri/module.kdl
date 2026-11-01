@@ -279,6 +279,7 @@ layout {
         color "#ffffff92"
         inactive-color "#ffffff92"
     }
+    background-color "transparent"
 }
 window-rule {
     geometry-corner-radius 26
@@ -326,6 +327,10 @@ layer-rule {
     background-effect {
         xray false
     }
+}
+layer-rule {
+    match namespace="^axiom-wallpaper$"
+    place-within-backdrop true
 }
 input {
     keyboard {

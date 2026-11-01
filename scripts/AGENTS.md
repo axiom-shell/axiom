@@ -1,6 +1,6 @@
 # Scripts (`scripts/`)
 
-External scripts the shell runs (wallpaper, Hyprland claim, greeter) and the dev checks (`check_*.py`, `run_tests.sh`, `log.sh`, `dev/`).
+External scripts the shell runs (Hyprland claim, greeter) and the dev checks (`check_*.py`, `run_tests.sh`, `log.sh`, `dev/`).
 
 Verify with `scripts/dev/verify.sh`.
 

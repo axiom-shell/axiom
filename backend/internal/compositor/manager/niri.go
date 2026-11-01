@@ -121,6 +121,7 @@ func (w *niriWriter) outputs(in Inputs, path string) any {
 func (w *niriWriter) parts(in Inputs, spec any, path string, mode string) *jsonx.Object {
 	look := render.NiriLookNodes(getAny(spec, "look"))
 	look.Append(w.tables.NiriSurfaceBlurNodes(getAny(spec, "surfaces")).Items...)
+	look.Append(render.NiriWallpaperNodes().Items...)
 	var binds any = w.plan(in)
 	options := render.NiriOptionNodes(w.schemaOf("Workspaces"), in.get("stripOptions"), false)
 	var recent *jsonx.Object

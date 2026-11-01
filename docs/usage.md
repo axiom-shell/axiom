@@ -64,7 +64,7 @@ axiom ipc <target> <function> [args]
 | `brightness` | `up`, `down`, `set <percent>`, `dim <percent>`, `dimBy <percent>`, `undim` |
 | `screenshot` | `take <region\|window\|screen>`, `cancel` |
 | `screenRecord` | `toggle`, `enable`, `disable`, `status` |
-| `wallpaper` | `next`, `random` |
+| `wallpaper` | `next`, `random`, `preview <transition>` (the next wallpaper, played with that transition: `fade`, `wipe`, `slide`, `grow`, `shrink`, `wave`, `dissolve`, `pixelate`, `blinds`, `tiles`, `zoom`, `ripple`, `swirl`, `blur`, `clock`) |
 | `monitors` | `open`, `keep`, `revert`, `identify` |
 | `onboarding` | `open`, `close`, `goTo <step>`, `reset` |
 | `lockscreen` | `lock` |
@@ -128,7 +128,7 @@ Plain text searches apps and open windows. When the text is math, the result sho
 | --- | --- |
 | **Session** | `/lock` `/suspend` `/hibernate` `/logout` `/reboot` `/poweroff` `/power` |
 | **Pages** | `/overlay [page]` `/settings` `/themes` `/bar` `/keybinds` `/layouts` `/menus` `/monitors` `/widgets` `/workspaces` `/calendar` |
-| **Look** | `/theme <name>` `/dark` `/light` `/mode` `/wallpaper <file\|Random>` `/nextwallpaper` `/generate` `/nightlight` |
+| **Look** | `/theme <name>` `/dark` `/light` `/mode` `/wallpaper <file\|Random>` `/nextwallpaper` `/transition <name>` `/generate` `/nightlight` |
 | **Audio and media** | `/volume <n\|+n\|-n>` `/mute` `/mic` `/output <device>` `/input <device>` `/play` `/next` `/prev` |
 | **Connectivity** | `/wifi [on\|off]` `/bluetooth [on\|off]` `/connect <device>` `/vpn [name]` `/eject [drive]` |
 | **Calendar and notes** | `/event <when> <title>` `/notes [text]` `/todo [text]` `/pomodoro [start\|pause\|skip\|stop]` `/timer <duration> [label]` `/stopwatch [start\|pause\|lap\|reset]` |

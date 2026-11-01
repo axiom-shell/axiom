@@ -600,9 +600,11 @@ Found meanwhile:
 - [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
 - [BlurManager.paused reads undefined on a reload](issues.md#blurmanagerpaused-reads-undefined-on-a-reload)
 - [A workspace overview bind set to open calls a missing function](issues.md#a-workspace-overview-bind-set-to-open-calls-a-missing-function)
+- [Wallpapers list only jpg, png and bmp](issues.md#wallpapers-list-only-jpg-png-and-bmp) (an idea from the wallpaper transitions branch)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
+- [Video wallpapers](issues.md#video-wallpapers) (an idea from the wallpaper transitions branch)
 - [A pill bar stacked inside another pill bar grows its pills out of nothing](issues.md#a-pill-bar-stacked-inside-another-pill-bar-grows-its-pills-out-of-nothing)
 - [Toggles are switched in several places, and most have no IPC](issues.md#toggles-are-switched-in-several-places-and-most-have-no-ipc)
 
@@ -654,8 +656,7 @@ Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log ev
 Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put this on hold - note that growing modules kinda needs a re-work or removal"):
 - [An integrated top or bottom menu's zone follows its growing modules](issues.md#an-integrated-top-or-bottom-menus-zone-follows-its-growing-modules)
 
-Deferred by the maintainer (2026-11-01, the clear-out's questions: awww's daemon "defer - awww will be taking it's own dedicated branch"; side-edge submenus "defer - This takes quite a bit of thought to make consistent without an option."; the pill bar's frame lag "defer"; lock screen notification settings "defer"; Windows zone names, on leaving it logged, "agree"):
-- [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (with awww's removal, maintainer: "awww is scheduled for remove in favor of axioms own animations")
+Deferred by the maintainer (2026-11-01, the clear-out's questions: side-edge submenus "defer - This takes quite a bit of thought to make consistent without an option."; the pill bar's frame lag "defer"; lock screen notification settings "defer"; Windows zone names, on leaving it logged, "agree"):
 - [A side edge's submenus always open away from the edge](issues.md#a-side-edges-submenus-always-open-away-from-the-edge)
 - [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [The lock screen has no settings for allowing or viewing notifications](issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (needs a plan once taken up)

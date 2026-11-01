@@ -122,6 +122,24 @@ var all = []Step{
 	{Version: 86, Run: v86},
 	// v87: an OSD's items split into bars, statuses and media (v87.go)
 	{Version: 87, Run: v87},
+	// v88: the awww wallpaper backend went: axiom draws every wallpaper,
+	// with its own transitions
+	{Version: 88, Run: func(cfg *jsonx.Object) []string {
+		w := object(cfg, "Appearance", "wallpaper")
+		if w == nil {
+			return nil
+		}
+		backend, _ := w.Value("backend").(string)
+		removed := w.Delete("backend")
+		removed = w.Delete("daemon") || removed
+		if !removed {
+			return nil
+		}
+		if backend == "awww" {
+			return []string{"Appearance.wallpaper.backend awww removed: axiom draws the wallpaper itself, with its own transitions (Appearance.wallpaper.transition)"}
+		}
+		return []string{"Appearance.wallpaper.backend and daemon removed: axiom always draws the wallpaper"}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

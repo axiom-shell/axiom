@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Wallpapers list only jpg, png and bmp
+- **Where:** `services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
+- **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.
+- **Size:** small
+- **Found:** 2026-11-01, while adding wallpaper transitions
+
+### Video wallpapers
+- **Where:** `components/surfaces/wallpaper/WallpaperView.qml`, `services/core/ThemeManager.qml` (generateThemesFromWallpaper)
+- **What:** An idea from the wallpaper transitions branch, not a bug: mp4/webm wallpapers through QtMultimedia. It adds a dependency and a steady GPU and battery cost, the transitions would need a video's frame as a texture, and generating a theme needs a still frame grabbed from it. Kept out of the branch (maintainer, 2026-11-01: not picked among the wallpaper improvements).
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while adding wallpaper transitions
+
 ### The Vpn widget's icon and label are invisible on a filled bar
 - **Where:** `components/bar/widgets/Vpn/schema.yaml`, `components/bar/widgets/base/BarIconWidget.qml` (`colors`)
 - **What:** The Vpn widget's schema has no `foregroundColor` (no `colors` part, no own field), so `properties.foregroundColor` is undefined, `Theme.resolveColor` makes it transparent, and on a bar whose `widgetStyle` is `filled` (the default) `BarWidgetStyle.colors` draws its icon and label in that: an empty pill. Seen with the Drives widget, which was built from it (fixed there by adding the field as IdleInhibitor has it). Fix: the same `foregroundColor` field on Vpn; a `tst_Config` check that every `BarIconWidget` type has one would keep it from coming back.
@@ -203,14 +215,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Accepted by the maintainer (2026-10-28, #163): with no takeovers kept, a restore is refused and a hand fix sets the takeovers as it reads.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while reviewing row 12's third batch
-
-### Setting an awww wallpaper never starts awww's daemon
-- **Where:** `scripts/setWallpaper.sh`, `services/core/ThemeManager.qml` (`_showWallpaper`)
-- **What:** With `Appearance.wallpaperBackend` `awww` and no `awww-daemon` running, the script runs `awww query || awww init`, but awww has no `init` (`error: unrecognized subcommand 'init'`), so the wallpaper isn't set (`set -e` stops it). `ThemeManager` now runs the script through the daemon (`CommandManager.runDetached`, backend stage 6), so starting `awww-daemon` from it would no longer inherit qs's transparent huge pages opt-out ([memory](core/memory.md) › Transparent huge pages): only the script's `awww init` is left to fix.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "defer it to awww's removal"): "defer - awww will be taking it's own dedicated branch".
-- **Size:** small
-- **Found:** 2026-10-27, while reviewing what the shell still starts as its own children (row 9)
 
 ### The daemon's own commands are left zombies across a re-exec
 - **Where:** `backend/internal/updates/updates.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`

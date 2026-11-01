@@ -18,7 +18,7 @@ Inherited down the schema; the root is `machine`.
 
 | Scope | What | Export / import | Snapshot |
 |---|---|---|---|
-| `look` | the layout and style sections, the theme, font, shape and motion, the launcher's and notifications' look, each surface's Module size (`moduleScale`: a ratio over the card size), compositor animations and decoration, cursor theme, the theme schedule | always | ✅ |
+| `look` | the layout and style sections, the theme, font, shape and motion, the launcher's and notifications' look, each surface's Module size (`moduleScale`: a ratio over the card size), compositor animations and decoration, cursor theme, the theme schedule, the wallpaper's transition, fit and parallax | always | ✅ |
 | `personal` | how big the UI is (`Widget.scale`, `cardSize`, `density`: a shared look keeps its proportions at your size), the workspace layout and strips (`Workspaces`: the onboarder offers the examples after its Workspaces step, so one mustn't undo that pick), preferences (notification, idle, night light, input, window behaviour, launcher search, chat, calendar, notes), `Keybinds.binds`, `Apps.pinned`, a dock's own `pinned`, Favourites' apps, OSD app bars | its own switch, off by default | ✅ |
 | `commands` | anything that runs as you: every command field, `Apps` terminal/file manager/browser, `Updates` terminal and upgrade, idle listeners, exec and raw binds | its own switch, off by default, warned | ✅ |
 | `machine` | monitor names, wallpapers, accounts, paths, hardware, services, takeovers, and every section not marked | never | wallpaper setup only (`x-snapshot`) |

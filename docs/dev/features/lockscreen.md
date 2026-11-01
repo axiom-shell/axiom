@@ -109,7 +109,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 
 #### Background
 - `background` is one of:
-  - `wallpaper`: `ThemeManager.wallpaperFor(screen)`, blurred by a `MultiEffect` when the layout's `backdrop.blur` is on (each layout has its own: the lock screen's and the login screen's are independent).
+  - `wallpaper`: `ThemeManager.wallpaperFor(screen)` in a `WallpaperView` (a change while locked plays the wallpaper transition, and it follows `Appearance.wallpaper.fill`; [wallpaper](../theming/wallpaper-and-schedules.md)), blurred by a `MultiEffect` when the layout's `backdrop.blur` is on (each layout has its own: the lock screen's and the login screen's are independent).
   - `color`: `backgroundColor`.
 - Either way it sits under a black layer at `dim`%.
 

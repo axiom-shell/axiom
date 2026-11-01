@@ -502,13 +502,13 @@ class CheckPackages(unittest.TestCase):
         ("install.sh", '"grim|grim|grim"', '"grim|grim|grimm"', "grim on fedora is 'grimm', Packages.qml says 'grim'"),
         ("install.sh", '"git|git|git"', '"git|git|git"\n  "ghost|ghost|ghost"\n  "odd|odd"', "no key 'ghost' (install.sh installs it)"),
         ("install.sh", None, None, "PACKAGES row 'odd|odd' isn't key|arch|fedora"),
-        ("install.sh", '"Wallpapers|awww|"', '"Wallpapers|awww|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
+        ("install.sh", '"Package update checks|checkupdates|"', '"Package update checks|checkupdates|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
         ("install.sh", "REQUIRED=(git ", "REQUIRED=(specter git ", "'specter' isn't in PACKAGES"),
         ("packaging/aur/axiom-shell/PKGBUILD", "depends=('quickshell", "depends=('extra' 'quickshell",
          "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell'] aren't"),
-        ("packaging/aur/axiom-shell-git/PKGBUILD", "'awww: wallpapers'", "'phantom: boo'",
+        ("packaging/aur/axiom-shell-git/PKGBUILD", "'wlsunset: night light (niri)'", "'phantom: boo'",
          "axiom-shell-git/PKGBUILD: optdepends phantom, which no install.sh feature or compositor installs"),
-        ("packaging/aur/axiom-shell-git/PKGBUILD", None, None, "axiom-shell-git/PKGBUILD: no optdepends for awww"),
+        ("packaging/aur/axiom-shell-git/PKGBUILD", None, None, "axiom-shell-git/PKGBUILD: no optdepends for wlsunset"),
     ]
 
     def test_each_rule_fails(self):
@@ -522,6 +522,32 @@ class CheckPackages(unittest.TestCase):
             code, out = run_check(root, "check_packages.py")
         self.assertEqual(code, 1)
         self.assertEqual(missed(out, [m for *_, m in self.EDITS]), [], out)
+
+
+class CheckShaders(unittest.TestCase):
+    """scripts/check_shaders.py fails when a wallpaper shader's .qsb is stale
+    or missing, or a .qsb or stamp has no source."""
+
+    SHADERS = "components/surfaces/wallpaper/shaders"
+
+    def test_clean(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out = run_check(fixture_root(tmp, self.SHADERS), "check_shaders.py")
+        self.assertEqual(code, 0, out)
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, self.SHADERS)
+            shaders = root / self.SHADERS
+            (shaders / "fade.frag").write_text((shaders / "fade.frag").read_text() + "// edited\n")
+            (shaders / "wipe.frag.qsb").unlink()
+            (shaders / "ghost.frag.qsb").write_bytes(b"x")
+            (shaders / "stamps.txt").write_text((shaders / "stamps.txt").read_text() + "00  gone.frag\n")
+            code, out = run_check(root, "check_shaders.py")
+        self.assertEqual(code, 1)
+        for message in ("fade.frag: changed since its .qsb was built", "wipe.frag: no wipe.frag.qsb",
+                        "ghost.frag.qsb: no source ghost.frag", "a stamp for gone.frag"):
+            self.assertIn(message, out)
 
 
 class CheckIcons(unittest.TestCase):

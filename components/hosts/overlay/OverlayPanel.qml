@@ -36,7 +36,7 @@ ReservedAreaWindow {
   visible: false
   // Its layer rule arranges it after docks and draws it over them
   // (see render.LayerRulesLua)
-  WlrLayershell.namespace: "axiom-overlay"
+  layerNamespace: "axiom-overlay"
   // The keyboard exclusively while its grab is one the compositor doesn't
   // have (FocusGrab.exclusive)
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand

@@ -29,11 +29,6 @@ QtObject {
   //=========================================================================
   // Public Models & State
   //=========================================================================
-  readonly property FolderListModel wallpaperModel: FolderListModel {
-    folder: Paths.greeter ? "" : "file://" + Appearance.wallpaperPath
-    nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.bmp"]
-    showDirs: false
-  }
   // One entry per theme, a dark/light pair being one theme:
   // [{ label, dark, light, darkPreview, lightPreview, shared, generated,
   // community }] (ThemeFamilies.build), where dark/light are Appearance.theme
@@ -69,6 +64,56 @@ QtObject {
     "dark": Appearance.darkWallpaper,
     "light": Appearance.lightWallpaper
   }, Appearance.darkMode, root._look.rotated ?? null)
+  // The transition the next change of what's shown plays ({ seed, forced,
+  // point }; WallpaperView reads it once the new wallpaper has loaded): a
+  // fresh seed per change, so the screens changing together pick the same
+  // transition, a preview's transition name ("" for the configured), and
+  // the clicked point it starts from ({ x, y } in screen units, or null)
+  readonly property var transition: root._transition
+  property var _transition: ({
+      "seed": 0,
+      "forced": "",
+      "point": null
+    })
+  property string _forcedTransition: ""
+  // startFrom's point and when it was given
+  property var _startPoint: null
+  // What was shown when the seed was drawn: the binding also re-evaluates
+  // on look state changes that show nothing new (lastRotated)
+  property string _seededFor: ""
+  onShownWallpapersChanged: {
+    const shown = JSON.stringify(root.shownWallpapers);
+    if (shown === root._seededFor)
+      return;
+    root._seededFor = shown;
+    // A click's point only for a change soon after it: one that changed
+    // nothing mustn't aim a later rotation (a config-committed change, such
+    // as a light/dark wallpaper, lands a moment after the click)
+    const start = root._startPoint;
+    root._transition = {
+      "seed": Math.floor(Math.random() * 2147483647),
+      "forced": root._forcedTransition,
+      "point": start && Date.now() - start.at < 3000 ? {
+        "x": start.x,
+        "y": start.y
+      } : null
+    };
+    root._forcedTransition = "";
+    root._startPoint = null;
+  }
+  // The next change plays `name` (WallpaperManager.preview)
+  function forceTransition(name) {
+    root._forcedTransition = name;
+  }
+  // The next change, if it comes soon, starts from `point` ({ x, y } in
+  // screen units: where a wallpaper picker was clicked)
+  function startFrom(point) {
+    root._startPoint = {
+      "x": point.x,
+      "y": point.y,
+      "at": Date.now()
+    };
+  }
   // The primary monitor's (the lockscreen's)
   readonly property string wallpaper: root.wallpaperFor(General.primaryMonitor)
   function wallpaperFor(monitor) {
@@ -158,20 +203,21 @@ QtObject {
     return true;
   }
 
+  // The wallpapers the shuffle hasn't shown yet this round (random order,
+  // WallpaperManager), null before the first
+  readonly property var shuffleBag: root._look.shuffle ?? null
+  function setShuffleBag(bag) {
+    root._saveLook({
+      "shuffle": bag
+    });
+  }
+
   // When the rotation last moved on (ms since the epoch; 0 for never)
   readonly property real lastRotated: root._look.lastRotated ?? 0
   function setLastRotated(time) {
     root._saveLook({
       "lastRotated": time
     });
-  }
-
-  // awww needs telling; the built-in backend (shell/Wallpaper) follows
-  // wallpaperFor(). Only _applyShown calls it.
-  function _showWallpaper(url, monitor) {
-    if (Paths.greeter || Appearance.wallpaperBackend !== "awww")
-      return;
-    CommandManager.runDetached([Paths.scriptsPath + "setWallpaper.sh", url.replace("file://", ""), monitor]);
   }
 
   // Generated themes are named by style, not wallpaper, so each run
@@ -337,14 +383,14 @@ QtObject {
     _reloadAllThemes();
     // Anything shown changed while qs wasn't running (a light/dark
     // wallpaper, a monitor), and a generated theme that isn't there yet
-    Qt.callLater(root._applyShown);
+    Qt.callLater(root.syncGeneratedTheme);
   }
 
   // --- What's showing ---
   // state/look.json: { theme: { for, name } (the schedule's variant of the
   // chosen theme, or null), rotated: { wallpaper, wallpapers },
-  // lastRotated, applied: { monitors } (what the backend was last
-  // told) }. The greeter keeps none.
+  // lastRotated, shuffle: [urls] (the shuffle's round, shuffleBag) }. The
+  // greeter keeps none.
   readonly property var _lookState: StateManager.createStateHandler("look")
   property var _look: Paths.greeter ? ({}) : root._lookState.load({})
 
@@ -380,34 +426,11 @@ QtObject {
     root._lookState.save(root._look);
   }
 
-  // Tells the backend about each monitor whose wallpaper changed (or that
-  // just connected), and brings a generated theme in line with the
-  // primary's. Runs on any change of what's shown: a pick, a rotation, a
-  // light/dark switch, a mode switch, a restored config.
+  // Brings a generated theme in line with the primary's wallpaper on any
+  // change of what's shown: a pick, a rotation, a light/dark switch, a
+  // mode switch, a restored config, a monitor connecting.
   readonly property string _shownKey: Paths.greeter ? "" : JSON.stringify([root.shownWallpapers, General.primaryMonitor, General.outputs.map(screen => screen.name)])
-  on_ShownKeyChanged: Qt.callLater(root._applyShown)
-
-  function _applyShown() {
-    if (Paths.greeter)
-      return;
-    const before = root._look.applied ?? {};
-    const after = {
-      "monitors": {}
-    };
-    for (const screen of General.outputs) {
-      const url = root.wallpaperFor(screen.name);
-      if (!url)
-        continue;
-      if (before.monitors?.[screen.name] !== url)
-        root._showWallpaper(url, screen.name);
-      after.monitors[screen.name] = url;
-    }
-    if (!Utils.deepEqual(after, before))
-      root._saveLook({
-        "applied": after
-      });
-    root.syncGeneratedTheme();
-  }
+  on_ShownKeyChanged: Qt.callLater(root.syncGeneratedTheme)
 
   // --- Active theme ---
   // Loaded eagerly so config/Theme never sees an empty theme

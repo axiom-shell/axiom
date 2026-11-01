@@ -88,10 +88,6 @@ QtObject {
         "arch": "niri",
         "fedora": "niri"
       },
-      "awww": {
-        "arch": "awww",
-        "fedora": null
-      },
       "nmcli": {
         "arch": "networkmanager",
         "fedora": "NetworkManager"
