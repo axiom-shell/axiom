@@ -554,3 +554,51 @@ func TestNoLoadChangesATakeover(t *testing.T) {
 		}
 	}
 }
+
+// Over a config.json that didn't load at the start, the defaults the store
+// runs on are never saved over a snapshot: the active one isn't modified,
+// a restore keeps nothing and a save is refused. The restore applies the
+// snapshot with the default machine settings (decided 2026-11-01).
+func TestDefaultsOverABrokenFileAreNeverSaved(t *testing.T) {
+	t.Parallel()
+	f := setup(t)
+	set(t, f.store, "Bars.style.widgetStyle", "outline")
+	if _, err := f.svc.Save("Work", ""); err != nil {
+		t.Fatal(err)
+	}
+	set(t, f.store, "Bars.style.widgetStyle", "plain")
+	if _, err := f.svc.Save("Home", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.svc.Restore("Work"); err != nil {
+		t.Fatal(err)
+	}
+	work, _ := os.ReadFile(filepath.Join(f.dir, "saved", "Work.json"))
+	f.store.Close()
+	os.WriteFile(filepath.Join(f.dir, store.FileName), []byte(`{"format": 2, "version": 76, "Battery": {"lowThreshold": "x"}}`), 0o600)
+	st, err := store.Open(store.Options{Dir: f.dir, Pipeline: f.svc.opts.Pipeline()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { st.Close() })
+	opts := f.svc.opts
+	opts.Store = st
+	svc := New(opts)
+	svc.Changed()
+	if s := svc.State(); s.Active != "Work" || s.Modified || s.Keep != "" {
+		t.Errorf("state over the defaults: %+v", s)
+	}
+	if _, err := svc.Save("Work", ""); err == nil {
+		t.Error("saved the defaults over Work")
+	}
+	applied, err := svc.Restore("Home")
+	if err != nil || applied.Kept != "" {
+		t.Fatalf("restore: %+v %v", applied, err)
+	}
+	if now, _ := os.ReadFile(filepath.Join(f.dir, "saved", "Work.json")); string(now) != string(work) {
+		t.Errorf("Work.json changed:\n%s", now)
+	}
+	if cfg, s := st.Config(); s.Blocked || s.Defaults || get(t, st, "Bars.style.widgetStyle") != "plain" || cfg == nil {
+		t.Errorf("after the restore: %+v, style %v", s, get(t, st, "Bars.style.widgetStyle"))
+	}
+}

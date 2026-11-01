@@ -8,7 +8,7 @@
 #      change touches what they're recorded from)
 #   1. formats changed QML with Qt 6's qmlformat, writing in place so the
 #      file keeps its inode and the running shell still reloads it
-#   2. check_structure, check_sizes, check_docs and check_packages (a few
+#   2. check_structure, check_sizes, check_icons, check_docs and check_packages (a few
 #      seconds) on every change, then those of check_all.sh's other checks
 #      the change reaches, a deletion or a check script's own change
 #      included (a new check there gets a trigger here): qmllint, JSON
@@ -104,6 +104,7 @@ for f in "${changed[@]}"; do
   scripts/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
   scripts/dev/known_issues.py) script_tests+=(KnownIssues) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
+  scripts/check_icons.py) script_tests+=(CheckIcons) ;;
   scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json) script_tests+=(CheckStructure) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
   .claude/skills/review-system/scope.py) script_tests+=(ReviewScope) ;;
@@ -150,6 +151,7 @@ if [[ $qmlformat -eq 1 ]]; then
 fi
 step "structure" python3 scripts/check_structure.py
 step "sizes" python3 scripts/check_sizes.py
+step "icon names" python3 scripts/check_icons.py
 step "doc citations" python3 scripts/check_docs.py
 step "package lists" python3 scripts/check_packages.py
 if [[ $lint -eq 1 ]]; then

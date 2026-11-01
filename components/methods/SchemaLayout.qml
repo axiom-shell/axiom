@@ -93,6 +93,14 @@ QtObject {
     });
   }
 
+  // Whether a setting waits for the user's own Save or card instead of
+  // going live or being set from the launcher: `x-applyOnSave` (Hyprland's
+  // mode) or `x-takeover` (the locker, idle, polkit, the greeter), whose
+  // effect is a takeover
+  function waitsForUser(schema) {
+    return schema?.["x-applyOnSave"] === true || schema?.["x-takeover"] === true;
+  }
+
   // Stored values per shown one for a number with `x-unit`: a duration
   // is stored in ms and shown in its unit (`s`, `min`, `h`, `d`); any
   // other unit shows the value as stored
@@ -107,8 +115,10 @@ QtObject {
 
   // `node` with every object `$ref` in its properties (Bars.style's
   // BarStyle) replaced by the definition, the keys beside the `$ref` over
-  // it, down through nested objects (not array items)
-  function _resolved(node, schema) {
+  // it, down through nested objects (not array items). `rows` and
+  // `compositorAllows` don't resolve: give them a resolved schema
+  // (`resolved(schema, schema)`)
+  function resolved(node, schema) {
     if (!node?.properties)
       return node;
     const properties = {};
@@ -121,7 +131,7 @@ QtObject {
           delete prop.$ref;
         }
       }
-      properties[key] = root._resolved(prop, schema);
+      properties[key] = root.resolved(prop, schema);
     }
     return Object.assign({}, node, {
       "properties": properties
@@ -269,7 +279,7 @@ QtObject {
   // first. A card holding a field marked `x-wide` spans both columns
   // (`wide`).
   function groups(schema, sectionKey) {
-    const section = root._resolved(schema.properties[sectionKey], schema);
+    const section = root.resolved(schema.properties[sectionKey], schema);
     const sectionTitle = section.title ?? sectionKey;
     const handBuilt = section["x-card"] ?? {};
     const perField = handBuilt.perField === true;

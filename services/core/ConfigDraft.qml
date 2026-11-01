@@ -65,7 +65,7 @@ QtObject {
   // notify. Deferred so it doesn't re-enter the binding of the control
   // that made the edit.
   function changed() {
-    root.isDirty = JSON.stringify(root.local) !== JSON.stringify(root.saved);
+    root.isDirty = !Utils.deepEqual(root.local, root.saved);
     Qt.callLater(() => root.local = Utils.clone(root.local));
   }
 

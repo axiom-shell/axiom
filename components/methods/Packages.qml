@@ -44,10 +44,6 @@ QtObject {
       }
     })
 
-  // The Material Symbols Rounded variable font, for distributions without a
-  // package of it
-  readonly property string iconFontUrl: "https://github.com/google/material-design-icons/raw/master/variablefont/MaterialSymbolsRounded%5BFILL,GRAD,opsz,wght%5D.ttf"
-
   // Hyprland and its tools left Fedora's own repositories; this COPR builds
   // them (and quickshell) for every current release
   readonly property string _hyprCopr: "nett00n/hyprland"
@@ -56,19 +52,12 @@ QtObject {
 
   // { key: { distro: package } }, a key being a command (a compositor by
   // its lowercase name), a package
-  // without a command ("xdg-desktop-portal-gtk"), or "iconFont". install.sh
+  // without a command ("xdg-desktop-portal-gtk"). install.sh
   // keeps a table of the same keys (scripts/check_packages.py compares them).
   // A package is a name, { name, repo } (from a repository enabled first),
-  // { file, to } (a download), or null: nothing to install there (the
+  // or null: nothing to install there (the
   // feature doesn't apply). Every key names every distribution.
   readonly property var packages: ({
-      "iconFont": {
-        "arch": "ttf-material-symbols-variable",
-        "fedora": {
-          "file": root.iconFontUrl,
-          "to": "~/.local/share/fonts/MaterialSymbolsRounded.ttf"
-        }
-      },
       "git": {
         "arch": "git",
         "fedora": "git"
@@ -229,7 +218,7 @@ QtObject {
   }
 
   // The shell lines that install `keys` on `distro`, in order: repositories
-  // to enable, one install of every package, then downloads. [] for an
+  // to enable, then one install of every package. [] for an
   // unknown distribution or nothing to install
   function installLines(distro, keys) {
     const how = root.distros[distro];
@@ -241,10 +230,6 @@ QtObject {
     const names = unique(found.filter(entry => entry.name).map(entry => entry.name));
     if (names.length > 0)
       lines.push(`${how.install} ${names.join(" ")}`);
-    for (const entry of found.filter(entry => entry.file)) {
-      const dir = entry.to.slice(0, entry.to.lastIndexOf("/"));
-      lines.push(`mkdir -p ${dir} && curl -fLo ${entry.to} '${entry.file}' && fc-cache -f`);
-    }
     return lines;
   }
 

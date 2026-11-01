@@ -63,9 +63,9 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `x-disabledNote`: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
 - `x-beside: true`: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns). Give the pair the same `x-showIf`. A bar widget's options pair the same way in the widget inspector (`SchemaPropertiesForm`'s `pairs`), but only while both are shown.
 - `x-wide: true` (field): the settings card the field lands on spans both columns (`SchemaLayout.groups`' `wide`). Put it on the field that needs the room, usually an array of objects (chat providers, Hyprland curves, session environment). See [Settings page](settings-page.md) › Columns.
-- `x-applyOnSave`: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
+- `x-applyOnSave`: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files). An `x-takeover` setting waits the same way (`SchemaLayout.waitsForUser`).
 - `x-snapshot: true`: a machine setting a saved snapshot carries too (the wallpaper setup: wallpapers, folder, mode, rotation, light/dark wallpapers, theme schedule), since a snapshot restores on the PC it was saved on. Exports and examples still leave it out. See [Saved configs and sharing](saved-configs-sharing.md).
-- `x-takeover: true`: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter). Loading or importing a config, or editing config.json from outside while axiom runs, never changes it; only its own card does. See [Saved configs and sharing](saved-configs-sharing.md).
+- `x-takeover: true`: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter). Loading or importing a config, or editing config.json from outside while axiom runs, never changes it; only its own card does: the settings page holds it until Save (no preview) and the launcher's `/config` only opens it there. See [Saved configs and sharing](saved-configs-sharing.md).
 
 ### Controls
 - `x-options`: a dynamic option list.
@@ -87,6 +87,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `"readonly"`: shows a string with a copy button instead of a field (an edge menu's `id`).
   - `"folder"`: a string with a Browse button opening the desktop's folder picker ([File picker](file-picker.md); the wallpaper, notes, screenshot and recording folders, Claude usage's `configDir`, System stats' `diskPath`). It hands back `~/…`, so whatever reads the setting expands `~` (`Paths.expandHome`).
   - `"search"`: a long option list (e.g. `"timezones"`) is typed into to filter it (`SchemaField`; the Clock module's and World clocks' `timezone`).
+  - `"icon"`: a string holding an icon: a field led by the icon itself, whose list searches the bundled Material Symbols by name and tag; anything else typed or pasted (a Nerd Font glyph) is kept ([Icons](icons.md)). Every icon setting takes it (`check_icons.py` checks their defaults).
 - Integers render through `forms/SchemaNumberField`:
   - a slider with a value box for 7–200 steps, else a stepper, with ±10 buttons past 20 steps
   - steppers commit debounced, sliders on release

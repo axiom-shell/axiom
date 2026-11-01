@@ -8,7 +8,7 @@ Everything is configured from inside the shell (see [Features](features.md)). Op
 
 - Settings are saved to `~/.config/axiom/config.json`. The `axiom` binary owns that file: it checks every change against the schema and writes it atomically. You never need to open it, but axiom notices when the file changes, so editing it by hand also works.
 - From a terminal or a script, `axiom config` reads and changes it while axiom runs, and the shell shows the change at once: `axiom config get Appearance.font`, `axiom config set Appearance.font.size 14`, `axiom config reset Appearance.font.size`. `axiom config validate` checks a file without changing anything, `axiom config share FILE` prints a shared file as Export would write it (only its look), and `axiom config path` shows where everything is.
-- Configs from older versions are migrated automatically. A config from before the current format is converted once and the original kept beside it as `config.format1.json`.
+- Configs from older versions are migrated automatically. The file as it was is kept once beside it: `config.v<version>.json`, or `config.format1.json` for a config from before the current format, which is converted. A hand-written config needs its `"format": 2` and `"version"`.
 - The schema defines every option and its default, and generates the Settings page. Its source is YAML under `config/schema/` (one file per section and definition), built into `config/json/config.schema.json`.
 - Chat API keys are entered in **Settings → Modules → Chat** and stored in your keyring (or `$XDG_STATE_HOME/axiom/secrets.json`, mode 600, without one). A provider's environment variable (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`) wins over a stored key. Conversations are saved in `$XDG_STATE_HOME/axiom/chats/`.
 
@@ -101,5 +101,3 @@ axiom restart           # restart the shell (the daemon keeps running)
 - **A notice that the files and the binary are from different versions:** the `axiom` binary is older or newer than the shell's files, so axiom runs read-only and doesn't save settings. Rebuild the binary from the same clone (`scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`), then `axiom daemon reexec`.
 
 Reporting a bug? Include the output of `axiom bug-info` (your versions, compositor, distribution and config mode; `~/.local/bin/axiom bug-info` if `axiom` isn't on your `PATH`) along with the log (`scripts/log.sh`, in axiom's folder: `~/.config/quickshell/axiom` for a clone, `/usr/share/axiom` for a package).
-
-Icons showing as words (`wifi`, `battery_full`) mean the icon font is missing: install `ttf-material-symbols-variable` and restart the shell.

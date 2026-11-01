@@ -45,7 +45,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - A menu that is gone or disabled leaves the widget its own popout (`EdgeMenusConfig.popoutMenuOf`).
 
 ### Icons
-- Icons are Material Symbols names (`ttf-material-symbols-variable`, fonts.google.com/icons) drawn by `reusable/StyledIcon` in `Appearance.iconFamily`.
+- Icons are Material Symbols names drawn by `reusable/StyledIcon` in `Appearance.iconFamily`, the font axiom bundles ([icons.md](../core/icons.md)).
 - `StyledIcon` draws anything that isn't a name (a glyph, or text typed into an icon field) in the text font.
 - Services, schema defaults (`x-icon`, icon fields) and launcher `glyph`s hold names.
 - `DependencyManager` warns once when the font is missing.

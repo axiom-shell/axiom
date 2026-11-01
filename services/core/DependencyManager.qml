@@ -7,12 +7,11 @@ import qs.services.compositor
 import qs.services.system
 
 /*
- * Startup checks for what the whole shell needs to look right: the icon font
- * (every icon is a Material Symbols name, StyledIcon, which shows as a word
- * without it) and the text font (`Appearance.font.family`, a free-text
- * setting: a misspelt name silently falls back to fontconfig's default).
- * Warns in the log and notifies once per qs launch (the text font once per
- * name, checked again whenever it changes). Created from shell.qml's
+ * A startup check for what the whole shell needs to look right: the text
+ * font (`Appearance.font.family`, a free-text setting: a misspelt name
+ * silently falls back to fontconfig's default; the icon font is bundled,
+ * Appearance.iconFamily). Warns in the log and notifies once per name,
+ * checked again whenever it changes. Created from shell.qml's
  * `_services`.
  *
  * Also which commands are installed
@@ -23,7 +22,6 @@ import qs.services.system
 Singleton {
   id: root
 
-  readonly property bool iconFontInstalled: Qt.fontFamilies().includes(Appearance.iconFamily)
   readonly property bool textFontInstalled: hasFontFamily(Appearance.fontFamily)
 
   // fontconfig's generic names, which match no single family
@@ -41,15 +39,10 @@ Singleton {
   // "" for one axiom has no package names for), from os-release
   readonly property string distro: Packages.distroFamily(FileManager.read("/etc/os-release") ?? FileManager.read("/usr/lib/os-release"))
 
-  // The shell lines that install these commands (or "iconFont") here: []
+  // The shell lines that install these commands here: []
   // on an unknown distribution
   function installLines(keys) {
     return Packages.installLines(root.distro, keys);
-  }
-
-  // A key as people read it: the font's family for "iconFont"
-  function label(key) {
-    return key === "iconFont" ? Appearance.iconFamily : key;
   }
 
   // One line that installs a command here ("" on an unknown distribution)
@@ -228,27 +221,8 @@ Singleton {
   PersistentProperties {
     id: _run
     reloadableId: "axiomDependencies"
-    property bool notified: false
     // The last missing text font notified, so each name is only notified once
     property string notifiedFont: ""
-  }
-
-  // Let the notification server come up first
-  Timer {
-    id: _notify
-    interval: 3000
-    onTriggered: {
-      // Installed since it was notified (a restart ago)
-      if (root.iconFontInstalled) {
-        NotificationManager.dismissApp(root._iconFontEntry);
-        return;
-      }
-      _run.notified = true;
-      const command = root.installCommand("iconFont");
-      NotificationManager.sendNotification("axiom", I18n.tr("Icon font missing"), command !== "" ? I18n.tr("Install {0} ({1}), then restart the shell.", Appearance.iconFamily, command) : I18n.tr("Install {0}, then restart the shell.", Appearance.iconFamily), {
-        "desktopEntry": root._iconFontEntry
-      });
-    }
   }
 
   // Settings commit the family on every keystroke: check once it settles
@@ -274,18 +248,12 @@ Singleton {
     }
   }
 
-  // The font notifications' desktop entries, which take them away once
-  // the font is there (clicking one opens nothing)
-  readonly property string _iconFontEntry: "axiom-icon-font"
+  // The font notification's desktop entry, which takes it away once the
+  // font is there (clicking it opens nothing)
   readonly property string _fontEntry: "axiom-font"
 
   Component.onCompleted: {
-    NotificationManager.registerHandler(root._iconFontEntry, () => {});
     NotificationManager.registerHandler(root._fontEntry, () => {});
     _checkTextFont.start();
-    if (!root.iconFontInstalled)
-      console.warn(`[DependencyManager] ${Appearance.iconFamily} is not installed: icons will show as words`);
-    if (!_run.notified)
-      _notify.start();
   }
 }

@@ -262,10 +262,12 @@ ColumnLayout {
         when: !input.activeFocus
       }
 
-      // Typed since it took focus: only then does it commit. Text it was
-      // left showing (the value changed while it had focus: what it edits
-      // switched under it) would land on what it edits now.
+      // Typed since it took focus or a value was pushed in: only then
+      // does it commit
       property bool typed: false
+      // The value as stored when it took focus, or as pushed in since:
+      // what Escape puts back
+      property real before
       onTypedChanged: {
         if (!input.typed)
           EditsManager.releaseTyping(input);
@@ -281,18 +283,35 @@ ColumnLayout {
         input.apply();
         EditsManager.releaseTyping(input);
       }
-      // Untyped, it follows the value while it has focus too
       Connections {
         target: root
+        // Untyped, it follows the value while it has focus too
         function onValueChanged() {
           if (input.activeFocus && !input.typed)
             input.text = String(root.value);
         }
+        // A value pushed in that isn't the echo of its own typing (what it
+        // edits switched under it, or was reset) drops the typing: kept, it
+        // would commit onto the new one
+        function onShownConfigValueChanged() {
+          if (input.typed && root.clamp(parseInt(input.text, 10)) === root.shownConfigValue)
+            return;
+          input.before = root.currentConfigValue;
+          if (input.typed) {
+            input.typed = false;
+            input.text = String(root.shownConfigValue);
+          }
+        }
       }
 
+      // Text that doesn't parse puts back the value it had
       function apply() {
         const parsed = parseInt(input.text, 10);
-        if (input.typed && !isNaN(parsed)) {
+        if (input.typed && isNaN(parsed)) {
+          input.revert();
+          return;
+        }
+        if (input.typed) {
           commitTimer.stop();
           root.value = root.clamp(parsed);
           root.committed(root.value * root.unitScale, true);
@@ -309,10 +328,18 @@ ColumnLayout {
         input.typed = false;
         input.text = String(root.value);
       }
+      // Escape: back to the value it had, in a form's draft too (each
+      // keystroke went there: valueTyped)
+      function revert() {
+        if (input.typed && root.currentConfigValue !== input.before)
+          root.valueTyped(input.before);
+        input.discardTyped();
+      }
 
       onActiveFocusChanged: {
         if (activeFocus) {
           input.typed = false;
+          input.before = root.currentConfigValue;
           selectAll();
         } else {
           apply();
@@ -321,8 +348,7 @@ ColumnLayout {
       Keys.onReturnPressed: focus = false
       Keys.onEnterPressed: focus = false
       Keys.onEscapePressed: {
-        input.typed = false;
-        text = String(root.value);
+        input.revert();
         focus = false;
       }
     }

@@ -81,17 +81,15 @@ TestCase {
   }
 
   function test_installLines_arch() {
-    compare(Packages.installLines("arch", ["iconFont", "qalc", "grim", "qalc"]), ["sudo pacman -S --needed ttf-material-symbols-variable libqalculate grim"]);
+    compare(Packages.installLines("arch", ["qalc", "grim", "qalc"]), ["sudo pacman -S --needed libqalculate grim"]);
     compare(Packages.installLines("arch", []), []);
   }
 
   function test_installLines_fedora() {
-    const lines = Packages.installLines("fedora", ["satty", "qalc", "checkupdates", "iconFont"]);
-    compare(lines.length, 3);
+    const lines = Packages.installLines("fedora", ["satty", "qalc", "checkupdates"]);
+    compare(lines.length, 2);
     compare(lines[0], "sudo dnf copr enable -y nett00n/hyprland", "the COPR first, once");
     compare(lines[1], "sudo dnf install satty qalculate", "checkupdates dropped");
-    verify(lines[2].startsWith("mkdir -p ~/.local/share/fonts && curl -fLo ~/.local/share/fonts/MaterialSymbolsRounded.ttf '"), lines[2]);
-    verify(lines[2].endsWith("' && fc-cache -f"), lines[2]);
     compare(Packages.installLines("fedora", ["qalc"]), ["sudo dnf install qalculate"], "no COPR unless needed");
     compare(Packages.installLines("fedora", ["checkupdates"]), [], "nothing to install");
   }

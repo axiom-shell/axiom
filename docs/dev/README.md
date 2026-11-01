@@ -108,6 +108,7 @@ docs/dev/       developer docs
 - [editors-pattern](core/editors-pattern.md): the shape every editor follows (draft, selection, page, unsaved reminders, drag, inspector).
 - [shell-manager-targeting](core/shell-manager-targeting.md): cross-cutting UI signals, monitor modes, which screen answers a shortcut, the surface registry (`SurfaceManager`).
 - [secrets](core/secrets.md): API keys and passwords (`SecretsManager`).
+- [icons](core/icons.md): the bundled Material Symbols font, its catalog and update script, the icon field (`x-control: icon`, `IconManager`) and `check_icons.py`.
 - [file-picker](core/file-picker.md): the desktop's file/folder picker (`FilePickerManager`, axiom's `filepicker.pick`), folder settings' Browse button.
 - [i18n](core/i18n.md): translation mechanics, language files, `check_i18n.py`.
 - [shared-ui-pieces](core/shared-ui-pieces.md): index of reusable widgets and helpers. Check it before drawing anything.

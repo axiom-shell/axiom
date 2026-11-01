@@ -138,6 +138,7 @@ properties:
               description: The bar sets every monitor with a brightness control at once, instead of only the one the OSD is on.
             icon:
               type: string
+              x-control: icon
               title: Icon
               default: ''
               description: 'Icon shown with it: a Material Symbols name (fonts.google.com/icons), or text. Empty follows what it shows (the level, the device).'

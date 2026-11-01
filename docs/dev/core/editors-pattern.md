@@ -9,7 +9,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 ### Draft
 - The manager owns a `ConfigDraft` of its config path.
   - An editor that is one part of a page's manager is a non-singleton the manager holds, named `*Editor`: the layouts editor's edge menus are `OverlayManager.menus` (`EdgeMenuEditor`), the Keybinds page's binds `KeybindManager.editor` (`KeybindEditor`, beside the page's view state `KeybindManager.page`), its screen layouts `ScreenLayoutEditor`s (`DesktopManager.editor`, …).
-- Mutate `draft.local` in place, then `changed()`. It re-clones next tick so bindings see it; `isDirty` is a JSON compare.
+- Mutate `draft.local` in place, then `changed()`. It re-clones next tick so bindings see it; `isDirty` compares the data whatever its key order (`Utils.deepEqual`).
 - Editors (the settings page too) show unsaved edits live through `ConfigManager.setPreview`, never by changing `ConfigManager.config`.
 - Save merges onto the latest config (`commit`, which may refuse: the draft stays dirty; a save axiom refuses later makes it dirty again through `ConfigManager.saveRefused`). Discard (shown only while dirty) reloads.
 - Typed text in a text or number box reaches the draft only on Enter, focus loss or Save, but shows Save at once: the box holds `EditsManager.typingField`, `SaveResetActions` (and `saveAll()` / `discardAll()`) commit or drop it first. Half-typed commands and paths never reach the preview.

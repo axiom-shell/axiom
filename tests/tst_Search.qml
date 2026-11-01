@@ -17,6 +17,20 @@ TestCase {
     compare(Search.score("Firefox", ""), 0);
   }
 
+  function test_rankIcons() {
+    const entries = [["search", "find magnify"], ["home", "house"], ["volume_up", "audio sound speaker"], ["volume_off", "audio mute"], ["speaker", "audio sound"], ["music_note", "audio song"]];
+    compare(Search.rankIcons(entries, "", 2), ["search", "home"], "no query: the most popular");
+    compare(Search.rankIcons(entries, "volume", 5), ["volume_up", "volume_off"], "by name prefix, in catalog order");
+    compare(Search.rankIcons(entries, "volume up", 5), ["volume_up"], "spaces read as underscores");
+    compare(Search.rankIcons(entries, "speaker", 5), ["speaker", "volume_up"], "the name first, then a tag");
+    compare(Search.rankIcons(entries, "audio", 2), ["volume_up", "volume_off"], "tags, limited");
+    compare(Search.rankIcons(entries, "sound mute", 5), [], "every word must match");
+    compare(Search.rankIcons(entries, "off", 5), ["volume_off"], "a word inside the name");
+    compare(Search.rankIcons(entries, "zzz", 5), []);
+    compare(Search.rankIcons(entries, "magn", 5), ["search"], "a search word's start");
+    compare(Search.rankIcons(entries, "aker", 5), ["speaker"], "inside the name, but never inside a search word");
+  }
+
   function test_frecency() {
     const now = Date.UTC(2026, 9, 8);
     const day = 86400000;

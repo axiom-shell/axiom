@@ -3,10 +3,18 @@ import QtTest
 import qs.components.methods
 
 TestCase {
+  id: test
   name: "SchemaLayout"
 
   RepoFiles {
     id: files
+  }
+
+  // Records showIfHolds' calls as shared fixtures (Shared.qml), which Go's
+  // schema.Holds replays
+  Shared {
+    id: shared
+    testCase: test
   }
 
   property var schema
@@ -59,6 +67,60 @@ TestCase {
     compare(rows.map(r => r.kind + ":" + r.path.join(".")), ["field:S.a", "group:S.group", "field:S.group.b", "array:S.list", "field:S.tags"]);
   }
 
+  // A `$ref` property's fields are rows once the schema is resolved (the
+  // settings page's Changed from default and /config list Bars.style.*)
+  function test_rows_of_a_resolved_ref() {
+    const refSchema = {
+      "definitions": {
+        "Style": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "properties": {
+        "S": {
+          "type": "object",
+          "properties": {
+            "style": {
+              "$ref": "#/definitions/Style",
+              "title": "Style"
+            }
+          }
+        }
+      }
+    };
+    compare(SchemaLayout.rows(SchemaLayout.resolved(refSchema, refSchema), []).map(r => r.kind + ":" + r.path.join(".")), ["group:S", "group:S.style", "field:S.style.size"]);
+    const resolved = SchemaLayout.resolved(schema, schema);
+    verify(SchemaLayout.rows(resolved, []).some(r => r.path.join(".") === "Bars.style.fontSize"), "the real schema's bar style");
+    // /config (SettingsManager.settingPaths) walks the resolved schema to
+    // keep them too
+    verify(SchemaLayout.compositorAllows(resolved, ["Bars", "style", "fontSize"], key => undefined), "the bar style passes compositorAllows");
+  }
+
+  function test_waitsForUser() {
+    verify(SchemaLayout.waitsForUser({
+      "type": "string",
+      "x-applyOnSave": true
+    }), "Hyprland's mode waits for Save");
+    verify(SchemaLayout.waitsForUser({
+      "type": "boolean",
+      "x-takeover": true
+    }), "a takeover setting (Polkit.enabled) waits too");
+    verify(!SchemaLayout.waitsForUser({
+      "type": "boolean"
+    }));
+    verify(!SchemaLayout.waitsForUser(undefined));
+    // The real schema's takeover switches shown as plain rows
+    for (const path of [["Polkit", "enabled"], ["Idle", "enabled"], ["Lockscreen", "mode"], ["Compositor", "mode"]]) {
+      const prop = schema.properties[path[0]].properties[path[1]];
+      verify(SchemaLayout.waitsForUser(prop), path.join("."));
+    }
+  }
+
   function test_defaultAt() {
     const objectSchema = {
       "properties": {
@@ -108,41 +170,44 @@ TestCase {
       "mode": "grid",
       "on": true,
       "list": [1],
-      "none": []
+      "none": [],
+      "empty": "",
+      "name": "x",
+      "unset": null
     };
     const valueOf = key => values[key];
-    verify(SchemaLayout.showIfHolds(null, valueOf));
-    verify(SchemaLayout.showIfHolds({
+    verify(shared.showIfHolds(null, valueOf));
+    verify(shared.showIfHolds({
       "mode": "grid"
     }, valueOf));
-    verify(!SchemaLayout.showIfHolds({
+    verify(!shared.showIfHolds({
       "mode": "standard"
     }, valueOf));
-    verify(SchemaLayout.showIfHolds({
+    verify(shared.showIfHolds({
       "mode": ["standard", "grid"]
     }, valueOf));
-    verify(!SchemaLayout.showIfHolds({
+    verify(!shared.showIfHolds({
       "mode": {
         "not": "grid"
       }
     }, valueOf));
-    verify(!SchemaLayout.showIfHolds({
+    verify(!shared.showIfHolds({
       "mode": "grid",
       "on": false
     }, valueOf));
     // notEmpty: a list with something in it
-    verify(SchemaLayout.showIfHolds({
+    verify(shared.showIfHolds({
       "list": {
         "notEmpty": true
       }
     }, valueOf));
-    verify(!SchemaLayout.showIfHolds({
+    verify(!shared.showIfHolds({
       "none": {
         "notEmpty": true
       }
     }, valueOf));
     // anyOf: one of its conditions holds, alongside the other keys
-    verify(SchemaLayout.showIfHolds({
+    verify(shared.showIfHolds({
       "anyOf": [
         {
           "mode": "standard"
@@ -153,7 +218,7 @@ TestCase {
         }
       ]
     }, valueOf));
-    verify(!SchemaLayout.showIfHolds({
+    verify(!shared.showIfHolds({
       "anyOf": [
         {
           "mode": "standard"
@@ -163,7 +228,7 @@ TestCase {
         }
       ]
     }, valueOf));
-    verify(!SchemaLayout.showIfHolds({
+    verify(!shared.showIfHolds({
       "on": false,
       "anyOf": [
         {
@@ -171,6 +236,69 @@ TestCase {
         }
       ]
     }, valueOf));
+    // A missing key, a null value and a list value, in every form
+    verify(!shared.showIfHolds({
+      "missing": "grid"
+    }, valueOf));
+    verify(shared.showIfHolds({
+      "missing": {
+        "not": "grid"
+      }
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "missing": ["grid", null]
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "missing": {
+        "notEmpty": true
+      }
+    }, valueOf));
+    verify(shared.showIfHolds({
+      "unset": null
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "unset": {
+        "not": null
+      }
+    }, valueOf));
+    verify(shared.showIfHolds({
+      "unset": ["a", null]
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "unset": {
+        "notEmpty": true
+      }
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "list": 1
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "list": [1]
+    }, valueOf), "a list value is never one of the listed values");
+    verify(shared.showIfHolds({
+      "list": {
+        "not": 1
+      }
+    }, valueOf));
+    // notEmpty on a string
+    verify(shared.showIfHolds({
+      "name": {
+        "notEmpty": true
+      }
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "empty": {
+        "notEmpty": true
+      }
+    }, valueOf));
+    // A boolean against a list, and anyOf with nothing in it
+    verify(shared.showIfHolds({
+      "on": [true]
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "anyOf": []
+    }, valueOf));
+    verify(shared.showIfHolds({}, valueOf));
   }
 
   // The real settings page: every category has cards, and every

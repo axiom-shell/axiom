@@ -142,12 +142,13 @@ QtObject {
     }
   }
 
+  // Compared whatever their key order (a bind completed or restored from
+  // a preset has its fields in another order than the one saved)
   function _matchOrigins() {
-    const saved = (draft.saved ?? []).map(bind => JSON.stringify(bind));
+    const saved = draft.saved ?? [];
     const used = saved.map(() => false);
     root._origins = (draft.local ?? []).map(bind => {
-      const text = JSON.stringify(bind);
-      const at = saved.findIndex((entry, i) => !used[i] && entry === text);
+      const at = saved.findIndex((entry, i) => !used[i] && Utils.deepEqual(entry, bind));
       if (at >= 0)
         used[at] = true;
       return at;
@@ -160,7 +161,7 @@ QtObject {
     const origins = root._origins;
     return root.binds.map((bind, i) => {
       const origin = origins[i] ?? -1;
-      return origin < 0 || JSON.stringify(bind) !== JSON.stringify(saved[origin]);
+      return origin < 0 || !Utils.deepEqual(bind, saved[origin]);
     });
   }
 

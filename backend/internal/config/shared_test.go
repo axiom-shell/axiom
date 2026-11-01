@@ -39,6 +39,21 @@ func stringsArray(list []string) *jsonx.Array {
 	return a
 }
 
+// recordedValueOf answers as the recorded valueOf did ({"$fn": {"[\"key\"]":
+// answer}}): a key it wasn't asked for, or answered undefined for
+// ({"$undefined": true}), isn't there.
+func recordedValueOf(fn any) schema.ValueOf {
+	fnObj, _ := jsonx.AsObject(fn)
+	answers, _ := jsonx.AsObject(fnObj.Value("$fn"))
+	return func(key string) (any, bool) {
+		answer, ok := answers.Get(string(jsonx.MarshalCompact(jsonx.Arr(key))))
+		if o, isObj := answer.(*jsonx.Object); isObj && o.Len() == 1 && o.Has("$undefined") {
+			return nil, false
+		}
+		return answer, ok
+	}
+}
+
 func runSchemaOp(t *testing.T, c testkit.Case) any {
 	t.Helper()
 	switch c.Op {
@@ -54,6 +69,8 @@ func runSchemaOp(t *testing.T, c testkit.Case) any {
 		return out
 	case "schema.resolveRef":
 		return schema.New(c.Args[1]).Resolve(c.Args[0])
+	case "schema.showIfHolds":
+		return schema.Holds(c.Args[0], recordedValueOf(c.Args[1]))
 	}
 	t.Fatalf("unknown op %s", c.Op)
 	return nil
