@@ -403,12 +403,12 @@ FoldingCard {
         }
       }
       StatusChip {
-        shown: calendarRow.calendar.readOnly ?? false
+        shown: calendarRow.joined?.readOnly ?? false
         color: Theme.foregroundAlt
         text: I18n.tr("Read-only")
       }
       SegmentButton {
-        visible: !(calendarRow.calendar.readOnly ?? false) && CalendarConfig.writableKind(root.account.kind)
+        visible: calendarRow.joined?.writable ?? false
         Layout.fillWidth: false
         implicitHeight: Widget.height - Widget.px(6)
         text: I18n.tr("Default")
@@ -443,7 +443,7 @@ FoldingCard {
   }
 
   StyledText {
-    visible: (root.account?.calendars ?? []).some(calendar => !(calendar.components ?? []).includes("VEVENT"))
+    visible: CalendarManager.calendars.some(calendar => calendar.account === root.accountId && !calendar.events)
     Layout.fillWidth: true
     text: I18n.tr("Task lists (such as iCloud's reminders) aren't shown yet.")
     opacity: 0.6

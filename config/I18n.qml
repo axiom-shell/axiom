@@ -44,6 +44,14 @@ QtObject {
     return date.toLocaleString(root.locale, format);
   }
 
+  // `date`'s hour, 0-23 or 1-12, in the shell's language's digits; two
+  // digits when `padded`. Qt's h is 12-hour only beside an AP field, so the
+  // 12-hour hour is formatted as the 24-hour hour of a day without a DST jump
+  function formatHour(date, use24Hour, padded) {
+    const hour = use24Hour ? date.getHours() : date.getHours() % 12 || 12;
+    return root.formatDate(new Date(2000, 0, 1, hour), padded ? "HH" : "H");
+  }
+
   // AM or PM for `date`'s hour, in the shell's language (午前/午後 in
   // Japanese), for clocks that set it apart from the time
   function meridiem(date) {
