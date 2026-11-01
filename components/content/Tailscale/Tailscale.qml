@@ -539,7 +539,7 @@ Panel {
       ChoiceRow {
         icon: "block"
         title: I18n.tr("None")
-        chosen: TailscaleManager.exitNodeIP === ""
+        chosen: TailscaleManager.exitNode === ""
         onPicked: TailscaleManager.setExitNode("")
       }
       Repeater {

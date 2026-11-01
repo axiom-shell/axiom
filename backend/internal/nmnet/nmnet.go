@@ -161,24 +161,6 @@ func deviceByIface(ctx context.Context, conn *dbus.Conn, iface string) (dbus.Obj
 	return dev, nil
 }
 
-// firstWifi is the first Wi-Fi device NetworkManager has.
-func firstWifi(ctx context.Context, conn *dbus.Conn) (dbus.ObjectPath, error) {
-	m, err := conn.Call(ctx, busName, managerPath, ifaceManager, "GetDevices", "")
-	var devs []dbus.ObjectPath
-	if err == nil {
-		err = m.Store(&devs)
-	}
-	if err != nil {
-		return "", axerr.Wrap(axerr.Unavailable, err, "NetworkManager isn't running")
-	}
-	for _, dev := range devs {
-		if v, err := conn.GetProperty(ctx, busName, dev, ifaceDevice, "DeviceType"); err == nil && v.Value == uint32(deviceWifi) {
-			return dev, nil
-		}
-	}
-	return "", axerr.New(axerr.NotFound, "no Wi-Fi device")
-}
-
 // dicts is an aa{sv} as decoded.
 func dicts(v any) []map[string]dbus.Variant {
 	list, _ := v.([]any)

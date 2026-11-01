@@ -27,9 +27,9 @@ func TestParse(t *testing.T) {
 		{"running", string(running), State{
 			Available: true, BackendState: "Running", TailnetName: "example.ts.net", IP: "100.64.0.7",
 			Version: "1.104.1", HostName: "laptop", DNSName: "laptop.example.ts.net",
-			IPs: []string{"100.64.0.7", "fd7a:115c:a1e0::7"}, MagicDNSSuffix: "example.ts.net",
-			Health:   []string{"Some peers are advertising routes but --accept-routes is false"},
-			ExitNode: "nas", ExitNodeIP: "100.64.0.2",
+			IPs:       []string{"100.64.0.7", "fd7a:115c:a1e0::7"},
+			Health:    []string{"Some peers are advertising routes but --accept-routes is false"},
+			ExitNode:  "nas",
 			Account:   Account{LoginName: "me@example.com", DisplayName: "Me"},
 			KeyExpiry: "2027-04-28T11:48:50Z",
 			Peers: []Peer{

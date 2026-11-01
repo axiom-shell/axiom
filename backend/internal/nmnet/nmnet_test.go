@@ -242,7 +242,7 @@ func TestJoin(t *testing.T) {
 	svc, f := startFake(t)
 	ctx := context.Background()
 	// A new network is added and activated
-	if err := svc.Join(ctx, JoinRequest{SSID: "Office", Security: "eap", EAP: "peap", Identity: "me", Password: "pw", SystemCA: true}); err != nil {
+	if err := svc.Join(ctx, JoinRequest{Device: "wlan0", SSID: "Office", Security: "eap", EAP: "peap", Identity: "me", Password: "pw", SystemCA: true}); err != nil {
 		t.Fatal(err)
 	}
 	// A saved one is updated in place, keeping its uuid, and activated

@@ -39,16 +39,12 @@ type State struct {
 	HostName string   `json:"hostName"`
 	DNSName  string   `json:"dnsName"`
 	IPs      []string `json:"ips"` // every Tailscale address of this machine
-	// MagicDNSSuffix is the tailnet's DNS suffix ("" without MagicDNS)
-	MagicDNSSuffix string `json:"magicDNSSuffix"`
 	// AuthURL is where to log in, while a login waits for it
 	AuthURL string `json:"authURL"`
 	// Health is tailscaled's warnings, as it words them
 	Health []string `json:"health"`
-	// ExitNode is the name of the peer used as exit node ("" none), and
-	// ExitNodeIP its first address
-	ExitNode   string `json:"exitNode"`
-	ExitNodeIP string `json:"exitNodeIP"`
+	// ExitNode is the name of the peer used as exit node ("" none)
+	ExitNode string `json:"exitNode"`
 	// Account is who this machine is logged in as
 	Account Account `json:"account"`
 	// KeyExpiry is when this machine's node key expires (RFC 3339), ""
@@ -113,7 +109,6 @@ func Parse(out []byte) State {
 		Version        string
 		BackendState   string
 		AuthURL        string
-		MagicDNSSuffix string
 		Health         []string
 		CurrentTailnet *struct{ Name string }
 		Self           *statusNode
@@ -127,7 +122,6 @@ func Parse(out []byte) State {
 	st.BackendState = status.BackendState
 	st.Version = status.Version
 	st.AuthURL = status.AuthURL
-	st.MagicDNSSuffix = status.MagicDNSSuffix
 	if status.Health != nil {
 		st.Health = status.Health
 	}
@@ -150,9 +144,6 @@ func Parse(out []byte) State {
 		p := peer(n)
 		if p.ExitNode {
 			st.ExitNode = p.Name
-			if len(p.IPs) > 0 {
-				st.ExitNodeIP = p.IPs[0]
-			}
 		}
 		st.Peers = append(st.Peers, p)
 	}

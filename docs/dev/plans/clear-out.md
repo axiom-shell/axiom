@@ -220,9 +220,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - ChatManager.copy only forwards to ClipboardManager.copyText
   - Notes documents count a revision nothing reads
   - NoteMarkdown's reparse repeats _normalize
-  - [net.join's first-Wi-Fi fallback is never reached](../issues.md#netjoins-first-wi-fi-fallback-is-never-reached)
-  - [The VPN state's device and autoconnect fields nothing reads](../issues.md#the-vpn-states-device-and-autoconnect-fields-nothing-reads)
-  - [Tailscale carries two state fields and a guard nothing needs](../issues.md#tailscale-carries-two-state-fields-and-a-guard-nothing-needs)
+  - net.join's first-Wi-Fi fallback is never reached
+  - The VPN state's device and autoconnect fields nothing reads
+  - Tailscale carries two state fields and a guard nothing needs
   - [CommunityCatalog's setups carry three fields nothing reads](../issues.md#communitycatalogs-setups-carry-three-fields-nothing-reads)
   - [Dead and forwarding members in the timer services and helpers](../issues.md#dead-and-forwarding-members-in-the-timer-services-and-helpers)
   - [Small shrinks in TimeZoneManager and WorldClocks](../issues.md#small-shrinks-in-timezonemanager-and-worldclocks)
