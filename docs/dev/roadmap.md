@@ -642,6 +642,10 @@ Found by the audits:
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
 - [ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room](issues.md#screenlayouteditorsavedlayout-is-dead-and-desktoptarget-forwards-the-editors-room)
+- [The system volume bar opens the OSD when the default output switches](issues.md#the-system-volume-bar-opens-the-osd-when-the-default-output-switches)
+- [Every OSD's opening reads the monitor's brightness, brightness bar or not](issues.md#every-osds-opening-reads-the-monitors-brightness-brightness-bar-or-not)
+- [The OSD's stream bar tracks its streams by hand](issues.md#the-osds-stream-bar-tracks-its-streams-by-hand)
+- [PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon](issues.md#pipewirevolumebar-keeps-a-mute-toggle-nothing-calls-and-its-own-volume-icon)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
