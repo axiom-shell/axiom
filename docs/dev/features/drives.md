@@ -19,7 +19,7 @@ Package `udisks` (`backend/internal/udisks/`, wired in `daemon/drives.go`) reads
 - **State:** `drives.get` after each hello, then `drives.state` on every change (the shell subscribes to every topic). `drives` leaves out the ignored ones (`DrivesConfig.ignore`, matched by `DriveInfo.ignored`: a volume's UUID or label, exactly), and they're never notified or mounted either. `available` false (udisks2 not running) shows the panel's off message.
 - **Actions:** `mount`, `unmount` / `unmountAll`, `lock`, `eject` / `ejectAll`, `open`, and `askUnlock(volumeId)` then `unlock(passphrase)`. Each marks its drive in `pending` until the call answers ("Mounting…" on the row); a failure's error kind (`busy`, `not_authorized`, `wrong_passphrase`, `not_found`, `unavailable`, `failed`) becomes the row's red status (`errors`, `errorText`). The passphrase goes only in the call's body; nothing logs a call's params.
 - **Open:** mounts first if needed (or asks for the passphrase, and opens once unlocked), then runs `Apps.fileManager` with the folder appended (`sh -c '<command> "$1"'`), else `xdg-open <folder>`. `openAfterMount` opens after every mount.
-- **Unlock:** `unlockRequest` is the volume whose passphrase field shows (in its `DriveRow`). The notification's Unlock sets it and opens the overlay page or edge menu holding a Drives module (`ShellManager.openModule`); with none, the field waits in the bar popout. A wrong passphrase keeps the field with `unlockError`; a right one mounts the cleartext volume.
+- **Unlock:** `unlockRequest` is the volume whose passphrase field shows (in its `DriveRow`). The notification's Unlock sets it and opens the overlay page or edge menu holding a Drives module (`ShellManager.openModule`); with none, the field waits in the bar popout. A wrong passphrase keeps the field with `unlockError`; a right one mounts the cleartext volume when the unlock's answer says there's a filesystem in it (`mountable`: not LVM).
 - **Eject:** unmounts, locks and powers off (the daemon's `drives.eject`), then notifies "Safe to remove"; `busy` notifies that it's in use.
 - **Created from** `shell.qml`'s `_services`, so plug-ins are noticed and IPC answers with no Drives widget or module shown.
 - **Inert** on the login screen (`Paths.greeter`): nothing is fetched or listened to.
@@ -27,10 +27,10 @@ Package `udisks` (`backend/internal/udisks/`, wired in `daemon/drives.go`) reads
 ### On plug-in
 Only a real `drives.event` `added` (never a drive there at login, or udisks2 restarting) runs `DrivesConfig.onInsert`:
 - **`ask`** (the default): a notification with Mount / Open / Ignore; an encrypted drive's says Unlock / Ignore.
-- **`mount`**: mounts every volume it can, then notifies where, with Open / Eject. While the built-in lock is up (`LockManager.builtinLocked`) nothing mounts: the drive waits in `_queued` until the unlock.
+- **`mount`**: mounts every volume it can, then notifies where the first went (its `mount` call's `onMounted`), with Open / Eject. While the built-in lock is up (`LockManager.builtinLocked`) nothing mounts: the drive waits in `_queued` until the unlock.
 - **`nothing`**: no notification; the widget, module and OSD still show it.
 
-Every one of these notifications has the desktop entry `axiom-drives`: a click on one opens the Drives module (`registerHandler`, so it survives a reload, which the buttons' `onAction` doesn't). Unplugging a drive clears them (`dismissApp`), except right after an eject, so "Safe to remove" stays until it's read.
+Every one of these notifications has the desktop entry `axiom-drives`: a click on one opens the Drives module (`registerHandler`, so it survives a reload, which the buttons' `onAction` doesn't). Unplugging or ejecting a drive clears them (`dismissApp`). "Safe to remove" goes without that entry, so it stays until it's read.
 
 ### What shows them
 - **`DriveInfo`** (`components/methods/`, `tst_DriveInfo`): the pure parts: a drive's name (its one labelled volume's label, else vendor and model; the daemon sends no drive label) and size in decimal units ("SanDisk Ultra · 32 GB"), its icon (`usb`, `sd_card`, `album`, `hard_drive`), the volumes a list shows (a LUKS container standing for its cleartext volume, `effective`), each volume's action (`unlock`, `open`, `mount`), and the volume opening the drive acts on (`pick`).

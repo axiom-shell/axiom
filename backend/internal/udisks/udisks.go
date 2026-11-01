@@ -392,35 +392,41 @@ func fsTarget(v Volume) dbus.ObjectPath {
 	return dbus.ObjectPath(v.ID)
 }
 
-// Unlock opens the LUKS volume id names with passphrase and returns its
-// cleartext's id. The passphrase goes only to UDisks2: it is never
-// logged, and never in an error.
-func (s *Service) Unlock(ctx context.Context, id, passphrase string) (string, error) {
+// Unlock opens the LUKS volume id names with passphrase and returns the
+// volume as the state shows it after (its CleartextID, and whether there
+// is a filesystem to mount). The passphrase goes only to UDisks2: it is
+// never logged, and never in an error.
+func (s *Service) Unlock(ctx context.Context, id, passphrase string) (Volume, error) {
 	conn, v, err := s.volume(id)
 	if err != nil {
-		return "", err
+		return Volume{}, err
 	}
 	if !v.Encrypted {
-		return "", axerr.New(axerr.BadRequest, "%s isn't encrypted", v.Device)
+		return Volume{}, axerr.New(axerr.BadRequest, "%s isn't encrypted", v.Device)
 	}
 	if v.Unlocked {
-		return v.CleartextID, nil
+		return v, nil
 	}
 	m, err := conn.Call(ctx, busName, dbus.ObjectPath(v.ID), ifaceEncrypted, "Unlock", "sa{sv}", passphrase, map[string]dbus.Variant{})
 	if err != nil {
-		return "", mapError(err, passphrase)
+		return Volume{}, mapError(err, passphrase)
 	}
 	var ct dbus.ObjectPath
 	if err := m.Store(&ct); err != nil {
-		return "", err
+		return Volume{}, err
 	}
 	// Answered once the state shows it, so a mount right after finds the
 	// cleartext (its signals may still be on their way)
+	after := Volume{ID: id, CleartextID: string(ct), Unlocked: true}
 	s.await(ctx, func() bool {
 		_, v, err := s.volume(string(ct))
-		return err == nil && v.ID == id
+		if err == nil && v.ID == id {
+			after = v
+			return true
+		}
+		return false
 	})
-	return string(ct), nil
+	return after, nil
 }
 
 // await waits until done holds, for at most 2 s.

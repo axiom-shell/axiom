@@ -5,7 +5,9 @@ import QtQuick
 // (DrivesManager): its name, size and icon, the volumes a list shows
 // (an unlocked LUKS container standing for its cleartext volume), each
 // volume's main action, the one opening the drive opens, and the ignore
-// list's match. A drive is { id, vendor, model, size, bus,
+// list's match. The daemon lists an unlocked container's cleartext
+// volume only through it (cleartextId; its filesystem, mount points and
+// mountable). A drive is { id, vendor, model, size, bus,
 // optical, removable, canEject, canPowerOff, volumes }, a volume { id,
 // device, label, uuid, fsType, size, mountPoints, readOnly, encrypted,
 // unlocked, cleartextId, mountable }.
@@ -64,29 +66,24 @@ QtObject {
     return "hard_drive";
   }
 
-  // The volumes a list shows: those that can be mounted or unlocked,
-  // without the cleartext volumes of the drive's own LUKS containers (the
-  // container stands for its own)
+  // The volumes a list shows: those that can be mounted or unlocked
   function volumes(drive) {
-    const all = drive?.volumes ?? [];
-    const inner = all.filter(v => v.encrypted && v.cleartextId).map(v => v.cleartextId);
-    return all.filter(v => (v.mountable || v.encrypted) && !inner.includes(v.id));
+    return (drive?.volumes ?? []).filter(v => v.mountable || v.encrypted);
   }
 
   // The volume a shown one acts as: an unlocked container's cleartext
-  // volume, else itself. The daemon reports the cleartext's filesystem
-  // and mount points on the container, so when the cleartext isn't
-  // listed it's the container's own, under the cleartext's id
-  function effective(drive, volume) {
+  // volume (the container's filesystem, mount points and mountable under
+  // the cleartext's id), else itself
+  function effective(volume) {
     if (!volume?.encrypted || !volume.unlocked || !volume.cleartextId)
       return volume ?? null;
-    return (drive?.volumes ?? []).find(v => v.id === volume.cleartextId) ?? {
+    return {
       "id": volume.cleartextId,
       "label": volume.label,
       "fsType": volume.fsType,
       "size": volume.size,
       "mountPoints": volume.mountPoints ?? [],
-      "mountable": true,
+      "mountable": volume.mountable === true,
       "encrypted": false
     };
   }
@@ -103,10 +100,10 @@ QtObject {
 
   // What clicking a shown volume does: "unlock" (locked), "open"
   // (mounted), "mount", else "" (nothing to mount)
-  function action(drive, volume) {
+  function action(volume) {
     if (root.locked(volume))
       return "unlock";
-    const v = root.effective(drive, volume);
+    const v = root.effective(volume);
     if (root.mounted(v))
       return "open";
     return v?.mountable ? "mount" : "";
@@ -114,7 +111,7 @@ QtObject {
 
   // Any shown volume is mounted
   function driveMounted(drive) {
-    return root.volumes(drive).some(v => root.mounted(root.effective(drive, v)));
+    return root.volumes(drive).some(v => root.mounted(root.effective(v)));
   }
 
   // Any shown volume is locked
@@ -125,7 +122,7 @@ QtObject {
   // The first mount point of the drive's volumes, else ""
   function mountPoint(drive) {
     for (const v of root.volumes(drive)) {
-      const points = root.effective(drive, v)?.mountPoints ?? [];
+      const points = root.effective(v)?.mountPoints ?? [];
       if (points.length > 0)
         return points[0];
     }
@@ -137,7 +134,7 @@ QtObject {
   function pick(drive) {
     const shown = root.volumes(drive);
     for (const wanted of ["open", "mount", "unlock"]) {
-      const volume = shown.find(v => root.action(drive, v) === wanted);
+      const volume = shown.find(v => root.action(v) === wanted);
       if (volume)
         return {
           "volume": volume,

@@ -631,9 +631,10 @@ func TestMethods(t *testing.T) {
 	if axerr.KindOf(err) != axerr.WrongPassphrase || strings.Contains(err.Error(), wrongPass) {
 		t.Errorf("wrong passphrase: %v", err)
 	}
-	ct, err := h.s.Unlock(ctx, luks, rightPass)
-	if err != nil || ct != pathBlocks+"dm_2d9" {
-		t.Errorf("Unlock = %q, %v", ct, err)
+	unlocked, err := h.s.Unlock(ctx, luks, rightPass)
+	ct := unlocked.CleartextID
+	if err != nil || ct != pathBlocks+"dm_2d9" || !unlocked.Mountable {
+		t.Errorf("Unlock = %+v, %v", unlocked, err)
 	}
 	// Shown unlocked once it answers: the cleartext mounts by its own id
 	if v := h.s.State().Drives[0].Volumes[0]; !v.Unlocked || v.CleartextID != ct {

@@ -98,12 +98,6 @@ QtObject {
     return I18n.tr("That didn't work");
   }
 
-  // The row's click: opens the drive (mounting it first), or asks for the
-  // passphrase of a locked one
-  function activate(drive) {
-    root.open(drive);
-  }
-
   // Opens a volume's folder (the drive's mounted one, else its first one
   // to mount, mounted first); a locked one asks for its passphrase first
   function open(drive, volume) {
@@ -112,9 +106,9 @@ QtObject {
     const v = volume ?? DriveInfo.pick(drive)?.volume ?? null;
     if (!v)
       return;
-    switch (DriveInfo.action(drive, v)) {
+    switch (DriveInfo.action(v)) {
     case "open":
-      root._openFolder(DriveInfo.effective(drive, v).mountPoints[0]);
+      root._openFolder(DriveInfo.effective(v).mountPoints[0]);
       break;
     case "mount":
       root.mount(drive, v, true);
@@ -128,8 +122,9 @@ QtObject {
 
   // rpc: drives.mount
   // Mounts a volume (an unlocked container's cleartext one); opens it
-  // after with `andOpen` or DrivesConfig.openAfterMount
-  function mount(drive, volume, andOpen) {
+  // after with `andOpen` or DrivesConfig.openAfterMount, and tells
+  // `onMounted` where it went
+  function mount(drive, volume, andOpen, onMounted) {
     if (!drive || !volume || root._inert)
       return;
     if (DriveInfo.locked(volume)) {
@@ -137,7 +132,7 @@ QtObject {
       root.askUnlock(volume.id);
       return;
     }
-    const target = DriveInfo.effective(drive, volume);
+    const target = DriveInfo.effective(volume);
     root._pend(drive, "mounting");
     BackendManager.call("drives.mount", {
       "id": target.id
@@ -150,6 +145,8 @@ QtObject {
       root._event("mounted", root.driveById(drive.id) ?? drive, point);
       if (point !== "" && (andOpen === true || DrivesConfig.openAfterMount))
         root._openFolder(point);
+      if (onMounted)
+        onMounted(point);
     });
   }
 
@@ -159,14 +156,14 @@ QtObject {
       return;
     root._pend(drive, "unmounting");
     BackendManager.call("drives.unmount", {
-      "id": DriveInfo.effective(drive, volume).id
+      "id": DriveInfo.effective(volume).id
     }, error => root._settle(drive, "drives.unmount", error));
   }
 
   // Unmounts every mounted volume of a drive
   function unmountAll(drive) {
     for (const v of DriveInfo.volumes(drive)) {
-      if (DriveInfo.mounted(DriveInfo.effective(drive, v)))
+      if (DriveInfo.mounted(DriveInfo.effective(v)))
         root.unmount(drive, v);
     }
   }
@@ -207,7 +204,8 @@ QtObject {
       const andOpen = root._openAfterUnlock;
       if (root.unlockRequest === id)
         root.cancelUnlock();
-      if (error || !result?.cleartextId)
+      // Nothing to mount inside (LVM, or no filesystem yet)
+      if (error || !result?.cleartextId || !result.mountable)
         return;
       root.mount(drive, {
         "id": result.cleartextId,
@@ -238,14 +236,12 @@ QtObject {
       root.cancelUnlock();
     const name = root.nameOf(drive);
     root._pend(drive, "ejecting");
-    root._ejected = root._ejected.concat([drive.id]);
     BackendManager.call("drives.eject", {
       "id": drive.id
     }, error => {
       root._settle(drive, "drives.eject", error);
       NotificationManager.dismissApp(root._desktopEntry);
       if (error) {
-        root._ejected = root._ejected.filter(id => id !== drive.id);
         if (error.kind === "busy")
           root._notify(I18n.tr("{0} is in use", name), I18n.tr("Close the files and apps using it, then eject it again."), "drive-removable-media");
         else
@@ -253,7 +249,11 @@ QtObject {
         return;
       }
       root._event("ejected", drive, "");
-      root._notify(I18n.tr("Safe to remove"), I18n.tr("{0} can be unplugged now.", name), "media-eject");
+      // Without the drives' desktop entry: it stays until it's read, not
+      // cleared as this drive or another one is unplugged
+      NotificationManager.sendNotification("axiom", I18n.tr("Safe to remove"), I18n.tr("{0} can be unplugged now.", name), {
+        "icon": "media-eject"
+      });
     });
   }
 
@@ -269,9 +269,6 @@ QtObject {
 
   // -- Private --
   property var _all: []
-  // Drives ejected from here, until they're gone: their unplugging keeps
-  // the "Safe to remove" notification
-  property var _ejected: []
   // Drives that came while the screen was locked, to mount after the
   // unlock (onInsert "mount")
   property var _queued: []
@@ -400,69 +397,46 @@ QtObject {
     });
   }
 
-  // Mounts every volume to mount (the first opened with `andOpen`)
-  function _mountAll(drive, andOpen) {
+  // Mounts every volume to mount (the first opened with `andOpen`, and
+  // its mount point told to `onFirstMounted`)
+  function _mountAll(drive, andOpen, onFirstMounted) {
     if (!drive)
       return;
     let first = true;
     for (const v of DriveInfo.volumes(drive)) {
-      if (DriveInfo.action(drive, v) !== "mount")
+      if (DriveInfo.action(v) !== "mount")
         continue;
-      root.mount(drive, v, andOpen && first);
+      root.mount(drive, v, andOpen && first, first ? onFirstMounted : null);
       first = false;
     }
   }
 
-  // onInsert "mount": mounts it, then says where, offering Open and Eject
+  // onInsert "mount": mounts it, then says where (the first volume's
+  // answer), offering Open and Eject
   function _mountOnInsert(drive) {
     const id = drive.id;
     const name = root.nameOf(drive);
-    const target = DriveInfo.effective(drive, DriveInfo.pick(drive)?.volume);
-    if (!target)
-      return;
-    root._mountAll(drive, false);
-    // The first volume's answer says where (mount() opens it if asked)
-    const done = root.lastEvent?.serial ?? 0;
-    root._mountedNotice = {
-      "driveId": id,
-      "name": name,
-      "after": done
-    };
-  }
-
-  // A mount on insert waiting for its answer, to say where it went
-  property var _mountedNotice: null
-  onLastEventChanged: {
-    const notice = root._mountedNotice;
-    const e = root.lastEvent;
-    if (!notice || !e || e.kind !== "mounted" || e.driveId !== notice.driveId || e.serial <= notice.after)
-      return;
-    root._mountedNotice = null;
-    root._notify(I18n.tr("{0} mounted", notice.name), Paths.shortenHome(e.mountPoint), "drive-removable-media", [
-      {
-        "id": "open",
-        "label": I18n.tr("Open")
-      },
-      {
-        "id": "eject",
-        "label": I18n.tr("Eject")
-      }
-    ], action => {
-      const now = root.driveById(notice.driveId);
-      if (action === "open")
-        root.open(now);
-      else if (action === "eject")
-        root.eject(now);
-    });
+    root._mountAll(drive, false, point => root._notify(I18n.tr("{0} mounted", name), Paths.shortenHome(point), "drive-removable-media", [
+        {
+          "id": "open",
+          "label": I18n.tr("Open")
+        },
+        {
+          "id": "eject",
+          "label": I18n.tr("Eject")
+        }
+      ], action => {
+        const now = root.driveById(id);
+        if (action === "open")
+          root.open(now);
+        else if (action === "eject")
+          root.eject(now);
+      }));
   }
 
   function _gone(driveId) {
     root._queued = root._queued.filter(id => id !== driveId);
     root._setError(driveId, "");
-    if (root._ejected.includes(driveId)) {
-      root._ejected = root._ejected.filter(id => id !== driveId);
-      return;
-    }
     NotificationManager.dismissApp(root._desktopEntry);
   }
 

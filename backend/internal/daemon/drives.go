@@ -56,6 +56,8 @@ func (d *Daemon) drivesMethods(reg *rpc.Registry) {
 	}
 	type unlockResult struct {
 		CleartextID string `json:"cleartextId"`
+		// There's a filesystem in it to mount (not LVM, nor nothing yet)
+		Mountable bool `json:"mountable"`
 	}
 	// Only the shell mounts, unlocks or ejects: it's the one showing them
 	refuse := func(c *rpc.Conn) error {
@@ -84,8 +86,8 @@ func (d *Daemon) drivesMethods(reg *rpc.Registry) {
 		if err := refuse(c); err != nil {
 			return unlockResult{}, err
 		}
-		ct, err := d.drives.Unlock(ctx, p.ID, p.Passphrase)
-		return unlockResult{CleartextID: ct}, err
+		v, err := d.drives.Unlock(ctx, p.ID, p.Passphrase)
+		return unlockResult{CleartextID: v.CleartextID, Mountable: v.Mountable}, err
 	})
 	rpc.Handle(reg, "drives.lock", func(ctx context.Context, c *rpc.Conn, p idParams) (struct{}, error) {
 		if err := refuse(c); err != nil {

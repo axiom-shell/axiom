@@ -22,7 +22,7 @@ DeviceRow {
   readonly property bool asking: row.asked !== null
   readonly property bool mounted: DriveInfo.driveMounted(row.drive)
   // Unlocked LUKS volumes not mounted: they can be locked again
-  readonly property var lockable: row.volumes.filter(v => v.encrypted && v.unlocked && !DriveInfo.mounted(DriveInfo.effective(row.drive, v)))
+  readonly property var lockable: row.volumes.filter(v => v.encrypted && v.unlocked && !DriveInfo.mounted(DriveInfo.effective(v)))
 
   icon: DriveInfo.icon(row.drive)
   iconBadge: DriveInfo.driveLocked(row.drive) ? "lock" : ""
@@ -73,7 +73,7 @@ DeviceRow {
           id: volumeRow
           required property int index
           readonly property var volume: row.volumes[volumeRow.index] ?? null
-          readonly property string action: DriveInfo.action(row.drive, volumeRow.volume)
+          readonly property string action: DriveInfo.action(volumeRow.volume)
           Layout.fillWidth: true
           spacing: Widget.spacing
 

@@ -87,43 +87,43 @@ TestCase {
     })), "hard_drive");
   }
 
-  function test_volumes_hide_cleartext() {
+  function test_volumes() {
     const d = drive([vol("luks", {
         "encrypted": true,
-        "unlocked": true,
-        "cleartextId": "clear",
         "mountable": false
-      }), vol("clear", {
-        "mountPoints": ["/run/media/u/x"]
       }), vol("swap", {
         "mountable": false
       })]);
-    compare(DriveInfo.volumes(d).map(v => v.id), ["luks"], "the container stands for its cleartext; unmountable left out");
-    compare(DriveInfo.effective(d, d.volumes[0]).id, "clear");
-    compare(DriveInfo.action(d, d.volumes[0]), "open");
-    verify(DriveInfo.driveMounted(d));
-    compare(DriveInfo.mountPoint(d), "/run/media/u/x");
+    compare(DriveInfo.volumes(d).map(v => v.id), ["luks"], "a locked container shows; unmountable left out");
   }
 
-  function test_effective_standin() {
+  function test_effective() {
     const d = drive([vol("luks", {
         "encrypted": true,
         "unlocked": true,
         "cleartextId": "clear",
-        "mountable": false
+        "mountable": true
       })]);
-    const v = DriveInfo.effective(d, d.volumes[0]);
-    compare(v.id, "clear", "not listed yet: a stand-in");
-    compare(DriveInfo.action(d, d.volumes[0]), "mount");
+    const v = DriveInfo.effective(d.volumes[0]);
+    compare(v.id, "clear", "the cleartext, by its id");
+    compare(DriveInfo.action(d.volumes[0]), "mount");
     const mounted = drive([vol("luks", {
         "encrypted": true,
         "unlocked": true,
         "cleartextId": "clear",
-        "mountable": false,
+        "mountable": true,
         "mountPoints": ["/run/media/u/x"]
       })]);
-    compare(DriveInfo.action(mounted, mounted.volumes[0]), "open", "the container reports its cleartext's mount points");
+    compare(DriveInfo.action(mounted.volumes[0]), "open", "the container reports its cleartext's mount points");
+    verify(DriveInfo.driveMounted(mounted));
     compare(DriveInfo.mountPoint(mounted), "/run/media/u/x");
+    const lvm = drive([vol("luks", {
+        "encrypted": true,
+        "unlocked": true,
+        "cleartextId": "clear",
+        "mountable": false
+      })]);
+    compare(DriveInfo.action(lvm.volumes[0]), "", "no filesystem inside (LVM): nothing to mount");
   }
 
   function test_action() {
@@ -134,9 +134,9 @@ TestCase {
     const d = drive([locked, vol("m", {
         "mountPoints": ["/m"]
       }), vol("u")]);
-    compare(DriveInfo.action(d, locked), "unlock");
-    compare(DriveInfo.action(d, d.volumes[1]), "open");
-    compare(DriveInfo.action(d, d.volumes[2]), "mount");
+    compare(DriveInfo.action(locked), "unlock");
+    compare(DriveInfo.action(d.volumes[1]), "open");
+    compare(DriveInfo.action(d.volumes[2]), "mount");
     verify(DriveInfo.driveLocked(d));
   }
 
