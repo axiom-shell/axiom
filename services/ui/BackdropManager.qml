@@ -52,31 +52,39 @@ QtObject {
 
   // --- Catching clicks for a focus grab the compositor doesn't have ---
 
-  // FocusGrabs without a native grab, active now (uids, oldest first,
-  // kept while a modal is up so their order outlives it): every screen's
+  // FocusGrabs without a native grab, active now (uids): every screen's
   // backdrop window then covers its screen, transparent, under the
   // grabbing surface, and a click on it ends their grabs. Not while a
   // modal is up (SurfaceManager.modalShown): it covers every screen, so no
   // click needs catching
   property var _catchers: []
   readonly property bool catching: root._catchers.length > 0 && !SurfaceManager.modalShown
-  // The catcher that started last (0 with none): only its surface asks for
-  // the keyboard exclusively (FocusGrab.exclusive)
-  readonly property int newestCatcher: root._catchers.length > 0 ? root._catchers[root._catchers.length - 1] : 0
   // A click caught while `catching`: on a backdrop (`window` null), or on
   // a bar above it (`window` its window), outside a grab that doesn't let
   // input through to it (FocusGrab)
   signal clickedOutside(var window)
 
-  // The FocusGrab that started last, native grab or not (its uid, 0 with
-  // none yet): a native grab cleared while a newer one started was taken
-  // by it (one at a time), not ended by a click (FocusGrab.dismissed)
-  property int newestGrab: 0
+  // Every FocusGrab active now, native grab or not (uids, oldest first)
+  property var _grabs: []
+  // The newest of them (0 with none): only its surface asks for the
+  // keyboard exclusively (FocusGrab.exclusive), and it holds Hyprland's
+  // native grab (one at a time: a newer one starting clears an older one
+  // with no click, which takes it back once it's the newest again)
+  readonly property int newestGrab: root._grabs.length > 0 ? root._grabs[root._grabs.length - 1] : 0
+
+  function grabbing(uid, on) {
+    if (root._grabs.includes(uid) !== on)
+      root._grabs = root._listed(root._grabs, uid, on);
+  }
 
   function catchClicks(uid, on) {
-    if (root._catchers.includes(uid) === on)
-      return;
-    const others = root._catchers.filter(c => c !== uid);
-    root._catchers = on ? others.concat([uid]) : others;
+    if (root._catchers.includes(uid) !== on)
+      root._catchers = root._listed(root._catchers, uid, on);
+  }
+
+  // `list` with `uid` last, or without it
+  function _listed(list, uid, on) {
+    const others = list.filter(c => c !== uid);
+    return on ? others.concat([uid]) : others;
   }
 }
