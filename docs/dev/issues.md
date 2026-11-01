@@ -248,12 +248,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while reviewing the calendar port (roadmap row 8)
 
-### The calendar doc's Files header leaves out its page
-- **Where:** `docs/dev/features/calendar.md` (its `Files:` header), `components/views/CalendarPage/CalendarPage.qml`
-- **What:** `CalendarPage.qml` is the only code file no doc's `Files:` header lists (`.claude/skills/review-system/scope.py --orphans`), though `calendar.md` describes it in its text. So `check_doc_drift.py` never flags the doc when the page changes, and a review of the calendar feature doesn't see the page.
-- **Size:** trivial
-- **Found:** 2026-10-19, while building the review-system skill
-
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `shell/BlurBackingWindow.qml` (its fill), `components/hosts/popout/SwitchStill.qml`
 - **What:** With blur on under niri, a bar popout switching to another widget's content in the same window shows its old stroke cutting into the box for a frame or two as it resizes: the stroke is the popout's window's, the fill the blur window's, and niri shows the two windows' frames out of step (no `supports.layerFrameSync`). Tried and reverted (2026-10-18), neither changing what the maintainer saw: holding the switch until the popout's window had drawn the new content twice (`SwitchStill`, its window's `frameSwapped`), and drawing the popout's stroke in the blur window with its fill (a stroke-only `AttachedSurfaceCopy` over the fills, the popout's own stroke transparent). That the second didn't help suggests the stroke isn't what's late: perhaps the popout's content, its clip, or the blur region. Next: log each window's `frameSwapped` with what it drew, during a switch.
@@ -2186,3 +2180,115 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The dock's EdgeTrigger zeroes `position`, `startInset` and `endInset` so that `_centre` comes out as `positionOffset` alone (`root.startInset + (… - root.startInset - root.endInset) * root.position + root.positionOffset`); EdgeTrigger's `centre` property is that override (`!isNaN(root.centre) ? root.centre : …`), which IntegratedEdgeMenu uses. And `DockManager.focus(id)` only forwards to `CompositorManager.focusWindow(id)`, for its one caller (DockMenu's window rows, which already imports `qs.services.compositor`). Fix: `centre: DockManager.reservedOf(root.screen)[root.vertical ? 1 : 0] + root.centre` in place of the four lines 383–386, and DockMenu calling `CompositorManager.focusWindow(win.id)` with `focus` (lines 84–87) gone: 7 lines.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:dock system
+
+### A 12-hour Clock shows the hour in 24-hour time
+- **Where:** `components/content/Clock/Clock.qml:38` (`hours`), `components/bar/widgets/Time/Time.qml:65` (`timeLines`), `components/bar/widgets/Time/Time.qml:72` (`timeLines`)
+- **What:** Qt's `h` and `hh` are 12-hour only when the same format has an `AP`/`ap` field; alone they are 0–23. Clock's `hours` is `I18n.formatDate(root.now, root.use24Hour ? "HH" : "h")`, so a digital or stacked Clock with "24-hour clock" off shows "15:07" with "PM" beside it (stacked: "15" over "07", "PM" under). The Japanese vertical Time widget does the same for its hour line (`use24Hour ? "H" : "h"`): 午後 over 15時. Proof (qmltestrunner, Qt 6.12, 2026-01-01 15:07): en_US `h` = `15`, `hh.ap` = `03.pm`; ja_JP `h` = `15`. Line 72 already works around it by formatting `"hh.ap"` and stripping `.am`/`.pm`, which only works where the locale's AM/PM text is am/pm. Fix: one hour for all three, `String(date.getHours() % 12 || 12)` when 12-hour (padded to two digits on line 72), in place of the `"h"` formats and line 72's strip.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the clock-timezones system
+
+### Small shrinks in TimeZoneManager and WorldClocks
+- **Where:** `services/system/TimeZoneManager.qml:22` (`offsets`), `services/system/TimeZoneManager.qml:102` (`_readZones`), `services/system/TimeZoneManager.qml:114` (`_readingZones`), `components/content/WorldClocks/WorldClocks.qml:66` (`detailOf`)
+- **What:** Each keeps every behaviour:
+  - `TimeZoneManager.offsets` is read nowhere (every clock calls `offsetOf`; `grep -rn 'TimeZoneManager.offsets'` finds nothing): 1 line.
+  - `_readZones` has one caller, `Component.onCompleted`, which runs once, so its guard (`if (root._zones.length > 0 || root._readingZones) return;`) and `_readingZones` never stop anything. Lines 101–116 (16) become a 7-line `Component.onCompleted: BackendManager.call("tz.zones", {}, (error, result) => { if (!error) root._zones = result.zones; }, { "repeatable": true })` under the same comment: 9 removed.
+  - WorldClocks' two callers build `{ "timezone": entry.place.timezone, "date": clock.date }` (4 lines each) for `detailOf`, which then works out `root.timeIn(place.timezone)` again although the row already has it as `entry.there`. `detailOf(zone, there)`, reading `clock.date` itself, makes each call one line (`root.detailOf(entry.place.timezone, entry.there)`): 6 removed, and one zone shift less per row each minute.
+  Total 16 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the clock-timezones system
+
+### A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking
+- **Where:** `services/apps/DeadlineTicker.qml:133` (`_arm`), `services/apps/DeadlineTicker.qml:159` (`_armWarning`)
+- **What:** `_arm` sets a single-shot Timer to `Math.min(left + 50, 3600000)` and only looks at `Date.now()` again when it fires. Qt's timers run on the monotonic clock, which stops while the machine sleeps. Start a 25-minute pomodoro, suspend after 5 minutes, wake an hour later: the alarm still has 20 minutes to run, so for 20 minutes the dial and bar widget read `00:00` while still running, and when it finally fires the end is over 5 minutes late, so `_end(late)` advances silently with no notification. The same holds for the one-off timer (StopwatchManager) and caffeine's timer (IdleManager), and for the warning alarm. Nothing in the shell listens for wake (the daemon's logind watcher sees `PrepareForSleep`, but no shell code reacts to it). PLAUSIBLE: settle by suspending with a 2-minute timer for 5 minutes and watching when it ends. Fix: cap both alarms at a minute instead of an hour (`Math.min(left + 50, 60000)`), bounding the lateness to a minute at the cost of one wake-up a minute while a deadline runs; update the doc's "at most an hour at a time".
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### Skipping a focus session counts it as finished
+- **Where:** `services/apps/PomodoroManager.qml:72` (`skip`), `components/methods/PomodoroCycle.qml:87` (`advance`), `components/bar/widgets/Pomodoro/Pomodoro.qml:36`
+- **What:** `skip()` calls `PomodoroCycle.advance`, which counts `completed + 1` whenever the phase was `work`, whether it ran out or was skipped. The doc and PomodoroCycle's header define `completed` as focus sessions *finished* ("Every `longBreakEvery`-th finished focus session is followed by a long break"). A right click on the idle Pomodoro widget (its skip) therefore counts a session that never started, lights a dot, and with `autoStartBreaks` (default on) starts a 5-minute break running; four stray right clicks bring a long break. Question for the maintainer: should a skipped focus session count (some apps count it), not count, or count only once started? Fix (if it shouldn't count): give `advance` a `finished` flag (true from `_finish`, false from `skip`) that gates the `+ 1`, with a `tst_PomodoroCycle` row.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### A recent timer chip reads its label back as part of the duration
+- **Where:** `components/content/parts/CountdownTimer.qml:155` (`chipText`), `components/content/parts/CountdownTimer.qml:233`
+- **What:** A recent timer is kept as `{ ms, label }`, but its chip restarts it by turning it back into text (`formatShort(ms) + " " + label`) and re-parsing that through `started(text)`. A label that starts with a duration is read into the time. Run through `StopwatchClock.parse` as written: `90 5m` is 90 min labelled `5m`, its chip reads `1h30m 5m` and starts 1h35m with no label; `1:30 5m stretch` is 90 s labelled `5m stretch`, its chip `1m30s 5m stretch` starts 6m30s labelled `stretch`. Caffeine's popout shares the part. Fix: a recent chip emits the stored values (a `startedRecent(ms, label)` signal, or `started` carrying `{ ms, label }`), and the owners call `StopwatchManager.startTimer(ms, label)` / caffeine's equivalent instead of parsing text.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### A todo.json deleted while unreadable blocks every save until restart
+- **Where:** `services/apps/TodoManager.qml:98` (`_load`)
+- **What:** `_unreadable` is set when the file holds broken JSON and cleared only by a successful parse. When the file is then deleted (the obvious way out of a broken hand edit), `FileManager.read` returns null, `_load` sets only `_loaded`, and `_unreadable` stays true: every add, tick and delete is dropped with `Not saving over` warnings although there is nothing left to protect, until a valid file appears or the shell restarts. Fix: `if (text === null) { root._unreadable = false; root._loaded = true; }` (2 lines).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### Dead and forwarding members in the timer services and helpers
+- **Where:** `services/apps/TodoManager.qml:21` (`loaded`), `services/apps/PomodoroManager.qml:22` (`state`), `services/apps/StopwatchManager.qml:22` (`stopwatch`), `components/methods/StopwatchClock.qml:181` (`endsAt`), `components/methods/PomodoroCycle.qml:107` (`format`)
+- **What:** `TodoManager.loaded`, `PomodoroManager.state` and `StopwatchManager.stopwatch` are read by nothing (`grep -rn` for each qualified name and for `root.<name>` finds only the declaration; the services use `_loaded`, `_state`, `_stopwatch`). `StopwatchClock.endsAt(state)` returns `state.running ? state.endsAt : 0`, but every timer it gets went through `normalizeTimer`, which already sets `endsAt` to 0 when not running; its one user (`CountdownTimer._endTime`) can read `root.timer.endsAt`. `PomodoroCycle.format(ms)` only forwards to `StopwatchClock.format(ms, false, true)` for PomodoroManager's two calls. Fix: delete the three properties (3 lines), `endsAt` (5 lines with its blank) and its two test rows in `tst_StopwatchClock` (2), and `format` (4 lines, its four test rows moved to `tst_StopwatchClock` if not already covered there), calling `StopwatchClock.format(…, false, true)` from PomodoroManager: 14 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### PomodoroDial redraws DialControls' ring and buttons
+- **Where:** `components/content/parts/PomodoroDial.qml:28` (`TimeRing`), `components/content/parts/PomodoroDial.qml:58` (buttons), `components/content/Pomodoro/Pomodoro.qml:39` (`dialSize`)
+- **What:** `DialControls` (shared by the timer, caffeine and the stopwatch since #262) is "a TimeRing over (or beside, `horizontal`) three round buttons", sized to its card with `fill`. PomodoroDial builds the same thing by hand: a TimeRing (lines 28–35, 8 lines), stop / play-pause / skip FlatIconButtons (58–82, 25), its own `horizontal` / `dialSize` / grid columns (17–18, 24–26, 5), and Pomodoro.qml works out the dial size and width test itself (32, 39, 2): 40 lines. So the pomodoro's buttons look and size differently from the other three dials, and lack the keyboard (Space) they have. Fix: PomodoroDial becomes a `DialControls` (`leftIcon: "stop"`, `leftEnabled: !idle`, `mainIcon` play/pause, `rightIcon: "skip_next"`, `color: phaseColor`, `fill` from the card) with the session dots and the task picker under it, about 20 lines; Pomodoro.qml drops its dial sizing. The dots and picker then sit under the ring rather than beside it in a wide card. About 20 lines net.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### Focus and Pomodoro build the parts their properties turn off
+- **Where:** `components/content/Focus/Focus.qml:68` (`PomodoroDial`), `components/content/Focus/Focus.qml:81` (`TodoList`), `components/content/Focus/Focus.qml:89` (`DayPane`), `components/content/parts/PomodoroDial.qml:84` (task picker)
+- **What:** components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Focus's `showTimer`, `showTodos` and `showAgenda` only set `visible`, so a Focus card with the agenda off still builds a `DayPane` (its calendar list), and one with todos off the whole `TodoList`. PomodoroDial's task picker is `visible: root.showTask`, and Focus always passes `showTask: false`, so every Focus card builds a hidden `StyledComboEntry` whose `options` map the todo list again on each todo change. Fix: Loaders gated on each switch (`active: root.showAgenda` and so on), and the task picker in a Loader on `showTask`.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### The Accounts card reads read-only and task-list facts from config entries that never hold them
+- **Where:** `components/views/Settings/CalendarAccountsCard.qml:411` (the Read-only `StatusChip`), `components/views/Settings/CalendarAccountsCard.qml:416` (the Default `SegmentButton`), `components/views/Settings/CalendarAccountsCard.qml:451` (the task-list note)
+- **What:** Since the config reshape (format-2 `convert.go`: "What was fetched (a calendar's name, server color, read-only flag, components) is the calendar cache's now"), a config calendar entry holds only `href`, `name`, `color`, `enabled` (`CalendarEntry` is `additionalProperties: false`), and what the server says lives in `CalendarManager.info`. The card still reads `calendarRow.calendar.readOnly` and `calendar.components` from the config entry. So `(calendar.components ?? []).includes("VEVENT")` is false for every calendar and "Task lists (such as iCloud's reminders) aren't shown yet." shows under every account that has a calendar; the "Read-only" chip never shows for a read-only CalDAV share; and the Default button shows on read-only shares (picking one does nothing, as `newEventCalendar` skips non-writable calendars). The row already holds the joined calendar (`calendarRow.joined = CalendarManager.calendar(calendarId)`). Fix: read `calendarRow.joined?.readOnly ?? false` at lines 411 and 416, and at 451 `(root.account?.calendars ?? []).some(calendar => CalendarManager.calendar(root.accountId + "|" + calendar.href)?.events === false)`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the calendar system
+
+### A Calendar card on the desktop or in an edge menu takes the page's request
+- **Where:** `components/content/Calendar/Calendar.qml:54` (`_takeRequest`), `services/apps/CalendarManager.qml:299` (`openPage`)
+- **What:** `openPage(request)` sets `CalendarManager.request` and opens the CalendarPage view (or the page with a Calendar module). Every embedded Calendar card listens (`onRequestChanged` → `_takeRequest`, gated only on `root.embedded`), and `embedded` is true in every module grid (`OverlaySlot.qml:56`), so a Calendar card on the desktop or in a pinned edge menu (both allowed: the module's schema leaves `hosts` out) takes the request synchronously, before the page is built. Then clicking the Next event bar widget or a reminder opens the Calendar page on today instead of the event's day, and `/event` or the `calendar newEvent` IPC opens the editor on the desktop card behind the overlay. A request no page shows (no page holds a Calendar, so Settings opens) also stays set until some Calendar card is next built, which then opens a stale new-event editor. Fix: `openPage` stores the page it opens in the request (`{ kind, key, page }`, and no request when it falls back to Settings); Calendar takes it only when it sits on that overlay page (its `host`), the view only when `page === "CalendarPage"`.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the calendar system
+
+### A save conflict reloads nothing, so trying again conflicts again
+- **Where:** `backend/internal/calendar/calendar.go:591` (`Save`), `backend/internal/calendar/calendar.go:627` (`Delete`), `services/apps/CalendarManager.qml:327` (`errorText`), `components/content/parts/calendar/EventEditor.qml:101` (`_save`)
+- **What:** An event changed elsewhere (a phone) since the last sync: axiom's PUT gets 412 and `Save` returns `conflict` before `resync`, so objects.json and events.json keep the old copy and etag. The editor says "The event changed elsewhere. It has been reloaded: check it and try again." but nothing was reloaded, and Save again sends the same draft etag (`firstOf(r.Etag, obj.Etag)`, the draft's first) and conflicts again until the next timed sync, and even then the open editor keeps the stale etag. The same holds for a local calendar's file changed on disk, and for `cachedObject`'s conflict when the event is gone from the cache. Fix: on a `Conflict` from `put` or `cachedObject`, `Save` and `Delete` run `s.resync` for that calendar before returning the error; the editor, on `conflict`, reopens on the fresh event (`CalendarEvents.draftOf` of the occurrence with the same href and rid, or closes when it's gone), so what it says is true.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the calendar system
+
+### Moving a recurring event to another calendar drops its earlier occurrences and exceptions
+- **Where:** `services/apps/CalendarManager.qml:207` (`save`, the move)
+- **What:** Changing the calendar of an occurrence of a weekly series (not Custom: the picker is read-only for those) skips the "Change which?" question and saves as a move: a new event made from the draft, then the old one deleted as a series. The draft is `CalendarEvents.draftOf(event)` of the clicked occurrence, so the new series starts at that occurrence: every earlier one disappears (the old object, history included, is deleted), and its EXDATEs, overrides, attendees and unknown properties are lost (`NewEvent` builds from the payload). When the delete fails after the create (a conflict, the server down), both copies stay while the editor shows the error, and trying again creates a third. Fix: do the move in the daemon: `calendar.save` with a target calendar copies the cached object, applies the series edit (`ApplySeries`, keeping its first DTSTART, overrides and properties), PUTs it to the target with `If-None-Match: *` and the same UID, then deletes the old one, in one locked call that resyncs both calendars. The Custom rule's read-only picker then has no reason left.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the calendar system
+
+### Enter in the editor's title saves again while busy and picks All events while asking
+- **Where:** `components/content/parts/calendar/EventEditor.qml:158` (`titleEntry`'s `onAccepted`), `components/content/parts/calendar/EventEditor.qml:86` (`save`)
+- **What:** Only the Save button is disabled while `busy`; the title's `onAccepted: root.save()` isn't, and `save()` doesn't check `busy`. A new event saved with Enter twice on a slow server queues two `calendar.save` jobs with no href: two identical events. And while the "Change which?" row shows for a recurring event, `save()` skips the question (`root.asking === ""` is false) and calls `_save("series")`: pressing Enter again after editing a title changes every occurrence without the user choosing. Fix: `if (root.busy || root.asking !== "") return;` at the top of `save()` (the row's own buttons pick the scope).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the calendar system
+
+### Removing a CalDAV account deletes its password before the draft is saved
+- **Where:** `components/views/Settings/CalendarAccountsCard.qml:84` (`remove`)
+- **What:** The account's removal goes through the settings draft (`SettingsManager.setValue`), which Reset changes or leaving without saving undoes, but `SecretsManager.clearSecret("calendar", root.accountId)` runs at the click. Removing an account and then resetting brings the account back with no password: every sync fails `no_password` until it's typed again. calendar.md keeps local calendars' folders for this very reason ("a draft can be reverted, so nothing is deleted"). Fix: leave the secret on remove, and clear the secrets of account ids gone from `Calendar.items` once a save lands (CalendarManager, on `CalendarConfig.accounts` changing).
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the calendar system
+
+### Event titles from a feed render as styled text and load remote images
+- **Where:** `components/content/parts/calendar/MonthGrid.qml:296` (the title chips), `components/content/Calendar/Calendar.qml:86` (the compact card's label), `components/bar/widgets/NextEvent/NextEvent.qml:51` (`text`, `subtext`)
+- **What:** `StyledText` leaves `textFormat` at Text.AutoText, so a title whose first tag is HTML (`Qt::mightBeRichText`) is rendered as styled text. An `.ics` subscription is anyone's content: an event titled `<img src="https://tracker.example/p.png"> Standup` makes the shell fetch that URL whenever the month's titles, the compact Calendar card or the Next event widget show it, telling the feed's author the user's address and when they look (events are private: calendar.md › Privacy). Tested: a Qt 6 `Text` with `"9:00 <img src=\"http://127.0.0.1:18765/pixel.png\"> Standup"`, run offscreen, made `GET /pixel.png` on a local server. `EventRow` already sets `textFormat: Text.PlainText`; these three don't. Fix: `textFormat: Text.PlainText` on the chip's StyledText, and through `CompactFigure`'s label and the bar widget's text for event titles (or plain text by default in `StyledText`, rich text opted into: a wider ui-kit change).
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the calendar system
+
+### Calendar results and members nothing reads
+- **Where:** `backend/internal/calendar/calendar.go:206` (`SyncResult`'s `Changed` and `Count`), `services/apps/CalendarManager.qml:41` (`busy`)
+- **What:** The shell drops `calendar.sync`'s result (`CalendarManager.sync` calls back with `{ ok: true }` only; events and errors come from events.json), so `SyncResult.Changed` and `Count` are worked out for the Go tests alone (calendar.go lines 208–209, 294, 298–300, 301 and 307: 8 lines); the tests can assert the same directly (`fake.multigets`, the occurrences in events.json, which they read already). `CalendarManager.busy` has no reader (`grep -rn 'CalendarManager.busy'`: none; 2 lines with its comment). Fix: drop the two fields and their bookkeeping (keeping `Errors`), and `busy`: 10 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the calendar system
+
+### The Accounts card's fallbacks for a renamed key and for empty account ids
+- **Where:** `components/views/Settings/CalendarAccountsCard.qml:27` (`accounts`), `components/views/Settings/CalendarAccountsCard.qml:33` (`accountId`), `components/views/Settings/CalendarAccountsCard.qml:113` (`connect`), `components/views/Settings/CalendarAccountsCard.qml:172` (`addLocal`)
+- **What:** `SettingsManager.localConfig?.Calendar?.accounts` names the key format 2 renamed to `items`, so it's always undefined and the card always reads `CalendarConfig.savedAccounts`, which is right anyway (the draft's edits are previews, in `ConfigManager.live`). And an account's `id` is a required `ItemId` (pattern `^[A-Za-z0-9]…`, never empty; `add()` sets one), so `account.id || "account-" + (index + 1)` (lines 33 and 73), connect's copy with the id filled in (lines 114–116) and the id written back at lines 138 and 172 handle a case that can't occur. Fix: `accounts: CalendarConfig.savedAccounts`, `defaultCalendar: CalendarConfig.defaultCalendar`, `accountId: root.account?.id ?? ""`, `freeId` over `account.id`, `const account = root.account`, and lines 138 and 172 go: 4 lines removed, 3 shortened.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the calendar system
