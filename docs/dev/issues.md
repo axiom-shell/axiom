@@ -2316,3 +2316,54 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The same `level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high"` is in the module, the OSD bar and the Quick actions tile; changing the icons or thresholds means finding all three. Fix: one `icon(level)` function in BrightnessManager (as `AudioManager.inputIcon` serves the OSD's microphone bar), called from all three; Brightness.qml's own `icon` (4 lines) goes.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
+
+### Replacing the chat's conversation leaves its reply and attachments behind
+- **Where:** `services/apps/ChatManager.qml:70` (`newConversation`), `services/apps/ChatManager.qml:77` (`open`), `services/apps/ChatManager.qml:166` (`ask`), `services/apps/ChatManager.qml:503` (`_finish`)
+- **What:** `newConversation` and `open` replace the conversation but only half let go of what belonged to the old one:
+  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 504 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
+  - **Pending attachments.** A pasted image, screenshot or dropped file is copied at once into `chats/<current id>/` (with `Chat.keepConversations` > 0); both functions just set `root.attachments = []` (only `detach` runs `rm`). A conversation never sent is never in `index.json`, so neither `remove` nor the pruning in `_writeConversation` reaches its folder: paste a screenshot, click New conversation, and the screenshot stays in `~/.local/state/axiom/chats/<id>/` for good, a privacy leak as much as a disk one (the same for attachments pending at a reload, left as rare).
+  Fix: one helper both call before replacing the conversation, `_letGo()`: `if (busy) { stop(); _replyId = ""; streamingText = ""; streamingThinking = ""; }` (the late answer and deltas then fail their id check) and `attachments.forEach(a => CommandManager.runDetached(["rm", "-f", "--", a.path]))`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### Images dropped together on the chat overwrite each other
+- **Where:** `services/apps/ChatManager.qml:371` (`_attachmentPath`), `components/content/Chat/Chat.qml:141` (`onDropped`)
+- **What:** An attachment's file is named `${Date.now().toString(36)}.${ext}` in the conversation's folder. The DropArea calls `attachFile` for each URL in one synchronous loop, and each `attachFile` computes its copy's path before its `cp` runs, so two images of one type dropped together get the same millisecond and the same path: both `cp`s write one file, the composer shows two chips of the last image, the first image is never sent, and removing either chip (`detach` → `rm -f`) deletes the file the other still points to. Fix: make the name unique as `_blank` does for ids: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}` (or a counter property).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### An image sent without text to Anthropic carries a whitespace-only text block
+- **Where:** `backend/internal/chat/send.go:284` (`anthropicRequest`)
+- **What:** `send` allows a message with attachments and no text, and `anthropicRequest` always appends `{"type": "text", "text": orSpace(t.text())}`, so an image-only message sends the text `" "`. The Messages API rejects whitespace-only text blocks ("text content blocks must contain non-whitespace text"), so the reply fails as `bad_reply` where OpenAI-style and Gemini requests (which skip the text when there are images) succeed. PLAUSIBLE: one Anthropic request with an image and empty text settles it (not made: paid API). The shape came over unchanged from the old ChatProtocol. Fix: append the text block only when the text is non-empty or there's no image (`if text := t.text(); text != "" || len(content) == 0 { … orSpace(text) … }`), plus a TestBuild row with an image-only user turn.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### Stop is ignored while chat.send still looks up the key
+- **Where:** `backend/internal/chat/send.go:87` (`Send`), `backend/internal/chat/send.go:160` (`Stop`)
+- **What:** `Send` looks the key up (`keyFor`: the environment, then `secret-tool lookup`, then secrets.json) before it registers its cancel in `s.running` (line 94), and `Stop` does nothing for an id not there. A Stop pressed during the lookup (a locked keyring's unlock prompt, a slow Secret Service) is lost: the request goes out afterwards and streams to the end while the shell shows it as stopping; the same for `newConversation`'s stop. PLAUSIBLE that users meet it: it needs a lookup slow enough to press Stop in. Fix: register the cancel first and do the lookup under the cancellable ctx (move `ctx, cancel := context.WithCancelCause(ctx)` and the registration above `keyFor`, and answer `Stopped` when `stopped()` after it), plus a TestStop case stopping before the lookup returns.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### The chat builds its conversation lists and model picker while hidden
+- **Where:** `components/content/Chat/Chat.qml:58` (docked `ConversationList`), `components/content/Chat/Chat.qml:116` (floating `ConversationList`), `components/content/Chat/Chat.qml:126` (`ModelPicker`), `components/content/parts/chat/ConversationList.qml:140` (`renameField`)
+- **What:** components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Chat.qml always builds two `ConversationList`s, the docked one (`visible: root.listDocked`) and the floating one (`visible: !root.listDocked && root.listOpen`), so one is always hidden and usually both; each builds a row per saved conversation (`Chat.keepConversations` defaults to 50), each row with a hidden rename `StyledTextEntry` (`visible: item.editing`). The `ModelPicker` (`visible: root.pickerOpen`) builds every preset and model row while closed. Fix: wrap the three in Loaders with `active` on their conditions (`listDocked`, `!listDocked && listOpen`, `pickerOpen`), and the rename field in a Loader on `item.editing`.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### An attachment's thumbnail pokes past its rounded corners
+- **Where:** `components/content/parts/chat/AttachmentChip.qml:23` (`clip`)
+- **What:** The chip is a Rectangle with `radius: Widget.radius / 2` and `clip: true`, which clips to the bounding box, so the `PreserveAspectCrop` image (inset 1 px) draws its square corners over the rounded border, in the composer and in every sent message. qml-pitfalls.md: "Rounded clipping is Quickshell.Widgets' `ClippingRectangle`". Fix: make the root a `ClippingRectangle` (with its `color` set) in place of the Rectangle and drop `clip: true`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### package chat's Log option is never used
+- **Where:** `backend/internal/chat/chat.go:46` (`Options.Log`), `backend/internal/daemon/chat.go:21` (`chatMethods`)
+- **What:** `Options.Log` is defaulted in `New` and passed by the daemon, but nothing in package chat logs (`grep -n 'o\.Log' backend/internal/chat/*.go`: only the default in `New`). Fix: drop the field (line 46), its default (lines 67–69), the `log/slog` import (line 15) and the daemon's `Log:` line: 6 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### ChatManager.copy only forwards to ClipboardManager.copyText
+- **Where:** `services/apps/ChatManager.qml:206` (`copy`), `components/content/parts/chat/ChatMessage.qml:307`, `components/content/parts/chat/ChatCodeBlock.qml:56`
+- **What:** `copy(text)` is `ClipboardManager.copyText(text)` and nothing else; its two callers can call `ClipboardManager.copyText` directly, as `CodeLine` does. Fix: delete it (lines 206–208, 3 lines) and import `qs.services.system` in the two parts.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system

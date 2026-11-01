@@ -616,6 +616,14 @@ Found by the audits:
 - [Idle dimming is forgotten across a shell reload](issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
 - [Two members of the brightness system nothing needs](issues.md#two-members-of-the-brightness-system-nothing-needs)
 - [The brightness icon thresholds are written three times](issues.md#the-brightness-icon-thresholds-are-written-three-times)
+- [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
+- [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
+- [An image sent without text to Anthropic carries a whitespace-only text block](issues.md#an-image-sent-without-text-to-anthropic-carries-a-whitespace-only-text-block)
+- [Stop is ignored while chat.send still looks up the key](issues.md#stop-is-ignored-while-chatsend-still-looks-up-the-key)
+- [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
+- [An attachment's thumbnail pokes past its rounded corners](issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
+- [package chat's Log option is never used](issues.md#package-chats-log-option-is-never-used)
+- [ChatManager.copy only forwards to ClipboardManager.copyText](issues.md#chatmanagercopy-only-forwards-to-clipboardmanagercopytext)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
