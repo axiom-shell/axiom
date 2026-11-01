@@ -47,8 +47,14 @@ QtObject {
   //   keyboardLayout { layouts, index },
   //   audio / microphone { muted, name, detail, icon (the device's,
   //   unmuted), device (its identity, deviceKey's) }, powerProfile { profile: "powerSaver" |
-  //   "balanced" | "performance" | "" }, charger { available, plugged },
-  //   message { icon, text }, every other type { available, on }
+  //   "balanced" | "performance" | "" }, charger { available, plugged,
+  //   percent, charging, full, untilFull (the time left to full, as
+  //   shown) }, wifi { available, on, network (the one joined, else ""),
+  //   signal (0-100) },
+  //   message { icon, text }, vpn { available, on, name (the VPNs up),
+  //   address (the first one's) }, camera / screenShare / micUse { apps
+  //   (the app names using it) }, every other
+  //   type (recording too) { available, on }
   function tile(type, state) {
     const t = {
       "icon": "",
@@ -120,11 +126,45 @@ QtObject {
     case "charger":
       return Object.assign(t, {
         "icon": "power",
+        "name": s.plugged === true && s.percent !== undefined ? `${s.percent}%` : "",
+        "percent": s.percent ?? 0,
+        "charging": s.charging === true,
+        "full": s.full === true,
+        "untilFull": s.untilFull ?? "",
         "on": s.plugged === true,
         "slash": s.plugged !== true,
         "notable": s.available === true && s.plugged === false,
         "hidden": s.available !== true
       });
+    case "vpn":
+      return Object.assign(t, {
+        "icon": "vpn_key",
+        "name": s.on === true ? (s.name ?? "") : "",
+        "address": s.on === true ? (s.address ?? "") : "",
+        "on": s.on === true,
+        "slash": s.on !== true,
+        "notable": s.on === true,
+        "hidden": s.available !== true
+      });
+    case "camera":
+    case "screenShare":
+    case "micUse":
+      {
+        const apps = s.apps ?? [];
+        const icons = {
+          "camera": "videocam",
+          "screenShare": "screen_share",
+          "micUse": "record_voice_over"
+        };
+        return Object.assign(t, {
+          "icon": icons[type],
+          "apps": apps,
+          "name": apps.join(", "),
+          "on": apps.length > 0,
+          "slash": apps.length === 0,
+          "notable": apps.length > 0
+        });
+      }
     case "message":
       return Object.assign(t, {
         "icon": s.icon || "chat",
@@ -140,7 +180,8 @@ QtObject {
       "nightLight": ["nightlight", true],
       "wifi": ["wifi", false],
       "bluetooth": ["bluetooth", null],
-      "airplane": ["airplanemode_active", true]
+      "airplane": ["airplanemode_active", true],
+      "recording": ["screen_record", true]
     };
     const toggle = toggles[type];
     if (!toggle)
@@ -148,13 +189,20 @@ QtObject {
         "hidden": true
       });
     const on = s.on === true;
-    return Object.assign(t, {
+    Object.assign(t, {
       "icon": toggle[0],
       "on": on,
       "slash": !on,
       "notable": toggle[1] !== null && on === toggle[1],
       "hidden": s.available === false
     });
+    // The network joined names Wi-Fi (its tooltip, its card)
+    if (type === "wifi" && on && s.network)
+      Object.assign(t, {
+        "name": s.network,
+        "signal": s.signal ?? 0
+      });
+    return t;
   }
 
   // The statuses the row shows, in the OSD's order: of `types` (its
@@ -173,6 +221,125 @@ QtObject {
     });
   }
 
+  // A VPN going up or down, from `last` (each VPN's last settled state,
+  // `{ id: "on" | "off" }`, what this returned before; null at first) and
+  // `now` (`{ id: state }`, a VpnManager row's state by its id):
+  // { changed, up, last }. Changed: one known before is settled again in
+  // another state, through "connecting" or "disconnecting" or not; `up`:
+  // one of them came up (its card; one going down as another comes up is
+  // a switch, shown as the one up). A row appearing (its service
+  // answering, Tailscale's first status) isn't a change; one going away
+  // is forgotten
+  function vpnStep(last, now) {
+    const next = {};
+    let changed = false;
+    let up = false;
+    for (const id of Object.keys(now ?? {})) {
+      const state = now[id];
+      const was = last?.[id];
+      if (state !== "on" && state !== "off") {
+        if (was !== undefined)
+          next[id] = was;
+        continue;
+      }
+      if (was !== undefined && was !== state) {
+        changed = true;
+        up = up || state === "on";
+      }
+      next[id] = state;
+    }
+    return {
+      "changed": changed,
+      "up": up,
+      "last": next
+    };
+  }
+
+  // What changed in the streams using the camera or sharing the screen
+  // (lists of their PipeWire node ids, which stay put while a stream's
+  // name is still being read): "started" (one that wasn't, its card),
+  // "stopped" (none now, after some), else ""
+  function captureChange(before, after) {
+    const was = before ?? [];
+    const now = after ?? [];
+    if (now.some(id => !was.includes(id)))
+      return "started";
+    if (now.length === 0 && was.length > 0)
+      return "stopped";
+    return "";
+  }
+
+  // The status types that show a card for a change (`fired(true)`): an
+  // audio device switching, a VPN coming up, an app starting to use the
+  // camera or share the screen, the charger plugged in, a Wi-Fi network
+  // joined
+  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi"]
+
+  // Whether two capture tiles (tile()'s) share an app: one app taking the
+  // camera and the microphone together (a call)
+  function _sameApp(a, b) {
+    const apps = a?.apps ?? [];
+    return apps.some(app => (b?.apps ?? []).includes(app));
+  }
+
+  // What a status's card shows, from the OSD's tiles (by type, tile()'s)
+  // and status types: { icon, title, role, detail }, or null for a type
+  // with no card. `role` is English, for the caller to translate (what an
+  // audio device is now used for: "Output and input" when the OSD's other
+  // device status holds the same device; what a VPN, the apps or the
+  // charger did); `detail` an audio device's profile, a VPN's address, a
+  // network's signal, the time left to a full battery
+  function card(type, tiles, types) {
+    if (!root.cardTypes.includes(type))
+      return null;
+    const t = tiles?.[type] ?? {};
+    const out = {
+      "icon": t.icon ?? "",
+      "title": t.name ?? "",
+      "role": "",
+      "detail": ""
+    };
+    switch (type) {
+    case "audio":
+    case "microphone":
+      {
+        const other = type === "audio" ? "microphone" : "audio";
+        const key = t.device ?? "";
+        const both = key !== "" && (types ?? []).includes(other) && tiles?.[other]?.device === key;
+        out.role = both ? "Output and input" : type === "audio" ? "Output" : "Input";
+        out.detail = t.detail ?? "";
+        break;
+      }
+    case "vpn":
+      out.role = "Connected";
+      out.detail = t.address ?? "";
+      break;
+    case "camera":
+    case "micUse":
+      {
+        // One app on both: one card says so, whichever came first
+        const other = type === "camera" ? "micUse" : "camera";
+        const both = (types ?? []).includes(other) && root._sameApp(t, tiles?.[other]);
+        out.role = both ? "Using the camera and microphone" : type === "camera" ? "Using the camera" : "Using the microphone";
+        break;
+      }
+    case "charger":
+      out.icon = "battery_charging_full";
+      out.title = `${t.percent ?? 0}%`;
+      out.role = t.full === true ? "Fully charged" : t.charging === true ? "Charging" : "Plugged in";
+      out.detail = t.full === true ? "" : (t.untilFull ?? "");
+      break;
+    case "wifi":
+      out.role = "Connected";
+      out.detail = t.name ? `${t.signal ?? 0}%` : "";
+      break;
+    case "screenShare":
+      out.role = "Sharing the screen";
+      break;
+    }
+    return out;
+  }
+
   // How long after a change its own knock-on changes (airplane mode
   // switching the radios, a headset taking the output then the input, a
   // new device's mute) don't take its highlight, in ms
@@ -180,21 +347,33 @@ QtObject {
 
   // Whether a change of type `incoming` takes the highlight from `shown`
   // (the type highlighted, "" for none) `elapsed` ms after it took it,
-  // over `tiles` (by type, tile()'s); `shownSwitch` / `incomingSwitch`:
-  // the change is an audio device switching (its card), not its mute.
-  // Always, except Wi-Fi or Bluetooth just after airplane mode switched
-  // them, the output and input switching to the same device together
-  // (one change: a headset), and a mute just after a device switch (the
-  // new device's own state coming in, not the user)
-  function replaces(shown, incoming, elapsed, tiles, shownSwitch, incomingSwitch) {
+  // over `tiles` (by type, tile()'s); `shownCard` / `incomingCard`: the
+  // change shows its card (cardTypes: an audio device switching, not its
+  // mute; a VPN coming up; a capture starting). Always, except Wi-Fi or
+  // Bluetooth just after airplane mode switched them, a card's own status
+  // changing again without one (a new device's mute, the other half of a
+  // VPN switch, a capture stopping as soon as it started), the camera and
+  // the microphone taken by the same app together (one card says both),
+  // the output and
+  // input switching to the same device together (one change: a headset),
+  // and either device's mute just after a device switch (its own state
+  // coming in, not the user)
+  function replaces(shown, incoming, elapsed, tiles, shownCard, incomingCard) {
     if (elapsed >= root.quietWindow)
       return true;
     if (shown === "airplane" && (incoming === "wifi" || incoming === "bluetooth"))
       return false;
-    const audio = ["audio", "microphone"];
-    if (shownSwitch !== true || !audio.includes(incoming))
+    if (shownCard !== true)
       return true;
-    if (incomingSwitch !== true)
+    if (incoming === shown && incomingCard !== true)
+      return false;
+    const calls = ["camera", "micUse"];
+    if (incomingCard === true && shown !== incoming && calls.includes(shown) && calls.includes(incoming) && root._sameApp(tiles?.[shown], tiles?.[incoming]))
+      return false;
+    const audio = ["audio", "microphone"];
+    if (!audio.includes(shown) || !audio.includes(incoming))
+      return true;
+    if (incomingCard !== true)
       return false;
     if (shown !== incoming) {
       const a = tiles?.[shown]?.device ?? "";

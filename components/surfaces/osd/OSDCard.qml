@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
 
-// The frame of an OSD's cards (OSDMediaCard, OSDDeviceCard): a square
+// The frame of an OSD's cards (OSDMediaCard, OSDStatusCard): a square
 // picture on the left (`picture`), a title and a faint line under it,
 // and optionally an icon at the end saying what it's doing.
 Item {

@@ -3544,7 +3544,6 @@
     "What's unusual shows only the states out of the ordinary (Caps Lock on, muted, do not disturb, on battery, …) and the one that just changed. Every one picked shows each, lit when on.": "",
     "Num lock": "",
     "The levels the OSD shows as bars, and how they're laid out. A change to one shows the bars, with the status icons beside them.": "",
-    "Messages are what `axiom ipc osd message <icon> <text>` sends.": "",
     "Caps lock": "",
     "A change on it opens the OSD. Off, it still shows while the OSD is open, and a change keeps an open OSD open.": "",
     "Only the one that changed": "",
@@ -3563,6 +3562,18 @@
     "Webcam": "",
     "{0}: {1}, muted": "",
     "Output and input": "",
-    "Audio": ""
+    "Audio": "",
+    "Using the camera": "",
+    "Using the microphone": "",
+    "Using the camera and microphone": "",
+    "Sharing the screen": "",
+    "Plugged in": "",
+    "Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in. Off, they show as their icon like any other change.": "",
+    "Detail cards": "",
+    "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, and Charger one with the battery level when plugged in. Messages are what `axiom ipc osd message <icon> <text>` sends.": "",
+    "Mic use": "",
+    "Vpn": "",
+    "Screen sharing": "",
+    "Microphone in use": ""
   }
 }

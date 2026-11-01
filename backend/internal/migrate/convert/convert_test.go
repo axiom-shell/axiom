@@ -158,8 +158,8 @@ var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.nir
 
 // osdItemFields drops what an OSD gained since format 1 that no step
 // writes: every bar's fields but its type, icon and showOsd (each kind's
-// own options), the status icons' row mode and the now playing card. They
-// come from their defaults at load.
+// own options), the status icons' row mode and cards switch and the now
+// playing card. They come from their defaults at load.
 func osdItemFields(cfg *jsonx.Object) {
 	osd, _ := cfg.Value("OSD").(*jsonx.Object)
 	if osd == nil {
@@ -177,6 +177,7 @@ func osdItemFields(cfg *jsonx.Object) {
 		e.Delete("media")
 		if statuses, _ := e.Value("statuses").(*jsonx.Object); statuses != nil {
 			statuses.Delete("row")
+			statuses.Delete("cards")
 		}
 		bars, _ := e.Value("bars").(*jsonx.Object)
 		if bars == nil {

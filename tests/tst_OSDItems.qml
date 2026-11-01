@@ -189,7 +189,7 @@ TestCase {
   function test_tile_base_icons() {
     // An off state is a slash over the base icon, never an icon's own off
     // form, so every one looks the same
-    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message"];
+    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message", "vpn", "recording", "camera", "micUse", "screenShare"];
     for (const type of types) {
       for (const on of [true, false]) {
         const t = OSDItems.tile(type, {
@@ -200,11 +200,151 @@ TestCase {
           "profile": "balanced",
           "layouts": ["us", "de"],
           "index": 0,
-          "text": "x"
+          "text": "x",
+          "apps": on ? ["Firefox"] : []
         });
         verify(!/_(off|disabled|inactive)$/.test(t.icon), `${type} ${on}: ${t.icon}`);
       }
     }
+  }
+
+  function test_tile_vpn_capture() {
+    const up = OSDItems.tile("vpn", {
+      "available": true,
+      "on": true,
+      "name": "Home"
+    });
+    verify(up.on && up.notable && !up.slash && !up.hidden);
+    compare(up.name, "Home");
+    const down = OSDItems.tile("vpn", {
+      "available": true,
+      "on": false,
+      "name": "Home"
+    });
+    verify(down.slash && !down.notable);
+    compare(down.name, "", "no name while down: the tooltip says off");
+    verify(OSDItems.tile("vpn", {
+      "available": false
+    }).hidden, "no NetworkManager");
+
+    const rec = OSDItems.tile("recording", {
+      "available": true,
+      "on": true
+    });
+    verify(rec.on && rec.notable);
+    verify(OSDItems.tile("recording", {
+      "available": false,
+      "on": false
+    }).hidden, "no recorder");
+
+    const cam = OSDItems.tile("camera", {
+      "apps": ["Firefox", "OBS"]
+    });
+    verify(cam.on && cam.notable);
+    compare(cam.icon, "videocam");
+    compare(cam.name, "Firefox, OBS");
+    const share = OSDItems.tile("screenShare", {
+      "apps": []
+    });
+    verify(share.slash && !share.notable && !share.hidden);
+    compare(share.icon, "screen_share");
+  }
+
+  function test_tile_names() {
+    compare(OSDItems.tile("wifi", {
+      "available": true,
+      "on": true,
+      "network": "Home"
+    }).name, "Home", "Wi-Fi names the network joined");
+    compare(OSDItems.tile("wifi", {
+      "available": true,
+      "on": false,
+      "network": "Home"
+    }).name ?? "", "", "never while off (its tooltip would read muted)");
+    compare(OSDItems.tile("charger", {
+      "available": true,
+      "plugged": true,
+      "percent": 64
+    }).name, "64%");
+    compare(OSDItems.tile("charger", {
+      "available": true,
+      "plugged": false,
+      "percent": 64
+    }).name, "", "on battery: the struck-through plug alone");
+  }
+
+  function test_call() {
+    const call = {
+      "camera": OSDItems.tile("camera", {
+        "apps": ["Vesktop"]
+      }),
+      "micUse": OSDItems.tile("micUse", {
+        "apps": ["Vesktop", "OBS"]
+      })
+    };
+    const types = ["camera", "micUse"];
+    compare(OSDItems.card("camera", call, types).role, "Using the camera and microphone");
+    compare(OSDItems.card("micUse", call, types).role, "Using the camera and microphone", "whichever came first");
+    compare(OSDItems.card("camera", call, ["camera"]).role, "Using the camera", "no microphone status");
+    const apart = {
+      "camera": call.camera,
+      "micUse": OSDItems.tile("micUse", {
+        "apps": ["OBS"]
+      })
+    };
+    compare(OSDItems.card("micUse", apart, types).role, "Using the microphone", "another app");
+    compare(OSDItems.card("micUse", apart, types).icon, "record_voice_over");
+
+    verify(!OSDItems.replaces("camera", "micUse", 300, call, true, true), "one app taking both: one card");
+    verify(!OSDItems.replaces("micUse", "camera", 300, call, true, true), "either order");
+    verify(OSDItems.replaces("camera", "micUse", 300, apart, true, true), "another app's microphone");
+    verify(OSDItems.replaces("camera", "micUse", OSDItems.quietWindow, call, true, true), "later");
+  }
+
+  function test_vpnStep() {
+    let step = OSDItems.vpnStep(null, {
+      "a": "off",
+      "tailscale": "connecting"
+    });
+    verify(!step.changed, "the first reading");
+    compare(JSON.stringify(step.last), JSON.stringify({
+      "a": "off"
+    }), "only settled states are kept");
+    step = OSDItems.vpnStep(step.last, {
+      "a": "connecting",
+      "tailscale": "on"
+    });
+    verify(!step.changed, "on its way, and a row settling for the first time");
+    compare(step.last.a, "off", "the settled state is kept through connecting");
+    step = OSDItems.vpnStep(step.last, {
+      "a": "on",
+      "tailscale": "on"
+    });
+    verify(step.changed && step.up, "up, through connecting: its card");
+    step = OSDItems.vpnStep(step.last, {
+      "a": "off",
+      "tailscale": "on"
+    });
+    verify(step.changed && !step.up, "a drop: no card");
+    step = OSDItems.vpnStep(step.last, {
+      "a": "disconnecting"
+    });
+    verify(!step.changed, "a row going away");
+    compare(step.last.tailscale, undefined, "is forgotten");
+    step = OSDItems.vpnStep(step.last, {
+      "a": "off",
+      "tailscale": "on"
+    });
+    verify(!step.changed, "back where it was, and a row appearing again");
+  }
+
+  function test_captureChange() {
+    compare(OSDItems.captureChange([], [61]), "started");
+    compare(OSDItems.captureChange([61], [61, 74]), "started", "another stream");
+    compare(OSDItems.captureChange([61, 74], [61]), "", "one of two stopping");
+    compare(OSDItems.captureChange([61], [61]), "", "the same stream (its name read late)");
+    compare(OSDItems.captureChange([61], []), "stopped");
+    compare(OSDItems.captureChange([], []), "");
   }
 
   function test_rowTypes() {
@@ -271,6 +411,113 @@ TestCase {
     verify(OSDItems.replaces("microphone", "microphone", OSDItems.quietWindow, apart, true, false), "the user's own mute later");
     verify(OSDItems.replaces("microphone", "microphone", 300, apart, false, true), "a switch after a mute shows");
     verify(OSDItems.replaces("audio", "microphone", 300, headset, false, false), "mutes one after another");
+
+    // Every card keeps its place against its own status's follow-up
+    verify(!OSDItems.replaces("vpn", "vpn", 300, {}, true, false), "the other half of a VPN switch");
+    verify(OSDItems.replaces("vpn", "vpn", 300, {}, true, true), "another VPN up");
+    verify(OSDItems.replaces("vpn", "vpn", OSDItems.quietWindow, {}, true, false), "a drop later");
+    verify(!OSDItems.replaces("camera", "camera", 300, {}, true, false), "a capture stopping as it starts");
+    verify(OSDItems.replaces("camera", "microphone", 300, headset, true, false), "a capture's card isn't a device switch");
+    verify(OSDItems.replaces("camera", "screenShare", 300, {}, true, true), "another capture's card");
+  }
+
+  function test_card() {
+    verify(OSDItems.card("dnd", {}, ["dnd"]) === null, "no card");
+    verify(OSDItems.card("", {}, []) === null, "none shown yet");
+    const headset = {
+      "audio": OSDItems.tile("audio", {
+        "device": "60",
+        "name": "Headset",
+        "detail": "Analog Stereo",
+        "icon": "headset"
+      }),
+      "microphone": OSDItems.tile("microphone", {
+        "device": "60"
+      })
+    };
+    const both = OSDItems.card("audio", headset, ["audio", "microphone"]);
+    compare(both.role, "Output and input");
+    compare(both.title, "Headset");
+    compare(both.detail, "Analog Stereo");
+    compare(both.icon, "headset");
+    compare(OSDItems.card("audio", headset, ["audio"]).role, "Output", "the other status left out of the OSD (a stale tile)");
+    compare(OSDItems.card("microphone", {
+      "microphone": headset.microphone
+    }, ["microphone"]).role, "Input");
+
+    const vpn = OSDItems.card("vpn", {
+      "vpn": OSDItems.tile("vpn", {
+        "available": true,
+        "on": true,
+        "name": "Tailnet",
+        "address": "100.64.0.1"
+      })
+    }, ["vpn"]);
+    compare(vpn.title, "Tailnet");
+    compare(vpn.role, "Connected");
+    compare(vpn.detail, "100.64.0.1");
+    compare(vpn.icon, "vpn_key");
+
+    const cam = OSDItems.card("camera", {
+      "camera": OSDItems.tile("camera", {
+        "apps": ["Firefox"]
+      })
+    }, ["camera"]);
+    compare(cam.title, "Firefox");
+    compare(cam.role, "Using the camera");
+    compare(OSDItems.card("screenShare", {}, ["screenShare"]).role, "Sharing the screen", "no tile yet");
+    const charging = OSDItems.card("charger", {
+      "charger": OSDItems.tile("charger", {
+        "available": true,
+        "plugged": true,
+        "percent": 64,
+        "charging": true,
+        "untilFull": "1h 20m"
+      })
+    }, ["charger"]);
+    compare(charging.title, "64%");
+    compare(charging.role, "Charging");
+    compare(charging.detail, "1h 20m");
+    const full = OSDItems.card("charger", {
+      "charger": OSDItems.tile("charger", {
+        "available": true,
+        "plugged": true,
+        "percent": 100,
+        "full": true,
+        "untilFull": "0m"
+      })
+    }, ["charger"]);
+    compare(full.role, "Fully charged");
+    compare(full.detail, "", "nothing left to full");
+    compare(OSDItems.card("charger", {
+      "charger": OSDItems.tile("charger", {
+        "available": true,
+        "plugged": true,
+        "percent": 80
+      })
+    }, ["charger"]).role, "Plugged in", "not charging yet");
+
+    const home = OSDItems.card("wifi", {
+      "wifi": OSDItems.tile("wifi", {
+        "available": true,
+        "on": true,
+        "network": "Home",
+        "signal": 72
+      })
+    }, ["wifi"]);
+    compare(home.title, "Home");
+    compare(home.role, "Connected");
+    compare(home.detail, "72%");
+    compare(OSDItems.card("wifi", {
+      "wifi": OSDItems.tile("wifi", {
+        "available": true,
+        "on": true,
+        "network": ""
+      })
+    }, ["wifi"]).detail, "", "its name not in yet: no signal either");
+
+    for (const type of OSDItems.cardTypes)
+      verify(OSDItems.card(type, {}, [type]) !== null, type);
   }
 
   function test_deviceName() {

@@ -10,8 +10,9 @@ import qs.components.methods
 // bars side by side, horizontal bars as rows, or along its edge one line
 // parallel to it, end to end when the bars run along it too) with its
 // status icons beside them, the status icons alone (a status changed, the
-// one that did highlighted), an audio device's card (it switched), or the
-// now playing card. Every part is built
+// one that did highlighted), a status's card (an audio device switched,
+// an app started using the camera or sharing the screen), or the now
+// playing card. Every part is built
 // while the OSD is closed, as its items report their own changes.
 Item {
   id: root
@@ -34,7 +35,7 @@ Item {
   readonly property var statusTypes: osd.statuses.items
   readonly property bool hasMedia: osd.media.enabled
 
-  // "level" | "status" | "device" | "media": the part shown, the last to change (the
+  // "level" | "status" | "card" | "media": the part shown, the last to change (the
   // bars, else the status icons, else the card, until one does)
   readonly property string shown: root._shown !== "" ? root._shown : root.levelItems.length > 0 ? "level" : root.statusTypes.length > 0 ? "status" : "media"
   property string _shown: ""
@@ -42,40 +43,43 @@ Item {
   // when (Date.now(), for OSDItems.replaces)
   property string changed: ""
   property real _changedAt: 0
-  // It was an audio device switching (its card), not its mute
-  property bool _changedSwitch: false
+  // It showed its card (an audio device switching, not its mute; a VPN
+  // up; a capture starting), for OSDItems.replaces
+  property bool _changedCard: false
 
   // Every status's tile (OSDItems.tile) by type, as its source reports it;
   // a message's from the last one
   property var tiles: ({})
-  // The sources by type, and the types a click on their icon flips
+  // The sources by type, and the types a click on their icon flips (a
+  // recording's only while it runs)
   property var _sources: ({})
-  property var toggleable: []
+  readonly property var toggleable: Object.keys(root._sources).filter(type => root._sources[type]?.canToggle === true)
   // The icon last clicked: it stays in the row while the OSD stays open,
   // though it turned back to ordinary
   property string _held: ""
   // The status icons shown with the bars (what's unusual, every one, or
   // none) and alone (the change too)
   readonly property var _types: root.changed === "message" && !root.statusTypes.includes("message") ? root.statusTypes.concat(["message"]) : root.statusTypes
-  readonly property var rowTypes: OSDItems.rowTypes(root._types, root.tiles, root.osd.statuses.row, root.changed !== "" ? root.changed : root._held)
-
-  // The OSD shows an audio device's card as it switches
   // Every type the row may show: its statuses, and a message as one comes
   readonly property var _allTypes: root.statusTypes.includes("message") ? root.statusTypes : root.statusTypes.concat(["message"])
-  readonly property bool hasDevices: root.statusTypes.includes("audio") || root.statusTypes.includes("microphone")
-  // The device card's role line: what the device switched to is now used
-  // for (both, a headset taking the output and the input)
-  // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input")
-  readonly property string deviceRole: {
-    if (root._cardType === "")
-      return "";
-    const other = root._cardType === "audio" ? "microphone" : "audio";
-    const key = root.tiles[root._cardType]?.device ?? "";
-    if (key !== "" && root.statusTypes.includes(other) && root.tiles[other]?.device === key)
-      return I18n.tr("Output and input");
-    return root._cardType === "audio" ? I18n.tr("Output") : I18n.tr("Input");
+  readonly property var rowTypes: OSDItems.rowTypes(root._types, root.tiles, root.osd.statuses.row, root.changed !== "" ? root.changed : root._held)
+
+  // The OSD shows a status's card (OSDItems.cardTypes): an audio device's
+  // as it switches, a VPN's as it comes up, an app's as it starts using
+  // the camera or sharing the screen, the battery's as it's plugged in, a
+  // network's as Wi-Fi joins it
+  // (unless its cards are off: then the icons)
+  readonly property bool cards: root.osd.statuses.cards
+  readonly property bool hasCards: root.cards && OSDItems.cardTypes.some(type => root.statusTypes.includes(type))
+  // What the card shows (OSDItems.card), its role translated
+  // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in")
+  readonly property var cardContent: {
+    const card = OSDItems.card(root._cardType, root.tiles, root.statusTypes);
+    return card ? Object.assign(card, {
+      "role": I18n.tr(card.role)
+    }) : null;
   }
-  // The device the card shows (its status type): kept past the OSD
+  // The status the card shows (its type): kept past the OSD
   // closing, so the card doesn't empty as it slides away
   property string _cardType: ""
 
@@ -90,8 +94,8 @@ Item {
       parts.push(depth(grid) + levels.rowSpacing + row.maxDepth);
     if (root.hasMedia)
       parts.push(depth(card));
-    if (root.hasDevices)
-      parts.push(depth(deviceCard));
+    if (root.hasCards)
+      parts.push(depth(statusCard));
     return Math.max(0, ...parts);
   }
 
@@ -110,7 +114,7 @@ Item {
       "showOsd": false
     })
 
-  readonly property Item _current: root.shown === "media" ? card : root.shown === "device" ? deviceCard : levels
+  readonly property Item _current: root.shown === "media" ? card : root.shown === "card" ? statusCard : levels
   implicitWidth: root._current.implicitWidth
   implicitHeight: root._current.implicitHeight
 
@@ -127,7 +131,6 @@ Item {
     else if (sources[source.type] === source)
       delete sources[source.type];
     root._sources = sources;
-    root.toggleable = Object.keys(sources).filter(type => sources[type].canToggle);
   }
 
   // An icon clicked: flips it, held in place
@@ -147,21 +150,25 @@ Item {
     }
   }
 
-  // A status changed: shows the icons with it highlighted (an audio
-  // device switching, `switched`: its card), unless it would take the
-  // highlight from one it mustn't (OSDItems.replaces); `force` opens the
-  // OSD. While it's open on the bars, they stay: the change is
-  // highlighted in their row
-  function showStatus(type, force, switched) {
-    if (root.changed !== "" && !OSDItems.replaces(root.changed, type, Date.now() - root._changedAt, root.tiles, root._changedSwitch, switched === true))
+  // A status changed: shows the icons with it highlighted (`withCard`:
+  // its card, OSDItems.cardTypes', unless the OSD's cards are off), unless it
+  // would take the highlight from one it mustn't (OSDItems.replaces);
+  // `force` opens the OSD. While it's open on the bars, they stay: the
+  // change is highlighted in their row
+  function showStatus(type, force, withCard) {
+    // A quiet change with the OSD shut is never seen
+    if (!force && !root.hostOpen)
+      return;
+    const card = withCard === true && root.cards;
+    if (root.changed !== "" && !OSDItems.replaces(root.changed, type, Date.now() - root._changedAt, root.tiles, root._changedCard, card === true))
       return;
     root.changed = type;
     root._changedAt = Date.now();
-    root._changedSwitch = switched === true;
+    root._changedCard = card === true;
     if (!(root.hostOpen && root.shown === "level")) {
-      if (switched === true)
+      if (card === true)
         root._cardType = type;
-      root._shown = switched === true ? "device" : "status";
+      root._shown = card === true ? "card" : "status";
     }
     root.poked(force);
   }
@@ -217,6 +224,7 @@ Item {
       id: row
       visible: root.rowTypes.length > 0
       Layout.alignment: Qt.AlignCenter
+      allTypes: root._allTypes
       types: root.rowTypes
       tiles: root.tiles
       changed: root.changed
@@ -224,7 +232,6 @@ Item {
       hasCaption: root._types.includes("message")
       toggleable: root.toggleable
       onToggled: type => root.toggle(type)
-      allTypes: root._allTypes
     }
   }
 
@@ -233,11 +240,10 @@ Item {
     visible: root.shown === "media"
   }
 
-  OSDDeviceCard {
-    id: deviceCard
-    visible: root.shown === "device"
-    tile: root.tiles[root._cardType] ?? ({})
-    role: root.deviceRole
+  OSDStatusCard {
+    id: statusCard
+    visible: root.shown === "card"
+    card: root.cardContent ?? ({})
   }
 
   // The types watched, as a string: any edit to an OSD parses every OSD
@@ -262,12 +268,12 @@ Item {
         root._register(watcher, true);
       }
       Component.onDestruction: root._register(watcher, false)
-      onFired: switched => {
+      onFired: card => {
         if (watcher.type === "media") {
           root._shown = "media";
           root.poked(true);
         } else {
-          root.showStatus(watcher.type, !root.osd.statuses.quiet.includes(watcher.type), switched);
+          root.showStatus(watcher.type, !root.osd.statuses.quiet.includes(watcher.type), card);
         }
       }
     }

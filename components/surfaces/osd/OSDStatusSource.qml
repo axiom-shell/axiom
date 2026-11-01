@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.services.session
 import qs.services.system
+import qs.services.apps
 import qs.components.methods
 
 // One status type of an OSD, or its now playing card (OSDContent builds
@@ -20,15 +21,18 @@ Loader {
   // The OSD's `media` ({ enabled, onTrackChange, onPlayPause }), for "media"
   property var mediaOptions: ({})
 
-  // The user changed it; `switched`: an audio device switched (its card),
-  // not its mute
-  signal fired(bool switched)
+  // It changed: the user's doing, or (a VPN, the camera, a screen share)
+  // anything's. `card`: shown as its card (OSDItems.cardTypes: an audio
+  // device switched, not its mute; a VPN came up; an app started using
+  // the camera or sharing the screen)
+  signal fired(bool card)
 
   // What it shows now (OSDItems.tile; a message's is OSDContent's)
   readonly property var tile: OSDItems.tile(root.type, root._state())
 
   // A click on its icon can change it (toggle)
-  readonly property bool canToggle: ["keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane"].includes(root.type)
+  // (a recording only stops)
+  readonly property bool canToggle: root.type === "recording" ? ScreenshotManager.recording : ["keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "vpn"].includes(root.type)
 
   // Flips it, as its own control would (the layout to the next, the
   // profile between power saver and the rest)
@@ -63,6 +67,13 @@ Loader {
       break;
     case "airplane":
       NetworkingManager.setAirplane(!NetworkingManager.airplane);
+      break;
+    case "vpn":
+      VpnManager.toggleLast();
+      break;
+    case "recording":
+      if (ScreenshotManager.recording)
+        ScreenshotManager.stopRecording();
       break;
     }
   }
@@ -124,7 +135,9 @@ Loader {
     case "wifi":
       return {
         "available": NetworkingManager.available,
-        "on": NetworkingManager.wifiEnabled
+        "on": NetworkingManager.wifiEnabled,
+        "network": NetworkingManager.wifiDevice?.connected ? (NetworkingManager.activeNetwork?.name ?? "") : "",
+        "signal": Math.round((NetworkingManager.activeNetwork?.signalStrength ?? 0) * 100)
       };
     case "bluetooth":
       return {
@@ -138,15 +151,57 @@ Loader {
     case "charger":
       return {
         "available": BatteryManager.isAvailable,
-        "plugged": !BatteryManager.onBattery
+        "plugged": !BatteryManager.onBattery,
+        "percent": BatteryManager.percentage,
+        "charging": BatteryManager.isCharging,
+        "full": BatteryManager.isFull,
+        "untilFull": BatteryManager.timeToFull
+      };
+    case "vpn":
+      return {
+        "available": VpnManager.available || VpnManager.rows.length > 0,
+        "on": VpnManager.anyActive,
+        "name": VpnManager.activeRows.map(r => r.name).join(", "),
+        "address": VpnManager.primary?.ipv4 ?? ""
+      };
+    case "recording":
+      return {
+        "available": ScreenshotManager.hasRecorder,
+        "on": ScreenshotManager.recording
+      };
+    case "camera":
+    case "screenShare":
+    case "micUse":
+      return {
+        "apps": root._apps(root._captures())
       };
     }
     return {};
   }
 
-  function _report(switched) {
+  // The streams capturing what this type watches (camera, screenShare,
+  // micUse)
+  function _captures() {
+    switch (root.type) {
+    case "camera":
+      return PrivacyManager.cameraCaptures;
+    case "screenShare":
+      return PrivacyManager.screenCaptures;
+    case "micUse":
+      return AudioManager.micCaptures;
+    }
+    return [];
+  }
+
+  // The apps' names of capturing streams, once each
+  function _apps(nodes) {
+    return [...new Set(nodes.map(n => AudioManager.appName(n)))];
+  }
+
+  // A card only for a type that has one
+  function _report(card) {
     if (root._armed)
-      root.fired(switched === true);
+      root.fired(card === true && OSDItems.cardTypes.includes(root.type));
   }
 
   property bool _armed: false
@@ -172,6 +227,11 @@ Loader {
       "bluetooth": bluetooth,
       "airplane": airplane,
       "charger": charger,
+      "vpn": vpn,
+      "recording": recording,
+      "camera": capture,
+      "screenShare": capture,
+      "micUse": capture,
       "media": media
     })
   sourceComponent: root._watchers[root.type] ?? null
@@ -369,6 +429,20 @@ Loader {
     id: wifi
 
     Item {
+      id: radio
+      // The Wi-Fi device has joined a network: its own state, steadier
+      // than the scanned list (which can drop the network joined for a
+      // moment as it's rebuilt). Leaving one for another goes through
+      // disconnected
+      readonly property bool joined: NetworkingManager.wifiDevice?.connected === true
+
+      // The network's card as one is joined (its name fills in as the
+      // list catches up)
+      onJoinedChanged: {
+        if (radio.joined)
+          root._report(true);
+      }
+
       Connections {
         target: NetworkingManager
         function onWifiEnabledChanged() {
@@ -412,11 +486,83 @@ Loader {
     Item {
       Connections {
         target: BatteryManager
+        // Plugged in: its card (the level, charging, the time to full)
         function onOnBatteryChanged() {
           if (BatteryManager.isAvailable)
-            root._report();
+            root._report(!BatteryManager.onBattery);
         }
       }
+    }
+  }
+
+  Component {
+    id: vpn
+
+    Item {
+      id: tunnels
+      // Each VPN's last settled state (OSDItems.vpnStep)
+      property var _last: null
+
+      function _check() {
+        const now = {};
+        for (const row of VpnManager.rows)
+          now[row.id] = row.state;
+        const step = OSDItems.vpnStep(tunnels._last, now);
+        tunnels._last = step.last;
+        if (step.changed)
+          root._report(step.up);
+      }
+
+      // Lists Tailscale among the VPNs (polled while held, as for the Vpn
+      // widget)
+      Component.onCompleted: {
+        VpnManager.acquire(tunnels);
+        tunnels._check();
+      }
+      Component.onDestruction: VpnManager.release(tunnels)
+
+      Connections {
+        target: VpnManager
+        function onRowsChanged() {
+          Qt.callLater(tunnels._check);
+        }
+      }
+    }
+  }
+
+  Component {
+    id: recording
+
+    Item {
+      Connections {
+        target: ScreenshotManager
+        function onRecordingChanged() {
+          root._report();
+        }
+      }
+    }
+  }
+
+  Component {
+    id: capture
+
+    Item {
+      id: apps
+      // By node id: an app's name may come in after its stream starts
+      // (its properties bind later), which isn't another app starting
+      readonly property var now: root._captures().map(n => n.id)
+      property var _last: []
+
+      function _check() {
+        const change = OSDItems.captureChange(apps._last, apps.now);
+        apps._last = apps.now;
+        if (change !== "")
+          root._report(change === "started");
+      }
+
+      Component.onCompleted: apps._last = apps.now
+      // Links bind one by one: judged once they're in
+      onNowChanged: Qt.callLater(apps._check)
     }
   }
 
