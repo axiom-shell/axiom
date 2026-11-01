@@ -1022,40 +1022,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### PopoutWrapperBase's aboutToDismiss signal has no listener
-- **Where:** `components/hosts/popout/PopoutWrapperBase.qml:161` (`aboutToDismiss`)
-- **What:** A repo-wide grep for `boutToDismiss` finds only the declaration, its example comment (line 160) and the emit in `requestDismiss` (line 165); no wrapper handles it. Fix: delete the comment and signal (159-161) and the emit (165): 4 lines.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### Three EdgePopout members nothing reads
-- **Where:** `components/hosts/popout/EdgePopout.qml:80` (`detached`), `components/hosts/popout/EdgePopout.qml:149` (`yielded`), `components/hosts/popout/EdgePopout.qml:191` (`gaps`)
-- **What:** Each forwards `placement.*` or `claim.*`, and nothing reads them on an EdgePopout. Internal users read `placement`/`claim` directly. `SubmenuHost`'s `geometry.detached` is EdgePlacement's, and the only outside mention is FloatingEdgeMenu.qml:25's comment `(EdgePopout.gaps)`. Fix: delete lines 77-80 (`detached` and its comment), 149 and 191 (6 lines), and point that comment at `EdgePlacement.gaps`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### PopoutGeometry handles a phase and a submenu pair the registry never produces
-- **Where:** `components/methods/PopoutGeometry.qml:81` (`resolve`), `components/methods/PopoutGeometry.qml:120` (`resumable`), `tests/tst_PopoutGeometry.qml:115`
-- **What:** Two branches handle cases nothing produces:
-  - **The "closing" phase:** PopoutManager writes only the phases "open" and "yielded", plus "opening" through `resumable`. A grep for `"closing"` over services/, components/ and tests/ finds only PopoutGeometry's comment (line 17), lines 81 and 120, and the test.
-  - **The sibling-submenu skip** (lines 89-91, `e.kind === "submenu" && claim.parentId && e.parentId === claim.parentId`): it needs two submenu claims with one parent. A submenu's key is its parent's plus `/submenu`, with one SubPopout per host, so the only such entry is the claim itself, which line 79 already skips.
-
-  Fix: drop both `"closing"` clauses, lines 89-91, the comment's "closing" part and the test's "gone" row (about 6 lines).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### PillBarJoin's available repeats what joined already says
-- **Where:** `components/hosts/popout/PillBarJoin.qml:45` (`available`), `components/methods/SurfaceContext.qml:114` (`end`), `docs/dev/popouts/pill-and-floating-bars.md:34`
-- **What:** `available` asks `ScreenEdgeManager.surfaceEnd(screen, side).kind === "pillBar"` again. EdgePlacement sets `joined` from `place.joinStart && startEnd.sink === "pillBar"`, and `SurfaceContext.end` gives sink `"pillBar"` only when `joins && e.kind === "pillBar"`. So `joined` implies `available` wherever both are read. The doc's "Its `available` is what makes the end joinable" is wrong too. Fix: drop lines 43-45 and the two `available` terms, and point the doc at `sink: "pillBar"`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### Geometry members nothing reads
-- **Where:** `components/hosts/popout/AttachedSurface.qml:330` (`sideU`), `components/hosts/popout/AttachedSurface.qml:331` (`farSideU`), `components/hosts/popout/EdgePlacement.qml:225` (`merged`), `components/methods/SurfaceOutline.qml:97` (`size`)
-- **What:** No `.sideU`/`.farSideU` read of AttachedSurface and no `.merged` read of an EdgePlacement exist. `SurfaceOutline.size` is called only by `tests/tst_SurfaceOutline.qml` (lines 146, 329), while AttachedSurface works the size out again itself. Fix: delete the three properties (3 lines). Then either AttachedSurface takes its implicit size from `SurfaceOutline.size(root._spec, root._m)`, or `size` goes (lines 95-103, 9 lines) and the tests inline it.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### SurfaceContext.layout's pill and merged results have no test row
 - **Where:** `tests/tst_SurfaceContext.qml:553` (`test_layout_between_pills`), `components/methods/SurfaceContext.qml:337` (`layout`)
 - **What:** No row pins `layout`'s result for:
@@ -1065,12 +1031,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   A slip in any of these passes today (63 rows pass). A lost backfill shows the pill stroke's fringe as a line; a wrong `attachClearance` puts a merged box's content where the pills would be. Fix: add `test_layout_on_pill`, `test_layout_merged` and a bare-edge `ownSink` row.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### The tray menu's isVertical and barConfig are never read
-- **Where:** `components/content/SystemTray/SystemTray.qml:14` (`isVertical`), `components/content/SystemTray/SystemTray.qml:15` (`barConfig`), `components/bar/widgets/SystemTray/SystemTray.qml:99`
-- **What:** The tray content declares both from its payload and nothing reads either: no host reads them off `currentItem`/`currentData`, and inside the content only the declarations match. The widget's `extraData` sends them only to feed these. Fix: drop the two properties and the two `extraData` keys (4 lines).
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the popouts system
 
 ### Both tray menu lists override the same width cap
@@ -1104,17 +1064,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
-
-### Nothing listens to the bar's layoutUpdated any more
-- **Where:** `components/bar/BarContainer.qml:31` (`layoutUpdated`), `components/bar/BarContainer.qml:313` (`layoutMoved`, `_slotsKey`, `_settle`), `components/bar/BarContainer.qml:401` (`onAllocationUpdated`), `components/bar/WidgetGroup.qml:109` (`allocationUpdated`, `_allocationKey`), `docs/dev/bar/composition.md`
-- **What:** The signal has no handler. `grep -rn 'layoutUpdated'` over QML and docs finds only its declaration, its two emits (BarContainer.qml:314, 320) and composition.md's "`BarContainer.layoutMoved()` emits `layoutUpdated` … so an open popout re-anchors on the settled widget". Its listener was BarPopouts' `onLayoutUpdated`, removed in "Rework and harden popouts (#53)". The chain still runs on the hot path:
-  - Every `slots` change `JSON.stringify`s the slots.
-  - Every section allocation change (a ticking clock's width, a tray icon) `JSON.stringify`s the allocation, emits `allocationUpdated` and calls `layoutMoved()`.
-  - `layoutMoved()` emits to nobody and restarts a Timer that emits to nobody again `animNormal` later.
-
-  Fix: delete the chain and its doc line, 35 lines: the signal and its comment (BarContainer.qml:29-31), `_slotsKey`/`onSlotsChanged`/`layoutMoved`/`_settle` (301-321), Section's `onAllocationUpdated` (401), WidgetGroup's `allocationUpdated`/`_allocationKey`/`onAllocationChanged` (108-117).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
 
 ### A bar made while the bar editor is open may never report to it
 - **Where:** `components/bar/BarContainer.qml:346` (`on_ReportKeyChanged`), `components/bar/BarContainer.qml:349` (`_report`)
@@ -1175,24 +1124,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### StandaloneBar only wraps BarPanel's BarContainer
-- **Where:** `components/bar/StandaloneBar.qml:7`, `components/bar/BarPanel.qml:127` (`bar`), `components/bar/BarContainer.qml:215` (`borderOpening`), `components/bar/BarContainer.qml:515` (`blurOrigin`)
-- **What:** Its header calls it "A bar's BarContainer outside a window of its own", but nothing draws a bar outside a window any more. BarPanel is its only user, and it overrides StandaloneBar's own logic (the implicit 300 px size) with explicit x/y/width/height; what's left forwards `barConfig`/`panel`/`screen` into a BarContainer filling it. The comments about "the bar editor's preview" (215, 515) describe a preview that is gone. Fix: put the `BarContainer` straight into BarPanel with the same x/y/width/height (`container: bar`), read the container's own `x`/`y` in `blurOrigin`, drop the preview clauses, and drop its `Extra:` line in `.claude/skills/review-system/systems.md`. This removes StandaloneBar.qml (27 lines).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### BarContainer._withEntry rebuilds Utils.withEntry
-- **Where:** `components/bar/BarContainer.qml:174` (`_withEntry`), `components/methods/Utils.qml:65` (`withEntry`)
-- **What:** `_withEntry` copies the map and sets or deletes `owner` (177-182), which is `Utils.withEntry`; the same file already uses `Utils.withEntry` at line 341. Fix: `return Utils.deepEqual(map[owner] ?? null, value ?? null) ? null : Utils.withEntry(map, owner, value || undefined);`, 12 lines (172-183) down to 4.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
-- **Where:** `config/BarsConfig.qml:106` (`enrichBarConfig`), `config/BarsConfig.qml:145`, `config/BarsConfig.qml:25`, `config/BarsConfig.qml:47`, `config/BarsConfig.qml:113`
-- **What:** Nothing reads an enriched bar's `joinable` or `separatorGap` (every `.joinable` read is an end's or SurfaceContext's own edge; `separatorGap` is read only as `look.separatorGap`, line 118). The bar comes from `ConfigManager.live` with every default filled, so `barConfig.background ?? "solid"`, `barConfig.pillPadding ?? 0` and `barConfig.pillMerge ?? 0` never fall back (AGENTS.md: "readers use no `??` fallbacks"; check_structure only catches `_c.key ?? x`). Fix: delete lines 105-106 and 145 (3 lines) and the three `??` tails.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### A bar's reserve trim is worked out again by callers holding the enriched bar
 - **Where:** `config/BarsConfig.qml:354` (`reservedZone`), `config/BarsConfig.qml:345` (`detachedPush`), `config/BarsConfig.qml:176` (`enrichBarConfig`)
 - **What:** `enrichBarConfig` already sets `bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0)`. Every caller of `reservedZone` and `detachedPush` passes an enriched bar and its own edge's `gapsOut`, then gets the same number again from `reserveTrim`: `components/bar/BarPanel.qml:38`, `services/ui/ScreenEdgeManager.qml:91` (without `?? 0`, so the two sources can differ), `components/hosts/popout/EdgePlacement.qml:201`. Fix: read `barConfig.trim`; `reservedZone(barConfig)` loses its `gapsOut` parameter, and `detachedPush` becomes `gapsOut - barConfig.trim - connectorGap / 2`. Take it with [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp), whose fix calls `reservedZone`. (`cornerMargin`'s copy is the Major above.)
@@ -1250,23 +1181,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### The stacked style clips on a thin bar
 - **Where:** `components/bar/widgets/base/ValueGraphic.qml:217` (value `font.pixelSize`), `components/bar/widgets/base/ValueGraphic.qml:229` (caption `font.pixelSize`)
 - **What:** Stacked's two lines are `fontSize * 0.8` and `fontSize * 0.6`, sized from the font alone: about 1.17 × 1.4 × fontSize ≈ 23 px at font 14. They are centred in the widget's `widgetSize`, and the widget clips. At the default 26 px they fit. At `widgetSize` 20 with font 14, where a one-line label (about 16 px) still fits, about 1.5 px comes off the top of the value and the bottom of the caption. PLAUSIBLE: a screenshot of a stacked widget on a 20 px bar settles it. Fix: scale both lines by `Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize))`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
-### BaseWidget's background box and panel-size defaults are dead
-- **Where:** `components/bar/widgets/base/BaseWidget.qml:13` (`backgroundColor`), `components/bar/widgets/base/BaseWidget.qml:15` (`showBackground`), `components/bar/widgets/base/BaseWidget.qml:17` (`contentItem`), `components/bar/widgets/base/BaseWidget.qml:19` (`radius`), `components/bar/widgets/base/BaseWidget.qml:29` (the `Rectangle`), `components/bar/widgets/base/IconTextWidget.qml:22` (`spacing`), `components/bar/widgets/base/IconTextWidget.qml:25` (`fontSize`), `components/bar/widgets/base/ValueGraphic.qml:31` (`fontSize`), `docs/dev/core/shared-ui-pieces.md:103`
-- **What:** Widgets don't draw their own backgrounds; WidgetGroup does (widget-style.md › Widget style). BaseWidget still has its own box, and it is never drawn. Its three instances all set `showBackground: false`: BarIconWidget:60, SystemStats:179 (`box`) and SystemStats:204 (the segments).
-  - `backgroundColor` and `radius` feed only that Rectangle. The two `radius:` setters (BarIconWidget:43, SystemStats:178) therefore do nothing.
-  - `contentItem` has no reader (its declaration is its only hit in `components/bar`).
-  - Deletion pass: BaseWidget lines 13–15, 17, 19 and 29–35 (12 lines) plus the five setters, 17 lines in all.
-  - shared-ui-pieces.md:103 still calls BaseWidget "the rounded box a bar widget sits in": it becomes "the sizing wrapper".
-
-  The bases' remaining defaults are the panels' sizes, and every instance replaces them from `barConfig`:
-  - BaseWidget: `padding: Widget.padding`, `crossSize: Widget.height`
-  - IconTextWidget: `spacing: Widget.spacing * 1.5`, `fontSize: Appearance.fontSize`
-  - ValueGraphic: `fontSize: Appearance.fontSize`
-
-  These five are the only `Widget.*`/`Appearance.fontSize` reads under `components/bar/widgets`, and they read as though the bar's pieces size from the Interface section. Default them to 0.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
@@ -1505,12 +1419,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/content/Submenu/Submenu.qml:35` (`_firstOpener`)
 - **What:** "Show on screen" on a submenu menu holds the parent open, and the parent's first Submenu row opening it opens it (`previewed` needs `_firstOpener`). `_firstOpener` finds that row by comparing the config's `place.x`/`place.y` with `root.slotRect[0]`/`[1]`, but `slotRect` is `GridPlacement.rectOf(slot.place)` from `ModuleGrid.places`, the grown places: a growing module above the row in its columns (Notifications with a notification, say) pushes it down (`GridPlacement.grown`), the coordinates differ, no row is the first opener, and the submenu never opens while the editor says it's shown. Fix: match the row by something growth doesn't move: hand modules their config place beside `slotRect` (OverlaySlot) and compare that, or compare the row's `properties` with the first opener's (two identical rows open the same menu alike).
 - **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call
-- **Where:** `components/surfaces/edgemenu/EdgeMenuSync.qml:64` (`_edgeHost`, `_engage`), `components/surfaces/edgemenu/IntegratedEdgeMenu.qml:70` (`engage`)
-- **What:** EdgeMenuSync connects `EdgeMenuManager.engageRequested` for both hosts and calls `engage()` through a `var` (`_edgeHost`, since PopoutWrapperBase has no `engage`), so IntegratedEdgeMenu defines an empty `engage()` ("it holds no popout claim, so there's no rank to raise"). Only the floating host has anything to do. Fix: move the `Connections` into FloatingEdgeMenu (`if (id === root.menuId) root.engage()`), deleting EdgeMenuSync.qml:64–74 (11 lines) and IntegratedEdgeMenu.qml:70–73 (4 lines), about 6 added.
-- **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
 ### MenuSubmenu repeats EdgeMenuBody's module grid

@@ -180,8 +180,6 @@ BarWidget {
     isVertical: root.isVertical
     crossSize: root.barConfig.widgetSize
     padding: root.segments.length > 0 ? root.barConfig.widgetPadding : 0
-    radius: root.barConfig.radius
-    showBackground: false
 
     content: Grid {
       columns: root.isVertical ? 1 : Math.max(1, root.segments.length)
@@ -206,7 +204,6 @@ BarWidget {
           isVertical: root.isVertical
           crossSize: root.barConfig.widgetSize
           padding: 0
-          showBackground: false
           fontSize: root.barConfig.fontSize
           spacing: root.isVertical ? 0 : root.barConfig.widgetSpacing * 1.5
           textScale: root.isVertical ? 0.7 : 0.9

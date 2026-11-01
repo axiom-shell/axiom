@@ -26,10 +26,6 @@ Rectangle {
   readonly property bool isVertical: barConfig.vertical
   readonly property real length: isVertical ? height : width
 
-  // Emitted whenever widgets may have moved, so an open popout can follow
-  // its anchor
-  signal layoutUpdated
-
   // The surface layer paints the bar
   color: "transparent"
 
@@ -172,14 +168,7 @@ Rectangle {
   // `map` with `owner`'s entry set to `value` (or with null cleared), or
   // null where that changes nothing
   function _withEntry(map, owner, value) {
-    if (Utils.deepEqual(map[owner] ?? null, value ?? null))
-      return null;
-    const next = Object.assign({}, map);
-    if (value)
-      next[owner] = value;
-    else
-      delete next[owner];
-    return next;
+    return Utils.deepEqual(map[owner] ?? null, value ?? null) ? null : Utils.withEntry(map, owner, value || undefined);
   }
   // Sets (or with null clears) `owner`'s request
   function setRequest(owner, request) {
@@ -212,7 +201,7 @@ Rectangle {
   // the border leaves its stroke open under a translucent fill: a pill, a
   // popout merged into the bar or on a solid bar's inner edge. Null while
   // surfaces are solid, with the border off, or until the bar's place on
-  // screen is known (the bar editor's preview has none).
+  // screen is known.
   function borderOpening(from, to) {
     if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || to <= from)
       return null;
@@ -298,27 +287,6 @@ Rectangle {
   // Per section, the model indices hidden so the minimum sizes fit
   readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.spacing, root.barConfig.groupSpacing, root.barConfig.lockCenter)
   readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.spacing, root.barConfig.lockCenter, centerGroup.layoutHang)
-  // Bindings re-run on any module change; only signal real moves
-  property string _slotsKey: ""
-  onSlotsChanged: {
-    const key = JSON.stringify(slots);
-    if (key !== _slotsKey) {
-      _slotsKey = key;
-      root.layoutMoved();
-    }
-  }
-  // Widgets and sections glide to a new layout (BarWidgetHost, Section),
-  // so what's anchored to them (an open popout) is told again once
-  // they've arrived
-  function layoutMoved() {
-    layoutUpdated();
-    _settle.restart();
-  }
-  Timer {
-    id: _settle
-    interval: Appearance.animNormal
-    onTriggered: root.layoutUpdated()
-  }
 
   // A section's shown widgets; `configIndex` is each one's place in the
   // section's config, which hidden widgets leave out
@@ -397,8 +365,6 @@ Rectangle {
 
     x: section.bar.isVertical ? section.crossPos : section.drawnPos
     y: section.bar.isVertical ? section.drawnPos : section.crossPos
-
-    onAllocationUpdated: section.bar.layoutMoved()
   }
 
   // The shadow the bar's surface casts, evenly and only outside it, so
@@ -512,8 +478,8 @@ Rectangle {
 
   // The blur window draws the bar's fill (BlurManager), once
   // its window is placed on screen: where its shapes are, the container's
-  // top-left on screen (the bar editor's preview has none, and fills itself)
-  readonly property var blurOrigin: root.panel?.screenOrigin ? Qt.point(root.panel.screenOrigin.x + (root.parent?.x ?? 0), root.panel.screenOrigin.y + (root.parent?.y ?? 0)) : null
+  // top-left on screen
+  readonly property var blurOrigin: root.panel?.screenOrigin ? Qt.point(root.panel.screenOrigin.x + root.x, root.panel.screenOrigin.y + root.y) : null
   readonly property string blurScreen: root.panel?.screen?.name ?? ""
   readonly property bool backed: BlurManager.backsOn(root.blurScreen, false) && root.blurOrigin !== null
 

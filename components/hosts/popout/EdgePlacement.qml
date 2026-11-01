@@ -223,7 +223,6 @@ QtObject {
       }) : null
     });
   }
-  readonly property bool merged: root._layout.merged
   // Standing on a pill's or island's far stroke
   readonly property bool onPill: root._layout.onPill
   // A box of its own (SurfaceContext.detached): held, or on a bar with

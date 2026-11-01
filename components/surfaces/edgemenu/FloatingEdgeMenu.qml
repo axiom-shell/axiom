@@ -22,7 +22,7 @@ EdgePopout {
   readonly property string menuId: root.menu.id
 
   // Held off the edge, its gaps from the frame lines across its edge and
-  // at its ends (EdgePopout.gaps)
+  // at its ends (EdgePlacement.gaps)
   held: root.menu.detached
   gap: root.menu.gap
 
@@ -125,6 +125,18 @@ EdgePopout {
     onWarpRequested: {
       const box = root.boxInWindow;
       CompositorManager.warpCursorToLayer(root.layerNamespace, root.screen?.name ?? "", root.window.width, root.window.height, box.x + box.width / 2, box.y + box.height / 2);
+    }
+  }
+
+  // Asked for again while open (EdgeMenuManager.engageRequested): it comes
+  // forward (EdgePopout.engage). The integrated host holds no popout
+  // claim, so it has no rank to raise
+  Connections {
+    target: EdgeMenuManager
+
+    function onEngageRequested(id) {
+      if (id === root.menuId)
+        root.engage();
     }
   }
 

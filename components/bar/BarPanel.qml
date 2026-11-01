@@ -110,7 +110,7 @@ PanelWindow {
   readonly property var popoutHost: barPopouts
 
   // The widget area, where the pills are
-  readonly property var container: bar.barContainer
+  readonly property var container: bar
 
   BarPopouts {
     id: barPopouts
@@ -121,10 +121,10 @@ PanelWindow {
 
   // The bar's own extent, at its outer edge. Placed by plain geometry, not
   // conditional anchors: when a bar changes orientation, a `width:
-  // undefined` binding resets width to the implicit 300 after the anchors
+  // undefined` binding resets width to the implicit one after the anchors
   // have sized it, and the anchors don't reapply until the window resizes,
-  // leaving a 300px bar that hides most of its widgets as overflow.
-  StandaloneBar {
+  // leaving a short bar that hides most of its widgets as overflow.
+  BarContainer {
     id: bar
     x: root.barConfig.right ? parent.width - width : 0
     y: root.barConfig.bottom ? parent.height - height : 0

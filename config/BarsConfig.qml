@@ -22,7 +22,7 @@ QtObject {
     // setting can leave them cut off
     const widgetSize = barConfig.widgetSize;
     const padding = barConfig.padding;
-    const background = barConfig.background ?? "solid";
+    const background = barConfig.background;
     const pills = background === "pills";
     const solid = background === "solid";
     // Floating bars are islands held off the edge: one along the bar, or
@@ -44,7 +44,7 @@ QtObject {
     const overlap = Appearance.screenBorder ? Appearance.borderWidth : 0;
     // Padding past the border's stroke on the pill's outer side, so its
     // widgets sit the frame plus this in from the screen edge
-    const pillPad = barConfig.pillPadding ?? 0;
+    const pillPad = barConfig.pillPadding;
     // How far a pill's widgets sit in from the bar's outer edge (and its
     // ends): past the border stroke, or with the border off, the screen
     // margin the frame would have taken, so they keep the same gap from the
@@ -102,15 +102,13 @@ QtObject {
       "floatGapAuto": barConfig.floatGap < 0,
       "islandGap": Appearance.borderWidth + padding,
       "insideBorder": insideBorder,
-      // An inner stroke surfaces on its edge can join: a solid bar's
-      "joinable": solid,
       // A solid bar's inner stroke is the border strip's; with the border
       // off it draws its own, on its innermost pixels
       "innerStroke": solid && !Appearance.screenBorder,
       "overlap": overlap,
       "pillInset": pillInset,
       "pillGap": pillGap,
-      "pillMerge": barConfig.pillMerge ?? 0,
+      "pillMerge": barConfig.pillMerge,
       "pillDepth": pillDepth,
       "spacing": barConfig.spacing,
       // Between the widgets within a section: a powerline's touch, and
@@ -142,7 +140,6 @@ QtObject {
       "separatorStyle": grouping === "powerline" ? "none" : look.separatorStyle,
       "separatorColor": look.separatorColor,
       "separatorThickness": look.separatorThickness,
-      "separatorGap": look.separatorGap,
       "accentLine": look.accentLine,
       "accentLineColor": look.accentLineColor,
       "accentLineFade": look.accentLineFade,

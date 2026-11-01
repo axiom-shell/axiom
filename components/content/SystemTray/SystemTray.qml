@@ -11,8 +11,6 @@ Item {
   required property var wrapper
 
   property var trayItem: wrapper.currentData?.trayItem
-  property bool isVertical: wrapper.currentData?.isVertical ?? false
-  property var barConfig: wrapper.currentData?.barConfig
 
   readonly property bool openToLeft: root.wrapper?.openToLeft ?? false
 
