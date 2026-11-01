@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Wallpapers list only jpg, png and bmp
+- **Where:** `services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
+- **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.
+- **Size:** small
+- **Found:** 2026-11-01, while removing awww and adding wallpaper transitions
+
+### Video wallpapers
+- **Where:** `components/surfaces/wallpaper/WallpaperView.qml`, `services/core/ThemeManager.qml` (generateThemesFromWallpaper)
+- **What:** An idea from the wallpaper transitions branch, not a bug: mp4/webm wallpapers through QtMultimedia. It adds a dependency and a steady GPU and battery cost, the transitions would need a video's frame as a texture, and generating a theme needs a still frame grabbed from it. Kept out of the branch (maintainer, 2026-11-01: not picked among the wallpaper improvements).
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while removing awww and adding wallpaper transitions
+
 ### A workspace overview bind set to open calls a missing function
 - **Where:** `backend/internal/compositor/actions/table.json`, `shell/WorkspaceOverlay.qml`, `tests/tst_BindActions.qml`
 - **What:** The table's `calls` maps `workspaceOverview` open to `show`, but the `workspaceOverlay` IPC target has `toggle`, `open` and `hide`, no `show`. A bind or hot corner set to open runs `axiom ipc workspaceOverlay show` and fails. `tst_BindActions` covers close→hide only, and nothing checks the table's templates and calls against `docs/dev/generated/ipc.md` (as `backend/internal/cli/named_test.go` does for the named commands).
