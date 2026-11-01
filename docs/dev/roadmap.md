@@ -552,7 +552,6 @@ Found by the audits:
 - [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
 - [Uninstall keeps a stale greetd backup when greetd points elsewhere](issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
 - [The greeter reads its keyboard layouts before the bundle's are applied](issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
-- [GreetdManager.available is never read](issues.md#greetdmanageravailable-is-never-read)
 - [The launcher's /generate reads a monitor setting that doesn't exist](issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
 - [EmojiManager's groups() is never called](issues.md#emojimanagers-groups-is-never-called)
 - [LauncherManager keeps a dead clear() and a cliphist test](issues.md#launchermanager-keeps-a-dead-clear-and-a-cliphist-test)

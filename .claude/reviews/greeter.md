@@ -6,7 +6,7 @@ In good shape: greeter mode is gated everywhere it acts, the bundle is data only
 ## Open findings
 - Major: [Uninstall keeps a stale greetd backup when greetd points elsewhere](../../docs/dev/issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
 - Major: [The greeter reads its keyboard layouts before the bundle's are applied](../../docs/dev/issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
-- Cleanup: [GreetdManager.available is never read](../../docs/dev/issues.md#greetdmanageravailable-is-never-read)
+- Cleanup: "GreetdManager.available is never read" (fixed, row 20 platform-01)
 - Minor: Stale names and claims in the greeter's docs and comments: `Greeter.monitor` for `Greeter.screen` (greeter-runtime.md:85, GreeterWindow.qml:10, GreeterSurface.qml:14); "greetd's Hyprland" (GreeterWindow.qml, shell/Greeter.qml:17) though sway comes first; the display modules list misses `Clock`; "owns no ... Wayland connection" though `greeterProfiles` runs an `outputs.Tracker`; `Greeter.source`'s description says main can't be installed though it installs the edge build.
 - Minor: A failed status check's `_lastError` (GreeterManager.check) outlives the next good check and overwrites the last action's error; reachable only when greeter.status errors.
 

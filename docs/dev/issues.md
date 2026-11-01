@@ -2003,12 +2003,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the greeter system
 
-### GreetdManager.available is never read
-- **Where:** `services/session/GreetdManager.qml:21` (`available`)
-- **What:** `readonly property bool available: Greetd.available` has no reader anywhere (`grep -rn 'GreetdManager.available'` finds none; inside the file only its definition). Fix: delete the line (1 line).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the greeter system
-
 ### The launcher's /generate reads a monitor setting that doesn't exist
 - **Where:** `services/ui/LauncherCommands.qml:156` (`generate`), `config/LauncherConfig.qml` (`screen`)
 - **What:** `/generate` picks its wallpaper with `ShellManager.targetFor(...)` given a `monitors` member that LauncherConfig doesn't have (its ScreenTarget is `screen`; a grep of every LauncherConfig member used, against the reader's members, finds only this one missing). `targetFor(undefined)` resolves as "inherit", so it answers for General's screen target, not the launcher's. Scenario: two monitors with different wallpapers, `General.screen` primary (DP-1) and `Launcher.screen` focused; open the launcher on DP-2 and run `/generate`: the themes are generated from DP-1's wallpaper, not the one on the monitor the launcher is on. [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start) describes `/generate` as using "its target monitor's wallpaper", which only holds after this fix. Fix: pass `LauncherConfig.screen`.
