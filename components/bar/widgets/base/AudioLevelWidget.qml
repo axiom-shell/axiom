@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.services.core
 import qs.services.system
+import qs.services.ui
 import qs.components.hosts.popout
 
 // Base for the Volume and Microphone widgets: a default device's level, as
@@ -17,6 +18,8 @@ ValueStyleWidget {
   property var node: null
   // The mixer's side: "output" | "input"
   property string mode: "output"
+  // What the OSD calls its changes (ShellManager.onScreen)
+  readonly property string osdKind: root.mode === "input" ? "microphone" : "audio"
   readonly property real level: root.node?.audio?.volume ?? 0
   readonly property bool muted: root.node?.audio?.muted ?? false
   readonly property real maxVolume: properties.maxVolume / 100
@@ -32,13 +35,16 @@ ValueStyleWidget {
   onClicked: button => {
     if (button === Qt.MiddleButton)
       CommandManager.runDetached(root.properties.middleCommand);
-    else
+    else {
+      ShellManager.onScreen(root.osdKind);
       AudioManager.toggleNodeMute(root.node);
+    }
   }
   onScrolled: steps => {
     if (steps === 0)
       return;
     const step = root.properties.scrollStep / 100;
+    ShellManager.onScreen(root.osdKind);
     AudioManager.stepNodeVolume(root.node, steps > 0 ? step : -step, root.maxVolume);
   }
 

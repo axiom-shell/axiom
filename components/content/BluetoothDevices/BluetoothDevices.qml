@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell.Bluetooth
 
 import qs.services.system
+import qs.services.ui
 import qs.config
 import qs.components.reusable
 import qs.components.content.base
@@ -91,7 +92,10 @@ Panel {
     scanning: BluetoothManager.discovering
     checked: BluetoothManager.enabled
     switchEnabled: BluetoothManager.available && !BluetoothManager.blocked
-    onToggled: checked => BluetoothManager.setEnabled(checked)
+    onToggled: checked => {
+      ShellManager.onScreen("bluetooth");
+      BluetoothManager.setEnabled(checked);
+    }
   }
 
   StyledSeparator {

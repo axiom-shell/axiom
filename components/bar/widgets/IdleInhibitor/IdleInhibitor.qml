@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.session
+import qs.services.ui
 import qs.config
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
@@ -26,7 +27,10 @@ ValueStyleWidget {
 
   accentColor: Theme.resolveColor(IdleManager.caffeine ? properties.activeColor : properties.inactiveColor)
   clickable: true
-  onClicked: IdleManager.toggle()
+  onClicked: {
+    ShellManager.onScreen("caffeine");
+    IdleManager.toggle();
+  }
 
   PopoutAnchor {
     hitArea: root.hitArea

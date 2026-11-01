@@ -435,6 +435,32 @@ QtObject {
   // new device's mute) don't take its highlight, in ms
   readonly property int quietWindow: 2000
 
+  // The on-screen mark a bar or status type is judged by (a change the
+  // pointer made in axiom's own bar or panels, ShellManager.onScreen):
+  // every output level and the output device one ("audio"), the input's
+  // ("microphone"), else the type itself
+  function onScreenKind(type) {
+    if (type === "master" || type === "other" || type === "app")
+      return "audio";
+    return type;
+  }
+
+  // How long after a mark the change it made may still come in, in ms:
+  // a connection's state settles seconds after the click
+  function onScreenWindow(kind) {
+    if (kind === "vpn")
+      return 15000;
+    if (kind === "wifi" || kind === "bluetooth" || kind === "airplane")
+      return 8000;
+    return 2000;
+  }
+
+  // Whether a change of `type` is the pointer's own, `elapsed` ms after
+  // its kind was last marked (Infinity: never)
+  function fromScreen(type, elapsed) {
+    return elapsed >= 0 && elapsed < root.onScreenWindow(root.onScreenKind(type));
+  }
+
   // Whether a change of type `incoming` takes the highlight from `shown`
   // (the type highlighted, "" for none) `elapsed` ms after it took it,
   // over `tiles` (by type, tile()'s); `shownCard` / `incomingCard`: the

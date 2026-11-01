@@ -80,7 +80,10 @@ Card {
     }
     TapHandler {
       enabled: !root.missing
-      onTapped: NightLightManager.toggle()
+      onTapped: {
+        ShellManager.onScreen("nightLight");
+        NightLightManager.toggle();
+      }
     }
     HoverHandler {
       cursorShape: root.missing ? Qt.ArrowCursor : Qt.PointingHandCursor
@@ -181,7 +184,10 @@ Card {
       }
       TapHandler {
         id: heroTap
-        onTapped: NightLightManager.toggle()
+        onTapped: {
+          ShellManager.onScreen("nightLight");
+          NightLightManager.toggle();
+        }
       }
     }
 
@@ -235,7 +241,10 @@ Card {
         StyledSwitch {
           enabled: !root.missing
           checked: root.active
-          onToggled: NightLightManager.setActive(checked)
+          onToggled: {
+            ShellManager.onScreen("nightLight");
+            NightLightManager.setActive(checked);
+          }
         }
       }
 

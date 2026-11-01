@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.services.system
+import qs.services.ui
 import qs.config
 import qs.components.reusable
 import qs.components.content.parts
@@ -14,8 +15,10 @@ import qs.components.content.base
 // one is greyed out while the monitors differ, and a click on it brings
 // them back to their mean. The sliders scroll when the card is short (a
 // strip shows the shared one first), and the expand button opens the
-// whole card over the grid; compact, the level. Changes here don't open
-// the OSD. QuickActions' brightness tile opens this.
+// whole card over the grid; compact, the level. Changes here are marked
+// as the pointer's (ShellManager.onScreen), so they move an open OSD's
+// bar but open one only with OSD.onScreenChanges. QuickActions'
+// brightness tile opens this.
 // properties: { monitor: "*" (all) | "" (the primary monitor) | a name }
 Panel {
   id: root
@@ -101,14 +104,20 @@ Panel {
           volume: root.level
           muted: root.desynced
           showMute: false
-          onVolumeMoved: v => BrightnessManager.setMany(root.targets, v, true)
+          onVolumeMoved: v => {
+            ShellManager.onScreen("brightness");
+            BrightnessManager.setMany(root.targets, v);
+          }
 
           // Out of sync: a click anywhere brings every monitor to the mean
           MouseArea {
             anchors.fill: parent
             visible: root.desynced
             cursorShape: Qt.PointingHandCursor
-            onClicked: BrightnessManager.setMany(root.targets, root.level, true)
+            onClicked: {
+              ShellManager.onScreen("brightness");
+              BrightnessManager.setMany(root.targets, root.level);
+            }
           }
         }
 
@@ -129,7 +138,10 @@ Panel {
             title: name
             volume: value
             showMute: false
-            onVolumeMoved: v => BrightnessManager.set(name, v, true)
+            onVolumeMoved: v => {
+              ShellManager.onScreen("brightness");
+              BrightnessManager.set(name, v);
+            }
           }
         }
       }

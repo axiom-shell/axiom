@@ -7,7 +7,7 @@
 The on-screen displays: levels (volumes, microphone, brightness) as bars, the state of the machine as status icons (lock keys, the keyboard layout, the audio output and the microphone, toggles, the VPN, a recording, the camera and a screen share, messages), and the track playing. Each OSD is a configurable `EdgePopout` with its own bars, status icons and now playing card, and shows whichever changed last.
 
 ### Config (`OSD` section, `OSDConfig`)
-- **Section keys:** `scrollToChange`, `scrollStep`, `items` (the OSDs; each has its own `enabled`; the section-wide one went in config v69).
+- **Section keys:** `scrollToChange`, `scrollStep`, `onScreenChanges` (see What opens it), `items` (the OSDs; each has its own `enabled`; the section-wide one went in config v69).
   - `OSDConfig.scrollStep` is the level change per wheel notch (0–1). It is 0 when scrolling is off.
 - **Each OSD** (`definitions/OSDEntry`):
   - `id`, `name`, `enabled`;

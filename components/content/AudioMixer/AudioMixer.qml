@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 
 import qs.services.system
+import qs.services.ui
 import qs.config
 import qs.components.reusable
 import qs.components.content.parts
@@ -26,6 +27,8 @@ Panel {
   property int currentTab: 0
 
   readonly property bool isInput: mode === "input"
+  // What the OSD calls its changes (ShellManager.onScreen)
+  readonly property string osdKind: isInput ? "microphone" : "audio"
   readonly property var defaultDevice: isInput ? AudioManager.defaultSource : AudioManager.defaultSink
   readonly property var apps: isInput ? AudioManager.recordingApps : AudioManager.playbackApps
   readonly property var devices: isInput ? AudioManager.sources : AudioManager.sinks
@@ -80,7 +83,10 @@ Panel {
     MouseArea {
       anchors.fill: parent
       cursorShape: Qt.PointingHandCursor
-      onClicked: AudioManager.toggleNodeMute(parent.node)
+      onClicked: {
+        ShellManager.onScreen(root.osdKind);
+        AudioManager.toggleNodeMute(parent.node);
+      }
     }
   }
 
@@ -142,8 +148,14 @@ Panel {
           maxVolume: root.maxVolume
           mutedGlyph: root.mutedGlyph
           unmutedGlyph: root.unmutedGlyph
-          onVolumeMoved: value => AudioManager.setNodeVolume(node, value, root.maxVolume)
-          onMuteToggled: AudioManager.toggleNodeMute(node)
+          onVolumeMoved: value => {
+            ShellManager.onScreen(root.osdKind);
+            AudioManager.setNodeVolume(node, value, root.maxVolume);
+          }
+          onMuteToggled: {
+            ShellManager.onScreen(root.osdKind);
+            AudioManager.toggleNodeMute(node);
+          }
         }
 
         ExpandButton {
@@ -227,8 +239,14 @@ Panel {
               maxVolume: root.maxVolume
               mutedGlyph: root.mutedGlyph
               unmutedGlyph: root.unmutedGlyph
-              onVolumeMoved: value => AudioManager.setNodesVolume(appRow.app?.nodes, value, root.maxVolume)
-              onMuteToggled: AudioManager.setNodesMuted(appRow.app?.nodes, !appRow.muted)
+              onVolumeMoved: value => {
+                ShellManager.onScreen(root.osdKind);
+                AudioManager.setNodesVolume(appRow.app?.nodes, value, root.maxVolume);
+              }
+              onMuteToggled: {
+                ShellManager.onScreen(root.osdKind);
+                AudioManager.setNodesMuted(appRow.app?.nodes, !appRow.muted);
+              }
             }
           }
 
@@ -267,7 +285,10 @@ Panel {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: deviceRow.selected ? Qt.ArrowCursor : Qt.PointingHandCursor
-                onClicked: AudioManager.setDefault(deviceRow.node)
+                onClicked: {
+                  ShellManager.onScreen(root.osdKind);
+                  AudioManager.setDefault(deviceRow.node);
+                }
               }
 
               RowLayout {

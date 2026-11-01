@@ -12,6 +12,9 @@ QtObject {
 
   // Level change per wheel notch (0-1); 0 when scrolling is off
   readonly property real scrollStep: _c.scrollToChange ? _c.scrollStep / 100 : 0
+  // A change the pointer made in axiom's own bar and panels
+  // (ShellManager.fromScreen) opens an OSD too
+  readonly property bool onScreenChanges: _c.onScreenChanges
   // [OSDEntry] (see the schema): each with its id, screen (a ScreenTarget),
   // place, `bars` (their layout and items, { type, icon, showOsd, … }),
   // `statuses` ({ row, items, quiet }: the status types shown as icons)

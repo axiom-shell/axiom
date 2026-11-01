@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.system
+import qs.services.ui
 import qs.components.bar.widgets.base
 
 // Active xkb layout of the main keyboard, from KeyboardLayoutManager. Left
@@ -20,5 +21,8 @@ BarIconWidget {
 
   clickable: true
   acceptedButtons: Qt.LeftButton | Qt.RightButton
-  onClicked: button => KeyboardLayoutManager.cycle(button === Qt.RightButton ? "prev" : "next")
+  onClicked: button => {
+    ShellManager.onScreen("keyboardLayout");
+    KeyboardLayoutManager.cycle(button === Qt.RightButton ? "prev" : "next");
+  }
 }

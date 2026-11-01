@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.system
+import qs.services.ui
 import qs.components.reusable
 import qs.components.content.base
 
@@ -76,8 +77,14 @@ Card {
       muted: AudioManager.muted
       icon: AudioManager.muted ? "volume_off" : "volume_up"
       label: I18n.tr("Output")
-      onToggled: AudioManager.toggleMute()
-      onStepped: delta => AudioManager.stepNodeVolume(AudioManager.defaultSink, delta)
+      onToggled: {
+        ShellManager.onScreen("audio");
+        AudioManager.toggleMute();
+      }
+      onStepped: delta => {
+        ShellManager.onScreen("audio");
+        AudioManager.stepNodeVolume(AudioManager.defaultSink, delta);
+      }
     }
     Dial {
       visible: !root.compact
@@ -87,8 +94,14 @@ Card {
       muted: AudioManager.sourceMuted
       icon: AudioManager.sourceMuted ? "mic_off" : "mic"
       label: I18n.tr("Input")
-      onToggled: AudioManager.toggleSourceMute()
-      onStepped: delta => AudioManager.stepNodeVolume(AudioManager.defaultSource, delta)
+      onToggled: {
+        ShellManager.onScreen("microphone");
+        AudioManager.toggleSourceMute();
+      }
+      onStepped: delta => {
+        ShellManager.onScreen("microphone");
+        AudioManager.stepNodeVolume(AudioManager.defaultSource, delta);
+      }
     }
   }
 }

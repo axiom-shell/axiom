@@ -3727,6 +3727,8 @@
     "The center": "",
     "Where the compositor makes workspaces as you need them, how many it takes to slide from one end to the other. Each workspace down moves it the same step, so opening and closing windows never moves it; past the last, it stays at the end.": "",
     "Workspaces it spans": "",
-    "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (when Removable drives › Show drive events is On the OSD; a click opens the drive, or unlocks an encrypted one). Messages are what `axiom message <icon> <text>` sends.": ""
+    "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (when Removable drives › Show drive events is On the OSD; a click opens the drive, or unlocks an encrypted one). Messages are what `axiom message <icon> <text>` sends.": "",
+    "Open the OSD for what you change with the mouse in axiom's own bar and panels (scrolling the Volume widget, a quick toggle). Off, those change an open OSD but don't open one. Keys and other apps always open it.": "",
+    "Show for changes made on screen": ""
   }
 }

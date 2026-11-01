@@ -654,6 +654,16 @@ TestCase {
       verify(OSDItems.card(type, {}, [type]) !== null, type);
   }
 
+  function test_fromScreen() {
+    const rows = [
+      // [type, elapsed, from the pointer, what]
+      ["master", 500, true, "the output's bar: the audio mark"], ["app", 500, true, "an app's bar: the audio mark"], ["microphone", 1999, true, "inside the window"], ["microphone", 2000, false, "past it"], ["caffeine", Infinity, false, "never marked"], ["vpn", 10000, true, "a VPN settles slowly"], ["wifi", 9000, false, "past Wi-Fi's window"], ["dnd", -5, false, "a mark from the future (clock change)"]];
+    for (const [type, elapsed, want, what] of rows)
+      compare(OSDItems.fromScreen(type, elapsed), want, what);
+    compare(OSDItems.onScreenKind("other"), "audio");
+    compare(OSDItems.onScreenKind("brightness"), "brightness");
+  }
+
   function test_deviceName() {
     const rows = [
       // [device, title, detail, translate, what]
