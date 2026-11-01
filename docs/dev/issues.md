@@ -2037,3 +2037,21 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `Power._info` (Power.qml:25-41, 17 lines) restates `SessionManager.sessionActionInfo`'s icons (`bedtime`, `restart_alt`, `power_settings_new`) and `SessionManager.destructiveActions` (`confirm` true for reboot and poweroff), with other words for the same actions ("Restart" / "Shut down" on the lock screen and greeter, "Reboot" / "Power off" in the power menu, QuickActions and launcher). And the press-twice gate (an `armed` string, a 3000 ms `disarm` Timer, "arm unless already armed, else run") is written out three times: `Power.press` and its Timer (Power.qml:44-65), `PowerMenuWindow.run` and `disarm` (:35-44, :82-86), `QuickActions.run` and `disarm` (:185-190, :226-230). Fix: Power reads `SessionManager.sessionActionInfo(action)` and `SessionManager.destructiveActions` (drops `_info`: 17 lines), and one small non-visual `ConfirmGate` (`armed`, `timeout`, `pass(key, needsConfirm)`) replaces the three gates. Open (maintainer): which words the session actions use everywhere ("Restart" / "Shut down" or "Reboot" / "Power off").
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the security system
+
+### Uninstall keeps a stale greetd backup when greetd points elsewhere
+- **Where:** `backend/internal/greeterinstall/install.go:520` (`uninstall`)
+- **What:** `uninstall` deletes `/etc/greetd/config.toml.axiom-original` only inside `if rules.GreetdValue(...) == rules.Session`. When the user pointed greetd at another greeter by hand before pressing Remove, the original survives; the next install keeps it (`pointGreetd` copies only when it's missing), so the next uninstall restores the config from before the *first* install, dropping every edit made since (greeter, `vt`, `user`). greeter-install.md says the opposite: "Uninstall puts the original config back and deletes `.axiom-original`, so a later install backs up the config as it is then." Proven with a throwaway test on a scratch root: install, set `command = "tuigreet"` and `vt = 3`, uninstall (`.axiom-original` kept: true), install, uninstall: greetd's config came back as the first install's `agreety`/`vt = 1`. Fix: move `os.Remove(path + ".axiom-original")` after the `if` so every uninstall spends it, plus that sequence as a case beside `TestUninstallRestoresTheOriginal`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the greeter system
+
+### The greeter reads its keyboard layouts before the bundle's are applied
+- **Where:** `services/session/GreetdManager.qml:244` (`Component.onCompleted`, `_readLayouts`), `services/compositor/CompositorManager.qml:293` (`setUpGreeter`)
+- **What:** At start `GreetdManager` calls `_applyCompositor()` (`CompositorManager.setUpGreeter` → the daemon's `greeter.compositor`, which sets the bundle's keyboard layouts on sway or Hyprland) and then `_readLayouts()` at once, without waiting for its reply. The daemon answers each request in its own goroutine (`backend/internal/rpc/rpc.go:482`), and both backends read the layouts from the compositor's live state (`SwayState.keyboard` from `xkb_layout_names`, `HyprState.keyboard` from `devices`), so the read can land before the input is set: a bundle with `us,de` then shows the compositor's default single layout, `KeyboardLayout.canSwitch` (`layouts.length > 1`) is false, the module is inert, and nothing reads the layouts again (only `nextLayout` does, which needs a click). PLAUSIBLE: settle in a nested sway with a bundle setting two layouts and the greeter run non-windowed. Fix: give `setUpGreeter` a `then` callback (called on the reply, error or not) and run `_readLayouts()` from it; windowed, read at once as now.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the greeter system
+
+### GreetdManager.available is never read
+- **Where:** `services/session/GreetdManager.qml:21` (`available`)
+- **What:** `readonly property bool available: Greetd.available` has no reader anywhere (`grep -rn 'GreetdManager.available'` finds none; inside the file only its definition). Fix: delete the line (1 line).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the greeter system
