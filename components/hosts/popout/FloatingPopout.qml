@@ -165,10 +165,7 @@ PopoutWrapperBase {
           root.contentItem?.forceActiveFocus();
       }
 
-      onCleared: {
-        if (!active)
-          root.hide();
-      }
+      onCleared: root.hide()
     }
 
     MouseArea {

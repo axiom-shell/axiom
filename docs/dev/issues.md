@@ -946,23 +946,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the blur system
 
-### Edge and floating popouts never close when their focus grab clears
-- **Where:** `components/hosts/popout/EdgePopout.qml:460` (`focusGrab`), `components/hosts/popout/FloatingPopout.qml:162` (`focusGrab`), `services/compositor/FocusGrab.qml:57` (`_outside`)
-- **What:** Both hosts handle the grab ending with `onCleared: { if (!active) root.hide(); }`. Inside `FocusGrab { … }`, `active` is the wrapper's own property, bound to `surfaceWindow.visible && root.grabEnabled && (…)` (EdgePopout.qml:452) or `root.isOpen && …` (FloatingPopout.qml:154), and the wrapper emits `cleared` only while that property is true:
-  - **No native grab (sway, niri):** the backdrop `Connections` is `enabled: root._catching`, which is `!_native && active`. The `_lost` timer checks `root.active && …` (FocusGrab.qml:135).
-  - **Hyprland:** the inner `HyprlandGrab` clears. Its own `active` goes false, but the wrapper's binding doesn't.
-
-  So `!active` is always false when `cleared` arrives, and `hide()` never runs. The guard dates from when the handler sat on Quickshell's `HyprlandFocusGrab` directly, whose `active` does drop. The wrapper's other users close unconditionally (`PowerMenuWindow.qml:133` `onCleared: root.shown = false`, `DockMenu.qml:64` `onCleared: root.close()`).
-
-  What users see:
-  - A floating edge menu with `close.onOutsideClick` stays open on a click outside (FloatingEdgeMenu.qml:111 sets `closeOnClickOutside`).
-  - The attached launcher (EdgePopout, `closeOnClickOutside: true`, Launcher.qml:191, commented "until Esc, a pick or a click elsewhere") stays open.
-  - The detached launcher closes only on a click in its own window's free area (FloatingPopout.qml:169's MouseArea), not on a bar, the border or another monitor.
-
-  Fix: `onCleared: root.hide()` in both hosts (`hide()` already checks `isOpen`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### An open edge popout's layer and namespace still follow its edge's bar
 - **Where:** `components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `components/hosts/popout/EdgePopout.qml:97` (`windowLayer`), `components/hosts/popout/EdgePopout.qml:113` (`layerNamespace`), `components/hosts/popout/EdgePopout.qml:216` (`_overlayLatch`), `components/hosts/popout/BarPopouts.qml:42` (`_under`)
 - **What:** BarPopouts latches `placement.slidesUnder` in a `ClosedLatch`, so an open bar popout never changes layer. EdgePopout latches only two of that output's inputs (`_overlayLatch`, `_fullscreenLatch`) and reads `placement.slidesUnder` live. That value also depends on the edge's bar: `bar?.background === "transparent"`, from `SurfaceContext.layout`.

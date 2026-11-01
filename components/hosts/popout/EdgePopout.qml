@@ -448,7 +448,8 @@ PopoutWrapperBase {
 
     FocusGrab {
       id: focusGrab
-      windows: [surfaceWindow].concat(root.grabWindows, SurfaceManager.modalWindows)
+      // Its submenu's window too: a click there is inside the menu
+      windows: [surfaceWindow, slot.submenu.popupWindow].concat(root.grabWindows, SurfaceManager.modalWindows)
       active: surfaceWindow.visible && root.grabEnabled && (root.wantsKeyboardFocus || root.closeOnClickOutside)
 
       onActiveChanged: {
@@ -456,10 +457,7 @@ PopoutWrapperBase {
           root.contentItem?.forceActiveFocus();
       }
 
-      onCleared: {
-        if (!active)
-          root.hide();
-      }
+      onCleared: root.hide()
     }
 
     // Where the window is on screen: the blur window draws the surface's
