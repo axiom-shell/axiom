@@ -340,9 +340,25 @@ class ConfigUsage(unittest.TestCase):
                          [("WorkspaceOverlayConfig", "showHint", "exact")])
         self.assertTrue(self.ref.member_users[("WorkspaceOverlayConfig", "showHint")])
 
-    def test_alias_of_a_subsection(self):
-        # `_c: ConfigManager.live.Compositor.hyprland` reads that part
-        self.assertIn("Compositor.hyprland", self.readers["HyprlandConfig"]["members"]["managed"]["paths"])
+    def test_alias_of_a_section(self):
+        # `_look: ConfigManager.live.WindowLook` stands for that section
+        self.assertIn("WindowLook.surfaceBlur.throughWindows",
+                      self.readers["Appearance"]["members"]["blurThroughWindows"]["paths"])
+
+    def test_used_inside_the_reader(self):
+        # The `.x` of its own `_c.x` binding is the key, not a use
+        from gen_docs import used_inside
+        self.assertFalse(used_inside("R", "x", "property bool x: _c.x"))
+        self.assertTrue(used_inside("R", "x", "property bool x: _c.x\nproperty bool y: x && _c.y"))
+        self.assertTrue(used_inside("R", "x", "property bool x: _c.x\nfunction f() { return root.x }"))
+        self.assertTrue(used_inside("R", "x", "property bool x: _c.x\nfunction f() { return R.x }"))
+
+    def test_spread_reads_a_member(self):
+        from gen_docs import Usage
+        usage = Usage()
+        usage.files = {"a.qml": "[].concat(...R.x.map(f))", "b.qml": "foo.R.y"}
+        self.assertEqual(usage.member("R", "x", ""), ["a.qml"])
+        self.assertEqual(usage.member("R", "y", ""), [])
 
     def test_ratchet(self):
         from gen_docs import ratchet_problems

@@ -12,7 +12,6 @@ type Loaded struct {
 	Config  *jsonx.Object
 	Removed []string // unknown keys dropped (logged as warnings)
 	Changes []string // what the migrations did (logged)
-	Secrets *jsonx.Object
 	Errors  []string // why it is invalid; empty when it is valid
 	// Migrated says the file was of an older version (written back once)
 	Migrated bool
@@ -36,27 +35,7 @@ func LoadLegacy(s *schema.Schema, parsed any) (Loaded, error) {
 		Config:   obj,
 		Removed:  removed,
 		Changes:  migration.Changes,
-		Secrets:  migration.Secrets,
 		Errors:   ValidationErrors(s, filled, s.Root()),
 		Migrated: migration.Migrated,
 	}, nil
-}
-
-// Object is l as the shared fixtures write it.
-func (l Loaded) Object() *jsonx.Object {
-	return jsonx.Obj(
-		"config", l.Config,
-		"removed", stringsArray(l.Removed),
-		"changes", stringsArray(l.Changes),
-		"secrets", l.Secrets,
-		"errors", stringsArray(l.Errors),
-	)
-}
-
-func stringsArray(list []string) *jsonx.Array {
-	a := jsonx.Arr()
-	for _, s := range list {
-		a.Append(s)
-	}
-	return a
 }

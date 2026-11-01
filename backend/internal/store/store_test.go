@@ -30,7 +30,7 @@ func pipeline(t *testing.T) config.Pipeline {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return config.V2Pipeline{S: schema.New(root)}
+	return config.Pipeline{S: schema.New(root)}
 }
 
 func open(t *testing.T, dir string) *Store {
@@ -753,5 +753,24 @@ func TestTakeoverWriteBackIsNotReadAgain(t *testing.T) {
 	s.reload()
 	if len(events) != 1 {
 		t.Errorf("%d events for one takeover-only edit", len(events))
+	}
+}
+
+// A schema rebuild loads the file again through the new schema, as a
+// reload: an unchanged config keeps its revision, a new setting is filled.
+func TestReschemaReloads(t *testing.T) {
+	t.Parallel()
+	s := open(t, t.TempDir())
+	_, before := s.Config()
+	s.Reschema(pipeline(t))
+	if _, st := s.Config(); st.Revision != before.Revision {
+		t.Errorf("an unchanged config bumped the revision: %d → %d", before.Revision, st.Revision)
+	}
+	p := pipeline(t)
+	p.S.Root().(*jsonx.Object).Value("properties").(*jsonx.Object).Set("Zz", jsonx.Obj("type", "object", "default", jsonx.Obj("on", true)))
+	s.Reschema(p)
+	cfg, st := s.Config()
+	if st.Revision == before.Revision || !jsonx.Equal(cfg.Value("Zz"), jsonx.Obj("on", true)) {
+		t.Errorf("the new setting isn't filled: %v, %+v", cfg.Value("Zz"), st)
 	}
 }

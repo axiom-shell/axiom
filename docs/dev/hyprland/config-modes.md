@@ -1,6 +1,6 @@
 # Hyprland config writer
 
-> **Files:** `backend/internal/compositor/manager/hypr.go`, `config/HyprlandConfig.qml`, `backend/internal/compositor/render/hyprconfig.go`, `backend/internal/compositor/render/hyprlua.go`, `components/methods/BindKeys.qml`, `config/InputConfig.qml`
+> **Files:** `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/render/hyprconfig.go`, `backend/internal/compositor/render/hyprlua.go`, `components/methods/BindKeys.qml`, `config/InputConfig.qml`
 > **Config:** `Compositor.mode`, `Compositor.requiredSettings`, `Input.*`, `Session.*`, `Keybinds.binds`, `Compositor.hyprland`, `WindowLook`, `Monitors.items`, `Workspaces.strips`
 > **Related:** [Config modes](../compositor/config-modes.md), [Managed takeover](managed-takeover.md), [Window look](../compositor/window-look.md), [Bind merge](bind-merge.md), [Keybinds](keybinds.md), [Monitors](monitors.md), [Workspace strips](workspace-strips.md)
 

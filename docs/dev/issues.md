@@ -357,12 +357,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Three reader members nothing reads
-- **Where:** `config/HyprlandConfig.qml` (`managed`), `config/LauncherConfig.qml` (`clipboardMaxEntries`), `config/WindowBehaviourConfig.qml` (`behaviour`), `scripts/config-usage-baseline.json`
-- **What:** `scripts/gen_docs.py` lists them as reader members with no user (the daemon reads those settings itself: Compositor.hyprland and WindowBehaviour through `x-compositor`, the clipboard's limit by name). `HyprlandConfig` has no other member, so the whole reader can go; `WindowBehaviourConfig` too. They sit in `scripts/config-usage-baseline.json`, which only shrinks: deleting one means dropping its line there. Deletion candidates for the audits' deletion pass.
-- **Size:** trivial
-- **Found:** 2026-10-30, while making gen_docs.py see readers of ConfigManager.live (roadmap row 18)
-
 ### The guard reads the branch from the session's folder, not a `cd` before the push
 - **Where:** `.claude/hooks/guard.py` (`check_git`, `current_branch`), `tests/scripts/test_guard.py`
 - **What:** `git push … origin HEAD` (or a push with no refspec) is refused when `current_branch` of the hook's `cwd` is main, and that `cwd` is the session's folder: a `cd` earlier in the same command isn't followed (`git -C` is). An agent whose session sits in a checkout on main and pushes a branch from a worktree with `cd <worktree> && git push -q -u origin HEAD && gh pr create --label roadmap --base main --body "$(cat <<'EOF' … EOF)"` gets `don't push to main; open a PR from a branch.` (refused once on 2026-10-30, autopilot for #232; reproduced 2026-10-30 by feeding `guard.check` that command with `cwd` a scratch repository on main: refused; with `cwd` the worktree, or `git -C <worktree> push`: allowed). The plain shape from the branch's own folder passes since #241 (a heredoc body with rule-like text passes too). It struck again on 2026-11-01 (row 19, batch 15): `git push -u origin HEAD` for the feature branch `roadmap/19-audits-batch15` was refused with `Blocked by AGENTS.md › Never, while testing: don't push to main; open a PR from a branch.`, and pushing by branch name went through. `check_git` already resolves a bare `HEAD` (line 376, `dest == "HEAD" and current_branch(cwd) in PROTECTED_BRANCHES`), but from the hook's `cwd`; a subagent's Bash `cwd` resets to the session's folder (the live checkout, on main) every call, so a worktree reached by `cd` is never the one read (reproduced 2026-11-01 through `guard.check`: `git push -u origin HEAD` with `cwd` the worktree allowed; with `cwd` the live checkout, with or without a leading `cd <worktree> &&`, refused). The workaround is an explicit `branch:branch` refspec or `git -C`. Fix: follow a leading `cd <dir> &&` into the cwd `check_git` uses, with a test case.
@@ -554,12 +548,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Stale lines in the Hyprland docs and comments
 - **Where:** `docs/dev/hyprland/window-switcher.md`, `components/methods/WorkspaceGeometry.qml` (`orderMonitors`), `components/methods/BindKeys.qml`, `backend/internal/compositor/render/keys.go` (`RuntimeBinds`), `components/hosts/popout/EdgePopout.qml`
 - **What:** window-switcher.md › Events and the manager says the list is "limited to the focused monitor", but with `scope: all` `DockLayout.inScope` keeps every monitor's windows; what's tied to the focused monitor is where it shows. `orderMonitors`' comment says CompositorManager fills its keys; `blockBases` does. BindKeys' header still lists "which of axiom's binds a runtime layer applies and which it skips", gone from QML, and keys.go's comment calls `RuntimeBinds` the copy of BindKeys' `runtimeBinds`, which no longer exists. EdgePopout.qml (outside the system, lines 89 and 383) twice credits "HyprlandManager's layer rules", which are the daemon's now (`render.LayerRulesLua`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The unused reader member check counts a member named after its key as used
-- **Where:** `scripts/gen_docs.py` (the reader-member usage count), `scripts/config-usage-baseline.json`, `config/WindowSwitcherConfig.qml` (`compositorSwitcher`)
-- **What:** gen_docs.py (around line 334) counts a reader member as used inside its reader when its name appears more than once there. `(?<![\w])name\b` also matches the `.name` in the member's own `_c.name` binding, so every member named after its config key passes, read or not: `WindowSwitcherConfig.compositorSwitcher` has no QML reader (the daemon reads the setting itself, `manager/niri_test.go` pins it) and isn't listed. Fix: don't count a match preceded by `.`, or count `<Reader>.<member>` uses outside the reader; then delete what it newly finds (the baseline only shrinks): `compositorSwitcher` is 3 lines.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -1741,39 +1729,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A format-2 config without a version runs every step again
 - **Where:** `backend/internal/migrate/steps/steps.go:156` (`migrate`), `backend/internal/config/format.go:82` (`Load`)
-- **What:** `migrate` reads the version as `from, _ := cfg.Value("version").(float64)`, so a format-2 file whose `version` is missing (or not a number, e.g. a hand-written config.json with just `"format": 2`) counts as version 0: every step from v77 runs, `migrated` is true and the store writes the result back. Most steps find nothing in a current-shape config, but v78 and v80 act on one. A probe through `V2Pipeline.Load` of `{"format":2,"Session":{"autostart":[{"id":"hypridle","command":"hypridle"}]},"Overlay":{"items":[{"id":"settings","type":"Settings"}]}}` returned `migrated=true`, changes "Session.autostart: the hypridle entry removed …" and "Overlay.items: added the Custom widgets page": the user's own hypridle autostart (the entry v78's note tells them to add back) is deleted and a page they removed comes back, both written to disk. Saved and shared files are refused without a version (`readShared` › `versioned` in `backend/internal/saved/saved.go`), so only the live config.json takes this path.
+- **What:** `migrate` reads the version as `from, _ := cfg.Value("version").(float64)`, so a format-2 file whose `version` is missing (or not a number, e.g. a hand-written config.json with just `"format": 2`) counts as version 0: every step from v77 runs, `migrated` is true and the store writes the result back. Most steps find nothing in a current-shape config, but v78 and v80 act on one. A probe through `Pipeline.Load` of `{"format":2,"Session":{"autostart":[{"id":"hypridle","command":"hypridle"}]},"Overlay":{"items":[{"id":"settings","type":"Settings"}]}}` returned `migrated=true`, changes "Session.autostart: the hypridle entry removed …" and "Overlay.items: added the Custom widgets page": the user's own hypridle autostart (the entry v78's note tells them to add back) is deleted and a page they removed comes back, both written to disk. Saved and shared files are refused without a version (`readShared` › `versioned` in `backend/internal/saved/saved.go`), so only the live config.json takes this path.
 
-  **Decided** (maintainer, 2026-10-31): "Reccomendation as described". Fix: refuse it. In `V2Pipeline.Load` (`backend/internal/config/format.go:43`), `format == 2` with a `version` that isn't an integer in [`convert.Version` (76), `Current()`] returns an Errors message "version: missing or not a format-2 version; add `\"version\": N`". Plus a one-time backup `config.v<from>.json` for every migrated write-back, as format 1 has. `format_test.go` rows for a missing `version`, a string and 3.
+  **Decided** (maintainer, 2026-10-31): "Reccomendation as described". Fix: refuse it. In `Pipeline.Load` (`backend/internal/config/format.go`), `format == 2` with a `version` that isn't an integer in [`convert.Version` (76), `Current()`] returns an Errors message "version: missing or not a format-2 version; add `\"version\": N`". Plus a one-time backup `config.v<from>.json` for every migrated write-back, as format 1 has. `format_test.go` rows for a missing `version`, a string and 3.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the config-pipeline system
 
 ### The condition grammar has no shared fixtures
 - **Where:** `backend/internal/schema/conditions.go:20` (`Holds`), `backend/internal/config/shared_test.go:33` (`runSchemaOp`), `tests/Shared.qml`
 - **What:** `docs/dev/core/config-v2.md` rule 9 says `x-showIf`, `x-enabledIf`, `x-enumShowIf` and `x-scopeIf` share one grammar, "implemented once in Go and once in `SchemaLayout`, with shared fixtures". No fixture exists: `tests/Shared.qml` records only `schema.applyDefaults` and `schema.resolveRef`, and the `schema` package's only test is `pattern_test.go`, so `Holds`' `anyOf`, `{not: …}` and `{notEmpty: true}` branches run in no Go test (the share tests reach the plain-value and list forms through the exec bind). `Holds` decides `x-scopeIf`, which decides whether an imported or exported file's commands (an exec or raw bind, `Keybind.yaml`'s `when: {action: [exec, raw]}`; an exec hot corner) are carried or kept: a rule written with `not` or `anyOf` that evaluates differently in Go than in `SchemaLayout.showIfHolds` would carry commands the settings page shows as personal, and nothing would catch it. Fix: a `schema.showIfHolds` op in `tests/Shared.qml` (rows for each form, a missing key, null, a list value) and its case in `runSchemaOp` calling `schema.Holds`.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### Format-1 secrets plumbing nothing fills or reads
-- **Where:** `backend/internal/config/load.go:15` (`Loaded`), `backend/internal/migrate/legacy/legacy.go:45` (`Result`)
-- **What:** `legacy.js`'s `migrate` declares `const secrets = {}` and returns it without ever writing a key (`grep -n secrets legacy.js`: the declaration, the doc comment and the return only), and no production code reads `Loaded.Secrets` (`grep -rn '\.Secrets\b' backend` outside tests: only its assignment in `LoadLegacy`). `Loaded.Object` and `Result.Object`, with `stringsArray`, exist only for the frozen-hash tests (`legacy_test.go`, `shared_test.go`). Fix: drop the two `Secrets` fields and their assignments (load.go:15, :39; legacy.go:45, :89; legacy.go:90 checks only `Config`): 4 lines; move the fixture encoders (load.go:45-62, legacy.go:101-108: 26 lines) into the `_test.go` files, writing an empty `"secrets"` object so the frozen hashes still match.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### The validator and the schema check carry patternProperties nothing uses
-- **Where:** `backend/internal/config/pipeline.go:264` (`validateObject`), `backend/internal/schema/yamlsrc/check.go:16` (`keywords`)
-- **What:** No schema uses `patternProperties`: 0 in `config/json/config.schema.json`, 0 in the frozen `schema-v75.json` (only `config/themes/theme.schema.json` has it, which the Go validator never reads). `Prune` and `ApplyDefaults` already ignore it, so only validation and the build's keyword check carry it. Fix: drop the `patternProperties` keyword (check.go:16's entry, the `"patterns"` case at check.go:134 and its branch at :141-143) and its validation (pipeline.go:264-272): 12 lines; a schema using it then fails the build as an unknown keyword instead of half-working.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### Every step test copies the same case runner
-- **Where:** `backend/internal/migrate/steps/steps_test.go` (`TestV81FoldsCommandOutput`), `backend/internal/migrate/steps/v83_test.go` (`stepAt`)
-- **What:** Nine step tests each repeat the same loop: parse the input, run the step, compare the compact bytes, check `changed`, run it again and expect nothing (steps_test.go:91-106, 135-151, 203-218, 238-257, 283-302; v82_test.go:33-52; v83_test.go:35-54; v84_test.go:42-61; v85_test.go:35-54: 169 lines). The older five also pick their step by index (`all[1]`, then a version check) where the newer ones use `stepAt`. Fix: one `runStepCases(t, version, cases)` helper beside `stepAt` doing the loop once (about 20 lines), each test keeping only its table: about 149 lines fewer, and a new step's test is its rows.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### The config Pipeline interface has one implementation
-- **Where:** `backend/internal/config/format.go:16` (`Pipeline`, `V2Pipeline`)
-- **What:** `Pipeline` is "what the config store does … for one config format", but format 1 is read inside `V2Pipeline.Load` (the frozen chain, then the conversion), and nothing else implements it: no fake in any test (a grep for `) Check(cfg *jsonx.Object)` finds only `V2Pipeline`'s). Store, saved, greeter, the CLI and the daemon all hold a `config.Pipeline` built as `config.V2Pipeline{S: …}` (17 mentions). Fix: make `Pipeline` the struct (`config.Pipeline{S: …}`), the interface's per-method docs moving onto the methods: the interface's 17 lines (format.go:14-30) go, and the "V2" that names a choice there isn't.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the config-pipeline system
 
@@ -1815,24 +1779,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `services/ui/SettingsManager.qml:67` (`_settingsPaths`), `services/ui/SettingsManager.qml:74` (`nonDefaultPaths`), `components/methods/SchemaLayout.qml:30` (`rows`)
 - **What:** `_settingsPaths` is built from `SchemaLayout.rows(ConfigManager.configSchema, [])`, which walks only `prop.type === "object" && prop.properties` and doesn't resolve `$ref`, while the page builds its cards through `SchemaLayout.groups`, which does. In the built schema `Bars.style` is still `{"$ref": "#/definitions/BarStyle"}`, so `rows` gives one field row `Bars.style` and none of the leaf paths `_diff` produces (`Bars.style.fontSize`, …); `nonDefaultPaths` filters all of them out. Scenario: change Bars › Widget style › Font size, click Changed from default: it isn't listed, and with nothing else changed the page says every setting is at its default, against settings-page.md › Sidebar and jumping. The launcher's `/config` (`settingPaths`) misses them the same way. Fix: walk the resolved section (expose `SchemaLayout._resolved` and call `rows` on its result), and add a `tst_SchemaLayout` row for a `$ref` property.
 - **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
-
-### Store.Reschema repeats reload's load-and-apply
-- **Where:** `backend/internal/store/store.go:728` (`Reschema`), `backend/internal/store/store.go:526` (`reload`)
-- **What:** After swapping the pipeline, `Reschema` reads the file and runs a second copy of `reload`'s tail: `load`, `Blocked`/`Issues` on problems, else `holdTakeovers`, clearing `fileTakeovers`, `keepTakeovers`, `Revision++` and a `FromFile` event. It already sets `s.written = nil`, which is what makes `reload` read the file again. Simpler: swap the pipeline, takeovers and `written` under the locks, unlock, then call `s.reload()`. A missing file then marks `Missing` instead of returning silently, a broken one logs as a reload does, and an unchanged config doesn't bump the revision, which no caller needs (`dev.go` pushes `schema.changed` itself). No store test calls `Reschema`. Fix: delete lines 737–760 (24 lines), add an unlock and a `s.reload()` call (+2): 22 lines.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
-
-### OpenAdopting repeats Open's setup
-- **Where:** `backend/internal/store/store.go:767` (`OpenAdopting`), `backend/internal/store/store.go:115` (`Open`)
-- **What:** `OpenAdopting` copies `Open`'s option defaults (6 lines) and its construction and initial load (6 lines); only how the lock is got differs (`fsx.TryLock` against `fsx.Adopt`). Fix: a `newStore(opts, path, lock)` holding the defaults, the struct and `loadInitial` with its `lock.Release()`, called by both: 12 lines go, 3 come back, 9 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the config system
-
-### Six more reader members nothing reads
-- **Where:** `config/I18n.qml:72` (`languageName`), `config/Paths.qml:66` (`swayPath`), `config/Paths.qml:68` (`niriPath`), `config/Theme.qml:124` (`variant`), `config/Theme.qml:125` (`paired`), `config/Theme.qml:126` (`isGenerated`)
-- **What:** `grep -rnw` over the QML and JS finds each only at its declaration (`isGenerated` is a writable property nothing assigns; `paired` is read only off theme entries, `theme.paired` in `ThemeFamilies`, never as `Theme.paired`; `variant` likewise, `Appearance.darkMode` reading `ThemeManager.currentTheme.variant`; theming audit, 2026-10-31). The daemon writes the sway and niri configs now, so `swayPath` and `niriPath` lost their users when that stage moved; only `docs/dev/compositor/sway-backend.md` and `niri-backend.md` still name them, as where the managed config goes. gen_docs.py's unused-member check misses them (`languageName` is a function; the others pass its name match, the cause filed in "The unused reader member check counts a member named after its key as used"). Fix: delete them: `languageName` 3 lines, `swayPath` and `niriPath` 2 each with their comments, `variant`, `paired` and `isGenerated` 1 each: 10 lines; the two backend docs then say `$XDG_CONFIG_HOME/sway/` and `$XDG_CONFIG_HOME/niri/` without the member.
-- **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the config system
 
 ### The launcher's /config can switch a takeover setting

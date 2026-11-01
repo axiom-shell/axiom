@@ -69,10 +69,6 @@ QtObject {
     return root.current.formats?.[name] ?? root._formats[name] ?? name;
   }
 
-  function languageName(code) {
-    return root.languages.find(l => l.code === code)?.name ?? code;
-  }
-
   // -- Private --
   readonly property var _english: ({
       "code": "en",

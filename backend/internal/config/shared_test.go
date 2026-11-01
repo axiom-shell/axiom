@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/migrate/legacy"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
@@ -28,6 +29,14 @@ func TestSharedSchemaCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func stringsArray(list []string) *jsonx.Array {
+	a := jsonx.Arr()
+	for _, s := range list {
+		a.Append(s)
+	}
+	return a
 }
 
 func runSchemaOp(t *testing.T, c testkit.Case) any {
@@ -63,7 +72,13 @@ func TestFrozenLoadCases(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			c.Check(t, loaded.Object())
+			c.Check(t, jsonx.Obj(
+				"config", loaded.Config,
+				"removed", stringsArray(loaded.Removed),
+				"changes", stringsArray(loaded.Changes),
+				"secrets", jsonx.NewObject(), // legacy.js's were always empty
+				"errors", stringsArray(loaded.Errors),
+			))
 		})
 	}
 }

@@ -13,7 +13,7 @@ import (
 var keywords = map[string]string{
 	"$schema": "string", "$ref": "ref", "title": "string", "description": "string",
 	"type": "type", "default": "data", "const": "data", "enum": "list",
-	"properties": "schemas", "definitions": "schemas", "patternProperties": "patterns",
+	"properties": "schemas", "definitions": "schemas",
 	"additionalProperties": "boolOrSchema", "required": "strings", "items": "schema",
 	"oneOf": "schemaList", "minimum": "number", "maximum": "number",
 	"exclusiveMinimum": "number", "exclusiveMaximum": "number", "multipleOf": "number",
@@ -131,16 +131,13 @@ func (c *checker) node(v any, where string, isRoot bool) {
 			for i, x := range arr.Items {
 				c.node(x, fmt.Sprintf("%s[%d]", at, i), false)
 			}
-		case "schemas", "patterns":
+		case "schemas":
 			m, ok := val.(*jsonx.Object)
 			if !ok {
 				c.fail(obj, key, where, "%s must be a mapping", key)
 				break
 			}
 			for _, name := range m.Keys() {
-				if kind == "patterns" {
-					c.pattern(m, name, at, name)
-				}
 				c.node(m.Value(name), join(at, name), false)
 			}
 		}

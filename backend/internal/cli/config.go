@@ -57,20 +57,20 @@ func offlinePipeline(e *Env, treeDir string) (config.Pipeline, error) {
 	if treeDir != "" {
 		root, ferr := tree.Find(treeDir, e.Getenv, "")
 		if ferr != nil {
-			return nil, ferr
+			return config.Pipeline{}, ferr
 		}
 		data, err = tree.BuildSchema(root)
 	} else {
 		data, err = assets.Read("config/json/config.schema.json")
 	}
 	if err != nil {
-		return nil, err
+		return config.Pipeline{}, err
 	}
 	root, err := jsonx.Unmarshal(data)
 	if err != nil {
-		return nil, err
+		return config.Pipeline{}, err
 	}
-	return config.V2Pipeline{S: schema.New(root)}, nil
+	return config.Pipeline{S: schema.New(root)}, nil
 }
 
 // current is the config as the daemon has it, or read from the file
@@ -78,7 +78,7 @@ func offlinePipeline(e *Env, treeDir string) (config.Pipeline, error) {
 func current(ctx context.Context, e *Env, treeDir string) (*jsonx.Object, store.State, config.Pipeline, bool, error) {
 	pipeline, err := offlinePipeline(e, treeDir)
 	if err != nil {
-		return nil, store.State{}, nil, false, err
+		return nil, store.State{}, config.Pipeline{}, false, err
 	}
 	if !e.Globals.Offline {
 		var res struct {
@@ -89,12 +89,12 @@ func current(ctx context.Context, e *Env, treeDir string) (*jsonx.Object, store.
 		if err == nil {
 			v, err := jsonx.Unmarshal(res.Config)
 			if err != nil {
-				return nil, store.State{}, nil, false, err
+				return nil, store.State{}, config.Pipeline{}, false, err
 			}
 			return v.(*jsonx.Object), res.State, pipeline, true, nil
 		}
 		if axerr.KindOf(err) != axerr.Unavailable {
-			return nil, store.State{}, nil, false, err
+			return nil, store.State{}, config.Pipeline{}, false, err
 		}
 	}
 	cfg, st, err := store.Peek(store.Options{Dir: configDir(e), Pipeline: pipeline})
