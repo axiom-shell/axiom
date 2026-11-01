@@ -236,11 +236,11 @@ QtObject {
     return BindActions.hasCalls(root.actionTable, action) ? ["toggle", "open", "close"] : null;
   }
 
-  // A call's label for an action (a caffeine, night light, dark mode, Wi-Fi
-  // or Bluetooth bind turns it on or off, a recording bind starts or stops it)
+  // A call's label for an action (a recording bind starts or stops it; one
+  // whose open call is `enable`, caffeine or Wi-Fi, turns it on or off)
   function callLabels(action) {
-    const onOff = ["idleInhibit", "nightLight", "darkMode", "wifi", "bluetooth"].includes(action);
     const record = action === "screenRecord";
+    const onOff = !record && root.actionTable?.calls?.[action]?.open === "enable";
     return {
       "toggle": I18n.tr("Toggle"),
       "open": record ? I18n.tr("Start") : onOff ? I18n.tr("Turn on") : I18n.tr("Open"),

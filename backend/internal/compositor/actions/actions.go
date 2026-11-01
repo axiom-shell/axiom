@@ -7,7 +7,9 @@ package actions
 import (
 	_ "embed"
 	"fmt"
+	"maps"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -117,7 +119,7 @@ var calls = map[string]string{"toggle": "toggle", "open": "open", "show": "open"
 
 // The words a {call} matches: only calls, so another function of the same
 // target ("appLauncher clipboard") is its own action, not a toggle
-const callNames = `toggle|open|show|enable|close|hide|disable`
+var callNames = strings.Join(slices.Sorted(maps.Keys(calls)), "|")
 
 // The axiom binary, by name or path, maybe quoted (Paths.shellCommand)
 const axiom = `['"]?(?:\S*/)?axiom['"]?`
