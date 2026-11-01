@@ -363,7 +363,8 @@ QtObject {
   // mute; a VPN coming up; a capture starting). Always, except Wi-Fi or
   // Bluetooth just after airplane mode switched them, a card's own status
   // changing again without one (a new device's mute, the other half of a
-  // VPN switch, a capture stopping as soon as it started), the camera and
+  // VPN switch, a capture stopping as soon as it started; not a VPN,
+  // Wi-Fi or the charger turning off), the camera and
   // the microphone taken by the same app together (one card says both),
   // the output and
   // input switching to the same device together (one change: a headset),
@@ -376,8 +377,11 @@ QtObject {
       return false;
     if (shownCard !== true)
       return true;
+    // A card that said "on" (a VPN up, a network joined, the charger
+    // plugged in) gives way to its status turning off: it would say what
+    // no longer holds
     if (incoming === shown && incomingCard !== true)
-      return false;
+      return ["vpn", "wifi", "charger"].includes(incoming) && tiles?.[incoming]?.on !== true;
     const calls = ["camera", "micUse"];
     if (incomingCard === true && shown !== incoming && calls.includes(shown) && calls.includes(incoming) && root._sameApp(tiles?.[shown], tiles?.[incoming]))
       return false;

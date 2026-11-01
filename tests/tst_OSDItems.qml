@@ -413,9 +413,39 @@ TestCase {
     verify(OSDItems.replaces("audio", "microphone", 300, headset, false, false), "mutes one after another");
 
     // Every card keeps its place against its own status's follow-up
-    verify(!OSDItems.replaces("vpn", "vpn", 300, {}, true, false), "the other half of a VPN switch");
-    verify(OSDItems.replaces("vpn", "vpn", 300, {}, true, true), "another VPN up");
-    verify(OSDItems.replaces("vpn", "vpn", OSDItems.quietWindow, {}, true, false), "a drop later");
+    const vpnUp = {
+      "vpn": OSDItems.tile("vpn", {
+        "available": true,
+        "on": true
+      })
+    };
+    const vpnDown = {
+      "vpn": OSDItems.tile("vpn", {
+        "available": true,
+        "on": false
+      })
+    };
+    verify(!OSDItems.replaces("vpn", "vpn", 300, vpnUp, true, false), "the other half of a VPN switch");
+    verify(OSDItems.replaces("vpn", "vpn", 300, vpnUp, true, true), "another VPN up");
+    verify(OSDItems.replaces("vpn", "vpn", OSDItems.quietWindow, vpnUp, true, false), "a drop later");
+    verify(OSDItems.replaces("vpn", "vpn", 300, vpnDown, true, false), "a drop just after: the card would say Connected");
+    verify(OSDItems.replaces("charger", "charger", 300, {
+      "charger": OSDItems.tile("charger", {
+        "available": true,
+        "plugged": false
+      })
+    }, true, false), "unplugged just after: the card would say Plugged in");
+    verify(OSDItems.replaces("wifi", "wifi", 300, {
+      "wifi": OSDItems.tile("wifi", {
+        "on": false
+      })
+    }, true, false), "Wi-Fi off just after joining");
+    verify(!OSDItems.replaces("wifi", "wifi", 300, {
+      "wifi": OSDItems.tile("wifi", {
+        "on": true,
+        "network": "home"
+      })
+    }, true, false), "Wi-Fi still on");
     verify(!OSDItems.replaces("camera", "camera", 300, {}, true, false), "a capture stopping as it starts");
     verify(OSDItems.replaces("camera", "microphone", 300, headset, true, false), "a capture's card isn't a device switch");
     verify(OSDItems.replaces("camera", "screenShare", 300, {}, true, true), "another capture's card");

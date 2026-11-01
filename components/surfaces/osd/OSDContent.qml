@@ -63,7 +63,10 @@ Item {
   readonly property var _types: root.changed === "message" && !root.statusTypes.includes("message") ? root.statusTypes.concat(["message"]) : root.statusTypes
   // Every type the row may show: its statuses, and a message as one comes
   readonly property var _allTypes: root.statusTypes.includes("message") ? root.statusTypes : root.statusTypes.concat(["message"])
-  readonly property var rowTypes: OSDItems.rowTypes(root._types, root.tiles, root.osd.statuses.row, root.changed !== "" ? root.changed : root._held)
+  readonly property var rowTypes: OSDItems.rowTypes(root._types, root.tiles, root._previewAll ? "all" : root.osd.statuses.row, root.changed !== "" ? root.changed : root._held)
+  // Show on the icons alone with none to show as they are (nothing
+  // unusual): every one, not an empty OSD, until it closes
+  property bool _previewAll: false
 
   // The OSD shows a status's card (OSDItems.cardTypes): an audio device's
   // as it switches, a VPN's as it comes up, an app's as it starts using
@@ -148,6 +151,7 @@ Item {
     if (!root.hostOpen) {
       root._held = "";
       root.changed = "";
+      root._previewAll = false;
     }
   }
 
@@ -175,9 +179,11 @@ Item {
   }
 
   // The settings page's Show: the bars, else the status icons as they are
+  // (every one when none would show)
   function preview() {
     root.changed = "";
     root._shown = root.levelItems.length > 0 ? "level" : root.statusTypes.length > 0 ? "status" : "media";
+    root._previewAll = root._shown === "status" && OSDItems.rowTypes(root._types, root.tiles, root.osd.statuses.row, "").length === 0;
   }
 
   // The bars with the icons beside them, or the icons alone
