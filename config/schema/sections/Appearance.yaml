@@ -83,6 +83,7 @@ properties:
         x-snapshot: true
         title: Collection
         default: ''
+        x-suggestions: wallpaperCollections
         description: A subfolder of the wallpaper folder to pick and rotate from (its path inside it), empty for the folder itself. Also chosen in the wallpaper picker.
       subfolders:
         type: boolean

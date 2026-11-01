@@ -145,6 +145,26 @@ Card {
       }
     }
 
+    // Which subfolder to pick from, when the folder has any
+    StyledComboEntry {
+      visible: root.tall && WallpaperManager.collections.length > 0
+      Layout.fillWidth: true
+      icon: "folder"
+      value: Appearance.wallpaperCollection
+      options: [
+        {
+          "value": "",
+          "label": I18n.tr("The whole folder")
+        }
+      ].concat(WallpaperManager.collections.map(folder => ({
+            "value": folder,
+            "label": folder
+          })))
+      onPicked: value => SettingsManager.commitValues({
+          "Appearance.wallpaper.collection": value
+        })
+    }
+
     SettingRows {
       visible: root.tall && root.mode === "rotate"
       Layout.fillWidth: true
@@ -261,8 +281,8 @@ Card {
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
-        visible: ThemeManager.wallpaperModel.count === 0
-        text: I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder)
+        visible: WallpaperManager.images.length === 0
+        text: Appearance.wallpaperCollection ? I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder + "/" + Appearance.wallpaperCollection) : I18n.tr("No wallpapers in {0}", Appearance.wallpaperFolder)
         opacity: 0.6
       }
 
@@ -275,20 +295,19 @@ Card {
         cellHeight: thumbHeight
         // Two across in the tall layout
         cellWidth: root.tall ? width / 2 : thumbHeight * 16 / 10
-        model: ThemeManager.wallpaperModel
+        model: WallpaperManager.images
 
         delegate: Item {
           id: thumb
-          required property url fileUrl
-          required property string filePath
-          readonly property bool current: root.wallpaper !== "" && thumb.filePath.endsWith(root.wallpaper.replace("file://", ""))
+          required property string modelData
+          readonly property bool current: root.wallpaper !== "" && decodeURIComponent(thumb.modelData) === decodeURIComponent(root.wallpaper)
           width: view.cellWidth
           height: view.cellHeight
 
           Thumbnail {
             anchors.fill: parent
             anchors.margins: Widget.spacing / 2
-            source: thumb.fileUrl
+            source: thumb.modelData
             sourceSize: Qt.size(320, 200)
             fillColor: Theme.backgroundAlt
             borderColor: thumb.current ? Theme.accent : thumbArea.containsMouse ? Theme.foreground : "transparent"
@@ -300,10 +319,13 @@ Card {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: WallpaperManager.pick(thumb.fileUrl.toString(), root.targetMonitor, root.tall ? root.variant : "")
+            onClicked: WallpaperManager.pick(thumb.modelData, root.targetMonitor, root.tall ? root.variant : "")
           }
         }
       }
     }
   }
+
+  // New files show as the picker opens
+  Component.onCompleted: WallpaperManager.refresh()
 }

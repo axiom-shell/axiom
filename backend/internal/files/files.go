@@ -1,7 +1,7 @@
 // Package files is how the shell writes and watches its own files
 // (FileManager's write and watch: file.write, file.watch, file.unwatch):
 // StateManager's state, notes, the todo list, notification history and
-// chats. A write is atomic (fsx) and makes the folders it needs; a watch
+// chats; and lists a folder's (file.list: the wallpapers). A write is atomic (fsx) and makes the folders it needs; a watch
 // pushes a path's change to every connection watching it, a moment after
 // a burst of events settles, but not one this package's own write made.
 package files

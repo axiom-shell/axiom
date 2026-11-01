@@ -35,6 +35,10 @@ QtObject {
   readonly property bool rotationPauseFullscreen: _c.wallpaper.rotation.pause.fullscreen
   readonly property bool rotationPauseLocked: _c.wallpaper.rotation.pause.locked
   readonly property bool rotationPauseBattery: _c.wallpaper.rotation.pause.battery
+  // A subfolder of the folder to list from ("" for the folder itself), and
+  // whether the folders under it count too (WallpaperManager.images)
+  readonly property string wallpaperCollection: _c.wallpaper.collection
+  readonly property bool wallpaperSubfolders: _c.wallpaper.subfolders
   // "random" | "none" | a WallpaperTransitions name; the ones random picks
   // from; how long one takes (ms)
   readonly property string wallpaperTransition: _c.wallpaper.transition.type

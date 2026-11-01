@@ -74,9 +74,12 @@ Singleton {
       console.log("[WallpaperManager] No next wallpaper in light/dark mode");
       return;
     }
-    const list = root._wallpaperList();
+    root.refresh(list => root._next(list));
+  }
+
+  function _next(list) {
     if (list.length === 0) {
-      console.log("[WallpaperManager] No wallpapers in", Appearance.wallpaperPath);
+      console.log("[WallpaperManager] No wallpapers in", root._listedPath);
       return;
     }
     ThemeManager.setLastRotated(Date.now());
@@ -127,9 +130,12 @@ Singleton {
   // A random wallpaper of the folder, picked by hand (for the focused
   // monitor, as `pick` does)
   function random() {
-    const list = root._wallpaperList();
+    root.refresh(list => root._random(list));
+  }
+
+  function _random(list) {
     if (list.length === 0) {
-      console.log("[WallpaperManager] No wallpapers in", Appearance.wallpaperPath);
+      console.log("[WallpaperManager] No wallpapers in", root._listedPath);
       return;
     }
     // From the shuffle's round, as the rotation draws
@@ -180,14 +186,56 @@ Singleton {
     onTriggered: root.checkFolder()
   }
 
-  // --- Private ---
+  // --- The wallpapers to pick from ---
 
-  function _wallpaperList() {
-    const model = ThemeManager.wallpaperModel;
-    const list = [];
-    for (let i = 0; i < model.count; i++)
-      list.push(model.get(i, "fileUrl").toString());
-    return list;
+  // The images of the folder's collection (Appearance.wallpaper.collection,
+  // the folder itself when empty), with every folder under it when
+  // subfolders is on: file URLs, by name. Listed by the daemon on start, on
+  // a change of those settings, as the picker opens (refresh) and before
+  // each rotation, so new files show up then
+  readonly property var images: root._images
+  // The folders under the wallpaper folder holding images, as paths inside
+  // it ("trips", "trips/2024"): the collections to choose from
+  readonly property var collections: root._collections
+  readonly property string _listedPath: Appearance.wallpaperPath + (Appearance.wallpaperCollection ? "/" + Appearance.wallpaperCollection : "")
+  readonly property var _extensions: ["jpg", "jpeg", "png", "bmp"]
+  property var _images: []
+  property var _collections: []
+  property int _listings: 0
+  on_ListedPathChanged: root.refresh()
+  readonly property bool _subfolders: Appearance.wallpaperSubfolders
+  on_SubfoldersChanged: root.refresh()
+
+  // Lists the images again, then calls done(images) (when it's the latest
+  // listing asked for)
+  function refresh(done) {
+    if (Paths.greeter)
+      return;
+    const listing = ++root._listings;
+    BackendManager.call("file.list", {
+      "path": root._listedPath,
+      "extensions": root._extensions,
+      "recursive": Appearance.wallpaperSubfolders
+    }, (error, result) => {
+      if (listing !== root._listings)
+        return;
+      const images = error ? [] : result.files.map(path => Qt.resolvedUrl("file://" + path).toString());
+      if (JSON.stringify(images) !== JSON.stringify(root._images))
+        root._images = images;
+      done?.(root._images);
+    });
+    // The collections, from the whole folder
+    BackendManager.call("file.list", {
+      "path": Appearance.wallpaperPath,
+      "extensions": root._extensions,
+      "recursive": true
+    }, (error, result) => {
+      if (listing !== root._listings)
+        return;
+      const folders = error ? [] : result.folders;
+      if (JSON.stringify(folders) !== JSON.stringify(root._collections))
+        root._collections = folders;
+    });
   }
 
   // --- Rotation ---
@@ -254,6 +302,14 @@ Singleton {
 
     function random(): void {
       root.random();
+    }
+  }
+
+  // A reconnected daemon (a re-exec): the folder may have changed meanwhile
+  property Connections _backend: Connections {
+    target: BackendManager
+    function onGreeted() {
+      root.refresh();
     }
   }
 

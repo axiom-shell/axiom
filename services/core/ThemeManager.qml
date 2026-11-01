@@ -29,11 +29,6 @@ QtObject {
   //=========================================================================
   // Public Models & State
   //=========================================================================
-  readonly property FolderListModel wallpaperModel: FolderListModel {
-    folder: Paths.greeter ? "" : "file://" + Appearance.wallpaperPath
-    nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.bmp"]
-    showDirs: false
-  }
   // One entry per theme, a dark/light pair being one theme:
   // [{ label, dark, light, darkPreview, lightPreview, shared, generated,
   // community }] (ThemeFamilies.build), where dark/light are Appearance.theme

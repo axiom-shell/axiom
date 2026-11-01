@@ -17,7 +17,7 @@ func (d *Daemon) filesMethods(reg *rpc.Registry) {
 	fileHandlers(reg, func() *files.Files { return d.files })
 }
 
-// fileHandlers are file.write, file.watch and file.unwatch on f's files
+// fileHandlers are file.write, file.watch, file.unwatch and file.list on f's files
 // (the greeter's axiom answers them too: its state is written through it).
 func fileHandlers(reg *rpc.Registry, f func() *files.Files) {
 	type writeParams struct {
@@ -33,6 +33,15 @@ func fileHandlers(reg *rpc.Registry, f func() *files.Files) {
 	// Changes come as file.changed pushes, to this connection only
 	rpc.Handle(reg, "file.watch", func(ctx context.Context, c *rpc.Conn, p pathParams) (struct{}, error) {
 		return struct{}{}, f().Watch(c, p.Path)
+	})
+	type listParams struct {
+		Path       string   `json:"path"` // absolute
+		Extensions []string `json:"extensions"`
+		Recursive  bool     `json:"recursive"`
+	}
+	// A folder's files of those kinds (the wallpaper list)
+	rpc.Handle(reg, "file.list", func(ctx context.Context, c *rpc.Conn, p listParams) (files.Listing, error) {
+		return files.List(p.Path, p.Extensions, p.Recursive)
 	})
 	rpc.Handle(reg, "file.unwatch", func(ctx context.Context, c *rpc.Conn, p pathParams) (struct{}, error) {
 		f().Unwatch(c, p.Path)

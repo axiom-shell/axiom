@@ -80,7 +80,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 - `x-enumLabels` (`{ value: label }`): labels shown instead of raw enum values in dropdowns (and on an array of enum strings' chips, on the array).
 - `x-enumIcons` (`{ value: icon }`, on an array of enum strings): a Material Symbols icon on each option's chip (an OSD's status icons).
 - `x-enumFrom: "<sibling>"` (on an array of enum strings): offers only the options the sibling array holds, as chips (an OSD's `quiet` statuses, from those it shows).
-- `x-suggestions` (e.g. `"audioApps"`): chips under a text field (`SettingsManager.suggestionsFor`).
+- `x-suggestions` (`"audioApps"`, `"wallpaperCollections"`): chips under a text field (`SettingsManager.suggestionsFor`).
 - `x-multiline: true`: a growing text area that holds line breaks (Enter makes one, Ctrl+Enter commits). Without it a text field is one line, wrapped to four as it grows.
 - `x-control`:
   - `"slider"` | `"stepper"`: overrides the integer control choice (below).
