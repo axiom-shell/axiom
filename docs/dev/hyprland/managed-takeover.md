@@ -37,7 +37,7 @@ How `managed` mode takes `~/.config/hypr/hyprland.lua` over (`claim`), and how l
 - **Released files.** A file that `release` wrote (`releasedLua()`, unedited apart from the include lines) is reported as `released` by `check`. It is only replaced, not kept.
 - **Writing.** `claim` leaves hyprland.lua in place, for the managed write to replace atomically. Hyprland reloads when the file changes, and must never find it missing.
 - **Re-claiming.** Claiming the same file again before the managed write came reuses its copies (making the edits to the adopted copy again, which change nothing twice), but only as the claim's record (`.axiom-claimed`) names them: a config released unchanged has the newest backup's bytes too, and is copied anew.
-- **The record.** Each claim notes what it set aside in `.axiom-claimed` beside the config (`previous=`, `backup=`), so release gives back that, never an older claim's dated backup still lying there. A claim from before records gets the newest of each.
+- **The record.** Each claim notes what it set aside in `.axiom-claimed` beside the config (`previous=`, `backup=`), so release gives back that, never an older claim's dated backup still lying there. A claim from before records gives back nothing (the maintainer, 2026-11-01: "drop"): release writes the released file, and the old copies stay where they are.
 - **Binds.** Only the adopted file's binds are merged straight away (`mergeUserBinds(name)`, `extract --only`), so managed mode starts with no conflicts. The rest of `user/` waits for the Merge button ([Bind merge](bind-merge.md)).
 
 ### Release

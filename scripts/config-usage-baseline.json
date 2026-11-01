@@ -1,8 +1,4 @@
 {
   "settings": [],
-  "members": [
-    "HyprlandConfig.managed",
-    "LauncherConfig.clipboardMaxEntries",
-    "WindowBehaviourConfig.behaviour"
-  ]
+  "members": []
 }

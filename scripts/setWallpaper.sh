@@ -3,9 +3,8 @@
 # Author:      travmonkey
 # Date:        2025-09-30
 # Description: Sets a wallpaper with a random transition on a monitor.
-# Usage:       setWallpaper.sh <path_to_image> [monitor] [primary]
-#              without a monitor, every one; primary=1 also links it
-#              to ~/.current_wallpaper
+# Usage:       setWallpaper.sh <path_to_image> [monitor]
+#              without a monitor, every one
 
 set -euo pipefail
 
@@ -28,7 +27,3 @@ if [[ -n "${2:-}" ]]; then
   outputs=(-o "$2")
 fi
 awww img "${outputs[@]}" "$WALLPAPER_PATH" $awww_PARAMS
-
-if [[ "${3:-}" == "1" ]]; then
-  ln -sf "$WALLPAPER_PATH" "$HOME/.current_wallpaper"
-fi

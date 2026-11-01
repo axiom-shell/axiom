@@ -3,8 +3,25 @@ package render
 import (
 	"testing"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/kdl"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
+
+// A parsed node is written back as niri reads it: escapes, a float kept a
+// float, a name that isn't bare quoted.
+func TestKdlNodeText(t *testing.T) {
+	t.Parallel()
+	nodes, err := kdl.Parse("spawn \"a \\\"b\\\"\r\" 1 2.0 0.25 true focus=false\n\"odd name\" 1\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := KdlNodeText(nodes[0]), `spawn "a \"b\"\r" 1 2.0 0.25 true focus=false`; got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+	if got, want := KdlNodeText(nodes[1]), `"odd name" 1`; got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+}
 
 // The switcher binds go to niri's recent-windows, except one without a
 // modifier or a mouse wheel key (niri refuses those there): they stay axiom's.

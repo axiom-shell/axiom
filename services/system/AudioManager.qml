@@ -32,8 +32,6 @@ QtObject {
 
   readonly property real volume: Pipewire.defaultAudioSink?.audio?.volume ?? 0
   readonly property bool muted: Pipewire.defaultAudioSink?.audio?.muted ?? false
-  readonly property string name: Pipewire.defaultAudioSink?.name ?? ""
-  readonly property string description: Pipewire.defaultAudioSink?.description ?? ""
 
   function increaseVolume(amount = 0.05) {
     stepNodeVolume(defaultSink, amount);
@@ -260,7 +258,6 @@ QtObject {
     }
     return targets;
   }
-  readonly property var micUsers: [...new Set(micCaptures.map(n => appName(n)))]
   readonly property bool micInUse: micCaptures.length > 0
 
   // An app stream's name: its application, else its binary or node name

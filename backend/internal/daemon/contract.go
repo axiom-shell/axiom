@@ -59,14 +59,6 @@ func (d *Daemon) methodSets() []func(*rpc.Registry) {
 	}
 }
 
-// greeterOnlyMethods are the methods the greeter's axiom serves and the
-// session's doesn't (greeterRegistry), which the contract lists too: the
-// shell calls them in greeter mode. profiles takes the bundle's monitor
-// profiles (greeterProfiles).
-func greeterOnlyMethods(reg *rpc.Registry, getenv func(string) string, schema func() any, profiles func(any)) {
-	greeterHandlers(reg, getenv, schema, profiles)
-}
-
 // BuildContract builds the daemon's registry without starting anything
 // (registering only stores closures), with the greeter's own methods, and
 // reports its shapes.

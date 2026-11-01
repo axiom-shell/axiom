@@ -18,8 +18,6 @@ import qs.services.compositor
 QtObject {
   id: root
 
-  readonly property bool available: Greetd.available
-
   // --- Users and sessions ---
 
   // Regular accounts (GreeterUsers), by name

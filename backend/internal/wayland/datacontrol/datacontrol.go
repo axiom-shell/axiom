@@ -113,17 +113,6 @@ func (d *Device) Protocol() string {
 	return ""
 }
 
-// Mimes are the current selection's types (nil: none, or a clipboard
-// nobody serves).
-func (d *Device) Mimes() []string {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	if d.current == nil {
-		return nil
-	}
-	return append([]string(nil), d.current.mimes...)
-}
-
 // Current is the current selection, nil without one.
 func (d *Device) Current() *Offer {
 	d.mu.Lock()

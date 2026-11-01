@@ -48,7 +48,8 @@ Singleton {
       ThemeManager.generateThemesFromWallpaper(url);
       return;
     }
-    ThemeManager.setWallpaperAndGenerate(url, monitor);
+    ThemeManager.setWallpaper(url, monitor);
+    ThemeManager.generateThemesFromWallpaper(url);
   }
 
   // The light or dark wallpaper ("dark" | "light"); ThemeManager shows it

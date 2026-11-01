@@ -375,12 +375,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Three reader members nothing reads
-- **Where:** `config/HyprlandConfig.qml` (`managed`), `config/LauncherConfig.qml` (`clipboardMaxEntries`), `config/WindowBehaviourConfig.qml` (`behaviour`), `scripts/config-usage-baseline.json`
-- **What:** `scripts/gen_docs.py` lists them as reader members with no user (the daemon reads those settings itself: Compositor.hyprland and WindowBehaviour through `x-compositor`, the clipboard's limit by name). `HyprlandConfig` has no other member, so the whole reader can go; `WindowBehaviourConfig` too. They sit in `scripts/config-usage-baseline.json`, which only shrinks: deleting one means dropping its line there. Deletion candidates for the audits' deletion pass.
-- **Size:** trivial
-- **Found:** 2026-10-30, while making gen_docs.py see readers of ConfigManager.live (roadmap row 18)
-
 ### The guard reads the branch from the session's folder, not a `cd` before the push
 - **Where:** `.claude/hooks/guard.py` (`check_git`, `current_branch`), `tests/scripts/test_guard.py`
 - **What:** `git push … origin HEAD` (or a push with no refspec) is refused when `current_branch` of the hook's `cwd` is main, and that `cwd` is the session's folder: a `cd` earlier in the same command isn't followed (`git -C` is). An agent whose session sits in a checkout on main and pushes a branch from a worktree with `cd <worktree> && git push -q -u origin HEAD && gh pr create --label roadmap --base main --body "$(cat <<'EOF' … EOF)"` gets `don't push to main; open a PR from a branch.` (refused once on 2026-10-30, autopilot for #232; reproduced 2026-10-30 by feeding `guard.check` that command with `cwd` a scratch repository on main: refused; with `cwd` the worktree, or `git -C <worktree> push`: allowed). The plain shape from the branch's own folder passes since #241 (a heredoc body with rule-like text passes too). It struck again on 2026-11-01 (row 19, batch 15): `git push -u origin HEAD` for the feature branch `roadmap/19-audits-batch15` was refused with `Blocked by AGENTS.md › Never, while testing: don't push to main; open a PR from a branch.`, and pushing by branch name went through. `check_git` already resolves a bare `HEAD` (line 376, `dest == "HEAD" and current_branch(cwd) in PROTECTED_BRANCHES`), but from the hook's `cwd`; a subagent's Bash `cwd` resets to the session's folder (the live checkout, on main) every call, so a worktree reached by `cd` is never the one read (reproduced 2026-11-01 through `guard.check`: `git push -u origin HEAD` with `cwd` the worktree allowed; with `cwd` the live checkout, with or without a leading `cd <worktree> &&`, refused). The workaround is an explicit `branch:branch` refspec or `git -C`. Fix: follow a leading `cd <dir> &&` into the cwd `check_git` uses, with a test case.
@@ -388,7 +382,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while recording the size before the audits (roadmap row 19)
 
 ### The daemon picks a compositor the shell may not run under
-- **Where:** `backend/internal/compositor/manager/manager.go` (`New`), `backend/internal/compositor/manager/outputs.go` (`OutputsFromEnv`, `Outputs.Read`), `backend/internal/daemon/compositorsocket.go` (`greeterHandlers`, `outputHandlers`, `applyGreeter`), `components/methods/CompositorKind.qml`
+- **Where:** `backend/internal/compositor/manager/manager.go` (`New`), `backend/internal/compositor/manager/outputs.go` (`OutputsFromEnv`, `Outputs.Read`), `backend/internal/daemon/compositorsocket.go` (`greeterOnlyMethods`, `outputHandlers`, `applyGreeter`), `components/methods/CompositorKind.qml`
 - **What:** The shell picks its compositor with `CompositorKind`: with more than one of `HYPRLAND_INSTANCE_SIGNATURE` / `SWAYSOCK` / `NIRI_SOCKET` set (one left in the systemd user environment by an earlier session), the one whose process still runs wins. The daemon doesn't: `manager.New` takes the first set in a fixed order (Hyprland, niri, sway; the shell's is Hyprland, sway, niri) and `Outputs.Read`/`Apply` switch on the same order, with no process check. Under niri with a stale `HYPRLAND_INSTANCE_SIGNATURE` (or under sway with a stale `NIRI_SOCKET`) the manager is Hyprland's: `live()` needs the shell's facts to name its kind, so the layer is never applied (no binds, look or input in any mode), the status card stays on Checking, monitor profiles and `outputs.apply` go to a dead socket, and idle's `ScreenPower` fails. `applyGreeter` takes the same order. A stale variable is a case `docs/dev/compositor/README.md` names; the live session (sway) has none, so it isn't seen there. Both the compositor and the niri audits found this from the code; the niri one adds that `outputs.apply` (the Monitors page's Apply, profile switching) then fails with "no reply from Hyprland". Fix: one Go `Detect(getenv)` (CompositorKind's rule, `/proc/<pid>/comm`, as `userconf.NiriMain` and the sway reader already check their pid) used by all three, or the daemon passes the kind it picked to all three; then the daemon can start qs with only the running compositor's variable set, and `CompositorKind.qml` (68 lines), `tests/tst_CompositorKind.qml` (73) and `CompositorManager._running` go.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor system (and again reviewing the niri system)
@@ -543,24 +537,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### Hyprland's exit command is kept in two packages
-- **Where:** `backend/internal/compositor/binds/hypr.go` (`exitCommand`), `backend/internal/compositor/render/hyprconfig.go` (`exitLua`)
-- **What:** The merge maps `exec_cmd(<exitCommand>)` to `exitSession` and the writer emits `exitLua` for `exitSession`: the same string, kept by hand in two places (hypr.go:44, hyprconfig.go:30), with no test tying them. Changed alone, a written exit bind merges back as a plain `exec`. Fix: one constant (e.g. in `actions`) used by both; deletion pass 1 line.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### noteReload counts every compositor reload a second time
 - **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
 - **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30). The sway review (2026-10-30) found an apply between the count and that reset still sends the old list: [The detached layer's unbind list can drift from what sway holds](#the-detached-layers-unbind-list-can-drift-from-what-sway-holds) wants the reset where the reload is counted; fix the two together.
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The Hyprland Go code keeps dead and doubled helpers
-- **Where:** `backend/internal/compositor/takeover/kinds.go` (`record`), `backend/internal/compositor/takeover/takeover.go`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherLeaveLua`), `backend/internal/compositor/render/keys.go` (`UserKeyCounts`), `backend/internal/compositor/binds/hyprlua.go` (`quoteLua`), `backend/internal/daemon/compositor.go`, `backend/internal/daemon/compositorsocket.go`
-- **What:** Deletion pass, about 65 lines. `Kind.record` is true for all three kinds, so the field and its `!record` halves are dead (about 13), and the `err != nil` fallback for claims older than `.axiom-claimed` goes too (about 6 more). `render.SwitcherLeaveLua` has no Go caller (HyprlandManager.qml hard-codes the same Lua; 1). `render.UserKeyCounts` has only `shared_test.go`'s op row as caller (the shell counts user keys itself; about 18, with its row; the op row there for BindKeys' `runtimeBinds` replays a JS function that no longer exists). `binds.quoteLua` (31 lines) is a second Lua string quoter beside `render.LuaString`; `binds` can import `render` with no cycle (moved `raw` arguments would keep raw control bytes instead of `\ddd`, which no test pins). `daemon/compositor.go` spells the anonymous `struct{ Only string }` six times (a named type, about -15). The `hyprctl setcursor` request is built twice (`manager/hypr.go`, `daemon/compositorsocket.go`): one `ipc` helper. `render.SoftShadow`, `LeaveSubmap` and `AnimationSet` are exported but used only inside `render`.
-
-  **Decided** (maintainer, 2026-11-01, on the old-claims fallback, "drop" or "keep"; recommended keep): "drop".
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### Bind helpers keep JS halves the daemon owns now
@@ -575,12 +555,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### The unused reader member check counts a member named after its key as used
-- **Where:** `scripts/gen_docs.py` (the reader-member usage count), `scripts/config-usage-baseline.json`, `config/WindowSwitcherConfig.qml` (`compositorSwitcher`)
-- **What:** gen_docs.py (around line 334) counts a reader member as used inside its reader when its name appears more than once there. `(?<![\w])name\b` also matches the `.name` in the member's own `_c.name` binding, so every member named after its config key passes, read or not: `WindowSwitcherConfig.compositorSwitcher` has no QML reader (the daemon reads the setting itself, `manager/niri_test.go` pins it) and isn't listed. Fix: don't count a match preceded by `.`, or count `<Reader>.<member>` uses outside the reader; then delete what it newly finds (the baseline only shrinks): `compositorSwitcher` is 3 lines.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### A user's blur off overrides axiom's blur on niri
 - **Where:** `backend/internal/compositor/render/niri.go` (`NiriLookNodes`), `backend/internal/compositor/userconf/niri.go` (`NiriInfo`)
 - **What:** `niri-backend.md` says axiom's look wins over the user's files, and a boolean is written both ways so axiom's choice wins. The look's blur isn't: with blur on, `NiriLookNodes` writes `blur { passes; offset; noise }` but never `on`. A `blur { off }` in the user's config (included mode) or in a `user/*.kdl` (managed mode, e.g. the adopted `00-previous.kdl`) stays in effect, since niri merges a later definition per field, so axiom's window and surface blur silently does nothing. `niri validate` (niri 26.04) accepts `blur { on }`. `NiriInfo` has the mirror gap: it sets `enabled` false on any `off` and never back on a later `on`, so `NiriManager.blur` would read wrong once the writer writes `on`. Fix: `KdlSetPath(nodes, "blur.on", …)` with blur on; `NiriInfo` takes the last of `on` / `off`; a frozen render case.
@@ -589,43 +563,13 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### niri started on a broken config reads as loaded
 - **Where:** `backend/internal/compositor/ipc/niri.go` (`Reloads`), `backend/internal/compositor/manager/niri.go` (`checkLoaded`, `lastFailed`), `backend/internal/compositor/manager/manager.go` (`configReloaded`)
-- **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (`NiriManager.lastLoadFailed` has no reader). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### Nothing reads userBindsRead or lastLoadFailed
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`userBindsRead`), `backend/internal/compositor/manager/writer.go` (`userBindsRead`), `backend/internal/compositor/manager/manager.go` (`state`), `services/compositor/NiriManager.qml` (`lastLoadFailed`)
-- **What:** Deletion pass. `CompositorConfigManager.userBindsRead` has no reader in QML (grep: its declaration only). In Go it's a writer interface method whose three implementations always return true: Hyprland's and sway's are the constant, and niri's `userEntries != nil` is set by `newNiri` before the first state is sent. About 9 lines (QML property, interface method, three implementations, the fake's, the state field) plus the doc comment. `NiriManager.lastLoadFailed` (2 lines plus a sentence in `niri-backend.md` › State) has no reader either, unless the fix for "niri started on a broken config reads as loaded" gives it one.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### The niri writer's runtimeOn and unread-binds guards are dead
-- **Where:** `backend/internal/compositor/manager/niri.go` (`runtimeOn`, `runtimeApply`, `entries`, `readUserConfig`)
-- **What:** Deletion pass. `niriWriter.runtimeOn` is set in `runtimeApply` and `runtimeClear` and never read (sway's is; niri's was copied along): 3 lines. `newNiri` calls `readUserConfig`, which always leaves `userEntries` non-nil (an empty array when the config can't be read), so `runtimeApply`'s and `entries`' `if w.userEntries == nil` returns and `readUserConfig`'s own nil guard can't happen: about 9 more lines, and `entries` never returns nil on niri.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### Three listings of niri's user files
-- **Where:** `backend/internal/compositor/manager/niri.go` (`userFiles`), `backend/internal/compositor/binds/niri.go` (`niriFiles`), `backend/internal/compositor/takeover/kinds.go` (`left`)
-- **What:** Deletion pass. The managed config's `user/*.kdl` (regular `.kdl` files, no hidden ones, by name) is listed three times: the writer's `userFiles` (12 lines), the merge's `niriFiles` (21, with `--only`), and the takeover's `left` (13), which counts what a restored config doesn't include. The copies disagree: `left` counts hidden `.kdl` files (an editor's swap file, a staged write) that the writer never includes, and skips a symlinked `.kdl` (`DirEntry.Type`) that the writer includes (`os.Stat`), so a release can report files left out that were never in. One `userconf.NiriUserFiles(dir)` used by all three saves about 25 lines and makes them agree.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### RunningNested has its own niri socket client
-- **Where:** `backend/internal/compositor/userconf/niri.go` (`RunningNested`), `backend/internal/compositor/ipc/niri.go` (`Outputs`)
-- **What:** Deletion pass. `RunningNested` dials `$NIRI_SOCKET`, writes `"Outputs"` and parses the reply by hand (28 lines), which `ipc.NiriFromEnv(getenv).Outputs(ctx)` already does with the shared dial and timeout (`userconf` can import `ipc`: `ipc` depends only on `render`, `actions` and `jsonx`). As one `Outputs` call, a single output named `winit`: about 8 lines.
+- **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (the unread `NiriManager` property that forwarded it is gone). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
 ### NiriManager queues actions the daemon could order
 - **Where:** `services/compositor/NiriManager.qml` (`_command`, `_next`), `backend/internal/daemon/compositorsocket.go` (`niriHandlers`)
 - **What:** Deletion pass. `NiriManager` keeps its own queue (`_command`, `_queue`, `_running`, `_next`: about 30 lines) so a chain of actions can't overtake itself, sending each only after the last one's reply came back through the daemon: one full round trip per action. The daemon already has the mechanism, `rpc.Registry.InOrder` (used for `outputs.apply`). A `niri.command` method registered in order, alongside `niri.request` for state, lets `_action` / `_command` send at once and drops the queue: about 30 QML lines for about 5 Go lines.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### A second KDL writer in the kdl package
-- **Where:** `backend/internal/compositor/kdl/kdl.go` (`ValueText`, `PyFloat`, `NodeText`, `Str`), `backend/internal/compositor/render/niri.go` (`KdlValue`, `KdlString`, `KdlSerialize`)
-- **What:** Deletion pass. The niri system's Check is that KDL is written by one module; `niri-backend.md` names `render`'s serializer. The parser package carries a second writer from the Python port: `ValueText` (its own escapes, without `\r`), `PyFloat` (floats as Python's `str` spells them, "1e+16"), `NodeText` (no quoting of names), and `Str`'s Python spellings ("True", "None"). They're used only for a moved bind's `raw` text and a bind's description (`binds/niri.go`, `userconf/niri.go`), where `render`'s writer gives the same text for the values niri's binds hold. Writing those through `render` (or one shared value writer) removes about 50 lines and the second set of escaping rules.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the niri system
 
@@ -796,30 +740,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A sway line continuing a non-bind line is moved as a bind of its own
 - **Where:** `backend/internal/compositor/binds/sway.go:283` (`extractSway`)
 - **What:** Only the bind's own line is checked for a trailing `\`; a line that follows a continued line is read as a fresh statement. `exec_always foo \` then `bindsym Mod4+x kill` is to sway one `exec_always foo bindsym Mod4+x kill`; extract moves `SUPER + X → closeWindow` (reproduced) and remove prefixes the second line with `# (moved into axiom) `, so sway now runs `foo # (moved into axiom) bindsym Mod4+x kill` and the user gains a bind they never had. Rare. Fix: carry a `continued` flag from the previous raw line and skip a line it covers; one test row.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Small shrinks in the compositor manager
-- **Where:** `backend/internal/compositor/manager/manager.go:760` (`AllowTakeover`), `backend/internal/compositor/manager/manager.go:532` (`state`), `backend/internal/compositor/manager/manager.go:888` (`release`), `backend/internal/compositor/manager/manager.go:1251` (`merge`), `backend/internal/compositor/manager/writer.go:216` (`sprintf`), `backend/internal/compositor/manager/hypr.go:70` (`problems`)
-- **What:** Deletion pass, about 15 lines. `AllowTakeover`'s `m.w == nil` check is dead (`enqueue` drops everything then) and its `if m.mode == "managed"` repeats line 760's early return; `state()`'s `if m.w != nil` (532) can't be false for its two callers, and its `kind` field (559) is read by no client; the approval removal with its warning is written twice (888-890, 1148-1150) beside an `approve()` for the add; `merge`'s `|| m.merging` (1251) can't be true at entry (set and cleared inside the one call on the manager goroutine); `sprintf` (writer.go:216) wraps `fmt.Sprintf` for its one caller `logf`; `problems().Blocked` is the same sentence in all three writers (hypr.go:70, sway.go:76, niri.go:88), read only at manager.go:854, where `m.files().ConfigDir` gives the one part that differs. Fix: drop the dead checks and `kind`, add `forgetApproval()`, call `fmt.Sprintf` in `logf`, build the blocked sentence in the manager and drop the field (and the fake writer's `Blocked`). Every path keeps its behaviour: each removed check is settled by the caller or the line before it. "Nothing reads userBindsRead or lastLoadFailed" drops another `state()` field, independently.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### niri's bind plan is a copy of runtimeLayer.plan
-- **Where:** `backend/internal/compositor/manager/niri.go:110` (`plan`), `backend/internal/compositor/manager/runtime.go:42` (`plan`)
-- **What:** `runtimeLayer` is "what every compositor's runtime layer shares", yet `niriWriter.plan` (niri.go:108-126, 19 lines) repeats `runtimeLayer.plan` (filter by `complete`, `render.RuntimeBinds` against the user's entries, keep `skipped`, log each taken key once through its own `reported` map, with its own `reported`/`skipped` fields). It has drifted: it drops `RuntimeBinds`' unreadable keys without the "Can't read the key %q" log the other two give, and words the skip log differently. Fix: give `niriWriter` a `runtime runtimeLayer{configName: "niri"}`; `parts`, `entries`, `ownKey` and `skippedKeys` use it; about 15 lines fewer and one log wording.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Go copies of bind helpers that only the parity replay calls
-- **Where:** `backend/internal/compositor/render/actions.go:22` (`Supported`), `backend/internal/compositor/render/actions.go:36` (`AppliesUnder`), `backend/internal/compositor/render/actions.go:43` (`KeySupported`), `backend/internal/compositor/render/actions.go:63` (`HasCalls`), `backend/internal/compositor/render/actions.go:81` (`ArgumentKind`), `backend/internal/compositor/render/layer.go:29` (`Hex`), `backend/internal/compositor/render/shared_test.go:212`
-- **What:** No daemon code calls these: `grep -rnw` over the non-test Go finds each only at its definition (or `Supported`/`KeySupported` inside `AppliesUnder`). Their only callers are `shared_test.go`'s op rows replaying the shell's `BindActions.*` / `CompositorLayer.hex`, which the shell keeps using itself (`KeybindManager.qml`, `KeybindEditor.qml`). Deletion pass, 36 lines (actions.go 20-45, 62-63, 80-83; layer.go 28-31) plus six op rows; the replay skips ops with no row (`if !ok { continue }`), so the cases still pass. (`UserKeyCounts`, the same kind, is in "The Hyprland Go code keeps dead and doubled helpers".) Fix: delete them and their rows.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### sway and niri each fit the shadow to axiom's themselves
-- **Where:** `backend/internal/compositor/render/sway.go:510` (`SwayFxLines`), `backend/internal/compositor/render/niri.go:471` (`NiriLookNodes`), `backend/internal/compositor/render/layer.go:223` (`GaussianShadow`), `backend/internal/compositor/render/niri.go:422` (`NiriBindEntries`)
-- **What:** Both writers carry the same 7 lines (`soft := truthy(get(s, "soft")) && truthy(get(s, "rgb"))`, the raw size and color, then `r, a := GaussianShadow(s); size = r; color = … + AlphaHex(a)`). Fix: `GaussianShadow(s)` returns the spec's `(size, color)`, falling back to the raw ones when not soft; each block becomes one line; output unchanged. Same pass: `NiriBindEntries`' `else if id != "" { mask = id[:len(id)-1] }` can't run (`KeyID` returns "" or an id holding `:`), 2 lines.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
@@ -1044,30 +964,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
-### SwayConfigBinds keeps its own copy of sway's $variables
-- **Where:** `backend/internal/compositor/render/sway.go:804` (`swaySet`), `backend/internal/compositor/render/sway.go:815` (`SwayConfigBinds`)
-- **What:** Deletion pass, 12 lines. `userconf` already has `Vars` (`Set`, and `Expand` longest name first) and `SetLine`, and `extractSway` and `SwayText` use them. `SwayConfigBinds` re-implements all of it: `swaySet` is `SetLine` character for character, plus a names slice, a map, and a sort by length on every line. `render` can import `userconf` without a cycle. Fix: `vars := &userconf.Vars{}`, `SetLine` for `set` lines, `line = vars.Expand(line)`. That removes 18 lines (804: 1, 816-825: 10, 843-849: 7) and adds about 6, leaving one set of variable rules instead of two.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### Small shrinks in the sway writer and IPC
-- **Where:** `backend/internal/compositor/manager/sway.go:203` (`setCursor`), `backend/internal/compositor/render/sway.go:478` (`numberOr0`), `backend/internal/compositor/ipc/sway.go:45` (`swayWrite`)
-- **What:** Deletion pass, about 10 lines:
-  - `setCursor` (203-205) sends `seat * xcursor_theme …`, but the live lines carry the same line every time (`SwayInputLines` appends `SwayCursorLine` whenever a cursor is set, `live` or not), so a cursor change sends it twice. Make it a no-op (3 lines to 1).
-  - `numberOr0` (478-485) has one caller, `clampRound`. Inline it as a NaN check (8 lines out, about 2 in).
-  - `swayWrite`'s tail (45-48) becomes `_, err := conn.Write(…); return err` (4 lines to 2).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### The sway extract's input-device case and isSwayFlag repeat the general rule
 - **Where:** `backend/internal/compositor/binds/sway.go:37` (`isSwayFlag`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
 - **What:** Deletion pass, about 17 lines. `--input-device=<id>` is in neither `swayFlags` nor `swayHarmless`, so the general `other` branch already keeps such a bind as `options`. The `device` boolean (288-302) exists only so the detail lists every flag instead of the unknown one, which nothing pins (`input-device` appears only in sway.go). `isSwayFlag` (37-45, 9 lines) has one caller. Fix: `slices.ContainsFunc(swayFlags, …)` inline, plus `if len(other) > 0 { push(… strings.Join(other, " ")) }`. The 17 lines at 287-303 become about 9, and `isSwayFlag` goes. `swayAction`'s `o Options` parameter is never read and goes too. These are the lines [A sway title-bar mouse bind moves in as a whole-window bind](#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind) changes: land the two together.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### binds and takeover each keep their own isFile and git check
-- **Where:** `backend/internal/compositor/binds/binds.go:185` (`isFile`), `backend/internal/compositor/takeover/kinds.go:215` (`isFile`), `backend/internal/compositor/userconf/niri.go:453` (`isFile`), `backend/internal/compositor/binds/binds.go:86` (`inGit`), `backend/internal/compositor/takeover/takeover.go:112` (`gitRepo`)
-- **What:** Deletion pass, 11 lines. There are three identical 4-line `isFile` functions. `inGit` and `gitRepo` both run `git -C <dir> rev-parse --show-toplevel`; one keeps the answer, the other the repo. Fix: one exported `IsFile` (in `fsx`) and one `GitRepo` in a shared package, with binds' default tracker calling it. That removes two `isFile`s (8 lines) and `inGit` (3).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
@@ -1129,24 +1028,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### sway and niri build output details and descriptions twice
 - **Where:** `components/methods/SwayState.qml:183` (`output`), `components/methods/SwayState.qml:298` (`outputDetails`), `components/methods/NiriState.qml:135` (`description`), `components/methods/NiriState.qml:351` (`outputDetails`)
 - **What:** Deletion pass, about 12 lines. The make/model/serial description (`[make, model, serial].filter(part => part && part !== "Unknown").join(" ")`) is written three times: twice in SwayState and once as `NiriState.description`. Both `outputDetails` repeat the same mHz→Hz `rate` lambda, the `availableModes` template (`${m.width}x${m.height}@${rate(m).toFixed(2)}Hz`) and the 13-key object (24 and 30 lines). `MonitorLayout` matches modes as strings across compositors, so the two spellings must stay identical. Fix: one pure helper (`description`, `mode(width, height, mHz)`, `detail({…})`) with a test row, used by both. It removes about 12 lines and keeps the spellings identical by construction.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### The bind merge lists user/ files three times, once per compositor
-- **Where:** `backend/internal/compositor/binds/hypr.go:336` (`hyprFiles`), `backend/internal/compositor/binds/sway.go:212` (`swayFiles`), `backend/internal/compositor/binds/niri.go:128` (`niriFiles`)
-- **What:** Deletion pass, about 32 lines. `swayFiles` and `niriFiles` are the same 21 lines each; `diff` shows only the name, the comment and the filter line. `hyprFiles` (13 lines) does the same with a `.lua` filter but no hidden-file filter. That's 55 lines in all. Fix: one `userFiles(o Options, keep func(name string) bool) []string` (about 20 lines, `only` handled once, hidden files always skipped) plus a one-line filter per kind. It removes about 32 lines, and Hyprland's merge stops reading a hidden `.x.lua` the managed file never loads. Do it with [Three listings of niri's user files](#three-listings-of-niris-user-files), which moves the writer's copy.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### sway's and niri's merges build a moved bind the same way twice
-- **Where:** `backend/internal/compositor/binds/sway.go:309` (`extractSway`), `backend/internal/compositor/binds/niri.go:203` (`extractNiri`)
-- **What:** Deletion pass, about 11 lines. Both copy the mapped action's keys into `{key}` (sway 310-313, niri 204-207). Both then apply the same repeat rule under the same three-line comment (sway 319-325, niri 214-221: `if <native repeat on> && (actions.Default().Repeating[name] || name == "raw")`): 23 lines. Fix: one `movedBind(key, action, nativeRepeat)` of about 10 lines with the comment, called from both. It keeps every output, and the next change to the rule happens once.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### The merge keeps key and variable tables render already has
-- **Where:** `backend/internal/compositor/binds/hypr.go:183` (`keyID`), `backend/internal/compositor/binds/sway.go:22` (`swayMouse`), `backend/internal/compositor/binds/hypr.go:41` (`hyprDirections`), `backend/internal/compositor/binds/sway.go:30` (`swayDirections`)
-- **What:** Deletion pass, about 16 lines. (1) `keyID` (15 lines) is a third key normaliser beside `render.KeyID`/`BindKeys.keyId`. It lowercases and sorts but resolves no modifier alias, so `hl.unbind("WIN + Q")` doesn't match a moved `SUPER + Q`, which `render.KeyID` would. `binds` can import `render` with no cycle. (2) `swayMouse` (3 lines) holds the same 12 entries as `render`'s `swayMouseKeys`. (3) `hyprDirections` and `swayDirections` are the same four-entry map. Fix: use `render.KeyID` in the merge (re-keying `exampleKeys` and `TestKeyID`'s rows to its spelling), export one mouse table, and share one directions map. `SwayConfigBinds`' own `$variable` expander is [SwayConfigBinds keeps its own copy of sway's $variables](#swayconfigbinds-keeps-its-own-copy-of-sways-variables).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 
@@ -1753,39 +1634,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A format-2 config without a version runs every step again
 - **Where:** `backend/internal/migrate/steps/steps.go:156` (`migrate`), `backend/internal/config/format.go:82` (`Load`)
-- **What:** `migrate` reads the version as `from, _ := cfg.Value("version").(float64)`, so a format-2 file whose `version` is missing (or not a number, e.g. a hand-written config.json with just `"format": 2`) counts as version 0: every step from v77 runs, `migrated` is true and the store writes the result back. Most steps find nothing in a current-shape config, but v78 and v80 act on one. A probe through `V2Pipeline.Load` of `{"format":2,"Session":{"autostart":[{"id":"hypridle","command":"hypridle"}]},"Overlay":{"items":[{"id":"settings","type":"Settings"}]}}` returned `migrated=true`, changes "Session.autostart: the hypridle entry removed …" and "Overlay.items: added the Custom widgets page": the user's own hypridle autostart (the entry v78's note tells them to add back) is deleted and a page they removed comes back, both written to disk. Saved and shared files are refused without a version (`readShared` › `versioned` in `backend/internal/saved/saved.go`), so only the live config.json takes this path.
+- **What:** `migrate` reads the version as `from, _ := cfg.Value("version").(float64)`, so a format-2 file whose `version` is missing (or not a number, e.g. a hand-written config.json with just `"format": 2`) counts as version 0: every step from v77 runs, `migrated` is true and the store writes the result back. Most steps find nothing in a current-shape config, but v78 and v80 act on one. A probe through `Pipeline.Load` of `{"format":2,"Session":{"autostart":[{"id":"hypridle","command":"hypridle"}]},"Overlay":{"items":[{"id":"settings","type":"Settings"}]}}` returned `migrated=true`, changes "Session.autostart: the hypridle entry removed …" and "Overlay.items: added the Custom widgets page": the user's own hypridle autostart (the entry v78's note tells them to add back) is deleted and a page they removed comes back, both written to disk. Saved and shared files are refused without a version (`readShared` › `versioned` in `backend/internal/saved/saved.go`), so only the live config.json takes this path.
 
-  **Decided** (maintainer, 2026-10-31): "Reccomendation as described". Fix: refuse it. In `V2Pipeline.Load` (`backend/internal/config/format.go:43`), `format == 2` with a `version` that isn't an integer in [`convert.Version` (76), `Current()`] returns an Errors message "version: missing or not a format-2 version; add `\"version\": N`". Plus a one-time backup `config.v<from>.json` for every migrated write-back, as format 1 has. `format_test.go` rows for a missing `version`, a string and 3.
+  **Decided** (maintainer, 2026-10-31): "Reccomendation as described". Fix: refuse it. In `Pipeline.Load` (`backend/internal/config/format.go`), `format == 2` with a `version` that isn't an integer in [`convert.Version` (76), `Current()`] returns an Errors message "version: missing or not a format-2 version; add `\"version\": N`". Plus a one-time backup `config.v<from>.json` for every migrated write-back, as format 1 has. `format_test.go` rows for a missing `version`, a string and 3.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the config-pipeline system
 
 ### The condition grammar has no shared fixtures
 - **Where:** `backend/internal/schema/conditions.go:20` (`Holds`), `backend/internal/config/shared_test.go:33` (`runSchemaOp`), `tests/Shared.qml`
 - **What:** `docs/dev/core/config-v2.md` rule 9 says `x-showIf`, `x-enabledIf`, `x-enumShowIf` and `x-scopeIf` share one grammar, "implemented once in Go and once in `SchemaLayout`, with shared fixtures". No fixture exists: `tests/Shared.qml` records only `schema.applyDefaults` and `schema.resolveRef`, and the `schema` package's only test is `pattern_test.go`, so `Holds`' `anyOf`, `{not: …}` and `{notEmpty: true}` branches run in no Go test (the share tests reach the plain-value and list forms through the exec bind). `Holds` decides `x-scopeIf`, which decides whether an imported or exported file's commands (an exec or raw bind, `Keybind.yaml`'s `when: {action: [exec, raw]}`; an exec hot corner) are carried or kept: a rule written with `not` or `anyOf` that evaluates differently in Go than in `SchemaLayout.showIfHolds` would carry commands the settings page shows as personal, and nothing would catch it. Fix: a `schema.showIfHolds` op in `tests/Shared.qml` (rows for each form, a missing key, null, a list value) and its case in `runSchemaOp` calling `schema.Holds`.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### Format-1 secrets plumbing nothing fills or reads
-- **Where:** `backend/internal/config/load.go:15` (`Loaded`), `backend/internal/migrate/legacy/legacy.go:45` (`Result`)
-- **What:** `legacy.js`'s `migrate` declares `const secrets = {}` and returns it without ever writing a key (`grep -n secrets legacy.js`: the declaration, the doc comment and the return only), and no production code reads `Loaded.Secrets` (`grep -rn '\.Secrets\b' backend` outside tests: only its assignment in `LoadLegacy`). `Loaded.Object` and `Result.Object`, with `stringsArray`, exist only for the frozen-hash tests (`legacy_test.go`, `shared_test.go`). Fix: drop the two `Secrets` fields and their assignments (load.go:15, :39; legacy.go:45, :89; legacy.go:90 checks only `Config`): 4 lines; move the fixture encoders (load.go:45-62, legacy.go:101-108: 26 lines) into the `_test.go` files, writing an empty `"secrets"` object so the frozen hashes still match.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### The validator and the schema check carry patternProperties nothing uses
-- **Where:** `backend/internal/config/pipeline.go:264` (`validateObject`), `backend/internal/schema/yamlsrc/check.go:16` (`keywords`)
-- **What:** No schema uses `patternProperties`: 0 in `config/json/config.schema.json`, 0 in the frozen `schema-v75.json` (only `config/themes/theme.schema.json` has it, which the Go validator never reads). `Prune` and `ApplyDefaults` already ignore it, so only validation and the build's keyword check carry it. Fix: drop the `patternProperties` keyword (check.go:16's entry, the `"patterns"` case at check.go:134 and its branch at :141-143) and its validation (pipeline.go:264-272): 12 lines; a schema using it then fails the build as an unknown keyword instead of half-working.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### Every step test copies the same case runner
-- **Where:** `backend/internal/migrate/steps/steps_test.go` (`TestV81FoldsCommandOutput`), `backend/internal/migrate/steps/v83_test.go` (`stepAt`)
-- **What:** Nine step tests each repeat the same loop: parse the input, run the step, compare the compact bytes, check `changed`, run it again and expect nothing (steps_test.go:91-106, 135-151, 203-218, 238-257, 283-302; v82_test.go:33-52; v83_test.go:35-54; v84_test.go:42-61; v85_test.go:35-54: 169 lines). The older five also pick their step by index (`all[1]`, then a version check) where the newer ones use `stepAt`. Fix: one `runStepCases(t, version, cases)` helper beside `stepAt` doing the loop once (about 20 lines), each test keeping only its table: about 149 lines fewer, and a new step's test is its rows.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### The config Pipeline interface has one implementation
-- **Where:** `backend/internal/config/format.go:16` (`Pipeline`, `V2Pipeline`)
-- **What:** `Pipeline` is "what the config store does … for one config format", but format 1 is read inside `V2Pipeline.Load` (the frozen chain, then the conversion), and nothing else implements it: no fake in any test (a grep for `) Check(cfg *jsonx.Object)` finds only `V2Pipeline`'s). Store, saved, greeter, the CLI and the daemon all hold a `config.Pipeline` built as `config.V2Pipeline{S: …}` (17 mentions). Fix: make `Pipeline` the struct (`config.Pipeline{S: …}`), the interface's per-method docs moving onto the methods: the interface's 17 lines (format.go:14-30) go, and the "V2" that names a choice there isn't.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the config-pipeline system
 
@@ -1827,24 +1684,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `services/ui/SettingsManager.qml:67` (`_settingsPaths`), `services/ui/SettingsManager.qml:74` (`nonDefaultPaths`), `components/methods/SchemaLayout.qml:30` (`rows`)
 - **What:** `_settingsPaths` is built from `SchemaLayout.rows(ConfigManager.configSchema, [])`, which walks only `prop.type === "object" && prop.properties` and doesn't resolve `$ref`, while the page builds its cards through `SchemaLayout.groups`, which does. In the built schema `Bars.style` is still `{"$ref": "#/definitions/BarStyle"}`, so `rows` gives one field row `Bars.style` and none of the leaf paths `_diff` produces (`Bars.style.fontSize`, …); `nonDefaultPaths` filters all of them out. Scenario: change Bars › Widget style › Font size, click Changed from default: it isn't listed, and with nothing else changed the page says every setting is at its default, against settings-page.md › Sidebar and jumping. The launcher's `/config` (`settingPaths`) misses them the same way. Fix: walk the resolved section (expose `SchemaLayout._resolved` and call `rows` on its result), and add a `tst_SchemaLayout` row for a `$ref` property.
 - **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
-
-### Store.Reschema repeats reload's load-and-apply
-- **Where:** `backend/internal/store/store.go:728` (`Reschema`), `backend/internal/store/store.go:526` (`reload`)
-- **What:** After swapping the pipeline, `Reschema` reads the file and runs a second copy of `reload`'s tail: `load`, `Blocked`/`Issues` on problems, else `holdTakeovers`, clearing `fileTakeovers`, `keepTakeovers`, `Revision++` and a `FromFile` event. It already sets `s.written = nil`, which is what makes `reload` read the file again. Simpler: swap the pipeline, takeovers and `written` under the locks, unlock, then call `s.reload()`. A missing file then marks `Missing` instead of returning silently, a broken one logs as a reload does, and an unchanged config doesn't bump the revision, which no caller needs (`dev.go` pushes `schema.changed` itself). No store test calls `Reschema`. Fix: delete lines 737–760 (24 lines), add an unlock and a `s.reload()` call (+2): 22 lines.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
-
-### OpenAdopting repeats Open's setup
-- **Where:** `backend/internal/store/store.go:767` (`OpenAdopting`), `backend/internal/store/store.go:115` (`Open`)
-- **What:** `OpenAdopting` copies `Open`'s option defaults (6 lines) and its construction and initial load (6 lines); only how the lock is got differs (`fsx.TryLock` against `fsx.Adopt`). Fix: a `newStore(opts, path, lock)` holding the defaults, the struct and `loadInitial` with its `lock.Release()`, called by both: 12 lines go, 3 come back, 9 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the config system
-
-### Six more reader members nothing reads
-- **Where:** `config/I18n.qml:72` (`languageName`), `config/Paths.qml:66` (`swayPath`), `config/Paths.qml:68` (`niriPath`), `config/Theme.qml:124` (`variant`), `config/Theme.qml:125` (`paired`), `config/Theme.qml:126` (`isGenerated`)
-- **What:** `grep -rnw` over the QML and JS finds each only at its declaration (`isGenerated` is a writable property nothing assigns; `paired` is read only off theme entries, `theme.paired` in `ThemeFamilies`, never as `Theme.paired`; `variant` likewise, `Appearance.darkMode` reading `ThemeManager.currentTheme.variant`; theming audit, 2026-10-31). The daemon writes the sway and niri configs now, so `swayPath` and `niriPath` lost their users when that stage moved; only `docs/dev/compositor/sway-backend.md` and `niri-backend.md` still name them, as where the managed config goes. gen_docs.py's unused-member check misses them (`languageName` is a function; the others pass its name match, the cause filed in "The unused reader member check counts a member named after its key as used"). Fix: delete them: `languageName` 3 lines, `swayPath` and `niriPath` 2 each with their comments, `variant`, `paired` and `isGenerated` 1 each: 10 lines; the two backend docs then say `$XDG_CONFIG_HOME/sway/` and `$XDG_CONFIG_HOME/niri/` without the member.
-- **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the config system
 
 ### The launcher's /config can switch a takeover setting
@@ -1907,18 +1746,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the services-core system
 
-### Small shrinks in the core services
-- **Where:** `services/core/StateManager.qml:25` (`createStateHandler`), `services/core/StateManager.qml:12` (`stateDir`), `services/system/AudioManager.qml:35` (`name`, `description`, `micUsers`), `backend/internal/daemon/tools.go:47` (`artResult`), `components/bar/widgets/Privacy/Privacy.qml:27` (`appName`)
-- **What:** Each keeps every behaviour but the last, which says what it changes:
-  - StateManager's `save` wraps `FileManager.write` in a `try` that can't catch (the write is asynchronous and reports through `done`) and returns `true`/`false` that no caller reads (none of the 21 `createStateHandler` users uses `save`'s result); its "state saved." debug line runs before the write. `save: data => FileManager.write(filepath, JSON.stringify(data, null, 2))`: lines 25 to 34 (10) become 1, 9 removed.
-  - `StateManager.stateDir` is public but read only by the line below it: use `Paths.statePath` there, 2 lines (with its blank line).
-  - `AudioManager.name`, `description` (lines 35 and 36) and `micUsers` (line 263) are read nowhere (grep: no reader outside the file or inside it): 3 lines.
-  - `media.art` answers `artResult{Path: p.Path}`, the path it was sent, and MediaManager reads only the error: answer `struct{}{}` and drop the 3-line type.
-  - Privacy's `appName` (3 lines) is AudioManager's without the binary fallback, so a stream with no `application.name` is named by its nickname in the privacy tooltip and by its binary in the mixer: use `AudioManager.appName` (the only change: such a stream gets the mixer's name).
-  Total: 20 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the services-core system
-
 ### Rescanning the theme folders lists the shell's working directory as themes
 - **Where:** `services/core/ThemeManager.qml:578` (`_reloadAllThemes`), `services/core/ThemeManager.qml:589` (`reloadCommunityThemes`), `services/core/ThemeManager.qml:642` (`_defaultThemeLoader`), `services/core/ThemeManager.qml:651` (`_generatedThemeLoader`), `services/core/ThemeManager.qml:660` (`_communityThemeLoader`)
 - **What:** To rescan, `_reloadAllThemes` (at start-up and after every generation) and `reloadCommunityThemes` set each loader's `folder` to `""` and then back. A FolderListModel whose folder is empty lists the current directory. qs runs in `$HOME`, so each loader briefly lists `~/*.json`, and its `onStatusChanged` (Ready, count > 0) parses every JSON file there as a theme and rebuilds the families. The live debug log shows it at each start: the first line is `[ThemeManager] Themes: axiom-backup-before-resize-…, axiom-demoConfig7-…` (exported configs in `~`, without the stock themes), the next lists them twice (stock and community loaders both on `~`), and only later lines show the real list. When the real folder then has no themes (a user who has never generated any: `Paths.generatedThemesPath` empty or missing), no Ready with rows follows. The `~` files then stay as `generated/<file>` families in the Themes page's Generated group, and picking one applies a theme that doesn't exist. Only the community loader has a guard for its count dropping to 0 (`_communityEmptied`), so its list recovers after a second; the generated one doesn't. PLAUSIBLE for the stuck case: run a nested shell with an empty generated folder and a JSON file in its working directory, and see whether the Generated group lists it. Fix: give the three folders one inline loader component (`path`, `prefix`) whose handler ignores rows while `String(folder)` isn't its path, and give all three the emptied-folder handling. That replaces the three 9-line `FolderListModel` blocks and the community-only `_communityEmptied` Timer (lines 640–680, 41 lines) with one component and three instances.
@@ -1934,20 +1761,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A theme generated from another monitor's wallpaper is replaced by the primary's at the next start
 - **Where:** `services/core/ThemeManager.qml:194` (`syncGeneratedTheme`), `services/ui/WallpaperManager.qml:36` (`pick`), `services/ui/LauncherCommands.qml:159`
 - **What:** A pick by hand always generates themes from the picked wallpaper (wallpaper-and-schedules.md: "picks by hand … always do"), including one for a monitor that isn't the primary: the Themes page's monitor picker, or `pick` from the focused monitor. The launcher's `/generate` does the same from its target monitor's wallpaper. `syncGeneratedTheme` holds a generated theme to the primary's wallpaper only (`root.wallpaper`), and `_applyShown` runs it on every change of what's shown and once at start-up. Scenario: with a generated theme active and two monitors, pick a wallpaper for DP-2. The colors follow it. At the next qs start or reload, or the next monitor hotplug or rotation, `syncGeneratedTheme` sees `generated.wallpaper` ≠ the primary's and regenerates from the primary's wallpaper, so the colors the user picked change without them doing anything. When the theme was already from a non-primary wallpaper, the pick's own `_applyShown` queues the primary's generation right behind the pick's, and the picked colors flash and are replaced. Fix: in `syncGeneratedTheme`, accept any wallpaper shown on any monitor (`Object.values(shownWallpapers.wallpapers)` plus `wallpaper`, decoded) as up to date. A restored snapshot whose generation's wallpaper is no longer shown still regenerates, now from the primary's.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the theming system
-
-### setWallpaperAndGenerate only forwards for one caller
-- **Where:** `services/core/ThemeManager.qml:111` (`setWallpaperAndGenerate`), `services/ui/WallpaperManager.qml:36` (`pick`)
-- **What:** `grep -rnw setWallpaperAndGenerate` finds one caller, `WallpaperManager.pick`'s fixed-mode branch. The function only calls `setWallpaper(url, monitor)` and then `generateThemesFromWallpaper(url)`, which `pick`'s rotate branch already calls directly. Fix: call the two directly in `pick`, and delete the function with its comment (lines 110–114, 5 lines).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the theming system
-
-### ~/.current_wallpaper is written but nothing reads it
-- **Where:** every mention in the repo (`grep -rn current_wallpaper`, 2026-10-31): `services/core/ThemeManager.qml:178` (`_showWallpaper`'s comment), `services/core/ThemeManager.qml:186` (the `ln -sf`), `scripts/setWallpaper.sh:8` (header comment), `scripts/setWallpaper.sh:33` (the `ln -sf`), `docs/dev/roadmap.md:556` (this entry's link), `.claude/reviews/theming.md:11` (this entry's link)
-- **What:** On every change of the primary's wallpaper, `_showWallpaper` runs `ln -sf <path> ~/.current_wallpaper` (line 186), and `setWallpaper.sh` does the same for awww (line 33). `grep -rn current_wallpaper` over the repo finds only these two and their comments. No axiom code reads the link, and no doc names it. It is written in `$HOME`, not under an XDG path like the system's other files (systems.md theming Check: "Generated files under XDG paths"). Its target is the URL with `file://` stripped but not decoded (unlike `generateThemesFromWallpaper`), so a wallpaper with `%` or `#` in its name links to a path that doesn't exist.
-
-  **Decided** (maintainer, 2026-10-31): "remove .current_wallpaper. Legacy. Should be completely purged". Fix: delete every writer and every mention listed under **Where**: ThemeManager's `ln -sf` lines (185–186, the `else if (primary)` branch and its call) and their comment, `scripts/setWallpaper.sh`'s copy and its header line, and the links to this entry, which go with it.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the theming system
 
@@ -1981,12 +1794,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the ui-kit system
 
-### StyledRectButton's badge and border press colour have no user
-- **Where:** `components/reusable/StyledRectButton.qml:28` (`borderPressColor`), `components/reusable/StyledRectButton.qml:32` (`badgeText`, `badgeVisible`, `badgeBackgroundColor`, `badgeTextColor`), `components/reusable/StyledRectButton.qml:84` (`CountBadge`)
-- **What:** No StyledRectButton or SquareIconButton (11 + 35 instances) sets any of the four badge properties or `borderPressColor` (no name has a hit outside the file: `grep -rnw badgeText --include=*.qml .`). The two counts drawn on buttons use `CountBadge` directly (`components/bar/widgets/Notifications/Notifications.qml`, `components/content/parts/custom/elements/Icon/CustomIcon.qml`). Fix: delete lines 28, 32–35 and the `CountBadge` block 84–93, and read `root.borderColor` for the pressed border in line 48; shared-ui-pieces.md's "optional `CountBadge`" goes. 15 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
 ### ActionTile and ActionPill carry the same countdown bar
 - **Where:** `components/reusable/ActionTile.qml:110` (`countdownBar`, `drain`, `onActiveChanged`), `components/reusable/ActionPill.qml:121` (`countdownBar`, `drain`, `onActiveChanged`)
 - **What:** The "time left while active" bar is the same 26 lines in both (`diff <(sed -n 110,135p ActionTile.qml) <(sed -n 121,146p ActionPill.qml)` prints nothing): a Rectangle along the bottom, a NumberAnimation draining its width over `countdown` ms, and the `onActiveChanged` that restarts it. Their frames are the same too (`radius`, the `color` and `border.color` from `active`/`hot`/`tone`, two `ColorGlide`s: ActionTile 48–55, ActionPill 36–43). Fix: one small piece in `components/reusable/` (a bar draining over a duration while running), each tile placing it in 3 lines; 26 lines go.
@@ -1996,12 +1803,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### StyledTextEntry and StyledTextArea carry the same blinking cursor
 - **Where:** `components/reusable/StyledTextEntry.qml:104` (`cursorDelegate`), `components/reusable/StyledTextArea.qml:171` (`cursorDelegate`)
 - **What:** Both draw the accent cursor and blink it with the same `SequentialAnimation` (two `PropertyAnimation`s of 500 ms marked as behaviour timing), 19 lines each, the same but for the focus they read (`textField` / `textInput`) and a comment. AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: a cursor piece in `components/reusable/` reading its parent input's `activeFocus`, set as the `cursorDelegate` of both; 19 lines go (and the blink timing lives in one place).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### TileGrid and StyledVolumeBar keep lines nothing reads
-- **Where:** `components/content/parts/TileGrid.qml:58` (`_gridWidth`), `components/reusable/StyledVolumeBar.qml:83` (`anchors.leftMargin`), `components/reusable/StyledVolumeBar.qml:177` (`Layout.maximumWidth`)
-- **What:** `_gridWidth` has no reader (one hit repo-wide, its definition; `tileX` works out each row's width itself). StyledVolumeBar's fill sets `anchors.leftMargin: root.orientation === Qt.Vertical ? parent.width - width : 0`, but the left anchor is only set when horizontal, where the margin is 0. Its percentage's `Layout.maximumWidth: root.showPercent ? Infinity : parent.width - Widget.px(4)` takes the second branch only while the text is "" and hidden. Fix: delete lines 58, 83 and 177 (the label's `Layout.preferredWidth` already fixes its width when shown). 3 lines.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the ui-kit system
 
@@ -2020,12 +1821,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### fzf's flags rebuilt in Go where a template does
 - **Where:** `backend/internal/theme/integrations/table.go:187` (`fzf`)
 - **What:** `fzf` takes `t.vars(true)` and joins fixed `name:${VAR}` pairs into one `--color=` line, which is what `tmpl{text: true}` does with a one-line template; the system's Checks name such an entry as an odd one out ("a table entry … reimplementing what `tmpl` … does"). Fix: a `templates/fzf` holding `--color=fg:${FOREGROUND},bg:${BACKGROUND},hl:${ACCENT},fg+:${FOREGROUND_HIGHLIGHT},bg+:${BACKGROUND_HIGHLIGHT},hl+:${ACCENT},info:${INFO},marker:${SUCCESS},prompt:${ACCENT},spinner:${ACCENT_ALT},pointer:${ACCENT},header:${FOREGROUND_ALT},border:${BORDER},label:${FOREGROUND_ALT},query:${FOREGROUND},gutter:${BACKGROUND}` and the entry `one("{state}/axiom/fzf-colors", tmpl{name: "fzf", text: true})`; the goldens stay byte for byte. Removes lines 186–201 (16 lines); the doc's "built in Go (fzf's flags, …)" drops fzf.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the theme-integrations system
-
-### Two hand-written cmp.Or in the theme packages
-- **Where:** `backend/internal/theme/integrations/integrations.go:85` (`or`), `backend/internal/hookup/hookup.go:177` (`cmpOr`)
-- **What:** Both are the standard library's `cmp.Or` for strings (go.mod is Go 1.26; `wayland/outputs` already uses `cmp.Or`). Fix: delete both (6 + 6 = 12 lines) and call `cmp.Or(t.Name, "Unknown")` and the like (`vars`, 3 calls), `cmp.Or(env.ZDotDir, env.Dirs.Home)` and `cmp.Or(r.Comment, "#")`.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the theme-integrations system
 
@@ -2049,12 +1844,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the security system
 
-### PolkitAgents.isAgentCommand is dead since the autostart moved to Go
-- **Where:** `components/methods/PolkitAgents.qml:56` (`isAgentCommand`), `tests/tst_PolkitAgents.qml:8` (`test_isAgentCommand_data`), `backend/internal/compositor/render/hyprconfig.go:290` (`IsAgentCommand`), `docs/dev/features/polkit.md:19`
-- **What:** The managed mode's autostart is rendered in Go now, through `Tables.IsAgentCommand` (hyprconfig.go:327, `backend/internal/compositor/manager/sway.go:124`, `backend/internal/compositor/manager/niri.go:203`), which reads only `PolkitAgents.qml`'s `agents` (`backend/internal/compositor/render/tables.go`). The QML `isAgentCommand` has no caller left (`grep -rn isAgentCommand --include=*.qml`: its definition and the test only), so its test rows pin the dead copy while the live Go one has no test (`grep -c IsAgentCommand backend/internal/compositor/render/*_test.go`: 0 in each). Fix: delete `isAgentCommand` and its comment (PolkitAgents.qml:54-62, 9 lines) and `test_isAgentCommand_data` / `test_isAgentCommand` (tst_PolkitAgents.qml:8-55, 48 lines): 57 lines; move the rows to a table test of `Tables.IsAgentCommand` in `render`, reword its comment (hyprconfig.go:288, "IsAgentCommand is PolkitAgents.isAgentCommand") to stand on its own, and drop `isAgentCommand` from polkit.md's list.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the security system
-
 ### Power repeats the session actions' icons, labels and confirm
 - **Where:** `components/content/Power/Power.qml:25` (`_info`), `services/session/SessionManager.qml:16` (`sessionActionInfo`), `components/surfaces/powermenu/PowerMenuWindow.qml:35` (`run`), `components/content/QuickActions/QuickActions.qml:185` (`run`)
 - **What:** `Power._info` (Power.qml:25-41, 17 lines) restates `SessionManager.sessionActionInfo`'s icons (`bedtime`, `restart_alt`, `power_settings_new`) and `SessionManager.destructiveActions` (`confirm` true for reboot and poweroff), with other words for the same actions ("Restart" / "Shut down" on the lock screen and greeter, "Reboot" / "Power off" in the power menu, QuickActions and launcher). And the press-twice gate (an `armed` string, a 3000 ms `disarm` Timer, "arm unless already armed, else run") is written out three times: `Power.press` and its Timer (Power.qml:44-65), `PowerMenuWindow.run` and `disarm` (:35-44, :82-86), `QuickActions.run` and `disarm` (:185-190, :226-230). Fix: Power reads `SessionManager.sessionActionInfo(action)` and `SessionManager.destructiveActions` (drops `_info`: 17 lines), and one small non-visual `ConfirmGate` (`armed`, `timeout`, `pass(key, needsConfirm)`) replaces the three gates. Open (maintainer): which words the session actions use everywhere ("Restart" / "Shut down" or "Reboot" / "Power off").
@@ -2075,27 +1864,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the greeter system
 
-### GreetdManager.available is never read
-- **Where:** `services/session/GreetdManager.qml:21` (`available`)
-- **What:** `readonly property bool available: Greetd.available` has no reader anywhere (`grep -rn 'GreetdManager.available'` finds none; inside the file only its definition). Fix: delete the line (1 line).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the greeter system
-
 ### The launcher's /generate reads a monitor setting that doesn't exist
 - **Where:** `services/ui/LauncherCommands.qml:156` (`generate`), `config/LauncherConfig.qml` (`screen`)
 - **What:** `/generate` picks its wallpaper with `ShellManager.targetFor(...)` given a `monitors` member that LauncherConfig doesn't have (its ScreenTarget is `screen`; a grep of every LauncherConfig member used, against the reader's members, finds only this one missing). `targetFor(undefined)` resolves as "inherit", so it answers for General's screen target, not the launcher's. Scenario: two monitors with different wallpapers, `General.screen` primary (DP-1) and `Launcher.screen` focused; open the launcher on DP-2 and run `/generate`: the themes are generated from DP-1's wallpaper, not the one on the monitor the launcher is on. [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start) describes `/generate` as using "its target monitor's wallpaper", which only holds after this fix. Fix: pass `LauncherConfig.screen`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the launcher system
-
-### EmojiManager's groups() is never called
-- **Where:** `services/apps/EmojiManager.qml:86` (`groups`), `docs/dev/features/launcher-providers.md`
-- **What:** `EmojiManager.groups()` and its cache `_groups` have no caller: the EmojiPicker module, the only user of Unicode's groups, names them itself in its `groupIcons` table, and the launcher never asks. launcher-providers.md still offers it ("`recent(limit)` and `groups()` are also provided"), as does the file's header comment. Fix: delete lines 85-90 and the `_groups` property (line 106), 7 lines, and drop `groups()` from the doc, the header comment and `search`'s comment (line 48: "a name from groups()").
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the launcher system
-
-### LauncherManager keeps a dead clear() and a cliphist test
-- **Where:** `services/ui/LauncherManager.qml:103` (`clear`), `services/ui/LauncherManager.qml:517` (`_clipboardRow`)
-- **What:** `clear()` (lines 103-106) has no caller anywhere: the launcher resets through `query` and `LauncherPanel.reset`. And a text clip's glyph tests `/^\[\[ binary data/`, the marker cliphist printed for images; the daemon's history replaced cliphist (an image is now its own entry with `format`, drawn by `_clipboardImageRow`), so the test only matches text that literally starts with "[[ binary data". Fix: delete `clear()` (4 lines) and make the glyph `entry.pinned ? "keep" : "content_paste"`.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the launcher system
 
@@ -2129,18 +1900,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the packaging system
 
-### The shell's unused daemon-call paths
-- **Where:** `services/core/BackendManager.qml:79` (`notify`), `services/core/BackendManager.qml:122` (`handle`), `services/core/BackendManager.qml:33` (`compatible`), `components/methods/JsonRpc.qml:21` (`notification`)
-- **What:** Nothing outside `BackendManager.qml` calls `BackendManager.notify` or `BackendManager.handle`, or reads `BackendManager.compatible` (`grep -rn 'BackendManager\.\(notify\|handle\|compatible\)'` over the repo finds only `docs/dev/backend/protocol.md` naming `handle` and `notify`). `notify` is the only caller of `JsonRpc.notification` (its other hit is the assertion in `tests/tst_JsonRpc.qml:11`), and the queue's `"id": null` entries and `_failQueued`'s `entry.id === null ||` exist only for it. `_handlers` only ever holds the built-in `"ipc.call"`; `compatible` is written by `_applyDaemonState` and never read (config writes rely on the daemon's `incompatible` refusal, as the docs say). Fix: delete `notify` with its comment (lines 78-90, 13), `handle` with its comment (120-124, 5), `compatible` and `_compatible` (32-33, 128, 136: 4), `JsonRpc.notification` (21-29, 9) and its test assertion (`tests/tst_JsonRpc.qml` 11-13, 3): 34 lines; drop `entry.id === null ||` and the "(null for a notification)" note in `_queue`'s comment, `|notify` from `scripts/gen_docs.py`'s `QML_CALL` / `QML_CALL_OPEN`, and `handle` / `notify` from protocol.md's channel E and call rule (channel E then names `_handlers`); `tests/scripts/test_scripts.py`'s `qml_call_sites` fixture loses its `BackendManager.notify("x.y")` line and expected row.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the daemon system
-
-### Two dead Go helpers and a forwarding wrapper
-- **Where:** `backend/internal/fsx/lock.go:52` (`Holder`), `backend/internal/xdg/xdg.go:206` (`Dirs.Describe`), `backend/internal/daemon/contract.go:66` (`greeterOnlyMethods`)
-- **What:** `fsx.Holder` is called only by `backend/internal/fsx/fsx_test.go:124` (`TryLock` reads the pid itself through `readPID` for its error); `Dirs.Describe` by nothing at all, not even a test, though its comment says it is "for `axiom config path` and logs" (`configPathCommand` in `backend/internal/cli/config.go` prints the file, and `dirs` as JSON, without it); `greeterOnlyMethods` (called from `backend/internal/daemon/greeter.go:183` and `contract.go:81`) only forwards to `greeterHandlers` (`backend/internal/daemon/compositorsocket.go:74`) with the same arguments. Fix: delete `Holder` (lines 51-59, 9; the test reads the lock file with `os.ReadFile`), `Describe` (205-208, 4), and fold the wrapper by renaming `greeterHandlers` to `greeterOnlyMethods`, its comment kept (contract.go 62-68, 7): 20 lines.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the daemon system
-
 ### daemon.shutdown starts its goroutine past tasks.Go
 - **Where:** `backend/internal/daemon/methods.go:340` (`coreMethods`)
 - **What:** The daemon's docs state "Every goroutine is started through `tasks.Go` … and `Run` waits for all of them" (`docs/dev/backend/README.md` › What exists now, the daemon's parts; the daemon system's Checks repeat it), but `daemon.shutdown` runs `announceClosing` and `d.stop()` on a bare `go func()`: `Run` doesn't wait for it, so it can still be sending `daemon.closing` through a server whose `Serve` has returned. Every other goroutine of the package goes through `tasks.Go` (or, in dev mode's `watch`, a wait group its stop function waits on; the greeter's `Serve`, a channel its function waits on before returning). Fix: `d.tasks.Go(func(context.Context) { announceClosing(d.server, false, closingWait); d.stop() })`, as `reexecSoon` does.
@@ -2151,12 +1910,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `backend/internal/wayland/client/client.go:99` (`Run`), `backend/internal/daemon/daemon.go:419` (`followCompositor`), `backend/internal/daemon/wayland.go:31` (`waylandNow`)
 - **What:** When the compositor sends `wl_display.error` (any bad request from one of the nine clients on the shared connection), `wire.Conn.Run` closes the connection and `client.Run` returns, but no client is told: each keeps its manager id and objects. `followCompositor` only logs `the Wayland connection failed: monitors aren't known` and falls back to `wire.Watch`. From then on `idlenotify.Notifier.Available()` stays true with its watches armed on a dead socket (proven with a throwaway test on `wiretest`: `Run returned: the compositor reported error 0 on object 2: bad request; Available after: true`), so with Idle on nothing ever dims, locks or turns the screens off while `idle.state` reports the notifier and the watches armed; `wayland.state` keeps `ready: true` and its `typing` / `nightLight` / `clipboard` flags, so `NightLightManager` doesn't fall back to wlsunset (the compositor dropped the gamma/CTM with the client), `ClipboardManager` stays `available` with its history frozen, and `EmojiManager.canType` stays true while `input.type` fails. Related: `wayland.md` says "until then every flag reads off", but `waylandNow` returns the flags whatever `ready` says. Fix: give `client.Client` a `Stop()` that `client.Run` calls on every client when the connection ends (each forgets its ids as its `Start` does and tells its `OnChange`; `waylandSession.Stop` sets `ready` false), and have `waylandNow` return `waylandState{}` while not ready, so the shell sees everything off and falls back.
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the dbus-wayland system
-
-### Three Wayland client members nothing in the daemon calls
-- **Where:** `backend/internal/wayland/wire/conn.go:251` (`NewID`), `backend/internal/wayland/datacontrol/datacontrol.go:118` (`Device.Mimes`), `backend/internal/wayland/keyhold/keyhold.go:245` (`Holder.Held`)
-- **What:** `wire.NewID` has no caller anywhere (`grep -rn 'NewID(' backend` finds only its definition; `Conn.Bind` writes the same bytes by hand as `Uint(name), String(iface), Uint(version), Uint(id)`); `wayland.md` lists it among the arguments. `Device.Mimes` is called only by `datacontrol_test.go:142` (the daemon reads types through `Current()` and the offer's own `Mimes`), and `Holder.Held` only by `keyhold_test.go:215`. Fix: delete the three (5 + 10 + 6 = 21 lines, comments included) and `NewID` from `wayland.md`'s Arguments line; the in-package tests read `d.Current().Mimes()` and `h.hold != nil` instead.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the dbus-wayland system
 
 ### A transient notification toasts blank

@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; awaiting the maintainer's reorder or veto of clusters
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01 and compositor-01 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -13,7 +13,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): split, with the theme page directly after integrations.
 4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): a) "Restart" / "Shut down".
 5. Deferred: [Setting an awww wallpaper never starts awww's daemon](../issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (awww's own branch).
-6. [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers): drop the old-claims fallback.
+6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
 7. [Gaps to the edges are wider on sway than the setting says](../issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says): accept the narrower gap.
 8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): show them.
 9. Deferred: [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge).
@@ -46,10 +46,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 | # | Cluster | Kind | Title | Entries | Est. lines | Depends on | Questions |
 |---|---|---|---|---|---|---|---|
-| 1 | config-01 | deletion | Config pipeline and store dead code, the step-test runner, and every reader member nothing reads | 9 | ~370 (net about -270) | none |  |
-| 2 | platform-01 | deletion | Dead code across the daemon, launcher, greeter and security | 6 | ~190 | config-01 |  |
-| 3 | core-ui-theming-01 | deletion | Dead members and pure shrinks in core services, ui-kit, theming and Wayland | 7 | ~-100 net | config-01 |  |
-| 4 | compositor-01 | deletion | Go compositor backend: dead and doubled helpers | 17 | ~550 (~370 out) | none | Q6 |
+| 1 | config-01 | deletion | Done: Config pipeline and store dead code, the step-test runner, and every reader member nothing reads | 9 | ~370 (net about -270) | none |  |
+| 2 | platform-01 | deletion | Done: Dead code across the daemon, launcher, greeter and security | 6 | ~190 | config-01 |  |
+| 3 | core-ui-theming-01 | deletion | Done: Dead members and pure shrinks in core services, ui-kit, theming and Wayland | 7 | ~-100 net | config-01 |  |
+| 4 | compositor-01 | deletion | Done: Go compositor backend: dead and doubled helpers | 17 | ~550 (~370 out) | none | Q6 |
 | 5 | compositor-02 | deletion | QML compositor services, keybind helpers, workspace strips | 12 | ~450 | none |  |
 | 6 | compositor-03 | deletion | The blur system | 5 | ~200 | none |  |
 | 7 | bar-popouts-01 | deletion | Dead members, signals and wrappers across popouts, the bar, bar widgets and edge menus | 12 | ~150 | none |  |
@@ -130,49 +130,49 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **Deletions**
 
-- **config-01** (9): Takes core-ui-theming's and platform's reader-member entries: the fixed check runs first, then one pass deletes what it and they find, so config-usage-baseline.json changes once.
-  - [Format-1 secrets plumbing nothing fills or reads](../issues.md#format-1-secrets-plumbing-nothing-fills-or-reads)
-  - [The validator and the schema check carry patternProperties nothing uses](../issues.md#the-validator-and-the-schema-check-carry-patternproperties-nothing-uses)
-  - [The config Pipeline interface has one implementation](../issues.md#the-config-pipeline-interface-has-one-implementation)
-  - [Store.Reschema repeats reload's load-and-apply](../issues.md#storereschema-repeats-reloads-load-and-apply)
-  - [OpenAdopting repeats Open's setup](../issues.md#openadopting-repeats-opens-setup)
-  - [Every step test copies the same case runner](../issues.md#every-step-test-copies-the-same-case-runner)
-  - [The unused reader member check counts a member named after its key as used](../issues.md#the-unused-reader-member-check-counts-a-member-named-after-its-key-as-used)
-  - [Six more reader members nothing reads](../issues.md#six-more-reader-members-nothing-reads)
-  - [Three reader members nothing reads](../issues.md#three-reader-members-nothing-reads)
-- **platform-01** (6):
-  - [PolkitAgents.isAgentCommand is dead since the autostart moved to Go](../issues.md#polkitagentsisagentcommand-is-dead-since-the-autostart-moved-to-go)
-  - [GreetdManager.available is never read](../issues.md#greetdmanageravailable-is-never-read)
-  - [EmojiManager's groups() is never called](../issues.md#emojimanagers-groups-is-never-called)
-  - [LauncherManager keeps a dead clear() and a cliphist test](../issues.md#launchermanager-keeps-a-dead-clear-and-a-cliphist-test)
-  - [The shell's unused daemon-call paths](../issues.md#the-shells-unused-daemon-call-paths)
-  - [Two dead Go helpers and a forwarding wrapper](../issues.md#two-dead-go-helpers-and-a-forwarding-wrapper)
-- **core-ui-theming-01** (7):
-  - [Small shrinks in the core services](../issues.md#small-shrinks-in-the-core-services)
-  - [setWallpaperAndGenerate only forwards for one caller](../issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)
-  - [~/.current_wallpaper is written but nothing reads it](../issues.md#current_wallpaper-is-written-but-nothing-reads-it)
-  - [StyledRectButton's badge and border press colour have no user](../issues.md#styledrectbuttons-badge-and-border-press-colour-have-no-user)
-  - [TileGrid and StyledVolumeBar keep lines nothing reads](../issues.md#tilegrid-and-styledvolumebar-keep-lines-nothing-reads)
-  - [Two hand-written cmp.Or in the theme packages](../issues.md#two-hand-written-cmpor-in-the-theme-packages)
-  - [Three Wayland client members nothing in the daemon calls](../issues.md#three-wayland-client-members-nothing-in-the-daemon-calls)
-- **compositor-01** (17): One commit per package, the old-claims fallback's 6 lines included (Q6).
-  - [Hyprland's exit command is kept in two packages](../issues.md#hyprlands-exit-command-is-kept-in-two-packages)
-  - [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers)
-  - [Nothing reads userBindsRead or lastLoadFailed](../issues.md#nothing-reads-userbindsread-or-lastloadfailed)
-  - [The niri writer's runtimeOn and unread-binds guards are dead](../issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
-  - [Three listings of niri's user files](../issues.md#three-listings-of-niris-user-files)
-  - [RunningNested has its own niri socket client](../issues.md#runningnested-has-its-own-niri-socket-client)
-  - [A second KDL writer in the kdl package](../issues.md#a-second-kdl-writer-in-the-kdl-package)
-  - [Small shrinks in the compositor manager](../issues.md#small-shrinks-in-the-compositor-manager)
-  - [niri's bind plan is a copy of runtimeLayer.plan](../issues.md#niris-bind-plan-is-a-copy-of-runtimelayerplan)
-  - [Go copies of bind helpers that only the parity replay calls](../issues.md#go-copies-of-bind-helpers-that-only-the-parity-replay-calls)
-  - [sway and niri each fit the shadow to axiom's themselves](../issues.md#sway-and-niri-each-fit-the-shadow-to-axioms-themselves)
-  - [SwayConfigBinds keeps its own copy of sway's $variables](../issues.md#swayconfigbinds-keeps-its-own-copy-of-sways-variables)
-  - [Small shrinks in the sway writer and IPC](../issues.md#small-shrinks-in-the-sway-writer-and-ipc)
-  - [binds and takeover each keep their own isFile and git check](../issues.md#binds-and-takeover-each-keep-their-own-isfile-and-git-check)
-  - [The bind merge lists user/ files three times, once per compositor](../issues.md#the-bind-merge-lists-user-files-three-times-once-per-compositor)
-  - [sway's and niri's merges build a moved bind the same way twice](../issues.md#sways-and-niris-merges-build-a-moved-bind-the-same-way-twice)
-  - [The merge keeps key and variable tables render already has](../issues.md#the-merge-keeps-key-and-variable-tables-render-already-has)
+- **config-01** (9, done): Takes core-ui-theming's and platform's reader-member entries: the fixed check runs first, then one pass deletes what it and they find, so config-usage-baseline.json changes once.
+  - Format-1 secrets plumbing nothing fills or reads
+  - The validator and the schema check carry patternProperties nothing uses
+  - The config Pipeline interface has one implementation
+  - Store.Reschema repeats reload's load-and-apply
+  - OpenAdopting repeats Open's setup
+  - Every step test copies the same case runner
+  - The unused reader member check counts a member named after its key as used
+  - Six more reader members nothing reads
+  - Three reader members nothing reads
+- **platform-01** (6, done):
+  - PolkitAgents.isAgentCommand is dead since the autostart moved to Go
+  - GreetdManager.available is never read
+  - EmojiManager's groups() is never called
+  - LauncherManager keeps a dead clear() and a cliphist test
+  - The shell's unused daemon-call paths
+  - Two dead Go helpers and a forwarding wrapper
+- **core-ui-theming-01** (7, done):
+  - Small shrinks in the core services
+  - setWallpaperAndGenerate only forwards for one caller
+  - ~/.current_wallpaper is written but nothing reads it
+  - StyledRectButton's badge and border press colour have no user
+  - TileGrid and StyledVolumeBar keep lines nothing reads
+  - Two hand-written cmp.Or in the theme packages
+  - Three Wayland client members nothing in the daemon calls
+- **compositor-01** (17, done): One commit per package, the old-claims fallback's 6 lines included (Q6).
+  - Hyprland's exit command is kept in two packages
+  - The Hyprland Go code keeps dead and doubled helpers
+  - Nothing reads userBindsRead or lastLoadFailed
+  - The niri writer's runtimeOn and unread-binds guards are dead
+  - Three listings of niri's user files
+  - RunningNested has its own niri socket client
+  - A second KDL writer in the kdl package
+  - Small shrinks in the compositor manager
+  - niri's bind plan is a copy of runtimeLayer.plan
+  - Go copies of bind helpers that only the parity replay calls
+  - sway and niri each fit the shadow to axiom's themselves
+  - SwayConfigBinds keeps its own copy of sway's $variables
+  - Small shrinks in the sway writer and IPC
+  - binds and takeover each keep their own isFile and git check
+  - The bind merge lists user/ files three times, once per compositor
+  - sway's and niri's merges build a moved bind the same way twice
+  - The merge keeps key and variable tables render already has
 - **compositor-02** (12): Leaves the keybind tables entry's _bindMods change to compositor-17.
   - [Backends keep stubs for calls the facade gates](../issues.md#backends-keep-stubs-for-calls-the-facade-gates)
   - [Small shrinks in the compositor layer](../issues.md#small-shrinks-in-the-compositor-layer)

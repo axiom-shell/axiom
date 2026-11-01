@@ -13,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/luacheck"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
@@ -33,22 +34,18 @@ var (
 	// workspace, onto axiom's. Only for binds in an adopted file: elsewhere
 	// a key was the user's own choice.
 	exampleKeys = map[[2]string]string{
-		{"super + j", "toggleSplit"}:           "SUPER + X",
-		{"super + s", "toggleSpecial"}:         "SUPER + V",
-		{"shift + super + s", "moveToSpecial"}: "SUPER + SHIFT + V",
-		{"super + v", "toggleFloat"}:           "SUPER + Z",
+		{"64:j", "toggleSplit"}:   "SUPER + X",
+		{"64:s", "toggleSpecial"}: "SUPER + V",
+		{"65:s", "moveToSpecial"}: "SUPER + SHIFT + V",
+		{"64:v", "toggleFloat"}:   "SUPER + Z",
 	}
-	hyprDirections = map[string]bool{"left": true, "right": true, "up": true, "down": true}
 )
-
-const exitCommand = "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"
 
 // --- Mapping ---
 
 var (
 	stepPattern   = regexp.MustCompile(`^[erm]?([+-])1$`)
 	numberPattern = regexp.MustCompile(`^[1-9][0-9]*$`)
-	keySplit      = regexp.MustCompile(`\s*\+\s*`)
 )
 
 // pyStr is a JSON value as Python's str writes it, for matching
@@ -97,7 +94,7 @@ func workspaceNumber(workspace any) string {
 // the same
 func execAction(command string) (string, string, bool) {
 	command = strings.TrimSpace(command)
-	if command == exitCommand {
+	if command == render.HyprExitCommand {
 		return "exitSession", "", true
 	}
 	if command == "" {
@@ -140,9 +137,9 @@ func mapDispatcher(name string, args []any) (string, string, bool) {
 			switch {
 			case name == "window.float" && key == "action" && value == "toggle":
 				return "toggleFloat", "", true
-			case name == "focus" && key == "direction" && isString && hyprDirections[s]:
+			case name == "focus" && key == "direction" && isString && directions[s]:
 				return "focusDir", s, true
-			case name == "window.move" && key == "direction" && isString && hyprDirections[s]:
+			case name == "window.move" && key == "direction" && isString && directions[s]:
 				return "moveWindowDir", s, true
 			case (name == "focus" || name == "window.move") && key == "workspace":
 				goTo := name == "focus"
@@ -179,22 +176,6 @@ func pyG(f float64) string {
 	return strconv.FormatFloat(f, 'g', 6, 64)
 }
 
-// keyID is a key with its modifiers in a fixed order, for comparing
-func keyID(key string) string {
-	var parts []string
-	for _, p := range keySplit.Split(strings.TrimSpace(key), -1) {
-		if p = strings.ToLower(strings.TrimSpace(p)); p != "" {
-			parts = append(parts, p)
-		}
-	}
-	if len(parts) == 0 {
-		return ""
-	}
-	mods := parts[:len(parts)-1]
-	sort.Strings(mods)
-	return strings.Join(append(mods, parts[len(parts)-1]), " + ")
-}
-
 // toAxiom is the axiom bind for an extracted bind, or why it stays
 // (adopted: it's from an adopted file, so exampleKeys applies)
 func toAxiom(b luaBind, adopted bool) (*jsonx.Object, [2]string) {
@@ -219,7 +200,7 @@ func toAxiom(b luaBind, adopted bool) (*jsonx.Object, [2]string) {
 		action, argument = "raw", b.lua
 	}
 	key := b.key
-	if moved, ok := exampleKeys[[2]string{keyID(b.key), action}]; ok && adopted {
+	if moved, ok := exampleKeys[[2]string{render.KeyID(b.key), action}]; ok && adopted {
 		key = moved
 	}
 	bind := jsonx.Obj("key", key, "action", action, "argument", argument, "call", "toggle")
@@ -332,19 +313,9 @@ func usedElsewhere(code, name string) bool {
 
 // --- Extract and remove ---
 
-// hyprFiles are user/*.lua, sorted (only: just that one)
+// hyprFiles are user/*.lua (only: just that one)
 func hyprFiles(dir, only string) []string {
-	user := filepath.Join(dir, "user")
-	var out []string
-	entries, _ := os.ReadDir(user)
-	for _, e := range entries {
-		path := filepath.Join(user, e.Name())
-		if strings.HasSuffix(e.Name(), ".lua") && isFile(path) && (only == "" || e.Name() == only) {
-			out = append(out, path)
-		}
-	}
-	sort.Strings(out)
-	return out
+	return userFiles(dir, only, func(name string) bool { return strings.HasSuffix(name, ".lua") })
 }
 
 type siteKey struct {
@@ -450,7 +421,7 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 			if to := made[i].Value("key").(string); to != e.key {
 				push(result, "remapped", jsonx.Obj("from", e.key, "to", to, "action", made[i].Value("action")))
 			}
-			movedKeys[keyID(e.key)] = true
+			movedKeys[render.KeyID(e.key)] = true
 		}
 		push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", moved))
 		read[k.file] = true
@@ -464,7 +435,7 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 	for _, k := range sortedSites(unbinds) {
 		all := true
 		for _, u := range unbinds[k] {
-			if u.key == "" || !movedKeys[keyID(u.key)] {
+			if id := render.KeyID(u.key); id == "" || !movedKeys[id] {
 				all = false
 			}
 		}

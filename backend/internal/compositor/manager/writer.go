@@ -2,7 +2,6 @@ package manager
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -112,17 +111,16 @@ type writer interface {
 	header() string
 	monitorPattern() (*regexp.Regexp, string)
 	problems(in Inputs) problems
-	// runningConfig and userBindsRead: niri's (NiriManager)
+	// runningConfig: niri's (NiriManager)
 	runningConfig(in Inputs) string
-	userBindsRead() bool
 }
 
 // problems are why a file mode isn't in effect; Runtime, why the runtime
 // layer isn't as axiom made it (sway's binds made without knowing the
 // user's keys, niri's module it refused)
 type problems struct {
-	NotIncluded, NotManaged, Blocked, Failed, Runtime string
-	Invalid                                           func(string) string
+	NotIncluded, NotManaged, Failed, Runtime string
+	Invalid                                  func(string) string
 }
 
 // env is what writers share: paths, tables, the schema and the
@@ -212,5 +210,3 @@ func startCommand(in Inputs) string {
 func sessionEnv(in Inputs, spec any) any {
 	return render.SessionEnv(in.get("session"), getAny(getAny(spec, "input"), "cursor"), jsonx.Obj("qt", in.flag("qt")))
 }
-
-func sprintf(format string, args ...any) string { return fmt.Sprintf(format, args...) }

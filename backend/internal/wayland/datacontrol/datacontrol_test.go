@@ -139,7 +139,7 @@ func TestReadsTheSelection(t *testing.T) {
 	if _, err := o.Receive(context.Background(), "text/plain;charset=utf-8", 2, time.Second); err == nil {
 		t.Error("read past the limit")
 	}
-	if got := d.Mimes(); len(got) != 1 {
+	if got := d.Current().Mimes(); len(got) != 1 {
 		t.Errorf("mimes %v", got)
 	}
 	// The next selection replaces it: the old offer goes

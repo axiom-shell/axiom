@@ -3,7 +3,6 @@ package binds
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -11,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -19,15 +19,11 @@ var (
 	swayMods = map[string]string{"mod4": "SUPER", "super": "SUPER", "mod1": "ALT", "alt": "ALT", "ctrl": "CTRL", "control": "CTRL",
 		"shift": "SHIFT", "lock": "CAPS", "mod2": "MOD2", "mod3": "MOD3", "mod5": "MOD5"}
 	swayModOrder = []string{"SUPER", "CTRL", "ALT", "SHIFT", "CAPS", "MOD2", "MOD3", "MOD5"}
-	swayMouse    = map[string]string{"button1": "mouse:272", "button2": "mouse:274", "button3": "mouse:273", "button4": "mouse_up",
-		"button5": "mouse_down", "button6": "mouse_left", "button7": "mouse_right", "btn_left": "mouse:272",
-		"btn_right": "mouse:273", "btn_middle": "mouse:274", "btn_side": "mouse:275", "btn_extra": "mouse:276"}
 	// Options a moved bind keeps as axiom's flags, in this order
 	swayFlags = [][2]string{{"--release", "release"}, {"--locked", "locked"}}
 	// Options a moved bind can drop (not --to-code: axiom binds by keysym,
 	// which would change the bind on another layout)
-	swayHarmless   = map[string]bool{"--no-warn": true, "--whole-window": true, "--no-repeat": true}
-	swayDirections = map[string]bool{"left": true, "right": true, "up": true, "down": true}
+	swayHarmless = map[string]bool{"--no-warn": true, "--whole-window": true, "--no-repeat": true}
 
 	swayBlock = regexp.MustCompile(`^(bindsym|bindcode)(\s+--\S+)*\s*\{$`)
 	swayBind  = regexp.MustCompile(`^(bindsym|bindcode)\s+(.*)$`)
@@ -70,7 +66,7 @@ func swayKey(combo string, code bool) string {
 			}
 		}
 		key = "code:" + last
-	} else if m, ok := swayMouse[strings.ToLower(last)]; ok {
+	} else if m, ok := render.SwayMouseKeys[strings.ToLower(last)]; ok {
 		key = m
 	} else if len([]rune(last)) == 1 {
 		key = strings.ToUpper(last)
@@ -193,10 +189,10 @@ func swayAction(o Options, command string) *jsonx.Object {
 	if action, ok := simple[command]; ok {
 		return jsonx.Obj("action", action)
 	}
-	if len(words) == 2 && words[0] == "focus" && swayDirections[words[1]] {
+	if len(words) == 2 && words[0] == "focus" && directions[words[1]] {
 		return jsonx.Obj("action", "focusDir", "argument", words[1])
 	}
-	if len(words) == 2 && words[0] == "move" && swayDirections[words[1]] {
+	if len(words) == 2 && words[0] == "move" && directions[words[1]] {
 		return jsonx.Obj("action", "moveWindowDir", "argument", words[1])
 	}
 	if len(words) > 0 && words[0] == "exec" {
@@ -209,26 +205,10 @@ func swayAction(o Options, command string) *jsonx.Object {
 	return jsonx.Obj("action", "raw", "argument", command, "compositor", "sway")
 }
 
+// swayFiles are user/'s files as sway's `include user/*` reads them, no
+// backups
 func swayFiles(o Options) []string {
-	user := filepath.Join(o.Dir, "user")
-	if o.Only != "" {
-		if path := filepath.Join(user, o.Only); isFile(path) {
-			return []string{path}
-		}
-		return nil
-	}
-	// As sway's `include user/*` reads them: no hidden files (a staged
-	// write, an editor's swap file), no backups
-	var out []string
-	entries, _ := os.ReadDir(user)
-	for _, e := range entries {
-		path := filepath.Join(user, e.Name())
-		if isFile(path) && !strings.HasPrefix(e.Name(), ".") && !strings.Contains(e.Name(), ".axiom-backup-") {
-			out = append(out, path)
-		}
-	}
-	sort.Strings(out)
-	return out
+	return userFiles(o.Dir, o.Only, func(name string) bool { return !strings.Contains(name, ".axiom-backup-") })
 }
 
 // extractSway reads the bindsym and bindcode lines outside a mode, in
@@ -236,7 +216,7 @@ func swayFiles(o Options) []string {
 // in each so far
 func extractSway(ctx context.Context, o Options) *jsonx.Object {
 	result := emptyResult()
-	vars := &userconf.Vars{}
+	vars := &render.Vars{}
 	for _, path := range swayFiles(o) {
 		if o.Tracked(ctx, path) {
 			push(result, "tracked", path)
@@ -253,7 +233,7 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 			if line == "" || strings.HasPrefix(line, "#") {
 				continue
 			}
-			if m := userconf.SetLine.FindStringSubmatch(line); m != nil {
+			if m := render.SwaySetLine.FindStringSubmatch(line); m != nil {
 				vars.Set(m[1], strings.TrimSpace(vars.Expand(m[2])))
 				continue
 			}
@@ -306,23 +286,13 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 				push(result, "kept", keptEntry(path, number, combo, "key", ""))
 				continue
 			}
-			entry := jsonx.Obj("key", key)
-			action := swayAction(o, command)
-			for _, k := range action.Keys() {
-				entry.Set(k, action.Value(k))
-			}
+			extra := jsonx.NewObject()
 			for _, f := range swayFlags {
 				if slices.Contains(flags, f[0]) {
-					entry.Set(f[1], true)
+					extra.Set(f[1], true)
 				}
 			}
-			// Sway repeats a held bind unless told not to, but that's rarely
-			// meant (a held close would close one window after another): an
-			// action repeats as axiom's own does, a raw command as sway had it
-			name, _ := entry.Value("action").(string)
-			if !slices.Contains(flags, "--no-repeat") && (actions.Default().Repeating[name] || name == "raw") {
-				entry.Set("repeating", true)
-			}
+			entry := movedBind(key, swayAction(o, command), extra, !slices.Contains(flags, "--no-repeat"))
 			push(result, "binds", entry)
 			push(result, "sites", jsonx.Obj("file", path, "line", float64(number), "binds", jsonx.Arr(entry), "text", raw))
 		}

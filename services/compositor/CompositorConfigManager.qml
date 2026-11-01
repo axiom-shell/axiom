@@ -72,9 +72,8 @@ Singleton {
   // looked
   readonly property int mergeable: _state.mergeable ?? -1
   // niri's: the config it runs now (the detached wrapper while it's
-  // loaded), and whether the user's binds have been read
+  // loaded)
   readonly property string runningConfig: _state.runningConfig ?? ""
-  readonly property bool userBindsRead: _state.userBindsRead === true
   // The name of the saved monitor profile for what's connected, as the
   // daemon matched it on its last read, "" for none (MonitorManager)
   readonly property string monitorProfile: _state.monitorProfile ?? ""

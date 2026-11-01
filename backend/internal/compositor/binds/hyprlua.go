@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	lua "github.com/yuin/gopher-lua"
+
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 )
 
 // luaBind is one hl.bind call the user's files made
@@ -440,7 +442,7 @@ var luaName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 func luaSource(v lua.LValue) string {
 	switch v := v.(type) {
 	case lua.LString:
-		return quoteLua(string(v))
+		return render.LuaString(string(v))
 	case lua.LNumber:
 		return numberText(float64(v))
 	case lua.LBool:
@@ -475,37 +477,4 @@ func luaSource(v lua.LValue) string {
 		return "{ " + strings.Join(parts, ", ") + " }"
 	}
 	return v.String()
-}
-
-// quoteLua is a string as Lua 5.4's %q writes it, a newline as \n
-func quoteLua(s string) string {
-	var b strings.Builder
-	b.WriteByte('"')
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		switch {
-		case c == '"':
-			b.WriteString(`\"`)
-		case c == '\\':
-			b.WriteString(`\\`)
-		case c == '\n':
-			b.WriteString(`\n`)
-		case c == '\r':
-			b.WriteString(`\r`)
-		case c == 0 || c < 32 || c == 127:
-			next := byte(0)
-			if i+1 < len(s) {
-				next = s[i+1]
-			}
-			if next >= '0' && next <= '9' {
-				fmt.Fprintf(&b, `\%03d`, c)
-			} else {
-				fmt.Fprintf(&b, `\%d`, c)
-			}
-		default:
-			b.WriteByte(c)
-		}
-	}
-	b.WriteByte('"')
-	return b.String()
 }

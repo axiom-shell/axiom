@@ -8,9 +8,6 @@ TestCase {
   function test_frames_one_line_each() {
     const r = JsonRpc.request(3, "config.get");
     compare(r, '{"jsonrpc":"2.0","id":3,"method":"config.get"}\n');
-    compare(JsonRpc.notification("lock.state", {
-      "locked": true
-    }), '{"jsonrpc":"2.0","method":"lock.state","params":{"locked":true}}\n');
     compare(JsonRpc.result(7, undefined), '{"jsonrpc":"2.0","id":7,"result":null}\n');
     verify(!JsonRpc.request(1, "x", {
       "text": "a\nb"

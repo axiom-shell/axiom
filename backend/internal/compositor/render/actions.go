@@ -17,33 +17,6 @@ func at(v any, i int) any {
 	return nil
 }
 
-// Supported is BindActions.supported: whether a compositor (its supports)
-// can run action.
-func (t *Tables) Supported(action, supports any) bool {
-	caps := get(t.Needs, str(action))
-	if caps == nil {
-		return true
-	}
-	for _, c := range items(caps) {
-		if isTrue(get(supports, str(c))) {
-			return true
-		}
-	}
-	return false
-}
-
-// AppliesUnder is BindActions.appliesUnder.
-func (t *Tables) AppliesUnder(bind any, kind string, supports any) bool {
-	action := get(bind, "action")
-	return t.Supported(action, supports) && (str(action) != "raw" || str(or(get(bind, "compositor"), "hyprland")) == kind) &&
-		t.KeySupported(get(bind, "key"), supports)
-}
-
-// KeySupported is BindActions.keySupported: a tap needs modifierTap.
-func (t *Tables) KeySupported(key, supports any) bool {
-	return TapModifier(key) == "" || isTrue(get(supports, "modifierTap"))
-}
-
 // SwitcherHeld is BindActions.switcherHeld: the modifiers a switcher combo
 // is held by (all but SHIFT, unless SHIFT is all there is).
 func SwitcherHeld(mods []string) []string {
@@ -59,9 +32,6 @@ func SwitcherHeld(mods []string) []string {
 	return []string{"SHIFT"}
 }
 
-// HasCalls is BindActions.hasCalls.
-func (t *Tables) HasCalls(action any) bool { return t.Calls.Has(str(action)) }
-
 // CallOf is BindActions.callOf: a bind's call, "toggle" unless its action
 // has the one it names.
 func (t *Tables) CallOf(bind any) any {
@@ -75,11 +45,6 @@ func (t *Tables) CallOf(bind any) any {
 // runs.
 func (t *Tables) CallFunction(bind any) string {
 	return str(or(get(get(t.Calls, str(get(bind, "action"))), str(t.CallOf(bind))), "toggle"))
-}
-
-// ArgumentKind is BindActions.argumentKind.
-func (t *Tables) ArgumentKind(action any) string {
-	return str(or(get(t.ArgumentKinds, str(action)), ""))
 }
 
 // NeedsArgument is BindActions.needsArgument.

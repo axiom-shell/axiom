@@ -5,17 +5,18 @@
 package userconf
 
 import (
-	"bufio"
-	"encoding/json"
-	"net"
+	"context"
 	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
-	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/kdl"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
@@ -99,7 +100,7 @@ func NiriMain(getenv func(string) string) string {
 		return v
 	}
 	user := filepath.Join(configHome(getenv), "niri", "config.kdl")
-	if isFile(user) || !isFile("/etc/niri/config.kdl") {
+	if fsx.IsFile(user) || !fsx.IsFile("/etc/niri/config.kdl") {
 		return user
 	}
 	return "/etc/niri/config.kdl"
@@ -210,32 +211,12 @@ func lookupEnv(getenv func(string) string, name string) (string, bool) {
 // RunningNested is whether the niri $NIRI_SOCKET names runs nested, in a
 // window (its winit backend, whose only output is "winit").
 func RunningNested(getenv func(string) string) bool {
-	path := getenv("NIRI_SOCKET")
-	if path == "" {
+	n := ipc.NiriFromEnv(getenv)
+	if n == nil {
 		return false
 	}
-	conn, err := net.DialTimeout("unix", path, 2*time.Second)
-	if err != nil {
-		return false
-	}
-	defer conn.Close()
-	conn.SetDeadline(time.Now().Add(2 * time.Second))
-	if _, err := conn.Write([]byte("\"Outputs\"\n")); err != nil {
-		return false
-	}
-	line, err := bufio.NewReader(conn).ReadBytes('\n')
-	if err != nil && len(line) == 0 {
-		return false
-	}
-	var reply struct {
-		Ok struct {
-			Outputs map[string]json.RawMessage
-		}
-	}
-	if json.Unmarshal(line, &reply) != nil {
-		return false
-	}
-	return len(reply.Ok.Outputs) == 1 && reply.Ok.Outputs["winit"] != nil
+	outputs, err := n.Outputs(context.Background())
+	return err == nil && len(outputs) == 1 && outputs[0].Name == "winit"
 }
 
 // --- Binds ---
@@ -270,7 +251,9 @@ func ModKey(files []File, nested bool) string {
 				continue
 			}
 			if found := node.Child(option); found != nil && len(found.Args) > 0 {
-				name = kdl.Str(found.Args[0])
+				if s, ok := found.Args[0].(string); ok {
+					name = s
+				}
 			}
 		}
 	}
@@ -340,7 +323,7 @@ func actionText(bind *kdl.Node) string {
 	if len(bind.Children) == 0 {
 		return ""
 	}
-	return kdl.NodeText(bind.Children[0])
+	return render.KdlNodeText(bind.Children[0])
 }
 
 // NiriBinds are the binds in effect as BindKeys' entries ({ modmask, key,
@@ -437,7 +420,7 @@ func NiriInfo(files []File, nested bool) *jsonx.Object {
 				}
 			case "input":
 				if layout := node.Child("keyboard").Child("xkb").Child("layout"); layout != nil && len(layout.Args) > 0 {
-					layouts = kdl.Str(layout.Args[0])
+					layouts, _ = layout.Args[0].(string)
 				}
 			}
 		}
@@ -450,9 +433,25 @@ func NiriInfo(files []File, nested bool) *jsonx.Object {
 	return jsonx.Obj("gaps", gaps, "struts", struts, "layouts", layouts, "blur", blur, "modKey", modKey)
 }
 
-func isFile(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.Mode().IsRegular()
+// UserFiles are the names of dir's regular files (a link followed) that
+// keep takes (nil: all), sorted, hidden ones left out (a staged write, an
+// editor's swap file): the managed config's user/ files.
+func UserFiles(dir string, keep func(name string) bool) []string {
+	var names []string
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		if !strings.HasPrefix(e.Name(), ".") && (keep == nil || keep(e.Name())) && fsx.IsFile(filepath.Join(dir, e.Name())) {
+			names = append(names, e.Name())
+		}
+	}
+	sort.Strings(names)
+	return names
+}
+
+// NiriUserFiles are user/*.kdl as the managed config includes them, by name
+// (niri takes no globs).
+func NiriUserFiles(dir string) []string {
+	return UserFiles(dir, func(name string) bool { return strings.HasSuffix(name, ".kdl") })
 }
 
 func exists(path string) bool {

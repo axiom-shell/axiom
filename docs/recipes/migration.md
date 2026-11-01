@@ -12,7 +12,7 @@ A reshape now is a **format-2 step** in `backend/internal/migrate/steps/`: every
 1. `backend/internal/migrate/steps/steps.go`: a `Step{Version: N, Run: …}` appended to `all`, N one past the last (the first is 77). Put a longer `Run` in its own file, `v<N>.go`.
 2. `config/schema/index.yaml`: `version`'s `default` to N.
 3. The schema change itself (`config/schema/`), and the readers and editors that read the moved key.
-4. `backend/internal/migrate/steps/steps_test.go` (or `v<N>_test.go`): a case per shape the step meets.
+4. `backend/internal/migrate/steps/steps_test.go` (or `v<N>_test.go`): `runStepCases(t, <N>, []stepCase{…})`, a row per shape the step meets (it also checks a second run changes nothing).
 
 ## Skeleton
 ```go

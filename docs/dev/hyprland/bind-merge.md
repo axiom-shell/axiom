@@ -4,7 +4,7 @@
 > **Config:** `Keybinds.binds`
 > **Related:** [Managed takeover](managed-takeover.md), [Keybinds](keybinds.md), [Config modes](config-modes.md)
 
-`mergeUserBinds(only)` moves the binds in `user/*.lua` into `Keybinds.binds`, so axiom owns them and nothing is bound twice. It works in managed mode only.
+`mergeUserBinds(only)` moves the binds in `user/*.lua` (no hidden ones, as the managed file loads them: `userconf.UserFiles`, which sway's and niri's merges and the niri writer list through too) into `Keybinds.binds`, so axiom owns them and nothing is bound twice. It works in managed mode only.
 
 ### Entry points
 - The Keybinds page's Merge button.
@@ -50,7 +50,7 @@
 
 ### Committing and removing
 1. The daemon saves the binds first (`Keybinds.binds`, through the store; refused while the config is read-only, `saveFailed`). The `compositor.bindsMerged` push lets `KeybindEditor` add them to a dirty draft.
-2. `remove` then deletes those calls, plus any `hl.unbind` of a moved key (it would unbind the moved bind too).
+2. `remove` then deletes those calls, plus any `hl.unbind` of a moved key, its modifiers compared by `render.KeyID` (WIN is SUPER; it would unbind the moved bind too).
    - It first writes a dated `<file>.axiom-backup-<date>` copy, keeping the file's mode.
    - It leaves a file alone if the result doesn't parse (`luacheck`: `luac -p` where it's installed, else gopher-lua).
    - A file it can't read, back up or write is failed (`io`) and the others go on, so what was deleted is always known.

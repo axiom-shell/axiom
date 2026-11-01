@@ -354,10 +354,12 @@ func TestHyprWhatCantMoveStays(t *testing.T) {
 	eq(t, strings.Contains(text, "SUPER + C"), true)
 }
 
+// An unbind of a moved key goes with it, the key spelled any way Hyprland
+// reads it (WIN is SUPER)
 func TestHyprUnbindOfAMovedKeyGoesToo(t *testing.T) {
 	t.Parallel()
 	f := newFx(t, "hyprland")
-	f.write("binds.lua", "hl.unbind(\"SUPER + Q\")\nhl.bind(\"SUPER + Q\", hl.dsp.exec_cmd(\"foot\"))\nhl.unbind(\"SUPER + W\")\n")
+	f.write("binds.lua", "hl.unbind(\"WIN + q\")\nhl.bind(\"SUPER + Q\", hl.dsp.exec_cmd(\"foot\"))\nhl.unbind(\"SUPER + W\")\n")
 	found := f.extract()
 	eq(t, len(list(found, "sites")), 2)
 	f.remove(found.Value("sites"))
@@ -505,13 +507,6 @@ func TestHyprRemoveKeepsAFileThatWouldntParse(t *testing.T) {
 	failed := list(done, "failed")
 	eq(t, failed[0].Value("reason"), "syntax")
 	eq(t, f.read("binds.lua"), text)
-}
-
-func TestKeyID(t *testing.T) {
-	t.Parallel()
-	eq(t, keyID(" SUPER+shift + s "), "shift + super + s")
-	eq(t, keyID("Q"), "q")
-	eq(t, keyID(""), "")
 }
 
 // --- niri ---

@@ -38,10 +38,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"time"
 
@@ -98,7 +96,7 @@ func prepare(o Options, needFallback bool) (*call, error) {
 		o.Now = time.Now
 	}
 	if o.Git == nil {
-		o.Git = gitRepo
+		o.Git = edit.GitRepo
 	}
 	dir := strings.TrimSuffix(o.Dir, "/")
 	if dir == "" {
@@ -108,18 +106,9 @@ func prepare(o Options, needFallback bool) (*call, error) {
 	return &call{Options: o, file: filepath.Join(dir, o.Kind.File), user: filepath.Join(dir, "user")}, nil
 }
 
-// gitRepo asks git, so worktrees, $GIT_DIR and ceilings count as git does
-func gitRepo(ctx context.Context, dir string) (string, bool) {
-	out, err := exec.CommandContext(ctx, "git", "-C", dir, "rev-parse", "--show-toplevel").Output()
-	if err != nil {
-		return "", false
-	}
-	return strings.TrimRight(string(out), "\n"), true
-}
-
 func (c *call) isOurs() bool {
 	data, err := os.ReadFile(c.file)
-	if err != nil || !isFile(c.file) {
+	if err != nil || !fsx.IsFile(c.file) {
 		return false
 	}
 	first, _, _ := strings.Cut(string(data), "\n")
@@ -155,7 +144,7 @@ func Check(ctx context.Context, o Options) (string, error) {
 		return b, nil
 	}
 	switch {
-	case !isFile(c.file):
+	case !fsx.IsFile(c.file):
 		return "new", nil
 	case c.isStock():
 		return "stock", nil
@@ -185,7 +174,7 @@ func Claim(ctx context.Context, o Options) (string, error) {
 	if err := os.MkdirAll(c.user, 0o755); err != nil {
 		return "", err
 	}
-	if !isFile(c.file) {
+	if !fsx.IsFile(c.file) {
 		return "created", c.setAside("", "")
 	}
 	stamp := c.Now().Format(edit.Stamp)
@@ -293,7 +282,7 @@ func (c *call) isStock() bool {
 	if example == "" {
 		example = c.Kind.exampleDefault(c.Getenv)
 	}
-	if example == "" || !isFile(example) {
+	if example == "" || !fsx.IsFile(example) {
 		return false
 	}
 	mine, err1 := os.ReadFile(c.file)
@@ -441,26 +430,16 @@ func mapLines(text string, fn func(string) string) string {
 const recordName = ".axiom-claimed"
 
 func (c *call) setAside(previous, backup string) error {
-	if !c.Kind.record {
-		return nil
-	}
 	return fsx.WriteFile(filepath.Join(c.Dir, recordName), fmt.Appendf(nil, "previous=%s\nbackup=%s\n", previous, backup), 0o644)
 }
 
-func (c *call) forget() {
-	if c.Kind.record {
-		os.Remove(filepath.Join(c.Dir, recordName))
-	}
-}
+func (c *call) forget() { os.Remove(filepath.Join(c.Dir, recordName)) }
 
 // setAsideNow is what release gives back: as the record names it (each
-// only while it's still there), else, from a claim before records, the
-// newest of each
+// only while it's still there); nothing without one (a claim from before
+// records: the maintainer, 2026-11-01, "drop")
 func (c *call) setAsideNow() (previous, backup string) {
-	data, err := os.ReadFile(filepath.Join(c.Dir, recordName))
-	if !c.Kind.record || err != nil {
-		return c.newestPrevious(), c.newestBackup()
-	}
+	data, _ := os.ReadFile(filepath.Join(c.Dir, recordName))
 	for _, line := range splitLines(string(data)) {
 		if v, ok := strings.CutPrefix(line, "previous="); ok {
 			previous = v
@@ -468,10 +447,10 @@ func (c *call) setAsideNow() (previous, backup string) {
 			backup = v
 		}
 	}
-	if previous != "" && !isFile(filepath.Join(c.user, previous)) {
+	if previous != "" && !fsx.IsFile(filepath.Join(c.user, previous)) {
 		previous = ""
 	}
-	if backup != "" && !isFile(filepath.Join(c.Dir, backup)) {
+	if backup != "" && !fsx.IsFile(filepath.Join(c.Dir, backup)) {
 		backup = ""
 	}
 	return previous, backup
@@ -479,32 +458,17 @@ func (c *call) setAsideNow() (previous, backup string) {
 
 // pending is what a claim not yet followed by its managed write set aside:
 // its record, naming the newest backup (and, adopted, a copy still in
-// user/). Without records, the newest of each, as before them.
+// user/)
 func (c *call) pending() (previous, backup string, ok bool) {
 	last := c.newestBackup()
 	if last == "" {
 		return "", "", false
 	}
-	if !c.Kind.record {
-		return c.newestPrevious(), last, true
-	}
-	if !isFile(filepath.Join(c.Dir, recordName)) {
+	if !fsx.IsFile(filepath.Join(c.Dir, recordName)) {
 		return "", "", false
 	}
 	previous, backup = c.setAsideNow()
 	return previous, backup, backup == last
-}
-
-// newestPrevious is the newest adopted config in user/ (00-previous<ext> is
-// the first, 00-previous-<date><ext> the later ones), or ""
-func (c *call) newestPrevious() string {
-	if dated := newest(c.user, "00-previous-*"+c.Kind.Ext); dated != "" {
-		return dated
-	}
-	if name := "00-previous" + c.Kind.Ext; isFile(filepath.Join(c.user, name)) {
-		return name
-	}
-	return ""
 }
 
 func (c *call) newestBackup() string {
@@ -513,17 +477,14 @@ func (c *call) newestBackup() string {
 
 // newest is the last name in dir matching pattern, by name (they're dated)
 func newest(dir, pattern string) string {
-	var names []string
-	for _, e := range entries(dir) {
+	last := ""
+	list, _ := os.ReadDir(dir) // sorted by name
+	for _, e := range list {
 		if ok, _ := filepath.Match(pattern, e.Name()); ok {
-			names = append(names, e.Name())
+			last = e.Name()
 		}
 	}
-	if len(names) == 0 {
-		return ""
-	}
-	sort.Strings(names)
-	return names[len(names)-1]
+	return last
 }
 
 // --- Files ---

@@ -16,9 +16,9 @@ The three backends implement every member the facade calls, and the takeover, au
 - Cleanup: [Backends keep stubs for calls the facade gates](../../docs/dev/issues.md#backends-keep-stubs-for-calls-the-facade-gates) (`leaveSwitcher`, folded into the compositor review's entry)
 - Cleanup: [Small shrinks in SwayManager](../../docs/dev/issues.md#small-shrinks-in-swaymanager) (`runCommands`, filed by the sway review)
 - Cleanup: [sway and niri build output details and descriptions twice](../../docs/dev/issues.md#sway-and-niri-build-output-details-and-descriptions-twice)
-- Cleanup: [The bind merge lists user/ files three times, once per compositor](../../docs/dev/issues.md#the-bind-merge-lists-user-files-three-times-once-per-compositor)
-- Cleanup: [sway's and niri's merges build a moved bind the same way twice](../../docs/dev/issues.md#sways-and-niris-merges-build-a-moved-bind-the-same-way-twice)
-- Cleanup: [The merge keeps key and variable tables render already has](../../docs/dev/issues.md#the-merge-keeps-key-and-variable-tables-render-already-has)
+- Cleanup: "The bind merge lists user/ files three times, once per compositor" (fixed, row 20 compositor-01)
+- Cleanup: "sway's and niri's merges build a moved bind the same way twice" (fixed, row 20 compositor-01)
+- Cleanup: "The merge keeps key and variable tables render already has" (fixed, row 20 compositor-01)
 
 Unrecorded (Minor): niri's empty workspace names (`NiriState.windows`/`workspace`: "workspace " in the launcher); niri misses the hotplug after zero outputs (`NiriManager._readOutputs`, sway's `_outputsRead`); contract.md's `mirrorOf` (Hyprland's is an id), "optional" `outputsApplied` (required with `monitors`) and its two-backend list; sway's and niri's merges list git-tracked files they never edit (`tracked`). Known-entry notes, added to "Backends keep stubs for calls the facade gates": `SwayManager.scrollStrip`, `NiriManager.applyRemap` and both `leaveSwitcher` stubs.
 

@@ -75,8 +75,6 @@ Singleton {
   // Ids in each output's block (CompositorManager.blockSize): niri makes
   // workspaces as they fill, so more than anyone has
   readonly property int blockSize: 100
-  // Whether niri's last config load failed (it keeps the config before)
-  readonly property bool lastLoadFailed: _state.configFailed
   // What niri does (CompositorManager.supports). Its workspaces belong to
   // an output, and every output is a strip. A column's windows shown as
   // tabs are its window groups. No outputCapture: it has only

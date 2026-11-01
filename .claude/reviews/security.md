@@ -6,7 +6,7 @@ The lock's core holds: only `LockManager.lock()` locks, only PAM's success (or t
 ## Open findings
 - Major: [A shell started locked locks again on every reload](../../docs/dev/issues.md#a-shell-started-locked-locks-again-on-every-reload)
 - Major: [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../../docs/dev/issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
-- Cleanup: [PolkitAgents.isAgentCommand is dead since the autostart moved to Go](../../docs/dev/issues.md#polkitagentsisagentcommand-is-dead-since-the-autostart-moved-to-go)
+- Cleanup: "PolkitAgents.isAgentCommand is dead since the autostart moved to Go" (fixed, row 20 platform-01)
 - Cleanup: [Power repeats the session actions' icons, labels and confirm](../../docs/dev/issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
 
 ### secrets.md names an OnSecrets that doesn't exist

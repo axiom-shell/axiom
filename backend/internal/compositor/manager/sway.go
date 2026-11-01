@@ -73,7 +73,6 @@ func (w *swayWriter) problems(in Inputs) problems {
 	p := problems{
 		NotIncluded: `Compositor mode is "included", but your sway config doesn't include ` + f.IncludePath + "; add:\n" + f.IncludeLines,
 		NotManaged:  `Compositor mode is "managed", but ` + f.ManagedPath + " isn't loaded",
-		Blocked:     `Compositor mode is "managed", but ` + f.ConfigDir + ` is a symlink or in a git repository, so axiom won't take it over; use "included" instead. Applying axiom's layer at runtime meanwhile.`,
 	}
 	if w.unread != "" {
 		p.Runtime = "Can't read your sway config (" + w.unread + "), so axiom's binds may cover your own keys"
@@ -200,9 +199,8 @@ func (w *swayWriter) sendEach(ctx context.Context, lines []string) {
 
 func (w *swayWriter) runLive(ctx context.Context, lines []string) bool { return w.run(ctx, lines) }
 
-func (w *swayWriter) setCursor(ctx context.Context, cursor any) {
-	w.run(ctx, []string{render.SwayCursorLine(getAny(cursor, "xcursor"), getAny(cursor, "size"))})
-}
+// setCursor: the live lines carry the cursor's line whenever one is set
+func (w *swayWriter) setCursor(context.Context, any) {}
 
 // userBinds are the binds the user's own sway config holds (its includes
 // in, axiom's files left out), or nil
@@ -291,7 +289,6 @@ func (w *swayWriter) reloads(ctx context.Context, out chan<- ipc.Reload) error {
 func (w *swayWriter) configReloaded(context.Context, Inputs) bool { return false }
 func (w *swayWriter) ownKey(Inputs) string                        { return "" }
 func (w *swayWriter) runningConfig(Inputs) string                 { return "" }
-func (w *swayWriter) userBindsRead() bool                         { return true }
 
 // entries are the user's binds and axiom's in effect: those the runtime
 // layer bound, or all of them while the file is loaded

@@ -4,8 +4,8 @@ reviewed: d51805b 2026-11-01  (full, except the files under Coverage › Not rea
 The daemon core holds up: hello guards, the latest-wins queue, in-order calls, the re-exec handoff, supervision and polled topics do what the docs say, and each security rule has a test. Left: 54 lines of dead call paths and helpers, one goroutine past `tasks.Go`, a garbled `axiom daemon status` line, and doc lists behind the code.
 
 ## Open findings
-- Cleanup: [The shell's unused daemon-call paths](../../docs/dev/issues.md#the-shells-unused-daemon-call-paths)
-- Cleanup: [Two dead Go helpers and a forwarding wrapper](../../docs/dev/issues.md#two-dead-go-helpers-and-a-forwarding-wrapper)
+- Cleanup: "The shell's unused daemon-call paths" (fixed, row 20 platform-01)
+- Cleanup: "Two dead Go helpers and a forwarding wrapper" (fixed, row 20 platform-01)
 - Cleanup: [daemon.shutdown starts its goroutine past tasks.Go](../../docs/dev/issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
 
 ### axiom daemon status runs the config folder into the revision

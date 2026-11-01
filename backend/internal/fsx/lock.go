@@ -48,16 +48,6 @@ func TryLock(path string) (*Lock, error) {
 	return &Lock{f: f}, nil
 }
 
-// Holder is the pid recorded in a lock file (0 when unknown).
-func Holder(path string) int {
-	f, err := os.Open(path)
-	if err != nil {
-		return 0
-	}
-	defer f.Close()
-	return readPID(f)
-}
-
 func readPID(f *os.File) int {
 	buf := make([]byte, 32)
 	n, _ := f.ReadAt(buf, 0)

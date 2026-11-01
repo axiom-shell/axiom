@@ -3,7 +3,6 @@ package binds
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/kdl"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -103,7 +103,7 @@ func niriAction(o Options, node *kdl.Node) *jsonx.Object {
 			return commandAction(o, s)
 		}
 	}
-	return jsonx.Obj("action", "raw", "argument", kdl.NodeText(node), "compositor", "niri")
+	return jsonx.Obj("action", "raw", "argument", render.KdlNodeText(node), "compositor", "niri")
 }
 
 var shellSafe = regexp.MustCompile(`^[\w@%+=:,./-]+$`)
@@ -125,26 +125,9 @@ func shellJoin(words []string) string {
 	return strings.Join(out, " ")
 }
 
+// niriFiles are user/*.kdl as the managed config includes them
 func niriFiles(o Options) []string {
-	user := filepath.Join(o.Dir, "user")
-	if o.Only != "" {
-		if path := filepath.Join(user, o.Only); isFile(path) {
-			return []string{path}
-		}
-		return nil
-	}
-	// As the managed config includes them: .kdl files, no hidden ones (a
-	// staged write, an editor's swap file) or backups
-	var out []string
-	entries, _ := os.ReadDir(user)
-	for _, e := range entries {
-		path := filepath.Join(user, e.Name())
-		if strings.HasSuffix(e.Name(), ".kdl") && !strings.HasPrefix(e.Name(), ".") && isFile(path) {
-			out = append(out, path)
-		}
-	}
-	sort.Strings(out)
-	return out
+	return userFiles(o.Dir, o.Only, func(name string) bool { return strings.HasSuffix(name, ".kdl") })
 }
 
 type parsedFile struct {
@@ -200,25 +183,15 @@ func extractNiri(ctx context.Context, o Options) *jsonx.Object {
 					push(result, "kept", keptEntry(f.path, bind.Line, bind.Name, "key", ""))
 					continue
 				}
-				entry := jsonx.Obj("key", key)
-				action := niriAction(o, bind.Children[0])
-				for _, k := range action.Keys() {
-					entry.Set(k, action.Value(k))
-				}
+				extra := jsonx.NewObject()
 				if locked, _ := bind.Props.Get("allow-when-locked"); locked == true {
-					entry.Set("locked", true)
+					extra.Set("locked", true)
 				}
-				if title, _ := bind.Props.Get("hotkey-overlay-title"); kdl.Truthy(title) {
-					entry.Set("description", kdl.Str(title))
+				if title, _ := bind.Props.Get("hotkey-overlay-title"); title != nil && title != "" {
+					extra.Set("description", title)
 				}
-				// niri repeats a held bind unless told not to, but that's
-				// rarely meant (a held close would close one window after
-				// another): an action repeats as axiom's own does, a raw one
-				// as niri had it
-				name, _ := entry.Value("action").(string)
-				if repeat, _ := bind.Props.Get("repeat"); repeat != false && (actions.Default().Repeating[name] || name == "raw") {
-					entry.Set("repeating", true)
-				}
+				repeat, _ := bind.Props.Get("repeat")
+				entry := movedBind(key, niriAction(o, bind.Children[0]), extra, repeat != false)
 				text := ""
 				if bind.Line-1 < len(f.lines) {
 					text = f.lines[bind.Line-1]

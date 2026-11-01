@@ -22,7 +22,7 @@ func pipeline(t *testing.T) config.Pipeline {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return config.V2Pipeline{S: schema.New(parsed)}
+	return config.Pipeline{S: schema.New(parsed)}
 }
 
 func write(t *testing.T, dir, name, text string) string {

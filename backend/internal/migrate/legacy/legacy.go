@@ -38,11 +38,10 @@ func Schema() *jsonx.Object {
 // LastVersion is the last format-1 version: legacy.js's currentVersion.
 const LastVersion = 75
 
-// Result is migrate()'s: the upgraded config, secrets pulled out of it,
-// what was done (English, for the log), and whether anything was.
+// Result is migrate()'s: the upgraded config, what was done (English, for
+// the log), and whether anything was.
 type Result struct {
 	Config   *jsonx.Object
-	Secrets  *jsonx.Object
 	Changes  []string
 	Migrated bool
 }
@@ -86,8 +85,7 @@ func Migrate(config any) (Result, error) {
 	obj, _ := parsed.(*jsonx.Object)
 	res := Result{Migrated: obj.Value("migrated") == true}
 	res.Config, _ = obj.Value("config").(*jsonx.Object)
-	res.Secrets, _ = obj.Value("secrets").(*jsonx.Object)
-	if res.Config == nil || res.Secrets == nil {
+	if res.Config == nil {
 		return Result{}, fmt.Errorf("legacy migrations returned no config")
 	}
 	if changes, ok := obj.Value("changes").(*jsonx.Array); ok {
@@ -96,13 +94,4 @@ func Migrate(config any) (Result, error) {
 		}
 	}
 	return res, nil
-}
-
-// Object is r as the JS returned it ({config, secrets, changes, migrated}).
-func (r Result) Object() *jsonx.Object {
-	changes := jsonx.Arr()
-	for _, c := range r.Changes {
-		changes.Append(c)
-	}
-	return jsonx.Obj("config", r.Config, "secrets", r.Secrets, "changes", changes, "migrated", r.Migrated)
 }

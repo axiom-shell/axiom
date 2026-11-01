@@ -225,7 +225,8 @@ class Usage:
         """Files reading `Reader.name` (not `x.Reader.name`), but `own`."""
         if not hasattr(self, "_refs"):
             # One pass over every file instead of a search per member
-            ref = re.compile(r"(?<![\w.])([A-Z]\w*)\.(\w+)")
+            # (a spread, `...Reader.name`, is a use)
+            ref = re.compile(r"(?<!\w)(?<![\w)\]]\.)([A-Z]\w*)\.(\w+)")
             self._refs = {f: set(ref.findall(text)) for f, text in self.files.items()}
         return sorted(f for f, refs in self._refs.items() if f != own and (reader, name) in refs)
 
@@ -315,6 +316,13 @@ def join_files(files, limit=14):
 
 # ----------------------------------------------------------- config reference
 
+def used_inside(reader, name, text):
+    """Whether a reader's own other members use its member `name`: a use
+    besides the declaration, bare or as `root.name` or `Reader.name` (the
+    `.name` of its own `_c.name` binding is a key, not a use)."""
+    return len(re.findall(r"(?<![\w.])(?:(?:root|" + reader + r")\.)?" + name + r"\b", text)) > 1
+
+
 class ConfigReference:
     def __init__(self, schema, readers, usage):
         self.schema, self.readers, self.usage = schema, readers, usage
@@ -330,8 +338,7 @@ class ConfigReference:
                     # A marker naming what it reads stands for a use
                     users = sorted({f for p in m["paths"] for f in usage.marked(p)})
                 self.member_users[(reader, name)] = users
-                # Used by the reader's own other members
-                if len(re.findall(r"(?<![\w])" + name + r"\b", own)) > 1:
+                if used_inside(reader, name, own):
                     self.inside.add((reader, name))
         # Files outside config/ reading ConfigManager.config / live
         self.direct = {}
@@ -349,6 +356,8 @@ class ConfigReference:
         self.go = {rel(p): p.read_text() for p in go_sources()
                    if not re.match(r"backend/internal/(config|schema|share|migrate)/", rel(p))}
         self.unread = set()
+        # Settings an x-compositor entry is written under (`if: enabled`)
+        self.gates = set()
 
     def reader_for(self, section):
         for reader, info in self.readers.items():
@@ -447,7 +456,7 @@ class ConfigReference:
             files.update(marked)
             read.append("`// reads:` marker")
         if not (read or files):
-            if "x-compositor" in node_r:
+            if "x-compositor" in node_r or plain in self.gates:
                 read.append("the daemon's compositor writer (`x-compositor`)")
             elif go := sorted(f for f, text in self.go.items()
                               if re.search(r'[(,]\s*"' + re.escape(last) + r'"\s*[),]', text)):
@@ -499,6 +508,10 @@ class ConfigReference:
         leaves = []
         walk(self.schema, node, section, leaves)
         leaves = leaves[1:]
+        for path, child, _ in leaves:
+            for spec in resolve(self.schema, child).get("x-compositor", {}).values():
+                if isinstance(spec, dict) and "if" in spec:
+                    self.gates.add(path.rsplit(".", 1)[0].replace("[]", "") + "." + spec["if"])
         members = []
         if info:
             members = ["", "### Reader members", "", f"Every public member of `{reader}`, with the files that use it.", ""]
@@ -718,9 +731,9 @@ SHAPES_PATH = ROOT / GEN_OUT / "rpc-shapes.json"
 GO_COMMENT_LINE = re.compile(r"^[ \t]*//.*$", re.M)
 # QML: through BackendManager (or inside it, root.*), and `// rpc: a, b`
 # for methods named at runtime
-QML_CALL = re.compile(r'\b(?:BackendManager|root)\.(?:call|notify)\("([\w.]+)"|JsonRpc\.request\(\w+,\s*"([\w.]+)"')
+QML_CALL = re.compile(r'\b(?:BackendManager|root)\.call\("([\w.]+)"|JsonRpc\.request\(\w+,\s*"([\w.]+)"')
 QML_LISTEN = re.compile(r'\b(?:BackendManager|root)\.listen\("([\w.]+)"')
-QML_HANDLE = re.compile(r'\b(?:BackendManager|root)\.handle\("([\w.]+)"|^\s*"([\w.]+)":\s*params\s*=>', re.M)
+QML_HANDLE = re.compile(r'^\s*"([\w.]+)":\s*params\s*=>', re.M)
 QML_RPC_NOTE = re.compile(r"//\s*rpc:(?!\s*unchecked\b)\s*(.+)")
 # A call the check can't read, marked so on its line or the line above
 QML_RPC_UNCHECKED = re.compile(r"//\s*rpc:\s*unchecked\s*\((.+)\)\s*$", re.M)
@@ -857,7 +870,7 @@ def shape_key_problems(src, shape, where):
     return problems
 
 
-QML_CALL_OPEN = re.compile(r"\b(?:(?:BackendManager|root)\.(call|notify)|JsonRpc\.(request))\(")
+QML_CALL_OPEN = re.compile(r"\b(?:(?:BackendManager|root)\.call|JsonRpc\.(request))\(")
 JS_STRING = re.compile(r'^"([\w.]+)"$')
 
 
@@ -868,7 +881,7 @@ def qml_call_sites(text):
     sites = []
     for m in QML_CALL_OPEN.finditer(text):
         args = call_args(text, m.end() - 1)
-        if m.group(2):  # JsonRpc.request(id, method, params)
+        if m.group(1):  # JsonRpc.request(id, method, params)
             args = args[1:]
         method = JS_STRING.match(args[0]) if args else None
         sites.append((text.count("\n", 0, m.start()) + 1, method and method.group(1), args[1] if len(args) > 1 else ""))
@@ -1156,9 +1169,9 @@ def rpc_scan():
                 pushes[method]["qml"].add(rel(path))
             else:
                 problems.append(f"{rel(path)} listens to {method}, which the daemon never pushes")
-        for a, b in QML_HANDLE.findall(text):
-            if (a or b) in to_shell:
-                to_shell[a or b]["qml"].add(rel(path))
+        for method in QML_HANDLE.findall(text):
+            if method in to_shell:
+                to_shell[method]["qml"].add(rel(path))
     for method, info in to_shell.items():
         if not info["qml"]:
             problems.append(f"the daemon calls {method} on the shell, which nothing answers")

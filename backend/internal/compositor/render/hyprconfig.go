@@ -27,7 +27,9 @@ func indent(list []string, prefix string) string {
 	return strings.Join(out, "\n")
 }
 
-const exitLua = "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"
+// HyprExitCommand is the command axiom's exitSession bind runs on
+// Hyprland (the bind merge maps it back to exitSession).
+const HyprExitCommand = "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"
 
 func towardsStart(argument string) bool { return argument == "left" || argument == "up" }
 
@@ -101,7 +103,7 @@ func (t *Tables) DispatcherLua(action, argument string, ctx any) string {
 	case "restartShell":
 		return "hl.dsp.exec_cmd(" + LuaString(get(ctx, "restartCommand")) + ")"
 	case "exitSession":
-		return "hl.dsp.exec_cmd(" + LuaString(exitLua) + ")"
+		return "hl.dsp.exec_cmd(" + LuaString(HyprExitCommand) + ")"
 	case "terminal", "fileManager", "browser":
 		return "hl.dsp.exec_cmd(" + LuaString(get(ctx, action)) + ")"
 	}
@@ -285,8 +287,9 @@ var (
 	spaceRun    = regexp.MustCompile(`\s+`)
 )
 
-// IsAgentCommand is PolkitAgents.isAgentCommand: whether an autostart
-// command starts a known polkit agent (by name or path, or its unit).
+// IsAgentCommand is whether an autostart command starts a known polkit
+// agent (PolkitAgents.qml's agents): runs one by name or path, or starts
+// its unit ("systemctl --user start hyprpolkitagent").
 func (t *Tables) IsAgentCommand(command any) bool {
 	for _, word := range spaceRun.Split(trim(str(command)), -1) {
 		name := agentQuotes.ReplaceAllString(strings.TrimSuffix(agentPath.ReplaceAllString(word, ""), ".service"), "")
@@ -372,10 +375,10 @@ func AnimationsOff(m, motion any) bool {
 	return !truthy(get(m, "animations")) || preset == "instant" || (preset == "axiom" && !truthy(get(motion, "enabled")))
 }
 
-// AnimationSet is HyprConfigLua.animationSet: the preset (or custom list) of
+// animationSet is HyprConfigLua.animationSet: the preset (or custom list) of
 // m as { curves, leaves }, or nil for Hyprland's own animations.
-func AnimationSet(m, motion any) *jsonx.Object {
-	set := animationSet(m, motion)
+func animationSet(m, motion any) *jsonx.Object {
+	set := presetSet(m, motion)
 	if set == nil {
 		return nil
 	}
@@ -398,7 +401,9 @@ func AnimationSet(m, motion any) *jsonx.Object {
 	return set
 }
 
-func animationSet(m, motion any) *jsonx.Object {
+// presetSet is the preset (or custom list) of m before animationSet adds
+// the workspaces leaf.
+func presetSet(m, motion any) *jsonx.Object {
 	switch str(get(m, "animationPreset")) {
 	case "axiom":
 		// Look & Feel → Motion: the shell's durations, in Hyprland's unit
@@ -452,7 +457,7 @@ func AnimationsLua(m, motion any) string {
 	if AnimationsOff(m, motion) {
 		return ""
 	}
-	set := AnimationSet(m, motion)
+	set := animationSet(m, motion)
 	if set == nil {
 		return ""
 	}

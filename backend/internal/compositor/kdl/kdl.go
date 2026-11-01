@@ -1,6 +1,6 @@
 // Package kdl parses niri's config: the subset of KDL 1 and 2 niri configs
-// use, into nodes that keep where they start (for the bind merge's edits),
-// and writes a node back as KDL text. Pure: no I/O.
+// use, into nodes that keep where they start (for the bind merge's edits).
+// render writes KDL. Pure: no I/O.
 package kdl
 
 import (
@@ -497,81 +497,6 @@ func (p *parser) nodes(inBlock bool) []*Node {
 		}
 		found = append(found, p.node())
 	}
-}
-
-// --- Writing ---
-
-// ValueText is a value as KDL writes it (numbers as Python's str does).
-func ValueText(v any) string {
-	switch v := v.(type) {
-	case bool:
-		if v {
-			return "true"
-		}
-		return "false"
-	case nil:
-		return "null"
-	case string:
-		r := strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`, "\t", `\t`)
-		return `"` + r.Replace(v) + `"`
-	case int64:
-		return strconv.FormatInt(v, 10)
-	case float64:
-		return PyFloat(v)
-	}
-	return fmt.Sprint(v)
-}
-
-// PyFloat is a float as Python's str writes it ("2.0", "1e+16", "inf").
-func PyFloat(f float64) string {
-	switch {
-	case math.IsInf(f, 1):
-		return "inf"
-	case math.IsInf(f, -1):
-		return "-inf"
-	case math.IsNaN(f):
-		return "nan"
-	}
-	if f != 0 {
-		if exp := math.Floor(math.Log10(math.Abs(f))); exp < -4 || exp >= 16 {
-			return strconv.FormatFloat(f, 'e', -1, 64)
-		}
-	}
-	s := strconv.FormatFloat(f, 'f', -1, 64)
-	if !strings.Contains(s, ".") {
-		s += ".0"
-	}
-	return s
-}
-
-// NodeText is a node without its children as KDL writes it
-// (`spawn "foot"`).
-func NodeText(n *Node) string {
-	parts := []string{n.Name}
-	for _, a := range n.Args {
-		parts = append(parts, ValueText(a))
-	}
-	for _, k := range n.Props.keys {
-		parts = append(parts, k+"="+ValueText(n.Props.values[k]))
-	}
-	return strings.Join(parts, " ")
-}
-
-// Str is a value as Python's str writes it, the way niri's readers turned
-// a value into text ("Super", "5", "True").
-func Str(v any) string {
-	switch v := v.(type) {
-	case string:
-		return v
-	case bool:
-		if v {
-			return "True"
-		}
-		return "False"
-	case nil:
-		return "None"
-	}
-	return ValueText(v)
 }
 
 // Truthy is whether a value counts as set: not "", 0, false or null.

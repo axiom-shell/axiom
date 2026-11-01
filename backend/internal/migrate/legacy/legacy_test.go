@@ -20,7 +20,12 @@ func TestFrozenMigrateCases(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			c.Check(t, res.Object())
+			changes := jsonx.Arr()
+			for _, ch := range res.Changes {
+				changes.Append(ch)
+			}
+			// legacy.js's secrets were always empty
+			c.Check(t, jsonx.Obj("config", res.Config, "secrets", jsonx.NewObject(), "changes", changes, "migrated", res.Migrated))
 		})
 	}
 }

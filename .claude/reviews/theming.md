@@ -7,9 +7,8 @@ Sound overall: the docs match the code, the pure helpers are tested, and the sch
 - Major: [Rescanning the theme folders lists the shell's working directory as themes](../../docs/dev/issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
 - Major: [A generated theme from a wallpaper reached through a symlink is regenerated at every start](../../docs/dev/issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)
 - Major: [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](../../docs/dev/issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)
-- Cleanup: [setWallpaperAndGenerate only forwards for one caller](../../docs/dev/issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)
-- Cleanup: [~/.current_wallpaper is written but nothing reads it](../../docs/dev/issues.md#current_wallpaper-is-written-but-nothing-reads-it)
-- Cleanup: [Six more reader members nothing reads](../../docs/dev/issues.md#six-more-reader-members-nothing-reads) (`Theme.variant` added)
+- Cleanup: "setWallpaperAndGenerate only forwards for one caller" (fixed, row 20 core-ui-theming-01)
+- Cleanup: "Six more reader members nothing reads" (fixed, row 20 config-01) (`Theme.variant` added)
 
 Minor (unrecorded):
 - themes.md's family shape leaves out `darkPreview` and `lightPreview`.

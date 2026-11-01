@@ -1,21 +1,13 @@
 package steps
 
-import (
-	"testing"
-
-	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-)
+import "testing"
 
 func TestV82MovesNirisHotCorner(t *testing.T) {
 	t.Parallel()
-	step := stepAt(t, 82)
 	corner := func(id string) string {
 		return `{"id":"` + id + `","corner":"topLeft","action":"workspaceOverview","argument":"","screen":{"mode":"all","names":[]},"delay":0}`
 	}
-	cases := []struct {
-		name, in, out string
-		changed       bool
-	}{
+	runStepCases(t, 82, []stepCase{
 		{"on in managed mode",
 			`{"Compositor":{"mode":"managed","niri":{"hotCorner":true,"animations":true}}}`,
 			`{"Compositor":{"mode":"managed","niri":{"animations":true}},"HotCorners":{"items":[` + corner("niri-corner") + `]}}`, true},
@@ -29,25 +21,5 @@ func TestV82MovesNirisHotCorner(t *testing.T) {
 			`{"HotCorners":3,"Compositor":{"mode":"managed","niri":{"hotCorner":true}}}`, `{"HotCorners":3,"Compositor":{"mode":"managed","niri":{}}}`, true},
 		{"already migrated", `{"Compositor":{"mode":"managed","niri":{}}}`, `{"Compositor":{"mode":"managed","niri":{}}}`, false},
 		{"no niri section", `{"Compositor":{"mode":"managed"}}`, `{"Compositor":{"mode":"managed"}}`, false},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			t.Parallel()
-			v, err := jsonx.Unmarshal([]byte(c.in))
-			if err != nil {
-				t.Fatal(err)
-			}
-			cfg := v.(*jsonx.Object)
-			changes := step.Run(cfg)
-			if got := string(jsonx.MarshalCompact(cfg)); got != c.out {
-				t.Errorf("got %s, want %s", got, c.out)
-			}
-			if (len(changes) > 0) != c.changed {
-				t.Errorf("changes %v", changes)
-			}
-			if again := step.Run(cfg); len(again) > 0 {
-				t.Errorf("a second run: %v", again)
-			}
-		})
-	}
+	})
 }

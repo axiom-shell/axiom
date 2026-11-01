@@ -261,15 +261,6 @@ func validateObject(s *schema.Schema, value *jsonx.Object, n *jsonx.Object, path
 			}
 		}
 	}
-	if patterns, ok := n.Value("patternProperties").(*jsonx.Object); ok {
-		for _, key := range value.Keys() {
-			for _, p := range patterns.Keys() {
-				if re, err := s.Pattern(p); err == nil && re.MatchString(key) {
-					validate(s, value.Value(key), patterns.Value(p), childPath(path, key), errs)
-				}
-			}
-		}
-	}
 }
 
 func validateArray(s *schema.Schema, value *jsonx.Array, n *jsonx.Object, path string, errs *[]string) {

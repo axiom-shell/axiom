@@ -42,10 +42,8 @@ func swayWrite(conn net.Conn, kind uint32, payload []byte) error {
 	copy(head, swayMagic)
 	binary.LittleEndian.PutUint32(head[6:], uint32(len(payload)))
 	binary.LittleEndian.PutUint32(head[10:], kind)
-	if _, err := conn.Write(append(head, payload...)); err != nil {
-		return err
-	}
-	return nil
+	_, err := conn.Write(append(head, payload...))
+	return err
 }
 
 func swayRead(conn net.Conn) (uint32, []byte, error) {

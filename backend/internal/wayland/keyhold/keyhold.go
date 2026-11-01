@@ -241,13 +241,6 @@ func (h *Holder) Release() {
 	}
 }
 
-// Held reports whether a hold is running.
-func (h *Holder) Held() bool {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	return h.hold != nil
-}
-
 // destroy sends hd's destructors (h.mu held).
 func (h *Holder) destroy(hd *hold) {
 	c := h.s.Conn

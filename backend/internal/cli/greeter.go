@@ -86,7 +86,7 @@ scratch folder.`,
 					candidates = append(candidates, greeter.Candidate{Source: "bundle", Path: filepath.Join(gdir, "config", "greeter.json")})
 				}
 				candidates = append(candidates, greeter.Candidate{Source: "fallback", Path: filepath.Join(fallback, "greeter.json")})
-				result := greeter.Load(config.V2Pipeline{S: schema.New(parsed)}, candidates)
+				result := greeter.Load(config.Pipeline{S: schema.New(parsed)}, candidates)
 				for _, p := range result.Problems {
 					fmt.Fprintf(e.Stderr, "axiom greeter: skipped the %s: %s\n", p.Source, p.Error)
 				}

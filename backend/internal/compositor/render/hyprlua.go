@@ -152,9 +152,9 @@ func hlConfig(table *jsonx.Object) string {
 	return "hl.config(" + Serialize(table, "") + ")"
 }
 
-// SoftShadow is HyprLua.softShadow: Hyprland's shadow standing in for
+// softShadow is HyprLua.softShadow: Hyprland's shadow standing in for
 // axiom's own (a soft one), as { range, power, alpha }.
-func SoftShadow(shadow any) (rng, power, alpha float64) {
+func softShadow(shadow any) (rng, power, alpha float64) {
 	lum := Luminance(get(shadow, "rgb"))
 	factor := math.Max(0.01, 0.3*pow(0.018/0.3, lum/0.45))
 	return round(num(get(shadow, "size")) * 1.2), 4,
@@ -191,7 +191,7 @@ func LookLua(look, lookSchema any) []string {
 		soft := truthy(get(s, "soft")) && !jsonx.StrictEqual(get(s, "rgb"), "")
 		rng, power, alpha := get(s, "size"), get(s, "power"), num(get(s, "alpha"))
 		if soft {
-			r, p, a := SoftShadow(s)
+			r, p, a := softShadow(s)
 			rng, power, alpha = r, p, a
 		}
 		setPath(table, "decoration.shadow.enabled", true)
@@ -498,16 +498,15 @@ func greeterSchema(objectSchema any) *jsonx.Object {
 	return out
 }
 
-// LeaveSubmap is HyprLua.leaveSubmap.
-func LeaveSubmap(name string) string {
+// leaveSubmap is HyprLua.leaveSubmap.
+func leaveSubmap(name string) string {
 	return "if hl.get_current_submap() == " + LuaString(name) + ` then hl.dispatch(hl.dsp.submap("reset")) end`
 }
 
 // The window switcher's submap and events (HyprLua's switcher)
 const (
-	SwitcherSubmap   = "axiom_switcher"
-	SwitcherEvent    = "axiom-switcher:"
-	SwitcherLeaveLua = "if axiom_switcher_leave then axiom_switcher_leave() end"
+	SwitcherSubmap = "axiom_switcher"
+	SwitcherEvent  = "axiom-switcher:"
 )
 
 var switcherModifierKeys = map[string][]string{"SUPER": {"Super_L", "Super_R"}, "CTRL": {"Control_L", "Control_R"},
@@ -562,7 +561,7 @@ func SwitcherLua(entries any) []string {
   AXIOM_SWITCHER_SUB = nil
 end`, `function axiom_switcher_leave()
   axiom_switcher_unwatch()
-  `+LeaveSubmap(SwitcherSubmap)+`
+  `+leaveSubmap(SwitcherSubmap)+`
 end`, `function axiom_switcher_watch()
   if AXIOM_SWITCHER_SUB then return end
   AXIOM_SWITCHER_SUB = hl.on("input.keyboard.key", function(_, _, state)

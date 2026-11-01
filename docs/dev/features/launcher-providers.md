@@ -30,7 +30,7 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
   - else text (`text/plain;charset=utf-8` > `UTF8_STRING` > `text/plain` > …), at most 100 000 characters, not blank;
   - else HTML that is just an `<img>` (a browser's copy without the image itself), shown from its http(s) `src`.
 - A clip marked `x-kde-passwordManagerHint: secret` (what wl-paste's `CLIPBOARD_STATE=sensitive` was) is never recorded.
-- Deduplicated by content (the copy moves to the top), capped at `clipboardMaxEntries`.
+- Deduplicated by content (the copy moves to the top), capped at `Launcher.providers.clipboard.maxEntries` (the daemon reads it).
 - In memory only, never on disk: an image is a file in `$XDG_RUNTIME_DIR/axiom/clipboard/` (tmpfs; the folder 0700, files 0600) for the shell to show, at most 256 MiB of them (the oldest go first), removed with its entry, when the history is turned off, and when the daemon starts and stops. A restart or re-exec starts the history empty.
 - **To the shell:** `clipboard.state` (the `clipboard` topic) and `clipboard.get` give the entries with their text cut to 1000 characters; `clipboard.text {id}` gives one whole. Every `clipboard.*` method answers the shell only.
 
@@ -60,7 +60,7 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
   - the name first, then keywords and group, which count only on a real match;
   - plus frecency from `usage`, stored in `~/.local/state/axiom/ui/emoji.json`;
   - with no query, the most used come first.
-  - `recent(limit)` and `groups()` are also provided.
+  - `recent(limit)` is also provided (the EmojiPicker's recent row).
 - **Enter / Shift+Enter:**
   - Enter `copy`s it (`ClipboardManager.copyText`).
   - Shift+Enter also `type`s the emoji, 150 ms later, once the launcher has let go of the keyboard: `input.type`, the daemon's virtual keyboard (`wayland/vkbd`). `canType` is `WaylandManager.typing`: the compositor offers `zwp_virtual_keyboard_manager_v1`.

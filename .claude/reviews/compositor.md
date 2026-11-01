@@ -22,10 +22,10 @@ The neutral QML layer holds: every consumer goes through CompositorManager, ever
 - Major: [A sway bind using a variable from an include moves as a literal $name](../../docs/dev/issues.md#a-sway-bind-using-a-variable-from-an-include-moves-as-a-literal-name)
 - Major: [A niri spawn of one word with a space moves as a broken shell command](../../docs/dev/issues.md#a-niri-spawn-of-one-word-with-a-space-moves-as-a-broken-shell-command)
 - Major: [A sway line continuing a non-bind line is moved as a bind of its own](../../docs/dev/issues.md#a-sway-line-continuing-a-non-bind-line-is-moved-as-a-bind-of-its-own)
-- Cleanup: [Small shrinks in the compositor manager](../../docs/dev/issues.md#small-shrinks-in-the-compositor-manager)
-- Cleanup: [niri's bind plan is a copy of runtimeLayer.plan](../../docs/dev/issues.md#niris-bind-plan-is-a-copy-of-runtimelayerplan)
-- Cleanup: [Go copies of bind helpers that only the parity replay calls](../../docs/dev/issues.md#go-copies-of-bind-helpers-that-only-the-parity-replay-calls)
-- Cleanup: [sway and niri each fit the shadow to axiom's themselves](../../docs/dev/issues.md#sway-and-niri-each-fit-the-shadow-to-axioms-themselves)
+- Cleanup: "Small shrinks in the compositor manager" (fixed, row 20 compositor-01)
+- Cleanup: "niri's bind plan is a copy of runtimeLayer.plan" (fixed, row 20 compositor-01)
+- Cleanup: "Go copies of bind helpers that only the parity replay calls" (fixed, row 20 compositor-01)
+- Cleanup: "sway and niri each fit the shadow to axiom's themselves" (fixed, row 20 compositor-01)
 
 Unrecorded (Minor):
 - `backend/internal/compositor/manager/sway.go:254` (`noteReload`): the filed "noteReload counts every compositor reload a second time" fix must first move sway's `SwayUnbind = nil` reset into `swayWriter.configReloaded`, or a stale `unbindsym` removes a user's new bind (added to that entry).

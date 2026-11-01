@@ -24,9 +24,6 @@ BarIconWidget {
   readonly property var videoGroups: Pipewire.linkGroups.values.filter(g => g && g.source?.type === PwNodeType.VideoSource && g.target)
   readonly property var activeGroups: videoGroups.filter(g => g.state === PwLinkState.Active)
 
-  function appName(node) {
-    return node.properties?.["application.name"] || node.nickname || node.name || I18n.tr("Unknown");
-  }
   function ignored(node) {
     const names = [node.name, node.properties?.["application.name"], node.properties?.["application.process.binary"]];
     return names.some(n => n && root.ignoredApps.includes(n.toLowerCase()));
@@ -41,11 +38,11 @@ BarIconWidget {
   }
   // Unique app names capturing from sources matching `sourceTest`
   function users(sourceTest, targetTest) {
-    const names = activeGroups.filter(g => sourceTest(g.source) && targetTest(g.target) && !ignored(g.target)).map(g => appName(g.target));
+    const names = activeGroups.filter(g => sourceTest(g.source) && targetTest(g.target) && !ignored(g.target)).map(g => AudioManager.appName(g.target));
     return [...new Set(names)];
   }
 
-  readonly property var micUsers: properties.showMic ? [...new Set(AudioManager.micCaptures.filter(n => !ignored(n)).map(n => appName(n)))] : []
+  readonly property var micUsers: properties.showMic ? [...new Set(AudioManager.micCaptures.filter(n => !ignored(n)).map(n => AudioManager.appName(n)))] : []
   readonly property var screenUsers: properties.showScreen ? users(s => s.type === PwNodeType.VideoSource && isPortal(s), t => isVideoStream(t)).concat(ScreenshotManager.recording ? [I18n.tr("Screen recording")] : []) : []
   readonly property var cameraUsers: properties.showCamera ? users(s => s.type === PwNodeType.VideoSource && !isPortal(s), t => isVideoStream(t)) : []
 

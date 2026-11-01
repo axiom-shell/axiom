@@ -54,7 +54,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `LayoutOrder`: shows a layout's items in reverse order while `reversed` (`Panel.flips`: a popout growing up keeps its controls last, by the bar). Only for a layout of plain items, no Repeater directly in it.
 
 ### Controls (`reusable/`)
-- `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors, optional `CountBadge`).
+- `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors).
 - `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
 - `StyledSlider`: trough, fill and handle; `moved` while dragged, `released` at the end; a value pushed in animates.
 - `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll; its trough clips the fill, so a low level keeps to its rounded ends); muted, its icon (the base one) is a `SlashedIcon`; with `iconClickable` the icon is a button (`iconClicked`, hover highlight, `iconTip`); `surfaces/osd/PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).

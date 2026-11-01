@@ -67,7 +67,6 @@ func (w *hyprWriter) problems(in Inputs) problems {
 	return problems{
 		NotIncluded: `Compositor mode is "included", but hyprland.lua doesn't load ` + f.IncludePath + "; add:\n" + f.IncludeLines,
 		NotManaged:  `Compositor mode is "managed", but ` + f.ManagedPath + " isn't loaded (see hyprctl configerrors)",
-		Blocked:     `Compositor mode is "managed", but ` + f.ConfigDir + ` is a symlink or in a git repository, so axiom won't take it over; use "included" instead. Applying axiom's layer at runtime meanwhile.`,
 	}
 }
 
@@ -180,11 +179,7 @@ func (w *hyprWriter) runLive(ctx context.Context, lines []string) bool {
 	return w.eval(ctx, strings.Join(lines, "\n"))
 }
 
-// setCursor: Hyprland takes the theme by its own name (a hyprcursor theme
-// too) and fills in missing names itself
-func (w *hyprWriter) setCursor(ctx context.Context, cursor any) {
-	w.ipc.Request(ctx, "setcursor "+jsonx.ToString(getAny(cursor, "theme"))+" "+jsonx.ToString(getAny(cursor, "size")))
-}
+func (w *hyprWriter) setCursor(ctx context.Context, cursor any) { w.ipc.SetCursor(ctx, cursor) }
 
 // The keys the runtime layer bound live in Hyprland's Lua state, which a
 // reload resets along with the binds and which outlives the daemon; they're
@@ -279,7 +274,6 @@ func (w *hyprWriter) configReloaded(context.Context, Inputs) bool  { return fals
 func (w *hyprWriter) ownKey(Inputs) string                         { return "" }
 func (w *hyprWriter) entries(context.Context, Inputs) *jsonx.Array { return nil }
 func (w *hyprWriter) runningConfig(Inputs) string                  { return "" }
-func (w *hyprWriter) userBindsRead() bool                          { return true }
 
 func strs(list []string) *jsonx.Array {
 	a := jsonx.Arr()

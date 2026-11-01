@@ -18,6 +18,12 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
 
+// IsFile is whether path is a regular file, a symlink followed.
+func IsFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
 // WriteFile replaces path's content atomically: a temp file in the same
 // directory (created exclusively, never through a symlink), written,
 // fsynced, renamed over path, then the directory fsynced. When path is a

@@ -88,7 +88,6 @@ Item {
         anchors.left: root.orientation === Qt.Horizontal ? parent.left : undefined
         anchors.bottom: parent.bottom
         anchors.right: root.orientation === Qt.Vertical ? parent.right : undefined
-        anchors.leftMargin: root.orientation === Qt.Vertical ? parent.width - width : 0
 
         width: root.orientation === Qt.Horizontal ? parent.width * root.volumeLevel : parent.width
         height: root.orientation === Qt.Vertical ? parent.height * root.volumeLevel : parent.height
@@ -200,7 +199,6 @@ Item {
       Layout.preferredWidth: root.showPercent ? widest.advanceWidth : -1
       visible: text !== ""
       elide: Text.ElideRight
-      Layout.maximumWidth: root.showPercent ? Infinity : parent.width - Widget.px(4)
 
       TextMetrics {
         id: widest

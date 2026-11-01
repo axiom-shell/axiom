@@ -12,35 +12,22 @@ import (
 )
 
 // Pipeline is what the config store does to a file it reads and to a
-// config it is asked to write, for one config format.
-type Pipeline interface {
-	// Load brings a parsed config.json to the current shape: migrated,
-	// pruned of unknown keys, filled with defaults and validated (Errors
-	// non-empty when invalid). Migrated says it changed shape, so it is
-	// written back (Loaded.Migrated).
-	Load(parsed any) (Loaded, error)
-	// Check fills defaults into a config about to be written and returns
-	// it, or the reasons it's invalid. Unknown keys are errors here: a
-	// write never silently drops what it was asked to write.
-	Check(cfg *jsonx.Object) (*jsonx.Object, []string)
-	// Defaults is the config of an empty file.
-	Defaults() *jsonx.Object
-	// Schema is the schema the pipeline validates against.
-	Schema() *schema.Schema
-}
-
-// V2Pipeline is format 2 (docs/dev/core/config-v2.md), against the tree's
-// schema. It reads format 1 too: such a file goes through the frozen
-// migrations to version 75 (against the frozen v75 schema), is converted,
-// then loads as format 2 (Loaded.FromFormat1). A format-2 file older than
-// steps.Current runs the steps newer than it.
-type V2Pipeline struct {
+// config it is asked to write: format 2 (docs/dev/core/config-v2.md),
+// against the tree's schema. It reads format 1 too: such a file goes
+// through the frozen migrations to version 75 (against the frozen v75
+// schema), is converted, then loads as format 2 (Loaded.FromFormat1). A
+// format-2 file older than steps.Current runs the steps newer than it.
+type Pipeline struct {
 	S *schema.Schema
 }
 
-func (p V2Pipeline) Schema() *schema.Schema { return p.S }
+// Schema is the schema the pipeline validates against.
+func (p Pipeline) Schema() *schema.Schema { return p.S }
 
-func (p V2Pipeline) Load(parsed any) (Loaded, error) {
+// Load brings a parsed config.json to the current shape: migrated, pruned
+// of unknown keys, filled with defaults and validated (Errors non-empty
+// when invalid). Migrated says it changed shape, so it is written back.
+func (p Pipeline) Load(parsed any) (Loaded, error) {
 	obj, ok := parsed.(*jsonx.Object)
 	if !ok {
 		return Loaded{}, axerr.New(axerr.InvalidConfig, "config.json must hold an object")
@@ -86,14 +73,17 @@ func (p V2Pipeline) Load(parsed any) (Loaded, error) {
 }
 
 // normalize prunes unknown keys, fills defaults and validates.
-func (p V2Pipeline) normalize(cfg *jsonx.Object) Loaded {
+func (p Pipeline) normalize(cfg *jsonx.Object) Loaded {
 	removed := Prune(p.S, cfg, p.S.Root())
 	filled, _ := ApplyDefaults(p.S, cfg, true, p.S.Root())
 	obj, _ := filled.(*jsonx.Object)
 	return Loaded{Config: obj, Removed: removed, Errors: ValidationErrors(p.S, filled, p.S.Root())}
 }
 
-func (p V2Pipeline) Check(cfg *jsonx.Object) (*jsonx.Object, []string) {
+// Check fills defaults into a config about to be written and returns it,
+// or the reasons it's invalid. Unknown keys are errors here: a write never
+// silently drops what it was asked to write.
+func (p Pipeline) Check(cfg *jsonx.Object) (*jsonx.Object, []string) {
 	filled, _ := ApplyDefaults(p.S, cfg, true, p.S.Root())
 	obj, _ := filled.(*jsonx.Object)
 	if errs := ValidationErrors(p.S, obj, p.S.Root()); len(errs) > 0 {
@@ -102,7 +92,8 @@ func (p V2Pipeline) Check(cfg *jsonx.Object) (*jsonx.Object, []string) {
 	return obj, nil
 }
 
-func (p V2Pipeline) Defaults() *jsonx.Object {
+// Defaults is the config of an empty file.
+func (p Pipeline) Defaults() *jsonx.Object {
 	filled, _ := ApplyDefaults(p.S, jsonx.NewObject(), true, p.S.Root())
 	return filled.(*jsonx.Object)
 }
