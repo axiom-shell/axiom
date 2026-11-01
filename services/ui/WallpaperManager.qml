@@ -236,7 +236,9 @@ Singleton {
     }, (error, result) => {
       if (listing !== root._listings)
         return;
-      const images = error ? [] : result.files.map(path => Qt.resolvedUrl("file://" + path).toString());
+      // %, # and ? escaped first: a name holding # or ? isn't a fragment
+      // or a query
+      const images = error ? [] : result.files.map(path => Qt.resolvedUrl("file://" + path.replace(/[%#?]/g, encodeURIComponent)).toString());
       if (JSON.stringify(images) !== JSON.stringify(root._images))
         root._images = images;
       const waiting = root._waiting;

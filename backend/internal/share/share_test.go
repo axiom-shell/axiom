@@ -59,9 +59,9 @@ func TestPickTakesScopes(t *testing.T) {
 		in, out []string
 		binds   []string
 	}{
-		{"look", nil, []string{"Appearance.theme.name", "WindowLook.gaps", "Bars.items"}, []string{"Battery", "Weather", "Keybinds", "Apps.terminal", "Appearance.wallpaper"}, []string{}},
+		{"look", nil, []string{"Appearance.theme.name", "WindowLook.gaps", "Bars.items", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax"}, []string{"Battery", "Weather", "Keybinds", "Apps.terminal", "Appearance.wallpaper.file", "Appearance.wallpaper.folder", "Appearance.wallpaper.mode"}, []string{}},
 		{"personal", []string{"personal"}, []string{"Appearance.theme.name", "Keybinds.binds"}, []string{"Battery", "Apps.terminal"}, []string{"super-space"}},
-		{"everything", Everything, []string{"Keybinds.binds", "Apps.terminal"}, []string{"Battery", "Weather.location", "Appearance.wallpaper"}, []string{"super-space", "mine"}},
+		{"everything", Everything, []string{"Keybinds.binds", "Apps.terminal"}, []string{"Battery", "Weather.location", "Appearance.wallpaper.file", "Appearance.wallpaper.folder"}, []string{"super-space", "mine"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -215,7 +215,7 @@ func TestSnapshotPathsAndFiles(t *testing.T) {
 		paths = append(paths, strings.Join(p, "."))
 	}
 	sort.Strings(paths)
-	want := []string{"Appearance.wallpaper.collection", "Appearance.wallpaper.file", "Appearance.wallpaper.fill", "Appearance.wallpaper.folder", "Appearance.wallpaper.mode", "Appearance.wallpaper.perScreen", "Appearance.wallpaper.rotation", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.variants"}
+	want := []string{"Appearance.wallpaper.collection", "Appearance.wallpaper.file", "Appearance.wallpaper.folder", "Appearance.wallpaper.mode", "Appearance.wallpaper.perScreen", "Appearance.wallpaper.rotation", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.variants"}
 	if !reflect.DeepEqual(paths, want) {
 		t.Errorf("snapshot paths %v", paths)
 	}

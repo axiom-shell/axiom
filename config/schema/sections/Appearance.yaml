@@ -146,6 +146,7 @@ properties:
         properties: {dark: {type: string, default: ''}, light: {type: string, default: ''}}
         x-settings: false
       transition:
+        x-scope: look
         type: object
         title: Wallpaper transition
         additionalProperties: false
@@ -200,14 +201,15 @@ properties:
             maximum: 5000
             description: How long a transition takes.
       fill:
+        x-scope: look
         type: string
-        x-snapshot: true
         title: Wallpaper fit
         enum: [crop, fit, stretch, center]
         x-enumLabels: {crop: Fill the screen, fit: Show it whole, stretch: Stretch, center: Center at its own size}
         default: crop
         description: How a wallpaper that isn't the screen's shape is drawn, everywhere it shows (the desktop, lock screen, login screen and workspace overview). Around one that doesn't fill the screen is the theme's background.
       parallax:
+        x-scope: look
         type: object
         title: Workspace parallax
         additionalProperties: false
