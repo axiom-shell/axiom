@@ -18,7 +18,6 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 
 | Feature | Needs |
 | --- | --- |
-| Wallpaper transitions (optional backend) | `awww` (not packaged for Fedora) |
 | Network widget / module, Wi-Fi menu | NetworkManager, Quickshell built with its Networking module, and `ip` (iproute2) |
 | Updates | Arch: `pacman-contrib` (`checkupdates`), plus `paru` or `yay` for AUR updates. Fedora: `dnf` (nothing extra). Hidden on other distributions |
 | Tailscale | `tailscale` |
@@ -156,7 +155,6 @@ The Compositor section also holds switches for:
 - **required settings:** what axiom's surfaces need from the compositor (on Hyprland: `misc.allow_session_lock_restore`, a rule ignoring apps' `maximize` requests, and a `workspaces` animation for the grid's slides)
 - **theme-colored window borders**, the window shape, gaps, shadows and opacity (**Window look**)
 - **blur behind axiom's surfaces** (Hyprland, niri, SwayFX)
-- **starting `awww-daemon`** (with the awww wallpaper backend)
 
 The window look and **Input** (keyboard, mouse, touchpad, cursor) apply in every mode once switched on.
 

@@ -52,7 +52,6 @@ PACKAGES=(
   "hyprland|hyprland|nett00n/hyprland:hyprland"
   "sway|sway|sway"
   "niri|niri|niri"
-  "awww|awww|n/a"
   "secret-tool|libsecret|libsecret"
   "nmcli|networkmanager|NetworkManager"
   "nm-connection-editor|nm-connection-editor|nm-connection-editor"
@@ -78,7 +77,6 @@ REQUIRED=(git quickshell curl iconFont)
 # "feature|keys|compositors" (none listed: any), offered one at a time;
 # the AUR package's optdepends say the same
 FEATURES=(
-  "Wallpapers|awww|"
   "Calendar accounts and feeds|secret-tool|"
   "Wi-Fi menu and network widget|nmcli|"
   "Adding and editing VPNs (the VPN menu's edit button)|nm-connection-editor|"

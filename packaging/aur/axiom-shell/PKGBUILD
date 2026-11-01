@@ -23,7 +23,6 @@ optdepends=(
   'sway: run axiom under sway (swayfx provides it), and the compositor the login screen runs in'
   'xorg-xwayland: X11 apps under sway (Steam, games, older apps)'
   'xwayland-satellite: X11 apps under niri (Steam, games, older apps)'
-  'awww: wallpapers'
   'libsecret: calendar accounts and feeds'
   'networkmanager: Wi-Fi menu and network widget'
   'nm-connection-editor: adding and editing VPNs'

@@ -113,20 +113,6 @@ properties:
         additionalProperties: false
         properties: {dark: {type: string, default: ''}, light: {type: string, default: ''}}
         x-settings: false
-      backend:
-        type: string
-        title: Wallpaper backend
-        enum: [quickshell, awww]
-        x-enumLabels: {quickshell: Axiom (built in), awww: awww}
-        default: quickshell
-        description: What draws the wallpaper. Axiom needs nothing installed and crossfades; awww (AUR) adds wipe and wave transitions.
-      daemon:
-        x-scope: machine
-        type: boolean
-        title: Start awww
-        default: true
-        description: Start awww-daemon for the wallpaper picker.
-        x-showIf: {backend: awww}
   font:
     x-scope: look
     type: object

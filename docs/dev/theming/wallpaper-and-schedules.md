@@ -1,7 +1,7 @@
 # Wallpaper and schedules
 
-> **Files:** `services/ui/WallpaperManager.qml`, `services/core/ThemeManager.qml`, `services/core/DailySchedule.qml`, `components/methods/Schedules.qml`, `components/methods/ShownLook.qml`, `shell/Wallpaper.qml`, `components/surfaces/wallpaper/WallpaperWindow.qml`, `scripts/setWallpaper.sh`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/forms/SettingRows.qml`
-> **Config:** `Appearance.wallpaper.*` (`file`, `perScreen`, `folder`, `mode`, `rotation`, `variants`, `backend`, `daemon`), `Appearance.theme.schedule.*`
+> **Files:** `services/ui/WallpaperManager.qml`, `services/core/ThemeManager.qml`, `services/core/DailySchedule.qml`, `components/methods/Schedules.qml`, `components/methods/ShownLook.qml`, `shell/Wallpaper.qml`, `components/surfaces/wallpaper/WallpaperWindow.qml`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/forms/SettingRows.qml`
+> **Config:** `Appearance.wallpaper.*` (`file`, `perScreen`, `folder`, `mode`, `rotation`, `variants`), `Appearance.theme.schedule.*`
 > **Related:** [Themes](themes.md), [Night light](night-light.md)
 
 How the wallpaper is drawn, and everything that changes the look on its own: wallpaper rotation, light/dark wallpapers, and the light/dark theme schedule.
@@ -12,13 +12,11 @@ How the wallpaper is drawn, and everything that changes the look on its own: wal
 - What changes on its own never writes the config, so a snapshot's unsaved dot and `config.json` move only on explicit changes. ThemeManager shows it at runtime through `methods/ShownLook` (tests: `tst_ShownLook`):
   - `ThemeManager.activeTheme`: the theme showing (the schedule's variant, else `Appearance.theme`);
   - `ThemeManager.shownWallpapers` / `wallpaperFor(monitor)` / `wallpaper` (the primary's): what every surface draws (wallpaper window, desktop, lock screen, overview, picker, the greeter bundle).
-- The runtime part is in `~/.local/state/axiom/ui/look.json`: the schedule's variant (`theme: { for, name }`, dropped when a theme is picked by hand), the rotation's wallpapers (`rotated`), `lastRotated`, and `applied` (what the backend was last told).
+- The runtime part is in `~/.local/state/axiom/ui/look.json`: the schedule's variant (`theme: { for, name }`, dropped when a theme is picked by hand), the rotation's wallpapers (`rotated`), and `lastRotated`.
 
-### Wallpaper backend (ThemeManager `_applyShown`)
-- Any change of what's shown (a pick, a rotation, a light/dark switch, a mode switch, a restored config, a monitor connecting) runs `_applyShown`, which tells the backend about the monitors that changed and brings a generated theme in line (`syncGeneratedTheme`).
-- `Appearance.wallpaper.backend` (reader `Appearance.wallpaperBackend`):
-  - `quickshell` (the default): drawn by `shell/Wallpaper` from `wallpaperFor`, one Background-layer `surfaces/wallpaper/WallpaperWindow` per screen, crossfading.
-  - `awww`: runs `setWallpaper.sh`. `Appearance.wallpaper.daemon` starts its daemon (`awww-daemon`) only then, from `WallpaperManager` at start-up.
+### Drawing it
+- `shell/Wallpaper` draws `wallpaperFor` on one Background-layer `surfaces/wallpaper/WallpaperWindow` per screen.
+- Any change of what's shown (a pick, a rotation, a light/dark switch, a mode switch, a restored config, a monitor connecting) brings a generated theme in line (`ThemeManager.syncGeneratedTheme`).
 - Fixed wallpapers are written through `ThemeManager.setWallpaper` / `setWallpapers(map)` → `ConfigManager.setWallpaper(s)` (one save); the rotation's through `ThemeManager.showRotated(map)` (state only).
 
 ### WallpaperManager: wallpaper modes

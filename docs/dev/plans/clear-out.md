@@ -12,7 +12,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 2. [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks): yes, the plan also shows "doesn't lock" as a status.
 3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): split, with the theme page directly after integrations.
 4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): a) "Restart" / "Shut down".
-5. Deferred: [Setting an awww wallpaper never starts awww's daemon](../issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (awww's own branch).
+5. Done on awww's own branch: awww was removed (axiom draws every wallpaper, with its own transitions).
 6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
 7. [Gaps to the edges are wider on sway than the setting says](../issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says): accept the narrower gap.
 8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): show them.

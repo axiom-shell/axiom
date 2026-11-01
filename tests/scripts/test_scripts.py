@@ -501,13 +501,13 @@ class CheckPackages(unittest.TestCase):
         ("install.sh", '"grim|grim|grim"', '"grim|grim|grimm"', "grim on fedora is 'grimm', Packages.qml says 'grim'"),
         ("install.sh", '"git|git|git"', '"git|git|git"\n  "ghost|ghost|ghost"\n  "odd|odd"', "no key 'ghost' (install.sh installs it)"),
         ("install.sh", None, None, "PACKAGES row 'odd|odd' isn't key|arch|fedora"),
-        ("install.sh", '"Wallpapers|awww|"', '"Wallpapers|awww|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
+        ("install.sh", '"Package update checks|checkupdates|"', '"Package update checks|checkupdates|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
         ("install.sh", "REQUIRED=(git ", "REQUIRED=(specter git ", "'specter' isn't in PACKAGES"),
         ("packaging/aur/axiom-shell/PKGBUILD", "depends=('quickshell", "depends=('extra' 'quickshell",
          "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell', 'ttf-material-symbols-variable'] aren't"),
-        ("packaging/aur/axiom-shell-git/PKGBUILD", "'awww: wallpapers'", "'phantom: boo'",
+        ("packaging/aur/axiom-shell-git/PKGBUILD", "'wlsunset: night light (niri)'", "'phantom: boo'",
          "axiom-shell-git/PKGBUILD: optdepends phantom, which no install.sh feature or compositor installs"),
-        ("packaging/aur/axiom-shell-git/PKGBUILD", None, None, "axiom-shell-git/PKGBUILD: no optdepends for awww"),
+        ("packaging/aur/axiom-shell-git/PKGBUILD", None, None, "axiom-shell-git/PKGBUILD: no optdepends for wlsunset"),
     ]
 
     def test_each_rule_fails(self):

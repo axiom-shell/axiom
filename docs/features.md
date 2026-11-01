@@ -289,7 +289,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 - **Light and dark** by hand, or on a schedule.
 - **Wallpapers** can be set per monitor:
   - Fixed, rotating on a timer, or one for light mode and one for dark.
-  - axiom draws them itself (crossfading), or uses [awww](https://github.com/LGFae/awww) for its transitions.
+  - axiom draws them itself, with its own transitions.
 - **Other apps** follow the active theme too:
   - Each app is a switch under **Settings → Theme integrations**, one card per app, and gets its own `axiom` theme file.
   - Its switch shows the line that loads that file from the app's config. Copy the line, or click **Apply**, which backs your config up first.

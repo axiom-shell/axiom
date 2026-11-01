@@ -651,8 +651,7 @@ Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log ev
 Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put this on hold - note that growing modules kinda needs a re-work or removal"):
 - [An integrated top or bottom menu's zone follows its growing modules](issues.md#an-integrated-top-or-bottom-menus-zone-follows-its-growing-modules)
 
-Deferred by the maintainer (2026-11-01, the clear-out's questions: awww's daemon "defer - awww will be taking it's own dedicated branch"; side-edge submenus "defer - This takes quite a bit of thought to make consistent without an option."; the pill bar's frame lag "defer"; lock screen notification settings "defer"; Windows zone names, on leaving it logged, "agree"):
-- [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (with awww's removal, maintainer: "awww is scheduled for remove in favor of axioms own animations")
+Deferred by the maintainer (2026-11-01, the clear-out's questions: side-edge submenus "defer - This takes quite a bit of thought to make consistent without an option."; the pill bar's frame lag "defer"; lock screen notification settings "defer"; Windows zone names, on leaving it logged, "agree"):
 - [A side edge's submenus always open away from the edge](issues.md#a-side-edges-submenus-always-open-away-from-the-edge)
 - [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [The lock screen has no settings for allowing or viewing notifications](issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (needs a plan once taken up)

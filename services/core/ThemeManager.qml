@@ -166,14 +166,6 @@ QtObject {
     });
   }
 
-  // awww needs telling; the built-in backend (shell/Wallpaper) follows
-  // wallpaperFor(). Only _applyShown calls it.
-  function _showWallpaper(url, monitor) {
-    if (Paths.greeter || Appearance.wallpaperBackend !== "awww")
-      return;
-    CommandManager.runDetached([Paths.scriptsPath + "setWallpaper.sh", url.replace("file://", ""), monitor]);
-  }
-
   // Generated themes are named by style, not wallpaper, so each run
   // overwrites the last and a config only records the theme's name. When
   // the active one was made from another wallpaper than the configured one
@@ -337,14 +329,13 @@ QtObject {
     _reloadAllThemes();
     // Anything shown changed while qs wasn't running (a light/dark
     // wallpaper, a monitor), and a generated theme that isn't there yet
-    Qt.callLater(root._applyShown);
+    Qt.callLater(root.syncGeneratedTheme);
   }
 
   // --- What's showing ---
   // state/look.json: { theme: { for, name } (the schedule's variant of the
   // chosen theme, or null), rotated: { wallpaper, wallpapers },
-  // lastRotated, applied: { monitors } (what the backend was last
-  // told) }. The greeter keeps none.
+  // lastRotated }. The greeter keeps none.
   readonly property var _lookState: StateManager.createStateHandler("look")
   property var _look: Paths.greeter ? ({}) : root._lookState.load({})
 
@@ -380,34 +371,11 @@ QtObject {
     root._lookState.save(root._look);
   }
 
-  // Tells the backend about each monitor whose wallpaper changed (or that
-  // just connected), and brings a generated theme in line with the
-  // primary's. Runs on any change of what's shown: a pick, a rotation, a
-  // light/dark switch, a mode switch, a restored config.
+  // Brings a generated theme in line with the primary's wallpaper on any
+  // change of what's shown: a pick, a rotation, a light/dark switch, a
+  // mode switch, a restored config, a monitor connecting.
   readonly property string _shownKey: Paths.greeter ? "" : JSON.stringify([root.shownWallpapers, General.primaryMonitor, General.outputs.map(screen => screen.name)])
-  on_ShownKeyChanged: Qt.callLater(root._applyShown)
-
-  function _applyShown() {
-    if (Paths.greeter)
-      return;
-    const before = root._look.applied ?? {};
-    const after = {
-      "monitors": {}
-    };
-    for (const screen of General.outputs) {
-      const url = root.wallpaperFor(screen.name);
-      if (!url)
-        continue;
-      if (before.monitors?.[screen.name] !== url)
-        root._showWallpaper(url, screen.name);
-      after.monitors[screen.name] = url;
-    }
-    if (!Utils.deepEqual(after, before))
-      root._saveLook({
-        "applied": after
-      });
-    root.syncGeneratedTheme();
-  }
+  on_ShownKeyChanged: Qt.callLater(root.syncGeneratedTheme)
 
   // --- Active theme ---
   // Loaded eagerly so config/Theme never sees an empty theme
