@@ -22,7 +22,7 @@ import qs.components.reusable
 // → { x, y, w, h }), "list" (EntryListTarget: takes(drag), indexAt,
 // dropRequested(drag, index)) or "trash" (TrashTarget: a module, or the
 // group carried with it, dropped there is removed). Module edits go to `editor` (a GridEditor),
-// planned while carried (hoverPlan) so the canvas shows them first; a
+// planned while carried (shownPlan) so the canvas shows them first; a
 // list handles its own drops.
 DragLayer {
   id: root

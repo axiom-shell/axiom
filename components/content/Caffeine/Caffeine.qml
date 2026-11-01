@@ -12,8 +12,9 @@ import qs.components.content.parts
 // card. A switch for on until turned off; off, a CountdownTimer (as the
 // one-off timer's) to keep awake for a set time: a typed duration or time
 // of day, one of the `presets` or a recent one, then the time left and
-// when it ends, pause, more time and reset (which turns it off). On with no timer it says so, with turn off and set a
-// timer. Compact, the time left or on/off.
+// when it ends, pause, more time and reset (which turns it off). On with
+// no timer it says so, with turn off and set a timer. Compact, the time
+// left or on/off.
 // properties (card): { presets }
 Panel {
   id: root

@@ -10,9 +10,9 @@ import qs.components.hosts.overlay
 // An edge menu's modules on a grid of quarter cards, as on a Custom overlay
 // page, with its screen's overlay cards (EdgeMenusConfig.cardUnitOf). Taking
 // its whole edge (`length: "edge"`, and an integrated menu always:
-// GridPlacement.menuFillsEdge) the grid fits the edge exactly, its rows (or columns) growing or shrinking
-// evenly to `maxLength` (scrolling only past half a unit); otherwise it's
-// capped there and scrolls past that.
+// GridPlacement.menuFillsEdge) the grid fits the edge exactly, its rows
+// (or columns) growing or shrinking evenly to `maxLength` (scrolling only
+// past half a unit); otherwise it's capped there and scrolls past that.
 Item {
   id: root
 

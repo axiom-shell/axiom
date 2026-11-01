@@ -1072,10 +1072,6 @@ QtObject {
     };
   }
 
-  // Where a w × h module dropped with the pointer at `x`, `y` (canvas px)
-  // lands: the unit it's held by stays under the pointer. `grab`: where
-  // it's held, in px from its top left, or null to hold it by the middle.
-  // { x, y, w, h }
   // Whether two places ({ x, y, w, h }, or null) are the same: a drag
   // re-plans only when its snapped place changes
   function samePlace(a, b) {
@@ -1084,6 +1080,10 @@ QtObject {
     return a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
   }
 
+  // Where a w × h module dropped with the pointer at `x`, `y` (canvas px)
+  // lands: the unit it's held by stays under the pointer. `grab`: where
+  // it's held, in px from its top left, or null to hold it by the middle.
+  // { x, y, w, h }
   function canvasDropPlace(fit, x, y, w, h, grab) {
     const col = Math.floor((x - fit.originX + fit.gap / 2) / fit.step);
     const row = Math.floor((y - fit.originY + fit.gap / 2) / fit.step);

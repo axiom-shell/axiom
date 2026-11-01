@@ -17,8 +17,9 @@ import qs.components.hosts.popout
 // in; closing slides it out before the zone goes. With `frame` on, a
 // rounded box runs the strip's whole length (its stroke ending the screen
 // margin in from its edges, lining up with the screen border's) and the
-// modules sit in it, `padding` in from its stroke. Along the edge they sit
-// on the menu's lattice (GridPlacement.menuAlong).
+// modules sit in it, `padding` in from its stroke. Along the edge they
+// span it from its start, as the strip does (GridPlacement.menuFillsEdge,
+// menuModules).
 //
 // Open/close and hover-loss dismissal are PopoutWrapperBase's, as for the
 // popouts.
@@ -47,11 +48,11 @@ PopoutWrapperBase {
   readonly property real edgeLength: root.vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0
   readonly property real bodyDepth: root.vertical ? (loader.item?.implicitWidth ?? 0) : (loader.item?.implicitHeight ?? 0)
   readonly property int depth: Math.ceil(root.bodyDepth + root.pad * 2 + root.innerStroke)
-  // Where the modules start along the edge: its start, as it always takes
-  // the whole edge (GridPlacement.menuFillsEdge), stretched along it
   // Its card size (EdgeMenusConfig.cardUnitOf)
   readonly property int unit: EdgeMenusConfig.cardUnitOf(root.menu)
   readonly property real cardGap: EdgeMenusConfig.gapOf(root.menu)
+  // Where the modules start along the edge: its start, as it always takes
+  // the whole edge (GridPlacement.menuFillsEdge), stretched along it
   readonly property real alongPos: GridPlacement.menuAlong(root.menu, root.edgeLength, root.unit, root.pad, root.pad, root.cardGap)
 
   // Where the modules can sit, for the layouts editor (EdgeMenuManager.frames)

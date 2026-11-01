@@ -171,7 +171,7 @@ Singleton {
       if (!root.timerIdle)
         return;
       if (id === "minute")
-        root.startTimer(60000, label);
+        root.startTimer(60000, label, true);
       else if (id === "restart")
         root.startTimer(duration, label);
     });
