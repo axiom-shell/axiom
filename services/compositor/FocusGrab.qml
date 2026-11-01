@@ -23,6 +23,11 @@ Scope {
   // A click on a screen's backdrop ended it (no native grab): a real
   // click, never just focus leaving. Sent before `cleared`
   signal clickedOutside
+  // A real click outside ended it, on any compositor: `clickedOutside`, or
+  // the native grab cleared with no newer grab started (one native grab at
+  // a time: a newer one starting clears this one, no click). Never focus
+  // leaving. Sent before `cleared`
+  signal dismissed
 
   readonly property bool _native: CompositorManager.supports.focusGrab === true
   // Active without a native grab: a click outside clears it. In
@@ -47,6 +52,8 @@ Scope {
   Component.onCompleted: {
     root._uid = BackdropManager.register();
     BackdropManager.catchClicks(root._uid, root._catching);
+    if (root.active)
+      BackdropManager.newestGrab = root._uid;
   }
   Component.onDestruction: {
     if (root._uid > 0)
@@ -57,6 +64,7 @@ Scope {
     enabled: root._catching
     function onClickedOutside() {
       root.clickedOutside();
+      root.dismissed();
       root.cleared();
     }
   }
@@ -66,7 +74,11 @@ Scope {
     HyprlandGrab {
       windows: root.windows
       active: root.active
-      onCleared: root.cleared()
+      onCleared: {
+        if (BackdropManager.newestGrab === root._uid)
+          root.dismissed();
+        root.cleared();
+      }
     }
   }
 
@@ -120,6 +132,8 @@ Scope {
       _lost.restart();
   }
   onActiveChanged: {
+    if (root.active && root._uid > 0)
+      BackdropManager.newestGrab = root._uid;
     if (!root.active) {
       root._held = false;
       _lost.stop();

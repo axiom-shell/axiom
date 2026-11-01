@@ -65,6 +65,11 @@ QtObject {
   readonly property int newestCatcher: root._catchers.length > 0 ? root._catchers[root._catchers.length - 1] : 0
   signal clickedOutside
 
+  // The FocusGrab that started last, native grab or not (its uid, 0 with
+  // none yet): a native grab cleared while a newer one started was taken
+  // by it (one at a time), not ended by a click (FocusGrab.dismissed)
+  property int newestGrab: 0
+
   function catchClicks(uid, on) {
     if (root._catchers.includes(uid) === on)
       return;

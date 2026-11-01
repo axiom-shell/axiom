@@ -457,7 +457,9 @@ PopoutWrapperBase {
           root.contentItem?.forceActiveFocus();
       }
 
-      onCleared: root.hide()
+      // Only a real click, never another surface's grab starting or the
+      // keyboard leaving (a hover-opened keyboard popout, a prompt closing)
+      onDismissed: root.hide()
     }
 
     // Where the window is on screen: the blur window draws the surface's
