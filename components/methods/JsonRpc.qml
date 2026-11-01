@@ -3,7 +3,7 @@ import QtQuick
 
 // JSON-RPC 2.0, one message per line (NDJSON): how the shell talks to the
 // axiom binary (BackendManager; docs/dev/backend/README.md). Frames
-// requests, notifications and replies, and tells an incoming line apart.
+// requests and replies, and tells an incoming line apart.
 QtObject {
   id: root
 
@@ -11,16 +11,6 @@ QtObject {
     const message = {
       "jsonrpc": "2.0",
       "id": id,
-      "method": method
-    };
-    if (params !== undefined)
-      message.params = params;
-    return JSON.stringify(message) + "\n";
-  }
-
-  function notification(method, params) {
-    const message = {
-      "jsonrpc": "2.0",
       "method": method
     };
     if (params !== undefined)

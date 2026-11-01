@@ -145,7 +145,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - GreetdManager.available is never read
   - EmojiManager's groups() is never called
   - LauncherManager keeps a dead clear() and a cliphist test
-  - [The shell's unused daemon-call paths](../issues.md#the-shells-unused-daemon-call-paths)
+  - The shell's unused daemon-call paths
   - [Two dead Go helpers and a forwarding wrapper](../issues.md#two-dead-go-helpers-and-a-forwarding-wrapper)
 - **core-ui-theming-01** (7):
   - [Small shrinks in the core services](../issues.md#small-shrinks-in-the-core-services)

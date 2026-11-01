@@ -230,13 +230,12 @@ class RpcShapes(unittest.TestCase):
             "    zones: list, // a comment, with a comma",
             '    "opts": {on: `${a}, b`}',
             "  }, (e, r) => g(r));",
-            '  BackendManager.notify("x.y");',
             "  BackendManager.call(method, params);",
             '  root._send(JsonRpc.request(id, "daemon.hello", {pid: 1}));',
             "}",
         ])
         self.assertEqual([(line, method, src.split("\n")[0]) for line, method, src in qml_call_sites(qml)],
-                         [(2, "tz.offsets", "{"), (6, "x.y", ""), (7, None, "params"), (8, "daemon.hello", "{pid: 1}")])
+                         [(2, "tz.offsets", "{"), (6, None, "params"), (7, "daemon.hello", "{pid: 1}")])
 
     def test_helper_sites(self):
         sys.path.insert(0, str(SCRIPTS))

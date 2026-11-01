@@ -9,7 +9,7 @@ import qs.components.methods
 // docs/dev/backend/README.md): JSON-RPC over the socket the binary names
 // in $AXIOM_SOCKET. It says hello (the protocol and the schema read),
 // relays what the binary pushes (notified), sends calls (queued until the
-// hello is answered) and answers the binary's own calls (handle). It
+// hello is answered) and answers the binary's own calls (_handlers). It
 // reconnects when the binary re-execs. Below every other service: it
 // reads the environment only, so ConfigManager can stand on it.
 // Started without $AXIOM_SOCKET (the shell run by hand, not by axiom), it
@@ -29,8 +29,6 @@ QtObject {
   // says the config is writable (dev mode turned on), never set again
   // while the shell runs: that would take the desktop down
   readonly property string incompatible: _incompatible
-  // Whether axiom takes config writes now (it follows dev mode)
-  readonly property bool compatible: _compatible
   // Dev mode as axiom has it ({ enabled, available, unavailable,
   // building, lastBuild: { ok, at, output }, binary, installed }):
   // DevManager switches it
@@ -75,20 +73,6 @@ QtObject {
       });
   }
 
-  // Sends a notification (no reply)
-  function notify(method, params) {
-    if (!root.active)
-      return;
-    const line = JsonRpc.notification(method, params);
-    if (root.ready)
-      root._send(line);
-    else
-      root._queue.push({
-        "id": null,
-        "line": line
-      });
-  }
-
   // Subscribes to a polled topic ({ interval } in ms, plus what the
   // topic's own request carries): axiom fetches it at the shortest
   // interval anyone asked and pushes `<topic>.state` when it changes.
@@ -117,15 +101,8 @@ QtObject {
       root.call(topic + ".refresh", {}, root._logFailure(topic + ".refresh"));
   }
 
-  // Answers the binary's calls of method with fn(params): a result, or a
-  // thrown { kind, message }
-  function handle(method, fn) {
-    root._handlers[method] = fn;
-  }
-
   property var _hello: null
   property string _incompatible: Quickshell.env("AXIOM_INCOMPATIBLE") ?? ""
-  property bool _compatible: _incompatible === ""
   property var _dev: ({
       "enabled": false,
       "available": false
@@ -133,7 +110,6 @@ QtObject {
 
   // The parts of the hello that change while axiom runs
   function _applyDaemonState(state) {
-    root._compatible = !!state.compatible;
     if (state.compatible)
       root._incompatible = "";
   }
@@ -144,7 +120,7 @@ QtObject {
   property var _pending: ({})
   // call's repeatable calls not answered yet: { id: line }
   property var _repeatable: ({})
-  // Waiting for the hello: { id (null for a notification), line }
+  // Waiting for the hello: { id, line }
   property var _queue: []
   property var _handlers: ({
       "ipc.call": params => root._callTarget(params)
@@ -355,8 +331,8 @@ QtObject {
   }
 
   // Calls in flight or queued when the connection went fail (a failed one
-  // is never sent after all), but repeatable ones and queued
-  // notifications wait for the next hello, which is said again
+  // is never sent after all), but repeatable ones wait for the next
+  // hello, which is said again
   function _dropped() {
     root._hello = null;
     root._failQueued({
@@ -418,7 +394,7 @@ QtObject {
           "line": root._repeatable[id]
         });
     }
-    root._queue = unavailable ? resend.concat(root._queue.filter(entry => entry.id === null || entry.id in root._pending)) : [];
+    root._queue = unavailable ? resend.concat(root._queue.filter(entry => entry.id in root._pending)) : [];
     for (const id in pending) {
       delete root._repeatable[id];
       // Through a const: V4 crashes compiling an optional call on a
