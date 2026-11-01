@@ -5,7 +5,7 @@ The daemon core holds up: hello guards, the latest-wins queue, in-order calls, t
 
 ## Open findings
 - Cleanup: [The shell's unused daemon-call paths](../../docs/dev/issues.md#the-shells-unused-daemon-call-paths)
-- Cleanup: [Three Go helpers nothing but a test calls](../../docs/dev/issues.md#three-go-helpers-nothing-but-a-test-calls)
+- Cleanup: [Two dead Go helpers and a forwarding wrapper](../../docs/dev/issues.md#two-dead-go-helpers-and-a-forwarding-wrapper)
 - Cleanup: [daemon.shutdown starts its goroutine past tasks.Go](../../docs/dev/issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
 
 ### axiom daemon status runs the config folder into the revision
