@@ -152,7 +152,7 @@ func TestBuildDrives(t *testing.T) {
 		return Volume{ID: pathBlocks + dev, Device: "/dev/" + dev, Label: label, UUID: "uuid-" + dev, FSType: fsType, Size: 1e9, MountPoints: mounts, Mountable: mountable}
 	}
 	stick := Drive{
-		ID: pathDrives + "stick", Vendor: "Acme", Model: "Stick", Label: "STICK", Size: 32e9, Bus: "usb", Removable: true, CanPowerOff: true,
+		ID: pathDrives + "stick", Vendor: "Acme", Model: "Stick", Size: 32e9, Bus: "usb", Removable: true, CanPowerOff: true,
 		Volumes: []Volume{vol("sdb1", "vfat", "STICK", true), vol("sdb2", "ext4", "", true, "/run/media/me/data")},
 	}
 	if !reflect.DeepEqual(got[stick.ID], stick) {
@@ -161,36 +161,22 @@ func TestBuildDrives(t *testing.T) {
 
 	locked := vol("sdc1", "crypto_LUKS", "", false)
 	locked.Encrypted = true
-	if d := got[pathDrives+"luks"]; d.Label != "Vault" || !reflect.DeepEqual(d.Volumes, []Volume{locked}) {
+	if d := got[pathDrives+"luks"]; !reflect.DeepEqual(d.Volumes, []Volume{locked}) {
 		t.Errorf("locked LUKS: %+v", d)
 	}
 
 	open := vol("sdd1", "ext4", "SECRET", true, "/run/media/me/SECRET")
 	open.Encrypted, open.Unlocked, open.CleartextID = true, true, pathBlocks+"dm_2d1"
-	if d := got[pathDrives+"open"]; d.Label != "SECRET" || !reflect.DeepEqual(d.Volumes, []Volume{open}) {
+	if d := got[pathDrives+"open"]; !reflect.DeepEqual(d.Volumes, []Volume{open}) {
 		t.Errorf("unlocked LUKS: %+v", d)
 	}
 
-	if d := got[pathDrives+"sd"]; d.Bus != "sdio" || !d.CanEject || d.Label != "CAMERA" || !reflect.DeepEqual(d.Volumes, []Volume{vol("mmcblk0", "exfat", "CAMERA", true)}) {
+	if d := got[pathDrives+"sd"]; d.Bus != "sdio" || !d.CanEject || !reflect.DeepEqual(d.Volumes, []Volume{vol("mmcblk0", "exfat", "CAMERA", true)}) {
 		t.Errorf("SD card: %+v", d)
 	}
 
 	if d := got[pathBlocks+"loop0"]; d.Bus != "loop" || d.Model != "fat.img" || d.CanPowerOff || len(d.Volumes) != 1 || d.Volumes[0].ID != pathBlocks+"loop0" {
 		t.Errorf("loop: %+v", d)
-	}
-}
-
-// A drive's label falls back to its model, then its vendor
-func TestBuildLabel(t *testing.T) {
-	t.Parallel()
-	for _, tc := range []struct{ vendor, model, want string }{
-		{"Acme", "Stick", "Stick"},
-		{"Acme", "", "Acme"},
-	} {
-		objs := dbus.ManagedObjects{pathDrives + "x": drive("usb", true, false, map[string]dbus.Variant{"Vendor": v(tc.vendor), "Model": v(tc.model)})}
-		if d := build(objs, false); len(d) != 1 || d[0].Label != tc.want || len(d[0].Volumes) != 0 {
-			t.Errorf("%s/%s: %+v", tc.vendor, tc.model, d)
-		}
 	}
 }
 

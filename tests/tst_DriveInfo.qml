@@ -27,7 +27,6 @@ TestCase {
       "id": "d1",
       "vendor": "SanDisk",
       "model": "Ultra",
-      "label": "",
       "size": 32000000000,
       "bus": "usb",
       "optical": false,
@@ -56,9 +55,6 @@ TestCase {
       }), vol("b", {
         "label": "TWO"
       })])), "SanDisk Ultra", "two labels: the hardware");
-    compare(DriveInfo.name(drive([], {
-      "label": "Own"
-    })), "Own");
     compare(DriveInfo.name(drive([], {
       "vendor": "",
       "model": ""

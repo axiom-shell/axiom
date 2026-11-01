@@ -21,9 +21,7 @@ type Drive struct {
 	ID     string `json:"id"`
 	Vendor string `json:"vendor"`
 	Model  string `json:"model"`
-	// Label is its first volume's label, else its model, else its vendor
-	Label string `json:"label"`
-	Size  int64  `json:"size"`
+	Size   int64  `json:"size"`
 	// Bus is how it's connected: "usb", "sdio", "ieee1394", "loop", "" …
 	Bus         string   `json:"bus"`
 	Optical     bool     `json:"optical"`
@@ -177,7 +175,7 @@ func build(objs dbus.ManagedObjects, includeLoop bool) []Drive {
 				CanEject: p.bool("Ejectable"), CanPowerOff: p.bool("CanPowerOff"), mediaRemovable: p.bool("MediaRemovable"),
 			}
 			drive.Volumes = volumes(objs, blocks, cleartext, true)
-			drives = append(drives, labelled(drive))
+			drives = append(drives, drive)
 			continue
 		}
 		loop, ok := ifaces[ifaceLoop]
@@ -191,7 +189,7 @@ func build(objs dbus.ManagedObjects, includeLoop bool) []Drive {
 		}
 		drive := Drive{ID: string(path), Model: filepath.Base(backing), Size: b.size("Size"), Bus: "loop", Removable: true, loop: true}
 		drive.Volumes = volumes(objs, append([]dbus.ObjectPath{path}, byTable[string(path)]...), cleartext, false)
-		drives = append(drives, labelled(drive))
+		drives = append(drives, drive)
 	}
 	slices.SortFunc(drives, func(a, b Drive) int { return strings.Compare(a.ID, b.ID) })
 	return drives
@@ -202,20 +200,6 @@ func build(objs dbus.ManagedObjects, includeLoop bool) []Drive {
 // HintIgnore counts for them.
 func hinted(b props, system bool) bool {
 	return b.bool("HintIgnore") || system && b.bool("HintSystem")
-}
-
-func labelled(d Drive) Drive {
-	for _, v := range d.Volumes {
-		if v.Label != "" {
-			d.Label = v.Label
-			return d
-		}
-	}
-	d.Label = d.Model
-	if d.Label == "" {
-		d.Label = d.Vendor
-	}
-	return d
 }
 
 // volumes are the filesystems and encrypted containers among blocks,

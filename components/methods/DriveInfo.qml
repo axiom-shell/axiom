@@ -5,7 +5,7 @@ import QtQuick
 // (DrivesManager): its name, size and icon, the volumes a list shows
 // (an unlocked LUKS container standing for its cleartext volume), each
 // volume's main action, the one opening the drive opens, and the ignore
-// list's match. A drive is { id, vendor, model, label, size, bus,
+// list's match. A drive is { id, vendor, model, size, bus,
 // optical, removable, canEject, canPowerOff, volumes }, a volume { id,
 // device, label, uuid, fsType, size, mountPoints, readOnly, encrypted,
 // unlocked, cleartextId, mountable }.
@@ -28,13 +28,11 @@ QtObject {
     return shown + " " + units[unit];
   }
 
-  // The drive's name: its own label, else its one labelled volume's, else
-  // its vendor and model; "" when it has none (the caller says "Drive")
+  // The drive's name: its one labelled volume's label, else its vendor
+  // and model; "" when it has none (the caller says "Drive")
   function name(drive) {
     if (!drive)
       return "";
-    if (drive.label)
-      return drive.label;
     const labels = root.volumes(drive).map(v => v.label).filter(l => !!l);
     if (labels.length === 1)
       return labels[0];
@@ -150,12 +148,12 @@ QtObject {
   }
 
   // The drive matches an ignore list entry (Drives.ignore): a volume's
-  // UUID or label, or the drive's label, exactly
+  // UUID or label, exactly
   function ignored(drive, list) {
     const entries = (list ?? []).filter(e => e !== "");
     if (!drive || entries.length === 0)
       return false;
-    const keys = [drive.label ?? ""];
+    const keys = [];
     (drive.volumes ?? []).forEach(v => keys.push(v.uuid ?? "", v.label ?? ""));
     return keys.some(k => k !== "" && entries.includes(k));
   }
