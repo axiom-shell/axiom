@@ -198,12 +198,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - PopoutGeometry handles a phase and a submenu pair the registry never produces
   - PillBarJoin's available repeats what joined already says
   - Geometry members nothing reads
-  - [The tray menu's isVertical and barConfig are never read](../issues.md#the-tray-menus-isvertical-and-barconfig-are-never-read)
+  - The tray menu's isVertical and barConfig are never read
   - Nothing listens to the bar's layoutUpdated any more
   - StandaloneBar only wraps BarPanel's BarContainer
   - BarContainer._withEntry rebuilds Utils.withEntry
   - enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
-  - [BaseWidget's background box and panel-size defaults are dead](../issues.md#basewidgets-background-box-and-panel-size-defaults-are-dead)
+  - BaseWidget's background box and panel-size defaults are dead
   - [IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call](../issues.md#integratededgemenus-empty-engage-exists-only-for-edgemenusyncs-call)
 - **overlay-modules-01** (6): After compositor-02, which also edits OverlayPageNavigator (the wheel notch).
   - [GridEditor's canAdd and canMove have no caller](../issues.md#grideditors-canadd-and-canmove-have-no-caller)

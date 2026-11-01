@@ -1033,12 +1033,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### The tray menu's isVertical and barConfig are never read
-- **Where:** `components/content/SystemTray/SystemTray.qml:14` (`isVertical`), `components/content/SystemTray/SystemTray.qml:15` (`barConfig`), `components/bar/widgets/SystemTray/SystemTray.qml:99`
-- **What:** The tray content declares both from its payload and nothing reads either: no host reads them off `currentItem`/`currentData`, and inside the content only the declarations match. The widget's `extraData` sends them only to feed these. Fix: drop the two properties and the two `extraData` keys (4 lines).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### Both tray menu lists override the same width cap
 - **Where:** `components/content/parts/TrayMenuList.qml:22` (`maxWidth`), `components/content/SystemTray/SystemTray.qml:38`, `components/content/parts/TraySubmenu.qml:21` (`_window`), `components/content/parts/TraySubmenu.qml:34`
 - **What:** TrayMenuList's only two users both replace its default `Widget.px(600)` with the same stand-in, 30% of the screen's width: `(root.wrapper.screen?.width ?? 2000) * 0.3` and `(root._window?.screen?.width ?? 2000) * 0.3`, each marked `// fixed px`. TraySubmenu keeps `_window` only for this, and the default is never used. Fix: make the stand-in TrayMenuList's default, read through its own `QsWindow.window`, and drop SystemTray.qml:38 and TraySubmenu.qml:20-21 and 34 (4 lines).
@@ -1187,23 +1181,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### The stacked style clips on a thin bar
 - **Where:** `components/bar/widgets/base/ValueGraphic.qml:217` (value `font.pixelSize`), `components/bar/widgets/base/ValueGraphic.qml:229` (caption `font.pixelSize`)
 - **What:** Stacked's two lines are `fontSize * 0.8` and `fontSize * 0.6`, sized from the font alone: about 1.17 × 1.4 × fontSize ≈ 23 px at font 14. They are centred in the widget's `widgetSize`, and the widget clips. At the default 26 px they fit. At `widgetSize` 20 with font 14, where a one-line label (about 16 px) still fits, about 1.5 px comes off the top of the value and the bottom of the caption. PLAUSIBLE: a screenshot of a stacked widget on a 20 px bar settles it. Fix: scale both lines by `Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize))`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
-### BaseWidget's background box and panel-size defaults are dead
-- **Where:** `components/bar/widgets/base/BaseWidget.qml:13` (`backgroundColor`), `components/bar/widgets/base/BaseWidget.qml:15` (`showBackground`), `components/bar/widgets/base/BaseWidget.qml:17` (`contentItem`), `components/bar/widgets/base/BaseWidget.qml:19` (`radius`), `components/bar/widgets/base/BaseWidget.qml:29` (the `Rectangle`), `components/bar/widgets/base/IconTextWidget.qml:22` (`spacing`), `components/bar/widgets/base/IconTextWidget.qml:25` (`fontSize`), `components/bar/widgets/base/ValueGraphic.qml:31` (`fontSize`), `docs/dev/core/shared-ui-pieces.md:103`
-- **What:** Widgets don't draw their own backgrounds; WidgetGroup does (widget-style.md › Widget style). BaseWidget still has its own box, and it is never drawn. Its three instances all set `showBackground: false`: BarIconWidget:60, SystemStats:179 (`box`) and SystemStats:204 (the segments).
-  - `backgroundColor` and `radius` feed only that Rectangle. The two `radius:` setters (BarIconWidget:43, SystemStats:178) therefore do nothing.
-  - `contentItem` has no reader (its declaration is its only hit in `components/bar`).
-  - Deletion pass: BaseWidget lines 13–15, 17, 19 and 29–35 (12 lines) plus the five setters, 17 lines in all.
-  - shared-ui-pieces.md:103 still calls BaseWidget "the rounded box a bar widget sits in": it becomes "the sizing wrapper".
-
-  The bases' remaining defaults are the panels' sizes, and every instance replaces them from `barConfig`:
-  - BaseWidget: `padding: Widget.padding`, `crossSize: Widget.height`
-  - IconTextWidget: `spacing: Widget.spacing * 1.5`, `fontSize: Appearance.fontSize`
-  - ValueGraphic: `fontSize: Appearance.fontSize`
-
-  These five are the only `Widget.*`/`Appearance.fontSize` reads under `components/bar/widgets`, and they read as though the bar's pieces size from the Interface section. Default them to 0.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
