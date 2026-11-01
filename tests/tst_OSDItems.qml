@@ -189,7 +189,7 @@ TestCase {
   function test_tile_base_icons() {
     // An off state is a slash over the base icon, never an icon's own off
     // form, so every one looks the same
-    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message", "vpn", "recording", "camera", "micUse", "screenShare"];
+    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message", "vpn", "drive", "recording", "camera", "micUse", "screenShare"];
     for (const type of types) {
       for (const on of [true, false]) {
         const t = OSDItems.tile(type, {
@@ -206,6 +206,55 @@ TestCase {
         verify(!/_(off|disabled|inactive)$/.test(t.icon), `${type} ${on}: ${t.icon}`);
       }
     }
+  }
+
+  function test_tile_drive() {
+    const mounted = OSDItems.tile("drive", {
+      "available": true,
+      "count": 1,
+      "event": {
+        "kind": "mounted",
+        "name": "STICK",
+        "mountPoint": "/run/media/u/STICK"
+      }
+    });
+    verify(mounted.on && !mounted.hidden && !mounted.slash && !mounted.notable, "a drive in: shown, never unusual");
+    compare(mounted.name, "STICK");
+    let card = OSDItems.card("drive", {
+      "drive": mounted
+    }, ["drive"]);
+    compare([card.icon, card.title, card.role, card.detail], ["usb", "STICK", "Mounted", "/run/media/u/STICK"]);
+    const ejected = OSDItems.tile("drive", {
+      "available": true,
+      "count": 0,
+      "event": {
+        "kind": "ejected",
+        "name": "STICK",
+        "mountPoint": ""
+      }
+    });
+    verify(ejected.hidden, "none left: shown only as it changes");
+    card = OSDItems.card("drive", {
+      "drive": ejected
+    }, ["drive"]);
+    compare([card.icon, card.role, card.detail], ["eject", "Safe to remove", ""]);
+    card = OSDItems.card("drive", {
+      "drive": OSDItems.tile("drive", {
+        "available": true,
+        "count": 1,
+        "event": {
+          "kind": "added",
+          "name": "SD",
+          "mountPoint": ""
+        }
+      })
+    }, ["drive"]);
+    compare(card.role, "Connected", "plugged in");
+    verify(OSDItems.tile("drive", {
+      "available": false,
+      "count": 1
+    }).hidden, "no udisks2");
+    verify(OSDItems.tile("drive", null).hidden, "no state yet");
   }
 
   function test_tile_vpn_capture() {

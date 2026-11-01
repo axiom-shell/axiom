@@ -54,7 +54,10 @@ QtObject {
   //   message { icon, text }, vpn { available, on, name (the VPNs up),
   //   address (the first one's) }, camera / screenShare / micUse { apps
   //   (the app names using it), last (the ones last seen using it: a
-  //   card outlives a capture that stops at once) }, every other
+  //   card outlives a capture that stops at once) }, drive { available
+  //   (udisks2 answers), count (drives plugged in), event (the last one:
+  //   DrivesManager.lastEvent, { kind: "added" | "mounted" | "ejected",
+  //   name, mountPoint }, or null) }, every other
   //   type (recording too) { available, on }
   function tile(type, state) {
     const t = {
@@ -147,6 +150,18 @@ QtObject {
         "notable": s.on === true,
         "hidden": s.available !== true
       });
+    case "drive":
+      {
+        const e = s.event ?? null;
+        return Object.assign(t, {
+          "icon": "usb",
+          "name": e?.name ?? "",
+          "event": e?.kind ?? "",
+          "mountPoint": e?.mountPoint ?? "",
+          "on": (s.count ?? 0) > 0,
+          "hidden": s.available !== true || (s.count ?? 0) === 0
+        });
+      }
     case "camera":
     case "screenShare":
     case "micUse":
@@ -274,8 +289,8 @@ QtObject {
   // The status types that show a card for a change (`fired(true)`): an
   // audio device switching, a VPN coming up, an app starting to use the
   // camera or share the screen, the charger plugged in, a Wi-Fi network
-  // joined
-  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi"]
+  // joined, a drive plugged in, mounted or ejected
+  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "drive"]
 
   // Whether two capture tiles (tile()'s) share an app: one app taking the
   // camera and the microphone together (a call)
@@ -289,8 +304,9 @@ QtObject {
   // with no card. `role` is English, for the caller to translate (what an
   // audio device is now used for: "Output and input" when the OSD's other
   // device status holds the same device; what a VPN, the apps or the
-  // charger did); `detail` an audio device's profile, a VPN's address, a
-  // network's signal, the time left to a full battery
+  // charger did, a drive's last event); `detail` an audio device's
+  // profile, a VPN's address, a network's signal, the time left to a
+  // full battery, where a drive was mounted
   function card(type, tiles, types) {
     if (!root.cardTypes.includes(type))
       return null;
@@ -346,6 +362,11 @@ QtObject {
     case "wifi":
       out.role = "Connected";
       out.detail = t.name ? `${t.signal ?? 0}%` : "";
+      break;
+    case "drive":
+      out.icon = t.event === "ejected" ? "eject" : "usb";
+      out.role = t.event === "ejected" ? "Safe to remove" : t.event === "mounted" ? "Mounted" : "Connected";
+      out.detail = t.event === "mounted" ? (t.mountPoint ?? "") : "";
       break;
     }
     return out;

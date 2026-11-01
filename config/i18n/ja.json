@@ -3566,7 +3566,6 @@
     "Plugged in": "",
     "Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in. Off, they show as their icon like any other change.": "",
     "Detail cards": "",
-    "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, and Charger one with the battery level when plugged in. Messages are what `axiom ipc osd message <icon> <text>` sends.": "",
     "Mic use": "",
     "Vpn": "",
     "Screen sharing": "",
@@ -3651,6 +3650,8 @@
     "Hide with no drives": "",
     "Not mounted color": "",
     "Removable Drives": "",
-    "Stacked puts the count over how many are mounted.": ""
+    "Stacked puts the count over how many are mounted.": "",
+    "Mounted": "",
+    "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, or safe to remove after an eject. Messages are what `axiom ipc osd message <icon> <text>` sends.": ""
   }
 }
