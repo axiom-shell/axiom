@@ -63,8 +63,11 @@ QtObject {
 
   // Every default filled in, from the schema alone
   readonly property var defaults: SchemaValidation.applyDefaults({}, ConfigManager.configSchema)
+  // The schema with Bars.style's `$ref` resolved, which `rows` and
+  // `compositorAllows` walk (SchemaLayout.resolved)
+  readonly property var _resolvedSchema: SchemaLayout.resolved(ConfigManager.configSchema, ConfigManager.configSchema)
   // The key paths the settings page has a row for (not `x-settings: false`)
-  readonly property var _settingsPaths: SchemaLayout.rows(SchemaLayout.resolved(ConfigManager.configSchema, ConfigManager.configSchema), []).filter(row => row.kind !== "group").reduce((set, row) => {
+  readonly property var _settingsPaths: SchemaLayout.rows(root._resolvedSchema, []).filter(row => row.kind !== "group").reduce((set, row) => {
     set[row.path.join(".")] = true;
     return set;
   }, {})
@@ -405,10 +408,10 @@ QtObject {
   // elsewhere); conditions on the config aren't, as /config sets them
   // whatever the rest says.
   readonly property var settingPaths: {
-    const schema = ConfigManager.configSchema;
+    const schema = root._resolvedSchema;
     if (!schema?.properties)
       return [];
-    return SchemaLayout.rows(SchemaLayout.resolved(schema, schema), []).filter(row => row.kind === "field" && SchemaLayout.compositorAllows(schema, row.path, root.showIfValue)).map(row => ({
+    return SchemaLayout.rows(schema, []).filter(row => row.kind === "field" && SchemaLayout.compositorAllows(schema, row.path, root.showIfValue)).map(row => ({
           path: row.path,
           key: row.path.join("."),
           schema: row.schema,

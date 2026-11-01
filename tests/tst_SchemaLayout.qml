@@ -94,7 +94,11 @@ TestCase {
       }
     };
     compare(SchemaLayout.rows(SchemaLayout.resolved(refSchema, refSchema), []).map(r => r.kind + ":" + r.path.join(".")), ["group:S", "group:S.style", "field:S.style.size"]);
-    verify(SchemaLayout.rows(SchemaLayout.resolved(schema, schema), []).some(r => r.path.join(".") === "Bars.style.fontSize"), "the real schema's bar style");
+    const resolved = SchemaLayout.resolved(schema, schema);
+    verify(SchemaLayout.rows(resolved, []).some(r => r.path.join(".") === "Bars.style.fontSize"), "the real schema's bar style");
+    // /config (SettingsManager.settingPaths) walks the resolved schema to
+    // keep them too
+    verify(SchemaLayout.compositorAllows(resolved, ["Bars", "style", "fontSize"], key => undefined), "the bar style passes compositorAllows");
   }
 
   function test_waitsForUser() {

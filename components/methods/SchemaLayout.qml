@@ -115,8 +115,9 @@ QtObject {
 
   // `node` with every object `$ref` in its properties (Bars.style's
   // BarStyle) replaced by the definition, the keys beside the `$ref` over
-  // it, down through nested objects (not array items). `rows` doesn't
-  // resolve: give it a resolved schema (`resolved(schema, schema)`)
+  // it, down through nested objects (not array items). `rows` and
+  // `compositorAllows` don't resolve: give them a resolved schema
+  // (`resolved(schema, schema)`)
   function resolved(node, schema) {
     if (!node?.properties)
       return node;
