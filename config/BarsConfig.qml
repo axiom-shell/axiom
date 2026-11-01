@@ -335,15 +335,17 @@ QtObject {
 
   // How much further than half a connector gap past a transparent bar's
   // inner edge a box detached from it (a bar popout, a floating edge menu)
-  // sits, so it starts in line with the windows: at the bar's inner edge,
-  // or past an inner accent line gaps_out out (reserveTrim). Negative when
-  // they start nearer than half a connector gap: its attach edge moves in.
-  // A bar with another reserving inside it (not `facesWindows`, BarEnds.
-  // placeStack) has no windows past it: the box sits at its inner edge.
-  function detachedPush(barConfig, gapsOut, connectorGap) {
+  // sits, so it starts in line with the windows: `windowsPast` is how far
+  // past that edge they start (where its edge's bars and menus reserve to,
+  // gaps_out on: at the bar's inner edge alone, or past an inner accent
+  // line gaps_out out, reserveTrim). With bars inside it (not
+  // `facesWindows`, BarEnds.placeStack), that's past them all: the box
+  // clears the whole stack, never covering a bar. Negative when they
+  // start nearer than half a connector gap: its attach edge moves in.
+  function detachedPush(barConfig, windowsPast, connectorGap) {
     if (barConfig.background !== "transparent")
       return 0;
-    return (barConfig.facesWindows ? gapsOut - barConfig.trim : 0) - connectorGap / 2;
+    return windowsPast - connectorGap / 2;
   }
 
   // (The exclusive zone a bar sets is BarEnds.placeStack's `zone`: it

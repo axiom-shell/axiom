@@ -36,17 +36,31 @@ QtObject {
   readonly property int connectorGap: Appearance.connectorGap
 
   // The bar it follows: a bar popout's own (`followPanel`, solid
-  // included); else the bar on its edge other than a solid one, while it
+  // included), or past the connected bars inside it the innermost of them,
+  // which it grows out of as an edge popout would (BarEnds.connectedFrom,
+  // `attachId`); else the bar on its edge other than a solid one, while it
   // shows (a bar inside the border hides under fullscreen windows)
   property var followPanel: undefined
   readonly property var barPanel: {
     if (root.held)
       return null;
     if (root.followPanel !== undefined)
-      return root.followPanel;
+      return root._attachPanel;
     const panel = ScreenEdgeManager.barOn(root.screen?.name ?? "", root.edge);
     return panel?.visible && !panel.barConfig.solid ? panel : null;
   }
+  readonly property var _attachPanel: {
+    const own = root.followPanel?.barConfig;
+    if (!own || !own.attachId || own.attachId === own.id)
+      return root.followPanel;
+    const panel = ScreenEdgeManager.barOn(root.screen?.name ?? "", root.edge, own.attachId);
+    return panel?.visible ? panel : root.followPanel;
+  }
+  // How much further from the screen edge the followed bar's outer edge
+  // lies than the host's own bar's (a bar popout grown out of a connected
+  // bar inside its own): what attachFromBar, measured from the host's bar,
+  // adds
+  readonly property real _attachShift: root.followPanel?.barConfig && root.barConfig ? root.barConfig.outer - root.followPanel.barConfig.outer : 0
   readonly property var barConfig: root.barPanel?.barConfig ?? null
   readonly property bool followsBar: root.barConfig !== null
   // The bar's BarContainer
@@ -197,11 +211,12 @@ QtObject {
     "length": root.contentLength,
     "joinStart": root.joinStart,
     "joinEnd": root.joinEnd,
-    // The followed bar's own inner side, wherever it lies among the bars
+    // The followed bar's own inner side (a bar popout's, past the
+    // connected bars inside its own), wherever it lies among the bars
     // stacked on the edge; else the innermost's
     "frameLine": root.barConfig ? ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig) : ScreenEdgeManager.frameLineOn(root.screen, root.edge),
     "reserved": ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge),
-    "detachedPush": root.barConfig ? BarsConfig.detachedPush(root.barConfig, CompositorManager.gapsOut[root.edgeName] ?? 0, root.connectorGap) : 0,
+    "detachedPush": root.barConfig ? BarsConfig.detachedPush(root.barConfig, ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) + (CompositorManager.gapsOut[root.edgeName] ?? 0) - ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig), root.connectorGap) : 0,
     "ownBar": root.ownBar,
     "across": root.gaps?.across ?? 0,
     "layerOrder": CompositorManager.supports.layerOrder === true,
@@ -243,10 +258,10 @@ QtObject {
   // depth), which a host takes off its padding there
   readonly property real attachFill: root._layout.attachFill
   // Where its attach edge goes, across from the screen edge (held, a
-  // connector gap short of its box), and from the followed bar's outer
-  // edge
+  // connector gap short of its box), and from its own bar's outer edge
+  // (the host's: a bar popout's, past the bars it grows through)
   readonly property real attachAt: root._layout.attachAt
-  readonly property real attachFromBar: root._layout.attachFromBar
+  readonly property real attachFromBar: root._layout.attachFromBar + root._attachShift
   readonly property real barOuter: root._layout.barOuter
   // Whether the overlay is open on its screen (the host latches it while
   // open), and whether a detached box slides out from under a transparent

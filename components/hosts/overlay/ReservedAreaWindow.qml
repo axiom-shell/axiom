@@ -37,13 +37,13 @@ PanelWindow {
   // stroke to land on: sit at its invisible inner edge instead, past the
   // reserved space by that gap (none with an inner accent line, which it
   // reserves up to). A floating bar reserves up to its islands' inner
-  // side: land on their stroke, as on any other bar's. The innermost bar
-  // on the edge decides.
-  readonly property var _edges: ScreenEdgeManager.edgesFor(root.screen)
+  // side: land on their stroke, as on any other bar's. The innermost
+  // reserving bar on the edge decides (BarEnds.edgeOf's facing), where
+  // the reserved space ends.
   function _margin(side, location) {
     if (ScreenEdgeManager.screenEdgeOpen(root.screen, location))
       return 0;
-    const bar = root._edges[side];
+    const bar = ScreenEdgeManager.edgeOn(root.screen, location).facing;
     if (bar?.background === "transparent")
       return bar.trim;
     return -Appearance.borderWidth;

@@ -374,6 +374,135 @@ TestCase {
     verify(f.offBorder && fp.offBorder);
   }
 
+  function test_a_transparent_bar_yields_its_inner_bars_gap() {
+    // A floating bar inside a transparent one: the transparent bar
+    // reserves the float gap less, so the islands sit the transparent
+    // bar's padding from its widgets, as the bar outside it does
+    const [p, t, f] = placed([bar("top", "pills"), bar("top", "transparent"), bar("top", "floatingPills", {
+        "floatGap": 6
+      })], withBorder);
+    verify(!t.facesWindows);
+    compare(t.trim, 6);
+    compare(t.zone, 24);
+    compare(t.frame, 64, "its own popouts still grow from its inner edge");
+    compare(f.outer, 8 + 28 + 22 - 2);
+    // An inner accent line is an edge to see: the floating bar keeps its
+    // gap from it
+    const [, lined] = placed([bar("top", "pills"), bar("top", "transparent", {
+        "accentLine": "inner"
+      }), bar("top", "floating", {
+        "floatGap": 6
+      })], withBorder);
+    compare(lined.trim, 0);
+    // A transparent bar inside: nothing trimmed but by the innermost
+    const [outer, inner] = placed([bar("top", "transparent", {
+        "id": "a"
+      }), bar("top", "transparent", {
+        "id": "b"
+      })], withBorder);
+    compare(outer.trim, 0);
+    compare(inner.trim, 10);
+  }
+
+  function test_the_facing_bar_reserves_last() {
+    // A bar reserving nothing is innermost, but the reserved space ends
+    // at the reserving bar outside it
+    const bars = [bar("top", "solid"), bar("top", "transparent", {
+        "reserveSpace": false
+      })];
+    const e = edge(bars, "top", withBorder);
+    compare(e.inner.background, "transparent");
+    compare(e.facing.background, "solid");
+    compare(edge([bar("top", "transparent", {
+        "reserveSpace": false
+      })], "top", withBorder).facing.background, "transparent", "alone, it still decides");
+  }
+
+  function test_popouts_grow_out_of_the_connected_run() {
+    const stack = [bar("top", "solid", {
+        "insideBorder": false
+      }), bar("top", "pills"), bar("top", "transparent"), bar("top", "floatingPills")];
+    const ids = placed(stack, withBorder).map(b => b.attachId);
+    compare(ids, ["top:pills", "top:pills", "top:transparent", "top:floatingPills"]);
+    // Solid bars connect to each other and on to the pills
+    compare(placed([bar("top", "solid", {
+        "id": "s1",
+        "insideBorder": false
+      }), bar("top", "solid", {
+        "id": "s2",
+        "insideBorder": false
+      }), bar("top", "pills")], withBorder).map(b => b.attachId), ["top:pills", "top:pills", "top:pills"]);
+    // A pill bar inside another pill bar strokes no outer side: no run
+    compare(placed([bar("top", "pills", {
+        "id": "p1"
+      }), bar("top", "pills", {
+        "id": "p2"
+      })], withBorder).map(b => b.attachId), ["p1", "p2"]);
+    // A pill bar reserving nothing is laid over, never joined
+    compare(placed([bar("top", "solid", {
+        "insideBorder": false
+      }), bar("top", "pills", {
+        "reserveSpace": false
+      })], withBorder).map(b => b.attachId), ["top:solid", "top:pills"]);
+    // Borderless: the pills hang off the solid bar's own stroke
+    compare(placed([bar("top", "solid", {
+        "insideBorder": false
+      }), bar("top", "pills", {
+        "insideBorder": false
+      })], borderless).map(b => b.attachId), ["top:pills", "top:pills"]);
+    // A bar alone is its own
+    compare(placed([bar("top", "pills")], withBorder)[0].attachId, "top:pills");
+  }
+
+  function test_outer_popouts_cover_inner_bars() {
+    const stack = placed([bar("top", "solid", {
+        "insideBorder": false
+      }), bar("top", "pills"), bar("top", "transparent"), bar("top", "floatingPills")], withBorder);
+    const [s, p, t, f] = stack;
+    const size = {
+      "width": 1000,
+      "height": 500
+    };
+    const claim = (barId, rects, extra) => Object.assign({
+        "kind": "bar",
+        "screen": "DP-1",
+        "edge": "top",
+        "barId": barId,
+        "footprint": rects
+      }, extra ?? {});
+    // The solid bar's popout, grown out of the pill bar, reaching down past
+    // the floating bar: the two bars inside the pill bar give way under it
+    const deep = [claim(s.id, [Qt.rect(100, 0, 200, 300)])];
+    compare(BarEnds.coveredSpans(t, stack, deep, "DP-1", 0, size), [
+      {
+        "start": 100,
+        "end": 300
+      }
+    ]);
+    compare(BarEnds.coveredSpans(f, stack, deep, "DP-1", 0, size).length, 1);
+    // ...never the bar it grows out of (its pill stretches), nor its own
+    compare(BarEnds.coveredSpans(p, stack, deep, "DP-1", 0, size), []);
+    compare(BarEnds.coveredSpans(s, stack, deep, "DP-1", 0, size), []);
+    // A popout not reaching a bar's band leaves it
+    compare(BarEnds.coveredSpans(f, stack, [claim(s.id, [Qt.rect(100, 0, 200, t.frame - 4)])], "DP-1", 0, size), []);
+    // Other screens, edges and kinds, and a bar's own or inner popouts
+    compare(BarEnds.coveredSpans(t, stack, [claim(s.id, [Qt.rect(0, 0, 50, 300)], {
+        "screen": "HDMI-A-1"
+      }), claim(s.id, [Qt.rect(0, 0, 50, 300)], {
+        "kind": "menu"
+      }), claim(t.id, [Qt.rect(0, 0, 50, 300)]), claim(f.id, [Qt.rect(0, 0, 50, 300)])], "DP-1", 0, size), []);
+    // A bottom edge measures across from the screen's bottom
+    const low = placed([bar("bottom", "pills"), bar("bottom", "floating")], withBorder);
+    compare(BarEnds.coveredSpans(low[1], low, [claim(low[0].id, [Qt.rect(400, 500 - 200, 100, 200)], {
+        "edge": "bottom"
+      })], "DP-1", 0, size), [
+      {
+        "start": 400,
+        "end": 500
+      }
+    ]);
+  }
+
   function test_stacked_solid_bars() {
     // The border's strip lies over the inner solid bar alone: the outer
     // one reserves its whole extent, and has no stroke at its inner edge

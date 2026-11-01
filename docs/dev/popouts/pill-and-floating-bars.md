@@ -71,6 +71,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 ### Transparent bars (detached popouts)
 - **On a transparent bar, popouts are `detached`:** plain rounded boxes on the bar's own edge.
   - They never join an end; they're clamped clear of it.
+  - Across, they sit in line with the windows (`BarsConfig.detachedPush`). With bars inside the transparent bar (a floating bar, floating pills, another transparent bar) that is past them all, so the box never covers a bar; it just slides further.
 - **Their window:**
   - Whether it slides under is `EdgePlacement.slidesUnder` (`SurfaceContext.layout`), for bar and edge popouts alike.
   - It is on the bar's layer: the bar popout's window, `BarPopouts.underBar`.

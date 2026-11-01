@@ -47,10 +47,22 @@ QtObject {
   }
 
   // What a screen edge's bars and the border leave on it (BarEnds.edgeOf:
-  // reserved, frame, corner, solidZone, insideTaken, inner), integrated
+  // reserved, frame, corner, solidZone, insideTaken, inner, facing), integrated
   // menus not counted
   function edgeOn(screen, location) {
     return BarEnds.edgeOf(root.stackOn(screen, location), root._endsOptions);
+  }
+
+  // Where the open popouts of the bars outside a bar (a `bars` entry)
+  // lie over it, as spans along its edge in screen px: what gives way on
+  // it while they're open (BarEnds.coveredSpans)
+  function coveredOn(screen, bar) {
+    if (!screen)
+      return [];
+    return BarEnds.coveredSpans(bar, root.stackOn(screen, bar.location), PopoutManager.entries, screen.name, root.zoneOn(screen.name, ScreenEdge.name(bar.location)), {
+      "width": screen.width,
+      "height": screen.height
+    });
   }
 
   // Where a bar's window (a `bars` entry) starts along its edge at its

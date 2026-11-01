@@ -227,7 +227,9 @@ QtObject {
    *   stackIndex (0 outermost), innermost (the last on the edge),
    *   facesWindows (no bar inside it reserves space, so windows start
    *     right past it), trim (reserveTrim while it faces the windows; a
-   *     bar with one reserving inside it reserves its whole extent),
+   *     transparent bar with a floating bar next inside it, that bar's
+   *     float gap; any other bar with one reserving inside it reserves
+   *     its whole extent),
    *   offBorder (the border's stroke isn't on it: a bar inside the border
    *     with another inside the border outside it, or a solid bar with
    *     the border on that the border's strip doesn't lie over, one with
@@ -254,8 +256,14 @@ QtObject {
         line += opts.margin;
         borderLaid = true;
       }
-      const facesWindows = !stack.slice(index + 1).some(other => other.reserveSpace);
-      const trim = facesWindows ? bar.trim : 0;
+      const next = stack.slice(index + 1).find(other => other.reserveSpace) ?? null;
+      const facesWindows = next === null;
+      // A transparent bar has no inner edge to see: what lies inside it
+      // keeps its own gap from where it would be, so it reserves that gap
+      // less (windows' gaps_out, its reserveTrim; a floating bar's float
+      // gap), the widgets' gap to it then matching their gap outwards
+      const openInside = bar.background === "transparent" && bar.accentLine !== "inner";
+      const trim = facesWindows ? bar.trim : openInside && next.island ? next.floatGap : 0;
       const onStrip = bar === strip;
       let zone = 0;
       if (bar.reserveSpace)
@@ -285,6 +293,72 @@ QtObject {
   }
 
   /**
+   * The bar a bar's own popouts grow out of, in its edge's placed stack
+   * (placeStack, outer first): past every connected bar lying inside it,
+   * the innermost of the run. A solid or pill bar connects to the
+   * reserving solid or pill bar next inside it (the border's strip lies
+   * between them, or the pills hang off the solid bar's stroke), so its
+   * popout grows out of that bar as an edge popout would: from its pill,
+   * stretched to carry it, or between them from the border. The run stops
+   * at a transparent or floating bar (nothing joins them: covered), at
+   * one reserving nothing and at a pill bar off the border (its pills
+   * stroke no outer side). Any other bar is its own.
+   */
+  function connectedFrom(placed, bar) {
+    const index = placed.findIndex(other => other.id === bar.id);
+    if (index < 0)
+      return bar;
+    const connects = other => other.reserveSpace && (other.solid || (other.background === "pills" && !other.offBorder));
+    if (!connects(placed[index]))
+      return placed[index];
+    let last = index;
+    while (last + 1 < placed.length && connects(placed[last + 1]))
+      last++;
+    return placed[last];
+  }
+
+  /**
+   * Where the popouts of the bars outside a bar on its edge lie over it,
+   * as spans along the edge in screen px ({ start, end }): what gives way
+   * on it while they're open (its islands and sections fade, as a popout's
+   * fill, drawn in the blur window under every bar, can't cover them).
+   * `bar` and `stack` are placed (placeStack), `claims` PopoutManager's
+   * entries (footprints in screen px), `zone` what integrated menus
+   * reserve before the stack, `size` the screen's { width, height }. Only
+   * bar popouts on its screen from a bar outside it that doesn't grow out
+   * of it or a bar inside it (connectedFrom: their pills stretch to carry
+   * them) count, and only where a footprint crosses its band across.
+   */
+  function coveredSpans(bar, stack, claims, screenName, zone, size) {
+    const edge = root._edgeName(bar);
+    const index = id => stack.findIndex(other => other.id === id);
+    const own = index(bar.id);
+    if (own < 0)
+      return [];
+    const covering = claims.filter(c => {
+      if (c.kind !== "bar" || c.screen !== screenName || c.edge !== edge)
+        return false;
+      const from = index(c.barId);
+      return from >= 0 && from < own && index(stack[from].attachId ?? stack[from].id) < own;
+    });
+    const near = zone + bar.outer, far = zone + bar.frame;
+    const spans = [];
+    covering.forEach(c => (c.footprint ?? []).forEach(r => {
+        const across = edge === "top" ? [r.y, r.y + r.height] : edge === "bottom" ? [size.height - r.y - r.height, size.height - r.y] : edge === "left" ? [r.x, r.x + r.width] : [size.width - r.x - r.width, size.width - r.x];
+        if (across[1] <= near || across[0] >= far)
+          return;
+        spans.push(bar.vertical ? {
+          "start": r.y,
+          "end": r.y + r.height
+        } : {
+          "start": r.x,
+          "end": r.x + r.width
+        });
+      }));
+    return spans;
+  }
+
+  /**
    * What an edge's placed stack (placeStack) leaves on it, from its screen
    * edge, integrated menus not counted: reserved (where windows start,
    * before gaps_out: the border's margin and every bar's taken space),
@@ -295,11 +369,13 @@ QtObject {
    * (what the reserving solid bars reserve, before the border's strip),
    * insideTaken (what the bars inside the border take, which the
    * border's corner pieces are pulled back out past), inner (the
-   * innermost bar, or null)
+   * innermost bar, or null), facing (the innermost reserving bar, which
+   * `reserved` ends at, else inner)
    */
   function edgeOf(placed, opts) {
     const margin = opts.border ? opts.margin : 0;
     const inner = placed.length > 0 ? placed[placed.length - 1] : null;
+    const reserving = placed.filter(bar => bar.reserveSpace);
     const sum = (bars, key) => bars.reduce((total, bar) => total + bar[key], 0);
     const solids = placed.filter(bar => bar.solid && bar.reserveSpace);
     const solidZone = sum(solids, "zone");
@@ -310,7 +386,8 @@ QtObject {
       "strip": opts.border && solids.length > 0,
       "solidZone": solidZone,
       "insideTaken": sum(placed.filter(bar => bar.insideBorder), "taken"),
-      "inner": inner
+      "inner": inner,
+      "facing": reserving.length > 0 ? reserving[reserving.length - 1] : inner
     };
   }
 
@@ -335,8 +412,9 @@ QtObject {
   }
 
   // The bars, each placed in its edge's stack (placeStack; a disabled bar
-  // as if alone there), with its LayerSlot rank (`layerRank`, layerRanks)
-  // and its `ends` (endsOf) among the bars on its screen
+  // as if alone there), with its LayerSlot rank (`layerRank`, layerRanks),
+  // its `ends` (endsOf) among the bars on its screen and the id of the bar
+  // its popouts grow out of (`attachId`, connectedFrom)
   function withEnds(bars, opts) {
     const ranks = root.layerRanks(bars);
     const placedByBar = new Map();
@@ -356,7 +434,8 @@ QtObject {
       return stacksByMonitor.get(monitor);
     };
     return placed.map(bar => Object.assign(bar, {
-        "ends": root.endsOf(bar, stacksOf(bar.monitor), opts)
+        "ends": root.endsOf(bar, stacksOf(bar.monitor), opts),
+        "attachId": root.connectedFrom(stacksOf(bar.monitor)[root._edgeName(bar)], bar).id
       }));
   }
 }
