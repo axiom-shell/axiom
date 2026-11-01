@@ -2700,7 +2700,6 @@
     "The one todo list every todo widget and module shows. The items themselves are kept in your data folder, not in the config.": "",
     "Timer": "",
     "Stopwatch": "",
-    "10m, 1h30m, 90s, 10m tea…": "",
     "Resume": "",
     "One more minute": "",
     "Lap": "",
@@ -3134,7 +3133,6 @@
     "15 more minutes": "",
     "Caffeine for a set time, from the presets, when hovered.": "",
     "Caffeine for a set time from the popout, comma-separated: 30m, 1h30m, 4h.": "",
-    "30m, 1h30m, 90s…": "",
     "Shared with every bar.": "",
     "Skipped: your own config binds {0} too": "",
     "The login screen is installed.": "",
@@ -3518,6 +3516,14 @@
     "30 more minutes": "",
     "+1 min": "",
     "Warn before caffeine ends": "",
-    "A notification 5 minutes before a caffeine timer runs out, with a button for 30 minutes more.": ""
+    "A notification 5 minutes before a caffeine timer runs out, with a button for 30 minutes more.": "",
+    "Ends {0}": "",
+    "10m, 1h30m, at 17:30, 10m tea…": "",
+    "{0} (right-click for more)": "",
+    "{0} · ends {1}": "",
+    "Not a duration": "",
+    "Laps": "",
+    "Copy laps": "",
+    "30m, 1h30m, until 17:00…": ""
   }
 }

@@ -57,6 +57,7 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
   - A card's fill is drawn by the blur window: a `BlurShape` rect following its slide, clipped to the window (`notifications` is among `LayerStack.blurBacked`).
   - The attached box blurs as an EdgePopout does.
 - **Test notification:** the settings card's intro (`views/Settings/NotificationsPreview`, its `x-intro`) has a Show button that sends one through `sendNotification`, so it toasts with the settings as edited (readers read the previews), as the OSD and dock cards' Show does.
+- **The shell's own, with buttons:** `sendNotification`'s `opts.actions` (`[{ id, label }]`) become `notify-send -A id=label`, run through `CommandManager.run` (it waits until the notification closes; `exec.run` has no timeout), and `opts.onAction(id)` gets the one clicked from its output. A QML reload while it's up loses the callback, so its buttons then do nothing. The timer's end and caffeine's warning use it (`DeadlineTicker.notify`).
 
 ### Images
 - Cached as PNGs in `$XDG_STATE_HOME/axiom/notifications/`.

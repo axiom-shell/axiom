@@ -10,9 +10,9 @@ import qs.components.content.parts
 
 // Caffeine (IdleManager): the IdleInhibitor widget's popout, or an overlay
 // card. A switch for on until turned off; off, a CountdownTimer (as the
-// one-off timer's) to keep awake for a set time: a typed duration or one
-// of the `presets`, then the time left, pause, more time and reset (which
-// turns it off). On with no timer it says so, with turn off and set a
+// one-off timer's) to keep awake for a set time: a typed duration or time
+// of day, one of the `presets` or a recent one, then the time left and
+// when it ends, pause, more time and reset (which turns it off). On with no timer it says so, with turn off and set a
 // timer. Compact, the time left or on/off.
 // properties (card): { presets }
 Panel {
@@ -133,14 +133,18 @@ Panel {
     visible: !root.untilOff
     timer: IdleManager.caffeineTimer
     presets: root.shownPresets
+    recent: IdleManager.caffeineRecent
     text: IdleManager.caffeineText
+    remaining: IdleManager.caffeineRemaining
     progress: IdleManager.caffeineProgress
-    label: I18n.tr("Awake")
+    endLabelOf: time => I18n.tr("Until {0}", time)
     fill: root.embedded
     idleIcon: IdleManager.caffeine ? "coffee" : "bedtime"
-    placeholderText: I18n.tr("30m, 1h30m, 90s…")
+    placeholderText: I18n.tr("30m, 1h30m, until 17:00…")
     moreTime: 15 * 60000
     moreTimeText: I18n.tr("15 more minutes")
+    moreChoices: [30 * 60000, 60 * 60000, 2 * 60 * 60000]
+    wheelStep: 5 * 60000
     resetText: I18n.tr("Turn off")
     onStarted: text => IdleManager.startCaffeineText(text)
     onToggled: IdleManager.toggleCaffeineTimer()
