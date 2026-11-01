@@ -51,7 +51,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 3 | core-ui-theming-01 | deletion | Done: Dead members and pure shrinks in core services, ui-kit, theming and Wayland | 7 | ~-100 net | config-01 |  |
 | 4 | compositor-01 | deletion | Done: Go compositor backend: dead and doubled helpers | 17 | ~550 (~370 out) | none | Q6 |
 | 5 | compositor-02 | deletion | Done: QML compositor services, keybind helpers, workspace strips | 12 | ~450 | none |  |
-| 6 | compositor-03 | deletion | The blur system | 5 | ~200 | none |  |
+| 6 | compositor-03 | deletion | Done: The blur system | 5 | ~200 | none |  |
 | 7 | bar-popouts-01 | deletion | Dead members, signals and wrappers across popouts, the bar, bar widgets and edge menus | 12 | ~150 | none |  |
 | 8 | overlay-modules-01 | deletion | Overlay and modules: dead members and small shrinks | 6 | ~200 touched (~-150 net) | compositor-02 |  |
 | 9 | features-01 | deletion | Dead and forwarding members across the feature systems | 14 | ~250 | none |  |
@@ -186,12 +186,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The workspace strips repeat ActiveStrip's loader
   - The workspace strips' panel property is never read
   - Three copies of the wheel-notch accumulator
-- **compositor-03** (5):
+- **compositor-03** (5, done):
   - SlideAnimation's fade, easing and container aliases are dead
   - The blur window builds stand-ins and copies it never uses
   - BlurBacking spells out four near-identical blur windows
   - The border frame's path is built three times
-  - [Small shrinks in the blur system](../issues.md#small-shrinks-in-the-blur-system)
+  - Small shrinks in the blur system
 - **bar-popouts-01** (12): The layoutUpdated entry is filed Major; its fix is a pure deletion.
   - [PopoutWrapperBase's aboutToDismiss signal has no listener](../issues.md#popoutwrapperbases-abouttodismiss-signal-has-no-listener)
   - [Three EdgePopout members nothing reads](../issues.md#three-edgepopout-members-nothing-reads)

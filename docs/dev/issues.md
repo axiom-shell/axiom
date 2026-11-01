@@ -960,12 +960,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the blur system
 
-### Small shrinks in the blur system
-- **Where:** `components/methods/SurfaceContext.qml:140` (`shadow`), `services/ui/BlurManager.qml:33` (`_wanted`), `components/views/Settings/TranslucencyStatus.qml:36`, `backend/internal/compositor/render/layer.go:202` (`SurfaceBlur`), `backend/internal/compositor/render/niri.go:506` (`NiriSurfaceBlurNodes`)
-- **What:** Deletion pass, about 17 lines. (1) `SurfaceContext.shadow`'s submenu branch has no caller: `if (s.parent) return s.parent;` is never reached, because its one caller, `layout` (line 363), never passes `parent`; submenus take their parent's look in `SubPopout`, and `SurfaceContext.shadow(` appears otherwise only in tests. `layout`'s `"onBar": !p.held && …` also repeats what `shadow` checks first, since a held surface is always `detached`. Drop the branch, its 2 comment mentions, `test_submenuTakesItsParentsShadow` (11 lines) and `!p.held && `, 14 lines in all. (2) `supports.blur` is tested again after `Appearance.blur`: `Appearance.blur` needs `translucent`, which needs `compositorBlurs`, and `CompositorManager` binds that to `supports.blur === true && !Paths.greeter`, so `&& CompositorManager.supports.blur === true` in `BlurManager._wanted` and in `TranslucencyStatus` (line 36) adds nothing. (3) Two Go expressions do nothing: `or(get(surfaces, "threshold"), nil)` (`layer.go:202`) returns its first argument, since `or` returns `b` only for a nil `a`; `|| rule.Value("xray") == nil` (`niri.go:506`) can't be true, because every `SurfaceBlur` row with `blur` or `popups` sets `xray`. Fix: remove each one; output unchanged.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the blur system
-
 ### Edge and floating popouts never close when their focus grab clears
 - **Where:** `components/hosts/popout/EdgePopout.qml:460` (`focusGrab`), `components/hosts/popout/FloatingPopout.qml:162` (`focusGrab`), `services/compositor/FocusGrab.qml:57` (`_outside`)
 - **What:** Both hosts handle the grab ending with `onCleared: { if (!active) root.hide(); }`. Inside `FocusGrab { … }`, `active` is the wrapper's own property, bound to `surfaceWindow.visible && root.grabEnabled && (…)` (EdgePopout.qml:452) or `root.isOpen && …` (FloatingPopout.qml:154), and the wrapper emits `cleared` only while that property is true:

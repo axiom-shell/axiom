@@ -515,7 +515,7 @@ func NiriLookNodes(look any) *jsonx.Array {
 func (t *Tables) NiriSurfaceBlurNodes(surfaces any) *jsonx.Array {
 	out := jsonx.Arr()
 	for _, rule := range t.SurfaceBlur(surfaces) {
-		if !isTrue(rule.Value("on")) || !(isTrue(rule.Value("blur")) || isTrue(rule.Value("popups"))) || rule.Value("xray") == nil {
+		if !isTrue(rule.Value("on")) || !(isTrue(rule.Value("blur")) || isTrue(rule.Value("popups"))) {
 			continue
 		}
 		out.Append(block("layer-rule",

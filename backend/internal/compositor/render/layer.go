@@ -194,7 +194,7 @@ func jsCat(v any) string {
 func (t *Tables) SurfaceBlur(surfaces any) []*jsonx.Object {
 	on := isTrue(get(surfaces, "blur"))
 	xray := !isTrue(get(surfaces, "throughWindows"))
-	threshold := or(get(surfaces, "threshold"), nil)
+	threshold := get(surfaces, "threshold")
 	row := func(name string, namespaces []string, rowOn bool, fields ...any) *jsonx.Object {
 		r := jsonx.Obj("name", name, "namespaces", strs(namespaces), "on", rowOn, "blur", false, "popups", false,
 			"threshold", nil, "xray", nil, "noAnim", false)
