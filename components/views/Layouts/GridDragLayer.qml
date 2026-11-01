@@ -84,7 +84,9 @@ DragLayer {
   }
 
   function _updatePlace() {
-    const place = root.carryingModule && root.hoverTarget?.targetKind === "grid" ? root.hoverTarget.placeAt(root.pointer, root.dragging, root.grab) : null;
+    // dragging, not only carryingModule: onDraggingChanged can run before
+    // that binding catches up with a drag that just ended
+    const place = root.dragging !== null && root.carryingModule && root.hoverTarget?.targetKind === "grid" ? root.hoverTarget.placeAt(root.pointer, root.dragging, root.grab) : null;
     if (!GridPlacement.samePlace(place, root.hoverPlace))
       root.hoverPlace = place;
   }
