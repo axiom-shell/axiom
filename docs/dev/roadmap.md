@@ -582,6 +582,9 @@ Found by the audits:
 - [install.sh and the AUR packages never install notify-send, gio or pactl](issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl)
 - [A main-channel update applied after edge moved on needs go to rebuild the binary](issues.md#a-main-channel-update-applied-after-edge-moved-on-needs-go-to-rebuild-the-binary)
 - [The onboarder's Checks-page purposes don't match their declared keys](issues.md#the-onboarders-checks-page-purposes-dont-match-their-declared-keys)
+- [The shell's unused daemon-call paths](issues.md#the-shells-unused-daemon-call-paths)
+- [Three Go helpers nothing but a test calls](issues.md#three-go-helpers-nothing-but-a-test-calls)
+- [daemon.shutdown starts its goroutine past tasks.Go](issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
