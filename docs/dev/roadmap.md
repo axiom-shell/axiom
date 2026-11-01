@@ -412,7 +412,6 @@ Found by the audits:
 - [Sway and niri each forward withMainBinds to the daemon](issues.md#sway-and-niri-each-forward-withmainbinds-to-the-daemon)
 - [Small shrinks in the sway writer and IPC](issues.md#small-shrinks-in-the-sway-writer-and-ipc)
 - [The sway extract's input-device case and isSwayFlag repeat the general rule](issues.md#the-sway-extracts-input-device-case-and-isswayflag-repeat-the-general-rule)
-- [binds and takeover each keep their own isFile and git check](issues.md#binds-and-takeover-each-keep-their-own-isfile-and-git-check)
 - [niri's overview drop moves a window's whole column and switches workspace](issues.md#niris-overview-drop-moves-a-windows-whole-column-and-switches-workspace)
 - [sway's named workspaces all share workspace id -1](issues.md#sways-named-workspaces-all-share-workspace-id--1)
 - [sway lists disabled outputs as outputs](issues.md#sway-lists-disabled-outputs-as-outputs)

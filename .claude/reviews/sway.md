@@ -16,7 +16,7 @@ Sound in its core: state, events, SwayFX gating, quoting and the runtime layer's
 - Cleanup: "SwayConfigBinds keeps its own copy of sway's $variables" (fixed, row 20 compositor-01)
 - Cleanup: [Small shrinks in the sway writer and IPC](../../docs/dev/issues.md#small-shrinks-in-the-sway-writer-and-ipc)
 - Cleanup: [The sway extract's input-device case and isSwayFlag repeat the general rule](../../docs/dev/issues.md#the-sway-extracts-input-device-case-and-isswayflag-repeat-the-general-rule)
-- Cleanup: [binds and takeover each keep their own isFile and git check](../../docs/dev/issues.md#binds-and-takeover-each-keep-their-own-isfile-and-git-check)
+- Cleanup: "binds and takeover each keep their own isFile and git check" (fixed, row 20 compositor-01)
 
 Minor (not recorded):
 - sway-backend.md describes the shell-era writer and misses its biggest files: the `Files:` header (line 3) lacks `backend/internal/compositor/render/sway.go` and `backend/internal/compositor/ipc/sway.go`; line 71 (unbinds are the daemon's `SwayUnbind`, not a `PersistentProperties`), line 69 (`userconf.SwayText`, not the CLI), line 28 (only `window`/`workspace`/`output` re-read the tree), line 92 (Key capture is `SwayManager.captureKeys`).

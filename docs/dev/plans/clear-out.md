@@ -169,7 +169,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - sway and niri each fit the shadow to axiom's themselves
   - SwayConfigBinds keeps its own copy of sway's $variables
   - [Small shrinks in the sway writer and IPC](../issues.md#small-shrinks-in-the-sway-writer-and-ipc)
-  - [binds and takeover each keep their own isFile and git check](../issues.md#binds-and-takeover-each-keep-their-own-isfile-and-git-check)
+  - binds and takeover each keep their own isFile and git check
   - The bind merge lists user/ files three times, once per compositor
   - sway's and niri's merges build a moved bind the same way twice
   - The merge keeps key and variable tables render already has

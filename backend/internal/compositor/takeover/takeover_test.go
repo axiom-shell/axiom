@@ -512,16 +512,18 @@ func TestHyprlandReleaseGivesTheAdoptedConfigBack(t *testing.T) {
 	eq(t, f.run("release"), "notours")
 }
 
-// A claim from before records: the newest of what's there
-func TestHyprlandReleaseWithoutARecordTakesTheNewest(t *testing.T) {
+// A claim from before records gives back nothing: the released file is
+// written, the old copies stay
+func TestHyprlandReleaseWithoutARecordWritesTheReleasedFile(t *testing.T) {
 	t.Parallel()
 	f := newFx(t, "hyprland")
 	f.write("user/00-previous.lua", "-- first\n")
-	f.write("user/00-previous-20260101-000000.lua", "-- second\n")
-	f.write("user/00-previous-20260202-000000.lua", "-- third\n")
+	f.write("user/00-previous-20260202-000000.lua", "-- second\n")
+	f.write("hyprland.lua.axiom-backup-20260202-000000", "-- third\n")
 	f.ours()
-	eq(t, f.run("release"), "restored:user/00-previous-20260202-000000.lua:2")
-	eq(t, f.read("hyprland.lua"), "-- third\n")
+	eq(t, f.run("release"), "written")
+	eq(t, exists(f.path("user/00-previous-20260202-000000.lua")), true)
+	eq(t, exists(f.path("hyprland.lua.axiom-backup-20260202-000000")), true)
 }
 
 func TestHyprlandClaimOnlyBacksUpWhatReleaseWrote(t *testing.T) {
@@ -546,6 +548,7 @@ func TestHyprlandRestoringAFileThatLoadsUserReportsNoneLeft(t *testing.T) {
 	f := newFx(t, "hyprland")
 	f.write("user/00-previous.lua", "pcall(require, \"user.\" .. name)\n")
 	f.write("user/10-mine.lua", "-- mine\n")
+	f.write(recordName, "previous=00-previous.lua\nbackup=\n")
 	f.ours()
 	eq(t, f.run("release"), "restored:user/00-previous.lua:0")
 }
@@ -647,6 +650,10 @@ func TestNiriLeftCountsFilesNotIncluded(t *testing.T) {
 	f.write("user/00-previous.kdl", "include \"/c/niri/user/10-a.kdl\"\n")
 	f.write("user/10-a.kdl", "")
 	f.write("user/20-b.kdl", "")
+	// Not files niri includes: hidden, or not .kdl
+	f.write("user/.20-b.kdl.swp.kdl", "")
+	f.write("user/notes.txt", "")
+	f.write(recordName, "previous=00-previous.kdl\nbackup=\n")
 	f.ours()
 	eq(t, f.run("release"), "restored:user/00-previous.kdl:1")
 }
