@@ -61,6 +61,7 @@ Scope {
               osd: entry.osd
               screenName: edgeHost.screen?.name ?? ""
               edgeVertical: edgeHost.vertical
+              hostOpen: edgeHost.isOpen
               onPoked: force => edgeTriggers.poke(force)
             }
           }

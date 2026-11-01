@@ -428,8 +428,9 @@ Loader {
     }
   }
 
-  // An array of strings from `items.enum`: one toggle chip per option,
-  // committed in the enum's order
+  // An array of strings from `items.enum`: one toggle chip per option (with
+  // its `x-enumIcons` icon), committed in the enum's order. `x-enumFrom`
+  // offers only the options a sibling array holds
   Component {
     id: chipsField
     ColumnLayout {
@@ -443,11 +444,19 @@ Loader {
         Layout.fillWidth: true
         spacing: Widget.spacing / 2
         Repeater {
-          model: root.fieldSchema.items.enum
+          model: {
+            const all = root.fieldSchema.items.enum;
+            const from = root.fieldSchema["x-enumFrom"];
+            if (!from)
+              return all;
+            const held = root._valueOf(from) ?? [];
+            return all.filter(v => held.includes(v));
+          }
           SegmentButton {
             id: chip
             required property string modelData
             readonly property bool selected: (root.current ?? []).includes(chip.modelData)
+            iconText: root.fieldSchema["x-enumIcons"]?.[chip.modelData] ?? ""
             text: root.optionLabels[chip.modelData] ?? I18n.tr(chip.modelData)
             active: chip.selected
             onClicked: {

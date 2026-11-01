@@ -5,7 +5,8 @@ import qs.services.ui
 
 // The OSD section's first card (its `x-card`): the OSDs as tabs, one shown
 // at a time: where it sits (a screen picker with presets), a Show button,
-// and its settings and items (EntryListCard).
+// then its status icons and now playing card, each folding, its other
+// settings, and its bars at the bottom (EntryListCard).
 EntryListCard {
   id: root
 
@@ -19,14 +20,22 @@ EntryListCard {
   seed: ({
       "edge": "right",
       "detached": true,
-      "items": [
-        {
-          "type": "brightness",
-          "icon": "",
-          "showOsd": true
-        }
-      ]
+      "bars": {
+        "items": [
+          {
+            "type": "brightness",
+            "icon": "",
+            "showOsd": true
+          }
+        ]
+      },
+      "statuses": {
+        "items": []
+      }
     })
+  sections: ["statuses", "media", "bars"]
+  lastSections: ["bars"]
+  otherTitle: I18n.tr("Place and timing")
   labelOf: osd => OSDConfig.labelOf(osd)
   onShow: id => ShellManager.showOsd(id)
 }

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 import qs.services.system
 import qs.components.reusable
 
@@ -54,7 +55,18 @@ Item {
     volumeLevel: root.volume
     isMuted: root.isMuted
     enabled: root.nodeFound || root.useSystemVolume
+    iconClickable: true
+    // I18n.tr("Mute") I18n.tr("Unmute")
+    iconTip: root.isMuted ? I18n.tr("Unmute") : I18n.tr("Mute")
     onVolumeChanged: newVolume => root.setVolume(newVolume)
+    onIconClicked: root.toggleMute()
+  }
+
+  function toggleMute() {
+    if (useSystemVolume)
+      AudioManager.toggleMute();
+    else
+      AudioManager.setNodesMuted(_targetNodes, !root.isMuted);
   }
 
   function _systemChanged() {

@@ -19,6 +19,8 @@ x-defaultSize: the size it's added at.
 x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
 x-emptyLabel: offers or renames the empty value under that label.
 x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
+x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).
+x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip.'
 x-enumLabels: '`{ value: label }`: labels shown instead of raw enum values in dropdowns.'
 x-enumShowIf: '`{ value: condition }`: hides enum options whose condition doesn''t hold.'
 x-greeter: the greeter's compositor takes it (`methods/GreeterBundle`).

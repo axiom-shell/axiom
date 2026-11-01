@@ -5,7 +5,8 @@ import qs.config
 import qs.services.system
 import qs.components.reusable
 
-// One OSD level bar, by its item's type (see OSD.items in the schema):
+// One OSD level bar, by its item's type (see an OSD's bars.items in the
+// schema):
 //   master:     the default output's volume
 //   other:      the first playing stream no App bar matches
 //   app:        the streams its apps match by name
@@ -15,7 +16,7 @@ import qs.components.reusable
 Loader {
   id: root
 
-  // Its item in the OSD's items, or OSDContent.noBar for none
+  // Its item in the OSD's bars.items, or OSDContent.noBar for none
   required property var entry
   required property string screenName
   // The OSD's own settings: bars run vertically, levels shown as numbers
@@ -50,7 +51,7 @@ Loader {
       otherApps: root.type === "other"
       excludedApps: root.type === "other" ? OSDConfig.excludedApps : []
       useSystemVolume: isMaster
-      iconSource: root.entry.icon || (isMaster ? AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), AudioManager.muted, AudioManager.volume) : "")
+      iconSource: root.entry.icon || (isMaster ? AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), false, Math.max(AudioManager.volume, 0.01)) : "")
 
       onPoked: root.poked()
     }
@@ -77,8 +78,11 @@ Loader {
       volumeLevel: AudioManager.sourceVolume
       isMuted: AudioManager.sourceMuted
       enabled: AudioManager.defaultSource !== null
-      iconSource: root.entry.icon || AudioManager.inputIcon(AudioManager.deviceKind(AudioManager.defaultSource), AudioManager.sourceMuted)
+      iconSource: root.entry.icon || AudioManager.inputIcon(AudioManager.deviceKind(AudioManager.defaultSource), false)
+      iconClickable: true
+      iconTip: AudioManager.sourceMuted ? I18n.tr("Unmute") : I18n.tr("Mute")
       onVolumeChanged: newVolume => AudioManager.setSourceVolume(newVolume)
+      onIconClicked: AudioManager.toggleSourceMute()
       Component.onCompleted: _source = AudioManager.defaultSource
 
       Connections {

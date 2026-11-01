@@ -6,13 +6,16 @@ import qs.services.core
 // the keyboard layout, toggles and the track). Named OSDConfig because
 // `OSD` is the module type.
 QtObject {
+  id: root
+
   readonly property var _c: ConfigManager.live.OSD
 
   // Level change per wheel notch (0-1); 0 when scrolling is off
   readonly property real scrollStep: _c.scrollToChange ? _c.scrollStep / 100 : 0
   // [OSDEntry] (see the schema): each with its id, screen (a ScreenTarget),
-  // place and items, { type, icon, showOsd, … }, their types' shapes
-  // (level, status, media) OSDItems'. Goes through a string so a reload
+  // place, `bars` (their layout and items, { type, icon, showOsd, … }),
+  // `statuses` ({ row, items, quiet }: the status types shown as icons)
+  // and `media` (the now playing card). Goes through a string so a reload
   // that leaves the list unchanged doesn't rebuild the OSDs.
   readonly property string _osdsJson: JSON.stringify(_c.items)
   readonly property var osds: JSON.parse(_osdsJson)
@@ -20,7 +23,7 @@ QtObject {
   readonly property var shownIds: osds.filter(osd => osd.enabled).map(osd => osd.id)
   // The streams the App bars of every OSD match, which the Other apps bars
   // skip
-  readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.items.filter(item => item.type === "app").map(item => item.apps))))
+  readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.bars.items.filter(item => item.type === "app").map(item => item.apps))))
 
   function osdById(id) {
     return osds.find(osd => osd.id === id) ?? null;
@@ -31,26 +34,25 @@ QtObject {
   // first enabled one; "" with none
   function messageOsd(id) {
     const shown = osds.filter(osd => osd.enabled);
-    const pick = shown.find(osd => osd.id === id) ?? shown.find(osd => osd.items.some(item => item.type === "message")) ?? shown[0];
+    const pick = shown.find(osd => osd.id === id) ?? shown.find(osd => osd.statuses.items.includes("message")) ?? shown[0];
     return pick ? pick.id : "";
   }
 
-  // The name on its tab: its own, else its levels' (its other items' when
-  // it has none, so the default isn't named by all six)
-  function labelOf(osd) {
-    if (osd.name)
-      return osd.name;
+  // A bar's or status type's name, translated
+  function nameOf(type) {
     // I18n.tr("System volume") I18n.tr("Other apps") I18n.tr("Microphone") I18n.tr("Brightness")
-    // I18n.tr("Lock keys") I18n.tr("Keyboard layout") I18n.tr("Microphone muted") I18n.tr("Output device")
-    // I18n.tr("Power profile") I18n.tr("Caffeine") I18n.tr("Do not disturb") I18n.tr("Night light")
-    // I18n.tr("Wi-Fi") I18n.tr("Bluetooth") I18n.tr("Airplane mode") I18n.tr("Charger")
-    // I18n.tr("Messages") I18n.tr("Now playing")
+    // I18n.tr("Caps Lock") I18n.tr("Num Lock") I18n.tr("Scroll Lock") I18n.tr("Keyboard layout")
+    // I18n.tr("Microphone muted") I18n.tr("Output device") I18n.tr("Power profile") I18n.tr("Caffeine")
+    // I18n.tr("Do not disturb") I18n.tr("Night light") I18n.tr("Wi-Fi") I18n.tr("Bluetooth")
+    // I18n.tr("Airplane mode") I18n.tr("Charger") I18n.tr("Messages")
     const names = {
       "master": "System volume",
       "other": "Other apps",
       "microphone": "Microphone",
       "brightness": "Brightness",
-      "lockKeys": "Lock keys",
+      "capsLock": "Caps Lock",
+      "numLock": "Num Lock",
+      "scrollLock": "Scroll Lock",
       "keyboardLayout": "Keyboard layout",
       "micMute": "Microphone muted",
       "outputDevice": "Output device",
@@ -62,11 +64,20 @@ QtObject {
       "bluetooth": "Bluetooth",
       "airplane": "Airplane mode",
       "charger": "Charger",
-      "message": "Messages",
-      "media": "Now playing"
+      "message": "Messages"
     };
-    const levels = osd.items.filter(item => ["master", "other", "app", "microphone", "brightness"].includes(item.type));
-    const parts = (levels.length > 0 ? levels : osd.items).filter(item => names[item.type] || item.type === "app").map(item => item.type === "app" ? (item.apps.join(" / ") || I18n.tr("An app")) : I18n.tr(names[item.type]));
-    return parts.length > 0 ? parts.join(", ") : I18n.tr("Empty OSD");
+    return names[type] ? I18n.tr(names[type]) : "";
+  }
+
+  // The name on its tab: its own, else its bars', else its status icons'
+  // (so the default isn't named by all of them), else Now playing
+  function labelOf(osd) {
+    if (osd.name)
+      return osd.name;
+    const bars = osd.bars.items.filter(item => root.nameOf(item.type) !== "" || item.type === "app").map(item => item.type === "app" ? (item.apps.join(" / ") || I18n.tr("An app")) : root.nameOf(item.type));
+    const parts = bars.length > 0 ? bars : osd.statuses.items.map(type => root.nameOf(type)).filter(name => name !== "");
+    if (parts.length > 0)
+      return parts.join(", ");
+    return osd.media.enabled ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
   }
 }

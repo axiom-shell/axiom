@@ -120,6 +120,8 @@ var all = []Step{
 	}},
 	// v86: an OSD's bars became its items (v86.go)
 	{Version: 86, Run: v86},
+	// v87: an OSD's items split into bars, statuses and media (v87.go)
+	{Version: 87, Run: v87},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

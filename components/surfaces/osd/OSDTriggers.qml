@@ -31,7 +31,7 @@ QtObject {
   on_OpenChanged: {
     if (!root._open)
       return;
-    const bars = root.osd.items.filter(item => item.type === "brightness");
+    const bars = root.osd.bars.items.filter(item => item.type === "brightness");
     const names = bars.some(bar => bar.allMonitors) ? BrightnessManager.names : bars.length > 0 ? [root.host.screen.name] : [];
     names.forEach(name => BrightnessManager.refresh(name));
   }

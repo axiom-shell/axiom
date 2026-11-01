@@ -23,8 +23,10 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
   - entries as tabs
   - a screen picker with presets: by default an edge's middle or the bottom edge's ends, with `spotOf` reading `edge`/`position`; a drag on it sets `edge` and `position` (nearest edge)
   - Show/Duplicate/Delete
-  - the entry's form
-  - `entryContent` for extras such as the dock's pinned apps.
+  - `entryContent` for extras such as the dock's pinned apps
+  - `sections`: object settings each drawn as a `FoldingSection` of its own (its schema's title and description; the OSD's status icons, now playing and bars), its fields at their paths in the entry so an `x-showIf` reaches the entry's own keys through `../`; `lastSections` go after the rest
+  - the entry's other settings: its form, folding under `otherTitle` when it has sections.
+  - a line between the big parts (none under the accent line the first sits beneath).
 - Both sit on `FoldingCard`: a fold header (section line, heading, unsaved dot, chevron, `headerExtras`) and a `FoldingColumn` body.
 - Status cards (Hyprland, Idle, self-update, chat providers, onboarding) are `FieldGroup`s with a `StatusChip` in `headerExtras`.
 

@@ -1,46 +1,27 @@
 pragma Singleton
 import QtQuick
 
-// What an OSD item is and what it shows (the OSD's surfaces/osd): each
-// type's shape (a level bar, a one-line status or the media card), which
-// lock key or layout change is the user's, the status line of each type
-// from its state, and which status may replace the one shown.
+// What an OSD's status icons show (the OSD's surfaces/osd): which lock
+// key or layout change is the user's, each status's tile from its state,
+// which tiles the row shows, and which change may take the highlight
+// from the one shown.
 QtObject {
   id: root
 
-  readonly property var _levels: ["master", "other", "app", "microphone", "brightness"]
-  readonly property var _statuses: ["lockKeys", "keyboardLayout", "micMute", "outputDevice", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message"]
+  // The LED each lock key status reads (LockKeysManager's names)
+  readonly property var lockKeys: ({
+      "capsLock": "caps",
+      "numLock": "num",
+      "scrollLock": "scroll"
+    })
 
-  // "level" | "status" | "media" for an item's type, "" for none
-  function shapeOf(type) {
-    if (root._levels.includes(type))
-      return "level";
-    if (root._statuses.includes(type))
-      return "status";
-    return type === "media" ? "media" : "";
-  }
-
-  // The items of one shape, in order, each as { item, index } (its place
-  // in the OSD's items)
-  function ofShape(items, shape) {
-    return items.map((item, index) => ({
-          "item": item,
-          "index": index
-        })).filter(entry => root.shapeOf(entry.item.type) === shape);
-  }
-
-  // The lock key a lockKeys item shows that changed between two states
-  // ({ available, caps, num, scroll }) as { key, on }, the first of caps,
-  // num, scroll; null when none did, or when either state is unavailable
-  // (the first reading, or the LEDs gone: not the user)
-  function lockKeyChange(before, after, item) {
+  // Whether a lock key (`key`: "caps" | "num" | "scroll") changed between
+  // two states ({ available, caps, num, scroll }); never across an
+  // unavailable one (the first reading, or the LEDs gone: not the user)
+  function lockKeyChanged(before, after, key) {
     if (!before || !after || !before.available || !after.available)
-      return null;
-    const key = ["caps", "num", "scroll"].find(k => item[k] === true && before[k] !== after[k]);
-    return key ? {
-      "key": key,
-      "on": after[key] === true
-    } : null;
+      return false;
+    return before[key] !== after[key];
   }
 
   // Whether the layout switched between two keyboard states ({ layouts,
@@ -52,94 +33,154 @@ QtObject {
     return JSON.stringify(before.layouts) === JSON.stringify(after.layouts) && before.index !== after.index;
   }
 
-  // A status type's line from its state: { icon, text } with text English,
-  // for the caller to translate, or { icon, value } with value shown as it
-  // is (a name). States:
-  //   lockKeys { key, on }, keyboardLayout { name }, micMute { muted },
-  //   outputDevice { name }, powerProfile { profile: "powerSaver" |
-  //   "balanced" | "performance" }, charger { plugged }, message { icon,
-  //   text }, every other type { on }
-  function status(type, state) {
+  // A status's tile from its state:
+  //   { icon, label, caption, on, slash, notable, hidden }
+  // `icon` always the base one ("wifi", never "wifi_off": a toggle off is
+  // `slash`, drawn as one struck-through style whatever the icon), `label`
+  // short text drawn instead of the icon (a layout's code), `caption` text
+  // shown beside it only as it changes (a device's name, a message), `on`
+  // lit (a toggle on, the microphone live), `slash` a toggle off,
+  // `notable` out of the ordinary (the row's "What's unusual"), `hidden`
+  // nothing to show (no Wi-Fi, one layout). States:
+  //   capsLock / numLock / scrollLock { available, on },
+  //   keyboardLayout { layouts, index }, micMute { muted, icon (the
+  //   device's, unmuted) },
+  //   outputDevice { name, icon }, powerProfile { profile: "powerSaver" |
+  //   "balanced" | "performance" | "" }, charger { available, plugged },
+  //   message { icon, text }, every other type { available, on }
+  function tile(type, state) {
+    const t = {
+      "icon": "",
+      "label": "",
+      "caption": "",
+      "on": false,
+      "slash": false,
+      "notable": false,
+      "hidden": false
+    };
+    const s = state ?? {};
     switch (type) {
-    case "lockKeys":
+    case "capsLock":
+    case "numLock":
+    case "scrollLock":
       {
-        const keys = {
-          "caps": ["keyboard_capslock", "Caps Lock on", "Caps Lock off"],
-          "num": ["dialpad", "Num Lock on", "Num Lock off"],
-          "scroll": ["swap_vert", "Scroll Lock on", "Scroll Lock off"]
+        const icons = {
+          "capsLock": "keyboard_capslock",
+          "numLock": "dialpad",
+          "scrollLock": "swap_vert"
         };
-        const k = keys[state.key];
-        return {
-          "icon": k[0],
-          "text": state.on ? k[1] : k[2]
-        };
+        // Num Lock is on on most desktops and missing on most laptops: it
+        // shows as it changes, never as unusual
+        return Object.assign(t, {
+          "icon": icons[type],
+          "on": s.on === true,
+          "slash": s.on !== true,
+          "notable": s.on === true && type !== "numLock",
+          "hidden": s.available !== true
+        });
       }
     case "keyboardLayout":
-      return {
-        "icon": "keyboard",
-        "value": state.name
-      };
+      {
+        const layouts = s.layouts ?? [];
+        return Object.assign(t, {
+          "icon": "keyboard",
+          "label": String(layouts[s.index] ?? "").toUpperCase(),
+          "on": true,
+          "notable": (s.index ?? 0) > 0,
+          "hidden": layouts.length < 2
+        });
+      }
     case "micMute":
-      return {
-        "icon": state.muted ? "mic_off" : "mic",
-        "text": state.muted ? "Microphone off" : "Microphone on"
-      };
+      return Object.assign(t, {
+        "icon": s.icon || "mic",
+        "on": s.muted !== true,
+        "slash": s.muted === true,
+        "notable": s.muted === true
+      });
     case "outputDevice":
-      return {
-        "icon": "speaker",
-        "value": state.name
-      };
+      return Object.assign(t, {
+        "icon": s.icon || "speaker",
+        "caption": s.name ?? "",
+        "on": true
+      });
     case "powerProfile":
       {
-        const profiles = {
-          "powerSaver": ["energy_savings_leaf", "Power saver"],
-          "balanced": ["balance", "Balanced"],
-          "performance": ["speed", "Performance"]
+        const icons = {
+          "powerSaver": "energy_savings_leaf",
+          "balanced": "balance",
+          "performance": "speed"
         };
-        const p = profiles[state.profile] ?? profiles.balanced;
-        return {
-          "icon": p[0],
-          "text": p[1]
-        };
+        return Object.assign(t, {
+          "icon": icons[s.profile] ?? icons.balanced,
+          "on": s.profile !== "balanced",
+          "notable": s.profile === "powerSaver" || s.profile === "performance",
+          "hidden": !s.profile
+        });
       }
     case "charger":
-      return {
-        "icon": state.plugged ? "power" : "power_off",
-        "text": state.plugged ? "Charger plugged in" : "On battery"
-      };
+      return Object.assign(t, {
+        "icon": "power",
+        "on": s.plugged === true,
+        "slash": s.plugged !== true,
+        "notable": s.available === true && s.plugged === false,
+        "hidden": s.available !== true
+      });
     case "message":
-      return {
-        "icon": state.icon,
-        "value": state.text
-      };
+      return Object.assign(t, {
+        "icon": s.icon || "chat",
+        "caption": s.text ?? "",
+        "on": true,
+        "hidden": !s.text
+      });
     }
+    // [icon, notable when on (else when off; null: never)]
     const toggles = {
-      "caffeine": ["coffee", "coffee", "Caffeine on", "Caffeine off"],
-      "dnd": ["notifications_off", "notifications", "Do not disturb on", "Do not disturb off"],
-      "nightLight": ["nightlight", "light_mode", "Night light on", "Night light off"],
-      "wifi": ["wifi", "wifi_off", "Wi-Fi on", "Wi-Fi off"],
-      "bluetooth": ["bluetooth", "bluetooth_disabled", "Bluetooth on", "Bluetooth off"],
-      "airplane": ["airplanemode_active", "airplanemode_inactive", "Airplane mode on", "Airplane mode off"]
+      "caffeine": ["coffee", true],
+      "dnd": ["do_not_disturb_on", true],
+      "nightLight": ["nightlight", true],
+      "wifi": ["wifi", false],
+      "bluetooth": ["bluetooth", null],
+      "airplane": ["airplanemode_active", true]
     };
-    const t = toggles[type];
-    if (!t)
-      return {
-        "icon": "",
-        "text": ""
-      };
-    return {
-      "icon": state.on ? t[0] : t[1],
-      "text": state.on ? t[2] : t[3]
-    };
+    const toggle = toggles[type];
+    if (!toggle)
+      return Object.assign(t, {
+        "hidden": true
+      });
+    const on = s.on === true;
+    return Object.assign(t, {
+      "icon": toggle[0],
+      "on": on,
+      "slash": !on,
+      "notable": toggle[1] !== null && on === toggle[1],
+      "hidden": s.available === false
+    });
+  }
+
+  // The statuses the row shows, in the OSD's order: of `types` (its
+  // statuses), by `mode` ("notable" | "all" | "changed") over `tiles` (by
+  // type, tile()'s), `changed` (the type that just changed, or "") always
+  // among them. A hidden tile shows only as it changes; a message only as
+  // one comes.
+  function rowTypes(types, tiles, mode, changed) {
+    return types.filter(type => {
+      if (type === changed)
+        return true;
+      const t = tiles[type];
+      if (!t || t.hidden || type === "message")
+        return false;
+      return mode === "all" || (mode === "notable" && t.notable);
+    });
   }
 
   // How long after an airplane mode status the radios' own switching
-  // (which airplane mode causes) doesn't replace it, in ms
+  // (which airplane mode causes) doesn't take its highlight, in ms
   readonly property int radioQuiet: 2000
 
-  // Whether a status of type `incoming` replaces `shown` (the type of the
-  // status showing, "" for none) `elapsed` ms after it showed: always,
-  // except Wi-Fi or Bluetooth just after airplane mode switched them
+  // Whether a change of type `incoming` takes the highlight from `shown`
+  // (the type highlighted, "" for none) `elapsed` ms after it took it:
+  // always, except Wi-Fi or Bluetooth just after airplane mode switched
+  // them
   function replaces(shown, incoming, elapsed) {
     return !(shown === "airplane" && (incoming === "wifi" || incoming === "bluetooth") && elapsed < root.radioQuiet);
   }

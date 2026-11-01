@@ -1,22 +1,30 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Widgets
 import qs.config
 
 // A volume bar (vertical or horizontal) with its icon, mute and optional
-// percentage: drag, click or scroll to set it. PipewireVolumeBar binds it to audio.
+// percentage: drag, click or scroll to set it. Muted, the icon (the base
+// one, never its `_off` form) is struck through (SlashedIcon); with
+// `iconClickable` a click on it emits `iconClicked` (mute), with a hover
+// highlight and `iconTip`. PipewireVolumeBar binds it to audio.
 Item {
   id: root
 
   // -- Signals --
   signal volumeChanged(real newVolume)
+  signal iconClicked
 
   // -- Public API --
   property int orientation: Qt.Vertical
   property real volumeLevel: 0.75
   property bool isMuted: false
   property string iconSource: "volume_up"
+  // The icon is a button (mute)
+  property bool iconClickable: false
+  property string iconTip: ""
   // Shows the level as a percentage under the bar
   property bool showPercent: false
   // Level change per wheel notch (0-1); 0 turns scrolling off
@@ -137,6 +145,16 @@ Item {
       implicitWidth: iconText.implicitWidth
       implicitHeight: iconText.implicitHeight
 
+      // Behind the icon while it's hovered as a button
+      Rectangle {
+        anchors.centerIn: parent
+        width: parent.width + Widget.spacing * 2
+        height: parent.height + Widget.spacing
+        radius: Widget.radius
+        color: Qt.alpha(Theme.backgroundAlt, iconArea.containsMouse ? 1 : 0)
+        ColorGlide on color {}
+      }
+
       // Cross-fades as the level crosses a step (volume to muted)
       CrossFade {
         id: iconText
@@ -144,22 +162,30 @@ Item {
         width: implicitWidth
         height: implicitHeight
         value: root.iconSource
-        delegate: StyledIcon {
+        delegate: SlashedIcon {
           required property var value
           text: value
           textSize: Appearance.fontSizeBy(10)
+          slashed: root.isMuted
         }
       }
 
-      Rectangle {
-        id: crossOutLine
-        anchors.centerIn: parent
-        width: parent.width * 1.2
-        height: 2
-        rotation: 45
-        color: Theme.foreground
-        radius: 1
-        visible: root.isMuted
+      MouseArea {
+        id: iconArea
+        anchors.fill: parent
+        anchors.margins: -Widget.spacing
+        enabled: root.iconClickable
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.iconClicked()
+      }
+
+      LazyLoader {
+        active: iconArea.containsMouse && root.iconTip !== ""
+        StyledToolTip {
+          target: iconContainer
+          text: root.iconTip
+        }
       }
     }
 

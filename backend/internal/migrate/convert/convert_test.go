@@ -156,8 +156,9 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 // config has them, so they come from their default at load
 var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Apps.networkEditor", "Idle.caffeineWarning"}
 
-// osdItemFields drops every OSD item's fields but its type, icon and
-// showOsd: the others (each kind's own options, added since format 1)
+// osdItemFields drops what an OSD gained since format 1 that no step
+// writes: every bar's fields but its type, icon and showOsd (each kind's
+// own options), the status icons' row mode and the now playing card. They
 // come from their defaults at load.
 func osdItemFields(cfg *jsonx.Object) {
 	osd, _ := cfg.Value("OSD").(*jsonx.Object)
@@ -173,7 +174,15 @@ func osdItemFields(cfg *jsonx.Object) {
 		if e == nil {
 			continue
 		}
-		items, _ := e.Value("items").(*jsonx.Array)
+		e.Delete("media")
+		if statuses, _ := e.Value("statuses").(*jsonx.Object); statuses != nil {
+			statuses.Delete("row")
+		}
+		bars, _ := e.Value("bars").(*jsonx.Object)
+		if bars == nil {
+			continue
+		}
+		items, _ := bars.Value("items").(*jsonx.Array)
 		if items == nil {
 			continue
 		}

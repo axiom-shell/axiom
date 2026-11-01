@@ -20,6 +20,24 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A workspace overview bind set to open calls a missing function
+- **Where:** `backend/internal/compositor/actions/table.json`, `shell/WorkspaceOverlay.qml`, `tests/tst_BindActions.qml`
+- **What:** The table's `calls` maps `workspaceOverview` open to `show`, but the `workspaceOverlay` IPC target has `toggle`, `open` and `hide`, no `show`. A bind or hot corner set to open runs `axiom ipc workspaceOverlay show` and fails. `tst_BindActions` covers close→hide only, and nothing checks the table's templates and calls against `docs/dev/generated/ipc.md` (as `backend/internal/cli/named_test.go` does for the named commands).
+- **Size:** trivial
+- **Found:** 2026-11-01, while listing the actions a keybind can't run yet
+
+### Toggles are switched in several places, and most have no IPC
+- **Where:** `components/content/QuickActions/QuickActions.qml`, `components/surfaces/osd/OSDStatusSource.qml` (toggle), `services/ui/LauncherCommands.qml`
+- **What:** Wi-Fi, Bluetooth, caffeine, do not disturb, night light, power saver and dark mode are each flipped by their own switch in QuickActions, the OSD's status icons and the launcher commands, all calling the same service functions. Wi-Fi, Bluetooth, airplane mode, dark mode, the power profile and the keyboard layout have no `IpcTarget`, so no keybind or hot corner can reach them (the bindable actions cover about 32 of some 140 IPC functions). One catalogue of actions (id, label, icon, run, state) could serve all of them and the keybinds; the maintainer plans it as its own change.
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while making the OSD's status icons clickable
+
+### In dev mode a reshaped schema can prune config before its migration runs
+- **Where:** `backend/internal/daemon/dev.go`, `docs/dev/backend/README.md`
+- **What:** With dev mode on, the shell loads a schema rebuilt from the YAML as soon as it's edited, while the running binary still has the old migrations (a failed or pending dev build). A settings save then validates and prunes config.json against the new shape, so keys a new step would have moved are dropped instead of migrated. Seen 2026-11-01: v87 split each OSD's `items` into `bars` / `statuses` / `media`; a save from the settings page before the daemon ran v87 wrote the new shape with default `bars`, losing every OSD's own bars (`version` still 86, so v87 later skips the already reshaped entries). Saving should hold off, or the daemon refuse a write, while the tree's schema version is ahead of the binary's steps.
+- **Size:** small
+- **Found:** 2026-11-01, while splitting the OSD's items (config v87)
+
 ### The lock screen has no settings for allowing or viewing notifications
 - **Where:** `config/schema/sections/Lockscreen.yaml`, `docs/dev/features/lockscreen.md`
 - **What:** Asked by the maintainer (2026-10-31) beside the x-lockActions decision: "there should be settings for allowing/viewing notifications as well" on the lock screen. Not designed yet.
