@@ -632,6 +632,9 @@ Found by the audits:
 - [Notes documents count a revision nothing reads](issues.md#notes-documents-count-a-revision-nothing-reads)
 - [NotesConfig expands ~ by hand where Paths.expandHome does it](issues.md#notesconfig-expands--by-hand-where-pathsexpandhome-does-it)
 - [NoteMarkdown's reparse repeats _normalize](issues.md#notemarkdowns-reparse-repeats-_normalize)
+- [Two Bluetooth menus share one discovery scan, and one closing stops the other's](issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
+- [The join form stays incomplete after CA file is chosen and the security changed](issues.md#the-join-form-stays-incomplete-after-ca-file-is-chosen-and-the-security-changed)
+- [net.join's first-Wi-Fi fallback is never reached](issues.md#netjoins-first-wi-fi-fallback-is-never-reached)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
