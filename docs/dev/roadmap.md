@@ -530,8 +530,6 @@ Found by the audits:
 - [Rescanning the theme folders lists the shell's working directory as themes](issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
 - [A generated theme from a wallpaper reached through a symlink is regenerated at every start](issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)
 - [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)
-- [setWallpaperAndGenerate only forwards for one caller](issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)
-- [~/.current_wallpaper is written but nothing reads it](issues.md#current_wallpaper-is-written-but-nothing-reads-it)
 - [Icons.overrides never reaches window icons](issues.md#iconsoverrides-never-reaches-window-icons)
 - [A cancelled rename's typed text comes back in the notes and chat rename fields](issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
 - [Nine shared controls animate with their own easing, written out where Glide does it](issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)

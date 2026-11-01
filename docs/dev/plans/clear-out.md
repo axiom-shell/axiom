@@ -149,8 +149,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Two dead Go helpers and a forwarding wrapper
 - **core-ui-theming-01** (7):
   - Small shrinks in the core services
-  - [setWallpaperAndGenerate only forwards for one caller](../issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)
-  - [~/.current_wallpaper is written but nothing reads it](../issues.md#current_wallpaper-is-written-but-nothing-reads-it)
+  - setWallpaperAndGenerate only forwards for one caller
+  - ~/.current_wallpaper is written but nothing reads it
   - [StyledRectButton's badge and border press colour have no user](../issues.md#styledrectbuttons-badge-and-border-press-colour-have-no-user)
   - [TileGrid and StyledVolumeBar keep lines nothing reads](../issues.md#tilegrid-and-styledvolumebar-keep-lines-nothing-reads)
   - [Two hand-written cmp.Or in the theme packages](../issues.md#two-hand-written-cmpor-in-the-theme-packages)

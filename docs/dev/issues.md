@@ -1859,20 +1859,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the theming system
 
-### setWallpaperAndGenerate only forwards for one caller
-- **Where:** `services/core/ThemeManager.qml:111` (`setWallpaperAndGenerate`), `services/ui/WallpaperManager.qml:36` (`pick`)
-- **What:** `grep -rnw setWallpaperAndGenerate` finds one caller, `WallpaperManager.pick`'s fixed-mode branch. The function only calls `setWallpaper(url, monitor)` and then `generateThemesFromWallpaper(url)`, which `pick`'s rotate branch already calls directly. Fix: call the two directly in `pick`, and delete the function with its comment (lines 110–114, 5 lines).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the theming system
-
-### ~/.current_wallpaper is written but nothing reads it
-- **Where:** every mention in the repo (`grep -rn current_wallpaper`, 2026-10-31): `services/core/ThemeManager.qml:178` (`_showWallpaper`'s comment), `services/core/ThemeManager.qml:186` (the `ln -sf`), `scripts/setWallpaper.sh:8` (header comment), `scripts/setWallpaper.sh:33` (the `ln -sf`), `docs/dev/roadmap.md:556` (this entry's link), `.claude/reviews/theming.md:11` (this entry's link)
-- **What:** On every change of the primary's wallpaper, `_showWallpaper` runs `ln -sf <path> ~/.current_wallpaper` (line 186), and `setWallpaper.sh` does the same for awww (line 33). `grep -rn current_wallpaper` over the repo finds only these two and their comments. No axiom code reads the link, and no doc names it. It is written in `$HOME`, not under an XDG path like the system's other files (systems.md theming Check: "Generated files under XDG paths"). Its target is the URL with `file://` stripped but not decoded (unlike `generateThemesFromWallpaper`), so a wallpaper with `%` or `#` in its name links to a path that doesn't exist.
-
-  **Decided** (maintainer, 2026-10-31): "remove .current_wallpaper. Legacy. Should be completely purged". Fix: delete every writer and every mention listed under **Where**: ThemeManager's `ln -sf` lines (185–186, the `else if (primary)` branch and its call) and their comment, `scripts/setWallpaper.sh`'s copy and its header line, and the links to this entry, which go with it.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the theming system
-
 ### Icons.overrides never reaches window icons
 - **Where:** `services/system/AppIconManager.qml:37` (`resolveWindowIcon`), `config/schema/sections/Icons.yaml:12`, `components/bar/widgets/SystemTray/SystemTray.qml:78`
 - **What:** The schema documents `overrides` as "App name → icon path/URL, for apps whose tray or window icon doesn't resolve", but `IconsConfig.overrides` has one reader, the tray (`grep -rn IconsConfig` outside the reader and docs: only `SystemTray.qml:78`). `AppIconManager.resolveWindowIcon`, which every window icon goes through (the dock, the workspace strips and grid, the switcher, window previews, the launcher: 8 files), never reads it. A user whose app's window class has no icon adds `"Icons": {"overrides": {"someclass": "/path/icon.svg"}}` (the setting is `x-settings: false`, so config.json is the only way in): the tray would take it, the dock and switchers keep the generic icon. Fix: in `resolveWindowIcon`, before the cache, `const override = IconsConfig.overrides[windowClass ?? ""]; if (override) return override;` (outside the per-class cache, so editing the map applies at once), and say in the description that a window's key is its class.
