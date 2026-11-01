@@ -94,7 +94,8 @@ func parse() (*Table, error) {
 		call, _ := entry.Items[0].(string)
 		pattern := regexp.QuoteMeta(call)
 		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{call}"), `(?P<call>`+callNames+`)`)
-		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{0}"), `(?P<arg>\S+)`)
+		// An argument is one word, or quoted with spaces (ShellWord's form)
+		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{0}"), `(?P<arg>'[^']*'|"[^"]*"|\S+)`)
 		re, err := regexp.Compile("^" + pattern + "$")
 		if err != nil {
 			return nil, fmt.Errorf("the bind actions: %s: %w", action, err)
