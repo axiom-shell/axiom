@@ -9,7 +9,7 @@ The chat matches its doc closely; the Go request building and streaming are soun
 - Major: [An image sent without text to Anthropic carries a whitespace-only text block](../../docs/dev/issues.md#an-image-sent-without-text-to-anthropic-carries-a-whitespace-only-text-block)
 - Major: [Stop is ignored while chat.send still looks up the key](../../docs/dev/issues.md#stop-is-ignored-while-chatsend-still-looks-up-the-key)
 - Major: [The chat builds its conversation lists and model picker while hidden](../../docs/dev/issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
-- Major: [An attachment's thumbnail pokes past its rounded corners](../../docs/dev/issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
+- Minor: [An attachment's thumbnail pokes past its rounded corners](../../docs/dev/issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
 - Cleanup: [package chat's Log option is never used](../../docs/dev/issues.md#package-chats-log-option-is-never-used)
 - Cleanup: [ChatManager.copy only forwards to ClipboardManager.copyText](../../docs/dev/issues.md#chatmanagercopy-only-forwards-to-clipboardmanagercopytext)
 - Minor: chat.md says an unmapped failure becomes `bad_reply`, `_reply` maps it to `""` (`services/apps/ChatManager.qml:461`); the `config` errorKind (line 428) is in neither the doc nor the header. Fix: the doc.
@@ -25,4 +25,4 @@ Holds: the state shape, storage under `chats/` through FileManager.write with th
 Read deeply: ChatManager, send.go, chat.go, keys.go, daemon/chat.go, Chat.qml, ChatMessage, ChatMessageList, ChatComposer, ConversationList, ChatConfig, AttachmentChip, ChatMarkdownText, ChatMarkdown, ChatHeader. Outlined: ModelPicker, ChatThinking, ChatCodeBlock, BackendManager's call/drop handling, secrets.Lookup, CodeLine. Skipped: tests beyond TestBuild/TestStop (by grep).
 
 ## History
-- 2026-11-01 full: 12 findings (6 Major, 2 Cleanup, 4 Minor); recorded
+- 2026-11-01 full: 12 findings (5 Major, 2 Cleanup, 5 Minor; the thumbnail's corners downgraded to Minor in review); recorded

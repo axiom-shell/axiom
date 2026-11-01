@@ -2307,7 +2307,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Idle dimming is forgotten across a shell reload
 - **Where:** `services/system/BrightnessManager.qml:92` (`_dimmed`)
-- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload (as a default child of a `Scope`/`Singleton` root: a named property doesn't, see [DailySchedule's persisted state never survives a reload](issues.md#dailyschedules-persisted-state-never-survives-a-reload)).
+- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload, declared as a default child of a `Singleton` root (the root is a `QtObject` now, and a named property doesn't survive: see [DailySchedule's persisted state never survives a reload](#dailyschedules-persisted-state-never-survives-a-reload)).
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
@@ -2412,7 +2412,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### NotesConfig expands ~ by hand where Paths.expandHome does it
 - **Where:** `config/NotesConfig.qml:15` (`directory`), `config/NotesConfig.qml:12` (`defaultDirectory`)
-- **What:** AGENTS.md: "A path setting may hold `~`: expand it (`Paths.expandHome`) before use." `directory` trims, expands `~` and `~/` itself and keeps a `defaultDirectory` member read only there. Fix: `readonly property string directory: root.linked ? Paths.expandHome(_c.directory).replace(/\/*$/, "/") : Paths.defaultNotesPath` (expandHome trims and strips trailing slashes; `defaultNotesPath` ends in "/" already): lines 11–22 (12) become 2, 10 lines removed.
+- **What:** AGENTS.md: "A path setting may hold `~`: expand it (`Paths.expandHome`) before use." `directory` trims, expands `~` and `~/` itself and keeps a `defaultDirectory` member read only there. Fix: `readonly property string directory: root.linked ? Paths.expandHome(_c.directory).replace(/\/*$/, "/") : Paths.defaultNotesPath` (expandHome trims and strips trailing slashes; `defaultNotesPath` ends in "/" already): lines 10–11 and 14–21 (10) become 1, 9 lines removed.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 

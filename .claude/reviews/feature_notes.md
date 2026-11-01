@@ -1,7 +1,7 @@
 # feature:notes
 reviewed: f8e13e3 2026-11-01  (full)
 
-The shared-document and lossless-Markdown core holds; the bugs sit on rare paths: a rename with a dot drops the extension, a `#` in a folder name breaks the browser, a changed notes folder keeps the old note's text and saves it there, a missing linked folder is created by typing, and two toolbar edits skip the re-parse. Deletion pass: 23 lines (20 net).
+The shared-document and lossless-Markdown core holds; the bugs sit on rare paths: a rename with a dot drops the extension, a `#` in a folder name breaks the browser, a changed notes folder keeps the old note's text and saves it there, a missing linked folder is created by typing, and two toolbar edits skip the re-parse. Deletion pass: 22 lines (19 net).
 
 ## Open findings
 - Major: [Renaming a note whose new name holds a dot drops its extension and hides it](../../docs/dev/issues.md#renaming-a-note-whose-new-name-holds-a-dot-drops-its-extension-and-hides-it)
