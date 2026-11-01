@@ -14,7 +14,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 - **Read as pills:** `BarContainer.pillRects` holds the islands shaped like pills (`BarLayout.islandRects`), so the popout code reads them as pills.
   - The shape is either one island from limit to limit, or one per group, merged within `pillMerge`.
   - They are drawn from `pillShapes` (`BarLayout.stretchIslands`).
-- **Nothing joins a floating bar.** `joinable` is true only for a solid bar.
+- **Nothing joins a floating bar.** Its edge is a wall to the surfaces beside it (`SurfaceContext.endKind`).
 - **Surfaces on an island:**
   - **Which island:** a popout, edge popout or dock uses the island under its centre, otherwise the nearest.
   - **Where it grows from:** out of the island's inner stroke (`attachAt`). It never merges (`EdgeAttach.place`, island mode).

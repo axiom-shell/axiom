@@ -1130,12 +1130,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
-- **Where:** `config/BarsConfig.qml:106` (`enrichBarConfig`), `config/BarsConfig.qml:145`, `config/BarsConfig.qml:25`, `config/BarsConfig.qml:47`, `config/BarsConfig.qml:113`
-- **What:** Nothing reads an enriched bar's `joinable` or `separatorGap` (every `.joinable` read is an end's or SurfaceContext's own edge; `separatorGap` is read only as `look.separatorGap`, line 118). The bar comes from `ConfigManager.live` with every default filled, so `barConfig.background ?? "solid"`, `barConfig.pillPadding ?? 0` and `barConfig.pillMerge ?? 0` never fall back (AGENTS.md: "readers use no `??` fallbacks"; check_structure only catches `_c.key ?? x`). Fix: delete lines 105-106 and 145 (3 lines) and the three `??` tails.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### A bar's reserve trim is worked out again by callers holding the enriched bar
 - **Where:** `config/BarsConfig.qml:354` (`reservedZone`), `config/BarsConfig.qml:345` (`detachedPush`), `config/BarsConfig.qml:176` (`enrichBarConfig`)
 - **What:** `enrichBarConfig` already sets `bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0)`. Every caller of `reservedZone` and `detachedPush` passes an enriched bar and its own edge's `gapsOut`, then gets the same number again from `reserveTrim`: `components/bar/BarPanel.qml:38`, `services/ui/ScreenEdgeManager.qml:91` (without `?? 0`, so the two sources can differ), `components/hosts/popout/EdgePlacement.qml:201`. Fix: read `barConfig.trim`; `reservedZone(barConfig)` loses its `gapsOut` parameter, and `detachedPush` becomes `gapsOut - barConfig.trim - connectorGap / 2`. Take it with [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp), whose fix calls `reservedZone`. (`cornerMargin`'s copy is the Major above.)

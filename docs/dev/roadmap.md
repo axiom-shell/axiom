@@ -425,7 +425,6 @@ Found by the audits:
 - [Removing or copying another bar moves the editor's selection to a different bar](issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)
 - [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](issues.md#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp)
 - [The pill merge in BarContainer repeats BarLayout's, untested](issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
-- [enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks](issues.md#enrichbarconfig-hands-out-two-fields-nothing-reads-and-keeps-three-dead-fallbacks)
 - [A bar's reserve trim is worked out again by callers holding the enriched bar](issues.md#a-bars-reserve-trim-is-worked-out-again-by-callers-holding-the-enriched-bar)
 - [Missing test rows for two helper decisions](issues.md#missing-test-rows-for-two-helper-decisions)
 - [An overlay misses a transparent bar's inner accent line](issues.md#an-overlay-misses-a-transparent-bars-inner-accent-line)
