@@ -122,10 +122,28 @@ var all = []Step{
 	{Version: 86, Run: v86},
 	// v87: an OSD's items split into bars, statuses and media (v87.go)
 	{Version: 87, Run: v87},
-	// v88: hot corners that ran an action a corner no longer offers went,
+	// v88: the awww wallpaper backend went: axiom draws every wallpaper,
+	// with its own transitions
+	{Version: 88, Run: func(cfg *jsonx.Object) []string {
+		w := object(cfg, "Appearance", "wallpaper")
+		if w == nil {
+			return nil
+		}
+		backend, _ := w.Value("backend").(string)
+		removed := w.Delete("backend")
+		removed = w.Delete("daemon") || removed
+		if !removed {
+			return nil
+		}
+		if backend == "awww" {
+			return []string{"Appearance.wallpaper.backend awww removed: axiom draws the wallpaper itself, with its own transitions (Appearance.wallpaper.transition)"}
+		}
+		return []string{"Appearance.wallpaper.backend and daemon removed: axiom always draws the wallpaper"}
+	}},
+	// v89: hot corners that ran an action a corner no longer offers went,
 	// and the old default bind that logged out at once; OSDs on the old
-	// default status icons got the new default's (v88.go)
-	{Version: 88, Run: v88},
+	// default status icons got the new default's (v89.go)
+	{Version: 89, Run: v89},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

@@ -20,6 +20,9 @@ PanelWindow {
   id: root
 
   required property var layout
+  // Its top-left on its screen: the corner, as it ignores reserved space
+  // (a wallpaper picker's click point)
+  readonly property point screenOrigin: Qt.point(0, 0)
 
   WlrLayershell.layer: WlrLayer.Bottom
   WlrLayershell.namespace: "axiom-desktop"

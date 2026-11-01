@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell.Widgets
 
 import qs.config
+import qs.components.methods
 import qs.components.reusable
 
 // One workspace on the overview board: a miniature desktop (the monitor's
@@ -37,7 +38,7 @@ Item {
       source: root.wallpaper
       // Every cell asks for the same size, so they share one decoded image
       sourceSize: Qt.size(Math.round(root.width), Math.round(root.height))
-      fillMode: Image.PreserveAspectCrop
+      fillMode: WallpaperFill.fillMode(Appearance.wallpaperFill)
       asynchronous: true
       cache: true
     }

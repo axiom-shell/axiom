@@ -35,7 +35,7 @@ Quickshell's `Networking` has no VPN or active-connection types (`DeviceType` is
   - `pickImport()` owns the file picker itself (the popout asking may close while it's open), then `importFile`; `importError` is the last refusal.
   - `checkPublicIp()` asks `VpnConfig.publicIpUrl` for the address the internet sees, only on a click (nothing is sent otherwise; empty hides it). `publicIp` clears when the VPN up changes, and an answer for an earlier VPN is dropped.
   - An on → off change with an error sends a "VPN disconnected" notification (`VpnConfig.notifyOnDrop`).
-- **VpnRow:** a `DeviceRow`. Clicking toggles it; while it's asked for secrets, a password field per field appears under it.
+- **VpnRow:** a `DeviceRow`. Clicking toggles it; while it's asked for secrets, a password field (`SecretField`) per field appears under it.
 - **Where VPNs show:**
   - The `VpnConnections` popout and card (`DeviceList` of `VpnRow`s; Import, and Edit connections running `Apps.networkEditor`).
   - The `Vpn` bar widget: click toggles the last VPN, hover opens the popout, `hideWhenOff`.

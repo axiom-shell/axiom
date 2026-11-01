@@ -14,7 +14,7 @@ Everything below is one shell and one config, and everything is set from inside 
 - **28 widget types:**
   - Workspaces, Window, Time, NextEvent (the next event from your calendars), Media
   - Volume, Microphone, Network, Bluetooth, Battery, SystemStats, SystemTray, Notifications
-  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), Vpn, KeyboardLayout, LockKeys (Caps Lock, Num Lock and Scroll Lock, shown while on or always), IdleInhibitor, Privacy
+  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), Vpn, Drives (removable drives: hidden with none, a popout to open, eject or unlock one, middle click ejects them all), KeyboardLayout, LockKeys (Caps Lock, Num Lock and Scroll Lock, shown while on or always), IdleInhibitor, Privacy
   - ScreenRecord (shown while recording; click to stop), Claude usage (your Claude Code plan limits, for one or more logins), Todo (open count), Pomodoro (the time left), Timer & stopwatch
   - Button (runs any command, opens a page or toggles an edge menu) and Separator
 - **Popouts** grow out of the bar, or out of the screen border, with filleted corners. Widgets open theirs on hover, and Buttons can run their action on hover too.
@@ -77,7 +77,7 @@ Set a style once under **Settings → Look & Feel → Bar widgets**, and give an
   | Group | Modules |
   | --- | --- |
   | Media and sound | Now playing, Audio mixer, Volume dials |
-  | System | System graphs, Top processes, Disks, Battery, Updates, Network, Tailscale |
+  | System | System graphs, Top processes, Disks, Removable drives, Battery, Updates, Network, Tailscale |
   | Controls | Quick actions (toggles, power, pin), Screenshot, Screen recording (region or screen, with sound, recent recordings), Night light, Brightness, Bluetooth devices, Wi-Fi networks, Favourite apps |
   | Time and plans | Clock (digital, stacked or analog, in any time zone), World clocks, Clock & calendar, Calendar, Agenda, Weather |
   | Workspace | Workspaces map, Notifications |
@@ -288,8 +288,11 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 - **Generated themes** from your wallpaper, in five styles (tonal, vibrant, faithful, muted, alternate). The palette is built in OKLCH from the image's main colors, to match the contrast of the hand-made themes.
 - **Light and dark** by hand, or on a schedule.
 - **Wallpapers** can be set per monitor:
-  - Fixed, rotating on a timer, or one for light mode and one for dark.
-  - axiom draws them itself (crossfading), or uses [awww](https://github.com/LGFae/awww) for its transitions.
+  - Fixed, rotating on a timer, or one for light mode and one for dark. A random rotation shuffles: every wallpaper shows once before any comes back. It can wait while a window is fullscreen, the screen is locked, or on battery.
+  - Pick from the whole folder, one of its subfolders (a collection), or every folder inside it.
+  - Fifteen transitions: fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur and clock. Random picks from the ones you tick, and every monitor changing together plays the same one. Each can be aimed: a direction to move in (fade and co. sweep along it), a place to start from, or where you click a wallpaper in a picker, each random by default; and a pace (smooth, slowing down, speeding up, steady or snappy). The lock screen and login screen use them too. Try one with `/transition` in the launcher.
+  - Fill the screen, show the whole image, stretch it or center it at its own size.
+  - Workspace parallax: the wallpaper slides a little with each workspace you go to (by row and column on a grid), and sideways as you scroll along niri's or Hyprland's scrolling layout. On niri, axiom keeps the wallpaper still behind the workspaces as they slide, so the parallax shows.
 - **Other apps** follow the active theme too:
   - Each app is a switch under **Settings → Theme integrations**, one card per app, and gets its own `axiom` theme file.
   - Its switch shows the line that loads that file from the app's config. Copy the line, or click **Apply**, which backs your config up first.

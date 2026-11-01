@@ -20,10 +20,6 @@ QtObject {
   readonly property string fixedWallpaper: _c.wallpaper.file
   readonly property var fixedWallpapers: _c.wallpaper.perScreen
   // As configured (for display), and with ~ expanded, no trailing slash
-  // "quickshell" (shell/Wallpaper draws it) | "awww" (setWallpaper.sh)
-  readonly property string wallpaperBackend: _c.wallpaper.backend
-  // Start awww's daemon for the awww backend (WallpaperManager)
-  readonly property bool wallpaperDaemon: _c.wallpaper.daemon
   readonly property string wallpaperFolder: _c.wallpaper.folder
   readonly property string wallpaperPath: Paths.expandHome(_c.wallpaper.folder)
   // "fixed" | "rotate" (wallpaperRotation) | "variant" (variantWallpapers),
@@ -34,6 +30,32 @@ QtObject {
   // "random" | "sequential"
   readonly property string rotationOrder: _c.wallpaper.rotation.order
   readonly property bool rotationSameOnAll: _c.wallpaper.rotation.sameOnAll
+  // Hold the rotation while a window is fullscreen, the screen is locked,
+  // or on battery (WallpaperManager.rotationHeld)
+  readonly property bool rotationPauseFullscreen: _c.wallpaper.rotation.pause.fullscreen
+  readonly property bool rotationPauseLocked: _c.wallpaper.rotation.pause.locked
+  readonly property bool rotationPauseBattery: _c.wallpaper.rotation.pause.battery
+  // A subfolder of the folder to list from ("" for the folder itself), and
+  // whether the folders under it count too (WallpaperManager.images)
+  readonly property string wallpaperCollection: _c.wallpaper.collection
+  readonly property bool wallpaperSubfolders: _c.wallpaper.subfolders
+  // "random" | "none" | a WallpaperTransitions name; the ones random picks
+  // from; how long one takes (ms)
+  readonly property string wallpaperTransition: _c.wallpaper.transition.type
+  readonly property var wallpaperTransitionPool: _c.wallpaper.transition.pool
+  readonly property int wallpaperTransitionDuration: _c.wallpaper.transition.duration
+  // The way it moves ("random" | "right" | … | "upLeft"), where it starts
+  // ("random" | "click" | "center" | a corner) and its pace (an easing
+  // name; WallpaperTransitions.pick / easing)
+  readonly property string wallpaperTransitionDirection: _c.wallpaper.transition.direction
+  readonly property string wallpaperTransitionPosition: _c.wallpaper.transition.position
+  readonly property string wallpaperTransitionEasing: _c.wallpaper.transition.easing
+  // "crop" | "fit" | "stretch" | "center" (WallpaperFill)
+  readonly property string wallpaperFill: _c.wallpaper.fill
+  // Slide with the workspaces, drawn this much (%) larger than the screen
+  readonly property bool wallpaperParallax: _c.wallpaper.parallax.enabled
+  readonly property int wallpaperParallaxStrength: _c.wallpaper.parallax.strength
+  readonly property int wallpaperParallaxWorkspaces: _c.wallpaper.parallax.workspaces
   // { dark, light }: file URLs, "" for none
   readonly property string darkWallpaper: _c.wallpaper.variants.dark
   readonly property string lightWallpaper: _c.wallpaper.variants.light

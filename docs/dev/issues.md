@@ -25,6 +25,37 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
+
+### Wallpapers list only jpg, png and bmp
+- **Where:** `services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
+- **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.
+- **Size:** small
+- **Found:** 2026-11-01, while adding wallpaper transitions
+
+### Video wallpapers
+- **Where:** `components/surfaces/wallpaper/WallpaperView.qml`, `services/core/ThemeManager.qml` (generateThemesFromWallpaper)
+- **What:** An idea from the wallpaper transitions branch, not a bug: mp4/webm wallpapers through QtMultimedia. It adds a dependency and a steady GPU and battery cost, the transitions would need a video's frame as a texture, and generating a theme needs a still frame grabbed from it. Kept out of the branch (maintainer, 2026-11-01: not picked among the wallpaper improvements).
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while adding wallpaper transitions
+
+### The Vpn widget's icon and label are invisible on a filled bar
+- **Where:** `components/bar/widgets/Vpn/schema.yaml`, `components/bar/widgets/base/BarIconWidget.qml` (`colors`)
+- **What:** The Vpn widget's schema has no `foregroundColor` (no `colors` part, no own field), so `properties.foregroundColor` is undefined, `Theme.resolveColor` makes it transparent, and on a bar whose `widgetStyle` is `filled` (the default) `BarWidgetStyle.colors` draws its icon and label in that: an empty pill. Seen with the Drives widget, which was built from it (fixed there by adding the field as IdleInhibitor has it). Fix: the same `foregroundColor` field on Vpn; a `tst_Config` check that every `BarIconWidget` type has one would keep it from coming back.
+- **Size:** trivial
+- **Found:** 2026-11-01, while testing removable drives in a nested shell
+
+### The weather TestPlace test fails now and then under load
+- **Where:** `backend/internal/weather/weather_test.go` (`TestPlace`, `newFetcher`)
+- **What:** Its parallel subtests all fetch through `http.DefaultClient`, and each one's fake server closing (`httptest.Server.Close` calls `CloseIdleConnections` on `http.DefaultTransport`) can break another's request in flight: `scripts/dev/verify.sh` once failed `TestPlace/both_IP_services_down` with `err = Get "http://127.0.0.1:…/ipapi": net/http: HTTP/1.x transport connection broken: http: CloseIdleConnections called, want "HTTP 503"`; 120 runs alone passed. Fix: `newFetcher` uses the fake server's own client (`f.Client()`), not `http.DefaultClient`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing removable drive support
+
+### Eject may leave a USB stick powered on
+- **Where:** `backend/internal/udisks/udisks.go` (`eject`)
+- **What:** `eject` picks the Drive's `Eject` over `PowerOff` for any drive with `CanEject` and removable media (`case drive.Optical || drive.CanEject && drive.mediaRemovable:` before `case drive.CanPowerOff:`). If udisks2 reports a USB stick with the removable bit as Ejectable, it only gets `Eject`: it stays in udisks2 without media (hidden, `removed` sent) but powered, which contradicts `docs/dev/features/drives.md` ("locks and powers off"). A card reader's card wants `Eject` (the reader stays). PLAUSIBLE: `udisksctl info -b /dev/sdX` on a real stick (Ejectable, CanPowerOff, MediaRemovable) settles it. Fix, if it holds: `PowerOff` first when `CanPowerOff` and the drive isn't a card reader (`Optical` or a media-changing reader keeps `Eject`), the way GNOME's gvfs powers off a stick after its eject.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing removable drive support
+
 ### Toggles are switched in several places, and most have no IPC
 - **Where:** `components/content/QuickActions/QuickActions.qml`, `components/surfaces/osd/OSDStatusSource.qml` (toggle), `services/ui/LauncherCommands.qml`
 - **What:** Wi-Fi, Bluetooth, caffeine, do not disturb, night light, power saver and dark mode are each flipped by their own switch in QuickActions, the OSD's status icons and the launcher commands, all calling the same service functions. Wi-Fi, Bluetooth, airplane mode, dark mode, the power profile and the keyboard layout have no `IpcTarget`, so no keybind or hot corner can reach them (the bindable actions cover about 32 of some 140 IPC functions). One catalogue of actions (id, label, icon, run, state) could serve all of them and the keybinds; the maintainer plans it as its own change.
@@ -184,14 +215,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Accepted by the maintainer (2026-10-28, #163): with no takeovers kept, a restore is refused and a hand fix sets the takeovers as it reads.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while reviewing row 12's third batch
-
-### Setting an awww wallpaper never starts awww's daemon
-- **Where:** `scripts/setWallpaper.sh`, `services/core/ThemeManager.qml` (`_showWallpaper`)
-- **What:** With `Appearance.wallpaperBackend` `awww` and no `awww-daemon` running, the script runs `awww query || awww init`, but awww has no `init` (`error: unrecognized subcommand 'init'`), so the wallpaper isn't set (`set -e` stops it). `ThemeManager` now runs the script through the daemon (`CommandManager.runDetached`, backend stage 6), so starting `awww-daemon` from it would no longer inherit qs's transparent huge pages opt-out ([memory](core/memory.md) › Transparent huge pages): only the script's `awww init` is left to fix.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "defer it to awww's removal"): "defer - awww will be taking it's own dedicated branch".
-- **Size:** small
-- **Found:** 2026-10-27, while reviewing what the shell still starts as its own children (row 9)
 
 ### The daemon's own commands are left zombies across a re-exec
 - **Where:** `backend/internal/updates/updates.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`
@@ -601,12 +624,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced. BarContainer's inline `Section` settles through the same `Qt.callLater`; the fix should cover it too (bar audit, 2026-10-30).
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
-
-### Removable drives aren't handled
-- **Where:** `services/system/` (no service yet)
-- **What:** Nothing in services, components or the schema uses udisks: plugging in a USB stick or SD card gives no notification, no mount or eject, and no list of drives (the Disks module shows only mounted filesystems). Also open: automount or ask, the notification's actions, where the drive list lives (a bar widget, a popout, the Disks module), and running udisks through the daemon.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while listing small gaps users notice at once
 
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `services/system/BluetoothManager.qml` (`_connectAfterPair`), `components/content/BluetoothDevices/`

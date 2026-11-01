@@ -2,7 +2,7 @@
 
 > **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `components/surfaces/notifications/ToastStack.qml`, `components/surfaces/notifications/ToastItem.qml`, `components/methods/ToastMotion.qml`, `components/methods/NotificationMatch.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`, `components/content/parts/notifications/`
 > **Config:** `Notifications.*` (reader `NotificationsConfig`)
-> **Related:** [Self-update](self-update.md) (registerHandler), [Calendar](calendar.md) (reminders), [Grow and expand](../overlay/grow-expand.md)
+> **Related:** [Self-update](self-update.md) (registerHandler), [Drives](drives.md) (buttons), [Calendar](calendar.md) (reminders), [Grow and expand](../overlay/grow-expand.md)
 
 The D-Bus notification server, its persistent history, the toasts, and do-not-disturb.
 
@@ -75,5 +75,5 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
 
 ### Click handlers
 - `NotificationManager.registerHandler(desktopEntry, handler)` routes a click on one of axiom's own notifications by its `desktopEntry`.
-- `NotificationManager.dismissApp(desktopEntry)` removes every notification of that `desktopEntry`: one of axiom's asking for something to be done goes away once it's done (the login screen's update, the "available" one after a self-update, a missing font once it's installed).
-- Services that register one: SelfUpdateManager (`axiom-update`, see [Self-update](self-update.md)), CalendarManager (`axiom-calendar`, see [Calendar](calendar.md)), ScreenshotManager and GreeterManager.
+- `NotificationManager.dismissApp(desktopEntry)` removes every notification of that `desktopEntry`: one of axiom's asking for something to be done goes away once it's done (the login screen's update, the "available" one after a self-update, a missing font once it's installed, a drive's once it's unplugged).
+- Services that register one: SelfUpdateManager (`axiom-update`, see [Self-update](self-update.md)), CalendarManager (`axiom-calendar`, see [Calendar](calendar.md)), ScreenshotManager, GreeterManager and DrivesManager (`axiom-drives`: a click opens the Drives module, the buttons mount, open, unlock or eject; see [Drives](drives.md)).

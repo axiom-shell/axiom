@@ -153,6 +153,10 @@ Singleton {
     })
   // A tiled box wider than tall times this splits side by side
   readonly property real splitWidthMultiplier: root.backend?.splitWidthMultiplier ?? 1
+  // Whether the wallpaper stays put while workspaces slide (a backend
+  // that says nothing keeps its background layer still): the wallpaper's
+  // workspace parallax moves along the workspaces' axis only then
+  readonly property bool wallpaperStill: root.backend?.wallpaperStill ?? true
   // Whether surfaces with a fixed stacking order (bars, border, docks,
   // edge menus, the desktop) may map yet: the backend's stacking is in
   readonly property bool surfacesReady: root.backend?.surfacesReady ?? true

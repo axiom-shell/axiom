@@ -318,6 +318,7 @@ layout {
         color "#ffffff92"
         inactive-color "#ffffff92"
     }
+    background-color "transparent"
 }
 prefer-no-csd true
 overview {
@@ -390,6 +391,10 @@ layer-rule {
     background-effect {
         xray false
     }
+}
+layer-rule {
+    match namespace="^axiom-wallpaper$"
+    place-within-backdrop true
 }
 environment {
     GDK_BACKEND "wayland,x11,*"

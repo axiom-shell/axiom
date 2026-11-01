@@ -136,6 +136,20 @@ QtObject {
       }
     },
     {
+      name: "transition",
+      aliases: ["wallpapertransition", "preview"],
+      glyph: "animation",
+      usage: "<transition>",
+      needsArg: true,
+      description: () => I18n.tr("Try a wallpaper transition on the next wallpaper"),
+      options: () => root._transitions(),
+      run: (arg, value) => {
+        if (value)
+          WallpaperManager.preview(value);
+        return false;
+      }
+    },
+    {
       name: "nextwallpaper",
       aliases: ["nextwall", "rotate"],
       glyph: "shuffle",
@@ -276,6 +290,28 @@ QtObject {
       run: (arg, value) => {
         if (value)
           BluetoothManager.toggleDevice(value);
+      }
+    },
+    {
+      name: "eject",
+      aliases: ["drives", "unmount"],
+      glyph: "eject",
+      usage: "[drive]",
+      description: () => I18n.tr("Eject a removable drive"),
+      available: () => !Paths.greeter && DrivesManager.count > 0,
+      status: () => I18n.tr("{0} plugged in", DrivesManager.count),
+      options: () => DrivesManager.drives.map(drive => ({
+              title: DriveInfo.displayName(drive, I18n.tr("Drive")),
+              subtitle: DrivesManager.statusText(drive),
+              glyph: DriveInfo.icon(drive),
+              value: drive.id
+            })),
+      run: (arg, value) => {
+        const wanted = String(arg ?? "").trim().toLowerCase();
+        const drive = value ? DrivesManager.driveById(value) : wanted !== "" ? DrivesManager.drives.find(d => DrivesManager.nameOf(d).toLowerCase().startsWith(wanted)) ?? null : DrivesManager.count === 1 ? DrivesManager.drives[0] : null;
+        if (drive)
+          DrivesManager.eject(drive);
+        return false;
       }
     },
     // --- Notifications & idle ---
@@ -868,6 +904,20 @@ QtObject {
     ]);
   }
 
+  // Every wallpaper transition, by its settings label (its name,
+  // capitalized: the names match the labels)
+  function _transitions() {
+    // I18n.tr("Fade") I18n.tr("Wipe") I18n.tr("Slide") I18n.tr("Grow")
+    // I18n.tr("Shrink") I18n.tr("Wave") I18n.tr("Dissolve")
+    // I18n.tr("Pixelate") I18n.tr("Blinds") I18n.tr("Tiles") I18n.tr("Zoom")
+    // I18n.tr("Ripple") I18n.tr("Swirl") I18n.tr("Blur") I18n.tr("Clock")
+    return WallpaperTransitions.names.map(name => ({
+          title: I18n.tr(name.charAt(0).toUpperCase() + name.slice(1)),
+          glyph: "animation",
+          value: name
+        }));
+  }
+
   function _wallpapers() {
     const rows = [
       {
@@ -876,12 +926,11 @@ QtObject {
         value: "random"
       }
     ];
-    const model = ThemeManager.wallpaperModel;
-    for (let i = 0; i < model.count; i++)
+    for (const url of WallpaperManager.images)
       rows.push({
-        title: model.get(i, "fileBaseName"),
-        image: model.get(i, "fileUrl").toString(),
-        value: model.get(i, "fileUrl").toString()
+        title: decodeURIComponent(url.split("/").pop().replace(/\.[^.]*$/, "")),
+        image: url,
+        value: url
       });
     return rows;
   }

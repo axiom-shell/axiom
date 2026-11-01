@@ -88,10 +88,6 @@ QtObject {
         "arch": "niri",
         "fedora": "niri"
       },
-      "awww": {
-        "arch": "awww",
-        "fedora": null
-      },
       "nmcli": {
         "arch": "networkmanager",
         "fedora": "NetworkManager"
@@ -166,6 +162,10 @@ QtObject {
       "powerprofilesctl": {
         "arch": "power-profiles-daemon",
         "fedora": "power-profiles-daemon"
+      },
+      "udisksctl": {
+        "arch": "udisks2",
+        "fedora": "udisks2"
       },
       "greetd": {
         "arch": "greetd",

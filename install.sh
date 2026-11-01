@@ -51,7 +51,6 @@ PACKAGES=(
   "hyprland|hyprland|nett00n/hyprland:hyprland"
   "sway|sway|sway"
   "niri|niri|niri"
-  "awww|awww|n/a"
   "secret-tool|libsecret|libsecret"
   "nmcli|networkmanager|NetworkManager"
   "nm-connection-editor|nm-connection-editor|nm-connection-editor"
@@ -65,6 +64,7 @@ PACKAGES=(
   "xwayland-satellite|xwayland-satellite|xwayland-satellite"
   "Xwayland|xorg-xwayland|xorg-x11-server-Xwayland"
   "powerprofilesctl|power-profiles-daemon|power-profiles-daemon"
+  "udisksctl|udisks2|udisks2"
   "xdg-desktop-portal-gtk|xdg-desktop-portal-gtk|xdg-desktop-portal-gtk"
   "greetd|greetd|greetd"
   "agreety|greetd-agreety|greetd"
@@ -75,7 +75,6 @@ REQUIRED=(git quickshell curl)
 # "feature|keys|compositors" (none listed: any), offered one at a time;
 # the AUR package's optdepends say the same
 FEATURES=(
-  "Wallpapers|awww|"
   "Calendar accounts and feeds|secret-tool|"
   "Wi-Fi menu and network widget|nmcli|"
   "Adding and editing VPNs (the VPN menu's edit button)|nm-connection-editor|"
@@ -89,6 +88,7 @@ FEATURES=(
   "X11 apps under niri (Steam, games, older apps)|xwayland-satellite|niri"
   "X11 apps under sway (Steam, games, older apps)|Xwayland|sway"
   "Power profiles|powerprofilesctl|"
+  "Removable drives (mount, open and eject USB sticks and memory cards)|udisksctl|"
   "Browse buttons for folders and importing configs (the desktop's file picker)|xdg-desktop-portal-gtk|"
   # The login screen runs in a sway of its own, or in Hyprland where sway
   # isn't installed: with Hyprland, sway is offered on its own (recommended,

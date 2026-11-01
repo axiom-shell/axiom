@@ -6,6 +6,7 @@ import Quickshell
 import qs.config
 import qs.components.methods
 import qs.components.hosts.overlay
+import qs.components.surfaces.wallpaper
 
 // One screen of a screen layout (a ScreenLayout: the lock screen's, the
 // greeter's; or a DesktopLayout): the background (wallpaper or a color,
@@ -99,14 +100,12 @@ Item {
       color: root.background === "color" ? Theme.resolveColor(root.layout.backdrop.color) : Theme.background
     }
 
-    Image {
+    // With the same transitions as the wallpaper window, when the
+    // wallpaper changes while it shows (a light/dark switch while locked)
+    WallpaperView {
       anchors.fill: parent
       visible: root.background === "wallpaper"
       source: visible ? root.wallpaper : ""
-      fillMode: Image.PreserveAspectCrop
-      asynchronous: true
-      cache: false
-      sourceSize: Qt.size(root.screen?.width ?? 0, root.screen?.height ?? 0)
       layer.enabled: root.blurWallpaper
       layer.effect: MultiEffect {
         blurEnabled: true

@@ -383,6 +383,9 @@ PopoutWrapperBase {
     // HyprlandManager's layer rules)
     WlrLayershell.layer: root.windowLayer
     WlrLayershell.namespace: root.layerNamespace
+    // Its top-left on its screen, or null while unknown (a wallpaper
+    // picker's click point)
+    readonly property var screenOrigin: placeOnScreen.origin
     WlrLayershell.keyboardFocus: root.wantsKeyboardFocus || root.keyboardOnDemand ? (focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: 0

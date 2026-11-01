@@ -78,6 +78,19 @@ properties:
         default: '~/Pictures/wallpapers'
         pattern: '\S'
         description: Folder the wallpaper pickers list images from (jpg, png, bmp). A leading ~ is your home folder.
+      collection:
+        type: string
+        x-snapshot: true
+        title: Collection
+        default: ''
+        x-suggestions: wallpaperCollections
+        description: A subfolder of the wallpaper folder to pick and rotate from (its path inside it), empty for the folder itself. Also chosen in the wallpaper picker.
+      subfolders:
+        type: boolean
+        x-snapshot: true
+        title: Include subfolders
+        default: false
+        description: Also list the images in the folders inside it, at any depth.
       rotation:
         type: object
         x-snapshot: true
@@ -99,12 +112,31 @@ properties:
             enum: [random, sequential]
             x-enumLabels: {random: Random, sequential: 'In order, by name'}
             default: random
-            description: Random never picks the wallpaper already showing.
+            description: Random shuffles the folder, showing every wallpaper once before any comes back.
           sameOnAll:
             type: boolean
             title: Same on every monitor
             default: false
             description: Show one wallpaper on all monitors. Off, each monitor gets its own.
+          pause:
+            type: object
+            title: Hold the rotation
+            additionalProperties: false
+            description: While any of these holds, the wallpaper stays. Once none does and its time has passed, it changes at once.
+            properties:
+              fullscreen:
+                type: boolean
+                title: While a window is fullscreen
+                default: true
+              locked:
+                type: boolean
+                title: While the screen is locked
+                default: true
+                description: Axiom's own lock screen only; another locker isn't seen.
+              battery:
+                type: boolean
+                title: On battery
+                default: false
       variants:
         type: object
         x-snapshot: true
@@ -113,20 +145,97 @@ properties:
         additionalProperties: false
         properties: {dark: {type: string, default: ''}, light: {type: string, default: ''}}
         x-settings: false
-      backend:
+      transition:
+        x-scope: look
+        type: object
+        title: Wallpaper transition
+        additionalProperties: false
+        properties:
+          type:
+            type: string
+            title: Transition
+            enum: [random, none, fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur, clock]
+            x-enumLabels: {random: Random, none: None, fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, tiles: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur, clock: Clock}
+            default: random
+            description: How a new wallpaper replaces the old one. Random picks one from the list below each time; every monitor that changes together plays the same one. With animations off, it switches at once.
+          pool:
+            type: array
+            title: Random picks from
+            default: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur, clock]
+            items:
+              type: string
+              enum: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur, clock]
+            x-enumLabels: {fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, tiles: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur, clock: Clock}
+            x-showIf: {type: random}
+            description: The transitions Random chooses between. None ticked chooses from all of them.
+          direction:
+            type: string
+            title: Direction
+            enum: [random, right, left, down, up, downRight, downLeft, upRight, upLeft]
+            x-enumLabels: {random: Random, right: Left to right, left: Right to left, down: Top to bottom, up: Bottom to top, downRight: Top left to bottom right, downLeft: Top right to bottom left, upRight: Bottom left to top right, upLeft: Bottom right to top left}
+            default: random
+            x-showIf: {type: {not: none}}
+            description: The way a transition moves across the screen. Fade, dissolve, pixelate and blur sweep across in it too, and Clock starts its hand pointing that way. Random picks one each time.
+          position:
+            type: string
+            title: Starts from
+            enum: [random, click, center, topLeft, topRight, bottomLeft, bottomRight]
+            x-enumLabels: {random: Random, click: Where you click, center: The center, topLeft: Top left corner, topRight: Top right corner, bottomLeft: Bottom left corner, bottomRight: Bottom right corner}
+            default: random
+            x-showIf: {type: {not: none}}
+            description: Where grow, shrink, zoom, ripple, swirl and Clock start, and where fade, dissolve, pixelate and blur spread out from. Where you click starts at the thumbnail clicked in a wallpaper picker, and moving transitions move away from it; a change from anything else (rotation, light and dark) starts at random.
+          easing:
+            type: string
+            title: Pace
+            enum: [smooth, easeOut, easeIn, linear, snappy]
+            x-enumLabels: {smooth: Smooth, easeOut: Slowing down, easeIn: Speeding up, linear: Steady, snappy: Snappy}
+            default: smooth
+            x-showIf: {type: {not: none}}
+            description: How a transition speeds up and slows down over its length. Smooth starts and ends gently; Snappy covers most of the way at once and settles.
+          duration:
+            type: integer
+            title: Length
+            x-unit: ms
+            default: 1000
+            minimum: 100
+            maximum: 5000
+            description: How long a transition takes.
+      fill:
+        x-scope: look
         type: string
-        title: Wallpaper backend
-        enum: [quickshell, awww]
-        x-enumLabels: {quickshell: Axiom (built in), awww: awww}
-        default: quickshell
-        description: What draws the wallpaper. Axiom needs nothing installed and crossfades; awww (AUR) adds wipe and wave transitions.
-      daemon:
-        x-scope: machine
-        type: boolean
-        title: Start awww
-        default: true
-        description: Start awww-daemon for the wallpaper picker.
-        x-showIf: {backend: awww}
+        title: Wallpaper fit
+        enum: [crop, fit, stretch, center]
+        x-enumLabels: {crop: Fill the screen, fit: Show it whole, stretch: Stretch, center: Center at its own size}
+        default: crop
+        description: How a wallpaper that isn't the screen's shape is drawn, everywhere it shows (the desktop, lock screen, login screen and workspace overview). Around one that doesn't fill the screen is the theme's background.
+      parallax:
+        x-scope: look
+        type: object
+        title: Workspace parallax
+        additionalProperties: false
+        properties:
+          enabled:
+            type: boolean
+            title: Move with the workspaces
+            default: false
+            description: The wallpaper is drawn a little larger than the screen and slides a step with each workspace you go to, and across as you scroll along a scrolling layout's windows.
+          strength:
+            type: integer
+            title: How far
+            x-unit: '%'
+            default: 4
+            minimum: 1
+            maximum: 15
+            x-showIf: {enabled: true}
+            description: How much larger than the screen the wallpaper is drawn, and so how far it can slide.
+          workspaces:
+            type: integer
+            title: Workspaces it spans
+            default: 5
+            minimum: 2
+            maximum: 20
+            x-showIf: {enabled: true, /$supports.dynamicWorkspaces: true}
+            description: Where the compositor makes workspaces as you need them, how many it takes to slide from one end to the other. Each workspace down moves it the same step, so opening and closing windows never moves it; past the last, it stays at the end.
   font:
     x-scope: look
     type: object

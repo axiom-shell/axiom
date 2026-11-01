@@ -13,7 +13,7 @@ import (
 // pointer.
 var cornerUnsafe = []string{"clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop"}
 
-// osdOldStatuses is the default status icons before v88, which v87 wrote
+// osdOldStatuses is the default status icons before v89, which v87 wrote
 // into every OSD it split; osdAddedStatuses joined them, the toggles a
 // bind or hot corner switches with no other sign.
 var (
@@ -21,11 +21,11 @@ var (
 	osdAddedStatuses = []string{"dnd", "caffeine", "nightLight", "recording"}
 )
 
-// v88: hot corners running one of cornerUnsafe go, and so does the old
+// v89: hot corners running one of cornerUnsafe go, and so does the old
 // default bind logging out at once (SUPER + SHIFT + Escape, left as it
 // came): SUPER + Escape's power menu logs out after asking. An OSD still
 // on the old default status icons gets the new default's.
-func v88(cfg *jsonx.Object) []string {
+func v89(cfg *jsonx.Object) []string {
 	changes := dropInstantLogout(cfg)
 	changes = append(changes, dropUnsafeCorners(cfg)...)
 	return append(changes, addToggleStatuses(cfg)...)

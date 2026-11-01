@@ -390,6 +390,9 @@ QtObject {
     case "audioApps":
       // The apps playing sound now
       return AudioManager.playbackApps.map(app => app.name).filter((name, i, all) => all.indexOf(name) === i);
+    case "wallpaperCollections":
+      // The wallpaper folder's subfolders holding images
+      return WallpaperManager.collections;
     }
     return [];
   }

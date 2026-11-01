@@ -5,6 +5,9 @@ import Quickshell
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.compositor
+import qs.services.session
+import qs.services.system
 
 /*
  * What changes the look on its own. ThemeManager shows it (activeTheme,
@@ -33,9 +36,13 @@ Singleton {
 
   // A pick by hand (a wallpaper picker, the launcher): `monitor`'s
   // wallpaper (the focused one's without one), or in "variant" mode the
-  // variant's. Generates the themes from it.
-  function pick(url, monitor, variant) {
+  // variant's. Generates the themes from it. `point` ({ x, y } in screen
+  // units, optional): where it was clicked, for a transition that starts
+  // where you click.
+  function pick(url, monitor, variant, point) {
     url = url.toString();
+    if (point)
+      ThemeManager.startFrom(point);
     if (root.mode === "variant") {
       root.setVariantWallpaper(variant || (Appearance.darkMode ? "dark" : "light"), url);
       return;
@@ -67,48 +74,90 @@ Singleton {
   // rotation's in rotate mode, a new fixed one (asked for by hand) in fixed
   // mode, the shown variant's in light/dark mode (as `random` picks one).
   function next() {
-    const list = root._wallpaperList();
+    root.refresh(list => root._next(list));
+  }
+
+  // Moves on through `list`; whether anything shown changed
+  function _next(list) {
     if (list.length === 0) {
-      console.log("[WallpaperManager] No wallpapers in", Appearance.wallpaperPath);
-      return;
+      console.log("[WallpaperManager] No wallpapers in", root._listedPath);
+      return false;
     }
     if (root.mode === "variant") {
       const variant = Appearance.darkMode ? "dark" : "light";
       const current = variant === "dark" ? Appearance.darkWallpaper : Appearance.lightWallpaper;
       root.setVariantWallpaper(variant, Schedules.nextWallpaper(list, current, Appearance.rotationOrder, [], Math.random()));
-      return;
+      return true;
     }
     ThemeManager.setLastRotated(Date.now());
     const order = Appearance.rotationOrder;
     const screens = General.outputs.map(screen => screen.name);
     const wallpapers = {};
+    // Random order shuffles: each wallpaper once before any repeats
+    let bag = ThemeManager.shuffleBag;
+    const draw = (current, taken) => {
+      if (order !== "random")
+        return Schedules.nextWallpaper(list, current, order, taken, Math.random());
+      const next = Schedules.shuffleWallpaper(list, bag, current, taken, Math.random());
+      bag = next.bag;
+      return next.url;
+    };
     if (Appearance.rotationSameOnAll) {
-      const url = Schedules.nextWallpaper(list, ThemeManager.wallpaperFor(General.primaryMonitor), order, [], Math.random());
+      const url = draw(ThemeManager.wallpaperFor(General.primaryMonitor), []);
       for (const monitor of screens)
         wallpapers[monitor] = url;
     } else {
       const taken = [];
       for (const monitor of screens) {
-        const url = Schedules.nextWallpaper(list, ThemeManager.wallpaperFor(monitor), order, taken, Math.random());
+        const url = draw(ThemeManager.wallpaperFor(monitor), taken);
         taken.push(url);
         wallpapers[monitor] = url;
       }
     }
+    if (order === "random")
+      ThemeManager.setShuffleBag(bag);
     const changed = root.mode === "rotate" ? ThemeManager.showRotated(wallpapers) : ThemeManager.setWallpapers(wallpapers);
     // A generated theme follows on its own (ThemeManager.syncGeneratedTheme)
     if (!changed)
       ThemeManager.syncGeneratedTheme();
+    return changed;
+  }
+
+  // The next wallpaper (as next(), light/dark mode excepted), played with
+  // `transition` (a WallpaperTransitions name) whatever is configured:
+  // trying one out
+  function preview(transition) {
+    if (!WallpaperTransitions.names.includes(transition)) {
+      console.warn("[WallpaperManager] No transition", transition, "- one of", WallpaperTransitions.names.join(", "));
+      return;
+    }
+    if (root.mode === "variant") {
+      console.log("[WallpaperManager] No next wallpaper in light/dark mode");
+      return;
+    }
+    root.refresh(list => {
+      ThemeManager.forceTransition(transition);
+      // Nothing new to show: the next change plays the configured one
+      if (!root._next(list))
+        ThemeManager.forceTransition("");
+    });
   }
 
   // A random wallpaper of the folder, picked by hand (for the focused
   // monitor, as `pick` does)
   function random() {
-    const list = root._wallpaperList();
+    root.refresh(list => root._random(list));
+  }
+
+  function _random(list) {
     if (list.length === 0) {
-      console.log("[WallpaperManager] No wallpapers in", Appearance.wallpaperPath);
+      console.log("[WallpaperManager] No wallpapers in", root._listedPath);
       return;
     }
-    root.pick(list[Math.floor(Math.random() * list.length)], "", "");
+    // From the shuffle's round, as the rotation draws
+    const next = Schedules.shuffleWallpaper(list, ThemeManager.shuffleBag, ThemeManager.wallpaperFor(ThemeManager.monitorFor("")), [], Math.random());
+    ThemeManager.setShuffleBag(next.bag);
+    root.pick(next.url, "", "");
   }
 
   // --- The wallpaper folder (the onboarding's Look page) ---
@@ -153,28 +202,85 @@ Singleton {
     onTriggered: root.checkFolder()
   }
 
-  // --- Private ---
+  // --- The wallpapers to pick from ---
 
-  function _wallpaperList() {
-    const model = ThemeManager.wallpaperModel;
-    const list = [];
-    for (let i = 0; i < model.count; i++)
-      list.push(model.get(i, "fileUrl").toString());
-    return list;
+  // The images of the folder's collection (Appearance.wallpaper.collection,
+  // the folder itself when empty), with every folder under it when
+  // subfolders is on: file URLs, by name. Listed by the daemon on start, on
+  // a change of those settings, as the picker opens (refresh) and before
+  // each rotation, so new files show up then
+  readonly property var images: root._images
+  // The folders under the wallpaper folder holding images, as paths inside
+  // it ("trips", "trips/2024"): the collections to choose from
+  readonly property var collections: root._collections
+  readonly property string _listedPath: Appearance.wallpaperPath + (Appearance.wallpaperCollection ? "/" + Appearance.wallpaperCollection : "")
+  readonly property var _extensions: ["jpg", "jpeg", "png", "bmp"]
+  property var _images: []
+  property var _collections: []
+  property int _listings: 0
+  property var _waiting: []
+  on_ListedPathChanged: root.refresh()
+  readonly property bool _subfolders: Appearance.wallpaperSubfolders
+  on_SubfoldersChanged: root.refresh()
+
+  // Lists the images again, then calls done(images). A listing asked for
+  // meanwhile answers every caller waiting, with the newest list
+  function refresh(done) {
+    if (Paths.greeter)
+      return;
+    if (done)
+      root._waiting.push(done);
+    const listing = ++root._listings;
+    BackendManager.call("file.list", {
+      "path": root._listedPath,
+      "extensions": root._extensions,
+      "recursive": Appearance.wallpaperSubfolders
+    }, (error, result) => {
+      if (listing !== root._listings)
+        return;
+      // %, # and ? escaped first: a name holding # or ? isn't a fragment
+      // or a query
+      const images = error ? [] : result.files.map(path => Qt.resolvedUrl("file://" + path.replace(/[%#?]/g, encodeURIComponent)).toString());
+      if (JSON.stringify(images) !== JSON.stringify(root._images))
+        root._images = images;
+      const waiting = root._waiting;
+      root._waiting = [];
+      waiting.forEach(fn => fn(root._images));
+    });
+    // The collections, from the whole folder
+    BackendManager.call("file.list", {
+      "path": Appearance.wallpaperPath,
+      "extensions": root._extensions,
+      "recursive": true
+    }, (error, result) => {
+      if (listing !== root._listings)
+        return;
+      const folders = error ? [] : result.folders;
+      if (JSON.stringify(folders) !== JSON.stringify(root._collections))
+        root._collections = folders;
+    });
   }
 
   // --- Rotation ---
   onModeChanged: if (root.mode === "rotate")
     ThemeManager.setLastRotated(Date.now())
 
+  // Whether the rotation waits (Appearance.wallpaper.rotation.pause): a
+  // fullscreen window on any screen, the screen locked, on battery. Once
+  // nothing holds it and its time has passed, it moves on at once.
+  readonly property bool rotationHeld: (Appearance.rotationPauseFullscreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))) || (Appearance.rotationPauseLocked && LockManager.builtinLocked) || (Appearance.rotationPauseBattery && BatteryManager.onBattery)
+  onRotationHeldChanged: root._rotateIfDue()
+
+  function _rotateIfDue() {
+    if (root.mode === "rotate" && !root.rotationHeld && Date.now() - ThemeManager.lastRotated >= Appearance.rotationInterval)
+      root.next();
+  }
+
   property Timer _rotation: Timer {
     interval: 30000
     repeat: true
-    running: root.mode === "rotate"
-    onTriggered: {
-      if (Date.now() - ThemeManager.lastRotated >= Appearance.rotationInterval)
-        root.next();
-    }
+    running: root.mode === "rotate" && !root.rotationHeld
+    onTriggered: root._rotateIfDue()
   }
 
   // --- Light and dark by time ---
@@ -213,16 +319,25 @@ Singleton {
       root.next();
     }
 
+    function preview(transition: string): void {
+      root.preview(transition);
+    }
+
     function random(): void {
       root.random();
+    }
+  }
+
+  // A reconnected daemon (a re-exec): the folder may have changed meanwhile
+  property Connections _backend: Connections {
+    target: BackendManager
+    function onGreeted() {
+      root.refresh();
     }
   }
 
   Component.onCompleted: {
     if (ThemeManager.lastRotated === 0)
       ThemeManager.setLastRotated(Date.now());
-    // awww's daemon, unless it runs already (Appearance.wallpaperDaemon)
-    if (Appearance.wallpaperDaemon && Appearance.wallpaperBackend === "awww")
-      CommandManager.run(["sh", "-c", "command -v awww-daemon >/dev/null || exit 0; awww query >/dev/null 2>&1 || setsid -f awww-daemon >/dev/null 2>&1"], null, null, true);
   }
 }
