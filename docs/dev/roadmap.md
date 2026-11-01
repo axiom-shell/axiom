@@ -579,7 +579,7 @@ Found by the audits:
 - [LauncherManager keeps a dead clear() and a cliphist test](issues.md#launchermanager-keeps-a-dead-clear-and-a-cliphist-test)
 - [A clip's label and detail are written in both the launcher and the clipboard module](issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
 - [App scoring is written twice and the use bonus three times](issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
-- [install.sh and the AUR packages never install notify-send, gio or pactl](issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl)
+- [install.sh and the AUR packages never install notify-send, gio or pactl](issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl) (decided: `notify-send` is replaced by a daemon method in Go, not added as a dependency; maintainer, 2026-11-01)
 - [A main-channel update applied after edge moved on needs go to rebuild the binary](issues.md#a-main-channel-update-applied-after-edge-moved-on-needs-go-to-rebuild-the-binary)
 - [The onboarder's Checks-page purposes don't match their declared keys](issues.md#the-onboarders-checks-page-purposes-dont-match-their-declared-keys)
 - [The shell's unused daemon-call paths](issues.md#the-shells-unused-daemon-call-paths)
