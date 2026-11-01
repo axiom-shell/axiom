@@ -2276,13 +2276,13 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### Event titles from a feed render as styled text and load remote images
-- **Where:** `components/content/parts/calendar/MonthGrid.qml:297` (the title chips), `components/content/Calendar/Calendar.qml:86` (the compact card's label), `components/bar/widgets/NextEvent/NextEvent.qml:51` (`text`, `subtext`)
+- **Where:** `components/content/parts/calendar/MonthGrid.qml:296` (the title chips), `components/content/Calendar/Calendar.qml:86` (the compact card's label), `components/bar/widgets/NextEvent/NextEvent.qml:51` (`text`, `subtext`)
 - **What:** `StyledText` leaves `textFormat` at Text.AutoText, so a title whose first tag is HTML (`Qt::mightBeRichText`) is rendered as styled text. An `.ics` subscription is anyone's content: an event titled `<img src="https://tracker.example/p.png"> Standup` makes the shell fetch that URL whenever the month's titles, the compact Calendar card or the Next event widget show it, telling the feed's author the user's address and when they look (events are private: calendar.md › Privacy). Tested: a Qt 6 `Text` with `"9:00 <img src=\"http://127.0.0.1:18765/pixel.png\"> Standup"`, run offscreen, made `GET /pixel.png` on a local server. `EventRow` already sets `textFormat: Text.PlainText`; these three don't. Fix: `textFormat: Text.PlainText` on the chip's StyledText, and through `CompactFigure`'s label and the bar widget's text for event titles (or plain text by default in `StyledText`, rich text opted into: a wider ui-kit change).
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### Calendar results and members nothing reads
-- **Where:** `backend/internal/calendar/calendar.go:204` (`SyncResult`'s `Changed` and `Count`), `services/apps/CalendarManager.qml:40` (`busy`)
+- **Where:** `backend/internal/calendar/calendar.go:206` (`SyncResult`'s `Changed` and `Count`), `services/apps/CalendarManager.qml:41` (`busy`)
 - **What:** The shell drops `calendar.sync`'s result (`CalendarManager.sync` calls back with `{ ok: true }` only; events and errors come from events.json), so `SyncResult.Changed` and `Count` are worked out for the Go tests alone (calendar.go lines 208–209, 294, 298–300, 301 and 307: 8 lines); the tests can assert the same directly (`fake.multigets`, the occurrences in events.json, which they read already). `CalendarManager.busy` has no reader (`grep -rn 'CalendarManager.busy'`: none; 2 lines with its comment). Fix: drop the two fields and their bookkeeping (keeping `Errors`), and `busy`: 10 lines.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the calendar system
