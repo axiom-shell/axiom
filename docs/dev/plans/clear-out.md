@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02 and config-02 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02 and config-03 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -59,7 +59,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 11 | bar-popouts-02 | blocker | Done: Outside clicks never close edge and floating popouts | 1 | ~4 | none |  |
 | 12 | features-02 | blocker | Done: The 12-hour clock's hour, and the Accounts card's read-only and task-list facts | 2 | ~25 | features-01 |  |
 | 13 | config-02 | major | Done: The store's load and write safety | 3 | ~220 | config-01 | Q1 |
-| 14 | config-03 | major | The settings page's schema predicates, and takeover settings from the launcher | 4 | ~170 | none |  |
+| 14 | config-03 | major | Done: The settings page's schema predicates, and takeover settings from the launcher | 4 | ~170 | none |  |
 | 15 | config-04 | major | Editor fields and draft comparisons | 3 | ~110 | none |  |
 | 16 | config-05 | minor-sweep | Config and guardrails | 2 | ~50 | config-03, config-04 |  |
 | 17 | platform-02 | major | Locking and the greeter | 5 | ~150 | platform-01 | Q2 |
@@ -244,11 +244,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A format-2 config without a version runs every step again
   - A save overwrites an outside edit of config.json the store hasn't read yet
   - Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot
-- **config-03** (4): The two takeover entries are one fix (decided 2026-10-31).
-  - [Takeover settings go live through the settings page's preview before Save](../issues.md#takeover-settings-go-live-through-the-settings-pages-preview-before-save)
-  - [The launcher's /config can switch a takeover setting](../issues.md#the-launchers-config-can-switch-a-takeover-setting)
-  - [Changed from default never lists the bar widget style](../issues.md#changed-from-default-never-lists-the-bar-widget-style)
-  - [The condition grammar has no shared fixtures](../issues.md#the-condition-grammar-has-no-shared-fixtures)
+- **config-03** (4, done): The two takeover entries are one fix (decided 2026-10-31).
+  - Takeover settings go live through the settings page's preview before Save
+  - The launcher's /config can switch a takeover setting
+  - Changed from default never lists the bar widget style
+  - The condition grammar has no shared fixtures
 - **config-04** (3): Before compositor-16 and -17, which edit KeybindEditor's presets too.
   - [A number box keeps its typed text when the setting it edits switches under it](../issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
   - [Escape in a settings-page number box leaves the half-typed value in the draft](../issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)

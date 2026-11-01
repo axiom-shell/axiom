@@ -147,6 +147,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #279 (StandaloneBar removed), check the bar's blur and the border opening still sit right under a popout on a top, side and floating bar, and that a floating edge menu comes forward when engaged.
 - Once the shell runs #284, under sway and SwayFX reload the config (Super+Shift+C): the bars and popouts keep axiom's outer gaps (gapsOut and each output's reserved space match the look), and windows opened after the reload get axiom's blur and shadows.
 - Once the shell runs bar-popouts-02, on Hyprland and niri: a floating edge menu with Close on outside click, and the launcher attached and detached, close on a click on a window, a bar, the screen border and another monitor; a click in the edge menu's submenu (and a tray menu's) leaves it open; a pinned menu stays; with the launcher open, a click on a bar's launcher button closes it without reopening it, and one on a bar button opening the power menu or an edge menu leaves that open; with either open, hovering a bar widget whose popout takes the keyboard (Todo, Calculator, Stopwatch) opens that popout and leaves them open, and once it closes a click outside still closes them (on Hyprland they take their grab back); on Hyprland, with the launcher or the edge menu open under such a popout with its text field focused, a click on a window closes both and the window keeps the keyboard (a click back in the launcher closes both too: [known](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)).
+- Once the shell runs #287 (config-02), edit config.json by hand, then within a moment change a setting in the shell: the save is refused, the shell shows the hand edit, and the next change saves.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -462,12 +463,8 @@ Found by the audits:
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-- [The condition grammar has no shared fixtures](issues.md#the-condition-grammar-has-no-shared-fixtures)
-- [Takeover settings go live through the settings page's preview before Save](issues.md#takeover-settings-go-live-through-the-settings-pages-preview-before-save)
 - [A number box keeps its typed text when the setting it edits switches under it](issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
 - [Escape in a settings-page number box leaves the half-typed value in the draft](issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)
-- [Changed from default never lists the bar widget style](issues.md#changed-from-default-never-lists-the-bar-widget-style)
-- [The launcher's /config can switch a takeover setting](issues.md#the-launchers-config-can-switch-a-takeover-setting)
 - [A failed update check shows as up to date](issues.md#a-failed-update-check-shows-as-up-to-date)
 - [A weather fetch that fails shows Loading forever](issues.md#a-weather-fetch-that-fails-shows-loading-forever)
 - [The active media player is Spotify first and never follows playback](issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)

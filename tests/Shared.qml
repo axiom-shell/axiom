@@ -4,7 +4,8 @@ import qs.components.methods
 // The cases the JS helpers and the axiom binary (Go) must agree on
 // (tests/fixtures/shared/, docs/dev/backend/README.md › Shared fixtures):
 // SchemaValidation, which the shell still fills defaults from, against the
-// binary's config pipeline, and ConfigOps, the ops the shell's saves send
+// binary's config pipeline, SchemaLayout.showIfHolds against its condition
+// grammar (schema.Holds), and ConfigOps, the ops the shell's saves send
 // (config.set) and its pushes carry. Each op calls one
 // helper with JSON arguments and returns a JSON value; the expected output
 // is that value's exact bytes (canonical()). Tests call the helpers through
@@ -29,7 +30,8 @@ QtObject {
   // function of the compositor config helpers as "<Helper>.<function>"
   readonly property var ops: root._withHelperOps({
     "schema.applyDefaults": args => SchemaValidation.applyDefaults(args[0], args[1], args.length > 2 ? args[2] : args[1]),
-    "schema.resolveRef": args => SchemaValidation.resolveRef(args[0], args[1])
+    "schema.resolveRef": args => SchemaValidation.resolveRef(args[0], args[1]),
+    "schema.showIfHolds": args => SchemaLayout.showIfHolds(args[0], args[1])
   })
 
   // ConfigOps (config.set's ops, decoded by the binary's daemon tests) and
@@ -175,6 +177,10 @@ QtObject {
   }
   function resolveRef(schema, rootSchema) {
     return call("schema.resolveRef", [schema, rootSchema]);
+  }
+  // The condition grammar (Go: schema.Holds)
+  function showIfHolds(condition, valueOf) {
+    return call("schema.showIfHolds", [condition, valueOf]);
   }
 
   // --- recording ---

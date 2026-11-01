@@ -51,7 +51,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - Clicking a card link calls `SettingsManager.jumpTo(key)`, which unfolds the card, keeps the jump as `pendingJump` and emits `jumpRequested`.
   - The content makes the jump once the card is laid out (`SettingsContent._takeJump`): at once, after the unfold animation, or when its block settles (the page or category was just built). A jump made before the page exists still lands.
   - It scrolls to the card (`TitledCard.scrollTo`) and outlines it in the accent for a moment (`FlashOutline`); a jump to a setting (`row`) centres and outlines that row instead (`SettingsGroupCard.rowItem`).
-- The sidebar ends with **Changed from default** (`SettingsManager.changedOnly`): every setting whose draft value differs from its schema default (`nonDefaultPaths`, against `defaults`, limited to settings rows in the sections the page shows), from every category, listed like search results (`SettingsContent.listing`).
+- The sidebar ends with **Changed from default** (`SettingsManager.changedOnly`): every setting whose draft value differs from its schema default (`nonDefaultPaths`, against `defaults`, limited to settings rows in the sections the page shows, `$ref` objects such as `Bars.style` resolved), from every category, listed like search results (`SettingsContent.listing`).
   - The set is taken when the list is asked for (`SettingsManager.showChanged`, into `changedSet`; clicking it again retakes it), not followed, so a row put back to its default stays until the list is asked for again, and edits don't rebuild the cards. A search narrows it further.
 
 ### Scroll memory
