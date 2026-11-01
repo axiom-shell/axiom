@@ -1,10 +1,10 @@
 # feature:vpn
 reviewed: 97dc86d 2026-11-01  (full)
 
-Small, event-driven and documented truthfully; the doc's statements all hold. Open: the Tailscale row words every Tailscale refusal as "Couldn't connect" (red even while connected), two state fields nothing reads, and the known unseen-password-request entry.
+Small, event-driven and documented truthfully; the doc's statements all hold. Open: the Tailscale row (one entry with the Tailscale audit's two findings on it) words every Tailscale refusal as "Couldn't connect" (red even while connected), two state fields nothing reads, and the known unseen-password-request entry.
 
 ## Open findings
-- Major: [The VPN list's Tailscale row hides why Tailscale refused](../../docs/dev/issues.md#the-vpn-lists-tailscale-row-hides-why-tailscale-refused)
+- Major: [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](../../docs/dev/issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login) (filed with the Tailscale audit's two findings on the same row: one cause, `rows` building the row by its own rules)
 - Cleanup: [The VPN state's device and autoconnect fields nothing reads](../../docs/dev/issues.md#the-vpn-states-device-and-autoconnect-fields-nothing-reads)
 - Known before: [A VPN's password request can go unseen](../../docs/dev/issues.md#a-vpns-password-request-can-go-unseen)
 

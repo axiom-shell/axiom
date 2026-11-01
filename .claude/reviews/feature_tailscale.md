@@ -6,8 +6,7 @@ The Tailscale system is sound: the Go side parses, bounds and refuses as documen
 ## Open findings
 - Major: [The panel's relative times go stale while Tailscale's state stays the same](../../docs/dev/issues.md#the-panels-relative-times-go-stale-while-tailscales-state-stays-the-same)
 - Cleanup: [Tailscale carries two state fields and a guard nothing needs](../../docs/dev/issues.md#tailscale-carries-two-state-fields-and-a-guard-nothing-needs)
-- Outside: [The VPN list's Tailscale row does nothing while it needs a login with no link yet](../../docs/dev/issues.md#the-vpn-lists-tailscale-row-does-nothing-while-it-needs-a-login-with-no-link-yet)
-- Outside: [The VPN list shows Tailscale connecting or disconnecting during any Tailscale action](../../docs/dev/issues.md#the-vpn-list-shows-tailscale-connecting-or-disconnecting-during-any-tailscale-action)
+- Outside: [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](../../docs/dev/issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login) (this audit's findings that the row does nothing while it needs a login with no link yet and shows any action as connecting or disconnecting, merged into the VPN audit's entry for the same row)
 - Outside: [The Network card shows Tailscale's raw state, untranslated](../../docs/dev/issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - Known before: [Tailscale's PeerRow redraws DeviceRow without its buttons](../../docs/dev/issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
 

@@ -5,7 +5,7 @@ A small, well-layered system with true docs; Bluetooth discovery is started and 
 
 ## Open findings
 - Major: [Two Bluetooth menus share one discovery scan, and one closing stops the other's](../../docs/dev/issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
-- Major: [The join form stays incomplete after CA file is chosen and the security changed](../../docs/dev/issues.md#the-join-form-stays-incomplete-after-ca-file-is-chosen-and-the-security-changed)
+- Major: [The join form stays incomplete when CA file is picked without a file and the security changed](../../docs/dev/issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)
 - Cleanup: [net.join's first-Wi-Fi fallback is never reached](../../docs/dev/issues.md#netjoins-first-wi-fi-fallback-is-never-reached)
 
 ### NetworkingManager's IP comment still says `ip`
