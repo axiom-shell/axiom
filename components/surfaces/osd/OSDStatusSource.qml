@@ -21,10 +21,11 @@ Loader {
   // The OSD's `media` ({ enabled, onTrackChange, onPlayPause }), for "media"
   property var mediaOptions: ({})
 
-  // It changed: the user's doing, or (a VPN, the camera, a screen share)
-  // anything's. `card`: shown as its card (OSDItems.cardTypes: an audio
-  // device switched, not its mute; a VPN came up; an app started using
-  // the camera or sharing the screen)
+  // It changed: the user's doing, or (a VPN, a capture, Wi-Fi joining a
+  // network, the charger) anything's. `card`: shown as its card (a type in
+  // OSDItems.cardTypes: an audio device switched, not its mute; a VPN came
+  // up; an app started a capture; the charger was plugged in; Wi-Fi joined
+  // a network)
   signal fired(bool card)
 
   // What it shows now (OSDItems.tile; a message's is OSDContent's)
@@ -159,7 +160,8 @@ Loader {
       };
     case "vpn":
       return {
-        "available": VpnManager.available || VpnManager.rows.length > 0,
+        // Hidden with no VPN (NetworkManager running isn't one)
+        "available": VpnManager.rows.length > 0,
         "on": VpnManager.anyActive,
         "name": VpnManager.activeRows.map(r => r.name).join(", "),
         "address": VpnManager.primary?.ipv4 ?? ""

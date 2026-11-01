@@ -9,7 +9,9 @@ import qs.components.reusable
 // audio device switching, its name, what it's now used for and its
 // profile; a VPN coming up, its name, Connected and its address; apps
 // starting to use the camera or share the screen, their names and what
-// they started). OSDContent shows it as the change comes.
+// they started; the charger plugged in, the level and the time to full;
+// a Wi-Fi network joined, its name and signal). OSDContent shows it as
+// the change comes.
 OSDCard {
   id: root
 

@@ -10,10 +10,11 @@ import qs.components.methods
 // bars side by side, horizontal bars as rows, or along its edge one line
 // parallel to it, end to end when the bars run along it too) with its
 // status icons beside them, the status icons alone (a status changed, the
-// one that did highlighted), a status's card (an audio device switched,
-// an app started using the camera or sharing the screen), or the now
-// playing card. Every part is built
-// while the OSD is closed, as its items report their own changes.
+// one that did highlighted), a status's card (OSDItems.card: an audio
+// device switched, a VPN came up, an app started a capture, the charger
+// was plugged in, Wi-Fi joined a network), or the now playing card. Every
+// part is built while the OSD is closed, as its items report their own
+// changes.
 Item {
   id: root
 

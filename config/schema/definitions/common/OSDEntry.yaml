@@ -8,7 +8,7 @@ properties:
     type: string
     title: Name
     default: ''
-    description: Shown on its tab here. Empty names it by its bars.
+    description: Shown on its tab here. Empty names it by what it shows.
   enabled: {type: boolean, title: Enabled, default: true}
   screen:
     $ref: '#/definitions/ScreenTarget'

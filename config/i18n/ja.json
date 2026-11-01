@@ -1478,7 +1478,6 @@
     "Each dock has its own place, apps and behaviour.": "ドックごとに位置、アプリ、動作を設定できます。",
     "Dim by": "減光量",
     "Light and dark by time": "時間でライトとダークを切り替え",
-    "Shown on its tab here. Empty names it by its bars.": "ここのタブに表示される名前。空欄ならバーの名前になります。",
     "What draws the wallpaper. Axiom needs nothing installed and crossfades; awww (AUR) adds wipe and wave transitions.": "壁紙を描画する方法。Axiom は追加のインストールが不要でクロスフェードします。awww（AUR）はワイプやウェーブのトランジションを追加します。",
     "Lower is warmer. 6500 K is the screens' own color.": "低いほど暖色になります。6500 K が画面本来の色です。",
     "Bars": "バー",
@@ -3594,6 +3593,7 @@
     "Pomodoro start or pause": "",
     "Stopwatch lap": "",
     "Stopwatch start or pause": "",
-    "Stop pomodoro": ""
+    "Stop pomodoro": "",
+    "Shown on its tab here. Empty names it by what it shows.": ""
   }
 }
