@@ -1022,22 +1022,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### PopoutGeometry handles a phase and a submenu pair the registry never produces
-- **Where:** `components/methods/PopoutGeometry.qml:81` (`resolve`), `components/methods/PopoutGeometry.qml:120` (`resumable`), `tests/tst_PopoutGeometry.qml:115`
-- **What:** Two branches handle cases nothing produces:
-  - **The "closing" phase:** PopoutManager writes only the phases "open" and "yielded", plus "opening" through `resumable`. A grep for `"closing"` over services/, components/ and tests/ finds only PopoutGeometry's comment (line 17), lines 81 and 120, and the test.
-  - **The sibling-submenu skip** (lines 89-91, `e.kind === "submenu" && claim.parentId && e.parentId === claim.parentId`): it needs two submenu claims with one parent. A submenu's key is its parent's plus `/submenu`, with one SubPopout per host, so the only such entry is the claim itself, which line 79 already skips.
-
-  Fix: drop both `"closing"` clauses, lines 89-91, the comment's "closing" part and the test's "gone" row (about 6 lines).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### Geometry members nothing reads
-- **Where:** `components/hosts/popout/AttachedSurface.qml:330` (`sideU`), `components/hosts/popout/AttachedSurface.qml:331` (`farSideU`), `components/hosts/popout/EdgePlacement.qml:225` (`merged`), `components/methods/SurfaceOutline.qml:97` (`size`)
-- **What:** No `.sideU`/`.farSideU` read of AttachedSurface and no `.merged` read of an EdgePlacement exist. `SurfaceOutline.size` is called only by `tests/tst_SurfaceOutline.qml` (lines 146, 329), while AttachedSurface works the size out again itself. Fix: delete the three properties (3 lines). Then either AttachedSurface takes its implicit size from `SurfaceOutline.size(root._spec, root._m)`, or `size` goes (lines 95-103, 9 lines) and the tests inline it.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### SurfaceContext.layout's pill and merged results have no test row
 - **Where:** `tests/tst_SurfaceContext.qml:553` (`test_layout_between_pills`), `components/methods/SurfaceContext.qml:337` (`layout`)
 - **What:** No row pins `layout`'s result for:

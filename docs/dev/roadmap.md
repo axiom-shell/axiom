@@ -413,8 +413,6 @@ Found by the audits:
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
 - [The Updates popout's package list is frozen at opening](issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
 - [NowPlaying builds its strip layout and a second transport hidden in every mode](issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
-- [PopoutGeometry handles a phase and a submenu pair the registry never produces](issues.md#popoutgeometry-handles-a-phase-and-a-submenu-pair-the-registry-never-produces)
-- [Geometry members nothing reads](issues.md#geometry-members-nothing-reads)
 - [SurfaceContext.layout's pill and merged results have no test row](issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
 - [The tray menu's isVertical and barConfig are never read](issues.md#the-tray-menus-isvertical-and-barconfig-are-never-read)
 - [Both tray menu lists override the same width cap](issues.md#both-tray-menu-lists-override-the-same-width-cap)

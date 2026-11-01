@@ -195,9 +195,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **bar-popouts-01** (12): The layoutUpdated entry is filed Major; its fix is a pure deletion.
   - PopoutWrapperBase's aboutToDismiss signal has no listener
   - Three EdgePopout members nothing reads
-  - [PopoutGeometry handles a phase and a submenu pair the registry never produces](../issues.md#popoutgeometry-handles-a-phase-and-a-submenu-pair-the-registry-never-produces)
+  - PopoutGeometry handles a phase and a submenu pair the registry never produces
   - PillBarJoin's available repeats what joined already says
-  - [Geometry members nothing reads](../issues.md#geometry-members-nothing-reads)
+  - Geometry members nothing reads
   - [The tray menu's isVertical and barConfig are never read](../issues.md#the-tray-menus-isvertical-and-barconfig-are-never-read)
   - [Nothing listens to the bar's layoutUpdated any more](../issues.md#nothing-listens-to-the-bars-layoutupdated-any-more)
   - [StandaloneBar only wraps BarPanel's BarContainer](../issues.md#standalonebar-only-wraps-barpanels-barcontainer)
