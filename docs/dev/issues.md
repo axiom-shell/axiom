@@ -1803,6 +1803,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:notifications system
 
+### ToastStack logs a binding loop on _attachedShowing
+- **Where:** `components/surfaces/notifications/ToastStack.qml` (`_attachedShowing`)
+- **What:** The live shell logged `Binding loop detected for property "_attachedShowing"` (`@shell/Notifications.qml[42:15]`, ToastStack.qml:485) on two reloads on 2026-11-01, not on the next. `_attachedShowing` reads `attached`, `covered`, `toasts` and `_leaving`, and its change handler calls `box.show()` / `box.hide()`; one of those likely writes back a value it reads during the same evaluation. Not traced.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the OSD's statuses
+
 ### removeOnClick never removes a clicked toast's entry
 - **Where:** `components/surfaces/notifications/ToastItem.qml:116` (`close`), `components/surfaces/notifications/ToastItem.qml:357` (`NotificationText.onActivated`), `components/surfaces/notifications/ToastItem.qml:383` (`NotificationActions.onInvoked`), `components/surfaces/notifications/ToastItem.qml:393` (`NotificationReply.onSent`)
 - **What:** With `Notifications.removeOnClick` on, clicking a toast with a default action, one of its action pills, or sending its reply should take the entry out of the history (as it does in the list). But Quickshell closes a non-resident notification synchronously inside `invoke()` / `sendInlineReply()` (`notification.cpp`: `if (!this->notification->bindableResident().value()) this->notification->close(NotificationCloseReason::Dismissed);`); `closed` reaches `shell/Notifications`' `hideEverywhere`, every stack's `hide` calls the toast's `dismiss`, which starts `leave` (or sets `gone` with motion "none"), so `leaving` is already true when the handler then calls `root.close(NotificationsConfig.removeOnClick)`, whose first line is `if (root.leaving) return;`: `NotificationManager.dismiss(root.uid)` never runs and the entry stays (marked not live). Most notifications are non-resident, so the setting does nothing from toasts. Fix: dismiss before the guard: `function close(remove) { if (remove && root.uid) NotificationManager.dismiss(root.uid); if (!root.leaving) root.userClosed(); }` (dismissing an unknown uid is a no-op).

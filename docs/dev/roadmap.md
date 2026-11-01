@@ -527,6 +527,7 @@ Found by the audits:
 - [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
 - [removeOnClick never removes a clicked toast's entry](issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
+- [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
 - [The history's group and entry delegates repeat one swipe-away mechanism](issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
 - [clearAll removes each cached image twice, one process per entry](issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)

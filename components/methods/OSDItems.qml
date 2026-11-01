@@ -175,8 +175,7 @@ QtObject {
 
   // How long after a change its own knock-on changes (airplane mode
   // switching the radios, a headset taking the output then the input, a
-  // new device's mute)
-  // don't take its highlight, in ms
+  // new device's mute) don't take its highlight, in ms
   readonly property int quietWindow: 2000
 
   // Whether a change of type `incoming` takes the highlight from `shown`

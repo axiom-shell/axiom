@@ -6,8 +6,8 @@ import qs.components.reusable
 
 // An OSD's card for an audio device switch (an OSDCard): the device's
 // icon on the accent, its name, and under it what it's now used for and
-// its profile. `tile` is its status's (OSDItems.tile of outputDevice or
-// inputDevice); OSDContent shows it as the device switches.
+// its profile. `tile` is its status's (OSDItems.tile of audio or
+// microphone); OSDContent shows it as the device switches.
 OSDCard {
   id: root
 
