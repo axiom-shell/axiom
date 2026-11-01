@@ -73,7 +73,7 @@ PanelWindow {
   MouseArea {
     anchors.fill: parent
     enabled: BackdropManager.catching
-    onPressed: BackdropManager.clickedOutside(null)
+    onPressed: BackdropManager.clickedOutside(null, null)
   }
 
   // Where the compositor blurs only what a window asks: the dim, as it

@@ -120,11 +120,19 @@ PanelWindow {
     anchors.fill: parent
     z: 1
     PointHandler {
+      id: barPress
       enabled: BackdropManager.catching
       acceptedButtons: Qt.AllButtons
+      // The grabs on when it was pressed: one the click opens (a bar button
+      // opening the power menu over the launcher) isn't outside
+      property var since: []
       onActiveChanged: {
-        if (!active)
-          Qt.callLater(() => BackdropManager.clickedOutside(root));
+        if (barPress.active) {
+          barPress.since = BackdropManager.grabs;
+        } else {
+          const since = barPress.since;
+          Qt.callLater(() => BackdropManager.clickedOutside(root, since));
+        }
       }
     }
   }

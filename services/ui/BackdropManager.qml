@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import qs.services.compositor
 
 /**
  * The dim backgrounds full-screen surfaces ask for (the overlay, launcher,
@@ -52,39 +53,29 @@ QtObject {
 
   // --- Catching clicks for a focus grab the compositor doesn't have ---
 
-  // FocusGrabs without a native grab, active now (uids): every screen's
-  // backdrop window then covers its screen, transparent, under the
-  // grabbing surface, and a click on it ends their grabs. Not while a
-  // modal is up (SurfaceManager.modalShown): it covers every screen, so no
-  // click needs catching
-  property var _catchers: []
-  readonly property bool catching: root._catchers.length > 0 && !SurfaceManager.modalShown
-  // A click caught while `catching`: on a backdrop (`window` null), or on
-  // a bar above it (`window` its window), outside a grab that doesn't let
-  // input through to it (FocusGrab)
-  signal clickedOutside(var window)
-
   // Every FocusGrab active now, native grab or not (uids, oldest first)
-  property var _grabs: []
+  property var grabs: []
   // The newest of them (0 with none): only its surface asks for the
   // keyboard exclusively (FocusGrab.exclusive), and it holds Hyprland's
   // native grab (one at a time: a newer one starting clears an older one
   // with no click, which takes it back once it's the newest again)
-  readonly property int newestGrab: root._grabs.length > 0 ? root._grabs[root._grabs.length - 1] : 0
+  readonly property int newestGrab: root.grabs.length > 0 ? root.grabs[root.grabs.length - 1] : 0
+  // Some of them and no native grab: every screen's backdrop window then
+  // covers its screen, transparent, under the grabbing surface, and a
+  // click on it ends their grabs. Not while a modal is up
+  // (SurfaceManager.modalShown): it covers every screen, so no click needs
+  // catching
+  readonly property bool catching: root.grabs.length > 0 && CompositorManager.supports.focusGrab !== true && !SurfaceManager.modalShown
+  // A click caught while `catching`: on a backdrop (`window` null), or on
+  // a bar above it (`window` its window, `since` the `grabs` when it was
+  // pressed: one it opened isn't outside), outside a grab that doesn't let
+  // input through to it (FocusGrab)
+  signal clickedOutside(var window, var since)
 
   function grabbing(uid, on) {
-    if (root._grabs.includes(uid) !== on)
-      root._grabs = root._listed(root._grabs, uid, on);
-  }
-
-  function catchClicks(uid, on) {
-    if (root._catchers.includes(uid) !== on)
-      root._catchers = root._listed(root._catchers, uid, on);
-  }
-
-  // `list` with `uid` last, or without it
-  function _listed(list, uid, on) {
-    const others = list.filter(c => c !== uid);
-    return on ? others.concat([uid]) : others;
+    if (root.grabs.includes(uid) === on)
+      return;
+    const others = root.grabs.filter(g => g !== uid);
+    root.grabs = on ? others.concat([uid]) : others;
   }
 }

@@ -45,27 +45,19 @@ Scope {
 
   // A click caught outside every surface (BackdropManager.catching)
   property int _uid: 0
-  // Not before it has its id: a catcher reported under 0 would never clear
-  on_CatchingChanged: {
-    if (root._uid > 0)
-      BackdropManager.catchClicks(root._uid, root._catching);
-  }
   Component.onCompleted: {
     root._uid = BackdropManager.register();
-    BackdropManager.catchClicks(root._uid, root._catching);
     BackdropManager.grabbing(root._uid, root.active);
   }
   Component.onDestruction: {
-    if (root._uid > 0) {
-      BackdropManager.catchClicks(root._uid, false);
+    if (root._uid > 0)
       BackdropManager.grabbing(root._uid, false);
-    }
   }
   property Connections _outside: Connections {
     target: BackdropManager
     enabled: root._catching
-    function onClickedOutside(window) {
-      if (root.windows.includes(window))
+    function onClickedOutside(window, since) {
+      if (root.windows.includes(window) || (since && !since.includes(root._uid)))
         return;
       root.clickedOutside();
       root.dismissed();
