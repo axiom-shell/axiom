@@ -40,6 +40,15 @@ const (
 	BadReply Kind = "bad_reply"
 	// A bug or an unexpected system failure.
 	Internal Kind = "internal"
+	// The device or file is in use (a drive with a program open on it).
+	Busy Kind = "busy"
+	// The system's authorization (polkit) said no, or the person dismissed
+	// its prompt.
+	NotAuthorized Kind = "not_authorized"
+	// The passphrase given doesn't unlock it (an encrypted drive).
+	WrongPassphrase Kind = "wrong_passphrase"
+	// A system service failed the operation; the message is its own.
+	Failed Kind = "failed"
 )
 
 // Issue is one reason a value fails validation, at a path into it.
@@ -146,6 +155,14 @@ func RPCCode(kind Kind) int {
 		return -32009
 	case BadReply:
 		return -32010
+	case Busy:
+		return -32011
+	case NotAuthorized:
+		return -32012
+	case WrongPassphrase:
+		return -32013
+	case Failed:
+		return -32014
 	default:
 		return -32603
 	}

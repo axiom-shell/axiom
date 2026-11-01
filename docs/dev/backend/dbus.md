@@ -3,7 +3,7 @@
 > **Files:** `backend/internal/dbus/`, `backend/internal/dbus/dbustest/`, `backend/internal/unixmsg/`
 > **Related:** [The axiom binary](README.md), [Wayland protocols](wayland.md), [Roadmap](roadmap.md)
 
-The daemon's own D-Bus client: pure Go, no library, written for what axiom asks of a local bus. Idle (roadmap stage 2) is its first user: logind on the system bus, `org.freedesktop.ScreenSaver` on the session bus. Brightness (stage 3) sets backlights through logind's `Session.SetBrightness`. The services Scope lists as planned (notifications, tray, UPower, Mpris, …) build on it.
+The daemon's own D-Bus client: pure Go, no library, written for what axiom asks of a local bus. Idle (roadmap stage 2) is its first user: logind on the system bus, `org.freedesktop.ScreenSaver` on the session bus. Brightness (stage 3) sets backlights through logind's `Session.SetBrightness`. NetworkManager's VPNs (`nmvpn`) and UDisks2's removable drives (`udisks`) follow their services' signals on the system bus. The services Scope lists as planned (notifications, tray, UPower, Mpris, …) build on it.
 
 ### The connection
 - `dbus.Dial(ctx, address, Options)`:
@@ -25,6 +25,7 @@ The daemon's own D-Bus client: pure Go, no library, written for what axiom asks 
   - A subscriber more than 64 signals behind loses the newest (logged); the reader never blocks.
   - A rule's values are quoted, a `'` inside one written `'\''` (the spec's escape).
   - Helpers: `NameOwnerChanged(name)` and `PropertiesChangedMatch` / `PropertiesChanged(msg)`.
+  - Object managers (UDisks2): `GetManagedObjects(ctx, dest, path)` reads the whole tree (`ManagedObjects`: path → interface → properties), and `InterfacesAdded(msg)` / `InterfacesRemoved(msg)` read its signals. Subscribing to one `Match{Sender: name}` gets all of a service's signals in the order sent (separate subscriptions are forwarded apart, so a property change could be read before the `InterfacesAdded` of its object).
 - **Exporting:** `Export(path, Interface{Name, Methods, Signals})` answers calls until the returned func unexports.
   - Each `Method` declares `In` and `Out` signatures. A call with another signature gets `InvalidArgs`; an unknown object, interface or method gets its own error.
   - `Fn` answers at once, on the connection's one dispatch goroutine. A method whose answer waits on a person (NetworkManager's `GetSecrets`, `nmvpn`) sets `Defer` instead: it returns at once and calls `reply` later, from any goroutine; only the first reply goes out.
