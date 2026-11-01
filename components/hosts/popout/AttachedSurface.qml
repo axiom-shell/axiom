@@ -326,9 +326,7 @@ Item {
   implicitWidth: vertical ? depth : alongLength
   implicitHeight: vertical ? alongLength : depth
 
-  // Box sides and far edge (stroke centre line)
-  readonly property real sideU: _natural.sideU
-  readonly property real farSideU: _natural.farSideU
+  // Far edge (stroke centre line)
   readonly property real farV: _m.farV
   // How far in from its attach side (the backfill included) a joined end
   // covers the perpendicular stroke: its fill runs along it to the join's

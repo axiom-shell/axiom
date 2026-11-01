@@ -74,10 +74,6 @@ PopoutWrapperBase {
   // Take the keyboard when clicked, without a focus grab (content that may
   // hold a text field, e.g. an edge menu's modules)
   property bool keyboardOnDemand: false
-  // A plain rounded box a connector gap in from the edge, not joined to it:
-  // held off the edge, or on a bar with nothing to grow out of
-  // (EdgePlacement.detached)
-  readonly property bool detached: placement.detached
   property bool closeOnClickOutside: false
   // Space between the box and its content
   property real contentPadding: Appearance.borderWidth + PopoutsConfig.padding
@@ -146,7 +142,6 @@ PopoutWrapperBase {
     if (root.isOpen)
       root.engage();
   }
-  readonly property bool yielded: root.claim.yielded
   property PopoutClaim claim: PopoutClaim {
     key: root.claimKey
     kind: root.claimKind
@@ -188,7 +183,6 @@ PopoutWrapperBase {
   readonly property bool _overFullscreen: root._fullscreenLatch.value ?? false
   // Held, by `held` or over a fullscreen window
   readonly property bool holds: root.held || root._overFullscreen
-  readonly property var gaps: placement.gaps
 
   // The perpendicular edges at its start and end (ScreenEdges)
   readonly property int startSide: placement.startSide

@@ -22,7 +22,7 @@ EdgePopout {
   readonly property string menuId: root.menu.id
 
   // Held off the edge, its gaps from the frame lines across its edge and
-  // at its ends (EdgePopout.gaps)
+  // at its ends (EdgePlacement.gaps)
   held: root.menu.detached
   gap: root.menu.gap
 
