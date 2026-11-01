@@ -20,6 +20,14 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The lock screen has no settings for allowing or viewing notifications
+- **Where:** `config/schema/sections/Lockscreen.yaml`, `docs/dev/features/lockscreen.md`
+- **What:** Asked by the maintainer (2026-10-31) beside the x-lockActions decision: "there should be settings for allowing/viewing notifications as well" on the lock screen. Not designed yet.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "defer"): "defer".
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while recording the maintainer's answers to the clear-out's questions
+
 ### The chat has no slash commands to control it
 - **Where:** `components/content/parts/chat/ChatComposer.qml` (`_send`), `services/apps/ChatManager.qml` (`send`), `services/ui/LauncherCommands.qml` (`chat`), `services/ui/LauncherManager.qml` (`_chatRow`)
 - **What:** The maintainer (2026-11-01): "add chat slash commands for control to roadmap where necessary". Today the chat's composer handles no `/` input: `_send` hands the text to `ChatManager.send`, which sends `/new` to the model like any message. Outside the chat, the launcher's `@question` (`_chatRow`) and IPC `chat ask` start a new conversation with the default preset and send the question (`ChatManager.ask`); the launcher's `/chat` (alias `/ai`) opens the chat, a new conversation or a saved one; IPC `chat` also has `open`, `newChat` and `settings`. Every other control is a button only: New conversation (the header), Stop (the send button while busy), the preset and model pick (`ModelPicker`), regenerate, copy and remove a message (`ChatMessage`), rename, open and delete a conversation (`ConversationList`), attach the clipboard or a screenshot (the composer's buttons), and the provider's key (`openSettings`). Open for the plan: which of these get a command in the composer (candidates: new, stop, preset, model, regenerate, rename, delete, attach, settings, help), how they're offered (a suggestion list while typing `/`, as the launcher does), how a message really starting with `/` is sent, and whether the launcher's `/chat` takes the same commands.
@@ -47,6 +55,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### The onboarder's Integrations page is too long for one step
 - **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/session/OnboardingManager.qml` (`_pages`)
 - **What:** One step holds updates, clipboard history, idle (with its four timeouts), the lock screen, polkit, the login screen (with its install), then every theme integration with its hookups: by far the longest page, mixing decisions that take something over with optional app colours. Proposal: split it into a "System" step and an "App colours" step (a page id, and `version` stays, since nothing new is asked).
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "split it into a System step and an App colours step"): "agree - add theme page directly after integrations (so it is last before checks)".
 - **Size:** small
 - **Found:** 2026-10-30, while reworking the onboarder
 
@@ -161,6 +171,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Setting an awww wallpaper never starts awww's daemon
 - **Where:** `scripts/setWallpaper.sh`, `services/core/ThemeManager.qml` (`_showWallpaper`)
 - **What:** With `Appearance.wallpaperBackend` `awww` and no `awww-daemon` running, the script runs `awww query || awww init`, but awww has no `init` (`error: unrecognized subcommand 'init'`), so the wallpaper isn't set (`set -e` stops it). `ThemeManager` now runs the script through the daemon (`CommandManager.runDetached`, backend stage 6), so starting `awww-daemon` from it would no longer inherit qs's transparent huge pages opt-out ([memory](core/memory.md) › Transparent huge pages): only the script's `awww init` is left to fix.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "defer it to awww's removal"): "defer - awww will be taking it's own dedicated branch".
 - **Size:** small
 - **Found:** 2026-10-27, while reviewing what the shell still starts as its own children (row 9)
 
@@ -251,6 +263,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Calendar times in a Windows zone name with no VTIMEZONE read as local time
 - **Where:** `backend/internal/calendar/ical/zone.go` (`Zones.With`), `backend/internal/calendar/calendar.go` (`New`'s `Lookup`)
 - **What:** A TZID the zone database doesn't know is read only from the object's own VTIMEZONE. The Python helper this replaced (icalendar's `tzp.timezone`) also mapped a Windows zone name (`Pacific Standard Time`, about 140 of them in its `WINDOWS_TO_OLSON` table) and a "globally unique" `/vendor/…/Europe/Berlin` TZID to the IANA zone without one. An event naming such a zone with no VTIMEZONE beside it (rare: Outlook's feeds and invitations carry theirs) now shows at its wall time read as local time, off by the zones' difference. A fix is the CLDR windowsZones table and the prefix strip in `Lookup`; whether the rare case is worth the table is the maintainer's call.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "leave it logged"): "agree".
 - **Size:** small
 - **Found:** 2026-10-27, while reviewing the calendar port (roadmap row 8)
 
@@ -324,12 +338,16 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A side edge's submenus always open away from the edge
 - **Where:** `components/hosts/popout/SubmenuSide.qml` (`openToLeft`)
 - **What:** On a left or right edge a submenu always opens away from that edge (`openToLeft` is `edge === ScreenEdge.Right`), so a floating menu on the right edge opens every submenu to its left, across the menu's own content side. The maintainer finds that unexpected for a right-edge menu: which way it should open there (and whether by the box's place on screen, as top and bottom edges do) needs deciding. Seen with a `Submenu` module in a right-edge floating menu in nested niri.
+
+  **Decided** (maintainer, 2026-11-01, on a) toward the edge, b) away as now, c) by the box's place on screen; recommended c): "defer - This takes quite a bit of thought to make consistent without an option."
 - **Size:** small
 - **Found:** 2026-10-18, while checking shadow seams on side-edge menus
 
 ### A pill bar's end reach trails a sliding popout's wall
 - **Where:** `components/hosts/popout/PillBarJoin.qml`, `components/hosts/popout/EdgePlacement.qml` (`_slideLead`), `components/bar/BarContainer.qml` (`_endReach`)
 - **What:** Seen on niri with a solid bottom bar (border off) whose SystemStats popout joins the left pill bar: while the popout slides in or out, the left bar's end pill, run on to the popout's top wall, trails it by about 8px for two or three frames (below the wall while opening, above it while closing), so the two strokes and their shadows step at the left bar's inner edge. At rest they line up. Probably the other bar's window committing a frame or so after the popout's (as `AttachedSurface`'s fillet opening is taken a stroke ahead for). The end pill leads the wall by a stroke there (niri has no `supports.layerFrameSync`, `EdgePlacement._slideLead`), which helps but doesn't close the gap; sway and Hyprland move the two as one without it.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "defer"): "defer".
 - **Size:** small
 - **Found:** 2026-10-18, while fixing shadow seams where a wall runs on into another surface
 
@@ -521,7 +539,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The Hyprland Go code keeps dead and doubled helpers
 - **Where:** `backend/internal/compositor/takeover/kinds.go` (`record`), `backend/internal/compositor/takeover/takeover.go`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherLeaveLua`), `backend/internal/compositor/render/keys.go` (`UserKeyCounts`), `backend/internal/compositor/binds/hyprlua.go` (`quoteLua`), `backend/internal/daemon/compositor.go`, `backend/internal/daemon/compositorsocket.go`
-- **What:** Deletion pass, about 65 lines. `Kind.record` is true for all three kinds, so the field and its `!record` halves are dead (about 13; the `err != nil` fallback for claims older than `.axiom-claimed` stays, and whether that fallback can go too is the maintainer's call, about 6 more). `render.SwitcherLeaveLua` has no Go caller (HyprlandManager.qml hard-codes the same Lua; 1). `render.UserKeyCounts` has only `shared_test.go`'s op row as caller (the shell counts user keys itself; about 18, with its row; the op row there for BindKeys' `runtimeBinds` replays a JS function that no longer exists). `binds.quoteLua` (31 lines) is a second Lua string quoter beside `render.LuaString`; `binds` can import `render` with no cycle (moved `raw` arguments would keep raw control bytes instead of `\ddd`, which no test pins). `daemon/compositor.go` spells the anonymous `struct{ Only string }` six times (a named type, about -15). The `hyprctl setcursor` request is built twice (`manager/hypr.go`, `daemon/compositorsocket.go`): one `ipc` helper. `render.SoftShadow`, `LeaveSubmap` and `AnimationSet` are exported but used only inside `render`.
+- **What:** Deletion pass, about 65 lines. `Kind.record` is true for all three kinds, so the field and its `!record` halves are dead (about 13), and the `err != nil` fallback for claims older than `.axiom-claimed` goes too (about 6 more). `render.SwitcherLeaveLua` has no Go caller (HyprlandManager.qml hard-codes the same Lua; 1). `render.UserKeyCounts` has only `shared_test.go`'s op row as caller (the shell counts user keys itself; about 18, with its row; the op row there for BindKeys' `runtimeBinds` replays a JS function that no longer exists). `binds.quoteLua` (31 lines) is a second Lua string quoter beside `render.LuaString`; `binds` can import `render` with no cycle (moved `raw` arguments would keep raw control bytes instead of `\ddd`, which no test pins). `daemon/compositor.go` spells the anonymous `struct{ Only string }` six times (a named type, about -15). The `hyprctl setcursor` request is built twice (`manager/hypr.go`, `daemon/compositorsocket.go`): one `ipc` helper. `render.SoftShadow`, `LeaveSubmap` and `AnimationSet` are exported but used only inside `render`.
+
+  **Decided** (maintainer, 2026-11-01, on the old-claims fallback, "drop" or "keep"; recommended keep): "drop".
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -612,18 +632,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Modules inside borders aren't sized evenly
 - **Where:** `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/OverlaySlot.qml`
 - **What:** From the maintainer's notes: module sizing within borders isn't even (the space around modules framed by a border differs from side to side or between modules). Seen while reviewing the overlay system (2026-10-31), two likely causes. First, `OverlayPages` scales the whole page by `contentZoom`, so the slots' edges and `Card`'s border fall on fractional pixels and are drawn a pixel apart unevenly: `GridPlacement.rectPx` snaps each edge to a whole layout px, which only settles it at zoom 1. Snapping to whole drawn px would settle the rest. Second, `Card` doesn't pad its content (`full` fills the box), while `Panel`'s column takes `pad`, so each of the 25 `Card` modules applies `pad` itself, some once and ColorSwatch not at all. PLAUSIBLE: a screenshot at a non-1 zoom, compared with one at 100 %. Seen again while reviewing the modules system (2026-10-31): the `Card` modules padding differently are ColorSwatch (not at all), KeyboardLayout (width only), Greeting (`anchors.margins`) and Session (its own `margin`, 0 when tight); and padding also skews which layout a slot gets, since `SlotContext.compact` compares `fullMin*` with the slot padding included ([its entry](#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)).
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### High module padding clips edge menu modules
-- **Where:** `components/surfaces/edgemenu/EdgeMenuBody.qml`
-- **What:** From the maintainer's notes: on an edge menu, a module padding too high for the menu clips the modules instead of making them smaller.
-- **Size:** small
-- **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### An edge popout doesn't size itself consistently
-- **Where:** `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/EdgeSurface.qml`
-- **What:** From the maintainer's notes: an edge popout doesn't consistently size itself (the same content opens at different sizes).
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
@@ -744,6 +752,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Gaps to the edges are wider on sway than the setting says
 - **Where:** `backend/internal/compositor/render/sway.go:468` (`SwayLookLines`), `backend/internal/compositor/render/niri.go:456` (`NiriLookNodes`), `services/compositor/SwayManager.qml:38` (`gapsOut`)
 - **What:** `WindowLook.gaps.outer` is "Gaps to the edges". Hyprland writes it as `gaps_out` (the edge gap); niri's writer writes struts of `outer - inner` so its edge comes out at `outer`; the sway writer writes `"gaps inner "+inner, "gaps outer "+outer` unchanged (468-469), and sway(5) says "Outer gaps are in addition to inner gaps. To reduce or remove outer gaps, outer gaps can be set to a negative value." (sway-backend.md and `SwayManager.gapsOut` read it back as outer + inner). At the defaults (inner 3, outer 6) Hyprland and niri leave 6 px at the edge, sway 9, and Automatic bars follow the 9. niri's writer also clamps the struts at 0 (`math.Max(0, …-inner)`), so with inner 10 and outer 0 niri keeps 10 px where Hyprland keeps 0 (`niri validate` 26.04 accepts a negative strut; PLAUSIBLE that niri draws it narrower: a nested niri with inner 10, outer 0 settles it). Fix: sway writes `outer - inner` (`gaps outer`, and `gaps outer all set` live), `SwayManager.gapsOut`'s live branch becomes `_liveGaps.outer`; drop niri's `math.Max(0, …)` around the edge; regenerate the sway and niri goldens.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "accept the narrower gap (9 to 6 px at the defaults; sway matches the setting)"): "agree".
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor system
 
@@ -911,7 +921,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The bind list's flag icons carry tooltip strings nothing shows
 - **Where:** `components/views/Keybinds/BindListRow.qml:188`
-- **What:** The flags Repeater's model is `[["repeating", "repeat", I18n.tr("Repeats while held")], ["locked", "lock", I18n.tr("Works while locked")], ["release", "keyboard_capslock", I18n.tr("Fires on release")]]`, but the delegate (a bare `StyledIcon`, :190-196) reads only `modelData[1]`. "Repeats while held" and "Fires on release" are used nowhere else (grep: one hit each), so they are two dead translation keys translated into every language. Fix: either drop the third element, or show it (a `StyledToolTip` on hover). Showing it is likely the intent, since the icons alone don't explain themselves.
+- **What:** The flags Repeater's model is `[["repeating", "repeat", I18n.tr("Repeats while held")], ["locked", "lock", I18n.tr("Works while locked")], ["release", "keyboard_capslock", I18n.tr("Fires on release")]]`, but the delegate (a bare `StyledIcon`, :190-196) reads only `modelData[1]`. "Repeats while held" and "Fires on release" are used nowhere else (grep: one hit each), so they are two dead translation keys translated into every language. Fix: show it (a `StyledToolTip` on hover). Showing it is likely the intent, since the icons alone don't explain themselves.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "show them (a StyledToolTip on hover)"): "agree".
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -1526,7 +1538,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### fullMinWidth and fullMinHeight are compared with the slot's size, padding included
 - **Where:** `components/content/base/SlotContext.qml:32` (`compact`), `components/content/base/Card.qml:38` (`growHeight`), `components/content/base/Panel.qml:48` (`growHeight`), `docs/dev/overlay/writing-modules.md:24`
-- **What:** `compact` tests `(width > 0 && width < fullMinWidth) || (height > 0 && height < fullMinHeight)`, where `width`/`height` are the whole slot. Every module writes `fullMin*` as the px its content needs, with no padding: none of the 30 `fullMinHeight:` settings in `components/content` adds a pad, and Weather sets `fullMinHeight: Appearance.fontSize * 6`, the same figure as its `currentHeight`, which it compares with `innerHeight` everywhere else. So from `fullMin*` up to `fullMin* + 2 × pad` (36 px in a bordered card at the defaults) the full layout is laid into room up to 36 px short of what it asked for. Cases at font 14, normal density: Weather in a 4x1 strip 360×90 px has 54 px inside for a 72 px block, and `Card`'s clip cuts it where the compact figure would have fit. Stopwatch with the timer set at a 140 px slot has 104 px for 130 px (segment row 30, ring 56, buttons 36, spacing 8), so the ring overlaps the buttons. The strips of Calculator, ClipboardHistory, EmojiPicker, ScreenRecord, AudioMixer, Brightness and NowPlaying (`fullMinHeight` 3.5 × font = 49) have 13 px inside at 49 px for a 28–34 px row. NightLightControls and WorldClocks (2.4 × font) reach the border. `growHeight` grows a card to `fullMinHeight`, short by the same pad. Fix, in one place: in `SlotContext`, compare the room inside the full layout's padding, with `fullPad: OverlayConfig.cardPad(false, <the bare test pad uses>)` (the non-compact pad, so `compact` doesn't depend on itself): `(width > 0 && width - 2 * fullPad < fullMinWidth) || (height > 0 && height - 2 * fullPad < fullMinHeight)`. Add `2 * fullPad` in `growHeight`, and say in writing-modules.md that `fullMin*` are inner px. It is likely the cause of [High module padding clips edge menu modules](#high-module-padding-clips-edge-menu-modules) too (a higher padding shrinks the room inside while `compact` still sees the whole slot): fix them together.
+- **What:** `compact` tests `(width > 0 && width < fullMinWidth) || (height > 0 && height < fullMinHeight)`, where `width`/`height` are the whole slot. Every module writes `fullMin*` as the px its content needs, with no padding: none of the 30 `fullMinHeight:` settings in `components/content` adds a pad, and Weather sets `fullMinHeight: Appearance.fontSize * 6`, the same figure as its `currentHeight`, which it compares with `innerHeight` everywhere else. So from `fullMin*` up to `fullMin* + 2 × pad` (36 px in a bordered card at the defaults) the full layout is laid into room up to 36 px short of what it asked for. Cases at font 14, normal density: Weather in a 4x1 strip 360×90 px has 54 px inside for a 72 px block, and `Card`'s clip cuts it where the compact figure would have fit. Stopwatch with the timer set at a 140 px slot has 104 px for 130 px (segment row 30, ring 56, buttons 36, spacing 8), so the ring overlaps the buttons. The strips of Calculator, ClipboardHistory, EmojiPicker, ScreenRecord, AudioMixer, Brightness and NowPlaying (`fullMinHeight` 3.5 × font = 49) have 13 px inside at 49 px for a 28–34 px row. NightLightControls and WorldClocks (2.4 × font) reach the border. `growHeight` grows a card to `fullMinHeight`, short by the same pad. Fix, in one place: in `SlotContext`, compare the room inside the full layout's padding, with `fullPad: OverlayConfig.cardPad(false, <the bare test pad uses>)` (the non-compact pad, so `compact` doesn't depend on itself): `(width > 0 && width - 2 * fullPad < fullMinWidth) || (height > 0 && height - 2 * fullPad < fullMinHeight)`. Add `2 * fullPad` in `growHeight`, and say in writing-modules.md that `fullMin*` are inner px. It is also the cause of a note merged into this entry (row 20 triage, 2026-11-01; it was "High module padding clips edge menu modules", filed 2026-10-28 from the maintainer's notes): "on an edge menu, a module padding too high for the menu clips the modules instead of making them smaller". A higher padding shrinks the room inside while `compact` still sees the whole slot; once fixed, check it in an edge menu with module borders on and a high padding.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 
@@ -1635,7 +1647,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   **Decided** (maintainer, 2026-10-31): "use reccomendation as described. Everything that has an action now keeps it (unless it actually is dangerous, but everything now should be okay). Note in that there should be settings for allowing/viewing notifications as well". Fix: a schema annotation on module types, `x-lockActions: [session | media | volume]` (Power `[session]`, NowPlaying `[media]`, VolumeDials `[volume]`). `check_structure` maps each action to the service methods it covers (`session`: `SessionManager.sessionAction`; `media`: `MediaManager.togglePlayPause|next|previous|setPositionByRatio|selectPlayer`; `volume`: `AudioManager.toggleMute|toggleSourceMute|stepNodeVolume`) and fails any `XManager.method(` call in a type whose hosts include `lockscreen` that is neither read-only (a small allowlist: `acquire`, `release`, `formatTime`, `wants`, …) nor covered. A call site that gates itself carries `// lock-inert: <reason>`. Both docs point at the annotation instead of listing modules. Breaking fixture: a lockscreen module calling `CommandManager.run`. Every module that acts today keeps its actions, VolumeDials' volume step included.
 
-  Also asked (maintainer, 2026-10-31): "there should be settings for allowing/viewing notifications as well" on the lock screen. Not designed yet.
+  Also asked: lock screen notification settings, filed and deferred as [The lock screen has no settings for allowing or viewing notifications](#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications).
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 
@@ -1768,6 +1780,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot
 - **Where:** `backend/internal/saved/saved.go:367` (`keep`), `backend/internal/saved/saved.go:386` (`plan`), `backend/internal/saved/saved.go:247` (`modified`), `backend/internal/saved/saved.go:639` (`apply`), `backend/internal/store/store.go:400` (`loadInitial`)
 - **What:** When config.json doesn't load at the start, the store runs on the defaults (`s.config = s.opts.Pipeline.Defaults()`, store.go:400) and `Store.Config()` hands them out. The saved service checks `Blocked` only in `Changed` (line 233), before it makes "My setup". `modified()` compares `Snapshot(defaults)` with the active snapshot's baseline, so it's true, and `plan()` returns the active snapshot. Scenario: a dotfiles merge conflict breaks config.json at login, and the active snapshot is "Work". The store's refusal tells the user to fix it or restore a saved config. On the Saved configs card, Restore "Home" says "Your changes are saved to "Work" first" (`keepHint`). Confirming runs `keep`, which writes the defaults' snapshot parts over `saved/Work.json`, so the user's last copy of that setup is gone. Applying an example, an import, a community setup or the defaults does the same, and so does the active row's Overwrite. The apply also takes the machine settings from `current` (`share.Apply(sch, current, …)`), which are the defaults, so monitors, accounts and theme integrations reset too. The store already keeps the file's takeovers apart for this case (`fileTakeovers`); nothing does the same for snapshots. Fix: the store says when it runs on the defaults (e.g. `State.Defaults`, set and cleared with `fileTakeovers`). While it's set, `modified()` is false, `keep`/`plan` save nothing and `saved.save` refuses. Whether an apply over a broken file should carry the file's machine settings (as far as it loaded) is for the plan.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "b) apply the snapshot with default machine settings"): "agree".
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the config system
 
@@ -2018,6 +2032,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### With Idle on and the user's own locker left at loginctl lock-session, nothing locks
 - **Where:** `backend/internal/lockscreen/lockscreen.go:181` (`Locker.ownLocker`), `backend/internal/idle/idle.go:489` (`logindOnce`), `services/session/LockManager.qml:88` (`lock`), `components/views/Settings/IdleStatusCard.qml:43` (`detail`), `config/schema/sections/Lockscreen.yaml:21`
 - **What:** `Lockscreen.lockCommand` defaults to `loginctl lock-session` (meant for a user's own idle daemon), and `ownLocker` refuses that command, so with `Lockscreen.mode` `none`, `Idle.enabled` on and the command left at its default: (1) every idle lock step, logind lock request and lock before sleep fails with only a daemon warning (`idle: an action failed`, `idle: locking before sleep`), while the dim, screen-off and suspend steps still run, so the machine idles into suspend unlocked; (2) a lock button runs `loginctl lock-session` (`LockManager.lock`), logind sends `Lock`, the daemon (Idle on) calls `Locker.Lock`, which refuses again: the button does nothing. The Idle card meanwhile says "axiom dims, locks and turns the screens off on these settings, and locks before the computer sleeps." Nothing in the UI joins the two settings (`grep -rn lockCommand --include=*.qml`: only `LockManager.lock` and the reader). Fix: the Idle card's `detail` (and status colour) warns when `Idle.enabled && LockscreenConfig.mode === "none"` and `lockCommand` is empty or `loginctl lock-session`: "Your own locker's command is loginctl lock-session, which comes back to axiom: nothing locks. Set the Lock command to your locker." Open (maintainer): whether the lock steps should also leave the plan in that state, so the card can say "doesn't lock" instead of a failure in the log.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "yes: the daemon also leaves the plan in a 'doesn't lock' state, so the card shows it as a status"): "agree".
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the security system
 
@@ -2030,6 +2046,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Power repeats the session actions' icons, labels and confirm
 - **Where:** `components/content/Power/Power.qml:25` (`_info`), `services/session/SessionManager.qml:16` (`sessionActionInfo`), `components/surfaces/powermenu/PowerMenuWindow.qml:35` (`run`), `components/content/QuickActions/QuickActions.qml:185` (`run`)
 - **What:** `Power._info` (Power.qml:25-41, 17 lines) restates `SessionManager.sessionActionInfo`'s icons (`bedtime`, `restart_alt`, `power_settings_new`) and `SessionManager.destructiveActions` (`confirm` true for reboot and poweroff), with other words for the same actions ("Restart" / "Shut down" on the lock screen and greeter, "Reboot" / "Power off" in the power menu, QuickActions and launcher). And the press-twice gate (an `armed` string, a 3000 ms `disarm` Timer, "arm unless already armed, else run") is written out three times: `Power.press` and its Timer (Power.qml:44-65), `PowerMenuWindow.run` and `disarm` (:35-44, :82-86), `QuickActions.run` and `disarm` (:185-190, :226-230). Fix: Power reads `SessionManager.sessionActionInfo(action)` and `SessionManager.destructiveActions` (drops `_info`: 17 lines), and one small non-visual `ConfirmGate` (`armed`, `timeout`, `pass(key, needsConfirm)`) replaces the three gates. Open (maintainer): which words the session actions use everywhere ("Restart" / "Shut down" or "Reboot" / "Power off").
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "a) 'Restart' / 'Shut down'"): "agree".
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the security system
 
@@ -2171,7 +2189,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A dock beside another edge's reserving dock is laid out as if that dock weren't there
 - **Where:** `components/surfaces/dock/DockWindow.qml:470` (`margins`), `components/surfaces/dock/DockWindow.qml:102` (`length`), `components/hosts/popout/EdgePlacement.qml:161` (`innerStart`)
 - **What:** A dock window is a Normal-exclusion layer anchored to both ends of its edge, so the compositor starts it past every exclusive zone at those ends, another dock's included (an always-shown, reserving left dock for a bottom dock). Its layout along the edge doesn't: `length` is `placement.innerEnd - placement.innerStart`, and EdgePlacement's inner sides are `ScreenEdgeManager.reservedWithMenusOn` (bars and integrated menus, no docks). Its margins along the edge are only `-root.startStrokeInset` / `-root.endStrokeInset`. EdgePopout, under the same compositor rule, reaches past docks there (`-root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "left")`, EdgePopout.qml:414–415; comment "Docks reserving space inside the border don't push it in: it reaches past them, on its own edge and at both ends"). So with a reserving left dock of zone Z, the bottom dock's box is drawn Z px right of where `centre`/`insetStart`/`insetEnd` put it in a window Z px shorter than `length`: at `position` 100, or a dock as long as the edge, its far end runs Z px past the window and is cut off, and an attached dock's start end is worked out as joining the border's left stroke while it actually sits past the left dock. The trigger and intellihide rect (`DockManager.reservedOf`, the compositor's reserved) follow the shifted box, not the computed one. Which dock is pushed depends on the compositor's order when both reserve. PLAUSIBLE: settle in a nested session with a left reserving dock and a bottom dock at position 100. Open product question: should a dock keep clear of another edge's dock at its ends (subtract those zones from its inner sides, the box beside it) or reach past it as edge popouts do (the margins above, the box may meet the corner under it)?
-  Fix: either way, make the layout and the window agree: reaching past, subtract `DockManager.zoneOn(<screen>, <end side>)` in the along-edge margins as EdgePopout does (2 lines, the dock's own edge excluded); keeping clear, give EdgePlacement the docks' zones on the perpendicular edges.
+  Fix: make the layout and the window agree: reaching past, subtract `DockManager.zoneOn(<screen>, <end side>)` in the along-edge margins as EdgePopout does (2 lines, the dock's own edge excluded).
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "b) reach past it as edge popouts do"): "agree".
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:dock system
 
@@ -2206,6 +2226,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Skipping a focus session counts it as finished
 - **Where:** `services/apps/PomodoroManager.qml:72` (`skip`), `components/methods/PomodoroCycle.qml:87` (`advance`), `components/bar/widgets/Pomodoro/Pomodoro.qml:36`
 - **What:** `skip()` calls `PomodoroCycle.advance`, which counts `completed + 1` whenever the phase was `work`, whether it ran out or was skipped. The doc and PomodoroCycle's header define `completed` as focus sessions *finished* ("Every `longBreakEvery`-th finished focus session is followed by a long break"). A right click on the idle Pomodoro widget (its skip) therefore counts a session that never started, lights a dot, and with `autoStartBreaks` (default on) starts a 5-minute break running; four stray right clicks bring a long break. Question for the maintainer: should a skipped focus session count (some apps count it), not count, or count only once started? Fix (if it shouldn't count): give `advance` a `finished` flag (true from `_finish`, false from `skip`) that gates the `+ 1`, with a `tst_PomodoroCycle` row.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "c) count only if the session had started"): "agree".
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
@@ -2230,6 +2252,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### PomodoroDial redraws DialControls' ring and buttons
 - **Where:** `components/content/parts/PomodoroDial.qml:28` (`TimeRing`), `components/content/parts/PomodoroDial.qml:58` (buttons), `components/content/Pomodoro/Pomodoro.qml:39` (`dialSize`)
 - **What:** `DialControls` (shared by the timer, caffeine and the stopwatch since #262) is "a TimeRing over (or beside, `horizontal`) three round buttons", sized to its card with `fill`. PomodoroDial builds the same thing by hand: a TimeRing (lines 28–35, 8 lines), stop / play-pause / skip FlatIconButtons (58–82, 25), its own `horizontal` / `dialSize` / grid columns (17–18, 24–26, 5), and Pomodoro.qml works out the dial size and width test itself (32, 39, 2): 40 lines. So the pomodoro's buttons look and size differently from the other three dials, and lack the keyboard (Space) they have. Fix: PomodoroDial becomes a `DialControls` (`leftIcon: "stop"`, `leftEnabled: !idle`, `mainIcon` play/pause, `rightIcon: "skip_next"`, `color: phaseColor`, `fill` from the card) with the session dots and the task picker under it, about 20 lines; Pomodoro.qml drops its dial sizing. The dots and picker then sit under the ring rather than beside it in a wide card. About 20 lines net.
+
+  **Decided** (maintainer, 2026-11-01, on the recommendation "accept: the dots and picker move under the ring in a wide card"): "agree".
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
