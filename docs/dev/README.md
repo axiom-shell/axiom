@@ -197,6 +197,7 @@ docs/dev/       developer docs
 - [brightness](features/brightness.md): backlight / DDC, the module, OSD bars.
 - [networking-bluetooth](features/networking-bluetooth.md): Wi-Fi, wired, Bluetooth.
 - [vpn](features/vpn.md): NetworkManager's VPNs and Tailscale in one list, the secret agent.
+- [drives](features/drives.md): removable drives through udisks2: the plug-in notification or mount, open, unlock, eject.
 - [tailscale](features/tailscale.md): the `tailscale` topic, Connect / Disconnect, the widget, popout and module.
 - [idle](features/idle.md): hypridle and idle inhibit.
 - [lock-keys](features/lock-keys.md): Caps Lock / Num Lock / Scroll Lock from the keyboard LEDs (the `lockKeys` topic), the password fields' warning, the LockKeys widget.

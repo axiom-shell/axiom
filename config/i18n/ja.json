@@ -3653,6 +3653,7 @@
     "Stacked puts the count over how many are mounted.": "",
     "Mounted": "",
     "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, or safe to remove after an eject. Messages are what `axiom ipc osd message <icon> <text>` sends.": "",
-    "Eject a removable drive": ""
+    "Eject a removable drive": "",
+    "Removable drives (udisks2: mounting, ejecting, unlocking)": ""
   }
 }

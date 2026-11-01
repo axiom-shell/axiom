@@ -76,14 +76,18 @@ QtObject {
   }
 
   // The volume a shown one acts as: an unlocked container's cleartext
-  // volume (a stand-in when the state doesn't list it yet), else itself
+  // volume, else itself. The daemon reports the cleartext's filesystem
+  // and mount points on the container, so when the cleartext isn't
+  // listed it's the container's own, under the cleartext's id
   function effective(drive, volume) {
     if (!volume?.encrypted || !volume.unlocked || !volume.cleartextId)
       return volume ?? null;
     return (drive?.volumes ?? []).find(v => v.id === volume.cleartextId) ?? {
       "id": volume.cleartextId,
       "label": volume.label,
-      "mountPoints": [],
+      "fsType": volume.fsType,
+      "size": volume.size,
+      "mountPoints": volume.mountPoints ?? [],
       "mountable": true,
       "encrypted": false
     };

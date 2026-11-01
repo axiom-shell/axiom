@@ -119,6 +119,15 @@ TestCase {
     const v = DriveInfo.effective(d, d.volumes[0]);
     compare(v.id, "clear", "not listed yet: a stand-in");
     compare(DriveInfo.action(d, d.volumes[0]), "mount");
+    const mounted = drive([vol("luks", {
+        "encrypted": true,
+        "unlocked": true,
+        "cleartextId": "clear",
+        "mountable": false,
+        "mountPoints": ["/run/media/u/x"]
+      })]);
+    compare(DriveInfo.action(mounted, mounted.volumes[0]), "open", "the container reports its cleartext's mount points");
+    compare(DriveInfo.mountPoint(mounted), "/run/media/u/x");
   }
 
   function test_action() {

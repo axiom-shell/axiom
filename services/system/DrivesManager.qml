@@ -86,11 +86,11 @@ QtObject {
     switch (kind) {
     case "busy":
       return I18n.tr("In use: close the files and apps using it");
-    case "not-authorized":
+    case "not_authorized":
       return I18n.tr("Not allowed");
-    case "wrong-passphrase":
+    case "wrong_passphrase":
       return I18n.tr("Wrong passphrase");
-    case "not-found":
+    case "not_found":
       return I18n.tr("The drive is gone");
     case "unavailable":
       return I18n.tr("udisks isn't running");
@@ -197,7 +197,7 @@ QtObject {
       "id": id,
       "passphrase": passphrase
     }, (error, result) => {
-      if (error?.kind === "wrong-passphrase") {
+      if (error?.kind === "wrong_passphrase") {
         root._settle(drive, "drives.unlock", null);
         root.unlockError = root.errorText(error.kind);
         return;

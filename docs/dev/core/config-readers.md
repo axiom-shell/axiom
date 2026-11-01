@@ -39,6 +39,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` 
 - **`EdgeMenusConfig`**: edge menus.
 - **`IconsConfig`**, **`ChatConfig`**, **`ThemeIntegrations`**.
 - **`TailscaleConfig`**: what every Tailscale widget and module shares: the poll `interval`, `showOffline` peers, the Connect/Disconnect `actions`.
+- **`DrivesConfig`**: what plugging in a removable drive does and the drives left alone: `onInsert`, `openAfterMount`, `ignore`.
 - **`VpnConfig`**: what every VPN widget and module shares: `notifyOnDrop`, `showTailscale` (Tailscale as a VPN row), `publicIpUrl`.
 - **`CustomWidgetsConfig`**: the custom widgets (`items`, `byId`, `definition(id)`), read through a JSON string so an unrelated change doesn't notify ([custom widgets](../features/custom-widgets.md)).
 - **`CommunitySetups`**: whether the gallery is on, and its catalog URL ([Community setups](../features/community-setups.md)).

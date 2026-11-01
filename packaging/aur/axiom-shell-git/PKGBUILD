@@ -37,6 +37,7 @@ optdepends=(
   'ddcutil: brightness keys and OSD bar (external monitors over DDC/CI)'
   'wlsunset: night light (niri)'
   'power-profiles-daemon: power profiles'
+  'udisks2: removable drives (mount, open and eject USB sticks and memory cards)'
   'xdg-desktop-portal-gtk: browse buttons for folders and importing configs'
   'greetd: axiom as the login screen (set up from Settings → Login screen)'
   'greetd-agreety: axiom as the login screen (its text fallback)'

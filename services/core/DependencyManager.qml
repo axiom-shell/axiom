@@ -76,6 +76,7 @@ Singleton {
   // I18n.tr("The system's sound in screen recordings")
   // I18n.tr("Annotating screenshots (swappy works too)")
   // I18n.tr("Power profiles in the quick actions")
+  // I18n.tr("Removable drives (udisks2: mounting, ejecting, unlocking)")
   // I18n.tr("Calendar accounts and feeds")
   // I18n.tr("The login screen's compositor (Hyprland works too)")
   readonly property var tools: [
@@ -138,6 +139,10 @@ Singleton {
     {
       "command": "powerprofilesctl",
       "purpose": "Power profiles in the quick actions"
+    },
+    {
+      "command": "udisksctl",
+      "purpose": "Removable drives (udisks2: mounting, ejecting, unlocking)"
     },
     // What the login screen runs in (greeter-session.sh): sway, else
     // Hyprland
