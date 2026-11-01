@@ -14,6 +14,7 @@ This doc covers the shared host pieces in `components/hosts/popout/`, how a bar 
   - `xAlign`/`yAlign` say which part of the box sits at that point.
   - It fades in, once granted its `PopoutClaim` (`claimKey`; its footprint is its box where it's placed).
   - Used by the detached launcher and the window switcher.
+- **Closing on an outside click** (`closeOnClickOutside`: the launcher, a floating edge menu with `close.onOutsideClick`): `FloatingPopout` and `EdgePopout` close on their `FocusGrab`'s `dismissed`, a real click only, never its `cleared`. So a popout opened by hover that takes the keyboard (Todo, Calculator, Stopwatch), another surface's grab starting or a polkit prompt closing leaves them open. A click on a bar closes them too; on sway and niri the bar reports it once released (`BarPanel`), after the click's own action, so the bar's launcher button closes the launcher rather than closing and reopening it.
 - **`SlideAnimation`.**
 - **`AttachedSurface`:** the content box, connector and `CornerPiece` fillets that make a popout look like it grows out of a bar or the screen border. `edge` is a `ScreenEdge`.
   - **Attached:**

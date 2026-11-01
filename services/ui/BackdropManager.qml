@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import qs.services.compositor
 
 /**
  * The dim backgrounds full-screen surfaces ask for (the overlay, launcher,
@@ -52,23 +53,31 @@ QtObject {
 
   // --- Catching clicks for a focus grab the compositor doesn't have ---
 
-  // FocusGrabs without a native grab, active now (uids, oldest first,
-  // kept while a modal is up so their order outlives it): every screen's
-  // backdrop window then covers its screen, transparent, under the
-  // grabbing surface, and a click on it ends their grabs. Not while a
-  // modal is up (SurfaceManager.modalShown): it covers every screen, so no
-  // click needs catching
-  property var _catchers: []
-  readonly property bool catching: root._catchers.length > 0 && !SurfaceManager.modalShown
-  // The catcher that started last (0 with none): only its surface asks for
-  // the keyboard exclusively (FocusGrab.exclusive)
-  readonly property int newestCatcher: root._catchers.length > 0 ? root._catchers[root._catchers.length - 1] : 0
-  signal clickedOutside
+  // Every FocusGrab active now, native grab or not (uids, oldest first),
+  // but one a click ended under a newer native grab (FocusGrab)
+  property var grabs: []
+  // The newest of them (0 with none): only its surface asks for the
+  // keyboard exclusively (FocusGrab.exclusive), and it holds Hyprland's
+  // native grab (one at a time: a newer one starting clears an older one
+  // with no click, which takes it back once it's the newest again)
+  readonly property int newestGrab: root.grabs.length > 0 ? root.grabs[root.grabs.length - 1] : 0
+  // Some of them and no native grab: every screen's backdrop window then
+  // covers its screen, transparent, under the grabbing surface, and a
+  // click on it ends their grabs. Not while a modal is up
+  // (SurfaceManager.modalShown): it covers every screen, so no click needs
+  // catching
+  readonly property bool catching: root.grabs.length > 0 && CompositorManager.supports.focusGrab !== true && !SurfaceManager.modalShown
+  // A click caught while `catching`: on a backdrop (`window` null), or on
+  // a bar above it (`window` its window, `since` the `grabs` when it was
+  // pressed: one it opened isn't outside), outside a grab that doesn't let
+  // input through to it (FocusGrab). On Hyprland, a click that cleared the
+  // newest grab's native grab (both null): outside the older grabs too
+  signal clickedOutside(var window, var since)
 
-  function catchClicks(uid, on) {
-    if (root._catchers.includes(uid) === on)
+  function grabbing(uid, on) {
+    if (root.grabs.includes(uid) === on)
       return;
-    const others = root._catchers.filter(c => c !== uid);
-    root._catchers = on ? others.concat([uid]) : others;
+    const others = root.grabs.filter(g => g !== uid);
+    root.grabs = on ? others.concat([uid]) : others;
   }
 }
