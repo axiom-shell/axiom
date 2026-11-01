@@ -19,9 +19,8 @@ QtObject {
   // The setups of a parsed index.json, each checked and given
   // `compatible` (its config version is one `currentVersion` reads):
   // [{ id, title, author, description, about, tags, tested, fonts, theme,
-  // configVersion, compatible, wallpaper, updated, page, files }], where
-  // files are { config, theme?, wallpaper?, screenshot, thumb } of
-  // { path, sha256, size }. Malformed entries are left out; null when the
+  // compatible, wallpaper, page, files }], where files are { config,
+  // theme?, wallpaper?, screenshot, thumb } of { path, sha256 }. Malformed entries are left out; null when the
   // index isn't one this axiom reads.
   function parse(index, currentVersion) {
     if (!_isObject(index) || index.format !== root.format || !Array.isArray(index.setups))
@@ -74,14 +73,12 @@ QtObject {
       "tested": strings(entry.tested).filter(name => root._compositors.includes(name)),
       "fonts": strings(entry.fonts),
       "theme": text(entry.theme),
-      "configVersion": entry.configVersion,
       "compatible": entry.configVersion >= 1 && entry.configVersion <= currentVersion,
       "wallpaper": checked.wallpaper && wallpaper ? {
         "license": text(wallpaper.license),
         "source": text(wallpaper.source),
         "credit": text(wallpaper.credit)
       } : null,
-      "updated": text(entry.updated),
       "page": /^https:\/\/github\.com\//.test(text(entry.page)) ? entry.page : "",
       "files": checked
     };
@@ -97,8 +94,7 @@ QtObject {
       return null;
     return {
       "path": value.path,
-      "sha256": value.sha256,
-      "size": Number.isInteger(value.size) ? value.size : 0
+      "sha256": value.sha256
     };
   }
 

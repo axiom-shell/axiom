@@ -559,7 +559,6 @@ Found by the audits:
 - [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)
 - [Turning the gallery on while its card is shown leaves it empty](issues.md#turning-the-gallery-on-while-its-card-is-shown-leaves-it-empty)
 - [community.fetch isn't sent again after a daemon re-exec, and blanks every thumbnail](issues.md#communityfetch-isnt-sent-again-after-a-daemon-re-exec-and-blanks-every-thumbnail)
-- [CommunityCatalog's setups carry three fields nothing reads](issues.md#communitycatalogs-setups-carry-three-fields-nothing-reads)
 - [The apply's wallpaper rides in a property instead of the callback](issues.md#the-applys-wallpaper-rides-in-a-property-instead-of-the-callback)
 - [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
 - [Clicking an older capture's notification opens the newest capture](issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)

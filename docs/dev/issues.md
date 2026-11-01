@@ -2000,12 +2000,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the community-setups system
 
-### CommunityCatalog's setups carry three fields nothing reads
-- **Where:** `components/methods/CommunityCatalog.qml:77` (`_setup`), `components/methods/CommunityCatalog.qml:84` (`_setup`), `components/methods/CommunityCatalog.qml:101` (`_file`)
-- **What:** `configVersion` (only used to compute `compatible` on the line after), `updated` and each file's `size` are copied into the parsed setups, but no reader exists: `grep -rn '\.updated\b\|\.size\b\|\.configVersion'` over the manager, the card, LauncherConfigBrowser and tst_CommunityCatalog finds none. Fix: drop the three lines and their names from `parse`'s comment (`compatible` reads `entry.configVersion` already). 3 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the community-setups system
-
 ### The apply's wallpaper rides in a property instead of the callback
 - **Where:** `services/apps/CommunitySetupsManager.qml:172` (`_applyWallpaper`), `services/apps/CommunitySetupsManager.qml:140` (`apply`)
 - **What:** `apply` stores the wallpaper file in `_applyWallpaper` only for `_finishApply` to read it from the callback it starts; its comment ("set once SavedConfigsManager has applied it") is also wrong (it's set before the download). Fix: `root._fetch(downloads, fetched => root._finishApply(fetched.failures, wallpaper))` and `_finishApply(failures, wallpaper)`: removes the property with its comment (3 lines) and the assignment (1). 4 lines.
