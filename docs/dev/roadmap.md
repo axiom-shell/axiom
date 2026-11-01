@@ -231,7 +231,6 @@ Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` 
 
 Resolves:
 - [A protocol bump in dev mode leaves the installed CLI on the old protocol](issues.md#a-protocol-bump-in-dev-mode-leaves-the-installed-cli-on-the-old-protocol)
-- [The calendar doc's Files header leaves out its page](issues.md#the-calendar-docs-files-header-leaves-out-its-page)
 - [AGENTS.md's funnel rule doesn't name FileManager.write and watch](issues.md#agentsmds-funnel-rule-doesnt-name-filemanagerwrite-and-watch)
 - [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 
@@ -604,6 +603,15 @@ Found by the audits:
 - [Dead and forwarding members in the timer services and helpers](issues.md#dead-and-forwarding-members-in-the-timer-services-and-helpers)
 - [PomodoroDial redraws DialControls' ring and buttons](issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
 - [Focus and Pomodoro build the parts their properties turn off](issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)
+- [The Accounts card reads read-only and task-list facts from config entries that never hold them](issues.md#the-accounts-card-reads-read-only-and-task-list-facts-from-config-entries-that-never-hold-them)
+- [A Calendar card on the desktop or in an edge menu takes the page's request](issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
+- [A save conflict reloads nothing, so trying again conflicts again](issues.md#a-save-conflict-reloads-nothing-so-trying-again-conflicts-again)
+- [Moving a recurring event to another calendar drops its earlier occurrences and exceptions](issues.md#moving-a-recurring-event-to-another-calendar-drops-its-earlier-occurrences-and-exceptions)
+- [Enter in the editor's title saves again while busy and picks All events while asking](issues.md#enter-in-the-editors-title-saves-again-while-busy-and-picks-all-events-while-asking)
+- [Removing a CalDAV account deletes its password before the draft is saved](issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
+- [Event titles from a feed render as styled text and load remote images](issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
+- [Calendar results and members nothing reads](issues.md#calendar-results-and-members-nothing-reads)
+- [The Accounts card's fallbacks for a renamed key and for empty account ids](issues.md#the-accounts-cards-fallbacks-for-a-renamed-key-and-for-empty-account-ids)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
