@@ -250,8 +250,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Changed from default never lists the bar widget style
   - The condition grammar has no shared fixtures
 - **config-04** (3): Before compositor-16 and -17, which edit KeybindEditor's presets too.
-  - [A number box keeps its typed text when the setting it edits switches under it](../issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
-  - [Escape in a settings-page number box leaves the half-typed value in the draft](../issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)
+  - A number box keeps its typed text when the setting it edits switches under it
+  - Escape in a settings-page number box leaves the half-typed value in the draft
   - [Restoring a saved keybind preset marks every bind new, and Revert deletes it](../issues.md#restoring-a-saved-keybind-preset-marks-every-bind-new-and-revert-deletes-it)
 - **config-05** (2):
   - [After a refused save, a draft's edits show unsaved but not live](../issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
