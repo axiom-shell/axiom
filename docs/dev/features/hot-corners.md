@@ -1,14 +1,14 @@
 # Hot corners
 
-> **Files:** `config/HotCornersConfig.qml`, `backend/internal/compositor/manager/niri.go` (`managedText`), `backend/internal/migrate/steps/v82.go`, `shell/HotCorners.qml`, `services/ui/ShellManager.qml` (`runAction`), `components/methods/BindActions.qml` (`ipcCall`)
+> **Files:** `config/HotCornersConfig.qml`, `backend/internal/compositor/manager/niri.go` (`managedText`), `backend/internal/migrate/steps/v82.go`, `backend/internal/migrate/steps/v88.go`, `shell/HotCorners.qml`, `services/ui/ShellManager.qml` (`runAction`), `components/methods/BindActions.qml` (`ipcCall`)
 > **Config:** `HotCorners.items` (reader `HotCornersConfig`)
 > **Related:** [ShellManager and screen targeting](../core/shell-manager-targeting.md), [Keybinds](../hyprland/keybinds.md), [Layer arrangement](../compositor/layer-arrangement.md), [niri backend](../compositor/niri-backend.md)
 
 axiom's own hot corners, drawn by the shell, so they work the same on every compositor. None are set by default, so nothing is mapped until one is.
 
 ### Config (`HotCorners` section, Overlay & Popouts)
-- `items[]`: `id`, `corner` (`topLeft` | `topRight` | `bottomLeft` | `bottomRight`), `action` with its `argument`, `screen` (a `ScreenTarget`: every monitor, the primary one or named ones), `delay` (ms, 0 by default, as niri's corner fires at once).
-- `action` is any axiom action: the keybind table's `ipcActions` (`backend/internal/compositor/actions/table.json`), or `exec` with a command (`x-scopeIf` makes that item `commands`). `tst_BindActions` checks the enum and the argument's `x-showIf` against the table.
+- `items[]`: `id`, `corner` (`topLeft` | `topRight` | `bottomLeft` | `bottomRight`), `action` with its `argument` and `call` (toggle, open or close, for the actions with `calls` in the table, as a bind's), `screen` (a `ScreenTarget`: every monitor, the primary one or named ones), `delay` (ms, 0 by default, as niri's corner fires at once).
+- `action` is an axiom action: the keybind table's `ipcActions` (`backend/internal/compositor/actions/table.json`), or `exec` with a command (`x-scopeIf` makes that item `commands`). A corner fires on a stray pointer, so it leaves out the actions that lose state or move a window with no sign: clearing notifications, moving the window to a workspace (all four), resetting the stopwatch or timer and stopping the pomodoro (config v88 removed corners set to one). `tst_BindActions` checks the enum (the table's less those), the argument's and the call's `x-showIf` against the table, and that the labels are the Keybinds page's.
 - The generated form shows the list as one card (`x-wide`).
 
 ### Windows (`shell/HotCorners`)

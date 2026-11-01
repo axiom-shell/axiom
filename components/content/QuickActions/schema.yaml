@@ -26,6 +26,22 @@ settings:
         - reboot
         - poweroff
         - pin
+      x-enumLabels:
+        wifi: Wi-Fi
+        bluetooth: Bluetooth
+        caffeine: Caffeine
+        dnd: Do not disturb
+        darkMode: Dark mode
+        nightLight: Night light
+        powerSaver: Power saver
+        brightness: Brightness
+        lock: Lock
+        suspend: Suspend
+        hibernate: Hibernate
+        logout: Log out
+        reboot: Reboot
+        poweroff: Power off
+        pin: Pin open
   labels:
     type: string
     title: Names

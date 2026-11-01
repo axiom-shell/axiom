@@ -48,7 +48,7 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
   - An immediate `screen` capture must report back too.
 
 ### Recording
-Recording lives in the service, not in the card, because the overlay destroys the card when it closes.
+Recording lives in the service, not in the card, because the overlay destroys the card when it closes. IPC `screenRecord` (`toggle` / `enable` / `disable` / `status`; binds, hot corners, `axiom record`) says on the OSD that wf-recorder is missing instead of doing nothing (`_canRecord`).
 
 **Pick-based (`toggleRecording()`):**
 - Opens the same picker with kind `record`. That kind has no save or annotate controls.

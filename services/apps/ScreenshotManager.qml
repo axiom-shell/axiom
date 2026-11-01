@@ -515,15 +515,25 @@ QtObject {
     }
   }
 
+  // Whether a recording can start; says why not on the OSD (a bind's or
+  // `axiom record`'s start, which has no button to grey out)
+  function _canRecord() {
+    if (root.recording || root.hasRecorder)
+      return true;
+    ShellManager.refuse("screen_record", I18n.tr("Screen recording"), I18n.tr("Needs wf-recorder"));
+    return false;
+  }
+
   property IpcTarget _recordIpc: IpcTarget {
     target: "screenRecord"
 
     function toggle(): void {
-      root.toggleRecording();
+      if (root._canRecord())
+        root.toggleRecording();
     }
 
     function enable(): void {
-      if (!root.recording)
+      if (!root.recording && root._canRecord())
         root.startRecording();
     }
 

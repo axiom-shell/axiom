@@ -5,6 +5,7 @@ import Quickshell.Services.Pipewire
 
 import qs.config
 import qs.services.core
+import qs.services.ui
 import qs.components.methods
 
 // Pipewire audio state: the default output (sink) and input (source), every
@@ -78,8 +79,12 @@ QtObject {
       root.toggleSourceMute();
     }
 
+    // Says so on the OSD with only one output to switch to
     function nextOutput(): void {
-      root.nextOutput();
+      if (root.sinks.length < 2)
+        ShellManager.refuse("speaker", I18n.tr("Audio output"), I18n.tr("No other output to switch to"));
+      else
+        root.nextOutput();
     }
   }
 
@@ -131,6 +136,34 @@ QtObject {
 
   function toggleSourceMute() {
     toggleNodeMute(defaultSource);
+  }
+
+  function setSourceMuted(muted) {
+    if (defaultSource?.audio)
+      defaultSource.audio.muted = muted;
+  }
+
+  // The microphone on or off (keybind action toggleMicMute with its call):
+  // enable unmutes it
+  property IpcTarget _micIpc: IpcTarget {
+    target: "microphone"
+
+    function toggle(): void {
+      root.toggleSourceMute();
+    }
+
+    function enable(): void {
+      root.setSourceMuted(false);
+    }
+
+    function disable(): void {
+      root.setSourceMuted(true);
+    }
+
+    // Whether it's on (unmuted)
+    function status(): bool {
+      return !root.sourceMuted;
+    }
   }
 
   function setSourceVolume(value, max = 1.0) {

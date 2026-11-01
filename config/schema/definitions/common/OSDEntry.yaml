@@ -216,7 +216,7 @@ properties:
           micUse: record_voice_over
           screenShare: screen_share
           message: chat
-        default: [capsLock, numLock, keyboardLayout, microphone, audio]
+        default: [capsLock, numLock, keyboardLayout, microphone, audio, dnd, caffeine, nightLight, recording]
         description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, and Charger one with the battery level when plugged in. Messages are what `axiom ipc osd message <icon> <text>` sends.'
       quiet:
         type: array

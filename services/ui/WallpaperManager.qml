@@ -65,15 +65,17 @@ Singleton {
 
   // The next wallpaper of the folder now, and the timer starts over: the
   // rotation's in rotate mode, a new fixed one (asked for by hand) in fixed
-  // mode. Light/dark mode has none.
+  // mode, the shown variant's in light/dark mode (as `random` picks one).
   function next() {
-    if (root.mode === "variant") {
-      console.log("[WallpaperManager] No next wallpaper in light/dark mode");
-      return;
-    }
     const list = root._wallpaperList();
     if (list.length === 0) {
       console.log("[WallpaperManager] No wallpapers in", Appearance.wallpaperPath);
+      return;
+    }
+    if (root.mode === "variant") {
+      const variant = Appearance.darkMode ? "dark" : "light";
+      const current = variant === "dark" ? Appearance.darkWallpaper : Appearance.lightWallpaper;
+      root.setVariantWallpaper(variant, Schedules.nextWallpaper(list, current, Appearance.rotationOrder, [], Math.random()));
       return;
     }
     ThemeManager.setLastRotated(Date.now());

@@ -21,7 +21,6 @@ properties:
       - {id: super-escape, key: SUPER + Escape, action: powerMenu}
       - {id: super-ctrl-l, key: SUPER + CTRL + L, action: lock}
       - {id: super-ctrl-r, key: SUPER + CTRL + R, action: restartShell, release: true}
-      - {id: super-shift-escape, key: SUPER + SHIFT + Escape, action: exitSession, release: true}
       - {id: super-return, key: SUPER + Return, action: terminal}
       - {id: super-q, key: SUPER + Q, action: terminal}
       - {id: super-e, key: SUPER + E, action: fileManager}

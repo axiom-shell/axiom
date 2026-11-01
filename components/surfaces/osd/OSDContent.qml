@@ -12,7 +12,8 @@ import qs.components.methods
 // status icons beside them, the status icons alone (a status changed, the
 // one that did highlighted), a status's card (OSDItems.card: an audio
 // device switched, a VPN came up, an app started a capture, the charger
-// was plugged in, Wi-Fi joined a network), or the now playing card. Every
+// was plugged in, Wi-Fi joined a network, a message came), or the now
+// playing card. Every
 // part is built while the OSD is closed, as its items report their own
 // changes.
 Item {
@@ -49,7 +50,7 @@ Item {
   property bool _changedCard: false
 
   // Every status's tile (OSDItems.tile) by type, as its source reports it;
-  // a message's from the last one
+  // a message's from the last one (shown as its card, never in the row)
   property var tiles: ({})
   // The sources by type, and the types a click on their icon flips (a
   // recording's only while it runs)
@@ -60,10 +61,7 @@ Item {
   property string _held: ""
   // The status icons shown with the bars (what's unusual, every one, or
   // none) and alone (the change too)
-  readonly property var _types: root.changed === "message" && !root.statusTypes.includes("message") ? root.statusTypes.concat(["message"]) : root.statusTypes
-  // Every type the row may show: its statuses, and a message as one comes
-  readonly property var _allTypes: root.statusTypes.includes("message") ? root.statusTypes : root.statusTypes.concat(["message"])
-  readonly property var rowTypes: OSDItems.rowTypes(root._types, root.tiles, root._previewAll ? "all" : root.osd.statuses.row, root.changed !== "" ? root.changed : root._held)
+  readonly property var rowTypes: OSDItems.rowTypes(root.statusTypes, root.tiles, root._previewAll ? "all" : root.osd.statuses.row, root.changed !== "" ? root.changed : root._held)
   // Show on the icons alone with none to show as they are (nothing
   // unusual): every one, not an empty OSD, until it closes
   property bool _previewAll: false
@@ -72,15 +70,17 @@ Item {
   // as it switches, a VPN's as it comes up, an app's as it starts using
   // the camera or sharing the screen, the battery's as it's plugged in, a
   // network's as Wi-Fi joins it
-  // (unless its cards are off: then the icons)
+  // (unless its cards are off: then the icons), and a message's always
   readonly property bool cards: root.osd.statuses.cards
-  readonly property bool hasCards: root.cards && OSDItems.cardTypes.some(type => root.statusTypes.includes(type))
+  // It may show a message (it lists Messages, or one was sent to it by id)
+  readonly property bool _hasMessages: root.statusTypes.includes("message") || root.changed === "message"
+  readonly property bool hasCards: (root.cards && OSDItems.cardTypes.some(type => root.statusTypes.includes(type))) || root._hasMessages
   // What the card shows (OSDItems.card), its role translated
   // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Stopped using the camera") I18n.tr("Stopped using the microphone") I18n.tr("Stopped sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in")
   readonly property var cardContent: {
     const card = OSDItems.card(root._cardType, root.tiles, root.statusTypes);
     return card ? Object.assign(card, {
-      "role": I18n.tr(card.role)
+      "role": card.role !== "" ? I18n.tr(card.role) : ""
     }) : null;
   }
   // The status the card shows (its type): kept past the OSD
@@ -164,13 +164,14 @@ Item {
     // A quiet change with the OSD shut is never seen
     if (!force && !root.hostOpen)
       return;
-    const card = withCard === true && root.cards;
+    const card = withCard === true && (root.cards || OSDItems.alwaysCard(type));
     if (root.changed !== "" && !OSDItems.replaces(root.changed, type, Date.now() - root._changedAt, root.tiles, root._changedCard, card === true))
       return;
     root.changed = type;
     root._changedAt = Date.now();
     root._changedCard = card === true;
-    if (!(root.hostOpen && root.shown === "level")) {
+    // A message's card shows over the bars too: its text is the point
+    if (!(root.hostOpen && root.shown === "level") || OSDItems.alwaysCard(type)) {
       if (card === true)
         root._cardType = type;
       root._shown = card === true ? "card" : "status";
@@ -183,7 +184,7 @@ Item {
   function preview() {
     root.changed = "";
     root._shown = root.levelItems.length > 0 ? "level" : root.statusTypes.length > 0 ? "status" : "media";
-    root._previewAll = root._shown === "status" && OSDItems.rowTypes(root._types, root.tiles, root.osd.statuses.row, "").length === 0;
+    root._previewAll = root._shown === "status" && OSDItems.rowTypes(root.statusTypes, root.tiles, root.osd.statuses.row, "").length === 0;
   }
 
   // The bars with the icons beside them, or the icons alone
@@ -231,12 +232,11 @@ Item {
       id: row
       visible: root.rowTypes.length > 0
       Layout.alignment: Qt.AlignCenter
-      allTypes: root._allTypes
+      allTypes: root.statusTypes
       types: root.rowTypes
       tiles: root.tiles
       changed: root.changed
       vertical: root.edgeVertical
-      hasCaption: root._types.includes("message")
       toggleable: root.toggleable
       onToggled: type => root.toggle(type)
     }
@@ -289,14 +289,16 @@ Item {
   Connections {
     target: ShellManager
 
-    function onOsdMessage(id, icon, text) {
+    function onOsdMessage(id, icon, text, detail, tone) {
       if (id !== root.osd.id)
         return;
       root._setTile("message", OSDItems.tile("message", {
         "icon": icon,
-        "text": text
+        "text": text,
+        "detail": detail,
+        "tone": tone
       }));
-      root.showStatus("message", !root.osd.statuses.quiet.includes("message"));
+      root.showStatus("message", !root.osd.statuses.quiet.includes("message"), true);
     }
 
     function onShowOsd(id) {

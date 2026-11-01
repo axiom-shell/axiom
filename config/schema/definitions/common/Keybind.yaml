@@ -114,7 +114,7 @@ properties:
       powerMenu: Power menu
       lock: Lock
       toggleDnd: Do not disturb
-      clearNotifications: Clear notifications
+      clearNotifications: Clear all notifications
       idleInhibit: Caffeine
       nightLight: Night light
       nextWallpaper: Next wallpaper
@@ -142,15 +142,15 @@ properties:
       toggleGroup: Toggle window group
       windowSwitcher: Switch windows
       windowSwitcherReverse: Switch windows backwards
-      mouseDrag: Drag window (mouse button)
-      mouseResize: Resize window (mouse button)
+      mouseDrag: Drag window with the mouse
+      mouseResize: Resize window with the mouse
       toggleSpecial: Toggle special workspace
       moveToSpecial: Move window to special workspace
       restartShell: Restart axiom
       volumeUp: Volume up
       volumeDown: Volume down
-      toggleMute: Mute
-      toggleMicMute: Mute microphone
+      toggleMute: Toggle mute
+      toggleMicMute: Toggle microphone
       brightnessUp: Brightness up
       brightnessDown: Brightness down
       mediaPlayPause: Play/Pause
@@ -184,12 +184,12 @@ properties:
       exec: Run a command
       pseudo: Pseudotile window
       toggleSplit: Toggle split direction
-      stripSwapColumn: 'Strip: swap column'
-      stripWider: 'Strip: widen column'
-      stripNarrower: 'Strip: narrow column'
-      stripFit: 'Strip: fit visible columns'
-      stripConsume: 'Strip: join or leave a column'
-      stripCenter: 'Strip: center column'
+      stripSwapColumn: Swap strip column
+      stripWider: Widen strip column
+      stripNarrower: Narrow strip column
+      stripFit: Fit visible strip columns
+      stripConsume: Join or leave a strip column
+      stripCenter: Center strip column
       raw: Compositor command
     default: launcher
   argument:
@@ -240,6 +240,8 @@ properties:
         - wifi
         - bluetooth
         - screenRecord
+        - toggleMicMute
+        - toggleDnd
   compositor:
     type: string
     title: Compositor

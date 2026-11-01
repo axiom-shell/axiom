@@ -122,6 +122,10 @@ var all = []Step{
 	{Version: 86, Run: v86},
 	// v87: an OSD's items split into bars, statuses and media (v87.go)
 	{Version: 87, Run: v87},
+	// v88: hot corners that ran an action a corner no longer offers went,
+	// and the old default bind that logged out at once; OSDs on the old
+	// default status icons got the new default's (v88.go)
+	{Version: 88, Run: v88},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

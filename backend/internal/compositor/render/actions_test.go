@@ -15,7 +15,7 @@ func TestDescriptionFor(t *testing.T) {
 		bind *jsonx.Object
 		want string
 	}{
-		{jsonx.Obj("action", "closeWindow"), "Window: Close"},
+		{jsonx.Obj("action", "closeWindow"), "Window: Close window"},
 		{jsonx.Obj("action", "closeWindow", "description", "Kill it"), "Window: Kill it"},
 		{jsonx.Obj("action", "closeWindow", "description", "Mine: Kill it"), "Mine: Kill it"},
 	} {

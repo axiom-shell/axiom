@@ -78,7 +78,7 @@ TestCase {
       "available": true,
       "on": false
     });
-    compare([capsOff.on, capsOff.slash, capsOff.notable], [false, true, false], "off: struck through");
+    compare([capsOff.on, capsOff.slash, capsOff.notable], [false, false, false], "off: unlit, only a mute is struck through");
     verify(!OSDItems.tile("numLock", {
       "available": true,
       "on": true
@@ -121,7 +121,7 @@ TestCase {
       "icon": "",
       "device": "44"
     });
-    compare([device.icon, device.name, device.detail, device.device, device.on, device.slash, device.caption, device.notable, device.hidden], ["volume_up", "AudioBox Go", "Analog Stereo", "44", true, false, "", false, false], "lit, no caption");
+    compare([device.icon, device.name, device.detail, device.device, device.on, device.slash, device.notable, device.hidden], ["volume_up", "AudioBox Go", "Analog Stereo", "44", true, false, false, false], "lit");
     compare([OSDItems.tile("audio", {
         "muted": true,
         "device": "44"
@@ -160,7 +160,7 @@ TestCase {
     const dndOff = OSDItems.tile("dnd", {
       "on": false
     });
-    compare([dndOff.icon, dndOff.slash], ["do_not_disturb_on", true], "off: the same icon, struck through");
+    compare([dndOff.icon, dndOff.on, dndOff.slash], ["do_not_disturb_on", false, false], "off: the same icon, unlit");
     verify(OSDItems.tile("wifi", {
       "available": true,
       "on": false
@@ -181,14 +181,27 @@ TestCase {
       "icon": "",
       "text": "Saved"
     });
-    compare([message.icon, message.caption, message.hidden], ["chat", "Saved", false]);
+    compare([message.icon, message.name, message.detail, message.tone, message.hidden], ["chat", "Saved", "", "", false]);
+    const refusal = OSDItems.tile("message", {
+      "icon": "nightlight",
+      "text": "Night light",
+      "detail": "Not available here",
+      "tone": "warning"
+    });
+    compare([refusal.name, refusal.detail, refusal.tone], ["Night light", "Not available here", "warning"], "a refusal");
+    const card = OSDItems.card("message", {
+      "message": refusal
+    }, []);
+    compare([card.icon, card.title, card.role, card.detail, card.tone], ["nightlight", "Night light", "", "Not available here", "warning"], "its card, its two lines");
+    verify(OSDItems.alwaysCard("message"));
+    verify(!OSDItems.alwaysCard("audio"), "the others follow the OSD's detail cards");
     verify(OSDItems.tile("message", {}).hidden, "none yet");
     verify(OSDItems.tile("bogus", {}).hidden);
   }
 
   function test_tile_base_icons() {
-    // An off state is a slash over the base icon, never an icon's own off
-    // form, so every one looks the same
+    // Off is the base icon unlit (a mute struck through), never an icon's
+    // own off form, so every one looks the same
     const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message", "vpn", "recording", "camera", "micUse", "screenShare"];
     for (const type of types) {
       for (const on of [true, false]) {
@@ -221,7 +234,7 @@ TestCase {
       "on": false,
       "name": "Home"
     });
-    verify(down.slash && !down.notable);
+    verify(!down.on && !down.slash && !down.notable);
     compare(down.name, "", "no name while down: the tooltip says off");
     verify(OSDItems.tile("vpn", {
       "available": false
@@ -246,7 +259,7 @@ TestCase {
     const share = OSDItems.tile("screenShare", {
       "apps": []
     });
-    verify(share.slash && !share.notable && !share.hidden);
+    verify(!share.on && !share.slash && !share.notable && !share.hidden);
     compare(share.icon, "screen_share");
   }
 
@@ -371,7 +384,7 @@ TestCase {
     compare(OSDItems.rowTypes(types, tiles, "notable", ""), ["capsLock"]);
     compare(OSDItems.rowTypes(types, tiles, "notable", "dnd"), ["capsLock", "dnd"], "the change, in its place");
     compare(OSDItems.rowTypes(types, tiles, "all", ""), ["capsLock", "numLock", "dnd"], "not hidden ones, nor a message");
-    compare(OSDItems.rowTypes(types, tiles, "all", "message"), ["capsLock", "numLock", "dnd", "message"]);
+    compare(OSDItems.rowTypes(types, tiles, "all", "message"), ["capsLock", "numLock", "dnd"], "a message is a card, never a tile");
     compare(OSDItems.rowTypes(types, tiles, "changed", "numLock"), ["numLock"]);
     compare(OSDItems.rowTypes(types, tiles, "changed", ""), []);
     compare(OSDItems.rowTypes([], tiles, "all", ""), []);
@@ -385,6 +398,10 @@ TestCase {
     verify(OSDItems.replaces("airplane", "bluetooth", OSDItems.quietWindow), "the user's own toggle later");
     verify(OSDItems.replaces("wifi", "airplane", 0), "airplane mode always shows");
     verify(OSDItems.replaces("airplane", "capsLock", 0));
+    verify(!OSDItems.replaces("message", "capsLock", 300, {}, true, false), "a message's card stays to be read");
+    verify(OSDItems.replaces("message", "message", 300, {}, true, true), "another message");
+    verify(OSDItems.replaces("message", "audio", 300, {}, true, true), "another card");
+    verify(OSDItems.replaces("message", "capsLock", OSDItems.quietWindow, {}, true, false), "later");
 
     const headset = {
       "audio": OSDItems.tile("audio", {

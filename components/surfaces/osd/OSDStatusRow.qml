@@ -8,9 +8,9 @@ import qs.components.reusable
 
 // An OSD's status icons: one tile per status shown (OSDItems.rowTypes), in
 // a line along its edge. A tile is its icon (or short label: a layout's
-// code) in a rounded square, filled while on, faint and struck through
-// (SlashedIcon) while off; the one that just changed is the accent and
-// pops in, its caption (a message's text) beside the line.
+// code) in a rounded square: on the accent while on, faint while off (a
+// mute also struck through: SlashedIcon). The one that just changed is
+// ringed and pops in. A message never shows here: it's a card.
 // Hovered, a tile lightens and names itself and its state; one in
 // `toggleable` is clicked to flip it (`toggled`).
 Item {
@@ -26,19 +26,14 @@ Item {
   property string changed: ""
   // Runs top to bottom (along a left or right edge)
   property bool vertical: false
-  // It may show a caption (the OSD shows messages)
-  property bool hasCaption: false
   // The types a click flips
   property var toggleable: []
 
   signal toggled(string type)
 
   readonly property int tileSize: Widget.px(40)
-  readonly property int captionWidth: Widget.px(280)
-  // Its largest size across the edge, whatever it shows (OSDContent.maxDepth):
-  // a tile, and along a left or right edge a caption at its widest
-  readonly property real maxDepth: root.vertical && root.hasCaption ? Math.max(root.tileSize, root.captionWidth) : root.tileSize
-  readonly property string caption: root.changed !== "" ? (root.tiles[root.changed]?.caption ?? "") : ""
+  // Its largest size across the edge, whatever it shows (OSDContent.maxDepth)
+  readonly property real maxDepth: root.tileSize
 
   // As a string, so an edit elsewhere in the OSD doesn't rebuild the tiles
   readonly property string _allKey: root.allTypes.join(",")
@@ -70,7 +65,7 @@ Item {
         // I18n.tr("{0}: on") I18n.tr("{0}: off") I18n.tr("{0}: {1}") I18n.tr("{0}: {1}, muted")
         readonly property string tip: {
           const name = OSDConfig.nameOf(tile.modelData);
-          const value = tile.t.caption || tile.t.name || tile.t.label;
+          const value = tile.t.name || tile.t.label;
           if (tile.t.name && tile.t.slash)
             return I18n.tr("{0}: {1}, muted", name, value);
           if (value)
@@ -84,9 +79,13 @@ Item {
         Layout.preferredHeight: root.tileSize
         Layout.alignment: Qt.AlignCenter
         radius: Widget.radius
-        readonly property color fill: tile.current ? Theme.accent : tile.t.on ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
-        color: !area.containsMouse ? tile.fill : tile.current ? Qt.lighter(Theme.accent, 1.15) : Theme.backgroundAlt
+        readonly property bool lit: tile.t.on === true
+        readonly property color fill: tile.lit ? Theme.accent : Qt.alpha(Theme.backgroundHighlight, 0)
+        color: !area.containsMouse ? tile.fill : tile.lit ? Qt.lighter(tile.fill, 1.15) : Theme.backgroundAlt
         ColorGlide on color {}
+        border.width: tile.current ? Widget.px(2) : 0
+        // The foreground, not borderFocus: that is the accent in most themes
+        border.color: Theme.foreground
 
         // Pops in as it becomes the change
         onCurrentChanged: {
@@ -103,8 +102,8 @@ Item {
           easing.type: Easing.OutBack
         }
 
-        readonly property color ink: tile.current ? Theme.background : Theme.foreground
-        readonly property real inkOpacity: tile.current || tile.t.on ? 1 : 0.45
+        readonly property color ink: tile.lit ? Theme.background : Theme.foreground
+        readonly property real inkOpacity: tile.current || tile.lit ? 1 : 0.45
 
         SlashedIcon {
           anchors.centerIn: parent
@@ -145,17 +144,6 @@ Item {
           }
         }
       }
-    }
-
-    StyledText {
-      visible: root.caption !== ""
-      Layout.alignment: Qt.AlignCenter
-      Layout.maximumWidth: root.captionWidth
-      Layout.leftMargin: root.vertical ? 0 : Widget.spacing
-      text: root.caption
-      textSize: Appearance.fontSizeLarge
-      elide: Text.ElideRight
-      maximumLineCount: 1
     }
   }
 }

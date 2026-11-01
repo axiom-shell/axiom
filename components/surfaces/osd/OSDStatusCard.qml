@@ -10,8 +10,9 @@ import qs.components.reusable
 // profile; a VPN coming up, its name, Connected and its address; apps
 // starting to use the camera or share the screen, their names and what
 // they started; the charger plugged in, the level and the time to full;
-// a Wi-Fi network joined, its name and signal). OSDContent shows it as
-// the change comes.
+// a Wi-Fi network joined, its name and signal; a message, its text and
+// second line, on the warning colour for a refusal). OSDContent shows it
+// as the change comes.
 OSDCard {
   id: root
 
@@ -23,7 +24,7 @@ OSDCard {
 
   picture: Rectangle {
     radius: Widget.radius
-    color: Theme.accent
+    color: root.card.tone === "warning" ? Theme.warning : Theme.accent
 
     StyledIcon {
       anchors.centerIn: parent

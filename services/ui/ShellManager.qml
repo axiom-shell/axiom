@@ -10,7 +10,7 @@ import qs.services.compositor
 QtObject {
   id: root
 
-  signal openPowerMenu
+  signal togglePowerMenu
   signal toggleAppLauncher
   signal toggleOverlay
   signal toggleWorkspaceOverlay
@@ -54,23 +54,45 @@ QtObject {
   // Opens an OSD by id where it would open for a change (the settings
   // page's Show button)
   signal showOsd(string id)
-  // Shows a line of text on an OSD (`axiom ipc osd message`): the OSD of
+  // Shows a message card on an OSD (`axiom ipc osd message`): the OSD of
   // that id (OSDConfig.messageOsd picks it), where it would open for a
-  // change
-  signal osdMessage(string id, string icon, string text)
+  // change; `text` its title, `detail` a faint second line ("" for none),
+  // `tone` "warning" for a refusal (refuse()), else ""
+  signal osdMessage(string id, string icon, string text, string detail, string tone)
+
+  // A message on the OSD showing messages (the first with a Messages
+  // item, else the first)
+  function message(icon, text, detail) {
+    root.osdMessage(OSDConfig.messageOsd(""), icon, text, detail ?? "", "");
+  }
+
+  // The same on the warning colour: what a bind, hot corner or `axiom`
+  // command that can't run here says instead of nothing. `icon` the base
+  // one of what was refused ("nightlight", never "nightlight_off"),
+  // `title` what ("Night light"), `detail` why ("Not available here")
+  function refuse(icon, title, detail) {
+    root.osdMessage(OSDConfig.messageOsd(""), icon, title, detail, "warning");
+  }
 
   property IpcTarget _osdIpc: IpcTarget {
     target: "osd"
 
-    // On the OSD showing messages (the first with a Messages item, else
-    // the first)
     function message(icon: string, text: string): void {
-      root.osdMessage(OSDConfig.messageOsd(""), icon, text);
+      root.message(icon, text, "");
+    }
+
+    // With a faint second line under the text
+    function messageDetail(icon: string, text: string, detail: string): void {
+      root.message(icon, text, detail);
     }
 
     // On the OSD of that id
     function messageTo(id: string, icon: string, text: string): void {
-      root.osdMessage(OSDConfig.messageOsd(id), icon, text);
+      root.osdMessage(OSDConfig.messageOsd(id), icon, text, "", "");
+    }
+
+    function messageDetailTo(id: string, icon: string, text: string, detail: string): void {
+      root.osdMessage(OSDConfig.messageOsd(id), icon, text, detail, "");
     }
 
     function show(id: string): void {
@@ -100,21 +122,22 @@ QtObject {
   }
 
   // Runs an axiom action (the keybind table's ipcActions: "overlayPage"
-  // with its page, "lock", …) as its bind would, or `exec`'s command
-  function runAction(action, argument) {
+  // with its page, "lock", …) with its call (toggle, open or close) as its
+  // bind would, or `exec`'s command
+  function runAction(action, argument, call) {
     if (action === "exec") {
       CommandManager.runDetached(argument);
       return;
     }
-    const call = BindActions.ipcCall(KeybindManager.actionTable, action, argument);
-    if (!call) {
+    const ipc = BindActions.ipcCall(KeybindManager.actionTable, action, argument, call);
+    if (!ipc) {
       console.warn("[ShellManager] can't run action", action);
       return;
     }
     BackendManager.call("ipc.call", {
-      "target": call.target,
-      "function": call.function,
-      "args": call.args
+      "target": ipc.target,
+      "function": ipc.function,
+      "args": ipc.args
     }, error => {
       if (error)
         console.warn("[ShellManager]", action, "failed:", error.message);

@@ -34,14 +34,15 @@ QtObject {
   }
 
   // A status's tile from its state:
-  //   { icon, label, caption, on, slash, notable, hidden }
-  // (an audio device's also { name, detail, device })
-  // `icon` always the base one ("wifi", never "wifi_off": a toggle off is
-  // `slash`, drawn as one struck-through style whatever the icon), `label`
-  // short text drawn instead of the icon (a layout's code), `caption` text
-  // shown beside it only as it changes (a message), `on`
-  // lit (a toggle on, the microphone live), `slash` a toggle off,
-  // `notable` out of the ordinary (the row's "What's unusual"), `hidden`
+  //   { icon, label, tone, on, slash, notable, hidden }
+  // (an audio device's also { name, detail, device }; a message's
+  // { name, detail }, its card's lines)
+  // `icon` always the base one ("wifi", never "wifi_off": off is told by
+  // `on`, a mute by `slash`), `label` short text drawn instead of the icon
+  // (a layout's code), `tone` "warning" for a message saying why something
+  // couldn't run (else ""), `on` lit (a toggle on, the microphone live),
+  // `slash` muted (audio, microphone: drawn struck through), `notable` out
+  // of the ordinary (the row's "What's unusual"), `hidden`
   // nothing to show (no Wi-Fi, one layout). States:
   //   capsLock / numLock / scrollLock { available, on },
   //   keyboardLayout { layouts, index },
@@ -51,7 +52,7 @@ QtObject {
   //   percent, charging, full, untilFull (the time left to full, as
   //   shown) }, wifi { available, on, network (the one joined, else ""),
   //   signal (0-100) },
-  //   message { icon, text }, vpn { available, on, name (the VPNs up),
+  //   message { icon, text, detail, tone }, vpn { available, on, name (the VPNs up),
   //   address (the first one's) }, camera / screenShare / micUse { apps
   //   (the app names using it), last (the ones last seen using it: a
   //   card outlives a capture that stops at once) }, every other
@@ -60,9 +61,9 @@ QtObject {
     const t = {
       "icon": "",
       "label": "",
-      "caption": "",
       "on": false,
       "slash": false,
+      "tone": "",
       "notable": false,
       "hidden": false
     };
@@ -82,7 +83,6 @@ QtObject {
         return Object.assign(t, {
           "icon": icons[type],
           "on": s.on === true,
-          "slash": s.on !== true,
           "notable": s.on === true && type !== "numLock",
           "hidden": s.available !== true
         });
@@ -133,7 +133,6 @@ QtObject {
         "full": s.full === true,
         "untilFull": s.untilFull ?? "",
         "on": s.plugged === true,
-        "slash": s.plugged !== true,
         "notable": s.available === true && s.plugged === false,
         "hidden": s.available !== true
       });
@@ -143,7 +142,6 @@ QtObject {
         "name": s.on === true ? (s.name ?? "") : "",
         "address": s.on === true ? (s.address ?? "") : "",
         "on": s.on === true,
-        "slash": s.on !== true,
         "notable": s.on === true,
         "hidden": s.available !== true
       });
@@ -163,14 +161,15 @@ QtObject {
           "last": s.last ?? [],
           "name": apps.join(", "),
           "on": apps.length > 0,
-          "slash": apps.length === 0,
           "notable": apps.length > 0
         });
       }
     case "message":
       return Object.assign(t, {
         "icon": s.icon || "chat",
-        "caption": s.text ?? "",
+        "name": s.text ?? "",
+        "detail": s.detail ?? "",
+        "tone": s.tone ?? "",
         "on": true,
         "hidden": !s.text
       });
@@ -194,7 +193,6 @@ QtObject {
     Object.assign(t, {
       "icon": toggle[0],
       "on": on,
-      "slash": !on,
       "notable": toggle[1] !== null && on === toggle[1],
       "hidden": s.available === false
     });
@@ -210,14 +208,16 @@ QtObject {
   // The statuses the row shows, in the OSD's order: of `types` (its
   // statuses), by `mode` ("notable" | "all" | "changed") over `tiles` (by
   // type, tile()'s), `changed` (the type that just changed, or "") always
-  // among them. A hidden tile shows only as it changes; a message only as
-  // one comes.
+  // among them. A hidden tile shows only as it changes; a message never
+  // (it shows as its card).
   function rowTypes(types, tiles, mode, changed) {
     return types.filter(type => {
+      if (type === "message")
+        return false;
       if (type === changed)
         return true;
       const t = tiles[type];
-      if (!t || t.hidden || type === "message")
+      if (!t || t.hidden)
         return false;
       return mode === "all" || (mode === "notable" && t.notable);
     });
@@ -274,8 +274,14 @@ QtObject {
   // The status types that show a card for a change (`fired(true)`): an
   // audio device switching, a VPN coming up, an app starting to use the
   // camera or share the screen, the charger plugged in, a Wi-Fi network
-  // joined
-  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi"]
+  // joined, and a message (always: alwaysCard)
+  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "message"]
+
+  // The types shown as their card even on an OSD whose detail cards are
+  // off: a message is its text, nothing without it
+  function alwaysCard(type) {
+    return type === "message";
+  }
 
   // Whether two capture tiles (tile()'s) share an app: one app taking the
   // camera and the microphone together (a call)
@@ -285,12 +291,13 @@ QtObject {
   }
 
   // What a status's card shows, from the OSD's tiles (by type, tile()'s)
-  // and status types: { icon, title, role, detail }, or null for a type
+  // and status types: { icon, title, role, detail, tone }, or null for a type
   // with no card. `role` is English, for the caller to translate (what an
   // audio device is now used for: "Output and input" when the OSD's other
   // device status holds the same device; what a VPN, the apps or the
   // charger did); `detail` an audio device's profile, a VPN's address, a
-  // network's signal, the time left to a full battery
+  // network's signal, the time left to a full battery, a message's second
+  // line; `tone` a message's ("warning" for a refusal, else "")
   function card(type, tiles, types) {
     if (!root.cardTypes.includes(type))
       return null;
@@ -299,7 +306,8 @@ QtObject {
       "icon": t.icon ?? "",
       "title": t.name ?? "",
       "role": "",
-      "detail": ""
+      "detail": "",
+      "tone": t.tone ?? ""
     };
     switch (type) {
     case "audio":
@@ -347,6 +355,9 @@ QtObject {
       out.role = "Connected";
       out.detail = t.name ? `${t.signal ?? 0}%` : "";
       break;
+    case "message":
+      out.detail = t.detail ?? "";
+      break;
     }
     return out;
   }
@@ -369,10 +380,13 @@ QtObject {
   // the output and
   // input switching to the same device together (one change: a headset),
   // and either device's mute just after a device switch (its own state
-  // coming in, not the user)
+  // coming in, not the user); a message's card gives way only to another
+  // card (its text gets read)
   function replaces(shown, incoming, elapsed, tiles, shownCard, incomingCard) {
     if (elapsed >= root.quietWindow)
       return true;
+    if (shown === "message" && shownCard === true)
+      return incomingCard === true;
     if (shown === "airplane" && (incoming === "wifi" || incoming === "bluetooth"))
       return false;
     if (shownCard !== true)

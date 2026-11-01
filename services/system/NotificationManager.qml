@@ -607,6 +607,27 @@ Singleton {
     }
   }
 
+  // Do not disturb on or off (keybind action toggleDnd with its call)
+  property IpcTarget _dndIpc: IpcTarget {
+    target: "dnd"
+
+    function toggle(): void {
+      root.toggleDnd();
+    }
+
+    function enable(): void {
+      root.setDnd(true);
+    }
+
+    function disable(): void {
+      root.setDnd(false);
+    }
+
+    function status(): bool {
+      return root.dnd;
+    }
+  }
+
   NotificationServer {
     id: server
 

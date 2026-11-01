@@ -24,13 +24,13 @@ binds {
     Super+F hotkey-overlay-title="Window: Fullscreen" repeat=false {
         fullscreen-window
     }
-    Super+C hotkey-overlay-title="Window: Close" repeat=false {
+    Super+C hotkey-overlay-title="Window: Close window" repeat=false {
         close-window
     }
     Super+Z hotkey-overlay-title="Window: Toggle floating" repeat=false {
         toggle-window-floating
     }
-    Super+Ctrl+r hotkey-overlay-title="Axiom: Restart shell" repeat=false {
+    Super+Ctrl+r hotkey-overlay-title="Axiom: Restart axiom" repeat=false {
         spawn-sh "'/home/user/.local/bin/axiom' restart"
     }
     Super+Q hotkey-overlay-title="Apps: Terminal" repeat=false {
@@ -147,11 +147,11 @@ binds {
     XF86AudioLowerVolume hotkey-overlay-title="Media: Volume down" allow-when-locked=true {
         spawn "/home/user/.local/bin/axiom" "ipc" "audio" "volumeDown"
     }
-    XF86AudioMute hotkey-overlay-title="Media: Mute" repeat=false allow-when-locked=true {
+    XF86AudioMute hotkey-overlay-title="Media: Toggle mute" repeat=false allow-when-locked=true {
         spawn "/home/user/.local/bin/axiom" "ipc" "audio" "toggleMute"
     }
-    XF86AudioMicMute hotkey-overlay-title="Media: Mute microphone" repeat=false allow-when-locked=true {
-        spawn "/home/user/.local/bin/axiom" "ipc" "audio" "toggleMicMute"
+    XF86AudioMicMute hotkey-overlay-title="Media: Toggle microphone" repeat=false allow-when-locked=true {
+        spawn "/home/user/.local/bin/axiom" "ipc" "microphone" "toggle"
     }
     XF86MonBrightnessUp hotkey-overlay-title="Media: Brightness up" allow-when-locked=true {
         spawn "/home/user/.local/bin/axiom" "ipc" "brightness" "up"
@@ -171,7 +171,7 @@ binds {
     XF86AudioPrev hotkey-overlay-title="Media: Previous track" repeat=false allow-when-locked=true {
         spawn "/home/user/.local/bin/axiom" "ipc" "media" "previous"
     }
-    XF86AudioStop hotkey-overlay-title="Media: Stop" repeat=false allow-when-locked=true {
+    XF86AudioStop hotkey-overlay-title="Media: Stop playback" repeat=false allow-when-locked=true {
         spawn "/home/user/.local/bin/axiom" "ipc" "media" "stop"
     }
     Super+W hotkey-overlay-title="Workspace: Switch up" repeat=false {
@@ -228,13 +228,13 @@ binds {
     Super+bracketright hotkey-overlay-title="Window: Swap column right" repeat=false {
         move-column-right
     }
-    Super+equal hotkey-overlay-title="Window: Widen column" repeat=false {
+    Super+equal hotkey-overlay-title="Window: Widen strip column" repeat=false {
         set-column-width "+10%"
     }
-    Super+minus hotkey-overlay-title="Window: Narrow column" repeat=false {
+    Super+minus hotkey-overlay-title="Window: Narrow strip column" repeat=false {
         set-column-width "-10%"
     }
-    Super+Ctrl+F hotkey-overlay-title="Window: Fit visible columns" repeat=false {
+    Super+Ctrl+F hotkey-overlay-title="Window: Fit visible strip columns" repeat=false {
         expand-column-to-available-width
     }
     Super+0 hotkey-overlay-title="Workspace: Go to workspace 10" repeat=false {
