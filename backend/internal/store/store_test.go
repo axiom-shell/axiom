@@ -97,12 +97,29 @@ func TestFormat1IsConvertedAndKept(t *testing.T) {
 	}
 }
 
+// A migrated format-2 file is kept once as it was, by its version.
+func TestMigratedFileIsKept(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	old := []byte(`{"format": 2, "version": 76}`)
+	os.WriteFile(filepath.Join(dir, FileName), old, 0o644)
+	s := open(t, dir)
+	if cfg, st := s.Config(); st.Blocked || cfg.Value("version") != float64(steps.Current()) {
+		t.Fatalf("version %v state %+v", cfg.Value("version"), st)
+	}
+	kept, err := os.ReadFile(filepath.Join(dir, "config.v76.json"))
+	if err != nil || string(kept) != string(old) {
+		t.Errorf("v76 copy: %q %v", kept, err)
+	}
+}
+
 func TestFormatsItCantReadBlock(t *testing.T) {
 	t.Parallel()
 	for name, content := range map[string]string{
 		"no format, format 2's version": `{"version": 76}`,
 		"another format":                `{"format": 3, "version": 80}`,
 		"newer version":                 `{"format": 2, "version": 99}`,
+		"no version":                    `{"format": 2}`,
 	} {
 		dir := t.TempDir()
 		os.WriteFile(filepath.Join(dir, FileName), []byte(content), 0o644)
@@ -257,6 +274,41 @@ func TestBrokenFileBlocksSavesUntilFixed(t *testing.T) {
 		cfg, st := s.Config()
 		return !st.Blocked && cfg.Value("Battery").(*jsonx.Object).Value("lowThreshold") == 9.0
 	})
+}
+
+// A save made while an edit from outside is unread is refused, and the
+// edit is read then, watched or not.
+func TestWriteOverAnUnreadEditIsRefused(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir) // not watched: only the refusal reads the edit
+	path := filepath.Join(dir, FileName)
+	cfg, _ := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Value("Battery").(*jsonx.Object).Set("lowThreshold", 9.0)
+	os.WriteFile(path, jsonx.Marshal(edited), 0o600)
+
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "notify"), false)}, SetOptions{}); axerr.KindOf(err) != axerr.Conflict {
+		t.Errorf("saved over an unread edit: %v", err)
+	}
+	if data, _ := os.ReadFile(path); !strings.Contains(string(data), `"lowThreshold": 9`) {
+		t.Fatal("the edit was overwritten")
+	}
+	if cfg, _ := s.Config(); cfg.Value("Battery").(*jsonx.Object).Value("lowThreshold") != 9.0 {
+		t.Error("the edit wasn't loaded")
+	}
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "notify"), false)}, SetOptions{}); err != nil {
+		t.Errorf("save after the reload: %v", err)
+	}
+	// An edit that doesn't load is refused as one: saves stay blocked
+	os.WriteFile(path, []byte("{"), 0o600)
+	_, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "notify"), true)}, SetOptions{})
+	if e, ok := err.(*axerr.Error); !ok || !strings.Contains(e.Message, "doesn't load") || len(e.Issues) == 0 {
+		t.Errorf("refused over a broken edit: %v", err)
+	}
+	if _, st := s.Config(); !st.Blocked {
+		t.Error("the broken edit didn't block saves")
+	}
 }
 
 func TestOwnWritesDontReload(t *testing.T) {

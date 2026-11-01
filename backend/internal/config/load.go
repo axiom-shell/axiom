@@ -18,6 +18,9 @@ type Loaded struct {
 	// FromFormat1 says it was converted from format 1: the file as it was
 	// is kept beside it before it's written back (config.format1.json)
 	FromFormat1 bool
+	// From is the format-2 version it had (0 from format 1): a migrated
+	// file is kept once beside it as config.v<From>.json
+	From int
 }
 
 // LoadLegacy runs what the shell's ConfigManager did with a parsed

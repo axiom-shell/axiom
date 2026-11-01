@@ -1,14 +1,14 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02 and features-02 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03 and config-04 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
 ### Answered (maintainer, 2026-11-01)
 The product questions, answered in one sitting (step 2.5); each entry quotes its answer under **Decided**, and the deferred ones are under [Deferred](../roadmap.md#deferred).
 
-1. [Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot](../issues.md#over-a-configjson-that-didnt-load-at-the-start-keeping-the-running-config-saves-the-defaults-over-the-active-snapshot): b) apply the snapshot with default machine settings.
+1. Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot: b) apply the snapshot with default machine settings.
 2. [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks): yes, the plan also shows "doesn't lock" as a status.
 3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): split, with the theme page directly after integrations.
 4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): a) "Restart" / "Shut down".
@@ -58,9 +58,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 10 | compositor-04 | blocker | Done: Sway's look lost after a reload | 1 | ~10 | compositor-02 |  |
 | 11 | bar-popouts-02 | blocker | Done: Outside clicks never close edge and floating popouts | 1 | ~4 | none |  |
 | 12 | features-02 | blocker | Done: The 12-hour clock's hour, and the Accounts card's read-only and task-list facts | 2 | ~25 | features-01 |  |
-| 13 | config-02 | major | The store's load and write safety | 3 | ~220 | config-01 | Q1 |
-| 14 | config-03 | major | The settings page's schema predicates, and takeover settings from the launcher | 4 | ~170 | none |  |
-| 15 | config-04 | major | Editor fields and draft comparisons | 3 | ~110 | none |  |
+| 13 | config-02 | major | Done: The store's load and write safety | 3 | ~220 | config-01 | Q1 |
+| 14 | config-03 | major | Done: The settings page's schema predicates, and takeover settings from the launcher | 4 | ~170 | none |  |
+| 15 | config-04 | major | Done: Editor fields and draft comparisons | 3 | ~110 | none |  |
 | 16 | config-05 | minor-sweep | Config and guardrails | 2 | ~50 | config-03, config-04 |  |
 | 17 | platform-02 | major | Locking and the greeter | 5 | ~150 | platform-01 | Q2 |
 | 18 | platform-03 | major | Packaging and self-update | 4 | ~400 | none |  |
@@ -240,19 +240,19 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **config**
 
-- **config-02** (3):
-  - [A format-2 config without a version runs every step again](../issues.md#a-format-2-config-without-a-version-runs-every-step-again)
-  - [A save overwrites an outside edit of config.json the store hasn't read yet](../issues.md#a-save-overwrites-an-outside-edit-of-configjson-the-store-hasnt-read-yet)
-  - [Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot](../issues.md#over-a-configjson-that-didnt-load-at-the-start-keeping-the-running-config-saves-the-defaults-over-the-active-snapshot)
-- **config-03** (4): The two takeover entries are one fix (decided 2026-10-31).
-  - [Takeover settings go live through the settings page's preview before Save](../issues.md#takeover-settings-go-live-through-the-settings-pages-preview-before-save)
-  - [The launcher's /config can switch a takeover setting](../issues.md#the-launchers-config-can-switch-a-takeover-setting)
-  - [Changed from default never lists the bar widget style](../issues.md#changed-from-default-never-lists-the-bar-widget-style)
-  - [The condition grammar has no shared fixtures](../issues.md#the-condition-grammar-has-no-shared-fixtures)
-- **config-04** (3): Before compositor-16 and -17, which edit KeybindEditor's presets too.
-  - [A number box keeps its typed text when the setting it edits switches under it](../issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
-  - [Escape in a settings-page number box leaves the half-typed value in the draft](../issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)
-  - [Restoring a saved keybind preset marks every bind new, and Revert deletes it](../issues.md#restoring-a-saved-keybind-preset-marks-every-bind-new-and-revert-deletes-it)
+- **config-02** (3, done):
+  - A format-2 config without a version runs every step again
+  - A save overwrites an outside edit of config.json the store hasn't read yet
+  - Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot
+- **config-03** (4, done): The two takeover entries are one fix (decided 2026-10-31).
+  - Takeover settings go live through the settings page's preview before Save
+  - The launcher's /config can switch a takeover setting
+  - Changed from default never lists the bar widget style
+  - The condition grammar has no shared fixtures
+- **config-04** (3, done): Before compositor-16 and -17, which edit KeybindEditor's presets too.
+  - A number box keeps its typed text when the setting it edits switches under it
+  - Escape in a settings-page number box leaves the half-typed value in the draft
+  - Restoring a saved keybind preset marks every bind new, and Revert deletes it
 - **config-05** (2):
   - [After a refused save, a draft's edits show unsaved but not live](../issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
   - [The guard reads the branch from the session's folder, not a `cd` before the push](../issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)

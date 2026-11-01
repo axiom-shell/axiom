@@ -15,6 +15,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - Text and number boxes (`forms/SchemaTextField`, `SchemaNumberField`'s value box) show their edit as unsaved on the first keystroke and apply it only on Enter (Ctrl+Enter when multiline), focus loss, teardown or Save; a suggestion click or a folder picked with Browse (`x-control: "folder"`, [File picker](file-picker.md)) commits at once. Each live apply re-evaluates the readers (~35 ms of JS before layout), and half-typed values had side effects: a font re-shaped every text, a notes folder ran `find` on `/`, a widget's label command ran per keystroke.
   - Every page: the box holding typed text registers with `EditsManager.holdTyping`, which shows Save and Discard in its window (`SaveResetActions`); Save commits it first (`EditsManager.commitTyping`), Discard drops it.
   - This page also puts each keystroke in its draft (`valueTyped` → the form's `typed` → `SettingsManager.setDraftValue`), so the card's unsaved dot shows too; `_merged` diffs afresh, since Save's commit lands in place.
+  - A value pushed into a box with typed text (what it edits switched under it, a reset) drops the typing, unless it's the echo of that typing (`SchemaTextField._show`, the number box's `onShownConfigValueChanged`). Escape in a number box, or text there that doesn't parse, puts back the value it had when it took focus, into the draft too.
 
 ### Cards
 - Generated cards are `settings/SettingsGroupCard`.
@@ -51,7 +52,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - Clicking a card link calls `SettingsManager.jumpTo(key)`, which unfolds the card, keeps the jump as `pendingJump` and emits `jumpRequested`.
   - The content makes the jump once the card is laid out (`SettingsContent._takeJump`): at once, after the unfold animation, or when its block settles (the page or category was just built). A jump made before the page exists still lands.
   - It scrolls to the card (`TitledCard.scrollTo`) and outlines it in the accent for a moment (`FlashOutline`); a jump to a setting (`row`) centres and outlines that row instead (`SettingsGroupCard.rowItem`).
-- The sidebar ends with **Changed from default** (`SettingsManager.changedOnly`): every setting whose draft value differs from its schema default (`nonDefaultPaths`, against `defaults`, limited to settings rows in the sections the page shows), from every category, listed like search results (`SettingsContent.listing`).
+- The sidebar ends with **Changed from default** (`SettingsManager.changedOnly`): every setting whose draft value differs from its schema default (`nonDefaultPaths`, against `defaults`, limited to settings rows in the sections the page shows, `$ref` objects such as `Bars.style` resolved), from every category, listed like search results (`SettingsContent.listing`).
   - The set is taken when the list is asked for (`SettingsManager.showChanged`, into `changedSet`; clicking it again retakes it), not followed, so a row put back to its default stays until the list is asked for again, and edits don't rebuild the cards. A search narrows it further.
 
 ### Scroll memory

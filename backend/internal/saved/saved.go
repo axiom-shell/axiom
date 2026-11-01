@@ -248,7 +248,11 @@ func (s *Service) modified() bool {
 	if s.state.Active == "" || s.baseline == nil {
 		return false
 	}
-	cfg, _ := s.opts.Store.Config()
+	cfg, st := s.opts.Store.Config()
+	if st.Defaults {
+		// The file didn't load: nothing was changed, only not read
+		return false
+	}
 	return !jsonx.Equal(share.Snapshot(s.opts.Pipeline().Schema(), cfg), s.baseline)
 }
 
@@ -266,7 +270,10 @@ func (s *Service) save(name, source, kind string) (string, error) {
 	if file == "" {
 		return "", axerr.New(axerr.BadRequest, "a snapshot needs a name")
 	}
-	cfg, _ := s.opts.Store.Config()
+	cfg, st := s.opts.Store.Config()
+	if st.Defaults {
+		return "", axerr.New(axerr.Conflict, "config.json didn't load: the defaults running aren't saved as a config")
+	}
 	sch := s.opts.Pipeline().Schema()
 	out := envelope(file, "", source, kind)
 	body := share.Sparse(sch, share.Snapshot(sch, cfg)).(*jsonx.Object)
@@ -378,8 +385,12 @@ func (s *Service) keep(result *Applied) error {
 
 // plan says where the running config goes before something replaces it:
 // into the active snapshot when it has edits ("" unchanged: it's on disk),
-// and with none active a new snapshot of the user's, mySetup.
+// and with none active a new snapshot of the user's, mySetup; nowhere
+// while the store runs on the defaults.
 func (s *Service) plan() string {
+	if _, st := s.opts.Store.Config(); st.Defaults {
+		return "" // the file didn't load: nothing of the user's runs
+	}
 	if !s.hasActive() {
 		return s.freeName(mySetup, false)
 	}

@@ -63,9 +63,9 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `x-disabledNote`: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
 - `x-beside: true`: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns). Give the pair the same `x-showIf`. A bar widget's options pair the same way in the widget inspector (`SchemaPropertiesForm`'s `pairs`), but only while both are shown.
 - `x-wide: true` (field): the settings card the field lands on spans both columns (`SchemaLayout.groups`' `wide`). Put it on the field that needs the room, usually an array of objects (chat providers, Hyprland curves, session environment). See [Settings page](settings-page.md) › Columns.
-- `x-applyOnSave`: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
+- `x-applyOnSave`: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files). An `x-takeover` setting waits the same way (`SchemaLayout.waitsForUser`).
 - `x-snapshot: true`: a machine setting a saved snapshot carries too (the wallpaper setup: wallpapers, folder, mode, rotation, light/dark wallpapers, theme schedule), since a snapshot restores on the PC it was saved on. Exports and examples still leave it out. See [Saved configs and sharing](saved-configs-sharing.md).
-- `x-takeover: true`: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter). Loading or importing a config, or editing config.json from outside while axiom runs, never changes it; only its own card does. See [Saved configs and sharing](saved-configs-sharing.md).
+- `x-takeover: true`: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter). Loading or importing a config, or editing config.json from outside while axiom runs, never changes it; only its own card does: the settings page holds it until Save (no preview) and the launcher's `/config` only opens it there. See [Saved configs and sharing](saved-configs-sharing.md).
 
 ### Controls
 - `x-options`: a dynamic option list.

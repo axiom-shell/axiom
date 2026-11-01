@@ -21,7 +21,7 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 9. **Annotations grouped by subject.**
    - The 14 `x-hypr*` / `x-sway*` / `x-niri*` variants become one `x-compositor: { hyprland: {key, value, scale, if, always, skip, configOnly}, sway: {…}, niri: {…} }`.
    - The 5 `x-card*` become `x-card: { file, title, wide, folds, perField }`.
-   - `x-showIf`, `x-enabledIf`, `x-enumShowIf` and `x-scopeIf` share one condition grammar, implemented once in Go and once in `SchemaLayout`, with shared fixtures.
+   - `x-showIf`, `x-enabledIf`, `x-enumShowIf` and `x-scopeIf` share one condition grammar, implemented once in Go (`schema.Holds`) and once in `SchemaLayout` (`showIfHolds`), with shared fixtures (the `schema.showIfHolds` op, recorded from tst_SchemaLayout).
    - A condition repeated across definitions is written once: the `$bar.*` show rules on widget colors (today copied into 23 widget files) live in the shared widget color definitions.
 10. **The envelope:** `{ "$schema", "format": 2, "version": N, … }`. `version` is the only migration counter and keeps counting from 76; `format` names the file's grammar, so a reader refuses a format it doesn't know outright rather than guessing from a version number. Saved and exported files add `meta: { title, description, source }`, replacing `_example`.
 11. **Types live in folders.** A bar widget, overlay module or view type is a folder `<root>/<Type>/` holding `<Type>.qml` (its root object), `schema.yaml` (its definition) and its private parts (sub-components, layouts; later, variant files).
