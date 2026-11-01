@@ -411,7 +411,32 @@ func (s *Service) Unlock(ctx context.Context, id, passphrase string) (string, er
 		return "", mapError(err, passphrase)
 	}
 	var ct dbus.ObjectPath
-	return string(ct), m.Store(&ct)
+	if err := m.Store(&ct); err != nil {
+		return "", err
+	}
+	// Answered once the state shows it, so a mount right after finds the
+	// cleartext (its signals may still be on their way)
+	s.await(ctx, func() bool {
+		_, v, err := s.volume(string(ct))
+		return err == nil && v.ID == id
+	})
+	return string(ct), nil
+}
+
+// await waits until done holds, for at most 2 s.
+func (s *Service) await(ctx context.Context, done func() bool) {
+	tick := time.NewTicker(20 * time.Millisecond)
+	defer tick.Stop()
+	limit := time.After(2 * time.Second)
+	for !done() {
+		select {
+		case <-ctx.Done():
+			return
+		case <-limit:
+			return
+		case <-tick.C:
+		}
+	}
 }
 
 // Lock closes the LUKS volume id names, unmounting it first.
@@ -484,8 +509,8 @@ func (s *Service) Eject(ctx context.Context, id string) error {
 	return mapError(err, "")
 }
 
-// volume finds a volume the state shows: nothing else (an internal disk)
-// is the shell's to mount.
+// volume finds a volume the state shows, by its id or, unlocked, its
+// cleartext's: nothing else (an internal disk) is the shell's to mount.
 func (s *Service) volume(id string) (*dbus.Conn, Volume, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -494,7 +519,7 @@ func (s *Service) volume(id string) (*dbus.Conn, Volume, error) {
 	}
 	for _, d := range s.state.Drives {
 		for _, v := range d.Volumes {
-			if v.ID == id {
+			if v.ID == id || v.Unlocked && v.CleartextID == id {
 				return s.conn, v, nil
 			}
 		}

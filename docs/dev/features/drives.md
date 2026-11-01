@@ -11,7 +11,7 @@ Package `udisks` (`backend/internal/udisks/`, wired in `daemon/drives.go`) reads
 - **Drives shown:** `Removable || MediaRemovable || ConnectionBus ∈ {usb, sdio}`, with media, whole disk not `HintSystem`/`HintIgnore`. A card reader with no card isn't listed: inserting a card is `added`, taking it out `removed`.
 - **Volumes** are filesystems and LUKS containers; partition tables, extended partitions and swap are left out, and an unlocked LUKS volume reports its cleartext's filesystem and mount points.
 - **`drives.event`** comes only from signals after the sync: `added` once a volume is known or after 500 ms, `removed` only for drives that were announced.
-- **Writes** are shell-only. Mounting a mounted volume answers its mount point; unmount, lock and unlock are idempotent.
+- **Writes** are shell-only. Mounting a mounted volume answers its mount point; unmount, lock and unlock are idempotent. An unlocked container's volume is found by its own id or its cleartext's, and an unlock answers only once the state shows the cleartext (at most 2 s), so a mount right after finds it.
 - **Testing:** `scripts/dev/drive-fixtures.sh up|down` sets up loop devices (`udisksctl --no-user-interaction`; LUKS passphrase `axiom-test`) for a scratch daemon run with `AXIOM_DRIVES_INCLUDE_LOOP=1`; the Go side is tested against a fake UDisks2 on `dbustest`.
 
 ### The service

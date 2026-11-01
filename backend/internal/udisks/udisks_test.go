@@ -649,10 +649,11 @@ func TestMethods(t *testing.T) {
 	if err != nil || ct != pathBlocks+"dm_2d9" {
 		t.Errorf("Unlock = %q, %v", ct, err)
 	}
-	if !testkit.Eventually(func() bool { return h.s.State().Drives[0].Volumes[0].Unlocked }) {
-		t.Fatal("not unlocked")
+	// Shown unlocked once it answers: the cleartext mounts by its own id
+	if v := h.s.State().Drives[0].Volumes[0]; !v.Unlocked || v.CleartextID != ct {
+		t.Fatalf("not shown unlocked: %+v", v)
 	}
-	if at, err := h.s.Mount(ctx, luks); err != nil || at != "/run/media/me/dm_2d9" {
+	if at, err := h.s.Mount(ctx, ct); err != nil || at != "/run/media/me/dm_2d9" {
 		t.Errorf("Mount unlocked = %q, %v", at, err)
 	}
 	if !testkit.Eventually(func() bool { return len(h.s.State().Drives[0].Volumes[0].MountPoints) == 1 }) {
