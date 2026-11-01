@@ -24,7 +24,7 @@ How the wallpaper is drawn, and everything that changes the look on its own: wal
 ### WallpaperManager: wallpaper modes
 - `Appearance.wallpaper.mode` (reader `Appearance.wallpaperMode`):
   - `fixed`: picks write the config. `next()` here picks a new fixed one (asked for by hand).
-  - `rotate`: `wallpaper.rotation` with `interval` (ms, shown in minutes), `random`/`sequential` order (via `methods/Schedules.nextWallpaper`) and `sameOnAll`. `ThemeManager.lastRotated` (state file, so it survives restarts) is checked every 30 s. Triggers: IPC `wallpaper next`, bind `nextWallpaper`, launcher `/nextwallpaper`. A pick by hand shows until the next rotation; a monitor not rotated yet shows its fixed wallpaper.
+  - `rotate`: `wallpaper.rotation` with `interval` (ms, shown in minutes), `random`/`sequential` order (via `methods/Schedules.nextWallpaper`) and `sameOnAll`. `ThemeManager.lastRotated` (state file, so it survives restarts) is checked every 30 s. Triggers: IPC `wallpaper next`, bind `nextWallpaper`, launcher `/nextwallpaper`. `WallpaperManager.random()` (IPC `wallpaper random`, bind `randomWallpaper`, launcher `/wallpaper random`) is a pick by hand of a random file instead. A pick by hand shows until the next rotation; a monitor not rotated yet shows its fixed wallpaper.
   - `variant`: `wallpaper.variants.dark`/`light` on every monitor, following `Appearance.darkMode`, derived by `ShownLook` (falling back to the fixed ones when that variant has none). `next()` does nothing here.
 - Regenerating the theme:
   - automatic changes regenerate only while a generated theme is active;

@@ -54,6 +54,14 @@ TestCase {
     compare(shared.calls.BindActions.callFunction(test.table, {
       "action": "overlay"
     }), "toggle");
+    compare(shared.calls.BindActions.callFunction(test.table, {
+      "action": "workspaceOverview",
+      "call": "open"
+    }), "open", "workspaceOverlay has open, not show");
+    compare(shared.calls.BindActions.callFunction(test.table, {
+      "action": "wifi",
+      "call": "close"
+    }), "disable", "an on/off action's off");
   }
 
   function test_ipcCall() {
@@ -75,6 +83,16 @@ TestCase {
     compare(BindActions.ipcCall(test.table, "workspaceNth", "3").args, ["3", "go"]);
     compare(BindActions.ipcCall(test.table, "workspaceNth", ""), null, "missing its argument");
     compare(BindActions.ipcCall(test.table, "screenshot", "").args, ["region"], "the table's default argument");
+    compare(BindActions.ipcCall(test.table, "timerStart", "10m tea"), {
+      "target": "stopwatch",
+      "function": "timer",
+      "args": ["10m tea"]
+    });
+    compare(BindActions.ipcCall(test.table, "clipboard", ""), {
+      "target": "appLauncher",
+      "function": "clipboard",
+      "args": []
+    });
     compare(BindActions.ipcCall(test.table, "closeWindow", ""), null, "a compositor action");
   }
 
@@ -109,6 +127,8 @@ TestCase {
   function test_labels() {
     compare(shared.calls.BindActions.sectionFor(test.table, "volumeUp"), "Media");
     compare(shared.calls.BindActions.sectionFor(test.table, "toggleSpecial"), "Special");
+    compare(shared.calls.BindActions.sectionFor(test.table, "pomodoro"), "Tools");
+    compare(shared.calls.BindActions.sectionFor(test.table, "nightLight"), "System");
     compare(shared.calls.BindActions.sectionFor(test.table, "nope"), "Axiom", "unknown actions file under Axiom");
     compare(shared.calls.BindActions.defaultLabel(test.table, {
       "action": "workspaceNth",

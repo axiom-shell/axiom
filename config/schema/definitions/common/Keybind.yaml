@@ -30,6 +30,12 @@ properties:
       - idleInhibit
       - nightLight
       - nextWallpaper
+      - randomWallpaper
+      - monitorsIdentify
+      - darkMode
+      - wifi
+      - bluetooth
+      - vpn
       - workspaceStep
       - moveWindowStep
       - moveWindowStepSilent
@@ -63,11 +69,29 @@ properties:
       - mediaNext
       - mediaPrevious
       - mediaStop
+      - audioOutputNext
       - terminal
       - fileManager
       - browser
       - screenshot
       - screenRecord
+      - clipboard
+      - emoji
+      - calculator
+      - notes
+      - calendar
+      - calendarNewEvent
+      - chat
+      - chatNew
+      - pomodoro
+      - pomodoroSkip
+      - pomodoroStop
+      - stopwatch
+      - stopwatchLap
+      - stopwatchReset
+      - timerStart
+      - timerToggle
+      - timerReset
       - exitSession
       - exec
       - pseudo
@@ -94,6 +118,12 @@ properties:
       idleInhibit: Caffeine
       nightLight: Night light
       nextWallpaper: Next wallpaper
+      randomWallpaper: Random wallpaper
+      monitorsIdentify: Identify monitors
+      darkMode: Dark mode
+      wifi: Wi-Fi
+      bluetooth: Bluetooth
+      vpn: VPN on or off
       workspaceStep: Workspace in a direction
       moveWindowStep: Move window in a direction
       workspaceNth: Workspace by number
@@ -127,11 +157,29 @@ properties:
       mediaNext: Next track
       mediaPrevious: Previous track
       mediaStop: Stop playback
+      audioOutputNext: Switch audio output
       terminal: Terminal
       fileManager: File manager
       browser: Browser
       screenshot: Screenshot
       screenRecord: Screen recording
+      clipboard: Clipboard history
+      emoji: Emoji picker
+      calculator: Calculator
+      notes: Notes
+      calendar: Calendar
+      calendarNewEvent: New calendar event
+      chat: Chat
+      chatNew: New chat
+      pomodoro: Pomodoro start or pause
+      pomodoroSkip: Skip pomodoro phase
+      pomodoroStop: Stop pomodoro
+      stopwatch: Stopwatch start or pause
+      stopwatchLap: Stopwatch lap
+      stopwatchReset: Reset stopwatch
+      timerStart: Start a timer
+      timerToggle: Pause or resume timer
+      timerReset: Reset timer
       exitSession: Log out
       exec: Run a command
       pseudo: Pseudotile window
@@ -148,7 +196,7 @@ properties:
     type: string
     title: Argument
     default: ''
-    description: 'Search text, page, edge menu or dock id, direction, workspace number, special workspace name, resize step ("50 0"), screenshot kind (region, window or screen), command, or a compositor command in its own language (Hyprland: a dispatcher as Lua, hl.dsp.layout("swapsplit"); sway: a command, layout tabbed; niri: an action as its config writes it, focus-column-first).'
+    description: 'Search text, page, edge menu or dock id, direction, workspace number, special workspace name, resize step ("50 0"), screenshot kind (region, window or screen), timer length (10m, 1:30), command, or a compositor command in its own language (Hyprland: a dispatcher as Lua, hl.dsp.layout("swapsplit"); sway: a command, layout tabbed; niri: an action as its config writes it, focus-column-first).'
     x-showIf:
       action:
         - launcherSearch
@@ -168,6 +216,7 @@ properties:
         - toggleSpecial
         - moveToSpecial
         - screenshot
+        - timerStart
         - exec
         - raw
   call:
@@ -176,7 +225,7 @@ properties:
     default: toggle
     enum: [toggle, open, close]
     x-enumLabels: {toggle: Toggle, open: Open, close: Close}
-    description: 'For actions that open and close something: whether the bind toggles it, only opens it or only closes it.'
+    description: 'For actions that open and close or turn on and off something: whether the bind toggles it, only opens it or only closes it.'
     x-showIf:
       action:
         - launcher
@@ -187,6 +236,9 @@ properties:
         - powerMenu
         - idleInhibit
         - nightLight
+        - darkMode
+        - wifi
+        - bluetooth
         - screenRecord
   compositor:
     type: string

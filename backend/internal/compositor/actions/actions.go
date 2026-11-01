@@ -91,7 +91,7 @@ func parse() (*Table, error) {
 		}
 		call, _ := entry.Items[0].(string)
 		pattern := regexp.QuoteMeta(call)
-		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{call}"), `(?P<call>\w+)`)
+		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{call}"), `(?P<call>`+callNames+`)`)
 		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{0}"), `(?P<arg>\S+)`)
 		re, err := regexp.Compile("^" + pattern + "$")
 		if err != nil {
@@ -114,6 +114,10 @@ func parse() (*Table, error) {
 // What a call names, for actions that open and close (BindActions.calls)
 var calls = map[string]string{"toggle": "toggle", "open": "open", "show": "open", "enable": "open",
 	"close": "close", "hide": "close", "disable": "close"}
+
+// The words a {call} matches: only calls, so another function of the same
+// target ("appLauncher clipboard") is its own action, not a toggle
+const callNames = `toggle|open|show|enable|close|hide|disable`
 
 // The axiom binary, by name or path, maybe quoted (Paths.shellCommand)
 const axiom = `['"]?(?:\S*/)?axiom['"]?`
@@ -145,11 +149,7 @@ func (t *Table) IPCAction(command string) *jsonx.Object {
 		}
 		entry := jsonx.Obj("action", p.action)
 		if i := p.re.SubexpIndex("call"); i > 0 && m[i] != "" {
-			name, ok := calls[m[i]]
-			if !ok {
-				name = "toggle"
-			}
-			entry.Set("call", name)
+			entry.Set("call", calls[m[i]])
 		}
 		if i := p.re.SubexpIndex("arg"); i > 0 && m[i] != "" {
 			entry.Set("argument", unquote(m[i]))

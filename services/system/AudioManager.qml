@@ -49,6 +49,14 @@ QtObject {
     setNodeVolume(defaultSink, value);
   }
 
+  // The next output after the default one, round the list (keybind
+  // action audioOutputNext)
+  function nextOutput() {
+    if (root.sinks.length < 2)
+      return;
+    setDefault(root.sinks[(root.sinks.indexOf(root.defaultSink) + 1) % root.sinks.length]);
+  }
+
   // Volume keys (keybind actions volumeUp, ...): the OSD shows the change
   property IpcTarget _ipc: IpcTarget {
     target: "audio"
@@ -67,6 +75,10 @@ QtObject {
 
     function toggleMicMute(): void {
       root.toggleSourceMute();
+    }
+
+    function nextOutput(): void {
+      root.nextOutput();
     }
   }
 

@@ -24,6 +24,7 @@ import qs.services.core
  * Created from shell.qml's `_services`.
  *
  *   axiom ipc wallpaper next
+ *   axiom ipc wallpaper random
  */
 Singleton {
   id: root
@@ -95,6 +96,17 @@ Singleton {
     // A generated theme follows on its own (ThemeManager.syncGeneratedTheme)
     if (!changed)
       ThemeManager.syncGeneratedTheme();
+  }
+
+  // A random wallpaper of the folder, picked by hand (for the focused
+  // monitor, as `pick` does)
+  function random() {
+    const list = root._wallpaperList();
+    if (list.length === 0) {
+      console.log("[WallpaperManager] No wallpapers in", Appearance.wallpaperPath);
+      return;
+    }
+    root.pick(list[Math.floor(Math.random() * list.length)], "", "");
   }
 
   // --- The wallpaper folder (the onboarding's Look page) ---
@@ -197,6 +209,10 @@ Singleton {
 
     function next(): void {
       root.next();
+    }
+
+    function random(): void {
+      root.random();
     }
   }
 

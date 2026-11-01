@@ -33,6 +33,11 @@ func TestIPCAction(t *testing.T) {
 		"axiom run":                        "null",
 		"axiomatic ipc appLauncher toggle": "null",
 		"axiom ipc somethingNew it":        "null",
+		"axiom ipc wifi enable":            `{"action":"wifi","call":"open"}`,
+		"axiom ipc darkMode disable":       `{"action":"darkMode","call":"close"}`,
+		"axiom ipc workspaceOverlay show":  `{"action":"workspaceOverview","call":"open"}`,
+		"axiom ipc stopwatch timer 10m":    `{"action":"timerStart","argument":"10m"}`,
+		"axiom ipc appLauncher clipboard":  `{"action":"clipboard"}`,
 	}
 	for command, want := range cases {
 		got := "null"

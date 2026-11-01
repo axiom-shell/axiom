@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell.Bluetooth
 
 import qs.config
+import qs.services.core
 
 // Bluetooth state and actions over the default adapter (BlueZ via
 // Quickshell.Bluetooth). Named BluetoothManager so it doesn't shadow
@@ -123,6 +124,23 @@ QtObject {
         if (!modelData.pairing && !modelData.paired)
           root._connectAfterPair = root._connectAfterPair.filter(d => d !== modelData);
       }
+    }
+  }
+
+  // Keybind action bluetooth: axiom ipc bluetooth toggle|enable|disable
+  property IpcTarget _ipc: IpcTarget {
+    target: "bluetooth"
+
+    function toggle(): void {
+      root.toggleEnabled();
+    }
+
+    function enable(): void {
+      root.setEnabled(true);
+    }
+
+    function disable(): void {
+      root.setEnabled(false);
     }
   }
 }

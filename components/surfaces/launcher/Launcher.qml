@@ -97,6 +97,16 @@ Scope {
     function search(text: string): void {
       root.open(text);
     }
+    // The clipboard history, emoji and calculator rows (keybind actions)
+    function clipboard(): void {
+      root.open(":");
+    }
+    function emoji(): void {
+      root.open(";");
+    }
+    function calculator(): void {
+      root.open("=");
+    }
   }
 
   // The dim background, under the bars and border, for either host

@@ -2,6 +2,8 @@ pragma Singleton
 import QtQuick
 import qs.config
 import qs.services.core
+import qs.services.system
+import qs.services.ui
 
 // Notes: Markdown files in NotesConfig.directory ($XDG_DATA_HOME/axiom/notes/ by
 // default, or a linked folder). Paths are relative to that folder, with
@@ -183,6 +185,24 @@ QtObject {
   // loaded in the next few seconds takes it with takeReveal(place)
   signal openRequested(string path, int line, string place)
   property var _pendingReveal: null
+
+  // Shows the notes: an overlay page with a Notes module, else an edge
+  // menu with one, at `path` (and `line`) when given (the launcher's
+  // /notes, the notes keybind action)
+  function openNotes(path, line) {
+    const page = OverlayConfig.pageWithModule("Notes");
+    const menu = page === "" ? EdgeMenusConfig.menuWithModule("Notes") : null;
+    if (page === "" && !menu) {
+      NotificationManager.sendNotification("axiom", I18n.tr("No notes module"), I18n.tr("Add a Notes module to an overlay page or an edge menu."));
+      return;
+    }
+    if (path)
+      root.requestOpen(path, line, menu ? "edgeMenu:" + menu.id : "overlay");
+    if (menu)
+      EdgeMenuManager.reveal(menu.id);
+    else
+      ShellManager.openOverlayPage(page);
+  }
 
   function requestOpen(path, line, place) {
     const rel = root.clean(path);
@@ -466,6 +486,15 @@ QtObject {
       on_FileChanged: doc._follow()
       Component.onCompleted: doc._follow()
       Component.onDestruction: FileManager.unwatch(doc._watch)
+    }
+  }
+
+  property IpcTarget _ipc: IpcTarget {
+    target: "notes"
+    enabled: !Paths.greeter
+
+    function open(): void {
+      root.openNotes("", 0);
     }
   }
 }
