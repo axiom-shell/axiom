@@ -319,8 +319,6 @@ Found while retiring the `qs ipc` fallback (backend stage 6):
 Found while closing the config path (backend stage 7):
 - [After a refused save, a draft's edits show unsaved but not live](issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
 
-Found while adding niri's own overview (row 16):
-- [An open-only workspace overview bind calls a function that doesn't exist](issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
 
 Found while fixing the lock screen surviving a reload:
 - [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
@@ -373,7 +371,7 @@ Found by the audits:
 - [The Hyprland and sway bind merges each skip half of compositor/actions](issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
 - [Hyprland's remove deletes whatever hl.bind is on a site's line now](issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
 - [A claim comments out axiom's start inside a long string, breaking the script](issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
-- [An unknown IPC function word merges as a toggle](issues.md#an-unknown-ipc-function-word-merges-as-a-toggle)
+- [The bind merge reads an IPC bind with a quoted argument of several words as a command](issues.md#the-bind-merge-reads-an-ipc-bind-with-a-quoted-argument-of-several-words-as-a-command)
 - [The overview stays open with nothing shown after its monitor goes away](issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)
 - [Wide active is hidden in the perMonitor layout but still applies there](issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
 - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)

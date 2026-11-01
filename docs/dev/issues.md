@@ -108,12 +108,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the overlay and popouts plan's build (row 16)
 
-### An open-only workspace overview bind calls a function that doesn't exist
-- **Where:** `backend/internal/compositor/actions/table.json` (`calls.workspaceOverview`), `shell/WorkspaceOverlay.qml` (its `IpcTarget`)
-- **What:** The bind table maps the `workspaceOverview` action's `open` call to the IPC function `show` (`render.Tables.CallFunction`), so a bind with call `open` runs `axiom ipc workspaceOverlay show`; the `workspaceOverlay` target has only `toggle`, `open` and `hide` (`docs/dev/generated/ipc.md`), so the bind does nothing. The default bind (`toggle`) is unaffected. Fix: the table's `open` names `open`.
-- **Size:** trivial
-- **Found:** 2026-10-29, while adding niri's own overview (row 16)
-
 ### The overlay's gaps can't be adjusted
 - **Where:** `components/methods/GridPlacement.qml` (`cardSpacing`, `baseCard`, `gapOf`), `config/OverlayConfig.qml` (`boxPadding`)
 - **What:** The maintainer's note: "the overlay's gaps become adjustable". The gaps are one design value, `GridPlacement.cardSpacing` = 20: the gap between modules, the margin around the grid, the overlay box's padding and the tool pages' spacing; through `baseCard` and `gapOf` edge menus, the desktop, the lock screen and the greeter are drawn as the overlay's grid scaled. Answered so far (2026-10-29): "one setting, gaps between modules and edges of the overlay page look the same". Open: the overlay's alone, or one Look & Feel setting for the overlay, lock screen, greeter and desktop with edge menus kept at today's value (the maintainer: "Menus already seem smaller"); a bigger gap shrinks the cards on a page fitted to its screen. Deferred: "defer for now, still unsure".
@@ -713,11 +707,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### An unknown IPC function word merges as a toggle
-- **Where:** `backend/internal/compositor/actions/actions.go:148` (`IPCAction`), `backend/internal/compositor/actions/actions.go:115` (`calls`)
-- **What:** For an `ipcActions` row with `{call}`, the pattern captures any `\w+`, and a word not in `calls` becomes `"toggle"` (`if !ok { name = "toggle" }`). The targets have other functions: `edgeMenu` has `pin`/`unpin`/`edit`/`list` (EdgeMenuManager.qml), and `nightLight`/`idleInhibit`/`screenRecord` have `status`. Probe: `IPCAction("axiom ipc edgeMenu pin left")` gives `{"action":"edgeMenu","call":"toggle","argument":"left"}`, and `axiom ipc nightLight status` gives `{"action":"nightLight","call":"toggle"}`. On sway and niri, a user's bind that pins an edge menu is merged as one that toggles it, a silent change in behaviour. TestIPCAction has no row for a word outside `calls`. The niri review reproduced it with an overlay test for `edgeMenu pin`/`unpin`, `nightLight status` and `screenRecord status`, and found the same map also accepts `open`/`show`/`enable` for every action, whatever that action's IPC target names them (`idleInhibit` has no `open`). Fix: look the word up in the action's own row of the table's `calls` (`{open, close}`) or `toggle`; anything else returns nil, so the bind stays an `exec`. That drops the Go `calls` map (2 lines); test rows (`"axiom ipc edgeMenu pin left": "null"`).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system and the niri system
+### The bind merge reads an IPC bind with a quoted argument of several words as a command
+- **Where:** `backend/internal/compositor/actions/actions.go:97` (`parse`), `backend/internal/compositor/actions/actions.go:164` (`unquote`)
+- **What:** A `{0}` in an `ipcActions` row becomes `(?P<arg>\S+)`, so a quoted argument holding a space never matches, though `unquote` is there to strip its quotes and axiom writes such binds itself (`ShellWord` quotes the argument on Hyprland and sway). Probe: `IPCAction("axiom ipc appLauncher search 'foo bar'")` and `IPCAction("axiom ipc stopwatch timer '10m tea'")` give nil, while `axiom ipc stopwatch timer 10m` gives `timerStart`. On sway and niri, a user's launcher search or labelled timer bind moves in as a plain `exec`, without its action, label or section. Fix: `{0}` becomes `(?P<arg>'[^']*'|"[^"]*"|\S+)`, with TestIPCAction rows for both quoted commands.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the bind actions (keybinds for most of axiom)
 
 ### The overview stays open with nothing shown after its monitor goes away
 - **Where:** `shell/WorkspaceOverlay.qml:21` (`overlayVisible`), `shell/WorkspaceOverlay.qml:30` (`open`), `shell/WorkspaceOverlay.qml:42` (`toggle`), `shell/WorkspaceOverlay.qml:90` (`shown`)

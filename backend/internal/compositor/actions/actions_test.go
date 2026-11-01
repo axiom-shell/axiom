@@ -38,6 +38,8 @@ func TestIPCAction(t *testing.T) {
 		"axiom ipc workspaceOverlay show":  `{"action":"workspaceOverview","call":"open"}`,
 		"axiom ipc stopwatch timer 10m":    `{"action":"timerStart","argument":"10m"}`,
 		"axiom ipc appLauncher clipboard":  `{"action":"clipboard"}`,
+		"axiom ipc edgeMenu pin left":      "null",
+		"axiom ipc nightLight status":      "null",
 	}
 	for command, want := range cases {
 		got := "null"
