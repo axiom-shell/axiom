@@ -554,7 +554,6 @@ Found by the audits:
 - [The onboarder's Checks-page purposes don't match their declared keys](issues.md#the-onboarders-checks-page-purposes-dont-match-their-declared-keys)
 - [daemon.shutdown starts its goroutine past tasks.Go](issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
 - [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
-- [Three Wayland client members nothing in the daemon calls](issues.md#three-wayland-client-members-nothing-in-the-daemon-calls)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
 - [removeOnClick never removes a clicked toast's entry](issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
