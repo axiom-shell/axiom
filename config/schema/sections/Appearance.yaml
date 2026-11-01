@@ -132,6 +132,7 @@ properties:
                 type: boolean
                 title: While the screen is locked
                 default: true
+                description: Axiom's own lock screen only; another locker isn't seen.
               battery:
                 type: boolean
                 title: On battery

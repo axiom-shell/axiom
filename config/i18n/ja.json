@@ -3626,6 +3626,7 @@
     "Transition": "",
     "While any of these holds, the wallpaper stays. Once none does and its time has passed, it changes at once.": "",
     "Show it whole": "",
-    "Move with the workspaces": ""
+    "Move with the workspaces": "",
+    "Axiom's own lock screen only; another locker isn't seen.": ""
   }
 }

@@ -92,7 +92,9 @@ Item {
   }
 
   function _rect(image) {
-    if (!image || image.status !== Image.Ready)
+    // By its loaded size, not its status: an image decoded again at a new
+    // size (the fill, the parallax, the screen) keeps its texture meanwhile
+    if (!image || !(image.implicitWidth > 0 && image.implicitHeight > 0))
       return Qt.vector4d(0, 0, 0, 0);
     const r = WallpaperFill.rect(Appearance.wallpaperFill, image.implicitWidth, image.implicitHeight, root._screen.width, root._screen.height, root.zoom, root.shiftX, root.shiftY);
     return Qt.vector4d(r.x, r.y, r.width, r.height);

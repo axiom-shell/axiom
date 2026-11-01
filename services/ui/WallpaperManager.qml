@@ -77,10 +77,11 @@ Singleton {
     root.refresh(list => root._next(list));
   }
 
+  // Moves on through `list`; whether anything shown changed
   function _next(list) {
     if (list.length === 0) {
       console.log("[WallpaperManager] No wallpapers in", root._listedPath);
-      return;
+      return false;
     }
     ThemeManager.setLastRotated(Date.now());
     const order = Appearance.rotationOrder;
@@ -113,6 +114,7 @@ Singleton {
     // A generated theme follows on its own (ThemeManager.syncGeneratedTheme)
     if (!changed)
       ThemeManager.syncGeneratedTheme();
+    return changed;
   }
 
   // The next wallpaper (as next(), light/dark mode excepted), played with
@@ -123,8 +125,16 @@ Singleton {
       console.warn("[WallpaperManager] No transition", transition, "- one of", WallpaperTransitions.names.join(", "));
       return;
     }
-    ThemeManager.forceTransition(transition);
-    root.next();
+    if (root.mode === "variant") {
+      console.log("[WallpaperManager] No next wallpaper in light/dark mode");
+      return;
+    }
+    root.refresh(list => {
+      ThemeManager.forceTransition(transition);
+      // Nothing new to show: the next change plays the configured one
+      if (!root._next(list))
+        ThemeManager.forceTransition("");
+    });
   }
 
   // A random wallpaper of the folder, picked by hand (for the focused
@@ -202,15 +212,18 @@ Singleton {
   property var _images: []
   property var _collections: []
   property int _listings: 0
+  property var _waiting: []
   on_ListedPathChanged: root.refresh()
   readonly property bool _subfolders: Appearance.wallpaperSubfolders
   on_SubfoldersChanged: root.refresh()
 
-  // Lists the images again, then calls done(images) (when it's the latest
-  // listing asked for)
+  // Lists the images again, then calls done(images). A listing asked for
+  // meanwhile answers every caller waiting, with the newest list
   function refresh(done) {
     if (Paths.greeter)
       return;
+    if (done)
+      root._waiting.push(done);
     const listing = ++root._listings;
     BackendManager.call("file.list", {
       "path": root._listedPath,
@@ -222,7 +235,9 @@ Singleton {
       const images = error ? [] : result.files.map(path => Qt.resolvedUrl("file://" + path).toString());
       if (JSON.stringify(images) !== JSON.stringify(root._images))
         root._images = images;
-      done?.(root._images);
+      const waiting = root._waiting;
+      root._waiting = [];
+      waiting.forEach(fn => fn(root._images));
     });
     // The collections, from the whole folder
     BackendManager.call("file.list", {

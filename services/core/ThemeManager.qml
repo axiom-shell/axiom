@@ -68,7 +68,8 @@ QtObject {
   // }; WallpaperView reads it once the new wallpaper has loaded): a fresh
   // seed per change, so the screens changing together pick the same
   // transition, and a preview's transition name ("" for the configured)
-  property var transition: ({
+  readonly property var transition: root._transition
+  property var _transition: ({
       "seed": 0,
       "forced": ""
     })
@@ -81,7 +82,7 @@ QtObject {
     if (shown === root._seededFor)
       return;
     root._seededFor = shown;
-    root.transition = {
+    root._transition = {
       "seed": Math.floor(Math.random() * 2147483647),
       "forced": root._forcedTransition
     };
