@@ -7,50 +7,59 @@ import qs.services.core
 
 /*
  * The Material Symbols the bundled icon font draws (Appearance.iconFamily),
- * for icon pickers (forms/SchemaIconField). The catalog is
+ * for icon pickers (SchemaField's icon field). The catalog is
  * config/json/material-symbols.json (built with the font by
- * scripts/generate_icons.py): [name, "search words"], most popular first,
- * read the first time it's asked for. `search(query, limit)` ranks names
- * (Search.rankIcons); `isKnown(name)` says whether the font has it.
+ * scripts/generate_icons.py): [name, "search words"], most popular first.
+ * `search(query, limit)` ranks names (Search.rankIcons), reading the
+ * catalog then if it's not read yet (a picker opened or typed in).
+ * `isKnown(name)` says whether the font has it: until the catalog is read,
+ * every name is, and asking schedules the read after the frame, so a page
+ * of icon fields never waits on it (a binding asking runs again once read).
  */
 QtObject {
   id: root
 
-  // Every icon, loaded on first use; [] when the file can't be read
-  function entries() {
-    const cache = root._cache;
-    if (cache.entries === null) {
-      const text = FileManager.read(Paths.resourcePath + "json/material-symbols.json");
-      try {
-        cache.entries = text ? JSON.parse(text) : [];
-      } catch (e) {
-        console.warn("[IconManager] Could not parse material-symbols.json:", e);
-        cache.entries = [];
-      }
-      if (cache.entries.length === 0)
-        console.warn("[IconManager] No icon catalog: run scripts/generate_icons.py");
-      cache.names = new Set(cache.entries.map(entry => entry[0]));
-    }
-    return cache.entries;
-  }
-
   // The names best matching `query` (the most popular with none)
   function search(query, limit) {
-    return Search.rankIcons(root.entries(), query, limit);
+    root._load();
+    return Search.rankIcons(root._entries, query, limit);
   }
 
-  // Whether the font has an icon of this name
+  // Whether the font has an icon of this name (true until the catalog is read)
   function isKnown(name) {
-    root.entries();
-    return root._cache.names.has(String(name ?? "").trim());
+    if (!root._loaded) {
+      Qt.callLater(root._load);
+      return true;
+    }
+    // No catalog (already warned): no name is doubted
+    return root._entries.length === 0 || root._names[String(name ?? "").trim()] === true;
   }
 
   // --- Private ---
 
-  // Filled in place, not assigned: loading it from a binding (isKnown in
-  // a field's `visible`) must not change a property that binding reads
-  readonly property var _cache: ({
-      "entries": null,
-      "names": null
-    })
+  property bool _loaded: false
+  property var _entries: []
+  // Each name as a key: an object, since a Set of them is ~30x slower to
+  // build in this engine
+  property var _names: ({})
+
+  // Reads the catalog, once; [] when the file can't be read
+  function _load() {
+    if (root._loaded)
+      return;
+    const text = FileManager.read(Paths.resourcePath + "json/material-symbols.json");
+    let entries = [];
+    try {
+      entries = text ? JSON.parse(text) : [];
+    } catch (e) {
+      console.warn("[IconManager] Could not parse material-symbols.json:", e);
+    }
+    if (entries.length === 0)
+      console.warn("[IconManager] No icon catalog: run scripts/generate_icons.py");
+    root._entries = entries;
+    const names = Object.create(null);
+    entries.forEach(entry => names[entry[0]] = true);
+    root._names = names;
+    root._loaded = true;
+  }
 }

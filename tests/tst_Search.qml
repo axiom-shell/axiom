@@ -27,6 +27,8 @@ TestCase {
     compare(Search.rankIcons(entries, "sound mute", 5), [], "every word must match");
     compare(Search.rankIcons(entries, "off", 5), ["volume_off"], "a word inside the name");
     compare(Search.rankIcons(entries, "zzz", 5), []);
+    compare(Search.rankIcons(entries, "magn", 5), ["search"], "a search word's start");
+    compare(Search.rankIcons(entries, "aker", 5), ["speaker"], "inside the name, but never inside a search word");
   }
 
   function test_frecency() {

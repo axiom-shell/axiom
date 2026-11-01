@@ -87,12 +87,17 @@ Item {
   }
   onHeightChanged: if (root._inlineOpen)
     Qt.callLater(root._reveal)
-  readonly property bool listOpen: root.expandsInline ? root._inlineOpen : dropdown.opened
-  readonly property ListView _list: root.expandsInline ? inlineList.item as ListView : popupList
+  // The dropdown, built the first time it opens (a closed one is never
+  // built: a page of these fields would build every list and shadow)
+  readonly property Popup _dropdown: dropdownLoader.item as Popup
+  readonly property bool listOpen: root.expandsInline ? root._inlineOpen : root._dropdown?.opened ?? false
+  readonly property ListView _list: root.expandsInline ? inlineList.item as ListView : root._dropdown?.contentItem as ListView
 
   readonly property var matches: {
+    // Asked once the list shows (a Popup's `opened` waits out its enter
+    // transition, `visible` doesn't) or something is typed
     if (root.search)
-      return root.listOpen || root.query !== "" ? root.search(root.query) : [];
+      return root._inlineOpen || (root._dropdown?.visible ?? false) || root.query !== "" ? root.search(root.query) : [];
     const query = root.query.trim().toLowerCase();
     if (!root.editable || query === "")
       return root.options;
@@ -117,12 +122,15 @@ Item {
   function openList() {
     if (root.readOnly || !root._hasList)
       return;
-    root.highlighted = Math.max(0, root.matches.findIndex(option => option.value === root.value));
     if (root.expandsInline) {
       root._inlineCap = Math.max(Widget.height * 2, root._roomBelow());
       root._inlineOpen = true;
-    } else
-      dropdown.open();
+    } else {
+      dropdownLoader.active = true;
+      root._dropdown.open();
+    }
+    // Once open: a `search` list is empty until then
+    root.highlighted = Math.max(0, root.matches.findIndex(option => option.value === root.value));
     root._list?.positionViewAtIndex(root.highlighted, ListView.Contain);
   }
 
@@ -139,7 +147,7 @@ Item {
 
   function closeList() {
     root._inlineOpen = false;
-    dropdown.close();
+    root._dropdown?.close();
   }
 
   function pick(value) {
@@ -256,64 +264,75 @@ Item {
     }
   }
 
-  Popup {
-    id: dropdown
-    y: root.height + Widget.spacing / 2
-    width: root.width
-    // Rows are inset from the rounded border (as SchemaComboBox's), so
-    // the highlight never meets it
-    padding: Widget.spacing
-    // The field keeps the keys: the list is driven from it
-    focus: false
-    closePolicy: Popup.CloseOnPressOutsideParent
-    transformOrigin: Item.Top
+  // At the field's corner, so the popup's place is measured from the field;
+  // kept once built, so it closes with its animation
+  Loader {
+    id: dropdownLoader
+    active: false
+    sourceComponent: dropdownComponent
+  }
 
-    // Grows down out of the field, as FloatingPopout does
-    enter: Transition {
-      NumberAnimation {
-        property: "opacity"
-        from: 0
-        to: 1
-        duration: Appearance.animNormal
-        easing.type: Appearance.easing
+  Component {
+    id: dropdownComponent
+
+    Popup {
+      y: root.height + Widget.spacing / 2
+      width: root.width
+      // Rows are inset from the rounded border (as SchemaComboBox's), so
+      // the highlight never meets it
+      padding: Widget.spacing
+      // The field keeps the keys: the list is driven from it
+      focus: false
+      closePolicy: Popup.CloseOnPressOutsideParent
+      transformOrigin: Item.Top
+
+      // Grows down out of the field, as FloatingPopout does
+      enter: Transition {
+        NumberAnimation {
+          property: "opacity"
+          from: 0
+          to: 1
+          duration: Appearance.animNormal
+          easing.type: Appearance.easing
+        }
+        NumberAnimation {
+          property: "scale"
+          from: 0.95
+          to: 1
+          duration: Appearance.animNormal
+          easing.type: Appearance.easing
+        }
       }
-      NumberAnimation {
-        property: "scale"
-        from: 0.95
-        to: 1
-        duration: Appearance.animNormal
-        easing.type: Appearance.easing
+      exit: Transition {
+        NumberAnimation {
+          property: "opacity"
+          to: 0
+          duration: Appearance.animFast
+          easing.type: Appearance.easing
+        }
       }
-    }
-    exit: Transition {
-      NumberAnimation {
-        property: "opacity"
-        to: 0
-        duration: Appearance.animFast
-        easing.type: Appearance.easing
+
+      // Solid: it opens inside its window, where no blur reaches
+      background: DropdownSurface {
+        color: Theme.backgroundAlt
+        border.width: Appearance.borderWidth
       }
-    }
 
-    // Solid: it opens inside its window, where no blur reaches
-    background: DropdownSurface {
-      color: Theme.backgroundAlt
-      border.width: Appearance.borderWidth
-    }
+      contentItem: ListView {
+        implicitHeight: Math.min(contentHeight, Widget.height * 6)
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        model: root.matches
+        delegate: optionDelegate
 
-    contentItem: ListView {
-      id: popupList
-      implicitHeight: Math.min(contentHeight, Widget.height * 6)
-      clip: true
-      boundsBehavior: Flickable.StopAtBounds
-      model: root.matches
-      delegate: optionDelegate
-
-      ScrollIndicator.vertical: ScrollIndicator {}
+        ScrollIndicator.vertical: ScrollIndicator {}
+      }
     }
   }
 
   // The inline list: fades in at its full height (a popout's box grows to
-  // it), and keeps that height until it has faded out
+  // it), and keeps that height until it has faded out. Its list is built
+  // only where lists open inline (the surface, layerless, is cheap)
   Item {
     id: inlineBox
     visible: root.expandsInline && opacity > 0

@@ -21,12 +21,12 @@ Every icon is a Material Symbols name (`"wifi"`, `"battery_full"`) that `StyledI
 ### The catalog
 - `config/json/material-symbols.json` holds one `[name, "search words"]` per icon the font has (from its `.codepoints`), most popular first.
 - The words are Google's tags from `fonts.google.com/metadata/icons`, split into words, less the name's own and the few that tag over a tenth of all icons (`icon`, `symbol`, …). If that unofficial endpoint fails, the script writes names only.
-- `IconManager` reads it the first time it's asked, never before an icon field is shown. It holds it in a plain object filled in place, so a binding that triggers the load (`isKnown` in a field's `visible`) doesn't loop.
-  - `search(query, limit)`: `Search.rankIcons`, below. With no query, the most popular.
-  - `isKnown(name)`: whether the font has the name.
+- `IconManager` reads it the first time it's asked, never before an icon field is shown, and never while a page builds:
+  - `search(query, limit)`: `Search.rankIcons`, below. With no query, the most popular. It reads the catalog then if it isn't read yet (a list opened or typed in).
+  - `isKnown(name)`: whether the font has the name. Until the catalog is read (or when it can't be) every name is known, and asking schedules the read after the frame (`Qt.callLater`), so a page of icon fields never reads it while it builds. The binding runs again once it's read. The names are an object's keys, not a `Set`: building a `Set` of 4,300 names took ~30 ms in qs's engine, the object ~1 ms.
 - `Search.rankIcons(entries, query, limit)` (pure, `tst_Search`):
   - It ranks by name with `Search.score`, reading the query's spaces as underscores (`volume up` → `volume_up`).
-  - An icon whose search words (or name) contain every query word at a word start ranks with a name matched inside a word (50).
+  - An icon whose search words (or name parts) contain every query word at a word start ranks with a name matched inside a word (50). That test is a plain substring check, not `Search.score`: its fuzzy pass over every icon's search words took 55-140 ms a keystroke, the check ~10 ms.
   - The catalog's popularity order breaks ties.
 
 ### The icon field (`x-control: "icon"`)
