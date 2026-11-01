@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01 and platform-01 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01 and core-ui-theming-01 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -48,7 +48,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 |---|---|---|---|---|---|---|---|
 | 1 | config-01 | deletion | Done: Config pipeline and store dead code, the step-test runner, and every reader member nothing reads | 9 | ~370 (net about -270) | none |  |
 | 2 | platform-01 | deletion | Done: Dead code across the daemon, launcher, greeter and security | 6 | ~190 | config-01 |  |
-| 3 | core-ui-theming-01 | deletion | Dead members and pure shrinks in core services, ui-kit, theming and Wayland | 7 | ~-100 net | config-01 |  |
+| 3 | core-ui-theming-01 | deletion | Done: Dead members and pure shrinks in core services, ui-kit, theming and Wayland | 7 | ~-100 net | config-01 |  |
 | 4 | compositor-01 | deletion | Go compositor backend: dead and doubled helpers | 17 | ~550 (~370 out) | none | Q6 |
 | 5 | compositor-02 | deletion | QML compositor services, keybind helpers, workspace strips | 12 | ~450 | none |  |
 | 6 | compositor-03 | deletion | The blur system | 5 | ~200 | none |  |
@@ -147,14 +147,14 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - LauncherManager keeps a dead clear() and a cliphist test
   - The shell's unused daemon-call paths
   - Two dead Go helpers and a forwarding wrapper
-- **core-ui-theming-01** (7):
-  - [Small shrinks in the core services](../issues.md#small-shrinks-in-the-core-services)
-  - [setWallpaperAndGenerate only forwards for one caller](../issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)
-  - [~/.current_wallpaper is written but nothing reads it](../issues.md#current_wallpaper-is-written-but-nothing-reads-it)
-  - [StyledRectButton's badge and border press colour have no user](../issues.md#styledrectbuttons-badge-and-border-press-colour-have-no-user)
-  - [TileGrid and StyledVolumeBar keep lines nothing reads](../issues.md#tilegrid-and-styledvolumebar-keep-lines-nothing-reads)
-  - [Two hand-written cmp.Or in the theme packages](../issues.md#two-hand-written-cmpor-in-the-theme-packages)
-  - [Three Wayland client members nothing in the daemon calls](../issues.md#three-wayland-client-members-nothing-in-the-daemon-calls)
+- **core-ui-theming-01** (7, done):
+  - Small shrinks in the core services
+  - setWallpaperAndGenerate only forwards for one caller
+  - ~/.current_wallpaper is written but nothing reads it
+  - StyledRectButton's badge and border press colour have no user
+  - TileGrid and StyledVolumeBar keep lines nothing reads
+  - Two hand-written cmp.Or in the theme packages
+  - Three Wayland client members nothing in the daemon calls
 - **compositor-01** (17): One commit per package, the old-claims fallback's 6 lines included (Q6).
   - [Hyprland's exit command is kept in two packages](../issues.md#hyprlands-exit-command-is-kept-in-two-packages)
   - [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers)

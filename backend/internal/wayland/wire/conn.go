@@ -246,12 +246,6 @@ func Array(data []byte) Arg {
 	return Arg{b: b}
 }
 
-// NewID is a new_id argument of an interface the request doesn't name
-// (wl_registry.bind's): the interface, its version, then the id.
-func NewID(iface string, version, id uint32) Arg {
-	return Arg{b: append(append(String(iface).b, uint32Arg(version)...), uint32Arg(id)...)}
-}
-
 // Fd is a file descriptor argument. The descriptor is duplicated into
 // the message: f stays the caller's.
 func Fd(f *os.File) Arg { return Arg{fd: f} }

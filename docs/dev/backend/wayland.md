@@ -7,7 +7,7 @@ The daemon's own Wayland connection, and what each compositor offers for what it
 
 ### The connection
 - `wire.Conn` (pure Go, no libwayland): object ids from 2 up, reused after the compositor's `delete_id`; each object's events go to its handler on the goroutine running `Run`; `Registry`, `Bind`, `Sync`. A `wl_display.error` ends it with the compositor's message.
-- **Arguments**: `Uint`, `Int`, `Fixed` (24.8), `String`, `Array`, `NewID` (an interface named by the request, as `wl_registry.bind`'s) and `Fd`, read back by `Args` in order.
+- **Arguments**: `Uint`, `Int`, `Fixed` (24.8), `String`, `Array` and `Fd`, read back by `Args` in order.
   - File descriptors ride beside the message on `internal/unixmsg` ([dbus.md](dbus.md) › Descriptors): `Fd(f)` sends a duplicate (`f` stays the caller's).
   - `Args.Fd()` takes the event's next one from the connection's queue. A handler must take every fd its event carries, in order, or later events get the wrong ones.
   - `SealedFile(name, data)` is a sealed memfd for what the compositor maps (a keymap, gamma ramps).

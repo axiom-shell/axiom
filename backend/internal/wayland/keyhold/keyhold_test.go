@@ -212,7 +212,10 @@ func TestHold(t *testing.T) {
 			}
 
 			h.Release()
-			if h.Held() {
+			h.mu.Lock()
+			held := h.hold != nil
+			h.mu.Unlock()
+			if held {
 				t.Error("still held")
 			}
 			if !testkit.Eventually(func() bool { s := f.state(); return s.layerGone && s.surfaceGone }) {

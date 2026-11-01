@@ -1841,18 +1841,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the services-core system
 
-### Small shrinks in the core services
-- **Where:** `services/core/StateManager.qml:25` (`createStateHandler`), `services/core/StateManager.qml:12` (`stateDir`), `services/system/AudioManager.qml:35` (`name`, `description`, `micUsers`), `backend/internal/daemon/tools.go:47` (`artResult`), `components/bar/widgets/Privacy/Privacy.qml:27` (`appName`)
-- **What:** Each keeps every behaviour but the last, which says what it changes:
-  - StateManager's `save` wraps `FileManager.write` in a `try` that can't catch (the write is asynchronous and reports through `done`) and returns `true`/`false` that no caller reads (none of the 21 `createStateHandler` users uses `save`'s result); its "state saved." debug line runs before the write. `save: data => FileManager.write(filepath, JSON.stringify(data, null, 2))`: lines 25 to 34 (10) become 1, 9 removed.
-  - `StateManager.stateDir` is public but read only by the line below it: use `Paths.statePath` there, 2 lines (with its blank line).
-  - `AudioManager.name`, `description` (lines 35 and 36) and `micUsers` (line 263) are read nowhere (grep: no reader outside the file or inside it): 3 lines.
-  - `media.art` answers `artResult{Path: p.Path}`, the path it was sent, and MediaManager reads only the error: answer `struct{}{}` and drop the 3-line type.
-  - Privacy's `appName` (3 lines) is AudioManager's without the binary fallback, so a stream with no `application.name` is named by its nickname in the privacy tooltip and by its binary in the mixer: use `AudioManager.appName` (the only change: such a stream gets the mixer's name).
-  Total: 20 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the services-core system
-
 ### Rescanning the theme folders lists the shell's working directory as themes
 - **Where:** `services/core/ThemeManager.qml:578` (`_reloadAllThemes`), `services/core/ThemeManager.qml:589` (`reloadCommunityThemes`), `services/core/ThemeManager.qml:642` (`_defaultThemeLoader`), `services/core/ThemeManager.qml:651` (`_generatedThemeLoader`), `services/core/ThemeManager.qml:660` (`_communityThemeLoader`)
 - **What:** To rescan, `_reloadAllThemes` (at start-up and after every generation) and `reloadCommunityThemes` set each loader's `folder` to `""` and then back. A FolderListModel whose folder is empty lists the current directory. qs runs in `$HOME`, so each loader briefly lists `~/*.json`, and its `onStatusChanged` (Ready, count > 0) parses every JSON file there as a theme and rebuilds the families. The live debug log shows it at each start: the first line is `[ThemeManager] Themes: axiom-backup-before-resize-…, axiom-demoConfig7-…` (exported configs in `~`, without the stock themes), the next lists them twice (stock and community loaders both on `~`), and only later lines show the real list. When the real folder then has no themes (a user who has never generated any: `Paths.generatedThemesPath` empty or missing), no Ready with rows follows. The `~` files then stay as `generated/<file>` families in the Themes page's Generated group, and picking one applies a theme that doesn't exist. Only the community loader has a guard for its count dropping to 0 (`_communityEmptied`), so its list recovers after a second; the generated one doesn't. PLAUSIBLE for the stuck case: run a nested shell with an empty generated folder and a JSON file in its working directory, and see whether the Generated group lists it. Fix: give the three folders one inline loader component (`path`, `prefix`) whose handler ignores rows while `String(folder)` isn't its path, and give all three the emptied-folder handling. That replaces the three 9-line `FolderListModel` blocks and the community-only `_communityEmptied` Timer (lines 640–680, 41 lines) with one component and three instances.
@@ -1868,20 +1856,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A theme generated from another monitor's wallpaper is replaced by the primary's at the next start
 - **Where:** `services/core/ThemeManager.qml:194` (`syncGeneratedTheme`), `services/ui/WallpaperManager.qml:36` (`pick`), `services/ui/LauncherCommands.qml:159`
 - **What:** A pick by hand always generates themes from the picked wallpaper (wallpaper-and-schedules.md: "picks by hand … always do"), including one for a monitor that isn't the primary: the Themes page's monitor picker, or `pick` from the focused monitor. The launcher's `/generate` does the same from its target monitor's wallpaper. `syncGeneratedTheme` holds a generated theme to the primary's wallpaper only (`root.wallpaper`), and `_applyShown` runs it on every change of what's shown and once at start-up. Scenario: with a generated theme active and two monitors, pick a wallpaper for DP-2. The colors follow it. At the next qs start or reload, or the next monitor hotplug or rotation, `syncGeneratedTheme` sees `generated.wallpaper` ≠ the primary's and regenerates from the primary's wallpaper, so the colors the user picked change without them doing anything. When the theme was already from a non-primary wallpaper, the pick's own `_applyShown` queues the primary's generation right behind the pick's, and the picked colors flash and are replaced. Fix: in `syncGeneratedTheme`, accept any wallpaper shown on any monitor (`Object.values(shownWallpapers.wallpapers)` plus `wallpaper`, decoded) as up to date. A restored snapshot whose generation's wallpaper is no longer shown still regenerates, now from the primary's.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the theming system
-
-### setWallpaperAndGenerate only forwards for one caller
-- **Where:** `services/core/ThemeManager.qml:111` (`setWallpaperAndGenerate`), `services/ui/WallpaperManager.qml:36` (`pick`)
-- **What:** `grep -rnw setWallpaperAndGenerate` finds one caller, `WallpaperManager.pick`'s fixed-mode branch. The function only calls `setWallpaper(url, monitor)` and then `generateThemesFromWallpaper(url)`, which `pick`'s rotate branch already calls directly. Fix: call the two directly in `pick`, and delete the function with its comment (lines 110–114, 5 lines).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the theming system
-
-### ~/.current_wallpaper is written but nothing reads it
-- **Where:** every mention in the repo (`grep -rn current_wallpaper`, 2026-10-31): `services/core/ThemeManager.qml:178` (`_showWallpaper`'s comment), `services/core/ThemeManager.qml:186` (the `ln -sf`), `scripts/setWallpaper.sh:8` (header comment), `scripts/setWallpaper.sh:33` (the `ln -sf`), `docs/dev/roadmap.md:556` (this entry's link), `.claude/reviews/theming.md:11` (this entry's link)
-- **What:** On every change of the primary's wallpaper, `_showWallpaper` runs `ln -sf <path> ~/.current_wallpaper` (line 186), and `setWallpaper.sh` does the same for awww (line 33). `grep -rn current_wallpaper` over the repo finds only these two and their comments. No axiom code reads the link, and no doc names it. It is written in `$HOME`, not under an XDG path like the system's other files (systems.md theming Check: "Generated files under XDG paths"). Its target is the URL with `file://` stripped but not decoded (unlike `generateThemesFromWallpaper`), so a wallpaper with `%` or `#` in its name links to a path that doesn't exist.
-
-  **Decided** (maintainer, 2026-10-31): "remove .current_wallpaper. Legacy. Should be completely purged". Fix: delete every writer and every mention listed under **Where**: ThemeManager's `ln -sf` lines (185–186, the `else if (primary)` branch and its call) and their comment, `scripts/setWallpaper.sh`'s copy and its header line, and the links to this entry, which go with it.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the theming system
 
@@ -1915,12 +1889,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the ui-kit system
 
-### StyledRectButton's badge and border press colour have no user
-- **Where:** `components/reusable/StyledRectButton.qml:28` (`borderPressColor`), `components/reusable/StyledRectButton.qml:32` (`badgeText`, `badgeVisible`, `badgeBackgroundColor`, `badgeTextColor`), `components/reusable/StyledRectButton.qml:84` (`CountBadge`)
-- **What:** No StyledRectButton or SquareIconButton (11 + 35 instances) sets any of the four badge properties or `borderPressColor` (no name has a hit outside the file: `grep -rnw badgeText --include=*.qml .`). The two counts drawn on buttons use `CountBadge` directly (`components/bar/widgets/Notifications/Notifications.qml`, `components/content/parts/custom/elements/Icon/CustomIcon.qml`). Fix: delete lines 28, 32–35 and the `CountBadge` block 84–93, and read `root.borderColor` for the pressed border in line 48; shared-ui-pieces.md's "optional `CountBadge`" goes. 15 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
 ### ActionTile and ActionPill carry the same countdown bar
 - **Where:** `components/reusable/ActionTile.qml:110` (`countdownBar`, `drain`, `onActiveChanged`), `components/reusable/ActionPill.qml:121` (`countdownBar`, `drain`, `onActiveChanged`)
 - **What:** The "time left while active" bar is the same 26 lines in both (`diff <(sed -n 110,135p ActionTile.qml) <(sed -n 121,146p ActionPill.qml)` prints nothing): a Rectangle along the bottom, a NumberAnimation draining its width over `countdown` ms, and the `onActiveChanged` that restarts it. Their frames are the same too (`radius`, the `color` and `border.color` from `active`/`hot`/`tone`, two `ColorGlide`s: ActionTile 48–55, ActionPill 36–43). Fix: one small piece in `components/reusable/` (a bar draining over a duration while running), each tile placing it in 3 lines; 26 lines go.
@@ -1930,12 +1898,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### StyledTextEntry and StyledTextArea carry the same blinking cursor
 - **Where:** `components/reusable/StyledTextEntry.qml:104` (`cursorDelegate`), `components/reusable/StyledTextArea.qml:171` (`cursorDelegate`)
 - **What:** Both draw the accent cursor and blink it with the same `SequentialAnimation` (two `PropertyAnimation`s of 500 ms marked as behaviour timing), 19 lines each, the same but for the focus they read (`textField` / `textInput`) and a comment. AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: a cursor piece in `components/reusable/` reading its parent input's `activeFocus`, set as the `cursorDelegate` of both; 19 lines go (and the blink timing lives in one place).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### TileGrid and StyledVolumeBar keep lines nothing reads
-- **Where:** `components/content/parts/TileGrid.qml:58` (`_gridWidth`), `components/reusable/StyledVolumeBar.qml:83` (`anchors.leftMargin`), `components/reusable/StyledVolumeBar.qml:177` (`Layout.maximumWidth`)
-- **What:** `_gridWidth` has no reader (one hit repo-wide, its definition; `tileX` works out each row's width itself). StyledVolumeBar's fill sets `anchors.leftMargin: root.orientation === Qt.Vertical ? parent.width - width : 0`, but the left anchor is only set when horizontal, where the margin is 0. Its percentage's `Layout.maximumWidth: root.showPercent ? Infinity : parent.width - Widget.px(4)` takes the second branch only while the text is "" and hidden. Fix: delete lines 58, 83 and 177 (the label's `Layout.preferredWidth` already fixes its width when shown). 3 lines.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the ui-kit system
 
@@ -1954,12 +1916,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### fzf's flags rebuilt in Go where a template does
 - **Where:** `backend/internal/theme/integrations/table.go:187` (`fzf`)
 - **What:** `fzf` takes `t.vars(true)` and joins fixed `name:${VAR}` pairs into one `--color=` line, which is what `tmpl{text: true}` does with a one-line template; the system's Checks name such an entry as an odd one out ("a table entry … reimplementing what `tmpl` … does"). Fix: a `templates/fzf` holding `--color=fg:${FOREGROUND},bg:${BACKGROUND},hl:${ACCENT},fg+:${FOREGROUND_HIGHLIGHT},bg+:${BACKGROUND_HIGHLIGHT},hl+:${ACCENT},info:${INFO},marker:${SUCCESS},prompt:${ACCENT},spinner:${ACCENT_ALT},pointer:${ACCENT},header:${FOREGROUND_ALT},border:${BORDER},label:${FOREGROUND_ALT},query:${FOREGROUND},gutter:${BACKGROUND}` and the entry `one("{state}/axiom/fzf-colors", tmpl{name: "fzf", text: true})`; the goldens stay byte for byte. Removes lines 186–201 (16 lines); the doc's "built in Go (fzf's flags, …)" drops fzf.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the theme-integrations system
-
-### Two hand-written cmp.Or in the theme packages
-- **Where:** `backend/internal/theme/integrations/integrations.go:85` (`or`), `backend/internal/hookup/hookup.go:177` (`cmpOr`)
-- **What:** Both are the standard library's `cmp.Or` for strings (go.mod is Go 1.26; `wayland/outputs` already uses `cmp.Or`). Fix: delete both (6 + 6 = 12 lines) and call `cmp.Or(t.Name, "Unknown")` and the like (`vars`, 3 calls), `cmp.Or(env.ZDotDir, env.Dirs.Home)` and `cmp.Or(r.Comment, "#")`.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the theme-integrations system
 
@@ -2049,12 +2005,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `backend/internal/wayland/client/client.go:99` (`Run`), `backend/internal/daemon/daemon.go:419` (`followCompositor`), `backend/internal/daemon/wayland.go:31` (`waylandNow`)
 - **What:** When the compositor sends `wl_display.error` (any bad request from one of the nine clients on the shared connection), `wire.Conn.Run` closes the connection and `client.Run` returns, but no client is told: each keeps its manager id and objects. `followCompositor` only logs `the Wayland connection failed: monitors aren't known` and falls back to `wire.Watch`. From then on `idlenotify.Notifier.Available()` stays true with its watches armed on a dead socket (proven with a throwaway test on `wiretest`: `Run returned: the compositor reported error 0 on object 2: bad request; Available after: true`), so with Idle on nothing ever dims, locks or turns the screens off while `idle.state` reports the notifier and the watches armed; `wayland.state` keeps `ready: true` and its `typing` / `nightLight` / `clipboard` flags, so `NightLightManager` doesn't fall back to wlsunset (the compositor dropped the gamma/CTM with the client), `ClipboardManager` stays `available` with its history frozen, and `EmojiManager.canType` stays true while `input.type` fails. Related: `wayland.md` says "until then every flag reads off", but `waylandNow` returns the flags whatever `ready` says. Fix: give `client.Client` a `Stop()` that `client.Run` calls on every client when the connection ends (each forgets its ids as its `Start` does and tells its `OnChange`; `waylandSession.Stop` sets `ready` false), and have `waylandNow` return `waylandState{}` while not ready, so the shell sees everything off and falls back.
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the dbus-wayland system
-
-### Three Wayland client members nothing in the daemon calls
-- **Where:** `backend/internal/wayland/wire/conn.go:251` (`NewID`), `backend/internal/wayland/datacontrol/datacontrol.go:118` (`Device.Mimes`), `backend/internal/wayland/keyhold/keyhold.go:245` (`Holder.Held`)
-- **What:** `wire.NewID` has no caller anywhere (`grep -rn 'NewID(' backend` finds only its definition; `Conn.Bind` writes the same bytes by hand as `Uint(name), String(iface), Uint(version), Uint(id)`); `wayland.md` lists it among the arguments. `Device.Mimes` is called only by `datacontrol_test.go:142` (the daemon reads types through `Current()` and the offer's own `Mimes`), and `Holder.Held` only by `keyhold_test.go:215`. Fix: delete the three (5 + 10 + 6 = 21 lines, comments included) and `NewID` from `wayland.md`'s Arguments line; the in-package tests read `d.Current().Mimes()` and `h.hold != nil` instead.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the dbus-wayland system
 
 ### A transient notification toasts blank

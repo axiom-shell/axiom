@@ -6,6 +6,7 @@
 package hookup
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -145,7 +146,7 @@ func resolve(t Target, env Env) Resolved {
 		r.Shell = path.Base(env.Shell)
 		switch r.Shell {
 		case "zsh":
-			r.Path = cmpOr(env.ZDotDir, env.Dirs.Home) + "/.zshrc"
+			r.Path = cmp.Or(env.ZDotDir, env.Dirs.Home) + "/.zshrc"
 		case "bash":
 			r.Path = env.Dirs.Home + "/.bashrc"
 		case "fish":
@@ -172,13 +173,6 @@ func resolve(t Target, env Env) Resolved {
 		r.Path = env.Dirs.Expand(t.File[0])
 	}
 	return r
-}
-
-func cmpOr(a, b string) string {
-	if a != "" {
-		return a
-	}
-	return b
 }
 
 // Facts are what the edge found about a resolved target's file.
@@ -372,7 +366,7 @@ func Lines(text string) []string {
 // Text is lines joined, newline-terminated.
 func Text(lines []string) string { return strings.Join(lines, "\n") + "\n" }
 
-func (r Resolved) comment() string { return cmpOr(r.Comment, "#") }
+func (r Resolved) comment() string { return cmp.Or(r.Comment, "#") }
 
 // keys are the keys the missing lines set, where a second setting of a key
 // matters (fish's set -gx lines are never matched)

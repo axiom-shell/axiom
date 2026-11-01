@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Qt.labs.folderlistmodel
-import Quickshell
 import Quickshell.Io
 
 import qs.config
@@ -107,12 +106,6 @@ QtObject {
     applyTheme(target);
   }
 
-  // Sets the wallpaper, then generates themes from it
-  function setWallpaperAndGenerate(wallpaperUrl, monitor) {
-    setWallpaper(wallpaperUrl.toString(), monitor);
-    generateThemesFromWallpaper(wallpaperUrl);
-  }
-
   // `monitor`, or the focused monitor without one
   function monitorFor(monitor) {
     return monitor || (CompositorManager.focusedOutput || General.primaryMonitor);
@@ -174,16 +167,11 @@ QtObject {
   }
 
   // awww needs telling; the built-in backend (shell/Wallpaper) follows
-  // wallpaperFor(). Either way the primary's is linked to
-  // ~/.current_wallpaper. Only _applyShown calls it.
-  function _showWallpaper(url, monitor, primary) {
-    if (Paths.greeter)
+  // wallpaperFor(). Only _applyShown calls it.
+  function _showWallpaper(url, monitor) {
+    if (Paths.greeter || Appearance.wallpaperBackend !== "awww")
       return;
-    const path = url.replace("file://", "");
-    if (Appearance.wallpaperBackend === "awww")
-      CommandManager.runDetached([Paths.scriptsPath + "setWallpaper.sh", path, monitor, primary ? "1" : "0"]);
-    else if (primary)
-      CommandManager.runDetached(["ln", "-sf", path, Quickshell.env("HOME") + "/.current_wallpaper"]);
+    CommandManager.runDetached([Paths.scriptsPath + "setWallpaper.sh", url.replace("file://", ""), monitor]);
   }
 
   // Generated themes are named by style, not wallpaper, so each run
@@ -355,7 +343,7 @@ QtObject {
   // --- What's showing ---
   // state/look.json: { theme: { for, name } (the schedule's variant of the
   // chosen theme, or null), rotated: { wallpaper, wallpapers },
-  // lastRotated, applied: { monitors, primary } (what the backend was last
+  // lastRotated, applied: { monitors } (what the backend was last
   // told) }. The greeter keeps none.
   readonly property var _lookState: StateManager.createStateHandler("look")
   property var _look: Paths.greeter ? ({}) : root._lookState.load({})
@@ -404,20 +392,15 @@ QtObject {
       return;
     const before = root._look.applied ?? {};
     const after = {
-      "monitors": {},
-      "primary": before.primary ?? ""
+      "monitors": {}
     };
-    const primary = General.primaryMonitor;
     for (const screen of General.outputs) {
       const url = root.wallpaperFor(screen.name);
       if (!url)
         continue;
-      const isPrimary = screen.name === primary;
-      if (before.monitors?.[screen.name] !== url || (isPrimary && after.primary !== url))
-        root._showWallpaper(url, screen.name, isPrimary);
+      if (before.monitors?.[screen.name] !== url)
+        root._showWallpaper(url, screen.name);
       after.monitors[screen.name] = url;
-      if (isPrimary)
-        after.primary = url;
     }
     if (!Utils.deepEqual(after, before))
       root._saveLook({
