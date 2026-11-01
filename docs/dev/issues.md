@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The chat has no slash commands to control it
+- **Where:** `components/content/parts/chat/ChatComposer.qml` (`_send`), `services/apps/ChatManager.qml` (`send`), `services/ui/LauncherCommands.qml` (`chat`), `services/ui/LauncherManager.qml` (`_chatRow`)
+- **What:** The maintainer (2026-11-01): "add chat slash commands for control to roadmap where necessary". Today the chat's composer handles no `/` input: `_send` hands the text to `ChatManager.send`, which sends `/new` to the model like any message. Outside the chat, the launcher's `@question` (`_chatRow`) and IPC `chat ask` start a new conversation with the default preset and send the question (`ChatManager.ask`); the launcher's `/chat` (alias `/ai`) opens the chat, a new conversation or a saved one; IPC `chat` also has `open`, `newChat` and `settings`. Every other control is a button only: New conversation (the header), Stop (the send button while busy), the preset and model pick (`ModelPicker`), regenerate, copy and remove a message (`ChatMessage`), rename, open and delete a conversation (`ConversationList`), attach the clipboard or a screenshot (the composer's buttons), and the provider's key (`openSettings`). Open for the plan: which of these get a command in the composer (candidates: new, stop, preset, model, regenerate, rename, delete, attach, settings, help), how they're offered (a suggestion list while typing `/`, as the launcher does), how a message really starting with `/` is sent, and whether the launcher's `/chat` takes the same commands.
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while filing the maintainer's notes
+
 ### DailySchedule's persisted state never survives a reload
 - **Where:** `services/core/DailySchedule.qml` (`_state`), `services/system/NotificationManager.qml` (`_dndSchedule`), `services/system/NightLightManager.qml` (`_schedule`), `services/ui/WallpaperManager.qml` (`_themeSchedule`)
 - **What:** `DailySchedule` is a QtObject holding its `PersistentProperties` in a named property, and each owner holds it in a named property too. Quickshell's Singleton passes a reload only to its default children, and only to Reloadable ones (a plain QObject child is skipped), so `persisted.last` always starts empty and every QML reload reports `due` again: a scheduled dark theme or night light switched off by hand comes back, as do do-not-disturb windows. DeadlineTicker had the same shape and was fixed by making it a `Scope` declared as a default child (`DeadlineTicker { id: … }`); the same change fits here.
@@ -2292,3 +2298,126 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `SettingsManager.localConfig?.Calendar?.accounts` names the key format 2 renamed to `items`, so it's always undefined and the card always reads `CalendarConfig.savedAccounts`, which is right anyway (the draft's edits are previews, in `ConfigManager.live`). And an account's `id` is a required `ItemId` (pattern `^[A-Za-z0-9]…`, never empty; `add()` sets one), so `account.id || "account-" + (index + 1)` (lines 33 and 73), connect's copy with the id filled in (lines 114–116) and the id written back at lines 138 and 172 handle a case that can't occur. Fix: `accounts: CalendarConfig.savedAccounts`, `defaultCalendar: CalendarConfig.defaultCalendar`, `accountId: root.account?.id ?? ""`, `freeId` over `account.id`, `const account = root.account`, and lines 138 and 172 go: 4 lines removed, 3 shortened.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the calendar system
+
+### An own brightness set opens the OSD, which refreshes the monitor beside the write
+- **Where:** `services/system/BrightnessManager.qml:63` (`set`), `components/surfaces/osd/OSDTriggers.qml:32` (`_open`)
+- **What:** `set` emits `brightnessChanged(name)` (line 63) before `_write` marks `_writing[name]` (line 136). With the OSD shut, a brightness key goes `brightnessChanged` → OSDBar `poked` → `OSDTriggers.poke(true)` → `host.show()`, which sets `occupied` synchronously, so `_open` turns true and calls `BrightnessManager.refresh` while `_writing[name]` is still false: a `brightness.get` goes out, then the `brightness.set`. The daemon runs calls concurrently (`rpc.go` handles each in its own goroutine), so on a DDC monitor `ddcutil getvcp` and `ddcutil setvcp` run on one I2C bus at once. The get can fail (DDC/CI transfers interleaved), or read the old level and answer after the set's callback cleared `_writing`: the guard at line 109 then lets the stale level overwrite the new one, the OSD bar jumps back, and the next press steps from the old value. Every first press with the OSD shut pays a ddcutil run for a value axiom just set. PLAUSIBLE: settle with a DDC monitor, pressing brightness up with the OSD shut and reading the log and the bar. Fix: in `set`, emit `brightnessChanged` after the write/pending branch, so `refresh` sees `_writing[name]` and returns.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:brightness system
+
+### Idle dimming is forgotten across a shell reload
+- **Where:** `services/system/BrightnessManager.qml:92` (`_dimmed`)
+- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload, declared as a default child of a `Singleton` root (the root is a `QtObject` now, and a named property doesn't survive: see [DailySchedule's persisted state never survives a reload](#dailyschedules-persisted-state-never-survives-a-reload)).
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:brightness system
+
+### Two members of the brightness system nothing needs
+- **Where:** `services/system/BrightnessManager.qml:114` (`_focused`), `components/content/Brightness/Brightness.qml:102` (`allRow`)
+- **What:** `_focused()` only returns `CompositorManager.focusedOutput`, for the three IPC functions (`up`, `down`, `set`); `id: allRow` is never referenced (`grep -c allRow` gives 1, the definition). Fix: the IPC functions read `CompositorManager.focusedOutput` directly and the id goes: 5 lines (lines 114-117 of BrightnessManager.qml, line 102 of Brightness.qml).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:brightness system
+
+### The brightness icon thresholds are written three times
+- **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:114` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
+- **What:** The same `level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high"` is in the module, the OSD bar and the Quick actions tile; changing the icons or thresholds means finding all three. Fix: one `icon(level)` function in BrightnessManager (as `AudioManager.inputIcon` serves the OSD's microphone bar), called from all three; Brightness.qml's own `icon` (4 lines) goes.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:brightness system
+
+### Replacing the chat's conversation leaves its reply and attachments behind
+- **Where:** `services/apps/ChatManager.qml:70` (`newConversation`), `services/apps/ChatManager.qml:77` (`open`), `services/apps/ChatManager.qml:166` (`ask`), `services/apps/ChatManager.qml:503` (`_finish`)
+- **What:** `newConversation` and `open` replace the conversation but only half let go of what belonged to the old one:
+  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 504 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
+  - **Pending attachments.** A pasted image, screenshot or dropped file is copied at once into `chats/<current id>/` (with `Chat.keepConversations` > 0); both functions just set `root.attachments = []` (only `detach` runs `rm`). A conversation never sent is never in `index.json`, so neither `remove` nor the pruning in `_writeConversation` reaches its folder: paste a screenshot, click New conversation, and the screenshot stays in `~/.local/state/axiom/chats/<id>/` for good, a privacy leak as much as a disk one (the same for attachments pending at a reload, left as rare).
+  Fix: one helper both call before replacing the conversation, `_letGo()`: `if (busy) { stop(); _replyId = ""; streamingText = ""; streamingThinking = ""; }` (the late answer and deltas then fail their id check) and `attachments.forEach(a => CommandManager.runDetached(["rm", "-f", "--", a.path]))`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### Images dropped together on the chat overwrite each other
+- **Where:** `services/apps/ChatManager.qml:371` (`_attachmentPath`), `components/content/Chat/Chat.qml:141` (`onDropped`)
+- **What:** An attachment's file is named `${Date.now().toString(36)}.${ext}` in the conversation's folder. The DropArea calls `attachFile` for each URL in one synchronous loop, and each `attachFile` computes its copy's path before its `cp` runs, so two images of one type dropped together get the same millisecond and the same path: both `cp`s write one file, the composer shows two chips of the last image, the first image is never sent, and removing either chip (`detach` → `rm -f`) deletes the file the other still points to. Fix: make the name unique as `_blank` does for ids: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}` (or a counter property).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### An image sent without text to Anthropic carries a whitespace-only text block
+- **Where:** `backend/internal/chat/send.go:284` (`anthropicRequest`)
+- **What:** `send` allows a message with attachments and no text, and `anthropicRequest` always appends `{"type": "text", "text": orSpace(t.text())}`, so an image-only message sends the text `" "`. The Messages API rejects whitespace-only text blocks ("text content blocks must contain non-whitespace text"), so the reply fails as `bad_reply` where OpenAI-style and Gemini requests (which skip the text when there are images) succeed. PLAUSIBLE: one Anthropic request with an image and empty text settles it (not made: paid API). The shape came over unchanged from the old ChatProtocol. Fix: append the text block only when the text is non-empty or there's no image (`if text := t.text(); text != "" || len(content) == 0 { … orSpace(text) … }`), plus a TestBuild row with an image-only user turn.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### Stop is ignored while chat.send still looks up the key
+- **Where:** `backend/internal/chat/send.go:87` (`Send`), `backend/internal/chat/send.go:160` (`Stop`)
+- **What:** `Send` looks the key up (`keyFor`: the environment, then `secret-tool lookup`, then secrets.json) before it registers its cancel in `s.running` (line 94), and `Stop` does nothing for an id not there. A Stop pressed during the lookup (a locked keyring's unlock prompt, a slow Secret Service) is lost: the request goes out afterwards and streams to the end while the shell shows it as stopping; the same for `newConversation`'s stop. PLAUSIBLE that users meet it: it needs a lookup slow enough to press Stop in. Fix: register the cancel first and do the lookup under the cancellable ctx (move `ctx, cancel := context.WithCancelCause(ctx)` and the registration above `keyFor`, and answer `Stopped` when `stopped()` after it), plus a TestStop case stopping before the lookup returns.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### The chat builds its conversation lists and model picker while hidden
+- **Where:** `components/content/Chat/Chat.qml:58` (docked `ConversationList`), `components/content/Chat/Chat.qml:116` (floating `ConversationList`), `components/content/Chat/Chat.qml:126` (`ModelPicker`), `components/content/parts/chat/ConversationList.qml:140` (`renameField`)
+- **What:** components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Chat.qml always builds two `ConversationList`s, the docked one (`visible: root.listDocked`) and the floating one (`visible: !root.listDocked && root.listOpen`), so one is always hidden and usually both; each builds a row per saved conversation (`Chat.keepConversations` defaults to 50), each row with a hidden rename `StyledTextEntry` (`visible: item.editing`). The `ModelPicker` (`visible: root.pickerOpen`) builds every preset and model row while closed. Fix: wrap the three in Loaders with `active` on their conditions (`listDocked`, `!listDocked && listOpen`, `pickerOpen`), and the rename field in a Loader on `item.editing`.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### An attachment's thumbnail pokes past its rounded corners
+- **Where:** `components/content/parts/chat/AttachmentChip.qml:23` (`clip`)
+- **What:** The chip is a Rectangle with `radius: Widget.radius / 2` and `clip: true`, which clips to the bounding box, so the `PreserveAspectCrop` image (inset 1 px) draws its square corners over the rounded border, in the composer and in every sent message. qml-pitfalls.md: "Rounded clipping is Quickshell.Widgets' `ClippingRectangle`". Fix: make the root a `ClippingRectangle` (with its `color` set) in place of the Rectangle and drop `clip: true`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### package chat's Log option is never used
+- **Where:** `backend/internal/chat/chat.go:46` (`Options.Log`), `backend/internal/daemon/chat.go:21` (`chatMethods`)
+- **What:** `Options.Log` is defaulted in `New` and passed by the daemon, but nothing in package chat logs (`grep -n 'o\.Log' backend/internal/chat/*.go`: only the default in `New`). Fix: drop the field (line 46), its default (lines 67–69), the `log/slog` import (line 15) and the daemon's `Log:` line: 6 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### ChatManager.copy only forwards to ClipboardManager.copyText
+- **Where:** `services/apps/ChatManager.qml:206` (`copy`), `components/content/parts/chat/ChatMessage.qml:307`, `components/content/parts/chat/ChatCodeBlock.qml:56`
+- **What:** `copy(text)` is `ClipboardManager.copyText(text)` and nothing else; its two callers can call `ClipboardManager.copyText` directly, as `CodeLine` does. Fix: delete it (lines 206–208, 3 lines) and import `qs.services.system` in the two parts.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the chat system
+
+### Renaming a note whose new name holds a dot drops its extension and hides it
+- **Where:** `services/apps/NotesManager.qml:253` (`rename`), `services/apps/NotesManager.qml:236` (`createNote`)
+- **What:** `rename` keeps the old extension only when the new name has no dot at all (`if (ext && !isFolder && !/\.[^.]+$/.test(base)) base += ext[0];`), while `createNote` asks whether the name ends in one of `NotesConfig.extensions`. The rename field shows the title without its extension (`NotesManager.titleOf`), so renaming "Meeting 31.10.md" to "Meeting 1.11" (or opening its rename field and pressing Enter unchanged, "Meeting 31.10") moves the file to "Meeting 1.11" with no `.md` (checked by running those two lines in node: `Meeting 1.11`). The file then matches no name filter: it leaves the note list, `allNotes`, the settings' note picker and the search, and once the module shows another note it can't be opened again from axiom. CONFIRMED. Fix: decide "has an extension" one way for both, `NotesConfig.extensions.some(ext => base.toLowerCase().endsWith("." + ext))`, in a small helper `createNote` and `rename` share.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### A folder name holding `#` or `?` opens the wrong folder in the note list
+- **Where:** `components/content/parts/notes/NoteBrowser.qml:87` (`folderModel`), `services/core/ThemeManager.qml:34` (the wallpaper folder's FolderListModel)
+- **What:** The browser's `FolderListModel` is given `"file://" + NotesManager.absolute(…)` unencoded, so a `#` starts the URL's fragment and a `?` its query. Folder names come from the user (`createFolder` keeps both characters). Checked with qmltestrunner: a model given `file:///…/d/C#/` listed the contents of `d/C` (`names= ["x"]`), not `d/C#`. So opening a folder "C#" (or "Q&A?") shows another folder's notes, or nothing, under a breadcrumb saying "C#", and a notes folder set to such a path lists nothing at all; a `%20` in a name is read as a space. The wallpaper folder (`Appearance.wallpaperPath`, a user path too) is built the same way. CONFIRMED. Fix: build the URL from encoded segments, a new Paths helper, `fileUrl(path)`, returning `"file://" + path.split("/").map(encodeURIComponent).join("/")`, used by both models.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### A changed notes folder keeps showing the old folder's note and saves it into the new one
+- **Where:** `services/apps/NotesManager.qml:443` (`_read`), `services/apps/NotesManager.qml:400` (`_file`), `services/apps/NotesManager.qml:366` (`onDirectoryChanged`)
+- **What:** An open document's `_file` is bound to `root.absolute(doc.path)`, so when `Notes.directory` changes every open document follows to the same relative path in the new folder (`on_FileChanged: doc._follow()`). Where the new folder has no such file, `_read` keeps the old text (`if (text === null) doc.loaded = true;`, meant for a new note). A Notes module in an edge menu or on the desktop showing "notes.md" thus keeps showing the old folder's notes.md after the folder is switched to a synced vault, and the first keystroke writes all of it into the vault as notes.md. The order against `onDirectoryChanged`'s `flushAll()` is not stated either: if the binding updates first, edits less than 600 ms old are flushed into the new folder (PLAUSIBLE: QML's notify order). CONFIRMED for the kept text. Fix: on a directory change, flush every document to its old file, then reload each from the new one with a missing file reading as empty (`_file` a plain property set by `_follow()`, called from `onDirectoryChanged` after `flushAll()`; `_read` empties the text when it follows to a missing file); or have the modules release their documents and show their place's note again.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### Typing in a note creates a linked notes folder that doesn't exist
+- **Where:** `services/apps/NotesManager.qml:411` (`flush`), `services/apps/NotesManager.qml:302` (`refreshList`)
+- **What:** notes.md: "A linked folder is never created", and the note list says "The notes folder doesn't exist" (`directoryMissing`). But a module still opens its last note (a missing file reads as an empty note) and `flush()` saves through `FileManager.write`, which writes the file "making its folders" (FileManager.qml's comment). With `Notes.directory` on a drive that isn't mounted yet (or mistyped), the first keystroke in an edge-menu scratchpad creates the whole path on the root disk; mounting the drive later hides that note under the mount. CONFIRMED by reading. Fix: when `NotesConfig.linked`, `flush()` checks the folder first (`[ -d "$1" ]` through `_run`) and keeps the edit dirty with `_fail(I18n.tr("The notes folder doesn't exist: {0}", …))` when it's gone, refreshing `directoryMissing` on the way.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives
+- **Where:** `components/methods/NoteMarkdown.qml:517` (`toggleBullet`), `components/methods/NoteMarkdown.qml:457` (`toggleTask`)
+- **What:** notes.md: "Every structural edit re-parses (`_normalize`), so the blocks are always what `parse()` would give." `toggleBullet`'s text branch and `toggleTask`'s "add a task at the end" branch return the edited copy without `_normalize`. Checked with qmltestrunner: the bullet button on a line "[ ] foo" gives a text block "- [ ] foo" that parses as a task (no checkbox, `progress` uncounted until the next structural edit); the checklist button with nothing focused in a note ending in an unclosed code fence shows a checkbox row that is plain "- [ ] " inside the fence once the note reloads. CONFIRMED. Fix: return `root._normalize(copy, focus)` from both branches, and a `tst_NoteMarkdown` row asserting, for each edit, `parse(serialize(result.doc))` equals `result.doc` (it would have caught both).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### Notes documents count a revision nothing reads
+- **Where:** `services/apps/NotesManager.qml:394` (`revision`)
+- **What:** Each document's `revision` is bumped when the text is replaced from disk (`doc.revision += 1;`, line 434), and nothing reads it: no `.revision` in the Notes module or its parts, and NoteEditor tells its own edits apart by `_lastText`. Fix: delete the property, its comment and the increment (lines 393, 394, 434: 3 lines).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### NotesConfig expands ~ by hand where Paths.expandHome does it
+- **Where:** `config/NotesConfig.qml:15` (`directory`), `config/NotesConfig.qml:12` (`defaultDirectory`)
+- **What:** AGENTS.md: "A path setting may hold `~`: expand it (`Paths.expandHome`) before use." `directory` trims, expands `~` and `~/` itself and keeps a `defaultDirectory` member read only there. Fix: `readonly property string directory: root.linked ? Paths.expandHome(_c.directory).replace(/\/*$/, "/") : Paths.defaultNotesPath` (expandHome trims and strips trailing slashes; `defaultNotesPath` ends in "/" already): lines 10–11 and 14–21 (10) become 1, 9 lines removed.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
+
+### NoteMarkdown's reparse repeats _normalize
+- **Where:** `components/methods/NoteMarkdown.qml:229` (`reparse`), `components/methods/NoteMarkdown.qml:266` (`_normalize`)
+- **What:** `reparse(doc, index, pos)` is `_normalize(doc, { block: index, pos })` line for line (`lineOf`, `parse(serialize(doc))`, `positionAt`); `_normalize` only adds the empty-doc and null-focus cases. Fix: delete `reparse` and its comment (lines 227–236, 10 lines) and make `_normalize` the public `reparse(doc, focus)`; its caller (`NoteEditor.blockEdited`) and two test calls pass `{ block, pos }` (about 3 lines more: 7 net).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:notes system
