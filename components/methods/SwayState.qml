@@ -180,10 +180,9 @@ QtObject {
     };
     const wsName = monitor?.activeWorkspace?.name ?? ipc.current_workspace ?? "";
     const ws = info?.workspaceRects?.[wsName];
-    const description = [ipc.make, ipc.model, ipc.serial].filter(part => part && part !== "Unknown").join(" ");
     return {
       "name": name,
-      "description": description,
+      "description": MonitorLayout.describe(ipc),
       "x": monitor?.x ?? 0,
       "y": monitor?.y ?? 0,
       "width": monitor?.width ?? 0,
@@ -296,16 +295,15 @@ QtObject {
   // A get_outputs reply as output details (contract.md › Outputs): every
   // output, disabled ones too
   function outputDetails(outputs) {
-    const rate = mode => Math.round((mode?.refresh ?? 0) / 10) / 100;
     return (outputs ?? []).map(o => {
       const mode = o.current_mode ?? {};
       const disabled = o.active === false;
       return {
         "name": o.name,
-        "description": [o.make, o.model, o.serial].filter(part => part && part !== "Unknown").join(" "),
+        "description": MonitorLayout.describe(o),
         "width": mode.width ?? o.rect?.width ?? 0,
         "height": mode.height ?? o.rect?.height ?? 0,
-        "refreshRate": rate(mode),
+        "refreshRate": MonitorLayout.hz(mode.refresh),
         "x": o.rect?.x ?? 0,
         "y": o.rect?.y ?? 0,
         "scale": disabled ? 1 : (o.scale > 0 ? o.scale : 1),
@@ -313,7 +311,7 @@ QtObject {
         "disabled": disabled,
         "mirrorOf": "none",
         "vrr": o.adaptive_sync_status === "enabled",
-        "availableModes": (o.modes ?? []).map(m => `${m.width}x${m.height}@${rate(m).toFixed(2)}Hz`)
+        "availableModes": (o.modes ?? []).map(m => MonitorLayout.availableMode(m.width, m.height, m.refresh))
       };
     });
   }

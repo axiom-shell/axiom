@@ -8,7 +8,6 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.session
-import qs.services.system
 import qs.services.ui
 
 /*
@@ -128,7 +127,7 @@ Singleton {
         "size": WindowLookConfig.shadowSize,
         "color": WindowLookConfig.shadowThemed ? String(WindowLookConfig.shadowColor) : "",
         "alpha": WindowLookConfig.shadowAlpha,
-        "soft": WindowLookConfig.shadowSoft,
+        "soft": WindowLookConfig.shadowMatched,
         "strength": WindowLookConfig.shadowStrength
       } : null
     })
@@ -301,14 +300,6 @@ Singleton {
   }
 
   // --- For the settings page ---
-
-  function copyIncludeLines() {
-    ClipboardManager.copyText(includeLines);
-  }
-
-  function copyAutostartLines() {
-    ClipboardManager.copyText(autostartLines);
-  }
 
   // Adds the autostart line to the user's config (the autostart hookup,
   // with a backup); it takes effect with the next session, so no reload

@@ -29,7 +29,7 @@ Outputs and workspaces come live from Quickshell's `I3` module (as Hyprland's do
   - `configReloaded`: a `workspace` event with change `reload`.
   - `outputsHotplugged`: an `output` event that changed the set of output names (sway sends `output` for any output change).
   - `keyboardLayoutChanged`: `input` with `xkb_layout` / `xkb_keymap`.
-  - `windowFocused`: `window` with `focus`. `layersChanged`: never (sway reports no layer surfaces).
+  - `windowFocused`: `window` with `focus`.
   - `binding`: axiom's own binds run `nop axiom <what> <verb> [argument]` (`switcher step|commit|cancel` → `switcherKey`; `special toggle|move <name>`), so a key costs no process.
 - **windows** (`SwayState.tree`): the tree's leaves with a pid, under `nodes` and `floating_nodes`; the scratchpad's aren't listed until shown.
   - `id` = `String(con_id)`; `appId` = `app_id`, else the X11 `class`; `initialAppId` the same.
@@ -59,9 +59,9 @@ Outputs and workspaces come live from Quickshell's `I3` module (as Hyprland's do
   - When the setting changes while groups hold windows, `toggleSpecial` first moves the group's windows the other kind keeps over to this one (`SwayState.specialAdopt`): to the workspace, its marked windows lose the mark and move there (floating, as the scratchpad left them); to the scratchpad, the windows on `axiom-special-<name>` are marked and moved to it, then `workspace --no-auto-back-and-forth` the one shown (sway goes to a hidden workspace when its last tiled window leaves it for the scratchpad; checked in nested sway).
   - A group name with a space, quote, `,` or `;` gets no bind (`render`'s `swayOneWord`): sway would split the `nop` command there.
 - `withOutputDetails`: `get_outputs` (`SwayState.outputDetails`; modes as `WxH@R.RRHz`). `applyOutputs`: axiom sends one `output … enable mode … pos … scale … transform … adaptive_sync … render_bit_depth 8|10` command per rule (`outputs.apply`, `render.SwayOutputCommands`), disabled ones last. No mirroring and no color settings.
-- `cycleKeyboardLayout`: `input type:keyboard xkb_switch_layout next|prev`. `exitSession`: `exit`. `leaveSwitcher`: nothing (the switcher's binds enter no mode).
+- `cycleKeyboardLayout`: `input type:keyboard xkb_switch_layout next|prev`. `exitSession`: `exit`. No `leaveSwitcher` (the switcher's binds enter no mode).
 - `toplevelFor`: null. Quickshell can't capture a toplevel on sway (`ScreencopyView` calls it not captureable), so the overview shows icons.
-- `withLayerRects`, `withCursorPos`: null; `warpCursorToLayer`, `scrollStrip`: nothing. `surfacesReady` waits for `ready` (the `get_version` reply, which says whether it's SwayFX), so the blur and shadow windows map in their place with the other chrome rather than after it, which would map each lower-ordered window again; the chrome stays hidden until sway answers.
+- No `withLayerRects`, `withCursorPos`, `warpCursorToLayer`, `scrollStrip`, `layersChanged` or `withMainBinds` (the facade's `withBinds` reads the daemon's entries). `surfacesReady` waits for `ready` (the `get_version` reply, which says whether it's SwayFX), so the blur and shadow windows map in their place with the other chrome rather than after it, which would map each lower-ordered window again; the chrome stays hidden until sway answers.
 
 ### The config writer (the daemon's `manager/sway.go`)
 The [config modes](config-modes.md) on sway; the text comes from `render` (`sway.go`), as Hyprland's does.

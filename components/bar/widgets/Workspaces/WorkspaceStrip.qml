@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
+import qs.components.reusable
 import qs.components.hosts.popout
 
 // The standard layout's switcher: workspaces 1..count in a row (horizontal
@@ -17,7 +18,6 @@ import qs.components.hosts.popout
 Item {
   id: root
   property var screen
-  property var panel
   // The widget's (BarWidget.hitArea), which its popout reads hover from
   property var hitArea: null
   property var barConfig
@@ -45,9 +45,6 @@ Item {
   readonly property int base: CompositorManager.workspaceBase(root.output)
   // "horizontal" | "vertical" on a strip monitor, else ""
   readonly property string stripDirection: CompositorManager.stripDirection(root.screen?.name ?? "")
-  // One workspace shown on a strip monitor: the strip is all there is, so
-  // its windows show alone while it has any (the cell stands in while empty)
-  readonly property bool stripOnly: root.ids.length <= 1 && root.stripDirection !== "" && ((activeStrip.item as ActiveStrip)?.hasWindows ?? false)
   // Only workspaces with windows and the active one: without `showEmpty`,
   // and where the compositor's empty one at the end is only for opening
   readonly property bool _hideEmpty: !root.properties.showEmpty || CompositorManager.dynamicWorkspaces
@@ -103,19 +100,13 @@ Item {
     }
   }
 
-  WheelHandler {
+  NotchWheel {
     enabled: root.properties.scrollToSwitch
-    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-    property real _accumulated: 0
-    onWheel: event => {
-      _accumulated += event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
-      if (Math.abs(_accumulated) < 120)
-        return;
+    onStepped: direction => {
       if (root.stripDirection !== "")
-        CompositorManager.stepStrip(_accumulated > 0 ? -1 : 1, root.output);
+        CompositorManager.stepStrip(direction, root.output);
       else
-        root.step(_accumulated > 0 ? -1 : 1);
-      _accumulated = 0;
+        root.step(direction);
     }
   }
 
@@ -123,14 +114,14 @@ Item {
     id: layout
     anchors.centerIn: parent
     // Only what's shown: a Grid keeps spacing for an empty column or row
-    readonly property int shown: Math.max(1, (root.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0))
+    readonly property int shown: Math.max(1, (activeStrip.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0))
     rows: root.isVertical ? shown : 1
     columns: root.isVertical ? 1 : shown
     spacing: root.barConfig.widgetSpacing
 
     WorkspaceCellRow {
       id: cellRow
-      visible: !root.stripOnly
+      visible: !activeStrip.stripOnly
       barConfig: root.barConfig
       properties: root.properties
       monitor: root.monitor
@@ -148,25 +139,20 @@ Item {
       hoverColor: root.hoverColor
     }
 
-    Loader {
+    ActiveStrip {
       id: activeStrip
-      active: root.stripDirection !== ""
-      visible: (item as ActiveStrip)?.hasWindows ?? false
-
-      sourceComponent: ActiveStrip {
-        barConfig: root.barConfig
-        divider: !root.stripOnly
-        workspaceId: root.activeId
-        stripVertical: root.stripDirection === "vertical"
-        cell: root.cell
-        cellRadius: root.cellRadius
-        activeColor: root.activeColor
-        occupiedColor: root.occupiedColor
-        textColor: root.textColor
-        hoverColor: root.hoverColor
-        clickable: root.properties.clickToSwitch
-        hitArea: root.hitArea
-      }
+      barConfig: root.barConfig
+      workspaceId: root.activeId
+      stripDirection: root.stripDirection
+      shownCount: root.ids.length
+      cell: root.cell
+      cellRadius: root.cellRadius
+      activeColor: root.activeColor
+      occupiedColor: root.occupiedColor
+      textColor: root.textColor
+      hoverColor: root.hoverColor
+      clickable: root.properties.clickToSwitch
+      hitArea: root.hitArea
     }
   }
 

@@ -504,7 +504,7 @@ QtObject {
   // --- Presets ---
 
   // Presets leave descriptions empty: each bind gets its action's label
-  // and section (BindActions.descriptionFor)
+  // and section (the daemon's render.DescriptionFor)
   function _workspaceBind(key, action, argument) {
     return {
       "key": key,

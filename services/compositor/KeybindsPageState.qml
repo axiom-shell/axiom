@@ -26,7 +26,7 @@ QtObject {
   readonly property bool filtering: sectionFilter.length > 0 || modFilter.length > 0 || sourceFilter.length > 0
 
   // The modifier chips: the modifiers the binds use, in
-  // KeybindManager.modifierNames order
+  // BindKeys.modifierNames order
   readonly property var modOptions: {
     const used = {};
     for (const section of KeybindManager.keybindings)
@@ -34,7 +34,7 @@ QtObject {
         for (const combo of row.combos)
           for (const mod of combo.mods)
             used[mod] = true;
-    return KeybindManager.modifierNames.filter(name => used[name]);
+    return BindKeys.modifierNames.filter(name => used[name]);
   }
 
   // group: "section" | "mod" | "source", or the editor's "editSection" |
@@ -152,7 +152,7 @@ QtObject {
   // An editor bind's modifiers, by the names the compositor's binds decode to
   function _bindMods(bind) {
     const id = BindKeys.keyId(bind.key);
-    return id === "" ? [] : KeybindManager.decodeMods(parseInt(id));
+    return id === "" ? [] : BindKeys.decodeMods(parseInt(id));
   }
 
   // The editor's chips: [{ key, title, count }] per section (actionSections
@@ -175,7 +175,7 @@ QtObject {
     for (const bind of root.editor.binds)
       for (const mod of root._bindMods(bind))
         used[mod] = true;
-    return KeybindManager.modifierNames.filter(name => used[name]);
+    return BindKeys.modifierNames.filter(name => used[name]);
   }
 
   // The shown binds' indices, filtered by editQuery and the chips, in the

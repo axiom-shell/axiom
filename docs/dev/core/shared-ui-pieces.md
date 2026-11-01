@@ -71,6 +71,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - `options` `[{ value, label, icon? }]`, `value` pushed in, `picked(value)`.
   - Used by the greeter's user and session pickers.
 - `StyledSwitch`.
+- `NotchWheel`: a `WheelHandler` that steps once per wheel notch (120, a touchpad's scroll adding up to one first), `stepped(direction)` -1 up/left, 1 down/right. Used by the workspace switchers and the overlay's page navigator.
 - `TypePickerPopup`: pick a type, `{ type, label, icon }`.
 - `ActionTile`: an icon well over a label. With `opens`, a right click or long press is `opened`.
 - `ActionPill`: the wide one, a well beside a name and status. With `opens`, the well toggles and the rest opens.
@@ -108,7 +109,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - **Active workspace** (`bar/widgets/Workspaces/ActiveCellIndicator`): the active cell's box or underline (`CellUnderline`, shared with `WorkspaceCell`), drawn once under a switcher's row of cells and sliding between them.
   - Lives in `WorkspaceCellRow`; cells it stands in for set `indicated`.
   - Dots-only bars keep the cells' own recolour.
-- **Strip windows** (`bar/widgets/Workspaces/StripWindows`): a workspace's windows in strip order as bar `WorkspaceCell`s (app icons, the last focused active, click focuses). Used by `ActiveStrip` (both switchers) and the `WorkspaceStrips` popout.
+- **Strip windows** (`bar/widgets/Workspaces/StripWindows`): a workspace's windows in strip order as bar `WorkspaceCell`s (app icons, the last focused active, click focuses). Used by `ActiveStrip` (both switchers: a `Loader` that loads only on a strip monitor, shows only with windows, and says when the strip shows alone, `stripOnly`) and the `WorkspaceStrips` popout.
 - **Window previews** (`surfaces/workspaces/WindowPreview`): a Hyprland client's capture, rounded.
   - Shows the app icon until it gives a frame.
   - One frame per open unless `live` (or `hovered` / `resizing`).
