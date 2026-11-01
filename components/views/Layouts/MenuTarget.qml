@@ -19,7 +19,7 @@ EditTarget {
   readonly property real edgeLength: root.screen ? (root.vertical ? root.screen.height : root.screen.width) : 0
   // Where the menu's modules sit on its screen (OverlayManager.menus.placementOf)
   readonly property var place: root.menu ? OverlayManager.menus.placementOf(root.menu) : null
-  readonly property bool tooLong: root.menu?.length !== "edge" && root.edgeLength > 0 && root.length > root.edgeLength
+  readonly property bool tooLong: root.menu !== null && !GridPlacement.menuFillsEdge(root.menu) && root.edgeLength > 0 && root.length > root.edgeLength
   // Whether it has a place on its lattice (not taking its whole edge or
   // longer than it), the offsets that keep it there, and its offset among
   // them (a config's can be past them, kept on the lattice)
@@ -47,7 +47,7 @@ EditTarget {
       return "";
     if (root.submenu)
       return I18n.tr("Opens beside a floating menu, from its Submenu module");
-    if (root.menu.length === "edge")
+    if (GridPlacement.menuFillsEdge(root.menu))
       return I18n.tr("Takes its whole edge");
     if (root.tooLong)
       return I18n.tr("Longer than its edge: it scrolls");

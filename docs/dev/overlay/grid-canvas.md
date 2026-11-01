@@ -50,8 +50,10 @@ Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement
 - Targets:
   - **The canvas** (`targetKind: "grid"`):
     - `placeAt(point, drag, grab)`, snapped to units. A moved module keeps the unit it was grabbed by under the pointer; a new one is held by its middle.
-    - `hoverPlan` is the editor's plan for a drop there (memoized per place), applied as is on the drop.
+    - `hoverPlace` changes only when the snapped place does (`GridPlacement.samePlace`, set from each move in `_updatePlace`), so a move within a unit re-plans and redraws nothing: `hoverPlan`, the tiles' rects and the guides all follow it.
+    - `hoverPlan` is the editor's plan for a drop there. `shownPlan` is what the canvas shows and the drop applies as is: the hover plan while it's valid (a no-op too, back over the module's own place) or off the grid, else the last valid one of this drag, so a place with no room (pushes only go down: a bounded grid runs out of rows) leaves the tiles still instead of gliding back and forth. The ghost turns red ("Doesn't fit here") only when nothing valid came before.
     - With a tile's `resizePlan` it gives `previewPlaces` / `landingPlace` / `landingValid`.
+    - The carried tile (faded, under the landing rectangle) jumps with it; the others glide out of the way (`Glide`, `GridCanvas`).
   - **`EntryListTarget`s** (`"list"`): `takes(drag)`, `indexAt`, `dropRequested`, which reorder their own rows. Each row is an `EntryListRow` carrying its list's `moveKind`.
 - A `TrashTarget` at the bottom of the canvas shows while a module is carried. Dropped there, it goes, with its group (required ones stay).
 - For a grid of something other than overlay modules (a custom widget's elements, `views/CustomWidgets/ElementEditorLayout`), three hooks name what it holds: `describe(type)` → `{ icon, label }`, `sizeLabel(w, h)` (a tile's size while resized; cards by default) and `countLabel(n)` (the canvas's count and a carried group; modules by default).

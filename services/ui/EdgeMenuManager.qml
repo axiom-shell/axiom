@@ -51,21 +51,23 @@ Singleton {
   }
 
   // A menu's frame (see `frames`): its running one's, else (a disabled
-  // menu, or one not yet reported) its padding all round
+  // menu, or one not yet reported) its stroke (an integrated one's frame,
+  // as IntegratedEdgeMenu's) and padding all round
   function frameOf(menu) {
     const screenName = EdgeMenusConfig.screenFor(menu)?.name ?? "";
     const live = root.frames[menu?.id ?? ""];
     if (live && live.screen === screenName)
       return live;
-    const pad = Appearance.borderWidth + EdgeMenusConfig.paddingOf(menu);
+    const integrated = menu?.mode === "integrated";
+    const pad = (integrated ? EdgeMenusConfig.outerPadOf(menu) : Appearance.borderWidth) + EdgeMenusConfig.paddingOf(menu);
     return {
       "screen": screenName,
       "startPad": pad,
       "endPad": pad,
       "across": pad,
       "before": 0,
-      "after": pad,
-      "reserves": menu?.mode === "integrated"
+      "after": pad + (integrated ? EdgeMenusConfig.innerStroke : 0),
+      "reserves": integrated
     };
   }
 

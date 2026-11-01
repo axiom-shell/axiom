@@ -54,6 +54,18 @@ QtObject {
     return (candidates.find(candidate => isRunning(candidate)) ?? candidates[0]).kind;
   }
 
+  // What tells one run of compositor `kind` from the next: the variable
+  // naming its instance (Hyprland's signature, sway's or niri's socket,
+  // each new every time it starts) from `env`, "" with none
+  function sessionKey(env, kind) {
+    const name = ({
+        "hyprland": "HYPRLAND_INSTANCE_SIGNATURE",
+        "sway": "SWAYSOCK",
+        "niri": "NIRI_SOCKET"
+      })[kind];
+    return name ? String(env[name] ?? "") : "";
+  }
+
   // The pid in a Hyprland lock file's text (its first line), or ""
   function lockPid(text) {
     const line = String(text ?? "").split("\n")[0].trim();

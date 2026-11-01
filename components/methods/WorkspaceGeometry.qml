@@ -315,6 +315,40 @@ QtObject {
     return best;
   }
 
+  // The middle workspace of a `cols` × `rows` grid block whose first id
+  // is `base` (ids run along each row, then down the rows): the middle
+  // cell, or with an even count the one after the middle (right, down)
+  function centreWorkspace(base, cols, rows) {
+    return base + Math.floor(Math.max(1, rows) / 2) * Math.max(1, cols) + Math.floor(Math.max(1, cols) / 2);
+  }
+
+  // Every monitor to its grid block's centre (centreWorkspace), for a
+  // grid's start: remapWorkspaces' { focus, changed } (focus: every
+  // monitor, the focused one last, as applyRemap takes it). With
+  // `untouched`, only monitors still where the compositor started them
+  // go: on their block's first id, or outside their block (one Hyprland
+  // numbered on); the rest keep the one they show. monitors: [{ name,
+  // block, active, focused }] (remapWorkspaces'); `size` ids a block
+  function centreFocus(monitors, size, cols, rows, untouched) {
+    const focus = (monitors ?? []).map(m => {
+      const base = m.block * size + 1;
+      const fresh = m.active === base || m.active < base || m.active >= base + size;
+      return {
+        "monitor": m.name,
+        "id": !untouched || fresh ? root.centreWorkspace(base, cols, rows) : m.active,
+        "active": m.active,
+        "focused": !!m.focused
+      };
+    });
+    return {
+      "focus": focus.filter(f => !f.focused).concat(focus.filter(f => f.focused)).map(f => ({
+            "monitor": f.monitor,
+            "id": f.id
+          })),
+      "changed": focus.some(f => f.id !== f.active)
+    };
+  }
+
   // Where windows go when the workspace layout changes (CompositorManager's
   // remap): every workspace with windows moves into its own monitor's ids
   // under `to`, at the same place in the block where it can, so its windows

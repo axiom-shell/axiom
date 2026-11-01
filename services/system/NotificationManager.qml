@@ -219,11 +219,26 @@ Singleton {
 
   // NotificationServer can't create notifications itself, so send one over
   // DBus; it comes back through our own server like any other (DND applies).
-  // opts: { desktopEntry (see registerHandler), icon (a name or path) }
+  // opts: { desktopEntry (see registerHandler), icon (a name or path),
+  // actions ([{ id, label }]: buttons on it), onAction (called with the
+  // picked action's id) }. With actions notify-send waits until it's
+  // closed (exec.run has no timeout); a QML reload in between loses
+  // onAction, so the buttons then do nothing
   function sendNotification(appName, summary, body, opts) {
     const hints = opts?.desktopEntry ? ["-h", "string:desktop-entry:" + opts.desktopEntry] : [];
     const icon = opts?.icon ? ["-i", opts.icon] : [];
-    CommandManager.runDetached(["notify-send", "-a", appName].concat(icon, hints, ["--", summary, body]));
+    const actions = opts?.actions ?? [];
+    const command = ["notify-send", "-a", appName].concat(icon, hints, [].concat(...actions.map(a => ["-A", a.id + "=" + a.label])), ["--", summary, body]);
+    if (actions.length === 0) {
+      CommandManager.runDetached(command);
+      return;
+    }
+    const onAction = opts.onAction;
+    CommandManager.run(command, (code, stdout) => {
+      const id = String(stdout ?? "").trim();
+      if (code === 0 && id !== "" && onAction)
+        onAction(id);
+    });
   }
 
   // -- Private --

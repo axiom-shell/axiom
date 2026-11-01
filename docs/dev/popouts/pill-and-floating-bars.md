@@ -62,7 +62,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - **Perpendicular joins:** at a pill that joins the perpendicular edge, the box joins that edge too.
 - **Between pills:** a surface centred between pills or islands (`EdgeAttach.place`'s `between` mode) that keeps more than `pillMerge` and two fillets' room from each grows from the bar's outer edge instead, over the bar's reserved area, as on a bare stretch of a solid edge.
   - It grows out of the border's stroke (opened under it), or straight off a bare screen edge.
-  - Its content starts at that edge (`attachClearance` 0, unlike `merged`), so a dock there sits in the bar's empty room.
+  - Its content starts at that edge (`attachClearance` 0, unlike `merged`), so a dock there sits in the bar's empty room. An edge popout there takes the bar's empty depth off its padding on that side (`SurfaceContext.layout`'s `attachFill`), as it does the border's margin.
   - It stretches no pill. Too close to a pill, it grows out of the nearest one as above.
 - **`BarContainer.pillShapes`** is the pills (or islands) as drawn: stretched and merged.
 - **Merged boxes:** only a pill bar showing no pills leaves a box to grow from its outer edge (`EdgePlacement.merged`). That box is as deep as the pills would be.

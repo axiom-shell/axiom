@@ -17,8 +17,9 @@ import qs.components.hosts.popout
 // in; closing slides it out before the zone goes. With `frame` on, a
 // rounded box runs the strip's whole length (its stroke ending the screen
 // margin in from its edges, lining up with the screen border's) and the
-// modules sit in it, `padding` in from its stroke. Along the edge they sit
-// on the menu's lattice (GridPlacement.menuAlong).
+// modules sit in it, `padding` in from its stroke. Along the edge they
+// span it from its start, as the strip does (GridPlacement.menuFillsEdge,
+// menuModules).
 //
 // Open/close and hover-loss dismissal are PopoutWrapperBase's, as for the
 // popouts.
@@ -37,22 +38,21 @@ PopoutWrapperBase {
   // The frame's inset from the strip's edges (0 without one): the screen
   // margin reaches its stroke's inner edge, as the screen border's does, so
   // the two strokes line up
-  readonly property int frameInset: root.framed ? Math.max(0, Appearance.screenMargin - Appearance.borderWidth) : 0
+  readonly property int frameInset: EdgeMenusConfig.frameInsetOf(root.menu)
   // From the strip's edges to the cards: the frame and its stroke, then
   // the padding
-  readonly property int pad: root.frameInset + (root.framed ? Appearance.borderWidth : 0) + root.padding
+  readonly property int pad: EdgeMenusConfig.outerPadOf(root.menu) + root.padding
   // With the screen border off, the strip's own inner stroke (with it on,
   // the border's strip inside this one draws it)
-  readonly property int innerStroke: Appearance.screenBorder ? 0 : Appearance.borderWidth
+  readonly property int innerStroke: EdgeMenusConfig.innerStroke
   readonly property real edgeLength: root.vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0
   readonly property real bodyDepth: root.vertical ? (loader.item?.implicitWidth ?? 0) : (loader.item?.implicitHeight ?? 0)
   readonly property int depth: Math.ceil(root.bodyDepth + root.pad * 2 + root.innerStroke)
-  // Where the modules start along the edge, from config (the body loads
-  // only while open, and the hover strip needs it closed)
   // Its card size (EdgeMenusConfig.cardUnitOf)
   readonly property int unit: EdgeMenusConfig.cardUnitOf(root.menu)
   readonly property real cardGap: EdgeMenusConfig.gapOf(root.menu)
-  readonly property real gridLength: EdgeMenusConfig.gridLengthOf(root.menu, root.vertical, root.unit, root.cardGap)
+  // Where the modules start along the edge: its start, as it always takes
+  // the whole edge (GridPlacement.menuFillsEdge), stretched along it
   readonly property real alongPos: GridPlacement.menuAlong(root.menu, root.edgeLength, root.unit, root.pad, root.pad, root.cardGap)
 
   // Where the modules can sit, for the layouts editor (EdgeMenuManager.frames)
@@ -97,8 +97,8 @@ PopoutWrapperBase {
     screen: root.screen
     visible: root.menu.open.onHover
     edge: root.edge
-    // On the modules (the strip spans the whole edge)
-    centre: root.menu.length === "edge" ? root.edgeLength / 2 : root.alongPos + root.gridLength / 2
+    // On the modules, which span the whole edge as the strip does
+    centre: root.edgeLength / 2
     // Not its own zone, and the strip spans the whole edge regardless of
     // the others
     edgeInset: Math.max(0, ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root._edgeName) - root.reserved)

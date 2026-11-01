@@ -121,6 +121,12 @@ properties:
     default: true
     description: Video players and browsers can ask to stay awake through the compositor, D-Bus and systemd. The caffeine widget works either way.
     x-showIf: {enabled: true}
+  caffeineWarning:
+    type: boolean
+    title: Warn before caffeine ends
+    x-group: Caffeine
+    default: true
+    description: A notification 5 minutes before a caffeine timer runs out, with a button for 30 minutes more.
   items:
     x-scope: commands
     type: array

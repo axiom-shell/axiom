@@ -280,9 +280,10 @@ QtObject {
    *     its edge, for the shadow), across (held: the gap from the frame
    *     line across the edge), layerOrder (the compositor orders layer
    *     windows by namespace, supports.layerOrder), overOverlay (the
-   *     overlay is open on its screen)
+   *     overlay is open on its screen), menuZone (what integrated edge
+   *     menus reserve on its edge)
    * Returns EdgeAttach.place's result and: merged, onPill, detached,
-   *   straight, backfill, attachClearance, attachAt (across, from the
+   *   straight, backfill, attachClearance, attachFill, attachAt (across, from the
    *   screen edge), attachFromBar (the same from the followed bar's outer
    *   edge), barOuter, ownSink, shadow, stretchFrom, stretchTo (where a
    *   joined submenu's reach along its pill stays), slidesUnder
@@ -349,6 +350,14 @@ QtObject {
     else
       ownSink = p.border ? "border" : "solidBar";
     const ownBar = p.ownBar ?? null;
+    // How deep the plain fill it joins runs, from the screen edge to its
+    // attach edge: the border's margin, or a floating or pill bar's empty
+    // depth it grows over (merged, between). A host takes it off its
+    // padding on the attach side, so its content is as far from the
+    // screen edge as from its other sides. None where it stands on
+    // something with content of its own (a pill or island, a solid bar,
+    // an integrated menu), nor held or detached (a box of its own)
+    const plainJoin = !p.held && !detached && !onPill && (bar ? fromOuter : !ownBar) && !((p.menuZone ?? 0) > 0);
     return Object.assign({}, place, {
       "merged": merged,
       "onPill": onPill,
@@ -356,6 +365,7 @@ QtObject {
       "straight": fromOuter ? !p.border : place.mode === "plain" && p.bareEdge,
       "backfill": !detached && onPill ? 1 : 0,
       "attachClearance": merged ? pillFoot : 0,
+      "attachFill": plainJoin ? Math.max(0, attachAt) : 0,
       "attachAt": attachAt,
       "attachFromBar": attachFromBar,
       "barOuter": barOuter,

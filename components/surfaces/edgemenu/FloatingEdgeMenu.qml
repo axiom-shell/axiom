@@ -59,7 +59,7 @@ EdgePopout {
       "screen": root.screen?.name ?? "",
       "startPad": root.startPad,
       "endPad": root.endPad,
-      "across": root.attachAt + root.contentPadding + root.attachClearance,
+      "across": root.attachAt + root.contentPadding + root.attachExtra,
       "before": Math.max(0, root.attachBase),
       "after": root.contentPadding,
       "reserves": false
@@ -83,7 +83,7 @@ EdgePopout {
     const data = root.currentData;
     if (!data)
       return;
-    const rect = root.menu.popoutAtWidget && root.menu.length === "content" && data.claimKind === "bar" ? data.anchorItem?.screenRect?.() ?? null : null;
+    const rect = root.menu.popoutAtWidget && !GridPlacement.menuFillsEdge(root.menu) && data.claimKind === "bar" ? data.anchorItem?.screenRect?.() ?? null : null;
     root._widgetCentre = rect && rect.edge === root.edge && rect.screen?.name === root.screen?.name ? (root.vertical ? rect.y + rect.height / 2 : rect.x + rect.width / 2) : NaN;
   }
   // Fill cells grow to whatever room there is, so its ends always reach
@@ -105,7 +105,7 @@ EdgePopout {
   triggerLength: sync.triggerLength(root.contentItem, root.vertical, root.contentPadding)
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')
-  triggerCentre: root.menu.length === "edge" ? (root.startPad + root.screenLength - root.endPad) / 2 : root.modulesStart + root.gridLength / 2
+  triggerCentre: GridPlacement.menuFillsEdge(root.menu) ? (root.startPad + root.screenLength - root.endPad) / 2 : root.modulesStart + root.gridLength / 2
   dismissDelay: root.menu.close.delay
   keyboardOnDemand: true
   closeOnClickOutside: root.menu.close.onOutsideClick && !sync.held

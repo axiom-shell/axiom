@@ -222,6 +222,12 @@ PopoutWrapperBase {
   // Extra box depth at the attach edge that a merged box's content keeps
   // clear of the pills by
   readonly property real attachClearance: placement.attachClearance
+  // What the content moves in by at the attach edge, past the box's
+  // stroke and padding: the clearance, less the plain fill it joins there
+  // (EdgePlacement.attachFill: the border's margin, a floating or pill
+  // bar's empty depth), taken off the padding (never the stroke), so the
+  // content is as far from the screen edge as from the box's other sides
+  readonly property real attachExtra: root.attachClearance - Math.min(placement.attachFill, Math.max(0, root.contentPadding - Appearance.borderWidth))
 
   // Unless held (or detached, or on an island), it joins the
   // perpendicular edges when the box reaches them, as a bar popout pushed
@@ -492,8 +498,8 @@ PopoutWrapperBase {
       // While the blur window backs surfaces, once it knows where this one
       // is (LayerOrigin.settled), so it never shows unbacked beside them
       active: root.isOpen && root.claimed && placement.stretchReady && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
-      boxWidth: root.vertical ? root._contentAcross + root.attachClearance : root.boxLength
-      boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachClearance + slot.shownStretchAcross
+      boxWidth: root.vertical ? root._contentAcross + root.attachExtra : root.boxLength
+      boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachExtra + slot.shownStretchAcross
       fillColor: root.fillColor
       strokeColor: root.strokeColor
 
@@ -510,10 +516,10 @@ PopoutWrapperBase {
         // re-evaluate one at a time when the edge changes, and QML drops
         // the anchor that briefly conflicts (top + bottom + verticalCenter)
         // for good.
-        readonly property real leftMargin: root.contentPadding + (root.edge === ScreenEdge.Left ? root.attachClearance : 0)
-        readonly property real rightMargin: root.contentPadding + (root.edge === ScreenEdge.Right ? root.attachClearance : 0)
-        readonly property real topMargin: root.contentPadding + (root.edge === ScreenEdge.Top ? root.attachClearance : 0)
-        readonly property real bottomMargin: root.contentPadding + (root.edge === ScreenEdge.Bottom ? root.attachClearance : 0)
+        readonly property real leftMargin: root.contentPadding + (root.edge === ScreenEdge.Left ? root.attachExtra : 0)
+        readonly property real rightMargin: root.contentPadding + (root.edge === ScreenEdge.Right ? root.attachExtra : 0)
+        readonly property real topMargin: root.contentPadding + (root.edge === ScreenEdge.Top ? root.attachExtra : 0)
+        readonly property real bottomMargin: root.contentPadding + (root.edge === ScreenEdge.Bottom ? root.attachExtra : 0)
         // (below a submenu's stretch above it, clear of one below)
         x: root.vertical ? leftMargin : root.contentPadding + root.place.contentOffset
         y: root.vertical ? root.contentPadding + root.place.contentOffset + slot.shownStretchTop : topMargin + slot.shownStretchTop

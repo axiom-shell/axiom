@@ -127,7 +127,7 @@ properties:
         type: boolean
         title: Blur windows behind surfaces
         default: true
-        description: Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them.
+        description: Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them, except on SwayFX.
         x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
         x-enabledIf: {/$supports.blur: true}
       backdrops:

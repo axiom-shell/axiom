@@ -23,7 +23,9 @@ Rectangle {
 
   Layout.fillWidth: true
   Layout.preferredWidth: contentRow.implicitWidth + (itemPadding * 2)
-  Layout.preferredHeight: menuItem.isSeparator ? 1 : itemHeight
+  // A label may hold line breaks (DBus labels can): each line past the
+  // first adds its height, so a one-line entry keeps `itemHeight`
+  Layout.preferredHeight: menuItem.isSeparator ? 1 : Math.round(itemHeight + label.implicitHeight * (1 - 1 / Math.max(1, label.lineCount)))
   color: menuItemArea.containsMouse && menuItem.enabled && !menuItem.isSeparator ? Theme.backgroundHighlight : "transparent"
   radius: Widget.radius
   opacity: menuItem.enabled ? 1.0 : 0.5
@@ -76,6 +78,7 @@ Rectangle {
 
     // Label
     StyledText {
+      id: label
       text: root.menuItem.text
       Layout.fillWidth: true
       elide: Text.ElideRight
