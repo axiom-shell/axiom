@@ -2202,3 +2202,45 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   Total 16 lines.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the clock-timezones system
+
+### A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking
+- **Where:** `services/apps/DeadlineTicker.qml:133` (`_arm`), `services/apps/DeadlineTicker.qml:159` (`_armWarning`)
+- **What:** `_arm` sets a single-shot Timer to `Math.min(left + 50, 3600000)` and only looks at `Date.now()` again when it fires. Qt's timers run on the monotonic clock, which stops while the machine sleeps. Start a 25-minute pomodoro, suspend after 5 minutes, wake an hour later: the alarm still has 20 minutes to run, so for 20 minutes the dial and bar widget read `00:00` while still running, and when it finally fires the end is over 5 minutes late, so `_end(late)` advances silently with no notification. The same holds for the one-off timer (StopwatchManager) and caffeine's timer (IdleManager), and for the warning alarm. Nothing in the shell listens for wake (the daemon's logind watcher sees `PrepareForSleep`, but no shell code reacts to it). PLAUSIBLE: settle by suspending with a 2-minute timer for 5 minutes and watching when it ends. Fix: cap both alarms at a minute instead of an hour (`Math.min(left + 50, 60000)`), bounding the lateness to a minute at the cost of one wake-up a minute while a deadline runs; update the doc's "at most an hour at a time".
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### Skipping a focus session counts it as finished
+- **Where:** `services/apps/PomodoroManager.qml:72` (`skip`), `components/methods/PomodoroCycle.qml:87` (`advance`), `components/bar/widgets/Pomodoro/Pomodoro.qml:36`
+- **What:** `skip()` calls `PomodoroCycle.advance`, which counts `completed + 1` whenever the phase was `work`, whether it ran out or was skipped. The doc and PomodoroCycle's header define `completed` as focus sessions *finished* ("Every `longBreakEvery`-th finished focus session is followed by a long break"). A right click on the idle Pomodoro widget (its skip) therefore counts a session that never started, lights a dot, and with `autoStartBreaks` (default on) starts a 5-minute break running; four stray right clicks bring a long break. Question for the maintainer: should a skipped focus session count (some apps count it), not count, or count only once started? Fix (if it shouldn't count): give `advance` a `finished` flag (true from `_finish`, false from `skip`) that gates the `+ 1`, with a `tst_PomodoroCycle` row.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### A recent timer chip reads its label back as part of the duration
+- **Where:** `components/content/parts/CountdownTimer.qml:155` (`chipText`), `components/content/parts/CountdownTimer.qml:233`
+- **What:** A recent timer is kept as `{ ms, label }`, but its chip restarts it by turning it back into text (`formatShort(ms) + " " + label`) and re-parsing that through `started(text)`. A label that starts with a duration is read into the time. Run through `StopwatchClock.parse` as written: `90 5m` is 90 min labelled `5m`, its chip reads `1h30m 5m` and starts 1h35m with no label; `1:30 5m stretch` is 90 s labelled `5m stretch`, its chip `1m30s 5m stretch` starts 6m30s labelled `stretch`. Caffeine's popout shares the part. Fix: a recent chip emits the stored values (a `startedRecent(ms, label)` signal, or `started` carrying `{ ms, label }`), and the owners call `StopwatchManager.startTimer(ms, label)` / caffeine's equivalent instead of parsing text.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### A todo.json deleted while unreadable blocks every save until restart
+- **Where:** `services/apps/TodoManager.qml:98` (`_load`)
+- **What:** `_unreadable` is set when the file holds broken JSON and cleared only by a successful parse. When the file is then deleted (the obvious way out of a broken hand edit), `FileManager.read` returns null, `_load` sets only `_loaded`, and `_unreadable` stays true: every add, tick and delete is dropped with `Not saving over` warnings although there is nothing left to protect, until a valid file appears or the shell restarts. Fix: `if (text === null) { root._unreadable = false; root._loaded = true; }` (2 lines).
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### Dead and forwarding members in the timer services and helpers
+- **Where:** `services/apps/TodoManager.qml:21` (`loaded`), `services/apps/PomodoroManager.qml:22` (`state`), `services/apps/StopwatchManager.qml:22` (`stopwatch`), `components/methods/StopwatchClock.qml:181` (`endsAt`), `components/methods/PomodoroCycle.qml:107` (`format`)
+- **What:** `TodoManager.loaded`, `PomodoroManager.state` and `StopwatchManager.stopwatch` are read by nothing (`grep -rn` for each qualified name and for `root.<name>` finds only the declaration; the services use `_loaded`, `_state`, `_stopwatch`). `StopwatchClock.endsAt(state)` returns `state.running ? state.endsAt : 0`, but every timer it gets went through `normalizeTimer`, which already sets `endsAt` to 0 when not running; its one user (`CountdownTimer._endTime`) can read `root.timer.endsAt`. `PomodoroCycle.format(ms)` only forwards to `StopwatchClock.format(ms, false, true)` for PomodoroManager's two calls. Fix: delete the three properties (3 lines), `endsAt` (5 lines with its blank) and its two test rows in `tst_StopwatchClock` (2), and `format` (4 lines, its four test rows moved to `tst_StopwatchClock` if not already covered there), calling `StopwatchClock.format(…, false, true)` from PomodoroManager: 14 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### PomodoroDial redraws DialControls' ring and buttons
+- **Where:** `components/content/parts/PomodoroDial.qml:28` (`TimeRing`), `components/content/parts/PomodoroDial.qml:58` (buttons), `components/content/Pomodoro/Pomodoro.qml:39` (`dialSize`)
+- **What:** `DialControls` (shared by the timer, caffeine and the stopwatch since #262) is "a TimeRing over (or beside, `horizontal`) three round buttons", sized to its card with `fill`. PomodoroDial builds the same thing by hand: a TimeRing (lines 28–35, 8 lines), stop / play-pause / skip FlatIconButtons (58–82, 25), its own `horizontal` / `dialSize` / grid columns (17–18, 24–26, 5), and Pomodoro.qml works out the dial size and width test itself (32, 39, 2): 40 lines. So the pomodoro's buttons look and size differently from the other three dials, and lack the keyboard (Space) they have. Fix: PomodoroDial becomes a `DialControls` (`leftIcon: "stop"`, `leftEnabled: !idle`, `mainIcon` play/pause, `rightIcon: "skip_next"`, `color: phaseColor`, `fill` from the card) with the session dots and the task picker under it, about 20 lines; Pomodoro.qml drops its dial sizing. The dots and picker then sit under the ring rather than beside it in a wide card. About 20 lines net.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
+
+### Focus and Pomodoro build the parts their properties turn off
+- **Where:** `components/content/Focus/Focus.qml:68` (`PomodoroDial`), `components/content/Focus/Focus.qml:81` (`TodoList`), `components/content/Focus/Focus.qml:89` (`DayPane`), `components/content/parts/PomodoroDial.qml:84` (task picker)
+- **What:** components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Focus's `showTimer`, `showTodos` and `showAgenda` only set `visible`, so a Focus card with the agenda off still builds a `DayPane` (its calendar list), and one with todos off the whole `TodoList`. PomodoroDial's task picker is `visible: root.showTask`, and Focus always passes `showTask: false`, so every Focus card builds a hidden `StyledComboEntry` whose `options` map the todo list again on each todo change. Fix: Loaders gated on each switch (`active: root.showAgenda` and so on), and the task picker in a Loader on `showTask`.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system

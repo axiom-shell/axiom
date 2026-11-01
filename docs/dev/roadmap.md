@@ -597,6 +597,13 @@ Found by the audits:
 - [The dock's trigger placement and window focus go the long way round](issues.md#the-docks-trigger-placement-and-window-focus-go-the-long-way-round)
 - [A 12-hour Clock shows the hour in 24-hour time](issues.md#a-12-hour-clock-shows-the-hour-in-24-hour-time)
 - [Small shrinks in TimeZoneManager and WorldClocks](issues.md#small-shrinks-in-timezonemanager-and-worldclocks)
+- [A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking](issues.md#a-pomodoro-timer-or-caffeine-end-due-during-a-suspend-fires-up-to-an-hour-after-waking)
+- [Skipping a focus session counts it as finished](issues.md#skipping-a-focus-session-counts-it-as-finished)
+- [A recent timer chip reads its label back as part of the duration](issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)
+- [A todo.json deleted while unreadable blocks every save until restart](issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
+- [Dead and forwarding members in the timer services and helpers](issues.md#dead-and-forwarding-members-in-the-timer-services-and-helpers)
+- [PomodoroDial redraws DialControls' ring and buttons](issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
+- [Focus and Pomodoro build the parts their properties turn off](issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
