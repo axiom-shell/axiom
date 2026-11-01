@@ -2186,3 +2186,19 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The dock's EdgeTrigger zeroes `position`, `startInset` and `endInset` so that `_centre` comes out as `positionOffset` alone (`root.startInset + (… - root.startInset - root.endInset) * root.position + root.positionOffset`); EdgeTrigger's `centre` property is that override (`!isNaN(root.centre) ? root.centre : …`), which IntegratedEdgeMenu uses. And `DockManager.focus(id)` only forwards to `CompositorManager.focusWindow(id)`, for its one caller (DockMenu's window rows, which already imports `qs.services.compositor`). Fix: `centre: DockManager.reservedOf(root.screen)[root.vertical ? 1 : 0] + root.centre` in place of the four lines 383–386, and DockMenu calling `CompositorManager.focusWindow(win.id)` with `focus` (lines 84–87) gone: 7 lines.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:dock system
+
+### A 12-hour Clock shows the hour in 24-hour time
+- **Where:** `components/content/Clock/Clock.qml:38` (`hours`), `components/bar/widgets/Time/Time.qml:65` (`timeLines`), `components/bar/widgets/Time/Time.qml:72` (`timeLines`)
+- **What:** Qt's `h` and `hh` are 12-hour only when the same format has an `AP`/`ap` field; alone they are 0–23. Clock's `hours` is `I18n.formatDate(root.now, root.use24Hour ? "HH" : "h")`, so a digital or stacked Clock with "24-hour clock" off shows "15:07" with "PM" beside it (stacked: "15" over "07", "PM" under). The Japanese vertical Time widget does the same for its hour line (`use24Hour ? "H" : "h"`): 午後 over 15時. Proof (qmltestrunner, Qt 6.12, 2026-01-01 15:07): en_US `h` = `15`, `hh.ap` = `03.pm`; ja_JP `h` = `15`. Line 72 already works around it by formatting `"hh.ap"` and stripping `.am`/`.pm`, which only works where the locale's AM/PM text is am/pm. Fix: one hour for all three, `String(date.getHours() % 12 || 12)` when 12-hour (padded to two digits on line 72), in place of the `"h"` formats and line 72's strip.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the clock-timezones system
+
+### Small shrinks in TimeZoneManager and WorldClocks
+- **Where:** `services/system/TimeZoneManager.qml:22` (`offsets`), `services/system/TimeZoneManager.qml:102` (`_readZones`), `services/system/TimeZoneManager.qml:114` (`_readingZones`), `components/content/WorldClocks/WorldClocks.qml:66` (`detailOf`)
+- **What:** Each keeps every behaviour:
+  - `TimeZoneManager.offsets` is read nowhere (every clock calls `offsetOf`; `grep -rn 'TimeZoneManager.offsets'` finds nothing): 1 line.
+  - `_readZones` has one caller, `Component.onCompleted`, which runs once, so its guard (`if (root._zones.length > 0 || root._readingZones) return;`) and `_readingZones` never stop anything. Lines 101–116 (16) become a 7-line `Component.onCompleted: BackendManager.call("tz.zones", {}, (error, result) => { if (!error) root._zones = result.zones; }, { "repeatable": true })` under the same comment: 9 removed.
+  - WorldClocks' two callers build `{ "timezone": entry.place.timezone, "date": clock.date }` (4 lines each) for `detailOf`, which then works out `root.timeIn(place.timezone)` again although the row already has it as `entry.there`. `detailOf(zone, there)`, reading `clock.date` itself, makes each call one line (`root.detailOf(entry.place.timezone, entry.there)`): 6 removed, and one zone shift less per row each minute.
+  Total 16 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the clock-timezones system

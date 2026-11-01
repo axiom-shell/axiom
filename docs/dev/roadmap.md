@@ -595,6 +595,8 @@ Found by the audits:
 - [The dock's menu and drag state outlive the icons they point at](issues.md#the-docks-menu-and-drag-state-outlive-the-icons-they-point-at)
 - [A dock beside another edge's reserving dock is laid out as if that dock weren't there](issues.md#a-dock-beside-another-edges-reserving-dock-is-laid-out-as-if-that-dock-werent-there)
 - [The dock's trigger placement and window focus go the long way round](issues.md#the-docks-trigger-placement-and-window-focus-go-the-long-way-round)
+- [A 12-hour Clock shows the hour in 24-hour time](issues.md#a-12-hour-clock-shows-the-hour-in-24-hour-time)
+- [Small shrinks in TimeZoneManager and WorldClocks](issues.md#small-shrinks-in-timezonemanager-and-worldclocks)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
