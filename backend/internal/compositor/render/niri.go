@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/kdl"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
@@ -89,6 +90,26 @@ func KdlSerialize(nodes any, depth int) string {
 		}
 	}
 	return strings.Join(out, "\n")
+}
+
+// KdlNodeText is a parsed node without its children as KDL text
+// (`spawn "foot"`), a float staying one.
+func KdlNodeText(n *kdl.Node) string {
+	value := func(v any) any {
+		if f, ok := v.(float64); ok {
+			return real(f)
+		}
+		return kdl.JSON(v)
+	}
+	args, props := jsonx.Arr(), jsonx.NewObject()
+	for _, a := range n.Args {
+		args.Append(value(a))
+	}
+	for _, k := range n.Props.Keys() {
+		v, _ := n.Props.Get(k)
+		props.Set(k, value(v))
+	}
+	return KdlSerialize(jsonx.Arr(Node(n.Name, args, props, nil)), 0)
 }
 
 func nameOf(n any) any { return get(n, "name") }
@@ -419,8 +440,6 @@ func (t *Tables) NiriBindEntries(binds, ctx any) *jsonx.Array {
 		mask, key := "", id
 		if at >= 0 {
 			mask, key = id[:at], id[at+1:]
-		} else if id != "" {
-			mask = id[:len(id)-1]
 		}
 		out.Append(jsonx.Obj("modmask", jsonx.ToNumber(mask), "key", key, "keycode", 0.0, "submap", "", "description", t.DescriptionFor(b)))
 	}
@@ -468,16 +487,9 @@ func NiriLookNodes(look any) *jsonx.Array {
 		}
 	}
 	if s := get(look, "shadow"); truthy(s) {
-		soft := truthy(get(s, "soft")) && truthy(get(s, "rgb"))
-		size := num(get(s, "size"))
-		var color any = get(s, "color")
-		if soft {
-			r, a := GaussianShadow(s)
-			size = r
-			color = jsCat(get(s, "rgb")) + AlphaHex(a)
-		}
+		size, color := fitShadow(s)
 		layout("shadow.on")
-		layout("shadow.softness", math.Max(0, round(size)))
+		layout("shadow.softness", math.Max(0, round(num(size))))
 		// Spread evenly, as axiom's own (0 still resets the user's)
 		KdlSetPath(nodes, "layout.shadow.offset", jsonx.Arr(), jsonx.Obj("x", 0.0, "y", 0.0))
 		if !jsonx.StrictEqual(color, "") {

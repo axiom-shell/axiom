@@ -1,10 +1,12 @@
 package takeover
 
 import (
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
 
 // Kind is what differs between compositors in a takeover: the file, what
@@ -35,9 +37,6 @@ type Kind struct {
 	parses bool
 	// left counts user/'s files a restored config doesn't load
 	left func(text, userDir string) int
-	// record: claim notes what it set aside in .axiom-claimed, so release
-	// gives back that and not an older claim's dated backup
-	record bool
 }
 
 // KindNamed is the kind called name.
@@ -66,7 +65,7 @@ var hyprland = &Kind{
 		}
 		for _, data := range filepath.SplitList(dirs) {
 			path := filepath.Join(data, "hypr", "hyprland.lua")
-			if filepath.IsAbs(data) && isFile(path) {
+			if filepath.IsAbs(data) && fsx.IsFile(path) {
 				return path
 			}
 		}
@@ -91,9 +90,8 @@ var hyprland = &Kind{
 		if strings.Contains(text, `pcall(require, "user.`) {
 			return 0
 		}
-		return countEntries(userDir, func(e os.DirEntry) bool { return strings.HasSuffix(e.Name(), ".lua") })
+		return len(userconf.UserFiles(userDir, func(name string) bool { return strings.HasSuffix(name, ".lua") }))
 	},
-	record: true,
 }
 
 // sway's lines starting axiom: an `exec`/`exec_always` of `axiom run`, not an
@@ -117,9 +115,8 @@ var sway = &Kind{
 		if regexp.MustCompile(`(?m)^[[:space:]]*include .*/user/\*`).MatchString(text) {
 			return 0
 		}
-		return countEntries(userDir, func(e os.DirEntry) bool { return e.Type().IsRegular() })
+		return len(userconf.UserFiles(userDir, nil))
 	},
-	record: true,
 }
 
 // niri's nodes starting axiom: a spawn-at-startup or spawn-sh-at-startup of
@@ -146,18 +143,14 @@ var niri = &Kind{
 	// niri takes no globs: each file is included by name
 	left: func(text, userDir string) int {
 		n := 0
-		for _, e := range entries(userDir) {
-			if !e.Type().IsRegular() || !strings.HasSuffix(e.Name(), ".kdl") {
-				continue
-			}
-			included := regexp.MustCompile(`(?m)^[[:space:]]*include[[:space:]].*/user/` + regexp.QuoteMeta(e.Name()) + `"`)
+		for _, name := range userconf.NiriUserFiles(userDir) {
+			included := regexp.MustCompile(`(?m)^[[:space:]]*include[[:space:]].*/user/` + regexp.QuoteMeta(name) + `"`)
 			if !included.MatchString(text) {
 				n++
 			}
 		}
 		return n
 	},
-	record: true,
 }
 
 // replacer puts dir/ between a line's two groups where re matches
@@ -195,24 +188,4 @@ func swayInclude(line, dir string) string {
 		}
 		return quote + dir + "/" + inner + quote
 	})
-}
-
-func entries(dir string) []os.DirEntry {
-	list, _ := os.ReadDir(dir)
-	return list
-}
-
-func countEntries(dir string, keep func(os.DirEntry) bool) int {
-	n := 0
-	for _, e := range entries(dir) {
-		if keep(e) {
-			n++
-		}
-	}
-	return n
-}
-
-func isFile(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.Mode().IsRegular()
 }

@@ -519,24 +519,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### Hyprland's exit command is kept in two packages
-- **Where:** `backend/internal/compositor/binds/hypr.go` (`exitCommand`), `backend/internal/compositor/render/hyprconfig.go` (`exitLua`)
-- **What:** The merge maps `exec_cmd(<exitCommand>)` to `exitSession` and the writer emits `exitLua` for `exitSession`: the same string, kept by hand in two places (hypr.go:44, hyprconfig.go:30), with no test tying them. Changed alone, a written exit bind merges back as a plain `exec`. Fix: one constant (e.g. in `actions`) used by both; deletion pass 1 line.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### noteReload counts every compositor reload a second time
 - **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
 - **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30). The sway review (2026-10-30) found an apply between the count and that reset still sends the old list: [The detached layer's unbind list can drift from what sway holds](#the-detached-layers-unbind-list-can-drift-from-what-sway-holds) wants the reset where the reload is counted; fix the two together.
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The Hyprland Go code keeps dead and doubled helpers
-- **Where:** `backend/internal/compositor/takeover/kinds.go` (`record`), `backend/internal/compositor/takeover/takeover.go`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherLeaveLua`), `backend/internal/compositor/render/keys.go` (`UserKeyCounts`), `backend/internal/compositor/binds/hyprlua.go` (`quoteLua`), `backend/internal/daemon/compositor.go`, `backend/internal/daemon/compositorsocket.go`
-- **What:** Deletion pass, about 65 lines. `Kind.record` is true for all three kinds, so the field and its `!record` halves are dead (about 13), and the `err != nil` fallback for claims older than `.axiom-claimed` goes too (about 6 more). `render.SwitcherLeaveLua` has no Go caller (HyprlandManager.qml hard-codes the same Lua; 1). `render.UserKeyCounts` has only `shared_test.go`'s op row as caller (the shell counts user keys itself; about 18, with its row; the op row there for BindKeys' `runtimeBinds` replays a JS function that no longer exists). `binds.quoteLua` (31 lines) is a second Lua string quoter beside `render.LuaString`; `binds` can import `render` with no cycle (moved `raw` arguments would keep raw control bytes instead of `\ddd`, which no test pins). `daemon/compositor.go` spells the anonymous `struct{ Only string }` six times (a named type, about -15). The `hyprctl setcursor` request is built twice (`manager/hypr.go`, `daemon/compositorsocket.go`): one `ipc` helper. `render.SoftShadow`, `LeaveSubmap` and `AnimationSet` are exported but used only inside `render`.
-
-  **Decided** (maintainer, 2026-11-01, on the old-claims fallback, "drop" or "keep"; recommended keep): "drop".
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### Bind helpers keep JS halves the daemon owns now
@@ -559,43 +545,13 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### niri started on a broken config reads as loaded
 - **Where:** `backend/internal/compositor/ipc/niri.go` (`Reloads`), `backend/internal/compositor/manager/niri.go` (`checkLoaded`, `lastFailed`), `backend/internal/compositor/manager/manager.go` (`configReloaded`)
-- **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (`NiriManager.lastLoadFailed` has no reader). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### Nothing reads userBindsRead or lastLoadFailed
-- **Where:** `services/compositor/CompositorConfigManager.qml` (`userBindsRead`), `backend/internal/compositor/manager/writer.go` (`userBindsRead`), `backend/internal/compositor/manager/manager.go` (`state`), `services/compositor/NiriManager.qml` (`lastLoadFailed`)
-- **What:** Deletion pass. `CompositorConfigManager.userBindsRead` has no reader in QML (grep: its declaration only). In Go it's a writer interface method whose three implementations always return true: Hyprland's and sway's are the constant, and niri's `userEntries != nil` is set by `newNiri` before the first state is sent. About 9 lines (QML property, interface method, three implementations, the fake's, the state field) plus the doc comment. `NiriManager.lastLoadFailed` (2 lines plus a sentence in `niri-backend.md` › State) has no reader either, unless the fix for "niri started on a broken config reads as loaded" gives it one.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### The niri writer's runtimeOn and unread-binds guards are dead
-- **Where:** `backend/internal/compositor/manager/niri.go` (`runtimeOn`, `runtimeApply`, `entries`, `readUserConfig`)
-- **What:** Deletion pass. `niriWriter.runtimeOn` is set in `runtimeApply` and `runtimeClear` and never read (sway's is; niri's was copied along): 3 lines. `newNiri` calls `readUserConfig`, which always leaves `userEntries` non-nil (an empty array when the config can't be read), so `runtimeApply`'s and `entries`' `if w.userEntries == nil` returns and `readUserConfig`'s own nil guard can't happen: about 9 more lines, and `entries` never returns nil on niri.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### Three listings of niri's user files
-- **Where:** `backend/internal/compositor/manager/niri.go` (`userFiles`), `backend/internal/compositor/binds/niri.go` (`niriFiles`), `backend/internal/compositor/takeover/kinds.go` (`left`)
-- **What:** Deletion pass. The managed config's `user/*.kdl` (regular `.kdl` files, no hidden ones, by name) is listed three times: the writer's `userFiles` (12 lines), the merge's `niriFiles` (21, with `--only`), and the takeover's `left` (13), which counts what a restored config doesn't include. The copies disagree: `left` counts hidden `.kdl` files (an editor's swap file, a staged write) that the writer never includes, and skips a symlinked `.kdl` (`DirEntry.Type`) that the writer includes (`os.Stat`), so a release can report files left out that were never in. One `userconf.NiriUserFiles(dir)` used by all three saves about 25 lines and makes them agree.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### RunningNested has its own niri socket client
-- **Where:** `backend/internal/compositor/userconf/niri.go` (`RunningNested`), `backend/internal/compositor/ipc/niri.go` (`Outputs`)
-- **What:** Deletion pass. `RunningNested` dials `$NIRI_SOCKET`, writes `"Outputs"` and parses the reply by hand (28 lines), which `ipc.NiriFromEnv(getenv).Outputs(ctx)` already does with the shared dial and timeout (`userconf` can import `ipc`: `ipc` depends only on `render`, `actions` and `jsonx`). As one `Outputs` call, a single output named `winit`: about 8 lines.
+- **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (the unread `NiriManager` property that forwarded it is gone). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
 ### NiriManager queues actions the daemon could order
 - **Where:** `services/compositor/NiriManager.qml` (`_command`, `_next`), `backend/internal/daemon/compositorsocket.go` (`niriHandlers`)
 - **What:** Deletion pass. `NiriManager` keeps its own queue (`_command`, `_queue`, `_running`, `_next`: about 30 lines) so a chain of actions can't overtake itself, sending each only after the last one's reply came back through the daemon: one full round trip per action. The daemon already has the mechanism, `rpc.Registry.InOrder` (used for `outputs.apply`). A `niri.command` method registered in order, alongside `niri.request` for state, lets `_action` / `_command` send at once and drops the queue: about 30 QML lines for about 5 Go lines.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### A second KDL writer in the kdl package
-- **Where:** `backend/internal/compositor/kdl/kdl.go` (`ValueText`, `PyFloat`, `NodeText`, `Str`), `backend/internal/compositor/render/niri.go` (`KdlValue`, `KdlString`, `KdlSerialize`)
-- **What:** Deletion pass. The niri system's Check is that KDL is written by one module; `niri-backend.md` names `render`'s serializer. The parser package carries a second writer from the Python port: `ValueText` (its own escapes, without `\r`), `PyFloat` (floats as Python's `str` spells them, "1e+16"), `NodeText` (no quoting of names), and `Str`'s Python spellings ("True", "None"). They're used only for a moved bind's `raw` text and a bind's description (`binds/niri.go`, `userconf/niri.go`), where `render`'s writer gives the same text for the values niri's binds hold. Writing those through `render` (or one shared value writer) removes about 50 lines and the second set of escaping rules.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the niri system
 
@@ -772,30 +728,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A sway line continuing a non-bind line is moved as a bind of its own
 - **Where:** `backend/internal/compositor/binds/sway.go:283` (`extractSway`)
 - **What:** Only the bind's own line is checked for a trailing `\`; a line that follows a continued line is read as a fresh statement. `exec_always foo \` then `bindsym Mod4+x kill` is to sway one `exec_always foo bindsym Mod4+x kill`; extract moves `SUPER + X → closeWindow` (reproduced) and remove prefixes the second line with `# (moved into axiom) `, so sway now runs `foo # (moved into axiom) bindsym Mod4+x kill` and the user gains a bind they never had. Rare. Fix: carry a `continued` flag from the previous raw line and skip a line it covers; one test row.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Small shrinks in the compositor manager
-- **Where:** `backend/internal/compositor/manager/manager.go:760` (`AllowTakeover`), `backend/internal/compositor/manager/manager.go:532` (`state`), `backend/internal/compositor/manager/manager.go:888` (`release`), `backend/internal/compositor/manager/manager.go:1251` (`merge`), `backend/internal/compositor/manager/writer.go:216` (`sprintf`), `backend/internal/compositor/manager/hypr.go:70` (`problems`)
-- **What:** Deletion pass, about 15 lines. `AllowTakeover`'s `m.w == nil` check is dead (`enqueue` drops everything then) and its `if m.mode == "managed"` repeats line 760's early return; `state()`'s `if m.w != nil` (532) can't be false for its two callers, and its `kind` field (559) is read by no client; the approval removal with its warning is written twice (888-890, 1148-1150) beside an `approve()` for the add; `merge`'s `|| m.merging` (1251) can't be true at entry (set and cleared inside the one call on the manager goroutine); `sprintf` (writer.go:216) wraps `fmt.Sprintf` for its one caller `logf`; `problems().Blocked` is the same sentence in all three writers (hypr.go:70, sway.go:76, niri.go:88), read only at manager.go:854, where `m.files().ConfigDir` gives the one part that differs. Fix: drop the dead checks and `kind`, add `forgetApproval()`, call `fmt.Sprintf` in `logf`, build the blocked sentence in the manager and drop the field (and the fake writer's `Blocked`). Every path keeps its behaviour: each removed check is settled by the caller or the line before it. "Nothing reads userBindsRead or lastLoadFailed" drops another `state()` field, independently.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### niri's bind plan is a copy of runtimeLayer.plan
-- **Where:** `backend/internal/compositor/manager/niri.go:110` (`plan`), `backend/internal/compositor/manager/runtime.go:42` (`plan`)
-- **What:** `runtimeLayer` is "what every compositor's runtime layer shares", yet `niriWriter.plan` (niri.go:108-126, 19 lines) repeats `runtimeLayer.plan` (filter by `complete`, `render.RuntimeBinds` against the user's entries, keep `skipped`, log each taken key once through its own `reported` map, with its own `reported`/`skipped` fields). It has drifted: it drops `RuntimeBinds`' unreadable keys without the "Can't read the key %q" log the other two give, and words the skip log differently. Fix: give `niriWriter` a `runtime runtimeLayer{configName: "niri"}`; `parts`, `entries`, `ownKey` and `skippedKeys` use it; about 15 lines fewer and one log wording.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Go copies of bind helpers that only the parity replay calls
-- **Where:** `backend/internal/compositor/render/actions.go:22` (`Supported`), `backend/internal/compositor/render/actions.go:36` (`AppliesUnder`), `backend/internal/compositor/render/actions.go:43` (`KeySupported`), `backend/internal/compositor/render/actions.go:63` (`HasCalls`), `backend/internal/compositor/render/actions.go:81` (`ArgumentKind`), `backend/internal/compositor/render/layer.go:29` (`Hex`), `backend/internal/compositor/render/shared_test.go:212`
-- **What:** No daemon code calls these: `grep -rnw` over the non-test Go finds each only at its definition (or `Supported`/`KeySupported` inside `AppliesUnder`). Their only callers are `shared_test.go`'s op rows replaying the shell's `BindActions.*` / `CompositorLayer.hex`, which the shell keeps using itself (`KeybindManager.qml`, `KeybindEditor.qml`). Deletion pass, 36 lines (actions.go 20-45, 62-63, 80-83; layer.go 28-31) plus six op rows; the replay skips ops with no row (`if !ok { continue }`), so the cases still pass. (`UserKeyCounts`, the same kind, is in "The Hyprland Go code keeps dead and doubled helpers".) Fix: delete them and their rows.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### sway and niri each fit the shadow to axiom's themselves
-- **Where:** `backend/internal/compositor/render/sway.go:510` (`SwayFxLines`), `backend/internal/compositor/render/niri.go:471` (`NiriLookNodes`), `backend/internal/compositor/render/layer.go:223` (`GaussianShadow`), `backend/internal/compositor/render/niri.go:422` (`NiriBindEntries`)
-- **What:** Both writers carry the same 7 lines (`soft := truthy(get(s, "soft")) && truthy(get(s, "rgb"))`, the raw size and color, then `r, a := GaussianShadow(s); size = r; color = … + AlphaHex(a)`). Fix: `GaussianShadow(s)` returns the spec's `(size, color)`, falling back to the raw ones when not soft; each block becomes one line; output unchanged. Same pass: `NiriBindEntries`' `else if id != "" { mask = id[:len(id)-1] }` can't run (`KeyID` returns "" or an id holding `:`), 2 lines.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
@@ -1020,30 +952,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
-### SwayConfigBinds keeps its own copy of sway's $variables
-- **Where:** `backend/internal/compositor/render/sway.go:804` (`swaySet`), `backend/internal/compositor/render/sway.go:815` (`SwayConfigBinds`)
-- **What:** Deletion pass, 12 lines. `userconf` already has `Vars` (`Set`, and `Expand` longest name first) and `SetLine`, and `extractSway` and `SwayText` use them. `SwayConfigBinds` re-implements all of it: `swaySet` is `SetLine` character for character, plus a names slice, a map, and a sort by length on every line. `render` can import `userconf` without a cycle. Fix: `vars := &userconf.Vars{}`, `SetLine` for `set` lines, `line = vars.Expand(line)`. That removes 18 lines (804: 1, 816-825: 10, 843-849: 7) and adds about 6, leaving one set of variable rules instead of two.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### Small shrinks in the sway writer and IPC
-- **Where:** `backend/internal/compositor/manager/sway.go:203` (`setCursor`), `backend/internal/compositor/render/sway.go:478` (`numberOr0`), `backend/internal/compositor/ipc/sway.go:45` (`swayWrite`)
-- **What:** Deletion pass, about 10 lines:
-  - `setCursor` (203-205) sends `seat * xcursor_theme …`, but the live lines carry the same line every time (`SwayInputLines` appends `SwayCursorLine` whenever a cursor is set, `live` or not), so a cursor change sends it twice. Make it a no-op (3 lines to 1).
-  - `numberOr0` (478-485) has one caller, `clampRound`. Inline it as a NaN check (8 lines out, about 2 in).
-  - `swayWrite`'s tail (45-48) becomes `_, err := conn.Write(…); return err` (4 lines to 2).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### The sway extract's input-device case and isSwayFlag repeat the general rule
 - **Where:** `backend/internal/compositor/binds/sway.go:37` (`isSwayFlag`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
 - **What:** Deletion pass, about 17 lines. `--input-device=<id>` is in neither `swayFlags` nor `swayHarmless`, so the general `other` branch already keeps such a bind as `options`. The `device` boolean (288-302) exists only so the detail lists every flag instead of the unknown one, which nothing pins (`input-device` appears only in sway.go). `isSwayFlag` (37-45, 9 lines) has one caller. Fix: `slices.ContainsFunc(swayFlags, …)` inline, plus `if len(other) > 0 { push(… strings.Join(other, " ")) }`. The 17 lines at 287-303 become about 9, and `isSwayFlag` goes. `swayAction`'s `o Options` parameter is never read and goes too. These are the lines [A sway title-bar mouse bind moves in as a whole-window bind](#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind) changes: land the two together.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### binds and takeover each keep their own isFile and git check
-- **Where:** `backend/internal/compositor/binds/binds.go:185` (`isFile`), `backend/internal/compositor/takeover/kinds.go:215` (`isFile`), `backend/internal/compositor/userconf/niri.go:453` (`isFile`), `backend/internal/compositor/binds/binds.go:86` (`inGit`), `backend/internal/compositor/takeover/takeover.go:112` (`gitRepo`)
-- **What:** Deletion pass, 11 lines. There are three identical 4-line `isFile` functions. `inGit` and `gitRepo` both run `git -C <dir> rev-parse --show-toplevel`; one keeps the answer, the other the repo. Fix: one exported `IsFile` (in `fsx`) and one `GitRepo` in a shared package, with binds' default tracker calling it. That removes two `isFile`s (8 lines) and `inGit` (3).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
@@ -1105,24 +1016,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### sway and niri build output details and descriptions twice
 - **Where:** `components/methods/SwayState.qml:183` (`output`), `components/methods/SwayState.qml:298` (`outputDetails`), `components/methods/NiriState.qml:135` (`description`), `components/methods/NiriState.qml:351` (`outputDetails`)
 - **What:** Deletion pass, about 12 lines. The make/model/serial description (`[make, model, serial].filter(part => part && part !== "Unknown").join(" ")`) is written three times: twice in SwayState and once as `NiriState.description`. Both `outputDetails` repeat the same mHz→Hz `rate` lambda, the `availableModes` template (`${m.width}x${m.height}@${rate(m).toFixed(2)}Hz`) and the 13-key object (24 and 30 lines). `MonitorLayout` matches modes as strings across compositors, so the two spellings must stay identical. Fix: one pure helper (`description`, `mode(width, height, mHz)`, `detail({…})`) with a test row, used by both. It removes about 12 lines and keeps the spellings identical by construction.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### The bind merge lists user/ files three times, once per compositor
-- **Where:** `backend/internal/compositor/binds/hypr.go:336` (`hyprFiles`), `backend/internal/compositor/binds/sway.go:212` (`swayFiles`), `backend/internal/compositor/binds/niri.go:128` (`niriFiles`)
-- **What:** Deletion pass, about 32 lines. `swayFiles` and `niriFiles` are the same 21 lines each; `diff` shows only the name, the comment and the filter line. `hyprFiles` (13 lines) does the same with a `.lua` filter but no hidden-file filter. That's 55 lines in all. Fix: one `userFiles(o Options, keep func(name string) bool) []string` (about 20 lines, `only` handled once, hidden files always skipped) plus a one-line filter per kind. It removes about 32 lines, and Hyprland's merge stops reading a hidden `.x.lua` the managed file never loads. Do it with [Three listings of niri's user files](#three-listings-of-niris-user-files), which moves the writer's copy.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### sway's and niri's merges build a moved bind the same way twice
-- **Where:** `backend/internal/compositor/binds/sway.go:309` (`extractSway`), `backend/internal/compositor/binds/niri.go:203` (`extractNiri`)
-- **What:** Deletion pass, about 11 lines. Both copy the mapped action's keys into `{key}` (sway 310-313, niri 204-207). Both then apply the same repeat rule under the same three-line comment (sway 319-325, niri 214-221: `if <native repeat on> && (actions.Default().Repeating[name] || name == "raw")`): 23 lines. Fix: one `movedBind(key, action, nativeRepeat)` of about 10 lines with the comment, called from both. It keeps every output, and the next change to the rule happens once.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### The merge keeps key and variable tables render already has
-- **Where:** `backend/internal/compositor/binds/hypr.go:183` (`keyID`), `backend/internal/compositor/binds/sway.go:22` (`swayMouse`), `backend/internal/compositor/binds/hypr.go:41` (`hyprDirections`), `backend/internal/compositor/binds/sway.go:30` (`swayDirections`)
-- **What:** Deletion pass, about 16 lines. (1) `keyID` (15 lines) is a third key normaliser beside `render.KeyID`/`BindKeys.keyId`. It lowercases and sorts but resolves no modifier alias, so `hl.unbind("WIN + Q")` doesn't match a moved `SUPER + Q`, which `render.KeyID` would. `binds` can import `render` with no cycle. (2) `swayMouse` (3 lines) holds the same 12 entries as `render`'s `swayMouseKeys`. (3) `hyprDirections` and `swayDirections` are the same four-entry map. Fix: use `render.KeyID` in the merge (re-keying `exampleKeys` and `TestKeyID`'s rows to its spelling), export one mouse table, and share one directions map. `SwayConfigBinds`' own `$variable` expander is [SwayConfigBinds keeps its own copy of sway's $variables](#swayconfigbinds-keeps-its-own-copy-of-sways-variables).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 

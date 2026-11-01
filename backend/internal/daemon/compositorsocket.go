@@ -136,7 +136,7 @@ func applyGreeter(ctx context.Context, h *ipc.Hypr, niri bool, s *ipc.Sway, prof
 		if cursor == nil {
 			return refused
 		}
-		reply, err := h.Request(ctx, "setcursor "+jsonx.ToString(cursor.Value("theme"))+" "+jsonx.ToString(cursor.Value("size")))
+		reply, err := h.SetCursor(ctx, cursor)
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}

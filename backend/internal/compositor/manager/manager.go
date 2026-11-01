@@ -25,6 +25,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -189,7 +190,7 @@ func (m *Manager) AddLayerRules(ctx context.Context) error {
 }
 
 func (m *Manager) logf(format string, args ...any) {
-	m.o.Log.Info("compositor: " + sprintf(format, args...))
+	m.o.Log.Info("compositor: " + fmt.Sprintf(format, args...))
 }
 
 // timer is a stopped timer running fn on the manager's goroutine
@@ -528,10 +529,6 @@ func (m *Manager) state() *jsonx.Object {
 	complete := jsonx.Arr()
 	skipped, conflicts := jsonx.Arr(), jsonx.Arr()
 	var fs, look any
-	runningConfig, userBindsRead := "", false
-	if m.w != nil {
-		runningConfig, userBindsRead = m.w.runningConfig(m.in), m.w.userBindsRead()
-	}
 	if m.live() {
 		for _, b := range itemsOf(activeBinds(m.in)) {
 			if m.w.complete(m.in, b) {
@@ -556,10 +553,10 @@ func (m *Manager) state() *jsonx.Object {
 		profiles, _ := config.Lookup(m.o.Config(), config.Keys("Monitors", "items"))
 		monitorProfile = m.profiles.matched(profiles)
 	}
-	return jsonx.Obj("kind", m.kind, "live", m.live(), "mode", m.mode, "status", m.status(), "problem", m.problem,
+	return jsonx.Obj("live", m.live(), "mode", m.mode, "status", m.status(), "problem", m.problem,
 		"takeoverPending", m.takeoverPending, "managedCheck", check, "managedBlockedBy", by, "managedBlockedRepo", repo,
 		"monitorConflicts", conflicts, "skippedKeys", skipped, "complete", complete, "merging", m.merging,
-		"lastMerge", m.lastMerge, "mergeable", m.mergeable, "runningConfig", runningConfig, "userBindsRead", userBindsRead,
+		"lastMerge", m.lastMerge, "mergeable", m.mergeable, "runningConfig", m.w.runningConfig(m.in),
 		"releaseProblem", m.releaseProblem, "files", fs, "look", look, "monitorProfile", monitorProfile)
 }
 
@@ -747,6 +744,13 @@ func (m *Manager) approve() {
 	}
 }
 
+// forgetApproval: the approval was for one takeover, so the next asks again
+func (m *Manager) forgetApproval() {
+	if err := m.approvals().remove(m.kind); err != nil {
+		m.o.Log.Warn("compositor: forgetting the takeover's approval", "err", err)
+	}
+}
+
 func (m *Manager) approvalProblem() string {
 	return `Compositor mode is "managed", but taking over ` + m.files().ManagedPath +
 		` needs your approval (Settings › Compositor). Applying axiom's layer at runtime meanwhile.`
@@ -757,15 +761,13 @@ func (m *Manager) approvalProblem() string {
 // back.
 func (m *Manager) AllowTakeover() {
 	m.enqueue(func(ctx context.Context) {
-		if m.w == nil || m.mode != "managed" {
+		if m.mode != "managed" {
 			return
 		}
 		m.approve()
 		m.takeoverPending = false
 		m.problem = ""
-		if m.mode == "managed" {
-			m.apply(ctx)
-		}
+		m.apply(ctx)
 	})
 }
 
@@ -851,7 +853,7 @@ func (m *Manager) claim(ctx context.Context) {
 	switch word {
 	case "blocked":
 		lock.Release()
-		m.warnOnce(m.w.problems(m.in).Blocked)
+		m.warnOnce(`Compositor mode is "managed", but ` + m.files().ConfigDir + ` is a symlink or in a git repository, so axiom won't take it over; use "included" instead. Applying axiom's layer at runtime meanwhile.`)
 		m.runtimeApply(ctx)
 		return
 	case "adopted":
@@ -884,10 +886,7 @@ func (m *Manager) release(ctx context.Context) {
 	default:
 		m.releaseDone()
 		if word != "notours" {
-			// The approval was for this takeover: the next asks again
-			if err := m.approvals().remove(m.kind); err != nil {
-				m.o.Log.Warn("compositor: forgetting the takeover's approval", "err", err)
-			}
+			m.forgetApproval()
 		}
 	}
 	switch word {
@@ -1145,9 +1144,7 @@ func (m *Manager) syncFile(ctx context.Context) {
 		// over. The takeover allowed is over, so apply() asks again
 		if !m.configIsOurs() {
 			m.logf("%s isn't axiom's any more: taking it over needs your approval again", path)
-			if err := m.approvals().remove(m.kind); err != nil {
-				m.o.Log.Warn("compositor: forgetting the takeover's approval", "err", err)
-			}
+			m.forgetApproval()
 			m.loaded = false
 			m.debounce.Reset(300 * time.Millisecond)
 			return
@@ -1248,7 +1245,7 @@ func (m *Manager) mergeOptions(only string) binds.Options {
 // that couldn't be has its binds taken back out of axiom's, so no key is
 // ever bound twice.
 func (m *Manager) merge(ctx context.Context, only string, preview bool) {
-	if !m.live() || m.mode != "managed" || m.merging {
+	if !m.live() || m.mode != "managed" {
 		return
 	}
 	m.merging = true

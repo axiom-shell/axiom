@@ -29,13 +29,15 @@ package binds
 import (
 	"context"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/luacheck"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
@@ -75,16 +77,15 @@ func (o *Options) defaults() error {
 		o.Now = time.Now
 	}
 	if o.Tracked == nil {
-		o.Tracked = inGit
+		o.Tracked = func(ctx context.Context, path string) bool {
+			_, ok := edit.GitRepo(ctx, filepath.Dir(path))
+			return ok
+		}
 	}
 	if o.Timeout == 0 {
 		o.Timeout = 30 * time.Second
 	}
 	return nil
-}
-
-func inGit(ctx context.Context, path string) bool {
-	return exec.CommandContext(ctx, "git", "-C", filepath.Dir(path), "rev-parse", "--show-toplevel").Run() == nil
 }
 
 // Extract reads what can move.
@@ -182,10 +183,44 @@ func backup(o Options, path, dir string) error {
 	return edit.Copy(path, filepath.Join(dir, filepath.Base(path)+".axiom-backup-"+o.Now().Format(edit.Stamp)))
 }
 
-func isFile(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.Mode().IsRegular()
+// userFiles are the paths of dir's user/ files that keep takes, as
+// userconf.UserFiles lists them (only: just that one, when it's there)
+func userFiles(dir, only string, keep func(name string) bool) []string {
+	user := filepath.Join(dir, "user")
+	if only != "" {
+		if path := filepath.Join(user, only); fsx.IsFile(path) {
+			return []string{path}
+		}
+		return nil
+	}
+	names := userconf.UserFiles(user, keep)
+	for i, name := range names {
+		names[i] = filepath.Join(user, name)
+	}
+	return names
 }
+
+// movedBind is a bind that moves: its key, its action's fields, then
+// extra's (flags, a description). The compositor repeats a held bind
+// (nativeRepeat: it wasn't told not to), but that's rarely meant (a held
+// close would close one window after another): an action repeats as
+// axiom's own does, a raw one as the compositor had it
+func movedBind(key string, action, extra *jsonx.Object, nativeRepeat bool) *jsonx.Object {
+	entry := jsonx.Obj("key", key)
+	for _, o := range []*jsonx.Object{action, extra} {
+		for _, k := range o.Keys() {
+			entry.Set(k, o.Value(k))
+		}
+	}
+	name, _ := action.Value("action").(string)
+	if nativeRepeat && (actions.Default().Repeating[name] || name == "raw") {
+		entry.Set("repeating", true)
+	}
+	return entry
+}
+
+// directions are the directions focus and move take
+var directions = map[string]bool{"left": true, "right": true, "up": true, "down": true}
 
 // realPath is path with its links followed (Path.resolve)
 func realPath(path string) string {

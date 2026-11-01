@@ -209,25 +209,19 @@ func objects(list []*jsonx.Object) any {
 
 // ops maps each recorded op onto the port
 var ops = map[string]func(t *Tables, a []any) any{
-	"BindActions.appliesUnder":   func(t *Tables, a []any) any { return t.AppliesUnder(arg(a, 0), argStr(a, 1), arg(a, 2)) },
-	"BindActions.argumentKind":   func(t *Tables, a []any) any { return t.ArgumentKind(arg(a, 0)) },
 	"BindActions.callFunction":   func(t *Tables, a []any) any { return t.CallFunction(arg(a, 0)) },
 	"BindActions.callOf":         func(t *Tables, a []any) any { return t.CallOf(arg(a, 0)) },
 	"BindActions.defaultLabel":   func(t *Tables, a []any) any { return t.DefaultLabel(arg(a, 0)) },
 	"BindActions.descriptionFor": func(t *Tables, a []any) any { return t.DescriptionFor(arg(a, 0)) },
-	"BindActions.hasCalls":       func(t *Tables, a []any) any { return t.HasCalls(arg(a, 0)) },
 	"BindActions.hasOwnSection":  func(t *Tables, a []any) any { return HasOwnSection(arg(a, 0)) },
-	"BindActions.keySupported":   func(t *Tables, a []any) any { return t.KeySupported(arg(a, 0), arg(a, 1)) },
 	"BindActions.needsArgument":  func(t *Tables, a []any) any { return t.NeedsArgument(arg(a, 0)) },
 	"BindActions.sectionFor":     func(t *Tables, a []any) any { return t.SectionFor(arg(a, 0)) },
-	"BindActions.supported":      func(t *Tables, a []any) any { return t.Supported(arg(a, 0), arg(a, 1)) },
 	"BindActions.switcherHeld":   func(t *Tables, a []any) any { return strList(SwitcherHeld(stringList(arg(a, 0)))) },
 
-	"BindKeys.entryId":       func(t *Tables, a []any) any { return EntryID(arg(a, 0)) },
-	"BindKeys.keyId":         func(t *Tables, a []any) any { return KeyID(arg(a, 0)) },
-	"BindKeys.mergeBinds":    func(t *Tables, a []any) any { return MergeBinds(arg(a, 0), arg(a, 1)) },
-	"BindKeys.runtimeBinds":  func(t *Tables, a []any) any { return RuntimeBinds(arg(a, 0), arg(a, 1)) },
-	"BindKeys.userKeyCounts": func(t *Tables, a []any) any { return UserKeyCounts(arg(a, 0), arg(a, 1)) },
+	"BindKeys.entryId":      func(t *Tables, a []any) any { return EntryID(arg(a, 0)) },
+	"BindKeys.keyId":        func(t *Tables, a []any) any { return KeyID(arg(a, 0)) },
+	"BindKeys.mergeBinds":   func(t *Tables, a []any) any { return MergeBinds(arg(a, 0), arg(a, 1)) },
+	"BindKeys.runtimeBinds": func(t *Tables, a []any) any { return RuntimeBinds(arg(a, 0), arg(a, 1)) },
 
 	"KeyNames.join":        func(t *Tables, a []any) any { return JoinKey(stringList(arg(a, 0)), argStr(a, 1)) },
 	"KeyNames.split":       func(t *Tables, a []any) any { return SplitKey(arg(a, 0)).json() },
@@ -238,7 +232,6 @@ var ops = map[string]func(t *Tables, a []any) any{
 		r, al := GaussianShadow(arg(a, 0))
 		return jsonx.Obj("radius", r, "alpha", al)
 	},
-	"CompositorLayer.hex":         func(t *Tables, a []any) any { return Hex(arg(a, 0)) },
 	"CompositorLayer.input":       func(t *Tables, a []any) any { return Input(arg(a, 0), arg(a, 1)) },
 	"CompositorLayer.look":        func(t *Tables, a []any) any { return Look(arg(a, 0), arg(a, 1)) },
 	"CompositorLayer.luminance":   func(t *Tables, a []any) any { return Luminance(arg(a, 0)) },
@@ -249,7 +242,7 @@ var ops = map[string]func(t *Tables, a []any) any{
 	"HyprLua.configTable":   func(t *Tables, a []any) any { return ConfigTable(arg(a, 0), arg(a, 1), arg(a, 2), arg(a, 3)) },
 	"HyprLua.inputLua":      func(t *Tables, a []any) any { return strList(InputLua(arg(a, 0), arg(a, 1))) },
 	"HyprLua.layerRulesLua": func(t *Tables, a []any) any { return strList(t.LayerRulesLua()) },
-	"HyprLua.leaveSubmap":   func(t *Tables, a []any) any { return LeaveSubmap(argStr(a, 0)) },
+	"HyprLua.leaveSubmap":   func(t *Tables, a []any) any { return leaveSubmap(argStr(a, 0)) },
 	"HyprLua.lookLua":       func(t *Tables, a []any) any { return strList(LookLua(arg(a, 0), arg(a, 1))) },
 	"HyprLua.monitorCalls":  func(t *Tables, a []any) any { return strList(MonitorCalls(arg(a, 0), arg(a, 1))) },
 	"HyprLua.monitorSpec":   func(t *Tables, a []any) any { return MonitorSpec(arg(a, 0)) },
@@ -261,7 +254,7 @@ var ops = map[string]func(t *Tables, a []any) any{
 		return Serialize(arg(a, 0).(*jsonx.Object), pad)
 	},
 	"HyprLua.softShadow": func(t *Tables, a []any) any {
-		r, p, al := SoftShadow(arg(a, 0))
+		r, p, al := softShadow(arg(a, 0))
 		return jsonx.Obj("range", r, "power", p, "alpha", al)
 	},
 	"HyprLua.string":           func(t *Tables, a []any) any { return LuaString(arg(a, 0)) },
@@ -272,7 +265,7 @@ var ops = map[string]func(t *Tables, a []any) any{
 	"HyprLua.value":            func(t *Tables, a []any) any { return LuaValue(arg(a, 0)) },
 
 	"HyprConfigLua.animationSet": func(t *Tables, a []any) any {
-		if set := AnimationSet(arg(a, 0), arg(a, 1)); set != nil {
+		if set := animationSet(arg(a, 0), arg(a, 1)); set != nil {
 			return set
 		}
 		return nil

@@ -7,6 +7,8 @@ package edit
 import (
 	"context"
 	"os"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
@@ -26,6 +28,16 @@ func LockDir(ctx context.Context, dir string) (*fsx.Lock, error) {
 	ctx, cancel := context.WithTimeout(ctx, lockWait)
 	defer cancel()
 	return fsx.LockDir(ctx, dir)
+}
+
+// GitRepo is the git repository dir is in, if any. It asks git, so
+// worktrees, $GIT_DIR and ceilings count as git does.
+func GitRepo(ctx context.Context, dir string) (string, bool) {
+	out, err := exec.CommandContext(ctx, "git", "-C", dir, "rev-parse", "--show-toplevel").Output()
+	if err != nil {
+		return "", false
+	}
+	return strings.TrimRight(string(out), "\n"), true
 }
 
 // Stamp is the layout of the dates in backup names (20261024-120000).

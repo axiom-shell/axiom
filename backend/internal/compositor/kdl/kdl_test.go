@@ -63,14 +63,3 @@ func TestStrings(t *testing.T) {
 		t.Errorf("got %q", nodes[0].Args)
 	}
 }
-
-func TestNodeText(t *testing.T) {
-	t.Parallel()
-	nodes, err := Parse("spawn \"a \\\"b\\\"\" 1 2.0 1e20 true null focus=false\n")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, want := NodeText(nodes[0]), `spawn "a \"b\"" 1 2.0 1e+20 true null focus=false`; got != want {
-		t.Errorf("got %s, want %s", got, want)
-	}
-}

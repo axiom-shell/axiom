@@ -143,26 +143,6 @@ func RuntimeBinds(binds, entries any) *jsonx.Object {
 	return jsonx.Obj("apply", apply, "skipped", skipped, "unreadable", unreadable)
 }
 
-// UserKeyCounts is BindKeys.userKeyCounts: how many binds on each key id are
-// the user's (every entry outside a submap, less axiom's applied ones).
-func UserKeyCounts(entries, applied any) *jsonx.Object {
-	counts := jsonx.NewObject()
-	for _, e := range items(entries) {
-		if truthy(get(e, "submap")) {
-			continue
-		}
-		id := EntryID(e)
-		counts.Set(id, num(or(counts.Value(id), 0.0))+1)
-	}
-	for _, b := range items(applied) {
-		id := KeyID(get(b, "key"))
-		if id != "" && truthy(counts.Value(id)) {
-			counts.Set(id, num(counts.Value(id))-1)
-		}
-	}
-	return counts
-}
-
 // MergeBinds is BindKeys.mergeBinds: binds with incoming merged in, one bind
 // per key, an incoming bind replacing the one on its key where it stands.
 func MergeBinds(binds, incoming any) *jsonx.Array {
