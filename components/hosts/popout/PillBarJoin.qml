@@ -40,9 +40,6 @@ PillStretch {
   property real hidden: 0
 
   readonly property var _panel: ScreenEdgeManager.barOn(root.screen?.name ?? "", root.side)
-  // A pill bar showing there, with no integrated menu's strip on that edge
-  // between (SurfaceContext.endKind "pillBar", as its hosts decide joins)
-  readonly property bool available: ScreenEdgeManager.surfaceEnd(root.screen, root.side).kind === "pillBar"
 
   // Along that bar, this edge is its start (left, top) or its end
   readonly property bool _atStart: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Top
@@ -52,7 +49,7 @@ PillStretch {
   // `reach` from the surface's edge; null while the surface doesn't show
   function _wallAt(reach) {
     const origin = root._panel?.container?.blurOrigin;
-    if (!origin || !root.showing || !root.joined || !root.available)
+    if (!origin || !root.showing || !root.joined)
       return null;
     const span = (root._vertical ? root.screen?.width : root.screen?.height) ?? 0;
     return (root._atStart ? reach : span - reach) - (root._vertical ? origin.x : origin.y);
@@ -69,7 +66,7 @@ PillStretch {
   // fillet's tip, or the wall
   readonly property var _reach: root._drawnWall === null ? null : !root.filleted ? root._drawnWall : root._atStart ? root._drawnWall + root._radius : root._drawnWall - root._radius
 
-  container: root.joined && root.available ? (root._panel?.container ?? null) : null
+  container: root.joined ? (root._panel?.container ?? null) : null
   // Filleted, past the fillet by the pill's own corner; else out to the
   // wall's outer edge, squared there
   endReach: root._reach === null ? null : root.filleted ? {

@@ -9,7 +9,7 @@ Keybinds are edited on the overlay's **Keybinds** page: the binds by section on 
 **All binds** is the quick reference: every bind your compositor has, axiom's and your own, by section and grouped under their modifiers (click a group to fold it), with direction and number sets folded into one row. Press a combo in **Look up a combo** to see what it does, or bind it if nothing does. **Keyboard** shows the same binds on a keyboard under the modifiers you pick. Click one of axiom's binds in either to edit it. The Cheatsheet module shows the reference on any page, as a list or a keyboard.
 
 A bind can run:
-- any IPC action below
+- any IPC action below, picked from a list: axiom's surfaces, **System** toggles (Wi-Fi, Bluetooth, VPN, dark mode, caffeine, night light), **Tools** (clipboard history, emoji, calculator, notes, calendar, chat, pomodoro, stopwatch and timers), media keys and switching the audio output
 - a window action (focus, move, resize, close, fullscreen, floating, special workspaces, mouse drag)
 - a raw command in the compositor's own language: a Hyprland dispatcher as Lua (`hl.dsp.layout("swapsplit")`), a sway command or a niri action. It's kept for the compositor it was written for, and skipped (with a warning) on the others
 - a command
@@ -48,7 +48,7 @@ axiom ipc <target> <function> [args]
 | `overlay` | `open`, `close`, `toggle`, `page <type>` |
 | `edgeMenu` | `open <id>`, `close <id>`, `toggle <id>`, `pin <id>`, `unpin <id>`, `list`, `edit` |
 | `dock` | `open <id>`, `close <id>`, `toggle <id>` (no id: every dock) |
-| `appLauncher` | `open`, `close`, `toggle`, `search <text>` |
+| `appLauncher` | `open`, `close`, `toggle`, `search <text>`, `clipboard`, `emoji`, `calculator` (opens on that history or picker) |
 | `powermenu` | `open`, `close`, `toggle` |
 | `osd` | `message <icon> <text>` (an icon and text on the OSD showing Messages, else the first), `messageTo <id> <icon> <text>`, `show <id>` |
 | `workspaceOverlay` | `open`, `hide`, `toggle` |
@@ -56,10 +56,14 @@ axiom ipc <target> <function> [args]
 | `windowSwitcher` | `next`, `previous`, `commit`, `cancel` (for scripts: the Alt+Tab bind doesn't need them) |
 | `idleInhibit` | `enable`, `disable`, `toggle`, `timer <duration>`, `status` |
 | `nightLight` | `enable`, `disable`, `toggle`, `status` |
+| `darkMode` | `enable`, `disable`, `toggle` (the theme's dark or light variant) |
+| `wifi` | `enable`, `disable`, `toggle` |
+| `bluetooth` | `enable`, `disable`, `toggle` |
+| `vpn` | `toggle` (the VPN last used, as the Vpn widget's click) |
 | `brightness` | `up`, `down`, `set <percent>`, `dim <percent>`, `dimBy <percent>`, `undim` |
 | `screenshot` | `take <region\|window\|screen>`, `cancel` |
 | `screenRecord` | `toggle`, `enable`, `disable`, `status` |
-| `wallpaper` | `next` |
+| `wallpaper` | `next`, `random` |
 | `monitors` | `open`, `keep`, `revert`, `identify` |
 | `onboarding` | `open`, `close`, `goTo <step>`, `reset` |
 | `lockscreen` | `lock` |
@@ -69,11 +73,12 @@ axiom ipc <target> <function> [args]
 | `community` | `refresh`, `list` (each setup's id and title), `apply <id>` (without its wallpaper) |
 | `chat` | `open`, `newChat`, `ask <text>`, `settings` |
 | `calendar` | `open`, `newEvent`, `sync`, `add <text>` (as `/event`) |
+| `notes` | `open` (the overlay page or edge menu with a Notes module) |
 | `todo` | `add <text>`, `toggle <text>`, `list`, `count`, `clearCompleted` |
 | `customWidgets` | `refresh <name>` (a custom widget's refresh name, id or name: its script runs again now), `list` |
 | `pomodoro` | `start`, `pause`, `toggle`, `skip`, `stop`, `reset`, `status` |
 | `stopwatch` | `timer <duration [label]>`, `toggleTimer`, `resetTimer`, `toggle`, `lap`, `reset`, `status` |
-| `audio` | `volumeUp`, `volumeDown`, `toggleMute`, `toggleMicMute` |
+| `audio` | `volumeUp`, `volumeDown`, `toggleMute`, `toggleMicMute`, `nextOutput` (the next audio output) |
 | `media` | `playPause`, `next`, `previous`, `stop` |
 | `popouts` | `list` (debugging: every open popout's claim and footprint) |
 

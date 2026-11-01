@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 
 // What Card and Panel derive from their slot, in one place: its size in
 // grid units (four to a card), shape, whether it's compact, bare, and the
@@ -25,7 +26,7 @@ QtObject {
   readonly property int cols: slotRect[2]
   readonly property int rows: slotRect[3]
   // "square" | "horizontal" | "vertical"
-  readonly property string shape: OverlayConfig.slotShape(slotRect)
+  readonly property string shape: GridPlacement.slotShape(slotRect)
   // A quarter card or smaller, or smaller than the full layout needs:
   // room for the key figure only (by px once laid out, so a module isn't
   // built compact and rebuilt before it has a size)

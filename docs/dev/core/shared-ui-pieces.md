@@ -35,7 +35,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `StyledContainer`: a themed box (surface opacity or solid, optional border and radius).
 - `StyledScrollView`: a ScrollView with the shell's padding and a thin accent scroll bar.
 - `KeyHint`: a keycap and what it does (`[↵] open`), for a controls hint.
-- `content/parts/KeyCap` (a key, optionally with an icon), `ModifierCap` (a combo's modifiers in one cap, as glyphs or words), `KeyCluster` (a folded direction set, H J K L): keycaps for binds. `KeybindSection` / `KeybindRow` draw the keybinds reference (the Keybinds page and the Cheatsheet); `compact` follows `KeybindManager.page.refDensity`; a modifier group folds (`KeybindManager.page.refFolded`). `KeyboardMap`: a US keyboard (`methods/KeyMap`) whose keys are coloured, labelled and clicked through hooks (the editor's key map); `KeyboardReference`: the reference drawn on it, under picked modifiers.
+- `content/parts/KeyCap` (a key, or a folded direction set's keys spaced in one cap, H J K L), `ModifierCap` (a combo's modifiers in one cap, as glyphs or words): keycaps for binds. `KeybindSection` / `KeybindRow` draw the keybinds reference (the Keybinds page and the Cheatsheet); `compact` follows `KeybindManager.page.refDensity`; a modifier group folds (`KeybindManager.page.refFolded`). `KeyboardMap`: a US keyboard (`methods/KeyMap`) whose keys are coloured, labelled and clicked through hooks (the editor's key map); `KeyboardReference`: the reference drawn on it, under picked modifiers.
 - `StyledSeparator`: border-coloured divider (accent where a divider is accent by design).
 - `SeparatorMark`: a line, dot, slash or chevron divider (the Separator widget's, the bar's `separatorStyle` and a custom widget's Separator element).
 - `StatusChip` (filled status pill), `CountBadge` (a count on a button's or icon's corner; bumps when it changes), `UnsavedDot` (`onAccent` on a selected row).
@@ -102,7 +102,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
 
 ### Bar pieces (`bar/`)
-- `bar/widgets/base/BaseWidget`: the rounded box a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`).
+- `bar/widgets/base/BaseWidget`: the sizing wrapper a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`).
 - `WidgetBackground`: a widget's or merged run's background in the bar's widget style and shape, with the hover outline and editor highlight.
 - `methods/BarShapes` (caps and SVG outlines), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
 

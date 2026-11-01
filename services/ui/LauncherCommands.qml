@@ -126,13 +126,10 @@ QtObject {
       description: () => I18n.tr("Set the focused monitor's wallpaper"),
       options: () => root._wallpapers(),
       run: (arg, value) => {
-        let url = value;
-        if (url === "random") {
-          const walls = root._wallpapers().slice(1);
-          url = walls.length > 0 ? walls[Math.floor(Math.random() * walls.length)].value : "";
-        }
-        if (url)
-          WallpaperManager.pick(url, "", "");
+        if (value === "random")
+          WallpaperManager.random();
+        else if (value)
+          WallpaperManager.pick(value, "", "");
         return false;
       }
     },
@@ -426,22 +423,8 @@ QtObject {
       description: () => I18n.tr("Search the notes, by name and text"),
       options: arg => root._notes(arg),
       run: (arg, value) => {
-        // After the launcher has closed, so the overlay gets the keyboard.
-        // An overlay page with a Notes module, else an edge menu with one
-        Qt.callLater(() => {
-          const page = OverlayConfig.pageWithModule("Notes");
-          const menu = page === "" ? EdgeMenusConfig.menuWithModule("Notes") : null;
-          if (page === "" && !menu) {
-            NotificationManager.sendNotification("axiom", I18n.tr("No notes module"), I18n.tr("Add a Notes module to an overlay page or an edge menu."));
-            return;
-          }
-          if (value)
-            NotesManager.requestOpen(value.path, value.line, menu ? "edgeMenu:" + menu.id : "overlay");
-          if (menu)
-            EdgeMenuManager.reveal(menu.id);
-          else
-            ShellManager.openOverlayPage(page);
-        });
+        // After the launcher has closed, so the overlay gets the keyboard
+        Qt.callLater(() => NotesManager.openNotes(value?.path, value?.line));
       }
     },
     {

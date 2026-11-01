@@ -168,7 +168,11 @@ TestCase {
   function test_footprint_attached_top() {
     const s = spec({});
     const m = SurfaceOutline.metrics(s);
-    const sz = SurfaceOutline.size(s, m);
+    // A top box: its alongLength wide, its depth high
+    const sz = {
+      "width": m.alongLength,
+      "height": m.depth
+    };
     compare(sz, {
       "width": 254,
       "height": 128
@@ -351,7 +355,10 @@ TestCase {
       "detachedOffset": 10
     });
     const dm = SurfaceOutline.metrics(detached);
-    const size = SurfaceOutline.size(detached, dm);
+    const size = {
+      "width": dm.alongLength,
+      "height": dm.depth
+    };
     const box = SurfaceOutline.blurRegion(detached, dm, size.width, size.height, 0, 0, {
       "start": 6,
       "end": 0

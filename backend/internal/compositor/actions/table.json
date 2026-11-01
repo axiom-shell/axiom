@@ -11,9 +11,15 @@
     "lock": ["lockscreen lock", "Lock", "Axiom"],
     "toggleDnd": ["notifications toggleDnd", "Do not disturb", "Axiom"],
     "clearNotifications": ["notifications clear", "Clear notifications", "Axiom"],
-    "idleInhibit": ["idleInhibit {call}", "Caffeine", "Axiom"],
-    "nightLight": ["nightLight {call}", "Night light", "Axiom"],
+    "idleInhibit": ["idleInhibit {call}", "Caffeine", "System"],
+    "nightLight": ["nightLight {call}", "Night light", "System"],
     "nextWallpaper": ["wallpaper next", "Next wallpaper", "Axiom"],
+    "randomWallpaper": ["wallpaper random", "Random wallpaper", "Axiom"],
+    "monitorsIdentify": ["monitors identify", "Identify monitors", "Axiom"],
+    "darkMode": ["darkMode {call}", "Dark mode", "System"],
+    "wifi": ["wifi {call}", "Wi-Fi", "System"],
+    "bluetooth": ["bluetooth {call}", "Bluetooth", "System"],
+    "vpn": ["vpn toggle", "VPN", "System"],
     "workspaceStep": ["workspaces step {0} go", "Switch {0}", "Workspace"],
     "moveWindowStep": ["workspaces step {0} move", "Move window {0}", "Workspace"],
     "workspaceNth": ["workspaces nth {0} go", "Go to workspace {0}", "Workspace"],
@@ -31,6 +37,24 @@
     "mediaNext": ["media next", "Next track", "Media"],
     "mediaPrevious": ["media previous", "Previous track", "Media"],
     "mediaStop": ["media stop", "Stop", "Media"],
+    "audioOutputNext": ["audio nextOutput", "Switch audio output", "Media"],
+    "clipboard": ["appLauncher clipboard", "Clipboard history", "Tools"],
+    "emoji": ["appLauncher emoji", "Emoji picker", "Tools"],
+    "calculator": ["appLauncher calculator", "Calculator", "Tools"],
+    "notes": ["notes open", "Notes", "Tools"],
+    "calendar": ["calendar open", "Calendar", "Tools"],
+    "calendarNewEvent": ["calendar newEvent", "New event", "Tools"],
+    "chat": ["chat open", "Chat", "Tools"],
+    "chatNew": ["chat newChat", "New chat", "Tools"],
+    "pomodoro": ["pomodoro toggle", "Pomodoro", "Tools"],
+    "pomodoroSkip": ["pomodoro skip", "Skip pomodoro phase", "Tools"],
+    "pomodoroStop": ["pomodoro stop", "Stop pomodoro", "Tools"],
+    "stopwatch": ["stopwatch toggle", "Stopwatch", "Tools"],
+    "stopwatchLap": ["stopwatch lap", "Stopwatch lap", "Tools"],
+    "stopwatchReset": ["stopwatch reset", "Reset stopwatch", "Tools"],
+    "timerStart": ["stopwatch timer {0}", "Timer: {0}", "Tools"],
+    "timerToggle": ["stopwatch toggleTimer", "Pause or resume timer", "Tools"],
+    "timerReset": ["stopwatch resetTimer", "Reset timer", "Tools"],
     "screenshot": ["screenshot take {0}", "Screenshot: {0}", "Apps"],
     "screenRecord": ["screenRecord {call}", "Screen recording", "Apps"]
   },
@@ -71,9 +95,12 @@
     "edgeMenu": {"open": "open", "close": "close"},
     "dock": {"open": "open", "close": "close"},
     "powerMenu": {"open": "open", "close": "close"},
-    "workspaceOverview": {"open": "show", "close": "hide"},
+    "workspaceOverview": {"open": "open", "close": "hide"},
     "idleInhibit": {"open": "enable", "close": "disable"},
     "nightLight": {"open": "enable", "close": "disable"},
+    "darkMode": {"open": "enable", "close": "disable"},
+    "wifi": {"open": "enable", "close": "disable"},
+    "bluetooth": {"open": "enable", "close": "disable"},
     "screenRecord": {"open": "enable", "close": "disable"}
   },
   "needs": {
@@ -116,6 +143,7 @@
   },
   "argumentKinds": {
     "launcherSearch": "text",
+    "timerStart": "duration",
     "exec": "text",
     "raw": "raw",
     "overlayPage": "view",
@@ -139,6 +167,7 @@
   },
   "argumentDefaults": {
     "screenshot": "region",
-    "dock": "main"
+    "dock": "main",
+    "timerStart": "5m"
   }
 }

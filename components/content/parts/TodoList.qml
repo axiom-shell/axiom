@@ -16,8 +16,6 @@ ColumnLayout {
 
   property bool fill: false
   property real maxListHeight: Number.POSITIVE_INFINITY
-  // The work-on-it button (off where no timer is near)
-  property bool showFocus: true
   // The item being renamed ("" for none)
   property string editing: ""
   // The field last, below the items (a popout growing up: Panel.growth)
@@ -99,7 +97,7 @@ ColumnLayout {
               }
             }
             FlatIconButton {
-              visible: root.showFocus && !entry.item.done
+              visible: !entry.item.done
               size: Math.round(Appearance.fontSize * 1.8)
               iconText: "timer"
               tooltipText: I18n.tr("Work on this")

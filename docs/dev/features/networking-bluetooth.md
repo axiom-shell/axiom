@@ -8,7 +8,7 @@ Wi-Fi, wired and Bluetooth state, built on Quickshell's D-Bus modules. Throughpu
 
 ### NetworkingManager
 - Wi-Fi over `Quickshell.Networking`: NetworkManager over D-Bus, event-driven. Nothing runs `nmcli`. What Quickshell doesn't show goes through axiom's `nmnet` (below).
-- **Radio:** `wifiEnabled`, `setWifiEnabled`.
+- **Radio:** `wifiEnabled`, `setWifiEnabled`; IPC `wifi enable|disable|toggle` (the `wifi` keybind action). In `shell.qml`'s `_services`, so it answers with no Wi-Fi widget shown.
 - **Airplane mode:** `setAirplane(on)` remembers both radios' states (`StateManager`, `airplane`) and turns Wi-Fi and Bluetooth off; off restores them (Wi-Fi at least). `airplane` is true only when turned on here and both radios are still off: either coming back on ends it, and radios that are merely both off aren't airplane mode.
 - **`networks`:** sorted connected first, then saved, then by name. The order is fixed.
 - **Actions:** connect, disconnect, forget.
@@ -42,4 +42,5 @@ What the Wi-Fi menu asks NetworkManager beyond Quickshell.Networking, over the s
 
 ### BluetoothManager
 - Over `Quickshell.Bluetooth`: adapter power, scanning, sorted device lists, and connect / pair / forget.
+- IPC `bluetooth enable|disable|toggle` (the `bluetooth` keybind action), the adapter's power. In `_services` too.
 - Not named `Bluetooth`: that would shadow Quickshell's singleton, and the name is also taken by the `Bluetooth` bar widget file.

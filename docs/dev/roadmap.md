@@ -144,6 +144,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs the OSD's statuses (config v87), pick Caps Lock, Num Lock, Keyboard layout, Microphone and Audio under an OSD's Status icons (the default has them; a custom OSD gets them in Settings → Dock & OSD): toggle Caps Lock and Num Lock, switch the layout, mute the microphone and switch the output in the audio mixer, and check each shows its icon, highlighted, on the focused screen and that a volume key while one shows swaps back to the bars without the OSD moving; that plugging in a headset no longer opens the bars; and that nothing shows in the first moments after a reload. Then on a laptop, the power profile, charger, Wi-Fi, Bluetooth and airplane mode icons (airplane mode's highlight isn't taken by its radios switching), and Now playing on a track change.
 - Once the shell runs the OSD's VPN, screen recording, camera and screen sharing statuses, add them to an OSD: bring a NetworkManager VPN or Tailscale up and down from the Vpn widget, then drop it (`nmcli connection down`, or stop tailscaled): coming up shows a card with its name, Connected and its address, a drop the struck-through icon, and switching from one VPN to another one card; start and stop a recording (a click on the lit icon stops it); open a browser's camera test and share a screen in a call: a card names the browser and says what it started, and stopping shows the struck-through icon (confirmed under niri with Vesktop; check Hyprland's and sway's portals too); join a call with the camera and microphone: one card, "Using the camera and microphone"; turn the OSD's Detail cards off: the same changes show as their icons. Join a Wi-Fi network (a card with its name and signal) and, on a laptop, plug in the charger (a card with the level and the time to full). Nothing shows in the first moments after a reload.
 - With a DDC/CI monitor, press brightness up with the OSD shut: `scripts/log.sh` shows no failed `brightness.get`, the bar doesn't jump back, and the next press steps from the new level (an own set now marks its write before the OSD's refresh runs).
+- Once the shell runs #279 (StandaloneBar removed), check the bar's blur and the border opening still sit right under a popout on a top, side and floating bar, and that a floating edge menu comes forward when engaged.
 
 
 ### Phase 0: decisions and quick wins
@@ -323,9 +324,6 @@ Found while retiring the `qs ipc` fallback (backend stage 6):
 Found while closing the config path (backend stage 7):
 - [After a refused save, a draft's edits show unsaved but not live](issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
 
-Found while adding niri's own overview (row 16):
-- [An open-only workspace overview bind calls a function that doesn't exist](issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
-
 Found while fixing the lock screen surviving a reload:
 - [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
 
@@ -377,7 +375,6 @@ Found by the audits:
 - [The Hyprland and sway bind merges each skip half of compositor/actions](issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
 - [Hyprland's remove deletes whatever hl.bind is on a site's line now](issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
 - [A claim comments out axiom's start inside a long string, breaking the script](issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
-- [An unknown IPC function word merges as a toggle](issues.md#an-unknown-ipc-function-word-merges-as-a-toggle)
 - [The overview stays open with nothing shown after its monitor goes away](issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)
 - [Wide active is hidden in the perMonitor layout but still applies there](issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
 - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
@@ -418,27 +415,17 @@ Found by the audits:
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
 - [The Updates popout's package list is frozen at opening](issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
 - [NowPlaying builds its strip layout and a second transport hidden in every mode](issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
-- [PopoutWrapperBase's aboutToDismiss signal has no listener](issues.md#popoutwrapperbases-abouttodismiss-signal-has-no-listener)
-- [Three EdgePopout members nothing reads](issues.md#three-edgepopout-members-nothing-reads)
-- [PopoutGeometry handles a phase and a submenu pair the registry never produces](issues.md#popoutgeometry-handles-a-phase-and-a-submenu-pair-the-registry-never-produces)
-- [PillBarJoin's available repeats what joined already says](issues.md#pillbarjoins-available-repeats-what-joined-already-says)
-- [Geometry members nothing reads](issues.md#geometry-members-nothing-reads)
 - [SurfaceContext.layout's pill and merged results have no test row](issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
-- [The tray menu's isVertical and barConfig are never read](issues.md#the-tray-menus-isvertical-and-barconfig-are-never-read)
 - [Both tray menu lists override the same width cap](issues.md#both-tray-menu-lists-override-the-same-width-cap)
 - [The tray menu draws its own separator](issues.md#the-tray-menu-draws-its-own-separator)
 - [The two workspace popouts share 28 lines of payload and colour properties](issues.md#the-two-workspace-popouts-share-28-lines-of-payload-and-colour-properties)
 - [Small improvements to WorkspaceGrid](issues.md#small-improvements-to-workspacegrid)
 - [The dock's footprint assumes fillets at both ends](issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
-- [Nothing listens to the bar's layoutUpdated any more](issues.md#nothing-listens-to-the-bars-layoutupdated-any-more)
 - [A bar made while the bar editor is open may never report to it](issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
 - [Plugging in or unplugging a monitor remakes the bar that stays](issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
 - [Removing or copying another bar moves the editor's selection to a different bar](issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)
 - [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](issues.md#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp)
 - [The pill merge in BarContainer repeats BarLayout's, untested](issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
-- [StandaloneBar only wraps BarPanel's BarContainer](issues.md#standalonebar-only-wraps-barpanels-barcontainer)
-- [BarContainer._withEntry rebuilds Utils.withEntry](issues.md#barcontainer_withentry-rebuilds-utilswithentry)
-- [enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks](issues.md#enrichbarconfig-hands-out-two-fields-nothing-reads-and-keeps-three-dead-fallbacks)
 - [A bar's reserve trim is worked out again by callers holding the enriched bar](issues.md#a-bars-reserve-trim-is-worked-out-again-by-callers-holding-the-enriched-bar)
 - [Missing test rows for two helper decisions](issues.md#missing-test-rows-for-two-helper-decisions)
 - [An overlay misses a transparent bar's inner accent line](issues.md#an-overlay-misses-a-transparent-bars-inner-accent-line)
@@ -448,14 +435,11 @@ Found by the audits:
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 - [SystemStats' used memory clips on a vertical bar](issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
 - [The stacked style clips on a thin bar](issues.md#the-stacked-style-clips-on-a-thin-bar)
-- [BaseWidget's background box and panel-size defaults are dead](issues.md#basewidgets-background-box-and-panel-size-defaults-are-dead)
 - [SystemStats works out ValueStyleWidget's style fallbacks again](issues.md#systemstats-works-out-valuestylewidgets-style-fallbacks-again)
 - [The workspace switchers find a workspace by id with hand-written loops](issues.md#the-workspace-switchers-find-a-workspace-by-id-with-hand-written-loops)
 - [Reopening the overlay while it closes leaves it open but hidden](issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
 - [A clean layout's problem blocks saving the others in the Layouts editor](issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
 - [The five layouts drafts are listed by hand in eight places](issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
-- [GridEditor's canAdd and canMove have no caller](issues.md#grideditors-canadd-and-canmove-have-no-caller)
-- [Small shrinks in the overlay](issues.md#small-shrinks-in-the-overlay)
 - [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)
 - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding)
 - [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)
@@ -466,9 +450,7 @@ Found by the audits:
 - [Card and Panel each spell out the grow and expand members](issues.md#card-and-panel-each-spell-out-the-grow-and-expand-members)
 - [Tailscale's PeerRow redraws DeviceRow without its buttons](issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
 - [WifiNetworks' WPA password form repeats WifiJoinForm's](issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
-- [Three row options nothing sets](issues.md#three-row-options-nothing-sets)
 - [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
-- [Three keycap parts draw the same cap, and KeyCap's icon slot has no user](issues.md#three-keycap-parts-draw-the-same-cap-and-keycaps-icon-slot-has-no-user)
 - [WeatherForecast repeats the Weather card's current conditions](issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
 - [What a lock screen module may do is a list kept by hand in two docs that disagree](issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - [Any custom widget reaches the lock screen past its Offer switch](issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
@@ -482,7 +464,6 @@ Found by the audits:
 - [A whole-edge menu's hover strip covers only its modules' length while closed](issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
-- [IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call](issues.md#integratededgemenus-empty-engage-exists-only-for-edgemenusyncs-call)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - [A format-2 config without a version runs every step again](issues.md#a-format-2-config-without-a-version-runs-every-step-again)
 - [The condition grammar has no shared fixtures](issues.md#the-condition-grammar-has-no-shared-fixtures)
@@ -583,7 +564,6 @@ Found by the audits:
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 - [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
 - [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
-- [ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room](issues.md#screenlayouteditorsavedlayout-is-dead-and-desktoptarget-forwards-the-editors-room)
 - [Hot corners' action list is a hand-kept copy of the keybind one](issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
 - [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
 - [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)

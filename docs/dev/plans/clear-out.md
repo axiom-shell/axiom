@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01 and compositor-01 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, bar-popouts-01 and overlay-modules-01 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -52,8 +52,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 4 | compositor-01 | deletion | Done: Go compositor backend: dead and doubled helpers | 17 | ~550 (~370 out) | none | Q6 |
 | 5 | compositor-02 | deletion | Done: QML compositor services, keybind helpers, workspace strips | 12 | ~450 | none |  |
 | 6 | compositor-03 | deletion | Done: The blur system | 5 | ~200 | none |  |
-| 7 | bar-popouts-01 | deletion | Dead members, signals and wrappers across popouts, the bar, bar widgets and edge menus | 12 | ~150 | none |  |
-| 8 | overlay-modules-01 | deletion | Overlay and modules: dead members and small shrinks | 5 | ~200 touched (~-150 net) | compositor-02 |  |
+| 7 | bar-popouts-01 | deletion | Done: Dead members, signals and wrappers across popouts, the bar, bar widgets and edge menus | 12 | ~150 | none |  |
+| 8 | overlay-modules-01 | deletion | Done: Overlay and modules: dead members and small shrinks | 6 | ~200 touched (~-150 net) | compositor-02 |  |
 | 9 | features-01 | deletion | Dead and forwarding members across the feature systems | 14 | ~250 | none |  |
 | 10 | compositor-04 | blocker | Sway's look lost after a reload | 1 | ~10 | compositor-02 |  |
 | 11 | bar-popouts-02 | blocker | Outside clicks never close edge and floating popouts | 1 | ~4 | none |  |
@@ -78,7 +78,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 30 | compositor-05 | major | The daemon's mode lifecycle (detect, load, leave, claim) | 6 | ~350 | compositor-01 |  |
 | 31 | compositor-06 | major | Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
 | 32 | compositor-07 | major | The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
-| 33 | compositor-08 | major | What a moved bind becomes | 5 | ~180 | compositor-07 |  |
+| 33 | compositor-08 | major | What a moved bind becomes | 3 | ~120 | compositor-07 |  |
 | 34 | compositor-21 | major | Command text in moved and written binds | 4 | ~150 | compositor-08 |  |
 | 35 | compositor-09 | major | Applying monitor rules | 4 | ~150 | compositor-05 |  |
 | 36 | compositor-10 | major | The trial Apply and the Monitors page | 3 | ~80 | none |  |
@@ -192,25 +192,26 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - BlurBacking spells out four near-identical blur windows
   - The border frame's path is built three times
   - Small shrinks in the blur system
-- **bar-popouts-01** (12): The layoutUpdated entry is filed Major; its fix is a pure deletion.
-  - [PopoutWrapperBase's aboutToDismiss signal has no listener](../issues.md#popoutwrapperbases-abouttodismiss-signal-has-no-listener)
-  - [Three EdgePopout members nothing reads](../issues.md#three-edgepopout-members-nothing-reads)
-  - [PopoutGeometry handles a phase and a submenu pair the registry never produces](../issues.md#popoutgeometry-handles-a-phase-and-a-submenu-pair-the-registry-never-produces)
-  - [PillBarJoin's available repeats what joined already says](../issues.md#pillbarjoins-available-repeats-what-joined-already-says)
-  - [Geometry members nothing reads](../issues.md#geometry-members-nothing-reads)
-  - [The tray menu's isVertical and barConfig are never read](../issues.md#the-tray-menus-isvertical-and-barconfig-are-never-read)
-  - [Nothing listens to the bar's layoutUpdated any more](../issues.md#nothing-listens-to-the-bars-layoutupdated-any-more)
-  - [StandaloneBar only wraps BarPanel's BarContainer](../issues.md#standalonebar-only-wraps-barpanels-barcontainer)
-  - [BarContainer._withEntry rebuilds Utils.withEntry](../issues.md#barcontainer_withentry-rebuilds-utilswithentry)
-  - [enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks](../issues.md#enrichbarconfig-hands-out-two-fields-nothing-reads-and-keeps-three-dead-fallbacks)
-  - [BaseWidget's background box and panel-size defaults are dead](../issues.md#basewidgets-background-box-and-panel-size-defaults-are-dead)
-  - [IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call](../issues.md#integratededgemenus-empty-engage-exists-only-for-edgemenusyncs-call)
-- **overlay-modules-01** (5): After compositor-02, which also edits OverlayPageNavigator (the wheel notch).
-  - [GridEditor's canAdd and canMove have no caller](../issues.md#grideditors-canadd-and-canmove-have-no-caller)
-  - [ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room](../issues.md#screenlayouteditorsavedlayout-is-dead-and-desktoptarget-forwards-the-editors-room)
-  - [Three row options nothing sets](../issues.md#three-row-options-nothing-sets)
-  - [Three keycap parts draw the same cap, and KeyCap's icon slot has no user](../issues.md#three-keycap-parts-draw-the-same-cap-and-keycaps-icon-slot-has-no-user)
-  - [Small shrinks in the overlay](../issues.md#small-shrinks-in-the-overlay)
+- **bar-popouts-01** (12, done): The layoutUpdated entry is filed Major; its fix is a pure deletion.
+  - PopoutWrapperBase's aboutToDismiss signal has no listener
+  - Three EdgePopout members nothing reads
+  - PopoutGeometry handles a phase and a submenu pair the registry never produces
+  - PillBarJoin's available repeats what joined already says
+  - Geometry members nothing reads
+  - The tray menu's isVertical and barConfig are never read
+  - Nothing listens to the bar's layoutUpdated any more
+  - StandaloneBar only wraps BarPanel's BarContainer
+  - BarContainer._withEntry rebuilds Utils.withEntry
+  - enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
+  - BaseWidget's background box and panel-size defaults are dead
+  - IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call
+- **overlay-modules-01** (6, done): After compositor-02, which also edits OverlayPageNavigator (the wheel notch).
+  - GridEditor's canAdd and canMove have no caller
+  - ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room
+  - Three row options nothing sets
+  - PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon
+  - Three keycap parts draw the same cap, and KeyCap's icon slot has no user
+  - Small shrinks in the overlay
 - **features-01** (14):
   - [Calendar results and members nothing reads](../issues.md#calendar-results-and-members-nothing-reads)
   - [The Accounts card's fallbacks for a renamed key and for empty account ids](../issues.md#the-accounts-cards-fallbacks-for-a-renamed-key-and-for-empty-account-ids)
@@ -342,12 +343,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [A sway line continuing a non-bind line is moved as a bind of its own](../issues.md#a-sway-line-continuing-a-non-bind-line-is-moved-as-a-bind-of-its-own)
   - [A sway title-bar mouse bind moves in as a whole-window bind](../issues.md#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind)
   - [The sway extract's input-device case and isSwayFlag repeat the general rule](../issues.md#the-sway-extracts-input-device-case-and-isswayflag-repeat-the-general-rule)
-- **compositor-08** (5):
+- **compositor-08** (3; two entries fixed by the bind actions PR):
   - [The Hyprland and sway bind merges each skip half of compositor/actions](../issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
-  - [An unknown IPC function word merges as a toggle](../issues.md#an-unknown-ipc-function-word-merges-as-a-toggle)
   - [sway's merge moves workspace binds as raw sway commands](../issues.md#sways-merge-moves-workspace-binds-as-raw-sway-commands)
   - [niri's confirming quit moves in as an instant log out](../issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
-  - [An open-only workspace overview bind calls a function that doesn't exist](../issues.md#an-open-only-workspace-overview-bind-calls-a-function-that-doesnt-exist)
 - **compositor-21** (4):
   - [A sway bind using a variable from an include moves as a literal $name](../issues.md#a-sway-bind-using-a-variable-from-an-include-moves-as-a-literal-name)
   - [A niri spawn of one word with a space moves as a broken shell command](../issues.md#a-niri-spawn-of-one-word-with-a-space-moves-as-a-broken-shell-command)

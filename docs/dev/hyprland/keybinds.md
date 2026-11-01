@@ -9,7 +9,12 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
 ### Bind actions
 - `binds` are edited on the Keybinds page, not in settings.
 - An action is one of:
-  - **An axiom IPC call** (the table's `ipcActions`). This includes the `audio`/`media` targets on AudioManager/MediaManager, so the OSD shows.
+  - **An axiom IPC call** (the table's `ipcActions`). This includes the `audio`/`media` targets on AudioManager/MediaManager, so the OSD shows. The picker files them by the table's section:
+    - **Axiom**: the launcher, overlay, edge menus, docks, power menu, lock, notifications, wallpapers (`nextWallpaper`, `randomWallpaper`), `monitorsIdentify`.
+    - **System**: on/off toggles with toggle/on/off calls: `idleInhibit`, `nightLight`, `darkMode` (ThemeManager), `wifi` (NetworkingManager), `bluetooth` (BluetoothManager), and `vpn` (VpnManager's `toggleLast`, as the Vpn widget's click). Networking, Bluetooth and VPN are in `shell.qml`'s `_services`, so their IPC answers with no widget showing them.
+    - **Tools**: the launcher's clipboard, emoji and calculator rows (`appLauncher clipboard|emoji|calculator`), `notes` (`NotesManager.openNotes`), calendar, chat, pomodoro, stopwatch and timer (`timerStart` takes a length, `10m` or `1:30`; its argument kind `duration`).
+    - **Media**: volume, brightness, playback, `audioOutputNext` (`AudioManager.nextOutput`, the next sink round the list).
+  - Left out on purpose: daemon/dev/update/onboarding/greeter calls, monitors keep/revert, `list`/`status` queries, and calls that need free text other than a search or a timer length (todo add, chat ask, calendar add).
   - **A compositor action bound directly** (the table's `compositorActions`; on Hyprland its Lua in `render.dispatcherLua`):
     - focus/move/resize, close, fullscreen, floating, pin, special workspaces
     - mouse drag/resize on a `mouse:272` key (Hyprland makes that a mouse bind by itself)

@@ -98,16 +98,6 @@ QtObject {
     });
   }
 
-  // The item's size for a spec: along the edge, the box and fillet
-  // squares; away from it, the box and connector gap
-  function size(s, m) {
-    const vertical = s.edge === ScreenEdge.Left || s.edge === ScreenEdge.Right;
-    return {
-      "width": vertical ? m.depth : m.alongLength,
-      "height": vertical ? m.alongLength : m.depth
-    };
-  }
-
   // An edge-local point in the item's coordinates (`w`/`h` its size)
   function toItem(edge, w, h, back, u, v) {
     switch (edge) {

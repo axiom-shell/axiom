@@ -70,7 +70,6 @@ Seams: bar widgets (`PopoutAnchor`), edge menus, OSD, dock, launcher.
 ## bar
 Scope: the bar window, container, sections, pills, ends and corners, bar editor.
 Docs: bar/*.md
-Extra: components/bar/StandaloneBar.qml
 Checks:
 - Which bar owns a corner and what each end meets is only `BarEnds` (`ends`); no host re-derives it.
 - Geometry animates what's drawn, never what's measured.

@@ -14,8 +14,7 @@ import QtQuick
 // - resident: gives way and comes back (the dock, pinned popouts, a menu
 //   previewing from its editor) rather than closing for good
 // - phase: "open" | "yielded", as PopoutManager registers them; "opening"
-//   (one `resumable` brings back) collides as "open" does, "closing" as
-//   "yielded" doesn't
+//   (one `resumable` brings back) collides as "open" does
 QtObject {
   id: root
 
@@ -60,7 +59,7 @@ QtObject {
 
   // What happens when `claim` (an entry) asks to show among `entries`:
   // { allowed, evict: [ids], yield: [ids], blockedBy: id | "" }
-  // - entries on other screens, closing or yielded ones, the claim itself,
+  // - entries on other screens, yielded ones, the claim itself,
   //   and its own parent or submenu never collide with it
   // - one ranked above it that it overlaps refuses it (`blockedBy`)
   // - else every one ranked at or below it that it overlaps goes: a
@@ -78,16 +77,13 @@ QtObject {
     for (const e of entries) {
       if (e.id === claim.id || e.screen !== claim.screen)
         continue;
-      if (e.phase === "closing" || e.phase === "yielded")
+      if (e.phase === "yielded")
         continue;
       if (e.parentId === claim.id || claim.parentId === e.id)
         continue;
       // Toasts and docks never collide: an always-shown dock would hide a
       // stack over it for good
       if ((e.kind === "toast" && claim.kind === "dock") || (e.kind === "dock" && claim.kind === "toast"))
-        continue;
-      // A submenu goes with its parent: only the parent collides
-      if (e.kind === "submenu" && claim.parentId && e.parentId === claim.parentId)
         continue;
       if (!intersects(e.footprint, claim.footprint))
         continue;
@@ -117,7 +113,7 @@ QtObject {
   // checked against what's showing and those already coming back)
   function resumable(entries) {
     const yielded = entries.filter(e => e.phase === "yielded").sort((a, b) => rankOf(b, null) - rankOf(a, null));
-    let showing = entries.filter(e => e.phase !== "yielded" && e.phase !== "closing");
+    let showing = entries.filter(e => e.phase !== "yielded");
     const back = [];
     for (const e of yielded) {
       const claim = Object.assign({}, e, {

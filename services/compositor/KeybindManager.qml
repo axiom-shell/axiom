@@ -70,9 +70,10 @@ QtObject {
 
   // The action picker's categories, in tab order ("" is All). `exec` is
   // filed under Apps there; everything else by its section on the page.
-  // I18n.tr("Axiom") I18n.tr("Apps") I18n.tr("Media") I18n.tr("Window")
-  // I18n.tr("Workspace") I18n.tr("Special") I18n.tr("Custom")
-  readonly property var actionSections: ["Axiom", "Apps", "Media", "Window", "Workspace", "Special", "Custom"]
+  // I18n.tr("Axiom") I18n.tr("System") I18n.tr("Tools") I18n.tr("Apps")
+  // I18n.tr("Media") I18n.tr("Window") I18n.tr("Workspace")
+  // I18n.tr("Special") I18n.tr("Custom")
+  readonly property var actionSections: ["Axiom", "System", "Tools", "Apps", "Media", "Window", "Workspace", "Special", "Custom"]
 
   // Material Symbols per reference section, by title ("" is Other)
   function sectionIcon(title) {
@@ -80,6 +81,8 @@ QtObject {
   }
   readonly property var _sectionIcons: ({
       "Axiom": "dashboard",
+      "System": "settings",
+      "Tools": "construction",
       "Apps": "apps",
       "Media": "music_note",
       "Window": "select_window",
@@ -105,6 +108,30 @@ QtObject {
       "idleInhibit": "coffee",
       "nightLight": "nightlight",
       "nextWallpaper": "wallpaper",
+      "randomWallpaper": "shuffle",
+      "monitorsIdentify": "desktop_windows",
+      "darkMode": "contrast",
+      "wifi": "wifi",
+      "bluetooth": "bluetooth",
+      "vpn": "vpn_lock",
+      "audioOutputNext": "speaker",
+      "clipboard": "content_paste",
+      "emoji": "mood",
+      "calculator": "calculate",
+      "notes": "sticky_note_2",
+      "calendar": "calendar_month",
+      "calendarNewEvent": "event",
+      "chat": "chat",
+      "chatNew": "add_comment",
+      "pomodoro": "timer",
+      "pomodoroSkip": "skip_next",
+      "pomodoroStop": "stop_circle",
+      "stopwatch": "timer_play",
+      "stopwatchLap": "flag",
+      "stopwatchReset": "restart_alt",
+      "timerStart": "hourglass_top",
+      "timerToggle": "hourglass",
+      "timerReset": "hourglass_empty",
       "workspaceStep": "swap_horiz",
       "moveWindowStep": "move_item",
       "moveWindowStepSilent": "send",
@@ -209,11 +236,11 @@ QtObject {
     return BindActions.hasCalls(root.actionTable, action) ? ["toggle", "open", "close"] : null;
   }
 
-  // A call's label for an action (a caffeine or night light bind turns it
-  // on or off, a recording bind starts or stops it)
+  // A call's label for an action (a recording bind starts or stops it; one
+  // whose open call is `enable`, caffeine or Wi-Fi, turns it on or off)
   function callLabels(action) {
-    const onOff = action === "idleInhibit" || action === "nightLight";
     const record = action === "screenRecord";
+    const onOff = !record && root.actionTable?.calls?.[action]?.open === "enable";
     return {
       "toggle": I18n.tr("Toggle"),
       "open": record ? I18n.tr("Start") : onOff ? I18n.tr("Turn on") : I18n.tr("Open"),

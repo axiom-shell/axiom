@@ -63,10 +63,7 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
   - then `grep -F` line matches (0-based).
 
 ### Opening a note from elsewhere
-- Launcher `/notes` searches too.
-- A result opens through `requestOpen(path, line, place)`:
-  - on the overlay page that has a Notes module;
-  - else in an edge menu that has one.
+- Launcher `/notes` searches too; its result, and the `notes` keybind action (IPC `notes open`), go through `openNotes(path, line)`. That shows the overlay page that has a Notes module, else an edge menu that has one (a notification when neither does). With a path it asks first through `requestOpen(path, line, place)`.
 - The module whose `placeKey` matches shows it: `openRequested`, or `takeReveal` if the module loads within 5 s.
 
 ### Per-module state
