@@ -565,7 +565,6 @@ Found by the audits:
 - [The system volume bar opens the OSD when the default output switches](issues.md#the-system-volume-bar-opens-the-osd-when-the-default-output-switches)
 - [Every OSD's opening reads the monitor's brightness, brightness bar or not](issues.md#every-osds-opening-reads-the-monitors-brightness-brightness-bar-or-not)
 - [The OSD's stream bar tracks its streams by hand](issues.md#the-osds-stream-bar-tracks-its-streams-by-hand)
-- [PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon](issues.md#pipewirevolumebar-keeps-a-mute-toggle-nothing-calls-and-its-own-volume-icon)
 - [Hot corners' action list is a hand-kept copy of the keybind one](issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
 - [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
 - [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)

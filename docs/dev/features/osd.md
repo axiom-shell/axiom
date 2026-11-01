@@ -26,7 +26,7 @@ The volume, microphone and brightness on-screen displays. Each OSD is a configur
 
 ### Bars
 Each bar is `{ type, apps, icon, allMonitors, showOsd }`, drawn by `surfaces/osd/OSDBar`, laid out in `OSDContent`. The types:
-- **`master`:** the default output's volume.
+- **`master`:** the default output's volume, under the bar's Volume widget's icon (`AudioManager.outputIcon`) unless `icon` is set.
 - **`other`:** the first playing stream that no App bar matches. Other apps skips the App bars of every OSD (`excludedApps`).
 - **`app`:** the streams its `apps` match, by name.
 - **`microphone`:** the default input's volume.
