@@ -489,12 +489,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### The workspace strips repeat ActiveStrip's loader
-- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml`, `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml`, `components/bar/widgets/Workspaces/ActiveStrip.qml` (`hasWindows`)
-- **What:** Both strips hold the same `Loader { active: stripDirection !== ""; visible: hasWindows; ActiveStrip { 12 bindings } }` (only the text colour differs) and the same `stripOnly` expression but for the id count; `ActiveStrip.hasWindows` also calls `CompositorManager.stripWindows` again beside its `StripWindows`. Deletion pass: move the loader into ActiveStrip (it sets its own `active`/`visible` and exposes `stripOnly(count)`), about 20 lines. The two strips also repeat about 15 more lines each (the five resolved colours, `monitor`/`output`/`base`/`activeId`/`stripDirection`, `cell`/`cellRadius`/`cellLength`); the shared piece can take those too (bar-widgets audit, 2026-10-30).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### The managed file's catch-all monitor line is copied into M.monitors
 - **Where:** `backend/internal/compositor/render/hyprlua.go` (`HyprFileMonitorCalls`), `backend/internal/compositor/manager/hypr.go`
 - **What:** Until the outputs are read, `M.monitors()` is refilled from the file: every line starting `hl.monitor({ output = "`. In managed mode that matches the managed file's fixed catch-all `hl.monitor({ output = "", mode = "preferred", … })` (hyprconfig.go:531) too, so each write made before the first read adds one more copy inside `M.monitors()`. Harmless (each replaces the default rule; the next write after a read cleans up) but the file churns and the layer key changes. Fix: read only the lines inside `function M.monitors()`, or skip `output = ""`.
@@ -777,18 +771,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/views/Monitors/MonitorInspector.qml:230` (Mirror row `shown`), `components/views/Monitors/MonitorInspector.qml:251`, `components/views/Monitors/MonitorInspector.qml:268` (X/Y `shown: !root.rule?.mirror`), `components/views/Monitors/MonitorCanvas.qml:19` (`others`), `services/compositor/MonitorManager.qml:275` (`issues`)
 - **What:** monitors.md › Profiles: "a profile saved under one compositor is picked under another". A profile saved under Hyprland with a mirrored monitor (`mirror: "desc:…"`), opened on sway or niri (no `supports.monitorMirror`): the Mirror row is hidden (`shown: CompositorManager.supports.monitorMirror === true && (…)`), and the X/Y rows are hidden because `mirror` is set. The canvas lists the monitor as "mirrors X" under the board, not as a tile (`placedRules` drops mirrors), so it can't be dragged or moved, and the overlap and island checks skip it, though neither sway.go nor niri.go renders `mirror` (grep finds none), so that compositor lights it at its saved x/y. If X is off, the error "mirrors a monitor that isn't shown" (MonitorManager.qml:275) blocks Apply, and nothing on the page can clear it. Fix: let a set mirror always be turned off: `shown: !!root.rule?.mirror || (CompositorManager.supports.monitorMirror === true && mirrorField.targets.length > 0)`.
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The workspace strips' panel property is never read
-- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml:20` (`panel`), `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml:21` (`panel`), `components/bar/widgets/Workspaces/Workspaces.qml:46`, `components/bar/widgets/Workspaces/Workspaces.qml:58`
-- **What:** Both strips declare `property var panel` and `Workspaces.qml` sets it, but neither file reads it (`grep -c panel` is 1 in each strip: the declaration); popouts go through `PopoutAnchor { hitArea }`. Nothing else instantiates the strips (only Workspaces.qml:44 and :56). Fix: delete the two declarations and the two `panel: root.panel` lines (4 lines).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Three copies of the wheel-notch accumulator
-- **Where:** `components/bar/widgets/Workspaces/WorkspaceStrip.qml:106` (`WheelHandler`), `components/bar/widgets/Workspaces/WorkspaceGridStrip.qml:102` (`WheelHandler`), `components/hosts/overlay/OverlayPageNavigator.qml:65` (`WheelHandler`)
-- **What:** Each holds the same `WheelHandler { acceptedDevices: Mouse | TouchPad; property real _accumulated; onWheel: add angleDelta.y (else .x), return under 120, act on the sign, reset }` (15 + 16 + 14 = 45 lines); AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: a shared `NotchWheel` in components/reusable/ (a `WheelHandler` with `signal stepped(int direction)`, -1 for up/left), each user becoming `NotchWheel { enabled: …; onStepped: d => … }` (about 4 lines each): about 30 lines fewer, the same 120 threshold and reset in one place.
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### The key map and the keyboard reference each carry the same modifier chips and legend

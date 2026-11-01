@@ -43,7 +43,6 @@ BarWidget {
     id: strip
     WorkspaceStrip {
       screen: root.screen
-      panel: root.panel
       hitArea: root.hitArea
       barConfig: root.barConfig
       properties: root.properties
@@ -55,7 +54,6 @@ BarWidget {
     id: gridStrip
     WorkspaceGridStrip {
       screen: root.screen
-      panel: root.panel
       hitArea: root.hitArea
       barConfig: root.barConfig
       properties: root.properties
