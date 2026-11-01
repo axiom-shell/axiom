@@ -356,7 +356,6 @@ Found by the audits:
 - [The workspace strips repeat ActiveStrip's loader](issues.md#the-workspace-strips-repeat-activestrips-loader)
 - [The managed file's catch-all monitor line is copied into M.monitors](issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
 - [noteReload counts every compositor reload a second time](issues.md#notereload-counts-every-compositor-reload-a-second-time)
-- [The Hyprland Go code keeps dead and doubled helpers](issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers)
 - [Bind helpers keep JS halves the daemon owns now](issues.md#bind-helpers-keep-js-halves-the-daemon-owns-now)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)

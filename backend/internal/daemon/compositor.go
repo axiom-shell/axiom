@@ -138,37 +138,20 @@ func (d *Daemon) compositorMethods(reg *rpc.Registry, m *manager.Manager) {
 	rpc.Handle(reg, "compositor.entries", func(ctx context.Context, c *rpc.Conn, _ struct{}) (json.RawMessage, error) {
 		return jsonx.MarshalCompact(m.Entries(ctx)), nil
 	})
-	action := func(name string, run func(p struct {
+	type onlyParams struct {
 		Only string `json:"only"`
-	})) {
-		rpc.Handle(reg, name, func(ctx context.Context, c *rpc.Conn, p struct {
-			Only string `json:"only"`
-		}) (struct{}, error) {
+	}
+	action := func(name string, run func(only string)) {
+		rpc.Handle(reg, name, func(ctx context.Context, c *rpc.Conn, p onlyParams) (struct{}, error) {
 			if err := shellOnly(c); err != nil {
 				return struct{}{}, err
 			}
-			run(p)
+			run(p.Only)
 			return struct{}{}, nil
 		})
 	}
-	action("compositor.allowTakeover", func(struct {
-		Only string `json:"only"`
-	}) {
-		m.AllowTakeover()
-	})
-	action("compositor.merge", func(p struct {
-		Only string `json:"only"`
-	}) {
-		m.Merge(p.Only)
-	})
-	action("compositor.previewMerge", func(struct {
-		Only string `json:"only"`
-	}) {
-		m.PreviewMerge()
-	})
-	action("compositor.reload", func(struct {
-		Only string `json:"only"`
-	}) {
-		m.Reload()
-	})
+	action("compositor.allowTakeover", func(string) { m.AllowTakeover() })
+	action("compositor.merge", m.Merge)
+	action("compositor.previewMerge", func(string) { m.PreviewMerge() })
+	action("compositor.reload", func(string) { m.Reload() })
 }

@@ -13,7 +13,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): split, with the theme page directly after integrations.
 4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): a) "Restart" / "Shut down".
 5. Deferred: [Setting an awww wallpaper never starts awww's daemon](../issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (awww's own branch).
-6. [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers): drop the old-claims fallback.
+6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
 7. [Gaps to the edges are wider on sway than the setting says](../issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says): accept the narrower gap.
 8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): show them.
 9. Deferred: [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge).
@@ -157,7 +157,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Three Wayland client members nothing in the daemon calls
 - **compositor-01** (17): One commit per package, the old-claims fallback's 6 lines included (Q6).
   - Hyprland's exit command is kept in two packages
-  - [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers)
+  - The Hyprland Go code keeps dead and doubled helpers
   - [Nothing reads userBindsRead or lastLoadFailed](../issues.md#nothing-reads-userbindsread-or-lastloadfailed)
   - The niri writer's runtimeOn and unread-binds guards are dead
   - Three listings of niri's user files
