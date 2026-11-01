@@ -111,7 +111,7 @@ properties:
             enum: [random, sequential]
             x-enumLabels: {random: Random, sequential: 'In order, by name'}
             default: random
-            description: Random never picks the wallpaper already showing.
+            description: Random shuffles the folder, showing every wallpaper once before any comes back.
           sameOnAll:
             type: boolean
             title: Same on every monitor

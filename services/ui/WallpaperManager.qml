@@ -80,18 +80,29 @@ Singleton {
     const order = Appearance.rotationOrder;
     const screens = General.outputs.map(screen => screen.name);
     const wallpapers = {};
+    // Random order shuffles: each wallpaper once before any repeats
+    let bag = ThemeManager.shuffleBag;
+    const draw = (current, taken) => {
+      if (order !== "random")
+        return Schedules.nextWallpaper(list, current, order, taken, Math.random());
+      const next = Schedules.shuffleWallpaper(list, bag, current, taken, Math.random());
+      bag = next.bag;
+      return next.url;
+    };
     if (Appearance.rotationSameOnAll) {
-      const url = Schedules.nextWallpaper(list, ThemeManager.wallpaperFor(General.primaryMonitor), order, [], Math.random());
+      const url = draw(ThemeManager.wallpaperFor(General.primaryMonitor), []);
       for (const monitor of screens)
         wallpapers[monitor] = url;
     } else {
       const taken = [];
       for (const monitor of screens) {
-        const url = Schedules.nextWallpaper(list, ThemeManager.wallpaperFor(monitor), order, taken, Math.random());
+        const url = draw(ThemeManager.wallpaperFor(monitor), taken);
         taken.push(url);
         wallpapers[monitor] = url;
       }
     }
+    if (order === "random")
+      ThemeManager.setShuffleBag(bag);
     const changed = root.mode === "rotate" ? ThemeManager.showRotated(wallpapers) : ThemeManager.setWallpapers(wallpapers);
     // A generated theme follows on its own (ThemeManager.syncGeneratedTheme)
     if (!changed)
@@ -118,7 +129,10 @@ Singleton {
       console.log("[WallpaperManager] No wallpapers in", Appearance.wallpaperPath);
       return;
     }
-    root.pick(list[Math.floor(Math.random() * list.length)], "", "");
+    // From the shuffle's round, as the rotation draws
+    const next = Schedules.shuffleWallpaper(list, ThemeManager.shuffleBag, ThemeManager.wallpaperFor(ThemeManager.monitorFor("")), [], Math.random());
+    ThemeManager.setShuffleBag(next.bag);
+    root.pick(next.url, "", "");
   }
 
   // --- The wallpaper folder (the onboarding's Look page) ---

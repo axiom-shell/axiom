@@ -43,4 +43,33 @@ QtObject {
     const pool = fresh.length > 0 ? fresh : others.length > 0 ? others : list;
     return pool[Math.min(pool.length - 1, Math.floor(random * pool.length))];
   }
+
+  // A random wallpaper of `list` that the shuffle hasn't shown yet: `bag`
+  // holds those still to come this round (null or empty: a new round, all
+  // but `current`), so every wallpaper shows once before any repeats.
+  // Prefers ones not in `taken` (given to another monitor), never picks
+  // `current` while there's another. `random` is a number in [0, 1).
+  // Returns { url ("" for an empty list), bag (what's left) }.
+  function shuffleWallpaper(list, bag, current, taken, random) {
+    if (list.length === 0)
+      return {
+        "url": "",
+        "bag": []
+      };
+    let left = (bag ?? []).filter(url => list.includes(url) && url !== current);
+    if (left.length === 0)
+      left = list.filter(url => url !== current);
+    if (left.length === 0)
+      return {
+        "url": list[0],
+        "bag": []
+      };
+    const fresh = left.filter(url => !(taken ?? []).includes(url));
+    const pool = fresh.length > 0 ? fresh : left;
+    const url = pool[Math.min(pool.length - 1, Math.floor(random * pool.length))];
+    return {
+      "url": url,
+      "bag": left.filter(other => other !== url)
+    };
+  }
 }

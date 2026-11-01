@@ -68,4 +68,41 @@ TestCase {
     compare(Schedules.nextWallpaper([walls[0]], walls[0], "random", [], 0.5), walls[0], "only one: keeps it");
     compare(Schedules.nextWallpaper([walls[0]], walls[0], "sequential", [], 0), walls[0]);
   }
+
+  function test_shuffleShowsEachOnce() {
+    let bag = null;
+    let current = walls[0];
+    const seen = [];
+    for (let i = 0; i < walls.length - 1; i++) {
+      const next = Schedules.shuffleWallpaper(walls, bag, current, [], 0.5);
+      verify(!seen.includes(next.url) && next.url !== walls[0], "no repeat within a round: " + next.url);
+      seen.push(next.url);
+      bag = next.bag;
+      current = next.url;
+    }
+    compare(bag, [], "the round is over");
+    const again = Schedules.shuffleWallpaper(walls, bag, current, [], 0);
+    verify(again.url !== current, "a new round never starts with the one showing");
+  }
+
+  function test_shuffleDropsGoneFiles() {
+    const next = Schedules.shuffleWallpaper([walls[0], walls[1]], ["file:///gone.png", walls[1]], walls[0], [], 0);
+    compare(next, {
+      "url": walls[1],
+      "bag": []
+    });
+  }
+
+  function test_shuffleAvoidsTaken() {
+    compare(Schedules.shuffleWallpaper(walls, null, walls[0], [walls[1]], 0).url, walls[2]);
+    compare(Schedules.shuffleWallpaper(walls, [walls[1]], walls[0], [walls[1]], 0).url, walls[1], "the bag's last, taken or not");
+  }
+
+  function test_shuffleSmallLists() {
+    compare(Schedules.shuffleWallpaper([], null, "", [], 0.5), {
+      "url": "",
+      "bag": []
+    });
+    compare(Schedules.shuffleWallpaper([walls[0]], null, walls[0], [], 0.5).url, walls[0], "only one: keeps it");
+  }
 }

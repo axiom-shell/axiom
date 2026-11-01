@@ -185,6 +185,15 @@ QtObject {
     return true;
   }
 
+  // The wallpapers the shuffle hasn't shown yet this round (random order,
+  // WallpaperManager), null before the first
+  readonly property var shuffleBag: root._look.shuffle ?? null
+  function setShuffleBag(bag) {
+    root._saveLook({
+      "shuffle": bag
+    });
+  }
+
   // When the rotation last moved on (ms since the epoch; 0 for never)
   readonly property real lastRotated: root._look.lastRotated ?? 0
   function setLastRotated(time) {
@@ -362,7 +371,8 @@ QtObject {
   // --- What's showing ---
   // state/look.json: { theme: { for, name } (the schedule's variant of the
   // chosen theme, or null), rotated: { wallpaper, wallpapers },
-  // lastRotated }. The greeter keeps none.
+  // lastRotated, shuffle: [urls] (the shuffle's round, shuffleBag) }. The
+  // greeter keeps none.
   readonly property var _lookState: StateManager.createStateHandler("look")
   property var _look: Paths.greeter ? ({}) : root._lookState.load({})
 

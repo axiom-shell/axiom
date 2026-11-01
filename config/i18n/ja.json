@@ -1441,7 +1441,6 @@
     "Trigger length": "トリガーの長さ",
     "Change every": "変更間隔",
     "0 never dims. Brightness comes back when you return.": "0 で暗くしません。戻ると明るさが元に戻ります。",
-    "Random never picks the wallpaper already showing.": "ランダムでは、表示中の壁紙は選ばれません。",
     "Visible toasts": "表示するトースト数",
     "Names": "名前",
     "Use the theme's light variant during the day and its dark one at night. Switching by hand lasts until the next change.": "昼はテーマのライト版、夜はダーク版を使います。手動で切り替えた場合は、次の切り替え時刻まで維持されます。",
@@ -3626,6 +3625,7 @@
     "A subfolder of the wallpaper folder to pick and rotate from (its path inside it), empty for the folder itself. Also chosen in the wallpaper picker.": "",
     "Blinds": "",
     "Zoom": "",
-    "Fill the screen": ""
+    "Fill the screen": "",
+    "Random shuffles the folder, showing every wallpaper once before any comes back.": ""
   }
 }
