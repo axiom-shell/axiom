@@ -27,12 +27,16 @@ QtObject {
   required property string owner
   property var span: null
   property var sink: null
+  // The bar whose own stroke a "solidBar" sink is, when it's one of the
+  // bars stacked on the span's edge (a bar popout's own bar); "" for the
+  // innermost there
+  property string barId: ""
 
   readonly property var _border: BorderOpening {
     opening: root.sink === "border" && Appearance.translucent && root.span ? root.span : null
   }
   readonly property var _solid: PillStretch {
-    readonly property var panel: root.sink === "solidBar" && root.span ? ScreenEdgeManager.barOn(root.screen?.name ?? "", ScreenEdge.fromName(root.span.edge)) : null
+    readonly property var panel: root.sink === "solidBar" && root.span ? ScreenEdgeManager.barOn(root.screen?.name ?? "", ScreenEdge.fromName(root.span.edge), root.barId) : null
     owner: root.owner
     container: panel?.visible && (panel.barConfig?.innerStroke ?? false) ? panel.container : null
     opening: {

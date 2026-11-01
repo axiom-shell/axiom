@@ -37,7 +37,7 @@ QtObject {
     const outerCover = insideBorder ? Appearance.borderWidth : 0;
     const innerCover = solid && !Appearance.screenBorder ? Appearance.borderWidth : 0;
     // A solid bar reaches at least as far as the border strip laid over its
-    // inner part (BarPanel.reservedZone), so no gap opens under the strip
+    // inner part (BarEnds.placeStack's zone), so no gap opens under the strip
     const minExtent = solid && Appearance.screenBorder ? Appearance.screenMargin - Appearance.borderWidth : 0;
     const plainExtent = Math.max(minExtent, outerCover + padding + widgetSize + padding + innerCover);
     // A pill covers the screen border's stroke where it joins it
@@ -167,9 +167,10 @@ QtObject {
       "top": loc === ScreenEdge.Top,
       "bottom": loc === ScreenEdge.Bottom
     };
-    // How much less than its extent it reserves (reserveTrim). What its
-    // ends meet depends on the other bars on its screen: ScreenEdgeManager.bars
-    // adds them (BarEnds.withEnds).
+    // How much less than its extent it reserves alone on its edge
+    // (reserveTrim). Where it lies among the other bars on its edge, what
+    // it reserves there and what its ends meet depend on the other bars on
+    // its screen: ScreenEdgeManager.bars adds them (BarEnds.withEnds).
     bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0);
     return bar;
   }
@@ -191,6 +192,7 @@ QtObject {
     return {
       "border": Appearance.screenBorder,
       "borderWidth": Appearance.borderWidth,
+      "margin": Appearance.screenMargin,
       "gapsOut": gapsOut,
       "floatGaps": floatGaps
     };
@@ -333,26 +335,21 @@ QtObject {
 
   // How much further than half a connector gap past a transparent bar's
   // inner edge a box detached from it (a bar popout, a floating edge menu)
-  // sits, so it starts in line with the windows: at the bar's inner edge,
-  // or past an inner accent line gaps_out out (reserveTrim). Negative when
-  // they start nearer than half a connector gap: its attach edge moves in.
-  function detachedPush(barConfig, gapsOut, connectorGap) {
+  // sits, so it starts in line with the windows: `windowsPast` is how far
+  // past that edge they start (where its edge's bars and menus reserve to,
+  // gaps_out on: at the bar's inner edge alone, or past an inner accent
+  // line gaps_out out, reserveTrim). With bars inside it (not
+  // `facesWindows`, BarEnds.placeStack), that's past them all: the box
+  // clears the whole stack, never covering a bar. Negative when they
+  // start nearer than half a connector gap: its attach edge moves in.
+  function detachedPush(barConfig, windowsPast, connectorGap) {
     if (barConfig.background !== "transparent")
       return 0;
-    return gapsOut - BarsConfig.reserveTrim(barConfig, gapsOut) - connectorGap / 2;
+    return windowsPast - connectorGap / 2;
   }
 
-  // The exclusive zone a bar sets (BarPanel), given Hyprland's gaps_out on
-  // its edge. On a bar inside the border Hyprland counts its -borderWidth
-  // margin into the reserved space, so that much less is reserved in all.
-  function reservedZone(barConfig, gapsOut) {
-    if (!barConfig.reserveSpace)
-      return 0;
-    const trim = BarsConfig.reserveTrim(barConfig, gapsOut);
-    if (barConfig.insideBorder)
-      return Math.max(0, barConfig.extent - trim);
-    return Math.max(0, (Appearance.screenBorder ? barConfig.extent - Appearance.screenMargin + Appearance.borderWidth : barConfig.extent) - trim);
-  }
+  // (The exclusive zone a bar sets is BarEnds.placeStack's `zone`: it
+  // depends on the bars beside it on its edge.)
 
   // The widget styles that draw each widget on a box of its own: only they
   // have shapes and grouping

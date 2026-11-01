@@ -165,5 +165,22 @@ TestCase {
     corner.mapped = true;
     corner.seq = 1;
     compare(shared.calls.LayerStack.sequence([strip, corner], false).remap, ["corner"]);
+    // Hyprland breaks a tie of one order by map order too
+    compare(shared.calls.LayerStack.sequence([strip, corner], true).remap, ["corner"]);
+    // Ranks of other groups (bars on another edge) never compare: one
+    // remade there maps nothing again
+    const top = entry("top", 0, {
+      "rank": 1,
+      "rankGroup": "top",
+      "mapped": true,
+      "seq": 1
+    });
+    const bottom = entry("bottom", 0, {
+      "rankGroup": "bottom",
+      "mapped": true,
+      "seq": 2
+    });
+    compare(shared.calls.LayerStack.sequence([top, bottom], true).remap, []);
+    compare(shared.calls.LayerStack.sequence([top, bottom], false).remap, []);
   }
 }

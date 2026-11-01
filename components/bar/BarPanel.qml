@@ -5,7 +5,6 @@ import Quickshell.Wayland
 import QtQuick
 
 import qs.config
-import qs.services.compositor
 import qs.services.ui
 import qs.components.hosts.popout
 import qs.components.methods
@@ -30,12 +29,15 @@ PanelWindow {
   // longer edge have rules of their own (-long), arranged after the shorter
   // edge's bars of their kind, so which bar takes a shared corner never
   // depends on which mapped first (BarEnds). All are on the Top layer, so a fullscreen window covers
-  // them.
+  // them. Bars sharing an edge stack, each laid out past what the ones
+  // arranged before it reserve (BarEnds.placeStack); bars of one rule on
+  // an edge map in list order (`layerRank`), as the compositor breaks
+  // their tie by map order.
   WlrLayershell.layer: WlrLayer.Top
-  WlrLayershell.exclusiveZone: root.reservedZone
-  // On a transparent or pill bar, how far in from its outer edge it
-  // reserves (floating edge menus place themselves against that)
-  readonly property int reservedZone: BarsConfig.reservedZone(barConfig, CompositorManager.gapsOut[ScreenEdge.name(barConfig.location)] ?? 0)
+  // How far in from its outer edge it reserves (BarEnds.placeStack: a
+  // transparent bar facing the windows less gaps_out, a solid bar under
+  // the border's strip less the strip)
+  WlrLayershell.exclusiveZone: root.barConfig.zone
   WlrLayershell.namespace: root.layerNamespace
   readonly property string layerNamespace: BarsConfig.layerNamespace(barConfig)
   // The bar container paints the background (or not, when transparent)
@@ -66,6 +68,8 @@ PanelWindow {
     id: slot
     window: root
     namespace: root.layerNamespace
+    rank: root.barConfig.layerRank
+    rankGroup: ScreenEdge.name(root.barConfig.location)
     wanted: root.barConfig.enabled
   }
 
@@ -103,7 +107,7 @@ PanelWindow {
     window: root
     namespace: root.layerNamespace
     edge: root.barConfig.location
-    estimatedStart: ScreenEdgeManager.barStartOn(root.screen, root.barConfig.location, true)
+    estimatedStart: ScreenEdgeManager.barStartOn(root.screen, root.barConfig, true)
   }
 
   // What PopoutAnchors in it open their popouts in

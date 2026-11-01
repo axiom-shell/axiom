@@ -424,11 +424,8 @@ Found by the audits:
 - [A bar made while the bar editor is open may never report to it](issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
 - [Plugging in or unplugging a monitor remakes the bar that stays](issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
 - [Removing or copying another bar moves the editor's selection to a different bar](issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)
-- [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](issues.md#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp)
 - [The pill merge in BarContainer repeats BarLayout's, untested](issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
-- [A bar's reserve trim is worked out again by callers holding the enriched bar](issues.md#a-bars-reserve-trim-is-worked-out-again-by-callers-holding-the-enriched-bar)
 - [Missing test rows for two helper decisions](issues.md#missing-test-rows-for-two-helper-decisions)
-- [An overlay misses a transparent bar's inner accent line](issues.md#an-overlay-misses-a-transparent-bars-inner-accent-line)
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
 - [Media squeezed to its minimum in the fill style shows the meter, not its icon](issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
 - [The Workspaces widget's measured length glides when the active cell widens](issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
@@ -610,6 +607,7 @@ Found meanwhile:
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
+- [A pill bar stacked inside another pill bar grows its pills out of nothing](issues.md#a-pill-bar-stacked-inside-another-pill-bar-grows-its-pills-out-of-nothing)
 - [Toggles are switched in several places, and most have no IPC](issues.md#toggles-are-switched-in-several-places-and-most-have-no-ipc)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
@@ -657,9 +655,6 @@ Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log ev
 - [Removable drives aren't handled](issues.md#removable-drives-arent-handled)
 - [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
 - [No keyboard backlight control](issues.md#no-keyboard-backlight-control)
-
-Deferred by the maintainer (2026-10-30, stacked bars: "Stacked bars will be planned as supported. Mark it as needs a plan and move to deferred"; through [Items that need a plan](#items-that-need-a-plan) once taken up):
-- [A second bar on an edge is invisible to the screen-edge answers, and New bar makes one](issues.md#a-second-bar-on-an-edge-is-invisible-to-the-screen-edge-answers-and-new-bar-makes-one)
 
 Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put this on hold - note that growing modules kinda needs a re-work or removal"):
 - [An integrated top or bottom menu's zone follows its growing modules](issues.md#an-integrated-top-or-bottom-menus-zone-follows-its-growing-modules)

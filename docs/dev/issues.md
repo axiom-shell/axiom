@@ -46,6 +46,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while recording the maintainer's answers to the clear-out's questions
 
+### A pill bar stacked inside another pill bar grows its pills out of nothing
+- **Where:** `components/bar/BarContainer.qml` (`borderOpening`), `components/methods/BarEnds.qml` (`placeStack`)
+- **What:** A pill bar's pills grow out of a stroke at its outer edge: the border's, which they cover and open. Stacked inside another pill bar (`offBorder`: pill bars are the first kind inside the border), there is no such stroke. Its outer edge lies on the far side of the bar outside it, which only that bar's pills stroke. Where an inner pill sits under an outer pill it joins that pill's far stroke and looks right; seen in a nested niri (two top pill bars, the inner one's end pills under the outer one's). Under a gap between the outer bar's pills, its outer side is open and its fillets curve into nothing. Since `offBorder`, it opens no border stroke (it used to cut the border's under the outer bar), and merged popouts on it open none either. Open for the plan: draw an inner pill bar's pills closed on their outer side (as islands), stretch the outer bar's pills over them, or leave pills inside the border's first bar to the user.
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while adding stacked bars
+
 ### The chat has no slash commands to control it
 - **Where:** `components/content/parts/chat/ChatComposer.qml` (`_send`), `services/apps/ChatManager.qml` (`send`), `services/ui/LauncherCommands.qml` (`chat`), `services/ui/LauncherManager.qml` (`_chatRow`)
 - **What:** The maintainer (2026-11-01): "add chat slash commands for control to roadmap where necessary". Today the chat's composer handles no `/` input: `_send` hands the text to `ChatManager.send`, which sends `/new` to the model like any message. Outside the chat, the launcher's `@question` (`_chatRow`) and IPC `chat ask` start a new conversation with the default preset and send the question (`ChatManager.ask`); the launcher's `/chat` (alias `/ai`) opens the chat, a new conversation or a saved one; IPC `chat` also has `open`, `newChat` and `settings`. Every other control is a button only: New conversation (the header), Stop (the send button while busy), the preset and model pick (`ModelPicker`), regenerate, copy and remove a message (`ChatMessage`), rename, open and delete a conversation (`ConversationList`), attach the clipboard or a screenshot (the composer's buttons), and the provider's key (`openSettings`). Open for the plan: which of these get a command in the composer (candidates: new, stop, preset, model, regenerate, rename, delete, attach, settings, help), how they're offered (a suggestion list while typing `/`, as the launcher does), how a message really starting with `/` is sent, and whether the launcher's `/chat` takes the same commands.
@@ -1052,20 +1058,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### A second bar on an edge is invisible to the screen-edge answers, and New bar makes one
-- **Where:** `components/methods/BarEnds.qml:161` (`edgesOn`), `services/ui/ScreenEdgeManager.qml:91` (`barReservedOn`), `services/ui/ScreenEdgeManager.qml:206` (`barOn`), `services/ui/BarManager.qml:155` (`addBar`)
-- **What:** `edgesOn` keeps only the first enabled bar on each edge (`if (!edges[edge]) edges[edge] = bar;`). Every screen-edge answer goes through it: `barReservedOn`, `frameLine`, `detachedGaps`, `surfaceEnd`, `barStartOn` and each bar's `ends`.
-  - The compositors stack both bars' exclusive zones, so with two reserving bars on one edge `reservedWithMenusOn` is short by the second bar's zone.
-  - Docks (`components/surfaces/dock/DockWindow.qml:60`), floating edge menus (`components/surfaces/edgemenu/FloatingEdgeMenu.qml`) and bar popouts (`EdgePlacement`) then sit under the second bar.
-  - Bars on the perpendicular edges never yield to the second bar.
-  - The first bar wins even when it reserves nothing. `barOn` picks by panel registration order and `edgesOn` by config order, so the two can disagree.
-
-  The editor creates this case. `addBar` fills every field from the Bar defaults (location top, screen primary), so on the default config **New bar** stacks a second bar on the default top bar. `duplicateBar` moves its copy to a free screen "so it doesn't sit on the original", which suggests stacking isn't meant.
-
-  **Decided** (maintainer, 2026-10-30): "Stacked bars will be planned as supported. Mark it as needs a plan and move to deferred". Fix: `edgesOn` returns every bar on an edge, and the reserved, frame-line and corner answers add them up, designed first through a plan; deferred until then.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### Plugging in or unplugging a monitor remakes the bar that stays
 - **Where:** `config/BarsConfig.qml:409` (`expandBars`), `shell/Bar.qml:25`
 - **What:** The id depends on how many of the bar's screens are connected.
@@ -1087,21 +1079,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### A corner piece's pull-out re-derives a bar's reserve and misses its clamp
-- **Where:** `components/surfaces/border/RoundedBorders.qml:39` (`cornerMargin`), `config/BarsConfig.qml:351` (`reservedZone`)
-- **What:** `cornerMargin` pulls a corner piece back out over a bar inside the border "As far as the bar reserves (see BarPanel)". It works that distance out again as `-(bar.extent - reserveTrim(bar, gapsOut))`, but what `BarPanel` reserves is `BarsConfig.reservedZone`, which clamps: `return Math.max(0, barConfig.extent - trim);` (BarsConfig.qml:356). Scenario: a transparent bar inside the border on Hyprland, with `gaps_out` larger than the bar's extent (40 against 34). The bar reserves 0, but `cornerMargin` returns +6, so both corners on that edge sit 6 px in from the frame's corner. PLAUSIBLE: the code difference is certain; what gets drawn needs that setup in a nested Hyprland. Fix: read the reserve the bar sets, as `innerInset` does a few lines down: `const zone = bar?.insideBorder ? BarsConfig.reservedZone(bar, CompositorManager.gapsOut[edge] ?? 0) : 0; return (zone > 0 ? -zone : -root.strokeWidth) - docks;` (9 lines to 5).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### The pill merge in BarContainer repeats BarLayout's, untested
 - **Where:** `components/bar/BarContainer.qml:96` (`sectionPills`), `components/methods/BarLayout.qml:523` (`_mergeSpans`)
 - **What:** `sectionPills` hand-rolls the loop that joins spans at most `pillMerge` apart (99-107), which `BarLayout._mergeSpans` already does for islands, then decides each pill's joins in the host (`root.ends.start.joinable && m.start - gap <= reach`). That breaks composition.md (main-axis layout math lives in `methods/BarLayout`) and AGENTS.md ("A methods helper's decision … is read from its output, never re-derived in a host"). No row tests when an end pill joins. The copy also writes into `_spans`' own objects (`spans.slice()` is shallow, and `last.end = …` mutates the pushed span). Fix: a BarLayout `pillRects(spans, merge, gap, reach, length, joinStart, joinEnd)` on `_mergeSpans` (which copies), with rows for a free end, a joined end at each side, and a held end. `sectionPills` (96-126, 31 lines) becomes one call of about 3 lines.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### A bar's reserve trim is worked out again by callers holding the enriched bar
-- **Where:** `config/BarsConfig.qml:354` (`reservedZone`), `config/BarsConfig.qml:345` (`detachedPush`), `config/BarsConfig.qml:176` (`enrichBarConfig`)
-- **What:** `enrichBarConfig` already sets `bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0)`. Every caller of `reservedZone` and `detachedPush` passes an enriched bar and its own edge's `gapsOut`, then gets the same number again from `reserveTrim`: `components/bar/BarPanel.qml:38`, `services/ui/ScreenEdgeManager.qml:91` (without `?? 0`, so the two sources can differ), `components/hosts/popout/EdgePlacement.qml:201`. Fix: read `barConfig.trim`; `reservedZone(barConfig)` loses its `gapsOut` parameter, and `detachedPush` becomes `gapsOut - barConfig.trim - connectorGap / 2`. Take it with [A corner piece's pull-out re-derives a bar's reserve and misses its clamp](#a-corner-pieces-pull-out-re-derives-a-bars-reserve-and-misses-its-clamp), whose fix calls `reservedZone`. (`cornerMargin`'s copy is the Major above.)
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the bar system
 
@@ -1109,12 +1089,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/methods/BarEnds.qml:111` (`endOf`), `components/methods/BarLayout.qml:181` (`overflowHidden`)
 - **What:** `tst_BarEnds` has no row for a solid bar meeting a solid bar: the `|| bar.solid` arm (a solid bar with the border off gets `_frame`, i.e. `bare`) is untested, and changing it to `_barStroke("solidBar", opts)` passes every row. `tst_BarLayout`'s two `lockCenter` rows never let the centre alone overflow, so line 181's `return [2]` is untested: returning `[0, 1]` would hide side widgets while the centre still doesn't fit. Fix: add those two rows.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### An overlay misses a transparent bar's inner accent line
-- **Where:** `components/hosts/overlay/ReservedAreaWindow.qml:46` (`_margin`)
-- **What:** `_margin` returns `gapsOut` for every transparent bar. A transparent bar with `accentLine: inner` reserves its full extent instead (`BarsConfig.reserveTrim` is 0 for it), so the overlay sits `gapsOut` past that bar's inner edge rather than on it. The last line's `reserveTrim` call can then only return 0, since the transparent case already returned. Fix: `if (bar?.background === "transparent") return bar.trim;` and make the last line `return -Appearance.borderWidth;`.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
 
 ### WindowLookConfig rebuilds BarStyle.look
