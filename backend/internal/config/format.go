@@ -65,10 +65,14 @@ func (p Pipeline) Load(parsed any) (Loaded, error) {
 			"format: %s isn't one this axiom reads (it reads format 1, without a \"format\" key, and \"format\": %d)", jsonx.MarshalCompact(format), convert.Format)}}, nil
 	case version > float64(steps.Current()):
 		return Loaded{Config: obj, Errors: []string{fmt.Sprintf("version: %v is newer than this axiom knows (%d): update axiom", version, steps.Current())}}, nil
+	case version < convert.Version || version != float64(int(version)):
+		// Missing, a string or a format-1 number: every step would run again
+		return Loaded{Config: obj, Errors: []string{fmt.Sprintf(
+			"version: missing or not a format-2 version; add \"version\": N (%d is this axiom's)", steps.Current())}}, nil
 	}
 	stepped, migrated := steps.Migrate(obj)
 	l := p.normalize(obj)
-	l.Changes, l.Migrated = stepped, migrated
+	l.Changes, l.Migrated, l.From = stepped, migrated, int(version)
 	return l, nil
 }
 

@@ -6,14 +6,16 @@
 //
 // A file that doesn't load (bad JSON, invalid) blocks writes until it is
 // fixed, so a broken hand edit is never overwritten by the shell; the last
-// good config keeps running meanwhile. A file deleted while running is not
-// recreated until the next write.
+// good config keeps running meanwhile. Nor is an outside edit not read
+// yet: a write while one is on disk is refused. A file deleted while
+// running is not recreated until the next write.
 package store
 
 import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -62,6 +64,10 @@ type State struct {
 	Issues   []axerr.Issue `json:"issues,omitempty"`
 	Missing  bool          `json:"missing"`
 	FirstRun bool          `json:"firstRun"`
+	// Defaults: running on the defaults, as the file didn't load at the
+	// start (until a good load or a restore), so nothing saves them as
+	// the user's
+	Defaults bool `json:"defaults"`
 }
 
 // Event is one change: the config (nil when only the state changed),
@@ -256,9 +262,9 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	defer s.changeMu.Unlock()
 	s.mu.Lock()
 	if s.state.Blocked && !opts.Restore {
-		issues := s.state.Issues
+		err := s.blocked()
 		s.mu.Unlock()
-		return 0, &axerr.Error{Kind: axerr.Conflict, Message: s.path + " doesn't load: fix it (or restore a saved config) before anything is saved", Issues: issues}
+		return 0, err
 	}
 	if s.takeoversUnknown && !opts.Takeover {
 		s.mu.Unlock()
@@ -292,6 +298,20 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 		s.mu.Unlock()
 		return rev, nil
 	}
+	// An edit made outside that the store hasn't read yet (its reload
+	// waits for the debounce, or no watch saw it) is never written over:
+	// it's read now, so the shell reading its config back on the refusal
+	// gets it
+	if onDisk, err := os.ReadFile(s.path); err == nil && !bytes.Equal(onDisk, s.written) {
+		s.mu.Unlock()
+		s.reloadHeld()
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if s.state.Blocked && !opts.Restore {
+			return 0, s.blocked() // the edit doesn't load
+		}
+		return 0, axerr.New(axerr.Conflict, "%s changed on disk: it was read again, save after that", s.path)
+	}
 	data := jsonx.Marshal(checked)
 	if err := fsx.WriteFile(s.path, data, 0o600); err != nil {
 		s.mu.Unlock()
@@ -299,7 +319,7 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	}
 	s.written = data
 	s.config = checked
-	s.fileTakeovers, s.takeoversUnknown = nil, false
+	s.fileTakeovers, s.takeoversUnknown, s.state.Defaults = nil, false, false
 	s.keepTakeovers(checked)
 	s.state.Revision++
 	s.state.Missing = false
@@ -310,6 +330,11 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	s.queue(ev)
 	s.mu.Unlock()
 	return ev.State.Revision, nil
+}
+
+// blocked is the refusal of a save while the file doesn't load (s.mu held).
+func (s *Store) blocked() error {
+	return &axerr.Error{Kind: axerr.Conflict, Message: s.path + " doesn't load: fix it (or restore a saved config) before anything is saved", Issues: s.state.Issues}
 }
 
 // Watch reloads the file whenever something else changes it, until ctx
@@ -398,6 +423,7 @@ func (s *Store) loadInitial() error {
 	if err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "reading the config")
 	}
+	s.written = data
 	loaded, problems := s.load(data)
 	s.state.Revision = 1
 	if problems != nil {
@@ -410,7 +436,7 @@ func (s *Store) loadInitial() error {
 		if loaded != nil {
 			s.fileTakeovers, _ = share.KeepTakeovers(s.config, loaded, s.takeovers).(*jsonx.Object)
 		}
-		s.state.Blocked, s.state.Issues = true, problems
+		s.state.Blocked, s.state.Issues, s.state.Defaults = true, problems, true
 		s.opts.Log.Warn("the config doesn't load: running on the defaults, saves blocked until it's fixed", "path", s.path, "issues", len(problems))
 		return nil
 	}
@@ -489,15 +515,17 @@ func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue) {
 		return loaded.Config, issues(loaded.Errors)
 	}
 	if loaded.Migrated {
+		// The file as it was, once, beside it: nothing is lost if the
+		// conversion or a step missed something
+		backup := fmt.Sprintf("config.v%d.json", loaded.From)
 		if loaded.FromFormat1 {
-			// The file as it was, once, beside it: nothing is lost if the
-			// conversion missed something
-			backup := filepath.Join(filepath.Dir(s.path), Format1File)
-			if _, err := os.Lstat(backup); errors.Is(err, fs.ErrNotExist) {
-				if err := fsx.WriteFile(backup, data, 0o600); err != nil {
-					s.opts.Log.Error("keeping the format-1 config failed; the file isn't rewritten", "err", err)
-					return loaded.Config, nil
-				}
+			backup = Format1File
+		}
+		backup = filepath.Join(filepath.Dir(s.path), backup)
+		if _, err := os.Lstat(backup); errors.Is(err, fs.ErrNotExist) {
+			if err := fsx.WriteFile(backup, data, 0o600); err != nil {
+				s.opts.Log.Error("keeping the config before its migration failed; the file isn't rewritten", "err", err)
+				return loaded.Config, nil
 			}
 		}
 		out := jsonx.Marshal(loaded.Config)
@@ -510,10 +538,17 @@ func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue) {
 	return loaded.Config, nil
 }
 
+// reload reads the file again if something else changed it.
 func (s *Store) reload() {
 	defer s.publish()
 	s.changeMu.Lock()
 	defer s.changeMu.Unlock()
+	s.reloadHeld()
+}
+
+// reloadHeld reads the file again if it changed (changeMu held; its event
+// is queued for the caller's publish).
+func (s *Store) reloadHeld() {
 	data, err := os.ReadFile(s.path)
 	s.mu.Lock()
 	if errors.Is(err, fs.ErrNotExist) {
@@ -549,7 +584,7 @@ func (s *Store) reload() {
 	} else {
 		s.state.Blocked, s.state.Issues = false, nil
 		loaded = s.holdTakeovers(loaded)
-		s.fileTakeovers, s.takeoversUnknown = nil, false
+		s.fileTakeovers, s.takeoversUnknown, s.state.Defaults = nil, false, false
 		s.keepTakeovers(loaded)
 		if !jsonx.Equal(loaded, s.config) {
 			changes := config.Diff(s.config, loaded)

@@ -48,6 +48,11 @@ func TestFormatsItCantReadSayWhy(t *testing.T) {
 		{`{"format": null, "version": 76}`, "format: null isn't", "<nil>"},
 		{`{"format": "2", "version": 76}`, `format: "2" isn't`, ""},
 		{`{"format": 3, "version": 76}`, "format: 3 isn't", ""},
+		// Without a format-2 version every step would run again
+		{`{"format": 2}`, "version: missing or not a format-2 version", ""},
+		{`{"format": 2, "version": "80"}`, "version: missing or not a format-2 version", ""},
+		{`{"format": 2, "version": 3}`, "version: missing or not a format-2 version", ""},
+		{`{"format": 2, "version": 80.5}`, "version: missing or not a format-2 version", ""},
 	} {
 		l := load(t, p, c.text)
 		if len(l.Errors) != 1 || !strings.Contains(l.Errors[0], c.want) || c.not != "" && strings.Contains(l.Errors[0], c.not) {
