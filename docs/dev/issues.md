@@ -411,12 +411,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### Restoring a saved keybind preset marks every bind new, and Revert deletes it
-- **Where:** `services/compositor/KeybindEditor.qml` (`_completeBind`, `restorePreset`, `_matchOrigins`, `changedBinds`, `revertBind`), `services/core/ConfigDraft.qml` (`changed`)
-- **What:** `_completeBind` (KeybindEditor.qml:101-114) builds a template and `Object.assign`s the bind onto it, so keys the template lacks (`id`, `compositor`) move to the end. Origins, the unsaved dots and the draft's dirty check all compare `JSON.stringify` text, which depends on key order. Save a preset, then Restore it unchanged: no bind matches its saved twin, every row gets an unsaved dot and origin -1, Save lights up with nothing changed, and Revert on any row calls `removeBind` ("origin < 0 → new"), deleting a bind the user never touched. Fix: keep the bind's own key order in `_completeBind` (`Object.assign({}, bind, <missing fields only>)`), or compare order-insensitively (`Utils.deepEqual`, or a key-sorted stringify) in `_matchOrigins` and `changedBinds`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### The Keybinds page goes stale after a detached-mode Save
 - **Where:** `services/compositor/KeybindManager.qml` (`refreshSoon`, `_appliedBinds`, `userKeyCounts`), `backend/internal/compositor/manager/hypr.go` (`runtimeApply`)
 - **What:** In detached mode the daemon re-applies binds by eval only (`runtimeApply`, no reload, so no `configreloaded`). The page re-reads Hyprland's binds only on `configReloaded`, on open, and through `refreshSoon`, whose one caller is the merge (KeybindEditor.qml:500); the Go port (dd773ed) dropped the two `refreshSoon()` calls the QML runtime layer (`RuntimeLayer.qml`) made after each apply. `_appliedBinds` follows the daemon's state at once, so the two disagree until the page reopens: move a bind from SUPER + Q to SUPER + W and Save, and SUPER + Q shows as the user's own bind (reference, key map colour, "Your compositor config uses this key" on a new bind there) while SUPER + W is missing. Fix: `on_AppliedBindsChanged: refreshSoon()` in KeybindManager (its debounce and `_readAgain` guard already absorb bursts).
@@ -1347,18 +1341,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** MenuSubmenu copies EdgeMenuBody's parts one for one: the `_modulesKey` re-parse ("as EdgeMenuBody", lines 24–27), the `host` map (29–34, adding `submenu`), the `OverlayGrid` at `cardUnitOf`/`gapOf` (36–40, on the parent's screen) and the clipped Flickable around a `ModuleGrid` at the menu's `zoomOf` (54–71): 33 lines that must change together (a fix to how a menu's modules are keyed, zoomed or hosted lands twice). Fix: EdgeMenuBody takes a `screen` (for `cardUnitOf`) and `submenu` (no pin, no Escape, no stretch, `host.submenu`), and MenuSubmenu becomes an `EdgeMenuBody` (`vertical: true`, `maxLength` from `root.wrapper?.maxContentHeight`) plus its empty text: 33 lines out, about 12 in.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### A number box keeps its typed text when the setting it edits switches under it
-- **Where:** `components/forms/SchemaNumberField.qml:98` (`onShownConfigValueChanged`), `components/forms/SchemaNumberField.qml:287` (`onValueChanged`), `components/views/Settings/EntryListCard.qml:182`, `components/forms/SchemaObjectArray.qml:57`, `components/views/Settings/SettingsField.qml:112`
-- **What:** When the value pushed into a number box changes while it has focus and holds typed text, the box updates `root.value` but keeps the text and `typed` (line 288 follows the value only when `!input.typed`). The next Enter, focus loss or Save commits the typed number onto whatever the box edits by then. `SchemaTextField._show` handles exactly this for text and drops the typing; the number box doesn't. The clicks that switch the target don't take focus, so the box keeps it. Scenarios: (1) the OSD or Dock card: type 5 in OSD 1's "Hide after", click OSD 2's tab, click elsewhere: 5 is written into OSD 2. (2) An array-of-objects list (`SchemaObjectArray`, delegates keyed by count): type in item 2's number, then move item 2 or remove item 1: the number lands on another item. (3) Type 20, click the row's "Reset to default": the default goes in, then focus loss commits 20 over it (the unsaved dot calls `EditsManager.discardTypingIn` first; the reset button doesn't). Fix: in `onShownConfigValueChanged`, when the box is typed and the new value isn't the echo of its own text (`root.clamp(parseInt(input.text, 10)) !== root.shownConfigValue`), drop the typing, as `SchemaTextField._show` does.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
-
-### Escape in a settings-page number box leaves the half-typed value in the draft
-- **Where:** `components/forms/SchemaNumberField.qml:323` (`Keys.onEscapePressed`), `components/forms/SchemaNumberField.qml:293` (`apply`), `components/views/Settings/SettingsContent.qml:61` (`onTyped`)
-- **What:** On the settings page every parseable keystroke goes into the draft (`valueTyped` → `SettingsManager.setDraftValue`, no preview), and comes back as `shownConfigValue`, which `onShownConfigValueChanged` copies into `root.value`. Escape only sets `typed = false` and `text = String(root.value)`, which is already the typed value, so it reverts nothing, although the component says "Escape reverts". Emptying the box and leaving it does the same: `apply()` skips the NaN text and shows the last parseable keystroke's clamped value. Scenario: font size 14, type 9, press Escape: the box shows 9, the row's unsaved dot is on, the shell still uses 14, and Save writes 9. Fix: keep the value the box had when it took focus; on Escape, and in `apply()` when typed text doesn't parse, emit `valueTyped(before * root.unitScale)` so the draft gets back what it held.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
 
 ### A failed update check shows as up to date
 - **Where:** `services/system/UpdatesManager.qml:104` (`repoPackages`), `components/content/Updates/Updates.qml:171`, `backend/internal/updates/updates.go:41` (`State`)
