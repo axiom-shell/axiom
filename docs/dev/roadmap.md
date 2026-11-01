@@ -587,6 +587,11 @@ Found by the audits:
 - [daemon.shutdown starts its goroutine past tasks.Go](issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
 - [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
 - [Three Wayland client members nothing in the daemon calls](issues.md#three-wayland-client-members-nothing-in-the-daemon-calls)
+- [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
+- [removeOnClick never removes a clicked toast's entry](issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
+- [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
+- [The history's group and entry delegates repeat one swipe-away mechanism](issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
+- [clearAll removes each cached image twice, one process per entry](issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
