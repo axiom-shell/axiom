@@ -1919,12 +1919,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the theme-integrations system
 
-### Two hand-written cmp.Or in the theme packages
-- **Where:** `backend/internal/theme/integrations/integrations.go:85` (`or`), `backend/internal/hookup/hookup.go:177` (`cmpOr`)
-- **What:** Both are the standard library's `cmp.Or` for strings (go.mod is Go 1.26; `wayland/outputs` already uses `cmp.Or`). Fix: delete both (6 + 6 = 12 lines) and call `cmp.Or(t.Name, "Unknown")` and the like (`vars`, 3 calls), `cmp.Or(env.ZDotDir, env.Dirs.Home)` and `cmp.Or(r.Comment, "#")`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the theme-integrations system
-
 ### The onboarder's integration commands are a hand-kept list in ThemeManager
 - **Where:** `services/core/ThemeManager.qml:561` (`_integrationCommands`), `config/schema/sections/ThemeIntegrations.yaml`
 - **What:** AGENTS.md › Config: "Prefer a new schema annotation to a hand-kept list in QML". The commands that show an integration's app is installed are a QML map keyed by the `ThemeIntegrations` switches, beside the schema that already carries each switch's per-app facts (`x-hookup`, `x-profiles`); a new integration has to remember a second place (the doc's Adding an integration lists it). Fix: an `x-commands` annotation (described in `config/schema/annotations.yaml`) on the seven switches the map lists (`gtk: []`, `qt`, `helix`, `vscode`, `zed`, `vesktop`, `firefox`), and `integrationCommands(key)` returning that switch's `x-commands`, else `[key]`; removes lines 559–570 (12 lines) and the doc's step.

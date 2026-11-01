@@ -11,6 +11,7 @@
 package integrations
 
 import (
+	"cmp"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -82,13 +83,6 @@ func Parse(data, defaults []byte, stem string) (*Theme, error) {
 	return t, nil
 }
 
-func or(s, fallback string) string {
-	if s == "" {
-		return fallback
-	}
-	return s
-}
-
 func merged(a, b map[string]string) map[string]string {
 	out := maps.Clone(a)
 	if out == nil {
@@ -127,7 +121,7 @@ var meta = map[string]bool{"THEME_NAME": true, "THEME_AUTHOR": true, "THEME_VARI
 // vars are the theme's template values, text colors readable when text.
 func (t *Theme) vars(text bool) vars {
 	v := vars{
-		"THEME_NAME": clean(or(t.Name, "Unknown")), "THEME_AUTHOR": clean(or(t.Author, "N/A")), "THEME_VARIANT": clean(or(t.Variant, "unknown")),
+		"THEME_NAME": clean(cmp.Or(t.Name, "Unknown")), "THEME_AUTHOR": clean(cmp.Or(t.Author, "N/A")), "THEME_VARIANT": clean(cmp.Or(t.Variant, "unknown")),
 		"COLOR_SCHEME": "dark",
 	}
 	if t.Light {

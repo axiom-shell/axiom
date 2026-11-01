@@ -153,7 +153,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - ~/.current_wallpaper is written but nothing reads it
   - StyledRectButton's badge and border press colour have no user
   - TileGrid and StyledVolumeBar keep lines nothing reads
-  - [Two hand-written cmp.Or in the theme packages](../issues.md#two-hand-written-cmpor-in-the-theme-packages)
+  - Two hand-written cmp.Or in the theme packages
   - [Three Wayland client members nothing in the daemon calls](../issues.md#three-wayland-client-members-nothing-in-the-daemon-calls)
 - **compositor-01** (17): One commit per package, the old-claims fallback's 6 lines included (Q6).
   - [Hyprland's exit command is kept in two packages](../issues.md#hyprlands-exit-command-is-kept-in-two-packages)

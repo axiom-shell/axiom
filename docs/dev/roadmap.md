@@ -540,7 +540,6 @@ Found by the audits:
 - [ncspot's splice keeps nothing after a begin marker that follows the end marker](issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
 - [Kitty reloads only when its socket is /tmp/kitty-*](issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
-- [Two hand-written cmp.Or in the theme packages](issues.md#two-hand-written-cmpor-in-the-theme-packages)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 - [A shell started locked locks again on every reload](issues.md#a-shell-started-locked-locks-again-on-every-reload)
 - [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
