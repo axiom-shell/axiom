@@ -38,7 +38,7 @@ Rectangle {
   implicitHeight: root.size
 
   color: Appearance.fill(Utils.fadeable(mouseArea.pressed ? root.pressColor : (mouseArea.containsMouse ? root.hoverColor : root.backgroundColor), root.hoverColor, root.backgroundColor))
-  border.color: Utils.fadeable(mouseArea.pressed ? root.borderColor : (mouseArea.containsMouse ? root.borderHoverColor : root.borderColor), root.borderHoverColor, root.borderColor)
+  border.color: Utils.fadeable(mouseArea.containsMouse && !mouseArea.pressed ? root.borderHoverColor : root.borderColor, root.borderHoverColor, root.borderColor)
   border.width: root.borderWidth
   radius: root.borderRadius
 
