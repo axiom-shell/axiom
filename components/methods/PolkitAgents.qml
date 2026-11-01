@@ -51,16 +51,6 @@ QtObject {
   // in its arguments (an editor on a file called soteria)
   readonly property string processPattern: `^([^ ]*/)?(${agents.map(agent => _escape(agent.process)).join("|")})( |$)`
 
-  // Whether an autostart command starts a known agent: runs one by name or
-  // path, or starts its unit ("systemctl --user start hyprpolkitagent")
-  function isAgentCommand(command) {
-    const words = String(command).trim().split(/\s+/);
-    return words.some(word => {
-      const name = word.replace(/^.*\//, "").replace(/\.service$/, "").replace(/^["']|["']$/g, "");
-      return agents.some(agent => agent.process === name || agent.unit === name + ".service");
-    });
-  }
-
   function _escape(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }

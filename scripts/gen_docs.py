@@ -731,9 +731,9 @@ SHAPES_PATH = ROOT / GEN_OUT / "rpc-shapes.json"
 GO_COMMENT_LINE = re.compile(r"^[ \t]*//.*$", re.M)
 # QML: through BackendManager (or inside it, root.*), and `// rpc: a, b`
 # for methods named at runtime
-QML_CALL = re.compile(r'\b(?:BackendManager|root)\.(?:call|notify)\("([\w.]+)"|JsonRpc\.request\(\w+,\s*"([\w.]+)"')
+QML_CALL = re.compile(r'\b(?:BackendManager|root)\.call\("([\w.]+)"|JsonRpc\.request\(\w+,\s*"([\w.]+)"')
 QML_LISTEN = re.compile(r'\b(?:BackendManager|root)\.listen\("([\w.]+)"')
-QML_HANDLE = re.compile(r'\b(?:BackendManager|root)\.handle\("([\w.]+)"|^\s*"([\w.]+)":\s*params\s*=>', re.M)
+QML_HANDLE = re.compile(r'^\s*"([\w.]+)":\s*params\s*=>', re.M)
 QML_RPC_NOTE = re.compile(r"//\s*rpc:(?!\s*unchecked\b)\s*(.+)")
 # A call the check can't read, marked so on its line or the line above
 QML_RPC_UNCHECKED = re.compile(r"//\s*rpc:\s*unchecked\s*\((.+)\)\s*$", re.M)
@@ -870,7 +870,7 @@ def shape_key_problems(src, shape, where):
     return problems
 
 
-QML_CALL_OPEN = re.compile(r"\b(?:(?:BackendManager|root)\.(call|notify)|JsonRpc\.(request))\(")
+QML_CALL_OPEN = re.compile(r"\b(?:(?:BackendManager|root)\.call|JsonRpc\.(request))\(")
 JS_STRING = re.compile(r'^"([\w.]+)"$')
 
 
@@ -881,7 +881,7 @@ def qml_call_sites(text):
     sites = []
     for m in QML_CALL_OPEN.finditer(text):
         args = call_args(text, m.end() - 1)
-        if m.group(2):  # JsonRpc.request(id, method, params)
+        if m.group(1):  # JsonRpc.request(id, method, params)
             args = args[1:]
         method = JS_STRING.match(args[0]) if args else None
         sites.append((text.count("\n", 0, m.start()) + 1, method and method.group(1), args[1] if len(args) > 1 else ""))
@@ -1169,9 +1169,9 @@ def rpc_scan():
                 pushes[method]["qml"].add(rel(path))
             else:
                 problems.append(f"{rel(path)} listens to {method}, which the daemon never pushes")
-        for a, b in QML_HANDLE.findall(text):
-            if (a or b) in to_shell:
-                to_shell[a or b]["qml"].add(rel(path))
+        for method in QML_HANDLE.findall(text):
+            if method in to_shell:
+                to_shell[method]["qml"].add(rel(path))
     for method, info in to_shell.items():
         if not info["qml"]:
             problems.append(f"the daemon calls {method} on the shell, which nothing answers")

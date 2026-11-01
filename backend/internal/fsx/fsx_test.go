@@ -121,7 +121,7 @@ func TestLockIsExclusiveAndNamesItsHolder(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), fmt.Sprint(os.Getpid())) {
 		t.Fatalf("second lock: %v", err)
 	}
-	if Holder(path) != os.Getpid() {
+	if data, _ := os.ReadFile(path); strings.TrimSpace(string(data)) != fmt.Sprint(os.Getpid()) {
 		t.Error("holder not recorded")
 	}
 	l.Release()

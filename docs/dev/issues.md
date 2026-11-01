@@ -364,7 +364,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while recording the size before the audits (roadmap row 19)
 
 ### The daemon picks a compositor the shell may not run under
-- **Where:** `backend/internal/compositor/manager/manager.go` (`New`), `backend/internal/compositor/manager/outputs.go` (`OutputsFromEnv`, `Outputs.Read`), `backend/internal/daemon/compositorsocket.go` (`greeterHandlers`, `outputHandlers`, `applyGreeter`), `components/methods/CompositorKind.qml`
+- **Where:** `backend/internal/compositor/manager/manager.go` (`New`), `backend/internal/compositor/manager/outputs.go` (`OutputsFromEnv`, `Outputs.Read`), `backend/internal/daemon/compositorsocket.go` (`greeterOnlyMethods`, `outputHandlers`, `applyGreeter`), `components/methods/CompositorKind.qml`
 - **What:** The shell picks its compositor with `CompositorKind`: with more than one of `HYPRLAND_INSTANCE_SIGNATURE` / `SWAYSOCK` / `NIRI_SOCKET` set (one left in the systemd user environment by an earlier session), the one whose process still runs wins. The daemon doesn't: `manager.New` takes the first set in a fixed order (Hyprland, niri, sway; the shell's is Hyprland, sway, niri) and `Outputs.Read`/`Apply` switch on the same order, with no process check. Under niri with a stale `HYPRLAND_INSTANCE_SIGNATURE` (or under sway with a stale `NIRI_SOCKET`) the manager is Hyprland's: `live()` needs the shell's facts to name its kind, so the layer is never applied (no binds, look or input in any mode), the status card stays on Checking, monitor profiles and `outputs.apply` go to a dead socket, and idle's `ScreenPower` fails. `applyGreeter` takes the same order. A stale variable is a case `docs/dev/compositor/README.md` names; the live session (sway) has none, so it isn't seen there. Both the compositor and the niri audits found this from the code; the niri one adds that `outputs.apply` (the Monitors page's Apply, profile switching) then fails with "no reply from Hyprland". Fix: one Go `Detect(getenv)` (CompositorKind's rule, `/proc/<pid>/comm`, as `userconf.NiriMain` and the sway reader already check their pid) used by all three, or the daemon passes the kind it picked to all three; then the daemon can start qs with only the running compositor's variable set, and `CompositorKind.qml` (68 lines), `tests/tst_CompositorKind.qml` (73) and `CompositorManager._running` go.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor system (and again reviewing the niri system)
@@ -1983,12 +1983,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the security system
 
-### PolkitAgents.isAgentCommand is dead since the autostart moved to Go
-- **Where:** `components/methods/PolkitAgents.qml:56` (`isAgentCommand`), `tests/tst_PolkitAgents.qml:8` (`test_isAgentCommand_data`), `backend/internal/compositor/render/hyprconfig.go:290` (`IsAgentCommand`), `docs/dev/features/polkit.md:19`
-- **What:** The managed mode's autostart is rendered in Go now, through `Tables.IsAgentCommand` (hyprconfig.go:327, `backend/internal/compositor/manager/sway.go:124`, `backend/internal/compositor/manager/niri.go:203`), which reads only `PolkitAgents.qml`'s `agents` (`backend/internal/compositor/render/tables.go`). The QML `isAgentCommand` has no caller left (`grep -rn isAgentCommand --include=*.qml`: its definition and the test only), so its test rows pin the dead copy while the live Go one has no test (`grep -c IsAgentCommand backend/internal/compositor/render/*_test.go`: 0 in each). Fix: delete `isAgentCommand` and its comment (PolkitAgents.qml:54-62, 9 lines) and `test_isAgentCommand_data` / `test_isAgentCommand` (tst_PolkitAgents.qml:8-55, 48 lines): 57 lines; move the rows to a table test of `Tables.IsAgentCommand` in `render`, reword its comment (hyprconfig.go:288, "IsAgentCommand is PolkitAgents.isAgentCommand") to stand on its own, and drop `isAgentCommand` from polkit.md's list.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the security system
-
 ### Power repeats the session actions' icons, labels and confirm
 - **Where:** `components/content/Power/Power.qml:25` (`_info`), `services/session/SessionManager.qml:16` (`sessionActionInfo`), `components/surfaces/powermenu/PowerMenuWindow.qml:35` (`run`), `components/content/QuickActions/QuickActions.qml:185` (`run`)
 - **What:** `Power._info` (Power.qml:25-41, 17 lines) restates `SessionManager.sessionActionInfo`'s icons (`bedtime`, `restart_alt`, `power_settings_new`) and `SessionManager.destructiveActions` (`confirm` true for reboot and poweroff), with other words for the same actions ("Restart" / "Shut down" on the lock screen and greeter, "Reboot" / "Power off" in the power menu, QuickActions and launcher). And the press-twice gate (an `armed` string, a 3000 ms `disarm` Timer, "arm unless already armed, else run") is written out three times: `Power.press` and its Timer (Power.qml:44-65), `PowerMenuWindow.run` and `disarm` (:35-44, :82-86), `QuickActions.run` and `disarm` (:185-190, :226-230). Fix: Power reads `SessionManager.sessionActionInfo(action)` and `SessionManager.destructiveActions` (drops `_info`: 17 lines), and one small non-visual `ConfirmGate` (`armed`, `timeout`, `pass(key, needsConfirm)`) replaces the three gates. Open (maintainer): which words the session actions use everywhere ("Restart" / "Shut down" or "Reboot" / "Power off").
@@ -2009,27 +2003,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the greeter system
 
-### GreetdManager.available is never read
-- **Where:** `services/session/GreetdManager.qml:21` (`available`)
-- **What:** `readonly property bool available: Greetd.available` has no reader anywhere (`grep -rn 'GreetdManager.available'` finds none; inside the file only its definition). Fix: delete the line (1 line).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the greeter system
-
 ### The launcher's /generate reads a monitor setting that doesn't exist
 - **Where:** `services/ui/LauncherCommands.qml:156` (`generate`), `config/LauncherConfig.qml` (`screen`)
 - **What:** `/generate` picks its wallpaper with `ShellManager.targetFor(...)` given a `monitors` member that LauncherConfig doesn't have (its ScreenTarget is `screen`; a grep of every LauncherConfig member used, against the reader's members, finds only this one missing). `targetFor(undefined)` resolves as "inherit", so it answers for General's screen target, not the launcher's. Scenario: two monitors with different wallpapers, `General.screen` primary (DP-1) and `Launcher.screen` focused; open the launcher on DP-2 and run `/generate`: the themes are generated from DP-1's wallpaper, not the one on the monitor the launcher is on. [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start) describes `/generate` as using "its target monitor's wallpaper", which only holds after this fix. Fix: pass `LauncherConfig.screen`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the launcher system
-
-### EmojiManager's groups() is never called
-- **Where:** `services/apps/EmojiManager.qml:86` (`groups`), `docs/dev/features/launcher-providers.md`
-- **What:** `EmojiManager.groups()` and its cache `_groups` have no caller: the EmojiPicker module, the only user of Unicode's groups, names them itself in its `groupIcons` table, and the launcher never asks. launcher-providers.md still offers it ("`recent(limit)` and `groups()` are also provided"), as does the file's header comment. Fix: delete lines 85-90 and the `_groups` property (line 106), 7 lines, and drop `groups()` from the doc, the header comment and `search`'s comment (line 48: "a name from groups()").
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the launcher system
-
-### LauncherManager keeps a dead clear() and a cliphist test
-- **Where:** `services/ui/LauncherManager.qml:103` (`clear`), `services/ui/LauncherManager.qml:517` (`_clipboardRow`)
-- **What:** `clear()` (lines 103-106) has no caller anywhere: the launcher resets through `query` and `LauncherPanel.reset`. And a text clip's glyph tests `/^\[\[ binary data/`, the marker cliphist printed for images; the daemon's history replaced cliphist (an image is now its own entry with `format`, drawn by `_clipboardImageRow`), so the test only matches text that literally starts with "[[ binary data". Fix: delete `clear()` (4 lines) and make the glyph `entry.pinned ? "keep" : "content_paste"`.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the launcher system
 
@@ -2062,18 +2038,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** ChecksPage shows `I18n.tr(tool.modelData.purpose)`, its comment saying "purposes are declared in DependencyManager", but the declarations above `tools` have drifted from the list: two purposes aren't declared, so they're in no `config/i18n/*.json` and show in English in every language ("Night light, where the compositor has no gamma control", "Screenshots (the picker's frozen frame)": 0 i18n files each), and nine declared keys are no tool's purpose any more ("Copying to the clipboard", "Reading JSON (theme integrations)", "Chat requests", "Theme integrations and keybinds", "Idle locking and screen blanking", "Night light", "Clipboard history shared with other apps", "Typing emoji from the launcher", "Calendar accounts and feeds"), which keeps their translations alive for nothing. Fix: the comment declares exactly the 14 distinct purposes of `tools`' 15 entries (the two X11 tools share one): drop lines 67, 70, 72, 74 and 79 (5 lines) and the stale keys on 66 and 75, and declare the two missing ones.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the packaging system
-
-### The shell's unused daemon-call paths
-- **Where:** `services/core/BackendManager.qml:79` (`notify`), `services/core/BackendManager.qml:122` (`handle`), `services/core/BackendManager.qml:33` (`compatible`), `components/methods/JsonRpc.qml:21` (`notification`)
-- **What:** Nothing outside `BackendManager.qml` calls `BackendManager.notify` or `BackendManager.handle`, or reads `BackendManager.compatible` (`grep -rn 'BackendManager\.\(notify\|handle\|compatible\)'` over the repo finds only `docs/dev/backend/protocol.md` naming `handle` and `notify`). `notify` is the only caller of `JsonRpc.notification` (its other hit is the assertion in `tests/tst_JsonRpc.qml:11`), and the queue's `"id": null` entries and `_failQueued`'s `entry.id === null ||` exist only for it. `_handlers` only ever holds the built-in `"ipc.call"`; `compatible` is written by `_applyDaemonState` and never read (config writes rely on the daemon's `incompatible` refusal, as the docs say). Fix: delete `notify` with its comment (lines 78-90, 13), `handle` with its comment (120-124, 5), `compatible` and `_compatible` (32-33, 128, 136: 4), `JsonRpc.notification` (21-29, 9) and its test assertion (`tests/tst_JsonRpc.qml` 11-13, 3): 34 lines; drop `entry.id === null ||` and the "(null for a notification)" note in `_queue`'s comment, `|notify` from `scripts/gen_docs.py`'s `QML_CALL` / `QML_CALL_OPEN`, and `handle` / `notify` from protocol.md's channel E and call rule (channel E then names `_handlers`); `tests/scripts/test_scripts.py`'s `qml_call_sites` fixture loses its `BackendManager.notify("x.y")` line and expected row.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the daemon system
-
-### Two dead Go helpers and a forwarding wrapper
-- **Where:** `backend/internal/fsx/lock.go:52` (`Holder`), `backend/internal/xdg/xdg.go:206` (`Dirs.Describe`), `backend/internal/daemon/contract.go:66` (`greeterOnlyMethods`)
-- **What:** `fsx.Holder` is called only by `backend/internal/fsx/fsx_test.go:124` (`TryLock` reads the pid itself through `readPID` for its error); `Dirs.Describe` by nothing at all, not even a test, though its comment says it is "for `axiom config path` and logs" (`configPathCommand` in `backend/internal/cli/config.go` prints the file, and `dirs` as JSON, without it); `greeterOnlyMethods` (called from `backend/internal/daemon/greeter.go:183` and `contract.go:81`) only forwards to `greeterHandlers` (`backend/internal/daemon/compositorsocket.go:74`) with the same arguments. Fix: delete `Holder` (lines 51-59, 9; the test reads the lock file with `os.ReadFile`), `Describe` (205-208, 4), and fold the wrapper by renaming `greeterHandlers` to `greeterOnlyMethods`, its comment kept (contract.go 62-68, 7): 20 lines.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the daemon system
 
 ### daemon.shutdown starts its goroutine past tasks.Go
 - **Where:** `backend/internal/daemon/methods.go:340` (`coreMethods`)

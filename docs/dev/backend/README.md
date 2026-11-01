@@ -43,7 +43,7 @@
   - An outside edit never changes a takeover setting (`holdTakeovers`): the value in effect is kept, each key ignored is logged, and the file is written back with it (normalized, like any write of the store's), so the file matches what's in effect and a restart can't release a managed config (decided 2026-10-28). Only while the values are unknown does the first edit that loads set them. `Store.Takeovers` hands out the values in effect: the compositor's mode is read from it, the one hold of every takeover.
   - Writes are atomic and keep a symlinked config a symlink.
 - **The shell's side:**
-  - `BackendManager` (the connection, hello, reconnect; `compatible` and `dev` from the hello and its pushes).
+  - `BackendManager` (the connection, hello, reconnect; `incompatible` and `dev` from the hello and its pushes).
   - `ConfigManager`: the config read from the snapshot and pushes. Writes are checked against the schema in JS, applied at once and sent to the daemon, whose answer stands.
   - `IpcTarget` (every IPC target, registered with the daemon).
   - `LockManager` reporting the lock.

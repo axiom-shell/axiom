@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01 and platform-01 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -47,7 +47,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | # | Cluster | Kind | Title | Entries | Est. lines | Depends on | Questions |
 |---|---|---|---|---|---|---|---|
 | 1 | config-01 | deletion | Done: Config pipeline and store dead code, the step-test runner, and every reader member nothing reads | 9 | ~370 (net about -270) | none |  |
-| 2 | platform-01 | deletion | Dead code across the daemon, launcher, greeter and security | 6 | ~190 | config-01 |  |
+| 2 | platform-01 | deletion | Done: Dead code across the daemon, launcher, greeter and security | 6 | ~190 | config-01 |  |
 | 3 | core-ui-theming-01 | deletion | Dead members and pure shrinks in core services, ui-kit, theming and Wayland | 7 | ~-100 net | config-01 |  |
 | 4 | compositor-01 | deletion | Go compositor backend: dead and doubled helpers | 17 | ~550 (~370 out) | none | Q6 |
 | 5 | compositor-02 | deletion | QML compositor services, keybind helpers, workspace strips | 12 | ~450 | none |  |
@@ -140,13 +140,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The unused reader member check counts a member named after its key as used
   - Six more reader members nothing reads
   - Three reader members nothing reads
-- **platform-01** (6):
-  - [PolkitAgents.isAgentCommand is dead since the autostart moved to Go](../issues.md#polkitagentsisagentcommand-is-dead-since-the-autostart-moved-to-go)
-  - [GreetdManager.available is never read](../issues.md#greetdmanageravailable-is-never-read)
-  - [EmojiManager's groups() is never called](../issues.md#emojimanagers-groups-is-never-called)
-  - [LauncherManager keeps a dead clear() and a cliphist test](../issues.md#launchermanager-keeps-a-dead-clear-and-a-cliphist-test)
-  - [The shell's unused daemon-call paths](../issues.md#the-shells-unused-daemon-call-paths)
-  - [Two dead Go helpers and a forwarding wrapper](../issues.md#two-dead-go-helpers-and-a-forwarding-wrapper)
+- **platform-01** (6, done):
+  - PolkitAgents.isAgentCommand is dead since the autostart moved to Go
+  - GreetdManager.available is never read
+  - EmojiManager's groups() is never called
+  - LauncherManager keeps a dead clear() and a cliphist test
+  - The shell's unused daemon-call paths
+  - Two dead Go helpers and a forwarding wrapper
 - **core-ui-theming-01** (7):
   - [Small shrinks in the core services](../issues.md#small-shrinks-in-the-core-services)
   - [setWallpaperAndGenerate only forwards for one caller](../issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)

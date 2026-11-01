@@ -171,3 +171,25 @@ end`
 		t.Errorf("no file: %q", got)
 	}
 }
+
+func TestIsAgentCommand(t *testing.T) {
+	tab := repoTables(t)
+	for _, c := range []struct {
+		name    string
+		command string
+		want    bool
+	}{
+		{"systemd unit", "systemctl --user start hyprpolkitagent", true},
+		{"unit with suffix", "systemctl --user start plasma-polkit-agent.service", true},
+		{"path", "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1", true},
+		{"quoted path", "'/usr/lib/polkit-kde-authentication-agent-1'", true},
+		{"bare name with argument", "lxpolkit --verbose", true},
+		{"other command", "hypridle", false},
+		{"name inside another word", "my-hyprpolkitagent-wrapper", false},
+		{"empty", "", false},
+	} {
+		if got := tab.IsAgentCommand(c.command); got != c.want {
+			t.Errorf("%s: IsAgentCommand(%q) = %v, want %v", c.name, c.command, got, c.want)
+		}
+	}
+}
