@@ -8,6 +8,8 @@ import qs.config
 // `clearable` (search boxes) adds an X at the right while it holds text,
 // which empties it as a typed edit and keeps the focus in it; with
 // `escapeClears`, Escape does too (passed on when it's already empty).
+// A field hiding its text (a password) warns while Caps Lock is on, by
+// itself: CapsLockHint at the right, loaded only while it has focus.
 StyledContainer {
   id: root
 
@@ -32,6 +34,11 @@ StyledContainer {
   // Escape clears it too, or goes on to the parent when it's empty
   property bool escapeClears: false
   readonly property bool _clearShown: root.clearable && !root.readOnly && textField.text !== ""
+  // Caps Lock is on while it takes hidden text (PasswordEntry's message
+  // line says so too)
+  readonly property bool capsHintShown: root._capsHint?.shown === true
+  readonly property real _capsRoom: root._capsHint?.visible ? capsHint.width + Widget.spacing : 0
+  readonly property CapsLockHint _capsHint: capsHint.item as CapsLockHint
 
   // Empties the field as if typed (textEdited), keeping its focus.
   // TextInput.clear(), not an assignment, which would drop the field's
@@ -58,7 +65,7 @@ StyledContainer {
     id: textField
     anchors.fill: parent
     anchors.leftMargin: Widget.padding
-    anchors.rightMargin: root._clearShown ? clearButton.width + clearButton.inset + Widget.spacing : Widget.padding
+    anchors.rightMargin: (root._clearShown ? clearButton.width + clearButton.inset + Widget.spacing : Widget.padding) + root._capsRoom
     verticalAlignment: TextInput.AlignVCenter
     text: root.text
     onTextChanged: root.text = text
@@ -136,5 +143,16 @@ StyledContainer {
     iconSize: Appearance.fontSizeBy(1)
     tooltipText: I18n.tr("Clear")
     onClicked: root.clear()
+  }
+
+  // Only while hidden text is typed into it: the key is polled while a
+  // hint exists
+  Loader {
+    id: capsHint
+    active: textField.echoMode !== TextInput.Normal && textField.activeFocus && !root.readOnly
+    anchors.right: root._clearShown ? clearButton.left : parent.right
+    anchors.rightMargin: root._clearShown ? Widget.spacing : clearButton.inset + Widget.px(2)
+    anchors.verticalCenter: parent.verticalCenter
+    sourceComponent: CapsLockHint {}
   }
 }

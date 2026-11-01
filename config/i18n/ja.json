@@ -3524,6 +3524,13 @@
     "Not a duration": "",
     "Laps": "",
     "Copy laps": "",
-    "30m, 1h30m, until 17:00…": ""
+    "30m, 1h30m, until 17:00…": "",
+    "Caps Lock is on": "",
+    "Caps Lock": "",
+    "Num Lock": "",
+    "Scroll Lock": "",
+    "{0}: on": "",
+    "Show the widget only while one of the keys above is on.": "",
+    "Lock Keys": ""
   }
 }

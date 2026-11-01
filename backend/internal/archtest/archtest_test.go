@@ -82,6 +82,7 @@ var tiers = map[string]int{
 	"internal/files":                tierEdge,
 	"internal/ipcroute":             tierEdge,
 	"internal/lockscreen":           tierEdge,
+	"internal/lockkeys":             tierEdge,
 	"internal/logfile":              tierEdge,
 	"internal/logind":               tierEdge,
 	"internal/media":                tierEdge,

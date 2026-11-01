@@ -92,6 +92,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 - **Fallback field:** a surface whose key has no report shows a `PasswordField` of its own, so a hand-edited or broken layout can never lock anyone out.
   - It appears a tick after loading, near the bottom, over the modules.
 - **Stable layout:** the field never moves or grows with its messages (`reusable/PasswordEntry`).
+- **Caps Lock:** while it's on, the field shows a warning icon and, with no other message, its message line says so ([Lock keys](lock-keys.md)).
   - The message line's room is kept (`reserveMessage`).
   - The busy bar runs over the field's bottom edge.
 - **Short slots:** a slot too short for the message line (one row on a doubled grid) changes the layout, as the greeter's `Login` does:

@@ -5,6 +5,7 @@ import (
 	"os/user"
 
 	"github.com/axiom-shell/axiom/backend/internal/claudeusage"
+	"github.com/axiom-shell/axiom/backend/internal/lockkeys"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/sysmon"
 	"github.com/axiom-shell/axiom/backend/internal/tailscale"
@@ -38,6 +39,7 @@ func (d *Daemon) sources() []topics.Source {
 		sysmon.Source(sysmon.Options{Home: d.opts.Getenv("HOME")}),
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
 		weather.Source(weather.Options{}),
+		lockkeys.Source(lockkeys.Options{}),
 	}, d.opts.topics...)
 }
 

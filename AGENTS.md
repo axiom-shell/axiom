@@ -55,7 +55,7 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 
 ## Layout
 
-Each kind of file has its folder and naming (`docs/dev/README.md` › Layout; `check_structure` holds the folders types load by). `components/reusable/` holds generic `Styled*` widgets with no feature logic; only `StyledToolTip` and the plumbing `StreamedLoader`, `BackdropRequest`, `ScrollMemory`, `SurfaceGroup` read services. Imports use `qs.`, never relative paths.
+Each kind of file has its folder and naming (`docs/dev/README.md` › Layout; `check_structure` holds the folders types load by). `components/reusable/` holds generic `Styled*` widgets with no feature logic; only `StyledToolTip` and the plumbing `StreamedLoader`, `BackdropRequest`, `ScrollMemory`, `SurfaceGroup`, `CapsLockHint` read services. Imports use `qs.`, never relative paths.
 
 ## Layering
 

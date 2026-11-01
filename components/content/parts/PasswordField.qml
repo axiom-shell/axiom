@@ -71,6 +71,7 @@ Item {
     fieldHeight: root.fieldHeight
     inlineMessage: root.inlineMessage
     reserveMessage: root.showMessages
+    capsMessage: root.showMessages
     readOnly: !root.active
     enabled: !root.active || !AuthManager.isAuthenticating
     message: root.active && root.showMessages ? AuthManager.message : ""

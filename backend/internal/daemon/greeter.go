@@ -18,6 +18,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/files"
+	"github.com/axiom-shell/axiom/backend/internal/lockkeys"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/outputs"
@@ -49,8 +50,9 @@ const greeterSocket = "axiom.sock"
 // lock screen, compositor layer or Wayland connection: it answers only
 // what the greeter asks, its commands (exec.*, watched ones pushed as
 // exec.outputs), lookups (tz.*, net.addresses), the weather topic (its
-// Weather module) and the compositor's socket (hypr.request, niri.*), and
-// only to that quickshell. Greeter mode reads its
+// Weather module), the lockKeys topic (its password field's Caps Lock
+// warning) and the compositor's socket (hypr.request, niri.*), and only
+// to that quickshell. Greeter mode reads its
 // config once and writes nothing (docs/dev/features/greeter-runtime.md).
 func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	if o.Log == nil {
@@ -143,8 +145,9 @@ func greeterProfiles(ctx context.Context, getenv func(string) string, log *slog.
 }
 
 // greeterRegistry is what the greeter's axiom answers: a hello from its
-// quickshell alone, then that quickshell's commands (watched ones too), run with its own
-// environment, its files (its state), lookups, the weather and the
+// quickshell alone, then that quickshell's commands (watched ones too),
+// run with its own environment, its files (its state), lookups, the
+// weather, the lock keys (the password field's Caps Lock hint) and the
 // compositor's socket (Hyprland's requests, niri's requests and event
 // stream on niriStreams, nil when not under niri), and greeter.compositor,
 // which hands profiles the bundle's monitor profiles on Hyprland and sway. Anything else is unavailable, as it was with
@@ -182,5 +185,6 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	outputHandlers(reg, o.Getenv)
 	greeterOnlyMethods(reg, o.Getenv, func() any { return o.Schema }, profiles)
 	topics.Register(reg, hub, weather.Source(weather.Options{}))
+	topics.Register(reg, hub, lockkeys.Source(lockkeys.Options{}))
 	return reg
 }

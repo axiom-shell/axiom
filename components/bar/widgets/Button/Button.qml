@@ -118,7 +118,7 @@ BarIconWidget {
     StyledToolTip {
       target: root
       text: root.properties.tooltip
-      edges: root.barConfig.top ? Edges.Bottom : root.barConfig.bottom ? Edges.Top : root.barConfig.left ? Edges.Right : Edges.Left
+      edges: root.innerEdges
     }
   }
 }
