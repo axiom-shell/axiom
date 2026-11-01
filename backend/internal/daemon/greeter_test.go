@@ -103,11 +103,12 @@ func TestGreeterRegistryAnswersOnlyTheGreeter(t *testing.T) {
 // password field to the lock keys, its state
 // (GreetdManager's) is written through file.write, and on Hyprland its
 // HyprlandManager sends hypr.request (monitors, layouts, the cursor), and
-// on niri its NiriManager sends niri.request and watches niri.watch.
+// on niri its NiriManager sends niri.request and niri.command and
+// watches niri.watch.
 func TestGreeterServesWeather(t *testing.T) {
 	t.Parallel()
 	reg := greeterRegistry(GreeterOptions{Getenv: func(string) string { return "" }}, nil, func(int) bool { return true }, command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method}), topics.New(topics.Options{}), files.New(files.Options{}), nil, func(any) {})
-	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "lockKeys.subscribe", "lockKeys.unsubscribe", "file.write", "hypr.request", "niri.request", "niri.watch"} {
+	for _, m := range []string{"weather.subscribe", "weather.unsubscribe", "weather.refresh", "lockKeys.subscribe", "lockKeys.unsubscribe", "file.write", "hypr.request", "niri.request", "niri.command", "niri.watch"} {
 		if _, _, ok := reg.Types(m); !ok {
 			t.Errorf("no %s", m)
 		}
