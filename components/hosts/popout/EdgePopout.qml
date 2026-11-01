@@ -278,7 +278,23 @@ PopoutWrapperBase {
   readonly property real _contentAlong: Math.ceil((vertical ? root.contentItem?.implicitHeight ?? 100 : root.contentItem?.implicitWidth ?? 100) + contentPadding * 2)
   // ...and across it, on whole pixels too: a far side between two pixels
   // drew its stroke faint, or dotted with a thin one
-  readonly property real _contentAcross: Math.ceil((vertical ? root.contentItem?.implicitWidth ?? 100 : root.contentItem?.implicitHeight ?? 100) + contentPadding * 2)
+  readonly property real _contentAcross: root._stepped ? root._segmentFar(0) : Math.ceil((vertical ? root.contentItem?.implicitWidth ?? 100 : root.contentItem?.implicitHeight ?? 100) + contentPadding * 2)
+  // Content in parts stacked out from the edge (an OSD's), its
+  // `contentSegments`: [{ along, far }], each part's length and its far side,
+  // out from the content's near side. More than one draws stepped: the
+  // box holds the first, each other one a step past it, padded as the
+  // box is (SurfaceOutline's steps), the content running on past the box
+  property var contentSegments: []
+  readonly property var _segments: root.contentSegments
+  readonly property bool _stepped: root._segments.length > 1
+  // A segment's far side from the box's start, on a whole pixel
+  function _segmentFar(i) {
+    return Math.ceil(root._segments[i].far + root.contentPadding * 2);
+  }
+  readonly property var _steps: root._stepped ? root._segments.slice(1).map((segment, i) => ({
+        "along": Math.ceil(segment.along + root.contentPadding * 2),
+        "depth": root._segmentFar(i + 1) - root._segmentFar(i)
+      })) : []
   EdgePlacement {
     id: placement
     screen: root.screen
@@ -495,6 +511,7 @@ PopoutWrapperBase {
       // While the blur window backs surfaces, once it knows where this one
       // is (LayerOrigin.settled), so it never shows unbacked beside them
       active: root.isOpen && root.claimed && placement.stretchReady && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
+      steps: root._steps
       boxWidth: root.vertical ? root._contentAcross + root.attachExtra : root.boxLength
       boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachExtra + slot.shownStretchAcross
       fillColor: root.fillColor
@@ -518,10 +535,13 @@ PopoutWrapperBase {
         readonly property real topMargin: root.contentPadding + (root.edge === ScreenEdge.Top ? root.attachExtra : 0)
         readonly property real bottomMargin: root.contentPadding + (root.edge === ScreenEdge.Bottom ? root.attachExtra : 0)
         // (below a submenu's stretch above it, clear of one below)
-        x: root.vertical ? leftMargin : root.contentPadding + root.place.contentOffset
-        y: root.vertical ? root.contentPadding + root.place.contentOffset + slot.shownStretchTop : topMargin + slot.shownStretchTop
-        width: root.vertical ? parent.width - leftMargin - rightMargin : (root.contentItem?.implicitWidth ?? 0)
-        height: root.vertical ? (root.contentItem?.implicitHeight ?? 0) : parent.height - topMargin - bottomMargin - slot.shownStretchAcross
+        // Stepped, it keeps its own depth too, from the attach edge on
+        // past the box (on a bottom or right edge, before it)
+        readonly property real _across: root.vertical ? (root.contentItem?.implicitWidth ?? 0) : (root.contentItem?.implicitHeight ?? 0)
+        x: root.vertical ? (root._stepped && root.edge === ScreenEdge.Right ? parent.width - rightMargin - loader._across : leftMargin) : root.contentPadding + root.place.contentOffset
+        y: root.vertical ? root.contentPadding + root.place.contentOffset + slot.shownStretchTop : (root._stepped && root.edge === ScreenEdge.Bottom ? parent.height - bottomMargin - loader._across : topMargin + slot.shownStretchTop)
+        width: root.vertical ? (root._stepped ? loader._across : parent.width - leftMargin - rightMargin) : (root.contentItem?.implicitWidth ?? 0)
+        height: root.vertical ? (root.contentItem?.implicitHeight ?? 0) : root._stepped ? loader._across : parent.height - topMargin - bottomMargin - slot.shownStretchAcross
 
         active: root.occupied || root.keepLoaded
         asynchronous: false

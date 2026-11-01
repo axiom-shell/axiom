@@ -409,4 +409,88 @@ TestCase {
       "height": 4
     }), [], "nothing past the clip");
   }
+
+  // Steps past the box (an OSD's parts): none change nothing; a narrower
+  // one steps in with a convex corner, then a concave fillet into its
+  // wall, each at most half the room it leaves (here 25 a side)
+  function test_steps() {
+    const plain = spec({});
+    const none = spec({
+      "steps": []
+    });
+    compare(SurfaceOutline.strokePath(none, SurfaceOutline.metrics(none), 254, 128), SurfaceOutline.strokePath(plain, SurfaceOutline.metrics(plain), 254, 128));
+    compare(SurfaceOutline.fillPath(none, SurfaceOutline.metrics(none), 254, 128), SurfaceOutline.fillPath(plain, SurfaceOutline.metrics(plain), 254, 128));
+    const s = spec({
+      "steps": [
+        {
+          "along": 100,
+          "depth": 60
+        }
+      ]
+    });
+    const m = SurfaceOutline.metrics(s);
+    compare(m.depth, 188, "the step's depth past the box");
+    compare(m.levels.length, 2);
+    compare(m.levels[1].a, 78);
+    compare(m.levels[1].b, 176);
+    compare(m.levels[1].v, 159);
+    const stroke = SurfaceOutline.strokePath(s, m, 254, 188);
+    verify(stroke.indexOf("L 28 72 L 28 74 A 25 25 0 0 0 53 99 A 25 25 0 0 1 78 124 L 78 132 A 27 27 0 0 0 105 159 ") >= 0, stroke);
+    verify(stroke.indexOf("L 149 159 A 27 27 0 0 0 176 132 L 176 124 A 25 25 0 0 1 201 99 A 25 25 0 0 0 226 74 ") >= 0, stroke);
+    const fp = SurfaceOutline.footprint(s, m, 254, 188);
+    compare(fp[fp.length - 1], {
+      "x": 77,
+      "y": 99,
+      "width": 100,
+      "height": 61
+    });
+    // The step, and a fillet's square each side of its foot
+    compare(SurfaceOutline.blurRegion(s, m, 254, 188, 0, 0).length, 6);
+  }
+
+  function test_steps_merge_and_cut() {
+    // As long as the box: it only deepens it
+    const same = spec({
+      "steps": [
+        {
+          "along": 200,
+          "depth": 40
+        }
+      ]
+    });
+    const sm = SurfaceOutline.metrics(same);
+    compare(sm.levels.length, 1);
+    compare(sm.depth, 168);
+    verify(SurfaceOutline.strokePath(same, sm, 254, 168).indexOf("L 28 112 A 27 27 0 0 0 55 139 L 199 139 ") >= 0);
+    compare(SurfaceOutline.footprint(same, sm, 254, 168)[0].height, 140);
+    // Longer than the box: cut to it
+    const longer = spec({
+      "steps": [
+        {
+          "along": 400,
+          "depth": 40
+        }
+      ]
+    });
+    compare(SurfaceOutline.metrics(longer).levels.length, 1);
+    // Joined or detached: no steps
+    compare(SurfaceOutline.metrics(spec({
+      "joinStart": true,
+      "steps": [
+        {
+          "along": 100,
+          "depth": 40
+        }
+      ]
+    })).levels, []);
+    compare(SurfaceOutline.metrics(spec({
+      "detached": true,
+      "steps": [
+        {
+          "along": 100,
+          "depth": 40
+        }
+      ]
+    })).levels, []);
+  }
 }

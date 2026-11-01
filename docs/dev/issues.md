@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A stepped OSD takes clicks beside its narrower parts
+- **Where:** `components/hosts/popout/EdgePopout.qml` (`mask`), `components/hosts/popout/AttachedSurface.qml` (`footprint`)
+- **What:** the surface window's input mask is the surface item's whole rect, so with an OSD's parts drawn stepped (`steps`), the empty room beside a narrower part (a card under wide bars) takes clicks and hover meant for the window under it while the OSD is open. The mask should follow the footprint's rects (box, fillets, steps), as Region children.
+- **Size:** small
+- **Found:** 2026-11-02, while adding the OSD's stepped outline
+
 ### A VPN bind ignores Tailscale unless a VPN widget is showing
 - **Where:** `services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
 - **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.

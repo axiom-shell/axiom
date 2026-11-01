@@ -216,6 +216,7 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
 - [The keybinds page on a small monitor with large binds](issues.md#the-keybinds-page-on-a-small-monitor-with-large-binds) (with the 1080p pass)
 - [Modules inside borders aren't sized evenly](issues.md#modules-inside-borders-arent-sized-evenly)
+- [A stepped OSD takes clicks beside its narrower parts](issues.md#a-stepped-osd-takes-clicks-beside-its-narrower-parts)
 
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.

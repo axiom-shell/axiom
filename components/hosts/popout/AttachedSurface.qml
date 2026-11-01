@@ -80,6 +80,10 @@ Item {
   // edges (screen border off): the surface runs straight off them, with no
   // fillet onto them
   property bool straight: false
+  // Segments stacked past the box's far side, out from the edge (an
+  // OSD's parts: SurfaceOutline's `steps`, [{ along, depth }]): a stepped
+  // outline. Attached only
+  property var steps: []
   property bool straightJoins: false
   // ...for each joined end on its own, where the two differ (a pill on a
   // bare edge joining a solid bar's stroke at one end)
@@ -293,6 +297,7 @@ Item {
       "straight": root.straight
     })
   readonly property var _spec: Object.assign({}, root._baseSpec, {
+    "steps": root.steps,
     "flushStartThrough": root.flushStartThrough,
     "flushEndThrough": root.flushEndThrough,
     "straightJoins": root.straightJoins,
