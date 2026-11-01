@@ -463,7 +463,6 @@ Found by the audits:
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-- [The condition grammar has no shared fixtures](issues.md#the-condition-grammar-has-no-shared-fixtures)
 - [A number box keeps its typed text when the setting it edits switches under it](issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
 - [Escape in a settings-page number box leaves the half-typed value in the draft](issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)
 - [A failed update check shows as up to date](issues.md#a-failed-update-check-shows-as-up-to-date)
