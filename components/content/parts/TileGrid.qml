@@ -55,7 +55,6 @@ Item {
   readonly property real tileWidth: _fit.w
   readonly property real tileHeight: _fit.h
 
-  readonly property real _gridWidth: columns * tileWidth + (columns - 1) * spacing
   readonly property real _gridHeight: rowCount * tileHeight + (rowCount - 1) * spacing
 
   function tileX(i) {

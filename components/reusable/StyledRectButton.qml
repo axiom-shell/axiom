@@ -5,8 +5,7 @@ import Quickshell
 import qs.config
 import qs.components.methods
 
-// A rectangular icon button with hover and press colors, a tooltip and an
-// optional count badge.
+// A rectangular icon button with hover and press colors and a tooltip.
 Rectangle {
   id: root
 
@@ -25,14 +24,8 @@ Rectangle {
   property color pressColor: root.backgroundColor
   property color borderColor: "transparent"
   property color borderHoverColor: root.borderColor
-  property color borderPressColor: root.borderColor
   property int borderWidth: Appearance.borderWidth
   property real borderRadius: Widget.radius
-
-  property string badgeText: ""
-  property bool badgeVisible: root.badgeText !== ""
-  property color badgeBackgroundColor: Theme.error
-  property color badgeTextColor: Theme.background
 
   // -- Implementation --
 
@@ -45,7 +38,7 @@ Rectangle {
   implicitHeight: root.size
 
   color: Appearance.fill(Utils.fadeable(mouseArea.pressed ? root.pressColor : (mouseArea.containsMouse ? root.hoverColor : root.backgroundColor), root.hoverColor, root.backgroundColor))
-  border.color: Utils.fadeable(mouseArea.pressed ? root.borderPressColor : (mouseArea.containsMouse ? root.borderHoverColor : root.borderColor), root.borderHoverColor, root.borderColor)
+  border.color: Utils.fadeable(mouseArea.pressed ? root.borderColor : (mouseArea.containsMouse ? root.borderHoverColor : root.borderColor), root.borderHoverColor, root.borderColor)
   border.width: root.borderWidth
   radius: root.borderRadius
 
@@ -79,16 +72,5 @@ Rectangle {
       target: root
       text: root.tooltipText
     }
-  }
-
-  CountBadge {
-    shown: root.badgeVisible
-    anchors.top: parent.top
-    anchors.right: parent.right
-    anchors.topMargin: -2
-    anchors.rightMargin: -2
-    color: root.badgeBackgroundColor
-    text: root.badgeText
-    textColor: root.badgeTextColor
   }
 }

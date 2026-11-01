@@ -1889,12 +1889,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the ui-kit system
 
-### StyledRectButton's badge and border press colour have no user
-- **Where:** `components/reusable/StyledRectButton.qml:28` (`borderPressColor`), `components/reusable/StyledRectButton.qml:32` (`badgeText`, `badgeVisible`, `badgeBackgroundColor`, `badgeTextColor`), `components/reusable/StyledRectButton.qml:84` (`CountBadge`)
-- **What:** No StyledRectButton or SquareIconButton (11 + 35 instances) sets any of the four badge properties or `borderPressColor` (no name has a hit outside the file: `grep -rnw badgeText --include=*.qml .`). The two counts drawn on buttons use `CountBadge` directly (`components/bar/widgets/Notifications/Notifications.qml`, `components/content/parts/custom/elements/Icon/CustomIcon.qml`). Fix: delete lines 28, 32–35 and the `CountBadge` block 84–93, and read `root.borderColor` for the pressed border in line 48; shared-ui-pieces.md's "optional `CountBadge`" goes. 15 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
 ### ActionTile and ActionPill carry the same countdown bar
 - **Where:** `components/reusable/ActionTile.qml:110` (`countdownBar`, `drain`, `onActiveChanged`), `components/reusable/ActionPill.qml:121` (`countdownBar`, `drain`, `onActiveChanged`)
 - **What:** The "time left while active" bar is the same 26 lines in both (`diff <(sed -n 110,135p ActionTile.qml) <(sed -n 121,146p ActionPill.qml)` prints nothing): a Rectangle along the bottom, a NumberAnimation draining its width over `countdown` ms, and the `onActiveChanged` that restarts it. Their frames are the same too (`radius`, the `color` and `border.color` from `active`/`hot`/`tone`, two `ColorGlide`s: ActionTile 48–55, ActionPill 36–43). Fix: one small piece in `components/reusable/` (a bar draining over a duration while running), each tile placing it in 3 lines; 26 lines go.
@@ -1904,12 +1898,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### StyledTextEntry and StyledTextArea carry the same blinking cursor
 - **Where:** `components/reusable/StyledTextEntry.qml:104` (`cursorDelegate`), `components/reusable/StyledTextArea.qml:171` (`cursorDelegate`)
 - **What:** Both draw the accent cursor and blink it with the same `SequentialAnimation` (two `PropertyAnimation`s of 500 ms marked as behaviour timing), 19 lines each, the same but for the focus they read (`textField` / `textInput`) and a comment. AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: a cursor piece in `components/reusable/` reading its parent input's `activeFocus`, set as the `cursorDelegate` of both; 19 lines go (and the blink timing lives in one place).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### TileGrid and StyledVolumeBar keep lines nothing reads
-- **Where:** `components/content/parts/TileGrid.qml:58` (`_gridWidth`), `components/reusable/StyledVolumeBar.qml:83` (`anchors.leftMargin`), `components/reusable/StyledVolumeBar.qml:177` (`Layout.maximumWidth`)
-- **What:** `_gridWidth` has no reader (one hit repo-wide, its definition; `tileX` works out each row's width itself). StyledVolumeBar's fill sets `anchors.leftMargin: root.orientation === Qt.Vertical ? parent.width - width : 0`, but the left anchor is only set when horizontal, where the margin is 0. Its percentage's `Layout.maximumWidth: root.showPercent ? Infinity : parent.width - Widget.px(4)` takes the second branch only while the text is "" and hidden. Fix: delete lines 58, 83 and 177 (the label's `Layout.preferredWidth` already fixes its width when shown). 3 lines.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the ui-kit system
 
