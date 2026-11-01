@@ -203,10 +203,6 @@ Singleton {
     _save();
   }
 
-  function copy(text) {
-    ClipboardManager.copyText(text);
-  }
-
   // Lists a provider's chat models (Settings → Chat's Test and Fetch
   // models), calling back with (error, models): models is null when the
   // address didn't answer like that kind of API

@@ -216,8 +216,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Calendar results and members nothing reads
   - The Accounts card's fallbacks for a renamed key and for empty account ids
   - Two members of the brightness system nothing needs
-  - [package chat's Log option is never used](../issues.md#package-chats-log-option-is-never-used)
-  - [ChatManager.copy only forwards to ClipboardManager.copyText](../issues.md#chatmanagercopy-only-forwards-to-clipboardmanagercopytext)
+  - package chat's Log option is never used
+  - ChatManager.copy only forwards to ClipboardManager.copyText
   - [Notes documents count a revision nothing reads](../issues.md#notes-documents-count-a-revision-nothing-reads)
   - [NoteMarkdown's reparse repeats _normalize](../issues.md#notemarkdowns-reparse-repeats-_normalize)
   - [net.join's first-Wi-Fi fallback is never reached](../issues.md#netjoins-first-wi-fi-fallback-is-never-reached)

@@ -1842,16 +1842,16 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
 ### Replacing the chat's conversation leaves its reply and attachments behind
-- **Where:** `services/apps/ChatManager.qml:70` (`newConversation`), `services/apps/ChatManager.qml:77` (`open`), `services/apps/ChatManager.qml:166` (`ask`), `services/apps/ChatManager.qml:503` (`_finish`)
+- **Where:** `services/apps/ChatManager.qml:70` (`newConversation`), `services/apps/ChatManager.qml:77` (`open`), `services/apps/ChatManager.qml:166` (`ask`), `services/apps/ChatManager.qml:499` (`_finish`)
 - **What:** `newConversation` and `open` replace the conversation but only half let go of what belonged to the old one:
-  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 504 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
+  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 500 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
   - **Pending attachments.** A pasted image, screenshot or dropped file is copied at once into `chats/<current id>/` (with `Chat.keepConversations` > 0); both functions just set `root.attachments = []` (only `detach` runs `rm`). A conversation never sent is never in `index.json`, so neither `remove` nor the pruning in `_writeConversation` reaches its folder: paste a screenshot, click New conversation, and the screenshot stays in `~/.local/state/axiom/chats/<id>/` for good, a privacy leak as much as a disk one (the same for attachments pending at a reload, left as rare).
   Fix: one helper both call before replacing the conversation, `_letGo()`: `if (busy) { stop(); _replyId = ""; streamingText = ""; streamingThinking = ""; }` (the late answer and deltas then fail their id check) and `attachments.forEach(a => CommandManager.runDetached(["rm", "-f", "--", a.path]))`.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
 
 ### Images dropped together on the chat overwrite each other
-- **Where:** `services/apps/ChatManager.qml:371` (`_attachmentPath`), `components/content/Chat/Chat.qml:141` (`onDropped`)
+- **Where:** `services/apps/ChatManager.qml:367` (`_attachmentPath`), `components/content/Chat/Chat.qml:141` (`onDropped`)
 - **What:** An attachment's file is named `${Date.now().toString(36)}.${ext}` in the conversation's folder. The DropArea calls `attachFile` for each URL in one synchronous loop, and each `attachFile` computes its copy's path before its `cp` runs, so two images of one type dropped together get the same millisecond and the same path: both `cp`s write one file, the composer shows two chips of the last image, the first image is never sent, and removing either chip (`detach` → `rm -f`) deletes the file the other still points to. Fix: make the name unique as `_blank` does for ids: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}` (or a counter property).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
@@ -1877,18 +1877,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### An attachment's thumbnail pokes past its rounded corners
 - **Where:** `components/content/parts/chat/AttachmentChip.qml:23` (`clip`)
 - **What:** The chip is a Rectangle with `radius: Widget.radius / 2` and `clip: true`, which clips to the bounding box, so the `PreserveAspectCrop` image (inset 1 px) draws its square corners over the rounded border, in the composer and in every sent message. qml-pitfalls.md: "Rounded clipping is Quickshell.Widgets' `ClippingRectangle`". Fix: make the root a `ClippingRectangle` (with its `color` set) in place of the Rectangle and drop `clip: true`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### package chat's Log option is never used
-- **Where:** `backend/internal/chat/chat.go:46` (`Options.Log`), `backend/internal/daemon/chat.go:21` (`chatMethods`)
-- **What:** `Options.Log` is defaulted in `New` and passed by the daemon, but nothing in package chat logs (`grep -n 'o\.Log' backend/internal/chat/*.go`: only the default in `New`). Fix: drop the field (line 46), its default (lines 67–69), the `log/slog` import (line 15) and the daemon's `Log:` line: 6 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### ChatManager.copy only forwards to ClipboardManager.copyText
-- **Where:** `services/apps/ChatManager.qml:206` (`copy`), `components/content/parts/chat/ChatMessage.qml:307`, `components/content/parts/chat/ChatCodeBlock.qml:56`
-- **What:** `copy(text)` is `ClipboardManager.copyText(text)` and nothing else; its two callers can call `ClipboardManager.copyText` directly, as `CodeLine` does. Fix: delete it (lines 206–208, 3 lines) and import `qs.services.system` in the two parts.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
 
