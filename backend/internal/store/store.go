@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -489,15 +490,17 @@ func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue) {
 		return loaded.Config, issues(loaded.Errors)
 	}
 	if loaded.Migrated {
+		// The file as it was, once, beside it: nothing is lost if the
+		// conversion or a step missed something
+		backup := fmt.Sprintf("config.v%d.json", loaded.From)
 		if loaded.FromFormat1 {
-			// The file as it was, once, beside it: nothing is lost if the
-			// conversion missed something
-			backup := filepath.Join(filepath.Dir(s.path), Format1File)
-			if _, err := os.Lstat(backup); errors.Is(err, fs.ErrNotExist) {
-				if err := fsx.WriteFile(backup, data, 0o600); err != nil {
-					s.opts.Log.Error("keeping the format-1 config failed; the file isn't rewritten", "err", err)
-					return loaded.Config, nil
-				}
+			backup = Format1File
+		}
+		backup = filepath.Join(filepath.Dir(s.path), backup)
+		if _, err := os.Lstat(backup); errors.Is(err, fs.ErrNotExist) {
+			if err := fsx.WriteFile(backup, data, 0o600); err != nil {
+				s.opts.Log.Error("keeping the config before its migration failed; the file isn't rewritten", "err", err)
+				return loaded.Config, nil
 			}
 		}
 		out := jsonx.Marshal(loaded.Config)

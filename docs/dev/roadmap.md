@@ -462,7 +462,6 @@ Found by the audits:
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-- [A format-2 config without a version runs every step again](issues.md#a-format-2-config-without-a-version-runs-every-step-again)
 - [The condition grammar has no shared fixtures](issues.md#the-condition-grammar-has-no-shared-fixtures)
 - [Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot](issues.md#over-a-configjson-that-didnt-load-at-the-start-keeping-the-running-config-saves-the-defaults-over-the-active-snapshot)
 - [A save overwrites an outside edit of config.json the store hasn't read yet](issues.md#a-save-overwrites-an-outside-edit-of-configjson-the-store-hasnt-read-yet)

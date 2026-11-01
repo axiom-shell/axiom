@@ -97,12 +97,29 @@ func TestFormat1IsConvertedAndKept(t *testing.T) {
 	}
 }
 
+// A migrated format-2 file is kept once as it was, by its version.
+func TestMigratedFileIsKept(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	old := []byte(`{"format": 2, "version": 76}`)
+	os.WriteFile(filepath.Join(dir, FileName), old, 0o644)
+	s := open(t, dir)
+	if cfg, st := s.Config(); st.Blocked || cfg.Value("version") != float64(steps.Current()) {
+		t.Fatalf("version %v state %+v", cfg.Value("version"), st)
+	}
+	kept, err := os.ReadFile(filepath.Join(dir, "config.v76.json"))
+	if err != nil || string(kept) != string(old) {
+		t.Errorf("v76 copy: %q %v", kept, err)
+	}
+}
+
 func TestFormatsItCantReadBlock(t *testing.T) {
 	t.Parallel()
 	for name, content := range map[string]string{
 		"no format, format 2's version": `{"version": 76}`,
 		"another format":                `{"format": 3, "version": 80}`,
 		"newer version":                 `{"format": 2, "version": 99}`,
+		"no version":                    `{"format": 2}`,
 	} {
 		dir := t.TempDir()
 		os.WriteFile(filepath.Join(dir, FileName), []byte(content), 0o644)
