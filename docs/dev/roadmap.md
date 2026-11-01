@@ -653,6 +653,10 @@ Found by the audits:
 - [community.fetch isn't sent again after a daemon re-exec, and blanks every thumbnail](issues.md#communityfetch-isnt-sent-again-after-a-daemon-re-exec-and-blanks-every-thumbnail)
 - [CommunityCatalog's setups carry three fields nothing reads](issues.md#communitycatalogs-setups-carry-three-fields-nothing-reads)
 - [The apply's wallpaper rides in a property instead of the callback](issues.md#the-applys-wallpaper-rides-in-a-property-instead-of-the-callback)
+- [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
+- [Clicking an older capture's notification opens the newest capture](issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
+- [The screenshot's Edit notification rebuilds sendNotification's actions](issues.md#the-screenshots-edit-notification-rebuilds-sendnotifications-actions)
+- [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
