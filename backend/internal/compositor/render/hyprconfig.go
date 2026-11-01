@@ -285,8 +285,9 @@ var (
 	spaceRun    = regexp.MustCompile(`\s+`)
 )
 
-// IsAgentCommand is PolkitAgents.isAgentCommand: whether an autostart
-// command starts a known polkit agent (by name or path, or its unit).
+// IsAgentCommand is whether an autostart command starts a known polkit
+// agent (PolkitAgents.qml's agents): runs one by name or path, or starts
+// its unit ("systemctl --user start hyprpolkitagent").
 func (t *Tables) IsAgentCommand(command any) bool {
 	for _, word := range spaceRun.Split(trim(str(command)), -1) {
 		name := agentQuotes.ReplaceAllString(strings.TrimSuffix(agentPath.ReplaceAllString(word, ""), ".service"), "")

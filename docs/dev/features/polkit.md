@@ -16,7 +16,7 @@ Axiom as the session's polkit agent: it takes over registration from other agent
 ### Taking over from other agents
 A session has one agent, and Quickshell never retries a failed registration. So:
 - **After 2 s:** if the agent is still unregistered, it looks for the agents `components/methods/PolkitAgents` knows.
-  - `PolkitAgents` is pure: process names, systemd user units, `isAgentCommand`, `processPattern`.
+  - `PolkitAgents` is pure: process names, systemd user units, `processPattern`. The managed mode's autostart matches agent commands in Go against the same table (`Tables.IsAgentCommand`).
   - Matches are anchored to the executable, so a command whose argument names an agent is never killed.
 - **Stopping them:** `systemctl --user stop` for the active units, `pkill -f` for the rest.
 - **Remaking:** it then remakes the agent after a 300 ms pause, even when it found no agent to stop (a stopped agent can hold the session for a moment after its kill). The old agent is deleted later, and a new one made before then doesn't register.

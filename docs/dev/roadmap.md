@@ -549,7 +549,6 @@ Found by the audits:
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 - [A shell started locked locks again on every reload](issues.md#a-shell-started-locked-locks-again-on-every-reload)
 - [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
-- [PolkitAgents.isAgentCommand is dead since the autostart moved to Go](issues.md#polkitagentsisagentcommand-is-dead-since-the-autostart-moved-to-go)
 - [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
 - [Uninstall keeps a stale greetd backup when greetd points elsewhere](issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
 - [The greeter reads its keyboard layouts before the bundle's are applied](issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)

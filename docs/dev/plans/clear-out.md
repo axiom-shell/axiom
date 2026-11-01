@@ -141,7 +141,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Six more reader members nothing reads
   - Three reader members nothing reads
 - **platform-01** (6):
-  - [PolkitAgents.isAgentCommand is dead since the autostart moved to Go](../issues.md#polkitagentsisagentcommand-is-dead-since-the-autostart-moved-to-go)
+  - PolkitAgents.isAgentCommand is dead since the autostart moved to Go
   - [GreetdManager.available is never read](../issues.md#greetdmanageravailable-is-never-read)
   - [EmojiManager's groups() is never called](../issues.md#emojimanagers-groups-is-never-called)
   - [LauncherManager keeps a dead clear() and a cliphist test](../issues.md#launchermanager-keeps-a-dead-clear-and-a-cliphist-test)
