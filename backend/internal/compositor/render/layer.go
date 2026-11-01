@@ -25,11 +25,6 @@ func hexByte(v float64) string {
 	return s
 }
 
-// Hex is CompositorLayer.hex: a color ({ r, g, b } in 0-1) as "rrggbb".
-func Hex(color any) string {
-	return hexByte(num(get(color, "r"))*255) + hexByte(num(get(color, "g"))*255) + hexByte(num(get(color, "b"))*255)
-}
-
 var colorText = regexp.MustCompile(`^#(?:[0-9a-fA-F]{2})?([0-9a-fA-F]{6})$`)
 
 // TextHex is a color as the shell writes it ("#rrggbb", or "#aarrggbb"
@@ -224,6 +219,17 @@ func GaussianShadow(shadow any) (radius, alpha float64) {
 	size := math.Max(2, num(get(shadow, "size")))
 	return round(size * 0.7),
 		math.Min(1, num(get(shadow, "baseAlpha"))*math.Min(1, 0.2*log(size))*num(or(get(shadow, "strength"), 1.0)))
+}
+
+// fitShadow is a shadow's size and color as a compositor draws it: the
+// gaussian standing in for axiom's own when it's soft (and has a color to
+// tint), else the spec's own.
+func fitShadow(shadow any) (size, color any) {
+	if !truthy(get(shadow, "soft")) || !truthy(get(shadow, "rgb")) {
+		return get(shadow, "size"), get(shadow, "color")
+	}
+	r, a := GaussianShadow(shadow)
+	return r, jsCat(get(shadow, "rgb")) + AlphaHex(a)
 }
 
 var inputPartNames = []string{"keyboard", "mouse", "touchpad", "cursor"}

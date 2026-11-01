@@ -165,8 +165,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [A second KDL writer in the kdl package](../issues.md#a-second-kdl-writer-in-the-kdl-package)
   - [Small shrinks in the compositor manager](../issues.md#small-shrinks-in-the-compositor-manager)
   - [niri's bind plan is a copy of runtimeLayer.plan](../issues.md#niris-bind-plan-is-a-copy-of-runtimelayerplan)
-  - [Go copies of bind helpers that only the parity replay calls](../issues.md#go-copies-of-bind-helpers-that-only-the-parity-replay-calls)
-  - [sway and niri each fit the shadow to axiom's themselves](../issues.md#sway-and-niri-each-fit-the-shadow-to-axioms-themselves)
+  - Go copies of bind helpers that only the parity replay calls
+  - sway and niri each fit the shadow to axiom's themselves
   - [SwayConfigBinds keeps its own copy of sway's $variables](../issues.md#swayconfigbinds-keeps-its-own-copy-of-sways-variables)
   - [Small shrinks in the sway writer and IPC](../issues.md#small-shrinks-in-the-sway-writer-and-ipc)
   - [binds and takeover each keep their own isFile and git check](../issues.md#binds-and-takeover-each-keep-their-own-isfile-and-git-check)

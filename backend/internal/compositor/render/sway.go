@@ -474,17 +474,12 @@ func SwayLookLines(look any, live bool) []string {
 	return out
 }
 
-// numberOr0 is Number(v) || 0
-func numberOr0(v any) float64 {
-	n := num(v)
-	if math.IsNaN(n) {
-		return 0
-	}
-	return n
-}
-
 func clampRound(v any, low, high float64) float64 {
-	return math.Max(low, math.Min(high, round(numberOr0(v))))
+	n := num(v)
+	if math.IsNaN(n) { // Number(v) || 0
+		n = 0
+	}
+	return math.Max(low, math.Min(high, round(n)))
 }
 
 func toggle(on any) string {
@@ -507,14 +502,7 @@ func (t *Tables) SwayFxLines(look, surfaces any) []string {
 			"blur_contrast "+fmtNum(round(num(get(b, "contrast")))/100))
 	}
 	if s := get(look, "shadow"); truthy(s) {
-		soft := truthy(get(s, "soft")) && truthy(get(s, "rgb"))
-		size := get(s, "size")
-		var color any = get(s, "color")
-		if soft {
-			r, a := GaussianShadow(s)
-			size = r
-			color = jsCat(get(s, "rgb")) + AlphaHex(a)
-		}
+		size, color := fitShadow(s)
 		out = append(out, "shadow_blur_radius "+fmtNum(clampRound(size, 0, 100)), "shadow_offset 0 0") // spread evenly, as axiom's own
 		if !jsonx.StrictEqual(color, "") {
 			out = append(out, "shadow_color #"+jsCat(color), "shadow_inactive_color #"+jsCat(color))
@@ -795,13 +783,15 @@ func SwayFileOutputLines(text any) []string {
 // --- A user's sway config ---
 
 var (
-	swayModBits   = map[string]int{"shift": 1, "lock": 2, "control": 4, "ctrl": 4, "mod1": 8, "alt": 8, "mod2": 16, "mod3": 32, "mod4": 64, "super": 64, "mod5": 128}
-	swayMouseKeys = map[string]string{"button1": "mouse:272", "button2": "mouse:274", "button3": "mouse:273", "button4": "mouse_up",
+	swayModBits = map[string]int{"shift": 1, "lock": 2, "control": 4, "ctrl": 4, "mod1": 8, "alt": 8, "mod2": 16, "mod3": 32, "mod4": 64, "super": 64, "mod5": 128}
+	// SwayMouseKeys are sway's mouse buttons as axiom's (Hyprland's names)
+	SwayMouseKeys = map[string]string{"button1": "mouse:272", "button2": "mouse:274", "button3": "mouse:273", "button4": "mouse_up",
 		"button5": "mouse_down", "button6": "mouse_left", "button7": "mouse_right", "btn_left": "mouse:272",
 		"btn_right": "mouse:273", "btn_middle": "mouse:274", "btn_side": "mouse:275", "btn_extra": "mouse:276"}
 
 	swayFloatingLine = regexp.MustCompile(`^floating_modifier\s+(\S+)(?:\s+(?:normal|inverse))?$`)
-	swaySet          = regexp.MustCompile(`^set\s+(\$\S+)\s+(.*)$`)
+	// SwaySetLine is a `set $name value` line (trimmed)
+	SwaySetLine      = regexp.MustCompile(`^set\s+(\$\S+)\s+(.*)$`)
 	swayModeQuoted   = regexp.MustCompile(`^mode\s+(?:--pango_markup\s+)?"(.+?)"\s*\{$`)
 	swayModeBare     = regexp.MustCompile(`^mode\s+(?:--pango_markup\s+)?(.+?)\s*\{$`)
 	swayBindsBlock   = regexp.MustCompile(`^((?:bindsym|bindcode)(?:\s+--\S+)*)\s*\{$`)
@@ -810,19 +800,38 @@ var (
 	swayContinuation = regexp.MustCompile(`\\\n`)
 )
 
+// Vars are sway's $variables as set so far, in the order they were set.
+type Vars struct {
+	names  []string
+	values map[string]string
+}
+
+// Set sets name (with its $) to value.
+func (v *Vars) Set(name, value string) {
+	if v.values == nil {
+		v.values = map[string]string{}
+	}
+	if _, ok := v.values[name]; !ok {
+		v.names = append(v.names, name)
+	}
+	v.values[name] = value
+}
+
+// Expand puts the variables into text, the longest names first (so $mod
+// doesn't take $modifier's place).
+func (v *Vars) Expand(text string) string {
+	names := append([]string(nil), v.names...)
+	slices.SortStableFunc(names, func(a, b string) int { return len(b) - len(a) })
+	for _, name := range names {
+		text = strings.ReplaceAll(text, name, v.values[name])
+	}
+	return text
+}
+
 // SwayConfigBinds is SwayConf.configBinds: the binds in a sway config's
 // text as BindKeys' entries ({ modmask, key, keycode, submap, description }).
 func SwayConfigBinds(text any) *jsonx.Array {
-	var varNames []string
-	vars := map[string]string{}
-	expand := func(line string) string {
-		names := append([]string(nil), varNames...)
-		slices.SortStableFunc(names, func(a, b string) int { return jsLen(b) - jsLen(a) })
-		for _, n := range names {
-			line = strings.ReplaceAll(line, n, vars[n])
-		}
-		return line
-	}
+	vars := &Vars{}
 	type block struct {
 		mode, prefix string
 		skip         bool
@@ -840,14 +849,11 @@ func SwayConfigBinds(text any) *jsonx.Array {
 			}
 			continue
 		}
-		if m := swaySet.FindStringSubmatch(line); m != nil {
-			if _, ok := vars[m[1]]; !ok {
-				varNames = append(varNames, m[1])
-			}
-			vars[m[1]] = trim(expand(m[2]))
+		if m := SwaySetLine.FindStringSubmatch(line); m != nil {
+			vars.Set(m[1], trim(vars.Expand(m[2])))
 			continue
 		}
-		line = expand(line)
+		line = vars.Expand(line)
 		if strings.HasSuffix(line, "{") {
 			b := block{}
 			isMode := false
@@ -938,7 +944,7 @@ func swayEntry(kind, combo, command, submap string) *jsonx.Object {
 	key, keycode := last, 0.0
 	if kind == "bindcode" {
 		key, keycode = "", jsonx.ToNumber(last)
-	} else if m, ok := swayMouseKeys[strings.ToLower(last)]; ok {
+	} else if m, ok := SwayMouseKeys[strings.ToLower(last)]; ok {
 		key = m
 	}
 	return jsonx.Obj("modmask", float64(mask), "key", key, "keycode", keycode, "submap", submap, "description", command)

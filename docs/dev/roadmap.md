@@ -383,8 +383,6 @@ Found by the audits:
 - [A sway line continuing a non-bind line is moved as a bind of its own](issues.md#a-sway-line-continuing-a-non-bind-line-is-moved-as-a-bind-of-its-own)
 - [Small shrinks in the compositor manager](issues.md#small-shrinks-in-the-compositor-manager)
 - [niri's bind plan is a copy of runtimeLayer.plan](issues.md#niris-bind-plan-is-a-copy-of-runtimelayerplan)
-- [Go copies of bind helpers that only the parity replay calls](issues.md#go-copies-of-bind-helpers-that-only-the-parity-replay-calls)
-- [sway and niri each fit the shadow to axiom's themselves](issues.md#sway-and-niri-each-fit-the-shadow-to-axioms-themselves)
 - [The Hyprland and sway bind merges each skip half of compositor/actions](issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
 - [Hyprland's remove deletes whatever hl.bind is on a site's line now](issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
 - [A claim comments out axiom's start inside a long string, breaking the script](issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
