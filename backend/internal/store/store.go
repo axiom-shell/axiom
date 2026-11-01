@@ -262,9 +262,9 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	defer s.changeMu.Unlock()
 	s.mu.Lock()
 	if s.state.Blocked && !opts.Restore {
-		issues := s.state.Issues
+		err := s.blocked()
 		s.mu.Unlock()
-		return 0, &axerr.Error{Kind: axerr.Conflict, Message: s.path + " doesn't load: fix it (or restore a saved config) before anything is saved", Issues: issues}
+		return 0, err
 	}
 	if s.takeoversUnknown && !opts.Takeover {
 		s.mu.Unlock()
@@ -305,6 +305,11 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	if onDisk, err := os.ReadFile(s.path); err == nil && !bytes.Equal(onDisk, s.written) {
 		s.mu.Unlock()
 		s.reloadHeld()
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if s.state.Blocked && !opts.Restore {
+			return 0, s.blocked() // the edit doesn't load
+		}
 		return 0, axerr.New(axerr.Conflict, "%s changed on disk: it was read again, save after that", s.path)
 	}
 	data := jsonx.Marshal(checked)
@@ -325,6 +330,11 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	s.queue(ev)
 	s.mu.Unlock()
 	return ev.State.Revision, nil
+}
+
+// blocked is the refusal of a save while the file doesn't load (s.mu held).
+func (s *Store) blocked() error {
+	return &axerr.Error{Kind: axerr.Conflict, Message: s.path + " doesn't load: fix it (or restore a saved config) before anything is saved", Issues: s.state.Issues}
 }
 
 // Watch reloads the file whenever something else changes it, until ctx

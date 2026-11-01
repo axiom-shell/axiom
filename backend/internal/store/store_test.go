@@ -300,6 +300,15 @@ func TestWriteOverAnUnreadEditIsRefused(t *testing.T) {
 	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "notify"), false)}, SetOptions{}); err != nil {
 		t.Errorf("save after the reload: %v", err)
 	}
+	// An edit that doesn't load is refused as one: saves stay blocked
+	os.WriteFile(path, []byte("{"), 0o600)
+	_, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "notify"), true)}, SetOptions{})
+	if e, ok := err.(*axerr.Error); !ok || !strings.Contains(e.Message, "doesn't load") || len(e.Issues) == 0 {
+		t.Errorf("refused over a broken edit: %v", err)
+	}
+	if _, st := s.Config(); !st.Blocked {
+		t.Error("the broken edit didn't block saves")
+	}
 }
 
 func TestOwnWritesDontReload(t *testing.T) {
