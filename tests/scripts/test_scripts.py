@@ -504,7 +504,7 @@ class CheckPackages(unittest.TestCase):
         ("install.sh", '"Wallpapers|awww|"', '"Wallpapers|awww|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
         ("install.sh", "REQUIRED=(git ", "REQUIRED=(specter git ", "'specter' isn't in PACKAGES"),
         ("packaging/aur/axiom-shell/PKGBUILD", "depends=('quickshell", "depends=('extra' 'quickshell",
-         "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell', 'ttf-material-symbols-variable'] aren't"),
+         "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell'] aren't"),
         ("packaging/aur/axiom-shell-git/PKGBUILD", "'awww: wallpapers'", "'phantom: boo'",
          "axiom-shell-git/PKGBUILD: optdepends phantom, which no install.sh feature or compositor installs"),
         ("packaging/aur/axiom-shell-git/PKGBUILD", None, None, "axiom-shell-git/PKGBUILD: no optdepends for awww"),
