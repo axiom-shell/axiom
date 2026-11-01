@@ -137,6 +137,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once axiom runs a binary built with row 15 (stage 8), pick a file from Settings (a wallpaper or a path setting) under each compositor and check the portal's picker opens and its choice lands, then with the portal stopped check zenity or kdialog opens instead; and run `axiom bug-info` under Hyprland, niri and sway and check its Compositor and monitor lines.
 - Once the shell runs the lock-survives-reload fix, let the idle lock come up, save a loaded QML file, then unlock with the password: the lock screen stays up throughout, `scripts/log.sh --all` shows no `Session lock object was destroyed without unlocking`, and the next save after unlocking reloads. Nested niri, sway and Hyprland showed it with a test unlock hook; the real idle lock and PAM only the live session can.
 - Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
+- On an NVIDIA machine without an AMD card, once axiom runs the graphs'-history change: show a GPU stat or graph and check it fills from the streamed `nvidia-smi` (`pgrep -c nvidia-smi` is 1 while shown, 0 a few seconds after closing, with no GPU graph configured), and on a laptop with a runtime-PM dGPU that the card stays `suspended` (`power/runtime_status`) with nothing open. If the GPU reads stay missing, nvidia-smi isn't printing each line as it comes when piped: fall back to one-shot queries off the sample path.
 - Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
 - Once the shell runs the workspace grid's centre start, with `Workspaces.layout` `grid` (3 × 3): log in under sway and Hyprland with two monitors and check each starts on its block's centre (5, 14); restart axiom after moving away and check nothing moves; on sway, switch the layout to `perMonitor` and back to `grid` and check every monitor goes to its centre, windows kept on their workspaces. Nested Hyprland (one output) showed the start, a reload leaving workspace 1 alone, and perMonitor → grid going to 5.
 - Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
@@ -494,7 +495,6 @@ Found by the audits:
 - [The launcher's /config can switch a takeover setting](issues.md#the-launchers-config-can-switch-a-takeover-setting)
 - [A failed update check shows as up to date](issues.md#a-failed-update-check-shows-as-up-to-date)
 - [A weather fetch that fails shows Loading forever](issues.md#a-weather-fetch-that-fails-shows-loading-forever)
-- [SystemManager samples every second while nothing is shown](issues.md#systemmanager-samples-every-second-while-nothing-is-shown)
 - [The active media player is Spotify first and never follows playback](issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
 - [Album art piles up in the runtime folder for the whole session](issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
 - [MediaManager ticks the position with nothing showing it](issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
@@ -694,9 +694,6 @@ Deferred by the maintainer (2026-10-30, stacked bars: "Stacked bars will be plan
 
 Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put this on hold - note that growing modules kinda needs a re-work or removal"):
 - [An integrated top or bottom menu's zone follows its growing modules](issues.md#an-integrated-top-or-bottom-menus-zone-follows-its-growing-modules)
-
-Deferred by the maintainer (2026-10-31, the system graphs' history: "Drop it now - mark accordingly in issues / roadmap for the robust daemon implementation"; the drop itself stays under Phase 11):
-- [The system graphs start empty until the daemon keeps their history](issues.md#the-system-graphs-start-empty-until-the-daemon-keeps-their-history)
 
 Deferred by the maintainer (2026-11-01, the clear-out's questions: awww's daemon "defer - awww will be taking it's own dedicated branch"; side-edge submenus "defer - This takes quite a bit of thought to make consistent without an option."; the pill bar's frame lag "defer"; lock screen notification settings "defer"; Windows zone names, on leaving it logged, "agree"):
 - [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (with awww's removal, maintainer: "awww is scheduled for remove in favor of axioms own animations")

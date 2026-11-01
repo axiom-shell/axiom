@@ -53,7 +53,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 
 ### Data sources
 - `SystemManager` adds:
-  - `history: true` (60-sample ring buffers);
+  - `history: true` (the last minute of each graphed metric, one sample a second, kept by axiom: a configured graph's from launch);
   - a `net` metric (`/proc/net/dev` rates; the connection itself is `NetworkingManager.netInfo`);
   - a `processes` metric (`/proc/<pid>/stat`, %CPU since the last sample; `kill(pid)` sends SIGTERM through axiom's `system.kill`).
 - Weather comes from `WeatherManager` (`acquire(owner)`, read `weather`, `current`, `condition`, `place`, …).

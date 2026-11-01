@@ -26,7 +26,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | AI chat | `curl`; `secret-tool` (libsecret) to keep keys in your keyring |
 | Launcher calculator | `qalc` (libqalculate) |
 | Brightness (keys, OSD bar) | nothing for a laptop panel (axiom sets its backlight through logind); `ddcutil` for external monitors over DDC/CI (monitors that support it, with i2c access: the package's udev rule gives it to the logged-in user) |
-| NVIDIA GPU stats | `nvidia-smi` (AMD is read from sysfs) |
+| NVIDIA GPU stats | `nvidia-smi`, one streamed process while GPU stats are shown or a GPU graph is configured on a card that never powers down (AMD is read from sysfs) |
 | Idle (dim, lock, screen off, suspend) | Nothing: axiom does it itself, on every compositor |
 | Login screen | `greetd` and its text login `agreety` (`greetd-agreety` on Arch), the fallback; `sway` for it to run in (recommended), or Hyprland without one; `pkexec` (polkit) to install it |
 | Calendar | `secret-tool` (libsecret) to keep account passwords in your keyring |
