@@ -635,6 +635,8 @@ Found by the audits:
 - [Two Bluetooth menus share one discovery scan, and one closing stops the other's](issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
 - [The join form stays incomplete after CA file is chosen and the security changed](issues.md#the-join-form-stays-incomplete-after-ca-file-is-chosen-and-the-security-changed)
 - [net.join's first-Wi-Fi fallback is never reached](issues.md#netjoins-first-wi-fi-fallback-is-never-reached)
+- [The VPN list's Tailscale row hides why Tailscale refused](issues.md#the-vpn-lists-tailscale-row-hides-why-tailscale-refused)
+- [The VPN state's device and autoconnect fields nothing reads](issues.md#the-vpn-states-device-and-autoconnect-fields-nothing-reads)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
