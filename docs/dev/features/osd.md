@@ -29,7 +29,7 @@ The on-screen displays: levels (volumes, microphone, brightness) as bars, the st
 
 ### Bars (`bars.items`)
 Each is `{ type, icon, showOsd, … }`; `icon` empty follows what it shows (the un-muted icon: muted, it's struck through), `showOsd` off lists it without opening the OSD (a change still shows on, and keeps open, an open one). A volume or microphone bar's icon mutes it on a click (`StyledVolumeBar.iconClickable`; an app's bar mutes the streams it matches). Drawn by `OSDBar`:
-- **`master`:** the default output's volume; its icon is `AudioManager.outputIcon` (the device's kind, muted, the level), as the Volume widget's.
+- **`master`:** the default output's volume; its icon is `AudioManager.outputIcon` for the device's kind, never its muted form (muted, it's struck through), as the Volume widget's.
 - **`other`:** the first playing stream that no App bar matches. Other apps skips the App bars of every OSD (`excludedApps`).
 - **`app`:** the streams its `apps` match, by name.
 - **`microphone`:** the default input's volume.
