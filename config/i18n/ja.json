@@ -3516,7 +3516,6 @@
     "Message": "",
     "What's unusual shows only the states out of the ordinary (Caps Lock on, muted, do not disturb, on battery, …) and the one that just changed. Every one picked shows each, lit when on.": "",
     "Num lock": "",
-    "The levels the OSD shows as bars, and how they're laid out. A change to one shows the bars, with the status icons beside them.": "",
     "Caps lock": "",
     "A change on it opens the OSD. Off, it still shows while the OSD is open, and a change keeps an open OSD open.": "",
     "Only the one that changed": "",
@@ -3527,7 +3526,6 @@
     "Status icons": "",
     "The cover, title and artist of the track playing, as a card.": "",
     "Icon shown with it: a Material Symbols name (fonts.google.com/icons), or text. Empty follows what it shows (the level, the device).": "",
-    "The state of the machine as icons: a change to one opens the OSD on the icons alone, and the bars show them beside the levels.": "",
     "Show the track playing": "",
     "Speakers": "",
     "Headphones": "",
@@ -3729,6 +3727,16 @@
     "Workspaces it spans": "",
     "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (when Removable drives › Show drive events is On the OSD; a click opens the drive, or unlocks an encrypted one). Messages are what `axiom message <icon> <text>` sends.": "",
     "Open the OSD for what you change with the mouse in axiom's own bar and panels (scrolling the Volume widget, a quick toggle). Off, those change an open OSD but don't open one. Keys and other apps always open it.": "",
-    "Show for changes made on screen": ""
+    "Show for changes made on screen": "",
+    "When the bars, the status icons and a card show together, each part is its own size, stepping in with curved corners (the longest by the edge), or all of them share one box as wide as the widest.": "",
+    "How long a card stays out below the icons, keeping the OSD open. Then it slides back in, and the OSD closes with it unless the mouse is on it. Hovering the card keeps it out. Messages use it too.": "",
+    "The state of the machine as icons: a change to one shows the icons. A change with a card (a drive plugged in, a VPN connecting) shows only the card; its icon is lit the next time the icons show.": "",
+    "Shape with several parts": "",
+    "The levels the OSD shows as bars, and how they're laid out. A change to one shows the bars.": "",
+    "Hold still under the mouse": "",
+    "Stepped": "",
+    "One box": "",
+    "While the mouse is on the OSD, a part that comes in goes at the far end, so nothing you're pointing at moves. Off, it takes its usual place, the longest by the edge.": "",
+    "Card timeout": ""
   }
 }

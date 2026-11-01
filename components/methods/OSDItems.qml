@@ -505,6 +505,76 @@ QtObject {
     return true;
   }
 
+  // A status change without a card while a card is out (`cardType`'s,
+  // `elapsed` ms old), the two in their own parts: "retract" when the
+  // card would say what no longer holds (its VPN, Wi-Fi or charger turned
+  // off: it draws back, the change shows), "suppress" when it's the
+  // card's own knock-on (a new device's mute, the other half of a VPN
+  // switch, a capture stopping as it starts: nothing shows), else "show"
+  // (unrelated: the card stays, the change shows on the buttons)
+  function besideCard(cardType, incoming, elapsed, tiles) {
+    if (incoming === cardType && ["vpn", "wifi", "charger"].includes(incoming) && tiles?.[incoming]?.on !== true)
+      return "retract";
+    if (cardType !== "message" && !root.replaces(cardType, incoming, elapsed, tiles, true, false))
+      return "suppress";
+    return "show";
+  }
+
+  // The OSD's parts, nearest the edge first on a tie: the bars, the
+  // status icons, the card
+  readonly property var parts: ["level", "status", "card"]
+
+  // The parts' order out from the edge once `incoming` opens: `order` the
+  // ones shown (kept as they are: nothing shown moves for a length
+  // changing), `lengths` each part's along the edge. It goes before the
+  // first one shorter by more than `snap` (or as long, within `snap`, and
+  // later in `parts`): the longest nearest the edge. `atEnd` (the pointer
+  // on the OSD, holding still): past them all, so nothing under it moves
+  function partOrder(order, incoming, lengths, snap, atEnd) {
+    const rest = order.filter(part => part !== incoming);
+    if (order.includes(incoming))
+      return order.slice();
+    if (atEnd)
+      return rest.concat([incoming]);
+    const mine = lengths?.[incoming] ?? 0;
+    const rank = part => root.parts.indexOf(part);
+    let at = rest.findIndex(part => {
+      const other = lengths?.[part] ?? 0;
+      return other < mine - snap || (Math.abs(other - mine) <= snap && rank(part) > rank(incoming));
+    });
+    if (at < 0)
+      at = rest.length;
+    return rest.slice(0, at).concat([incoming], rest.slice(at));
+  }
+
+  // Which parts close at `now` (ms), from `deadlines` (by part; 0 or
+  // missing: not open): those due, each held for any due within `grace`
+  // after it so they close together, not in steps. { due: [parts], next:
+  // when to look again (0: nothing pending) }
+  function partsDue(deadlines, now, grace) {
+    const open = Object.keys(deadlines ?? {}).filter(part => deadlines[part] > 0).sort((a, b) => deadlines[a] - deadlines[b]);
+    let due = [];
+    let next = 0;
+    let i = 0;
+    while (i < open.length) {
+      const first = deadlines[open[i]];
+      let j = i;
+      while (j + 1 < open.length && deadlines[open[j + 1]] - first <= grace)
+        j++;
+      const at = deadlines[open[j]];
+      const group = open.slice(i, j + 1);
+      if (at <= now)
+        due = due.concat(group);
+      else if (next === 0 || at < next)
+        next = at;
+      i = j + 1;
+    }
+    return {
+      "due": due,
+      "next": next
+    };
+  }
+
   // An audio device's name for the OSD's card, from its PipeWire node
   // ({ nick: node.nick, description: node.description, profile:
   // device.profile.description, bus: device.bus, kind: deviceKind's }):

@@ -158,7 +158,8 @@ var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.nir
 
 // osdItemFields drops what an OSD gained since format 1 that no step
 // writes: every bar's fields but its type, icon and showOsd (each kind's
-// own options), the status icons' row mode and cards switch, the
+// own options), the status icons' row mode, cards switch and card
+// timeout, the parts' shape and holding still, the
 // `drive` status of the default list and the now playing card. They come
 // from their defaults at load, or (the list) stay as the config had them.
 func osdItemFields(cfg *jsonx.Object) {
@@ -176,9 +177,12 @@ func osdItemFields(cfg *jsonx.Object) {
 			continue
 		}
 		e.Delete("media")
+		e.Delete("shape")
+		e.Delete("holdStill")
 		if statuses, _ := e.Value("statuses").(*jsonx.Object); statuses != nil {
 			statuses.Delete("row")
 			statuses.Delete("cards")
+			statuses.Delete("cardTimeout")
 			// A default status added since: a format-1 config keeps its list
 			if shown, _ := statuses.Value("items").(*jsonx.Array); shown != nil {
 				kept := shown.Items[:0]

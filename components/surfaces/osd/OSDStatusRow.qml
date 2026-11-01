@@ -10,8 +10,10 @@ import qs.components.reusable
 // a line along its edge. A tile is its icon (or short label: a layout's
 // code) in a rounded square: on the accent while on, faint while off (a
 // mute also struck through: SlashedIcon). The one that just changed is
-// ringed and pops in. A message never shows here: it's a card.
-// Hovered, a tile lightens and names itself and its state; one in
+// ringed (the ring fading in and out) and pops in. A message never shows
+// here: it's a card.
+// Hovered, a tile takes a faint layer at once and names itself and its
+// state; one in
 // `toggleable` is clicked to flip it (`toggled`).
 Item {
   id: root
@@ -80,12 +82,20 @@ Item {
         Layout.alignment: Qt.AlignCenter
         radius: Widget.radius
         readonly property bool lit: tile.t.on === true
-        readonly property color fill: tile.lit ? Theme.accent : Qt.alpha(Theme.backgroundHighlight, 0)
-        color: !area.containsMouse ? tile.fill : tile.lit ? Qt.lighter(tile.fill, 1.15) : Theme.backgroundAlt
+        // Only the state glides: hover is the layer below, at once, so
+        // moving across the row leaves no tile easing back behind it
+        color: tile.lit ? Theme.accent : Qt.alpha(Theme.accent, 0)
         ColorGlide on color {}
-        border.width: tile.current ? Widget.px(2) : 0
-        // The foreground, not borderFocus: that is the accent in most themes
-        border.color: Theme.foreground
+
+        // The hover layer: the ink faintly over the fill, so it shows on
+        // any accent (lightening a pale one barely changes it)
+        readonly property color hoverTint: Qt.alpha(tile.ink, 0.12)
+        Rectangle {
+          anchors.fill: parent
+          radius: tile.radius
+          visible: area.containsMouse
+          color: tile.hoverTint
+        }
 
         // Pops in as it becomes the change
         onCurrentChanged: {
@@ -112,7 +122,9 @@ Item {
           textSize: Appearance.fontSizeBy(6)
           textColor: tile.ink
           slashed: tile.t.slash === true
-          cutout: tile.color
+          // What the slash parts the glyph in: the lit fill as it shows
+          // (hovered too); none on an unlit one, which has no fill
+          cutout: !tile.lit ? Qt.alpha(Theme.background, 0) : area.containsMouse ? Qt.tint(tile.color, tile.hoverTint) : tile.color
           opacity: tile.inkOpacity
         }
 
@@ -123,6 +135,31 @@ Item {
           font.bold: true
           textColor: tile.ink
           opacity: tile.inkOpacity
+        }
+
+        // The ring round the one that just changed: the foreground, then
+        // a gap in the background inside it, so it reads on the accent
+        // fill too (borderFocus is the accent in most themes). Fades in
+        // and out
+        Rectangle {
+          anchors.fill: parent
+          radius: tile.radius
+          color: "transparent"
+          border.width: Widget.px(2)
+          border.color: Theme.foreground
+          opacity: tile.current ? 1 : 0
+          Glide on opacity {
+            duration: Appearance.animNormal
+          }
+
+          Rectangle {
+            anchors.fill: parent
+            anchors.margins: Widget.px(2)
+            radius: Math.max(0, tile.radius - Widget.px(2))
+            color: "transparent"
+            border.width: Widget.px(2)
+            border.color: Theme.background
+          }
         }
 
         MouseArea {

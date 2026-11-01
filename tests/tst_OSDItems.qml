@@ -727,4 +727,78 @@ TestCase {
       compare([name.title, name.detail, name.translate === true], [title, detail, translate], what);
     }
   }
+
+  function test_besideCard() {
+    const vpnDown = {
+      "vpn": OSDItems.tile("vpn", {
+        "available": true,
+        "on": false
+      })
+    };
+    compare(OSDItems.besideCard("vpn", "vpn", 300, vpnDown), "retract", "a drop: the card would say Connected");
+    compare(OSDItems.besideCard("vpn", "vpn", 5000, vpnDown), "retract", "a drop later too");
+    compare(OSDItems.besideCard("vpn", "capsLock", 300, vpnDown), "show", "unrelated: the card stays");
+    compare(OSDItems.besideCard("camera", "camera", 300, {}), "suppress", "a capture stopping as it starts");
+    compare(OSDItems.besideCard("microphone", "microphone", 300, {}), "suppress", "the new input's mute coming in");
+    compare(OSDItems.besideCard("microphone", "microphone", OSDItems.quietWindow, {}), "show", "the user's own mute later");
+    compare(OSDItems.besideCard("message", "capsLock", 300, {}), "show", "a message stays beside the buttons");
+  }
+
+  function test_partOrder() {
+    const lengths = {
+      "level": 200,
+      "status": 120,
+      "card": 400
+    };
+    compare(OSDItems.partOrder([], "level", lengths, 20, false), ["level"]);
+    compare(OSDItems.partOrder(["level"], "card", lengths, 20, false), ["card", "level"], "the longest nearest the edge");
+    compare(OSDItems.partOrder(["level"], "status", lengths, 20, false), ["level", "status"]);
+    compare(OSDItems.partOrder(["level"], "card", lengths, 20, true), ["level", "card"], "holding still: past them all");
+    compare(OSDItems.partOrder(["level", "status"], "status", lengths, 20, false), ["level", "status"], "already shown");
+    compare(OSDItems.partOrder(["status"], "level", {
+      "level": 130,
+      "status": 120
+    }, 20, false), ["level", "status"], "a tie: the bars first");
+    compare(OSDItems.partOrder(["level"], "status", {
+      "level": 120,
+      "status": 130
+    }, 20, false), ["level", "status"], "a tie: the buttons after");
+    compare(OSDItems.partOrder(["status", "level"], "card", {
+      "level": 300,
+      "status": 100,
+      "card": 200
+    }, 20, false), ["card", "status", "level"], "an unsorted order kept: before the first shorter");
+  }
+
+  function test_partsDue() {
+    compare(OSDItems.partsDue({}, 1000, 750), {
+      "due": [],
+      "next": 0
+    });
+    compare(OSDItems.partsDue({
+      "level": 1000,
+      "card": 0
+    }, 1000, 750), {
+      "due": ["level"],
+      "next": 0
+    });
+    compare(OSDItems.partsDue({
+      "level": 1000,
+      "card": 1500
+    }, 1000, 750), {
+      "due": [],
+      "next": 1500
+    }, "held for the card: they close together");
+    compare(OSDItems.partsDue({
+      "level": 1000,
+      "card": 1500
+    }, 1500, 750).due.sort(), ["card", "level"]);
+    compare(OSDItems.partsDue({
+      "level": 1000,
+      "card": 3000
+    }, 1000, 750), {
+      "due": ["level"],
+      "next": 3000
+    }, "apart: each on its own");
+  }
 }

@@ -71,10 +71,25 @@ properties:
     minimum: 250
     maximum: 10000
     description: How long the OSD stays open after the last change.
+  shape:
+    type: string
+    title: Shape with several parts
+    default: stepped
+    enum: [stepped, box]
+    x-enumLabels:
+      stepped: Stepped
+      box: One box
+    x-showIf: {detached: false}
+    description: 'When the bars, the status icons and a card show together, each part is its own size, stepping in with curved corners (the longest by the edge), or all of them share one box as wide as the widest.'
+  holdStill:
+    type: boolean
+    title: Hold still under the mouse
+    default: true
+    description: 'While the mouse is on the OSD, a part that comes in goes at the far end, so nothing you''re pointing at moves. Off, it takes its usual place, the longest by the edge.'
   bars:
     type: object
     title: Bars
-    description: 'The levels the OSD shows as bars, and how they''re laid out. A change to one shows the bars, with the status icons beside them.'
+    description: 'The levels the OSD shows as bars, and how they''re laid out. A change to one shows the bars.'
     additionalProperties: false
     properties:
       orientation:
@@ -150,7 +165,7 @@ properties:
   statuses:
     type: object
     title: Status icons
-    description: 'The state of the machine as icons: a change to one opens the OSD on the icons alone, and the bars show them beside the levels.'
+    description: 'The state of the machine as icons: a change to one shows the icons. A change with a card (a drive plugged in, a VPN connecting) shows only the card; its icon is lit the next time the icons show.'
     additionalProperties: false
     properties:
       row:
@@ -168,6 +183,14 @@ properties:
         title: Detail cards
         default: true
         description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, something done to a removable drive. Off, they show as their icon like any other change.'
+      cardTimeout:
+        type: integer
+        title: Card timeout
+        x-unit: ms
+        default: 4000
+        minimum: 1000
+        maximum: 15000
+        description: 'How long a card stays out below the icons, keeping the OSD open. Then it slides back in, and the OSD closes with it unless the mouse is on it. Hovering the card keeps it out. Messages use it too.'
       items:
         type: array
         title: Shows

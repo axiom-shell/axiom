@@ -126,6 +126,7 @@ Never, besides `AGENTS.md` › Never: open a PR of roadmap.md or issues.md edits
 ### Live checks
 What waits for the maintainer's own session (see [Running it unattended](#running-it-unattended) › Pick): a merged fix to confirm live, or an item only the live environment can build. None of it holds up a row; a confirmed check is deleted, a failed one becomes an issues.md entry.
 
+- With the OSD's parts drawn stepped: hover a part while another comes in (`holdStill` puts it past the others, nothing moves), leave and watch each part keep its own time, two ending within 750 ms close together (the card folds in, then the OSD slides away); and a bottom-edge OSD steps upward.
 - On sway and on Hyprland, show a few notifications, detached and attached, and check each toast blurs behind (the first after launch too): they're blur-backed shapes now, no longer popups of a 1x1 layer window (notifications revamp).
 - Confirm the missing app icon fallback in the launcher and dock with an icon theme lacking `applications-system-symbolic` (#196).
 - Lock once and check `scripts/log.sh` shows no `[ModuleGrid] … overlaps another` (#198).
