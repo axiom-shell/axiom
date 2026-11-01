@@ -6,8 +6,9 @@
 //
 // A file that doesn't load (bad JSON, invalid) blocks writes until it is
 // fixed, so a broken hand edit is never overwritten by the shell; the last
-// good config keeps running meanwhile. A file deleted while running is not
-// recreated until the next write.
+// good config keeps running meanwhile. Nor is an outside edit not read
+// yet: a write while one is on disk is refused. A file deleted while
+// running is not recreated until the next write.
 package store
 
 import (
@@ -293,6 +294,13 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 		s.mu.Unlock()
 		return rev, nil
 	}
+	// An edit made outside that the store hasn't read yet (the reload
+	// waits for its debounce) is never written over: the reload loads it,
+	// and the shell reads its config back on the refusal
+	if onDisk, err := os.ReadFile(s.path); err == nil && !bytes.Equal(onDisk, s.written) {
+		s.mu.Unlock()
+		return 0, axerr.New(axerr.Conflict, "%s changed on disk: it's read again, save after that", s.path)
+	}
 	data := jsonx.Marshal(checked)
 	if err := fsx.WriteFile(s.path, data, 0o600); err != nil {
 		s.mu.Unlock()
@@ -399,6 +407,7 @@ func (s *Store) loadInitial() error {
 	if err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "reading the config")
 	}
+	s.written = data
 	loaded, problems := s.load(data)
 	s.state.Revision = 1
 	if problems != nil {

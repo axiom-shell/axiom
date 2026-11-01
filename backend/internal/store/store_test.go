@@ -276,6 +276,33 @@ func TestBrokenFileBlocksSavesUntilFixed(t *testing.T) {
 	})
 }
 
+// A save made while an edit from outside waits for its reload is refused,
+// and the reload then loads the edit.
+func TestWriteOverAnUnreadEditIsRefused(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	s := open(t, dir) // not watched: the edit stays unread until reload
+	path := filepath.Join(dir, FileName)
+	cfg, _ := s.Config()
+	edited := jsonx.Clone(cfg).(*jsonx.Object)
+	edited.Value("Battery").(*jsonx.Object).Set("lowThreshold", 9.0)
+	os.WriteFile(path, jsonx.Marshal(edited), 0o600)
+
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "notify"), false)}, SetOptions{}); axerr.KindOf(err) != axerr.Conflict {
+		t.Errorf("saved over an unread edit: %v", err)
+	}
+	if data, _ := os.ReadFile(path); !strings.Contains(string(data), `"lowThreshold": 9`) {
+		t.Fatal("the edit was overwritten")
+	}
+	s.reload()
+	if cfg, _ := s.Config(); cfg.Value("Battery").(*jsonx.Object).Value("lowThreshold") != 9.0 {
+		t.Error("the edit wasn't loaded")
+	}
+	if _, err := s.Set([]config.Op{config.SetValue(config.Keys("Battery", "notify"), false)}, SetOptions{}); err != nil {
+		t.Errorf("save after the reload: %v", err)
+	}
+}
+
 func TestOwnWritesDontReload(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

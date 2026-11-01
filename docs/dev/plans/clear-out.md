@@ -242,7 +242,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 - **config-02** (3):
   - A format-2 config without a version runs every step again
-  - [A save overwrites an outside edit of config.json the store hasn't read yet](../issues.md#a-save-overwrites-an-outside-edit-of-configjson-the-store-hasnt-read-yet)
+  - A save overwrites an outside edit of config.json the store hasn't read yet
   - [Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot](../issues.md#over-a-configjson-that-didnt-load-at-the-start-keeping-the-running-config-saves-the-defaults-over-the-active-snapshot)
 - **config-03** (4): The two takeover entries are one fix (decided 2026-10-31).
   - [Takeover settings go live through the settings page's preview before Save](../issues.md#takeover-settings-go-live-through-the-settings-pages-preview-before-save)

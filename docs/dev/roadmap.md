@@ -464,7 +464,6 @@ Found by the audits:
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - [The condition grammar has no shared fixtures](issues.md#the-condition-grammar-has-no-shared-fixtures)
 - [Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot](issues.md#over-a-configjson-that-didnt-load-at-the-start-keeping-the-running-config-saves-the-defaults-over-the-active-snapshot)
-- [A save overwrites an outside edit of config.json the store hasn't read yet](issues.md#a-save-overwrites-an-outside-edit-of-configjson-the-store-hasnt-read-yet)
 - [Takeover settings go live through the settings page's preview before Save](issues.md#takeover-settings-go-live-through-the-settings-pages-preview-before-save)
 - [A number box keeps its typed text when the setting it edits switches under it](issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
 - [Escape in a settings-page number box leaves the half-typed value in the draft](issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)
