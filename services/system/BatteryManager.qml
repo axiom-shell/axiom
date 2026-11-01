@@ -32,6 +32,12 @@ QtObject {
   // daemon is there, so its CLI being installed stands in for it
   readonly property bool hasPowerProfiles: DependencyManager.found.powerprofilesctl === true
   readonly property bool powerSaver: hasPowerProfiles && PowerProfiles.profile === PowerProfile.PowerSaver
+  // The power profile as a name: "powerSaver" | "balanced" |
+  // "performance", "" without power-profiles-daemon
+  readonly property string profile: !hasPowerProfiles ? "" : PowerProfiles.profile === PowerProfile.PowerSaver ? "powerSaver" : PowerProfiles.profile === PowerProfile.Performance ? "performance" : "balanced"
+  // Running on the battery, not on a charger (UPower's own, so it holds
+  // while a full battery stops charging)
+  readonly property bool onBattery: UPower.onBattery
 
   // The last level notified about, so each drop into low and then
   // critical notifies once (charging, or a reload, starts over)

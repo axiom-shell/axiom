@@ -5,6 +5,7 @@ import Quickshell.Services.Pipewire
 
 import qs.config
 import qs.services.core
+import qs.components.methods
 
 // Pipewire audio state: the default output (sink) and input (source), every
 // device and app stream, and helpers to control them. All audio nodes are
@@ -84,6 +85,46 @@ QtObject {
 
   // -- Default input --
   readonly property var defaultSource: Pipewire.defaultAudioSource
+
+  // -- Settled defaults --
+
+  // Whether the default output's / input's level and mute changing now is
+  // the user's: the device has been the default, bound, since before the
+  // change, and still is. A device switching, appearing, binding or going
+  // away (a Bluetooth headset connecting, disconnecting or changing
+  // profile) changes them too: a node going away turns unready, then has
+  // its volumes cleared (reading 0) while it's still the default. The
+  // OSD's bars and microphone status read these
+  function sinkSettled() {
+    return root.defaultSink?.ready === true && root.defaultSink === root._settledSink;
+  }
+  function sourceSettled() {
+    return root.defaultSource?.ready === true && root.defaultSource === root._settledSource;
+  }
+
+  // The defaults, taken once they've bound and their own changes are
+  // through
+  property var _settledSink: null
+  property var _settledSource: null
+  function _settle() {
+    root._settledSink = root.defaultSink?.ready ? root.defaultSink : null;
+    root._settledSource = root.defaultSource?.ready ? root.defaultSource : null;
+  }
+  onDefaultSinkChanged: Qt.callLater(root._settle)
+  onDefaultSourceChanged: Qt.callLater(root._settle)
+  property Connections _sinkReady: Connections {
+    target: root.defaultSink
+    function onReadyChanged() {
+      Qt.callLater(root._settle);
+    }
+  }
+  property Connections _sourceReady: Connections {
+    target: root.defaultSource
+    function onReadyChanged() {
+      Qt.callLater(root._settle);
+    }
+  }
+  Component.onCompleted: root._settle()
 
   readonly property real sourceVolume: Pipewire.defaultAudioSource?.audio?.volume ?? 0
   readonly property bool sourceMuted: Pipewire.defaultAudioSource?.audio?.muted ?? false
@@ -186,6 +227,43 @@ QtObject {
       byKey[key].nodes.push(node);
     }
     return groups;
+  }
+
+  // -- Device identity / name --
+
+  // The physical device a sink or source is part of, as text: its sink
+  // and source share it, and so does a Bluetooth headset across its
+  // profiles (a profile switch replaces the node, not the device). A
+  // virtual node (no device) is its own. "" for none, or one not bound
+  // yet (its properties, so its device, come then)
+  function deviceKey(node) {
+    if (!node?.ready)
+      return "";
+    const props = node.properties || {};
+    const key = props["device.id"] ?? props["api.bluez5.address"] ?? node.id;
+    return key === undefined || key === null ? "" : String(key);
+  }
+
+  // A sink's or source's name to show ({ title, detail }:
+  // OSDItems.deviceName's, a kind's name translated)
+  function deviceLabel(node) {
+    if (!node)
+      return {
+        "title": "",
+        "detail": ""
+      };
+    const props = node.properties || {};
+    const name = OSDItems.deviceName({
+      "nick": props["node.nick"] ?? node.nickname ?? "",
+      "description": node.description || node.name || "",
+      "profile": props["device.profile.description"] ?? "",
+      "bus": props["device.bus"] ?? "",
+      "kind": root.deviceKind(node)
+    });
+    return {
+      "title": name.translate ? I18n.tr(name.title) : name.title,
+      "detail": name.detail
+    };
   }
 
   // -- Device kind / icons --

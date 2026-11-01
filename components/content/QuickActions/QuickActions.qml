@@ -81,7 +81,7 @@ Card {
         "status": root.onOff(BatteryManager.powerSaver)
       },
       "brightness": {
-        "icon": root.brightnessLevel < 0.34 ? "brightness_low" : root.brightnessLevel < 0.67 ? "brightness_medium" : "brightness_high",
+        "icon": BrightnessManager.icon(root.brightnessLevel),
         "label": I18n.tr("Brightness"),
         "active": false,
         "status": I18n.tr("{0}%", Math.round(root.brightnessLevel * 100)),

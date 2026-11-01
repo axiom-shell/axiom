@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Services.Pipewire
 
 import qs.services.system
 import qs.services.apps
@@ -10,41 +9,27 @@ import qs.components.bar.widgets.base
 // Mic / screen share / camera indicators, derived from active Pipewire
 // links (no polling). Hidden entirely while nothing is capturing.
 //   mic:    AudioManager.micCaptures (an app recording from a microphone)
-//   screen: a video source from xdg-desktop-portal linked to a stream, or
-//           axiom's own recording (wf-recorder uses screencopy, not the
-//           portal, so Pipewire never sees it)
-//   camera: any other video source linked to a stream
+//   screen: PrivacyManager.screenCaptures (a screencast's video linked
+//           to a stream), or axiom's own recording (wf-recorder uses
+//           screencopy, not the portal, so Pipewire never sees it)
+//   camera: PrivacyManager.cameraCaptures (a camera device's video)
 BarIconWidget {
   id: root
 
   readonly property var ignoredApps: properties.ignoreApps.map(a => a.trim().toLowerCase()).filter(a => a !== "")
 
-  // Links out of a video source (mic use comes from Audio). A link group's
-  // state reads Unlinked until the group is bound, so all are tracked.
-  readonly property var videoGroups: Pipewire.linkGroups.values.filter(g => g && g.source?.type === PwNodeType.VideoSource && g.target)
-  readonly property var activeGroups: videoGroups.filter(g => g.state === PwLinkState.Active)
-
   function ignored(node) {
     const names = [node.name, node.properties?.["application.name"], node.properties?.["application.process.binary"]];
     return names.some(n => n && root.ignoredApps.includes(n.toLowerCase()));
   }
-  // Quickshell has no type for `Stream/Input/Video`, so a screen/camera
-  // consumer is Untracked and `isStream` is false; read the media class.
-  function isVideoStream(node) {
-    return (node.properties?.["media.class"] ?? "") === "Stream/Input/Video";
-  }
-  function isPortal(node) {
-    return (node.name || "").startsWith("xdg-desktop-portal");
-  }
-  // Unique app names capturing from sources matching `sourceTest`
-  function users(sourceTest, targetTest) {
-    const names = activeGroups.filter(g => sourceTest(g.source) && targetTest(g.target) && !ignored(g.target)).map(g => AudioManager.appName(g.target));
-    return [...new Set(names)];
+  // Unique app names of the streams, past the ignored ones
+  function users(nodes) {
+    return [...new Set(nodes.filter(n => !root.ignored(n)).map(n => AudioManager.appName(n)))];
   }
 
-  readonly property var micUsers: properties.showMic ? [...new Set(AudioManager.micCaptures.filter(n => !ignored(n)).map(n => AudioManager.appName(n)))] : []
-  readonly property var screenUsers: properties.showScreen ? users(s => s.type === PwNodeType.VideoSource && isPortal(s), t => isVideoStream(t)).concat(ScreenshotManager.recording ? [I18n.tr("Screen recording")] : []) : []
-  readonly property var cameraUsers: properties.showCamera ? users(s => s.type === PwNodeType.VideoSource && !isPortal(s), t => isVideoStream(t)) : []
+  readonly property var micUsers: properties.showMic ? users(AudioManager.micCaptures) : []
+  readonly property var screenUsers: properties.showScreen ? users(PrivacyManager.screenCaptures).concat(ScreenshotManager.recording ? [I18n.tr("Screen recording")] : []) : []
+  readonly property var cameraUsers: properties.showCamera ? users(PrivacyManager.cameraCaptures) : []
 
   readonly property var glyphs: [...(micUsers.length ? ["mic"] : []), ...(screenUsers.length ? ["monitor"] : []), ...(cameraUsers.length ? ["camera"] : [])]
   hidden: glyphs.length === 0
@@ -53,12 +38,6 @@ BarIconWidget {
   showText: false
 
   accentColor: Theme.resolveColor(properties.activeColor)
-
-  // Binds the link groups (for their state) and the linked nodes (for
-  // media.class / application.name)
-  PwObjectTracker {
-    objects: root.videoGroups.concat(...root.videoGroups.map(g => [g.source, g.target]))
-  }
 
   clickable: true
   onClicked: {

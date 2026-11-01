@@ -59,12 +59,19 @@ QtObject {
       return;
     const clamped = Math.max(0, Math.min(1, value));
     _update(name, clamped);
-    if (!silent)
-      brightnessChanged(name);
     if (_writing[name])
       _pending[name] = clamped;
     else
       _write(name, clamped);
+    // After the write is marked, so the OSD opening on it doesn't read
+    // the monitor beside the write (refresh skips a monitor being written)
+    if (!silent)
+      brightnessChanged(name);
+  }
+
+  // The icon of a level (0-1): low, medium or high
+  function icon(level) {
+    return level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high";
   }
 
   // Idle dimming (the daemon's idle steps, through IPC): every monitor down to `fraction`

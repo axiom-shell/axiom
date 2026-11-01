@@ -10,7 +10,7 @@ import qs.components.methods
 
 // Every enabled OSD (OSD.osds), each on the screens its `monitors` puts it
 // on: an EdgePopout, held off its edge when `detached` (as a dock or edge
-// menu can be). A change opens every OSD holding that bar, on the target
+// menu can be). A change opens every OSD holding that item, on the target
 // screen (the focused one), or on all of them in "all" mode. Hiding is the
 // host's own hover-aware dismiss timer. Keyed by id, so editing an OSD's
 // settings updates it in place instead of rebuilding every OSD.
@@ -50,7 +50,9 @@ Scope {
           // The strip spans the OSD's own length along the edge
           triggerLength: edgeHost.vertical ? (edgeHost.contentItem?.implicitHeight ?? 0) : (edgeHost.contentItem?.implicitWidth ?? 0)
           dismissDelay: entry.osd.timeout
-          // The bars inside also report their own changes, so they must
+          // Room for the deepest of its parts, as it swaps between them
+          maxContentDepth: (edgeHost.contentItem as OSDContent)?.maxDepth ?? 0
+          // The items inside also report their own changes, so they must
           // exist while the OSD is closed
           keepLoaded: true
 
@@ -59,6 +61,8 @@ Scope {
               osd: entry.osd
               screenName: edgeHost.screen?.name ?? ""
               edgeVertical: edgeHost.vertical
+              // Until it has slid away, so the highlight stays as it goes
+              hostOpen: edgeHost.occupied
               onPoked: force => edgeTriggers.poke(force)
             }
           }

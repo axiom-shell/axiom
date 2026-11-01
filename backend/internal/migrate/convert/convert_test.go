@@ -143,6 +143,8 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			}
 		}
 	}
+	osdItemFields(converted)
+	osdItemFields(defaults.(*jsonx.Object))
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {
@@ -153,6 +155,49 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
 var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Apps.networkEditor", "Idle.caffeineWarning"}
+
+// osdItemFields drops what an OSD gained since format 1 that no step
+// writes: every bar's fields but its type, icon and showOsd (each kind's
+// own options), the status icons' row mode and cards switch and the now
+// playing card. They come from their defaults at load.
+func osdItemFields(cfg *jsonx.Object) {
+	osd, _ := cfg.Value("OSD").(*jsonx.Object)
+	if osd == nil {
+		return
+	}
+	list, _ := osd.Value("items").(*jsonx.Array)
+	if list == nil {
+		return
+	}
+	for _, entry := range list.Items {
+		e, _ := entry.(*jsonx.Object)
+		if e == nil {
+			continue
+		}
+		e.Delete("media")
+		if statuses, _ := e.Value("statuses").(*jsonx.Object); statuses != nil {
+			statuses.Delete("row")
+			statuses.Delete("cards")
+		}
+		bars, _ := e.Value("bars").(*jsonx.Object)
+		if bars == nil {
+			continue
+		}
+		items, _ := bars.Value("items").(*jsonx.Array)
+		if items == nil {
+			continue
+		}
+		for _, item := range items.Items {
+			if o, _ := item.(*jsonx.Object); o != nil {
+				for _, k := range o.Keys() {
+					if k != "type" && k != "icon" && k != "showOsd" {
+						o.Delete(k)
+					}
+				}
+			}
+		}
+	}
+}
 
 // Bar widget settings added since, the same way (a widget's display style,
 // the Network widget's VPN lock and its popout's VPN section)

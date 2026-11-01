@@ -8,6 +8,8 @@ import qs.services.compositor
 
 /* The shell's signals, link navigation and screen targeting */
 QtObject {
+  id: root
+
   signal openPowerMenu
   signal toggleAppLauncher
   signal toggleOverlay
@@ -52,6 +54,29 @@ QtObject {
   // Opens an OSD by id where it would open for a change (the settings
   // page's Show button)
   signal showOsd(string id)
+  // Shows a line of text on an OSD (`axiom ipc osd message`): the OSD of
+  // that id (OSDConfig.messageOsd picks it), where it would open for a
+  // change
+  signal osdMessage(string id, string icon, string text)
+
+  property IpcTarget _osdIpc: IpcTarget {
+    target: "osd"
+
+    // On the OSD showing messages (the first with a Messages item, else
+    // the first)
+    function message(icon: string, text: string): void {
+      root.osdMessage(OSDConfig.messageOsd(""), icon, text);
+    }
+
+    // On the OSD of that id
+    function messageTo(id: string, icon: string, text: string): void {
+      root.osdMessage(OSDConfig.messageOsd(id), icon, text);
+    }
+
+    function show(id: string): void {
+      root.showOsd(id);
+    }
+  }
 
   // Opens the overlay page with the biggest module of the first of `types`
   // any page has, else an edge menu with one (the first of `types` again);

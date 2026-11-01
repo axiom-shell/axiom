@@ -22,7 +22,7 @@ Panel {
   id: root
 
   readonly property bool hasPlayer: MediaManager.hasActivePlayer
-  readonly property string artSource: MediaManager.artDownloaded && MediaManager.artVersion >= 0 ? "file://" + MediaManager.artFilePath : ""
+  readonly property string artSource: MediaManager.artSource
   // Card only: the art beside the info and controls, when the slot is
   // clearly wider than tall
   readonly property bool sideBySide: root.embedded && root.innerWidth >= root.innerHeight * 1.25
@@ -80,35 +80,9 @@ Panel {
     }
   }
 
-  // The cover, rounded; a note when there's none
-  component Art: Item {
-    id: art
-    property real radius: Widget.radius
-    ClippingRectangle {
-      anchors.fill: parent
-      radius: art.radius
-      color: Theme.backgroundAlt
-      // A new cover fades in over the old once it has loaded
-      CrossFade {
-        anchors.fill: parent
-        value: root.artSource
-        delegate: Image {
-          required property var value
-          readonly property bool ready: status !== Image.Loading
-          source: value
-          fillMode: Image.PreserveAspectCrop
-          asynchronous: true
-          visible: status === Image.Ready
-        }
-      }
-      StyledIcon {
-        anchors.centerIn: parent
-        visible: root.artSource === ""
-        text: "music_note"
-        textSize: Math.min(art.width, art.height) * 0.4
-        opacity: 0.4
-      }
-    }
+  // The cover (CoverArt)
+  component Art: CoverArt {
+    source: root.artSource
   }
 
   // Title, artist and album; the player's name above, click to cycle
