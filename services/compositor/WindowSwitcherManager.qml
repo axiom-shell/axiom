@@ -79,7 +79,7 @@ Singleton {
   function pick(index) {
     root._index = index;
     root.commit();
-    if (CompositorManager.supports.switcher)
+    if (CompositorManager.supports.switcherRelease)
       CompositorManager.backend.leaveSwitcher();
   }
 

@@ -381,18 +381,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### Backends keep stubs for calls the facade gates
-- **Where:** `services/compositor/SwayManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`, `scrollStrip`, `leaveSwitcher`), `services/compositor/NiriManager.qml` (`withCursorPos`, `warpCursorToLayer`, `withLayerRects`, `applyRemap`, `leaveSwitcher`), `services/compositor/CompositorManager.qml` (`withLayerRects`), `services/compositor/WindowSwitcherManager.qml` (`pick`), `docs/dev/compositor/contract.md`
-- **What:** Deletion pass. `CompositorManager.withCursorPos` and `warpCursorToLayer` call the backend only with `supports.cursorPos` / `cursorWarp`, which only Hyprland sets, so sway's and niri's `withCursorPos` (calls back null) and empty `warpCursorToLayer` are never reached. `withLayerRects` is called ungated, but both only call back null, which the facade's no-backend branch already does. About 22 lines over the two backends. The sway review (2026-10-30) adds sway's `scrollStrip` (3 lines): the facade calls it only past `if (!root.supports.strips …) return;`, and sway has no `strips`. The compositor-parity review (2026-10-30) adds niri's empty `applyRemap` (3 lines with its comment): the facade returns before calling it when `root.supports.outputWorkspaces === true`, which niri sets. It also adds sway's and niri's empty `leaveSwitcher` (5 + 4 lines with their comments, which say "Nothing to let go"): `WindowSwitcherManager.pick` calls it under `supports.switcher`, which all three set, but only Hyprland holds the switcher's keys in a mode to leave (its `axiom_switcher` submap, `switcherRelease`). Fix: delete the six gated stubs; gate `pick`'s call on `CompositorManager.supports.switcherRelease` and delete the two `leaveSwitcher` stubs (list `leaveSwitcher()` under `switcherRelease` in contract.md); make `withLayerRects` optional in the facade (`root.backend?.withLayerRects ? … : callback(null)`) and delete its two stubs; mark the three optional in contract.md › Session and input and the compositor-backend recipe.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Small shrinks in the compositor layer
-- **Where:** `services/compositor/CompositorManager.qml` (`stepWorkspace`), `services/compositor/CompositorConfigManager.qml` (`copyIncludeLines`, `copyAutostartLines`), `config/WindowLookConfig.qml` (`shadowSoft`), `components/views/Settings/CompositorStatusCard.qml`
-- **What:** Deletion pass, about 12 lines. `stepWorkspace` re-derives `WorkspacesConfig.columns` and `rows` (`grid ? columns : size`, `grid ? rows : 1` equal them in every layout: `columns` is `count` and `rows` 1 outside the grid), a re-derivation of a reader's decision. `copyIncludeLines` / `copyAutostartLines` each wrap one `ClipboardManager.copyText` for one caller (the status card, which can call it itself). `WindowLookConfig.shadowSoft` is `_shadowMatched` under a second name, read once by `CompositorConfigManager._look`. Fix: use the readers' `columns`/`rows`; have the card call `ClipboardManager.copyText(CompositorConfigManager.includeLines)` and drop the wrappers; send `_shadowMatched` as a public `shadowMatched` (or keep one name).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### A trial monitor Apply that turns a monitor off drops its Keep/Revert
 - **Where:** `services/compositor/MonitorManager.qml` (`onOutputsHotplugged`, `apply`, `revert`), `services/compositor/HyprlandManager.qml` (`_announce`)
 - **What:** `apply()` evaluates the trial rules and sets `pending`; the hotplug handler (MonitorManager.qml:451-456) ends any pending trial (`pending = false; _countdown.stop()`), assuming the hotplug means the daemon already switched profiles. A trial whose rules disable or mirror a monitor makes Hyprland remove that output (`monitorremoved` → `outputsHotplugged`), so the trial ends itself: the prompt goes, the 15 s auto-revert is cancelled, `axiom ipc monitors revert` does nothing (`revert()` returns while `!pending`), and the trial layout stays live, unsaved. Turning the wrong monitor off is the case the revert exists for. Code path confirmed; that Hyprland sends `monitorremoved` for a rule-disabled monitor wants one nested Hyprland run (`scripts/dev/nested.sh hyprland`). Fix: end the trial only on a hotplug the trial's own rules don't explain (record the outputs `apply()` expects to stay enabled), or keep the countdown running. That makes a prompt window created while shown reachable, and `MonitorPromptWindow.qml:33` registers as modal only in `onVisibleChanged`: the fix should also register in `Component.onCompleted` (`PolkitWindow.qml:53` has the same pattern) (the hyprland review, 2026-10-30).
@@ -489,12 +477,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### HyprlandManager keeps members only it reads
-- **Where:** `services/compositor/HyprlandManager.qml` (`withAnimations`, `_optionsWaiting`, `runLua`, `withBinds`, `layerApplied`, `refreshOptions`, `animations`, `animationsEnabled`, `_compaction`, `applyRemap`, `_bases`), `docs/dev/hyprland/ipc.md`, `docs/recipes/service.md`
-- **What:** Deletion pass, about 40 lines. `withAnimations` has no caller, and `_optionsWaiting` serves only it (about 11 lines). `runLua` is a public wrapper whose only callers are its own `captureKeys` and `leaveSwitcher` (7 lines; `_eval` there). `withBinds` is used only by `withMainBinds` (inline, about 4). `layerApplied` only forwards to `refreshOptions` under two stacked comments (one function, about 4). `animations`/`animationsEnabled` are public but feed only `_workspaceAnim` (compute it in `_readOptions`, about 6). `_compaction` and `applyRemap` wrap their lines in the same animation-off/on prelude and epilogue (one `_runPlan(lines)`, about 4). `_bases` is recomputed on every output change though only the scrolling layout reads it (gate on `dynamicByLayout`, 2; the copy itself is by design, workspaces.md › Layouts). ipc.md's list of what `CompositorManager` uses ("`runLua`, `withOutputs`, `withBinds`, `refreshOptions`, `animations`, `switcherKey`") names a `withOutputs` that doesn't exist and four members no other file calls, leaves out `WindowSwitcherManager` (`leaveSwitcher`, `switcherKey`) and `CompositorConfigManager` (`layerApplied`) reaching the backend, and says the runtime layer's unbind goes through `runLua` (it's the daemon's now); service.md:109 also names `runLua`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### A bind description's section is parsed three ways
 - **Where:** `services/compositor/KeybindsPageState.qml` (`_bindSection`), `services/compositor/KeybindManager.qml` (`bindLabel`, `_buildKeybindings`), `components/methods/BindActions.qml` (`hasOwnSection`)
 - **What:** "Section: Label" is split three ways: `indexOf(": ")`, `indexOf(":")` and `split(":")[0]`. Only the editor's (`_bindSection`) doesn't trim, so `" Media: Play"` or `"Media : Play"` passes `hasOwnSection` (which trims) and gets its own " Media"/"Media " section and chip in the editor, while the reference shows it under Media. Fix: one `BindActions.splitDescription(text) → { section, label }` (trimmed), with test rows for a leading space and `a:b: c`, used by all three.
@@ -547,12 +529,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `backend/internal/compositor/ipc/niri.go` (`Reloads`), `backend/internal/compositor/manager/niri.go` (`checkLoaded`, `lastFailed`), `backend/internal/compositor/manager/manager.go` (`configReloaded`)
 - **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (the unread `NiriManager` property that forwarded it is gone). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### NiriManager queues actions the daemon could order
-- **Where:** `services/compositor/NiriManager.qml` (`_command`, `_next`), `backend/internal/daemon/compositorsocket.go` (`niriHandlers`)
-- **What:** Deletion pass. `NiriManager` keeps its own queue (`_command`, `_queue`, `_running`, `_next`: about 30 lines) so a chain of actions can't overtake itself, sending each only after the last one's reply came back through the daemon: one full round trip per action. The daemon already has the mechanism, `rpc.Registry.InOrder` (used for `outputs.apply`). A `niri.command` method registered in order, alongside `niri.request` for state, lets `_action` / `_command` send at once and drops the queue: about 30 QML lines for about 5 Go lines.
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the niri system
 
 ### Setting names that still confuse
@@ -933,23 +909,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### Small shrinks in SwayManager
-- **Where:** `services/compositor/SwayManager.qml:95` (`layersChanged`), `services/compositor/NiriManager.qml:120` (`layersChanged`), `services/compositor/SwayManager.qml:288` (`runCommands`), `services/compositor/SwayManager.qml:330` (`_lookSeen`), `services/compositor/SwayManager.qml:342` (`onActiveWindowIdChanged`), `services/compositor/SwayManager.qml:319` (`_configBlur`)
-- **What:** Deletion pass, 21 lines, every behaviour kept (the compositor-parity review found `runCommands` too, noting Hyprland's `runLua` has the same shape and is filed under "HyprlandManager keeps members only it reads"):
-  - `signal layersChanged` with its comment (94-95, 2 lines). It is never emitted, and the facade connects with `ignoreUnknownSignals: true` (`CompositorManager.qml:199`). niri's (`NiriManager.qml:119-120`, never emitted either) goes the same way, 2 more lines. contract.md › Signals then marks `layersChanged` optional (only Hyprland has it), and sway-backend.md drops its "`layersChanged`: never".
-  - `runCommands` (287-290, 4 lines). Its only callers are SwayManager's own (339, 370); neither passes an empty line or a callback, so its filter and `callback?.(ok)` do nothing. Call `SwayIpcManager.command(lines.join("; "))` instead.
-  - `_lookSeen` (328-330 and 313, 4 lines). It is always `root._windowEffects !== null`, so 334 becomes `if (!root._windowEffects)`.
-  - `onActiveWindowIdChanged: _applyWindowLook()` (342, 1 line). `windows` is bound to `SwayState.ranked(…, activeWindowId)`, so `onWindowsChanged` already runs it on every focus change, and today it runs twice.
-  - The blur default is written out twice (319-323 and 586-590), and `SwayState.configInfo("").blur` already holds it. That is 10 lines that become 2; keep the `fx` gate.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### Sway and niri each forward withMainBinds to the daemon
-- **Where:** `services/compositor/SwayManager.qml:358` (`withMainBinds`), `services/compositor/NiriManager.qml:391` (`withMainBinds`), `services/compositor/CompositorManager.qml:399` (`withBinds`)
-- **What:** Deletion pass, 10 lines. Since stage 7 both backends' `withMainBinds` are the same forward to `CompositorConfigManager.withEntries(callback)` (sway 356-360, niri 389-393), a layer whose job has shrunk to forwarding. Fix: the facade's `withBinds` calls `root.backend.withMainBinds ? root.backend.withMainBinds(callback) : CompositorConfigManager.withEntries(callback)` (only Hyprland reads its own), both forwards go, and contract.md marks `withMainBinds` optional.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
 ### The sway extract's input-device case and isSwayFlag repeat the general rule

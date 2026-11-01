@@ -114,8 +114,6 @@ Singleton {
 
   // --- Events ---
 
-  // Never: niri says nothing of the space layer surfaces take
-  signal layersChanged
   // An output was connected or disconnected
   signal outputsHotplugged
   // niri loaded its config again
@@ -254,10 +252,6 @@ Singleton {
       });
   }
 
-  // niri can't move the cursor (supports.cursorWarp is off)
-  function warpCursorToLayer(namespace, monitor, width, height, x, y) {
-  }
-
   // The Wayland toplevel for a window id, for live previews: none on niri,
   // so the overview draws the window's icon instead
   function toplevelFor(id) {
@@ -336,11 +330,6 @@ Singleton {
     root.focusOutput(follow ? name : from);
   }
 
-  // niri's workspaces belong to their output and keep their place there
-  // (supports.outputWorkspaces): there's nothing to remap
-  function applyRemap(plan, outputs) {
-  }
-
   // How niri refers to axiom's workspace `id`: by its own id where it has
   // that workspace, else by its place on the output (niri goes to its last,
   // empty one for a place past it)
@@ -375,20 +364,7 @@ Singleton {
     return root.focusedOutput;
   }
 
-  // --- The window switcher ---
-
-  // Nothing to let go: niri's switcher binds enter no mode (the daemon
-  // holds the keys while it's open: WindowSwitcherManager)
-  function leaveSwitcher() {
-  }
-
   // --- Binds ---
-
-  // Calls back with the binds in effect outside axiom's own (the user's,
-  // read from their config, and axiom's), or null
-  function withMainBinds(callback) {
-    CompositorConfigManager.withEntries(callback);
-  }
 
   // Nothing to do: the key recorder's window inhibits niri's shortcuts
   // itself (KeyRecorder's ShortcutInhibitor), niri having no empty mode
@@ -411,15 +387,6 @@ Singleton {
         "layout": direction === "prev" ? "Prev" : "Next"
       }
     }, () => callback?.());
-  }
-
-  // niri can't say where the cursor is, nor where layer surfaces are
-  function withCursorPos(callback) {
-    callback(null);
-  }
-
-  function withLayerRects(callback) {
-    callback(null);
   }
 
   // Ends the niri session (the power menu's log out)
@@ -557,31 +524,16 @@ Singleton {
   }
 
   // Sends a request that changes something ({ "Output": { … } }, an
-  // action) after those sent before, so a chain split over several calls
-  // can't overtake itself, then calls back with whether niri took it.
-  // Requests for state go at once.
+  // action) after those sent before (axiom runs niri.command in the order
+  // sent), so a chain split over several calls can't overtake itself, then
+  // calls back with whether niri took it. Requests for state go at once
   function _command(request, callback) {
-    _queue.push({
-      "request": request,
-      "callback": callback
-    });
-    if (!_running)
-      _next();
-  }
-
-  property var _queue: []
-  property bool _running: false
-
-  function _next() {
-    const item = _queue.shift();
-    if (!item) {
-      _running = false;
-      return;
-    }
-    _running = true;
-    root._request(item.request, reply => {
-      item.callback?.(reply !== null);
-      root._next();
+    BackendManager.call("niri.command", {
+      "request": request
+    }, error => {
+      if (error)
+        console.warn("[NiriManager]", JSON.stringify(request).slice(0, 160) + ":", error.message);
+      callback?.(!error);
     });
   }
 

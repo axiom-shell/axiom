@@ -91,8 +91,6 @@ Singleton {
 
   // --- Events ---
 
-  // Never: sway reports no layer surfaces
-  signal layersChanged
   // An output was connected or disconnected
   signal outputsHotplugged
   // Sway reloaded its config (binds and runtime settings reset)
@@ -176,10 +174,6 @@ Singleton {
       SwayIpcManager.command(lines.join("; "));
   }
 
-  // Sway can't move the cursor (supports.cursorWarp is off)
-  function warpCursorToLayer(namespace, monitor, width, height, x, y) {
-  }
-
   // The Wayland toplevel for a window id, for live previews: none on sway.
   // Quickshell can't capture a toplevel there (ScreencopyView calls it not
   // captureable), so the overview draws the window's icon instead.
@@ -192,10 +186,6 @@ Singleton {
   // Sends the focused window to workspace `id`, staying put
   function sendWindowToWorkspace(id) {
     SwayIpcManager.dispatch(`move container to workspace number ${id}`);
-  }
-
-  // Sway has no strips
-  function scrollStrip(direction) {
   }
 
   // A workspace switch (CompositorManager.goToWorkspace). Sway doesn't
@@ -267,14 +257,6 @@ Singleton {
     SwayIpcManager.command(SwayState.specialMove(root._marks, id, name, CompositorConfig.swaySpecial).join("; "), () => root._debounce.restart());
   }
 
-  // --- The window switcher ---
-
-  // Nothing to let go: sway's switcher binds enter no mode (the daemon
-  // holds the keys while it's open: WindowSwitcherManager), and `mode
-  // default` would leave one of the user's own
-  function leaveSwitcher() {
-  }
-
   // --- axiom's config layer (the daemon's: CompositorConfigManager) ---
 
   // axiom's config layer changed sway at runtime (the daemon's
@@ -282,11 +264,6 @@ Singleton {
   // windows are read again
   function layerApplied() {
     refresh();
-  }
-
-  // Runs sway commands (`lines`), in order, after those sent before
-  function runCommands(lines, callback) {
-    SwayIpcManager.command(lines.filter(line => line !== "").join("; "), ok => callback?.(ok));
   }
 
   // The window look as set now (the daemon's, render.Look, through
@@ -310,36 +287,29 @@ Singleton {
       "shadows": root.fx && look?.shadow ? true : null,
       "dim": root.fx && look?.dim ? look.dim.strength / 100 : null
     };
-    root._lookSeen = true;
     root._applyWindowLook();
   }
 
   property var _liveGaps: null
   property var _liveBlur: null
-  property var _configBlur: ({
-      "enabled": false,
-      "size": 5,
-      "passes": 2
-    })
+  property var _configBlur: SwayState.configInfo("").blur
   // SwayFX's default_dim_inactive in its config, what dim goes back to
   property real _configDim: 0
-  // The look's parts set a window at a time (SwayState.windowCommands)
+  // The look's parts set a window at a time (SwayState.windowCommands);
+  // null until the look is first set (after a reload of the shell, the
+  // windows keep what they have)
   property var _windowEffects: null
-  // Until the look is first set (after a reload of the shell), the
-  // windows keep what they have
-  property bool _lookSeen: false
 
   // Each window's look as the look's parts say, for those that changed
   function _applyWindowLook() {
-    if (!root._lookSeen)
+    if (!root._windowEffects)
       return;
     const plan = SwayState.windowCommands(root.windows, root.activeWindowId, root._windowEffects, JSON.parse(_recent.windowLookJson), root._configDim);
     _recent.windowLookJson = JSON.stringify(plan.applied);
     if (plan.lines.length > 0)
-      root.runCommands(plan.lines);
+      SwayIpcManager.command(plan.lines.join("; "));
   }
   onWindowsChanged: _applyWindowLook()
-  onActiveWindowIdChanged: _applyWindowLook()
 
   // After a config reload: each window's blur and shadows are the
   // config's again, so the look sent after every reload (setLiveLook)
@@ -353,12 +323,6 @@ Singleton {
     _recent.windowLookJson = JSON.stringify(applied);
   }
 
-  // Calls back with the binds in effect outside axiom's own modes (the
-  // user's, read from their config, and axiom's), or null
-  function withMainBinds(callback) {
-    CompositorConfigManager.withEntries(callback);
-  }
-
   // While on, every key reaches axiom instead of a bind (the Keybinds
   // page's recorder): an empty mode, left by an unreachable key. A sleeping
   // swaymsg leaves it after 30 s even if the shell dies meanwhile. Each
@@ -367,7 +331,7 @@ Singleton {
   function captureKeys(on) {
     if (on) {
       const mode = `axiom_record_${Date.now() % 1000000000}`;
-      runCommands([`mode "${mode}" bindsym --no-warn Mod4+Ctrl+Mod1+Shift+F24 mode default`, `mode "${mode}"`, `exec sleep 30 && swaymsg -t get_binding_state | grep -qw ${mode} && swaymsg mode default`]);
+      SwayIpcManager.command([`mode "${mode}" bindsym --no-warn Mod4+Ctrl+Mod1+Shift+F24 mode default`, `mode "${mode}"`, `exec sleep 30 && swaymsg -t get_binding_state | grep -qw ${mode} && swaymsg mode default`].join("; "));
     } else {
       SwayIpcManager.dispatch("mode default");
     }
@@ -386,15 +350,6 @@ Singleton {
   // Switches every keyboard to its "next" or "prev" layout, then calls back
   function cycleKeyboardLayout(direction, callback) {
     SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${direction === "prev" ? "prev" : "next"}`, () => callback?.());
-  }
-
-  // Sway can't say where the cursor is, nor list layer surfaces
-  function withCursorPos(callback) {
-    callback(null);
-  }
-
-  function withLayerRects(callback) {
-    callback(null);
   }
 
   // What can do what plain sway can't (CompositorManager.unsupportedNote).
@@ -583,11 +538,7 @@ Singleton {
       root._gaps = info.gaps;
       root._configLayouts = info.layouts;
       root._configDim = root.fx ? info.dim : 0;
-      root._configBlur = root.fx ? info.blur : {
-        "enabled": false,
-        "size": 5,
-        "passes": 2
-      };
+      root._configBlur = root.fx ? info.blur : SwayState.configInfo("").blur;
     }, null, true);
   }
 

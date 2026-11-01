@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.compositor
+import qs.services.system
 import qs.services.ui
 import qs.components.reusable
 
@@ -317,7 +318,7 @@ FieldGroup {
     // notification's Add it for me does
     canAdd: root.status !== "loaded" && CompositorConfigManager.includeTarget !== null
     adding: IntegrationHookupManager.busy.compositorModule > 0
-    onCopyClicked: CompositorConfigManager.copyIncludeLines()
+    onCopyClicked: ClipboardManager.copyText(CompositorConfigManager.includeLines)
     onAddClicked: CompositorConfigManager.addIncludeLines()
   }
 
@@ -335,7 +336,7 @@ FieldGroup {
     canAdd: CompositorConfigManager.autostartTarget !== null
     adding: IntegrationHookupManager.busy.compositorAutostart > 0
     added: root.autostartAdded
-    onCopyClicked: CompositorConfigManager.copyAutostartLines()
+    onCopyClicked: ClipboardManager.copyText(CompositorConfigManager.autostartLines)
     onAddClicked: CompositorConfigManager.addAutostartLines()
   }
 

@@ -106,7 +106,7 @@ Consumer (the request comes from config only, never from live values):
 ## Gotchas
 - **Greeter:** a side effect reachable from the greeter (writes, integrations, network) checks `Paths.greeter` first, as `CalendarManager` does.
 - **Secrets** go through `SecretsManager` (stdin), never argv or config.json.
-- **Hyprland:** only the `Hyprland*` services talk to it; anything else asks `HyprlandManager` (Lua through `runLua`, workspace and window focus through its functions). See [IPC](../dev/hyprland/ipc.md).
+- **Hyprland:** only the `Hyprland*` services talk to it; anything else asks `HyprlandManager` (workspace and window focus through its functions). See [IPC](../dev/hyprland/ipc.md).
 - **Requests:**
   - An identical re-`acquire` is a no-op, but a new object every sample churns every binding on `requests`.
   - Build requests from config only. Never key a Repeater model on live values (the 25 GB lesson).

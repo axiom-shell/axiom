@@ -174,14 +174,14 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - sway's and niri's merges build a moved bind the same way twice
   - The merge keeps key and variable tables render already has
 - **compositor-02** (12): Leaves the keybind tables entry's _bindMods change to compositor-17.
-  - [Backends keep stubs for calls the facade gates](../issues.md#backends-keep-stubs-for-calls-the-facade-gates)
-  - [Small shrinks in the compositor layer](../issues.md#small-shrinks-in-the-compositor-layer)
-  - [HyprlandManager keeps members only it reads](../issues.md#hyprlandmanager-keeps-members-only-it-reads)
+  - Backends keep stubs for calls the facade gates
+  - Small shrinks in the compositor layer
+  - HyprlandManager keeps members only it reads
   - [KeybindManager keeps tables the methods helpers already hold](../issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold)
   - [Bind helpers keep JS halves the daemon owns now](../issues.md#bind-helpers-keep-js-halves-the-daemon-owns-now)
-  - [NiriManager queues actions the daemon could order](../issues.md#nirimanager-queues-actions-the-daemon-could-order)
-  - [Small shrinks in SwayManager](../issues.md#small-shrinks-in-swaymanager)
-  - [Sway and niri each forward withMainBinds to the daemon](../issues.md#sway-and-niri-each-forward-withmainbinds-to-the-daemon)
+  - NiriManager queues actions the daemon could order
+  - Small shrinks in SwayManager
+  - Sway and niri each forward withMainBinds to the daemon
   - [sway and niri build output details and descriptions twice](../issues.md#sway-and-niri-build-output-details-and-descriptions-twice)
   - [The workspace strips repeat ActiveStrip's loader](../issues.md#the-workspace-strips-repeat-activestrips-loader)
   - [The workspace strips' panel property is never read](../issues.md#the-workspace-strips-panel-property-is-never-read)
