@@ -563,18 +563,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### The niri writer's runtimeOn and unread-binds guards are dead
-- **Where:** `backend/internal/compositor/manager/niri.go` (`runtimeOn`, `runtimeApply`, `entries`, `readUserConfig`)
-- **What:** Deletion pass. `niriWriter.runtimeOn` is set in `runtimeApply` and `runtimeClear` and never read (sway's is; niri's was copied along): 3 lines. `newNiri` calls `readUserConfig`, which always leaves `userEntries` non-nil (an empty array when the config can't be read), so `runtimeApply`'s and `entries`' `if w.userEntries == nil` returns and `readUserConfig`'s own nil guard can't happen: about 9 more lines, and `entries` never returns nil on niri.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
-### Three listings of niri's user files
-- **Where:** `backend/internal/compositor/manager/niri.go` (`userFiles`), `backend/internal/compositor/binds/niri.go` (`niriFiles`), `backend/internal/compositor/takeover/kinds.go` (`left`)
-- **What:** Deletion pass. The managed config's `user/*.kdl` (regular `.kdl` files, no hidden ones, by name) is listed three times: the writer's `userFiles` (12 lines), the merge's `niriFiles` (21, with `--only`), and the takeover's `left` (13), which counts what a restored config doesn't include. The copies disagree: `left` counts hidden `.kdl` files (an editor's swap file, a staged write) that the writer never includes, and skips a symlinked `.kdl` (`DirEntry.Type`) that the writer includes (`os.Stat`), so a release can report files left out that were never in. One `userconf.NiriUserFiles(dir)` used by all three saves about 25 lines and makes them agree.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the niri system
-
 ### NiriManager queues actions the daemon could order
 - **Where:** `services/compositor/NiriManager.qml` (`_command`, `_next`), `backend/internal/daemon/compositorsocket.go` (`niriHandlers`)
 - **What:** Deletion pass. `NiriManager` keeps its own queue (`_command`, `_queue`, `_running`, `_next`: about 30 lines) so a chain of actions can't overtake itself, sending each only after the last one's reply came back through the daemon: one full round trip per action. The daemon already has the mechanism, `rpc.Registry.InOrder` (used for `outputs.apply`). A `niri.command` method registered in order, alongside `niri.request` for state, lets `_action` / `_command` send at once and drops the queue: about 30 QML lines for about 5 Go lines.
@@ -755,18 +743,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `backend/internal/compositor/binds/sway.go:283` (`extractSway`)
 - **What:** Only the bind's own line is checked for a trailing `\`; a line that follows a continued line is read as a fresh statement. `exec_always foo \` then `bindsym Mod4+x kill` is to sway one `exec_always foo bindsym Mod4+x kill`; extract moves `SUPER + X → closeWindow` (reproduced) and remove prefixes the second line with `# (moved into axiom) `, so sway now runs `foo # (moved into axiom) bindsym Mod4+x kill` and the user gains a bind they never had. Rare. Fix: carry a `continued` flag from the previous raw line and skip a line it covers; one test row.
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Small shrinks in the compositor manager
-- **Where:** `backend/internal/compositor/manager/manager.go:760` (`AllowTakeover`), `backend/internal/compositor/manager/manager.go:532` (`state`), `backend/internal/compositor/manager/manager.go:888` (`release`), `backend/internal/compositor/manager/manager.go:1251` (`merge`), `backend/internal/compositor/manager/writer.go:216` (`sprintf`), `backend/internal/compositor/manager/hypr.go:70` (`problems`)
-- **What:** Deletion pass, about 15 lines. `AllowTakeover`'s `m.w == nil` check is dead (`enqueue` drops everything then) and its `if m.mode == "managed"` repeats line 760's early return; `state()`'s `if m.w != nil` (532) can't be false for its two callers, and its `kind` field (559) is read by no client; the approval removal with its warning is written twice (888-890, 1148-1150) beside an `approve()` for the add; `merge`'s `|| m.merging` (1251) can't be true at entry (set and cleared inside the one call on the manager goroutine); `sprintf` (writer.go:216) wraps `fmt.Sprintf` for its one caller `logf`; `problems().Blocked` is the same sentence in all three writers (hypr.go:70, sway.go:76, niri.go:88), read only at manager.go:854, where `m.files().ConfigDir` gives the one part that differs. Fix: drop the dead checks and `kind`, add `forgetApproval()`, call `fmt.Sprintf` in `logf`, build the blocked sentence in the manager and drop the field (and the fake writer's `Blocked`). Every path keeps its behaviour: each removed check is settled by the caller or the line before it. "Nothing reads userBindsRead or lastLoadFailed" drops another `state()` field, independently.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### niri's bind plan is a copy of runtimeLayer.plan
-- **Where:** `backend/internal/compositor/manager/niri.go:110` (`plan`), `backend/internal/compositor/manager/runtime.go:42` (`plan`)
-- **What:** `runtimeLayer` is "what every compositor's runtime layer shares", yet `niriWriter.plan` (niri.go:108-126, 19 lines) repeats `runtimeLayer.plan` (filter by `complete`, `render.RuntimeBinds` against the user's entries, keep `skipped`, log each taken key once through its own `reported` map, with its own `reported`/`skipped` fields). It has drifted: it drops `RuntimeBinds`' unreadable keys without the "Can't read the key %q" log the other two give, and words the skip log differently. Fix: give `niriWriter` a `runtime runtimeLayer{configName: "niri"}`; `parts`, `entries`, `ownKey` and `skippedKeys` use it; about 15 lines fewer and one log wording.
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor system
 
 ### The Hyprland and sway bind merges each skip half of compositor/actions
@@ -987,15 +963,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Sway and niri each forward withMainBinds to the daemon
 - **Where:** `services/compositor/SwayManager.qml:358` (`withMainBinds`), `services/compositor/NiriManager.qml:391` (`withMainBinds`), `services/compositor/CompositorManager.qml:399` (`withBinds`)
 - **What:** Deletion pass, 10 lines. Since stage 7 both backends' `withMainBinds` are the same forward to `CompositorConfigManager.withEntries(callback)` (sway 356-360, niri 389-393), a layer whose job has shrunk to forwarding. Fix: the facade's `withBinds` calls `root.backend.withMainBinds ? root.backend.withMainBinds(callback) : CompositorConfigManager.withEntries(callback)` (only Hyprland reads its own), both forwards go, and contract.md marks `withMainBinds` optional.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### Small shrinks in the sway writer and IPC
-- **Where:** `backend/internal/compositor/manager/sway.go:203` (`setCursor`), `backend/internal/compositor/render/sway.go:478` (`numberOr0`), `backend/internal/compositor/ipc/sway.go:45` (`swayWrite`)
-- **What:** Deletion pass, about 10 lines:
-  - `setCursor` (203-205) sends `seat * xcursor_theme …`, but the live lines carry the same line every time (`SwayInputLines` appends `SwayCursorLine` whenever a cursor is set, `live` or not), so a cursor change sends it twice. Make it a no-op (3 lines to 1).
-  - `numberOr0` (478-485) has one caller, `clampRound`. Inline it as a NaN check (8 lines out, about 2 in).
-  - `swayWrite`'s tail (45-48) becomes `_, err := conn.Write(…); return err` (4 lines to 2).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 

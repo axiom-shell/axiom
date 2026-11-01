@@ -14,7 +14,7 @@ Sound in its core: state, events, SwayFX gating, quoting and the runtime layer's
 - Cleanup: [Small shrinks in SwayManager](../../docs/dev/issues.md#small-shrinks-in-swaymanager)
 - Cleanup: [Sway and niri each forward withMainBinds to the daemon](../../docs/dev/issues.md#sway-and-niri-each-forward-withmainbinds-to-the-daemon)
 - Cleanup: "SwayConfigBinds keeps its own copy of sway's $variables" (fixed, row 20 compositor-01)
-- Cleanup: [Small shrinks in the sway writer and IPC](../../docs/dev/issues.md#small-shrinks-in-the-sway-writer-and-ipc)
+- Cleanup: "Small shrinks in the sway writer and IPC" (fixed, row 20 compositor-01)
 - Cleanup: [The sway extract's input-device case and isSwayFlag repeat the general rule](../../docs/dev/issues.md#the-sway-extracts-input-device-case-and-isswayflag-repeat-the-general-rule)
 - Cleanup: "binds and takeover each keep their own isFile and git check" (fixed, row 20 compositor-01)
 
