@@ -10,7 +10,8 @@ import qs.components.reusable
 // known one; a second click within a few seconds forgets it) show over the
 // end of the name, so every row lays out alike. Clicking the row
 // `activated`s it. Children go under the row, shown while `expanded` (e.g.
-// a password field).
+// a password field). The button at the end connects or disconnects, or
+// does what `actionIcon` says.
 Rectangle {
   id: root
 
@@ -29,6 +30,10 @@ Rectangle {
   property bool selected: false
   property bool expanded: false
   property string connectTip: I18n.tr("Connect")
+  // The button at the end: connect / disconnect, unless a row sets
+  // another (a drive's eject)
+  property string actionIcon: root.connected ? "link_off" : "link"
+  property string actionTip: root.connected ? I18n.tr("Disconnect") : root.connectTip
   // A small icon on the icon's bottom-right corner (e.g. "lock")
   property string iconBadge: ""
   // Buttons before forget, shown with it on hover (e.g. autoconnect)
@@ -172,11 +177,11 @@ Rectangle {
       size: Widget.iconButton
       enabled: !root.busy
       opacity: enabled ? 1 : 0.5
-      iconText: root.connected ? "link_off" : "link"
+      iconText: root.actionIcon
       iconColor: root.connected ? Theme.accent : Theme.foreground
       backgroundColor: "transparent"
       borderHoverColor: Theme.accent
-      tooltipText: root.connected ? I18n.tr("Disconnect") : root.connectTip
+      tooltipText: root.actionTip
       onClicked: root.connectClicked()
     }
   }

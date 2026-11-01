@@ -63,46 +63,22 @@ DeviceRow {
       Repeater {
         model: row.request?.fields ?? []
 
-        RowLayout {
+        SecretField {
           id: fieldRow
           required property string modelData
           required property int index
-          Layout.fillWidth: true
-          spacing: Widget.spacing
-
-          StyledTextEntry {
-            id: entry
-            Layout.fillWidth: true
-            placeholderText: VpnManager.fieldLabel(fieldRow.modelData)
-            input.echoMode: TextInput.Password
-            input.wrapMode: Text.NoWrap
-            onTextChanged: {
-              const next = Object.assign({}, form.values);
-              next[fieldRow.modelData] = entry.text;
-              form.values = next;
-            }
-            onAccepted: form.submit()
-            // The field leaves Escape to its parents
-            Keys.onEscapePressed: VpnManager.cancelSecret()
-            Component.onCompleted: {
-              if (fieldRow.index === 0)
-                Qt.callLater(() => entry.input.forceActiveFocus());
-            }
-          }
-
+          placeholderText: VpnManager.fieldLabel(fieldRow.modelData)
           // One button, after the last field
-          StyledRectButton {
-            visible: fieldRow.index === (row.request?.fields ?? []).length - 1
-            size: Widget.iconButton
-            enabled: form.complete
-            opacity: enabled ? 1 : 0.5
-            iconText: "link"
-            iconColor: Theme.accent
-            backgroundColor: "transparent"
-            borderHoverColor: Theme.accent
-            tooltipText: I18n.tr("Connect")
-            onClicked: form.submit()
+          buttonShown: fieldRow.index === (row.request?.fields ?? []).length - 1
+          canSubmit: form.complete
+          focusOnShow: fieldRow.index === 0
+          onTextChanged: {
+            const next = Object.assign({}, form.values);
+            next[fieldRow.modelData] = fieldRow.text;
+            form.values = next;
           }
+          onSubmitted: form.submit()
+          onCancelled: VpnManager.cancelSecret()
         }
       }
     }

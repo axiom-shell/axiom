@@ -3634,6 +3634,15 @@
     "Volume UUIDs or labels of drives to leave alone: no notification, no mounting, and not listed. Find them with `lsblk -f`.": "",
     "Ask": "",
     "Open after mounting": "",
-    "Mount it": ""
+    "Mount it": "",
+    "Unmount": "",
+    "Volume {0}": "",
+    "Passphrase for {0}": "",
+    "Passphrase": "",
+    "no drives": "",
+    "Drives": "",
+    "Eject all": "",
+    "udisks2 isn't running: it's what reaches removable drives": "",
+    "No removable drives plugged in": ""
   }
 }
