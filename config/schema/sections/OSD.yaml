@@ -5,7 +5,7 @@ type: object
 x-category: Dock & OSD
 x-card: {file: OSDList, title: OSDs, folds: true}
 title: OSD
-description: On-screen displays of volume, microphone and brightness bars, shown when one of their bars changes.
+description: On-screen displays of volume, microphone and brightness levels, lock keys, the keyboard layout, toggles and the track playing, shown when one of them changes.
 additionalProperties: false
 properties:
   scrollToChange:
@@ -26,7 +26,7 @@ properties:
     type: array
     title: OSDs
     x-settings: false
-    description: Each OSD has its own place and bars. A change opens every OSD holding that bar.
+    description: Each OSD has its own place and items. A change opens every OSD holding that item.
     default:
       - id: main
         screen: {mode: inherit, names: []}

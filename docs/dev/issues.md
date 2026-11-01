@@ -20,6 +20,24 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A workspace overview bind set to open calls a missing function
+- **Where:** `backend/internal/compositor/actions/table.json`, `shell/WorkspaceOverlay.qml`, `tests/tst_BindActions.qml`
+- **What:** The table's `calls` maps `workspaceOverview` open to `show`, but the `workspaceOverlay` IPC target has `toggle`, `open` and `hide`, no `show`. A bind or hot corner set to open runs `axiom ipc workspaceOverlay show` and fails. `tst_BindActions` covers close→hide only, and nothing checks the table's templates and calls against `docs/dev/generated/ipc.md` (as `backend/internal/cli/named_test.go` does for the named commands).
+- **Size:** trivial
+- **Found:** 2026-11-01, while listing the actions a keybind can't run yet
+
+### Toggles are switched in several places, and most have no IPC
+- **Where:** `components/content/QuickActions/QuickActions.qml`, `components/surfaces/osd/OSDStatusSource.qml` (toggle), `services/ui/LauncherCommands.qml`
+- **What:** Wi-Fi, Bluetooth, caffeine, do not disturb, night light, power saver and dark mode are each flipped by their own switch in QuickActions, the OSD's status icons and the launcher commands, all calling the same service functions. Wi-Fi, Bluetooth, airplane mode, dark mode, the power profile and the keyboard layout have no `IpcTarget`, so no keybind or hot corner can reach them (the bindable actions cover about 32 of some 140 IPC functions). One catalogue of actions (id, label, icon, run, state) could serve all of them and the keybinds; the maintainer plans it as its own change.
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while making the OSD's status icons clickable
+
+### In dev mode a reshaped schema can prune config before its migration runs
+- **Where:** `backend/internal/daemon/dev.go`, `docs/dev/backend/README.md`
+- **What:** With dev mode on, the shell loads a schema rebuilt from the YAML as soon as it's edited, while the running binary still has the old migrations (a failed or pending dev build). A settings save then validates and prunes config.json against the new shape, so keys a new step would have moved are dropped instead of migrated. Seen 2026-11-01: v87 split each OSD's `items` into `bars` / `statuses` / `media`; a save from the settings page before the daemon ran v87 wrote the new shape with default `bars`, losing every OSD's own bars (`version` still 86, so v87 later skips the already reshaped entries). Saving should hold off, or the daemon refuse a write, while the tree's schema version is ahead of the binary's steps.
+- **Size:** small
+- **Found:** 2026-11-01, while splitting the OSD's items (config v87)
+
 ### The lock screen has no settings for allowing or viewing notifications
 - **Where:** `config/schema/sections/Lockscreen.yaml`, `docs/dev/features/lockscreen.md`
 - **What:** Asked by the maintainer (2026-10-31) beside the x-lockActions decision: "there should be settings for allowing/viewing notifications as well" on the lock screen. Not designed yet.
@@ -126,11 +144,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building custom widgets (reported by the maintainer)
 
-### config.json replaced by rename isn't always read by the live daemon
-- **Where:** `backend/internal/store/store.go` (`Watch`, `reload`)
-- **What:** Twice on 2026-10-29 (dev mode on, the daemon re-exec'd between them) a config.json written to a temp file and renamed over the old one, as AGENTS.md asks, wasn't read: `axiom config status` kept its revision for 15 s and longer, and the daemon log said nothing, neither a reload nor `the config was edited into one that doesn't load`. Rewriting the same bytes in place was read at once (the revision went up). The watch is on the folder and filters by name, so a rename should reach it; not yet reproduced in a test. Related: `axiom config validate` checks against the installed binary's schema, not the running daemon's, so under dev mode it calls a config with new types invalid that the daemon accepts.
-- **Size:** small
-- **Found:** 2026-10-29, while testing custom widgets on the live config
+### The daemon never watches config.json, so outside edits aren't read
+- **Where:** `backend/internal/store/store.go` (`Watch`), `backend/internal/daemon/methods.go` (`configPart`)
+- **What:** Nothing starts `Store.Watch`: a5ca837 (2026-10-24) removed `serve("the config watch", d.store.Watch)` from the daemon and no part runs it since (`git grep 'store.Watch' -- backend/internal/daemon` is empty). An outside edit (an editor, `axiom config set --offline`, a sync tool) is read only at the next load: a re-exec or a dev-mode `Reschema`. Seen 2026-11-01: a hand fix of a config the daemon had started on the defaults over stayed unread (`axiom config status` kept the old problems, nothing in the daemon log) until a dev rebuild re-exec'd the daemon; an earlier hand edit was overwritten by a save from the shell's copy, never having been read. That explains the 2026-10-29 sighting (a rename not read for 15 s and more; an in-place rewrite that seemed read was likely a re-exec's load). Fix: `run: d.store.Watch` on `configPart`, with a daemon test that an outside edit is pushed. Related: `axiom config validate` checks against the installed binary's schema, not the running daemon's, so under dev mode it calls a config with new types invalid that the daemon accepts.
+- **Size:** trivial
+- **Found:** 2026-10-29, while testing custom widgets on the live config; cause found 2026-11-01, while renaming the OSD's audio statuses
 
 ### After a refused save, a draft's edits show unsaved but not live
 - **Where:** `services/core/ConfigDraft.qml` (`_refusals`), `services/ui/SettingsManager.qml` (`_clearPreviews`), `services/ui/BarManager.qml` (`applyChanges`)
@@ -600,12 +618,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `services/system/BluetoothManager.qml` (`_connectAfterPair`), `components/content/BluetoothDevices/`
 - **What:** Pairing trusts, pairs and connects, but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Also open: whether Quickshell's Bluetooth registers an agent, or the daemon does, and the prompt's surface.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while listing small gaps users notice at once
-
-### No OSD for caps lock or the keyboard layout
-- **Where:** `config/schema/definitions/common/OSDEntry.yaml` (bar kinds), `components/surfaces/osd/OSDTriggers.qml`, `services/system/KeyboardLayoutManager.qml`
-- **What:** The OSD's bars are only master, other, microphone, brightness and app: toggling Caps Lock or Num Lock, or switching the keyboard layout, shows nothing. These aren't levels, so they need a different OSD shape than a bar. The lock keys' state is `LockKeysManager`'s (the keyboard LEDs, [Lock keys](features/lock-keys.md)).
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
@@ -1633,6 +1645,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:notifications system
 
+### ToastStack logs a binding loop on _attachedShowing
+- **Where:** `components/surfaces/notifications/ToastStack.qml` (`_attachedShowing`)
+- **What:** The live shell logged `Binding loop detected for property "_attachedShowing"` (`@shell/Notifications.qml[42:15]`, ToastStack.qml:485) on two reloads on 2026-11-01, not on the next. `_attachedShowing` reads `attached`, `covered`, `toasts` and `_leaving`, and its change handler calls `box.show()` / `box.hide()`; one of those likely writes back a value it reads during the same evaluation. Not traced.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the OSD's statuses
+
+### A device's own level arriving late can swap its OSD card for the bars
+- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml` (`_systemChanged`), `components/surfaces/osd/OSDBar.qml` (`_levelChanged`), `components/surfaces/osd/OSDContent.qml` (the bars' `onPoked`), `components/methods/OSDItems.qml` (`replaces`)
+- **What:** The System volume and Microphone bars count a level or mute change only while `AudioManager.sinkSettled()` / `sourceSettled()` holds, which turns true a moment after the new default node is ready. `OSDItems.replaces` already allows that a new device's mute may come after that ("a mute just after a device switch is the new device's own state coming in"), and PipeWire sends a node's volumes and mute in the same params. So when a headset connects, its own volume landing after the settle pokes the bar, and the bars' `onPoked` sets `_shown` to `level` with no `replaces` check: the device card is swapped for the bars, the case the branch set out to stop. PLAUSIBLE: a log of `defaultSink.ready` against `AudioManager.volume` changes on a headset connect settles it (the roadmap's Live checks already asks whether plugging in a headset opens the bars). Fix, if it shows: run the System volume and Microphone bars' pokes through `replaces` as the `audio` / `microphone` statuses' mutes (an `OSDItems` rule mapping a bar type to its status, a test row), which also holds back the user's own volume key in the 2 s after a switch: a trade-off for the maintainer.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the OSD's statuses
+
 ### removeOnClick never removes a clicked toast's entry
 - **Where:** `components/surfaces/notifications/ToastItem.qml:116` (`close`), `components/surfaces/notifications/ToastItem.qml:357` (`NotificationText.onActivated`), `components/surfaces/notifications/ToastItem.qml:383` (`NotificationActions.onInvoked`), `components/surfaces/notifications/ToastItem.qml:393` (`NotificationReply.onSent`)
 - **What:** With `Notifications.removeOnClick` on, clicking a toast with a default action, one of its action pills, or sending its reply should take the entry out of the history (as it does in the list). But Quickshell closes a non-resident notification synchronously inside `invoke()` / `sendInlineReply()` (`notification.cpp`: `if (!this->notification->bindableResident().value()) this->notification->close(NotificationCloseReason::Dismissed);`); `closed` reaches `shell/Notifications`' `hideEverywhere`, every stack's `hide` calls the toast's `dismiss`, which starts `leave` (or sets `gone` with motion "none"), so `leaving` is already true when the handler then calls `root.close(NotificationsConfig.removeOnClick)`, whose first line is `if (root.leaving) return;`: `NotificationManager.dismiss(root.uid)` never runs and the entry stays (marked not live). Most notifications are non-resident, so the setting does nothing from toasts. Fix: dismiss before the guard: `function close(remove) { if (remove && root.uid) NotificationManager.dismiss(root.uid); if (!root.leaving) root.userClosed(); }` (dismissing an unknown uid is a no-op).
@@ -1763,22 +1787,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
 
-### An own brightness set opens the OSD, which refreshes the monitor beside the write
-- **Where:** `services/system/BrightnessManager.qml:63` (`set`), `components/surfaces/osd/OSDTriggers.qml:32` (`_open`)
-- **What:** `set` emits `brightnessChanged(name)` (line 63) before `_write` marks `_writing[name]` (line 136). With the OSD shut, a brightness key goes `brightnessChanged` → OSDBar `poked` → `OSDTriggers.poke(true)` → `host.show()`, which sets `occupied` synchronously, so `_open` turns true and calls `BrightnessManager.refresh` while `_writing[name]` is still false: a `brightness.get` goes out, then the `brightness.set`. The daemon runs calls concurrently (`rpc.go` handles each in its own goroutine), so on a DDC monitor `ddcutil getvcp` and `ddcutil setvcp` run on one I2C bus at once. The get can fail (DDC/CI transfers interleaved), or read the old level and answer after the set's callback cleared `_writing`: the guard at line 109 then lets the stale level overwrite the new one, the OSD bar jumps back, and the next press steps from the old value. Every first press with the OSD shut pays a ddcutil run for a value axiom just set. PLAUSIBLE: settle with a DDC monitor, pressing brightness up with the OSD shut and reading the log and the bar. Fix: in `set`, emit `brightnessChanged` after the write/pending branch, so `refresh` sees `_writing[name]` and returns.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:brightness system
-
 ### Idle dimming is forgotten across a shell reload
 - **Where:** `services/system/BrightnessManager.qml:92` (`_dimmed`)
 - **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload, declared as a default child of a `Singleton` root (the root is a `QtObject` now, and a named property doesn't survive: see [DailySchedule's persisted state never survives a reload](#dailyschedules-persisted-state-never-survives-a-reload)).
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:brightness system
-
-### The brightness icon thresholds are written three times
-- **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:109` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
-- **What:** The same `level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high"` is in the module, the OSD bar and the Quick actions tile; changing the icons or thresholds means finding all three. Fix: one `icon(level)` function in BrightnessManager (as `AudioManager.inputIcon` serves the OSD's microphone bar), called from all three; Brightness.qml's own `icon` (4 lines) goes.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
 ### Replacing the chat's conversation leaves its reply and attachments behind
@@ -1886,29 +1898,24 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the tailscale system
 
+### An app reading the camera through V4L2 never shows as using it
+- **Where:** `services/system/PrivacyManager.qml` (cameraCaptures), `components/bar/widgets/Privacy/Privacy.qml`
+- **What:** Camera use is read only from PipeWire links into a `Stream/Input/Video` node. Chromium and Electron (Discord, Vesktop) open the camera through V4L2 (`/dev/video0`) by default; their PipeWire camera path is the opt-in `WebRtcPipeWireCamera` feature. The Discord and Vesktop flatpaks have `devices=all`, and logind's seat ACL (`crw-rw----+`) lets the user's processes open the device, so a call with the camera on shows nothing in the Privacy widget or the OSD's camera status. Checked 2026-11-01: inotify on `/dev/video0` reports `IN_OPEN` / `IN_CLOSE_*` from any process (event-driven, no polling), and `/proc/<pid>/fd` of a flatpak's processes is readable, with the app id in `/proc/<pid>/cgroup` (`app-flatpak-dev.vencord.Vesktop-….scope`). Fix: the daemon watches `/dev/video*` (and `/dev` for cameras plugged in) with inotify, and on each event lists the processes holding one open (skipping pipewire and wireplumber, whose use the links already show), pushed as `camera.state` `[{ pid, app }]` (flatpak id, else the desktop entry by `comm`); `PrivacyManager.cameraCaptures` merges it. Opening the device without streaming (a camera picker listing devices) also counts, briefly.
+- **Size:** small
+- **Found:** 2026-11-01, while asked why Vesktop's camera never showed in the OSD
+
+### Tailscale's state is polled where it could be pushed
+- **Where:** `backend/internal/tailscale/tailscale.go`, `services/apps/TailscaleManager.qml` (acquire), `services/system/VpnManager.qml` (acquire)
+- **What:** Tailscale's state comes from `tailscale status --json` every `Tailscale.interval` (10 s default) while anything holds `TailscaleManager`: the Tailscale and Vpn widgets, the Network, WifiNetworks and VpnConnections cards, and now an OSD with the VPN status, which holds it for the whole session. A connect or drop shows up to 10 s late, while NetworkManager's VPNs are pushed (`vpn.state`). tailscaled's LocalAPI streams its changes (`/localapi/v0/watch-ipn-bus`, what `tailscale status --watch`-style clients use), so the daemon could watch that instead of running the CLI, with the interval left only for the peers' details if needed.
+- **Size:** needs a plan
+- **Found:** 2026-11-01, while adding the OSD's VPN status
+
 ### A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors
 - **Where:** `config/DesktopConfig.qml:29` (`matchFor`), `config/DesktopConfig.qml` (`sourceFor`, `layoutFor`)
 - **What:** `matchFor` returns the most specific layout whether enabled or not, and `sourceFor`/`layoutFor` then return nothing when that match is off: `?? (name === root.primaryName ? items.find(layout => layout.screen.mode === "primary") : undefined) ?? items.find(layout => layout.screen.mode === "all")`. So with "All monitors" turned on (with modules) and "Primary monitor" turned off in the Layouts editor, the primary monitor's desktop is empty (no `DesktopWindow`; its picker row says "Shows nothing"). The doc says each step applies "only while enabled" ("otherwise `primary` ... otherwise `all`"), and the reader's own comment says "a monitor shows the most specific one that's enabled ...; a layout naming a monitor that's turned off leaves it empty" (only a named one). Before #96 (`dd773ed`) `sourceFor` did fall through: `if (name === root.primaryName && section.primary.enabled) return "primary"; return section.all.enabled ? "all" : "";`. A regression from that commit. Fix: skip a disabled `primary` in `matchFor`, keeping a named layout final: `items.find(named) ?? (name === root.primaryName ? items.find(layout => layout.screen.mode === "primary" && layout.enabled) : undefined) ?? items.find(all) ?? null`; `DesktopManager.statusOf` then reports "Uses all monitors'" by itself.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the desktop system
 
-### The system volume bar opens the OSD when the default output switches
-- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:78` (`onVolumeChanged`), `components/surfaces/osd/PipewireVolumeBar.qml:82` (`onIsMutedChanged`)
-- **What:** The OSD's `poked` signal is meant for changes the user makes, "not a stream appearing or a device switch" (PipewireVolumeBar.qml:12-13, OSDBar.qml:25-26), and the microphone bar keeps to it (`_levelChanged` skips the first change after `AudioManager.defaultSource` changes) and so do the app bars (`_nodeKey`). The master bar doesn't: `onVolumeChanged` and `onIsMutedChanged` call `root.poked()` whenever `useSystemVolume`, and `AudioManager.volume` / `muted` follow `Pipewire.defaultAudioSink`. Connecting Bluetooth headphones, plugging a headset, or picking another output in the audio mixer changes the default sink; when its volume or mute differs from the old one's, the bar pokes and, with the default `showOsd: true`, the OSD opens though nobody changed a level. The same path opens it at startup if the default sink binds after the OSD's bars are built (PLAUSIBLE: settle by starting the shell before PipeWire is ready, or in a nested session, and watching whether the OSD shows). Fix: mirror the microphone bar: keep `property var _sink: null`, set it in `Component.onCompleted`, and in both handlers `if (root.useSystemVolume) { if (AudioManager.defaultSink === root._sink) root.poked(); root._sink = AudioManager.defaultSink; }`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:osd system
-
-### Every OSD's opening reads the monitor's brightness, brightness bar or not
-- **Where:** `components/surfaces/osd/OSDTriggers.qml:30` (`on_OpenChanged`)
-- **What:** `on_OpenChanged` calls `BrightnessManager.refresh(root.host.screen.name)` whenever the OSD opens, whatever its bars. The default OSD (`main`: Other apps and System volume, no brightness bar) on a DDC monitor so runs `ddcutil --bus N getvcp 10` (brightness.go `Get`, up to the 10 s ddcTimeout) on every volume key press that opens it, for a value nothing shows; with the OSD in "all" mode, once per monitor. The reverse case misses: an `allMonitors` brightness bar shows the mean of `BrightnessManager.names`, but only the OSD's own screen is refreshed, so a level changed outside axiom on another monitor stays stale in the mean. Distinct from [An own brightness set opens the OSD, which refreshes the monitor beside the write](#an-own-brightness-set-opens-the-osd-which-refreshes-the-monitor-beside-the-write) (that is the order inside `BrightnessManager.set`; this is which OSDs refresh which monitors). Fix: refresh the monitors the OSD's brightness bars show: `const bars = root.osd.bars.filter(bar => bar.type === "brightness"); (bars.some(bar => bar.allMonitors) ? BrightnessManager.names : bars.length > 0 ? [root.host.screen.name] : []).forEach(name => BrightnessManager.refresh(name));`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:osd system
-
-### The OSD's stream bar tracks its streams by hand
-- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml:49` (`_audioStreams`), `components/surfaces/osd/PipewireVolumeBar.qml:53` (Instantiator), `components/surfaces/osd/PipewireVolumeBar.qml:102` (`onTargetAppsChanged` and the three handlers after it), `components/surfaces/osd/PipewireVolumeBar.qml:116` (`Component.onCompleted`), `components/surfaces/osd/PipewireVolumeBar.qml:122` (the two `Connections`), `components/surfaces/osd/PipewireVolumeBar.qml:149` (`_setTargetNodes`, `_updateTargetNode`)
-- **What:** `_targetNodes` is re-assigned by hand from seven triggers (a watcher per playback stream for `ready`, node insert and remove, `Pipewire.ready`, four config properties, completion), each calling `AudioManager.matchStreams`. Every one of them is a property `matchStreams` already reads (`_playbackStreams`, each node's `audio`, `ready`, `properties`, `nickname`, and the three arguments), so a binding re-evaluates on exactly those changes, and also on a stream's `properties` arriving late, which no trigger covers now. Every bar runs the whole mechanism, the master bar too, whose result is always `[]`. Fix: `readonly property var _targetNodes: useSystemVolume ? [] : AudioManager.matchStreams(targetApps, otherApps, excludedApps)`, and fold the node ids into `_levels` (`_keyOf(_targetNodes) + "|" + …`) so a change in the set of streams always changes it and `on_LevelsChanged` keeps telling a level change from a set change (what `_setTargetNodes`'s early `_nodeKey` write does now). Removes lines 46-67, 101-143 and 149-161: 22 + 43 + 13 = 78 lines.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:osd system
 
 ### Hot corners' action list is a hand-kept copy of the keybind one
 - **Where:** `config/schema/sections/HotCorners.yaml:30` (`action`), `config/schema/sections/HotCorners.yaml:104` (`argument`), `config/schema/definitions/common/Keybind.yaml`, `tests/tst_BindActions.qml:83` (`test_hotCornerActionsAreTheAxiomActions`)

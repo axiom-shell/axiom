@@ -5,7 +5,8 @@ import qs.config
 import qs.services.system
 import qs.components.reusable
 
-// One OSD bar, by its entry's type (see OSD.bars in the schema):
+// One OSD level bar, by its item's type (see an OSD's bars.items in the
+// schema):
 //   master:     the default output's volume
 //   other:      the first playing stream no App bar matches
 //   app:        the streams its apps match by name
@@ -15,7 +16,7 @@ import qs.components.reusable
 Loader {
   id: root
 
-  // Its entry in the OSD's bars, or OSDContent.noBar for none
+  // Its item in the OSD's bars.items, or OSDContent.noBar for none
   required property var entry
   required property string screenName
   // The OSD's own settings: bars run vertically, levels shown as numbers
@@ -50,8 +51,7 @@ Loader {
       otherApps: root.type === "other"
       excludedApps: root.type === "other" ? OSDConfig.excludedApps : []
       useSystemVolume: isMaster
-      // The master bar's icon is the bar's Volume widget's
-      iconSource: root.entry.icon || (isMaster ? AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), AudioManager.muted, AudioManager.volume) : "")
+      iconSource: root.entry.icon || (isMaster ? AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), false, Math.max(AudioManager.volume, 0.01)) : "")
 
       onPoked: root.poked()
     }
@@ -61,15 +61,10 @@ Loader {
     id: micBar
 
     StyledVolumeBar {
-      id: mic
-      // The first change after the input device switches (or binds) is it
-      // appearing, not the user
-      property var _source: null
-
+      // A change as the input device switches or binds is the device's
       function _levelChanged() {
-        if (AudioManager.defaultSource === _source)
+        if (AudioManager.sourceSettled())
           root.poked();
-        _source = AudioManager.defaultSource;
       }
 
       orientation: root.orientation
@@ -78,21 +73,13 @@ Loader {
       volumeLevel: AudioManager.sourceVolume
       isMuted: AudioManager.sourceMuted
       enabled: AudioManager.defaultSource !== null
-      iconSource: root.entry.icon || AudioManager.inputIcon(AudioManager.deviceKind(AudioManager.defaultSource), AudioManager.sourceMuted)
+      iconSource: root.entry.icon || AudioManager.inputIcon(AudioManager.deviceKind(AudioManager.defaultSource), false)
+      iconClickable: true
+      iconTip: AudioManager.sourceMuted ? I18n.tr("Unmute") : I18n.tr("Mute")
       onVolumeChanged: newVolume => AudioManager.setSourceVolume(newVolume)
-      Component.onCompleted: _source = AudioManager.defaultSource
-
-      Connections {
-        target: AudioManager
-
-        function onSourceVolumeChanged() {
-          mic._levelChanged();
-        }
-
-        function onSourceMutedChanged() {
-          mic._levelChanged();
-        }
-      }
+      onIconClicked: AudioManager.toggleSourceMute()
+      onVolumeLevelChanged: _levelChanged()
+      onIsMutedChanged: _levelChanged()
     }
   }
 
@@ -106,7 +93,7 @@ Loader {
       showPercent: root.showPercent
       scrollStep: OSDConfig.scrollStep
       volumeLevel: level
-      iconSource: root.entry.icon || (level < 0.34 ? "brightness_low" : (level < 0.67 ? "brightness_medium" : "brightness_high"))
+      iconSource: root.entry.icon || BrightnessManager.icon(level)
       onVolumeChanged: newVolume => BrightnessManager.setMany(root.brightnessTargets, newVolume)
 
       Connections {

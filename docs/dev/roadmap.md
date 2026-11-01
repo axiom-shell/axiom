@@ -141,6 +141,9 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
 - Once the shell runs the workspace grid's centre start, with `Workspaces.layout` `grid` (3 × 3): log in under sway and Hyprland with two monitors and check each starts on its block's centre (5, 14); restart axiom after moving away and check nothing moves; on sway, switch the layout to `perMonitor` and back to `grid` and check every monitor goes to its centre, windows kept on their workspaces. Nested Hyprland (one output) showed the start, a reload leaving workspace 1 alone, and perMonitor → grid going to 5.
 - Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
+- Once the shell runs the OSD's statuses (config v87), pick Caps Lock, Num Lock, Keyboard layout, Microphone and Audio under an OSD's Status icons (the default has them; a custom OSD gets them in Settings → Dock & OSD): toggle Caps Lock and Num Lock, switch the layout, mute the microphone and switch the output in the audio mixer, and check each shows its icon, highlighted, on the focused screen and that a volume key while one shows swaps back to the bars without the OSD moving; that plugging in a headset no longer opens the bars; and that nothing shows in the first moments after a reload. Then on a laptop, the power profile, charger, Wi-Fi, Bluetooth and airplane mode icons (airplane mode's highlight isn't taken by its radios switching), and Now playing on a track change.
+- Once the shell runs the OSD's VPN, screen recording, camera and screen sharing statuses, add them to an OSD: bring a NetworkManager VPN or Tailscale up and down from the Vpn widget, then drop it (`nmcli connection down`, or stop tailscaled): coming up shows a card with its name, Connected and its address, a drop the struck-through icon, and switching from one VPN to another one card; start and stop a recording (a click on the lit icon stops it); open a browser's camera test and share a screen in a call: a card names the browser and says what it started, and stopping shows the struck-through icon (confirmed under niri with Vesktop; check Hyprland's and sway's portals too); join a call with the camera and microphone: one card, "Using the camera and microphone"; turn the OSD's Detail cards off: the same changes show as their icons. Join a Wi-Fi network (a card with its name and signal) and, on a laptop, plug in the charger (a card with the level and the time to full). Nothing shows in the first moments after a reload.
+- With a DDC/CI monitor, press brightness up with the OSD shut: `scripts/log.sh` shows no failed `brightness.get`, the bar doesn't jump back, and the next press steps from the new level (an own set now marks its write before the OSD's refresh runs).
 - Once the shell runs #279 (StandaloneBar removed), check the bar's blur and the border opening still sit right under a popout on a top, side and floating bar, and that a floating edge menu comes forward when engaged.
 
 ### Phase 0: decisions and quick wins
@@ -159,6 +162,7 @@ The config, the takeover and the session must never be damaged by a rarely taken
 Done: every entry is fixed, the last with backend stage 7; the hand-fix gap with no takeovers kept is [Deferred](#deferred).
 
 - [A shared file older than v71 resets niri's hot corner](issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
+- [In dev mode a reshaped schema can prune config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-config-before-its-migration-runs)
 
 ### Phase 2: finish stage 2
 Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the hypridle autostart default (dropped, and from saved configs by the v78 step) and the D-Bus match rules' escaping.
@@ -501,6 +505,8 @@ Found by the audits:
 - [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
 - [removeOnClick never removes a clicked toast's entry](issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
+- [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
+- [A device's own level arriving late can swap its OSD card for the bars](issues.md#a-devices-own-level-arriving-late-can-swap-its-osd-card-for-the-bars)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
 - [The history's group and entry delegates repeat one swipe-away mechanism](issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
 - [clearAll removes each cached image twice, one process per entry](issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)
@@ -520,9 +526,7 @@ Found by the audits:
 - [Enter in the editor's title saves again while busy and picks All events while asking](issues.md#enter-in-the-editors-title-saves-again-while-busy-and-picks-all-events-while-asking)
 - [Removing a CalDAV account deletes its password before the draft is saved](issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
 - [Event titles from a feed render as styled text and load remote images](issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
-- [An own brightness set opens the OSD, which refreshes the monitor beside the write](issues.md#an-own-brightness-set-opens-the-osd-which-refreshes-the-monitor-beside-the-write)
 - [Idle dimming is forgotten across a shell reload](issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
-- [The brightness icon thresholds are written three times](issues.md#the-brightness-icon-thresholds-are-written-three-times)
 - [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
 - [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
 - [An image sent without text to Anthropic carries a whitespace-only text block](issues.md#an-image-sent-without-text-to-anthropic-carries-a-whitespace-only-text-block)
@@ -540,10 +544,9 @@ Found by the audits:
 - [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login)
 - [The panel's relative times go stale while Tailscale's state stays the same](issues.md#the-panels-relative-times-go-stale-while-tailscales-state-stays-the-same)
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
+- [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
+- [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
 - [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
-- [The system volume bar opens the OSD when the default output switches](issues.md#the-system-volume-bar-opens-the-osd-when-the-default-output-switches)
-- [Every OSD's opening reads the monitor's brightness, brightness bar or not](issues.md#every-osds-opening-reads-the-monitors-brightness-brightness-bar-or-not)
-- [The OSD's stream bar tracks its streams by hand](issues.md#the-osds-stream-bar-tracks-its-streams-by-hand)
 - [Hot corners' action list is a hand-kept copy of the keybind one](issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
 - [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
 - [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)
@@ -589,16 +592,22 @@ Steps:
 - **Done:** **The window switcher's blur and release on sway and niri** (row 16; plan #212, the maintainer: "For the blur, it just looks really bad, and goes out WAY to many pixels away", "For the key release, it sometimes works but is really inconsistent", and "B: daemon holds keys"): SwayFX blurs every pixel that isn't clear, so a floating popout's shadow cast in its own blurred window (the switcher, the floating launcher) was frosted out to its reach; the shadow and stroke now go to a window of their own over the box's (`FloatingShadow`, `BlurManager.shadowsApart`), the popouts' stack. On sway and niri the daemon holds the keyboard while the switcher is open (`switcher.hold`, `wayland/keyhold`): the modifiers' mask that follows `wl_keyboard.enter` says which are already down, so a modifier let go before it had the keyboard picks (after a 40 ms grace that rides out a keyboard's blip; the maintainer's custom keyboard showed one) instead of leaving the switcher open to eat the next key; `SwitcherKeys` is gone ([window switcher](hyprland/window-switcher.md) › sway and niri).
 
 - **Done:** **Low levels spill out of their rounded troughs** (row 16; the maintainer: "anything with a bar with corner radius that extends to fill a container (the two I directly notice are the custom module pill style mode (with the colored fill that fills the module based on percentage), and the osd bars, there may be more though), has a problem of when appearing (i.e. 0-10 ish percentage), since it has a small width, the corner radius doesn't get fully fleshed out, causing a rectangle look (which spills out of its "trough"'s corner radius.)) Fix this"): a fill shorter than twice its radius had its radius clamped. A bar widget's `backgroundLevel` is now the background's own shape seen through a `ClippingRectangle` window with a rounded leading edge (`WidgetBackground`), `StyledVolumeBar`'s trough (the OSD's bars) clips its fill, and the Disks and Claude usage modules' meters are `LevelMeter`s (never shorter than their rounded ends), as the custom widgets' already were.
+- **Done:** **A Caps Lock warning in password fields** (#270; from the small gaps users notice at once, 2026-10-30): the daemon's `lockKeys` topic reads Caps, Num and Scroll Lock from the keyboard LEDs, every hidden-text field shows a Caps Lock icon while it has focus, `PasswordEntry` (lock screen, greeter, polkit) also says so on its message line, and a LockKeys bar widget shows the keys that are on ([Lock keys](features/lock-keys.md)).
+
+- **Done:** **The OSD's statuses** (#272; the maintainer, 2026-11-01: "with the implementation of lock keys handling, the OSD is finally ready for it's final pass of improvements"; plan choices: "Swap in a pill", every extra in this pass, "Rename to items"): an OSD has `bars` (its levels and their layout), `statuses` (status types shown as icons, the change highlighted, a click flipping a toggle; `quiet` ones don't open it) and `media` (the now playing card), showing whichever changed last (steps v86 and v87; an OSD on the old default gets the new default's statuses). Statuses: lock keys, the keyboard layout, the audio output and the microphone (muted, or a card as the device switches), the power profile, caffeine, do not disturb, night light, Wi-Fi, Bluetooth, airplane mode, the charger, a VPN, a screen recording, the camera, the microphone in use and screen sharing (with detail cards: a VPN coming up, an app starting a capture, a network joined, the charger plugged in; `PrivacyManager` now owns the Privacy widget's camera and screen detection), and messages from `axiom ipc osd message <icon> <text>` ([OSD](features/osd.md)). Closes "No OSD for caps lock or the keyboard layout" and, as it rewrote the same files, the OSD audit's four entries and two of the brightness audit's.
+
 Found meanwhile:
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
 - [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
-- [config.json replaced by rename isn't always read by the live daemon](issues.md#configjson-replaced-by-rename-isnt-always-read-by-the-live-daemon)
+- [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
 - [BlurManager.paused reads undefined on a reload](issues.md#blurmanagerpaused-reads-undefined-on-a-reload)
+- [A workspace overview bind set to open calls a missing function](issues.md#a-workspace-overview-bind-set-to-open-calls-a-missing-function)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
 - [A pill bar stacked inside another pill bar grows its pills out of nothing](issues.md#a-pill-bar-stacked-inside-another-pill-bar-grows-its-pills-out-of-nothing)
+- [Toggles are switched in several places, and most have no IPC](issues.md#toggles-are-switched-in-several-places-and-most-have-no-ipc)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.
@@ -644,7 +653,6 @@ Deferred by the maintainer (2026-10-29: "move what is necessary to deferred"; Qu
 Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log everything except notif sound … Build them into roadmap in the correct spot but deferred and issues (all should need a plan)"; Phase 13 features, each through [Items that need a plan](#items-that-need-a-plan) once taken up; notification sounds are the maintainer's own system sounds plan):
 - [Removable drives aren't handled](issues.md#removable-drives-arent-handled)
 - [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
-- [No OSD for caps lock or the keyboard layout](issues.md#no-osd-for-caps-lock-or-the-keyboard-layout)
 - [No keyboard backlight control](issues.md#no-keyboard-backlight-control)
 
 Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put this on hold - note that growing modules kinda needs a re-work or removal"):

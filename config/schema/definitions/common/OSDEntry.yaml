@@ -8,7 +8,7 @@ properties:
     type: string
     title: Name
     default: ''
-    description: Shown on its tab here. Empty names it by its bars.
+    description: Shown on its tab here. Empty names it by what it shows.
   enabled: {type: boolean, title: Enabled, default: true}
   screen:
     $ref: '#/definitions/ScreenTarget'
@@ -58,21 +58,6 @@ properties:
     x-unit: px
     description: Space between the OSD and the border or bar on its edge, and at the ends. Auto lines it up with a floating bar on its edge, else with your windows.
     x-showIf: {detached: true}
-  orientation:
-    type: string
-    title: Bar orientation
-    default: vertical
-    enum: [vertical, horizontal]
-    description: Vertical bars sit side by side; horizontal bars stack as rows.
-  alongEdge:
-    type: boolean
-    title: Line up along the edge
-    default: false
-    x-showIf:
-      anyOf:
-        - {edge: [top, bottom], orientation: horizontal}
-        - {edge: [left, right], orientation: vertical}
-    description: 'Put the bars end to end in one line along the edge, instead of stacked away from it: the OSD is longer but sticks out less. Shown only while the bars run along the edge.'
   openOnHover:
     type: boolean
     title: Open on hover
@@ -86,57 +71,222 @@ properties:
     minimum: 250
     maximum: 10000
     description: How long the OSD stays open after the last change.
-  showPercent:
-    type: boolean
-    title: Show percentages
-    default: true
-    description: Show each bar's level as a percentage beside its icon.
   bars:
-    type: array
+    type: object
     title: Bars
-    description: One bar per entry, in order. System volume is the output device's volume, Other apps is the first playing stream no App bar (in any OSD) matches, Microphone is the input device's volume, and Brightness is the monitor's own (a laptop panel through its backlight, an external monitor over DDC/CI through ddcutil; left out on a monitor that has neither).
-    default:
-      - {type: other, icon: music_note, showOsd: true}
-      - {type: master, icon: '', showOsd: true}
-    items:
-      x-scopeIf: {when: {type: app}, scope: personal}
-      type: object
-      additionalProperties: false
-      properties:
-        type:
+    description: 'The levels the OSD shows as bars, and how they''re laid out. A change to one shows the bars, with the status icons beside them.'
+    additionalProperties: false
+    properties:
+      orientation:
+        type: string
+        title: Bar orientation
+        default: vertical
+        enum: [vertical, horizontal]
+        description: Vertical bars sit side by side; horizontal bars stack as rows.
+      alongEdge:
+        type: boolean
+        title: Line up along the edge
+        default: false
+        x-showIf:
+          anyOf:
+            - {../edge: [top, bottom], orientation: horizontal}
+            - {../edge: [left, right], orientation: vertical}
+        description: 'Put the bars end to end in one line along the edge, instead of stacked away from it: the OSD is longer but sticks out less. Shown only while the bars run along the edge.'
+      showPercent:
+        type: boolean
+        title: Show percentages
+        default: true
+        description: Show each level's value as a percentage beside its icon.
+      items:
+        type: array
+        title: Bars
+        description: 'In order. System volume is the output device''s volume, Other apps is the first playing stream no App bar (in any OSD) matches, Microphone is the input device''s volume, and Brightness is the monitor''s own (a laptop panel through its backlight, an external monitor over DDC/CI through ddcutil; left out on a monitor that has neither). The same bar in two OSDs opens both.'
+        x-link: {setting: OSD.scrollToChange}
+        default:
+          - {type: other, icon: music_note, showOsd: true}
+          - {type: master, icon: '', showOsd: true}
+        items:
+          x-scopeIf: {when: {type: app}, scope: personal}
+          type: object
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              title: Kind
+              enum: [master, other, app, microphone, brightness]
+              x-enumLabels:
+                master: System volume
+                other: Other apps
+                app: An app
+                microphone: Microphone
+                brightness: Brightness
+              default: app
+            apps:
+              x-scope: personal
+              type: array
+              items: {type: string}
+              title: Apps
+              default: []
+              x-showIf: {type: app}
+              x-suggestions: audioApps
+              description: Comma-separated; each matched as a substring of a stream's binary or name. The bar shows the first listed app with a stream open, and a change sets every matching stream.
+            allMonitors:
+              type: boolean
+              title: All monitors
+              default: false
+              x-showIf: {type: brightness}
+              description: The bar sets every monitor with a brightness control at once, instead of only the one the OSD is on.
+            icon:
+              type: string
+              title: Icon
+              default: ''
+              description: 'Icon shown with it: a Material Symbols name (fonts.google.com/icons), or text. Empty follows what it shows (the level, the device).'
+            showOsd:
+              type: boolean
+              title: Opens the OSD
+              default: true
+              description: A change on it opens the OSD. Off, it still shows while the OSD is open, and a change keeps an open OSD open.
+  statuses:
+    type: object
+    title: Status icons
+    description: 'The state of the machine as icons: a change to one opens the OSD on the icons alone, and the bars show them beside the levels.'
+    additionalProperties: false
+    properties:
+      row:
+        type: string
+        title: Icons shown
+        default: notable
+        enum: [notable, all, changed]
+        x-enumLabels:
+          notable: What's unusual
+          all: Every one picked
+          changed: Only the one that changed
+        description: 'What''s unusual shows only the states out of the ordinary (Caps Lock on, muted, do not disturb, on battery, …) and the one that just changed. Every one picked shows each, lit when on.'
+      cards:
+        type: boolean
+        title: Detail cards
+        default: true
+        description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in. Off, they show as their icon like any other change.'
+      items:
+        type: array
+        title: Shows
+        items:
           type: string
-          title: Shows
-          enum: [master, other, microphone, brightness, app]
-          x-enumLabels:
-            master: System volume
-            other: Other apps
-            microphone: Microphone
-            brightness: Brightness
-            app: An app
-          default: app
-        apps:
-          x-scope: personal
-          type: array
-          items: {type: string}
-          title: Apps
-          default: []
-          x-showIf: {type: app}
-          x-suggestions: audioApps
-          description: Comma-separated; each matched as a substring of a stream's binary or name. The bar shows the first listed app with a stream open, and a change sets every matching stream.
-        allMonitors:
-          type: boolean
-          title: All monitors
-          default: false
-          x-showIf: {type: brightness}
-          description: The bar sets every monitor with a brightness control at once, instead of only the one the OSD is on.
-        icon:
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, charger, recording, camera, micUse, screenShare, message]
+        x-enumLabels:
+          capsLock: Caps Lock
+          numLock: Num Lock
+          scrollLock: Scroll Lock
+          keyboardLayout: Keyboard layout
+          audio: Audio
+          microphone: Microphone
+          powerProfile: Power profile
+          caffeine: Caffeine
+          dnd: Do not disturb
+          nightLight: Night light
+          wifi: Wi-Fi
+          bluetooth: Bluetooth
+          airplane: Airplane mode
+          vpn: VPN
+          charger: Charger
+          recording: Screen recording
+          camera: Camera
+          micUse: Microphone in use
+          screenShare: Screen sharing
+          message: Messages
+        x-enumIcons:
+          capsLock: keyboard_capslock
+          numLock: dialpad
+          scrollLock: swap_vert
+          keyboardLayout: keyboard
+          audio: volume_up
+          microphone: mic
+          powerProfile: speed
+          caffeine: coffee
+          dnd: do_not_disturb_on
+          nightLight: nightlight
+          wifi: wifi
+          bluetooth: bluetooth
+          airplane: airplanemode_active
+          vpn: vpn_key
+          charger: power
+          recording: screen_record
+          camera: videocam
+          micUse: record_voice_over
+          screenShare: screen_share
+          message: chat
+        default: [capsLock, numLock, keyboardLayout, microphone, audio]
+        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, and Charger one with the battery level when plugged in. Messages are what `axiom ipc osd message <icon> <text>` sends.'
+      quiet:
+        type: array
+        title: Without opening the OSD
+        items:
           type: string
-          title: Icon
-          default: ''
-          description: 'Icon shown on the bar: a Material Symbols name (fonts.google.com/icons), or text. Empty follows the level for system volume, microphone and brightness.'
-        showOsd:
-          type: boolean
-          title: Opens the OSD
-          default: true
-          description: A change on this bar opens the OSD (it always keeps an open one open).
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, charger, recording, camera, micUse, screenShare, message]
+        x-enumFrom: items
+        x-showIf: {items: {notEmpty: true}}
+        x-enumLabels:
+          capsLock: Caps Lock
+          numLock: Num Lock
+          scrollLock: Scroll Lock
+          keyboardLayout: Keyboard layout
+          audio: Audio
+          microphone: Microphone
+          powerProfile: Power profile
+          caffeine: Caffeine
+          dnd: Do not disturb
+          nightLight: Night light
+          wifi: Wi-Fi
+          bluetooth: Bluetooth
+          airplane: Airplane mode
+          vpn: VPN
+          charger: Charger
+          recording: Screen recording
+          camera: Camera
+          micUse: Microphone in use
+          screenShare: Screen sharing
+          message: Messages
+        x-enumIcons:
+          capsLock: keyboard_capslock
+          numLock: dialpad
+          scrollLock: swap_vert
+          keyboardLayout: keyboard
+          audio: volume_up
+          microphone: mic
+          powerProfile: speed
+          caffeine: coffee
+          dnd: do_not_disturb_on
+          nightLight: nightlight
+          wifi: wifi
+          bluetooth: bluetooth
+          airplane: airplanemode_active
+          vpn: vpn_key
+          charger: power
+          recording: screen_record
+          camera: videocam
+          micUse: record_voice_over
+          screenShare: screen_share
+          message: chat
+        default: []
+        description: Shown among the icons, but a change to one doesn't open the OSD.
+  media:
+    type: object
+    title: Now playing
+    description: The cover, title and artist of the track playing, as a card.
+    additionalProperties: false
+    properties:
+      enabled:
+        type: boolean
+        title: Show the track playing
+        default: false
+      onTrackChange:
+        type: boolean
+        title: On a new track
+        default: true
+        x-showIf: {enabled: true}
+      onPlayPause:
+        type: boolean
+        title: On play and pause
+        default: false
+        x-showIf: {enabled: true}
 required: [id]

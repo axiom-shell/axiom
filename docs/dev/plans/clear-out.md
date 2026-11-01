@@ -37,7 +37,7 @@ Settled in this triage. One real duplicate was merged in issues.md; the rest are
 - **The Updates popout's frozen list** (bar-popouts) rides core-ui-theming-03 with the failed update check: the same UpdatesManager-to-popout path.
 - **The reader-member check:** config-01 fixes the check and deletes what it finds together with core-ui-theming's six and platform's three reader members, so config-usage-baseline.json changes once.
 - **Compositor pairs that must land together:** the detached layer's unbind list with noteReload's double count (compositor-15); the sway output rule with no serial with the niri-spelled monitor (compositor-09); sway's title-bar mouse bind with the sway extract's input-device case (compositor-07); three listings of niri's user files with the bind merge's three listings (compositor-01); nothing-reads-userBindsRead-or-lastLoadFailed with niri started on a broken config (the shell's lastLoadFailed goes in compositor-01, the Go fix in compositor-05, in that order).
-- **Ordered, not merged** (shared files, different causes): overlay-modules-01 after compositor-02 (OverlayPageNavigator); compositor-16 after config-04 (KeybindEditor's presets); core-ui-theming-04 after platform-05 (/generate's monitor); features-08 after core-ui-theming-02 (DailySchedule's reload fix) and overlay-modules-08 (OSDTriggers); features-14 after overlay-modules-04 (Calculator, Stopwatch, TodoList, Agenda); features-11 after overlay-modules-10 (Tailscale, WifiJoinForm); bar-popouts-07 after overlay-modules-02 (module padding in edge menus).
+- **Ordered, not merged** (shared files, different causes): overlay-modules-01 after compositor-02 (OverlayPageNavigator); compositor-16 after config-04 (KeybindEditor's presets); core-ui-theming-04 after platform-05 (/generate's monitor); features-08 after core-ui-theming-02 (DailySchedule's reload fix); features-14 after overlay-modules-04 (Calculator, Stopwatch, TodoList, Agenda); features-11 after overlay-modules-10 (Tailscale, WifiJoinForm); bar-popouts-07 after overlay-modules-02 (module padding in edge menus).
 
 ### The PR list
 Deletions first, as step 2.4 allows (config-01 ahead of the rest, so the fixed reader check runs before the other deletions), then the three Blockers, then area by area: Majors, then the area's minor sweep (step 2.3), then its plans and live-only clusters, which go through [Items that need a plan](../roadmap.md#items-that-need-a-plan) or wait for a repro and don't hold up the loop. Areas run config, platform, core-ui-theming, compositor, bar-popouts, overlay-modules, features, so each shared piece (the takeover predicate, notify-send in Go, DailySchedule, the ui-kit, KeybindEditor, the module base, OSDTriggers) changes once, in its owner's PR, before the features that use it.
@@ -106,7 +106,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 58 | overlay-modules-05 | major | The overlay host and the Layouts editor | 4 | ~80 | none |  |
 | 59 | overlay-modules-06 | major | Custom widgets | 4 | ~150 | none |  |
 | 60 | overlay-modules-07 | major | What reaches the lock screen | 2 | ~150 | overlay-modules-06 |  |
-| 61 | overlay-modules-08 | major | OSD volume and brightness | 3 | ~100 touched (~-60 net) | overlay-modules-01 |  |
+| 61 | overlay-modules-08 | major | OSD volume and brightness (done with the OSD's statuses) | 0 | none left | overlay-modules-01 |  |
 | 62 | overlay-modules-09 | minor-sweep | The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
 | 63 | overlay-modules-10 | minor-sweep | Modules | 5 | ~200 touched (~-130 net) | overlay-modules-03 |  |
 | 64 | overlay-modules-11 | minor-sweep | Hot corners | 2 | ~120 | none |  |
@@ -117,7 +117,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 69 | features-05 | major | Todo, pomodoro and timers | 7 | ~200 | features-01 | Q14, Q15 |
 | 70 | features-06 | major | Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
 | 71 | features-07 | major | Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
-| 72 | features-08 | major | Brightness | 3 | ~40 | features-01, core-ui-theming-02, overlay-modules-08 |  |
+| 72 | features-08 | major | Brightness | 1 | ~20 | features-01, core-ui-theming-02 |  |
 | 73 | features-09 | major | The chat | 6 | ~180 | features-01 |  |
 | 74 | features-10 | major | Notes | 6 | ~180 | features-01, core-ui-theming-05 |  |
 | 75 | features-11 | major | Networking and Bluetooth, the VPN list and Tailscale | 5 | ~150 | features-01, overlay-modules-10 |  |
@@ -490,10 +490,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **overlay-modules-07** (2):
   - [Any custom widget reaches the lock screen past its Offer switch](../issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
   - [What a lock screen module may do is a list kept by hand in two docs that disagree](../issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
-- **overlay-modules-08** (3): Before features-08 (same OSDTriggers opening).
-  - [The system volume bar opens the OSD when the default output switches](../issues.md#the-system-volume-bar-opens-the-osd-when-the-default-output-switches)
-  - [Every OSD's opening reads the monitor's brightness, brightness bar or not](../issues.md#every-osds-opening-reads-the-monitors-brightness-brightness-bar-or-not)
-  - [The OSD's stream bar tracks its streams by hand](../issues.md#the-osds-stream-bar-tracks-its-streams-by-hand)
+- **overlay-modules-08** (0): Done: its three entries were fixed with the OSD's statuses (the OSD's items, config v86), which rewrote the same files.
 - **overlay-modules-09** (6):
   - [The Layouts canvas logs null reads as it's torn down](../issues.md#the-layouts-canvas-logs-null-reads-as-its-torn-down)
   - [The monitor prompt's padding is a bare 18 px, and check_sizes misses it](../issues.md#the-monitor-prompts-padding-is-a-bare-18-px-and-check_sizes-misses-it)
@@ -542,10 +539,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [A Calendar card on the desktop or in an edge menu takes the page's request](../issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
   - [Removing a CalDAV account deletes its password before the draft is saved](../issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
   - [Event titles from a feed render as styled text and load remote images](../issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
-- **features-08** (3): The OSD entry gets a Live checks line (a DDC monitor).
-  - [An own brightness set opens the OSD, which refreshes the monitor beside the write](../issues.md#an-own-brightness-set-opens-the-osd-which-refreshes-the-monitor-beside-the-write)
+- **features-08** (1): Its two OSD entries (the own set's refresh, the icon thresholds) were fixed with the OSD's statuses.
   - [Idle dimming is forgotten across a shell reload](../issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
-  - [The brightness icon thresholds are written three times](../issues.md#the-brightness-icon-thresholds-are-written-three-times)
 - **features-09** (6): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines.
   - [A fast chat reply can drop the shell's connection](../issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
   - [Replacing the chat's conversation leaves its reply and attachments behind](../issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
@@ -584,7 +579,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [A custom clock format without spaces spills past a vertical bar](../issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 
 ### Counts
-- Entries: 354 in the list (359 at triage, from 360 open outside Deferred and Phase 13 less the one merged duplicate; the answers deferred 4 and removed 1). By the area whose clusters hold them: config 21, platform 27, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 45, features 68. By the area that filed them: config 18, platform 29, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 44, features 70.
+- Entries: 348 in the list (354 at the answers, less 6 fixed with the OSD's statuses: overlay-modules-01 one, overlay-modules-08 three, features-08 two; 359 at triage, from 360 open outside Deferred and Phase 13 less the one merged duplicate; the answers deferred 4 and removed 1). By the area whose clusters hold them: config 21, platform 27, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 45, features 68. By the area that filed them: config 18, platform 29, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 44, features 70.
 - Clusters: 79: 9 deletion, 3 blocker, 48 major, 13 minor-sweep, 5 plan, 1 live-only.
 - Product questions: 16, answered 2026-11-01 (5 deferred, 1 removed).
 - Checked by a script (2026-11-01, again after the answers): every assign entry outside Deferred and Phase 13 appears exactly once under Entries by cluster, the merged duplicate excepted, and every issues.md link here names an existing heading.

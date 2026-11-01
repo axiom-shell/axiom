@@ -1,10 +1,10 @@
 # Lock keys
 
-> **Files:** `backend/internal/lockkeys/lockkeys.go`, `backend/internal/daemon/topics.go`, `backend/internal/daemon/greeter.go`, `services/system/LockKeysManager.qml`, `components/reusable/CapsLockHint.qml`, `components/reusable/StyledTextEntry.qml`, `components/reusable/PasswordEntry.qml`, `components/bar/widgets/LockKeys/LockKeys.qml`
+> **Files:** `backend/internal/lockkeys/lockkeys.go`, `backend/internal/daemon/topics.go`, `backend/internal/daemon/greeter.go`, `services/system/LockKeysManager.qml`, `components/reusable/CapsLockHint.qml`, `components/reusable/StyledTextEntry.qml`, `components/reusable/PasswordEntry.qml`, `components/bar/widgets/LockKeys/LockKeys.qml`, `components/surfaces/osd/OSDStatusSource.qml`
 > **Config:** none of its own; the LockKeys widget's settings (`showCaps`, `showNum`, `showScroll`, `hideWhenOff`, its colors)
 > **Related:** [Services pattern](../core/services-pattern.md) (polled topics), [Protocol](../backend/protocol.md), [Shared UI pieces](../core/shared-ui-pieces.md) (`StyledTextEntry`, `PasswordEntry`), [Greeter runtime](greeter-runtime.md)
 
-Whether Caps Lock, Num Lock and Scroll Lock are on: every password field warns about Caps Lock by itself, and the LockKeys bar widget shows the keys that are on.
+Whether Caps Lock, Num Lock and Scroll Lock are on: every password field warns about Caps Lock by itself, the LockKeys bar widget shows the keys that are on, and the OSD shows a key toggling.
 
 ### Source
 - **The keyboards' LEDs** (`/sys/class/leds/<device>::capslock`, `::numlock`, `::scrolllock`, their `brightness`). Hyprland, sway and niri each keep the LEDs in step with xkb's locked modifiers, and every user may read them (the greeter's user too). No compositor reports the locked modifiers on all three otherwise: sway's `get_inputs` and niri's IPC don't, Hyprland's `devices` does only when polled, and Qt doesn't hand them to QML.
@@ -19,6 +19,4 @@ Whether Caps Lock, Num Lock and Scroll Lock are on: every password field warns a
 - `CapsLockHint` is plumbing, the one reusable piece reading `LockKeysManager` (root `AGENTS.md` › Layout); hosts read `StyledTextEntry.capsHintShown`.
 - **`PasswordEntry`** (lock screen, greeter, polkit, where a wrong password costs most): while its message is empty, its message line says "Caps Lock is on" in `Theme.warning` (under `inlineMessage`, the empty field's placeholder). A real message (a failure, a PAM prompt) always wins. `capsMessage` turns the line's warning off: the lock screen's and greeter's fields tie it to their Messages setting, since with no line reserved it would push the field (the icon still shows).
 - **The LockKeys bar widget**: a glyph per shown key in its `lead` slot (a Repeater over the keys its settings show, never over live state). With Hide when off, only the keys that are on show and the widget hides while none is; without it, every shown key always shows, one that's off dimmed in the inactive color's icon color (`_offColor`), so a key turning on never tints the ones still off. The active color while any is on, else the inactive one; always hidden while `available` is false. Hovering it lists each shown key, on or off: the host's hit area lies over the module and takes the hover, so it reads `hitArea.hovered` (a `HoverHandler` of its own only without one) and shows a `StyledToolTip` on the bar's inner side. It holds the topic as long as it exists, so the LEDs are polled the whole session (a few tiny reads every 150 ms, nothing pushed without a change). No clicks: toggling a lock key would need a virtual keyboard.
-
-### Not done
-- An OSD on a toggle: [No OSD for caps lock or the keyboard layout](../issues.md#no-osd-for-caps-lock-or-the-keyboard-layout).
+- **The OSD**: an OSD's `capsLock`, `numLock` and `scrollLock` status icons show the key's state, and open the OSD when it toggles (`OSDItems.lockKeyChanged`; [OSD](osd.md) › Status icons). Each holds the topic as long as it's shown, as the widget does.

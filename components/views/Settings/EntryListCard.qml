@@ -10,10 +10,11 @@ import qs.components.reusable
 
 // A section's list of entries as one card (the Dock and OSD `x-card`s):
 // the entries as tabs, one shown at a time: where it sits (a screen picker
-// with `presets`), Show, Duplicate and Delete, then `entryContent` and its
-// settings. Edits go through the settings draft like any other row (the
-// list as one value), so they show live and wait for Save. Folds like the
-// generated cards, under `foldKey`.
+// with `presets`), Show, Duplicate and Delete, then `entryContent`, its
+// `sections` (each a folding part of its own; `lastSections` after the
+// rest) and its other settings. Edits go through the settings draft like
+// any other row (the list as one value), so they show live and wait for
+// Save. Folds like the generated cards, under `foldKey`.
 FoldingCard {
   id: root
 
@@ -99,6 +100,15 @@ FoldingCard {
   property var spotOf: entry => ScreenEdge.edgeSpot(entry.edge, entry.position / 100, 0)
   // Between the picker and the settings
   property alias entryContent: entrySlot.data
+  // Keys of object settings each shown as a folding part of its own, titled
+  // and described by its schema, before the others (an OSD's bars, status
+  // icons and now playing). Their fields' `x-showIf` reach the entry's own
+  // through `../`
+  property var sections: []
+  // Of `sections`, those shown after the other settings, at the bottom
+  property var lastSections: []
+  // Titles the entry's other settings when it has sections
+  property string otherTitle
 
   // Show was clicked for the entry with this id
   signal show(string id)
@@ -255,14 +265,102 @@ FoldingCard {
     spacing: Widget.spacing * 1.5
   }
 
-  SchemaPropertiesForm {
-    visible: root.entry !== null
+  // One of `sections`: a line, then a folding part, its fields at their
+  // paths in the entry
+  Component {
+    id: sectionPart
+
+    ColumnLayout {
+      id: part
+      required property string modelData
+      readonly property var schema: root.entrySchema.properties[part.modelData]
+      readonly property string foldKey: root.foldKey + ":" + part.modelData
+
+      Layout.fillWidth: true
+      spacing: Widget.spacing * 1.5
+
+      // (The first sits under the accent line already)
+      StyledSeparator {
+        visible: part.modelData !== root.sections[0]
+        Layout.fillWidth: true
+      }
+
+      FoldingSection {
+        Layout.fillWidth: true
+        title: I18n.tr(part.schema.title ?? part.modelData)
+        description: part.schema.description ? I18n.tr(part.schema.description) : ""
+        collapsed: SettingsManager.isCollapsed(part.foldKey)
+        onToggled: SettingsManager.setCollapsed(part.foldKey, !collapsed)
+
+        SchemaPropertiesForm {
+          Layout.fillWidth: true
+          propertiesSchema: ({
+              [part.modelData]: part.schema
+            })
+          values: root.entry ?? ({})
+          onEdited: (path, value) => root.edit({
+              [path[0]]: value
+            })
+        }
+      }
+    }
+  }
+
+  Repeater {
+    model: root.entry !== null ? root.sections.filter(key => !root.lastSections.includes(key)) : []
+
+    delegate: sectionPart
+  }
+
+  // The entry's other settings: folding under `otherTitle` beside
+  // sections, else as they are
+  Component {
+    id: otherForm
+
+    SchemaPropertiesForm {
+      propertiesSchema: Object.keys(root.entrySchema.properties).filter(key => !root.sections.includes(key)).reduce((out, key) => {
+        out[key] = root.entrySchema.properties[key];
+        return out;
+      }, {})
+      order: root.entrySchema["x-order"] ?? []
+      values: root.entry ?? ({})
+      onEdited: (path, value) => root.edit({
+          [path[0]]: value
+        })
+    }
+  }
+
+  Loader {
+    active: root.entry !== null && root.sections.length === 0
+    visible: active
     Layout.fillWidth: true
-    propertiesSchema: root.entrySchema.properties
-    order: root.entrySchema["x-order"] ?? []
-    values: root.entry ?? ({})
-    onEdited: (path, value) => root.edit({
-        [path[0]]: value
-      })
+    sourceComponent: otherForm
+  }
+
+  StyledSeparator {
+    visible: others.visible
+    Layout.fillWidth: true
+  }
+
+  FoldingSection {
+    id: others
+    readonly property string foldKey: root.foldKey + ":other"
+    visible: root.entry !== null && root.sections.length > 0
+    Layout.fillWidth: true
+    title: root.otherTitle
+    collapsed: SettingsManager.isCollapsed(others.foldKey)
+    onToggled: SettingsManager.setCollapsed(others.foldKey, !others.collapsed)
+
+    Loader {
+      active: others.visible
+      Layout.fillWidth: true
+      sourceComponent: otherForm
+    }
+  }
+
+  Repeater {
+    model: root.entry !== null ? root.sections.filter(key => root.lastSections.includes(key)) : []
+
+    delegate: sectionPart
   }
 }
