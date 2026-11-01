@@ -16,7 +16,7 @@ url='https://github.com/axiom-shell/axiom'
 license=('GPL-3.0-or-later')
 # No compositor: it's the shell, not the session, and any one of
 # hyprland, sway (or swayfx, which provides it) and niri runs it
-depends=('quickshell>=0.3.2' 'curl' 'ttf-material-symbols-variable')
+depends=('quickshell>=0.3.2' 'curl')
 optdepends=(
   'hyprland: the compositor with every feature'
   'niri: run axiom under niri'

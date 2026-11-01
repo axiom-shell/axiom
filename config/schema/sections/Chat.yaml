@@ -184,6 +184,7 @@ properties:
         name: {type: string, title: Name, default: ''}
         icon:
           type: string
+          x-control: icon
           title: Icon
           default: chat
           description: A Material Symbols name (fonts.google.com/icons).

@@ -16,11 +16,13 @@ settings:
     description: Text shown while connected. Empty shows the tailnet name.
   connectedIcon:
     type: string
+    x-control: icon
     title: Connected icon
     default: shield_lock
     description: A Material Symbols name (fonts.google.com/icons), or text.
   disconnectedIcon:
     type: string
+    x-control: icon
     title: Disconnected icon
     default: signal_disconnected
     description: A Material Symbols name (fonts.google.com/icons), or text.

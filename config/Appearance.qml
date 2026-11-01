@@ -57,8 +57,17 @@ QtObject {
     return Math.round((baseFontSize + n) * Widget.scale);
   }
   // Icons are Material Symbols names drawn in this font (StyledIcon), so
-  // they don't depend on the text font
-  readonly property string iconFamily: "Material Symbols Rounded"
+  // they don't depend on the text font: the copy axiom bundles
+  // (assets/fonts, built by scripts/generate_icons.py), renamed so a system
+  // copy is never drawn in its place. Loaded here, not by a service: every
+  // icon reads this, in the shell and the greeter alike, so the font is
+  // there wherever one is drawn
+  readonly property string iconFamily: _iconFont.name || "Axiom Material Symbols"
+  readonly property FontLoader _iconFont: FontLoader {
+    source: Qt.resolvedUrl("../assets/fonts/MaterialSymbolsRounded.ttf")
+    onStatusChanged: if (status === FontLoader.Error)
+      console.warn("[Appearance] Could not load the bundled icon font (assets/fonts): icons will show as words")
+  }
 
   // --- Shape ---
   readonly property int borderRadius: _c.shape.radius

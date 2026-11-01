@@ -174,7 +174,7 @@ It uses the compositor you're running or have installed, or asks which one to in
 <details>
 <summary><b>By hand</b>: on another distribution, or if you'd rather not pipe to bash</summary>
 
-Install the requirements: a compositor (above), [Quickshell](https://quickshell.org) 0.3.2+, the [Material Symbols](https://fonts.google.com/icons) font, `git`, `go` and `curl`. Optional features have their own dependencies, listed in [the installation guide](docs/installation.md#requirements).
+Install the requirements: a compositor (above), [Quickshell](https://quickshell.org) 0.3.2+, `git`, `go` and `curl`. Optional features have their own dependencies, listed in [the installation guide](docs/installation.md#requirements).
 
 Clone into Quickshell's config directory, build the `axiom` binary (the shell's parent), and try it with `axiom run`:
 
@@ -229,7 +229,7 @@ axiom is built on:
 - [Hyprland](https://hypr.land), [niri](https://github.com/YaLTeR/niri) and [sway](https://swaywm.org), the compositors it runs on
 - [Quickshell](https://quickshell.org), the QML toolkit every surface is written in, and without which axiom couldn't exist
 - [Go](https://go.dev), which the `axiom` binary is written in, with [goja](https://github.com/dop251/goja) (running the old config migrations) and [gopher-lua](https://github.com/yuin/gopher-lua) (reading Hyprland's Lua configs)
-- [Material Symbols](https://fonts.google.com/icons), the icons
+- [Material Symbols](https://fonts.google.com/icons), the icons (bundled in `assets/fonts`, Apache-2.0)
 
 The static themes are ports of [Catppuccin](https://catppuccin.com), [Gruvbox](https://github.com/morhetz/gruvbox), [Gruvbox Material](https://github.com/sainnhe/gruvbox-material), [Solarized](https://ethanschoonover.com/solarized/), [Tokyo Night](https://github.com/tokyo-night/tokyo-night-vscode-theme), [Rosé Pine](https://rosepinetheme.com), [Nord](https://www.nordtheme.com) (Nord Light after [threddast's](https://github.com/tinted-theming/schemes/blob/spec-0.11/base16/nord-light.yaml)), [Dracula and Alucard](https://draculatheme.com), [Everforest](https://github.com/sainnhe/everforest), [Kanagawa](https://github.com/rebelot/kanagawa.nvim), [One Dark/Light](https://github.com/atom/atom/tree/master/packages), [Ayu](https://github.com/ayu-theme/ayu-colors), [Nightfox](https://github.com/EdenEast/nightfox.nvim), [GitHub](https://github.com/primer/github-vscode-theme) and [Oxocarbon](https://github.com/nyoom-engineering/oxocarbon.nvim), most by way of [tinted-theming](https://github.com/tinted-theming/schemes)'s base16 palettes. Submarine Sonar is axiom's own.
 

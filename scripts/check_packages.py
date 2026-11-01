@@ -5,9 +5,7 @@ install.sh, components/methods/Packages.qml (the onboarder's install hints)
 and the AUR PKGBUILDs (packaging/aur/*/PKGBUILD) each say what installs
 axiom's dependencies; this fails when they drift:
 - every key in install.sh's PACKAGES names the same Arch and Fedora package
-  as Packages.packages (a COPR as Packages' `repo`, "download" as its
-  `{ file, to }` with install.sh's ICON_FONT_URL and ICON_FONT_FILE, "-" and
-  "n/a" as null)
+  as Packages.packages (a COPR as Packages' `repo`, "-" and "n/a" as null)
 - every key install.sh's REQUIRED and FEATURES use is in PACKAGES
 - each PKGBUILD's depends are the Arch packages of REQUIRED (less git: a
   package doesn't self-update), and its optdepends are exactly the Arch
@@ -46,11 +44,6 @@ def bash_array(text, name):
     return [item for item in done.stdout.split("\0") if item] if done.returncode == 0 else None
 
 
-def bash_value(text, name):
-    match = re.search(rf"^{name}=(.*)$", text, re.M)
-    return match.group(1).strip().strip("\"'") if match else None
-
-
 def qml_packages():
     """Packages.packages as data: its root.<name> strings filled in"""
     text = PACKAGES_QML.read_text()
@@ -65,12 +58,10 @@ def qml_packages():
     return json.loads(body)
 
 
-def same(cell, entry, font):
+def same(cell, entry):
     """Whether an install.sh cell says what a Packages entry does"""
     if cell in ("-", "n/a"):
         return entry is None
-    if cell == "download":
-        return isinstance(entry, dict) and entry.get("file") == font[0] and entry.get("to") == font[1]
     name = cell.split(":")[-1]
     repo = cell.split(":")[0] if "/" in cell and ":" in cell else None
     if isinstance(entry, str):
@@ -98,7 +89,6 @@ def main():
     if rows is None or required is None or features is None:
         error(INSTALL, "PACKAGES, REQUIRED or FEATURES not found")
         return
-    font = (bash_value(text, "ICON_FONT_URL"), (bash_value(text, "ICON_FONT_FILE") or "").replace("$HOME", "~"))
     table = {}
     for row in rows:
         cells = row.split("|")
@@ -113,7 +103,7 @@ def main():
             error(PACKAGES_QML, f"no key {key!r} (install.sh installs it)")
             continue
         for distro in DISTROS:
-            if not same(cells[distro], packages[key].get(distro), font):
+            if not same(cells[distro], packages[key].get(distro)):
                 error(INSTALL, f"{key} on {distro} is {cells[distro]!r}, Packages.qml says {packages[key].get(distro)!r}")
 
     feature_keys = []

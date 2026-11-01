@@ -6,6 +6,7 @@
   - the Neovim module Apply copies compiles and maps the shipped themes
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
     lines marked `// fixed px:`
+  - check_icons.py finds icon names the bundled font doesn't have
   - only PAM's success unlocks the built-in lock screen
   - the review skills' scope.py resolves doc headers and files audits'
     findings once
@@ -504,7 +505,7 @@ class CheckPackages(unittest.TestCase):
         ("install.sh", '"Wallpapers|awww|"', '"Wallpapers|awww|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
         ("install.sh", "REQUIRED=(git ", "REQUIRED=(specter git ", "'specter' isn't in PACKAGES"),
         ("packaging/aur/axiom-shell/PKGBUILD", "depends=('quickshell", "depends=('extra' 'quickshell",
-         "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell', 'ttf-material-symbols-variable'] aren't"),
+         "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell'] aren't"),
         ("packaging/aur/axiom-shell-git/PKGBUILD", "'awww: wallpapers'", "'phantom: boo'",
          "axiom-shell-git/PKGBUILD: optdepends phantom, which no install.sh feature or compositor installs"),
         ("packaging/aur/axiom-shell-git/PKGBUILD", None, None, "axiom-shell-git/PKGBUILD: no optdepends for awww"),
@@ -521,6 +522,53 @@ class CheckPackages(unittest.TestCase):
             code, out = run_check(root, "check_packages.py")
         self.assertEqual(code, 1)
         self.assertEqual(missed(out, [m for *_, m in self.EDITS]), [], out)
+
+
+class CheckIcons(unittest.TestCase):
+    """scripts/check_icons.py finds icon names the font doesn't have, where
+    a literal can be shown, and leaves other strings alone."""
+
+    def test_finds_unknown_names(self):
+        sys.path.insert(0, str(SCRIPTS))
+        import check_icons
+        qml = "\n".join([
+            "Item {",
+            '  icon: "wifi"',
+            '  connectedIcon: on ? "shield_lock" : "shieldd_lock"',
+            '  icon: ["ticker", "stacked"].includes(style) ? "bogus_one" : ""',
+            '  icon: mode === "not_shown" ? "wifi" : "\uf001"',
+            '  glyph: "nope_glyph" // not an icon: a test',
+            "  StyledIcon {",
+            '    text: "bogus_text"',
+            "    Item {",
+            '      text: "plain_text"',
+            "    }",
+            "  }",
+            '  readonly property var _actionIcons: ({',
+            '      "lock": "lock",',
+            '      "x": "bogus_map"',
+            "    })",
+            '  text: "not_an_icon_context"',
+            "}",
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "components").mkdir()
+            (Path(tmp) / "components/A.qml").write_text(qml)
+            old_root, check_icons.ROOT, check_icons.errors = check_icons.ROOT, Path(tmp), []
+            try:
+                check_icons.check_qml({"wifi", "shield_lock", "lock"})
+            finally:
+                check_icons.ROOT = old_root
+        self.assertEqual(check_icons.errors, [
+            "error    components/A.qml:3: no icon named 'shieldd_lock'",
+            "error    components/A.qml:4: no icon named 'bogus_one'",
+            "error    components/A.qml:8: no icon named 'bogus_text'",
+            "error    components/A.qml:15: no icon named 'bogus_map'",
+        ])
+
+    def test_the_tree_passes(self):
+        done = subprocess.run([sys.executable, str(SCRIPTS / "check_icons.py")], capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0, done.stdout)
 
 
 class CheckSizes(unittest.TestCase):

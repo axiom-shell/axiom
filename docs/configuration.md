@@ -101,5 +101,3 @@ axiom restart           # restart the shell (the daemon keeps running)
 - **A notice that the files and the binary are from different versions:** the `axiom` binary is older or newer than the shell's files, so axiom runs read-only and doesn't save settings. Rebuild the binary from the same clone (`scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`), then `axiom daemon reexec`.
 
 Reporting a bug? Include the output of `axiom bug-info` (your versions, compositor, distribution and config mode; `~/.local/bin/axiom bug-info` if `axiom` isn't on your `PATH`) along with the log (`scripts/log.sh`, in axiom's folder: `~/.config/quickshell/axiom` for a clone, `/usr/share/axiom` for a package).
-
-Icons showing as words (`wifi`, `battery_full`) mean the icon font is missing: install `ttf-material-symbols-variable` and restart the shell.

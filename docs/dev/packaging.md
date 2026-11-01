@@ -8,17 +8,17 @@ How axiom gets onto a machine: the installer (a clone in the user's home) or a d
 
 ### Three package lists, kept in step
 - `Packages.packages` (the onboarder's install hints), install.sh's `PACKAGES` table and the PKGBUILDs' `depends`/`optdepends` all say what installs a dependency.
-- They share keys: a command, a compositor by its lowercase name, `iconFont`, or a package without a command (`xdg-desktop-portal-gtk`).
+- They share keys: a command, a compositor by its lowercase name, or a package without a command (`xdg-desktop-portal-gtk`).
 - `scripts/check_packages.py` (CI, `check_all.sh`, `verify.sh` when one of them changes) fails when:
-  - an install.sh key's Arch or Fedora package differs from `Packages.packages` (a COPR is `owner/project:name` there and `{ name, repo }` here; `download` is `{ file, to }`, the same URL and file; `-` and `n/a` are `null`);
+  - an install.sh key's Arch or Fedora package differs from `Packages.packages` (a COPR is `owner/project:name` there and `{ name, repo }` here; `-` and `n/a` are `null`);
   - a key in `REQUIRED` or `FEATURES` isn't in `PACKAGES`;
   - a PKGBUILD's `depends` aren't `REQUIRED`'s Arch packages (less `git`, which only fetches it: `makedepends` with `go`), or its `optdepends` aren't exactly the compositors' and `FEATURES`' Arch packages.
 - Adding an optional feature: its keys in `Packages.packages` (if new), a `PACKAGES` row, a `FEATURES` row, and an `optdepends` line in both PKGBUILDs, in the same words.
 
 ### install.sh
 - One self-contained file, wrapped in `main` so `curl | bash` reads all of it first. Questions and the package manager read `/dev/tty`.
-- **Distribution:** `distro_family` follows `Packages.distroFamily`'s rule (os-release `ID`, else the first known `ID_LIKE`). Arch uses `pacman -T` / `pacman -S --needed`; Fedora `rpm -q --whatprovides` / `dnf install`, each COPR enabled first (`dnf copr enable`, the copr plugin installed if missing), and the icon font downloaded into `~/.local/share/fonts` as the user.
-  - `PACKAGES` cells: a package, `owner/project:name` (from that COPR), `download`, `-` (nothing needed there: `checkupdates` on Fedora) or `n/a` (not packaged there: `awww` on Fedora, whose feature is listed as not available).
+- **Distribution:** `distro_family` follows `Packages.distroFamily`'s rule (os-release `ID`, else the first known `ID_LIKE`). Arch uses `pacman -T` / `pacman -S --needed`; Fedora `rpm -q --whatprovides` / `dnf install`, each COPR enabled first (`dnf copr enable`, the copr plugin installed if missing).
+  - `PACKAGES` cells: a package, `owner/project:name` (from that COPR), `-` (nothing needed there: `checkupdates` on Fedora) or `n/a` (not packaged there: `awww` on Fedora, whose feature is listed as not available).
   - COPRs: quickshell from `errornointernet/quickshell` (the one quickshell's docs name; Fedora's own is too old), Hyprland and its tools from `nett00n/hyprland`. Each is asked separately; declining one a required package needs stops the install.
 - **Compositor:** the main one is `--compositor` if given; else the running one (`HYPRLAND_INSTANCE_SIGNATURE`, `NIRI_SOCKET`, `SWAYSOCK`); else the installed one whose config already starts axiom (an earlier run's); else it asks among the installed ones; with none installed, it asks which to install (Hyprland by default, and without a terminal). The main one is what the session gets into (the TTY offer).
   - Every other installed compositor is offered the autostart line too, asked separately and defaulting to no: sway may be there only for the login screen, whose feature installs it.

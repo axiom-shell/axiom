@@ -87,6 +87,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
   - `"readonly"`: shows a string with a copy button instead of a field (an edge menu's `id`).
   - `"folder"`: a string with a Browse button opening the desktop's folder picker ([File picker](file-picker.md); the wallpaper, notes, screenshot and recording folders, Claude usage's `configDir`, System stats' `diskPath`). It hands back `~/…`, so whatever reads the setting expands `~` (`Paths.expandHome`).
   - `"search"`: a long option list (e.g. `"timezones"`) is typed into to filter it (`SchemaField`; the Clock module's and World clocks' `timezone`).
+  - `"icon"`: a string holding an icon: a field led by the icon itself, whose list searches the bundled Material Symbols by name and tag; anything else typed or pasted (a Nerd Font glyph) is kept ([Icons](icons.md)). Every icon setting takes it (`check_icons.py` checks their defaults).
 - Integers render through `forms/SchemaNumberField`:
   - a slider with a value box for 7–200 steps, else a stepper, with ±10 buttons past 20 steps
   - steppers commit debounced, sliders on release
