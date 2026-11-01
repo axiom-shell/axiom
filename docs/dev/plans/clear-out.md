@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, bar-popouts-01 and overlay-modules-01 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, bar-popouts-01, overlay-modules-01 and features-01 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -54,7 +54,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 6 | compositor-03 | deletion | Done: The blur system | 5 | ~200 | none |  |
 | 7 | bar-popouts-01 | deletion | Done: Dead members, signals and wrappers across popouts, the bar, bar widgets and edge menus | 12 | ~150 | none |  |
 | 8 | overlay-modules-01 | deletion | Done: Overlay and modules: dead members and small shrinks | 6 | ~200 touched (~-150 net) | compositor-02 |  |
-| 9 | features-01 | deletion | Dead and forwarding members across the feature systems | 14 | ~250 | none |  |
+| 9 | features-01 | deletion | Done: Dead and forwarding members across the feature systems | 14 | ~250 | none |  |
 | 10 | compositor-04 | blocker | Sway's look lost after a reload | 1 | ~10 | compositor-02 |  |
 | 11 | bar-popouts-02 | blocker | Outside clicks never close edge and floating popouts | 1 | ~4 | none |  |
 | 12 | features-02 | blocker | The 12-hour clock's hour, and the Accounts card's read-only and task-list facts | 2 | ~25 | features-01 |  |
@@ -212,7 +212,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon
   - Three keycap parts draw the same cap, and KeyCap's icon slot has no user
   - Small shrinks in the overlay
-- **features-01** (14):
+- **features-01** (14, done):
   - Calendar results and members nothing reads
   - The Accounts card's fallbacks for a renamed key and for empty account ids
   - Two members of the brightness system nothing needs
@@ -226,7 +226,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - CommunityCatalog's setups carry three fields nothing reads
   - Dead and forwarding members in the timer services and helpers
   - Small shrinks in TimeZoneManager and WorldClocks
-  - [The dock's trigger placement and window focus go the long way round](../issues.md#the-docks-trigger-placement-and-window-focus-go-the-long-way-round)
+  - The dock's trigger placement and window focus go the long way round
 
 **Blockers**
 
