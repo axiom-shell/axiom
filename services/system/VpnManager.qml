@@ -17,9 +17,8 @@ QtObject {
 
   // NetworkManager runs (false until axiom says otherwise)
   property bool available: false
-  // NetworkManager's VPNs: [{ uuid, name, kind, plugin, autoconnect,
-  // state ("off" | "connecting" | "on" | "disconnecting"), device, ipv4,
-  // error }], by name
+  // NetworkManager's VPNs: [{ uuid, name, kind, plugin, state ("off" |
+  // "connecting" | "on" | "disconnecting"), ipv4, error }], by name
   property var profiles: []
 
   // Every row: { id, name, kind, state, ipv4, error, plugin }, by name, so

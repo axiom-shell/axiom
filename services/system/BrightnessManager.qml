@@ -118,10 +118,6 @@ QtObject {
     });
   }
 
-  function _focused() {
-    return CompositorManager.focusedOutput;
-  }
-
   function _update(name, value, max) {
     const display = displays[name];
     if (!display || (display.value === value && (max === undefined || display.max === max)))
@@ -218,15 +214,15 @@ QtObject {
     target: "brightness"
 
     function up(): void {
-      root.stepBy(root._focused(), root.step);
+      root.stepBy(CompositorManager.focusedOutput, root.step);
     }
 
     function down(): void {
-      root.stepBy(root._focused(), -root.step);
+      root.stepBy(CompositorManager.focusedOutput, -root.step);
     }
 
     function set(percent: int): void {
-      root.set(root._focused(), percent / 100);
+      root.set(CompositorManager.focusedOutput, percent / 100);
     }
 
     // Every monitor, without the OSD (the Idle settings' dim step)

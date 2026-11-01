@@ -201,12 +201,9 @@ type SyncError struct {
 	Message  string     `json:"message"`
 }
 
-// SyncResult is a sync's outcome; Changed says whether any calendar's
-// objects did.
+// SyncResult is a sync's outcome.
 type SyncResult struct {
-	Errors  []SyncError `json:"errors"`
-	Changed bool        `json:"changed"`
-	Count   int         `json:"count"`
+	Errors []SyncError `json:"errors"`
 }
 
 // object is a calendar object as fetched
@@ -291,20 +288,14 @@ func (s *Service) sync(ctx context.Context, r SyncRequest, onlyAccount, onlyCale
 			} else if err != nil {
 				return SyncResult{}, err
 			}
-			result.Changed = result.Changed || fresh != old
 			calendars[id] = fresh
 		}
 	}
-	for id := range calendars {
-		result.Changed = result.Changed || saved.Calendars[id] == nil
-	}
-	result.Changed = result.Changed || len(calendars) != len(saved.Calendars)
 	saved.Calendars = calendars
 	if err := writeJSON(filepath.Join(s.o.StateDir, "objects.json"), saved); err != nil {
 		return SyncResult{}, err
 	}
 	occurrences := s.expandAll(calendars, r.Range)
-	result.Count = len(occurrences)
 	err := writeJSON(filepath.Join(s.o.StateDir, "events.json"), events{
 		Version: 1, Updated: s.o.Now().UnixMilli(), Range: r.Range, Events: occurrences, Errors: result.Errors,
 	})

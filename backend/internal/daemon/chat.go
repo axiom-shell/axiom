@@ -18,7 +18,6 @@ func (d *Daemon) chatMethods(reg *rpc.Registry) {
 	s := chat.New(chat.Options{
 		Secrets: d.secretStore("chat"),
 		Command: d.commandOptions,
-		Log:     d.opts.Log.With("part", "chat"),
 	})
 	type stopParams struct {
 		ID string `json:"id"`

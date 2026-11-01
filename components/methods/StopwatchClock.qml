@@ -177,11 +177,6 @@ QtObject {
     return state;
   }
 
-  // When a running timer ends (epoch ms), else 0
-  function endsAt(state) {
-    return state.running ? state.endsAt : 0;
-  }
-
   // Recent timers, [{ ms, label }], the newest first: `ms` and `label` put
   // first (once), at most `max`
   function pushRecent(list, ms, label, max) {

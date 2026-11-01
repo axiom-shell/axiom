@@ -19,7 +19,6 @@ import qs.services.ui
 Singleton {
   id: root
 
-  readonly property var state: root._state
   readonly property string phase: root._state.phase
   readonly property bool running: root._state.running
   readonly property bool isBreak: PomodoroCycle.isBreak(root._state)
@@ -29,7 +28,7 @@ Singleton {
   // Ms left, and 0–1 through the phase, as of `now`
   readonly property real remaining: PomodoroCycle.remaining(root._state, root.now, PomodoroConfig.settings)
   readonly property real progress: PomodoroCycle.progress(root._state, root.now, PomodoroConfig.settings)
-  readonly property string remainingText: PomodoroCycle.format(root.remaining)
+  readonly property string remainingText: StopwatchClock.format(root.remaining, false, true)
   // Updated every second while running and acquired
   readonly property real now: _ticker.now
   // The todo the sessions are for ("" for none), and its text
@@ -42,7 +41,7 @@ Singleton {
   // (the launcher, IPC): `remainingText` follows `now`, which ticks only
   // while something has acquired it
   function remainingTextNow() {
-    return PomodoroCycle.format(PomodoroCycle.remaining(root._state, Date.now(), PomodoroConfig.settings));
+    return StopwatchClock.format(PomodoroCycle.remaining(root._state, Date.now(), PomodoroConfig.settings), false, true);
   }
 
   function acquire(owner) {

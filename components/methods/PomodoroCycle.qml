@@ -102,9 +102,4 @@ QtObject {
       "completed": all ? 0 : state.completed
     });
   }
-
-  // "mm:ss", or "h:mm:ss" from an hour, rounding up so 0:00 is the end
-  function format(ms) {
-    return StopwatchClock.format(ms, false, true);
-  }
 }

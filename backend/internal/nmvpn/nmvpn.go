@@ -74,14 +74,11 @@ type Connection struct {
 	// "openconnect", …)
 	Kind string `json:"kind"`
 	// Plugin: the plugin it needs is installed (always for WireGuard)
-	Plugin      bool `json:"plugin"`
-	Autoconnect bool `json:"autoconnect"`
+	Plugin bool `json:"plugin"`
 	// State is "off", "connecting", "on" or "disconnecting"
 	State string `json:"state"`
-	// Device is its interface while up ("" for a plugin VPN NetworkManager
-	// doesn't name one for); IPv4 its first address
-	Device string `json:"device"`
-	IPv4   string `json:"ipv4"`
+	// IPv4 is its first address while up
+	IPv4 string `json:"ipv4"`
 	// Error is why it last failed or dropped, "" if it didn't: no-secrets,
 	// login-failed, timeout, service-failed, plugin-missing, failed
 	Error string `json:"error"`
@@ -150,7 +147,6 @@ type Service struct {
 
 type profile struct {
 	uuid, name, kind, service, user string
-	autoconnect                     bool
 	vpn                             bool
 }
 
@@ -438,8 +434,8 @@ func (s *Service) reload(ctx context.Context, conn *dbus.Conn) {
 	}
 
 	type activeConn struct {
-		uuid, device, ipv4 string
-		state              uint32
+		uuid, ipv4 string
+		state      uint32
 	}
 	var actives []activeConn
 	activePaths := map[dbus.ObjectPath]string{}
@@ -459,15 +455,6 @@ func (s *Service) reload(ctx context.Context, conn *dbus.Conn) {
 			a.state, _ = props["State"].Value.(uint32)
 			if ip4, ok := props["Ip4Config"].Value.(dbus.ObjectPath); ok && ip4 != "/" {
 				a.ipv4 = firstAddress(ctx, conn, ip4)
-			}
-			// A WireGuard connection is its own device; a plugin VPN's
-			// Devices is the one it runs over, and its tunnel isn't named
-			if kind == "wireguard" {
-				if devs, ok := props["Devices"].Value.([]dbus.ObjectPath); ok && len(devs) > 0 {
-					if v, err := conn.GetProperty(ctx, busName, devs[0], "org.freedesktop.NetworkManager.Device", "Interface"); err == nil {
-						a.device, _ = v.Value.(string)
-					}
-				}
 			}
 			activePaths[ap] = a.uuid
 			actives = append(actives, a)
@@ -490,12 +477,12 @@ func (s *Service) reload(ctx context.Context, conn *dbus.Conn) {
 		if pr.kind == "" {
 			continue
 		}
-		c := Connection{UUID: pr.uuid, Name: pr.name, Kind: pr.kind, Autoconnect: pr.autoconnect, State: "off", Plugin: !pr.vpn || plugins[pr.service]}
+		c := Connection{UUID: pr.uuid, Name: pr.name, Kind: pr.kind, State: "off", Plugin: !pr.vpn || plugins[pr.service]}
 		for _, a := range actives {
 			if a.uuid != pr.uuid {
 				continue
 			}
-			c.State, c.Device, c.IPv4 = stateName(a.state), a.device, a.ipv4
+			c.State, c.IPv4 = stateName(a.state), a.ipv4
 		}
 		c.Error = s.errors[pr.uuid]
 		if !c.Plugin && c.Error == "" {
@@ -548,12 +535,9 @@ func firstAddress(ctx context.Context, conn *dbus.Conn, path dbus.ObjectPath) st
 // its kind is "" when it's no VPN.
 func readProfile(settings any) profile {
 	c := section(settings, "connection")
-	pr := profile{autoconnect: true}
+	pr := profile{}
 	pr.uuid, _ = c["uuid"].Value.(string)
 	pr.name, _ = c["id"].Value.(string)
-	if a, ok := c["autoconnect"].Value.(bool); ok {
-		pr.autoconnect = a
-	}
 	switch c["type"].Value {
 	case "wireguard":
 		pr.kind = "wireguard"

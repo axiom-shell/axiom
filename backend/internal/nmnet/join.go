@@ -14,7 +14,7 @@ import (
 // asked for: a hidden one, or one whose security needs more than a
 // password (WEP, enterprise). Secrets come over the socket, never argv.
 type JoinRequest struct {
-	// Device is the Wi-Fi interface ("": the first)
+	// Device is the Wi-Fi interface
 	Device string `json:"device"`
 	SSID   string `json:"ssid"`
 	Hidden bool   `json:"hidden"`
@@ -179,12 +179,7 @@ func (s *Service) Join(ctx context.Context, r JoinRequest) error {
 		return err
 	}
 	defer conn.Close()
-	var dev dbus.ObjectPath
-	if r.Device != "" {
-		dev, err = deviceByIface(ctx, conn, r.Device)
-	} else {
-		dev, err = firstWifi(ctx, conn)
-	}
+	dev, err := deviceByIface(ctx, conn, r.Device)
 	if err != nil {
 		return err
 	}

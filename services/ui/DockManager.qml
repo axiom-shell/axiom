@@ -81,10 +81,6 @@ QtObject {
     CompositorManager.focusWindow(DockLayout.clickTarget(item.windows, root.focusedId));
   }
 
-  function focus(id) {
-    CompositorManager.focusWindow(id);
-  }
-
   // A new instance (middle click, the menu's New window)
   function launch(key) {
     const entry = root.entryFor(key);

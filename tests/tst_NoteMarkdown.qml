@@ -97,7 +97,10 @@ TestCase {
 
   function test_typed_blank_line_splits_the_paragraph() {
     const doc = NoteMarkdown.setText(NoteMarkdown.parse("abc"), 0, "abc\n\nd");
-    const result = NoteMarkdown.reparse(doc, 0, 6);
+    const result = NoteMarkdown.reparse(doc, {
+      "block": 0,
+      "pos": 6
+    });
     compare(kinds(result.doc), ["text", "text"]);
     compare(result.focus, {
       "block": 1,
@@ -266,7 +269,10 @@ TestCase {
     const typed = NoteMarkdown.setText(doc, 0, "intro\n- [ ] milk");
     verify(NoteMarkdown.hasTaskLine(typed.blocks[0].text));
     verify(!NoteMarkdown.hasTaskLine("intro\n- [ ]"));
-    const result = NoteMarkdown.reparse(typed, 0, 16);
+    const result = NoteMarkdown.reparse(typed, {
+      "block": 0,
+      "pos": 16
+    });
     compare(kinds(result.doc), ["text", "task"]);
     compare(result.focus, {
       "block": 1,

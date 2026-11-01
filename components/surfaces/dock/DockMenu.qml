@@ -114,7 +114,7 @@ PopupWindow {
           icon: win?.id === DockManager.focusedId ? "radio_button_checked" : "select_window"
           text: win?.title || win?.appId || ""
           onClicked: {
-            DockManager.focus(win.id);
+            CompositorManager.focusWindow(win.id);
             root.close();
           }
         }

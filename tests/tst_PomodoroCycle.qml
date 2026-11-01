@@ -50,7 +50,7 @@ TestCase {
     compare(PomodoroCycle.reset(state, true), PomodoroCycle.idle);
   }
 
-  function test_normalize_and_format() {
+  function test_normalize() {
     compare(PomodoroCycle.normalize(null), PomodoroCycle.idle);
     compare(PomodoroCycle.normalize({
       "phase": "nap",
@@ -60,9 +60,5 @@ TestCase {
     }), Object.assign({}, PomodoroCycle.idle, {
       "completed": 2
     }));
-    compare(PomodoroCycle.format(25 * minute), "25:00");
-    compare(PomodoroCycle.format(61500), "01:02", "rounded up");
-    compare(PomodoroCycle.format(3600000 + 5000), "1:00:05");
-    compare(PomodoroCycle.format(-5), "00:00");
   }
 }

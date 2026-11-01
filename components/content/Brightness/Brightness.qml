@@ -95,7 +95,6 @@ Panel {
 
         // Every target at once (the one monitor, or all)
         AudioRow {
-          id: allRow
           icon: BrightnessManager.icon(root.level)
           title: root.all ? I18n.tr("All monitors") : root.monitorName
           subtitle: root.desynced ? I18n.tr("Out of sync: click to sync") : ""

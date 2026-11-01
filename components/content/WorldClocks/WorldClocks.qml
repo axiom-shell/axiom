@@ -62,14 +62,14 @@ Card {
   }
 
   // "+9 h", "−5:30 h" from here, and "Tomorrow"/"Yesterday" when its date
-  // isn't today's (nothing for here itself)
-  function detailOf(place) {
-    if (!place.timezone)
+  // (`there`, its wall time) isn't today's (nothing for here itself)
+  function detailOf(zone, there) {
+    if (!zone)
       return "";
-    const zoned = TimeZoneManager.offsetOf(place.timezone);
+    const zoned = TimeZoneManager.offsetOf(zone);
     const parts = [];
     if (zoned !== null) {
-      const diff = zoned + place.date.getTimezoneOffset();
+      const diff = zoned + clock.date.getTimezoneOffset();
       if (diff === 0) {
         parts.push(I18n.tr("Same time"));
       } else {
@@ -78,7 +78,7 @@ Card {
         parts.push(I18n.tr("{0} h", (diff < 0 ? "−" : "+") + hours + (minutes ? ":" + String(minutes).padStart(2, "0") : "")));
       }
     }
-    const day = root.dayText(root.timeIn(place.timezone), place.date);
+    const day = root.dayText(there, clock.date);
     if (day !== "")
       parts.push(day);
     return parts.join(" · ");
@@ -210,10 +210,7 @@ Card {
           StyledText {
             Layout.alignment: Qt.AlignHCenter
             Layout.maximumWidth: parent.width
-            text: root.detailOf({
-              "timezone": entry.place.timezone,
-              "date": clock.date
-            })
+            text: root.detailOf(entry.place.timezone, entry.there)
             textSize: Appearance.fontSizeBy(-3)
             textColor: Theme.foregroundAlt
             elide: Text.ElideRight
@@ -251,10 +248,7 @@ Card {
               StyledText {
                 Layout.fillWidth: true
                 visible: text !== "" && root.rowHeight >= Appearance.fontSize * 2.6
-                text: root.detailOf({
-                  "timezone": entry.place.timezone,
-                  "date": clock.date
-                })
+                text: root.detailOf(entry.place.timezone, entry.there)
                 textSize: Appearance.fontSizeBy(-3)
                 textColor: Theme.foregroundAlt
                 elide: Text.ElideRight
