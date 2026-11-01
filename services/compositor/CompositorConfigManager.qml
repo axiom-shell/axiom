@@ -235,6 +235,17 @@ Singleton {
   // SwayManager.setLiveLook)
   property string _lookSet: ""
 
+  // A reload takes back what the look set at runtime (sway:
+  // SwayManager._onEvent), so the backend gets it again, changed or not
+  property Connections _reloads: Connections {
+    target: CompositorManager
+
+    function onConfigReloaded() {
+      root._lookSet = "";
+      root._fetchState();
+    }
+  }
+
   function _setState(state) {
     root._state = state ?? {};
     const look = state?.look ? JSON.stringify(state.look) : "";
