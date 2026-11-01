@@ -190,7 +190,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - SlideAnimation's fade, easing and container aliases are dead
   - The blur window builds stand-ins and copies it never uses
   - BlurBacking spells out four near-identical blur windows
-  - [The border frame's path is built three times](../issues.md#the-border-frames-path-is-built-three-times)
+  - The border frame's path is built three times
   - [Small shrinks in the blur system](../issues.md#small-shrinks-in-the-blur-system)
 - **bar-popouts-01** (12): The layoutUpdated entry is filed Major; its fix is a pure deletion.
   - [PopoutWrapperBase's aboutToDismiss signal has no listener](../issues.md#popoutwrapperbases-abouttodismiss-signal-has-no-listener)

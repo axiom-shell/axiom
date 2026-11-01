@@ -74,6 +74,21 @@ Item {
   readonly property real innerRight: root.outerRight + root.innerInset("right")
   readonly property real innerBottom: root.outerBottom + root.innerInset("bottom")
   readonly property real innerRadius: Math.max(0, root.innerBorderRadius - root.strokeWidth)
+  // The stroke's inner side, round the corner pieces' arcs, as an SVG
+  // subpath in a window of w × h over the screen
+  function innerPath(w, h) {
+    const x0 = root.innerLeft, y0 = root.innerTop, x1 = w - root.innerRight, y1 = h - root.innerBottom;
+    const r = Math.max(0, Math.min(root.innerRadius, (x1 - x0) / 2, (y1 - y0) / 2));
+    return `M ${x0 + r} ${y0} L ${x1 - r} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y0 + r} L ${x1} ${y1 - r} A ${r} ${r} 0 0 1 ${x1 - r} ${y1} L ${x0 + r} ${y1} A ${r} ${r} 0 0 1 ${x0} ${y1 - r} L ${x0} ${y0 + r} A ${r} ${r} 0 0 1 ${x0 + r} ${y0} Z`;
+  }
+  // The frame, filled odd-even: from the window's edges, or from past the
+  // integrated menus' strips (`fromMenus`, as the blur window fills it),
+  // to innerPath
+  function framePath(w, h, fromMenus) {
+    const x0 = fromMenus ? root.outerLeft : 0, y0 = fromMenus ? root.outerTop : 0;
+    const x1 = w - (fromMenus ? root.outerRight : 0), y1 = h - (fromMenus ? root.outerBottom : 0);
+    return `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z ` + root.innerPath(w, h);
+  }
 
   BlurShape {
     source: root
@@ -112,13 +127,6 @@ Item {
     id: shadowWindow
 
     readonly property var look: BarStyle.look
-    // (the frame line, past integrated menus' strips as the frame is)
-    readonly property real left: root.innerLeft
-    readonly property real right: root.innerRight
-    readonly property real top: root.innerTop
-    readonly property real bottom: root.innerBottom
-    // The stroke's inner side, round the corner pieces' arcs
-    readonly property real radius: Math.max(0, root.innerBorderRadius - root.strokeWidth)
 
     // Backed, the blur window casts it, with the surfaces joined to the
     // frame (BlurShape.shadow): the window stays mapped and draws nothing.
@@ -162,8 +170,9 @@ Item {
     function _holePath(o) {
       const reach = look.shadowSize * 2;
       const vertical = o.edge === "left" || o.edge === "right";
-      // Across: the frame line, and which way is in from it
-      const line = o.edge === "top" ? top : o.edge === "bottom" ? height - bottom : o.edge === "left" ? left : width - right;
+      // Across: the frame line (past integrated menus' strips as the frame
+      // is), and which way is in from it
+      const line = o.edge === "top" ? root.innerTop : o.edge === "bottom" ? height - root.innerBottom : o.edge === "left" ? root.innerLeft : width - root.innerRight;
       const inward = o.edge === "top" || o.edge === "left" ? 1 : -1;
       const fs = o.startFillet ?? 0, fe = o.endFillet ?? 0;
       const from = o.start + fs, to = o.end - fe;
@@ -210,13 +219,7 @@ Item {
           strokeWidth: 0
 
           PathSvg {
-            readonly property real x0: shadowWindow.left
-            readonly property real y0: shadowWindow.top
-            readonly property real x1: shadowWindow.width - shadowWindow.right
-            readonly property real y1: shadowWindow.height - shadowWindow.bottom
-            readonly property real r: Math.max(0, Math.min(shadowWindow.radius, (x1 - x0) / 2, (y1 - y0) / 2))
-
-            path: `M ${x0 + r} ${y0} L ${x1 - r} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y0 + r} L ${x1} ${y1 - r} A ${r} ${r} 0 0 1 ${x1 - r} ${y1} L ${x0 + r} ${y1} A ${r} ${r} 0 0 1 ${x0} ${y1 - r} L ${x0} ${y0 + r} A ${r} ${r} 0 0 1 ${x0 + r} ${y0} Z` + shadowWindow.holes.join("")
+            path: root.innerPath(shadowWindow.width, shadowWindow.height) + shadowWindow.holes.join("")
           }
         }
       }
@@ -250,15 +253,7 @@ Item {
           strokeWidth: 0
 
           PathSvg {
-            readonly property real w: shadowWindow.width
-            readonly property real h: shadowWindow.height
-            readonly property real x0: shadowWindow.left
-            readonly property real y0: shadowWindow.top
-            readonly property real x1: w - shadowWindow.right
-            readonly property real y1: h - shadowWindow.bottom
-            readonly property real r: Math.min(shadowWindow.radius, (x1 - x0) / 2, (y1 - y0) / 2)
-
-            path: `M 0 0 L ${w} 0 L ${w} ${h} L 0 ${h} Z M ${x0 + r} ${y0} L ${x1 - r} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y0 + r} L ${x1} ${y1 - r} A ${r} ${r} 0 0 1 ${x1 - r} ${y1} L ${x0 + r} ${y1} A ${r} ${r} 0 0 1 ${x0} ${y1 - r} L ${x0} ${y0 + r} A ${r} ${r} 0 0 1 ${x0 + r} ${y0} Z`
+            path: root.framePath(shadowWindow.width, shadowWindow.height, false)
           }
         }
       }
