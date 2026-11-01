@@ -224,17 +224,6 @@ QtObject {
     };
   }
 
-  // Parses the note again (a task typed or pasted into a text block),
-  // keeping the cursor on the same character
-  function reparse(doc, index, pos) {
-    const at = root.lineOf(doc, index, pos);
-    const parsed = root.parse(root.serialize(doc));
-    return {
-      "doc": parsed,
-      "focus": root.positionAt(parsed, at.line, at.col)
-    };
-  }
-
   // Tab / Shift+Tab on a task: two spaces more or less
   function indentTask(doc, index, delta) {
     const copy = root._copy(doc);
@@ -261,9 +250,10 @@ QtObject {
     };
   }
 
-  // Parses the edited note again, so its text is split into paragraphs as
-  // parse() would, moving `focus` along by line and column
-  function _normalize(doc, focus) {
+  // Parses the edited note again (after an edit, or a task typed or pasted
+  // into a text block), so its text is split into paragraphs as parse()
+  // would, moving `focus` ({ block, pos }) along by line and column
+  function reparse(doc, focus) {
     const at = focus && doc.blocks.length > 0 ? root.lineOf(doc, focus.block, focus.pos) : null;
     const parsed = root.parse(root.serialize(doc));
     return {
@@ -349,7 +339,7 @@ QtObject {
         "kind": "text",
         "text": ""
       };
-      return root._normalize(copy, {
+      return root.reparse(copy, {
         "block": index,
         "pos": 0
       });
@@ -381,7 +371,7 @@ QtObject {
         "kind": "text",
         "text": block.text
       };
-      return root._normalize(copy, {
+      return root.reparse(copy, {
         "block": index,
         "pos": 0
       });
@@ -403,7 +393,7 @@ QtObject {
       copy.blocks.splice(index, 1);
     else
       block.text = block.text.slice(newline + 1);
-    return root._normalize(copy, {
+    return root.reparse(copy, {
       "block": index - 1,
       "pos": pos
     });
@@ -432,7 +422,7 @@ QtObject {
       else
         next.text = next.text.slice(newline + 1);
     }
-    return root._normalize(copy, {
+    return root.reparse(copy, {
       "block": index,
       "pos": pos
     });
@@ -449,7 +439,7 @@ QtObject {
       // An empty last line becomes the task instead of leaving a gap
       if (last && last.kind === "text" && root._lineAt(last.text, last.text.length).line === "") {
         const first = root._replaceLine(copy, copy.blocks.length - 1, last.text.length, [root.newTask()]);
-        return root._normalize(copy, {
+        return root.reparse(copy, {
           "block": first,
           "pos": 0
         });
@@ -468,7 +458,7 @@ QtObject {
         "kind": "text",
         "text": block.indent + block.text
       };
-      return root._normalize(copy, {
+      return root.reparse(copy, {
         "block": index,
         "pos": copy.blocks[index].text.length
       });
@@ -479,7 +469,7 @@ QtObject {
     const text = bullet ? line.slice(bullet[0].length) : line.slice(indent.length);
     const task = root.newTask(indent, bullet ? bullet[2] : "-", text);
     const first = root._replaceLine(copy, index, pos, [task]);
-    return root._normalize(copy, {
+    return root.reparse(copy, {
       "block": first,
       "pos": text.length
     });
@@ -495,7 +485,7 @@ QtObject {
         "kind": "text",
         "text": "- "
       });
-      return root._normalize(copy, {
+      return root.reparse(copy, {
         "block": copy.blocks.length - 1,
         "pos": 2
       });
@@ -505,7 +495,7 @@ QtObject {
         "kind": "text",
         "text": block.indent + block.marker + " " + block.text
       };
-      return root._normalize(copy, {
+      return root.reparse(copy, {
         "block": index,
         "pos": copy.blocks[index].text.length
       });

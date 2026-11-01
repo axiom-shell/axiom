@@ -218,8 +218,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Two members of the brightness system nothing needs
   - package chat's Log option is never used
   - ChatManager.copy only forwards to ClipboardManager.copyText
-  - [Notes documents count a revision nothing reads](../issues.md#notes-documents-count-a-revision-nothing-reads)
-  - [NoteMarkdown's reparse repeats _normalize](../issues.md#notemarkdowns-reparse-repeats-_normalize)
+  - Notes documents count a revision nothing reads
+  - NoteMarkdown's reparse repeats _normalize
   - [net.join's first-Wi-Fi fallback is never reached](../issues.md#netjoins-first-wi-fi-fallback-is-never-reached)
   - [The VPN state's device and autoconnect fields nothing reads](../issues.md#the-vpn-states-device-and-autoconnect-fields-nothing-reads)
   - [Tailscale carries two state fields and a guard nothing needs](../issues.md#tailscale-carries-two-state-fields-and-a-guard-nothing-needs)

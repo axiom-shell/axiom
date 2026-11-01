@@ -43,7 +43,7 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
   - toggles and the toolbar;
   - typing `- [ ] `, or typing text after a blank line.
 - Never on every keystroke.
-- Every structural edit re-parses (`_normalize`), so the blocks are always what `parse()` would give.
+- Every structural edit re-parses (`reparse`), so the blocks are always what `parse()` would give.
 
 **`NoteBlock`:**
 - It shows its Markdown rendered (`Text.MarkdownText`), unless it's focused or holds the find match.
