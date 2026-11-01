@@ -357,12 +357,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### Three reader members nothing reads
-- **Where:** `config/HyprlandConfig.qml` (`managed`), `config/LauncherConfig.qml` (`clipboardMaxEntries`), `config/WindowBehaviourConfig.qml` (`behaviour`), `scripts/config-usage-baseline.json`
-- **What:** `scripts/gen_docs.py` lists them as reader members with no user (the daemon reads those settings itself: Compositor.hyprland and WindowBehaviour through `x-compositor`, the clipboard's limit by name). `HyprlandConfig` has no other member, so the whole reader can go; `WindowBehaviourConfig` too. They sit in `scripts/config-usage-baseline.json`, which only shrinks: deleting one means dropping its line there. Deletion candidates for the audits' deletion pass.
-- **Size:** trivial
-- **Found:** 2026-10-30, while making gen_docs.py see readers of ConfigManager.live (roadmap row 18)
-
 ### The guard reads the branch from the session's folder, not a `cd` before the push
 - **Where:** `.claude/hooks/guard.py` (`check_git`, `current_branch`), `tests/scripts/test_guard.py`
 - **What:** `git push … origin HEAD` (or a push with no refspec) is refused when `current_branch` of the hook's `cwd` is main, and that `cwd` is the session's folder: a `cd` earlier in the same command isn't followed (`git -C` is). An agent whose session sits in a checkout on main and pushes a branch from a worktree with `cd <worktree> && git push -q -u origin HEAD && gh pr create --label roadmap --base main --body "$(cat <<'EOF' … EOF)"` gets `don't push to main; open a PR from a branch.` (refused once on 2026-10-30, autopilot for #232; reproduced 2026-10-30 by feeding `guard.check` that command with `cwd` a scratch repository on main: refused; with `cwd` the worktree, or `git -C <worktree> push`: allowed). The plain shape from the branch's own folder passes since #241 (a heredoc body with rule-like text passes too). It struck again on 2026-11-01 (row 19, batch 15): `git push -u origin HEAD` for the feature branch `roadmap/19-audits-batch15` was refused with `Blocked by AGENTS.md › Never, while testing: don't push to main; open a PR from a branch.`, and pushing by branch name went through. `check_git` already resolves a bare `HEAD` (line 376, `dest == "HEAD" and current_branch(cwd) in PROTECTED_BRANCHES`), but from the hook's `cwd`; a subagent's Bash `cwd` resets to the session's folder (the live checkout, on main) every call, so a worktree reached by `cd` is never the one read (reproduced 2026-11-01 through `guard.check`: `git push -u origin HEAD` with `cwd` the worktree allowed; with `cwd` the live checkout, with or without a leading `cd <worktree> &&`, refused). The workaround is an explicit `branch:branch` refspec or `git -C`. Fix: follow a leading `cd <dir> &&` into the cwd `check_git` uses, with a test case.
@@ -554,12 +548,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Stale lines in the Hyprland docs and comments
 - **Where:** `docs/dev/hyprland/window-switcher.md`, `components/methods/WorkspaceGeometry.qml` (`orderMonitors`), `components/methods/BindKeys.qml`, `backend/internal/compositor/render/keys.go` (`RuntimeBinds`), `components/hosts/popout/EdgePopout.qml`
 - **What:** window-switcher.md › Events and the manager says the list is "limited to the focused monitor", but with `scope: all` `DockLayout.inScope` keeps every monitor's windows; what's tied to the focused monitor is where it shows. `orderMonitors`' comment says CompositorManager fills its keys; `blockBases` does. BindKeys' header still lists "which of axiom's binds a runtime layer applies and which it skips", gone from QML, and keys.go's comment calls `RuntimeBinds` the copy of BindKeys' `runtimeBinds`, which no longer exists. EdgePopout.qml (outside the system, lines 89 and 383) twice credits "HyprlandManager's layer rules", which are the daemon's now (`render.LayerRulesLua`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The unused reader member check counts a member named after its key as used
-- **Where:** `scripts/gen_docs.py` (the reader-member usage count), `scripts/config-usage-baseline.json`, `config/WindowSwitcherConfig.qml` (`compositorSwitcher`)
-- **What:** gen_docs.py (around line 334) counts a reader member as used inside its reader when its name appears more than once there. `(?<![\w])name\b` also matches the `.name` in the member's own `_c.name` binding, so every member named after its config key passes, read or not: `WindowSwitcherConfig.compositorSwitcher` has no QML reader (the daemon reads the setting itself, `manager/niri_test.go` pins it) and isn't listed. Fix: don't count a match preceded by `.`, or count `<Reader>.<member>` uses outside the reader; then delete what it newly finds (the baseline only shrinks): `compositorSwitcher` is 3 lines.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -1826,12 +1814,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### OpenAdopting repeats Open's setup
 - **Where:** `backend/internal/store/store.go:767` (`OpenAdopting`), `backend/internal/store/store.go:115` (`Open`)
 - **What:** `OpenAdopting` copies `Open`'s option defaults (6 lines) and its construction and initial load (6 lines); only how the lock is got differs (`fsx.TryLock` against `fsx.Adopt`). Fix: a `newStore(opts, path, lock)` holding the defaults, the struct and `loadInitial` with its `lock.Release()`, called by both: 12 lines go, 3 come back, 9 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the config system
-
-### Six more reader members nothing reads
-- **Where:** `config/I18n.qml:72` (`languageName`), `config/Paths.qml:66` (`swayPath`), `config/Paths.qml:68` (`niriPath`), `config/Theme.qml:124` (`variant`), `config/Theme.qml:125` (`paired`), `config/Theme.qml:126` (`isGenerated`)
-- **What:** `grep -rnw` over the QML and JS finds each only at its declaration (`isGenerated` is a writable property nothing assigns; `paired` is read only off theme entries, `theme.paired` in `ThemeFamilies`, never as `Theme.paired`; `variant` likewise, `Appearance.darkMode` reading `ThemeManager.currentTheme.variant`; theming audit, 2026-10-31). The daemon writes the sway and niri configs now, so `swayPath` and `niriPath` lost their users when that stage moved; only `docs/dev/compositor/sway-backend.md` and `niri-backend.md` still name them, as where the managed config goes. gen_docs.py's unused-member check misses them (`languageName` is a function; the others pass its name match, the cause filed in "The unused reader member check counts a member named after its key as used"). Fix: delete them: `languageName` 3 lines, `swayPath` and `niriPath` 2 each with their comments, `variant`, `paired` and `isGenerated` 1 each: 10 lines; the two backend docs then say `$XDG_CONFIG_HOME/sway/` and `$XDG_CONFIG_HOME/niri/` without the member.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the config system
 

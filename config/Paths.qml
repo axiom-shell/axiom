@@ -62,10 +62,6 @@ QtObject {
 
   // Hyprland's config folder ($XDG_CONFIG_HOME/hypr/, where Hyprland looks)
   readonly property string hyprlandPath: (Quickshell.env("XDG_CONFIG_HOME") || root.homeDirectory + ".config").replace(/\/$/, "") + "/hypr/"
-  // Sway's config folder ($XDG_CONFIG_HOME/sway/, as sway looks there first)
-  readonly property string swayPath: (Quickshell.env("XDG_CONFIG_HOME") || root.homeDirectory + ".config").replace(/\/$/, "") + "/sway/"
-  // niri's config folder ($XDG_CONFIG_HOME/niri/, where niri looks)
-  readonly property string niriPath: (Quickshell.env("XDG_CONFIG_HOME") || root.homeDirectory + ".config").replace(/\/$/, "") + "/niri/"
   // Where to look for data the system (or the user) installed, most
   // important first: $XDG_DATA_HOME, then $XDG_DATA_DIRS (DataDirs.searchDirs;
   // /usr/share isn't where every distro has it). No trailing slashes.

@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; awaiting the maintainer's reorder or veto of clusters
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -46,7 +46,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 | # | Cluster | Kind | Title | Entries | Est. lines | Depends on | Questions |
 |---|---|---|---|---|---|---|---|
-| 1 | config-01 | deletion | Config pipeline and store dead code, the step-test runner, and every reader member nothing reads | 9 | ~370 (net about -270) | none |  |
+| 1 | config-01 | deletion | Done: Config pipeline and store dead code, the step-test runner, and every reader member nothing reads | 9 | ~370 (net about -270) | none |  |
 | 2 | platform-01 | deletion | Dead code across the daemon, launcher, greeter and security | 6 | ~190 | config-01 |  |
 | 3 | core-ui-theming-01 | deletion | Dead members and pure shrinks in core services, ui-kit, theming and Wayland | 7 | ~-100 net | config-01 |  |
 | 4 | compositor-01 | deletion | Go compositor backend: dead and doubled helpers | 17 | ~550 (~370 out) | none | Q6 |
@@ -130,16 +130,16 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **Deletions**
 
-- **config-01** (9): Takes core-ui-theming's and platform's reader-member entries: the fixed check runs first, then one pass deletes what it and they find, so config-usage-baseline.json changes once.
+- **config-01** (9, done): Takes core-ui-theming's and platform's reader-member entries: the fixed check runs first, then one pass deletes what it and they find, so config-usage-baseline.json changes once.
   - [Format-1 secrets plumbing nothing fills or reads](../issues.md#format-1-secrets-plumbing-nothing-fills-or-reads)
   - [The validator and the schema check carry patternProperties nothing uses](../issues.md#the-validator-and-the-schema-check-carry-patternproperties-nothing-uses)
   - [The config Pipeline interface has one implementation](../issues.md#the-config-pipeline-interface-has-one-implementation)
   - [Store.Reschema repeats reload's load-and-apply](../issues.md#storereschema-repeats-reloads-load-and-apply)
   - [OpenAdopting repeats Open's setup](../issues.md#openadopting-repeats-opens-setup)
   - [Every step test copies the same case runner](../issues.md#every-step-test-copies-the-same-case-runner)
-  - [The unused reader member check counts a member named after its key as used](../issues.md#the-unused-reader-member-check-counts-a-member-named-after-its-key-as-used)
-  - [Six more reader members nothing reads](../issues.md#six-more-reader-members-nothing-reads)
-  - [Three reader members nothing reads](../issues.md#three-reader-members-nothing-reads)
+  - The unused reader member check counts a member named after its key as used
+  - Six more reader members nothing reads
+  - Three reader members nothing reads
 - **platform-01** (6):
   - [PolkitAgents.isAgentCommand is dead since the autostart moved to Go](../issues.md#polkitagentsisagentcommand-is-dead-since-the-autostart-moved-to-go)
   - [GreetdManager.available is never read](../issues.md#greetdmanageravailable-is-never-read)
