@@ -75,6 +75,17 @@ command -v dbus-run-session >/dev/null || {
 }
 
 mkdir -p "$scratch"/{config/axiom,state,data,cache}
+
+# The nested D-Bus session must not start its own document portal: it mounts
+# over the live one's /run/user/<uid>/doc (XDG_RUNTIME_DIR is shared), and when
+# the nested session ends its auto_unmount takes the live mount with it, so
+# every flatpak app then fails with "bwrap: Can't find source path
+# /run/user/<uid>/doc/by-app/…" until xdg-document-portal is restarted. A
+# service file earlier in XDG_DATA_DIRS shadows the real one for that bus.
+mkdir -p "$scratch/dbus/dbus-1/services"
+printf '[D-BUS Service]\nName=org.freedesktop.portal.Documents\nExec=/bin/false\n' \
+  >"$scratch/dbus/dbus-1/services/org.freedesktop.portal.Documents.service"
+export XDG_DATA_DIRS="$scratch/dbus:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 "$repo/scripts/generate.sh" >/dev/null
 go -C "$repo/backend" build -trimpath -o "$scratch/axiom" ./cmd/axiom
 
