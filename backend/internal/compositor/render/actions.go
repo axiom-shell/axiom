@@ -77,7 +77,9 @@ func HasOwnSection(description any) bool {
 	return ownSection.MatchString(trim(str(or(description, ""))))
 }
 
-// DescriptionFor is BindActions.descriptionFor: "Section: Label".
+// DescriptionFor is the description the compositor gets for a bind:
+// "Section: Label", the section from the action unless the description
+// names its own (the shell has no copy).
 func (t *Tables) DescriptionFor(bind any) string {
 	own := trim(str(or(get(bind, "description"), "")))
 	if HasOwnSection(own) {
