@@ -225,7 +225,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Tailscale carries two state fields and a guard nothing needs
   - CommunityCatalog's setups carry three fields nothing reads
   - Dead and forwarding members in the timer services and helpers
-  - [Small shrinks in TimeZoneManager and WorldClocks](../issues.md#small-shrinks-in-timezonemanager-and-worldclocks)
+  - Small shrinks in TimeZoneManager and WorldClocks
   - [The dock's trigger placement and window focus go the long way round](../issues.md#the-docks-trigger-placement-and-window-focus-go-the-long-way-round)
 
 **Blockers**

@@ -1725,16 +1725,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the clock-timezones system
 
-### Small shrinks in TimeZoneManager and WorldClocks
-- **Where:** `services/system/TimeZoneManager.qml:22` (`offsets`), `services/system/TimeZoneManager.qml:102` (`_readZones`), `services/system/TimeZoneManager.qml:114` (`_readingZones`), `components/content/WorldClocks/WorldClocks.qml:66` (`detailOf`)
-- **What:** Each keeps every behaviour:
-  - `TimeZoneManager.offsets` is read nowhere (every clock calls `offsetOf`; `grep -rn 'TimeZoneManager.offsets'` finds nothing): 1 line.
-  - `_readZones` has one caller, `Component.onCompleted`, which runs once, so its guard (`if (root._zones.length > 0 || root._readingZones) return;`) and `_readingZones` never stop anything. Lines 101–116 (16) become a 7-line `Component.onCompleted: BackendManager.call("tz.zones", {}, (error, result) => { if (!error) root._zones = result.zones; }, { "repeatable": true })` under the same comment: 9 removed.
-  - WorldClocks' two callers build `{ "timezone": entry.place.timezone, "date": clock.date }` (4 lines each) for `detailOf`, which then works out `root.timeIn(place.timezone)` again although the row already has it as `entry.there`. `detailOf(zone, there)`, reading `clock.date` itself, makes each call one line (`root.detailOf(entry.place.timezone, entry.there)`): 6 removed, and one zone shift less per row each minute.
-  Total 16 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the clock-timezones system
-
 ### A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking
 - **Where:** `services/apps/DeadlineTicker.qml:133` (`_arm`), `services/apps/DeadlineTicker.qml:159` (`_armWarning`)
 - **What:** `_arm` sets a single-shot Timer to `Math.min(left + 50, 3600000)` and only looks at `Date.now()` again when it fires. Qt's timers run on the monotonic clock, which stops while the machine sleeps. Start a 25-minute pomodoro, suspend after 5 minutes, wake an hour later: the alarm still has 20 minutes to run, so for 20 minutes the dial and bar widget read `00:00` while still running, and when it finally fires the end is over 5 minutes late, so `_end(late)` advances silently with no notification. The same holds for the one-off timer (StopwatchManager) and caffeine's timer (IdleManager), and for the warning alarm. Nothing in the shell listens for wake (the daemon's logind watcher sees `PrepareForSleep`, but no shell code reacts to it). PLAUSIBLE: settle by suspending with a 2-minute timer for 5 minutes and watching when it ends. Fix: cap both alarms at a minute instead of an hour (`Math.min(left + 50, 60000)`), bounding the lateness to a minute at the cost of one wake-up a minute while a deadline runs; update the doc's "at most an hour at a time".

@@ -19,7 +19,6 @@ QtObject {
   id: root
 
   // zone -> minutes east of UTC
-  readonly property var offsets: root._offsets
   property var _offsets: ({})
   // The system's zone names, sorted ([] until read)
   readonly property var zones: root._zones
@@ -99,19 +98,10 @@ QtObject {
   }
 
   // tzdata's own list ($TZDIR where it's set)
-  function _readZones() {
-    if (root._zones.length > 0 || root._readingZones)
-      return;
-    root._readingZones = true;
-    BackendManager.call("tz.zones", {}, (error, result) => {
-      root._readingZones = false;
-      if (!error)
-        root._zones = result.zones;
-    }, {
-      "repeatable": true
-    });
-  }
-  property bool _readingZones: false
-
-  Component.onCompleted: root._readZones()
+  Component.onCompleted: BackendManager.call("tz.zones", {}, (error, result) => {
+    if (!error)
+      root._zones = result.zones;
+  }, {
+    "repeatable": true
+  })
 }
