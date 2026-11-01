@@ -4,7 +4,7 @@ import qs.config
 
 /**
  * Reusable slide animation container
- * Supports sliding from any direction with optional fade
+ * Supports sliding from any direction
  */
 Item {
   id: root
@@ -18,11 +18,6 @@ Item {
   property bool slideFromBottom: false
 
   property int animationDuration: Appearance.animNormal
-  property bool enableFade: true
-  property int easingType: Appearance.easing
-
-  property alias containerHeight: contentWrapper.height
-  property alias containerWidth: contentWrapper.width
 
   default property alias content: contentArea.children
 
@@ -55,9 +50,6 @@ Item {
       x: root._left + slideX
       y: root._top + slideY
 
-      readonly property real targetX: 0
-      readonly property real targetY: 0
-
       readonly property real hiddenX: {
         if (root.slideFromRight)
           return root.width;
@@ -79,8 +71,8 @@ Item {
           name: "visible"
           when: root.active
           PropertyChanges {
-            contentWrapper.slideX: contentWrapper.targetX
-            contentWrapper.slideY: contentWrapper.targetY
+            contentWrapper.slideX: 0
+            contentWrapper.slideY: 0
           }
         },
         State {
@@ -97,7 +89,7 @@ Item {
         NumberAnimation {
           properties: "slideX,slideY"
           duration: root.animationDuration
-          easing.type: root.easingType
+          easing.type: Appearance.easing
         }
       }
 
@@ -108,25 +100,14 @@ Item {
     }
   }
 
-  // Fade animation
-  opacity: root.enableFade ? (root.active ? 1.0 : 0.0) : 1.0
-
-  Behavior on opacity {
-    enabled: root.enableFade
-    NumberAnimation {
-      duration: root.animationDuration
-      easing.type: root.easingType
-    }
-  }
-
   Component.onCompleted: {
     Qt.callLater(function () {
       // Gone already: a surface built and dropped in one pass (a bar
       // switching to or from pills remakes its window)
       if (!root)
         return;
-      contentWrapper.slideX = root.active ? contentWrapper.targetX : contentWrapper.hiddenX;
-      contentWrapper.slideY = root.active ? contentWrapper.targetY : contentWrapper.hiddenY;
+      contentWrapper.slideX = root.active ? 0 : contentWrapper.hiddenX;
+      contentWrapper.slideY = root.active ? 0 : contentWrapper.hiddenY;
     });
   }
 }

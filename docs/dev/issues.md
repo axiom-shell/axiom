@@ -960,12 +960,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the blur system
 
-### SlideAnimation's fade, easing and container aliases are dead
-- **Where:** `components/hosts/popout/SlideAnimation.qml:21` (`enableFade`), `components/hosts/popout/SlideAnimation.qml:22` (`easingType`), `components/hosts/popout/SlideAnimation.qml:24` (`containerHeight`, `containerWidth`), `components/hosts/popout/SlideAnimation.qml:58` (`targetX`, `targetY`), `components/hosts/popout/AttachedSurface.qml:411`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml:169`
-- **What:** None of these members changes anything. Both users (the only two `SlideAnimation {`) set `enableFade: false`, so the opacity is always 1 and the fade `Behavior` (lines 111-120) never runs; `easingType` is set by no one; `containerHeight`/`containerWidth` re-set `contentWrapper`'s size to the size it already binds, since both users fill their parent; `targetX`/`targetY` are the constant 0. Fix: remove 1 + 1 + 2 + 2 + 10 lines in the file and 3 + 3 at the users, 22 lines. The 2 easing reads become `Appearance.easing` and the 4 target reads become 0. Every behaviour is kept.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the blur system
-
 ### The blur window builds stand-ins and copies it never uses
 - **Where:** `shell/BlurBackingWindow.qml:303` (`blankSurface`, `blankRect`), `shell/BlurBackingWindow.qml:189` (the `cutBy` `Copies`)
 - **What:** Each window builds a whole hidden `AttachedSurface` (`blankSurface`) and a `Rectangle` (`blankRect`), used only as `?? blankSurface` / `?? blankRect` while a source is going. `AttachedSurfaceCopy` already handles a null source (`visible: root.source !== null`, and every read is `root.source?.… ?? …`), and the rect mirror's `visible: src !== null` (line 365) can never be false while the stand-in is there. Separately, a `part: "fills"` window still mirrors every shape of the other window (`Copies { shapes: backing.cutBy }`) and bursts `FrameNudge` for them, though `cutByUnion` (line 38) is `backing.part !== "fills" && …`, so they are never read. That happens on SwayFX with the overlay open. Fix: `?? null` at both sites, delete lines 301-311 (11 lines), and use `shapes: backing.part !== "fills" ? backing.cutBy : []`.
