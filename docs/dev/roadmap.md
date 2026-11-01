@@ -516,7 +516,6 @@ Found by the audits:
 - [clearAll removes each cached image twice, one process per entry](issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)
 - [The dock's menu and drag state outlive the icons they point at](issues.md#the-docks-menu-and-drag-state-outlive-the-icons-they-point-at)
 - [A dock beside another edge's reserving dock is laid out as if that dock weren't there](issues.md#a-dock-beside-another-edges-reserving-dock-is-laid-out-as-if-that-dock-werent-there)
-- [A 12-hour Clock shows the hour in 24-hour time](issues.md#a-12-hour-clock-shows-the-hour-in-24-hour-time)
 - [A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking](issues.md#a-pomodoro-timer-or-caffeine-end-due-during-a-suspend-fires-up-to-an-hour-after-waking)
 - [Skipping a focus session counts it as finished](issues.md#skipping-a-focus-session-counts-it-as-finished)
 - [A recent timer chip reads its label back as part of the duration](issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)

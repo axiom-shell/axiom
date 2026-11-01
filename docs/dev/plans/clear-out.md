@@ -235,7 +235,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **bar-popouts-02** (1, done):
   - Edge and floating popouts never close when their focus grab clears
 - **features-02** (2): Blocker by the reviews' label; both are small display bugs.
-  - [A 12-hour Clock shows the hour in 24-hour time](../issues.md#a-12-hour-clock-shows-the-hour-in-24-hour-time)
+  - A 12-hour Clock shows the hour in 24-hour time
   - [The Accounts card reads read-only and task-list facts from config entries that never hold them](../issues.md#the-accounts-card-reads-read-only-and-task-list-facts-from-config-entries-that-never-hold-them)
 
 **config**

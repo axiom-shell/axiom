@@ -62,14 +62,14 @@ BarWidget {
       if (!use24Hour)
         lines.push(_line(I18n.meridiem(date), 0.7, false, 0.9));
       // Number over its unit; the units are dictionary entries
-      lines.push(_line(I18n.formatDate(date, use24Hour ? "H" : "h") + "\n" + I18n.tr("hour")));
+      lines.push(_line(I18n.formatHour(date, use24Hour, false) + "\n" + I18n.tr("hour")));
       lines.push(_line(I18n.formatDate(date, "mm") + "\n" + I18n.tr("minute")));
       if (showSeconds)
         lines.push(_line(I18n.formatDate(date, "ss") + "\n" + I18n.tr("second")));
       return lines;
     }
     // Hours and minutes alike, the rest smaller and muted
-    const lines = [_line(I18n.formatDate(date, use24Hour ? "HH" : "hh.ap").replace(/\.(am|pm)$/i, ""), 1, true), _line(I18n.formatDate(date, "mm"), 1, true)];
+    const lines = [_line(I18n.formatHour(date, use24Hour, true), 1, true), _line(I18n.formatDate(date, "mm"), 1, true)];
     if (showSeconds)
       lines.push(_line(I18n.formatDate(date, "ss"), 0.75, false, 0.75));
     if (!use24Hour)

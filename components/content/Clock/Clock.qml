@@ -35,7 +35,7 @@ Card {
 
   // The time shown, in the clock's zone
   readonly property date now: TimeZones.shift(clock.date, TimeZoneManager.offsetOf(root.timezone))
-  readonly property string hours: I18n.formatDate(root.now, root.use24Hour ? "HH" : "h")
+  readonly property string hours: I18n.formatHour(root.now, root.use24Hour, root.use24Hour)
   readonly property string minutes: I18n.formatDate(root.now, "mm")
   readonly property string seconds: root.showSeconds ? I18n.formatDate(root.now, "ss") : ""
   readonly property string meridiem: root.use24Hour ? "" : I18n.meridiem(root.now)
