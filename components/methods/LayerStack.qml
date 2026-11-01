@@ -224,8 +224,9 @@ QtObject {
     const wants = e => e.wanted || (!ordered && e.held);
     const peers = e => entries.filter(o => o !== e && o.output === e.output && o.layer === e.layer);
     // `o` belongs before `e`: a higher order, or a lower rank of the same
-    // (the border's corners after its strips, drawn over their ends)
-    const before = (o, e) => o.order > e.order || (o.order === e.order && (o.rank ?? 0) < (e.rank ?? 0));
+    // in its rank group (the border's corners after its strips, drawn over
+    // their ends; bars stacked on one edge)
+    const before = (o, e) => o.order > e.order || (o.order === e.order && (o.rankGroup ?? "") === (e.rankGroup ?? "") && (o.rank ?? 0) < (e.rank ?? 0));
     const remap = entries.filter(e => e.mapped && peers(e).some(o => o.mapped && before(o, e) && o.seq > e.seq && (!ordered || o.order === e.order))).map(e => e.id);
     const show = entries.filter(e => wants(e) && !remap.includes(e.id) && (e.showing || peers(e).every(o => !wants(o) || !before(o, e) || o.mapped))).map(e => e.id);
     return {

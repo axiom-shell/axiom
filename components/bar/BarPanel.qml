@@ -7,6 +7,7 @@ import QtQuick
 import qs.config
 import qs.services.ui
 import qs.components.hosts.popout
+import qs.components.methods
 
 // One bar's layer-shell window (shell/Bar makes one per ScreenEdgeManager.bars
 // entry): its screen, layer and exclusive zone, holding the bar's BarContainer.
@@ -68,6 +69,7 @@ PanelWindow {
     window: root
     namespace: root.layerNamespace
     rank: root.barConfig.layerRank
+    rankGroup: ScreenEdge.name(root.barConfig.location)
     wanted: root.barConfig.enabled
   }
 

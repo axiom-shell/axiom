@@ -833,10 +833,19 @@ Rectangle {
 
   // A line along the bar's inner or outer edge, from its color fading
   // into another along the bar. Inline components can't see this file's
-  // ids, hence `bar`.
+  // ids, hence `bar`. Where an outer bar's popout lies over it
+  // (coveredSpans) it gives way, as the islands and sections do: on a pill
+  // bar not, its pills merging with the popout.
   component AccentLine: Rectangle {
     id: line
     required property Item bar
+    opacity: !line.bar.pills && line.bar.covers(line.start, line.start + line.length) ? 0 : 1
+    Behavior on opacity {
+      NumberAnimation {
+        duration: Appearance.animFast
+        easing.type: Appearance.easing
+      }
+    }
     // Along the bar, and in from its outer edge
     required property real start
     required property real length
