@@ -1983,3 +1983,33 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `_gridWidth` has no reader (one hit repo-wide, its definition; `tileX` works out each row's width itself). StyledVolumeBar's fill sets `anchors.leftMargin: root.orientation === Qt.Vertical ? parent.width - width : 0`, but the left anchor is only set when horizontal, where the margin is 0. Its percentage's `Layout.maximumWidth: root.showPercent ? Infinity : parent.width - Widget.px(4)` takes the second branch only while the text is "" and hidden. Fix: delete lines 58, 83 and 177 (the label's `Layout.preferredWidth` already fixes its width when shown). 3 lines.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the ui-kit system
+
+### ncspot's splice keeps nothing after a begin marker that follows the end marker
+- **Where:** `backend/internal/theme/integrations/merge.go:50` (`SpliceNcspot`), `backend/internal/theme/effects.go:211` (`ncspot`)
+- **What:** `SpliceNcspot` accepts any file with one begin and one end marker, the begin in `[theme]`, without checking their order. When the end comes first, the rewrite copies lines up to the begin marker, then the colors, and sets `inside` with no end marker left to clear it: every later line of `config.toml` is dropped, and `ncspot` writes the result (no backup). Reached without hand-editing the markers' order: a user who deleted the begin line sees the hookup as not done, clicks Apply, and `hookup.Edit` (`place: section`, only the missing line) appends the begin marker at the end of `[theme]`, after the remaining end marker. Proven with a probe test: `[theme]`, `background = "x"`, the end marker, then `[keybindings]` with `"q" = "quit"` → after Apply the begin line sits after the end line, and the next splice returns `[theme]`, `background`, the two markers and the colors, without `[keybindings]`. Fix: in `SpliceNcspot`, note the begin's and end's line numbers and return `ok = false` unless the begin comes before the end (the integration then warns that the block is missing and leaves the file alone); a test row for the swapped order.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the theme-integrations system
+
+### Kitty reloads only when its socket is /tmp/kitty-*
+- **Where:** `backend/internal/theme/effects.go:260` (`reloadKitty`), `config/schema/sections/ThemeIntegrations.yaml:59` (`kitty`'s description)
+- **What:** The switch says "Reloads kitty when allow_remote_control is on", but `reloadKitty` only tries the sockets matching `/tmp/kitty-*`. kitty's `listen_on` defaults to `none` (no socket at all, whatever `allow_remote_control` says), and its own examples are `unix:${TEMP}/mykitty` and `unix:@mykitty` (kitty.conf), which give `/tmp/mykitty-<pid>` or an abstract socket: neither matches, so a theme change reaches no running kitty unless the user happened to name the socket `kitty`. kitty reloads its whole config on `SIGUSR1` (kitty.conf: "sending kitty the SIGUSR1 signal"; its changelog fixes that on macOS in 0.24.0), which needs neither remote control nor a socket. Fix: replace `reloadKitty` (lines 253–266, 14 lines) with the effect `"kitty": {after: live(func(r *run) { r.signalFrom("kitty", "0.24", syscall.SIGUSR1, "kitty") })}`, as Ghostty's, and change the description to "Reloads running kitty." (and the doc's Reloads line).
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the theme-integrations system
+
+### fzf's flags rebuilt in Go where a template does
+- **Where:** `backend/internal/theme/integrations/table.go:187` (`fzf`)
+- **What:** `fzf` takes `t.vars(true)` and joins fixed `name:${VAR}` pairs into one `--color=` line, which is what `tmpl{text: true}` does with a one-line template; the system's Checks name such an entry as an odd one out ("a table entry … reimplementing what `tmpl` … does"). Fix: a `templates/fzf` holding `--color=fg:${FOREGROUND},bg:${BACKGROUND},hl:${ACCENT},fg+:${FOREGROUND_HIGHLIGHT},bg+:${BACKGROUND_HIGHLIGHT},hl+:${ACCENT},info:${INFO},marker:${SUCCESS},prompt:${ACCENT},spinner:${ACCENT_ALT},pointer:${ACCENT},header:${FOREGROUND_ALT},border:${BORDER},label:${FOREGROUND_ALT},query:${FOREGROUND},gutter:${BACKGROUND}` and the entry `one("{state}/axiom/fzf-colors", tmpl{name: "fzf", text: true})`; the goldens stay byte for byte. Removes lines 186–201 (16 lines); the doc's "built in Go (fzf's flags, …)" drops fzf.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the theme-integrations system
+
+### Two hand-written cmp.Or in the theme packages
+- **Where:** `backend/internal/theme/integrations/integrations.go:85` (`or`), `backend/internal/hookup/hookup.go:177` (`cmpOr`)
+- **What:** Both are the standard library's `cmp.Or` for strings (go.mod is Go 1.26; `wayland/outputs` already uses `cmp.Or`). Fix: delete both (6 + 6 = 12 lines) and call `cmp.Or(t.Name, "Unknown")` and the like (`vars`, 3 calls), `cmp.Or(env.ZDotDir, env.Dirs.Home)` and `cmp.Or(r.Comment, "#")`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the theme-integrations system
+
+### The onboarder's integration commands are a hand-kept list in ThemeManager
+- **Where:** `services/core/ThemeManager.qml:561` (`_integrationCommands`), `config/schema/sections/ThemeIntegrations.yaml`
+- **What:** AGENTS.md › Config: "Prefer a new schema annotation to a hand-kept list in QML". The commands that show an integration's app is installed are a QML map keyed by the `ThemeIntegrations` switches, beside the schema that already carries each switch's per-app facts (`x-hookup`, `x-profiles`); a new integration has to remember a second place (the doc's Adding an integration lists it). Fix: an `x-commands` annotation (described in `config/schema/annotations.yaml`) on the seven switches the map lists (`gtk: []`, `qt`, `helix`, `vscode`, `zed`, `vesktop`, `firefox`), and `integrationCommands(key)` returning that switch's `x-commands`, else `[key]`; removes lines 559–570 (12 lines) and the doc's step.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the theme-integrations system

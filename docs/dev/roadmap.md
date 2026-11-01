@@ -562,6 +562,11 @@ Found by the audits:
 - [ActionTile and ActionPill carry the same countdown bar](issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
 - [StyledTextEntry and StyledTextArea carry the same blinking cursor](issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
 - [TileGrid and StyledVolumeBar keep lines nothing reads](issues.md#tilegrid-and-styledvolumebar-keep-lines-nothing-reads)
+- [ncspot's splice keeps nothing after a begin marker that follows the end marker](issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
+- [Kitty reloads only when its socket is /tmp/kitty-*](issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
+- [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
+- [Two hand-written cmp.Or in the theme packages](issues.md#two-hand-written-cmpor-in-the-theme-packages)
+- [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
