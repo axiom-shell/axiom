@@ -50,6 +50,7 @@ axiom ipc <target> <function> [args]
 | `dock` | `open <id>`, `close <id>`, `toggle <id>` (no id: every dock) |
 | `appLauncher` | `open`, `close`, `toggle`, `search <text>` |
 | `powermenu` | `open`, `close`, `toggle` |
+| `osd` | `message <icon> <text>` (a line on the OSD with a Messages item, else the first), `messageTo <id> <icon> <text>`, `show <id>` |
 | `workspaceOverlay` | `open`, `hide`, `toggle` |
 | `workspaces` | `go <id>`, `move <id>`, `moveSilent <id>`, `left`, `right`, `up`, `down`, `step <direction> <mode>`, `scroll <direction>`, `nth <n> <mode>`, `reconcile` |
 | `windowSwitcher` | `next`, `previous`, `commit`, `cancel` (for scripts: the Alt+Tab bind doesn't need them) |

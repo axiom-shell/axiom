@@ -143,6 +143,8 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			}
 		}
 	}
+	osdItemFields(converted)
+	osdItemFields(defaults.(*jsonx.Object))
 	var out []string
 	diffs(converted, defaults, "", &out)
 	for _, d := range out {
@@ -153,6 +155,39 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
 var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Apps.networkEditor", "Idle.caffeineWarning"}
+
+// osdItemFields drops every OSD item's fields but its type, icon and
+// showOsd: the others (each kind's own options, added since format 1)
+// come from their defaults at load.
+func osdItemFields(cfg *jsonx.Object) {
+	osd, _ := cfg.Value("OSD").(*jsonx.Object)
+	if osd == nil {
+		return
+	}
+	list, _ := osd.Value("items").(*jsonx.Array)
+	if list == nil {
+		return
+	}
+	for _, entry := range list.Items {
+		e, _ := entry.(*jsonx.Object)
+		if e == nil {
+			continue
+		}
+		items, _ := e.Value("items").(*jsonx.Array)
+		if items == nil {
+			continue
+		}
+		for _, item := range items.Items {
+			if o, _ := item.(*jsonx.Object); o != nil {
+				for _, k := range o.Keys() {
+					if k != "type" && k != "icon" && k != "showOsd" {
+						o.Delete(k)
+					}
+				}
+			}
+		}
+	}
+}
 
 // Bar widget settings added since, the same way (a widget's display style,
 // the Network widget's VPN lock and its popout's VPN section)

@@ -118,6 +118,8 @@ var all = []Step{
 		}
 		return []string{fmt.Sprintf("iconSize removed from %d System Tray bar widget(s): tray icons now follow the bar's font size", removed)}
 	}},
+	// v86: an OSD's bars became its items (v86.go)
+	{Version: 86, Run: v86},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

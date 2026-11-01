@@ -5,7 +5,7 @@ import qs.services.ui
 
 // The OSD section's first card (its `x-card`): the OSDs as tabs, one shown
 // at a time: where it sits (a screen picker with presets), a Show button,
-// and its settings and bars (EntryListCard).
+// and its settings and items (EntryListCard).
 EntryListCard {
   id: root
 
@@ -19,7 +19,7 @@ EntryListCard {
   seed: ({
       "edge": "right",
       "detached": true,
-      "bars": [
+      "items": [
         {
           "type": "brightness",
           "icon": "",
