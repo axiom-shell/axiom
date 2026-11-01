@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -410,7 +411,8 @@ func TestHandoffIsChecked(t *testing.T) {
 // Every polled topic names its request and state types (what rpc.md shows)
 func TestSourcesDeclareTypes(t *testing.T) {
 	t.Parallel()
-	d := &Daemon{opts: Options{Getenv: func(string) string { return "" }}}
+	d := &Daemon{opts: Options{Getenv: func(string) string { return "" }, Log: slog.New(slog.DiscardHandler)}}
+	d.sysmon = d.newSysmon()
 	for _, src := range d.sources() {
 		if src.Request == nil || src.State == nil {
 			t.Errorf("topic %s declares no request or state type", src.Name)

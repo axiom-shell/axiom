@@ -39,6 +39,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
+	"github.com/axiom-shell/axiom/backend/internal/sysmon"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
@@ -149,6 +150,8 @@ type Daemon struct {
 	idle *idle.Service
 	// topics are the polled topics and their subscribers
 	topics *topics.Hub
+	// sysmon is the `system` topic and the graphs' history
+	sysmon *sysmon.Monitor
 	// The commands the shell watches (exec.watch)
 	watches *command.Watches
 	// The files the shell watches (file.watch)
@@ -316,6 +319,7 @@ func Run(ctx context.Context, opts Options) error {
 	d.newVPN()
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
+	d.sysmon = d.newSysmon()
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
@@ -330,6 +334,7 @@ func Run(ctx context.Context, opts Options) error {
 		OnClose: func(c *rpc.Conn) {
 			d.router.Forget(c)
 			d.topics.Forget(c)
+			d.sysmon.Forget(c)
 			d.watches.Forget(c)
 			d.files.Forget(c)
 			d.releaseSwitcher(c)

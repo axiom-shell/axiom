@@ -69,7 +69,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 21 | platform-06 | minor-sweep | The onboarder | 3 | ~150 | platform-03 | Q3 |
 | 22 | platform-07 | minor-sweep | The launcher with its providers | 2 | ~80 | platform-05 |  |
 | 23 | platform-08 | minor-sweep | Security: the session actions | 1 | ~60 | platform-02 | Q4 |
-| 24 | core-ui-theming-02 | major | Services that run with nothing shown, the media pick, schedules lost on reload | 5 | ~220 | core-ui-theming-01 |  |
+| 24 | core-ui-theming-02 | major | Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
 | 25 | core-ui-theming-03 | major | Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
 | 26 | core-ui-theming-04 | major | Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
 | 27 | core-ui-theming-05 | major | ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
@@ -290,8 +290,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **core-ui-theming**
 
-- **core-ui-theming-02** (5): Before features-08, which gives idle dimming the same reload fix.
-  - [SystemManager samples every second while nothing is shown](../issues.md#systemmanager-samples-every-second-while-nothing-is-shown)
+- **core-ui-theming-02** (4): Before features-08, which gives idle dimming the same reload fix. SystemManager's self-consumer went with the graphs' history moving into the daemon (its own PR).
   - [MediaManager ticks the position with nothing showing it](../issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
   - [The active media player is Spotify first and never follows playback](../issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
   - [Album art piles up in the runtime folder for the whole session](../issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)

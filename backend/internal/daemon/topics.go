@@ -26,8 +26,23 @@ func (d *Daemon) topicsPart() part {
 				topics.Register(reg, d.topics, src)
 			}
 			d.tailscaleMethods(reg, tailscale.Options{})
+			// The graphed metrics whose history is kept from launch
+			// (SystemManager, from config): sampled in the daemon, pushed
+			// only with a graph's subscription
+			rpc.Handle(reg, "system.keep", func(ctx context.Context, c *rpc.Conn, p struct {
+				Metrics []string `json:"metrics"`
+			}) (struct{}, error) {
+				return struct{}{}, d.sysmon.Keep(c, p.Metrics)
+			})
 		},
+		run: func(ctx context.Context) error { return d.sysmon.Run(ctx) },
 	}
+}
+
+// newSysmon is the `system` topic's monitor, kept for the daemon's
+// lifetime: its history outlives the topic's subscribers.
+func (d *Daemon) newSysmon() *sysmon.Monitor {
+	return sysmon.New(sysmon.Options{Home: d.opts.Getenv("HOME"), Log: d.opts.Log.With("part", "sysmon")})
 }
 
 // sources are the daemon's polled topics.
@@ -36,7 +51,7 @@ func (d *Daemon) sources() []topics.Source {
 		tailscale.Source(tailscale.Options{}),
 		tailscale.DetailsSource(tailscale.Options{}),
 		updates.Source(updates.Options{Log: d.opts.Log}),
-		sysmon.Source(sysmon.Options{Home: d.opts.Getenv("HOME")}),
+		d.sysmon.Source(),
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
 		weather.Source(weather.Options{}),
 		lockkeys.Source(lockkeys.Options{}),
