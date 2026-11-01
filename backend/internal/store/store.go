@@ -64,6 +64,10 @@ type State struct {
 	Issues   []axerr.Issue `json:"issues,omitempty"`
 	Missing  bool          `json:"missing"`
 	FirstRun bool          `json:"firstRun"`
+	// Defaults: running on the defaults, as the file didn't load at the
+	// start (until a good load or a restore), so nothing saves them as
+	// the user's
+	Defaults bool `json:"defaults"`
 }
 
 // Event is one change: the config (nil when only the state changed),
@@ -308,7 +312,7 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	}
 	s.written = data
 	s.config = checked
-	s.fileTakeovers, s.takeoversUnknown = nil, false
+	s.fileTakeovers, s.takeoversUnknown, s.state.Defaults = nil, false, false
 	s.keepTakeovers(checked)
 	s.state.Revision++
 	s.state.Missing = false
@@ -420,7 +424,7 @@ func (s *Store) loadInitial() error {
 		if loaded != nil {
 			s.fileTakeovers, _ = share.KeepTakeovers(s.config, loaded, s.takeovers).(*jsonx.Object)
 		}
-		s.state.Blocked, s.state.Issues = true, problems
+		s.state.Blocked, s.state.Issues, s.state.Defaults = true, problems, true
 		s.opts.Log.Warn("the config doesn't load: running on the defaults, saves blocked until it's fixed", "path", s.path, "issues", len(problems))
 		return nil
 	}
@@ -561,7 +565,7 @@ func (s *Store) reload() {
 	} else {
 		s.state.Blocked, s.state.Issues = false, nil
 		loaded = s.holdTakeovers(loaded)
-		s.fileTakeovers, s.takeoversUnknown = nil, false
+		s.fileTakeovers, s.takeoversUnknown, s.state.Defaults = nil, false, false
 		s.keepTakeovers(loaded)
 		if !jsonx.Equal(loaded, s.config) {
 			changes := config.Diff(s.config, loaded)
