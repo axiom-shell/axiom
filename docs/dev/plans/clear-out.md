@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, bar-popouts-01, overlay-modules-01 and features-01 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01 and features-01 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -55,7 +55,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 7 | bar-popouts-01 | deletion | Done: Dead members, signals and wrappers across popouts, the bar, bar widgets and edge menus | 12 | ~150 | none |  |
 | 8 | overlay-modules-01 | deletion | Done: Overlay and modules: dead members and small shrinks | 6 | ~200 touched (~-150 net) | compositor-02 |  |
 | 9 | features-01 | deletion | Done: Dead and forwarding members across the feature systems | 14 | ~250 | none |  |
-| 10 | compositor-04 | blocker | Sway's look lost after a reload | 1 | ~10 | compositor-02 |  |
+| 10 | compositor-04 | blocker | Done: Sway's look lost after a reload | 1 | ~10 | compositor-02 |  |
 | 11 | bar-popouts-02 | blocker | Outside clicks never close edge and floating popouts | 1 | ~4 | none |  |
 | 12 | features-02 | blocker | The 12-hour clock's hour, and the Accounts card's read-only and task-list facts | 2 | ~25 | features-01 |  |
 | 13 | config-02 | major | The store's load and write safety | 3 | ~220 | config-01 | Q1 |
@@ -230,8 +230,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **Blockers**
 
-- **compositor-04** (1):
-  - [After a sway reload, gapsOut and SwayFX's per-window blur and shadows stay off until the look changes](../issues.md#after-a-sway-reload-gapsout-and-swayfxs-per-window-blur-and-shadows-stay-off-until-the-look-changes)
+- **compositor-04** (1, done):
+  - After a sway reload, gapsOut and SwayFX's per-window blur and shadows stay off until the look changes
 - **bar-popouts-02** (1):
   - [Edge and floating popouts never close when their focus grab clears](../issues.md#edge-and-floating-popouts-never-close-when-their-focus-grab-clears)
 - **features-02** (2): Blocker by the reviews' label; both are small display bugs.

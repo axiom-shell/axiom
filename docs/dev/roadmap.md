@@ -389,7 +389,6 @@ Found by the audits:
 - [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
 - [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
 - [niri's confirming quit moves in as an instant log out](issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
-- [After a sway reload, gapsOut and SwayFX's per-window blur and shadows stay off until the look changes](issues.md#after-a-sway-reload-gapsout-and-swayfxs-per-window-blur-and-shadows-stay-off-until-the-look-changes)
 - [A sway title-bar mouse bind moves in as a whole-window bind](issues.md#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind)
 - [A sway exec chained with ; or , moves in as one shell command](issues.md#a-sway-exec-chained-with--or--moves-in-as-one-shell-command)
 - [A sway include path with a space breaks after a takeover](issues.md#a-sway-include-path-with-a-space-breaks-after-a-takeover)
