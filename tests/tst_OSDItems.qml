@@ -102,21 +102,34 @@ TestCase {
       "index": 0
     }).hidden, "one layout");
 
-    const muted = OSDItems.tile("micMute", {
+    const muted = OSDItems.tile("microphone", {
       "muted": true,
-      "icon": ""
+      "icon": "",
+      "device": "44"
     });
     compare([muted.icon, muted.on, muted.slash, muted.notable], ["mic", false, true, true], "the base icon, struck through");
-    compare(OSDItems.tile("micMute", {
+    compare(OSDItems.tile("microphone", {
       "muted": false,
-      "icon": "headset_mic"
+      "icon": "headset_mic",
+      "device": "44"
     }).icon, "headset_mic", "the device's own icon");
 
-    const device = OSDItems.tile("outputDevice", {
-      "name": "Speakers",
-      "icon": ""
+    const device = OSDItems.tile("audio", {
+      "muted": false,
+      "name": "AudioBox Go",
+      "detail": "Analog Stereo",
+      "icon": "",
+      "device": "44"
     });
-    compare([device.icon, device.caption, device.notable], ["speaker", "Speakers", false]);
+    compare([device.icon, device.name, device.detail, device.device, device.on, device.slash, device.caption, device.notable, device.hidden], ["volume_up", "AudioBox Go", "Analog Stereo", "44", true, false, "", false, false], "lit, no caption");
+    compare([OSDItems.tile("audio", {
+        "muted": true,
+        "device": "44"
+      }).slash, OSDItems.tile("audio", {
+        "muted": true,
+        "device": "44"
+      }).notable], [true, true], "the output muted, struck through");
+    verify(OSDItems.tile("microphone", {}).hidden, "no device");
 
     compare(OSDItems.tile("powerProfile", {
       "profile": "powerSaver"
@@ -176,7 +189,7 @@ TestCase {
   function test_tile_base_icons() {
     // An off state is a slash over the base icon, never an icon's own off
     // form, so every one looks the same
-    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "micMute", "outputDevice", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message"];
+    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message"];
     for (const type of types) {
       for (const on of [true, false]) {
         const t = OSDItems.tile(type, {
@@ -229,8 +242,98 @@ TestCase {
     verify(OSDItems.replaces("capsLock", "wifi", 0));
     verify(!OSDItems.replaces("airplane", "wifi", 300), "airplane mode switching the radio");
     verify(!OSDItems.replaces("airplane", "bluetooth", 1999));
-    verify(OSDItems.replaces("airplane", "bluetooth", OSDItems.radioQuiet), "the user's own toggle later");
+    verify(OSDItems.replaces("airplane", "bluetooth", OSDItems.quietWindow), "the user's own toggle later");
     verify(OSDItems.replaces("wifi", "airplane", 0), "airplane mode always shows");
     verify(OSDItems.replaces("airplane", "capsLock", 0));
+
+    const headset = {
+      "audio": OSDItems.tile("audio", {
+        "device": "60"
+      }),
+      "microphone": OSDItems.tile("microphone", {
+        "device": "60"
+      })
+    };
+    verify(!OSDItems.replaces("audio", "microphone", 300, headset, true, true), "a headset taking both: one change");
+    verify(!OSDItems.replaces("microphone", "audio", 300, headset, true, true), "either order");
+    verify(OSDItems.replaces("audio", "microphone", OSDItems.quietWindow, headset, true, true), "the user's own switch later");
+    verify(OSDItems.replaces("audio", "audio", 300, headset, true, true), "the output switching again");
+    const apart = {
+      "audio": headset.audio,
+      "microphone": OSDItems.tile("microphone", {
+        "device": "52"
+      })
+    };
+    verify(OSDItems.replaces("audio", "microphone", 300, apart, true, true), "another device");
+    verify(OSDItems.replaces("audio", "microphone", 300, undefined, true, true), "no tiles");
+    verify(!OSDItems.replaces("microphone", "microphone", 300, apart, true, false), "the new input's mute coming in");
+    verify(!OSDItems.replaces("audio", "microphone", 300, headset, true, false), "a headset's mute coming in");
+    verify(OSDItems.replaces("microphone", "microphone", OSDItems.quietWindow, apart, true, false), "the user's own mute later");
+    verify(OSDItems.replaces("microphone", "microphone", 300, apart, false, true), "a switch after a mute shows");
+    verify(OSDItems.replaces("audio", "microphone", 300, headset, false, false), "mutes one after another");
+  }
+
+  function test_deviceName() {
+    const rows = [
+      // [device, title, detail, translate, what]
+      [
+        {
+          "nick": "CU34G4Z",
+          "description": "Navi 31 HDMI/DP Audio Digital Stereo (HDMI) [CU34G4Z]",
+          "profile": "Digital Stereo (HDMI)",
+          "bus": "pci",
+          "kind": "hdmi"
+        },
+        "CU34G4Z", "Digital Stereo (HDMI)", false, "a monitor by its model"], [
+        {
+          "nick": "AudioBox Go",
+          "description": "AudioBox Go Analog Stereo",
+          "profile": "Analog Stereo",
+          "bus": "usb",
+          "kind": "speaker"
+        },
+        "AudioBox Go", "Analog Stereo", false, "a USB interface"], [
+        {
+          "nick": "EMEET SmartCam C960",
+          "description": "EMEET SmartCam C960 Mono",
+          "profile": "Mono",
+          "bus": "usb",
+          "kind": "webcam"
+        },
+        "EMEET SmartCam C960", "Mono", false, "a webcam"], [
+        {
+          "description": "Easy Effects Sink"
+        },
+        "Easy Effects Sink", "", false, "a virtual sink"], [
+        {
+          "nick": "HD-Audio Generic",
+          "description": "Family 17h/19h HD Audio Controller Analog Stereo",
+          "profile": "Analog Stereo",
+          "bus": "pci",
+          "kind": "speaker"
+        },
+        "Speakers", "Analog Stereo", true, "a sound chip: its kind"], [
+        {
+          "nick": "HD-Audio Generic",
+          "description": "Some USB Thing Analog Stereo",
+          "profile": "Analog Stereo",
+          "bus": "usb",
+          "kind": "speaker"
+        },
+        "Some USB Thing", "Analog Stereo", false, "the description without its profile"], [
+        {
+          "nick": "WH-1000XM4",
+          "description": "WH-1000XM4",
+          "profile": "High Fidelity Playback (A2DP Sink)",
+          "bus": "bluetooth",
+          "kind": "bluetooth"
+        },
+        "WH-1000XM4", "High Fidelity Playback (A2DP Sink)", false, "a headset by its alias"], [
+        {},
+        "Speakers", "", true, "nothing known"]];
+    for (const [device, title, detail, translate, what] of rows) {
+      const name = OSDItems.deviceName(device);
+      compare([name.title, name.detail, name.translate === true], [title, detail, translate], what);
+    }
   }
 }

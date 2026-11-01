@@ -140,7 +140,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
 - Once the shell runs the workspace grid's centre start, with `Workspaces.layout` `grid` (3 × 3): log in under sway and Hyprland with two monitors and check each starts on its block's centre (5, 14); restart axiom after moving away and check nothing moves; on sway, switch the layout to `perMonitor` and back to `grid` and check every monitor goes to its centre, windows kept on their workspaces. Nested Hyprland (one output) showed the start, a reload leaving workspace 1 alone, and perMonitor → grid going to 5.
 - Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
-- Once the shell runs the OSD's statuses (config v87), pick Caps Lock, Num Lock, Keyboard layout, Microphone muted and Output device under an OSD's Status icons (the default has them; a custom OSD gets them in Settings → Dock & OSD): toggle Caps Lock and Num Lock, switch the layout, mute the microphone and switch the output in the audio mixer, and check each shows its icon, highlighted, on the focused screen and that a volume key while one shows swaps back to the bars without the OSD moving; that plugging in a headset no longer opens the bars; and that nothing shows in the first moments after a reload. Then on a laptop, the power profile, charger, Wi-Fi, Bluetooth and airplane mode icons (airplane mode's highlight isn't taken by its radios switching), and Now playing on a track change.
+- Once the shell runs the OSD's statuses (config v87), pick Caps Lock, Num Lock, Keyboard layout, Microphone and Audio under an OSD's Status icons (the default has them; a custom OSD gets them in Settings → Dock & OSD): toggle Caps Lock and Num Lock, switch the layout, mute the microphone and switch the output in the audio mixer, and check each shows its icon, highlighted, on the focused screen and that a volume key while one shows swaps back to the bars without the OSD moving; that plugging in a headset no longer opens the bars; and that nothing shows in the first moments after a reload. Then on a laptop, the power profile, charger, Wi-Fi, Bluetooth and airplane mode icons (airplane mode's highlight isn't taken by its radios switching), and Now playing on a track change.
 - With a DDC/CI monitor, press brightness up with the OSD shut: `scripts/log.sh` shows no failed `brightness.get`, the bar doesn't jump back, and the next press steps from the new level (an own set now marks its write before the OSD's refresh runs).
 
 
@@ -649,14 +649,13 @@ Found meanwhile:
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
 - [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
-- [config.json replaced by rename isn't always read by the live daemon](issues.md#configjson-replaced-by-rename-isnt-always-read-by-the-live-daemon)
+- [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
 - [BlurManager.paused reads undefined on a reload](issues.md#blurmanagerpaused-reads-undefined-on-a-reload)
 - [A workspace overview bind set to open calls a missing function](issues.md#a-workspace-overview-bind-set-to-open-calls-a-missing-function)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
 - [Toggles are switched in several places, and most have no IPC](issues.md#toggles-are-switched-in-several-places-and-most-have-no-ipc)
-- [The OSD's microphone bar misses the first change after a switch to a device at the same level](issues.md#the-osds-microphone-bar-misses-the-first-change-after-a-switch-to-a-device-at-the-same-level)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.

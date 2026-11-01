@@ -45,9 +45,6 @@ Item {
   // changing
   readonly property string _levels: _keyOf(_targetNodes) + "|" + _targetNodes.map(n => n.audio ? `${n.audio.volume}:${n.audio.muted}` : "").join(",")
   property string _nodeKey: ""
-  // The output device the system volume last read: a change as it
-  // switches (or binds) is the device's, not the user's
-  property var _sink: null
 
   StyledVolumeBar {
     id: bar
@@ -68,25 +65,15 @@ Item {
       AudioManager.setNodesMuted(_targetNodes, !root.isMuted);
   }
 
+  // The system volume's changes as the device switches or binds are the
+  // device's, not the user's
   function _systemChanged() {
-    if (!root.useSystemVolume)
-      return;
-    if (AudioManager.defaultSink === root._sink)
+    if (root.useSystemVolume && AudioManager.sinkSettled())
       root.poked();
-    root._sink = AudioManager.defaultSink;
   }
 
   onVolumeChanged: root._systemChanged()
   onIsMutedChanged: root._systemChanged()
-
-  // A device switching to one at the same level and mute changes neither:
-  // take it in once the switch's own changes are through
-  Connections {
-    target: AudioManager
-    function onDefaultSinkChanged() {
-      Qt.callLater(() => root._sink = AudioManager.defaultSink);
-    }
-  }
 
   on_LevelsChanged: {
     const key = root._keyOf(root._targetNodes);
@@ -95,10 +82,7 @@ Item {
     root._nodeKey = key;
   }
 
-  Component.onCompleted: {
-    root._sink = AudioManager.defaultSink;
-    root._nodeKey = root._keyOf(root._targetNodes);
-  }
+  Component.onCompleted: root._nodeKey = root._keyOf(root._targetNodes)
 
   function setVolume(newVolume) {
     if (useSystemVolume)

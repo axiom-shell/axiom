@@ -167,14 +167,14 @@ properties:
         title: Shows
         items:
           type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, micMute, outputDevice, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, charger, message]
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, charger, message]
         x-enumLabels:
           capsLock: Caps Lock
           numLock: Num Lock
           scrollLock: Scroll Lock
           keyboardLayout: Keyboard layout
-          micMute: Microphone muted
-          outputDevice: Output device
+          audio: Audio
+          microphone: Microphone
           powerProfile: Power profile
           caffeine: Caffeine
           dnd: Do not disturb
@@ -189,8 +189,8 @@ properties:
           numLock: dialpad
           scrollLock: swap_vert
           keyboardLayout: keyboard
-          micMute: mic_off
-          outputDevice: speaker
+          audio: volume_up
+          microphone: mic
           powerProfile: speed
           caffeine: coffee
           dnd: do_not_disturb_on
@@ -200,14 +200,14 @@ properties:
           airplane: airplanemode_active
           charger: power
           message: chat
-        default: [capsLock, numLock, keyboardLayout, micMute, outputDevice]
+        default: [capsLock, numLock, keyboardLayout, microphone, audio]
         description: 'Messages are what `axiom ipc osd message <icon> <text>` sends.'
       quiet:
         type: array
         title: Without opening the OSD
         items:
           type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, micMute, outputDevice, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, charger, message]
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, charger, message]
         x-enumFrom: items
         x-showIf: {items: {notEmpty: true}}
         x-enumLabels:
@@ -215,8 +215,8 @@ properties:
           numLock: Num Lock
           scrollLock: Scroll Lock
           keyboardLayout: Keyboard layout
-          micMute: Microphone muted
-          outputDevice: Output device
+          audio: Audio
+          microphone: Microphone
           powerProfile: Power profile
           caffeine: Caffeine
           dnd: Do not disturb
@@ -231,8 +231,8 @@ properties:
           numLock: dialpad
           scrollLock: swap_vert
           keyboardLayout: keyboard
-          micMute: mic_off
-          outputDevice: speaker
+          audio: volume_up
+          microphone: mic
           powerProfile: speed
           caffeine: coffee
           dnd: do_not_disturb_on

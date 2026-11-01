@@ -61,15 +61,10 @@ Loader {
     id: micBar
 
     StyledVolumeBar {
-      id: mic
-      // The first change after the input device switches (or binds) is it
-      // appearing, not the user
-      property var _source: null
-
+      // A change as the input device switches or binds is the device's
       function _levelChanged() {
-        if (AudioManager.defaultSource === _source)
+        if (AudioManager.sourceSettled())
           root.poked();
-        _source = AudioManager.defaultSource;
       }
 
       orientation: root.orientation
@@ -83,19 +78,8 @@ Loader {
       iconTip: AudioManager.sourceMuted ? I18n.tr("Unmute") : I18n.tr("Mute")
       onVolumeChanged: newVolume => AudioManager.setSourceVolume(newVolume)
       onIconClicked: AudioManager.toggleSourceMute()
-      Component.onCompleted: _source = AudioManager.defaultSource
-
-      Connections {
-        target: AudioManager
-
-        function onSourceVolumeChanged() {
-          mic._levelChanged();
-        }
-
-        function onSourceMutedChanged() {
-          mic._levelChanged();
-        }
-      }
+      onVolumeLevelChanged: _levelChanged()
+      onIsMutedChanged: _levelChanged()
     }
   }
 

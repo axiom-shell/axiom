@@ -26,12 +26,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while listing the actions a keybind can't run yet
 
-### The OSD's microphone bar misses the first change after a switch to a device at the same level
-- **Where:** `components/surfaces/osd/OSDBar.qml` (`micBar`'s `_levelChanged`)
-- **What:** `_levelChanged` pokes only when `AudioManager.defaultSource` is still the `_source` it last saw, and `_source` moves only on a level or mute change. Switching the input to a device at the same volume and mute changes neither, so `_source` keeps the old device and the user's next microphone change (a key, the mixer) is taken for the switch and doesn't open the OSD. The system volume bar (`PipewireVolumeBar`, `_sink`) and the OSD's Microphone muted status (`OSDStatusSource`) take the new device in on `onDefaultSourceChanged` through `Qt.callLater`. Fix: the same `Connections` on `AudioManager.defaultSource` in `micBar`, or one shared "the device switched" helper for the three.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the OSD overhaul
-
 ### Toggles are switched in several places, and most have no IPC
 - **Where:** `components/content/QuickActions/QuickActions.qml`, `components/surfaces/osd/OSDStatusSource.qml` (toggle), `services/ui/LauncherCommands.qml`
 - **What:** Wi-Fi, Bluetooth, caffeine, do not disturb, night light, power saver and dark mode are each flipped by their own switch in QuickActions, the OSD's status icons and the launcher commands, all calling the same service functions. Wi-Fi, Bluetooth, airplane mode, dark mode, the power profile and the keyboard layout have no `IpcTarget`, so no keybind or hot corner can reach them (the bindable actions cover about 32 of some 140 IPC functions). One catalogue of actions (id, label, icon, run, state) could serve all of them and the keybinds; the maintainer plans it as its own change.
@@ -150,11 +144,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building custom widgets (reported by the maintainer)
 
-### config.json replaced by rename isn't always read by the live daemon
-- **Where:** `backend/internal/store/store.go` (`Watch`, `reload`)
-- **What:** Twice on 2026-10-29 (dev mode on, the daemon re-exec'd between them) a config.json written to a temp file and renamed over the old one, as AGENTS.md asks, wasn't read: `axiom config status` kept its revision for 15 s and longer, and the daemon log said nothing, neither a reload nor `the config was edited into one that doesn't load`. Rewriting the same bytes in place was read at once (the revision went up). The watch is on the folder and filters by name, so a rename should reach it; not yet reproduced in a test. Related: `axiom config validate` checks against the installed binary's schema, not the running daemon's, so under dev mode it calls a config with new types invalid that the daemon accepts.
-- **Size:** small
-- **Found:** 2026-10-29, while testing custom widgets on the live config
+### The daemon never watches config.json, so outside edits aren't read
+- **Where:** `backend/internal/store/store.go` (`Watch`), `backend/internal/daemon/methods.go` (`configPart`)
+- **What:** Nothing starts `Store.Watch`: a5ca837 (2026-10-24) removed `serve("the config watch", d.store.Watch)` from the daemon and no part runs it since (`git grep 'store.Watch' -- backend/internal/daemon` is empty). An outside edit (an editor, `axiom config set --offline`, a sync tool) is read only at the next load: a re-exec or a dev-mode `Reschema`. Seen 2026-11-01: a hand fix of a config the daemon had started on the defaults over stayed unread (`axiom config status` kept the old problems, nothing in the daemon log) until a dev rebuild re-exec'd the daemon; an earlier hand edit was overwritten by a save from the shell's copy, never having been read. That explains the 2026-10-29 sighting (a rename not read for 15 s and more; an in-place rewrite that seemed read was likely a re-exec's load). Fix: `run: d.store.Watch` on `configPart`, with a daemon test that an outside edit is pushed. Related: `axiom config validate` checks against the installed binary's schema, not the running daemon's, so under dev mode it calls a config with new types invalid that the daemon accepts.
+- **Size:** trivial
+- **Found:** 2026-10-29, while testing custom widgets on the live config; cause found 2026-11-01, while renaming the OSD's audio statuses
 
 ### After a refused save, a draft's edits show unsaved but not live
 - **Where:** `services/core/ConfigDraft.qml` (`_refusals`), `services/ui/SettingsManager.qml` (`_clearPreviews`), `services/ui/BarManager.qml` (`applyChanges`)

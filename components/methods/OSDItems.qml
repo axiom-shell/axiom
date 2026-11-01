@@ -35,17 +35,18 @@ QtObject {
 
   // A status's tile from its state:
   //   { icon, label, caption, on, slash, notable, hidden }
+  // (an audio device's also { name, detail, device })
   // `icon` always the base one ("wifi", never "wifi_off": a toggle off is
   // `slash`, drawn as one struck-through style whatever the icon), `label`
   // short text drawn instead of the icon (a layout's code), `caption` text
-  // shown beside it only as it changes (a device's name, a message), `on`
+  // shown beside it only as it changes (a message), `on`
   // lit (a toggle on, the microphone live), `slash` a toggle off,
   // `notable` out of the ordinary (the row's "What's unusual"), `hidden`
   // nothing to show (no Wi-Fi, one layout). States:
   //   capsLock / numLock / scrollLock { available, on },
-  //   keyboardLayout { layouts, index }, micMute { muted, icon (the
-  //   device's, unmuted) },
-  //   outputDevice { name, icon }, powerProfile { profile: "powerSaver" |
+  //   keyboardLayout { layouts, index },
+  //   audio / microphone { muted, name, detail, icon (the device's,
+  //   unmuted), device (its identity, deviceKey's) }, powerProfile { profile: "powerSaver" |
   //   "balanced" | "performance" | "" }, charger { available, plugged },
   //   message { icon, text }, every other type { available, on }
   function tile(type, state) {
@@ -90,18 +91,17 @@ QtObject {
           "hidden": layouts.length < 2
         });
       }
-    case "micMute":
+    case "audio":
+    case "microphone":
       return Object.assign(t, {
-        "icon": s.icon || "mic",
+        "icon": s.icon || (type === "audio" ? "volume_up" : "mic"),
+        "name": s.name ?? "",
+        "detail": s.detail ?? "",
+        "device": s.device ?? "",
         "on": s.muted !== true,
         "slash": s.muted === true,
-        "notable": s.muted === true
-      });
-    case "outputDevice":
-      return Object.assign(t, {
-        "icon": s.icon || "speaker",
-        "caption": s.name ?? "",
-        "on": true
+        "notable": s.muted === true,
+        "hidden": !s.device
       });
     case "powerProfile":
       {
@@ -173,15 +173,81 @@ QtObject {
     });
   }
 
-  // How long after an airplane mode status the radios' own switching
-  // (which airplane mode causes) doesn't take its highlight, in ms
-  readonly property int radioQuiet: 2000
+  // How long after a change its own knock-on changes (airplane mode
+  // switching the radios, a headset taking the output then the input, a
+  // new device's mute)
+  // don't take its highlight, in ms
+  readonly property int quietWindow: 2000
 
   // Whether a change of type `incoming` takes the highlight from `shown`
-  // (the type highlighted, "" for none) `elapsed` ms after it took it:
-  // always, except Wi-Fi or Bluetooth just after airplane mode switched
-  // them
-  function replaces(shown, incoming, elapsed) {
-    return !(shown === "airplane" && (incoming === "wifi" || incoming === "bluetooth") && elapsed < root.radioQuiet);
+  // (the type highlighted, "" for none) `elapsed` ms after it took it,
+  // over `tiles` (by type, tile()'s); `shownSwitch` / `incomingSwitch`:
+  // the change is an audio device switching (its card), not its mute.
+  // Always, except Wi-Fi or Bluetooth just after airplane mode switched
+  // them, the output and input switching to the same device together
+  // (one change: a headset), and a mute just after a device switch (the
+  // new device's own state coming in, not the user)
+  function replaces(shown, incoming, elapsed, tiles, shownSwitch, incomingSwitch) {
+    if (elapsed >= root.quietWindow)
+      return true;
+    if (shown === "airplane" && (incoming === "wifi" || incoming === "bluetooth"))
+      return false;
+    const audio = ["audio", "microphone"];
+    if (shownSwitch !== true || !audio.includes(incoming))
+      return true;
+    if (incomingSwitch !== true)
+      return false;
+    if (shown !== incoming) {
+      const a = tiles?.[shown]?.device ?? "";
+      return a === "" || a !== (tiles?.[incoming]?.device ?? "");
+    }
+    return true;
+  }
+
+  // An audio device's name for the OSD's card, from its PipeWire node
+  // ({ nick: node.nick, description: node.description, profile:
+  // device.profile.description, bus: device.bus, kind: deviceKind's }):
+  // { title, detail }. The nick names the device ("AudioBox Go", a
+  // monitor's model, a headset's alias) unless it's a sound chip's
+  // generic one; else the description without the profile it ends with
+  // (a virtual device's own name); a built-in sound chip's description
+  // names the chip, not what's plugged in, so it's the kind's. `detail`
+  // the profile ("Analog Stereo"), unless the title is the description.
+  // I18n.tr("Speakers") I18n.tr("Headphones") I18n.tr("Headset") I18n.tr("Display") I18n.tr("Webcam") I18n.tr("Bluetooth")
+  function deviceName(d) {
+    const nick = String(d?.nick ?? "").trim();
+    const profile = String(d?.profile ?? "").trim();
+    let description = String(d?.description ?? "").trim();
+    const generic = nick === "" || /^(HD-Audio Generic|HDA\b)/i.test(nick);
+    if (!generic)
+      return {
+        "title": nick,
+        "detail": profile
+      };
+    if (description !== "" && d?.bus !== "pci") {
+      description = description.replace(/\s*\[[^\]]*\]$/, "");
+      if (profile !== "" && description.endsWith(" " + profile))
+        return {
+          "title": description.slice(0, -profile.length - 1),
+          "detail": profile
+        };
+      return {
+        "title": description,
+        "detail": ""
+      };
+    }
+    const labels = {
+      "speaker": "Speakers",
+      "headphones": "Headphones",
+      "headset": "Headset",
+      "hdmi": "Display",
+      "webcam": "Webcam",
+      "bluetooth": "Bluetooth"
+    };
+    return {
+      "title": labels[d?.kind] ?? labels.speaker,
+      "detail": profile,
+      "translate": true
+    };
   }
 }

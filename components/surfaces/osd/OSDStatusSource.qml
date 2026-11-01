@@ -20,14 +20,15 @@ Loader {
   // The OSD's `media` ({ enabled, onTrackChange, onPlayPause }), for "media"
   property var mediaOptions: ({})
 
-  // The user changed it
-  signal fired
+  // The user changed it; `switched`: an audio device switched (its card),
+  // not its mute
+  signal fired(bool switched)
 
   // What it shows now (OSDItems.tile; a message's is OSDContent's)
   readonly property var tile: OSDItems.tile(root.type, root._state())
 
   // A click on its icon can change it (toggle)
-  readonly property bool canToggle: ["keyboardLayout", "micMute", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane"].includes(root.type)
+  readonly property bool canToggle: ["keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane"].includes(root.type)
 
   // Flips it, as its own control would (the layout to the next, the
   // profile between power saver and the rest)
@@ -36,7 +37,10 @@ Loader {
     case "keyboardLayout":
       KeyboardLayoutManager.cycle("next");
       break;
-    case "micMute":
+    case "audio":
+      AudioManager.toggleMute();
+      break;
+    case "microphone":
       AudioManager.toggleSourceMute();
       break;
     case "powerProfile":
@@ -86,16 +90,21 @@ Loader {
         "layouts": KeyboardLayoutManager.layouts,
         "index": KeyboardLayoutManager.layoutIndex
       };
-    case "micMute":
-      return {
-        "muted": AudioManager.sourceMuted,
-        "icon": AudioManager.inputIcon(AudioManager.deviceKind(AudioManager.defaultSource), false)
-      };
-    case "outputDevice":
-      return {
-        "name": AudioManager.defaultSink?.description || AudioManager.defaultSink?.name || "",
-        "icon": AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), false, 1)
-      };
+    case "audio":
+    case "microphone":
+      {
+        const output = root.type === "audio";
+        const node = output ? AudioManager.defaultSink : AudioManager.defaultSource;
+        const kind = AudioManager.deviceKind(node);
+        const label = AudioManager.deviceLabel(node);
+        return {
+          "name": label.title,
+          "detail": label.detail,
+          "device": AudioManager.deviceKey(node),
+          "muted": output ? AudioManager.muted : AudioManager.sourceMuted,
+          "icon": output ? AudioManager.outputIcon(kind, false, 1) : AudioManager.inputIcon(kind, false)
+        };
+      }
     case "powerProfile":
       return {
         "profile": BatteryManager.profile
@@ -135,9 +144,9 @@ Loader {
     return {};
   }
 
-  function _report() {
+  function _report(switched) {
     if (root._armed)
-      root.fired();
+      root.fired(switched === true);
   }
 
   property bool _armed: false
@@ -153,8 +162,8 @@ Loader {
       "numLock": lockKeys,
       "scrollLock": lockKeys,
       "keyboardLayout": keyboardLayout,
-      "micMute": micMute,
-      "outputDevice": outputDevice,
+      "audio": audioDevice,
+      "microphone": audioDevice,
       "powerProfile": powerProfile,
       "caffeine": caffeine,
       "dnd": dnd,
@@ -244,50 +253,54 @@ Loader {
   }
 
   Component {
-    id: micMute
+    id: audioDevice
 
     Item {
-      id: mic
-      // A change as the input device switches (or binds) is the device's
-      property var _source: null
+      id: device
+      readonly property bool output: root.type === "audio"
+      readonly property var node: device.output ? AudioManager.defaultSink : AudioManager.defaultSource
+      // The physical device last in use (AudioManager.deviceKey), kept
+      // through a gap with none: a Bluetooth headset switching profile
+      // replaces its node (often with none between), not the device
+      property string _last: ""
 
-      Component.onCompleted: mic._source = AudioManager.defaultSource
+      // A switch from one device to another: not the first one appearing
+      function _check() {
+        const key = AudioManager.deviceKey(device.node);
+        if (key === "")
+          return;
+        if (device._last !== "" && key !== device._last)
+          root._report(true);
+        device._last = key;
+      }
+
+      // A mute: a change as the device switches or binds is the device's
+      function _muteChanged() {
+        if (device.output ? AudioManager.sinkSettled() : AudioManager.sourceSettled())
+          root._report(false);
+      }
+
+      Component.onCompleted: device._check()
+
+      // Judged once the new node has bound
+      onNodeChanged: Qt.callLater(device._check)
 
       Connections {
-        target: AudioManager
-        function onSourceMutedChanged() {
-          if (AudioManager.defaultSource === mic._source && mic._source !== null)
-            root._report();
-          mic._source = AudioManager.defaultSource;
-        }
-        // A device switching to one with the same mute changes nothing:
-        // take it in once the switch's own changes are through (as the
-        // system volume bar does), whichever handler runs first
-        function onDefaultSourceChanged() {
-          Qt.callLater(() => mic._source = AudioManager.defaultSource);
+        target: device.node
+        function onReadyChanged() {
+          Qt.callLater(device._check);
         }
       }
-    }
-  }
-
-  Component {
-    id: outputDevice
-
-    Item {
-      id: output
-      property var _sink: null
-
-      Component.onCompleted: output._sink = AudioManager.defaultSink
 
       Connections {
         target: AudioManager
-        function onDefaultSinkChanged() {
-          // From one device to another: not the first one binding, nor the
-          // last going away. Reported once the new device has bound (its
-          // description arrives then)
-          if (output._sink !== null && AudioManager.defaultSink !== null && AudioManager.defaultSink !== output._sink)
-            Qt.callLater(root._report);
-          output._sink = AudioManager.defaultSink;
+        function onMutedChanged() {
+          if (device.output)
+            device._muteChanged();
+        }
+        function onSourceMutedChanged() {
+          if (!device.output)
+            device._muteChanged();
         }
       }
     }

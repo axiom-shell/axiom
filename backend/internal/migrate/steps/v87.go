@@ -10,6 +10,10 @@ import (
 // osdLevels are the item types v86 drew as bars.
 var osdLevels = map[string]bool{"master": true, "other": true, "app": true, "microphone": true, "brightness": true}
 
+// osdStatusNames are v86's audio item types by the status that replaced
+// them: one per device, its mute and switches together.
+var osdStatusNames = map[string]string{"micMute": "microphone", "outputDevice": "audio", "inputDevice": "microphone"}
+
 // osdBarKeys are an OSD's keys that only lay out its bars.
 var osdBarKeys = []string{"orientation", "alongEdge", "showPercent"}
 
@@ -17,8 +21,9 @@ var osdBarKeys = []string{"orientation", "alongEdge", "showPercent"}
 // levels, with the keys that lay them out), `statuses` (the status types
 // shown as icons, those that don't open the OSD also in `quiet`; lock
 // keys one type per key) and `media` (the now playing card). A status's
-// own icon goes: a status's icon is what it shows. The three take the
-// list's place among the entry's keys.
+// own icon goes: a status's icon is what it shows. The microphone muted
+// and the output device became the microphone and audio statuses. The
+// three take the list's place among the entry's keys.
 func v87(cfg *jsonx.Object) []string {
 	osd := object(cfg, "OSD")
 	if osd == nil {
@@ -57,6 +62,9 @@ func v87(cfg *jsonx.Object) []string {
 		seen := map[string]bool{}
 		var media *jsonx.Object
 		addStatus := func(kind string, opens bool) {
+			if name, ok := osdStatusNames[kind]; ok {
+				kind = name
+			}
 			if seen[kind] {
 				return
 			}

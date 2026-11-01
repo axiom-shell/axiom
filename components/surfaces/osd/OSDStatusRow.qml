@@ -10,7 +10,7 @@ import qs.components.reusable
 // a line along its edge. A tile is its icon (or short label: a layout's
 // code) in a rounded square, filled while on, faint and struck through
 // (SlashedIcon) while off; the one that just changed is the accent and
-// pops in, its caption (a device's name, a message) beside the line.
+// pops in, its caption (a message's text) beside the line.
 // Hovered, a tile lightens and names itself and its state; one in
 // `toggleable` is clicked to flip it (`toggled`).
 Item {
@@ -24,6 +24,8 @@ Item {
   property string changed: ""
   // Runs top to bottom (along a left or right edge)
   property bool vertical: false
+  // It may show a caption (the OSD shows messages)
+  property bool hasCaption: false
   // The types a click flips
   property var toggleable: []
 
@@ -33,7 +35,7 @@ Item {
   readonly property int captionWidth: Widget.px(280)
   // Its largest size across the edge, whatever it shows (OSDContent.maxDepth):
   // a tile, and along a left or right edge a caption at its widest
-  readonly property real maxDepth: root.vertical ? Math.max(root.tileSize, root.captionWidth) : root.tileSize
+  readonly property real maxDepth: root.vertical && root.hasCaption ? Math.max(root.tileSize, root.captionWidth) : root.tileSize
   readonly property string caption: root.changed !== "" ? (root.tiles[root.changed]?.caption ?? "") : ""
 
   implicitWidth: line.implicitWidth
@@ -57,10 +59,12 @@ Item {
         readonly property var t: root.tiles[tile.modelData] ?? ({})
         readonly property bool current: tile.modelData === root.changed
         readonly property bool canToggle: root.toggleable.includes(tile.modelData)
-        // I18n.tr("{0}: on") I18n.tr("{0}: off") I18n.tr("{0}: {1}") I18n.tr("Microphone")
+        // I18n.tr("{0}: on") I18n.tr("{0}: off") I18n.tr("{0}: {1}") I18n.tr("{0}: {1}, muted")
         readonly property string tip: {
-          const name = tile.modelData === "micMute" ? I18n.tr("Microphone") : OSDConfig.nameOf(tile.modelData);
-          const value = tile.t.caption || tile.t.label;
+          const name = OSDConfig.nameOf(tile.modelData);
+          const value = tile.t.caption || tile.t.name || tile.t.label;
+          if (tile.t.name && tile.t.slash)
+            return I18n.tr("{0}: {1}, muted", name, value);
           if (value)
             return I18n.tr("{0}: {1}", name, value);
           if (tile.modelData === "powerProfile")
