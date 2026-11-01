@@ -298,12 +298,14 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 		s.mu.Unlock()
 		return rev, nil
 	}
-	// An edit made outside that the store hasn't read yet (the reload
-	// waits for its debounce) is never written over: the reload loads it,
-	// and the shell reads its config back on the refusal
+	// An edit made outside that the store hasn't read yet (its reload
+	// waits for the debounce, or no watch saw it) is never written over:
+	// it's read now, so the shell reading its config back on the refusal
+	// gets it
 	if onDisk, err := os.ReadFile(s.path); err == nil && !bytes.Equal(onDisk, s.written) {
 		s.mu.Unlock()
-		return 0, axerr.New(axerr.Conflict, "%s changed on disk: it's read again, save after that", s.path)
+		s.reloadHeld()
+		return 0, axerr.New(axerr.Conflict, "%s changed on disk: it was read again, save after that", s.path)
 	}
 	data := jsonx.Marshal(checked)
 	if err := fsx.WriteFile(s.path, data, 0o600); err != nil {
@@ -526,10 +528,17 @@ func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue) {
 	return loaded.Config, nil
 }
 
+// reload reads the file again if something else changed it.
 func (s *Store) reload() {
 	defer s.publish()
 	s.changeMu.Lock()
 	defer s.changeMu.Unlock()
+	s.reloadHeld()
+}
+
+// reloadHeld reads the file again if it changed (changeMu held; its event
+// is queued for the caller's publish).
+func (s *Store) reloadHeld() {
 	data, err := os.ReadFile(s.path)
 	s.mu.Lock()
 	if errors.Is(err, fs.ErrNotExist) {

@@ -276,12 +276,12 @@ func TestBrokenFileBlocksSavesUntilFixed(t *testing.T) {
 	})
 }
 
-// A save made while an edit from outside waits for its reload is refused,
-// and the reload then loads the edit.
+// A save made while an edit from outside is unread is refused, and the
+// edit is read then, watched or not.
 func TestWriteOverAnUnreadEditIsRefused(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
-	s := open(t, dir) // not watched: the edit stays unread until reload
+	s := open(t, dir) // not watched: only the refusal reads the edit
 	path := filepath.Join(dir, FileName)
 	cfg, _ := s.Config()
 	edited := jsonx.Clone(cfg).(*jsonx.Object)
@@ -294,7 +294,6 @@ func TestWriteOverAnUnreadEditIsRefused(t *testing.T) {
 	if data, _ := os.ReadFile(path); !strings.Contains(string(data), `"lowThreshold": 9`) {
 		t.Fatal("the edit was overwritten")
 	}
-	s.reload()
 	if cfg, _ := s.Config(); cfg.Value("Battery").(*jsonx.Object).Value("lowThreshold") != 9.0 {
 		t.Error("the edit wasn't loaded")
 	}
