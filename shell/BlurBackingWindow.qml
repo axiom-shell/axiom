@@ -185,8 +185,9 @@ PanelWindow {
       anchors.fill: parent
       visible: backing.cutBy.length > 0
 
+      // (none for a fills-only window, which never reads them)
       Copies {
-        shapes: backing.cutBy
+        shapes: backing.part !== "fills" ? backing.cutBy : []
         onChanged: nudge.burst()
       }
     }
@@ -298,18 +299,6 @@ PanelWindow {
     signal changed
     anchors.fill: parent
 
-    // What a copy reads while its source is going (destroyed before its
-    // BlurShape leaves the list)
-    AttachedSurface {
-      id: blankSurface
-      visible: false
-      edge: ScreenEdge.Top
-    }
-    Rectangle {
-      id: blankRect
-      visible: false
-    }
-
     KeyedModel {
       id: shapeModel
       keys: copies.shapes.map(shape => shape.uid)
@@ -351,7 +340,7 @@ PanelWindow {
           id: attachedMirror
 
           AttachedSurfaceCopy {
-            source: slot.shape?.source ?? blankSurface
+            source: slot.shape?.source ?? null
           }
         }
 
@@ -359,9 +348,10 @@ PanelWindow {
           id: rectMirror
 
           Rectangle {
-            // (null for a moment while the window is torn down, as on a
-            // reload: it draws nothing then, as AttachedSurfaceCopy)
-            readonly property var src: slot.shape?.source ?? blankRect
+            // (null while its source is going, destroyed before its
+            // BlurShape leaves the list, or the window is torn down, as on
+            // a reload: it draws nothing then, as AttachedSurfaceCopy)
+            readonly property var src: slot.shape?.source ?? null
             visible: src !== null
             width: src?.width ?? 0
             height: src?.height ?? 0

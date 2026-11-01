@@ -406,7 +406,6 @@ Found by the audits:
 - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
 - [A backed toast's blur fill is at the surface opacity twice](issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)
 - [A keepFill opening leaves an unfilled row in an unbacked translucent pill](issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
-- [The blur window builds stand-ins and copies it never uses](issues.md#the-blur-window-builds-stand-ins-and-copies-it-never-uses)
 - [BlurBacking spells out four near-identical blur windows](issues.md#blurbacking-spells-out-four-near-identical-blur-windows)
 - [The border frame's path is built three times](issues.md#the-border-frames-path-is-built-three-times)
 - [Small shrinks in the blur system](issues.md#small-shrinks-in-the-blur-system)

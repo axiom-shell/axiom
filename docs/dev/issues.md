@@ -960,12 +960,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the blur system
 
-### The blur window builds stand-ins and copies it never uses
-- **Where:** `shell/BlurBackingWindow.qml:303` (`blankSurface`, `blankRect`), `shell/BlurBackingWindow.qml:189` (the `cutBy` `Copies`)
-- **What:** Each window builds a whole hidden `AttachedSurface` (`blankSurface`) and a `Rectangle` (`blankRect`), used only as `?? blankSurface` / `?? blankRect` while a source is going. `AttachedSurfaceCopy` already handles a null source (`visible: root.source !== null`, and every read is `root.source?.… ?? …`), and the rect mirror's `visible: src !== null` (line 365) can never be false while the stand-in is there. Separately, a `part: "fills"` window still mirrors every shape of the other window (`Copies { shapes: backing.cutBy }`) and bursts `FrameNudge` for them, though `cutByUnion` (line 38) is `backing.part !== "fills" && …`, so they are never read. That happens on SwayFX with the overlay open. Fix: `?? null` at both sites, delete lines 301-311 (11 lines), and use `shapes: backing.part !== "fills" ? backing.cutBy : []`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the blur system
-
 ### BlurBacking spells out four near-identical blur windows
 - **Where:** `shell/BlurBacking.qml:58`, `shell/BlurBacking.qml:68`, `shell/BlurBacking.qml:85`, `shell/BlurBacking.qml:99`
 - **What:** The four `BlurBackingWindow`s (9 + 13 + 13 + 13 = 48 lines) differ only in their shapes and `cutBy` pair, `wanted`, `held` and `stackLayer` (all set by whether they're below or over the overlay), their `part`, and their namespace, which is `(part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (over ? "-overlay" : "")`. Fix: one inline component taking `over`, with an `Instantiator` over `shadowsApart ? ["fills", "shadows"] : ["all"]`. It is used twice, the over-overlay one under its `aboveOverlay` gate: about 25 lines in place of 48. SwayFX's map order (fills, then shadows) is kept.

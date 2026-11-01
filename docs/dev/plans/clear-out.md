@@ -188,7 +188,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Three copies of the wheel-notch accumulator
 - **compositor-03** (5):
   - SlideAnimation's fade, easing and container aliases are dead
-  - [The blur window builds stand-ins and copies it never uses](../issues.md#the-blur-window-builds-stand-ins-and-copies-it-never-uses)
+  - The blur window builds stand-ins and copies it never uses
   - [BlurBacking spells out four near-identical blur windows](../issues.md#blurbacking-spells-out-four-near-identical-blur-windows)
   - [The border frame's path is built three times](../issues.md#the-border-frames-path-is-built-three-times)
   - [Small shrinks in the blur system](../issues.md#small-shrinks-in-the-blur-system)
