@@ -523,6 +523,32 @@ class CheckPackages(unittest.TestCase):
         self.assertEqual(missed(out, [m for *_, m in self.EDITS]), [], out)
 
 
+class CheckShaders(unittest.TestCase):
+    """scripts/check_shaders.py fails when a wallpaper shader's .qsb is stale
+    or missing, or a .qsb or stamp has no source."""
+
+    SHADERS = "components/surfaces/wallpaper/shaders"
+
+    def test_clean(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out = run_check(fixture_root(tmp, self.SHADERS), "check_shaders.py")
+        self.assertEqual(code, 0, out)
+
+    def test_each_rule_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fixture_root(tmp, self.SHADERS)
+            shaders = root / self.SHADERS
+            (shaders / "fade.frag").write_text((shaders / "fade.frag").read_text() + "// edited\n")
+            (shaders / "wipe.frag.qsb").unlink()
+            (shaders / "ghost.frag.qsb").write_bytes(b"x")
+            (shaders / "stamps.txt").write_text((shaders / "stamps.txt").read_text() + "00  gone.frag\n")
+            code, out = run_check(root, "check_shaders.py")
+        self.assertEqual(code, 1)
+        for message in ("fade.frag: changed since its .qsb was built", "wipe.frag: no wipe.frag.qsb",
+                        "ghost.frag.qsb: no source ghost.frag", "a stamp for gone.frag"):
+            self.assertIn(message, out)
+
+
 class CheckSizes(unittest.TestCase):
     """scripts/check_sizes.py finds sizes written as numbers outside the bars."""
 

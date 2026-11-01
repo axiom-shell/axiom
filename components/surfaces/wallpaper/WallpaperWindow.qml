@@ -4,15 +4,30 @@ import Quickshell
 import Quickshell.Wayland
 
 import qs.config
+import qs.components.methods
 import qs.services.core
+import qs.services.compositor
 
-// A screen's wallpaper, crossfading to a new one once it has loaded
+// A screen's wallpaper (WallpaperView: its transitions), sliding with the
+// workspaces when the parallax is on
 PanelWindow {
   id: root
 
-  readonly property string source: ThemeManager.wallpaperFor(screen?.name ?? "")
-  // The image shown on top; the other one loads the next wallpaper
-  property Image current: first
+  readonly property string name: screen?.name ?? ""
+  // Where the parallax puts it for the output's active workspace
+  readonly property var _shift: Appearance.wallpaperParallax ? WallpaperFill.parallax(CompositorManager.output(root.name)?.activeWorkspaceId ?? 0, {
+    "grid": WorkspacesConfig.grid,
+    "columns": WorkspacesConfig.columns,
+    "rows": WorkspacesConfig.rows,
+    "size": WorkspacesConfig.size,
+    "base": CompositorManager.workspaceBase(root.name),
+    "dynamic": CompositorManager.supports.dynamicWorkspaces === true,
+    "vertical": CompositorManager.supports.verticalWorkspaces === true,
+    "ids": CompositorManager.workspaces.filter(w => w.output === root.name).map(w => w.id)
+  }) : ({
+      "x": 0,
+      "y": 0
+    })
 
   WlrLayershell.layer: WlrLayer.Background
   WlrLayershell.namespace: "axiom-wallpaper"
@@ -25,74 +40,24 @@ PanelWindow {
     right: true
   }
 
-  onSourceChanged: {
-    const next = current === first ? second : first;
-    // Back to the one it held last (dark, light, dark): the same source
-    // doesn't load again, so no status change would bring it up
-    if (next.source.toString() === source && next.status === Image.Ready)
-      next.reveal();
-    else
-      next.source = source;
-  }
-  Component.onCompleted: first.source = source
-
-  // The new image fades in over the old, which stays opaque underneath
-  component WallpaperImage: Image {
-    id: image
-
-    required property ShellScreen screenInfo
-    // The wallpaper wanted on screen, and whether this image shows it
-    required property string wanted
-    required property bool shown
-    signal ready
-
-    function reveal() {
-      image.ready();
-      fadeIn.restart();
-    }
-
+  WallpaperView {
     anchors.fill: parent
-    fillMode: Image.PreserveAspectCrop
-    asynchronous: true
-    cache: false
-    // The screen's size, kept while Hyprland briefly has no output (the
-    // screen is null then), so the image isn't decoded again meanwhile
-    Binding on sourceSize {
-      when: image.screenInfo !== null
-      value: Qt.size(image.screenInfo?.width ?? 0, image.screenInfo?.height ?? 0)
-      restoreMode: Binding.RestoreNone
-    }
-    z: image.shown ? 1 : 0
-    onStatusChanged: {
-      if (image.status !== Image.Ready || image.source.toString() !== image.wanted || image.shown)
-        return;
-      image.reveal();
-    }
+    source: ThemeManager.wallpaperFor(root.name)
+    zoom: Appearance.wallpaperParallax ? 1 + Appearance.wallpaperParallaxStrength / 100 : 1
+    shiftX: root._shift.x
+    shiftY: root._shift.y
 
-    NumberAnimation {
-      id: fadeIn
-      target: image
-      property: "opacity"
-      from: 0
-      to: 1
-      duration: Appearance.animSlow
-      easing.type: Appearance.easing
+    Behavior on shiftX {
+      NumberAnimation {
+        duration: Appearance.animSlow
+        easing.type: Appearance.easing
+      }
     }
-  }
-
-  WallpaperImage {
-    id: first
-    screenInfo: root.screen
-    wanted: root.source
-    shown: root.current === first
-    onReady: root.current = first
-  }
-
-  WallpaperImage {
-    id: second
-    screenInfo: root.screen
-    wanted: root.source
-    shown: root.current === second
-    onReady: root.current = second
+    Behavior on shiftY {
+      NumberAnimation {
+        duration: Appearance.animSlow
+        easing.type: Appearance.easing
+      }
+    }
   }
 }

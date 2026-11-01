@@ -78,6 +78,18 @@ properties:
         default: '~/Pictures/wallpapers'
         pattern: '\S'
         description: Folder the wallpaper pickers list images from (jpg, png, bmp). A leading ~ is your home folder.
+      collection:
+        type: string
+        x-snapshot: true
+        title: Collection
+        default: ''
+        description: A subfolder of the wallpaper folder to pick and rotate from (its path inside it), empty for the folder itself. Also chosen in the wallpaper picker.
+      subfolders:
+        type: boolean
+        x-snapshot: true
+        title: Include subfolders
+        default: false
+        description: Also list the images in the folders inside it, at any depth.
       rotation:
         type: object
         x-snapshot: true
@@ -105,6 +117,24 @@ properties:
             title: Same on every monitor
             default: false
             description: Show one wallpaper on all monitors. Off, each monitor gets its own.
+          pause:
+            type: object
+            title: Hold the rotation
+            additionalProperties: false
+            description: While any of these holds, the wallpaper stays. Once none does and its time has passed, it changes at once.
+            properties:
+              fullscreen:
+                type: boolean
+                title: While a window is fullscreen
+                default: true
+              locked:
+                type: boolean
+                title: While locked or idle
+                default: true
+              battery:
+                type: boolean
+                title: On battery
+                default: false
       variants:
         type: object
         x-snapshot: true
@@ -113,6 +143,63 @@ properties:
         additionalProperties: false
         properties: {dark: {type: string, default: ''}, light: {type: string, default: ''}}
         x-settings: false
+      transition:
+        type: object
+        title: Wallpaper transition
+        additionalProperties: false
+        properties:
+          type:
+            type: string
+            title: Transition
+            enum: [random, none, fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, checker, zoom, ripple, swirl, blur]
+            x-enumLabels: {random: Random, none: None, fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, checker: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur}
+            default: random
+            description: How a new wallpaper replaces the old one. Random picks one from the list below each time; every monitor that changes together plays the same one. With animations off, it switches at once.
+          pool:
+            type: array
+            title: Random picks from
+            default: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, checker, zoom, ripple, swirl, blur]
+            items:
+              type: string
+              enum: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, checker, zoom, ripple, swirl, blur]
+            x-enumLabels: {fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, checker: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur}
+            x-showIf: {type: random}
+            description: The transitions Random chooses between. None ticked chooses from all of them.
+          duration:
+            type: integer
+            title: Length
+            x-unit: ms
+            default: 1000
+            minimum: 100
+            maximum: 5000
+            description: How long a transition takes.
+      fill:
+        type: string
+        x-snapshot: true
+        title: Wallpaper fit
+        enum: [crop, fit, stretch, center]
+        x-enumLabels: {crop: Fill the screen, fit: Show it whole, stretch: Stretch, center: Center at its own size}
+        default: crop
+        description: How a wallpaper that isn't the screen's shape is drawn, everywhere it shows (the desktop, lock screen, login screen and workspace overview). Around one that doesn't fill the screen is the theme's background.
+      parallax:
+        type: object
+        title: Workspace parallax
+        additionalProperties: false
+        properties:
+          enabled:
+            type: boolean
+            title: Move with the workspaces
+            default: false
+            description: The wallpaper is drawn a little larger than the screen and slides a step with each workspace you go to.
+          strength:
+            type: integer
+            title: How far
+            x-unit: '%'
+            default: 4
+            minimum: 1
+            maximum: 15
+            x-showIf: {enabled: true}
+            description: How much larger than the screen the wallpaper is drawn, and so how far it can slide.
   font:
     x-scope: look
     type: object

@@ -63,7 +63,7 @@ axiom ipc <target> <function> [args]
 | `brightness` | `up`, `down`, `set <percent>`, `dim <percent>`, `dimBy <percent>`, `undim` |
 | `screenshot` | `take <region\|window\|screen>`, `cancel` |
 | `screenRecord` | `toggle`, `enable`, `disable`, `status` |
-| `wallpaper` | `next`, `random` |
+| `wallpaper` | `next`, `random`, `preview <transition>` (the next wallpaper, played with that transition: `fade`, `wipe`, `slide`, `grow`, `shrink`, `wave`, `dissolve`, `pixelate`, `blinds`, `checker`, `zoom`, `ripple`, `swirl`, `blur`) |
 | `monitors` | `open`, `keep`, `revert`, `identify` |
 | `onboarding` | `open`, `close`, `goTo <step>`, `reset` |
 | `lockscreen` | `lock` |

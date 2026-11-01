@@ -61,7 +61,7 @@ step() {
   "$@" || failed+=("$name")
 }
 
-qml=() tests=() shells=() script_tests=() schema=0 go=0 fixtures=0 lint=0 i18n=0 qmlformat=0
+qml=() tests=() shells=() script_tests=() schema=0 go=0 fixtures=0 lint=0 i18n=0 qmlformat=0 shaders=0
 for f in "${changed[@]}"; do
   case "$f" in
   *.qml) qml+=("$f") lint=1 i18n=1 ;;
@@ -72,6 +72,7 @@ for f in "${changed[@]}"; do
   scripts/check_i18n.py | config/i18n/*) i18n=1 ;;
   scripts/check_go.sh) go=1 ;;
   scripts/check_qmlformat.sh) qmlformat=1 ;;
+  components/surfaces/wallpaper/shaders/* | scripts/check_shaders.py) shaders=1 ;;
   esac
   case "$f" in
   components/methods/SchemaValidation.qml) schema=1 go=1 ;;
@@ -110,6 +111,7 @@ for f in "${changed[@]}"; do
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
   scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;
   scripts/check_packages.py) script_tests+=(CheckPackages) ;;
+  scripts/check_shaders.py) script_tests+=(CheckShaders) ;;
   scripts/gen_docs.py | scripts/config-usage-baseline.json) script_tests+=(RpcShapes ConfigUsage) ;;
   tests/scripts/test_scripts.py) script_tests+=(all) ;;
   esac
@@ -152,6 +154,9 @@ step "structure" python3 scripts/check_structure.py
 step "sizes" python3 scripts/check_sizes.py
 step "doc citations" python3 scripts/check_docs.py
 step "package lists" python3 scripts/check_packages.py
+if [[ $shaders -eq 1 ]]; then
+  step "shaders" python3 scripts/check_shaders.py
+fi
 if [[ $lint -eq 1 ]]; then
   step "qmllint" python3 scripts/check_qmllint.py
 fi

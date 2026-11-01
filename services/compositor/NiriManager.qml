@@ -94,6 +94,7 @@ Singleton {
       "stripsAlways": true,
       "outputWorkspaces": true,
       "dynamicWorkspaces": true,
+      "verticalWorkspaces": true,
       "windowBorders": true,
       "windowShape": true,
       "windowRounding": true,

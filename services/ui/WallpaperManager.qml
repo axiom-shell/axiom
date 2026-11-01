@@ -98,6 +98,18 @@ Singleton {
       ThemeManager.syncGeneratedTheme();
   }
 
+  // The next wallpaper (as next(), light/dark mode excepted), played with
+  // `transition` (a WallpaperTransitions name) whatever is configured:
+  // trying one out
+  function preview(transition) {
+    if (!WallpaperTransitions.names.includes(transition)) {
+      console.warn("[WallpaperManager] No transition", transition, "- one of", WallpaperTransitions.names.join(", "));
+      return;
+    }
+    ThemeManager.forceTransition(transition);
+    root.next();
+  }
+
   // A random wallpaper of the folder, picked by hand (for the focused
   // monitor, as `pick` does)
   function random() {
@@ -209,6 +221,10 @@ Singleton {
 
     function next(): void {
       root.next();
+    }
+
+    function preview(transition: string): void {
+      root.preview(transition);
     }
 
     function random(): void {

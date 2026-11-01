@@ -30,6 +30,16 @@ QtObject {
   // "random" | "sequential"
   readonly property string rotationOrder: _c.wallpaper.rotation.order
   readonly property bool rotationSameOnAll: _c.wallpaper.rotation.sameOnAll
+  // "random" | "none" | a WallpaperTransitions name; the ones random picks
+  // from; how long one takes (ms)
+  readonly property string wallpaperTransition: _c.wallpaper.transition.type
+  readonly property var wallpaperTransitionPool: _c.wallpaper.transition.pool
+  readonly property int wallpaperTransitionDuration: _c.wallpaper.transition.duration
+  // "crop" | "fit" | "stretch" | "center" (WallpaperFill)
+  readonly property string wallpaperFill: _c.wallpaper.fill
+  // Slide with the workspaces, drawn this much (%) larger than the screen
+  readonly property bool wallpaperParallax: _c.wallpaper.parallax.enabled
+  readonly property int wallpaperParallaxStrength: _c.wallpaper.parallax.strength
   // { dark, light }: file URLs, "" for none
   readonly property string darkWallpaper: _c.wallpaper.variants.dark
   readonly property string lightWallpaper: _c.wallpaper.variants.light

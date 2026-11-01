@@ -215,7 +215,7 @@ func TestSnapshotPathsAndFiles(t *testing.T) {
 		paths = append(paths, strings.Join(p, "."))
 	}
 	sort.Strings(paths)
-	want := []string{"Appearance.wallpaper.file", "Appearance.wallpaper.folder", "Appearance.wallpaper.mode", "Appearance.wallpaper.perScreen", "Appearance.wallpaper.rotation", "Appearance.wallpaper.variants"}
+	want := []string{"Appearance.wallpaper.collection", "Appearance.wallpaper.file", "Appearance.wallpaper.fill", "Appearance.wallpaper.folder", "Appearance.wallpaper.mode", "Appearance.wallpaper.perScreen", "Appearance.wallpaper.rotation", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.variants"}
 	if !reflect.DeepEqual(paths, want) {
 		t.Errorf("snapshot paths %v", paths)
 	}

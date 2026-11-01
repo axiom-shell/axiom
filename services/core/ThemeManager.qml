@@ -69,6 +69,33 @@ QtObject {
     "dark": Appearance.darkWallpaper,
     "light": Appearance.lightWallpaper
   }, Appearance.darkMode, root._look.rotated ?? null)
+  // The transition the next change of what's shown plays ({ seed, forced
+  // }; WallpaperView reads it once the new wallpaper has loaded): a fresh
+  // seed per change, so the screens changing together pick the same
+  // transition, and a preview's transition name ("" for the configured)
+  property var transition: ({
+      "seed": 0,
+      "forced": ""
+    })
+  property string _forcedTransition: ""
+  // What was shown when the seed was drawn: the binding also re-evaluates
+  // on look state changes that show nothing new (lastRotated)
+  property string _seededFor: ""
+  onShownWallpapersChanged: {
+    const shown = JSON.stringify(root.shownWallpapers);
+    if (shown === root._seededFor)
+      return;
+    root._seededFor = shown;
+    root.transition = {
+      "seed": Math.floor(Math.random() * 2147483647),
+      "forced": root._forcedTransition
+    };
+    root._forcedTransition = "";
+  }
+  // The next change plays `name` (WallpaperManager.preview)
+  function forceTransition(name) {
+    root._forcedTransition = name;
+  }
   // The primary monitor's (the lockscreen's)
   readonly property string wallpaper: root.wallpaperFor(General.primaryMonitor)
   function wallpaperFor(monitor) {

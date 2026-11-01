@@ -62,6 +62,7 @@ for job in "${jobs[@]}"; do
     step "sizes" python3 scripts/check_sizes.py
     step "docs" python3 scripts/check_docs.py
     step "package lists" python3 scripts/check_packages.py
+    step "shaders" python3 scripts/check_shaders.py
     step "json" json
     # Fails on what the pre-commit hook fixes; empty entries only warn
     step "translations" python3 scripts/check_i18n.py
