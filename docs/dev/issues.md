@@ -1071,17 +1071,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### Nothing listens to the bar's layoutUpdated any more
-- **Where:** `components/bar/BarContainer.qml:31` (`layoutUpdated`), `components/bar/BarContainer.qml:313` (`layoutMoved`, `_slotsKey`, `_settle`), `components/bar/BarContainer.qml:401` (`onAllocationUpdated`), `components/bar/WidgetGroup.qml:109` (`allocationUpdated`, `_allocationKey`), `docs/dev/bar/composition.md`
-- **What:** The signal has no handler. `grep -rn 'layoutUpdated'` over QML and docs finds only its declaration, its two emits (BarContainer.qml:314, 320) and composition.md's "`BarContainer.layoutMoved()` emits `layoutUpdated` … so an open popout re-anchors on the settled widget". Its listener was BarPopouts' `onLayoutUpdated`, removed in "Rework and harden popouts (#53)". The chain still runs on the hot path:
-  - Every `slots` change `JSON.stringify`s the slots.
-  - Every section allocation change (a ticking clock's width, a tray icon) `JSON.stringify`s the allocation, emits `allocationUpdated` and calls `layoutMoved()`.
-  - `layoutMoved()` emits to nobody and restarts a Timer that emits to nobody again `animNormal` later.
-
-  Fix: delete the chain and its doc line, 35 lines: the signal and its comment (BarContainer.qml:29-31), `_slotsKey`/`onSlotsChanged`/`layoutMoved`/`_settle` (301-321), Section's `onAllocationUpdated` (401), WidgetGroup's `allocationUpdated`/`_allocationKey`/`onAllocationChanged` (108-117).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### A bar made while the bar editor is open may never report to it
 - **Where:** `components/bar/BarContainer.qml:346` (`on_ReportKeyChanged`), `components/bar/BarContainer.qml:349` (`_report`)
 - **What:** A bar's report reaches `BarManager.setLive` only from `on_ReportKeyChanged`, and a change handler doesn't run for a property's first value.
@@ -1139,18 +1128,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/bar/BarContainer.qml:96` (`sectionPills`), `components/methods/BarLayout.qml:523` (`_mergeSpans`)
 - **What:** `sectionPills` hand-rolls the loop that joins spans at most `pillMerge` apart (99-107), which `BarLayout._mergeSpans` already does for islands, then decides each pill's joins in the host (`root.ends.start.joinable && m.start - gap <= reach`). That breaks composition.md (main-axis layout math lives in `methods/BarLayout`) and AGENTS.md ("A methods helper's decision … is read from its output, never re-derived in a host"). No row tests when an end pill joins. The copy also writes into `_spans`' own objects (`spans.slice()` is shallow, and `last.end = …` mutates the pushed span). Fix: a BarLayout `pillRects(spans, merge, gap, reach, length, joinStart, joinEnd)` on `_mergeSpans` (which copies), with rows for a free end, a joined end at each side, and a held end. `sectionPills` (96-126, 31 lines) becomes one call of about 3 lines.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### StandaloneBar only wraps BarPanel's BarContainer
-- **Where:** `components/bar/StandaloneBar.qml:7`, `components/bar/BarPanel.qml:127` (`bar`), `components/bar/BarContainer.qml:215` (`borderOpening`), `components/bar/BarContainer.qml:515` (`blurOrigin`)
-- **What:** Its header calls it "A bar's BarContainer outside a window of its own", but nothing draws a bar outside a window any more. BarPanel is its only user, and it overrides StandaloneBar's own logic (the implicit 300 px size) with explicit x/y/width/height; what's left forwards `barConfig`/`panel`/`screen` into a BarContainer filling it. The comments about "the bar editor's preview" (215, 515) describe a preview that is gone. Fix: put the `BarContainer` straight into BarPanel with the same x/y/width/height (`container: bar`), read the container's own `x`/`y` in `blurOrigin`, drop the preview clauses, and drop its `Extra:` line in `.claude/skills/review-system/systems.md`. This removes StandaloneBar.qml (27 lines).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### BarContainer._withEntry rebuilds Utils.withEntry
-- **Where:** `components/bar/BarContainer.qml:174` (`_withEntry`), `components/methods/Utils.qml:65` (`withEntry`)
-- **What:** `_withEntry` copies the map and sets or deletes `owner` (177-182), which is `Utils.withEntry`; the same file already uses `Utils.withEntry` at line 341. Fix: `return Utils.deepEqual(map[owner] ?? null, value ?? null) ? null : Utils.withEntry(map, owner, value || undefined);`, 12 lines (172-183) down to 4.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
 
 ### enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks

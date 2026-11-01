@@ -199,9 +199,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - PillBarJoin's available repeats what joined already says
   - Geometry members nothing reads
   - [The tray menu's isVertical and barConfig are never read](../issues.md#the-tray-menus-isvertical-and-barconfig-are-never-read)
-  - [Nothing listens to the bar's layoutUpdated any more](../issues.md#nothing-listens-to-the-bars-layoutupdated-any-more)
-  - [StandaloneBar only wraps BarPanel's BarContainer](../issues.md#standalonebar-only-wraps-barpanels-barcontainer)
-  - [BarContainer._withEntry rebuilds Utils.withEntry](../issues.md#barcontainer_withentry-rebuilds-utilswithentry)
+  - Nothing listens to the bar's layoutUpdated any more
+  - StandaloneBar only wraps BarPanel's BarContainer
+  - BarContainer._withEntry rebuilds Utils.withEntry
   - [enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks](../issues.md#enrichbarconfig-hands-out-two-fields-nothing-reads-and-keeps-three-dead-fallbacks)
   - [BaseWidget's background box and panel-size defaults are dead](../issues.md#basewidgets-background-box-and-panel-size-defaults-are-dead)
   - [IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call](../issues.md#integratededgemenus-empty-engage-exists-only-for-edgemenusyncs-call)

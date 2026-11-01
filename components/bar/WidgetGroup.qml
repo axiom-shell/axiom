@@ -105,17 +105,6 @@ Item {
     return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.widgetSize);
   }
 
-  // Emitted when modules moved or resized within the group
-  signal allocationUpdated
-  property string _allocationKey: ""
-  onAllocationChanged: {
-    const key = JSON.stringify(allocation);
-    if (key !== _allocationKey) {
-      _allocationKey = key;
-      allocationUpdated();
-    }
-  }
-
   implicitWidth: isVertical ? root.barConfig.widgetSize : usedLength
   implicitHeight: isVertical ? usedLength : root.barConfig.widgetSize
 
