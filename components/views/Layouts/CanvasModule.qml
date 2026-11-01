@@ -192,7 +192,9 @@ Rectangle {
       readonly property bool corner: zone.modelData.length === 2
       readonly property real edge: Math.max(3, Math.min(8, root.width / 5, root.height / 5))
       readonly property real cornerSize: Math.max(Widget.px(5), Math.min(Widget.px(16), root.width / 4, root.height / 4))
-      // Where the drag started, in the canvas, and the place then
+      // Where the drag started, in the drag layer, and the place then.
+      // Not in the tile's parent: that moves as the top (or left) edge
+      // does, so the pointer's offset from it drifts mid-drag
       property point start: Qt.point(0, 0)
       property var startPlace: null
 
@@ -207,17 +209,17 @@ Rectangle {
 
       onPressed: mouse => {
         root.editor.select(root.index);
-        zone.start = zone.mapToItem(root.parent, mouse.x, mouse.y);
+        zone.start = zone.mapToItem(root.dragLayer, mouse.x, mouse.y);
         zone.startPlace = Object.assign({}, root.place);
         root.resizing = zone.modelData;
       }
       onPositionChanged: mouse => {
         if (!zone.pressed || !zone.startPlace)
           return;
-        const p = zone.mapToItem(root.parent, mouse.x, mouse.y);
+        const p = zone.mapToItem(root.dragLayer, mouse.x, mouse.y);
         const place = GridPlacement.resizeFrom(zone.startPlace, zone.modelData, Math.round((p.x - zone.start.x) / root.step), Math.round((p.y - zone.start.y) / root.step));
         const current = root.dragLayer.resizePlan?.place ?? zone.startPlace;
-        if (place.x !== current.x || place.y !== current.y || place.w !== current.w || place.h !== current.h || !root.dragLayer.resizePlan)
+        if (!GridPlacement.samePlace(place, current) || !root.dragLayer.resizePlan)
           root.dragLayer.resizePlan = root.editor.planResize(root.index, place);
       }
       onReleased: {

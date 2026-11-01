@@ -72,7 +72,7 @@ Set a style once under **Settings → Look & Feel → Bar widgets**, and give an
 <p align="center"><img src="../assets/screenshots/overlay-home.webp" alt="The overlay's Home page: Wi-Fi, quick actions, media, notifications, a clock and calendar, the mixer, network, weather and disks" width="900"></p>
 
 - A full-screen overlay made of pages. Each page is a grid you place modules on, with gaps wherever you like. Pages have their own name and icon in the navigator.
-- **42 modules**, and every one adapts to its size and shape (square, wide or tall, down to a compact figure):
+- **43 modules**, and every one adapts to its size and shape (square, wide or tall, down to a compact figure):
 
   | Group | Modules |
   | --- | --- |
@@ -82,7 +82,7 @@ Set a style once under **Settings → Look & Feel → Bar widgets**, and give an
   | Time and plans | Clock (digital, stacked or analog, in any time zone), World clocks, Clock & calendar, Calendar, Agenda, Weather |
   | Workspace | Workspaces map, Notifications |
   | Writing | Notes, AI chat |
-  | Focus | Todo list, Pomodoro timer, Timer & stopwatch (one-off timers with presets, a stopwatch with laps), Focus (the timer, the todos and today's events together) |
+  | Focus | Todo list, Pomodoro timer, Timer & stopwatch (one-off timers with presets, a stopwatch with laps), Focus (the timer, the todos and today's events together), Caffeine (keep awake until turned off or for a set time) |
   | Utilities | Calculator (with a keypad; math, units and currencies), Clipboard history (with pins), Emoji picker, Command output (any command's output as a card), Keybind cheat sheet |
   | Look | Theme picker, Wallpapers, Palette, Theme color swatch, Greeting |
 

@@ -202,7 +202,8 @@ QtObject {
     "ownBar": root.ownBar,
     "across": root.gaps?.across ?? 0,
     "layerOrder": CompositorManager.supports.layerOrder === true,
-    "overOverlay": root.overOverlay
+    "overOverlay": root.overOverlay,
+    "menuZone": ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root.edgeName)
   }))
   // EdgeAttach.place's answer in the host's coordinates
   readonly property var place: {
@@ -235,6 +236,10 @@ QtObject {
   // Extra box depth at the attach edge that a merged box's content keeps
   // clear of where the pills would be by
   readonly property real attachClearance: root._layout.attachClearance
+  // How deep the plain fill it joins runs from the screen edge to its
+  // attach edge (the border's margin, a floating or pill bar's empty
+  // depth), which a host takes off its padding there
+  readonly property real attachFill: root._layout.attachFill
   // Where its attach edge goes, across from the screen edge (held, a
   // connector gap short of its box), and from the followed bar's outer
   // edge

@@ -14,7 +14,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 ### An entry's fields
 - `id`, `name`, `monitor`, `edge`, `mode`.
 - `offset` / `gridOffset`: where the modules sit along the edge (see [Hosts](hosts.md)).
-- `length`:
+- `length` (floating menus only: an integrated menu always takes its whole edge, `GridPlacement.menuFillsEdge`, so the setting is hidden for it, `x-showIf: {mode: floating}`):
   - `content`: as long as its modules;
   - `edge`: fitted to the whole edge. Its rows (columns on a top/bottom edge) grow or shrink evenly to take exactly the room (`GridPlacement.trackSizes` with `fit`, down to half a unit, scrolling only past that; `menuOnScreen` draws it the same in the editor). Modules go compact below their minimum.
 - `moduleScale`: % of the card size on its screen (`OverlayConfig.cardUnitOn`, from `Widget.cardSize`; the overlay's own Module size doesn't apply).

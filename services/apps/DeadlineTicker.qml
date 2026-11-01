@@ -12,11 +12,17 @@ import qs.services.system
 // keyed by `name`) and a restart (StateManager `name`, unless `keeps` is
 // off); `set(changes)` merges into it. `ended` fires once when `deadline`
 // (an object with `running` and `endsAt`, in ms) runs out, with nothing
-// showing it; displays acquire(owner, interval) a `now` ticking at the
-// shortest interval asked while `ticks` holds. Nothing is restored or
+// showing it, and with `warnBefore` set, `warned` that long before it
+// (once per deadline, only when it's crossed while running); displays
+// acquire(owner, interval) a `now` ticking at the shortest interval asked
+// while `ticks` holds. Nothing is restored or
 // written in greeter mode (with `keeps` off nothing is written, so it runs
-// there too).
-QtObject {
+// there too). Its owner declares it as a default child (`DeadlineTicker {
+// id: … }`), or a reload loses `values`; they are real once `ready`.
+// A Scope, not a QtObject: a Singleton's reload passes only to its default
+// children that are Reloadable (a plain QObject child is skipped), and
+// matches them by their order.
+Scope {
   id: root
 
   // The StateManager file and the reload key
@@ -31,13 +37,20 @@ QtObject {
   property bool ticks: false
   // Notifications go out under it; clicking one fires notificationClicked
   property string desktopEntry: ""
+  // Ms before the deadline `warned` fires; 0 for never
+  property real warnBefore: 0
 
   readonly property var values: root._parse(_run.values) ?? ({})
+  // `values` are restored (empty until then: on a reload, until the old
+  // ones are copied in)
+  readonly property bool ready: root._started
   property real now: Date.now()
 
   // The deadline ran out: `late` when it ended long ago, with axiom not
   // running
   signal ended(bool late)
+  // `warnBefore` is left to the deadline
+  signal warned
   signal notificationClicked
 
   // Merges `changes` into `values`, and saves them
@@ -61,10 +74,14 @@ QtObject {
     root._registry.release(owner);
   }
 
-  function notify(summary, body) {
+  // `actions` ([{ id, label }]) are buttons on it; `onAction(id)` runs the
+  // one picked
+  function notify(summary, body, actions, onAction) {
     NotificationManager.sendNotification("axiom", summary, body, {
       "desktopEntry": root.desktopEntry,
-      "icon": "appointment-soon"
+      "icon": "appointment-soon",
+      "actions": actions ?? [],
+      "onAction": onAction
     });
   }
 
@@ -73,12 +90,17 @@ QtObject {
   readonly property var _store: StateManager.createStateHandler(root.name)
   property ConsumerRegistry _registry: ConsumerRegistry {}
 
-  property PersistentProperties _persisted: PersistentProperties {
+  // Matched on a reload to the old ticker's (both the Scope's first
+  // child): loaded fires once, after the old values were copied in, or
+  // with none to copy (a restart)
+  PersistentProperties {
     id: _run
     reloadableId: "axiomTicker-" + root.name
     // `values` as JSON ("" until restored from the state file)
     property string values: ""
     property bool restored: false
+
+    onLoaded: root._load()
   }
 
   function _parse(text) {
@@ -99,6 +121,7 @@ QtObject {
 
   // To the deadline, at most an hour at a time
   function _arm() {
+    root._armWarning();
     _alarm.stop();
     if (!root.deadline?.running)
       return;
@@ -113,6 +136,35 @@ QtObject {
 
   onDeadlineChanged: if (root._started)
     root._arm()
+  onWarnBeforeChanged: if (root._started)
+    root._armWarning()
+
+  // The deadline last warned of, so each warns once
+  property real _warnedFor: 0
+
+  // To `warnBefore` ahead of the deadline, at most an hour at a time
+  function _armWarning() {
+    _warnAlarm.stop();
+    if (!(root.warnBefore > 0) || !root.deadline?.running || root._warnedFor === root.deadline.endsAt)
+      return;
+    const left = root.deadline.endsAt - root.warnBefore - Date.now();
+    // Already inside the warning: it wasn't crossed while running
+    if (left < -1000)
+      return;
+    if (left <= 0) {
+      root._warnedFor = root.deadline.endsAt;
+      root.warned();
+      return;
+    }
+    _warnAlarm.interval = Math.min(left + 50, 3600000);
+    _warnAlarm.start();
+  }
+
+  property Timer _warnAlarmTimer: Timer {
+    id: _warnAlarm
+    repeat: false
+    onTriggered: root._armWarning()
+  }
 
   property bool _started: false
 
@@ -129,7 +181,9 @@ QtObject {
     onTriggered: root.now = Date.now()
   }
 
-  Component.onCompleted: {
+  // Restored (on a restart from the state file, on a reload kept): only
+  // then are `values` real, so nothing acts on the empty ones before
+  function _load() {
     if (Paths.greeter && root.keeps)
       return;
     // A restart (not a reload): back from the state file

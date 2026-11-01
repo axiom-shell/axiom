@@ -138,6 +138,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs the lock-survives-reload fix, let the idle lock come up, save a loaded QML file, then unlock with the password: the lock screen stays up throughout, `scripts/log.sh --all` shows no `Session lock object was destroyed without unlocking`, and the next save after unlocking reloads. Nested niri, sway and Hyprland showed it with a test unlock hook; the real idle lock and PAM only the live session can.
 - Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
 - Once the shell runs #230, check app and window icons in the dock, launcher, workspace widgets, workspace overview and switcher (AppIconManager; a window class's icon is cached until desktop entries change).
+- Once the shell runs the workspace grid's centre start, with `Workspaces.layout` `grid` (3 × 3): log in under sway and Hyprland with two monitors and check each starts on its block's centre (5, 14); restart axiom after moving away and check nothing moves; on sway, switch the layout to `perMonitor` and back to `grid` and check every monitor goes to its centre, windows kept on their workspaces. Nested Hyprland (one output) showed the start, a reload leaving workspace 1 alone, and perMonitor → grid going to 5.
 - Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
 
 ### Phase 0: decisions and quick wins
@@ -446,7 +447,6 @@ Found by the audits:
 - [The merge keeps key and variable tables render already has](issues.md#the-merge-keeps-key-and-variable-tables-render-already-has)
 - [A backed toast's blur fill is at the surface opacity twice](issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)
 - [A keepFill opening leaves an unfilled row in an unbacked translucent pill](issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
-- [The editable dropdown's list fills translucent over the overlay](issues.md#the-editable-dropdowns-list-fills-translucent-over-the-overlay)
 - [SlideAnimation's fade, easing and container aliases are dead](issues.md#slideanimations-fade-easing-and-container-aliases-are-dead)
 - [The blur window builds stand-ins and copies it never uses](issues.md#the-blur-window-builds-stand-ins-and-copies-it-never-uses)
 - [BlurBacking spells out four near-identical blur windows](issues.md#blurbacking-spells-out-four-near-identical-blur-windows)
@@ -590,6 +590,9 @@ Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
 - [The onboarder's Integrations page is too long for one step](issues.md#the-onboarders-integrations-page-is-too-long-for-one-step)
 - [The Look page offers Hyprland's wallpapers under any compositor](issues.md#the-look-page-offers-hyprlands-wallpapers-under-any-compositor)
+
+Found while making caffeine survive reloads:
+- [DailySchedule's persisted state never survives a reload](issues.md#dailyschedules-persisted-state-never-survives-a-reload)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

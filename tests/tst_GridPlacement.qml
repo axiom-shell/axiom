@@ -535,11 +535,12 @@ TestCase {
     const zoom = 0.73;
     const layout = GridPlacement.trackSizes(bounds, 450, null, GridPlacement.gapOf(1));
     const drawn = GridPlacement.trackSizes(bounds, 450 * zoom, null, GridPlacement.gapOf(zoom));
-    fuzzyCompare(drawn.width, layout.width * zoom, 1e-6);
-    fuzzyCompare(drawn.height, layout.height * zoom, 1e-6);
+    // Within a pixel: both are rounded to whole px
+    fuzzyCompare(drawn.width, layout.width * zoom, 1);
+    fuzzyCompare(drawn.height, layout.height * zoom, 1);
     const a = GridPlacement.rectPx(place, layout);
     const b = GridPlacement.rectPx(place, drawn);
-    ["x", "y", "width", "height"].forEach(key => fuzzyCompare(b[key], a[key] * zoom, 1e-6, key));
+    ["x", "y", "width", "height"].forEach(key => fuzzyCompare(b[key], a[key] * zoom, 1, key));
   }
 
   function test_overlayLayout() {
@@ -569,10 +570,20 @@ TestCase {
 
   function test_screenLattice() {
     // card 425: unit (425 - 60) / 4 = 91.25, step 111.25
+    // 17 × 9 fit: each count rounded down to even, so the centre falls
+    // between units
     compare(GridPlacement.screenLattice(425, 1920, 1080, 20), {
-      "cols": 17,
-      "rows": 9
+      "cols": 16,
+      "rows": 8
     }, "1080p");
+    // At each screen's own card size (baseCard: 450 px at 1080p, 630 px
+    // at 1440p), where 16 × 9, 15 × 8 and 21 × 8 fit
+    [[1920, 1080, 16, 8], [2560, 1440, 14, 8], [3440, 1440, 20, 8]].forEach(([width, height, cols, rows]) => {
+      compare(GridPlacement.screenLattice(GridPlacement.baseCard(width, height), width, height, 20), {
+        "cols": cols,
+        "rows": rows
+      }, `${width} × ${height}`);
+    });
     compare(GridPlacement.screenLattice(425, 2560, 1080, 20).cols, 22, "21:9: more across, as many down");
     compare(GridPlacement.screenLattice(850, 1920, 1080, 20), {
       "cols": 8,
@@ -582,6 +593,11 @@ TestCase {
       "cols": 1,
       "rows": 1
     }, "never none");
+  }
+
+  function test_evenCount() {
+    compare([1, 2, 3, 9, 10].map(count => GridPlacement.evenCount(count, false)), [1, 2, 2, 8, 10], "down");
+    compare([1, 2, 3, 9, 10].map(count => GridPlacement.evenCount(count, true)), [1, 2, 4, 10, 10], "up");
   }
 
   function test_anchorPlaces() {
@@ -745,7 +761,7 @@ TestCase {
     ];
     // Card 425 at zoom 1: gap 20, unit 91.25, step 111.25
     const fits = GridPlacement.screenArrangement(places, from, 425, 2560, 1080, 20, false, 1);
-    compare([fits.cols, fits.rows, fits.unit, fits.gap, fits.zoom, fits.shrunk], [22, 9, 425, 20, 1, false]);
+    compare([fits.cols, fits.rows, fits.unit, fits.gap, fits.zoom, fits.shrunk], [22, 8, 425, 20, 1, false]);
     compare(fits.places[1].x, 17, "kept to the right edge");
     const zoomed = GridPlacement.screenArrangement(places, from, 425, 2560, 1080, 20, false, 1.2);
     compare([zoomed.gap, zoomed.zoom], [24, 1.2], "content and gaps drawn at its Module size");
@@ -763,7 +779,7 @@ TestCase {
       "cols": 32,
       "rows": 18
     }, 425, 2560, 1080, 20, true, 1);
-    compare([fine.cols, fine.rows, fine.unit, fine.zoom], [44, 18, GridPlacement.fineUnit(425, 20), 1]);
+    compare([fine.cols, fine.rows, fine.unit, fine.zoom], [44, 16, GridPlacement.fineUnit(425, 20), 1], "22 × 8 whole units");
     // Too big for the room even on its own grid: fitted into it
     const fitted = GridPlacement.screenArrangement([at(0, 0, 4, 4).place], {
       "cols": 16,
@@ -771,6 +787,29 @@ TestCase {
     }, 850, 800, 450, 20, false, 1);
     verify(fitted.shrunk && fitted.unit < 850);
     fuzzyCompare(fitted.gap / fitted.unit, 20 / 850, 1e-4, "its gaps shrink with its cards");
+    // Fitting no smaller grid at all: the grid it was placed on, each
+    // count made even upward so nothing moves off it
+    const kept = GridPlacement.screenArrangement([at(0, 0, 15, 9).place], {
+      "cols": 15,
+      "rows": 9
+    }, 425, 300, 200, 20, false, 1);
+    compare([kept.cols, kept.rows], [16, 10]);
+    compare(kept.places[0], at(0, 0, 15, 9).place, "nothing moves");
+    // On a double grid, even in whole units: 33 half units reach 17
+    // whole, so 18
+    const keptFine = GridPlacement.screenArrangement([at(0, 0, 33, 18).place], {
+      "cols": 33,
+      "rows": 18
+    }, 425, 300, 200, 20, true, 1);
+    compare([keptFine.cols, keptFine.rows], [36, 20]);
+  }
+
+  function test_samePlace() {
+    verify(GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 2, 3, 4).place), "equal fields, other objects");
+    verify(!GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 3, 3, 4).place));
+    verify(!GridPlacement.samePlace(at(1, 2, 3, 4).place, at(1, 2, 3, 5).place));
+    verify(GridPlacement.samePlace(null, null));
+    verify(!GridPlacement.samePlace(null, at(0, 0, 1, 1).place));
   }
 
   function test_fitScale() {
@@ -818,6 +857,47 @@ TestCase {
     menu.length = "edge";
     const whole = GridPlacement.menuOnScreen(menu, GridPlacement.menuPlacement(menu, GridPlacement.bounds(menu.layout.modules), 500, frame, 1920, 1080), 500);
     compare(r4(whole.modules[0].rect), [1660, 10, 240, 1060], "taking the whole edge: stretched along it");
+    // An integrated menu always takes its whole edge, its modules from its
+    // start: a lone module two units down still spans it
+    const integrated = {
+      "edge": "right",
+      "mode": "integrated",
+      "length": "content",
+      "offset": -1,
+      "layout": {
+        "modules": [at(0, 2, 2, 4)]
+      }
+    };
+    const strip = GridPlacement.menuPlacement(integrated, GridPlacement.bounds(integrated.layout.modules), 500, frame, 1920, 1080);
+    compare([strip.along, strip.cell], [10, null], "at its edge's start, off the lattice");
+    compare(GridPlacement.menuAlong(integrated, 1080, 500, 10, 10), 10);
+    compare(r4(GridPlacement.menuOnScreen(integrated, strip, 500).modules[0].rect), [1660, 10, 240, 1060], "stretched end to end");
+  }
+
+  function test_menuFillsEdge_and_modules() {
+    const menu = (mode, length, edge, modules) => ({
+          "mode": mode,
+          "length": length,
+          "edge": edge,
+          "layout": {
+            "modules": modules
+          }
+        });
+    compare(GridPlacement.menuFillsEdge(menu("floating", "content", "left", [])), false);
+    compare(GridPlacement.menuFillsEdge(menu("floating", "edge", "left", [])), true);
+    compare(GridPlacement.menuFillsEdge(menu("integrated", "content", "left", [])), true, "integrated: always");
+    compare(GridPlacement.menuKeepsLead(menu("floating", "edge", "left", [])), true, "a whole-edge floating menu keeps its lead");
+    compare(GridPlacement.menuKeepsLead(menu("integrated", "edge", "left", [])), false);
+    const offset = [at(1, 3, 2, 4), at(0, 7, 2, 2)];
+    const side = GridPlacement.menuModules(menu("integrated", "content", "left", offset));
+    compare(side.map(module => [module.place.x, module.place.y]), [[1, 0], [0, 4]], "moved up to start at the first, across untouched");
+    compare(offset[0].place.y, 3, "the config's own places untouched");
+    const top = GridPlacement.menuModules(menu("integrated", "content", "top", [at(2, 1, 4, 4)]));
+    compare([top[0].place.x, top[0].place.y], [0, 1], "a top menu: along is x");
+    const kept = menu("floating", "edge", "left", offset);
+    compare(GridPlacement.menuModules(kept), offset, "a kept lead: as placed");
+    compare(GridPlacement.menuModules(menu("floating", "content", "left", offset)), offset, "content length: as placed");
+    compare(GridPlacement.menuModules(menu("integrated", "content", "left", [])), [], "none");
   }
 
   function test_canvasExtent() {
@@ -999,6 +1079,39 @@ TestCase {
       "width": 500,
       "height": 760
     });
+  }
+
+  function test_rectPxWholePixels() {
+    // Fractional units (a stretched menu): every edge on a whole pixel, the
+    // right one where the next slot's left would be less the gap
+    const sizes = {
+      "unitW": 37.375,
+      "unitH": 41.6,
+      "gap": 10
+    };
+    const a = GridPlacement.rectPx({
+      "x": 1,
+      "y": 1,
+      "w": 2,
+      "h": 3
+    }, sizes);
+    [a.x, a.y, a.width, a.height].forEach(value => compare(value, Math.round(value)));
+    compare([a.x, a.y, a.width, a.height], [47, 52, 85, 144]);
+    const b = GridPlacement.rectPx({
+      "x": 3,
+      "y": 1,
+      "w": 1,
+      "h": 1
+    }, sizes);
+    compare(b.x, Math.round(3 * 47.375), "the next slot starts where the place does");
+    const grid = GridPlacement.trackSizes({
+      "cols": 3,
+      "rows": 4
+    }, 400, {
+      "width": 467.5,
+      "fit": true
+    });
+    compare(grid.width, Math.round(grid.width), "the grid's size is whole px");
   }
 
   function test_guideFrame() {

@@ -85,8 +85,8 @@ properties:
     default: content
     enum: [content, edge]
     x-enumLabels: {content: Fit its modules, edge: Whole edge}
-    description: Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge).
-    x-showIf: {mode: {not: submenu}}
+    description: Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge). An integrated menu always takes its whole edge.
+    x-showIf: {mode: floating}
   popoutAtWidget:
     x-group: Placement
     type: boolean

@@ -1,0 +1,12 @@
+label: Caffeine
+icon: coffee
+group: System
+keyboard: true
+defaultSize: [4, 5]
+settings:
+  presets:
+    type: array
+    items: {type: string}
+    title: Presets
+    default: ['30m', '1h', '4h']
+    description: 'Caffeine for a set time, comma-separated: 30m, 1h30m, 4h.'

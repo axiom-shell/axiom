@@ -585,15 +585,25 @@ QtObject {
 
   // How many units at card size `unit` (`gap` px between cards) fit
   // `width` × `height` px with `margin` px all round: a screen layout's
-  // grid on a screen, { cols, rows }, at least one each way
+  // grid on a screen, { cols, rows }, at least one each way. Each count
+  // is even (rounded down; a lone unit stays one), so the screen's centre
+  // falls between units and the editor's centre guides between cells
   function screenLattice(unit, width, height, margin, gap) {
     const spacing = gap ?? root.cardSpacing;
     const step = root.stepOf(unit, spacing);
-    const fit = room => Math.max(1, Math.floor((room - 2 * margin + spacing) / step));
+    const fit = room => root.evenCount(Math.max(1, Math.floor((room - 2 * margin + spacing) / step)), false);
     return {
       "cols": fit(width),
       "rows": fit(height)
     };
+  }
+
+  // `count` (at least 1) made even, so a grid's middle falls between
+  // units: rounded down, or up with `up`; 1 stays 1
+  function evenCount(count, up) {
+    if (count <= 1 || count % 2 === 0)
+      return count;
+    return up ? count + 1 : count - 1;
   }
 
   // The groups of `places` that touch or overlap (sharing some length of
@@ -706,7 +716,14 @@ QtObject {
         break;
       card *= 0.96;
     }
-    const reach = root.layoutReach(places, from);
+    // As far as they reach, each count made even in whole units as
+    // screenLattice's are (rounded up, so every module still fits)
+    const reached = root.layoutReach(places, from);
+    const even = count => root.evenCount(Math.ceil(count / scale), true) * scale;
+    const reach = {
+      "cols": even(reached.cols),
+      "rows": even(reached.rows)
+    };
     // A double grid's units are (card - gap) / 2: its gap per px of unit
     const ratio = fine ? 2 * per / (1 - per) : per;
     const fitted = Math.min(asked, root.latticeUnit(reach.cols, reach.rows, width, height, margin, ratio));
@@ -766,7 +783,9 @@ QtObject {
   // optional) is room to grow into: that axis's units share it evenly. A
   // grid never shrinks below its natural size, unless `fit`: then it takes
   // exactly the room, shrinking down to half a unit at the least. `gap`:
-  // the px between cards (cardSpacing unless given), kept in the result
+  // the px between cards (cardSpacing unless given), kept in the result.
+  // Units may be fractional; the grid's width and height are whole px, as
+  // rectPx's edges are, so it and its host's box sit on whole pixels
   function trackSizes(bounds, unit, stretch, gap) {
     const spacing = gap ?? root.cardSpacing;
     const size = root.unitOf(unit, spacing);
@@ -778,19 +797,26 @@ QtObject {
       "unitW": unitW,
       "unitH": unitH,
       "gap": spacing,
-      "width": bounds.cols > 0 ? bounds.cols * unitW + (bounds.cols - 1) * spacing : 0,
-      "height": bounds.rows > 0 ? bounds.rows * unitH + (bounds.rows - 1) * spacing : 0
+      "width": bounds.cols > 0 ? Math.round(bounds.cols * unitW + (bounds.cols - 1) * spacing) : 0,
+      "height": bounds.rows > 0 ? Math.round(bounds.rows * unitH + (bounds.rows - 1) * spacing) : 0
     };
   }
 
-  // A place's pixel rect for trackSizes' `sizes`
+  // A place's pixel rect for trackSizes' `sizes`, its edges on whole px
+  // (each rounded, so neighbours keep their gap): a slot clips its module,
+  // and a clip at a fractional edge shaves the pixel a module draws its
+  // stroke in there (a borderless Chat's composer)
   function rectPx(place, sizes) {
     const spacing = sizes.gap ?? root.cardSpacing;
+    const x = place.x * (sizes.unitW + spacing);
+    const y = place.y * (sizes.unitH + spacing);
+    const left = Math.round(x);
+    const top = Math.round(y);
     return {
-      "x": place.x * (sizes.unitW + spacing),
-      "y": place.y * (sizes.unitH + spacing),
-      "width": place.w * sizes.unitW + (place.w - 1) * spacing,
-      "height": place.h * sizes.unitH + (place.h - 1) * spacing
+      "x": left,
+      "y": top,
+      "width": Math.round(x + place.w * sizes.unitW + (place.w - 1) * spacing) - left,
+      "height": Math.round(y + place.h * sizes.unitH + (place.h - 1) * spacing) - top
     };
   }
 
@@ -831,11 +857,50 @@ QtObject {
     return menu.edge === "left" || menu.edge === "right" ? reach.rows : reach.cols;
   }
 
+  // Whether a menu takes its whole edge, stretched along it: one set to
+  // (`length` "edge"), and an integrated one always, as its strip spans
+  // the edge
+  function menuFillsEdge(menu) {
+    return menu.length === "edge" || menu.mode === "integrated";
+  }
+
+  // Whether a gap before a menu's modules along its edge is kept: a
+  // whole-edge floating menu's, laid out on purpose (the layouts editor
+  // holds it). An integrated menu's modules start at its edge's start
+  // (menuModules)
+  function menuKeepsLead(menu) {
+    return menu.length === "edge" && menu.mode !== "integrated";
+  }
+
+  // A menu's `modules` (its own by default) as it lays them out: one
+  // taking its whole edge without keeping a lead (menuKeepsLead) moved
+  // back along the edge to start at its first module, so an offset lone
+  // module still spans the edge; others as placed
+  function menuModules(menu, modules) {
+    const list = modules ?? menu.layout.modules ?? [];
+    if (!root.menuFillsEdge(menu) || root.menuKeepsLead(menu))
+      return list;
+    const key = menu.edge === "left" || menu.edge === "right" ? "y" : "x";
+    const starts = list.filter(module => module?.place).map(module => module.place[key]);
+    const lead = starts.length > 0 ? Math.min(...starts) : 0;
+    if (lead <= 0)
+      return list;
+    return list.map(module => {
+      if (!module?.place)
+        return module;
+      const place = Object.assign({}, module.place);
+      place[key] -= lead;
+      return Object.assign({}, module, {
+        "place": place
+      });
+    });
+  }
+
   // Where a menu's modules start along its edge, `edgeLength` px long: on
   // its lattice, `menu.offset` cells from centred (alongStart), or at
-  // `startPad` when it takes the whole edge (`menu.length` "edge")
+  // `startPad` when it takes the whole edge (menuFillsEdge)
   function menuAlong(menu, edgeLength, unit, startPad, endPad, gap) {
-    if (menu.length === "edge")
+    if (root.menuFillsEdge(menu))
       return startPad;
     return root.alongStart(root.latticeOf(menu, edgeLength, unit, startPad, endPad, gap), menu.offset, root.unitsAlong(menu));
   }
@@ -853,7 +918,7 @@ QtObject {
     const edgeLength = vertical ? screenHeight : screenWidth;
     const lattice = root.latticeOf(menu, edgeLength, unit, frame.startPad, frame.endPad, gap);
     const units = root.unitsAlong(menu, bounds);
-    const cell = menu.length === "edge" ? null : root.menuCell(lattice, menu.offset, units);
+    const cell = root.menuFillsEdge(menu) ? null : root.menuCell(lattice, menu.offset, units);
     return {
       "along": cell === null ? frame.startPad : lattice.origin + cell * lattice.step,
       "across": frame.across,
@@ -872,19 +937,20 @@ QtObject {
   // A menu as it sits on its screen (`place`, from menuPlacement), in
   // screen px: { rect (its box: the modules plus the frame's `after` all
   // round), modules: [{ type, rect }] } (rects { x, y, width, height }),
-  // fitted to its edge when it takes the whole edge (as EdgeMenuBody), `gap`
-  // px between its cards
+  // fitted to its edge when it takes the whole edge (as EdgeMenuBody:
+  // menuFillsEdge, menuModules), `gap` px between its cards
   function menuOnScreen(menu, place, unit, gap) {
     const vertical = menu.edge === "left" || menu.edge === "right";
     const room = place.edgeLength - place.frame.startPad - place.frame.endPad;
-    const stretch = menu.length !== "edge" ? null : vertical ? {
+    const modules = root.menuModules(menu);
+    const stretch = !root.menuFillsEdge(menu) ? null : vertical ? {
       "height": room,
       "fit": true
     } : {
       "width": room,
       "fit": true
     };
-    const sizes = root.trackSizes(root.bounds(menu.layout.modules), unit, stretch, gap);
+    const sizes = root.trackSizes(root.bounds(modules), unit, stretch, gap);
     const depth = vertical ? sizes.width : sizes.height;
     const acrossAt = menu.edge === "right" ? place.screenWidth - place.across - depth : menu.edge === "bottom" ? place.screenHeight - place.across - depth : place.across;
     const x = vertical ? acrossAt : place.along;
@@ -897,7 +963,7 @@ QtObject {
         "width": sizes.width + pad * 2,
         "height": sizes.height + pad * 2
       },
-      "modules": (menu.layout.modules ?? []).map(module => {
+      "modules": modules.map(module => {
         const r = root.rectPx(module.place, sizes);
         return {
           "type": module.type,
@@ -1004,6 +1070,14 @@ QtObject {
       "width": box.w * fit.step,
       "height": box.h * fit.step
     };
+  }
+
+  // Whether two places ({ x, y, w, h }, or null) are the same: a drag
+  // re-plans only when its snapped place changes
+  function samePlace(a, b) {
+    if (!a || !b)
+      return !a && !b;
+    return a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
   }
 
   // Where a w × h module dropped with the pointer at `x`, `y` (canvas px)

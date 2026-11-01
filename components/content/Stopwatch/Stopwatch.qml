@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.apps
+import qs.services.system
 import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
@@ -11,10 +12,12 @@ import qs.components.content.parts
 
 // The one-off timer and the stopwatch (StopwatchManager), one at a time
 // under a Timer / Stopwatch switch: the Stopwatch widget's popout, or an
-// overlay card. Timer: a CountdownTimer (type a duration or pick a
-// preset; then a ring, pause, +1 min and reset). Stopwatch: the
-// time in tenths, start-pause, lap and reset, and the laps. Compact, the
-// time of whichever is going.
+// overlay card. Timer: a CountdownTimer (type a duration or a time of
+// day, or pick a preset or a recent one; then a ring, pause, more time and
+// reset, centred in the card and beside each other in a wide, short one).
+// Stopwatch: DialControls with the time in tenths and the minute swept
+// round, reset, start-pause and lap, then the laps (copyable, the fastest
+// and slowest tinted). Compact, the time of whichever is going.
 // properties (card): { mode: "auto" | "timer" | "stopwatch" }
 Panel {
   id: root
@@ -56,8 +59,6 @@ Panel {
     label: !StopwatchManager.timerIdle ? (StopwatchManager.timer.label || I18n.tr("Timer")) : I18n.tr("Stopwatch")
   }
 
-  readonly property real dialSize: root.embedded ? Math.max(Appearance.fontSize * 4, Math.min(root.innerWidth, root.innerHeight - Appearance.fontSize * 8)) : Appearance.fontSize * 9
-
   SegmentRow {
     Layout.fillWidth: true
 
@@ -79,10 +80,11 @@ Panel {
     visible: root.timerMode
     timer: StopwatchManager.timer
     presets: StopwatchConfig.presets
+    recent: StopwatchManager.recent
     text: StopwatchManager.timerText
+    remaining: StopwatchManager.timerRemaining
     progress: StopwatchManager.timerProgress
     label: StopwatchManager.timer.label
-    dialSize: root.dialSize
     fill: root.embedded
     onStarted: text => StopwatchManager.startTimerText(text)
     onToggled: StopwatchManager.toggleTimer()
@@ -92,43 +94,54 @@ Panel {
 
   // -- Stopwatch --
 
-  StyledText {
+  DialControls {
     visible: !root.timerMode
-    Layout.alignment: Qt.AlignHCenter
+    Layout.fillWidth: true
+    Layout.fillHeight: root.embedded
+    // Filling: whatever is left (the laps get their share), never what
+    // the ring asks (it's sized from it)
+    Layout.preferredHeight: root.embedded ? 0 : -1
+    fill: root.embedded
+    // The current minute, swept round
+    progress: StopwatchManager.elapsed % 60000 / 60000
     text: StopwatchClock.format(StopwatchManager.elapsed, true, false)
-    textSize: Math.round(Appearance.fontSize * 2.4)
-    font.bold: true
-    font.features: {
-      "tnum": 1
-    }
-    textColor: StopwatchManager.stopwatchRunning ? Theme.foreground : Theme.foregroundAlt
+    label: StopwatchManager.stopwatchIdle ? "" : !StopwatchManager.stopwatchRunning ? I18n.tr("Paused") : StopwatchManager.laps.length > 0 ? I18n.tr("Lap {0}", StopwatchManager.laps.length + 1) : ""
+    running: StopwatchManager.stopwatchRunning
+    color: Theme.accentAlt
+    tick: 100
+    leftIcon: "restart_alt"
+    leftTip: I18n.tr("Reset")
+    leftEnabled: !StopwatchManager.stopwatchIdle
+    mainIcon: StopwatchManager.stopwatchRunning ? "pause" : "play_arrow"
+    mainTip: StopwatchManager.stopwatchRunning ? I18n.tr("Pause") : I18n.tr("Start")
+    rightIcon: "flag"
+    rightTip: I18n.tr("Lap")
+    rightEnabled: StopwatchManager.stopwatchRunning
+    rightKey: Qt.Key_L
+    onLeftClicked: StopwatchManager.resetStopwatch()
+    onMainClicked: StopwatchManager.toggleStopwatch()
+    onRightClicked: StopwatchManager.lap()
   }
 
+  // The laps: a heading with copy, then the latest first, the fastest and
+  // slowest tinted
   RowLayout {
-    visible: !root.timerMode
-    Layout.alignment: Qt.AlignHCenter
+    visible: !root.timerMode && StopwatchManager.laps.length > 0
+    Layout.fillWidth: true
     spacing: Widget.spacing
 
-    FlatIconButton {
-      size: Math.round(Appearance.fontSize * 2)
-      iconText: "restart_alt"
-      enabled: !StopwatchManager.stopwatchIdle
-      tooltipText: I18n.tr("Reset")
-      onClicked: StopwatchManager.resetStopwatch()
+    StyledText {
+      Layout.fillWidth: true
+      text: I18n.tr("Laps")
+      font.bold: true
+      textSize: Appearance.fontSizeBy(-1)
     }
     FlatIconButton {
-      size: Math.round(Appearance.fontSize * 2.6)
-      iconText: StopwatchManager.stopwatchRunning ? "pause" : "play_arrow"
-      iconColor: Theme.accentAlt
-      tooltipText: StopwatchManager.stopwatchRunning ? I18n.tr("Pause") : I18n.tr("Start")
-      onClicked: StopwatchManager.toggleStopwatch()
-    }
-    FlatIconButton {
-      size: Math.round(Appearance.fontSize * 2)
-      iconText: "flag"
-      enabled: StopwatchManager.stopwatchRunning
-      tooltipText: I18n.tr("Lap")
-      onClicked: StopwatchManager.lap()
+      size: Math.round(Appearance.fontSize * 1.6)
+      iconSize: Appearance.fontSizeBy(-1)
+      iconText: "content_copy"
+      tooltipText: I18n.tr("Copy laps")
+      onClicked: ClipboardManager.copyText(StopwatchClock.lapsText(StopwatchManager.laps, n => I18n.tr("Lap {0}", n)))
     }
   }
 
@@ -137,7 +150,8 @@ Panel {
     visible: !root.timerMode && StopwatchManager.laps.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
-    Layout.preferredHeight: root.embedded ? -1 : Math.min(laps.implicitHeight, Appearance.fontSize * 12)
+    Layout.preferredHeight: root.embedded ? 0 : Math.min(laps.implicitHeight, Appearance.fontSize * 12)
+    Layout.maximumHeight: laps.implicitHeight
     contentHeight: laps.implicitHeight
     boundsBehavior: Flickable.StopAtBounds
     clip: true
@@ -155,19 +169,23 @@ Panel {
           readonly property var lap: StopwatchManager.laps[index] ?? {
             "number": 0,
             "split": 0,
-            "total": 0
+            "total": 0,
+            "fastest": false,
+            "slowest": false
           }
+          readonly property color tint: lapRow.lap.fastest ? Theme.success : lapRow.lap.slowest ? Theme.error : Theme.foreground
           Layout.fillWidth: true
           spacing: Widget.spacing
 
           StyledText {
             Layout.fillWidth: true
             text: I18n.tr("Lap {0}", lapRow.lap.number)
-            textColor: Theme.foregroundAlt
+            textColor: lapRow.lap.fastest || lapRow.lap.slowest ? lapRow.tint : Theme.foregroundAlt
             textSize: Appearance.fontSizeBy(-1)
           }
           StyledText {
             text: StopwatchClock.format(lapRow.lap.split, true, false)
+            textColor: lapRow.tint
             textSize: Appearance.fontSizeBy(-1)
           }
           StyledText {
@@ -180,10 +198,5 @@ Panel {
         }
       }
     }
-  }
-
-  Item {
-    visible: root.embedded && !root.timerMode && StopwatchManager.laps.length === 0
-    Layout.fillHeight: true
   }
 }

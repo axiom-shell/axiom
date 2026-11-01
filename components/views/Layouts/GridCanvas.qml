@@ -669,16 +669,27 @@ Card {
             "w": 1,
             "h": 1
           })
+          // Carried (faded, its landing drawn over it): it jumps with the
+          // landing instead of gliding after it
+          readonly property bool carried: root.dragLayer.draggingKind === "module-move" && (root.dragLayer.dragging.index === tile.index || (root.dragLayer.dragging.group ?? []).includes(tile.index))
           x: tile.r.x
           y: tile.r.y
           width: tile.r.width
           height: tile.r.height
           label: "layouts canvas tile"
 
-          Glide on x {}
-          Glide on y {}
-          Glide on width {}
-          Glide on height {}
+          Glide on x {
+            enabled: !tile.carried
+          }
+          Glide on y {
+            enabled: !tile.carried
+          }
+          Glide on width {
+            enabled: !tile.carried
+          }
+          Glide on height {
+            enabled: !tile.carried
+          }
 
           sourceComponent: CanvasModule {
             dragLayer: root.dragLayer
