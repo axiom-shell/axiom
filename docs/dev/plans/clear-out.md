@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01 and bar-popouts-02 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02 and features-02 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -57,7 +57,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 9 | features-01 | deletion | Done: Dead and forwarding members across the feature systems | 14 | ~250 | none |  |
 | 10 | compositor-04 | blocker | Done: Sway's look lost after a reload | 1 | ~10 | compositor-02 |  |
 | 11 | bar-popouts-02 | blocker | Done: Outside clicks never close edge and floating popouts | 1 | ~4 | none |  |
-| 12 | features-02 | blocker | The 12-hour clock's hour, and the Accounts card's read-only and task-list facts | 2 | ~25 | features-01 |  |
+| 12 | features-02 | blocker | Done: The 12-hour clock's hour, and the Accounts card's read-only and task-list facts | 2 | ~25 | features-01 |  |
 | 13 | config-02 | major | The store's load and write safety | 3 | ~220 | config-01 | Q1 |
 | 14 | config-03 | major | The settings page's schema predicates, and takeover settings from the launcher | 4 | ~170 | none |  |
 | 15 | config-04 | major | Editor fields and draft comparisons | 3 | ~110 | none |  |
@@ -234,9 +234,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - After a sway reload, gapsOut and SwayFX's per-window blur and shadows stay off until the look changes
 - **bar-popouts-02** (1, done):
   - Edge and floating popouts never close when their focus grab clears
-- **features-02** (2): Blocker by the reviews' label; both are small display bugs.
+- **features-02** (2, done):
   - A 12-hour Clock shows the hour in 24-hour time
-  - [The Accounts card reads read-only and task-list facts from config entries that never hold them](../issues.md#the-accounts-card-reads-read-only-and-task-list-facts-from-config-entries-that-never-hold-them)
+  - The Accounts card reads read-only and task-list facts from config entries that never hold them
 
 **config**
 

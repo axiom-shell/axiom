@@ -522,7 +522,6 @@ Found by the audits:
 - [A todo.json deleted while unreadable blocks every save until restart](issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
 - [PomodoroDial redraws DialControls' ring and buttons](issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
 - [Focus and Pomodoro build the parts their properties turn off](issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)
-- [The Accounts card reads read-only and task-list facts from config entries that never hold them](issues.md#the-accounts-card-reads-read-only-and-task-list-facts-from-config-entries-that-never-hold-them)
 - [A Calendar card on the desktop or in an edge menu takes the page's request](issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
 - [A save conflict reloads nothing, so trying again conflicts again](issues.md#a-save-conflict-reloads-nothing-so-trying-again-conflicts-again)
 - [Moving a recurring event to another calendar drops its earlier occurrences and exceptions](issues.md#moving-a-recurring-event-to-another-calendar-drops-its-earlier-occurrences-and-exceptions)
