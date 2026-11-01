@@ -59,6 +59,36 @@ TestCase {
     compare(rows.map(r => r.kind + ":" + r.path.join(".")), ["field:S.a", "group:S.group", "field:S.group.b", "array:S.list", "field:S.tags"]);
   }
 
+  // A `$ref` property's fields are rows once the schema is resolved (the
+  // settings page's Changed from default and /config list Bars.style.*)
+  function test_rows_of_a_resolved_ref() {
+    const refSchema = {
+      "definitions": {
+        "Style": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "properties": {
+        "S": {
+          "type": "object",
+          "properties": {
+            "style": {
+              "$ref": "#/definitions/Style",
+              "title": "Style"
+            }
+          }
+        }
+      }
+    };
+    compare(SchemaLayout.rows(SchemaLayout.resolved(refSchema, refSchema), []).map(r => r.kind + ":" + r.path.join(".")), ["group:S", "group:S.style", "field:S.style.size"]);
+    verify(SchemaLayout.rows(SchemaLayout.resolved(schema, schema), []).some(r => r.path.join(".") === "Bars.style.fontSize"), "the real schema's bar style");
+  }
+
   function test_waitsForUser() {
     verify(SchemaLayout.waitsForUser({
       "type": "string",

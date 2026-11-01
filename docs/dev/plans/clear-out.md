@@ -247,7 +247,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **config-03** (4): The two takeover entries are one fix (decided 2026-10-31).
   - Takeover settings go live through the settings page's preview before Save
   - The launcher's /config can switch a takeover setting
-  - [Changed from default never lists the bar widget style](../issues.md#changed-from-default-never-lists-the-bar-widget-style)
+  - Changed from default never lists the bar widget style
   - [The condition grammar has no shared fixtures](../issues.md#the-condition-grammar-has-no-shared-fixtures)
 - **config-04** (3): Before compositor-16 and -17, which edit KeybindEditor's presets too.
   - [A number box keeps its typed text when the setting it edits switches under it](../issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)

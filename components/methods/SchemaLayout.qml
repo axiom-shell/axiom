@@ -115,8 +115,9 @@ QtObject {
 
   // `node` with every object `$ref` in its properties (Bars.style's
   // BarStyle) replaced by the definition, the keys beside the `$ref` over
-  // it, down through nested objects (not array items)
-  function _resolved(node, schema) {
+  // it, down through nested objects (not array items). `rows` doesn't
+  // resolve: give it a resolved schema (`resolved(schema, schema)`)
+  function resolved(node, schema) {
     if (!node?.properties)
       return node;
     const properties = {};
@@ -129,7 +130,7 @@ QtObject {
           delete prop.$ref;
         }
       }
-      properties[key] = root._resolved(prop, schema);
+      properties[key] = root.resolved(prop, schema);
     }
     return Object.assign({}, node, {
       "properties": properties
@@ -277,7 +278,7 @@ QtObject {
   // first. A card holding a field marked `x-wide` spans both columns
   // (`wide`).
   function groups(schema, sectionKey) {
-    const section = root._resolved(schema.properties[sectionKey], schema);
+    const section = root.resolved(schema.properties[sectionKey], schema);
     const sectionTitle = section.title ?? sectionKey;
     const handBuilt = section["x-card"] ?? {};
     const perField = handBuilt.perField === true;

@@ -64,7 +64,7 @@ QtObject {
   // Every default filled in, from the schema alone
   readonly property var defaults: SchemaValidation.applyDefaults({}, ConfigManager.configSchema)
   // The key paths the settings page has a row for (not `x-settings: false`)
-  readonly property var _settingsPaths: SchemaLayout.rows(ConfigManager.configSchema, []).filter(row => row.kind !== "group").reduce((set, row) => {
+  readonly property var _settingsPaths: SchemaLayout.rows(SchemaLayout.resolved(ConfigManager.configSchema, ConfigManager.configSchema), []).filter(row => row.kind !== "group").reduce((set, row) => {
     set[row.path.join(".")] = true;
     return set;
   }, {})
@@ -408,7 +408,7 @@ QtObject {
     const schema = ConfigManager.configSchema;
     if (!schema?.properties)
       return [];
-    return SchemaLayout.rows(schema, []).filter(row => row.kind === "field" && SchemaLayout.compositorAllows(schema, row.path, root.showIfValue)).map(row => ({
+    return SchemaLayout.rows(SchemaLayout.resolved(schema, schema), []).filter(row => row.kind === "field" && SchemaLayout.compositorAllows(schema, row.path, root.showIfValue)).map(row => ({
           path: row.path,
           key: row.path.join("."),
           schema: row.schema,

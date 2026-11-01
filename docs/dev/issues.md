@@ -1366,12 +1366,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the config system
 
-### Changed from default never lists the bar widget style
-- **Where:** `services/ui/SettingsManager.qml:67` (`_settingsPaths`), `services/ui/SettingsManager.qml:74` (`nonDefaultPaths`), `components/methods/SchemaLayout.qml:30` (`rows`)
-- **What:** `_settingsPaths` is built from `SchemaLayout.rows(ConfigManager.configSchema, [])`, which walks only `prop.type === "object" && prop.properties` and doesn't resolve `$ref`, while the page builds its cards through `SchemaLayout.groups`, which does. In the built schema `Bars.style` is still `{"$ref": "#/definitions/BarStyle"}`, so `rows` gives one field row `Bars.style` and none of the leaf paths `_diff` produces (`Bars.style.fontSize`, …); `nonDefaultPaths` filters all of them out. Scenario: change Bars › Widget style › Font size, click Changed from default: it isn't listed, and with nothing else changed the page says every setting is at its default, against settings-page.md › Sidebar and jumping. The launcher's `/config` (`settingPaths`) misses them the same way. Fix: walk the resolved section (expose `SchemaLayout._resolved` and call `rows` on its result), and add a `tst_SchemaLayout` row for a `$ref` property.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
-
 ### A failed update check shows as up to date
 - **Where:** `services/system/UpdatesManager.qml:104` (`repoPackages`), `components/content/Updates/Updates.qml:171`, `backend/internal/updates/updates.go:41` (`State`)
 - **What:** Go ends every check in a state, a failed one with its `error` and the last packages (`st.Repo, st.Error = last.Repo, err.Error()`), but the shell's listener reads only `state.repo` and `state.aur`, so nothing in the UI can tell a failed check from an empty one. Scenario: log in before the Wi-Fi connects (or with the pacman db locked): the first `checkupdates` fails, `last.Repo` is still empty, and the Updates card says "System is up to date" (and the widget shows 0, or hides with `hideWhenEmpty`) until the next check, 30 minutes later by default. Fix: keep `state.error` in a new `error` property of UpdatesManager; the card shows it in place of "System is up to date" and the widget's tooltip names it.
