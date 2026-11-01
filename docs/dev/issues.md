@@ -1787,18 +1787,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the config system
 
-### Store.Reschema repeats reload's load-and-apply
-- **Where:** `backend/internal/store/store.go:728` (`Reschema`), `backend/internal/store/store.go:526` (`reload`)
-- **What:** After swapping the pipeline, `Reschema` reads the file and runs a second copy of `reload`'s tail: `load`, `Blocked`/`Issues` on problems, else `holdTakeovers`, clearing `fileTakeovers`, `keepTakeovers`, `Revision++` and a `FromFile` event. It already sets `s.written = nil`, which is what makes `reload` read the file again. Simpler: swap the pipeline, takeovers and `written` under the locks, unlock, then call `s.reload()`. A missing file then marks `Missing` instead of returning silently, a broken one logs as a reload does, and an unchanged config doesn't bump the revision, which no caller needs (`dev.go` pushes `schema.changed` itself). No store test calls `Reschema`. Fix: delete lines 737–760 (24 lines), add an unlock and a `s.reload()` call (+2): 22 lines.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
-
-### OpenAdopting repeats Open's setup
-- **Where:** `backend/internal/store/store.go:767` (`OpenAdopting`), `backend/internal/store/store.go:115` (`Open`)
-- **What:** `OpenAdopting` copies `Open`'s option defaults (6 lines) and its construction and initial load (6 lines); only how the lock is got differs (`fsx.TryLock` against `fsx.Adopt`). Fix: a `newStore(opts, path, lock)` holding the defaults, the struct and `loadInitial` with its `lock.Release()`, called by both: 12 lines go, 3 come back, 9 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the config system
-
 ### The launcher's /config can switch a takeover setting
 - **Where:** `services/ui/SettingsManager.qml:409` (`settingPaths`), `services/ui/LauncherConfigBrowser.qml:193`
 - **What:** `settingPaths` leaves out `x-applyOnSave` settings but offers the other `x-takeover` ones (`Polkit.enabled`, `Idle.enabled`, `Lockscreen.mode`, `Greeter.enabled`), and `/config Polkit.enabled true` reaches `SettingsManager.commitValue`, which saves with `takeover` true (`_takesOver`). schema-annotations.md says such a setting changes only through its own card, while config-manager.md lets `commitValue(s)` pass true for one.

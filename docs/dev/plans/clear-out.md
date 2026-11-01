@@ -134,8 +134,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Format-1 secrets plumbing nothing fills or reads
   - The validator and the schema check carry patternProperties nothing uses
   - The config Pipeline interface has one implementation
-  - [Store.Reschema repeats reload's load-and-apply](../issues.md#storereschema-repeats-reloads-load-and-apply)
-  - [OpenAdopting repeats Open's setup](../issues.md#openadopting-repeats-opens-setup)
+  - Store.Reschema repeats reload's load-and-apply
+  - OpenAdopting repeats Open's setup
   - [Every step test copies the same case runner](../issues.md#every-step-test-copies-the-same-case-runner)
   - The unused reader member check counts a member named after its key as used
   - Six more reader members nothing reads

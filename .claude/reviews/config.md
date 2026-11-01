@@ -10,8 +10,8 @@ The store, drafts and previews keep their contract on the paths taken daily: tak
 - Major: [A number box keeps its typed text when the setting it edits switches under it](../../docs/dev/issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
 - Major: [Escape in a settings-page number box leaves the half-typed value in the draft](../../docs/dev/issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)
 - Major: [Changed from default never lists the bar widget style](../../docs/dev/issues.md#changed-from-default-never-lists-the-bar-widget-style)
-- Cleanup: [Store.Reschema repeats reload's load-and-apply](../../docs/dev/issues.md#storereschema-repeats-reloads-load-and-apply)
-- Cleanup: [OpenAdopting repeats Open's setup](../../docs/dev/issues.md#openadopting-repeats-opens-setup)
+- Cleanup: "Store.Reschema repeats reload's load-and-apply" (fixed, row 20 config-01)
+- Cleanup: "OpenAdopting repeats Open's setup" (fixed, row 20 config-01)
 - Cleanup: "Six more reader members nothing reads" (fixed, row 20 config-01)
 - Outside: [The launcher's /config can switch a takeover setting](../../docs/dev/issues.md#the-launchers-config-can-switch-a-takeover-setting)
 - Minor: config.json deleted and put back unchanged stays "missing": `backend/internal/store/store.go:526` (`reload`) returns at `bytes.Equal(data, s.written)` before clearing `Missing`, so `axiom config status` says missing until the next save. Fix: clear `Missing` (and queue a state event) in that early return.

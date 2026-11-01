@@ -520,8 +520,6 @@ Found by the audits:
 - [A number box keeps its typed text when the setting it edits switches under it](issues.md#a-number-box-keeps-its-typed-text-when-the-setting-it-edits-switches-under-it)
 - [Escape in a settings-page number box leaves the half-typed value in the draft](issues.md#escape-in-a-settings-page-number-box-leaves-the-half-typed-value-in-the-draft)
 - [Changed from default never lists the bar widget style](issues.md#changed-from-default-never-lists-the-bar-widget-style)
-- [Store.Reschema repeats reload's load-and-apply](issues.md#storereschema-repeats-reloads-load-and-apply)
-- [OpenAdopting repeats Open's setup](issues.md#openadopting-repeats-opens-setup)
 - [The launcher's /config can switch a takeover setting](issues.md#the-launchers-config-can-switch-a-takeover-setting)
 - [A failed update check shows as up to date](issues.md#a-failed-update-check-shows-as-up-to-date)
 - [A weather fetch that fails shows Loading forever](issues.md#a-weather-fetch-that-fails-shows-loading-forever)

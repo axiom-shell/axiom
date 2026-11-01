@@ -112,12 +112,6 @@ type Store struct {
 // Open takes the writer lock and loads the config (writing the defaults
 // when there is no file yet: a first run).
 func Open(opts Options) (*Store, error) {
-	if opts.Log == nil {
-		opts.Log = slog.New(slog.DiscardHandler)
-	}
-	if opts.Debounce == 0 {
-		opts.Debounce = 150 * time.Millisecond
-	}
 	if err := os.MkdirAll(opts.Dir, 0o700); err != nil {
 		return nil, axerr.Wrap(axerr.Unavailable, err, "making %s", opts.Dir)
 	}
@@ -127,6 +121,17 @@ func Open(opts Options) (*Store, error) {
 			return nil, &axerr.Error{Kind: axerr.Running, Message: "another axiom is writing " + filepath.Join(opts.Dir, FileName), Err: err}
 		}
 		return nil, err
+	}
+	return newStore(opts, lock)
+}
+
+// newStore is a store holding lock, with the config loaded.
+func newStore(opts Options, lock *fsx.Lock) (*Store, error) {
+	if opts.Log == nil {
+		opts.Log = slog.New(slog.DiscardHandler)
+	}
+	if opts.Debounce == 0 {
+		opts.Debounce = 150 * time.Millisecond
 	}
 	s := &Store{
 		opts:      opts,
@@ -724,39 +729,16 @@ func (s *Store) Pipeline() config.Pipeline {
 }
 
 // Reschema switches to another pipeline (the schema changed: `axiom run
-// --dev` rebuilt it) and loads the file again through it.
+// --dev` rebuilt it) and loads the file again through it, as a reload.
 func (s *Store) Reschema(p config.Pipeline) {
-	defer s.publish()
 	s.changeMu.Lock()
-	defer s.changeMu.Unlock()
 	s.mu.Lock()
 	s.opts.Pipeline = p
 	s.takeovers = share.TakeoverPaths(p.Schema())
-	s.written = nil
+	s.written = nil // so the reload reads the file again
 	s.mu.Unlock()
-	data, err := os.ReadFile(s.path)
-	if err != nil {
-		return
-	}
-	loaded, problems := s.load(data)
-	s.mu.Lock()
-	var ev Event
-	if problems != nil {
-		s.state.Blocked, s.state.Issues = true, problems
-		ev = Event{State: s.state}
-	} else {
-		s.state.Blocked, s.state.Issues = false, nil
-		loaded = s.holdTakeovers(loaded)
-		changes := config.Diff(s.config, loaded)
-		s.config = loaded
-		s.fileTakeovers, s.takeoversUnknown = nil, false
-		s.keepTakeovers(loaded)
-		s.state.Revision++
-		ev = Event{State: s.state, Config: loaded, Changes: changes}
-	}
-	ev.FromFile = true
-	s.queue(ev)
-	s.mu.Unlock()
+	s.changeMu.Unlock()
+	s.reload()
 }
 
 // LockFile is the writer lock's descriptor, for a re-exec to keep it.
@@ -765,23 +747,11 @@ func (s *Store) LockFile() *os.File { return s.lock.File() }
 // OpenAdopting is Open with the writer lock inherited from the image
 // before a re-exec.
 func OpenAdopting(opts Options, lockFile *os.File) (*Store, error) {
-	if opts.Log == nil {
-		opts.Log = slog.New(slog.DiscardHandler)
-	}
-	if opts.Debounce == 0 {
-		opts.Debounce = 150 * time.Millisecond
-	}
-	path := filepath.Join(opts.Dir, FileName)
-	lock, err := fsx.Adopt(lockFile, path+".lock")
+	lock, err := fsx.Adopt(lockFile, filepath.Join(opts.Dir, FileName+".lock"))
 	if err != nil {
 		return nil, err
 	}
-	s := &Store{opts: opts, path: path, lock: lock, subs: map[int]func(Event){}, takeovers: share.TakeoverPaths(opts.Pipeline.Schema())}
-	if err := s.loadInitial(); err != nil {
-		lock.Release()
-		return nil, err
-	}
-	return s, nil
+	return newStore(opts, lock)
 }
 
 // Freeze holds the store so nothing more is written (a re-exec follows).
