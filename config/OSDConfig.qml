@@ -38,35 +38,15 @@ QtObject {
     return pick ? pick.id : "";
   }
 
-  // A bar's or status type's name, translated
+  // A bar's or status type's name, translated: its label in the schema
+  // (x-enumLabels of a bar's type and of the statuses)
+  readonly property var _typeLabels: {
+    const entry = ConfigManager.configSchema?.definitions?.OSDEntry?.properties;
+    return Object.assign({}, entry?.bars?.properties?.items?.items?.properties?.type?.["x-enumLabels"], entry?.statuses?.properties?.items?.["x-enumLabels"]);
+  }
   function nameOf(type) {
-    // I18n.tr("System volume") I18n.tr("Other apps") I18n.tr("Microphone") I18n.tr("Brightness")
-    // I18n.tr("Caps Lock") I18n.tr("Num Lock") I18n.tr("Scroll Lock") I18n.tr("Keyboard layout")
-    // I18n.tr("Microphone muted") I18n.tr("Output device") I18n.tr("Power profile") I18n.tr("Caffeine")
-    // I18n.tr("Do not disturb") I18n.tr("Night light") I18n.tr("Wi-Fi") I18n.tr("Bluetooth")
-    // I18n.tr("Airplane mode") I18n.tr("Charger") I18n.tr("Messages")
-    const names = {
-      "master": "System volume",
-      "other": "Other apps",
-      "microphone": "Microphone",
-      "brightness": "Brightness",
-      "capsLock": "Caps Lock",
-      "numLock": "Num Lock",
-      "scrollLock": "Scroll Lock",
-      "keyboardLayout": "Keyboard layout",
-      "micMute": "Microphone muted",
-      "outputDevice": "Output device",
-      "powerProfile": "Power profile",
-      "caffeine": "Caffeine",
-      "dnd": "Do not disturb",
-      "nightLight": "Night light",
-      "wifi": "Wi-Fi",
-      "bluetooth": "Bluetooth",
-      "airplane": "Airplane mode",
-      "charger": "Charger",
-      "message": "Messages"
-    };
-    return names[type] ? I18n.tr(names[type]) : "";
+    const english = root._typeLabels[type];
+    return english ? I18n.tr(english) : "";
   }
 
   // The name on its tab: its own, else its bars', else its status icons'
