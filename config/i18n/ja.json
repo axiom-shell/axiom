@@ -3613,7 +3613,6 @@
     "While a window is fullscreen": "",
     "Wipe": "",
     "Collection": "",
-    "While locked or idle": "",
     "Workspace parallax": "",
     "Stretch": "",
     "Also list the images in the folders inside it, at any depth.": "",
@@ -3626,6 +3625,7 @@
     "Blinds": "",
     "Zoom": "",
     "Fill the screen": "",
-    "Random shuffles the folder, showing every wallpaper once before any comes back.": ""
+    "Random shuffles the folder, showing every wallpaper once before any comes back.": "",
+    "While the screen is locked": ""
   }
 }

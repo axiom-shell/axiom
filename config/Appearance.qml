@@ -30,6 +30,11 @@ QtObject {
   // "random" | "sequential"
   readonly property string rotationOrder: _c.wallpaper.rotation.order
   readonly property bool rotationSameOnAll: _c.wallpaper.rotation.sameOnAll
+  // Hold the rotation while a window is fullscreen, the screen is locked,
+  // or on battery (WallpaperManager.rotationHeld)
+  readonly property bool rotationPauseFullscreen: _c.wallpaper.rotation.pause.fullscreen
+  readonly property bool rotationPauseLocked: _c.wallpaper.rotation.pause.locked
+  readonly property bool rotationPauseBattery: _c.wallpaper.rotation.pause.battery
   // "random" | "none" | a WallpaperTransitions name; the ones random picks
   // from; how long one takes (ms)
   readonly property string wallpaperTransition: _c.wallpaper.transition.type

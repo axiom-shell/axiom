@@ -129,7 +129,7 @@ properties:
                 default: true
               locked:
                 type: boolean
-                title: While locked or idle
+                title: While the screen is locked
                 default: true
               battery:
                 type: boolean

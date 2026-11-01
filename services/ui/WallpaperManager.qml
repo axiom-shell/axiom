@@ -5,6 +5,9 @@ import Quickshell
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.compositor
+import qs.services.session
+import qs.services.system
 
 /*
  * What changes the look on its own. ThemeManager shows it (activeTheme,
@@ -191,14 +194,22 @@ Singleton {
   onModeChanged: if (root.mode === "rotate")
     ThemeManager.setLastRotated(Date.now())
 
+  // Whether the rotation waits (Appearance.wallpaper.rotation.pause): a
+  // fullscreen window on any screen, the screen locked, on battery. Once
+  // nothing holds it and its time has passed, it moves on at once.
+  readonly property bool rotationHeld: (Appearance.rotationPauseFullscreen && General.outputs.some(screen => CompositorManager.hasFullscreen(screen.name))) || (Appearance.rotationPauseLocked && LockManager.builtinLocked) || (Appearance.rotationPauseBattery && BatteryManager.onBattery)
+  onRotationHeldChanged: root._rotateIfDue()
+
+  function _rotateIfDue() {
+    if (root.mode === "rotate" && !root.rotationHeld && Date.now() - ThemeManager.lastRotated >= Appearance.rotationInterval)
+      root.next();
+  }
+
   property Timer _rotation: Timer {
     interval: 30000
     repeat: true
-    running: root.mode === "rotate"
-    onTriggered: {
-      if (Date.now() - ThemeManager.lastRotated >= Appearance.rotationInterval)
-        root.next();
-    }
+    running: root.mode === "rotate" && !root.rotationHeld
+    onTriggered: root._rotateIfDue()
   }
 
   // --- Light and dark by time ---
