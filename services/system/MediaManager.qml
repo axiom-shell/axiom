@@ -35,6 +35,9 @@ QtObject {
   property bool artDownloaded: false
   // Bumped when new art lands, so images reload the same path
   property int artVersion: 0
+  // The cover as an image source once downloaded, else ""; follows
+  // artVersion, so a new cover at the same path reloads
+  readonly property string artSource: artDownloaded && artVersion >= 0 ? "file://" + artFilePath : ""
   readonly property bool canTogglePlaying: activePlayer ? activePlayer.canTogglePlaying : false
   readonly property bool canGoNext: activePlayer ? activePlayer.canGoNext : false
   readonly property bool canGoPrevious: activePlayer ? activePlayer.canGoPrevious : false

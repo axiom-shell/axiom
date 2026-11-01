@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while listing the actions a keybind can't run yet
 
+### The OSD's microphone bar misses the first change after a switch to a device at the same level
+- **Where:** `components/surfaces/osd/OSDBar.qml` (`micBar`'s `_levelChanged`)
+- **What:** `_levelChanged` pokes only when `AudioManager.defaultSource` is still the `_source` it last saw, and `_source` moves only on a level or mute change. Switching the input to a device at the same volume and mute changes neither, so `_source` keeps the old device and the user's next microphone change (a key, the mixer) is taken for the switch and doesn't open the OSD. The system volume bar (`PipewireVolumeBar`, `_sink`) and the OSD's Microphone muted status (`OSDStatusSource`) take the new device in on `onDefaultSourceChanged` through `Qt.callLater`. Fix: the same `Connections` on `AudioManager.defaultSource` in `micBar`, or one shared "the device switched" helper for the three.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the OSD overhaul
+
 ### Toggles are switched in several places, and most have no IPC
 - **Where:** `components/content/QuickActions/QuickActions.qml`, `components/surfaces/osd/OSDStatusSource.qml` (toggle), `services/ui/LauncherCommands.qml`
 - **What:** Wi-Fi, Bluetooth, caffeine, do not disturb, night light, power saver and dark mode are each flipped by their own switch in QuickActions, the OSD's status icons and the launcher commands, all calling the same service functions. Wi-Fi, Bluetooth, airplane mode, dark mode, the power profile and the keyboard layout have no `IpcTarget`, so no keybind or hot corner can reach them (the bindable actions cover about 32 of some 140 IPC functions). One catalogue of actions (id, label, icon, run, state) could serve all of them and the keybinds; the maintainer plans it as its own change.

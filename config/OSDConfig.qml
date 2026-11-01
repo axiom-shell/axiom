@@ -74,7 +74,7 @@ QtObject {
   function labelOf(osd) {
     if (osd.name)
       return osd.name;
-    const bars = osd.bars.items.filter(item => root.nameOf(item.type) !== "" || item.type === "app").map(item => item.type === "app" ? (item.apps.join(" / ") || I18n.tr("An app")) : root.nameOf(item.type));
+    const bars = osd.bars.items.map(item => item.type === "app" ? (item.apps.join(" / ") || I18n.tr("An app")) : root.nameOf(item.type));
     const parts = bars.length > 0 ? bars : osd.statuses.items.map(type => root.nameOf(type)).filter(name => name !== "");
     if (parts.length > 0)
       return parts.join(", ");

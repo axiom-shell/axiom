@@ -126,6 +126,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - (Rule: AGENTS.md › Config, "Animation".)
 
 ### Small helpers
+- **Cover art** (`reusable/CoverArt`): a track's cover (`source`, `MediaManager.artSource`), rounded, a new one fading in over the old (`CrossFade`), a note while there's none. The Now Playing module's and the OSD's now playing card's.
 - **Last found** (`reusable/LastFound`): the last non-null `source`, for an entry looked up by id whose delegates must never be handed null as it's removed (`shell/Dock`, `shell/OSD`).
 - **Frame nudge** (`reusable/FrameNudge`): `burst()` makes its window draw and commit a few more frames. For where Hyprland keeps showing a layer's frame from before a change (a bar's stretches, the blur window's shapes).
 - **Backdrop** (`reusable/BackdropRequest`): a full-screen surface's dim background (overlay, overview, launcher, power menu, onboarding), under the bars and the border. It's drawn by the screen's one backdrop window (`surfaces/backdrop/ScreenBackdrop`, built by `shell/Backdrops`), which shows the request that showed last there (`BackdropManager`).

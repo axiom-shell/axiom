@@ -93,7 +93,7 @@ Loader {
       };
     case "outputDevice":
       return {
-        "name": AudioManager.description || AudioManager.name,
+        "name": AudioManager.defaultSink?.description || AudioManager.defaultSink?.name || "",
         "icon": AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), false, 1)
       };
     case "powerProfile":
@@ -260,8 +260,11 @@ Loader {
             root._report();
           mic._source = AudioManager.defaultSource;
         }
+        // A device switching to one with the same mute changes nothing:
+        // take it in once the switch's own changes are through (as the
+        // system volume bar does), whichever handler runs first
         function onDefaultSourceChanged() {
-          mic._source = AudioManager.defaultSource;
+          Qt.callLater(() => mic._source = AudioManager.defaultSource);
         }
       }
     }

@@ -56,7 +56,6 @@ Item {
     isMuted: root.isMuted
     enabled: root.nodeFound || root.useSystemVolume
     iconClickable: true
-    // I18n.tr("Mute") I18n.tr("Unmute")
     iconTip: root.isMuted ? I18n.tr("Unmute") : I18n.tr("Mute")
     onVolumeChanged: newVolume => root.setVolume(newVolume)
     onIconClicked: root.toggleMute()
