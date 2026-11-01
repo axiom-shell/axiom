@@ -9,7 +9,7 @@ A small, sound system; its real gaps are the known Overlay-layer covering and th
 - Known: [A shared file older than v71 resets niri's hot corner](../../docs/dev/issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
 
 ## Contract
-Every line of docs/dev/features/hot-corners.md holds (see findings.md › Contract); tst_BindActions pins the action enum and argument x-showIf; v82 go test passes.
+Every line of docs/dev/features/hot-corners.md holds; tst_BindActions pins the action enum and argument x-showIf; v82 go test passes.
 
 ## Coverage
 Deep: shell/HotCorners.qml, config/HotCornersConfig.qml, HotCorners.yaml, v82.go, ShellManager.runAction, BindActions.ipcCall. Outlined: niri.go managedText, LayerStack hot-corner entry.

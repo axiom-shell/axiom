@@ -2477,7 +2477,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the desktop system
 
 ### ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room
-- **Where:** `services/ui/ScreenLayoutEditor.qml:92` (`savedLayout`), `components/views/Layouts/DesktopTarget.qml:14` (`roomWidth`, `roomHeight`)
+- **Where:** `services/ui/ScreenLayoutEditor.qml:92` (`savedLayout`), `components/views/Layouts/DesktopTarget.qml:15` (`roomWidth`, `roomHeight`)
 - **What:** `savedLayout` has no reader (`grep -rnw savedLayout` finds only its definition). `DesktopTarget.roomWidth`/`roomHeight` (and their comment) only forward `DesktopManager.editor.room` to the one `fitText` line in the same file. Fix: delete `savedLayout` (1 line) and lines 14-16 of DesktopTarget (3 lines), reading `Math.round(root.screenEditor.room.width)` / `.height` in `fitText` (the `int` properties rounded); 4 lines.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the desktop system
@@ -2507,7 +2507,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:osd system
 
 ### Hot corners' action list is a hand-kept copy of the keybind one
-- **Where:** `config/schema/sections/HotCorners.yaml:33` (`action`), `config/schema/sections/HotCorners.yaml:109` (`argument`), `config/schema/definitions/common/Keybind.yaml`, `tests/tst_BindActions.qml:83` (`test_hotCornerActionsAreTheAxiomActions`)
+- **Where:** `config/schema/sections/HotCorners.yaml:30` (`action`), `config/schema/sections/HotCorners.yaml:104` (`argument`), `config/schema/definitions/common/Keybind.yaml`, `tests/tst_BindActions.qml:83` (`test_hotCornerActionsAreTheAxiomActions`)
 - **What:** The hot corner's `action` enum (35 lines) is the actions table's `ipcActions` keys plus `exec`, its `x-enumLabels` (35 lines) are word for word the Keybind definition's labels for those actions (a script comparing the built schema found no difference), and the argument's `x-showIf` list (15 lines) is the actions whose template has `{0}`, plus `exec`. All three are kept by hand and only a test (7 lines) catches drift, so every new axiom action is added in three more places. AGENTS.md: "Prefer a new schema annotation to a hand-kept list". Fix: let the schema assembler (`backend/internal/schema/yamlsrc`) fill an `action` marked e.g. `x-axiomActions: true` from `table.json` (`ipcActions` + `exec`, labels from the Keybind definition's `x-enumLabels`) and its argument's `x-showIf` from the templates; this removes the 85 schema lines and the test, for an assembler rule and its Go test.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the hot-corners system
