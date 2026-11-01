@@ -37,15 +37,11 @@ Panel {
   fullMinWidth: Appearance.fontSize * 12
   fullMinHeight: Appearance.fontSize * 3.5
 
-  function icon(level) {
-    return level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high";
-  }
-
   // Values changed outside axiom
   Component.onCompleted: root.targets.forEach(name => BrightnessManager.refresh(name))
 
   compactContent: CompactFigure {
-    icon: root.icon(root.level)
+    icon: BrightnessManager.icon(root.level)
     value: root.targets.length > 0 ? String(Math.round(root.level * 100)) : ""
     unit: root.targets.length > 0 ? "%" : ""
     label: root.targets.length > 0 ? I18n.tr("Brightness") : I18n.tr("No control")
@@ -53,7 +49,7 @@ Panel {
 
   ModuleHeader {
     visible: root.showHeader && root.targets.length > 0
-    icon: root.icon(root.level)
+    icon: BrightnessManager.icon(root.level)
     title: I18n.tr("Brightness")
     ExpandButton {
       module: root
@@ -100,7 +96,7 @@ Panel {
         // Every target at once (the one monitor, or all)
         AudioRow {
           id: allRow
-          icon: root.icon(root.level)
+          icon: BrightnessManager.icon(root.level)
           title: root.all ? I18n.tr("All monitors") : root.monitorName
           subtitle: root.desynced ? I18n.tr("Out of sync: click to sync") : ""
           volume: root.level
@@ -130,7 +126,7 @@ Panel {
             required property int index
             readonly property string name: root.targets[index] ?? ""
             readonly property real value: BrightnessManager.valueFor(name)
-            icon: root.icon(value)
+            icon: BrightnessManager.icon(value)
             title: name
             volume: value
             showMute: false

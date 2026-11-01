@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.services.system
 import qs.components.reusable
-import Quickshell.Services.Pipewire
 
 // A StyledVolumeBar bound to a Pipewire stream (by app name) or the system
 // volume: shows and sets its level and mute; the OSD's audio bars.
@@ -35,36 +34,19 @@ Item {
   implicitWidth: bar.implicitWidth
   implicitHeight: bar.implicitHeight
 
-  // Every stream being controlled; _targetNode (the first) is the one shown
-  property var _targetNodes: []
+  // Every stream being controlled; _targetNode (the first) is the one
+  // shown. A binding: matchStreams reads every stream's ready, audio and
+  // properties, so it follows streams coming, going and binding
+  readonly property var _targetNodes: useSystemVolume ? [] : AudioManager.matchStreams(targetApps, otherApps, excludedApps)
   readonly property var _targetNode: _targetNodes.length > 0 ? _targetNodes[0] : null
-  // The controlled streams' levels, so a change on any of them shows the
-  // bar; _nodeKey tells a level change from the set of streams changing
-  readonly property string _levels: _targetNodes.map(n => n.audio ? `${n.audio.volume}:${n.audio.muted}` : "").join(",")
+  // The controlled streams and their levels, so a change on any of them
+  // shows the bar; _nodeKey tells a level change from the set of streams
+  // changing
+  readonly property string _levels: _keyOf(_targetNodes) + "|" + _targetNodes.map(n => n.audio ? `${n.audio.volume}:${n.audio.muted}` : "").join(",")
   property string _nodeKey: ""
-
-  // Every playback stream (not recording ones: an app's mic capture shares
-  // its name). AudioManager tracks them all (which binds them, so their
-  // .properties are there to search), but binding is async
-  readonly property var _audioStreams: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioOutStream)
-
-  // Re-run the search whenever a candidate finishes binding (node.ready
-  // flips true): tracking only *requests* a bind
-  Instantiator {
-    model: root._audioStreams
-    delegate: Item {
-      id: streamWatcher
-      required property var modelData
-      Connections {
-        target: streamWatcher.modelData
-        function onReadyChanged() {
-          if (streamWatcher.modelData.ready) {
-            root._updateTargetNode();
-          }
-        }
-      }
-    }
-  }
+  // The output device the system volume last read: a change as it
+  // switches (or binds) is the device's, not the user's
+  property var _sink: null
 
   StyledVolumeBar {
     id: bar
@@ -75,13 +57,24 @@ Item {
     onVolumeChanged: newVolume => root.setVolume(newVolume)
   }
 
-  onVolumeChanged: {
-    if (root.useSystemVolume)
+  function _systemChanged() {
+    if (!root.useSystemVolume)
+      return;
+    if (AudioManager.defaultSink === root._sink)
       root.poked();
+    root._sink = AudioManager.defaultSink;
   }
-  onIsMutedChanged: {
-    if (root.useSystemVolume)
-      root.poked();
+
+  onVolumeChanged: root._systemChanged()
+  onIsMutedChanged: root._systemChanged()
+
+  // A device switching to one at the same level and mute changes neither:
+  // take it in once the switch's own changes are through
+  Connections {
+    target: AudioManager
+    function onDefaultSinkChanged() {
+      Qt.callLater(() => root._sink = AudioManager.defaultSink);
+    }
   }
 
   on_LevelsChanged: {
@@ -91,6 +84,11 @@ Item {
     root._nodeKey = key;
   }
 
+  Component.onCompleted: {
+    root._sink = AudioManager.defaultSink;
+    root._nodeKey = root._keyOf(root._targetNodes);
+  }
+
   function setVolume(newVolume) {
     if (useSystemVolume)
       AudioManager.setVolume(newVolume);
@@ -98,72 +96,7 @@ Item {
       AudioManager.setNodesVolume(_targetNodes, newVolume);
   }
 
-  function toggleMute() {
-    if (useSystemVolume)
-      AudioManager.toggleMute();
-    else if (nodeFound)
-      AudioManager.setNodesMuted(_targetNodes, !_targetNode.audio.muted);
-  }
-
-  // Config changes (a reload, another saved config) pick the stream again
-  onTargetAppsChanged: _updateTargetNode()
-  onOtherAppsChanged: {
-    if (Pipewire.ready)
-      _updateTargetNode();
-  }
-  onExcludedAppsChanged: {
-    if (Pipewire.ready)
-      _updateTargetNode();
-  }
-  onUseSystemVolumeChanged: {
-    if (Pipewire.ready)
-      _updateTargetNode();
-  }
-
-  Component.onCompleted: {
-    if (Pipewire.ready) {
-      _updateTargetNode();
-    }
-  }
-
-  Connections {
-    target: Pipewire.nodes
-    function onObjectInsertedPost(object, index) {
-      if (Pipewire.ready) {
-        root._updateTargetNode();
-      }
-    }
-    function onObjectRemovedPost(object, index) {
-      if (Pipewire.ready) {
-        root._updateTargetNode();
-      }
-    }
-  }
-
-  Connections {
-    target: Pipewire
-    function onReadyChanged() {
-      if (Pipewire.ready) {
-        root._updateTargetNode();
-      }
-    }
-  }
-
   function _keyOf(nodes) {
     return nodes.map(n => n.id).join(",");
-  }
-
-  function _setTargetNodes(nodes) {
-    const key = _keyOf(nodes);
-    if (key === _keyOf(_targetNodes))
-      return;
-    // on_LevelsChanged sees the new key and doesn't count this as a change;
-    // set it again in case the levels read the same
-    _targetNodes = nodes;
-    _nodeKey = key;
-  }
-
-  function _updateTargetNode() {
-    _setTargetNodes(useSystemVolume ? [] : AudioManager.matchStreams(targetApps, otherApps, excludedApps));
   }
 }

@@ -5,7 +5,7 @@ import qs.config
 import qs.services.system
 import qs.components.reusable
 
-// One OSD bar, by its entry's type (see OSD.bars in the schema):
+// One OSD level bar, by its item's type (see OSD.items in the schema):
 //   master:     the default output's volume
 //   other:      the first playing stream no App bar matches
 //   app:        the streams its apps match by name
@@ -15,7 +15,7 @@ import qs.components.reusable
 Loader {
   id: root
 
-  // Its entry in the OSD's bars, or OSDContent.noBar for none
+  // Its item in the OSD's items, or OSDContent.noBar for none
   required property var entry
   required property string screenName
   // The OSD's own settings: bars run vertically, levels shown as numbers
@@ -50,13 +50,7 @@ Loader {
       otherApps: root.type === "other"
       excludedApps: root.type === "other" ? OSDConfig.excludedApps : []
       useSystemVolume: isMaster
-      iconSource: {
-        if (!isMaster || root.entry.icon)
-          return root.entry.icon;
-        if (AudioManager.muted || AudioManager.volume === 0)
-          return "volume_mute";
-        return AudioManager.volume > 0.4 ? "volume_up" : "volume_down";
-      }
+      iconSource: root.entry.icon || (isMaster ? AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), AudioManager.muted, AudioManager.volume) : "")
 
       onPoked: root.poked()
     }
@@ -111,7 +105,7 @@ Loader {
       showPercent: root.showPercent
       scrollStep: OSDConfig.scrollStep
       volumeLevel: level
-      iconSource: root.entry.icon || (level < 0.34 ? "brightness_low" : (level < 0.67 ? "brightness_medium" : "brightness_high"))
+      iconSource: root.entry.icon || BrightnessManager.icon(level)
       onVolumeChanged: newVolume => BrightnessManager.setMany(root.brightnessTargets, newVolume)
 
       Connections {
