@@ -574,6 +574,11 @@ Found by the audits:
 - [Uninstall keeps a stale greetd backup when greetd points elsewhere](issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
 - [The greeter reads its keyboard layouts before the bundle's are applied](issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
 - [GreetdManager.available is never read](issues.md#greetdmanageravailable-is-never-read)
+- [The launcher's /generate reads a monitor setting that doesn't exist](issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
+- [EmojiManager's groups() is never called](issues.md#emojimanagers-groups-is-never-called)
+- [LauncherManager keeps a dead clear() and a cliphist test](issues.md#launchermanager-keeps-a-dead-clear-and-a-cliphist-test)
+- [A clip's label and detail are written in both the launcher and the clipboard module](issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
+- [App scoring is written twice and the use bonus three times](issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
