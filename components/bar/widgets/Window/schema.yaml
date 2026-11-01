@@ -11,6 +11,7 @@ colors: standard
 settings:
   icon:
     type: string
+    x-control: icon
     title: Icon
     default: ''
     description: 'Icon shown before the title: a Material Symbols name (fonts.google.com/icons), or text. Empty shows none.'

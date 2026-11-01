@@ -41,14 +41,13 @@ PACKAGED_DIR=/usr/share/axiom
 
 # What installs each key (Packages.packages' keys, checked against it by
 # scripts/check_packages.py): key|Arch|Fedora, each a package name,
-# "owner/project:name" (from that COPR), "download" (the icon font, into
-# your home), "-" (nothing needed there) or "n/a" (not packaged there)
+# "owner/project:name" (from that COPR), "-" (nothing needed there) or
+# "n/a" (not packaged there)
 PACKAGES=(
   "git|git|git"
   "go|go|golang"
   "quickshell|quickshell|errornointernet/quickshell:quickshell"
   "curl|curl|curl"
-  "iconFont|ttf-material-symbols-variable|download"
   "hyprland|hyprland|nett00n/hyprland:hyprland"
   "sway|sway|sway"
   "niri|niri|niri"
@@ -69,11 +68,9 @@ PACKAGES=(
   "greetd|greetd|greetd"
   "agreety|greetd-agreety|greetd"
 )
-ICON_FONT_URL="https://github.com/google/material-design-icons/raw/master/variablefont/MaterialSymbolsRounded%5BFILL,GRAD,opsz,wght%5D.ttf"
-ICON_FONT_FILE=$HOME/.local/share/fonts/MaterialSymbolsRounded.ttf
 # go isn't here: the axiom binary is downloaded (a package brings its own),
 # and go is installed only to build it when there's no official build
-REQUIRED=(git quickshell curl iconFont)
+REQUIRED=(git quickshell curl)
 # "feature|keys|compositors" (none listed: any), offered one at a time;
 # the AUR package's optdepends say the same
 FEATURES=(
@@ -284,7 +281,6 @@ package_copr() { [[ "$1" == */*:* ]] && echo "${1%%:*}" || true; }
 installed() {
   case "$1" in
   - | n/a) return 0 ;;
-  download) [[ -f "$ICON_FONT_FILE" ]] || fc-list 2>/dev/null | grep -q 'Material Symbols Rounded' ;;
   *)
     if [[ "$distro" == arch ]]; then
       [[ -z "$(pacman -T "$1" 2>/dev/null)" ]]
@@ -657,12 +653,11 @@ fi
 
 # Every key to install (a key can be wanted twice), as packages
 mapfile -t to_install < <(missing "${need_required[@]}" "${wanted[@]}" | sort -u)
-packages=() coprs=() download=0
+packages=() coprs=()
 for key in "${to_install[@]}"; do
   cell=$(package_of "$key")
   case "$cell" in
   - | n/a) ;;
-  download) download=1 ;;
   *)
     packages+=("$(package_name "$cell")")
     copr=$(package_copr "$cell")
@@ -790,15 +785,6 @@ if ((${#packages[@]})) && ! install_packages "${packages[@]}"; then
     skipped+=("${entry%%|*}")
   done
   to_install=()
-fi
-
-# The icon font, where it isn't packaged: a download into your home, as you
-if ((download)) && [[ " ${to_install[*]} " == *" iconFont "* ]]; then
-  echo
-  info "The icon font (Material Symbols Rounded) isn't packaged for $distro_name: downloading it from Google's repository into $ICON_FONT_FILE."
-  run mkdir -p "$(dirname "$ICON_FONT_FILE")"
-  run curl -fL --progress-bar -o "$ICON_FONT_FILE" "$ICON_FONT_URL" || die "Downloading the icon font failed."
-  run fc-cache -f >/dev/null
 fi
 
 if [[ " ${to_install[*]} " == *" nmcli "* ]] && ((!dry_run)) && ! systemctl is-active --quiet NetworkManager; then

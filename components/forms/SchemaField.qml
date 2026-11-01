@@ -240,6 +240,8 @@ Loader {
       // A long list (`x-control: "search"`) is typed into to filter it
       if (root.options && fieldSchema["x-control"] === "search")
         return searchField;
+      if (fieldSchema["x-control"] === "icon")
+        return iconField;
       return root.options ? comboField : textField;
     }
   }
@@ -387,6 +389,46 @@ Loader {
           if (root.options.includes(value))
             root.commit(value);
         }
+      }
+    }
+  }
+
+  // An icon (`x-control: "icon"`): a Material Symbols name picked from
+  // the bundled font's (IconManager), searched by name and tag, or any
+  // text typed or pasted (a Nerd Font glyph), which StyledIcon draws in the
+  // text font. The field leads with the icon itself
+  Component {
+    id: iconField
+    ColumnLayout {
+      id: iconColumn
+      spacing: Widget.spacing
+      readonly property string value: root.current ?? ""
+      FieldHeader {
+        label: root.label
+        description: root.description
+        trailing: root.headerExtra
+      }
+      StyledComboEntry {
+        Layout.fillWidth: true
+        editable: true
+        icon: iconColumn.value
+        placeholderText: I18n.tr("Search icons, or paste a glyph")
+        search: query => IconManager.search(query, 60).map(name => ({
+                "value": name,
+                "label": name,
+                "icon": name
+              }))
+        value: iconColumn.value
+        onPicked: value => root.commit(value)
+      }
+      StyledText {
+        // Reads as a name, but the font has none by it: drawn as text
+        visible: /^[a-z][a-z0-9_]*$/.test(iconColumn.value) && !IconManager.isKnown(iconColumn.value)
+        text: I18n.tr("No icon is named \"{0}\": it shows as text", iconColumn.value)
+        color: Theme.warning
+        textSize: Appearance.fontSizeBy(-2)
+        wrapMode: Text.WordWrap
+        Layout.fillWidth: true
       }
     }
   }

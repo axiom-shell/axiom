@@ -7,7 +7,7 @@ additionalProperties: false
 properties:
   id: {$ref: '#/definitions/ItemId'}
   name: {type: string, title: Name, default: Custom widget, description: Its name in the widget and module libraries.}
-  icon: {type: string, title: Icon, default: widgets, description: 'A Material Symbols name, for the libraries and when the script gives none.'}
+  icon: {type: string, x-control: icon, title: Icon, default: widgets, description: 'A Material Symbols name, for the libraries and when the script gives none.'}
   command:
     x-scope: commands
     type: string

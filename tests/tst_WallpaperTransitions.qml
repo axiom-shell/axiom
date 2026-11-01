@@ -25,7 +25,7 @@ TestCase {
   }
 
   function test_unknownType() {
-    compare(WallpaperTransitions.pick("awww", [], 1, "").name, "fade");
+    compare(WallpaperTransitions.pick("sparkle", [], 1, "").name, "fade");
   }
 
   function test_randomIsDeterministic() {

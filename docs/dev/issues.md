@@ -24,13 +24,13 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
 - **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.
 - **Size:** small
-- **Found:** 2026-11-01, while removing awww and adding wallpaper transitions
+- **Found:** 2026-11-01, while adding wallpaper transitions
 
 ### Video wallpapers
 - **Where:** `components/surfaces/wallpaper/WallpaperView.qml`, `services/core/ThemeManager.qml` (generateThemesFromWallpaper)
 - **What:** An idea from the wallpaper transitions branch, not a bug: mp4/webm wallpapers through QtMultimedia. It adds a dependency and a steady GPU and battery cost, the transitions would need a video's frame as a texture, and generating a theme needs a still frame grabbed from it. Kept out of the branch (maintainer, 2026-11-01: not picked among the wallpaper improvements).
 - **Size:** needs a plan
-- **Found:** 2026-11-01, while removing awww and adding wallpaper transitions
+- **Found:** 2026-11-01, while adding wallpaper transitions
 
 ### A workspace overview bind set to open calls a missing function
 - **Where:** `backend/internal/compositor/actions/table.json`, `shell/WorkspaceOverlay.qml`, `tests/tst_BindActions.qml`
@@ -412,12 +412,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A shell reload during a trial monitor Apply loses the way back
 - **Where:** `services/compositor/MonitorManager.qml` (`pending`, `_revertRules`, `_revertDetails`, the `monitors` IPC `revert`)
 - **What:** The trial state is plain properties (MonitorManager.qml:303-308), no `PersistentProperties`. A QML reload or a crash `axiom run` restarts within the 15 s leaves `pending` false and the snapshot gone: the countdown never reverts, and `axiom ipc monitors revert` (documented as the recovery from a layout that can't be seen) is a no-op. The unsaved trial layout stays until the next hotplug or config reload. PLAUSIBLE as a scenario (needs a reload or crash in the window; a monitor change is a common crash trigger). Fix: keep `pending`, `secondsLeft` and the two snapshots in `PersistentProperties`; for a crash, the daemon could own the trial (`outputs.apply` with a trial flag it reverts itself unless `outputs.keep` arrives).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Restoring a saved keybind preset marks every bind new, and Revert deletes it
-- **Where:** `services/compositor/KeybindEditor.qml` (`_completeBind`, `restorePreset`, `_matchOrigins`, `changedBinds`, `revertBind`), `services/core/ConfigDraft.qml` (`changed`)
-- **What:** `_completeBind` (KeybindEditor.qml:101-114) builds a template and `Object.assign`s the bind onto it, so keys the template lacks (`id`, `compositor`) move to the end. Origins, the unsaved dots and the draft's dirty check all compare `JSON.stringify` text, which depends on key order. Save a preset, then Restore it unchanged: no bind matches its saved twin, every row gets an unsaved dot and origin -1, Save lights up with nothing changed, and Revert on any row calls `removeBind` ("origin < 0 → new"), deleting a bind the user never touched. Fix: keep the bind's own key order in `_completeBind` (`Object.assign({}, bind, <missing fields only>)`), or compare order-insensitively (`Utils.deepEqual`, or a key-sorted stringify) in `_matchOrigins` and `changedBinds`.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -1351,18 +1345,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** MenuSubmenu copies EdgeMenuBody's parts one for one: the `_modulesKey` re-parse ("as EdgeMenuBody", lines 24–27), the `host` map (29–34, adding `submenu`), the `OverlayGrid` at `cardUnitOf`/`gapOf` (36–40, on the parent's screen) and the clipped Flickable around a `ModuleGrid` at the menu's `zoomOf` (54–71): 33 lines that must change together (a fix to how a menu's modules are keyed, zoomed or hosted lands twice). Fix: EdgeMenuBody takes a `screen` (for `cardUnitOf`) and `submenu` (no pin, no Escape, no stretch, `host.submenu`), and MenuSubmenu becomes an `EdgeMenuBody` (`vertical: true`, `maxLength` from `root.wrapper?.maxContentHeight`) plus its empty text: 33 lines out, about 12 in.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### A number box keeps its typed text when the setting it edits switches under it
-- **Where:** `components/forms/SchemaNumberField.qml:98` (`onShownConfigValueChanged`), `components/forms/SchemaNumberField.qml:287` (`onValueChanged`), `components/views/Settings/EntryListCard.qml:182`, `components/forms/SchemaObjectArray.qml:57`, `components/views/Settings/SettingsField.qml:112`
-- **What:** When the value pushed into a number box changes while it has focus and holds typed text, the box updates `root.value` but keeps the text and `typed` (line 288 follows the value only when `!input.typed`). The next Enter, focus loss or Save commits the typed number onto whatever the box edits by then. `SchemaTextField._show` handles exactly this for text and drops the typing; the number box doesn't. The clicks that switch the target don't take focus, so the box keeps it. Scenarios: (1) the OSD or Dock card: type 5 in OSD 1's "Hide after", click OSD 2's tab, click elsewhere: 5 is written into OSD 2. (2) An array-of-objects list (`SchemaObjectArray`, delegates keyed by count): type in item 2's number, then move item 2 or remove item 1: the number lands on another item. (3) Type 20, click the row's "Reset to default": the default goes in, then focus loss commits 20 over it (the unsaved dot calls `EditsManager.discardTypingIn` first; the reset button doesn't). Fix: in `onShownConfigValueChanged`, when the box is typed and the new value isn't the echo of its own text (`root.clamp(parseInt(input.text, 10)) !== root.shownConfigValue`), drop the typing, as `SchemaTextField._show` does.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
-
-### Escape in a settings-page number box leaves the half-typed value in the draft
-- **Where:** `components/forms/SchemaNumberField.qml:323` (`Keys.onEscapePressed`), `components/forms/SchemaNumberField.qml:293` (`apply`), `components/views/Settings/SettingsContent.qml:61` (`onTyped`)
-- **What:** On the settings page every parseable keystroke goes into the draft (`valueTyped` → `SettingsManager.setDraftValue`, no preview), and comes back as `shownConfigValue`, which `onShownConfigValueChanged` copies into `root.value`. Escape only sets `typed = false` and `text = String(root.value)`, which is already the typed value, so it reverts nothing, although the component says "Escape reverts". Emptying the box and leaving it does the same: `apply()` skips the NaN text and shows the last parseable keystroke's clamped value. Scenario: font size 14, type 9, press Escape: the box shows 9, the row's unsaved dot is on, the shell still uses 14, and Save writes 9. Fix: keep the value the box had when it took focus; on Escape, and in `apply()` when typed text doesn't parse, emit `valueTyped(before * root.unitScale)` so the draft gets back what it held.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config system
 
 ### A failed update check shows as up to date
 - **Where:** `services/system/UpdatesManager.qml:104` (`repoPackages`), `components/content/Updates/Updates.qml:171`, `backend/internal/updates/updates.go:41` (`State`)

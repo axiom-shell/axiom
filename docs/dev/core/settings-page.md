@@ -15,6 +15,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - Text and number boxes (`forms/SchemaTextField`, `SchemaNumberField`'s value box) show their edit as unsaved on the first keystroke and apply it only on Enter (Ctrl+Enter when multiline), focus loss, teardown or Save; a suggestion click or a folder picked with Browse (`x-control: "folder"`, [File picker](file-picker.md)) commits at once. Each live apply re-evaluates the readers (~35 ms of JS before layout), and half-typed values had side effects: a font re-shaped every text, a notes folder ran `find` on `/`, a widget's label command ran per keystroke.
   - Every page: the box holding typed text registers with `EditsManager.holdTyping`, which shows Save and Discard in its window (`SaveResetActions`); Save commits it first (`EditsManager.commitTyping`), Discard drops it.
   - This page also puts each keystroke in its draft (`valueTyped` → the form's `typed` → `SettingsManager.setDraftValue`), so the card's unsaved dot shows too; `_merged` diffs afresh, since Save's commit lands in place.
+  - A value pushed into a box with typed text (what it edits switched under it, a reset) drops the typing, unless it's the echo of that typing (`SchemaTextField._show`, the number box's `onShownConfigValueChanged`). Escape in a number box, or text there that doesn't parse, puts back the value it had when it took focus, into the draft too.
 
 ### Cards
 - Generated cards are `settings/SettingsGroupCard`.

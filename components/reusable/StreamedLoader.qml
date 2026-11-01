@@ -24,6 +24,12 @@ Loader {
   // Off: not built (or unbuilt) even once its turn has come, as `active`
   property bool wanted: true
 
+  // Streamed with `always` and still filling in (until the queue drains):
+  // the loaders inside it stream too, so a settings card switched to fills
+  // in field by field, its lists' rows included, instead of building them
+  // all in the frame the card arrives
+  property bool streamsInside: false
+
   property bool _granted: false
   property bool _streamed: false
   active: root._granted && root.wanted
@@ -38,9 +44,12 @@ Loader {
     return host.buildStreaming === true;
   }
 
-  // Whether the page it's on is still being built (no such page: yes)
+  // Whether the page it's on is still being built (no such page: yes), or
+  // a loader around it streaming with `always` is
   function _pageStreaming() {
     for (let item = root.parent; item; item = item.parent) {
+      if ((item as StreamedLoader)?.streamsInside)
+        return true;
       if ("buildStreaming" in item)
         return root._flagOf(item);
     }
@@ -50,10 +59,20 @@ Loader {
   Component.onCompleted: {
     if (root.stream && (root.always || root._pageStreaming())) {
       root._streamed = true;
+      root.streamsInside = root.always;
       BuildQueueManager.request(root, () => root._granted = true, root.label);
     } else {
       root._granted = true;
     }
   }
   Component.onDestruction: BuildQueueManager.cancel(root)
+
+  Connections {
+    target: BuildQueueManager
+    enabled: root.streamsInside
+    function onPendingChanged() {
+      if (BuildQueueManager.pending === 0)
+        root.streamsInside = false;
+    }
+  }
 }

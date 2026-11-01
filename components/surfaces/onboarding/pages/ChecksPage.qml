@@ -22,17 +22,11 @@ OnboardingPage {
   readonly property bool checked: DependencyManager.tools.every(tool => DependencyManager.toolFound(tool) !== undefined)
   // Every command to look up, alternatives too
   readonly property var commands: [].concat(...DependencyManager.tools.map(tool => DependencyManager.commandsOf(tool)))
-  // What to install: commands, and "iconFont" for the icon font
-  readonly property var wanted: (DependencyManager.iconFontInstalled ? [] : ["iconFont"]).concat(root.missing.map(tool => tool.command))
+  // The commands to install
+  readonly property var wanted: root.missing.map(tool => tool.command)
   readonly property var installLines: DependencyManager.installLines(root.wanted)
 
   Component.onCompleted: DependencyManager.check(root.commands)
-
-  Notice {
-    visible: !DependencyManager.iconFontInstalled
-    tone: "error"
-    text: I18n.tr("The icon font ({0}) isn't installed, so icons show as words. Install it with the command below, then restart the shell.", Appearance.iconFamily)
-  }
 
   Notice {
     visible: root.checked && root.wanted.length === 0
@@ -56,7 +50,7 @@ OnboardingPage {
       }
 
       StyledText {
-        text: DependencyManager.label(DependencyManager.toolCommand(tool.modelData))
+        text: DependencyManager.toolCommand(tool.modelData)
         textFamily: "monospace"
       }
 
@@ -78,7 +72,7 @@ OnboardingPage {
     StyledText {
       Layout.topMargin: Widget.spacing
       Layout.fillWidth: true
-      text: root.installLines.length > 0 ? I18n.tr("To install what's missing:") : I18n.tr("Install these with your package manager: {0}", root.wanted.map(key => DependencyManager.label(key)).join(", "))
+      text: root.installLines.length > 0 ? I18n.tr("To install what's missing:") : I18n.tr("Install these with your package manager: {0}", root.wanted.join(", "))
       wrapMode: Text.WordWrap
     }
 
