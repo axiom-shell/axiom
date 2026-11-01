@@ -172,6 +172,18 @@ TestCase {
       "x": 0,
       "y": 1
     }, "past the last step: at the end");
+    // A grid layout left in the config doesn't lay out a dynamic list:
+    // the fourth row is three steps down, not the grid's second row
+    compare(WallpaperFill.parallax(4, Object.assign({}, five, {
+      "grid": true,
+      "columns": 3,
+      "rows": 3,
+      "base": 1,
+      "ids": [1, 2, 3, 4, 5]
+    })), {
+      "x": 0,
+      "y": 0.5
+    }, "dynamic over a grid");
     compare(WallpaperFill.parallax(-1, null), {
       "x": 0,
       "y": 0

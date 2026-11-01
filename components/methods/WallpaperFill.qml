@@ -105,7 +105,7 @@ QtObject {
     const along = root.stripShift(spec.windows ?? [], vertical, vertical ? spec.height : spec.width);
     // The workspaces' axis, when it's a single one: by the layout, not the
     // value (a grid's middle row or column shifts 0)
-    const theirs = spec.grid ? "" : spec.vertical ? "vertical" : "horizontal";
+    const theirs = spec.grid && !spec.dynamic ? "" : spec.vertical ? "vertical" : "horizontal";
     if (vertical)
       return {
         "x": theirs === "vertical" ? shift.y : shift.x,
@@ -152,7 +152,8 @@ QtObject {
     };
     if (!Number.isFinite(activeId) || activeId === 0)
       return none;
-    if (spec.grid) {
+    // A dynamic list is the compositor's own, never the config's grid
+    if (spec.grid && !spec.dynamic) {
       const index = activeId - spec.base;
       if (index < 0 || index >= spec.columns * spec.rows)
         return none;
