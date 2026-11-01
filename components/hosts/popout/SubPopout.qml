@@ -447,6 +447,8 @@ Item {
     }
   }
 
+  // Its window, which its parent's focus grab lets input through to
+  readonly property var popupWindow: submenuPopup
   // The overlay's focus grab lets input through to the submenu (see
   // SurfaceManager.grabPartners)
   Component.onCompleted: SurfaceManager.registerGrabPartner(submenuPopup, outer.screen?.name)

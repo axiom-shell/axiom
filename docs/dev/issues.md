@@ -128,7 +128,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Close on outside click differs on Hyprland since the overlay ignores its grab ending
 - **Where:** `components/hosts/overlay/OverlayPanel.qml` (`grab`, `onClickedOutside`), `services/compositor/FocusGrab.qml` (`clickedOutside`)
-- **What:** With `Overlay.closeOnOutsideClick` on, the overlay now closes on its empty background (`backgroundClicks`) everywhere, and, without a native grab (sway, niri), on a press on any screen's backdrop: another monitor, the screen border (its mask is empty), a floating bar's gap. On Hyprland those clicks only end its native grab, which it no longer closes on (that also fires when a popout's or the dock menu's own grab starts over it, one native grab at a time), so they leave it open, where before this change they closed it on every compositor. The maintainer decided on #211 "only where the blur backing would be": whether those places count (another monitor has no backing; the border covers it; a bar's gap shows it) decides the fix: none on sway and niri dropping `clickedOutside`, or on Hyprland a backdrop that takes the click.
+- **What:** With `Overlay.closeOnOutsideClick` on, the overlay now closes on its empty background (`backgroundClicks`) everywhere, and, without a native grab (sway, niri), on a press on any screen's backdrop: another monitor, the screen border (its mask is empty), a floating bar's gap. On Hyprland those clicks only end its native grab, which it no longer closes on (that also fires when a popout's or the dock menu's own grab starts over it, one native grab at a time), so they leave it open, where before this change they closed it on every compositor. The maintainer decided on #211 "only where the blur backing would be": whether those places count (another monitor has no backing; the border covers it; a bar's gap shows it) decides the fix: none on sway and niri dropping `clickedOutside`, or on Hyprland closing on `FocusGrab.dismissed` (a native grab cleared with no newer grab started, as edge and floating popouts do since bar-popouts-02) or a backdrop that takes the click.
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the overlay and popouts plan's build (row 16)
 
@@ -952,22 +952,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the blur system
 
-### Edge and floating popouts never close when their focus grab clears
-- **Where:** `components/hosts/popout/EdgePopout.qml:460` (`focusGrab`), `components/hosts/popout/FloatingPopout.qml:162` (`focusGrab`), `services/compositor/FocusGrab.qml:57` (`_outside`)
-- **What:** Both hosts handle the grab ending with `onCleared: { if (!active) root.hide(); }`. Inside `FocusGrab { … }`, `active` is the wrapper's own property, bound to `surfaceWindow.visible && root.grabEnabled && (…)` (EdgePopout.qml:452) or `root.isOpen && …` (FloatingPopout.qml:154), and the wrapper emits `cleared` only while that property is true:
-  - **No native grab (sway, niri):** the backdrop `Connections` is `enabled: root._catching`, which is `!_native && active`. The `_lost` timer checks `root.active && …` (FocusGrab.qml:135).
-  - **Hyprland:** the inner `HyprlandGrab` clears. Its own `active` goes false, but the wrapper's binding doesn't.
-
-  So `!active` is always false when `cleared` arrives, and `hide()` never runs. The guard dates from when the handler sat on Quickshell's `HyprlandFocusGrab` directly, whose `active` does drop. The wrapper's other users close unconditionally (`PowerMenuWindow.qml:133` `onCleared: root.shown = false`, `DockMenu.qml:64` `onCleared: root.close()`).
-
-  What users see:
-  - A floating edge menu with `close.onOutsideClick` stays open on a click outside (FloatingEdgeMenu.qml:111 sets `closeOnClickOutside`).
-  - The attached launcher (EdgePopout, `closeOnClickOutside: true`, Launcher.qml:191, commented "until Esc, a pick or a click elsewhere") stays open.
-  - The detached launcher closes only on a click in its own window's free area (FloatingPopout.qml:169's MouseArea), not on a bar, the border or another monitor.
-
-  Fix: `onCleared: root.hide()` in both hosts (`hide()` already checks `isOpen`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
+### On Hyprland a click back in an older popout closes it with the newer one
+- **Where:** `services/compositor/FocusGrab.qml` (`dismissed`, `_outside`), `services/ui/BackdropManager.qml` (`clickedOutside`)
+- **What:** Hyprland has one native grab at a time, and its `cleared` doesn't say where the click landed. So while a newer keyboard popout (Todo, Calculator) holds the native grab over an older edge or floating popout (the launcher, a floating edge menu), a click back inside the older one clears the newer grab, which sends `BackdropManager.clickedOutside(null, null)`, and the older one is dismissed and closes too. Rare: hover popouts close once the pointer leaves them, so the pointer reaches the older popout only after the newer grab ended with no click, except where the two overlap or the newer one is held open. Accepted as is by the leader (bar-popouts-02, round 4); fixing it needs the click's position (a backdrop that takes clicks on Hyprland too).
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing bar-popouts-02 (edge and floating popouts closing on an outside click)
 
 ### An open edge popout's layer and namespace still follow its edge's bar
 - **Where:** `components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `components/hosts/popout/EdgePopout.qml:97` (`windowLayer`), `components/hosts/popout/EdgePopout.qml:113` (`layerNamespace`), `components/hosts/popout/EdgePopout.qml:216` (`_overlayLatch`), `components/hosts/popout/BarPopouts.qml:42` (`_under`)
