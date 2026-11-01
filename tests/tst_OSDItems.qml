@@ -466,6 +466,27 @@ TestCase {
     compare(cam.title, "Firefox");
     compare(cam.role, "Using the camera");
     compare(OSDItems.card("screenShare", {}, ["screenShare"]).role, "Sharing the screen", "no tile yet");
+    const stopped = OSDItems.card("screenShare", {
+      "screenShare": OSDItems.tile("screenShare", {
+        "apps": [],
+        "last": ["Vesktop"]
+      })
+    }, ["screenShare"]);
+    compare(stopped.title, "Vesktop", "a preview stream stopped under its card: still named");
+    compare(stopped.role, "Stopped sharing the screen");
+    const sharing = OSDItems.card("screenShare", {
+      "screenShare": OSDItems.tile("screenShare", {
+        "apps": ["Firefox"],
+        "last": ["Vesktop"]
+      })
+    }, ["screenShare"]);
+    compare(sharing.title, "Firefox", "the apps sharing now, not the last ones");
+    compare(sharing.role, "Sharing the screen");
+    compare(OSDItems.card("micUse", {
+      "micUse": OSDItems.tile("micUse", {
+        "last": ["Vesktop"]
+      })
+    }, ["micUse"]).role, "Stopped using the microphone");
     const charging = OSDItems.card("charger", {
       "charger": OSDItems.tile("charger", {
         "available": true,

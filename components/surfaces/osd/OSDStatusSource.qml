@@ -173,7 +173,8 @@ Loader {
     case "screenShare":
     case "micUse":
       return {
-        "apps": root._apps(root._captures())
+        "apps": root._apps(root._captures()),
+        "last": root._lastApps
       };
     }
     return {};
@@ -192,6 +193,10 @@ Loader {
     }
     return [];
   }
+
+  // The apps last seen capturing (a capture's watcher keeps them): its
+  // card still names them once the capture stops
+  property var _lastApps: []
 
   // The apps' names of capturing streams, once each
   function _apps(nodes) {
@@ -551,7 +556,14 @@ Loader {
       // By node id: an app's name may come in after its stream starts
       // (its properties bind later), which isn't another app starting
       readonly property var now: root._captures().map(n => n.id)
+      // Their names, as they bind
+      readonly property var names: root._apps(root._captures())
       property var _last: []
+
+      onNamesChanged: {
+        if (apps.names.length > 0)
+          root._lastApps = apps.names;
+      }
 
       function _check() {
         const change = OSDItems.captureChange(apps._last, apps.now);
@@ -560,7 +572,10 @@ Loader {
           root._report(change === "started");
       }
 
-      Component.onCompleted: apps._last = apps.now
+      Component.onCompleted: {
+        apps._last = apps.now;
+        root._lastApps = apps.names;
+      }
       // Links bind one by one: judged once they're in
       onNowChanged: Qt.callLater(apps._check)
     }

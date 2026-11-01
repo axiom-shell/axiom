@@ -3574,6 +3574,9 @@
     "Mic use": "",
     "Vpn": "",
     "Screen sharing": "",
-    "Microphone in use": ""
+    "Microphone in use": "",
+    "Stopped using the camera": "",
+    "Stopped using the microphone": "",
+    "Stopped sharing the screen": ""
   }
 }

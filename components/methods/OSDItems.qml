@@ -53,7 +53,8 @@ QtObject {
   //   signal (0-100) },
   //   message { icon, text }, vpn { available, on, name (the VPNs up),
   //   address (the first one's) }, camera / screenShare / micUse { apps
-  //   (the app names using it) }, every other
+  //   (the app names using it), last (the ones last seen using it: a
+  //   card outlives a capture that stops at once) }, every other
   //   type (recording too) { available, on }
   function tile(type, state) {
     const t = {
@@ -159,6 +160,7 @@ QtObject {
         return Object.assign(t, {
           "icon": icons[type],
           "apps": apps,
+          "last": s.last ?? [],
           "name": apps.join(", "),
           "on": apps.length > 0,
           "slash": apps.length === 0,
@@ -316,7 +318,19 @@ QtObject {
       break;
     case "camera":
     case "micUse":
+    case "screenShare":
       {
+        // Stopped while its card shows (a picker's preview stream): who
+        // it was, and that it stopped
+        if ((t.apps ?? []).length === 0 && (t.last ?? []).length > 0) {
+          out.title = t.last.join(", ");
+          out.role = type === "camera" ? "Stopped using the camera" : type === "micUse" ? "Stopped using the microphone" : "Stopped sharing the screen";
+          break;
+        }
+        if (type === "screenShare") {
+          out.role = "Sharing the screen";
+          break;
+        }
         // One app on both: one card says so, whichever came first
         const other = type === "camera" ? "micUse" : "camera";
         const both = (types ?? []).includes(other) && root._sameApp(t, tiles?.[other]);
@@ -332,9 +346,6 @@ QtObject {
     case "wifi":
       out.role = "Connected";
       out.detail = t.name ? `${t.signal ?? 0}%` : "";
-      break;
-    case "screenShare":
-      out.role = "Sharing the screen";
       break;
     }
     return out;

@@ -72,7 +72,7 @@ Item {
   readonly property bool cards: root.osd.statuses.cards
   readonly property bool hasCards: root.cards && OSDItems.cardTypes.some(type => root.statusTypes.includes(type))
   // What the card shows (OSDItems.card), its role translated
-  // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in")
+  // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Stopped using the camera") I18n.tr("Stopped using the microphone") I18n.tr("Stopped sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in")
   readonly property var cardContent: {
     const card = OSDItems.card(root._cardType, root.tiles, root.statusTypes);
     return card ? Object.assign(card, {
