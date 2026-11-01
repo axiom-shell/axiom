@@ -567,6 +567,10 @@ Found by the audits:
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [Two hand-written cmp.Or in the theme packages](issues.md#two-hand-written-cmpor-in-the-theme-packages)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
+- [A shell started locked locks again on every reload](issues.md#a-shell-started-locked-locks-again-on-every-reload)
+- [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
+- [PolkitAgents.isAgentCommand is dead since the autostart moved to Go](issues.md#polkitagentsisagentcommand-is-dead-since-the-autostart-moved-to-go)
+- [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
