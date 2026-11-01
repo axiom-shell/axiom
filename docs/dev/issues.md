@@ -960,12 +960,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the blur system
 
-### BlurBacking spells out four near-identical blur windows
-- **Where:** `shell/BlurBacking.qml:58`, `shell/BlurBacking.qml:68`, `shell/BlurBacking.qml:85`, `shell/BlurBacking.qml:99`
-- **What:** The four `BlurBackingWindow`s (9 + 13 + 13 + 13 = 48 lines) differ only in their shapes and `cutBy` pair, `wanted`, `held` and `stackLayer` (all set by whether they're below or over the overlay), their `part`, and their namespace, which is `(part === "shadows" ? "axiom-shadows" : "axiom-blur-backing") + (over ? "-overlay" : "")`. Fix: one inline component taking `over`, with an `Instantiator` over `shadowsApart ? ["fills", "shadows"] : ["all"]`. It is used twice, the over-overlay one under its `aboveOverlay` gate: about 25 lines in place of 48. SwayFX's map order (fills, then shadows) is kept.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the blur system
-
 ### The border frame's path is built three times
 - **Where:** `shell/BlurBackingWindow.qml:379` (`frameMirror`), `components/surfaces/border/RoundedBorders.qml:112` (`shadowWindow`), `components/surfaces/border/RoundedBorders.qml:212`, `components/surfaces/border/RoundedBorders.qml:252`
 - **What:** The same rounded inner-rect path (the `A ${r} ${r} 0 0 1` template) is written out three times: `BlurBackingWindow.qml:407`, `RoundedBorders.qml:219` and `RoundedBorders.qml:261`. The copies have already drifted: line 259 has no `Math.max(0, …)`, while lines 217 and 405 do. `shadowWindow`'s `radius` (line 121) repeats `root.innerRadius`, and its `left`/`right`/`top`/`bottom` (lines 116-119) only forward `root.inner*`. Fix: `RoundedBorders` exposes `innerPath` (and the frame path built from it), and the three users read it. That is about 30 lines out, 8 in.
