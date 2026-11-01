@@ -320,7 +320,7 @@ Singleton {
   // Calls back with each output's layer surfaces ({ [output]: { w, h,
   // layers: [{ namespace, x, y, w, h }] } }), or null when unknown
   function withLayerRects(callback) {
-    if (root.backend)
+    if (root.backend?.withLayerRects)
       root.backend.withLayerRects(callback);
     else
       callback(null);
@@ -395,12 +395,16 @@ Singleton {
   // --- Binds (the Keybinds page) ---
 
   // Calls back with the compositor's binds in effect ({ modmask, key,
-  // keycode, description, submap }, BindKeys), or null. Needs bindMerge
+  // keycode, description, submap }, BindKeys), or null: the backend's own
+  // where it reads them (Hyprland), else those the daemon reads from the
+  // config (the user's and axiom's). Needs bindMerge
   function withBinds(callback) {
-    if (root.supports.bindMerge)
+    if (!root.supports.bindMerge)
+      callback(null);
+    else if (root.backend.withMainBinds)
       root.backend.withMainBinds(callback);
     else
-      callback(null);
+      CompositorConfigManager.withEntries(callback);
   }
 
   // While on, every key reaches axiom instead of the compositor's binds
@@ -507,8 +511,8 @@ Singleton {
       goToWorkspace(base, mode);
       return;
     }
-    const cols = WorkspacesConfig.grid ? WorkspacesConfig.columns : size;
-    const rows = WorkspacesConfig.grid ? WorkspacesConfig.rows : 1;
+    const cols = WorkspacesConfig.columns;
+    const rows = WorkspacesConfig.rows;
     if (!WorkspacesConfig.grid && (direction === "up" || direction === "down"))
       direction = direction === "up" ? "left" : "right";
     let col = index % cols + (direction === "left" ? -1 : direction === "right" ? 1 : 0);

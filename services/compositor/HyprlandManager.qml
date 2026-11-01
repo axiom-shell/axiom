@@ -13,7 +13,7 @@ import qs.services.core
 /* CompositorManager's backend on Hyprland (docs/dev/compositor/contract.md):
  * Hyprland's state as the compositor-neutral shapes (HyprState), and the
  * primitives CompositorManager builds on. Also what only the Hyprland
- * features use (runLua, options, binds, outputs as Hyprland has them). The
+ * features use (options, binds, outputs as Hyprland has them). The
  * only reader of Quickshell.Hyprland outside the Hyprland* services
  * (docs/dev/hyprland/ipc.md). */
 Singleton {
@@ -87,7 +87,7 @@ Singleton {
   // Each output's first id while they're dynamic, as CompositorManager
   // numbers them (WorkspaceGeometry.blockBases)
   // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label
-  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles)
+  readonly property var _bases: root.dynamicByLayout ? WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles) : ({})
 
   // Re-reads the monitors and the windows soon (Quickshell re-reads the
   // monitors' lastIpcObject only on monitor events)
@@ -116,7 +116,7 @@ Singleton {
   // Leaves the window switcher's submap and its release listener (a tile
   // was clicked while its keys were held)
   function leaveSwitcher() {
-    root.runLua("if axiom_switcher_leave then axiom_switcher_leave() end");
+    root._eval("if axiom_switcher_leave then axiom_switcher_leave() end");
   }
 
   // The daemon's render.SwitcherSubmap and SwitcherEvent
@@ -239,24 +239,11 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   property var _evalQueue: []
   property bool _evaluating: false
 
-  // Runs a Lua chunk in Hyprland (config functions like hl.bind or
-  // hl.config, which a dispatch can't call) after the chunks queued before
-  // it, then calls back with Hyprland's reply ("ok" or the error); failures
-  // are logged. For the Hyprland features only.
-  function runLua(lua, callback) {
-    _eval(lua, callback);
-  }
-
-  // Re-reads the options axiom follows (gaps, split ratio, the workspaces
-  // animation), after something changed them at runtime: once the queued
-  // Lua has run, which may be what changes them
-  // axiom's config layer changed Hyprland at runtime (the daemon's
-  // compositor.applied): its options are read again
+  // Re-reads the options axiom follows (gaps, split ratio, blur, the
+  // workspaces animation), after something changed them at runtime (axiom's
+  // config layer, the daemon's compositor.applied; a config reload): once
+  // the queued Lua has run, which may be what changes them
   function layerApplied() {
-    refreshOptions();
-  }
-
-  function refreshOptions() {
     if (_evaluating || _evalQueue.length > 0) {
       _refreshAfterEval = true;
       return;
@@ -266,30 +253,18 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
       return;
     }
     _readingOptions = true;
-    // Those waiting get this read's answer: it started after they asked
-    const waiting = _optionsWaiting;
-    _optionsWaiting = [];
     root._jsonBatch(["getoption general:gaps_out", "getoption dwindle:split_width_multiplier", "getoption decoration:blur:enabled", "getoption decoration:blur:size", "getoption decoration:blur:passes", "getoption animations:enabled", "animations"], replies => {
       root._readingOptions = false;
       root._readOptions(replies);
-      waiting.forEach(callback => callback());
       if (root._optionsAgain) {
         root._optionsAgain = false;
-        root.refreshOptions();
+        root.layerApplied();
       }
     });
   }
 
   property bool _readingOptions: false
   property bool _optionsAgain: false
-  property var _optionsWaiting: []
-
-  // Reads the options again (refreshOptions), then calls back with the
-  // animations as read
-  function withAnimations(callback) {
-    _optionsWaiting.push(() => callback(root.animations));
-    refreshOptions();
-  }
 
   function _readOptions([gaps, split, blurEnabled, blurSize, blurPasses, animationsEnabled, animations]) {
     root.gapsOut = _gapSides(gaps) ?? root.gapsOut;
@@ -303,10 +278,20 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     };
     if (blur.size > 0 && blur.passes > 0 && JSON.stringify(blur) !== JSON.stringify(root.blur))
       root.blur = blur;
-    if (animationsEnabled)
-      root.animationsEnabled = animationsEnabled.int !== 0 && animationsEnabled.bool !== false;
-    if (Array.isArray(animations))
-      root.animations = animations;
+    // Hyprland's animations (j/animations: [leaves, curves]) under its
+    // animations:enabled switch
+    if (!animationsEnabled || !Array.isArray(animations))
+      return;
+    const leaves = Array.isArray(animations[0]) ? animations[0] : [];
+    const leaf = name => leaves.find(a => a.name === name);
+    const own = leaf("workspaces");
+    const anim = own?.overridden ? own : leaf("global");
+    const on = animationsEnabled.int !== 0 && animationsEnabled.bool !== false;
+    root._workspaceAnim = on && own?.enabled !== false && anim?.enabled && anim.bezier && anim.speed > 0 ? {
+      "speed": anim.speed,
+      "bezier": anim.bezier,
+      "style": (own?.overridden && own.style) || "slide"
+    } : null;
   }
 
   function _eval(lua, callback) {
@@ -324,7 +309,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     if (_evalQueue.length === 0) {
       if (_refreshAfterEval) {
         _refreshAfterEval = false;
-        refreshOptions();
+        layerApplied();
       }
       root._debounce.restart();
       return;
@@ -393,16 +378,12 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     });
   }
 
-  // Calls back with every bind Hyprland has (its binds as JSON: modmask,
-  // key, keycode, submap, description, dispatcher, arg, …), or null
-  function withBinds(callback) {
-    root._json("binds", binds => callback(Array.isArray(binds) ? binds : null));
-  }
-
   // Calls back with the binds in effect outside axiom's own submaps (the
-  // key recorder's, the window switcher's), or null (CompositorManager)
+  // key recorder's, the window switcher's), or null (CompositorManager):
+  // Hyprland's binds as JSON (modmask, key, keycode, submap, description,
+  // dispatcher, arg, …)
   function withMainBinds(callback) {
-    root.withBinds(binds => callback(binds ? binds.filter(entry => entry.submap !== root._captureSubmap && entry.submap !== root._switcherSubmap) : null));
+    root._json("binds", binds => callback(Array.isArray(binds) ? binds.filter(entry => entry.submap !== root._captureSubmap && entry.submap !== root._switcherSubmap) : null));
   }
 
   // While on, every key reaches axiom instead of a bind (the Keybinds
@@ -410,7 +391,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   // bind, hence the unreachable one). A Hyprland timer leaves it even if
   // the shell dies meanwhile.
   function captureKeys(on) {
-    root.runLua(on ? root._enterCaptureLua : root._leaveCaptureLua);
+    root._eval(on ? root._enterCaptureLua : root._leaveCaptureLua);
   }
 
   readonly property string _captureSubmap: "axiom_record"
@@ -552,9 +533,14 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     root._slideSteps = [];
     _slideTimer.stop();
     root.travelingTo = -1;
+    _runPlan([].concat(plan.moves.map(m => _moveLua(m.id, `"name:axiom-remap-${m.to}"`)), [].concat(...outputs.map((name, i) => _focusLua(name, `"name:axiom-remap-mon-${i}"`))), plan.moves.map(m => _moveLua(m.id, m.to)), [].concat(...plan.focus.map(f => _focusLua(f.monitor, f.id)))));
+  }
+
+  // Runs a remap's or a compaction's Lua lines (in run()) with the
+  // workspaces animation off, so nothing slides meanwhile
+  function _runPlan(lines) {
     const anim = root._workspaceAnim;
-    const lines = [].concat(anim ? [_animLua(false)] : [], plan.moves.map(m => _moveLua(m.id, `"name:axiom-remap-${m.to}"`)), [].concat(...outputs.map((name, i) => _focusLua(name, `"name:axiom-remap-mon-${i}"`))), plan.moves.map(m => _moveLua(m.id, m.to)), [].concat(...plan.focus.map(f => _focusLua(f.monitor, f.id))), anim ? [_animLua(true)] : []);
-    _eval(_luaPrelude + lines.join("\n") + _luaEpilogue);
+    _eval(_luaPrelude + [].concat(anim ? [_animLua(false)] : [], lines, anim ? [_animLua(true)] : []).join("\n") + _luaEpilogue);
   }
 
   // The workspaces animation on or off, as configured otherwise (Lua)
@@ -605,9 +591,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       if (!plan.changed)
         return;
       console.log(`[HyprlandManager] closing workspace gaps: ${plan.moves.length} windows, outputs to ${plan.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
-      const anim = root._workspaceAnim;
-      const lines = [].concat(anim ? [_animLua(false)] : [], plan.moves.map(m => _moveLua(m.id, m.to)), [].concat(...plan.focus.map(f => _focusLua(f.monitor, f.id, f.stay))), anim ? [_animLua(true)] : []);
-      _eval(_luaPrelude + lines.join("\n") + _luaEpilogue);
+      _runPlan([].concat(plan.moves.map(m => _moveLua(m.id, m.to)), [].concat(...plan.focus.map(f => _focusLua(f.monitor, f.id, f.stay)))));
     }
   }
 
@@ -631,28 +615,11 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       "size": 8,
       "passes": 1
     })
-  // Hyprland's animations (j/animations: [leaves, curves]), read with the
-  // options; [] until read
-  property var animations: []
-  // animations:enabled, Hyprland's switch for all of them
-  property bool animationsEnabled: true
   // Hyprland's own "workspaces" animation ({ speed, bezier, style }), put
   // back after each slide (global's speed and curve when it isn't set,
-  // sliding by default); null when animations are off, so there's nothing
-  // to slide with
-  readonly property var _workspaceAnim: {
-    if (!animationsEnabled)
-      return null;
-    const leaves = Array.isArray(animations[0]) ? animations[0] : [];
-    const leaf = name => leaves.find(a => a.name === name);
-    const own = leaf("workspaces");
-    const anim = own?.overridden ? own : leaf("global");
-    return own?.enabled !== false && anim?.enabled && anim.bezier && anim.speed > 0 ? {
-      "speed": anim.speed,
-      "bezier": anim.bezier,
-      "style": (own?.overridden && own.style) || "slide"
-    } : null;
-  }
+  // sliding by default), read with the options (_readOptions); null when
+  // animations are off, so there's nothing to slide with
+  property var _workspaceAnim: null
 
   // Whether the layer rules stacking axiom's surfaces are in Hyprland
   // (LayerStack.layers, which says why each sits where it does;
@@ -682,7 +649,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
 
   Component.onCompleted: {
     _fetch();
-    refreshOptions();
+    layerApplied();
     // Added again on a QML reload too, as the rules replace themselves; an
     // error (no axiom, the greeter's, whose surfaces have no rule) is no
     // reason to wait
@@ -701,7 +668,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       if (event.name === "openlayer" || event.name === "closelayer" || event.name === "custom")
         return;
       if (event.name === "configreloaded")
-        root.refreshOptions();
+        root.layerApplied();
       // Quickshell doesn't track special workspaces: refresh the monitors'
       // lastIpcObject, which carries them (specialWorkspaceId)
       if (event.name === "activespecial" || event.name === "activespecialv2")

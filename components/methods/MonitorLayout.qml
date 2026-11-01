@@ -34,6 +34,23 @@ QtObject {
     return `${width}x${height}` + (rate > 0 ? "@" + formatRate(rate) : "");
   }
 
+  // A refresh rate in mHz (sway's and niri's) as Hz, two decimals at most
+  function hz(milli) {
+    return Math.round((milli ?? 0) / 10) / 100;
+  }
+
+  // A mode as every compositor's availableModes spell it ("WxH@R.RRHz", from
+  // a rate in mHz): parseModes and the rules match them as strings
+  function availableMode(width, height, milli) {
+    return `${width}x${height}@${root.hz(milli).toFixed(2)}Hz`;
+  }
+
+  // An output's description from its make, model and serial (sway's and
+  // niri's), those it has: what outputId names it by
+  function describe(output) {
+    return [output?.make, output?.model, output?.serial].filter(part => part && part !== "Unknown").join(" ");
+  }
+
   // availableModes as resolutions, largest first, each with its rates
   // (highest first, duplicates dropped): [{ width, height, rates: [...] }]
   function parseModes(availableModes) {

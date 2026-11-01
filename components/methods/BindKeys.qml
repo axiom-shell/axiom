@@ -28,6 +28,14 @@ QtObject {
       "MOD5": 128
     })
 
+  // The modifiers' names, in the order a combo shows them
+  readonly property var modifierNames: ["SUPER", "CTRL", "ALT", "SHIFT", "MOD2", "MOD3", "MOD5", "CAPS"]
+
+  // A modmask's modifiers by name, in modifierNames' order
+  function decodeMods(modmask) {
+    return root.modifierNames.filter(name => (modmask & root._modBits[name]) !== 0);
+  }
+
   // "SUPER + SHIFT + SPACE" as hyprctl binds lists it ("64:space"), or ""
   function keyId(key) {
     const parts = String(key ?? "").split("+").map(part => part.trim()).filter(part => part !== "");

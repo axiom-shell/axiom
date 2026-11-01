@@ -425,6 +425,19 @@ func TestMergedBindsGetIDs(t *testing.T) {
 	}
 }
 
+// BindKeys.withIds' shared cases (the Keybinds page's copy of the rule)
+// replayed through withIDs, so the two can't drift
+func TestWithIDsSharedCases(t *testing.T) {
+	t.Parallel()
+	for _, c := range testkit.Cases(t, "BindKeys.withIds") {
+		list, ok := jsonx.AsArray(c.Args[0])
+		if !ok {
+			t.Fatalf("%s: not a list", c.Name)
+		}
+		c.Compare(t, withIDs(list))
+	}
+}
+
 // Under a compositor without config modes nothing runs the queue: config
 // changes (the store's delivery) and calls must never wait on it
 func TestInertManagerNeverBlocks(t *testing.T) {
