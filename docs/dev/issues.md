@@ -1305,21 +1305,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the modules system
 
-### Three row options nothing sets
-- **Where:** `components/content/parts/DeviceRow.qml:32` (`disconnectTip`), `components/content/parts/ItemRow.qml:23` (`titleFamily`), `components/content/parts/TodoList.qml:20` (`showFocus`)
-- **What:** `grep -rnw` over qml, yaml, json and py finds each name twice: its declaration and its one read. No DeviceRow user sets `disconnectTip` (BluetoothDevices sets only `connectTip`). No ItemRow user sets `titleFamily`, which defaults to `Appearance.fontFamily`, StyledText's own. No TodoList user (Todo, Focus) sets `showFocus`, so it is always true despite its comment "off where no timer is near". Fix: inline `I18n.tr("Disconnect")`, drop the `titleFamily` binding, and drop `showFocus` and its test (about 4 lines).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
 ### Login and Password each carry the same required-field report
 - **Where:** `components/content/Login/Login.qml:43` (`_report`), `components/content/Password/Password.qml:41` (`_report`)
 - **What:** Both modules hold the same 12 lines: `_reportedKey`, a `_report()` that unreports the old key and reports the new one through `SurfaceManager.reportRequiredField`, and `Component.onCompleted`, `onHostChanged` and `Component.onDestruction`. They differ only in the host test (`onGreeter` / `onLockscreen`). Fix: one small QtObject part in `content/parts/` holding the 12 lines, given the host and whether it applies. Each module keeps 1–3 lines, so about 20 lines fewer.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### Three keycap parts draw the same cap, and KeyCap's icon slot has no user
-- **Where:** `components/content/parts/KeyCap.qml:12` (`icon`), `components/content/parts/KeyCluster.qml`, `components/content/parts/KeybindRow.qml:109`, `components/content/parts/ModifierCap.qml`
-- **What:** KeyCap, KeyCluster and ModifierCap repeat the same `Rectangle` shell: the height `Math.round(Widget.height * (compact ? 0.62 : 0.75))`, the width, radius and colour, and the text size. KeyCluster is a KeyCap whose text is its keys with a gap between them, and KeybindRow builds both a KeyCap and a KeyCluster for every alternative and hides one (lines 109–121). No `KeyCap {` user sets `icon`. Fix: delete KeyCluster.qml (35 lines), and replace KeybindRow's pair (13 lines) with one `KeyCap { text: alternative.modelData.join(" ") }` (about 5): about 43 lines fewer, and one cap built per alternative. Delete `icon` and its `StyledIcon` (7 lines) unless ModifierCap folds into KeyCap too, which needs SUPER ordered first; check `KeybindManager`'s modifier order before doing that. About 50 lines in all.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the modules system
 

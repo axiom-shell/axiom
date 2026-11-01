@@ -206,9 +206,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - BaseWidget's background box and panel-size defaults are dead
   - IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call
 - **overlay-modules-01** (6): After compositor-02, which also edits OverlayPageNavigator (the wheel notch).
-  - [Three row options nothing sets](../issues.md#three-row-options-nothing-sets)
   - [PipewireVolumeBar keeps a mute toggle nothing calls and its own volume icon](../issues.md#pipewirevolumebar-keeps-a-mute-toggle-nothing-calls-and-its-own-volume-icon)
-  - [Three keycap parts draw the same cap, and KeyCap's icon slot has no user](../issues.md#three-keycap-parts-draw-the-same-cap-and-keycaps-icon-slot-has-no-user)
   - [Small shrinks in the overlay](../issues.md#small-shrinks-in-the-overlay)
 - **features-01** (14):
   - [Calendar results and members nothing reads](../issues.md#calendar-results-and-members-nothing-reads)
