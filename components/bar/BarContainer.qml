@@ -200,10 +200,11 @@ Rectangle {
   // SurfaceManager.setBorderOpening takes it (screen px along the edge), so
   // the border leaves its stroke open under a translucent fill: a pill, a
   // popout merged into the bar or on a solid bar's inner edge. Null while
-  // surfaces are solid, with the border off, or until the bar's place on
-  // screen is known.
+  // surfaces are solid, with the border off, on a bar the border's stroke
+  // isn't on (stacked inside another, BarEnds' offBorder), or until the
+  // bar's place on screen is known.
   function borderOpening(from, to) {
-    if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || to <= from)
+    if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from)
       return null;
     const at = root.isVertical ? root.blurOrigin.y : root.blurOrigin.x;
     return {
@@ -230,11 +231,13 @@ Rectangle {
   // (BarEnds' end kind) and showing: a solid bar with the border off
   // ("solidBar"), whose inner stroke a pill joined there curves into, or a
   // pill bar ("pillBar"), whose end pill this bar's end pill merges into
-  // (CornerMerge)
+  // (CornerMerge); the one the end meets (`barId`) among the bars stacked
+  // on that edge
   function barAt(atStart, kind) {
-    if ((atStart ? root.ends.start : root.ends.end).kind !== kind)
+    const end = atStart ? root.ends.start : root.ends.end;
+    if (end.kind !== kind)
       return null;
-    const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right));
+    const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right), end.barId);
     return panel?.visible ? panel.container : null;
   }
   readonly property var solidStart: root.barAt(true, "solidBar")

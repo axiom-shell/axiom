@@ -8,17 +8,20 @@ import qs.services.compositor
 
 /* What's on each screen edge: the running bars (`bars`, while the bar
  * editor has unsaved edits, those), laid out with the compositor's gaps
- * (BarsConfig.enrichBarConfig), their windows (the bar panels), and the zones
- * open integrated edge menus reserve, with what they leave on each edge:
- * which bar is there, where windows start, where surfaces held off it
- * measure from. */
+ * (BarsConfig.enrichBarConfig) and stacked on their edges (BarEnds: bars
+ * on one edge lie one inside the other), their windows (the bar panels),
+ * and the zones open integrated edge menus reserve, with what they leave
+ * on each edge: which bar is innermost there, where windows start, where
+ * surfaces held off it measure from. */
 QtObject {
   id: root
 
   // The running bars (while the bar editor has unsaved edits, those),
-  // each with what its ends meet among the bars on its screen (BarEnds:
-  // which bar a shared corner goes to)
-  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps)), BarsConfig.endsOptions(CompositorManager.gapsOut, root.floatGaps))
+  // each placed in its edge's stack and with what its ends meet among the
+  // bars on its screen (BarEnds.withEnds: where it lies, what it
+  // reserves, which bar a shared corner goes to)
+  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps)), root._endsOptions)
+  readonly property var _endsOptions: BarsConfig.endsOptions(CompositorManager.gapsOut, root.floatGaps)
 
   // The gaps a floating bar's Automatic float gap keeps (per edge name):
   // the compositor's outer gaps, or with no backend to ask, the screen
@@ -31,33 +34,35 @@ QtObject {
       "left": Appearance.screenMargin
     })
 
-  // The enabled bars on a screen by edge ({ top, bottom, left, right },
-  // null where there is none)
+  // The innermost enabled bar on each edge of a screen ({ top, bottom,
+  // left, right }, null where there is none): what surfaces arranged after
+  // every bar meet
   function edgesFor(screen) {
     return BarEnds.edgesOn(root.bars, screen?.name);
   }
 
-  // Where the window of the bar on a screen edge (a ScreenEdge) starts
-  // along it at its start or end (`atStart`), in px from that end's
-  // screen edge, as Hyprland arranges it (BarEnds): past the bar there it
-  // makes way for, else from the frame's outer side (the screen edge for a
-  // solid bar, arranged before the border), each less the bar's reach onto
-  // the stroke there. Integrated menus on that edge, arranged before
+  // The enabled bars on a screen edge (a ScreenEdge), outer first
+  function stackOn(screen, location) {
+    return BarEnds.stacksOn(root.bars, screen?.name)[ScreenEdge.name(location)];
+  }
+
+  // What a screen edge's bars and the border leave on it (BarEnds.edgeOf:
+  // reserved, frame, corner, solidZone, insideTaken, inner), integrated
+  // menus not counted
+  function edgeOn(screen, location) {
+    return BarEnds.edgeOf(root.stackOn(screen, location), root._endsOptions);
+  }
+
+  // Where a bar's window (a `bars` entry) starts along its edge at its
+  // start or end (`atStart`), in px from that end's screen edge, as
+  // Hyprland arranges it (BarEnds.endsOf): past the bars there it makes way
+  // for, and the border for a bar inside it, less its reach onto the
+  // stroke there. Integrated menus on that edge, arranged before
   // everything, included.
-  function barStartOn(screen, location, atStart) {
-    const edges = root.edgesFor(screen);
-    const bar = edges[ScreenEdge.name(location)];
-    if (!bar)
-      return 0;
-    const side = BarEnds.endEdges(bar)[atStart ? 0 : 1];
+  function barStartOn(screen, bar, atStart) {
     const end = atStart ? bar.ends.start : bar.ends.end;
-    const menus = root.zoneOn(screen?.name ?? "", side);
-    const reserved = root.barReservedOn(screen, ScreenEdge.fromName(side));
-    // A solid bar is arranged before the border, which then reserves its
-    // margin inside both: past the other solid bar alone
-    if (BarEnds.yieldsTo(bar, edges[side]))
-      return menus + reserved - (bar.solid && Appearance.screenBorder ? Appearance.screenMargin : 0) - end.reach;
-    return menus + (bar.solid || !Appearance.screenBorder ? 0 : Appearance.screenMargin) - end.reach;
+    const side = BarEnds.endEdges(bar)[atStart ? 0 : 1];
+    return root.zoneOn(screen?.name ?? "", side) + end.from - end.reach;
   }
 
   // What a surface's end reaching a screen edge (a ScreenEdge) along a
@@ -83,45 +88,37 @@ QtObject {
   }
 
   // Where windows start on a screen edge (a ScreenEdge), in px from it:
-  // the border's and bar's reserved space, Hyprland's gaps_out not
-  // included, nor integrated edge menus' zones (reservedWithMenusOn
+  // the border's and every bar's reserved space there, Hyprland's gaps_out
+  // not included, nor integrated edge menus' zones (reservedWithMenusOn
   // adds those)
   function barReservedOn(screen, location) {
-    const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const zone = bar ? BarsConfig.reservedZone(bar, CompositorManager.gapsOut[ScreenEdge.name(location)]) : 0;
-    return (Appearance.screenBorder ? Appearance.screenMargin : 0) + zone - (zone > 0 && bar.insideBorder ? Appearance.borderWidth : 0);
+    return root.edgeOn(screen, location).reserved;
   }
 
   // The inner side of what's on a screen edge, in px from it: the
-  // border's stroke, or the bar there (a solid bar's inner stroke, a
-  // floating bar's islands, a pill bar's far side, a transparent bar's
-  // inner edge); 0 on a bare edge. Surfaces held off an edge measure their
-  // gap from it (detachedGaps). Integrated edge menus' zones not included
-  // (frameLineOn adds those).
+  // border's stroke, or the innermost bar there (a solid bar's inner
+  // stroke, a floating bar's islands, a pill bar's far side, a transparent
+  // bar's inner edge); 0 on a bare edge. Surfaces held off an edge measure
+  // their gap from it (detachedGaps). Integrated edge menus' zones not
+  // included (frameLineOn adds those).
   function frameLine(screen, location) {
-    const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const margin = Appearance.screenBorder ? Appearance.screenMargin : 0;
-    if (!bar)
-      return margin;
-    // Its outer edge on the border's stroke
-    if (bar.insideBorder)
-      return margin - Appearance.borderWidth + bar.extent;
-    // The border's strip, laid over its inner part, draws its stroke
-    if (bar.solid && Appearance.screenBorder)
-      return bar.reserveSpace ? bar.extent + Appearance.borderWidth : margin;
-    return bar.extent;
+    return root.edgeOn(screen, location).frame;
+  }
+
+  // The same for one bar (a `bars` entry), wherever it lies in its edge's
+  // stack (BarEnds.placeStack's `frame`), integrated menus on its edge
+  // included: what its own popouts grow out of
+  function barFrameLineOn(screen, bar) {
+    return bar.frame + root.zoneOn(screen?.name ?? "", ScreenEdge.name(bar.location));
   }
 
   // Where the border frame's rounded inner corner lies from a screen edge
-  // (a ScreenEdge), in px: past a solid bar its strip (frameLine), else
-  // the frame's own width, any other bar sitting inside it; 0 with the
-  // border off. What an end with nothing to join keeps its fillet clear of
+  // (a ScreenEdge), in px: past the solid bars there its strip, else the
+  // frame's own width, any other bar sitting inside it; 0 with the border
+  // off. What an end with nothing to join keeps its fillet clear of
   // (SurfaceContext.wallAt).
   function cornerLine(screen, location) {
-    if (!Appearance.screenBorder)
-      return 0;
-    const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    return bar?.solid ? root.frameLine(screen, location) : Appearance.screenMargin;
+    return root.edgeOn(screen, location).corner;
   }
 
   // The gaps a surface held off a screen edge (a ScreenEdge) keeps from
@@ -201,8 +198,12 @@ QtObject {
     barPanels = barPanels.filter(p => p !== panel);
   }
 
-  // The enabled bar on a screen edge (a ScreenEdge), or null
-  function barOn(screenName, location) {
-    return barPanels.find(p => p.barConfig.enabled && p.barConfig.location === location && p.screen?.name === screenName) ?? null;
+  // The window of the innermost enabled bar on a screen edge (a
+  // ScreenEdge), or with `barId`, of that bar there; else null
+  function barOn(screenName, location, barId) {
+    const id = barId || (BarEnds.edgesOn(root.bars, screenName)[ScreenEdge.name(location)]?.id ?? "");
+    if (id === "")
+      return null;
+    return barPanels.find(p => p.barConfig.enabled && p.barConfig.id === id && p.barConfig.location === location && p.screen?.name === screenName) ?? null;
   }
 }

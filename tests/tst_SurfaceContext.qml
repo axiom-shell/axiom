@@ -534,6 +534,27 @@ TestCase {
     verify(past.detached);
     compare(past.attachFromBar, 34);
     compare(past.attachAt + 24 / 2, 46);
+    // A solid bar outside another, the border's strip on the inner one
+    // (offBorder): its popout grows from its own inner edge, wherever it
+    // lies in the stack (frameLine), and opens no stroke there
+    const outerSolid = Object.assign(bar("solid"), {
+      "extent": 40,
+      "innerStroke": false,
+      "offBorder": true
+    });
+    const stacked = at({
+      "bar": outerSolid,
+      "frameLine": 70
+    });
+    compare(stacked.barOuter, 30);
+    compare(stacked.attachAt, 70);
+    compare(stacked.ownSink, null);
+    // ...and the border's strip opens under one it lies over
+    compare(at({
+      "bar": Object.assign({}, outerSolid, {
+        "offBorder": false
+      })
+    }).ownSink, "border");
   }
 
   // Centred between a pill bar's pills (or a floating bar's islands) and
@@ -580,6 +601,16 @@ TestCase {
         "border": false
       }).straight, kind);
     }
+    // Grown out of a pill bar stacked inside another bar (offBorder): no
+    // border stroke there to open
+    compare(at("pills", apart, {
+      "bar": Object.assign(bar("pills"), {
+        "extent": 40,
+        "pillDepth": 30,
+        "pillMerge": 12,
+        "offBorder": true
+      })
+    }).ownSink, null);
     // Too near a pill for two fillets: out of the nearest, as before
     const near = at("pills", [
       {

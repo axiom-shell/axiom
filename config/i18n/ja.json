@@ -3548,6 +3548,7 @@
     "Pomodoro start or pause": "",
     "Stopwatch lap": "",
     "Stopwatch start or pause": "",
-    "Stop pomodoro": ""
+    "Stop pomodoro": "",
+    "Bars can share an edge, one inside the other: solid bars nearest the screen's edge, then pill, transparent, floating and floating pill bars; bars with the same background in list order.": ""
   }
 }

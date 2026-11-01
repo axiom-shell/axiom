@@ -11,13 +11,19 @@ import QtQuick
 // longer bar gives up its length. The other bar's window then ends at the
 // owner's reserved line.
 //
-// A bar is an enriched bar entry (BarsConfig.enrichBarConfig): `vertical`,
-// `shortEdge`, `solid`, `background`, `insideBorder`, `island`, `floatGap`,
-// `floatGapAuto`, `trim` (how much less than its extent it reserves),
-// `enabled`, `reserveSpace`, `monitor`, `top`/`bottom`/`left`/`right`.
-// `opts`: { border (the screen border is on), borderWidth, gapsOut (per
-// edge name), floatGaps (what an Automatic float gap keeps, per edge
-// name) }.
+// Bars may stack on one edge: the compositor arranges them outer first in
+// that same order of kinds (stacksOn), each in what the ones before it
+// left, and placeStack says where each lies; an end then meets the bars on
+// the perpendicular edge it makes way for (endsOf).
+//
+// A bar is an enriched bar entry (BarsConfig.enrichBarConfig): `id`,
+// `vertical`, `shortEdge`, `solid`, `background`, `insideBorder`, `island`,
+// `extent`, `floatGap`, `floatGapAuto`, `trim` (how much less than its
+// extent it reserves, alone on its edge), `enabled`, `reserveSpace`,
+// `monitor`, `top`/`bottom`/`left`/`right`.
+// `opts`: { border (the screen border is on), borderWidth, margin (the
+// border's width, Appearance.screenMargin), gapsOut (per edge name),
+// floatGaps (what an Automatic float gap keeps, per edge name) }.
 //
 // An end is { kind, joinable, straight, held, reach, over, gap }:
 // - kind: "border" (the border's stroke), "bare" (a bare screen edge),
@@ -34,6 +40,7 @@ import QtQuick
 // - held: the end keeps clear of the bar it yields to, as a surface held
 //   off an edge: `over` is how far into the window that bar's frame line
 //   (its inner edge) lies, `gap` how far past it the bar's end keeps
+// - barId, from: see endsOf
 QtObject {
   id: root
 
@@ -135,39 +142,221 @@ QtObject {
     };
   }
 
-  // { start, end } for a bar, `edges` the bars on its screen by edge name
-  // (the first enabled one on each)
-  function endsOf(bar, edges, opts) {
+  // { start, end } for a bar, `stacks` the bars on its screen by edge
+  // name, outer first (stacksOn, each with its place: placeStack). An end
+  // meets the bars on the perpendicular edge it makes way for, which
+  // Hyprland arranges before it: a prefix of that edge's stack, as layer
+  // rules order kinds the same way on every edge. What it meets is the
+  // innermost of them, and its window ends past them all: `from` is how
+  // far from that perpendicular screen edge (the border's margin too,
+  // for a bar inside it), before its `reach`, and `barId` the id of the
+  // bar it meets ("" for the frame).
+  function endsOf(bar, stacks, opts) {
+    const end = side => {
+      const before = (stacks[side] ?? []).filter(other => root.yieldsTo(bar, other));
+      const meets = before.length > 0 ? before[before.length - 1] : null;
+      const from = before.reduce((sum, other) => sum + other.taken, opts.border && !bar.solid ? opts.margin : 0);
+      return Object.assign(root.endOf(bar, meets, side, opts), {
+        "barId": meets?.id ?? "",
+        "from": from
+      });
+    };
     const [s, e] = root.endEdges(bar);
     return {
-      "start": root.endOf(bar, edges[s] ?? null, s, opts),
-      "end": root.endOf(bar, edges[e] ?? null, e, opts)
+      "start": end(s),
+      "end": end(e)
     };
   }
 
-  // The enabled bars on a screen (`monitor`) by edge name, the first on
-  // each edge
-  function edgesOn(bars, monitor) {
-    const edges = {
-      "top": null,
-      "bottom": null,
-      "left": null,
-      "right": null
+  function _edgeName(bar) {
+    return bar.top ? "top" : bar.bottom ? "bottom" : bar.left ? "left" : "right";
+  }
+
+  // Where a kind of bar is arranged on its edge: solid bars (then the
+  // border), pill bars, transparent bars, floating bars, floating pills.
+  // Floating bars and floating pills share a layer rule, so their order
+  // is LayerSlot's rank (layerRank).
+  function kindIndex(bar) {
+    return ["solid", "pills", "transparent", "floating", "floatingPills"].indexOf(bar.background);
+  }
+
+  // The enabled bars on a screen (`monitor`) by edge name, each edge's
+  // outer first, as the compositor arranges them: those reserving space
+  // by kind (kindIndex), then those reserving none (laid out in what's
+  // left once everything has reserved); within a kind, in config order
+  function stacksOn(bars, monitor) {
+    const stacks = {
+      "top": [],
+      "bottom": [],
+      "left": [],
+      "right": []
     };
-    bars.forEach(bar => {
-      if (!bar.enabled || bar.monitor !== monitor)
-        return;
-      const edge = bar.top ? "top" : bar.bottom ? "bottom" : bar.left ? "left" : "right";
-      if (!edges[edge])
-        edges[edge] = bar;
+    bars.forEach((bar, index) => {
+      if (bar.enabled && bar.monitor === monitor)
+        stacks[root._edgeName(bar)].push({
+          "bar": bar,
+          "index": index
+        });
     });
+    const key = e => [e.bar.reserveSpace ? 0 : 1, root.kindIndex(e.bar), e.index];
+    const compare = (a, b) => {
+      const ka = key(a), kb = key(b);
+      return ka[0] - kb[0] || ka[1] - kb[1] || ka[2] - kb[2];
+    };
+    for (const edge in stacks)
+      stacks[edge] = stacks[edge].sort(compare).map(e => e.bar);
+    return stacks;
+  }
+
+  // The innermost enabled bar on each edge of a screen (`monitor`), or
+  // null: what surfaces arranged after every bar (edge popouts, docks,
+  // floating menus) meet
+  function edgesOn(bars, monitor) {
+    const stacks = root.stacksOn(bars, monitor);
+    const edges = {};
+    for (const edge in stacks)
+      edges[edge] = stacks[edge].length > 0 ? stacks[edge][stacks[edge].length - 1] : null;
     return edges;
   }
 
-  // The bars, each with its `ends` (endsOf) among the bars on its screen
+  /**
+   * Each bar of an edge's stack (stacksOn, outer first) with its place in
+   * it, as the compositor arranges them: the reserving solid bars from
+   * the screen edge, the border's margin, the other reserving bars, then
+   * those reserving nothing, laid over what's left. Adds:
+   *   stackIndex (0 outermost), innermost (the last on the edge),
+   *   facesWindows (no bar inside it reserves space, so windows start
+   *     right past it), trim (reserveTrim while it faces the windows; a
+   *     bar with one reserving inside it reserves its whole extent),
+   *   offBorder (the border's stroke isn't on it: a bar inside the border
+   *     with another inside the border outside it, or a solid bar with
+   *     the border on that the border's strip doesn't lie over, one with
+   *     another solid bar inside it),
+   *   zone (the exclusive zone it sets: BarPanel), taken (how much it
+   *     reserves: its zone and its -borderWidth margin inside the border),
+   *   outer (where its window's outer edge is, from the screen edge),
+   *   frame (its inner side, from the screen edge: its inner edge, the
+   *     border's stroke for a solid bar it lies over, or where a solid bar
+   *     reserving nothing is laid, inside the border, which it covers)
+   * Integrated edge menus' zones, arranged before it all, aren't counted.
+   */
+  function placeStack(stack, opts) {
+    const w = opts.border ? opts.borderWidth : 0;
+    const solids = stack.filter(bar => bar.solid && bar.reserveSpace);
+    const strip = opts.border && solids.length > 0 ? solids[solids.length - 1] : null;
+    const placed = [];
+    let line = 0;
+    let borderLaid = !opts.border;
+    let insideBefore = false;
+    stack.forEach((bar, index) => {
+      // The border's strip is arranged after the reserving solid bars
+      if (!borderLaid && !(bar.solid && bar.reserveSpace)) {
+        line += opts.margin;
+        borderLaid = true;
+      }
+      const facesWindows = !stack.slice(index + 1).some(other => other.reserveSpace);
+      const trim = facesWindows ? bar.trim : 0;
+      const onStrip = bar === strip;
+      let zone = 0;
+      if (bar.reserveSpace)
+        zone = Math.max(0, (onStrip ? bar.extent - opts.margin + opts.borderWidth : bar.extent) - trim);
+      const reach = bar.insideBorder ? w : 0;
+      const taken = zone > 0 ? zone - reach : 0;
+      const outer = line - reach;
+      let frame = outer + bar.extent;
+      if (bar.solid && opts.border)
+        frame = !bar.reserveSpace ? outer : onStrip ? outer + bar.extent + opts.borderWidth : outer + bar.extent;
+      placed.push(Object.assign({}, bar, {
+        "stackIndex": index,
+        "innermost": index === stack.length - 1,
+        "facesWindows": facesWindows,
+        "trim": trim,
+        "offBorder": opts.border && (bar.solid ? bar.reserveSpace && !onStrip : bar.insideBorder && insideBefore),
+        "zone": zone,
+        "taken": taken,
+        "outer": outer,
+        "frame": frame
+      }));
+      if (bar.insideBorder && bar.reserveSpace)
+        insideBefore = true;
+      line += taken;
+    });
+    return placed;
+  }
+
+  /**
+   * What an edge's placed stack (placeStack) leaves on it, from its screen
+   * edge, integrated menus not counted: reserved (where windows start,
+   * before gaps_out: the border's margin and every bar's taken space),
+   * frame (the innermost bar's inner side, else the border's), corner
+   * (where the border's rounded inner corner lies: past the reserving
+   * solid bars, its strip on the last; 0 with the border off), strip (the
+   * border's strip lies over a reserving solid bar), solidZone
+   * (what the reserving solid bars reserve, before the border's strip),
+   * insideTaken (what the bars inside the border take, which the
+   * border's corner pieces are pulled back out past), inner (the
+   * innermost bar, or null)
+   */
+  function edgeOf(placed, opts) {
+    const margin = opts.border ? opts.margin : 0;
+    const inner = placed.length > 0 ? placed[placed.length - 1] : null;
+    const sum = (bars, key) => bars.reduce((total, bar) => total + bar[key], 0);
+    const solids = placed.filter(bar => bar.solid && bar.reserveSpace);
+    const solidZone = sum(solids, "zone");
+    return {
+      "reserved": margin + sum(placed, "taken"),
+      "frame": inner ? inner.frame : margin,
+      "corner": opts.border ? solidZone + margin : 0,
+      "strip": opts.border && solids.length > 0,
+      "solidZone": solidZone,
+      "insideTaken": sum(placed.filter(bar => bar.insideBorder), "taken"),
+      "inner": inner
+    };
+  }
+
+  // Among the enabled bars on its screen edge sharing its layer rule (its
+  // kind, floating bars and floating pills alike: the namespace
+  // BarsConfig.layerNamespace names), where a bar maps: floating bars
+  // before floating pills, then in config order, so bars of a kind on one
+  // edge stack in that order wherever the compositor breaks a tie by map
+  // order (LayerSlot's rank). Bars on other edges never meet across it,
+  // so they keep no order (one remade doesn't map the others again).
+  function layerRanks(bars) {
+    const group = bar => root._edgeName(bar) + ":" + (bar.solid ? "solid" : bar.island ? "floating" : bar.background);
+    const ranks = bars.map(() => 0);
+    const entries = bars.map((bar, index) => ({
+          "bar": bar,
+          "index": index
+        })).filter(e => e.bar.enabled);
+    entries.forEach(e => {
+      ranks[e.index] = entries.filter(o => o.bar.monitor === e.bar.monitor && group(o.bar) === group(e.bar) && (root.kindIndex(o.bar) < root.kindIndex(e.bar) || (root.kindIndex(o.bar) === root.kindIndex(e.bar) && o.index < e.index))).length;
+    });
+    return ranks;
+  }
+
+  // The bars, each placed in its edge's stack (placeStack; a disabled bar
+  // as if alone there), with its LayerSlot rank (`layerRank`, layerRanks)
+  // and its `ends` (endsOf) among the bars on its screen
   function withEnds(bars, opts) {
-    return bars.map(bar => Object.assign({}, bar, {
-        "ends": root.endsOf(bar, root.edgesOn(bars, bar.monitor), opts)
+    const ranks = root.layerRanks(bars);
+    const placedByBar = new Map();
+    const monitors = [...new Set(bars.map(bar => bar.monitor))];
+    for (const monitor of monitors) {
+      const stacks = root.stacksOn(bars, monitor);
+      for (const edge in stacks)
+        root.placeStack(stacks[edge], opts).forEach(p => placedByBar.set(stacks[edge][p.stackIndex], p));
+    }
+    const placed = bars.map((bar, index) => Object.assign(placedByBar.get(bar) ?? root.placeStack([bar], opts)[0], {
+        "layerRank": ranks[index]
+      }));
+    const stacksByMonitor = new Map();
+    const stacksOf = monitor => {
+      if (!stacksByMonitor.has(monitor))
+        stacksByMonitor.set(monitor, root.stacksOn(placed, monitor));
+      return stacksByMonitor.get(monitor);
+    };
+    return placed.map(bar => Object.assign(bar, {
+        "ends": root.endsOf(bar, stacksOf(bar.monitor), opts)
       }));
   }
 }

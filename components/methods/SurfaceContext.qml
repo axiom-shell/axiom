@@ -271,10 +271,11 @@ QtObject {
    * where it lands. `p`, as frame()'s, and:
    *   pills (the followed bar's pills or islands, along the edge), centre,
    *     aligned, length (the content's), joinStart, joinEnd (joinsOf)
-   *   frameLine (across: the inner side of what's on its own edge),
-   *     reserved (where windows start across it), detachedPush
-   *     (BarsConfig.detachedPush for the followed bar), ownBar (whatever bar is on
-   *     its edge, for the shadow), across (held: the gap from the frame
+   *   frameLine (across: the inner side of the followed bar, wherever it
+   *     lies among bars stacked on the edge, else of what's on its own
+   *     edge), reserved (where windows start across it), detachedPush
+   *     (BarsConfig.detachedPush for the followed bar), ownBar (the
+   *     followed bar, else the innermost on its edge, for the shadow), across (held: the gap from the frame
    *     line across the edge), layerOrder (the compositor orders layer
    *     windows by namespace, supports.layerOrder), overOverlay (the
    *     overlay is open on its screen), menuZone (what integrated edge
@@ -338,9 +339,13 @@ QtObject {
     const attachAt = p.held ? p.frameLine + (p.across ?? 0) - p.gap / 2 : bar ? barOuter + attachFromBar : p.reserved - (p.bareEdge ? 0 : p.stroke);
     // The stroke it stands on along its own edge: the border's, or with
     // the border off a solid bar's own (not a pill's or island's: the bar
-    // opens that itself; nor a bare edge's)
+    // opens that itself; nor a bare edge's; nor the border's where it
+    // isn't on the followed bar, stacked inside another or, solid, outside
+    // the one the border's strip lies over: BarEnds' offBorder)
     let ownSink;
     if (detached || onPill || (bar && !bar.solid && !fromOuter) || p.bareEdge)
+      ownSink = null;
+    else if (p.border && bar?.offBorder)
       ownSink = null;
     else if (fromOuter)
       ownSink = p.border ? "border" : null;

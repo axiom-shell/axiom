@@ -99,8 +99,9 @@ QtObject {
   readonly property real _span: (root.vertical ? root.screen?.height : root.screen?.width) ?? 0
   readonly property real _spanAcross: (root.vertical ? root.screen?.width : root.screen?.height) ?? 0
   readonly property bool bareEdge: ScreenEdgeManager.screenEdgeOpen(root.screen, root.edge)
-  // The bar on the edge, whatever it is (an enriched bar entry), or null
-  readonly property var ownBar: ScreenEdgeManager.edgesFor(root.screen)[root.edgeName] ?? null
+  // The bar it grows out of, whatever it is (an enriched bar entry): the
+  // followed bar, else the innermost on the edge, or null
+  readonly property var ownBar: root.barConfig ?? ScreenEdgeManager.edgesFor(root.screen)[root.edgeName] ?? null
 
   // Where the followed bar's window lies along the screen edge
   readonly property real barStart: root.barPanel ? (root.vertical ? root.barPanel.screenPlaced.y : root.barPanel.screenPlaced.x) : 0
@@ -196,7 +197,9 @@ QtObject {
     "length": root.contentLength,
     "joinStart": root.joinStart,
     "joinEnd": root.joinEnd,
-    "frameLine": ScreenEdgeManager.frameLineOn(root.screen, root.edge),
+    // The followed bar's own inner side, wherever it lies among the bars
+    // stacked on the edge; else the innermost's
+    "frameLine": root.barConfig ? ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig) : ScreenEdgeManager.frameLineOn(root.screen, root.edge),
     "reserved": ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge),
     "detachedPush": root.barConfig ? BarsConfig.detachedPush(root.barConfig, CompositorManager.gapsOut[root.edgeName] ?? 0, root.connectorGap) : 0,
     "ownBar": root.ownBar,
@@ -377,12 +380,14 @@ QtObject {
   property StrokeOpening _ownOpening: StrokeOpening {
     screen: root.screen
     owner: root.owner + ":stroke"
+    barId: root.barConfig?.id ?? ""
     sink: root._layout.ownSink
     span: root._coverSpan
   }
   property StrokeOpening _submenuOpening: StrokeOpening {
     screen: root.screen
     owner: root.owner + ":submenuStroke"
+    barId: root.barConfig?.id ?? ""
     sink: root._layout.ownSink
     span: root.submenuSpan ? root._edgeSpan(root.submenuSpan.start, root.submenuSpan.end) : null
   }

@@ -165,5 +165,7 @@ TestCase {
     corner.mapped = true;
     corner.seq = 1;
     compare(shared.calls.LayerStack.sequence([strip, corner], false).remap, ["corner"]);
+    // Hyprland breaks a tie of one order by map order too
+    compare(shared.calls.LayerStack.sequence([strip, corner], true).remap, ["corner"]);
   }
 }

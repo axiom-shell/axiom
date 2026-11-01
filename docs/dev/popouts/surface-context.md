@@ -48,7 +48,7 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
 ### EdgePlacement: the only input gatherer
 `hosts/popout/EdgePlacement` is the only thing that gathers SurfaceContext's inputs.
 - **What it gathers:**
-  - The bar it follows: a bar popout's own bar, solid ones included (`followPanel`); otherwise the non-solid bar on its edge.
+  - The bar it follows: a bar popout's own bar, solid ones included (`followPanel`); otherwise the innermost bar on its edge, unless it's solid. Across, the followed bar's own inner side wherever it lies among bars stacked on the edge (`ScreenEdgeManager.barFrameLineOn`), else the edge's; its shadow takes that bar's look (`ownBar`). Its own stroke opening on a solid bar goes to that bar (`StrokeOpening.barId`).
   - The perpendicular sides' end kinds, frame lines and reservations.
   - Held gaps.
 - **Coordinates:** it converts to its host's coordinates. `alongStart` is where the host's along-axis 0 sits on screen.
