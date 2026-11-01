@@ -62,7 +62,9 @@ Scope {
   property Connections _outside: Connections {
     target: BackdropManager
     enabled: root._catching
-    function onClickedOutside() {
+    function onClickedOutside(window) {
+      if (root.windows.includes(window))
+        return;
       root.clickedOutside();
       root.dismissed();
       root.cleared();

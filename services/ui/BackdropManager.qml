@@ -63,7 +63,10 @@ QtObject {
   // The catcher that started last (0 with none): only its surface asks for
   // the keyboard exclusively (FocusGrab.exclusive)
   readonly property int newestCatcher: root._catchers.length > 0 ? root._catchers[root._catchers.length - 1] : 0
-  signal clickedOutside
+  // A click caught while `catching`: on a backdrop (`window` null), or on
+  // a bar above it (`window` its window), outside a grab that doesn't let
+  // input through to it (FocusGrab)
+  signal clickedOutside(var window)
 
   // The FocusGrab that started last, native grab or not (its uid, 0 with
   // none yet): a native grab cleared while a newer one started was taken

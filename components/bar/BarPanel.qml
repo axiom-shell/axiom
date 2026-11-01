@@ -112,6 +112,23 @@ PanelWindow {
   // The widget area, where the pills are
   readonly property var container: bar
 
+  // A click on the bar, while a focus grab without a native grab is on,
+  // is outside a grab that doesn't let input through to the bar
+  // (FocusGrab). Reported once released, after the click's own action: a
+  // bar button toggling the launcher closes it, never closes and reopens it
+  Item {
+    anchors.fill: parent
+    z: 1
+    PointHandler {
+      enabled: BackdropManager.catching
+      acceptedButtons: Qt.AllButtons
+      onActiveChanged: {
+        if (!active)
+          Qt.callLater(() => BackdropManager.clickedOutside(root));
+      }
+    }
+  }
+
   BarPopouts {
     id: barPopouts
     barConfig: root.barConfig
