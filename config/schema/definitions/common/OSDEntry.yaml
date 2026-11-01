@@ -167,13 +167,13 @@ properties:
         type: boolean
         title: Detail cards
         default: true
-        description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in. Off, they show as their icon like any other change.'
+        description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, something done to a removable drive. Off, they show as their icon like any other change.'
       items:
         type: array
         title: Shows
         items:
           type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, charger, recording, camera, micUse, screenShare, message]
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, recording, camera, micUse, screenShare, message]
         x-enumLabels:
           capsLock: Caps Lock
           numLock: Num Lock
@@ -189,6 +189,7 @@ properties:
           bluetooth: Bluetooth
           airplane: Airplane mode
           vpn: VPN
+          drive: Removable drives
           charger: Charger
           recording: Screen recording
           camera: Camera
@@ -210,20 +211,21 @@ properties:
           bluetooth: bluetooth
           airplane: airplanemode_active
           vpn: vpn_key
+          drive: usb
           charger: power
           recording: screen_record
           camera: videocam
           micUse: record_voice_over
           screenShare: screen_share
           message: chat
-        default: [capsLock, numLock, keyboardLayout, microphone, audio]
-        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, and Charger one with the battery level when plugged in. Messages are what `axiom ipc osd message <icon> <text>` sends.'
+        default: [capsLock, numLock, keyboardLayout, microphone, audio, drive]
+        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (when Removable drives › Show drive events is On the OSD; a click opens the drive, or unlocks an encrypted one). Messages are what `axiom ipc osd message <icon> <text>` sends.'
       quiet:
         type: array
         title: Without opening the OSD
         items:
           type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, charger, recording, camera, micUse, screenShare, message]
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, recording, camera, micUse, screenShare, message]
         x-enumFrom: items
         x-showIf: {items: {notEmpty: true}}
         x-enumLabels:
@@ -241,6 +243,7 @@ properties:
           bluetooth: Bluetooth
           airplane: Airplane mode
           vpn: VPN
+          drive: Removable drives
           charger: Charger
           recording: Screen recording
           camera: Camera
@@ -262,6 +265,7 @@ properties:
           bluetooth: bluetooth
           airplane: airplanemode_active
           vpn: vpn_key
+          drive: usb
           charger: power
           recording: screen_record
           camera: videocam

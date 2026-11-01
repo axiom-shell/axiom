@@ -12,7 +12,7 @@ import qs.components.reusable
 // method, an outer identity and how the server is checked (the system's
 // CAs, a CA file, or not at all). `hidden` adds the network's name and a
 // choice of security, for a network that doesn't broadcast. Enter in any
-// field submits, Escape cancels.
+// field submits, Escape cancels. The password is a SecretField.
 ColumnLayout {
   id: root
 
@@ -62,8 +62,8 @@ ColumnLayout {
   }
 
   function _focusFirst() {
-    const first = root.hidden ? ssidField : root.needsIdentity ? identityField : passwordField;
-    first.input.forceActiveFocus();
+    const first = root.hidden ? ssidField.input : root.needsIdentity ? identityField.input : passwordField.input;
+    first.forceActiveFocus();
   }
 
   spacing: Widget.spacing
@@ -146,17 +146,14 @@ ColumnLayout {
     placeholderText: I18n.tr("User name")
   }
 
-  RowLayout {
+  SecretField {
+    id: passwordField
     visible: root.needsPassword
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    Field {
-      id: passwordField
-      placeholderText: root.security === "wep" ? I18n.tr("Key or passphrase") : I18n.tr("Password")
-      input.echoMode: TextInput.Password
-    }
-    ConnectButton {}
+    entryHeight: root.fieldHeight
+    placeholderText: root.security === "wep" ? I18n.tr("Key or passphrase") : I18n.tr("Password")
+    canSubmit: root.complete
+    onSubmitted: root.submit()
+    onCancelled: root.cancelled()
   }
 
   // The last attempt's error

@@ -167,6 +167,10 @@ QtObject {
         "arch": "power-profiles-daemon",
         "fedora": "power-profiles-daemon"
       },
+      "udisksctl": {
+        "arch": "udisks2",
+        "fedora": "udisks2"
+      },
       "greetd": {
         "arch": "greetd",
         "fedora": "greetd"
