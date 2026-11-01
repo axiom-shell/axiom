@@ -36,9 +36,13 @@ Singleton {
 
   // A pick by hand (a wallpaper picker, the launcher): `monitor`'s
   // wallpaper (the focused one's without one), or in "variant" mode the
-  // variant's. Generates the themes from it.
-  function pick(url, monitor, variant) {
+  // variant's. Generates the themes from it. `point` ({ x, y } in screen
+  // units, optional): where it was clicked, for a transition that starts
+  // where you click.
+  function pick(url, monitor, variant, point) {
     url = url.toString();
+    if (point)
+      ThemeManager.startFrom(point);
     if (root.mode === "variant") {
       root.setVariantWallpaper(variant || (Appearance.darkMode ? "dark" : "light"), url);
       return;

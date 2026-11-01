@@ -19,6 +19,12 @@ Singleton {
 
   // --- Backend state (docs/dev/compositor/contract.md) ---
 
+  // Whether the wallpaper stays put as workspaces slide: niri draws the
+  // background layer inside each workspace unless axiom's module puts it
+  // in the backdrop (render.NiriWallpaperNodes), which every mode loads
+  // (detached through its wrapper); not where axiom writes no niri config
+  // (the greeter)
+  readonly property bool wallpaperStill: CompositorConfigManager.enabled
   // The windows (NiriState.windows)
   readonly property var windows: NiriState.windows(_state, outputs, _bases, root.blockSize, _gap)
   // The enabled outputs (NiriState.outputs)

@@ -44,6 +44,12 @@ QtObject {
   readonly property string wallpaperTransition: _c.wallpaper.transition.type
   readonly property var wallpaperTransitionPool: _c.wallpaper.transition.pool
   readonly property int wallpaperTransitionDuration: _c.wallpaper.transition.duration
+  // The way it moves ("random" | "right" | … | "upLeft"), where it starts
+  // ("random" | "click" | "center" | a corner) and its pace (an easing
+  // name; WallpaperTransitions.pick / easing)
+  readonly property string wallpaperTransitionDirection: _c.wallpaper.transition.direction
+  readonly property string wallpaperTransitionPosition: _c.wallpaper.transition.position
+  readonly property string wallpaperTransitionEasing: _c.wallpaper.transition.easing
   // "crop" | "fit" | "stretch" | "center" (WallpaperFill)
   readonly property string wallpaperFill: _c.wallpaper.fill
   // Slide with the workspaces, drawn this much (%) larger than the screen

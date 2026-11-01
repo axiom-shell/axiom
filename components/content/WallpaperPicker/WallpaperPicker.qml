@@ -34,6 +34,24 @@ Card {
   property string chosenMonitor: ""
   readonly property var screenNames: General.outputs.map(screen => screen.name)
   readonly property string targetMonitor: root.tall && root.screenNames.includes(root.chosenMonitor) ? root.chosenMonitor : root.monitor
+
+  // Where a click on `item` is on this screen ({ x, y } in screen units),
+  // for a transition that starts where you click; null when it changes
+  // another screen or the window doesn't know where it is (its
+  // screenOrigin)
+  // The window it's in, through a var: QsWindow.window is typed QObject
+  readonly property var _window: root.QsWindow.window
+  function clickPoint(item, mouse) {
+    const origin = root._window?.screenOrigin ?? null;
+    const screen = root._window?.screen ?? null;
+    if (!origin || !screen || screen.width <= 0 || screen.height <= 0 || root.targetMonitor !== root.monitor)
+      return null;
+    const p = item.mapToItem(null, mouse.x, mouse.y);
+    return {
+      "x": Math.max(0, Math.min(1, (origin.x + p.x) / screen.width)),
+      "y": Math.max(0, Math.min(1, (origin.y + p.y) / screen.height))
+    };
+  }
   readonly property string mode: Appearance.wallpaperMode
   readonly property bool variantMode: root.mode === "variant"
   // The variant a click sets in Light/Dark mode: the current one until
@@ -319,7 +337,7 @@ Card {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: WallpaperManager.pick(thumb.modelData, root.targetMonitor, root.tall ? root.variant : "")
+            onClicked: mouse => WallpaperManager.pick(thumb.modelData, root.targetMonitor, root.tall ? root.variant : "", root.clickPoint(thumbArea, mouse))
           }
         }
       }

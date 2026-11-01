@@ -525,6 +525,20 @@ func (t *Tables) NiriSurfaceBlurNodes(surfaces any) *jsonx.Array {
 	return out
 }
 
+// NiriWallpaperNodes keeps axiom's wallpaper still: niri draws the
+// background layer inside each workspace, so it slides away with one; in
+// the backdrop (niri 25.05+) it stays put while the workspaces slide over
+// it, which the wallpaper's parallax needs, and shows behind them in the
+// overview. The workspaces' own background goes transparent so it shows
+// through (niri's wiki pairs the two).
+func NiriWallpaperNodes() *jsonx.Array {
+	return jsonx.Arr(
+		block("layer-rule",
+			Node("match", jsonx.Arr(), jsonx.Obj("namespace", "^axiom-wallpaper$"), nil),
+			node("place-within-backdrop", true)),
+		block("layout", node("background-color", "transparent")))
+}
+
 // --- Input and options ---
 
 // niriNode is a field's node path and argument as niri takes them, or

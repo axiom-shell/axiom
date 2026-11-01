@@ -26,6 +26,9 @@ layout(std140, binding = 0) uniform buf {
     vec2 origin;
     // A number for the noise, so each run differs
     float seed;
+    // How fade, dissolve, pixelate and blur spread: 0 everywhere at once,
+    // 1 along the direction, 2 out from the origin (localProgress)
+    float sweep;
 };
 
 layout(binding = 1) uniform sampler2D fromTex;
@@ -85,6 +88,17 @@ float farthestCorner() {
     d = max(d, distanceFromOrigin(vec2(0.0, 1.0)));
     d = max(d, distanceFromOrigin(vec2(1.0, 1.0)));
     return d;
+}
+
+// This point's own progress for a transition that may sweep: everywhere
+// at once (sweep 0), or a wide band moving along the direction (1) or out
+// from the origin (2). Still exactly 0 and 1 at progress 0 and 1.
+float localProgress(vec2 uv) {
+    if (sweep < 0.5)
+        return progress;
+    float t = sweep < 1.5 ? along(uv) : distanceFromOrigin(uv) / (farthestCorner() + 0.001);
+    float w = 0.6;
+    return clamp(progress * (1.0 + w) - t * w, 0.0, 1.0);
 }
 
 float hash(vec2 p) {

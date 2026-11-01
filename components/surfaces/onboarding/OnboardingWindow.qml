@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Wayland
 
 import qs.config
 import qs.services.session
@@ -17,7 +16,7 @@ import qs.components.reusable
 ReservedAreaWindow {
   id: root
 
-  WlrLayershell.namespace: "axiom-onboarding"
+  layerNamespace: "axiom-onboarding"
 
   // How much the overlay shrinks its first page on this screen (OverlayPages'
   // fitScale): a page wider than the screen shrinks as a whole

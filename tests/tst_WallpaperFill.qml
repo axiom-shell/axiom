@@ -155,4 +155,103 @@ TestCase {
       "y": 0
     });
   }
+  // Three columns 1000 wide, 20 apart, on a 1920 wide output
+  function strip(focused) {
+    return [0, 1, 2].map(i => ({
+          "x": 20 + i * 1020,
+          "y": 0,
+          "w": 1000,
+          "h": 1080,
+          "focusRank": i === focused ? 0 : 1 + i
+        }));
+  }
+
+  function test_stripShift() {
+    compare(WallpaperFill.stripShift(strip(0), false, 1920), -1, "the first column");
+    compare(WallpaperFill.stripShift(strip(2), false, 1920), 1, "the last");
+    fuzzyCompare(WallpaperFill.stripShift(strip(1), false, 1920), 0, 1e-9, "the middle");
+    compare(WallpaperFill.stripShift(strip(0).slice(0, 1), false, 1920), 0, "fits: nothing scrolls");
+    compare(WallpaperFill.stripShift([], false, 1920), 0, "no windows");
+    const moved = strip(2).map(w => Object.assign({}, w, {
+        "x": w.x - 1500
+      }));
+    compare(WallpaperFill.stripShift(moved, false, 1920), 1, "reported where it shows: the same");
+    const column = strip(2).map(w => ({
+          "x": 0,
+          "y": w.x,
+          "w": 1920,
+          "h": w.w,
+          "focusRank": w.focusRank
+        }));
+    compare(WallpaperFill.stripShift(column, true, 1080), 1, "a vertical strip");
+  }
+
+  function test_parallaxStrip() {
+    // niri: workspaces stacked, every output a horizontal strip
+    const niri = {
+      "dynamic": true,
+      "vertical": true,
+      "ids": [7, 3, 9],
+      "strip": "horizontal",
+      "windows": strip(2),
+      "width": 1920,
+      "height": 1080
+    };
+    compare(WallpaperFill.parallax(9, niri), {
+      "x": 1,
+      "y": 1
+    }, "the strip across, the workspaces down");
+    compare(WallpaperFill.parallax(9, Object.assign({}, niri, {
+      "still": false
+    })), {
+      "x": 1,
+      "y": 0
+    }, "a wallpaper sliding with its workspace: the strip alone");
+    // Hyprland's scrolling layout: workspaces in a row, a horizontal strip
+    const row = {
+      "base": 1,
+      "size": 5,
+      "strip": "horizontal",
+      "windows": strip(0),
+      "width": 1920,
+      "height": 1080
+    };
+    compare(WallpaperFill.parallax(5, row), {
+      "x": -1,
+      "y": 1
+    }, "the strip takes x; the workspaces move to y");
+    compare(WallpaperFill.parallax(5, Object.assign({}, row, {
+      "strip": "vertical",
+      "windows": []
+    })), {
+      "x": 1,
+      "y": 0
+    }, "a vertical strip leaves x to the workspaces");
+    compare(WallpaperFill.parallax(1, Object.assign({}, row, {
+      "strip": ""
+    })), {
+      "x": -1,
+      "y": 0
+    }, "no strip: as before");
+    // A grid with a strip: the strip takes its axis, the grid keeps the
+    // other, also in its middle row (a shift of 0)
+    const grid = {
+      "grid": true,
+      "columns": 3,
+      "rows": 3,
+      "base": 1,
+      "strip": "horizontal",
+      "windows": [],
+      "width": 1920,
+      "height": 1080
+    };
+    compare(WallpaperFill.parallax(4, grid), {
+      "x": 0,
+      "y": 0
+    }, "a grid's middle row, first column: the row's shift, not the column's");
+    compare(WallpaperFill.parallax(1, grid), {
+      "x": 0,
+      "y": -1
+    }, "a grid's first row");
+  }
 }

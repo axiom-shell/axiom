@@ -152,6 +152,9 @@ PopoutWrapperBase {
       edge: root.edge
     }
     readonly property bool backed: BlurManager.backsOn(root.screen, false) && placeOnScreen.origin !== null
+    // Its top-left on its screen, or null while unknown (a wallpaper
+    // picker's click point)
+    readonly property var screenOrigin: placeOnScreen.origin
 
     SlideAnimation {
       id: slide

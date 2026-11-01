@@ -25,8 +25,9 @@ const MaxListed = 20000
 
 // List is dir's regular files (links to them too) whose extension is one
 // of exts (without the dot, any case), and with recursive those of every
-// folder under it, hidden ones and links to folders left out. A missing
-// dir is NotFound.
+// folder under it, hidden ones and links to folders left out (dir itself
+// may be a link: its files are listed under dir). A missing dir is
+// NotFound.
 func List(dir string, exts []string, recursive bool) (Listing, error) {
 	root, err := clean(dir)
 	if err != nil {
@@ -35,6 +36,11 @@ func List(dir string, exts []string, recursive bool) (Listing, error) {
 	info, err := os.Stat(root)
 	if err != nil || !info.IsDir() {
 		return Listing{}, axerr.New(axerr.NotFound, "%s isn't a folder", root)
+	}
+	// WalkDir doesn't follow a link it starts at: walk where it leads
+	walked, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return Listing{}, axerr.Wrap(axerr.Unavailable, err, "listing %s", root)
 	}
 	want := map[string]bool{}
 	for _, e := range exts {
@@ -45,14 +51,14 @@ func List(dir string, exts []string, recursive bool) (Listing, error) {
 	walk := func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			// An unreadable folder inside is skipped, not the whole list
-			if path == root {
+			if path == walked {
 				return err
 			}
 			return fs.SkipDir
 		}
 		name := d.Name()
 		if d.IsDir() {
-			if path == root {
+			if path == walked {
 				return nil
 			}
 			if !recursive || strings.HasPrefix(name, ".") {
@@ -75,15 +81,17 @@ func List(dir string, exts []string, recursive bool) (Listing, error) {
 			out.Truncated = true
 			return fs.SkipAll
 		}
-		out.Files = append(out.Files, path)
-		if rel, err := filepath.Rel(root, filepath.Dir(path)); err == nil && rel != "." {
-			for p := rel; p != "." && p != "/"; p = filepath.Dir(p) {
-				folders[p] = true
-			}
+		rel, err := filepath.Rel(walked, path)
+		if err != nil {
+			return nil
+		}
+		out.Files = append(out.Files, filepath.Join(root, rel))
+		for p := filepath.Dir(rel); p != "." && p != "/"; p = filepath.Dir(p) {
+			folders[p] = true
 		}
 		return nil
 	}
-	if err := filepath.WalkDir(root, walk); err != nil {
+	if err := filepath.WalkDir(walked, walk); err != nil {
 		return Listing{}, axerr.Wrap(axerr.Unavailable, err, "listing %s", root)
 	}
 	for f := range folders {

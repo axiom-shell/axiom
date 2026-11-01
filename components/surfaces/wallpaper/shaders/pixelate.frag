@@ -1,10 +1,13 @@
-// The old wallpaper breaks into blocks, which settle into the new one
+// The old wallpaper breaks into blocks, which settle into the new one:
+// everywhere at once, or sweeping along the direction or out from the origin
 void main() {
     vec2 uv = qt_TexCoord0;
-    float size = 0.06 * sin(progress * PI);
+    float local = localProgress(uv);
+    float size = 0.06 * sin(local * PI);
+    vec2 at = uv;
     if (size > 0.002) {
         vec2 cell = vec2(size / aspect, size);
-        uv = (floor(uv / cell) + 0.5) * cell;
+        at = (floor(uv / cell) + 0.5) * cell;
     }
-    finish(mix(fromColor(uv), toColor(uv), smoothstep(0.35, 0.65, progress)));
+    finish(mix(fromColor(at), toColor(at), smoothstep(0.35, 0.65, local)));
 }

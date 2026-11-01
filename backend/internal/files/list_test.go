@@ -54,6 +54,14 @@ func TestList(t *testing.T) {
 			}
 		})
 	}
+	// A folder reached through a link lists under the link's path
+	link := filepath.Join(t.TempDir(), "wallpapers")
+	if err := os.Symlink(dir, link); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := List(link, []string{"jpg"}, false); err != nil || !reflect.DeepEqual(got.Files, []string{filepath.Join(link, "a.jpg"), filepath.Join(link, "link.jpg")}) {
+		t.Errorf("a linked folder: %+v, %v", got, err)
+	}
 	if _, err := List(filepath.Join(dir, "missing"), nil, false); axerr.KindOf(err) != axerr.NotFound {
 		t.Errorf("a missing folder: %v", err)
 	}

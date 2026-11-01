@@ -153,20 +153,44 @@ properties:
           type:
             type: string
             title: Transition
-            enum: [random, none, fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, checker, zoom, ripple, swirl, blur]
-            x-enumLabels: {random: Random, none: None, fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, checker: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur}
+            enum: [random, none, fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur, clock]
+            x-enumLabels: {random: Random, none: None, fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, tiles: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur, clock: Clock}
             default: random
             description: How a new wallpaper replaces the old one. Random picks one from the list below each time; every monitor that changes together plays the same one. With animations off, it switches at once.
           pool:
             type: array
             title: Random picks from
-            default: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, checker, zoom, ripple, swirl, blur]
+            default: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur, clock]
             items:
               type: string
-              enum: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, checker, zoom, ripple, swirl, blur]
-            x-enumLabels: {fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, checker: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur}
+              enum: [fade, wipe, slide, grow, shrink, wave, dissolve, pixelate, blinds, tiles, zoom, ripple, swirl, blur, clock]
+            x-enumLabels: {fade: Fade, wipe: Wipe, slide: Slide, grow: Grow, shrink: Shrink, wave: Wave, dissolve: Dissolve, pixelate: Pixelate, blinds: Blinds, tiles: Tiles, zoom: Zoom, ripple: Ripple, swirl: Swirl, blur: Blur, clock: Clock}
             x-showIf: {type: random}
             description: The transitions Random chooses between. None ticked chooses from all of them.
+          direction:
+            type: string
+            title: Direction
+            enum: [random, right, left, down, up, downRight, downLeft, upRight, upLeft]
+            x-enumLabels: {random: Random, right: Left to right, left: Right to left, down: Top to bottom, up: Bottom to top, downRight: Top left to bottom right, downLeft: Top right to bottom left, upRight: Bottom left to top right, upLeft: Bottom right to top left}
+            default: random
+            x-showIf: {type: {not: none}}
+            description: The way a transition moves across the screen. Fade, dissolve, pixelate and blur sweep across in it too, and Clock starts its hand pointing that way. Random picks one each time.
+          position:
+            type: string
+            title: Starts from
+            enum: [random, click, center, topLeft, topRight, bottomLeft, bottomRight]
+            x-enumLabels: {random: Random, click: Where you click, center: The center, topLeft: Top left corner, topRight: Top right corner, bottomLeft: Bottom left corner, bottomRight: Bottom right corner}
+            default: random
+            x-showIf: {type: {not: none}}
+            description: Where grow, shrink, zoom, ripple, swirl and Clock start, and where fade, dissolve, pixelate and blur spread out from. Where you click starts at the thumbnail clicked in a wallpaper picker, and moving transitions move away from it; a change from anything else (rotation, light and dark) starts at random.
+          easing:
+            type: string
+            title: Pace
+            enum: [smooth, easeOut, easeIn, linear, snappy]
+            x-enumLabels: {smooth: Smooth, easeOut: Slowing down, easeIn: Speeding up, linear: Steady, snappy: Snappy}
+            default: smooth
+            x-showIf: {type: {not: none}}
+            description: How a transition speeds up and slows down over its length. Smooth starts and ends gently; Snappy covers most of the way at once and settles.
           duration:
             type: integer
             title: Length
@@ -192,7 +216,7 @@ properties:
             type: boolean
             title: Move with the workspaces
             default: false
-            description: The wallpaper is drawn a little larger than the screen and slides a step with each workspace you go to.
+            description: The wallpaper is drawn a little larger than the screen and slides a step with each workspace you go to, and across as you scroll along a scrolling layout's windows.
           strength:
             type: integer
             title: How far

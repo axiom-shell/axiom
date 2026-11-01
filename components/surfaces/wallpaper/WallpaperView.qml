@@ -25,7 +25,7 @@ Item {
   // from)
   property Image current: null
   property Image previous: null
-  // The transition playing: { name, angle, origin, seed }
+  // The transition playing: { name, angle, origin, sweep, seed }
   property var _transition: ({
       "name": "show",
       "angle": 0,
@@ -33,6 +33,7 @@ Item {
         "x": 0.5,
         "y": 0.5
       },
+      "sweep": 0,
       "seed": 0
     })
   // The screen's size, kept while the item is briefly 0 (a screen going
@@ -70,7 +71,11 @@ Item {
     root.previous = root.current;
     root.current = image;
     const wanted = ThemeManager.transition;
-    const picked = WallpaperTransitions.pick(Appearance.wallpaperTransition, Appearance.wallpaperTransitionPool, wanted.seed, wanted.forced);
+    const picked = WallpaperTransitions.pick(Appearance.wallpaperTransition, Appearance.wallpaperTransitionPool, wanted.seed, wanted.forced, {
+      "direction": Appearance.wallpaperTransitionDirection,
+      "position": Appearance.wallpaperTransitionPosition,
+      "point": wanted.point ?? null
+    });
     // Nothing to move from at the start: the first wallpaper fades in
     // over the background
     const from = root.previous?.status === Image.Ready;
@@ -140,6 +145,7 @@ Item {
     property vector4d toRect: root._rect(root.current)
     property color background: Theme.background
     property point origin: Qt.point(root._transition.origin.x, root._transition.origin.y)
+    property real sweep: root._transition.sweep
     property real seed: root._transition.seed
     property var fromTex: root.previous ?? root.current
     property var toTex: root.current
@@ -154,7 +160,7 @@ Item {
     to: 1
     // behaviour timing: the user's transition length (Appearance.wallpaper.transition.duration)
     duration: Appearance.wallpaperTransitionDuration
-    easing.type: Easing.InOutCubic
+    easing.type: WallpaperTransitions.easing(Appearance.wallpaperTransitionEasing)
     onFinished: root._rest()
   }
 }

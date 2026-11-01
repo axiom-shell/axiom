@@ -64,16 +64,20 @@ QtObject {
     "dark": Appearance.darkWallpaper,
     "light": Appearance.lightWallpaper
   }, Appearance.darkMode, root._look.rotated ?? null)
-  // The transition the next change of what's shown plays ({ seed, forced
-  // }; WallpaperView reads it once the new wallpaper has loaded): a fresh
-  // seed per change, so the screens changing together pick the same
-  // transition, and a preview's transition name ("" for the configured)
+  // The transition the next change of what's shown plays ({ seed, forced,
+  // point }; WallpaperView reads it once the new wallpaper has loaded): a
+  // fresh seed per change, so the screens changing together pick the same
+  // transition, a preview's transition name ("" for the configured), and
+  // the clicked point it starts from ({ x, y } in screen units, or null)
   readonly property var transition: root._transition
   property var _transition: ({
       "seed": 0,
-      "forced": ""
+      "forced": "",
+      "point": null
     })
   property string _forcedTransition: ""
+  // startFrom's point and when it was given
+  property var _startPoint: null
   // What was shown when the seed was drawn: the binding also re-evaluates
   // on look state changes that show nothing new (lastRotated)
   property string _seededFor: ""
@@ -82,15 +86,33 @@ QtObject {
     if (shown === root._seededFor)
       return;
     root._seededFor = shown;
+    // A click's point only for a change soon after it: one that changed
+    // nothing mustn't aim a later rotation (a config-committed change, such
+    // as a light/dark wallpaper, lands a moment after the click)
+    const start = root._startPoint;
     root._transition = {
       "seed": Math.floor(Math.random() * 2147483647),
-      "forced": root._forcedTransition
+      "forced": root._forcedTransition,
+      "point": start && Date.now() - start.at < 3000 ? {
+        "x": start.x,
+        "y": start.y
+      } : null
     };
     root._forcedTransition = "";
+    root._startPoint = null;
   }
   // The next change plays `name` (WallpaperManager.preview)
   function forceTransition(name) {
     root._forcedTransition = name;
+  }
+  // The next change, if it comes soon, starts from `point` ({ x, y } in
+  // screen units: where a wallpaper picker was clicked)
+  function startFrom(point) {
+    root._startPoint = {
+      "x": point.x,
+      "y": point.y,
+      "at": Date.now()
+    };
   }
   // The primary monitor's (the lockscreen's)
   readonly property string wallpaper: root.wallpaperFor(General.primaryMonitor)

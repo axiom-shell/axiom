@@ -9,13 +9,17 @@ import qs.services.core
 import qs.services.compositor
 
 // A screen's wallpaper (WallpaperView: its transitions), sliding with the
-// workspaces when the parallax is on
+// workspaces and along a scrolling strip when the parallax is on
 PanelWindow {
   id: root
 
   readonly property string name: screen?.name ?? ""
-  // Where the parallax puts it for the output's active workspace
-  readonly property var _shift: Appearance.wallpaperParallax ? WallpaperFill.parallax(CompositorManager.output(root.name)?.activeWorkspaceId ?? 0, {
+  // The output's active workspace and scrolling strip, if it has one
+  readonly property int _activeId: CompositorManager.output(root.name)?.activeWorkspaceId ?? 0
+  readonly property string _strip: Appearance.wallpaperParallax ? CompositorManager.stripDirection(root.name) : ""
+  // Where the parallax puts it for the output's active workspace and where
+  // its strip is scrolled to
+  readonly property var _shift: Appearance.wallpaperParallax ? WallpaperFill.parallax(root._activeId, {
     "grid": WorkspacesConfig.grid,
     "columns": WorkspacesConfig.columns,
     "rows": WorkspacesConfig.rows,
@@ -23,7 +27,12 @@ PanelWindow {
     "base": CompositorManager.workspaceBase(root.name),
     "dynamic": CompositorManager.supports.dynamicWorkspaces === true,
     "vertical": CompositorManager.supports.verticalWorkspaces === true,
-    "ids": CompositorManager.workspaces.filter(w => w.output === root.name).map(w => w.id)
+    "ids": CompositorManager.workspaces.filter(w => w.output === root.name).map(w => w.id),
+    "still": CompositorManager.wallpaperStill,
+    "strip": root._strip,
+    "windows": root._strip === "" ? [] : CompositorManager.windows.filter(w => w.output === root.name && w.workspaceId === root._activeId && !w.floating && !w.hidden && !w.fullscreen),
+    "width": root.width,
+    "height": root.height
   }) : ({
       "x": 0,
       "y": 0

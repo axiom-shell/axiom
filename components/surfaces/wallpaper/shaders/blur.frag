@@ -1,8 +1,10 @@
-// The old wallpaper blurs away and the new one comes into focus
+// The old wallpaper blurs away and the new one comes into focus:
+// everywhere at once, or sweeping along the direction or out from the origin
 void main() {
     vec2 uv = qt_TexCoord0;
-    float radius = 0.025 * sin(progress * PI);
-    float m = smoothstep(0.3, 0.7, progress);
+    float local = localProgress(uv);
+    float radius = 0.025 * sin(local * PI);
+    float m = smoothstep(0.3, 0.7, local);
     vec4 sum = vec4(0.0);
     float total = 0.0;
     // A spiral of taps over a disc

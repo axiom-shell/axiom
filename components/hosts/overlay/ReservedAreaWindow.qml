@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.config
 import qs.services.ui
 import qs.components.methods
+import qs.components.hosts.popout
 
 // A full-screen Overlay-layer window placed inside the border's and bars'
 // reserved area (the overlay, the onboarder). Normal exclusion with no zone
@@ -24,6 +25,11 @@ PanelWindow {
 
   // Stepped aside: subclasses hide their content on it
   readonly property bool steppedAside: SurfaceManager.steppedAside
+  // Its layer-shell namespace
+  required property string layerNamespace
+  // Its top-left on its screen, or null while unknown (a wallpaper
+  // picker's click point)
+  readonly property var screenOrigin: placeOnScreen.origin
 
   anchors {
     left: true
@@ -60,10 +66,18 @@ PanelWindow {
   mask: root.steppedAside ? stepAsideMask : null
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : WlrKeyboardFocus.OnDemand
   WlrLayershell.layer: WlrLayer.Overlay
+  WlrLayershell.namespace: root.layerNamespace
   exclusionMode: ExclusionMode.Normal
   exclusiveZone: 0
 
   Region {
     id: stepAsideMask
+  }
+
+  LayerOrigin {
+    id: placeOnScreen
+    window: root
+    namespace: root.layerNamespace
+    layer: WlrLayer.Overlay
   }
 }
