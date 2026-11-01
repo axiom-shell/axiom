@@ -47,6 +47,17 @@ func (h *Hypr) Request(ctx context.Context, command string) (string, error) {
 	return string(reply), nil
 }
 
+// SetCursor sets the cursor (a { theme, size } object): Hyprland takes the
+// theme by its own name (a hyprcursor theme too) and fills in missing
+// names itself.
+func (h *Hypr) SetCursor(ctx context.Context, cursor any) (string, error) {
+	o, ok := cursor.(*jsonx.Object)
+	if !ok {
+		o = jsonx.NewObject()
+	}
+	return h.Request(ctx, "setcursor "+jsonx.ToString(o.Value("theme"))+" "+jsonx.ToString(o.Value("size")))
+}
+
 // JSON sends "j/<command>" and parses the reply.
 func (h *Hypr) JSON(ctx context.Context, command string) (any, error) {
 	reply, err := h.Request(ctx, "j/"+command)
