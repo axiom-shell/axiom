@@ -7,6 +7,9 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
 
 var swaySocketPID = regexp.MustCompile(`sway-ipc\.\d+\.(\d+)\.sock$`)
@@ -27,46 +30,14 @@ func SwayMain(getenv func(string) string) string {
 	places = append(places, filepath.Join(home, ".sway/config"), filepath.Join(xdg, "sway/config"),
 		filepath.Join(home, ".i3/config"), filepath.Join(xdg, "i3/config"), "/etc/sway/config")
 	for _, p := range places {
-		if isFile(p) {
+		if fsx.IsFile(p) {
 			return p
 		}
 	}
 	return ""
 }
 
-// Vars are sway's $variables as set so far, in the order they were set.
-type Vars struct {
-	names  []string
-	values map[string]string
-}
-
-// Set sets name (with its $) to value.
-func (v *Vars) Set(name, value string) {
-	if v.values == nil {
-		v.values = map[string]string{}
-	}
-	if _, ok := v.values[name]; !ok {
-		v.names = append(v.names, name)
-	}
-	v.values[name] = value
-}
-
-// Expand puts the variables into text, the longest names first (so $mod
-// doesn't take $modifier's place).
-func (v *Vars) Expand(text string) string {
-	names := append([]string(nil), v.names...)
-	sort.SliceStable(names, func(i, j int) bool { return len(names[i]) > len(names[j]) })
-	for _, name := range names {
-		text = strings.ReplaceAll(text, name, v.values[name])
-	}
-	return text
-}
-
-var (
-	// SetLine is a `set $name value` line (trimmed)
-	SetLine     = regexp.MustCompile(`^set\s+(\$\S+)\s+(.*)$`)
-	includeLine = regexp.MustCompile(`^include\s+(.+)$`)
-)
+var includeLine = regexp.MustCompile(`^include\s+(.+)$`)
 
 // SwayText is the sway config main with its includes put in, each file
 // once (one path or several, globs, ~, environment variables and the
@@ -81,7 +52,7 @@ func SwayText(main string, skip []string, skipHeader string, getenv func(string)
 		skipped[realPath(expandUser(p, getenv))] = true
 	}
 	seen := map[string]bool{}
-	vars := &Vars{}
+	vars := &render.Vars{}
 	var inline func(path string) string
 	inline = func(path string) string {
 		real := realPath(path)
@@ -99,7 +70,7 @@ func SwayText(main string, skip []string, skipHeader string, getenv func(string)
 		ours := skipHeader != "" && len(lines) > 0 && strings.HasPrefix(lines[0], skipHeader)
 		for _, line := range lines {
 			stripped := strings.TrimSpace(line)
-			if m := SetLine.FindStringSubmatch(stripped); m != nil {
+			if m := render.SwaySetLine.FindStringSubmatch(stripped); m != nil {
 				vars.Set(m[1], strings.TrimSpace(vars.Expand(m[2])))
 			}
 			m := includeLine.FindStringSubmatch(stripped)
@@ -122,7 +93,7 @@ func SwayText(main string, skip []string, skipHeader string, getenv func(string)
 					pattern = filepath.Join(filepath.Dir(path), pattern)
 				}
 				for _, name := range glob(pattern) {
-					if isFile(name) {
+					if fsx.IsFile(name) {
 						out = append(out, inline(name))
 					}
 				}

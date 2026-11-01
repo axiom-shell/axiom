@@ -161,13 +161,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Nothing reads userBindsRead or lastLoadFailed](../issues.md#nothing-reads-userbindsread-or-lastloadfailed)
   - [The niri writer's runtimeOn and unread-binds guards are dead](../issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
   - [Three listings of niri's user files](../issues.md#three-listings-of-niris-user-files)
-  - [RunningNested has its own niri socket client](../issues.md#runningnested-has-its-own-niri-socket-client)
+  - RunningNested has its own niri socket client
   - [A second KDL writer in the kdl package](../issues.md#a-second-kdl-writer-in-the-kdl-package)
   - [Small shrinks in the compositor manager](../issues.md#small-shrinks-in-the-compositor-manager)
   - [niri's bind plan is a copy of runtimeLayer.plan](../issues.md#niris-bind-plan-is-a-copy-of-runtimelayerplan)
   - Go copies of bind helpers that only the parity replay calls
   - sway and niri each fit the shadow to axiom's themselves
-  - [SwayConfigBinds keeps its own copy of sway's $variables](../issues.md#swayconfigbinds-keeps-its-own-copy-of-sways-variables)
+  - SwayConfigBinds keeps its own copy of sway's $variables
   - [Small shrinks in the sway writer and IPC](../issues.md#small-shrinks-in-the-sway-writer-and-ipc)
   - [binds and takeover each keep their own isFile and git check](../issues.md#binds-and-takeover-each-keep-their-own-isfile-and-git-check)
   - [The bind merge lists user/ files three times, once per compositor](../issues.md#the-bind-merge-lists-user-files-three-times-once-per-compositor)

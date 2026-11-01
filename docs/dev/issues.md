@@ -581,12 +581,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### RunningNested has its own niri socket client
-- **Where:** `backend/internal/compositor/userconf/niri.go` (`RunningNested`), `backend/internal/compositor/ipc/niri.go` (`Outputs`)
-- **What:** Deletion pass. `RunningNested` dials `$NIRI_SOCKET`, writes `"Outputs"` and parses the reply by hand (28 lines), which `ipc.NiriFromEnv(getenv).Outputs(ctx)` already does with the shared dial and timeout (`userconf` can import `ipc`: `ipc` depends only on `render`, `actions` and `jsonx`). As one `Outputs` call, a single output named `winit`: about 8 lines.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
 ### NiriManager queues actions the daemon could order
 - **Where:** `services/compositor/NiriManager.qml` (`_command`, `_next`), `backend/internal/daemon/compositorsocket.go` (`niriHandlers`)
 - **What:** Deletion pass. `NiriManager` keeps its own queue (`_command`, `_queue`, `_running`, `_next`: about 30 lines) so a chain of actions can't overtake itself, sending each only after the last one's reply came back through the daemon: one full round trip per action. The daemon already has the mechanism, `rpc.Registry.InOrder` (used for `outputs.apply`). A `niri.command` method registered in order, alongside `niri.request` for state, lets `_action` / `_command` send at once and drops the queue: about 30 QML lines for about 5 Go lines.
@@ -1008,12 +1002,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
-### SwayConfigBinds keeps its own copy of sway's $variables
-- **Where:** `backend/internal/compositor/render/sway.go:804` (`swaySet`), `backend/internal/compositor/render/sway.go:815` (`SwayConfigBinds`)
-- **What:** Deletion pass, 12 lines. `userconf` already has `Vars` (`Set`, and `Expand` longest name first) and `SetLine`, and `extractSway` and `SwayText` use them. `SwayConfigBinds` re-implements all of it: `swaySet` is `SetLine` character for character, plus a names slice, a map, and a sort by length on every line. `render` can import `userconf` without a cycle. Fix: `vars := &userconf.Vars{}`, `SetLine` for `set` lines, `line = vars.Expand(line)`. That removes 18 lines (804: 1, 816-825: 10, 843-849: 7) and adds about 6, leaving one set of variable rules instead of two.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### Small shrinks in the sway writer and IPC
 - **Where:** `backend/internal/compositor/manager/sway.go:203` (`setCursor`), `backend/internal/compositor/render/sway.go:478` (`numberOr0`), `backend/internal/compositor/ipc/sway.go:45` (`swayWrite`)
 - **What:** Deletion pass, about 10 lines:
@@ -1110,7 +1098,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The merge keeps key and variable tables render already has
 - **Where:** `backend/internal/compositor/binds/hypr.go:183` (`keyID`), `backend/internal/compositor/binds/sway.go:22` (`swayMouse`), `backend/internal/compositor/binds/hypr.go:41` (`hyprDirections`), `backend/internal/compositor/binds/sway.go:30` (`swayDirections`)
-- **What:** Deletion pass, about 16 lines. (1) `keyID` (15 lines) is a third key normaliser beside `render.KeyID`/`BindKeys.keyId`. It lowercases and sorts but resolves no modifier alias, so `hl.unbind("WIN + Q")` doesn't match a moved `SUPER + Q`, which `render.KeyID` would. `binds` can import `render` with no cycle. (2) `swayMouse` (3 lines) holds the same 12 entries as `render`'s `swayMouseKeys`. (3) `hyprDirections` and `swayDirections` are the same four-entry map. Fix: use `render.KeyID` in the merge (re-keying `exampleKeys` and `TestKeyID`'s rows to its spelling), export one mouse table, and share one directions map. `SwayConfigBinds`' own `$variable` expander is [SwayConfigBinds keeps its own copy of sway's $variables](#swayconfigbinds-keeps-its-own-copy-of-sways-variables).
+- **What:** Deletion pass, about 16 lines. (1) `keyID` (15 lines) is a third key normaliser beside `render.KeyID`/`BindKeys.keyId`. It lowercases and sorts but resolves no modifier alias, so `hl.unbind("WIN + Q")` doesn't match a moved `SUPER + Q`, which `render.KeyID` would. `binds` can import `render` with no cycle. (2) `swayMouse` (3 lines) holds the same 12 entries as `render`'s `swayMouseKeys`. (3) `hyprDirections` and `swayDirections` are the same four-entry map. Fix: use `render.KeyID` in the merge (re-keying `exampleKeys` and `TestKeyID`'s rows to its spelling), export one mouse table, and share one directions map. `SwayConfigBinds`' own `$variable` expander is SwayConfigBinds keeps its own copy of sway's $variables.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 

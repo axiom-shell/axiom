@@ -12,7 +12,7 @@ Unchanged since batch 1 and still in good shape at its core (event stream, reduc
 - Cleanup: [Nothing reads userBindsRead or lastLoadFailed](../../docs/dev/issues.md#nothing-reads-userbindsread-or-lastloadfailed)
 - Cleanup: [The niri writer's runtimeOn and unread-binds guards are dead](../../docs/dev/issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
 - Cleanup: [Three listings of niri's user files](../../docs/dev/issues.md#three-listings-of-niris-user-files)
-- Cleanup: [RunningNested has its own niri socket client](../../docs/dev/issues.md#runningnested-has-its-own-niri-socket-client)
+- Cleanup: "RunningNested has its own niri socket client" (fixed, row 20 compositor-01)
 - Cleanup: [NiriManager queues actions the daemon could order](../../docs/dev/issues.md#nirimanager-queues-actions-the-daemon-could-order)
 - Cleanup: [A second KDL writer in the kdl package](../../docs/dev/issues.md#a-second-kdl-writer-in-the-kdl-package)
 - Outside: [The Hyprland and sway bind merges each skip half of compositor/actions](../../docs/dev/issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)

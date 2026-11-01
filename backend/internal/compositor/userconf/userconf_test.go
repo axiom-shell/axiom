@@ -221,3 +221,18 @@ func TestAxiomKey(t *testing.T) {
 	eq(t, AxiomKey("Mod3+X", "Super"), "")
 	eq(t, AxiomKey("", "Super"), "")
 }
+
+// user/'s files as the managed config includes them: regular files and
+// links to one, by name, no hidden ones, no folders
+func TestNiriUserFiles(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	for _, name := range []string{"b.kdl", "a.kdl", ".swap.kdl", "notes.txt", "sub.kdl/x.kdl"} {
+		write(t, filepath.Join(dir, name), "")
+	}
+	if err := os.Symlink(filepath.Join(dir, "a.kdl"), filepath.Join(dir, "c.kdl")); err != nil {
+		t.Fatal(err)
+	}
+	eq(t, strings.Join(NiriUserFiles(dir), ","), "a.kdl,b.kdl,c.kdl")
+	eq(t, strings.Join(UserFiles(dir, nil), ","), "a.kdl,b.kdl,c.kdl,notes.txt")
+}

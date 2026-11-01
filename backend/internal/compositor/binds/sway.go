@@ -11,6 +11,7 @@ import (
 	"unicode"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -236,7 +237,7 @@ func swayFiles(o Options) []string {
 // in each so far
 func extractSway(ctx context.Context, o Options) *jsonx.Object {
 	result := emptyResult()
-	vars := &userconf.Vars{}
+	vars := &render.Vars{}
 	for _, path := range swayFiles(o) {
 		if o.Tracked(ctx, path) {
 			push(result, "tracked", path)
@@ -253,7 +254,7 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 			if line == "" || strings.HasPrefix(line, "#") {
 				continue
 			}
-			if m := userconf.SetLine.FindStringSubmatch(line); m != nil {
+			if m := render.SwaySetLine.FindStringSubmatch(line); m != nil {
 				vars.Set(m[1], strings.TrimSpace(vars.Expand(m[2])))
 				continue
 			}
