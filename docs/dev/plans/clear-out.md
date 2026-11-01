@@ -148,7 +148,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The shell's unused daemon-call paths
   - Two dead Go helpers and a forwarding wrapper
 - **core-ui-theming-01** (7):
-  - [Small shrinks in the core services](../issues.md#small-shrinks-in-the-core-services)
+  - Small shrinks in the core services
   - [setWallpaperAndGenerate only forwards for one caller](../issues.md#setwallpaperandgenerate-only-forwards-for-one-caller)
   - [~/.current_wallpaper is written but nothing reads it](../issues.md#current_wallpaper-is-written-but-nothing-reads-it)
   - [StyledRectButton's badge and border press colour have no user](../issues.md#styledrectbuttons-badge-and-border-press-colour-have-no-user)

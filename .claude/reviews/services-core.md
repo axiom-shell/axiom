@@ -11,7 +11,7 @@ The core funnels (CommandManager, FileManager, StateManager, ConsumerRegistry, t
 - Major: [Album art piles up in the runtime folder for the whole session](../../docs/dev/issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
 - Major: [MediaManager ticks the position with nothing showing it](../../docs/dev/issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
 - Cleanup: [runDetached warns about a lost connection](../../docs/dev/issues.md#rundetached-warns-about-a-lost-connection)
-- Cleanup: [Small shrinks in the core services](../../docs/dev/issues.md#small-shrinks-in-the-core-services)
+- Cleanup: "Small shrinks in the core services" (fixed, row 20 core-ui-theming-01)
 Minor (unrecorded):
 - `docs/dev/core/services-pattern.md` › Shape: "Every service is `pragma Singleton QtObject`", but 24 services' root is Quickshell's `Singleton` (the service recipe allows it for child objects).
 - `docs/dev/core/shell-manager-targeting.md` › "all": names the focus grab `HyprlandGrab`; it is `FocusGrab` (HyprlandGrab only on Hyprland). "A use may narrow the enum (General's own has no `inherit`)": it has no `named` either.

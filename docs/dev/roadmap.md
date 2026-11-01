@@ -527,7 +527,6 @@ Found by the audits:
 - [Album art piles up in the runtime folder for the whole session](issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
 - [MediaManager ticks the position with nothing showing it](issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
 - [runDetached warns about a lost connection](issues.md#rundetached-warns-about-a-lost-connection)
-- [Small shrinks in the core services](issues.md#small-shrinks-in-the-core-services)
 - [Rescanning the theme folders lists the shell's working directory as themes](issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
 - [A generated theme from a wallpaper reached through a symlink is regenerated at every start](issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)
 - [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)

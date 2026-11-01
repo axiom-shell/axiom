@@ -9,8 +9,6 @@ import qs.config
 QtObject {
   id: root
 
-  readonly property string stateDir: Paths.statePath
-
   /**
      * @brief Creates a state handler for a specific service
      * @param serviceName The name of the service (e.g., "launcher")
@@ -20,18 +18,9 @@ QtObject {
   function createStateHandler(serviceName) {
     if (_handlers[serviceName])
       return _handlers[serviceName];
-    const filepath = stateDir + serviceName + ".json";
+    const filepath = Paths.statePath + serviceName + ".json";
     const handler = {
-      save: function (data) {
-        try {
-          FileManager.write(filepath, JSON.stringify(data, null, 2));
-          console.log(`[StateManager] ${serviceName} state saved.`);
-          return true;
-        } catch (e) {
-          console.error(`[StateManager] Failed to save ${serviceName}:`, e);
-          return false;
-        }
-      },
+      save: data => FileManager.write(filepath, JSON.stringify(data, null, 2)),
       load: function (defaultValue) {
         console.log(`[StateManager] Loading ${serviceName} from`, filepath);
         const content = FileManager.read(Qt.resolvedUrl(filepath));
