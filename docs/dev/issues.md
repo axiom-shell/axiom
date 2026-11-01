@@ -126,12 +126,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the overlay and popouts plan's build (row 16)
 
-### On Hyprland an older grab under a newer one survives a click outside both
-- **Where:** `services/compositor/FocusGrab.qml` (`_superseded`, `dismissed`), `services/ui/BackdropManager.qml` (`newestGrab`)
-- **What:** Hyprland has one native grab at a time, so a newer `FocusGrab` (a bar popout's text field, the dock menu, a popout over the overlay) clears an older one's with no click, and the older takes it back once it's the newest again. A click on a window, outside both, then dismisses only the newer: the older one (a floating edge menu with close on outside click, the launcher) stays open, takes its grab back and with it the keyboard from the window just clicked. The cleared grab doesn't say where the click landed: on the older surface (stay open, as now) or on a window (close too). Closing every older grab on the newest's dismissal closes the launcher on a click in it; listing the older grabs' windows in the newest's keeps the newer open on a click in the older.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing bar-popouts-02 (edge and floating popouts close only on a real outside click)
-
 ### The overlay's gaps can't be adjusted
 - **Where:** `components/methods/GridPlacement.qml` (`cardSpacing`, `baseCard`, `gapOf`), `config/OverlayConfig.qml` (`boxPadding`)
 - **What:** The maintainer's note: "the overlay's gaps become adjustable". The gaps are one design value, `GridPlacement.cardSpacing` = 20: the gap between modules, the margin around the grid, the overlay box's padding and the tool pages' spacing; through `baseCard` and `gapOf` edge menus, the desktop, the lock screen and the greeter are drawn as the overlay's grid scaled. Answered so far (2026-10-29): "one setting, gaps between modules and edges of the overlay page look the same". Open: the overlay's alone, or one Look & Feel setting for the overlay, lock screen, greeter and desktop with edge menus kept at today's value (the maintainer: "Menus already seem smaller"); a bigger gap shrinks the cards on a page fitted to its screen. Deferred: "defer for now, still unsure".

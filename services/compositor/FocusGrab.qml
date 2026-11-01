@@ -26,8 +26,8 @@ Scope {
   // A real click outside ended it, on any compositor: `clickedOutside`, or
   // the native grab cleared while this is the newest grab (one native grab
   // at a time: a newer one starting clears this one, no click, and this
-  // takes it back once it's the newest again). Never focus leaving. Sent
-  // before `cleared`
+  // takes it back once it's the newest again), which ends the older grabs
+  // too. Never focus leaving. Sent before `cleared`
   signal dismissed
 
   readonly property bool _native: CompositorManager.supports.focusGrab === true
@@ -53,13 +53,19 @@ Scope {
     if (root._uid > 0)
       BackdropManager.grabbing(root._uid, false);
   }
+  // On Hyprland, a click that ended the newest grab's native grab, for one
+  // a newer grab took the native grab from: it leaves BackdropManager.grabs,
+  // so it never takes the grab, and the keyboard, back from where it landed
   property Connections _outside: Connections {
     target: BackdropManager
-    enabled: root._catching
+    enabled: root._catching || (root.active && root._superseded)
     function onClickedOutside(window, since) {
       if (root.windows.includes(window) || (since && !since.includes(root._uid)))
         return;
-      root.clickedOutside();
+      if (root._native)
+        BackdropManager.grabbing(root._uid, false);
+      else
+        root.clickedOutside();
       root.dismissed();
       root.cleared();
     }
@@ -80,10 +86,12 @@ Scope {
       windows: root.windows
       active: root.active && !root._superseded
       onCleared: {
-        if (root._newest)
+        if (root._newest) {
+          BackdropManager.clickedOutside(null, null);
           root.dismissed();
-        else
+        } else {
           root._superseded = true;
+        }
         root.cleared();
       }
     }

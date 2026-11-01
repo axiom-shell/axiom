@@ -53,7 +53,8 @@ QtObject {
 
   // --- Catching clicks for a focus grab the compositor doesn't have ---
 
-  // Every FocusGrab active now, native grab or not (uids, oldest first)
+  // Every FocusGrab active now, native grab or not (uids, oldest first),
+  // but one a click ended under a newer native grab (FocusGrab)
   property var grabs: []
   // The newest of them (0 with none): only its surface asks for the
   // keyboard exclusively (FocusGrab.exclusive), and it holds Hyprland's
@@ -69,7 +70,8 @@ QtObject {
   // A click caught while `catching`: on a backdrop (`window` null), or on
   // a bar above it (`window` its window, `since` the `grabs` when it was
   // pressed: one it opened isn't outside), outside a grab that doesn't let
-  // input through to it (FocusGrab)
+  // input through to it (FocusGrab). On Hyprland, a click that cleared the
+  // newest grab's native grab (both null): outside the older grabs too
   signal clickedOutside(var window, var since)
 
   function grabbing(uid, on) {
