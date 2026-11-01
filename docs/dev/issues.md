@@ -32,6 +32,24 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding wallpaper transitions
 
+### The Vpn widget's icon and label are invisible on a filled bar
+- **Where:** `components/bar/widgets/Vpn/schema.yaml`, `components/bar/widgets/base/BarIconWidget.qml` (`colors`)
+- **What:** The Vpn widget's schema has no `foregroundColor` (no `colors` part, no own field), so `properties.foregroundColor` is undefined, `Theme.resolveColor` makes it transparent, and on a bar whose `widgetStyle` is `filled` (the default) `BarWidgetStyle.colors` draws its icon and label in that: an empty pill. Seen with the Drives widget, which was built from it (fixed there by adding the field as IdleInhibitor has it). Fix: the same `foregroundColor` field on Vpn; a `tst_Config` check that every `BarIconWidget` type has one would keep it from coming back.
+- **Size:** trivial
+- **Found:** 2026-11-01, while testing removable drives in a nested shell
+
+### The weather TestPlace test fails now and then under load
+- **Where:** `backend/internal/weather/weather_test.go` (`TestPlace`, `newFetcher`)
+- **What:** Its parallel subtests all fetch through `http.DefaultClient`, and each one's fake server closing (`httptest.Server.Close` calls `CloseIdleConnections` on `http.DefaultTransport`) can break another's request in flight: `scripts/dev/verify.sh` once failed `TestPlace/both_IP_services_down` with `err = Get "http://127.0.0.1:…/ipapi": net/http: HTTP/1.x transport connection broken: http: CloseIdleConnections called, want "HTTP 503"`; 120 runs alone passed. Fix: `newFetcher` uses the fake server's own client (`f.Client()`), not `http.DefaultClient`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing removable drive support
+
+### Eject may leave a USB stick powered on
+- **Where:** `backend/internal/udisks/udisks.go` (`eject`)
+- **What:** `eject` picks the Drive's `Eject` over `PowerOff` for any drive with `CanEject` and removable media (`case drive.Optical || drive.CanEject && drive.mediaRemovable:` before `case drive.CanPowerOff:`). If udisks2 reports a USB stick with the removable bit as Ejectable, it only gets `Eject`: it stays in udisks2 without media (hidden, `removed` sent) but powered, which contradicts `docs/dev/features/drives.md` ("locks and powers off"). A card reader's card wants `Eject` (the reader stays). PLAUSIBLE: `udisksctl info -b /dev/sdX` on a real stick (Ejectable, CanPowerOff, MediaRemovable) settles it. Fix, if it holds: `PowerOff` first when `CanPowerOff` and the drive isn't a card reader (`Optical` or a media-changing reader keeps `Eject`), the way GNOME's gvfs powers off a stick after its eject.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing removable drive support
+
 ### A workspace overview bind set to open calls a missing function
 - **Where:** `backend/internal/compositor/actions/table.json`, `shell/WorkspaceOverlay.qml`, `tests/tst_BindActions.qml`
 - **What:** The table's `calls` maps `workspaceOverview` open to `show`, but the `workspaceOverlay` IPC target has `toggle`, `open` and `hide`, no `show`. A bind or hot corner set to open runs `axiom ipc workspaceOverlay show` and fails. `tst_BindActions` covers close→hide only, and nothing checks the table's templates and calls against `docs/dev/generated/ipc.md` (as `backend/internal/cli/named_test.go` does for the named commands).
@@ -606,12 +624,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced. BarContainer's inline `Section` settles through the same `Qt.callLater`; the fix should cover it too (bar audit, 2026-10-30).
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
-
-### Removable drives aren't handled
-- **Where:** `services/system/` (no service yet)
-- **What:** Nothing in services, components or the schema uses udisks: plugging in a USB stick or SD card gives no notification, no mount or eject, and no list of drives (the Disks module shows only mounted filesystems). Also open: automount or ask, the notification's actions, where the drive list lives (a bar widget, a popout, the Disks module), and running udisks through the daemon.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while listing small gaps users notice at once
 
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `services/system/BluetoothManager.qml` (`_connectAfterPair`), `components/content/BluetoothDevices/`

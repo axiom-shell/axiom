@@ -54,7 +54,10 @@ QtObject {
   //   message { icon, text }, vpn { available, on, name (the VPNs up),
   //   address (the first one's) }, camera / screenShare / micUse { apps
   //   (the app names using it), last (the ones last seen using it: a
-  //   card outlives a capture that stops at once) }, every other
+  //   card outlives a capture that stops at once) }, drive { available
+  //   (udisks2 answers), count (drives plugged in), event (the last one:
+  //   DrivesManager.lastEvent, { kind: "added" | "mounted" | "ejected",
+  //   name, mountPoint }, or null) }, every other
   //   type (recording too) { available, on }
   function tile(type, state) {
     const t = {
@@ -147,6 +150,18 @@ QtObject {
         "notable": s.on === true,
         "hidden": s.available !== true
       });
+    case "drive":
+      {
+        const e = s.event ?? null;
+        return Object.assign(t, {
+          "icon": "usb",
+          "name": e?.name ?? "",
+          "event": e?.kind ?? "",
+          "mountPoint": e?.mountPoint ?? "",
+          "on": (s.count ?? 0) > 0,
+          "hidden": s.available !== true || (s.count ?? 0) === 0
+        });
+      }
     case "camera":
     case "screenShare":
     case "micUse":
@@ -274,8 +289,49 @@ QtObject {
   // The status types that show a card for a change (`fired(true)`): an
   // audio device switching, a VPN coming up, an app starting to use the
   // camera or share the screen, the charger plugged in, a Wi-Fi network
-  // joined
-  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi"]
+  // joined, something done to a drive (DrivesManager.lastEvent)
+  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "drive"]
+
+  // A drive event's card (DrivesManager.lastEvent's kinds): its icon and
+  // what happened (English)
+  readonly property var _driveCards: ({
+      "added": {
+        "icon": "usb",
+        "role": "Connected"
+      },
+      "locked": {
+        "icon": "lock",
+        "role": "Encrypted: click to unlock"
+      },
+      "mounted": {
+        "icon": "usb",
+        "role": "Mounted"
+      },
+      "unmounted": {
+        "icon": "usb",
+        "role": "Unmounted"
+      },
+      "ejected": {
+        "icon": "eject",
+        "role": "Safe to remove"
+      },
+      "removed": {
+        "icon": "usb_off",
+        "role": "Disconnected"
+      },
+      "pulled": {
+        "icon": "warning",
+        "role": "Unplugged without ejecting"
+      },
+      "busy": {
+        "icon": "warning",
+        "role": "In use: close what's using it"
+      },
+      "ejectFailed": {
+        "icon": "warning",
+        "role": "Couldn't eject"
+      }
+    })
 
   // Whether two capture tiles (tile()'s) share an app: one app taking the
   // camera and the microphone together (a call)
@@ -285,12 +341,14 @@ QtObject {
   }
 
   // What a status's card shows, from the OSD's tiles (by type, tile()'s)
-  // and status types: { icon, title, role, detail }, or null for a type
+  // and status types: { icon, title, role, detail, clickable (a click
+  // acts on it: a drive's, DrivesManager.activate) }, or null for a type
   // with no card. `role` is English, for the caller to translate (what an
   // audio device is now used for: "Output and input" when the OSD's other
   // device status holds the same device; what a VPN, the apps or the
-  // charger did); `detail` an audio device's profile, a VPN's address, a
-  // network's signal, the time left to a full battery
+  // charger did, a drive's last event); `detail` an audio device's
+  // profile, a VPN's address, a network's signal, the time left to a
+  // full battery, where a drive was mounted
   function card(type, tiles, types) {
     if (!root.cardTypes.includes(type))
       return null;
@@ -299,7 +357,8 @@ QtObject {
       "icon": t.icon ?? "",
       "title": t.name ?? "",
       "role": "",
-      "detail": ""
+      "detail": "",
+      "clickable": type === "drive"
     };
     switch (type) {
     case "audio":
@@ -347,6 +406,14 @@ QtObject {
       out.role = "Connected";
       out.detail = t.name ? `${t.signal ?? 0}%` : "";
       break;
+    case "drive":
+      {
+        const look = root._driveCards[t.event] ?? root._driveCards.added;
+        out.icon = look.icon;
+        out.role = look.role;
+        out.detail = t.event === "mounted" ? (t.mountPoint ?? "") : "";
+        break;
+      }
     }
     return out;
   }

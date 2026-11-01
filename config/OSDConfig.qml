@@ -25,6 +25,12 @@ QtObject {
   // skip
   readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.bars.items.filter(item => item.type === "app").map(item => item.apps))))
 
+  // Whether an enabled OSD shows a status type (a service with something
+  // to say then leaves it to the OSD, not a notification)
+  function showsStatus(type) {
+    return osds.some(osd => osd.enabled && osd.statuses.items.includes(type));
+  }
+
   function osdById(id) {
     return osds.find(osd => osd.id === id) ?? null;
   }

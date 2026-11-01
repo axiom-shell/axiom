@@ -290,6 +290,28 @@ QtObject {
           BluetoothManager.toggleDevice(value);
       }
     },
+    {
+      name: "eject",
+      aliases: ["drives", "unmount"],
+      glyph: "eject",
+      usage: "[drive]",
+      description: () => I18n.tr("Eject a removable drive"),
+      available: () => !Paths.greeter && DrivesManager.count > 0,
+      status: () => I18n.tr("{0} plugged in", DrivesManager.count),
+      options: () => DrivesManager.drives.map(drive => ({
+              title: DriveInfo.displayName(drive, I18n.tr("Drive")),
+              subtitle: DrivesManager.statusText(drive),
+              glyph: DriveInfo.icon(drive),
+              value: drive.id
+            })),
+      run: (arg, value) => {
+        const wanted = String(arg ?? "").trim().toLowerCase();
+        const drive = value ? DrivesManager.driveById(value) : wanted !== "" ? DrivesManager.drives.find(d => DrivesManager.nameOf(d).toLowerCase().startsWith(wanted)) ?? null : DrivesManager.count === 1 ? DrivesManager.drives[0] : null;
+        if (drive)
+          DrivesManager.eject(drive);
+        return false;
+      }
+    },
     // --- Notifications & idle ---
     {
       name: "dnd",

@@ -81,6 +81,7 @@ sections:
   - ClaudeUsage
   - Tailscale
   - Vpn
+  - Drives
   - CustomWidgets
   - Updates
   - Todo

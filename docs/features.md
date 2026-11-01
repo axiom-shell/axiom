@@ -14,7 +14,7 @@ Everything below is one shell and one config, and everything is set from inside 
 - **28 widget types:**
   - Workspaces, Window, Time, NextEvent (the next event from your calendars), Media
   - Volume, Microphone, Network, Bluetooth, Battery, SystemStats, SystemTray, Notifications
-  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), Vpn, KeyboardLayout, LockKeys (Caps Lock, Num Lock and Scroll Lock, shown while on or always), IdleInhibitor, Privacy
+  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), Vpn, Drives (removable drives: hidden with none, a popout to open, eject or unlock one, middle click ejects them all), KeyboardLayout, LockKeys (Caps Lock, Num Lock and Scroll Lock, shown while on or always), IdleInhibitor, Privacy
   - ScreenRecord (shown while recording; click to stop), Claude usage (your Claude Code plan limits, for one or more logins), Todo (open count), Pomodoro (the time left), Timer & stopwatch
   - Button (runs any command, opens a page or toggles an edge menu) and Separator
 - **Popouts** grow out of the bar, or out of the screen border, with filleted corners. Widgets open theirs on hover, and Buttons can run their action on hover too.
@@ -77,7 +77,7 @@ Set a style once under **Settings → Look & Feel → Bar widgets**, and give an
   | Group | Modules |
   | --- | --- |
   | Media and sound | Now playing, Audio mixer, Volume dials |
-  | System | System graphs, Top processes, Disks, Battery, Updates, Network, Tailscale |
+  | System | System graphs, Top processes, Disks, Removable drives, Battery, Updates, Network, Tailscale |
   | Controls | Quick actions (toggles, power, pin), Screenshot, Screen recording (region or screen, with sound, recent recordings), Night light, Brightness, Bluetooth devices, Wi-Fi networks, Favourite apps |
   | Time and plans | Clock (digital, stacked or analog, in any time zone), World clocks, Clock & calendar, Calendar, Agenda, Weather |
   | Workspace | Workspaces map, Notifications |
