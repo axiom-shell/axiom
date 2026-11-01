@@ -16,8 +16,7 @@ import qs.services.system
  * `type` also types it into the focused window (the daemon's virtual
  * keyboard, where the compositor has one: `canType`).
  * `search(query, limit, group)` ranks them for the launcher and the EmojiPicker
- * module (most used first with no query), `groups()` lists Unicode's groups
- * in order.
+ * module (most used first with no query).
  */
 QtObject {
   id: root
@@ -45,7 +44,7 @@ QtObject {
   // Most used first with no query (then the rest in Unicode's order), else
   // by name, then keyword, then group (keywords and groups only on a real
   // match: a fuzzy one would match most of them), with use as a tiebreak.
-  // `group` keeps to one group (a name from groups(), "" for all)
+  // `group` keeps to one group (a Unicode group name, "" for all)
   function search(query, limit, group) {
     const all = entries();
     const entriesIn = group ? all.filter(e => e.g === group) : all;
@@ -82,13 +81,6 @@ QtObject {
     return Object.keys(root.usage).sort((a, b) => Search.frecency(root.usage[b], now) - Search.frecency(root.usage[a], now)).slice(0, limit);
   }
 
-  // Unicode's groups, in its order
-  function groups() {
-    if (root._groups === null)
-      root._groups = entries().map(e => e.g).filter((g, i, all) => all.indexOf(g) === i);
-    return root._groups;
-  }
-
   function copy(emoji) {
     _record(emoji);
     ClipboardManager.copyText(emoji);
@@ -103,7 +95,6 @@ QtObject {
   // --- Private ---
 
   property var _entries: null
-  property var _groups: null
   property string _typing: ""
 
   property Timer _typeLater: Timer {

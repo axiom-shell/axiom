@@ -2009,18 +2009,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the launcher system
 
-### EmojiManager's groups() is never called
-- **Where:** `services/apps/EmojiManager.qml:86` (`groups`), `docs/dev/features/launcher-providers.md`
-- **What:** `EmojiManager.groups()` and its cache `_groups` have no caller: the EmojiPicker module, the only user of Unicode's groups, names them itself in its `groupIcons` table, and the launcher never asks. launcher-providers.md still offers it ("`recent(limit)` and `groups()` are also provided"), as does the file's header comment. Fix: delete lines 85-90 and the `_groups` property (line 106), 7 lines, and drop `groups()` from the doc, the header comment and `search`'s comment (line 48: "a name from groups()").
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the launcher system
-
-### LauncherManager keeps a dead clear() and a cliphist test
-- **Where:** `services/ui/LauncherManager.qml:103` (`clear`), `services/ui/LauncherManager.qml:517` (`_clipboardRow`)
-- **What:** `clear()` (lines 103-106) has no caller anywhere: the launcher resets through `query` and `LauncherPanel.reset`. And a text clip's glyph tests `/^\[\[ binary data/`, the marker cliphist printed for images; the daemon's history replaced cliphist (an image is now its own entry with `format`, drawn by `_clipboardImageRow`), so the test only matches text that literally starts with "[[ binary data". Fix: delete `clear()` (4 lines) and make the glyph `entry.pinned ? "keep" : "content_paste"`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the launcher system
-
 ### A clip's label and detail are written in both the launcher and the clipboard module
 - **Where:** `services/ui/LauncherManager.qml:480` (`_clipboardRows`), `services/ui/LauncherManager.qml:505` (`_clipboardRow`), `services/ui/LauncherManager.qml:537` (`_clipboardImageRow`), `components/content/ClipboardHistory/ClipboardHistory.qml:61` (`labelOf`, `detailOf`, `allClips`)
 - **What:** Both build "pins first, then the history without them" with the same expression (LauncherManager:480, ClipboardHistory:25), and both turn an entry into its label ("Image {0}", "Image from {0}" with the url's host, the first line) and its detail (line count and time, format and size, "HTML"): LauncherManager:508-514 and 542-543 against ClipboardHistory:61-83. They differ only in the launcher's " · <url>" after "HTML" and the module's "Pinned". Fix: ClipboardManager gets `shown` (the pins-first list) and `labelOf(entry)` / `detailOf(entry)` (the module's 23 lines, moved, with the url suffix); both callers read them, removing about 10 lines from LauncherManager, which keeps its own glyph and hint.

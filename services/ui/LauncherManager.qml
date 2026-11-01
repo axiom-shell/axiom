@@ -100,11 +100,6 @@ QtObject {
     return results[index]?.complete ?? "";
   }
 
-  function clear() {
-    root._armed = "";
-    query("");
-  }
-
   function launchApp(appEntry) {
     if (!appEntry)
       return false;
@@ -514,7 +509,7 @@ QtObject {
       details.push(I18n.formatDate(new Date(entry.time), I18n.dateFormat("time24")));
     return {
       kind: "clipboard",
-      glyph: entry.pinned ? "keep" : /^\[\[ binary data/.test(first) ? "image" : "content_paste",
+      glyph: entry.pinned ? "keep" : "content_paste",
       title: first.length > 120 ? first.slice(0, 120) + "…" : first,
       subtitle: details.join(" · "),
       hint: entry.pinned ? I18n.tr("Shift+Enter unpins") : I18n.tr("Shift+Enter removes"),

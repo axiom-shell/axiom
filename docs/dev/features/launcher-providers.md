@@ -60,7 +60,7 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
   - the name first, then keywords and group, which count only on a real match;
   - plus frecency from `usage`, stored in `~/.local/state/axiom/ui/emoji.json`;
   - with no query, the most used come first.
-  - `recent(limit)` and `groups()` are also provided.
+  - `recent(limit)` is also provided (the EmojiPicker's recent row).
 - **Enter / Shift+Enter:**
   - Enter `copy`s it (`ClipboardManager.copyText`).
   - Shift+Enter also `type`s the emoji, 150 ms later, once the launcher has let go of the keyboard: `input.type`, the daemon's virtual keyboard (`wayland/vkbd`). `canType` is `WaylandManager.typing`: the compositor offers `zwp_virtual_keyboard_manager_v1`.

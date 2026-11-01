@@ -5,8 +5,8 @@ In good shape: one row shape for every provider, `/config` kept off bars, overla
 
 ## Open findings
 - Major: [The launcher's /generate reads a monitor setting that doesn't exist](../../docs/dev/issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
-- Cleanup: [EmojiManager's groups() is never called](../../docs/dev/issues.md#emojimanagers-groups-is-never-called)
-- Cleanup: [LauncherManager keeps a dead clear() and a cliphist test](../../docs/dev/issues.md#launchermanager-keeps-a-dead-clear-and-a-cliphist-test)
+- Cleanup: "EmojiManager's groups() is never called" (fixed, row 20 platform-01)
+- Cleanup: "LauncherManager keeps a dead clear() and a cliphist test" (fixed, row 20 platform-01)
 - Cleanup: [A clip's label and detail are written in both the launcher and the clipboard module](../../docs/dev/issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
 - Cleanup: [App scoring is written twice and the use bonus three times](../../docs/dev/issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
 - Minor: launcher.md's row shape and LauncherManager's header leave out `armed` (command rows waiting for their confirming Enter; LauncherRow reads it).

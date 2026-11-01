@@ -553,8 +553,6 @@ Found by the audits:
 - [Uninstall keeps a stale greetd backup when greetd points elsewhere](issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
 - [The greeter reads its keyboard layouts before the bundle's are applied](issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
 - [The launcher's /generate reads a monitor setting that doesn't exist](issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
-- [EmojiManager's groups() is never called](issues.md#emojimanagers-groups-is-never-called)
-- [LauncherManager keeps a dead clear() and a cliphist test](issues.md#launchermanager-keeps-a-dead-clear-and-a-cliphist-test)
 - [A clip's label and detail are written in both the launcher and the clipboard module](issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
 - [App scoring is written twice and the use bonus three times](issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
 - [install.sh and the AUR packages never install notify-send, gio or pactl](issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl) (decided: `notify-send` is replaced by a daemon method in Go, not added as a dependency; maintainer, 2026-11-01)
