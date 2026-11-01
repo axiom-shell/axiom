@@ -11,6 +11,9 @@ import qs.config
 // Escape closes it. `options` is [{ value, label, icon? }]; `value` is the
 // current choice, which the field shows unless it's being typed in (the
 // push pattern: picking emits `picked`, the owner sets `value`).
+// `search` (a function of the typed text returning options) replaces the
+// options and their filter, for a list too long to hold (the icon picker):
+// it's asked only once the list opens or something is typed.
 // `expandsInline` opens the list under the field inside it instead, the
 // field growing by its height: on by itself in a popout or edge menu (its
 // window declares `popoutRoom`), where a Popup would be a window of its own
@@ -22,6 +25,8 @@ Item {
   id: root
 
   property var options: []
+  // (query) => [{ value, label, icon? }], instead of `options`
+  property var search: null
   property string value: ""
   // Anything may be typed, not only the options
   property bool editable: false
@@ -42,6 +47,7 @@ Item {
   property int highlighted: 0
 
   property bool _inlineOpen: false
+  readonly property bool _hasList: root.search !== null || root.options.length > 0
   // The inline list's most height, as it opens (read once: the room
   // shrinks as the list takes it), at least two rows
   property real _inlineCap: Number.POSITIVE_INFINITY
@@ -85,6 +91,8 @@ Item {
   readonly property ListView _list: root.expandsInline ? inlineList.item as ListView : popupList
 
   readonly property var matches: {
+    if (root.search)
+      return root.listOpen || root.query !== "" ? root.search(root.query) : [];
     const query = root.query.trim().toLowerCase();
     if (!root.editable || query === "")
       return root.options;
@@ -107,7 +115,7 @@ Item {
   }
 
   function openList() {
-    if (root.readOnly || root.options.length === 0)
+    if (root.readOnly || !root._hasList)
       return;
     root.highlighted = Math.max(0, root.matches.findIndex(option => option.value === root.value));
     if (root.expandsInline) {
@@ -221,7 +229,7 @@ Item {
     }
 
     StyledIcon {
-      visible: !root.readOnly && root.options.length > 0
+      visible: !root.readOnly && root._hasList
       anchors.right: parent.right
       anchors.rightMargin: Widget.smallPadding
       anchors.verticalCenter: parent.verticalCenter

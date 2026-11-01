@@ -24,6 +24,7 @@ settings:
     description: Which account's usage the bar shows. The popout lists every account.
   icon:
     type: string
+    x-control: icon
     title: Icon
     default: data_usage
     description: A Material Symbols name (fonts.google.com/icons), or text.

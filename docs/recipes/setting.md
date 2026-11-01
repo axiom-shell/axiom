@@ -36,6 +36,7 @@
 6. Use it from the consumer.
 
 ## Gotchas
+- **An icon** (a Material Symbols name, or a glyph) takes `"x-control": "icon"`: the field searches the bundled icons, and `check_icons.py` checks its default ([icons](../dev/core/icons.md)).
 - **`x-scope`:** a key inside a `look`-scoped section that names a monitor, path or account needs `"x-scope": "machine"`, and one that runs something `"commands"`. Otherwise examples, imports and exports carry it to other PCs.
 - **`x-takeover: true`** is for settings that take something over on this PC (locker, idle, polkit, Hyprland mode, greeter). Loading or importing a config never changes those.
 - **Paths:** a folder setting gets `"x-control": "folder"` (a Browse button; [File picker](../dev/core/file-picker.md)). It may hold `~`, so expand it with `Paths.expandHome` before it reaches a process or a file read (AGENTS.md › Config).

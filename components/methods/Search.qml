@@ -38,6 +38,33 @@ QtObject {
     return Math.max(5, 30 - 2 * (last - first + 1 - q.length));
   }
 
+  // The icons (the catalog's [name, "search words"], most popular first:
+  // IconManager) best matching `query`, at most `limit` names: by name (the
+  // query's spaces read as underscores), else every query word starting one
+  // of its search words, which ranks with a name matched inside a word;
+  // the catalog's order breaks ties. No query: the most popular
+  function rankIcons(entries, query, limit) {
+    const q = String(query ?? "").trim().toLowerCase();
+    if (q === "")
+      return entries.slice(0, limit).map(entry => entry[0]);
+    const name = q.replace(/\s+/g, "_");
+    const words = q.split(/[\s_]+/).filter(word => word !== "");
+    const scored = [];
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      const tagged = words.every(word => root.score(entry[1], word) >= 65 || root.score(entry[0], word) >= 65);
+      const s = Math.max(root.score(entry[0], name), tagged ? 50 : 0);
+      if (s > 0)
+        scored.push({
+          name: entry[0],
+          i: i,
+          s: s
+        });
+    }
+    scored.sort((a, b) => b.s - a.s || a.i - b.i);
+    return scored.slice(0, limit).map(match => match.name);
+  }
+
   // A use record's weight at `now` (ms): its count, faded with age
   function frecency(entry, now) {
     if (!entry)
