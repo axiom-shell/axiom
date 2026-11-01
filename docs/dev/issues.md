@@ -966,12 +966,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 
-### sway and niri build output details and descriptions twice
-- **Where:** `components/methods/SwayState.qml:183` (`output`), `components/methods/SwayState.qml:298` (`outputDetails`), `components/methods/NiriState.qml:135` (`description`), `components/methods/NiriState.qml:351` (`outputDetails`)
-- **What:** Deletion pass, about 12 lines. The make/model/serial description (`[make, model, serial].filter(part => part && part !== "Unknown").join(" ")`) is written three times: twice in SwayState and once as `NiriState.description`. Both `outputDetails` repeat the same mHz→Hz `rate` lambda, the `availableModes` template (`${m.width}x${m.height}@${rate(m).toFixed(2)}Hz`) and the 13-key object (24 and 30 lines). `MonitorLayout` matches modes as strings across compositors, so the two spellings must stay identical. Fix: one pure helper (`description`, `mode(width, height, mHz)`, `detail({…})`) with a test row, used by both. It removes about 12 lines and keeps the spellings identical by construction.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
 ### A backed toast's blur fill is at the surface opacity twice
 - **Where:** `components/surfaces/notifications/ToastStack.qml:346` (the card's `BlurShape`), `shell/BlurBackingWindow.qml:168` (`fills`)
 - **What:** The blur window draws each copy opaque, then applies `Appearance.surfaceAlpha` once to all of them (`opacity: Appearance.surfaceAlpha`, line 168). Every other `kind: "rect"` shape hands it a raw colour: `BarContainer.qml:541`/`:643` use `BlurShape`'s default `Theme.background`, and `IntegratedEdgeMenu.qml:190` uses `Theme.background`. The toast card hands it `Qt.alpha(Appearance.fill(Theme.background), Appearance.fill(Theme.background).a * toastCard.opacity)`, and `Appearance.fill` has already multiplied in `surfaceAlpha` (`config/Appearance.qml:113`). With translucency at 80% and blur on, a toast's fill comes out at 0.64. It is lighter than the edge popout and bar it sits beside, and lighter than the same toast unbacked (`BlurManager.fillOn`, 0.8), so its tone jumps when the blur pauses or resumes. Fix: `color: Qt.alpha(Theme.background, toastCard.opacity)`.

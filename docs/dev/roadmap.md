@@ -407,7 +407,6 @@ Found by the audits:
 - [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](issues.md#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway)
 - [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
 - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
-- [sway and niri build output details and descriptions twice](issues.md#sway-and-niri-build-output-details-and-descriptions-twice)
 - [A backed toast's blur fill is at the surface opacity twice](issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)
 - [A keepFill opening leaves an unfilled row in an unbacked translucent pill](issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
 - [SlideAnimation's fade, easing and container aliases are dead](issues.md#slideanimations-fade-easing-and-container-aliases-are-dead)

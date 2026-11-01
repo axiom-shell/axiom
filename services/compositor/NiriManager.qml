@@ -425,7 +425,7 @@ Singleton {
       if (root._outputsReply[name].logical)
         raw.push({
           "name": name,
-          "description": NiriState.description(root._outputsReply[name])
+          "description": MonitorLayout.describe(root._outputsReply[name])
         });
     }
     // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label

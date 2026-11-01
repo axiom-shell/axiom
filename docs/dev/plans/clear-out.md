@@ -182,7 +182,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - NiriManager queues actions the daemon could order
   - Small shrinks in SwayManager
   - Sway and niri each forward withMainBinds to the daemon
-  - [sway and niri build output details and descriptions twice](../issues.md#sway-and-niri-build-output-details-and-descriptions-twice)
+  - sway and niri build output details and descriptions twice
   - [The workspace strips repeat ActiveStrip's loader](../issues.md#the-workspace-strips-repeat-activestrips-loader)
   - [The workspace strips' panel property is never read](../issues.md#the-workspace-strips-panel-property-is-never-read)
   - [Three copies of the wheel-notch accumulator](../issues.md#three-copies-of-the-wheel-notch-accumulator)
