@@ -18,7 +18,6 @@ QtObject {
   // Every item, in order (see TodoItems)
   readonly property var items: root._items
   readonly property int openCount: TodoItems.openCount(root._items)
-  readonly property bool loaded: root._loaded
   readonly property string path: Paths.userDataPath + "todo.json"
 
   // What a list shows (TodoItems.shown, with Todo.showCompleted)

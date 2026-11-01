@@ -132,8 +132,6 @@ func newFakeNM(t *testing.T, bus *dbustest.Bus) *fakeNM {
 			return map[string]dbus.Variant{"ActiveConnections": dbus.MakeVariant(list)}
 		case path == "/ip4" && iface == ifaceIP4Config:
 			return map[string]dbus.Variant{"AddressData": {Sig: "aa{sv}", Value: []map[string]dbus.Variant{{"address": dbus.MakeVariant("10.99.0.2"), "prefix": dbus.MakeVariant(uint32(24))}}}}
-		case path == "/dev/wg":
-			return map[string]dbus.Variant{"Interface": dbus.MakeVariant("wg0")}
 		}
 		a, ok := f.actives[path]
 		if !ok {
@@ -141,7 +139,7 @@ func newFakeNM(t *testing.T, bus *dbustest.Bus) *fakeNM {
 		}
 		return map[string]dbus.Variant{
 			"Uuid": dbus.MakeVariant(a.uuid), "Type": dbus.MakeVariant(a.kind), "State": dbus.MakeVariant(a.state),
-			"Ip4Config": dbus.MakeVariant(dbus.ObjectPath("/ip4")), "Devices": dbus.MakeVariant([]dbus.ObjectPath{"/dev/wg"}),
+			"Ip4Config": dbus.MakeVariant(dbus.ObjectPath("/ip4")),
 		}
 	}
 	propMethods := map[string]dbus.Method{
@@ -161,7 +159,7 @@ func newFakeNM(t *testing.T, bus *dbustest.Bus) *fakeNM {
 		}},
 	}
 	// Active connections are /a/1 to /a/9 (ActivateConnection's names)
-	paths := []dbus.ObjectPath{managerPath, "/ip4", "/dev/wg"}
+	paths := []dbus.ObjectPath{managerPath, "/ip4"}
 	for i := 1; i <= 9; i++ {
 		paths = append(paths, dbus.ObjectPath("/a/"+string(rune('0'+i))))
 	}
@@ -266,7 +264,7 @@ func TestListsVPNsOnly(t *testing.T) {
 	h := start(t)
 	got := h.svc.State()
 	want := State{Available: true, Connections: []Connection{
-		{UUID: "wg-1", Name: "Home WG", Kind: "wireguard", Plugin: true, Autoconnect: true, State: "off"},
+		{UUID: "wg-1", Name: "Home WG", Kind: "wireguard", Plugin: true, State: "off"},
 		{UUID: "oc-1", Name: "Missing plugin", Kind: "openconnect", State: "off", Error: "plugin-missing"},
 		{UUID: "ovpn-1", Name: "Work", Kind: "openvpn", Plugin: true, State: "off"},
 	}}
@@ -291,7 +289,7 @@ func TestUpDownAndFailures(t *testing.T) {
 	if !testkit.Eventually(func() bool { return h.conn("wg-1").State == "on" }) {
 		t.Fatalf("not on: %+v", h.conn("wg-1"))
 	}
-	if c := h.conn("wg-1"); c.IPv4 != "10.99.0.2" || c.Device != "wg0" {
+	if c := h.conn("wg-1"); c.IPv4 != "10.99.0.2" {
 		t.Errorf("up: %+v", c)
 	}
 	if err := h.svc.Down(ctx, "wg-1"); err != nil {

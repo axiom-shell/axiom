@@ -37,8 +37,6 @@ QtObject {
   // The last sync's problems: [{ calendar, kind, message }]
   property var errors: []
   readonly property bool syncing: root._running?.cmd === "sync" || root._jobs.some(job => job.cmd === "sync")
-  // A sync, save or delete is running
-  readonly property bool busy: root._running !== null
   // What the page or a module was asked to show next ({ kind: "new" |
   // "day", key }), taken by the first one that can (takeRequest)
   property var request: null

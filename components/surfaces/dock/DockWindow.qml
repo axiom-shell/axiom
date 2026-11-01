@@ -380,10 +380,7 @@ Scope {
     visible: !root.preview && root.mode !== "always" && !root.fullscreen && !root.away && root.count > 0
     edge: root.edge
     // Placed along the work area (inside the reserved zones), as the dock is
-    position: 0
-    startInset: 0
-    endInset: 0
-    positionOffset: DockManager.reservedOf(root.screen)[root.vertical ? 1 : 0] + root.centre
+    centre: DockManager.reservedOf(root.screen)[root.vertical ? 1 : 0] + root.centre
     triggerWidth: root.dock.trigger.size
     triggerLength: root.restLength
     hoverDelay: root.dock.timing.openDelay

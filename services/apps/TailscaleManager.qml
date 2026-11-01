@@ -28,14 +28,12 @@ QtObject {
   // This machine's OS host name and MagicDNS name
   property string hostName: ""
   property string dnsName: ""
-  property string magicDNSSuffix: ""
   // Where to log in while a login waits ("" otherwise)
   property string authURL: ""
   // tailscaled's warnings
   property var health: []
-  // The peer used as exit node ("" none), and its address
+  // The peer used as exit node ("" none)
   property string exitNode: ""
-  property string exitNodeIP: ""
   // Who this machine is logged in as: { loginName, displayName }
   property var account: ({
       "loginName": "",
@@ -83,8 +81,7 @@ QtObject {
 
   function refresh() {
     BackendManager.refresh("tailscale");
-    if (root._detailsInterval > 0)
-      BackendManager.refresh("tailscaledetails");
+    BackendManager.refresh("tailscaledetails");
   }
 
   // `tailscale up`, with the node's saved settings
@@ -186,11 +183,9 @@ QtObject {
       root.version = state.version ?? "";
       root.hostName = state.hostName ?? "";
       root.dnsName = state.dnsName ?? "";
-      root.magicDNSSuffix = state.magicDNSSuffix ?? "";
       root.authURL = state.authURL ?? "";
       root.health = state.health ?? [];
       root.exitNode = state.exitNode ?? "";
-      root.exitNodeIP = state.exitNodeIP ?? "";
       root.account = state.account;
       root.keyExpiry = state.keyExpiry ?? "";
       root.peers = state.peers ?? [];

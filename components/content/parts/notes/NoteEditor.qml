@@ -271,7 +271,10 @@ Item {
       // "- [ ] " typed (or pasted): the line becomes a checkbox; text
       // after a blank line: a new paragraph
       const item = root._block(index);
-      root.apply(NoteMarkdown.reparse(root.doc, index, item ? item.field.cursorPosition : text.length));
+      root.apply(NoteMarkdown.reparse(root.doc, {
+        "block": index,
+        "pos": item ? item.field.cursorPosition : text.length
+      }));
       return;
     }
     root._commit();

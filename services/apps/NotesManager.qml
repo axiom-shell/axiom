@@ -74,7 +74,7 @@ QtObject {
 
   property var _docs: ({})
 
-  // The shared document for a note ({ path, text, revision, … }), or null
+  // The shared document for a note ({ path, text, … }), or null
   // for a path outside the folder. Release it with release(path).
   function acquire(path) {
     const rel = root.clean(path);
@@ -410,8 +410,6 @@ QtObject {
       property string path
       // The note's text as last loaded or edited
       property string text: ""
-      // Bumped when the text is replaced from disk (not by edit())
-      property int revision: 0
       property bool loaded: false
       // Edits waiting to be written
       property bool dirty: false
@@ -451,7 +449,6 @@ QtObject {
         if (doc.dirty || text === doc.text)
           return;
         doc.text = text;
-        doc.revision += 1;
       }
 
       property Timer _saveSoon: Timer {

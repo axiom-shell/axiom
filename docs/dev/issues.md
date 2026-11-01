@@ -1684,7 +1684,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:notifications system
 
 ### The dock's menu and drag state outlive the icons they point at
-- **Where:** `components/surfaces/dock/DockWindow.qml:216` (`dragIndex`), `components/surfaces/dock/DockWindow.qml:357` (`menuIndex`), `components/surfaces/dock/DockWindow.qml:577` (`anchorItem`), `components/surfaces/dock/DockItem.qml:100` (the hover Timer)
+- **Where:** `components/surfaces/dock/DockWindow.qml:216` (`dragIndex`), `components/surfaces/dock/DockWindow.qml:357` (`menuIndex`), `components/surfaces/dock/DockWindow.qml:574` (`anchorItem`), `components/surfaces/dock/DockItem.qml:100` (the hover Timer)
 - **What:** The menu is held as `menuKey`/`menuFull` and anchored on `repeater.itemAt(root.menuIndex)`; a drag as `dragIndex`. Both are cleared only by the icon or the menu itself (`closeMenu()` from DockItem's press, click and drag start, DockMenu's FocusGrab `onCleared`, `conceal()`; `dragIndex = -1` only in DockItem's `_endDrag`). Two paths leave them set:
   - (1) The app goes while its full menu is open: an unpinned app's last window closes by itself (an app quitting, a dialog finishing). `menuIndex` becomes -1, `anchorItem` null, the menu hides, and its FocusGrab (`active: root.visible && root.full`) goes inactive without `cleared`. `menuFull` stays true, so DockItem's hover Timer (`running: … && !root.dockWindow.menuFull && …`) never opens an app's name and windows again; a press doesn't clear it either (`if (!root.dockWindow.menuFull) closeMenu()`). Only a left click or drag on an icon, or the dock being put away, ends it; if the app comes back, its full menu pops open again unasked.
   - (2) Any app appears or goes while a menu is open or an icon is carried: `model: root.keys` is a new JS array, and the Repeater rebuilds every DockItem (the comment at line 84: "they only rebuild when the set of apps changes"). The menu's anchor is destroyed; `anchorItem` isn't re-read when `menuIndex` keeps its value (a pinned app's index doesn't move when a running app is added), so the menu hides with `menuKey` still set (the hover Timer's `menuKey !== root.key` keeps that icon's names shut). A carried icon's delegate is destroyed with its press, so no drop or cancel reaches `_endDrag`: `dragIndex` stays ≥ 0, `engaged` stays true, and a hover or intellihide dock never hides again, magnification stays off and the icon now at that index draws without its indicator. PLAUSIBLE for (2): settle in a nested session (hover a pinned icon until its menu shows, open a window of an app not on the dock by a bind; the menu goes and doesn't come back on that icon) and the same while carrying an icon.
@@ -1693,7 +1693,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:dock system
 
 ### A dock beside another edge's reserving dock is laid out as if that dock weren't there
-- **Where:** `components/surfaces/dock/DockWindow.qml:470` (`margins`), `components/surfaces/dock/DockWindow.qml:102` (`length`), `components/hosts/popout/EdgePlacement.qml:161` (`innerStart`)
+- **Where:** `components/surfaces/dock/DockWindow.qml:467` (`margins`), `components/surfaces/dock/DockWindow.qml:102` (`length`), `components/hosts/popout/EdgePlacement.qml:161` (`innerStart`)
 - **What:** A dock window is a Normal-exclusion layer anchored to both ends of its edge, so the compositor starts it past every exclusive zone at those ends, another dock's included (an always-shown, reserving left dock for a bottom dock). Its layout along the edge doesn't: `length` is `placement.innerEnd - placement.innerStart`, and EdgePlacement's inner sides are `ScreenEdgeManager.reservedWithMenusOn` (bars and integrated menus, no docks). Its margins along the edge are only `-root.startStrokeInset` / `-root.endStrokeInset`. EdgePopout, under the same compositor rule, reaches past docks there (`-root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "left")`, EdgePopout.qml:414–415; comment "Docks reserving space inside the border don't push it in: it reaches past them, on its own edge and at both ends"). So with a reserving left dock of zone Z, the bottom dock's box is drawn Z px right of where `centre`/`insetStart`/`insetEnd` put it in a window Z px shorter than `length`: at `position` 100, or a dock as long as the edge, its far end runs Z px past the window and is cut off, and an attached dock's start end is worked out as joining the border's left stroke while it actually sits past the left dock. The trigger and intellihide rect (`DockManager.reservedOf`, the compositor's reserved) follow the shifted box, not the computed one. Which dock is pushed depends on the compositor's order when both reserve. PLAUSIBLE: settle in a nested session with a left reserving dock and a bottom dock at position 100. Open product question: should a dock keep clear of another edge's dock at its ends (subtract those zones from its inner sides, the box beside it) or reach past it as edge popouts do (the margins above, the box may meet the corner under it)?
   Fix: make the layout and the window agree: reaching past, subtract `DockManager.zoneOn(<screen>, <end side>)` in the along-edge margins as EdgePopout does (2 lines, the dock's own edge excluded).
 
@@ -1701,25 +1701,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:dock system
 
-### The dock's trigger placement and window focus go the long way round
-- **Where:** `components/surfaces/dock/DockWindow.qml:383` (`trigger`), `services/ui/DockManager.qml:84` (`focus`)
-- **What:** The dock's EdgeTrigger zeroes `position`, `startInset` and `endInset` so that `_centre` comes out as `positionOffset` alone (`root.startInset + (… - root.startInset - root.endInset) * root.position + root.positionOffset`); EdgeTrigger's `centre` property is that override (`!isNaN(root.centre) ? root.centre : …`), which IntegratedEdgeMenu uses. And `DockManager.focus(id)` only forwards to `CompositorManager.focusWindow(id)`, for its one caller (DockMenu's window rows, which already imports `qs.services.compositor`). Fix: `centre: DockManager.reservedOf(root.screen)[root.vertical ? 1 : 0] + root.centre` in place of the four lines 383–386, and DockMenu calling `CompositorManager.focusWindow(win.id)` with `focus` (lines 84–87) gone: 7 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:dock system
-
 ### A 12-hour Clock shows the hour in 24-hour time
 - **Where:** `components/content/Clock/Clock.qml:38` (`hours`), `components/bar/widgets/Time/Time.qml:65` (`timeLines`), `components/bar/widgets/Time/Time.qml:72` (`timeLines`)
 - **What:** Qt's `h` and `hh` are 12-hour only when the same format has an `AP`/`ap` field; alone they are 0–23. Clock's `hours` is `I18n.formatDate(root.now, root.use24Hour ? "HH" : "h")`, so a digital or stacked Clock with "24-hour clock" off shows "15:07" with "PM" beside it (stacked: "15" over "07", "PM" under). The Japanese vertical Time widget does the same for its hour line (`use24Hour ? "H" : "h"`): 午後 over 15時. Proof (qmltestrunner, Qt 6.12, 2026-01-01 15:07): en_US `h` = `15`, `hh.ap` = `03.pm`; ja_JP `h` = `15`. Line 72 already works around it by formatting `"hh.ap"` and stripping `.am`/`.pm`, which only works where the locale's AM/PM text is am/pm. Fix: one hour for all three, `String(date.getHours() % 12 || 12)` when 12-hour (padded to two digits on line 72), in place of the `"h"` formats and line 72's strip.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the clock-timezones system
-
-### Small shrinks in TimeZoneManager and WorldClocks
-- **Where:** `services/system/TimeZoneManager.qml:22` (`offsets`), `services/system/TimeZoneManager.qml:102` (`_readZones`), `services/system/TimeZoneManager.qml:114` (`_readingZones`), `components/content/WorldClocks/WorldClocks.qml:66` (`detailOf`)
-- **What:** Each keeps every behaviour:
-  - `TimeZoneManager.offsets` is read nowhere (every clock calls `offsetOf`; `grep -rn 'TimeZoneManager.offsets'` finds nothing): 1 line.
-  - `_readZones` has one caller, `Component.onCompleted`, which runs once, so its guard (`if (root._zones.length > 0 || root._readingZones) return;`) and `_readingZones` never stop anything. Lines 101–116 (16) become a 7-line `Component.onCompleted: BackendManager.call("tz.zones", {}, (error, result) => { if (!error) root._zones = result.zones; }, { "repeatable": true })` under the same comment: 9 removed.
-  - WorldClocks' two callers build `{ "timezone": entry.place.timezone, "date": clock.date }` (4 lines each) for `detailOf`, which then works out `root.timeIn(place.timezone)` again although the row already has it as `entry.there`. `detailOf(zone, there)`, reading `clock.date` itself, makes each call one line (`root.detailOf(entry.place.timezone, entry.there)`): 6 removed, and one zone shift less per row each minute.
-  Total 16 lines.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the clock-timezones system
 
@@ -1730,7 +1714,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
 ### Skipping a focus session counts it as finished
-- **Where:** `services/apps/PomodoroManager.qml:72` (`skip`), `components/methods/PomodoroCycle.qml:87` (`advance`), `components/bar/widgets/Pomodoro/Pomodoro.qml:36`
+- **Where:** `services/apps/PomodoroManager.qml:71` (`skip`), `components/methods/PomodoroCycle.qml:87` (`advance`), `components/bar/widgets/Pomodoro/Pomodoro.qml:36`
 - **What:** `skip()` calls `PomodoroCycle.advance`, which counts `completed + 1` whenever the phase was `work`, whether it ran out or was skipped. The doc and PomodoroCycle's header define `completed` as focus sessions *finished* ("Every `longBreakEvery`-th finished focus session is followed by a long break"). A right click on the idle Pomodoro widget (its skip) therefore counts a session that never started, lights a dot, and with `autoStartBreaks` (default on) starts a 5-minute break running; four stray right clicks bring a long break. Question for the maintainer: should a skipped focus session count (some apps count it), not count, or count only once started? Fix (if it shouldn't count): give `advance` a `finished` flag (true from `_finish`, false from `skip`) that gates the `+ 1`, with a `tst_PomodoroCycle` row.
 
   **Decided** (maintainer, 2026-11-01, on the recommendation "c) count only if the session had started"): "agree".
@@ -1744,14 +1728,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
 ### A todo.json deleted while unreadable blocks every save until restart
-- **Where:** `services/apps/TodoManager.qml:98` (`_load`)
+- **Where:** `services/apps/TodoManager.qml:97` (`_load`)
 - **What:** `_unreadable` is set when the file holds broken JSON and cleared only by a successful parse. When the file is then deleted (the obvious way out of a broken hand edit), `FileManager.read` returns null, `_load` sets only `_loaded`, and `_unreadable` stays true: every add, tick and delete is dropped with `Not saving over` warnings although there is nothing left to protect, until a valid file appears or the shell restarts. Fix: `if (text === null) { root._unreadable = false; root._loaded = true; }` (2 lines).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
-### Dead and forwarding members in the timer services and helpers
-- **Where:** `services/apps/TodoManager.qml:21` (`loaded`), `services/apps/PomodoroManager.qml:22` (`state`), `services/apps/StopwatchManager.qml:22` (`stopwatch`), `components/methods/StopwatchClock.qml:181` (`endsAt`), `components/methods/PomodoroCycle.qml:107` (`format`)
-- **What:** `TodoManager.loaded`, `PomodoroManager.state` and `StopwatchManager.stopwatch` are read by nothing (`grep -rn` for each qualified name and for `root.<name>` finds only the declaration; the services use `_loaded`, `_state`, `_stopwatch`). `StopwatchClock.endsAt(state)` returns `state.running ? state.endsAt : 0`, but every timer it gets went through `normalizeTimer`, which already sets `endsAt` to 0 when not running; its one user (`CountdownTimer._endTime`) can read `root.timer.endsAt`. `PomodoroCycle.format(ms)` only forwards to `StopwatchClock.format(ms, false, true)` for PomodoroManager's two calls. Fix: delete the three properties (3 lines), `endsAt` (5 lines with its blank) and its two test rows in `tst_StopwatchClock` (2), and `format` (4 lines, its four test rows moved to `tst_StopwatchClock` if not already covered there), calling `StopwatchClock.format(…, false, true)` from PomodoroManager: 14 lines.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
@@ -1770,25 +1748,25 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
 ### The Accounts card reads read-only and task-list facts from config entries that never hold them
-- **Where:** `components/views/Settings/CalendarAccountsCard.qml:411` (the Read-only `StatusChip`), `components/views/Settings/CalendarAccountsCard.qml:416` (the Default `SegmentButton`), `components/views/Settings/CalendarAccountsCard.qml:451` (the task-list note)
-- **What:** Since the config reshape (format-2 `convert.go`: "What was fetched (a calendar's name, server color, read-only flag, components) is the calendar cache's now"), a config calendar entry holds only `href`, `name`, `color`, `enabled` (`CalendarEntry` is `additionalProperties: false`), and what the server says lives in `CalendarManager.info`. The card still reads `calendarRow.calendar.readOnly` and `calendar.components` from the config entry. So `(calendar.components ?? []).includes("VEVENT")` is false for every calendar and "Task lists (such as iCloud's reminders) aren't shown yet." shows under every account that has a calendar; the "Read-only" chip never shows for a read-only CalDAV share; and the Default button shows on read-only shares (picking one does nothing, as `newEventCalendar` skips non-writable calendars). The row already holds the joined calendar (`calendarRow.joined = CalendarManager.calendar(calendarId)`). Fix: read `calendarRow.joined?.readOnly ?? false` at lines 411 and 416, and at 451 `(root.account?.calendars ?? []).some(calendar => CalendarManager.calendar(root.accountId + "|" + calendar.href)?.events === false)`.
+- **Where:** `components/views/Settings/CalendarAccountsCard.qml:406` (the Read-only `StatusChip`), `components/views/Settings/CalendarAccountsCard.qml:411` (the Default `SegmentButton`), `components/views/Settings/CalendarAccountsCard.qml:446` (the task-list note)
+- **What:** Since the config reshape (format-2 `convert.go`: "What was fetched (a calendar's name, server color, read-only flag, components) is the calendar cache's now"), a config calendar entry holds only `href`, `name`, `color`, `enabled` (`CalendarEntry` is `additionalProperties: false`), and what the server says lives in `CalendarManager.info`. The card still reads `calendarRow.calendar.readOnly` and `calendar.components` from the config entry. So `(calendar.components ?? []).includes("VEVENT")` is false for every calendar and "Task lists (such as iCloud's reminders) aren't shown yet." shows under every account that has a calendar; the "Read-only" chip never shows for a read-only CalDAV share; and the Default button shows on read-only shares (picking one does nothing, as `newEventCalendar` skips non-writable calendars). The row already holds the joined calendar (`calendarRow.joined = CalendarManager.calendar(calendarId)`). Fix: read `calendarRow.joined?.readOnly ?? false` at lines 406 and 411, and at 446 `(root.account?.calendars ?? []).some(calendar => CalendarManager.calendar(root.accountId + "|" + calendar.href)?.events === false)`.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### A Calendar card on the desktop or in an edge menu takes the page's request
-- **Where:** `components/content/Calendar/Calendar.qml:54` (`_takeRequest`), `services/apps/CalendarManager.qml:299` (`openPage`)
+- **Where:** `components/content/Calendar/Calendar.qml:54` (`_takeRequest`), `services/apps/CalendarManager.qml:297` (`openPage`)
 - **What:** `openPage(request)` sets `CalendarManager.request` and opens the CalendarPage view (or the page with a Calendar module). Every embedded Calendar card listens (`onRequestChanged` → `_takeRequest`, gated only on `root.embedded`), and `embedded` is true in every module grid (`OverlaySlot.qml:56`), so a Calendar card on the desktop or in a pinned edge menu (both allowed: the module's schema leaves `hosts` out) takes the request synchronously, before the page is built. Then clicking the Next event bar widget or a reminder opens the Calendar page on today instead of the event's day, and `/event` or the `calendar newEvent` IPC opens the editor on the desktop card behind the overlay. A request no page shows (no page holds a Calendar, so Settings opens) also stays set until some Calendar card is next built, which then opens a stale new-event editor. Fix: `openPage` stores the page it opens in the request (`{ kind, key, page }`, and no request when it falls back to Settings); Calendar takes it only when it sits on that overlay page (its `host`), the view only when `page === "CalendarPage"`.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### A save conflict reloads nothing, so trying again conflicts again
-- **Where:** `backend/internal/calendar/calendar.go:591` (`Save`), `backend/internal/calendar/calendar.go:627` (`Delete`), `services/apps/CalendarManager.qml:327` (`errorText`), `components/content/parts/calendar/EventEditor.qml:101` (`_save`)
+- **Where:** `backend/internal/calendar/calendar.go:582` (`Save`), `backend/internal/calendar/calendar.go:618` (`Delete`), `services/apps/CalendarManager.qml:325` (`errorText`), `components/content/parts/calendar/EventEditor.qml:101` (`_save`)
 - **What:** An event changed elsewhere (a phone) since the last sync: axiom's PUT gets 412 and `Save` returns `conflict` before `resync`, so objects.json and events.json keep the old copy and etag. The editor says "The event changed elsewhere. It has been reloaded: check it and try again." but nothing was reloaded, and Save again sends the same draft etag (`firstOf(r.Etag, obj.Etag)`, the draft's first) and conflicts again until the next timed sync, and even then the open editor keeps the stale etag. The same holds for a local calendar's file changed on disk, and for `cachedObject`'s conflict when the event is gone from the cache. Fix: on a `Conflict` from `put` or `cachedObject`, `Save` and `Delete` run `s.resync` for that calendar before returning the error; the editor, on `conflict`, reopens on the fresh event (`CalendarEvents.draftOf` of the occurrence with the same href and rid, or closes when it's gone), so what it says is true.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### Moving a recurring event to another calendar drops its earlier occurrences and exceptions
-- **Where:** `services/apps/CalendarManager.qml:207` (`save`, the move)
+- **Where:** `services/apps/CalendarManager.qml:205` (`save`, the move)
 - **What:** Changing the calendar of an occurrence of a weekly series (not Custom: the picker is read-only for those) skips the "Change which?" question and saves as a move: a new event made from the draft, then the old one deleted as a series. The draft is `CalendarEvents.draftOf(event)` of the clicked occurrence, so the new series starts at that occurrence: every earlier one disappears (the old object, history included, is deleted), and its EXDATEs, overrides, attendees and unknown properties are lost (`NewEvent` builds from the payload). When the delete fails after the create (a conflict, the server down), both copies stay while the editor shows the error, and trying again creates a third. Fix: do the move in the daemon: `calendar.save` with a target calendar copies the cached object, applies the series edit (`ApplySeries`, keeping its first DTSTART, overrides and properties), PUTs it to the target with `If-None-Match: *` and the same UID, then deletes the old one, in one locked call that resyncs both calendars. The Custom rule's read-only picker then has no reason left.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
@@ -1800,7 +1778,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### Removing a CalDAV account deletes its password before the draft is saved
-- **Where:** `components/views/Settings/CalendarAccountsCard.qml:84` (`remove`)
+- **Where:** `components/views/Settings/CalendarAccountsCard.qml:83` (`remove`)
 - **What:** The account's removal goes through the settings draft (`SettingsManager.setValue`), which Reset changes or leaving without saving undoes, but `SecretsManager.clearSecret("calendar", root.accountId)` runs at the click. Removing an account and then resetting brings the account back with no password: every sync fails `no_password` until it's typed again. calendar.md keeps local calendars' folders for this very reason ("a draft can be reverted, so nothing is deleted"). Fix: leave the secret on remove, and clear the secrets of account ids gone from `Calendar.items` once a save lands (CalendarManager, on `CalendarConfig.accounts` changing).
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
@@ -1809,18 +1787,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/content/parts/calendar/MonthGrid.qml:296` (the title chips), `components/content/Calendar/Calendar.qml:86` (the compact card's label), `components/bar/widgets/NextEvent/NextEvent.qml:51` (`text`, `subtext`)
 - **What:** `StyledText` leaves `textFormat` at Text.AutoText, so a title whose first tag is HTML (`Qt::mightBeRichText`) is rendered as styled text. An `.ics` subscription is anyone's content: an event titled `<img src="https://tracker.example/p.png"> Standup` makes the shell fetch that URL whenever the month's titles, the compact Calendar card or the Next event widget show it, telling the feed's author the user's address and when they look (events are private: calendar.md › Privacy). Tested: a Qt 6 `Text` with `"9:00 <img src=\"http://127.0.0.1:18765/pixel.png\"> Standup"`, run offscreen, made `GET /pixel.png` on a local server. `EventRow` already sets `textFormat: Text.PlainText`; these three don't. Fix: `textFormat: Text.PlainText` on the chip's StyledText, and through `CompactFigure`'s label and the bar widget's text for event titles (or plain text by default in `StyledText`, rich text opted into: a wider ui-kit change).
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the calendar system
-
-### Calendar results and members nothing reads
-- **Where:** `backend/internal/calendar/calendar.go:206` (`SyncResult`'s `Changed` and `Count`), `services/apps/CalendarManager.qml:41` (`busy`)
-- **What:** The shell drops `calendar.sync`'s result (`CalendarManager.sync` calls back with `{ ok: true }` only; events and errors come from events.json), so `SyncResult.Changed` and `Count` are worked out for the Go tests alone (calendar.go lines 208–209, 294, 298–300, 301 and 307: 8 lines); the tests can assert the same directly (`fake.multigets`, the occurrences in events.json, which they read already). `CalendarManager.busy` has no reader (`grep -rn 'CalendarManager.busy'`: none; 2 lines with its comment). Fix: drop the two fields and their bookkeeping (keeping `Errors`), and `busy`: 10 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the calendar system
-
-### The Accounts card's fallbacks for a renamed key and for empty account ids
-- **Where:** `components/views/Settings/CalendarAccountsCard.qml:27` (`accounts`), `components/views/Settings/CalendarAccountsCard.qml:33` (`accountId`), `components/views/Settings/CalendarAccountsCard.qml:113` (`connect`), `components/views/Settings/CalendarAccountsCard.qml:172` (`addLocal`)
-- **What:** `SettingsManager.localConfig?.Calendar?.accounts` names the key format 2 renamed to `items`, so it's always undefined and the card always reads `CalendarConfig.savedAccounts`, which is right anyway (the draft's edits are previews, in `ConfigManager.live`). And an account's `id` is a required `ItemId` (pattern `^[A-Za-z0-9]…`, never empty; `add()` sets one), so `account.id || "account-" + (index + 1)` (lines 33 and 73), connect's copy with the id filled in (lines 114–116) and the id written back at lines 138 and 172 handle a case that can't occur. Fix: `accounts: CalendarConfig.savedAccounts`, `defaultCalendar: CalendarConfig.defaultCalendar`, `accountId: root.account?.id ?? ""`, `freeId` over `account.id`, `const account = root.account`, and lines 138 and 172 go: 4 lines removed, 3 shortened.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### An own brightness set opens the OSD, which refreshes the monitor beside the write
@@ -1835,12 +1801,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
-### Two members of the brightness system nothing needs
-- **Where:** `services/system/BrightnessManager.qml:114` (`_focused`), `components/content/Brightness/Brightness.qml:102` (`allRow`)
-- **What:** `_focused()` only returns `CompositorManager.focusedOutput`, for the three IPC functions (`up`, `down`, `set`); `id: allRow` is never referenced (`grep -c allRow` gives 1, the definition). Fix: the IPC functions read `CompositorManager.focusedOutput` directly and the id goes: 5 lines (lines 114-117 of BrightnessManager.qml, line 102 of Brightness.qml).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:brightness system
-
 ### The brightness icon thresholds are written three times
 - **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:109` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
 - **What:** The same `level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high"` is in the module, the OSD bar and the Quick actions tile; changing the icons or thresholds means finding all three. Fix: one `icon(level)` function in BrightnessManager (as `AudioManager.inputIcon` serves the OSD's microphone bar), called from all three; Brightness.qml's own `icon` (4 lines) goes.
@@ -1848,16 +1808,16 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
 ### Replacing the chat's conversation leaves its reply and attachments behind
-- **Where:** `services/apps/ChatManager.qml:70` (`newConversation`), `services/apps/ChatManager.qml:77` (`open`), `services/apps/ChatManager.qml:166` (`ask`), `services/apps/ChatManager.qml:503` (`_finish`)
+- **Where:** `services/apps/ChatManager.qml:70` (`newConversation`), `services/apps/ChatManager.qml:77` (`open`), `services/apps/ChatManager.qml:166` (`ask`), `services/apps/ChatManager.qml:499` (`_finish`)
 - **What:** `newConversation` and `open` replace the conversation but only half let go of what belonged to the old one:
-  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 504 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
+  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 500 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
   - **Pending attachments.** A pasted image, screenshot or dropped file is copied at once into `chats/<current id>/` (with `Chat.keepConversations` > 0); both functions just set `root.attachments = []` (only `detach` runs `rm`). A conversation never sent is never in `index.json`, so neither `remove` nor the pruning in `_writeConversation` reaches its folder: paste a screenshot, click New conversation, and the screenshot stays in `~/.local/state/axiom/chats/<id>/` for good, a privacy leak as much as a disk one (the same for attachments pending at a reload, left as rare).
   Fix: one helper both call before replacing the conversation, `_letGo()`: `if (busy) { stop(); _replyId = ""; streamingText = ""; streamingThinking = ""; }` (the late answer and deltas then fail their id check) and `attachments.forEach(a => CommandManager.runDetached(["rm", "-f", "--", a.path]))`.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
 
 ### Images dropped together on the chat overwrite each other
-- **Where:** `services/apps/ChatManager.qml:371` (`_attachmentPath`), `components/content/Chat/Chat.qml:141` (`onDropped`)
+- **Where:** `services/apps/ChatManager.qml:367` (`_attachmentPath`), `components/content/Chat/Chat.qml:141` (`onDropped`)
 - **What:** An attachment's file is named `${Date.now().toString(36)}.${ext}` in the conversation's folder. The DropArea calls `attachFile` for each URL in one synchronous loop, and each `attachFile` computes its copy's path before its `cp` runs, so two images of one type dropped together get the same millisecond and the same path: both `cp`s write one file, the composer shows two chips of the last image, the first image is never sent, and removing either chip (`detach` → `rm -f`) deletes the file the other still points to. Fix: make the name unique as `_blank` does for ids: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}` (or a counter property).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
@@ -1886,18 +1846,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
 
-### package chat's Log option is never used
-- **Where:** `backend/internal/chat/chat.go:46` (`Options.Log`), `backend/internal/daemon/chat.go:21` (`chatMethods`)
-- **What:** `Options.Log` is defaulted in `New` and passed by the daemon, but nothing in package chat logs (`grep -n 'o\.Log' backend/internal/chat/*.go`: only the default in `New`). Fix: drop the field (line 46), its default (lines 67–69), the `log/slog` import (line 15) and the daemon's `Log:` line: 6 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### ChatManager.copy only forwards to ClipboardManager.copyText
-- **Where:** `services/apps/ChatManager.qml:206` (`copy`), `components/content/parts/chat/ChatMessage.qml:307`, `components/content/parts/chat/ChatCodeBlock.qml:56`
-- **What:** `copy(text)` is `ClipboardManager.copyText(text)` and nothing else; its two callers can call `ClipboardManager.copyText` directly, as `CodeLine` does. Fix: delete it (lines 206–208, 3 lines) and import `qs.services.system` in the two parts.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
 ### Renaming a note whose new name holds a dot drops its extension and hides it
 - **Where:** `services/apps/NotesManager.qml:253` (`rename`), `services/apps/NotesManager.qml:236` (`createNote`)
 - **What:** `rename` keeps the old extension only when the new name has no dot at all (`if (ext && !isFolder && !/\.[^.]+$/.test(base)) base += ext[0];`), while `createNote` asks whether the name ends in one of `NotesConfig.extensions`. The rename field shows the title without its extension (`NotesManager.titleOf`), so renaming "Meeting 31.10.md" to "Meeting 1.11" (or opening its rename field and pressing Enter unchanged, "Meeting 31.10") moves the file to "Meeting 1.11" with no `.md` (checked by running those two lines in node: `Meeting 1.11`). The file then matches no name filter: it leaves the note list, `allNotes`, the settings' note picker and the search, and once the module shows another note it can't be opened again from axiom. CONFIRMED. Fix: decide "has an extension" one way for both, `NotesConfig.extensions.some(ext => base.toLowerCase().endsWith("." + ext))`, in a small helper `createNote` and `rename` share.
@@ -1911,38 +1859,26 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 
 ### A changed notes folder keeps showing the old folder's note and saves it into the new one
-- **Where:** `services/apps/NotesManager.qml:443` (`_read`), `services/apps/NotesManager.qml:400` (`_file`), `services/apps/NotesManager.qml:366` (`onDirectoryChanged`)
+- **Where:** `services/apps/NotesManager.qml:440` (`_read`), `services/apps/NotesManager.qml:398` (`_file`), `services/apps/NotesManager.qml:366` (`onDirectoryChanged`)
 - **What:** An open document's `_file` is bound to `root.absolute(doc.path)`, so when `Notes.directory` changes every open document follows to the same relative path in the new folder (`on_FileChanged: doc._follow()`). Where the new folder has no such file, `_read` keeps the old text (`if (text === null) doc.loaded = true;`, meant for a new note). A Notes module in an edge menu or on the desktop showing "notes.md" thus keeps showing the old folder's notes.md after the folder is switched to a synced vault, and the first keystroke writes all of it into the vault as notes.md. The order against `onDirectoryChanged`'s `flushAll()` is not stated either: if the binding updates first, edits less than 600 ms old are flushed into the new folder (PLAUSIBLE: QML's notify order). CONFIRMED for the kept text. Fix: on a directory change, flush every document to its old file, then reload each from the new one with a missing file reading as empty (`_file` a plain property set by `_follow()`, called from `onDirectoryChanged` after `flushAll()`; `_read` empties the text when it follows to a missing file); or have the modules release their documents and show their place's note again.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 
 ### Typing in a note creates a linked notes folder that doesn't exist
-- **Where:** `services/apps/NotesManager.qml:411` (`flush`), `services/apps/NotesManager.qml:302` (`refreshList`)
+- **Where:** `services/apps/NotesManager.qml:409` (`flush`), `services/apps/NotesManager.qml:302` (`refreshList`)
 - **What:** notes.md: "A linked folder is never created", and the note list says "The notes folder doesn't exist" (`directoryMissing`). But a module still opens its last note (a missing file reads as an empty note) and `flush()` saves through `FileManager.write`, which writes the file "making its folders" (FileManager.qml's comment). With `Notes.directory` on a drive that isn't mounted yet (or mistyped), the first keystroke in an edge-menu scratchpad creates the whole path on the root disk; mounting the drive later hides that note under the mount. CONFIRMED by reading. Fix: when `NotesConfig.linked`, `flush()` checks the folder first (`[ -d "$1" ]` through `_run`) and keeps the edit dirty with `_fail(I18n.tr("The notes folder doesn't exist: {0}", …))` when it's gone, refreshing `directoryMissing` on the way.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 
 ### Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives
-- **Where:** `components/methods/NoteMarkdown.qml:517` (`toggleBullet`), `components/methods/NoteMarkdown.qml:457` (`toggleTask`)
-- **What:** notes.md: "Every structural edit re-parses (`_normalize`), so the blocks are always what `parse()` would give." `toggleBullet`'s text branch and `toggleTask`'s "add a task at the end" branch return the edited copy without `_normalize`. Checked with qmltestrunner: the bullet button on a line "[ ] foo" gives a text block "- [ ] foo" that parses as a task (no checkbox, `progress` uncounted until the next structural edit); the checklist button with nothing focused in a note ending in an unclosed code fence shows a checkbox row that is plain "- [ ] " inside the fence once the note reloads. CONFIRMED. Fix: return `root._normalize(copy, focus)` from both branches, and a `tst_NoteMarkdown` row asserting, for each edit, `parse(serialize(result.doc))` equals `result.doc` (it would have caught both).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notes system
-
-### Notes documents count a revision nothing reads
-- **Where:** `services/apps/NotesManager.qml:394` (`revision`)
-- **What:** Each document's `revision` is bumped when the text is replaced from disk (`doc.revision += 1;`, line 434), and nothing reads it: no `.revision` in the Notes module or its parts, and NoteEditor tells its own edits apart by `_lastText`. Fix: delete the property, its comment and the increment (lines 393, 394, 434: 3 lines).
+- **Where:** `components/methods/NoteMarkdown.qml:507` (`toggleBullet`), `components/methods/NoteMarkdown.qml:447` (`toggleTask`)
+- **What:** notes.md: "Every structural edit re-parses (`reparse`), so the blocks are always what `parse()` would give." `toggleBullet`'s text branch and `toggleTask`'s "add a task at the end" branch return the edited copy without `reparse`. Checked with qmltestrunner: the bullet button on a line "[ ] foo" gives a text block "- [ ] foo" that parses as a task (no checkbox, `progress` uncounted until the next structural edit); the checklist button with nothing focused in a note ending in an unclosed code fence shows a checkbox row that is plain "- [ ] " inside the fence once the note reloads. CONFIRMED. Fix: return `root.reparse(copy, focus)` from both branches, and a `tst_NoteMarkdown` row asserting, for each edit, `parse(serialize(result.doc))` equals `result.doc` (it would have caught both).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 
 ### NotesConfig expands ~ by hand where Paths.expandHome does it
 - **Where:** `config/NotesConfig.qml:15` (`directory`), `config/NotesConfig.qml:12` (`defaultDirectory`)
 - **What:** AGENTS.md: "A path setting may hold `~`: expand it (`Paths.expandHome`) before use." `directory` trims, expands `~` and `~/` itself and keeps a `defaultDirectory` member read only there. Fix: `readonly property string directory: root.linked ? Paths.expandHome(_c.directory).replace(/\/*$/, "/") : Paths.defaultNotesPath` (expandHome trims and strips trailing slashes; `defaultNotesPath` ends in "/" already): lines 10–11 and 14–21 (10) become 1, 9 lines removed.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notes system
-
-### NoteMarkdown's reparse repeats _normalize
-- **Where:** `components/methods/NoteMarkdown.qml:229` (`reparse`), `components/methods/NoteMarkdown.qml:266` (`_normalize`)
-- **What:** `reparse(doc, index, pos)` is `_normalize(doc, { block: index, pos })` line for line (`lineOf`, `parse(serialize(doc))`, `positionAt`); `_normalize` only adds the empty-doc and null-focus cases. Fix: delete `reparse` and its comment (lines 227–236, 10 lines) and make `_normalize` the public `reparse(doc, focus)`; its caller (`NoteEditor.blockEdited`) and two test calls pass `{ block, pos }` (about 3 lines more: 7 net).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 
@@ -1958,34 +1894,16 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the networking-bluetooth system
 
-### net.join's first-Wi-Fi fallback is never reached
-- **Where:** `backend/internal/nmnet/nmnet.go:165` (`firstWifi`), `backend/internal/nmnet/join.go:172` (`Join`)
-- **What:** `Join` uses `firstWifi` when the request names no device (`JoinRequest.Device`: `"": the first`). `net.join` is shell-only (`fromShell`), and its one caller, `NetworkingManager.join`, sends `wifiDevice?.name ?? ""`: empty only without a Wi-Fi device, where no join form can show (the rows come from `wifiDevice.networks`, the hidden form needs `radioOn`, which needs `available`), and where `firstWifi` would fail anyway. Only `TestJoin`'s first call relies on it. Fix: delete `firstWifi` (nmnet.go lines 164–180, 17 lines) and make Join's device lookup one line, `dev, err := deviceByIface(ctx, conn, r.Device)` (join.go lines 182–187, 5 lines fewer; an empty device is already `BadRequest` there), drop `("": the first)` from the field comment, and give TestJoin's first call `Device: "wlan0"`. 22 lines fewer.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the networking-bluetooth system
-
 ### The VPN list's Tailscale row misreads Tailscale's errors, actions and login
-- **Where:** `services/system/VpnManager.qml:43` (`rows`), `services/system/VpnManager.qml:45` (`rows`), `services/system/VpnManager.qml:106` (`up`), `services/system/VpnManager.qml:235` (`statusText`), `services/apps/TailscaleManager.qml:136` (`openLogin`), `services/apps/TailscaleManager.qml:166` (`_run`, `lastError`)
-- **What:** VpnManager builds the Tailscale row from TailscaleManager by its own rules, and gets three of them wrong. (1) Errors: the row's error is `TailscaleManager.lastError !== "" ? "failed" : ""`, which `statusText` reads as "Couldn't connect". `lastError` is set by any Tailscale call (`tailscale.up`, `down`, `switch`, `set`, …) and kept until the next one, and it already holds the reason in the user's words ("Your user can't change Tailscale: allow it with Grant access.", "Access wasn't granted.", "Tailscale isn't available."). So on a machine where the user isn't Tailscale's operator (Tailscale's default), clicking the row in the VPN popout, the Wi-Fi menu or `/vpn` reads "Couldn't connect" with no hint that Grant access (only in the Tailscale module) fixes it; and a refused exit-node change in the Tailscale module while connected shows the row "Connected" in the error colour (`VpnRow.failed` is `error !== ""`, unlike the NetworkManager rows, whose error counts only while off) until the next Tailscale call. (2) Actions: the row's state is `TailscaleManager.busy ? (connected ? "disconnecting" : "connecting") : …`, and `busy` is true for every action (`pending !== ""`): switching account, Add account (`tailscale login`, up to 15 s), an exit node, a pref, Grant access (until the polkit dialog closes). During any of these the row reads "disconnecting" while nothing disconnects, and `toggle` ignores clicks on it (`row.state === "disconnecting"`, line 93). (3) Login: `up` calls `TailscaleManager.openLogin()` whenever `needsLogin`, and `openLogin` opens only a non-empty `authURL`. After a logout tailscaled is `NeedsLogin` with no `AuthURL` until a login starts, so clicking the row in the VPN popout, the Wi-Fi menu or the Vpn widget does nothing; the Tailscale panel handles that very case (`onTriggered: TailscaleManager.authURL ? TailscaleManager.openLogin() : TailscaleManager.connect()`, `components/content/Tailscale/Tailscale.qml:440`). CONFIRMED by the code. Fix, in the row and TailscaleManager together: (1) set the row's error only while it's off (`!TailscaleManager.connected && TailscaleManager.lastError !== ""`), carry the text (`"message": TailscaleManager.lastError`) and let `statusText` end with `return row.message || I18n.tr("Couldn't connect")`; (2) read the action itself (`TailscaleManager.pending === "tailscale.down" ? "disconnecting" : TailscaleManager.pending === "tailscale.up" ? "connecting" : …`), or have TailscaleManager expose `connecting` / `disconnecting`; (3) move the panel's choice into TailscaleManager (`function logIn() { authURL ? openLogin() : connect() }`) and call it from both places.
+- **Where:** `services/system/VpnManager.qml:42` (`rows`), `services/system/VpnManager.qml:44` (`rows`), `services/system/VpnManager.qml:105` (`up`), `services/system/VpnManager.qml:234` (`statusText`), `services/apps/TailscaleManager.qml:133` (`openLogin`), `services/apps/TailscaleManager.qml:163` (`_run`, `lastError`)
+- **What:** VpnManager builds the Tailscale row from TailscaleManager by its own rules, and gets three of them wrong. (1) Errors: the row's error is `TailscaleManager.lastError !== "" ? "failed" : ""`, which `statusText` reads as "Couldn't connect". `lastError` is set by any Tailscale call (`tailscale.up`, `down`, `switch`, `set`, …) and kept until the next one, and it already holds the reason in the user's words ("Your user can't change Tailscale: allow it with Grant access.", "Access wasn't granted.", "Tailscale isn't available."). So on a machine where the user isn't Tailscale's operator (Tailscale's default), clicking the row in the VPN popout, the Wi-Fi menu or `/vpn` reads "Couldn't connect" with no hint that Grant access (only in the Tailscale module) fixes it; and a refused exit-node change in the Tailscale module while connected shows the row "Connected" in the error colour (`VpnRow.failed` is `error !== ""`, unlike the NetworkManager rows, whose error counts only while off) until the next Tailscale call. (2) Actions: the row's state is `TailscaleManager.busy ? (connected ? "disconnecting" : "connecting") : …`, and `busy` is true for every action (`pending !== ""`): switching account, Add account (`tailscale login`, up to 15 s), an exit node, a pref, Grant access (until the polkit dialog closes). During any of these the row reads "disconnecting" while nothing disconnects, and `toggle` ignores clicks on it (`row.state === "disconnecting"`, line 92). (3) Login: `up` calls `TailscaleManager.openLogin()` whenever `needsLogin`, and `openLogin` opens only a non-empty `authURL`. After a logout tailscaled is `NeedsLogin` with no `AuthURL` until a login starts, so clicking the row in the VPN popout, the Wi-Fi menu or the Vpn widget does nothing; the Tailscale panel handles that very case (`onTriggered: TailscaleManager.authURL ? TailscaleManager.openLogin() : TailscaleManager.connect()`, `components/content/Tailscale/Tailscale.qml:440`). CONFIRMED by the code. Fix, in the row and TailscaleManager together: (1) set the row's error only while it's off (`!TailscaleManager.connected && TailscaleManager.lastError !== ""`), carry the text (`"message": TailscaleManager.lastError`) and let `statusText` end with `return row.message || I18n.tr("Couldn't connect")`; (2) read the action itself (`TailscaleManager.pending === "tailscale.down" ? "disconnecting" : TailscaleManager.pending === "tailscale.up" ? "connecting" : …`), or have TailscaleManager expose `connecting` / `disconnecting`; (3) move the panel's choice into TailscaleManager (`function logIn() { authURL ? openLogin() : connect() }`) and call it from both places.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:vpn and tailscale systems
-
-### The VPN state's device and autoconnect fields nothing reads
-- **Where:** `backend/internal/nmvpn/nmvpn.go:78` (`Connection.Autoconnect`), `backend/internal/nmvpn/nmvpn.go:83` (`Connection.Device`), `backend/internal/nmvpn/nmvpn.go:463` (`reload`), `backend/internal/nmvpn/nmvpn.go:554` (`readProfile`), `services/system/VpnManager.qml` (`profiles`)
-- **What:** `vpn.state` sends each VPN's `device` and `autoconnect`, and `reload` makes one more D-Bus call per active WireGuard connection (the device's `Interface`) to fill `device`. Nothing reads either: `VpnManager.rows` maps only id, name, kind, state, ipv4, error and plugin, nothing outside VpnManager reads `VpnManager.profiles`, and the only Go users of `nmvpn` are the daemon's `vpn.*` handlers, which pass the state through. Fix: drop `Autoconnect` (line 78), `Device` with its comment (81–83), `profile.autoconnect` (153), the device lookup (463–471) and the autoconnect read (554–556), 17 lines; `pr := profile{autoconnect: true}` becomes `profile{}`, `activeConn` loses `device`, line 498 stops assigning it, the fake NetworkManager in `nmvpn_test.go` loses its `/dev/wg` object and the test's `Device` and `Autoconnect` expectations, and `vpn.md` › State and the `profiles` comment stop naming them.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:vpn system
 
 ### The panel's relative times go stale while Tailscale's state stays the same
 - **Where:** `components/content/Tailscale/Tailscale.qml:46` (`now`, `keyDays`), `components/content/ClaudeUsage/ClaudeUsage.qml:22` (`now`)
 - **What:** `now` and `keyDays` are re-read only when `TailscaleManager.peers` is reassigned (`void TailscaleManager.peers; return Date.now();`). The daemon's topic hub pushes a state only when its JSON changed (`backend/internal/topics/topics.go:344`, `if bytes.Equal(data, t.last)`), and `Parse` keeps only the peers' online/active/relay/last seen/traffic fields. On a quiet tailnet (all peers offline or idle), nothing changes between polls. A module left on the desktop or in an edge menu then keeps saying "Offline · seen 3m ago" for hours, and the key-expiry warning appears only at the next unrelated change after the 7-day mark. ClaudeUsage's `now` is built the same way, though its accounts' `fetchedAt` changes at every fetch, so it lags by one fetch interval at most. PLAUSIBLE: what's unproven is whether an idle tailnet's parsed state really repeats byte for byte; to settle it, compare two `tailscale status --json` runs parsed a minute apart on a connected, idle tailnet. Fix: drive the times from a minute clock, as Notifications does (`SystemClock { id: clock; precision: SystemClock.Minutes }`, `readonly property real now: clock.date.getTime()`), and compute `keyDays` from `root.now`.
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the tailscale system
-
-### Tailscale carries two state fields and a guard nothing needs
-- **Where:** `backend/internal/tailscale/tailscale.go:43` (`State.MagicDNSSuffix`, `State.ExitNodeIP`), `services/apps/TailscaleManager.qml:31` (`magicDNSSuffix`, `exitNodeIP`, `refresh`)
-- **What:** `TailscaleManager.magicDNSSuffix` has no reader (`grep -rnw TailscaleManager.magicDNSSuffix` finds none). `exitNodeIP` has one: the exit-node fold's None row (`chosen: TailscaleManager.exitNodeIP === ""`, `components/content/Tailscale/Tailscale.qml:542`), which `TailscaleManager.exitNode === ""` answers the same way, since both are set from the one peer with `ExitNode`. `refresh()` guards the details refresh with `if (root._detailsInterval > 0)`, but `BackendManager.refresh` already does nothing for a topic not acquired (`if (topic in root._acquired && root.ready)`). Fix: drop `MagicDNSSuffix` (tailscale.go lines 42, 43, 116, 130) and `ExitNodeIP` (line 51, lines 153–155, and the comment's half-line at 49), along with the manager's two properties and their assignments (TailscaleManager.qml 31, 38, 189, 193) and the guard line (86). Point the None row at `exitNode`, and remove the field from `TestParse`'s want and from the doc's Parse list. In all, 14 lines (9 Go, 5 QML).
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the tailscale system
 
 ### The Network card shows Tailscale's raw state, untranslated
@@ -2048,12 +1966,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the community-setups system
 
-### CommunityCatalog's setups carry three fields nothing reads
-- **Where:** `components/methods/CommunityCatalog.qml:77` (`_setup`), `components/methods/CommunityCatalog.qml:84` (`_setup`), `components/methods/CommunityCatalog.qml:101` (`_file`)
-- **What:** `configVersion` (only used to compute `compatible` on the line after), `updated` and each file's `size` are copied into the parsed setups, but no reader exists: `grep -rn '\.updated\b\|\.size\b\|\.configVersion'` over the manager, the card, LauncherConfigBrowser and tst_CommunityCatalog finds none. Fix: drop the three lines and their names from `parse`'s comment (`compatible` reads `entry.configVersion` already). 3 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the community-setups system
-
 ### The apply's wallpaper rides in a property instead of the callback
 - **Where:** `services/apps/CommunitySetupsManager.qml:172` (`_applyWallpaper`), `services/apps/CommunitySetupsManager.qml:140` (`apply`)
 - **What:** `apply` stores the wallpaper file in `_applyWallpaper` only for `_finishApply` to read it from the callback it starts; its comment ("set once SavedConfigsManager has applied it") is also wrong (it's set before the download). Fix: `root._fetch(downloads, fetched => root._finishApply(fetched.failures, wallpaper))` and `_finishApply(failures, wallpaper)`: removes the property with its comment (3 lines) and the assignment (1). 4 lines.
@@ -2079,7 +1991,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the screenshots-recording system
 
 ### ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour
-- **Where:** `components/content/ScreenRecord/ScreenRecord.qml:49` (`durationText`), `components/bar/widgets/ScreenRecord/ScreenRecord.qml:17`, `components/methods/StopwatchClock.qml:288` (`format`)
+- **Where:** `components/content/ScreenRecord/ScreenRecord.qml:49` (`durationText`), `components/bar/widgets/ScreenRecord/ScreenRecord.qml:17`, `components/methods/StopwatchClock.qml:283` (`format`)
 - **What:** The card formats `recordingElapsed` with its own `durationText` ("1:05", "1:02:03"; lines 48-54, 7 lines), the bar widget with a third inline copy that has no hours: `${Math.floor(root.elapsed / 60)}:…` shows "65:00" where the card shows "1:05:00" for the same recording. `StopwatchClock.format(ms)` already makes "mm:ss" / "h:mm:ss" and is tested. Fix: both use `StopwatchClock.format(ScreenshotManager.recordingElapsed * 1000)`; `durationText` goes (7 lines) and the bar matches the card (both then pad the minutes, "01:05", as the timer and stopwatch do).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the screenshots-recording system

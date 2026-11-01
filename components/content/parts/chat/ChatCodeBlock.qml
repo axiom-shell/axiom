@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.config
-import qs.services.apps
+import qs.services.system
 import qs.components.reusable
 
 // A fenced code block in a reply: its language, a copy button and the code
@@ -53,7 +53,7 @@ StyledContainer {
         iconColor: root._copied ? Theme.success : Theme.foregroundAlt
         tooltipText: I18n.tr("Copy")
         onClicked: {
-          ChatManager.copy(root.code);
+          ClipboardManager.copyText(root.code);
           root._copied = true;
           copiedTimer.restart();
         }

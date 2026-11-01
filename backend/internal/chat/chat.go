@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -43,7 +42,6 @@ type Options struct {
 	// daemon's own)
 	Command func() command.Options
 	Client  *http.Client
-	Log     *slog.Logger
 }
 
 // Service answers the chat methods.
@@ -63,9 +61,6 @@ func New(o Options) *Service {
 		transport := http.DefaultTransport.(*http.Transport).Clone()
 		transport.DialContext = dialer.DialContext
 		o.Client = &http.Client{Transport: transport}
-	}
-	if o.Log == nil {
-		o.Log = slog.New(slog.DiscardHandler)
 	}
 	return &Service{o: o, running: map[string]context.CancelCauseFunc{}}
 }

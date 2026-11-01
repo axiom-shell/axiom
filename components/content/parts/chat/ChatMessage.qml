@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
+import qs.services.system
 import qs.components.methods
 import qs.components.reusable
 
@@ -304,7 +305,7 @@ Item {
         iconText: "content_copy"
         iconSize: Appearance.fontSizeBy(-2)
         tooltipText: I18n.tr("Copy")
-        onClicked: ChatManager.copy(root.text)
+        onClicked: ClipboardManager.copyText(root.text)
       }
 
       FlatIconButton {
