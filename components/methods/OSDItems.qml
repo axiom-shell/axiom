@@ -289,8 +289,45 @@ QtObject {
   // The status types that show a card for a change (`fired(true)`): an
   // audio device switching, a VPN coming up, an app starting to use the
   // camera or share the screen, the charger plugged in, a Wi-Fi network
-  // joined, a drive plugged in, mounted or ejected
+  // joined, something done to a drive (DrivesManager.lastEvent)
   readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "drive"]
+
+  // A drive event's card (DrivesManager.lastEvent's kinds): its icon and
+  // what happened (English)
+  readonly property var _driveCards: ({
+      "added": {
+        "icon": "usb",
+        "role": "Connected"
+      },
+      "mounted": {
+        "icon": "usb",
+        "role": "Mounted"
+      },
+      "unmounted": {
+        "icon": "usb",
+        "role": "Unmounted"
+      },
+      "ejected": {
+        "icon": "eject",
+        "role": "Safe to remove"
+      },
+      "removed": {
+        "icon": "usb_off",
+        "role": "Disconnected"
+      },
+      "pulled": {
+        "icon": "warning",
+        "role": "Unplugged without ejecting"
+      },
+      "busy": {
+        "icon": "warning",
+        "role": "In use: close what's using it"
+      },
+      "ejectFailed": {
+        "icon": "warning",
+        "role": "Couldn't eject"
+      }
+    })
 
   // Whether two capture tiles (tile()'s) share an app: one app taking the
   // camera and the microphone together (a call)
@@ -364,10 +401,13 @@ QtObject {
       out.detail = t.name ? `${t.signal ?? 0}%` : "";
       break;
     case "drive":
-      out.icon = t.event === "ejected" ? "eject" : "usb";
-      out.role = t.event === "ejected" ? "Safe to remove" : t.event === "mounted" ? "Mounted" : "Connected";
-      out.detail = t.event === "mounted" ? (t.mountPoint ?? "") : "";
-      break;
+      {
+        const look = root._driveCards[t.event] ?? root._driveCards.added;
+        out.icon = look.icon;
+        out.role = look.role;
+        out.detail = t.event === "mounted" ? (t.mountPoint ?? "") : "";
+        break;
+      }
     }
     return out;
   }

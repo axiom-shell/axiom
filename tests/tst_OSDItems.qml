@@ -250,6 +250,21 @@ TestCase {
       })
     }, ["drive"]);
     compare(card.role, "Connected", "plugged in");
+    const looks = [["unmounted", "usb", "Unmounted"], ["removed", "usb_off", "Disconnected"], ["pulled", "warning", "Unplugged without ejecting"], ["busy", "warning", "In use: close what's using it"], ["ejectFailed", "warning", "Couldn't eject"]];
+    for (const [kind, icon, role] of looks) {
+      card = OSDItems.card("drive", {
+        "drive": OSDItems.tile("drive", {
+          "available": true,
+          "count": 0,
+          "event": {
+            "kind": kind,
+            "name": "STICK",
+            "mountPoint": ""
+          }
+        })
+      }, ["drive"]);
+      compare([card.icon, card.title, card.role, card.detail], [icon, "STICK", role, ""], kind);
+    }
     verify(OSDItems.tile("drive", {
       "available": false,
       "count": 1

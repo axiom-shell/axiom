@@ -114,6 +114,16 @@ QtObject {
     return root.volumes(drive).some(v => root.mounted(root.effective(v)));
   }
 
+  // The ids of the drive's mounted shown volumes, with those of `before`
+  // (its ids as last seen) whose volume is gone from it: a pulled drive's
+  // volumes leave udisks before the drive does, still mounted
+  function mountedIds(drive, before) {
+    const shown = root.volumes(drive);
+    const ids = shown.map(v => v.id);
+    const now = shown.filter(v => root.mounted(root.effective(v))).map(v => v.id);
+    return now.concat((before ?? []).filter(id => !ids.includes(id) && !now.includes(id)));
+  }
+
   // Any shown volume is locked
   function driveLocked(drive) {
     return root.volumes(drive).some(v => root.locked(v));

@@ -3,10 +3,16 @@
 type: object
 x-category: Modules
 title: Removable drives
-description: "What happens when a USB stick, memory card or other removable drive is plugged in, and how the Drives widget and module open one. Drives are reached through udisks2."
+description: "How USB sticks, memory cards and other removable drives are announced, what plugging one in does, and the drives left alone. Drives are reached through udisks2."
 additionalProperties: false
-x-order: [onInsert, openAfterMount, ignore]
+x-order: [notifications, onInsert, warnUnplugged, ignore]
 properties:
+  notifications:
+    type: boolean
+    title: Drive notifications
+    default: true
+    description: "Notifications for removable drives. What has buttons (asking what to do with one plugged in, an encrypted one, where one was mounted on plug-in) is a notification; everything else (connected, mounted, unmounted, safe to remove, unplugged, what went wrong) shows on an OSD showing Removable drives, or is a notification with none. Turned off, that OSD shows everything without buttons, and with no such OSD nothing is said."
+    x-link: {setting: OSD}
   onInsert:
     type: string
     title: When a drive is plugged in
@@ -16,13 +22,13 @@ properties:
       mount: Mount it
       nothing: Do nothing
     default: ask
-    description: "Ask sends a notification offering to mount or open it (or, for an encrypted drive, to unlock it). Mount it mounts it at once and says where; nothing is mounted while the screen is locked, it waits for the unlock. Do nothing leaves it to the Drives widget and module."
-  openAfterMount:
-    type: boolean
-    title: Open after mounting
-    default: false
-    description: "Open the drive's folder in the file manager each time it's mounted, not only when you ask to open it."
+    description: "Ask sends a notification offering to mount or open it (or, for an encrypted drive, to unlock it); with drive notifications off it does nothing. Mount it mounts it at once and notifies where, offering to open it; nothing is mounted while the screen is locked, it waits for the unlock. Do nothing leaves it to the Drives widget and module. Drives open in the file manager."
     x-link: {setting: Apps.fileManager}
+  warnUnplugged:
+    type: boolean
+    title: Warn when unplugged without ejecting
+    default: true
+    description: "Warn when a mounted drive is unplugged before it's ejected: files still being written to it can be lost."
   ignore:
     x-scope: machine
     type: array

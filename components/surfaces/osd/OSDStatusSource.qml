@@ -25,7 +25,7 @@ Loader {
   // network, the charger, a drive) anything's. `card`: shown as its card
   // (a type in OSDItems.cardTypes: an audio device switched, not its mute;
   // a VPN came up; an app started a capture; the charger was plugged in;
-  // Wi-Fi joined a network; a drive was plugged in, mounted or ejected)
+  // Wi-Fi joined a network; something done to a drive)
   signal fired(bool card)
 
   // What it shows now (OSDItems.tile; a message's is OSDContent's)
@@ -550,8 +550,8 @@ Loader {
     Item {
       Connections {
         target: DrivesManager
-        // Plugged in, mounted or ejected (never a drive there at login):
-        // its card
+        // Something done to a drive (DrivesManager.lastEvent; never a
+        // drive there at login): its card
         function onLastEventChanged() {
           if (DrivesManager.lastEvent)
             root._report(true);

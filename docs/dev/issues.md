@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while testing removable drives in a nested shell
 
+### Eject may leave a USB stick powered on
+- **Where:** `backend/internal/udisks/udisks.go` (`eject`)
+- **What:** `eject` picks the Drive's `Eject` over `PowerOff` for any drive with `CanEject` and removable media (`case drive.Optical || drive.CanEject && drive.mediaRemovable:` before `case drive.CanPowerOff:`). If udisks2 reports a USB stick with the removable bit as Ejectable, it only gets `Eject`: it stays in udisks2 without media (hidden, `removed` sent) but powered, which contradicts `docs/dev/features/drives.md` ("locks and powers off"). A card reader's card wants `Eject` (the reader stays). PLAUSIBLE: `udisksctl info -b /dev/sdX` on a real stick (Ejectable, CanPowerOff, MediaRemovable) settles it. Fix, if it holds: `PowerOff` first when `CanPowerOff` and the drive isn't a card reader (`Optical` or a media-changing reader keeps `Eject`), the way GNOME's gvfs powers off a stick after its eject.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing removable drive support
+
 ### A workspace overview bind set to open calls a missing function
 - **Where:** `backend/internal/compositor/actions/table.json`, `shell/WorkspaceOverlay.qml`, `tests/tst_BindActions.qml`
 - **What:** The table's `calls` maps `workspaceOverview` open to `show`, but the `workspaceOverlay` IPC target has `toggle`, `open` and `hide`, no `show`. A bind or hot corner set to open runs `axiom ipc workspaceOverlay show` and fails. `tst_BindActions` covers close→hide only, and nothing checks the table's templates and calls against `docs/dev/generated/ipc.md` (as `backend/internal/cli/named_test.go` does for the named commands).

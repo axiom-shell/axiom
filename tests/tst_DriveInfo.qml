@@ -140,6 +140,25 @@ TestCase {
     verify(DriveInfo.driveLocked(d));
   }
 
+  function test_mountedIds() {
+    const mounted = vol("m", {
+      "mountPoints": ["/m"]
+    });
+    compare(DriveInfo.mountedIds(drive([mounted, vol("u")]), []), ["m"], "mounted now");
+    compare(DriveInfo.mountedIds(drive([vol("m"), vol("u")]), ["m"]), [], "unmounted in place");
+    compare(DriveInfo.mountedIds(drive([vol("u")]), ["m"]), ["m"], "gone while mounted: a pull");
+    compare(DriveInfo.mountedIds(drive([]), []), [], "gone while not mounted");
+    compare(DriveInfo.mountedIds(drive([mounted]), ["m"]), ["m"], "no duplicate");
+    const luks = vol("c", {
+      "encrypted": true,
+      "unlocked": true,
+      "cleartextId": "x",
+      "mountPoints": ["/x"]
+    });
+    compare(DriveInfo.mountedIds(drive([luks]), []), ["c"], "an unlocked container by its own id");
+    compare(DriveInfo.mountedIds(drive([]), ["c"]), ["c"], "its container gone");
+  }
+
   function test_pick() {
     const locked = vol("l", {
       "encrypted": true,

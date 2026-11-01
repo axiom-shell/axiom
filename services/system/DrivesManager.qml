@@ -12,8 +12,11 @@ import qs.services.ui
 // every change, `drives.event` on a real plug or unplug), and what the
 // shell does with them: mount, open, unmount, unlock a LUKS volume, eject.
 // On a plug-in it follows DrivesConfig.onInsert: a notification asking
-// (ask), a mount (never while the screen is locked: it waits for the
-// unlock), or nothing. The Drives widget, module and popout, the OSD's
+// (ask, with notifications on), a mount (never while the screen is
+// locked: it waits for the unlock), or nothing. Each event is said once
+// (_say): with buttons and notifications on, a notification; else the
+// OSD's `drive` card, or with no OSD showing `drive` a notification (with
+// notifications on). The Drives widget, module and popout, the OSD's
 // `drive` status and /eject read it. Inert on the login screen.
 QtObject {
   id: root
@@ -36,8 +39,10 @@ QtObject {
   // The last unlock's error, under the field
   property string unlockError: ""
   // The last thing that happened to a drive, for the OSD's `drive`
-  // status: { kind: "added" | "mounted" | "ejected", driveId, name,
-  // mountPoint, serial }, else null
+  // status: { kind, driveId, name, mountPoint, serial }, else null. Kinds:
+  // "added", "mounted" / "unmounted" (by anyone, seen in the state),
+  // "ejected", "removed" (unplugged), "pulled" (unplugged while mounted),
+  // "busy", "ejectFailed". Set only when the OSD says it (_say)
   property var lastEvent: null
 
   function driveById(id) {
@@ -122,8 +127,8 @@ QtObject {
 
   // rpc: drives.mount
   // Mounts a volume (an unlocked container's cleartext one); opens it
-  // after with `andOpen` or DrivesConfig.openAfterMount, and tells
-  // `onMounted` where it went
+  // after with `andOpen`, and tells `onMounted` where it went ("" when it
+  // failed)
   function mount(drive, volume, andOpen, onMounted) {
     if (!drive || !volume || root._inert)
       return;
@@ -138,12 +143,13 @@ QtObject {
       "id": target.id
     }, (error, result) => {
       root._settle(drive, "drives.mount", error);
-      if (error)
+      if (error) {
+        if (onMounted)
+          onMounted("");
         return;
+      }
       const point = result?.mountPoint ?? "";
-      // As it is now: an unlocked drive's name is its cleartext's label
-      root._event("mounted", root.driveById(drive.id) ?? drive, point);
-      if (point !== "" && (andOpen === true || DrivesConfig.openAfterMount))
+      if (point !== "" && andOpen === true)
         root._openFolder(point);
       if (onMounted)
         onMounted(point);
@@ -243,17 +249,16 @@ QtObject {
       NotificationManager.dismissApp(root._desktopEntry);
       if (error) {
         if (error.kind === "busy")
-          root._notify(I18n.tr("{0} is in use", name), I18n.tr("Close the files and apps using it, then eject it again."), "drive-removable-media");
+          root._say("busy", drive, () => root._notify(I18n.tr("{0} is in use", name), I18n.tr("Close the files and apps using it, then eject it again."), "drive-removable-media"));
         else
-          root._notify(I18n.tr("Couldn't eject {0}", name), root.errorText(error.kind), "dialog-warning");
+          root._say("ejectFailed", drive, () => root._notify(I18n.tr("Couldn't eject {0}", name), root.errorText(error.kind), "dialog-warning"));
         return;
       }
-      root._event("ejected", drive, "");
-      // Without the drives' desktop entry: it stays until it's read, not
-      // cleared as this drive or another one is unplugged
-      NotificationManager.sendNotification("axiom", I18n.tr("Safe to remove"), I18n.tr("{0} can be unplugged now.", name), {
-        "icon": "media-eject"
-      });
+      if (root._seen[drive.id])
+        root._seen[drive.id].ejected = true;
+      // Without the drives' desktop entry: powered off, the drive leaves
+      // udisks at once (often after this answer), and that would clear it
+      root._say("ejected", drive, () => root._notifyKept(I18n.tr("Safe to remove"), I18n.tr("{0} can be unplugged now.", name), "media-eject"));
     });
   }
 
@@ -276,6 +281,17 @@ QtObject {
   property int _serial: 0
   readonly property bool _inert: Paths.greeter
   readonly property string _desktopEntry: "axiom-drives"
+  // An OSD shows the `drive` status: it says everything without buttons
+  readonly property bool _osd: OSDConfig.showsStatus("drive")
+  // What plugging in does: onInsert, its ask only with notifications on
+  // (the question is a notification)
+  readonly property string _insert: DrivesConfig.onInsert === "ask" && !DrivesConfig.notifications ? "nothing" : DrivesConfig.onInsert
+  // driveId -> { name, mounted, mountedIds, ejected, quiet }: each drive
+  // as last seen (DriveInfo.mountedIds), so its mount coming or going (by
+  // anyone: the shell, a file manager) is said, and an unplug knows its
+  // name and whether it was pulled while mounted. `quiet`: a mount on
+  // insert, which its own notification says
+  property var _seen: ({})
 
   function _pend(drive, what) {
     const next = Object.assign({}, root.pending);
@@ -306,12 +322,13 @@ QtObject {
     root.errors = next;
   }
 
-  function _event(kind, drive, mountPoint) {
+  // `name`: a drive gone's, as last seen
+  function _event(kind, drive, mountPoint, name) {
     root._serial += 1;
     root.lastEvent = {
       "kind": kind,
       "driveId": drive.id,
-      "name": root.nameOf(drive),
+      "name": name ?? root.nameOf(drive),
       "mountPoint": mountPoint,
       "serial": root._serial
     };
@@ -337,17 +354,65 @@ QtObject {
     });
   }
 
-  // A drive plugged in: DrivesConfig.onInsert
+  // A notification that stays until it's read: without the drives'
+  // desktop entry, which an unplug or eject clears
+  function _notifyKept(summary, body, icon) {
+    NotificationManager.sendNotification("axiom", summary, body, {
+      "icon": icon
+    });
+  }
+
+  // Something without buttons (`kind`, an OSD event): the OSD's card, else
+  // (no OSD showing `drive`), with notifications on, `notify`
+  function _say(kind, drive, notify, name, mountPoint) {
+    if (root._osd)
+      root._event(kind, drive, mountPoint ?? "", name);
+    else if (DrivesConfig.notifications)
+      notify();
+  }
+
+  // Keeps each drive as last seen (_seen); its mount coming or going is
+  // said (not a drive's first sighting, an eject's unmount, nor a mount on
+  // insert, which its notification says)
+  function _see(drives) {
+    for (const d of drives) {
+      const s = root._seen[d.id];
+      // A volume gone while mounted stays mounted: the drive is leaving
+      const mountedIds = DriveInfo.mountedIds(d, s?.mountedIds ?? []);
+      const mounted = mountedIds.length > 0;
+      const changed = s && s.mounted !== mounted && root.pending[d.id] !== "ejecting" && !s.ejected;
+      const name = root.nameOf(d);
+      if (changed && mounted && !s.quiet) {
+        const point = DriveInfo.mountPoint(d);
+        root._say("mounted", d, () => root._notify(I18n.tr("{0} mounted", name), Paths.shortenHome(point), "drive-removable-media"), name, point);
+      } else if (changed && !mounted)
+        root._say("unmounted", d, () => root._notify(I18n.tr("{0} unmounted", name), "", "drive-removable-media"), name);
+      root._seen[d.id] = {
+        "name": name,
+        "mounted": mounted,
+        "mountedIds": mountedIds,
+        "ejected": s?.ejected ?? false,
+        // Spent by the mount it was for
+        "quiet": (s?.quiet ?? false) && !(changed && mounted)
+      };
+    }
+  }
+
+  // A drive plugged in: what onInsert says. One thing says so: the
+  // notification asking (ask, or an encrypted one, with notifications
+  // on), a mount on insert's, else Connected (_say)
   function _arrived(drive) {
     if (!drive || DriveInfo.ignored(drive, DrivesConfig.ignore))
       return;
-    root._event("added", drive, "");
     const id = drive.id;
     const name = root.nameOf(drive);
     const pick = DriveInfo.pick(drive);
-    if (!pick || DrivesConfig.onInsert === "nothing")
-      return;
     const detail = [DriveInfo.hardware(drive), DriveInfo.size(drive.size)].filter(s => s !== "").join(" · ");
+    const connected = () => root._say("added", drive, () => root._notify(I18n.tr("{0} plugged in", name), detail, "drive-removable-media"));
+    if (!pick || root._insert === "nothing" || (pick.action === "unlock" && !DrivesConfig.notifications) || (root._insert === "mount" && pick.action === "open")) {
+      connected();
+      return;
+    }
     if (pick.action === "unlock") {
       root._notify(I18n.tr("{0} is encrypted", name), detail, "drive-removable-media", [
         {
@@ -359,6 +424,8 @@ QtObject {
           "label": I18n.tr("Ignore")
         }
       ], action => {
+        // Answered: it goes
+        NotificationManager.dismissApp(root._desktopEntry);
         if (action === "unlock") {
           root.askUnlock(pick.volume.id);
           root.showDrives();
@@ -366,10 +433,11 @@ QtObject {
       });
       return;
     }
-    if (DrivesConfig.onInsert === "mount") {
+    if (root._insert === "mount") {
       if (LockManager.builtinLocked) {
         if (!root._queued.includes(id))
           root._queued = root._queued.concat([id]);
+        connected();
         return;
       }
       root._mountOnInsert(drive);
@@ -389,6 +457,9 @@ QtObject {
         "label": I18n.tr("Ignore")
       }
     ], action => {
+      // Answered: it goes. A mount from here is said like any other (the
+      // OSD's Mounted card): Open was this notification's offer
+      NotificationManager.dismissApp(root._desktopEntry);
       const now = root.driveById(id);
       if (action === "mount")
         root._mountAll(now, false);
@@ -411,12 +482,38 @@ QtObject {
     }
   }
 
-  // onInsert "mount": mounts it, then says where (the first volume's
-  // answer), offering Open and Eject
+  // onInsert "mount": mounts it, then (with notifications on) a
+  // notification says where (the first volume's answer), opening it on a
+  // click and offering Open and Eject, in place of the Mounted the state
+  // would say (_seen's `quiet`); without, that Mounted (_see)
   function _mountOnInsert(drive) {
     const id = drive.id;
     const name = root.nameOf(drive);
-    root._mountAll(drive, false, point => root._notify(I18n.tr("{0} mounted", name), Paths.shortenHome(point), "drive-removable-media", [
+    if (!DrivesConfig.notifications) {
+      root._mountAll(drive, false);
+      return;
+    }
+    root._seen[id] = Object.assign(root._seen[id] ?? {
+      "name": name,
+      "mounted": false,
+      "mountedIds": [],
+      "ejected": false
+    }, {
+      "quiet": true
+    });
+    root._mountAll(drive, false, point => {
+      // Failed: nothing to say, and a later mount is said again
+      if (point === "") {
+        if (root._seen[id])
+          root._seen[id].quiet = false;
+        return;
+      }
+      root._notify(I18n.tr("{0} mounted", name), Paths.shortenHome(point), "drive-removable-media", [
+        {
+          // A click on it (never a button)
+          "id": "default",
+          "label": I18n.tr("Open")
+        },
         {
           "id": "open",
           "label": I18n.tr("Open")
@@ -427,22 +524,47 @@ QtObject {
         }
       ], action => {
         const now = root.driveById(id);
-        if (action === "open")
+        if (action === "default" || action === "open")
           root.open(now);
         else if (action === "eject")
           root.eject(now);
-      }));
+      });
+    });
   }
 
+  // Unplugged: Disconnected, or a warning when it was pulled while mounted
+  // (DrivesConfig.warnUnplugged) (_say)
   function _gone(driveId) {
     root._queued = root._queued.filter(id => id !== driveId);
     root._setError(driveId, "");
     NotificationManager.dismissApp(root._desktopEntry);
+    const seen = root._seen[driveId];
+    if (!seen)
+      return;
+    // Still mounted as it left: pulled (its volumes leave udisks first,
+    // still mounted, which _see keeps as mounted). Not one being unmounted
+    // or ejected
+    const pulled = DrivesConfig.warnUnplugged && seen.mounted && !root.pending[driveId];
+    delete root._seen[driveId];
+    // Ejected: powered off, it leaves at once; its Safe to remove card
+    // stays
+    if (seen.ejected || root.pending[driveId] === "ejecting")
+      return;
+    const gone = {
+      "id": driveId
+    };
+    if (!pulled) {
+      root._say("removed", gone, () => root._notify(I18n.tr("{0} disconnected", seen.name), "", "drive-removable-media"), seen.name);
+      return;
+    }
+    // Kept: not cleared as another drive is unplugged
+    root._say("pulled", gone, () => root._notifyKept(I18n.tr("{0} was unplugged without ejecting", seen.name), I18n.tr("Eject a drive before unplugging it, or files being written to it can be lost."), "dialog-warning"), seen.name);
   }
 
   function _show(state) {
     root.available = state?.available ?? false;
     root._all = state?.drives ?? [];
+    root._see(root.drives);
     // A request for a volume gone with its drive
     if (root.unlockRequest !== "" && !root.driveOfVolume(root.unlockRequest))
       root.cancelUnlock();
