@@ -519,12 +519,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### Hyprland's exit command is kept in two packages
-- **Where:** `backend/internal/compositor/binds/hypr.go` (`exitCommand`), `backend/internal/compositor/render/hyprconfig.go` (`exitLua`)
-- **What:** The merge maps `exec_cmd(<exitCommand>)` to `exitSession` and the writer emits `exitLua` for `exitSession`: the same string, kept by hand in two places (hypr.go:44, hyprconfig.go:30), with no test tying them. Changed alone, a written exit bind merges back as a plain `exec`. Fix: one constant (e.g. in `actions`) used by both; deletion pass 1 line.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### noteReload counts every compositor reload a second time
 - **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
 - **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30). The sway review (2026-10-30) found an apply between the count and that reset still sends the old list: [The detached layer's unbind list can drift from what sway holds](#the-detached-layers-unbind-list-can-drift-from-what-sway-holds) wants the reset where the reload is counted; fix the two together.
@@ -1081,24 +1075,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### sway and niri build output details and descriptions twice
 - **Where:** `components/methods/SwayState.qml:183` (`output`), `components/methods/SwayState.qml:298` (`outputDetails`), `components/methods/NiriState.qml:135` (`description`), `components/methods/NiriState.qml:351` (`outputDetails`)
 - **What:** Deletion pass, about 12 lines. The make/model/serial description (`[make, model, serial].filter(part => part && part !== "Unknown").join(" ")`) is written three times: twice in SwayState and once as `NiriState.description`. Both `outputDetails` repeat the same mHz→Hz `rate` lambda, the `availableModes` template (`${m.width}x${m.height}@${rate(m).toFixed(2)}Hz`) and the 13-key object (24 and 30 lines). `MonitorLayout` matches modes as strings across compositors, so the two spellings must stay identical. Fix: one pure helper (`description`, `mode(width, height, mHz)`, `detail({…})`) with a test row, used by both. It removes about 12 lines and keeps the spellings identical by construction.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### The bind merge lists user/ files three times, once per compositor
-- **Where:** `backend/internal/compositor/binds/hypr.go:336` (`hyprFiles`), `backend/internal/compositor/binds/sway.go:212` (`swayFiles`), `backend/internal/compositor/binds/niri.go:128` (`niriFiles`)
-- **What:** Deletion pass, about 32 lines. `swayFiles` and `niriFiles` are the same 21 lines each; `diff` shows only the name, the comment and the filter line. `hyprFiles` (13 lines) does the same with a `.lua` filter but no hidden-file filter. That's 55 lines in all. Fix: one `userFiles(o Options, keep func(name string) bool) []string` (about 20 lines, `only` handled once, hidden files always skipped) plus a one-line filter per kind. It removes about 32 lines, and Hyprland's merge stops reading a hidden `.x.lua` the managed file never loads. Do it with [Three listings of niri's user files](#three-listings-of-niris-user-files), which moves the writer's copy.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### sway's and niri's merges build a moved bind the same way twice
-- **Where:** `backend/internal/compositor/binds/sway.go:309` (`extractSway`), `backend/internal/compositor/binds/niri.go:203` (`extractNiri`)
-- **What:** Deletion pass, about 11 lines. Both copy the mapped action's keys into `{key}` (sway 310-313, niri 204-207). Both then apply the same repeat rule under the same three-line comment (sway 319-325, niri 214-221: `if <native repeat on> && (actions.Default().Repeating[name] || name == "raw")`): 23 lines. Fix: one `movedBind(key, action, nativeRepeat)` of about 10 lines with the comment, called from both. It keeps every output, and the next change to the rule happens once.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### The merge keeps key and variable tables render already has
-- **Where:** `backend/internal/compositor/binds/hypr.go:183` (`keyID`), `backend/internal/compositor/binds/sway.go:22` (`swayMouse`), `backend/internal/compositor/binds/hypr.go:41` (`hyprDirections`), `backend/internal/compositor/binds/sway.go:30` (`swayDirections`)
-- **What:** Deletion pass, about 16 lines. (1) `keyID` (15 lines) is a third key normaliser beside `render.KeyID`/`BindKeys.keyId`. It lowercases and sorts but resolves no modifier alias, so `hl.unbind("WIN + Q")` doesn't match a moved `SUPER + Q`, which `render.KeyID` would. `binds` can import `render` with no cycle. (2) `swayMouse` (3 lines) holds the same 12 entries as `render`'s `swayMouseKeys`. (3) `hyprDirections` and `swayDirections` are the same four-entry map. Fix: use `render.KeyID` in the merge (re-keying `exampleKeys` and `TestKeyID`'s rows to its spelling), export one mouse table, and share one directions map. `SwayConfigBinds`' own `$variable` expander is SwayConfigBinds keeps its own copy of sway's $variables.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 

@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
@@ -39,7 +40,7 @@ func removeMarked(o Options, sites *jsonx.Array, mark string, atCol bool) (*json
 	}
 	removed := 0
 	for _, name := range files {
-		if filepath.Dir(filepath.Clean(name)) != filepath.Clean(user) || !isFile(name) {
+		if filepath.Dir(filepath.Clean(name)) != filepath.Clean(user) || !fsx.IsFile(name) {
 			push(done, "failed", failedEntry(name, 0, "notUser", ""))
 			continue
 		}

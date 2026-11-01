@@ -156,7 +156,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Two hand-written cmp.Or in the theme packages
   - Three Wayland client members nothing in the daemon calls
 - **compositor-01** (17): One commit per package, the old-claims fallback's 6 lines included (Q6).
-  - [Hyprland's exit command is kept in two packages](../issues.md#hyprlands-exit-command-is-kept-in-two-packages)
+  - Hyprland's exit command is kept in two packages
   - [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers)
   - [Nothing reads userBindsRead or lastLoadFailed](../issues.md#nothing-reads-userbindsread-or-lastloadfailed)
   - [The niri writer's runtimeOn and unread-binds guards are dead](../issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
@@ -170,9 +170,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - SwayConfigBinds keeps its own copy of sway's $variables
   - [Small shrinks in the sway writer and IPC](../issues.md#small-shrinks-in-the-sway-writer-and-ipc)
   - [binds and takeover each keep their own isFile and git check](../issues.md#binds-and-takeover-each-keep-their-own-isfile-and-git-check)
-  - [The bind merge lists user/ files three times, once per compositor](../issues.md#the-bind-merge-lists-user-files-three-times-once-per-compositor)
-  - [sway's and niri's merges build a moved bind the same way twice](../issues.md#sways-and-niris-merges-build-a-moved-bind-the-same-way-twice)
-  - [The merge keeps key and variable tables render already has](../issues.md#the-merge-keeps-key-and-variable-tables-render-already-has)
+  - The bind merge lists user/ files three times, once per compositor
+  - sway's and niri's merges build a moved bind the same way twice
+  - The merge keeps key and variable tables render already has
 - **compositor-02** (12): Leaves the keybind tables entry's _bindMods change to compositor-17.
   - [Backends keep stubs for calls the facade gates](../issues.md#backends-keep-stubs-for-calls-the-facade-gates)
   - [Small shrinks in the compositor layer](../issues.md#small-shrinks-in-the-compositor-layer)
