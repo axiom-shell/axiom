@@ -21,6 +21,7 @@ Package `udisks` (`backend/internal/udisks/`, wired in `daemon/drives.go`) reads
 - **Open:** mounts first if needed (or asks for the passphrase, and opens once unlocked), then runs `Apps.fileManager` with the folder appended (`sh -c '<command> "$1"'`), else `xdg-open <folder>`. `openAfterMount` opens after every mount.
 - **Unlock:** `unlockRequest` is the volume whose passphrase field shows (in its `DriveRow`). The notification's Unlock sets it and opens the overlay page or edge menu holding a Drives module (`ShellManager.openModule`); with none, the field waits in the bar popout. A wrong passphrase keeps the field with `unlockError`; a right one mounts the cleartext volume.
 - **Eject:** unmounts, locks and powers off (the daemon's `drives.eject`), then notifies "Safe to remove"; `busy` notifies that it's in use.
+- **Created from** `shell.qml`'s `_services`, so plug-ins are noticed and IPC answers with no Drives widget or module shown.
 - **Inert** on the login screen (`Paths.greeter`): nothing is fetched or listened to.
 
 ### On plug-in

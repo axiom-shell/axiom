@@ -146,7 +146,8 @@ QtObject {
       if (error)
         return;
       const point = result?.mountPoint ?? "";
-      root._event("mounted", drive, point);
+      // As it is now: an unlocked drive's name is its cleartext's label
+      root._event("mounted", root.driveById(drive.id) ?? drive, point);
       if (point !== "" && (andOpen === true || DrivesConfig.openAfterMount))
         root._openFolder(point);
     });
