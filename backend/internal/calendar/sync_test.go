@@ -179,7 +179,7 @@ func TestCalDAVSync(t *testing.T) {
 		}
 		return r
 	}
-	if r := sync(); !r.Changed || r.Count != 2 || len(r.Errors) != 0 {
+	if r := sync(); len(r.Errors) != 0 || len(readEvents(t, s).Events) != 2 {
 		t.Errorf("first sync %+v", r)
 	}
 	e := readEvents(t, s).Events
@@ -191,22 +191,22 @@ func TestCalDAVSync(t *testing.T) {
 		t.Errorf("events.json mode %v", info.Mode().Perm())
 	}
 	// An unchanged ctag isn't fetched again
-	if r := sync(); r.Changed || fake.multigets != 1 {
-		t.Errorf("unchanged sync %+v, %d multigets", r, fake.multigets)
+	if sync(); fake.multigets != 1 {
+		t.Errorf("unchanged sync: %d multigets", fake.multigets)
 	}
 	// A new ctag fetches only the objects whose etag changed
 	fake.mu.Lock()
 	fake.version++
 	fake.objects["b.ics"], fake.etags["b.ics"], fake.requested = fmt.Sprintf(event, "b", "Dinner"), fake.version, nil
 	fake.mu.Unlock()
-	if r := sync(); !r.Changed || !reflect.DeepEqual(fake.requested, []string{"b.ics"}) {
-		t.Errorf("changed sync %+v, fetched %v", r, fake.requested)
+	if sync(); !reflect.DeepEqual(fake.requested, []string{"b.ics"}) || !reflect.DeepEqual(titles(t, s), []string{"Dentist", "Dinner"}) {
+		t.Errorf("changed sync fetched %v: %v", fake.requested, titles(t, s))
 	}
 	// No password: the calendar reports it and keeps its copy
 	if err := s.o.Secrets.Clear(ctx, "calendar", "acc"); err != nil {
 		t.Fatal(err)
 	}
-	if r := sync(); len(r.Errors) != 1 || r.Errors[0].Kind != axerr.NoPassword || r.Count != 2 {
+	if r := sync(); len(r.Errors) != 1 || r.Errors[0].Kind != axerr.NoPassword || len(readEvents(t, s).Events) != 2 {
 		t.Errorf("no password %+v", r)
 	}
 }
@@ -303,7 +303,7 @@ func TestFeedSync(t *testing.T) {
 	url := ts.URL + "/team.ics"
 	accounts := []Account{account("feed", "ics", url)}
 	r, err := s.Sync(ctx, SyncRequest{Range: july, Accounts: accounts})
-	if err != nil || !r.Changed || r.Count != 1 {
+	if err != nil || len(readEvents(t, s).Events) != 1 {
 		t.Fatalf("sync %+v %v", r, err)
 	}
 	trip := readEvents(t, s).Events[0]
@@ -311,7 +311,7 @@ func TestFeedSync(t *testing.T) {
 		t.Errorf("trip %+v", trip)
 	}
 	// Unchanged (304), then gone: the last copy is kept and the error reported
-	if r, _ := s.Sync(ctx, SyncRequest{Range: july, Accounts: accounts}); r.Changed {
+	if r, _ := s.Sync(ctx, SyncRequest{Range: july, Accounts: accounts}); len(r.Errors) != 0 || len(readEvents(t, s).Events) != 1 {
 		t.Errorf("304 sync %+v", r)
 	}
 	mu.Lock()
@@ -322,8 +322,8 @@ func TestFeedSync(t *testing.T) {
 		t.Errorf("gone sync %+v", r)
 	}
 	// A dropped calendar is a change
-	if r, _ := s.Sync(ctx, SyncRequest{Range: july}); !r.Changed || r.Count != 0 {
-		t.Errorf("no calendars %+v", r)
+	if s.Sync(ctx, SyncRequest{Range: july}); len(readEvents(t, s).Events) != 0 {
+		t.Errorf("no calendars: %+v", readEvents(t, s).Events)
 	}
 }
 
@@ -363,11 +363,11 @@ func TestLocalCalendar(t *testing.T) {
 	// A file dropped into the folder by hand is picked up; one half written isn't
 	os.WriteFile(filepath.Join(folder, "extra.ics"), fmt.Appendf(nil, event, "x", "Extra"), 0o600)
 	os.WriteFile(filepath.Join(folder, ".tmp-y.ics"), fmt.Appendf(nil, event, "y", "Half written"), 0o600)
-	if r, _ := s.Sync(ctx, SyncRequest{Range: july, Accounts: edit.Accounts}); !r.Changed || r.Count != 2 {
-		t.Errorf("dropped in %+v", r)
+	if s.Sync(ctx, SyncRequest{Range: july, Accounts: edit.Accounts}); !reflect.DeepEqual(titles(t, s), []string{"Dentist (moved)", "Extra"}) {
+		t.Errorf("dropped in %v", titles(t, s))
 	}
-	if r, _ := s.Sync(ctx, SyncRequest{Range: july, Accounts: edit.Accounts}); r.Changed {
-		t.Errorf("unchanged %+v", r)
+	if s.Sync(ctx, SyncRequest{Range: july, Accounts: edit.Accounts}); len(readEvents(t, s).Events) != 2 {
+		t.Errorf("unchanged %v", titles(t, s))
 	}
 	os.Remove(filepath.Join(folder, "extra.ics"))
 	gone := changed

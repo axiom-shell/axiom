@@ -530,8 +530,6 @@ Found by the audits:
 - [Enter in the editor's title saves again while busy and picks All events while asking](issues.md#enter-in-the-editors-title-saves-again-while-busy-and-picks-all-events-while-asking)
 - [Removing a CalDAV account deletes its password before the draft is saved](issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
 - [Event titles from a feed render as styled text and load remote images](issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
-- [Calendar results and members nothing reads](issues.md#calendar-results-and-members-nothing-reads)
-- [The Accounts card's fallbacks for a renamed key and for empty account ids](issues.md#the-accounts-cards-fallbacks-for-a-renamed-key-and-for-empty-account-ids)
 - [An own brightness set opens the OSD, which refreshes the monitor beside the write](issues.md#an-own-brightness-set-opens-the-osd-which-refreshes-the-monitor-beside-the-write)
 - [Idle dimming is forgotten across a shell reload](issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
 - [Two members of the brightness system nothing needs](issues.md#two-members-of-the-brightness-system-nothing-needs)

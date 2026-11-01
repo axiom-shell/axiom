@@ -24,13 +24,12 @@ FoldingCard {
   property string foldKey
 
   readonly property var accountSchema: ConfigManager.configSchema.definitions.CalendarAccount
-  readonly property var accounts: SettingsManager.localConfig?.Calendar?.accounts ?? CalendarConfig.savedAccounts
-  readonly property string defaultCalendar: SettingsManager.localConfig?.Calendar?.defaultCalendar ?? CalendarConfig.defaultCalendar
+  readonly property var accounts: CalendarConfig.savedAccounts
+  readonly property string defaultCalendar: CalendarConfig.defaultCalendar
   property int selected: 0
   readonly property int current: Math.max(0, Math.min(root.selected, root.accounts.length - 1))
   readonly property var account: root.accounts[root.current] ?? null
-  // The shown account's id as the reader fills it in (numbered when empty)
-  readonly property string accountId: root.account ? (root.account.id || "account-" + (root.current + 1)) : ""
+  readonly property string accountId: root.account?.id ?? ""
   readonly property bool isLocal: root.account?.kind === "local"
   readonly property string passwordStatus: root.accountId ? SecretsManager.secretStatus("calendar", root.accountId) : ""
 
@@ -70,7 +69,7 @@ FoldingCard {
   function add() {
     const accounts = Utils.clone(root.accounts);
     accounts.push(SchemaValidation.applyDefaults({
-      "id": Utils.freeId("account", accounts.map((account, index) => account.id || "account-" + (index + 1)))
+      "id": Utils.freeId("account", accounts.map(account => account.id))
     }, root.accountSchema, ConfigManager.configSchema));
     root._commit(accounts);
     root.selected = accounts.length - 1;
@@ -111,9 +110,7 @@ FoldingCard {
   // Finds the account's calendars and merges them in: new ones holding
   // events come in shown; ones the server no longer lists go
   function connect() {
-    const account = Object.assign({}, root.account, {
-      "id": root.accountId
-    });
+    const account = root.account;
     const index = root.current;
     root.result = {
       "busy": true,
@@ -135,7 +132,6 @@ FoldingCard {
       const old = accounts[index]?.calendars ?? [];
       if (!accounts[index])
         return;
-      accounts[index].id = account.id;
       // What the server says of them is the calendar cache's; the config
       // keeps what the user set
       CalendarManager.remember(account.id, result.calendars);
@@ -169,7 +165,6 @@ FoldingCard {
       "color": "",
       "enabled": true
     });
-    accounts[root.current].id = root.accountId;
     accounts[root.current].calendars = calendars;
     root._commit(accounts);
   }
