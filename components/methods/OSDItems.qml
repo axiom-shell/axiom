@@ -299,6 +299,10 @@ QtObject {
         "icon": "usb",
         "role": "Connected"
       },
+      "locked": {
+        "icon": "lock",
+        "role": "Encrypted: click to unlock"
+      },
       "mounted": {
         "icon": "usb",
         "role": "Mounted"
@@ -337,7 +341,8 @@ QtObject {
   }
 
   // What a status's card shows, from the OSD's tiles (by type, tile()'s)
-  // and status types: { icon, title, role, detail }, or null for a type
+  // and status types: { icon, title, role, detail, clickable (a click
+  // acts on it: a drive's, DrivesManager.activate) }, or null for a type
   // with no card. `role` is English, for the caller to translate (what an
   // audio device is now used for: "Output and input" when the OSD's other
   // device status holds the same device; what a VPN, the apps or the
@@ -352,7 +357,8 @@ QtObject {
       "icon": t.icon ?? "",
       "title": t.name ?? "",
       "role": "",
-      "detail": ""
+      "detail": "",
+      "clickable": type === "drive"
     };
     switch (type) {
     case "audio":

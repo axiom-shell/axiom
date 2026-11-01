@@ -135,6 +135,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once axiom runs a build with Phase 10 (row 17), set up 5–10 popular Waybar custom scripts (`~/waybar-test-scripts`: media, updates, weather, crypto, VPN, …) from the Custom widgets page alone, through the Import from Waybar box or the presets, and check each runs unchanged on a bar and as a module, under niri, sway and Hyprland (Phase 10's "done when").
 - On Hyprland 0.57 with `Input` pointer settings on and acceleration left at `default`, check Hyprland reports no config error for `input.accel_profile` (#238).
 - Once axiom runs a binary built with row 15 (stage 8), pick a file from Settings (a wallpaper or a path setting) under each compositor and check the portal's picker opens and its choice lands, then with the portal stopped check zenity or kdialog opens instead; and run `axiom bug-info` under Hyprland, niri and sway and check its Compositor and monitor lines.
+- Removable drives (a USB drive confirmed live, every path): plug in a real LUKS stick (the Locked card's click shows the passphrase field, a right and a wrong passphrase) and a memory card in a card reader (inserting and taking out the card is Connected / Disconnected, and its eject leaves the reader).
 - Once the shell runs the lock-survives-reload fix, let the idle lock come up, save a loaded QML file, then unlock with the password: the lock screen stays up throughout, `scripts/log.sh --all` shows no `Session lock object was destroyed without unlocking`, and the next save after unlocking reloads. Nested niri, sway and Hyprland showed it with a test unlock hook; the real idle lock and PAM only the live session can.
 - Once axiom runs a binary built with row 16's greeter progress fix, update the login screen for real and check the card reads "Installing now..." after the password, then that it's up to date, and that the "Login screen update" notification is gone.
 - On an NVIDIA machine without an AMD card, once axiom runs the graphs'-history change: show a GPU stat or graph and check it fills from the streamed `nvidia-smi` (`pgrep -c nvidia-smi` is 1 while shown, 0 a few seconds after closing, with no GPU graph configured), and on a laptop with a runtime-PM dGPU that the card stays `suspended` (`power/runtime_status`) with nothing open. If the GPU reads stay missing, nvidia-smi isn't printing each line as it comes when piped: fall back to one-shot queries off the sample path.
@@ -560,6 +561,7 @@ Found while making caffeine survive reloads:
 Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)
 - [Eject may leave a USB stick powered on](issues.md#eject-may-leave-a-usb-stick-powered-on)
+- [The weather TestPlace test fails now and then under load](issues.md#the-weather-testplace-test-fails-now-and-then-under-load)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

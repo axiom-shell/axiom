@@ -173,6 +173,58 @@ TestCase {
     compare(DriveInfo.pick(drive([])), null, "nothing");
   }
 
+  function test_channel_data() {
+    return [
+      {
+        "tag": "osd shown",
+        "announce": "osd",
+        "osd": true,
+        "want": "osd"
+      },
+      {
+        "tag": "osd, none shows drives: notifications",
+        "announce": "osd",
+        "osd": false,
+        "want": "notification"
+      },
+      {
+        "tag": "notification, an OSD shows drives",
+        "announce": "notification",
+        "osd": true,
+        "want": "notification"
+      },
+      {
+        "tag": "notification",
+        "announce": "notification",
+        "osd": false,
+        "want": "notification"
+      },
+      {
+        "tag": "off, an OSD shows drives",
+        "announce": "off",
+        "osd": true,
+        "want": ""
+      },
+      {
+        "tag": "off",
+        "announce": "off",
+        "osd": false,
+        "want": ""
+      }
+    ];
+  }
+
+  function test_channel(row) {
+    compare(DriveInfo.channel(row.announce, row.osd), row.want);
+  }
+
+  function test_clickAction() {
+    compare(DriveInfo.clickAction("mounted"), "open");
+    compare(DriveInfo.clickAction("locked"), "unlock");
+    for (const kind of ["added", "unmounted", "ejected", "removed", "pulled", "busy", "ejectFailed", undefined])
+      compare(DriveInfo.clickAction(kind), "show", String(kind));
+  }
+
   function test_ignored() {
     const d = drive([vol("a", {
         "uuid": "1234-ABCD",

@@ -224,6 +224,7 @@ TestCase {
       "drive": mounted
     }, ["drive"]);
     compare([card.icon, card.title, card.role, card.detail], ["usb", "STICK", "Mounted", "/run/media/u/STICK"]);
+    verify(card.clickable, "a drive's card takes a click");
     const ejected = OSDItems.tile("drive", {
       "available": true,
       "count": 0,
@@ -250,7 +251,7 @@ TestCase {
       })
     }, ["drive"]);
     compare(card.role, "Connected", "plugged in");
-    const looks = [["unmounted", "usb", "Unmounted"], ["removed", "usb_off", "Disconnected"], ["pulled", "warning", "Unplugged without ejecting"], ["busy", "warning", "In use: close what's using it"], ["ejectFailed", "warning", "Couldn't eject"]];
+    const looks = [["locked", "lock", "Encrypted: click to unlock"], ["unmounted", "usb", "Unmounted"], ["removed", "usb_off", "Disconnected"], ["pulled", "warning", "Unplugged without ejecting"], ["busy", "warning", "In use: close what's using it"], ["ejectFailed", "warning", "Couldn't eject"]];
     for (const [kind, icon, role] of looks) {
       card = OSDItems.card("drive", {
         "drive": OSDItems.tile("drive", {
@@ -560,6 +561,7 @@ TestCase {
     compare(cam.title, "Firefox");
     compare(cam.role, "Using the camera");
     compare(OSDItems.card("screenShare", {}, ["screenShare"]).role, "Sharing the screen", "no tile yet");
+    verify(!OSDItems.card("screenShare", {}, ["screenShare"]).clickable, "only a drive's card takes a click");
     const stopped = OSDItems.card("screenShare", {
       "screenShare": OSDItems.tile("screenShare", {
         "apps": [],

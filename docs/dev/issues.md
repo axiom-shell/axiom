@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while testing removable drives in a nested shell
 
+### The weather TestPlace test fails now and then under load
+- **Where:** `backend/internal/weather/weather_test.go` (`TestPlace`, `newFetcher`)
+- **What:** Its parallel subtests all fetch through `http.DefaultClient`, and each one's fake server closing (`httptest.Server.Close` calls `CloseIdleConnections` on `http.DefaultTransport`) can break another's request in flight: `scripts/dev/verify.sh` once failed `TestPlace/both_IP_services_down` with `err = Get "http://127.0.0.1:…/ipapi": net/http: HTTP/1.x transport connection broken: http: CloseIdleConnections called, want "HTTP 503"`; 120 runs alone passed. Fix: `newFetcher` uses the fake server's own client (`f.Client()`), not `http.DefaultClient`.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing removable drive support
+
 ### Eject may leave a USB stick powered on
 - **Where:** `backend/internal/udisks/udisks.go` (`eject`)
 - **What:** `eject` picks the Drive's `Eject` over `PowerOff` for any drive with `CanEject` and removable media (`case drive.Optical || drive.CanEject && drive.mediaRemovable:` before `case drive.CanPowerOff:`). If udisks2 reports a USB stick with the removable bit as Ejectable, it only gets `Eject`: it stays in udisks2 without media (hidden, `removed` sent) but powered, which contradicts `docs/dev/features/drives.md` ("locks and powers off"). A card reader's card wants `Eject` (the reader stays). PLAUSIBLE: `udisksctl info -b /dev/sdX` on a real stick (Ejectable, CanPowerOff, MediaRemovable) settles it. Fix, if it holds: `PowerOff` first when `CanPowerOff` and the drive isn't a card reader (`Optical` or a media-changing reader keeps `Eject`), the way GNOME's gvfs powers off a stick after its eject.

@@ -5,13 +5,18 @@ x-category: Modules
 title: Removable drives
 description: "How USB sticks, memory cards and other removable drives are announced, what plugging one in does, and the drives left alone. Drives are reached through udisks2."
 additionalProperties: false
-x-order: [notifications, onInsert, warnUnplugged, ignore]
+x-order: [announce, onInsert, warnUnplugged, ignore]
 properties:
-  notifications:
-    type: boolean
-    title: Drive notifications
-    default: true
-    description: "Notifications for removable drives. What has buttons (asking what to do with one plugged in, an encrypted one, where one was mounted on plug-in) is a notification; everything else (connected, mounted, unmounted, safe to remove, unplugged, what went wrong) shows on an OSD showing Removable drives, or is a notification with none. Turned off, that OSD shows everything without buttons, and with no such OSD nothing is said."
+  announce:
+    type: string
+    title: Show drive events
+    enum: [osd, notification, 'off']
+    x-enumLabels:
+      osd: On the OSD
+      notification: As notifications
+      'off': Don't
+    default: osd
+    description: "How a drive being plugged in, mounted, unmounted, safe to remove or unplugged is shown, and what went wrong. On the OSD shows a card (a click opens the drive, or unlocks an encrypted one); it needs an enabled OSD with Removable drives among its statuses, and with none falls back to notifications. As notifications sends each as a notification, with Open, Eject or Unlock buttons where they help. Don't leaves them to the Drives widget and module. Asking what to do with a drive plugged in is always a notification."
     x-link: {setting: OSD}
   onInsert:
     type: string
@@ -22,7 +27,7 @@ properties:
       mount: Mount it
       nothing: Do nothing
     default: ask
-    description: "Ask sends a notification offering to mount or open it (or, for an encrypted drive, to unlock it); with drive notifications off it does nothing. Mount it mounts it at once and notifies where, offering to open it; nothing is mounted while the screen is locked, it waits for the unlock. Do nothing leaves it to the Drives widget and module. Drives open in the file manager."
+    description: "Ask sends a notification offering to mount or open it (or, for an encrypted drive, to unlock it), whatever Show drive events says. Mount it mounts it at once (an encrypted drive waits to be unlocked); nothing is mounted while the screen is locked, it waits for the unlock. Do nothing leaves it to the Drives widget and module. Drives open in the file manager."
     x-link: {setting: Apps.fileManager}
   warnUnplugged:
     type: boolean
