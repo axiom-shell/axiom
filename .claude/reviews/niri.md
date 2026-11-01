@@ -9,7 +9,7 @@ Unchanged since batch 1 and still in good shape at its core (event stream, reduc
 - Major: [niri started on a broken config reads as loaded](../../docs/dev/issues.md#niri-started-on-a-broken-config-reads-as-loaded)
 - Major: [An unknown IPC function word merges as a toggle](../../docs/dev/issues.md#an-unknown-ipc-function-word-merges-as-a-toggle)
 - Major: [niri's confirming quit moves in as an instant log out](../../docs/dev/issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
-- Cleanup: [Nothing reads userBindsRead or lastLoadFailed](../../docs/dev/issues.md#nothing-reads-userbindsread-or-lastloadfailed)
+- Cleanup: "Nothing reads userBindsRead or lastLoadFailed" (fixed, row 20 compositor-01)
 - Cleanup: "The niri writer's runtimeOn and unread-binds guards are dead" (fixed, row 20 compositor-01)
 - Cleanup: "Three listings of niri's user files" (fixed, row 20 compositor-01)
 - Cleanup: "RunningNested has its own niri socket client" (fixed, row 20 compositor-01)

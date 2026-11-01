@@ -25,7 +25,7 @@
 - **Windows**: `id` is niri's, `focusRank` follows its focus timestamps (nothing persisted), `column`/`tile` its place in the strip (`WorkspaceGeometry.stripOrder` orders by them). niri 26.04 gives no position for a tiled window, only its size: a strip is laid out from its columns at the output's edge, without niri's scroll (`windowGeometry` off). Its `cover` (`windowCover`, for the dock's intellihide) is its column at the output's height while the strip fits on the output (niri doesn't scroll it then), else the whole output (the strip fills the view). A floating window is where niri says. A tiled window as big as its output is fullscreen.
 - **Keyboard**: niri's full layout names, short codes from `Input.keyboard.layout` when axiom sets the keyboard, else the config's xkb layout, else the name (`KeyboardLayouts`).
 - **Gaps** (`gapsOut`, a strip's layout): the gaps and struts of the config niri runs (`axiom compositor niri info --config <running config>`: axiom's module or the detached wrapper in it), read on `niri.started` and after every reload. The same read gives what `Mod` stands for (`modKey`, nested niri's `mod-key-nested`), for `builtInBinds`.
-- `configReloaded` is a `ConfigLoaded` that didn't fail; `lastLoadFailed` says when one did (niri keeps the config before).
+- `configReloaded` is a `ConfigLoaded` that didn't fail (a failed one leaves niri on the config before).
 
 ### Primitives
 - `activateWindow` / `closeWindow`: `FocusWindow` / `CloseWindow` by id.

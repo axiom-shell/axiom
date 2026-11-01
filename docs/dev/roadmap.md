@@ -360,7 +360,6 @@ Found by the audits:
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
 - [niri started on a broken config reads as loaded](issues.md#niri-started-on-a-broken-config-reads-as-loaded)
-- [Nothing reads userBindsRead or lastLoadFailed](issues.md#nothing-reads-userbindsread-or-lastloadfailed)
 - [NiriManager queues actions the daemon could order](issues.md#nirimanager-queues-actions-the-daemon-could-order)
 - [A file mode that stops loading keeps the saved monitor profile off](issues.md#a-file-mode-that-stops-loading-keeps-the-saved-monitor-profile-off)
 - [Leaving included between sessions leaves the full module loaded](issues.md#leaving-included-between-sessions-leaves-the-full-module-loaded)
