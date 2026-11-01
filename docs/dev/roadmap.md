@@ -365,7 +365,6 @@ Found by the audits:
 - [The niri writer's runtimeOn and unread-binds guards are dead](issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
 - [Three listings of niri's user files](issues.md#three-listings-of-niris-user-files)
 - [NiriManager queues actions the daemon could order](issues.md#nirimanager-queues-actions-the-daemon-could-order)
-- [A second KDL writer in the kdl package](issues.md#a-second-kdl-writer-in-the-kdl-package)
 - [A file mode that stops loading keeps the saved monitor profile off](issues.md#a-file-mode-that-stops-loading-keeps-the-saved-monitor-profile-off)
 - [Leaving included between sessions leaves the full module loaded](issues.md#leaving-included-between-sessions-leaves-the-full-module-loaded)
 - [A failed takeover leaves no layer and no problem](issues.md#a-failed-takeover-leaves-no-layer-and-no-problem)

@@ -581,12 +581,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### A second KDL writer in the kdl package
-- **Where:** `backend/internal/compositor/kdl/kdl.go` (`ValueText`, `PyFloat`, `NodeText`, `Str`), `backend/internal/compositor/render/niri.go` (`KdlValue`, `KdlString`, `KdlSerialize`)
-- **What:** Deletion pass. The niri system's Check is that KDL is written by one module; `niri-backend.md` names `render`'s serializer. The parser package carries a second writer from the Python port: `ValueText` (its own escapes, without `\r`), `PyFloat` (floats as Python's `str` spells them, "1e+16"), `NodeText` (no quoting of names), and `Str`'s Python spellings ("True", "None"). They're used only for a moved bind's `raw` text and a bind's description (`binds/niri.go`, `userconf/niri.go`), where `render`'s writer gives the same text for the values niri's binds hold. Writing those through `render` (or one shared value writer) removes about 50 lines and the second set of escaping rules.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the niri system
-
 ### Setting names that still confuse
 - **Where:** `config/schema/sections/`
 - **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.

@@ -162,7 +162,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [The niri writer's runtimeOn and unread-binds guards are dead](../issues.md#the-niri-writers-runtimeon-and-unread-binds-guards-are-dead)
   - [Three listings of niri's user files](../issues.md#three-listings-of-niris-user-files)
   - RunningNested has its own niri socket client
-  - [A second KDL writer in the kdl package](../issues.md#a-second-kdl-writer-in-the-kdl-package)
+  - A second KDL writer in the kdl package
   - [Small shrinks in the compositor manager](../issues.md#small-shrinks-in-the-compositor-manager)
   - [niri's bind plan is a copy of runtimeLayer.plan](../issues.md#niris-bind-plan-is-a-copy-of-runtimelayerplan)
   - Go copies of bind helpers that only the parity replay calls

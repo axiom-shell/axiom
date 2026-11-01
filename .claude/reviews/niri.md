@@ -14,7 +14,7 @@ Unchanged since batch 1 and still in good shape at its core (event stream, reduc
 - Cleanup: [Three listings of niri's user files](../../docs/dev/issues.md#three-listings-of-niris-user-files)
 - Cleanup: "RunningNested has its own niri socket client" (fixed, row 20 compositor-01)
 - Cleanup: [NiriManager queues actions the daemon could order](../../docs/dev/issues.md#nirimanager-queues-actions-the-daemon-could-order)
-- Cleanup: [A second KDL writer in the kdl package](../../docs/dev/issues.md#a-second-kdl-writer-in-the-kdl-package)
+- Cleanup: "A second KDL writer in the kdl package" (fixed, row 20 compositor-01)
 - Outside: [The Hyprland and sway bind merges each skip half of compositor/actions](../../docs/dev/issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
 
 ### Minor (report only, not recorded)
