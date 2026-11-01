@@ -532,7 +532,6 @@ Found by the audits:
 - [Event titles from a feed render as styled text and load remote images](issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
 - [An own brightness set opens the OSD, which refreshes the monitor beside the write](issues.md#an-own-brightness-set-opens-the-osd-which-refreshes-the-monitor-beside-the-write)
 - [Idle dimming is forgotten across a shell reload](issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
-- [Two members of the brightness system nothing needs](issues.md#two-members-of-the-brightness-system-nothing-needs)
 - [The brightness icon thresholds are written three times](issues.md#the-brightness-icon-thresholds-are-written-three-times)
 - [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
 - [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)

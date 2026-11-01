@@ -215,7 +215,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-01** (14):
   - Calendar results and members nothing reads
   - The Accounts card's fallbacks for a renamed key and for empty account ids
-  - [Two members of the brightness system nothing needs](../issues.md#two-members-of-the-brightness-system-nothing-needs)
+  - Two members of the brightness system nothing needs
   - [package chat's Log option is never used](../issues.md#package-chats-log-option-is-never-used)
   - [ChatManager.copy only forwards to ClipboardManager.copyText](../issues.md#chatmanagercopy-only-forwards-to-clipboardmanagercopytext)
   - [Notes documents count a revision nothing reads](../issues.md#notes-documents-count-a-revision-nothing-reads)

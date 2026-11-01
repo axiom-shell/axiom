@@ -1835,12 +1835,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
-### Two members of the brightness system nothing needs
-- **Where:** `services/system/BrightnessManager.qml:114` (`_focused`), `components/content/Brightness/Brightness.qml:102` (`allRow`)
-- **What:** `_focused()` only returns `CompositorManager.focusedOutput`, for the three IPC functions (`up`, `down`, `set`); `id: allRow` is never referenced (`grep -c allRow` gives 1, the definition). Fix: the IPC functions read `CompositorManager.focusedOutput` directly and the id goes: 5 lines (lines 114-117 of BrightnessManager.qml, line 102 of Brightness.qml).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:brightness system
-
 ### The brightness icon thresholds are written three times
 - **Where:** `components/content/Brightness/Brightness.qml:40` (`icon`), `components/surfaces/osd/OSDBar.qml:109` (`iconSource`), `components/content/QuickActions/QuickActions.qml:84`
 - **What:** The same `level < 0.34 ? "brightness_low" : level < 0.67 ? "brightness_medium" : "brightness_high"` is in the module, the OSD bar and the Quick actions tile; changing the icons or thresholds means finding all three. Fix: one `icon(level)` function in BrightnessManager (as `AudioManager.inputIcon` serves the OSD's microphone bar), called from all three; Brightness.qml's own `icon` (4 lines) goes.
