@@ -42,7 +42,7 @@ func setupSchema(t *testing.T, edit func(root *jsonx.Object)) fixture {
 		t.Fatal(err)
 	}
 	edit(root.(*jsonx.Object))
-	pipeline := config.V2Pipeline{S: schema.New(root)}
+	pipeline := config.Pipeline{S: schema.New(root)}
 	dir, home, ex := t.TempDir(), t.TempDir(), t.TempDir()
 	st, err := store.Open(store.Options{Dir: dir, Pipeline: pipeline, Debounce: 20 * time.Millisecond})
 	if err != nil {

@@ -12,7 +12,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 )
 
-func v2(t *testing.T) config.V2Pipeline {
+func v2(t *testing.T) config.Pipeline {
 	t.Helper()
 	data, err := tree.BuildSchema(testkit.RepoRoot())
 	if err != nil {
@@ -22,10 +22,10 @@ func v2(t *testing.T) config.V2Pipeline {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return config.V2Pipeline{S: schema.New(root)}
+	return config.Pipeline{S: schema.New(root)}
 }
 
-func load(t *testing.T, p config.V2Pipeline, text string) config.Loaded {
+func load(t *testing.T, p config.Pipeline, text string) config.Loaded {
 	t.Helper()
 	parsed, err := jsonx.Unmarshal([]byte(text))
 	if err != nil {

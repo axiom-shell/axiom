@@ -131,9 +131,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 **Deletions**
 
 - **config-01** (9, done): Takes core-ui-theming's and platform's reader-member entries: the fixed check runs first, then one pass deletes what it and they find, so config-usage-baseline.json changes once.
-  - [Format-1 secrets plumbing nothing fills or reads](../issues.md#format-1-secrets-plumbing-nothing-fills-or-reads)
-  - [The validator and the schema check carry patternProperties nothing uses](../issues.md#the-validator-and-the-schema-check-carry-patternproperties-nothing-uses)
-  - [The config Pipeline interface has one implementation](../issues.md#the-config-pipeline-interface-has-one-implementation)
+  - Format-1 secrets plumbing nothing fills or reads
+  - The validator and the schema check carry patternProperties nothing uses
+  - The config Pipeline interface has one implementation
   - [Store.Reschema repeats reload's load-and-apply](../issues.md#storereschema-repeats-reloads-load-and-apply)
   - [OpenAdopting repeats Open's setup](../issues.md#openadopting-repeats-opens-setup)
   - [Every step test copies the same case runner](../issues.md#every-step-test-copies-the-same-case-runner)

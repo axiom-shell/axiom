@@ -513,5 +513,5 @@ func (d *Daemon) rebuildSchema() {
 	d.dev.push() // whether turning it off leaves the config read-only
 	d.opts.Log.Info("rebuilt the schema", "hash", hash)
 	pushSchemaChanged.Send(d.server, schemaChanged{Hash: hash, Path: d.runtime.File(SchemaFile)}, subscribedTo(topicConfig))
-	d.store.Reschema(config.V2Pipeline{S: schema.New(parsed)})
+	d.store.Reschema(config.Pipeline{S: schema.New(parsed)})
 }

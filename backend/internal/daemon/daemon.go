@@ -231,7 +231,7 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	storeOpts := store.Options{
 		Dir:      d.dirs.Config,
-		Pipeline: config.V2Pipeline{S: schema.New(parsed)},
+		Pipeline: config.Pipeline{S: schema.New(parsed)},
 		Log:      opts.Log.With("part", "config"),
 		// The takeover settings in effect, read when config.json isn't JSON
 		TakeoversFile: filepath.Join(d.dirs.State, store.TakeoversFile),

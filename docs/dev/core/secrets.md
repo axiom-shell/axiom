@@ -34,4 +34,4 @@ Package chat reads a key for `chat.send` and `chat.models`, and package calendar
 - Keys: `views/Settings/ChatProvidersCard` (the Chat section's `x-card`, with Test and Fetch models).
 - Passwords: `CalendarAccountsCard`.
 - Never through the settings draft.
-- A key never goes in config.json. The binary's store hands secrets a migration step pulls out of the file to its `OnSecrets` before writing it back; no step pulls any out now.
+- A key never goes in config.json, and no migration step pulls one out of the file (format 1's frozen migrations returned an empty `secrets`, which nothing reads).

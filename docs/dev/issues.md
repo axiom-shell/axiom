@@ -1741,27 +1741,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the config-pipeline system
 
-### Format-1 secrets plumbing nothing fills or reads
-- **Where:** `backend/internal/config/load.go:15` (`Loaded`), `backend/internal/migrate/legacy/legacy.go:45` (`Result`)
-- **What:** `legacy.js`'s `migrate` declares `const secrets = {}` and returns it without ever writing a key (`grep -n secrets legacy.js`: the declaration, the doc comment and the return only), and no production code reads `Loaded.Secrets` (`grep -rn '\.Secrets\b' backend` outside tests: only its assignment in `LoadLegacy`). `Loaded.Object` and `Result.Object`, with `stringsArray`, exist only for the frozen-hash tests (`legacy_test.go`, `shared_test.go`). Fix: drop the two `Secrets` fields and their assignments (load.go:15, :39; legacy.go:45, :89; legacy.go:90 checks only `Config`): 4 lines; move the fixture encoders (load.go:45-62, legacy.go:101-108: 26 lines) into the `_test.go` files, writing an empty `"secrets"` object so the frozen hashes still match.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### The validator and the schema check carry patternProperties nothing uses
-- **Where:** `backend/internal/config/pipeline.go:264` (`validateObject`), `backend/internal/schema/yamlsrc/check.go:16` (`keywords`)
-- **What:** No schema uses `patternProperties`: 0 in `config/json/config.schema.json`, 0 in the frozen `schema-v75.json` (only `config/themes/theme.schema.json` has it, which the Go validator never reads). `Prune` and `ApplyDefaults` already ignore it, so only validation and the build's keyword check carry it. Fix: drop the `patternProperties` keyword (check.go:16's entry, the `"patterns"` case at check.go:134 and its branch at :141-143) and its validation (pipeline.go:264-272): 12 lines; a schema using it then fails the build as an unknown keyword instead of half-working.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
 ### Every step test copies the same case runner
 - **Where:** `backend/internal/migrate/steps/steps_test.go` (`TestV81FoldsCommandOutput`), `backend/internal/migrate/steps/v83_test.go` (`stepAt`)
 - **What:** Nine step tests each repeat the same loop: parse the input, run the step, compare the compact bytes, check `changed`, run it again and expect nothing (steps_test.go:91-106, 135-151, 203-218, 238-257, 283-302; v82_test.go:33-52; v83_test.go:35-54; v84_test.go:42-61; v85_test.go:35-54: 169 lines). The older five also pick their step by index (`all[1]`, then a version check) where the newer ones use `stepAt`. Fix: one `runStepCases(t, version, cases)` helper beside `stepAt` doing the loop once (about 20 lines), each test keeping only its table: about 149 lines fewer, and a new step's test is its rows.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the config-pipeline system
-
-### The config Pipeline interface has one implementation
-- **Where:** `backend/internal/config/format.go:16` (`Pipeline`, `V2Pipeline`)
-- **What:** `Pipeline` is "what the config store does … for one config format", but format 1 is read inside `V2Pipeline.Load` (the frozen chain, then the conversion), and nothing else implements it: no fake in any test (a grep for `) Check(cfg *jsonx.Object)` finds only `V2Pipeline`'s). Store, saved, greeter, the CLI and the daemon all hold a `config.Pipeline` built as `config.V2Pipeline{S: …}` (17 mentions). Fix: make `Pipeline` the struct (`config.Pipeline{S: …}`), the interface's per-method docs moving onto the methods: the interface's 17 lines (format.go:14-30) go, and the "V2" that names a choice there isn't.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the config-pipeline system
 
