@@ -1,29 +1,29 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; awaiting the maintainer's reorder or veto of clusters and answers to the questions below
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; awaiting the maintainer's reorder or veto of clusters
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
-### Product questions
-Gathered for one sitting (step 2.5): each holds its cluster, or the named entry in it, until answered. Needs-a-plan entries ask theirs in their plan, not here.
+### Answered (maintainer, 2026-11-01)
+The product questions, answered in one sitting (step 2.5); each entry quotes its answer under **Decided**, and the deferred ones are under [Deferred](../roadmap.md#deferred).
 
-1. [Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot](../issues.md#over-a-configjson-that-didnt-load-at-the-start-keeping-the-running-config-saves-the-defaults-over-the-active-snapshot): The entry: "Whether an apply over a broken file should carry the file's machine settings (as far as it loaded) is for the plan." Carry them, or apply the snapshot alone? Holds: config-02 (its broken-file case).
-2. [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks): "Open (maintainer): whether the lock steps should also leave the plan in that state, so the card can say "doesn't lock" instead of a failure in the log." Yes, or the card's warning alone? Holds: platform-02.
-3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): "Proposal: split it into a "System" step and an "App colours" step". Split it, or keep one page? Holds: platform-06.
-4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): "Open (maintainer): which words the session actions use everywhere ("Restart" / "Shut down" or "Reboot" / "Power off")." Holds: platform-08.
-5. [Setting an awww wallpaper never starts awww's daemon](../issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon): Phase 5 lists it as closed by awww's removal (maintainer: "awww is scheduled for remove in favor of axioms own animations"). Defer it until that removal (a known issue in the post), or the smallest fix now (the script starts awww-daemon, about 2 lines)? Holds: core-ui-theming-07 (that entry only).
-6. [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers): The fallback for claims older than .axiom-claimed: "whether that fallback can go too is the maintainer's call" (about 6 lines). Drop it, or keep it? Technical: the leader may decide. Holds: compositor-01 (6 lines of it).
-7. [Gaps to the edges are wider on sway than the setting says](../issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says): No open question in the entry, but the fix changes what every sway user sees: the edge gap narrows to what the setting says (9 to 6 px at the defaults). Accept the narrower gap, or keep today's look? Holds: compositor-13.
-8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): "either drop the third element, or show it (a `StyledToolTip` on hover). Showing it is likely the intent". Drop the strings, or show them? Holds: compositor-17 (that entry).
-9. [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge): "which way it should open there (and whether by the box's place on screen, as top and bottom edges do) needs deciding." Toward the edge, away from it as now, or by the box's place on screen? Holds: bar-popouts-08 (that entry).
-10. [An edge popout doesn't size itself consistently](../issues.md#an-edge-popout-doesnt-size-itself-consistently): The maintainer's note: "the same content opens at different sizes". Which popout, and what steps show it? Holds: bar-popouts-10.
-11. [A pill bar's end reach trails a sliding popout's wall](../issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall): A rare path (niri only, 2 to 3 frames): the smallest fix, keep it logged, or defer it? Holds: bar-popouts-10.
-12. [What a lock screen module may do is a list kept by hand in two docs that disagree](../issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree): "there should be settings for allowing/viewing notifications as well" on the lock screen, "Not designed yet." File it as its own needs-a-plan entry, or defer it? Holds: nothing (overlay-modules-07 goes ahead with the decided x-lockActions fix).
-13. [A dock beside another edge's reserving dock is laid out as if that dock weren't there](../issues.md#a-dock-beside-another-edges-reserving-dock-is-laid-out-as-if-that-dock-werent-there): "Open product question: should a dock keep clear of another edge's dock at its ends (subtract those zones from its inner sides, the box beside it) or reach past it as edge popouts do (the margins above, the box may meet the corner under it)?" Holds: features-04.
-14. [Skipping a focus session counts it as finished](../issues.md#skipping-a-focus-session-counts-it-as-finished): "Question for the maintainer: should a skipped focus session count (some apps count it), not count, or count only once started?" Holds: features-05.
-15. [PomodoroDial redraws DialControls' ring and buttons](../issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons): The fix moves the layout: "The dots and picker then sit under the ring rather than beside it in a wide card." Accept that, or keep them beside the ring? Holds: features-05 (that entry).
-16. [Calendar times in a Windows zone name with no VTIMEZONE read as local time](../issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time): "whether the rare case is worth the table is the maintainer's call" (a CLDR windowsZones table, about 170 lines, mostly data). Add the table, or leave the entry logged? Holds: features-15 (that entry).
+1. [Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot](../issues.md#over-a-configjson-that-didnt-load-at-the-start-keeping-the-running-config-saves-the-defaults-over-the-active-snapshot): b) apply the snapshot with default machine settings.
+2. [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks): yes, the plan also shows "doesn't lock" as a status.
+3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): split, with the theme page directly after integrations.
+4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): a) "Restart" / "Shut down".
+5. Deferred: [Setting an awww wallpaper never starts awww's daemon](../issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (awww's own branch).
+6. [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers): drop the old-claims fallback.
+7. [Gaps to the edges are wider on sway than the setting says](../issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says): accept the narrower gap.
+8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): show them.
+9. Deferred: [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge).
+10. Removed: an edge popout's inconsistent size (fixed, maintainer).
+11. Deferred: [A pill bar's end reach trails a sliding popout's wall](../issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall).
+12. Deferred: [The lock screen has no settings for allowing or viewing notifications](../issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (filed apart; overlay-modules-07 goes ahead).
+13. [A dock beside another edge's reserving dock is laid out as if that dock weren't there](../issues.md#a-dock-beside-another-edges-reserving-dock-is-laid-out-as-if-that-dock-werent-there): b) reach past it as edge popouts do.
+14. [Skipping a focus session counts it as finished](../issues.md#skipping-a-focus-session-counts-it-as-finished): c) count only if the session had started.
+15. [PomodoroDial redraws DialControls' ring and buttons](../issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons): accept the dots and picker under the ring.
+16. Deferred: [Calendar times in a Windows zone name with no VTIMEZONE read as local time](../issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time) (left logged, no table).
 
 ### Cross-area merges
 Settled in this triage. One real duplicate was merged in issues.md; the rest are entries moved into one cluster because they share code.
@@ -74,7 +74,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 26 | core-ui-theming-04 | major | Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
 | 27 | core-ui-theming-05 | major | ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
 | 28 | core-ui-theming-06 | minor-sweep | ui-kit shared pieces | 4 | ~250 touched (~-100 net) | core-ui-theming-05 |  |
-| 29 | core-ui-theming-07 | minor-sweep | Core services, theming and theme integrations | 5 | ~60 | core-ui-theming-04 | Q5 |
+| 29 | core-ui-theming-07 | minor-sweep | Core services, theming and theme integrations | 4 | ~60 | core-ui-theming-04 |  |
 | 30 | compositor-05 | major | The daemon's mode lifecycle (detect, load, leave, claim) | 6 | ~350 | compositor-01 |  |
 | 31 | compositor-06 | major | Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
 | 32 | compositor-07 | major | The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
@@ -95,37 +95,36 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 47 | bar-popouts-04 | major | The bar's reserve and rebuild identity | 7 | ~120 | bar-popouts-01 |  |
 | 48 | bar-popouts-06 | major | Bar widgets that clip or glide | 4 | ~60 | bar-popouts-01 |  |
 | 49 | bar-popouts-07 | major | Edge menu sizing, placement and zones | 5 | ~250 | bar-popouts-01, overlay-modules-02 |  |
-| 50 | bar-popouts-08 | minor-sweep | Popouts and edge menus | 6 | ~120 | bar-popouts-03, -07 | Q9 |
+| 50 | bar-popouts-08 | minor-sweep | Popouts and edge menus | 5 | ~120 | bar-popouts-03, -07 |  |
 | 51 | bar-popouts-09 | minor-sweep | The bar and bar widgets, with the workspace popouts | 7 | ~200 | bar-popouts-04, -06 |  |
-| 52 | bar-popouts-10 | live-only | A repro and a frame lag | 2 | ~20 or none | bar-popouts-03 | Q10, Q11 |
-| 53 | bar-popouts-11 | plan | The 1080p pass: text clips, and the Keybinds page on a small monitor | 2 | needs a plan | compositor-16 |  |
-| 54 | bar-popouts-12 | plan | Nineteen windows mapped on one monitor | 1 | needs a plan | none |  |
-| 55 | bar-popouts-13 | plan | Popouts and tray submenus taller than the screen | 2 | needs a plan | bar-popouts-08 |  |
-| 56 | overlay-modules-02 | major | Slot padding and grow in the module base | 4 | ~150 | overlay-modules-01 |  |
-| 57 | overlay-modules-03 | major | Per-module full minimums, and NowPlaying's hidden parts | 5 | ~280 | overlay-modules-02 |  |
-| 58 | overlay-modules-04 | major | Parts built hidden, and images decoded more than once | 2 | ~300 | overlay-modules-03 |  |
-| 59 | overlay-modules-05 | major | The overlay host and the Layouts editor | 4 | ~80 | none |  |
-| 60 | overlay-modules-06 | major | Custom widgets | 4 | ~150 | none |  |
-| 61 | overlay-modules-07 | major | What reaches the lock screen | 2 | ~150 | overlay-modules-06 | Q12 |
-| 62 | overlay-modules-08 | major | OSD volume and brightness | 3 | ~100 touched (~-60 net) | overlay-modules-01 |  |
-| 63 | overlay-modules-09 | minor-sweep | The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
-| 64 | overlay-modules-10 | minor-sweep | Modules | 5 | ~200 touched (~-130 net) | overlay-modules-03 |  |
-| 65 | overlay-modules-11 | minor-sweep | Hot corners | 2 | ~120 | none |  |
-| 66 | overlay-modules-12 | live-only | The overlay grid's model of -1 | 1 | ~5 | none |  |
-| 67 | overlay-modules-13 | plan | Compact cards build their full layout | 1 | needs a plan | overlay-modules-02, -04 |  |
-| 68 | features-03 | major | Notifications | 5 | ~200 (net about -80) | platform-03 |  |
-| 69 | features-04 | major | The dock | 2 | ~30 | features-01 | Q13 |
-| 70 | features-05 | major | Todo, pomodoro and timers | 7 | ~200 | features-01 | Q14, Q15 |
-| 71 | features-06 | major | Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
-| 72 | features-07 | major | Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
-| 73 | features-08 | major | Brightness | 3 | ~40 | features-01, core-ui-theming-02, overlay-modules-08 |  |
-| 74 | features-09 | major | The chat | 6 | ~180 | features-01 |  |
-| 75 | features-10 | major | Notes | 6 | ~180 | features-01, core-ui-theming-05 |  |
-| 76 | features-11 | major | Networking and Bluetooth, the VPN list and Tailscale | 5 | ~150 | features-01, overlay-modules-10 |  |
-| 77 | features-12 | major | Community setups | 5 | ~30 | features-01 |  |
-| 78 | features-13 | major | Screenshots and recording | 4 | ~80 | features-03 |  |
-| 79 | features-14 | major | Unbounded lists, and the chat's hidden parts | 2 | ~300 | features-05, -07, -09, overlay-modules-04 |  |
-| 80 | features-15 | minor-sweep | The clock format and calendar zone names | 2 | ~5, or ~170 with the table | features-02, -06 | Q16 |
+| 52 | bar-popouts-11 | plan | The 1080p pass: text clips, and the Keybinds page on a small monitor | 2 | needs a plan | compositor-16 |  |
+| 53 | bar-popouts-12 | plan | Nineteen windows mapped on one monitor | 1 | needs a plan | none |  |
+| 54 | bar-popouts-13 | plan | Popouts and tray submenus taller than the screen | 2 | needs a plan | bar-popouts-08 |  |
+| 55 | overlay-modules-02 | major | Slot padding and grow in the module base | 4 | ~150 | overlay-modules-01 |  |
+| 56 | overlay-modules-03 | major | Per-module full minimums, and NowPlaying's hidden parts | 5 | ~280 | overlay-modules-02 |  |
+| 57 | overlay-modules-04 | major | Parts built hidden, and images decoded more than once | 2 | ~300 | overlay-modules-03 |  |
+| 58 | overlay-modules-05 | major | The overlay host and the Layouts editor | 4 | ~80 | none |  |
+| 59 | overlay-modules-06 | major | Custom widgets | 4 | ~150 | none |  |
+| 60 | overlay-modules-07 | major | What reaches the lock screen | 2 | ~150 | overlay-modules-06 |  |
+| 61 | overlay-modules-08 | major | OSD volume and brightness | 3 | ~100 touched (~-60 net) | overlay-modules-01 |  |
+| 62 | overlay-modules-09 | minor-sweep | The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
+| 63 | overlay-modules-10 | minor-sweep | Modules | 5 | ~200 touched (~-130 net) | overlay-modules-03 |  |
+| 64 | overlay-modules-11 | minor-sweep | Hot corners | 2 | ~120 | none |  |
+| 65 | overlay-modules-12 | live-only | The overlay grid's model of -1 | 1 | ~5 | none |  |
+| 66 | overlay-modules-13 | plan | Compact cards build their full layout | 1 | needs a plan | overlay-modules-02, -04 |  |
+| 67 | features-03 | major | Notifications | 5 | ~200 (net about -80) | platform-03 |  |
+| 68 | features-04 | major | The dock | 2 | ~30 | features-01 | Q13 |
+| 69 | features-05 | major | Todo, pomodoro and timers | 7 | ~200 | features-01 | Q14, Q15 |
+| 70 | features-06 | major | Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
+| 71 | features-07 | major | Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
+| 72 | features-08 | major | Brightness | 3 | ~40 | features-01, core-ui-theming-02, overlay-modules-08 |  |
+| 73 | features-09 | major | The chat | 6 | ~180 | features-01 |  |
+| 74 | features-10 | major | Notes | 6 | ~180 | features-01, core-ui-theming-05 |  |
+| 75 | features-11 | major | Networking and Bluetooth, the VPN list and Tailscale | 5 | ~150 | features-01, overlay-modules-10 |  |
+| 76 | features-12 | major | Community setups | 5 | ~30 | features-01 |  |
+| 77 | features-13 | major | Screenshots and recording | 4 | ~80 | features-03 |  |
+| 78 | features-14 | major | Unbounded lists, and the chat's hidden parts | 2 | ~300 | features-05, -07, -09, overlay-modules-04 |  |
+| 79 | features-15 | minor-sweep | The clock format | 1 | ~5 | features-02, -06 |  |
 
 #### Entries by cluster
 
@@ -156,7 +155,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [TileGrid and StyledVolumeBar keep lines nothing reads](../issues.md#tilegrid-and-styledvolumebar-keep-lines-nothing-reads)
   - [Two hand-written cmp.Or in the theme packages](../issues.md#two-hand-written-cmpor-in-the-theme-packages)
   - [Three Wayland client members nothing in the daemon calls](../issues.md#three-wayland-client-members-nothing-in-the-daemon-calls)
-- **compositor-01** (17): One commit per package. Q6 decides only whether 6 more lines go.
+- **compositor-01** (17): One commit per package, the old-claims fallback's 6 lines included (Q6).
   - [Hyprland's exit command is kept in two packages](../issues.md#hyprlands-exit-command-is-kept-in-two-packages)
   - [The Hyprland Go code keeps dead and doubled helpers](../issues.md#the-hyprland-go-code-keeps-dead-and-doubled-helpers)
   - [Nothing reads userBindsRead or lastLoadFailed](../issues.md#nothing-reads-userbindsread-or-lastloadfailed)
@@ -317,10 +316,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](../issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
   - [ActionTile and ActionPill carry the same countdown bar](../issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
   - [StyledTextEntry and StyledTextArea carry the same blinking cursor](../issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
-- **core-ui-theming-07** (5): The awww entry drops out if Q5 defers it.
+- **core-ui-theming-07** (4):
   - [runDetached warns about a lost connection](../issues.md#rundetached-warns-about-a-lost-connection)
   - [AGENTS.md's funnel rule doesn't name FileManager.write and watch](../issues.md#agentsmds-funnel-rule-doesnt-name-filemanagerwrite-and-watch)
-  - [Setting an awww wallpaper never starts awww's daemon](../issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon)
   - [fzf's flags rebuilt in Go where a template does](../issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
   - [The onboarder's integration commands are a hand-kept list in ThemeManager](../issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 
@@ -445,13 +443,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [A whole-edge menu's hover strip covers only its modules' length while closed](../issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
   - [An integrated menu's zone stays behind when it changes edge or screen](../issues.md#an-integrated-menus-zone-stays-behind-when-it-changes-edge-or-screen)
   - [Previewing a submenu menu doesn't open it once a module above its row has grown](../issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
-- **bar-popouts-08** (6):
+- **bar-popouts-08** (5):
   - [SurfaceContext.layout's pill and merged results have no test row](../issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
   - [Both tray menu lists override the same width cap](../issues.md#both-tray-menu-lists-override-the-same-width-cap)
   - [The tray menu draws its own separator](../issues.md#the-tray-menu-draws-its-own-separator)
   - [The dock's footprint assumes fillets at both ends](../issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
   - [MenuSubmenu repeats EdgeMenuBody's module grid](../issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-  - [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge)
 - **bar-popouts-09** (7):
   - [The pill merge in BarContainer repeats BarLayout's, untested](../issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
   - [Missing test rows for two helper decisions](../issues.md#missing-test-rows-for-two-helper-decisions)
@@ -460,9 +457,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [The workspace switchers find a workspace by id with hand-written loops](../issues.md#the-workspace-switchers-find-a-workspace-by-id-with-hand-written-loops)
   - [The two workspace popouts share 28 lines of payload and colour properties](../issues.md#the-two-workspace-popouts-share-28-lines-of-payload-and-colour-properties)
   - [Small improvements to WorkspaceGrid](../issues.md#small-improvements-to-workspacegrid)
-- **bar-popouts-10** (2): Waits for a repro (Q10) and the rare-path answer (Q11).
-  - [An edge popout doesn't size itself consistently](../issues.md#an-edge-popout-doesnt-size-itself-consistently)
-  - [A pill bar's end reach trails a sliding popout's wall](../issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - **bar-popouts-11** (2): Takes compositor's small-monitor Keybinds entry, which says to ride the 1080p pass.
   - [Text clips on 1080p screens](../issues.md#text-clips-on-1080p-screens)
   - [The keybinds page on a small monitor with large binds](../issues.md#the-keybinds-page-on-a-small-monitor-with-large-binds)
@@ -498,7 +492,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [A custom widget's Tooltip switch does nothing](../issues.md#a-custom-widgets-tooltip-switch-does-nothing)
   - [A stale exec-if check can block a widget after its exec-if changed](../issues.md#a-stale-exec-if-check-can-block-a-widget-after-its-exec-if-changed)
   - [A command naming a program shows the program as its script](../issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
-- **overlay-modules-07** (2): Q12 doesn't hold the decided x-lockActions fix.
+- **overlay-modules-07** (2):
   - [Any custom widget reaches the lock screen past its Offer switch](../issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
   - [What a lock screen module may do is a list kept by hand in two docs that disagree](../issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - **overlay-modules-08** (3): Before features-08 (same OSDTriggers opening).
@@ -591,12 +585,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-14** (2): After overlay-modules-04 (same Calculator, Stopwatch, TodoList and Agenda files). Splits by file group if it passes the gate.
   - [Unbounded lists still built in full](../issues.md#unbounded-lists-still-built-in-full)
   - [The chat builds its conversation lists and model picker while hidden](../issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
-- **features-15** (2): The zone entry is a rare path: the table only if Q16 says so, else it stays logged.
+- **features-15** (1):
   - [A custom clock format without spaces spills past a vertical bar](../issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
-  - [Calendar times in a Windows zone name with no VTIMEZONE read as local time](../issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
 
 ### Counts
-- Entries: 359 in the list (360 open outside Deferred and Phase 13, less the one merged duplicate). By the area whose clusters hold them: config 21, platform 27, core-ui-theming 33, compositor 113, bar-popouts 51, overlay-modules 45, features 69. By the area that filed them: config 18, platform 29, core-ui-theming 33, compositor 113, bar-popouts 51, overlay-modules 44, features 71.
-- Clusters: 80: 9 deletion, 3 blocker, 48 major, 13 minor-sweep, 5 plan, 2 live-only.
-- Product questions: 16.
-- Checked by a script (2026-11-01): every assign entry outside Deferred and Phase 13 appears exactly once under Entries by cluster, the merged duplicate excepted, and every issues.md link here names an existing heading.
+- Entries: 354 in the list (359 at triage, from 360 open outside Deferred and Phase 13 less the one merged duplicate; the answers deferred 4 and removed 1). By the area whose clusters hold them: config 21, platform 27, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 45, features 68. By the area that filed them: config 18, platform 29, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 44, features 70.
+- Clusters: 79: 9 deletion, 3 blocker, 48 major, 13 minor-sweep, 5 plan, 1 live-only.
+- Product questions: 16, answered 2026-11-01 (5 deferred, 1 removed).
+- Checked by a script (2026-11-01, again after the answers): every assign entry outside Deferred and Phase 13 appears exactly once under Entries by cluster, the merged duplicate excepted, and every issues.md link here names an existing heading.

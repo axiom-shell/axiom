@@ -187,9 +187,6 @@ Resolves:
 
 Stage 7 also retires the code that exists twice: `SchemaValidation` against Go's pipeline, and the QML compositor renderers (`HyprLua`, `NiriConf`, `SwayConf`, `CompositorLayer`) against `compositor/render`. Both done: `SchemaValidation` keeps only what previews use, and the four renderers are gone.
 
-Resolved by a stage:
-- [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (closed by awww's removal; maintainer: "awww is scheduled for remove in favor of axioms own animations")
-
 ### Phase 6: compositor parity
 Every feature works the same under each compositor, or says why not. It follows backend stage 7, when only Go writes compositor configs; bugs outside the writer (crashes, freezes, reload glitches) can go any time. sway is the largest cluster: take it as one pass in a nested sway (`scripts/dev/nested.sh sway`).
 
@@ -202,15 +199,12 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [An edge menu can be bigger than its screen](issues.md#an-edge-menu-can-be-bigger-than-its-screen)
 - [A popout taller than the screen runs off it](issues.md#a-popout-taller-than-the-screen-runs-off-it)
 - [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
-- [A side edge's submenus always open away from the edge](issues.md#a-side-edges-submenus-always-open-away-from-the-edge)
-- [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [WorkspaceStrip's Grid briefly has more items than cells](issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
 - [The keybinds page on a small monitor with large binds](issues.md#the-keybinds-page-on-a-small-monitor-with-large-binds) (with the 1080p pass)
 - [Modules inside borders aren't sized evenly](issues.md#modules-inside-borders-arent-sized-evenly)
-- [An edge popout doesn't size itself consistently](issues.md#an-edge-popout-doesnt-size-itself-consistently)
 
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
@@ -316,9 +310,6 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 | Reading | Commit | QML | Go | Scripts |
 |---|---|---|---|---|
 | Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
-
-Found while porting the scripts (backend stage 4):
-- [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
 
 Found while retiring the `qs ipc` fallback (backend stage 6):
 - [A word passed to an int IPC parameter is 0](issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
@@ -757,3 +748,10 @@ Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put
 
 Deferred by the maintainer (2026-10-31, the system graphs' history: "Drop it now - mark accordingly in issues / roadmap for the robust daemon implementation"; the drop itself stays under Phase 11):
 - [The system graphs start empty until the daemon keeps their history](issues.md#the-system-graphs-start-empty-until-the-daemon-keeps-their-history)
+
+Deferred by the maintainer (2026-11-01, the clear-out's questions: awww's daemon "defer - awww will be taking it's own dedicated branch"; side-edge submenus "defer - This takes quite a bit of thought to make consistent without an option."; the pill bar's frame lag "defer"; lock screen notification settings "defer"; Windows zone names, on leaving it logged, "agree"):
+- [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (with awww's removal, maintainer: "awww is scheduled for remove in favor of axioms own animations")
+- [A side edge's submenus always open away from the edge](issues.md#a-side-edges-submenus-always-open-away-from-the-edge)
+- [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
+- [The lock screen has no settings for allowing or viewing notifications](issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (needs a plan once taken up)
+- [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
