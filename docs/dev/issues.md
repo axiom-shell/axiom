@@ -484,8 +484,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### KeybindManager keeps tables the methods helpers already hold
-- **Where:** `services/compositor/KeybindManager.qml` (`_modifiers`, `decodeMods`, `_keyNames`, `_appliedBinds`, `userKeyCounts`), `components/methods/BindKeys.qml` (`_modBits`), `components/methods/KeyMap.qml` (`labelOf`), `services/compositor/KeybindsPageState.qml` (`_bindMods`)
-- **What:** Deletion pass, about 36 lines. `_modifiers` (33 lines) is a second name↔mask table, the inverse of `BindKeys._modBits`, and `_bindMods` parses keyId's string (`parseInt`) to get a mask back: one `decodeMods(mask)` in BindKeys, built from `_modBits`, replaces it (net about -25), and the two can't disagree (its other caller is Hyprland's `modmask`, KeybindManager.qml:395; `_bindMods` stops decoding a mask with the fix in "Two keybind reference paths drop a key's binds"). Nine `_keyNames` entries (`mouse:272/273/274`, `mouse_up/down`, `left/right/up/down`) return what `KeyMap.labelOf` already does, which `_formatKey` asks next (about 9 lines). The skipped-key list is computed twice (KeybindManager.qml:230 and :245; one property, -2).
+- **Where:** `services/compositor/KeybindsPageState.qml` (`_bindMods`), `components/methods/BindKeys.qml` (`decodeMods`)
+- **What:** Deletion pass. `_bindMods` parses keyId's string (`parseInt`) to get a mask back and decodes it (`BindKeys.decodeMods`); it stops decoding a mask with the fix in "Two keybind reference paths drop a key's binds". The rest of this entry (the second modifier table, the key names KeyMap holds, the skipped keys worked out twice) was done in the clear-out's compositor-02.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -504,12 +504,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### noteReload counts every compositor reload a second time
 - **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
 - **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30). The sway review (2026-10-30) found an apply between the count and that reset still sends the old list: [The detached layer's unbind list can drift from what sway holds](#the-detached-layers-unbind-list-can-drift-from-what-sway-holds) wants the reset where the reload is counted; fix the two together.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Bind helpers keep JS halves the daemon owns now
-- **Where:** `components/methods/BindActions.qml` (`descriptionFor`), `components/methods/BindKeys.qml` (`withIds`), `tests/tst_BindKeys.qml`, `backend/internal/compositor/manager/manager.go` (`withIDs`)
-- **What:** `BindActions.descriptionFor` has no QML caller (only a comment in KeybindEditor.qml and its test): Go's `DescriptionFor` renders every description, so its test rows belong in a Go test and the function can go (deletion pass, 4 lines plus the test). `BindKeys.withIds` and Go's `withIDs` follow one rule (bind-merge.md › Duplicates), but tst_BindKeys.qml says "withIds has no Go counterpart to replay it", no shared case pins them, and they already differ on a bind with no `key` (`bind` in QML, `null` in Go). Fix: record `withIds` as a shared case and replay it against `withIDs` (nil key → "").
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 

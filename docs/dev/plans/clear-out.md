@@ -178,7 +178,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Small shrinks in the compositor layer
   - HyprlandManager keeps members only it reads
   - [KeybindManager keeps tables the methods helpers already hold](../issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold)
-  - [Bind helpers keep JS halves the daemon owns now](../issues.md#bind-helpers-keep-js-halves-the-daemon-owns-now)
+  - Bind helpers keep JS halves the daemon owns now
   - NiriManager queues actions the daemon could order
   - Small shrinks in SwayManager
   - Sway and niri each forward withMainBinds to the daemon

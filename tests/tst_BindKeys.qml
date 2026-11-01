@@ -32,6 +32,14 @@ TestCase {
     compare(shared.calls.BindKeys.keyId(undefined), "");
   }
 
+  function test_decodeMods() {
+    compare(BindKeys.decodeMods(65), ["SUPER", "SHIFT"]);
+    compare(BindKeys.decodeMods(4 | 8 | 2 | 128), ["CTRL", "ALT", "MOD5", "CAPS"], "in modifierNames' order");
+    compare(BindKeys.decodeMods(0), []);
+    for (const name of BindKeys.modifierNames)
+      compare(BindKeys.decodeMods(BindKeys._modBits[name]), [name], "each name its own bit");
+  }
+
   function test_entryId_matches_keyId() {
     compare(shared.calls.BindKeys.entryId(entry(65, "Space")), shared.calls.BindKeys.keyId("SUPER + SHIFT + space"));
     compare(shared.calls.BindKeys.entryId(entry(64, "", {
@@ -153,13 +161,13 @@ TestCase {
     compare(merged[2].paused, true);
   }
 
-  // Not a shared case: withIds has no Go counterpart to replay it
+  // Shared with the binary's merge (manager.withIDs)
   function test_withIds() {
     const kept = {
       "id": "super-y",
       "key": "SUPER + Y"
     };
-    const binds = BindKeys.withIds([kept,
+    const binds = shared.calls.BindKeys.withIds([kept,
       {
         "id": "super-y",
         "key": "SUPER + Y",
@@ -174,9 +182,12 @@ TestCase {
       },
       {
         "key": ""
+      },
+      {
+        "action": "exec"
       }
     ]);
-    compare(binds.map(bind => bind.id), ["super-y", "super-y-2", "super-shift-space", "print", "bind"]);
+    compare(binds.map(bind => bind.id), ["super-y", "super-y-2", "super-shift-space", "print", "bind", "bind-2"]);
     verify(binds[0] === kept, "a bind keeping its id is the same object");
     compare(Object.keys(binds[1])[0], "id", "the id first");
     compare(binds[1].action, "exec");

@@ -226,10 +226,9 @@ QtObject {
   readonly property var userKeyCounts: BindKeys.userKeyCounts(root._entries, root._appliedBinds)
 
   // The saved axiom binds the runtime layer applied (the rest it skipped)
-  readonly property var _appliedBinds: {
-    const skipped = CompositorConfigManager.skippedKeys.map(key => BindKeys.keyId(key));
-    return KeybindsConfig.activeBinds.filter(bind => CompositorConfigManager.isComplete(bind) && !skipped.includes(BindKeys.keyId(bind.key)));
-  }
+  readonly property var _appliedBinds: KeybindsConfig.activeBinds.filter(bind => CompositorConfigManager.isComplete(bind) && !root._skippedIds.includes(BindKeys.keyId(bind.key)))
+  // The keys the runtime layer skipped, by BindKeys.keyId
+  readonly property var _skippedIds: CompositorConfigManager.skippedKeys.map(key => BindKeys.keyId(key))
 
   // Their keys, by BindKeys.keyId: { "64:return": bind }
   readonly property var _axiomIds: root._appliedBinds.reduce((ids, bind) => {
@@ -241,15 +240,12 @@ QtObject {
 
   // The saved axiom binds skipped because the user's config holds their
   // key, their labels by key: { "64:q": "Close window" }
-  readonly property var _skippedLabels: {
-    const skipped = CompositorConfigManager.skippedKeys.map(key => BindKeys.keyId(key));
-    return KeybindsConfig.activeBinds.reduce((labels, bind) => {
-      const id = BindKeys.keyId(bind.key);
-      if (id !== "" && skipped.includes(id) && labels[id] === undefined)
-        labels[id] = root.bindLabel(bind);
-      return labels;
-    }, {});
-  }
+  readonly property var _skippedLabels: KeybindsConfig.activeBinds.reduce((labels, bind) => {
+    const id = BindKeys.keyId(bind.key);
+    if (id !== "" && root._skippedIds.includes(id) && labels[id] === undefined)
+      labels[id] = root.bindLabel(bind);
+    return labels;
+  }, {})
 
   // A bind's label: its own (less a "Section:" prefix), else its action's
   function bindLabel(bind) {
@@ -259,49 +255,7 @@ QtObject {
     return BindActions.defaultLabel(root.actionTable, bind) || (root.actionLabels[bind?.action] ?? "");
   }
 
-  // The modifiers' names, in the order a combo shows them
-  readonly property var modifierNames: root._modifiers.map(m => m.name)
-  readonly property var _modifiers: [
-    {
-      name: "SUPER",
-      mask: 64
-    },
-    {
-      name: "CTRL",
-      mask: 4
-    },
-    {
-      name: "ALT",
-      mask: 8
-    },
-    {
-      name: "SHIFT",
-      mask: 1
-    },
-    {
-      name: "MOD2",
-      mask: 16
-    },
-    {
-      name: "MOD3",
-      mask: 32
-    },
-    {
-      name: "MOD5",
-      mask: 128
-    },
-    {
-      name: "CAPS",
-      mask: 2
-    },
-  ]
-
   readonly property var _keyNames: ({
-      "mouse:272": "LMB",
-      "mouse:273": "RMB",
-      "mouse:274": "MMB",
-      "mouse_up": "Scroll ↑",
-      "mouse_down": "Scroll ↓",
       "mouse_left": "Scroll ←",
       "mouse_right": "Scroll →",
       "super_l": "Super L",
@@ -311,11 +265,7 @@ QtObject {
       "alt_l": "Alt L",
       "alt_r": "Alt R",
       "shift_l": "Shift L",
-      "shift_r": "Shift R",
-      "left": "←",
-      "right": "→",
-      "up": "↑",
-      "down": "↓"
+      "shift_r": "Shift R"
     })
 
   // Every bind the compositor reported (CompositorManager.withBinds)
@@ -392,7 +342,7 @@ QtObject {
         }
       }
 
-      const mods = root.decodeMods(entry.modmask);
+      const mods = BindKeys.decodeMods(entry.modmask);
       const key = root._formatKey(entry.key);
       const rowKey = `${section.title}\u0000${label}`;
       const id = BindKeys.entryId(entry);
@@ -443,10 +393,6 @@ QtObject {
     for (const section of sections)
       section.binds = BindRows.collapseDirections(BindRows.collapseNumbered(section.binds));
     return sections;
-  }
-
-  function decodeMods(modmask) {
-    return root._modifiers.filter(m => (modmask & m.mask) !== 0).map(m => m.name);
   }
 
   // A combo as shown on the page ("SUPER + mouse:272" -> "SUPER + LMB")
