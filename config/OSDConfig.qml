@@ -35,7 +35,7 @@ QtObject {
     return osds.find(osd => osd.id === id) ?? null;
   }
 
-  // The OSD a message goes to (`axiom ipc osd message`): the enabled one
+  // The OSD a message goes to (`axiom message`): the enabled one
   // of that id, else the first enabled one with a Messages item, else the
   // first enabled one; "" with none
   function messageOsd(id) {

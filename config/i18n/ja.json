@@ -3700,7 +3700,6 @@
     "Encrypted: click to unlock": "",
     "Ask sends a notification offering to mount or open it (or, for an encrypted drive, to unlock it), whatever Show drive events says. Mount it mounts it at once (an encrypted drive waits to be unlocked); nothing is mounted while the screen is locked, it waits for the unlock. Do nothing leaves it to the Drives widget and module. Drives open in the file manager.": "",
     "Don't": "",
-    "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (when Removable drives › Show drive events is On the OSD; a click opens the drive, or unlocks an encrypted one). Messages are what `axiom ipc osd message <icon> <text>` sends.": "",
     "On the OSD": "",
     "How a drive being plugged in, mounted, unmounted, safe to remove or unplugged is shown, and what went wrong. On the OSD shows a card (a click opens the drive, or unlocks an encrypted one); it needs an enabled OSD with Removable drives among its statuses, and with none falls back to notifications. As notifications sends each as a notification, with Open, Eject or Unlock buttons where they help. Don't leaves them to the Drives widget and module. Asking what to do with a drive plugged in is always a notification.": "",
     "Show drive events": "",
@@ -3727,6 +3726,7 @@
     "Steady": "",
     "The center": "",
     "Where the compositor makes workspaces as you need them, how many it takes to slide from one end to the other. Each workspace down moves it the same step, so opening and closing windows never moves it; past the last, it stays at the end.": "",
-    "Workspaces it spans": ""
+    "Workspaces it spans": "",
+    "A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (when Removable drives › Show drive events is On the OSD; a click opens the drive, or unlocks an encrypted one). Messages are what `axiom message <icon> <text>` sends.": ""
   }
 }

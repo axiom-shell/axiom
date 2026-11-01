@@ -50,7 +50,7 @@ axiom ipc <target> <function> [args]
 | `dock` | `open <id>`, `close <id>`, `toggle <id>` (no id: every dock) |
 | `appLauncher` | `open`, `close`, `toggle`, `search <text>`, `clipboard`, `emoji`, `calculator` (opens on that history or picker) |
 | `powermenu` | `open`, `close`, `toggle` |
-| `osd` | `message <icon> <text>` (a card with an icon and text on the OSD showing Messages, else the first), `messageDetail <icon> <text> <detail>` (a second line under it), `messageTo <id> <icon> <text>`, `messageDetailTo <id> <icon> <text> <detail>`, `show <id>` |
+| `osd` | `show <id>` (messages: `axiom message`) |
 | `workspaceOverlay` | `open`, `hide`, `toggle` |
 | `workspaces` | `go <id>`, `move <id>`, `moveSilent <id>`, `left`, `right`, `up`, `down`, `step <direction> <mode>`, `scroll <direction>`, `nth <n> <mode>`, `reconcile` |
 | `windowSwitcher` | `next`, `previous`, `commit`, `cancel` (for scripts: the Alt+Tab bind doesn't need them) |
@@ -87,7 +87,7 @@ axiom ipc <target> <function> [args]
 
 </details>
 
-The common actions also have their own commands, which are easier to remember: `axiom launcher toggle`, `axiom overlay toggle`, `axiom volume up`, `axiom mic toggle`, `axiom dnd on`, `axiom brightness down`, `axiom media play-pause`, `axiom screenshot take region`, `axiom lock`. `axiom --help` lists them all, and `axiom <command> --help` each one's options.
+The common actions also have their own commands, which are easier to remember: `axiom launcher toggle`, `axiom overlay toggle`, `axiom volume up`, `axiom mic toggle`, `axiom dnd on`, `axiom message info "Backup done"`, `axiom brightness down`, `axiom media play-pause`, `axiom screenshot take region`, `axiom lock`. `axiom --help` lists them all, and `axiom <command> --help` each one's options.
 
 To bind them in your compositor's own config instead, run the same command. On Hyprland, a `"Section: Label"` description also sets where the bind appears on the Keybinds page:
 

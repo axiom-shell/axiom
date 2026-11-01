@@ -54,7 +54,7 @@ QtObject {
   // Opens an OSD by id where it would open for a change (the settings
   // page's Show button)
   signal showOsd(string id)
-  // Shows a message card on an OSD (`axiom ipc osd message`): the OSD of
+  // Shows a message card on an OSD (`axiom message`): the OSD of
   // that id (OSDConfig.messageOsd picks it), where it would open for a
   // change; `text` its title, `detail` a faint second line ("" for none),
   // `tone` "warning" for a refusal (refuse()), else ""
@@ -77,21 +77,10 @@ QtObject {
   property IpcTarget _osdIpc: IpcTarget {
     target: "osd"
 
-    function message(icon: string, text: string): void {
-      root.message(icon, text, "");
-    }
-
-    // With a faint second line under the text
-    function messageDetail(icon: string, text: string, detail: string): void {
-      root.message(icon, text, detail);
-    }
-
-    // On the OSD of that id
-    function messageTo(id: string, icon: string, text: string): void {
-      root.osdMessage(OSDConfig.messageOsd(id), icon, text, "", "");
-    }
-
-    function messageDetailTo(id: string, icon: string, text: string, detail: string): void {
+    // What `axiom message` calls (IPC functions take no optional
+    // arguments, so it passes all four): `id` "" for the OSD showing
+    // messages, `detail` "" for no second line
+    function message(id: string, icon: string, text: string, detail: string): void {
       root.osdMessage(OSDConfig.messageOsd(id), icon, text, detail, "");
     }
 

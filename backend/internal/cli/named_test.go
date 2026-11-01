@@ -15,6 +15,32 @@ import (
 // IpcTargets).
 func TestNamedCommandsMatchTheShellsTargets(t *testing.T) {
 	t.Parallel()
+	functions := shellFunctions(t)
+	for _, n := range namedCommands {
+		for _, v := range n.verbs {
+			want, ok := functions[n.target+"."+v.function]
+			if !ok {
+				t.Errorf("axiom %s %s calls %s.%s, which the shell doesn't have", n.name, v.name, n.target, v.function)
+			} else if want != v.nargs {
+				t.Errorf("axiom %s %s passes %d arguments, %s.%s takes %d", n.name, v.name, v.nargs, n.target, v.function, want)
+			}
+		}
+	}
+}
+
+// axiom message passes osd.message as many arguments as it takes.
+func TestMessageMatchesTheShellsTarget(t *testing.T) {
+	t.Parallel()
+	args := messageArgs("", "", "info", "text")
+	if n, ok := shellFunctions(t)["osd.message"]; !ok || n != len(args) {
+		t.Errorf("axiom message passes %d arguments, osd.message takes %d (the shell has it: %v)", len(args), n, ok)
+	}
+}
+
+// shellFunctions reads every IPC function from docs/dev/generated/ipc.md:
+// "target.fn" → its argument count.
+func shellFunctions(t *testing.T) map[string]int {
+	t.Helper()
 	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "docs", "dev", "generated", "ipc.md"))
 	if err != nil {
 		t.Fatal(err)
@@ -38,20 +64,7 @@ func TestNamedCommandsMatchTheShellsTargets(t *testing.T) {
 	if len(functions) < 50 {
 		t.Fatalf("read only %d functions from ipc.md", len(functions))
 	}
-	names := map[string]bool{}
-	for _, c := range Root().Subs {
-		names[c.Name] = true
-	}
-	for _, n := range namedCommands {
-		for _, v := range n.verbs {
-			want, ok := functions[n.target+"."+v.function]
-			if !ok {
-				t.Errorf("axiom %s %s calls %s.%s, which the shell doesn't have", n.name, v.name, n.target, v.function)
-			} else if want != v.nargs {
-				t.Errorf("axiom %s %s passes %d arguments, %s.%s takes %d", n.name, v.name, v.nargs, n.target, v.function, want)
-			}
-		}
-	}
+	return functions
 }
 
 func TestCommandNamesAreUnique(t *testing.T) {
