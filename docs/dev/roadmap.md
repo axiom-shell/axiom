@@ -585,6 +585,8 @@ Found by the audits:
 - [The shell's unused daemon-call paths](issues.md#the-shells-unused-daemon-call-paths)
 - [Two dead Go helpers and a forwarding wrapper](issues.md#two-dead-go-helpers-and-a-forwarding-wrapper)
 - [daemon.shutdown starts its goroutine past tasks.Go](issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
+- [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
+- [Three Wayland client members nothing in the daemon calls](issues.md#three-wayland-client-members-nothing-in-the-daemon-calls)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
