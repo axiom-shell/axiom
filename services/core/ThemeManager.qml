@@ -661,4 +661,23 @@ QtObject {
       root._rebuildFamilies();
     }
   }
+
+  // Keybind action darkMode: the current theme's dark variant on (enable)
+  // or off (disable: its light one)
+  property IpcTarget _ipc: IpcTarget {
+    target: "darkMode"
+    enabled: !Paths.greeter
+
+    function toggle(): void {
+      root.toggleDarkMode();
+    }
+
+    function enable(): void {
+      root.setLightMode(false);
+    }
+
+    function disable(): void {
+      root.setLightMode(true);
+    }
+  }
 }

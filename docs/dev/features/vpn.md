@@ -31,7 +31,7 @@ Quickshell's `Networking` has no VPN or active-connection types (`DeviceType` is
 - **VpnManager:**
   - `rows` merges the profiles with a Tailscale row (id `tailscale`, through `TailscaleManager`) while something holds `acquire()` and `VpnConfig.showTailscale` is on. Tailscale is polled; NetworkManager's state isn't.
   - Rows stay in name order, so nothing moves under the pointer.
-  - `toggle`, `toggleLast` (the VPN used last, kept in `StateManager` as `vpn` with `folded`), `statusText` and `kindIcon`.
+  - `toggle`, `toggleLast` (the VPN used last, kept in `StateManager` as `vpn` with `folded`; also IPC `vpn toggle`, the `vpn` keybind action, with VpnManager in `_services`), `statusText` and `kindIcon`.
   - `pickImport()` owns the file picker itself (the popout asking may close while it's open), then `importFile`; `importError` is the last refusal.
   - `checkPublicIp()` asks `VpnConfig.publicIpUrl` for the address the internet sees, only on a click (nothing is sent otherwise; empty hides it). `publicIp` clears when the VPN up changes, and an answer for an earlier VPN is dropped.
   - An on → off change with an error sends a "VPN disconnected" notification (`VpnConfig.notifyOnDrop`).

@@ -45,6 +45,12 @@ properties:
             - idleInhibit
             - nightLight
             - nextWallpaper
+            - randomWallpaper
+            - monitorsIdentify
+            - darkMode
+            - wifi
+            - bluetooth
+            - vpn
             - workspaceStep
             - moveWindowStep
             - workspaceNth
@@ -62,6 +68,24 @@ properties:
             - mediaNext
             - mediaPrevious
             - mediaStop
+            - audioOutputNext
+            - clipboard
+            - emoji
+            - calculator
+            - notes
+            - calendar
+            - calendarNewEvent
+            - chat
+            - chatNew
+            - pomodoro
+            - pomodoroSkip
+            - pomodoroStop
+            - stopwatch
+            - stopwatchLap
+            - stopwatchReset
+            - timerStart
+            - timerToggle
+            - timerReset
             - screenshot
             - screenRecord
             - exec
@@ -80,6 +104,12 @@ properties:
             idleInhibit: Caffeine
             nightLight: Night light
             nextWallpaper: Next wallpaper
+            randomWallpaper: Random wallpaper
+            monitorsIdentify: Identify monitors
+            darkMode: Dark mode
+            wifi: Wi-Fi
+            bluetooth: Bluetooth
+            vpn: VPN on or off
             workspaceStep: Workspace in a direction
             moveWindowStep: Move window in a direction
             workspaceNth: Workspace by number
@@ -97,6 +127,24 @@ properties:
             mediaNext: Next track
             mediaPrevious: Previous track
             mediaStop: Stop playback
+            audioOutputNext: Switch audio output
+            clipboard: Clipboard history
+            emoji: Emoji picker
+            calculator: Calculator
+            notes: Notes
+            calendar: Calendar
+            calendarNewEvent: New calendar event
+            chat: Chat
+            chatNew: New chat
+            pomodoro: Pomodoro start or pause
+            pomodoroSkip: Skip pomodoro phase
+            pomodoroStop: Stop pomodoro
+            stopwatch: Stopwatch start or pause
+            stopwatchLap: Stopwatch lap
+            stopwatchReset: Reset stopwatch
+            timerStart: Start a timer
+            timerToggle: Pause or resume timer
+            timerReset: Reset timer
             screenshot: Screenshot
             screenRecord: Screen recording
             exec: Run a command
@@ -105,7 +153,7 @@ properties:
           type: string
           title: Argument
           default: ''
-          description: 'Search text, page, edge menu or dock id, direction, workspace number, screenshot kind (region, window or screen), or the command.'
+          description: 'Search text, page, edge menu or dock id, direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.'
           x-showIf:
             action:
               - launcherSearch
@@ -119,6 +167,7 @@ properties:
               - moveWindowNth
               - moveWindowNthSilent
               - scrollStep
+              - timerStart
               - screenshot
               - exec
         screen:
