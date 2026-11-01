@@ -640,6 +640,8 @@ Found by the audits:
 - [The panel's relative times go stale while Tailscale's state stays the same](issues.md#the-panels-relative-times-go-stale-while-tailscales-state-stays-the-same)
 - [Tailscale carries two state fields and a guard nothing needs](issues.md#tailscale-carries-two-state-fields-and-a-guard-nothing-needs)
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
+- [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
+- [ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room](issues.md#screenlayouteditorsavedlayout-is-dead-and-desktoptarget-forwards-the-editors-room)
 
 Found while reworking the onboarder:
 - [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)

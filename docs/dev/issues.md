@@ -2469,3 +2469,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** With `VpnConfig.showTailscale` off, the Network card writes "Tailscale · Running 100.x.y.z" from `TailscaleManager.backendState` as is: "NeedsLogin", "NoState" and the like appear in English camel case. Only the Tailscale panel maps the states to `I18n.tr` labels (`stateLabels`), and only the panel can use that map. Fix: move `stateLabels` and `stateText` into `TailscaleManager` and read the manager's `stateText` in both.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the tailscale system
+
+### A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors
+- **Where:** `config/DesktopConfig.qml:29` (`matchFor`), `config/DesktopConfig.qml` (`sourceFor`, `layoutFor`)
+- **What:** `matchFor` returns the most specific layout whether enabled or not, and `sourceFor`/`layoutFor` then return nothing when that match is off: `?? (name === root.primaryName ? items.find(layout => layout.screen.mode === "primary") : undefined) ?? items.find(layout => layout.screen.mode === "all")`. So with "All monitors" turned on (with modules) and "Primary monitor" turned off in the Layouts editor, the primary monitor's desktop is empty (no `DesktopWindow`; its picker row says "Shows nothing"). The doc says each step applies "only while enabled" ("otherwise `primary` ... otherwise `all`"), and the reader's own comment says "a monitor shows the most specific one that's enabled ...; a layout naming a monitor that's turned off leaves it empty" (only a named one). Before #96 (`dd773ed`) `sourceFor` did fall through: `if (name === root.primaryName && section.primary.enabled) return "primary"; return section.all.enabled ? "all" : "";`. A regression from that commit. Fix: skip a disabled `primary` in `matchFor`, keeping a named layout final: `items.find(named) ?? (name === root.primaryName ? items.find(layout => layout.screen.mode === "primary" && layout.enabled) : undefined) ?? items.find(all) ?? null`; `DesktopManager.statusOf` then reports "Uses all monitors'" by itself.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the desktop system
+
+### ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room
+- **Where:** `services/ui/ScreenLayoutEditor.qml:92` (`savedLayout`), `components/views/Layouts/DesktopTarget.qml:14` (`roomWidth`, `roomHeight`)
+- **What:** `savedLayout` has no reader (`grep -rnw savedLayout` finds only its definition). `DesktopTarget.roomWidth`/`roomHeight` (and their comment) only forward `DesktopManager.editor.room` to the one `fitText` line in the same file. Fix: delete `savedLayout` (1 line) and lines 14-16 of DesktopTarget (3 lines), reading `Math.round(root.screenEditor.room.width)` / `.height` in `fitText` (the `int` properties rounded); 4 lines.
+- **Size:** trivial
+- **Found:** 2026-11-01, while reviewing the desktop system
