@@ -61,7 +61,8 @@ Scope {
               osd: entry.osd
               screenName: edgeHost.screen?.name ?? ""
               edgeVertical: edgeHost.vertical
-              hostOpen: edgeHost.isOpen
+              // Until it has slid away, so the highlight stays as it goes
+              hostOpen: edgeHost.occupied
               onPoked: force => edgeTriggers.poke(force)
             }
           }

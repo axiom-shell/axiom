@@ -16,8 +16,10 @@ import qs.components.reusable
 Item {
   id: root
 
-  // The types shown, in order, and every status's tile by type
+  // Every type it may show, in order (its tiles, built once), the ones
+  // shown now (OSDItems.rowTypes), and every status's tile by type
   // (OSDItems.tile)
+  property var allTypes: []
   property var types: []
   property var tiles: ({})
   // The type that just changed, or ""
@@ -38,6 +40,9 @@ Item {
   readonly property real maxDepth: root.vertical && root.hasCaption ? Math.max(root.tileSize, root.captionWidth) : root.tileSize
   readonly property string caption: root.changed !== "" ? (root.tiles[root.changed]?.caption ?? "") : ""
 
+  // As a string, so an edit elsewhere in the OSD doesn't rebuild the tiles
+  readonly property string _allKey: root.allTypes.join(",")
+
   implicitWidth: line.implicitWidth
   implicitHeight: line.implicitHeight
 
@@ -50,12 +55,15 @@ Item {
     rowSpacing: Widget.spacing
     columnSpacing: Widget.spacing
 
+    // Over the types from config, not the ones shown: those follow the
+    // live state
     Repeater {
-      model: root.types
+      model: root._allKey === "" ? [] : root._allKey.split(",")
 
       delegate: Rectangle {
         id: tile
         required property string modelData
+        visible: root.types.includes(tile.modelData)
         readonly property var t: root.tiles[tile.modelData] ?? ({})
         readonly property bool current: tile.modelData === root.changed
         readonly property bool canToggle: root.toggleable.includes(tile.modelData)

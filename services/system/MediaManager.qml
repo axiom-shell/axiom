@@ -33,11 +33,10 @@ QtObject {
   readonly property string artFileName: artUrl ? Qt.md5(artUrl) + ".jpg" : ""
   readonly property string artFilePath: artFileName ? Paths.runtimePath + "media-art/" + artFileName : ""
   property bool artDownloaded: false
-  // Bumped when new art lands, so images reload the same path
-  property int artVersion: 0
-  // The cover as an image source once downloaded, else ""; follows
-  // artVersion, so a new cover at the same path reloads
-  readonly property string artSource: artDownloaded && artVersion >= 0 ? "file://" + artFilePath : ""
+  // The cover as an image source once downloaded, else "". Each URL has
+  // its own file, and a new URL clears artDownloaded first, so a new cover
+  // is always a new source
+  readonly property string artSource: artDownloaded ? "file://" + artFilePath : ""
   readonly property bool canTogglePlaying: activePlayer ? activePlayer.canTogglePlaying : false
   readonly property bool canGoNext: activePlayer ? activePlayer.canGoNext : false
   readonly property bool canGoPrevious: activePlayer ? activePlayer.canGoPrevious : false
@@ -82,7 +81,6 @@ QtObject {
       if (!error) {
         console.log("[MediaManager] Album art ready:", root.artFilePath);
         root.artDownloaded = true;
-        root.artVersion++;
       } else {
         console.warn("[MediaManager] Failed to fetch album art from:", url, error.message);
         root.artDownloaded = false;

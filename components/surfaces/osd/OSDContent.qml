@@ -21,9 +21,10 @@ Item {
   required property string screenName
   // The edge it slides out of runs vertically
   property bool edgeVertical: false
-  // Its host is open: a status changing then keeps the part shown (the
-  // bars stay, the change highlighted in their row) rather than swapping
-  // the OSD's shape under the cursor
+  // Its host is showing (open, or still sliding away): a status changing
+  // then keeps the part shown (the bars stay, the change highlighted in
+  // their row) rather than swapping the OSD's shape under the cursor, and
+  // the highlight is released only once it's gone
   property bool hostOpen: false
 
   // An item changed; `force` when it opens the OSD
@@ -59,6 +60,8 @@ Item {
   readonly property var rowTypes: OSDItems.rowTypes(root._types, root.tiles, root.osd.statuses.row, root.changed !== "" ? root.changed : root._held)
 
   // The OSD shows an audio device's card as it switches
+  // Every type the row may show: its statuses, and a message as one comes
+  readonly property var _allTypes: root.statusTypes.includes("message") ? root.statusTypes : root.statusTypes.concat(["message"])
   readonly property bool hasDevices: root.statusTypes.includes("audio") || root.statusTypes.includes("microphone")
   // The device card's role line: what the device switched to is now used
   // for (both, a headset taking the output and the input)
@@ -136,7 +139,7 @@ Item {
     source.toggle();
   }
 
-  // The OSD closed: nothing held
+  // The OSD gone: nothing held
   onHostOpenChanged: {
     if (!root.hostOpen) {
       root._held = "";
@@ -221,6 +224,7 @@ Item {
       hasCaption: root._types.includes("message")
       toggleable: root.toggleable
       onToggled: type => root.toggle(type)
+      allTypes: root._allTypes
     }
   }
 
