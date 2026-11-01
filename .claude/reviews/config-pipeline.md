@@ -8,7 +8,7 @@ Sound: the tree, strict YAML reader, schema build, conversion and format-2 steps
 - Major: [The condition grammar has no shared fixtures](../../docs/dev/issues.md#the-condition-grammar-has-no-shared-fixtures)
 - Cleanup: "Format-1 secrets plumbing nothing fills or reads" (fixed, row 20 config-01)
 - Cleanup: "The validator and the schema check carry patternProperties nothing uses" (fixed, row 20 config-01)
-- Cleanup: [Every step test copies the same case runner](../../docs/dev/issues.md#every-step-test-copies-the-same-case-runner)
+- Cleanup: "Every step test copies the same case runner" (fixed, row 20 config-01)
 - Cleanup: "The config Pipeline interface has one implementation" (fixed, row 20 config-01)
 - Minor: `backend/internal/schema/yamlsrc/check.go:11` says the validator reads every keyword it accepts; `multipleOf` is never validated.
 - Minor: `docs/dev/core/config-v2.md` › Schema source's Weather example lacks `label` and shows old `colors`/`popout`; › Duplicated information removed still lists the root description.
