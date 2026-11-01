@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The Vpn widget's icon and label are invisible on a filled bar
+- **Where:** `components/bar/widgets/Vpn/schema.yaml`, `components/bar/widgets/base/BarIconWidget.qml` (`colors`)
+- **What:** The Vpn widget's schema has no `foregroundColor` (no `colors` part, no own field), so `properties.foregroundColor` is undefined, `Theme.resolveColor` makes it transparent, and on a bar whose `widgetStyle` is `filled` (the default) `BarWidgetStyle.colors` draws its icon and label in that: an empty pill. Seen with the Drives widget, which was built from it (fixed there by adding the field as IdleInhibitor has it). Fix: the same `foregroundColor` field on Vpn; a `tst_Config` check that every `BarIconWidget` type has one would keep it from coming back.
+- **Size:** trivial
+- **Found:** 2026-11-01, while testing removable drives in a nested shell
+
 ### A workspace overview bind set to open calls a missing function
 - **Where:** `backend/internal/compositor/actions/table.json`, `shell/WorkspaceOverlay.qml`, `tests/tst_BindActions.qml`
 - **What:** The table's `calls` maps `workspaceOverview` open to `show`, but the `workspaceOverlay` IPC target has `toggle`, `open` and `hide`, no `show`. A bind or hot corner set to open runs `axiom ipc workspaceOverlay show` and fails. `tst_BindActions` covers close→hide only, and nothing checks the table's templates and calls against `docs/dev/generated/ipc.md` (as `backend/internal/cli/named_test.go` does for the named commands).

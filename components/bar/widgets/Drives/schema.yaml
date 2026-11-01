@@ -23,3 +23,12 @@ settings:
     $ref: '#/definitions/WidgetColor'
     title: Not mounted color
     x-autoColor: 'off'
+  foregroundColor:
+    type: string
+    title: Text color
+    x-options: colors
+    default: base00
+    x-showIf:
+      $bar.widgetStyle: filled
+      $bar.widgetGrouping: {not: merged}
+      $bar.widgetTextColor: ''
