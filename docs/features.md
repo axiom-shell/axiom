@@ -11,10 +11,10 @@ Everything below is one shell and one config, and everything is set from inside 
 <p align="center"><img src="../assets/screenshots/desktop.webp" alt="A floating pill bar down the left, a transparent bar down the right and the dock at the top, inside the screen border"></p>
 
 - Bars are defined in config. Have any number, on any monitor (or a copy on every one) and any edge.
-- **26 widget types:**
+- **28 widget types:**
   - Workspaces, Window, Time, NextEvent (the next event from your calendars), Media
   - Volume, Microphone, Network, Bluetooth, Battery, SystemStats, SystemTray, Notifications
-  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), KeyboardLayout, IdleInhibitor, Privacy
+  - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), Vpn, KeyboardLayout, LockKeys (Caps Lock, Num Lock and Scroll Lock, shown while on or always), IdleInhibitor, Privacy
   - ScreenRecord (shown while recording; click to stop), Claude usage (your Claude Code plan limits, for one or more logins), Todo (open count), Pomodoro (the time left), Timer & stopwatch
   - Button (runs any command, opens a page or toggles an edge menu) and Separator
 - **Popouts** grow out of the bar, or out of the screen border, with filleted corners. Widgets open theirs on hover, and Buttons can run their action on hover too.
@@ -266,6 +266,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   - Drawn in your theme, wallpapers and monitor layout.
   - Remembers the last user and their session.
   - Installed and updated from Settings with one password prompt; changing its look needs none. See [Login screen](installation.md#login-screen-greetd).
+- **Caps Lock warning:** every password field (the lock screen, the login screen, polkit, Wi-Fi, VPN and account keys) shows when Caps Lock is on, read from the keyboard's LED on any compositor.
 - **Polkit prompt:** when an app asks for admin rights, the screen dims and a password prompt opens on the focused monitor, in your theme.
   - Switch which identity to authenticate as.
   - Turn it on under **Settings → Screen & Power → Authentication prompts**. axiom stops the other agent you had (hyprpolkitagent, KDE's, GNOME's), and starts it again if you turn axiom's off.

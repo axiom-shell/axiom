@@ -143,6 +143,7 @@ Item {
         fieldHeight: root.fieldHeight
         inlineMessage: root.inlineMessage
         reserveMessage: root.showMessages
+        capsMessage: root.showMessages
         placeholder: root.prompt || root.placeholder || I18n.tr("Enter password...")
         centered: root.centered
         reveal: root.active && root.prompt !== "" && GreetdManager.promptEcho

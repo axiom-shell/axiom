@@ -1,0 +1,24 @@
+label: Lock Keys
+icon: keyboard_capslock
+group: System
+popout: menu
+settings:
+  showCaps: {type: boolean, title: Caps Lock, default: true}
+  showNum: {type: boolean, title: Num Lock, default: false}
+  showScroll: {type: boolean, title: Scroll Lock, default: false}
+  hideWhenOff:
+    type: boolean
+    title: Hide when off
+    default: true
+    description: Show the widget only while one of the keys above is on.
+  activeColor: {$ref: '#/definitions/WidgetColor', title: Active color, x-autoColor: warning}
+  inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
+  foregroundColor:
+    type: string
+    title: Text color
+    x-options: colors
+    default: base00
+    x-showIf:
+      $bar.widgetStyle: filled
+      $bar.widgetGrouping: {not: merged}
+      $bar.widgetTextColor: ''

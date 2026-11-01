@@ -133,7 +133,7 @@ One repository and one config for the whole desktop:
 - **Overlay** pages from the same modules, full screen.
 - **Desktop widgets** from the same modules, under your windows, per monitor.
 - **Lock screen** and **login screen** (greetd), laid out from the same modules too.
-- **Bars** with 26 widget types, in any style. Their popouts grow out of the bar or the screen border.
+- **Bars** with 28 widget types, in any style. Their popouts grow out of the bar or the screen border.
 - **Workspaces** as a line, a grid per monitor or scrolling strips, plus an overview and **Alt+Tab switcher**.
 - **Your compositor, set from the UI:** keybinds, monitors, input, the window look (borders, gaps, rounding, blur, shadows), and optionally the whole config file.
 - **Calendar** from CalDAV accounts, `.ics` feeds and calendars kept on your computer, with an editor, reminders and quick add (`/event fri 3pm Dentist`).

@@ -199,6 +199,7 @@ docs/dev/       developer docs
 - [vpn](features/vpn.md): NetworkManager's VPNs and Tailscale in one list, the secret agent.
 - [tailscale](features/tailscale.md): the `tailscale` topic, Connect / Disconnect, the widget, popout and module.
 - [idle](features/idle.md): hypridle and idle inhibit.
+- [lock-keys](features/lock-keys.md): Caps Lock / Num Lock / Scroll Lock from the keyboard LEDs (the `lockKeys` topic), the password fields' warning, the LockKeys widget.
 - [polkit](features/polkit.md): the polkit agent.
 - [onboarding](features/onboarding.md): the first-run onboarder.
 - [self-update](features/self-update.md): axiom updating its own clone.

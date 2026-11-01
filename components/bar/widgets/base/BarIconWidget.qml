@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 
 import qs.config
 
@@ -32,6 +33,8 @@ IconTextWidget {
   readonly property bool pressed: clickArea.pressed
   // The pointer is over it (an edge menu this opened stays open meanwhile)
   readonly property bool hovered: clickArea.containsMouse
+  // The bar's inner side, where its tooltip opens
+  readonly property int innerEdges: barConfig.top ? Edges.Bottom : barConfig.bottom ? Edges.Top : barConfig.left ? Edges.Right : Edges.Left
 
   signal clicked(int button)
   signal scrolled(real steps)

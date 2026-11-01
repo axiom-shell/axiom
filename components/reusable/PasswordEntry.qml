@@ -4,7 +4,8 @@ import QtQuick.Controls
 import qs.config
 
 // A password field with what an authenticator shows under it: a message,
-// a sliding bar while it checks, and a shake when it fails. It knows no
+// a sliding bar while it checks, and a shake when it fails, and that Caps
+// Lock is on while nothing else is said (the field's own hint). It knows no
 // authenticator: the lock screen's PasswordField and the polkit prompt
 // wire it to theirs (`accepted`, `shake()`).
 Item {
@@ -32,9 +33,17 @@ Item {
   // field (it's emptied after a failure) instead, and only the field takes
   // room
   property bool inlineMessage: false
+  // The message line says Caps Lock is on while it has nothing else to say
+  // (off where the host shows no messages: the line would push the field)
+  property bool capsMessage: true
   // What a message line under the field takes, shown or not (for a host
   // deciding on inlineMessage)
   readonly property real messageRoom: body.spacing + messageMetrics.height
+
+  // What the line says: the message, else the Caps Lock warning
+  readonly property bool _capsWarning: root.capsMessage && root.message === "" && entry.capsHintShown
+  readonly property string _line: root._capsWarning ? I18n.tr("Caps Lock is on") : root.message
+  readonly property color _lineColor: root._capsWarning ? Theme.warning : root.messageIsError ? Theme.error : Theme.foregroundAlt
 
   signal accepted
 
@@ -54,7 +63,7 @@ Item {
       id: entry
       width: parent.width
       height: root.fieldHeight
-      placeholderText: root.inlineMessage && root.message !== "" ? root.message : root.placeholder
+      placeholderText: root.inlineMessage && root._line !== "" ? root._line : root.placeholder
       input.passwordCharacter: "•"
       input.passwordMaskDelay: 0
       input.horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
@@ -71,19 +80,19 @@ Item {
 
     // An inline message in its color
     Binding {
-      when: root.inlineMessage && root.message !== ""
+      when: root.inlineMessage && root._line !== ""
       target: entry.input
       property: "placeholderTextColor"
-      value: root.messageIsError ? Theme.error : Theme.foregroundAlt
+      value: root._lineColor
     }
 
     StyledText {
       id: messageText
       width: parent.width
-      visible: !root.inlineMessage && (root.message !== "" || root.reserveMessage)
+      visible: !root.inlineMessage && (root._line !== "" || root.reserveMessage)
       // A space keeps a reserved line's height
-      text: root.message || " "
-      textColor: root.messageIsError ? Theme.error : Theme.foregroundAlt
+      text: root._line || " "
+      textColor: root._lineColor
       textSize: Appearance.fontSizeBy(-2)
       horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
       wrapMode: root.wrapMessage ? Text.WordWrap : Text.NoWrap
