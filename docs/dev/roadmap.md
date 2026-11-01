@@ -505,7 +505,6 @@ Found by the audits:
 - [The launcher's /config can switch a takeover setting](issues.md#the-launchers-config-can-switch-a-takeover-setting)
 - [A failed update check shows as up to date](issues.md#a-failed-update-check-shows-as-up-to-date)
 - [A weather fetch that fails shows Loading forever](issues.md#a-weather-fetch-that-fails-shows-loading-forever)
-- [SystemManager samples every second while nothing is shown](issues.md#systemmanager-samples-every-second-while-nothing-is-shown)
 - [The active media player is Spotify first and never follows playback](issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
 - [Album art piles up in the runtime folder for the whole session](issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
 - [MediaManager ticks the position with nothing showing it](issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
@@ -705,9 +704,6 @@ Deferred by the maintainer (2026-10-30, stacked bars: "Stacked bars will be plan
 
 Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put this on hold - note that growing modules kinda needs a re-work or removal"):
 - [An integrated top or bottom menu's zone follows its growing modules](issues.md#an-integrated-top-or-bottom-menus-zone-follows-its-growing-modules)
-
-Deferred by the maintainer (2026-10-31, the system graphs' history: "Drop it now - mark accordingly in issues / roadmap for the robust daemon implementation"; the drop itself stays under Phase 11):
-- [The system graphs start empty until the daemon keeps their history](issues.md#the-system-graphs-start-empty-until-the-daemon-keeps-their-history)
 
 Deferred by the maintainer (2026-11-01, the clear-out's questions: awww's daemon "defer - awww will be taking it's own dedicated branch"; side-edge submenus "defer - This takes quite a bit of thought to make consistent without an option."; the pill bar's frame lag "defer"; lock screen notification settings "defer"; Windows zone names, on leaving it logged, "agree"):
 - [Setting an awww wallpaper never starts awww's daemon](issues.md#setting-an-awww-wallpaper-never-starts-awwws-daemon) (with awww's removal, maintainer: "awww is scheduled for remove in favor of axioms own animations")

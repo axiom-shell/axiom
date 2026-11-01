@@ -1,15 +1,20 @@
 // Package sysmon is the machine's load for the shell, the `system` polled
 // topic: CPU, memory, temperatures, GPU, network throughput, disk usage
-// and the process list, read from /proc and /sys (and `nvidia-smi` for an
-// NVIDIA card without an AMD one), only the metrics some subscriber asks
-// for. Each push is one sample; the graphs' history stays the shell's
-// (SystemManager). Also `system.kill`, which signals a process.
+// and the process list, read from /proc and /sys (and a streamed
+// `nvidia-smi` for an NVIDIA card without an AMD one), only the metrics
+// some subscriber asks for. It also keeps the graphs' history: the last
+// minute of each graphed metric, sampled once a second in-process while
+// the shell names it (`system.keep`, from config) or a graph is open, so
+// a graph opens with its minute already drawn and nothing is pushed while
+// none is shown. Also `system.kill`, which signals a process.
 package sysmon
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"log/slog"
 	"math"
 	"os"
 	"os/exec"
@@ -38,11 +43,21 @@ const (
 	Processes = "processes"
 )
 
+// graphed are the metrics with a history, in the order kept
+var graphed = []string{CPU, Mem, GPU, CPUTemp, Net}
+
+const (
+	// HistoryLength is how many samples a history holds (SystemManager's
+	// historyLength), one every historyEvery: a minute
+	HistoryLength = 60
+	historyEvery  = time.Second
+)
+
 // State is one sample (SystemManager); a metric nobody asked for is left
 // out.
 type State struct {
 	// At is when it was taken (ms since the epoch): every sample differs,
-	// so each one is pushed and the shell's history gets them all
+	// so each one is pushed
 	At            int64            `json:"at"`
 	HasCPUTemp    bool             `json:"hasCpuTemp"`
 	HasGPU        bool             `json:"hasGpu"`
@@ -57,6 +72,10 @@ type State struct {
 	NetTx         *float64         `json:"netTx,omitempty"`
 	Disks         map[string]Usage `json:"disks,omitempty"` // by the path as asked
 	Processes     []Process        `json:"processes,omitempty"`
+	// History is the last HistoryLength samples, oldest first, one a
+	// second, of each metric kept (cpu, mem, gpu, cpuTemp, netRx, netTx),
+	// only while some request asks for it
+	History map[string][]float64 `json:"history,omitempty"`
 }
 
 // Usage is a filesystem's, as `df` counts it.
@@ -79,19 +98,25 @@ type request struct {
 	Metrics   []string `json:"metrics"`
 	DiskPaths []string `json:"diskPaths"`
 	Interval  *float64 `json:"interval"` // ms
+	// History asks for State.History: the graphed metrics it names are
+	// kept while it's asked
+	History []string `json:"history"`
 }
 
-// Options are where the source reads; zero values are the real ones.
+// Options are where the monitor reads; zero values are the real ones.
 type Options struct {
 	Proc, Sys string // "/proc", "/sys"
 	Home      string // what a disk path's "~" stands for
+	Log       *slog.Logger
 	Now       func() time.Time
+	// After is the ring loop's timer
+	After func(time.Duration) <-chan time.Time
 	// Sleep waits between the two reads of a first process list
 	Sleep    func(ctx context.Context, d time.Duration)
 	LookPath func(file string) (string, error)
-	// NvidiaSMI returns `nvidia-smi --query-gpu=utilization.gpu,
-	// temperature.gpu --format=csv,noheader,nounits`'s output
-	NvidiaSMI func(ctx context.Context, bin string) []byte
+	// NvidiaStream starts `nvidia-smi … --loop-ms` (a line of
+	// "usage, temp" every interval) until ctx ends
+	NvidiaStream func(ctx context.Context, bin string, every time.Duration) (io.ReadCloser, error)
 }
 
 const (
@@ -107,16 +132,43 @@ const (
 // rss in /proc/<pid>/stat counts pages: 16 KiB on Asahi, not 4
 var pageSize = int64(os.Getpagesize())
 
-// Source is the `system` topic.
-func Source(o Options) topics.Source {
+// Monitor is the `system` topic's sampler, the graphs' history and the
+// NVIDIA stream, for the daemon's lifetime.
+type Monitor struct {
+	o    Options
+	hub  *sampler
+	wake chan struct{}
+
+	mu         sync.Mutex
+	discovered bool
+	sn         sensors
+	// keeps: each connection's `system.keep`; held: the graphed metrics a
+	// history request names, until its lease ends (the hub stops fetching
+	// with no subscribers, and says nothing)
+	keeps    map[any][]string
+	held     map[string]time.Time
+	ring     counters
+	ringLast time.Time
+	history  map[string][]float64
+	gpu      nvidia
+}
+
+// New returns a monitor; the daemon runs its Run.
+func New(o Options) *Monitor {
 	if o.Proc == "" {
 		o.Proc = "/proc"
 	}
 	if o.Sys == "" {
 		o.Sys = "/sys"
 	}
+	if o.Log == nil {
+		o.Log = slog.New(slog.DiscardHandler)
+	}
 	if o.Now == nil {
 		o.Now = time.Now
+	}
+	if o.After == nil {
+		o.After = time.After
 	}
 	if o.Sleep == nil {
 		o.Sleep = func(ctx context.Context, d time.Duration) {
@@ -129,10 +181,22 @@ func Source(o Options) topics.Source {
 	if o.LookPath == nil {
 		o.LookPath = exec.LookPath
 	}
-	if o.NvidiaSMI == nil {
-		o.NvidiaSMI = nvidiaSMI
+	if o.NvidiaStream == nil {
+		o.NvidiaStream = nvidiaStream
 	}
-	s := &sampler{o: o, users: map[string]string{}}
+	m := &Monitor{
+		o:       o,
+		wake:    make(chan struct{}, 1),
+		keeps:   map[any][]string{},
+		held:    map[string]time.Time{},
+		history: map[string][]float64{},
+	}
+	m.hub = &sampler{m: m, users: map[string]string{}}
+	return m
+}
+
+// Source is the `system` topic.
+func (m *Monitor) Source() topics.Source {
 	return topics.Source{
 		Name:    "system",
 		Floor:   topics.MinInterval,
@@ -140,47 +204,351 @@ func Source(o Options) topics.Source {
 		Request: reflect.TypeFor[request](),
 		State:   reflect.TypeFor[State](),
 		Fetch: func(ctx context.Context, requests []json.RawMessage) (any, error) {
-			return s.sample(ctx, requests), nil
+			return m.hub.sample(ctx, requests), nil
 		},
 	}
 }
 
-// sampler keeps what a sample is measured against: the last CPU, network
-// and per-process counters, and what discovery found.
+// Keep sets the graphed metrics owner (a connection) wants a history of
+// from now on, whether or not anything shows them (`system.keep`).
+func (m *Monitor) Keep(owner any, metrics []string) error {
+	var kept []string
+	for _, metric := range metrics {
+		if !slices.Contains(graphed, metric) {
+			return axerr.New(axerr.BadRequest, "system.keep: %q has no history", metric)
+		}
+		if !slices.Contains(kept, metric) {
+			kept = append(kept, metric)
+		}
+	}
+	m.mu.Lock()
+	if len(kept) == 0 {
+		delete(m.keeps, owner)
+	} else {
+		m.keeps[owner] = kept
+	}
+	m.mu.Unlock()
+	m.signal()
+	return nil
+}
+
+// Forget drops owner's keep (a connection that closed).
+func (m *Monitor) Forget(owner any) {
+	m.mu.Lock()
+	_, ok := m.keeps[owner]
+	delete(m.keeps, owner)
+	m.mu.Unlock()
+	if ok {
+		m.signal()
+	}
+}
+
+func (m *Monitor) signal() {
+	select {
+	case m.wake <- struct{}{}:
+	default:
+	}
+}
+
+// Run samples the kept metrics into their histories once a second while
+// any is kept, and runs the NVIDIA stream while anything wants it; it
+// sleeps without either.
+func (m *Monitor) Run(ctx context.Context) error {
+	var stream *streamProc
+	defer func() { stream.stop() }()
+	var next time.Time
+	for {
+		m.mu.Lock()
+		now := m.o.Now()
+		ringOn := len(m.kept(now)) > 0
+		want, retry := m.streamWant(now)
+		m.mu.Unlock()
+
+		if stream != nil && (stream.every != want || stream.ended()) {
+			stream.stop()
+			stream = nil
+		}
+		if stream == nil && want > 0 && retry {
+			stream = m.startStream(ctx, want)
+		}
+
+		var tick <-chan time.Time
+		if ringOn {
+			if next.IsZero() || now.Sub(next) > 3*historyEvery {
+				next = now
+			}
+			if !now.Before(next) {
+				m.record()
+				next = next.Add(historyEvery)
+			}
+			tick = m.o.After(next.Sub(now))
+		} else {
+			next = time.Time{}
+		}
+		var ended <-chan struct{}
+		if stream != nil {
+			ended = stream.done
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-m.wake:
+		case <-tick:
+		case <-ended:
+		}
+	}
+}
+
+// kept is every metric with a history now, in graphed's order: a GPU that
+// may sleep only while a graph shows it (m.mu held).
+func (m *Monitor) kept(now time.Time) []string {
+	m.discover()
+	var out []string
+	for _, metric := range graphed {
+		until, held := m.held[metric]
+		if held && !now.Before(until) {
+			delete(m.held, metric)
+			held = false
+		}
+		kept := false
+		for _, list := range m.keeps {
+			kept = kept || slices.Contains(list, metric)
+		}
+		if metric == GPU && (!m.sn.hasGPU() || m.sn.maySleep()) {
+			kept = false
+		}
+		if held || kept {
+			out = append(out, metric)
+		}
+	}
+	return out
+}
+
+// hold keeps metrics' histories for a history request, until a lease of
+// a few of its intervals ends
+func (m *Monitor) hold(metrics []string, until time.Time) {
+	m.mu.Lock()
+	added := false
+	for _, metric := range metrics {
+		if slices.Contains(graphed, metric) {
+			_, had := m.held[metric]
+			added = added || !had
+			m.held[metric] = until
+		}
+	}
+	m.mu.Unlock()
+	if added {
+		m.signal()
+	}
+}
+
+// record takes one sample of each kept metric into its history.
+func (m *Monitor) record() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	now := m.o.Now()
+	kept := m.kept(now)
+	// A sample after a pause (a suspend) is measured afresh
+	if !m.ringLast.IsZero() && now.Sub(m.ringLast) > 3*historyEvery {
+		m.ring = counters{}
+	}
+	m.ringLast = now
+	push := func(key string, v float64) {
+		list := append(m.history[key], v)
+		if len(list) > HistoryLength {
+			list = slices.Clone(list[len(list)-HistoryLength:])
+		}
+		m.history[key] = list
+	}
+	keys := map[string]bool{}
+	for _, metric := range kept {
+		switch metric {
+		case CPU:
+			if v := m.ring.cpu(m.o.Proc); v != nil {
+				push(CPU, float64(*v))
+			}
+		case Mem:
+			if total, avail := meminfo(m.o.Proc); total > 0 {
+				push(Mem, float64(round(float64(total-avail)/float64(total)*100)))
+			}
+		case CPUTemp:
+			if m.sn.cpuTemp != "" {
+				push(CPUTemp, float64(round(float64(readInt(m.sn.cpuTemp))/1000)))
+			}
+		case GPU:
+			if usage, _ := m.gpuNow(now, historyEvery); usage != nil {
+				push(GPU, float64(*usage))
+			}
+		case Net:
+			if rx, tx := m.ring.net(m.o.Proc, now); rx != nil {
+				push("netRx", *rx)
+				push("netTx", *tx)
+			}
+			keys["netRx"], keys["netTx"] = true, true
+			continue
+		}
+		keys[metric] = true
+	}
+	// A metric no longer kept starts afresh when it's kept again
+	for key := range m.history {
+		if !keys[key] {
+			delete(m.history, key)
+		}
+	}
+}
+
+// historyCopy is every kept history as it is (m.mu held).
+func (m *Monitor) historyCopy() map[string][]float64 {
+	out := make(map[string][]float64, len(m.history))
+	for key, list := range m.history {
+		out[key] = slices.Clone(list)
+	}
+	return out
+}
+
+// sensors are what discovery found: sysfs files, "" for none.
+type sensors struct {
+	cpuTemp string
+	// The GPU: amdgpu's files, or nvidia-smi's path; dev is its PCI
+	// device (its power state and screens), "" when unknown
+	gpuBusy, gpuTemp, nvidia, dev string
+}
+
+func (s sensors) hasGPU() bool { return s.gpuBusy != "" || s.nvidia != "" }
+
+// asleep: the GPU is runtime-suspended (reading the status never wakes
+// it; reading the card would)
+func (s sensors) asleep() bool {
+	return s.dev != "" && readString(filepath.Join(s.dev, "power/runtime_status")) == "suspended"
+}
+
+// maySleep: the GPU runtime-suspends when idle (power/control "auto") and
+// drives no screen, so reading it every second would keep it awake; a
+// card with a screen connected never suspends anyway
+func (s sensors) maySleep() bool {
+	if s.dev == "" || readString(filepath.Join(s.dev, "power/control")) != "auto" {
+		return false
+	}
+	connectors, _ := filepath.Glob(filepath.Join(s.dev, "drm/card*/card*-*/status"))
+	for _, c := range connectors {
+		if readString(c) == "connected" {
+			return false
+		}
+	}
+	return true
+}
+
+// discover finds the CPU package sensor and the AMD card with the most
+// VRAM (the discrete one, when there's also an iGPU); nvidia-smi only
+// stands in without one (m.mu held).
+func (m *Monitor) discover() {
+	if m.discovered {
+		return
+	}
+	m.discovered = true
+	sys := m.o.Sys
+	hwmons, _ := filepath.Glob(filepath.Join(sys, "class/hwmon/hwmon*"))
+	for _, h := range hwmons {
+		switch readString(filepath.Join(h, "name")) {
+		case "k10temp", "coretemp", "zenpower":
+			m.sn.cpuTemp = filepath.Join(h, "temp1_input")
+		}
+		if m.sn.cpuTemp != "" {
+			break
+		}
+	}
+	cards, _ := filepath.Glob(filepath.Join(sys, "class/drm/card*/device"))
+	best := int64(-1)
+	card := ""
+	for _, d := range cards {
+		if _, err := os.Stat(filepath.Join(d, "gpu_busy_percent")); err != nil {
+			continue
+		}
+		if vram := readInt(filepath.Join(d, "mem_info_vram_total")); vram > best {
+			best, card = vram, d
+		}
+	}
+	if card != "" {
+		m.sn.dev = card
+		m.sn.gpuBusy = filepath.Join(card, "gpu_busy_percent")
+		if temps, _ := filepath.Glob(filepath.Join(card, "hwmon/*/temp1_input")); len(temps) > 0 {
+			m.sn.gpuTemp = temps[0]
+		}
+		return
+	}
+	bin, err := m.o.LookPath("nvidia-smi")
+	if err != nil {
+		return
+	}
+	m.sn.nvidia = bin
+	// The first NVIDIA display controller, what `nvidia-smi -i 0` reads
+	devs, _ := filepath.Glob(filepath.Join(sys, "bus/pci/devices/*"))
+	for _, d := range devs {
+		if readString(filepath.Join(d, "vendor")) == "0x10de" && strings.HasPrefix(readString(filepath.Join(d, "class")), "0x03") {
+			m.sn.dev = d
+			break
+		}
+	}
+}
+
+// gpuNow is the GPU's usage and temperature now (nil for unknown): 0 for
+// a card asleep, never woken; an NVIDIA card's from its stream's latest
+// line, if one came within a few intervals (m.mu held).
+func (m *Monitor) gpuNow(now time.Time, every time.Duration) (usage, temp *int) {
+	switch {
+	case !m.sn.hasGPU():
+		return nil, nil
+	case m.sn.asleep():
+		return ptr(0), nil
+	case m.sn.gpuBusy != "":
+		usage = ptr(int(readInt(m.sn.gpuBusy)))
+		if m.sn.gpuTemp != "" {
+			temp = ptr(round(float64(readInt(m.sn.gpuTemp)) / 1000))
+		}
+		return usage, temp
+	}
+	if m.gpu.at.IsZero() || now.Sub(m.gpu.at) > 3*max(every, m.gpu.every, historyEvery) {
+		return nil, nil
+	}
+	return ptr(m.gpu.usage), ptr(m.gpu.temp)
+}
+
+// sampler is the topic's fetch: it keeps what a sample is measured
+// against, the last CPU, network and per-process counters.
 type sampler struct {
-	o Options
+	m *Monitor
 	// A loop stopped and started again can briefly overlap the old one
 	mu sync.Mutex
 
-	discovered               bool
-	cpuTemp, gpuBusy, gpuTmp string // sysfs files, "" for none
-	nvidia                   string // nvidia-smi's path, "" for none
-
-	last              time.Time // the last sample
-	cpuTotal, cpuIdle uint64
-	rx, tx            uint64
-	netAt             time.Time
-	procTicks         map[int]uint64
-	procAt            time.Time
-	disks             map[string]Usage
-	diskAt            time.Time
-	diskKey           string
-	users             map[string]string // uid -> name
+	last      time.Time // the last sample
+	c         counters
+	procTicks map[int]uint64
+	procAt    time.Time
+	disks     map[string]Usage
+	diskAt    time.Time
+	diskKey   string
+	users     map[string]string // uid -> name
 }
 
 func (s *sampler) sample(ctx context.Context, requests []json.RawMessage) State {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	var metrics, paths []string
+	m := s.m
+	var metrics, paths, history []string
 	interval := time.Duration(0)
 	for _, raw := range requests {
 		var r request
 		if json.Unmarshal(raw, &r) != nil {
 			continue
 		}
-		for _, m := range r.Metrics {
-			if !slices.Contains(metrics, m) {
-				metrics = append(metrics, m)
+		for _, metric := range r.Metrics {
+			if !slices.Contains(metrics, metric) {
+				metrics = append(metrics, metric)
+			}
+		}
+		for _, metric := range r.History {
+			if !slices.Contains(history, metric) {
+				history = append(history, metric)
 			}
 		}
 		for _, p := range r.DiskPaths {
@@ -194,46 +562,66 @@ func (s *sampler) sample(ctx context.Context, requests []json.RawMessage) State 
 			}
 		}
 	}
-	if !s.discovered {
-		s.discover()
-	}
-	now := s.o.Now()
-	// A sample after a pause is measured afresh, not averaged over it
+	now := m.o.Now()
 	if interval <= 0 {
 		interval = 2 * time.Second
 	}
+	// The leases of what this fetch asks of the ring and the stream: a
+	// few intervals, renewed by every fetch
+	lease := now.Add(3*max(interval, historyEvery) + historyEvery)
+	if len(history) > 0 {
+		m.hold(history, lease)
+	}
+	wants := func(metric string) bool { return slices.Contains(metrics, metric) }
+	if wants(GPU) {
+		m.leaseStream(interval, lease)
+	}
+
+	// A sample after a pause is measured afresh, not averaged over it
 	if !s.last.IsZero() && now.Sub(s.last) > 3*max(interval, 500*time.Millisecond) {
-		s.cpuTotal, s.netAt, s.procTicks = 0, time.Time{}, nil
+		s.c, s.procTicks = counters{}, nil
 	}
 	s.last = now
-	wants := func(m string) bool { return slices.Contains(metrics, m) }
 
-	st := State{At: now.UnixMilli(), HasCPUTemp: s.cpuTemp != "", HasGPU: s.gpuBusy != "" || s.nvidia != ""}
+	m.mu.Lock()
+	m.discover()
+	sn := m.sn
+	st := State{At: now.UnixMilli(), HasCPUTemp: sn.cpuTemp != "", HasGPU: sn.hasGPU()}
+	if wants(GPU) {
+		st.GPUUsage, st.GPUTemp = m.gpuNow(now, interval)
+	}
+	if len(history) > 0 {
+		st.History = m.historyCopy()
+	}
+	// A first CPU or network sample has nothing to measure against: the
+	// history's newest stands in, when it's fresh
+	newest := func(key string) *float64 {
+		if list := m.history[key]; len(list) > 0 && now.Sub(m.ringLast) <= 2*historyEvery {
+			return ptr(list[len(list)-1])
+		}
+		return nil
+	}
+	cpuNewest, rxNewest, txNewest := newest(CPU), newest("netRx"), newest("netTx")
+	m.mu.Unlock()
+
 	if wants(CPU) {
-		st.CPUUsage = s.cpu()
+		if st.CPUUsage = s.c.cpu(m.o.Proc); st.CPUUsage == nil && cpuNewest != nil {
+			st.CPUUsage = ptr(int(*cpuNewest))
+		}
 	}
 	if wants(Mem) {
-		if total, avail := s.meminfo(); total > 0 {
+		if total, avail := meminfo(m.o.Proc); total > 0 {
 			st.MemTotalBytes, st.MemUsedBytes = ptr(total), ptr(total-avail)
 			st.MemUsage = ptr(round(float64(total-avail) / float64(total) * 100))
 		}
 	}
-	if wants(CPUTemp) && s.cpuTemp != "" {
-		st.CPUTemp = ptr(round(float64(readInt(s.cpuTemp)) / 1000))
-	}
-	if wants(GPU) {
-		if s.gpuBusy != "" {
-			st.GPUUsage = ptr(int(readInt(s.gpuBusy)))
-			if s.gpuTmp != "" {
-				st.GPUTemp = ptr(round(float64(readInt(s.gpuTmp)) / 1000))
-			}
-		} else if s.nvidia != "" {
-			usage, temp := parseNvidia(s.o.NvidiaSMI(ctx, s.nvidia))
-			st.GPUUsage, st.GPUTemp = &usage, &temp
-		}
+	if wants(CPUTemp) && sn.cpuTemp != "" {
+		st.CPUTemp = ptr(round(float64(readInt(sn.cpuTemp)) / 1000))
 	}
 	if wants(Net) {
-		st.NetRx, st.NetTx = s.net(now)
+		if st.NetRx, st.NetTx = s.c.net(m.o.Proc, now); st.NetRx == nil && rxNewest != nil {
+			st.NetRx, st.NetTx = rxNewest, txNewest
+		}
 	}
 	if wants(Disk) && len(paths) > 0 {
 		st.Disks = s.diskUsage(now, paths)
@@ -244,45 +632,18 @@ func (s *sampler) sample(ctx context.Context, requests []json.RawMessage) State 
 	return st
 }
 
-// discover finds the CPU package sensor and the AMD card with the most
-// VRAM (the discrete one, when there's also an iGPU); nvidia-smi only
-// stands in without one.
-func (s *sampler) discover() {
-	s.discovered = true
-	hwmons, _ := filepath.Glob(filepath.Join(s.o.Sys, "class/hwmon/hwmon*"))
-	for _, h := range hwmons {
-		switch readString(filepath.Join(h, "name")) {
-		case "k10temp", "coretemp", "zenpower":
-			s.cpuTemp = filepath.Join(h, "temp1_input")
-		}
-		if s.cpuTemp != "" {
-			break
-		}
-	}
-	cards, _ := filepath.Glob(filepath.Join(s.o.Sys, "class/drm/card*/device"))
-	best := int64(-1)
-	card := ""
-	for _, d := range cards {
-		if _, err := os.Stat(filepath.Join(d, "gpu_busy_percent")); err != nil {
-			continue
-		}
-		if vram := readInt(filepath.Join(d, "mem_info_vram_total")); vram > best {
-			best, card = vram, d
-		}
-	}
-	if card != "" {
-		s.gpuBusy = filepath.Join(card, "gpu_busy_percent")
-		if temps, _ := filepath.Glob(filepath.Join(card, "hwmon/*/temp1_input")); len(temps) > 0 {
-			s.gpuTmp = temps[0]
-		}
-	} else if bin, err := s.o.LookPath("nvidia-smi"); err == nil {
-		s.nvidia = bin
-	}
+// counters are what CPU usage and network throughput are measured
+// against: the topic's samples and the history's keep their own, so
+// neither cuts the other's interval short.
+type counters struct {
+	cpuTotal, cpuIdle uint64
+	rx, tx            uint64
+	netAt             time.Time
 }
 
 // cpu is the usage since the last read of /proc/stat (nil on the first).
-func (s *sampler) cpu() *int {
-	data, err := os.ReadFile(filepath.Join(s.o.Proc, "stat"))
+func (c *counters) cpu(proc string) *int {
+	data, err := os.ReadFile(filepath.Join(proc, "stat"))
 	if err != nil {
 		return nil
 	}
@@ -300,8 +661,8 @@ func (s *sampler) cpu() *int {
 			idle += n
 		}
 	}
-	prevTotal, prevIdle := s.cpuTotal, s.cpuIdle
-	s.cpuTotal, s.cpuIdle = total, idle
+	prevTotal, prevIdle := c.cpuTotal, c.cpuIdle
+	c.cpuTotal, c.cpuIdle = total, idle
 	if prevTotal == 0 || total <= prevTotal {
 		return nil
 	}
@@ -309,8 +670,8 @@ func (s *sampler) cpu() *int {
 }
 
 // meminfo is MemTotal and MemAvailable in bytes.
-func (s *sampler) meminfo() (total, avail int64) {
-	data, _ := os.ReadFile(filepath.Join(s.o.Proc, "meminfo"))
+func meminfo(proc string) (total, avail int64) {
+	data, _ := os.ReadFile(filepath.Join(proc, "meminfo"))
 	for line := range strings.SplitSeq(string(data), "\n") {
 		f := strings.Fields(line)
 		if len(f) < 2 {
@@ -329,8 +690,8 @@ func (s *sampler) meminfo() (total, avail int64) {
 
 // net is the throughput since the last read of /proc/net/dev (nil on the
 // first).
-func (s *sampler) net(now time.Time) (rx, tx *float64) {
-	data, err := os.ReadFile(filepath.Join(s.o.Proc, "net/dev"))
+func (c *counters) net(proc string, now time.Time) (rx, tx *float64) {
+	data, err := os.ReadFile(filepath.Join(proc, "net/dev"))
 	if err != nil {
 		return nil, nil
 	}
@@ -348,8 +709,8 @@ func (s *sampler) net(now time.Time) (rx, tx *float64) {
 		b, _ := strconv.ParseUint(f[8], 10, 64)
 		r, t = r+a, t+b
 	}
-	prevRx, prevTx, prevAt := s.rx, s.tx, s.netAt
-	s.rx, s.tx, s.netAt = r, t, now
+	prevRx, prevTx, prevAt := c.rx, c.tx, c.netAt
+	c.rx, c.tx, c.netAt = r, t, now
 	if prevAt.IsZero() || !now.After(prevAt) {
 		return nil, nil
 	}
@@ -375,8 +736,8 @@ func (s *sampler) diskUsage(now time.Time, paths []string) map[string]Usage {
 	s.disks = map[string]Usage{}
 	for _, p := range paths {
 		path := p
-		if rest, ok := strings.CutPrefix(p, "~"); ok && (rest == "" || rest[0] == '/') && s.o.Home != "" {
-			path = s.o.Home + rest
+		if rest, ok := strings.CutPrefix(p, "~"); ok && (rest == "" || rest[0] == '/') && s.m.o.Home != "" {
+			path = s.m.o.Home + rest
 		}
 		var fs syscall.Statfs_t
 		if syscall.Statfs(path, &fs) != nil || fs.Blocks == 0 {
@@ -397,15 +758,15 @@ func (s *sampler) diskUsage(now time.Time, paths []string) map[string]Usage {
 // list reads twice, processWarmup apart.
 func (s *sampler) processes(ctx context.Context) []Process {
 	if s.procTicks == nil {
-		s.procTicks, s.procAt = s.readProcs(nil), s.o.Now()
-		s.o.Sleep(ctx, processWarmup)
+		s.procTicks, s.procAt = s.readProcs(nil), s.m.o.Now()
+		s.m.o.Sleep(ctx, processWarmup)
 	}
-	memTotal, _ := s.meminfo()
+	memTotal, _ := meminfo(s.m.o.Proc)
 	list := []Process{}
 	ticks := s.readProcs(func(pid int, comm string, rss int64, uid string) {
 		list = append(list, Process{PID: pid, User: s.user(uid), Command: comm, Mem: percent(rss*pageSize, memTotal)})
 	})
-	now := s.o.Now()
+	now := s.m.o.Now()
 	secs := now.Sub(s.procAt).Seconds()
 	for i := range list {
 		p := &list[i]
@@ -429,14 +790,14 @@ func (s *sampler) processes(ctx context.Context) []Process {
 // readProcs reads every /proc/<pid>/stat for its CPU ticks, calling each
 // (when set) with the rest a row shows.
 func (s *sampler) readProcs(each func(pid int, comm string, rss int64, uid string)) map[int]uint64 {
-	entries, _ := os.ReadDir(s.o.Proc)
+	entries, _ := os.ReadDir(s.m.o.Proc)
 	ticks := map[int]uint64{}
 	for _, e := range entries {
 		pid, err := strconv.Atoi(e.Name())
 		if err != nil || pid <= 0 {
 			continue
 		}
-		dir := filepath.Join(s.o.Proc, e.Name())
+		dir := filepath.Join(s.m.o.Proc, e.Name())
 		comm, t, rss, ok := parseStat(readString(filepath.Join(dir, "stat")))
 		if !ok {
 			continue // gone since the listing
@@ -490,23 +851,6 @@ func (s *sampler) user(uid string) string {
 	}
 	s.users[uid] = name
 	return name
-}
-
-func parseNvidia(out []byte) (usage, temp int) {
-	line, _, _ := strings.Cut(string(out), "\n")
-	f := strings.Split(line, ",")
-	if len(f) >= 2 {
-		usage, _ = strconv.Atoi(strings.TrimSpace(f[0]))
-		temp, _ = strconv.Atoi(strings.TrimSpace(f[1]))
-	}
-	return usage, temp
-}
-
-func nvidiaSMI(ctx context.Context, bin string) []byte {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	out, _ := exec.CommandContext(ctx, bin, "--query-gpu=utilization.gpu,temperature.gpu", "--format=csv,noheader,nounits").Output()
-	return out
 }
 
 // Kill sends pid SIGTERM (`system.kill`, the process list's End). Init and
