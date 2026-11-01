@@ -133,6 +133,8 @@ ColumnLayout {
           return I18n.tr("Step, e.g. 50 0");
         case "special":
           return I18n.tr("Workspace name");
+        case "duration":
+          return I18n.tr("Length, e.g. 10m or 1:30");
         case "raw":
           return {
             "sway": I18n.tr("Command, e.g. splitv"),

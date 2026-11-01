@@ -14,7 +14,7 @@
 
 ### Where it runs
 - The merge is the binary's (`backend/internal/compositor/binds`, every compositor's `extract` and `remove` with the same JSON, documented in its package comment). The daemon runs it (managed mode: the adopted file on a takeover, all of `user/` on the Keybinds page's Merge, `compositor.merge` / `compositor.previewMerge`); `axiom compositor binds extract|remove --kind K DIR [SITES]` runs it from the command line.
-- What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) or a volume, brightness or media command maps onto comes from `compositor/actions`, from its table's `ipcActions` and `actionFlags` (`table.json`, embedded: the one table the daemon also sends the shell), so a new IPC action is a row there and nothing else.
+- What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) or a volume, brightness or media command maps onto comes from `compositor/actions`, from its table's `ipcActions` and `actionFlags` (`table.json`, embedded: the one table the daemon also sends the shell), so a new IPC action is a row there and nothing else. A `{call}` matches only a call's words (`toggle`, `open`/`show`/`enable`, `close`/`hide`/`disable`), so another function of the same target (`appLauncher clipboard`) is its own action. A `{0}` is one word, or a quoted one with spaces (`stopwatch timer '10m tea'`, as the bind writes it, a `'` inside as `'\''`).
 
 ### Extracting
 - It runs the files under gopher-lua (Lua 5.1), with no `lua` binary.

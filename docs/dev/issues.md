@@ -68,7 +68,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A VPN's password request can go unseen
 - **Where:** `services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)
-- **What:** axiom takes NetworkManager's secret request whenever the shell is connected, but only a `VpnRow` shows it: the Wi-Fi menu (with its VPN section), the VPN popout or a VPN card. A VPN needing a password brought up from `/vpn` in the launcher, or by a click on a `Vpn` widget in an edge menu, shows its field nowhere: the row reads "Connecting…" until NetworkManager gives up, and nm-applet is never asked. Open: whether the request opens the VPN popout, sends a notification that opens it, or axiom answers `NoSecrets` while no row is shown (so another agent asks).
+- **What:** axiom takes NetworkManager's secret request whenever the shell is connected, but only a `VpnRow` shows it: the Wi-Fi menu (with its VPN section), the VPN popout or a VPN card. A VPN needing a password brought up from `/vpn` in the launcher, the `vpn` keybind action, or a click on a `Vpn` widget in an edge menu, shows its field nowhere: the row reads "Connecting…" until NetworkManager gives up, and nm-applet is never asked. Open: whether the request opens the VPN popout, sends a notification that opens it, or axiom answers `NoSecrets` while no row is shown (so another agent asks).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the VPN branch
 
@@ -107,12 +107,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** With `Overlay.closeOnOutsideClick` on, the overlay now closes on its empty background (`backgroundClicks`) everywhere, and, without a native grab (sway, niri), on a press on any screen's backdrop: another monitor, the screen border (its mask is empty), a floating bar's gap. On Hyprland those clicks only end its native grab, which it no longer closes on (that also fires when a popout's or the dock menu's own grab starts over it, one native grab at a time), so they leave it open, where before this change they closed it on every compositor. The maintainer decided on #211 "only where the blur backing would be": whether those places count (another monitor has no backing; the border covers it; a bar's gap shows it) decides the fix: none on sway and niri dropping `clickedOutside`, or on Hyprland a backdrop that takes the click.
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the overlay and popouts plan's build (row 16)
-
-### An open-only workspace overview bind calls a function that doesn't exist
-- **Where:** `backend/internal/compositor/actions/table.json` (`calls.workspaceOverview`), `shell/WorkspaceOverlay.qml` (its `IpcTarget`)
-- **What:** The bind table maps the `workspaceOverview` action's `open` call to the IPC function `show` (`render.Tables.CallFunction`), so a bind with call `open` runs `axiom ipc workspaceOverlay show`; the `workspaceOverlay` target has only `toggle`, `open` and `hide` (`docs/dev/generated/ipc.md`), so the bind does nothing. The default bind (`toggle`) is unaffected. Fix: the table's `open` names `open`.
-- **Size:** trivial
-- **Found:** 2026-10-29, while adding niri's own overview (row 16)
 
 ### The overlay's gaps can't be adjusted
 - **Where:** `components/methods/GridPlacement.qml` (`cardSpacing`, `baseCard`, `gapOf`), `config/OverlayConfig.qml` (`boxPadding`)
@@ -712,12 +706,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `adopt` checks each line on its own with `mapLines`. A line matching the unanchored `axiomLine` (`(^|[[:space:]"'/])axiom["']?[[:space:]]+run…`) gets `-- (axiom starts and loads itself now) ` put in front of it, even when the line is inside a Lua long string. The result still parses, so `keepsParsing` keeps the edit (with luac it returns true at once). Probe: hyprland.lua = `hl.exec_cmd([[\n  axiom run &\n  waybar\n]])` claims as `adopted:00-previous.lua`, with line 2 of the copy now `-- (axiom starts and loads itself now)   axiom run &` inside the string. Hyprland runs that string through `sh -c`, where `-- (axiom …` is a syntax error, so the whole script fails and waybar (and anything else the script started) no longer starts in managed mode. The same thing happens for a matching line inside a `--[[ ]]` block comment (harmless there). Fix: skip lines that start inside a string or comment. luacheck already finds those spans (`tokens`), so export a `luacheck.InCode(text) []bool` (or reuse `WholeLines(text, []int{n})`) and only mark lines where it holds. Add a takeover test row with the file above, expecting the line inside the string to be left as it was.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
-
-### An unknown IPC function word merges as a toggle
-- **Where:** `backend/internal/compositor/actions/actions.go:148` (`IPCAction`), `backend/internal/compositor/actions/actions.go:115` (`calls`)
-- **What:** For an `ipcActions` row with `{call}`, the pattern captures any `\w+`, and a word not in `calls` becomes `"toggle"` (`if !ok { name = "toggle" }`). The targets have other functions: `edgeMenu` has `pin`/`unpin`/`edit`/`list` (EdgeMenuManager.qml), and `nightLight`/`idleInhibit`/`screenRecord` have `status`. Probe: `IPCAction("axiom ipc edgeMenu pin left")` gives `{"action":"edgeMenu","call":"toggle","argument":"left"}`, and `axiom ipc nightLight status` gives `{"action":"nightLight","call":"toggle"}`. On sway and niri, a user's bind that pins an edge menu is merged as one that toggles it, a silent change in behaviour. TestIPCAction has no row for a word outside `calls`. The niri review reproduced it with an overlay test for `edgeMenu pin`/`unpin`, `nightLight status` and `screenRecord status`, and found the same map also accepts `open`/`show`/`enable` for every action, whatever that action's IPC target names them (`idleInhibit` has no `open`). Fix: look the word up in the action's own row of the table's `calls` (`{open, close}`) or `toggle`; anything else returns nil, so the bind stays an `exec`. That drops the Go `calls` map (2 lines); test rows (`"axiom ipc edgeMenu pin left": "null"`).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system and the niri system
 
 ### The overview stays open with nothing shown after its monitor goes away
 - **Where:** `shell/WorkspaceOverlay.qml:21` (`overlayVisible`), `shell/WorkspaceOverlay.qml:30` (`open`), `shell/WorkspaceOverlay.qml:42` (`toggle`), `shell/WorkspaceOverlay.qml:90` (`shown`)

@@ -450,4 +450,21 @@ QtObject {
       }
     }
   }
+
+  // Keybind action wifi: axiom ipc wifi toggle|enable|disable
+  property IpcTarget _ipc: IpcTarget {
+    target: "wifi"
+
+    function toggle(): void {
+      root.toggleWifi();
+    }
+
+    function enable(): void {
+      root.setWifiEnabled(true);
+    }
+
+    function disable(): void {
+      root.setWifiEnabled(false);
+    }
+  }
 }

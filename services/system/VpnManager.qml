@@ -381,4 +381,14 @@ QtObject {
     if (BackendManager.ready)
       root._fetch();
   }
+
+  // Keybind action vpn: the last VPN used, up or down (as the Vpn
+  // widget's click)
+  property IpcTarget _ipc: IpcTarget {
+    target: "vpn"
+
+    function toggle(): void {
+      root.toggleLast();
+    }
+  }
 }
