@@ -61,7 +61,7 @@ Item {
   property bool _focusDial: false
 
   function _endTime() {
-    const end = StopwatchClock.endsAt(root.timer);
+    const end = root.timer.endsAt;
     return end > 0 ? I18n.formatDate(new Date(end), CalendarConfig.timeFormat) : "";
   }
 

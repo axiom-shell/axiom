@@ -90,6 +90,7 @@ TestCase {
     compare(StopwatchClock.format(64100, false, true), "01:05", "a countdown rounds up");
     compare(StopwatchClock.format(3723000, false, false), "1:02:03");
     compare(StopwatchClock.format(-1, false, true), "00:00");
+    compare(StopwatchClock.format(3605000, false, true), "1:00:05", "a countdown from an hour");
   }
 
   function test_laps() {
@@ -111,8 +112,6 @@ TestCase {
     let p = StopwatchClock.pauseTimer(StopwatchClock.startTimer(StopwatchClock.idleTimer, 5 * minute, 0, ""), minute);
     p = StopwatchClock.addTime(p, -10 * minute);
     compare([p.remaining, p.duration], [1000, minute + 1000]);
-    compare(StopwatchClock.endsAt(p), 0);
-    compare(StopwatchClock.endsAt(t), 2 * minute + 1000);
   }
 
   function test_recent() {

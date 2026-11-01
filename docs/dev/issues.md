@@ -1742,7 +1742,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
 ### Skipping a focus session counts it as finished
-- **Where:** `services/apps/PomodoroManager.qml:72` (`skip`), `components/methods/PomodoroCycle.qml:87` (`advance`), `components/bar/widgets/Pomodoro/Pomodoro.qml:36`
+- **Where:** `services/apps/PomodoroManager.qml:71` (`skip`), `components/methods/PomodoroCycle.qml:87` (`advance`), `components/bar/widgets/Pomodoro/Pomodoro.qml:36`
 - **What:** `skip()` calls `PomodoroCycle.advance`, which counts `completed + 1` whenever the phase was `work`, whether it ran out or was skipped. The doc and PomodoroCycle's header define `completed` as focus sessions *finished* ("Every `longBreakEvery`-th finished focus session is followed by a long break"). A right click on the idle Pomodoro widget (its skip) therefore counts a session that never started, lights a dot, and with `autoStartBreaks` (default on) starts a 5-minute break running; four stray right clicks bring a long break. Question for the maintainer: should a skipped focus session count (some apps count it), not count, or count only once started? Fix (if it shouldn't count): give `advance` a `finished` flag (true from `_finish`, false from `skip`) that gates the `+ 1`, with a `tst_PomodoroCycle` row.
 
   **Decided** (maintainer, 2026-11-01, on the recommendation "c) count only if the session had started"): "agree".
@@ -1756,14 +1756,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
 ### A todo.json deleted while unreadable blocks every save until restart
-- **Where:** `services/apps/TodoManager.qml:98` (`_load`)
+- **Where:** `services/apps/TodoManager.qml:97` (`_load`)
 - **What:** `_unreadable` is set when the file holds broken JSON and cleared only by a successful parse. When the file is then deleted (the obvious way out of a broken hand edit), `FileManager.read` returns null, `_load` sets only `_loaded`, and `_unreadable` stays true: every add, tick and delete is dropped with `Not saving over` warnings although there is nothing left to protect, until a valid file appears or the shell restarts. Fix: `if (text === null) { root._unreadable = false; root._loaded = true; }` (2 lines).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
-### Dead and forwarding members in the timer services and helpers
-- **Where:** `services/apps/TodoManager.qml:21` (`loaded`), `services/apps/PomodoroManager.qml:22` (`state`), `services/apps/StopwatchManager.qml:22` (`stopwatch`), `components/methods/StopwatchClock.qml:181` (`endsAt`), `components/methods/PomodoroCycle.qml:107` (`format`)
-- **What:** `TodoManager.loaded`, `PomodoroManager.state` and `StopwatchManager.stopwatch` are read by nothing (`grep -rn` for each qualified name and for `root.<name>` finds only the declaration; the services use `_loaded`, `_state`, `_stopwatch`). `StopwatchClock.endsAt(state)` returns `state.running ? state.endsAt : 0`, but every timer it gets went through `normalizeTimer`, which already sets `endsAt` to 0 when not running; its one user (`CountdownTimer._endTime`) can read `root.timer.endsAt`. `PomodoroCycle.format(ms)` only forwards to `StopwatchClock.format(ms, false, true)` for PomodoroManager's two calls. Fix: delete the three properties (3 lines), `endsAt` (5 lines with its blank) and its two test rows in `tst_StopwatchClock` (2), and `format` (4 lines, its four test rows moved to `tst_StopwatchClock` if not already covered there), calling `StopwatchClock.format(…, false, true)` from PomodoroManager: 14 lines.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
@@ -2025,7 +2019,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the screenshots-recording system
 
 ### ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour
-- **Where:** `components/content/ScreenRecord/ScreenRecord.qml:49` (`durationText`), `components/bar/widgets/ScreenRecord/ScreenRecord.qml:17`, `components/methods/StopwatchClock.qml:288` (`format`)
+- **Where:** `components/content/ScreenRecord/ScreenRecord.qml:49` (`durationText`), `components/bar/widgets/ScreenRecord/ScreenRecord.qml:17`, `components/methods/StopwatchClock.qml:283` (`format`)
 - **What:** The card formats `recordingElapsed` with its own `durationText` ("1:05", "1:02:03"; lines 48-54, 7 lines), the bar widget with a third inline copy that has no hours: `${Math.floor(root.elapsed / 60)}:…` shows "65:00" where the card shows "1:05:00" for the same recording. `StopwatchClock.format(ms)` already makes "mm:ss" / "h:mm:ss" and is tested. Fix: both use `StopwatchClock.format(ScreenshotManager.recordingElapsed * 1000)`; `durationText` goes (7 lines) and the bar matches the card (both then pad the minutes, "01:05", as the timer and stopwatch do).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the screenshots-recording system

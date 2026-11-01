@@ -19,7 +19,6 @@ Singleton {
   id: root
 
   readonly property var timer: root._timer
-  readonly property var stopwatch: root._stopwatch
   readonly property bool timerRunning: root._timer.running
   readonly property bool timerIdle: StopwatchClock.timerIdle(root._timer)
   readonly property bool stopwatchRunning: root._stopwatch.running

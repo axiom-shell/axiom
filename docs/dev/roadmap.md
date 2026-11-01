@@ -520,7 +520,6 @@ Found by the audits:
 - [Skipping a focus session counts it as finished](issues.md#skipping-a-focus-session-counts-it-as-finished)
 - [A recent timer chip reads its label back as part of the duration](issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)
 - [A todo.json deleted while unreadable blocks every save until restart](issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
-- [Dead and forwarding members in the timer services and helpers](issues.md#dead-and-forwarding-members-in-the-timer-services-and-helpers)
 - [PomodoroDial redraws DialControls' ring and buttons](issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
 - [Focus and Pomodoro build the parts their properties turn off](issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)
 - [The Accounts card reads read-only and task-list facts from config entries that never hold them](issues.md#the-accounts-card-reads-read-only-and-task-list-facts-from-config-entries-that-never-hold-them)
