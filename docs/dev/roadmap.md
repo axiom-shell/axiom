@@ -646,3 +646,6 @@ Deferred by the maintainer (2026-11-01, the clear-out's questions: side-edge sub
 - [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [The lock screen has no settings for allowing or viewing notifications](issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (needs a plan once taken up)
 - [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
+
+Deferred by the maintainer (2026-11-02: "add to needs a plan in deferred"):
+- [axiom installs into Quickshell's config folder, and dev mode can't switch trees](issues.md#axiom-installs-into-quickshells-config-folder-and-dev-mode-cant-switch-trees) (needs a plan once taken up)
