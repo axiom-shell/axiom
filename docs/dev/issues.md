@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Included's hookup can put sway-only lines into a config i3 still runs
+- **Where:** `backend/internal/compositor/manager/sway.go` (`userMain`)
+- **What:** Since compositor-06, sway's include and autostart targets are the config sway runs (`userconf.SwayMain`), so an i3 migrant whose sway runs `~/.config/i3/config` gets **Add it for me**'s include line written there. If they still run i3 from that same file, i3 follows the include into axiom's sway module and reports its sway-only lines as errors. Rare (one file shared by both, included mode); found by the branch review, left logged rather than widening the batch. Fix when it comes up: the hookup notes, or refuses with a reason, when its target is under an `i3/` folder.
+- **Size:** small
+- **Found:** 2026-11-02, while reviewing roadmap row 20's compositor-06
+
 ### MediaManager's start-up pass throws: the engine has no Object.fromEntries
 - **Where:** `services/system/MediaManager.qml:228` (`_startedAt`)
 - **What:** `Component.onCompleted` sets `root._startedAt = Object.fromEntries(…)`, but Qt's JS engine has no `Object.fromEntries` (qml-pitfalls.md › The JS engine). Every start and reload logs `TypeError: Property 'fromEntries' of object function Object() { [native code] } is not a function` (a nested niri run's log, 2026-11-02), and the `_pick()` after it never runs: the players already running at start get no start time, and nothing is picked until the player list changes. Fix: `reduce`, as the pitfall says; `check_structure` could refuse `fromEntries` and `flatMap` as it refuses an optional call on a computed member.
