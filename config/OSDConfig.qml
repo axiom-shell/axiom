@@ -34,8 +34,8 @@ QtObject {
   // without a popup (NotificationManager.announce)
   readonly property bool cardsToHistory: _c.cardsToHistory
 
-  // Where an event of a status type goes (OSDItems.cardRoute): "osd" (an
-  // enabled OSD lists it, not quiet, with its detail cards on: its card),
+  // Where an event goes (OSDItems.cardRoute): "osd" (an OSD opens its
+  // card: OSDItems.opensCard),
   // else "notification" with `notify` (its section's switch:
   // Battery.notify, Drives.notify, Monitors.notify, Screenshots.notify),
   // else "" (nowhere)

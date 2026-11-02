@@ -18,7 +18,8 @@ var osdCardOnly = []string{"monitor", "screenshot", "message"}
 // `media` (Now playing) becomes `media` in that list, its options
 // `cards.onTrackChange` / `onPlayPause`. Messages now show only on an OSD
 // that picks them: an OSD listing them keeps them, and with none listing
-// them the first enabled one, where they went, gets them.
+// them the first enabled one, where they went, gets them (unless quiet
+// there: a notification, as before).
 func v91(cfg *jsonx.Object) []string {
 	osd := object(cfg, "OSD")
 	if osd == nil {
@@ -65,7 +66,8 @@ func v91(cfg *jsonx.Object) []string {
 				shown.Items = kept
 			}
 		}
-		if i == target {
+		// (a quiet message was a notification there, as it stays)
+		if i == target && !slices.Contains(quiet, any("message")) {
 			picked = append(picked, "message")
 		}
 		if media, _ := entry.Value("media").(*jsonx.Object); media != nil {
