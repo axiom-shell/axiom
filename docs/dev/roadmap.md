@@ -358,7 +358,6 @@ Found by the audits:
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
 - [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)
-- [A relative -c is read from the daemon's folder](issues.md#a-relative--c-is-read-from-the-daemons-folder)
 - [Gaps to the edges are wider on sway than the setting says](issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says)
 - [A $' or $& in a bind's argument is read as a replacement pattern](issues.md#a--or--in-a-binds-argument-is-read-as-a-replacement-pattern)
 - [A niri merge of two binds on one line loses one](issues.md#a-niri-merge-of-two-binds-on-one-line-loses-one)

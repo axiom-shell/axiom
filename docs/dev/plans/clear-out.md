@@ -333,7 +333,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **compositor-06** (5):
   - Claim keeps writing a symlinked or git-tracked config that release refuses to give back
   - [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](../issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)
-  - [A relative -c is read from the daemon's folder](../issues.md#a-relative--c-is-read-from-the-daemons-folder)
+  - A relative -c is read from the daemon's folder
   - A claim comments out axiom's start inside a long string, breaking the script
   - A sway include path with a space breaks after a takeover
 - **compositor-07** (6):

@@ -1,10 +1,14 @@
 package userconf
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -212,6 +216,34 @@ func TestNiriMain(t *testing.T) {
 	// A socket naming a pid that isn't niri's is a leftover
 	vars["NIRI_SOCKET"] = "/run/user/1000/niri.wayland-1.1.sock"
 	eq(t, NiriMain(env(vars)), "/x/config.kdl")
+}
+
+// A relative -c is the compositor's, read from its own folder
+func TestStartedWithARelativeConfig(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	// A script named niri: its process's comm is the script's name
+	write(t, filepath.Join(dir, "bin", "niri"), "#!/bin/sh\nread x\n")
+	os.Chmod(filepath.Join(dir, "bin", "niri"), 0o755)
+	cmd := exec.Command(filepath.Join(dir, "bin", "niri"), "-c", "test.kdl")
+	cmd.Dir = dir
+	stdin, _ := cmd.StdinPipe()
+	if err := cmd.Start(); err != nil {
+		t.Skip(err)
+	}
+	defer func() { stdin.Close(); cmd.Wait() }()
+	pid := strconv.Itoa(cmd.Process.Pid)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, isNiri := startedWith(pid, "niri"); isNiri || time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	config, isNiri := startedWith(pid, "niri")
+	eq(t, fmt.Sprint(isNiri), "true")
+	real, _ := filepath.EvalSymlinks(dir)
+	eq(t, config, filepath.Join(real, "test.kdl"))
 }
 
 func TestAxiomKey(t *testing.T) {

@@ -54,21 +54,29 @@ func proc(pid, name string) []string {
 }
 
 // startedWith is the -c / --config in the command line of the process pid
-// named comm, or ""
+// named comm (a relative one from that process's folder), or ""
 func startedWith(pid, comm string) (string, bool) {
 	if strings.TrimSpace(strings.Join(proc(pid, "comm"), "")) != comm {
 		return "", false
 	}
 	args := proc(pid, "cmdline")
+	config := ""
 	for i, arg := range args {
 		if (arg == "-c" || arg == "--config") && i+1 < len(args) {
-			return args[i+1], true
+			config = args[i+1]
+			break
 		}
 		if v, ok := strings.CutPrefix(arg, "--config="); ok {
-			return v, true
+			config = v
+			break
 		}
 	}
-	return "", true
+	if config != "" && !filepath.IsAbs(config) {
+		if cwd, err := os.Readlink(filepath.Join("/proc", pid, "cwd")); err == nil {
+			config = filepath.Join(cwd, config)
+		}
+	}
+	return config, true
 }
 
 // NiriMain is the config file of the niri $NIRI_SOCKET names, as it

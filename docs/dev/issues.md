@@ -596,12 +596,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### A relative -c is read from the daemon's folder
-- **Where:** `backend/internal/compositor/userconf/niri.go:88` (`NiriMain`), `backend/internal/compositor/userconf/sway.go:22` (`SwayMain`)
-- **What:** `startedWith` returns the compositor's `-c` as written. After `cd ~/.config/niri && niri -c test.kdl`, `NiriMain` returns `test.kdl`, which `ResolveNiri` opens relative to the daemon's working folder: "Can't read your niri config", no user binds known, included reported as not loaded, and a wrapper including `test.kdl` relative to `$XDG_STATE_HOME/axiom/`. `SwayMain` checks `isFile` against the daemon's folder and silently falls back to the default places, a config sway doesn't run. Fix: when the path isn't absolute, join it to `os.Readlink("/proc/<pid>/cwd")`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### Gaps to the edges are wider on sway than the setting says
 - **Where:** `backend/internal/compositor/render/sway.go:468` (`SwayLookLines`), `backend/internal/compositor/render/niri.go:456` (`NiriLookNodes`), `services/compositor/SwayManager.qml:38` (`gapsOut`)
 - **What:** `WindowLook.gaps.outer` is "Gaps to the edges". Hyprland writes it as `gaps_out` (the edge gap); niri's writer writes struts of `outer - inner` so its edge comes out at `outer`; the sway writer writes `"gaps inner "+inner, "gaps outer "+outer` unchanged (468-469), and sway(5) says "Outer gaps are in addition to inner gaps. To reduce or remove outer gaps, outer gaps can be set to a negative value." (sway-backend.md and `SwayManager.gapsOut` read it back as outer + inner). At the defaults (inner 3, outer 6) Hyprland and niri leave 6 px at the edge, sway 9, and Automatic bars follow the 9. niri's writer also clamps the struts at 0 (`math.Max(0, …-inner)`), so with inner 10 and outer 0 niri keeps 10 px where Hyprland keeps 0 (`niri validate` 26.04 accepts a negative strut; PLAUSIBLE that niri draws it narrower: a nested niri with inner 10, outer 0 settles it). Fix: sway writes `outer - inner` (`gaps outer`, and `gaps outer all set` live), `SwayManager.gapsOut`'s live branch becomes `_liveGaps.outer`; drop niri's `math.Max(0, …)` around the edge; regenerate the sway and niri goldens.
