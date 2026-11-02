@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -59,9 +60,43 @@ func connect(ctx context.Context, e *Env) (*rpc.Conn, daemon.HelloResult, error)
 	var hello daemon.HelloResult
 	if err := c.Call(dctx, "daemon.hello", daemon.HelloParams{Protocol: buildinfo.Protocol(), Client: "cli", PID: os.Getpid()}, &hello); err != nil {
 		c.Close()
+		// Another protocol: in dev mode the daemon runs a dev build, which
+		// a bump leaves this installed binary behind (binds call it)
+		if exe := devBinary(e); axerr.KindOf(err) == axerr.Incompatible && exe != "" && e.Exec != nil {
+			err = e.Exec(exe) // returns only when it failed
+		}
 		return nil, daemon.HelloResult{}, err
 	}
 	return c, hello, nil
+}
+
+// devCLIEnv marks a command run again with the dev build: its own refusal
+// is the answer.
+const devCLIEnv = "AXIOM_DEV_CLI"
+
+// devBinary is dev mode's build, to run this command with when the daemon
+// refuses this binary's protocol ("": none, or this is it).
+func devBinary(e *Env) string {
+	if e.Getenv(devCLIEnv) != "" {
+		return ""
+	}
+	exe := daemon.DevBinary(xdg.Resolve(e.Getenv))
+	if self, err := os.Executable(); err == nil {
+		if self, _ = filepath.EvalSymlinks(self); self == exe {
+			return ""
+		}
+	}
+	if info, err := os.Stat(exe); err != nil || info.Mode()&0o111 == 0 {
+		return ""
+	}
+	return exe
+}
+
+// ExecDev runs this command again with the binary at exe, in this process
+// (Env.Exec in the axiom binary).
+func ExecDev(exe string) error {
+	err := syscall.Exec(exe, append([]string{exe}, os.Args[1:]...), append(os.Environ(), devCLIEnv+"=1"))
+	return axerr.Wrap(axerr.Unavailable, err, "running the dev build %s", exe)
 }
 
 // call runs one request against the daemon.

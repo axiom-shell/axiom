@@ -1,12 +1,16 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/daemon"
+	"github.com/axiom-shell/axiom/backend/internal/rpc"
 )
 
 // The daemon to talk to: --socket, else $AXIOM_SOCKET, else the display's,
@@ -102,5 +106,55 @@ func TestConfigOffline(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir, "config.json")); err != nil {
 		t.Errorf("no config.json written: %v", err)
+	}
+}
+
+// A daemon that refuses this binary's protocol (dev mode rebuilt it with
+// a bump) runs the command again with the dev build, once.
+func TestProtocolRefusalRunsTheDevBuild(t *testing.T) {
+	t.Parallel()
+	dir, err := os.MkdirTemp("", "ax") // short: a sockaddr_un
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	sock := filepath.Join(dir, "s.sock")
+	ln, err := rpc.Listen(sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := rpc.NewRegistry()
+	rpc.Handle(reg, "daemon.hello", func(context.Context, *rpc.Conn, daemon.HelloParams) (struct{}, error) {
+		return struct{}{}, axerr.New(axerr.Incompatible, "this axiom speaks protocol 99")
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go (&rpc.Server{Registry: reg}).Serve(ctx, ln)
+
+	dev := filepath.Join(dir, "state", "axiom", "dev", "axiom")
+	run := func(env map[string]string) (ran string, err error) {
+		e := &Env{Getenv: func(k string) string { return env[k] }}
+		e.Globals.Socket = sock
+		e.Exec = func(exe string) error {
+			ran = exe
+			return errors.New("exec'd")
+		}
+		_, _, err = connect(ctx, e)
+		return ran, err
+	}
+	state := map[string]string{"XDG_STATE_HOME": filepath.Join(dir, "state")}
+	if ran, err := run(state); ran != "" || axerr.KindOf(err) != axerr.Incompatible {
+		t.Errorf("no dev build: ran %q, %v", ran, err)
+	}
+	os.MkdirAll(filepath.Dir(dev), 0o700)
+	if err := os.WriteFile(dev, []byte("#!/bin/sh\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if ran, err := run(state); ran != dev || err == nil {
+		t.Errorf("with a dev build: ran %q, %v", ran, err)
+	}
+	state[devCLIEnv] = "1"
+	if ran, err := run(state); ran != "" || axerr.KindOf(err) != axerr.Incompatible {
+		t.Errorf("already the dev build: ran %q, %v", ran, err)
 	}
 }
