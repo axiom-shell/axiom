@@ -3,7 +3,9 @@ import QtQuick
 
 // The press-twice gate of a destructive action: pass(key, true) arms the
 // key and refuses; the same key again within `timeout` passes. Arming
-// another key moves it; it disarms by itself after `timeout`.
+// another key moves it; it disarms by itself after `timeout` (`expired`).
+// Each owner builds its own: the power menu, the QuickActions and Power
+// modules, and LauncherManager's commands.
 QtObject {
   id: root
 
@@ -11,6 +13,9 @@ QtObject {
   property string armed: ""
   // How long a key stays armed, in ms
   property int timeout: 3000
+
+  // The armed key ran out of time
+  signal expired
 
   // Whether the action keyed `key` runs now
   function pass(key, needsConfirm) {
@@ -30,6 +35,9 @@ QtObject {
 
   property Timer _timer: Timer {
     interval: root.timeout
-    onTriggered: root.armed = ""
+    onTriggered: {
+      root.armed = "";
+      root.expired();
+    }
   }
 }

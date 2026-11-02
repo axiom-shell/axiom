@@ -219,14 +219,8 @@ QtObject {
 
   property LauncherCommands _commands: LauncherCommands {}
   // A command waiting for its confirming second Enter
-  property string _armed: ""
-
-  property Timer _disarm: Timer {
-    interval: 3000
-    onTriggered: {
-      root._armed = "";
-      root._refresh();
-    }
+  property ConfirmGate _gate: ConfirmGate {
+    onExpired: root._refresh()
   }
 
   // Re-reads the rows after a command that keeps the launcher open, once
@@ -304,7 +298,7 @@ QtObject {
 
   function _commandRow(command, arg) {
     const takesArg = !!(command.options || command.usage);
-    const armed = root._armed === command.name;
+    const armed = root._gate.armed === command.name;
     return {
       kind: "command",
       glyph: command.glyph,
@@ -332,13 +326,10 @@ QtObject {
   }
 
   function _runCommand(command, arg, value) {
-    if (command.confirm && root._armed !== command.name) {
-      root._armed = command.name;
-      _disarm.restart();
+    if (!root._gate.pass(command.name, command.confirm)) {
       _refresh();
       return false;
     }
-    root._armed = "";
     _recordCommand(command.name);
     const result = command.run(arg, value);
     if (typeof result === "string")
