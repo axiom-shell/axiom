@@ -301,9 +301,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A Wayland protocol error leaves every client claiming its protocol
   - The Updates popout's package list is frozen at opening
 - **core-ui-theming-04** (5):
-  - [Rescanning the theme folders lists the shell's working directory as themes](../issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
-  - [A generated theme from a wallpaper reached through a symlink is regenerated at every start](../issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)
-  - [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](../issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)
+  - Rescanning the theme folders lists the shell's working directory as themes
+  - A generated theme from a wallpaper reached through a symlink is regenerated at every start
+  - A theme generated from another monitor's wallpaper is replaced by the primary's at the next start
   - [ncspot's splice keeps nothing after a begin marker that follows the end marker](../issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
   - [Kitty reloads only when its socket is /tmp/kitty-*](../issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
 - **core-ui-theming-05** (3):
