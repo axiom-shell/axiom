@@ -203,13 +203,15 @@ func TestNiri(t *testing.T) {
 	defer cancel()
 	go n.Reloads(c, out)
 	// The stream's first ConfigLoaded is niri's state, not a reload
-	select {
-	case r := <-out:
-		if !r.Failed {
-			t.Fatal("the start state read as a reload")
+	for _, want := range []Reload{{Initial: true}, {Failed: true}} {
+		select {
+		case r := <-out:
+			if r != want {
+				t.Fatalf("read %+v, want %+v", r, want)
+			}
+		case <-time.After(testkit.Bound(3 * time.Second)):
+			t.Fatal("no reload")
 		}
-	case <-time.After(testkit.Bound(3 * time.Second)):
-		t.Fatal("no reload")
 	}
 }
 

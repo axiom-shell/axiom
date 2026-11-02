@@ -40,8 +40,10 @@ func dial(ctx context.Context, path string) (net.Conn, error) {
 
 // Reloads is a compositor's event stream as what the layer needs from it:
 // one value per config reload (Failed when it couldn't load the config).
+// Initial is niri's state as the stream starts (whether the config it
+// runs loaded), not a reload.
 type Reload struct {
-	Failed bool
+	Failed, Initial bool
 }
 
 // describe is an output's description as the shell builds it from the

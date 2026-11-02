@@ -75,7 +75,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 27 | core-ui-theming-05 | major | Done: ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
 | 28 | core-ui-theming-06 | minor-sweep | Done: ui-kit shared pieces | 4 | ~250 touched (~-100 net) | core-ui-theming-05 |  |
 | 29 | core-ui-theming-07 | minor-sweep | Done: Core services, theming and theme integrations | 4 | ~60 | core-ui-theming-04 |  |
-| 30 | compositor-05 | major | The daemon's mode lifecycle (detect, load, leave, claim) | 6 | ~350 | compositor-01 |  |
+| 30 | compositor-05 | major | Done: The daemon's mode lifecycle (detect, load, leave, claim) | 6 | ~350 | compositor-01 |  |
 | 31 | compositor-06 | major | Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
 | 32 | compositor-07 | major | The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
 | 33 | compositor-08 | major | What a moved bind becomes | 3 | ~120 | compositor-07 |  |
@@ -323,13 +323,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **compositor**
 
-- **compositor-05** (6): The niri entry's shell-side lastLoadFailed is deleted in compositor-01.
+- **compositor-05** (6, done): The niri entry's shell-side lastLoadFailed is deleted in compositor-01.
   - The daemon picks a compositor the shell may not run under
   - A file mode that stops loading keeps the saved monitor profile off
   - Leaving included between sessions leaves the full module loaded
   - A failed takeover leaves no layer and no problem
   - A failed takeover check reuses the last answer and can adopt without approval
-  - [niri started on a broken config reads as loaded](../issues.md#niri-started-on-a-broken-config-reads-as-loaded)
+  - niri started on a broken config reads as loaded
 - **compositor-06** (5):
   - [Claim keeps writing a symlinked or git-tracked config that release refuses to give back](../issues.md#claim-keeps-writing-a-symlinked-or-git-tracked-config-that-release-refuses-to-give-back)
   - [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](../issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)

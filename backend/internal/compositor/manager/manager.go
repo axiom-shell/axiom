@@ -1154,9 +1154,11 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 	if h, ok := m.w.(*hyprWriter); ok {
 		h.addLayerRules(ctx)
 	}
+	// niri's state as its event stream starts (a config it couldn't load
+	// at login runs its defaults) is no reload: checkLoaded reads it
 	if n, ok := m.w.(*niriWriter); ok {
 		n.lastFailed = r.Failed
-		if r.Failed {
+		if r.Failed || r.Initial {
 			return
 		}
 	}

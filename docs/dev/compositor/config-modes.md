@@ -18,7 +18,7 @@ How axiom sets the compositor up, the same on every compositor with `supports.co
   - **detached**: evaluated at runtime (the writer's `runtimeApply`), again after every config reload, which drops it
   - **included**: written to a module (`moduleText` → `includePath`) the user's config loads (`includeLines`)
   - **managed**: written as the compositor's config itself (`managedText` → `managedPath`), after a takeover, loading the user's own files (`userFiles`) after it.
-- Whenever a file isn't loaded (included but the lines are missing, a takeover refused, or one that failed: the config dir couldn't be locked or set aside), the runtime layer stands in and `problem` says why (a module or managed config that couldn't be written says so too). The writer's `checkLoaded` tells; it may say the compositor couldn't load its config at all (niri), and then nothing stands in.
+- Whenever a file isn't loaded (included but the lines are missing, a takeover refused, or one that failed: the config dir couldn't be locked or set aside), the runtime layer stands in and `problem` says why (a module or managed config that couldn't be written says so too). The writer's `checkLoaded` tells; it may say the compositor couldn't load its config at all (niri: the last `ConfigLoaded`, or the one its event stream starts with when niri started on a broken config and runs its defaults), and then nothing stands in.
 - **Included but not loaded**: a notification, once per session and not while the onboarding is open, offers **Add it for me** (`addIncludeLines`: the `compositorModule` hookup, the include lines added with a backup, then `compositor.reload`) and Open settings. The Compositor card has the same button next to Copy while the module isn't loaded.
 
 ### The runtime layer
