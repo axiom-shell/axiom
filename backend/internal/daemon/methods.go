@@ -347,10 +347,10 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 
 	rpc.Handle(reg, "daemon.shutdown", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
 		d.opts.Log.Info("asked to shut down", "client", sessionOf(c).Client)
-		go func() {
+		d.tasks.Go(func(context.Context) {
 			announceClosing(d.server, false, closingWait)
 			d.stop()
-		}()
+		})
 		return struct{}{}, nil
 	})
 

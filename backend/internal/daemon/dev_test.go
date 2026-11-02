@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // fakeGo writes a go that runs script (sh) for build, after a generate
@@ -75,5 +76,27 @@ func TestDevUnavailableWithoutSource(t *testing.T) {
 	os.RemoveAll(filepath.Join(m.d.opts.Tree, "backend"))
 	if m.unavailable() == "" || m.State().Available {
 		t.Error("builds offered without the source")
+	}
+}
+
+// A build the source changed under (a pull while a branch switch's build
+// ran) doesn't re-exec into the stale image: the edits' kick builds again.
+func TestDevBuildSourceChangedMeanwhile(t *testing.T) {
+	t.Parallel()
+	// The build edits a source file, as the pull did, while it runs
+	m := devFixture(t, fakeGo(t, `sleep 0.3; echo 'package x' > edited.go; sleep 0.3; printf '#!/bin/sh\necho axiom\n' > "$3"; chmod +x "$3"`))
+	var logged strings.Builder
+	m.d.opts.Log = slog.New(slog.NewTextHandler(&logged, nil))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go m.watchSource(ctx)
+	m.build(ctx)
+	if out := logged.String(); !strings.Contains(out, "building again") || strings.Contains(out, "re-executing") {
+		t.Fatalf("the stale build was re-exec'd into:\n%s", out)
+	}
+	select {
+	case <-m.builds.ch:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the edit didn't kick another build")
 	}
 }

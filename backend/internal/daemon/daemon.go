@@ -355,6 +355,27 @@ func Run(ctx context.Context, opts Options) error {
 		}
 	})
 
+	// The shell's supervisor before the socket serves: an adopted shell
+	// reconnects the moment the re-exec'd image listens, and its hello
+	// is checked against the pid this knows
+	if !opts.NoShell {
+		adopt := 0
+		if h != nil {
+			adopt = h.Shell
+		}
+		d.shell = supervise.New(supervise.Options{
+			Command:  ShellCommand(opts.QS, opts.Tree),
+			NoTHP:    true,
+			Env:      d.shellEnv(),
+			EnvFunc:  d.shellEnvNow,
+			PIDFile:  runtime.File(ShellPIDFile),
+			Output:   opts.ShellOutput,
+			Log:      opts.Log.With("part", "shell"),
+			AdoptPID: adopt,
+			OnExit:   func(int, bool) { d.locker.ShellExited() },
+			OnStop:   func(int) { d.locker.ShellStopped() },
+		})
+	}
 	serve := func(name string, fn func(context.Context) error) {
 		d.tasks.Go(func(ctx context.Context) {
 			if err := fn(ctx); err != nil {
@@ -381,23 +402,7 @@ func Run(ctx context.Context, opts Options) error {
 			return nil
 		})
 	}
-	if !opts.NoShell {
-		adopt := 0
-		if h != nil {
-			adopt = h.Shell
-		}
-		d.shell = supervise.New(supervise.Options{
-			Command:  ShellCommand(opts.QS, opts.Tree),
-			NoTHP:    true,
-			Env:      d.shellEnv(),
-			EnvFunc:  d.shellEnvNow,
-			PIDFile:  runtime.File(ShellPIDFile),
-			Output:   opts.ShellOutput,
-			Log:      opts.Log.With("part", "shell"),
-			AdoptPID: adopt,
-			OnExit:   func(int, bool) { d.locker.ShellExited() },
-			OnStop:   func(int) { d.locker.ShellStopped() },
-		})
+	if d.shell != nil {
 		serve("the shell", d.shell.Run)
 		if _, hash := d.currentSchema(); h != nil && h.Schema != "" && h.Schema != hash {
 			// The shell read the schema of before (an update re-exec'd
