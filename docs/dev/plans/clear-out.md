@@ -279,7 +279,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The launcher's /generate reads a monitor setting that doesn't exist
   - A word passed to an int IPC parameter is 0
 - **platform-06** (3):
-  - [The onboarder's Integrations page names Hyprland's tools everywhere](../issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
   - [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step)
   - [The Look page offers Hyprland's wallpapers under any compositor](../issues.md#the-look-page-offers-hyprlands-wallpapers-under-any-compositor)
 - **platform-07** (2):

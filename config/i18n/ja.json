@@ -1286,7 +1286,6 @@
     "Clipboard history": "クリップボード履歴",
     "Type : in the launcher to search what you've copied. axiom keeps it in memory only and skips what password managers mark as sensitive; turn it off if you copy passwords from apps that don't.": "ランチャーで : を入力すると、コピーした内容を検索できます。axiom は履歴をメモリ上にのみ保持し、パスワードマネージャーが機密としてマークしたものは記録しません。機密マークを付けないアプリからパスワードをコピーする場合はオフにしてください。",
     "Use my own": "自分で管理する",
-    "To lock after some idle time with your own hypridle, point its general section in ~/.config/hypr/hypridle.conf at axiom:": "自分の hypridle で一定時間後にロックするには、~/.config/hypr/hypridle.conf の general セクションで axiom を指定してください：",
     "Drag the monitors into place as they stand on your desk, then pick each one's resolution, refresh rate and scale. Apply tries it, and asks you to keep it: if the picture goes wrong, it goes back by itself after 15 seconds.": "モニターを机の上の配置どおりにドラッグし、それぞれの解像度、リフレッシュレート、スケールを選んでください。「適用」で試してから維持するか確認します。表示がおかしくなった場合は 15 秒後に自動で元に戻ります。",
     "Pick your monitor's resolution, refresh rate and scale. Apply tries it, and asks you to keep it: if the picture goes wrong, it goes back by itself after 15 seconds.": "モニターの解像度、リフレッシュレート、スケールを選んでください。「適用」で試してから維持するか確認します。表示がおかしくなった場合は 15 秒後に自動で元に戻ります。",
     "The primary monitor holds the main bar, and it's where the lock screen and this setup appear. Set it in the monitor's settings.": "メインモニターにはメインバーが表示され、ロック画面とこのセットアップもここに表示されます。モニターの設定で指定してください。",
@@ -1966,10 +1965,8 @@
     "Authentication prompts": "認証プロンプト",
     "Authentication required": "認証が必要です",
     "From": "提供元",
-    "Leaves the prompt to the agent you start yourself, such as hyprpolkitagent.": "プロンプトは hyprpolkitagent など、自分で起動するエージェントに任せます。",
     "Starting": "起動中",
     "The password prompt apps show when they need administrator rights (polkit): installing updates, mounting drives, changing system settings.": "アプリが管理者権限を必要とするときに表示するパスワードプロンプト（polkit）。アップデートのインストール、ドライブのマウント、システム設定の変更など。",
-    "The screen dims and the prompt opens in the middle, in axiom's theme. Stops any other agent, such as hyprpolkitagent.": "画面が暗くなり、axiom のテーマでプロンプトが中央に開きます。hyprpolkitagent など他のエージェントは停止します。",
     "Use axiom's prompt": "axiom のプロンプトを使う",
     "When an app needs administrator rights (installing updates, mounting a drive, changing system settings), a polkit agent asks for your password. A session has only one.": "アプリが管理者権限を必要とするとき（アップデートのインストール、ドライブのマウント、システム設定の変更など）、polkit エージェントがパスワードを求めます。エージェントはセッションごとに 1 つだけです。",
     "authenticate": "認証",
@@ -3014,8 +3011,6 @@
     "Then moves your {0} into {1}, where it keeps working, with a dated backup beside it": "",
     "axiom tries again by itself.": "",
     "Let axiom handle idle": "",
-    "Dims, locks and turns the screens off when you're away, set up from axiom's settings, and locks before the computer sleeps. Remove any hypridle you start yourself.": "",
-    "Leaves idle to a daemon you run yourself, such as hypridle.": "",
     "Watching": "",
     "Held off": "",
     "Unsupported": "",
@@ -3715,6 +3710,11 @@
     "Doesn't lock": "",
     "The lock screen is your own locker, but its Lock command is empty or loginctl lock-session, which comes back to axiom: nothing locks. Set the Lock command to your locker.": "",
     "Night light, where the compositor has no gamma control": "",
-    "Screenshots (the picker's frozen frame)": ""
+    "Screenshots (the picker's frozen frame)": "",
+    "Dims, locks and turns the screens off when you're away, set up from axiom's settings, and locks before the computer sleeps. Stop any idle daemon you start yourself.": "",
+    "Leaves idle to a daemon you run yourself.": "",
+    "To lock after some idle time with your own idle daemon, have it lock with this command, also before the computer sleeps:": "",
+    "The screen dims and the prompt opens in the middle, in axiom's theme. Stops any other agent you run.": "",
+    "Leaves the prompt to the agent you start yourself.": ""
   }
 }

@@ -112,12 +112,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while moving the Wi-Fi popout's buttons
 
-### The onboarder's Integrations page names Hyprland's tools everywhere
-- **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`
-- **What:** Under sway and niri the Idle cards say "Remove any hypridle you start yourself" and "such as hypridle", the hint for your own idle daemon shows a `~/.config/hypr/hypridle.conf` block, and the polkit cards name hyprpolkitagent. These should name the compositor's usual tools (swayidle, …) or stay neutral.
-- **Size:** small
-- **Found:** 2026-10-30, while reworking the onboarder
-
 ### The onboarder's Integrations page is too long for one step
 - **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/session/OnboardingManager.qml` (`_pages`)
 - **What:** One step holds updates, clipboard history, idle (with its four timeouts), the lock screen, polkit, the login screen (with its install), then every theme integration with its hookups: by far the longest page, mixing decisions that take something over with optional app colours. Proposal: split it into a "System" step and an "App colours" step (a page id, and `version` stays, since nothing new is asked).

@@ -539,7 +539,6 @@ Found by the audits:
 - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 
 Found while reworking the onboarder:
-- [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
 - [The onboarder's Integrations page is too long for one step](issues.md#the-onboarders-integrations-page-is-too-long-for-one-step)
 - [The Look page offers Hyprland's wallpapers under any compositor](issues.md#the-look-page-offers-hyprlands-wallpapers-under-any-compositor)
 

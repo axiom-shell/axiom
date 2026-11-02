@@ -58,4 +58,4 @@ With Idle off, for the lock screen's `quickshell` mode, a user's own hypridle sh
 - `lock_cmd = axiom lock`
 - `before_sleep_cmd = loginctl lock-session`
 
-For `none` mode it should have no axiom references. See [Lockscreen](lockscreen.md).
+Any other idle daemon (swayidle, …) locks with `axiom lock`, before sleep too; the onboarder says only that, naming no daemon. For `none` mode it should have no axiom references. See [Lockscreen](lockscreen.md).

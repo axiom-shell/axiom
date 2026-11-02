@@ -89,7 +89,7 @@ OnboardingPage {
       Layout.fillHeight: true
       icon: "bedtime"
       title: I18n.tr("Let axiom handle idle")
-      description: I18n.tr("Dims, locks and turns the screens off when you're away, set up from axiom's settings, and locks before the computer sleeps. Remove any hypridle you start yourself.")
+      description: I18n.tr("Dims, locks and turns the screens off when you're away, set up from axiom's settings, and locks before the computer sleeps. Stop any idle daemon you start yourself.")
       selected: Idle.enabled
       recommended: true
       onClicked: SettingsManager.commitValues({
@@ -103,7 +103,7 @@ OnboardingPage {
       Layout.fillHeight: true
       icon: "tune"
       title: I18n.tr("Use my own")
-      description: I18n.tr("Leaves idle to a daemon you run yourself, such as hypridle.")
+      description: I18n.tr("Leaves idle to a daemon you run yourself.")
       selected: !Idle.enabled
       onClicked: SettingsManager.commitValues({
         "Idle.enabled": false
@@ -124,12 +124,12 @@ OnboardingPage {
 
     StyledText {
       Layout.fillWidth: true
-      text: I18n.tr("To lock after some idle time with your own hypridle, point its general section in ~/.config/hypr/hypridle.conf at axiom:")
+      text: I18n.tr("To lock after some idle time with your own idle daemon, have it lock with this command, also before the computer sleeps:")
       wrapMode: Text.WordWrap
     }
 
     CodeLine {
-      text: "lock_cmd = axiom lock\nbefore_sleep_cmd = loginctl lock-session"
+      text: "axiom lock"
     }
   }
 
@@ -193,7 +193,7 @@ OnboardingPage {
       Layout.fillHeight: true
       icon: "admin_panel_settings"
       title: I18n.tr("Use axiom's prompt")
-      description: I18n.tr("The screen dims and the prompt opens in the middle, in axiom's theme. Stops any other agent, such as hyprpolkitagent.")
+      description: I18n.tr("The screen dims and the prompt opens in the middle, in axiom's theme. Stops any other agent you run.")
       selected: PolkitConfig.enabled
       recommended: true
       onClicked: SettingsManager.commitValues({
@@ -207,7 +207,7 @@ OnboardingPage {
       Layout.fillHeight: true
       icon: "tune"
       title: I18n.tr("Use my own")
-      description: I18n.tr("Leaves the prompt to the agent you start yourself, such as hyprpolkitagent.")
+      description: I18n.tr("Leaves the prompt to the agent you start yourself.")
       selected: !PolkitConfig.enabled
       onClicked: SettingsManager.commitValues({
         "Polkit.enabled": false
