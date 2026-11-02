@@ -59,7 +59,6 @@ Singleton {
   // I18n.tr("Brightness of external monitors")
   // I18n.tr("Pending package updates")
   // I18n.tr("Chat API keys in the keyring") I18n.tr("Moving notes to the trash")
-  // I18n.tr("Notifications from axiom itself, with their buttons")
   // I18n.tr("Night light, where the compositor has no gamma control")
   // I18n.tr("X11 apps (Steam, games, older apps)")
   // I18n.tr("Screen recording") I18n.tr("Screenshots (the picker's frozen frame)")
@@ -88,10 +87,6 @@ Singleton {
     {
       "command": "gio",
       "purpose": "Moving notes to the trash"
-    },
-    {
-      "command": "notify-send",
-      "purpose": "Notifications from axiom itself, with their buttons"
     },
     {
       "command": "wlsunset",

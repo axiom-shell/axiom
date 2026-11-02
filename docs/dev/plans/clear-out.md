@@ -266,7 +266,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Uninstall keeps a stale greetd backup when greetd points elsewhere
   - The greeter reads its keyboard layouts before the bundle's are applied
 - **platform-03** (4): notify-send moves into Go here (NotificationManager, ScreenshotManager, CompositorConfigManager), so it lands before the compositor and features majors. Splits by file group if it passes 800.
-  - [install.sh and the AUR packages never install notify-send, gio or pactl](../issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl)
+  - install.sh and the AUR packages never install notify-send, gio or pactl
   - A main-channel update applied after edge moved on needs go to rebuild the binary
   - install.sh still installs the rest of a feature whose COPR was declined
   - The onboarder's Checks-page purposes don't match their declared keys
@@ -570,7 +570,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-13** (4):
   - [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](../issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
   - [Clicking an older capture's notification opens the newest capture](../issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
-  - [The screenshot's Edit notification rebuilds sendNotification's actions](../issues.md#the-screenshots-edit-notification-rebuilds-sendnotifications-actions)
+  - The screenshot's Edit notification rebuilds sendNotification's actions (done in platform-03, with notify-send's move into Go)
   - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](../issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 - **features-14** (2): After overlay-modules-04 (same Calculator, Stopwatch, TodoList and Agenda files). Splits by file group if it passes the gate.
   - [Unbounded lists still built in full](../issues.md#unbounded-lists-still-built-in-full)

@@ -217,27 +217,29 @@ Singleton {
     root._handlers[desktopEntry] = handler;
   }
 
-  // NotificationServer can't create notifications itself, so send one over
-  // DBus; it comes back through our own server like any other (DND applies).
-  // opts: { desktopEntry (see registerHandler), icon (a name or path),
+  // NotificationServer can't create notifications itself, so axiom sends
+  // one over DBus (notify.send); it comes back through our own server
+  // like any other (DND applies). opts: { desktopEntry (see
+  // registerHandler), icon (a name or path), urgency ("low", "critical"),
   // actions ([{ id, label }]: buttons on it), onAction (called with the
-  // picked action's id) }. With actions notify-send waits until it's
-  // closed (exec.run has no timeout); a QML reload in between loses
-  // onAction, so the buttons then do nothing
+  // picked action's id) }. With actions the call waits until it's
+  // closed; a QML reload in between loses onAction, so the buttons then
+  // do nothing
   function sendNotification(appName, summary, body, opts) {
-    const hints = opts?.desktopEntry ? ["-h", "string:desktop-entry:" + opts.desktopEntry] : [];
-    const icon = opts?.icon ? ["-i", opts.icon] : [];
-    const actions = opts?.actions ?? [];
-    const command = ["notify-send", "-a", appName].concat(icon, hints, [].concat(...actions.map(a => ["-A", a.id + "=" + a.label])), ["--", summary, body]);
-    if (actions.length === 0) {
-      CommandManager.runDetached(command);
-      return;
-    }
-    const onAction = opts.onAction;
-    CommandManager.run(command, (code, stdout) => {
-      const id = String(stdout ?? "").trim();
-      if (code === 0 && id !== "" && onAction)
-        onAction(id);
+    const onAction = opts?.onAction;
+    BackendManager.call("notify.send", {
+      "appName": appName,
+      "summary": summary,
+      "body": body,
+      "icon": opts?.icon ?? "",
+      "desktopEntry": opts?.desktopEntry ?? "",
+      "urgency": opts?.urgency ?? "",
+      "actions": opts?.actions ?? []
+    }, (error, result) => {
+      if (error)
+        console.warn(`[NotificationManager] Sending "${summary}" failed: ${error.message}`);
+      else if (result.action !== "" && onAction)
+        onAction(result.action);
     });
   }
 

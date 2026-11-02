@@ -504,6 +504,7 @@ class CheckPackages(unittest.TestCase):
         ("install.sh", None, None, "PACKAGES row 'odd|odd' isn't key|arch|fedora"),
         ("install.sh", '"Package update checks|checkupdates|"', '"Package update checks|checkupdates|"\n  "Haunting|phantom|"', "feature 'Haunting' uses 'phantom', which isn't in PACKAGES"),
         ("install.sh", "REQUIRED=(git ", "REQUIRED=(specter git ", "'specter' isn't in PACKAGES"),
+        ("install.sh", '  "pactl|libpulse|pulseaudio-utils"\n', "", "no PACKAGES row for 'pactl' (Packages.qml has it)"),
         ("packaging/aur/axiom-shell/PKGBUILD", "depends=('quickshell", "depends=('extra' 'quickshell",
          "axiom-shell/PKGBUILD: depends ['curl', 'extra', 'quickshell'] aren't"),
         ("packaging/aur/axiom-shell-git/PKGBUILD", "'wlsunset: night light (niri)'", "'phantom: boo'",

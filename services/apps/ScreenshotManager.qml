@@ -201,18 +201,16 @@ QtObject {
     root.annotate = false;
     const summary = I18n.tr("Screenshot saved");
     const body = root.copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");
-    if (root.annotator === "") {
-      NotificationManager.sendNotification("axiom", summary, body, {
-        "desktopEntry": root._desktopEntry,
-        "icon": path
-      });
-      return;
-    }
-    // With an "Edit in …" button: notify-send waits for it (until the
-    // notification closes) and prints the action
-    CommandManager.run(["notify-send", "-a", "axiom", "-i", path, "-h", "string:desktop-entry:" + root._desktopEntry, "-A", "edit=" + I18n.tr("Edit in {0}", root.annotatorName), "--", summary, body], (code, stdout) => {
-      if (stdout.trim() === "edit")
-        root.edit(path);
+    NotificationManager.sendNotification("axiom", summary, body, {
+      "desktopEntry": root._desktopEntry,
+      "icon": path,
+      "actions": root.annotator === "" ? [] : [
+        {
+          "id": "edit",
+          "label": I18n.tr("Edit in {0}", root.annotatorName)
+        }
+      ],
+      "onAction": () => root.edit(path)
     });
   }
 

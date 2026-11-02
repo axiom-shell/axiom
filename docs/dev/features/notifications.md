@@ -1,6 +1,6 @@
 # Notifications
 
-> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `components/surfaces/notifications/ToastStack.qml`, `components/surfaces/notifications/ToastItem.qml`, `components/methods/ToastMotion.qml`, `components/methods/NotificationMatch.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`, `components/content/parts/notifications/`
+> **Files:** `services/system/NotificationManager.qml`, `shell/Notifications.qml`, `components/surfaces/notifications/ToastStack.qml`, `components/surfaces/notifications/ToastItem.qml`, `components/methods/ToastMotion.qml`, `components/methods/NotificationMatch.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`, `components/content/parts/notifications/`, `backend/internal/notification/`
 > **Config:** `Notifications.*` (reader `NotificationsConfig`)
 > **Related:** [Self-update](self-update.md) (registerHandler), [Drives](drives.md) (buttons), [Calendar](calendar.md) (reminders), [Grow and expand](../overlay/grow-expand.md)
 
@@ -57,7 +57,7 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
   - A card's fill is drawn by the blur window: a `BlurShape` rect following its slide, clipped to the window (`notifications` is among `LayerStack.blurBacked`).
   - The attached box blurs as an EdgePopout does.
 - **Test notification:** the settings card's intro (`views/Settings/NotificationsPreview`, its `x-intro`) has a Show button that sends one through `sendNotification`, so it toasts with the settings as edited (readers read the previews), as the OSD and dock cards' Show does.
-- **The shell's own, with buttons:** `sendNotification`'s `opts.actions` (`[{ id, label }]`) become `notify-send -A id=label`, run through `CommandManager.run` (it waits until the notification closes; `exec.run` has no timeout), and `opts.onAction(id)` gets the one clicked from its output. A QML reload while it's up loses the callback, so its buttons then do nothing. The timer's end and caffeine's warning use it (`DeadlineTicker.notify`).
+- **The shell's own:** `sendNotification` asks the daemon (`notify.send`, `backend/internal/notification`), which sends it over the session bus (`org.freedesktop.Notifications.Notify`, so the shell's own server shows it like any other) with its `desktopEntry` and `urgency` hints. Its `opts.actions` (`[{ id, label }]`) become the notification's buttons: the call then waits until one is picked (`ActionInvoked`) or the notification closes (`NotificationClosed`), and `opts.onAction(id)` gets the one clicked. Nothing else is installed for it (it was `notify-send`, which no package axiom brings depends on; maintainer, 2026-11-01: "yes - note roadmap and issues accordingly to replace notify-send into go"). A QML reload while it's up loses the callback, so its buttons then do nothing. The timer's end and caffeine's warning use it (`DeadlineTicker.notify`).
 
 ### Images
 - Cached as PNGs in `$XDG_STATE_HOME/axiom/notifications/`.

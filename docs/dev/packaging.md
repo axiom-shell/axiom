@@ -11,7 +11,7 @@ How axiom gets onto a machine: the installer (a clone in the user's home) or a d
 - They share keys: a command, a compositor by its lowercase name, or a package without a command (`xdg-desktop-portal-gtk`).
 - `scripts/check_packages.py` (CI, `check_all.sh`, `verify.sh` when one of them changes) fails when:
   - an install.sh key's Arch or Fedora package differs from `Packages.packages` (a COPR is `owner/project:name` there and `{ name, repo }` here; `-` and `n/a` are `null`);
-  - a key in `REQUIRED` or `FEATURES` isn't in `PACKAGES`;
+  - a key in `REQUIRED` or `FEATURES` isn't in `PACKAGES`, or a key of `Packages.packages` has no `PACKAGES` row;
   - a PKGBUILD's `depends` aren't `REQUIRED`'s Arch packages (less `git`, which only fetches it: `makedepends` with `go`), or its `optdepends` aren't exactly the compositors' and `FEATURES`' Arch packages.
 - Adding an optional feature: its keys in `Packages.packages` (if new), a `PACKAGES` row, a `FEATURES` row, and an `optdepends` line in both PKGBUILDs, in the same words.
 

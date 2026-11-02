@@ -8,6 +8,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.session
+import qs.services.system
 import qs.services.ui
 
 /*
@@ -368,12 +369,18 @@ Singleton {
       return;
     _session[flag] = true;
     const all = actions.concat([["settings", I18n.tr("Open settings"), () => SettingsManager.openSetting("Compositor")]]);
-    const command = ["notify-send", "-a", "axiom", "-u", "critical"].concat(...all.map(action => ["-A", `${action[0]}=${action[1]}`]), ["--", title, body]);
-    CommandManager.run(command, (code, out) => {
-      // (not `picked?.[2]()`: Qt 6.12's compiler crashes on it)
-      const picked = all.find(action => action[0] === out.trim());
-      if (picked)
-        picked[2]();
+    NotificationManager.sendNotification("axiom", title, body, {
+      "urgency": "critical",
+      "actions": all.map(action => ({
+            "id": action[0],
+            "label": action[1]
+          })),
+      "onAction": id => {
+        // (not `picked?.[2]()`: Qt 6.12's compiler crashes on it)
+        const picked = all.find(action => action[0] === id);
+        if (picked)
+          picked[2]();
+      }
     });
   }
 

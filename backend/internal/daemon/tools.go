@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/community"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
@@ -12,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/filepicker"
 	"github.com/axiom-shell/axiom/backend/internal/media"
 	"github.com/axiom-shell/axiom/backend/internal/netif"
+	"github.com/axiom-shell/axiom/backend/internal/notification"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/sysmon"
 	"github.com/axiom-shell/axiom/backend/internal/tz"
@@ -62,6 +64,20 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "community.fetch", func(ctx context.Context, c *rpc.Conn, p fetchParams) (fetchResult, error) {
 		return fetchResult{Files: fetcher.Fetch(ctx, p.Files)}, nil
 	})
+	type notifyResult struct {
+		Action string `json:"action"` // the button picked, "" for none
+	}
+	// axiom's own notifications; with buttons the answer comes when one
+	// is picked or the notification closes
+	rpc.Handle(reg, "notify.send", func(ctx context.Context, c *rpc.Conn, p notification.Notification) (notifyResult, error) {
+		conn, err := d.sessionBus(ctx)
+		if err != nil {
+			return notifyResult{}, err
+		}
+		defer conn.Close()
+		action, err := notification.Send(ctx, conn, p)
+		return notifyResult{Action: action}, err
+	})
 	type pickResult struct {
 		Path string `json:"path"` // "": cancelled
 	}
@@ -78,14 +94,8 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 func (d *Daemon) filePickerOptions() filepicker.Options {
 	log := d.opts.Log.With("part", "filepicker")
 	return filepicker.Options{
-		SessionBus: func(ctx context.Context) (*dbus.Conn, error) {
-			addr, err := dbus.SessionAddress(d.opts.Getenv)
-			if err != nil {
-				return nil, err
-			}
-			return dbus.Dial(ctx, addr, dbus.Options{Log: log})
-		},
-		LookPath: exec.LookPath,
+		SessionBus: d.sessionBus,
+		LookPath:   exec.LookPath,
 		Run: func(ctx context.Context, argv []string) (int, string, error) {
 			res, err := command.Run(ctx, d.commandOptions(), argv, nil)
 			return res.ExitCode, res.Stdout, err
@@ -93,6 +103,15 @@ func (d *Daemon) filePickerOptions() filepicker.Options {
 		Home: d.opts.Getenv("HOME"),
 		Log:  log,
 	}
+}
+
+// sessionBus connects to the session bus, for one call's use.
+func (d *Daemon) sessionBus(ctx context.Context) (*dbus.Conn, error) {
+	addr, err := dbus.SessionAddress(d.opts.Getenv)
+	if err != nil {
+		return nil, axerr.Wrap(axerr.Unavailable, err, "no session bus")
+	}
+	return dbus.Dial(ctx, addr, dbus.Options{Log: d.opts.Log.With("part", "session-bus")})
 }
 
 // lookupMethods are the lookups the greeter's axiom answers too (its
