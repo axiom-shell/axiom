@@ -556,19 +556,9 @@ QtObject {
   }
 
   // The commands any of which shows an integration's app is installed: its
-  // key unless listed here, none for ones every desktop has
-  readonly property var _integrationCommands: ({
-      "gtk": [],
-      // qt*ct, or a KDE app (which reads the KDE scheme without them)
-      "qt": ["qt6ct", "qt5ct", "okular", "dolphin", "kate", "kwrite", "gwenview", "konsole", "ark", "spectacle", "systemsettings"],
-      "helix": ["hx", "helix"],
-      "vscode": ["code", "codium"],
-      "zed": ["zed", "zeditor", "zedit", "dev.zed.Zed"],
-      "vesktop": ["vesktop", "dev.vencord.Vesktop", "equibop", "discord"],
-      "firefox": ["firefox", "librewolf", "zen-browser", "zen", "floorp", "waterfox", "org.mozilla.firefox", "io.gitlab.librewolf-community", "app.zen_browser.zen", "one.ablaze.floorp", "net.waterfox.waterfox"]
-    })
+  // switch's x-commands, else its key
   function integrationCommands(key) {
-    return root._integrationCommands[key] ?? [key];
+    return ConfigManager.configSchema.properties.ThemeIntegrations.properties[key]?.["x-commands"] ?? [key];
   }
 
   // --- Theme List Loading ---
