@@ -260,6 +260,43 @@ func TestMainChannelFollowsTheEdgeBuild(t *testing.T) {
 	}
 }
 
+// An apply on main after edge moved on (a merge since the check) moves to
+// the newer build's commit, not the one the check named; an apply naming
+// a commit that's no fast-forward to it is still refused
+func TestMainChannelApplyFollowsANewerBuild(t *testing.T) {
+	t.Parallel()
+	r := newRepos(t)
+	r.commit(r.upstream, "two")
+	first := r.head(r.upstream)
+	built := first
+	edge := func(context.Context) (string, error) { return built, nil }
+	u := New(Options{Dir: r.clone, Environ: func() []string { return r.env }, EdgeCommit: edge})
+	rep, err := u.Check(context.Background(), ChannelMain)
+	if err != nil || rep.State != "available" || rep.Latest != first[:len(rep.Latest)] {
+		t.Fatalf("check: %+v %v", rep, err)
+	}
+	r.commit(r.upstream, "three")
+	built = r.head(r.upstream)
+	applied, err := u.Apply(context.Background(), ChannelMain, rep.Latest)
+	if err != nil || applied.Error != "" || applied.State != "uptodate" || !r.exists("three.txt") || u.Head(context.Background()) != built {
+		t.Fatalf("apply: %+v %v", applied, err)
+	}
+	if applied.Latest != built[:len(applied.Latest)] {
+		t.Fatalf("the report names %q, not the build checked out", applied.Latest)
+	}
+	// A side branch's commit upstream: no fast-forward to the newest build
+	r.git(r.upstream, "checkout", "-q", "-b", "side", "HEAD~1")
+	r.commit(r.upstream, "side")
+	side := r.head(r.upstream)
+	r.git(r.upstream, "checkout", "-q", "main")
+	r.commit(r.upstream, "four")
+	built = r.head(r.upstream)
+	r.git(r.clone, "fetch", "-q", "origin", "side")
+	if refused, err := u.Apply(context.Background(), ChannelMain, side[:12]); err != nil || refused.Error == "" || r.exists("four.txt") {
+		t.Fatalf("a commit off the build's line was applied: %+v %v", refused, err)
+	}
+}
+
 func (r *repos) head(repo string) string {
 	r.t.Helper()
 	cmd := exec.Command("git", "-C", repo, "rev-parse", "HEAD")

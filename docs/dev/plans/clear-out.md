@@ -267,7 +267,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The greeter reads its keyboard layouts before the bundle's are applied
 - **platform-03** (4): notify-send moves into Go here (NotificationManager, ScreenshotManager, CompositorConfigManager), so it lands before the compositor and features majors. Splits by file group if it passes 800.
   - [install.sh and the AUR packages never install notify-send, gio or pactl](../issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl)
-  - [A main-channel update applied after edge moved on needs go to rebuild the binary](../issues.md#a-main-channel-update-applied-after-edge-moved-on-needs-go-to-rebuild-the-binary)
+  - A main-channel update applied after edge moved on needs go to rebuild the binary
   - install.sh still installs the rest of a feature whose COPR was declined
   - The onboarder's Checks-page purposes don't match their declared keys
 - **platform-04** (4): Dev mode only; the three re-exec races get Live checks lines.
