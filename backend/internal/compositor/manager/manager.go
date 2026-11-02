@@ -1158,6 +1158,11 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 	// at login runs its defaults) is no reload: checkLoaded reads it
 	if n, ok := m.w.(*niriWriter); ok {
 		n.lastFailed = r.Failed
+		// That state can come after the first apply (the stream connects
+		// on its own): said now
+		if r.Initial && r.Failed {
+			m.checkLoaded(ctx)
+		}
 		if r.Failed || r.Initial {
 			return
 		}
