@@ -463,7 +463,6 @@ Found by the audits:
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - [runDetached warns about a lost connection](issues.md#rundetached-warns-about-a-lost-connection)
-- [Icons.overrides never reaches window icons](issues.md#iconsoverrides-never-reaches-window-icons)
 - [A cancelled rename's typed text comes back in the notes and chat rename fields](issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
 - [Nine shared controls animate with their own easing, written out where Glide does it](issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)
 - [Every StyledSlider overrides its look and its value the same way](issues.md#every-styledslider-overrides-its-look-and-its-value-the-same-way)

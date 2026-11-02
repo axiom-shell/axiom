@@ -9,6 +9,6 @@ properties:
   overrides:
     type: object
     default: {}
-    description: App name → icon path/URL, for apps whose tray or window icon doesn't resolve.
+    description: App name → icon path/URL, for apps whose tray or window icon doesn't resolve (a window's key is its class).
     additionalProperties: {type: string}
     x-settings: false

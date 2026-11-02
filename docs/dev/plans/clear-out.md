@@ -307,7 +307,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - ncspot's splice keeps nothing after a begin marker that follows the end marker
   - Kitty reloads only when its socket is /tmp/kitty-*
 - **core-ui-theming-05** (3):
-  - [Icons.overrides never reaches window icons](../issues.md#iconsoverrides-never-reaches-window-icons)
+  - Icons.overrides never reaches window icons
   - [A cancelled rename's typed text comes back in the notes and chat rename fields](../issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
   - [Nine shared controls animate with their own easing, written out where Glide does it](../issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)
 - **core-ui-theming-06** (4):
