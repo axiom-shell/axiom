@@ -360,6 +360,14 @@ class ConfigUsage(unittest.TestCase):
         self.assertEqual(usage.member("R", "x", ""), ["a.qml"])
         self.assertEqual(usage.member("R", "y", ""), [])
 
+    def test_missing_member_fails(self):
+        # A read the reader lacks fails; a config path in a string or a
+        # block comment isn't a read
+        from gen_docs import Usage
+        usage = Usage()
+        usage.files = {"a.qml": 'f(R.x, R.gone)\n/* R.prose */\nset("R.path", `R.tpl ${R.inTpl}`)'}
+        self.assertEqual(usage.missing({"R": {"members": {"x": {}}}}), ["a.qml: R.gone", "a.qml: R.inTpl"])
+
     def test_ratchet(self):
         from gen_docs import ratchet_problems
         self.assertEqual(ratchet_problems({"A.x"}, ["A.x"], "unused"), [])
@@ -384,6 +392,8 @@ class CheckStructure(unittest.TestCase):
         ("shell/Handler.qml", qml("IpcHandler {}"), "shell/Handler.qml: an IpcHandler"),
         ("shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
         ("shell/Target.qml", qml('IpcTarget { target: "ghostTarget" }'), "IPC target 'ghostTarget' is missing from the IPC table"),
+        ("shell/IntArg.qml", qml('IpcTarget {\n    target: "brightness"\n    function set(percent: int): void {}\n  }'),
+         "shell/IntArg.qml:8: IPC function set's percent is int: take a string"),
         ("shell/NoPurpose.qml", qml(purpose=""), "shell/NoPurpose.qml: no purpose comment"),
         ("shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no components/content/Ghost/Ghost.qml'),
         ("components/content/Unused/Unused.qml", qml(), "components/content/Unused/: not an overlay module"),

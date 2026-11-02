@@ -4,7 +4,7 @@ reviewed: d51805b 2026-11-01  (full)
 In good shape: one row shape for every provider, `/config` kept off bars, overlay pages and edge menus, both hosts placed and sized as documented, the daemon's clipboard history matching its contract. Open: `/generate` reads a LauncherConfig member that doesn't exist (General's target monitor's wallpaper is used), and about 29 lines of dead or repeated code.
 
 ## Open findings
-- Major: [The launcher's /generate reads a monitor setting that doesn't exist](../../docs/dev/issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
+- Major: "The launcher's /generate reads a monitor setting that doesn't exist" (fixed, row 20 platform-05)
 - Cleanup: "EmojiManager's groups() is never called" (fixed, row 20 platform-01)
 - Cleanup: "LauncherManager keeps a dead clear() and a cliphist test" (fixed, row 20 platform-01)
 - Cleanup: [A clip's label and detail are written in both the launcher and the clipboard module](../../docs/dev/issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)

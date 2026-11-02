@@ -18,7 +18,8 @@
                         type's) has no reader or use, or a reader member no
                         user, that scripts/config-usage-baseline.json doesn't
                         list (or it lists one that's gone: the baseline only
-                        shrinks)
+                        shrinks), or a read of a reader member that doesn't
+                        exist
 
 Usages are file level (no line numbers) and found by name, so they're a map
 to start from, not a proof: a member read dynamically (`Reader[key]`) or off
@@ -229,6 +230,18 @@ class Usage:
             ref = re.compile(r"(?<!\w)(?<![\w)\]]\.)([A-Z]\w*)\.(\w+)")
             self._refs = {f: set(ref.findall(text)) for f, text in self.files.items()}
         return sorted(f for f, refs in self._refs.items() if f != own and (reader, name) in refs)
+
+    def missing(self, readers):
+        """`Reader.name` reads of a member the reader lacks (`undefined` at
+        runtime, which qmllint can't see on a singleton), outside strings and
+        block comments, where a config path (`"Idle.lock.timeout"`) isn't one;
+        a template's `${…}` parts are code, so they stay."""
+        quoted = re.compile(r"""/\*.*?\*/|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`""", re.S)
+        code = lambda m: " ".join(re.findall(r"\$\{([^{}]*)\}", m.group(0))) if m.group(0)[0] == "`" else '""'
+        ref = re.compile(r"(?<!\w)(?<![\w)\]]\.)([A-Z]\w*)\.(\w+)")
+        return sorted(f"{f}: {r}.{n}" for f, text in self.files.items()
+                      for r, n in set(ref.findall(quoted.sub(code, text)))
+                      if r in readers and n not in readers[r]["members"])
 
 
 # ------------------------------------------------------------- schema walking
@@ -1343,7 +1356,8 @@ def generate():
     unused = sorted(f"{r}.{n}" for (r, n), users in ref.member_users.items()
                     if not users and (r, n) not in ref.inside and readers[r]["members"][n]["kind"] != "signal")
     usage_problems = (ratchet_problems(ref.unread, BASELINE["settings"], "a setting with no reader or use")
-                      + ratchet_problems(unused, BASELINE["members"], "a reader member with no user"))
+                      + ratchet_problems(unused, BASELINE["members"], "a reader member with no user")
+                      + [f"a read of a reader member that doesn't exist: {x}" for x in usage.missing(readers)])
     return pages, usage_problems, rpc_problems
 
 

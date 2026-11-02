@@ -327,9 +327,6 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 |---|---|---|---|---|
 | Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
 
-Found while retiring the `qs ipc` fallback (backend stage 6):
-- [A word passed to an int IPC parameter is 0](issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
-
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
@@ -486,7 +483,6 @@ Found by the audits:
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 - [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
-- [The launcher's /generate reads a monitor setting that doesn't exist](issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
 - [A clip's label and detail are written in both the launcher and the clipboard module](issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
 - [App scoring is written twice and the use bonus three times](issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
 - [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)

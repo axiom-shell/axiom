@@ -164,7 +164,7 @@ QtObject {
       description: () => I18n.tr("Generate themes from the current wallpaper"),
       status: () => ThemeManager.isGenerating ? I18n.tr("Generating…") : "",
       run: () => {
-        const monitor = ShellManager.targetFor(LauncherConfig.monitors);
+        const monitor = ShellManager.targetFor(LauncherConfig.screen);
         const wallpaper = ThemeManager.wallpaperFor(monitor);
         if (wallpaper)
           ThemeManager.generateThemesFromWallpaper(wallpaper);
