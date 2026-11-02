@@ -36,12 +36,9 @@ Item {
     when: !mouseArea.isDragging
   }
 
-  Behavior on _internalValue {
+  Glide on _internalValue {
+    duration: Appearance.animNormal
     enabled: !mouseArea.isDragging
-    NumberAnimation {
-      duration: Appearance.animNormal
-      easing.type: Easing.OutQuad
-    }
   }
 
   Rectangle {
@@ -85,11 +82,8 @@ Item {
     color: Theme.backgroundAlt
     scale: mouseArea.isDragging ? 1.2 : (mouseArea.containsMouse ? 1.1 : 1.0)
 
-    Behavior on scale {
-      NumberAnimation {
-        duration: Appearance.animNormal
-        easing.type: Easing.OutQuad
-      }
+    Glide on scale {
+      duration: Appearance.animNormal
     }
   }
 

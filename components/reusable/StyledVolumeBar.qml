@@ -95,20 +95,14 @@ Item {
         radius: Widget.radius
         color: root.isMuted ? Qt.alpha(Theme.foreground, 0.4) : Theme.accent
 
-        Behavior on height {
+        Glide on height {
+          duration: Appearance.animNormal
           enabled: root.orientation === Qt.Vertical
-          NumberAnimation {
-            duration: Appearance.animNormal
-            easing.type: Easing.OutCubic
-          }
         }
 
-        Behavior on width {
+        Glide on width {
+          duration: Appearance.animNormal
           enabled: root.orientation === Qt.Horizontal
-          NumberAnimation {
-            duration: Appearance.animNormal
-            easing.type: Easing.OutCubic
-          }
         }
       }
 

@@ -84,10 +84,7 @@ Item {
     textSize: root.side * 0.3
   }
 
-  Behavior on percentage {
-    NumberAnimation {
-      duration: Appearance.animSlow
-      easing.type: Easing.OutCubic
-    }
+  Glide on percentage {
+    duration: Appearance.animSlow
   }
 }
