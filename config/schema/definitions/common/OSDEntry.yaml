@@ -181,7 +181,7 @@ properties:
           notable: What's unusual
           all: Every one picked
           changed: Only the one that changed
-        description: 'What''s unusual shows only the states out of the ordinary (Caps Lock or Num Lock on, muted, do not disturb, on battery, a drive plugged in, …) and the one that just changed. Every one picked shows each, lit when on. With What''s unusual or Every one picked, an icon shown stays while the icons are out, though it turns ordinary; Only the one that changed shows just the latest.'
+        description: 'What''s unusual shows only the states out of the ordinary (Caps Lock or Num Lock on, muted, do not disturb, on battery, a drive plugged in, …) and the one that just changed. Every one picked shows each, lit when on. Only the one that changed shows each change as it comes. Whichever you pick, an icon shown stays while the icons are out, though it turns ordinary or another one changes.'
       items:
         type: array
         title: Shows

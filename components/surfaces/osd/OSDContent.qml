@@ -86,10 +86,10 @@ Item {
   readonly property var rowTypes: OSDItems.rowTypes(root.statusTypes, root.tiles, root._previewAll ? "all" : root.osd.statuses.row, root._keptNow)
   // Keeps what the row shows while the icons are out: run as they open
   // and as a change rings (every change while they're out does), never
-  // from a binding on the row, which it feeds
-  // ("Only the one that changed" keeps none: it shows just the latest)
+  // from a binding on the row, which it feeds. In every `row` mode: with
+  // "Only the one that changed" each change joins the ones before it
   function _keepRow() {
-    if (root._open.status !== true || root.osd.statuses.row === "changed")
+    if (root._open.status !== true)
       return;
     const more = root.rowTypes.filter(type => !root._kept.includes(type));
     if (more.length > 0)

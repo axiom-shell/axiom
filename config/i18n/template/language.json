@@ -3230,7 +3230,7 @@
     "What's new in {0}": "",
     "What's new in {0} ({1} commits)": "",
     "What's unusual": "",
-    "What's unusual shows only the states out of the ordinary (Caps Lock or Num Lock on, muted, do not disturb, on battery, a drive plugged in, …) and the one that just changed. Every one picked shows each, lit when on. With What's unusual or Every one picked, an icon shown stays while the icons are out, though it turns ordinary; Only the one that changed shows just the latest.": "",
+    "What's unusual shows only the states out of the ordinary (Caps Lock or Num Lock on, muted, do not disturb, on battery, a drive plugged in, …) and the one that just changed. Every one picked shows each, lit when on. Only the one that changed shows each change as it comes. Whichever you pick, an icon shown stays while the icons are out, though it turns ordinary or another one changes.": "",
     "When a drive is plugged in": "",
     "When an app asks for its own duration, or for its notification to stay until dismissed, use that instead of the duration above; and when it withdraws a notification (once you've read it there, say), take it out of the history too. Off, a withdrawn notification stays in the history without its actions.": "",
     "When an app needs administrator rights (installing updates, mounting a drive, changing system settings), a polkit agent asks for your password. A session has only one.": "",
