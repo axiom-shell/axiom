@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -59,11 +60,14 @@ func connect(ctx context.Context, e *Env) (*rpc.Conn, daemon.HelloResult, error)
 	}
 	var hello daemon.HelloResult
 	if err := c.Call(dctx, "daemon.hello", daemon.HelloParams{Protocol: buildinfo.Protocol(), Client: "cli", PID: os.Getpid()}, &hello); err != nil {
+		daemonPID := c.PeerPID()
 		c.Close()
 		// Another protocol: in dev mode the daemon runs a dev build, which
 		// a bump leaves this installed binary behind (binds call it)
-		if exe := devBinary(e); axerr.KindOf(err) == axerr.Incompatible && exe != "" && e.Exec != nil {
-			err = e.Exec(exe) // returns only when it failed
+		if axerr.KindOf(err) == axerr.Incompatible && e.Exec != nil {
+			if exe := devBinary(e, daemonPID); exe != "" {
+				err = e.Exec(exe) // returns only when it failed
+			}
 		}
 		return nil, daemon.HelloResult{}, err
 	}
@@ -74,19 +78,22 @@ func connect(ctx context.Context, e *Env) (*rpc.Conn, daemon.HelloResult, error)
 // is the answer.
 const devCLIEnv = "AXIOM_DEV_CLI"
 
+// procExe is the binary process pid runs ("" when unknown).
+var procExe = func(pid int) string {
+	exe, _ := os.Readlink("/proc/" + strconv.Itoa(pid) + "/exe")
+	return exe
+}
+
 // devBinary is dev mode's build, to run this command with when the daemon
-// refuses this binary's protocol ("": none, or this is it).
-func devBinary(e *Env) string {
-	if e.Getenv(devCLIEnv) != "" {
+// at pid refuses this binary's protocol: "" unless the daemon runs it (a
+// dev build left from an earlier dev mode is never run), or when this is
+// already the retry.
+func devBinary(e *Env, pid int) string {
+	if e.Getenv(devCLIEnv) != "" || pid <= 0 {
 		return ""
 	}
 	exe := daemon.DevBinary(xdg.Resolve(e.Getenv))
-	if self, err := os.Executable(); err == nil {
-		if self, _ = filepath.EvalSymlinks(self); self == exe {
-			return ""
-		}
-	}
-	if info, err := os.Stat(exe); err != nil || info.Mode()&0o111 == 0 {
+	if procExe(pid) != exe {
 		return ""
 	}
 	return exe

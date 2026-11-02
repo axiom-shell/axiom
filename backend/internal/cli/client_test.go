@@ -110,9 +110,17 @@ func TestConfigOffline(t *testing.T) {
 }
 
 // A daemon that refuses this binary's protocol (dev mode rebuilt it with
-// a bump) runs the command again with the dev build, once.
+// a bump) runs the command again with the dev build, once, and only when
+// the daemon runs it. Not parallel: it stubs procExe.
 func TestProtocolRefusalRunsTheDevBuild(t *testing.T) {
-	t.Parallel()
+	daemonExe, real := "/usr/bin/axiom", procExe
+	t.Cleanup(func() { procExe = real })
+	procExe = func(pid int) string {
+		if pid != os.Getpid() {
+			return ""
+		}
+		return daemonExe
+	}
 	dir, err := os.MkdirTemp("", "ax") // short: a sockaddr_un
 	if err != nil {
 		t.Fatal(err)
@@ -143,15 +151,17 @@ func TestProtocolRefusalRunsTheDevBuild(t *testing.T) {
 		return ran, err
 	}
 	state := map[string]string{"XDG_STATE_HOME": filepath.Join(dir, "state")}
-	if ran, err := run(state); ran != "" || axerr.KindOf(err) != axerr.Incompatible {
-		t.Errorf("no dev build: ran %q, %v", ran, err)
-	}
+	// A dev build left from an earlier dev mode: the daemon runs another
 	os.MkdirAll(filepath.Dir(dev), 0o700)
 	if err := os.WriteFile(dev, []byte("#!/bin/sh\n"), 0o700); err != nil {
 		t.Fatal(err)
 	}
+	if ran, err := run(state); ran != "" || axerr.KindOf(err) != axerr.Incompatible {
+		t.Errorf("the daemon runs the installed binary: ran %q, %v", ran, err)
+	}
+	daemonExe = dev
 	if ran, err := run(state); ran != dev || err == nil {
-		t.Errorf("with a dev build: ran %q, %v", ran, err)
+		t.Errorf("the daemon runs the dev build: ran %q, %v", ran, err)
 	}
 	state[devCLIEnv] = "1"
 	if ran, err := run(state); ran != "" || axerr.KindOf(err) != axerr.Incompatible {
