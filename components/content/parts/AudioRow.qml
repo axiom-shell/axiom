@@ -92,14 +92,9 @@ Item {
       StyledSlider {
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.px(16)
-        troughHeight: Widget.px(6)
-        handleWidth: Widget.px(14)
-        handleHeight: Widget.px(14)
-        handleRadius: Widget.px(7)
         handleColor: root.muted ? Theme.foregroundAlt : Theme.foreground
         fillColor: root.muted ? Theme.foregroundAlt : Theme.accent
-        // Not `value`: dragging assigns that, which would drop the binding
-        targetValue: Math.min(1, root.volume / root.maxVolume)
+        value: Math.min(1, root.volume / root.maxVolume)
         onMoved: value => root.volumeMoved(value * root.maxVolume)
         onReleased: value => root.volumeMoved(value * root.maxVolume)
       }

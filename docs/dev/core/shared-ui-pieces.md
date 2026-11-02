@@ -15,7 +15,7 @@ Everything outside the bars follows the Interface scale and Density through `Wid
 | Inner margins of a row, field or dropdown (6–8 px) | `Widget.smallPadding` |
 | A panel's or card's padding (10–22 px) | `Widget.padding` (× 2 for 18–22) |
 | A control's height (fields, switches, tabs) | `Widget.height` (or a fixed share of it) |
-| A square icon button | `Widget.iconButton` (`FlatIconButton`'s default) |
+| A square icon button | `Widget.iconButton` (`StyledIconButton`'s default `size`) |
 | A chip, pill or small button (18–22 px) | `Widget.smallHeight` |
 | An icon or text size | `Appearance.fontSize`, `fontSizeLarge`, or `Appearance.fontSizeBy(n)` for n px more or less (never `fontSize ± n`: the offset wouldn't scale) |
 | A width, an avatar, a dot, a thin bar | `Widget.px(n)` (the Interface scale only) |
@@ -54,9 +54,9 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `LayoutOrder`: shows a layout's items in reverse order while `reversed` (`Panel.flips`: a popout growing up keeps its controls last, by the bar). Only for a layout of plain items, no Repeater directly in it.
 
 ### Controls (`reusable/`)
-- `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors).
+- `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors). `StyledIconButton` is a square of side `size` that doesn't stretch in a layout; `FlatIconButton` is one with a dimmer icon.
 - `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
-- `StyledSlider`: trough, fill and handle; `moved` while dragged, `released` at the end; a value pushed in animates.
+- `StyledSlider`: trough, accent fill and a round handle (`handleSize`); `moved` while dragged, `released` at the end (still `pressed`, so a value pushed in from it shows without a snap back). `value` is only pushed in (a drag never writes it, so bind it) and animates when it changes; `position` is what it shows (the drag's place while `pressed`).
 - `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll; its trough clips the fill, so a low level keeps to its rounded ends); muted, its icon (the base one) is a `SlashedIcon`; with `iconClickable` the icon is a button (`iconClicked`, hover highlight, `iconTip`); `surfaces/osd/PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).
 - `PercentageCircle`: a ring gauge with an icon in the middle; `sweep` below 360 opens it at the bottom (a gauge).
 - `LevelMeter`: a level shown, not set: `StyledSlider`'s trough and fill without the handle, across or filling up (`vertical`); the fill is never shorter than its rounded ends. Any meter in a rounded trough is one (the custom widgets', Disks, Claude usage).
@@ -66,6 +66,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `SegmentRow`: a single choice of SegmentButtons on one track, the accent sliding to the active one. Toggles and multi-select chips stay plain rows or Flows.
 - `StyledTabBar` (of `StyledTabButton`s): its current tab's highlight slides between tabs.
 - `StyledTextEntry`: see [QML pitfalls](qml-pitfalls.md) (push the value in, act on `textEdited`). Search boxes set `clearable`: an X at the right while there's text, which clears it as a typed edit (`clear()`) and keeps the focus; with `escapeClears`, Escape clears it too (passed on when it's empty). The launcher's own field has the same X. A field hiding its text (`echoMode` not Normal) warns while Caps Lock is on by itself: it loads `CapsLockHint` (plumbing, the one reusable piece reading `LockKeysManager`) at the right only while it has focus, and says so in `capsHintShown`; no host sets anything ([Lock keys](../features/lock-keys.md)). `StyledTextArea`: multi-line, optionally growing with its text (`expandable`, capped at `maxLines`, then it scrolls); `singleLine` makes it a one-line value that wraps (line breaks become spaces, Enter submits, Tab moves on).
+  - Both draw their cursor with `TextCursor` (an accent bar blinking while its input has focus), the `cursorDelegate` of any text input drawn by hand.
 - `PasswordEntry`: a password field with a message, a busy bar and `shake()`. While its message is empty and Caps Lock is on, the message line (or the placeholder, `inlineMessage`) says so in `Theme.warning` (unless `capsMessage` is off).
   - It has no authenticator of its own: the lock screen's `PasswordField`, the greeter's `LoginField` and the polkit prompt wire it.
 - `StyledComboEntry`: a choice from a list dropping down under a field, optionally typed. `search` (a function of the typed text returning the options) stands in for `options` when the list is too long to hold, asked only once the list opens or something is typed: the icon field (`x-control: icon`, [icons](icons.md)). In a popout or edge menu (its window declares `popoutRoom`) the list opens inline (`expandsInline`), inside the field's layout, since a dropdown Popup there is a window the popout's hover and blur don't reach. It's capped by the room the box has left to grow, or in an edge menu by the Flickable around it, which scrolls it into view. The dropdown Popup (a shadowed surface and a ListView) is built the first time the list opens, never for a closed field.
@@ -76,6 +77,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `TypePickerPopup`: pick a type, `{ type, label, icon }`.
 - `ActionTile`: an icon well over a label. With `opens`, a right click or long press is `opened`.
 - `ActionPill`: the wide one, a well beside a name and status. With `opens`, the well toggles and the rest opens.
+  - Both drain a `CountdownBar` (a bar along the bottom emptying over `duration` while `running`) over their `countdown` while active.
 
 ### Editor lists and drags (`reusable/`)
 - `ListEntryRow` (+ `RowAction`, `AddEntryButton`).

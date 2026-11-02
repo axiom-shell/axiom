@@ -184,13 +184,8 @@ Panel {
       Layout.preferredHeight: Widget.px(root.short ? 10 : root.large ? 20 : 16)
       enabled: MediaManager.canSeek
       troughHeight: Widget.px(root.short ? 4 : root.large ? 8 : 6)
-      handleWidth: Widget.px(root.short ? 10 : root.large ? 18 : 14)
-      handleHeight: Widget.px(root.short ? 10 : root.large ? 18 : 14)
-      handleRadius: Widget.px(root.short ? 5 : root.large ? 9 : 7)
-      handleColor: Theme.foreground
-      fillColor: Theme.accent
-      // Not `value`: dragging assigns that, which would drop the binding
-      targetValue: Math.min(1, Math.max(0, MediaManager.progress))
+      handleSize: Widget.px(root.short ? 10 : root.large ? 18 : 14)
+      value: Math.min(1, Math.max(0, MediaManager.progress))
       onPressedChanged: root.seeking = pressed
       onReleased: value => MediaManager.setPositionByRatio(value)
     }
@@ -198,7 +193,7 @@ Panel {
       visible: !root.short
       Layout.fillWidth: true
       StyledText {
-        text: MediaManager.formatTime(seek.pressed ? seek.value * MediaManager.length : MediaManager.position)
+        text: MediaManager.formatTime(seek.pressed ? seek.position * MediaManager.length : MediaManager.position)
         textSize: root.large ? Appearance.fontSizeBy(-1) : Appearance.fontSizeBy(-3)
         opacity: 0.6
       }

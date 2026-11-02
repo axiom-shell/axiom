@@ -463,10 +463,6 @@ Found by the audits:
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - [runDetached warns about a lost connection](issues.md#rundetached-warns-about-a-lost-connection)
-- [Every StyledSlider overrides its look and its value the same way](issues.md#every-styledslider-overrides-its-look-and-its-value-the-same-way)
-- [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
-- [ActionTile and ActionPill carry the same countdown bar](issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
-- [StyledTextEntry and StyledTextArea carry the same blinking cursor](issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
@@ -524,6 +520,10 @@ Found by the audits:
 
 Found while fixing core-ui-theming-04 (row 20):
 - [MediaManager's start-up pass throws: the engine has no Object.fromEntries](issues.md#mediamanagers-start-up-pass-throws-the-engine-has-no-objectfromentries)
+
+Found while reviewing core-ui-theming-06 (row 20):
+- [A NowPlaying seek shows the old place until the next tick, and keeps it while paused](issues.md#a-nowplaying-seek-shows-the-old-place-until-the-next-tick-and-keeps-it-while-paused)
+- [The text cursor keeps blinking with animations off](issues.md#the-text-cursor-keeps-blinking-with-animations-off)
 
 Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)

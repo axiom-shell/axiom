@@ -362,10 +362,7 @@ Item {
       }
 
       StyledIconButton {
-        Layout.fillWidth: false
-        Layout.fillHeight: false
-        Layout.preferredWidth: Widget.smallHeight
-        Layout.preferredHeight: Widget.smallHeight
+        size: Widget.smallHeight
         Layout.alignment: Qt.AlignTop
 
         iconText: "close"

@@ -26,6 +26,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-02, while fixing roadmap row 20's core-ui-theming-04
 
+### A NowPlaying seek shows the old place until the next tick, and keeps it while paused
+- **Where:** `services/system/MediaManager.qml` (`setPositionByRatio`), `components/content/NowPlaying/NowPlaying.qml` (`seek`)
+- **What:** `setPositionByRatio` writes `activePlayer.position` but not `MediaManager.position`, which only `_positionTimer` copies over (every 500 ms, and only while playing). Released, the seek slider shows its `value` (`MediaManager.progress`, still the old place) and glides back to it, then jumps to the seek at the next tick; paused, it stays on the old place (and the time beside it) until playback resumes. The same before core-ui-theming-06 (the old slider put `targetValue` back on release). Found by reading; a seek while paused settles it. Fix: `root.position = seekPosition` in `setPositionByRatio`.
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
+
+### The text cursor keeps blinking with animations off
+- **Where:** `components/reusable/TextCursor.qml`
+- **What:** its `SequentialAnimation on opacity` loops whenever the input has focus, whatever `Appearance.animations` says, against AGENTS.md › Config: "looping animations gate `running` on `Appearance.animations`" (`check_structure` doesn't check it). Carried over from StyledTextEntry's and StyledTextArea's copies. Fix: `running: root._focused && Appearance.animations`, and opacity back to 1 when it stops (a stop leaves it wherever the blink was, maybe 0).
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
+
 ### axiom installs into Quickshell's config folder, and dev mode can't switch trees
 - **Where:** `install.sh`, `config/Paths.qml` (`axiomPath`), `backend/internal/daemon/dev.go`
 - **What:** An idea from the maintainer (2026-11-02), not a bug. The checkout lives in `~/.config/quickshell/axiom`, though it's now an installed program (the Go daemon and CLI, the greeter, a QML tree self-update replaces) of which the QML is one part `axiom run` hands to qs. The maintainer: "where should a git install (or install script) actually live? Since quickshell has been moved to rendering primarily and axiom has its own shit (i.e. go) it feels slighty wrong to be in quickshell directly?" and "does this also make sense with a light refactor (i.e. a qs folder with all qs in it). This then allows for easy swirching between a real install (i.e. share version), and my cloned version for dev, with just turning dev mode on/off? (i.e. axiom dev set "path" then axiom dev on/off rewires to main install (that you don't tiuch) and the clone?" Three parts for the plan:
@@ -1312,30 +1324,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `run()` and `_logFailure` skip an error of kind `unavailable` (the connection to axiom closed: a re-exec or restart, already logged where it happens), but `runDetached` warns on any error. The live log shows it after reloads: `[CommandManager] mkdir: the connection to axiom closed` (NotificationManager's startup `mkdir -p` of its image folder, queued as the connection went). Fix: `if (error && error.kind !== "unavailable")`, as `run` does.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the services-core system
-
-### Every StyledSlider overrides its look and its value the same way
-- **Where:** `components/reusable/StyledSlider.qml:16` (`value`, `targetValue`, `_internalValue`), `components/reusable/StyledSlider.qml:69`, `components/forms/SchemaNumberField.qml:193`, `components/content/parts/custom/elements/Bar/CustomBar.qml:52`, `components/content/parts/AudioRow.qml:95`, `components/content/NowPlaying/NowPlaying.qml:213`, `components/content/NightLightControls/NightLightControls.qml:112`
-- **What:** Nobody uses the slider's defaults (a 4 px trough, a 24×14 handle in `Theme.backgroundAlt`, a `Theme.foreground` fill): its five users set a 14×14 handle of radius 7 (four of five, NowPlaying scaling it), `handleColor: Theme.foreground` (four), `fillColor: Theme.accent` (two; the others colour it by state or element) and a 6 px trough (three). And all five push their value through `targetValue`, each with the same comment, "Not `value`: dragging assigns that, which would drop the binding", since `value` is both the documented input and what a drag writes. The fill also eases twice: `_internalValue` animates (39–45) and the fill's width has its own Behavior (69–75), so each frame of the first restarts the second and the fill lags its target. Fix: defaults become what the users set (6 px trough, 14 px round handle in `Theme.foreground`, accent fill), removing 21 lines from the users (SchemaNumberField 193 and 195–199, CustomBar 52–55, AudioRow 95–98, NowPlaying 213–214, NightLightControls 112–116); `value` becomes the pushed-in input, which a drag never writes (the drag's place in a private property, `pressed` as now), so the five comments go (5 lines); delete the width Behavior (69–75, 7 lines). 33 lines.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### Eleven StyledIconButtons undo its stretching to be FlatIconButtons
-- **Where:** `components/reusable/StyledIconButton.qml:30` (`Layout.fillHeight`, `Layout.fillWidth`), `components/reusable/FlatIconButton.qml:10` (`size`), `components/views/Settings/DockListCard.qml:118`, `components/views/Keybinds/Keybinds.qml:152`, `components/surfaces/notifications/ToastItem.qml:364`, `components/surfaces/edgemenu/EdgeMenuBody.qml:101`, `components/content/parts/notifications/NotificationReply.qml:42`, `components/content/parts/notifications/NotificationItemDelegate.qml:186`, `components/content/parts/notifications/NotificationGroupDelegate.qml:276`
-- **What:** StyledIconButton fills both directions in a layout by default (lines 30–31). Apart from FlatIconButton, its only subclass, it has eleven direct users (`grep -rn '^\s*StyledIconButton {'`: 12 with FlatIconButton), and every one undoes that and sizes a square by hand: `Layout.fillWidth: false`, `Layout.fillHeight: false`, `Layout.preferredWidth/Height: <side>` (DockListCard ×3, Keybinds ×3, ToastItem, NotificationReply), or `width`/`height` (EdgeMenuBody, both notification delegates): 36 lines, which is FlatIconButton's `size` (its lines 10–19). Fix: StyledIconButton takes FlatIconButton's square `size` (default `Widget.iconButton`) and its no-stretch layout lines in place of its own three; FlatIconButton keeps only its `iconColor`; the eleven users set `size:` (11 lines for 36): 25 lines.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### ActionTile and ActionPill carry the same countdown bar
-- **Where:** `components/reusable/ActionTile.qml:110` (`countdownBar`, `drain`, `onActiveChanged`), `components/reusable/ActionPill.qml:121` (`countdownBar`, `drain`, `onActiveChanged`)
-- **What:** The "time left while active" bar is the same 26 lines in both (`diff <(sed -n 110,135p ActionTile.qml) <(sed -n 121,146p ActionPill.qml)` prints nothing): a Rectangle along the bottom, a NumberAnimation draining its width over `countdown` ms, and the `onActiveChanged` that restarts it. Their frames are the same too (`radius`, the `color` and `border.color` from `active`/`hot`/`tone`, two `ColorGlide`s: ActionTile 48–55, ActionPill 36–43). Fix: one small piece in `components/reusable/` (a bar draining over a duration while running), each tile placing it in 3 lines; 26 lines go.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### StyledTextEntry and StyledTextArea carry the same blinking cursor
-- **Where:** `components/reusable/StyledTextEntry.qml:104` (`cursorDelegate`), `components/reusable/StyledTextArea.qml:171` (`cursorDelegate`)
-- **What:** Both draw the accent cursor and blink it with the same `SequentialAnimation` (two `PropertyAnimation`s of 500 ms marked as behaviour timing), 19 lines each, the same but for the focus they read (`textField` / `textInput`) and a comment. AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: a cursor piece in `components/reusable/` reading its parent input's `activeFocus`, set as the `cursorDelegate` of both; 19 lines go (and the blink timing lives in one place).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
 
 ### fzf's flags rebuilt in Go where a template does
 - **Where:** `backend/internal/theme/integrations/table.go:187` (`fzf`)

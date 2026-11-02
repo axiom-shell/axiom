@@ -276,8 +276,7 @@ Item {
             StyledIconButton {
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
-              width: Widget.smallHeight
-              height: Widget.smallHeight
+              size: Widget.smallHeight
               visible: opacity > 0
               opacity: hover.hovered ? 1 : 0
               iconText: "close"
