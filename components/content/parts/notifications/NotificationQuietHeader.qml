@@ -7,8 +7,9 @@ import qs.config
 import qs.components.reusable
 
 // The notification menu's Quiet section heading: silent notifications'
-// count, a clear button and a chevron, the row folding them open and shut
-// (NotificationManager.quietOpen)
+// count, a dot while one came in since it was last seen open
+// (NotificationManager.quietUnseen), a clear button and a chevron, the row
+// folding them open and shut (NotificationManager.quietOpen)
 FoldRow {
   id: root
 
@@ -28,6 +29,15 @@ FoldRow {
     textColor: root.hovered ? Theme.accent : Theme.foregroundAlt
     textSize: Appearance.fontSizeBy(-2)
     font.bold: true
+  }
+
+  // Something new since it was last seen open
+  Rectangle {
+    visible: NotificationManager.quietUnseen
+    implicitWidth: Widget.px(6)
+    implicitHeight: implicitWidth
+    radius: width / 2
+    color: Theme.accent
   }
 
   StyledIconButton {

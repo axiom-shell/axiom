@@ -186,7 +186,8 @@ properties:
           type: string
           title: App
           default: ''
-          description: Its name, as its notifications show it, or its desktop entry (firefox, org.telegram.desktop).
+          x-suggestions: notificationApps
+          description: Its name, as its notifications show it, or its desktop entry (firefox, org.telegram.desktop). One of axiom's own sources (axiom-drives, axiom-updates, …) sets just that one's level, a rule for axiom all the rest.
         level:
           type: string
           title: Level

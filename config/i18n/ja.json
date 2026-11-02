@@ -3301,7 +3301,6 @@
     "Critical": "",
     "As the app sends it": "",
     "Per-app rules": "",
-    "Its name, as its notifications show it, or its desktop entry (firefox, org.telegram.desktop).": "",
     "Where notification toasts appear, how they move, how long they stay, and what the history keeps. Toasts sit inside the space the bars and screen border leave free, and hide while a popout is open over them.": "",
     "Signing in as {0}": "",
     "VPN": "",
@@ -3769,6 +3768,10 @@
     "Nothing of yours needed changing.": "",
     "1 package update": "",
     "{0} package updates": "",
-    "Upgrade": ""
+    "Upgrade": "",
+    "Connections": "",
+    "Pomodoro": "",
+    "Axiom update": "",
+    "Its name, as its notifications show it, or its desktop entry (firefox, org.telegram.desktop). One of axiom's own sources (axiom-drives, axiom-updates, …) sets just that one's level, a rule for axiom all the rest.": ""
   }
 }

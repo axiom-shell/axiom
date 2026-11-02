@@ -114,8 +114,12 @@ QtObject {
     const count = root.repoPackages.length + root.aurPackages.length;
     if (count === 0)
       NotificationManager.dismissKey("updates");
-    if (count > root._noted)
-      NotificationManager.sendNotification("axiom", count === 1 ? I18n.tr("1 package update") : I18n.tr("{0} package updates", count), [].concat(root.repoPackages, root.aurPackages).slice(0, 5).map(p => p.name).join(", ") + (count > 5 ? "…" : ""), {
+    const summary = count === 1 ? I18n.tr("1 package update") : I18n.tr("{0} package updates", count);
+    // _noted starts at 0 after a restart: the note kept from before stays
+    // as it is (not new again) if it says the same
+    const kept = NotificationManager.entries.find(e => e.key === "updates");
+    if (count > root._noted && kept?.summary !== summary)
+      NotificationManager.sendNotification("axiom", summary, [].concat(root.repoPackages, root.aurPackages).slice(0, 5).map(p => p.name).join(", ") + (count > 5 ? "…" : ""), {
         "desktopEntry": root._desktopEntry,
         "icon": "system-software-update",
         "key": "updates",

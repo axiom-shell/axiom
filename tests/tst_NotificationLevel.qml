@@ -43,6 +43,20 @@ TestCase {
         want: "alert"
       },
       {
+        tag: "a silent rule lets a critical one alert",
+        rule: "silent",
+        urgency: 2,
+        low: "silent",
+        want: "alert"
+      },
+      {
+        tag: "a block rule still blocks a critical one",
+        rule: "off",
+        urgency: 2,
+        low: "silent",
+        want: "off"
+      },
+      {
         tag: "critical",
         rule: "",
         urgency: 2,
@@ -115,5 +129,51 @@ TestCase {
       quietMaxEntries: 1,
       quietMaxAge: 0
     }), []);
+  }
+
+  function test_groupKey_data() {
+    return [
+      {
+        tag: "an app",
+        entry: {
+          appName: "Firefox",
+          desktopEntry: "firefox"
+        },
+        want: "Firefox"
+      },
+      {
+        tag: "no app name",
+        entry: {
+          appName: "",
+          desktopEntry: "org.telegram.desktop"
+        },
+        want: "org.telegram.desktop"
+      },
+      {
+        tag: "a shell source",
+        entry: {
+          appName: "axiom",
+          desktopEntry: "axiom-drives"
+        },
+        want: "axiom-drives"
+      },
+      {
+        tag: "the shell without a source",
+        entry: {
+          appName: "axiom",
+          desktopEntry: ""
+        },
+        want: "axiom"
+      },
+      {
+        tag: "nothing",
+        entry: {},
+        want: ""
+      },
+    ];
+  }
+
+  function test_groupKey(row) {
+    compare(NotificationLevel.groupKey(row.entry), row.want);
   }
 }

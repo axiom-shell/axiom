@@ -29,10 +29,9 @@ import qs.components.methods
  * silent), run by its desktop entry's handler (registerHandler).
  *
  * The history keeps NotificationsConfig.maxEntries alerts and
- * quietMaxEntries silent ones, none older than their age limits, and with
- * clearOnFocus an app's entries go
- * when one of its windows is focused; with followApps one its app
- * withdraws goes too. DND is saved in Paths.statePath.
+ * quietMaxEntries silent ones, none older than their age limits; with
+ * clearOnFocus an app's entries go when one of its windows is focused,
+ * with followApps one its app withdraws goes too.
  */
 Singleton {
   id: root
@@ -86,17 +85,27 @@ Singleton {
   readonly property bool quietOpen: root._quietOpen
   property bool _quietOpen: false
   on_QuietOpenChanged: root._saveState()
-
   function setQuietOpen(open: bool): void {
     root._quietOpen = open;
   }
+
+  // Whether a silent one came in (or a keyed one was replaced) since the
+  // Quiet section was last seen open, as of _quietSeen (its newest's time)
+  readonly property bool quietUnseen: root.quiet.some(e => e.time > root._quietSeen)
+  property real _quietSeen: 0
+  // The list shows the Quiet section open: what's in it is seen
+  function markQuietSeen(): void {
+    root._quietSeen = Math.max(root._quietSeen, root.quiet[0]?.time ?? 0);
+  }
+  on_QuietSeenChanged: root._saveState()
 
   function _saveState() {
     if (root._stateLoaded)
       root._state.save({
         dnd: root._dnd,
         dndMissed: root._dndMissed,
-        quietOpen: root._quietOpen
+        quietOpen: root._quietOpen,
+        quietSeen: root._quietSeen
       });
   }
 
@@ -694,6 +703,7 @@ Singleton {
     root._dnd = saved.dnd === true;
     root._quietOpen = saved.quietOpen === true;
     root._dndMissed = saved.dndMissed ?? 0;
+    root._quietSeen = saved.quietSeen ?? 0;
     // A click on the summary opens nothing
     root.registerHandler("axiom-dnd", () => {});
     root._stateLoaded = true;
@@ -701,11 +711,17 @@ Singleton {
 
   Component.onDestruction: root._files.flush()
 
-  // axiom ipc notifications clear | toggleDnd
+  // axiom ipc notifications clear | clearQuiet | toggleQuiet | toggleDnd
   property IpcTarget _ipc: IpcTarget {
     target: "notifications"
     function clear(): void {
       root.clearAll();
+    }
+    function clearQuiet(): void {
+      root.clearQuiet();
+    }
+    function toggleQuiet(): void {
+      root.setQuietOpen(!root.quietOpen);
     }
     function toggleDnd(): void {
       root.toggleDnd();
@@ -715,19 +731,15 @@ Singleton {
   // Do not disturb on or off (keybind action toggleDnd with its call)
   property IpcTarget _dndIpc: IpcTarget {
     target: "dnd"
-
     function toggle(): void {
       root.toggleDnd();
     }
-
     function enable(): void {
       root.setDnd(true);
     }
-
     function disable(): void {
       root.setDnd(false);
     }
-
     function status(): bool {
       return root.dnd;
     }

@@ -423,6 +423,16 @@ QtObject {
     case "audioApps":
       // The apps playing sound now
       return AudioManager.playbackApps.map(app => app.name).filter((name, i, all) => all.indexOf(name) === i);
+    case "notificationApps":
+      // The apps in the notification history, then the shell's sources
+      // (a rule naming one sets just its level), as { value, label }
+      return NotificationManager.entries.map(e => e.appName || e.desktopEntry).filter((name, i, all) => name && name !== "axiom" && all.indexOf(name) === i).map(name => ({
+            value: name,
+            label: name
+          })).concat(Object.keys(NotificationLevel.sources).map(key => ({
+            value: key,
+            label: I18n.tr(NotificationLevel.sources[key])
+          })));
     case "wallpaperCollections":
       // The wallpaper folder's subfolders holding images
       return WallpaperManager.collections;
