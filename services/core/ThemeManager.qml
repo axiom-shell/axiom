@@ -222,14 +222,15 @@ QtObject {
 
   // Generated themes are named by style, not wallpaper, so each run
   // overwrites the last and a config only records the theme's name. When
-  // the active one was made from a wallpaper no monitor shows (a snapshot
-  // restored over a newer generation), generate it again from the
+  // the active one was made from a wallpaper set for no monitor (a
+  // snapshot restored over a newer generation), generate it again from the
   // primary's: the file watch then reloads the colors and runs the
-  // integrations. Any monitor's counts, as a pick for one generates from it.
+  // integrations. Any monitor's counts (one without a wallpaper of its own
+  // shows the default), as a pick or /generate for one generates from it.
   function syncGeneratedTheme() {
     if (Paths.greeter || !root.activeTheme.startsWith("generated/") || !root.wallpaper)
       return;
-    const shown = [root.wallpaper].concat(Object.values(root.shownWallpapers.wallpapers)).filter(url => url);
+    const shown = [root.shownWallpapers.wallpaper].concat(Object.values(root.shownWallpapers.wallpapers)).filter(url => url);
     // Already on its way
     if (isGenerating && (shown.includes(root._generating) || shown.includes(root._pendingGeneration)))
       return;
@@ -652,6 +653,10 @@ QtObject {
     }
 
     folder: location
+    // Not there yet: stop watching the working directory it fell back to
+    // (a rescan after a generation or an install picks the folder up)
+    Component.onCompleted: if (String(folder) !== String(location))
+      folder = ""
     nameFilters: ["*.json"]
     showDirs: false
     onStatusChanged: if (status === FolderListModel.Ready && count > 0 && String(folder) === String(themeFolder.location)) {
