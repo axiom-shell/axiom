@@ -26,6 +26,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-02, while fixing roadmap row 20's core-ui-theming-04
 
+### A NowPlaying seek shows the old place until the next tick, and keeps it while paused
+- **Where:** `services/system/MediaManager.qml` (`setPositionByRatio`), `components/content/NowPlaying/NowPlaying.qml` (`seek`)
+- **What:** `setPositionByRatio` writes `activePlayer.position` but not `MediaManager.position`, which only `_positionTimer` copies over (every 500 ms, and only while playing). Released, the seek slider shows its `value` (`MediaManager.progress`, still the old place) and glides back to it, then jumps to the seek at the next tick; paused, it stays on the old place (and the time beside it) until playback resumes. The same before core-ui-theming-06 (the old slider put `targetValue` back on release). Found by reading; a seek while paused settles it. Fix: `root.position = seekPosition` in `setPositionByRatio`.
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
+
+### The text cursor keeps blinking with animations off
+- **Where:** `components/reusable/TextCursor.qml`
+- **What:** its `SequentialAnimation on opacity` loops whenever the input has focus, whatever `Appearance.animations` says, against AGENTS.md › Config: "looping animations gate `running` on `Appearance.animations`" (`check_structure` doesn't check it). Carried over from StyledTextEntry's and StyledTextArea's copies. Fix: `running: root._focused && Appearance.animations`, and opacity back to 1 when it stops (a stop leaves it wherever the blink was, maybe 0).
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
+
 ### axiom installs into Quickshell's config folder, and dev mode can't switch trees
 - **Where:** `install.sh`, `config/Paths.qml` (`axiomPath`), `backend/internal/daemon/dev.go`
 - **What:** An idea from the maintainer (2026-11-02), not a bug. The checkout lives in `~/.config/quickshell/axiom`, though it's now an installed program (the Go daemon and CLI, the greeter, a QML tree self-update replaces) of which the QML is one part `axiom run` hands to qs. The maintainer: "where should a git install (or install script) actually live? Since quickshell has been moved to rendering primarily and axiom has its own shit (i.e. go) it feels slighty wrong to be in quickshell directly?" and "does this also make sense with a light refactor (i.e. a qs folder with all qs in it). This then allows for easy swirching between a real install (i.e. share version), and my cloned version for dev, with just turning dev mode on/off? (i.e. axiom dev set "path" then axiom dev on/off rewires to main install (that you don't tiuch) and the clone?" Three parts for the plan:
