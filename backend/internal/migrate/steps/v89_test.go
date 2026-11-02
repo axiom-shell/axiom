@@ -1,18 +1,10 @@
 package steps
 
-import (
-	"testing"
-
-	"github.com/axiom-shell/axiom/backend/internal/jsonx"
-)
+import "testing"
 
 func TestV89DropsUnsafeCornersAndTheInstantLogout(t *testing.T) {
 	t.Parallel()
-	step := stepAt(t, 89)
-	cases := []struct {
-		name, in, out string
-		changed       bool
-	}{
+	runStepCases(t, 89, []stepCase{
 		{"an unsafe corner among safe ones",
 			`{"HotCorners":{"items":[{"id":"a","action":"workspaceOverview"},{"id":"b","corner":"topRight","action":"clearNotifications"},{"id":"c","action":"moveWindowNth","argument":"2"}]}}`,
 			`{"HotCorners":{"items":[{"id":"a","action":"workspaceOverview"}]}}`, true},
@@ -35,25 +27,5 @@ func TestV89DropsUnsafeCornersAndTheInstantLogout(t *testing.T) {
 		{"status icons of the user's own order stay",
 			`{"OSD":{"items":[{"id":"a","statuses":{"items":["audio","microphone","keyboardLayout","numLock","capsLock"]}}]}}`,
 			`{"OSD":{"items":[{"id":"a","statuses":{"items":["audio","microphone","keyboardLayout","numLock","capsLock"]}}]}}`, false},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			t.Parallel()
-			v, err := jsonx.Unmarshal([]byte(c.in))
-			if err != nil {
-				t.Fatal(err)
-			}
-			cfg := v.(*jsonx.Object)
-			changes := step.Run(cfg)
-			if got := string(jsonx.MarshalCompact(cfg)); got != c.out {
-				t.Errorf("got %s, want %s", got, c.out)
-			}
-			if (len(changes) > 0) != c.changed {
-				t.Errorf("changes %v", changes)
-			}
-			if again := step.Run(cfg); len(again) > 0 {
-				t.Errorf("a second run: %v", again)
-			}
-		})
-	}
+	})
 }
