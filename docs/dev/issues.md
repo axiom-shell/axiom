@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
 
+### TestNvidiaStream can see the stream's first line before it looks
+- **Where:** `backend/internal/sysmon/sysmon_test.go` (`TestNvidiaStream`)
+- **What:** The fake stream (`streams`, line "37, 61") answers as soon as the fetch starts it, so the first `fetch` can already read its values and the check that none came yet fails: CI run 41435061352 (a branch that didn't touch sysmon) failed with `before the stream's first line: {… GPUUsage:0xc000190238 GPUTemp:0xc000190248 …}`; the rerun passed. Fix: hold the fake's first line until the test releases it (a channel), then check before and after.
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing the OSD's cards (CI on commands-pass)
+
 ### Included's hookup can put sway-only lines into a config i3 still runs
 - **Where:** `backend/internal/compositor/manager/sway.go` (`userMain`)
 - **What:** Since compositor-06, sway's include and autostart targets are the config sway runs (`userconf.SwayMain`), so an i3 migrant whose sway runs `~/.config/i3/config` gets **Add it for me**'s include line written there. If they still run i3 from that same file, i3 follows the include into axiom's sway module and reports its sway-only lines as errors. Rare (one file shared by both, included mode); found by the branch review, left logged rather than widening the batch. Fix when it comes up: the hookup notes, or refuses with a reason, when its target is under an `i3/` folder.

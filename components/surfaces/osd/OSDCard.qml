@@ -22,10 +22,11 @@ Item {
   // The text's width: its own, the longer line's, between a least (a
   // short title doesn't make a stub of a card) and a most (a long one
   // ends in "…"). A Text's implicit width ignores its eliding, so this
-  // reads the lines' own widths
+  // reads the lines' own widths (the subtitle's by its text, not its
+  // `visible`, which reads false while the card's slot is folded)
   readonly property int minTextWidth: Widget.px(160)
   readonly property int maxTextWidth: Widget.px(360)
-  readonly property int textWidth: Math.round(Math.max(root.minTextWidth, Math.min(root.maxTextWidth, Math.max(titleText.implicitWidth, subtitleText.visible ? subtitleText.implicitWidth : 0))))
+  readonly property int textWidth: Math.round(Math.max(root.minTextWidth, Math.min(root.maxTextWidth, Math.max(titleText.implicitWidth, root.subtitle !== "" ? subtitleText.implicitWidth : 0))))
   // The empty margin round what shows across `vertical` edges' depth
   // (its width) or else its height (round the picture): a host spacing
   // it by what shows reads it
