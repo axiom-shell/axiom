@@ -296,10 +296,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Album art piles up in the runtime folder for the whole session
   - DailySchedule's persisted state never survives a reload
 - **core-ui-theming-03** (4): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
-  - [A failed update check shows as up to date](../issues.md#a-failed-update-check-shows-as-up-to-date)
+  - A failed update check shows as up to date
   - [A weather fetch that fails shows Loading forever](../issues.md#a-weather-fetch-that-fails-shows-loading-forever)
   - A Wayland protocol error leaves every client claiming its protocol
-  - [The Updates popout's package list is frozen at opening](../issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
+  - The Updates popout's package list is frozen at opening
 - **core-ui-theming-04** (5):
   - [Rescanning the theme folders lists the shell's working directory as themes](../issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
   - [A generated theme from a wallpaper reached through a symlink is regenerated at every start](../issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)

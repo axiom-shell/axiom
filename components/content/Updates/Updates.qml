@@ -17,8 +17,9 @@ Panel {
   id: root
 
   // [{ name, from, to }]
-  property var repoPackages: UpdatesManager.repoPackages
-  property var aurPackages: UpdatesManager.aurPackages
+  readonly property var repoPackages: UpdatesManager.repoPackages
+  readonly property var aurPackages: UpdatesConfig.includeAur && UpdatesManager.hasAur ? UpdatesManager.aurPackages : []
+  readonly property string failed: UpdatesManager.error === "" ? "" : I18n.tr("Couldn't check for updates: {0}", UpdatesManager.error)
   readonly property int total: repoPackages.length + aurPackages.length
 
   spacing: Widget.padding
@@ -152,8 +153,10 @@ Panel {
   }
 
   StyledText {
-    visible: !root.embedded && root.total === 0
-    text: I18n.tr("System is up to date")
+    visible: !root.embedded && (root.total === 0 || root.failed !== "")
+    Layout.fillWidth: true
+    wrapMode: Text.Wrap
+    text: root.failed || I18n.tr("System is up to date")
     textColor: Theme.foregroundAlt
   }
 
@@ -167,8 +170,8 @@ Panel {
       anchors.centerIn: parent
       maxWidth: parent.width
       availableHeight: parent.height
-      icon: UpdatesManager.supported ? "check" : "block"
-      text: !UpdatesManager.supported ? I18n.tr("axiom can't check for updates on this distribution.") : UpdatesManager.checking ? I18n.tr("checking…") : I18n.tr("System is up to date")
+      icon: !UpdatesManager.supported ? "block" : root.failed !== "" ? "error" : "check"
+      text: !UpdatesManager.supported ? I18n.tr("axiom can't check for updates on this distribution.") : UpdatesManager.checking ? I18n.tr("checking…") : root.failed || I18n.tr("System is up to date")
     }
   }
 }

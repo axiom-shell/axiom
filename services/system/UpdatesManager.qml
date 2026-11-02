@@ -26,6 +26,9 @@ QtObject {
   // [{ name, from, to }]
   property var repoPackages: []
   property var aurPackages: []
+  // Why the last check failed ("" when it didn't); the packages are then
+  // the last check's that worked
+  property string error: ""
   // From subscribing or refresh() until axiom's next state
   property bool checking: false
 
@@ -103,6 +106,7 @@ QtObject {
   Component.onCompleted: BackendManager.listen("updates.state", state => {
     root.repoPackages = state.repo;
     root.aurPackages = state.aur;
+    root.error = state.error;
     root.checking = false;
   })
 }

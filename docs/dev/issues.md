@@ -945,16 +945,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### The Updates popout's package list is frozen at opening
-- **Where:** `components/bar/widgets/Updates/Updates.qml:54` (`extraData`), `components/content/Updates/Updates.qml:20` (`repoPackages`), `components/content/Updates/Updates.qml:21` (`aurPackages`), `components/hosts/popout/BarPopouts.qml:547`
-- **What:** The widget sends `repoPackages`/`aurPackages` as `extraData`. BarPopouts copies each key once in `onLoaded` (`item[key] = root.currentData[key];`), which replaces the panel's live bindings (`property var repoPackages: UpdatesManager.repoPackages`) with the arrays as they were at opening. `PopoutAnchor.open()` returns early while the popout is open.
-  - **Scenario:** with the popout open, right-click the widget (`UpdatesManager.refresh()`), or let an upgrade finish in a terminal. The bar's count changes, but the popout still lists the old packages, or still says it's up to date, until it is reopened.
-  - **Why the keys exist:** only to apply the widget's AUR filter.
-
-  Fix: delete the widget's `extraData` (4 lines). The panel's `aurPackages` binds the same filter itself (`UpdatesConfig.includeAur && UpdatesManager.hasAur ? UpdatesManager.aurPackages : []`), which cards then share; both properties become `readonly`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### NowPlaying builds its strip layout and a second transport hidden in every mode
 - **Where:** `components/content/NowPlaying/NowPlaying.qml:330` (the strip), `components/content/NowPlaying/NowPlaying.qml:440` (the grid's `Transport`), `components/content/NowPlaying/NowPlaying.qml:453` (the popout's `Transport`)
 - **What:** components/content/AGENTS.md says "a part shown in one mode only is a Loader gated on it, not `visible: false`". All three parts here are gated by `visible` only:
@@ -1310,12 +1300,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** MenuSubmenu copies EdgeMenuBody's parts one for one: the `_modulesKey` re-parse ("as EdgeMenuBody", lines 24–27), the `host` map (29–34, adding `submenu`), the `OverlayGrid` at `cardUnitOf`/`gapOf` (36–40, on the parent's screen) and the clipped Flickable around a `ModuleGrid` at the menu's `zoomOf` (54–71): 33 lines that must change together (a fix to how a menu's modules are keyed, zoomed or hosted lands twice). Fix: EdgeMenuBody takes a `screen` (for `cardUnitOf`) and `submenu` (no pin, no Escape, no stretch, `host.submenu`), and MenuSubmenu becomes an `EdgeMenuBody` (`vertical: true`, `maxLength` from `root.wrapper?.maxContentHeight`) plus its empty text: 33 lines out, about 12 in.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### A failed update check shows as up to date
-- **Where:** `services/system/UpdatesManager.qml:104` (`repoPackages`), `components/content/Updates/Updates.qml:171`, `backend/internal/updates/updates.go:41` (`State`)
-- **What:** Go ends every check in a state, a failed one with its `error` and the last packages (`st.Repo, st.Error = last.Repo, err.Error()`), but the shell's listener reads only `state.repo` and `state.aur`, so nothing in the UI can tell a failed check from an empty one. Scenario: log in before the Wi-Fi connects (or with the pacman db locked): the first `checkupdates` fails, `last.Repo` is still empty, and the Updates card says "System is up to date" (and the widget shows 0, or hides with `hideWhenEmpty`) until the next check, 30 minutes later by default. Fix: keep `state.error` in a new `error` property of UpdatesManager; the card shows it in place of "System is up to date" and the widget's tooltip names it.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
 
 ### A weather fetch that fails shows Loading forever
 - **Where:** `backend/internal/weather/weather.go:148` (`fetch`), `services/apps/WeatherManager.qml:109` (`_shown`), `components/content/Weather/Weather.qml:52`

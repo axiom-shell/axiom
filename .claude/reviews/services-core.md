@@ -4,7 +4,7 @@ reviewed: 4d8f880 2026-10-31  (full)
 The core funnels (CommandManager, FileManager, StateManager, ConsumerRegistry, the topics hub and its Go sources) are sound and match their docs. The weak spots are at the edges: two daemon topics lose their failures on the way to the UI (an offline first update check reads "System is up to date", an offline first weather fetch reads "Loading weather…" for the whole interval), and MediaManager, which no doc covers, picks Spotify over a playing player, ticks with nothing shown and never prunes its album art.
 
 ## Open findings
-- Major: [A failed update check shows as up to date](../../docs/dev/issues.md#a-failed-update-check-shows-as-up-to-date)
+- Major: "A failed update check shows as up to date" (fixed, row 20 core-ui-theming-03)
 - Major: [A weather fetch that fails shows Loading forever](../../docs/dev/issues.md#a-weather-fetch-that-fails-shows-loading-forever)
 - Major: [SystemManager samples every second while nothing is shown](../../docs/dev/issues.md#systemmanager-samples-every-second-while-nothing-is-shown)
 - Major: "The active media player is Spotify first and never follows playback" (fixed, row 20 core-ui-theming-02)
