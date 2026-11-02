@@ -52,7 +52,7 @@ QtObject {
   // the translation check: I18n.tr("Calendar"), I18n.tr("Connections"),
   // I18n.tr("Do not disturb"), I18n.tr("Drives"), I18n.tr("Login screen"),
   // I18n.tr("Monitors"), I18n.tr("Pomodoro"), I18n.tr("Screenshots"),
-  // I18n.tr("Stopwatch"), I18n.tr("Axiom update"), I18n.tr("Updates")
+  // I18n.tr("Settings"), I18n.tr("Stopwatch"), I18n.tr("Axiom update"), I18n.tr("Updates")
   readonly property var sources: ({
       "axiom-calendar": "Calendar",
       "axiom-connectivity": "Connections",
@@ -62,6 +62,7 @@ QtObject {
       "axiom-monitors": "Monitors",
       "axiom-pomodoro": "Pomodoro",
       "axiom-screenshot": "Screenshots",
+      "axiom-settings": "Settings",
       "axiom-stopwatch": "Stopwatch",
       "axiom-update": "Axiom update",
       "axiom-updates": "Updates"

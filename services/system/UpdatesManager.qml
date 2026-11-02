@@ -58,14 +58,15 @@ QtObject {
     return root.backend?.upgrade ?? "";
   }
 
-  // Runs `command` in a terminal (`terminal`, else Apps.inTerminal's) and
-  // checks again once the terminal closes. Ignored while an upgrade is
-  // already running.
-  function upgrade(command, terminal) {
+  // Runs the upgrade (Updates.upgradeCommand, else upgradeCommand's) in a
+  // terminal (Updates.terminal, else Apps.inTerminal's) and checks again
+  // once the terminal closes. Ignored while an upgrade is already running.
+  function upgrade() {
+    const command = UpdatesConfig.upgradeCommand || root.upgradeCommand(UpdatesConfig.activeAurHelper);
     if (root._upgrading || command === "")
       return;
     root._upgrading = true;
-    CommandManager.run(Apps.inTerminal(["bash", "-c", `${command}; echo; read -n 1 -s -r -p "Press any key to close"`], terminal), () => {
+    CommandManager.run(Apps.inTerminal(["bash", "-c", `${command}; echo; read -n 1 -s -r -p "Press any key to close"`], UpdatesConfig.terminal), () => {
       root._upgrading = false;
       root.refresh();
     });
@@ -137,7 +138,7 @@ QtObject {
   Component.onCompleted: {
     NotificationManager.registerHandler(root._desktopEntry, (entry, action) => {
       if (action === "upgrade")
-        root.upgrade(UpdatesConfig.upgradeCommand || root.upgradeCommand(UpdatesConfig.activeAurHelper), UpdatesConfig.terminal);
+        root.upgrade();
     });
     BackendManager.listen("updates.state", state => {
       root.repoPackages = state.repo;

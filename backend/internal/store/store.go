@@ -68,8 +68,9 @@ type State struct {
 	// start (until a good load or a restore), so nothing saves them as
 	// the user's
 	Defaults bool `json:"defaults"`
-	// Migrated: the last load of the file migrated it (nil: it didn't),
-	// for the shell to note once
+	// Migrated: the last load that migrated the file (nil: none since the
+	// daemon started; a later load that doesn't migrate keeps it), for the
+	// shell to note once per version
 	Migrated *Migration `json:"migrated,omitempty"`
 }
 
