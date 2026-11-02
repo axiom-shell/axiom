@@ -56,7 +56,7 @@ properties:
     type: boolean
     title: Kitty
     default: false
-    description: Writes kitty/axiom.conf. Reloads kitty when allow_remote_control is on.
+    description: Writes kitty/axiom.conf. Reloads running kitty.
     x-hookup:
       - file: '{config}/kitty/kitty.conf'
         place: end

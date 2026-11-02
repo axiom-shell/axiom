@@ -463,9 +463,6 @@ Found by the audits:
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - [runDetached warns about a lost connection](issues.md#rundetached-warns-about-a-lost-connection)
-- [Rescanning the theme folders lists the shell's working directory as themes](issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
-- [A generated theme from a wallpaper reached through a symlink is regenerated at every start](issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)
-- [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)
 - [Icons.overrides never reaches window icons](issues.md#iconsoverrides-never-reaches-window-icons)
 - [A cancelled rename's typed text comes back in the notes and chat rename fields](issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
 - [Nine shared controls animate with their own easing, written out where Glide does it](issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)
@@ -473,8 +470,6 @@ Found by the audits:
 - [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
 - [ActionTile and ActionPill carry the same countdown bar](issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
 - [StyledTextEntry and StyledTextArea carry the same blinking cursor](issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
-- [ncspot's splice keeps nothing after a begin marker that follows the end marker](issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
-- [Kitty reloads only when its socket is /tmp/kitty-*](issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
@@ -529,6 +524,9 @@ Found by the audits:
 - [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
 - [Clicking an older capture's notification opens the newest capture](issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
 - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
+
+Found while fixing core-ui-theming-04 (row 20):
+- [MediaManager's start-up pass throws: the engine has no Object.fromEntries](issues.md#mediamanagers-start-up-pass-throws-the-engine-has-no-objectfromentries)
 
 Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)

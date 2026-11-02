@@ -222,19 +222,22 @@ QtObject {
 
   // Generated themes are named by style, not wallpaper, so each run
   // overwrites the last and a config only records the theme's name. When
-  // the active one was made from another wallpaper than the configured one
-  // (a snapshot restored over a newer generation), generate it again: the
-  // file watch then reloads the colors and runs the integrations.
+  // the active one was made from a wallpaper set for no monitor (a
+  // snapshot restored over a newer generation), generate it again from the
+  // primary's: the file watch then reloads the colors and runs the
+  // integrations. Any monitor's counts (one without a wallpaper of its own
+  // shows the default), as a pick or /generate for one generates from it.
   function syncGeneratedTheme() {
     if (Paths.greeter || !root.activeTheme.startsWith("generated/") || !root.wallpaper)
       return;
+    const shown = [root.shownWallpapers.wallpaper].concat(Object.values(root.shownWallpapers.wallpapers)).filter(url => url);
     // Already on its way
-    if (isGenerating && (root._generating === root.wallpaper || root._pendingGeneration === root.wallpaper))
+    if (isGenerating && (shown.includes(root._generating) || shown.includes(root._pendingGeneration)))
       return;
-    const wanted = decodeURIComponent(root.wallpaper.replace("file://", ""));
-    if (root.currentTheme?.generated?.wallpaper === wanted)
+    const from = root.currentTheme?.generated?.wallpaper;
+    if (shown.some(url => decodeURIComponent(url.replace("file://", "")) === from))
       return;
-    console.log("[ThemeManager] Generated theme is from", root.currentTheme?.generated?.wallpaper ?? "no wallpaper", "- regenerating for", wanted);
+    console.log("[ThemeManager] Generated theme is from", from ?? "no wallpaper", "- regenerating for", root.wallpaper);
     generateThemesFromWallpaper(root.wallpaper);
   }
 
@@ -380,7 +383,6 @@ QtObject {
     root._theme = initial;
     if (Paths.greeter)
       return;
-    _reloadAllThemes();
     // Anything shown changed while qs wasn't running (a light/dark
     // wallpaper, a monitor), and a generated theme that isn't there yet
     Qt.callLater(root.syncGeneratedTheme);
@@ -426,7 +428,7 @@ QtObject {
     root._lookState.save(root._look);
   }
 
-  // Brings a generated theme in line with the primary's wallpaper on any
+  // Brings a generated theme in line with the wallpapers shown on any
   // change of what's shown: a pick, a rotation, a light/dark switch, a
   // mode switch, a restored config, a monitor connecting.
   readonly property string _shownKey: Paths.greeter ? "" : JSON.stringify([root.shownWallpapers, General.primaryMonitor, General.outputs.map(screen => screen.name)])
@@ -536,16 +538,7 @@ QtObject {
     Qt.callLater(root.themeIntegrations);
   }
 
-  // --- Paths and Models ---
-  readonly property string _themesPath: "file://" + Paths.themePath
-  readonly property string _generatedThemesPath: "file://" + Paths.generatedThemesPath
-  readonly property string _communityThemesPath: "file://" + Paths.communityThemesPath
-
-  // Each folder's themes, [{ name, label, variant, paired }], combined
-  // into _families once any folder has been scanned
-  property var _stockThemes: []
-  property var _generatedThemes: []
-  property var _communityThemes: []
+  // The theme folders' themes, combined once any folder has been scanned
   property var _families: []
 
   // --- Integrations ---
@@ -580,21 +573,17 @@ QtObject {
 
   // --- Theme List Loading ---
 
-  // Rescans the theme folders; each rebuilds the families when it's read
+  // Rescans the theme folders, after a generation; each rebuilds the
+  // families when it's read
   function _reloadAllThemes() {
-    _defaultThemeLoader.folder = "";
-    _generatedThemeLoader.folder = "";
-    _communityThemeLoader.folder = "";
-    _defaultThemeLoader.folder = _themesPath;
-    _generatedThemeLoader.folder = _generatedThemesPath;
-    _communityThemeLoader.folder = _communityThemesPath;
+    for (const folder of [root._stockFolder, root._generatedFolder, root._communityFolder])
+      folder.rescan();
   }
 
   // Rescans the community setups' palettes, after one is installed
   // (CommunitySetupsManager)
   function reloadCommunityThemes() {
-    _communityThemeLoader.folder = "";
-    _communityThemeLoader.folder = _communityThemesPath;
+    root._communityFolder.rescan();
   }
 
   // A scanned folder's themes, parsed for their name, variant and pair.
@@ -639,50 +628,66 @@ QtObject {
   }
 
   function _rebuildFamilies() {
-    root._families = ThemeFamilies.build(root._stockThemes, false).concat(ThemeFamilies.build(root._communityThemes, false, true), ThemeFamilies.build(root._generatedThemes, true));
+    root._families = ThemeFamilies.build(root._stockFolder.themes, false).concat(ThemeFamilies.build(root._communityFolder.themes, false, true), ThemeFamilies.build(root._generatedFolder.themes, true));
     console.log("[ThemeManager] Themes:", root._families.map(family => family.label).join(", "));
   }
 
-  // Ready is reported once before the rows arrive, then again with them.
+  // One theme folder (`path`, ending in "/") and its themes,
+  // [{ name, label, variant, paired, preview }]. Ready is reported once
+  // before the rows arrive, then again with them. A FolderListModel
+  // created without a folder, or with one that doesn't exist yet, lists
+  // qs's working directory instead: its rows are ignored, and the folder
+  // is set from the start, as those rows could land after the real
+  // folder's. A rescan empties it first (which lists nothing).
   // Directories are hidden (showDirs): themes are files.
-  property FolderListModel _defaultThemeLoader: FolderListModel {
+  component ThemeFolder: FolderListModel {
+    id: themeFolder
+    required property string path
+    required property string prefix
+    readonly property url location: "file://" + path
+    property var themes: []
+
+    function rescan() {
+      themeFolder.folder = "";
+      themeFolder.folder = themeFolder.location;
+    }
+
+    folder: location
+    // Not there yet: stop watching the working directory it fell back to
+    // (a rescan after a generation or an install picks the folder up)
+    Component.onCompleted: if (String(folder) !== String(location))
+      folder = ""
     nameFilters: ["*.json"]
     showDirs: false
-    onStatusChanged: if (status === FolderListModel.Ready && count > 0) {
-      root._stockThemes = root._readThemes(root._defaultThemeLoader, "");
+    onStatusChanged: if (status === FolderListModel.Ready && count > 0 && String(folder) === String(themeFolder.location)) {
+      themeFolder.themes = root._readThemes(themeFolder, themeFolder.prefix);
       root._rebuildFamilies();
+    }
+    // Its last theme deleted, or the folder rescanned empty, the count
+    // drops to 0 with no Ready after it; a rescan drops it to 0 too, just
+    // before the rows come back
+    onCountChanged: if (count === 0 && themeFolder.themes.length > 0)
+      themeFolder._emptied.restart()
+    property Timer _emptied: Timer {
+      interval: 1000
+      onTriggered: if (themeFolder.count === 0 && themeFolder.themes.length > 0) {
+        themeFolder.themes = [];
+        root._rebuildFamilies();
+      }
     }
   }
 
-  property FolderListModel _generatedThemeLoader: FolderListModel {
-    nameFilters: ["*.json"]
-    showDirs: false
-    onStatusChanged: if (status === FolderListModel.Ready && count > 0) {
-      root._generatedThemes = root._readThemes(root._generatedThemeLoader, "generated/");
-      root._rebuildFamilies();
-    }
+  property ThemeFolder _stockFolder: ThemeFolder {
+    path: Paths.themePath
+    prefix: ""
   }
-
-  property FolderListModel _communityThemeLoader: FolderListModel {
-    nameFilters: ["*.json"]
-    showDirs: false
-    onStatusChanged: if (status === FolderListModel.Ready && count > 0) {
-      root._communityThemes = root._readThemes(root._communityThemeLoader, "community/");
-      root._rebuildFamilies();
-    }
-    // Its last palette deleted, the count drops to 0 with no Ready after
-    // it; a rescan drops it to 0 too, just before the rows come back
-    onCountChanged: if (count === 0 && root._communityThemes.length > 0)
-      root._communityEmptied.restart()
+  property ThemeFolder _generatedFolder: ThemeFolder {
+    path: Paths.generatedThemesPath
+    prefix: "generated/"
   }
-
-  // An emptied community folder, believed once it stays empty
-  property Timer _communityEmptied: Timer {
-    interval: 1000
-    onTriggered: if (root._communityThemeLoader.count === 0 && root._communityThemes.length > 0) {
-      root._communityThemes = [];
-      root._rebuildFamilies();
-    }
+  property ThemeFolder _communityFolder: ThemeFolder {
+    path: Paths.communityThemesPath
+    prefix: "community/"
   }
 
   // Keybind action darkMode: the current theme's dark variant on (enable)

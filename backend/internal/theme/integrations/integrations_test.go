@@ -227,6 +227,7 @@ func TestSpliceNcspot(t *testing.T) {
 		{"replaces the last colors", "[theme]\n" + NcspotBegin + "\nold = 1\n" + NcspotEnd + "\n", "[theme]\n" + NcspotBegin + "\n" + colors + NcspotEnd + "\n", nil, true},
 		{"no markers", "[theme]\n", "", nil, false},
 		{"markers outside [theme]", "[other]\n" + markers, "", nil, false},
+		{"the end before the begin", "[theme]\nbackground = \"x\"\n" + NcspotEnd + "\n" + NcspotBegin + "\n\n[keybindings]\n\"q\" = \"quit\"\n", "", nil, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

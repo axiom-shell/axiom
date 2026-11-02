@@ -48,9 +48,6 @@ func Generate(wallpaper, dir string, now time.Time) ([]string, error) {
 	if err != nil {
 		return nil, axerr.Wrap(axerr.BadRequest, err, "can't read the wallpaper")
 	}
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		path = resolved
-	}
 	f, err := os.Open(path)
 	if err != nil {
 		kind := axerr.Unavailable

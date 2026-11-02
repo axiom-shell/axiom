@@ -1816,7 +1816,6 @@
     "Writes the \"axiom\" theme. Helix 23.10+ reloads it.": "\"axiom\" テーマを書き込みます。Helix 23.10 以降は自動で再読み込みします。",
     "In ~/.config/k9s/config.yaml, merged into its k9s: section.": "~/.config/k9s/config.yaml の k9s: セクションに統合してください。",
     "Neovim has no single line to add. Its colors come from colorscheme plugins your config loads, often lazily through a plugin manager and after init.lua has run, so a file read at startup would be overridden. axiom writes the theme to $XDG_STATE_HOME/axiom/nvim-theme.json; the axiom_theme module reads it, picks a colorscheme you map to it (or builds one from the palette) and reloads when the theme changes. Copy the module into your config, then call its setup() once your plugins are loaded.": "Neovim には追加するだけの一行がありません。配色は設定が読み込むカラースキームのプラグインから来ており、多くはプラグインマネージャーによって init.lua の実行後に遅延読み込みされるため、起動時に読むファイルは上書きされてしまいます。axiom はテーマを $XDG_STATE_HOME/axiom/nvim-theme.json に書き込み、axiom_theme モジュールがそれを読んで対応付けたカラースキームを選び（またはパレットから作成し）、テーマが変わると再読み込みします。モジュールを設定にコピーし、プラグインの読み込み後に setup() を呼んでください。",
-    "Writes kitty/axiom.conf. Reloads kitty when allow_remote_control is on.": "kitty/axiom.conf を書き込みます。allow_remote_control が有効なら kitty を再読み込みします。",
     "Writes cava/colors/axiom.conf (and a Cava config including it, when there is none). Reloads running Cava.": "cava/colors/axiom.conf を書き込みます（Cava の設定がなければ、それを読み込む設定も作成します）。起動中の Cava を再読み込みします。",
     "Writes the \"axiom\" color scheme. WezTerm picks it up on its next config reload.": "\"axiom\" 配色を書き込みます。WezTerm は次の設定再読み込みで反映します。",
     "This sets LG_CONFIG_FILE, which takes the place of any value you set yourself: add your own files to it.": "LG_CONFIG_FILE を設定するため、自分で設定した値は置き換えられます。自分のファイルも追加してください。",
@@ -3715,6 +3714,7 @@
     "The power menu: lock, suspend, hibernate, log out, restart and shut down, opened by the power button, a keybind or `axiom ipc powermenu toggle`.": "",
     "Log out, restart and shut down ask for a second click (or Enter) first.": "",
     "Couldn't check for updates: {0}": "",
-    "Couldn't load the weather: {0}": ""
+    "Couldn't load the weather: {0}": "",
+    "Writes kitty/axiom.conf. Reloads running kitty.": ""
   }
 }
