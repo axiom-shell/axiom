@@ -201,9 +201,10 @@ func (d *Daemon) upgradeTarget(ctx context.Context, want int) (exe string, start
 }
 
 // binaryProtocol is the protocol the axiom binary at exe speaks (0: it
-// didn't say).
+// didn't say). A hello dropped meanwhile doesn't cut it short: the
+// answer is remembered (upgradesTried) for every later hello.
 func binaryProtocol(ctx context.Context, exe string) int {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, exe, "version", "--json").Output()
 	var info struct {
