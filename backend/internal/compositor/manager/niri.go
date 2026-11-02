@@ -80,7 +80,7 @@ func (w *niriWriter) problems(in Inputs) problems {
 	p := problems{
 		NotIncluded: `Compositor mode is "included", but your niri config doesn't include ` + f.IncludePath + "; add at its end:\n" + f.IncludeLines,
 		NotManaged:  `Compositor mode is "managed", but ` + f.ManagedPath + " isn't loaded",
-		Failed:      "niri couldn't load its config (see niri's log, or run `niri validate`), so it still runs the one before.",
+		Failed:      "niri couldn't load its config (see niri's log, or run `niri validate`), so it runs the config it had before (at its start, its defaults).",
 		Invalid: func(err string) string {
 			return "niri refuses the config axiom made, so it wasn't written (a raw bind?):\n" + err
 		},

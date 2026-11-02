@@ -806,3 +806,29 @@ func TestAFailedTakeoverCheckForgetsTheLastAnswer(t *testing.T) {
 		t.Fatalf("managedCheck %v after a failed check", got)
 	}
 }
+
+// niri's state as its event stream starts can come after the first apply
+// (the stream connects on its own): a config niri couldn't load at its
+// start is said then, and the module the apply found reads as not loaded
+func TestNiriFailedAtItsStartIsSaidAfterTheFirstApply(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	env := map[string]string{"NIRI_SOCKET": filepath.Join(dir, "niri.sock"), "XDG_RUNTIME_DIR": dir}
+	m := New(Options{
+		Getenv:      func(k string) string { return env[k] },
+		StateDir:    filepath.Join(dir, "state"),
+		RuntimeFile: filepath.Join(dir, "run", "compositor.json"),
+		Log:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	m.in = Inputs{jsonx.Obj("kind", "niri")}
+	m.mode, m.loaded = "included", true
+	// A later stream's state that didn't fail changes nothing
+	m.configReloaded(context.Background(), ipc.Reload{Initial: true})
+	if !m.loaded || m.problem != "" {
+		t.Fatalf("loaded %v, problem %q after a state that didn't fail", m.loaded, m.problem)
+	}
+	m.configReloaded(context.Background(), ipc.Reload{Initial: true, Failed: true})
+	if want := m.w.problems(m.in).Failed; m.loaded || m.problem != want {
+		t.Fatalf("loaded %v, problem %q; want the failure said", m.loaded, m.problem)
+	}
+}
