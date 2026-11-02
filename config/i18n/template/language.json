@@ -3348,7 +3348,7 @@
     "Writes cava/colors/axiom.conf (and a Cava config including it, when there is none). Reloads running Cava.": "",
     "Writes chrome/axiom.css into every profile of Firefox and its forks (LibreWolf, Zen, Floorp, Waterfox; Flatpak too), recoloring the browser's tabs, toolbars, menus and sidebar. Applies from each browser's next start; websites only follow light/dark.": "",
     "Writes foot/axiom.ini. Applies to new windows.": "",
-    "Writes kitty/axiom.conf. Reloads kitty when allow_remote_control is on.": "",
+    "Writes kitty/axiom.conf. Reloads running kitty.": "",
     "Writes lazygit/axiom.yml. Applies from lazygit's next start.": "",
     "Writes the \"Axiom\" theme, which follows light/dark. Zed reloads it.": "",
     "Writes the \"axiom\" color scheme. WezTerm picks it up on its next config reload.": "",

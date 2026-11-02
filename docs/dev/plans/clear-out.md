@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02 and core-ui-theming-03 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03 and core-ui-theming-04 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -71,7 +71,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 23 | platform-08 | minor-sweep | Done: Security: the session actions | 1 | ~60 | platform-02 | Q4 |
 | 24 | core-ui-theming-02 | major | Done: Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
 | 25 | core-ui-theming-03 | major | Done: Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
-| 26 | core-ui-theming-04 | major | Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
+| 26 | core-ui-theming-04 | major | Done: Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
 | 27 | core-ui-theming-05 | major | ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
 | 28 | core-ui-theming-06 | minor-sweep | ui-kit shared pieces | 4 | ~250 touched (~-100 net) | core-ui-theming-05 |  |
 | 29 | core-ui-theming-07 | minor-sweep | Core services, theming and theme integrations | 4 | ~60 | core-ui-theming-04 |  |
@@ -300,12 +300,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A weather fetch that fails shows Loading forever
   - A Wayland protocol error leaves every client claiming its protocol
   - The Updates popout's package list is frozen at opening
-- **core-ui-theming-04** (5):
+- **core-ui-theming-04** (5, done):
   - Rescanning the theme folders lists the shell's working directory as themes
   - A generated theme from a wallpaper reached through a symlink is regenerated at every start
   - A theme generated from another monitor's wallpaper is replaced by the primary's at the next start
-  - [ncspot's splice keeps nothing after a begin marker that follows the end marker](../issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
-  - [Kitty reloads only when its socket is /tmp/kitty-*](../issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
+  - ncspot's splice keeps nothing after a begin marker that follows the end marker
+  - Kitty reloads only when its socket is /tmp/kitty-*
 - **core-ui-theming-05** (3):
   - [Icons.overrides never reaches window icons](../issues.md#iconsoverrides-never-reaches-window-icons)
   - [A cancelled rename's typed text comes back in the notes and chat rename fields](../issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)

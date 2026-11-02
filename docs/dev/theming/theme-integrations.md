@@ -29,7 +29,7 @@ How axiom themes other apps: the daemon writes each app's own `axiom.*` file, an
 - `theme.Integrator` (`integrate.go`) renders and writes each file atomically (`fsx.WriteFile`: a symlink is written through and kept), and `effects.go` does the rest per key: reshaping a file for the installed app (foot), keeping the app's own files in step (ncspot, kdeglobals), warnings, and telling running apps. Only the daemon's `Live` integrator tells apps; tests never do.
 - Each writes only its own `axiom.*` file (a test checks every path of the table).
 - A missing main config may be created with the hookup (`IfMissing`: cava's config, GTK's `gtk.css`). One that exists is never touched.
-- Reloads (live only): cava (`SIGUSR2`), Ghostty 1.2+ (`SIGUSR2`), Helix 23.10+ (`SIGUSR1`; older versions die of the signal, so the version is asked first), kitty over its remote-control sockets, Neovim over its RPC sockets, ncspot's socket, zathura over D-Bus (`SourceConfig` on each `org.pwmt.zathura.PID-*` name), KDE apps (`notifyChange`), GTK's light/dark through `gsettings` (`color-scheme`, and `gtk-theme` between `adw-gtk3` and `adw-gtk3-dark` when it's one of them), bat's theme cache (`bat cache --build`). Signals go to this user's processes of that name (`/proc`, as `pkill -x`).
+- Reloads (live only): cava (`SIGUSR2`), Ghostty 1.2+ (`SIGUSR2`), Helix 23.10+ and kitty 0.24+ (`SIGUSR1`; older versions die of the signal, so the version is asked first), Neovim over its RPC sockets, ncspot's socket, zathura over D-Bus (`SourceConfig` on each `org.pwmt.zathura.PID-*` name), KDE apps (`notifyChange`), GTK's light/dark through `gsettings` (`color-scheme`, and `gtk-theme` between `adw-gtk3` and `adw-gtk3-dark` when it's one of them), bat's theme cache (`bat cache --build`). Signals go to this user's processes of that name (`/proc`, as `pkill -x`).
 - foot: the template is foot 1.20's `[colors]`; a foot accepting `[colors-dark]`/`[colors-light]` (1.28 rejects `[colors]`) gets the theme in both, an older one its cursor in `[cursor]` (asked of the installed foot with `--check-config`).
 
 ### Changes from the scripts (2026-10)
@@ -38,7 +38,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - An app that isn't installed no longer fails its integration: the file is written anyway (an app installed later finds it), and only the reload needs the app.
 - JSON files (VS Code, Zed, Neovim) are rendered from templates or Go, so their whitespace and key order differ (Neovim's maps are sorted); their content is the same.
 - Firefox's profiles are read by the daemon from the schema's `x-profiles`, no longer through the hookup script's `profiles` action (that action went).
-- The scripts' progress lines are gone (how many kitty and Neovim instances reloaded goes to the daemon's log at info); only problems reach the shell.
+- The scripts' progress lines are gone (how many Neovim instances reloaded goes to the daemon's log at info); only problems reach the shell.
 
 ### Changes from the hookup script (2026-10)
 `integration_hookup.py` was ported to Go as well. On purpose:
@@ -60,7 +60,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 ### ncspot (an exception)
 - ncspot can't include a file, so its integration writes `$XDG_STATE_HOME/axiom/ncspot-theme.toml`.
 - It copies that between the two marker lines its Apply put in `config.toml`'s `[theme]` (`integrations.SpliceNcspot`; `x-hookupNote` says so; a test checks the markers are the hookup's text).
-- It leaves out keys the user sets in `[theme]` outside the markers. With no markers it only warns.
+- It leaves out keys the user sets in `[theme]` outside the markers. With no markers, or the end before the begin (an Apply that put back a deleted begin line after the end), it only warns.
 - It edits the file a symlink points at (only a warning when the user can't write it, e.g. a `/nix/store` link), rewrites only on a change, and sends `reload` to ncspot's socket.
 
 ### Neovim

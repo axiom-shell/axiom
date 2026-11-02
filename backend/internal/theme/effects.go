@@ -40,7 +40,9 @@ var effects = map[string]effect{
 		}
 		r.signalFrom(cmd, "23.10", syscall.SIGUSR1, "hx", "helix")
 	})},
-	"kitty":   {after: live(reloadKitty)},
+	// kitty rereads its whole config on SIGUSR1: no remote control or
+	// socket needed
+	"kitty":   {after: live(func(r *run) { r.signalFrom("kitty", "0.24", syscall.SIGUSR1, "kitty") })},
 	"ncspot":  {after: ncspot},
 	"nvim":    {after: live(reloadNvim)},
 	"qt":      {after: kde},
@@ -248,21 +250,6 @@ func sockets(pattern string) []string {
 		}
 	}
 	return out
-}
-
-// reloadKitty: every kitty allowing remote control takes the colors.
-func reloadKitty(r *run) {
-	if !r.has("kitty") {
-		return
-	}
-	file := filepath.Join(r.dirs.Config, "kitty", "axiom.conf")
-	reloaded := 0
-	for _, s := range sockets("/tmp/kitty-*") {
-		if _, err := r.output("kitty", "@", "--to", "unix:"+s, "set-colors", "--all", "--configured", file); err == nil {
-			reloaded++
-		}
-	}
-	r.opts.Log.Info("kitty: reloaded the instances allowing remote control", "count", reloaded)
 }
 
 // reloadNvim: every Neovim with the axiom_theme module reloads it.

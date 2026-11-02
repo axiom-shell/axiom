@@ -311,9 +311,23 @@ func TestVersionAtLeast(t *testing.T) {
 	for _, tt := range []struct {
 		have, want string
 		ok         bool
-	}{{"1.2", "1.2", true}, {"1.10.1", "1.2", true}, {"1.1.9", "1.2", false}, {"25.01.1", "23.10", true}, {"23.05", "23.10", false}} {
+	}{{"1.2", "1.2", true}, {"1.10.1", "1.2", true}, {"1.1.9", "1.2", false}, {"25.01.1", "23.10", true}, {"23.05", "23.10", false}, {"0.39.1", "0.24", true}, {"0.23.1", "0.24", false}} {
 		if versionAtLeast(tt.have, tt.want) != tt.ok {
 			t.Errorf("%s >= %s", tt.have, tt.want)
+		}
+	}
+}
+
+// The --version lines signalFrom reads
+func TestVersionOf(t *testing.T) {
+	t.Parallel()
+	for out, want := range map[string]string{
+		"kitty 0.39.1 created by Kovid Goyal\n":          "0.39.1",
+		"Ghostty 1.2.0\n\nVersion\n  - version: 1.2.0\n": "1.2.0",
+		"helix 25.01.1 (e7ac2fcd)\n":                     "25.01.1",
+	} {
+		if m := versionOf.FindStringSubmatch(out); m == nil || m[1] != want {
+			t.Errorf("%q: %v, want %s", out, m, want)
 		}
 	}
 }

@@ -470,8 +470,6 @@ Found by the audits:
 - [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
 - [ActionTile and ActionPill carry the same countdown bar](issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
 - [StyledTextEntry and StyledTextArea carry the same blinking cursor](issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
-- [ncspot's splice keeps nothing after a begin marker that follows the end marker](issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
-- [Kitty reloads only when its socket is /tmp/kitty-*](issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)

@@ -23,10 +23,11 @@ var (
 
 // SpliceNcspot puts the rendered colors between the markers in ncspot's
 // config, leaving out the keys its [theme] sets outside them (own, which
-// win). ok is false when the markers aren't there, once each, in [theme].
+// win). ok is false when the markers aren't there, once each, in [theme],
+// the begin first (an end before it would leave every later line out).
 func SpliceNcspot(config, colors []byte) (out []byte, own []string, ok bool) {
 	lines := splitLines(config)
-	section, inside, markers, inTheme := "", false, 0, 0
+	section, inside, ordered, markers, inTheme := "", false, false, 0, 0
 	for _, line := range lines {
 		if m := tomlSection.FindStringSubmatch(line); m != nil {
 			section = m[1]
@@ -39,6 +40,7 @@ func SpliceNcspot(config, colors []byte) (out []byte, own []string, ok bool) {
 			inside = true
 			markers++
 		case line == NcspotEnd:
+			ordered = inside
 			inside = false
 			markers++
 		case !inside && section == "theme":
@@ -47,7 +49,7 @@ func SpliceNcspot(config, colors []byte) (out []byte, own []string, ok bool) {
 			}
 		}
 	}
-	if markers != 2 || inTheme != 1 {
+	if markers != 2 || inTheme != 1 || !ordered {
 		return nil, nil, false
 	}
 	var b strings.Builder
