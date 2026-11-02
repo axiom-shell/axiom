@@ -115,19 +115,22 @@ Item {
       }
     }
 
+    // `released` goes out before the drag ends, so a user pushing the
+    // released value in has done so when the slider goes back to showing
+    // `value`, and it doesn't snap back to the old one first
     onReleased: {
       if (isDragging) {
         dragValue = ratioAt(mouseX);
-        isDragging = false;
         root.released(dragValue);
+        isDragging = false;
       }
     }
 
     // Still ends the drag where it got to, so the value is committed
     onCanceled: {
       if (isDragging) {
-        isDragging = false;
         root.released(dragValue);
+        isDragging = false;
       }
     }
   }

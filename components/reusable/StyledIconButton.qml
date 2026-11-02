@@ -15,7 +15,7 @@ ToolButton {
   property string iconText: ""
   property string tooltipText: ""
   // A square of this side that doesn't stretch in layouts
-  property real size: Widget.iconButton
+  property int size: Widget.iconButton
 
   // -- Configurable Appearance --
   property int iconSize: Appearance.fontSize
