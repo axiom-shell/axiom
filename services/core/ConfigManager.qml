@@ -232,9 +232,11 @@ QtObject {
         BackendManager.call("config.ackFirstRun", null, null);
       }
       // A re-exec'd axiom that couldn't load the file (an older dev build)
-      // runs on the defaults: keep the config read before, as the message
-      // says, until it leaves them (_applyState: a fix or a restore)
-      if (state.defaults && root._revision >= 0) {
+      // runs on the defaults: keep the config read before (or, after a
+      // QML reload, the snapshot, which such a re-exec leaves as it was),
+      // as the message says, until it leaves them (_applyState: a fix or
+      // a restore). At a start on the defaults the snapshot is them
+      if (state.defaults) {
         root._revision = state.revision;
         root._kept = true;
         return;

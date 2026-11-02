@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -78,10 +79,11 @@ func connect(ctx context.Context, e *Env) (*rpc.Conn, daemon.HelloResult, error)
 // is the answer.
 const devCLIEnv = "AXIOM_DEV_CLI"
 
-// procExe is the binary process pid runs ("" when unknown).
+// procExe is the binary process pid runs ("" when unknown), also once a
+// newer build replaced its file (a build the source changed under).
 var procExe = func(pid int) string {
 	exe, _ := os.Readlink("/proc/" + strconv.Itoa(pid) + "/exe")
-	return exe
+	return strings.TrimSuffix(exe, " (deleted)")
 }
 
 // devBinary is dev mode's build, to run this command with when the daemon

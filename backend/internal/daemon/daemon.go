@@ -251,8 +251,13 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 	defer d.store.Close()
-	if err := d.writeSnapshot(); err != nil {
-		return err
+	// A re-exec that comes up on the defaults (an older dev build refusing
+	// a newer file) leaves the snapshot of before: a QML reload keeps the
+	// config the shell had running, as ConfigManager does on the hello
+	if _, st := d.store.Config(); h == nil || !st.Defaults {
+		if err := d.writeSnapshot(); err != nil {
+			return err
+		}
 	}
 
 	if listener == nil {
