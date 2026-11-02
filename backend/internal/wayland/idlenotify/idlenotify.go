@@ -200,6 +200,19 @@ func (n *Notifier) Removed(name uint32) {
 // Ready (client.Client)
 func (n *Notifier) Ready() { n.changed() }
 
+// Stop forgets the notifier of a connection that failed (a protocol
+// error closes it with no global removed), so Available reads false; it
+// sends nothing, the connection being closed.
+func (n *Notifier) Stop() {
+	n.mu.Lock()
+	n.manager, n.global = 0, 0
+	for w := range n.watches {
+		w.obj = 0
+	}
+	n.mu.Unlock()
+	n.changed()
+}
+
 func (n *Notifier) changed() {
 	if n.opts.OnChange != nil {
 		n.opts.OnChange()

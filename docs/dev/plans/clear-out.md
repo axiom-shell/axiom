@@ -298,7 +298,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **core-ui-theming-03** (4): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
   - [A failed update check shows as up to date](../issues.md#a-failed-update-check-shows-as-up-to-date)
   - [A weather fetch that fails shows Loading forever](../issues.md#a-weather-fetch-that-fails-shows-loading-forever)
-  - [A Wayland protocol error leaves every client claiming its protocol](../issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
+  - A Wayland protocol error leaves every client claiming its protocol
   - [The Updates popout's package list is frozen at opening](../issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
 - **core-ui-theming-04** (5):
   - [Rescanning the theme folders lists the shell's working directory as themes](../issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)

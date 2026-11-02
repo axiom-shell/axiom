@@ -9,6 +9,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/client"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/seat"
+	"github.com/axiom-shell/axiom/backend/internal/wayland/wire"
 	"github.com/axiom-shell/axiom/backend/internal/wayland/wire/wiretest"
 )
 
@@ -146,5 +147,35 @@ func TestWatchBeforeTheConnection(t *testing.T) {
 	t.Cleanup(func() { cancel(); <-done })
 	if r := next(t, f.requests); r.timeout != 60000 {
 		t.Errorf("got %+v", r)
+	}
+}
+
+// A protocol error ends the connection with no global removed: Stop
+// (followCompositor's) drops the notifier, and says so
+func TestStopAfterTheConnectionFails(t *testing.T) {
+	t.Parallel()
+	f := newFake(t, 2)
+	st := seat.New()
+	changes := make(chan struct{}, 8)
+	n := New(Options{Seat: st, OnChange: func() { changes <- struct{}{} }})
+	n.Watch(time.Minute, true, func() {}, func() {})
+	done := make(chan error, 1)
+	go func() { done <- client.Run(context.Background(), f.Socket, st, n) }()
+	next(t, f.requests)
+	// wl_display.error(object, code, message)
+	f.Send(1, 0, wire.Uint(2), wire.Uint(0), wire.String("bad request"))
+	if err := next(t, done); err == nil {
+		t.Fatal("Run returned nil")
+	}
+	for len(changes) > 0 {
+		<-changes
+	}
+	if !n.Available() {
+		t.Fatal("not available before Stop")
+	}
+	n.Stop()
+	next(t, changes)
+	if n.Available() {
+		t.Error("still available after the connection failed")
 	}
 }

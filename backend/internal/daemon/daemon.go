@@ -443,6 +443,10 @@ func (d *Daemon) followCompositor(ctx context.Context, socket string) {
 	// Unavailable: no compositor to connect to, nor to watch
 	if err != nil && !errors.Is(err, wire.ErrGone) && axerr.KindOf(err) != axerr.Unavailable {
 		log.Warn("the Wayland connection failed: monitors aren't known", "err", err)
+		// Nothing on it works any more: what it offered reads off, so
+		// the shell falls back and Idle sees no notifier
+		d.idleNotifier.Stop()
+		d.wayland.Failed()
 		err = wire.Watch(ctx, socket)
 	}
 	if errors.Is(err, wire.ErrGone) {

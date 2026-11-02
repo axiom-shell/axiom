@@ -4,7 +4,7 @@ reviewed: 47db042 2026-11-01  (full)
 The D-Bus and Wayland wire layers are sound (spec limits enforced, fuzzed without a panic, descriptors closed on every path). The open problem is the shared Wayland connection's failure path: a protocol error leaves every client claiming its protocol.
 
 ## Open findings
-- Major: [A Wayland protocol error leaves every client claiming its protocol](../../docs/dev/issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
+- Major: "A Wayland protocol error leaves every client claiming its protocol" (fixed, row 20 core-ui-theming-03)
 - Cleanup: "Three Wayland client members nothing in the daemon calls" (fixed, row 20 core-ui-theming-01)
 - Minor: A call abandoned on its deadline can leak its reply's descriptors: `backend/internal/dbus/conn.go:298` (`Conn.Call`); a reply buffered in the call's channel as ctx ends is never closed. Fix: after `c.forget(serial)`, drain `ch` and `Close` it.
 - Minor: dbus.md's intro lists only idle and brightness as users; nmvpn, filepicker and theme/effects.go also dial the bus.
