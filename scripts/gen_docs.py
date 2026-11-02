@@ -234,11 +234,13 @@ class Usage:
     def missing(self, readers):
         """`Reader.name` reads of a member the reader lacks (`undefined` at
         runtime, which qmllint can't see on a singleton), outside strings and
-        block comments, where a config path (`"Idle.lock.timeout"`) isn't one."""
+        block comments, where a config path (`"Idle.lock.timeout"`) isn't one;
+        a template's `${…}` parts are code, so they stay."""
         quoted = re.compile(r"""/\*.*?\*/|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`""", re.S)
+        code = lambda m: " ".join(re.findall(r"\$\{([^{}]*)\}", m.group(0))) if m.group(0)[0] == "`" else '""'
         ref = re.compile(r"(?<!\w)(?<![\w)\]]\.)([A-Z]\w*)\.(\w+)")
         return sorted(f"{f}: {r}.{n}" for f, text in self.files.items()
-                      for r, n in set(ref.findall(quoted.sub('""', text)))
+                      for r, n in set(ref.findall(quoted.sub(code, text)))
                       if r in readers and n not in readers[r]["members"])
 
 

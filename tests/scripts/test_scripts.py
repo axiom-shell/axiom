@@ -365,8 +365,8 @@ class ConfigUsage(unittest.TestCase):
         # block comment isn't a read
         from gen_docs import Usage
         usage = Usage()
-        usage.files = {"a.qml": 'f(R.x, R.gone)\n/* R.prose */\nset("R.path", `R.tpl`)'}
-        self.assertEqual(usage.missing({"R": {"members": {"x": {}}}}), ["a.qml: R.gone"])
+        usage.files = {"a.qml": 'f(R.x, R.gone)\n/* R.prose */\nset("R.path", `R.tpl ${R.inTpl}`)'}
+        self.assertEqual(usage.missing({"R": {"members": {"x": {}}}}), ["a.qml: R.gone", "a.qml: R.inTpl"])
 
     def test_ratchet(self):
         from gen_docs import ratchet_problems
