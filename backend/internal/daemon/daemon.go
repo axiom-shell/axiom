@@ -112,8 +112,12 @@ type Daemon struct {
 	// (they differ while dev mode runs its own build)
 	executable string
 	installed  string
-	instance   *fsx.Lock
-	listener   net.Listener
+	// upgradesTried: the binaries (path, inode, time) a newer client's
+	// hello already re-exec'd into or found wanting, never tried again
+	upgradeMu     sync.Mutex
+	upgradesTried map[string]bool
+	instance      *fsx.Lock
+	listener      net.Listener
 
 	store     *store.Store
 	saved     *saved.Service

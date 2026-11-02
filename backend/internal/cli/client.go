@@ -47,12 +47,31 @@ func socketPath(e *Env) (string, error) {
 	return "", axerr.New(axerr.BadRequest, "axiom runs on several displays: pick one with --socket or $WAYLAND_DISPLAY")
 }
 
-// connect dials the daemon and says hello.
+// connect dials the daemon and says hello, once more when the daemon
+// answers it's restarting (into a binary that speaks this protocol).
 func connect(ctx context.Context, e *Env) (*rpc.Conn, daemon.HelloResult, error) {
 	path, err := socketPath(e)
 	if err != nil {
 		return nil, daemon.HelloResult{}, err
 	}
+	c, hello, err := greet(ctx, e, path)
+	if axerr.KindOf(err) == axerr.Unavailable && strings.Contains(err.Error(), "restarting") {
+		select {
+		case <-time.After(restartWait):
+		case <-ctx.Done():
+			return nil, daemon.HelloResult{}, ctx.Err()
+		}
+		c, hello, err = greet(ctx, e, path)
+	}
+	return c, hello, err
+}
+
+// restartWait is how long a daemon restarting into a newer binary is
+// given before the hello is said again (its re-exec and start).
+const restartWait = time.Second
+
+// greet dials the daemon at path and says hello.
+func greet(ctx context.Context, e *Env, path string) (*rpc.Conn, daemon.HelloResult, error) {
 	dctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	c, err := rpc.Dial(dctx, path, nil, nil)

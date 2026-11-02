@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -167,4 +168,38 @@ func TestProtocolRefusalRunsTheDevBuild(t *testing.T) {
 	if ran, err := run(state); ran != "" || axerr.KindOf(err) != axerr.Incompatible {
 		t.Errorf("already the dev build: ran %q, %v", ran, err)
 	}
+}
+
+// A daemon restarting into a binary that speaks this protocol is greeted
+// again once it's back.
+func TestHelloAgainAfterTheDaemonRestarts(t *testing.T) {
+	t.Parallel()
+	dir, err := os.MkdirTemp("", "ax") // short: a sockaddr_un
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	sock := filepath.Join(dir, "s.sock")
+	ln, err := rpc.Listen(sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := rpc.NewRegistry()
+	var hellos atomic.Int32
+	rpc.Handle(reg, "daemon.hello", func(context.Context, *rpc.Conn, daemon.HelloParams) (daemon.HelloResult, error) {
+		if hellos.Add(1) == 1 {
+			return daemon.HelloResult{}, axerr.New(axerr.Unavailable, "axiom is restarting into the newer binary /x: try again")
+		}
+		return daemon.HelloResult{Version: "new"}, nil
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go (&rpc.Server{Registry: reg}).Serve(ctx, ln)
+	e := &Env{Getenv: func(string) string { return "" }}
+	e.Globals.Socket = sock
+	c, hello, err := connect(ctx, e)
+	if err != nil || hello.Version != "new" || hellos.Load() != 2 {
+		t.Fatalf("hello %+v, %v after %d hellos", hello, err, hellos.Load())
+	}
+	c.Close()
 }

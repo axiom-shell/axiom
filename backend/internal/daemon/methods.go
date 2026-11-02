@@ -321,6 +321,16 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "daemon.hello", func(ctx context.Context, c *rpc.Conn, p HelloParams) (HelloResult, error) {
 		_, hash := d.currentSchema()
 		if err := p.compatible(hash); err != nil {
+			// A newer client (an update replaced the binary, a dev build
+			// bumped it): this image takes the binary that speaks it
+			if exe := d.upgradeTarget(ctx, p.Protocol); exe != "" {
+				d.opts.Log.Info("a client speaks a newer protocol: re-executing", "protocol", p.Protocol, "binary", exe)
+				d.reexecSoon(exe)
+				return HelloResult{}, axerr.New(axerr.Unavailable, "axiom is restarting into the newer binary %s: try again", exe)
+			}
+			if p.Protocol > buildinfo.Protocol() {
+				return HelloResult{}, axerr.New(axerr.Incompatible, "%s (no axiom binary here speaks protocol %d: update axiom)", err.Error(), p.Protocol)
+			}
 			return HelloResult{}, err
 		}
 		// Only the shell this daemon runs may say it is the shell: it

@@ -1,15 +1,21 @@
 package daemon
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/sys/unix"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
@@ -147,4 +153,68 @@ func (d *Daemon) adopt(h *handoff) (net.Listener, error) {
 		ul.SetUnlinkOnClose(true)
 	}
 	return ln, nil
+}
+
+// upgradeTarget is the binary to re-exec into for a client speaking
+// protocol want, newer than this image's: the dev build (in dev mode),
+// else the installed one, the first that speaks it, and only when the
+// tree's files do too (a stray newer CLI never strands the shell). ""
+// when none does; each binary is tried once.
+func (d *Daemon) upgradeTarget(ctx context.Context, want int) string {
+	if want <= buildinfo.Protocol() || protocolIn(filepath.Join(d.opts.Tree, "config", "json", "backend.json")) != want {
+		return ""
+	}
+	candidates := []string{d.installed}
+	if d.dev.Enabled() {
+		candidates = []string{DevBinary(d.dirs), d.installed}
+	}
+	for _, exe := range candidates {
+		info, err := os.Stat(exe)
+		if err != nil {
+			continue
+		}
+		var inode uint64
+		if st, ok := info.Sys().(*syscall.Stat_t); ok {
+			inode = st.Ino
+		}
+		key := fmt.Sprint(exe, inode, info.ModTime().UnixNano())
+		d.upgradeMu.Lock()
+		tried := d.upgradesTried[key]
+		if d.upgradesTried == nil {
+			d.upgradesTried = map[string]bool{}
+		}
+		d.upgradesTried[key] = true
+		d.upgradeMu.Unlock()
+		if !tried && binaryProtocol(ctx, exe) == want {
+			return exe
+		}
+	}
+	return ""
+}
+
+// binaryProtocol is the protocol the axiom binary at exe speaks (0: it
+// didn't say).
+func binaryProtocol(ctx context.Context, exe string) int {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, exe, "version", "--json").Output()
+	var info struct {
+		Protocol int `json:"protocol"`
+	}
+	if err != nil || json.Unmarshal(out, &info) != nil {
+		return 0
+	}
+	return info.Protocol
+}
+
+// protocolIn is the protocol a backend.json names (0: unreadable).
+func protocolIn(path string) int {
+	data, err := os.ReadFile(path)
+	var file struct {
+		Protocol int `json:"protocol"`
+	}
+	if err != nil || json.Unmarshal(data, &file) != nil {
+		return 0
+	}
+	return file.Protocol
 }
