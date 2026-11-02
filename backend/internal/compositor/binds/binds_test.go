@@ -506,6 +506,55 @@ func TestHyprAFailedRemovalNamesItsSites(t *testing.T) {
 	eq(t, info.Mode().Perm(), os.FileMode(0o640))
 }
 
+// A file that changed since extract keeps whatever call is on a site's
+// line now: here a new first line moves both down one
+func TestHyprRemoveLeavesAStatementItDidntRead(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	binds := "hl.bind(\"SUPER + Y\", hl.dsp.window.close())\nhl.bind(\"SUPER + U\", hl.dsp.window.pin())\n"
+	f.write("binds.lua", binds)
+	found := f.extract()
+	text := "hl.bind(\"SUPER + Z\", hl.dsp.exec_cmd(\"mine\"))\n" + binds
+	f.write("binds.lua", text)
+	done := f.remove(found.Value("sites"))
+	var failed []string
+	for _, e := range list(done, "failed") {
+		failed = append(failed, js(e.Value("line"))+" "+e.Value("reason").(string))
+	}
+	eq(t, strings.Join(failed, ", ")+" "+js(done.Value("removed")), "1 changed, 2 changed 0")
+	eq(t, f.read("binds.lua"), text)
+}
+
+// A helper's hl.bind stays: it also makes binds extract never sees (in a
+// submap or hl.on handler, another branch). Its file's own calls, a loop's
+// too, still move
+func TestHyprABindMadeInAFunctionStays(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("binds.lua", strings.Join([]string{
+		"local function bindx(k, c)",
+		"  hl.bind(k, hl.dsp.exec_cmd(c))",
+		"end",
+		`bindx("SUPER + A", "foo")`,
+		`hl.define_submap("resize", function() bindx("x", "bar") end)`,
+		`for _, k in ipairs({ "B", "C" }) do`,
+		`  hl.bind("SUPER + " .. k, hl.dsp.window.close())`,
+		"end",
+		"",
+	}, "\n"))
+	found := f.extract()
+	var kept []string
+	for _, k := range list(found, "kept") {
+		kept = append(kept, k.Value("key").(string)+" "+k.Value("reason").(string))
+	}
+	eq(t, strings.Join(kept, ", "), "SUPER + A inFunction")
+	eq(t, len(list(found, "binds")), 2)
+	f.remove(found.Value("sites"))
+	text := f.read("binds.lua")
+	eq(t, strings.Contains(text, "hl.bind(k, hl.dsp.exec_cmd(c))"), true)
+	eq(t, strings.Contains(text, "window.close"), false)
+}
+
 // An edit that would leave the file unparsable leaves it alone
 func TestHyprRemoveKeepsAFileThatWouldntParse(t *testing.T) {
 	t.Parallel()

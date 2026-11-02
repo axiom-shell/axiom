@@ -46,12 +46,14 @@
   - every bind it makes must map (a loop makes several)
   - it may use no option axiom's binds lack (`non_consuming`, …)
   - it must be its own statement in a `user/*.lua` file, not in a `user/lib/` module
+  - it must run in the file's main chunk, a top-level loop too, not in a function the file defines (`inFunction`): a helper's `hl.bind` also makes the binds a submap or `hl.on` handler, or a branch not taken, would, which extract never sees
   - any variable it's kept in must be unused.
 
 ### Committing and removing
 1. The daemon saves the binds first (`Keybinds.binds`, through the store; refused while the config is read-only, `saveFailed`). The `compositor.bindsMerged` push lets `KeybindEditor` add them to a dirty draft.
 2. `remove` then deletes those calls, plus any `hl.unbind` of a moved key, its modifiers compared by `render.KeyID` (WIN is SUPER; it would unbind the moved bind too).
    - It first writes a dated `<file>.axiom-backup-<date>` copy, keeping the file's mode.
+   - A site carries its statement's text as extract read it: a call on that line now that differs (the file changed in between) is left (`changed`).
    - It leaves a file alone if the result doesn't parse (`luacheck`: `luac -p` where it's installed, else gopher-lua).
    - A file it can't read, back up or write is failed (`io`) and the others go on, so what was deleted is always known.
 3. Whatever it couldn't delete (`failed`, per file or per call) is taken back out.

@@ -340,8 +340,10 @@ func sortedSites[T any](groups map[siteKey][]T) []siteKey {
 // extractHypr runs user/*.lua for their binds. A bind moves only when every
 // bind its call makes can (a call in a loop makes several), the call is
 // the whole statement, and it's in a user/*.lua file itself (not a shared
-// module). Binds inside submaps or hl.on handlers aren't seen, since those
-// functions never run here.
+// module) and its main chunk. Binds inside submaps or hl.on handlers
+// aren't seen, since those functions never run here: a call in a function
+// (a helper) may make some, so it stays. A site carries its statement's
+// text, so remove leaves one that changed since.
 func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 	files := hyprFiles(o.Dir, o.Only)
 	result := emptyResult()
@@ -366,9 +368,11 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 	}
 	type source struct{ text, code string }
 	texts := map[string]source{}
-	span := func(file string, line int, call string) [2]string {
+	// span is why the call on line can't be taken out, or its statement's
+	// text (what remove finds there again)
+	span := func(file string, line int, call string) ([2]string, string) {
 		if !allowed[file] {
-			return [2]string{"shared", ""}
+			return [2]string{"shared", ""}, ""
 		}
 		src, ok := texts[file]
 		if !ok {
@@ -376,8 +380,8 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 			src = source{string(data), luacheck.CodeOnly(string(data))}
 			texts[file] = src
 		}
-		_, _, reason := statementSpan(src.text, src.code, line, call)
-		return reason
+		start, end, reason := statementSpan(src.text, src.code, line, call)
+		return reason, src.text[start:end]
 	}
 	resolve := func(file string) string {
 		if file == "" {
@@ -397,10 +401,13 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 	for _, k := range sortedSites(sites) {
 		entries := sites[k]
 		made := make([]*jsonx.Object, len(entries))
-		reason := span(k.file, k.line, "hl.bind")
+		reason, text := span(k.file, k.line, "hl.bind")
 		for i, e := range entries {
 			bind, why := toAxiom(e, adopted[k.file])
 			made[i] = bind
+			if e.inFunction {
+				why = [2]string{"inFunction", ""}
+			}
 			if reason[0] == "" && why[0] != "" {
 				reason = why
 			}
@@ -423,7 +430,7 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 			}
 			movedKeys[render.KeyID(e.key)] = true
 		}
-		push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", moved))
+		push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", moved, "text", text))
 		read[k.file] = true
 	}
 
@@ -435,12 +442,12 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 	for _, k := range sortedSites(unbinds) {
 		all := true
 		for _, u := range unbinds[k] {
-			if id := render.KeyID(u.key); id == "" || !movedKeys[id] {
+			if id := render.KeyID(u.key); id == "" || !movedKeys[id] || u.inFunction {
 				all = false
 			}
 		}
-		if all && span(k.file, k.line, "hl.unbind")[0] == "" {
-			push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", jsonx.Arr()))
+		if reason, text := span(k.file, k.line, "hl.unbind"); all && reason[0] == "" {
+			push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", jsonx.Arr(), "text", text))
 			read[k.file] = true
 		}
 	}
@@ -472,10 +479,10 @@ func removeHypr(ctx context.Context, o Options, sites *jsonx.Array) (*jsonx.Obje
 	for _, f := range hyprFiles(o.Dir, "") {
 		allowed[realPath(f)] = true
 	}
-	byFile := map[string][]int{}
+	byFile := map[string][]site{}
 	for _, s := range readSites(sites) {
 		f := realPath(s.file)
-		byFile[f] = append(byFile[f], s.line)
+		byFile[f] = append(byFile[f], s)
 	}
 	files := make([]string, 0, len(byFile))
 	for f := range byFile {
@@ -497,22 +504,23 @@ func removeHypr(ctx context.Context, o Options, sites *jsonx.Array) (*jsonx.Obje
 		}
 		text := string(data)
 		code := luacheck.CodeOnly(text)
-		lines := byFile[file]
-		sort.Ints(lines)
+		fileSites := byFile[file]
+		sort.SliceStable(fileSites, func(i, j int) bool { return fileSites[i].line < fileSites[j].line })
 		type span struct{ start, end int }
 		var spans []span
 		last := -1
-		for _, line := range lines {
-			if line == last {
+		for _, s := range fileSites {
+			if s.line == last {
 				continue
 			}
-			last = line
-			start, end, reason := statementSpan(text, code, line, "hl.bind")
+			last = s.line
+			start, end, reason := statementSpan(text, code, s.line, "hl.bind")
 			if reason[0] != "" {
-				start, end, reason = statementSpan(text, code, line, "hl.unbind")
+				start, end, reason = statementSpan(text, code, s.line, "hl.unbind")
 			}
-			if reason[0] != "" {
-				failed = append(failed, failedEntry(file, line, "changed", ""))
+			// A statement other than the one extract read there is left
+			if reason[0] != "" || (s.hasText && text[start:end] != s.text) {
+				failed = append(failed, failedEntry(file, s.line, "changed", ""))
 				continue
 			}
 			spans = append(spans, span{start, end})
