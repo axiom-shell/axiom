@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.session
+import qs.services.compositor
 import qs.services.system
 import qs.services.apps
 import qs.components.methods
@@ -22,10 +23,12 @@ Loader {
   property var mediaOptions: ({})
 
   // It changed: the user's doing, or (a VPN, a capture, Wi-Fi joining a
-  // network, the charger, a drive) anything's. `card`: shown as its card
-  // (a type in OSDItems.cardTypes: an audio device switched, not its mute;
-  // a VPN came up; an app started a capture; the charger was plugged in;
-  // Wi-Fi joined a network; something done to a drive)
+  // network, the charger, a drive, the battery, a monitor) anything's.
+  // `card`: shown as its card (a type in OSDItems.cardTypes: an audio
+  // device switched, not its mute; a VPN came up; an app started a
+  // capture; the charger was plugged in; Wi-Fi joined a network;
+  // something done to a drive; the battery dropped to low or critical; a
+  // monitor came or went; a screenshot was taken)
   signal fired(bool card)
 
   // What it shows now (OSDItems.tile; a message's is OSDContent's)
@@ -75,6 +78,19 @@ Loader {
     case "recording":
       if (ScreenshotManager.recording)
         ScreenshotManager.stopRecording();
+      break;
+    }
+  }
+
+  // A click on its card (OSDItems.clickableCards): a drive's opens or
+  // unlocks it, a screenshot's opens the picture
+  function activate() {
+    switch (root.type) {
+    case "drive":
+      DrivesManager.activate(DrivesManager.lastEvent);
+      break;
+    case "screenshot":
+      ScreenshotManager.open(ScreenshotManager.lastShot?.path ?? "");
       break;
     }
   }
@@ -172,6 +188,21 @@ Loader {
         "count": DrivesManager.count,
         "event": DrivesManager.lastEvent
       };
+    case "battery":
+      return {
+        "available": BatteryManager.isAvailable,
+        "level": BatteryManager.level,
+        "percent": BatteryManager.percentage,
+        "timeLeft": BatteryManager.timeRemaining
+      };
+    case "monitor":
+      return {
+        "event": MonitorManager.lastEvent
+      };
+    case "screenshot":
+      return {
+        "event": ScreenshotManager.lastShot
+      };
     case "recording":
       return {
         "available": ScreenshotManager.hasRecorder,
@@ -242,6 +273,9 @@ Loader {
       "charger": charger,
       "vpn": vpn,
       "drive": drive,
+      "battery": battery,
+      "monitor": monitor,
+      "screenshot": screenshot,
       "recording": recording,
       "camera": capture,
       "screenShare": capture,
@@ -554,6 +588,53 @@ Loader {
         // drive there at login): its card
         function onLastEventChanged() {
           if (DrivesManager.lastEvent)
+            root._report(true);
+        }
+      }
+    }
+  }
+
+  Component {
+    id: battery
+
+    Item {
+      Connections {
+        target: BatteryManager
+        // The battery dropped to low or critical (levelEvent, set only
+        // when an OSD shows `battery`): its card
+        function onLevelEventChanged() {
+          if (BatteryManager.levelEvent)
+            root._report(true);
+        }
+      }
+    }
+  }
+
+  Component {
+    id: monitor
+
+    Item {
+      Connections {
+        target: MonitorManager
+        // A monitor connected or removed (lastEvent, never one there at
+        // the start): its card
+        function onLastEventChanged() {
+          if (MonitorManager.lastEvent)
+            root._report(true);
+        }
+      }
+    }
+  }
+
+  Component {
+    id: screenshot
+
+    Item {
+      Connections {
+        target: ScreenshotManager
+        // A screenshot taken (lastShot): its card
+        function onLastShotChanged() {
+          if (ScreenshotManager.lastShot)
             root._report(true);
         }
       }

@@ -71,21 +71,16 @@ properties:
     minimum: 250
     maximum: 10000
     description: How long the OSD stays open after the last change.
-  shape:
-    type: string
-    title: Shape with several parts
-    default: stepped
-    enum: [stepped, box]
-    x-enumLabels:
-      stepped: Stepped
-      box: One box
-    x-showIf: {detached: false}
-    description: 'When the bars, the status icons and a card show together, each part is its own size, stepping in with curved corners (the longest by the edge), or all of them share one box as wide as the widest.'
+  openTogether:
+    type: boolean
+    title: Bars and status icons together
+    default: false
+    description: 'A change to a bar or a status icon brings out both. Off, each comes out on its own; while both are out they close together.'
   holdStill:
     type: boolean
     title: Hold still under the mouse
     default: true
-    description: 'While the mouse is on the OSD, a part that comes in goes at the far end, so nothing you''re pointing at moves. Off, it takes its usual place, the longest by the edge.'
+    description: 'While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you''re pointing at moves. Off, they take their usual place, the longer by the edge. A card always goes last.'
   bars:
     type: object
     title: Bars
@@ -182,7 +177,7 @@ properties:
         type: boolean
         title: Detail cards
         default: true
-        description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, something done to a removable drive. Off, they show as their icon like any other change.'
+        description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, the battery running low, a monitor connected or removed, a screenshot taken, something done to a removable drive. Off, they show as their icon like any other change.'
       cardTimeout:
         type: integer
         title: Card timeout
@@ -196,7 +191,7 @@ properties:
         title: Shows
         items:
           type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, recording, camera, micUse, screenShare, message]
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, battery, monitor, recording, screenshot, camera, micUse, screenShare, message]
         x-enumLabels:
           capsLock: Caps Lock
           numLock: Num Lock
@@ -214,7 +209,10 @@ properties:
           vpn: VPN
           drive: Removable drives
           charger: Charger
+          battery: Low battery
+          monitor: Monitors
           recording: Screen recording
+          screenshot: Screenshots
           camera: Camera
           micUse: Microphone in use
           screenShare: Screen sharing
@@ -236,19 +234,22 @@ properties:
           vpn: vpn_key
           drive: usb
           charger: power
+          battery: battery_alert
+          monitor: monitor
           recording: screen_record
+          screenshot: screenshot_monitor
           camera: videocam
           micUse: record_voice_over
           screenShare: screen_share
           message: chat
         default: [capsLock, numLock, keyboardLayout, microphone, audio, dnd, caffeine, nightLight, recording, drive]
-        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (when Removable drives › Show drive events is On the OSD; a click opens the drive, or unlocks an encrypted one). Messages are what `axiom message <icon> <text>` sends.'
+        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (a click opens the drive, or unlocks an encrypted one). Low battery shows one as the battery drops to low and to critical, Monitors one naming a monitor connected or removed and its resolution, and Screenshots one with the picture as one is taken (a click opens it). Removable drives, Low battery, Monitors and Screenshots picked in an OSD show there instead of as notifications. Messages are what `axiom message <icon> <text>` sends.'
       quiet:
         type: array
         title: Without opening the OSD
         items:
           type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, recording, camera, micUse, screenShare, message]
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, battery, monitor, recording, screenshot, camera, micUse, screenShare, message]
         x-enumFrom: items
         x-showIf: {items: {notEmpty: true}}
         x-enumLabels:
@@ -268,7 +269,10 @@ properties:
           vpn: VPN
           drive: Removable drives
           charger: Charger
+          battery: Low battery
+          monitor: Monitors
           recording: Screen recording
+          screenshot: Screenshots
           camera: Camera
           micUse: Microphone in use
           screenShare: Screen sharing
@@ -290,7 +294,10 @@ properties:
           vpn: vpn_key
           drive: usb
           charger: power
+          battery: battery_alert
+          monitor: monitor
           recording: screen_record
+          screenshot: screenshot_monitor
           camera: videocam
           micUse: record_voice_over
           screenShare: screen_share

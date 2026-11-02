@@ -61,12 +61,6 @@
 - **Short of room:** when room runs out (a floating bar owning the corner, its island reaching over the bar it pushes aside), the box moves in. No radius shrinks: fillets and corners are always whole.
 - **Floating bar held clear:** a floating bar held clear of the other bar takes no wall at that end. Its islands, and so its popouts, already keep to the windows there.
 
-### Steps (an OSD's parts)
-- **What:** content in parts stacked out from the edge (`EdgePopout.contentSegments`, from `OSDContent.segments`: each part's length and far side) draws a stepped outline: the box holds the first part, each other one is a step past its far side (`AttachedSurface.steps` → `SurfaceOutline`'s `steps`, `{ along, depth }`), padded as the box is.
-- **Shape:** each step is centred on the box and no longer than the one before (a longer one is cut to it; the OSD lengthens a nearer part instead). A narrower one leaves the face before it with a convex corner and turns into its own wall with a concave fillet, each at most half the room it leaves (`SurfaceOutline._levels`); one as long only carries the walls on. The fill, stroke, footprint, blur region and the blur window's copy (`AttachedSurfaceCopy`) all follow it.
-- **Attached only:** detached, or with a joined end, steps are ignored (the OSD's `shape` is hidden when it's detached). The content runs on past the box (`EdgePopout`'s Loader keeps the content's own depth, from the attach edge).
-- **Input:** the window's mask is still the surface's whole rect, the room beside a narrower step included ([the issue](../issues.md#a-stepped-osd-takes-clicks-beside-its-narrower-parts)).
-
 ### Nudge (submenus)
 - **Why submenus differ:** their "pill" is the parent's box, so `SubPopout` calls `place` with `nudge` set, rather than letting the box grow.
 - **How `nudge` works:** the content moves whichever way is shorter without growing anything. It goes either up to that end, or back far enough for the fillet.
@@ -80,7 +74,7 @@
   - A stretch carries the pill it stands on at rest (`pill`) and its surface's box (`box`). The bar finds the pill by that span when its index has gone stale (`BarLayout.pillIndex`: an end reach's stub came or went before the stretch was sent again), and the box bounds how far a squared end's shadow runs on under the surface (`BarLayout.flushEnds`).
 - **The owner sets the pace; the bar draws what it's sent, as sent.** The bar animates none of it, so a surface and the pill it stands on can't drift apart.
   - A `PillStretch` animates its own `progress` (animFast) and sends its stretch that far out from the pill's own span (`EdgeAttach.progressStretch`).
-  - A stretch changing while it's out (a switch in place, a resize) glides there.
+  - A stretch changing while it's out (a switch in place, a resize) glides there, unless `glides` is off (`EdgePlacement.stretchGlides`). `EdgePopout` turns it off, because its box follows its content's size as it eases (an OSD's length easing): the pill follows the box as sent, not chasing it with an ease of its own.
   - With `tracks`, the stretch follows its surface along a slide by itself and is sent as given.
   - Pushes go at the end of the pass (`Qt.callLater`): what one sends reshapes the pills it reads.
   - The pills' position follows the layout at once.

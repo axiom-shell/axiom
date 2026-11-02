@@ -221,14 +221,21 @@ Singleton {
   // DBus; it comes back through our own server like any other (DND applies).
   // opts: { desktopEntry (see registerHandler), icon (a name or path),
   // actions ([{ id, label }]: buttons on it), onAction (called with the
-  // picked action's id) }. With actions notify-send waits until it's
-  // closed (exec.run has no timeout); a QML reload in between loses
-  // onAction, so the buttons then do nothing
+  // picked action's id), urgency ("critical" for an urgent one), silent
+  // (only filed in the history, as Do Not Disturb keeps one: no popup,
+  // no buttons) }. With actions notify-send waits until it's closed
+  // (exec.run has no timeout); a QML reload in between loses onAction,
+  // so the buttons then do nothing
   function sendNotification(appName, summary, body, opts) {
+    if (opts?.silent === true) {
+      root._file(appName, summary, body, opts.icon ?? "", opts.desktopEntry ?? "");
+      return;
+    }
     const hints = opts?.desktopEntry ? ["-h", "string:desktop-entry:" + opts.desktopEntry] : [];
     const icon = opts?.icon ? ["-i", opts.icon] : [];
+    const urgency = opts?.urgency === "critical" ? ["-u", "critical"] : [];
     const actions = opts?.actions ?? [];
-    const command = ["notify-send", "-a", appName].concat(icon, hints, [].concat(...actions.map(a => ["-A", a.id + "=" + a.label])), ["--", summary, body]);
+    const command = ["notify-send", "-a", appName].concat(icon, urgency, hints, [].concat(...actions.map(a => ["-A", a.id + "=" + a.label])), ["--", summary, body]);
     if (actions.length === 0) {
       CommandManager.runDetached(command);
       return;
@@ -241,7 +248,50 @@ Singleton {
     });
   }
 
+  // An event of an OSD status type (`type`: "drive", "battery",
+  // "monitor", "screenshot") said where OSDConfig.routeOf puts it, with
+  // `notify` its section's switch: on an OSD listing it (the caller shows
+  // its card; filed here without a popup with OSD.cardsToHistory), else
+  // as a notification, else nowhere. An urgent one (opts.urgency
+  // "critical": a critical battery) pops up beside its card too, unless
+  // `notify` is off. Returns the route ("osd", "notification" or "")
+  function announce(type, notify, summary, body, opts) {
+    const route = OSDConfig.routeOf(type, notify);
+    if (route === "notification" || (route === "osd" && notify && opts?.urgency === "critical"))
+      root.sendNotification("axiom", summary, body, opts);
+    else if (route === "osd" && OSDConfig.cardsToHistory)
+      root.sendNotification("axiom", summary, body, Object.assign({}, opts, {
+        "silent": true
+      }));
+    return route;
+  }
+
   // -- Private --
+
+  // Files one in the history with no popup (sendNotification's silent):
+  // no notification behind it, so no buttons; a click goes by its desktop
+  // entry (registerHandler). An icon that's a path is its picture
+  function _file(appName, summary, body, icon, desktopEntry) {
+    const picture = icon.startsWith("/");
+    const entry = {
+      uid: root._newUid(),
+      nid: -1,
+      appName: appName,
+      appIcon: picture ? "" : icon,
+      desktopEntry: desktopEntry,
+      summary: summary,
+      body: body,
+      image: "",
+      urgency: NotificationUrgency.Normal,
+      time: Date.now(),
+      live: false
+    };
+    if (root.ruleFor(entry)?.history === false)
+      return;
+    root._put(entry);
+    if (picture)
+      root._cacheImage(entry.uid, "file://" + icon);
+  }
 
   readonly property var _state: StateManager.createStateHandler("notifications")
   property bool _stateLoaded: false

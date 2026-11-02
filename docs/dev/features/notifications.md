@@ -58,6 +58,8 @@ The D-Bus notification server, its persistent history, the toasts, and do-not-di
   - The attached box blurs as an EdgePopout does.
 - **Test notification:** the settings card's intro (`views/Settings/NotificationsPreview`, its `x-intro`) has a Show button that sends one through `sendNotification`, so it toasts with the settings as edited (readers read the previews), as the OSD and dock cards' Show does.
 - **The shell's own, with buttons:** `sendNotification`'s `opts.actions` (`[{ id, label }]`) become `notify-send -A id=label`, run through `CommandManager.run` (it waits until the notification closes; `exec.run` has no timeout), and `opts.onAction(id)` gets the one clicked from its output. A QML reload while it's up loses the callback, so its buttons then do nothing. The timer's end and caffeine's warning use it (`DeadlineTicker.notify`).
+- **Filed without a popup:** `sendNotification`'s `opts.silent` puts an entry straight into the history (`_file`: no D-Bus notification behind it, so no toast and no buttons; `live` false; a click goes by its desktop entry's `registerHandler`; an icon that's a path is cached as its picture; an app rule's `history` off still keeps it out). `opts.urgency` `critical` sends it urgent (`-u critical`).
+- **Events an OSD may show** (a drive, the battery, a monitor, a screenshot) go through `announce(type, notify, summary, body, opts)`: `OSDConfig.routeOf` picks the OSD's card (filed silently with `OSD.cardsToHistory`), a notification, or nothing, and an urgent one notifies beside its card unless `notify` is off ([OSD](osd.md) › Where events go).
 
 ### Images
 - Cached as PNGs in `$XDG_STATE_HOME/axiom/notifications/`.

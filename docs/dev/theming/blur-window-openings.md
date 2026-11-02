@@ -75,8 +75,10 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
 ### Joins: openings in the border's stroke
 - A surface joined to the border's stroke (`EdgePopout`) publishes the stretch it covers:
   - `SurfaceManager.setBorderOpening`, through a `hosts/popout/BorderOpening`, which takes it back as it goes;
-  - in screen px along the edge; its edge coordinates start at `ScreenEdgeManager.reservedWithMenusOn(startSide)`.
+  - in screen px along the edge; its edge coordinates start at `ScreenEdgeManager.reservedWithMenusOn(startSide)`;
+  - on whole pixels (`StrokeOpening` rounds it through `SurfaceContext.opening`), so a surface easing its size (an OSD's parts) re-sends it once per pixel, not every frame.
 - `BorderPanel` leaves its stroke and the fill of the stroke's row open there (`Utils.subtractSpans`).
+  - It nudges its window (`FrameNudge`) only when its own openings changed: `SurfaceManager.borderOpenings` is a new array whenever any opening on any screen moves.
   - A strip's own offset along its edge (`screenOffset`) is read through `LayerOrigin`. Until then it's taken as half what the edges across it reserve.
 - The same goes for strokes a surface is joined over. An opening is cut whenever surfaces are translucent, blurred or not, so a translucent fill doesn't show a line through it.
 - Pills publish theirs too (`BarContainer.borderOpening`, from the bar's place on screen).

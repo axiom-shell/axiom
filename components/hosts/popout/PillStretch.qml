@@ -86,6 +86,10 @@ QtObject {
   Glide on progress {
     enabled: !root.tracks
   }
+  // Its ends glide to a new stretch once out: off where the surface's box
+  // eases its own size (an edge popout's), so the pill follows it as sent
+  // rather than chasing it with a second ease
+  property bool glides: true
   // The stretch it shows: the one asked for, kept while it draws back
   // after that clears; its ends glide to a new one once out (`_settled`)
   property var _shown: null
@@ -93,10 +97,10 @@ QtObject {
   property real _shownEnd: 0
   readonly property bool _settled: root.progress >= 1 && !root.tracks
   Glide on _shownStart {
-    enabled: root._settled
+    enabled: root._settled && root.glides
   }
   Glide on _shownEnd {
-    enabled: root._settled
+    enabled: root._settled && root.glides
   }
   // A closing surface never moves, so neither does its stretch: one sent
   // while it closes is left out (its content unloading may move its box

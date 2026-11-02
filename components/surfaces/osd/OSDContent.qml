@@ -4,7 +4,6 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.ui
-import qs.services.system
 import qs.components.methods
 import qs.components.reusable
 
@@ -15,12 +14,17 @@ import qs.components.reusable
 // that did ringed), and the card (a status's card, OSDItems.card: an
 // audio device switched, a VPN came up, an app started a capture, the
 // charger was plugged in, Wi-Fi joined a network, a drive event, a
-// message; or the now playing card). They stack out from the edge, the
-// longest nearest it (OSDItems.partOrder), each sliding out from under
-// the one before as it opens and folding back as its time runs out;
-// times ending close together end together (OSDItems.partsDue), the
-// outer parts folding in before the OSD slides away. Every part is built
-// while the OSD is closed, as its items report their own changes.
+// message; or the now playing card). They stack out from the edge in
+// one box, the longer of the bars and the icons nearest it, the card
+// last (OSDItems.partOrder), each sliding out from under the one before
+// as it opens, the box as long as the longest, its length easing to fit.
+// With `openTogether` a change to the bars or the icons brings out both.
+// The bars and the icons out together share their time
+// (OSDItems.sharedDeadlines), a card keeping its own; when the last ones
+// end the OSD slides away whole, and what comes in meanwhile waits for it
+// to be gone. Opened from its edge it brings out the bars
+// and the icons. Every part is built while the OSD is closed, as its items
+// report their own changes.
 Item {
   id: root
 
@@ -31,9 +35,9 @@ Item {
   property bool edgeVertical: false
   // The edge is the bottom or the right one: the parts stack up or left
   property bool edgeAtEnd: false
-  // The pointer is on the OSD (its surface or hover strip): every part's
-  // time waits, so nothing leaves from under it, and with `holdStill` a
-  // part coming in goes past the others
+  // The pointer is on the OSD (its surface or hover strip): the bars and
+  // the icons wait (a card only with the pointer on it), and
+  // with `holdStill` a part coming in goes past the others
   property bool pointerIn: false
   // Its host is showing (open, or still sliding away): parts opening then
   // slide out; closed, they're simply there as it slides in, and the
@@ -75,17 +79,15 @@ Item {
   // every one, not an empty row, until it closes
   property bool _previewAll: false
 
-  // The OSD shows a status's card (OSDItems.cardTypes): an audio device's
-  // as it switches, a VPN's as it comes up, an app's as it starts using
-  // the camera or sharing the screen, the battery's as it's plugged in, a
-  // network's as Wi-Fi joins it, a drive's (unless its cards are off:
-  // then the icons), and a message's always
+  // The OSD shows a status's card for the changes OSDItems.cardTypes
+  // lists (unless its cards are off: then the icons), and a message's
+  // always (OSDItems.alwaysCard)
   readonly property bool cards: root.osd.statuses.cards
   // It may show a message (it lists Messages, or one was sent to it by id)
   readonly property bool _hasMessages: root.statusTypes.includes("message") || root._cardType === "message"
   readonly property bool hasCards: (root.cards && OSDItems.cardTypes.some(type => root.statusTypes.includes(type))) || root._hasMessages
   // What the status card shows (OSDItems.card), its role translated
-  // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Stopped using the camera") I18n.tr("Stopped using the microphone") I18n.tr("Stopped sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in") I18n.tr("Mounted") I18n.tr("Safe to remove") I18n.tr("Unmounted") I18n.tr("Disconnected") I18n.tr("Unplugged without ejecting") I18n.tr("In use: close what's using it") I18n.tr("Couldn't eject") I18n.tr("Encrypted: click to unlock")
+  // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Stopped using the camera") I18n.tr("Stopped using the microphone") I18n.tr("Stopped sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in") I18n.tr("Mounted") I18n.tr("Safe to remove") I18n.tr("Unmounted") I18n.tr("Disconnected") I18n.tr("Unplugged without ejecting") I18n.tr("In use: close what's using it") I18n.tr("Couldn't eject") I18n.tr("Encrypted: click to unlock") I18n.tr("Battery low") I18n.tr("Battery critically low") I18n.tr("Copied to the clipboard")
   readonly property var cardContent: {
     const card = OSDItems.card(root._cardType, root.tiles, root.statusTypes);
     return card ? Object.assign(card, {
@@ -163,23 +165,80 @@ Item {
     const next = Object.assign({}, root._open);
     next[part] = open;
     root._open = next;
-    const due = Object.assign({}, root._deadlines);
-    due[part] = open ? Date.now() + root._timeout(part) : 0;
-    root._deadlines = due;
+    root._setDeadline(part, open ? Date.now() + root._timeout(part) : 0);
   }
 
-  // Opens a part (or restarts its time), placed by OSDItems.partOrder
+  // One part's time, shared (OSDItems.sharedDeadlines: the bars and the
+  // icons close together, a card on its own)
+  function _setDeadline(part, at) {
+    const due = Object.assign({}, root._deadlines);
+    due[part] = at;
+    root._deadlines = OSDItems.sharedDeadlines(due);
+  }
+
+  // Closing: the last parts' time is up, until the OSD has slid away.
+  // What comes in meanwhile waits for it to be gone (`_pending`)
+  property bool _closing: false
+  // { parts: [part], kind, type, at, ring, force } or null
+  property var _pending: null
+
+  // Whether a part opening now waits for the close (queued with `force`
+  // and `extra`: the card's { kind, type, at }, the icons' { ring })
+  function _queued(part, force, extra) {
+    if (!root._closing)
+      return false;
+    const pending = root._pending ?? ({
+        "parts": [],
+        "force": false
+      });
+    if (!pending.parts.includes(part))
+      pending.parts = pending.parts.concat([part]);
+    if (extra)
+      Object.assign(pending, extra);
+    pending.force = pending.force || force;
+    root._pending = pending;
+    return true;
+  }
+
+  // The last parts' time is up: the OSD slides away whole
+  function _close() {
+    root._closing = true;
+    root.collapse();
+  }
+
+  // Opens a part (or restarts its time), placed by OSDItems.partOrder.
+  // The icons coming out with none to show as they are show every one,
+  // not an empty row, until they close (`_previewAll`)
   function _openPart(part) {
-    cascadeTimer.stop();
+    // Before the order changes: the eased lengths read the order, and
+    // their eases must already know whether this one slides out
+    root._snapping = !root.hostOpen || !root._order.some(other => other !== part && root._reveal(other) > 0);
+    if (part === "status" && root._open.status !== true)
+      root._previewAll = OSDItems.rowTypes(root.statusTypes, root.tiles, root.osd.statuses.row, root.changed !== "" ? root.changed : root._held).length === 0;
     if (!root._order.includes(part)) {
       const lengths = {};
       OSDItems.parts.forEach(other => lengths[other] = root._length(root._item(other)));
       root._order = OSDItems.partOrder(root._order, part, lengths, root.snap, root.osd.holdStill && root.pointerIn && root.hostOpen);
     }
-    root._snapping = !root.hostOpen || !root._order.some(other => other !== part && root._reveal(other) > 0);
     root._setOpen(part, true);
     root._snapping = false;
     root._schedule();
+  }
+
+  // The box's parts a change of one brings out: both, with
+  // `openTogether` and an OSD showing both; else that one
+  function _boxParts(part) {
+    return root.osd.openTogether && root.levelItems.length > 0 && root.statusTypes.length > 0 ? ["level", "status"] : [part];
+  }
+  // A bar changed: its box parts wait for the close, or come out
+  function _openBox(part, force) {
+    const parts = root._boxParts(part);
+    if (root._queued(part, force)) {
+      parts.forEach(other => root._queued(other, force));
+      return true;
+    }
+    parts.forEach(other => root._openPart(other));
+    return false;
   }
 
   function _closePart(part) {
@@ -187,29 +246,39 @@ Item {
       root._setOpen(part, false);
   }
 
-  // The next part's time, unless the pointer holds them
+  // The pointer on the OSD holds the bars and the icons; the card only
+  // while it's on the card itself (its time runs while the pointer is on
+  // the rest)
+  function _pointerHolds(part) {
+    return root.pointerIn && (part !== "card" || root.cardHovered);
+  }
+  // The deadlines of the parts not held
+  function _running() {
+    const out = {};
+    Object.keys(root._deadlines).forEach(part => {
+      if (!root._pointerHolds(part))
+        out[part] = root._deadlines[part];
+    });
+    return out;
+  }
+
+  // The next time a part not held is up
   function _schedule() {
     dueTimer.stop();
-    if (root.pointerIn)
-      return;
-    const next = OSDItems.partsDue(root._deadlines, Date.now(), root.grace).next;
+    const next = OSDItems.partsDue(root._running(), Date.now(), root.grace).next;
     if (next > 0) {
       dueTimer.interval = Math.max(1, next - Date.now());
       dueTimer.start();
     }
   }
 
-  // Parts' times up: they fold back; the last ones going together close
-  // the OSD, the outer ones folding in first
+  // Parts' times up: the card, or the bars and the icons, fold back; the
+  // last ones going together close the OSD, sliding away whole
   function _due() {
-    const due = OSDItems.partsDue(root._deadlines, Date.now(), root.grace).due;
+    const due = OSDItems.partsDue(root._running(), Date.now(), root.grace).due;
     const open = root._order.filter(part => root._open[part] === true);
     if (open.length > 0 && open.every(part => due.includes(part))) {
-      open.slice(1).forEach(part => root._closePart(part));
-      if (open.length > 1)
-        cascadeTimer.start();
-      else
-        root.collapse();
+      root._close();
       return;
     }
     due.forEach(part => root._closePart(part));
@@ -221,35 +290,53 @@ Item {
     onTriggered: root._due()
   }
 
-  // The outer parts folding in before the OSD slides away
-  Timer {
-    id: cascadeTimer
-    interval: Appearance.animFast
-    onTriggered: root.collapse()
+  // The pointer on the card (it holds the card's time)
+  readonly property bool cardHovered: root._cardKind === "media" ? mediaCardHover.hovered : statusCardHover.hovered
+
+  // A part held by the pointer gets its time anew as it's let go
+  function _renew(parts) {
+    const due = Object.assign({}, root._deadlines);
+    parts.filter(part => root._open[part] === true).forEach(part => due[part] = Date.now() + root._timeout(part));
+    root._deadlines = OSDItems.sharedDeadlines(due);
   }
 
-  // The pointer on it holds every part; leaving, each gets its time anew
+  // The pointer on it holds the bars and the icons (it brings them out
+  // only as it opens the OSD from its edge: onHostOpenChanged); leaving,
+  // they get their time anew (the card too if it was on it)
   onPointerInChanged: {
-    if (root.pointerIn) {
-      dueTimer.stop();
-      return;
-    }
-    const due = Object.assign({}, root._deadlines);
-    root._order.filter(part => root._open[part] === true).forEach(part => due[part] = Date.now() + root._timeout(part));
-    root._deadlines = due;
+    if (!root.pointerIn)
+      root._renew(root.cardHovered ? OSDItems.parts : ["level", "status"]);
+    root._schedule();
+  }
+  onCardHoveredChanged: {
+    if (!root.cardHovered)
+      root._renew(["card"]);
     root._schedule();
   }
 
-  // Open with nothing out (its hover strip, the Show button): the bars,
-  // else the icons, else the now playing card. Gone: every part with it
+  // The bars and the icons (every icon when none would show, until they
+  // close), else the now playing card: it opening with nothing out (its
+  // hover strip), the Show button
+  function _expose() {
+    if (root.levelItems.length > 0)
+      root._openPart("level");
+    if (root.statusTypes.length > 0)
+      root._openPart("status");
+    if (root.levelItems.length === 0 && root.statusTypes.length === 0 && root.hasMedia && root._open.card !== true) {
+      root._cardKind = "media";
+      root._openPart("card");
+    }
+  }
+
+  // Open with nothing out: _expose. Gone: every part with it, then what
+  // came in as it closed (`_pending`), the OSD opening again for it
   onHostOpenChanged: {
     if (root.hostOpen) {
       if (!root._order.some(part => root._open[part] === true))
-        root._openPart(root.levelItems.length > 0 ? "level" : root.statusTypes.length > 0 || !root.hasMedia ? "status" : "card");
+        root._expose();
       return;
     }
     dueTimer.stop();
-    cascadeTimer.stop();
     root._snapping = true;
     root._open = ({});
     root._deadlines = ({});
@@ -258,6 +345,23 @@ Item {
     root.changed = "";
     root._held = "";
     root._previewAll = false;
+    root._closing = false;
+    const pending = root._pending;
+    root._pending = null;
+    if (!pending?.force)
+      return;
+    if (pending.parts.includes("card")) {
+      root._cardKind = pending.kind;
+      // (a now playing card queues no status)
+      if (pending.kind === "status") {
+        root._cardType = pending.type;
+        root._cardAt = pending.at;
+      }
+    }
+    if (pending.ring)
+      root._ring(pending.ring);
+    pending.parts.forEach(part => root._openPart(part));
+    root.poked(true);
   }
 
   // ---- Size ----
@@ -270,96 +374,90 @@ Item {
     return root.edgeVertical ? item.implicitHeight : item.implicitWidth;
   }
 
-  readonly property real gap: Widget.spacing * 2
-  // Its host's padding inside the outline (EdgePopout.contentPadding):
-  // where a part steps in, the gap before it holds the face between them,
-  // padded each side as the box is
-  property real padding: 0
+  // The gap between parts: its host's padding inside its stroke
+  // (EdgePopout.contentPadding less the border), so a part is as far from
+  // the next as the outer ones are from the outline, and the nearest from
+  // the screen edge (EdgePopout.attachExtra keeps that the same)
+  property real gap: Widget.spacing * 2
+  // ---- Its length ----
+  // One box, attached or held off the edge, as long as its longest part:
+  // a card shorter than the bars runs as long as them, a longer one makes
+  // the box as long as it. The length eases to each new one
+  // (`_lengthEased`): the box's ends run out to meet a longer part as it
+  // slides out, and back as it folds; a jump left what was out shifting a
+  // frame before the rest
+  // The parts that size it: the open ones (one folding back gives its
+  // room up as it goes), else, closing, every one still out
+  readonly property var _sizing: {
+    const open = root._order.filter(part => root._open[part] === true);
+    return open.length > 0 ? open : root._order;
+  }
+  readonly property real _lengthTarget: Math.max(0, ...root._sizing.map(part => root._length(root._item(part))))
+  property real _lengthEased: root._lengthTarget
+  Glide on _lengthEased {
+    duration: Appearance.animNormal
+    enabled: root._animate
+  }
+  readonly property real _lengthNow: Math.round(root._lengthEased)
 
-  // The OSD draws its parts stepped (OSDEntry.shape, attached only)
-  readonly property bool _stepShape: root.osd.shape === "stepped" && !root.osd.detached
-  // The parts out, and whether each steps in from the one before: a part
-  // is drawn as long as the longest from it out (a pyramid, the longest
-  // by the edge), and steps in where that's shorter than the one before's
-  // by more than `snap`. Judged by their full lengths, so a part's gap
-  // doesn't jump as it eases out
-  readonly property var _shownParts: root._order.filter(part => root._reveal(part) > 0)
-  readonly property var _fullAlong: root._suffixMax(root._shownParts.map(part => root._length(root._item(part))))
-  readonly property var _steps: root._shownParts.map((part, i) => root._stepShape && i > 0 && root._fullAlong[i - 1] - root._fullAlong[i] > root.snap)
-
-  function _suffixMax(lengths) {
-    const out = lengths.slice();
-    for (let i = out.length - 2; i >= 0; i--)
-      out[i] = Math.max(out[i], out[i + 1]);
-    return out;
+  // A part's empty margin across the edge, round what shows (a card's
+  // round its picture): gaps are measured between what shows, so a
+  // part's own margin doesn't add to them, nor to the padding at the
+  // outline (the margin runs on into it; the host doesn't clip its
+  // content). A bar's margin holds its muted highlight, which shows: its
+  // edge is what shows (run on into the gap, it sat cramped)
+  function _inset(part) {
+    return part === "card" ? root._item("card").inset(root.edgeVertical) : 0;
   }
 
-  // Each part's place across the edge as it stands (its gap before it,
-  // as far as both it and something before it are out), and the whole
+  // Each part's place across the edge as it stands (its slot: its gap
+  // before it, as far as both it and something before it are out, then
+  // what shows with its margin each side), and the whole (what shows,
+  // margins left out), in whole pixels as its outline is (a fraction
+  // left the content a pixel off its outline, and its window's size
+  // wobbling)
   readonly property var _layout: {
     let at = 0;
     let before = 0;
     const out = {};
     root._order.forEach(part => {
       const reveal = root._reveal(part);
-      const i = root._shownParts.indexOf(part);
-      const gapNow = (i >= 0 && root._steps[i] ? root.padding * 2 : root.gap) * reveal * Math.min(1, before);
-      const depth = reveal * root._depth(root._item(part));
+      const inset = Math.round(reveal * root._inset(part));
+      const gapNow = Math.round(root.gap * reveal * Math.min(1, before));
+      const shows = Math.max(0, Math.round(reveal * root._depth(root._item(part))) - inset * 2);
       out[part] = {
-        "at": at + gapNow,
-        "depth": depth
+        "at": at + gapNow - inset,
+        "depth": shows + inset * 2
       };
-      at += gapNow + depth;
+      at += gapNow + shows;
       before += reveal;
     });
     out.total = at;
     return out;
   }
-  readonly property real _lengthNow: Math.max(0, ...root._order.map(part => root._reveal(part) * root._length(root._item(part))))
-
-  // The parts' segments for a stepped outline (EdgePopout's `segments`:
-  // each one's length and far side): the first as long as the OSD; one
-  // stepping in narrows from the one before to its own as it eases out;
-  // one that doesn't carries the one before's on. None drawn as one box
-  readonly property var segments: {
-    if (!root._stepShape)
-      return [];
-    const out = [];
-    root._shownParts.forEach((part, i) => {
-      // (while the order and the layout catch up with each other)
-      const place = root._layout[part];
-      if (!place)
-        return;
-      let along = root._lengthNow;
-      if (out.length > 0) {
-        const last = out[out.length - 1].along;
-        along = root._steps[i] ? Math.min(last, last + (root._fullAlong[i] - last) * root._reveal(part)) : last;
-      }
-      out.push({
-        "along": along,
-        "far": place.at + place.depth
-      });
-    });
-    return out;
-  }
   implicitWidth: root.edgeVertical ? root._layout.total : root._lengthNow
   implicitHeight: root.edgeVertical ? root._lengthNow : root._layout.total
 
-  // Its length along the edge for the hover strip: the part it opens on
-  // while shut
-  readonly property real triggerLength: root._lengthNow > 0 ? root._lengthNow : root._length(root.levelItems.length > 0 ? grid : row)
+  // Its length along the edge for the hover strip: the parts' full
+  // length (not the eased one, so its window resizes once per part, not
+  // every frame), else the part it opens on while shut
+  readonly property real triggerLength: Math.round(root._lengthTarget > 0 ? root._lengthTarget : root._length(root.levelItems.length > 0 ? grid : row))
 
   // The OSD's largest size across its edge, every part out at once, so
   // its window keeps room for them (EdgePopout.maxContentDepth). The
   // icons' at their largest (OSDStatusRow.maxDepth): they come and go
   readonly property real maxDepth: {
-    const parts = [row.maxDepth];
+    // (what shows: margins run on into the padding and the gaps)
+    const parts = root.statusTypes.length > 0 ? [row.maxDepth] : [];
     if (root.levelItems.length > 0)
       parts.push(root._depth(grid));
-    const cardDepth = Math.max(root.hasCards ? root._depth(statusCard) : 0, root.hasMedia ? root._depth(mediaCard) : 0);
-    if (cardDepth > 0)
-      parts.push(cardDepth);
-    return parts.reduce((sum, depth) => sum + depth, 0) + (root._stepShape ? Math.max(root.gap, root.padding * 2) : root.gap) * (parts.length - 1);
+    // (beside a side edge a card's width is its depth: the widest it
+    // may be, OSDCard.maxWidth, as it sizes to its text)
+    const cardDepth = card => (root.edgeVertical ? card.maxWidth : root._depth(card)) - card.inset(root.edgeVertical) * 2;
+    const deepest = Math.max(root.hasCards ? cardDepth(statusCard) : 0, root.hasMedia ? cardDepth(mediaCard) : 0);
+    if (deepest > 0)
+      parts.push(deepest);
+    return Math.ceil(parts.reduce((sum, depth) => sum + depth, 0) + root.gap * Math.max(0, parts.length - 1));
   }
 
   // Length of each bar along its axis; the OSD grows with the bar count in
@@ -427,6 +525,14 @@ Item {
     const now = Date.now();
     const cardOut = root._open.card === true && root._cardKind === "status";
     if (withCard === true && (root.cards || OSDItems.alwaysCard(type))) {
+      if (root._queued("card", force, {
+        "kind": "status",
+        "type": type,
+        "at": now
+      })) {
+        root.poked(force);
+        return;
+      }
       if (cardOut && !OSDItems.replaces(root._cardType, type, now - root._cardAt, root.tiles, true, true))
         return;
       root._cardKind = "status";
@@ -436,6 +542,13 @@ Item {
       if (root._open.status === true && type !== "message")
         root._ring(type);
     } else {
+      if (root._queued("status", force, {
+        "ring": type
+      })) {
+        root._boxParts("status").forEach(other => root._queued(other, force));
+        root.poked(force);
+        return;
+      }
       if (cardOut) {
         const beside = OSDItems.besideCard(root._cardType, type, now - root._cardAt, root.tiles);
         if (beside === "suppress")
@@ -446,7 +559,7 @@ Item {
       if (root._open.status === true && root.changed !== "" && !OSDItems.replaces(root.changed, type, now - root._changedAt, root.tiles, false, false))
         return;
       root._ring(type);
-      root._openPart("status");
+      root._boxParts("status").forEach(other => root._openPart(other));
     }
     root.poked(force);
   }
@@ -455,15 +568,7 @@ Item {
   // (every one when none would show)
   function preview() {
     root.changed = "";
-    root._previewAll = OSDItems.rowTypes(root.statusTypes, root.tiles, root.osd.statuses.row, "").length === 0;
-    if (root.levelItems.length > 0)
-      root._openPart("level");
-    if (root.statusTypes.length > 0)
-      root._openPart("status");
-    if (root.levelItems.length === 0 && root.statusTypes.length === 0 && root.hasMedia) {
-      root._cardKind = "media";
-      root._openPart("card");
-    }
+    root._expose();
   }
 
   // ---- Drawing ----
@@ -483,11 +588,13 @@ Item {
   function _slotY(place) {
     return root.edgeVertical ? 0 : root.edgeAtEnd ? root.height - place.at - place.depth : place.at;
   }
+  // (centred on a whole pixel: a half one, flipping as the length eases,
+  // shimmered what was out)
   function _farX(slot, item) {
-    return root.edgeVertical ? (root.edgeAtEnd ? 0 : slot.width - item.implicitWidth) : (slot.width - item.implicitWidth) / 2;
+    return root.edgeVertical ? (root.edgeAtEnd ? 0 : slot.width - item.implicitWidth) : Math.round((slot.width - item.implicitWidth) / 2);
   }
   function _farY(slot, item) {
-    return !root.edgeVertical ? (root.edgeAtEnd ? 0 : slot.height - item.implicitHeight) : (slot.height - item.implicitHeight) / 2;
+    return !root.edgeVertical ? (root.edgeAtEnd ? 0 : slot.height - item.implicitHeight) : Math.round((slot.height - item.implicitHeight) / 2);
   }
 
   Item {
@@ -528,7 +635,7 @@ Item {
             const force = entry.showOsd && root.opensFor(entry.type);
             if (!force && !root.hostOpen)
               return;
-            root._openPart("level");
+            root._openBox("level", force);
             root.poked(force);
           }
         }
@@ -576,8 +683,17 @@ Item {
       x: root._farX(cardSlot, statusCard)
       y: root._farY(cardSlot, statusCard)
       card: root.cardContent ?? ({})
-      // Only a drive's card takes a click (OSDItems.card's clickable)
-      onClicked: DrivesManager.activate(DrivesManager.lastEvent)
+
+      HoverHandler {
+        id: statusCardHover
+      }
+      // Only a drive's and a screenshot's cards take a click
+      // (OSDItems.card's clickable): their source acts on it
+      onClicked: {
+        const source = root._sources[root._cardType];
+        if (source)
+          source.activate();
+      }
     }
 
     OSDMediaCard {
@@ -585,6 +701,10 @@ Item {
       visible: root._cardKind === "media"
       x: root._farX(cardSlot, mediaCard)
       y: root._farY(cardSlot, mediaCard)
+
+      HoverHandler {
+        id: mediaCardHover
+      }
     }
   }
 
@@ -612,8 +732,12 @@ Item {
       Component.onDestruction: root._register(watcher, false)
       onFired: card => {
         if (watcher.type === "media") {
-          root._cardKind = "media";
-          root._openPart("card");
+          if (!root._queued("card", true, {
+            "kind": "media"
+          })) {
+            root._cardKind = "media";
+            root._openPart("card");
+          }
           root.poked(true);
         } else {
           root.showStatus(watcher.type, !root.osd.statuses.quiet.includes(watcher.type) && root.opensFor(watcher.type), card);

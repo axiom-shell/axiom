@@ -80,10 +80,6 @@ Item {
   // edges (screen border off): the surface runs straight off them, with no
   // fillet onto them
   property bool straight: false
-  // Segments stacked past the box's far side, out from the edge (an
-  // OSD's parts: SurfaceOutline's `steps`, [{ along, depth }]): a stepped
-  // outline. Attached only
-  property var steps: []
   property bool straightJoins: false
   // ...for each joined end on its own, where the two differ (a pill on a
   // bare edge joining a solid bar's stroke at one end)
@@ -197,6 +193,8 @@ Item {
   readonly property bool _holesReady: Appearance.translucent && !root.mirror
 
   default property alias content: contentContainer.data
+  // The pointer is on the surface (its box and fillets)
+  readonly property bool hovered: surfaceHover.hovered
   // The content box, sliding with the surface: where things in the
   // content are within the box whether or not it's out yet
   readonly property Item contentBox: contentContainer
@@ -297,7 +295,6 @@ Item {
       "straight": root.straight
     })
   readonly property var _spec: Object.assign({}, root._baseSpec, {
-    "steps": root.steps,
     "flushStartThrough": root.flushStartThrough,
     "flushEndThrough": root.flushEndThrough,
     "straightJoins": root.straightJoins,
@@ -325,6 +322,14 @@ Item {
   // The box and the half connector gap past it (and a joined end's fillet
   // along the perpendicular stroke)
   readonly property real depth: _m.depth
+  // ...as it would be with a box `boxDepth` deep: a host sizing for its
+  // content at its largest, not as it eases there
+  function depthFor(boxDepth) {
+    const spec = Object.assign({}, root._baseSpec, {
+      "boxDepth": boxDepth
+    });
+    return SurfaceOutline.withBoxStart(spec, SurfaceOutline.metrics(spec), root.boxStart === root.naturalBoxStart ? SurfaceOutline.metrics(spec).naturalBoxStart : root.boxStart).depth;
+  }
 
   // Along the edge: box + fillet squares. Away from the edge: box +
   // connector gap.
@@ -635,6 +640,13 @@ Item {
       y: root.boxRect.y
       width: root.boxWidth
       height: root.boxHeight
+
+      // On the whole surface, which holds the content (declared here, as
+      // the surface's own children are its content's)
+      HoverHandler {
+        id: surfaceHover
+        parent: root
+      }
     }
   }
 }

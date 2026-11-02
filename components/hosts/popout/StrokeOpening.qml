@@ -32,8 +32,15 @@ QtObject {
   // innermost there
   property string barId: ""
 
+  // On whole pixels too: a fractional span re-sent every frame redrew the
+  // border's strips and shadow for nothing
   readonly property var _border: BorderOpening {
-    opening: root.sink === "border" && Appearance.translucent && root.span ? root.span : null
+    opening: {
+      if (root.sink !== "border" || !Appearance.translucent || !root.span)
+        return null;
+      const o = SurfaceContext.opening(root.span.start, root.span.end, root.span.startFillet ?? 0, root.span.endFillet ?? 0);
+      return o.end > o.start ? Object.assign({}, root.span, o) : null;
+    }
   }
   readonly property var _solid: PillStretch {
     readonly property var panel: root.sink === "solidBar" && root.span ? ScreenEdgeManager.barOn(root.screen?.name ?? "", ScreenEdge.fromName(root.span.edge), root.barId) : null

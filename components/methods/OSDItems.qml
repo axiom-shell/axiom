@@ -58,7 +58,12 @@ QtObject {
   //   card outlives a capture that stops at once) }, drive { available
   //   (udisks2 answers), count (drives plugged in), event (the last one:
   //   DrivesManager.lastEvent, { kind: "added" | "mounted" | "ejected",
-  //   name, mountPoint }, or null) }, every other
+  //   name, mountPoint }, or null) }, battery { available, level ("none"
+  //   | "low" | "critical"), percent, timeLeft (to empty, as shown) },
+  //   monitor { available, event (MonitorManager.lastEvent: { kind:
+  //   "added" | "removed", name, description, width, height }, or null) },
+  //   screenshot { event (ScreenshotManager.lastShot: { path, title,
+  //   folder }, or null) }, every other
   //   type (recording too) { available, on }
   function tile(type, state) {
     const t = {
@@ -158,6 +163,49 @@ QtObject {
           "mountPoint": e?.mountPoint ?? "",
           "on": (s.count ?? 0) > 0,
           "hidden": s.available !== true || (s.count ?? 0) === 0
+        });
+      }
+    case "battery":
+      {
+        // Lit while low; unusual only when critical
+        const level = s.level ?? "none";
+        return Object.assign(t, {
+          "icon": level === "critical" ? "battery_alert" : level === "low" ? "battery_low" : "battery_full",
+          "name": `${s.percent ?? 0}%`,
+          "level": level,
+          "timeLeft": s.timeLeft ?? "",
+          "on": level !== "none",
+          "notable": level === "critical",
+          "hidden": s.available !== true
+        });
+      }
+    case "monitor":
+      {
+        // Only its card says anything: shown as it changes
+        const e = s.event ?? null;
+        return Object.assign(t, {
+          "icon": "monitor",
+          "name": e ? (e.description || e.name) : "",
+          "event": e?.kind ?? "",
+          "output": e?.name ?? "",
+          "description": e?.description ?? "",
+          "width": e?.width ?? 0,
+          "height": e?.height ?? 0,
+          "on": true,
+          "hidden": true
+        });
+      }
+    case "screenshot":
+      {
+        // Only its card says anything: shown as it changes
+        const e = s.event ?? null;
+        return Object.assign(t, {
+          "icon": "screenshot_monitor",
+          "name": e?.title ?? "",
+          "path": e?.path ?? "",
+          "folder": e?.folder ?? "",
+          "on": true,
+          "hidden": true
         });
       }
     case "camera":
@@ -289,9 +337,14 @@ QtObject {
   // The status types that show a card for a change (`fired(true)`): an
   // audio device switching, a VPN coming up, an app starting to use the
   // camera or share the screen, the charger plugged in, a Wi-Fi network
-  // joined, something done to a drive (DrivesManager.lastEvent), and a
-  // message (always: alwaysCard)
-  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "drive", "message"]
+  // joined, something done to a drive (DrivesManager.lastEvent), the
+  // battery dropping to low or critical, a monitor connected or removed,
+  // a screenshot taken, and a message (always: alwaysCard)
+  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "drive", "battery", "monitor", "screenshot", "message"]
+
+  // The types whose card is clicked to act on what it says (a drive's
+  // opens or unlocks it, a screenshot's opens the picture)
+  readonly property var clickableCards: ["drive", "screenshot"]
 
   // The types shown as their card even on an OSD whose detail cards are
   // off: a message is its text, nothing without it
@@ -348,15 +401,18 @@ QtObject {
   }
 
   // What a status's card shows, from the OSD's tiles (by type, tile()'s)
-  // and status types: { icon, title, role, detail, tone, clickable (a
-  // click acts on it: a drive's, DrivesManager.activate) }, or null for a
+  // and status types: { icon, title, role, detail, tone, image (a
+  // picture shown in place of the icon: a screenshot's, a file URL, else
+  // ""), clickable (a click acts on it: clickableCards) }, or null for a
   // type with no card. `role` is English, for the caller to translate
   // (what an audio device is now used for: "Output and input" when the
   // OSD's other device status holds the same device; what a VPN, the apps
   // or the charger did, a drive's last event); `detail` an audio device's
   // profile, a VPN's address, a network's signal, the time left to a full
-  // battery, where a drive was mounted, a message's second line; `tone` a
-  // message's ("warning" for a refusal, else "")
+  // battery, where a drive was mounted, the time left on a low battery,
+  // a monitor's connector and resolution, the folder a screenshot was
+  // saved in, a message's second line; `tone` a message's ("warning" for
+  // a refusal, else ""), a critical battery's ("warning")
   function card(type, tiles, types) {
     if (!root.cardTypes.includes(type))
       return null;
@@ -367,7 +423,8 @@ QtObject {
       "role": "",
       "detail": "",
       "tone": t.tone ?? "",
-      "clickable": type === "drive"
+      "image": "",
+      "clickable": root.clickableCards.includes(type)
     };
     switch (type) {
     case "audio":
@@ -423,6 +480,24 @@ QtObject {
         out.detail = t.event === "mounted" ? (t.mountPoint ?? "") : "";
         break;
       }
+    case "battery":
+      out.role = t.level === "critical" ? "Battery critically low" : "Battery low";
+      out.detail = t.timeLeft ?? "";
+      out.tone = t.level === "critical" ? "warning" : "";
+      break;
+    case "monitor":
+      {
+        out.icon = t.event === "removed" ? "desktop_access_disabled" : "monitor";
+        out.role = t.event === "removed" ? "Disconnected" : "Connected";
+        const size = (t.width ?? 0) > 0 ? `${t.width}×${t.height}` : "";
+        out.detail = [t.description ? (t.output ?? "") : "", size].filter(part => part !== "").join(" · ");
+        break;
+      }
+    case "screenshot":
+      out.role = "Copied to the clipboard";
+      out.detail = t.folder ?? "";
+      out.image = t.path ? "file://" + t.path : "";
+      break;
     case "message":
       out.detail = t.detail ?? "";
       break;
@@ -526,25 +601,42 @@ QtObject {
 
   // The parts' order out from the edge once `incoming` opens: `order` the
   // ones shown (kept as they are: nothing shown moves for a length
-  // changing), `lengths` each part's along the edge. It goes before the
-  // first one shorter by more than `snap` (or as long, within `snap`, and
-  // later in `parts`): the longest nearest the edge. `atEnd` (the pointer
-  // on the OSD, holding still): past them all, so nothing under it moves
+  // changing), `lengths` each part's along the edge. The card is always
+  // last, past the bars and the icons. Between
+  // those two, it goes before the first one shorter by more than `snap`
+  // (or as long, within `snap`, and later in `parts`): the longer nearest
+  // the edge. `atEnd` (the pointer on the OSD, holding still): after the
+  // other, so nothing under it moves
   function partOrder(order, incoming, lengths, snap, atEnd) {
-    const rest = order.filter(part => part !== incoming);
     if (order.includes(incoming))
       return order.slice();
+    const box = order.filter(part => part !== "card");
+    const card = order.includes("card") ? ["card"] : [];
+    if (incoming === "card")
+      return box.concat(["card"]);
     if (atEnd)
-      return rest.concat([incoming]);
+      return box.concat([incoming], card);
     const mine = lengths?.[incoming] ?? 0;
     const rank = part => root.parts.indexOf(part);
-    let at = rest.findIndex(part => {
+    let at = box.findIndex(part => {
       const other = lengths?.[part] ?? 0;
       return other < mine - snap || (Math.abs(other - mine) <= snap && rank(part) > rank(incoming));
     });
     if (at < 0)
-      at = rest.length;
-    return rest.slice(0, at).concat([incoming], rest.slice(at));
+      at = box.length;
+    return box.slice(0, at).concat([incoming], box.slice(at), card);
+  }
+
+  // The parts' shared time, from `deadlines` (by part; 0 or missing: not
+  // open): the bars and the status icons open take the later of theirs,
+  // so they close together; the card keeps its own, neither holding nor
+  // held (it says what happened once: they fold back without it)
+  function sharedDeadlines(deadlines) {
+    const out = Object.assign({}, deadlines ?? {});
+    const shared = Object.keys(out).filter(part => part !== "card" && out[part] > 0);
+    const latest = Math.max(0, ...shared.map(part => out[part]));
+    shared.forEach(part => out[part] = latest);
+    return out;
   }
 
   // Which parts close at `now` (ms), from `deadlines` (by part; 0 or

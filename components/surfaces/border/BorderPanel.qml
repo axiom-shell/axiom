@@ -53,8 +53,16 @@ PanelWindow {
   readonly property var rowPieces: Utils.subtractSpans(0, root.length, root.openings)
   // An opening follows a surface in another window (sliding, a pill
   // growing): drawn here, but shown only once this window commits again
-  // (FrameNudge)
-  onOpeningsChanged: nudge.burst()
+  // (FrameNudge). Only when this strip's own changed: `openings` is a new
+  // array whenever any border opening on any screen moves
+  property string _lastOpenings: "[]"
+  onOpeningsChanged: {
+    const now = JSON.stringify(root.openings);
+    if (now === root._lastOpenings)
+      return;
+    root._lastOpenings = now;
+    nudge.burst();
+  }
 
   anchors {
     left: root.edge !== "right"

@@ -28,10 +28,23 @@ QtObject {
   // skip
   readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.bars.items.filter(item => item.type === "app").map(item => item.apps))))
 
+  // An event card shown on an OSD (a drive, the battery, a monitor, a
+  // screenshot, a message) is also filed in the notification history,
+  // without a popup (NotificationManager.announce)
+  readonly property bool cardsToHistory: _c.cardsToHistory
+
   // Whether an enabled OSD shows a status type (a service with something
   // to say then leaves it to the OSD, not a notification)
-  function showsStatus(type) {
+  function showsType(type) {
     return osds.some(osd => osd.enabled && osd.statuses.items.includes(type));
+  }
+
+  // Where an event of a status type goes: "osd" (an enabled OSD lists
+  // it: its card), else "notification" with `notify` (its section's
+  // switch: Battery.notify, Drives.notify, Monitors.notify,
+  // Screenshots.notify), else "" (nowhere)
+  function routeOf(type, notify) {
+    return root.showsType(type) ? "osd" : notify ? "notification" : "";
   }
 
   function osdById(id) {

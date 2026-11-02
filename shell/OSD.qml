@@ -12,7 +12,7 @@ import qs.components.methods
 // on: an EdgePopout, held off its edge when `detached` (as a dock or edge
 // menu can be). A change opens every OSD holding that item, on the target
 // screen (the focused one), or on all of them in "all" mode. Hiding is the
-// host's own hover-aware dismiss timer. Keyed by id, so editing an OSD's
+// parts' own times (OSDContent's collapse). Keyed by id, so editing an OSD's
 // settings updates it in place instead of rebuilding every OSD.
 Scope {
   Variants {
@@ -52,8 +52,6 @@ Scope {
           dismissDelay: entry.osd.timeout
           // Room for every part out at once, as they come and go
           maxContentDepth: (edgeHost.contentItem as OSDContent)?.maxDepth ?? 0
-          // Its parts, drawn stepped (OSDContent.segments)
-          contentSegments: (edgeHost.contentItem as OSDContent)?.segments ?? []
           // The items inside also report their own changes, so they must
           // exist while the OSD is closed
           keepLoaded: true
@@ -62,7 +60,7 @@ Scope {
             OSDContent {
               osd: entry.osd
               screenName: edgeHost.screen?.name ?? ""
-              padding: edgeHost.contentPadding
+              gap: edgeHost.contentPadding - Appearance.borderWidth
               edgeVertical: edgeHost.vertical
               edgeAtEnd: edgeHost.edge === ScreenEdge.Bottom || edgeHost.edge === ScreenEdge.Right
               // On its surface or hover strip (not what opened it: nothing)

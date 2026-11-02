@@ -154,12 +154,12 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
-var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Apps.networkEditor", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges"}
+var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Apps.networkEditor", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify"}
 
 // osdItemFields drops what an OSD gained since format 1 that no step
 // writes: every bar's fields but its type, icon and showOsd (each kind's
 // own options), the status icons' row mode, cards switch and card
-// timeout, the parts' shape and holding still, the
+// timeout, the parts opening together and holding still, the
 // `drive` status of the default list and the now playing card. They come
 // from their defaults at load, or (the list) stay as the config had them.
 func osdItemFields(cfg *jsonx.Object) {
@@ -177,7 +177,7 @@ func osdItemFields(cfg *jsonx.Object) {
 			continue
 		}
 		e.Delete("media")
-		e.Delete("shape")
+		e.Delete("openTogether")
 		e.Delete("holdStill")
 		if statuses, _ := e.Value("statuses").(*jsonx.Object); statuses != nil {
 			statuses.Delete("row")

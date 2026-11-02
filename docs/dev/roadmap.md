@@ -126,7 +126,7 @@ Never, besides `AGENTS.md` › Never: open a PR of roadmap.md or issues.md edits
 ### Live checks
 What waits for the maintainer's own session (see [Running it unattended](#running-it-unattended) › Pick): a merged fix to confirm live, or an item only the live environment can build. None of it holds up a row; a confirmed check is deleted, a failed one becomes an issues.md entry.
 
-- With the OSD's parts drawn stepped: hover a part while another comes in (`holdStill` puts it past the others, nothing moves), leave and watch each part keep its own time, two ending within 750 ms close together (the card folds in, then the OSD slides away); and a bottom-edge OSD steps upward.
+- With the OSD's parts: hover a part while another comes in (`holdStill` puts it past the others, nothing moves), leave and watch each part keep its own time, two ending within 750 ms close together (the card folds in, then the OSD slides away); and a bottom-edge OSD stacks upward.
 - On sway and on Hyprland, show a few notifications, detached and attached, and check each toast blurs behind (the first after launch too): they're blur-backed shapes now, no longer popups of a 1x1 layer window (notifications revamp).
 - Confirm the missing app icon fallback in the launcher and dock with an icon theme lacking `applications-system-symbolic` (#196).
 - Lock once and check `scripts/log.sh` shows no `[ModuleGrid] … overlaps another` (#198).
@@ -217,7 +217,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
 - [The keybinds page on a small monitor with large binds](issues.md#the-keybinds-page-on-a-small-monitor-with-large-binds) (with the 1080p pass)
 - [Modules inside borders aren't sized evenly](issues.md#modules-inside-borders-arent-sized-evenly)
-- [A stepped OSD takes clicks beside its narrower parts](issues.md#a-stepped-osd-takes-clicks-beside-its-narrower-parts)
 
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
@@ -502,7 +501,8 @@ Found by the audits:
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
 - [removeOnClick never removes a clicked toast's entry](issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
-- [A device's own level arriving late can swap its OSD card for the bars](issues.md#a-devices-own-level-arriving-late-can-swap-its-osd-card-for-the-bars)
+- [A device's own level arriving late brings the OSD's bars out beside its card](issues.md#a-devices-own-level-arriving-late-brings-the-osds-bars-out-beside-its-card)
+- [A quiet OSD event type never shows with the OSD shut](issues.md#a-quiet-osd-event-type-never-shows-with-the-osd-shut)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
 - [The history's group and entry delegates repeat one swipe-away mechanism](issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
 - [clearAll removes each cached image twice, one process per entry](issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)

@@ -20,11 +20,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### A stepped OSD takes clicks beside its narrower parts
-- **Where:** `components/hosts/popout/EdgePopout.qml` (`mask`), `components/hosts/popout/AttachedSurface.qml` (`footprint`)
-- **What:** the surface window's input mask is the surface item's whole rect, so with an OSD's parts drawn stepped (`steps`), the empty room beside a narrower part (a card under wide bars) takes clicks and hover meant for the window under it while the OSD is open. The mask should follow the footprint's rects (box, fillets, steps), as Region children.
-- **Size:** small
-- **Found:** 2026-11-02, while adding the OSD's stepped outline
+### A quiet OSD event type never shows with the OSD shut
+- **Where:** `config/OSDConfig.qml` (`showsType`, `routeOf`), `components/surfaces/osd/OSDContent.qml` (`showStatus`)
+- **What:** `showsType` counts a status listed in the OSD's `quiet`, so a `drive`, `battery`, `monitor` or `screenshot` event there is routed to the OSD (no notification), but a quiet change with the OSD shut is dropped: the event is only seen if the OSD happens to be open (or in the history with `OSD.cardsToHistory`; a critical battery still notifies). Excluding quiet types in `routeOf` would send them as notifications instead (and never as a card): a behaviour choice for the maintainer.
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing the OSD's parts and event cards
 
 ### A VPN bind ignores Tailscale unless a VPN widget is showing
 - **Where:** `services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
@@ -1580,9 +1580,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
 
-### A device's own level arriving late can swap its OSD card for the bars
-- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml` (`_systemChanged`), `components/surfaces/osd/OSDBar.qml` (`_levelChanged`), `components/surfaces/osd/OSDContent.qml` (the bars' `onPoked`), `components/methods/OSDItems.qml` (`replaces`)
-- **What:** The System volume and Microphone bars count a level or mute change only while `AudioManager.sinkSettled()` / `sourceSettled()` holds, which turns true a moment after the new default node is ready. `OSDItems.replaces` already allows that a new device's mute may come after that ("a mute just after a device switch is the new device's own state coming in"), and PipeWire sends a node's volumes and mute in the same params. So when a headset connects, its own volume landing after the settle pokes the bar, and the bars' `onPoked` sets `_shown` to `level` with no `replaces` check: the device card is swapped for the bars, the case the branch set out to stop. PLAUSIBLE: a log of `defaultSink.ready` against `AudioManager.volume` changes on a headset connect settles it (the roadmap's Live checks already asks whether plugging in a headset opens the bars). Fix, if it shows: run the System volume and Microphone bars' pokes through `replaces` as the `audio` / `microphone` statuses' mutes (an `OSDItems` rule mapping a bar type to its status, a test row), which also holds back the user's own volume key in the 2 s after a switch: a trade-off for the maintainer.
+### A device's own level arriving late brings the OSD's bars out beside its card
+- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml` (`_systemChanged`), `components/surfaces/osd/OSDBar.qml` (`_levelChanged`), `components/surfaces/osd/OSDContent.qml` (the bars' `onPoked`, `_openBox`), `components/methods/OSDItems.qml` (`replaces`)
+- **What:** The System volume and Microphone bars count a level or mute change only while `AudioManager.sinkSettled()` / `sourceSettled()` holds, which turns true a moment after the new default node is ready. `OSDItems.replaces` already allows that a new device's mute may come after that ("a mute just after a device switch is the new device's own state coming in"), and PipeWire sends a node's volumes and mute in the same params. So when a headset connects, its own volume landing after the settle pokes the bar, and the bars' `onPoked` opens the bars part (`_openBox`) with no `replaces` check: the bars come out beside the device card, a change the user didn't make. PLAUSIBLE: a log of `defaultSink.ready` against `AudioManager.volume` changes on a headset connect settles it (the roadmap's Live checks already asks whether plugging in a headset opens the bars). Fix, if it shows: run the System volume and Microphone bars' pokes through `replaces` as the `audio` / `microphone` statuses' mutes (an `OSDItems` rule mapping a bar type to its status, a test row), which also holds back the user's own volume key in the 2 s after a switch: a trade-off for the maintainer.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
 

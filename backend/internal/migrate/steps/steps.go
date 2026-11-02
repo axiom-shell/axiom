@@ -144,6 +144,31 @@ var all = []Step{
 	// and the old default bind that logged out at once; OSDs on the old
 	// default status icons got the new default's (v89.go)
 	{Version: 89, Run: v89},
+	// v90: Drives.announce (osd | notification | off) became Drives.notify:
+	// an OSD listing Removable drives shows them, whatever the setting
+	{Version: 90, Run: func(cfg *jsonx.Object) []string {
+		d := object(cfg, "Drives")
+		if d == nil {
+			return nil
+		}
+		announce, ok := d.Value("announce").(string)
+		if !ok {
+			return nil
+		}
+		var notify bool
+		switch announce {
+		case "osd", "notification":
+			notify = true
+		case "off":
+		default:
+			return nil
+		}
+		d.Delete("announce")
+		if !d.Has("notify") {
+			d.Set("notify", notify)
+		}
+		return []string{"Drives.announce " + announce + " became Drives.notify: an OSD listing Removable drives shows them, else they notify unless it's off"}
+	}},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

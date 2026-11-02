@@ -5,6 +5,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.compositor
+import qs.services.system
 
 /* The shell's signals, link navigation and screen targeting */
 QtObject {
@@ -78,10 +79,15 @@ QtObject {
     return at !== undefined && OSDItems.fromScreen(type, Date.now() - at);
   }
 
-  // A message on the OSD showing messages (the first with a Messages
-  // item, else the first)
-  function message(icon, text, detail) {
-    root.osdMessage(OSDConfig.messageOsd(""), icon, text, detail ?? "", "");
+  // A message to the OSD `id`, also filed in the notification history
+  // without a popup with OSD.cardsToHistory (a refusal isn't: it only
+  // answers what was just tried)
+  function _message(id, icon, text, detail) {
+    root.osdMessage(id, icon, text, detail, "");
+    if (id !== "" && OSDConfig.cardsToHistory)
+      NotificationManager.sendNotification("axiom", text, detail, {
+        "silent": true
+      });
   }
 
   // The same on the warning colour: what a bind, hot corner or `axiom`
@@ -99,7 +105,7 @@ QtObject {
     // arguments, so it passes all four): `id` "" for the OSD showing
     // messages, `detail` "" for no second line
     function message(id: string, icon: string, text: string, detail: string): void {
-      root.osdMessage(OSDConfig.messageOsd(id), icon, text, detail, "");
+      root._message(OSDConfig.messageOsd(id), icon, text, detail);
     }
 
     function show(id: string): void {

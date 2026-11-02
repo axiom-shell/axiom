@@ -56,7 +56,7 @@ They follow the same pattern:
   - `matchStreams(apps, other, excluded)` is the OSD app bars' playback stream matching.
   - Recording streams are left out: an app's mic capture shares its name.
 - **BatteryManager**: also the power profile, and `level` against the `Battery` section's thresholds (`BatteryConfig`; the Battery widget and module colour from it).
-  - Sends the low battery notifications, once per drop into low and then critical, whatever bars exist.
+  - Says each drop into low and then critical once, whatever bars exist: an OSD's `battery` card or a notification (`NotificationManager.announce`; a critical one notifies beside its card too).
   - Created from `shell.qml`'s `_services` so it runs without a widget.
 - **KeyboardLayoutManager**, **MediaManager** (MPRIS), **CompositorManager** (the compositor, through its backend `HyprlandManager`: [compositor/](../compositor/README.md)), **StateManager**, **BarManager**, **LauncherManager**, **SettingsManager**, **SavedConfigsManager**, **AuthManager**, **LockManager**.
 

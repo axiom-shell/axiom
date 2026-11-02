@@ -38,7 +38,6 @@ AttachedSurface {
   backfill: root.source?.backfill ?? 0
   joinBackfill: root.source?.joinBackfill ?? 0
   straight: root.source?.straight ?? false
-  steps: root.source?.steps ?? []
   straightJoins: root.source?.straightJoins ?? false
   straightJoinStart: root.source?.straightJoinStart ?? straightJoins
   straightJoinEnd: root.source?.straightJoinEnd ?? straightJoins

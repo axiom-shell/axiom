@@ -122,7 +122,7 @@ PopoutWrapperBase {
   // opened or asked for again (engage()) and not let go since. A pinned
   // one ranks as its kind meanwhile, so it opens (or comes forward) over
   // what it would give way to as pinned, and drops to pinned once let go
-  readonly property bool engaged: surfaceHover.hovered || trigger.containsMouse || root.anchorHovered || root._grace
+  readonly property bool engaged: surface.hovered || trigger.containsMouse || root.anchorHovered || root._grace
   property bool _grace: false
   function engage() {
     root._grace = true;
@@ -133,7 +133,7 @@ PopoutWrapperBase {
     interval: Math.max(root.dismissDelay, 2500)
     onTriggered: root._grace = false
   }
-  readonly property bool _pointerIn: surfaceHover.hovered
+  readonly property bool _pointerIn: surface.hovered
   on_PointerInChanged: {
     if (!root._pointerIn)
       root._grace = false;
@@ -278,26 +278,13 @@ PopoutWrapperBase {
   readonly property real _contentAlong: Math.ceil((vertical ? root.contentItem?.implicitHeight ?? 100 : root.contentItem?.implicitWidth ?? 100) + contentPadding * 2)
   // ...and across it, on whole pixels too: a far side between two pixels
   // drew its stroke faint, or dotted with a thin one
-  readonly property real _contentAcross: root._stepped ? root._segmentFar(0) : Math.ceil((vertical ? root.contentItem?.implicitWidth ?? 100 : root.contentItem?.implicitHeight ?? 100) + contentPadding * 2)
-  // Content in parts stacked out from the edge (an OSD's), its
-  // `contentSegments`: [{ along, far }], each part's length and its far side,
-  // out from the content's near side. More than one draws stepped: the
-  // box holds the first, each other one a step past it, padded as the
-  // box is (SurfaceOutline's steps), the content running on past the box
-  property var contentSegments: []
-  readonly property var _segments: root.contentSegments
-  readonly property bool _stepped: root._segments.length > 1
-  // A segment's far side from the box's start, on a whole pixel
-  function _segmentFar(i) {
-    return Math.ceil(root._segments[i].far + root.contentPadding * 2);
-  }
-  readonly property var _steps: root._stepped ? root._segments.slice(1).map((segment, i) => ({
-        "along": Math.ceil(segment.along + root.contentPadding * 2),
-        "depth": root._segmentFar(i + 1) - root._segmentFar(i)
-      })) : []
+  readonly property real _contentAcross: Math.ceil((vertical ? root.contentItem?.implicitWidth ?? 100 : root.contentItem?.implicitHeight ?? 100) + contentPadding * 2)
   EdgePlacement {
     id: placement
     screen: root.screen
+    // Its box eases its own size (its content's): the pill follows it as
+    // sent, not chasing it with an ease of its own
+    stretchGlides: false
     edge: root.edge
     held: root.holds
     gap: root.held ? root.gap : -1
@@ -305,8 +292,9 @@ PopoutWrapperBase {
     probeStart: placement.centre - root.naturalBox / 2
     probeLength: root.naturalBox
     // Along a side edge the box reaches past its content's ends for a
-    // submenu (shownStretchTop/Bottom)
-    aligned: placement.centre - root._contentAlong / 2 - root._stretchAlongTop
+    // submenu (shownStretchTop/Bottom). On a whole pixel: content easing
+    // its length (an OSD's) flipped a half pixel every other frame
+    aligned: Math.round(placement.centre - root._contentAlong / 2) - root._stretchAlongTop
     contentLength: root._contentAlong + root._stretchAlongTop + root._stretchAlongBottom
     submenu: slot
     coverStart: surface.coverStart
@@ -365,7 +353,7 @@ PopoutWrapperBase {
   readonly property real _stretchAlongTop: root.vertical ? slot.shownStretchTop : 0
   readonly property real _stretchAlongBottom: root.vertical ? slot.shownStretchBottom : 0
   // ---- end submenu ----
-  keepAlive: surfaceHover.hovered || trigger.containsMouse || (focusGrab.active && wantsKeyboardFocus)
+  keepAlive: surface.hovered || trigger.containsMouse || (focusGrab.active && wantsKeyboardFocus)
 
   EdgeTrigger {
     id: trigger
@@ -440,7 +428,15 @@ PopoutWrapperBase {
       // (a submenu's stretch as it will be, not as it animates there)
       const surfaceDepth = (root.vertical ? surface.implicitWidth : surface.implicitHeight) - slot.shownStretchAcross + slot.stretchAcross;
       // and room for the shadow it casts (SurfaceShadow)
-      const own = surfaceDepth + Math.max(0, root.maxContentDepth - content) + surface.shadowReach;
+      // (whole pixels: the surface's depth is, its content may not be, and
+      // a window flipping a pixel taller and back moved a bottom one's
+      // content with it)
+      // Content in parts (`maxContentDepth`) takes the surface's depth at
+      // its largest outright: the surface's less the content's are two
+      // bindings a pass apart as a part eases, which wobbled a few pixels
+      // a frame, each wobble resizing the layer window (a stutter on a
+      // fast monitor)
+      const own = root.maxContentDepth > 0 ? Math.ceil(surface.depthFor(Math.ceil(root.maxContentDepth + root.contentPadding * 2) + root.attachExtra + (root.vertical ? 0 : slot.stretchAcross)) + surface.shadowReach) : Math.ceil(surfaceDepth + Math.max(0, root.maxContentDepth - content) + surface.shadowReach);
       if (!root.roomForSubmenus || root.vertical)
         return own;
       // From this window's edge (its attach edge, less its backfill and
@@ -511,15 +507,10 @@ PopoutWrapperBase {
       // While the blur window backs surfaces, once it knows where this one
       // is (LayerOrigin.settled), so it never shows unbacked beside them
       active: root.isOpen && root.claimed && placement.stretchReady && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
-      steps: root._steps
       boxWidth: root.vertical ? root._contentAcross + root.attachExtra : root.boxLength
       boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachExtra + slot.shownStretchAcross
       fillColor: root.fillColor
       strokeColor: root.strokeColor
-
-      HoverHandler {
-        id: surfaceHover
-      }
 
       Loader {
         id: loader
@@ -535,13 +526,10 @@ PopoutWrapperBase {
         readonly property real topMargin: root.contentPadding + (root.edge === ScreenEdge.Top ? root.attachExtra : 0)
         readonly property real bottomMargin: root.contentPadding + (root.edge === ScreenEdge.Bottom ? root.attachExtra : 0)
         // (below a submenu's stretch above it, clear of one below)
-        // Stepped, it keeps its own depth too, from the attach edge on
-        // past the box (on a bottom or right edge, before it)
-        readonly property real _across: root.vertical ? (root.contentItem?.implicitWidth ?? 0) : (root.contentItem?.implicitHeight ?? 0)
-        x: root.vertical ? (root._stepped && root.edge === ScreenEdge.Right ? parent.width - rightMargin - loader._across : leftMargin) : root.contentPadding + root.place.contentOffset
-        y: root.vertical ? root.contentPadding + root.place.contentOffset + slot.shownStretchTop : (root._stepped && root.edge === ScreenEdge.Bottom ? parent.height - bottomMargin - loader._across : topMargin + slot.shownStretchTop)
-        width: root.vertical ? (root._stepped ? loader._across : parent.width - leftMargin - rightMargin) : (root.contentItem?.implicitWidth ?? 0)
-        height: root.vertical ? (root.contentItem?.implicitHeight ?? 0) : root._stepped ? loader._across : parent.height - topMargin - bottomMargin - slot.shownStretchAcross
+        x: root.vertical ? leftMargin : root.contentPadding + root.place.contentOffset
+        y: root.vertical ? root.contentPadding + root.place.contentOffset + slot.shownStretchTop : topMargin + slot.shownStretchTop
+        width: root.vertical ? parent.width - leftMargin - rightMargin : (root.contentItem?.implicitWidth ?? 0)
+        height: root.vertical ? (root.contentItem?.implicitHeight ?? 0) : parent.height - topMargin - bottomMargin - slot.shownStretchAcross
 
         active: root.occupied || root.keepLoaded
         asynchronous: false

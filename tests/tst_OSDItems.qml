@@ -202,7 +202,7 @@ TestCase {
   function test_tile_base_icons() {
     // Off is the base icon unlit (a mute struck through), never an icon's
     // own off form, so every one looks the same
-    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message", "vpn", "drive", "recording", "camera", "micUse", "screenShare"];
+    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message", "vpn", "drive", "battery", "monitor", "screenshot", "recording", "camera", "micUse", "screenShare"];
     for (const type of types) {
       for (const on of [true, false]) {
         const t = OSDItems.tile(type, {
@@ -284,6 +284,92 @@ TestCase {
       "count": 1
     }).hidden, "no udisks2");
     verify(OSDItems.tile("drive", null).hidden, "no state yet");
+  }
+
+  function test_tile_battery() {
+    const low = OSDItems.tile("battery", {
+      "available": true,
+      "level": "low",
+      "percent": 18,
+      "timeLeft": "1h 5m"
+    });
+    verify(low.on && !low.notable && !low.hidden, "low: lit, not unusual");
+    compare(low.icon, "battery_low");
+    let card = OSDItems.card("battery", {
+      "battery": low
+    }, ["battery"]);
+    compare([card.icon, card.title, card.role, card.detail, card.tone, card.clickable], ["battery_low", "18%", "Battery low", "1h 5m", "", false]);
+    const critical = OSDItems.tile("battery", {
+      "available": true,
+      "level": "critical",
+      "percent": 6,
+      "timeLeft": ""
+    });
+    verify(critical.notable, "critical is unusual");
+    card = OSDItems.card("battery", {
+      "battery": critical
+    }, ["battery"]);
+    compare([card.icon, card.role, card.detail, card.tone], ["battery_alert", "Battery critically low", "", "warning"]);
+    const fine = OSDItems.tile("battery", {
+      "available": true,
+      "level": "none",
+      "percent": 80
+    });
+    verify(!fine.on && !fine.notable && !fine.hidden, "fine: shown unlit");
+    verify(OSDItems.tile("battery", {
+      "available": false
+    }).hidden, "no battery");
+    verify(OSDItems.tile("battery", null).hidden, "no state yet");
+  }
+
+  function test_tile_monitor() {
+    const added = OSDItems.tile("monitor", {
+      "event": {
+        "kind": "added",
+        "name": "DP-1",
+        "description": "Dell U2720Q",
+        "width": 3840,
+        "height": 2160
+      }
+    });
+    verify(added.hidden && !added.notable, "only ever its card, never unusual");
+    let card = OSDItems.card("monitor", {
+      "monitor": added
+    }, ["monitor"]);
+    compare([card.icon, card.title, card.role, card.detail, card.clickable], ["monitor", "Dell U2720Q", "Connected", "DP-1 · 3840×2160", false]);
+    card = OSDItems.card("monitor", {
+      "monitor": OSDItems.tile("monitor", {
+        "event": {
+          "kind": "removed",
+          "name": "HDMI-A-1",
+          "description": "",
+          "width": 1920,
+          "height": 1080
+        }
+      })
+    }, ["monitor"]);
+    compare([card.icon, card.title, card.role, card.detail], ["desktop_access_disabled", "HDMI-A-1", "Disconnected", "1920×1080"], "no description: named by its connector, once");
+    compare(OSDItems.card("monitor", {
+      "monitor": OSDItems.tile("monitor", null)
+    }, ["monitor"]).detail, "", "no event yet");
+  }
+
+  function test_tile_screenshot() {
+    const shot = OSDItems.tile("screenshot", {
+      "event": {
+        "path": "/home/u/Pictures/Screenshots/a.png",
+        "title": "Screenshot saved",
+        "folder": "~/Pictures/Screenshots"
+      }
+    });
+    verify(shot.hidden && !shot.notable, "only ever its card");
+    const card = OSDItems.card("screenshot", {
+      "screenshot": shot
+    }, ["screenshot"]);
+    compare([card.icon, card.title, card.role, card.detail, card.image], ["screenshot_monitor", "Screenshot saved", "Copied to the clipboard", "~/Pictures/Screenshots", "file:///home/u/Pictures/Screenshots/a.png"]);
+    verify(card.clickable, "a screenshot's card opens it");
+    compare(OSDItems.card("screenshot", {}, ["screenshot"]).image, "", "no picture yet");
+    compare(OSDItems.card("drive", {}, ["drive"]).image, "", "no picture but a screenshot's");
   }
 
   function test_tile_vpn_capture() {
@@ -578,7 +664,7 @@ TestCase {
     compare(cam.title, "Firefox");
     compare(cam.role, "Using the camera");
     compare(OSDItems.card("screenShare", {}, ["screenShare"]).role, "Sharing the screen", "no tile yet");
-    verify(!OSDItems.card("screenShare", {}, ["screenShare"]).clickable, "only a drive's card takes a click");
+    verify(!OSDItems.card("screenShare", {}, ["screenShare"]).clickable, "only a drive's and a screenshot's cards take a click");
     const stopped = OSDItems.card("screenShare", {
       "screenShare": OSDItems.tile("screenShare", {
         "apps": [],
@@ -751,9 +837,11 @@ TestCase {
       "card": 400
     };
     compare(OSDItems.partOrder([], "level", lengths, 20, false), ["level"]);
-    compare(OSDItems.partOrder(["level"], "card", lengths, 20, false), ["card", "level"], "the longest nearest the edge");
+    compare(OSDItems.partOrder(["level"], "card", lengths, 20, false), ["level", "card"], "the card always last, however long");
     compare(OSDItems.partOrder(["level"], "status", lengths, 20, false), ["level", "status"]);
     compare(OSDItems.partOrder(["level"], "card", lengths, 20, true), ["level", "card"], "holding still: past them all");
+    compare(OSDItems.partOrder(["status", "card"], "level", lengths, 20, false), ["level", "status", "card"], "a box part goes inside the card");
+    compare(OSDItems.partOrder(["level", "card"], "status", lengths, 20, true), ["level", "status", "card"], "holding still: after the box, still inside the card");
     compare(OSDItems.partOrder(["level", "status"], "status", lengths, 20, false), ["level", "status"], "already shown");
     compare(OSDItems.partOrder(["status"], "level", {
       "level": 130,
@@ -767,7 +855,8 @@ TestCase {
       "level": 300,
       "status": 100,
       "card": 200
-    }, 20, false), ["card", "status", "level"], "an unsorted order kept: before the first shorter");
+    }, 20, false), ["status", "level", "card"], "an unsorted order kept, the card last");
+    compare(OSDItems.partOrder(["status", "level"], "level", lengths, 20, false), ["status", "level"], "an unsorted box kept");
   }
 
   function test_partsDue() {
@@ -800,5 +889,41 @@ TestCase {
       "due": ["level"],
       "next": 3000
     }, "apart: each on its own");
+  }
+
+  function test_sharedDeadlines() {
+    compare(OSDItems.sharedDeadlines({}), {});
+    compare(OSDItems.sharedDeadlines({
+      "level": 1000,
+      "status": 2500,
+      "card": 0
+    }), {
+      "level": 2500,
+      "status": 2500,
+      "card": 0
+    }, "the bars and the icons share the latest");
+    compare(OSDItems.sharedDeadlines({
+      "level": 1000,
+      "card": 4000
+    }), {
+      "level": 1000,
+      "card": 4000
+    }, "a card doesn't hold the bars");
+    compare(OSDItems.sharedDeadlines({
+      "level": 5000,
+      "status": 3000,
+      "card": 4000
+    }), {
+      "level": 5000,
+      "status": 5000,
+      "card": 4000
+    }, "nor do they hold the card");
+    compare(OSDItems.sharedDeadlines({
+      "level": 0,
+      "status": 3000
+    }), {
+      "level": 0,
+      "status": 3000
+    }, "a closed part stays closed");
   }
 }

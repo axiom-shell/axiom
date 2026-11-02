@@ -18,3 +18,9 @@ properties:
     x-control: folder
     default: ''
     description: Where recordings are saved, and listed from by the Screen recording card. Empty saves them with the screenshots.
+  notify:
+    type: boolean
+    title: Screenshot notifications
+    default: true
+    description: "Send a notification when a screenshot is taken (a click opens it; Edit in … opens it in the annotator). An enabled OSD with Screenshots among its statuses shows it as a card instead. Off, and with no such OSD, nothing is shown."
+    x-link: {setting: OSD}

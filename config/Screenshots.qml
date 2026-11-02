@@ -13,4 +13,7 @@ QtObject {
   readonly property string folder: Paths.expandHome(_c.folder)
   // With ~ expanded; empty for the screenshot folder
   readonly property string recordingFolder: Paths.expandHome(_c.recordingFolder)
+  // A screenshot taken as a notification, where no OSD shows `screenshot`
+  // (OSDConfig.routeOf)
+  readonly property bool notify: _c.notify
 }

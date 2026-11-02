@@ -15,17 +15,12 @@ import QtQuick
 //     startCornerRadius, endCornerRadius, connectorGap, joinStart,
 //     joinEnd, flushStart, flushEnd, flushStartThrough, flushEndThrough,
 //     detached, detachedOffset, backfill, straight, straightJoins,
-//     straightJoinStart, straightJoinEnd, joinBackfill, steps }
+//     straightJoinStart, straightJoinEnd, joinBackfill }
 // (straightJoinStart/End: one joined end's, where the edges it meets
 // differ, a bare screen edge at one and a solid bar's stroke at the
 // other; each defaults to straightJoins. joinBackfill: the row a surface
 // covers past its joined ends (a submenu's, beside its parent's backfill),
-// which a straight join's far wall runs on through. steps: segments
-// stacked past the box's far side, out from the edge, each centred on
-// it, `{ along, depth }` (its length, outer edge to outer edge, and how
-// far its far side lies past the one before): a stepped outline, each
-// one no longer than the one before (a longer one is cut to it), joined
-// to it by a concave fillet where it's narrower; attached only)
+// which a straight join's far wall runs on through)
 QtObject {
   id: root
 
@@ -94,121 +89,13 @@ QtObject {
     const h = m.half, R = s.filletRadius;
     const along = Math.max(0, s.boxAlong / 2 - h);
     const room = filleted => Math.max(0, Math.min(along, boxStart + s.boxDepth - h - (filleted ? h + R : 0)));
-    const out = Object.assign({}, m, {
+    return Object.assign({}, m, {
       "startCornerRadius": Math.min(s.startCornerRadius ?? s.cornerRadius, room(m.filletStart)),
       "endCornerRadius": Math.min(s.endCornerRadius ?? s.cornerRadius, room(m.filletEnd)),
       "boxStart": boxStart,
+      "depth": m.back + boxStart + s.boxDepth + s.connectorGap / 2 + (m.joinFillet ? s.filletRadius : 0),
       "farV": boxStart + s.boxDepth - m.half
     });
-    out.levels = root._levels(s, out);
-    const stepped = out.levels.length > 0 ? out.levels[out.levels.length - 1].v - out.farV : 0;
-    out.depth = m.back + boxStart + s.boxDepth + stepped + s.connectorGap / 2 + (m.joinFillet ? s.filletRadius : 0);
-    return out;
-  }
-
-  // The steps past the box (spec `steps`), as levels out from it: the box
-  // first, then each step, its walls' centre lines `a` (start) and `b`
-  // (end) and its far side's `v`. A step as long as the one before (or
-  // within a pixel) only carries its walls on; at a narrower one the
-  // corners: `c0`/`c1` the convex corner each end of the face before it,
-  // `f` the concave fillet into its wall, each at most half the room the
-  // step leaves; and the outermost face's corners, `cs`/`ce`. Steps all
-  // as long as the box only deepen it (one level). None without steps,
-  // detached, or with a joined end
-  function _levels(s, m) {
-    const steps = (s.steps ?? []).filter(step => step.depth > 0);
-    if (steps.length === 0 || s.detached || s.joinStart || s.joinEnd)
-      return [];
-    const h = m.half, R = s.filletRadius;
-    // A step's corners: the spec's, else the box's own (a host passes
-    // its start and end ones)
-    const cr = Math.max(0, s.cornerRadius ?? Math.max(s.startCornerRadius ?? 0, s.endCornerRadius ?? 0));
-    const centre = m.startMargin + s.boxAlong / 2;
-    const levels = [
-      {
-        "a": m.sideU,
-        "b": m.farSideU,
-        "v": m.farV,
-        "depth": s.boxDepth,
-        "cs": m.startCornerRadius,
-        "ce": m.endCornerRadius
-      }
-    ];
-    steps.forEach(step => {
-      const last = levels[levels.length - 1];
-      const half = Math.min(step.along, last.b - last.a + 2 * h) / 2;
-      const a = centre - half + h;
-      if (a - last.a < 1) {
-        last.v += step.depth;
-        last.depth += step.depth;
-        return;
-      }
-      levels.push({
-        "a": a,
-        "b": centre + half - h,
-        "v": last.v + step.depth,
-        "depth": step.depth
-      });
-    });
-    levels.forEach((level, i) => {
-      if (i === 0)
-        return;
-      const corner = Math.max(0, Math.min(cr, level.depth / 2, (level.b - level.a) / 2));
-      level.cs = corner;
-      level.ce = corner;
-    });
-    levels.forEach((level, i) => {
-      if (i === 0)
-        return;
-      const before = levels[i - 1];
-      const room = (level.a - before.a) / 2;
-      level.c0 = Math.min(before.cs, room);
-      level.c1 = Math.min(before.ce, room);
-      level.f = Math.max(0, Math.min(R, room, level.depth / 2));
-    });
-    return levels;
-  }
-
-  // The outline's far side from the start wall (at the box's far corner)
-  // to the end wall: the box's far corners, or with steps, out along each
-  // step's walls and faces and back
-  function _farStart(m, p, cs) {
-    const L = m.levels ?? [];
-    if (L.length === 0)
-      return p.arc(cs, false, m.sideU + cs, m.farV);
-    let d = "";
-    for (let k = 1; k < L.length; k++) {
-      const before = L[k - 1], step = L[k];
-      // (the box's wall already runs up to its own corner)
-      if (k > 1 || step.c0 !== cs)
-        d += p.line(before.a, before.v - step.c0);
-      d += p.arc(step.c0, false, before.a + step.c0, before.v);
-      // (none where the two arcs meet: a line going nowhere spikes a
-      // mitred stroke)
-      if (step.a - step.f - (before.a + step.c0) > 0.01)
-        d += p.line(step.a - step.f, before.v);
-      d += p.arc(step.f, true, step.a, before.v + step.f);
-    }
-    const out = L[L.length - 1];
-    d += p.line(out.a, out.v - out.cs);
-    d += p.arc(out.cs, false, out.a + out.cs, out.v);
-    return d;
-  }
-  function _farEnd(m, p, ce) {
-    const L = m.levels ?? [];
-    if (L.length === 0)
-      return p.line(m.farSideU - ce, m.farV) + p.arc(ce, false, m.farSideU, m.farV - ce);
-    const out = L[L.length - 1];
-    let d = p.line(out.b - out.ce, out.v) + p.arc(out.ce, false, out.b, out.v - out.ce);
-    for (let k = L.length - 1; k > 0; k--) {
-      const before = L[k - 1], step = L[k];
-      d += p.line(step.b, before.v + step.f);
-      d += p.arc(step.f, true, step.b + step.f, before.v);
-      if (before.b - step.c1 - (step.b + step.f) > 0.01)
-        d += p.line(before.b - step.c1, before.v);
-      d += p.arc(step.c1, false, before.b, before.v - step.c1);
-    }
-    return d;
   }
 
   // An edge-local point in the item's coordinates (`w`/`h` its size)
@@ -298,7 +185,7 @@ QtObject {
     } else if (!m.filletStart) {
       d += startWith(sideU, fv0);
       d += p.line(sideU, farV - cs);
-      d += root._farStart(m, p, cs);
+      d += p.arc(cs, false, sideU + cs, farV);
     } else {
       if (sideU - R >= ci) {
         d += startWith(ci, h);
@@ -308,7 +195,7 @@ QtObject {
       }
       d += p.arc(R, true, sideU, h + R);
       d += p.line(sideU, farV - cs);
-      d += root._farStart(m, p, cs);
+      d += p.arc(cs, false, sideU + cs, farV);
     }
     if (s.joinEnd && m.straightJoinEnd) {
       d += p.line(L, farV);
@@ -316,10 +203,12 @@ QtObject {
       d += p.line(L - h - R, farV);
       d += p.arc(R, true, L - ju, jv);
     } else if (!m.filletEnd) {
-      d += root._farEnd(m, p, ce);
+      d += p.line(farSideU - ce, farV);
+      d += p.arc(ce, false, farSideU, farV - ce);
       d += p.line(farSideU, fv1);
     } else {
-      d += root._farEnd(m, p, ce);
+      d += p.line(farSideU - ce, farV);
+      d += p.arc(ce, false, farSideU, farV - ce);
       d += p.line(farSideU, h + R);
       if (farSideU + R <= L - ci) {
         d += p.arc(R, true, farSideU + R, h);
@@ -388,9 +277,7 @@ QtObject {
     if (s.detached)
       return [boxRect(s, m, w, h)];
     // Attached, the box reaches back to the attach edge
-    const levels = m.levels ?? [];
-    const deeper = levels.length > 0 ? levels[0].v - m.farV : 0;
-    const out = [rect(m.startMargin, 0, s.boxAlong, m.boxStart + s.boxDepth + deeper)];
+    const out = [rect(m.startMargin, 0, s.boxAlong, m.boxStart + s.boxDepth)];
     const filletDeep = R + m.half;
     if (m.filletStart && m.startMargin > 0)
       out.push(rect(0, 0, m.startMargin, filletDeep));
@@ -402,11 +289,6 @@ QtObject {
       out.push(rect(m.alongLength - m.half - R, m.farV, m.half + R, R + m.half));
     if (back > 0)
       out.push(rect(0, -back, m.alongLength, back));
-    // Each step past the box
-    levels.forEach((level, i) => {
-      if (i > 0)
-        out.push(rect(level.a - m.half, m.levels[i - 1].v, level.b - level.a + 2 * m.half, level.v - m.levels[i - 1].v + m.half));
-    });
     return out.filter(r => r.width > 0 && r.height > 0);
   }
 
@@ -441,59 +323,13 @@ QtObject {
     } else {
       // The box, back to the backfill's far side
       const u0 = m.filletStart ? m.startMargin : 0, u1 = m.filletEnd ? L - m.endMargin : L;
-      const levels = m.levels ?? [];
       pieces.push({
         "u": u0,
         "v": -back,
         "along": u1 - u0,
-        "deep": back + (levels.length > 0 ? levels[0].v + half : far),
-        "startFar": s.joinStart ? 0 : outer(levels.length > 1 ? levels[1].c0 : m.startCornerRadius),
-        "endFar": s.joinEnd ? 0 : outer(levels.length > 1 ? levels[1].c1 : m.endCornerRadius)
-      });
-      // Each step past it (overlapping the face before it, under its
-      // stroke), its far corners those of the face it meets next, and
-      // the concave fillets at its foot: their squares less the circle
-      // beyond their arc
-      levels.forEach((level, i) => {
-        if (i === 0)
-          return;
-        const before = levels[i - 1], next = levels[i + 1];
-        pieces.push({
-          "u": level.a - half,
-          "v": before.v - half,
-          "along": level.b - level.a + 2 * half,
-          "deep": level.v - before.v + 2 * half,
-          "startFar": outer(next ? next.c0 : level.cs),
-          "endFar": outer(next ? next.c1 : level.ce)
-        });
-        if (level.f > half) {
-          pieces.push({
-            "u": level.a - level.f,
-            "v": before.v,
-            "along": level.f - half,
-            "deep": level.f,
-            "cuts": [
-              {
-                "u": level.a - level.f,
-                "v": before.v + level.f,
-                "r": level.f - half
-              }
-            ]
-          });
-          pieces.push({
-            "u": level.b + half,
-            "v": before.v,
-            "along": level.f - half,
-            "deep": level.f,
-            "cuts": [
-              {
-                "u": level.b + level.f,
-                "v": before.v + level.f,
-                "r": level.f - half
-              }
-            ]
-          });
-        }
+        "deep": back + far,
+        "startFar": s.joinStart ? 0 : outer(m.startCornerRadius),
+        "endFar": s.joinEnd ? 0 : outer(m.endCornerRadius)
       });
       if (back > 0)
         pieces.push({
