@@ -485,7 +485,6 @@ Found by the audits:
 - [Kitty reloads only when its socket is /tmp/kitty-*](issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
-- [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
 - [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
 - [Uninstall keeps a stale greetd backup when greetd points elsewhere](issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
 - [The greeter reads its keyboard layouts before the bundle's are applied](issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)

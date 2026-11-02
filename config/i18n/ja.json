@@ -3720,6 +3720,8 @@
     "Steady": "",
     "The center": "",
     "Where the compositor makes workspaces as you need them, how many it takes to slide from one end to the other. Each workspace down moves it the same step, so opening and closing windows never moves it; past the last, it stays at the end.": "",
-    "Workspaces it spans": ""
+    "Workspaces it spans": "",
+    "Doesn't lock": "",
+    "The lock screen is your own locker, but its Lock command is empty or loginctl lock-session, which comes back to axiom: nothing locks. Set the Lock command to your locker.": ""
   }
 }

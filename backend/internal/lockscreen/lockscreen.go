@@ -171,17 +171,32 @@ func (l *Locker) Lock(ctx context.Context) error {
 
 // ownLocker runs the user's lock command (mode "none"). Their locker
 // can't confirm anything to axiom, so running it is all there is.
-// `loginctl lock-session` is refused: logind hands that lock request to
-// the idle daemon, which calls axiom lock again.
 func (l *Locker) ownLocker() error {
+	command := l.ownCommand()
+	if command == "" {
+		return axerr.New(axerr.Unavailable, "the lock screen is your own (Lockscreen.mode none), and Lockscreen.lockCommand doesn't name a locker")
+	}
+	return shellcmd.Start(command, l.opts.Go)
+}
+
+// ownCommand is the user's lock command, "" when it names no locker:
+// `loginctl lock-session` doesn't, since logind hands that lock request
+// to the idle daemon, which calls axiom lock again.
+func (l *Locker) ownCommand() string {
 	command := ""
 	if l.opts.Command != nil {
 		command = strings.TrimSpace(l.opts.Command())
 	}
-	if command == "" || command == "loginctl lock-session" {
-		return axerr.New(axerr.Unavailable, "the lock screen is your own (Lockscreen.mode none), and Lockscreen.lockCommand doesn't name a locker")
+	if command == "loginctl lock-session" {
+		return ""
 	}
-	return shellcmd.Start(command, l.opts.Go)
+	return command
+}
+
+// CanLock is whether Lock has a locker to lock with: the built-in one, or
+// the user's own lock command.
+func (l *Locker) CanLock() bool {
+	return l.opts.Mode == nil || l.opts.Mode() != "none" || l.ownCommand() != ""
 }
 
 // wait waits for a confirmed report.

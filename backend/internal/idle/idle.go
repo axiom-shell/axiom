@@ -73,8 +73,11 @@ type State struct {
 	Inhibited  bool        `json:"inhibited"`
 	Inhibitors []Inhibitor `json:"inhibitors"`
 	// Fired are the listeners (by plan index) idle has reached
-	Fired       []int            `json:"fired"`
-	Logind      bool             `json:"logind"`
+	Fired  []int `json:"fired"`
+	Logind bool  `json:"logind"`
+	// NoLocker: nothing locks (Settings.NoLocker): no lock step, no lock
+	// when logind asks or before sleep
+	NoLocker    bool             `json:"noLocker"`
 	ScreenSaver ScreenSaverState `json:"screensaver"`
 }
 
@@ -231,7 +234,7 @@ func (s *Service) reconcile() {
 	}
 
 	// The sleep inhibitor, from the logind connected now
-	wantSleep := st.Enabled && st.LockBeforeSleep && s.lg != nil
+	wantSleep := st.Enabled && st.LockBeforeSleep && !st.NoLocker && s.lg != nil
 	switch {
 	case wantSleep && s.sleepHeld != s.lg:
 		lg := s.lg
@@ -485,7 +488,7 @@ func (s *Service) logindOnce(ctx context.Context) error {
 		switch {
 		case e.Lock:
 			s.post(func() {
-				if s.settings.Enabled {
+				if s.settings.Enabled && !s.settings.NoLocker {
 					s.act(Action{Kind: Lock})
 				}
 			})
@@ -516,7 +519,7 @@ func (s *Service) sleepChanged(sleeping bool) {
 		return
 	}
 	if sleeping {
-		if st.LockBeforeSleep {
+		if st.LockBeforeSleep && !st.NoLocker {
 			delay := s.delayMax - 500*time.Millisecond
 			if delay < time.Second {
 				delay = time.Second
@@ -594,6 +597,7 @@ func (s *Service) publish() {
 		Armed:      len(s.armed),
 		Inhibited:  s.settings.Enabled && s.inhibited(),
 		Logind:     s.lg != nil,
+		NoLocker:   s.settings.Enabled && s.settings.NoLocker,
 		Inhibitors: []Inhibitor{},
 		Fired:      []int{},
 	}

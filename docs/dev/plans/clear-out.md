@@ -9,7 +9,7 @@ Not an options plan: this is row 20's PR list, combined from the seven area tria
 The product questions, answered in one sitting (step 2.5); each entry quotes its answer under **Decided**, and the deferred ones are under [Deferred](../roadmap.md#deferred).
 
 1. Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot: b) apply the snapshot with default machine settings.
-2. [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks): yes, the plan also shows "doesn't lock" as a status.
+2. With Idle on and the user's own locker left at loginctl lock-session, nothing locks: yes, the plan also shows "doesn't lock" as a status.
 3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): split, with the theme page directly after integrations.
 4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): a) "Restart" / "Shut down".
 5. Done: the second wallpaper backend was removed (axiom draws every wallpaper, with its own transitions).
@@ -261,7 +261,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 - **platform-02** (5): The nested-Hyprland timing gets a Live checks line.
   - A shell started locked locks again on every reload
-  - [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
+  - With Idle on and the user's own locker left at loginctl lock-session, nothing locks
   - [Nested Hyprland acknowledges a lock too late for axiom lock](../issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
   - [Uninstall keeps a stale greetd backup when greetd points elsewhere](../issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
   - [The greeter reads its keyboard layouts before the bundle's are applied](../issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)

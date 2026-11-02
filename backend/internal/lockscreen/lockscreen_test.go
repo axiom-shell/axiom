@@ -137,9 +137,19 @@ func TestOwnLockerRunsItsCommandButNotLoginctl(t *testing.T) {
 	if !testkit.Eventually(func() bool { _, err := os.Stat(marker); return err == nil }) {
 		t.Error("the lock command didn't run")
 	}
-	command = "loginctl lock-session"
-	if err := l.Lock(context.Background()); err == nil {
-		t.Error("loginctl lock-session (which loops back to axiom) was run")
+	if !l.CanLock() {
+		t.Error("CanLock is false with a lock command")
+	}
+	for _, command = range []string{"loginctl lock-session", " "} {
+		if err := l.Lock(context.Background()); err == nil {
+			t.Errorf("%q (which locks nothing or loops back to axiom) was run", command)
+		}
+		if l.CanLock() {
+			t.Errorf("CanLock is true with the lock command %q", command)
+		}
+	}
+	if !New(Options{Mode: func() string { return "quickshell" }}).CanLock() {
+		t.Error("the built-in locker can't lock")
 	}
 }
 

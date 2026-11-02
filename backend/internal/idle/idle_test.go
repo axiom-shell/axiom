@@ -326,6 +326,25 @@ func TestLogindLockAndSleep(t *testing.T) {
 	h.rec.expect(t, "lock", "lock", "screen true")
 }
 
+func TestNoLockerLocksNothing(t *testing.T) {
+	t.Parallel()
+	h := start(t, true)
+	s := defaults()
+	s.NoLocker = true
+	h.svc.Configure(s)
+	h.until(t, func(s State) bool { return s.Logind && s.NoLocker })
+	select {
+	case held := <-h.logind.Inhibited:
+		held.Close()
+		t.Error("took a sleep inhibitor with nothing to lock with")
+	case <-time.After(100 * time.Millisecond):
+	}
+	h.logind.Lock()
+	h.logind.PrepareForSleep(true)
+	h.logind.PrepareForSleep(false)
+	h.rec.expect(t, "screen true")
+}
+
 func TestSuspendThroughLogind(t *testing.T) {
 	t.Parallel()
 	h := start(t, true)
