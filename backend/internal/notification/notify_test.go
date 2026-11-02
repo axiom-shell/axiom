@@ -64,7 +64,7 @@ func TestSendWithoutActions(t *testing.T) {
 	bus := dbustest.New(t)
 	calls := fakeServer(t, bus)
 	sent, err := Send(testCtx(t), dial(t, bus), Notification{AppName: "axiom", Summary: "Hi", Body: "there", Icon: "/a.png", DesktopEntry: "axiom-update", Urgency: "critical"})
-	if err != nil || sent.ID != 7 || sent.Wait(testCtx(t)) != "" {
+	if err != nil || sent.ID != 7 || sent.Wait(testCtx(t), nil) != "" {
 		t.Fatalf("%+v %v", sent, err)
 	}
 	body := <-calls
@@ -86,7 +86,7 @@ func TestSendWaitsForAButton(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if picked := sent.Wait(testCtx(t)); picked != "edit" {
+	if picked := sent.Wait(testCtx(t), nil); picked != "edit" {
 		t.Fatalf("picked %q", picked)
 	}
 	if body := <-calls; !reflect.DeepEqual(body[5], []string{"edit", "Edit", "open", "Open"}) {
@@ -102,7 +102,7 @@ func TestSendClosedWithoutAPick(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if picked := sent.Wait(testCtx(t)); picked != "" {
+	if picked := sent.Wait(testCtx(t), nil); picked != "" {
 		t.Fatalf("picked %q", picked)
 	}
 }
@@ -125,7 +125,7 @@ func TestWaitEndsWithTheBus(t *testing.T) {
 		t.Fatal(err)
 	}
 	conn.Close()
-	if picked := sent.Wait(testCtx(t)); picked != "" {
+	if picked := sent.Wait(testCtx(t), nil); picked != "" {
 		t.Fatalf("picked %q", picked)
 	}
 }

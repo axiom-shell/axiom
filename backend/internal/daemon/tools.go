@@ -81,16 +81,7 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 		d.tasks.Go(func(ctx context.Context) {
 			defer conn.Close()
 			// Its connection gone (a shell reload), nobody hears the pick
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
-			go func() {
-				select {
-				case <-c.Done():
-					cancel()
-				case <-ctx.Done():
-				}
-			}()
-			c.Notify(pushNotifyAction.Method, notifyAction{ID: sent.ID, Action: sent.Wait(ctx)})
+			c.Notify(pushNotifyAction.Method, notifyAction{ID: sent.ID, Action: sent.Wait(ctx, c.Done())})
 		})
 		return notifyResult{ID: sent.ID}, nil
 	})

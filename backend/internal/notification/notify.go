@@ -81,8 +81,8 @@ func Send(ctx context.Context, conn *dbus.Conn, n Notification) (Sent, error) {
 }
 
 // Wait answers the id of the button picked, or "" once the notification
-// closes, the bus does or ctx ends (at once without buttons).
-func (s Sent) Wait(ctx context.Context) string {
+// closes, the bus does, ctx ends or gone closes (at once without buttons).
+func (s Sent) Wait(ctx context.Context, gone <-chan struct{}) string {
 	if s.sub == nil {
 		return ""
 	}
@@ -90,6 +90,8 @@ func (s Sent) Wait(ctx context.Context) string {
 	for {
 		select {
 		case <-ctx.Done():
+			return ""
+		case <-gone:
 			return ""
 		case m, ok := <-s.sub.C:
 			if !ok {
