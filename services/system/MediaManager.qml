@@ -247,9 +247,22 @@ QtObject {
     root.activePlayer = root.players.find(p => p.dbusName === id) ?? null;
   }
 
+  // A player that appears already playing (no playbackStateChanged seen)
+  // started now, and drops the pin as one starting would; a vanished
+  // one's time goes
   onPlayersChanged: {
     if (!root.players.some(p => p.dbusName === root._pinnedId))
       root._pinnedId = "";
+    const startedAt = {};
+    for (const p of root.players) {
+      if (p.dbusName in root._startedAt)
+        startedAt[p.dbusName] = root._startedAt[p.dbusName];
+      else if (p.playbackState === MprisPlaybackState.Playing) {
+        startedAt[p.dbusName] = Date.now();
+        root._pinnedId = "";
+      }
+    }
+    root._startedAt = startedAt;
     root._pick();
   }
 
