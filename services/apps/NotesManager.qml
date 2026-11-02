@@ -2,7 +2,6 @@ pragma Singleton
 import QtQuick
 import qs.config
 import qs.services.core
-import qs.services.system
 import qs.services.ui
 
 // Notes: Markdown files in NotesConfig.directory ($XDG_DATA_HOME/axiom/notes/ by
@@ -193,7 +192,7 @@ QtObject {
     const page = OverlayConfig.pageWithModule("Notes");
     const menu = page === "" ? EdgeMenusConfig.menuWithModule("Notes") : null;
     if (page === "" && !menu) {
-      NotificationManager.sendNotification("axiom", I18n.tr("No notes module"), I18n.tr("Add a Notes module to an overlay page or an edge menu."));
+      ShellManager.refuse("sticky_note_2", I18n.tr("No notes module"), I18n.tr("Add a Notes module to an overlay page or an edge menu."));
       return;
     }
     if (path)

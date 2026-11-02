@@ -348,7 +348,8 @@ QtObject {
           "kind": p.kind,
           "error": p.error
         })), {
-          "icon": "network-vpn-disconnected"
+          "icon": "network-vpn-disconnected",
+          "key": "vpn:" + p.uuid
         });
     });
   }

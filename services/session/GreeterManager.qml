@@ -236,8 +236,11 @@ QtObject {
     const hash = root._report?.currentHash ?? "";
     if (root.status !== "outdated" || !GreeterConfig.enabled || !hash || root._saved.notifiedHash === hash)
       return;
+    // Silent and one entry, however often main moves
     NotificationManager.sendNotification("axiom", I18n.tr("Login screen update"), I18n.tr("Axiom changed since its login screen was set up. Click to update it (it asks for your password)."), {
-      "desktopEntry": root._desktopEntry
+      "desktopEntry": root._desktopEntry,
+      "key": "greeter-outdated",
+      "silent": true
     });
     root._saved = Object.assign({}, root._saved, {
       "notifiedHash": hash

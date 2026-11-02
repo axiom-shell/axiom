@@ -277,11 +277,9 @@ QtObject {
       return false;
     const draft = CalendarEvents.newDraft(CalendarEvents.dayKey(parsed.start), Date.now(), root.newEventCalendar, CalendarConfig.defaultDuration, CalendarConfig.defaultReminder);
     root.save(Object.assign(draft, parsed), "series", result => {
+      // Saved: an answer (an OSD card, or a toast that isn't kept)
       if (result.ok)
-        NotificationManager.sendNotification(I18n.tr("Calendar"), I18n.tr("Added {0}", parsed.title), parsed.allDay ? I18n.formatDate(new Date(parsed.start), I18n.dateFormat("longDate")) : I18n.tr("{0} · {1}", I18n.formatDate(new Date(parsed.start), I18n.dateFormat("longDate")), I18n.formatDate(new Date(parsed.start), CalendarConfig.timeFormat)), {
-          "desktopEntry": root._desktopEntry,
-          "icon": "x-office-calendar"
-        });
+        ShellManager.confirm("calendar_month", I18n.tr("Added {0}", parsed.title), parsed.allDay ? I18n.formatDate(new Date(parsed.start), I18n.dateFormat("longDate")) : I18n.tr("{0} · {1}", I18n.formatDate(new Date(parsed.start), I18n.dateFormat("longDate")), I18n.formatDate(new Date(parsed.start), CalendarConfig.timeFormat)));
       else
         NotificationManager.sendNotification(I18n.tr("Calendar"), I18n.tr("Couldn't add {0}", parsed.title), root.errorText(result), {
           "desktopEntry": root._desktopEntry,

@@ -358,9 +358,11 @@ QtObject {
       CommandManager.runDetached(["xdg-open", path]);
   }
 
-  function _notify(summary, body, icon, actions, onAction) {
+  function _notify(summary, body, icon, actions, onAction, key) {
     const notice = root._notice(summary, body, icon, actions, onAction);
-    NotificationManager.sendNotification("axiom", notice.summary, notice.body, notice.opts);
+    NotificationManager.sendNotification("axiom", notice.summary, notice.body, Object.assign(notice.opts, {
+      "key": key
+    }));
   }
 
   // Something that happened to a drive (`kind`, lastEvent's), where the
@@ -368,11 +370,47 @@ QtObject {
   // announce): the OSD's card, a notification, or nothing. `opts`:
   // { name (a drive gone's, as last seen), mountPoint, error (an axerr
   // kind) }
+  // A notification is one entry per drive (key `drive:<id>`): what
+  // happened to it last. Its comings and goings are silent (the Quiet
+  // section, their buttons run by _pick); the rest (a question, a warning,
+  // Safe to remove) alerts
   function _say(kind, drive, opts) {
     const name = opts?.name ?? root.nameOf(drive);
     const notice = root._eventNotice(kind, drive, name, opts ?? {});
-    if (notice && NotificationManager.announce("drive", DrivesConfig.notify, notice.summary, notice.body, notice.opts) === "osd")
+    if (!notice)
+      return;
+    const sent = Object.assign({}, notice.opts, {
+      "key": "drive:" + drive.id,
+      "silent": root._quietKinds.includes(kind),
+      "data": {
+        "kind": kind,
+        "driveId": drive.id
+      }
+    });
+    if (NotificationManager.announce("drive", DrivesConfig.notify, notice.summary, notice.body, sent) === "osd")
       root._event(kind, drive, opts?.mountPoint ?? "", name);
+  }
+  readonly property var _quietKinds: ["added", "mounted", "unmounted", "removed"]
+
+  // A click on one of the drives' notifications (`action` ""), or a
+  // button of a silent one (by its data): the Drives module, or what the
+  // button says
+  function _pick(entry, action) {
+    const data = entry?.data;
+    if (!action || action === "default" || !data) {
+      root.showDrives();
+      return;
+    }
+    const drive = root.driveById(data.driveId);
+    if (!drive)
+      root.showDrives();
+    else if (action === "eject")
+      root.eject(drive);
+    else
+      root.activate({
+        "kind": data.kind,
+        "driveId": data.driveId
+      });
   }
 
   // A notification's summary, body and sendNotification options
@@ -562,7 +600,7 @@ QtObject {
           "kind": "locked",
           "driveId": id
         });
-    });
+    }, "drive:" + id);
   }
 
   // Mounts every volume to mount (the first opened with `andOpen`)
@@ -650,7 +688,7 @@ QtObject {
   Component.onCompleted: {
     if (root._inert)
       return;
-    NotificationManager.registerHandler(root._desktopEntry, () => root.showDrives());
+    NotificationManager.registerHandler(root._desktopEntry, (entry, action) => root._pick(entry, action));
     BackendManager.listen("drives.state", state => root._show(state));
     BackendManager.listen("drives.event", e => root._onEvent(e));
     // Made after the hello (a QML reload): no greeted to wait for

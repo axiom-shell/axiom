@@ -5,7 +5,6 @@ import Quickshell
 
 import qs.config
 import qs.services.core
-import qs.services.system
 import qs.services.ui
 
 /*
@@ -222,7 +221,7 @@ Singleton {
   function openPage() {
     if (ShellManager.openModule(["Chat"]))
       return true;
-    NotificationManager.sendNotification("axiom", I18n.tr("No chat module"), I18n.tr("Add a Chat module to an overlay page or an edge menu."));
+    ShellManager.refuse("smart_toy", I18n.tr("No chat module"), I18n.tr("Add a Chat module to an overlay page or an edge menu."));
     return false;
   }
 

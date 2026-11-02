@@ -145,10 +145,11 @@ Singleton {
     });
   }
 
-  function _notify(summary, body) {
-    NotificationManager.sendNotification("axiom", summary, body, {
+  // `opts`: sendNotification's key and silent
+  function _notify(summary, body, opts) {
+    NotificationManager.sendNotification("axiom", summary, body, Object.assign({
       desktopEntry: root._desktopEntry
-    });
+    }, opts));
   }
 
   function _onChecked(result) {
@@ -180,10 +181,15 @@ Singleton {
       notifiedTag: root.latest
     });
     const summary = root.channel === "main" ? I18n.tr("axiom has {0} new commits on main", root.behind) : I18n.tr("axiom {0} is available", root.latest);
+    // A release alerts; main's commits keep one silent entry up to date
+    const opts = {
+      key: "update-available",
+      silent: root.channel === "main"
+    };
     if (root.blocked === "")
-      root._notify(summary, I18n.tr("Click to see what's new and update."));
+      root._notify(summary, I18n.tr("Click to see what's new and update."), opts);
     else
-      root._notify(summary, I18n.tr("Your copy can't update: {0}", root.blockedReason(root.blocked)));
+      root._notify(summary, I18n.tr("Your copy can't update: {0}", root.blockedReason(root.blocked)), opts);
   }
 
   function _onApplied(result) {
@@ -193,7 +199,9 @@ Singleton {
     });
     if (result.error) {
       console.warn(`[SelfUpdateManager] Update failed: ${result.error}`);
-      root._notify(I18n.tr("axiom update failed"), result.error || I18n.tr("Unknown error"));
+      root._notify(I18n.tr("axiom update failed"), result.error || I18n.tr("Unknown error"), {
+        key: "update-failed"
+      });
       return;
     }
     // On main, the commit: the last tag says little
@@ -204,12 +212,17 @@ Singleton {
     });
     // The "available" notification is done with
     NotificationManager.dismissApp(root._desktopEntry);
-    root._notify(I18n.tr("axiom updated to {0}", version), result.notes || I18n.tr("Click to see what's new."));
+    root._notify(I18n.tr("axiom updated to {0}", version), result.notes || I18n.tr("Click to see what's new."), {
+      key: "update-applied",
+      silent: true
+    });
     // With the binary rebuilt, the daemon re-execs into it; when the
     // update changed the schema, it restarts the shell itself
     if (result.buildError) {
       console.warn(`[SelfUpdateManager] The axiom binary didn't build: ${result.buildError}`);
-      root._notify(I18n.tr("The axiom binary didn't build"), I18n.tr("Until it does, settings can't be saved after the next start: {0}", result.buildError));
+      root._notify(I18n.tr("The axiom binary didn't build"), I18n.tr("Until it does, settings can't be saved after the next start: {0}", result.buildError), {
+        key: "update-build"
+      });
     }
     // git replaces files rather than editing them, which qs's file
     // watcher can miss, so reload explicitly

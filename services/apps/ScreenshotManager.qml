@@ -209,8 +209,10 @@ QtObject {
   function _sayTaken(path) {
     const summary = I18n.tr("Screenshot saved");
     const body = root.copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");
+    // One entry: the last screenshot's
     const route = NotificationManager.announce("screenshot", Screenshots.notify, summary, body, {
       "desktopEntry": root._desktopEntry,
+      "key": "screenshot",
       "icon": path,
       "actions": root.annotator === "" ? [] : [
         {
@@ -459,7 +461,8 @@ QtObject {
       if (root._listed)
         root.refreshRecordings();
       NotificationManager.sendNotification("axiom", I18n.tr("Recording saved"), I18n.tr("Saved in {0}. Click to open it.", path.replace(/\/[^/]*$/, "")), {
-        "desktopEntry": root._desktopEntry
+        "desktopEntry": root._desktopEntry,
+        "key": "recording"
       });
     }, null, true);
   }

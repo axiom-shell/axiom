@@ -436,8 +436,12 @@ QtObject {
     const size = monitor.width > 0 ? `${monitor.width}×${monitor.height}` : "";
     const summary = kind === "added" ? I18n.tr("{0} connected", label) : I18n.tr("{0} disconnected", label);
     const body = [monitor.description ? monitor.name : "", size].filter(part => part !== "").join(" · ");
+    // Silent (the Quiet section): one entry per connector, its last change
     if (NotificationManager.announce("monitor", MonitorsConfig.notify, summary, body, {
-      "icon": "video-display"
+      "icon": "video-display",
+      "desktopEntry": root._desktopEntry,
+      "key": "monitor:" + monitor.name,
+      "silent": true
     }) !== "osd")
       return;
     root._serial += 1;
@@ -521,7 +525,13 @@ QtObject {
   // is filled in, and a refresh then does nothing
   readonly property bool _canRead: CompositorManager.supports.monitors === true
   on_CanReadChanged: refresh()
-  Component.onCompleted: refresh()
+  // The monitors' notifications: a click opens their settings
+  readonly property string _desktopEntry: "axiom-monitors"
+
+  Component.onCompleted: {
+    NotificationManager.registerHandler(root._desktopEntry, () => SettingsManager.openSetting("Monitors"));
+    refresh();
+  }
 
   // Recovers from a layout that can't be seen: `axiom ipc
   // monitors revert`
