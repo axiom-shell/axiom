@@ -404,12 +404,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### The bind merge deletes an hl.bind inside a helper, losing binds it never read
-- **Where:** `backend/internal/compositor/binds/hyprlua.go` (`callSite`), `backend/internal/compositor/binds/hypr.go` (`extractHypr`)
-- **What:** A bind's site is the line of its `hl.bind` call (`callSite`: `GetStack(1)`, `CurrentLine`), not the top-level statement that ran it. A `user/*.lua` file binding through its own helper (`local function bindx(k, c) hl.bind(k, hl.dsp.exec_cmd(c)) end`, then `bindx("SUPER + A", "foo")` and, in a `hl.define_submap` handler, `bindx("x", "bar")`) gives one site, the helper's body, holding only the binds extract saw. Everything it saw maps, so the merge moves it and `remove` deletes the helper's `hl.bind` line: the submap's `x` bind (and any bind the helper makes from an `hl.on` handler or an untaken branch) is silently gone, with only the dated backup to recover it. Reproduced against `extractHypr`/`removeHypr` with an overlay test (no tree edits). bind-merge.md › What can move doesn't cover it. Fix: record on each `luaBind`/`luaUnbind` whether the call ran in the file's main chunk (`L.GetInfo("S", …)`'s `What` at level 1) and keep a site that didn't, with a new reason (e.g. `inFunction`); a top-level loop still moves. A test row with the file above, and a line in bind-merge.md.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### The bind merge removes an hl.unbind whether or not its bind went
 - **Where:** `backend/internal/compositor/binds/hypr.go` (`extractHypr`'s unbind sites), `backend/internal/compositor/manager/manager.go` (`left`)
 - **What:** Extract adds an `hl.unbind(K)` site, with no binds, when K is a moved bind's key (hypr.go:459-474), and `remove` handles it on its own, per file. `left()` takes back only the binds of failed sites, matched by file and line, so the two outcomes split: the bind goes but the unbind's file fails (`syntax`, `io`, `changed`), and the user's surviving `hl.unbind(K)` runs after axiom's module and unbinds the moved bind (the key does nothing); or the unbind goes but the bind's file fails, the re-commit restores axiom's bind on K, and the user's `hl.bind(K)` fires alongside it, which bind-merge.md › Committing and removing says can't happen. Rare: needs one file of a merge to fail. Fix: give each unbind site the keys it covers; remove an unbind site only when its keys' bind sites all went, and treat a failed unbind site in `left()` as failing those binds.
@@ -610,12 +604,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### A niri merge of two binds on one line loses one
-- **Where:** `backend/internal/compositor/binds/marked.go:64` (`removeMarked`), `backend/internal/compositor/manager/manager.go:1305` (`merge`)
-- **What:** `removeMarked` marks a niri file's sites right to left on the same `lines[i]`, but checks each site's `text` against `lines[i]` as already marked. With `binds {\n    Mod+T { spawn "foot"; }; Mod+Q { close-window; }\n}` both binds are extracted (same line, cols 4 and 29); `Mod+Q` is marked first, then `Mod+T`'s check fails as `changed`. Remove returns `removed:1, failed:[{line:2, reason:"changed"}]` and writes `Mod+T { spawn "foot"; }; /* (moved into axiom) */ /-Mod+Q { close-window; }` (reproduced with a `go test -overlay` probe). `merge`'s `left()` matches failures by file and line only, so it takes both line-2 binds back out of the commit: `Mod+Q` is commented out of the user's file and missing from `Keybinds.binds` (only `user/.backups/` has it), and the merge reports a file nobody changed. Sway can't reach it (one bind per line); Hyprland keeps a call not alone on its line. Fix: compare against the line as read (keep `orig := lines[i]` per line before any mark); a `TestNiriRemove` row with two binds on one line.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### A sway bind using a variable from an include moves as a literal $name
 - **Where:** `backend/internal/compositor/binds/sway.go:256` (`extractSway`)
 - **What:** `extractSway` knows only the `set` lines of user/'s own files and never follows an `include`, while the takeover keeps the adopted file's includes live. A config setting `$term`/`$menu` in an included file (`include /etc/sway/definitions` on Manjaro's sway) with `bindsym Mod4+Return exec $term` moves that bind as `{"action":"exec","argument":"$term"}` (reproduced); the line is commented out, axiom's module is read before user/ where `$term` isn't set, so sway leaves it literal and the user's terminal and launcher binds run nothing after a Merge. Extract with `--only` has the same gap for variables set in an earlier user/ file. Fix: collect the variables as sway reads them, following `include`s (`userconf.SwayText` already expands them), before reading each file's binds; failing that, keep a bind whose command still holds a `$name`, with a reason; a `TestSwayExtract` row.
@@ -628,23 +616,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### A sway line continuing a non-bind line is moved as a bind of its own
-- **Where:** `backend/internal/compositor/binds/sway.go:283` (`extractSway`)
-- **What:** Only the bind's own line is checked for a trailing `\`; a line that follows a continued line is read as a fresh statement. `exec_always foo \` then `bindsym Mod4+x kill` is to sway one `exec_always foo bindsym Mod4+x kill`; extract moves `SUPER + X → closeWindow` (reproduced) and remove prefixes the second line with `# (moved into axiom) `, so sway now runs `foo # (moved into axiom) bindsym Mod4+x kill` and the user gains a bind they never had. Rare. Fix: carry a `continued` flag from the previous raw line and skip a line it covers; one test row.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### The Hyprland and sway bind merges each skip half of compositor/actions
 - **Where:** `backend/internal/compositor/binds/hypr.go:109` (`execAction`), `backend/internal/compositor/binds/sway.go:202` (`swayAction`), `backend/internal/compositor/binds/niri.go:56` (`commandAction`)
 - **What:** sway's and niri's merges run every exec command through `actions.Default().IPCAction` first, so `axiom ipc appLauncher toggle`, `axiom lock` and `axiom restart` become the `launcher`, `lock` and `restartShell` actions. Hyprland's `execAction` only checks the exit command and `actions.MediaAction`, then returns `"exec", command` (`grep -n 'IPCAction' binds/hypr.go` finds nothing). bind-merge.md › Where it runs says the opposite: "What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) … maps onto comes from `compositor/actions`". The commonest real case is an included-mode user who wrote `hl.bind("SUPER + D", hl.dsp.exec_cmd("axiom ipc appLauncher toggle"))` and is then claimed. Probe: extracting that file gives `{"key":"SUPER + D","action":"exec","argument":"axiom ipc appLauncher toggle",…}`. The moved bind still works, but it shows on the Keybinds page as a raw exec instead of the launcher action. It also gets none of the action's call, label or section, and on a key axiom already binds, `mergeBinds` puts this exec in place of axiom's own launcher bind. The niri review found the mirror gap in sway's merge: its `exec` branch calls `IPCAction` but never `MediaAction`, so `bindsym XF86AudioRaiseVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+` moves as `exec` (no axiom OSD action, no `locked`/`repeating` defaults from `actionFlags`). Only niri's merge uses both, as niri-backend.md says all three do: the same user bind becomes an axiom action on one compositor and a shell command on another. Fix: one `actions.CommandAction(command)` (IPC, then media, else nil) called by all three merges, carrying `call`/`argument`, with a row per merge in the binds tests (`TestHyprMappingAndRawLua`: `axiom ipc appLauncher toggle` → `launcher`; sway: a `wpctl set-volume` exec → its media action).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system and the niri system
-
-### Hyprland's remove deletes whatever hl.bind is on a site's line now
-- **Where:** `backend/internal/compositor/binds/hypr.go:455` (`extractHypr`'s sites), `backend/internal/compositor/binds/hypr.go:507` (`removeHypr`), `backend/internal/compositor/binds/binds.go:174` (`readSites`)
-- **What:** sway's and niri's sites carry the line's `text` (sway.go:327, niri.go:228), and `removeMarked` leaves a line whose text changed since extract (`changed`). Hyprland's sites carry only `file` and `line`, and `removeHypr` keeps only `s.line` (hypr.go:507). It reports `changed` only when no `hl.bind`/`hl.unbind` statement starts on that line any more (hypr.go:544). So if the file changes between extract and remove, and each site's line still holds some `hl.bind`, other binds are deleted. The window is the isolated child's run (up to 30 s) plus the commit; an editor save or a dotfiles sync can land in it. Probe: extract `binds.lua` = `SUPER + Y` (line 1), `SUPER + U` (line 2). Then the file gains `hl.bind("SUPER + Z", …exec_cmd("mine"))` at the top, and remove runs on the old sites. Result: `{"removed":2,"failed":[]}`, and the file is left with only `hl.bind("SUPER + U", …)`. Z, which was never moved, is deleted and is not in axiom. U is in axiom and still in the file, so it is bound twice, which bind-merge.md › Committing and removing says can't happen. The merge reports success, and only the dated backup has Z. This breaks C3 ("remove gives back exactly what was there"). Fix: put each statement's source text (`text[start:end]` from `statementSpan`) in the hypr site as `text`, and in `removeHypr` fail a site as `changed` when the statement found at its line differs. Add a test row: the probe above, expecting `2 changed` and Z kept.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### The overview stays open with nothing shown after its monitor goes away
 - **Where:** `shell/WorkspaceOverlay.qml:21` (`overlayVisible`), `shell/WorkspaceOverlay.qml:30` (`open`), `shell/WorkspaceOverlay.qml:42` (`toggle`), `shell/WorkspaceOverlay.qml:90` (`shown`)
@@ -738,14 +714,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### A sway title-bar mouse bind moves in as a whole-window bind
-- **Where:** `backend/internal/compositor/binds/sway.go:29` (`swayHarmless`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/render/sway.go:245` (`swayConflictFlags`)
-- **What:** sway(5) says mouse bindings "are only triggered when over the title bar" unless `--whole-window` is given. `swayHarmless` lists `--whole-window` as droppable, so a mouse bind *without* it moves in as well. axiom then writes every mouse key with `--whole-window` (`if k.Mouse { flags = append(flags, "--whole-window") }`). The i3 guide's own examples are `bindsym --release button2 kill` and `bindsym button3 floating toggle`. A probe of the worktree's extract on `bindsym --release button2 kill` gave `{"key":"mouse:274","action":"closeWindow","release":true}`, and the line was commented out. After a takeover, a middle click anywhere (a paste in a terminal) closes the window. The binds are shared, so Hyprland gets the same bind too.
-
-  Fix: keep a mouse key whose flags lack `--whole-window` as `kept` `options` with the detail `title bar`, and add a `TestSwayExtract` row for it. About 4 lines.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### A sway exec chained with ; or , moves in as one shell command
 - **Where:** `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
 - **What:** sway runs a bind's command as a list split at unquoted `;`/`,` (sway(5) › Command conventions). The `exec` branch (202) takes everything after `exec` as one argument (`execText(string([]rune(command)[4:]))`). A probe on `bindsym $mod+q exec notify-send bye; kill` moved it as `{"action":"exec","argument":"notify-send bye; kill"}`: the shell runs `kill` with no arguments, and the window no longer closes. `exec "foot", focus left` became an exec of `"foot", focus left`, so nothing starts. Both original lines were commented out. `TestSwayExecReadAsSwayRunsIt` covers only the quoted form, which sway keeps whole.
@@ -786,12 +754,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### The sway extract's input-device case and isSwayFlag repeat the general rule
-- **Where:** `backend/internal/compositor/binds/sway.go:37` (`isSwayFlag`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
-- **What:** Deletion pass, about 17 lines. `--input-device=<id>` is in neither `swayFlags` nor `swayHarmless`, so the general `other` branch already keeps such a bind as `options`. The `device` boolean (288-302) exists only so the detail lists every flag instead of the unknown one, which nothing pins (`input-device` appears only in sway.go). `isSwayFlag` (37-45, 9 lines) has one caller. Fix: `slices.ContainsFunc(swayFlags, …)` inline, plus `if len(other) > 0 { push(… strings.Join(other, " ")) }`. The 17 lines at 287-303 become about 9, and `isSwayFlag` goes. `swayAction`'s `o Options` parameter is never read and goes too. These are the lines [A sway title-bar mouse bind moves in as a whole-window bind](#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind) changes: land the two together.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
 ### niri's overview drop moves a window's whole column and switches workspace

@@ -3499,6 +3499,7 @@
     "it's inside a bindsym { } block": "",
     "it's kept in {0}, which the file uses": "",
     "it's made in a shared module": "",
+    "it's made inside a function": "",
     "it's part of a larger statement": "",
     "items": "",
     "its key isn't plain text": "",

@@ -30,15 +30,6 @@ var (
 	swayParts = regexp.MustCompile(`^((?:--\S+\s+)*)(\S*)\s*(.*)$`)
 )
 
-func isSwayFlag(flag string) bool {
-	for _, f := range swayFlags {
-		if f[0] == flag {
-			return true
-		}
-	}
-	return false
-}
-
 func swayKey(combo string, code bool) string {
 	var parts []string
 	for _, p := range strings.Split(combo, "+") {
@@ -181,7 +172,7 @@ func execText(arguments string) string {
 	return strings.Join(words, " ")
 }
 
-func swayAction(o Options, command string) *jsonx.Object {
+func swayAction(command string) *jsonx.Object {
 	words := strings.Fields(command)
 	simple := map[string]string{"kill": "closeWindow", "fullscreen": "fullscreen", "fullscreen toggle": "fullscreen",
 		"floating toggle": "toggleFloat", "sticky toggle": "pin", "layout toggle split": "toggleSplit",
@@ -227,10 +218,14 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 		}
 		// The open blocks: whether each is a bindsym/bindcode one
 		var blocks []bool
+		// Whether the line before ended in \ (this one is part of its
+		// statement), and this one does
+		after, continued := false, false
 		for n, raw := range userconf.SplitLines(strings.ToValidUTF8(string(data), "�")) {
 			number := n + 1
 			line := strings.TrimSpace(raw)
-			if line == "" || strings.HasPrefix(line, "#") {
+			after, continued = continued, strings.HasSuffix(strings.TrimRightFunc(raw, unicode.IsSpace), `\`)
+			if after || line == "" || strings.HasPrefix(line, "#") {
 				continue
 			}
 			if m := render.SwaySetLine.FindStringSubmatch(line); m != nil {
@@ -260,28 +255,26 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 			flags := strings.Fields(parts[1])
 			combo := parts[2]
 			command := storedCommand(parts[3])
-			if strings.HasSuffix(strings.TrimRightFunc(raw, unicode.IsSpace), `\`) {
+			if continued {
 				push(result, "kept", keptEntry(path, number, combo, "continued", ""))
 				continue
 			}
 			var other []string
-			device := false
 			for _, f := range flags {
-				if strings.HasPrefix(f, "--input-device") {
-					device = true
-				} else if !isSwayFlag(f) && !swayHarmless[f] {
+				if !slices.ContainsFunc(swayFlags, func(s [2]string) bool { return s[0] == f }) && !swayHarmless[f] {
 					other = append(other, f)
 				}
 			}
-			if len(other) > 0 || device {
-				detail := other
-				if len(detail) == 0 {
-					detail = flags
-				}
-				push(result, "kept", keptEntry(path, number, combo, "options", strings.Join(detail, " ")))
+			key := swayKey(combo, bind[1] == "bindcode")
+			// Without --whole-window, a mouse bind works only over a title
+			// bar; axiom writes its own for the whole window
+			if k := render.SwayKeyOf(key); len(other) == 0 && k != nil && k.Mouse && !slices.Contains(flags, "--whole-window") {
+				other = append(other, "title bar")
+			}
+			if len(other) > 0 {
+				push(result, "kept", keptEntry(path, number, combo, "options", strings.Join(other, " ")))
 				continue
 			}
-			key := swayKey(combo, bind[1] == "bindcode")
 			if key == "" || command == "" {
 				push(result, "kept", keptEntry(path, number, combo, "key", ""))
 				continue
@@ -292,7 +285,7 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 					extra.Set(f[1], true)
 				}
 			}
-			entry := movedBind(key, swayAction(o, command), extra, !slices.Contains(flags, "--no-repeat"))
+			entry := movedBind(key, swayAction(command), extra, !slices.Contains(flags, "--no-repeat"))
 			push(result, "binds", entry)
 			push(result, "sites", jsonx.Obj("file", path, "line", float64(number), "binds", jsonx.Arr(entry), "text", raw))
 		}
