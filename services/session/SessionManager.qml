@@ -5,8 +5,8 @@ import qs.config
 import qs.services.compositor
 import qs.services.core
 
-/* The session actions (lock, suspend, hibernate, log out, reboot, power
-   off), shared by the power menu, the QuickActions and Power modules and
+/* The session actions (lock, suspend, hibernate, log out, restart, shut
+   down), shared by the power menu, the QuickActions and Power modules and
    the launcher */
 QtObject {
   // The destructive ones ask for a second click first.
@@ -38,12 +38,12 @@ QtObject {
     case "reboot":
       return {
         icon: "restart_alt",
-        label: I18n.tr("Reboot")
+        label: I18n.tr("Restart")
       };
     case "poweroff":
       return {
         icon: "power_settings_new",
-        label: I18n.tr("Power off")
+        label: I18n.tr("Shut down")
       };
     }
     return null;

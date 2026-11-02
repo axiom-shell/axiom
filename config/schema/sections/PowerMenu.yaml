@@ -3,7 +3,7 @@
 type: object
 x-category: Screen & Power
 title: Power menu
-description: 'The power menu: lock, suspend, hibernate, log out, reboot and power off, opened by the power button, a keybind or `axiom ipc powermenu toggle`.'
+description: 'The power menu: lock, suspend, hibernate, log out, restart and shut down, opened by the power button, a keybind or `axiom ipc powermenu toggle`.'
 additionalProperties: false
 properties:
   screen:
@@ -38,7 +38,7 @@ properties:
     type: boolean
     title: Confirm destructive actions
     default: true
-    description: Log out, reboot and power off ask for a second click (or Enter) first.
+    description: Log out, restart and shut down ask for a second click (or Enter) first.
   tileSize:
     x-scope: look
     type: integer
