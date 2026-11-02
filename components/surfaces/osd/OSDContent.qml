@@ -659,7 +659,11 @@ Item {
   Item {
     id: statusSlot
     readonly property var place: root._place("status")
-    visible: statusSlot.place.depth > 0
+    // Never hidden, only clipped and taking no pointer while folded: the
+    // tiles' own visibility (OSDStatusRow) changes while it's folded, and
+    // under a hidden item that changes nothing their layout sees, so the
+    // row stayed 0 wide and never came out
+    enabled: statusSlot.place.depth > 0
     clip: true
     x: root._slotX(statusSlot.place)
     y: root._slotY(statusSlot.place)
