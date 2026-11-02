@@ -260,7 +260,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 **platform**
 
 - **platform-02** (5): The nested-Hyprland timing gets a Live checks line.
-  - [A shell started locked locks again on every reload](../issues.md#a-shell-started-locked-locks-again-on-every-reload)
+  - A shell started locked locks again on every reload
   - [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
   - [Nested Hyprland acknowledges a lock too late for axiom lock](../issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
   - [Uninstall keeps a stale greetd backup when greetd points elsewhere](../issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
