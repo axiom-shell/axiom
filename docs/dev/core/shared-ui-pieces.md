@@ -173,7 +173,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 ### Pure helpers (`methods/`)
 - **Search** (`methods/Search`): shared by LauncherManager and EmojiManager.
   - `score(text, q)`: the launcher's 0–100 fuzzy match.
-  - `frecency(useRecord, now)`.
+  - `frecency(useRecord, now)`, and `useBonus(frecency)`: the 0–25 it adds to a match's score (apps, commands, emoji).
   - `looksLikeMath(text)`.
 - `methods/ScreenEdge`: the screen edges as numbers (`ScreenEdge.Top`, `Bottom`, `Left`, `Right`, an order code indexes arrays by) and their config names: `name(edge)`, `fromName(name)` (-1 if unknown), `fromConfig(name)` (Top if unknown), `opposite(edge)`.
 - `methods/ChipRows.split(count, fit)`: a set of equal chips spread evenly over as few rows as `fit` allows (5 at 3 a row: 3 + 2), so each row can fill its width; `starts(sizes)`.

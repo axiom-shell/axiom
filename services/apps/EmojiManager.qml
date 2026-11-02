@@ -68,7 +68,7 @@ QtObject {
         scored.push({
           e: e,
           i: i,
-          s: s + Math.min(25, 8 * Math.log2(1 + Search.frecency(root.usage[e.e], now)))
+          s: s + Search.useBonus(Search.frecency(root.usage[e.e], now))
         });
     }
     scored.sort((a, b) => b.s - a.s || a.i - b.i);
