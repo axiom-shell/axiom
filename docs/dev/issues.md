@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
 
+### TestWatch can see one in-place edit as two
+- **Where:** `backend/internal/files/files_test.go` (`TestWatch`)
+- **What:** The test writes the file twice in a row ("the", then "theirs") and expects the burst to settle into one push, so a slow runner that lets the burst settle between the two writes gets two: CI run 41448998520 (the notifications branch, which didn't touch files) failed with `a got [/tmp/TestWatch…/001//todo.json /tmp/TestWatch…/001//todo.json]`; the rerun passed. Fix: allow one or two pushes for the in-place edit, or write it in one call and test the burst separately with a fake clock.
+- **Size:** trivial
+- **Found:** 2026-11-02, while merging the notification levels (CI on notifications-levels)
+
 ### TestNvidiaStream can see the stream's first line before it looks
 - **Where:** `backend/internal/sysmon/sysmon_test.go` (`TestNvidiaStream`)
 - **What:** The fake stream (`streams`, line "37, 61") answers as soon as the fetch starts it, so the first `fetch` can already read its values and the check that none came yet fails: CI run 41435061352 (a branch that didn't touch sysmon) failed with `before the stream's first line: {… GPUUsage:0xc000190238 GPUTemp:0xc000190248 …}`; the rerun passed. Fix: hold the fake's first line until the test releases it (a channel), then check before and after.
@@ -97,7 +103,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The axiom CLI can't send a notification
 - **Where:** `backend/internal/cli/named.go`, `backend/internal/daemon/tools.go`, `backend/internal/notification/notify.go`
-- **What:** A feature request from the maintainer (2026-11-02, "yes file the cli notification support where it goes"): with notify-send gone as a dependency, the daemon's `notify.send` and `notify.action` are reached only by the shell, and the CLI's `axiom notifications` only clears them and switches do-not-disturb. A command such as `axiom notify "title" "body" [--icon --urgency --action id=Label --wait]` would wrap them for scripts: it sends through the daemon, and with `--wait` blocks until a button is picked or the notification closes, printing the button's id as `notify-send --action` does. It should share its flags with `axiom message` (the OSD message command) where they overlap.
+- **What:** A feature request from the maintainer (2026-11-02, "yes file the cli notification support where it goes"): with notify-send gone as a dependency, the daemon's `notify.send` and `notify.action` are reached only by the shell, and the CLI's `axiom notifications` only clears them and switches do-not-disturb. A command such as `axiom notify "title" "body" [--icon --urgency --action id=Label --wait]` would wrap them for scripts: it sends through the daemon, and with `--wait` blocks until a button is picked or the notification closes, printing the button's id as `notify-send --action` does. It should share its flags with `axiom message` (the OSD message command) where they overlap, and take the levels' `--key` (one entry per key: `x-axiom-key`) and `--transient`; `--silent` would need a daemon push to the shell's `_file`, since a silent one never goes over D-Bus.
 - **Size:** small
 - **Found:** 2026-11-02, while removing the notify-send dependency (roadmap row 20, platform-03)
 
@@ -1215,12 +1221,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
-### A transient notification toasts blank
-- **Where:** `services/system/NotificationManager.qml:626` (`server.onNotification`), `services/system/NotificationManager.qml:534` (`_adopt`), `components/surfaces/notifications/ToastItem.qml:21` (`notification`)
-- **What:** A notification with the transient hint (`notify-send -e`, volume or brightness scripts) is not tracked (`if (!notification.transient && rule?.history !== false) { notification.tracked = true; … } else if (!notification.transient && toasts) { notification.tracked = true; … }`), yet `showPopup` still toasts it. Quickshell deletes an untracked notification as soon as the handler returns (`server.cpp`: `if (!notification->isTracked()) { emit NotificationClosed(…); delete notification; }`, no `closed` signal), and a `var` holding a deleted QObject reads `null` with its bindings re-evaluated (checked with a qmltestrunner case: a binding `holder.n?.summary ?? "<none>"` reads `<none>` after `destroy()`). So the toast shows no app name, summary or body, a bell for its avatar, no actions, and isn't clickable, for its whole timeout. Fix: track a transient one that toasts as a toast-only one (`else if (toasts) { notification.tracked = true; root._toastOnly = root._toastOnly.concat([notification]); }`, dropping `!notification.transient &&`), so `toastsGone` expires it once no screen shows it; and `_adopt` expires a kept transient one after a reload as it does a `history: false` one (`if (notif.transient || root.ruleFor(notif)?.history === false)`), so a reload never gives it an entry.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:notifications system
-
 ### ToastStack logs a binding loop on _attachedShowing
 - **Where:** `components/surfaces/notifications/ToastStack.qml` (`_attachedShowing`)
 - **What:** The live shell logged `Binding loop detected for property "_attachedShowing"` (`@shell/Notifications.qml[42:15]`, ToastStack.qml:485) on two reloads on 2026-11-01, not on the next. `_attachedShowing` reads `attached`, `covered`, `toasts` and `_leaving`, and its change handler calls `box.show()` / `box.hide()`; one of those likely writes back a value it reads during the same evaluation. Not traced.
@@ -1239,12 +1239,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The System volume and Microphone bars count a level or mute change only while `AudioManager.sinkSettled()` / `sourceSettled()` holds, which turns true a moment after the new default node is ready. `OSDItems.replaces` already allows that a new device's mute may come after that ("a mute just after a device switch is the new device's own state coming in"), and PipeWire sends a node's volumes and mute in the same params. So when a headset connects, its own volume landing after the settle pokes the bar, and the bars' `onPoked` opens the bars part (`_openBox`) with no `replaces` check: the bars come out beside the device card, a change the user didn't make. PLAUSIBLE: a log of `defaultSink.ready` against `AudioManager.volume` changes on a headset connect settles it (the roadmap's Live checks already asks whether plugging in a headset opens the bars). Fix, if it shows: run the System volume and Microphone bars' pokes through `replaces` as the `audio` / `microphone` statuses' mutes (an `OSDItems` rule mapping a bar type to its status, a test row), which also holds back the user's own volume key in the 2 s after a switch: a trade-off for the maintainer.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
-
-### removeOnClick never removes a clicked toast's entry
-- **Where:** `components/surfaces/notifications/ToastItem.qml:116` (`close`), `components/surfaces/notifications/ToastItem.qml:357` (`NotificationText.onActivated`), `components/surfaces/notifications/ToastItem.qml:383` (`NotificationActions.onInvoked`), `components/surfaces/notifications/ToastItem.qml:393` (`NotificationReply.onSent`)
-- **What:** With `Notifications.removeOnClick` on, clicking a toast with a default action, one of its action pills, or sending its reply should take the entry out of the history (as it does in the list). But Quickshell closes a non-resident notification synchronously inside `invoke()` / `sendInlineReply()` (`notification.cpp`: `if (!this->notification->bindableResident().value()) this->notification->close(NotificationCloseReason::Dismissed);`); `closed` reaches `shell/Notifications`' `hideEverywhere`, every stack's `hide` calls the toast's `dismiss`, which starts `leave` (or sets `gone` with motion "none"), so `leaving` is already true when the handler then calls `root.close(NotificationsConfig.removeOnClick)`, whose first line is `if (root.leaving) return;`: `NotificationManager.dismiss(root.uid)` never runs and the entry stays (marked not live). Most notifications are non-resident, so the setting does nothing from toasts. Fix: dismiss before the guard: `function close(remove) { if (remove && root.uid) NotificationManager.dismiss(root.uid); if (!root.leaving) root.userClosed(); }` (dismissing an unknown uid is a no-op).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notifications system
 
 ### The notification list's delegates animate with their own easing
 - **Where:** `components/content/parts/notifications/NotificationGroupDelegate.qml:124`, `components/content/parts/notifications/NotificationGroupDelegate.qml:192`, `components/content/parts/notifications/NotificationGroupDelegate.qml:301`, `components/content/parts/notifications/NotificationItemDelegate.qml:80`

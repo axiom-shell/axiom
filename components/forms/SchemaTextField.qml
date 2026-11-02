@@ -18,8 +18,9 @@ ColumnLayout {
   // Lines of its own (`x-multiline`), e.g. a system prompt: Enter makes a
   // new one. Otherwise the value is one line, wrapped to show it whole
   property bool multiline: false
-  // Values offered as chips under the field (`x-suggestions`); a click
-  // puts one in the field, or adds it to a comma-separated list
+  // Values offered as chips under the field (`x-suggestions`), each a
+  // string or { value, label }; a click puts one in the field, or adds it
+  // to a comma-separated list
   property var suggestions: []
   property bool commaList: false
   // "folder": a Browse button beside the field opens the desktop's folder
@@ -176,18 +177,21 @@ ColumnLayout {
       model: root.multiline ? [] : root.suggestions
 
       delegate: StyledTextButton {
-        required property string modelData
+        required property var modelData
+        // A value, or { value, label } to show a name for it
+        readonly property string value: typeof modelData === "string" ? modelData : modelData.value
         implicitHeight: Widget.height - Widget.px(8)
-        text: modelData
+        text: typeof modelData === "string" ? modelData : modelData.label
+        tooltipText: value !== text ? value : ""
         onClicked: {
           if (!root.commaList) {
-            textArea.text = modelData;
-            root._accept(modelData);
+            textArea.text = value;
+            root._accept(value);
             return;
           }
           const items = textArea.text.split(",").map(v => v.trim()).filter(v => v !== "");
-          if (!items.includes(modelData)) {
-            textArea.text = items.concat([modelData]).join(", ");
+          if (!items.includes(value)) {
+            textArea.text = items.concat([value]).join(", ");
             root._accept(textArea.text);
           }
         }

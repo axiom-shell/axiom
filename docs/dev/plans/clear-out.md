@@ -112,7 +112,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 64 | overlay-modules-11 | minor-sweep | Hot corners | 2 | ~120 | none |  |
 | 65 | overlay-modules-12 | live-only | The overlay grid's model of -1 | 1 | ~5 | none |  |
 | 66 | overlay-modules-13 | plan | Compact cards build their full layout | 1 | needs a plan | overlay-modules-02, -04 |  |
-| 67 | features-03 | major | Notifications | 5 | ~200 (net about -80) | platform-03 |  |
+| 67 | features-03 | major | Notifications | 3 | ~200 (net about -80) | platform-03 |  |
 | 68 | features-04 | major | The dock | 2 | ~30 | features-01 | Q13 |
 | 69 | features-05 | major | Todo, pomodoro and timers | 7 | ~200 | features-01 | Q14, Q15 |
 | 70 | features-06 | major | Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
@@ -514,9 +514,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **features**
 
-- **features-03** (5):
-  - [A transient notification toasts blank](../issues.md#a-transient-notification-toasts-blank)
-  - [removeOnClick never removes a clicked toast's entry](../issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
+- **features-03** (3):
   - [The notification list's delegates animate with their own easing](../issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
   - [The history's group and entry delegates repeat one swipe-away mechanism](../issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
   - [clearAll removes each cached image twice, one process per entry](../issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)

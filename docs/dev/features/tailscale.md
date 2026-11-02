@@ -12,6 +12,8 @@ Tailscale's state for the bar widget, its popout and the overlay module, shaped 
 
 - The `tailscaledetails` topic (`DetailsSource`) adds what only the popout and module show, so the bar's poll stays one process: `tailscale debug prefs` (the switches; `debug` isn't a stable interface, so prefs it can't read are `known: false` and the switches hide) and `tailscale switch --list --json` (the accounts; refused without operator rights: `profilesDenied`). The panel `acquireDetails(owner)`s it at the same `Tailscale.interval`.
 
+- **Connection note:** with `Notifications.quiet.connectivity`, connecting and disconnecting is noted silently (`ConnectionNotes`), only while something polls it.
+
 ### Actions
 - `tailscale.up` / `tailscale.down` (`TailscaleManager.connect()` / `disconnect()`) run `tailscale up` / `down` with the node's saved settings, then refresh the topic. `up` waits at most 15 s: past that a login is pending, and its link shows in the state.
 - `tailscale.switch {id}` (`switchAccount`) runs `tailscale switch <id>` (an id starting with `-` is refused). `tailscale.login` (`addAccount`) runs `tailscale login`, bounded like `up`, so its link shows in the state.

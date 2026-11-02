@@ -17,6 +17,16 @@ Item {
   // A NotificationManager entry
   required property var entry
   readonly property var live: root.entry?.live ? NotificationManager.liveNotification(root.entry.uid) : null
+  // A filed one's buttons (no notification behind it), shaped as a live
+  // one's for NotificationActions: run by its desktop entry's handler
+  readonly property var _filed: !root.live && (root.entry?.actions?.length ?? 0) > 0 ? {
+    "actions": root.entry.actions.map(a => ({
+          "identifier": a.id,
+          "text": a.label,
+          "invoke": () => NotificationManager.invokeFiled(root.entry, a.id)
+        })),
+    "hasActionIcons": false
+  } : null
   // The card's clock, so relative times refresh
   property real now: Date.now()
   // A lone entry leaves the time and dismiss button to its group's header
@@ -204,7 +214,7 @@ Item {
 
       NotificationActions {
         Layout.topMargin: 2
-        notification: root.live
+        notification: root.live ?? root._filed
         onInvoked: {
           if (NotificationsConfig.removeOnClick)
             root.dismiss();

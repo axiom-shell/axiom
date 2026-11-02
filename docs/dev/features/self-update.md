@@ -43,7 +43,7 @@ What it will and won't do:
 ### Modes (`SelfUpdate.mode`)
 - **`auto`:** applies, notifies, then reloads the shell (`LockManager.reload()`, which waits for the unlock while the built-in lock is up: [lockscreen.md](lockscreen.md) › No reload under the lock). git replaces files by inode, which the file watcher misses, so the explicit reload is needed.
   - With the binary replaced, the daemon re-execs into it once its reply is out: the new image takes the daemon over, and when the update changed the schema it restarts the shell (locked first when it was), whose hello would otherwise be refused ([backend](../backend/README.md) › Re-exec). A failed build is notified.
-- **`notify`:** sends a notification whose `desktopEntry` (`axiom-update`) is a `NotificationManager.registerHandler` key. Clicking it runs `openSettings()`, which opens Settings → Updates (the `SelfUpdateStatusCard`). A successful update takes the earlier notifications of that entry away before it notifies the new version.
+- **`notify`:** sends a notification whose `desktopEntry` (`axiom-update`) is a `NotificationManager.registerHandler` key. Clicking it runs `openSettings()`, which opens Settings → Updates (the `SelfUpdateStatusCard`). A release on the tags channel alerts; main's new commits are silent ([Notifications](notifications.md) › Levels), one entry kept current (key `update-available`). A successful update takes the earlier notifications of that entry away before it notes the new version, silently (`update-applied`, the release notes readable in the Quiet section); a failed update or build alerts.
 - **`off`:** never checks.
 
 ### When it checks

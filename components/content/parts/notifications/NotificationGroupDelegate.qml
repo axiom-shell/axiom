@@ -21,6 +21,8 @@ Item {
   required property var group
   property real now: Date.now()
   property bool expanded: false
+  // A group of silent ones (the Quiet section): a fainter card
+  property bool quiet: false
   property real swipeThreshold: 120
 
   readonly property var entries: root.group?.entries ?? []
@@ -162,6 +164,8 @@ Item {
     }
   }
 
+  readonly property color _fill: root.quiet ? Qt.alpha(Theme.backgroundAlt, 0.55) : Theme.backgroundAlt
+
   // The collapsed rest of the group, peeking out under the card
   Repeater {
     model: root.stackDepth
@@ -185,7 +189,7 @@ Item {
     height: body.implicitHeight + Widget.padding * 2
     clip: true
     radius: Widget.radius
-    color: hover.hovered ? Qt.tint(Theme.backgroundAlt, Qt.alpha(Theme.backgroundHighlight, 0.4)) : Theme.backgroundAlt
+    color: hover.hovered ? Qt.tint(root._fill, Qt.alpha(Theme.backgroundHighlight, 0.4)) : root._fill
     border.width: root.group?.critical ? Appearance.borderWidth : 0
     border.color: Qt.alpha(Theme.error, 0.6)
 

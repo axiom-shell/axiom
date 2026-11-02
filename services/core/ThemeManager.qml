@@ -124,7 +124,10 @@ QtObject {
   readonly property var defaults: _defaults
 
   signal generationFailed(string errorText)
-  onGenerationFailed: errorText => NotificationManager.sendNotification("axiom", I18n.tr("Failed to generate themes"), I18n.tr("There was an error while processing the wallpaper. Details: {0}", errorText))
+  // One entry, however many wallpapers a rotation fails on
+  onGenerationFailed: errorText => NotificationManager.sendNotification("axiom", I18n.tr("Failed to generate themes"), I18n.tr("There was an error while processing the wallpaper. Details: {0}", errorText), {
+      "key": "theme-failed"
+    })
 
   //=========================================================================
   // Public Functions

@@ -109,8 +109,10 @@ var namedCommands = []named{
 		{"previous", "previous", "", 0, "Previous track"},
 		{"stop", "stop", "", 0, "Stop"},
 	}},
-	{"notifications", "Clear the notifications", "notifications", []verb{
+	{"notifications", "Clear the notifications, or fold their Quiet section", "notifications", []verb{
 		{"clear", "clear", "", 0, "Clear them all (no undo)"},
+		{"clear-quiet", "clearQuiet", "", 0, "Clear the Quiet section's (no undo)"},
+		{"toggle-quiet", "toggleQuiet", "", 0, "Fold the Quiet section open, or shut"},
 	}},
 	{"dnd", "Turn do not disturb on or off", "dnd", []verb{
 		{"toggle", "toggle", "", 0, "On, or off"},

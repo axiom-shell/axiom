@@ -172,6 +172,8 @@ var all = []Step{
 	// v91: an OSD's cards got their own object (`cards`: enabled, timeout,
 	// the card-only types and Now playing as `items`) (v91.go)
 	{Version: 91, Run: v91},
+	// v92: a notification rule's toasts and history became level
+	{Version: 92, Run: v92},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

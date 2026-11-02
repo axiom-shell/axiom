@@ -27,7 +27,6 @@ ValueStyleWidget {
 
   // Shown while a check fails, so its popout can say why
   hidden: !UpdatesManager.supported || (properties.hideWhenEmpty && count === 0 && !failed)
-  readonly property string upgradeCommand: UpdatesConfig.upgradeCommand || UpdatesManager.upgradeCommand(UpdatesConfig.activeAurHelper)
 
   // Failed: the icon style, with the error icon after its own
   appearance: failed ? Object.assign({}, properties.appearance, {
@@ -55,7 +54,7 @@ ValueStyleWidget {
     if (button === Qt.RightButton)
       UpdatesManager.refresh();
     else
-      UpdatesManager.upgrade(root.upgradeCommand, UpdatesConfig.terminal);
+      UpdatesManager.upgrade();
   }
 
   PopoutAnchor {

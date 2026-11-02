@@ -56,7 +56,9 @@ QtObject {
         return;
       root._notifiedAt = build.at;
       const lines = (build.output ?? "").trim().split("\n");
-      NotificationManager.sendNotification("axiom", I18n.tr("The dev build failed"), lines.slice(-3).join("\n"));
+      NotificationManager.sendNotification("axiom", I18n.tr("The dev build failed"), lines.slice(-3).join("\n"), {
+        "key": "dev-build"
+      });
     }
   }
 }

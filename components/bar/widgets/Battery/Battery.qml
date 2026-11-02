@@ -79,5 +79,8 @@ ValueStyleWidget {
   }
 
   clickable: true
-  onClicked: NotificationManager.sendNotification("axiom", I18n.tr("Battery Status"), root.getBatteryStatus())
+  // An answer: a toast that isn't kept
+  onClicked: NotificationManager.sendNotification("axiom", I18n.tr("Battery Status"), root.getBatteryStatus(), {
+    "transient": true
+  })
 }

@@ -78,6 +78,20 @@ func TestSendWithoutActions(t *testing.T) {
 	}
 }
 
+func TestSendKeyedTransient(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	calls := fakeServer(t, bus)
+	if _, err := Send(testCtx(t), dial(t, bus), Notification{AppName: "axiom", Summary: "s", Key: "screenshot", Transient: true}); err != nil {
+		t.Fatal(err)
+	}
+	body := <-calls
+	want := map[string]dbus.Variant{"x-axiom-key": dbus.MakeVariant("screenshot"), "transient": dbus.MakeVariant(true)}
+	if !reflect.DeepEqual(body[6], want) {
+		t.Fatalf("hints %#v", body[6])
+	}
+}
+
 func TestSendWaitsForAButton(t *testing.T) {
 	t.Parallel()
 	bus := dbustest.New(t)

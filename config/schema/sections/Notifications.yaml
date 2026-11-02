@@ -162,13 +162,21 @@ properties:
         title: Critical ones still show
         default: true
         description: While do not disturb is on, critical notifications (a low battery, say) still toast. Off, they only go to the history too.
+  lowUrgency:
+    type: string
+    title: Low-urgency notifications
+    x-group: Per-app rules
+    default: silent
+    enum: [silent, alert]
+    x-enumLabels: {silent: Silent, alert: Alert}
+    description: Where an app's notifications marked low urgency go when no rule below names the app. Silent files them in the Quiet section without a toast or a badge count.
   apps:
     type: array
     title: Per-app rules
     x-group: Per-app rules
     x-wide: true
     default: []
-    description: 'Rules for one app''s notifications: whether they toast, whether they''re kept, their urgency and how long they stay. An app is matched by its name or desktop entry, as its windows are (Vesktop finds dev.vencord.Vesktop).'
+    description: 'Rules for one app''s notifications: whether they alert, go quietly to the Quiet section, only toast or are blocked, their urgency and how long they stay. An app is matched by its name or desktop entry, as its windows are (Vesktop finds dev.vencord.Vesktop).'
     items:
       type: object
       additionalProperties: false
@@ -178,17 +186,15 @@ properties:
           type: string
           title: App
           default: ''
-          description: Its name, as its notifications show it, or its desktop entry (firefox, org.telegram.desktop).
-        toasts:
-          type: boolean
-          title: Show toasts
-          default: true
-          description: Off, its notifications go only to the history.
-        history:
-          type: boolean
-          title: Keep in the history
-          default: true
-          description: Off, its notifications only toast, and go once they're closed.
+          x-suggestions: notificationApps
+          description: Its name, as its notifications show it, or its desktop entry (firefox, org.telegram.desktop). One of axiom's own sources (axiom-drives, axiom-updates, …) sets just that one's level, a rule for axiom all the rest.
+        level:
+          type: string
+          title: Level
+          default: alert
+          enum: [alert, silent, toast, 'off']
+          x-enumLabels: {alert: Alert, silent: Silent, toast: Toast only, 'off': Block}
+          description: 'Alert toasts and keeps it in the list. Silent keeps it in the Quiet section only: no toast, not counted on the badge. Toast only shows it and forgets it once closed. Block drops it.'
         urgency:
           type: string
           title: Urgency
@@ -248,3 +254,30 @@ properties:
     minimum: 0
     maximum: 31536000000
     description: Remove notifications older than this many days. 0 keeps them until removed.
+  quiet:
+    type: object
+    title: Quiet section
+    x-group: Notification history
+    additionalProperties: false
+    description: Silent notifications (axiom's own status, the OSD's copies, apps set to Silent) are kept apart from the rest, under the list, and never counted on the badge.
+    properties:
+      maxEntries:
+        type: integer
+        title: Quiet size
+        default: 50
+        minimum: 5
+        maximum: 500
+        description: How many silent notifications are kept. The oldest go first.
+      maxAge:
+        type: integer
+        title: Keep quiet ones for
+        x-unit: d
+        default: 604800000
+        minimum: 0
+        maximum: 31536000000
+        description: Remove silent notifications older than this many days. 0 keeps them until removed.
+      connectivity:
+        type: boolean
+        title: Note connection changes
+        default: false
+        description: Keep a silent note when the network, a Bluetooth device or Tailscale connects or disconnects, one per connection, its latest change.

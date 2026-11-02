@@ -112,13 +112,14 @@ Item {
     leave.start();
   }
 
-  // Closed by the user; `remove` also takes it out of the history
+  // Closed by the user; `remove` also takes it out of the history, even
+  // once it's leaving: running an action closes a non-resident one
+  // synchronously, which starts the leave before this runs
   function close(remove) {
-    if (root.leaving)
-      return;
     if (remove && root.uid)
       NotificationManager.dismiss(root.uid);
-    root.userClosed();
+    if (!root.leaving)
+      root.userClosed();
   }
 
   // The shift ({ x, y }) it starts from, hidden past its slide edge

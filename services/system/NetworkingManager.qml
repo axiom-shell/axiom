@@ -360,6 +360,15 @@ QtObject {
     if (_detailsLookup > 0)
       refreshDetails();
   }
+  // The primary connection coming and going, as a silent note
+  property ConnectionNotes _notes: ConnectionNotes {
+    prefix: "network"
+    icon: root.primaryKind === "wifi" ? "network-wireless" : "network-wired"
+    connected: root.primaryName !== "" ? {
+      [root.primaryName]: root.primaryName
+    } : ({})
+  }
+
   Component.onCompleted: {
     refreshIp();
     _airplaneOn = _airplaneState.load({}).on === true;

@@ -48,6 +48,9 @@ BarIconWidget {
       lines.push(I18n.tr("Screen: {0}", root.screenUsers.join(", ")));
     if (root.cameraUsers.length)
       lines.push(I18n.tr("Camera: {0}", root.cameraUsers.join(", ")));
-    NotificationManager.sendNotification("axiom", I18n.tr("Privacy"), lines.join("\n"));
+    // An answer: a toast that isn't kept
+    NotificationManager.sendNotification("axiom", I18n.tr("Privacy"), lines.join("\n"), {
+      "transient": true
+    });
   }
 }

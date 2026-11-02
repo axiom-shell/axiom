@@ -42,9 +42,13 @@ QtObject {
   readonly property string dndEndAt: _dnd.endAt
   readonly property bool dndAllowCritical: _dnd.allowCritical
 
-  // Per-app rules: [{ id, app, toasts, history, urgency ("app" | "low" |
-  // "normal" | "critical"), timeout (ms, -1 for the default) }]
+  // Per-app rules: [{ id, app, level ("alert" | "silent" | "toast" |
+  // "off"), urgency ("app" | "low" | "normal" | "critical"), timeout (ms,
+  // -1 for the default) }]
   readonly property var apps: _c.apps
+  // The level of an app's low-urgency notifications no rule names
+  // ("silent" | "alert")
+  readonly property string lowUrgency: _c.lowUrgency
 
   // History
   readonly property bool clearOnFocus: _c.clearOnFocus
@@ -55,4 +59,9 @@ QtObject {
   readonly property int maxEntries: _c.maxEntries
   // How old an entry may get (ms), 0 = keep forever
   readonly property real maxAge: _c.maxAge
+  // The Quiet section's (silent entries) own size and age (ms, 0 = forever)
+  readonly property int quietMaxEntries: _c.quiet.maxEntries
+  readonly property real quietMaxAge: _c.quiet.maxAge
+  // Silent notes of connections coming and going (ConnectionNotes)
+  readonly property bool quietConnectivity: _c.quiet.connectivity
 }

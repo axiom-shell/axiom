@@ -91,7 +91,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 ### Reminders
 - One single-shot timer to the next alarm (`CalendarEvents.nextAlarm`), at most an hour ahead.
 - Missed alarms within 5 minutes are still shown.
-- A notification with `desktopEntry` `axiom-calendar`; clicking it opens the page.
+- A notification with `desktopEntry` `axiom-calendar`; clicking it opens the page. A quick add's "Added …" is an answer, not a notification: `ShellManager.confirm` (an OSD card, else a toast that isn't kept); "Couldn't add …" alerts.
 - Fired ids are kept for two days in `~/.local/state/axiom/ui/calendar.json`.
 
 ### Opening the page

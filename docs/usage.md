@@ -69,7 +69,7 @@ axiom ipc <target> <function> [args]
 | `onboarding` | `open`, `close`, `goTo <step>`, `reset` |
 | `lockscreen` | `lock` |
 | `greeter` | `open` (its settings), `preview` (the login screen's layout, on screen) |
-| `notifications` | `clear` (every notification, no undo), `toggleDnd` |
+| `notifications` | `clear` (every notification, no undo), `clearQuiet` (the Quiet section's), `toggleQuiet` (fold the Quiet section open or shut), `toggleDnd` |
 | `dnd` | `enable`, `disable`, `toggle`, `status` (do not disturb) |
 | `selfUpdate` | `check`, `update`, `open` |
 | `community` | `refresh`, `list` (each setup's id and title), `apply <id>` (without its wallpaper) |

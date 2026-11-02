@@ -58,14 +58,15 @@ QtObject {
     return root.backend?.upgrade ?? "";
   }
 
-  // Runs `command` in a terminal (`terminal`, else Apps.inTerminal's) and
-  // checks again once the terminal closes. Ignored while an upgrade is
-  // already running.
-  function upgrade(command, terminal) {
+  // Runs the upgrade (Updates.upgradeCommand, else upgradeCommand's) in a
+  // terminal (Updates.terminal, else Apps.inTerminal's) and checks again
+  // once the terminal closes. Ignored while an upgrade is already running.
+  function upgrade() {
+    const command = UpdatesConfig.upgradeCommand || root.upgradeCommand(UpdatesConfig.activeAurHelper);
     if (root._upgrading || command === "")
       return;
     root._upgrading = true;
-    CommandManager.run(Apps.inTerminal(["bash", "-c", `${command}; echo; read -n 1 -s -r -p "Press any key to close"`], terminal), () => {
+    CommandManager.run(Apps.inTerminal(["bash", "-c", `${command}; echo; read -n 1 -s -r -p "Press any key to close"`], UpdatesConfig.terminal), () => {
       root._upgrading = false;
       root.refresh();
     });
@@ -103,10 +104,49 @@ QtObject {
     }
   }
 
-  Component.onCompleted: BackendManager.listen("updates.state", state => {
-    root.repoPackages = state.repo;
-    root.aurPackages = state.aur;
-    root.error = state.error;
-    root.checking = false;
-  })
+  // Pending updates as one silent notification (the Quiet section), kept
+  // current while a widget checks: noted again only when more are
+  // pending, gone once none are. Its Upgrade button runs the widgets'
+  // upgrade; a click opens nothing
+  readonly property string _desktopEntry: "axiom-updates"
+  property int _noted: 0
+
+  function _note() {
+    const count = root.repoPackages.length + root.aurPackages.length;
+    if (count === 0)
+      NotificationManager.dismissKey("updates");
+    const summary = count === 1 ? I18n.tr("1 package update") : I18n.tr("{0} package updates", count);
+    // _noted starts at 0 after a restart: the note kept from before stays
+    // as it is (not new again) if it says the same
+    const kept = NotificationManager.entries.find(e => e.key === "updates");
+    if (count > root._noted && kept?.summary !== summary)
+      NotificationManager.sendNotification("axiom", summary, [].concat(root.repoPackages, root.aurPackages).slice(0, 5).map(p => p.name).join(", ") + (count > 5 ? "…" : ""), {
+        "desktopEntry": root._desktopEntry,
+        "icon": "system-software-update",
+        "key": "updates",
+        "silent": true,
+        "actions": [
+          {
+            "id": "upgrade",
+            "label": I18n.tr("Upgrade")
+          }
+        ]
+      });
+    root._noted = count;
+  }
+
+  Component.onCompleted: {
+    NotificationManager.registerHandler(root._desktopEntry, (entry, action) => {
+      if (action === "upgrade")
+        root.upgrade();
+    });
+    BackendManager.listen("updates.state", state => {
+      root.repoPackages = state.repo;
+      root.aurPackages = state.aur;
+      root.error = state.error;
+      root.checking = false;
+      if (!state.error)
+        root._note();
+    });
+  }
 }

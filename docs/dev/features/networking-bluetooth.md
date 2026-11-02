@@ -23,6 +23,7 @@ Wi-Fi, wired and Bluetooth state, built on Quickshell's D-Bus modules. Throughpu
   - `netInfo` is `{ kind, name, device, signal, ip }`, all bindings.
   - The one exception is the IPv4 address, which Quickshell.Networking lacks. It comes from axiom (`net.addresses`, the interface's addresses read in Go; the greeter's `axiom greeter` answers it too) whenever the connection changes, or on `refreshIp()`; an answer for a lookup since replaced is dropped.
 - **Scanning:** the scanner runs only while something holds `acquireScan(owner)`.
+- **Connection notes:** with `Notifications.quiet.connectivity`, the primary connection coming and going (by its name), and in BluetoothManager each device connecting and disconnecting (by address), are noted silently through a `ConnectionNotes` child ([Notifications](notifications.md) › What the shell sends).
 - Not named `Networking`, which is Quickshell's singleton. (Rule: AGENTS.md › Services.)
 
 ### nmnet (axiom)

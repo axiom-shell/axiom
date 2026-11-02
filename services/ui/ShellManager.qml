@@ -95,19 +95,31 @@ QtObject {
       });
   }
 
+  // What something just asked for answers once done (the calendar's
+  // quick add: "Added …"): its card on the OSD picking Messages, never
+  // filed; a toast that isn't kept (transient) where none does
+  function confirm(icon, title, detail) {
+    root._answer(icon, title, detail, "");
+  }
+
   // The same on the warning colour: what a bind, hot corner or `axiom`
   // command that can't run here says instead of nothing (never filed: it
-  // only answers what was just tried; a notification where no OSD picks
-  // Messages). `icon` the base one of what was refused ("nightlight", never
-  // "nightlight_off"), `title` what ("Night light"), `detail` why ("Not
-  // available here")
+  // only answers what was just tried). `icon` the base one of what was
+  // refused ("nightlight", never "nightlight_off"), `title` what ("Night
+  // light"), `detail` why ("Not available here")
   function refuse(icon, title, detail) {
+    root._answer(icon, title, detail, "warning");
+  }
+
+  function _answer(icon, title, detail, tone) {
     const id = OSDConfig.messageOsd("");
     if (id === "") {
-      NotificationManager.sendNotification("axiom", title, detail);
+      NotificationManager.sendNotification("axiom", title, detail, {
+        "transient": true
+      });
       return;
     }
-    root.osdMessage(id, icon, title, detail, "warning");
+    root.osdMessage(id, icon, title, detail, tone);
   }
 
   property IpcTarget _osdIpc: IpcTarget {
