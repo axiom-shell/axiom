@@ -129,20 +129,13 @@ type Manager struct {
 	debounce, liveDebounce, fileSync, releaseRetry, hotplug *time.Timer
 }
 
-// New is the manager for the compositor the environment names; Kind is ""
+// New is the manager for the compositor running (ipc.Detect); Kind is ""
 // (and it does nothing) under none of axiom's config modes' compositors.
 func New(o Options) *Manager {
+	o.Getenv = ipc.LiveEnv(o.Getenv)
 	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second, hotplugDelay: 500 * time.Millisecond}
-	instance := ""
-	switch {
-	case o.Getenv("HYPRLAND_INSTANCE_SIGNATURE") != "":
-		m.kind, instance = "hyprland", o.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
-	case o.Getenv("NIRI_SOCKET") != "":
-		m.kind, instance = "niri", o.Getenv("NIRI_SOCKET")
-	case o.Getenv("SWAYSOCK") != "":
-		m.kind, instance = "sway", o.Getenv("SWAYSOCK")
-	}
-	m.st = loadState(o.RuntimeFile, m.kind+":"+instance)
+	m.kind = ipc.Detect(o.Getenv)
+	m.st = loadState(o.RuntimeFile, m.kind+":"+o.Getenv("HYPRLAND_INSTANCE_SIGNATURE")+o.Getenv("SWAYSOCK")+o.Getenv("NIRI_SOCKET"))
 	stateDir := strings.TrimSuffix(o.StateDir, "/") + "/"
 	e := env{getenv: o.Getenv, stateDir: stateDir, tables: o.Tables, schema: o.Schema, logf: m.logf, state: m.st}
 	switch m.kind {
@@ -601,7 +594,7 @@ func (m *Manager) writeIfChanged(ctx context.Context, path, text string) {
 		return
 	}
 	if err := writeFile(path, text); err != nil {
-		m.o.Log.Warn("compositor: could not write "+path, "err", err)
+		m.warnOnce("Couldn't write " + path + ": " + err.Error())
 		return
 	}
 	m.w.reload(ctx)
@@ -619,13 +612,13 @@ func (m *Manager) checkLoaded(ctx context.Context) {
 	}
 	// The compositor couldn't load its config at all: the runtime layer
 	// wouldn't load either
+	m.loaded = loaded && !failed
 	if failed {
 		m.warnOnce(m.w.problems(m.in).Failed)
 		return
 	}
 	if loaded {
 		m.problem = ""
-		m.loaded = true
 		m.w.runtimeClear(ctx)
 		return
 	}
@@ -698,9 +691,18 @@ func (m *Manager) apply(ctx context.Context) {
 	if m.mode == "managed" {
 		m.releaseDone()
 	}
-	released := false
-	if previous != "" && previous != m.mode {
-		released = m.leave(ctx, previous)
+	// Outside included the module does nothing (managed's restored config
+	// may load it). Emptied whatever mode applied last: that is known only
+	// within one compositor run
+	if m.mode != "included" {
+		m.emptyModule(ctx)
+	}
+	// Leaving managed gives back the config it claimed; else the old layer
+	// would stay in the compositor's config, and the runtime layer, which
+	// only adds, can't undo it. A release brings the runtime layer in itself
+	released := previous == "managed" && m.mode != "managed"
+	if released {
+		m.release(ctx)
 	}
 	m.st.AppliedMode = m.mode
 	m.st.save()
@@ -800,8 +802,8 @@ func (m *Manager) CheckManaged(ctx context.Context) string {
 func (m *Manager) check(ctx context.Context) {
 	result, err := takeover.Check(ctx, m.takeoverOptions(m.mode))
 	if err != nil {
+		// Not the last answer: claimIfApproved waits on none
 		m.o.Log.Warn("compositor: checking the takeover", "err", err)
-		return
 	}
 	m.managedCheck = result
 }
@@ -837,7 +839,7 @@ func (m *Manager) claimIfApproved(ctx context.Context) {
 func (m *Manager) claim(ctx context.Context) {
 	lock, err := edit.LockDir(ctx, m.files().ConfigDir)
 	if err != nil {
-		m.o.Log.Warn("compositor: taking over "+m.files().ManagedPath, "err", err)
+		m.claimFailed(ctx, err)
 		return
 	}
 	o := m.takeoverOptions(m.mode)
@@ -846,7 +848,7 @@ func (m *Manager) claim(ctx context.Context) {
 	m.findMonitorConflicts()
 	if err != nil {
 		lock.Release()
-		m.o.Log.Warn("compositor: taking over "+m.files().ManagedPath, "err", err)
+		m.claimFailed(ctx, err)
 		return
 	}
 	word, rest, _ := strings.Cut(result, ":")
@@ -869,6 +871,12 @@ func (m *Manager) claim(ctx context.Context) {
 	if word == "adopted" {
 		m.merge(ctx, rest, false)
 	}
+}
+
+// claimFailed: the runtime layer stands in, and the card says why
+func (m *Manager) claimFailed(ctx context.Context, err error) {
+	m.warnOnce("Couldn't take over " + m.files().ManagedPath + ": " + err.Error() + ". Applying axiom's layer at runtime meanwhile.")
+	m.runtimeApply(ctx)
 }
 
 // release gives the config back. One that fails (an error, or the dir now
@@ -929,23 +937,6 @@ func (m *Manager) releaseDone() {
 	m.releaseProblem = ""
 	m.releaseBackoff = 0
 	m.releaseRetry.Stop()
-}
-
-// leave gives back what previous took: leaving managed, the config it
-// claimed; leaving included (or managed, whose restored config may load
-// it), the module, which then does nothing. Else the old layer stays in
-// the compositor's config, and the runtime layer, which only adds, can't
-// undo it. True when it ran a release, which brings the runtime layer
-// in itself.
-func (m *Manager) leave(ctx context.Context, previous string) bool {
-	if m.mode != "included" {
-		m.emptyModule(ctx)
-	}
-	if previous == "managed" {
-		m.release(ctx)
-		return true
-	}
-	return false
 }
 
 func (m *Manager) emptyModule(ctx context.Context) {
@@ -1163,18 +1154,28 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 	if h, ok := m.w.(*hyprWriter); ok {
 		h.addLayerRules(ctx)
 	}
+	// niri's state as its event stream starts (a config it couldn't load
+	// at login runs its defaults) is no reload: checkLoaded reads it
 	if n, ok := m.w.(*niriWriter); ok {
 		n.lastFailed = r.Failed
-		if r.Failed {
+		// That state can come after the first apply (the stream connects
+		// on its own): said now
+		if r.Initial && r.Failed {
+			m.checkLoaded(ctx)
+		}
+		if r.Failed || r.Initial {
 			return
 		}
 	}
 	// Unless a file of axiom's holds it, the reload set the outputs as the
-	// user's config says: the saved profile goes back on
-	if m.profiles != nil && !m.loaded {
-		m.profiles.applied = ""
-		m.applyProfile(ctx)
-	}
+	// user's config says: the saved profile goes back on, once checkLoaded
+	// below has said whether one does
+	defer func() {
+		if m.profiles != nil && !m.loaded {
+			m.profiles.applied = ""
+			m.applyProfile(ctx)
+		}
+	}()
 	if !m.live() {
 		return
 	}

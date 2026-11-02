@@ -368,12 +368,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The daemon picks a compositor the shell may not run under
-- **Where:** `backend/internal/compositor/manager/manager.go` (`New`), `backend/internal/compositor/manager/outputs.go` (`OutputsFromEnv`, `Outputs.Read`), `backend/internal/daemon/compositorsocket.go` (`greeterOnlyMethods`, `outputHandlers`, `applyGreeter`), `components/methods/CompositorKind.qml`
-- **What:** The shell picks its compositor with `CompositorKind`: with more than one of `HYPRLAND_INSTANCE_SIGNATURE` / `SWAYSOCK` / `NIRI_SOCKET` set (one left in the systemd user environment by an earlier session), the one whose process still runs wins. The daemon doesn't: `manager.New` takes the first set in a fixed order (Hyprland, niri, sway; the shell's is Hyprland, sway, niri) and `Outputs.Read`/`Apply` switch on the same order, with no process check. Under niri with a stale `HYPRLAND_INSTANCE_SIGNATURE` (or under sway with a stale `NIRI_SOCKET`) the manager is Hyprland's: `live()` needs the shell's facts to name its kind, so the layer is never applied (no binds, look or input in any mode), the status card stays on Checking, monitor profiles and `outputs.apply` go to a dead socket, and idle's `ScreenPower` fails. `applyGreeter` takes the same order. A stale variable is a case `docs/dev/compositor/README.md` names; the live session (sway) has none, so it isn't seen there. Both the compositor and the niri audits found this from the code; the niri one adds that `outputs.apply` (the Monitors page's Apply, profile switching) then fails with "no reply from Hyprland". Fix: one Go `Detect(getenv)` (CompositorKind's rule, `/proc/<pid>/comm`, as `userconf.NiriMain` and the sway reader already check their pid) used by all three, or the daemon passes the kind it picked to all three; then the daemon can start qs with only the running compositor's variable set, and `CompositorKind.qml` (68 lines), `tests/tst_CompositorKind.qml` (73) and `CompositorManager._running` go.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system (and again reviewing the niri system)
-
 ### The Translucency card reads the window look's blur object as a switch
 - **Where:** `components/views/Settings/TranslucencyStatus.qml`, `config/WindowLookConfig.qml` (`look`)
 - **What:** `WindowLook.blur` is the `Blur` object (`{ enabled, windowBlur, size, … }`), but the card tests `WindowLookConfig.look.blur` as a bool, so it's always truthy: the status always ends "Set in Compositor → Window look." even when the blur comes from the user's own config, and the "Set the compositor's blur" button (`root.off && !look.blur`) is never offered. Its branch would also `setValue(["WindowLook", "blur"], true)`, writing `true` over the whole object. Fix: read `blur.enabled` (a new reader property on `WindowLookConfig`, `blurSet`) and set `["WindowLook", "blur", "enabled"]`; `look` and `_lookJson` (5 lines, whose comment about applying it again is stale since the daemon applies the look) then have no reader and go.
@@ -512,12 +506,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### niri started on a broken config reads as loaded
-- **Where:** `backend/internal/compositor/ipc/niri.go` (`Reloads`), `backend/internal/compositor/manager/niri.go` (`checkLoaded`, `lastFailed`), `backend/internal/compositor/manager/manager.go` (`configReloaded`)
-- **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (the unread `NiriManager` property that forwarded it is gone). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
 ### Setting names that still confuse
 - **Where:** `config/schema/sections/`
 - **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.
@@ -601,30 +589,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Laptops' keyboard backlights (`kbd_backlight` LEDs) have no slider, OSD bar or keys: nothing in services reads them. Also open: whether `BrightnessManager` takes them as another device, the OSD bar kind, and writing the LED through the daemon.
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
-
-### A file mode that stops loading keeps the saved monitor profile off
-- **Where:** `backend/internal/compositor/manager/manager.go:1177` (`configReloaded`), `backend/internal/compositor/manager/manager.go:631` (`checkLoaded`)
-- **What:** `m.loaded` is set when the included module or the managed config is in effect (631) and cleared only in `modeChanged` (728) and `syncFile`'s "isn't axiom's any more" branch (1151); `checkLoaded`'s not-loaded and `failed` paths leave it true. Scenario: Hyprland or sway, included mode, module loaded; the user takes the include line out and the compositor reloads. `configReloaded` tests `!m.loaded` (1177) before `checkLoaded` runs, so it skips the profile; `checkLoaded` then puts the runtime layer in (which carries no monitor rules: `hyprWriter.runtimeApply` has binds, required settings, live lines and strips only), but `m.loaded` stays true. The reload set the outputs from the user's own lines, and every later reload skips the saved profile the same way, until a hotplug or a Monitors edit. No test covers it (`TestHotplugsApplyTheSavedProfile` reloads in detached mode only). Fix: `m.loaded = false` in `checkLoaded`'s not-loaded and `failed` paths, and in `configReloaded` re-apply the profile after the mode branch has run `checkLoaded`; a test row (included, loaded, then a reload with the file no longer loaded re-applies the profile).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Leaving included between sessions leaves the full module loaded
-- **Where:** `backend/internal/compositor/manager/manager.go:705` (`apply`), `backend/internal/compositor/manager/manager.go:942` (`leave`)
-- **What:** `emptyModule` runs only from `leave`, which runs only when `previous != "" && previous != m.mode` (705); `previous` is `m.st.AppliedMode`, kept in `compositor.json` for one compositor instance only, so each new session starts with `""`. Managed has a cover for "a mode changed while axiom wasn't running" (`configIsOurs`, 698); included has none. Scenario: the last session ran included and the user's config still loads the module; config.json says detached at the next start (synced, or edited while axiom wasn't running). `apply` skips `leave`, the module keeps its old binds, look, input and monitor rules, and the runtime layer skips every axiom key as taken by the user's config, so Keybinds edits to those keys do nothing until the include line goes. config-modes.md › Leaving a mode: "Leaving included, or leaving managed for detached, empties the module if it exists". Fix: in `apply`, call `m.emptyModule(ctx)` whenever `m.mode != "included"` (outside the hold), not only from `leave` (it does nothing when the file is missing or already empty).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A failed takeover leaves no layer and no problem
-- **Where:** `backend/internal/compositor/manager/manager.go:837` (`claim`), `backend/internal/compositor/manager/manager.go:845` (`claim`), `backend/internal/compositor/manager/manager.go:606` (`writeIfChanged`)
-- **What:** In managed mode, approved (or nothing of the user's to take over), `claim` can fail: `edit.LockDir` (837: the lock held over 10 s by a command line's `axiom compositor …`, or a read-only config dir) or `takeover.Claim` (845: `MkdirAll` of user/, a backup copy, `setAside`). Both branches only log and return: no runtime layer goes on, `problem` stays "", the status reads `pending` with no reason, and the session has none of axiom's binds, look or input until a compositor reload happens to run `checkLoaded`. The `blocked` branch beside them already does it right (`m.warnOnce(m.w.problems(m.in).Blocked); m.runtimeApply(ctx)`). config-modes.md › The layer: "Whenever a file isn't loaded … the runtime layer stands in and `problem` says why". `writeIfChanged`'s write error (606) is the same in small: logged, no problem shown. Fix: in both `claim` error branches `m.warnOnce("Couldn't take over " + path + ": " + err.Error()); m.runtimeApply(ctx)`; in `writeIfChanged` `m.warnOnce("Couldn't write " + path + ": " + err.Error())`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A failed takeover check reuses the last answer and can adopt without approval
-- **Where:** `backend/internal/compositor/manager/manager.go:800` (`check`), `backend/internal/compositor/manager/manager.go:813` (`claimIfApproved`)
-- **What:** When `takeover.Check` errors (its `edit.LockDir` giving up while `axiom compositor claim|release|binds remove` holds the lock), `check` logs and returns, keeping `m.managedCheck` from an earlier call; `claimIfApproved` decides on that stale word. Scenario: the check said `released`/`new`/`stock` earlier in the session, the user then puts their own config back (now `adopt`), and an `apply` runs while the lock is held and is freed before `claim` takes it: the stale word lets `claim` run, and `takeover.Claim` adopts whatever is there without the user's Allow. config-modes.md › Approving a takeover: "Allowed only by `allowTakeover()` … `adopt` waits". `compositor.checkManaged` returns the stale word too. Narrow race. Fix: on error set `m.managedCheck = ""`, so `claimIfApproved`'s default branch waits (pending, runtime layer standing in).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
 
 ### Claim keeps writing a symlinked or git-tracked config that release refuses to give back
 - **Where:** `backend/internal/compositor/takeover/takeover.go:179` (`Claim`), `backend/internal/compositor/takeover/takeover.go:241` (`Release`), `backend/internal/compositor/manager/manager.go:862` (`claim`)

@@ -44,9 +44,10 @@ type Compositor interface {
 	Outputs(ctx context.Context) ([]render.Output, error)
 }
 
-// CompositorFromEnv is the compositor the environment names (by its
-// socket, as the daemon picks it), nil for none.
+// CompositorFromEnv is the compositor running (ipc.Detect, as the daemon
+// picks it), nil for none.
 func CompositorFromEnv(getenv func(string) string) Compositor {
+	getenv = ipc.LiveEnv(getenv)
 	if h := ipc.HyprFromEnv(getenv); h != nil {
 		return h
 	}
