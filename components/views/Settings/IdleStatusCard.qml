@@ -19,6 +19,7 @@ FieldGroup {
       return Theme.success;
     case "inhibited":
       return Theme.accent;
+    case "noLock":
     case "unsupported":
     case "unavailable":
       return Theme.warning;
@@ -32,6 +33,8 @@ FieldGroup {
       return I18n.tr("Watching");
     case "inhibited":
       return I18n.tr("Held off");
+    case "noLock":
+      return I18n.tr("Doesn't lock");
     case "unsupported":
       return I18n.tr("Unsupported");
     case "unavailable":
@@ -50,6 +53,8 @@ FieldGroup {
       return I18n.tr("axiom's daemon isn't running this shell, so nothing watches for idle.");
     case "inhibited":
       return I18n.tr("An app is keeping the screen on: the steps below wait until it lets go.");
+    case "noLock":
+      return I18n.tr("The lock screen is your own locker, but its Lock command is empty or loginctl lock-session, which comes back to axiom: nothing locks. Set the Lock command to your locker.");
     }
     return I18n.tr("axiom dims, locks and turns the screens off on these settings, and locks before the computer sleeps.");
   }

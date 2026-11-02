@@ -23,6 +23,20 @@ Scope {
     reloadableId: "axiomLockscreen"
 
     property bool locked: false
+    // AXIOM_LOCK_ON_START was acted on: it stays in the process's
+    // environment, so each reload would lock again
+    property bool startedLocked: false
+
+    // axiom restarts a shell that died while locked with this set: it
+    // locks before anything else shows, once per process. Read on
+    // `loaded` (each generation, after the old values are copied), since
+    // Component.onCompleted runs before them
+    onLoaded: {
+      if (startedLocked || Quickshell.env("AXIOM_LOCK_ON_START") !== "1")
+        return;
+      startedLocked = true;
+      LockManager.lock();
+    }
   }
 
   // No hot reload under the lock: Quickshell 0.3's WlSessionLock hands its
@@ -88,13 +102,6 @@ Scope {
     property: "builtinSurfaces"
     value: root.surfaces
     restoreMode: Binding.RestoreNone
-  }
-
-  // axiom restarts a shell that died while locked with this set: it locks
-  // before anything else shows
-  Component.onCompleted: {
-    if (Quickshell.env("AXIOM_LOCK_ON_START") === "1")
-      LockManager.lock();
   }
 
   WlSessionLock {

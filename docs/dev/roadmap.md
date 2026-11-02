@@ -150,6 +150,10 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs bar-popouts-02, on Hyprland and niri: a floating edge menu with Close on outside click, and the launcher attached and detached, close on a click on a window, a bar, the screen border and another monitor; a click in the edge menu's submenu (and a tray menu's) leaves it open; a pinned menu stays; with the launcher open, a click on a bar's launcher button closes it without reopening it, and one on a bar button opening the power menu or an edge menu leaves that open; with either open, hovering a bar widget whose popout takes the keyboard (Todo, Calculator, Stopwatch) opens that popout and leaves them open, and once it closes a click outside still closes them (on Hyprland they take their grab back); on Hyprland, with the launcher or the edge menu open under such a popout with its text field focused, a click on a window closes both and the window keeps the keyboard (a click back in the launcher closes both too: [known](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)).
 - Once the shell runs #287 (config-02), edit config.json by hand, then within a moment change a setting in the shell: the save is refused, the shell shows the hand edit, and the next change saves.
 - Once the shell runs #288 (config-03), turn Polkit's "Use axiom's prompt" or Idle's "Handle idle" on in Settings without saving and check nothing starts (no agent swap, hypridle untouched), then Discard; and in the launcher `/config Polkit.enabled` offers only Show in settings.
+- After a save axiom refuses (e.g. right after a hand edit of config.json), the editor's edits show live again on the running bars and settings (#293).
+- Once axiom runs a binary built with platform-02, run `axiom lock` under Hyprland and check `axiom daemon logs` has no `the shell didn't confirm the lock: starting it locked` (a nested Hyprland acknowledged the lock after about 5 s; the daemon now waits 10 s more for a shell holding the lock), and whether a real Hyprland is ever that slow.
+- Once the greeter runs platform-02, with a bundle setting two keyboard layouts (`us,de`), log out to the login screen under sway and Hyprland: its keyboard layout module switches between both from the start.
+- Once the shell runs platform-02, start a shell locked (`axiom lock` confirmed too late, or one restarted while locked), unlock with the password, then save a QML file: the reload doesn't lock again.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -325,9 +329,6 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 Found while retiring the `qs ipc` fallback (backend stage 6):
 - [A word passed to an int IPC parameter is 0](issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
 
-Found while fixing the lock screen surviving a reload:
-- [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
-
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
@@ -483,11 +484,7 @@ Found by the audits:
 - [Kitty reloads only when its socket is /tmp/kitty-*](issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
-- [A shell started locked locks again on every reload](issues.md#a-shell-started-locked-locks-again-on-every-reload)
-- [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
 - [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
-- [Uninstall keeps a stale greetd backup when greetd points elsewhere](issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
-- [The greeter reads its keyboard layouts before the bundle's are applied](issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
 - [The launcher's /generate reads a monitor setting that doesn't exist](issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
 - [A clip's label and detail are written in both the launcher and the clipboard module](issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
 - [App scoring is written twice and the use bonus three times](issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)

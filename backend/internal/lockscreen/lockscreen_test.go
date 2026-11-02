@@ -51,6 +51,39 @@ func TestPartialLockIsNotConfirmed(t *testing.T) {
 	}
 }
 
+// A shell that took the lock gets longer for the compositor's
+// acknowledgement (a nested Hyprland's is late) before it's started again;
+// one never acknowledged still is.
+func TestLateAcknowledgementIsWaitedFor(t *testing.T) {
+	t.Parallel()
+	for _, acked := range []bool{true, false} {
+		var started atomic.Bool
+		var l *Locker
+		l = New(Options{
+			Confirm: 20 * time.Millisecond,
+			Ack:     testkit.Bound(500 * time.Millisecond),
+			AskShell: func(ctx context.Context) error {
+				l.Report(State{Holding: true, Outputs: 1})
+				if acked {
+					time.AfterFunc(60*time.Millisecond, func() { l.Report(State{Locked: true, Holding: true, Surfaces: 1, Outputs: 1}) })
+				}
+				return nil
+			},
+			StartLocked: func(ctx context.Context) error {
+				started.Store(true)
+				go l.Report(State{Locked: true, Holding: true, Surfaces: 1, Outputs: 1})
+				return nil
+			},
+		})
+		if err := l.Lock(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		if started.Load() == acked {
+			t.Errorf("acknowledged %v: started again %v", acked, started.Load())
+		}
+	}
+}
+
 func TestConfirmRule(t *testing.T) {
 	t.Parallel()
 	for _, c := range []struct {
@@ -137,9 +170,19 @@ func TestOwnLockerRunsItsCommandButNotLoginctl(t *testing.T) {
 	if !testkit.Eventually(func() bool { _, err := os.Stat(marker); return err == nil }) {
 		t.Error("the lock command didn't run")
 	}
-	command = "loginctl lock-session"
-	if err := l.Lock(context.Background()); err == nil {
-		t.Error("loginctl lock-session (which loops back to axiom) was run")
+	if !l.CanLock() {
+		t.Error("CanLock is false with a lock command")
+	}
+	for _, command = range []string{"loginctl lock-session", " "} {
+		if err := l.Lock(context.Background()); err == nil {
+			t.Errorf("%q (which locks nothing or loops back to axiom) was run", command)
+		}
+		if l.CanLock() {
+			t.Errorf("CanLock is true with the lock command %q", command)
+		}
+	}
+	if !New(Options{Mode: func() string { return "quickshell" }}).CanLock() {
+		t.Error("the built-in locker can't lock")
 	}
 }
 
@@ -236,6 +279,9 @@ func TestDefaultConfirmBound(t *testing.T) {
 	t.Parallel()
 	if got := New(Options{}).opts.Confirm; got != 3*time.Second {
 		t.Errorf("Confirm = %v, want 3s", got)
+	}
+	if got := New(Options{}).opts.Ack; got != 10*time.Second {
+		t.Errorf("Ack = %v, want 10s", got)
 	}
 	if got := New(Options{Confirm: time.Second}).opts.Confirm; got != time.Second {
 		t.Errorf("Confirm = %v, want the one given", got)
