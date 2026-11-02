@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
 
+### TestWatch can see one in-place edit as two
+- **Where:** `backend/internal/files/files_test.go` (`TestWatch`)
+- **What:** The test writes the file twice in a row ("the", then "theirs") and expects the burst to settle into one push, so a slow runner that lets the burst settle between the two writes gets two: CI run 41448998520 (the notifications branch, which didn't touch files) failed with `a got [/tmp/TestWatch…/001//todo.json /tmp/TestWatch…/001//todo.json]`; the rerun passed. Fix: allow one or two pushes for the in-place edit, or write it in one call and test the burst separately with a fake clock.
+- **Size:** trivial
+- **Found:** 2026-11-02, while merging the notification levels (CI on notifications-levels)
+
 ### TestNvidiaStream can see the stream's first line before it looks
 - **Where:** `backend/internal/sysmon/sysmon_test.go` (`TestNvidiaStream`)
 - **What:** The fake stream (`streams`, line "37, 61") answers as soon as the fetch starts it, so the first `fetch` can already read its values and the check that none came yet fails: CI run 41435061352 (a branch that didn't touch sysmon) failed with `before the stream's first line: {… GPUUsage:0xc000190238 GPUTemp:0xc000190248 …}`; the rerun passed. Fix: hold the fake's first line until the test releases it (a channel), then check before and after.
