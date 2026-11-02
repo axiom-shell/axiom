@@ -151,6 +151,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #287 (config-02), edit config.json by hand, then within a moment change a setting in the shell: the save is refused, the shell shows the hand edit, and the next change saves.
 - Once the shell runs #288 (config-03), turn Polkit's "Use axiom's prompt" or Idle's "Handle idle" on in Settings without saving and check nothing starts (no agent swap, hypridle untouched), then Discard; and in the launcher `/config Polkit.enabled` offers only Show in settings.
 - After a save axiom refuses (e.g. right after a hand edit of config.json), the editor's edits show live again on the running bars and settings (#293).
+- Once axiom runs a binary built with platform-02, run `axiom lock` under Hyprland and check `axiom daemon logs` has no `the shell didn't confirm the lock: starting it locked` (a nested Hyprland acknowledged the lock after about 5 s; the daemon now waits 10 s more for a shell holding the lock), and whether a real Hyprland is ever that slow.
 - Once the shell runs platform-02, start a shell locked (`axiom lock` confirmed too late, or one restarted while locked), unlock with the password, then save a QML file: the reload doesn't lock again.
 
 ### Phase 0: decisions and quick wins
@@ -326,9 +327,6 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 
 Found while retiring the `qs ipc` fallback (backend stage 6):
 - [A word passed to an int IPC parameter is 0](issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
-
-Found while fixing the lock screen surviving a reload:
-- [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
 
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
