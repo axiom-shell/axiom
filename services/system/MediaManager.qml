@@ -221,15 +221,21 @@ QtObject {
     onTriggered: root.updatePosition()
   }
 
-  // Players already running at startup (later ones: onPlayersChanged)
-  Component.onCompleted: root._pick()
+  // Players already running at startup or a reload (later ones:
+  // onPlayersChanged), seen with no known start, so a later list change
+  // doesn't take a playing one for new and drop the pin
+  Component.onCompleted: {
+    root._startedAt = Object.fromEntries(root.players.map(p => [p.dbusName, 0]));
+    root._pick();
+  }
 
   // Every player, for player switchers
   readonly property var players: Mpris.players?.values ?? []
   // The bus name of a player the user picked: kept until it goes away or
   // another starts playing
   property string _pinnedId: ""
-  // Bus name -> when it last started playing (ms)
+  // Bus name -> when it last started playing (ms; 0 unknown), for every
+  // player seen playing or present at startup
   property var _startedAt: ({})
 
   function selectPlayer(player) {

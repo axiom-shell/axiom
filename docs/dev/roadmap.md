@@ -534,8 +534,6 @@ Found by the audits:
 - [Clicking an older capture's notification opens the newest capture](issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
 - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 
-Found while making caffeine survive reloads:
-
 Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)
 - [Eject may leave a USB stick powered on](issues.md#eject-may-leave-a-usb-stick-powered-on)
