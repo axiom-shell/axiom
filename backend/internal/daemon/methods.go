@@ -323,9 +323,11 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 		if err := p.compatible(hash); err != nil {
 			// A newer client (an update replaced the binary, a dev build
 			// bumped it): this image takes the binary that speaks it
-			if exe := d.upgradeTarget(ctx, p.Protocol); exe != "" {
-				d.opts.Log.Info("a client speaks a newer protocol: re-executing", "protocol", p.Protocol, "binary", exe)
-				d.reexecSoon(exe)
+			if exe, start := d.upgradeTarget(ctx, p.Protocol); exe != "" {
+				if start {
+					d.opts.Log.Info("a client speaks a newer protocol: re-executing", "protocol", p.Protocol, "binary", exe)
+					d.reexecSoon(exe)
+				}
 				return HelloResult{}, axerr.New(axerr.Unavailable, "axiom is restarting into the newer binary %s: try again", exe)
 			}
 			if p.Protocol > buildinfo.Protocol() {
@@ -388,6 +390,10 @@ func (d *Daemon) reexecSoon(target string) {
 		}
 		if err := d.reexec(target); err != nil {
 			d.opts.Log.Error("re-exec", "err", err)
+			// A newer client's hello is refused again, not told to wait
+			d.upgradeMu.Lock()
+			d.upgrading = ""
+			d.upgradeMu.Unlock()
 		}
 	})
 }

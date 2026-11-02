@@ -125,29 +125,40 @@ func TestNewerClientFindsItsBinary(t *testing.T) {
 	d.installed = filepath.Join(t.TempDir(), "axiom")
 	ctx := context.Background()
 
+	target := func(want int) string {
+		exe, _ := d.upgradeTarget(ctx, want)
+		return exe
+	}
+
 	tree(own + 1)
 	binary(d.installed, own) // not updated: nothing speaks it
-	if exe := d.upgradeTarget(ctx, own+1); exe != "" {
+	if exe := target(own + 1); exe != "" {
 		t.Errorf("no binary speaks it: %q", exe)
 	}
 	binary(d.installed, own+1) // updated in place: a new file, tried afresh
 	binary(DevBinary(d.dirs), own)
-	if exe := d.upgradeTarget(ctx, own+1); exe != d.installed {
-		t.Errorf("the updated binary: %q, want %q", exe, d.installed)
+	if exe, start := d.upgradeTarget(ctx, own+1); exe != d.installed || !start {
+		t.Errorf("the updated binary: %q (start %v), want %q", exe, start, d.installed)
 	}
-	if exe := d.upgradeTarget(ctx, own+1); exe != "" {
+	// Until the exec, another newer hello gets it too, without a second
+	if exe, start := d.upgradeTarget(ctx, own+1); exe != d.installed || start {
+		t.Errorf("a hello meanwhile: %q (start %v)", exe, start)
+	}
+	d.upgrading = "" // as a new image starts
+	if exe := target(own + 1); exe != "" {
 		t.Errorf("the same binary tried twice: %q", exe)
 	}
 	binary(DevBinary(d.dirs), own+1)
-	if exe := d.upgradeTarget(ctx, own+1); exe != DevBinary(d.dirs) {
+	if exe := target(own + 1); exe != DevBinary(d.dirs) {
 		t.Errorf("dev mode's build first: %q", exe)
 	}
-	if exe := d.upgradeTarget(ctx, own-1); exe != "" {
+	d.upgrading = ""
+	if exe := target(own - 1); exe != "" {
 		t.Errorf("an older client: %q", exe)
 	}
 	binary(d.installed, own+2)
 	tree(own + 1)
-	if exe := d.upgradeTarget(ctx, own+2); exe != "" {
+	if exe := target(own + 2); exe != "" {
 		t.Errorf("the tree's files speak another protocol: %q", exe)
 	}
 }

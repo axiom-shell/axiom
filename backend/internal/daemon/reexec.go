@@ -159,10 +159,17 @@ func (d *Daemon) adopt(h *handoff) (net.Listener, error) {
 // protocol want, newer than this image's: the dev build (in dev mode),
 // else the installed one, the first that speaks it, and only when the
 // tree's files do too (a stray newer CLI never strands the shell). ""
-// when none does; each binary is tried once.
-func (d *Daemon) upgradeTarget(ctx context.Context, want int) string {
+// when none does; each binary is tried once. Once one is found, every
+// newer hello until the exec gets it too (start: only the first, which
+// re-execs), so one said meanwhile isn't refused.
+func (d *Daemon) upgradeTarget(ctx context.Context, want int) (exe string, start bool) {
 	if want <= buildinfo.Protocol() || protocolIn(filepath.Join(d.opts.Tree, "config", "json", "backend.json")) != want {
-		return ""
+		return "", false
+	}
+	d.upgradeMu.Lock()
+	defer d.upgradeMu.Unlock()
+	if d.upgrading != "" {
+		return d.upgrading, false
 	}
 	candidates := []string{d.installed}
 	if d.dev.Enabled() {
@@ -178,18 +185,19 @@ func (d *Daemon) upgradeTarget(ctx context.Context, want int) string {
 			inode = st.Ino
 		}
 		key := fmt.Sprint(exe, inode, info.ModTime().UnixNano())
-		d.upgradeMu.Lock()
-		tried := d.upgradesTried[key]
 		if d.upgradesTried == nil {
 			d.upgradesTried = map[string]bool{}
 		}
+		if d.upgradesTried[key] {
+			continue
+		}
 		d.upgradesTried[key] = true
-		d.upgradeMu.Unlock()
-		if !tried && binaryProtocol(ctx, exe) == want {
-			return exe
+		if binaryProtocol(ctx, exe) == want {
+			d.upgrading = exe
+			return exe, true
 		}
 	}
-	return ""
+	return "", false
 }
 
 // binaryProtocol is the protocol the axiom binary at exe speaks (0: it

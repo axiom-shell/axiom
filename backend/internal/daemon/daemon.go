@@ -113,9 +113,11 @@ type Daemon struct {
 	executable string
 	installed  string
 	// upgradesTried: the binaries (path, inode, time) a newer client's
-	// hello already re-exec'd into or found wanting, never tried again
+	// hello already re-exec'd into or found wanting, never tried again;
+	// upgrading the one it is re-executing into
 	upgradeMu     sync.Mutex
 	upgradesTried map[string]bool
+	upgrading     string
 	instance      *fsx.Lock
 	listener      net.Listener
 
