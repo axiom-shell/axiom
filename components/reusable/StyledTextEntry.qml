@@ -105,25 +105,7 @@ StyledContainer {
       color: "transparent"
     }
 
-    cursorDelegate: Rectangle {
-      width: 2
-      color: Theme.accent
-      visible: textField.activeFocus
-
-      // Blinking animation
-      SequentialAnimation on opacity {
-        loops: Animation.Infinite
-        running: textField.activeFocus
-        PropertyAnimation {
-          to: 1
-          duration: 500 // behaviour timing: the cursor blink
-        }
-        PropertyAnimation {
-          to: 0
-          duration: 500 // behaviour timing: the cursor blink
-        }
-      }
-    }
+    cursorDelegate: TextCursor {}
   }
 
   FlatIconButton {

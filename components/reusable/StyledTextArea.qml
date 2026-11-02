@@ -167,25 +167,7 @@ StyledContainer {
         color: "transparent"
       }
 
-      // An accent bar, blinking while focused
-      cursorDelegate: Rectangle {
-        width: 2
-        color: Theme.accent
-        visible: textInput.activeFocus
-
-        SequentialAnimation on opacity {
-          loops: Animation.Infinite
-          running: textInput.activeFocus
-          PropertyAnimation {
-            to: 1
-            duration: 500 // behaviour timing: the cursor blink
-          }
-          PropertyAnimation {
-            to: 0
-            duration: 500 // behaviour timing: the cursor blink
-          }
-        }
-      }
+      cursorDelegate: TextCursor {}
     }
   }
 }
