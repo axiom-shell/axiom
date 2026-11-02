@@ -181,7 +181,7 @@ properties:
           notable: What's unusual
           all: Every one picked
           changed: Only the one that changed
-        description: 'What''s unusual shows only the states out of the ordinary (Caps Lock on, muted, do not disturb, on battery, …) and the one that just changed. Every one picked shows each, lit when on.'
+        description: 'What''s unusual shows only the states out of the ordinary (Caps Lock or Num Lock on, muted, do not disturb, on battery, a drive plugged in, …) and the one that just changed. Every one picked shows each, lit when on. An icon shown stays while the icons are out, though it turns ordinary.'
       cards:
         type: boolean
         title: Detail cards

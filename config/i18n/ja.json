@@ -3487,7 +3487,6 @@
     "Airplane": "",
     "Icons shown": "",
     "Message": "",
-    "What's unusual shows only the states out of the ordinary (Caps Lock on, muted, do not disturb, on battery, …) and the one that just changed. Every one picked shows each, lit when on.": "",
     "Num lock": "",
     "Caps lock": "",
     "A change on it opens the OSD. Off, it still shows while the OSD is open, and a change keeps an open OSD open.": "",
@@ -3744,6 +3743,7 @@
     "Past the bars": "",
     "By the edge": "",
     "Where the status icons go when they're out with the bars: past them, away from the edge, or between the bars and the edge. A card always goes last.": "",
-    "While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you're pointing at moves. Off, they take their usual place (Status icons). A card always goes last.": ""
+    "While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you're pointing at moves. Off, they take their usual place (Status icons). A card always goes last.": "",
+    "What's unusual shows only the states out of the ordinary (Caps Lock or Num Lock on, muted, do not disturb, on battery, a drive plugged in, …) and the one that just changed. Every one picked shows each, lit when on. An icon shown stays while the icons are out, though it turns ordinary.": ""
   }
 }

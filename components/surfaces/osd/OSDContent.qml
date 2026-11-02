@@ -71,12 +71,25 @@ Item {
   // recording's only while it runs)
   property var _sources: ({})
   readonly property var toggleable: Object.keys(root._sources).filter(type => root._sources[type]?.canToggle === true)
-  // The icon last clicked: it stays in the row while the OSD stays open,
-  // though it turned back to ordinary
-  property string _held: ""
-  // The status icons shown (what's unusual, every one, or none, and the
-  // change)
-  readonly property var rowTypes: OSDItems.rowTypes(root.statusTypes, root.tiles, root._previewAll ? "all" : root.osd.statuses.row, root.changed !== "" ? root.changed : root._held)
+  // Every icon the row has shown since the icons came out: one that
+  // turns ordinary (Caps Lock off, an icon clicked) stays in its place
+  // until the icons fold back
+  property var _kept: []
+  // ...and the change, as it comes
+  readonly property var _keptNow: root.changed !== "" && !root._kept.includes(root.changed) ? root._kept.concat([root.changed]) : root._kept
+  // The status icons shown (what's unusual, every one, or none, and what
+  // was shown since they came out: OSDItems.rowTypes)
+  readonly property var rowTypes: OSDItems.rowTypes(root.statusTypes, root.tiles, root._previewAll ? "all" : root.osd.statuses.row, root._keptNow)
+  // Keeps what the row shows while the icons are out: run as they open
+  // and as a change rings (every change while they're out does), never
+  // from a binding on the row, which it feeds
+  function _keepRow() {
+    if (root._open.status !== true)
+      return;
+    const more = root.rowTypes.filter(type => !root._kept.includes(type));
+    if (more.length > 0)
+      root._kept = root._kept.concat(more);
+  }
   // Show on the icons with none to show as they are (nothing unusual):
   // every one, not an empty row, until it closes
   property bool _previewAll: false
@@ -156,7 +169,7 @@ Item {
     root._order = root._order.filter(other => other !== part);
     if (part === "status") {
       root.changed = "";
-      root._held = "";
+      root._kept = [];
       root._previewAll = false;
     }
   }
@@ -214,10 +227,11 @@ Item {
     // their eases must already know whether this one slides out
     root._snapping = !root.hostOpen || !root._order.some(other => other !== part && root._reveal(other) > 0);
     if (part === "status" && root._open.status !== true)
-      root._previewAll = OSDItems.rowTypes(root.statusTypes, root.tiles, root.osd.statuses.row, root.changed !== "" ? root.changed : root._held).length === 0;
+      root._previewAll = OSDItems.rowTypes(root.statusTypes, root.tiles, root.osd.statuses.row, root._keptNow).length === 0;
     if (!root._order.includes(part))
       root._order = OSDItems.partOrder(root._order, part, root.osd.holdStill && root.pointerIn && root.hostOpen, root.osd.iconsPlace === "inside");
     root._setOpen(part, true);
+    root._keepRow();
     root._snapping = false;
     root._schedule();
   }
@@ -340,7 +354,7 @@ Item {
     root._order = [];
     root._snapping = false;
     root.changed = "";
-    root._held = "";
+    root._kept = [];
     root._previewAll = false;
     root._closing = false;
     const pending = root._pending;
@@ -494,18 +508,18 @@ Item {
     return OSDConfig.onScreenChanges || !ShellManager.fromScreen(type);
   }
 
-  // An icon clicked: flips it, held in place
+  // An icon clicked: flips it (it stays in place: `_kept`)
   function toggle(type) {
     const source = root._sources[type];
     if (!source)
       return;
-    root._held = type;
     source.toggle();
   }
 
   function _ring(type) {
     root.changed = type;
     root._changedAt = Date.now();
+    root._keepRow();
   }
 
   // A status changed; `force` opens the OSD. With its card (`withCard`,

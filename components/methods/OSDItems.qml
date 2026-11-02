@@ -86,12 +86,10 @@ QtObject {
           "numLock": "dialpad",
           "scrollLock": "swap_vert"
         };
-        // Num Lock is on on most desktops and missing on most laptops: it
-        // shows as it changes, never as unusual
         return Object.assign(t, {
           "icon": icons[type],
           "on": s.on === true,
-          "notable": s.on === true && type !== "numLock",
+          "notable": s.on === true,
           "hidden": s.available !== true
         });
       }
@@ -162,12 +160,13 @@ QtObject {
           "event": e?.kind ?? "",
           "mountPoint": e?.mountPoint ?? "",
           "on": (s.count ?? 0) > 0,
+          "notable": (s.count ?? 0) > 0,
           "hidden": s.available !== true || (s.count ?? 0) === 0
         });
       }
     case "battery":
       {
-        // Lit while low; unusual only when critical
+        // Lit and unusual while low or critical
         const level = s.level ?? "none";
         return Object.assign(t, {
           "icon": level === "critical" ? "battery_alert" : level === "low" ? "battery_low" : "battery_full",
@@ -175,7 +174,7 @@ QtObject {
           "level": level,
           "timeLeft": s.timeLeft ?? "",
           "on": level !== "none",
-          "notable": level === "critical",
+          "notable": level !== "none",
           "hidden": s.available !== true
         });
       }
@@ -270,14 +269,15 @@ QtObject {
 
   // The statuses the row shows, in the OSD's order: of `types` (its
   // statuses), by `mode` ("notable" | "all" | "changed") over `tiles` (by
-  // type, tile()'s), `changed` (the type that just changed, or "") always
+  // type, tile()'s), `kept` (the change, and every one shown since the
+  // icons came out: one that turned ordinary stays until they go) always
   // among them. A hidden tile shows only as it changes; a message never
   // (it shows as its card).
-  function rowTypes(types, tiles, mode, changed) {
+  function rowTypes(types, tiles, mode, kept) {
     return types.filter(type => {
       if (type === "message")
         return false;
-      if (type === changed)
+      if ((kept ?? []).includes(type))
         return true;
       const t = tiles[type];
       if (!t || t.hidden)

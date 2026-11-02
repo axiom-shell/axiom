@@ -79,10 +79,10 @@ TestCase {
       "on": false
     });
     compare([capsOff.on, capsOff.slash, capsOff.notable], [false, false, false], "off: unlit, only a mute is struck through");
-    verify(!OSDItems.tile("numLock", {
+    verify(OSDItems.tile("numLock", {
       "available": true,
       "on": true
-    }).notable, "Num Lock on is ordinary");
+    }).notable, "Num Lock on is unusual, as Caps Lock is");
     verify(OSDItems.tile("scrollLock", {
       "available": false,
       "on": false
@@ -310,7 +310,7 @@ TestCase {
         "mountPoint": "/run/media/u/STICK"
       }
     });
-    verify(mounted.on && !mounted.hidden && !mounted.slash && !mounted.notable, "a drive in: shown, never unusual");
+    verify(mounted.on && !mounted.hidden && !mounted.slash && mounted.notable, "a drive in: shown, unusual");
     compare(mounted.name, "STICK");
     let card = OSDItems.card("drive", {
       "drive": mounted
@@ -372,7 +372,7 @@ TestCase {
       "percent": 18,
       "timeLeft": "1h 5m"
     });
-    verify(low.on && !low.notable && !low.hidden, "low: lit, not unusual");
+    verify(low.on && low.notable && !low.hidden, "low: lit and unusual");
     compare(low.icon, "battery_low");
     let card = OSDItems.card("battery", {
       "battery": low
@@ -611,13 +611,15 @@ TestCase {
         "text": "Hi"
       })
     };
-    compare(OSDItems.rowTypes(types, tiles, "notable", ""), ["capsLock"]);
-    compare(OSDItems.rowTypes(types, tiles, "notable", "dnd"), ["capsLock", "dnd"], "the change, in its place");
-    compare(OSDItems.rowTypes(types, tiles, "all", ""), ["capsLock", "numLock", "dnd"], "not hidden ones, nor a message");
-    compare(OSDItems.rowTypes(types, tiles, "all", "message"), ["capsLock", "numLock", "dnd"], "a message is a card, never a tile");
-    compare(OSDItems.rowTypes(types, tiles, "changed", "numLock"), ["numLock"]);
-    compare(OSDItems.rowTypes(types, tiles, "changed", ""), []);
-    compare(OSDItems.rowTypes([], tiles, "all", ""), []);
+    compare(OSDItems.rowTypes(types, tiles, "notable", []), ["capsLock", "numLock"], "the lock keys on");
+    compare(OSDItems.rowTypes(types, tiles, "notable", ["dnd"]), ["capsLock", "numLock", "dnd"], "the change, in its place");
+    compare(OSDItems.rowTypes(types, tiles, "notable", ["wifi"]), ["capsLock", "numLock", "wifi"], "a hidden one as it changes");
+    compare(OSDItems.rowTypes(types, tiles, "all", []), ["capsLock", "numLock", "dnd"], "not hidden ones, nor a message");
+    compare(OSDItems.rowTypes(types, tiles, "all", ["message"]), ["capsLock", "numLock", "dnd"], "a message is a card, never a tile");
+    compare(OSDItems.rowTypes(types, tiles, "changed", ["numLock"]), ["numLock"]);
+    compare(OSDItems.rowTypes(types, tiles, "changed", ["dnd", "numLock"]), ["numLock", "dnd"], "every one kept, in the OSD's order");
+    compare(OSDItems.rowTypes(types, tiles, "changed", []), []);
+    compare(OSDItems.rowTypes([], tiles, "all", []), []);
   }
 
   function test_replaces() {
