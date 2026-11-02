@@ -318,7 +318,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **core-ui-theming-07** (4):
   - runDetached warns about a lost connection
   - AGENTS.md's funnel rule doesn't name FileManager.write and watch
-  - [fzf's flags rebuilt in Go where a template does](../issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
+  - fzf's flags rebuilt in Go where a template does
   - [The onboarder's integration commands are a hand-kept list in ThemeManager](../issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 
 **compositor**

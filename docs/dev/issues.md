@@ -1313,12 +1313,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
-### fzf's flags rebuilt in Go where a template does
-- **Where:** `backend/internal/theme/integrations/table.go:187` (`fzf`)
-- **What:** `fzf` takes `t.vars(true)` and joins fixed `name:${VAR}` pairs into one `--color=` line, which is what `tmpl{text: true}` does with a one-line template; the system's Checks name such an entry as an odd one out ("a table entry … reimplementing what `tmpl` … does"). Fix: a `templates/fzf` holding `--color=fg:${FOREGROUND},bg:${BACKGROUND},hl:${ACCENT},fg+:${FOREGROUND_HIGHLIGHT},bg+:${BACKGROUND_HIGHLIGHT},hl+:${ACCENT},info:${INFO},marker:${SUCCESS},prompt:${ACCENT},spinner:${ACCENT_ALT},pointer:${ACCENT},header:${FOREGROUND_ALT},border:${BORDER},label:${FOREGROUND_ALT},query:${FOREGROUND},gutter:${BACKGROUND}` and the entry `one("{state}/axiom/fzf-colors", tmpl{name: "fzf", text: true})`; the goldens stay byte for byte. Removes lines 186–201 (16 lines); the doc's "built in Go (fzf's flags, …)" drops fzf.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the theme-integrations system
-
 ### The onboarder's integration commands are a hand-kept list in ThemeManager
 - **Where:** `services/core/ThemeManager.qml:561` (`_integrationCommands`), `config/schema/sections/ThemeIntegrations.yaml`
 - **What:** AGENTS.md › Config: "Prefer a new schema annotation to a hand-kept list in QML". The commands that show an integration's app is installed are a QML map keyed by the `ThemeIntegrations` switches, beside the schema that already carries each switch's per-app facts (`x-hookup`, `x-profiles`); a new integration has to remember a second place (the doc's Adding an integration lists it). Fix: an `x-commands` annotation (described in `config/schema/annotations.yaml`) on the seven switches the map lists (`gtk: []`, `qt`, `helix`, `vscode`, `zed`, `vesktop`, `firefox`), and `integrationCommands(key)` returning that switch's `x-commands`, else `[key]`; removes lines 559–570 (12 lines) and the doc's step.

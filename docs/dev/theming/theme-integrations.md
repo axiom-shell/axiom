@@ -19,7 +19,7 @@ How axiom themes other apps: the daemon writes each app's own `axiom.*` file, an
 - Each switch is hooked into its app by `IntegrationHookupManager` (see Hookup below).
 
 ### The renderer and the writer (`backend/internal/theme`)
-- `theme/integrations` (pure) is the table: per key, the files written (`{config}`, `{state}`, `{data}` are the `$XDG_*_HOME`s, as the apps read them), each a template from its `templates/` (embedded) or built in Go (fzf's flags, Neovim's JSON, qt*ct's palette rows).
+- `theme/integrations` (pure) is the table: per key, the files written (`{config}`, `{state}`, `{data}` are the `$XDG_*_HOME`s, as the apps read them), each a template from its `templates/` (embedded) or built in Go (Neovim's JSON, qt*ct's palette rows).
   - A template's `${NAME}`s: `THEME_NAME`, `THEME_AUTHOR`, `THEME_VARIANT`, `COLOR_SCHEME` (light/dark), `BASE00`–`BASE0F`, every semantic color as `UPPER_SNAKE` (`backgroundAlt`: `BACKGROUND_ALT`), `ANSI_0`–`ANSI_15`, plus an entry's own (cava's gradient, VS Code's `UI_THEME`). A name nothing sets fails the render; a `.json` template gets its values JSON-escaped.
   - What a theme leaves out comes from `theme-defaults.json`, as `Theme` does.
   - The ANSI palette's chromatic colors (and bright black, dimmer) are floored to readable contrast against the background (`palette.Readable`: the OKLCH hue kept, lightness moved only as far as needed); `text: true` entries floor the semantic colors terminal apps draw text in too (red…info). GTK, Qt, VS Code and Firefox keep them as accents.
