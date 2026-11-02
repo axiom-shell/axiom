@@ -327,9 +327,6 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 |---|---|---|---|---|
 | Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
 
-Found while retiring the `qs ipc` fallback (backend stage 6):
-- [A word passed to an int IPC parameter is 0](issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
-
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)

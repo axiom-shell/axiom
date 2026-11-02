@@ -279,9 +279,10 @@ Singleton {
     }
 
     // Opens on a step (0 is Welcome)
-    function goTo(index: int): void {
+    function goTo(index: string): void {
+      const step = _int(index);
       root.open();
-      root.goTo(index);
+      root.goTo(step);
     }
 
     function reset(): void {

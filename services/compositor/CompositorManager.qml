@@ -702,20 +702,20 @@ Singleton {
     target: "workspaces"
 
     function go(id: string): void {
-      root.goToWorkspace(parseInt(id), "go");
+      root.goToWorkspace(_int(id), "go");
     }
 
     function move(id: string): void {
-      root.goToWorkspace(parseInt(id), "move");
+      root.goToWorkspace(_int(id), "move");
     }
 
     function moveSilent(id: string): void {
-      root.goToWorkspace(parseInt(id), "moveSilent");
+      root.goToWorkspace(_int(id), "moveSilent");
     }
 
     // The n-th of the current row (grid), or workspace n (standard)
     function nth(n: string, mode: string): void {
-      root.nthWorkspace(parseInt(n), mode);
+      root.nthWorkspace(_int(n), mode);
     }
 
     // Moves workspaces left outside their output's ids (by a change made

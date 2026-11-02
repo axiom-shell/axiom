@@ -221,18 +221,18 @@ QtObject {
       root.stepBy(CompositorManager.focusedOutput, -root.step);
     }
 
-    function set(percent: int): void {
-      root.set(CompositorManager.focusedOutput, percent / 100);
+    function set(percent: string): void {
+      root.set(CompositorManager.focusedOutput, _int(percent) / 100);
     }
 
     // Every monitor, without the OSD (the Idle settings' dim step)
-    function dim(percent: int): void {
-      root.dim(Math.max(0, Math.min(100, percent)) / 100);
+    function dim(percent: string): void {
+      root.dim(Math.max(0, Math.min(100, _int(percent))) / 100);
     }
 
     // Every monitor down by `percent` of its own brightness, so it always dims
-    function dimBy(percent: int): void {
-      root.dim(Math.max(0, Math.min(100, percent)) / 100, true);
+    function dimBy(percent: string): void {
+      root.dim(Math.max(0, Math.min(100, _int(percent))) / 100, true);
     }
 
     function undim(): void {

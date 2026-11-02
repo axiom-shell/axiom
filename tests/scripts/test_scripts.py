@@ -392,6 +392,8 @@ class CheckStructure(unittest.TestCase):
         ("shell/Handler.qml", qml("IpcHandler {}"), "shell/Handler.qml: an IpcHandler"),
         ("shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
         ("shell/Target.qml", qml('IpcTarget { target: "ghostTarget" }'), "IPC target 'ghostTarget' is missing from the IPC table"),
+        ("shell/IntArg.qml", qml('IpcTarget {\n    target: "brightness"\n    function set(percent: int): void {}\n  }'),
+         "shell/IntArg.qml:8: IPC function set's percent is int: take a string"),
         ("shell/NoPurpose.qml", qml(purpose=""), "shell/NoPurpose.qml: no purpose comment"),
         ("shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no components/content/Ghost/Ghost.qml'),
         ("components/content/Unused/Unused.qml", qml(), "components/content/Unused/: not an overlay module"),

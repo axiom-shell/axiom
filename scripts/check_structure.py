@@ -318,6 +318,23 @@ def main():
     for target in sorted(listed - set(targets)):
         errors.append(f"docs/usage.md: IPC target {target!r} has no IpcTarget")
 
+    # An IpcTarget's arguments arrive as the command line's text, which a
+    # typed parameter converts without refusing anything (`int` makes a word
+    # 0, `bool` makes "false" true): they're strings, read through _int
+    for path, text in sources.items():
+        for m in re.finditer(r"\bIpcTarget\s*\{", text):
+            depth, end = 1, m.end()
+            while depth and end < len(text):
+                depth += {"{": 1, "}": -1}.get(text[end], 0)
+                end += 1
+            for fn in re.finditer(r"function\s+(\w+)\s*\(([^)]*)\)", text[m.end():end]):
+                typed = re.findall(r"(\w+)\s*:\s*(\w+)", fn.group(2))
+                for name, kind in typed:
+                    if kind != "string":
+                        line = text.count("\n", 0, m.end() + fn.start()) + 1
+                        errors.append(f"{path}:{line}: IPC function {fn.group(1)}'s {name} is {kind}: take a string "
+                                      "(arguments arrive as text; a number through _int, services/core/IpcTarget.qml)")
+
     # Every file says what it's for above its root object (docs/dev/generated/files.md)
     for path, text in sources.items():
         lines = text.split("\n")
