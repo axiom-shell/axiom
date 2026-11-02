@@ -8,7 +8,7 @@ The core funnels (CommandManager, FileManager, StateManager, ConsumerRegistry, t
 - Major: [A weather fetch that fails shows Loading forever](../../docs/dev/issues.md#a-weather-fetch-that-fails-shows-loading-forever)
 - Major: [SystemManager samples every second while nothing is shown](../../docs/dev/issues.md#systemmanager-samples-every-second-while-nothing-is-shown)
 - Major: "The active media player is Spotify first and never follows playback" (fixed, row 20 core-ui-theming-02)
-- Major: [Album art piles up in the runtime folder for the whole session](../../docs/dev/issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
+- Major: "Album art piles up in the runtime folder for the whole session" (fixed, row 20 core-ui-theming-02)
 - Major: "MediaManager ticks the position with nothing showing it" (fixed, row 20 core-ui-theming-02)
 - Cleanup: [runDetached warns about a lost connection](../../docs/dev/issues.md#rundetached-warns-about-a-lost-connection)
 - Cleanup: "Small shrinks in the core services" (fixed, row 20 core-ui-theming-01)

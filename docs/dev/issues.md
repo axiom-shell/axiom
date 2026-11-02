@@ -1329,12 +1329,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the services-core system
 
-### Album art piles up in the runtime folder for the whole session
-- **Where:** `backend/internal/media/media.go:47` (`Art`), `services/system/MediaManager.qml:34` (`artFilePath`)
-- **What:** Each track's art is saved as `<md5 of its URL>.jpg` in `$XDG_RUNTIME_DIR/axiom/media-art` and kept ("A file already there (and not empty) is kept"), and nothing ever deletes one: `grep -rn media-art` finds only the shell's path and Go's `ArtDir`. The runtime folder is a tmpfs, so the art of every track played stays in RAM until logout: on 2026-10-31, 1 h 36 min after boot, it held 15 files, 2.3 MB; a day of music is a few hundred covers, tens of MB. Fix: after a fetch lands, `Art` removes all but the newest few files in `o.Dir` (by mtime; say 16, which keeps a playlist going back and forth cached).
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
 ### runDetached warns about a lost connection
 - **Where:** `services/core/CommandManager.qml:71` (`runDetached`)
 - **What:** `run()` and `_logFailure` skip an error of kind `unavailable` (the connection to axiom closed: a re-exec or restart, already logged where it happens), but `runDetached` warns on any error. The live log shows it after reloads: `[CommandManager] mkdir: the connection to axiom closed` (NotificationManager's startup `mkdir -p` of its image folder, queued as the connection went). Fix: `if (error && error.kind !== "unavailable")`, as `run` does.
