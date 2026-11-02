@@ -339,7 +339,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **compositor-07** (6):
   - [Hyprland's remove deletes whatever hl.bind is on a site's line now](../issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
   - [The bind merge deletes an hl.bind inside a helper, losing binds it never read](../issues.md#the-bind-merge-deletes-an-hlbind-inside-a-helper-losing-binds-it-never-read)
-  - [A niri merge of two binds on one line loses one](../issues.md#a-niri-merge-of-two-binds-on-one-line-loses-one)
+  - A niri merge of two binds on one line loses one
   - A sway line continuing a non-bind line is moved as a bind of its own
   - A sway title-bar mouse bind moves in as a whole-window bind
   - The sway extract's input-device case and isSwayFlag repeat the general rule

@@ -3,6 +3,7 @@ package binds
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -50,6 +51,8 @@ func removeMarked(o Options, sites *jsonx.Array, mark string, atCol bool) (*json
 			continue
 		}
 		lines := splitKeepEnds(string(data))
+		// As read: a line holding two binds is checked unmarked for both
+		read := slices.Clone(lines)
 		fileSites := byFile[name]
 		if atCol {
 			// Right to left, so a column still points where it did
@@ -62,7 +65,7 @@ func removeMarked(o Options, sites *jsonx.Array, mark string, atCol bool) (*json
 		for _, s := range fileSites {
 			i := s.line - 1
 			// Extract read the text with invalid bytes as U+FFFD
-			if i < 0 || i >= len(lines) || (s.hasText && strings.ToValidUTF8(strings.TrimRight(lines[i], "\r\n"), "\uFFFD") != s.text) {
+			if i < 0 || i >= len(lines) || (s.hasText && strings.ToValidUTF8(strings.TrimRight(read[i], "\r\n"), "\uFFFD") != s.text) {
 				push(done, "failed", failedEntry(name, s.line, "changed", ""))
 				continue
 			}

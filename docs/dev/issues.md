@@ -610,12 +610,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### A niri merge of two binds on one line loses one
-- **Where:** `backend/internal/compositor/binds/marked.go:64` (`removeMarked`), `backend/internal/compositor/manager/manager.go:1305` (`merge`)
-- **What:** `removeMarked` marks a niri file's sites right to left on the same `lines[i]`, but checks each site's `text` against `lines[i]` as already marked. With `binds {\n    Mod+T { spawn "foot"; }; Mod+Q { close-window; }\n}` both binds are extracted (same line, cols 4 and 29); `Mod+Q` is marked first, then `Mod+T`'s check fails as `changed`. Remove returns `removed:1, failed:[{line:2, reason:"changed"}]` and writes `Mod+T { spawn "foot"; }; /* (moved into axiom) */ /-Mod+Q { close-window; }` (reproduced with a `go test -overlay` probe). `merge`'s `left()` matches failures by file and line only, so it takes both line-2 binds back out of the commit: `Mod+Q` is commented out of the user's file and missing from `Keybinds.binds` (only `user/.backups/` has it), and the merge reports a file nobody changed. Sway can't reach it (one bind per line); Hyprland keeps a call not alone on its line. Fix: compare against the line as read (keep `orig := lines[i]` per line before any mark); a `TestNiriRemove` row with two binds on one line.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### A sway bind using a variable from an include moves as a literal $name
 - **Where:** `backend/internal/compositor/binds/sway.go:256` (`extractSway`)
 - **What:** `extractSway` knows only the `set` lines of user/'s own files and never follows an `include`, while the takeover keeps the adopted file's includes live. A config setting `$term`/`$menu` in an included file (`include /etc/sway/definitions` on Manjaro's sway) with `bindsym Mod4+Return exec $term` moves that bind as `{"action":"exec","argument":"$term"}` (reproduced); the line is commented out, axiom's module is read before user/ where `$term` isn't set, so sway leaves it literal and the user's terminal and launcher binds run nothing after a Merge. Extract with `--only` has the same gap for variables set in an earlier user/ file. Fix: collect the variables as sway reads them, following `include`s (`userconf.SwayText` already expands them), before reading each file's binds; failing that, keep a bind whose command still holds a `$name`, with a reason; a `TestSwayExtract` row.

@@ -585,6 +585,19 @@ func TestNiriRemove(t *testing.T) {
 	eq(t, len(list(f.extract(), "binds")), 0)
 }
 
+// Two binds on one line: both go, the first checked against the line as
+// read, not as the second's mark left it
+func TestNiriRemoveTwoBindsOnALine(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "niri")
+	f.write("00-previous.kdl", "binds {\n    Mod+T { spawn \"foot\"; }; Mod+Q { close-window; }\n}\n")
+	found := f.extract()
+	eq(t, len(list(found, "sites")), 2)
+	done := f.remove(found.Value("sites"))
+	eq(t, js(done.Value("failed"))+js(done.Value("removed")), "[]2")
+	eq(t, f.read("00-previous.kdl"), "binds {\n    /* (moved into axiom) */ /-Mod+T { spawn \"foot\"; }; /* (moved into axiom) */ /-Mod+Q { close-window; }\n}\n")
+}
+
 func TestNiriChangedLineStays(t *testing.T) {
 	t.Parallel()
 	f := newFx(t, "niri")
