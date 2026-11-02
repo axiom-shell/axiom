@@ -2,6 +2,7 @@ package render
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -46,5 +47,23 @@ func TestSwayFloatingModifier(t *testing.T) {
 				t.Errorf("unbind ends %q, want %q (%q)", last, c.restore, unbind)
 			}
 		})
+	}
+}
+
+// user/'s include in the managed and released configs: only the folder
+// quoted, so a space in it splits nothing and the glob still expands
+func TestSwayUserIncludeQuotesOnlyTheFolder(t *testing.T) {
+	t.Parallel()
+	want := "\ninclude \"/my home/.config/sway/user/\"*\n"
+	for name, text := range map[string]string{
+		"managed":  SwayManagedText("", jsonx.Obj("userDir", "/my home/.config/sway/user")),
+		"released": SwayReleasedText("/my home/.config/sway/user", "exec axiom run"),
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("%s: no %q in\n%s", name, want, text)
+		}
+	}
+	if got := SwayIncludePath("/plain/user", "*"); got != "/plain/user/*" {
+		t.Errorf("a plain folder: %s", got)
 	}
 }

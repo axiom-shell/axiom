@@ -331,11 +331,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A failed takeover check reuses the last answer and can adopt without approval
   - niri started on a broken config reads as loaded
 - **compositor-06** (5):
-  - [Claim keeps writing a symlinked or git-tracked config that release refuses to give back](../issues.md#claim-keeps-writing-a-symlinked-or-git-tracked-config-that-release-refuses-to-give-back)
+  - Claim keeps writing a symlinked or git-tracked config that release refuses to give back
   - [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](../issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)
   - [A relative -c is read from the daemon's folder](../issues.md#a-relative--c-is-read-from-the-daemons-folder)
-  - [A claim comments out axiom's start inside a long string, breaking the script](../issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
-  - [A sway include path with a space breaks after a takeover](../issues.md#a-sway-include-path-with-a-space-breaks-after-a-takeover)
+  - A claim comments out axiom's start inside a long string, breaking the script
+  - A sway include path with a space breaks after a takeover
 - **compositor-07** (6):
   - [Hyprland's remove deletes whatever hl.bind is on a site's line now](../issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
   - [The bind merge deletes an hl.bind inside a helper, losing binds it never read](../issues.md#the-bind-merge-deletes-an-hlbind-inside-a-helper-losing-binds-it-never-read)

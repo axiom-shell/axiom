@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
@@ -112,7 +113,7 @@ var sway = &Kind{
 	marker:         "# " + marker,
 	absInclude:     swayInclude,
 	left: func(text, userDir string) int {
-		if regexp.MustCompile(`(?m)^[[:space:]]*include .*/user/\*`).MatchString(text) {
+		if regexp.MustCompile(`(?m)^[[:space:]]*include .*/user/"?\*`).MatchString(text) {
 			return 0
 		}
 		return len(userconf.UserFiles(userDir, nil))
@@ -171,21 +172,18 @@ var (
 
 // swayInclude makes each relative path of a sway include absolute from dir:
 // sway joins its arguments and expands them as a shell would, so an include
-// takes several paths, each quoted or not
+// takes several paths, each quoted or not (dir quoted on its own, so a space
+// in it splits nothing and a glob after it still expands)
 func swayInclude(line, dir string) string {
 	m := swayIncludeLine.FindStringSubmatch(line)
 	if m == nil {
 		return line
 	}
 	return m[1] + swayIncludePath.ReplaceAllStringFunc(m[2], func(path string) string {
-		quote := ""
-		if path[0] == '"' || path[0] == '\'' {
-			quote = path[:1]
-		}
-		inner := strings.Trim(path, quote)
+		inner := strings.Trim(path, `"'`)
 		if inner == "" || strings.ContainsRune("/~$", rune(inner[0])) {
 			return path
 		}
-		return quote + dir + "/" + inner + quote
+		return render.SwayIncludePath(dir, path)
 	})
 }

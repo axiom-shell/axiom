@@ -590,12 +590,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
-### Claim keeps writing a symlinked or git-tracked config that release refuses to give back
-- **Where:** `backend/internal/compositor/takeover/takeover.go:179` (`Claim`), `backend/internal/compositor/takeover/takeover.go:241` (`Release`), `backend/internal/compositor/manager/manager.go:862` (`claim`)
-- **What:** `Claim` returns `ours` before it checks `blocked` (179-184); `Release` checks `blocked` after `ours` and refuses (241-246). managed-takeover.md › Release: "A symlinked or git-tracked file is refused, as `claim` refuses it". Scenario: in managed mode the user moves `~/.config/hypr` (or sway, niri) into a dotfiles repo, by git or a stow symlink. Every apply then runs `Claim` → `ours` → `writeIfChanged(ManagedPath, …)`, and `fsx.WriteFile` follows the link, so axiom rewrites the file in their repo on every settings change; leaving managed, `Release` answers `blocked:link`/`blocked:git` and the manager retries from 10 s up to every 5 min, telling them to make it a plain file. Fix: one rule; the smaller is `blocked` before `ours` in `Claim` (and `Check`), so managed stops writing and the runtime layer stands in with `problems().Blocked`, as release already assumes; a test row for claiming an `ours` symlinked file.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### sway's hookup and takeover use ~/.config/sway/config whatever config sway runs
 - **Where:** `backend/internal/compositor/manager/sway.go:57` (`files`), `backend/internal/compositor/userconf/sway.go:17` (`SwayMain`), `backend/internal/compositor/takeover/kinds.go:106` (`sway`)
 - **What:** The sway writer reads the user's binds from the config sway runs (`userconf.SwayMain`: the running sway's `-c`, else sway's search order `~/.sway/config`, `$XDG_CONFIG_HOME/sway/config`, `~/.i3/config`, `$XDG_CONFIG_HOME/i3/config`, `/etc/sway/config`), but `files()` points `IncludeTarget`/`AutostartTarget` at `managed := w.dir() + "config"`, and the takeover's file is the same fixed path. niri's writer uses `w.mainConfig`. Scenario: an i3 migrant on `~/.config/i3/config` (or `sway -c ~/dotfiles/sway.conf`) picks included; **Add it for me** creates `~/.config/sway/config` holding only the include line; nothing changes this session, but at the next login sway finds that file before `i3/config` and runs an almost empty config. Managed: `check` says `new` (no approval asked), `claim` writes the managed config there, `checkLoaded` fails all session, and the next login runs axiom's config with the user's neither adopted nor loaded. With `~/.sway/config` (searched first) neither mode ever loads. Fix: build sway's targets from `SwayMain` as niri's use `mainConfig`; in managed, `blocked` (or adopt) when `SwayMain` isn't the managed path; a test row running sway from `~/.config/i3/config`.
@@ -655,12 +649,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Hyprland's remove deletes whatever hl.bind is on a site's line now
 - **Where:** `backend/internal/compositor/binds/hypr.go:455` (`extractHypr`'s sites), `backend/internal/compositor/binds/hypr.go:507` (`removeHypr`), `backend/internal/compositor/binds/binds.go:174` (`readSites`)
 - **What:** sway's and niri's sites carry the line's `text` (sway.go:327, niri.go:228), and `removeMarked` leaves a line whose text changed since extract (`changed`). Hyprland's sites carry only `file` and `line`, and `removeHypr` keeps only `s.line` (hypr.go:507). It reports `changed` only when no `hl.bind`/`hl.unbind` statement starts on that line any more (hypr.go:544). So if the file changes between extract and remove, and each site's line still holds some `hl.bind`, other binds are deleted. The window is the isolated child's run (up to 30 s) plus the commit; an editor save or a dotfiles sync can land in it. Probe: extract `binds.lua` = `SUPER + Y` (line 1), `SUPER + U` (line 2). Then the file gains `hl.bind("SUPER + Z", …exec_cmd("mine"))` at the top, and remove runs on the old sites. Result: `{"removed":2,"failed":[]}`, and the file is left with only `hl.bind("SUPER + U", …)`. Z, which was never moved, is deleted and is not in axiom. U is in axiom and still in the file, so it is bound twice, which bind-merge.md › Committing and removing says can't happen. The merge reports success, and only the dated backup has Z. This breaks C3 ("remove gives back exactly what was there"). Fix: put each statement's source text (`text[start:end]` from `statementSpan`) in the hypr site as `text`, and in `removeHypr` fail a site as `changed` when the statement found at its line differs. Add a test row: the probe above, expecting `2 changed` and Z kept.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A claim comments out axiom's start inside a long string, breaking the script
-- **Where:** `backend/internal/compositor/takeover/takeover.go:352` (`adopt`), `backend/internal/compositor/takeover/kinds.go:86` (hyprland `axiomLine`)
-- **What:** `adopt` checks each line on its own with `mapLines`. A line matching the unanchored `axiomLine` (`(^|[[:space:]"'/])axiom["']?[[:space:]]+run…`) gets `-- (axiom starts and loads itself now) ` put in front of it, even when the line is inside a Lua long string. The result still parses, so `keepsParsing` keeps the edit (with luac it returns true at once). Probe: hyprland.lua = `hl.exec_cmd([[\n  axiom run &\n  waybar\n]])` claims as `adopted:00-previous.lua`, with line 2 of the copy now `-- (axiom starts and loads itself now)   axiom run &` inside the string. Hyprland runs that string through `sh -c`, where `-- (axiom …` is a syntax error, so the whole script fails and waybar (and anything else the script started) no longer starts in managed mode. The same thing happens for a matching line inside a `--[[ ]]` block comment (harmless there). Fix: skip lines that start inside a string or comment. luacheck already finds those spans (`tokens`), so export a `luacheck.InCode(text) []bool` (or reuse `WholeLines(text, []int{n})`) and only mark lines where it holds. Add a takeover test row with the file above, expecting the line inside the string to be left as it was.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -770,18 +758,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   Fix: before the `exec` branch, a stored command holding `;` or `,` outside quotes returns `raw` for sway, which keeps sway's behaviour. That is a small scan, plus a test row for each separator.
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### A sway include path with a space breaks after a takeover
-- **Where:** `backend/internal/compositor/takeover/kinds.go:196` (`swayInclude`), `backend/internal/compositor/render/sway.go:683` (`SwayManagedText`), `backend/internal/compositor/render/sway.go:694` (`SwayReleasedText`)
-- **What:** sway expands an include through wordexp(3). A C probe showed a double-quoted `"<dir>/user/*"` stays literal (no glob), and an unquoted path with a space splits into two words. With a space in `$HOME` or `$XDG_CONFIG_HOME`, two things break:
-  - `swayInclude` makes a relative include absolute as `quote + dir + "/" + inner + quote`, unquoted when the original was. `include conf.d/*` becomes two words and loads nothing.
-  - The managed and released configs write `include ` + `SwayQuote(userDir+"/*")`. `SwayQuote` double-quotes the whole path, `*` included, so sway loads nothing from `user/`: the adopted config and every user file are dropped.
-
-  `userconf.SwayText` still reads the quoted glob (`shellSplit`, then `glob`), so the daemon reads binds from files sway doesn't load. This is a rare path.
-
-  Fix: quote only the folder, never the glob: one helper in render, `SwayQuote(dir+"/") + rest`, used by the three writers, plus a takeover test row and a golden row with a spaced dir.
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the sway system
 
 ### A sway output rule by description misses a monitor with no serial

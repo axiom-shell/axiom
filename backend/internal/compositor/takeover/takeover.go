@@ -137,11 +137,13 @@ func Check(ctx context.Context, o Options) (string, error) {
 		return "", err
 	}
 	defer unlock()
-	if c.isOurs() {
-		return "ours", nil
-	}
+	// Before ours: a managed config since symlinked or put in git is no
+	// longer written (release refuses it too)
 	if b := c.blocked(ctx); b != "" {
 		return b, nil
+	}
+	if c.isOurs() {
+		return "ours", nil
 	}
 	switch {
 	case !fsx.IsFile(c.file):
@@ -165,11 +167,13 @@ func Claim(ctx context.Context, o Options) (string, error) {
 		return "", err
 	}
 	defer unlock()
-	if c.isOurs() {
-		return "ours", nil
-	}
+	// Before ours: a managed config since symlinked or put in git is no
+	// longer written (release refuses it too)
 	if b := c.blocked(ctx); b != "" {
 		return b, nil
+	}
+	if c.isOurs() {
+		return "ours", nil
 	}
 	if err := os.MkdirAll(c.user, 0o755); err != nil {
 		return "", err
@@ -344,8 +348,15 @@ func (c *call) adopt(ctx context.Context, path string) error {
 		return err
 	}
 	text := string(data)
+	// Lua's lines starting inside a long string or comment are left alone
+	var inCode []bool
+	if c.Kind.parses {
+		inCode = luacheck.InCode(text)
+	}
+	n := -1
 	edited := mapLines(text, func(line string) string {
-		if c.Kind.comment.MatchString(line) {
+		n++
+		if c.Kind.comment.MatchString(line) || (inCode != nil && !inCode[n]) {
 			return line
 		}
 		if c.Kind.axiomLine.MatchString(line) {

@@ -96,6 +96,25 @@ func CodeOnly(text string) string {
 	return string(out)
 }
 
+// InCode is, for each line of text, whether it starts outside any string
+// or comment (a line within a long string or block comment doesn't).
+func InCode(text string) []bool {
+	spans := tokens(text)
+	var out []bool
+	k := 0
+	for start := 0; ; {
+		for k < len(spans) && spans[k].end <= start {
+			k++
+		}
+		out = append(out, k == len(spans) || spans[k].start >= start)
+		nl := strings.IndexByte(text[start:], '\n')
+		if nl < 0 {
+			return out
+		}
+		start += nl + 1
+	}
+}
+
 var (
 	// Words opening a block that `end` (or `until`) closes: `while … do`
 	// and `for … do` count once, by their `do`

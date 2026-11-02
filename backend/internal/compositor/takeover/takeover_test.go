@@ -15,6 +15,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/luacheck"
+	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 )
 
 // fx is one scratch config dir of a kind, with its example stubbed
@@ -292,6 +293,16 @@ func TestBlocked(t *testing.T) {
 			eq(t, isLink(f.path(f.kind.File)), true)
 			eq(t, exists(f.path("user")), false)
 		})
+		t.Run(kind+"/ours symlinked since", func(t *testing.T) {
+			t.Parallel()
+			f := newFx(t, kind)
+			real := filepath.Join(f.tmp, "real")
+			os.WriteFile(real, []byte(headers[kind][0]+"\n"), 0o644)
+			os.Symlink(real, f.path(f.kind.File))
+			// Not ours to write any more, as release refuses it
+			eq(t, f.run("check"), "blocked:link")
+			eq(t, f.run("claim"), "blocked:link")
+		})
 		t.Run(kind+"/release never writes through a symlink", func(t *testing.T) {
 			t.Parallel()
 			f := newFx(t, kind)
@@ -457,6 +468,20 @@ func TestHyprlandAdoptedConfigNoLongerStartsAxiom(t *testing.T) {
 			eq(t, strings.Join(got[4:], "\n"), strings.Join(mine[4:], "\n"))
 		})
 	}
+}
+
+// A line inside a long string or block comment is left as it was: the
+// string runs through sh -c, where a Lua comment is a syntax error
+func TestHyprlandAdoptLeavesLinesInsideStrings(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	mine := "hl.exec_cmd([[\n  axiom run &\n  waybar\n]])\n--[[\naxiom run\n]]\nhl.exec_cmd(\"axiom run\")\n"
+	f.write("hyprland.lua", mine)
+	eq(t, f.run("claim"), "adopted:00-previous.lua")
+	got := lines(f.read("user/00-previous.lua"))
+	eq(t, got[1], "  axiom run &")
+	eq(t, got[5], "axiom run")
+	eq(t, got[7], `-- (axiom starts and loads itself now) hl.exec_cmd("axiom run")`)
 }
 
 // An edit that leaves the file unparsable isn't made
@@ -710,13 +735,31 @@ func TestVerbsWaitForTheDirsLock(t *testing.T) {
 
 func TestSwayIncludeMakesEveryRelativePathAbsolute(t *testing.T) {
 	t.Parallel()
-	for _, c := range [][2]string{
+	for _, c := range [][]string{
 		{"include conf.d/*", "include /d/conf.d/*"},
-		{`  include "my conf/a" 'b' c`, `  include "/d/my conf/a" '/d/b' /d/c`},
+		{`  include "my conf/a" 'b' c`, `  include /d/"my conf/a" /d/'b' /d/c`},
+		{"include conf.d/*", `include "/my d/"conf.d/*`, "/my d"},
 		{`include /etc/sway/config.d/* ~/x $HOME/y "/z" rel`, `include /etc/sway/config.d/* ~/x $HOME/y "/z" /d/rel`},
 		{"included a", "included a"},
 		{`include ""`, `include ""`},
 	} {
-		eq(t, swayInclude(c[0], "/d"), c[1])
+		dir := "/d"
+		if len(c) > 2 {
+			dir = c[2]
+		}
+		eq(t, swayInclude(c[0], dir), c[1])
 	}
+}
+
+// With a space in the dir, the adopted copy's include still reaches the
+// files: the dir quoted, the glob not
+func TestSwayAdoptInADirWithASpace(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "sway")
+	f.dir = filepath.Join(f.tmp, "my sway")
+	f.write("config", "include conf.d/*\n")
+	f.write("conf.d/a", "bindsym Mod4+a exec a\n")
+	eq(t, f.run("claim", f.dir), "adopted:00-previous.conf")
+	text, _ := userconf.SwayText(f.path("user/00-previous.conf"), nil, "", func(string) string { return "" })
+	eq(t, strings.Contains(text, "bindsym Mod4+a exec a"), true)
 }
