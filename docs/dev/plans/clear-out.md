@@ -340,9 +340,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Hyprland's remove deletes whatever hl.bind is on a site's line now](../issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
   - [The bind merge deletes an hl.bind inside a helper, losing binds it never read](../issues.md#the-bind-merge-deletes-an-hlbind-inside-a-helper-losing-binds-it-never-read)
   - [A niri merge of two binds on one line loses one](../issues.md#a-niri-merge-of-two-binds-on-one-line-loses-one)
-  - [A sway line continuing a non-bind line is moved as a bind of its own](../issues.md#a-sway-line-continuing-a-non-bind-line-is-moved-as-a-bind-of-its-own)
-  - [A sway title-bar mouse bind moves in as a whole-window bind](../issues.md#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind)
-  - [The sway extract's input-device case and isSwayFlag repeat the general rule](../issues.md#the-sway-extracts-input-device-case-and-isswayflag-repeat-the-general-rule)
+  - A sway line continuing a non-bind line is moved as a bind of its own
+  - A sway title-bar mouse bind moves in as a whole-window bind
+  - The sway extract's input-device case and isSwayFlag repeat the general rule
 - **compositor-08** (3; two entries fixed by the bind actions PR):
   - [The Hyprland and sway bind merges each skip half of compositor/actions](../issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
   - [sway's merge moves workspace binds as raw sway commands](../issues.md#sways-merge-moves-workspace-binds-as-raw-sway-commands)

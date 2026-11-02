@@ -628,12 +628,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### A sway line continuing a non-bind line is moved as a bind of its own
-- **Where:** `backend/internal/compositor/binds/sway.go:283` (`extractSway`)
-- **What:** Only the bind's own line is checked for a trailing `\`; a line that follows a continued line is read as a fresh statement. `exec_always foo \` then `bindsym Mod4+x kill` is to sway one `exec_always foo bindsym Mod4+x kill`; extract moves `SUPER + X → closeWindow` (reproduced) and remove prefixes the second line with `# (moved into axiom) `, so sway now runs `foo # (moved into axiom) bindsym Mod4+x kill` and the user gains a bind they never had. Rare. Fix: carry a `continued` flag from the previous raw line and skip a line it covers; one test row.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### The Hyprland and sway bind merges each skip half of compositor/actions
 - **Where:** `backend/internal/compositor/binds/hypr.go:109` (`execAction`), `backend/internal/compositor/binds/sway.go:202` (`swayAction`), `backend/internal/compositor/binds/niri.go:56` (`commandAction`)
 - **What:** sway's and niri's merges run every exec command through `actions.Default().IPCAction` first, so `axiom ipc appLauncher toggle`, `axiom lock` and `axiom restart` become the `launcher`, `lock` and `restartShell` actions. Hyprland's `execAction` only checks the exit command and `actions.MediaAction`, then returns `"exec", command` (`grep -n 'IPCAction' binds/hypr.go` finds nothing). bind-merge.md › Where it runs says the opposite: "What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) … maps onto comes from `compositor/actions`". The commonest real case is an included-mode user who wrote `hl.bind("SUPER + D", hl.dsp.exec_cmd("axiom ipc appLauncher toggle"))` and is then claimed. Probe: extracting that file gives `{"key":"SUPER + D","action":"exec","argument":"axiom ipc appLauncher toggle",…}`. The moved bind still works, but it shows on the Keybinds page as a raw exec instead of the launcher action. It also gets none of the action's call, label or section, and on a key axiom already binds, `mergeBinds` puts this exec in place of axiom's own launcher bind. The niri review found the mirror gap in sway's merge: its `exec` branch calls `IPCAction` but never `MediaAction`, so `bindsym XF86AudioRaiseVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+` moves as `exec` (no axiom OSD action, no `locked`/`repeating` defaults from `actionFlags`). Only niri's merge uses both, as niri-backend.md says all three do: the same user bind becomes an axiom action on one compositor and a shell command on another. Fix: one `actions.CommandAction(command)` (IPC, then media, else nil) called by all three merges, carrying `call`/`argument`, with a row per merge in the binds tests (`TestHyprMappingAndRawLua`: `axiom ipc appLauncher toggle` → `launcher`; sway: a `wpctl set-volume` exec → its media action).
@@ -738,14 +732,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### A sway title-bar mouse bind moves in as a whole-window bind
-- **Where:** `backend/internal/compositor/binds/sway.go:29` (`swayHarmless`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/render/sway.go:245` (`swayConflictFlags`)
-- **What:** sway(5) says mouse bindings "are only triggered when over the title bar" unless `--whole-window` is given. `swayHarmless` lists `--whole-window` as droppable, so a mouse bind *without* it moves in as well. axiom then writes every mouse key with `--whole-window` (`if k.Mouse { flags = append(flags, "--whole-window") }`). The i3 guide's own examples are `bindsym --release button2 kill` and `bindsym button3 floating toggle`. A probe of the worktree's extract on `bindsym --release button2 kill` gave `{"key":"mouse:274","action":"closeWindow","release":true}`, and the line was commented out. After a takeover, a middle click anywhere (a paste in a terminal) closes the window. The binds are shared, so Hyprland gets the same bind too.
-
-  Fix: keep a mouse key whose flags lack `--whole-window` as `kept` `options` with the detail `title bar`, and add a `TestSwayExtract` row for it. About 4 lines.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### A sway exec chained with ; or , moves in as one shell command
 - **Where:** `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
 - **What:** sway runs a bind's command as a list split at unquoted `;`/`,` (sway(5) › Command conventions). The `exec` branch (202) takes everything after `exec` as one argument (`execText(string([]rune(command)[4:]))`). A probe on `bindsym $mod+q exec notify-send bye; kill` moved it as `{"action":"exec","argument":"notify-send bye; kill"}`: the shell runs `kill` with no arguments, and the window no longer closes. `exec "foot", focus left` became an exec of `"foot", focus left`, so nothing starts. Both original lines were commented out. `TestSwayExecReadAsSwayRunsIt` covers only the quoted form, which sway keeps whole.
@@ -786,12 +772,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### The sway extract's input-device case and isSwayFlag repeat the general rule
-- **Where:** `backend/internal/compositor/binds/sway.go:37` (`isSwayFlag`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
-- **What:** Deletion pass, about 17 lines. `--input-device=<id>` is in neither `swayFlags` nor `swayHarmless`, so the general `other` branch already keeps such a bind as `options`. The `device` boolean (288-302) exists only so the detail lists every flag instead of the unknown one, which nothing pins (`input-device` appears only in sway.go). `isSwayFlag` (37-45, 9 lines) has one caller. Fix: `slices.ContainsFunc(swayFlags, …)` inline, plus `if len(other) > 0 { push(… strings.Join(other, " ")) }`. The 17 lines at 287-303 become about 9, and `isSwayFlag` goes. `swayAction`'s `o Options` parameter is never read and goes too. These are the lines [A sway title-bar mouse bind moves in as a whole-window bind](#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind) changes: land the two together.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
 ### niri's overview drop moves a window's whole column and switches workspace

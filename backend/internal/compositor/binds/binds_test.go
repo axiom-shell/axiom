@@ -122,6 +122,11 @@ bindcode $mod+49 exec thing
 mode "resize" {
     bindsym h resize shrink width 10px
 }
+bindsym --release button2 kill
+bindsym --whole-window $mod+button3 floating toggle
+bindsym --input-device=1:1:kbd $mod+y kill
+exec_always foo \
+bindsym $mod+z kill
 `
 
 func TestSwayExtract(t *testing.T) {
@@ -143,9 +148,17 @@ func TestSwayExtract(t *testing.T) {
 	// A mode's binds aren't seen; sway options axiom binds lack stay
 	_, mode := binds["H"]
 	eq(t, mode, false)
-	kept := list(found, "kept")
-	eq(t, len(kept), 1)
-	eq(t, js(kept[0]), `{"file":"`+f.user("00-previous.conf")+`","line":11,"key":"Mod4+button2","reason":"options","detail":"--border"}`)
+	// Only over a title bar: axiom's mouse binds are for the whole window
+	eq(t, binds["SUPER + mouse:273"], `{"key":"SUPER + mouse:273","action":"toggleFloat"}`)
+	// Part of the exec_always above it, to sway
+	_, continued := binds["SUPER + Z"]
+	eq(t, continued, false)
+	var kept []string
+	for _, k := range list(found, "kept") {
+		kept = append(kept, js(k.Value("line"))+" "+k.Value("key").(string)+" "+k.Value("reason").(string)+": "+k.Value("detail").(string))
+	}
+	eq(t, strings.Join(kept, ", "), "11 Mod4+button2 options: --border, 16 button2 options: title bar, 18 Mod4+y options: --input-device=1:1:kbd")
+	eq(t, list(found, "kept")[0].Value("file"), any(f.user("00-previous.conf")))
 }
 
 // Commenting one line out of a `bindsym { … }` block would leave the rest
