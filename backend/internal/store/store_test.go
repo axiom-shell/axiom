@@ -111,6 +111,19 @@ func TestMigratedFileIsKept(t *testing.T) {
 	if err != nil || string(kept) != string(old) {
 		t.Errorf("v76 copy: %q %v", kept, err)
 	}
+	// Told to the shell, for its note
+	if _, st := s.Config(); st.Migrated == nil || st.Migrated.From != 76 || st.Migrated.To != steps.Current() || st.Migrated.Changes == nil {
+		t.Errorf("migrated %+v", st.Migrated)
+	}
+}
+
+func TestACurrentFileIsntMigrated(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	open(t, dir).Close()
+	if _, st := open(t, dir).Config(); st.Migrated != nil {
+		t.Errorf("migrated %+v", st.Migrated)
+	}
 }
 
 func TestFormatsItCantReadBlock(t *testing.T) {

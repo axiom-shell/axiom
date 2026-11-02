@@ -189,7 +189,33 @@ QtObject {
     });
   }
 
+  // A migration of config.json, noted once per version it reached in the
+  // notifications' Quiet section (what the steps did, English as logged);
+  // a click opens the settings
+  readonly property var _migrated: ConfigManager.migrated
+  on_MigratedChanged: root._noteMigration()
+  readonly property var _notes: StateManager.createStateHandler("configNotes")
+  readonly property string _notesEntry: "axiom-settings"
+
+  function _noteMigration() {
+    const migrated = root._migrated;
+    if (!migrated || Paths.greeter || ConfigManager.firstRun || root._notes.load({}).migratedTo === migrated.to)
+      return;
+    root._notes.save({
+      "migratedTo": migrated.to
+    });
+    const changes = migrated.changes ?? [];
+    const shown = changes.slice(0, 6).concat(changes.length > 6 ? [I18n.tr("and {0} more", changes.length - 6)] : []);
+    NotificationManager.sendNotification("axiom", I18n.tr("Settings updated to version {0}", migrated.to), shown.length > 0 ? shown.join("\n") : I18n.tr("Nothing of yours needed changing."), {
+      "desktopEntry": root._notesEntry,
+      "key": "config-migrated",
+      "silent": true
+    });
+  }
+
   Component.onCompleted: {
+    NotificationManager.registerHandler(root._notesEntry, () => ShellManager.openOverlayPage("Settings"));
+    root._noteMigration();
     const saved = root._state.load({});
     root.collapsed = (saved.collapsed ?? []).reduce((all, key) => {
       all[key] = true;

@@ -103,10 +103,45 @@ QtObject {
     }
   }
 
-  Component.onCompleted: BackendManager.listen("updates.state", state => {
-    root.repoPackages = state.repo;
-    root.aurPackages = state.aur;
-    root.error = state.error;
-    root.checking = false;
-  })
+  // Pending updates as one silent notification (the Quiet section), kept
+  // current while a widget checks: noted again only when more are
+  // pending, gone once none are. Its Upgrade button runs the widgets'
+  // upgrade; a click opens nothing
+  readonly property string _desktopEntry: "axiom-updates"
+  property int _noted: 0
+
+  function _note() {
+    const count = root.repoPackages.length + root.aurPackages.length;
+    if (count === 0)
+      NotificationManager.dismissKey("updates");
+    if (count > root._noted)
+      NotificationManager.sendNotification("axiom", count === 1 ? I18n.tr("1 package update") : I18n.tr("{0} package updates", count), [].concat(root.repoPackages, root.aurPackages).slice(0, 5).map(p => p.name).join(", ") + (count > 5 ? "…" : ""), {
+        "desktopEntry": root._desktopEntry,
+        "icon": "system-software-update",
+        "key": "updates",
+        "silent": true,
+        "actions": [
+          {
+            "id": "upgrade",
+            "label": I18n.tr("Upgrade")
+          }
+        ]
+      });
+    root._noted = count;
+  }
+
+  Component.onCompleted: {
+    NotificationManager.registerHandler(root._desktopEntry, (entry, action) => {
+      if (action === "upgrade")
+        root.upgrade(UpdatesConfig.upgradeCommand || root.upgradeCommand(UpdatesConfig.activeAurHelper), UpdatesConfig.terminal);
+    });
+    BackendManager.listen("updates.state", state => {
+      root.repoPackages = state.repo;
+      root.aurPackages = state.aur;
+      root.error = state.error;
+      root.checking = false;
+      if (!state.error)
+        root._note();
+    });
+  }
 }

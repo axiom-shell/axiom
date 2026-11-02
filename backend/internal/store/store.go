@@ -68,6 +68,18 @@ type State struct {
 	// start (until a good load or a restore), so nothing saves them as
 	// the user's
 	Defaults bool `json:"defaults"`
+	// Migrated: the last load of the file migrated it (nil: it didn't),
+	// for the shell to note once
+	Migrated *Migration `json:"migrated,omitempty"`
+}
+
+// Migration is a load that migrated the file: the version it had (0 from
+// format 1), the version it has now, and what the steps did (English, as
+// logged).
+type Migration struct {
+	From    int      `json:"from"`
+	To      int      `json:"to"`
+	Changes []string `json:"changes"`
 }
 
 // Event is one change: the config (nil when only the state changed),
@@ -424,8 +436,9 @@ func (s *Store) loadInitial() error {
 		return axerr.Wrap(axerr.Unavailable, err, "reading the config")
 	}
 	s.written = data
-	loaded, problems := s.load(data)
+	loaded, problems, migration := s.load(data)
 	s.state.Revision = 1
+	s.state.Migrated = migration
 	if problems != nil {
 		// Run on the defaults, writes blocked, until the file is fixed
 		s.config = s.opts.Pipeline.Defaults()
@@ -495,15 +508,17 @@ func (s *Store) keptTakeoversFile() *jsonx.Object {
 
 // load parses and normalizes file content: the config, or the issues
 // that keep it from loading (with the config as far as it got, nil when
-// it isn't JSON). A migrated file is written back.
-func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue) {
+// it isn't JSON), and the migration it took (nil for none). A migrated
+// file is written back. It runs outside mu: the caller records the
+// migration in the state.
+func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue, *Migration) {
 	parsed, err := jsonx.Unmarshal(bytes.TrimPrefix(data, []byte("\xef\xbb\xbf")))
 	if err != nil {
-		return nil, []axerr.Issue{{Path: FileName, Message: err.Error()}}
+		return nil, []axerr.Issue{{Path: FileName, Message: err.Error()}}, nil
 	}
 	loaded, err := s.opts.Pipeline.Load(parsed)
 	if err != nil {
-		return nil, []axerr.Issue{{Path: FileName, Message: err.Error()}}
+		return nil, []axerr.Issue{{Path: FileName, Message: err.Error()}}, nil
 	}
 	for _, key := range loaded.Removed {
 		s.opts.Log.Warn("ignoring an unknown config key", "key", key)
@@ -512,9 +527,12 @@ func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue) {
 		s.opts.Log.Info("migrated the config", "change", change)
 	}
 	if len(loaded.Errors) > 0 {
-		return loaded.Config, issues(loaded.Errors)
+		return loaded.Config, issues(loaded.Errors), nil
 	}
+	var migration *Migration
 	if loaded.Migrated {
+		to, _ := loaded.Config.Value("version").(float64)
+		migration = &Migration{From: loaded.From, To: int(to), Changes: append([]string{}, loaded.Changes...)}
 		// The file as it was, once, beside it: nothing is lost if the
 		// conversion or a step missed something
 		backup := fmt.Sprintf("config.v%d.json", loaded.From)
@@ -525,7 +543,7 @@ func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue) {
 		if _, err := os.Lstat(backup); errors.Is(err, fs.ErrNotExist) {
 			if err := fsx.WriteFile(backup, data, 0o600); err != nil {
 				s.opts.Log.Error("keeping the config before its migration failed; the file isn't rewritten", "err", err)
-				return loaded.Config, nil
+				return loaded.Config, nil, migration
 			}
 		}
 		out := jsonx.Marshal(loaded.Config)
@@ -535,7 +553,7 @@ func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue) {
 			s.written = out
 		}
 	}
-	return loaded.Config, nil
+	return loaded.Config, nil, migration
 }
 
 // reload reads the file again if something else changed it.
@@ -572,10 +590,13 @@ func (s *Store) reloadHeld() {
 	s.written = data
 	s.mu.Unlock()
 
-	loaded, problems := s.load(data)
+	loaded, problems, migration := s.load(data)
 
 	s.mu.Lock()
 	s.state.Missing = false
+	if migration != nil {
+		s.state.Migrated = migration
+	}
 	var ev Event
 	if problems != nil {
 		s.state.Blocked, s.state.Issues = true, problems

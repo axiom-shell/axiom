@@ -3763,6 +3763,12 @@
     "Level": "",
     "Keep a silent note when the network, a Bluetooth device or Tailscale connects or disconnects, one per connection, its latest change.": "",
     "Note connection changes": "",
-    "Silent": ""
+    "Silent": "",
+    "and {0} more": "",
+    "Settings updated to version {0}": "",
+    "Nothing of yours needed changing.": "",
+    "1 package update": "",
+    "{0} package updates": "",
+    "Upgrade": ""
   }
 }

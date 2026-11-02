@@ -252,6 +252,7 @@ QtObject {
     if (state.blocked && !root._savesBlocked)
       console.error("[ConfigManager] config.json doesn't load; axiom keeps the last good config and blocks saves until it's fixed.", (state.issues ?? []).map(i => i.path + ": " + i.message).join("; "));
     root._savesBlocked = !!state.blocked;
+    root._migrated = state.migrated ?? null;
     if (root._kept && !state.defaults)
       root.hardResetConfig();
   }
@@ -299,4 +300,9 @@ QtObject {
   // from it), once per session
   readonly property bool firstRun: _firstRun
   property bool _firstRun: false
+
+  // The last load's migration of config.json, as axiom says it: { from,
+  // to, changes (English, as logged) }, else null
+  readonly property var migrated: _migrated
+  property var _migrated: null
 }

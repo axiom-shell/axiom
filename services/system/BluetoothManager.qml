@@ -127,6 +127,16 @@ QtObject {
     }
   }
 
+  // Devices connecting and disconnecting, as silent notes
+  property ConnectionNotes _notes: ConnectionNotes {
+    prefix: "bluetooth"
+    icon: "bluetooth"
+    connected: root.connectedDevices.reduce((all, device) => {
+      all[device.address] = root.deviceLabel(device);
+      return all;
+    }, {})
+  }
+
   // Keybind action bluetooth: axiom ipc bluetooth toggle|enable|disable
   property IpcTarget _ipc: IpcTarget {
     target: "bluetooth"

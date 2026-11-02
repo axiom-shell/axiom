@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import qs.config
 import qs.services.core
+import qs.services.system
 
 // Tailscale's state for every widget and module that shows it: axiom's
 // `tailscale` topic (`tailscale status --json` every Tailscale.interval;
@@ -171,6 +172,16 @@ QtObject {
       if (error)
         console.warn(`[TailscaleManager] ${method}: ${error.message}`);
     });
+  }
+
+  // Connecting and disconnecting (while something polls it), as a
+  // silent note
+  property ConnectionNotes _notes: ConnectionNotes {
+    prefix: "tailscale"
+    icon: "network-vpn"
+    connected: root.connected ? {
+      "tailscale": "Tailscale"
+    } : ({})
   }
 
   Component.onCompleted: {
