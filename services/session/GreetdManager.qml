@@ -222,10 +222,12 @@ QtObject {
   // The monitors and the bundle's input, on the greeter's compositor (sway,
   // else Hyprland: greeter-session.sh). axiom sets up the compositor and
   // keeps the monitors in the saved profile for what's connected (on each
-  // hotplug: Hyprland's Lua, axiom's own watch on sway)
+  // hotplug: Hyprland's Lua, axiom's own watch on sway). The keyboard
+  // layouts are read once its reply is in: before, they're the
+  // compositor's default
   function _applyCompositor() {
     const config = ConfigManager.config;
-    CompositorManager.setUpGreeter(config.Monitors.items, config.Input);
+    CompositorManager.setUpGreeter(config.Monitors.items, config.Input, root._readLayouts);
   }
 
   Component.onCompleted: {
@@ -241,6 +243,7 @@ QtObject {
     // session's own: left alone
     if (Quickshell.env("AXIOM_GREETER_WINDOWED") !== "1")
       root._applyCompositor();
-    root._readLayouts();
+    else
+      root._readLayouts();
   }
 }

@@ -293,14 +293,15 @@ Singleton {
   // axiom sends Hyprland Lua keeping the monitors in the profile for what's
   // connected and the x-greeter input, then the cursor; sway its input and
   // seat commands (its monitors: applyOutputs); niri takes input from its
-  // config file alone
-  function setUpGreeter(profiles, input) {
+  // config file alone. `then` is called on the reply, failed or not
+  function setUpGreeter(profiles, input, then) {
     BackendManager.call("greeter.compositor", {
       "profiles": profiles,
       "input": input
     }, error => {
       if (error)
         console.warn("[CompositorManager] setting up the greeter's compositor:", error.message);
+      then?.();
     });
   }
 

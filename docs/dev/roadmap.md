@@ -152,6 +152,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #288 (config-03), turn Polkit's "Use axiom's prompt" or Idle's "Handle idle" on in Settings without saving and check nothing starts (no agent swap, hypridle untouched), then Discard; and in the launcher `/config Polkit.enabled` offers only Show in settings.
 - After a save axiom refuses (e.g. right after a hand edit of config.json), the editor's edits show live again on the running bars and settings (#293).
 - Once axiom runs a binary built with platform-02, run `axiom lock` under Hyprland and check `axiom daemon logs` has no `the shell didn't confirm the lock: starting it locked` (a nested Hyprland acknowledged the lock after about 5 s; the daemon now waits 10 s more for a shell holding the lock), and whether a real Hyprland is ever that slow.
+- Once the greeter runs platform-02, with a bundle setting two keyboard layouts (`us,de`), log out to the login screen under sway and Hyprland: its keyboard layout module switches between both from the start.
 - Once the shell runs platform-02, start a shell locked (`axiom lock` confirmed too late, or one restarted while locked), unlock with the password, then save a QML file: the reload doesn't lock again.
 
 ### Phase 0: decisions and quick wins
@@ -484,7 +485,6 @@ Found by the audits:
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 - [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
-- [The greeter reads its keyboard layouts before the bundle's are applied](issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
 - [The launcher's /generate reads a monitor setting that doesn't exist](issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
 - [A clip's label and detail are written in both the launcher and the clipboard module](issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
 - [App scoring is written twice and the use bonus three times](issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
