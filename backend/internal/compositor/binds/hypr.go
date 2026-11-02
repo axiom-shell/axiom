@@ -381,7 +381,8 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 			texts[file] = src
 		}
 		start, end, reason := statementSpan(src.text, src.code, line, call)
-		return reason, src.text[start:end]
+		// As JSON carries it: invalid bytes as U+FFFD
+		return reason, strings.ToValidUTF8(src.text[start:end], "\uFFFD")
 	}
 	resolve := func(file string) string {
 		if file == "" {
@@ -519,7 +520,7 @@ func removeHypr(ctx context.Context, o Options, sites *jsonx.Array) (*jsonx.Obje
 				start, end, reason = statementSpan(text, code, s.line, "hl.unbind")
 			}
 			// A statement other than the one extract read there is left
-			if reason[0] != "" || (s.hasText && text[start:end] != s.text) {
+			if reason[0] != "" || (s.hasText && strings.ToValidUTF8(text[start:end], "\uFFFD") != s.text) {
 				failed = append(failed, failedEntry(file, s.line, "changed", ""))
 				continue
 			}

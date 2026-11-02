@@ -525,6 +525,17 @@ func TestHyprRemoveLeavesAStatementItDidntRead(t *testing.T) {
 	eq(t, f.read("binds.lua"), text)
 }
 
+// A statement holding an invalid byte (here in its comment) is still the
+// one extract read: the site's text reaches remove through JSON, as U+FFFD
+func TestHyprRemoveTakesAStatementWithAnInvalidByte(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("binds.lua", "hl.bind(\"SUPER + Y\", hl.dsp.window.close()) -- \xff\n")
+	done := f.remove(f.extract().Value("sites"))
+	eq(t, js(done.Value("failed"))+js(done.Value("removed")), "[]1")
+	eq(t, f.read("binds.lua"), "")
+}
+
 // A helper's hl.bind stays: it also makes binds extract never sees (in a
 // submap or hl.on handler, another branch). Its file's own calls, a loop's
 // too, still move
